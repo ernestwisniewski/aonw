@@ -333,7 +333,7 @@ _paidTruceFixture() {
 }
 
 void _expectPaidTruceState(
-  PersistentDiplomacyResult result,
+  _DiplomacyTestResult result,
   ({
     PersistentGameState state,
     DiplomaticProposal unrelatedProposal,

@@ -1,3 +1,4 @@
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
@@ -133,6 +134,130 @@ void main() {
     expect(afterFullTurn.research.forPlayer('player_2'), playerTwoResearch);
   });
 
+  test(
+    'advanceTurn carries one canonical snapshot into turn-derived diplomacy',
+    () {
+      final research = ResearchState(
+        players: {
+          'player_1': PlayerResearchState(scienceOverflow: 3),
+          'player_2': PlayerResearchState(
+            unlockedTechnologyIds: {TechnologyId.agriculture},
+          ),
+        },
+      );
+      final diplomacy = DiplomacyState.empty
+          .addContact('player_1', 'player_2')
+          .addMessage(
+            DiplomaticMessage.create(
+              id: 'message_at_cooldown_boundary',
+              fromPlayerId: 'player_1',
+              toPlayerId: 'player_2',
+              topic: DiplomaticMessageTopic.troopsNearCities,
+              createdTurn: 5,
+              expiresOnTurn: 20,
+            ),
+          );
+      final mapView = _mapData().indexedReadView();
+      final root = SimulatedState.fromView(
+        _view(
+          mapView: mapView,
+          turn: 9,
+          research: research,
+          diplomacy: diplomacy,
+          includeOpponent: true,
+        ),
+        maxPlanningDepth: 8,
+      );
+
+      final advanced = const TracingMctsSimulator(
+        simulateOpponentPlans: false,
+      ).advanceTurn(root);
+      final nextView = advanced.view;
+      final nextSnapshot = nextView.engineSnapshot!;
+
+      expect(nextView.turn, 10);
+      expect(nextSnapshot.domain.turn, nextView.turn);
+      expect(nextSnapshot.domain.research, nextView.research);
+      expect(nextSnapshot.domain.diplomacy, nextView.diplomacy);
+
+      final afterMessage =
+          SimulatedState.fromView(nextView, maxPlanningDepth: 8)
+              .apply(
+                const CommandMctsAction(
+                  SendDiplomaticMessageCommand(
+                    playerId: 'player_1',
+                    targetPlayerId: 'player_2',
+                    topic: DiplomaticMessageTopic.troopsNearCities,
+                    messageId: 'message_after_advance',
+                  ),
+                ),
+              )
+              .view;
+      final message = afterMessage.diplomacy.messages['message_after_advance']!;
+      expect(message.createdTurn, 10);
+      expect(message.expiresOnTurn, 15);
+
+      final proposalResult = const GameEngine().apply(
+        snapshot: nextSnapshot,
+        command: const SendDiplomaticProposalCommand(
+          playerId: 'player_1',
+          targetPlayerId: 'player_2',
+          kind: DiplomaticProposalKind.friendship,
+          proposalId: 'proposal_after_advance',
+        ),
+        context: GameEngineContext(
+          actorPlayerId: 'player_1',
+          mapView: mapView,
+          ruleset: GameRuleset.defaults,
+          commandTick: 10,
+        ),
+      );
+      expect(proposalResult, isA<GameEngineAccepted>());
+      final proposal = proposalResult
+          .snapshot
+          .domain
+          .diplomacy
+          .pendingProposals['proposal_after_advance']!;
+      expect(proposal.createdTurn, 10);
+      expect(proposal.expiresOnTurn, 15);
+
+      final truceSnapshot = nextSnapshot.copyWith(
+        domain: nextSnapshot.domain.copyWith(
+          diplomacy: nextSnapshot.domain.diplomacy.setStatus(
+            'player_1',
+            'player_2',
+            DiplomaticRelationStatus.truce,
+            turn: 5,
+            statusExpiresOnTurn: 10,
+          ),
+        ),
+      );
+      final warResult = const GameEngine().apply(
+        snapshot: truceSnapshot,
+        command: const DeclareWarCommand(
+          playerId: 'player_1',
+          targetPlayerId: 'player_2',
+        ),
+        context: GameEngineContext(
+          actorPlayerId: 'player_1',
+          mapView: mapView,
+          ruleset: GameRuleset.defaults,
+          commandTick: 11,
+        ),
+      );
+      expect(warResult, isA<GameEngineAccepted>());
+      final warDiplomacy = warResult.snapshot.domain.diplomacy;
+      expect(
+        warDiplomacy.relationBetween('player_1', 'player_2').lastChangedTurn,
+        10,
+      );
+      expect(
+        warDiplomacy.scoreEntriesBetween('player_1', 'player_2').last.turn,
+        10,
+      );
+    },
+  );
+
   test('lightweight skip projects the canonical unit mutation', () {
     final unit =
         GameUnit(
@@ -246,13 +371,16 @@ void main() {
 
 GameView _view({
   required MapReadView mapView,
+  int turn = 1,
   Iterable<GameUnit>? ownUnits,
   ResearchState research = ResearchState.empty,
+  DiplomacyState diplomacy = DiplomacyState.empty,
   List<ResourceTradeAgreement> agreements = const [],
   Map<String, MapObjectiveHoldState> holdStates = const {},
   WonderRegistry wonders = WonderRegistry.empty,
   int ownGold = 0,
   bool includeEngineSnapshot = true,
+  bool includeOpponent = false,
 }) {
   final units =
       ownUnits?.toList(growable: false) ??
@@ -268,7 +396,7 @@ GameView _view({
       ];
   return GameView(
     forPlayerId: 'player_1',
-    turn: 1,
+    turn: turn,
     ownUnits: units,
     ownCities: const [],
     ownGold: ownGold,
@@ -277,6 +405,7 @@ GameView _view({
     ownImprovements: const [],
     resourceTradeAgreements: agreements,
     mapObjectiveHoldStatesByObjectiveId: holdStates,
+    diplomacy: diplomacy,
     visibleEnemyUnits: const [],
     rememberedEnemyCities: const [],
     visibility: const FogVisibilityQuery(
@@ -286,17 +415,37 @@ GameView _view({
     mapData: mapView,
     ruleset: GameRuleset.defaults,
     wonderRegistry: wonders,
-    engineSnapshot: includeEngineSnapshot ? _engineSnapshot(units) : null,
+    engineSnapshot: includeEngineSnapshot
+        ? _engineSnapshot(
+            units,
+            turn: turn,
+            research: research,
+            diplomacy: diplomacy,
+            includeOpponent: includeOpponent,
+          )
+        : null,
   );
 }
 
-CanonicalGameSnapshot _engineSnapshot(List<GameUnit> units) {
+CanonicalGameSnapshot _engineSnapshot(
+  List<GameUnit> units, {
+  required int turn,
+  required ResearchState research,
+  required DiplomacyState diplomacy,
+  required bool includeOpponent,
+}) {
   return CanonicalGameSnapshot.snapshot(
     domain: DomainState.snapshot(
-      turn: 1,
+      turn: turn,
       matchRules: MatchRules.standard,
-      participants: const [Player(id: 'player_1', name: 'AI', colorValue: 1)],
+      participants: [
+        const Player(id: 'player_1', name: 'AI', colorValue: 1),
+        if (includeOpponent)
+          const Player(id: 'player_2', name: 'Opponent', colorValue: 2),
+      ],
       units: units,
+      research: research,
+      diplomacy: diplomacy,
     ),
     session: MatchSessionState.snapshot(gameMode: GameMode.hotSeat),
     metadata: GameSnapshotMetadata(

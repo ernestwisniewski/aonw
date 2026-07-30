@@ -116,6 +116,27 @@ abstract final class InteractionReducer {
     return state.copyWithInteraction(pendingAction: null);
   }
 
+  static GameState cancelResearchSelection(
+    GameState state,
+    CancelResearchSelectionCommand command, {
+    GameCommandContext context = const GameCommandContext(),
+  }) {
+    if (!context.canAct ||
+        (context.hasActor && context.actorPlayerId != command.playerId) ||
+        (!context.hasActor &&
+            state.activePlayerId.isNotEmpty &&
+            (state.activePlayerId != command.playerId ||
+                !state.activePlayerCanAct))) {
+      return state;
+    }
+    final pending = state.pendingAction;
+    if (pending is! PendingResearchSelection ||
+        pending.ownerPlayerId != command.playerId) {
+      return state;
+    }
+    return state.copyWithInteraction(pendingAction: null);
+  }
+
   static GameState startAttackTargeting(
     GameState state,
     StartAttackTargetingCommand command, {

@@ -4,7 +4,6 @@ import 'package:aonw_core/ai/mcts/mcts_simulation_projection.dart';
 import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -25,60 +24,6 @@ final class MctsSimulatedEconomyCommandApplier {
   final List<GameCity> ownCities;
   final List<GameCity> rememberedEnemyCities;
   final PlayerResearchState ownResearch;
-
-  MctsSimulatedCommandApplication applySelectTechnology(
-    SelectTechnologyCommand command,
-  ) {
-    final result = SelectTechnologyResolver.selectTechnology(
-      research: _researchState,
-      cities: ownCities,
-      fieldImprovements: view.ownImprovements,
-      command: command,
-      actorPlayerId: view.forPlayerId,
-      mapTiles: view.mapData,
-      ruleset: view.ruleset.technology,
-      // Preserve the current MCTS approximation; pace convergence is a
-      // separate, behavior-changing fix with its own characterization.
-      paceBalance: PaceBalance.unlimited,
-    );
-    if (!result.accepted) return unchangedCommandApplication;
-    final currentEngineSnapshot = view.engineSnapshot;
-    final nextEngineSnapshot = currentEngineSnapshot?.copyWith(
-      domain: currentEngineSnapshot.domain.copyWith(research: result.research),
-    );
-    return (
-      nextView: GameView(
-        forPlayerId: view.forPlayerId,
-        turn: view.turn,
-        ownUnits: view.ownUnits,
-        ownCities: view.ownCities,
-        artifacts: view.artifacts,
-        ownGold: view.ownGold,
-        ownWarWeariness: view.ownWarWeariness,
-        ownStabilityNet: view.ownStabilityNet,
-        research: result.research,
-        ownResearch: result.research.forPlayer(view.forPlayerId),
-        ownImprovements: view.ownImprovements,
-        resourceTradeAgreements: view.resourceTradeAgreements,
-        mapObjectiveHoldStatesByObjectiveId:
-            view.mapObjectiveHoldStatesByObjectiveId,
-        diplomacy: view.diplomacy,
-        visibleEnemyUnits: view.visibleEnemyUnits,
-        movementBlockingUnits: view.movementBlockingUnits,
-        rememberedEnemyCities: view.rememberedEnemyCities,
-        activeHostilePlayerIds: view.activeHostilePlayerIds,
-        recentHostilePlayerIds: view.recentHostilePlayerIds,
-        pressureTargetPlayerIds: view.pressureTargetPlayerIds,
-        defaultNeutralPlayerIds: view.defaultNeutralPlayerIds,
-        pendingCityAttackThreats: view.pendingCityAttackThreats,
-        visibility: view.visibility,
-        mapData: view.mapData,
-        ruleset: view.ruleset,
-        wonderRegistry: view.wonderRegistry,
-        engineSnapshot: nextEngineSnapshot,
-      ),
-    );
-  }
 
   MctsSimulatedCommandApplication applyEngineCommand(
     DomainCommand command,

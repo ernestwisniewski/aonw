@@ -5,7 +5,6 @@ const _player2 = 'p2';
 const _player3 = 'p3';
 const _player4 = 'p4';
 const _sentinelPlayer = 'sentinel';
-const _router = DiplomacyCommandRouter();
 
 const _sentinelTrade = ResourceTradeAgreement(
   id: 'sentinel_trade',
@@ -87,24 +86,90 @@ PersistentGameState _diplomacyState({
   );
 }
 
-PersistentDiplomacyResult _route(
+_DiplomacyTestResult _route(
   PersistentGameState state,
   DiplomaticCommand command, {
   required String actorPlayerId,
   int turn = 10,
   bool canAct = true,
 }) {
-  return _router.route(
-    state: state,
+  final runtime = state.runtimeState;
+  final resolved = DiplomacyCommandResolver.resolve(
+    state: DiplomacyCommandState(
+      playerColors: state.playerColors,
+      playerCountries: state.playerCountries,
+      playerGold: state.playerGold,
+      units: state.units,
+      cities: state.cities,
+      fogOfWar: state.fogOfWar,
+      diplomacy: runtime.diplomacy,
+      intendedAttacks: runtime.intendedAttacks,
+      resourceTradeAgreements: runtime.resourceTradeAgreements,
+    ),
     command: command,
     actorPlayerId: actorPlayerId,
     turn: turn,
     canAct: canAct,
   );
+  if (!resolved.accepted) {
+    return _DiplomacyTestResult(
+      accepted: false,
+      state: state,
+      reason: resolved.reason,
+    );
+  }
+  final runtimeChanged =
+      !identical(resolved.diplomacy, runtime.diplomacy) ||
+      !identical(resolved.intendedAttacks, runtime.intendedAttacks) ||
+      !identical(
+        resolved.resourceTradeAgreements,
+        runtime.resourceTradeAgreements,
+      );
+  return _DiplomacyTestResult(
+    accepted: true,
+    state: state.copyWith(
+      playerGold: identical(resolved.playerGold, state.playerGold)
+          ? null
+          : resolved.playerGold,
+      runtimeState: runtimeChanged
+          ? runtime.copyWith(
+              diplomacy: identical(resolved.diplomacy, runtime.diplomacy)
+                  ? null
+                  : resolved.diplomacy,
+              intendedAttacks:
+                  identical(resolved.intendedAttacks, runtime.intendedAttacks)
+                  ? null
+                  : resolved.intendedAttacks,
+              resourceTradeAgreements:
+                  identical(
+                    resolved.resourceTradeAgreements,
+                    runtime.resourceTradeAgreements,
+                  )
+                  ? null
+                  : resolved.resourceTradeAgreements,
+            )
+          : null,
+    ),
+    events: resolved.events,
+  );
+}
+
+final class _DiplomacyTestResult {
+  const _DiplomacyTestResult({
+    required this.accepted,
+    required this.state,
+    this.events = const [],
+    this.reason,
+  });
+
+  final bool accepted;
+  final PersistentGameState state;
+  final List<GameEvent> events;
+  final String? reason;
 }
 
 void _expectRejectedDiplomacy(
-  PersistentDiplomacyResult result,
+  _DiplomacyTestResult result,
   PersistentGameState input,
   String reason,
 ) {
@@ -129,7 +194,7 @@ void _expectRejectedDiplomacy(
 }
 
 void _expectOuterSentinelsUnchanged(
-  PersistentDiplomacyResult result,
+  _DiplomacyTestResult result,
   PersistentGameState input, {
   bool goldChanged = false,
 }) {
@@ -150,7 +215,7 @@ void _expectOuterSentinelsUnchanged(
 }
 
 void _expectRuntimeSentinelsUnchanged(
-  PersistentDiplomacyResult result,
+  _DiplomacyTestResult result,
   PersistentGameState input, {
   bool intendedAttacksChanged = false,
   bool tradesChanged = false,

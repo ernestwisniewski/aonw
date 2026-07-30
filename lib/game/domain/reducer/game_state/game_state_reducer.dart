@@ -71,7 +71,6 @@ class GameStateReducer {
         environment.startMerchantMoveToCitySelection(state, command),
       CancelMerchantMoveToCitySelectionCommand() =>
         environment.cancelMerchantMoveToCitySelection(state, command),
-      SelectTechnologyCommand() => environment.selectTechnology(state, command),
       CancelResearchSelectionCommand() => environment.cancelResearchSelection(
         state,
         command,
@@ -128,22 +127,6 @@ class GameStateReducer {
         command,
       ),
       FocusTurnStartActionCommand() => environment.focusTurnStartAction(
-        state,
-        command,
-      ),
-      SendDiplomaticProposalCommand() => environment.sendDiplomaticProposal(
-        state,
-        command,
-      ),
-      RespondDiplomaticProposalCommand() =>
-        environment.respondDiplomaticProposal(state, command),
-      DeclareWarCommand() => environment.declareWar(state, command),
-      SendGoldGiftCommand() => environment.sendGoldGift(state, command),
-      SendDiplomaticMessageCommand() => environment.sendDiplomaticMessage(
-        state,
-        command,
-      ),
-      RespondDiplomaticMessageCommand() => environment.respondDiplomaticMessage(
         state,
         command,
       ),

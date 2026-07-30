@@ -4,6 +4,7 @@ import 'package:aonw/game/application/services/local_city_economy_command_resolv
 import 'package:aonw/game/application/services/local_combat_command_resolver.dart';
 import 'package:aonw/game/application/services/local_movement_command_resolver.dart';
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
+import 'package:aonw/game/application/services/local_research_diplomacy_command_resolver.dart';
 import 'package:aonw/game/application/services/local_unit_action_command_resolver.dart';
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
@@ -14,6 +15,8 @@ import 'package:aonw/game/domain/turn.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
+
+part 'local_command_resolver_research_diplomacy.dart';
 
 class LocalCommandResolution {
   final SaveSnapshot snapshot;
@@ -89,12 +92,13 @@ class LocalCommandResolver {
         context: effectiveContext,
       );
     }
-    return _resolveReducerCommand(
+    return _resolveResearchDiplomacyOrReducer(
       baseSnapshot: baseSnapshot,
       currentState: currentState,
       command: command,
       savedAt: savedAt,
       context: effectiveContext,
+      engineFamily: engineFamily,
     );
   }
 
@@ -346,31 +350,6 @@ class LocalCommandResolver {
       events: result.events,
       uiEffects: uiEffects,
     );
-  }
-
-  List<String> _activePlayerIds(SaveSnapshot snapshot) {
-    final ids = snapshot.domain.participants
-        .map((player) => player.id)
-        .where((id) => id.isNotEmpty)
-        .toList();
-    if (ids.isNotEmpty) return ids..sort();
-
-    return snapshot.session.turnStatesByPlayerId.keys
-        .where((id) => id.isNotEmpty)
-        .toList()
-      ..sort();
-  }
-
-  bool _rejectSubmitTurn({
-    required SaveSnapshot baseSnapshot,
-    required SubmitTurnCommand command,
-    required String? actorPlayerId,
-  }) {
-    return (actorPlayerId != null &&
-            actorPlayerId.isNotEmpty &&
-            actorPlayerId != command.playerId) ||
-        !_activePlayerIds(baseSnapshot).contains(command.playerId) ||
-        baseSnapshot.session.hasSubmitted(command.playerId);
   }
 }
 

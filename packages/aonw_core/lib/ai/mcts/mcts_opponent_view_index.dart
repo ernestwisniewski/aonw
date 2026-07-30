@@ -81,6 +81,7 @@ final class MctsOpponentViewIndex {
       ownGold: state.playerGold[opponentId] ?? 0,
       ownWarWeariness: state.playerWarWeariness[opponentId] ?? 0,
       ownStabilityNet: state.playerStabilityNet[opponentId] ?? 0,
+      research: state.research,
       ownResearch: state.research.forPlayer(opponentId),
       ownImprovements: _improvementsByOwner[opponentId] ?? const [],
       artifacts: _artifactsByOwner[opponentId] ?? const [],

@@ -187,12 +187,38 @@ AiContext _context(MapReadView mapView) {
 }
 
 GameView _view(MapReadView mapView) {
+  const state = PersistentGameState();
+  final engineSnapshot = CanonicalGameSnapshot.snapshot(
+    domain: DomainState.snapshot(
+      turn: 1,
+      matchRules: MatchRules.standard,
+      participants: const [
+        Player(id: 'player_1', name: 'player_1', colorValue: 0),
+      ],
+    ),
+    session: MatchSessionState.snapshot(
+      gameMode: GameMode.hotSeat,
+      turnStatesByPlayerId: const {'player_1': PlayerTurnState.active},
+    ),
+    metadata: GameSnapshotMetadata(
+      id: 'performance-ai-mcts',
+      schemaVersion: 3,
+      name: 'Performance AI MCTS',
+      world: WorldReference(
+        name: mapView.mapName ?? 'performance',
+        source: MapSource.asset,
+      ),
+      savedAtUtc: DateTime.utc(1970),
+      camera: GameSnapshotCamera.zero,
+    ),
+  );
   return GameView.fromPersistentState(
-    const PersistentGameState(),
+    state,
     forPlayerId: 'player_1',
     turn: 1,
     mapData: mapView,
     ruleset: GameRuleset.defaults,
+    engineSnapshot: engineSnapshot,
   );
 }
 

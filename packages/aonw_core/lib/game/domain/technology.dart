@@ -1,5 +1,4 @@
 export 'technology/domain_research_command_resolver.dart';
-export 'technology/persistent_research_command_resolver.dart';
 export 'technology/player_research_state.dart';
 export 'technology/research_cost_calculator.dart';
 export 'technology/research_overflow_rules.dart';

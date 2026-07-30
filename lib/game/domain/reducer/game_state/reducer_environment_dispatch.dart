@@ -4,7 +4,6 @@ import 'package:aonw/game/domain/reducer/diplomacy/merchant_trade_route_reducer.
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/interaction/interaction_reducer.dart';
-import 'package:aonw/game/domain/reducer/research/research_reducer.dart';
 import 'package:aonw/game/domain/reducer/turn/end_turn_reducer.dart';
 import 'package:aonw/game/domain/reducer/turn/submit_turn_reducer.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -44,25 +43,12 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
     CancelMerchantMoveToCitySelectionCommand command,
   ) => MerchantTradeRouteReducer.cancelMoveToCitySelection(state, command);
 
-  GameStateTransition selectTechnology(
-    GameState state,
-    SelectTechnologyCommand command,
-  ) {
-    return ResearchReducer.selectTechnology(
-      state,
-      command,
-      context: context,
-      mapTiles: mapData,
-      ruleset: technologyRuleset,
-    );
-  }
-
   GameStateTransition cancelResearchSelection(
     GameState state,
     CancelResearchSelectionCommand command,
   ) {
     return GameStateTransition(
-      state: ResearchReducer.cancelResearchSelection(
+      state: InteractionReducer.cancelResearchSelection(
         state,
         command,
         context: context,

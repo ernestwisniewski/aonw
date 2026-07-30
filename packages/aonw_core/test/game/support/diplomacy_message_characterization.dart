@@ -340,7 +340,7 @@ void _registerMessageIdReuseTest() {
   });
 }
 
-PersistentDiplomacyResult _sendMessage(
+_DiplomacyTestResult _sendMessage(
   PersistentGameState state, {
   required DiplomaticMessageTopic topic,
   required int turn,

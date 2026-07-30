@@ -9,6 +9,7 @@ final class SendDiplomaticProposalCommand extends DiplomaticCommand {
     this.goldPayment = 0,
   });
 
+  @override
   final String playerId;
   final String targetPlayerId;
   final DiplomaticProposalKind kind;
@@ -42,6 +43,7 @@ final class RespondDiplomaticProposalCommand extends DiplomaticCommand {
     required this.accepted,
   });
 
+  @override
   final String playerId;
   final String proposalId;
   final bool accepted;
@@ -68,6 +70,7 @@ final class DeclareWarCommand extends DiplomaticCommand {
     required this.targetPlayerId,
   });
 
+  @override
   final String playerId;
   final String targetPlayerId;
 
@@ -88,6 +91,7 @@ final class SendGoldGiftCommand extends DiplomaticCommand {
     required this.amount,
   });
 
+  @override
   final String playerId;
   final String targetPlayerId;
   final int amount;
@@ -190,6 +194,7 @@ final class SendDiplomaticMessageCommand extends DiplomaticCommand {
     this.messageId,
   });
 
+  @override
   final String playerId;
   final String targetPlayerId;
   final DiplomaticMessageTopic topic;
@@ -220,6 +225,7 @@ final class RespondDiplomaticMessageCommand extends DiplomaticCommand {
     required this.response,
   });
 
+  @override
   final String playerId;
   final String messageId;
   final DiplomaticMessageResponse response;

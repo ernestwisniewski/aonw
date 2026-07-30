@@ -1,6 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/diplomacy/diplomacy_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/interaction/selection_reducer.dart';
@@ -87,44 +86,5 @@ extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
       ruleset: ruleset,
       paceBalance: paceBalance,
     );
-  }
-
-  GameStateTransition sendDiplomaticProposal(
-    GameState state,
-    SendDiplomaticProposalCommand command,
-  ) {
-    return DiplomacyReducer.sendProposal(state, command, context: context);
-  }
-
-  GameStateTransition respondDiplomaticProposal(
-    GameState state,
-    RespondDiplomaticProposalCommand command,
-  ) {
-    return DiplomacyReducer.respondProposal(state, command, context: context);
-  }
-
-  GameStateTransition declareWar(GameState state, DeclareWarCommand command) {
-    return DiplomacyReducer.declareWar(state, command, context: context);
-  }
-
-  GameStateTransition sendGoldGift(
-    GameState state,
-    SendGoldGiftCommand command,
-  ) {
-    return DiplomacyReducer.sendGoldGift(state, command, context: context);
-  }
-
-  GameStateTransition sendDiplomaticMessage(
-    GameState state,
-    SendDiplomaticMessageCommand command,
-  ) {
-    return DiplomacyReducer.sendMessage(state, command, context: context);
-  }
-
-  GameStateTransition respondDiplomaticMessage(
-    GameState state,
-    RespondDiplomaticMessageCommand command,
-  ) {
-    return DiplomacyReducer.respondMessage(state, command, context: context);
   }
 }

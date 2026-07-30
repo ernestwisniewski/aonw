@@ -144,6 +144,144 @@ void _registerEngineFamilyRoutingTests() {
       }
     });
   }
+
+  test('routes accepted research through its engine family without '
+      'the legacy reducer', () async {
+    const before = GameState(
+      activePlayerId: 'player_1',
+      activePlayerCanAct: true,
+      interaction: GameInteractionState(
+        pendingAction: PendingResearchSelection(ownerPlayerId: 'player_1'),
+      ),
+    );
+    final after = before.copyWith(
+      research: ResearchState(
+        players: {
+          'player_1': PlayerResearchState(
+            activeTechnologyId: TechnologyId.agriculture,
+          ),
+        },
+      ),
+      interaction: const GameInteractionState(),
+    );
+    final snapshot = SaveSnapshot.fromGameState(
+      save: _save(),
+      state: after,
+      eventLogOffset: 1,
+    );
+    const snapshotCodec = SnapshotCodec();
+    final dispatcher = _ScriptedCommandDispatcher(
+      (sentCommand) => WireCommandAck(
+        matchId: sentCommand.saveId,
+        accepted: true,
+        offset: 1,
+        snapshot: snapshotCodec.toWire(
+          matchId: sentCommand.saveId,
+          snapshot: snapshot,
+        ),
+        movementExecutions: WireMovementExecutionList(const []),
+      ),
+    );
+    final reducer = _FailingAuthoritativeReducer();
+    final transport = NetworkCommandTransport(
+      commandDispatcher: dispatcher,
+      token: AuthToken('jwt-token'),
+      actorPlayerId: 'player_1',
+      tickGenerator: ClientTickGenerator(),
+      localReducer: reducer,
+      gameRepository: _SnapshotRepository(
+        SaveSnapshot.fromGameState(save: _save(), state: before),
+      ),
+    );
+
+    final result = await transport.dispatch(
+      saveId: 'save_1',
+      currentState: before,
+      command: const SelectTechnologyCommand(
+        'player_1',
+        TechnologyId.agriculture,
+      ),
+    );
+
+    expect(reducer.calls, 0);
+    expect(
+      result.state.research.forPlayer('player_1').activeTechnologyId,
+      TechnologyId.agriculture,
+    );
+    expect(result.state.pendingAction, isNull);
+  });
+
+  test('routes accepted diplomacy through its engine family without '
+      'the legacy reducer', () async {
+    const before = GameState(
+      activePlayerId: 'player_1',
+      activePlayerCanAct: true,
+      interaction: GameInteractionState(
+        pendingAction: PendingResearchSelection(ownerPlayerId: 'player_1'),
+      ),
+    );
+    final after = before.copyWith(
+      diplomacy: DiplomacyState.empty
+          .addContact('player_1', 'player_2')
+          .addProposal(
+            const DiplomaticProposal(
+              id: 'proposal_1',
+              fromPlayerId: 'player_1',
+              toPlayerId: 'player_2',
+              kind: DiplomaticProposalKind.friendship,
+              createdTurn: 1,
+              expiresOnTurn: 6,
+            ),
+          ),
+    );
+    final snapshot = SaveSnapshot.fromGameState(
+      save: _save(),
+      state: after,
+      eventLogOffset: 1,
+    );
+    const snapshotCodec = SnapshotCodec();
+    final dispatcher = _ScriptedCommandDispatcher(
+      (sentCommand) => WireCommandAck(
+        matchId: sentCommand.saveId,
+        accepted: true,
+        offset: 1,
+        snapshot: snapshotCodec.toWire(
+          matchId: sentCommand.saveId,
+          snapshot: snapshot,
+        ),
+        movementExecutions: WireMovementExecutionList(const []),
+      ),
+    );
+    final reducer = _FailingAuthoritativeReducer();
+    final transport = NetworkCommandTransport(
+      commandDispatcher: dispatcher,
+      token: AuthToken('jwt-token'),
+      actorPlayerId: 'player_1',
+      tickGenerator: ClientTickGenerator(),
+      localReducer: reducer,
+      gameRepository: _SnapshotRepository(
+        SaveSnapshot.fromGameState(save: _save(), state: before),
+      ),
+    );
+
+    final result = await transport.dispatch(
+      saveId: 'save_1',
+      currentState: before,
+      command: const SendDiplomaticProposalCommand(
+        playerId: 'player_1',
+        targetPlayerId: 'player_2',
+        kind: DiplomaticProposalKind.friendship,
+        proposalId: 'proposal_1',
+      ),
+    );
+
+    expect(reducer.calls, 0);
+    expect(result.state.diplomacy.pendingProposals.keys, ['proposal_1']);
+    expect(
+      result.state.pendingAction,
+      const PendingResearchSelection(ownerPlayerId: 'player_1'),
+    );
+  });
 }
 
 List<Map<String, dynamic>> _projectedCombatEventPayloads() {

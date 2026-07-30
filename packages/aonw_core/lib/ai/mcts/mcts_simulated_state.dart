@@ -93,13 +93,7 @@ class SimulatedState {
       return _movementCommandApplier.applyUnitAction(command);
     }
     if (command is DomainCommand &&
-        switch (GameEngine.commandFamily(command)) {
-          GameEngineCommandFamily.city ||
-          GameEngineCommandFamily.production ||
-          GameEngineCommandFamily.worker ||
-          GameEngineCommandFamily.artifactTrade => true,
-          _ => false,
-        }) {
+        _usesEconomyCommandApplier(GameEngine.commandFamily(command))) {
       return _economyCommandApplier.applyEngineCommand(command, depth + 1);
     }
     return switch (command) {
@@ -107,10 +101,19 @@ class SimulatedState {
         nextView: _movementCommandApplier.applyMoveUnit(command).nextView,
       ),
       AttackHexCommand() => _applyEngineCombatCommand(command),
-      SelectTechnologyCommand() => _economyCommandApplier.applySelectTechnology(
-        command,
-      ),
       _ => _unchangedCommandApplication,
+    };
+  }
+
+  bool _usesEconomyCommandApplier(GameEngineCommandFamily? family) {
+    return switch (family) {
+      GameEngineCommandFamily.city ||
+      GameEngineCommandFamily.production ||
+      GameEngineCommandFamily.worker ||
+      GameEngineCommandFamily.artifactTrade ||
+      GameEngineCommandFamily.research ||
+      GameEngineCommandFamily.diplomacy => true,
+      _ => false,
     };
   }
 

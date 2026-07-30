@@ -415,7 +415,7 @@ void _registerGoldGiftSuccessTests() {
   });
 }
 
-PersistentDiplomacyResult _sendGift(
+_DiplomacyTestResult _sendGift(
   PersistentGameState state, {
   required int amount,
   int turn = 10,

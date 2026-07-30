@@ -12,7 +12,7 @@ part 'support/diplomacy_message_characterization.dart';
 part 'support/diplomacy_message_response_characterization.dart';
 
 void main() {
-  group('DiplomacyCommandRouter characterization', () {
+  group('DiplomacyCommandResolver characterization', () {
     _registerActorGuardCharacterizationTests();
     _registerProposalCharacterizationTests();
     _registerProposalEdgeCharacterizationTests();

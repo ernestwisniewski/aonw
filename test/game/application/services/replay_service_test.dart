@@ -15,14 +15,19 @@ import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 part 'replay_service_combat_test.dart';
+part 'replay_service_research_diplomacy_test.dart';
 
 void main() {
   group('ReplayService', () {
@@ -54,6 +59,7 @@ void main() {
     });
 
     _registerCombatReplayTest();
+    _registerResearchDiplomacyReplayTest();
 
     test('infers actors for legacy merchant replay commands', () {
       final merchant = GameUnit.produced(
@@ -362,6 +368,8 @@ SaveSnapshot _snapshot({
   List<GameCity> cities = const [],
   List<WorldArtifact> artifacts = const [],
   FogOfWarState fogOfWar = FogOfWarState.empty,
+  ResearchState research = ResearchState.empty,
+  GameRuntimeState runtimeState = GameRuntimeState.empty,
   List<Player> players = const [
     Player(id: 'p1', name: 'Alice', colorValue: 0xFF4A7FC4),
   ],
@@ -382,6 +390,8 @@ SaveSnapshot _snapshot({
     cities: cities,
     artifacts: artifacts,
     fogOfWar: fogOfWar,
+    research: research,
+    runtimeState: runtimeState,
   );
 }
 

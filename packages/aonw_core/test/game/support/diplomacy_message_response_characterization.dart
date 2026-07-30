@@ -257,7 +257,7 @@ void _registerMessageScoreSaturationTest() {
   });
 }
 
-PersistentDiplomacyResult _respondToMessage(
+_DiplomacyTestResult _respondToMessage(
   PersistentGameState state, {
   DiplomaticMessageResponse response = DiplomaticMessageResponse.conciliatory,
   int turn = 10,
@@ -275,7 +275,7 @@ PersistentDiplomacyResult _respondToMessage(
 }
 
 void _expectMessageResponseSuccess(
-  PersistentDiplomacyResult result, {
+  _DiplomacyTestResult result, {
   required PersistentGameState input,
   required DiplomaticMessage original,
   required DiplomaticMessageResponse response,

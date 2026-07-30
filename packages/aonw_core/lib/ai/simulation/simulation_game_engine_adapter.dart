@@ -41,7 +41,7 @@ final class SimulationGameEngineAdapter {
     CombatCommandVisibilityMode combatVisibilityMode =
         CombatCommandVisibilityMode.authoritative,
   }) {
-    final engineInput = _engineInput(snapshot: snapshot, state: state);
+    final engineInput = projectSnapshot(snapshot: snapshot, state: state);
     final result = const GameEngine().apply(
       snapshot: engineInput,
       command: command,
@@ -135,9 +135,10 @@ final class SimulationGameEngineAdapter {
     );
   }
 
-  CanonicalGameSnapshot _engineInput({
+  CanonicalGameSnapshot projectSnapshot({
     required CanonicalGameSnapshot snapshot,
     required PersistentGameState state,
+    int? turn,
   }) {
     final runtime = state.runtimeState;
     final interaction = PersistedInteractionState(
@@ -153,6 +154,7 @@ final class SimulationGameEngineAdapter {
     );
     return snapshot.copyWith(
       domain: snapshot.domain.copyWith(
+        turn: turn,
         playerGold: state.playerGold,
         playerWarWeariness: state.playerWarWeariness,
         playerStabilityNet: state.playerStabilityNet,

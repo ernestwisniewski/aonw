@@ -4,6 +4,7 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/runtime.dart';
 
 /// Applies only client-owned interaction cleanup after an authoritative ACK.
 ///
@@ -26,6 +27,8 @@ GameState acceptedEngineCommandInteractionSource({
       currentState,
       command,
     ),
+    GameEngineCommandFamily.research || GameEngineCommandFamily.diplomacy =>
+      _researchDiplomacy(currentState, command),
   };
 }
 
@@ -36,23 +39,28 @@ extension AcceptedNetworkCommandTransition on GameStateReducer {
     GameCommandContext context,
   ) {
     final family = GameEngine.commandFamily(command);
-    return switch (family) {
-      GameEngineCommandFamily.unitAction ||
-      GameEngineCommandFamily.movement ||
-      GameEngineCommandFamily.combat ||
-      GameEngineCommandFamily.city ||
-      GameEngineCommandFamily.production ||
-      GameEngineCommandFamily.worker ||
-      GameEngineCommandFamily.artifactTrade => GameStateTransition(
+    if (family != null) {
+      return GameStateTransition(
         state: acceptedEngineCommandInteractionSource(
           currentState: currentState,
           command: command,
-          family: family!,
+          family: family,
         ),
-      ),
-      null => reduce(currentState, command, context: context),
-    };
+      );
+    }
+    return reduce(currentState, command, context: context);
   }
+}
+
+GameState _researchDiplomacy(GameState state, DomainCommand command) {
+  if (command case SelectTechnologyCommand(:final playerId)) {
+    final pending = state.pendingAction;
+    if (pending is PendingResearchSelection &&
+        pending.ownerPlayerId == playerId) {
+      return state.copyWithInteraction(pendingAction: null);
+    }
+  }
+  return state;
 }
 
 GameState _cityEconomy(GameState state, DomainCommand command) {

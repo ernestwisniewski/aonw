@@ -650,7 +650,7 @@ void main() {
   });
 
   group('TracingMctsSimulator research selection parity', () {
-    test('selects technology like PersistentResearchCommandResolver', () {
+    test('selects technology through the shared game engine', () {
       const command = SelectTechnologyCommand(
         'player_1',
         TechnologyId.agriculture,
@@ -935,17 +935,11 @@ PersistentTurnCombatResult _resolvePersistentCombat(
   );
 }
 
-PersistentResearchCommandResult _resolvePersistentResearch(
+SimulationGameEngineResult _resolvePersistentResearch(
   PersistentGameState state,
   SelectTechnologyCommand command,
 ) {
-  return const PersistentResearchCommandResolver().selectTechnology(
-    state: state,
-    command: command,
-    actorPlayerId: 'player_1',
-    mapTiles: WorldMapReadView(_worldMap()),
-    ruleset: GameRuleset.defaults.technology,
-  );
+  return MctsSimulatorParityFixtures.resolveEngineCommand(state, command);
 }
 
 SimulationGameEngineResult _resolveWorkerImprovement(

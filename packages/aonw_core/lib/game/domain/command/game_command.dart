@@ -44,4 +44,6 @@ sealed class ServerSystemCommand extends GameCommand {
 /// Commands routed through the diplomacy application service.
 sealed class DiplomaticCommand extends DomainCommand {
   const DiplomaticCommand();
+
+  String get playerId;
 }

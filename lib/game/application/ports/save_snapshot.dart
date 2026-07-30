@@ -14,6 +14,7 @@ import 'package:aonw_core/game/domain/wonder.dart';
 
 part 'save_snapshot_combat_engine_projection.dart';
 part 'save_snapshot_city_economy_engine_projection.dart';
+part 'save_snapshot_research_diplomacy_engine_projection.dart';
 
 const _saveSnapshotAdapter = LegacyGameSnapshotAdapter();
 

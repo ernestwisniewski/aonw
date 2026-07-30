@@ -80,6 +80,24 @@ void main() {
 
       expect(violations, isEmpty);
     });
+
+    test('performance workload legacy adapter debt stays bounded', () {
+      final paths = {
+        for (final entry in productionDartSources().entries)
+          if (entry.key.startsWith('tool/performance/') &&
+              sourceSymbolReferenceViolations(
+                entry.value,
+                entry.key,
+                symbol: 'LegacyGameSnapshotAdapter',
+              ).isNotEmpty)
+            entry.key,
+      };
+
+      expect(paths, {
+        'tool/performance/ai_strategy_workload.dart',
+        'tool/performance/turn_finalization_workload.dart',
+      });
+    });
   });
 }
 

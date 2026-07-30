@@ -2,11 +2,10 @@ import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('persistent and domain adapters forward the standard pace', () {
+  test('domain adapter forwards the standard pace', () {
     final research = ResearchState(
       players: {'player_1': PlayerResearchState(scienceOverflow: 10)},
     );
-    final persistent = PersistentGameState.snapshot(research: research);
     final domain = DomainState.snapshot(
       turn: 1,
       matchRules: MatchRules.standard,
@@ -25,13 +24,6 @@ void main() {
       TechnologyId.agriculture,
     );
 
-    final persistentResult = const PersistentResearchCommandResolver()
-        .selectTechnology(
-          state: persistent,
-          command: command,
-          actorPlayerId: 'player_1',
-          paceBalance: PaceBalance.standard60,
-        );
     final domainResult = const DomainResearchCommandResolver().selectTechnology(
       state: domain,
       command: command,
@@ -39,14 +31,9 @@ void main() {
       paceBalance: PaceBalance.standard60,
     );
 
-    final persistentResearch = persistentResult.state.research.forPlayer(
-      'player_1',
-    );
     final domainResearch = domainResult.state.research.forPlayer('player_1');
-    expect(persistentResult.accepted, isTrue);
     expect(domainResult.accepted, isTrue);
-    expect(persistentResearch.progressFor(TechnologyId.agriculture), 2);
-    expect(domainResearch, persistentResearch);
+    expect(domainResearch.progressFor(TechnologyId.agriculture), 2);
   });
 
   test('kernel forwards owned field improvements to boost evaluation', () {

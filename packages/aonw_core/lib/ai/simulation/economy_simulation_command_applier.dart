@@ -24,29 +24,11 @@ final class _EconomySimulationCommandApplier {
         ruleset: ruleset,
       );
     }
-    switch (command) {
-      case SelectTechnologyCommand():
-        final result = const PersistentResearchCommandResolver()
-            .selectTechnology(
-              state: state,
-              command: command,
-              actorPlayerId: actorPlayerId,
-              mapTiles: mapView,
-              ruleset: ruleset.technology,
-              paceBalance: ruleset.paceBalance,
-            );
-        return _ApplyCommandResult(
-          accepted: result.accepted,
-          state: result.state,
-          reason: result.reason,
-        );
-      default:
-        return _ApplyCommandResult(
-          accepted: false,
-          state: state,
-          reason: 'unsupported_command_for_simulation',
-        );
-    }
+    return _ApplyCommandResult(
+      accepted: false,
+      state: state,
+      reason: 'unsupported_command_for_simulation',
+    );
   }
 
   _ApplyCommandResult _applyEngineCommand({

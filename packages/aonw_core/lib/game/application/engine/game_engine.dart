@@ -1,10 +1,12 @@
 import 'package:aonw_core/game/application/engine/artifact_trade_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/city_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/combat_engine_handler.dart';
+import 'package:aonw_core/game/application/engine/diplomacy_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/game_engine_context.dart';
 import 'package:aonw_core/game/application/engine/game_engine_result.dart';
 import 'package:aonw_core/game/application/engine/movement_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/production_engine_handler.dart';
+import 'package:aonw_core/game/application/engine/research_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/unit_action_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/worker_engine_handler.dart';
 import 'package:aonw_core/game/domain/command/game_command.dart';
@@ -18,6 +20,8 @@ enum GameEngineCommandFamily {
   production,
   worker,
   artifactTrade,
+  research,
+  diplomacy,
 }
 
 /// Deterministic dispatcher for authoritative player commands.
@@ -33,7 +37,9 @@ final class GameEngine {
         _cityFamily(command) ??
         _productionFamily(command) ??
         _workerFamily(command) ??
-        _artifactTradeFamily(command);
+        _artifactTradeFamily(command) ??
+        _researchFamily(command) ??
+        _diplomacyFamily(command);
   }
 
   static GameEngineCommandFamily? _unitActionFamily(DomainCommand command) {
@@ -106,12 +112,47 @@ final class GameEngine {
     };
   }
 
+  static GameEngineCommandFamily? _researchFamily(DomainCommand command) {
+    return switch (command) {
+      SelectTechnologyCommand() => GameEngineCommandFamily.research,
+      _ => null,
+    };
+  }
+
+  static GameEngineCommandFamily? _diplomacyFamily(DomainCommand command) {
+    return switch (command) {
+      DiplomaticCommand() => GameEngineCommandFamily.diplomacy,
+      _ => null,
+    };
+  }
+
   GameEngineResult apply({
     required CanonicalGameSnapshot snapshot,
     required DomainCommand command,
     required GameEngineContext context,
   }) {
-    return switch (commandFamily(command)) {
+    final family = commandFamily(command);
+    if (family == null) {
+      return GameEngineResult.rejected(
+        snapshot: snapshot,
+        reason: 'unsupported_domain_command',
+      );
+    }
+    return _applyKnownFamily(
+      family: family,
+      snapshot: snapshot,
+      command: command,
+      context: context,
+    );
+  }
+
+  GameEngineResult _applyKnownFamily({
+    required GameEngineCommandFamily family,
+    required CanonicalGameSnapshot snapshot,
+    required DomainCommand command,
+    required GameEngineContext context,
+  }) {
+    return switch (family) {
       GameEngineCommandFamily.unitAction =>
         const UnitActionEngineHandler().apply(
           snapshot: snapshot,
@@ -150,9 +191,15 @@ final class GameEngine {
           command: command,
           context: context,
         ),
-      null => GameEngineResult.rejected(
+      GameEngineCommandFamily.research => const ResearchEngineHandler().apply(
         snapshot: snapshot,
-        reason: 'unsupported_domain_command',
+        command: command,
+        context: context,
+      ),
+      GameEngineCommandFamily.diplomacy => const DiplomacyEngineHandler().apply(
+        snapshot: snapshot,
+        command: command,
+        context: context,
       ),
     };
   }

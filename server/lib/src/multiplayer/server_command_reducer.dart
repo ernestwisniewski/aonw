@@ -7,10 +7,8 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
 import 'package:aonw_server/src/multiplayer/wire_player_domain_mapper.dart';
 
-part 'server_command_reducer_diplomacy.dart';
 part 'server_command_reducer_map_cache.dart';
 part 'server_command_reducer_outcome.dart';
-part 'server_command_reducer_research.dart';
 part 'server_command_reducer_turns.dart';
 part 'server_command_reducer_unit_action.dart';
 
@@ -192,6 +190,8 @@ class ServerCommandReducer {
       case TradeArtifactCommand():
       case OpenResourceTradeCommand():
       case OpenResourceExchangeCommand():
+      case DiplomaticCommand():
+      case SelectTechnologyCommand():
         return _applyDomainCommandEngine(
           snapshot,
           command as DomainCommand,
@@ -199,20 +199,6 @@ class ServerCommandReducer {
           commandTick,
           loadedMap.mapView,
           ruleset,
-        );
-      case DiplomaticCommand():
-        return _applyDiplomacyCommand(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-        );
-      case SelectTechnologyCommand():
-        return _applySelectTechnologyCommand(
-          snapshot: snapshot,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          mapTiles: loadedMap.mapView,
-          ruleset: ruleset,
         );
       case ResetUnitMovementCommand():
         return _CommandApplication.reject(
@@ -250,36 +236,6 @@ class ServerCommandReducer {
           reason: 'client_only_command',
         );
     }
-  }
-
-  _CommandApplication _applicationFrom({
-    required CanonicalGameSnapshot snapshot,
-    required bool accepted,
-    DomainState? domain,
-    MatchSessionState? session,
-    GameSnapshotMetadata? metadata,
-    PersistedInteractionState? interaction,
-    List<GameEvent> events = const [],
-    Iterable<MovementCommandExecution> movementExecutions = const [],
-    String? reason,
-  }) {
-    if (!accepted) {
-      return _CommandApplication.reject(
-        snapshot: snapshot,
-        reason: reason ?? 'command_rejected',
-      );
-    }
-    return _CommandApplication.accept(
-      snapshot: _snapshotWithChanges(
-        snapshot,
-        domain: domain,
-        session: session,
-        metadata: metadata,
-        interaction: interaction,
-      ),
-      events: events,
-      movementExecutions: movementExecutions,
-    );
   }
 }
 
@@ -340,26 +296,5 @@ CanonicalGameSnapshot _withSavedAt(
   if (snapshot.metadata.savedAtUtc == savedAtUtc) return snapshot;
   return snapshot.copyWith(
     metadata: snapshot.metadata.copyWith(savedAtUtc: savedAtUtc),
-  );
-}
-
-CanonicalGameSnapshot _snapshotWithChanges(
-  CanonicalGameSnapshot snapshot, {
-  DomainState? domain,
-  MatchSessionState? session,
-  GameSnapshotMetadata? metadata,
-  PersistedInteractionState? interaction,
-}) {
-  if (domain == null &&
-      session == null &&
-      metadata == null &&
-      interaction == null) {
-    return snapshot;
-  }
-  return snapshot.copyWith(
-    domain: domain,
-    session: session,
-    metadata: metadata,
-    interaction: interaction,
   );
 }

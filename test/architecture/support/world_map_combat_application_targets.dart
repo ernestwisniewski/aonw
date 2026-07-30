@@ -173,30 +173,6 @@ const _applicationTargets = [
     ],
   ),
   _Target(
-    path: 'lib/game/domain/reducer/research/research_reducer.dart',
-    owner: 'ResearchReducer',
-    boundaries: [
-      _Boundary.method(
-        'selectTechnology',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-    ],
-  ),
-  _Target(
-    path:
-        'packages/aonw_core/lib/game/domain/technology/persistent_research_command_resolver.dart',
-    owner: 'PersistentResearchCommandResolver',
-    boundaries: [
-      _Boundary.method(
-        'selectTechnology',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-        nullable: true,
-      ),
-    ],
-  ),
-  _Target(
     path:
         'packages/aonw_core/lib/game/domain/technology/domain_research_command_resolver.dart',
     owner: 'DomainResearchCommandResolver',
