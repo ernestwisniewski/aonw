@@ -33,6 +33,9 @@ const _presentationCatalog = <String, _PresentationDecision>{
   'UnitMovedEvent': _PresentationDecision.effect(
     'movement animation requires matching evidence',
   ),
+  'FortifiedUnitThreatenedEvent': _PresentationDecision.effect(
+    'camera focus and visible-enemy threat markers',
+  ),
   'UnitGainedExperienceEvent': _PresentationDecision.none(
     'persistent unit state renders experience',
   ),
@@ -212,6 +215,7 @@ Set<String> _concreteEvents(Map<String, String?> declarations) {
           _isGameEvent(entry.key, declarations) &&
           entry.key != 'DomainEvent' &&
           entry.key != 'GameEvent' &&
+          entry.key != 'UnitPresentationEvent' &&
           entry.key != 'WorldEntityLifecycleEvent' &&
           entry.key != 'ArtifactLifecycleEvent')
         entry.key,
@@ -234,12 +238,16 @@ void _expectCompleteInventory(
         'ArtifactExcavationStartedEvent',
         'ArtifactCarriedEvent',
         'ArtifactStoredEvent',
+      } else if (name == 'UnitPresentationEvent') ...const {
+        'UnitMovedEvent',
+        'FortifiedUnitThreatenedEvent',
+        'UnitGainedExperienceEvent',
       } else
         name,
   };
   expect(expandedDescriptorCases, concreteEvents);
   expect(descriptorCases.toSet(), hasLength(descriptorCases.length));
-  expect(concreteEvents, hasLength(40));
+  expect(concreteEvents, hasLength(41));
   expect(_presentationCatalog.keys.toSet(), concreteEvents);
   expect(
     _presentationCatalog.values.every(
@@ -260,6 +268,7 @@ void _expectCompleteInventory(
       'CityProducedUnitEvent',
       'CityClaimedHexEvent',
       'UnitMovedEvent',
+      'FortifiedUnitThreatenedEvent',
       'CombatResolvedEvent',
       'UnitKilledEvent',
       'UnitRetreatedEvent',

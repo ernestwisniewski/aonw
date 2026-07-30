@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/stability.dart';
@@ -154,9 +155,7 @@ GameEventDescriptor _describeGameEvent(GameEvent event) => switch (event) {
     activityCategories: const [GameEventActivityCategory.city],
     playerIdsResolver: _cityOwnerPlayerIds(cityId),
   ),
-  UnitPresentationEvent() => throw StateError(
-    'Unit presentation event was not delegated.',
-  ),
+  UnitPresentationEvent() => throw StateError('Unit event was not delegated.'),
   UnitAttackedEvent(
     :final attackerUnitId,
     :final attackerOwnerPlayerId,
@@ -210,12 +209,7 @@ GameEventDescriptor _describeGameEvent(GameEvent event) => switch (event) {
       ],
       activityCategories: const [GameEventActivityCategory.combat],
       notificationMaxDetailCount: 2,
-      criticalNotificationResolver: (state, playerId) {
-        return (outcome.attackerKilled &&
-                _unitBelongsTo(state, outcome.attackerUnitId, playerId)) ||
-            (outcome.defenderKilled &&
-                _unitBelongsTo(state, outcome.defenderUnitId, playerId));
-      },
+      criticalNotificationResolver: _combatCriticalNotification(outcome),
       playerIdsResolver: _combatPlayerIds(
         attackerUnitId: attackerUnitId,
         defenderUnitId: defenderUnitId,
@@ -477,3 +471,13 @@ GameEventDescriptor _describeGameEvent(GameEvent event) => switch (event) {
     playerIds: [playerId],
   ),
 };
+
+_CriticalNotificationResolver _combatCriticalNotification(
+  CombatOutcome outcome,
+) {
+  return (state, playerId) =>
+      (outcome.attackerKilled &&
+          _unitBelongsTo(state, outcome.attackerUnitId, playerId)) ||
+      (outcome.defenderKilled &&
+          _unitBelongsTo(state, outcome.defenderUnitId, playerId));
+}
