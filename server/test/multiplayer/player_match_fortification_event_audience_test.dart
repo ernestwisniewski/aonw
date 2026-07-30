@@ -1,4 +1,3 @@
-import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
 import 'package:test/test.dart';
