@@ -6,7 +6,7 @@ import 'domain_turn_economy_golden.dart';
 
 void main() {
   group('DomainTurnEconomyProcessor projection', () {
-    test('matches the persistent wrapper and legacy rich-turn golden', () {
+    test('matches the persistent wrapper and canonical rich-turn golden', () {
       final state = _richState();
       expect(state.fogOfWar.playerIds, isNot(contains('base_only')));
       final ordered = _advanceBoth(state: state, playerIds: const ['p1', 'p2']);

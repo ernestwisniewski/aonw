@@ -108,6 +108,7 @@ void main() {
       expect(accepted.snapshot.domain.units.single.queuedPath, isNull);
       expect(accepted.events.map((event) => event.runtimeType), [
         TurnEndedEvent,
+        UnitMovedEvent,
       ]);
       expect(accepted.movementDelta.beforeUnits.single.col, 0);
       expect(accepted.movementDelta.afterUnits.single.col, 1);

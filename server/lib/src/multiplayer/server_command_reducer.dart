@@ -22,8 +22,6 @@ DomainCommand? _decodePlayerDomainCommand(Map<String, dynamic> rawCommand) {
     return GameCommandSerializer.fromJson(rawCommand);
   } on ArgumentError {
     return null;
-  } on FormatException {
-    return null;
   }
 }
 

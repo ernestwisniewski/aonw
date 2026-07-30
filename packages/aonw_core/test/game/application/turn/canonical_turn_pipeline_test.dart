@@ -140,6 +140,7 @@ void _characterizesMovementDelta() {
   expect(() => delta.executions.clear(), throwsUnsupportedError);
   expect(result.events.map((event) => event.runtimeType), [
     AllPlayersSubmittedEvent,
+    UnitMovedEvent,
     TurnEndedEvent,
     TurnEndedEvent,
   ]);

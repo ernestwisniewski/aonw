@@ -49,7 +49,7 @@ void main() {
           'playerId': 'p1',
           'canAct': true,
         }),
-        throwsA(isA<FormatException>()),
+        throwsA(isA<ArgumentError>()),
       );
     });
 

@@ -1,4 +1,4 @@
-/// Approved characterization of the pre-extraction persistent economy contract.
+/// Approved characterization of the canonical economy contract.
 const richEconomyEventGolden = <Map<String, Object?>>[
   {'type': 'ResearchPointsGained', 'playerId': 'p1', 'points': 3},
   {
@@ -7,6 +7,14 @@ const richEconomyEventGolden = <Map<String, Object?>>[
     'technologyId': 'agriculture',
   },
   {'type': 'CityFounded', 'cityId': 'city_p1_5_3', 'ownerPlayerId': 'p1'},
+  {
+    'type': 'ArtifactCarried',
+    'artifactId': 'artifact_excavated',
+    'ownerPlayerId': 'p1',
+    'unitId': 'scout_p1',
+    'col': 2,
+    'row': 2,
+  },
   {
     'type': 'CityProducedUnit',
     'cityId': 'city_p2',

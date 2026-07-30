@@ -44,10 +44,9 @@ void main() {
     expect(() => result.events.clear(), throwsUnsupportedError);
   });
 
-  test('empty dispatcher rejects unsupported domain command', () {
-    final snapshot = _snapshot();
+  test('complete dispatcher accepts turn commands', () {
     final result = const GameEngine().apply(
-      snapshot: snapshot,
+      snapshot: _snapshot(),
       command: const EndTurnCommand('player-1'),
       context: const GameEngineContext(
         actorPlayerId: 'player-1',
@@ -57,13 +56,11 @@ void main() {
       ),
     );
 
-    expect(result, isA<GameEngineRejected>());
-    expect(result.snapshot, same(snapshot));
-    expect(result.events, isEmpty);
-    expect((result as GameEngineRejected).reason, 'unsupported_domain_command');
+    expect(result, isA<GameEngineAccepted>());
+    expect(result.events, isNotEmpty);
   });
 
-  test('dispatcher classifies only migrated command families', () {
+  test('dispatcher classifies authoritative command families', () {
     expect(
       GameEngine.commandFamily(const MoveUnitCommand('unit-1', 1, 0)),
       GameEngineCommandFamily.movement,
@@ -76,7 +73,10 @@ void main() {
       GameEngine.commandFamily(const FortifyUnitCommand('unit-1')),
       GameEngineCommandFamily.unitAction,
     );
-    expect(GameEngine.commandFamily(const EndTurnCommand('player-1')), isNull);
+    expect(
+      GameEngine.commandFamily(const EndTurnCommand('player-1')),
+      GameEngineCommandFamily.turn,
+    );
   });
 
   test('system diagnostics remain outside authoritative domain events', () {

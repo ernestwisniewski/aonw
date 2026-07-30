@@ -185,7 +185,10 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
       expect(_executionSnapshots(autoOnly.executions), [
         'turn_auto_scout:0,0->1,0',
       ]);
-      expect(_eventSnapshots(turn.events), ['turn_auto_scout:1,0->3,0']);
+      expect(_eventSnapshots(turn.events), [
+        'turn_auto_scout:0,0->3,0',
+        'turn_auto_scout:1,0->3,0',
+      ]);
       expect(_executionSnapshots(turn.executions), [
         'turn_auto_scout:0,0->1,0',
         'turn_auto_scout:1,0->2,0|3,0',
