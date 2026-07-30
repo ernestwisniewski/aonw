@@ -24,7 +24,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('authoritative ACK movement', () {
     test(
-      'replaces local paths with exact global order and preserves other effects',
+      'returns exact global movement facts without local domain effects',
       () async {
         final before = _beforeState();
         final after = _afterState();
@@ -49,21 +49,13 @@ void main() {
         );
 
         expect(result.snapshot, isNotNull);
-        expect(result.uiEffects.first, same(camera));
-        expect(
-          result.uiEffects.whereType<AnimateUnitMoveEffect>().map(
-            _movementSnapshot,
-          ),
-          const [
-            ('unit_a', 0, 0, 1, 0, 7, 7),
-            ('unit_b', 0, 1, 1, 1, 11, 11),
-            ('unit_a', 1, 0, 2, 0, 13, 20),
-          ],
-        );
-        expect(
-          result.uiEffects.whereType<AnimateUnitMoveEffect>(),
-          hasLength(3),
-        );
+        expect(result.uiEffects, isEmpty);
+        expect(result.movementExecutions.map(_movementSnapshot), const [
+          ('unit_a', 0, 0, 1, 0, 7, 7),
+          ('unit_b', 0, 1, 1, 1, 11, 11),
+          ('unit_a', 1, 0, 2, 0, 13, 20),
+        ]);
+        expect(result.movementExecutions, hasLength(3));
         expect(result.uiEffects.clear, throwsUnsupportedError);
       },
     );
@@ -92,8 +84,8 @@ void main() {
       );
 
       expect(result.snapshot, isNotNull);
-      expect(result.uiEffects.whereType<AnimateUnitMoveEffect>(), isEmpty);
-      expect(result.uiEffects, [same(camera)]);
+      expect(result.movementExecutions, isEmpty);
+      expect(result.uiEffects, isEmpty);
     });
 
     test('lost ACK retry commits and animates the stored plan once', () async {
@@ -129,17 +121,14 @@ void main() {
       );
 
       expect(dispatcher.commits, 1);
-      expect(reducer.calls, 1);
+      expect(reducer.calls, 0);
       expect(dispatcher.sent.map((value) => value.wire.tick), [31, 31]);
       expect(
         dispatcher.sent.map((value) => value.clientMessageId).toSet(),
         hasLength(1),
       );
       expect(retried.snapshot, isNotNull);
-      expect(
-        retried.uiEffects.whereType<AnimateUnitMoveEffect>(),
-        hasLength(3),
-      );
+      expect(retried.movementExecutions, hasLength(3));
     });
 
     test('catch-up snapshot prevents stored ACK movement replay', () async {
@@ -176,9 +165,9 @@ void main() {
       );
 
       expect(dispatcher.commits, 1);
-      expect(reducer.calls, 1);
+      expect(reducer.calls, 0);
       expect(retried.snapshot, isNotNull);
-      expect(retried.uiEffects.whereType<AnimateUnitMoveEffect>(), isEmpty);
+      expect(retried.movementExecutions, hasLength(3));
     });
   });
 }
@@ -316,7 +305,7 @@ WireCommandAck _acceptedAck({
 
 typedef _MovementSnapshot = (String, int, int, int, int, int, int);
 
-_MovementSnapshot _movementSnapshot(AnimateUnitMoveEffect effect) {
+_MovementSnapshot _movementSnapshot(MovementCommandExecution effect) {
   final step = effect.steps.single;
   return (
     effect.unitId,

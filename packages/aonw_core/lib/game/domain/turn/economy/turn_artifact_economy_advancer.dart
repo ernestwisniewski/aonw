@@ -15,6 +15,7 @@ abstract final class TurnArtifactEconomyAdvancer {
     if (!result.changed) return TurnEconomyResult(state: state);
     return TurnEconomyResult(
       state: state.copyWith(units: result.units, artifacts: result.artifacts),
+      events: result.events,
     );
   }
 }

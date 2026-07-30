@@ -8,6 +8,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../../support/game_intent_test_resolver.dart';
 
 void main() {
   group('MerchantTradeRouteReducer', () {
@@ -31,7 +32,8 @@ void main() {
         ),
       );
 
-      final result = reducer.reduce(
+      final result = resolveGameIntent(
+        reducer,
         state,
         StartMerchantMoveToCitySelectionCommand(merchant.id),
       );
@@ -62,7 +64,8 @@ void main() {
         ),
       );
 
-      final result = reducer.reduce(
+      final result = resolveGameIntent(
+        reducer,
         state,
         MoveMerchantToCityCommand(merchant.id, city.id),
       );

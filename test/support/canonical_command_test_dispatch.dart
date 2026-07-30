@@ -1,5 +1,6 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/authoritative_command_policy.dart';
+import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
 import 'package:aonw/game/domain/game_save.dart';
@@ -32,7 +33,28 @@ GameStateTransition dispatchCanonicalTestCommand({
       );
   if (authoritativeCommand == null &&
       AuthoritativeCommandPolicy.isClientOnlyForState(state, command)) {
-    return reducer.reduce(state, command, context: context);
+    final intentResolver = GameIntentResolver(
+      reducer: reducer,
+      context: context,
+    );
+    final resolution = switch (command) {
+      GameIntent() => intentResolver.resolve(state.interaction, command, state),
+      SelectWorkerImprovementCommand() =>
+        intentResolver.resolveWorkerImprovementChoice(
+          state.interaction,
+          command,
+          state,
+        ),
+      _ => throw UnsupportedError(
+        '${command.runtimeType} is not a client interaction',
+      ),
+    };
+    return GameStateTransition(
+      state: resolution.interaction == state.interaction
+          ? state
+          : state.copyWith(interaction: resolution.interaction),
+      uiEffects: resolution.presentationFocus,
+    );
   }
 
   final resolved = LocalCommandResolver(reducer: reducer).resolve(

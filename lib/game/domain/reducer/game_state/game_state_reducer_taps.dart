@@ -1,6 +1,20 @@
-part of 'game_state_reducer.dart';
+import 'package:aonw/game/domain/city.dart';
+import 'package:aonw/game/domain/game_selection.dart';
+import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/reducer/city/city_founding_reducer.dart';
+import 'package:aonw/game/domain/reducer/combat/combat_reducer.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
+import 'package:aonw/game/domain/reducer/game_state/reducer_environment_interaction_dispatch.dart';
+import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
+import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
-abstract final class _GameStateTapReducer {
+abstract final class GameIntentTapResolver {
   static GameStateTransition handleTileTapped(
     GameState state,
     TileTappedCommand command,
@@ -286,7 +300,7 @@ abstract final class _GameStateTapReducer {
     final tile = mapTiles.tileAt(command.col, command.row);
     if (tile == null) return state;
 
-    final next = _clearMapInteractionState(state);
+    final next = state.copyWith(interaction: state.interaction.clearMapState());
 
     if (!state.activePlayerVisibility.canInspectTile(tile)) {
       return next.copyWithInteraction(selection: null);

@@ -18,12 +18,14 @@ final class LocalMovementCommandResolution {
     required this.state,
     required this.events,
     required this.uiEffects,
+    this.movementExecutions = const [],
   });
 
   final SaveSnapshot snapshot;
   final GameState state;
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
+  final List<MovementCommandExecution> movementExecutions;
 }
 
 final class LocalMovementCommandResolver {
@@ -126,7 +128,8 @@ final class LocalMovementCommandResolver {
       ),
       state: presentation.state,
       events: accepted.events,
-      uiEffects: presentation.uiEffects,
+      uiEffects: const [],
+      movementExecutions: presentation.movementExecutions,
     );
   }
 

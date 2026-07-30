@@ -321,6 +321,77 @@ void main() {
       );
     });
 
+    test('keeps all artifact lifecycle payloads owner-only', () {
+      final ownership = _ownership(
+        units: [_unit('carrier', ownerPlayerId: 'player-1')],
+        cities: [_city('storage-city', ownerPlayerId: 'player-1')],
+      );
+      final canonical = PlayerMatchEventAudience.annotateForStorage(
+        events: const <GameEvent>[
+          ArtifactExcavationStartedEvent(
+            artifactId: 'map-artifact',
+            ownerPlayerId: 'player-1',
+            unitId: 'carrier',
+            col: 2,
+            row: 3,
+          ),
+          ArtifactCarriedEvent(
+            artifactId: 'carried-artifact',
+            ownerPlayerId: 'player-1',
+            unitId: 'carrier',
+            col: 4,
+            row: 5,
+          ),
+          ArtifactStoredEvent(
+            artifactId: 'stored-artifact',
+            ownerPlayerId: 'player-1',
+            unitId: 'carrier',
+            cityId: 'storage-city',
+            col: 7,
+            row: 9,
+          ),
+        ],
+        participantPlayerIds: const ['player-1', 'hidden-observer'],
+        previous: ownership,
+        next: ownership,
+      );
+      for (final payload in canonical) {
+        payload['secret'] = 'storage-only';
+      }
+
+      final owner = PlayerMatchEventAudience.projectForRecipient(
+        canonical,
+        recipientPlayerId: 'player-1',
+      );
+      final hidden = PlayerMatchEventAudience.projectForRecipient(
+        canonical,
+        recipientPlayerId: 'hidden-observer',
+      );
+
+      expect(owner.map((payload) => payload['type']), const [
+        'ArtifactExcavationStarted',
+        'ArtifactCarried',
+        'ArtifactStored',
+      ]);
+      expect(owner[0], containsPair('artifactId', 'map-artifact'));
+      expect(owner[0], containsPair('col', 2));
+      expect(owner[0], containsPair('row', 3));
+      expect(owner[1], containsPair('artifactId', 'carried-artifact'));
+      expect(owner[1], containsPair('unitId', 'carrier'));
+      expect(owner[2], containsPair('artifactId', 'stored-artifact'));
+      expect(owner[2], containsPair('cityId', 'storage-city'));
+      for (final payload in owner) {
+        expect(payload, containsPair('ownerPlayerId', 'player-1'));
+        expect(payload.keys, isNot(contains(startsWith('_'))));
+        expect(payload, isNot(contains('secret')));
+      }
+      expect(hidden, isEmpty);
+      expect(hidden.toString(), isNot(contains('map-artifact')));
+      expect(hidden.toString(), isNot(contains('carried-artifact')));
+      expect(hidden.toString(), isNot(contains('stored-artifact')));
+      expect(hidden.toString(), isNot(contains('storage-city')));
+    });
+
     test('rejects malformed audience metadata instead of exposing events', () {
       final canonical = [
         {

@@ -36,7 +36,16 @@ void main() {
         artifacts: [previousArtifact],
       ),
       state: const GameState(cities: [city], artifacts: [storedArtifact]),
-      events: const [],
+      events: const [
+        ArtifactStoredEvent(
+          artifactId: _artifactId,
+          ownerPlayerId: _playerId,
+          unitId: _unitId,
+          cityId: 'city_1',
+          col: 3,
+          row: 4,
+        ),
+      ],
     );
 
     expect(content?.kind, HudFeedbackKind.artifactGuidance);
@@ -60,7 +69,15 @@ void main() {
         units: [previousUnit],
       ),
       state: GameState(units: [carryingUnit], artifacts: [artifact]),
-      events: const [],
+      events: const [
+        ArtifactCarriedEvent(
+          artifactId: _artifactId,
+          ownerPlayerId: _playerId,
+          unitId: _unitId,
+          col: 0,
+          row: 0,
+        ),
+      ],
     );
 
     expect(content?.kind, HudFeedbackKind.artifactGuidance);
@@ -96,20 +113,35 @@ void main() {
   });
 
   test(
-    'returns no guidance when the active player did not change artifacts',
+    'does not infer artifact guidance from a state diff without an event',
     () {
-      const artifact = WorldArtifact(
+      const previousArtifact = WorldArtifact(
         id: _artifactId,
         type: WorldArtifactType.heroSword,
-        location: WorldArtifactLocation.map(col: 5, row: 2),
+        location: WorldArtifactLocation.carried(unitId: _unitId),
+      );
+      const storedArtifact = WorldArtifact(
+        id: _artifactId,
+        type: WorldArtifactType.heroSword,
+        location: WorldArtifactLocation.stored(cityId: 'city_1'),
       );
 
       final content = resolver.resolve(
         previousState: const GameState(
           activePlayerId: _playerId,
-          artifacts: [artifact],
+          artifacts: [previousArtifact],
         ),
-        state: const GameState(artifacts: [artifact]),
+        state: const GameState(
+          cities: [
+            GameCity(
+              id: 'city_1',
+              ownerPlayerId: _playerId,
+              name: 'Capital',
+              center: CityHex(col: 3, row: 4),
+            ),
+          ],
+          artifacts: [storedArtifact],
+        ),
         events: const [],
       );
 

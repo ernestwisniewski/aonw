@@ -54,9 +54,8 @@ final class GameEventDomainDescriptor {
           cityIds: [cityId],
           unitIds: [producedUnitId],
         ),
-      CityClaimedHexEvent(:final cityId) => GameEventDomainDescriptor._(
-        cityIds: [cityId],
-      ),
+      CityClaimedHexEvent() ||
+      ArtifactLifecycleEvent() => _artifactLifecycleDescriptor(event),
       TechnologyResearchedEvent(:final playerId) => GameEventDomainDescriptor._(
         playerIds: [playerId],
       ),
@@ -174,11 +173,11 @@ final class GameEventDomainDescriptor {
         :final kind,
         :final accepted,
       ) =>
-        GameEventDomainDescriptor._(
-          playerIds: [fromPlayerId, toPlayerId],
-          signedPeacePlayerIds: kind == DiplomaticProposalKind.truce && accepted
-              ? [fromPlayerId, toPlayerId]
-              : const [],
+        _proposalResponseDescriptor(
+          fromPlayerId: fromPlayerId,
+          toPlayerId: toPlayerId,
+          kind: kind,
+          accepted: accepted,
         ),
       DiplomaticProposalExpiredEvent(:final fromPlayerId, :final toPlayerId) =>
         GameEventDomainDescriptor._(playerIds: [fromPlayerId, toPlayerId]),
@@ -299,4 +298,32 @@ final class GameEventDomainDescriptor {
     }
     return null;
   }
+}
+
+GameEventDomainDescriptor _proposalResponseDescriptor({
+  required String fromPlayerId,
+  required String toPlayerId,
+  required DiplomaticProposalKind kind,
+  required bool accepted,
+}) {
+  return GameEventDomainDescriptor._(
+    playerIds: [fromPlayerId, toPlayerId],
+    signedPeacePlayerIds: kind == DiplomaticProposalKind.truce && accepted
+        ? [fromPlayerId, toPlayerId]
+        : const [],
+  );
+}
+
+GameEventDomainDescriptor _artifactLifecycleDescriptor(GameEvent event) {
+  return switch (event) {
+    CityClaimedHexEvent(:final cityId) => GameEventDomainDescriptor._(
+      cityIds: [cityId],
+    ),
+    ArtifactLifecycleEvent() => GameEventDomainDescriptor._(
+      playerIds: [event.ownerPlayerId],
+      unitIds: [?event.unitId],
+      cityIds: [if (event case ArtifactStoredEvent(:final cityId)) cityId],
+    ),
+    _ => throw StateError('Unsupported delegated event: $event'),
+  };
 }

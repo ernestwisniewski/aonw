@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
-import 'package:aonw/api/transport/acknowledged_command_effect_resolver.dart';
+import 'package:aonw/api/transport/acknowledged_command_presentation.dart';
 import 'package:aonw/api/transport/wire_command_message_id.dart';
 import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/accepted_engine_command_interaction_source.dart';
 import 'package:aonw/game/application/services/authoritative_command_policy.dart';
+import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/multiplayer_interaction_reconciler.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
@@ -17,6 +18,8 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
+
+part 'network_command_transport_client_interaction.dart';
 
 class ClientTickGenerator {
   int _nextTick;
@@ -395,17 +398,17 @@ class NetworkCommandTransport implements CommandTransport {
       command: domainCommand,
       interactionSource: localTransition.state,
     );
+    final presentation = projectAcknowledgedCommandPresentation(
+      localEffects: localTransition.uiEffects,
+      movementExecutions: ack.movementExecutions,
+    );
     return CommandTransportResult(
       state: nextState,
-      uiEffects: AcknowledgedCommandEffectResolver.resolve(
-        localEffects: localTransition.uiEffects,
-        movementExecutions: ack.movementExecutions,
-        beforeUnits: currentState.units,
-        afterUnits: nextState.units,
-      ),
+      uiEffects: presentation.interactionEffects,
       snapshot: snapshot,
       offset: effectiveOffset,
       events: eventCodec.eventsFromJsonList(ack.events),
+      movementExecutions: presentation.movementExecutions,
       combatAnimations: eventCodec.combatAnimationFactsFromJsonList(ack.events),
       storedSnapshot: true,
     );
@@ -565,27 +568,6 @@ class NetworkCommandTransport implements CommandTransport {
   void _rememberSnapshot(String saveId, SaveSnapshot snapshot, {int? offset}) {
     _lastKnownTurnBySaveId[saveId] = snapshot.domain.turn;
     _lastKnownOffsetBySaveId[saveId] = offset ?? snapshot.eventLogOffset;
-  }
-
-  Future<CommandTransportResult> _dispatchClientOnly({
-    required String saveId,
-    required GameState currentState,
-    required GameCommand command,
-    required GameCommandContext context,
-  }) async {
-    final transition = localReducer.reduce(
-      currentState,
-      command,
-      context: context,
-    );
-    final offset = _lastKnownOffsetBySaveId[saveId] ?? -1;
-    return CommandTransportResult(
-      state: transition.state,
-      uiEffects: transition.uiEffects,
-      events: transition.events,
-      snapshot: null,
-      offset: offset,
-    );
   }
 
   bool _activePlayerCanActAfter({

@@ -18,6 +18,7 @@ part 'objective_events.dart';
 part 'system_events.dart';
 part 'diplomacy_events.dart';
 part 'stability_events.dart';
+part 'artifact_events.dart';
 
 sealed class GameEvent {
   const GameEvent();
@@ -26,4 +27,9 @@ sealed class GameEvent {
 /// An authoritative fact emitted by an accepted game-state transition.
 sealed class DomainEvent extends GameEvent {
   const DomainEvent();
+}
+
+/// Canonical lifecycle facts for persistent entities placed in the game world.
+sealed class WorldEntityLifecycleEvent extends DomainEvent {
+  const WorldEntityLifecycleEvent();
 }

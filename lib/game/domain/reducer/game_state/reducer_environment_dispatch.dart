@@ -115,7 +115,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
     );
   }
 
-  GameStateTransition workerInteraction(GameState state, GameCommand command) =>
+  GameStateTransition workerInteraction(GameState state, GameIntent command) =>
       GameStateTransition(
         state: switch (command) {
           StartWorkerActionSelectionCommand() =>
@@ -124,8 +124,6 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
               command,
               context: context,
             ),
-          SelectWorkerImprovementCommand() =>
-            InteractionReducer.selectWorkerImprovement(state, command),
           CancelWorkerActionSelectionCommand() =>
             InteractionReducer.cancelWorkerActionSelection(state, command),
           _ => throw UnsupportedError(

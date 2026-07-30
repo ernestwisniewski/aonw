@@ -19,9 +19,10 @@ import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue_mapper.dart';
+import 'package:aonw/game/presentation/engine/domain_event_presentation_projector.dart';
+import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
 import 'package:aonw/game/presentation/engine/renderer_view_model.dart';
 import 'package:aonw/game/presentation/providers/audio/game_audio_provider.dart';
-import 'package:aonw/game/presentation/providers/game/external_snapshot_renderer_effect_resolver.dart';
 import 'package:aonw/game/presentation/providers/game/game_activity_history_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/game/live_snapshot_presentation_resolver.dart'
@@ -31,7 +32,6 @@ import 'package:aonw/game/presentation/providers/renderer/renderer_provider.dart
 import 'package:aonw/game/presentation/providers/ruleset/ruleset_providers.dart';
 import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:aonw/game/presentation/providers/session/session_providers.dart';
-import 'package:aonw_core/game/application/engine/combat_animation_fact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
@@ -395,13 +395,12 @@ class GameStateNotifier extends _$GameStateNotifier {
       snapshot: snapshot,
       offset: incomingOffset,
     );
-    final presentedLiveEvent = _presentedLiveEvent(presentation, liveEvent);
     await _presentExternalSnapshot(
       previousState: previousState,
       nextState: nextState,
-      events: presentedLiveEvent?.events ?? const <GameEvent>[],
+      events: _presentedLiveEvents(presentation, liveEvent),
       movementExecutions: presentation.movementExecutions,
-      combatAnimations: presentedLiveEvent?.combatAnimations ?? const [],
+      identity: _liveBatchIdentity(saveId, incomingOffset),
       viewerPlayerId: viewerPlayerId,
       turn: snapshot.save.turn,
       renderer: ref.read(activeRendererViewModelProvider),

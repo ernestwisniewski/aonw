@@ -11,6 +11,7 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../../support/game_intent_test_resolver.dart';
 
 MapData _map() => MapData(
   cols: 5,
@@ -64,7 +65,8 @@ void main() {
       interaction: const GameInteractionState(moveCommandActive: true),
     );
 
-    final result = reducer.reduce(
+    final result = resolveGameIntent(
+      reducer,
       state,
       const StartCityWorkedHexSelectionCommand('city_1'),
     );
@@ -89,7 +91,8 @@ void main() {
       ),
     );
 
-    final result = reducer.reduce(
+    final result = resolveGameIntent(
+      reducer,
       state,
       const CancelCityWorkedHexSelectionCommand('city_1'),
     );
@@ -106,7 +109,8 @@ void main() {
       interaction: const GameInteractionState(moveCommandActive: true),
     );
 
-    final result = reducer.reduce(
+    final result = resolveGameIntent(
+      reducer,
       state,
       const StartCityExpansionSelectionCommand('city_1'),
     );
@@ -131,7 +135,8 @@ void main() {
       ),
     );
 
-    final result = reducer.reduce(
+    final result = resolveGameIntent(
+      reducer,
       state,
       const CancelCityExpansionSelectionCommand('city_1'),
     );
@@ -164,12 +169,14 @@ void main() {
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
       );
-      final withMode = reducer.reduce(
+      final withMode = resolveGameIntent(
+        reducer,
         startingState,
         StartWorkerActionSelectionCommand(worker.id),
       );
 
-      final result = reducer.reduce(
+      final result = resolveGameIntent(
+        reducer,
         withMode.state,
         SelectWorkerImprovementCommand(worker.id, FieldImprovementType.farm),
       );
@@ -207,16 +214,19 @@ void main() {
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
     );
-    final withMode = reducer.reduce(
+    final withMode = resolveGameIntent(
+      reducer,
       startingState,
       StartWorkerActionSelectionCommand(worker.id),
     );
-    final afterSelect = reducer.reduce(
+    final afterSelect = resolveGameIntent(
+      reducer,
       withMode.state,
       SelectWorkerImprovementCommand(worker.id, FieldImprovementType.farm),
     );
 
-    final result = reducer.reduce(
+    final result = resolveGameIntent(
+      reducer,
       afterSelect.state,
       ConfirmWorkerImprovementCommand(worker.id),
     );
@@ -247,7 +257,11 @@ void main() {
       ),
     );
 
-    final result = reducer.reduce(state, const TileTappedCommand(3, 3));
+    final result = resolveGameIntent(
+      reducer,
+      state,
+      const TileTappedCommand(3, 3),
+    );
     expect(result.state, equals(state));
   });
 
@@ -281,13 +295,21 @@ void main() {
       ),
     );
 
-    final preview = reducer.reduce(state, const TileTappedCommand(2, 1));
+    final preview = resolveGameIntent(
+      reducer,
+      state,
+      const TileTappedCommand(2, 1),
+    );
 
     expect(preview.state.pendingAction, state.pendingAction);
     expect(preview.state.movePreview?.targetCol, 2);
     expect(preview.state.movePreview?.targetRow, 1);
 
-    final moved = reducer.reduce(preview.state, const TileTappedCommand(2, 1));
+    final moved = resolveGameIntent(
+      reducer,
+      preview.state,
+      const TileTappedCommand(2, 1),
+    );
 
     expect(moved.state.pendingAction, state.pendingAction);
     expect(moved.state.units.single.col, 2);

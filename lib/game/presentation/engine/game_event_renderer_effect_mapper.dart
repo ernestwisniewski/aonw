@@ -1,6 +1,7 @@
 import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/presentation/engine/artifact_event_renderer_effect_mapper.dart';
 import 'package:aonw/game/presentation/engine/game_event_renderer_combat_effects.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/services/map_focus_visibility.dart';
@@ -392,6 +393,35 @@ abstract final class GameEventRendererEffectMapper {
   }
 }
 
+List<RendererEffect> rendererEffectsForEvent({
+  required GameEvent event,
+  required GameState state,
+  GameState? previousState,
+  AppLocalizations? l10n,
+  String? viewerPlayerId,
+  int? turn,
+  CombatAnimationFact? combatAnimation,
+}) {
+  if (event is ArtifactLifecycleEvent) {
+    return ArtifactEventRendererEffectMapper.effectsFor(
+      event,
+      state,
+      l10n: l10n,
+      viewerPlayerId: viewerPlayerId,
+    );
+  }
+  return GameEventRendererEffectMapper._effectsForEvent(
+    event,
+    state,
+    previousState,
+    skipUnitMoveIds: const {},
+    l10n: l10n,
+    viewerPlayerId: viewerPlayerId,
+    turn: turn,
+    combatAnimation: combatAnimation,
+  );
+}
+
 List<RendererEffect> _effectsForEvents({
   required Iterable<GameEvent> events,
   required GameState state,
@@ -409,16 +439,23 @@ List<RendererEffect> _effectsForEvents({
   var eventIndex = 0;
   for (final event in events) {
     effects.addAll(
-      GameEventRendererEffectMapper._effectsForEvent(
-        event,
-        state,
-        previousState,
-        skipUnitMoveIds: skipUnitMoveIds,
-        l10n: l10n,
-        viewerPlayerId: viewerPlayerId,
-        turn: turn,
-        combatAnimation: combatByEventIndex[eventIndex],
-      ),
+      event is ArtifactLifecycleEvent
+          ? ArtifactEventRendererEffectMapper.effectsFor(
+              event,
+              state,
+              l10n: l10n,
+              viewerPlayerId: viewerPlayerId,
+            )
+          : GameEventRendererEffectMapper._effectsForEvent(
+              event,
+              state,
+              previousState,
+              skipUnitMoveIds: skipUnitMoveIds,
+              l10n: l10n,
+              viewerPlayerId: viewerPlayerId,
+              turn: turn,
+              combatAnimation: combatByEventIndex[eventIndex],
+            ),
     );
     eventIndex += 1;
   }

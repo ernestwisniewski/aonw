@@ -1268,7 +1268,7 @@ void main() {
       final state = container.read(gameStateProvider('save_1')).value!;
       expect(state.units.single.col, 1);
       expect(gameRepository.snapshots[save.id]!.units.single.col, 1);
-      expect(uiEffects.single, isA<AnimateUnitMoveEffect>());
+      expect(uiEffects, isEmpty);
     });
 
     _registerAtomicEndTurnProviderCase();
@@ -1602,10 +1602,8 @@ void main() {
         final result = await pendingResult;
 
         expect(result.state.units.single.col, 1);
-        expect(
-          result.uiEffects.whereType<AnimateUnitMoveEffect>(),
-          hasLength(1),
-        );
+        expect(result.uiEffects.whereType<AnimateUnitMoveEffect>(), isEmpty);
+        expect(result.movementExecutions, hasLength(1));
         expect(snapshotStore.snapshots.single.offset, 4);
       },
     );
@@ -1668,7 +1666,7 @@ void main() {
         final state = container.read(gameStateProvider(save.id)).value!;
         expect(state.units.single.col, 1);
         expect(gameRepository.snapshots[save.id]!.units.single.col, 1);
-        expect(effects.single, isA<AnimateUnitMoveEffect>());
+        expect(effects, isEmpty);
       },
     );
 

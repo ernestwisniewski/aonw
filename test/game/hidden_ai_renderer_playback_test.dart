@@ -1,7 +1,9 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/services/hidden_ai_renderer_playback.dart';
+import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
+import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -14,13 +16,23 @@ void main() {
           activePlayerId: 'ai_1',
           activePlayerCanAct: true,
         );
-        const humanRendererState = GameState(
+        final beforeUnit = GameUnit.produced(
+          id: 'warrior_1',
+          ownerPlayerId: 'ai_1',
+          type: GameUnitType.warrior,
+          col: 2,
+          row: 3,
+        );
+        final afterUnit = beforeUnit.copyWith(col: 3);
+        final humanRendererState = GameState(
           activePlayerId: 'human',
           activePlayerCanAct: false,
+          units: [beforeUnit],
         );
-        const reducerState = GameState(
+        final reducerState = GameState(
           activePlayerId: 'ai_1',
           activePlayerCanAct: false,
+          units: [afterUnit],
         );
         const commandMove = AnimateUnitMoveEffect(
           unitId: 'warrior_1',
@@ -44,17 +56,46 @@ void main() {
         final report = await playback.playCommandEffects(
           previousRendererState: previousRendererState,
           commandState: reducerState,
-          uiEffects: const [commandMove],
-          events: const [],
+          uiEffects: const [],
+          events: const [
+            UnitMovedEvent(
+              unitId: 'warrior_1',
+              fromCol: 2,
+              fromRow: 3,
+              toCol: 3,
+              toRow: 3,
+            ),
+          ],
+          movementExecutions: [
+            MovementCommandExecution(
+              unitId: 'warrior_1',
+              fromCol: 2,
+              fromRow: 3,
+              steps: const [
+                UnitMovementStep(
+                  col: 3,
+                  row: 3,
+                  enterCost: 1,
+                  cumulativeCost: 1,
+                ),
+              ],
+            ),
+          ],
         );
 
         expect(report.applied, isTrue);
         expect(report.rendererState.activePlayerId, 'human');
         expect(report.rendererState.activePlayerCanAct, isFalse);
-        expect(report.rendererEffects, const [commandMove]);
+        final projectedMove = report.rendererEffects
+            .whereType<AnimateUnitMoveEffect>()
+            .single;
+        expect(projectedMove.unitId, commandMove.unitId);
+        expect(projectedMove.fromCol, commandMove.fromCol);
+        expect(projectedMove.fromRow, commandMove.fromRow);
+        expect(projectedMove.steps, commandMove.steps);
         expect(applied, hasLength(1));
         expect(applied.single.state.activePlayerId, 'human');
-        expect(applied.single.effects, const [commandMove]);
+        expect(applied.single.effects, report.rendererEffects);
       },
     );
 

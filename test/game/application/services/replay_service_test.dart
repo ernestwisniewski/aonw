@@ -152,7 +152,7 @@ void main() {
         expect(movedMerchant.row, 0);
         expect(movedMerchant.merchantTradeRoute?.originCityId, 'city_target');
 
-        final effect = step.uiEffects.whereType<AnimateUnitMoveEffect>().single;
+        final effect = step.movementExecutions.single;
         expect(effect.unitId, merchant.id);
         expect(effect.fromCol, 0);
         expect(effect.fromRow, 0);

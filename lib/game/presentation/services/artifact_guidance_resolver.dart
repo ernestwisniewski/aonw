@@ -18,7 +18,6 @@ class ArtifactGuidanceResolver {
     required Iterable<GameEvent> events,
   }) {
     final change = _ArtifactGuidanceChangeDetector(
-      previousState: previousState,
       state: state,
       events: events,
       playerId: previousState.activePlayerId,
@@ -73,13 +72,11 @@ class ArtifactGuidanceResolver {
 }
 
 class _ArtifactGuidanceChangeDetector {
-  final GameState previousState;
   final GameState state;
   final Iterable<GameEvent> events;
   final String playerId;
 
   const _ArtifactGuidanceChangeDetector({
-    required this.previousState,
     required this.state,
     required this.events,
     required this.playerId,
@@ -87,32 +84,30 @@ class _ArtifactGuidanceChangeDetector {
 
   _ArtifactGuidanceChange? detect() {
     if (playerId.isEmpty) return null;
-    return _newlyStoredArtifact() ??
-        _newlyCarriedArtifact() ??
+    return _storedArtifactEvent() ??
+        _carriedArtifactEvent() ??
         _artifactReachedByMovedUnit();
   }
 
-  _StoredArtifactGuidance? _newlyStoredArtifact() {
-    for (final artifact in state.artifacts) {
-      final location = artifact.location;
-      if (!location.isStored || location.cityId == null) continue;
-      final city = state.cityById(location.cityId!);
-      if (city?.ownerPlayerId != playerId) continue;
-      final previous = _artifactById(previousState, artifact.id);
-      if (previous?.location == artifact.location) continue;
+  _StoredArtifactGuidance? _storedArtifactEvent() {
+    for (final event in events.whereType<ArtifactStoredEvent>()) {
+      if (event.ownerPlayerId != playerId) continue;
+      final artifact = _artifactById(state, event.artifactId);
+      final city = state.cityById(event.cityId);
+      if (artifact == null || city?.ownerPlayerId != playerId) continue;
       return _StoredArtifactGuidance(artifact: artifact, city: city!);
     }
     return null;
   }
 
-  _CarriedArtifactGuidance? _newlyCarriedArtifact() {
-    for (final unit in state.units) {
-      if (unit.ownerPlayerId != playerId) continue;
-      final artifactId = unit.carriedArtifactId;
-      if (artifactId == null) continue;
-      final previousUnit = previousState.unitById(unit.id);
-      if (previousUnit?.carriedArtifactId == artifactId) continue;
-      final artifact = _artifactById(state, artifactId);
+  _CarriedArtifactGuidance? _carriedArtifactEvent() {
+    for (final event in events.whereType<ArtifactCarriedEvent>()) {
+      if (event.ownerPlayerId != playerId) continue;
+      final unitId = event.unitId;
+      if (unitId == null) continue;
+      final unit = state.unitById(unitId);
+      if (unit?.ownerPlayerId != playerId) continue;
+      final artifact = _artifactById(state, event.artifactId);
       return artifact == null
           ? null
           : _CarriedArtifactGuidance(artifact: artifact);

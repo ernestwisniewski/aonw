@@ -49,6 +49,14 @@ void main() {
       );
       expect(accepted.snapshot.domain.cities, same(snapshot.domain.cities));
       expect(accepted.snapshot.interaction, same(snapshot.interaction));
+      expect(
+        accepted.events.single,
+        isA<ArtifactExcavationStartedEvent>()
+            .having((event) => event.artifactId, 'artifactId', 'artifact')
+            .having((event) => event.ownerPlayerId, 'owner', _actorId)
+            .having((event) => event.unitId, 'unit', 'scout')
+            .having((event) => (event.col, event.row), 'hex', (1, 0)),
+      );
       _expectEnvelopePreserved(accepted.snapshot, snapshot);
     });
 
@@ -61,6 +69,42 @@ void main() {
       );
 
       _expectRejected(result, snapshot, 'artifact_not_found');
+    });
+
+    test('storage emits the canonical artifact destination event', () {
+      final snapshot = _snapshot(
+        units: [_unit().copyWithCarriedArtifact('artifact')],
+        cities: const [
+          GameCity(
+            id: 'city',
+            ownerPlayerId: _actorId,
+            name: 'City',
+            center: CityHex(col: 1, row: 0),
+          ),
+        ],
+        artifacts: const [
+          WorldArtifact(
+            id: 'artifact',
+            type: WorldArtifactType.heroSword,
+            location: WorldArtifactLocation.carried(unitId: 'scout'),
+          ),
+        ],
+      );
+
+      final accepted = _expectAccepted(
+        _apply(
+          snapshot,
+          const StoreArtifactInCityCommand('scout', cityId: 'city'),
+        ),
+      );
+
+      expect(
+        accepted.events.single,
+        isA<ArtifactStoredEvent>()
+            .having((event) => event.artifactId, 'artifactId', 'artifact')
+            .having((event) => event.cityId, 'city', 'city')
+            .having((event) => (event.col, event.row), 'hex', (1, 0)),
+      );
     });
 
     test(
@@ -131,6 +175,7 @@ void _expectEnvelopePreserved(
 
 CanonicalGameSnapshot _snapshot({
   List<GameUnit> units = const [],
+  List<GameCity> cities = const [],
   List<WorldArtifact> artifacts = const [],
 }) {
   return CanonicalGameSnapshot.snapshot(
@@ -143,6 +188,7 @@ CanonicalGameSnapshot _snapshot({
       ],
       playerGold: const {_actorId: 20, _otherId: 20},
       units: units,
+      cities: cities,
       artifacts: artifacts,
     ),
     session: MatchSessionState.snapshot(gameMode: GameMode.multiplayer),

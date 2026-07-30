@@ -15,6 +15,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/canonical_command_test_dispatch.dart';
+import '../../../support/game_intent_test_resolver.dart';
 
 MapData _emptyMap() => MapData(cols: 5, rows: 5, tiles: []);
 
@@ -171,7 +172,11 @@ void main() {
         ),
       );
 
-      final result = reducer.reduce(state, const TileTappedCommand(2, 3));
+      final result = resolveGameIntent(
+        reducer,
+        state,
+        const TileTappedCommand(2, 3),
+      );
 
       expect(result.state.pendingAction, pendingAction);
       expect(result.state.moveCommandActive, isFalse);

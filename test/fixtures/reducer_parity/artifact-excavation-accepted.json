@@ -333,6 +333,15 @@
         "turnStartedAt": "2026-01-02T01:02:03.000Z"
       }
     },
-    "events": []
+    "events": [
+      {
+        "type": "ArtifactExcavationStarted",
+        "artifactId": "artifact.heroSword",
+        "ownerPlayerId": "player_1",
+        "unitId": "scout_1",
+        "col": 1,
+        "row": 0
+      }
+    ]
   }
 }

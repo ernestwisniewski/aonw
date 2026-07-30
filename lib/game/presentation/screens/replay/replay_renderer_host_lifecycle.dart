@@ -3,7 +3,7 @@ part of 'replay_screen.dart';
 extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
   GameRenderer _createRenderer() {
     final session = widget.session;
-    return GameRenderer(
+    final renderer = GameRenderer(
       mapData: session.mapData,
       imagePath: session.imagePath,
       // Replay renders from the immutable seed snapshot, not the latest save.
@@ -18,7 +18,8 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
       moveCameraForUnitMovement: widget.followUnitMovementCamera,
       followUnitMovementCamera: widget.followUnitMovementCamera,
       cinematicCameraEnabled: widget.cinematicCameraEnabled,
-    );
+    )..activateProjectedEffectSource(widget.timeline.saveId);
+    return renderer;
   }
 
   void _attachRendererListeners(GameRenderer renderer) {
@@ -102,21 +103,10 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
     final canAnimate =
         animated && targetIndex > 0 && _lastAppliedStepIndex == targetIndex - 1;
     if (!canAnimate) {
-      if (shouldFocusInitialState) {
-        renderer.applyState(state);
-        if (_perspectivePlayerId == null &&
-            _fallbackPerspectivePlayerId.isNotEmpty) {
-          _pendingAllPlayersFocusReset = true;
-          _syncAllPlayersAfterInitialFocus();
-        }
-      } else {
-        renderer.applyStateWithoutCameraFocus(state);
-      }
-      _lastAppliedStepIndex = targetIndex;
-      _syncPerspectiveCamera(
-        immediate: _consumePendingPerspectiveCameraFocus(),
-      );
-      _announceTurnMarkerForTransition(
+      _applyReplaySeek(
+        renderer,
+        state,
+        shouldFocusInitialState: shouldFocusInitialState,
         previousIndex: previousAppliedStepIndex,
         targetIndex: targetIndex,
         animated: animated,
@@ -125,15 +115,19 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
     }
     final step = widget.timeline.steps[targetIndex - 1];
     final previousState = _displayState(step.previousState);
-    final effects = ReplayRendererEffectPlanner.effectsForStep(
-      commandEffects: step.uiEffects.rendererEffects,
-      events: step.events,
+    final effectBatch = _replayEffectBatch(
+      widget.timeline,
+      step,
       state: state,
       previousState: previousState,
-      combatAnimations: step.combatAnimations,
       l10n: widget.l10n,
     );
-    if (_shouldFastForwardStep(step, effects, state, previousState)) {
+    if (_shouldFastForwardStep(
+      step,
+      effectBatch.effects,
+      state,
+      previousState,
+    )) {
       renderer.applyStateWithoutCameraFocus(state);
       _lastAppliedStepIndex = targetIndex;
       _syncPerspectiveCamera(
@@ -147,11 +141,39 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
       return;
     }
 
-    await renderer.applyTransition(state, effects);
+    await renderer.applyProjectedTransition(state, effectBatch);
     _lastAppliedStepIndex = targetIndex;
     _syncPerspectiveCamera(immediate: _consumePendingPerspectiveCameraFocus());
     _announceTurnMarkerForTransition(
       previousIndex: previousAppliedStepIndex,
+      targetIndex: targetIndex,
+      animated: animated,
+    );
+  }
+
+  void _applyReplaySeek(
+    GameRenderer renderer,
+    GameState state, {
+    required bool shouldFocusInitialState,
+    required int previousIndex,
+    required int targetIndex,
+    required bool animated,
+  }) {
+    renderer.resetProjectedEffectCursorForReplaySeek();
+    if (shouldFocusInitialState) {
+      renderer.applyState(state);
+      if (_perspectivePlayerId == null &&
+          _fallbackPerspectivePlayerId.isNotEmpty) {
+        _pendingAllPlayersFocusReset = true;
+        _syncAllPlayersAfterInitialFocus();
+      }
+    } else {
+      renderer.applyStateWithoutCameraFocus(state);
+    }
+    _lastAppliedStepIndex = targetIndex;
+    _syncPerspectiveCamera(immediate: _consumePendingPerspectiveCameraFocus());
+    _announceTurnMarkerForTransition(
+      previousIndex: previousIndex,
       targetIndex: targetIndex,
       animated: animated,
     );
@@ -199,4 +221,25 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
     );
     _syncPerspectiveCamera(immediate: false);
   }
+}
+
+ProjectedGameEffectBatch _replayEffectBatch(
+  ReplayTimeline timeline,
+  ReplayStep step, {
+  required GameState state,
+  required GameState previousState,
+  required AppLocalizations l10n,
+}) {
+  return ReplayRendererEffectPlanner.batchForStep(
+    identity: PresentationBatchIdentity(
+      sourceId: timeline.saveId,
+      eventOffset: step.offset,
+    ),
+    interactionEffects: step.uiEffects.rendererEffects,
+    events: step.events,
+    movementExecutions: step.movementExecutions,
+    state: state,
+    previousState: previousState,
+    l10n: l10n,
+  );
 }

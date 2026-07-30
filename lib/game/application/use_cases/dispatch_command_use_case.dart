@@ -6,12 +6,14 @@ import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 
 class DispatchCommandResult {
   final GameState state;
   final List<UiEffect> uiEffects;
   final List<GameEvent> events;
   final List<CombatAnimationFact> combatAnimations;
+  final List<MovementCommandExecution> movementExecutions;
   final SaveSnapshot? snapshot;
   final int offset;
   final bool storedSnapshot;
@@ -21,6 +23,7 @@ class DispatchCommandResult {
     this.uiEffects = const [],
     this.events = const [],
     this.combatAnimations = const [],
+    this.movementExecutions = const [],
     this.snapshot,
     this.offset = 0,
     this.storedSnapshot = false,
@@ -49,6 +52,7 @@ class DispatchCommandUseCase {
       uiEffects: result.uiEffects,
       events: result.events,
       combatAnimations: result.combatAnimations,
+      movementExecutions: result.movementExecutions,
       snapshot: result.snapshot,
       offset: result.offset,
       storedSnapshot: result.storedSnapshot,

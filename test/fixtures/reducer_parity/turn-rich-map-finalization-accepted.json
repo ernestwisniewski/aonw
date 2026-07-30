@@ -904,6 +904,14 @@
         "goldPerTurn": 4
       },
       {
+        "type": "UnitMoved",
+        "unitId": "queued_scout_2",
+        "fromCol": 2,
+        "fromRow": 2,
+        "toCol": 1,
+        "toRow": 2
+      },
+      {
         "type": "TurnEnded",
         "playerId": "player_1"
       },

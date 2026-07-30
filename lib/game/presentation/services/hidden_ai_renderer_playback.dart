@@ -1,14 +1,17 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/game/presentation/engine/game_renderer_effect_sequence_builder.dart';
+import 'package:aonw/game/presentation/engine/domain_event_presentation_projector.dart';
+import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 
 typedef HiddenAiRendererStateReader = GameState? Function();
 typedef HiddenAiLocalizationReader = AppLocalizations? Function();
 typedef HiddenAiTransitionApplier =
     Future<void> Function(GameState state, List<RendererEffect> effects);
+typedef HiddenAiProjectedTransitionApplier =
+    Future<void> Function(GameState state, ProjectedGameEffectBatch effects);
 
 final class HiddenAiRendererPlaybackReport {
   final GameState rendererState;
@@ -26,11 +29,13 @@ final class HiddenAiRendererPlayback {
   final HiddenAiRendererStateReader rendererStateReader;
   final HiddenAiLocalizationReader localizationReader;
   final HiddenAiTransitionApplier applyTransition;
+  final HiddenAiProjectedTransitionApplier? applyProjectedTransition;
 
   const HiddenAiRendererPlayback({
     required this.rendererStateReader,
     required this.localizationReader,
     required this.applyTransition,
+    this.applyProjectedTransition,
   });
 
   GameState previousRendererState(GameState fallbackState) {
@@ -42,30 +47,45 @@ final class HiddenAiRendererPlayback {
     required GameState commandState,
     required Iterable<UiEffect> uiEffects,
     required Iterable<GameEvent> events,
-    Iterable<CombatAnimationFact> combatAnimations = const [],
+    String sourceId = 'hidden-ai-preview',
+    int eventOffset = 0,
+    Iterable<MovementCommandExecution> movementExecutions = const [],
     int? turn,
   }) async {
     final rendererState = withActionContext(
       commandState,
       previousRendererState,
     );
-    final rendererEffects = GameRendererEffectSequenceBuilder.build(
-      commandEffects: uiEffects.rendererEffects,
-      events: events,
-      state: rendererState,
-      previousState: previousRendererState,
-      l10n: localizationReader(),
-      turn: turn,
-      combatAnimations: combatAnimations,
-    );
+    final rendererEffects =
+        DomainEventPresentationProjector.projectObservedBatch(
+          identity: PresentationBatchIdentity(
+            sourceId: sourceId,
+            eventOffset: eventOffset,
+          ),
+          interactionEffects: uiEffects.rendererEffects.where(
+            (effect) =>
+                effect is JumpCameraEffect || effect is SmoothCameraEffect,
+          ),
+          events: events,
+          visibleMovementExecutions: movementExecutions,
+          state: rendererState,
+          previousState: previousRendererState,
+          l10n: localizationReader(),
+          turn: turn,
+        );
 
-    if (rendererEffects.isNotEmpty) {
-      await applyTransition(rendererState, rendererEffects);
+    if (rendererEffects.effects.isNotEmpty) {
+      final projectedApplier = applyProjectedTransition;
+      if (projectedApplier == null) {
+        await applyTransition(rendererState, rendererEffects.effects);
+      } else {
+        await projectedApplier(rendererState, rendererEffects);
+      }
     }
 
     return HiddenAiRendererPlaybackReport(
       rendererState: rendererState,
-      rendererEffects: rendererEffects,
+      rendererEffects: rendererEffects.effects,
     );
   }
 

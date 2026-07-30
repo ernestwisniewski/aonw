@@ -10,8 +10,10 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue_mapper.dart';
+import 'package:aonw/game/presentation/engine/command_dispatch_presentation_projector.dart';
 import 'package:aonw/game/presentation/engine/game_camera_effect_normalizer.dart';
-import 'package:aonw/game/presentation/engine/game_renderer_effect_sequence_builder.dart';
+import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
+import 'package:aonw/game/presentation/engine/renderer_view_model.dart';
 import 'package:aonw/game/presentation/providers/audio/game_audio_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_state_provider.dart';
@@ -47,7 +49,6 @@ class GameCommandController extends _$GameCommandController {
     });
   }
 
-  /// Returns all effects so callers can react to non-renderer work too.
   Future<List<UiEffect>> dispatch(GameCommand command) =>
       dispatchTransition(command).then((result) => result.uiEffects);
 
@@ -64,14 +65,7 @@ class GameCommandController extends _$GameCommandController {
   }) {
     return _enqueueCommand(() async {
       final record = await _dispatchOnly(command, context: context);
-      return HandoffPresentation(
-        command: command,
-        state: record.result.state,
-        previousState: record.previousState,
-        uiEffects: record.result.uiEffects,
-        events: record.result.events,
-        combatAnimations: record.result.combatAnimations,
-      );
+      return _handoffPresentation(command, record);
     });
   }
 
@@ -86,7 +80,10 @@ class GameCommandController extends _$GameCommandController {
             uiEffects: presentation.uiEffects,
             events: presentation.events,
             combatAnimations: presentation.combatAnimations,
+            movementExecutions: presentation.movementExecutions,
+            offset: presentation.offset,
           ),
+          interactionId: presentation.interactionId,
         ),
       ),
     );
@@ -313,22 +310,20 @@ class GameCommandController extends _$GameCommandController {
             saveId: session.saveId,
             effects: commandRendererEffects,
           );
-      final rendererEffects = GameRendererEffectSequenceBuilder.build(
-        commandEffects: visibleCommandRendererEffects,
-        events: result.events,
-        state: result.state,
-        previousState: previousState,
+      final rendererEffects = _commandProjection(
+        record,
+        sourceId: session.saveId,
+        interactionEffects: visibleCommandRendererEffects,
         l10n: renderer.l10n,
         turn: eventTurn,
-        combatAnimations: result.combatAnimations,
       );
       _playCommandAndTransitionSounds(
         command: command,
         previousState: previousState,
         result: result,
-        rendererEffects: rendererEffects,
+        rendererEffects: rendererEffects.effects,
       );
-      await renderer.applyTransition(
+      await renderer.applyProjectedTransition(
         result.state,
         rendererEffects,
         currentTurn: currentTurn,

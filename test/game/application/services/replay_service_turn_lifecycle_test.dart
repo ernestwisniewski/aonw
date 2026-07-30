@@ -49,7 +49,7 @@ void _registerReplayTurnLifecycleTests() {
     expect(step.offset, 1);
     expect(step.state.units.single.col, 1);
     expect(step.state.units.single.queuedPath, isNull);
-    final effect = step.uiEffects.whereType<AnimateUnitMoveEffect>().single;
+    final effect = step.movementExecutions.single;
     expect(effect.unitId, queuedUnit.id);
     expect(effect.fromCol, 0);
     expect(effect.steps.single.col, 1);
@@ -74,7 +74,7 @@ void _registerReplayTurnLifecycleTests() {
     expect(step.turn, 1);
     expect(step.domain.turn, 2);
     expect(step.state.units.single.col, 1);
-    expect(step.uiEffects.whereType<AnimateUnitMoveEffect>(), hasLength(1));
+    expect(step.movementExecutions, hasLength(1));
   });
 }
 

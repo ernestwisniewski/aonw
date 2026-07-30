@@ -7,6 +7,9 @@ void _registerTransientSnapshotCases() {
       units: [commander],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
+      interaction: GameInteractionState(
+        selection: GameSelection.unit(commander),
+      ),
     );
     final server = _FakeCommandServer(save: _save(), state: state);
     final transport = _transport(server);

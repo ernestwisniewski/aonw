@@ -13,6 +13,7 @@ import 'package:aonw/game/presentation/engine/game_hover_intent_resolver.dart';
 import 'package:aonw/game/presentation/engine/game_render_view_model.dart';
 import 'package:aonw/game/presentation/engine/game_rendering_coordinator.dart';
 import 'package:aonw/game/presentation/engine/game_scene_builder.dart';
+import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_component.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_option.dart';
@@ -71,25 +72,13 @@ part 'game_renderer_camera_policy.dart';
 part 'game_renderer_camera_rendering.dart';
 part 'game_renderer_gamepad_input.dart';
 part 'game_renderer_input.dart';
+part 'game_renderer_projected_effects.dart';
 part 'game_renderer_state_sync.dart';
 part 'game_renderer_testing.dart';
 part 'game_renderer_tile_interactions.dart';
 part 'game_renderer_transition_queue.dart';
+part 'game_renderer_types.dart';
 part 'game_renderer_world_lifecycle.dart';
-
-typedef WorkerActionPaletteOptionsBuilder =
-    List<ActionPaletteOption> Function({
-      required GameState state,
-      required GameUnit worker,
-      required PendingWorkerActionSelection pendingAction,
-      required MapData mapData,
-    });
-typedef TileInspectionCallback =
-    void Function(TileData tileData, Offset anchor);
-typedef ArtifactInspectionCallback =
-    void Function(WorldArtifact artifact, Offset anchor);
-typedef ObjectiveInspectionCallback =
-    void Function(MapObjectiveProgress progress, Offset anchor);
 
 /// Flame renderer for the game map.
 ///

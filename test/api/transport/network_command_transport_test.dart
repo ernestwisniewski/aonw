@@ -164,13 +164,11 @@ void main() {
           command: MoveUnitCommand(commander.id, 2, 0),
         );
 
-        final effect = result.uiEffects
-            .whereType<AnimateUnitMoveEffect>()
-            .single;
-        expect(effect.unitId, commander.id);
-        expect(effect.fromCol, 0);
-        expect(effect.fromRow, 0);
-        expect(effect.steps.map((step) => step.col), [1, 2]);
+        final execution = result.movementExecutions.single;
+        expect(execution.unitId, commander.id);
+        expect(execution.fromCol, 0);
+        expect(execution.fromRow, 0);
+        expect(execution.steps.map((step) => step.col), [1, 2]);
         expect(result.state.units.single.col, 2);
       },
     );

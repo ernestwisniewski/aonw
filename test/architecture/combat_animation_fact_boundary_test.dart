@@ -14,20 +14,11 @@ void main() {
       const {
         combatAnimationFactCodecPath: 1,
         combatEngineHandlerPath: 1,
-        combatAnimationFactUpcasterPath: 1,
+        combatDomainEventProjectorPath: 1,
       },
       reason:
           'Facts may only be created by the engine, decoded at the neutral '
-          'codec, or upcast at the explicit historical replay boundary.',
-    );
-    expect(
-      staticMemberReferenceCountsByPath(
-        sources,
-        'HistoricalCombatAnimationFactUpcaster',
-        'fromEvents',
-      ),
-      const {combatReplayEffectPlannerPath: 1},
-      reason: 'Historical combat reconstruction must have one consumer.',
+          'codec, or projected from ordered events at the presentation boundary.',
     );
     expect(
       staticMemberReferenceCountsByPath(
@@ -48,101 +39,68 @@ void main() {
       reason: 'The generic mutable-state projector must stay removed.',
     );
 
-    const rendererBuilderCalls = {
+    const projectorCalls = {
       combatReplayEffectPlannerPath: 1,
       combatGameActionsProviderPath: 1,
       combatHiddenAiPlaybackPath: 1,
+      combatGameStateRendererEffectsPath: 1,
     };
     expect(
       staticMemberReferenceCountsByPath(
         sources,
-        'GameRendererEffectSequenceBuilder',
-        'build',
+        'DomainEventPresentationProjector',
+        'projectObservedBatch',
       ),
-      rendererBuilderCalls,
+      projectorCalls,
     );
     expect(
       staticCallNamedArgumentViolations(
         sources,
-        targetType: 'GameRendererEffectSequenceBuilder',
-        methodName: 'build',
-        argumentName: 'combatAnimations',
-        expectedCalls: rendererBuilderCalls,
+        targetType: 'DomainEventPresentationProjector',
+        methodName: 'projectObservedBatch',
+        argumentName: 'visibleMovementExecutions',
+        expectedCalls: projectorCalls,
       ),
       isEmpty,
     );
 
-    const eventMapperCalls = {
-      combatRendererSequenceBuilderPath: 1,
-      combatExternalSnapshotResolverPath: 1,
-    };
     expect(
       staticMemberReferenceCountsByPath(
         sources,
         'GameEventRendererEffectMapper',
         'effectsFor',
       ),
-      eventMapperCalls,
-    );
-    expect(
-      staticCallNamedArgumentViolations(
-        sources,
-        targetType: 'GameEventRendererEffectMapper',
-        methodName: 'effectsFor',
-        argumentName: 'combatAnimations',
-        expectedCalls: eventMapperCalls,
-      ),
-      isEmpty,
-    );
-
-    const externalSnapshotCalls = {combatGameStateRendererEffectsPath: 1};
-    expect(
-      staticMemberReferenceCountsByPath(
-        sources,
-        'ExternalSnapshotRendererEffectResolver',
-        'resolve',
-      ),
-      externalSnapshotCalls,
-    );
-    expect(
-      staticCallNamedArgumentViolations(
-        sources,
-        targetType: 'ExternalSnapshotRendererEffectResolver',
-        methodName: 'resolve',
-        argumentName: 'combatAnimations',
-        expectedCalls: externalSnapshotCalls,
-      ),
-      isEmpty,
+      const {combatDomainEventProjectorPath: 1},
     );
   });
 
-  test('fact forwarding guard rejects omitted and duplicate arguments', () {
+  test('movement fact guard rejects omitted and duplicate arguments', () {
     final violations = staticCallNamedArgumentViolations(
       const {
         'missing.dart': '''
-void render() => GameRendererEffectSequenceBuilder.build(events: events);
+void render() => DomainEventPresentationProjector.projectObservedBatch(events: events);
 ''',
         'duplicate.dart': '''
-void render() => GameRendererEffectSequenceBuilder.build(
-  combatAnimations: first,
-  combatAnimations: second,
+void render() => DomainEventPresentationProjector.projectObservedBatch(
+  visibleMovementExecutions: first,
+  visibleMovementExecutions: second,
 );
 ''',
       },
-      targetType: 'GameRendererEffectSequenceBuilder',
-      methodName: 'build',
-      argumentName: 'combatAnimations',
+      targetType: 'DomainEventPresentationProjector',
+      methodName: 'projectObservedBatch',
+      argumentName: 'visibleMovementExecutions',
       expectedCalls: const {'missing.dart': 1, 'duplicate.dart': 1},
     );
 
     expect(violations, hasLength(2));
     expect(
       violations.singleWhere((entry) => entry.contains('missing.dart')),
-      contains('exactly one combatAnimations'),
+      contains('exactly one visibleMovementExecutions'),
     );
     expect(
       violations.singleWhere((entry) => entry.contains('duplicate.dart')),
-      contains('exactly one combatAnimations'),
+      contains('exactly one visibleMovementExecutions'),
     );
   });
 }

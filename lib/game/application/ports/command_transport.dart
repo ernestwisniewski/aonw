@@ -5,12 +5,14 @@ import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 
 class CommandTransportResult {
   final GameState state;
   final List<UiEffect> uiEffects;
   final List<GameEvent> events;
   final List<CombatAnimationFact> combatAnimations;
+  final List<MovementCommandExecution> movementExecutions;
 
   /// Snapshot produced or observed by this dispatch, when one exists.
   ///
@@ -27,6 +29,7 @@ class CommandTransportResult {
     this.uiEffects = const [],
     this.events = const [],
     this.combatAnimations = const [],
+    this.movementExecutions = const [],
     this.storedSnapshot = false,
   }) : assert(!storedSnapshot || snapshot != null);
 }

@@ -2,13 +2,16 @@ import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
+import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/state.dart';
 
@@ -73,6 +76,7 @@ class ReplayStep {
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
   final List<CombatAnimationFact> combatAnimations;
+  final List<MovementCommandExecution> movementExecutions;
   final int? originatingTurn;
 
   const ReplayStep({
@@ -84,6 +88,7 @@ class ReplayStep {
     required this.events,
     required this.uiEffects,
     this.combatAnimations = const [],
+    this.movementExecutions = const [],
     this.originatingTurn,
   });
 
@@ -273,18 +278,14 @@ class ReplayService {
           paceBalance: currentSnapshot.domain.matchRules.paceBalance,
           fallbackTurn: originatingTurn,
         );
-        final effectiveActorPlayerId = ReplayStep.inferEffectiveActorPlayerId(
+        final resolved = _resolveReplayCommand(
+          commandResolver: commandResolver,
           loggedCommand: logged,
-          state: currentState,
-        );
-        final resolved = commandResolver.resolve(
           baseSnapshot: currentSnapshot,
           currentState: currentState,
           command: command,
           savedAt: logged.timestamp,
-          context: commandContext.copyWith(
-            actorPlayerId: effectiveActorPlayerId,
-          ),
+          context: commandContext,
         );
         final resolvedSnapshotWithOffset = resolved.snapshot.withEventLogOffset(
           logged.offset,
@@ -319,6 +320,67 @@ class ReplayService {
   }
 }
 
+LocalCommandResolution _resolveReplayCommand({
+  required LocalCommandResolver commandResolver,
+  required LoggedCommand loggedCommand,
+  required SaveSnapshot baseSnapshot,
+  required GameState currentState,
+  required GameCommand command,
+  required DateTime savedAt,
+  required GameCommandContext context,
+}) {
+  final effectiveContext = context.copyWith(
+    actorPlayerId: ReplayStep.inferEffectiveActorPlayerId(
+      loggedCommand: loggedCommand,
+      state: currentState,
+    ),
+  );
+  if (command is! GameIntent) {
+    return commandResolver.resolve(
+      baseSnapshot: baseSnapshot,
+      currentState: currentState,
+      command: command,
+      savedAt: savedAt,
+      context: effectiveContext,
+    );
+  }
+  final intent = GameIntentResolver(
+    reducer: commandResolver.reducer,
+    context: effectiveContext,
+  ).resolve(currentState.interaction, command, currentState);
+  final interactionState = intent.interaction == currentState.interaction
+      ? currentState
+      : currentState.copyWith(interaction: intent.interaction);
+  final domainCommand = intent.domainCommand;
+  if (domainCommand == null) {
+    return LocalCommandResolution(
+      snapshot: baseSnapshot
+          .withSavedAt(savedAt)
+          .withGameState(interactionState),
+      state: interactionState,
+      events: const [],
+      uiEffects: intent.presentationFocus,
+      context: effectiveContext,
+    );
+  }
+  final domain = commandResolver.resolve(
+    baseSnapshot: baseSnapshot,
+    currentState: interactionState,
+    command: domainCommand,
+    savedAt: savedAt,
+    context: effectiveContext,
+  );
+  return LocalCommandResolution(
+    snapshot: domain.snapshot,
+    state: domain.state,
+    events: domain.events,
+    uiEffects: [...intent.presentationFocus, ...domain.uiEffects],
+    context: domain.context,
+    combatAnimations: domain.combatAnimations,
+    movementExecutions: domain.movementExecutions,
+  );
+}
+
 void _appendReplayStep(
   List<ReplayStep> steps, {
   required LoggedCommand logged,
@@ -337,6 +399,7 @@ void _appendReplayStep(
       events: logged.events,
       uiEffects: resolved.uiEffects,
       combatAnimations: resolved.combatAnimations,
+      movementExecutions: resolved.movementExecutions,
       originatingTurn: originatingTurn,
     ),
   );

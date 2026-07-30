@@ -1,7 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/interaction/selection_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
@@ -720,84 +719,6 @@ void main() {
 
       final result = SelectionReducer.handleCityTapped(state, city, mapData);
       expect(result, same(state));
-    });
-  });
-  // Integration: GameStateReducer wiring
-
-  group('GameStateReducer wiring', () {
-    test('SelectTileCommand dispatches to SelectionReducer', () {
-      final tile = _tile(1, 1);
-      final mapData = _mapWith([tile]);
-      final reducer = GameStateReducer(mapData: mapData);
-      const state = GameState(activePlayerId: 'p1');
-
-      final result = reducer.reduce(state, const SelectTileCommand(1, 1));
-
-      expect(result.state.selection, isNotNull);
-      expect(result.state.selection!.type, GameSelectionType.tile);
-    });
-
-    test('SelectUnitCommand dispatches to SelectionReducer', () {
-      final unit = _unit(col: 1, row: 1);
-      final tile = _tile(1, 1);
-      final mapData = _mapWith([tile]);
-      final reducer = GameStateReducer(mapData: mapData);
-      final state = GameState(activePlayerId: 'p1', units: [unit]);
-
-      final result = reducer.reduce(state, const SelectUnitCommand('u1'));
-
-      expect(result.state.selection, isNotNull);
-      expect(result.state.selection!.type, GameSelectionType.unit);
-      expect(result.state.moveCommandActive, isTrue);
-    });
-
-    test('SelectCityCommand dispatches to SelectionReducer', () {
-      final city = _city(col: 2, row: 2);
-      final tile = _tile(2, 2);
-      final mapData = _mapWith([tile]);
-      final reducer = GameStateReducer(mapData: mapData);
-      final state = GameState(
-        activePlayerId: 'p1',
-        cities: [city],
-        playerColors: const {'p1': 0xFF0000FF},
-      );
-
-      final result = reducer.reduce(state, const SelectCityCommand('c1'));
-
-      expect(result.state.selection, isNotNull);
-      expect(result.state.selection!.type, GameSelectionType.city);
-    });
-
-    test('TileTappedCommand dispatches to SelectionReducer', () {
-      final tile = _tile(5, 5);
-      final mapData = _mapWith([tile]);
-      final fog = _fogVisible('p1', [tile]);
-      final reducer = GameStateReducer(mapData: mapData);
-      final state = GameState(activePlayerId: 'p1', fogOfWar: fog);
-
-      final result = reducer.reduce(state, const TileTappedCommand(5, 5));
-
-      expect(result.state.selection, isNotNull);
-      expect(result.state.selection!.type, GameSelectionType.tile);
-    });
-
-    test('CityTappedCommand dispatches to SelectionReducer', () {
-      final city = _city(col: 2, row: 2);
-      final tile = _tile(2, 2);
-      final mapData = _mapWith([tile]);
-      final fog = _fogVisible('p1', [tile]);
-      final reducer = GameStateReducer(mapData: mapData);
-      final state = GameState(
-        activePlayerId: 'p1',
-        cities: [city],
-        playerColors: const {'p1': 0xFF0000FF},
-        fogOfWar: fog,
-      );
-
-      final result = reducer.reduce(state, const CityTappedCommand('c1'));
-
-      expect(result.state.selection, isNotNull);
-      expect(result.state.selection!.type, GameSelectionType.city);
     });
   });
 }

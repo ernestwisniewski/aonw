@@ -19,8 +19,7 @@ final class StartWorkerActionSelectionCommand extends GameIntent
 }
 
 /// Player chooses the intended worker improvement type.
-final class SelectWorkerImprovementCommand extends UnitDomainCommand
-    implements WorkerInteractionCommand {
+final class SelectWorkerImprovementCommand extends UnitDomainCommand {
   const SelectWorkerImprovementCommand(this.unitId, this.improvementType);
 
   @override

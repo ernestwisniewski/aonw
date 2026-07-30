@@ -8,6 +8,7 @@ import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
 import 'package:aonw/game/application/services/ai_turn_run_scheduler.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/engine/renderer_view_model.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/services/ai_turn_auto_scheduler.dart';
@@ -300,6 +301,11 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
         final renderer = ref.read(activeRendererViewModelProvider);
         if (renderer == null) return;
         await renderer.applyTransition(state, effects);
+      },
+      applyProjectedTransition: (state, batch) async {
+        final renderer = ref.read(activeRendererViewModelProvider);
+        if (renderer == null) return;
+        await renderer.applyProjectedTransition(state, batch);
       },
       hiddenDispatch: ({required saveId, required command, required context}) {
         return ref

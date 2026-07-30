@@ -1,5 +1,6 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/local_movement_engine_projection.dart';
+import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
@@ -80,7 +81,9 @@ GameStateTransition resolveMovementCommandForTest(
   return GameStateTransition(
     state: projection.state,
     events: accepted.events,
-    uiEffects: projection.uiEffects,
+    uiEffects: QueuedMovementEffectBuilder.fromExecutions(
+      projection.movementExecutions,
+    ),
   );
 }
 

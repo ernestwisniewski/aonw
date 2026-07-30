@@ -6,10 +6,7 @@ String? validateAcceptedArtifactCommand({
   required PersistentGameState after,
   required List<GameEvent> events,
 }) {
-  if (events.isNotEmpty) {
-    return 'must not emit events for artifact commands';
-  }
-  return switch (command) {
+  final stateFailure = switch (command) {
     final StartArtifactExcavationCommand command =>
       _validateAcceptedArtifactExcavation(command, before, after),
     final StoreArtifactInCityCommand command => _validateAcceptedArtifactStore(
@@ -24,6 +21,95 @@ String? validateAcceptedArtifactCommand({
     ),
     _ => 'uses an unsupported artifact command',
   };
+  if (stateFailure != null) return stateFailure;
+  if (events.length != 1) {
+    return 'must emit exactly one canonical artifact lifecycle event';
+  }
+  final event = events.single;
+  return switch (command) {
+    final StartArtifactExcavationCommand command =>
+      _validateArtifactExcavationEvent(command, before, event),
+    final StoreArtifactInCityCommand command => _validateArtifactStoreEvent(
+      command,
+      before,
+      event,
+    ),
+    final TradeArtifactCommand command => _validateArtifactTradeEvent(
+      command,
+      before,
+      event,
+    ),
+    _ => 'uses an unsupported artifact command',
+  };
+}
+
+String? _validateArtifactExcavationEvent(
+  StartArtifactExcavationCommand command,
+  PersistentGameState before,
+  GameEvent event,
+) {
+  final unit = before.units.byId(command.unitId);
+  final artifact = unit == null
+      ? null
+      : _artifactFixtureMapArtifactAt(before.artifacts, unit.col, unit.row);
+  return event is ArtifactExcavationStartedEvent &&
+          unit != null &&
+          artifact != null &&
+          event.artifactId == artifact.id &&
+          event.ownerPlayerId == unit.ownerPlayerId &&
+          event.unitId == unit.id &&
+          event.col == unit.col &&
+          event.row == unit.row
+      ? null
+      : 'must emit the exact reviewed artifact excavation event';
+}
+
+String? _validateArtifactStoreEvent(
+  StoreArtifactInCityCommand command,
+  PersistentGameState before,
+  GameEvent event,
+) {
+  final unit = before.units.byId(command.unitId);
+  final city = unit == null
+      ? null
+      : command.cityId == null
+      ? before.cities.cityAt(unit.col, unit.row)
+      : before.cities.byId(command.cityId!);
+  return event is ArtifactStoredEvent &&
+          unit?.carriedArtifactId != null &&
+          city != null &&
+          event.artifactId == unit!.carriedArtifactId &&
+          event.ownerPlayerId == city.ownerPlayerId &&
+          event.unitId == unit.id &&
+          event.cityId == city.id &&
+          event.col == city.center.col &&
+          event.row == city.center.row
+      ? null
+      : 'must emit the exact reviewed artifact storage event';
+}
+
+String? _validateArtifactTradeEvent(
+  TradeArtifactCommand command,
+  PersistentGameState before,
+  GameEvent event,
+) {
+  final targetCities = [
+    for (final city in before.cities)
+      if (city.ownerPlayerId == command.targetPlayerId &&
+          !_artifactFixtureCityHasStoredArtifact(before.artifacts, city.id))
+        city,
+  ]..sort((left, right) => left.id.compareTo(right.id));
+  final city = targetCities.isEmpty ? null : targetCities.first;
+  return event is ArtifactStoredEvent &&
+          city != null &&
+          event.artifactId == command.offeredArtifactId &&
+          event.ownerPlayerId == command.targetPlayerId &&
+          event.unitId == null &&
+          event.cityId == city.id &&
+          event.col == city.center.col &&
+          event.row == city.center.row
+      ? null
+      : 'must emit the exact reviewed artifact trade storage event';
 }
 
 String? _validateAcceptedArtifactExcavation(

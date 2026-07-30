@@ -7,6 +7,7 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/application/services/authoritative_command_policy.dart';
 import 'package:aonw/game/application/services/game_activity_event_projector.dart';
+import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -140,6 +141,7 @@ class LocalCommandTransport implements CommandTransport {
       uiEffects: resolved.uiEffects,
       events: resolved.events,
       combatAnimations: resolved.combatAnimations,
+      movementExecutions: resolved.movementExecutions,
       snapshot: snapshot,
       offset: offset,
       storedSnapshot: storedSnapshot,
@@ -217,15 +219,16 @@ class LocalCommandTransport implements CommandTransport {
           currentState,
           command,
         )) {
-      final transition = reducer.reduce(
+      final resolution = resolveClientIntent(
+        reducer,
         currentState,
         command,
-        context: context,
+        context,
       );
       return CommandTransportResult(
-        state: transition.state,
-        uiEffects: transition.uiEffects,
-        events: transition.events,
+        state: resolution.state,
+        uiEffects: resolution.uiEffects,
+        events: const [],
         snapshot: null,
         offset: -1,
       );

@@ -16,7 +16,6 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw/game/infrastructure/transport/local_command_transport.dart';
 import 'package:aonw/map/domain/map_data.dart';
@@ -250,7 +249,7 @@ void main() {
         expect(repository.snapshot.units.single.col, 2);
         expect(repository.snapshot.units.single.row, 0);
         expect(repository.snapshot.cities.single.hitPoints, 11);
-        final move = result.uiEffects.whereType<AnimateUnitMoveEffect>().single;
+        final move = result.movementExecutions.single;
         expect(move.unitId, 'commander_player_1');
         expect((move.fromCol, move.fromRow), (0, 0));
         expect(
@@ -337,8 +336,8 @@ void main() {
         expect(movedScout.id, 'scout_1');
         expect(movedScout.occupies(1, 0), isFalse);
         expect(
-          result.uiEffects.whereType<AnimateUnitMoveEffect>().single,
-          isA<AnimateUnitMoveEffect>()
+          result.movementExecutions.single,
+          isA<MovementCommandExecution>()
               .having((effect) => effect.unitId, 'unitId', 'scout_1')
               .having((effect) => effect.fromCol, 'fromCol', 1)
               .having((effect) => effect.fromRow, 'fromRow', 0),

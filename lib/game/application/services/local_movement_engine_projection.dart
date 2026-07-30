@@ -1,11 +1,10 @@
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
-import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:flutter/foundation.dart';
@@ -13,11 +12,11 @@ import 'package:flutter/foundation.dart';
 final class LocalMovementEngineProjection {
   const LocalMovementEngineProjection({
     required this.state,
-    required this.uiEffects,
+    required this.movementExecutions,
   });
 
   final GameState state;
-  final List<UiEffect> uiEffects;
+  final List<MovementCommandExecution> movementExecutions;
 }
 
 LocalMovementEngineProjection projectLocalMovementEngineResult({
@@ -67,9 +66,7 @@ LocalMovementEngineProjection projectLocalMovementEngineResult({
   };
   return LocalMovementEngineProjection(
     state: state,
-    uiEffects: QueuedMovementEffectBuilder.fromExecutions(
-      result.movementDelta.executions,
-    ),
+    movementExecutions: result.movementDelta.executions,
   );
 }
 

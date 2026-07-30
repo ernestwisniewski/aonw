@@ -395,6 +395,15 @@
         "turnStartedAt": "2026-01-02T01:02:03.000Z"
       }
     },
-    "events": []
+    "events": [
+      {
+        "type": "ArtifactStored",
+        "artifactId": "artifact.merchantsSeal",
+        "ownerPlayerId": "player_2",
+        "cityId": "target_a",
+        "col": 2,
+        "row": 0
+      }
+    ]
   }
 }

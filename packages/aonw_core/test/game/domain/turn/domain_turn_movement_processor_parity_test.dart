@@ -25,6 +25,10 @@ void main() {
         result.domain.state.fogOfWar.fogForPlayer('p1').discoveredHexes.length,
         greaterThan(input.fogOfWar.fogForPlayer('p1').discoveredHexes.length),
       );
+      _expectMovementEventInvariant(
+        result.domain.events,
+        result.domain.executions,
+      );
     });
 
     test('preserves state identity for empty player ids', () {
@@ -34,6 +38,10 @@ void main() {
       expect(result.domain.changed, isFalse);
       expect(identical(result.domain.state, result.domainInput), isTrue);
       expect(identical(result.persistent.state, input), isTrue);
+      _expectMovementEventInvariant(
+        result.domain.events,
+        result.domain.executions,
+      );
     });
 
     test('preserves state identity when no unit needs movement work', () {
@@ -94,8 +102,41 @@ void main() {
       );
       expect(result.domain.executions, hasLength(1));
       expect(result.persistent.executions, hasLength(1));
+      _expectMovementEventInvariant(
+        result.domain.events,
+        result.domain.executions,
+      );
     });
   });
+}
+
+void _expectMovementEventInvariant(
+  Iterable<GameEvent> events,
+  Iterable<MovementCommandExecution> executions,
+) {
+  final moved = events.whereType<UnitMovedEvent>().toList();
+  final byUnitId = <String, List<MovementCommandExecution>>{};
+  for (final execution in executions) {
+    byUnitId.putIfAbsent(execution.unitId, () => []).add(execution);
+  }
+  expect(moved, hasLength(byUnitId.length));
+  for (final entry in byUnitId.entries) {
+    final first = entry.value.first;
+    final last = entry.value.last;
+    expect(
+      moved
+          .where(
+            (event) =>
+                event.unitId == entry.key &&
+                event.fromCol == first.fromCol &&
+                event.fromRow == first.fromRow &&
+                event.toCol == last.destination.col &&
+                event.toRow == last.destination.row,
+          )
+          .length,
+      1,
+    );
+  }
 }
 
 _ParityResult _resolveBoth({

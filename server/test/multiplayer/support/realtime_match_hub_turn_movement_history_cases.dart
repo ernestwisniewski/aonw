@@ -54,7 +54,7 @@ Future<void> _timeoutPersistsAndBroadcastsTurnMovements() async {
                 .length,
           )
           .toList(),
-      [1, 1, 0],
+      [2, 2, 0],
     );
     for (final message in messages) {
       expect(

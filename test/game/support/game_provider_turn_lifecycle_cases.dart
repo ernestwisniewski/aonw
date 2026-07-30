@@ -51,10 +51,13 @@ void _registerAtomicEndTurnProviderCase() {
       expect(persisted.units.single.queuedPath, isNull);
       expect(persisted.eventLogOffset, 1);
       expect(presentation.events.whereType<TurnEndedEvent>(), hasLength(1));
+      expect(presentation.events.whereType<UnitMovedEvent>(), hasLength(1));
       expect(
         presentation.uiEffects.whereType<AnimateUnitMoveEffect>(),
-        hasLength(1),
+        isEmpty,
       );
+      expect(presentation.movementExecutions, hasLength(1));
+      expect(presentation.offset, 1);
       expect(
         renderer.handledEffects.whereType<AnimateUnitMoveEffect>(),
         isEmpty,

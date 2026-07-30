@@ -9,7 +9,9 @@ import 'package:aonw/game/presentation/services/hidden_ai_renderer_playback.dart
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
+import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -17,11 +19,19 @@ void main() {
     test('uses hidden presentation for hot-seat AI commands', () async {
       final applied = <_AppliedTransition>[];
       final hiddenCommands = <GameCommand>[];
+      final beforeUnit = GameUnit.produced(
+        id: 'warrior_1',
+        ownerPlayerId: 'ai_1',
+        type: GameUnitType.warrior,
+        col: 2,
+        row: 3,
+      );
       final driver = _driver(
         session: _session(gameMode: GameMode.hotSeat),
-        rendererState: const GameState(
+        rendererState: GameState(
           activePlayerId: 'human',
           activePlayerCanAct: false,
+          units: [beforeUnit],
         ),
         applyTransition: (state, effects) async {
           applied.add(_AppliedTransition(state, effects));
@@ -29,12 +39,29 @@ void main() {
         hiddenDispatch:
             ({required saveId, required command, required context}) async {
               hiddenCommands.add(command);
-              return const DispatchCommandResult(
+              return DispatchCommandResult(
                 state: GameState(
                   activePlayerId: 'ai_1',
                   activePlayerCanAct: false,
+                  units: [beforeUnit.copyWith(col: 3)],
                 ),
-                uiEffects: [_commandMove],
+                events: const [
+                  UnitMovedEvent(
+                    unitId: 'warrior_1',
+                    fromCol: 2,
+                    fromRow: 3,
+                    toCol: 3,
+                    toRow: 3,
+                  ),
+                ],
+                movementExecutions: [
+                  MovementCommandExecution(
+                    unitId: 'warrior_1',
+                    fromCol: 2,
+                    fromRow: 3,
+                    steps: _commandMoveSteps,
+                  ),
+                ],
               );
             },
       );
@@ -54,7 +81,11 @@ void main() {
       expect(result.state.activePlayerCanAct, isTrue);
       expect(applied, hasLength(1));
       expect(applied.single.state.activePlayerId, 'human');
-      expect(applied.single.effects, const [_commandMove]);
+      final move = applied.single.effects.single as AnimateUnitMoveEffect;
+      expect(move.unitId, _commandMove.unitId);
+      expect(move.fromCol, _commandMove.fromCol);
+      expect(move.fromRow, _commandMove.fromRow);
+      expect(move.steps, _commandMove.steps);
     });
 
     test('uses hidden presentation for multiplayer AI commands', () async {
@@ -206,6 +237,9 @@ const _commandMove = AnimateUnitMoveEffect(
   fromRow: 3,
   steps: [UnitMovementStep(col: 3, row: 3, enterCost: 1, cumulativeCost: 1)],
 );
+const _commandMoveSteps = [
+  UnitMovementStep(col: 3, row: 3, enterCost: 1, cumulativeCost: 1),
+];
 
 final class _AppliedTransition {
   final GameState state;

@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
+import 'package:aonw_core/game/domain/event/artifact_event_serialization.dart';
 import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/stability/stability_band.dart';
@@ -12,436 +13,434 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_core/util/wire_json.dart';
 
 abstract final class GameEventSerializer {
-  static Map<String, dynamic> toJson(GameEvent event) => switch (event) {
-    CityFoundedEvent(:final cityId, :final ownerPlayerId) => {
-      'type': 'CityFounded',
-      'cityId': cityId,
-      'ownerPlayerId': ownerPlayerId,
-    },
-    CityBuiltBuildingEvent(:final cityId, :final buildingType) => {
-      'type': 'CityBuiltBuilding',
-      'cityId': cityId,
-      'buildingType': buildingType.name,
-    },
-    CityBuiltWonderEvent(
-      :final cityId,
-      :final ownerPlayerId,
-      :final wonderType,
-    ) =>
-      {
-        'type': 'CityBuiltWonder',
+  static Map<String, dynamic> toJson(GameEvent event) {
+    return switch (event) {
+      WorldEntityLifecycleEvent() => ArtifactEventSerializer.toJson(event),
+      CityBuiltBuildingEvent(:final cityId, :final buildingType) => {
+        'type': 'CityBuiltBuilding',
         'cityId': cityId,
-        'ownerPlayerId': ownerPlayerId,
-        'wonderType': wonderType.name,
+        'buildingType': buildingType.name,
       },
-    WonderProductionRefundedEvent(
-      :final cityId,
-      :final ownerPlayerId,
-      :final wonderType,
-      :final refundedProduction,
-    ) =>
-      {
-        'type': 'WonderProductionRefunded',
+      CityBuiltWonderEvent(
+        :final cityId,
+        :final ownerPlayerId,
+        :final wonderType,
+      ) =>
+        {
+          'type': 'CityBuiltWonder',
+          'cityId': cityId,
+          'ownerPlayerId': ownerPlayerId,
+          'wonderType': wonderType.name,
+        },
+      WonderProductionRefundedEvent(
+        :final cityId,
+        :final ownerPlayerId,
+        :final wonderType,
+        :final refundedProduction,
+      ) =>
+        {
+          'type': 'WonderProductionRefunded',
+          'cityId': cityId,
+          'ownerPlayerId': ownerPlayerId,
+          'wonderType': wonderType.name,
+          'refundedProduction': refundedProduction,
+        },
+      CityProducedUnitEvent(
+        :final cityId,
+        :final unitType,
+        :final producedUnitId,
+      ) =>
+        {
+          'type': 'CityProducedUnit',
+          'cityId': cityId,
+          'unitType': unitType.name,
+          'producedUnitId': producedUnitId,
+        },
+      CityClaimedHexEvent(:final cityId, :final col, :final row) => {
+        'type': 'CityClaimedHex',
         'cityId': cityId,
-        'ownerPlayerId': ownerPlayerId,
-        'wonderType': wonderType.name,
-        'refundedProduction': refundedProduction,
-      },
-    CityProducedUnitEvent(
-      :final cityId,
-      :final unitType,
-      :final producedUnitId,
-    ) =>
-      {
-        'type': 'CityProducedUnit',
-        'cityId': cityId,
-        'unitType': unitType.name,
-        'producedUnitId': producedUnitId,
-      },
-    CityClaimedHexEvent(:final cityId, :final col, :final row) => {
-      'type': 'CityClaimedHex',
-      'cityId': cityId,
-      'col': col,
-      'row': row,
-    },
-    UnitMovedEvent(
-      :final unitId,
-      :final fromCol,
-      :final fromRow,
-      :final toCol,
-      :final toRow,
-    ) =>
-      {
-        'type': 'UnitMoved',
-        'unitId': unitId,
-        'fromCol': fromCol,
-        'fromRow': fromRow,
-        'toCol': toCol,
-        'toRow': toRow,
-      },
-    UnitGainedExperienceEvent(
-      :final unitId,
-      :final ownerPlayerId,
-      :final amount,
-      :final totalExperience,
-      :final rank,
-      :final promoted,
-    ) =>
-      {
-        'type': 'UnitGainedExperience',
-        'unitId': unitId,
-        'ownerPlayerId': ownerPlayerId,
-        'amount': amount,
-        'totalExperience': totalExperience,
-        'rank': rank.name,
-        'promoted': promoted,
-      },
-    UnitAttackedEvent(
-      :final attackerUnitId,
-      :final attackerOwnerPlayerId,
-      :final defenderUnitId,
-      :final defenderOwnerPlayerId,
-    ) =>
-      {
-        'type': 'UnitAttacked',
-        'attackerUnitId': attackerUnitId,
-        'attackerOwnerPlayerId': attackerOwnerPlayerId,
-        'defenderUnitId': defenderUnitId,
-        'defenderOwnerPlayerId': defenderOwnerPlayerId,
-      },
-    CombatResolvedEvent(
-      :final attackerUnitId,
-      :final defenderUnitId,
-      :final outcome,
-    ) =>
-      {
-        'type': 'CombatResolved',
-        'attackerUnitId': attackerUnitId,
-        'defenderUnitId': defenderUnitId,
-        'outcome': CombatOutcomeSerializer.toJson(outcome),
-      },
-    UnitKilledEvent(
-      :final unitId,
-      :final ownerPlayerId,
-      :final attackerUnitId,
-    ) =>
-      {
-        'type': 'UnitKilled',
-        'unitId': unitId,
-        'ownerPlayerId': ownerPlayerId,
-        'attackerUnitId': ?attackerUnitId,
-      },
-    UnitRetreatedEvent(
-      :final unitId,
-      :final ownerPlayerId,
-      :final fromCol,
-      :final fromRow,
-      :final toCol,
-      :final toRow,
-    ) =>
-      {
-        'type': 'UnitRetreated',
-        'unitId': unitId,
-        'ownerPlayerId': ownerPlayerId,
-        'fromCol': fromCol,
-        'fromRow': fromRow,
-        'toCol': toCol,
-        'toRow': toRow,
-      },
-    CityAttackedEvent(
-      :final attackerUnitId,
-      :final attackerOwnerPlayerId,
-      :final cityId,
-      :final cityOwnerPlayerId,
-    ) =>
-      {
-        'type': 'CityAttacked',
-        'attackerUnitId': attackerUnitId,
-        'attackerOwnerPlayerId': attackerOwnerPlayerId,
-        'cityId': cityId,
-        'cityOwnerPlayerId': cityOwnerPlayerId,
-      },
-    CityCapturedEvent(
-      :final cityId,
-      :final previousOwnerPlayerId,
-      :final newOwnerPlayerId,
-    ) =>
-      {
-        'type': 'CityCaptured',
-        'cityId': cityId,
-        'previousOwnerPlayerId': previousOwnerPlayerId,
-        'newOwnerPlayerId': newOwnerPlayerId,
-      },
-    CityDestroyedEvent(
-      :final cityId,
-      :final previousOwnerPlayerId,
-      :final attackerOwnerPlayerId,
-    ) =>
-      {
-        'type': 'CityDestroyed',
-        'cityId': cityId,
-        'previousOwnerPlayerId': previousOwnerPlayerId,
-        'attackerOwnerPlayerId': attackerOwnerPlayerId,
-      },
-    TurnEndedEvent(:final playerId) => {
-      'type': 'TurnEnded',
-      'playerId': playerId,
-    },
-    StabilityBandChangedEvent(
-      :final playerId,
-      :final previousBand,
-      :final newBand,
-      :final net,
-    ) =>
-      {
-        'type': 'StabilityBandChanged',
-        'playerId': playerId,
-        'previousBand': previousBand.name,
-        'newBand': newBand.name,
-        'net': net,
-      },
-    WorkerCompletedJobEvent(:final unitId) => {
-      'type': 'WorkerCompletedJob',
-      'unitId': unitId,
-    },
-    DominationThresholdReachedEvent(
-      :final playerId,
-      :final controlPercent,
-      :final requiredControlPercent,
-      :final holdTurns,
-      :final requiredHoldTurns,
-    ) =>
-      {
-        'type': 'DominationThresholdReached',
-        'playerId': playerId,
-        'controlPercent': controlPercent,
-        'requiredControlPercent': requiredControlPercent,
-        'holdTurns': holdTurns,
-        'requiredHoldTurns': requiredHoldTurns,
-      },
-    ResearchPointsGainedEvent(:final playerId, :final points) => {
-      'type': 'ResearchPointsGained',
-      'playerId': playerId,
-      'points': points,
-    },
-    TechnologyResearchedEvent(:final playerId, :final technologyId) => {
-      'type': 'TechnologyResearched',
-      'playerId': playerId,
-      'technologyId': technologyId.name,
-    },
-    StrategicResourceDiscoveredEvent(
-      :final playerId,
-      :final resourceType,
-      :final controlledCount,
-      :final rivalControlledCount,
-      :final unclaimedCount,
-      :final pressure,
-      :final nearestUnclaimedCol,
-      :final nearestUnclaimedRow,
-    ) =>
-      {
-        'type': 'StrategicResourceDiscovered',
-        'playerId': playerId,
-        'resourceType': resourceType.name,
-        'controlledCount': controlledCount,
-        'rivalControlledCount': rivalControlledCount,
-        'unclaimedCount': unclaimedCount,
-        'pressure': pressure.name,
-        'nearestUnclaimedCol': ?nearestUnclaimedCol,
-        'nearestUnclaimedRow': ?nearestUnclaimedRow,
-      },
-    MapObjectiveSecuredEvent(
-      :final playerId,
-      :final objectiveId,
-      :final objectiveType,
-      :final col,
-      :final row,
-      :final holdTurns,
-      :final requiredHoldTurns,
-      :final victoryPoints,
-      :final goldPerTurn,
-    ) =>
-      {
-        'type': 'MapObjectiveSecured',
-        'playerId': playerId,
-        'objectiveId': objectiveId,
-        'objectiveType': objectiveType.name,
         'col': col,
         'row': row,
-        'holdTurns': holdTurns,
-        'requiredHoldTurns': requiredHoldTurns,
-        'victoryPoints': victoryPoints,
-        'goldPerTurn': goldPerTurn,
       },
-    CivilizationMetEvent(:final playerId, :final metPlayerId) => {
-      'type': 'CivilizationMet',
-      'playerId': playerId,
-      'metPlayerId': metPlayerId,
-    },
-    DiplomaticProposalSentEvent(
-      :final proposalId,
-      :final fromPlayerId,
-      :final toPlayerId,
-      :final kind,
-      :final expiresOnTurn,
-    ) =>
-      {
-        'type': 'DiplomaticProposalSent',
-        'proposalId': proposalId,
-        'fromPlayerId': fromPlayerId,
-        'toPlayerId': toPlayerId,
-        'kind': kind.name,
-        'expiresOnTurn': expiresOnTurn,
+      UnitMovedEvent(
+        :final unitId,
+        :final fromCol,
+        :final fromRow,
+        :final toCol,
+        :final toRow,
+      ) =>
+        {
+          'type': 'UnitMoved',
+          'unitId': unitId,
+          'fromCol': fromCol,
+          'fromRow': fromRow,
+          'toCol': toCol,
+          'toRow': toRow,
+        },
+      UnitGainedExperienceEvent(
+        :final unitId,
+        :final ownerPlayerId,
+        :final amount,
+        :final totalExperience,
+        :final rank,
+        :final promoted,
+      ) =>
+        {
+          'type': 'UnitGainedExperience',
+          'unitId': unitId,
+          'ownerPlayerId': ownerPlayerId,
+          'amount': amount,
+          'totalExperience': totalExperience,
+          'rank': rank.name,
+          'promoted': promoted,
+        },
+      UnitAttackedEvent(
+        :final attackerUnitId,
+        :final attackerOwnerPlayerId,
+        :final defenderUnitId,
+        :final defenderOwnerPlayerId,
+      ) =>
+        {
+          'type': 'UnitAttacked',
+          'attackerUnitId': attackerUnitId,
+          'attackerOwnerPlayerId': attackerOwnerPlayerId,
+          'defenderUnitId': defenderUnitId,
+          'defenderOwnerPlayerId': defenderOwnerPlayerId,
+        },
+      CombatResolvedEvent(
+        :final attackerUnitId,
+        :final defenderUnitId,
+        :final outcome,
+      ) =>
+        {
+          'type': 'CombatResolved',
+          'attackerUnitId': attackerUnitId,
+          'defenderUnitId': defenderUnitId,
+          'outcome': CombatOutcomeSerializer.toJson(outcome),
+        },
+      UnitKilledEvent(
+        :final unitId,
+        :final ownerPlayerId,
+        :final attackerUnitId,
+      ) =>
+        {
+          'type': 'UnitKilled',
+          'unitId': unitId,
+          'ownerPlayerId': ownerPlayerId,
+          'attackerUnitId': ?attackerUnitId,
+        },
+      UnitRetreatedEvent(
+        :final unitId,
+        :final ownerPlayerId,
+        :final fromCol,
+        :final fromRow,
+        :final toCol,
+        :final toRow,
+      ) =>
+        {
+          'type': 'UnitRetreated',
+          'unitId': unitId,
+          'ownerPlayerId': ownerPlayerId,
+          'fromCol': fromCol,
+          'fromRow': fromRow,
+          'toCol': toCol,
+          'toRow': toRow,
+        },
+      CityAttackedEvent(
+        :final attackerUnitId,
+        :final attackerOwnerPlayerId,
+        :final cityId,
+        :final cityOwnerPlayerId,
+      ) =>
+        {
+          'type': 'CityAttacked',
+          'attackerUnitId': attackerUnitId,
+          'attackerOwnerPlayerId': attackerOwnerPlayerId,
+          'cityId': cityId,
+          'cityOwnerPlayerId': cityOwnerPlayerId,
+        },
+      CityCapturedEvent(
+        :final cityId,
+        :final previousOwnerPlayerId,
+        :final newOwnerPlayerId,
+      ) =>
+        {
+          'type': 'CityCaptured',
+          'cityId': cityId,
+          'previousOwnerPlayerId': previousOwnerPlayerId,
+          'newOwnerPlayerId': newOwnerPlayerId,
+        },
+      CityDestroyedEvent(
+        :final cityId,
+        :final previousOwnerPlayerId,
+        :final attackerOwnerPlayerId,
+      ) =>
+        {
+          'type': 'CityDestroyed',
+          'cityId': cityId,
+          'previousOwnerPlayerId': previousOwnerPlayerId,
+          'attackerOwnerPlayerId': attackerOwnerPlayerId,
+        },
+      TurnEndedEvent(:final playerId) => {
+        'type': 'TurnEnded',
+        'playerId': playerId,
       },
-    DiplomaticProposalRespondedEvent(
-      :final proposalId,
-      :final fromPlayerId,
-      :final toPlayerId,
-      :final kind,
-      :final accepted,
-    ) =>
-      {
-        'type': 'DiplomaticProposalResponded',
-        'proposalId': proposalId,
-        'fromPlayerId': fromPlayerId,
-        'toPlayerId': toPlayerId,
-        'kind': kind.name,
-        'accepted': accepted,
+      StabilityBandChangedEvent(
+        :final playerId,
+        :final previousBand,
+        :final newBand,
+        :final net,
+      ) =>
+        {
+          'type': 'StabilityBandChanged',
+          'playerId': playerId,
+          'previousBand': previousBand.name,
+          'newBand': newBand.name,
+          'net': net,
+        },
+      WorkerCompletedJobEvent(:final unitId) => {
+        'type': 'WorkerCompletedJob',
+        'unitId': unitId,
       },
-    DiplomaticProposalExpiredEvent(
-      :final proposalId,
-      :final fromPlayerId,
-      :final toPlayerId,
-      :final kind,
-    ) =>
-      {
-        'type': 'DiplomaticProposalExpired',
-        'proposalId': proposalId,
-        'fromPlayerId': fromPlayerId,
-        'toPlayerId': toPlayerId,
-        'kind': kind.name,
+      DominationThresholdReachedEvent(
+        :final playerId,
+        :final controlPercent,
+        :final requiredControlPercent,
+        :final holdTurns,
+        :final requiredHoldTurns,
+      ) =>
+        {
+          'type': 'DominationThresholdReached',
+          'playerId': playerId,
+          'controlPercent': controlPercent,
+          'requiredControlPercent': requiredControlPercent,
+          'holdTurns': holdTurns,
+          'requiredHoldTurns': requiredHoldTurns,
+        },
+      ResearchPointsGainedEvent(:final playerId, :final points) => {
+        'type': 'ResearchPointsGained',
+        'playerId': playerId,
+        'points': points,
       },
-    DiplomaticRelationChangedEvent(
-      :final playerAId,
-      :final playerBId,
-      :final oldStatus,
-      :final newStatus,
-      :final reason,
-      :final expiresOnTurn,
-    ) =>
-      {
-        'type': 'DiplomaticRelationChanged',
-        'playerAId': playerAId,
-        'playerBId': playerBId,
-        'oldStatus': oldStatus.name,
-        'newStatus': newStatus.name,
-        'reason': reason.name,
-        'expiresOnTurn': ?expiresOnTurn,
+      TechnologyResearchedEvent(:final playerId, :final technologyId) => {
+        'type': 'TechnologyResearched',
+        'playerId': playerId,
+        'technologyId': technologyId.name,
       },
-    DiplomaticMessageSentEvent(
-      :final messageId,
-      :final fromPlayerId,
-      :final toPlayerId,
-      :final topic,
-      :final category,
-      :final expiresOnTurn,
-    ) =>
-      {
-        'type': 'DiplomaticMessageSent',
-        'messageId': messageId,
-        'fromPlayerId': fromPlayerId,
-        'toPlayerId': toPlayerId,
-        'topic': topic.name,
-        'category': category.name,
-        'expiresOnTurn': expiresOnTurn,
+      StrategicResourceDiscoveredEvent(
+        :final playerId,
+        :final resourceType,
+        :final controlledCount,
+        :final rivalControlledCount,
+        :final unclaimedCount,
+        :final pressure,
+        :final nearestUnclaimedCol,
+        :final nearestUnclaimedRow,
+      ) =>
+        {
+          'type': 'StrategicResourceDiscovered',
+          'playerId': playerId,
+          'resourceType': resourceType.name,
+          'controlledCount': controlledCount,
+          'rivalControlledCount': rivalControlledCount,
+          'unclaimedCount': unclaimedCount,
+          'pressure': pressure.name,
+          'nearestUnclaimedCol': ?nearestUnclaimedCol,
+          'nearestUnclaimedRow': ?nearestUnclaimedRow,
+        },
+      MapObjectiveSecuredEvent(
+        :final playerId,
+        :final objectiveId,
+        :final objectiveType,
+        :final col,
+        :final row,
+        :final holdTurns,
+        :final requiredHoldTurns,
+        :final victoryPoints,
+        :final goldPerTurn,
+      ) =>
+        {
+          'type': 'MapObjectiveSecured',
+          'playerId': playerId,
+          'objectiveId': objectiveId,
+          'objectiveType': objectiveType.name,
+          'col': col,
+          'row': row,
+          'holdTurns': holdTurns,
+          'requiredHoldTurns': requiredHoldTurns,
+          'victoryPoints': victoryPoints,
+          'goldPerTurn': goldPerTurn,
+        },
+      CivilizationMetEvent(:final playerId, :final metPlayerId) => {
+        'type': 'CivilizationMet',
+        'playerId': playerId,
+        'metPlayerId': metPlayerId,
       },
-    DiplomaticMessageRespondedEvent(
-      :final messageId,
-      :final fromPlayerId,
-      :final toPlayerId,
-      :final topic,
-      :final response,
-      :final relationDelta,
-      :final relationScoreAfter,
-      :final promiseDueTurn,
-    ) =>
-      {
-        'type': 'DiplomaticMessageResponded',
-        'messageId': messageId,
-        'fromPlayerId': fromPlayerId,
-        'toPlayerId': toPlayerId,
-        'topic': topic.name,
-        'response': response.name,
-        'relationDelta': relationDelta,
-        'relationScoreAfter': relationScoreAfter,
-        'promiseDueTurn': ?promiseDueTurn,
-      },
-    DiplomaticScoreChangedEvent(
-      :final playerAId,
-      :final playerBId,
-      :final delta,
-      :final scoreAfter,
-      :final reason,
-      :final sourceId,
-    ) =>
-      {
-        'type': 'DiplomaticScoreChanged',
-        'playerAId': playerAId,
-        'playerBId': playerBId,
-        'delta': delta,
-        'scoreAfter': scoreAfter,
-        'reason': reason.name,
-        'sourceId': ?sourceId,
-      },
-    DiplomaticPromiseBrokenEvent(
-      :final messageId,
-      :final playerAId,
-      :final playerBId,
-      :final delta,
-      :final scoreAfter,
-    ) =>
-      {
-        'type': 'DiplomaticPromiseBroken',
-        'messageId': messageId,
-        'playerAId': playerAId,
-        'playerBId': playerBId,
-        'delta': delta,
-        'scoreAfter': scoreAfter,
-      },
-    CommandRejectedEvent(:final reason) => SystemEventWire.commandRejected(
-      reason: reason,
-    ),
-    AllPlayersSubmittedEvent(:final turn, :final playerIds) =>
-      SystemEventWire.allPlayersSubmitted(turn: turn, playerIds: playerIds),
-    PlayerTimedOutEvent(:final turn, :final playerId) =>
-      SystemEventWire.playerTimedOut(turn: turn, playerId: playerId),
-    TurnAutoResolvedEvent(
-      :final turn,
-      :final playerId,
-      :final unitOrderCount,
-      :final cityProductionCount,
-      :final researchSelected,
-    ) =>
-      SystemEventWire.turnAutoResolved(
-        turn: turn,
-        playerId: playerId,
-        unitOrderCount: unitOrderCount,
-        cityProductionCount: cityProductionCount,
-        researchSelected: researchSelected,
-      ),
-    PlayerKickedEvent(
-      :final turn,
-      :final playerId,
-      :final reason,
-      :final timeoutStreak,
-    ) =>
-      SystemEventWire.playerKicked(
-        turn: turn,
-        playerId: playerId,
+      DiplomaticProposalSentEvent(
+        :final proposalId,
+        :final fromPlayerId,
+        :final toPlayerId,
+        :final kind,
+        :final expiresOnTurn,
+      ) =>
+        {
+          'type': 'DiplomaticProposalSent',
+          'proposalId': proposalId,
+          'fromPlayerId': fromPlayerId,
+          'toPlayerId': toPlayerId,
+          'kind': kind.name,
+          'expiresOnTurn': expiresOnTurn,
+        },
+      DiplomaticProposalRespondedEvent(
+        :final proposalId,
+        :final fromPlayerId,
+        :final toPlayerId,
+        :final kind,
+        :final accepted,
+      ) =>
+        {
+          'type': 'DiplomaticProposalResponded',
+          'proposalId': proposalId,
+          'fromPlayerId': fromPlayerId,
+          'toPlayerId': toPlayerId,
+          'kind': kind.name,
+          'accepted': accepted,
+        },
+      DiplomaticProposalExpiredEvent(
+        :final proposalId,
+        :final fromPlayerId,
+        :final toPlayerId,
+        :final kind,
+      ) =>
+        {
+          'type': 'DiplomaticProposalExpired',
+          'proposalId': proposalId,
+          'fromPlayerId': fromPlayerId,
+          'toPlayerId': toPlayerId,
+          'kind': kind.name,
+        },
+      DiplomaticRelationChangedEvent(
+        :final playerAId,
+        :final playerBId,
+        :final oldStatus,
+        :final newStatus,
+        :final reason,
+        :final expiresOnTurn,
+      ) =>
+        {
+          'type': 'DiplomaticRelationChanged',
+          'playerAId': playerAId,
+          'playerBId': playerBId,
+          'oldStatus': oldStatus.name,
+          'newStatus': newStatus.name,
+          'reason': reason.name,
+          'expiresOnTurn': ?expiresOnTurn,
+        },
+      DiplomaticMessageSentEvent(
+        :final messageId,
+        :final fromPlayerId,
+        :final toPlayerId,
+        :final topic,
+        :final category,
+        :final expiresOnTurn,
+      ) =>
+        {
+          'type': 'DiplomaticMessageSent',
+          'messageId': messageId,
+          'fromPlayerId': fromPlayerId,
+          'toPlayerId': toPlayerId,
+          'topic': topic.name,
+          'category': category.name,
+          'expiresOnTurn': expiresOnTurn,
+        },
+      DiplomaticMessageRespondedEvent(
+        :final messageId,
+        :final fromPlayerId,
+        :final toPlayerId,
+        :final topic,
+        :final response,
+        :final relationDelta,
+        :final relationScoreAfter,
+        :final promiseDueTurn,
+      ) =>
+        {
+          'type': 'DiplomaticMessageResponded',
+          'messageId': messageId,
+          'fromPlayerId': fromPlayerId,
+          'toPlayerId': toPlayerId,
+          'topic': topic.name,
+          'response': response.name,
+          'relationDelta': relationDelta,
+          'relationScoreAfter': relationScoreAfter,
+          'promiseDueTurn': ?promiseDueTurn,
+        },
+      DiplomaticScoreChangedEvent(
+        :final playerAId,
+        :final playerBId,
+        :final delta,
+        :final scoreAfter,
+        :final reason,
+        :final sourceId,
+      ) =>
+        {
+          'type': 'DiplomaticScoreChanged',
+          'playerAId': playerAId,
+          'playerBId': playerBId,
+          'delta': delta,
+          'scoreAfter': scoreAfter,
+          'reason': reason.name,
+          'sourceId': ?sourceId,
+        },
+      DiplomaticPromiseBrokenEvent(
+        :final messageId,
+        :final playerAId,
+        :final playerBId,
+        :final delta,
+        :final scoreAfter,
+      ) =>
+        {
+          'type': 'DiplomaticPromiseBroken',
+          'messageId': messageId,
+          'playerAId': playerAId,
+          'playerBId': playerBId,
+          'delta': delta,
+          'scoreAfter': scoreAfter,
+        },
+      CommandRejectedEvent(:final reason) => SystemEventWire.commandRejected(
         reason: reason,
-        timeoutStreak: timeoutStreak,
       ),
-  };
+      AllPlayersSubmittedEvent(:final turn, :final playerIds) =>
+        SystemEventWire.allPlayersSubmitted(turn: turn, playerIds: playerIds),
+      PlayerTimedOutEvent(:final turn, :final playerId) =>
+        SystemEventWire.playerTimedOut(turn: turn, playerId: playerId),
+      TurnAutoResolvedEvent(
+        :final turn,
+        :final playerId,
+        :final unitOrderCount,
+        :final cityProductionCount,
+        :final researchSelected,
+      ) =>
+        SystemEventWire.turnAutoResolved(
+          turn: turn,
+          playerId: playerId,
+          unitOrderCount: unitOrderCount,
+          cityProductionCount: cityProductionCount,
+          researchSelected: researchSelected,
+        ),
+      PlayerKickedEvent(
+        :final turn,
+        :final playerId,
+        :final reason,
+        :final timeoutStreak,
+      ) =>
+        SystemEventWire.playerKicked(
+          turn: turn,
+          playerId: playerId,
+          reason: reason,
+          timeoutStreak: timeoutStreak,
+        ),
+    };
+  }
 
   static GameEvent fromJson(Map<String, dynamic> json) {
     final event = tryFromJson(json);
@@ -453,11 +452,9 @@ abstract final class GameEventSerializer {
 
   static GameEvent? tryFromJson(Map<String, dynamic> json) {
     final type = requiredStringField(json, 'GameEvent', 'type');
+    final artifact = ArtifactEventSerializer.tryFromJson(json, type);
+    if (artifact != null) return artifact;
     return switch (type) {
-      'CityFounded' => CityFoundedEvent(
-        cityId: requiredStringField(json, type, 'cityId'),
-        ownerPlayerId: requiredStringField(json, type, 'ownerPlayerId'),
-      ),
       'CityBuiltBuilding' => CityBuiltBuildingEvent(
         cityId: requiredStringField(json, type, 'cityId'),
         buildingType: requiredEnumField(

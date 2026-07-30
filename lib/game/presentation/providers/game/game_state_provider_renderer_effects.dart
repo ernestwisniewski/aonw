@@ -6,7 +6,7 @@ extension GameStateNotifierRendererEffects on GameStateNotifier {
     required GameState nextState,
     required List<GameEvent> events,
     required List<MovementCommandExecution> movementExecutions,
-    required List<CombatAnimationFact> combatAnimations,
+    required PresentationBatchIdentity identity,
     required String? viewerPlayerId,
     required int turn,
     required RendererViewModel? renderer,
@@ -15,18 +15,20 @@ extension GameStateNotifierRendererEffects on GameStateNotifier {
     required bool Function() isMounted,
   }) async {
     if (previousState == null) return;
-    final transitionEffects = ExternalSnapshotRendererEffectResolver.resolve(
-      previousState: previousState,
-      nextState: nextState,
-      events: events,
-      movementExecutions: movementExecutions,
-      combatAnimations: combatAnimations,
-      viewerPlayerId: viewerPlayerId,
-      turn: _eventTurnFor(events, fallbackTurn: turn),
-    );
+    final transitionEffects =
+        DomainEventPresentationProjector.projectObservedBatch(
+          identity: identity,
+          interactionEffects: const [],
+          previousState: previousState,
+          state: nextState,
+          events: events,
+          visibleMovementExecutions: movementExecutions,
+          viewerPlayerId: viewerPlayerId,
+          turn: _eventTurnFor(events, fallbackTurn: turn),
+        );
     final cues = [
       ...GameSoundCueMapper.forRendererEffects(
-        effects: transitionEffects,
+        effects: transitionEffects.effects,
         state: nextState,
         previousState: previousState,
       ),
@@ -40,7 +42,7 @@ extension GameStateNotifierRendererEffects on GameStateNotifier {
       audioController.playAll(cues);
     }
     if (renderer != null) {
-      await renderer.applyTransition(
+      await renderer.applyProjectedTransition(
         nextState,
         transitionEffects,
         currentTurn: turn,
@@ -62,4 +64,18 @@ extension GameStateNotifierRendererEffects on GameStateNotifier {
     }
     return fallbackTurn;
   }
+}
+
+PresentationBatchIdentity _liveBatchIdentity(String sourceId, int eventOffset) {
+  return PresentationBatchIdentity(
+    sourceId: sourceId,
+    eventOffset: eventOffset,
+  );
+}
+
+List<GameEvent> _presentedLiveEvents(
+  LiveSnapshotPresentationDecision presentation,
+  LiveServerEvent? liveEvent,
+) {
+  return _presentedLiveEvent(presentation, liveEvent)?.events ?? const [];
 }

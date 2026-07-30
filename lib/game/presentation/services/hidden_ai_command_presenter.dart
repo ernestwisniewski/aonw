@@ -32,6 +32,7 @@ final class HiddenAiCommandPresenter {
   });
 
   Future<DispatchCommandResult> dispatchAndPresent({
+    String sourceId = 'hidden-ai-preview',
     required GameState currentState,
     required GameCommand command,
     required GameCommandContext context,
@@ -47,7 +48,9 @@ final class HiddenAiCommandPresenter {
         commandState: result.state,
         uiEffects: result.uiEffects,
         events: result.events,
-        combatAnimations: result.combatAnimations,
+        sourceId: sourceId,
+        eventOffset: result.offset,
+        movementExecutions: result.movementExecutions,
         turn: _eventTurnFor(result),
       );
     }
@@ -60,6 +63,7 @@ final class HiddenAiCommandPresenter {
       uiEffects: result.uiEffects,
       events: result.events,
       combatAnimations: result.combatAnimations,
+      movementExecutions: result.movementExecutions,
       snapshot: result.snapshot,
       offset: result.offset,
       storedSnapshot: result.storedSnapshot,

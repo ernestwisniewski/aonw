@@ -1,14 +1,17 @@
 import 'package:aonw_core/game/domain/artifact/artifact_turn_processor.dart';
+import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/state.dart';
 
 final class PersistentArtifactTurnResult {
   const PersistentArtifactTurnResult({
     required this.state,
     this.changed = false,
+    this.events = const [],
   });
 
   final PersistentGameState state;
   final bool changed;
+  final List<DomainEvent> events;
 }
 
 abstract final class PersistentArtifactTurnProcessor {
@@ -25,6 +28,7 @@ abstract final class PersistentArtifactTurnProcessor {
     return PersistentArtifactTurnResult(
       state: state.copyWith(units: result.units, artifacts: result.artifacts),
       changed: true,
+      events: result.events,
     );
   }
 }

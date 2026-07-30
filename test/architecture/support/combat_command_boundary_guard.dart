@@ -25,18 +25,12 @@ const combatAnimationFactCodecPath =
     'packages/aonw_core/lib/game/application/engine/'
     'combat_animation_fact_codec.dart';
 const combatEventCodecPath = 'lib/api/protocol/codecs.dart';
-const combatAnimationFactUpcasterPath =
-    'lib/game/presentation/replay/'
-    'historical_combat_animation_fact_upcaster.dart';
+const combatDomainEventProjectorPath =
+    'lib/game/presentation/engine/domain_event_presentation_projector.dart';
 const combatReplayEffectPlannerPath =
     'lib/game/presentation/replay/replay_renderer_effect_planner.dart';
-const combatRendererSequenceBuilderPath =
-    'lib/game/presentation/engine/game_renderer_effect_sequence_builder.dart';
-const combatExternalSnapshotResolverPath =
-    'lib/game/presentation/providers/game/'
-    'external_snapshot_renderer_effect_resolver.dart';
 const combatGameActionsProviderPath =
-    'lib/game/presentation/providers/game/game_actions_provider.dart';
+    'lib/game/presentation/engine/command_dispatch_presentation_projector.dart';
 const combatHiddenAiPlaybackPath =
     'lib/game/presentation/services/hidden_ai_renderer_playback.dart';
 const combatGameStateRendererEffectsPath =

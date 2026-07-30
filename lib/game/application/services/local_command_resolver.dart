@@ -5,7 +5,6 @@ import 'package:aonw/game/application/services/local_movement_command_resolver.d
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
 import 'package:aonw/game/application/services/local_research_diplomacy_command_resolver.dart';
 import 'package:aonw/game/application/services/local_unit_action_command_resolver.dart';
-import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/game_state_conversions.dart';
@@ -14,6 +13,7 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 
 part 'local_command_resolver_research_diplomacy.dart';
 
@@ -23,6 +23,7 @@ class LocalCommandResolution {
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
   final List<CombatAnimationFact> combatAnimations;
+  final List<MovementCommandExecution> movementExecutions;
   final GameCommandContext context;
 
   const LocalCommandResolution({
@@ -32,6 +33,7 @@ class LocalCommandResolution {
     required this.uiEffects,
     required this.context,
     this.combatAnimations = const [],
+    this.movementExecutions = const [],
   });
 }
 
@@ -236,11 +238,8 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
       snapshot: projection.snapshot.withGameState(nextState),
       state: nextState,
       events: accepted.events,
-      uiEffects: QueuedMovementEffectBuilder.fromExecutions(
-        movement.executions,
-        beforeUnits: movement.beforeUnits,
-        afterUnits: movement.afterUnits,
-      ),
+      uiEffects: const [],
+      movementExecutions: movement.executions,
       context: context,
     );
   }
@@ -354,6 +353,7 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
       state: movement.state,
       events: movement.events,
       uiEffects: movement.uiEffects,
+      movementExecutions: movement.movementExecutions,
       context: context,
     );
   }

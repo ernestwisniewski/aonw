@@ -348,6 +348,16 @@
         "turnStartedAt": "2026-01-02T01:02:03.000Z"
       }
     },
-    "events": []
+    "events": [
+      {
+        "type": "ArtifactStored",
+        "artifactId": "artifact.queensMirror",
+        "ownerPlayerId": "player_1",
+        "unitId": "warrior_1",
+        "cityId": "city_actor",
+        "col": 0,
+        "row": 0
+      }
+    ]
   }
 }

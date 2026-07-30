@@ -8,6 +8,7 @@ void main() {
       final pending = _advanceBoth(input);
 
       expect(pending.neutral.changed, isTrue);
+      expect(pending.neutral.events, isEmpty);
       expect(pending.neutral.artifacts.first.location.remainingTurns, 1);
       expect(pending.neutral.units.first.excavatingArtifactId, 'artifact_1');
       expect(pending.neutral.units.last, input.units.last);
@@ -26,6 +27,14 @@ void main() {
       expect(unit.carriedArtifactId, artifact.id);
       expect(artifact.location.isCarried, isTrue);
       expect(artifact.location.unitId, unit.id);
+      expect(
+        completed.neutral.events.single,
+        isA<ArtifactCarriedEvent>()
+            .having((event) => event.artifactId, 'artifactId', 'artifact_1')
+            .having((event) => event.ownerPlayerId, 'owner', 'p1')
+            .having((event) => event.unitId, 'unit', 'scout_1')
+            .having((event) => (event.col, event.row), 'hex', (0, 0)),
+      );
       expect(() => completed.neutral.units.clear(), throwsUnsupportedError);
       expect(() => completed.neutral.artifacts.clear(), throwsUnsupportedError);
     });
@@ -60,6 +69,7 @@ void main() {
       expect(result.neutral.artifacts.single.location.isOnMap, isTrue);
       expect(result.neutral.artifacts.single.location.col, 0);
       expect(result.neutral.artifacts.single.location.row, 0);
+      expect(result.neutral.events, isEmpty);
     });
 
     test(
@@ -81,6 +91,8 @@ void main() {
         expect(identical(neutral.artifacts, input.artifacts), isTrue);
         expect(persistent.changed, isFalse);
         expect(identical(persistent.state, input), isTrue);
+        expect(neutral.events, isEmpty);
+        expect(persistent.events, isEmpty);
       },
     );
   });

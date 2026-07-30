@@ -1,6 +1,6 @@
 part of 'game_event.dart';
 
-final class CityFoundedEvent extends DomainEvent {
+final class CityFoundedEvent extends WorldEntityLifecycleEvent {
   const CityFoundedEvent({required this.cityId, required this.ownerPlayerId});
   final String cityId;
   final String ownerPlayerId;

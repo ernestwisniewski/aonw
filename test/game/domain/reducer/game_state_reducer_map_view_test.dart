@@ -18,6 +18,7 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../../support/game_intent_test_resolver.dart';
 
 void main() {
   late MapReadView mapView;
@@ -54,7 +55,11 @@ void main() {
         ),
       );
 
-      final inspected = reducer.reduce(initial, const TileTappedCommand(2, 1));
+      final inspected = resolveGameIntent(
+        reducer,
+        initial,
+        const TileTappedCommand(2, 1),
+      );
 
       expect(reducer.mapData, same(mapView));
       expect(inspected.state.selection?.type, GameSelectionType.tile);

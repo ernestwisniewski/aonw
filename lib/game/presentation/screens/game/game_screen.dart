@@ -9,6 +9,7 @@ import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/providers/map/map_inspection_binder.dart';
+import 'package:aonw/game/presentation/screens/game/game_map_vignette_overlay.dart';
 import 'package:aonw/game/presentation/screens/game/game_primary_action_controller.dart';
 import 'package:aonw/game/presentation/screens/game/gamepad_renderer_input_binding.dart';
 import 'package:aonw/game/presentation/widgets.dart';
@@ -192,7 +193,7 @@ class _GameRendererSessionHostState
     final session = widget.session;
     final gameplaySettings = ref.read(gameplaySettingsProvider);
     final mapInspection = MapInspectionBinder(ref: ref, session: session);
-    return GameRenderer(
+    final renderer = GameRenderer(
       mapData: session.mapData,
       imagePath: session.imagePath,
       initialCamera: session.initialCamera,
@@ -231,7 +232,8 @@ class _GameRendererSessionHostState
       followUnitMovementCamera: gameplaySettings.followUnitMovementCamera,
       followEnemyUnitCamera: gameplaySettings.followEnemyUnitCamera,
       cinematicCameraEnabled: gameplaySettings.cinematicCameraEnabled,
-    );
+    )..activateProjectedEffectSource(session.saveId);
+    return renderer;
   }
 
   void _attachMapZoomDebugListener(GameRenderer renderer) {
@@ -493,7 +495,7 @@ class _GameRendererPlaySurface extends ConsumerWidget {
             ),
           ),
         ),
-        const Positioned.fill(child: _MapVignetteOverlay()),
+        const Positioned.fill(child: GameMapVignetteOverlay()),
         if (showDiceRollTestOverlay)
           const Positioned.fill(child: DiceRollTestOverlay()),
         Positioned.fill(child: _buildHud(ref)),
@@ -804,25 +806,5 @@ class _GameStateReadyGate extends ConsumerWidget {
           ),
           data: (_) => child,
         );
-  }
-}
-
-class _MapVignetteOverlay extends StatelessWidget {
-  const _MapVignetteOverlay();
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      key: const Key('gameScreen.mapVignette'),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            radius: 0.92,
-            colors: [Colors.transparent, GameUiTheme.bg.withAlpha(120)],
-            stops: const [0.68, 1.0],
-          ),
-        ),
-      ),
-    );
   }
 }

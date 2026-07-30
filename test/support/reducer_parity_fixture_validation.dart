@@ -322,12 +322,8 @@ void _requireAcceptedParityArtifact(
   PersistentGameState state,
   List<GameEvent> events,
 ) {
-  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||
-      events.isNotEmpty) {
-    ReducerParityCorpus._fail(
-      fixture,
-      'must preserve save metadata without emitting events',
-    );
+  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save))) {
+    ReducerParityCorpus._fail(fixture, 'must preserve save metadata');
   }
   final failure = validateAcceptedArtifactCommand(
     command: fixture.command,

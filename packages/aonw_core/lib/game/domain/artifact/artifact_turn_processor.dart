@@ -1,4 +1,5 @@
 import 'package:aonw_core/game/domain/artifact/world_artifact.dart';
+import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 
 final class ArtifactTurnResult {
@@ -6,11 +7,13 @@ final class ArtifactTurnResult {
     required this.units,
     required this.artifacts,
     this.changed = false,
+    this.events = const [],
   });
 
   final List<GameUnit> units;
   final List<WorldArtifact> artifacts;
   final bool changed;
+  final List<DomainEvent> events;
 }
 
 /// Advances artifact excavation using persistence-free domain collections.
@@ -38,6 +41,7 @@ abstract final class ArtifactTurnProcessor {
       units: List.unmodifiable(result.units),
       artifacts: List.unmodifiable(result.artifacts),
       changed: true,
+      events: List.unmodifiable(result.events),
     );
   }
 
@@ -84,6 +88,7 @@ abstract final class ArtifactTurnProcessor {
       units: _replaceUnit(current.units, unit.copyWithExcavatingArtifact(null)),
       artifacts: nextArtifacts,
       changed: true,
+      events: current.events,
     );
   }
 
@@ -106,6 +111,7 @@ abstract final class ArtifactTurnProcessor {
         ),
       ),
       changed: true,
+      events: current.events,
     );
   }
 
@@ -128,6 +134,16 @@ abstract final class ArtifactTurnProcessor {
         ),
       ),
       changed: true,
+      events: [
+        ...current.events,
+        ArtifactCarriedEvent(
+          artifactId: artifact.id,
+          ownerPlayerId: unit.ownerPlayerId,
+          unitId: unit.id,
+          col: unit.col,
+          row: unit.row,
+        ),
+      ],
     );
   }
 

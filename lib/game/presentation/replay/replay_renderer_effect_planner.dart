@@ -1,51 +1,56 @@
-import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/game/presentation/engine/game_renderer_effect_sequence_builder.dart';
-import 'package:aonw/game/presentation/replay/historical_combat_animation_fact_upcaster.dart';
+import 'package:aonw/game/presentation/engine/domain_event_presentation_projector.dart';
+import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw_core/application.dart';
-import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 
 abstract final class ReplayRendererEffectPlanner {
-  static const int _artifactCueColor = 0xFFFFD166;
-  static const Duration _artifactTextDelay = Duration(milliseconds: 120);
-
   static List<RendererEffect> effectsForStep({
-    required Iterable<RendererEffect> commandEffects,
+    required Iterable<RendererEffect> interactionEffects,
     required Iterable<GameEvent> events,
+    Iterable<MovementCommandExecution> movementExecutions = const [],
     required GameState state,
     required GameState previousState,
-    Iterable<CombatAnimationFact>? combatAnimations,
     AppLocalizations? l10n,
   }) {
-    final replayCommandEffects = [
-      ...commandEffects,
-      ..._missingMovementEffects(
-        commandEffects: commandEffects,
-        state: state,
-        previousState: previousState,
+    return batchForStep(
+      identity: const PresentationBatchIdentity(
+        sourceId: 'replay-preview',
+        eventOffset: 0,
       ),
-      ..._artifactStateEffects(
-        state: state,
-        previousState: previousState,
-        l10n: l10n,
-      ),
-    ];
-    return GameRendererEffectSequenceBuilder.build(
-      commandEffects: replayCommandEffects,
+      interactionEffects: interactionEffects,
       events: events,
+      movementExecutions: movementExecutions,
       state: state,
       previousState: previousState,
       l10n: l10n,
-      combatAnimations:
-          combatAnimations ??
-          HistoricalCombatAnimationFactUpcaster.fromEvents(
-            events: events,
-            state: state,
-            previousState: previousState,
-          ),
+    ).effects;
+  }
+
+  static ProjectedGameEffectBatch batchForStep({
+    required PresentationBatchIdentity identity,
+    required Iterable<RendererEffect> interactionEffects,
+    required Iterable<GameEvent> events,
+    Iterable<MovementCommandExecution> movementExecutions = const [],
+    required GameState state,
+    required GameState previousState,
+    AppLocalizations? l10n,
+  }) {
+    final replayInteractionEffects = [
+      ...interactionEffects.where(
+        (effect) => effect is JumpCameraEffect || effect is SmoothCameraEffect,
+      ),
+    ];
+    return DomainEventPresentationProjector.projectObservedBatch(
+      identity: identity,
+      interactionEffects: replayInteractionEffects,
+      events: events,
+      visibleMovementExecutions: movementExecutions,
+      state: state,
+      previousState: previousState,
+      l10n: l10n,
     );
   }
 
@@ -112,127 +117,6 @@ abstract final class ReplayRendererEffectPlanner {
     return false;
   }
 
-  static List<RendererEffect> _artifactStateEffects({
-    required GameState state,
-    required GameState previousState,
-    AppLocalizations? l10n,
-  }) {
-    if (state.artifacts.isEmpty || previousState.artifacts.isEmpty) {
-      return const [];
-    }
-    final previousById = {
-      for (final artifact in previousState.artifacts) artifact.id: artifact,
-    };
-    final effects = <RendererEffect>[];
-    for (final artifact in state.artifacts) {
-      final previous = previousById[artifact.id];
-      if (previous == null || previous.location == artifact.location) {
-        continue;
-      }
-      final cue = _artifactCueForTransition(
-        previous: previous,
-        artifact: artifact,
-        state: state,
-        previousState: previousState,
-        l10n: l10n,
-      );
-      if (cue == null) continue;
-      effects.addAll(_artifactCueEffects(cue));
-    }
-    return effects;
-  }
-
-  static _ArtifactCue? _artifactCueForTransition({
-    required WorldArtifact previous,
-    required WorldArtifact artifact,
-    required GameState state,
-    required GameState previousState,
-    AppLocalizations? l10n,
-  }) {
-    final previousLocation = previous.location;
-    final location = artifact.location;
-    if (previousLocation.isOnMap && location.isBeingExcavated) {
-      return _ArtifactCue(
-        text: l10n?.worldArtifactStepExcavate ?? 'Excavate',
-        col: location.col ?? previousLocation.col ?? 0,
-        row: location.row ?? previousLocation.row ?? 0,
-      );
-    }
-
-    if (!previousLocation.isCarried && location.isCarried) {
-      final unit =
-          state.unitById(location.unitId ?? '') ??
-          previousState.unitById(location.unitId ?? '');
-      return _ArtifactCue(
-        text: l10n?.artifactGuidanceCarriedTitle ?? 'Artifact carried',
-        col: unit?.col ?? previousLocation.col ?? 0,
-        row: unit?.row ?? previousLocation.row ?? 0,
-      );
-    }
-
-    final movedIntoStorage =
-        !previousLocation.isStored && location.isStored ||
-        previousLocation.isStored &&
-            location.isStored &&
-            previousLocation.cityId != location.cityId;
-    if (movedIntoStorage) {
-      final city =
-          state.cityById(location.cityId ?? '') ??
-          previousState.cityById(location.cityId ?? '');
-      final unit = previousLocation.unitId == null
-          ? null
-          : previousState.unitById(previousLocation.unitId!);
-      return _ArtifactCue(
-        text: l10n?.artifactGuidanceStoredTitle ?? 'Artifact stored',
-        col: city?.center.col ?? unit?.col ?? 0,
-        row: city?.center.row ?? unit?.row ?? 0,
-      );
-    }
-
-    return null;
-  }
-
-  static List<RendererEffect> _artifactCueEffects(_ArtifactCue cue) {
-    return [
-      SpawnParticleBurstEffect(
-        kind: ParticleBurstKind.technologyResearched,
-        col: cue.col,
-        row: cue.row,
-        colorValue: _artifactCueColor,
-      ),
-      ShowFloatingTextEffect(
-        text: cue.text,
-        col: cue.col,
-        row: cue.row,
-        colorValue: _artifactCueColor,
-        delay: _artifactTextDelay,
-        presentation: FloatingTextPresentation.bubble,
-      ),
-    ];
-  }
-
-  static List<AnimateUnitMoveEffect> _missingMovementEffects({
-    required Iterable<RendererEffect> commandEffects,
-    required GameState state,
-    required GameState previousState,
-  }) {
-    final animatedUnitIds = {
-      for (final effect in commandEffects.whereType<AnimateUnitMoveEffect>())
-        effect.unitId,
-    };
-    if (animatedUnitIds.length == state.units.length) {
-      return const [];
-    }
-
-    return [
-      for (final effect in QueuedMovementEffectBuilder.fromUnitDelta(
-        beforeUnits: previousState.units,
-        afterUnits: state.units,
-      ))
-        if (!animatedUnitIds.contains(effect.unitId)) effect,
-    ];
-  }
-
   static bool _canSeeMovement(AnimateUnitMoveEffect effect, GameState state) {
     if (_canSeeDynamicAt(state, effect.fromCol, effect.fromRow)) return true;
     for (final step in effect.steps) {
@@ -263,16 +147,4 @@ abstract final class ReplayRendererEffectPlanner {
     }
     return visibility.canSeeDynamicAt(col, row);
   }
-}
-
-class _ArtifactCue {
-  const _ArtifactCue({
-    required this.text,
-    required this.col,
-    required this.row,
-  });
-
-  final String text;
-  final int col;
-  final int row;
 }
