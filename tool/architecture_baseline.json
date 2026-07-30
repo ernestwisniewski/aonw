@@ -1146,7 +1146,7 @@
         "test/api/session/network_session_refresh_coordinator_test.dart": 821,
         "test/api/transport/live_event_subscription_test.dart": 736,
         "test/api/transport/network_command_transport_test.dart": 1136,
-        "test/architecture/coverage_gate_test.dart": 682,
+        "test/architecture/coverage_gate_test.dart": 678,
         "test/architecture/lint_configuration_guard_test.dart": 715,
         "test/editor/editor_grid_test.dart": 592,
         "test/game/ai_turn_runner_test.dart": 651,
@@ -1231,7 +1231,7 @@
     },
     "root_tool": {
       "files": {
-        "tool/check_coverage.dart": 1657,
+        "tool/check_coverage.dart": 1655,
         "tool/run_save_ai_benchmark/execution_models.dart": 736,
         "tool/run_save_ai_benchmark/multi_turn_replay_report.dart": 719,
         "tool/run_save_ai_benchmark/report_models.dart": 505,
@@ -1239,7 +1239,7 @@
       },
       "legacyFiles": {},
       "declarations": {
-        "tool/check_coverage.dart::class:_CoverageGate": 566,
+        "tool/check_coverage.dart::class:_CoverageGate": 560,
         "tool/run_save_ai_benchmark/multi_turn_replay_report.dart::class:_MultiTurnReplayReport": 717,
         "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport": 414,
         "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite": 372,

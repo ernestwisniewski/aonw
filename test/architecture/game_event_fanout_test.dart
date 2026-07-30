@@ -86,11 +86,15 @@ final _gameEventClassPattern = RegExp(
 const _allowedSwitchEventPaths = {
   // Central application and domain descriptor factories.
   'lib/game/application/services/game_event_descriptor.dart',
+  'lib/game/application/services/game_event_descriptor_fortification.dart',
   'packages/aonw_core/lib/game/domain/event/game_event_domain_descriptor.dart',
+  'packages/aonw_core/lib/game/domain/event/'
+      'fortification_event_domain_descriptor.dart',
 
   // Serialization is an explicit architecture exception.
   'packages/aonw_core/lib/game/domain/event/artifact_event_serialization.dart',
   'packages/aonw_core/lib/game/domain/event/event_serialization.dart',
+  'packages/aonw_core/lib/game/domain/event/unit_event_serialization.dart',
 
   // Legacy fanout that should be migrated behind GameEventDescriptor.
   'lib/game/presentation/engine/artifact_event_renderer_effect_mapper.dart',

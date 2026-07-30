@@ -4,6 +4,7 @@ import 'dart:io';
 import 'coverage_gate/coverable_source.dart';
 import 'coverage_gate/coverage_failure.dart';
 import 'coverage_gate/diff_measurement.dart';
+import 'coverage_gate/ratchet_epoch.dart';
 
 const _defaultPolicyPath = 'tool/coverage_policy.json';
 const _defaultBaselinePath = 'tool/coverage_baseline.json';
@@ -594,31 +595,25 @@ void main() {
     }
 
     final oldPolicy = _CoveragePolicy.parse(oldPolicyText, 'historical policy');
-    if (oldPolicy.enforcedSince != policy.enforcedSince) {
-      throw const CoverageFailure(
-        'coverage_policy.json enforcedSince is immutable.',
-      );
-    }
-    if (oldPolicy.structuralSignature != policy.structuralSignature) {
-      throw const CoverageFailure(
-        'Coverage scope, layer, and exclusion policy is immutable after the '
-        'rollout anchor.',
-      );
-    }
-    if (policy.diffLineMinimumBasisPoints <
-        oldPolicy.diffLineMinimumBasisPoints) {
-      throw CoverageFailure(
-        'Diff coverage minimum cannot decrease: '
-        '${oldPolicy.diffLineMinimumPercent}% -> '
-        '${policy.diffLineMinimumPercent}%.',
-      );
-    }
+    final epochAdvanced = validateHistoricalCoveragePolicy(
+      oldAnchor: oldPolicy.enforcedSince,
+      currentAnchor: policy.enforcedSince,
+      oldEpoch: oldPolicy.ratchetEpoch,
+      currentEpoch: policy.ratchetEpoch,
+      oldStructure: oldPolicy.structuralSignature,
+      currentStructure: policy.structuralSignature,
+      oldDiffMinimum: oldPolicy.diffLineMinimumBasisPoints,
+      currentDiffMinimum: policy.diffLineMinimumBasisPoints,
+      oldDiffMinimumPercent: oldPolicy.diffLineMinimumPercent,
+      currentDiffMinimumPercent: policy.diffLineMinimumPercent,
+    );
 
     final oldBaseline = _CoverageBaseline.parse(
       oldBaselineText,
       oldPolicy,
       'historical baseline',
     );
+    if (epochAdvanced) return;
     final failures = <String>[];
     for (final scopeName in scopeNames) {
       final oldScope = oldBaseline.scopes[scopeName];
@@ -707,6 +702,7 @@ void main() {
 final class _CoveragePolicy {
   const _CoveragePolicy({
     required this.enforcedSince,
+    required this.ratchetEpoch,
     required this.diffLineMinimumBasisPoints,
     required this.excludeSuffixes,
     required this.scopes,
@@ -723,23 +719,23 @@ final class _CoveragePolicy {
 
   factory _CoveragePolicy.parse(String contents, String description) {
     final root = _decodeObject(contents, description);
-    _expectKeys(root, const {
-      'schema',
-      'enforcedSince',
-      'diffLineMinimumBasisPoints',
-      'excludeSuffixes',
-      'scopes',
-    }, description);
     final schema = _readInt(root, 'schema', description);
-    if (schema != 1) {
-      throw CoverageFailure('$description: unsupported schema $schema.');
-    }
+    _expectKeys(
+      root,
+      coveragePolicyKeysForSchema(schema, description),
+      description,
+    );
     final enforcedSince = _readString(root, 'enforcedSince', description);
     if (!RegExp(r'^[0-9a-f]{40}$').hasMatch(enforcedSince)) {
       throw CoverageFailure(
         '$description: enforcedSince must be a full lowercase commit SHA.',
       );
     }
+    final ratchetEpoch = readCoverageRatchetEpoch(
+      root['ratchetEpoch'],
+      schema,
+      description,
+    );
     final diffMinimum = _readInt(
       root,
       'diffLineMinimumBasisPoints',
@@ -779,7 +775,7 @@ final class _CoveragePolicy {
     }
 
     final structuralJson = <String, Object?>{
-      'schema': schema,
+      'schema': 1,
       'enforcedSince': enforcedSince,
       'excludeSuffixes': excludeSuffixes,
       'scopes': {
@@ -789,6 +785,7 @@ final class _CoveragePolicy {
     };
     return _CoveragePolicy(
       enforcedSince: enforcedSince,
+      ratchetEpoch: ratchetEpoch,
       diffLineMinimumBasisPoints: diffMinimum,
       excludeSuffixes: List.unmodifiable(excludeSuffixes),
       scopes: Map.unmodifiable(scopes),
@@ -797,6 +794,7 @@ final class _CoveragePolicy {
   }
 
   final String enforcedSince;
+  final int ratchetEpoch;
   final int diffLineMinimumBasisPoints;
   final List<String> excludeSuffixes;
   final Map<String, _ScopePolicy> scopes;

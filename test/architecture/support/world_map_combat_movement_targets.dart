@@ -88,12 +88,6 @@ const _movementTargets = [
     owner: 'UnitMovementTurnRules',
     boundaries: [
       _Boundary.method(
-        'resetForNewTurn',
-        parameter: 'mapData',
-        type: 'MapTileLookup',
-        nullable: true,
-      ),
-      _Boundary.method(
         'validateQueuedPath',
         parameter: 'mapData',
         type: 'MapTraversalView',

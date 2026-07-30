@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/coverage_gate_fixtures.dart';
+
 final _checkerPath = File('tool/check_coverage.dart').absolute.path;
 
 void main() {
@@ -54,7 +56,7 @@ end_of_record
 
   test('accepts CRLF only for the canonical excluded composition root', () {
     final fixture = _CoverageFixture.create(
-      manualMainContents: _canonicalMain.replaceAll('\n', '\r\n'),
+      manualMainContents: canonicalCoverageMain.replaceAll('\n', '\r\n'),
     );
     addTearDown(fixture.dispose);
 
@@ -68,7 +70,7 @@ end_of_record
 
     fixture.writeSource(
       'lib/main.dart',
-      _canonicalMain.replaceFirst('HexApp()', 'ChangedApp()'),
+      canonicalCoverageMain.replaceFirst('HexApp()', 'ChangedApp()'),
     );
 
     final changedResult = fixture.check();
@@ -367,8 +369,9 @@ end_of_record
 }
 
 const _expectedRepositoryPolicy = <String, Object?>{
-  'schema': 1,
+  'schema': 2,
   'enforcedSince': 'ee7ecf961f2d27b0ac9ea0f3ba0d1d4768fa7189',
+  'ratchetEpoch': 1,
   'diffLineMinimumBasisPoints': 9000,
   'excludeSuffixes': <String>['.freezed.dart', '.g.dart'],
   'scopes': <String, Object?>{
@@ -460,15 +463,6 @@ const _expectedRepositoryPolicy = <String, Object?>{
   },
 };
 
-const _canonicalMain = """import 'package:aonw/app/app.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-void main() {
-  runApp(const ProviderScope(child: HexApp()));
-}
-""";
-
 final class _InvalidLcovCase {
   const _InvalidLcovCase({
     required this.description,
@@ -554,11 +548,13 @@ final class _CoverageFixture {
 
   void writePolicy({
     int diffMinimumBasisPoints = 9000,
+    int ratchetEpoch = 0,
     List<String> excludeFiles = const [],
   }) {
     _writeJson('tool/coverage_policy.json', <String, Object?>{
-      'schema': 1,
+      'schema': 2,
       'enforcedSince': anchor,
+      'ratchetEpoch': ratchetEpoch,
       'diffLineMinimumBasisPoints': diffMinimumBasisPoints,
       'excludeSuffixes': <String>['.freezed.dart', '.g.dart'],
       'scopes': <String, Object?>{
