@@ -3,12 +3,13 @@ part of 'game_state_reducer.dart';
 abstract final class _ActivePlayerReducer {
   static GameStateTransition handleSetActivePlayer(
     GameState state,
-    SetActivePlayerCommand command,
+    String playerId,
+    bool canAct,
     ReducerEnvironment environment,
   ) {
-    final next = _activePlayerChanged(state, command)
-        ? _applyControlChange(state, command)
-        : _applyPlayerIdentity(state, command);
+    final next = _activePlayerChanged(state, playerId, canAct)
+        ? _applyControlChange(state, playerId, canAct)
+        : _applyPlayerIdentity(state, playerId, canAct);
 
     return GameStateTransition(
       state: _recomputeFogOfWarIfNeeded(next, environment),
@@ -17,18 +18,20 @@ abstract final class _ActivePlayerReducer {
 
   static bool _activePlayerChanged(
     GameState state,
-    SetActivePlayerCommand command,
+    String playerId,
+    bool canAct,
   ) {
-    return state.activePlayerId != command.playerId ||
-        state.activePlayerCanAct != command.canAct;
+    return state.activePlayerId != playerId ||
+        state.activePlayerCanAct != canAct;
   }
 
   static GameState _applyControlChange(
     GameState state,
-    SetActivePlayerCommand command,
+    String playerId,
+    bool canAct,
   ) {
     final next = _clearMapInteractionState(
-      _applyPlayerIdentity(state, command),
+      _applyPlayerIdentity(state, playerId, canAct),
       clearPendingAction: true,
     );
     return _clearSelectionIfUnavailable(next, state.selection);
@@ -36,12 +39,10 @@ abstract final class _ActivePlayerReducer {
 
   static GameState _applyPlayerIdentity(
     GameState state,
-    SetActivePlayerCommand command,
+    String playerId,
+    bool canAct,
   ) {
-    return state.copyWith(
-      activePlayerId: command.playerId,
-      activePlayerCanAct: command.canAct,
-    );
+    return state.copyWith(activePlayerId: playerId, activePlayerCanAct: canAct);
   }
 
   static GameState _clearSelectionIfUnavailable(

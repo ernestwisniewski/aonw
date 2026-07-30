@@ -117,22 +117,6 @@ void main() {
         expect(cmd.playerId, 'player-1');
       });
 
-      test('ResetUnitMovementCommand stores optional playerId', () {
-        const allPlayers = ResetUnitMovementCommand();
-        const singlePlayer = ResetUnitMovementCommand(playerId: 'player-1');
-        expect(allPlayers.playerId, isNull);
-        expect(singlePlayer.playerId, 'player-1');
-      });
-
-      test('SetActivePlayerCommand stores playerId and canAct', () {
-        const cmd = SetActivePlayerCommand('player-2', canAct: true);
-        expect(cmd.playerId, 'player-2');
-        expect(cmd.canAct, isTrue);
-
-        const cmd2 = SetActivePlayerCommand('player-3', canAct: false);
-        expect(cmd2.canAct, isFalse);
-      });
-
       test('ToggleMoveTargetingCommand can be constructed', () {
         const cmd = ToggleMoveTargetingCommand();
         expect(cmd, isA<GameCommand>());
@@ -351,8 +335,6 @@ void main() {
           requestedResource: ResourceType.horses,
           durationTurns: 8,
         ),
-        const ResetUnitMovementCommand(),
-        const SetActivePlayerCommand('p', canAct: true),
         const ToggleMoveTargetingCommand(),
         const StartCityFoundingCommand(),
         const CancelCityFoundingCommand(),
@@ -444,8 +426,6 @@ void main() {
           SendGoldGiftCommand() => 'SendGoldGift',
           OpenResourceTradeCommand() => 'OpenResourceTrade',
           OpenResourceExchangeCommand() => 'OpenResourceExchange',
-          ResetUnitMovementCommand() => 'ResetUnitMovement',
-          SetActivePlayerCommand() => 'SetActivePlayer',
           ToggleMoveTargetingCommand() => 'ToggleMoveTargeting',
           StartCityFoundingCommand() => 'StartCityFounding',
           CancelCityFoundingCommand() => 'CancelCityFounding',
@@ -737,41 +717,6 @@ void main() {
         expect(
           const SubmitTurnCommand('p'),
           isNot(equals(const SubmitTurnCommand('q'))),
-        );
-      });
-
-      test('ResetUnitMovementCommand: same playerId is equal', () {
-        expect(
-          const ResetUnitMovementCommand(playerId: 'p'),
-          equals(const ResetUnitMovementCommand(playerId: 'p')),
-        );
-      });
-
-      test('ResetUnitMovementCommand: different playerId is not equal', () {
-        expect(
-          const ResetUnitMovementCommand(playerId: 'p'),
-          isNot(equals(const ResetUnitMovementCommand(playerId: 'q'))),
-        );
-      });
-
-      test('ResetUnitMovementCommand: null and scoped commands differ', () {
-        expect(
-          const ResetUnitMovementCommand(),
-          isNot(equals(const ResetUnitMovementCommand(playerId: 'p'))),
-        );
-      });
-
-      test('SetActivePlayerCommand: same values are equal', () {
-        expect(
-          const SetActivePlayerCommand('p', canAct: true),
-          equals(const SetActivePlayerCommand('p', canAct: true)),
-        );
-      });
-
-      test('SetActivePlayerCommand: different canAct is not equal', () {
-        expect(
-          const SetActivePlayerCommand('p', canAct: true),
-          isNot(equals(const SetActivePlayerCommand('p', canAct: false))),
         );
       });
 

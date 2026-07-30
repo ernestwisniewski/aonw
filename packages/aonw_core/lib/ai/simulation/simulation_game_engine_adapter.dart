@@ -40,6 +40,9 @@ final class SimulationGameEngineAdapter {
         MovementCommandVisibilityMode.authoritative,
     CombatCommandVisibilityMode combatVisibilityMode =
         CombatCommandVisibilityMode.authoritative,
+    List<String> turnPlayerIds = const [],
+    List<String> requiredTurnSubmissionPlayerIds = const [],
+    DateTime? savedAt,
   }) {
     final engineInput = projectSnapshot(snapshot: snapshot, state: state);
     final result = const GameEngine().apply(
@@ -52,6 +55,9 @@ final class SimulationGameEngineAdapter {
         commandTick: commandTick,
         movementVisibilityMode: movementVisibilityMode,
         combatVisibilityMode: combatVisibilityMode,
+        turnPlayerIds: turnPlayerIds,
+        requiredTurnSubmissionPlayerIds: requiredTurnSubmissionPlayerIds,
+        savedAt: savedAt,
       ),
     );
     if (result is GameEngineRejected) {
@@ -124,6 +130,7 @@ final class SimulationGameEngineAdapter {
       !identical(result.intendedAttacks, input.intendedAttacks),
       !identical(result.resourceTradeAgreements, input.resourceTradeAgreements),
       !identical(resultSnapshot.interaction, engineInput.interaction),
+      resultSnapshot.session != engineInput.session,
     ].contains(true);
     if (!changed) return null;
     return runtime.copyWith(
@@ -132,6 +139,11 @@ final class SimulationGameEngineAdapter {
       resourceTradeAgreements: result.resourceTradeAgreements,
       cityFoundingDraft: resultSnapshot.interaction.cityFoundingDraft,
       pendingAction: resultSnapshot.interaction.pendingAction,
+      submittedPlayerIds: resultSnapshot.session.submittedPlayerIds,
+      timeoutStreaksByPlayerId: resultSnapshot.session.timeoutStreaksByPlayerId,
+      afkPlayerIds: resultSnapshot.session.afkPlayerIds,
+      kickedPlayerIds: resultSnapshot.session.kickedPlayerIds,
+      turnStartedAt: resultSnapshot.session.turnStartedAt,
     );
   }
 

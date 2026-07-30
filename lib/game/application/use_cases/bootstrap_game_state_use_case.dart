@@ -96,19 +96,13 @@ class BootstrapGameStateUseCase {
       return BootstrapGameStateResult(state: initialState, offset: offset);
     }
 
-    final result = await dispatchCommand.execute(
-      saveId: saveId,
-      currentState: initialState,
-      command: SetActivePlayerCommand(control.activePlayerId, canAct: canAct),
-    );
-    offset = _maxOffset(offset, result.offset);
     if (snapshot.session.gameMode != GameMode.multiplayer || !canAct) {
-      return BootstrapGameStateResult(state: result.state, offset: offset);
+      return BootstrapGameStateResult(state: initialState, offset: offset);
     }
 
     final focused = await dispatchCommand.execute(
       saveId: saveId,
-      currentState: result.state,
+      currentState: initialState,
       command: FocusTurnStartActionCommand(control.activePlayerId),
     );
     offset = _maxOffset(offset, focused.offset);

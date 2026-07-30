@@ -40,13 +40,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'game_state_provider.g.dart';
 part 'game_state_provider_renderer_effects.dart';
-
-Duration? _doNotRetry(int retryCount, Object error) => null;
-const _liveSnapshotRetryDelays = [
-  Duration(milliseconds: 150),
-  Duration(milliseconds: 350),
-  Duration(milliseconds: 750),
-];
+part 'game_state_provider_turn_lifecycle.dart';
 
 @Riverpod(
   retry: _doNotRetry,
@@ -54,6 +48,7 @@ const _liveSnapshotRetryDelays = [
 )
 class GameStateNotifier extends _$GameStateNotifier {
   DispatchCommandUseCase? _dispatchCommand;
+  GameStateReducer? _reducer;
   LiveEventSubscriptionHandle? _liveEvents;
   Future<LiveEventSubscriptionHandle?>? _liveEventsStarting;
   String _saveId = '';
@@ -82,6 +77,7 @@ class GameStateNotifier extends _$GameStateNotifier {
         stability: ref.watch(stabilityRulesetProvider),
       ),
     );
+    _reducer = reducer;
     final liveCommandDispatcher = session.gameMode == GameMode.multiplayer
         ? LiveWireCommandDispatcher(
             liveHandle: _liveCommandHandle,
@@ -106,37 +102,31 @@ class GameStateNotifier extends _$GameStateNotifier {
       preferredPlayerId: ref.read(networkSessionProvider)?.playerId,
     );
     _eventLogOffset = bootstrapped.offset;
-    if (!ref.mounted) return bootstrapped.state;
+    final synchronized = reducer
+        .syncActivePlayer(
+          bootstrapped.state,
+          playerId: bootstrapped.state.activePlayerId,
+          canAct: bootstrapped.state.activePlayerCanAct,
+        )
+        .state;
+    if (!ref.mounted) return synchronized;
     unawaited(_startLiveEvents(saveId, gameMode: session.gameMode));
-    return bootstrapped.state;
+    return synchronized;
   }
 
-  Future<List<UiEffect>> dispatch(
-    GameCommand command, {
-    GameCommandContext context = const GameCommandContext(),
-  }) async {
-    final result = await dispatchTransition(command, context: context);
-    return result.uiEffects;
-  }
-
-  /// Use when the caller must coordinate the new state with renderer effects.
-  Future<DispatchCommandResult> dispatchTransition(
-    GameCommand command, {
-    GameCommandContext context = const GameCommandContext(),
-  }) async {
-    return _enqueueDispatch(
-      () => _dispatchTransitionNow(command, context: context),
+  Future<void> syncActivePlayer({
+    required String playerId,
+    required bool canAct,
+  }) => _enqueueDispatch(() async {
+    final current = state.value;
+    final reducer = _reducer;
+    if (!ref.mounted || current == null || reducer == null) return;
+    state = AsyncData(
+      reducer
+          .syncActivePlayer(current, playerId: playerId, canAct: canAct)
+          .state,
     );
-  }
-
-  Future<T> _enqueueDispatch<T>(Future<T> Function() operation) {
-    final next = _dispatchQueue.then((_) => operation());
-    _dispatchQueue = next.then<void>(
-      (_) {},
-      onError: (Object error, StackTrace stackTrace) {},
-    );
-    return next;
-  }
+  });
 
   Future<DispatchCommandResult> _dispatchTransitionNow(
     GameCommand command, {
@@ -288,10 +278,6 @@ class GameStateNotifier extends _$GameStateNotifier {
     }
   }
 
-  FutureOr<LiveEventSubscriptionHandle?> _liveCommandHandle() {
-    return _liveEvents ?? _liveEventsStarting;
-  }
-
   Future<void> _reloadNetworkSnapshot(
     String saveId, {
     LiveServerEvent? liveEvent,
@@ -355,28 +341,6 @@ class GameStateNotifier extends _$GameStateNotifier {
             changedAt: ref.read(gameClockProvider).nowUtc(),
           ),
         );
-  }
-
-  void _queueNetworkSnapshotApply({
-    required String saveId,
-    required SaveSnapshot snapshot,
-    LiveServerEvent? liveEvent,
-  }) {
-    _networkSnapshotQueue = _networkSnapshotQueue.then(
-      (_) => _applyNetworkSnapshot(
-        saveId: saveId,
-        snapshot: snapshot,
-        liveEvent: liveEvent,
-      ),
-      onError: (Object error, StackTrace stackTrace) {
-        _warn('Previous network snapshot apply failed', error, stackTrace);
-        return _applyNetworkSnapshot(
-          saveId: saveId,
-          snapshot: snapshot,
-          liveEvent: liveEvent,
-        );
-      },
-    );
   }
 
   Future<void> _applyNetworkSnapshot({
@@ -474,24 +438,6 @@ class GameStateNotifier extends _$GameStateNotifier {
 
   void _warn(String message, [Object? error, StackTrace? stackTrace]) {
     if (!ref.mounted) return;
-    ref
-        .read(gameLoggerProvider)
-        .warn('GameStateNotifier', message, error, stackTrace);
+    _warnGameState(ref, message, error, stackTrace);
   }
-
-  Future<void> _closeLiveEvents() async {
-    final liveEvents = _liveEvents;
-    _liveEvents = null;
-    _liveEventsStarting = null;
-    await liveEvents?.close();
-  }
-}
-
-LiveServerEvent? _presentedLiveEvent(
-  LiveSnapshotPresentationDecision presentation,
-  LiveServerEvent? event,
-) => presentation.canPresentLiveTransition ? event : null;
-
-String _multiplayerCacheKey(String userId, String saveId) {
-  return multiplayerSnapshotCacheKey(userId: userId, matchId: saveId);
 }

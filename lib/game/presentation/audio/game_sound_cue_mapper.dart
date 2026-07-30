@@ -37,9 +37,6 @@ abstract final class GameSoundCueMapper {
       SelectTileCommand() => const [GameSoundCue.mapTileSelect],
       CityTappedCommand() || SelectCityCommand() => const [GameSoundCue.city],
       MoveUnitCommand() => const [GameSoundCue.walk],
-      SetActivePlayerCommand(:final playerId, :final canAct)
-          when playerId.isNotEmpty && canAct =>
-        const [GameSoundCue.newTurn],
       ToggleMoveTargetingCommand() => _moveTargetingCues(previousState, state),
       StartCityFoundingCommand() ||
       StartCityWorkedHexSelectionCommand() ||
@@ -163,10 +160,7 @@ abstract final class GameSoundCueMapper {
     GameState? previousState,
     GameState state,
   ) {
-    return switch (command) {
-      SetActivePlayerCommand(:final playerId) => playerId,
-      _ => _audiblePlayerId(previousState, state),
-    };
+    return _audiblePlayerId(previousState, state);
   }
 
   static bool _commandBelongsToPlayer(
@@ -242,13 +236,10 @@ abstract final class GameSoundCueMapper {
       RespondDiplomaticMessageCommand(playerId: final commandPlayerId) ||
       DeclareWarCommand(playerId: final commandPlayerId) ||
       SendGoldGiftCommand(playerId: final commandPlayerId) ||
-      SetActivePlayerCommand(playerId: final commandPlayerId) ||
       FocusNextPendingActionCommand(playerId: final commandPlayerId) ||
       FocusTurnStartActionCommand(
         playerId: final commandPlayerId,
       ) => commandPlayerId == playerId,
-      ResetUnitMovementCommand(playerId: final commandPlayerId) =>
-        commandPlayerId == null || commandPlayerId == playerId,
       SelectTechnologyCommand(playerId: final commandPlayerId) ||
       CancelResearchSelectionCommand(
         playerId: final commandPlayerId,

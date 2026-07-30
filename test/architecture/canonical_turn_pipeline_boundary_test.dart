@@ -24,16 +24,9 @@ const _performanceCallSite = 'tool/performance/turn_finalization_workload.dart';
 const _workedHexKernelPath =
     'packages/aonw_core/lib/game/domain/city/'
     'toggle_worked_hex_resolver.dart';
-const _persistentWorkedHexAdapterPath =
-    'packages/aonw_core/lib/game/domain/city/'
-    'persistent_city_worked_hex_resolver.dart';
 const _domainWorkedHexAdapterPath =
     'packages/aonw_core/lib/game/domain/city/'
     'domain_city_worked_hex_resolver.dart';
-const _localWorkedHexCallSite =
-    'lib/game/domain/reducer/city/city_worked_hex_reducer.dart';
-const _serverWorkedHexCallSite =
-    'server/lib/src/multiplayer/server_command_reducer_city.dart';
 const _retiredPersistentTurnTypes = {
   'PersistentTurnMovementDelta',
   'PersistentTurnPipelineRequest',
@@ -90,12 +83,7 @@ abstract final class PersistentTurnPipeline {
           'ToggleWorkedHexResolver',
           'toggleWorkedHex',
         ),
-        {
-          _persistentWorkedHexAdapterPath,
-          _domainWorkedHexAdapterPath,
-          _localWorkedHexCallSite,
-          _serverWorkedHexCallSite,
-        },
+        {_domainWorkedHexAdapterPath},
       );
       expect(
         instanceMemberReferencePaths(

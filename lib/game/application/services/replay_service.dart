@@ -128,10 +128,8 @@ class ReplayStep {
     required GameState previousState,
   }) {
     return switch (command) {
-      ResetUnitMovementCommand(:final playerId) => playerId,
       EndTurnCommand(:final playerId) ||
       SubmitTurnCommand(:final playerId) ||
-      SetActivePlayerCommand(:final playerId) ||
       SelectTechnologyCommand(:final playerId) ||
       CancelResearchSelectionCommand(:final playerId) ||
       FocusNextPendingActionCommand(:final playerId) ||

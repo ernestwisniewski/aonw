@@ -55,10 +55,7 @@ void main() {
       );
 
       expect(strategy.lastView, same(preparedTurn.view));
-      expect(plan.commands, [
-        const ResetUnitMovementCommand(playerId: 'player_2'),
-        const SkipUnitTurnCommand('commander_player_2'),
-      ]);
+      expect(plan.commands, [const SkipUnitTurnCommand('commander_player_2')]);
     });
   });
 }

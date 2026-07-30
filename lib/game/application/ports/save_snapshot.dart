@@ -14,6 +14,7 @@ import 'package:aonw_core/game/domain/wonder.dart';
 
 part 'save_snapshot_combat_engine_projection.dart';
 part 'save_snapshot_city_economy_engine_projection.dart';
+part 'save_snapshot_persistent_projection.dart';
 part 'save_snapshot_research_diplomacy_engine_projection.dart';
 
 const _saveSnapshotAdapter = LegacyGameSnapshotAdapter();
@@ -415,30 +416,6 @@ extension SaveSnapshotEngineProjection on SaveSnapshot {
       ),
     );
   }
-}
-
-CanonicalGameSnapshot? _projectionAfterUpdate(
-  CanonicalGameSnapshot? previous, {
-  required GameSave save,
-  required PersistentGameState state,
-  required int eventLogOffset,
-}) {
-  if (previous == null) return null;
-  final updated = _saveSnapshotAdapter.toCanonical(
-    save: save,
-    state: state,
-    eventLogOffset: eventLogOffset,
-  );
-  if (state.runtimeState.turnStartedAt != null ||
-      previous.domain.turn != save.turn ||
-      previous.session.gameMode != save.gameMode) {
-    return updated;
-  }
-  return updated.copyWith(
-    session: updated.session.copyWith(
-      turnStartedAt: previous.session.turnStartedAt,
-    ),
-  );
 }
 
 PersistentGameState _stateWithCountryDefaults(

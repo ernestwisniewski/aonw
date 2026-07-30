@@ -36,11 +36,6 @@ sealed class DomainCommand extends GameCommand {
   const DomainCommand();
 }
 
-/// A trusted server-authored request to change authoritative game state.
-sealed class ServerSystemCommand extends GameCommand {
-  const ServerSystemCommand();
-}
-
 /// Commands routed through the diplomacy application service.
 sealed class DiplomaticCommand extends DomainCommand {
   const DiplomaticCommand();

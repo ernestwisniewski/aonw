@@ -1,7 +1,9 @@
 import 'package:aonw_core/game/application/turn/canonical_turn_suffix.dart';
+import 'package:aonw_core/game/domain/artifact/cultural_victory_progress_resolver.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
+import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/turn/domain_turn_combat_resolver.dart';
@@ -70,6 +72,63 @@ final class CanonicalTurnPipelineResult {
 
 /// Canonical application facade for simultaneous turn finalization.
 abstract final class CanonicalTurnPipeline {
+  static CanonicalTurnPipelineResult sequentialEnd({
+    required CanonicalGameSnapshot snapshot,
+    required String playerId,
+    required DateTime savedAt,
+    required MapReadView mapView,
+    GameRuleset ruleset = GameRuleset.defaults,
+    FogOfWarService fogOfWarService = const FogOfWarService(),
+  }) {
+    final effectiveRuleset = ruleset.copyWith(
+      paceBalance: snapshot.domain.matchRules.paceBalance,
+    );
+    final economy = DomainTurnEconomyProcessor.advanceForPlayers(
+      state: snapshot.domain,
+      playerIds: [playerId],
+      mapData: mapView,
+      ruleset: effectiveRuleset,
+      fogOfWarService: fogOfWarService,
+      mapObjectives: mapView.objectives,
+    );
+    final culturalHoldTurns = snapshot.domain.matchRules.victory.culturalEnabled
+        ? const CulturalVictoryProgressResolver().advanceHoldTurns(
+            playerIds: [playerId],
+            artifacts: economy.state.artifacts,
+            cities: economy.state.cities,
+            previousHoldTurnsByPlayerId:
+                economy.state.culturalVictoryHoldTurnsByPlayerId,
+            requiredArtifactCount:
+                snapshot.domain.matchRules.victory.culturalRequiredArtifacts,
+          )
+        : economy.state.culturalVictoryHoldTurnsByPlayerId;
+    final nextDomain = economy.state.copyWith(
+      culturalVictoryHoldTurnsByPlayerId: culturalHoldTurns,
+    );
+    final nextSession = snapshot.session.copyWith(
+      turnStatesByPlayerId: {
+        ...snapshot.session.turnStatesByPlayerId,
+        playerId: PlayerTurnState.finished,
+      },
+    );
+    final savedAtUtc = savedAt.toUtc();
+    return CanonicalTurnPipelineResult(
+      snapshot: snapshot.copyWith(
+        domain: nextDomain,
+        session: nextSession,
+        metadata: snapshot.metadata.copyWith(savedAtUtc: savedAtUtc),
+      ),
+      events: [
+        ...economy.events,
+        TurnEndedEvent(playerId: playerId),
+      ],
+      movementDelta: TurnMovementDelta(
+        beforeUnits: snapshot.domain.units,
+        afterUnits: nextDomain.units,
+      ),
+    );
+  }
+
   static CanonicalTurnPipelineResult simultaneousFinalize(
     CanonicalTurnPipelineRequest request,
   ) {

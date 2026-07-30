@@ -14,7 +14,6 @@ abstract final class AuthoritativeCommandPolicy {
 
   static bool isClientOnly(GameCommand command) {
     return switch (command) {
-      SetActivePlayerCommand() ||
       TileTappedCommand() ||
       CityTappedCommand() ||
       ToggleMoveTargetingCommand() ||
@@ -63,7 +62,6 @@ abstract final class AuthoritativeCommandPolicy {
       DetachTroopCommand() ||
       EndTurnCommand() ||
       SubmitTurnCommand() ||
-      ResetUnitMovementCommand() ||
       ToggleWorkedHexCommand() ||
       SelectCityExpansionHexCommand() ||
       SelectWorkerImprovementCommand() ||
@@ -81,9 +79,7 @@ abstract final class AuthoritativeCommandPolicy {
     };
   }
 
-  static bool isServerManaged(GameCommand command) {
-    return command is ResetUnitMovementCommand;
-  }
+  static bool isServerManaged(GameCommand command) => false;
 
   static bool isClientOnlyForState(GameState state, GameCommand command) {
     if (command is SelectWorkerImprovementCommand) {

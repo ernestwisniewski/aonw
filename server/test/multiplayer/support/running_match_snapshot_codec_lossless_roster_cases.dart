@@ -175,7 +175,7 @@ void _registerRunningMatchSnapshotCodecLosslessRosterTests(
       expect(() => codec.encodeCanonical(decoded, next), _throwsRosterMismatch);
     });
 
-    test('rejects incomplete canonical turn-state roster', () {
+    test('encodes a sparse canonical turn-state roster', () {
       final fixture = _fixture();
       final decoded = codec.decode(
         match: fixture.match,
@@ -187,7 +187,9 @@ void _registerRunningMatchSnapshotCodecLosslessRosterTests(
         ),
       );
 
-      expect(() => codec.encodeCanonical(decoded, next), _throwsRosterMismatch);
+      final encoded = codec.encodeCanonical(decoded, next);
+
+      expect(GameSave.fromJson(encoded.save).playerStates, isEmpty);
     });
 
     test('rejects a domain reference outside canonical participants', () {

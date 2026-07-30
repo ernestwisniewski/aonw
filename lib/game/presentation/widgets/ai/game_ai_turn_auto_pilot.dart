@@ -219,7 +219,7 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
       confirmHumanTurn: (playerId) {
         return ref
             .read(gamePlayerControlControllerProvider.notifier)
-            .confirmHandoff(playerId, resetMovement: false);
+            .confirmHandoff(playerId);
       },
       focusTurnStartMapTarget: (playerId) {
         return ref

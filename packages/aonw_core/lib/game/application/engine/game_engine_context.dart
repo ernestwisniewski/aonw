@@ -12,6 +12,11 @@ final class GameEngineContext {
     required this.commandTick,
     this.movementVisibilityMode = MovementCommandVisibilityMode.authoritative,
     this.combatVisibilityMode = CombatCommandVisibilityMode.authoritative,
+    this.turnPlayerIds = const [],
+    this.requiredTurnSubmissionPlayerIds = const [],
+    this.savedAt,
+    this.preserveNonParticipantTurnStates = false,
+    this.trackTimeoutStreaks = false,
   });
 
   final String actorPlayerId;
@@ -20,4 +25,9 @@ final class GameEngineContext {
   final int commandTick;
   final MovementCommandVisibilityMode movementVisibilityMode;
   final CombatCommandVisibilityMode combatVisibilityMode;
+  final List<String> turnPlayerIds;
+  final List<String> requiredTurnSubmissionPlayerIds;
+  final DateTime? savedAt;
+  final bool preserveNonParticipantTurnStates;
+  final bool trackTimeoutStreaks;
 }

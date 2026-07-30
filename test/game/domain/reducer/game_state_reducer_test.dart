@@ -1,5 +1,4 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/movement.dart';
@@ -8,11 +7,9 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
-import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -132,7 +129,6 @@ void main() {
       const StartCityProjectCommand('c1', CityProjectType.wealth),
       const CancelResearchSelectionCommand('p1'),
       const DetachTroopCommand('u1', TroopType.settler),
-      const ResetUnitMovementCommand(),
       const ToggleMoveTargetingCommand(),
       const StartCityFoundingCommand(),
       const CancelCityFoundingCommand(),
@@ -185,148 +181,13 @@ void main() {
     });
   });
 
-  group('EndTurnCommand', () {
-    test('always emits TurnEndedEvent even when no state data changes', () {
-      const state = GameState(activePlayerId: 'p1');
-      final result = reducer.reduce(state, const EndTurnCommand('p1'));
-      final turnEvents = result.events.whereType<TurnEndedEvent>();
-      expect(turnEvents, hasLength(1));
-      expect(turnEvents.first.playerId, equals('p1'));
-    });
-
-    test('adds wealth project gold after project is queued', () {
-      final reducer = GameStateReducer(mapData: _landMap());
-      final city = _city(id: 'c1', ownerPlayerId: 'p1');
-      final state = GameState(
-        cities: [city],
-        activePlayerId: 'p1',
-        playerGold: const {'p1': 5},
-      );
-
-      final queued = dispatchCanonicalTestCommand(
-        reducer: reducer,
-        state: state,
-        command: const StartCityProjectCommand('c1', CityProjectType.wealth),
-      ).state;
-      final result = reducer.reduce(queued, const EndTurnCommand('p1'));
-
-      expect(result.state.playerGold['p1'], 6);
-      expect(
-        result.state.cities.single.productionQueue,
-        CityProductionQueue.project(projectType: CityProjectType.wealth),
-      );
-    });
-
-    test(
-      'adds research project science to active research after project is queued',
-      () {
-        final reducer = GameStateReducer(mapData: _landMap());
-        final city = _city(id: 'c1', ownerPlayerId: 'p1');
-        final state = GameState(
-          cities: [city],
-          activePlayerId: 'p1',
-          research: ResearchState(
-            players: {
-              'p1': PlayerResearchState(
-                activeTechnologyId: TechnologyId.agriculture,
-              ),
-            },
-          ),
-        );
-
-        final queued = dispatchCanonicalTestCommand(
-          reducer: reducer,
-          state: state,
-          command: const StartCityProjectCommand(
-            'c1',
-            CityProjectType.research,
-          ),
-        ).state;
-        final result = reducer.reduce(queued, const EndTurnCommand('p1'));
-
-        expect(
-          result.state.research
-              .forPlayer('p1')
-              .progressFor(TechnologyId.agriculture),
-          3,
-        );
-        expect(
-          result.events.whereType<ResearchPointsGainedEvent>().single.points,
-          3,
-        );
-      },
-    );
-  });
-
-  group('SubmitTurnCommand', () {
-    test('marks player as submitted without ending the turn pipeline', () {
-      const state = GameState(activePlayerId: 'p1');
-
-      final result = reducer.reduce(state, const SubmitTurnCommand('p1'));
-
-      expect(result.state.submittedPlayerIds, {'p1'});
-      expect(result.events.whereType<TurnEndedEvent>(), isEmpty);
-    });
-
-    test('turns off active player actions after submit', () {
-      final plan = UnitMovementPlan(
-        unitId: 'u1',
-        targetCol: 2,
-        targetRow: 3,
-        totalCost: 1,
-        availableMovementPoints: 3,
-        steps: const [
-          UnitMovementStep(col: 2, row: 3, enterCost: 1, cumulativeCost: 1),
-        ],
-      );
-      final state = const GameState(
-        activePlayerId: 'p1',
-        activePlayerCanAct: true,
-        interaction: GameInteractionState(
-          moveCommandActive: true,
-          pendingAction: PendingAttackTargeting(
-            ownerPlayerId: 'p1',
-            attackerUnitId: 'u1',
-          ),
-        ),
-      ).copyWithInteraction(movePreview: plan);
-
-      final result = reducer.reduce(state, const SubmitTurnCommand('p1'));
-
-      expect(result.state.activePlayerCanAct, isFalse);
-      expect(result.state.moveCommandActive, isFalse);
-      expect(result.state.movePreview, isNull);
-      expect(result.state.pendingAction, isNull);
-    });
-
-    test('duplicate submit is a no-op', () {
-      const state = GameState(activePlayerId: 'p1', submittedPlayerIds: {'p1'});
-
-      final result = reducer.reduce(state, const SubmitTurnCommand('p1'));
-
-      expect(result.state, state);
-    });
-
-    test('rejects a submitted player forged by another actor', () {
-      const state = GameState(activePlayerId: 'p2');
-
-      final result = reducer.reduce(
-        state,
-        const SubmitTurnCommand('p1'),
-        context: const GameCommandContext(actorPlayerId: 'p2'),
-      );
-
-      expect(result.state, state);
-      expect(result.events, isEmpty);
-    });
-  });
-
-  group('SetActivePlayerCommand', () {
+  group('active player interaction sync', () {
     test('updates activePlayerId and activePlayerCanAct', () {
       const state = GameState(activePlayerId: 'p1', activePlayerCanAct: true);
-      final result = reducer.reduce(
+      final result = reducer.syncActivePlayer(
         state,
-        const SetActivePlayerCommand('p2', canAct: false),
+        playerId: 'p2',
+        canAct: false,
       );
       expect(result.state.activePlayerId, equals('p2'));
       expect(result.state.activePlayerCanAct, isFalse);
@@ -337,9 +198,10 @@ void main() {
         activePlayerId: 'p1',
         interaction: GameInteractionState(moveCommandActive: true),
       );
-      final result = reducer.reduce(
+      final result = reducer.syncActivePlayer(
         state,
-        const SetActivePlayerCommand('p2', canAct: true),
+        playerId: 'p2',
+        canAct: true,
       );
       expect(result.state.moveCommandActive, isFalse);
     });
@@ -359,9 +221,10 @@ void main() {
         activePlayerId: 'p1',
       ).copyWithInteraction(movePreview: plan);
 
-      final result = reducer.reduce(
+      final result = reducer.syncActivePlayer(
         state,
-        const SetActivePlayerCommand('p2', canAct: true),
+        playerId: 'p2',
+        canAct: true,
       );
       expect(result.state.movePreview, isNull);
     });
@@ -378,9 +241,10 @@ void main() {
         units: [unit],
       ).copyWithInteraction(cityFoundingDraft: draft);
 
-      final result = reducer.reduce(
+      final result = reducer.syncActivePlayer(
         state,
-        const SetActivePlayerCommand('p2', canAct: true),
+        playerId: 'p2',
+        canAct: true,
       );
       expect(result.state.cityFoundingDraft, isNull);
     });
@@ -399,9 +263,10 @@ void main() {
           ),
         );
 
-        final result = reducer.reduce(
+        final result = reducer.syncActivePlayer(
           state,
-          const SetActivePlayerCommand('p1', canAct: true),
+          playerId: 'p1',
+          canAct: true,
         );
 
         expect(result.state.pendingAction, state.pendingAction);
@@ -419,9 +284,10 @@ void main() {
           units: [unit],
         ).copyWithInteraction(selection: selection);
 
-        final result = reducer.reduce(
+        final result = reducer.syncActivePlayer(
           state,
-          const SetActivePlayerCommand('p2', canAct: true),
+          playerId: 'p2',
+          canAct: true,
         );
         expect(result.state.selection, isNull);
       },
@@ -442,9 +308,10 @@ void main() {
           cities: [city],
         ).copyWithInteraction(selection: selection);
 
-        final result = reducer.reduce(
+        final result = reducer.syncActivePlayer(
           state,
-          const SetActivePlayerCommand('p2', canAct: true),
+          playerId: 'p2',
+          canAct: true,
         );
         expect(result.state.selection, isNull);
       },
@@ -458,9 +325,10 @@ void main() {
         activePlayerCanAct: true,
       ).copyWithInteraction(selection: selection);
 
-      final result = reducer.reduce(
+      final result = reducer.syncActivePlayer(
         state,
-        const SetActivePlayerCommand('p2', canAct: true),
+        playerId: 'p2',
+        canAct: true,
       );
       expect(result.state.selection, isNotNull);
       expect(result.state.selection!.type, equals(GameSelectionType.tile));
@@ -477,9 +345,10 @@ void main() {
           units: [unit],
         ).copyWithInteraction(selection: selection);
 
-        final result = reducer.reduce(
+        final result = reducer.syncActivePlayer(
           state,
-          const SetActivePlayerCommand('p2', canAct: true),
+          playerId: 'p2',
+          canAct: true,
         );
         expect(result.state.selection, isNotNull);
         expect(result.state.selection!.type, equals(GameSelectionType.unit));
@@ -495,9 +364,10 @@ void main() {
         units: [unit],
       ).copyWithInteraction(selection: selection);
 
-      final result = reducer.reduce(
+      final result = reducer.syncActivePlayer(
         state,
-        const SetActivePlayerCommand('p1', canAct: false),
+        playerId: 'p1',
+        canAct: false,
       );
 
       expect(result.state.selection, isNotNull);
@@ -520,9 +390,10 @@ void main() {
           cities: [city],
         ).copyWithInteraction(selection: selection);
 
-        final result = reducer.reduce(
+        final result = reducer.syncActivePlayer(
           state,
-          const SetActivePlayerCommand('p2', canAct: true),
+          playerId: 'p2',
+          canAct: true,
         );
         expect(result.state.selection, isNotNull);
         expect(result.state.selection!.type, equals(GameSelectionType.city));
@@ -531,9 +402,10 @@ void main() {
 
     test('returns no UI effects', () {
       const state = GameState(activePlayerId: 'p1');
-      final result = reducer.reduce(
+      final result = reducer.syncActivePlayer(
         state,
-        const SetActivePlayerCommand('p2', canAct: true),
+        playerId: 'p2',
+        canAct: true,
       );
       expect(result.uiEffects, isEmpty);
     });
@@ -543,9 +415,10 @@ void main() {
       final unit = _unit(ownerPlayerId: 'p2', col: 2, row: 2);
       final state = GameState(activePlayerId: 'p1', units: [unit]);
 
-      final result = reducer.reduce(
+      final result = reducer.syncActivePlayer(
         state,
-        const SetActivePlayerCommand('p2', canAct: true),
+        playerId: 'p2',
+        canAct: true,
       );
 
       expect(result.state.activePlayerVisibility.canSeeDynamicAt(2, 2), isTrue);

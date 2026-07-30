@@ -1,5 +1,4 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
-import 'package:aonw/game/application/services/advance_turn_snapshot.dart';
 import 'package:aonw/game/application/services/local_city_economy_command_resolver.dart';
 import 'package:aonw/game/application/services/local_combat_command_resolver.dart';
 import 'package:aonw/game/application/services/local_movement_command_resolver.dart';
@@ -9,9 +8,9 @@ import 'package:aonw/game/application/services/local_unit_action_command_resolve
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/game/domain/turn.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -52,54 +51,77 @@ class LocalCommandResolver {
   }) {
     final effectiveContext = _effectiveContext(baseSnapshot, context);
     final engineFamily = _engineFamily(command);
-    if (engineFamily == GameEngineCommandFamily.unitAction) {
-      return _resolveUnitAction(
+    return switch (engineFamily) {
+      GameEngineCommandFamily.turn => _resolveTurn(
         baseSnapshot: baseSnapshot,
         currentState: currentState,
         command: command as DomainCommand,
         savedAt: savedAt,
         context: effectiveContext,
-      );
-    }
-    if (engineFamily == GameEngineCommandFamily.movement) {
-      return _resolveMovement(
+      ),
+      GameEngineCommandFamily.unitAction => _resolveUnitAction(
         baseSnapshot: baseSnapshot,
         currentState: currentState,
         command: command as DomainCommand,
         savedAt: savedAt,
         context: effectiveContext,
+      ),
+      _ => _resolveRemainingFamily(
+        baseSnapshot: baseSnapshot,
+        currentState: currentState,
+        command: command,
+        savedAt: savedAt,
+        context: effectiveContext,
+        engineFamily: engineFamily,
+        movementPresentationOrigin: movementPresentationOrigin,
+      ),
+    };
+  }
+
+  LocalCommandResolution _resolveRemainingFamily({
+    required SaveSnapshot baseSnapshot,
+    required GameState currentState,
+    required GameCommand command,
+    required DateTime savedAt,
+    required GameCommandContext context,
+    required GameEngineCommandFamily? engineFamily,
+    required LocalMovementPresentationOrigin movementPresentationOrigin,
+  }) {
+    return switch (engineFamily) {
+      GameEngineCommandFamily.movement => _resolveMovement(
+        baseSnapshot: baseSnapshot,
+        currentState: currentState,
+        command: command as DomainCommand,
+        savedAt: savedAt,
+        context: context,
         presentationOrigin: movementPresentationOrigin,
-      );
-    }
-    if (engineFamily == GameEngineCommandFamily.combat) {
-      return _resolveCombat(
+      ),
+      GameEngineCommandFamily.combat => _resolveCombat(
         baseSnapshot: baseSnapshot,
         currentState: currentState,
         command: command as AttackHexCommand,
         savedAt: savedAt,
-        context: effectiveContext,
-      );
-    }
-    if (engineFamily == GameEngineCommandFamily.city ||
-        engineFamily == GameEngineCommandFamily.production ||
-        engineFamily == GameEngineCommandFamily.worker ||
-        engineFamily == GameEngineCommandFamily.artifactTrade) {
-      return _resolveCityEconomy(
+        context: context,
+      ),
+      GameEngineCommandFamily.city ||
+      GameEngineCommandFamily.production ||
+      GameEngineCommandFamily.worker ||
+      GameEngineCommandFamily.artifactTrade => _resolveCityEconomy(
         baseSnapshot: baseSnapshot,
         currentState: currentState,
         command: command as DomainCommand,
         savedAt: savedAt,
-        context: effectiveContext,
-      );
-    }
-    return _resolveResearchDiplomacyOrReducer(
-      baseSnapshot: baseSnapshot,
-      currentState: currentState,
-      command: command,
-      savedAt: savedAt,
-      context: effectiveContext,
-      engineFamily: engineFamily,
-    );
+        context: context,
+      ),
+      _ => _resolveResearchDiplomacyOrReducer(
+        baseSnapshot: baseSnapshot,
+        currentState: currentState,
+        command: command,
+        savedAt: savedAt,
+        context: context,
+        engineFamily: engineFamily,
+      ),
+    };
   }
 
   LocalCommandResolution _resolveReducerCommand({
@@ -109,12 +131,35 @@ class LocalCommandResolver {
     required DateTime savedAt,
     required GameCommandContext context,
   }) {
-    if (command is SubmitTurnCommand &&
-        _rejectSubmitTurn(
-          baseSnapshot: baseSnapshot,
-          command: command,
-          actorPlayerId: context.actorPlayerId,
-        )) {
+    final transition = reducer.reduce(currentState, command, context: context);
+    return LocalCommandResolution(
+      snapshot: baseSnapshot
+          .withSavedAt(savedAt)
+          .withGameState(transition.state),
+      state: transition.state,
+      events: transition.events,
+      uiEffects: transition.uiEffects,
+      context: context,
+    );
+  }
+}
+
+extension _LocalCommandResolverImplementation on LocalCommandResolver {
+  LocalCommandResolution _resolveTurn({
+    required SaveSnapshot baseSnapshot,
+    required GameState currentState,
+    required DomainCommand command,
+    required DateTime savedAt,
+    required GameCommandContext context,
+  }) {
+    final result = _applyTurnEngine(
+      baseSnapshot: baseSnapshot,
+      currentState: currentState,
+      command: command,
+      savedAt: savedAt,
+      context: context,
+    );
+    if (result is GameEngineRejected) {
       return LocalCommandResolution(
         snapshot: baseSnapshot.withSavedAt(savedAt).withGameState(currentState),
         state: currentState,
@@ -123,21 +168,154 @@ class LocalCommandResolver {
         context: context,
       );
     }
-    final transition = reducer.reduce(currentState, command, context: context);
-    final resolved = _resolveCommand(
+    return _acceptedTurnResolution(
       baseSnapshot: baseSnapshot,
+      currentState: currentState,
       command: command,
-      reducedState: transition.state,
       savedAt: savedAt,
+      context: context,
+      accepted: result as GameEngineAccepted,
     );
+  }
 
+  GameEngineResult _applyTurnEngine({
+    required SaveSnapshot baseSnapshot,
+    required GameState currentState,
+    required DomainCommand command,
+    required DateTime savedAt,
+    required GameCommandContext context,
+  }) {
+    final playerIds = _activePlayerIds(baseSnapshot);
+    return const GameEngine().apply(
+      snapshot: baseSnapshot.withGameState(currentState).canonical,
+      command: command,
+      context: GameEngineContext(
+        actorPlayerId: context.actorPlayerId ?? _turnPlayerId(command),
+        mapView: reducer.mapData,
+        ruleset: reducer.ruleset,
+        commandTick: context.commandTick,
+        turnPlayerIds: playerIds,
+        requiredTurnSubmissionPlayerIds: playerIds,
+        savedAt: savedAt,
+      ),
+    );
+  }
+
+  LocalCommandResolution _acceptedTurnResolution({
+    required SaveSnapshot baseSnapshot,
+    required GameState currentState,
+    required DomainCommand command,
+    required DateTime savedAt,
+    required GameCommandContext context,
+    required GameEngineAccepted accepted,
+  }) {
+    final preservesRawTurnStart =
+        accepted.snapshot.domain.turn == baseSnapshot.domain.turn;
+    final projection = _acceptedTurnProjection(
+      baseSnapshot: baseSnapshot,
+      currentState: currentState,
+      command: command,
+      accepted: accepted,
+      savedAt: savedAt,
+      preservesRawTurnStart: preservesRawTurnStart,
+    );
+    var nextState = projection.state;
+    if (command is SubmitTurnCommand &&
+        currentState.activePlayerId == command.playerId) {
+      nextState = nextState
+          .copyWith(activePlayerCanAct: false)
+          .copyWithInteraction(
+            moveCommandActive: false,
+            movePreview: null,
+            cityFoundingDraft: null,
+            pendingAction: null,
+          );
+    }
+    final movement = accepted.movementDelta;
     return LocalCommandResolution(
-      snapshot: resolved.snapshot,
-      state: resolved.state,
-      events: [...transition.events, ...resolved.events],
-      uiEffects: [...transition.uiEffects, ...resolved.uiEffects],
+      snapshot: projection.snapshot.withGameState(nextState),
+      state: nextState,
+      events: accepted.events,
+      uiEffects: QueuedMovementEffectBuilder.fromExecutions(
+        movement.executions,
+        beforeUnits: movement.beforeUnits,
+        afterUnits: movement.afterUnits,
+      ),
       context: context,
     );
+  }
+
+  ({SaveSnapshot snapshot, GameState state}) _acceptedTurnProjection({
+    required SaveSnapshot baseSnapshot,
+    required GameState currentState,
+    required DomainCommand command,
+    required GameEngineAccepted accepted,
+    required DateTime savedAt,
+    required bool preservesRawTurnStart,
+  }) {
+    final canonicalSameTurn =
+        preservesRawTurnStart && command is EndTurnCommand;
+    final snapshot = SaveSnapshot.fromCanonical(accepted.snapshot);
+    final persistent = preservesRawTurnStart
+        ? snapshot.rawPersistentState.copyWith(
+            runtimeState: snapshot.runtimeState.copyWith(
+              turnStartedAt: baseSnapshot.persistedTurnStartedAt,
+            ),
+          )
+        : snapshot.rawPersistentState;
+    if (canonicalSameTurn || !preservesRawTurnStart) {
+      return (
+        snapshot: SaveSnapshot.fromPersistentState(
+          save: snapshot.save,
+          state: persistent,
+          eventLogOffset: snapshot.eventLogOffset,
+        ),
+        state: currentState
+            .copyWithPersistentState(persistent)
+            .copyWithInteraction(
+              cityFoundingDraft:
+                  accepted.snapshot.interaction.cityFoundingDraft,
+              pendingAction: accepted.snapshot.interaction.pendingAction,
+            ),
+      );
+    }
+    final state = currentState
+        .copyWith(
+          submittedPlayerIds: accepted.snapshot.session.submittedPlayerIds,
+          turnStartedAt: baseSnapshot.persistedTurnStartedAt,
+        )
+        .copyWithInteraction(
+          cityFoundingDraft: accepted.snapshot.interaction.cityFoundingDraft,
+          pendingAction: accepted.snapshot.interaction.pendingAction,
+        );
+    return (
+      snapshot: _projectUnfinalizedTurn(
+        baseSnapshot: baseSnapshot,
+        state: state,
+        command: command,
+        savedAt: savedAt,
+      ),
+      state: state,
+    );
+  }
+
+  SaveSnapshot _projectUnfinalizedTurn({
+    required SaveSnapshot baseSnapshot,
+    required GameState state,
+    required DomainCommand command,
+    required DateTime savedAt,
+  }) {
+    var projected = baseSnapshot.withSavedAt(savedAt).withGameState(state);
+    final playerId = switch (command) {
+      SubmitTurnCommand(:final playerId) ||
+      EndTurnCommand(:final playerId) => playerId,
+      _ => null,
+    };
+    if (playerId != null &&
+        projected.session.turnStatesByPlayerId.containsKey(playerId)) {
+      projected = projected.withPlayerFinished(playerId);
+    }
+    return projected;
   }
 
   GameCommandContext _effectiveContext(
@@ -261,111 +439,13 @@ class LocalCommandResolver {
       context: context,
     );
   }
-
-  _ResolvedLocalCommand _resolveCommand({
-    required SaveSnapshot baseSnapshot,
-    required GameCommand command,
-    required GameState reducedState,
-    required DateTime savedAt,
-  }) {
-    if (command is SubmitTurnCommand) {
-      return _resolveSubmitTurn(
-        baseSnapshot: baseSnapshot,
-        command: command,
-        reducedState: reducedState,
-        savedAt: savedAt,
-      );
-    }
-
-    if (command is EndTurnCommand) {
-      final snapshot = const AdvanceTurnPhase().advanceSnapshot(
-        baseSnapshot,
-        playerId: command.playerId,
-        savedAt: savedAt,
-      );
-      return _ResolvedLocalCommand(
-        snapshot: snapshot.withGameState(reducedState),
-        state: reducedState,
-      );
-    }
-    return _ResolvedLocalCommand(
-      snapshot: baseSnapshot.withSavedAt(savedAt).withGameState(reducedState),
-      state: reducedState,
-    );
-  }
-
-  _ResolvedLocalCommand _resolveSubmitTurn({
-    required SaveSnapshot baseSnapshot,
-    required SubmitTurnCommand command,
-    required GameState reducedState,
-    required DateTime savedAt,
-  }) {
-    final playerIds = _activePlayerIds(baseSnapshot);
-    if (!playerIds.every(reducedState.submittedPlayerIds.contains)) {
-      return _ResolvedLocalCommand(
-        snapshot: baseSnapshot
-            .withPlayerFinished(command.playerId)
-            .withSavedAt(savedAt)
-            .withGameState(reducedState),
-        state: reducedState,
-      );
-    }
-
-    return _finalizeSimultaneousTurn(
-      snapshot: baseSnapshot,
-      state: reducedState,
-      playerIds: playerIds,
-      savedAt: savedAt.toUtc(),
-    );
-  }
-
-  _ResolvedLocalCommand _finalizeSimultaneousTurn({
-    required SaveSnapshot snapshot,
-    required GameState state,
-    required List<String> playerIds,
-    required DateTime savedAt,
-  }) {
-    final result = CanonicalTurnPipeline.simultaneousFinalize(
-      CanonicalTurnPipelineRequest.simultaneousFinalize(
-        snapshot: snapshot.withGameState(state).canonical,
-        playerIds: playerIds,
-        savedAt: savedAt,
-        mapView: reducer.mapData,
-        ruleset: reducer.ruleset,
-      ),
-    );
-    final movementDelta = result.movementDelta;
-    final uiEffects = QueuedMovementEffectBuilder.fromExecutions(
-      movementDelta.executions,
-    );
-    final resolvedSnapshot = SaveSnapshot.fromCanonical(result.snapshot);
-    final nextState = resolvedSnapshot.toGameState(
-      activePlayerId: state.activePlayerId,
-      activePlayerCanAct: state.activePlayerCanAct,
-    );
-
-    return _ResolvedLocalCommand(
-      snapshot: resolvedSnapshot,
-      state: nextState,
-      events: result.events,
-      uiEffects: uiEffects,
-    );
-  }
 }
 
 GameEngineCommandFamily? _engineFamily(GameCommand command) =>
     command is DomainCommand ? GameEngine.commandFamily(command) : null;
 
-class _ResolvedLocalCommand {
-  final SaveSnapshot snapshot;
-  final GameState state;
-  final List<GameEvent> events;
-  final List<UiEffect> uiEffects;
-
-  const _ResolvedLocalCommand({
-    required this.snapshot,
-    required this.state,
-    this.events = const [],
-    this.uiEffects = const [],
-  });
-}
+String _turnPlayerId(DomainCommand command) => switch (command) {
+  SubmitTurnCommand(:final playerId) ||
+  EndTurnCommand(:final playerId) => playerId,
+  _ => '',
+};

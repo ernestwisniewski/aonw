@@ -12,7 +12,7 @@ void main() {
     test('decodes every historical non-player discriminator', () {
       final decodedTypes = <String>{};
 
-      expect(_historicalCommandFixtures, hasLength(27));
+      expect(_historicalCommandFixtures, hasLength(25));
       for (final fixture in _historicalCommandFixtures) {
         expect(
           LoggedGameCommandCodec.fromJson(fixture.json),
@@ -50,27 +50,21 @@ void main() {
       );
     });
 
-    test('pins exact trusted system command encodings', () {
-      expect(LoggedGameCommandCodec.toJson(const ResetUnitMovementCommand()), {
-        'type': 'ResetUnitMovement',
-      });
+    test('maps removed lifecycle records to replay tombstones', () {
       expect(
-        LoggedGameCommandCodec.toJson(
-          const ResetUnitMovementCommand(playerId: 'player_1'),
-        ),
-        {'type': 'ResetUnitMovement', 'playerId': 'player_1'},
+        LoggedGameCommandCodec.fromJson(const {
+          'type': 'ResetUnitMovement',
+          'playerId': 'player_1',
+        }),
+        isNull,
       );
       expect(
-        LoggedGameCommandCodec.toJson(
-          const SetActivePlayerCommand('player_1', canAct: true),
-        ),
-        {'type': 'SetActivePlayer', 'playerId': 'player_1', 'canAct': true},
-      );
-      expect(
-        LoggedGameCommandCodec.toJson(
-          const SetActivePlayerCommand('player_2', canAct: false),
-        ),
-        {'type': 'SetActivePlayer', 'playerId': 'player_2', 'canAct': false},
+        LoggedGameCommandCodec.fromJson(const {
+          'type': 'SetActivePlayer',
+          'playerId': 'player_2',
+          'canAct': false,
+        }),
+        isNull,
       );
     });
   });
@@ -155,19 +149,14 @@ void main() {
       expect(restored.command, isA<ToggleMoveTargetingCommand>());
     });
 
-    test('round-trips trusted system commands in the internal log', () {
-      final logged = LoggedCommand(
-        offset: 1,
-        timestamp: DateTime.utc(2026),
-        turn: 1,
-        command: const ResetUnitMovementCommand(playerId: 'p1'),
-      );
-
-      final json = logged.toJson();
-      final restored = LoggedCommand.fromJson(json);
-
-      expect(json['command'], {'type': 'ResetUnitMovement', 'playerId': 'p1'});
-      expect(restored.command, const ResetUnitMovementCommand(playerId: 'p1'));
+    test('reads lifecycle tombstones without dispatchable commands', () {
+      final restored = LoggedCommand.fromJson({
+        'offset': 1,
+        'timestamp': DateTime.utc(2026).toIso8601String(),
+        'turn': 1,
+        'command': {'type': 'ResetUnitMovement', 'playerId': 'p1'},
+      });
+      expect(restored.command, isNull);
     });
 
     test('round-trips an event-only entry without inventing a command', () {
@@ -201,18 +190,6 @@ void main() {
 
 const _historicalCommandFixtures =
     <({Map<String, dynamic> json, GameCommand command})>[
-      (
-        json: {'type': 'ResetUnitMovement', 'playerId': 'player_1'},
-        command: ResetUnitMovementCommand(playerId: 'player_1'),
-      ),
-      (
-        json: {
-          'type': 'SetActivePlayer',
-          'playerId': 'player_2',
-          'canAct': false,
-        },
-        command: SetActivePlayerCommand('player_2', canAct: false),
-      ),
       (
         json: {'type': 'TileTapped', 'col': 2, 'row': 3},
         command: TileTappedCommand(2, 3),
@@ -345,8 +322,6 @@ const _historicalCommandFixtures =
     ];
 
 const _historicalCommandTypes = {
-  'ResetUnitMovement',
-  'SetActivePlayer',
   'TileTapped',
   'CityTapped',
   'StartMerchantTradeRouteSelection',

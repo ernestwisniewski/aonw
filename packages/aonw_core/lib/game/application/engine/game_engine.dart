@@ -7,6 +7,8 @@ import 'package:aonw_core/game/application/engine/game_engine_result.dart';
 import 'package:aonw_core/game/application/engine/movement_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/production_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/research_engine_handler.dart';
+import 'package:aonw_core/game/application/engine/server_system_command.dart';
+import 'package:aonw_core/game/application/engine/turn_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/unit_action_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/worker_engine_handler.dart';
 import 'package:aonw_core/game/domain/command/game_command.dart';
@@ -22,6 +24,7 @@ enum GameEngineCommandFamily {
   artifactTrade,
   research,
   diplomacy,
+  turn,
 }
 
 /// Deterministic dispatcher for authoritative player commands.
@@ -39,7 +42,8 @@ final class GameEngine {
         _workerFamily(command) ??
         _artifactTradeFamily(command) ??
         _researchFamily(command) ??
-        _diplomacyFamily(command);
+        _diplomacyFamily(command) ??
+        _turnFamily(command);
   }
 
   static GameEngineCommandFamily? _unitActionFamily(DomainCommand command) {
@@ -126,6 +130,13 @@ final class GameEngine {
     };
   }
 
+  static GameEngineCommandFamily? _turnFamily(DomainCommand command) {
+    return switch (command) {
+      SubmitTurnCommand() || EndTurnCommand() => GameEngineCommandFamily.turn,
+      _ => null,
+    };
+  }
+
   GameEngineResult apply({
     required CanonicalGameSnapshot snapshot,
     required DomainCommand command,
@@ -140,6 +151,18 @@ final class GameEngine {
     }
     return _applyKnownFamily(
       family: family,
+      snapshot: snapshot,
+      command: command,
+      context: context,
+    );
+  }
+
+  GameEngineResult applySystem({
+    required CanonicalGameSnapshot snapshot,
+    required ServerSystemCommand command,
+    required GameEngineContext context,
+  }) {
+    return const TurnEngineHandler().applySystem(
       snapshot: snapshot,
       command: command,
       context: context,
@@ -185,6 +208,22 @@ final class GameEngine {
         command: command,
         context: context,
       ),
+      _ => _applyStrategicFamily(
+        family: family,
+        snapshot: snapshot,
+        command: command,
+        context: context,
+      ),
+    };
+  }
+
+  GameEngineResult _applyStrategicFamily({
+    required GameEngineCommandFamily family,
+    required CanonicalGameSnapshot snapshot,
+    required DomainCommand command,
+    required GameEngineContext context,
+  }) {
+    return switch (family) {
       GameEngineCommandFamily.artifactTrade =>
         const ArtifactTradeEngineHandler().apply(
           snapshot: snapshot,
@@ -200,6 +239,15 @@ final class GameEngine {
         snapshot: snapshot,
         command: command,
         context: context,
+      ),
+      GameEngineCommandFamily.turn => const TurnEngineHandler().apply(
+        snapshot: snapshot,
+        command: command,
+        context: context,
+      ),
+      _ => GameEngineResult.rejected(
+        snapshot: snapshot,
+        reason: 'unsupported_domain_command',
       ),
     };
   }

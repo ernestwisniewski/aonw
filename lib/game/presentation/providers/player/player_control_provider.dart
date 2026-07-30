@@ -129,45 +129,29 @@ class GamePlayerControlController extends _$GamePlayerControlController {
         if (!ref.mounted) return result.updatedSave;
       }
       _setAndSync(result.nextControl);
-      if (result.shouldResetMovement) {
-        await _dispatchAndHandle(const ResetUnitMovementCommand());
-      }
     }
 
     return result.updatedSave;
   }
 
-  Future<void> confirmHandoff(
-    String playerId, {
-    bool resetMovement = true,
-  }) async {
+  Future<void> confirmHandoff(String playerId) async {
     final keepAlive = ref.keepAlive();
     try {
-      await _confirmHandoff(playerId, resetMovement: resetMovement);
+      await _confirmHandoff(playerId);
     } finally {
       keepAlive.close();
     }
   }
 
-  Future<void> _confirmHandoff(
-    String playerId, {
-    required bool resetMovement,
-  }) async {
+  Future<void> _confirmHandoff(String playerId) async {
     final session = ref.read(activeGameSessionProvider);
     if (session == null || session.saveId.isEmpty) return;
 
     late final ConfirmHandoffResult? result;
     try {
-      result =
-          await ConfirmHandoffUseCase(
-            repository: ref.read(gameRepositoryProvider),
-          ).execute(
-            saveId: session.saveId,
-            current: state,
-            playerId: playerId,
-            resetMovement: resetMovement,
-            dispatch: _dispatchAndHandle,
-          );
+      result = await ConfirmHandoffUseCase(
+        repository: ref.read(gameRepositoryProvider),
+      ).execute(saveId: session.saveId, current: state, playerId: playerId);
     } catch (error, stackTrace) {
       if (ref.mounted) {
         ref
@@ -203,17 +187,22 @@ class GamePlayerControlController extends _$GamePlayerControlController {
   void _syncGameState(PlayerControlState next) {
     final logger = ref.read(gameLoggerProvider);
     unawaited(
-      _dispatchAndHandle(
-        SetActivePlayerCommand(next.activePlayerId, canAct: next.canAct),
-      ).catchError((Object error, StackTrace stackTrace) {
-        logger.warn(
-          'GamePlayerControlController',
-          'game state sync failed',
-          error,
-          stackTrace,
-        );
-        return const <UiEffect>[];
-      }),
+      ref
+          .read(
+            gameStateProvider(
+              ref.read(activeGameSessionProvider)?.saveId ?? '',
+            ).notifier,
+          )
+          .syncActivePlayer(playerId: next.activePlayerId, canAct: next.canAct)
+          .catchError((Object error, StackTrace stackTrace) {
+            logger.warn(
+              'GamePlayerControlController',
+              'game state sync failed',
+              error,
+              stackTrace,
+            );
+            return;
+          }),
     );
   }
 

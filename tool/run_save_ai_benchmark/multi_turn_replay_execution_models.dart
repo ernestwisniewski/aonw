@@ -103,15 +103,3 @@ class _ReplayTurnResult {
   final List<_StaleMoveDiagnostic> staleMoveDiagnostics;
   final List<String> rejectedCommandDescriptions;
 }
-
-class _ResolvedReplayTurn {
-  const _ResolvedReplayTurn({
-    required this.snapshot,
-    required this.state,
-    required this.events,
-  });
-
-  final SaveSnapshot snapshot;
-  final GameState state;
-  final List<GameEvent> events;
-}

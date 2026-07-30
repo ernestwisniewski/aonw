@@ -267,7 +267,6 @@ class HumanTraceAnalyzer {
     return switch (command) {
       SubmitTurnCommand() ||
       EndTurnCommand() ||
-      SetActivePlayerCommand() ||
       StartCityFoundingCommand() ||
       StartAttackTargetingCommand() ||
       StartWorkerActionSelectionCommand() ||
@@ -297,7 +296,6 @@ class HumanTraceAnalyzer {
       SelectTechnologyCommand(:final playerId) => playerId,
       SubmitTurnCommand(:final playerId) => playerId,
       EndTurnCommand(:final playerId) => playerId,
-      SetActivePlayerCommand(:final playerId) => playerId,
       FocusNextPendingActionCommand(:final playerId) => playerId,
       FocusTurnStartActionCommand(:final playerId) => playerId,
       _ => null,

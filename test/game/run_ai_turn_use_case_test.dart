@@ -13,7 +13,6 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
-import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
@@ -340,10 +339,7 @@ void main() {
       );
 
       expect(report, isNotNull);
-      expect(transport.commands, [
-        const ResetUnitMovementCommand(playerId: 'player_2'),
-        const EndTurnCommand('player_2'),
-      ]);
+      expect(transport.commands, [const EndTurnCommand('player_2')]);
       final viewedCommander = strategy.lastView?.ownUnits.single;
       expect(
         viewedCommander?.movementPoints,
@@ -400,15 +396,10 @@ void main() {
       );
 
       expect(report, isNotNull);
-      expect(
-        transport.commands.first,
-        const ResetUnitMovementCommand(playerId: 'player_2'),
-      );
       expect(transport.commands.last, const EndTurnCommand('player_2'));
       expect(
         transport.commands
-            .skip(1)
-            .take(transport.commands.length - 2)
+            .take(transport.commands.length - 1)
             .where((command) => command is! EndTurnCommand),
         isNotEmpty,
       );
@@ -711,12 +702,6 @@ class _RecordingCommandTransport implements CommandTransport {
     commands.add(command);
     states.add(currentState);
     final nextState = switch (command) {
-      ResetUnitMovementCommand(:final playerId) =>
-        MovementReducer.resetUnitMovementForNewTurn(
-          currentState,
-          _mapData,
-          playerId: playerId,
-        ).state,
       SubmitTurnCommand() ||
       EndTurnCommand() => currentState.copyWith(activePlayerCanAct: false),
       _ => currentState.copyWithInteraction(moveCommandActive: true),

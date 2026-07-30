@@ -14,20 +14,20 @@ void _registerTransientSnapshotCases() {
     final result = await transport.dispatch(
       saveId: 'save_1',
       currentState: state,
-      command: const SetActivePlayerCommand('player_2', canAct: false),
+      command: const ToggleMoveTargetingCommand(),
     );
 
     expect(server.sentCommands, isEmpty);
     expect(result.snapshot, isNull);
-    expect(result.state.activePlayerId, 'player_2');
-    expect(result.state.activePlayerCanAct, isFalse);
+    expect(result.state.activePlayerId, 'player_1');
+    expect(result.state.moveCommandActive, isTrue);
     expect(result.uiEffects, isEmpty);
     expect(result.events, isEmpty);
     expect(result.offset, -1);
     expect(result.storedSnapshot, isFalse);
   });
 
-  test('does not send server-managed movement resets', () async {
+  test('does not send another presentation-only interaction', () async {
     final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
     final state = GameState(
       units: [commander],
@@ -39,7 +39,7 @@ void _registerTransientSnapshotCases() {
     final result = await _transport(server).dispatch(
       saveId: 'save_1',
       currentState: state,
-      command: const ResetUnitMovementCommand(playerId: 'player_1'),
+      command: const CancelCityFoundingCommand(),
     );
 
     expect(server.sentCommands, isEmpty);

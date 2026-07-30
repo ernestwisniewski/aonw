@@ -649,12 +649,9 @@ void main() {
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
       );
-      // SetActivePlayer to refresh fog context
-      state = _dispatch(
-        reducer,
-        state,
-        const SetActivePlayerCommand('player_1', canAct: true),
-      ).state;
+      state = reducer
+          .syncActivePlayer(state, playerId: 'player_1', canAct: true)
+          .state;
 
       state = _dispatch(reducer, state, const TileTappedCommand(5, 5)).state;
 
@@ -892,7 +889,7 @@ void main() {
       expect(state.selection?.city, playerCity);
     });
 
-    test('SetActivePlayerCommand clears selection and move state', () {
+    test('active player sync clears selection and move state', () {
       final map = _map(3, 3);
       final reducer = GameStateReducer(mapData: map);
       final commander = _commander();
@@ -911,11 +908,9 @@ void main() {
       );
 
       // Switch to player_2 — commander owned by player_1 should be deselected
-      state = _dispatch(
-        reducer,
-        state,
-        const SetActivePlayerCommand('player_2', canAct: true),
-      ).state;
+      state = reducer
+          .syncActivePlayer(state, playerId: 'player_2', canAct: true)
+          .state;
 
       expect(state.activePlayerId, 'player_2');
       expect(state.moveCommandActive, isFalse);

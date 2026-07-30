@@ -7,8 +7,13 @@ extension _ServerCommandReducerUnitAction on ServerCommandReducer {
     String actorPlayerId,
     int commandTick,
     MapReadView mapView,
-    GameRuleset ruleset,
-  ) {
+    GameRuleset ruleset, {
+    List<String> turnPlayerIds = const [],
+    List<String> requiredTurnSubmissionPlayerIds = const [],
+    DateTime? savedAt,
+    bool preserveNonParticipantTurnStates = false,
+    bool trackTimeoutStreaks = false,
+  }) {
     final result = const GameEngine().apply(
       snapshot: snapshot,
       command: command,
@@ -17,19 +22,13 @@ extension _ServerCommandReducerUnitAction on ServerCommandReducer {
         mapView: mapView,
         ruleset: ruleset,
         commandTick: commandTick,
+        turnPlayerIds: turnPlayerIds,
+        requiredTurnSubmissionPlayerIds: requiredTurnSubmissionPlayerIds,
+        savedAt: savedAt,
+        preserveNonParticipantTurnStates: preserveNonParticipantTurnStates,
+        trackTimeoutStreaks: trackTimeoutStreaks,
       ),
     );
-    return switch (result) {
-      GameEngineAccepted() => _CommandApplication.accept(
-        snapshot: result.snapshot,
-        events: result.events,
-        movementExecutions: result.movementDelta.executions,
-        combatAnimations: result.combatAnimations,
-      ),
-      final GameEngineRejected rejected => _CommandApplication.reject(
-        snapshot: snapshot,
-        reason: rejected.reason,
-      ),
-    };
+    return _commandApplicationFromEngine(snapshot, result);
   }
 }

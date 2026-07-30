@@ -190,20 +190,6 @@ final class MoveMerchantToCityCommand extends UnitDomainCommand {
       Object.hash(MoveMerchantToCityCommand, unitId, destinationCityId);
 }
 
-/// Resets unit movement for a new turn and advances queued paths.
-final class ResetUnitMovementCommand extends ServerSystemCommand {
-  const ResetUnitMovementCommand({this.playerId});
-
-  final String? playerId;
-
-  @override
-  bool operator ==(Object other) =>
-      other is ResetUnitMovementCommand && other.playerId == playerId;
-
-  @override
-  int get hashCode => Object.hash(ResetUnitMovementCommand, playerId);
-}
-
 /// Toggles whether the move-targeting mode is active.
 final class ToggleMoveTargetingCommand extends GameIntent {
   const ToggleMoveTargetingCommand();

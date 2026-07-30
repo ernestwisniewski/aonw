@@ -29,8 +29,11 @@ final class RunningMatchSnapshotCodec {
     return _losslessMatchSnapshotCodec.decode(snapshot);
   }
 
-  /// Materializes canonical state only when its persisted roster is complete
-  /// and exactly matches the authoritative transport roster.
+  /// Materializes canonical state only when its persisted identity roster
+  /// exactly matches the authoritative transport roster.
+  ///
+  /// Turn state may be sparse, but it may never introduce an identity outside
+  /// that roster.
   CanonicalGameSnapshot canonicalWithValidatedRoster(
     DecodedRunningMatchSnapshot source, {
     required WireMatch match,
@@ -66,7 +69,7 @@ final class RunningMatchSnapshotCodec {
     _requireMatchingRoster(_sameMap(state.playerColors, expectedColors));
     _requireMatchingRoster(_sameMap(state.playerCountries, expectedCountries));
     _requireMatchingRoster(
-      _sameSet(save.playerStates.keys.toSet(), expectedPlayerIds),
+      save.playerStates.keys.every(expectedPlayerIds.contains),
     );
     return canonical;
   }
@@ -145,10 +148,9 @@ final class RunningMatchSnapshotCodec {
     if (next == previous) return source.wire;
     _requireMatchingRoster(
       _sameOrderedPlayers(
-            next.domain.participants,
-            previous.domain.participants,
-          ) &&
-          _hasCompleteTurnStateRoster(next),
+        next.domain.participants,
+        previous.domain.participants,
+      ),
     );
     _requireUnchangedEventLogOffset(previous, next);
     _requireRepresentableRunningTurnStart(next);
@@ -230,12 +232,6 @@ bool _sameOrderedPlayers(List<Player> actual, List<Player> expected) {
 List<Player> _domainParticipants(WireMatch match) => [
   for (final player in match.players) domainPlayerFromWire(player),
 ];
-
-bool _hasCompleteTurnStateRoster(CanonicalGameSnapshot snapshot) {
-  return _sameSet(snapshot.session.turnStatesByPlayerId.keys.toSet(), {
-    for (final player in snapshot.domain.participants) player.id,
-  });
-}
 
 bool _sameMap<K, V>(Map<K, V> actual, Map<K, V> expected) {
   if (actual.length != expected.length) return false;

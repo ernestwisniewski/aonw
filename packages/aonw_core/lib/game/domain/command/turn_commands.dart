@@ -30,20 +30,3 @@ final class SubmitTurnCommand extends DomainCommand {
   @override
   int get hashCode => Object.hash(SubmitTurnCommand, playerId);
 }
-
-/// Sets the active player, optionally granting action rights.
-final class SetActivePlayerCommand extends ServerSystemCommand {
-  const SetActivePlayerCommand(this.playerId, {required this.canAct});
-
-  final String playerId;
-  final bool canAct;
-
-  @override
-  bool operator ==(Object other) =>
-      other is SetActivePlayerCommand &&
-      other.playerId == playerId &&
-      other.canAct == canAct;
-
-  @override
-  int get hashCode => Object.hash(SetActivePlayerCommand, playerId, canAct);
-}

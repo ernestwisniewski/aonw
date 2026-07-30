@@ -105,7 +105,7 @@ void main() {
             offset: 1,
             timestamp: DateTime.utc(2026, 4, 24, 11),
             turn: 1,
-            command: const SetActivePlayerCommand('player_1', canAct: true),
+            command: null,
           ),
         );
       final snapshotStore = _MemorySnapshotStore();

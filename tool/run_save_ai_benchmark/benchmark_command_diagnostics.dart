@@ -160,8 +160,6 @@ String _describeCommand(GameCommand command) {
     SkipUnitTurnCommand() => 'skip ${command.unitId}',
     FortifyUnitCommand() => 'fortify ${command.unitId}',
     AutoExploreUnitCommand() => 'auto explore ${command.unitId}',
-    ResetUnitMovementCommand() =>
-      'reset movement for ${command.playerId ?? 'all'}',
     EndTurnCommand() => 'end turn for ${command.playerId}',
     SubmitTurnCommand() => 'submit turn for ${command.playerId}',
     RushProductionCommand() => 'rush production in ${command.cityId}',

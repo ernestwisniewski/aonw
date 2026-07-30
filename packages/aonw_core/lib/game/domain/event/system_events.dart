@@ -6,7 +6,7 @@ final class CommandRejectedEvent extends GameEvent {
   final String reason;
 }
 
-final class AllPlayersSubmittedEvent extends GameEvent {
+final class AllPlayersSubmittedEvent extends DomainEvent {
   AllPlayersSubmittedEvent({
     required this.turn,
     required List<String> playerIds,
@@ -16,14 +16,14 @@ final class AllPlayersSubmittedEvent extends GameEvent {
   final List<String> playerIds;
 }
 
-final class PlayerTimedOutEvent extends GameEvent {
+final class PlayerTimedOutEvent extends DomainEvent {
   const PlayerTimedOutEvent({required this.turn, required this.playerId});
 
   final int turn;
   final String playerId;
 }
 
-final class TurnAutoResolvedEvent extends GameEvent {
+final class TurnAutoResolvedEvent extends DomainEvent {
   const TurnAutoResolvedEvent({
     required this.turn,
     required this.playerId,
@@ -39,7 +39,7 @@ final class TurnAutoResolvedEvent extends GameEvent {
   final bool researchSelected;
 }
 
-final class PlayerKickedEvent extends GameEvent {
+final class PlayerKickedEvent extends DomainEvent {
   const PlayerKickedEvent({
     required this.turn,
     required this.playerId,

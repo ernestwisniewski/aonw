@@ -132,30 +132,40 @@ void _registerRunningMatchSnapshotCodecRosterTests(
       );
     });
 
-    test('rejects missing and extra raw player-state keys', () {
+    test('accepts sparse raw player-state keys', () {
       final fixture = _fixture(includeSecondPlayer: true);
-      final invalidPlayerStates = <Map<String, PlayerTurnState>>[
-        const {'player-1': PlayerTurnState.active},
-        const {
-          'player-1': PlayerTurnState.active,
-          'player-2': PlayerTurnState.active,
-          'phantom': PlayerTurnState.active,
-        },
-      ];
+      final wire = fixture.wire.copyWith(
+        save: fixture.save
+            .copyWith(playerStates: const {'player-1': PlayerTurnState.active})
+            .toJson(),
+      );
+      final decoded = codec.decode(match: fixture.match, snapshot: wire);
 
-      for (final playerStates in invalidPlayerStates) {
-        final wire = fixture.wire.copyWith(
-          save: fixture.save.copyWith(playerStates: playerStates).toJson(),
-        );
-        final decoded = codec.decode(match: fixture.match, snapshot: wire);
+      expect(
+        codec.canonicalWithValidatedRoster(decoded, match: fixture.match),
+        same(decoded.canonical),
+      );
+    });
 
-        expect(
-          () =>
-              codec.canonicalWithValidatedRoster(decoded, match: fixture.match),
-          _throwsRosterMismatch,
-          reason: '$playerStates',
-        );
-      }
+    test('rejects an extra raw player-state key', () {
+      final fixture = _fixture(includeSecondPlayer: true);
+      final wire = fixture.wire.copyWith(
+        save: fixture.save
+            .copyWith(
+              playerStates: const {
+                'player-1': PlayerTurnState.active,
+                'player-2': PlayerTurnState.active,
+                'phantom': PlayerTurnState.active,
+              },
+            )
+            .toJson(),
+      );
+      final decoded = codec.decode(match: fixture.match, snapshot: wire);
+
+      expect(
+        () => codec.canonicalWithValidatedRoster(decoded, match: fixture.match),
+        _throwsRosterMismatch,
+      );
     });
 
     test('rejects a player referenced only by private diplomacy state', () {

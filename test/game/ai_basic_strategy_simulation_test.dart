@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
+import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/ai.dart';
@@ -103,13 +104,11 @@ _SimulationResult _simulateBasicAiTurns({
       combatSeedTurn: turn,
       ignoreFogOfWar: true,
     );
-    state = reducer
-        .reduce(
-          state,
-          ResetUnitMovementCommand(playerId: player.id),
-          context: context,
-        )
-        .state;
+    state = MovementReducer.resetUnitMovementForNewTurn(
+      state,
+      mapData,
+      playerId: player.id,
+    ).state;
 
     final view = GameView.fromPersistentState(
       _persistentStateFor(state),

@@ -153,25 +153,25 @@ String _playerId(int offset) => 'player_${((offset - 1) % 4) + 1}';
 GameCommand _command(int offset) {
   final playerId = _playerId(offset);
   return switch (offset % 4) {
-    0 => SetActivePlayerCommand(playerId, canAct: offset.isEven),
+    0 => SubmitTurnCommand(playerId),
     1 => SelectTechnologyCommand(playerId, TechnologyId.agriculture),
-    2 => ResetUnitMovementCommand(playerId: playerId),
+    2 => EndTurnCommand(playerId),
     _ => SkipUnitTurnCommand('unit_${((offset - 1) % 4) + 1}'),
   };
 }
 
 Map<String, int> _commandKindCounts(int events) {
   final counts = {
-    'resetUnitMovement': 0,
+    'endTurn': 0,
     'selectTechnology': 0,
-    'setActivePlayer': 0,
     'skipUnitTurn': 0,
+    'submitTurn': 0,
   };
   for (var offset = 1; offset <= events; offset++) {
     final name = switch (offset % 4) {
-      0 => 'setActivePlayer',
+      0 => 'submitTurn',
       1 => 'selectTechnology',
-      2 => 'resetUnitMovement',
+      2 => 'endTurn',
       _ => 'skipUnitTurn',
     };
     counts[name] = counts[name]! + 1;

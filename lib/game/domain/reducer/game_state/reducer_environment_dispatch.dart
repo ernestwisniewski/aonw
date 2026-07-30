@@ -4,8 +4,6 @@ import 'package:aonw/game/domain/reducer/diplomacy/merchant_trade_route_reducer.
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/interaction/interaction_reducer.dart';
-import 'package:aonw/game/domain/reducer/turn/end_turn_reducer.dart';
-import 'package:aonw/game/domain/reducer/turn/submit_turn_reducer.dart';
 import 'package:aonw_core/game/domain/command.dart';
 
 extension ReducerEnvironmentDispatch on ReducerEnvironment {
@@ -55,24 +53,6 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
       ),
     );
   }
-
-  GameStateTransition endTurn(GameState state, EndTurnCommand command) =>
-      EndTurnReducer.advanceCitiesForPlayer(
-        state,
-        command.playerId,
-        mapData,
-        fogOfWarService: fogOfWarService,
-        cityRuleset: cityRuleset,
-        technologyRuleset: technologyRuleset,
-        stabilityRuleset: stabilityRuleset,
-        wonderRuleset: wonderRuleset,
-        paceBalance: paceBalance,
-        victoryRules: context.victoryRules,
-        turn: context.combatSeedTurn,
-      );
-
-  GameStateTransition submitTurn(GameState state, SubmitTurnCommand command) =>
-      SubmitTurnReducer.submit(state, command, context.actorPlayerId);
 
   GameStateTransition startCityFounding(GameState state) {
     return GameStateTransition(

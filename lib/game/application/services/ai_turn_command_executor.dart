@@ -224,8 +224,6 @@ final class AiTurnCommandExecutor {
       MoveMerchantToCityCommand() =>
         'move merchant ${command.unitId} to city '
             '${command.destinationCityId}',
-      ResetUnitMovementCommand() =>
-        'reset movement for ${command.playerId ?? 'all players'}',
       EndTurnCommand() => 'end turn for ${command.playerId}',
       SubmitTurnCommand() => 'submit turn for ${command.playerId}',
       SendDiplomaticProposalCommand() =>
@@ -302,8 +300,6 @@ final class AiTurnCommandExecutor {
         'exchange ${command.offeredResource.name} from ${command.playerId} '
             'for ${command.requestedResource.name} from '
             '${command.targetPlayerId}',
-      SetActivePlayerCommand() =>
-        'set active player ${command.playerId} canAct=${command.canAct}',
       CancelUnitActionCommand() => 'cancel unit action for ${command.unitId}',
     };
   }

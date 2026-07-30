@@ -26,6 +26,10 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
           if (matchPlayer.kind == WirePlayerKind.human) matchPlayer.id,
       ],
     );
+    final nextSnapshot = _snapshotAfterResignationKick(
+      canonicalSnapshot,
+      player.id,
+    );
     final players = [
       for (final matchPlayer in state.match.players)
         matchPlayer.userId == userIdentifier
@@ -34,9 +38,6 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
               )
             : matchPlayer,
     ];
-    final nextSnapshot = canonicalSnapshot.copyWith(
-      session: transition.session,
-    );
     final runningState = state.copyWith(
       match: state.match.copyWith(players: players),
       snapshot: _runningMatchSnapshotCodec.encodeCanonical(
@@ -103,6 +104,63 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
       ),
     );
   }
+}
+
+CanonicalGameSnapshot _snapshotAfterResignationKick(
+  CanonicalGameSnapshot snapshot,
+  String playerId,
+) {
+  final result = const GameEngine().applySystem(
+    snapshot: snapshot,
+    command: KickParticipant(
+      playerId: playerId,
+      reason: 'resignation',
+      timeoutStreak: snapshot.session.timeoutStreaksByPlayerId[playerId] ?? 0,
+    ),
+    context: GameEngineContext(
+      actorPlayerId: 'server',
+      mapView: const _LifecycleMapReadView(),
+      ruleset: GameRuleset.defaults,
+      commandTick: snapshot.eventLogOffset,
+    ),
+  );
+  if (result is GameEngineRejected) {
+    throw StateError(
+      'Resignation system transition rejected: ${result.reason}',
+    );
+  }
+  return (result as GameEngineAccepted).snapshot;
+}
+
+final class _LifecycleMapReadView implements MapReadView {
+  const _LifecycleMapReadView();
+
+  @override
+  int get cols => 0;
+
+  @override
+  int get rows => 0;
+
+  @override
+  MapTileLookup get mapTiles => this;
+
+  @override
+  Iterable<MapObjectiveDefinition> get objectives => const [];
+
+  @override
+  String? get mapName => null;
+
+  @override
+  int get tileCount => 0;
+
+  @override
+  Iterable<Iterable<TerrainType>> get tileTerrains => const [];
+
+  @override
+  Iterable<MapTileView> get tileViews => const [];
+
+  @override
+  MapTileView? tileAt(int col, int row) => null;
 }
 
 String _resignationAbandonmentReason(

@@ -141,7 +141,7 @@ final _save = GameSave(
 );
 
 void main() {
-  test('loads a snapshot and dispatches active player sync', () async {
+  test('loads a snapshot with active player already synchronized', () async {
     final transport = _FakeCommandTransport();
     final useCase = BootstrapGameStateUseCase(
       repository: _FakeGameRepository(
@@ -158,16 +158,9 @@ void main() {
     final state = await useCase.execute(saveId: _save.id);
 
     expect(state.activePlayerId, 'player_1');
-    expect(state.moveCommandActive, isTrue);
-    expect(
-      transport.command,
-      isA<SetActivePlayerCommand>()
-          .having((command) => command.playerId, 'playerId', 'player_1')
-          .having((command) => command.canAct, 'canAct', isTrue),
-    );
-    expect(transport.currentState?.playerColors, const {
-      'player_1': 0xFF4a7fc4,
-    });
+    expect(state.moveCommandActive, isFalse);
+    expect(transport.command, isNull);
+    expect(state.playerColors, const {'player_1': 0xFF4a7fc4});
   });
 
   test('prefers the requested player when bootstrapping control', () async {
@@ -195,14 +188,7 @@ void main() {
     );
 
     expect(state.activePlayerId, 'player_2');
-    expect(
-      transport.command,
-      isA<SetActivePlayerCommand>().having(
-        (command) => command.playerId,
-        'playerId',
-        'player_2',
-      ),
-    );
+    expect(transport.command, isNull);
   });
 
   test(
@@ -220,11 +206,6 @@ void main() {
       await useCase.execute(saveId: save.id);
 
       expect(transport.commands, [
-        isA<SetActivePlayerCommand>().having(
-          (command) => command.playerId,
-          'playerId',
-          'player_1',
-        ),
         isA<FocusTurnStartActionCommand>().having(
           (command) => command.playerId,
           'playerId',
@@ -267,7 +248,7 @@ void main() {
 
     expect(result.offset, 2);
     expect(result.state.units.single.col, 1);
-    expect(transport.commands.first, isA<SetActivePlayerCommand>());
+    expect(transport.commands.first, isA<FocusTurnStartActionCommand>());
   });
 
   test('reloads the authoritative snapshot after redacted history', () async {
@@ -307,7 +288,7 @@ void main() {
     expect(repository.loadCount, 2);
     expect(result.offset, 2);
     expect(result.state.units.single.col, 1);
-    expect(transport.commands.first, isA<SetActivePlayerCommand>());
+    expect(transport.commands.first, isA<FocusTurnStartActionCommand>());
   });
 
   test(

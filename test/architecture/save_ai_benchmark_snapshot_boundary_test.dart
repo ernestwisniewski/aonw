@@ -34,7 +34,11 @@ void main() {
 
     expect(units, hasLength(declaredPartCount + 1));
     expect(_snapshotBoundaryViolations(units), isEmpty);
-    expect(_canonicalTurnFinalizeCount(units), 1);
+    expect(
+      _canonicalTurnFinalizeCount(units),
+      0,
+      reason: 'Benchmark turn finalization must enter through GameEngine.',
+    );
     expect(_propertyReadCountAcross(units, 'domain'), greaterThan(0));
     expect(_propertyReadCountAcross(units, 'session'), greaterThan(0));
     expect(_propertyReadCountAcross(units, 'metadata'), greaterThan(0));

@@ -101,6 +101,118 @@ void main() {
     },
   );
 
+  test('end turn follows canonical nonlexical participant order', () async {
+    final match = _runningMatch().copyWith(
+      players: const [
+        WirePlayer(
+          id: 'player_2',
+          userId: 'user_2',
+          name: 'Player 2',
+          colorValue: 0xFFB83A3A,
+          country: PlayerCountry.france,
+          kind: WirePlayerKind.human,
+          connectionState: WirePlayerConnectionState.connected,
+        ),
+        WirePlayer(
+          id: 'player_1',
+          userId: 'user_1',
+          name: 'Player 1',
+          colorValue: 0xFF3D5FA8,
+          country: PlayerCountry.poland,
+          kind: WirePlayerKind.human,
+          connectionState: WirePlayerConnectionState.connected,
+        ),
+        WirePlayer(
+          id: 'player_3',
+          userId: 'user_3',
+          name: 'Player 3',
+          colorValue: 0xFF3A8B55,
+          country: PlayerCountry.germany,
+          kind: WirePlayerKind.human,
+          connectionState: WirePlayerConnectionState.connected,
+        ),
+      ],
+    );
+    final save = _save().copyWith(
+      playerStates: const {
+        'player_2': PlayerTurnState.active,
+        'player_1': PlayerTurnState.active,
+        'player_3': PlayerTurnState.active,
+      },
+      players: const [
+        Player(
+          id: 'player_2',
+          name: 'Player 2',
+          colorValue: 0xFFB83A3A,
+          country: PlayerCountry.france,
+        ),
+        Player(
+          id: 'player_1',
+          name: 'Player 1',
+          colorValue: 0xFF3D5FA8,
+          country: PlayerCountry.poland,
+        ),
+        Player(
+          id: 'player_3',
+          name: 'Player 3',
+          colorValue: 0xFF3A8B55,
+          country: PlayerCountry.germany,
+        ),
+      ],
+    );
+    final state = PersistentGameState(
+      units: [
+        GameUnit(
+          id: 'queued_unit',
+          ownerPlayerId: 'player_1',
+          type: GameUnitType.warrior,
+          name: GameUnitType.warrior.defaultNameToken,
+          col: 0,
+          row: 0,
+          movementPoints: 0,
+          queuedPath: QueuedMovePath(
+            targetCol: 1,
+            targetRow: 0,
+            steps: const [
+              UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+            ],
+          ),
+        ),
+      ],
+    );
+    final reduction = await const ServerCommandReducerTestDriver().reduce(
+      reducer: ServerCommandReducer(
+        mapCatalog: _ProductionMapCatalog(_resourceTradeMap()),
+      ),
+      match: match,
+      wireSnapshot: WireSnapshot(
+        matchId: 'match_1',
+        offset: 0,
+        save: save.toJson(),
+        state: state.toJson(),
+      ),
+      wireCommand: WireCommand(
+        matchId: 'match_1',
+        tick: 1,
+        turn: 1,
+        actorPlayerId: 'player_2',
+        command: GameCommandSerializer.toJson(const EndTurnCommand('player_2')),
+      ),
+      actorPlayerId: 'player_2',
+      now: DateTime.utc(2026, 6, 30, 12),
+    );
+
+    expect(reduction.accepted, isTrue);
+    expect(
+      reduction.events.whereType<TurnEndedEvent>().map(
+        (event) => event.playerId,
+      ),
+      ['player_2', 'player_1', 'player_3'],
+    );
+    expect(reduction.nextSnapshot!.domain.units.single.col, 1);
+    expect(reduction.movementExecutions.single.unitId, 'queued_unit');
+  });
+
   test('routes map-backed commands through the loaded server map', () async {
     final scenarios = <({GameCommand command, String reason})>[
       (

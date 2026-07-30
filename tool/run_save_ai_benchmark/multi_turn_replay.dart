@@ -258,26 +258,11 @@ class _MultiTurnReplayRunner {
     currentState = terminalTransition.state;
     final savedAt = _replaySavedAt(currentSnapshot);
 
-    if (terminalCommand is SubmitTurnCommand) {
-      final playerIds = _replayActivePlayerIds(currentSnapshot);
-      if (playerIds.isNotEmpty &&
-          playerIds.every(currentState.submittedPlayerIds.contains)) {
-        final finalized = _finalizeSimultaneousTurn(
-          snapshot: currentSnapshot,
-          state: currentState,
-          playerIds: playerIds,
-          savedAt: savedAt,
-          mapView: context.mapData,
-        );
-        currentSnapshot = finalized.snapshot;
-        currentState = finalized.state;
-        eventCounts.addEvents(finalized.events);
-      }
-    } else if (terminalCommand is EndTurnCommand) {
-      currentSnapshot = currentSnapshot
-          .withPlayerFinished(player.id)
-          .withSavedAt(savedAt);
-    }
+    currentSnapshot = SaveSnapshot.fromCanonical(
+      dispatcher.snapshot.copyWith(
+        metadata: dispatcher.snapshot.metadata.copyWith(savedAtUtc: savedAt),
+      ),
+    );
 
     executionStopwatch.stop();
     return _ReplayTurnResult(
@@ -292,34 +277,6 @@ class _MultiTurnReplayRunner {
       eventCounts: eventCounts.snapshot(),
       staleMoveDiagnostics: staleMoveDiagnostics,
       rejectedCommandDescriptions: rejectedCommandDescriptions,
-    );
-  }
-
-  _ResolvedReplayTurn _finalizeSimultaneousTurn({
-    required SaveSnapshot snapshot,
-    required GameState state,
-    required List<String> playerIds,
-    required DateTime savedAt,
-    required MapReadView mapView,
-  }) {
-    final result = CanonicalTurnPipeline.simultaneousFinalize(
-      CanonicalTurnPipelineRequest.simultaneousFinalize(
-        snapshot: snapshot.withGameState(state).canonical,
-        playerIds: playerIds,
-        savedAt: savedAt,
-        mapView: mapView,
-        ruleset: GameRuleset.defaults,
-      ),
-    );
-    final nextSnapshot = SaveSnapshot.fromCanonical(result.snapshot);
-    final nextState = nextSnapshot.toGameState(
-      activePlayerId: '',
-      activePlayerCanAct: true,
-    );
-    return _ResolvedReplayTurn(
-      snapshot: nextSnapshot,
-      state: nextState,
-      events: result.events,
     );
   }
 }
@@ -345,18 +302,6 @@ GameState _prepareReplayCycleState(
         cityFoundingDraft: null,
         pendingAction: null,
       );
-}
-
-List<String> _replayActivePlayerIds(SaveSnapshot snapshot) {
-  final ids = snapshot.persistedPlayers
-      .map((player) => player.id)
-      .where((playerId) => playerId.isNotEmpty)
-      .toList();
-  if (ids.isNotEmpty) return ids..sort();
-  return snapshot.session.turnStatesByPlayerId.keys
-      .where((playerId) => playerId.isNotEmpty)
-      .toList()
-    ..sort();
 }
 
 DateTime _syntheticReplaySavedAt(DateTime savedAt, {required int cycles}) =>

@@ -60,23 +60,10 @@ extension LocalCommandResolverResearchDiplomacy on LocalCommandResolver {
         .map((player) => player.id)
         .where((id) => id.isNotEmpty)
         .toList();
-    if (ids.isNotEmpty) return ids..sort();
+    if (ids.isNotEmpty) return ids;
 
     return snapshot.session.turnStatesByPlayerId.keys
         .where((id) => id.isNotEmpty)
-        .toList()
-      ..sort();
-  }
-
-  bool _rejectSubmitTurn({
-    required SaveSnapshot baseSnapshot,
-    required SubmitTurnCommand command,
-    required String? actorPlayerId,
-  }) {
-    return (actorPlayerId != null &&
-            actorPlayerId.isNotEmpty &&
-            actorPlayerId != command.playerId) ||
-        !_activePlayerIds(baseSnapshot).contains(command.playerId) ||
-        baseSnapshot.session.hasSubmitted(command.playerId);
+        .toList();
   }
 }

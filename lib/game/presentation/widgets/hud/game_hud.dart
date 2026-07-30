@@ -36,7 +36,6 @@ import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_toast.dart';
-import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -324,10 +323,7 @@ class _GameHudState extends ConsumerState<GameHud> {
     );
   }
 
-  Future<void> _prepareHandoffControlAndCamera(
-    HandoffData handoff, {
-    required bool resetMovement,
-  }) async {
+  Future<void> _prepareHandoffControlAndCamera(HandoffData handoff) async {
     final control = ref.read(gamePlayerControlControllerProvider);
     final gameState = ref.read(gameStateProvider(widget.session.saveId)).value;
     final alreadyConfirmed =
@@ -339,12 +335,7 @@ class _GameHudState extends ConsumerState<GameHud> {
     if (!alreadyConfirmed) {
       await ref
           .read(gamePlayerControlControllerProvider.notifier)
-          .confirmHandoff(handoff.playerId, resetMovement: resetMovement);
-      if (!mounted) return;
-    } else if (handoff.freshTurn) {
-      await ref
-          .read(gameCommandControllerProvider.notifier)
-          .dispatch(ResetUnitMovementCommand(playerId: handoff.playerId));
+          .confirmHandoff(handoff.playerId);
       if (!mounted) return;
     }
 
@@ -376,10 +367,7 @@ class _GameHudState extends ConsumerState<GameHud> {
     });
 
     try {
-      await _prepareHandoffControlAndCamera(
-        handoff,
-        resetMovement: clearPending,
-      );
+      await _prepareHandoffControlAndCamera(handoff);
       if (!mounted) return;
       if (_handoffPreparationKey(
             handoff,

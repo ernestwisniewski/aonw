@@ -2,8 +2,10 @@ import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/combat.dart';
+import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/state.dart';
@@ -87,12 +89,18 @@ _BoundaryResult _executeBoundaryRoundTrip(_TurnFinalizationFixture fixture) {
     state: fixture.state,
     eventLogOffset: fixture.eventLogOffset,
   );
-  final canonicalResult = CanonicalTurnPipeline.simultaneousFinalize(
-    CanonicalTurnPipelineRequest.simultaneousFinalize(
-      snapshot: canonicalInput,
-      playerIds: _players.map((player) => player.id),
-      savedAt: _savedAt,
+  final playerIds = _players.map((player) => player.id).toList();
+  final canonicalResult = const GameEngine().apply(
+    snapshot: canonicalInput,
+    command: SubmitTurnCommand(playerIds.last),
+    context: GameEngineContext(
+      actorPlayerId: playerIds.last,
       mapView: fixture.mapView,
+      ruleset: GameRuleset.defaults,
+      commandTick: 0,
+      turnPlayerIds: playerIds,
+      requiredTurnSubmissionPlayerIds: playerIds,
+      savedAt: _savedAt,
     ),
   );
   return _BoundaryResult(
@@ -112,7 +120,10 @@ Map<String, Object?> _stableResult(
       result.legacy.save.turn != fixture.save.turn + 1) {
     throw StateError(
       'Turn finalization did not preserve the bounded fixture at '
-      '${fixture.entityCount} entities.',
+      '${fixture.entityCount} entities: outputEntities=$outputEntities, '
+      'offset=${result.legacy.eventLogOffset}/'
+      '${fixture.eventLogOffset}, turn=${result.legacy.save.turn}/'
+      '${fixture.save.turn + 1}.',
     );
   }
   final eventJson = [
@@ -221,7 +232,7 @@ final class _TurnFinalizationFixture {
         turn: 7,
         playerStates: const {
           'player_1': PlayerTurnState.finished,
-          'player_2': PlayerTurnState.finished,
+          'player_2': PlayerTurnState.active,
         },
         savedAt: DateTime.utc(2026, 7, 17, 11),
         camera: CameraState.zero,
@@ -238,7 +249,7 @@ final class _TurnFinalizationFixture {
         units: units,
         artifacts: artifacts,
         runtimeState: GameRuntimeState.snapshot(
-          submittedPlayerIds: const {'player_1', 'player_2'},
+          submittedPlayerIds: const {'player_1'},
           intendedAttacks: const [
             IntendedAttack(
               attackerUnitId: 'unit_0',
@@ -271,7 +282,7 @@ final class _BoundaryResult {
 
   final LegacyGameSnapshotParts legacy;
   final List<GameEvent> events;
-  final TurnMovementDelta movementDelta;
+  final MovementExecutionDelta movementDelta;
 }
 
 MapReadView _mapView() => MapData(

@@ -28,11 +28,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 part 'replay_service_combat_test.dart';
 part 'replay_service_research_diplomacy_test.dart';
+part 'replay_service_turn_lifecycle_test.dart';
 
 void main() {
   group('ReplayService', () {
     test('builds timeline from initial snapshot and logged commands', () async {
-      final initial = _snapshot();
+      final initial = _snapshot(units: [_actionableUnit()]);
       final service = _service(
         replayStore: _MemoryReplayStore({'save_1': initial}),
         eventLog: _MemoryEventLog([
@@ -40,7 +41,7 @@ void main() {
             offset: 1,
             timestamp: DateTime.utc(2026, 4, 24, 12, 1),
             turn: 1,
-            command: const SetActivePlayerCommand('p1', canAct: true),
+            command: const FocusTurnStartActionCommand('p1'),
           ),
         ]),
       );
@@ -51,7 +52,10 @@ void main() {
       expect(timeline.steps, hasLength(1));
       expect(timeline.steps.single.offset, 1);
       expect(timeline.steps.single.previousState.activePlayerId, isEmpty);
-      expect(timeline.steps.single.state.activePlayerId, 'p1');
+      expect(timeline.steps.single.state.activePlayerId, isEmpty);
+      expect(timeline.steps.single.state.selectedUnitId, 'warrior_p1');
+      expect(timeline.steps.single.uiEffects, hasLength(1));
+      expect(timeline.steps.single.uiEffects.single, isA<JumpCameraEffect>());
       expect(
         timeline.steps.single.metadata.savedAtUtc,
         DateTime.utc(2026, 4, 24, 12, 1),
@@ -155,6 +159,8 @@ void main() {
         expect(effect.steps.map((step) => step.col), [1, 2, 3]);
       },
     );
+
+    _registerReplayTurnLifecycleTests();
 
     test('infers actor before reducing legacy artifact commands', () async {
       final artifact = WorldArtifact.placed(
@@ -290,7 +296,7 @@ void main() {
             offset: 2,
             timestamp: DateTime.utc(2026, 4, 24, 12, 1),
             turn: 1,
-            command: const SetActivePlayerCommand('p1', canAct: true),
+            command: const FocusTurnStartActionCommand('p1'),
           ),
         ]),
       );
@@ -311,13 +317,15 @@ void main() {
       'replays legacy command entries using the current save turn',
       () async {
         final service = _service(
-          replayStore: _MemoryReplayStore({'save_1': _snapshot()}),
+          replayStore: _MemoryReplayStore({
+            'save_1': _snapshot(units: [_actionableUnit()]),
+          }),
           eventLog: _MemoryEventLog([
             LoggedCommand(
               offset: 1,
               timestamp: DateTime.utc(2026, 4, 24, 12, 1),
               turn: null,
-              command: const SetActivePlayerCommand('p1', canAct: true),
+              command: const FocusTurnStartActionCommand('p1'),
             ),
           ]),
         );
@@ -326,7 +334,8 @@ void main() {
 
         expect(timeline.steps, hasLength(1));
         expect(timeline.steps.single.turn, 1);
-        expect(timeline.steps.single.state.activePlayerId, 'p1');
+        expect(timeline.steps.single.state.activePlayerId, isEmpty);
+        expect(timeline.steps.single.state.selectedUnitId, 'warrior_p1');
       },
     );
 
@@ -373,6 +382,9 @@ SaveSnapshot _snapshot({
   List<Player> players = const [
     Player(id: 'p1', name: 'Alice', colorValue: 0xFF4A7FC4),
   ],
+  Map<String, PlayerTurnState> playerStates = const {
+    'p1': PlayerTurnState.active,
+  },
 }) {
   return SaveSnapshot(
     save: GameSave(
@@ -381,7 +393,7 @@ SaveSnapshot _snapshot({
       mapName: 'verdantia',
       mapSource: MapSource.asset,
       turn: 1,
-      playerStates: const {'p1': PlayerTurnState.active},
+      playerStates: playerStates,
       savedAt: DateTime.utc(2026, 4, 24, 12),
       camera: CameraState.zero,
       players: players,
@@ -392,26 +404,6 @@ SaveSnapshot _snapshot({
     fogOfWar: fogOfWar,
     research: research,
     runtimeState: runtimeState,
-  );
-}
-
-MerchantTradeRoute _merchantRoute({
-  required String originCityId,
-  required String destinationCityId,
-  required int toCol,
-}) {
-  return MerchantTradeRoute(
-    originCityId: originCityId,
-    destinationCityId: destinationCityId,
-    steps: [
-      for (var col = 0; col <= toCol; col++)
-        UnitMovementStep(
-          col: col,
-          row: 0,
-          enterCost: col == 0 ? 0 : 1,
-          cumulativeCost: col,
-        ),
-    ],
   );
 }
 

@@ -35,6 +35,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -45,6 +46,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 part 'support/game_provider_movement_fixtures.dart';
+part 'support/game_provider_turn_lifecycle_cases.dart';
 
 class _FakeGameRepository implements GameRepository {
   final Map<String, SaveSnapshot> snapshots;
@@ -288,14 +290,6 @@ class _FakeWireCommandDispatcher implements WireCommandDispatcher {
       clientMessageId: clientMessageId,
     );
   }
-}
-
-Future<void> _waitFor(bool Function() condition) async {
-  for (var i = 0; i < 50; i++) {
-    if (condition()) return;
-    await Future<void>.delayed(const Duration(milliseconds: 10));
-  }
-  fail('Condition was not met in time.');
 }
 
 List<T> _transportOverrides<T>() {
@@ -678,10 +672,7 @@ void main() {
         ),
         isTrue,
       );
-      expect(
-        gameRepository.snapshots[save.id]!.fogOfWar.playerIds,
-        contains('player_1'),
-      );
+      expect(state.fogOfWar.playerIds, contains('player_1'));
     });
 
     test('uses network session player for multiplayer control', () async {
@@ -1268,9 +1259,7 @@ void main() {
       await container.read(gameStateProvider('save_1').future);
       final notifier = container.read(gameStateProvider('save_1').notifier);
 
-      await notifier.dispatch(
-        const SetActivePlayerCommand('player_1', canAct: true),
-      );
+      await notifier.syncActivePlayer(playerId: 'player_1', canAct: true);
 
       final uiEffects = await notifier.dispatch(
         MoveUnitCommand(commander.id, 1, 0),
@@ -1281,6 +1270,8 @@ void main() {
       expect(gameRepository.snapshots[save.id]!.units.single.col, 1);
       expect(uiEffects.single, isA<AnimateUnitMoveEffect>());
     });
+
+    _registerAtomicEndTurnProviderCase();
 
     test(
       'serializes concurrent local dispatches before event log writes',
@@ -1311,22 +1302,16 @@ void main() {
         final notifier = container.read(gameStateProvider(save.id).notifier);
 
         await Future.wait([
-          notifier.dispatch(
-            const ResetUnitMovementCommand(playerId: 'player_1'),
-          ),
-          notifier.dispatch(
-            const ResetUnitMovementCommand(playerId: 'player_1'),
-          ),
-          notifier.dispatch(
-            const ResetUnitMovementCommand(playerId: 'player_1'),
-          ),
+          notifier.dispatch(const EndTurnCommand('player_1')),
+          notifier.dispatch(const EndTurnCommand('player_1')),
+          notifier.dispatch(const EndTurnCommand('player_1')),
         ]);
 
         expect(eventLog.maxConcurrentOperations, 1);
         expect(eventLog.commands.map((command) => command.offset), [1, 2, 3]);
         expect(
           eventLog.commands.map((command) => command.command),
-          everyElement(isA<ResetUnitMovementCommand>()),
+          everyElement(isA<EndTurnCommand>()),
         );
       },
     );

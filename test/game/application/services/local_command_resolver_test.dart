@@ -7,6 +7,7 @@ import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
+import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
@@ -91,6 +92,51 @@ void main() {
   });
 
   test(
+    'partial submit keeps an implicit turn start lossless over codec IO',
+    () {
+      final save = GameSave(
+        id: 'save_1',
+        name: 'Sparse multiplayer turn',
+        mapName: 'verdantia',
+        turn: 7,
+        playerStates: const {
+          'player_1': PlayerTurnState.active,
+          'player_2': PlayerTurnState.active,
+        },
+        savedAt: DateTime.utc(2026, 7, 11),
+        camera: CameraState.zero,
+        players: const [
+          Player(id: 'player_1', name: 'Alice', colorValue: 1),
+          Player(id: 'player_2', name: 'Bob', colorValue: 2),
+        ],
+        gameMode: GameMode.multiplayer,
+      );
+      const state = GameState(activePlayerId: 'player_1');
+      final base = SaveSnapshot.fromGameState(save: save, state: state);
+      expect(base.persistedTurnStartedAt, isNull);
+
+      final result =
+          LocalCommandResolver(
+            reducer: GameStateReducer(mapData: _mapData()),
+          ).resolve(
+            baseSnapshot: base,
+            currentState: state,
+            command: const SubmitTurnCommand('player_1'),
+            savedAt: DateTime.utc(2026, 7, 11, 12),
+            context: const GameCommandContext(actorPlayerId: 'player_1'),
+          );
+      final restored = SaveSnapshotCodec.fromJson(
+        SaveSnapshotCodec.toJson(result.snapshot),
+      );
+
+      expect(result.snapshot.domain.turn, 7);
+      expect(result.snapshot.persistedTurnStartedAt, isNull);
+      expect(restored.persistedTurnStartedAt, isNull);
+      expect(restored.session.turnStartedAt, restored.metadata.savedAtUtc);
+    },
+  );
+
+  test(
     'local final submit preserves presentation and persisted interaction',
     () {
       final save = GameSave(
@@ -136,6 +182,10 @@ void main() {
       expect(result.snapshot.save.turn, 8);
       expect(result.snapshot.eventLogOffset, 17);
       expect(result.snapshot.domain.turn, 8);
+      expect(
+        result.snapshot.persistedTurnStartedAt,
+        DateTime.utc(2026, 7, 11, 12),
+      );
       expect(result.state.submittedPlayerIds, isEmpty);
       expect(result.state.pendingAction, pendingAction);
       expect(result.state.activePlayerId, 'player_1');

@@ -65,11 +65,12 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
       expect(await fixture.store.listEvents(fixture.match.id, -1), isEmpty);
     });
 
-    test('rejects a snapshot missing a participant turn state', () async {
+    test('accepts a canonical participant with sparse turn state', () async {
       final fixture = await _createResignationFixture('missing-turn-state');
       final actor = fixture.player('guest-one');
       final stored = await fixture.state();
       final save = GameSave.fromJson(stored.snapshot.save);
+      final persistent = PersistentGameState.fromJson(stored.snapshot.state);
       final withoutActor = save.copyWith(
         playerStates: {
           for (final entry in save.playerStates.entries)
@@ -81,18 +82,24 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
           snapshot: stored.snapshot.copyWith(save: withoutActor.toJson()),
         ),
       );
-      final before = await fixture.state();
       final saveCallsBefore = fixture.store.saveStateCalls;
 
-      await expectLater(
-        fixture.resign(actor),
-        _throwsCanonicalResignationSnapshotError,
-      );
-      final after = await fixture.state();
+      final result = await fixture.resign(actor);
+      final updated = await fixture.state();
+      final updatedSave = GameSave.fromJson(updated.snapshot.save);
+      final updatedState = PersistentGameState.fromJson(updated.snapshot.state);
 
-      expect(after.match.toJson(), before.match.toJson());
-      expect(after.snapshot.toJson(), before.snapshot.toJson());
-      expect(fixture.store.saveStateCalls, saveCallsBefore);
+      expect(result.state, 'running');
+      expect(updatedSave.playerStates, withoutActor.playerStates);
+      expect(updatedState.runtimeState.afkPlayerIds, {
+        ...persistent.runtimeState.afkPlayerIds,
+        actor.id,
+      });
+      expect(updatedState.runtimeState.kickedPlayerIds, {
+        ...persistent.runtimeState.kickedPlayerIds,
+        actor.id,
+      });
+      expect(fixture.store.saveStateCalls, saveCallsBefore + 1);
       expect(await fixture.store.listEvents(fixture.match.id, -1), isEmpty);
     });
 

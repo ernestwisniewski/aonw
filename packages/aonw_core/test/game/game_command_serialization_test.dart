@@ -42,12 +42,14 @@ void main() {
       );
     });
 
-    test('rejects trusted system commands', () {
+    test('rejects removed local lifecycle payloads', () {
       expect(
-        () => GameCommandSerializer.toJson(
-          const SetActivePlayerCommand('p1', canAct: true),
-        ),
-        throwsA(isA<UnsupportedError>()),
+        () => GameCommandSerializer.fromJson({
+          'type': 'SetActivePlayer',
+          'playerId': 'p1',
+          'canAct': true,
+        }),
+        throwsA(isA<FormatException>()),
       );
     });
 

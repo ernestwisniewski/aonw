@@ -13,36 +13,26 @@ abstract final class LoggedGameCommandCodec {
   static Map<String, dynamic> toJson(GameCommand command) {
     return switch (command) {
       DomainCommand() => GameCommandSerializer.toJson(command),
-      ResetUnitMovementCommand(:final playerId) => {
-        'type': 'ResetUnitMovement',
-        'playerId': ?playerId,
-      },
-      SetActivePlayerCommand(:final playerId, :final canAct) => {
-        'type': 'SetActivePlayer',
-        'playerId': playerId,
-        'canAct': canAct,
-      },
       GameIntent() => throw UnsupportedError(
         'Presentation intents cannot be written to the authoritative log.',
       ),
     };
   }
 
-  static GameCommand fromJson(Map<String, dynamic> json) {
+  static GameCommand? fromJson(Map<String, dynamic> json) {
     final type = requiredStringField(json, 'LoggedGameCommand', 'type');
+    if (_unsupportedLifecycleTypes.contains(type)) return null;
     final decoder = _historicalDecoders[type];
     if (decoder != null) return decoder(json, type);
     return GameCommandSerializer.fromJson(json);
   }
 
+  static const _unsupportedLifecycleTypes = {
+    'ResetUnitMovement',
+    'SetActivePlayer',
+  };
+
   static final _historicalDecoders = <String, _CommandDecoder>{
-    'ResetUnitMovement': (json, type) => ResetUnitMovementCommand(
-      playerId: optionalStringField(json, type, 'playerId'),
-    ),
-    'SetActivePlayer': (json, type) => SetActivePlayerCommand(
-      requiredStringField(json, type, 'playerId'),
-      canAct: requiredBoolField(json, type, 'canAct'),
-    ),
     'TileTapped': (json, type) => TileTappedCommand(
       requiredIntField(json, type, 'col'),
       requiredIntField(json, type, 'row'),

@@ -11,14 +11,12 @@ class EndTurnResult {
   final GameSave updatedSave;
   final PlayerControlState nextControl;
   final HandoffData? handoff;
-  final bool shouldResetMovement;
   final String? jumpToPlayerId;
 
   const EndTurnResult({
     required this.updatedSave,
     required this.nextControl,
     this.handoff,
-    this.shouldResetMovement = false,
     this.jumpToPlayerId,
   });
 }
@@ -89,11 +87,7 @@ class HotSeatEndTurnStrategy implements EndTurnStrategy {
       );
     }
 
-    return EndTurnResult(
-      updatedSave: updatedSave,
-      nextControl: nextControl,
-      shouldResetMovement: updatedSave.turn > save.turn,
-    );
+    return EndTurnResult(updatedSave: updatedSave, nextControl: nextControl);
   }
 }
 
@@ -116,7 +110,6 @@ class MultiplayerEndTurnStrategy implements EndTurnStrategy {
         activePlayerId: control.activePlayerId,
         canAct: advancedTurn,
       ),
-      shouldResetMovement: false,
     );
   }
 }

@@ -31,6 +31,8 @@ final class BenchmarkCommandDispatcher {
   final GameRuleset _ruleset;
   final GameStateReducer _reducer;
 
+  CanonicalGameSnapshot get snapshot => _engineSnapshot;
+
   BenchmarkCommandTransition apply({
     required GameState state,
     required GameCommand command,
@@ -75,6 +77,15 @@ final class BenchmarkCommandDispatcher {
       combatVisibilityMode: context.ignoreFogOfWar
           ? CombatCommandVisibilityMode.unrestricted
           : CombatCommandVisibilityMode.authoritative,
+      turnPlayerIds: [
+        for (final participant in _engineSnapshot.domain.participants)
+          if (!_engineSnapshot.session.isKicked(participant.id)) participant.id,
+      ],
+      requiredTurnSubmissionPlayerIds: [
+        for (final participant in _engineSnapshot.domain.participants)
+          if (!_engineSnapshot.session.isKicked(participant.id)) participant.id,
+      ],
+      savedAt: _engineSnapshot.metadata.savedAtUtc,
     );
     _engineSnapshot = result.snapshot;
     final nextState = result.accepted

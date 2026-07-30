@@ -39,7 +39,6 @@ const _rolePolicy = <String, _CommandRole>{
   'MoveUnitCommand': _CommandRole.domain,
   'OpenResourceExchangeCommand': _CommandRole.domain,
   'OpenResourceTradeCommand': _CommandRole.domain,
-  'ResetUnitMovementCommand': _CommandRole.system,
   'RespondDiplomaticMessageCommand': _CommandRole.domain,
   'RespondDiplomaticProposalCommand': _CommandRole.domain,
   'RushProductionCommand': _CommandRole.domain,
@@ -52,7 +51,6 @@ const _rolePolicy = <String, _CommandRole>{
   'SendDiplomaticMessageCommand': _CommandRole.domain,
   'SendDiplomaticProposalCommand': _CommandRole.domain,
   'SendGoldGiftCommand': _CommandRole.domain,
-  'SetActivePlayerCommand': _CommandRole.system,
   'SetCitySpecializationCommand': _CommandRole.domain,
   'SkipUnitTurnCommand': _CommandRole.domain,
   'StartArtifactExcavationCommand': _CommandRole.domain,
@@ -86,7 +84,7 @@ void main() {
     expect(
       inventory.unclassifiedCommands,
       isEmpty,
-      reason: 'Every GameCommand must be intent, domain, or system.',
+      reason: 'Every GameCommand must have one explicit boundary role.',
     );
     expect(
       inventory.unknownPolicyCommands,
@@ -124,9 +122,7 @@ void main() {
       (entry) => entry.className == 'MoveUnitCommand',
     );
 
-    expect(submitTurn.localHandlers, [
-      'lib/game/domain/reducer/game_state/game_state_reducer.dart',
-    ]);
+    expect(submitTurn.localHandlers, isEmpty);
     expect(submitTurn.serverHandlers, [
       'server/lib/src/multiplayer/server_command_reducer.dart',
     ]);

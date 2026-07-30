@@ -48,11 +48,6 @@ class GameStateReducer {
     ReducerEnvironment environment,
   ) {
     return switch (command) {
-      SetActivePlayerCommand() => _ActivePlayerReducer.handleSetActivePlayer(
-        state,
-        command,
-        environment,
-      ),
       TileTappedCommand() => _GameStateTapReducer.handleTileTapped(
         state,
         command,
@@ -75,14 +70,6 @@ class GameStateReducer {
         state,
         command,
       ),
-      EndTurnCommand() => environment.endTurn(state, command),
-      SubmitTurnCommand() => environment.submitTurn(state, command),
-      ResetUnitMovementCommand(:final playerId) =>
-        MovementReducer.resetUnitMovementForNewTurnWithEnvironment(
-          state,
-          environment,
-          playerId: playerId,
-        ),
       ToggleMoveTargetingCommand() => GameStateTransition(
         state: MovementReducer.toggleMoveTargetingWithEnvironment(
           state,
@@ -135,4 +122,15 @@ class GameStateReducer {
       ),
     };
   }
+
+  GameStateTransition syncActivePlayer(
+    GameState state, {
+    required String playerId,
+    required bool canAct,
+  }) => _ActivePlayerReducer.handleSetActivePlayer(
+    state,
+    playerId,
+    canAct,
+    ReducerEnvironment(mapData: mapData, ruleset: ruleset),
+  );
 }

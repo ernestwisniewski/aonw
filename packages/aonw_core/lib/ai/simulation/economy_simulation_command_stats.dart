@@ -63,8 +63,6 @@ final class EconomySimulationCommandStats {
           TradeArtifactCommand() ||
           OpenResourceTradeCommand() ||
           OpenResourceExchangeCommand() ||
-          ResetUnitMovementCommand() ||
-          SetActivePlayerCommand() ||
           ToggleMoveTargetingCommand() ||
           StartCityFoundingCommand() ||
           CancelCityFoundingCommand() ||

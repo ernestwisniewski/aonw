@@ -24,7 +24,7 @@ void main() {
       final result = await useCase.execute(
         saveId: 'save_1',
         currentState: const GameState(),
-        command: const SetActivePlayerCommand('player_1', canAct: true),
+        command: const EndTurnCommand('player_1'),
         context: const GameCommandContext(actorPlayerId: 'player_1'),
       );
 
@@ -32,7 +32,7 @@ void main() {
       expect(result.uiEffects.single, isA<JumpCameraEffect>());
       expect(result.events.single, isA<TurnEndedEvent>());
       expect(transport.saveId, 'save_1');
-      expect(transport.command, isA<SetActivePlayerCommand>());
+      expect(transport.command, isA<EndTurnCommand>());
       expect(transport.context.actorPlayerId, 'player_1');
     });
   });

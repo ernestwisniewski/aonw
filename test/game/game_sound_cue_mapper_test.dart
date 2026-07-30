@@ -276,13 +276,13 @@ void main() {
       );
       expect(
         GameSoundCueMapper.forCommand(
-          command: const SetActivePlayerCommand('player_2', canAct: true),
+          command: const FocusTurnStartActionCommand('player_2'),
           previousState: state,
           state: const GameState(activePlayerId: 'player_2'),
           events: const [],
           uiEffects: const [],
         ),
-        [GameSoundCue.newTurn],
+        isEmpty,
       );
     });
 

@@ -9,6 +9,7 @@ import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 import 'measurement.dart';
@@ -112,7 +113,10 @@ LoggedCommand _loggedCommand(int offset) => LoggedCommand(
   timestamp: DateTime.utc(2026, 1, 1).add(Duration(seconds: offset)),
   turn: 1,
   actorPlayerId: 'player_1',
-  command: SetActivePlayerCommand('player_1', canAct: offset.isOdd),
+  command: SelectTechnologyCommand(
+    'player_1',
+    offset.isOdd ? TechnologyId.agriculture : TechnologyId.mining,
+  ),
 );
 
 Future<_ScaleResult> _measureEventLog(

@@ -1,5 +1,5 @@
+import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/game/compatibility.dart';
 
 import 'measurement.dart';
 
@@ -214,7 +214,7 @@ GameView _view(MapReadView mapView) {
     ),
     fogOfWar: _visibleFog(mapView),
   );
-  final engineSnapshot = const LegacyGameSnapshotAdapter().toCanonical(
+  final engineSnapshot = SaveSnapshot.fromPersistentState(
     save: GameSave(
       id: 'performance-ai-strategy',
       name: 'Performance AI strategy',
@@ -232,7 +232,7 @@ GameView _view(MapReadView mapView) {
       ],
     ),
     state: state,
-  );
+  ).canonical;
   return GameView.fromPersistentState(
     state,
     forPlayerId: _playerId,

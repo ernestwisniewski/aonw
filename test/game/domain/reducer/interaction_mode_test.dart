@@ -305,9 +305,10 @@ void main() {
       ),
     );
 
-    final result = reducer.reduce(
+    final result = reducer.syncActivePlayer(
       state,
-      const SetActivePlayerCommand('player_2', canAct: true),
+      playerId: 'player_2',
+      canAct: true,
     );
 
     expect(result.state.pendingAction, isNull);

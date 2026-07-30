@@ -6,7 +6,6 @@ import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
 import 'package:aonw/game/domain/ai/city_threat_assessor.dart';
 import 'package:aonw/game/domain/ai/pressure_target_resolver.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
@@ -55,15 +54,7 @@ final class AiTurnPreparationBuilder {
       activePlayerId: playerId,
       activePlayerCanAct: true,
     );
-    final movementPreparationCommands = _preparationCommandsFor(
-      gameMode: session.gameMode,
-      playerId: playerId,
-    );
-    final planningState = _planningState(
-      initialState: initialState,
-      gameMode: session.gameMode,
-      playerId: playerId,
-    );
+    final planningState = initialState;
     final planningSnapshot = resolvedSnapshot.withGameState(planningState);
     final planningDomain = planningSnapshot.canonical.domain;
     final effectiveRuleset = ruleset.copyWith(
@@ -140,13 +131,12 @@ final class AiTurnPreparationBuilder {
         );
     context = context.copyWith(strategicPlan: strategicPlan);
     final preparationCommands = [
-      ...movementPreparationCommands,
       ...const DiplomacyAiPolicy().commandsFor(view, context),
     ];
 
     return PreparedAiTurn(
       snapshot: resolvedSnapshot,
-      initialState: initialState,
+      initialState: planningState,
       view: view,
       context: context,
       strategy: _strategyWithPreparation(
@@ -177,30 +167,6 @@ final class AiTurnPreparationBuilder {
     playerId: playerId,
     mapData: mapData,
   );
-
-  GameState _planningState({
-    required GameState initialState,
-    required GameMode gameMode,
-    required String playerId,
-  }) {
-    if (gameMode != GameMode.hotSeat) return initialState;
-
-    return MovementReducer.resetUnitMovementForNewTurn(
-      initialState,
-      mapData,
-      playerId: playerId,
-    ).state;
-  }
-
-  static List<GameCommand> _preparationCommandsFor({
-    required GameMode gameMode,
-    required String playerId,
-  }) {
-    return switch (gameMode) {
-      GameMode.hotSeat => [ResetUnitMovementCommand(playerId: playerId)],
-      GameMode.multiplayer => const [],
-    };
-  }
 
   static AiStrategy _strategyWithPreparation(
     AiStrategy strategy,

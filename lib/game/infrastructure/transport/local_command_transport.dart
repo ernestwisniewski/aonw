@@ -212,8 +212,7 @@ class LocalCommandTransport implements CommandTransport {
           command,
           context,
         );
-    if (command is! SetActivePlayerCommand &&
-        authoritativeCommand == null &&
+    if (authoritativeCommand == null &&
         AuthoritativeCommandPolicy.isClientOnlyForState(
           currentState,
           command,

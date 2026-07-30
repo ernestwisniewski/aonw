@@ -20,6 +20,20 @@ GameState acceptedEngineCommandInteractionSource({
     GameEngineCommandFamily.unitAction => _unitAction(currentState, command),
     GameEngineCommandFamily.movement => _movement(currentState, command),
     GameEngineCommandFamily.combat => _combat(currentState, command),
+    _ => _acceptedStrategicInteractionSource(
+      currentState: currentState,
+      command: command,
+      family: family,
+    ),
+  };
+}
+
+GameState _acceptedStrategicInteractionSource({
+  required GameState currentState,
+  required DomainCommand command,
+  required GameEngineCommandFamily family,
+}) {
+  return switch (family) {
     GameEngineCommandFamily.city ||
     GameEngineCommandFamily.production ||
     GameEngineCommandFamily.worker ||
@@ -29,6 +43,7 @@ GameState acceptedEngineCommandInteractionSource({
     ),
     GameEngineCommandFamily.research || GameEngineCommandFamily.diplomacy =>
       _researchDiplomacy(currentState, command),
+    _ => currentState,
   };
 }
 

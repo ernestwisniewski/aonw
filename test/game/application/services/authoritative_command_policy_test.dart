@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('AuthoritativeCommandPolicy', () {
-    test('sends combat but blocks server-managed movement reset', () {
+    test('sends combat and has no command-shaped server lifecycle', () {
       expect(
         AuthoritativeCommandPolicy.shouldSendToServer(
           const AttackHexCommand('warrior_1', 1, 0),
@@ -17,23 +17,10 @@ void main() {
         isTrue,
       );
       expect(
-        AuthoritativeCommandPolicy.shouldSendToServer(
-          const ResetUnitMovementCommand(playerId: 'player_1'),
+        AuthoritativeCommandPolicy.isServerManaged(
+          const AttackHexCommand('warrior_1', 1, 0),
         ),
         isFalse,
-      );
-      expect(
-        AuthoritativeCommandPolicy.isServerManaged(
-          const ResetUnitMovementCommand(),
-        ),
-        isTrue,
-      );
-      expect(
-        AuthoritativeCommandPolicy.shouldLogForReplay(
-          const GameState(),
-          const ResetUnitMovementCommand(playerId: 'player_1'),
-        ),
-        isTrue,
       );
     });
 

@@ -118,7 +118,6 @@ void main() {
       );
       expect(result?.handoff?.playerId, 'player_2');
       expect(result?.jumpToPlayerId, 'player_2');
-      expect(result?.shouldResetMovement, isFalse);
     });
 
     test('does not prepare hotseat handoff when next player is AI', () async {
@@ -196,54 +195,31 @@ void main() {
         expect(result?.updatedSave.turn, 2);
         expect(result?.nextControl.activePlayerId, 'player_2');
         expect(result?.nextControl.canAct, isTrue);
-        expect(result?.shouldResetMovement, isFalse);
         expect(result?.handoff, isNull);
       },
     );
   });
 
   group('ConfirmHandoffUseCase', () {
-    test(
-      'reloads save and dispatches active player plus movement reset',
-      () async {
-        final save = _save(
-          turn: 2,
-          playerStates: const {
-            'player_1': PlayerTurnState.active,
-            'player_2': PlayerTurnState.active,
-          },
-        );
-        final commands = <GameCommand>[];
+    test('reloads save and dispatches the active player', () async {
+      final save = _save(
+        turn: 2,
+        playerStates: const {
+          'player_1': PlayerTurnState.active,
+          'player_2': PlayerTurnState.active,
+        },
+      );
+      final result =
+          await ConfirmHandoffUseCase(
+            repository: _MemoryGameRepository(SaveSnapshot(save: save)),
+          ).execute(
+            saveId: save.id,
+            current: const PlayerControlState(activePlayerId: 'player_2'),
+            playerId: 'player_1',
+          );
 
-        final result =
-            await ConfirmHandoffUseCase(
-              repository: _MemoryGameRepository(SaveSnapshot(save: save)),
-            ).execute(
-              saveId: save.id,
-              current: const PlayerControlState(activePlayerId: 'player_2'),
-              playerId: 'player_1',
-              resetMovement: true,
-              dispatch: (command) async {
-                commands.add(command);
-                return const [];
-              },
-            );
-
-        expect(result?.nextControl.activePlayerId, 'player_1');
-        expect(result?.nextControl.canAct, isTrue);
-        expect(commands, [
-          isA<SetActivePlayerCommand>().having(
-            (command) => command.playerId,
-            'playerId',
-            'player_1',
-          ),
-          isA<ResetUnitMovementCommand>().having(
-            (command) => command.playerId,
-            'playerId',
-            'player_1',
-          ),
-        ]);
-      },
-    );
+      expect(result?.nextControl.activePlayerId, 'player_1');
+      expect(result?.nextControl.canAct, isTrue);
+    });
   });
 }

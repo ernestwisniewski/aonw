@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
+import 'package:aonw_core/game/application/engine/server_system_command.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
@@ -115,14 +116,23 @@ class ServerCommandReducer {
     final skippedPlayerIds = playerIds
         .where((playerId) => !submittedPlayerIds.contains(playerId))
         .toList();
-    final result = _finalizeSimultaneousTurn(
+    final engineResult = const GameEngine().applySystem(
       snapshot: snapshot,
-      playerIds: playerIds,
-      skippedPlayerIds: skippedPlayerIds,
-      now: nowUtc,
-      mapView: loadedMap.mapView,
-      ruleset: ruleset,
+      command: FinalizeTimedOutTurn(
+        playerIds: playerIds,
+        skippedPlayerIds: skippedPlayerIds,
+      ),
+      context: GameEngineContext(
+        actorPlayerId: actorPlayerId,
+        mapView: loadedMap.mapView,
+        ruleset: ruleset,
+        commandTick: snapshot.eventLogOffset,
+        savedAt: nowUtc,
+        preserveNonParticipantTurnStates: true,
+        trackTimeoutStreaks: true,
+      ),
     );
+    final result = _commandApplicationFromEngine(snapshot, engineResult);
 
     return _acceptedReduction(
       match: match,
@@ -142,22 +152,14 @@ class ServerCommandReducer {
     required GameRuleset ruleset,
   }) {
     switch (command) {
-      case SubmitTurnCommand():
-        return _submitTurn(
-          snapshot: snapshot,
-          match: match,
-          command: command,
-          actorPlayerId: actorPlayerId,
-          now: now,
-          mapView: loadedMap.mapView,
-          ruleset: ruleset,
-        );
+      case SubmitTurnCommand(:final playerId):
       case EndTurnCommand(:final playerId):
-        return _submitTurn(
+        return _applyTurnCommand(
           snapshot: snapshot,
           match: match,
-          command: SubmitTurnCommand(playerId),
+          command: _submitTurnCommand(command, playerId),
           actorPlayerId: actorPlayerId,
+          commandTick: commandTick,
           now: now,
           mapView: loadedMap.mapView,
           ruleset: ruleset,
@@ -200,13 +202,7 @@ class ServerCommandReducer {
           loadedMap.mapView,
           ruleset,
         );
-      case ResetUnitMovementCommand():
-        return _CommandApplication.reject(
-          snapshot: snapshot,
-          reason: 'server_managed_command',
-        );
-      case SetActivePlayerCommand() ||
-          TileTappedCommand() ||
+      case TileTappedCommand() ||
           CityTappedCommand() ||
           ToggleMoveTargetingCommand() ||
           StartCityFoundingCommand() ||
@@ -237,6 +233,82 @@ class ServerCommandReducer {
         );
     }
   }
+
+  _CommandApplication _applyTurnCommand({
+    required CanonicalGameSnapshot snapshot,
+    required WireMatch match,
+    required SubmitTurnCommand command,
+    required String actorPlayerId,
+    required int commandTick,
+    required DateTime now,
+    required MapReadView mapView,
+    required GameRuleset ruleset,
+  }) {
+    final playerIds = _turnPlayerIds(snapshot);
+    final timedOut = _turnTimedOut(snapshot, now);
+    if (timedOut && snapshot.session.hasSubmitted(command.playerId)) {
+      return _commandApplicationFromEngine(
+        snapshot,
+        const GameEngine().applySystem(
+          snapshot: snapshot,
+          command: FinalizeTimedOutTurn(
+            playerIds: playerIds,
+            skippedPlayerIds: [
+              for (final id in playerIds)
+                if (!snapshot.session.hasSubmitted(id)) id,
+            ],
+          ),
+          context: GameEngineContext(
+            actorPlayerId: actorPlayerId,
+            mapView: mapView,
+            ruleset: ruleset,
+            commandTick: commandTick,
+            savedAt: now,
+            preserveNonParticipantTurnStates: true,
+            trackTimeoutStreaks: true,
+          ),
+        ),
+      );
+    }
+    final requiredPlayerIds = timedOut
+        ? [command.playerId]
+        : _requiredTurnSubmissionPlayerIds(match: match, playerIds: playerIds);
+    return _applyDomainCommandEngine(
+      snapshot,
+      command,
+      actorPlayerId,
+      commandTick,
+      mapView,
+      ruleset,
+      turnPlayerIds: playerIds,
+      requiredTurnSubmissionPlayerIds: requiredPlayerIds,
+      savedAt: now,
+      preserveNonParticipantTurnStates: true,
+      trackTimeoutStreaks: true,
+    );
+  }
+}
+
+SubmitTurnCommand _submitTurnCommand(GameCommand command, String playerId) {
+  return command is SubmitTurnCommand ? command : SubmitTurnCommand(playerId);
+}
+
+_CommandApplication _commandApplicationFromEngine(
+  CanonicalGameSnapshot snapshot,
+  GameEngineResult result,
+) {
+  return switch (result) {
+    GameEngineAccepted() => _CommandApplication.accept(
+      snapshot: result.snapshot,
+      events: result.events,
+      movementExecutions: result.movementDelta.executions,
+      combatAnimations: result.combatAnimations,
+    ),
+    final GameEngineRejected rejected => _CommandApplication.reject(
+      snapshot: snapshot,
+      reason: rejected.reason,
+    ),
+  };
 }
 
 class _CommandApplication {
