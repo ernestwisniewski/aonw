@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 1.1.8 - 2026-07-30
+
+- Unified local games, multiplayer, AI simulations, and replay around one
+  authoritative game engine so accepted commands follow the same rules and
+  emit the same ordered domain events in every runtime.
+- Separated presentation-only intents from serializable domain and server
+  commands, preventing selection, focus, and tap interactions from crossing
+  the multiplayer wire boundary.
+- Rebuilt movement, combat, city economy, research, diplomacy, unit actions,
+  turn finalization, and match outcomes on the shared engine while preserving
+  deterministic local/server parity.
+- Added a typed match lifecycle for matchmaking, active play, resignations,
+  timeouts, completion, reconnects, and concurrent lifecycle transitions.
+- Projected renderer and HUD effects from authoritative event batches with
+  stable identities so reconnects do not repeat already displayed effects.
+- Changed fortified-unit threat alerts so the unit remains fortified and idle
+  while the camera focuses it and blue markers identify only visible enemies
+  detected in its sight.
+- Strengthened command, snapshot, presentation, lifecycle, performance, and
+  architecture guards around the shared engine and strict current schemas.
+
 ## 1.1.7 - 2026-07-28
 
 - Unified the map, save, replay, AI, and local-command read paths around the
