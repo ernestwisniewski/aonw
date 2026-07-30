@@ -5,6 +5,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/game/application/engine/server_system_command.dart';
 import 'package:aonw_core/protocol.dart';
 
+import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
 import 'package:aonw_server/src/multiplayer/wire_player_domain_mapper.dart';
 
@@ -14,6 +15,7 @@ part 'server_command_reducer_turns.dart';
 part 'server_command_reducer_unit_action.dart';
 
 const defaultMultiplayerTurnTimeout = Duration(seconds: 115);
+const _matchLifecycleStateAdapter = MatchLifecycleStateAdapter();
 
 class ServerCommandReducer {
   ServerCommandReducer({
@@ -38,7 +40,7 @@ class ServerCommandReducer {
     required String actorPlayerId,
     required DateTime now,
   }) async {
-    if (match.state != 'running') {
+    if (!_matchLifecycleStateAdapter.isRunningWireMatch(match)) {
       // Outcome construction lives in its part, keeping the reducer focused on
       // command validation and application.
       return _reject('match_not_running');
@@ -91,7 +93,7 @@ class ServerCommandReducer {
     required String actorPlayerId,
     required DateTime now,
   }) async {
-    if (match.state != 'running') {
+    if (!_matchLifecycleStateAdapter.isRunningWireMatch(match)) {
       return _reject('match_not_running');
     }
 

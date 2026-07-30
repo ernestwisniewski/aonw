@@ -1,6 +1,7 @@
 import 'package:aonw_core/map/domain/map_player_capacity.dart';
 
 import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 
@@ -22,7 +23,7 @@ void requirePublicOpenLobby(StoredMatchState state) {
 }
 
 void requireOpenLobby(StoredMatchState state) {
-  if (state.match.state == 'open') return;
+  if (const MatchLifecycleStateAdapter().lifecycleOf(state).isOpen) return;
   throw multiplayerException(
     'match_not_open',
     'Only open matches can be joined.',

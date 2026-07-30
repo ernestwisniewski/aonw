@@ -17,6 +17,7 @@ import 'package:test/test.dart';
 
 part 'support/realtime_match_hub_fixture.dart';
 part 'support/realtime_match_hub_initial_snapshot_cases.dart';
+part 'support/realtime_match_hub_lifecycle_race_cases.dart';
 part 'support/realtime_match_hub_outcome_cases.dart';
 part 'support/realtime_match_hub_resignation_cases.dart';
 part 'support/realtime_match_hub_resignation_fixture.dart';
@@ -3563,5 +3564,4 @@ class _FakeMapCatalog implements MultiplayerMapCatalog {
   Future<MapData> loadAssetMap(String mapName) async => mapData;
 }
 
-/// Returns the shared map fixture used by the hub scenarios.
 MapData _testMap() => _realtimeMatchHubFixtureMap();

@@ -29,7 +29,7 @@ extension MatchmakingServiceTransactions on MatchmakingService {
           await txStore.saveState(
             _stateAccess.abandonedState(
               state,
-              reason: 'protocol_upgrade',
+              reason: MatchAbandonmentReason.protocolUpgrade,
               endedAt: _nowUtc(),
             ),
           );
@@ -106,7 +106,8 @@ extension MatchmakingServiceTransactions on MatchmakingService {
         countryId: countryId,
         broadcast: !state.match.quickplay,
       );
-      if (joined.value.match.quickplay && joined.value.match.state == 'open') {
+      if (joined.value.match.quickplay &&
+          const MatchLifecycleStateAdapter().lifecycleOf(joined.value).isOpen) {
         final advanced = await _lifecycle.advanceQuickplayLobby(
           store: txStore,
           state: joined.value,

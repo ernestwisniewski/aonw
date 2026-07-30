@@ -41,7 +41,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
         _broadcaster.message(
           matchId: state.match.id,
           offset: duplicate.offset,
-          match: state.match.state == 'running' ? null : state.match,
+          match: _matchUpdateUnlessRunning(state),
           ack: WireCommandAck(
             matchId: state.match.id,
             accepted: true,
@@ -54,7 +54,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
       );
     }
 
-    if (state.match.state != 'running') {
+    if (!_matchLifecycleStateAdapter.lifecycleOf(state).isRunning) {
       return _rejectedCommandOutcome(
         store: store,
         state: state,
@@ -213,3 +213,8 @@ extension MatchCommandServiceHandling on MatchCommandService {
     );
   }
 }
+
+WireMatch? _matchUpdateUnlessRunning(StoredMatchState state) =>
+    _matchLifecycleStateAdapter.lifecycleOf(state).isRunning
+    ? null
+    : state.match;

@@ -6,7 +6,7 @@ extension MatchLifecycleServiceQuickplay on MatchLifecycleService {
     required StoredMatchState state,
   }) async {
     final match = state.match;
-    if (!match.quickplay || match.state != 'open') {
+    if (!_isOpenQuickplayState(state)) {
       return const MatchMutationOutcome(false);
     }
     final stale = _quickplayLobbyPolicy.isStaleWaitingForPlayers(
@@ -19,7 +19,7 @@ extension MatchLifecycleServiceQuickplay on MatchLifecycleService {
     if (!stale) return const MatchMutationOutcome(false);
     final abandoned = _stateAccess.abandonedState(
       state,
-      reason: 'quickplay_stale',
+      reason: MatchAbandonmentReason.quickplayStale,
       endedAt: _nowUtc(),
     );
     await store.saveState(abandoned);
@@ -37,7 +37,7 @@ extension MatchLifecycleServiceQuickplay on MatchLifecycleService {
     bool broadcastUnchanged = false,
   }) async {
     final match = state.match;
-    if (!match.quickplay || match.state != 'open') {
+    if (!_isOpenQuickplayState(state)) {
       return MatchMutationOutcome(
         match,
         notifications: broadcastUnchanged
@@ -100,3 +100,7 @@ extension MatchLifecycleServiceQuickplay on MatchLifecycleService {
     }
   }
 }
+
+bool _isOpenQuickplayState(StoredMatchState state) =>
+    state.match.quickplay &&
+    _matchLifecycleStateAdapter.lifecycleOf(state).isOpen;

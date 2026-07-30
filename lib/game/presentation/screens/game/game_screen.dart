@@ -12,6 +12,7 @@ import 'package:aonw/game/presentation/providers/map/map_inspection_binder.dart'
 import 'package:aonw/game/presentation/screens/game/game_map_vignette_overlay.dart';
 import 'package:aonw/game/presentation/screens/game/game_primary_action_controller.dart';
 import 'package:aonw/game/presentation/screens/game/gamepad_renderer_input_binding.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw/game/presentation/widgets.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
 import 'package:aonw/game/presentation/widgets/screen/game_startup_asset_preloader.dart';
@@ -343,11 +344,10 @@ class _GameRendererSessionHostState
 
   bool _shouldRecreateRenderer(_GameRendererSessionHost oldWidget) {
     final oldSession = oldWidget.session;
-    final session = widget.session;
-    return oldSession.saveId != session.saveId ||
-        oldSession.mapData != session.mapData ||
-        oldSession.imagePath != session.imagePath ||
-        oldSession.initialCamera != session.initialCamera ||
+    return oldSession.saveId != widget.session.saveId ||
+        oldSession.mapData != widget.session.mapData ||
+        oldSession.imagePath != widget.session.imagePath ||
+        oldSession.initialCamera != widget.session.initialCamera ||
         oldWidget.l10n.localeName != widget.l10n.localeName;
   }
 
@@ -675,7 +675,7 @@ class _GameStartupLoadingOverlayState
     final match = ref.watch(
       multiplayerMatchProvider.select((matches) => matches[widget.saveId]),
     );
-    return match == null || match.state == 'loading';
+    return match == null || LobbyMatchStatusRules.isLoading(match);
   }
 
   void _notifyServerMapLoadedIfNeeded() {
@@ -792,13 +792,13 @@ class _GameStateReadyGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (session.saveId.isEmpty) return child;
-    final loadingProgress = GameLoadingProgress.initial.bumpedTo(0.42);
 
     return ref
         .watch(gameStateProvider(session.saveId))
         .when(
-          loading: () =>
-              GameLoadingView(progress: loadingProgress.bumpedTo(0.46)),
+          loading: () => GameLoadingView(
+            progress: GameLoadingProgress.initial.bumpedTo(0.46),
+          ),
           error: (error, _) => GameLoadErrorView(
             mapName: selection.displayName,
             error: error,

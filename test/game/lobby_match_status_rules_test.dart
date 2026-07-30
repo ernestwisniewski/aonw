@@ -82,6 +82,22 @@ void main() {
         isTrue,
       );
       expect(LobbyMatchStatusRules.isTerminal(_match(state: 'open')), isFalse);
+      expect(
+        LobbyMatchStatusRules.isTerminal(_match(state: 'paused')),
+        isFalse,
+      );
+      expect(
+        LobbyMatchStatusRules.canEnter(
+          _match(
+            state: 'paused',
+            players: [
+              _human('player_1', 'user_1'),
+              _human('player_2', 'user_2'),
+            ],
+          ),
+        ),
+        isFalse,
+      );
     });
   });
 }

@@ -5,6 +5,7 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart' hide GameEvent;
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
 import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
+import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
 import 'package:aonw_server/src/multiplayer/match_mutation_outcome.dart';
 import 'package:aonw_server/src/multiplayer/match_state_access.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
@@ -18,6 +19,8 @@ part 'match_command_service_handling.dart';
 part 'match_command_service_timeout.dart';
 
 const _runningMatchSnapshotCodec = RunningMatchSnapshotCodec();
+const _matchLifecycleStateAdapter = MatchLifecycleStateAdapter();
+const _matchLifecycleWireAdapter = MatchLifecycleWireAdapter();
 
 final class MatchCommandService {
   MatchCommandService({
@@ -73,19 +76,22 @@ final class MatchCommandService {
         'A finished ${outcome.condition.name} outcome requires a winner.',
       );
     }
-    return state.copyWith(
-      match: state.match.copyWith(
-        turn: turn,
-        state: 'finished',
-        endedAt: now.toUtc(),
-        outcomeCondition: outcome.condition.name,
-        winnerPlayerId: outcome.winnerPlayerId,
-        autoStartAt: null,
-      ),
-      snapshot: snapshot.copyWith(
-        state: {...snapshot.state, 'phase': 'finished'},
-      ),
+    final withSnapshot = state.copyWith(
+      match: state.match.copyWith(turn: turn),
+      snapshot: snapshot,
     );
+    final transition = _matchLifecycleStateAdapter.apply(
+      withSnapshot,
+      FinishMatchLifecycle(
+        _matchLifecycleWireAdapter.decodeFinishedReason(outcome.condition.name),
+      ),
+      endedAt: now,
+      winnerPlayerId: outcome.winnerPlayerId,
+    );
+    if (transition.rejection case final rejection?) {
+      throw StateError('Finish match lifecycle rejected: ${rejection.code}.');
+    }
+    return transition.state;
   }
 
   Future<void> handleClientMessage({

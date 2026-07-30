@@ -1,3 +1,4 @@
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
@@ -5,6 +6,7 @@ import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory
 import 'package:aonw_server/src/multiplayer/invite_code_generator.dart';
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
 import 'package:aonw_server/src/multiplayer/match_lifecycle_service.dart';
+import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
 import 'package:aonw_server/src/multiplayer/match_mutation_outcome.dart';
 import 'package:aonw_server/src/multiplayer/match_request_validator.dart';
 import 'package:aonw_server/src/multiplayer/match_state_access.dart';
@@ -18,6 +20,8 @@ export 'invite_code_generator.dart' show InviteCodeGenerator;
 
 part 'matchmaking_service_creation.dart';
 part 'matchmaking_service_transactions.dart';
+
+const _matchmakingLifecycleWireAdapter = MatchLifecycleWireAdapter();
 
 final class MatchmakingService {
   MatchmakingService({
@@ -73,7 +77,9 @@ final class MatchmakingService {
       minPlayers: request.minPlayers,
       quickplay: quickplay,
       turn: 0,
-      state: 'open',
+      state: _matchmakingLifecycleWireAdapter.encodeState(
+        const OpenMatchLifecycleState(),
+      ),
       createdAt: now,
       inviteCode: inviteCode,
     );

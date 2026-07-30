@@ -60,7 +60,7 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
         matchId,
         lock: true,
       );
-      if (state.match.state != 'running') {
+      if (!_matchLifecycleStateAdapter.lifecycleOf(state).isRunning) {
         return const MatchMutationOutcome<bool>(false);
       }
 

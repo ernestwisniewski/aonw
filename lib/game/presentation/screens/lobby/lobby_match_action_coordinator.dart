@@ -138,7 +138,7 @@ final class LobbyMatchActionCoordinator {
   Future<void> cancelQuickplay({required WireMatch? activeMatch}) async {
     stopLobbyUpdates();
     final session = await ensureSession();
-    if (activeMatch != null && activeMatch.state == 'open') {
+    if (activeMatch != null && LobbyMatchStatusRules.isOpen(activeMatch)) {
       await leaveMatch(token: session.token, matchId: activeMatch.id);
     }
     clearMatch(session);
@@ -150,7 +150,7 @@ final class LobbyMatchActionCoordinator {
     return List.unmodifiable(
       matches.where(
         (match) =>
-            match.state == 'open' &&
+            LobbyMatchStatusRules.isOpen(match) &&
             !match.quickplay &&
             match.inviteCode == null &&
             match.players.every((player) => player.userId != session.userId) &&
@@ -225,7 +225,7 @@ final class LobbyMatchActionCoordinator {
 
   Future<void> startHostedMatch({required WireMatch? activeMatch}) async {
     final match = activeMatch;
-    if (match == null || match.state != 'open') return;
+    if (match == null || !LobbyMatchStatusRules.isOpen(match)) return;
     final session = await ensureSession();
     final started = await startMatch(token: session.token, matchId: match.id);
     rememberMatch(session: session, match: started);

@@ -87,18 +87,21 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
     required String winnerPlayerId,
     required DateTime endedAt,
   }) {
-    return state.copyWith(
-      match: state.match.copyWith(
-        state: 'finished',
-        endedAt: endedAt.toUtc(),
-        outcomeCondition: 'resignation',
-        winnerPlayerId: winnerPlayerId,
-        autoStartAt: null,
-      ),
-      snapshot: state.snapshot.copyWith(
+    final transition = _matchLifecycleStateAdapter.apply(
+      state,
+      const FinishMatchLifecycle(MatchCompletionReason.resignation),
+      endedAt: endedAt,
+      winnerPlayerId: winnerPlayerId,
+    );
+    if (transition.rejection case final rejection?) {
+      throw StateError(
+        'Finish resignation lifecycle rejected: ${rejection.code}.',
+      );
+    }
+    return transition.state.copyWith(
+      snapshot: transition.state.snapshot.copyWith(
         state: {
-          ...state.snapshot.state,
-          'phase': 'finished',
+          ...transition.state.snapshot.state,
           'resignedUserIdentifier': resignedUserIdentifier,
         },
       ),
@@ -163,13 +166,13 @@ final class _LifecycleMapReadView implements MapReadView {
   MapTileView? tileAt(int col, int row) => null;
 }
 
-String _resignationAbandonmentReason(
+MatchAbandonmentReason _resignationAbandonmentReason(
   ParticipantResignationAbandonmentReason reason,
 ) {
   return switch (reason) {
     ParticipantResignationAbandonmentReason.allPlayersResigned =>
-      'all_players_resigned',
+      MatchAbandonmentReason.allPlayersResigned,
     ParticipantResignationAbandonmentReason.noAlivePlayersAfterResignation =>
-      'no_alive_players_after_resignation',
+      MatchAbandonmentReason.noAlivePlayersAfterResignation,
   };
 }

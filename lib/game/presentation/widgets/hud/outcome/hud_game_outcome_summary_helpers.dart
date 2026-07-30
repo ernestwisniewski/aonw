@@ -21,7 +21,9 @@ GameOutcome? _authoritativeMultiplayerOutcome({
   required GameSave gameSave,
   required WireMatch? match,
 }) {
-  if (match == null || match.id != gameSave.id || match.state != 'finished') {
+  if (match == null ||
+      match.id != gameSave.id ||
+      !LobbyMatchStatusRules.isFinished(match)) {
     return null;
   }
   final condition = match.outcomeCondition?.trim().toLowerCase();

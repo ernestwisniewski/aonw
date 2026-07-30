@@ -5,6 +5,7 @@ import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/app/app_release_info.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
 import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/map/domain/map_selection.dart';
@@ -146,16 +147,14 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
     if (stored == null || matchId == null || matchId.isEmpty) return;
     setState(() => _resumeLoading = true);
     try {
-      final client = ref.read(networkSessionClientProvider);
       final refreshedSession = await ref
           .read(networkSessionRefreshCoordinatorProvider)
           .ensureValidSession(forceRefresh: true);
-      final match = await client.loadMatch(
-        token: refreshedSession.token,
-        matchId: matchId,
-      );
+      final match = await ref
+          .read(networkSessionClientProvider)
+          .loadMatch(token: refreshedSession.token, matchId: matchId);
       final playerId = _playerIdForUser(match, stored.userId);
-      if (match.state != 'running' || playerId == null) {
+      if (!LobbyMatchStatusRules.isRunning(match) || playerId == null) {
         await _handleResumeFailure(store, forgetPersistedMatch: true);
         return;
       }

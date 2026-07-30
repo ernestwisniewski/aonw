@@ -5,6 +5,7 @@ import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
+import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
 import 'package:aonw_server/src/multiplayer/match_mutation_outcome.dart';
 import 'package:aonw_server/src/multiplayer/match_state_access.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
@@ -17,6 +18,7 @@ part 'match_lifecycle_service_quickplay.dart';
 part 'match_lifecycle_service_resignation.dart';
 
 const _runningMatchSnapshotCodec = RunningMatchSnapshotCodec();
+const _matchLifecycleStateAdapter = MatchLifecycleStateAdapter();
 
 final class MatchLifecycleService {
   const MatchLifecycleService({
@@ -77,7 +79,7 @@ final class MatchLifecycleService {
           'Only the owner can start this match.',
         );
       }
-      if (state.match.state != 'open') {
+      if (!_matchLifecycleStateAdapter.lifecycleOf(state).isOpen) {
         throw multiplayerException(
           'match_not_open',
           'Only open matches can be started.',
@@ -112,24 +114,27 @@ final class MatchLifecycleService {
       );
       _stateAccess.requireParticipant(state, userIdentifier);
       final now = _nowUtc();
-      final updated = switch (state.match.state) {
-        'running' => _runningStateAfterParticipantResigned(
+      final lifecycle = _matchLifecycleStateAdapter.lifecycleOf(state);
+      final updated = switch (lifecycle) {
+        RunningMatchLifecycleState() => _runningStateAfterParticipantResigned(
           state,
           userIdentifier: userIdentifier,
           endedAt: now,
         ),
-        'open' when state.match.ownerUserId == userIdentifier =>
+        OpenMatchLifecycleState()
+            when state.match.ownerUserId == userIdentifier =>
           _stateAccess.abandonedState(
             state,
-            reason: 'player_resigned',
+            reason: MatchAbandonmentReason.playerResigned,
             endedAt: now,
             userIdentifier: userIdentifier,
           ),
-        'open' => throw multiplayerException(
+        OpenMatchLifecycleState() => throw multiplayerException(
           'not_match_owner',
           'Only the owner can abandon an open lobby.',
         ),
-        _ => state,
+        FinishedMatchLifecycleState() ||
+        AbandonedMatchLifecycleState() => state,
       };
       await txStore.saveState(updated);
       return MatchMutationOutcome(
@@ -153,33 +158,13 @@ final class MatchLifecycleService {
         lock: true,
       );
       _stateAccess.requireParticipant(state, userIdentifier);
-      final StoredMatchState updated;
-      if (state.match.state == 'running') {
-        updated = _runningStateAfterParticipantLeft(
-          state,
-          userIdentifier: userIdentifier,
-        );
-      } else if (state.match.state == 'open' &&
-          state.match.ownerUserId == userIdentifier) {
-        updated = _stateAccess.abandonedState(
-          state,
-          reason: 'owner_left',
-          endedAt: _nowUtc(),
-          userIdentifier: userIdentifier,
-        );
-      } else if (state.match.state == 'open') {
-        final match = state.match.copyWith(
-          players: [
-            for (final player in state.match.players)
-              if (player.userId != userIdentifier) player,
-          ],
-        );
-        updated = state.copyWith(match: match);
-      } else {
-        updated = state;
-      }
+      final updated = _stateAfterParticipantLeft(
+        state,
+        userIdentifier: userIdentifier,
+      );
       await txStore.saveState(updated);
-      if (updated.match.quickplay && updated.match.state == 'open') {
+      if (updated.match.quickplay &&
+          _matchLifecycleStateAdapter.lifecycleOf(updated).isOpen) {
         final advanced = await advanceQuickplayLobby(
           store: txStore,
           state: updated,
@@ -207,7 +192,8 @@ final class MatchLifecycleService {
         matchId,
         lock: true,
       );
-      if (state.match.state != 'open' && state.match.state != 'running') {
+      final lifecycle = _matchLifecycleStateAdapter.lifecycleOf(state);
+      if (!lifecycle.acceptsConnectionMutation) {
         return MatchMutationOutcome(state);
       }
       final playerIndex = state.match.players.indexWhere(
@@ -257,12 +243,41 @@ final class MatchLifecycleService {
     )) {
       return _stateAccess.abandonedState(
         state,
-        reason: 'player_left',
+        reason: MatchAbandonmentReason.playerLeft,
         endedAt: _nowUtc(),
         userIdentifier: userIdentifier,
       );
     }
     return state.copyWith(match: state.match.copyWith(players: players));
+  }
+
+  StoredMatchState _stateAfterParticipantLeft(
+    StoredMatchState state, {
+    required String userIdentifier,
+  }) {
+    return switch (_matchLifecycleStateAdapter.lifecycleOf(state)) {
+      RunningMatchLifecycleState() => _runningStateAfterParticipantLeft(
+        state,
+        userIdentifier: userIdentifier,
+      ),
+      OpenMatchLifecycleState()
+          when state.match.ownerUserId == userIdentifier =>
+        _stateAccess.abandonedState(
+          state,
+          reason: MatchAbandonmentReason.ownerLeft,
+          endedAt: _nowUtc(),
+          userIdentifier: userIdentifier,
+        ),
+      OpenMatchLifecycleState() => state.copyWith(
+        match: state.match.copyWith(
+          players: [
+            for (final player in state.match.players)
+              if (player.userId != userIdentifier) player,
+          ],
+        ),
+      ),
+      FinishedMatchLifecycleState() || AbandonedMatchLifecycleState() => state,
+    };
   }
 
   Future<MatchMutationOutcome<WireMatch>> _startOpenMatch({
@@ -284,14 +299,16 @@ final class MatchLifecycleService {
             ]),
           )
         : state.match.mapName;
-    final runningMatch = state.match.copyWith(
+    final lifecycleTransition = _matchLifecycleStateAdapter.apply(
+      state,
+      const StartMatchLifecycle(),
+    );
+    if (lifecycleTransition.rejection case final rejection?) {
+      throw StateError('Start match lifecycle rejected: ${rejection.code}.');
+    }
+    final runningMatch = lifecycleTransition.state.match.copyWith(
       mapName: mapName,
-      state: 'running',
       turn: 1,
-      endedAt: null,
-      outcomeCondition: null,
-      winnerPlayerId: null,
-      autoStartAt: null,
     );
     final participants = runningMatch.players
         .map(domainPlayerFromWire)

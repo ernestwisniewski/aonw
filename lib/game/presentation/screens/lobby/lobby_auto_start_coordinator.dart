@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw_core/protocol.dart';
 
 typedef LobbyAutoStartTimerFactory =
@@ -94,7 +95,7 @@ final class LobbyAutoStartCoordinator {
   bool _shouldTrack(WireMatch match) {
     return canContinue() &&
         isQuickplayMode() &&
-        match.state == 'open' &&
+        LobbyMatchStatusRules.isOpen(match) &&
         match.autoStartAt != null;
   }
 

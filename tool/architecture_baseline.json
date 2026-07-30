@@ -499,7 +499,7 @@
         "lib/game/presentation/widgets/visual/game_insight_widgets.dart": 550,
         "lib/map/rendering/map_image_layer.dart": 525,
         "lib/map/rendering/tile/hex_tile_painter.dart": 788,
-        "lib/menu/main_menu_screen.dart": 1007,
+        "lib/menu/main_menu_screen.dart": 1006,
         "lib/menu/manual_screen.dart": 801,
         "lib/menu/options_screen.dart": 1150
       },
@@ -546,7 +546,7 @@
         "lib/game/presentation/widgets/technology/technology_tree_dialog.dart": 468,
         "lib/game/presentation/widgets/visual/game_insight_widgets.dart": 550,
         "lib/map/widgets/dice_roll_test_overlay.dart": 491,
-        "lib/menu/main_menu_screen.dart": 1007,
+        "lib/menu/main_menu_screen.dart": 1006,
         "lib/menu/manual_screen.dart": 801,
         "lib/menu/menu_route_shell.dart": 425,
         "lib/menu/options_screen.dart": 1150,
@@ -1351,13 +1351,12 @@
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 19,
         "server/lib/src/multiplayer/client_message_guard.dart::class:ClientMessageGuard/method:_validate": 13,
         "server/lib/src/multiplayer/client_message_guard.dart::class:_PayloadBudget/method:visit": 12,
-        "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 12,
+        "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 11,
         "server/lib/src/multiplayer/match_request_validator.dart::class:MatchRequestValidator/method:validate": 12,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 58
       },
       "cognitiveComplexity": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 17,
-        "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 16,
         "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 25
       }
     },

@@ -1,3 +1,4 @@
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/protocol.dart';
 
 abstract final class LobbyMatchStatusRules {
@@ -27,7 +28,23 @@ abstract final class LobbyMatchStatusRules {
   }
 
   static bool canLoadOrRun(WireMatch match) {
-    return match.state == 'loading' || match.state == 'running';
+    return _observedLifecycle(match)?.canLoadOrRun ?? false;
+  }
+
+  static bool isOpen(WireMatch match) {
+    return _observedLifecycle(match) is OpenObservedMatchLifecycleState;
+  }
+
+  static bool isRunning(WireMatch match) {
+    return _observedLifecycle(match) is RunningObservedMatchLifecycleState;
+  }
+
+  static bool isLoading(WireMatch match) {
+    return _observedLifecycle(match) is LoadingObservedMatchLifecycleState;
+  }
+
+  static bool isFinished(WireMatch match) {
+    return _observedLifecycle(match) is FinishedObservedMatchLifecycleState;
   }
 
   static bool canEnter(WireMatch match) {
@@ -35,7 +52,7 @@ abstract final class LobbyMatchStatusRules {
   }
 
   static bool isTerminal(WireMatch match) {
-    return match.state == 'finished' || match.state == 'abandoned';
+    return _observedLifecycle(match)?.isTerminal ?? false;
   }
 
   static String? playerIdForUser(WireMatch match, String userId) {
@@ -55,8 +72,21 @@ abstract final class LobbyMatchStatusRules {
     required String? userId,
     required bool busy,
   }) {
-    if (match == null || busy || match.state != 'open') return false;
+    if (match == null || busy) return false;
+    if (_observedLifecycle(match) is! OpenObservedMatchLifecycleState) {
+      return false;
+    }
     if (!isOwner(match, userId)) return false;
     return hasRequiredHumans(match);
+  }
+
+  static ClientObservedMatchLifecycleState? _observedLifecycle(
+    WireMatch match,
+  ) {
+    try {
+      return const MatchLifecycleWireAdapter().decodeObservedState(match.state);
+    } on FormatException {
+      return null;
+    }
   }
 }
