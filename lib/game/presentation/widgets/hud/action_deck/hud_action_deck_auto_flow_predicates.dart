@@ -9,6 +9,7 @@ extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
       activePlayerUsesAutoTurnFlow: _activePlayerUsesAutoTurnFlow(),
       panelOpen: widget.panelOpen,
       mapInspectionActive: ref.read(mapInspectionControllerProvider).active,
+      modalTransitionInProgress: _modalTransitionInProgress,
       activePlayerFinishedTurn:
           widget.gameSave.playerStates[widget.activePlayerId] ==
           PlayerTurnState.finished,

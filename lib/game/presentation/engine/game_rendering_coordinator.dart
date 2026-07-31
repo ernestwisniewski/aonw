@@ -404,13 +404,17 @@ class GameRenderingCoordinator {
     if (activePreview != null &&
         _canShowPathForUnit(state, activePreview.unitId)) {
       final selected = state.selectedUnitId == activePreview.unitId;
+      final unit = state.unitById(activePreview.unitId);
       entries
         ..removeWhere((entry) => entry.preview.unitId == activePreview.unitId)
         ..add(
           UnitMovePreviewLayerEntry(
             id: 'active:${activePreview.unitId}',
             preview: activePreview,
-            unitType: _unitTypeForPlan(state, activePreview),
+            unitType: unit?.type,
+            maxMovementPointsPerTurn: unit == null
+                ? null
+                : _maxMovementPointsPerTurn(unit),
             dimmed: dimmed,
             subdued: !selected,
             showCostLabel: false,
@@ -432,6 +436,10 @@ class GameRenderingCoordinator {
     if (!state.canControlUnit(unit)) return null;
     final tradeRoute = unit.merchantTradeRoute;
     if (tradeRoute != null && tradeRoute.steps.length >= 2) {
+      final travelledUpToIndex = tradeRoute.steps.indexWhere(
+        (step) => step.col == unit.col && step.row == unit.row,
+      );
+      if (travelledUpToIndex < 0) return null;
       final tradePlan = UnitMovementPlan(
         unitId: unit.id,
         targetCol: tradeRoute.targetCol,
@@ -439,16 +447,15 @@ class GameRenderingCoordinator {
         totalCost: tradeRoute.steps.last.cumulativeCost,
         availableMovementPoints: unit.movementPoints,
         steps: tradeRoute.steps,
-      );
-      final travelledUpToIndex = tradeRoute.steps.indexWhere(
-        (s) => s.col == unit.col && s.row == unit.row,
-      );
+      ).remainingFromStepIndex(travelledUpToIndex);
       final selected = state.selectedUnitId == unit.id;
       return UnitMovePreviewLayerEntry(
         id: 'trade:${unit.id}',
         preview: tradePlan,
-        travelledUpToIndex: travelledUpToIndex < 0 ? 0 : travelledUpToIndex,
+        displaySteps: tradeRoute.steps,
+        travelledUpToIndex: travelledUpToIndex,
         unitType: unit.type,
+        maxMovementPointsPerTurn: _maxMovementPointsPerTurn(unit),
         routeKind: UnitMovePreviewRouteKind.trade,
         dimmed: dimmed,
         subdued: !selected,
@@ -459,23 +466,27 @@ class GameRenderingCoordinator {
 
     final queuedPath = unit.queuedPath;
     if (queuedPath != null && queuedPath.steps.length >= 2) {
+      final travelledUpToIndex = queuedPath.steps.indexWhere(
+        (step) => step.col == unit.col && step.row == unit.row,
+      );
+      if (travelledUpToIndex < 0) return null;
       final queuedPlan = UnitMovementPlan(
         unitId: unit.id,
         targetCol: queuedPath.targetCol,
         targetRow: queuedPath.targetRow,
         totalCost: queuedPath.steps.last.cumulativeCost,
         availableMovementPoints: unit.movementPoints,
+        canSpendTurnEnteringFirstStep: unit.movementPoints > 0,
         steps: queuedPath.steps,
-      );
-      final travelledUpToIndex = queuedPath.steps.indexWhere(
-        (s) => s.col == unit.col && s.row == unit.row,
-      );
+      ).remainingFromStepIndex(travelledUpToIndex);
       final selected = state.selectedUnitId == unit.id;
       return UnitMovePreviewLayerEntry(
         id: 'queued:${unit.id}',
         preview: queuedPlan,
-        travelledUpToIndex: travelledUpToIndex < 0 ? 0 : travelledUpToIndex,
+        displaySteps: queuedPath.steps,
+        travelledUpToIndex: travelledUpToIndex,
         unitType: unit.type,
+        maxMovementPointsPerTurn: _maxMovementPointsPerTurn(unit),
         dimmed: dimmed,
         subdued: !selected,
         showCostLabel: selected,
@@ -485,8 +496,11 @@ class GameRenderingCoordinator {
     return null;
   }
 
-  GameUnitType? _unitTypeForPlan(GameState state, UnitMovementPlan plan) {
-    return state.unitById(plan.unitId)?.type;
+  int _maxMovementPointsPerTurn(GameUnit unit) {
+    return UnitMovementBalance.maxMovementPointsFor(
+      type: unit.type,
+      carriedArtifactId: unit.carriedArtifactId,
+    );
   }
 
   bool _canShowPathForUnit(GameState state, String unitId) {

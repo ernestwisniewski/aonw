@@ -29,10 +29,7 @@ class UnitMovePreview extends Component {
   static const double _frontRouteStrokeFalloff = 0.06;
 
   final List<Vector2> points;
-  final List<int> cumulativeCosts;
-  final int totalCost;
-  final int availableMovementPoints;
-  final bool canMoveNow;
+  final List<bool> reachablePoints;
   final GameUnitType? unitType;
   final UnitMovePreviewRouteKind routeKind;
   bool dimmed;
@@ -50,10 +47,7 @@ class UnitMovePreview extends Component {
 
   UnitMovePreview({
     required List<Vector2> points,
-    required List<int> cumulativeCosts,
-    required this.totalCost,
-    required this.availableMovementPoints,
-    required this.canMoveNow,
+    required List<bool> reachablePoints,
     this.unitType,
     this.routeKind = UnitMovePreviewRouteKind.movement,
     this.dimmed = false,
@@ -63,7 +57,7 @@ class UnitMovePreview extends Component {
     this.showConfirmedTarget = false,
     this.travelledUpToIndex = 0,
   }) : points = [for (final point in points) point.clone()],
-       cumulativeCosts = List.unmodifiable(cumulativeCosts);
+       reachablePoints = List.unmodifiable(reachablePoints);
 
   Color get reachableColor => _style.reachableColor;
 
@@ -774,9 +768,8 @@ class UnitMovePreview extends Component {
   }
 
   bool _isReachablePoint(int index) {
-    final cumulativeCost = index < cumulativeCosts.length
-        ? cumulativeCosts[index]
-        : totalCost;
-    return cumulativeCost <= availableMovementPoints;
+    return index >= 0 &&
+        index < reachablePoints.length &&
+        reachablePoints[index];
   }
 }

@@ -103,6 +103,47 @@ void main() {
     expect(state.units.single.col, 0);
     expect(state.movePreview, same(preview));
   });
+
+  test('tapping another route step retargets instead of confirming', () {
+    final movingCommander = commander.copyWith(movementPoints: 1);
+    final preview = UnitMovementPlan(
+      unitId: movingCommander.id,
+      targetCol: 3,
+      targetRow: 0,
+      totalCost: 3,
+      availableMovementPoints: movingCommander.movementPoints,
+      steps: const [
+        UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+        UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+        UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
+        UnitMovementStep(col: 3, row: 0, enterCost: 1, cumulativeCost: 3),
+      ],
+    );
+    final state = GameState(
+      units: [movingCommander],
+      activePlayerId: 'player_1',
+      activePlayerCanAct: true,
+      interaction: GameInteractionState(
+        selection: GameSelection.unit(movingCommander),
+        moveCommandActive: true,
+        movePreview: preview,
+      ),
+    );
+    final wideResolver = GameIntentResolver(
+      reducer: GameStateReducer(mapData: _map(cols: 4, rows: 1)),
+    );
+
+    final result = wideResolver.resolve(
+      state.interaction,
+      const TileTappedCommand(2, 0),
+      state,
+    );
+
+    expect(result.domainCommand, isNull);
+    expect(result.interaction.movePreview?.targetCol, 2);
+    expect(result.interaction.movePreview?.targetRow, 0);
+    expect(state.movePreview, same(preview));
+  });
 }
 
 const _allIntents = <GameIntent>[
@@ -133,12 +174,12 @@ const _allIntents = <GameIntent>[
   CancelWorkerActionSelectionCommand('unit'),
 ];
 
-MapData _map() => MapData(
-  cols: 2,
-  rows: 2,
+MapData _map({int cols = 2, int rows = 2}) => MapData(
+  cols: cols,
+  rows: rows,
   tiles: [
-    for (var row = 0; row < 2; row++)
-      for (var col = 0; col < 2; col++)
+    for (var row = 0; row < rows; row++)
+      for (var col = 0; col < cols; col++)
         TileData(
           col: col,
           row: row,

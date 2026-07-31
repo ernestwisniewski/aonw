@@ -138,6 +138,7 @@ List<Map<String, dynamic>> _eventAudienceForStorage({
   required DomainState previous,
   required DomainState next,
   required Iterable<CombatAnimationFact> combatAnimations,
+  required Map<String, Set<String>> movementAudiencePlayerIdsByUnit,
 }) {
   if (events.isEmpty) return const [];
   return PlayerMatchEventAudience.annotateForStorage(
@@ -146,6 +147,7 @@ List<Map<String, dynamic>> _eventAudienceForStorage({
     participantPlayerIds: participantPlayerIds,
     previous: GameEventOwnershipIndex.from(previous.units, previous.cities),
     next: GameEventOwnershipIndex.from(next.units, next.cities),
+    movementAudiencePlayerIdsByUnit: movementAudiencePlayerIdsByUnit,
     previousFog: previous.fogOfWar,
     nextFog: next.fogOfWar,
   );

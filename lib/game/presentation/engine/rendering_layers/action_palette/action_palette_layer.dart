@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
-
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_component.dart';
@@ -227,12 +225,12 @@ class ActionPaletteLayer extends Component with LayerAttachment {
   }
 
   int _turnsForPreview(UnitMovementPlan preview, GameUnit unit) {
-    if (preview.totalCost <= 0) return 0;
-    final movementPerTurn = math.max(
-      1,
-      UnitMovementBalance.maxMovementPointsForType(unit.type),
+    return preview.estimatedTurns(
+      UnitMovementBalance.maxMovementPointsFor(
+        type: unit.type,
+        carriedArtifactId: unit.carriedArtifactId,
+      ),
     );
-    return (preview.totalCost / movementPerTurn).ceil();
   }
 
   MapPillTone _pillToneFor(UnitMovementPlan preview) {

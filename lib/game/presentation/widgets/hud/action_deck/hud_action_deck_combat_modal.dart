@@ -16,115 +16,170 @@ extension _HudActionDeckCombatModal on _HudActionDeckState {
     return preview;
   }
 
-  void _syncCombatModal() {
-    final preview = _combatConfirmationPreview;
-    _queueCombatPreviewNotifierUpdate(preview);
-    if (preview == null) {
-      _lastRequestedCombatPreviewKey = null;
-      if (_combatModalOpen && _combatModalContext != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          final modalContext = _combatModalContext;
-          if (modalContext == null) return;
-          unawaited(Navigator.of(modalContext).maybePop());
-        });
-      }
-      return;
-    }
-
-    final key = _combatPreviewKey(preview);
-    if (_combatModalOpen || _lastRequestedCombatPreviewKey == key) return;
-    _lastRequestedCombatPreviewKey = key;
+  void _queueCombatModalOpen(HudCombatPreview preview, int revision) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      unawaited(_showCombatModal(preview));
+      if (!mounted ||
+          revision != _modalRevision ||
+          _modalPhase != _HudModalPhase.queued ||
+          _modalKind != _HudModalKind.combat ||
+          _requestedModalKey != _combatModalRequestKey(preview)) {
+        return;
+      }
+      unawaited(_showCombatModal(preview, revision));
     });
   }
 
-  void _queueCombatPreviewNotifierUpdate(HudCombatPreview? preview) {
+  void _queueCombatPreviewNotifierUpdate(
+    HudCombatPreview preview,
+    int revision,
+  ) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+      if (!mounted ||
+          revision != _modalRevision ||
+          _requestedModalKey != _combatModalRequestKey(preview)) {
+        return;
+      }
       _combatPreviewNotifier.value = preview;
     });
   }
 
-  Future<void> _showCombatModal(HudCombatPreview preview) async {
-    if (_combatModalOpen || !mounted) return;
+  Future<void> _showCombatModal(HudCombatPreview preview, int revision) async {
     final requestedKey = _combatPreviewKey(preview);
-    if (!_combatPreviewIsCurrent(requestedKey)) {
-      _resyncStaleCombatPreview(requestedKey);
+    if (!mounted ||
+        revision != _modalRevision ||
+        _modalPhase != _HudModalPhase.queued ||
+        _modalKind != _HudModalKind.combat ||
+        _requestedModalKey != _combatModalRequestKey(preview) ||
+        !_combatPreviewIsCurrent(requestedKey)) {
       return;
     }
     await ref
         .read(hudCommandDispatcherProvider)
         .focusUnitMapTarget(preview.attackerUnitId);
-    if (!mounted) return;
 
-    if (!_combatPreviewIsCurrent(requestedKey)) {
-      _resyncStaleCombatPreview(requestedKey);
+    if (!mounted ||
+        revision != _modalRevision ||
+        _modalPhase != _HudModalPhase.queued ||
+        _modalKind != _HudModalKind.combat ||
+        _requestedModalKey != _combatModalRequestKey(preview) ||
+        !_combatPreviewIsCurrent(requestedKey)) {
       return;
     }
-    if (_combatModalOpen) return;
 
     final currentPreview = _combatConfirmationPreview!;
-    _combatModalOpen = true;
+    final routeRevision = ++_modalRouteRevision;
+    _modalSession = _HudModalSession(
+      kind: _HudModalKind.combat,
+      routeRevision: routeRevision,
+      requestKey: _requestedModalKey!,
+    );
+    _modalPhase = _HudModalPhase.open;
     _combatPreviewNotifier.value = currentPreview;
+
+    Future<void>? routeClosed;
+    ModalRoute<void>? shownRoute;
+    Animation<double>? routeAnimation;
+    void handleRouteStatus(AnimationStatus status) {
+      if (status == AnimationStatus.reverse) {
+        _markModalRouteClosing(
+          kind: _HudModalKind.combat,
+          routeRevision: routeRevision,
+        );
+      }
+    }
 
     await showGameModal<void>(
       context: context,
       barrierDismissible: false,
       builder: (modalContext) {
-        _combatModalContext = modalContext;
-        return ValueListenableBuilder<HudCombatPreview?>(
-          valueListenable: _combatPreviewNotifier,
-          builder: (context, currentPreview, _) {
-            if (currentPreview == null) return const SizedBox.shrink();
-            return _CombatConfirmationDialog(
-              preview: currentPreview,
-              onCancel: () {
-                unawaited(Navigator.of(modalContext).maybePop());
-                _cancelCombatAttack();
-              },
-              onConfirm: () {
-                unawaited(Navigator.of(modalContext).maybePop());
-                _confirmCombatAttack(
-                  currentPreview,
-                  CityConquestAction.capture,
-                );
-              },
-              onDestroyCity:
-                  currentPreview.targetIsCity && currentPreview.defenderKilled
-                  ? () {
-                      unawaited(Navigator.of(modalContext).maybePop());
-                      _confirmCombatAttack(
-                        currentPreview,
-                        CityConquestAction.destroy,
-                      );
-                    }
-                  : null,
+        final route = ModalRoute.of<void>(modalContext)!;
+        if (shownRoute == null) {
+          shownRoute = route;
+          final session = _modalSession;
+          if (session != null &&
+              session.kind == _HudModalKind.combat &&
+              session.routeRevision == routeRevision) {
+            _modalSession = session.attach(
+              navigator: Navigator.of(modalContext),
+              route: route,
             );
-          },
+          }
+          routeClosed = route.completed.then((_) {});
+          routeAnimation = route.animation;
+          routeAnimation?.addStatusListener(handleRouteStatus);
+        }
+        if (_modalPhase == _HudModalPhase.closing && !_modalCloseStarted) {
+          _queueModalClose(_modalRevision);
+        }
+        return PopScope(
+          canPop: false,
+          child: ValueListenableBuilder<HudCombatPreview?>(
+            valueListenable: _combatPreviewNotifier,
+            builder: (context, currentPreview, _) {
+              if (currentPreview == null) return const SizedBox.shrink();
+              return _CombatConfirmationDialog(
+                preview: currentPreview,
+                onCancel: () {
+                  final closeAccepted = _popActiveModal(
+                    kind: _HudModalKind.combat,
+                    routeRevision: routeRevision,
+                    dismissRequest: true,
+                  );
+                  if (closeAccepted) _cancelCombatAttack();
+                },
+                onConfirm: () {
+                  final closeAccepted = _popActiveModal(
+                    kind: _HudModalKind.combat,
+                    routeRevision: routeRevision,
+                    dismissRequest: true,
+                  );
+                  if (closeAccepted) {
+                    _confirmCombatAttack(
+                      currentPreview,
+                      CityConquestAction.capture,
+                    );
+                  }
+                },
+                onDestroyCity:
+                    currentPreview.targetIsCity && currentPreview.defenderKilled
+                    ? () {
+                        final closeAccepted = _popActiveModal(
+                          kind: _HudModalKind.combat,
+                          routeRevision: routeRevision,
+                          dismissRequest: true,
+                        );
+                        if (closeAccepted) {
+                          _confirmCombatAttack(
+                            currentPreview,
+                            CityConquestAction.destroy,
+                          );
+                        }
+                      }
+                    : null,
+              );
+            },
+          ),
         );
       },
     );
+    await routeClosed;
+    routeAnimation?.removeStatusListener(handleRouteStatus);
 
-    if (!mounted) return;
-    _combatModalOpen = false;
-    _combatModalContext = null;
-    _lastRequestedCombatPreviewKey = null;
+    final route = shownRoute;
+    if (!mounted || route == null) return;
+    final finish = _finishModalRoute(
+      kind: _HudModalKind.combat,
+      routeRevision: routeRevision,
+      route: route,
+    );
+    if (finish == _HudModalFinish.stale) return;
+    _queueAutoTurnFlow();
   }
 
   bool _combatPreviewIsCurrent(String requestedKey) {
     final currentPreview = _combatConfirmationPreview;
     return currentPreview != null &&
         _combatPreviewKey(currentPreview) == requestedKey;
-  }
-
-  void _resyncStaleCombatPreview(String requestedKey) {
-    if (_lastRequestedCombatPreviewKey == requestedKey) {
-      _lastRequestedCombatPreviewKey = null;
-    }
-    _syncCombatModal();
   }
 
   void _confirmCombatAttack(

@@ -9,6 +9,7 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_auto_explore_advancer.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -107,12 +108,8 @@ abstract final class MovementReducer {
         preview.unitId == selected.id &&
         preview.targetCol == targetTile.col &&
         preview.targetRow == targetTile.row;
-    final isUnreachableConfirm =
-        preview != null &&
-        preview.unitId == selected.id &&
-        preview.isStepUnreachableThisTurn(targetTile.col, targetTile.row);
 
-    if (isConfirmation || isUnreachableConfirm) {
+    if (isConfirmation) {
       return _MovePreviewReducer.confirmPreview(
         state,
         mapView,

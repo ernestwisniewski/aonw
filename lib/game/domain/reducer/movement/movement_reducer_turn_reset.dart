@@ -7,6 +7,7 @@ abstract final class _MovementTurnResetProcessor {
     required String? playerId,
     required FogOfWarService fogOfWarService,
   }) {
+    state = _withoutResetPlayerTurnInteraction(state, playerId);
     final currentUnits = state.units;
 
     final resetUnits = [
@@ -282,7 +283,10 @@ abstract final class _MovementTurnResetProcessor {
               resetPlayerId == null || unit.ownerPlayerId == resetPlayerId;
           if (unitWasReset &&
               MovementReducer._canAutoActivateMoveTargeting(next, unit)) {
-            next = next.copyWithInteraction(moveCommandActive: true);
+            next = next.copyWithInteraction(
+              movePreview: null,
+              moveCommandActive: true,
+            );
           }
           break;
         }
@@ -290,6 +294,44 @@ abstract final class _MovementTurnResetProcessor {
     }
 
     return next;
+  }
+
+  static GameState _withoutResetPlayerTurnInteraction(
+    GameState state,
+    String? resetPlayerId,
+  ) {
+    final pendingAction = state.pendingAction;
+    final clearTurnSkip =
+        pendingAction is PendingUnitTurnSkip &&
+        (resetPlayerId == null || pendingAction.ownerPlayerId == resetPlayerId);
+
+    final movePreview = state.movePreview;
+    final previewUnit = movePreview == null
+        ? null
+        : state.unitById(movePreview.unitId);
+    final clearMovePreview =
+        movePreview != null &&
+        (previewUnit == null ||
+            state.selectedUnitId != movePreview.unitId ||
+            resetPlayerId == null ||
+            previewUnit.ownerPlayerId == resetPlayerId);
+
+    final selectedUnit = state.selectedUnit;
+    final deactivateMoveCommand =
+        state.moveCommandActive &&
+        (selectedUnit == null ||
+            resetPlayerId == null ||
+            clearMovePreview ||
+            selectedUnit.ownerPlayerId == resetPlayerId);
+
+    if (!clearTurnSkip && !clearMovePreview && !deactivateMoveCommand) {
+      return state;
+    }
+    return state.copyWithInteraction(
+      movePreview: clearMovePreview ? null : movePreview,
+      pendingAction: clearTurnSkip ? null : pendingAction,
+      moveCommandActive: deactivateMoveCommand ? false : null,
+    );
   }
 }
 
@@ -363,7 +405,7 @@ abstract final class _TurnProjection {
       );
     }
     final next = _MovementTurnResetProcessor._refreshSelectedUnit(
-      MovementReducer._clearMoveTargeting(projected),
+      projected,
       units,
       mapView,
       resetPlayerId: playerId,

@@ -99,6 +99,72 @@ class UnitMovementPlan {
     return _remainingAfterCost(availableMovementPoints, step.cumulativeCost);
   }
 
+  /// Returns the untravelled suffix with costs rebased to the current step.
+  ///
+  /// The current [availableMovementPoints] are preserved, so callers restoring
+  /// persisted routes must build this plan with the unit's current balance.
+  UnitMovementPlan remainingFromStepIndex(int stepIndex) {
+    if (stepIndex < 0 || stepIndex >= steps.length) {
+      throw RangeError.index(stepIndex, steps, 'stepIndex');
+    }
+
+    var cumulativeCost = 0;
+    final remainingSteps = <UnitMovementStep>[];
+    for (var index = stepIndex; index < steps.length; index++) {
+      final step = steps[index];
+      final enterCost = index == stepIndex ? 0 : step.enterCost;
+      cumulativeCost += enterCost;
+      remainingSteps.add(
+        UnitMovementStep(
+          col: step.col,
+          row: step.row,
+          enterCost: enterCost,
+          cumulativeCost: cumulativeCost,
+        ),
+      );
+    }
+
+    return UnitMovementPlan(
+      unitId: unitId,
+      targetCol: targetCol,
+      targetRow: targetRow,
+      totalCost: cumulativeCost,
+      availableMovementPoints: availableMovementPoints,
+      canSpendTurnEnteringFirstStep: canSpendTurnEnteringFirstStep,
+      steps: remainingSteps,
+    );
+  }
+
+  /// Estimates calendar turns, including the partially spent current turn.
+  int estimatedTurns(int maxMovementPointsPerTurn) {
+    if (totalCost <= 0) return 0;
+
+    final fullTurnMovement = maxMovementPointsPerTurn > 0
+        ? maxMovementPointsPerTurn
+        : 1;
+    var turns = 1;
+    var remainingMovement = availableMovementPoints;
+    var isFirstTravelStep = true;
+
+    for (final step in steps.skip(1)) {
+      if (step.enterCost <= remainingMovement) {
+        remainingMovement -= step.enterCost;
+      } else if (isFirstTravelStep &&
+          canSpendTurnEnteringFirstStep &&
+          remainingMovement > 0) {
+        remainingMovement = 0;
+      } else {
+        turns += 1;
+        remainingMovement = step.enterCost >= fullTurnMovement
+            ? 0
+            : fullTurnMovement - step.enterCost;
+      }
+      isFirstTravelStep = false;
+    }
+
+    return turns;
+  }
+
   bool _isFirstTravelStep(UnitMovementStep step) {
     return steps.length > 1 && step == steps[1];
   }

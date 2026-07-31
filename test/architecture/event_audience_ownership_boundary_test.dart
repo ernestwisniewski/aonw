@@ -100,6 +100,7 @@ void main() {
             'combatAnimations': 'Iterable<CombatAnimationFact>',
             'previousFog': 'FogOfWarState',
             'nextFog': 'FogOfWarState',
+            'movementAudiencePlayerIdsByUnit': 'Map<String, Set<String>>',
           },
         );
       },

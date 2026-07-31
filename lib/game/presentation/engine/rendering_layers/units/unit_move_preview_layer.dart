@@ -15,8 +15,10 @@ import 'package:flame/components.dart';
 class UnitMovePreviewLayerEntry {
   final String id;
   final UnitMovementPlan preview;
+  final List<UnitMovementStep>? displaySteps;
   final int travelledUpToIndex;
   final GameUnitType? unitType;
+  final int? maxMovementPointsPerTurn;
   final UnitMovePreviewRouteKind routeKind;
   final bool dimmed;
   final bool subdued;
@@ -26,11 +28,13 @@ class UnitMovePreviewLayerEntry {
   final bool showTargetArrow;
   final bool showConfirmedTarget;
 
-  const UnitMovePreviewLayerEntry({
+  UnitMovePreviewLayerEntry({
     required this.id,
     required this.preview,
+    this.displaySteps,
     this.travelledUpToIndex = 0,
     this.unitType,
+    this.maxMovementPointsPerTurn,
     this.routeKind = UnitMovePreviewRouteKind.movement,
     this.dimmed = false,
     this.subdued = false,
@@ -39,7 +43,17 @@ class UnitMovePreviewLayerEntry {
     this.showTargetPulse = false,
     this.showTargetArrow = false,
     this.showConfirmedTarget = false,
-  });
+  }) : assert(
+         displaySteps == null ||
+             (travelledUpToIndex >= 0 &&
+                 travelledUpToIndex < displaySteps.length &&
+                 preview.steps.isNotEmpty &&
+                 displaySteps[travelledUpToIndex].col ==
+                     preview.steps.first.col &&
+                 displaySteps[travelledUpToIndex].row ==
+                     preview.steps.first.row),
+         'displaySteps must join the remaining preview at travelledUpToIndex',
+       );
 }
 
 class UnitMovePreviewLayer extends Component with LayerAttachment {
@@ -169,15 +183,15 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
 
   UnitMovePreview _buildComponent(UnitMovePreviewLayerEntry entry) {
     final preview = entry.preview;
+    final displaySteps = entry.displaySteps ?? preview.steps;
     return UnitMovePreview(
       points: [
-        for (final coord in preview.path)
-          _tileWorldCenter(coord.col, coord.row),
+        for (final step in displaySteps) _tileWorldCenter(step.col, step.row),
       ],
-      cumulativeCosts: [for (final step in preview.steps) step.cumulativeCost],
-      totalCost: preview.totalCost,
-      availableMovementPoints: preview.availableMovementPoints,
-      canMoveNow: preview.canMoveNow,
+      reachablePoints: [
+        for (var index = 0; index < displaySteps.length; index++)
+          _isDisplayStepReachable(entry, index),
+      ],
       unitType: entry.unitType,
       routeKind: entry.routeKind,
       dimmed: entry.dimmed,
@@ -203,34 +217,42 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
   }
 
   String _signatureFor(UnitMovePreviewLayerEntry entry) {
-    final preview = entry.preview;
+    final displaySteps = entry.displaySteps ?? entry.preview.steps;
     final buffer = StringBuffer()
-      ..write(preview.totalCost)
-      ..write('|')
-      ..write(preview.availableMovementPoints)
-      ..write('|')
-      ..write(preview.canMoveNow)
-      ..write('|')
       ..write(entry.travelledUpToIndex)
       ..write('|')
       ..write(entry.unitType?.name ?? '-')
       ..write('|')
       ..write(entry.routeKind.name)
       ..write('|');
-    for (final coord in preview.path) {
+    for (var index = 0; index < displaySteps.length; index++) {
+      final step = displaySteps[index];
       buffer
-        ..write(coord.col)
+        ..write(step.col)
         ..write(',')
-        ..write(coord.row)
-        ..write(';');
-    }
-    buffer.write('|');
-    for (final step in preview.steps) {
-      buffer
-        ..write(step.cumulativeCost)
+        ..write(step.row)
+        ..write(':')
+        ..write(_isDisplayStepReachable(entry, index))
         ..write(';');
     }
     return buffer.toString();
+  }
+
+  bool _isDisplayStepReachable(
+    UnitMovePreviewLayerEntry entry,
+    int displayIndex,
+  ) {
+    if (entry.displaySteps == null) {
+      return entry.preview.canReachStepThisTurn(
+        entry.preview.steps[displayIndex],
+      );
+    }
+    final previewIndex = displayIndex - entry.travelledUpToIndex;
+    if (previewIndex < 0) return true;
+    if (previewIndex >= entry.preview.steps.length) return false;
+    return entry.preview.canReachStepThisTurn(
+      entry.preview.steps[previewIndex],
+    );
   }
 
   void _syncPillsForCurrentEntries() {
@@ -296,10 +318,12 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
   int _estimatedTurnCost(UnitMovePreviewLayerEntry entry) {
     final preview = entry.preview;
     if (preview.totalCost <= 0) return 0;
-    final movementPerTurn = entry.unitType == null
-        ? math.max(1, preview.availableMovementPoints)
-        : UnitMovementBalance.maxMovementPointsForType(entry.unitType!);
-    return (preview.totalCost / movementPerTurn).ceil();
+    final movementPerTurn =
+        entry.maxMovementPointsPerTurn ??
+        (entry.unitType == null
+            ? math.max(1, preview.availableMovementPoints)
+            : UnitMovementBalance.maxMovementPointsForType(entry.unitType!));
+    return preview.estimatedTurns(movementPerTurn);
   }
 
   MapPillTone _pillToneFor(UnitMovementPlan preview) {

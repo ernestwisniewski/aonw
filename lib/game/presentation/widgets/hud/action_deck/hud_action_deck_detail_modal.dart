@@ -8,55 +8,93 @@ class _SelectionDetailModalModel {
 }
 
 extension _HudActionDeckDetailModal on _HudActionDeckState {
-  void _syncDetailModal() {
-    final detail = _activeDetail(AppLocalizations.of(context));
-    _queueDetailNotifierUpdate(detail);
-    if (detail == null) {
-      _lastRequestedDetailKey = null;
-      if (_detailModalOpen && _detailModalContext != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          final modalContext = _detailModalContext;
-          if (modalContext == null) return;
-          unawaited(Navigator.of(modalContext).maybePop());
-        });
+  void _queueDetailModalOpen(SelectionDetailViewModel detail, int revision) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          revision != _modalRevision ||
+          _modalPhase != _HudModalPhase.queued ||
+          _modalKind != _HudModalKind.detail ||
+          _requestedModalKey != _detailModalRequestKey(detail)) {
+        return;
       }
-      return;
-    }
-    if (_detailModalOpen || _lastRequestedDetailKey == detail.contentKey) {
-      return;
-    }
-    _lastRequestedDetailKey = detail.contentKey;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      unawaited(_showDetailModal(detail));
+      unawaited(_showDetailModal(detail, revision));
     });
   }
 
-  void _queueDetailNotifierUpdate(SelectionDetailViewModel? detail) {
+  void _queueDetailNotifierUpdate(
+    SelectionDetailViewModel detail,
+    int revision,
+  ) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _detailNotifier.value = detail == null
-          ? null
-          : _SelectionDetailModalModel(
-              detail: detail,
-              peek: widget.selectionDetailPeek,
-            );
+      if (!mounted ||
+          revision != _modalRevision ||
+          _requestedModalKey != _detailModalRequestKey(detail)) {
+        return;
+      }
+      _detailNotifier.value = _SelectionDetailModalModel(
+        detail: detail,
+        peek: widget.selectionDetailPeek,
+      );
     });
   }
 
-  Future<void> _showDetailModal(SelectionDetailViewModel detail) async {
-    if (_detailModalOpen || !mounted) return;
-    _detailModalOpen = true;
+  Future<void> _showDetailModal(
+    SelectionDetailViewModel detail,
+    int revision,
+  ) async {
+    if (!mounted ||
+        revision != _modalRevision ||
+        _modalPhase != _HudModalPhase.queued ||
+        _modalKind != _HudModalKind.detail ||
+        _requestedModalKey != _detailModalRequestKey(detail)) {
+      return;
+    }
+    final routeRevision = ++_modalRouteRevision;
+    _modalSession = _HudModalSession(
+      kind: _HudModalKind.detail,
+      routeRevision: routeRevision,
+      requestKey: _requestedModalKey!,
+    );
+    _modalPhase = _HudModalPhase.open;
     _detailNotifier.value = _SelectionDetailModalModel(
       detail: detail,
       peek: widget.selectionDetailPeek,
     );
 
+    Future<void>? routeClosed;
+    ModalRoute<void>? shownRoute;
+    Animation<double>? routeAnimation;
+    void handleRouteStatus(AnimationStatus status) {
+      if (status == AnimationStatus.reverse) {
+        _markModalRouteClosing(
+          kind: _HudModalKind.detail,
+          routeRevision: routeRevision,
+        );
+      }
+    }
+
     await showGameBottomSheet<void>(
       context: context,
       builder: (modalContext) {
-        _detailModalContext = modalContext;
+        final route = ModalRoute.of<void>(modalContext)!;
+        if (shownRoute == null) {
+          shownRoute = route;
+          final session = _modalSession;
+          if (session != null &&
+              session.kind == _HudModalKind.detail &&
+              session.routeRevision == routeRevision) {
+            _modalSession = session.attach(
+              navigator: Navigator.of(modalContext),
+              route: route,
+            );
+          }
+          routeClosed = route.completed.then((_) {});
+          routeAnimation = route.animation;
+          routeAnimation?.addStatusListener(handleRouteStatus);
+        }
+        if (_modalPhase == _HudModalPhase.closing && !_modalCloseStarted) {
+          _queueModalClose(_modalRevision);
+        }
         return Padding(
           padding: EdgeInsets.fromLTRB(
             10,
@@ -77,8 +115,12 @@ extension _HudActionDeckDetailModal on _HudActionDeckState {
                 cityRuleset: widget.cityRuleset,
                 technologyRuleset: widget.technologyRuleset,
                 onClose: () {
-                  widget.onCloseSelectionDetail();
-                  unawaited(Navigator.of(modalContext).maybePop());
+                  final closeAccepted = _popActiveModal(
+                    kind: _HudModalKind.detail,
+                    routeRevision: routeRevision,
+                    dismissRequest: true,
+                  );
+                  if (closeAccepted) widget.onCloseSelectionDetail();
                 },
                 onDetachTroop: _detachTroop,
                 onSelectWorkerImprovement: _selectWorkerImprovement,
@@ -90,13 +132,22 @@ extension _HudActionDeckDetailModal on _HudActionDeckState {
         );
       },
     );
+    await routeClosed;
+    routeAnimation?.removeStatusListener(handleRouteStatus);
 
-    if (!mounted) return;
-    _detailModalOpen = false;
-    _detailModalContext = null;
-    _lastRequestedDetailKey = null;
-    if (widget.openSelectionDetailChipId == detail.chipId) {
+    final route = shownRoute;
+    if (!mounted || route == null) return;
+    final closedDetail = _detailNotifier.value?.detail ?? detail;
+    final finish = _finishModalRoute(
+      kind: _HudModalKind.detail,
+      routeRevision: routeRevision,
+      route: route,
+    );
+    if (finish == _HudModalFinish.stale) return;
+    if (finish == _HudModalFinish.dismissed &&
+        widget.openSelectionDetailChipId == closedDetail.chipId) {
       widget.onCloseSelectionDetail();
     }
+    _queueAutoTurnFlow();
   }
 }

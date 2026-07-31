@@ -2525,23 +2525,24 @@ void main() {
     });
 
     test(
-      'move preview pill shows turn cost when target unit is deselected',
+      'move preview pill includes current progress and artifact movement cap',
       () async {
-        final map = _map(3, 2);
+        final map = _map(4, 2);
         final commands = <GameCommand>[];
-        final commander = GameUnit.produced(
-          id: 'commander_1',
+        final warrior = GameUnit.produced(
+          id: 'warrior_1',
           ownerPlayerId: 'player_1',
-          type: GameUnitType.commander,
+          type: GameUnitType.warrior,
           col: 0,
           row: 0,
-        );
+        ).copyWithCarriedArtifact('artifact_1');
         final preview = UnitMovementPlan(
-          unitId: 'commander_1',
-          targetCol: 1,
+          unitId: 'warrior_1',
+          targetCol: 3,
           targetRow: 0,
-          totalCost: 1,
-          availableMovementPoints: 2,
+          totalCost: 4,
+          availableMovementPoints: 1,
+          canSpendTurnEnteringFirstStep: true,
           steps: [
             const UnitMovementStep(
               col: 0,
@@ -2554,6 +2555,18 @@ void main() {
               row: 0,
               enterCost: 1,
               cumulativeCost: 1,
+            ),
+            const UnitMovementStep(
+              col: 2,
+              row: 0,
+              enterCost: 2,
+              cumulativeCost: 3,
+            ),
+            const UnitMovementStep(
+              col: 3,
+              row: 0,
+              enterCost: 1,
+              cumulativeCost: 4,
             ),
           ],
         );
@@ -2568,9 +2581,9 @@ void main() {
             GameState(
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
-              units: [commander],
+              units: [warrior],
               interaction: GameInteractionState(
-                selection: GameSelection.tile(_tile(map, 2, 0)),
+                selection: GameSelection.tile(_tile(map, 1, 0)),
                 movePreview: preview,
                 moveCommandActive: true,
               ),
@@ -2584,7 +2597,7 @@ void main() {
         final popup = game.movePreviewPillForTesting;
         expect(game.actionPaletteVisibleForTesting, isTrue);
         expect(popup, isNotNull);
-        expect(popup!.labelForTesting, '1 turn');
+        expect(popup!.labelForTesting, '3 turns');
 
         popup.tapForTesting();
         await Future<void>.delayed(Duration.zero);

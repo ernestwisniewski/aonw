@@ -2176,9 +2176,9 @@ void main() {
       ),
     );
     final owner = match.players.first;
-    final initialState = PersistentGameState.fromJson(
-      (await store.findState(match.id))!.snapshot.state,
-    );
+    final guest = match.players.last;
+    final stored = (await store.findState(match.id))!;
+    final initialState = PersistentGameState.fromJson(stored.snapshot.state);
     final ownerUnit = initialState.units.firstWhere(
       (unit) => unit.ownerPlayerId == owner.id,
     );
@@ -2192,8 +2192,32 @@ void main() {
           (tile.row - ownerUnit.row).abs() <= 1 &&
           (tile.col != ownerUnit.col || tile.row != ownerUnit.row),
     );
+    final movementPlan = UnitMovementPathfinder(
+      mapData: _testMap(),
+      units: initialState.units,
+    ).plan(unit: ownerUnit, targetTile: target);
+    if (movementPlan == null) {
+      throw StateError('Expected the movement fixture target to be reachable.');
+    }
+    final visibleMovementHexes = {
+      for (final step in movementPlan.steps)
+        HexCoordinate(col: step.col, row: step.row),
+    };
+    final visibleState = initialState.copyWith(
+      fogOfWar: initialState.fogOfWar.updatePlayer(
+        initialState.fogOfWar
+            .fogForPlayer(guest.id)
+            .withVisibleHexes(visibleMovementHexes),
+      ),
+    );
+    await store.saveState(
+      stored.copyWith(
+        snapshot: stored.snapshot.copyWith(state: visibleState.toJson()),
+      ),
+    );
 
     final ownerInput = StreamController<MultiplayerClientMessage>();
+    final guestInput = StreamController<MultiplayerClientMessage>();
     final ownerStream = hub
         .connect(
           store: store,
@@ -2203,10 +2227,26 @@ void main() {
           input: ownerInput.stream,
         )
         .asBroadcastStream();
+    final guestStream = hub
+        .connect(
+          store: store,
+          userIdentifier: 'guest-user',
+          matchId: match.id,
+          afterOffset: 0,
+          input: guestInput.stream,
+        )
+        .asBroadcastStream();
 
-    expect((await ownerStream.first).snapshot?.offset, 0);
+    final initialMessages = await Future.wait([
+      ownerStream.first,
+      guestStream.first,
+    ]);
+    expect(initialMessages.map((message) => message.snapshot?.offset), [0, 0]);
 
     final ownerAck = ownerStream.firstWhere((message) => message.ack != null);
+    final guestEvent = guestStream.firstWhere(
+      (message) => message.event != null,
+    );
 
     ownerInput.add(
       MultiplayerClientMessage(
@@ -2226,6 +2266,7 @@ void main() {
     );
 
     final ackMessage = await ownerAck;
+    final guestMessage = await guestEvent;
     final nextState = PersistentGameState.fromJson(
       ackMessage.ack!.snapshot.state,
     );
@@ -2244,8 +2285,18 @@ void main() {
     );
     expect(movement.steps.last.col, target.col);
     expect(movement.steps.last.row, target.row);
+    expect(
+      guestMessage.event!.events.map(GameEventSerializer.fromJson).toList(),
+      [isA<UnitMovedEvent>()],
+    );
+    final observedMovement =
+        guestMessage.event!.movementExecutions.values.single;
+    expect(observedMovement.unitId, ownerUnit.id);
+    expect(observedMovement.steps.last.col, target.col);
+    expect(observedMovement.steps.last.row, target.row);
 
     await ownerInput.close();
+    await guestInput.close();
   });
 
   _registerRealtimeMatchHubOutcomeTests();

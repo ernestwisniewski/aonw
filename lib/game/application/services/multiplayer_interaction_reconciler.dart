@@ -2,6 +2,8 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/util/collection_equality.dart';
 
 /// Reapplies valid client-owned interaction state over a network snapshot.
 ///
@@ -14,6 +16,10 @@ abstract final class MultiplayerInteractionReconciler {
     required GameState interactionSource,
   }) {
     final sourceInteraction = interactionSource.interaction;
+    final turnAdvanced = _turnAdvanced(
+      authoritativeState: authoritativeState,
+      interactionSource: interactionSource,
+    );
     final selection = _refreshedSelection(
       authoritativeState,
       interactionSource.selection,
@@ -25,11 +31,15 @@ abstract final class MultiplayerInteractionReconciler {
     final authoritativeSelectedUnit = selectedUnitId == null
         ? null
         : authoritativeState.unitById(selectedUnitId);
-    final selectedUnitStayedPut =
+    final selectedUnitMovementStateStayedValid =
         sourceSelectedUnit != null &&
         authoritativeSelectedUnit != null &&
         sourceSelectedUnit.col == authoritativeSelectedUnit.col &&
-        sourceSelectedUnit.row == authoritativeSelectedUnit.row;
+        sourceSelectedUnit.row == authoritativeSelectedUnit.row &&
+        sourceSelectedUnit.movementPoints ==
+            authoritativeSelectedUnit.movementPoints &&
+        sourceSelectedUnit.queuedPath == authoritativeSelectedUnit.queuedPath &&
+        sourceSelectedUnit.posture == authoritativeSelectedUnit.posture;
     final canKeepSelectedUnitAction =
         authoritativeSelectedUnit != null &&
         _canPreserveInteraction(
@@ -38,12 +48,16 @@ abstract final class MultiplayerInteractionReconciler {
         );
 
     final authoritativePending = authoritativeState.pendingAction;
-    final pendingAction =
+    final resolvedPendingAction =
         authoritativePending ??
         _validPendingAction(
           authoritativeState,
           interactionSource.pendingAction,
         );
+    final pendingAction =
+        turnAdvanced && resolvedPendingAction is PendingUnitTurnSkip
+        ? null
+        : resolvedPendingAction;
     final authoritativeDraft = authoritativeState.cityFoundingDraft;
     final cityFoundingDraft =
         authoritativeDraft ??
@@ -51,12 +65,25 @@ abstract final class MultiplayerInteractionReconciler {
           authoritativeState,
           interactionSource.cityFoundingDraft,
         );
+    final sourceMovePreview = interactionSource.movePreview;
     final movePreview =
-        selectedUnitStayedPut &&
+        !turnAdvanced &&
+            _pathfindingInputsStayedValid(
+              authoritativeState,
+              interactionSource,
+            ) &&
+            selectedUnitMovementStateStayedValid &&
             canKeepSelectedUnitAction &&
-            interactionSource.movePreview?.unitId == selectedUnitId
-        ? interactionSource.movePreview
+            _canKeepMovePreview(authoritativeSelectedUnit) &&
+            sourceMovePreview != null &&
+            sourceMovePreview.unitId == selectedUnitId &&
+            sourceMovePreview.availableMovementPoints ==
+                authoritativeSelectedUnit.movementPoints
+        ? sourceMovePreview
         : null;
+    final canStartMoveTargeting =
+        canKeepSelectedUnitAction &&
+        _canStartMoveTargeting(authoritativeSelectedUnit);
 
     return authoritativeState.copyWith(
       interaction: sourceInteraction.copyWith(
@@ -65,11 +92,57 @@ abstract final class MultiplayerInteractionReconciler {
         cityFoundingDraft: cityFoundingDraft,
         pendingAction: pendingAction,
         moveCommandActive:
-            sourceInteraction.moveCommandActive &&
-            canKeepSelectedUnitAction &&
-            authoritativeSelectedUnit.movementPoints > 0,
+            canStartMoveTargeting &&
+            (turnAdvanced
+                ? pendingAction == null
+                : sourceInteraction.moveCommandActive),
       ),
     );
+  }
+
+  static bool _turnAdvanced({
+    required GameState authoritativeState,
+    required GameState interactionSource,
+  }) {
+    final authoritativeStart = authoritativeState.turnStartedAt;
+    final sourceStart = interactionSource.turnStartedAt;
+    if (authoritativeStart != null &&
+        sourceStart != null &&
+        authoritativeStart.isAfter(sourceStart)) {
+      return true;
+    }
+
+    final sourcePending = interactionSource.pendingAction;
+    if (sourcePending is! PendingUnitTurnSkip) return false;
+    final sourceUnit = interactionSource.unitById(sourcePending.unitId);
+    final authoritativeUnit = authoritativeState.unitById(sourcePending.unitId);
+    return sourceUnit != null &&
+        authoritativeUnit != null &&
+        sourceUnit.movementPoints == 0 &&
+        authoritativeUnit.movementPoints > 0;
+  }
+
+  static bool _canStartMoveTargeting(GameUnit? unit) {
+    return unit != null && unit.movementPoints > 0 && _canKeepMovePreview(unit);
+  }
+
+  static bool _canKeepMovePreview(GameUnit? unit) {
+    return unit != null &&
+        !unit.isWorking &&
+        !unit.isMerchant &&
+        unit.queuedPath == null &&
+        !unit.isFortified &&
+        !unit.isAutoExploring;
+  }
+
+  static bool _pathfindingInputsStayedValid(
+    GameState authoritativeState,
+    GameState interactionSource,
+  ) {
+    return listEquals(authoritativeState.units, interactionSource.units) &&
+        listEquals(authoritativeState.cities, interactionSource.cities) &&
+        authoritativeState.fogOfWar == interactionSource.fogOfWar &&
+        authoritativeState.diplomacy == interactionSource.diplomacy;
   }
 
   static GameSelection? _refreshedSelection(

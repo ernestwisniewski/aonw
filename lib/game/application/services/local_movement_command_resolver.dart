@@ -156,16 +156,23 @@ final class LocalMovementCommandResolver {
     String? rejectionReason,
     required LocalMovementPresentationOrigin presentationOrigin,
   }) {
+    final previewConfirmation =
+        command is MoveUnitCommand &&
+        presentationOrigin ==
+            LocalMovementPresentationOrigin.previewConfirmation;
     return LocalMovementCommandResolution(
       snapshot: baseSnapshot.withMovementEngineProjection(
         resultSnapshot: baseSnapshot.canonical,
         savedAt: savedAt,
       ),
-      state: projectUnchangedLocalMovementPresentation(
-        currentState: currentState,
-        command: command,
-        presentationOrigin: presentationOrigin,
-      ),
+      state: previewConfirmation
+          ? currentState.copyWithInteraction(
+              moveCommandActive:
+                  _canRetargetAfterRejectedMove(rejectionReason) &&
+                  currentState.moveCommandActive,
+              movePreview: null,
+            )
+          : currentState,
       events: const [],
       uiEffects:
           command is MoveUnitCommand &&
@@ -177,6 +184,17 @@ final class LocalMovementCommandResolver {
             ]
           : const [],
     );
+  }
+
+  bool _canRetargetAfterRejectedMove(String? reason) {
+    return switch (reason) {
+      'move_target_out_of_bounds' ||
+      'move_path_not_found' ||
+      'move_target_is_foreign_city_center' ||
+      'move_target_occupied' ||
+      'unit_movement_capacity_insufficient' => true,
+      _ => false,
+    };
   }
 
   String _actorPlayerId({

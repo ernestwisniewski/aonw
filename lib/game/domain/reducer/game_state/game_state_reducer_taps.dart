@@ -119,6 +119,7 @@ abstract final class GameIntentTapResolver {
         command,
         environment.mapData,
       ),
+      PendingUnitTurnSkip() => null,
       null => null,
       _ => GameStateTransition(state: state),
     };

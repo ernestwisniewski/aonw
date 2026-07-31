@@ -8,6 +8,7 @@ final class _HudAutoAdvanceContext {
     required this.activePlayerUsesAutoTurnFlow,
     required this.panelOpen,
     required this.mapInspectionActive,
+    required this.modalTransitionInProgress,
     required this.activePlayerFinishedTurn,
     required this.unitAnimationInProgress,
     required this.readyToEndTurn,
@@ -27,6 +28,7 @@ final class _HudAutoAdvanceContext {
   final bool activePlayerUsesAutoTurnFlow;
   final bool panelOpen;
   final bool mapInspectionActive;
+  final bool modalTransitionInProgress;
   final bool activePlayerFinishedTurn;
   final bool unitAnimationInProgress;
   final bool readyToEndTurn;
@@ -48,7 +50,10 @@ final class _HudAutoAdvanceContext {
   }
 
   bool get hudIsIdle {
-    return !panelOpen && !mapInspectionActive && !unitAnimationInProgress;
+    return !panelOpen &&
+        !mapInspectionActive &&
+        !modalTransitionInProgress &&
+        !unitAnimationInProgress;
   }
 
   bool get currentStepIsEnabled {

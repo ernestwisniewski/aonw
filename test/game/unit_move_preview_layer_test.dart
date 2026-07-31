@@ -19,6 +19,7 @@ UnitMovementPlan _plan({
   int targetRow = 0,
   int totalCost = 1,
   int availableMovementPoints = 5,
+  bool canSpendTurnEnteringFirstStep = false,
   List<UnitMovementStep>? steps,
 }) => UnitMovementPlan(
   unitId: 'commander_player_1',
@@ -26,6 +27,7 @@ UnitMovementPlan _plan({
   targetRow: targetRow,
   totalCost: totalCost,
   availableMovementPoints: availableMovementPoints,
+  canSpendTurnEnteringFirstStep: canSpendTurnEnteringFirstStep,
   steps:
       steps ??
       [
@@ -33,11 +35,27 @@ UnitMovementPlan _plan({
         UnitMovementStep(
           col: targetCol,
           row: targetRow,
-          enterCost: 1,
-          cumulativeCost: 1,
+          enterCost: totalCost,
+          cumulativeCost: totalCost,
         ),
       ],
 );
+
+UnitMovementPlan _linearPlan({
+  required int totalCost,
+  required int availableMovementPoints,
+}) {
+  return _plan(
+    targetCol: totalCost,
+    totalCost: totalCost,
+    availableMovementPoints: availableMovementPoints,
+    steps: [
+      const UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+      for (var cost = 1; cost <= totalCost; cost++)
+        UnitMovementStep(col: cost, row: 0, enterCost: 1, cumulativeCost: cost),
+    ],
+  );
+}
 
 String _turnCountLabel(int turns) => AppLocalizationsEn().turnCountLabel(turns);
 
@@ -72,9 +90,6 @@ void main() {
         hexRadius: MapConfig.defaultConfig.hexRadius,
       );
       expect(parent.children.query<UnitMovePreviewLayer>(), hasLength(1));
-      expect(preview.totalCost, 1);
-      expect(preview.availableMovementPoints, 5);
-      expect(preview.canMoveNow, isTrue);
       expect(preview.reachableColor, HudPalette.gold);
       expect(preview.priority, UnitMovePreviewLayer.routePriority);
       expect(
@@ -82,7 +97,7 @@ void main() {
         greaterThan(MapPriority.perTile(MapPriority.sprite, col: 99, row: 99)),
       );
       expect(preview.points, hasLength(2));
-      expect(preview.cumulativeCosts, [0, 1]);
+      expect(preview.reachablePoints, [isTrue, isTrue]);
       expect(preview.points.first.x, closeTo(expectedStart.x, 0.001));
       expect(
         preview.points.first.y,
@@ -300,7 +315,7 @@ void main() {
       expect(updated.showTargetArrowForTesting, isTrue);
     });
 
-    test('sync keeps cumulative costs for blue and red path segments', () {
+    test('sync uses domain reachability for route segments', () {
       final parent = Component();
       final layer = UnitMovePreviewLayer();
       final plan = _plan(
@@ -318,17 +333,54 @@ void main() {
       layer.sync(parent: parent, preview: plan);
 
       final preview = _singlePreviewIn(parent);
-      expect(preview.canMoveNow, isFalse);
-      expect(preview.cumulativeCosts, [0, 1, 5, 6]);
+      expect(preview.reachablePoints, [isTrue, isTrue, isTrue, isFalse]);
+    });
+
+    test('rough first step stays reachable when it can consume the turn', () {
+      final parent = Component();
+      final plan = _plan(
+        totalCost: 3,
+        availableMovementPoints: 2,
+        canSpendTurnEnteringFirstStep: true,
+        steps: const [
+          UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+          UnitMovementStep(col: 1, row: 0, enterCost: 3, cumulativeCost: 3),
+        ],
+      );
+
+      UnitMovePreviewLayer().sync(parent: parent, preview: plan);
+
+      expect(plan.canMoveNow, isTrue);
+      expect(_singlePreviewIn(parent).reachablePoints, [isTrue, isTrue]);
+    });
+
+    test('keeps travelled history while coloring the rebased suffix', () {
+      final parent = Component();
+      final fullPlan = _linearPlan(totalCost: 4, availableMovementPoints: 3);
+      final remainingPlan = fullPlan.remainingFromStepIndex(1);
+
+      UnitMovePreviewLayer().syncMany(
+        parent: parent,
+        previews: [
+          UnitMovePreviewLayerEntry(
+            id: 'queued',
+            preview: remainingPlan,
+            displaySteps: fullPlan.steps,
+            travelledUpToIndex: 1,
+          ),
+        ],
+      );
+
+      final rendered = _singlePreviewIn(parent);
+      expect(rendered.points, hasLength(5));
+      expect(rendered.reachablePoints, everyElement(isTrue));
+      expect(remainingPlan.estimatedTurns(3), 1);
     });
 
     test('route dash phase moves forward along the planned path', () {
       final preview = UnitMovePreview(
         points: [Vector2(0, 0), Vector2(100, 0)],
-        cumulativeCosts: const [0, 1],
-        totalCost: 1,
-        availableMovementPoints: 3,
-        canMoveNow: true,
+        reachablePoints: const [true, true],
       );
 
       final firstVisibleAtStart = preview
@@ -352,10 +404,7 @@ void main() {
           Vector2(60, 0),
           Vector2(80, 0),
         ],
-        cumulativeCosts: const [0, 5, 10, 15, 20],
-        totalCost: 20,
-        availableMovementPoints: 1,
-        canMoveNow: false,
+        reachablePoints: const [true, false, false, false, false],
       );
 
       expect(preview.routePointMutedForTesting(1), isFalse);
@@ -373,10 +422,7 @@ void main() {
           Vector2(60, 0),
           Vector2(80, 0),
         ],
-        cumulativeCosts: const [0, 1, 2, 3, 4],
-        totalCost: 4,
-        availableMovementPoints: 1,
-        canMoveNow: false,
+        reachablePoints: const [true, true, false, false, false],
         travelledUpToIndex: 1,
       );
 
@@ -395,10 +441,7 @@ void main() {
           Vector2(80, 0),
           Vector2(100, 0),
         ],
-        cumulativeCosts: const [0, 1, 2, 3, 4, 5],
-        totalCost: 5,
-        availableMovementPoints: 1,
-        canMoveNow: false,
+        reachablePoints: const [true, true, false, false, false, false],
       );
 
       expect(preview.routeStrokeScaleForTesting(1), 1.0);
@@ -417,10 +460,7 @@ void main() {
           Vector2(60, 0),
           Vector2(80, 0),
         ],
-        cumulativeCosts: const [0, 1, 2, 3, 4],
-        totalCost: 4,
-        availableMovementPoints: 1,
-        canMoveNow: false,
+        reachablePoints: const [true, true, false, false, false],
         travelledUpToIndex: 3,
       );
 
@@ -433,10 +473,7 @@ void main() {
     test('travelling unit marker samples the full planned route', () {
       final preview = UnitMovePreview(
         points: [Vector2(0, 0), Vector2(50, 0), Vector2(100, 0)],
-        cumulativeCosts: const [0, 1, 2],
-        totalCost: 2,
-        availableMovementPoints: 1,
-        canMoveNow: false,
+        reachablePoints: const [true, true, false],
         unitType: GameUnitType.warrior,
       );
 
@@ -454,17 +491,17 @@ void main() {
           previews: [
             UnitMovePreviewLayerEntry(
               id: 'one',
-              preview: _plan(totalCost: 4, availableMovementPoints: 9),
+              preview: _linearPlan(totalCost: 4, availableMovementPoints: 5),
               unitType: GameUnitType.commander,
             ),
             UnitMovePreviewLayerEntry(
               id: 'two',
-              preview: _plan(totalCost: 6, availableMovementPoints: 9),
+              preview: _linearPlan(totalCost: 6, availableMovementPoints: 3),
               unitType: GameUnitType.warrior,
             ),
             UnitMovePreviewLayerEntry(
               id: 'five',
-              preview: _plan(totalCost: 15, availableMovementPoints: 9),
+              preview: _linearPlan(totalCost: 15, availableMovementPoints: 3),
               unitType: GameUnitType.warrior,
             ),
           ],
@@ -473,6 +510,28 @@ void main() {
       expect(layer.pillForTesting('one')?.labelForTesting, '1 turn');
       expect(layer.pillForTesting('two')?.labelForTesting, '2 turns');
       expect(layer.pillForTesting('five')?.labelForTesting, '5 turns');
+    });
+
+    test('cost label uses the unit movement cap supplied by the domain', () {
+      final parent = Component();
+      final layer = UnitMovePreviewLayer(turnCostLabelBuilder: _turnCountLabel)
+        ..syncMany(
+          parent: parent,
+          previews: [
+            UnitMovePreviewLayerEntry(
+              id: 'artifact-carrier',
+              preview: _linearPlan(totalCost: 5, availableMovementPoints: 2),
+              unitType: GameUnitType.warrior,
+              maxMovementPointsPerTurn:
+                  UnitMovementBalance.artifactCarrierMovementPointsPerTurn,
+            ),
+          ],
+        );
+
+      expect(
+        layer.pillForTesting('artifact-carrier')?.labelForTesting,
+        '3 turns',
+      );
     });
 
     test('cost popup adds confirm hint for active planning preview', () {
@@ -487,7 +546,7 @@ void main() {
             previews: [
               UnitMovePreviewLayerEntry(
                 id: 'active',
-                preview: _plan(totalCost: 15, availableMovementPoints: 3),
+                preview: _linearPlan(totalCost: 15, availableMovementPoints: 3),
                 unitType: GameUnitType.warrior,
                 showConfirmationHint: true,
                 showTargetPulse: true,
@@ -509,7 +568,7 @@ void main() {
         previews: [
           UnitMovePreviewLayerEntry(
             id: 'active',
-            preview: _plan(totalCost: 15, availableMovementPoints: 3),
+            preview: _linearPlan(totalCost: 15, availableMovementPoints: 3),
             unitType: GameUnitType.warrior,
           ),
         ],
@@ -542,10 +601,7 @@ void main() {
     test('render draws the animated travel marker without throwing', () {
       final preview = UnitMovePreview(
         points: [Vector2(0, 0), Vector2(54, 0), Vector2(92, 28)],
-        cumulativeCosts: const [0, 1, 2],
-        totalCost: 2,
-        availableMovementPoints: 3,
-        canMoveNow: true,
+        reachablePoints: const [true, true, true],
         unitType: GameUnitType.warrior,
         showTargetPulse: true,
         showTargetArrow: true,

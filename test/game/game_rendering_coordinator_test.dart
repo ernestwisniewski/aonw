@@ -172,6 +172,76 @@ void main() {
       expect(movePreview.lastShowConfirmedTarget, isTrue);
     });
 
+    test('rebases a queued path after the unit has already travelled', () {
+      final map = _map();
+      final warrior =
+          GameUnit(
+            id: 'warrior',
+            ownerPlayerId: 'player_1',
+            type: GameUnitType.warrior,
+            name: GameUnitType.warrior.defaultNameToken,
+            col: 1,
+            row: 0,
+            movementPoints: 3,
+          ).copyWithQueuedPath(
+            QueuedMovePath(
+              targetCol: 3,
+              targetRow: 0,
+              steps: const [
+                UnitMovementStep(
+                  col: 0,
+                  row: 0,
+                  enterCost: 0,
+                  cumulativeCost: 0,
+                ),
+                UnitMovementStep(
+                  col: 1,
+                  row: 0,
+                  enterCost: 1,
+                  cumulativeCost: 1,
+                ),
+                UnitMovementStep(
+                  col: 2,
+                  row: 0,
+                  enterCost: 2,
+                  cumulativeCost: 3,
+                ),
+                UnitMovementStep(
+                  col: 3,
+                  row: 0,
+                  enterCost: 1,
+                  cumulativeCost: 4,
+                ),
+              ],
+            ),
+          );
+      final movePreview = _RecordingMovePreviewLayer();
+
+      _coordinator(map: map, movePreview: movePreview).syncAll(
+        state: GameState(
+          activePlayerId: 'player_1',
+          units: [warrior],
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(warrior, tile: _tile(map, 1)),
+          ),
+        ),
+        parent: Component(),
+        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+      );
+
+      expect(movePreview.lastPreview?.path, const [
+        (col: 1, row: 0),
+        (col: 2, row: 0),
+        (col: 3, row: 0),
+      ]);
+      expect(movePreview.lastPreview?.totalCost, 3);
+      expect(movePreview.lastPreview?.canMoveNow, isTrue);
+      expect(movePreview.lastPreview?.estimatedTurns(3), 1);
+      expect(movePreview.lastDisplaySteps, hasLength(4));
+      expect(movePreview.lastTravelledUpToIndex, 1);
+      expect(movePreview.lastMaxMovementPointsPerTurn, 3);
+    });
+
     test('shows queued path for deselected own unit', () {
       final map = _map();
       final commander = GameUnit.startingCommander(
@@ -1179,8 +1249,10 @@ void main() {
 class _RecordingMovePreviewLayer extends UnitMovePreviewLayer {
   UnitMovementPlan? lastPreview;
   List<UnitMovementPlan> lastPreviews = const [];
+  List<UnitMovementStep>? lastDisplaySteps;
   int? lastTravelledUpToIndex;
   GameUnitType? lastUnitType;
+  int? lastMaxMovementPointsPerTurn;
   UnitMovePreviewRouteKind? lastRouteKind;
   bool? lastDimmed;
   bool? lastSubdued;
@@ -1235,8 +1307,10 @@ class _RecordingMovePreviewLayer extends UnitMovePreviewLayer {
     lastPreviews = [for (final entry in entries) entry.preview];
     final last = entries.isEmpty ? null : entries.last;
     lastPreview = last?.preview;
+    lastDisplaySteps = last?.displaySteps;
     lastTravelledUpToIndex = last?.travelledUpToIndex;
     lastUnitType = last?.unitType;
+    lastMaxMovementPointsPerTurn = last?.maxMovementPointsPerTurn;
     lastRouteKind = last?.routeKind;
     lastDimmed = last?.dimmed;
     lastSubdued = last?.subdued;
@@ -1251,8 +1325,10 @@ class _RecordingMovePreviewLayer extends UnitMovePreviewLayer {
   void clear() {
     lastPreview = null;
     lastPreviews = const [];
+    lastDisplaySteps = null;
     lastTravelledUpToIndex = null;
     lastUnitType = null;
+    lastMaxMovementPointsPerTurn = null;
     lastRouteKind = null;
     lastDimmed = null;
     lastSubdued = null;

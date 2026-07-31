@@ -74,7 +74,8 @@ final class MovementEventExecutionPlan {
   final List<MovementCommandExecution> _executions;
   final Map<int, int> _eventIndexByExecutionIndex;
 
-  Iterable<MovementCommandExecution> executionsForEventRange(
+  Iterable<({int eventIndex, MovementCommandExecution execution})>
+  executionsForEventRange(
     int start,
     int end, {
     Set<String> excludedUnitIds = const {},
@@ -86,7 +87,7 @@ final class MovementEventExecutionPlan {
           eventIndex >= start &&
           eventIndex < end &&
           !excludedUnitIds.contains(execution.unitId)) {
-        yield execution;
+        yield (eventIndex: eventIndex, execution: execution);
       }
     }
   }

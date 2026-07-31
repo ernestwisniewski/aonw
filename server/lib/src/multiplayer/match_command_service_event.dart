@@ -12,6 +12,14 @@ WireEvent _acceptedCommandEventForStorage({
   final participantPlayerIds = state.match.players.map((player) => player.id);
   final previous = previousSnapshot.domain;
   final next = reduction.nextSnapshot!.domain;
+  final movementExecutions = PlayerMatchMovementAudience.annotateForStorage(
+    executions: reduction.movementExecutions,
+    participantPlayerIds: participantPlayerIds,
+    previousUnits: previous.units,
+    nextUnits: next.units,
+    previousFog: previous.fogOfWar,
+    nextFog: next.fogOfWar,
+  );
   return WireEvent(
     matchId: state.match.id,
     offset: offset,
@@ -26,16 +34,27 @@ WireEvent _acceptedCommandEventForStorage({
       previous: previous,
       next: next,
       combatAnimations: reduction.combatAnimations,
+      movementAudiencePlayerIdsByUnit: _movementAudiencePlayerIdsByUnit(
+        movementExecutions,
+      ),
     ),
-    movementExecutions: PlayerMatchMovementAudience.annotateForStorage(
-      executions: reduction.movementExecutions,
-      participantPlayerIds: participantPlayerIds,
-      previousUnits: previous.units,
-      nextUnits: next.units,
-      previousFog: previous.fogOfWar,
-      nextFog: next.fogOfWar,
-    ),
+    movementExecutions: movementExecutions,
   );
+}
+
+Map<String, Set<String>> _movementAudiencePlayerIdsByUnit(
+  WireMovementExecutionList executions,
+) {
+  final audiences = <String, Set<String>>{};
+  for (final execution in executions.values) {
+    final audience = execution.serverAudiencePlayerIds;
+    if (audience == null) continue;
+    audiences.putIfAbsent(execution.unitId, () => {}).addAll(audience);
+  }
+  return Map.unmodifiable({
+    for (final entry in audiences.entries)
+      entry.key: Set<String>.unmodifiable(entry.value),
+  });
 }
 
 WireEvent _acceptedTimeoutEventForStorage({

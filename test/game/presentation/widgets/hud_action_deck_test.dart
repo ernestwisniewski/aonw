@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/end_turn_button.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models/worker_action_panel_view_model.dart';
 import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_deck.dart';
@@ -42,6 +43,28 @@ const _turnActions = [
     kindLabel: 'Research',
   ),
 ];
+
+const _detailTestSelection = SelectionViewModel(
+  icon: GameIcons.terrain,
+  color: Colors.white,
+  title: 'Plain',
+  subtitle: 'Map tile',
+  items: [
+    SelectionInfoItem(
+      icon: GameIcons.terrain,
+      label: 'Terrain',
+      value: 'Plain',
+      color: Colors.white,
+    ),
+    SelectionInfoItem(
+      icon: GameIcons.info,
+      label: 'Description',
+      value: 'Field',
+      color: Colors.white,
+    ),
+  ],
+  selectionKey: 'tile:0,0',
+);
 
 void main() {
   testWidgets('HudActionDeck keeps the bottom command rail to one CTA', (
@@ -654,6 +677,84 @@ void main() {
     expect(find.byType(SelectionDetailSheet), findsNothing);
   });
 
+  testWidgets('detail modal blocks auto-flow until it is fully closed', (
+    tester,
+  ) async {
+    final commands = <GameCommand>[];
+    final container = ProviderContainer(
+      overrides: [
+        hudCommandDispatcherProvider.overrideWith(
+          (ref) => _RecordingHudCommandDispatcher(ref, commands),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    String? openChipId = SelectionInfoChipId.terrain;
+
+    Future<void> pump() {
+      return _pumpDeck(
+        tester,
+        gameState: const GameState(),
+        remainingActionCount: 1,
+        selection: _detailTestSelection,
+        openSelectionDetailChipId: openChipId,
+        providerContainer: container,
+      );
+    }
+
+    await pump();
+
+    expect(commands, isEmpty);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(SelectionDetailSheet), findsOneWidget);
+    expect(commands, isEmpty);
+
+    openChipId = null;
+    await pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(commands, isEmpty);
+
+    await tester.pumpAndSettle();
+
+    expect(commands.whereType<FocusNextPendingActionCommand>(), hasLength(1));
+  });
+
+  testWidgets('detail modal reopens the latest request after closing', (
+    tester,
+  ) async {
+    String? openChipId = SelectionInfoChipId.terrain;
+
+    Future<void> pump() {
+      return _pumpDeck(
+        tester,
+        selection: _detailTestSelection,
+        openSelectionDetailChipId: openChipId,
+      );
+    }
+
+    await pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      find.byKey(const Key('selectionInfo.detail.terrain')),
+      findsOneWidget,
+    );
+
+    tester
+        .widget<IconButton>(find.byKey(const Key('selectionInfo.detail.close')))
+        .onPressed!();
+    openChipId = SelectionInfoChipId.description;
+    await pump();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SelectionDetailSheet), findsOneWidget);
+    expect(
+      find.byKey(const Key('selectionInfo.detail.description')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('selectionInfo.detail.terrain')), findsNothing);
+  });
+
   testWidgets('opens context token info sheet on long press', (tester) async {
     var openChipId = null as String?;
 
@@ -826,6 +927,146 @@ void main() {
     expect(find.text('6/10'), findsOneWidget);
     expect(find.byKey(const Key('hudCombatConfirm.cancel')), findsOneWidget);
     expect(find.byKey(const Key('hudCombatConfirm.confirm')), findsOneWidget);
+  });
+
+  testWidgets('combat modal reopens the latest preview after closing', (
+    tester,
+  ) async {
+    final commands = <GameCommand>[];
+    final container = ProviderContainer(
+      overrides: [
+        hudCommandDispatcherProvider.overrideWith(
+          (ref) => _RecordingHudCommandDispatcher(ref, commands),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    var state = _attackState('attacker_1');
+    HudCombatPreview? preview = _combatPreview(
+      attackerUnitId: 'attacker_1',
+      defenderUnitId: 'defender_1',
+      attackerName: 'First attacker',
+      defenderName: 'First defender',
+    );
+
+    Future<void> pump() {
+      return _pumpDeck(
+        tester,
+        gameState: state,
+        combatPreview: preview,
+        providerContainer: container,
+      );
+    }
+
+    await pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('First attacker'), findsAtLeastNWidgets(1));
+
+    await tester.tap(find.byKey(const Key('hudCombatConfirm.cancel')));
+    state = _attackState('attacker_2');
+    preview = _combatPreview(
+      attackerUnitId: 'attacker_2',
+      defenderUnitId: 'defender_2',
+      attackerName: 'Latest attacker',
+      defenderName: 'Latest defender',
+    );
+    await pump();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('hudCombatConfirm.surface')), findsOneWidget);
+    expect(find.textContaining('Latest attacker'), findsAtLeastNWidgets(1));
+    expect(find.textContaining('First attacker'), findsNothing);
+    expect(commands.whereType<CancelAttackTargetingCommand>(), hasLength(1));
+  });
+
+  testWidgets(
+    'combat modal blocks back and stays dismissed while command is in flight',
+    (tester) async {
+      final commands = <GameCommand>[];
+      final container = ProviderContainer(
+        overrides: [
+          hudCommandDispatcherProvider.overrideWith(
+            (ref) => _RecordingHudCommandDispatcher(ref, commands),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final state = _attackState('attacker_1');
+      final preview = _combatPreview(
+        attackerUnitId: 'attacker_1',
+        defenderUnitId: 'defender_1',
+        attackerName: 'Attacker',
+        defenderName: 'Defender',
+      );
+
+      Future<void> pump() {
+        return _pumpDeck(
+          tester,
+          gameState: state,
+          combatPreview: preview,
+          providerContainer: container,
+        );
+      }
+
+      await pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('hudCombatConfirm.surface')), findsOneWidget);
+      expect(commands, isEmpty);
+
+      await tester.tap(find.byKey(const Key('hudCombatConfirm.confirm')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('hudCombatConfirm.surface')), findsNothing);
+      expect(commands.whereType<AttackHexCommand>(), hasLength(1));
+
+      await pump();
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('hudCombatConfirm.surface')), findsNothing);
+      expect(commands.whereType<AttackHexCommand>(), hasLength(1));
+    },
+  );
+
+  testWidgets('combat modal has priority over detail modal', (tester) async {
+    var state = _attackState('attacker_1');
+    HudCombatPreview? preview = _combatPreview(
+      attackerUnitId: 'attacker_1',
+      defenderUnitId: 'defender_1',
+      attackerName: 'Attacker',
+      defenderName: 'Defender',
+    );
+
+    Future<void> pump() {
+      return _pumpDeck(
+        tester,
+        gameState: state,
+        combatPreview: preview,
+        selection: _detailTestSelection,
+        openSelectionDetailChipId: SelectionInfoChipId.terrain,
+      );
+    }
+
+    await pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('hudCombatConfirm.surface')), findsOneWidget);
+    expect(find.byType(SelectionDetailSheet), findsNothing);
+
+    state = const GameState();
+    preview = null;
+    await pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byType(SelectionDetailSheet), findsNothing);
+
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('hudCombatConfirm.surface')), findsNothing);
+    expect(find.byType(SelectionDetailSheet), findsOneWidget);
   });
 
   testWidgets('combat confirmation popup adapts to compact and wide sizes', (
@@ -1084,6 +1325,52 @@ void main() {
   });
 }
 
+GameState _attackState(String attackerUnitId) {
+  return GameState(
+    interaction: GameInteractionState(
+      pendingAction: PendingAttackTargeting(
+        ownerPlayerId: 'player_1',
+        attackerUnitId: attackerUnitId,
+        defenderCol: 1,
+        defenderRow: 0,
+      ),
+    ),
+  );
+}
+
+HudCombatPreview _combatPreview({
+  required String attackerUnitId,
+  required String defenderUnitId,
+  required String attackerName,
+  required String defenderName,
+}) {
+  return HudCombatPreview(
+    attackerUnitId: attackerUnitId,
+    defenderUnitId: defenderUnitId,
+    attackerName: attackerName,
+    defenderName: defenderName,
+    targetIsCity: false,
+    attackerHpBefore: 10,
+    defenderHpBefore: 10,
+    attackerMaxHp: 10,
+    defenderMaxHp: 10,
+    attackerHpAfter: 8,
+    defenderHpAfter: 6,
+    attackerAttack: 6,
+    attackerDefense: 3,
+    defenderAttack: 4,
+    defenderDefense: 2,
+    defenderRange: 1,
+    attackDamage: 4,
+    retaliationDamage: 2,
+    attackerKilled: false,
+    defenderKilled: false,
+    defenderRetreated: false,
+    distance: 1,
+    range: 1,
+  );
+}
+
 Future<void> _pumpDeck(
   WidgetTester tester, {
   ValueNotifier<Set<String>>? animatingUnitIdsListenable,
@@ -1107,6 +1394,7 @@ Future<void> _pumpDeck(
   double? textScaleFactor,
   ValueChanged<String>? onToggleSelectionDetail,
   VoidCallback? onCloseSelectionDetail,
+  ProviderContainer? providerContainer,
 }) async {
   if (screenSize != null) {
     tester.view.physicalSize = screenSize;
@@ -1150,28 +1438,41 @@ Future<void> _pumpDeck(
     ),
   );
 
-  await tester.pumpWidget(
-    ProviderScope(
-      child: MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        locale: const Locale('en'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
-          builder: (context) {
-            if (textScaleFactor != null) {
-              deck = MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(textScaler: TextScaler.linear(textScaleFactor)),
-                child: deck,
-              );
-            }
-            return Scaffold(body: deck);
-          },
-        ),
-      ),
+  final app = MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    locale: const Locale('en'),
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Builder(
+      builder: (context) {
+        if (textScaleFactor != null) {
+          deck = MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScaleFactor)),
+            child: deck,
+          );
+        }
+        return Scaffold(body: deck);
+      },
     ),
   );
+
+  await tester.pumpWidget(
+    providerContainer == null
+        ? ProviderScope(child: app)
+        : UncontrolledProviderScope(container: providerContainer, child: app),
+  );
+}
+
+final class _RecordingHudCommandDispatcher extends HudCommandDispatcher {
+  _RecordingHudCommandDispatcher(super.ref, this.commands);
+
+  final List<GameCommand> commands;
+
+  @override
+  Future<void> dispatch(GameCommand command) async {
+    commands.add(command);
+  }
 }
 
 WorkerActionPanelViewModel _workerAction({

@@ -170,11 +170,7 @@ abstract final class AuthoritativeCommandPolicy {
     if (preview == null || preview.unitId != selected.id) return null;
     final sameTarget =
         preview.targetCol == command.col && preview.targetRow == command.row;
-    final confirmsReachableStep = preview.isStepUnreachableThisTurn(
-      command.col,
-      command.row,
-    );
-    if (!sameTarget && !confirmsReachableStep) return null;
+    if (!sameTarget) return null;
 
     return MoveUnitCommand(selected.id, preview.targetCol, preview.targetRow);
   }

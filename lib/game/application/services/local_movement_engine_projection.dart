@@ -70,19 +70,6 @@ LocalMovementEngineProjection projectLocalMovementEngineResult({
   );
 }
 
-GameState projectUnchangedLocalMovementPresentation({
-  required GameState currentState,
-  required DomainCommand command,
-  required LocalMovementPresentationOrigin presentationOrigin,
-}) {
-  if (command is! MoveUnitCommand ||
-      presentationOrigin !=
-          LocalMovementPresentationOrigin.previewConfirmation) {
-    return currentState;
-  }
-  return _clearMoveTargeting(currentState);
-}
-
 GameState _projectCanonicalSlices({
   required GameState currentState,
   required GameEngineAccepted result,
@@ -127,10 +114,15 @@ GameState _projectMove({
   required LocalMovementPresentationOrigin presentationOrigin,
 }) {
   if (identical(projected.units, currentState.units)) {
-    return presentationOrigin ==
-            LocalMovementPresentationOrigin.previewConfirmation
-        ? _clearMoveTargeting(projected)
-        : projected;
+    if (presentationOrigin !=
+        LocalMovementPresentationOrigin.previewConfirmation) {
+      return projected;
+    }
+    final unit = projected.units.byId(unitId);
+    return projected.copyWithInteraction(
+      moveCommandActive: _canRetargetMove(projected, unit),
+      movePreview: null,
+    );
   }
   final updatedUnit = projected.units.byId(unitId);
   var state = projected.copyWithInteraction(
@@ -145,6 +137,17 @@ GameState _projectMove({
     state = _selectUpdatedUnit(state, unitId, mapView);
   }
   return state;
+}
+
+bool _canRetargetMove(GameState state, GameUnit? unit) {
+  return unit != null &&
+      state.canControlUnit(unit) &&
+      unit.movementPoints > 0 &&
+      !unit.isWorking &&
+      !unit.isMerchant &&
+      unit.queuedPath == null &&
+      !unit.isFortified &&
+      !unit.isAutoExploring;
 }
 
 GameState _clearMoveTargeting(GameState state) {

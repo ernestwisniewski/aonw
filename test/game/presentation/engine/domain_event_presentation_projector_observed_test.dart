@@ -136,7 +136,7 @@ void main() {
       expect(effects.clear, throwsUnsupportedError);
     });
 
-    test('rejects ambiguous duplicate movement events fail closed', () {
+    test('deduplicates direct fallback for ambiguous duplicate events', () {
       final effects = DomainEventPresentationProjector.projectObserved(
         interactionEffects: const [],
         previousState: _state(aCol: 0, bCol: 0),
@@ -163,7 +163,47 @@ void main() {
         ],
       );
 
-      expect(effects.whereType<AnimateUnitMoveEffect>(), isEmpty);
+      expect(effects.whereType<AnimateUnitMoveEffect>().map(_snapshot), const [
+        ('unit_a', 0, 0, 2, 0, 0, 0),
+      ]);
+    });
+
+    test('keeps a legal repeated fallback after a continuous round trip', () {
+      final effects = DomainEventPresentationProjector.projectObserved(
+        interactionEffects: const [],
+        previousState: _state(aCol: 0),
+        state: _state(aCol: 1),
+        events: const [
+          UnitMovedEvent(
+            unitId: 'unit_a',
+            fromCol: 0,
+            fromRow: 0,
+            toCol: 1,
+            toRow: 0,
+          ),
+          UnitMovedEvent(
+            unitId: 'unit_a',
+            fromCol: 1,
+            fromRow: 0,
+            toCol: 0,
+            toRow: 0,
+          ),
+          UnitMovedEvent(
+            unitId: 'unit_a',
+            fromCol: 0,
+            fromRow: 0,
+            toCol: 1,
+            toRow: 0,
+          ),
+        ],
+        visibleMovementExecutions: const [],
+      );
+
+      expect(effects.whereType<AnimateUnitMoveEffect>().map(_snapshot), const [
+        ('unit_a', 0, 0, 1, 0, 0, 0),
+        ('unit_a', 1, 0, 0, 0, 0, 0),
+        ('unit_a', 0, 0, 1, 0, 0, 0),
+      ]);
     });
 
     test('places typed movement at its global event position', () {
@@ -243,7 +283,7 @@ void main() {
       expect(construction, greaterThan(movement));
     });
 
-    test('empty evidence does not repeat UnitMovedEvent animation', () {
+    test('empty execution evidence uses one visible event fallback', () {
       final effects = DomainEventPresentationProjector.projectObserved(
         interactionEffects: const [],
         previousState: _state(aCol: 0),
@@ -260,7 +300,9 @@ void main() {
         visibleMovementExecutions: const [],
       );
 
-      expect(effects.whereType<AnimateUnitMoveEffect>(), isEmpty);
+      expect(effects.whereType<AnimateUnitMoveEffect>().map(_snapshot), const [
+        ('unit_a', 0, 0, 2, 0, 0, 0),
+      ]);
     });
 
     test('empty evidence never infers movement from the state delta', () {
@@ -286,7 +328,7 @@ void main() {
       ],
       [_execution('unit_a', 0, 0, 1, 0, 7, 7)],
     ]) {
-      test('invalid chain cannot fall back through UnitMovedEvent', () {
+      test('invalid chain falls back to the visible event only', () {
         final effects = DomainEventPresentationProjector.projectObserved(
           interactionEffects: const [],
           previousState: _state(aCol: 0),
@@ -303,9 +345,51 @@ void main() {
           visibleMovementExecutions: invalid,
         );
 
-        expect(effects.whereType<AnimateUnitMoveEffect>(), isEmpty);
+        expect(
+          effects.whereType<AnimateUnitMoveEffect>().map(_snapshot),
+          const [('unit_a', 0, 0, 2, 0, 0, 0)],
+        );
       });
     }
+
+    test(
+      'uses exact evidence and fallback without duplicating either unit',
+      () {
+        final effects = DomainEventPresentationProjector.projectObserved(
+          interactionEffects: const [],
+          previousState: _state(aCol: 0, bCol: 0),
+          state: _state(aCol: 2, bCol: 1),
+          events: const [
+            UnitMovedEvent(
+              unitId: 'unit_b',
+              fromCol: 0,
+              fromRow: 1,
+              toCol: 1,
+              toRow: 1,
+            ),
+            UnitMovedEvent(
+              unitId: 'unit_a',
+              fromCol: 0,
+              fromRow: 0,
+              toCol: 2,
+              toRow: 0,
+            ),
+          ],
+          visibleMovementExecutions: _exactExecutions().where(
+            (execution) => execution.unitId == 'unit_a',
+          ),
+        );
+
+        expect(
+          effects.whereType<AnimateUnitMoveEffect>().map(_snapshot),
+          const [
+            ('unit_b', 0, 1, 1, 1, 0, 0),
+            ('unit_a', 0, 0, 1, 0, 7, 7),
+            ('unit_a', 1, 0, 2, 0, 13, 20),
+          ],
+        );
+      },
+    );
   });
 }
 

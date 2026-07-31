@@ -51,6 +51,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 part 'hud_action_deck_detail_modal.dart';
 part 'hud_action_deck_combat_modal.dart';
+part 'hud_action_deck_modals.dart';
 part 'hud_action_deck_combat_dialog.dart';
 part 'hud_action_deck_combat_explanation.dart';
 part 'hud_action_deck_combat_forecast.dart';
@@ -145,11 +146,79 @@ class HudActionDeck extends ConsumerStatefulWidget {
   ConsumerState<HudActionDeck> createState() => _HudActionDeckState();
 }
 
+enum _HudModalKind { detail, combat }
+
+enum _HudModalPhase { idle, queued, open, closing }
+
+enum _HudModalFinish { stale, dismissed, reopen }
+
+final class _HudModalSession {
+  const _HudModalSession({
+    required this.kind,
+    required this.routeRevision,
+    required this.requestKey,
+    this.navigator,
+    this.route,
+    this.closingAtRevision,
+    this.closingRequestKey,
+  });
+
+  final _HudModalKind kind;
+  final int routeRevision;
+  final String requestKey;
+  final NavigatorState? navigator;
+  final ModalRoute<void>? route;
+  final int? closingAtRevision;
+  final String? closingRequestKey;
+
+  bool get closeStarted => closingAtRevision != null;
+
+  _HudModalSession withRequestKey(String value) => _HudModalSession(
+    kind: kind,
+    routeRevision: routeRevision,
+    requestKey: value,
+    navigator: navigator,
+    route: route,
+    closingAtRevision: closingAtRevision,
+    closingRequestKey: closingRequestKey,
+  );
+
+  _HudModalSession attach({
+    required NavigatorState navigator,
+    required ModalRoute<void> route,
+  }) => _HudModalSession(
+    kind: kind,
+    routeRevision: routeRevision,
+    requestKey: requestKey,
+    navigator: navigator,
+    route: route,
+    closingAtRevision: closingAtRevision,
+    closingRequestKey: closingRequestKey,
+  );
+
+  _HudModalSession startClosing(int requestRevision) => closeStarted
+      ? this
+      : _HudModalSession(
+          kind: kind,
+          routeRevision: routeRevision,
+          requestKey: requestKey,
+          navigator: navigator,
+          route: route,
+          closingAtRevision: requestRevision,
+          closingRequestKey: requestKey,
+        );
+}
+
 class _HudActionDeckState extends ConsumerState<HudActionDeck> {
   late final ValueNotifier<_SelectionDetailModalModel?> _detailNotifier;
   late final ValueNotifier<HudCombatPreview?> _combatPreviewNotifier;
-  bool _detailModalOpen = false;
-  bool _combatModalOpen = false;
+  _HudModalPhase _modalPhase = _HudModalPhase.idle;
+  _HudModalKind? _modalKind;
+  int _modalRevision = 0;
+  int _modalRouteRevision = 0;
+  String? _requestedModalKey;
+  String? _dismissedModalRequestKey;
+  _HudModalSession? _modalSession;
   bool _autoActionFlowEnabled = false;
   bool _autoTurnFlowEnabled = false;
   bool _autoTurnFlowQueued = false;
@@ -157,18 +226,18 @@ class _HudActionDeckState extends ConsumerState<HudActionDeck> {
   bool _autoTurnFlowPrimed = false;
   bool _autoTurnFlowAdvancedThisTurn = false;
   bool _compactDeckCollapsed = false;
-  String? _lastRequestedDetailKey;
-  String? _lastRequestedCombatPreviewKey;
   String? _lastAutoTurnFlowSignature;
   String? _autoTurnFlowContextKey;
   String? _lastManualAutoTargetKey;
   String? _pausedManualAutoTargetKey;
   String? _completedManualCityTargetKey;
-  BuildContext? _detailModalContext;
-  BuildContext? _combatModalContext;
   bool _actionCompletionPulseVisible = false;
   late int _lastObservedActionTurn;
   late int _lastObservedActionCount;
+
+  bool get _modalTransitionInProgress => _modalPhase != _HudModalPhase.idle;
+
+  bool get _modalCloseStarted => _modalSession?.closeStarted ?? false;
 
   int get _visibleTurnActionCount {
     if (widget.turnActionOptions.isNotEmpty) {
@@ -275,8 +344,7 @@ class _HudActionDeckState extends ConsumerState<HudActionDeck> {
     }
     _syncAutoTurnFlowAfterUpdate();
     _syncDismissedResearchAction(oldWidget);
-    _syncCombatModal();
-    _syncDetailModal();
+    _syncModals();
     _syncActionCompletionPulse();
     _queueAutoTurnFlow();
   }
@@ -313,8 +381,7 @@ class _HudActionDeckState extends ConsumerState<HudActionDeck> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _syncAutoTurnFlowAfterUpdate();
-    _syncCombatModal();
-    _syncDetailModal();
+    _syncModals();
     _queueAutoTurnFlow();
   }
 
