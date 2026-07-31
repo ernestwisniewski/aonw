@@ -3,6 +3,41 @@ import 'package:test/test.dart';
 
 void main() {
   group('GameEventDomainDescriptor', () {
+    test('describes the complete coarse movement transition', () {
+      const event = UnitMovedEvent(
+        unitId: 'scout_1',
+        fromCol: 2,
+        fromRow: 3,
+        toCol: 4,
+        toRow: 5,
+      );
+
+      final descriptor = GameEventDomainDescriptor.forEvent(event);
+
+      expect(
+        descriptor.coarseMovement,
+        const GameEventCoarseMovement(
+          origin: HexCoordinate(col: 2, row: 3),
+          destination: HexCoordinate(col: 4, row: 5),
+        ),
+      );
+      expect(
+        descriptor.coarseMovement ==
+            const GameEventCoarseMovement(
+              origin: HexCoordinate(col: 2, row: 3),
+              destination: HexCoordinate(col: 4, row: 5),
+            ),
+        isTrue,
+      );
+      expect(
+        descriptor.coarseMovement!.hashCode,
+        Object.hash(
+          const HexCoordinate(col: 2, row: 3),
+          const HexCoordinate(col: 4, row: 5),
+        ),
+      );
+    });
+
     test('describes combat hostility and war-weariness activity', () {
       const event = UnitAttackedEvent(
         attackerUnitId: 'attacker',

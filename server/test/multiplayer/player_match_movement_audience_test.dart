@@ -1,8 +1,11 @@
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
+import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
 import 'package:aonw_server/src/multiplayer/player_match_movement_audience.dart';
 import 'package:aonw_server/src/multiplayer/player_match_view_projector.dart';
 import 'package:test/test.dart';
+
+part 'support/player_match_movement_audience_visibility_cases.dart';
 
 const _playerA = 'player-a';
 const _playerB = 'player-b';
@@ -49,47 +52,54 @@ void main() {
       expect(_projectSnapshots(canonical, _observer), isEmpty);
     });
 
-    test('observer requires every coordinate in both fog snapshots', () {
-      final allCoordinates = _hexes(const [
-        (col: 0, row: 0),
-        (col: 1, row: 0),
-        (col: 2, row: 0),
-        (col: 3, row: 0),
-        (col: 0, row: 1),
-        (col: 1, row: 1),
-      ]);
-      final withoutHiddenIntermediate = {...allCoordinates}
-        ..remove(const HexCoordinate(col: 2, row: 0));
-      final visibilityPairs = [
-        (previous: allCoordinates, next: withoutHiddenIntermediate),
-        (previous: withoutHiddenIntermediate, next: allCoordinates),
-      ];
-
-      for (final visibility in visibilityPairs) {
-        final canonical = _annotate(
-          executions: _orderedExecutions(),
-          previous: _state(
-            a: (col: 0, row: 0),
-            b: (col: 0, row: 1),
-            observerVisible: visibility.previous,
-          ),
-          next: _state(
-            a: (col: 3, row: 0),
-            b: (col: 1, row: 1),
-            observerVisible: visibility.next,
-          ),
-        );
-
-        expect(canonical.values.map(_wireExecutionSnapshot), [
-          'unit-a:0,0->1,0;audience=player-a',
-          'unit-b:0,1->1,1;audience=player-b,player-observer',
-          'unit-a:1,0->2,0|3,0;audience=player-a',
+    test(
+      'observer receives exact paths visible in either coherent fog snapshot',
+      () {
+        final allCoordinates = _hexes(const [
+          (col: 0, row: 0),
+          (col: 1, row: 0),
+          (col: 2, row: 0),
+          (col: 3, row: 0),
+          (col: 0, row: 1),
+          (col: 1, row: 1),
         ]);
-        expect(_projectSnapshots(canonical, _observer), [
-          'unit-b:0,1->1,1;audience=public',
-        ]);
-      }
-    });
+        final withoutHiddenIntermediate = {...allCoordinates}
+          ..remove(const HexCoordinate(col: 2, row: 0));
+        final visibilityPairs = [
+          (previous: allCoordinates, next: withoutHiddenIntermediate),
+          (previous: withoutHiddenIntermediate, next: allCoordinates),
+        ];
+
+        for (final visibility in visibilityPairs) {
+          final canonical = _annotate(
+            executions: _orderedExecutions(),
+            previous: _state(
+              a: (col: 0, row: 0),
+              b: (col: 0, row: 1),
+              observerVisible: visibility.previous,
+            ),
+            next: _state(
+              a: (col: 3, row: 0),
+              b: (col: 1, row: 1),
+              observerVisible: visibility.next,
+            ),
+          );
+
+          expect(canonical.values.map(_wireExecutionSnapshot), [
+            'unit-a:0,0->1,0;audience=player-a,player-observer',
+            'unit-b:0,1->1,1;audience=player-b,player-observer',
+            'unit-a:1,0->2,0|3,0;audience=player-a,player-observer',
+          ]);
+          expect(_projectSnapshots(canonical, _observer), [
+            'unit-a:0,0->1,0;audience=public',
+            'unit-b:0,1->1,1;audience=public',
+            'unit-a:1,0->2,0|3,0;audience=public',
+          ]);
+        }
+      },
+    );
+
+    _registerMovementAudienceVisibilityTests();
 
     test('preserves global order and one audience for split unit chains', () {
       final visible = _hexes(const [
@@ -454,11 +464,15 @@ String _wireExecutionSnapshot(WireMovementExecution execution) {
       '->$path;audience=$audience';
 }
 
-WireEvent _event({required WireMovementExecutionList movementExecutions}) {
+WireEvent _event({
+  Iterable<Map<String, dynamic>> events = const [],
+  required WireMovementExecutionList movementExecutions,
+}) {
   return WireEvent(
     matchId: 'match-1',
     offset: 1,
     timestamp: DateTime.utc(2026, 7, 25),
+    events: events.toList(growable: false),
     movementExecutions: movementExecutions,
   );
 }

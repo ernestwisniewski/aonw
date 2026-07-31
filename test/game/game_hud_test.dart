@@ -1869,7 +1869,7 @@ void main() {
 
     container.read(mapInspectionControllerProvider.notifier).clear();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
 
     expect(
       find.byKey(const Key('selectionInfo.detail.description')),

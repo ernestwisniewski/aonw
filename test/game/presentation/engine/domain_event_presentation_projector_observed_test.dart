@@ -9,7 +9,7 @@ import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-part 'domain_event_presentation_projector_unanchored_test.dart';
+part 'domain_event_presentation_projector_unanchored_cases.dart';
 
 void main() {
   group('DomainEventPresentationProjector.projectObserved', () {

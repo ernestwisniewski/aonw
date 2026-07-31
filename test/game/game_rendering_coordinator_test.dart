@@ -34,7 +34,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-part 'game_rendering_coordinator_queued_path_test.dart';
+part 'game_rendering_coordinator_queued_path_cases.dart';
 
 MapData _map() => MapData(
   cols: 4,

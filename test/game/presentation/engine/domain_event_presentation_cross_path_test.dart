@@ -1,3 +1,4 @@
+import 'package:aonw/api/transport/live_server_event.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/domain_event_presentation_projector.dart';
@@ -6,6 +7,7 @@ import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/protocol.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -93,6 +95,62 @@ void main() {
     expect(cursor.consume(acknowledged.domainEffects), isNotEmpty);
     expect(cursor.consume(acknowledged.domainEffects), isEmpty);
     expect(cursor.consume(batch(16).domainEffects), isEmpty);
+  });
+
+  test('coarse live movement reaches the renderer projection once', () {
+    final enemyBefore = GameUnit.produced(
+      id: 'enemy',
+      ownerPlayerId: 'player_2',
+      type: GameUnitType.warrior,
+      col: 0,
+      row: 0,
+    );
+    const event = UnitMovedEvent(
+      unitId: 'enemy',
+      fromCol: 0,
+      fromRow: 0,
+      toCol: 2,
+      toRow: 0,
+    );
+    final live = LiveServerEvent.fromWire(
+      wire: WireEvent(
+        matchId: 'match_1',
+        offset: 19,
+        timestamp: DateTime.utc(2026, 7, 31),
+        events: [GameEventSerializer.toJson(event)],
+        movementExecutions: WireMovementExecutionList(const []),
+      ),
+      events: [event],
+      combatAnimations: const [],
+    );
+    final before = GameState(units: [enemyBefore]);
+    final after = GameState(units: [enemyBefore.copyWith(col: 2)]);
+
+    ProjectedGameEffectBatch project() =>
+        DomainEventPresentationProjector.projectObservedBatch(
+          identity: PresentationBatchIdentity(
+            sourceId: live.wire.matchId,
+            eventOffset: live.wire.offset,
+          ),
+          interactionEffects: const [],
+          events: live.events,
+          visibleMovementExecutions: live.movementExecutions,
+          previousState: before,
+          state: after,
+        );
+
+    final batch = project();
+    final animation =
+        batch.domainEffects.single.effect as AnimateUnitMoveEffect;
+    expect(
+      (animation.unitId, animation.fromCol, animation.fromRow),
+      ('enemy', 0, 0),
+    );
+    expect((animation.steps.single.col, animation.steps.single.row), (2, 0));
+
+    final cursor = ProjectedGameEffectCursor();
+    expect(cursor.consume(batch.domainEffects), hasLength(1));
+    expect(cursor.consume(project().domainEffects), isEmpty);
   });
 
   test('six presentation paths share artifact lifecycle schedule exactly', () {

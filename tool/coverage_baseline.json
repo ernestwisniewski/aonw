@@ -19,8 +19,8 @@
             "found": 395
           },
           "lines": {
-            "hit": 13728,
-            "found": 15692
+            "hit": 13774,
+            "found": 15738
           }
         },
         "map": {
@@ -67,12 +67,12 @@
       "layers": {
         "api": {
           "files": {
-            "hit": 19,
-            "found": 19
+            "hit": 20,
+            "found": 20
           },
           "lines": {
-            "hit": 1042,
-            "found": 1260
+            "hit": 1046,
+            "found": 1267
           }
         },
         "app": {
@@ -111,78 +111,78 @@
             "found": 2
           },
           "lines": {
-            "hit": 405,
-            "found": 637
+            "hit": 403,
+            "found": 635
           }
         },
         "game_application": {
           "files": {
-            "hit": 49,
-            "found": 50
+            "hit": 67,
+            "found": 69
           },
           "lines": {
-            "hit": 1941,
-            "found": 2247
+            "hit": 2922,
+            "found": 3293
           }
         },
         "game_domain": {
           "files": {
-            "hit": 63,
-            "found": 63
+            "hit": 45,
+            "found": 45
           },
           "lines": {
-            "hit": 2893,
-            "found": 3105
+            "hit": 1896,
+            "found": 2090
           }
         },
         "game_infrastructure": {
           "files": {
-            "hit": 22,
-            "found": 23
+            "hit": 21,
+            "found": 22
           },
           "lines": {
-            "hit": 618,
-            "found": 659
+            "hit": 600,
+            "found": 643
           }
         },
         "game_presentation_engine": {
           "files": {
-            "hit": 86,
-            "found": 88
+            "hit": 95,
+            "found": 97
           },
           "lines": {
-            "hit": 7188,
-            "found": 9249
+            "hit": 7572,
+            "found": 9676
           }
         },
         "game_presentation_screens": {
           "files": {
-            "hit": 51,
-            "found": 55
+            "hit": 52,
+            "found": 56
           },
           "lines": {
-            "hit": 3434,
-            "found": 4482
+            "hit": 3456,
+            "found": 4503
           }
         },
         "game_presentation_support": {
           "files": {
-            "hit": 88,
-            "found": 91
+            "hit": 89,
+            "found": 92
           },
           "lines": {
-            "hit": 4177,
-            "found": 5003
+            "hit": 4176,
+            "found": 4994
           }
         },
         "game_presentation_widgets": {
           "files": {
-            "hit": 305,
-            "found": 310
+            "hit": 306,
+            "found": 311
           },
           "lines": {
-            "hit": 19433,
-            "found": 22004
+            "hit": 19630,
+            "found": 22191
           }
         },
         "l10n": {
@@ -228,6 +228,7 @@
       },
       "missingFiles": [
         "lib/developer/asset_adjustment_file_store_stub.dart",
+        "lib/game/application/services/local_movement_presentation_origin.dart",
         "lib/game/infrastructure/persistence/web/platform_persistence_adapters_web.dart",
         "lib/game/presentation/audio/game_sound_cue.dart",
         "lib/game/presentation/engine/rendering_layers/assets/animation_frame_adjustment_external_loader_stub.dart",
@@ -263,8 +264,8 @@
             "found": 52
           },
           "lines": {
-            "hit": 2217,
-            "found": 2752
+            "hit": 2226,
+            "found": 2761
           }
         },
         "observability": {

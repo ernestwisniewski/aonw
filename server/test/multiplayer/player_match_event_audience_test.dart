@@ -3,6 +3,8 @@ import 'package:aonw_core/domain.dart';
 import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
 import 'package:test/test.dart';
 
+part 'support/player_match_event_audience_movement_cases.dart';
+
 void main() {
   group('PlayerMatchEventAudience', () {
     test('uses transition ownership and strips storage-only metadata', () {
@@ -72,6 +74,8 @@ void main() {
         isEmpty,
       );
     });
+
+    _registerMovementEventAudienceTests();
 
     test(
       'projects one ordered combat sequence to owners and visible observers',
@@ -432,14 +436,19 @@ GameCity _city(String id, {required String ownerPlayerId}) {
   );
 }
 
-GameUnit _unit(String id, {required String ownerPlayerId}) {
+GameUnit _unit(
+  String id, {
+  required String ownerPlayerId,
+  int col = 1,
+  int row = 1,
+}) {
   return GameUnit(
     id: id,
     ownerPlayerId: ownerPlayerId,
     type: GameUnitType.worker,
     name: id,
-    col: 1,
-    row: 1,
+    col: col,
+    row: row,
   );
 }
 

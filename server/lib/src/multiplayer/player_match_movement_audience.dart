@@ -6,6 +6,22 @@ import 'package:aonw_core/protocol.dart';
 /// Annotation and projection both preserve the canonical execution order.
 /// Invalid evidence is removed per unit rather than clipped to a partial path.
 abstract final class PlayerMatchMovementAudience {
+  /// A recipient may see the coarse movement fact without learning its route.
+  ///
+  /// The origin belongs to the pre-transition view and the destination to the
+  /// post-transition view. This deliberately differs from exact execution
+  /// visibility, which requires one complete path in one coherent view.
+  static bool canObserveCoarseMovement({
+    required String playerId,
+    required HexCoordinate origin,
+    required HexCoordinate destination,
+    required FogOfWarState previousFog,
+    required FogOfWarState nextFog,
+  }) {
+    return previousFog.isVisible(playerId, origin) &&
+        nextFog.isVisible(playerId, destination);
+  }
+
   static WireMovementExecutionList annotateForStorage({
     required Iterable<MovementCommandExecution> executions,
     required Iterable<String> participantPlayerIds,
@@ -195,13 +211,14 @@ final class _DomainMovementChain {
     required FogOfWarState previousFog,
     required FogOfWarState nextFog,
   }) {
-    for (final coordinate in _coordinates) {
-      if (!previousFog.isVisible(playerId, coordinate) ||
-          !nextFog.isVisible(playerId, coordinate)) {
-        return false;
-      }
-    }
-    return true;
+    return _allVisibleIn(previousFog, playerId) ||
+        _allVisibleIn(nextFog, playerId);
+  }
+
+  bool _allVisibleIn(FogOfWarState fog, String playerId) {
+    return _coordinates.every(
+      (coordinate) => fog.isVisible(playerId, coordinate),
+    );
   }
 }
 

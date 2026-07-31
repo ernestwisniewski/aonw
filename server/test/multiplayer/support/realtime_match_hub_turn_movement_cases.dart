@@ -45,9 +45,18 @@ void _expectGuestObservedMovement(
   GameUnit ownerUnit,
   TileData target,
 ) {
+  final coarseMovement = message.event!.events
+      .map(GameEventSerializer.fromJson)
+      .whereType<UnitMovedEvent>()
+      .single;
+  expect(coarseMovement.unitId, ownerUnit.id);
   expect(
-    message.event!.events.map(GameEventSerializer.fromJson).toList(),
-    isEmpty,
+    (coarseMovement.fromCol, coarseMovement.fromRow),
+    (ownerUnit.col, ownerUnit.row),
+  );
+  expect(
+    (coarseMovement.toCol, coarseMovement.toRow),
+    (target.col, target.row),
   );
   final movement = message.event!.movementExecutions.values.single;
   expect(movement.unitId, ownerUnit.id);

@@ -3,6 +3,8 @@ import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 
+import 'package:aonw_server/src/multiplayer/player_match_movement_audience.dart';
+
 /// Server-owned recipient metadata embedded only in canonical event storage.
 ///
 /// The metadata is intentionally not part of the public event codec. A
@@ -56,6 +58,8 @@ abstract final class PlayerMatchEventAudience {
                     playerId: playerId,
                     previous: previous,
                     next: next,
+                    previousFog: previousFog,
+                    nextFog: nextFog,
                   ))
                 playerId,
           ],
@@ -114,13 +118,26 @@ abstract final class PlayerMatchEventAudience {
     required String playerId,
     required GameEventOwnershipIndex previous,
     required GameEventOwnershipIndex next,
+    required FogOfWarState previousFog,
+    required FogOfWarState nextFog,
   }) {
     final descriptor = GameEventDomainDescriptor.forEvent(event);
-    return descriptor.isVisibleToPlayer(
+    if (descriptor.isVisibleToPlayer(
       playerId: playerId,
       previous: previous,
       next: next,
-    );
+    )) {
+      return true;
+    }
+    final coarseMovement = descriptor.coarseMovement;
+    return coarseMovement != null &&
+        PlayerMatchMovementAudience.canObserveCoarseMovement(
+          playerId: playerId,
+          origin: coarseMovement.origin,
+          destination: coarseMovement.destination,
+          previousFog: previousFog,
+          nextFog: nextFog,
+        );
   }
 }
 

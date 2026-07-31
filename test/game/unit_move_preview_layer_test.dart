@@ -14,7 +14,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-part 'unit_move_preview_route_semantics_test.dart';
+part 'unit_move_preview_route_semantics_cases.dart';
 
 UnitMovementPlan _plan({
   int targetCol = 1,

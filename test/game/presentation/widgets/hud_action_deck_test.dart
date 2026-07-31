@@ -20,7 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-part 'hud_action_deck_modal_coordination_test.dart';
+part 'hud_action_deck_modal_coordination_cases.dart';
 
 void main() {
   testWidgets('HudActionDeck keeps the bottom command rail to one CTA', (

@@ -5,9 +5,20 @@ GameEventDomainDescriptor? unitPresentationEventDomainDescriptor(
 ) {
   if (event is! UnitPresentationEvent) return null;
   return switch (event) {
-    UnitMovedEvent(:final unitId) => GameEventDomainDescriptor._(
-      unitIds: [unitId],
-    ),
+    UnitMovedEvent(
+      :final unitId,
+      :final fromCol,
+      :final fromRow,
+      :final toCol,
+      :final toRow,
+    ) =>
+      GameEventDomainDescriptor._(
+        unitIds: [unitId],
+        coarseMovement: GameEventCoarseMovement(
+          origin: HexCoordinate(col: fromCol, row: fromRow),
+          destination: HexCoordinate(col: toCol, row: toRow),
+        ),
+      ),
     FortifiedUnitThreatenedEvent(
       :final unitId,
       :final ownerPlayerId,

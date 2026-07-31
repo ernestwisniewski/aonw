@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/event/game_event_ownership_index.dart';
+import 'package:aonw_core/game/domain/hex.dart';
 
 part 'fortification_event_domain_descriptor.dart';
 
@@ -14,6 +15,26 @@ final class GameEventHostility {
   final String hostilePlayerId;
 }
 
+/// The public endpoints of one movement event, without exposing its route.
+final class GameEventCoarseMovement {
+  const GameEventCoarseMovement({
+    required this.origin,
+    required this.destination,
+  });
+
+  final HexCoordinate origin;
+  final HexCoordinate destination;
+
+  @override
+  bool operator ==(Object other) =>
+      other is GameEventCoarseMovement &&
+      other.origin == origin &&
+      other.destination == destination;
+
+  @override
+  int get hashCode => Object.hash(origin, destination);
+}
+
 final class GameEventDomainDescriptor {
   GameEventDomainDescriptor._({
     this.combat = false,
@@ -25,6 +46,7 @@ final class GameEventDomainDescriptor {
     Iterable<String> citiesLostPlayerIds = const [],
     Iterable<String> signedPeacePlayerIds = const [],
     this.actorHostilityVictimPlayerId,
+    this.coarseMovement,
     Iterable<String>? visiblePlayerIds,
     this.visibleToAllPlayers = false,
   }) : playerIds = Set.unmodifiable(playerIds),
@@ -244,6 +266,7 @@ final class GameEventDomainDescriptor {
   final List<String> citiesLostPlayerIds;
   final Set<String> signedPeacePlayerIds;
   final String? actorHostilityVictimPlayerId;
+  final GameEventCoarseMovement? coarseMovement;
   final Set<String>? _visiblePlayerIds;
   final bool visibleToAllPlayers;
 
