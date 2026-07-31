@@ -32,6 +32,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../support/game_intent_test_resolver.dart';
 
+part 'game_renderer_keyboard_movement_fixture.dart';
+
 MapData _minimalMap() => MapData(
   cols: 2,
   rows: 2,
@@ -2543,32 +2545,7 @@ void main() {
           totalCost: 4,
           availableMovementPoints: 1,
           canSpendTurnEnteringFirstStep: true,
-          steps: [
-            const UnitMovementStep(
-              col: 0,
-              row: 0,
-              enterCost: 0,
-              cumulativeCost: 0,
-            ),
-            const UnitMovementStep(
-              col: 1,
-              row: 0,
-              enterCost: 1,
-              cumulativeCost: 1,
-            ),
-            const UnitMovementStep(
-              col: 2,
-              row: 0,
-              enterCost: 2,
-              cumulativeCost: 3,
-            ),
-            const UnitMovementStep(
-              col: 3,
-              row: 0,
-              enterCost: 1,
-              cumulativeCost: 4,
-            ),
-          ],
+          steps: _artifactCarrierPreviewSteps,
         );
         final game = GameRenderer(
           mapData: map,

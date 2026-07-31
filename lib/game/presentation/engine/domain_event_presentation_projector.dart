@@ -66,8 +66,11 @@ abstract final class DomainEventPresentationProjector {
     );
   }
 
-  /// Projects recipient-filtered movement evidence without revealing paths
-  /// which are absent from the corresponding visible [UnitMovedEvent].
+  /// Projects recipient-filtered authoritative movement evidence.
+  ///
+  /// Visible events anchor executions on the global event timeline. When an
+  /// execution has no public event, the complete server-reviewed movement
+  /// stream remains authoritative and is presented before the event stream.
   static List<RendererEffect> projectObserved({
     required Iterable<RendererEffect> interactionEffects,
     required Iterable<GameEvent> events,
@@ -122,6 +125,13 @@ abstract final class DomainEventPresentationProjector {
         fact.eventIndex: fact,
     };
     final effects = <RendererEffect>[...interactionEffects];
+    if (movementPlan.hasUnanchoredExecutions) {
+      effects.addAll(
+        _movementEffectsFromExecutions(
+          movementPlan.validExecutions(excludedUnitIds: combatRetreatUnitIds),
+        ),
+      );
+    }
     var eventIndex = 0;
     while (eventIndex < events.length) {
       final event = events[eventIndex];
@@ -158,69 +168,6 @@ abstract final class DomainEventPresentationProjector {
     return effects.isEmpty
         ? const []
         : List<RendererEffect>.unmodifiable(effects);
-  }
-
-  static List<RendererEffect> _observedMovementEffects({
-    required List<GameEvent> events,
-    required int start,
-    required int end,
-    required MovementEventExecutionPlan movementPlan,
-    required Set<String> excludedUnitIds,
-  }) {
-    final effects = <RendererEffect>[];
-    final matches = movementPlan
-        .executionsForEventRange(start, end, excludedUnitIds: excludedUnitIds)
-        .toList(growable: false);
-    final matchedEventIndices = {for (final match in matches) match.eventIndex};
-    final lastDestinationByUnit = <String, (int, int)>{};
-    final fallbacks = <({int eventIndex, UnitMovedEvent movement})>[];
-    for (var index = start; index < end; index++) {
-      final movement = events[index] as UnitMovedEvent;
-      if (excludedUnitIds.contains(movement.unitId)) {
-        continue;
-      }
-      if (matchedEventIndices.contains(index)) {
-        lastDestinationByUnit[movement.unitId] = (
-          movement.toCol,
-          movement.toRow,
-        );
-        continue;
-      }
-      final previousDestination = lastDestinationByUnit[movement.unitId];
-      if (previousDestination != null &&
-          previousDestination != (movement.fromCol, movement.fromRow)) {
-        continue;
-      }
-      fallbacks.add((eventIndex: index, movement: movement));
-      lastDestinationByUnit[movement.unitId] = (movement.toCol, movement.toRow);
-    }
-
-    var fallbackIndex = 0;
-    for (final match in matches) {
-      while (fallbackIndex < fallbacks.length &&
-          fallbacks[fallbackIndex].eventIndex < match.eventIndex) {
-        effects.addAll(
-          unitMovementRendererEffects(
-            fallbacks[fallbackIndex].movement,
-            const {},
-          ),
-        );
-        fallbackIndex += 1;
-      }
-      effects.addAll(
-        QueuedMovementEffectBuilder.fromExecutions([match.execution]),
-      );
-    }
-    while (fallbackIndex < fallbacks.length) {
-      effects.addAll(
-        unitMovementRendererEffects(
-          fallbacks[fallbackIndex].movement,
-          const {},
-        ),
-      );
-      fallbackIndex += 1;
-    }
-    return effects;
   }
 
   static List<RendererEffect> _project({
@@ -367,4 +314,85 @@ abstract final class DomainEventPresentationProjector {
       RendererEffect() => '${effect.runtimeType}',
     };
   }
+}
+
+List<RendererEffect> _observedMovementEffects({
+  required List<GameEvent> events,
+  required int start,
+  required int end,
+  required MovementEventExecutionPlan movementPlan,
+  required Set<String> excludedUnitIds,
+}) {
+  final matches = movementPlan.hasUnanchoredExecutions
+      ? const <({int eventIndex, MovementCommandExecution execution})>[]
+      : movementPlan
+            .executionsForEventRange(
+              start,
+              end,
+              excludedUnitIds: excludedUnitIds,
+            )
+            .toList(growable: false);
+  final fallbacks = _movementFallbacks(
+    events: events,
+    start: start,
+    end: end,
+    matches: matches,
+    movementPlan: movementPlan,
+    excludedUnitIds: excludedUnitIds,
+  );
+  final effects = <RendererEffect>[];
+  var fallbackIndex = 0;
+  for (final match in matches) {
+    while (fallbackIndex < fallbacks.length &&
+        fallbacks[fallbackIndex].eventIndex < match.eventIndex) {
+      effects.addAll(_fallbackEffects(fallbacks[fallbackIndex++].movement));
+    }
+    effects.addAll(_movementEffectsFromExecutions([match.execution]));
+  }
+  while (fallbackIndex < fallbacks.length) {
+    effects.addAll(_fallbackEffects(fallbacks[fallbackIndex++].movement));
+  }
+  return effects;
+}
+
+List<({int eventIndex, UnitMovedEvent movement})> _movementFallbacks({
+  required List<GameEvent> events,
+  required int start,
+  required int end,
+  required List<({int eventIndex, MovementCommandExecution execution})> matches,
+  required MovementEventExecutionPlan movementPlan,
+  required Set<String> excludedUnitIds,
+}) {
+  final matchedIndices = {for (final match in matches) match.eventIndex};
+  final executionUnits = movementPlan.validExecutionUnitIds;
+  final lastDestinationByUnit = <String, (int, int)>{};
+  final fallbacks = <({int eventIndex, UnitMovedEvent movement})>[];
+  for (var index = start; index < end; index++) {
+    final movement = events[index] as UnitMovedEvent;
+    if (excludedUnitIds.contains(movement.unitId) ||
+        executionUnits.contains(movement.unitId)) {
+      continue;
+    }
+    if (matchedIndices.contains(index)) {
+      lastDestinationByUnit[movement.unitId] = movement.destination;
+      continue;
+    }
+    final previous = lastDestinationByUnit[movement.unitId];
+    if (previous != null && previous != movement.origin) continue;
+    fallbacks.add((eventIndex: index, movement: movement));
+    lastDestinationByUnit[movement.unitId] = movement.destination;
+  }
+  return fallbacks;
+}
+
+List<AnimateUnitMoveEffect> _movementEffectsFromExecutions(
+  Iterable<MovementCommandExecution> executions,
+) => QueuedMovementEffectBuilder.fromExecutions(executions);
+
+List<RendererEffect> _fallbackEffects(UnitMovedEvent movement) =>
+    unitMovementRendererEffects(movement, const {});
+
+extension on UnitMovedEvent {
+  (int, int) get origin => (fromCol, fromRow);
+  (int, int) get destination => (toCol, toRow);
 }

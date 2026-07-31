@@ -135,7 +135,10 @@ abstract final class MovementReducer {
     FogOfWarService fogOfWarService = const FogOfWarService(),
   }) {
     return _MovementTurnResetProcessor.run(
-      state,
+      _MovementTurnResetProcessor.withoutResetPlayerTurnInteraction(
+        state,
+        playerId,
+      ),
       mapView,
       playerId: playerId,
       fogOfWarService: fogOfWarService,

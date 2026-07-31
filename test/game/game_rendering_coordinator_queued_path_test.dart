@@ -1,0 +1,143 @@
+part of 'game_rendering_coordinator_test.dart';
+
+void _registerQueuedPathRenderingTests() {
+  test('rebases a queued path after the unit has already travelled', () {
+    final map = _map();
+    final warrior =
+        GameUnit(
+          id: 'warrior',
+          ownerPlayerId: 'player_1',
+          type: GameUnitType.warrior,
+          name: GameUnitType.warrior.defaultNameToken,
+          col: 1,
+          row: 0,
+          movementPoints: 3,
+        ).copyWithQueuedPath(
+          QueuedMovePath(
+            targetCol: 3,
+            targetRow: 0,
+            steps: const [
+              UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+              UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+              UnitMovementStep(col: 2, row: 0, enterCost: 2, cumulativeCost: 3),
+              UnitMovementStep(col: 3, row: 0, enterCost: 1, cumulativeCost: 4),
+            ],
+          ),
+        );
+    final movePreview = _RecordingMovePreviewLayer();
+
+    _coordinator(map: map, movePreview: movePreview).syncAll(
+      state: GameState(
+        activePlayerId: 'player_1',
+        units: [warrior],
+        interaction: GameInteractionState(
+          selection: GameSelection.unit(warrior, tile: _tile(map, 1)),
+        ),
+      ),
+      parent: Component(),
+      viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+    );
+
+    expect(movePreview.lastPreview?.path, const [
+      (col: 1, row: 0),
+      (col: 2, row: 0),
+      (col: 3, row: 0),
+    ]);
+    expect(movePreview.lastPreview?.totalCost, 3);
+    expect(movePreview.lastPreview?.canMoveNow, isTrue);
+    expect(movePreview.lastPreview?.estimatedTurns(3), 1);
+    expect(movePreview.lastDisplaySteps, hasLength(4));
+    expect(movePreview.lastTravelledUpToIndex, 1);
+    expect(movePreview.lastMaxMovementPointsPerTurn, 3);
+  });
+}
+
+class _RecordingMovePreviewLayer extends UnitMovePreviewLayer {
+  UnitMovementPlan? lastPreview;
+  List<UnitMovementPlan> lastPreviews = const [];
+  List<UnitMovementStep>? lastDisplaySteps;
+  int? lastTravelledUpToIndex;
+  GameUnitType? lastUnitType;
+  int? lastMaxMovementPointsPerTurn;
+  UnitMovePreviewRouteKind? lastRouteKind;
+  bool? lastDimmed;
+  bool? lastSubdued;
+  bool? lastShowCostLabel;
+  bool? lastShowConfirmationHint;
+  bool? lastShowTargetPulse;
+  bool? lastShowTargetArrow;
+  bool? lastShowConfirmedTarget;
+
+  @override
+  void sync({
+    required Component parent,
+    required UnitMovementPlan? preview,
+    int travelledUpToIndex = 0,
+    GameUnitType? unitType,
+    UnitMovePreviewRouteKind routeKind = UnitMovePreviewRouteKind.movement,
+    bool dimmed = false,
+    bool showConfirmationHint = false,
+    bool showTargetPulse = false,
+    bool showTargetArrow = false,
+    bool showConfirmedTarget = false,
+  }) => syncMany(
+    parent: parent,
+    previews: preview == null
+        ? const []
+        : [
+            UnitMovePreviewLayerEntry(
+              id: preview.unitId,
+              preview: preview,
+              travelledUpToIndex: travelledUpToIndex,
+              unitType: unitType,
+              routeKind: routeKind,
+              dimmed: dimmed,
+              showConfirmationHint: showConfirmationHint,
+              showTargetPulse: showTargetPulse,
+              showTargetArrow: showTargetArrow,
+              showConfirmedTarget: showConfirmedTarget,
+            ),
+          ],
+  );
+
+  @override
+  void syncMany({
+    required Component parent,
+    required Iterable<UnitMovePreviewLayerEntry> previews,
+  }) {
+    final entries = previews.toList(growable: false);
+    lastPreviews = [for (final entry in entries) entry.preview];
+    final last = entries.lastOrNull;
+    lastPreview = last?.preview;
+    lastDisplaySteps = last?.displaySteps;
+    lastTravelledUpToIndex = last?.travelledUpToIndex;
+    lastUnitType = last?.unitType;
+    lastMaxMovementPointsPerTurn = last?.maxMovementPointsPerTurn;
+    lastRouteKind = last?.routeKind;
+    lastDimmed = last?.dimmed;
+    lastSubdued = last?.subdued;
+    lastShowCostLabel = last?.showCostLabel;
+    lastShowConfirmationHint = last?.showConfirmationHint;
+    lastShowTargetPulse = last?.showTargetPulse;
+    lastShowTargetArrow = last?.showTargetArrow;
+    lastShowConfirmedTarget = last?.showConfirmedTarget;
+  }
+
+  @override
+  void clear() {
+    lastPreview = null;
+    lastPreviews = const [];
+    lastDisplaySteps = null;
+    lastTravelledUpToIndex = null;
+    lastUnitType = null;
+    lastMaxMovementPointsPerTurn = null;
+    lastRouteKind = null;
+    lastDimmed = null;
+    lastSubdued = null;
+    lastShowCostLabel = null;
+    lastShowConfirmationHint = null;
+    lastShowTargetPulse = null;
+    lastShowTargetArrow = null;
+    lastShowConfirmedTarget = null;
+  }
+}

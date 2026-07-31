@@ -25,7 +25,6 @@ abstract final class PlayerMatchEventAudience {
     required GameEventOwnershipIndex previous,
     required GameEventOwnershipIndex next,
     Iterable<CombatAnimationFact> combatAnimations = const [],
-    Map<String, Set<String>> movementAudiencePlayerIdsByUnit = const {},
     FogOfWarState previousFog = FogOfWarState.empty,
     FogOfWarState nextFog = FogOfWarState.empty,
   }) {
@@ -52,10 +51,6 @@ abstract final class PlayerMatchEventAudience {
           _audiencePlayerIdsKey: [
             for (final playerId in participants)
               if (combat.audience.contains(playerId) ||
-                  _movementAudienceFor(
-                    orderedEvents[eventIndex],
-                    movementAudiencePlayerIdsByUnit,
-                  ).contains(playerId) ||
                   _isVisibleTo(
                     orderedEvents[eventIndex],
                     playerId: playerId,
@@ -126,15 +121,6 @@ abstract final class PlayerMatchEventAudience {
       previous: previous,
       next: next,
     );
-  }
-
-  static Set<String> _movementAudienceFor(
-    GameEvent event,
-    Map<String, Set<String>> audiencesByUnit,
-  ) {
-    return event is UnitMovedEvent
-        ? audiencesByUnit[event.unitId] ?? const {}
-        : const {};
   }
 }
 

@@ -2182,38 +2182,12 @@ void main() {
     final ownerUnit = initialState.units.firstWhere(
       (unit) => unit.ownerPlayerId == owner.id,
     );
-    final occupied = {
-      for (final unit in initialState.units) '${unit.col}:${unit.row}',
-    };
-    final target = _testMap().tiles.firstWhere(
-      (tile) =>
-          !occupied.contains('${tile.col}:${tile.row}') &&
-          (tile.col - ownerUnit.col).abs() <= 1 &&
-          (tile.row - ownerUnit.row).abs() <= 1 &&
-          (tile.col != ownerUnit.col || tile.row != ownerUnit.row),
-    );
-    final movementPlan = UnitMovementPathfinder(
-      mapData: _testMap(),
-      units: initialState.units,
-    ).plan(unit: ownerUnit, targetTile: target);
-    if (movementPlan == null) {
-      throw StateError('Expected the movement fixture target to be reachable.');
-    }
-    final visibleMovementHexes = {
-      for (final step in movementPlan.steps)
-        HexCoordinate(col: step.col, row: step.row),
-    };
-    final visibleState = initialState.copyWith(
-      fogOfWar: initialState.fogOfWar.updatePlayer(
-        initialState.fogOfWar
-            .fogForPlayer(guest.id)
-            .withVisibleHexes(visibleMovementHexes),
-      ),
-    );
-    await store.saveState(
-      stored.copyWith(
-        snapshot: stored.snapshot.copyWith(state: visibleState.toJson()),
-      ),
+    final target = await _makeMovementVisibleToGuest(
+      store: store,
+      stored: stored,
+      state: initialState,
+      ownerUnit: ownerUnit,
+      guestId: guest.id,
     );
 
     final ownerInput = StreamController<MultiplayerClientMessage>();
@@ -2285,15 +2259,7 @@ void main() {
     );
     expect(movement.steps.last.col, target.col);
     expect(movement.steps.last.row, target.row);
-    expect(
-      guestMessage.event!.events.map(GameEventSerializer.fromJson).toList(),
-      [isA<UnitMovedEvent>()],
-    );
-    final observedMovement =
-        guestMessage.event!.movementExecutions.values.single;
-    expect(observedMovement.unitId, ownerUnit.id);
-    expect(observedMovement.steps.last.col, target.col);
-    expect(observedMovement.steps.last.row, target.row);
+    _expectGuestObservedMovement(guestMessage, ownerUnit, target);
 
     await ownerInput.close();
     await guestInput.close();
@@ -3575,44 +3541,3 @@ final class _CreateConflictOnceMatchStore extends _MemoryMatchStore {
     return super.createState(state);
   }
 }
-
-final class _SequenceInviteCodeGenerator implements InviteCodeGenerator {
-  _SequenceInviteCodeGenerator(this._codes);
-
-  final List<String> _codes;
-  var calls = 0;
-
-  @override
-  String generate() {
-    final code = _codes[calls.clamp(0, _codes.length - 1)];
-    calls += 1;
-    return code;
-  }
-}
-
-bool _isActiveMatch(WireMatch match) =>
-    match.state == 'open' || match.state == 'running';
-
-bool _isAfterRunningCursor(WireMatch match, RunningMatchCursor? cursor) {
-  if (cursor == null) return true;
-  final createdAtOrder = match.createdAt.compareTo(cursor.createdAt);
-  return createdAtOrder > 0 ||
-      (createdAtOrder == 0 && match.id.compareTo(cursor.publicId) > 0);
-}
-
-int _compareTestMatchesNewestFirst(WireMatch first, WireMatch second) {
-  final createdAtOrder = second.createdAt.compareTo(first.createdAt);
-  if (createdAtOrder != 0) return createdAtOrder;
-  return second.id.compareTo(first.id);
-}
-
-class _FakeMapCatalog implements MultiplayerMapCatalog {
-  const _FakeMapCatalog(this.mapData);
-
-  final MapData mapData;
-
-  @override
-  Future<MapData> loadAssetMap(String mapName) async => mapData;
-}
-
-MapData _testMap() => _realtimeMatchHubFixtureMap();

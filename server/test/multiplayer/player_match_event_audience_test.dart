@@ -73,48 +73,6 @@ void main() {
       );
     });
 
-    test('shares a movement event with its reviewed path audience', () {
-      final ownership = _ownership(
-        units: [_unit('scout-1', ownerPlayerId: 'player-1')],
-      );
-      final canonical = PlayerMatchEventAudience.annotateForStorage(
-        events: const [
-          UnitMovedEvent(
-            unitId: 'scout-1',
-            fromCol: 0,
-            fromRow: 0,
-            toCol: 2,
-            toRow: 0,
-          ),
-        ],
-        participantPlayerIds: const ['player-1', 'observer', 'hidden'],
-        previous: ownership,
-        next: ownership,
-        movementAudiencePlayerIdsByUnit: const {
-          'scout-1': {'player-1', 'observer'},
-        },
-      );
-
-      expect(canonical.single['_serverAudiencePlayerIds'], const [
-        'observer',
-        'player-1',
-      ]);
-      expect(
-        PlayerMatchEventAudience.projectForRecipient(
-          canonical,
-          recipientPlayerId: 'observer',
-        ).single,
-        containsPair('type', 'UnitMoved'),
-      );
-      expect(
-        PlayerMatchEventAudience.projectForRecipient(
-          canonical,
-          recipientPlayerId: 'hidden',
-        ),
-        isEmpty,
-      );
-    });
-
     test(
       'projects one ordered combat sequence to owners and visible observers',
       () {

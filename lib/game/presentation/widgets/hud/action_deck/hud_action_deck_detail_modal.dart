@@ -42,13 +42,7 @@ extension _HudActionDeckDetailModal on _HudActionDeckState {
     SelectionDetailViewModel detail,
     int revision,
   ) async {
-    if (!mounted ||
-        revision != _modalRevision ||
-        _modalPhase != _HudModalPhase.queued ||
-        _modalKind != _HudModalKind.detail ||
-        _requestedModalKey != _detailModalRequestKey(detail)) {
-      return;
-    }
+    if (!_canOpenDetailModal(detail, revision)) return;
     final routeRevision = ++_modalRouteRevision;
     _modalSession = _HudModalSession(
       kind: _HudModalKind.detail,
@@ -150,4 +144,11 @@ extension _HudActionDeckDetailModal on _HudActionDeckState {
     }
     _queueAutoTurnFlow();
   }
+
+  bool _canOpenDetailModal(SelectionDetailViewModel detail, int revision) =>
+      mounted &&
+      revision == _modalRevision &&
+      _modalPhase == _HudModalPhase.queued &&
+      _modalKind == _HudModalKind.detail &&
+      _requestedModalKey == _detailModalRequestKey(detail);
 }

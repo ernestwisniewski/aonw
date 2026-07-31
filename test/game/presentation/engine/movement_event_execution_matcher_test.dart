@@ -50,7 +50,7 @@ void main() {
       expect(city, lessThan(secondMove));
     });
 
-    test('rejects an aggregate chain reused by a later event', () {
+    test('prefers an authoritative chain over inconsistent events', () {
       final effects = _project(
         events: const [
           UnitMovedEvent(
@@ -72,10 +72,13 @@ void main() {
         executions: _twoSteps,
       );
 
-      expect(effects.whereType<AnimateUnitMoveEffect>(), isEmpty);
+      expect(effects.whereType<AnimateUnitMoveEffect>().map(_snapshot), const [
+        ('unit_a', 0, 0, 1, 0),
+        ('unit_a', 1, 0, 2, 0),
+      ]);
     });
 
-    test('rejects unmatched event and unmatched execution', () {
+    test('uses authoritative execution or a safe visible-event fallback', () {
       expect(
         _project(
           events: const [
@@ -88,8 +91,8 @@ void main() {
             ),
           ],
           executions: _twoSteps,
-        ).whereType<AnimateUnitMoveEffect>(),
-        isEmpty,
+        ).whereType<AnimateUnitMoveEffect>().map(_snapshot),
+        const [('unit_a', 0, 0, 1, 0), ('unit_a', 1, 0, 2, 0)],
       );
       expect(
         _project(
@@ -103,8 +106,8 @@ void main() {
             ),
           ],
           executions: [_execution(0, 1)],
-        ).whereType<AnimateUnitMoveEffect>(),
-        isEmpty,
+        ).whereType<AnimateUnitMoveEffect>().map(_snapshot),
+        const [('unit_a', 0, 0, 2, 0)],
       );
     });
   });

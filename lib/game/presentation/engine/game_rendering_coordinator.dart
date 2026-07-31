@@ -16,16 +16,14 @@ import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_w
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/threat_overlay_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/marker_health_fraction.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview_layer.dart';
+import 'package:aonw/game/presentation/engine/unit_move_preview_entry_builder.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/map_objective_marker_layer.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
-import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 
@@ -396,7 +394,11 @@ class GameRenderingCoordinator {
   }) {
     final entries = <UnitMovePreviewLayerEntry>[];
     for (final unit in state.units) {
-      final entry = _queuedPathEntryForUnit(state, unit, dimmed);
+      final entry = UnitMovePreviewEntryBuilder.queuedPath(
+        state: state,
+        unit: unit,
+        dimmed: dimmed,
+      );
       if (entry != null) entries.add(entry);
     }
 
@@ -414,7 +416,7 @@ class GameRenderingCoordinator {
             unitType: unit?.type,
             maxMovementPointsPerTurn: unit == null
                 ? null
-                : _maxMovementPointsPerTurn(unit),
+                : UnitMovePreviewEntryBuilder.maxMovementPoints(unit),
             dimmed: dimmed,
             subdued: !selected,
             showCostLabel: false,
@@ -426,81 +428,6 @@ class GameRenderingCoordinator {
     }
 
     movePreview.syncMany(parent: parent, previews: entries);
-  }
-
-  UnitMovePreviewLayerEntry? _queuedPathEntryForUnit(
-    GameState state,
-    GameUnit unit,
-    bool dimmed,
-  ) {
-    if (!state.canControlUnit(unit)) return null;
-    final tradeRoute = unit.merchantTradeRoute;
-    if (tradeRoute != null && tradeRoute.steps.length >= 2) {
-      final travelledUpToIndex = tradeRoute.steps.indexWhere(
-        (step) => step.col == unit.col && step.row == unit.row,
-      );
-      if (travelledUpToIndex < 0) return null;
-      final tradePlan = UnitMovementPlan(
-        unitId: unit.id,
-        targetCol: tradeRoute.targetCol,
-        targetRow: tradeRoute.targetRow,
-        totalCost: tradeRoute.steps.last.cumulativeCost,
-        availableMovementPoints: unit.movementPoints,
-        steps: tradeRoute.steps,
-      ).remainingFromStepIndex(travelledUpToIndex);
-      final selected = state.selectedUnitId == unit.id;
-      return UnitMovePreviewLayerEntry(
-        id: 'trade:${unit.id}',
-        preview: tradePlan,
-        displaySteps: tradeRoute.steps,
-        travelledUpToIndex: travelledUpToIndex,
-        unitType: unit.type,
-        maxMovementPointsPerTurn: _maxMovementPointsPerTurn(unit),
-        routeKind: UnitMovePreviewRouteKind.trade,
-        dimmed: dimmed,
-        subdued: !selected,
-        showCostLabel: false,
-        showConfirmedTarget: selected,
-      );
-    }
-
-    final queuedPath = unit.queuedPath;
-    if (queuedPath != null && queuedPath.steps.length >= 2) {
-      final travelledUpToIndex = queuedPath.steps.indexWhere(
-        (step) => step.col == unit.col && step.row == unit.row,
-      );
-      if (travelledUpToIndex < 0) return null;
-      final queuedPlan = UnitMovementPlan(
-        unitId: unit.id,
-        targetCol: queuedPath.targetCol,
-        targetRow: queuedPath.targetRow,
-        totalCost: queuedPath.steps.last.cumulativeCost,
-        availableMovementPoints: unit.movementPoints,
-        canSpendTurnEnteringFirstStep: unit.movementPoints > 0,
-        steps: queuedPath.steps,
-      ).remainingFromStepIndex(travelledUpToIndex);
-      final selected = state.selectedUnitId == unit.id;
-      return UnitMovePreviewLayerEntry(
-        id: 'queued:${unit.id}',
-        preview: queuedPlan,
-        displaySteps: queuedPath.steps,
-        travelledUpToIndex: travelledUpToIndex,
-        unitType: unit.type,
-        maxMovementPointsPerTurn: _maxMovementPointsPerTurn(unit),
-        dimmed: dimmed,
-        subdued: !selected,
-        showCostLabel: selected,
-        showConfirmedTarget: selected,
-      );
-    }
-    return null;
-  }
-
-  int _maxMovementPointsPerTurn(GameUnit unit) {
-    return UnitMovementBalance.maxMovementPointsFor(
-      type: unit.type,
-      carriedArtifactId: unit.carriedArtifactId,
-    );
   }
 
   bool _canShowPathForUnit(GameState state, String unitId) {

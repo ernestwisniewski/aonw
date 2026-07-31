@@ -150,10 +150,6 @@ bool _canRetargetMove(GameState state, GameUnit? unit) {
       !unit.isAutoExploring;
 }
 
-GameState _clearMoveTargeting(GameState state) {
-  return state.copyWithInteraction(moveCommandActive: false, movePreview: null);
-}
-
 GameState _projectCancel({
   required GameState currentState,
   required GameState projected,

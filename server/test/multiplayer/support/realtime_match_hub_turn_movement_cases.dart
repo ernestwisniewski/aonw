@@ -2,6 +2,59 @@ part of '../realtime_match_hub_test.dart';
 
 const _turnMovementClientMessageId = 'turn-movement-final-submit';
 
+Future<TileData> _makeMovementVisibleToGuest({
+  required _MemoryMatchStore store,
+  required StoredMatchState stored,
+  required PersistentGameState state,
+  required GameUnit ownerUnit,
+  required String guestId,
+}) async {
+  final occupied = {for (final unit in state.units) '${unit.col}:${unit.row}'};
+  final target = _testMap().tiles.firstWhere(
+    (tile) =>
+        !occupied.contains('${tile.col}:${tile.row}') &&
+        (tile.col - ownerUnit.col).abs() <= 1 &&
+        (tile.row - ownerUnit.row).abs() <= 1 &&
+        (tile.col != ownerUnit.col || tile.row != ownerUnit.row),
+  );
+  final plan = UnitMovementPathfinder(
+    mapData: _testMap(),
+    units: state.units,
+  ).plan(unit: ownerUnit, targetTile: target);
+  if (plan == null) {
+    throw StateError('Expected the movement fixture target to be reachable.');
+  }
+  final visibleHexes = {
+    for (final step in plan.steps) HexCoordinate(col: step.col, row: step.row),
+  };
+  final visibleState = state.copyWith(
+    fogOfWar: state.fogOfWar.updatePlayer(
+      state.fogOfWar.fogForPlayer(guestId).withVisibleHexes(visibleHexes),
+    ),
+  );
+  await store.saveState(
+    stored.copyWith(
+      snapshot: stored.snapshot.copyWith(state: visibleState.toJson()),
+    ),
+  );
+  return target;
+}
+
+void _expectGuestObservedMovement(
+  MultiplayerServerMessage message,
+  GameUnit ownerUnit,
+  TileData target,
+) {
+  expect(
+    message.event!.events.map(GameEventSerializer.fromJson).toList(),
+    isEmpty,
+  );
+  final movement = message.event!.movementExecutions.values.single;
+  expect(movement.unitId, ownerUnit.id);
+  expect(movement.steps.last.col, target.col);
+  expect(movement.steps.last.row, target.row);
+}
+
 void _registerRealtimeMatchHubTurnMovementTests() {
   _registerRealtimeMatchHubTurnMovementHistoryTests();
   test(

@@ -35,14 +35,13 @@ abstract final class MovementEventExecutionMatcher {
 
     final before = _UniqueUnitIndex(beforeUnits);
     final after = _UniqueUnitIndex(afterUnits);
+    final validExecutionIndexes = <int>{};
     final eventIndexByExecutionIndex = <int, int>{};
     final unitIds = {...indexedEvents.keys, ...indexedExecutions.keys};
     for (final unitId in unitIds) {
       final unitEvents = indexedEvents[unitId] ?? const [];
       final unitExecutions = indexedExecutions[unitId] ?? const [];
-      if (unitEvents.isEmpty ||
-          unitExecutions.isEmpty ||
-          _hasDuplicateEvents(unitEvents) ||
+      if (unitExecutions.isEmpty ||
           !_matchesSnapshotChain(
             unitExecutions,
             before[unitId],
@@ -50,6 +49,10 @@ abstract final class MovementEventExecutionMatcher {
           )) {
         continue;
       }
+      validExecutionIndexes.addAll(
+        unitExecutions.map((execution) => execution.index),
+      );
+      if (unitEvents.isEmpty || _hasDuplicateEvents(unitEvents)) continue;
       final assignment = _uniqueAssignment(unitEvents, unitExecutions);
       if (assignment == null) continue;
       for (var index = 0; index < unitExecutions.length; index++) {
@@ -60,6 +63,7 @@ abstract final class MovementEventExecutionMatcher {
 
     return MovementEventExecutionPlan._(
       orderedExecutions,
+      validExecutionIndexes,
       eventIndexByExecutionIndex,
     );
   }
@@ -68,11 +72,34 @@ abstract final class MovementEventExecutionMatcher {
 final class MovementEventExecutionPlan {
   const MovementEventExecutionPlan._(
     this._executions,
+    this._validExecutionIndexes,
     this._eventIndexByExecutionIndex,
   );
 
   final List<MovementCommandExecution> _executions;
+  final Set<int> _validExecutionIndexes;
   final Map<int, int> _eventIndexByExecutionIndex;
+
+  bool get hasUnanchoredExecutions => _validExecutionIndexes.any(
+    (index) => !_eventIndexByExecutionIndex.containsKey(index),
+  );
+
+  Set<String> get validExecutionUnitIds => Set.unmodifiable({
+    for (var index = 0; index < _executions.length; index++)
+      if (_validExecutionIndexes.contains(index)) _executions[index].unitId,
+  });
+
+  Iterable<MovementCommandExecution> validExecutions({
+    Set<String> excludedUnitIds = const {},
+  }) sync* {
+    for (var index = 0; index < _executions.length; index++) {
+      final execution = _executions[index];
+      if (_validExecutionIndexes.contains(index) &&
+          !excludedUnitIds.contains(execution.unitId)) {
+        yield execution;
+      }
+    }
+  }
 
   Iterable<({int eventIndex, MovementCommandExecution execution})>
   executionsForEventRange(

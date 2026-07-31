@@ -34,27 +34,9 @@ WireEvent _acceptedCommandEventForStorage({
       previous: previous,
       next: next,
       combatAnimations: reduction.combatAnimations,
-      movementAudiencePlayerIdsByUnit: _movementAudiencePlayerIdsByUnit(
-        movementExecutions,
-      ),
     ),
     movementExecutions: movementExecutions,
   );
-}
-
-Map<String, Set<String>> _movementAudiencePlayerIdsByUnit(
-  WireMovementExecutionList executions,
-) {
-  final audiences = <String, Set<String>>{};
-  for (final execution in executions.values) {
-    final audience = execution.serverAudiencePlayerIds;
-    if (audience == null) continue;
-    audiences.putIfAbsent(execution.unitId, () => {}).addAll(audience);
-  }
-  return Map.unmodifiable({
-    for (final entry in audiences.entries)
-      entry.key: Set<String>.unmodifiable(entry.value),
-  });
 }
 
 WireEvent _acceptedTimeoutEventForStorage({

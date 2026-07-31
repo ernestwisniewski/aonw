@@ -9,6 +9,8 @@ import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+part 'domain_event_presentation_projector_unanchored_test.dart';
+
 void main() {
   group('DomainEventPresentationProjector.projectObserved', () {
     test('assigns stable authoritative identity and logical start offsets', () {
@@ -136,37 +138,7 @@ void main() {
       expect(effects.clear, throwsUnsupportedError);
     });
 
-    test('deduplicates direct fallback for ambiguous duplicate events', () {
-      final effects = DomainEventPresentationProjector.projectObserved(
-        interactionEffects: const [],
-        previousState: _state(aCol: 0, bCol: 0),
-        state: _state(aCol: 2, bCol: 0),
-        events: const [
-          UnitMovedEvent(
-            unitId: 'unit_a',
-            fromCol: 0,
-            fromRow: 0,
-            toCol: 2,
-            toRow: 0,
-          ),
-          UnitMovedEvent(
-            unitId: 'unit_a',
-            fromCol: 0,
-            fromRow: 0,
-            toCol: 2,
-            toRow: 0,
-          ),
-        ],
-        visibleMovementExecutions: [
-          _execution('unit_a', 0, 0, 1, 0, 7, 7),
-          _execution('unit_a', 1, 0, 2, 0, 13, 20),
-        ],
-      );
-
-      expect(effects.whereType<AnimateUnitMoveEffect>().map(_snapshot), const [
-        ('unit_a', 0, 0, 2, 0, 0, 0),
-      ]);
-    });
+    _registerUnanchoredMovementProjectionTests();
 
     test('keeps a legal repeated fallback after a continuous round trip', () {
       final effects = DomainEventPresentationProjector.projectObserved(

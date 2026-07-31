@@ -45,26 +45,13 @@ extension _HudActionDeckCombatModal on _HudActionDeckState {
 
   Future<void> _showCombatModal(HudCombatPreview preview, int revision) async {
     final requestedKey = _combatPreviewKey(preview);
-    if (!mounted ||
-        revision != _modalRevision ||
-        _modalPhase != _HudModalPhase.queued ||
-        _modalKind != _HudModalKind.combat ||
-        _requestedModalKey != _combatModalRequestKey(preview) ||
-        !_combatPreviewIsCurrent(requestedKey)) {
-      return;
-    }
+    if (!_canOpenCombatModal(preview, requestedKey, revision)) return;
     await ref
         .read(hudCommandDispatcherProvider)
         .focusUnitMapTarget(preview.attackerUnitId);
 
-    if (!mounted ||
-        revision != _modalRevision ||
-        _modalPhase != _HudModalPhase.queued ||
-        _modalKind != _HudModalKind.combat ||
-        _requestedModalKey != _combatModalRequestKey(preview) ||
-        !_combatPreviewIsCurrent(requestedKey)) {
-      return;
-    }
+    if (!mounted) return;
+    if (!_canOpenCombatModal(preview, requestedKey, revision)) return;
 
     final currentPreview = _combatConfirmationPreview!;
     final routeRevision = ++_modalRouteRevision;
@@ -175,6 +162,18 @@ extension _HudActionDeckCombatModal on _HudActionDeckState {
     if (finish == _HudModalFinish.stale) return;
     _queueAutoTurnFlow();
   }
+
+  bool _canOpenCombatModal(
+    HudCombatPreview preview,
+    String requestedKey,
+    int revision,
+  ) =>
+      mounted &&
+      revision == _modalRevision &&
+      _modalPhase == _HudModalPhase.queued &&
+      _modalKind == _HudModalKind.combat &&
+      _requestedModalKey == _combatModalRequestKey(preview) &&
+      _combatPreviewIsCurrent(requestedKey);
 
   bool _combatPreviewIsCurrent(String requestedKey) {
     final currentPreview = _combatConfirmationPreview;

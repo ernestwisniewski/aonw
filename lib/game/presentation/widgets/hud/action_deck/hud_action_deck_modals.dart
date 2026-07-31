@@ -1,91 +1,191 @@
 part of 'hud_action_deck.dart';
 
+enum _HudModalKind { detail, combat }
+
+enum _HudModalPhase { idle, queued, open, closing }
+
+enum _HudModalFinish { stale, dismissed, reopen }
+
+final class _HudModalSession {
+  const _HudModalSession({
+    required this.kind,
+    required this.routeRevision,
+    required this.requestKey,
+    this.navigator,
+    this.route,
+    this.closingAtRevision,
+    this.closingRequestKey,
+  });
+
+  final _HudModalKind kind;
+  final int routeRevision;
+  final String requestKey;
+  final NavigatorState? navigator;
+  final ModalRoute<void>? route;
+  final int? closingAtRevision;
+  final String? closingRequestKey;
+
+  bool get closeStarted => closingAtRevision != null;
+
+  _HudModalSession withRequestKey(String value) => _copy(requestKey: value);
+
+  _HudModalSession attach({
+    required NavigatorState navigator,
+    required ModalRoute<void> route,
+  }) => _copy(navigator: navigator, route: route);
+
+  _HudModalSession startClosing(int requestRevision) => closeStarted
+      ? this
+      : _copy(
+          closingAtRevision: requestRevision,
+          closingRequestKey: requestKey,
+        );
+
+  _HudModalSession _copy({
+    String? requestKey,
+    NavigatorState? navigator,
+    ModalRoute<void>? route,
+    int? closingAtRevision,
+    String? closingRequestKey,
+  }) => _HudModalSession(
+    kind: kind,
+    routeRevision: routeRevision,
+    requestKey: requestKey ?? this.requestKey,
+    navigator: navigator ?? this.navigator,
+    route: route ?? this.route,
+    closingAtRevision: closingAtRevision ?? this.closingAtRevision,
+    closingRequestKey: closingRequestKey ?? this.closingRequestKey,
+  );
+}
+
+final class _HudModalRequest {
+  const _HudModalRequest.detail(this.detail)
+    : kind = _HudModalKind.detail,
+      combatPreview = null;
+
+  const _HudModalRequest.combat(this.combatPreview)
+    : kind = _HudModalKind.combat,
+      detail = null;
+
+  final _HudModalKind kind;
+  final SelectionDetailViewModel? detail;
+  final HudCombatPreview? combatPreview;
+}
+
 extension _HudActionDeckModals on _HudActionDeckState {
   void _syncModals() {
-    final combatPreview = _combatConfirmationPreview;
-    // Combat confirmation owns the modal lane; detail waits for its route.
-    final detail = combatPreview == null
-        ? _activeDetail(AppLocalizations.of(context))
-        : null;
-    final availableKind = combatPreview != null
-        ? _HudModalKind.combat
-        : detail != null
-        ? _HudModalKind.detail
-        : null;
-    final availableKey = combatPreview != null
-        ? _combatModalRequestKey(combatPreview)
-        : detail != null
-        ? _detailModalRequestKey(detail)
-        : null;
+    final request = _availableModalRequest();
+    final availableKey = _requestKey(request);
     if (_dismissedModalRequestKey != null &&
         _dismissedModalRequestKey != availableKey) {
       _dismissedModalRequestKey = null;
     }
-    final requestDismissed =
-        availableKey != null && availableKey == _dismissedModalRequestKey;
-    final desiredKind = requestDismissed ? null : availableKind;
+    final requestDismissed = availableKey == _dismissedModalRequestKey;
     final requestedKey = requestDismissed ? null : availableKey;
     final requestChanged = requestedKey != _requestedModalKey;
-    if (requestChanged) {
-      _requestedModalKey = requestedKey;
-      _modalRevision += 1;
-    }
-    final revision = _modalRevision;
+    final revision = _updateRequestedModalKey(requestedKey, requestChanged);
 
-    if (!requestDismissed && combatPreview != null) {
-      _queueCombatPreviewNotifierUpdate(combatPreview, revision);
-    } else if (!requestDismissed && detail != null) {
-      _queueDetailNotifierUpdate(detail, revision);
-    }
-
-    if (desiredKind == null) {
+    if (requestDismissed || request == null) {
       _syncMissingModal(requestChanged: requestChanged, revision: revision);
       return;
     }
+    _queueModalNotifierUpdate(request, revision);
+    _syncDesiredModal(
+      request,
+      requestKey: requestedKey!,
+      requestChanged: requestChanged,
+      revision: revision,
+    );
+  }
 
+  _HudModalRequest? _availableModalRequest() {
+    final combatPreview = _combatConfirmationPreview;
+    if (combatPreview != null) return _HudModalRequest.combat(combatPreview);
+    final detail = _activeDetail(AppLocalizations.of(context));
+    return detail == null ? null : _HudModalRequest.detail(detail);
+  }
+
+  String? _requestKey(_HudModalRequest? request) {
+    if (request == null) return null;
+    return switch (request.kind) {
+      _HudModalKind.combat => _combatModalRequestKey(request.combatPreview!),
+      _HudModalKind.detail => _detailModalRequestKey(request.detail!),
+    };
+  }
+
+  int _updateRequestedModalKey(String? key, bool changed) {
+    if (changed) {
+      _requestedModalKey = key;
+      _modalRevision += 1;
+    }
+    return _modalRevision;
+  }
+
+  void _queueModalNotifierUpdate(_HudModalRequest request, int revision) {
+    switch (request.kind) {
+      case _HudModalKind.combat:
+        _queueCombatPreviewNotifierUpdate(request.combatPreview!, revision);
+      case _HudModalKind.detail:
+        _queueDetailNotifierUpdate(request.detail!, revision);
+    }
+  }
+
+  void _syncDesiredModal(
+    _HudModalRequest request, {
+    required String requestKey,
+    required bool requestChanged,
+    required int revision,
+  }) {
+    final desiredKind = request.kind;
     switch (_modalPhase) {
       case _HudModalPhase.idle:
         _modalKind = desiredKind;
         _modalPhase = _HudModalPhase.queued;
-        _queueDesiredModalOpen(
-          detail: detail,
-          combatPreview: combatPreview,
-          revision: revision,
-        );
+        _queueDesiredModalOpen(request, revision);
         return;
       case _HudModalPhase.queued:
         if (requestChanged) {
           _modalKind = desiredKind;
-          _queueDesiredModalOpen(
-            detail: detail,
-            combatPreview: combatPreview,
-            revision: revision,
-          );
+          _queueDesiredModalOpen(request, revision);
         }
         return;
       case _HudModalPhase.open:
         if (_modalKind == desiredKind) {
-          final session = _modalSession;
-          if (session != null) {
-            _modalSession = session.withRequestKey(requestedKey!);
-          }
+          _refreshModalSessionKey(requestKey);
           return;
         }
         _modalPhase = _HudModalPhase.closing;
         _queueModalClose(revision);
         return;
       case _HudModalPhase.closing:
-        if (_modalKind == desiredKind && !_modalCloseStarted) {
-          _modalPhase = _HudModalPhase.open;
-          final session = _modalSession;
-          if (session != null) {
-            _modalSession = session.withRequestKey(requestedKey!);
-          }
-        } else if (requestChanged && !_modalCloseStarted) {
-          _queueModalClose(revision);
-        }
+        _syncClosingDesiredModal(
+          desiredKind,
+          requestKey: requestKey,
+          requestChanged: requestChanged,
+          revision: revision,
+        );
         return;
     }
+  }
+
+  void _syncClosingDesiredModal(
+    _HudModalKind desiredKind, {
+    required String requestKey,
+    required bool requestChanged,
+    required int revision,
+  }) {
+    if (_modalCloseStarted) return;
+    if (_modalKind == desiredKind) {
+      _modalPhase = _HudModalPhase.open;
+      _refreshModalSessionKey(requestKey);
+    } else if (requestChanged) {
+      _queueModalClose(revision);
+    }
+  }
+
+  void _refreshModalSessionKey(String requestKey) {
+    final session = _modalSession;
+    if (session != null) _modalSession = session.withRequestKey(requestKey);
   }
 
   void _syncMissingModal({
@@ -111,15 +211,12 @@ extension _HudActionDeckModals on _HudActionDeckState {
     }
   }
 
-  void _queueDesiredModalOpen({
-    required SelectionDetailViewModel? detail,
-    required HudCombatPreview? combatPreview,
-    required int revision,
-  }) {
-    if (combatPreview != null) {
-      _queueCombatModalOpen(combatPreview, revision);
-    } else if (detail != null) {
-      _queueDetailModalOpen(detail, revision);
+  void _queueDesiredModalOpen(_HudModalRequest request, int revision) {
+    switch (request.kind) {
+      case _HudModalKind.combat:
+        _queueCombatModalOpen(request.combatPreview!, revision);
+      case _HudModalKind.detail:
+        _queueDetailModalOpen(request.detail!, revision);
     }
   }
 
@@ -145,22 +242,16 @@ extension _HudActionDeckModals on _HudActionDeckState {
   }) {
     if (_modalCloseStarted) return false;
     final session = _modalSession;
-    if (_modalKind != kind ||
-        session == null ||
-        session.kind != kind ||
-        session.routeRevision != routeRevision ||
-        session.navigator == null ||
-        session.route == null) {
-      return false;
-    }
+    if (!_isActiveSession(session, kind, routeRevision)) return false;
+    final activeSession = session!;
     if (!_markModalRouteClosing(kind: kind, routeRevision: routeRevision)) {
       return false;
     }
     if (dismissRequest) {
-      _dismissedModalRequestKey = session.requestKey;
+      _dismissedModalRequestKey = activeSession.requestKey;
     }
-    final navigator = session.navigator!;
-    final route = session.route!;
+    final navigator = activeSession.navigator!;
+    final route = activeSession.route!;
     if (!route.isActive) return true;
     if (!route.isCurrent) {
       navigator.removeRoute(route);
@@ -169,6 +260,18 @@ extension _HudActionDeckModals on _HudActionDeckState {
     navigator.pop();
     return true;
   }
+
+  bool _isActiveSession(
+    _HudModalSession? session,
+    _HudModalKind kind,
+    int routeRevision,
+  ) =>
+      _modalKind == kind &&
+      session != null &&
+      session.kind == kind &&
+      session.routeRevision == routeRevision &&
+      session.navigator != null &&
+      session.route != null;
 
   bool _markModalRouteClosing({
     required _HudModalKind kind,
@@ -192,15 +295,11 @@ extension _HudActionDeckModals on _HudActionDeckState {
     required ModalRoute<void> route,
   }) {
     final session = _modalSession;
-    if (_modalKind != kind ||
-        session == null ||
-        session.kind != kind ||
-        session.routeRevision != routeRevision ||
-        !identical(session.route, route)) {
+    if (!_isFinishingSession(session, kind, routeRevision, route)) {
       return _HudModalFinish.stale;
     }
     final requestChangedAfterClose =
-        session.closingAtRevision != null &&
+        session!.closingAtRevision != null &&
         _modalRevision != session.closingAtRevision;
     final reopen =
         _modalPhase == _HudModalPhase.closing &&
@@ -218,6 +317,18 @@ extension _HudActionDeckModals on _HudActionDeckState {
     }
     return reopen ? _HudModalFinish.reopen : _HudModalFinish.dismissed;
   }
+
+  bool _isFinishingSession(
+    _HudModalSession? session,
+    _HudModalKind kind,
+    int routeRevision,
+    ModalRoute<void> route,
+  ) =>
+      _modalKind == kind &&
+      session != null &&
+      session.kind == kind &&
+      session.routeRevision == routeRevision &&
+      identical(session.route, route);
 
   String _detailModalRequestKey(SelectionDetailViewModel detail) {
     return 'detail:${detail.contentKey}';

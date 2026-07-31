@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/util/collection_equality.dart';
@@ -25,39 +26,20 @@ abstract final class MultiplayerInteractionReconciler {
       interactionSource.selection,
     );
     final selectedUnitId = selection?.unit?.id;
-    final sourceSelectedUnit = selectedUnitId == null
-        ? null
-        : interactionSource.unitById(selectedUnitId);
     final authoritativeSelectedUnit = selectedUnitId == null
         ? null
         : authoritativeState.unitById(selectedUnitId);
-    final selectedUnitMovementStateStayedValid =
-        sourceSelectedUnit != null &&
-        authoritativeSelectedUnit != null &&
-        sourceSelectedUnit.col == authoritativeSelectedUnit.col &&
-        sourceSelectedUnit.row == authoritativeSelectedUnit.row &&
-        sourceSelectedUnit.movementPoints ==
-            authoritativeSelectedUnit.movementPoints &&
-        sourceSelectedUnit.queuedPath == authoritativeSelectedUnit.queuedPath &&
-        sourceSelectedUnit.posture == authoritativeSelectedUnit.posture;
     final canKeepSelectedUnitAction =
         authoritativeSelectedUnit != null &&
         _canPreserveInteraction(
           authoritativeState,
           authoritativeSelectedUnit.ownerPlayerId,
         );
-
-    final authoritativePending = authoritativeState.pendingAction;
-    final resolvedPendingAction =
-        authoritativePending ??
-        _validPendingAction(
-          authoritativeState,
-          interactionSource.pendingAction,
-        );
-    final pendingAction =
-        turnAdvanced && resolvedPendingAction is PendingUnitTurnSkip
-        ? null
-        : resolvedPendingAction;
+    final pendingAction = _reconciledPendingAction(
+      authoritativeState,
+      interactionSource,
+      turnAdvanced: turnAdvanced,
+    );
     final authoritativeDraft = authoritativeState.cityFoundingDraft;
     final cityFoundingDraft =
         authoritativeDraft ??
@@ -65,40 +47,100 @@ abstract final class MultiplayerInteractionReconciler {
           authoritativeState,
           interactionSource.cityFoundingDraft,
         );
-    final sourceMovePreview = interactionSource.movePreview;
-    final movePreview =
-        !turnAdvanced &&
-            _pathfindingInputsStayedValid(
-              authoritativeState,
-              interactionSource,
-            ) &&
-            selectedUnitMovementStateStayedValid &&
-            canKeepSelectedUnitAction &&
-            _canKeepMovePreview(authoritativeSelectedUnit) &&
-            sourceMovePreview != null &&
-            sourceMovePreview.unitId == selectedUnitId &&
-            sourceMovePreview.availableMovementPoints ==
-                authoritativeSelectedUnit.movementPoints
-        ? sourceMovePreview
-        : null;
-    final canStartMoveTargeting =
-        canKeepSelectedUnitAction &&
-        _canStartMoveTargeting(authoritativeSelectedUnit);
+    final movement = _reconciledMovement(
+      authoritativeState: authoritativeState,
+      interactionSource: interactionSource,
+      selectedUnit: authoritativeSelectedUnit,
+      canKeepSelectedUnitAction: canKeepSelectedUnitAction,
+      turnAdvanced: turnAdvanced,
+      pendingAction: pendingAction,
+    );
 
     return authoritativeState.copyWith(
       interaction: sourceInteraction.copyWith(
         selection: selection,
-        movePreview: movePreview,
+        movePreview: movement.preview,
         cityFoundingDraft: cityFoundingDraft,
         pendingAction: pendingAction,
-        moveCommandActive:
-            canStartMoveTargeting &&
-            (turnAdvanced
-                ? pendingAction == null
-                : sourceInteraction.moveCommandActive),
+        moveCommandActive: movement.active,
       ),
     );
   }
+
+  static PendingPlayerAction? _reconciledPendingAction(
+    GameState authoritativeState,
+    GameState interactionSource, {
+    required bool turnAdvanced,
+  }) {
+    final resolved =
+        authoritativeState.pendingAction ??
+        _validPendingAction(
+          authoritativeState,
+          interactionSource.pendingAction,
+        );
+    return turnAdvanced && resolved is PendingUnitTurnSkip ? null : resolved;
+  }
+
+  static ({UnitMovementPlan? preview, bool active}) _reconciledMovement({
+    required GameState authoritativeState,
+    required GameState interactionSource,
+    required GameUnit? selectedUnit,
+    required bool canKeepSelectedUnitAction,
+    required bool turnAdvanced,
+    required PendingPlayerAction? pendingAction,
+  }) {
+    final canTarget =
+        canKeepSelectedUnitAction && _canStartMoveTargeting(selectedUnit);
+    final active =
+        canTarget &&
+        (turnAdvanced
+            ? pendingAction == null
+            : interactionSource.moveCommandActive);
+    final preview =
+        _canPreserveMovePreview(
+          authoritativeState: authoritativeState,
+          interactionSource: interactionSource,
+          selectedUnit: selectedUnit,
+          canKeepSelectedUnitAction: canKeepSelectedUnitAction,
+          turnAdvanced: turnAdvanced,
+        )
+        ? interactionSource.movePreview
+        : null;
+    return (preview: preview, active: active);
+  }
+
+  static bool _canPreserveMovePreview({
+    required GameState authoritativeState,
+    required GameState interactionSource,
+    required GameUnit? selectedUnit,
+    required bool canKeepSelectedUnitAction,
+    required bool turnAdvanced,
+  }) {
+    final preview = interactionSource.movePreview;
+    return !turnAdvanced &&
+        preview != null &&
+        selectedUnit != null &&
+        preview.unitId == selectedUnit.id &&
+        preview.availableMovementPoints == selectedUnit.movementPoints &&
+        canKeepSelectedUnitAction &&
+        _canKeepMovePreview(selectedUnit) &&
+        _selectedMovementStateStayedValid(
+          interactionSource.unitById(selectedUnit.id),
+          selectedUnit,
+        ) &&
+        _pathfindingInputsStayedValid(authoritativeState, interactionSource);
+  }
+
+  static bool _selectedMovementStateStayedValid(
+    GameUnit? source,
+    GameUnit authoritative,
+  ) =>
+      source != null &&
+      source.col == authoritative.col &&
+      source.row == authoritative.row &&
+      source.movementPoints == authoritative.movementPoints &&
+      source.queuedPath == authoritative.queuedPath &&
+      source.posture == authoritative.posture;
 
   static bool _turnAdvanced({
     required GameState authoritativeState,

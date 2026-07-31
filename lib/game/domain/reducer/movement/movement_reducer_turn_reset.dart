@@ -7,7 +7,6 @@ abstract final class _MovementTurnResetProcessor {
     required String? playerId,
     required FogOfWarService fogOfWarService,
   }) {
-    state = _withoutResetPlayerTurnInteraction(state, playerId);
     final currentUnits = state.units;
 
     final resetUnits = [
@@ -296,33 +295,28 @@ abstract final class _MovementTurnResetProcessor {
     return next;
   }
 
-  static GameState _withoutResetPlayerTurnInteraction(
+  static GameState withoutResetPlayerTurnInteraction(
     GameState state,
     String? resetPlayerId,
   ) {
     final pendingAction = state.pendingAction;
-    final clearTurnSkip =
-        pendingAction is PendingUnitTurnSkip &&
-        (resetPlayerId == null || pendingAction.ownerPlayerId == resetPlayerId);
-
     final movePreview = state.movePreview;
     final previewUnit = movePreview == null
         ? null
         : state.unitById(movePreview.unitId);
-    final clearMovePreview =
-        movePreview != null &&
-        (previewUnit == null ||
-            state.selectedUnitId != movePreview.unitId ||
-            resetPlayerId == null ||
-            previewUnit.ownerPlayerId == resetPlayerId);
-
     final selectedUnit = state.selectedUnit;
-    final deactivateMoveCommand =
-        state.moveCommandActive &&
-        (selectedUnit == null ||
-            resetPlayerId == null ||
-            clearMovePreview ||
-            selectedUnit.ownerPlayerId == resetPlayerId);
+    final clearTurnSkip = _clearTurnSkip(pendingAction, resetPlayerId);
+    final clearMovePreview = _clearMovePreview(
+      state,
+      resetPlayerId,
+      previewUnit,
+    );
+    final deactivateMoveCommand = _deactivateMoveCommand(
+      state,
+      resetPlayerId,
+      selectedUnit,
+      clearMovePreview,
+    );
 
     if (!clearTurnSkip && !clearMovePreview && !deactivateMoveCommand) {
       return state;
@@ -334,6 +328,36 @@ abstract final class _MovementTurnResetProcessor {
     );
   }
 }
+
+bool _clearTurnSkip(
+  PendingPlayerAction? pendingAction,
+  String? resetPlayerId,
+) =>
+    pendingAction is PendingUnitTurnSkip &&
+    (resetPlayerId == null || pendingAction.ownerPlayerId == resetPlayerId);
+
+bool _clearMovePreview(
+  GameState state,
+  String? resetPlayerId,
+  GameUnit? previewUnit,
+) =>
+    state.movePreview != null &&
+    (previewUnit == null ||
+        state.selectedUnitId != state.movePreview!.unitId ||
+        resetPlayerId == null ||
+        previewUnit.ownerPlayerId == resetPlayerId);
+
+bool _deactivateMoveCommand(
+  GameState state,
+  String? resetPlayerId,
+  GameUnit? selectedUnit,
+  bool clearMovePreview,
+) =>
+    state.moveCommandActive &&
+    (selectedUnit == null ||
+        resetPlayerId == null ||
+        clearMovePreview ||
+        selectedUnit.ownerPlayerId == resetPlayerId);
 
 abstract final class _TurnProjection {
   static void apply(

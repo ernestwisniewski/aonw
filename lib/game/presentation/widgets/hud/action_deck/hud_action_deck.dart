@@ -146,69 +146,6 @@ class HudActionDeck extends ConsumerStatefulWidget {
   ConsumerState<HudActionDeck> createState() => _HudActionDeckState();
 }
 
-enum _HudModalKind { detail, combat }
-
-enum _HudModalPhase { idle, queued, open, closing }
-
-enum _HudModalFinish { stale, dismissed, reopen }
-
-final class _HudModalSession {
-  const _HudModalSession({
-    required this.kind,
-    required this.routeRevision,
-    required this.requestKey,
-    this.navigator,
-    this.route,
-    this.closingAtRevision,
-    this.closingRequestKey,
-  });
-
-  final _HudModalKind kind;
-  final int routeRevision;
-  final String requestKey;
-  final NavigatorState? navigator;
-  final ModalRoute<void>? route;
-  final int? closingAtRevision;
-  final String? closingRequestKey;
-
-  bool get closeStarted => closingAtRevision != null;
-
-  _HudModalSession withRequestKey(String value) => _HudModalSession(
-    kind: kind,
-    routeRevision: routeRevision,
-    requestKey: value,
-    navigator: navigator,
-    route: route,
-    closingAtRevision: closingAtRevision,
-    closingRequestKey: closingRequestKey,
-  );
-
-  _HudModalSession attach({
-    required NavigatorState navigator,
-    required ModalRoute<void> route,
-  }) => _HudModalSession(
-    kind: kind,
-    routeRevision: routeRevision,
-    requestKey: requestKey,
-    navigator: navigator,
-    route: route,
-    closingAtRevision: closingAtRevision,
-    closingRequestKey: closingRequestKey,
-  );
-
-  _HudModalSession startClosing(int requestRevision) => closeStarted
-      ? this
-      : _HudModalSession(
-          kind: kind,
-          routeRevision: routeRevision,
-          requestKey: requestKey,
-          navigator: navigator,
-          route: route,
-          closingAtRevision: requestRevision,
-          closingRequestKey: requestKey,
-        );
-}
-
 class _HudActionDeckState extends ConsumerState<HudActionDeck> {
   late final ValueNotifier<_SelectionDetailModalModel?> _detailNotifier;
   late final ValueNotifier<HudCombatPreview?> _combatPreviewNotifier;
