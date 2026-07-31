@@ -232,12 +232,14 @@ void main() {
       'flutter build macos',
       'codesign --force',
       'codesign --verify',
-      r'ditto -c -k --keepParent "$(STEAM_MACOS_APP)" "$$submission_zip"',
+      r'ditto -c -k --keepParent --norsrc --noextattr --noqtn --noacl '
+          r'"$(STEAM_MACOS_APP)" "$$submission_zip"',
       'notarytool submit',
       'stapler staple',
       'stapler validate',
       'spctl --assess',
-      r'ditto -c -k --keepParent "$(STEAM_MACOS_APP)" '
+      r'ditto -c -k --keepParent --norsrc --noextattr --noqtn --noacl '
+          r'"$(STEAM_MACOS_APP)" '
           r'"$(STEAM_MACOS_ZIP)"',
     ];
 
@@ -250,6 +252,13 @@ void main() {
     expect(macos, contains(r'--keychain-profile "$(MACOS_NOTARY_PROFILE)"'));
     expect(macos, contains(r'--options runtime'));
     expect(macos, contains(r'--timestamp'));
+    expect(macos, contains('AppleDouble or __MACOSX entries'));
+    expect(
+      macos,
+      contains(
+        r'codesign --verify --deep --strict --verbose=2 "$$verification_dir/$(STEAM_MACOS_APP_NAME)"',
+      ),
+    );
   });
 
   test('deploy preflight validates macOS distribution credentials', () {

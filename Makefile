@@ -834,8 +834,8 @@ download-package:
 		echo "Public download packages contain steam-named paths."; \
 		exit 1; \
 	fi
-	@zip_path="$$(pwd)/$(DOWNLOAD_MACOS_ZIP)"; \
-		cd "$(DOWNLOAD_BUILD_DIR)/macos" && zip -qry "$$zip_path" .
+	@ditto -c -k --keepParent --norsrc --noextattr --noqtn --noacl \
+		"$(DOWNLOAD_BUILD_DIR)/macos/$(STEAM_MACOS_APP_NAME)" "$(DOWNLOAD_MACOS_ZIP)"
 	@zip_path="$$(pwd)/$(DOWNLOAD_WINDOWS_ZIP)"; \
 		cd "$(DOWNLOAD_BUILD_DIR)/windows" && zip -qry "$$zip_path" .
 	@if [ "$(DOWNLOAD_INCLUDE_LINUX)" = "1" ]; then \
@@ -844,6 +844,15 @@ download-package:
 	fi
 	@cp "$(ITCH_ANDROID_APK)" "$(DOWNLOAD_ANDROID_APK)"
 	@unzip -tq "$(DOWNLOAD_MACOS_ZIP)" >/dev/null
+	@if unzip -Z1 "$(DOWNLOAD_MACOS_ZIP)" | rg '(^|/)(\._|__MACOSX/)' >/dev/null; then \
+		echo "Public macOS download must not contain AppleDouble or __MACOSX entries."; \
+		exit 1; \
+	fi
+	@tmp_dir=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp_dir"' EXIT; \
+	ditto -x -k "$(DOWNLOAD_MACOS_ZIP)" "$$tmp_dir"; \
+	codesign --verify --deep --strict --verbose=2 "$$tmp_dir/$(STEAM_MACOS_APP_NAME)"; \
+	spctl --assess --type execute --verbose=2 "$$tmp_dir/$(STEAM_MACOS_APP_NAME)"
 	@unzip -tq "$(DOWNLOAD_WINDOWS_ZIP)" >/dev/null
 	@if [ "$(DOWNLOAD_INCLUDE_LINUX)" = "1" ]; then unzip -tq "$(DOWNLOAD_LINUX_ZIP)" >/dev/null; fi
 	@unzip -tq "$(DOWNLOAD_ANDROID_APK)" >/dev/null
@@ -1160,12 +1169,13 @@ steam-macos: macos-distribution-preflight
 	@echo "Verified Steam macOS API: $(STEAM_API_BASE_URL)"
 	@set -e; \
 	submission_dir=$$(mktemp -d "$${TMPDIR:-/tmp}/aonw-notary.XXXXXX"); \
-	trap 'rm -rf "$$submission_dir"' EXIT HUP INT TERM; \
+	verification_dir=$$(mktemp -d "$${TMPDIR:-/tmp}/aonw-macos-verify.XXXXXX"); \
+	trap 'rm -rf "$$submission_dir" "$$verification_dir"' EXIT HUP INT TERM; \
 	submission_zip="$$submission_dir/aonw-macos-notary.zip"; \
 	codesign --force --deep --options runtime --timestamp \
 		--sign "$(MACOS_DEVELOPER_IDENTITY)" "$(STEAM_MACOS_APP)"; \
 	codesign --verify --deep --strict --verbose=2 "$(STEAM_MACOS_APP)"; \
-	ditto -c -k --keepParent "$(STEAM_MACOS_APP)" "$$submission_zip"; \
+	ditto -c -k --keepParent --norsrc --noextattr --noqtn --noacl "$(STEAM_MACOS_APP)" "$$submission_zip"; \
 	xcrun notarytool submit "$$submission_zip" --wait \
 		--keychain-profile "$(MACOS_NOTARY_PROFILE)"; \
 	xcrun stapler staple "$(STEAM_MACOS_APP)"; \
@@ -1173,8 +1183,15 @@ steam-macos: macos-distribution-preflight
 	spctl --assess --type execute --verbose=2 "$(STEAM_MACOS_APP)"; \
 	mkdir -p "$(STEAM_DIST_DIR)"; \
 	rm -f "$(STEAM_MACOS_ZIP)"; \
-	ditto -c -k --keepParent "$(STEAM_MACOS_APP)" "$(STEAM_MACOS_ZIP)"; \
-	unzip -tq "$(STEAM_MACOS_ZIP)" >/dev/null
+	ditto -c -k --keepParent --norsrc --noextattr --noqtn --noacl "$(STEAM_MACOS_APP)" "$(STEAM_MACOS_ZIP)"; \
+	unzip -tq "$(STEAM_MACOS_ZIP)" >/dev/null; \
+	if unzip -Z1 "$(STEAM_MACOS_ZIP)" | rg '(^|/)(\._|__MACOSX/)' >/dev/null; then \
+		echo "Steam macOS ZIP must not contain AppleDouble or __MACOSX entries."; \
+		exit 1; \
+	fi; \
+	ditto -x -k "$(STEAM_MACOS_ZIP)" "$$verification_dir"; \
+	codesign --verify --deep --strict --verbose=2 "$$verification_dir/$(STEAM_MACOS_APP_NAME)"; \
+	spctl --assess --type execute --verbose=2 "$$verification_dir/$(STEAM_MACOS_APP_NAME)"
 	@echo "Steam macOS ZIP ready: $(STEAM_MACOS_ZIP)"
 
 steam-windows:
@@ -1524,6 +1541,12 @@ itch-desktop:
 	@mkdir -p "$(ITCH_MACOS_DIR)" "$(ITCH_WINDOWS_DIR)"
 	@if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then mkdir -p "$(ITCH_LINUX_DIR)"; fi
 	@ditto -x -k "$(STEAM_MACOS_ZIP)" "$(ITCH_MACOS_DIR)"
+	@if find "$(ITCH_MACOS_DIR)" -name '._*' -print -quit | rg . >/dev/null; then \
+		echo "itch macOS folder must not contain AppleDouble entries."; \
+		exit 1; \
+	fi
+	@codesign --verify --deep --strict --verbose=2 "$(ITCH_MACOS_DIR)/$(STEAM_MACOS_APP_NAME)"
+	@spctl --assess --type execute --verbose=2 "$(ITCH_MACOS_DIR)/$(STEAM_MACOS_APP_NAME)"
 	@unzip -q "$(STEAM_WINDOWS_ZIP)" -d "$(ITCH_WINDOWS_DIR)"
 	@if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then unzip -q "$(STEAM_LINUX_ZIP)" -d "$(ITCH_LINUX_DIR)"; fi
 	@test -d "$(ITCH_MACOS_DIR)/$(STEAM_MACOS_APP_NAME)" || { echo "itch macOS folder must contain $(STEAM_MACOS_APP_NAME)."; exit 1; }
