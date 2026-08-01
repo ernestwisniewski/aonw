@@ -29,6 +29,7 @@ abstract final class PlayerMatchEventAudience {
     Iterable<CombatAnimationFact> combatAnimations = const [],
     FogOfWarState previousFog = FogOfWarState.empty,
     FogOfWarState nextFog = FogOfWarState.empty,
+    Map<String, Set<String>> exactMovementAudienceByUnit = const {},
   }) {
     final orderedEvents = List<GameEvent>.unmodifiable(events);
     final participants =
@@ -60,6 +61,7 @@ abstract final class PlayerMatchEventAudience {
                     next: next,
                     previousFog: previousFog,
                     nextFog: nextFog,
+                    exactMovementAudienceByUnit: exactMovementAudienceByUnit,
                   ))
                 playerId,
           ],
@@ -120,6 +122,7 @@ abstract final class PlayerMatchEventAudience {
     required GameEventOwnershipIndex next,
     required FogOfWarState previousFog,
     required FogOfWarState nextFog,
+    required Map<String, Set<String>> exactMovementAudienceByUnit,
   }) {
     final descriptor = GameEventDomainDescriptor.forEvent(event);
     if (descriptor.isVisibleToPlayer(
@@ -128,6 +131,10 @@ abstract final class PlayerMatchEventAudience {
       next: next,
     )) {
       return true;
+    }
+    if (event case UnitMovedEvent(:final unitId)) {
+      final exactAudience = exactMovementAudienceByUnit[unitId];
+      if (exactAudience?.contains(playerId) ?? false) return true;
     }
     final coarseMovement = descriptor.coarseMovement;
     return coarseMovement != null &&

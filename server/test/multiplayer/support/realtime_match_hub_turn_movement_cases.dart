@@ -70,6 +70,93 @@ void _registerRealtimeMatchHubTurnMovementTests() {
     'persists and reuses recipient-safe turn movement evidence',
     _persistsAndReusesTurnMovementEvidence,
   );
+  test(
+    'streams the movement event when an exact-path unit leaves the view',
+    _streamsMovementEventForExactPathLeavingView,
+  );
+}
+
+Future<void> _streamsMovementEventForExactPathLeavingView() async {
+  final fixture = await _startTurnMovementFixture(
+    observerSeesOwnerPathBefore: true,
+  );
+  final before = await fixture.hub.loadSnapshot(
+    store: fixture.store,
+    userIdentifier: 'turn-movement-observer',
+    matchId: fixture.match.id,
+  );
+  expect(
+    PersistentGameState.fromJson(before.state).units.byId('unit-a'),
+    isNotNull,
+  );
+
+  final clients = await _TurnMovementClients.connect(fixture);
+  try {
+    final observerEvent = clients.observerStream.firstWhere(
+      (message) => message.event != null,
+    );
+    final acknowledgement = await clients.sendOwner(
+      _turnMovementMessage(fixture),
+    );
+    final streamed = await observerEvent;
+
+    expect(acknowledgement.ack?.accepted, isTrue);
+    final after = PersistentGameState.fromJson(streamed.snapshot!.state);
+    expect(after.units.byId('unit-a'), isNull);
+    final streamedMovements = streamed.event!.events
+        .map(GameEventSerializer.fromJson)
+        .whereType<UnitMovedEvent>()
+        .toList(growable: false);
+    expect(
+      streamedMovements
+          .map(
+            (event) =>
+                '${event.unitId}:${event.fromCol},${event.fromRow}'
+                '->${event.toCol},${event.toRow}',
+          )
+          .toList(),
+      ['unit-a:0,0->3,0', 'unit-a:1,0->3,0'],
+    );
+    expect(
+      _turnMovementSnapshots(streamed.event!.movementExecutions),
+      _expectedOwnerTurnMovements(),
+    );
+    expect(
+      streamed.event!.toJson().toString(),
+      isNot(contains('_serverAudiencePlayerIds')),
+    );
+
+    final canonical = (await fixture.store.listEvents(
+      fixture.match.id,
+      0,
+    )).single;
+    final unitAEvents = canonical.events
+        .where((event) {
+          final decoded = GameEventSerializer.fromJson(event);
+          return decoded is UnitMovedEvent && decoded.unitId == 'unit-a';
+        })
+        .toList(growable: false);
+    expect(unitAEvents, hasLength(2));
+    expect(
+      unitAEvents.every(
+        (event) => (event['_serverAudiencePlayerIds']! as List<Object?>)
+            .contains(fixture.observer.id),
+      ),
+      isTrue,
+    );
+    expect(
+      canonical.movementExecutions.values
+          .where((execution) => execution.unitId == 'unit-a')
+          .every(
+            (execution) => execution.serverAudiencePlayerIds!.contains(
+              fixture.observer.id,
+            ),
+          ),
+      isTrue,
+    );
+  } finally {
+    await clients.close();
+  }
 }
 
 Future<void> _persistsAndReusesTurnMovementEvidence() async {
@@ -167,6 +254,7 @@ Future<void> _expectStoredTurnMovement(_TurnMovementFixture fixture) async {
 
 Future<_TurnMovementFixture> _startTurnMovementFixture({
   Duration? turnTimeout,
+  bool observerSeesOwnerPathBefore = false,
 }) async {
   final mapCatalog = _FakeMapCatalog(_turnMovementMap());
   final commandReducer = turnTimeout == null
@@ -209,11 +297,17 @@ Future<_TurnMovementFixture> _startTurnMovementFixture({
     unitBPlayer: match.players[1],
     observer: match.players[2],
   );
-  await _seedTurnMovementState(fixture);
+  await _seedTurnMovementState(
+    fixture,
+    observerSeesOwnerPathBefore: observerSeesOwnerPathBefore,
+  );
   return fixture;
 }
 
-Future<void> _seedTurnMovementState(_TurnMovementFixture fixture) async {
+Future<void> _seedTurnMovementState(
+  _TurnMovementFixture fixture, {
+  required bool observerSeesOwnerPathBefore,
+}) async {
   final stored = (await fixture.store.findState(fixture.match.id))!;
   final save = GameSave.fromJson(stored.snapshot.save).copyWith(
     playerStates: {
@@ -248,7 +342,19 @@ Future<void> _seedTurnMovementState(_TurnMovementFixture fixture) async {
           fixture.unitBPlayer.id,
           row: 1,
         ),
-        fixture.observer.id: PlayerFogOfWar(playerId: fixture.observer.id),
+        fixture.observer.id: observerSeesOwnerPathBefore
+            ? PlayerFogOfWar(
+                playerId: fixture.observer.id,
+                discoveredHexes: {
+                  for (var col = 0; col <= 3; col++)
+                    HexCoordinate(col: col, row: 0),
+                },
+                visibleHexes: {
+                  for (var col = 0; col <= 3; col++)
+                    HexCoordinate(col: col, row: 0),
+                },
+              )
+            : PlayerFogOfWar(playerId: fixture.observer.id),
       },
     ),
     runtimeState: GameRuntimeState(

@@ -34,6 +34,9 @@ WireEvent _acceptedCommandEventForStorage({
       previous: previous,
       next: next,
       combatAnimations: reduction.combatAnimations,
+      exactMovementAudienceByUnit: PlayerMatchMovementAudience.audienceByUnit(
+        movementExecutions,
+      ),
     ),
     movementExecutions: movementExecutions,
   );

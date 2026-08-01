@@ -51,4 +51,50 @@ void _registerMovementEventAudienceTests() {
       isEmpty,
     );
   });
+
+  test('keeps the movement event for every exact-path recipient', () {
+    const origin = HexCoordinate(col: 0, row: 0);
+    final previous = _ownership(
+      units: [_unit('mover', ownerPlayerId: 'player-1', col: 0, row: 0)],
+    );
+    final next = _ownership(
+      units: [_unit('mover', ownerPlayerId: 'player-1', col: 3, row: 0)],
+    );
+    final canonical = PlayerMatchEventAudience.annotateForStorage(
+      events: const [
+        UnitMovedEvent(
+          unitId: 'mover',
+          fromCol: 0,
+          fromRow: 0,
+          toCol: 3,
+          toRow: 0,
+        ),
+      ],
+      participantPlayerIds: const ['player-1', 'exact-observer', 'hidden'],
+      previous: previous,
+      next: next,
+      previousFog: _fog('exact-observer', {origin}),
+      nextFog: FogOfWarState.empty,
+      exactMovementAudienceByUnit: const {
+        'mover': {'player-1', 'exact-observer'},
+      },
+    );
+
+    final exactObserver = PlayerMatchEventAudience.projectForRecipient(
+      canonical,
+      recipientPlayerId: 'exact-observer',
+    );
+    expect(exactObserver, hasLength(1));
+    expect(
+      GameEventSerializer.fromJson(exactObserver.single),
+      isA<UnitMovedEvent>(),
+    );
+    expect(
+      PlayerMatchEventAudience.projectForRecipient(
+        canonical,
+        recipientPlayerId: 'hidden',
+      ),
+      isEmpty,
+    );
+  });
 }

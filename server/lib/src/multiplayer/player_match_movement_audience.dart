@@ -43,6 +43,22 @@ abstract final class PlayerMatchMovementAudience {
     return WireMovementExecutionList(_annotatedExecutions(ordered, audiences));
   }
 
+  /// Returns the reviewed exact-movement recipients grouped by unit.
+  ///
+  /// Event projection uses this to keep a movement event alongside exact
+  /// execution evidence when the post-transition player view no longer
+  /// contains the moved unit. Invalid or inconsistent chains fail closed.
+  static Map<String, Set<String>> audienceByUnit(
+    WireMovementExecutionList canonical,
+  ) {
+    final audits = _wireChainAudits(canonical.values);
+    return Map.unmodifiable({
+      for (final entry in audits.entries)
+        if (entry.value.audiencePlayerIds case final audience?)
+          entry.key: Set.unmodifiable(audience),
+    });
+  }
+
   static WireMovementExecutionList projectForRecipient(
     WireMovementExecutionList canonical, {
     required String recipientPlayerId,
@@ -267,6 +283,9 @@ final class _WireMovementChainAudit {
 
   bool isVisibleTo(String playerId) =>
       _valid && (_audience?.contains(playerId) ?? false);
+
+  List<String>? get audiencePlayerIds =>
+      _valid && _audience != null ? List.unmodifiable(_audience!) : null;
 }
 
 bool _sameStrings(List<String>? first, List<String>? second) {

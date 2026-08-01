@@ -134,6 +134,10 @@ void main() {
         'unit-b:0,1->1,1;audience=public',
         'unit-a:1,0->2,0|3,0;audience=public',
       ]);
+      expect(PlayerMatchMovementAudience.audienceByUnit(canonical), {
+        'unit-a': {_playerA, _observer},
+        'unit-b': {_playerB, _observer},
+      });
     });
 
     test('drops a broken or unknown unit chain but retains other order', () {
@@ -258,6 +262,9 @@ void main() {
         expect(_projectSnapshots(canonical, _observer), [
           'unit-b:0,1->1,1;audience=public',
         ]);
+        expect(PlayerMatchMovementAudience.audienceByUnit(canonical), {
+          'unit-b': {_playerB, _observer},
+        });
       }
     });
 

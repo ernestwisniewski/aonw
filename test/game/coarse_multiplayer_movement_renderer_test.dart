@@ -1,5 +1,6 @@
 import 'package:aonw/api/transport/live_server_event.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/domain_event_presentation_projector.dart';
 import 'package:aonw/game/presentation/engine/game_renderer.dart';
 import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
@@ -17,7 +18,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test(
-    'coarse stream movement animates once after an enemy leaves vision',
+    'exact stream movement falls back once after an enemy leaves vision',
     () async {
       final enemy = GameUnit.produced(
         id: 'enemy',
@@ -36,7 +37,7 @@ void main() {
         unitId: 'enemy',
         fromCol: 0,
         fromRow: 0,
-        toCol: 2,
+        toCol: 3,
         toRow: 0,
       );
       final live = LiveServerEvent.fromWire(
@@ -44,12 +45,66 @@ void main() {
           matchId: 'match_1',
           offset: 7,
           timestamp: DateTime.utc(2026, 7, 31),
-          events: [GameEventSerializer.toJson(event)],
-          movementExecutions: WireMovementExecutionList(const []),
+          events: [
+            GameEventSerializer.toJson(event),
+            GameEventSerializer.toJson(
+              const UnitMovedEvent(
+                unitId: 'enemy',
+                fromCol: 1,
+                fromRow: 0,
+                toCol: 3,
+                toRow: 0,
+              ),
+            ),
+          ],
+          movementExecutions: WireMovementExecutionList([
+            WireMovementExecution(
+              unitId: 'enemy',
+              fromCol: 0,
+              fromRow: 0,
+              steps: const [
+                WireMovementStep(
+                  col: 1,
+                  row: 0,
+                  enterCost: 1,
+                  cumulativeCost: 1,
+                ),
+              ],
+            ),
+            WireMovementExecution(
+              unitId: 'enemy',
+              fromCol: 1,
+              fromRow: 0,
+              steps: const [
+                WireMovementStep(
+                  col: 2,
+                  row: 0,
+                  enterCost: 1,
+                  cumulativeCost: 1,
+                ),
+                WireMovementStep(
+                  col: 3,
+                  row: 0,
+                  enterCost: 1,
+                  cumulativeCost: 2,
+                ),
+              ],
+            ),
+          ]),
         ),
-        events: const [event],
+        events: const [
+          event,
+          UnitMovedEvent(
+            unitId: 'enemy',
+            fromCol: 1,
+            fromRow: 0,
+            toCol: 3,
+            toRow: 0,
+          ),
+        ],
         combatAnimations: const [],
       );
+      expect(live.movementExecutions, hasLength(2));
       final batch = DomainEventPresentationProjector.projectObservedBatch(
         identity: PresentationBatchIdentity(
           sourceId: live.wire.matchId,
@@ -61,6 +116,12 @@ void main() {
         previousState: before,
         state: after,
       );
+      final movement = batch.domainEffects.single.effect;
+      expect(movement, isA<AnimateUnitMoveEffect>());
+      final coarse = movement as AnimateUnitMoveEffect;
+      expect((coarse.fromCol, coarse.fromRow), (0, 0));
+      expect((coarse.steps.single.col, coarse.steps.single.row), (3, 0));
+      expect(coarse.steps.single.cumulativeCost, 0);
       final renderer = GameRenderer(mapData: _map(), onCommand: (_) async {});
       addTearDown(renderer.disposeRenderer);
 
@@ -90,10 +151,10 @@ FogOfWarState _fog(Set<HexCoordinate> visible) => FogOfWarState(
 );
 
 MapData _map() => MapData(
-  cols: 3,
+  cols: 4,
   rows: 1,
   tiles: [
-    for (var col = 0; col < 3; col++)
+    for (var col = 0; col < 4; col++)
       TileData(
         col: col,
         row: 0,
