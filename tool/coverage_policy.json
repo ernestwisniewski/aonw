@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "enforcedSince": "ee7ecf961f2d27b0ac9ea0f3ba0d1d4768fa7189",
-  "ratchetEpoch": 1,
+  "ratchetEpoch": 2,
   "diffLineMinimumBasisPoints": 9000,
   "excludeSuffixes": [
     ".freezed.dart",
