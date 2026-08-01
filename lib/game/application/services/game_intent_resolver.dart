@@ -174,16 +174,21 @@ final class GameIntentResolver {
         environment.startCityExpansionSelection(state, intent),
       CancelCityExpansionSelectionCommand() =>
         environment.cancelCityExpansionSelection(state, intent),
-      StartWorkerActionSelectionCommand() ||
-      CancelWorkerActionSelectionCommand() => environment.workerInteraction(
+      WorkerInteractionCommand() => _resolveWorkerInteraction(
         state,
         intent,
+        environment,
       ),
-      ChooseWorkerImprovementIntent() => _resolveWorkerImprovementChoice(
-        state,
-        intent,
-      ),
-      ConfirmWorkerImprovementIntent() => GameStateTransition(state: state),
+      _ => _resolveCombatInteraction(state, intent, environment),
+    };
+  }
+
+  GameStateTransition _resolveCombatInteraction(
+    GameState state,
+    GameIntent intent,
+    ReducerEnvironment environment,
+  ) {
+    return switch (intent) {
       StartAttackTargetingCommand() => environment.startAttackTargeting(
         state,
         intent,
@@ -197,6 +202,26 @@ final class GameIntentResolver {
       CancelCommanderMergeSelectionCommand() =>
         environment.cancelCommanderMergeSelection(state, intent),
       _ => _resolveSelectionInteraction(state, intent, environment),
+    };
+  }
+
+  GameStateTransition _resolveWorkerInteraction(
+    GameState state,
+    GameIntent intent,
+    ReducerEnvironment environment,
+  ) {
+    return switch (intent) {
+      StartWorkerActionSelectionCommand() ||
+      CancelWorkerActionSelectionCommand() => environment.workerInteraction(
+        state,
+        intent,
+      ),
+      ChooseWorkerImprovementIntent() => _resolveWorkerImprovementChoice(
+        state,
+        intent,
+      ),
+      ConfirmWorkerImprovementIntent() => GameStateTransition(state: state),
+      _ => throw StateError('Expected a worker interaction'),
     };
   }
 

@@ -22,6 +22,8 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+part 'ai_turn_runner_test_support.dart';
+
 void main() {
   group('AiTurnRunner', () {
     tearDown(shutdownIsolatedAiPlanExecutorForTesting);
@@ -595,15 +597,6 @@ class _RecordingGameLogger implements GameLogger {
   ]) {
     warnMessages.add('$tag: $message');
   }
-}
-
-AiContext _context({required int turn}) {
-  return AiContext(
-    ruleset: GameRuleset.defaults,
-    mapData: _mapData,
-    turn: turn,
-    rng: AiRng.fromTurn(turn: turn, playerId: 'player_1', baseSeed: 7),
-  );
 }
 
 GameView _view({String forPlayerId = 'player_1'}) {

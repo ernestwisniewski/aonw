@@ -481,22 +481,3 @@ final class _WorkerReplayHarness {
     return [for (final step in timeline.steps) step.state];
   }
 }
-
-final class _MemoryReplayStore implements ReplayStore {
-  _MemoryReplayStore(this.snapshot);
-
-  SaveSnapshot? snapshot;
-
-  @override
-  Future<SaveSnapshot?> initialSnapshot(String saveId) async => snapshot;
-
-  @override
-  Future<void> saveInitialSnapshot(String saveId, SaveSnapshot snapshot) async {
-    this.snapshot = snapshot;
-  }
-
-  @override
-  Future<void> delete(String saveId) async {
-    snapshot = null;
-  }
-}

@@ -41,6 +41,8 @@ part 'game_actions_provider_turns.dart';
 class GameCommandController extends _$GameCommandController {
   Future<void> _commandQueue = Future<void>.value();
   final Set<String> _shownTurnStartProductionBubbleKeys = {};
+  Ref get _providerRef => ref;
+  bool get _isMounted => ref.mounted;
 
   @override
   void build() {
@@ -245,68 +247,6 @@ class GameCommandController extends _$GameCommandController {
     if (!ref.mounted) return record.result;
     await _presentDispatchRecord(record);
     return record.result;
-  }
-
-  Future<_CommandDispatchRecord> _dispatchOnly(
-    Object command, {
-    GameCommandContext context = const GameCommandContext(),
-  }) async {
-    if (!ref.mounted) {
-      return _CommandDispatchRecord(
-        command: command,
-        previousState: null,
-        result: const DispatchCommandResult(state: GameState()),
-      );
-    }
-    final session = ref.read(activeGameSessionProvider);
-    if (session == null || session.saveId.isEmpty) {
-      return _CommandDispatchRecord(
-        command: command,
-        previousState: null,
-        result: const DispatchCommandResult(state: GameState()),
-      );
-    }
-
-    final previousState = _currentGameState();
-    final notifier = ref.read(gameStateProvider(session.saveId).notifier);
-    late final DispatchCommandResult result;
-    try {
-      result = await switch (command) {
-        DomainCommand() => notifier.dispatchTransition(
-          command,
-          context: context,
-        ),
-        GameIntent() => notifier.dispatchIntentTransition(
-          command,
-          context: context,
-        ),
-        _ => throw ArgumentError.value(command, 'command'),
-      };
-    } catch (error, stackTrace) {
-      if (ref.mounted) {
-        ref
-            .read(gameLoggerProvider)
-            .warn(
-              'GameCommandController',
-              'command dispatch failed',
-              error,
-              stackTrace,
-            );
-        _invalidateSave(session.saveId);
-      }
-      return _CommandDispatchRecord(
-        command: command,
-        previousState: previousState,
-        result: DispatchCommandResult(
-          state: previousState ?? const GameState(),
-        ),
-      );
-    }
-    return _CommandDispatchRecord(
-      command: command,
-      previousState: previousState,
-      result: result,
-    );
   }
 
   Future<void> _presentDispatchRecord(_CommandDispatchRecord record) async {

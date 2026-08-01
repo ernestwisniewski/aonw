@@ -4,6 +4,8 @@ import 'package:test/test.dart';
 
 import 'mcts_simulator_parity_support.dart';
 
+part 'mcts_simulator_parity_map_support.dart';
+
 void main() {
   group('TracingMctsSimulator movement parity', () {
     test('applies reachable movement like the canonical game engine', () {
@@ -1089,33 +1091,3 @@ FogOfWarState _visibleFog() {
 MapData _mapData() => MctsSimulatorParityFixtures.mapData();
 
 WorldMap _worldMap() => MctsSimulatorParityFixtures.worldMap();
-
-MapData _highCostMapData() {
-  return MapData(
-    cols: 3,
-    rows: 1,
-    tiles: const [
-      TileData(
-        col: 0,
-        row: 0,
-        terrains: [TerrainType.plains],
-        resources: [],
-        height: 0,
-      ),
-      TileData(
-        col: 1,
-        row: 0,
-        terrains: [TerrainType.snow, TerrainType.forest, TerrainType.tundra],
-        resources: [],
-        height: 0,
-      ),
-      TileData(
-        col: 2,
-        row: 0,
-        terrains: [TerrainType.plains],
-        resources: [],
-        height: 0,
-      ),
-    ],
-  );
-}

@@ -49,6 +49,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+part 'game_screen_visual_assertions.dart';
+
 class _FakeGameRepository implements GameRepository {
   final Map<String, SaveSnapshot> snapshots;
 
@@ -373,19 +375,6 @@ void _expectRectContains(Rect outer, Rect inner, {required String reason}) {
   expect(inner.top, greaterThanOrEqualTo(outer.top), reason: reason);
   expect(inner.right, lessThanOrEqualTo(outer.right), reason: reason);
   expect(inner.bottom, lessThanOrEqualTo(outer.bottom), reason: reason);
-}
-
-void _expectWarmPanelSurface(
-  WidgetTester tester,
-  Key key, {
-  required String reason,
-}) {
-  final surface = tester.widget<DecoratedBox>(find.byKey(key));
-  final decoration = surface.decoration;
-  expect(decoration, isA<BoxDecoration>(), reason: reason);
-  final box = decoration as BoxDecoration;
-  expect(box.gradient, isA<LinearGradient>(), reason: reason);
-  expect(box.color, isNull, reason: reason);
 }
 
 void main() {

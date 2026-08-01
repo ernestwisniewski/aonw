@@ -9,18 +9,18 @@
             "found": 191
           },
           "lines": {
-            "hit": 11860,
-            "found": 12745
+            "hit": 11947,
+            "found": 12806
           }
         },
         "domain": {
           "files": {
-            "hit": 385,
-            "found": 395
+            "hit": 383,
+            "found": 394
           },
           "lines": {
-            "hit": 13774,
-            "found": 15738
+            "hit": 13799,
+            "found": 15755
           }
         },
         "map": {
@@ -264,8 +264,8 @@
             "found": 52
           },
           "lines": {
-            "hit": 2226,
-            "found": 2761
+            "hit": 2259,
+            "found": 2797
           }
         },
         "observability": {

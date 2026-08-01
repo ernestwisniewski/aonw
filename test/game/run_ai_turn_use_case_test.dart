@@ -30,6 +30,8 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+part 'run_ai_turn_use_case_test_support.dart';
+
 void main() {
   group('RunAiTurnUseCase', () {
     test('runs AI player through submit turn in multiplayer mode', () async {
@@ -800,24 +802,6 @@ GameSave _save({
     players: players ?? _defaultPlayers(aiStrategyId),
     gameMode: gameMode,
   );
-}
-
-List<Player> _defaultPlayers(AiStrategyId aiStrategyId) {
-  return [
-    const Player(id: 'player_1', name: 'Alice', colorValue: 0xFF2563EB),
-    Player(
-      id: 'player_2',
-      name: 'AI Random',
-      colorValue: 0xFFDC2626,
-      kind: PlayerKind.ai,
-      ai: AiPlayer(
-        strategyId: aiStrategyId,
-        difficulty: AiDifficulty.normal,
-        persona: AiPersona.aggressive,
-        seed: 123,
-      ),
-    ),
-  ];
 }
 
 final _mapData = MapData(

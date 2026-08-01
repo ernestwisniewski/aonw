@@ -170,57 +170,23 @@ abstract final class GameSoundCueMapper {
     String playerId,
   ) {
     if (playerId.isEmpty) return true;
+    if (command is GameIntent) {
+      return _intentBelongsToPlayer(command, previousState, state, playerId);
+    }
+    if (command is! DomainCommand) return true;
     return switch (command) {
-      SelectUnitCommand(:final unitId) ||
-      StartAttackTargetingCommand(attackerUnitId: final unitId) ||
-      CancelAttackTargetingCommand(attackerUnitId: final unitId) ||
-      AttackHexCommand(attackerUnitId: final unitId) ||
-      StartCommanderMergeSelectionCommand(commanderUnitId: final unitId) ||
-      CancelCommanderMergeSelectionCommand(commanderUnitId: final unitId) ||
-      MoveUnitCommand(:final unitId) ||
-      CancelUnitActionCommand(:final unitId) ||
-      SkipUnitTurnCommand(:final unitId) ||
-      FortifyUnitCommand(:final unitId) ||
-      AutoExploreUnitCommand(:final unitId) ||
-      StartMerchantTradeRouteSelectionCommand(:final unitId) ||
-      CancelMerchantTradeRouteSelectionCommand(:final unitId) ||
-      AssignMerchantTradeRouteCommand(:final unitId) ||
-      StartMerchantMoveToCitySelectionCommand(:final unitId) ||
-      CancelMerchantMoveToCitySelectionCommand(:final unitId) ||
-      MoveMerchantToCityCommand(:final unitId) ||
-      StartArtifactExcavationCommand(:final unitId) ||
-      StoreArtifactInCityCommand(:final unitId) ||
-      DetachTroopCommand(:final unitId) ||
-      StartWorkerActionSelectionCommand(:final unitId) ||
-      SelectWorkerImprovementCommand(:final unitId) ||
-      ConfirmWorkerImprovementCommand(:final unitId) ||
-      CancelWorkerActionSelectionCommand(:final unitId) ||
-      CancelWorkerJobCommand(:final unitId) ||
-      AssignWorkerToHexCommand(:final unitId) ||
-      CancelWorkerAssignmentCommand(:final unitId) => _belongsToPlayer(
+      UnitDomainCommand(:final unitId) => _belongsToPlayer(
         (previousState?.unitById(unitId) ?? state.unitById(unitId))
             ?.ownerPlayerId,
         playerId,
       ),
-      FoundCityCommand(:final founderId) => _belongsToPlayer(
-        (previousState?.unitById(founderId) ?? state.unitById(founderId))
+      AttackHexCommand(:final attackerUnitId) => _belongsToPlayer(
+        (previousState?.unitById(attackerUnitId) ??
+                state.unitById(attackerUnitId))
             ?.ownerPlayerId,
         playerId,
       ),
-      SelectCityCommand(:final cityId) ||
-      CityTappedCommand(:final cityId) ||
-      StartBuildingCommand(:final cityId) ||
-      StartUnitProductionCommand(:final cityId) ||
-      StartCityProjectCommand(:final cityId) ||
-      StartWonderCommand(:final cityId) ||
-      SetCitySpecializationCommand(:final cityId) ||
-      RushProductionCommand(:final cityId) ||
-      StartCityWorkedHexSelectionCommand(:final cityId) ||
-      CancelCityWorkedHexSelectionCommand(:final cityId) ||
-      ToggleWorkedHexCommand(:final cityId) ||
-      StartCityExpansionSelectionCommand(:final cityId) ||
-      CancelCityExpansionSelectionCommand(:final cityId) ||
-      SelectCityExpansionHexCommand(:final cityId) => _belongsToPlayer(
+      CityTargetDomainCommand(:final cityId) => _belongsToPlayer(
         (state.cityById(cityId) ?? previousState?.cityById(cityId))
             ?.ownerPlayerId,
         playerId,
@@ -230,28 +196,10 @@ abstract final class GameSoundCueMapper {
       TradeArtifactCommand(playerId: final commandPlayerId) ||
       OpenResourceTradeCommand(playerId: final commandPlayerId) ||
       OpenResourceExchangeCommand(playerId: final commandPlayerId) ||
-      SendDiplomaticProposalCommand(playerId: final commandPlayerId) ||
-      RespondDiplomaticProposalCommand(playerId: final commandPlayerId) ||
-      SendDiplomaticMessageCommand(playerId: final commandPlayerId) ||
-      RespondDiplomaticMessageCommand(playerId: final commandPlayerId) ||
-      DeclareWarCommand(playerId: final commandPlayerId) ||
-      SendGoldGiftCommand(playerId: final commandPlayerId) ||
-      FocusNextPendingActionCommand(playerId: final commandPlayerId) ||
-      FocusTurnStartActionCommand(
+      DiplomaticCommand(playerId: final commandPlayerId) ||
+      SelectTechnologyCommand(
         playerId: final commandPlayerId,
       ) => commandPlayerId == playerId,
-      SelectTechnologyCommand(playerId: final commandPlayerId) ||
-      CancelResearchSelectionCommand(
-        playerId: final commandPlayerId,
-      ) => commandPlayerId == playerId,
-      StartCityFoundingCommand() ||
-      CancelCityFoundingCommand() ||
-      ToggleMoveTargetingCommand() => _selectedOwnerBelongsToPlayer(
-        previousState ?? state,
-        playerId,
-      ),
-      TileTappedCommand() || SelectTileCommand() => true,
-      _ => true,
     };
   }
 
@@ -274,4 +222,94 @@ abstract final class GameSoundCueMapper {
     if (playerId.isEmpty) return true;
     return ownerPlayerId == playerId;
   }
+}
+
+bool _intentBelongsToPlayer(
+  GameIntent intent,
+  GameState? previousState,
+  GameState state,
+  String playerId,
+) {
+  final unitId = _primaryUnitIntentId(intent) ?? _modeUnitIntentId(intent);
+  if (unitId != null) {
+    return GameSoundCueMapper._belongsToPlayer(
+      (previousState?.unitById(unitId) ?? state.unitById(unitId))
+          ?.ownerPlayerId,
+      playerId,
+    );
+  }
+  final cityId = _cityIntentId(intent);
+  if (cityId != null) {
+    return GameSoundCueMapper._belongsToPlayer(
+      (state.cityById(cityId) ?? previousState?.cityById(cityId))
+          ?.ownerPlayerId,
+      playerId,
+    );
+  }
+  final commandPlayerId = _playerIntentId(intent);
+  if (commandPlayerId != null) return commandPlayerId == playerId;
+  if (_usesSelectedOwner(intent)) {
+    return GameSoundCueMapper._selectedOwnerBelongsToPlayer(
+      previousState ?? state,
+      playerId,
+    );
+  }
+  return true;
+}
+
+String? _primaryUnitIntentId(GameIntent intent) {
+  return switch (intent) {
+    SelectUnitCommand(:final unitId) => unitId,
+    StartAttackTargetingCommand(attackerUnitId: final unitId) ||
+    CancelAttackTargetingCommand(attackerUnitId: final unitId) => unitId,
+    StartCommanderMergeSelectionCommand(commanderUnitId: final unitId) ||
+    CancelCommanderMergeSelectionCommand(
+      commanderUnitId: final unitId,
+    ) => unitId,
+    _ => null,
+  };
+}
+
+String? _modeUnitIntentId(GameIntent intent) {
+  return switch (intent) {
+    StartMerchantTradeRouteSelectionCommand(:final unitId) ||
+    CancelMerchantTradeRouteSelectionCommand(:final unitId) ||
+    StartMerchantMoveToCitySelectionCommand(:final unitId) ||
+    CancelMerchantMoveToCitySelectionCommand(:final unitId) ||
+    StartWorkerActionSelectionCommand(:final unitId) ||
+    CancelWorkerActionSelectionCommand(:final unitId) ||
+    ChooseWorkerImprovementIntent(:final unitId) ||
+    ConfirmWorkerImprovementIntent(:final unitId) => unitId,
+    _ => null,
+  };
+}
+
+String? _cityIntentId(GameIntent intent) {
+  return switch (intent) {
+    SelectCityCommand(:final cityId) ||
+    CityTappedCommand(:final cityId) ||
+    StartCityWorkedHexSelectionCommand(:final cityId) ||
+    CancelCityWorkedHexSelectionCommand(:final cityId) ||
+    StartCityExpansionSelectionCommand(:final cityId) ||
+    CancelCityExpansionSelectionCommand(:final cityId) => cityId,
+    _ => null,
+  };
+}
+
+String? _playerIntentId(GameIntent intent) {
+  return switch (intent) {
+    FocusNextPendingActionCommand(:final playerId) ||
+    FocusTurnStartActionCommand(:final playerId) ||
+    CancelResearchSelectionCommand(:final playerId) => playerId,
+    _ => null,
+  };
+}
+
+bool _usesSelectedOwner(GameIntent intent) {
+  return switch (intent) {
+    StartCityFoundingCommand() ||
+    CancelCityFoundingCommand() ||
+    ToggleMoveTargetingCommand() => true,
+    _ => false,
+  };
 }

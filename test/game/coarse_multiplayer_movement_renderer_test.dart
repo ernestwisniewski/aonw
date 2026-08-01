@@ -40,70 +40,7 @@ void main() {
         toCol: 3,
         toRow: 0,
       );
-      final live = LiveServerEvent.fromWire(
-        wire: WireEvent(
-          matchId: 'match_1',
-          offset: 7,
-          timestamp: DateTime.utc(2026, 7, 31),
-          events: [
-            GameEventSerializer.toJson(event),
-            GameEventSerializer.toJson(
-              const UnitMovedEvent(
-                unitId: 'enemy',
-                fromCol: 1,
-                fromRow: 0,
-                toCol: 3,
-                toRow: 0,
-              ),
-            ),
-          ],
-          movementExecutions: WireMovementExecutionList([
-            WireMovementExecution(
-              unitId: 'enemy',
-              fromCol: 0,
-              fromRow: 0,
-              steps: const [
-                WireMovementStep(
-                  col: 1,
-                  row: 0,
-                  enterCost: 1,
-                  cumulativeCost: 1,
-                ),
-              ],
-            ),
-            WireMovementExecution(
-              unitId: 'enemy',
-              fromCol: 1,
-              fromRow: 0,
-              steps: const [
-                WireMovementStep(
-                  col: 2,
-                  row: 0,
-                  enterCost: 1,
-                  cumulativeCost: 1,
-                ),
-                WireMovementStep(
-                  col: 3,
-                  row: 0,
-                  enterCost: 1,
-                  cumulativeCost: 2,
-                ),
-              ],
-            ),
-          ]),
-        ),
-        events: const [
-          event,
-          UnitMovedEvent(
-            unitId: 'enemy',
-            fromCol: 1,
-            fromRow: 0,
-            toCol: 3,
-            toRow: 0,
-          ),
-        ],
-        combatAnimations: const [],
-      );
+      final live = _liveMovementEvent(event);
       expect(live.movementExecutions, hasLength(2));
       final batch = DomainEventPresentationProjector.projectObservedBatch(
         identity: PresentationBatchIdentity(
@@ -141,6 +78,58 @@ void main() {
       await renderer.applyProjectedTransition(after, batch);
       expect(renderer.animatingUnitIdsListenable.value, isEmpty);
     },
+  );
+}
+
+LiveServerEvent _liveMovementEvent(UnitMovedEvent event) {
+  return LiveServerEvent.fromWire(
+    wire: WireEvent(
+      matchId: 'match_1',
+      offset: 7,
+      timestamp: DateTime.utc(2026, 7, 31),
+      events: [
+        GameEventSerializer.toJson(event),
+        GameEventSerializer.toJson(
+          const UnitMovedEvent(
+            unitId: 'enemy',
+            fromCol: 1,
+            fromRow: 0,
+            toCol: 3,
+            toRow: 0,
+          ),
+        ),
+      ],
+      movementExecutions: WireMovementExecutionList([
+        WireMovementExecution(
+          unitId: 'enemy',
+          fromCol: 0,
+          fromRow: 0,
+          steps: const [
+            WireMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+          ],
+        ),
+        WireMovementExecution(
+          unitId: 'enemy',
+          fromCol: 1,
+          fromRow: 0,
+          steps: const [
+            WireMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 1),
+            WireMovementStep(col: 3, row: 0, enterCost: 1, cumulativeCost: 2),
+          ],
+        ),
+      ]),
+    ),
+    events: [
+      event,
+      const UnitMovedEvent(
+        unitId: 'enemy',
+        fromCol: 1,
+        fromRow: 0,
+        toCol: 3,
+        toRow: 0,
+      ),
+    ],
+    combatAnimations: const [],
   );
 }
 

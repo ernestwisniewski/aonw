@@ -22,6 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 part 'hud_action_deck_modal_coordination_cases.dart';
+part 'hud_action_deck_city_expansion_cases.dart';
 
 void main() {
   testWidgets('HudActionDeck keeps the bottom command rail to one CTA', (
@@ -813,7 +814,7 @@ void main() {
   testWidgets('combat modal reopens the latest preview after closing', (
     tester,
   ) async {
-    final commands = <GameIntent>[];
+    final commands = <Object>[];
     final container = ProviderContainer(
       overrides: [
         hudCommandDispatcherProvider.overrideWith(
@@ -863,7 +864,7 @@ void main() {
   testWidgets(
     'combat modal blocks back and stays dismissed while command is in flight',
     (tester) async {
-      final commands = <GameIntent>[];
+      final commands = <Object>[];
       final container = ProviderContainer(
         overrides: [
           hudCommandDispatcherProvider.overrideWith(
@@ -987,7 +988,7 @@ void main() {
   testWidgets('double combat confirmation dispatches one command', (
     tester,
   ) async {
-    final commands = <GameIntent>[];
+    final commands = <Object>[];
     final container = ProviderContainer(
       overrides: [
         hudCommandDispatcherProvider.overrideWith(
@@ -1193,86 +1194,5 @@ void main() {
     expect(find.byKey(const Key('hudActionDeck.line.actions')), findsOneWidget);
   });
 
-  testWidgets(
-    'city expansion confirm action appears above the bottom toolbar',
-    (tester) async {
-      const city = GameCity(
-        id: 'city_1',
-        ownerPlayerId: 'player_1',
-        name: 'City',
-        center: CityHex(col: 0, row: 0),
-        preferredExpansionHex: CityHex(col: 1, row: 0),
-      );
-
-      await _pumpDeck(
-        tester,
-        gameState: const GameState(
-          cities: [city],
-          interaction: GameInteractionState(
-            pendingAction: PendingCityExpansionSelection(
-              ownerPlayerId: 'player_1',
-              cityId: 'city_1',
-            ),
-          ),
-        ),
-      );
-
-      final confirmFinder = find.byKey(
-        const Key('hudActionDeck.cityExpansionConfirm'),
-      );
-      final cancelFinder = find.byKey(
-        const Key('hudActionDeck.cityExpansionCancel'),
-      );
-      final commandLineFinder = find.byKey(
-        const Key('hudActionDeck.line.commands'),
-      );
-
-      expect(confirmFinder, findsOneWidget);
-      expect(cancelFinder, findsOneWidget);
-      expect(find.text('Confirm'), findsOneWidget);
-      expect(find.text('Cancel'), findsOneWidget);
-      expect(
-        tester.getRect(confirmFinder).bottom,
-        lessThan(tester.getRect(commandLineFinder).top),
-      );
-      expect(
-        tester.getRect(cancelFinder).bottom,
-        lessThan(tester.getRect(commandLineFinder).top),
-      );
-    },
-  );
-
-  testWidgets('city expansion confirm waits for a chosen preferred hex', (
-    tester,
-  ) async {
-    const city = GameCity(
-      id: 'city_1',
-      ownerPlayerId: 'player_1',
-      name: 'City',
-      center: CityHex(col: 0, row: 0),
-    );
-
-    await _pumpDeck(
-      tester,
-      gameState: const GameState(
-        cities: [city],
-        interaction: GameInteractionState(
-          pendingAction: PendingCityExpansionSelection(
-            ownerPlayerId: 'player_1',
-            cityId: 'city_1',
-          ),
-        ),
-      ),
-    );
-
-    expect(
-      find.byKey(const Key('hudActionDeck.cityExpansionConfirm')),
-      findsNothing,
-    );
-    expect(
-      find.byKey(const Key('hudActionDeck.cityExpansionCancel')),
-      findsOneWidget,
-    );
-    expect(find.text('Cancel'), findsOneWidget);
-  });
+  _registerHudActionDeckCityExpansionCases();
 }

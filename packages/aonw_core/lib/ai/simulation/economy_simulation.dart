@@ -26,6 +26,7 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 export 'package:aonw_core/ai/simulation/economy_simulation_models.dart';
 
 part 'economy_simulation_command_applier.dart';
+part 'economy_simulation_command_outcome_recorder.dart';
 part 'economy_simulation_hostility_memory.dart';
 part 'economy_simulation_setup.dart';
 part 'economy_simulation_strategy_selector.dart';
@@ -71,6 +72,13 @@ abstract final class EconomySimulation {
     final appliedCommandRecords = <EconomySimulationAppliedCommand>[];
     final rejectedCommands = <DomainCommand>[];
     final rejectedCommandRecords = <EconomySimulationRejectedCommand>[];
+    final commandOutcomeRecorder = _EconomySimulationCommandOutcomeRecorder(
+      appliedCommands: appliedCommands,
+      appliedCommandRecords: appliedCommandRecords,
+      rejectedCommands: rejectedCommands,
+      rejectedCommandRecords: rejectedCommandRecords,
+      hostilityMemory: hostilityMemory,
+    );
     final aiTurnRuntimes = <EconomySimulationAiTurnRuntime>[];
     final strategicPlansByPlayerId = <String, StrategicPlan>{};
     final telemetrySamples = [
@@ -176,33 +184,16 @@ abstract final class EconomySimulation {
             ruleset: config.ruleset,
           );
           commandTick += 1;
-          if (applied.accepted) {
-            state = applied.state;
-            turnEvents.addAll(applied.events);
-            hostilityMemory.record(events: applied.events, turn: turn);
-            appliedCommands.add(command);
-            appliedCommandRecords.add(
-              EconomySimulationAppliedCommand(
-                turn: turn,
-                tick: commandTick - 1,
-                playerId: actingPlayer.id,
-                command: command,
-              ),
-            );
-            commandStats.addApplied(command);
-          } else {
-            rejectedCommands.add(command);
-            rejectedCommandRecords.add(
-              EconomySimulationRejectedCommand(
-                turn: turn,
-                tick: commandTick - 1,
-                playerId: actingPlayer.id,
-                command: command,
-                reason: applied.reason,
-              ),
-            );
-            commandStats.rejected += 1;
-          }
+          state = commandOutcomeRecorder.record(
+            result: applied,
+            currentState: state,
+            command: command,
+            turn: turn,
+            tick: commandTick - 1,
+            playerId: actingPlayer.id,
+            turnEvents: turnEvents,
+            commandStats: commandStats,
+          );
         }
       }
 

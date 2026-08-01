@@ -46,6 +46,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 part 'support/game_provider_movement_fixtures.dart';
+part 'support/game_provider_renderer_fixtures.dart';
 part 'support/game_provider_turn_lifecycle_cases.dart';
 
 class _FakeGameRepository implements GameRepository {
@@ -436,14 +437,6 @@ GameSession _makeSession({
   );
 }
 
-GameRenderer _makeRenderer() {
-  return GameRenderer(
-    mapData: _makeMap(),
-    initialViewMode: MapViewMode.tile,
-    onCommand: (_) async {},
-  );
-}
-
 class _SpyGameRenderer extends GameRenderer {
   _SpyGameRenderer({MapData? mapData})
     : super(
@@ -466,20 +459,6 @@ class _SpyGameRenderer extends GameRenderer {
   @override
   Future<void> handleEffects(Iterable<RendererEffect> effects) async {
     handledEffects.addAll(effects);
-  }
-}
-
-class _RecordingAudioController extends GameAudioController {
-  final cues = <GameSoundCue>[];
-
-  @override
-  Future<void> play(GameSoundCue cue, {double volume = 1}) async {
-    cues.add(cue);
-  }
-
-  @override
-  void playAll(Iterable<GameSoundCue> cues) {
-    this.cues.addAll(cues);
   }
 }
 

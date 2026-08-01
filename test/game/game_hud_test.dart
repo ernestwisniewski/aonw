@@ -69,6 +69,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'game_hud_auto_flow_regression_tests.dart';
 part 'game_hud_combat_camera_tests.dart';
+part 'game_hud_visual_assertions.dart';
 
 class _FakeGameRepository implements GameRepository {
   _FakeGameRepository({SaveSnapshot? snapshot})
@@ -502,19 +503,6 @@ Future<void> _pressGamepad(
   input.value = GamepadInputSnapshot.empty;
   await tester.pump(const Duration(milliseconds: 16));
   await tester.pump(const Duration(milliseconds: 120));
-}
-
-void _expectWarmPanelSurface(
-  WidgetTester tester,
-  Key key, {
-  required String reason,
-}) {
-  final surface = tester.widget<DecoratedBox>(find.byKey(key));
-  final decoration = surface.decoration;
-  expect(decoration, isA<BoxDecoration>(), reason: reason);
-  final box = decoration as BoxDecoration;
-  expect(box.gradient, isA<LinearGradient>(), reason: reason);
-  expect(box.color, isNull, reason: reason);
 }
 
 void main() {

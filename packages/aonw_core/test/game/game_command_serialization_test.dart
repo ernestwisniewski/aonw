@@ -2,6 +2,34 @@ import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test(
+    'worker picker intents have value semantics outside the domain codec',
+    () {
+      const choose = ChooseWorkerImprovementIntent(
+        'worker_1',
+        FieldImprovementType.farm,
+      );
+      const sameChoose = ChooseWorkerImprovementIntent(
+        'worker_1',
+        FieldImprovementType.farm,
+      );
+      const otherChoose = ChooseWorkerImprovementIntent(
+        'worker_1',
+        FieldImprovementType.mine,
+      );
+      const confirm = ConfirmWorkerImprovementIntent('worker_1');
+      const sameConfirm = ConfirmWorkerImprovementIntent('worker_1');
+      const otherConfirm = ConfirmWorkerImprovementIntent('worker_2');
+
+      expect(choose, sameChoose);
+      expect(choose.hashCode, sameChoose.hashCode);
+      expect(choose, isNot(otherChoose));
+      expect(confirm, sameConfirm);
+      expect(confirm.hashCode, sameConfirm.hashCode);
+      expect(confirm, isNot(otherConfirm));
+    },
+  );
+
   group('DomainCommandCodec', () {
     DomainCommand roundTrip(DomainCommand command) {
       return DomainCommandCodec.fromJson(DomainCommandCodec.toJson(command));

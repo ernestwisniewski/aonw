@@ -17,6 +17,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/game_intent_test_resolver.dart';
 
+part 'game_state_reducer_integration_test_support.dart';
+
 MapData _map(int cols, int rows) => MapData(
   cols: cols,
   rows: rows,
@@ -71,24 +73,6 @@ GameState _withFog(GameState state, MapData mapData) {
       playerIds: {state.activePlayerId},
       units: state.units,
       cities: state.cities,
-    ),
-  );
-}
-
-GameState _withRememberedFog(
-  GameState state,
-  MapData mapData,
-  Iterable<HexCoordinate> rememberedHexes,
-) {
-  final visibleState = _withFog(state, mapData);
-  final playerFog = visibleState.fogOfWar.fogForPlayer(
-    visibleState.activePlayerId,
-  );
-  return visibleState.copyWith(
-    fogOfWar: visibleState.fogOfWar.updatePlayer(
-      playerFog.copyWith(
-        discoveredHexes: {...playerFog.discoveredHexes, ...rememberedHexes},
-      ),
     ),
   );
 }

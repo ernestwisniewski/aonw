@@ -41,4 +41,21 @@ void main() {
       isA<FinalizeTimedOutTurn>(),
     );
   });
+
+  test('system codec rejects an unknown trusted command type', () {
+    expect(
+      () => SystemCommandCodec.fromJson(const {'type': 'UnknownSystem'}),
+      throwsFormatException,
+    );
+  });
+
+  test('recorded system command rejects a player-domain envelope', () {
+    expect(
+      () => RecordedSystemCommand.fromJson(const {
+        'recordKind': 'domain',
+        'command': {'type': 'FinalizeTimedOutTurn'},
+      }),
+      throwsFormatException,
+    );
+  });
 }

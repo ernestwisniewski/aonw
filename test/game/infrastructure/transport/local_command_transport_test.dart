@@ -43,6 +43,7 @@ part 'local_command_transport_preview_fast_path_tests.dart';
 part 'local_command_transport_test_support.dart';
 part 'local_command_transport_unit_action_tests.dart';
 part 'local_command_transport_worker_replay_tests.dart';
+part 'local_command_transport_worker_replay_support.dart';
 
 void main() {
   group('LocalCommandTransport', () {
@@ -499,23 +500,6 @@ class _MemoryEventLog implements EventLog {
     for (final command in commands) {
       if (command.offset >= offset) yield command;
     }
-  }
-}
-
-class _MemorySnapshotStore implements SnapshotStore {
-  Snapshot? latestSnapshot;
-  var accessCalls = 0;
-
-  @override
-  Future<Snapshot?> latest(String saveId) async {
-    accessCalls++;
-    return latestSnapshot;
-  }
-
-  @override
-  Future<void> save(String saveId, Snapshot snapshot) async {
-    accessCalls++;
-    latestSnapshot = snapshot;
   }
 }
 

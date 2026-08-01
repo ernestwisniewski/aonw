@@ -80,6 +80,73 @@ HudFeedbackContent? _artifactGuidanceContent(
   );
 }
 
+extension GameCommandControllerDispatch on GameCommandController {
+  Future<_CommandDispatchRecord> _dispatchOnly(
+    Object command, {
+    GameCommandContext context = const GameCommandContext(),
+  }) async {
+    if (!_isMounted) return _emptyDispatchRecord(command);
+    final session = _providerRef.read(activeGameSessionProvider);
+    if (session == null || session.saveId.isEmpty) {
+      return _emptyDispatchRecord(command);
+    }
+    final previousState = _currentGameState();
+    try {
+      final notifier = _providerRef.read(
+        gameStateProvider(session.saveId).notifier,
+      );
+      final result = await _executeCommand(notifier, command, context: context);
+      return _CommandDispatchRecord(
+        command: command,
+        previousState: previousState,
+        result: result,
+      );
+    } catch (error, stackTrace) {
+      if (_isMounted) {
+        _providerRef
+            .read(gameLoggerProvider)
+            .warn(
+              'GameCommandController',
+              'command dispatch failed',
+              error,
+              stackTrace,
+            );
+        _invalidateSave(session.saveId);
+      }
+      return _CommandDispatchRecord(
+        command: command,
+        previousState: previousState,
+        result: DispatchCommandResult(
+          state: previousState ?? const GameState(),
+        ),
+      );
+    }
+  }
+
+  Future<DispatchCommandResult> _executeCommand(
+    GameStateNotifier notifier,
+    Object command, {
+    required GameCommandContext context,
+  }) {
+    return switch (command) {
+      DomainCommand() => notifier.dispatchTransition(command, context: context),
+      GameIntent() => notifier.dispatchIntentTransition(
+        command,
+        context: context,
+      ),
+      _ => throw ArgumentError.value(command, 'command'),
+    };
+  }
+
+  _CommandDispatchRecord _emptyDispatchRecord(Object command) {
+    return _CommandDispatchRecord(
+      command: command,
+      previousState: null,
+      result: const DispatchCommandResult(state: GameState()),
+    );
+  }
+}
+
 class _CommandDispatchRecord {
   final Object command;
   final GameState? previousState;

@@ -1,5 +1,18 @@
 part of '../realtime_match_hub_test.dart';
 
+final class _CreateConflictOnceMatchStore extends _MemoryMatchStore {
+  var _conflictPending = true;
+
+  @override
+  Future<StoredMatchState> createState(StoredMatchState state) {
+    if (_conflictPending && state.match.inviteCode != null) {
+      _conflictPending = false;
+      throw const InviteCodeConflictException();
+    }
+    return super.createState(state);
+  }
+}
+
 final class _SequenceInviteCodeGenerator implements InviteCodeGenerator {
   _SequenceInviteCodeGenerator(this._codes);
 

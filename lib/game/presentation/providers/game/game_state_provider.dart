@@ -8,6 +8,7 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/application/services/game_intent_resolver.dart';
+import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/live_snapshot_presentation_policy.dart';
 import 'package:aonw/game/application/services/multiplayer_interaction_reconciler.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
@@ -56,74 +57,14 @@ class GameStateNotifier extends _$GameStateNotifier {
   Future<void> _dispatchQueue = Future<void>.value();
   Future<void> _networkSnapshotQueue = Future<void>.value();
   int _eventLogOffset = 0;
+  Ref get _providerRef => ref;
+  bool get _isMounted => ref.mounted;
+  GameState? get _stateValue => state.value;
+  Future<GameState> get _stateFuture => future;
+  set _stateValue(GameState value) => state = AsyncData(value);
 
   @override
-  Future<GameState> build(String saveId) async {
-    ref.onDispose(() {
-      unawaited(_closeLiveEvents());
-    });
-    await _closeLiveEvents();
-    _saveId = saveId;
-    final session = ref.watch(activeGameSessionProvider);
-    if (session == null || saveId.isEmpty) {
-      _dispatchCommand = null;
-      return const GameState();
-    }
-
-    final reducer = GameStateReducer(
-      mapData: session.mapData.indexedReadView(),
-      ruleset: GameRuleset.standard().copyWith(
-        city: ref.watch(cityRulesetProvider),
-        technology: ref.watch(technologyRulesetProvider),
-        stability: ref.watch(stabilityRulesetProvider),
-      ),
-    );
-    _reducer = reducer;
-    final liveCommandDispatcher = session.gameMode == GameMode.multiplayer
-        ? LiveWireCommandDispatcher(
-            liveHandle: _liveCommandHandle,
-            fallback: ref.watch(wireCommandDispatcherProvider),
-          )
-        : null;
-    _dispatchCommand = buildDispatchCommandUseCase(
-      ref,
-      reducer,
-      session.gameMode,
-      saveId: saveId,
-      commandDispatcher: liveCommandDispatcher,
-    );
-    final repository = gameRepositoryForSave(ref, saveId);
-
-    final bootstrap = BootstrapGameStateUseCase(
-      repository: repository,
-      dispatchCommand: _dispatchCommand!,
-    );
-    final bootstrapped = await bootstrap.executeWithResult(
-      saveId: saveId,
-      preferredPlayerId: ref.read(networkSessionProvider)?.playerId,
-    );
-    _eventLogOffset = bootstrapped.offset;
-    var synchronized = reducer
-        .syncActivePlayer(
-          bootstrapped.state,
-          playerId: bootstrapped.state.activePlayerId,
-          canAct: bootstrapped.state.activePlayerCanAct,
-        )
-        .state;
-    if (bootstrapped.shouldFocusTurnStart) {
-      final focus = GameIntentResolver(reducer: reducer).resolve(
-        synchronized.interaction,
-        FocusTurnStartActionCommand(synchronized.activePlayerId),
-        synchronized,
-      );
-      if (focus.interaction != synchronized.interaction) {
-        synchronized = synchronized.copyWith(interaction: focus.interaction);
-      }
-    }
-    if (!ref.mounted) return synchronized;
-    unawaited(_startLiveEvents(saveId, gameMode: session.gameMode));
-    return synchronized;
-  }
+  Future<GameState> build(String saveId) => _buildState(saveId);
 
   Future<void> syncActivePlayer({
     required String playerId,
@@ -138,118 +79,6 @@ class GameStateNotifier extends _$GameStateNotifier {
           .state,
     );
   });
-
-  Future<DispatchCommandResult> _dispatchTransitionNow(
-    DomainCommand command, {
-    GameCommandContext context = const GameCommandContext(),
-  }) async {
-    if (!ref.mounted) {
-      return const DispatchCommandResult(state: GameState());
-    }
-    var current = state.value;
-    if (current == null) {
-      try {
-        current = await future;
-      } catch (_) {
-        return const DispatchCommandResult(state: GameState());
-      }
-      if (!ref.mounted) {
-        return DispatchCommandResult(state: current);
-      }
-    }
-
-    final useCase = _dispatchCommand;
-    if (useCase == null || _saveId.isEmpty) {
-      return DispatchCommandResult(state: current);
-    }
-
-    final result = await useCase.execute(
-      saveId: _saveId,
-      currentState: current,
-      command: command,
-      context: context,
-    );
-
-    if (ref.mounted) {
-      if (result.offset >= 0) {
-        _eventLogOffset = result.offset;
-        ref.invalidate(gameActivityHistoryProvider(_saveId));
-      }
-      state = AsyncData(result.state);
-    }
-    if (result.storedSnapshot && result.snapshot != null) {
-      await _cacheAppliedSnapshot(
-        saveId: _saveId,
-        snapshot: result.snapshot!,
-        offset: result.offset,
-      );
-    }
-    return result;
-  }
-
-  Future<DispatchCommandResult> _resolveIntentTransitionNow(
-    GameIntent intent, {
-    GameCommandContext context = const GameCommandContext(),
-  }) async {
-    if (!ref.mounted) {
-      return const DispatchCommandResult(state: GameState(), offset: -1);
-    }
-    var current = state.value;
-    if (current == null) {
-      try {
-        current = await future;
-      } catch (_) {
-        return const DispatchCommandResult(state: GameState(), offset: -1);
-      }
-    }
-    final reducer = _reducer;
-    if (!ref.mounted || reducer == null) {
-      return DispatchCommandResult(state: current, offset: -1);
-    }
-    final resolution = GameIntentResolver(
-      reducer: reducer,
-      context: context,
-    ).resolve(current.interaction, intent, current);
-    final domainCommand = resolution.domainCommand;
-    if (domainCommand != null) {
-      final useCase = _dispatchCommand;
-      if (useCase == null || _saveId.isEmpty) {
-        return DispatchCommandResult(state: current, offset: -1);
-      }
-      final result = await useCase.execute(
-        saveId: _saveId,
-        currentState: current,
-        command: domainCommand,
-        context: context,
-        fromMovePreviewConfirmation:
-            intent is TileTappedCommand && domainCommand is MoveUnitCommand,
-      );
-      if (ref.mounted) {
-        if (result.offset >= 0) {
-          _eventLogOffset = result.offset;
-          ref.invalidate(gameActivityHistoryProvider(_saveId));
-        }
-        state = AsyncData(result.state);
-      }
-      if (result.storedSnapshot && result.snapshot != null) {
-        await _cacheAppliedSnapshot(
-          saveId: _saveId,
-          snapshot: result.snapshot!,
-          offset: result.offset,
-        );
-      }
-      return result;
-    }
-    final next = resolution.interaction == current.interaction
-        ? current
-        : current.copyWith(interaction: resolution.interaction);
-    if (ref.mounted) state = AsyncData(next);
-    return DispatchCommandResult(
-      state: next,
-      uiEffects: resolution.presentationFocus,
-      offset: -1,
-    );
-  }
 
   Future<void> _startLiveEvents(
     String saveId, {

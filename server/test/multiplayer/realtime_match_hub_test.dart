@@ -23,6 +23,7 @@ part 'support/realtime_match_hub_outcome_cases.dart';
 part 'support/realtime_match_hub_resignation_cases.dart';
 part 'support/realtime_match_hub_resignation_fixture.dart';
 part 'support/realtime_match_hub_turn_movement_cases.dart';
+part 'support/realtime_match_hub_turn_movement_fixture.dart';
 part 'support/realtime_match_hub_turn_movement_history_cases.dart';
 part 'support/realtime_match_hub_timeout_actor_cases.dart';
 
@@ -3527,18 +3528,5 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
         if (event.offset > afterOffset) event,
     ]..sort((first, second) => first.offset.compareTo(second.offset));
     return events.take(multiplayerEventPageSize).toList();
-  }
-}
-
-final class _CreateConflictOnceMatchStore extends _MemoryMatchStore {
-  var _conflictPending = true;
-
-  @override
-  Future<StoredMatchState> createState(StoredMatchState state) {
-    if (_conflictPending && state.match.inviteCode != null) {
-      _conflictPending = false;
-      throw const InviteCodeConflictException();
-    }
-    return super.createState(state);
   }
 }
