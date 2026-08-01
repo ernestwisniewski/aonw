@@ -42,9 +42,9 @@ const _requiredMovementCharacterization = <String, _MovementRequirement>{
     accepted: false,
     reason: 'unit_unavailable',
   ),
-  'movement-characterization-fortified-rejected': (
-    accepted: false,
-    reason: 'unit_unavailable',
+  'movement-characterization-fortified-move-accepted': (
+    accepted: true,
+    reason: null,
   ),
   'movement-characterization-merchant-rejected': (
     accepted: false,

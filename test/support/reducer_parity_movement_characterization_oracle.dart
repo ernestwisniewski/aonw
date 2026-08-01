@@ -6,7 +6,6 @@ const _movementIdentityStateFixtureIds = <String>{
   'movement-characterization-hidden-city-no-op-accepted',
   'movement-characterization-unit-missing-rejected',
   'movement-characterization-unit-working-rejected',
-  'movement-characterization-fortified-rejected',
   'movement-characterization-merchant-rejected',
   'movement-characterization-current-tile-rejected',
   'movement-characterization-foreign-city-rejected',
@@ -21,6 +20,22 @@ const _movementIdentityStateFixtureIds = <String>{
 DomainState _movementExpectedState(String fixtureId, DomainState input) {
   if (_movementIdentityStateFixtureIds.contains(fixtureId)) return input;
   return switch (fixtureId) {
+    'movement-characterization-fortified-move-accepted' =>
+      _movementStateWithUnit(
+        input,
+        _inputMovementUnit(input)
+            .copyWith(
+              col: 1,
+              row: 0,
+              movementPoints:
+                  UnitMovementBalance.maxMovementPointsForType(
+                    _inputMovementUnit(input).type,
+                  ) -
+                  1,
+              posture: UnitPosture.active,
+            )
+            .copyWithQueuedPath(null),
+      ),
     'movement-characterization-partial-queued-accepted' =>
       _movementStateWithUnit(
         input,
@@ -52,6 +67,15 @@ List<GameEvent> _movementExpectedEvents(String fixtureId) {
     return const [];
   }
   return switch (fixtureId) {
+    'movement-characterization-fortified-move-accepted' => const [
+      UnitMovedEvent(
+        unitId: _movementUnitId,
+        fromCol: 0,
+        fromRow: 0,
+        toCol: 1,
+        toRow: 0,
+      ),
+    ],
     'movement-characterization-partial-queued-accepted' => const [
       UnitMovedEvent(
         unitId: _movementUnitId,

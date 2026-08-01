@@ -52,10 +52,7 @@ abstract final class SelectionReducer {
     );
 
     if (next.canControlUnit(unit) &&
-        unit.movementPoints > 0 &&
-        !unit.isMerchant &&
-        unit.workerJob == null &&
-        !unit.isFortified) {
+        UnitManualMovementRules.canStartTargeting(unit)) {
       next = next.copyWithInteraction(moveCommandActive: true);
     } else {
       next = next.copyWithInteraction(moveCommandActive: false);
@@ -329,7 +326,8 @@ abstract final class SelectionReducer {
       GameSelection.unit(unit, tile: visibleTile),
     );
 
-    if (next.canControlUnit(unit) && !unit.isMerchant) {
+    if (next.canControlUnit(unit) &&
+        UnitManualMovementRules.canStartTargeting(unit)) {
       next = next.copyWithInteraction(moveCommandActive: true);
     } else {
       next = next.copyWithInteraction(moveCommandActive: false);

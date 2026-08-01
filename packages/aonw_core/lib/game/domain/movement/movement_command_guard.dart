@@ -57,7 +57,7 @@ abstract final class MovementCommandGuard {
     if (!canAct || unit.ownerPlayerId != actorPlayerId) {
       return _rejectedUnit('unit_not_controlled');
     }
-    if (unit.isWorking || unit.isFortified) {
+    if (unit.isWorking) {
       return _rejectedUnit('unit_unavailable');
     }
     if (unit.type == GameUnitType.merchant) {

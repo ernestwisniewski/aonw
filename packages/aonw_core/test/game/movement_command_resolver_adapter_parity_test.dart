@@ -120,7 +120,7 @@ void main() {
       expect(results.domain.state.fogOfWar, same(states.domain.fogOfWar));
     });
 
-    test('fortified unit is rejected at both complete state boundaries', () {
+    test('fortified unit wakes and moves at every state boundary', () {
       final states = movementStates(
         mover: movementUnit(movementPoints: 0, posture: UnitPosture.fortified),
       );
@@ -131,10 +131,37 @@ void main() {
         movementMap(cols: 2),
       );
 
+      expectAcceptedMovementParity(states, results);
+      final moved = results.kernel.units.first;
+      expect((moved.col, moved.row), (1, 0));
+      expect(moved.posture, UnitPosture.active);
+      expect(
+        moved.movementPoints,
+        UnitMovementBalance.maxMovementPointsForType(moved.type) - 1,
+      );
+      expectMoveEvent(results.kernel.events, fromCol: 0, toCol: 1);
+    });
+
+    test('rejected fortified movement preserves fortification identity', () {
+      final states = movementStates(
+        mover: movementUnit(movementPoints: 0, posture: UnitPosture.fortified),
+      );
+
+      final results = resolveMovement(
+        states,
+        const MoveUnitCommand(movementUnitId, 1, 0),
+        movementMap(
+          cols: 2,
+          terrainOverrides: const {
+            (col: 1, row: 0): [TerrainType.ocean],
+          },
+        ),
+      );
+
       expectRejectedMovementIdentity(
         states,
         results,
-        reason: 'unit_unavailable',
+        reason: 'move_path_not_found',
       );
     });
 

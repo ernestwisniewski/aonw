@@ -586,10 +586,7 @@ class HudOverlayFrame {
   };
 
   static bool _canStartMoveTargeting(GameUnit? unit) =>
-      unit != null &&
-      !unit.isMerchant &&
-      _canUseUnitTurnAction(unit) &&
-      unit.queuedPath == null;
+      unit != null && UnitManualMovementRules.canStartTargeting(unit);
 
   static String? _moveTargetingBlockedReason(
     GameUnit? unit,
@@ -600,12 +597,9 @@ class HudOverlayFrame {
       return l10n.selectionActionCancelCurrentMoveFirst;
     }
     if (unit.isWorking) return l10n.selectionActionUnitWorking;
-    if (unit.isFortified) {
-      return UnitFortificationRules.canHeal(unit)
-          ? l10n.selectionActionUnitHealing
-          : l10n.selectionActionUnitFortified;
+    if (UnitManualMovementRules.availableMovementPoints(unit) <= 0) {
+      return l10n.selectionActionNoMovement;
     }
-    if (unit.movementPoints <= 0) return l10n.selectionActionNoMovement;
     return null;
   }
 }

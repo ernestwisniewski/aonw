@@ -11,6 +11,7 @@ export 'unit/unit_capabilities.dart';
 export 'unit/unit_catalog.dart';
 export 'unit/unit_detachment_rules.dart';
 export 'unit/unit_fortification_rules.dart';
+export 'unit/unit_manual_movement_rules.dart';
 export 'unit/unit_production_catalog.dart';
 export 'unit/unit_production_definition.dart';
 export 'unit/unit_production_requirement.dart';

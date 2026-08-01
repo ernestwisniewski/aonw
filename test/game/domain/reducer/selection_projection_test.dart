@@ -9,6 +9,8 @@ import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/fog.dart';
+import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -59,6 +61,53 @@ void main() {
 
     expect(transition.state.selection?.type, GameSelectionType.tile);
     expect(transition.state.moveCommandActive, isFalse);
+    expect(transition.state.movePreview, isNull);
+  });
+
+  test('selecting a fortified unit immediately starts movement targeting', () {
+    final fortified = GameUnit.startingWarrior(
+      ownerPlayerId: 'player_1',
+      col: 1,
+      row: 1,
+    ).copyWith(movementPoints: 0, posture: UnitPosture.fortified);
+    final state = GameClientState(
+      units: [fortified],
+      activePlayerId: 'player_1',
+      fogOfWar: _fortifiedSelectionFog,
+    );
+
+    final selected = SelectionReducer.selectUnit(
+      state,
+      SelectUnitCommand(fortified.id),
+      mapData,
+    );
+
+    expect(selected.selectedUnit, same(fortified));
+    expect(selected.moveCommandActive, isTrue);
+    expect(selected.movePreview, isNull);
+    expect(selected.units.single.posture, UnitPosture.fortified);
+  });
+
+  test('tapping a fortified unit immediately starts movement targeting', () {
+    final fortified = GameUnit.startingWarrior(
+      ownerPlayerId: 'player_1',
+      col: 1,
+      row: 1,
+    ).copyWith(movementPoints: 0, posture: UnitPosture.fortified);
+    final state = GameClientState(
+      units: [fortified],
+      activePlayerId: 'player_1',
+      fogOfWar: _fortifiedSelectionFog,
+    );
+
+    final transition = SelectionReducer.handleTileTapped(
+      state,
+      const TileTappedCommand(1, 1),
+      mapData,
+    );
+
+    expect(transition.state.selectedUnit, same(fortified));
+    expect(transition.state.moveCommandActive, isTrue);
     expect(transition.state.movePreview, isNull);
   });
 
@@ -293,6 +342,16 @@ void main() {
     );
   });
 }
+
+final _fortifiedSelectionFog = FogOfWarState(
+  players: {
+    'player_1': PlayerFogOfWar(
+      playerId: 'player_1',
+      discoveredHexes: {const HexCoordinate(col: 1, row: 1)},
+      visibleHexes: {const HexCoordinate(col: 1, row: 1)},
+    ),
+  },
+);
 
 final _customStabilityRuleset = StabilityRuleset.standard.copyWith(
   unrestThreshold: -2,

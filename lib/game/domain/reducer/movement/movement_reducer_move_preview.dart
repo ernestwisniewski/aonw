@@ -127,28 +127,29 @@ abstract final class _MovePreviewReducer {
     required String actorPlayerId,
     required FogVisibilityQuery visibility,
   }) {
+    final planningUnit = UnitManualMovementRules.prepareForCommand(selected);
     return UnitMovementPlanner(
       mapData: mapView,
       units: UnitMovementVisibilityRules.planningUnitsForActor(
         units: state.units,
-        movingUnit: selected,
+        movingUnit: planningUnit,
         actorPlayerId: actorPlayerId,
         visibility: visibility,
       ),
       canEnterTile: (tile) =>
           UnitMovementVisibilityRules.canPlanThroughTile(
-            unit: selected,
+            unit: planningUnit,
             tile: tile,
             visibility: visibility,
           ) &&
           MovementHiddenObstacleRules.canPlanThroughCity(
             cities: state.cities,
             diplomacy: state.diplomacy,
-            unit: selected,
+            unit: planningUnit,
             tile: tile,
             visibility: visibility,
           ),
-    ).planMove(unit: selected, targetTile: targetTile);
+    ).planMove(unit: planningUnit, targetTile: targetTile);
   }
 
   static GameStateTransition confirmPreview(

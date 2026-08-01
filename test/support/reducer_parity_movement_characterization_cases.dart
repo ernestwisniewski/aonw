@@ -34,20 +34,6 @@ List<ReducerParityFixture> _movementUnitRejectionCases(
     ),
     _movementFixture(
       template,
-      id: 'movement-characterization-fortified-rejected',
-      tickOffset: 209,
-      mapData: line,
-      state: _movementState(
-        template.state,
-        mapCols: 3,
-        units: [
-          _movementUnit(movementPoints: 0, posture: UnitPosture.fortified),
-        ],
-      ),
-      command: const MoveUnitCommand(_movementUnitId, 1, 0),
-    ),
-    _movementFixture(
-      template,
       id: 'movement-characterization-merchant-rejected',
       tickOffset: 203,
       mapData: line,
@@ -90,6 +76,20 @@ List<ReducerParityFixture> _movementTerrainAndOccupancyRejectionCases(
     col: 1,
   );
   return [
+    _movementFixture(
+      template,
+      id: 'movement-characterization-fortified-move-accepted',
+      tickOffset: 209,
+      mapData: _movementMap(template, cols: 3),
+      state: _movementState(
+        template.state,
+        mapCols: 3,
+        units: [
+          _movementUnit(movementPoints: 0, posture: UnitPosture.fortified),
+        ],
+      ),
+      command: const MoveUnitCommand(_movementUnitId, 1, 0),
+    ),
     _movementFixture(
       template,
       id: 'movement-characterization-foreign-city-rejected',

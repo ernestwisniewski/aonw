@@ -110,12 +110,7 @@ GameClientState _projectMove({
 bool _canRetargetMove(GameClientState state, GameUnit? unit) {
   return unit != null &&
       state.canControlUnit(unit) &&
-      unit.movementPoints > 0 &&
-      !unit.isWorking &&
-      !unit.isMerchant &&
-      unit.queuedPath == null &&
-      !unit.isFortified &&
-      !unit.isAutoExploring;
+      UnitManualMovementRules.canStartTargeting(unit);
 }
 
 GameClientState _projectCancel({
@@ -157,11 +152,7 @@ bool _shouldReactivateMoveTargeting({
   return previousUnit.isFortified &&
       state.selectedUnitId == updatedUnit.id &&
       state.canControlUnit(updatedUnit) &&
-      !updatedUnit.isWorking &&
-      !updatedUnit.isMerchant &&
-      updatedUnit.queuedPath == null &&
-      !updatedUnit.isFortified &&
-      !updatedUnit.isAutoExploring;
+      UnitManualMovementRules.canStartTargeting(updatedUnit);
 }
 
 GameClientState _projectAutoExplore({

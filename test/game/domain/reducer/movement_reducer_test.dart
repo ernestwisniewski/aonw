@@ -20,6 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../support/movement_engine_test_driver.dart';
 
 part 'movement_reducer_artifact_city_entry_tests.dart';
+part 'movement_reducer_fortified_movement_tests.dart';
 part 'movement_reducer_unit_action_tests.dart';
 
 WorldMap _map(
@@ -620,6 +621,8 @@ void main() {
     // handleMoveTargetTile — preview
 
     group('handleMoveTargetTile — preview', () {
+      _registerFortifiedMovementPreviewTest(() => mapData);
+
       test('sets preview for adjacent tile', () {
         final commander = _commander();
         final state = GameClientState(
@@ -1417,7 +1420,7 @@ void main() {
         expect(result.state.selection?.unit?.col, 3);
       });
 
-      test('executing a target at 0 MP queues the path without moving', () {
+      test('exhausted active unit cannot enter movement targeting', () {
         final commander = _commander(movementPoints: 0);
         final start = GameClientState(
           units: [commander],
@@ -1428,42 +1431,11 @@ void main() {
           ),
         );
 
-        // Enter move mode (must succeed at 0 MP).
         final activated = MovementReducer.toggleMoveTargeting(start);
-        expect(activated.moveCommandActive, isTrue);
 
-        // First tap on (2,0) sets the preview.
-        final tile = mapData.tileAt(2, 0)!;
-        final previewed = MovementReducer.handleMoveTargetTile(
-          activated,
-          tile,
-          mapData,
-        );
-        expect(previewed.state.movePreview, isNotNull);
-        expect(previewed.state.movePreview?.targetCol, 2);
-
-        // With 0 MP every step is unreachable this turn, so the authoritative
-        // movement command queues the path and leaves the unit in place.
-        final confirmed = resolveMovementCommandForTest(
-          previewed.state,
-          MoveUnitCommand(commander.id, tile.col, tile.row),
-          mapData,
-        );
-        final updated = confirmed.state.units.single;
-
-        expect(updated.col, 0, reason: 'unit must not move this turn');
-        expect(updated.row, 0);
-        expect(updated.movementPoints, 0);
-        expect(updated.queuedPath, isNotNull);
-        expect(updated.queuedPath?.targetCol, 2);
-        expect(updated.queuedPath?.targetRow, 0);
-        expect(updated.queuedPath?.steps, isNotEmpty);
-        expect(
-          confirmed.state.moveCommandActive,
-          isFalse,
-          reason: 'queueing a route should exit move targeting',
-        );
-        expect(confirmed.state.movePreview, isNull);
+        expect(activated, start);
+        expect(activated.moveCommandActive, isFalse);
+        expect(activated.movePreview, isNull);
       });
 
       test('preserves queued path when new-turn movement is partial', () {

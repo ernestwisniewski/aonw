@@ -121,7 +121,8 @@ abstract final class MultiplayerInteractionReconciler {
         preview != null &&
         selectedUnit != null &&
         preview.unitId == selectedUnit.id &&
-        preview.availableMovementPoints == selectedUnit.movementPoints &&
+        preview.availableMovementPoints ==
+            UnitManualMovementRules.availableMovementPoints(selectedUnit) &&
         canKeepSelectedUnitAction &&
         _canKeepMovePreview(selectedUnit) &&
         _selectedMovementStateStayedValid(
@@ -165,16 +166,11 @@ abstract final class MultiplayerInteractionReconciler {
   }
 
   static bool _canStartMoveTargeting(GameUnit? unit) {
-    return unit != null && unit.movementPoints > 0 && _canKeepMovePreview(unit);
+    return unit != null && UnitManualMovementRules.canStartTargeting(unit);
   }
 
   static bool _canKeepMovePreview(GameUnit? unit) {
-    return unit != null &&
-        !unit.isWorking &&
-        !unit.isMerchant &&
-        unit.queuedPath == null &&
-        !unit.isFortified &&
-        !unit.isAutoExploring;
+    return unit != null && UnitManualMovementRules.canStartTargeting(unit);
   }
 
   static bool _pathfindingInputsStayedValid(

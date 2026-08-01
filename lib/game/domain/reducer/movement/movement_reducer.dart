@@ -66,9 +66,7 @@ abstract final class MovementReducer {
     if (selected == null || !context.canControlUnit(state, selected)) {
       return _clearMoveTargeting(state);
     }
-    if (selected.isWorking ||
-        selected.isFortified ||
-        selected.type == GameUnitType.merchant) {
+    if (!UnitManualMovementRules.canStartTargeting(selected)) {
       return _clearMoveTargeting(state);
     }
 
@@ -179,11 +177,7 @@ abstract final class MovementReducer {
     GameUnit unit,
   ) {
     return state.canControlUnit(unit) &&
-        !unit.isWorking &&
-        !unit.isMerchant &&
-        unit.queuedPath == null &&
-        !unit.isFortified &&
-        !unit.isAutoExploring;
+        UnitManualMovementRules.canStartTargeting(unit);
   }
 
   static GameClientState _clearMoveTargeting(GameClientState state) {

@@ -1,7 +1,6 @@
 import 'package:aonw_core/game/domain/artifact/world_artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
-import 'package:aonw_core/game/domain/movement/unit_movement_balance.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/state/domain_action_unit_rules.dart';
@@ -55,12 +54,7 @@ abstract final class UnitActionCommandResolver {
         : null;
     final nextMovementPoints =
         restoreMovementPoints ??
-        (unit.isFortified
-            ? UnitMovementBalance.maxMovementPointsFor(
-                type: unit.type,
-                carriedArtifactId: unit.carriedArtifactId,
-              )
-            : unit.movementPoints);
+        UnitManualMovementRules.availableMovementPoints(unit);
     final updatedUnit = unit
         .copyWith(movementPoints: nextMovementPoints)
         .copyWithQueuedPath(null)

@@ -4,6 +4,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
@@ -12,6 +13,47 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('MultiplayerInteractionReconciler', () {
+    test('preserves targeting preview for a still-fortified unit', () {
+      final fortified = _unit(
+        'warrior_1',
+        GameUnitType.warrior,
+      ).copyWith(movementPoints: 0, posture: UnitPosture.fortified);
+      final preview = UnitMovementPlan(
+        unitId: fortified.id,
+        targetCol: 1,
+        targetRow: 0,
+        totalCost: 1,
+        availableMovementPoints:
+            UnitManualMovementRules.availableMovementPoints(fortified),
+        steps: const [
+          UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+          UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+        ],
+      );
+      final source = GameClientState(
+        activePlayerId: 'player_1',
+        units: [fortified],
+        interaction: InteractionState(
+          selection: GameSelection.unit(fortified, tile: _tile),
+          moveCommandActive: true,
+          movePreview: preview,
+        ),
+      );
+      final authoritative = GameClientState(
+        activePlayerId: 'player_1',
+        units: [fortified],
+      );
+
+      final result = MultiplayerInteractionReconciler.reconcile(
+        authoritativeState: authoritative,
+        interactionSource: source,
+      );
+
+      expect(result.moveCommandActive, isTrue);
+      expect(result.movePreview, same(preview));
+      expect(result.selectedUnit?.posture, UnitPosture.fortified);
+    });
+
     test('preserves a valid local worker draft over a network snapshot', () {
       final worker = _unit('worker_1', GameUnitType.worker);
       final updatedWorker = worker.copyWith(movementPoints: 1);

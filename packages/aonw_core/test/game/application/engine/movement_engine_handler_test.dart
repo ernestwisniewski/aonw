@@ -59,6 +59,49 @@ void main() {
       _expectRejected(result, snapshot, 'move_path_not_found');
     });
 
+    test('manual movement atomically wakes a fortified unit', () {
+      final snapshot = _snapshot(
+        units: [
+          _unit(id: 'mover', movementPoints: 0, posture: UnitPosture.fortified),
+        ],
+      );
+
+      final result = _apply(
+        snapshot,
+        const MoveUnitCommand('mover', 1, 0),
+        mapView: _map(cols: 2),
+      );
+
+      final accepted = _expectAccepted(result);
+      final moved = accepted.snapshot.domain.units.single;
+      expect((moved.col, moved.row), (1, 0));
+      expect(moved.posture, UnitPosture.active);
+      expect(
+        moved.movementPoints,
+        UnitMovementBalance.maxMovementPointsForType(moved.type) - 1,
+      );
+      expect(accepted.events, hasLength(1));
+      expect(accepted.movementDelta.executions, hasLength(1));
+    });
+
+    test('rejected fortified movement leaves the snapshot untouched', () {
+      final snapshot = _snapshot(
+        units: [
+          _unit(id: 'mover', movementPoints: 0, posture: UnitPosture.fortified),
+        ],
+      );
+
+      final result = _apply(
+        snapshot,
+        const MoveUnitCommand('mover', 1, 0),
+        mapView: _map(cols: 2, blockedCols: const {1}),
+      );
+
+      _expectRejected(result, snapshot, 'move_path_not_found');
+      expect(snapshot.domain.units.single.posture, UnitPosture.fortified);
+      expect(snapshot.domain.units.single.movementPoints, 0);
+    });
+
     test('stale destination rejects with input snapshot identity', () {
       final snapshot = _snapshot(units: [_unit(id: 'mover')]);
 
