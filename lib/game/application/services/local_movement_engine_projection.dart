@@ -7,7 +7,6 @@ import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
-import 'package:aonw_core/util/collection_equality.dart';
 
 final class LocalMovementEngineProjection {
   const LocalMovementEngineProjection({
@@ -73,38 +72,7 @@ LocalMovementEngineProjection projectLocalMovementEngineResult({
 GameClientState _projectCanonicalSlices({
   required GameClientState currentState,
   required GameEngineAccepted result,
-}) {
-  final domain = result.snapshot.domain;
-  var state = currentState;
-  if (!listEquals(domain.units, currentState.units)) {
-    state = state.copyWith(units: domain.units);
-  }
-  if (!listEquals(domain.artifacts, currentState.artifacts)) {
-    state = state.copyWith(artifacts: domain.artifacts);
-  }
-  if (domain.fogOfWar != currentState.fogOfWar) {
-    state = state.copyWith(fogOfWar: domain.fogOfWar);
-  }
-  if (domain.diplomacy != currentState.diplomacy) {
-    state = state.copyWith(diplomacy: domain.diplomacy);
-  }
-  final interaction = result.snapshot.domain.actions;
-  final cityFoundingDraft =
-      state.cityFoundingDraft == interaction.cityFoundingDraft
-      ? state.cityFoundingDraft
-      : interaction.cityFoundingDraft;
-  final pendingAction = state.pendingAction == interaction.pendingAction
-      ? state.pendingAction
-      : interaction.pendingAction;
-  if (!identical(state.cityFoundingDraft, cityFoundingDraft) ||
-      !identical(state.pendingAction, pendingAction)) {
-    state = state.copyWithInteraction(
-      cityFoundingDraft: cityFoundingDraft,
-      pendingAction: pendingAction,
-    );
-  }
-  return state;
-}
+}) => currentState.withDomain(result.snapshot.domain);
 
 GameClientState _projectMove({
   required GameClientState currentState,

@@ -256,7 +256,7 @@
           }
         }
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "command": {
       "type": "ConfirmWorkerImprovement",
@@ -392,7 +392,7 @@
           }
         }
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "events": []
   }

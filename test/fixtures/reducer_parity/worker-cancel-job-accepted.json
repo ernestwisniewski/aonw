@@ -306,17 +306,31 @@
           }
         }
       },
-      "runtimeState": {
+      "lifecycle": {
         "cityFoundingDraft": {
           "unitId": "settler_sentinel",
           "ownerPlayerId": "player_1",
-          "center": {"col": 0, "row": 2},
+          "center": {
+            "col": 0,
+            "row": 2
+          },
           "controlledHexes": [
-            {"col": 0, "row": 1},
-            {"col": 1, "row": 2}
+            {
+              "col": 0,
+              "row": 1
+            },
+            {
+              "col": 1,
+              "row": 2
+            }
           ]
         },
-        "pendingAction": {"type": "workerActionSelection", "ownerPlayerId": "player_1", "unitId": "worker_sentinel", "improvementType": "mine"}
+        "pendingAction": {
+          "type": "workerActionSelection",
+          "ownerPlayerId": "player_1",
+          "unitId": "worker_sentinel",
+          "improvementType": "mine"
+        }
       }
     },
     "command": {
@@ -475,17 +489,31 @@
           }
         }
       },
-      "runtimeState": {
+      "lifecycle": {
         "cityFoundingDraft": {
           "unitId": "settler_sentinel",
           "ownerPlayerId": "player_1",
-          "center": {"col": 0, "row": 2},
+          "center": {
+            "col": 0,
+            "row": 2
+          },
           "controlledHexes": [
-            {"col": 0, "row": 1},
-            {"col": 1, "row": 2}
+            {
+              "col": 0,
+              "row": 1
+            },
+            {
+              "col": 1,
+              "row": 2
+            }
           ]
         },
-        "pendingAction": {"type": "workerActionSelection", "ownerPlayerId": "player_1", "unitId": "worker_sentinel", "improvementType": "mine"}
+        "pendingAction": {
+          "type": "workerActionSelection",
+          "ownerPlayerId": "player_1",
+          "unitId": "worker_sentinel",
+          "improvementType": "mine"
+        }
       }
     },
     "events": []

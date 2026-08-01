@@ -13,6 +13,7 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
+import 'package:aonw_core/util/collection_equality.dart';
 
 export 'package:aonw_core/game/domain/state.dart' show CanonicalGameSnapshot;
 
@@ -105,15 +106,26 @@ abstract final class GameSnapshotFactory {
     required DomainState state,
     int eventLogOffset = 0,
   }) => CanonicalGameSnapshot.snapshot(
-    domain: state.copyWith(
-      turn: save.turn,
-      matchRules: save.matchRules,
-      participants: save.players,
-      gameMode: save.gameMode,
-      turnStatesByPlayerId: save.playerStates,
-    ),
+    domain: _domainAlignedWithSave(state, save),
     metadata: _metadataFromSave(save),
     eventLogOffset: eventLogOffset,
+  );
+}
+
+DomainState _domainAlignedWithSave(DomainState state, GameSave save) {
+  if (state.turn == save.turn &&
+      state.matchRules == save.matchRules &&
+      listEquals(state.participants, save.players) &&
+      state.gameMode == save.gameMode &&
+      mapEquals(state.turnStatesByPlayerId, save.playerStates)) {
+    return state;
+  }
+  return state.copyWith(
+    turn: save.turn,
+    matchRules: save.matchRules,
+    participants: save.players,
+    gameMode: save.gameMode,
+    turnStatesByPlayerId: save.playerStates,
   );
 }
 
@@ -215,38 +227,10 @@ extension CanonicalGameSnapshotApplication on CanonicalGameSnapshot {
     ),
   );
 
-  CanonicalGameSnapshot withUnitActionEngineProjection({
-    required List<GameUnit> units,
-    required List<WorldArtifact> artifacts,
-    required DomainActionState interaction,
-    required DateTime savedAt,
-  }) {
-    return copyWith(
-      domain: domain.copyWith(units: units, artifacts: artifacts),
-      metadata: metadata.copyWith(savedAtUtc: savedAt.toUtc()),
-      actions: interaction,
-    );
-  }
-
-  CanonicalGameSnapshot withMovementEngineProjection({
+  CanonicalGameSnapshot withEngineResult({
     required CanonicalGameSnapshot resultSnapshot,
     required DateTime savedAt,
-  }) => _savedEngineResult(resultSnapshot, savedAt);
-
-  CanonicalGameSnapshot withCityEconomyEngineProjection({
-    required CanonicalGameSnapshot resultSnapshot,
-    required DateTime savedAt,
-  }) => _savedEngineResult(resultSnapshot, savedAt);
-
-  CanonicalGameSnapshot withCombatEngineProjection({
-    required CanonicalGameSnapshot resultSnapshot,
-    required DateTime savedAt,
-  }) => _savedEngineResult(resultSnapshot, savedAt);
-
-  CanonicalGameSnapshot withResearchDiplomacyEngineProjection({
-    required CanonicalGameSnapshot resultSnapshot,
-    required DateTime savedAt,
-  }) => _savedEngineResult(resultSnapshot, savedAt);
+  }) => _savedEngineResult(this, resultSnapshot, savedAt);
 
   CanonicalGameSnapshot withEventLogOffset(int eventLogOffset) {
     return copyWith(eventLogOffset: eventLogOffset);
@@ -254,10 +238,12 @@ extension CanonicalGameSnapshotApplication on CanonicalGameSnapshot {
 }
 
 CanonicalGameSnapshot _savedEngineResult(
+  CanonicalGameSnapshot source,
   CanonicalGameSnapshot result,
   DateTime savedAt,
 ) {
   return result.copyWith(
+    domain: result.domain == source.domain ? source.domain : result.domain,
     metadata: result.metadata.copyWith(savedAtUtc: savedAt.toUtc()),
   );
 }

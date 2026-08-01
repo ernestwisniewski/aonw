@@ -5,7 +5,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-const _legacyReducer =
+const _interactionReducer =
     'lib/game/domain/reducer/game_state/game_state_reducer.dart';
 const _intentResolver =
     'lib/game/application/services/game_intent_resolver.dart';
@@ -21,7 +21,9 @@ const _expectedConcreteIntents = <String>{
   'CancelMerchantTradeRouteSelectionCommand',
   'CancelResearchSelectionCommand',
   'CancelWorkerActionSelectionCommand',
+  'ChooseWorkerImprovementIntent',
   'CityTappedCommand',
+  'ConfirmWorkerImprovementIntent',
   'FocusNextPendingActionCommand',
   'FocusTurnStartActionCommand',
   'SelectCityCommand',
@@ -89,7 +91,7 @@ const _allowedPresentationRuleReads = <String, List<String>>{
 
 void main() {
   test('the intent resolver exclusively owns GameIntent dispatch', () {
-    final legacy = File(_legacyReducer).readAsStringSync();
+    final interactionReducer = File(_interactionReducer).readAsStringSync();
     final resolver = File(_intentResolver).readAsStringSync();
     final localCommandResolver = File(_localCommandResolver).readAsStringSync();
     final intentNames = _gameIntentNames();
@@ -98,7 +100,7 @@ void main() {
     expect(
       [
         for (final name in intentNames)
-          if (legacy.contains('$name()')) name,
+          if (interactionReducer.contains('$name()')) name,
       ],
       isEmpty,
       reason: 'GameStateReducer may not retain presentation intent branches.',

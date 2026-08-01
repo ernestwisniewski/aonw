@@ -215,7 +215,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "command": {
       "type": "SelectTechnology",
@@ -310,7 +310,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "events": []
   }

@@ -114,7 +114,7 @@ void main() {
       },
     );
 
-    test('turn combat has exactly three canonical orchestration sites', () {
+    test('turn combat has exactly two canonical orchestration sites', () {
       final sources = productionDartSources();
 
       expect(
@@ -123,11 +123,7 @@ void main() {
           'TurnCombatOrchestrator',
           'resolve',
         ),
-        const {
-          persistentTurnCombatResolverPath: 1,
-          domainTurnCombatResolverPath: 1,
-          combatCommandResolverPath: 1,
-        },
+        const {domainTurnCombatResolverPath: 1, combatCommandResolverPath: 1},
         reason: 'Unexpected TurnCombatOrchestrator.resolve call-sites.',
       );
       expect(
@@ -167,6 +163,7 @@ void main() {
                   'accepted_engine_command_interaction_source.dart':
               1,
           'lib/game/application/services/local_command_resolver.dart': 1,
+          'lib/game/application/services/local_combat_command_resolver.dart': 1,
           'packages/aonw_core/lib/game/application/engine/game_engine.dart': 2,
         },
         reason:
@@ -375,7 +372,6 @@ DomainState? leakedState;
 
       final report = combatCommandKernelBoundaryViolations(sources).join('\n');
       for (final expected in const {
-        'GameClientState',
         'PersistentGameState',
         'WorldMap',
         'HiddenMap',

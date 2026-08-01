@@ -9,53 +9,44 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('AiDomainStateFingerprint', () {
-    test('preserves the legacy cache invalidation partition', () {
+    test('tracks only inputs owned by the AI world-state cache', () {
       final base = _snapshot();
-      final variants = <({String label, CanonicalGameSnapshot snapshot})>[
-        (label: 'gold', snapshot: _snapshot(gold: 11)),
-        (label: 'unit', snapshot: _snapshot(unitCol: 1)),
-        (
-          label: 'session',
-          snapshot: _snapshot(submittedPlayerIds: {'player-1'}),
+      final baseHash = AiDomainStateFingerprint.hash(base.domain);
+
+      expect(
+        AiDomainStateFingerprint.hash(_snapshot(gold: 11).domain),
+        isNot(baseHash),
+      );
+      expect(
+        AiDomainStateFingerprint.hash(_snapshot(unitCol: 1).domain),
+        isNot(baseHash),
+      );
+      expect(
+        AiDomainStateFingerprint.hash(
+          _snapshot(submittedPlayerIds: {'player-1'}).domain,
         ),
-        (label: 'attack', snapshot: _snapshot(intendedAttacks: [_attack])),
-        (
-          label: 'victory progress',
-          snapshot: _snapshot(dominationHoldTurnsByPlayerId: {'player-1': 2}),
+        baseHash,
+      );
+      expect(
+        AiDomainStateFingerprint.hash(
+          _snapshot(dominationHoldTurnsByPlayerId: {'player-1': 2}).domain,
         ),
-      ];
-
-      for (final includeAttacks in const [false, true]) {
-        final legacyBase = _legacyFingerprint(
-          base,
-          includeIntendedAttacks: includeAttacks,
-        );
-        final canonicalBase = AiDomainStateFingerprint.hash(
-          base.domain,
-          includeIntendedAttacks: includeAttacks,
-        );
-
-        for (final variant in variants) {
-          final legacyEqual =
-              _legacyFingerprint(
-                variant.snapshot,
-                includeIntendedAttacks: includeAttacks,
-              ) ==
-              legacyBase;
-          final canonicalEqual =
-              AiDomainStateFingerprint.hash(
-                variant.snapshot.domain,
-                includeIntendedAttacks: includeAttacks,
-              ) ==
-              canonicalBase;
-
-          expect(
-            canonicalEqual,
-            legacyEqual,
-            reason: '${variant.label}, includeIntendedAttacks=$includeAttacks',
-          );
-        }
-      }
+        baseHash,
+      );
+      final attackState = _snapshot(intendedAttacks: [_attack]).domain;
+      expect(AiDomainStateFingerprint.hash(attackState), baseHash);
+      expect(
+        AiDomainStateFingerprint.hash(
+          attackState,
+          includeIntendedAttacks: true,
+        ),
+        isNot(
+          AiDomainStateFingerprint.hash(
+            base.domain,
+            includeIntendedAttacks: true,
+          ),
+        ),
+      );
     });
 
     test('ignores domain fields owned by other cache triggers', () {
@@ -99,19 +90,6 @@ void main() {
       );
     });
   });
-}
-
-int _legacyFingerprint(
-  CanonicalGameSnapshot snapshot, {
-  required bool includeIntendedAttacks,
-}) {
-  return snapshot.domain
-      .copyWith(
-        intendedAttacks: includeIntendedAttacks
-            ? snapshot.domain.intendedAttacks
-            : const [],
-      )
-      .hashCode;
 }
 
 CanonicalGameSnapshot _snapshot({

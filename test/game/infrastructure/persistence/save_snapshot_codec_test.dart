@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_save.dart';
@@ -16,7 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('SaveSnapshotCodec', () {
     test('rejects schema-2 snapshots without an upcaster', () {
-      final json = SaveSnapshotCodec.toJson(
+      final json = _mutableSnapshotJson(
         GameSnapshotFactory.create(save: _save()),
       );
       final save = json['save'] as Map<String, dynamic>;
@@ -36,7 +38,7 @@ void main() {
 
     test('rejects unknown older and future save schemas', () {
       for (final schemaVersion in [1, gameSaveCurrentSchemaVersion + 1]) {
-        final json = SaveSnapshotCodec.toJson(
+        final json = _mutableSnapshotJson(
           GameSnapshotFactory.create(save: _save()),
         );
         final save = json['save'] as Map<String, dynamic>;
@@ -64,9 +66,7 @@ void main() {
         center: CityHex(col: 2, row: 3),
       );
       final snapshot = GameSnapshotFactory.create(
-        save: _save(),
-        playerColors: const {'p1': 0xFF4a7fc4},
-        playerCountries: const {'p1': PlayerCountry.japan},
+        save: _save(country: PlayerCountry.japan),
         playerGold: const {'p1': 7},
         playerWarWeariness: const {'p1': 3},
         playerStabilityNet: const {'p1': -2},
@@ -119,7 +119,7 @@ void main() {
       expect(restored.eventLogOffset, 9);
     });
 
-    test('defaults stability state for snapshots created before stability', () {
+    test('decodes omitted empty stability fields', () {
       final json =
           SaveSnapshotCodec.toJson(GameSnapshotFactory.create(save: _save()))
             ..remove('playerWarWeariness')
@@ -148,7 +148,7 @@ void main() {
       );
     });
 
-    test('drops unknown pending runtime actions while loading', () {
+    test('rejects unknown pending runtime actions', () {
       final snapshot = GameSnapshotFactory.create(
         save: _save(),
 
@@ -157,23 +157,24 @@ void main() {
           cityId: 'city_1',
         ),
       );
-      final json = SaveSnapshotCodec.toJson(snapshot);
+      final json = _mutableSnapshotJson(snapshot);
       (json['lifecycle'] as Map<String, dynamic>)['pendingAction'] = {
         'type': 'futurePendingAction',
         'ownerPlayerId': 'p1',
       };
 
-      final restored = SaveSnapshotCodec.fromJson(json);
-
-      expect(restored.domain.actions.pendingAction, isNull);
+      expect(
+        () => SaveSnapshotCodec.fromJson(json),
+        throwsA(isA<FormatException>()),
+      );
     });
 
-    test('drops invalid submitted players while loading runtime state', () {
+    test('rejects invalid submitted players', () {
       final snapshot = GameSnapshotFactory.create(
         save: _save(),
         submittedPlayerIds: {'p1'},
       );
-      final json = SaveSnapshotCodec.toJson(snapshot);
+      final json = _mutableSnapshotJson(snapshot);
       (json['lifecycle'] as Map<String, dynamic>)['submittedPlayerIds'] = [
         'p1',
         '',
@@ -181,12 +182,13 @@ void main() {
         'p2',
       ];
 
-      final restored = SaveSnapshotCodec.fromJson(json);
-
-      expect(restored.domain.submittedPlayerIds, {'p1', 'p2'});
+      expect(
+        () => SaveSnapshotCodec.fromJson(json),
+        throwsA(isA<FormatException>()),
+      );
     });
 
-    test('drops invalid intended attacks while loading runtime state', () {
+    test('rejects invalid intended attacks', () {
       final snapshot = GameSnapshotFactory.create(
         save: _save(),
 
@@ -200,7 +202,7 @@ void main() {
           ),
         ],
       );
-      final json = SaveSnapshotCodec.toJson(snapshot);
+      final json = _mutableSnapshotJson(snapshot);
       (json['lifecycle'] as Map<String, dynamic>)['intendedAttacks'] = [
         {
           'attackerUnitId': 'warrior_1',
@@ -218,30 +220,28 @@ void main() {
         },
       ];
 
-      final restored = SaveSnapshotCodec.fromJson(json);
-
-      expect(restored.domain.intendedAttacks, hasLength(1));
       expect(
-        restored.domain.intendedAttacks.single.attackerUnitId,
-        'warrior_1',
+        () => SaveSnapshotCodec.fromJson(json),
+        throwsA(isA<FormatException>()),
       );
     });
 
-    test('drops invalid turnStartedAt while loading runtime state', () {
+    test('rejects an invalid turn start timestamp', () {
       final snapshot = GameSnapshotFactory.create(
         save: _save(),
 
         turnStartedAt: DateTime.utc(2026, 4, 27, 12),
       );
-      final json = SaveSnapshotCodec.toJson(snapshot);
+      final json = _mutableSnapshotJson(snapshot);
       (json['lifecycle'] as Map<String, dynamic>)['turnStartedAt'] = 'nope';
 
-      final restored = SaveSnapshotCodec.fromJson(json);
-
-      expect(restored.domain.turnStartedAt, isNull);
+      expect(
+        () => SaveSnapshotCodec.fromJson(json),
+        throwsA(isA<FormatException>()),
+      );
     });
 
-    test('clears unknown worker improvement type while loading', () {
+    test('rejects an unknown worker improvement type', () {
       final snapshot = GameSnapshotFactory.create(
         save: _save(),
 
@@ -251,26 +251,19 @@ void main() {
           improvementType: FieldImprovementType.mine,
         ),
       );
-      final json = SaveSnapshotCodec.toJson(snapshot);
+      final json = _mutableSnapshotJson(snapshot);
       final pendingAction =
           (json['lifecycle'] as Map<String, dynamic>)['pendingAction']
               as Map<String, dynamic>;
       pendingAction['improvementType'] = 'futureImprovement';
 
-      final restored = SaveSnapshotCodec.fromJson(json);
-
       expect(
-        restored.domain.actions.pendingAction,
-        isA<PendingWorkerActionSelection>(),
-      );
-      expect(
-        (restored.domain.actions.pendingAction as PendingWorkerActionSelection)
-            .improvementType,
-        isNull,
+        () => SaveSnapshotCodec.fromJson(json),
+        throwsA(isA<FormatException>()),
       );
     });
 
-    test('filters unknown research technology ids while loading', () {
+    test('rejects unknown research technology ids', () {
       final snapshot = GameSnapshotFactory.create(
         save: _save(),
         research: ResearchState(
@@ -283,7 +276,7 @@ void main() {
           },
         ),
       );
-      final json = SaveSnapshotCodec.toJson(snapshot);
+      final json = _mutableSnapshotJson(snapshot);
       final playerResearch =
           ((json['research'] as Map<String, dynamic>)['players']
                   as Map<String, dynamic>)['p1']
@@ -297,27 +290,25 @@ void main() {
       progress['futureTechnology'] = 99;
       progress['trade'] = -1;
 
-      final restored = SaveSnapshotCodec.fromJson(json);
-      final restoredResearch = restored.research.forPlayer('p1');
-
-      expect(restoredResearch.hasUnlocked(TechnologyId.agriculture), isTrue);
-      expect(restoredResearch.activeTechnologyId, isNull);
-      expect(restoredResearch.progressFor(TechnologyId.mining), 3);
-      expect(restoredResearch.progressFor(TechnologyId.trade), 0);
+      expect(
+        () => SaveSnapshotCodec.fromJson(json),
+        throwsA(isA<FormatException>()),
+      );
     });
 
-    test('defaults malformed research payload to empty state', () {
-      final json = SaveSnapshotCodec.toJson(
+    test('rejects a malformed research payload', () {
+      final json = _mutableSnapshotJson(
         GameSnapshotFactory.create(save: _save()),
       );
       json['research'] = {'players': <dynamic>[]};
 
-      final restored = SaveSnapshotCodec.fromJson(json);
-
-      expect(restored.research, ResearchState.empty);
+      expect(
+        () => SaveSnapshotCodec.fromJson(json),
+        throwsA(isA<FormatException>()),
+      );
     });
 
-    test('filters malformed fog entries while loading', () {
+    test('rejects malformed fog entries', () {
       final snapshot = GameSnapshotFactory.create(
         save: _save(),
         fogOfWar: FogOfWarState(
@@ -329,7 +320,7 @@ void main() {
           },
         ),
       );
-      final json = SaveSnapshotCodec.toJson(snapshot);
+      final json = _mutableSnapshotJson(snapshot);
       final fogJson = List<dynamic>.from(json['fogOfWar'] as List<dynamic>)
         ..add({'discoveredHexes': <dynamic>[]})
         ..add('bad-player-fog');
@@ -340,29 +331,31 @@ void main() {
         {'col': 4},
       ];
 
-      final restored = SaveSnapshotCodec.fromJson(json);
-
       expect(
-        restored.fogOfWar.isKnown('p1', const HexCoordinate(col: 1, row: 2)),
-        isTrue,
+        () => SaveSnapshotCodec.fromJson(json),
+        throwsA(isA<FormatException>()),
       );
-      expect(restored.fogOfWar.playerIds, ['p1']);
     });
 
-    test('defaults malformed fog payload to empty state', () {
-      final json = SaveSnapshotCodec.toJson(
+    test('rejects a malformed fog payload', () {
+      final json = _mutableSnapshotJson(
         GameSnapshotFactory.create(save: _save()),
       );
       json['fogOfWar'] = {'players': <dynamic>[]};
 
-      final restored = SaveSnapshotCodec.fromJson(json);
-
-      expect(restored.fogOfWar, FogOfWarState.empty);
+      expect(
+        () => SaveSnapshotCodec.fromJson(json),
+        throwsA(isA<FormatException>()),
+      );
     });
   });
 }
 
-GameSave _save() {
+Map<String, dynamic> _mutableSnapshotJson(CanonicalGameSnapshot snapshot) =>
+    jsonDecode(jsonEncode(SaveSnapshotCodec.toJson(snapshot)))
+        as Map<String, dynamic>;
+
+GameSave _save({PlayerCountry country = PlayerCountry.poland}) {
   return GameSave(
     id: 'save_1',
     name: 'Game',
@@ -372,6 +365,8 @@ GameSave _save() {
     playerStates: const {'p1': PlayerTurnState.active},
     savedAt: DateTime.utc(2026, 1, 1),
     camera: CameraState.zero,
-    players: const [Player(id: 'p1', name: 'Alice', colorValue: 0xFF4a7fc4)],
+    players: [
+      Player(id: 'p1', name: 'Alice', colorValue: 0xFF4a7fc4, country: country),
+    ],
   );
 }

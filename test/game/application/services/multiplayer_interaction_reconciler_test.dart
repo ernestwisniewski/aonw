@@ -217,16 +217,17 @@ void main() {
         ),
       );
 
+      final authoritativeState = GameClientState(
+        activePlayerId: 'player_1',
+        cities: [authoritativeCity],
+        playerStabilityNet: {'player_1': 4},
+      );
       final result = MultiplayerInteractionReconciler.reconcile(
-        authoritativeState: GameClientState(
-          activePlayerId: 'player_1',
-          cities: [authoritativeCity],
-          playerStabilityNet: {'player_1': 4},
-        ),
+        authoritativeState: authoritativeState,
         interactionSource: source,
       );
 
-      expect(result.selection?.city, same(authoritativeCity));
+      expect(result.selection?.city, same(authoritativeState.cities.single));
       expect(
         result.selection?.cityTileYieldBreakdown,
         same(cachedTileBreakdown),

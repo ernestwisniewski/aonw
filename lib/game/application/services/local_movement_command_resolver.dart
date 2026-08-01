@@ -1,4 +1,5 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/accepted_engine_command_interaction_source.dart';
 import 'package:aonw/game/application/services/local_movement_engine_projection.dart';
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
@@ -115,14 +116,19 @@ final class LocalMovementCommandResolver {
     required LocalMovementPresentationOrigin presentationOrigin,
   }) {
     final presentation = projectLocalMovementEngineResult(
-      currentState: currentState,
+      currentState: acceptedEngineCommandInteractionSource(
+        currentState: currentState,
+        command: command,
+        family: GameEngineCommandFamily.movement,
+        domainActions: accepted.snapshot.domain.actions,
+      ),
       result: accepted,
       command: command,
       mapView: mapView,
       presentationOrigin: presentationOrigin,
     );
     return LocalMovementCommandResolution(
-      snapshot: baseSnapshot.withMovementEngineProjection(
+      snapshot: baseSnapshot.withEngineResult(
         resultSnapshot: accepted.snapshot,
         savedAt: savedAt,
       ),
@@ -161,7 +167,7 @@ final class LocalMovementCommandResolver {
         presentationOrigin ==
             LocalMovementPresentationOrigin.previewConfirmation;
     return LocalMovementCommandResolution(
-      snapshot: baseSnapshot.withMovementEngineProjection(
+      snapshot: baseSnapshot.withEngineResult(
         resultSnapshot: baseSnapshot.canonical,
         savedAt: savedAt,
       ),

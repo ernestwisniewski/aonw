@@ -6,7 +6,6 @@ import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
-import 'package:aonw_core/util/collection_equality.dart';
 
 GameClientState projectLocalCombatEngineResult({
   required GameClientState currentState,
@@ -15,33 +14,7 @@ GameClientState projectLocalCombatEngineResult({
   required MapReadView mapView,
 }) {
   final domain = result.snapshot.domain;
-  var state = currentState;
-  if (!listEquals(domain.units, state.units)) {
-    state = state.copyWith(units: domain.units);
-  }
-  if (!listEquals(domain.cities, state.cities)) {
-    state = state.copyWith(cities: domain.cities);
-  }
-  if (!listEquals(domain.artifacts, state.artifacts)) {
-    state = state.copyWith(artifacts: domain.artifacts);
-  }
-  if (domain.fogOfWar != state.fogOfWar) {
-    state = state.copyWith(fogOfWar: domain.fogOfWar);
-  }
-  if (domain.diplomacy != state.diplomacy) {
-    state = state.copyWith(diplomacy: domain.diplomacy);
-  }
-  if (!listEquals(domain.intendedAttacks, state.intendedAttacks)) {
-    state = state.copyWith(intendedAttacks: domain.intendedAttacks);
-  }
-  if (!listEquals(
-    domain.resourceTradeAgreements,
-    state.resourceTradeAgreements,
-  )) {
-    state = state.copyWith(
-      resourceTradeAgreements: domain.resourceTradeAgreements,
-    );
-  }
+  var state = currentState.withDomain(domain);
   final pending = state.pendingAction;
   final clearPending =
       pending is PendingAttackTargeting &&

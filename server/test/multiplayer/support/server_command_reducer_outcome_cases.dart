@@ -9,6 +9,10 @@ void _registerServerCommandReducerOutcomeTests() {
         final reduction = await _reduceOutcomeCommand(
           match: _runningMatch(players: players),
           state: _outcomeState(
+            participants: [
+              ..._domainPlayers(),
+              _outcomeDomainPlayer('player_3'),
+            ],
             kickedPlayerIds: const {'player_3'},
             playerGold: const {'player_1': 50, 'player_3': 100000},
             dominationHoldTurnsByPlayerId: const {'player_3': 10},
@@ -35,6 +39,10 @@ void _registerServerCommandReducerOutcomeTests() {
         final reduction = await _reduceOutcomeCommand(
           match: _runningMatch(),
           state: _outcomeState(
+            participants: [
+              ..._domainPlayers(),
+              _outcomeDomainPlayer('phantom'),
+            ],
             playerGold: const {'phantom': 100000},
             dominationHoldTurnsByPlayerId: const {'phantom': 10},
             extraCities: [_dominantOutcomeCity('phantom')],
@@ -107,12 +115,14 @@ Future<ServerCommandTestReduction> _reduceOutcomeCommand({
 }
 
 DomainState _outcomeState({
+  List<Player>? participants,
   Set<String> kickedPlayerIds = const {},
   Map<String, int> playerGold = const {},
   Map<String, int> dominationHoldTurnsByPlayerId = const {},
   List<GameCity> extraCities = const [],
 }) {
   return DomainState.snapshot(
+    participants: participants ?? _domainPlayers(),
     playerGold: playerGold,
     units: [
       GameUnit(

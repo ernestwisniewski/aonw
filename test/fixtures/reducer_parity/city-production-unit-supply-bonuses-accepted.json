@@ -143,9 +143,9 @@
       },
       "savedAt": "2026-01-02T02:30:00.000Z",
       "camera": {
-        "x": 0,
-        "y": 0,
-        "zoom": 1
+        "x": 0.0,
+        "y": 0.0,
+        "zoom": 1.0
       },
       "ruleset": {
         "gameLength": {
@@ -158,7 +158,7 @@
         "victory": {
           "conquestEnabled": true,
           "dominationEnabled": true,
-          "dominationControlPercent": 45,
+          "dominationControlPercent": 45.0,
           "dominationHoldTurns": 10,
           "scoreFallbackEnabled": true,
           "turnLimit": 120,
@@ -399,10 +399,11 @@
           }
         }
       },
-      "runtimeState": {
+      "lifecycle": {
         "submittedPlayerIds": [
           "player_2"
         ],
+        "turnStartedAt": "2026-01-02T01:02:03.000Z",
         "resourceTradeAgreements": [
           {
             "id": "trade_sentinel",
@@ -412,8 +413,7 @@
             "goldPerTurn": 1,
             "remainingTurns": 4
           }
-        ],
-        "turnStartedAt": "2026-01-02T01:02:03.000Z"
+        ]
       },
       "wonderRegistry": {
         "centralBank": "player_2"
@@ -440,9 +440,9 @@
         "player_2": "active"
       },
       "camera": {
-        "x": 0,
-        "y": 0,
-        "zoom": 1
+        "x": 0.0,
+        "y": 0.0,
+        "zoom": 1.0
       },
       "ruleset": {
         "gameLength": {
@@ -455,7 +455,7 @@
         "victory": {
           "conquestEnabled": true,
           "dominationEnabled": true,
-          "dominationControlPercent": 45,
+          "dominationControlPercent": 45.0,
           "dominationHoldTurns": 10,
           "scoreFallbackEnabled": true,
           "turnLimit": 120,
@@ -703,10 +703,11 @@
           }
         }
       },
-      "runtimeState": {
+      "lifecycle": {
         "submittedPlayerIds": [
           "player_2"
         ],
+        "turnStartedAt": "2026-01-02T01:02:03.000Z",
         "resourceTradeAgreements": [
           {
             "id": "trade_sentinel",
@@ -716,8 +717,7 @@
             "goldPerTurn": 1,
             "remainingTurns": 4
           }
-        ],
-        "turnStartedAt": "2026-01-02T01:02:03.000Z"
+        ]
       },
       "wonderRegistry": {
         "centralBank": "player_2"

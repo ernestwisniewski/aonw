@@ -221,7 +221,7 @@
           }
         }
       },
-      "runtimeState": {
+      "lifecycle": {
         "pendingAction": {
           "type": "researchSelection",
           "ownerPlayerId": "player_1"
@@ -329,7 +329,7 @@
           }
         }
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "events": []
   }

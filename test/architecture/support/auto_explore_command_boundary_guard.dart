@@ -25,7 +25,7 @@ const _autoExploreResultFields = {
   'units': 'List<GameUnit>',
   'fogOfWar': 'FogOfWarState',
   'diplomacy': 'DiplomacyState',
-  'interaction': 'PersistedInteractionState',
+  'interaction': 'DomainActionState',
   'events': 'List<GameEvent>',
   'execution': 'MovementCommandExecution?',
 };
@@ -34,7 +34,7 @@ const _autoExploreAcceptedParameters = [
   _ParameterShape('units', 'List<GameUnit>', required: true),
   _ParameterShape('fogOfWar', 'FogOfWarState', required: true),
   _ParameterShape('diplomacy', 'DiplomacyState', required: true),
-  _ParameterShape('interaction', 'PersistedInteractionState', required: true),
+  _ParameterShape('interaction', 'DomainActionState', required: true),
   _ParameterShape('events', 'Iterable<GameEvent>', defaultValue: 'const []'),
   _ParameterShape('execution', 'MovementCommandExecution?'),
 ];
@@ -43,7 +43,7 @@ const _autoExploreRejectedParameters = [
   _ParameterShape('units', 'List<GameUnit>', required: true),
   _ParameterShape('fogOfWar', 'FogOfWarState', required: true),
   _ParameterShape('diplomacy', 'DiplomacyState', required: true),
-  _ParameterShape('interaction', 'PersistedInteractionState', required: true),
+  _ParameterShape('interaction', 'DomainActionState', required: true),
   _ParameterShape('reason', 'String?', required: true),
 ];
 
@@ -53,7 +53,7 @@ const _autoExploreOwnedParameters = [
   _ParameterShape('units', 'List<GameUnit>', required: true),
   _ParameterShape('fogOfWar', 'FogOfWarState', required: true),
   _ParameterShape('diplomacy', 'DiplomacyState', required: true),
-  _ParameterShape('interaction', 'PersistedInteractionState', required: true),
+  _ParameterShape('interaction', 'DomainActionState', required: true),
   _ParameterShape('events', 'List<GameEvent>', required: true),
   _ParameterShape('execution', 'MovementCommandExecution?', required: true),
 ];
@@ -79,16 +79,12 @@ List<String> autoExplorePublicApiViolations(Map<String, String> sources) => [
     className: 'AutoExploreCommandState',
     expectedFields: const {
       'movement': 'MovementCommandState',
-      'interaction': 'PersistedInteractionState',
+      'interaction': 'DomainActionState',
     },
     expectedConstructors: const {
       '': [
         _ParameterShape('movement', 'MovementCommandState', required: true),
-        _ParameterShape(
-          'interaction',
-          'PersistedInteractionState',
-          required: true,
-        ),
+        _ParameterShape('interaction', 'DomainActionState', required: true),
       ],
     },
     expectedPublicMethods: const {},

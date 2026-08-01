@@ -222,6 +222,7 @@ class _AppStatusEndpoint {
     _i1.TestSessionBuilder sessionBuilder, {
     required String platform,
     required int buildNumber,
+    int? multiplayerVersion,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -237,6 +238,7 @@ class _AppStatusEndpoint {
           parameters: _i1.testObjectToJson({
             'platform': platform,
             'buildNumber': buildNumber,
+            'multiplayerVersion': multiplayerVersion,
           }),
           serializationManager: _serializationManager,
         );

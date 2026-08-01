@@ -69,11 +69,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'game_hud_auto_flow_regression_tests.dart';
 part 'game_hud_combat_camera_tests.dart';
+part 'game_hud_snapshot_fixture.dart';
 part 'game_hud_visual_assertions.dart';
 
 class _FakeGameRepository implements GameRepository {
   _FakeGameRepository({CanonicalGameSnapshot? snapshot})
-    : snapshot = snapshot ?? GameSnapshotFactory.create(save: _save);
+    : snapshot = _withHudTestVisibility(
+        snapshot ?? GameSnapshotFactory.create(save: _save),
+      );
 
   CanonicalGameSnapshot snapshot;
   CameraState? savedCamera;
@@ -7086,12 +7089,9 @@ void main() {
         ownerPlayerId: 'player_1',
       );
       final repository = _FakeGameRepository(
-        snapshot: GameSnapshotFactory.fromClientState(
+        snapshot: GameSnapshotFactory.create(
           save: _save,
-          state: GameClientState(
-            activePlayerId: 'player_1',
-            interaction: const InteractionState(pendingAction: pendingResearch),
-          ),
+          pendingAction: pendingResearch,
         ),
       );
 

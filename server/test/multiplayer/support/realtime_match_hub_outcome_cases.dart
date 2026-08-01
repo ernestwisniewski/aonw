@@ -284,6 +284,10 @@ Future<void> _seedDrawOutcome({
 }) async {
   final stored = (await fixture.store.findState(fixture.match.id))!;
   final save = GameSave.fromJson(stored.snapshot.save);
+  final domain = const LosslessMatchSnapshotDecoder()
+      .decode(stored.snapshot)
+      .canonical
+      .domain;
   await fixture.store.saveState(
     stored.copyWith(
       match: stored.match.copyWith(turn: _drawOutcomeTurn),
@@ -294,17 +298,22 @@ Future<void> _seedDrawOutcome({
               matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
             )
             .toJson(),
-        state: _drawOutcomeState(owner: owner, guest: guest).toJson(),
+        state: _drawOutcomeState(
+          source: domain,
+          owner: owner,
+          guest: guest,
+        ).toJson(),
       ),
     ),
   );
 }
 
 DomainState _drawOutcomeState({
+  required DomainState source,
   required WirePlayer owner,
   required WirePlayer guest,
 }) {
-  return DomainState.snapshot(
+  return source.copyWith(
     units: [
       GameUnit(
         id: 'draw_owner_unit',

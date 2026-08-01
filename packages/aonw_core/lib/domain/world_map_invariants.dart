@@ -8,8 +8,7 @@ typedef WorldMapInvariantViolation = Never Function(String message);
 /// Validates map-wide invariants and builds the canonical coordinate index.
 ///
 /// The returned map borrows tile values while owning an immutable index. This
-/// keeps validation independent of both [WorldTile] and legacy [WorldTile]
-/// representations.
+/// keeps validation independent of the concrete immutable tile type.
 Map<HexCoord, TTile> buildValidatedWorldMapIndex<TTile extends MapTileView>({
   required int cols,
   required int rows,
@@ -18,6 +17,15 @@ Map<HexCoord, TTile> buildValidatedWorldMapIndex<TTile extends MapTileView>({
   required Iterable<MapObjectiveDefinition> objectives,
   required WorldMapInvariantViolation reject,
 }) {
+  final ownedTiles = List<TTile>.of(tiles);
+  for (final tile in ownedTiles) {
+    validateWorldMapTile(
+      terrains: tile.terrains,
+      height: tile.height,
+      reject: reject,
+    );
+  }
+
   _validateMapMetadata(
     cols: cols,
     rows: rows,
@@ -26,12 +34,7 @@ Map<HexCoord, TTile> buildValidatedWorldMapIndex<TTile extends MapTileView>({
   );
 
   final index = <HexCoord, TTile>{};
-  for (final tile in tiles) {
-    validateWorldMapTile(
-      terrains: tile.terrains,
-      height: tile.height,
-      reject: reject,
-    );
+  for (final tile in ownedTiles) {
     final coordinate = HexCoord(col: tile.col, row: tile.row);
     _validateCoordinate(
       coordinate,

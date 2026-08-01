@@ -177,7 +177,7 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
         persistent.state.units.map(_autoExploreTurnUnitSnapshot),
         turn.state.units.map(_autoExploreTurnUnitSnapshot),
       );
-      expect(persistent.state, same(persistentInput));
+      expect(persistent.state, isNot(same(persistentInput)));
       expect(_eventSnapshots(autoOnly.events), ['turn_auto_scout:0,0->1,0']);
       expect(_executionSnapshots(autoOnly.executions), [
         'turn_auto_scout:0,0->1,0',

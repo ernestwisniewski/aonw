@@ -140,6 +140,7 @@ final class GameClientState {
     Set<String> afkPlayerIds = const {},
     Set<String> kickedPlayerIds = const {},
     DateTime? turnStartedAt,
+    DomainActionState domainActions = DomainActionState.empty,
     InteractionState interaction = InteractionState.empty,
   }) => (() {
     final resolvedDomain =
@@ -182,6 +183,7 @@ final class GameClientState {
           afkPlayerIds: afkPlayerIds,
           kickedPlayerIds: kickedPlayerIds,
           turnStartedAt: turnStartedAt,
+          actions: domainActions,
         );
     return GameClientState.fromDomain(
       domain: resolvedDomain,
@@ -224,6 +226,16 @@ final class GameClientState {
   Set<String> get afkPlayerIds => domain.afkPlayerIds;
   Set<String> get kickedPlayerIds => domain.kickedPlayerIds;
   DateTime? get turnStartedAt => domain.turnStartedAt;
+
+  GameClientState withDomain(DomainState nextDomain) =>
+      identical(domain, nextDomain)
+      ? this
+      : GameClientState.fromDomain(
+          domain: nextDomain,
+          activePlayerId: activePlayerId,
+          activePlayerCanAct: activePlayerCanAct,
+          interaction: interaction,
+        );
 
   GameSelection? get selection => interaction.selection;
   UnitMovementPlan? get movePreview => interaction.movePreview;

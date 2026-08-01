@@ -95,7 +95,7 @@ void main() {
     );
 
     expect(targets.single, isA<CityProductionTurnActionTarget>());
-    expect(result.state.selection?.city, same(city));
+    expect(result.state.selection?.city, same(state.cities.single));
     expect(result.state.selection?.cityTileYieldBreakdown, isNotNull);
     expect(result.state.selection?.cityEconomy, isNotNull);
     expect(result.uiEffects.whereType<JumpCameraEffect>(), hasLength(1));

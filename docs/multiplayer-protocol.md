@@ -12,7 +12,8 @@ protocol envelopes and shared `aonw_core` wire DTOs.
 
 The accepted target compatibility and generated-code boundaries are recorded
 in [ADR 0004](adr/0004-versioned-multiplayer-protocol.md). This runbook remains
-the source for currently implemented version-3 behavior and rollout steps.
+the source for the active functional revision, wire-version behavior, and
+rollout steps.
 
 ## Architecture
 
@@ -155,15 +156,14 @@ and coarse direct-move history, but it does not translate authoritative
 intermediate coordinates or costs. Durable exact animation replay remains a
 separate event-plan contract.
 
-### Strict Protocol-v3 Activation
+### Strict Wire-v3 Activation
 
-No public online matches predate this contract, so the repository carries no
-live compatibility reader, movement fallback, or mixed-version deployment
-path. The shared models, generated client, Flutter client, and server activate
-the required field together. Development data written without
-`movementExecutions` is cleared rather than replayed. Contract fixtures cover
-only valid explicit-empty and non-empty envelopes plus rejection of an omitted,
-`null`, or malformed field.
+The repository carries no pre-v3 wire reader, movement fallback, or implicit
+mixed-wire deployment path. The shared models, generated client, Flutter
+client, and server activated the required field together. Development data
+written without `movementExecutions` is cleared rather than replayed. Contract
+fixtures cover only valid explicit-empty and non-empty envelopes plus rejection
+of an omitted, `null`, or malformed field.
 
 ### Timing Boundary
 
@@ -194,8 +194,23 @@ timeout handling treats AI seats as non-blocking.
 
 Every authoritative top-level wire envelope carries `v: 3` and is validated by
 `kProtocolVersion`; nested command/event bodies inherit the envelope version.
-Persisted snapshots/events from earlier wire versions must be cleared or
-migrated before replaying them with the current client and server.
+Persisted snapshots/events from earlier wire versions must have an explicit
+reader/migration or be retired before replaying them with the current client
+and server.
+
+Functional multiplayer compatibility is versioned independently:
+
+| Contract | Current | Compatible | Meaning |
+| --- | ---: | --- | --- |
+| Multiplayer revision | 2 | 1, 2 | Incremented for every online behavior or contract change. Missing declarations map to reviewed legacy revision 1. |
+| Wire envelope schema | 3 | 3 | Incremented only for incompatible serialized envelope changes. |
+
+The main-menu app-status request sends the app build plus multiplayer revision
+2. A revision in the compatible set can continue. A removed, invalid, or
+future revision receives `soon`, which renders the localized
+`mainMenuUpdateSoonTitle` and `mainMenuUpdateSoonBody` notice. Older clients
+that do not yet send a revision are treated specifically as revision 1 during
+this bridge window.
 
 Version 3 introduced recipient-scoped snapshots and redacted event history.
 The server intentionally rejects incompatible matches, including records whose
@@ -203,21 +218,17 @@ player identifiers embed account identifiers. The client uses the
 `multiplayer-v2` snapshot-cache namespace so pre-projection snapshots cannot
 be loaded as an offline fallback.
 
-Use this path for the first coordinated protocol bump:
+Use this path for every multiplayer change:
 
-1. Pause new multiplayer match creation during the deploy window.
-2. Update the shared wire models, bump `kProtocolVersion`, and regenerate the
-   Serverpod protocol output in the same change.
-3. Update the Flutter client, generated Serverpod client package, and Serverpod
-   server together so they read and write the same version.
-4. Clear or migrate persisted match snapshots/events that still carry the
-   earlier version when sessions requiring replay exist.
-5. Re-run command retry, reconnect, generated client, and server tests before
-   enabling matchmaking again.
-
-Once long-lived public multiplayer sessions are common, revisit this section
-before a protocol bump. At that point the project may need a temporary
-dual-version reader, replay migration, or forced client update policy.
+1. Increment `kCurrentMultiplayerVersion` for every functional change.
+2. Keep each older revision only when old/new fixtures prove it compatible.
+3. If wire JSON is incompatible, also bump `kProtocolVersion` and provide
+   explicit bounded readers/writers or retire incompatible persisted matches.
+4. Regenerate Serverpod server/client output for endpoint or model changes.
+5. Deploy status negotiation before removing an older revision from the
+   compatible set, so store propagation yields the translated update notice.
+6. Re-run app-status, command retry, reconnect, generated client, projection,
+   and server tests before enabling the new revision.
 
 ## Maintenance
 

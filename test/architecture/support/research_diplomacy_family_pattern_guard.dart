@@ -51,10 +51,6 @@ const reviewedResearchDiplomacyFamilyPatternSignatures =
         occurrences: 7,
         digest: 8693179505763133849,
       ),
-      'lib/game/application/services/authoritative_command_policy.dart': (
-        occurrences: 7,
-        digest: -6550399598407538099,
-      ),
       'lib/game/application/services/'
           'local_research_diplomacy_command_resolver.dart': (
         occurrences: 2,
@@ -65,8 +61,8 @@ const reviewedResearchDiplomacyFamilyPatternSignatures =
         digest: -2476462167450391537,
       ),
       'lib/game/presentation/audio/game_sound_cue_mapper.dart': (
-        occurrences: 7,
-        digest: -5326064467141391343,
+        occurrences: 2,
+        digest: 6069370054574359381,
       ),
       'lib/game/presentation/widgets/diplomacy/'
           'diplomacy_player_modal_actions.dart': (
@@ -149,9 +145,14 @@ const reviewedResearchDiplomacyFamilyPatternSignatures =
         digest: -8620495630862599191,
       ),
       'packages/aonw_core/lib/game/domain/command/'
-          'game_command_serialization.dart': (
-        occurrences: 14,
-        digest: 9037281826462526594,
+          'game_command_json_decoding.dart': (
+        occurrences: 7,
+        digest: 702406976783169100,
+      ),
+      'packages/aonw_core/lib/game/domain/command/'
+          'game_command_json_encoding.dart': (
+        occurrences: 7,
+        digest: -3594974223192794904,
       ),
       'packages/aonw_core/lib/game/domain/command/research_commands.dart': (
         occurrences: 2,

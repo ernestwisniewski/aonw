@@ -70,7 +70,7 @@ void _registerPlayerMatchProjectionGuardTests({
     expect(projectedRuntime, isNot(contains('turnStartedAt')));
   });
 
-  test('preserves incomplete public roster maps without normalization', () {
+  test('restores complete public identity maps from canonical roster', () {
     final canonical = playerMatchViewProjectionFixture;
     final colors = Map<String, dynamic>.from(
       canonical.state['playerColors']! as Map,
@@ -81,11 +81,10 @@ void _registerPlayerMatchProjectionGuardTests({
 
     final projected = projector.snapshotFor(incompleteRoster, owner);
 
-    expect(projected.state['playerColors'], colors);
-    expect(projected.state['playerColors'], isNot(contains('player-ai')));
+    expect(projected.state['playerColors'], canonical.state['playerColors']);
   });
 
-  test('preserves sparse roster provenance for diplomacy contacts', () {
+  test('retains canonical roster identity for diplomacy contacts', () {
     final canonical = playerMatchViewProjectionFixture;
     final colors = Map<String, dynamic>.from(
       canonical.state['playerColors']! as Map,
@@ -104,8 +103,8 @@ void _registerPlayerMatchProjectionGuardTests({
     final projected = projector.snapshotFor(sparseRoster, owner);
     final state = CanonicalGameSnapshotCodec.decodeDomainState(projected.state);
 
-    expect(state.playerColors, isNot(contains('player-ai')));
-    expect(state.playerCountries, isNot(contains('player-ai')));
+    expect(state.playerColors, contains('player-ai'));
+    expect(state.playerCountries, contains('player-ai'));
     expect(
       state.diplomacy.contactKeys,
       isNot(contains(DiplomacyState.relationKey('player-owner', 'player-ai'))),
@@ -191,7 +190,7 @@ void _registerPlayerMatchProjectionGuardTests({
     );
   });
 
-  test('preserves an absent public roster map', () {
+  test('restores an absent public identity map from canonical roster', () {
     final canonical = playerMatchViewProjectionFixture;
     final stateWithoutCountries = Map<String, dynamic>.from(canonical.state)
       ..remove('playerCountries');
@@ -201,7 +200,10 @@ void _registerPlayerMatchProjectionGuardTests({
       owner,
     );
 
-    expect(projected.state, isNot(contains('playerCountries')));
+    expect(
+      projected.state['playerCountries'],
+      canonical.state['playerCountries'],
+    );
   });
 
   test('messageFor prepares and projects a snapshot once', () {

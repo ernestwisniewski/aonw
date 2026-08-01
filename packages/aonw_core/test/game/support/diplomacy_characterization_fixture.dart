@@ -46,7 +46,7 @@ DomainState _diplomacyState({
   Set<String> submittedPlayerIds = const {_sentinelPlayer},
   Map<String, int> timeoutStreaksByPlayerId = const {_sentinelPlayer: 2},
   Set<String> afkPlayerIds = const {_sentinelPlayer},
-  Set<String> kickedPlayerIds = const {'removed_player'},
+  Set<String> kickedPlayerIds = const {_sentinelPlayer},
   List<IntendedAttack> intendedAttacks = const [],
   Map<String, int> dominationHoldTurnsByPlayerId = const {_sentinelPlayer: 3},
   Map<String, int> culturalVictoryHoldTurnsByPlayerId = const {
@@ -55,6 +55,14 @@ DomainState _diplomacyState({
   List<ResourceTradeAgreement> resourceTradeAgreements = const [_sentinelTrade],
 }) {
   return DomainState.snapshot(
+    participants: const [
+      Player(
+        id: _sentinelPlayer,
+        name: 'Sentinel',
+        colorValue: 99,
+        country: PlayerCountry.greece,
+      ),
+    ],
     playerColors: playerColors,
     playerCountries: playerCountries,
     playerGold: playerGold,

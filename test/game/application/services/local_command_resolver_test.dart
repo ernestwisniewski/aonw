@@ -22,6 +22,9 @@ void main() {
       playerStates: const {'player_1': PlayerTurnState.active},
       savedAt: DateTime.utc(2026, 7, 11),
       camera: CameraState.zero,
+      players: const [
+        Player(id: 'player_1', name: 'Alice', colorValue: 0xFF000001),
+      ],
     );
     final state = GameClientState(activePlayerId: 'player_1');
     final savedAt = DateTime.utc(2026, 7, 11, 12);
@@ -56,7 +59,7 @@ void main() {
     expect(result.events, isEmpty);
   });
 
-  test('local submit accepts a participant synthesized from sparse roster', () {
+  test('local submit accepts a participant listed in the roster', () {
     final save = GameSave(
       id: 'save_1',
       name: 'Sparse local save',
@@ -70,6 +73,7 @@ void main() {
       camera: CameraState.zero,
       players: const [
         Player(id: 'player_1', name: 'Alice', colorValue: 0xFF000001),
+        Player(id: 'legacy_only', name: 'Legacy', colorValue: 0xFF000002),
       ],
     );
     final state = GameClientState(activePlayerId: 'legacy_only');
@@ -95,53 +99,47 @@ void main() {
     expect(result.state.submittedPlayerIds, {'legacy_only'});
   });
 
-  test(
-    'partial submit keeps an implicit turn start lossless over codec IO',
-    () {
-      final save = GameSave(
-        id: 'save_1',
-        name: 'Sparse multiplayer turn',
-        mapName: 'verdantia',
-        turn: 7,
-        playerStates: const {
-          'player_1': PlayerTurnState.active,
-          'player_2': PlayerTurnState.active,
-        },
-        savedAt: DateTime.utc(2026, 7, 11),
-        camera: CameraState.zero,
-        players: const [
-          Player(id: 'player_1', name: 'Alice', colorValue: 1),
-          Player(id: 'player_2', name: 'Bob', colorValue: 2),
-        ],
-        gameMode: GameMode.multiplayer,
-      );
-      final state = GameClientState(activePlayerId: 'player_1');
-      final base = GameSnapshotFactory.fromClientState(
-        save: save,
-        state: state,
-      );
-      expect(base.persistedTurnStartedAt, isNull);
+  test('partial submit preserves an absent turn start over codec IO', () {
+    final save = GameSave(
+      id: 'save_1',
+      name: 'Sparse multiplayer turn',
+      mapName: 'verdantia',
+      turn: 7,
+      playerStates: const {
+        'player_1': PlayerTurnState.active,
+        'player_2': PlayerTurnState.active,
+      },
+      savedAt: DateTime.utc(2026, 7, 11),
+      camera: CameraState.zero,
+      players: const [
+        Player(id: 'player_1', name: 'Alice', colorValue: 1),
+        Player(id: 'player_2', name: 'Bob', colorValue: 2),
+      ],
+      gameMode: GameMode.multiplayer,
+    );
+    final state = GameClientState(activePlayerId: 'player_1');
+    final base = GameSnapshotFactory.fromClientState(save: save, state: state);
+    expect(base.persistedTurnStartedAt, isNull);
 
-      final result =
-          LocalCommandResolver(
-            reducer: GameStateReducer(mapData: _mapData()),
-          ).resolve(
-            baseSnapshot: base,
-            currentState: state,
-            command: const SubmitTurnCommand('player_1'),
-            savedAt: DateTime.utc(2026, 7, 11, 12),
-            context: const GameCommandContext(actorPlayerId: 'player_1'),
-          );
-      final restored = SaveSnapshotCodec.fromJson(
-        SaveSnapshotCodec.toJson(result.snapshot),
-      );
+    final result =
+        LocalCommandResolver(
+          reducer: GameStateReducer(mapData: _mapData()),
+        ).resolve(
+          baseSnapshot: base,
+          currentState: state,
+          command: const SubmitTurnCommand('player_1'),
+          savedAt: DateTime.utc(2026, 7, 11, 12),
+          context: const GameCommandContext(actorPlayerId: 'player_1'),
+        );
+    final restored = SaveSnapshotCodec.fromJson(
+      SaveSnapshotCodec.toJson(result.snapshot),
+    );
 
-      expect(result.snapshot.domain.turn, 7);
-      expect(result.snapshot.persistedTurnStartedAt, isNull);
-      expect(restored.persistedTurnStartedAt, isNull);
-      expect(restored.domain.turnStartedAt, restored.metadata.savedAtUtc);
-    },
-  );
+    expect(result.snapshot.domain.turn, 7);
+    expect(result.snapshot.persistedTurnStartedAt, isNull);
+    expect(restored.persistedTurnStartedAt, isNull);
+    expect(restored.domain.turnStartedAt, isNull);
+  });
 
   test(
     'local final submit preserves presentation and persisted interaction',
@@ -412,7 +410,7 @@ void main() {
             );
         final ai = const SimulationGameEngineAdapter().apply(
           snapshot: baseSnapshot,
-          state: persistent,
+          state: baseSnapshot.domain,
           command: command,
           actorPlayerId: actorPlayerId,
           commandTick: tick,

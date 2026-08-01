@@ -179,10 +179,7 @@ void main() {
         );
 
     expect(result.interaction.pendingAction, isNull);
-    expect(
-      snapshot.domain.actions.pendingAction,
-      isA<PendingResearchSelection>(),
-    );
+    expect(snapshot.domain.actions.pendingAction, isNull);
   });
 }
 

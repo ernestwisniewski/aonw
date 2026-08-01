@@ -40,10 +40,15 @@ final class MatchCommandService {
   RunningMatchCursor? _nextTimeoutSweepCursor;
 
   DecodedRunningMatchSnapshot _decodeRunningSnapshot(StoredMatchState state) {
-    return _runningMatchSnapshotCodec.decode(
+    final decoded = _runningMatchSnapshotCodec.decode(
       match: state.match,
       snapshot: state.snapshot,
     );
+    _runningMatchSnapshotCodec.canonicalWithValidatedRoster(
+      decoded,
+      match: state.match,
+    );
+    return decoded;
   }
 
   WireSnapshot _encodeReductionSnapshot({

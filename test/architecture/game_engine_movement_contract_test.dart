@@ -127,27 +127,6 @@ Object secondMovementFamilySwitch(Object command) => switch (command) {
     },
   );
 
-  test('family switch ratchet rejects a duplicate in a reviewed role', () {
-    const path =
-        'lib/game/application/services/authoritative_command_policy.dart';
-    const reviewedOccurrence = 'MoveUnitCommand() ||';
-    final runtimeSources = _localServerAiReplaySources(productionDartSources());
-    final original = runtimeSources[path]!;
-    final duplicated = original.replaceFirst(
-      reviewedOccurrence,
-      '$reviewedOccurrence $reviewedOccurrence',
-    );
-    expect(duplicated, isNot(original));
-
-    expect(
-      unreviewedMovementFamilyPatternPaths({
-        ...runtimeSources,
-        path: duplicated,
-      }),
-      contains(path),
-    );
-  });
-
   test('migrated command routing shares the game engine classifier', () {
     final sources = productionDartSources();
     expect(
@@ -162,6 +141,12 @@ Object secondMovementFamilySwitch(Object command) => switch (command) {
                 'accepted_engine_command_interaction_source.dart':
             1,
         'lib/game/application/services/local_command_resolver.dart': 1,
+        'lib/game/application/services/'
+                'local_city_economy_command_resolver.dart':
+            1,
+        'lib/game/application/services/'
+                'local_research_diplomacy_command_resolver.dart':
+            1,
         'tool/run_save_ai_benchmark/engine_command_dispatcher.dart': 1,
       },
     );

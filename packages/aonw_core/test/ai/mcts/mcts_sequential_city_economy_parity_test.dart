@@ -133,14 +133,17 @@ SimulatedState _simulateCommands(
   WorldMap? mapData,
 }) {
   final actualMapData = mapData ?? MctsSimulatorParityFixtures.mapData();
+  final engineSnapshot = MctsSimulatorParityFixtures.engineSnapshot(
+    initialState,
+  );
   var simulated = SimulatedState.fromView(
     GameView.fromDomainState(
-      initialState,
+      engineSnapshot.domain,
       forPlayerId: 'player_1',
       turn: 1,
       mapData: actualMapData,
       ruleset: GameRuleset.defaults,
-      engineSnapshot: MctsSimulatorParityFixtures.engineSnapshot(initialState),
+      engineSnapshot: engineSnapshot,
     ),
     maxPlanningDepth: commands.length + 1,
   );
@@ -160,8 +163,8 @@ _resolveEngineSequence(
   WorldMap? mapData,
 }) {
   final actualMapData = mapData ?? MctsSimulatorParityFixtures.mapData();
-  var state = initialState;
-  var snapshot = MctsSimulatorParityFixtures.engineSnapshot(state);
+  var snapshot = MctsSimulatorParityFixtures.engineSnapshot(initialState);
+  var state = snapshot.domain;
   final accepted = <bool>[];
   for (var index = 0; index < commands.length; index++) {
     final result = const SimulationGameEngineAdapter().apply(

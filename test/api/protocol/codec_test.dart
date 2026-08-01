@@ -270,9 +270,7 @@ void main() {
           center: CityHex(col: 2, row: 3),
         );
         final snapshot = GameSnapshotFactory.create(
-          save: _save(),
-          playerColors: const {'player_1': 0xFF2563EB},
-          playerCountries: const {'player_1': PlayerCountry.france},
+          save: _save(country: PlayerCountry.france),
           playerGold: const {'player_1': 11},
           playerWarWeariness: const {'player_1': 4},
           playerStabilityNet: const {'player_1': -3},
@@ -435,7 +433,7 @@ void main() {
   });
 }
 
-GameSave _save() {
+GameSave _save({PlayerCountry country = PlayerCountry.poland}) {
   return GameSave(
     id: 'save_1',
     name: 'Game',
@@ -445,8 +443,13 @@ GameSave _save() {
     playerStates: const {'player_1': PlayerTurnState.active},
     savedAt: DateTime.utc(2026, 4, 26, 10),
     camera: CameraState.zero,
-    players: const [
-      Player(id: 'player_1', name: 'Alice', colorValue: 0xFF2563EB),
+    players: [
+      Player(
+        id: 'player_1',
+        name: 'Alice',
+        colorValue: 0xFF2563EB,
+        country: country,
+      ),
     ],
     gameMode: GameMode.multiplayer,
   );

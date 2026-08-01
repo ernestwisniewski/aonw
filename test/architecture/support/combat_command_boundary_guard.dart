@@ -36,9 +36,6 @@ const combatHiddenAiPlaybackPath =
 const combatGameStateRendererEffectsPath =
     'lib/game/presentation/providers/game/'
     'game_state_provider_renderer_effects.dart';
-const persistentTurnCombatResolverPath =
-    'packages/aonw_core/lib/game/domain/turn/'
-    'persistent_turn_combat_resolver.dart';
 const domainTurnCombatResolverPath =
     'packages/aonw_core/lib/game/domain/turn/'
     'domain_turn_combat_resolver.dart';
@@ -57,7 +54,6 @@ const combatCommandAllCallSites = {
 };
 
 const turnCombatOrchestratorCallSites = {
-  persistentTurnCombatResolverPath,
   domainTurnCombatResolverPath,
   combatCommandResolverPath,
 };

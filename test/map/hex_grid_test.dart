@@ -116,7 +116,7 @@ void main() {
                 row: row,
                 terrains: const [TerrainType.ocean],
                 resources: const [],
-                height: row * 3 + col,
+                height: (row * 3 + col) % 6,
               ),
         ],
       );
@@ -127,7 +127,7 @@ void main() {
       );
       final heights = grid.outlineNeighborHeights(1, 1, grid.buildHeightMap());
 
-      expect(heights, [8, 7, 6, 3, 1, 5]);
+      expect(heights, [2, 1, 0, 3, 1, 5]);
     });
 
     test('tileDataAtWorldPoint resolves a perspective-scaled tile hit', () {

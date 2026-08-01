@@ -26,12 +26,18 @@ abstract final class SaveSnapshotCodec {
           entry.key: entry.value,
     };
 
-    return CanonicalGameSnapshotCodec.decode(
-      CanonicalGameSnapshotData(
-        save: rawSave,
-        state: state,
-        eventLogOffset: json['eventLogOffset'] as int? ?? 0,
-      ),
-    );
+    try {
+      return CanonicalGameSnapshotCodec.decode(
+        CanonicalGameSnapshotData(
+          save: rawSave,
+          state: state,
+          eventLogOffset: json['eventLogOffset'] as int? ?? 0,
+        ),
+      );
+    } on FormatException {
+      rethrow;
+    } catch (error) {
+      throw FormatException('Invalid current save snapshot: $error');
+    }
   }
 }

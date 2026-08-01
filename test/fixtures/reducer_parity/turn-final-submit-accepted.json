@@ -215,7 +215,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {
+      "lifecycle": {
         "submittedPlayerIds": [
           "player_1"
         ]
@@ -324,7 +324,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {
+      "lifecycle": {
         "turnStartedAt": "2026-01-02T03:04:05.000Z"
       }
     },

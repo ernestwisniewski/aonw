@@ -12,9 +12,8 @@ void main() {
       final report = const HumanTraceAnalyzer().analyze(
         humanPlayerId: 'player_1',
         log: [
-          _logged(1, FoundCityCommand('settler', controlledHexes: const [])),
           _logged(
-            2,
+            1,
             FoundCityCommand(
               'settler_player_1',
               controlledHexes: const [CityHex(col: 2, row: 3)],

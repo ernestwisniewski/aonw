@@ -105,6 +105,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<int>(),
               nullable: false,
             ),
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -115,6 +120,7 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     platform: params['platform'],
                     buildNumber: params['buildNumber'],
+                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
       },

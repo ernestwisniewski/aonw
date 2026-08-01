@@ -9,7 +9,7 @@ import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('canonical read model preserves sparse legacy roster fallback', () {
+  test('canonical read model rejects lifecycle players outside roster', () {
     final save = _save(
       name: 'Sparse campaign',
       turn: 3,
@@ -18,16 +18,7 @@ void main() {
         'legacy_only': PlayerTurnState.finished,
       },
     );
-    final timeline = _timeline(save);
-
-    expect(timeline.metadata.name, 'Sparse campaign');
-    expect(timeline.playerIds, ['legacy_only', 'p1']);
-    expect(timeline.participants.map((player) => player.id), [
-      'p1',
-      'legacy_only',
-    ]);
-    expect(timeline.firstTurn, 3);
-    expect(timeline.lastTurn, 3);
+    expect(() => _timeline(save), throwsArgumentError);
   });
 
   test('canonical read model preserves ordinary roster and first turn', () {

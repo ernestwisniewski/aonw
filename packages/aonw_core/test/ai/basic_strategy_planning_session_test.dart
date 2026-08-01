@@ -24,7 +24,7 @@ void main() {
             playerId: '',
             state: FogOfWarState.empty,
           ),
-          mapData: WorldMap(cols: 0, rows: 0, tiles: []),
+          mapData: WorldMap(cols: 1, rows: 1, tiles: []),
           ruleset: GameRuleset.standard(),
         ),
       );

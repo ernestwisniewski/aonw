@@ -405,18 +405,31 @@ void main() {
     expect(repeated.state.cityFoundingDraft, isNull);
   });
 
-  test('movement projection preserves sparse raw persistence envelope', () {
+  test('movement projection preserves the canonical persistence envelope', () {
     final unit = _unit(id: 'mover', movementPoints: 3);
     final baseSnapshot = GameSnapshotFactory.create(
-      save: _save().copyWith(players: const [], gameMode: GameMode.multiplayer),
-      playerColors: const {_playerId: 0xFF010203},
-      playerCountries: const {'country_only': PlayerCountry.canada},
+      save: _save().copyWith(
+        players: const [
+          Player(id: _playerId, name: 'One', colorValue: 0xFF010203),
+          Player(id: 'player_2', name: 'Two', colorValue: 0xFF020304),
+          Player(id: 'player_3', name: 'Three', colorValue: 0xFF030405),
+          Player(id: 'player_4', name: 'Four', colorValue: 0xFF040506),
+          Player(id: 'player_5', name: 'Five', colorValue: 0xFF050607),
+          Player(
+            id: 'player_6',
+            name: 'Six',
+            colorValue: 0xFF060708,
+            country: PlayerCountry.canada,
+          ),
+        ],
+        gameMode: GameMode.multiplayer,
+      ),
       units: [unit],
 
-      submittedPlayerIds: const {'session_only'},
-      timeoutStreaksByPlayerId: const {'timeout_only': 2},
-      afkPlayerIds: const {'afk_only'},
-      kickedPlayerIds: const {'kicked_only'},
+      submittedPlayerIds: const {'player_2'},
+      timeoutStreaksByPlayerId: const {'player_3': 2},
+      afkPlayerIds: const {'player_4'},
+      kickedPlayerIds: const {'player_5'},
 
       eventLogOffset: 73,
     );
@@ -436,10 +449,10 @@ void main() {
       _unreviewedMovementEnvelopeBytes(after),
       _unreviewedMovementEnvelopeBytes(before),
     );
-    expect(result.snapshot.save.players, isEmpty);
+    expect(result.snapshot.save.players, hasLength(6));
     expect(result.snapshot.eventLogOffset, 73);
     expect(result.snapshot.units.single.col, 1);
     expect(result.snapshot.persistedTurnStartedAt, isNull);
-    expect(result.snapshot.domain.submittedPlayerIds, {'session_only'});
+    expect(result.snapshot.domain.submittedPlayerIds, {'player_2'});
   });
 }

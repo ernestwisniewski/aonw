@@ -400,7 +400,6 @@ GameSave _makeSave({
 
 CanonicalGameSnapshot _makeSnapshot({
   GameSave? save,
-  Map<String, int> playerColors = const {},
   List<GameUnit> units = const [],
   List<GameCity> cities = const [],
   List<FieldImprovement> fieldImprovements = const [],
@@ -411,7 +410,6 @@ CanonicalGameSnapshot _makeSnapshot({
 }) {
   return GameSnapshotFactory.create(
     save: save ?? _makeSave(),
-    playerColors: playerColors,
     units: units,
     cities: cities,
     fieldImprovements: fieldImprovements,
@@ -617,15 +615,17 @@ void main() {
 
   group('GameStateNotifier', () {
     setUp(LiveEventSubscription.resetLocalCommandEchoGuardForTesting);
-
     test('loads state from repository for the active session', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final save = _makeSave(players: const [_player1]);
+      final save = _makeSave(
+        players: const [
+          Player(id: 'player_1', name: 'Alice', colorValue: 0xFF123456),
+        ],
+      );
       final gameRepository = _FakeGameRepository(
         snapshots: {
           save.id: _makeSnapshot(
             save: save,
-            playerColors: const {'player_1': 0xFF123456},
             units: [commander],
             fogOfWar: FogOfWarState(
               players: {

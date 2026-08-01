@@ -8,6 +8,24 @@ const _combatSentinelCityId = 'combat_sentinel_city';
 const _combatCarriedArtifactId = 'combat_carried_artifact';
 const _combatStoredArtifactId = 'combat_stored_artifact';
 
+const _combatSentinelPlayer = Player(
+  id: _combatSentinelPlayerId,
+  name: 'Combat sentinel',
+  colorValue: 0xFF4A8F63,
+  country: PlayerCountry.france,
+);
+
+const _combatSentinelWirePlayer = WirePlayer(
+  id: _combatSentinelPlayerId,
+  userId: 'user_3',
+  name: 'Combat sentinel',
+  colorValue: 0xFF4A8F63,
+  country: PlayerCountry.france,
+  kind: WirePlayerKind.human,
+  connectionState: WirePlayerConnectionState.connected,
+  ready: true,
+);
+
 final _combatSentinelUnit = GameUnit(
   id: _combatSentinelUnitId,
   ownerPlayerId: _combatSentinelPlayerId,
@@ -126,6 +144,7 @@ DomainState _combatState(
   DiplomacyState? diplomacy,
 }) {
   return source.copyWith(
+    participants: [...source.participants, _combatSentinelPlayer],
     units: [...units, _combatSentinelUnit],
     cities: [...cities, _combatSentinelCity],
     artifacts: artifacts,
@@ -234,6 +253,17 @@ ReducerParityFixture _combatFixture(
   String actorPlayerId = _combatActorId,
 }) {
   final required = _requiredCombatCharacterization[id]!;
+  final match = template.match.copyWith(
+    players: [...template.match.players, _combatSentinelWirePlayer],
+    maxPlayers: template.match.maxPlayers + 1,
+  );
+  final save = template.save.copyWith(
+    players: [...template.save.players, _combatSentinelPlayer],
+    playerStates: {
+      ...template.save.playerStates,
+      _combatSentinelPlayerId: PlayerTurnState.active,
+    },
+  );
   return ReducerParityFixture(
     id: id,
     family: 'combat',
@@ -241,13 +271,13 @@ ReducerParityFixture _combatFixture(
     actorPlayerId: actorPlayerId,
     tick: template.tick + tickOffset,
     mapData: mapData,
-    match: template.match,
-    save: template.save,
+    match: match,
+    save: save,
     state: state,
     command: command,
     expectedAccepted: required.accepted,
     expectedReason: required.reason,
-    expectedSave: reducerParitySave(template.save),
+    expectedSave: reducerParitySave(save),
     expectedState: CanonicalGameSnapshotCodec.encodeDomainState(
       _combatExpectedState(id, state),
     ),

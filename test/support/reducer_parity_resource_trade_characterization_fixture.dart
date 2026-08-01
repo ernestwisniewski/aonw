@@ -5,8 +5,8 @@ const _tradeTargetId = 'player_2';
 
 const _parityUnrelatedTrade = ResourceTradeAgreement(
   id: 'parity_unrelated_trade',
-  exporterPlayerId: 'player_3',
-  importerPlayerId: 'player_4',
+  exporterPlayerId: _tradeTargetId,
+  importerPlayerId: _tradeActorId,
   resource: ResourceType.coal,
   goldPerTurn: 7,
   remainingTurns: 9,
@@ -32,26 +32,26 @@ const _parityOfferedTrade = ResourceTradeAgreement(
 
 DomainState _tradeParityBaseState(DomainState source) {
   return source.copyWith(
-    submittedPlayerIds: const {'sentinel'},
-    timeoutStreaksByPlayerId: const {'sentinel': 2},
-    afkPlayerIds: const {'sentinel'},
-    kickedPlayerIds: const {'removed_player'},
+    submittedPlayerIds: const {_tradeTargetId},
+    timeoutStreaksByPlayerId: const {_tradeTargetId: 2},
+    afkPlayerIds: const {_tradeTargetId},
+    kickedPlayerIds: const {_tradeTargetId},
     intendedAttacks: const [
       IntendedAttack(
         attackerUnitId: 'sentinel_attacker',
         defenderCol: 2,
         defenderRow: 0,
         declaredAtTick: 41,
-        declaringPlayerId: 'sentinel',
+        declaringPlayerId: _tradeTargetId,
       ),
     ],
     diplomacy: source.diplomacy,
-    dominationHoldTurnsByPlayerId: const {'sentinel': 3},
-    culturalVictoryHoldTurnsByPlayerId: const {'sentinel': 4},
+    dominationHoldTurnsByPlayerId: const {_tradeTargetId: 3},
+    culturalVictoryHoldTurnsByPlayerId: const {_tradeTargetId: 4},
     mapObjectiveHoldStatesByObjectiveId: const {
       'sentinel_objective': MapObjectiveHoldState(
         objectiveId: 'sentinel_objective',
-        playerId: 'sentinel',
+        playerId: _tradeTargetId,
         holdTurns: 2,
       ),
     },

@@ -260,7 +260,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "command": {
       "type": "AttackHex",
@@ -401,7 +401,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "events": []
   }

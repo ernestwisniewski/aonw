@@ -1,4 +1,5 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/accepted_engine_command_interaction_source.dart';
 import 'package:aonw/game/application/services/local_unit_action_projection.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -76,21 +77,24 @@ final class LocalUnitActionCommandResolver {
     required DomainCommand command,
     required DateTime savedAt,
   }) {
-    final snapshot = baseSnapshot.withUnitActionEngineProjection(
-      units: result.snapshot.domain.units,
-      artifacts: result.snapshot.domain.artifacts,
-      interaction: result.snapshot.domain.actions,
+    final snapshot = baseSnapshot.withEngineResult(
+      resultSnapshot: result.snapshot,
       savedAt: savedAt,
+    );
+    final presentation = projectLocalUnitActionPresentation(
+      mapView: mapView,
+      currentState: acceptedEngineCommandInteractionSource(
+        currentState: currentState,
+        command: command,
+        family: GameEngineCommandFamily.unitAction,
+        domainActions: result.snapshot.domain.actions,
+      ),
+      resultSnapshot: result.snapshot,
+      command: command,
     );
     return LocalUnitActionCommandResolution(
       snapshot: snapshot,
-      state: projectLocalUnitActionPresentation(
-        mapView: mapView,
-        currentState: currentState,
-        baseSnapshot: baseSnapshot.canonical,
-        resultSnapshot: result.snapshot,
-        command: command,
-      ),
+      state: presentation.withDomain(result.snapshot.domain),
       events: result.events,
     );
   }
@@ -101,10 +105,8 @@ final class LocalUnitActionCommandResolver {
     DateTime savedAt,
   ) {
     return LocalUnitActionCommandResolution(
-      snapshot: snapshot.withUnitActionEngineProjection(
-        units: snapshot.units,
-        artifacts: snapshot.artifacts,
-        interaction: snapshot.domain.actions,
+      snapshot: snapshot.withEngineResult(
+        resultSnapshot: snapshot.canonical,
         savedAt: savedAt,
       ),
       state: state,

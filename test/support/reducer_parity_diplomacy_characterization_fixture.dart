@@ -5,6 +5,24 @@ const _diplomacyTargetId = 'player_2';
 const _diplomacyObserverId = 'player_3';
 const _diplomacyTurn = 7;
 
+const _diplomacyObserver = Player(
+  id: _diplomacyObserverId,
+  name: _diplomacyObserverId,
+  colorValue: 0xFF4A8F63,
+  country: PlayerCountry.france,
+);
+
+const _diplomacyWireObserver = WirePlayer(
+  id: _diplomacyObserverId,
+  userId: 'user_3',
+  name: _diplomacyObserverId,
+  colorValue: 0xFF4A8F63,
+  country: PlayerCountry.france,
+  kind: WirePlayerKind.human,
+  connectionState: WirePlayerConnectionState.connected,
+  ready: true,
+);
+
 const _unrelatedProposal = DiplomaticProposal(
   id: 'sentinel_proposal',
   fromPlayerId: _diplomacyObserverId,
@@ -44,15 +62,7 @@ const _unrelatedTrade = ResourceTradeAgreement(
 DomainState _diplomacyParityBaseState(DomainState source) {
   final diplomacy = _diplomacySentinelState();
   final base = source.copyWith(
-    participants: [
-      ...source.participants,
-      const Player(
-        id: _diplomacyObserverId,
-        name: _diplomacyObserverId,
-        colorValue: 0xFF4A8F63,
-        country: PlayerCountry.france,
-      ),
-    ],
+    participants: [...source.participants, _diplomacyObserver],
     playerGold: {...source.playerGold, _diplomacyObserverId: 31},
     playerWarWeariness: {...source.playerWarWeariness, _diplomacyObserverId: 6},
     playerStabilityNet: {...source.playerStabilityNet, _diplomacyObserverId: 7},
@@ -124,10 +134,10 @@ DomainState _withDiplomacySentinelRuntime(
   DiplomacyState diplomacy,
 ) {
   return source.copyWith(
-    submittedPlayerIds: const {'sentinel_submitted'},
-    timeoutStreaksByPlayerId: const {'sentinel_timeout': 2},
-    afkPlayerIds: const {'sentinel_afk'},
-    kickedPlayerIds: const {'sentinel_kicked'},
+    submittedPlayerIds: const {_diplomacyObserverId},
+    timeoutStreaksByPlayerId: const {_diplomacyObserverId: 2},
+    afkPlayerIds: const {_diplomacyObserverId},
+    kickedPlayerIds: const {_diplomacyObserverId},
     intendedAttacks: const [
       IntendedAttack(
         attackerUnitId: 'warrior_player_1',
@@ -159,8 +169,8 @@ DomainState _withDiplomacySentinelRuntime(
       ),
     ],
     diplomacy: diplomacy,
-    dominationHoldTurnsByPlayerId: const {'sentinel_domination': 3},
-    culturalVictoryHoldTurnsByPlayerId: const {'sentinel_culture': 4},
+    dominationHoldTurnsByPlayerId: const {_diplomacyObserverId: 3},
+    culturalVictoryHoldTurnsByPlayerId: const {_diplomacyObserverId: 4},
     mapObjectiveHoldStatesByObjectiveId: const {
       'sentinel_objective': MapObjectiveHoldState(
         objectiveId: 'sentinel_objective',
@@ -231,6 +241,17 @@ ReducerParityFixture _diplomacyFixture(
   required List<GameEvent> expectedEvents,
   String? reason,
 }) {
+  final match = template.match.copyWith(
+    players: [...template.match.players, _diplomacyWireObserver],
+    maxPlayers: template.match.maxPlayers + 1,
+  );
+  final save = template.save.copyWith(
+    players: [...template.save.players, _diplomacyObserver],
+    playerStates: {
+      ...template.save.playerStates,
+      _diplomacyObserverId: PlayerTurnState.active,
+    },
+  );
   return ReducerParityFixture(
     id: id,
     family: 'diplomacy',
@@ -238,13 +259,13 @@ ReducerParityFixture _diplomacyFixture(
     actorPlayerId: actorPlayerId,
     tick: template.tick + tickOffset,
     mapData: template.mapData,
-    match: template.match,
-    save: template.save,
+    match: match,
+    save: save,
     state: state,
     command: command,
     expectedAccepted: accepted,
     expectedReason: reason,
-    expectedSave: reducerParitySave(template.save),
+    expectedSave: reducerParitySave(save),
     expectedState: CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
     expectedEvents: reducerParityEvents(expectedEvents),
   );

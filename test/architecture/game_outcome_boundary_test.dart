@@ -79,7 +79,7 @@ void main() {
       );
     });
 
-    test('canonical detector entry requires domain and session state', () {
+    test('canonical detector entry requires only domain state', () {
       expect(
         _methodContract(
           _unitAt(_detectorPath),
@@ -87,10 +87,7 @@ void main() {
           'evaluateCanonical',
         ),
         const _MethodContract(
-          requiredNamed: {
-            'state': 'DomainState',
-            'session': 'MatchSessionState',
-          },
+          requiredNamed: {'state': 'DomainState'},
           optionalNamed: {'mapData': 'MapReadView?'},
         ),
       );
@@ -140,7 +137,7 @@ void main() {
       expect(body, contains('final nextSnapshot = result.snapshot;'));
       expect(body, contains('nextSnapshot: nextSnapshot'));
       expect(body, contains('domain: nextSnapshot.domain'));
-      expect(body, contains('session: nextSnapshot.session'));
+      expect(body, isNot(contains('session:')));
       expect(body, isNot(contains('encode(')));
       expect(body, isNot(contains('toCanonical')));
       expect(body, isNot(contains('toLegacy')));

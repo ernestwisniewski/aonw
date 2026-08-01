@@ -315,6 +315,10 @@ Future<void> _seedTurnMovementState(
   required bool observerSeesOwnerPathBefore,
 }) async {
   final stored = (await fixture.store.findState(fixture.match.id))!;
+  final source = const LosslessMatchSnapshotDecoder()
+      .decode(stored.snapshot)
+      .canonical
+      .domain;
   final save = GameSave.fromJson(stored.snapshot.save).copyWith(
     playerStates: {
       fixture.owner.id: PlayerTurnState.active,
@@ -322,10 +326,7 @@ Future<void> _seedTurnMovementState(
       fixture.observer.id: PlayerTurnState.finished,
     },
   );
-  final state = DomainState.snapshot(
-    playerColors: {
-      for (final player in fixture.match.players) player.id: player.colorValue,
-    },
+  final state = source.copyWith(
     units: [
       _queuedTurnMovementTestUnit(
         id: 'unit-a',

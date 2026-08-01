@@ -12,9 +12,33 @@
       "rows": 1,
       "mapName": "reducer_parity",
       "tiles": [
-        {"col": 0, "row": 0, "terrains": ["plains"], "resources": [], "height": 0},
-        {"col": 1, "row": 0, "terrains": ["plains"], "resources": [], "height": 0},
-        {"col": 2, "row": 0, "terrains": ["plains"], "resources": [], "height": 0}
+        {
+          "col": 0,
+          "row": 0,
+          "terrains": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 1,
+          "row": 0,
+          "terrains": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 2,
+          "row": 0,
+          "terrains": [
+            "plains"
+          ],
+          "resources": [],
+          "height": 0
+        }
       ]
     },
     "match": {
@@ -24,8 +48,26 @@
       "name": "Reducer parity",
       "mapName": "reducer_parity",
       "players": [
-        {"id": "player_1", "userId": "user_1", "name": "Player 1", "colorValue": 4282212264, "countryId": "poland", "kind": "human", "connectionState": "connected", "ready": true},
-        {"id": "player_2", "userId": "user_2", "name": "Player 2", "colorValue": 4290263610, "countryId": "japan", "kind": "human", "connectionState": "connected", "ready": true}
+        {
+          "id": "player_1",
+          "userId": "user_1",
+          "name": "Player 1",
+          "colorValue": 4282212264,
+          "countryId": "poland",
+          "kind": "human",
+          "connectionState": "connected",
+          "ready": true
+        },
+        {
+          "id": "player_2",
+          "userId": "user_2",
+          "name": "Player 2",
+          "colorValue": 4290263610,
+          "countryId": "japan",
+          "kind": "human",
+          "connectionState": "connected",
+          "ready": true
+        }
       ],
       "maxPlayers": 2,
       "minPlayers": 2,
@@ -41,40 +83,137 @@
       "mapName": "reducer_parity",
       "mapSource": "asset",
       "turn": 7,
-      "playerStates": {"player_1": "active", "player_2": "active"},
+      "playerStates": {
+        "player_1": "active",
+        "player_2": "active"
+      },
       "savedAt": "2026-01-02T02:30:00.000Z",
-      "camera": {"x": 0.0, "y": 0.0, "zoom": 1.0},
+      "camera": {
+        "x": 0.0,
+        "y": 0.0,
+        "zoom": 1.0
+      },
       "ruleset": {
-        "gameLength": {"kind": "targetMinutes", "targetMinutes": 60, "turnLimit": 120, "paceProfile": "standard60", "scoreFallbackEnabled": true},
-        "victory": {"conquestEnabled": true, "dominationEnabled": true, "dominationControlPercent": 45.0, "dominationHoldTurns": 10, "scoreFallbackEnabled": true, "turnLimit": 120, "culturalEnabled": true, "culturalRequiredArtifacts": 6, "culturalHoldTurns": 5},
+        "gameLength": {
+          "kind": "targetMinutes",
+          "targetMinutes": 60,
+          "turnLimit": 120,
+          "paceProfile": "standard60",
+          "scoreFallbackEnabled": true
+        },
+        "victory": {
+          "conquestEnabled": true,
+          "dominationEnabled": true,
+          "dominationControlPercent": 45.0,
+          "dominationHoldTurns": 10,
+          "scoreFallbackEnabled": true,
+          "turnLimit": 120,
+          "culturalEnabled": true,
+          "culturalRequiredArtifacts": 6,
+          "culturalHoldTurns": 5
+        },
         "balance": {}
       },
       "players": [
-        {"id": "player_1", "name": "Player 1", "colorValue": 4282212264, "country": "poland", "kind": "human"},
-        {"id": "player_2", "name": "Player 2", "colorValue": 4290263610, "country": "japan", "kind": "human"}
+        {
+          "id": "player_1",
+          "name": "Player 1",
+          "colorValue": 4282212264,
+          "country": "poland",
+          "kind": "human"
+        },
+        {
+          "id": "player_2",
+          "name": "Player 2",
+          "colorValue": 4290263610,
+          "country": "japan",
+          "kind": "human"
+        }
       ],
       "gameMode": "multiplayer"
     },
     "state": {
-      "playerColors": {"player_1": 4282212264, "player_2": 4290263610},
-      "playerCountries": {"player_1": "poland", "player_2": "japan"},
-      "playerGold": {"player_1": 17, "player_2": 23},
-      "playerWarWeariness": {"player_1": 2, "player_2": 3},
-      "playerStabilityNet": {"player_1": 4, "player_2": 5},
+      "playerColors": {
+        "player_1": 4282212264,
+        "player_2": 4290263610
+      },
+      "playerCountries": {
+        "player_1": "poland",
+        "player_2": "japan"
+      },
+      "playerGold": {
+        "player_1": 17,
+        "player_2": 23
+      },
+      "playerWarWeariness": {
+        "player_1": 2,
+        "player_2": 3
+      },
+      "playerStabilityNet": {
+        "player_1": 4,
+        "player_2": 5
+      },
       "units": [
-        {"id": "merchant_1", "ownerPlayerId": "player_1", "type": "merchant", "name": "merchant", "col": 1, "row": 0, "movementPoints": 3, "army": []}
+        {
+          "id": "merchant_1",
+          "ownerPlayerId": "player_1",
+          "type": "merchant",
+          "name": "merchant",
+          "col": 1,
+          "row": 0,
+          "movementPoints": 3,
+          "army": []
+        }
       ],
       "cities": [
-        {"id": "city_origin", "ownerPlayerId": "player_1", "name": "Origin", "population": 3, "storedFood": 0, "maxHexes": 6, "territoryRadius": 2, "center": {"col": 0, "row": 0}, "controlledHexes": [], "workedHexes": [], "buildings": [], "productionOverflow": 0},
-        {"id": "city_destination", "ownerPlayerId": "player_1", "name": "Destination", "population": 3, "storedFood": 0, "maxHexes": 6, "territoryRadius": 2, "center": {"col": 2, "row": 0}, "controlledHexes": [], "workedHexes": [], "buildings": [], "productionOverflow": 0}
+        {
+          "id": "city_origin",
+          "ownerPlayerId": "player_1",
+          "name": "Origin",
+          "population": 3,
+          "storedFood": 0,
+          "maxHexes": 6,
+          "territoryRadius": 2,
+          "center": {
+            "col": 0,
+            "row": 0
+          },
+          "controlledHexes": [],
+          "workedHexes": [],
+          "buildings": [],
+          "productionOverflow": 0
+        },
+        {
+          "id": "city_destination",
+          "ownerPlayerId": "player_1",
+          "name": "Destination",
+          "population": 3,
+          "storedFood": 0,
+          "maxHexes": 6,
+          "territoryRadius": 2,
+          "center": {
+            "col": 2,
+            "row": 0
+          },
+          "controlledHexes": [],
+          "workedHexes": [],
+          "buildings": [],
+          "productionOverflow": 0
+        }
       ],
       "artifacts": [],
       "fieldImprovements": [],
       "fogOfWar": [],
-      "research": {"players": {}},
-      "runtimeState": {}
+      "research": {
+        "players": {}
+      },
+      "lifecycle": {}
     },
-    "command": {"type": "MoveMerchantToCity", "unitId": "merchant_1", "destinationCityId": "city_destination"}
+    "command": {
+      "type": "MoveMerchantToCity",
+      "unitId": "merchant_1",
+      "destinationCityId": "city_destination"
+    }
   },
   "expected": {
     "accepted": true,
@@ -86,25 +225,75 @@
       "mapName": "reducer_parity",
       "mapSource": "asset",
       "turn": 7,
-      "playerStates": {"player_1": "active", "player_2": "active"},
-      "camera": {"x": 0.0, "y": 0.0, "zoom": 1.0},
+      "playerStates": {
+        "player_1": "active",
+        "player_2": "active"
+      },
+      "camera": {
+        "x": 0.0,
+        "y": 0.0,
+        "zoom": 1.0
+      },
       "ruleset": {
-        "gameLength": {"kind": "targetMinutes", "targetMinutes": 60, "turnLimit": 120, "paceProfile": "standard60", "scoreFallbackEnabled": true},
-        "victory": {"conquestEnabled": true, "dominationEnabled": true, "dominationControlPercent": 45.0, "dominationHoldTurns": 10, "scoreFallbackEnabled": true, "turnLimit": 120, "culturalEnabled": true, "culturalRequiredArtifacts": 6, "culturalHoldTurns": 5},
+        "gameLength": {
+          "kind": "targetMinutes",
+          "targetMinutes": 60,
+          "turnLimit": 120,
+          "paceProfile": "standard60",
+          "scoreFallbackEnabled": true
+        },
+        "victory": {
+          "conquestEnabled": true,
+          "dominationEnabled": true,
+          "dominationControlPercent": 45.0,
+          "dominationHoldTurns": 10,
+          "scoreFallbackEnabled": true,
+          "turnLimit": 120,
+          "culturalEnabled": true,
+          "culturalRequiredArtifacts": 6,
+          "culturalHoldTurns": 5
+        },
         "balance": {}
       },
       "players": [
-        {"id": "player_1", "name": "Player 1", "colorValue": 4282212264, "country": "poland", "kind": "human"},
-        {"id": "player_2", "name": "Player 2", "colorValue": 4290263610, "country": "japan", "kind": "human"}
+        {
+          "id": "player_1",
+          "name": "Player 1",
+          "colorValue": 4282212264,
+          "country": "poland",
+          "kind": "human"
+        },
+        {
+          "id": "player_2",
+          "name": "Player 2",
+          "colorValue": 4290263610,
+          "country": "japan",
+          "kind": "human"
+        }
       ],
       "gameMode": "multiplayer"
     },
     "state": {
-      "playerColors": {"player_1": 4282212264, "player_2": 4290263610},
-      "playerCountries": {"player_1": "poland", "player_2": "japan"},
-      "playerGold": {"player_1": 17, "player_2": 23},
-      "playerWarWeariness": {"player_1": 2, "player_2": 3},
-      "playerStabilityNet": {"player_1": 4, "player_2": 5},
+      "playerColors": {
+        "player_1": 4282212264,
+        "player_2": 4290263610
+      },
+      "playerCountries": {
+        "player_1": "poland",
+        "player_2": "japan"
+      },
+      "playerGold": {
+        "player_1": 17,
+        "player_2": 23
+      },
+      "playerWarWeariness": {
+        "player_1": 2,
+        "player_2": 3
+      },
+      "playerStabilityNet": {
+        "player_1": 4,
+        "player_2": 5
+      },
       "units": [
         {
           "id": "merchant_1",
@@ -119,21 +308,65 @@
             "targetCol": 2,
             "targetRow": 0,
             "steps": [
-              {"col": 1, "row": 0, "enterCost": 0, "cumulativeCost": 0},
-              {"col": 2, "row": 0, "enterCost": 1, "cumulativeCost": 1}
+              {
+                "col": 1,
+                "row": 0,
+                "enterCost": 0,
+                "cumulativeCost": 0
+              },
+              {
+                "col": 2,
+                "row": 0,
+                "enterCost": 1,
+                "cumulativeCost": 1
+              }
             ]
           }
         }
       ],
       "cities": [
-        {"id": "city_origin", "ownerPlayerId": "player_1", "name": "Origin", "population": 3, "storedFood": 0, "maxHexes": 6, "territoryRadius": 2, "center": {"col": 0, "row": 0}, "controlledHexes": [], "workedHexes": [], "buildings": [], "productionOverflow": 0},
-        {"id": "city_destination", "ownerPlayerId": "player_1", "name": "Destination", "population": 3, "storedFood": 0, "maxHexes": 6, "territoryRadius": 2, "center": {"col": 2, "row": 0}, "controlledHexes": [], "workedHexes": [], "buildings": [], "productionOverflow": 0}
+        {
+          "id": "city_origin",
+          "ownerPlayerId": "player_1",
+          "name": "Origin",
+          "population": 3,
+          "storedFood": 0,
+          "maxHexes": 6,
+          "territoryRadius": 2,
+          "center": {
+            "col": 0,
+            "row": 0
+          },
+          "controlledHexes": [],
+          "workedHexes": [],
+          "buildings": [],
+          "productionOverflow": 0
+        },
+        {
+          "id": "city_destination",
+          "ownerPlayerId": "player_1",
+          "name": "Destination",
+          "population": 3,
+          "storedFood": 0,
+          "maxHexes": 6,
+          "territoryRadius": 2,
+          "center": {
+            "col": 2,
+            "row": 0
+          },
+          "controlledHexes": [],
+          "workedHexes": [],
+          "buildings": [],
+          "productionOverflow": 0
+        }
       ],
       "artifacts": [],
       "fieldImprovements": [],
       "fogOfWar": [],
-      "research": {"players": {}},
-      "runtimeState": {}
+      "research": {
+        "players": {}
+      },
+      "lifecycle": {}
     },
     "events": []
   }

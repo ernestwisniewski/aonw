@@ -86,38 +86,13 @@ final class MctsSimulatorParityFixtures {
           country: state.playerCountries[playerId] ?? PlayerCountry.poland,
         ),
     ];
-    final runtime = state;
+    final canonicalState = state.copyWith(
+      turn: 1,
+      participants: participants,
+      gameMode: GameMode.hotSeat,
+    );
     return CanonicalGameSnapshot.snapshot(
-      domain:
-          ((DomainState.snapshot(
-            turn: 1,
-            matchRules: MatchRules.standard,
-            participants: participants,
-            playerGold: state.playerGold,
-            playerWarWeariness: state.playerWarWeariness,
-            playerStabilityNet: state.playerStabilityNet,
-            units: state.units,
-            cities: state.cities,
-            artifacts: state.artifacts,
-            fieldImprovements: state.fieldImprovements,
-            fogOfWar: state.fogOfWar,
-            research: state.research,
-            wonderRegistry: state.wonderRegistry,
-            intendedAttacks: runtime.intendedAttacks,
-            diplomacy: runtime.diplomacy,
-            resourceTradeAgreements: runtime.resourceTradeAgreements,
-            dominationHoldTurnsByPlayerId:
-                runtime.dominationHoldTurnsByPlayerId,
-            culturalVictoryHoldTurnsByPlayerId:
-                runtime.culturalVictoryHoldTurnsByPlayerId,
-            mapObjectiveHoldStatesByObjectiveId:
-                runtime.mapObjectiveHoldStatesByObjectiveId,
-          )).copyWith(gameMode: GameMode.hotSeat)).copyWith(
-            actions: DomainActionState(
-              cityFoundingDraft: runtime.actions.cityFoundingDraft,
-              pendingAction: runtime.actions.pendingAction,
-            ),
-          ),
+      domain: canonicalState,
 
       metadata: GameSnapshotMetadata(
         id: 'mcts_parity',
@@ -186,9 +161,10 @@ final class MctsSimulatorParityFixtures {
     MapReadView? mapView,
     String actorPlayerId = 'player_1',
   }) {
+    final snapshot = engineSnapshot(state);
     return const SimulationGameEngineAdapter().apply(
-      snapshot: engineSnapshot(state),
-      state: state,
+      snapshot: snapshot,
+      state: snapshot.domain,
       command: command,
       actorPlayerId: actorPlayerId,
       commandTick: 0,
@@ -203,6 +179,9 @@ final class MctsSimulatorParityFixtures {
 
   static DomainState opponentWorkerState() {
     return DomainState.snapshot(
+      participants: const [
+        Player(id: 'player_2', name: 'player_2', colorValue: 0),
+      ],
       units: [
         GameUnit(
           id: 'worker_2',
@@ -233,7 +212,7 @@ final class MctsSimulatorParityFixtures {
     final snapshot = engineSnapshot(state);
     final result = const SimulationGameEngineAdapter().finalizeSimultaneousTurn(
       snapshot: snapshot,
-      state: state,
+      state: snapshot.domain,
       playerIds: snapshot.domain.participants.map((player) => player.id),
       commandTick: 1,
       mapView: actualMapData,

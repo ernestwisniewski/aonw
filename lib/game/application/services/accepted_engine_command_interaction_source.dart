@@ -5,23 +5,31 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/state.dart';
 
 /// Applies only client-owned interaction cleanup after an authoritative ACK.
 ///
 /// Canonical game data always comes from the server snapshot. This projector
-/// prevents migrated engine commands from being replayed through the legacy
+/// prevents authoritative commands from being replayed through an interaction
 /// reducer merely to update ephemeral selection and targeting state.
 GameClientState acceptedEngineCommandInteractionSource({
   required GameClientState currentState,
   required DomainCommand command,
   required GameEngineCommandFamily family,
+  required DomainActionState domainActions,
 }) {
+  final projected = currentState.domain.actions == domainActions
+      ? currentState
+      : currentState.copyWithInteraction(
+          cityFoundingDraft: domainActions.cityFoundingDraft,
+          pendingAction: domainActions.pendingAction,
+        );
   return switch (family) {
-    GameEngineCommandFamily.unitAction => _unitAction(currentState, command),
-    GameEngineCommandFamily.movement => _movement(currentState, command),
-    GameEngineCommandFamily.combat => _combat(currentState, command),
+    GameEngineCommandFamily.unitAction => _unitAction(projected, command),
+    GameEngineCommandFamily.movement => _movement(projected, command),
+    GameEngineCommandFamily.combat => _combat(projected, command),
     _ => _acceptedStrategicInteractionSource(
-      currentState: currentState,
+      currentState: projected,
       command: command,
       family: family,
     ),
@@ -64,6 +72,7 @@ extension AcceptedNetworkCommandTransition on GameStateReducer {
         currentState: currentState,
         command: command,
         family: family,
+        domainActions: currentState.domain.actions,
       ),
     );
   }
@@ -110,21 +119,27 @@ GameClientState _cityEconomy(GameClientState state, DomainCommand command) {
 }
 
 GameClientState _unitAction(GameClientState state, DomainCommand command) {
-  final unitId = switch (command) {
-    SkipUnitTurnCommand(:final unitId) ||
-    FortifyUnitCommand(:final unitId) => unitId,
-    _ => '',
+  return switch (command) {
+    SkipUnitTurnCommand(:final unitId) => _clearOwnedInteraction(state, unitId),
+    FortifyUnitCommand(:final unitId) => _clearOwnedInteraction(
+      state,
+      unitId,
+      clearPending: true,
+    ),
+    _ => state,
   };
-  return _clearOwnedInteraction(state, unitId, clearPending: true);
 }
 
 GameClientState _movement(GameClientState state, DomainCommand command) {
   return switch (command) {
     MoveUnitCommand() => state.copyWithInteraction(movePreview: null),
     CancelUnitActionCommand(:final unitId) ||
-    AutoExploreUnitCommand(
-      :final unitId,
-    ) => _clearOwnedInteraction(state, unitId),
+    AutoExploreUnitCommand(:final unitId) => _clearOwnedInteraction(
+      state,
+      unitId,
+      clearPending: true,
+      clearDraft: true,
+    ),
     AssignMerchantTradeRouteCommand(:final unitId) ||
     MoveMerchantToCityCommand(:final unitId) => _clearOwnedInteraction(
       state,

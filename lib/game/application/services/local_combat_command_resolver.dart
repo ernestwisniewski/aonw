@@ -1,4 +1,5 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/accepted_engine_command_interaction_source.dart';
 import 'package:aonw/game/application/services/local_combat_engine_projection.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -72,12 +73,17 @@ final class LocalCombatCommandResolver {
     }
     final accepted = result as GameEngineAccepted;
     return LocalCombatCommandResolution(
-      snapshot: baseSnapshot.withCombatEngineProjection(
+      snapshot: baseSnapshot.withEngineResult(
         resultSnapshot: accepted.snapshot,
         savedAt: savedAt,
       ),
       state: projectLocalCombatEngineResult(
-        currentState: currentState,
+        currentState: acceptedEngineCommandInteractionSource(
+          currentState: currentState,
+          command: command,
+          family: GameEngineCommandFamily.combat,
+          domainActions: accepted.snapshot.domain.actions,
+        ),
         result: accepted,
         command: command,
         mapView: mapView,
@@ -121,7 +127,7 @@ final class LocalCombatCommandResolver {
     List<UiEffect> uiEffects = const [],
   }) {
     return LocalCombatCommandResolution(
-      snapshot: baseSnapshot.withCombatEngineProjection(
+      snapshot: baseSnapshot.withEngineResult(
         resultSnapshot: baseSnapshot.canonical,
         savedAt: savedAt,
       ),

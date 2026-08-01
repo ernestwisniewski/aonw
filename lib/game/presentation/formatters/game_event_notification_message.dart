@@ -537,13 +537,13 @@ GameEventNotificationMessage _combatMessage({
   final defenderOwnerPlayerId =
       _resolvedUnitOwnerPlayerId(defenderUnit) ??
       _resolvedCityOwnerPlayerId(defenderOwnerCity);
-
+  final countryState = previousState ?? state;
   return GameEventNotificationMessage(
     title: l10n.eventCombatTitle,
     body: l10n.eventCombatSimpleBody(
-      _playerCountryName(l10n, roster, state, attackerOwnerPlayerId),
+      _playerCountryName(l10n, roster, countryState, attackerOwnerPlayerId),
       attackerName,
-      _playerCountryName(l10n, roster, state, defenderOwnerPlayerId),
+      _playerCountryName(l10n, roster, countryState, defenderOwnerPlayerId),
       defenderName,
       outcome.attackerHpAfter,
       outcome.defenderHpAfter,

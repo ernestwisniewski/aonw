@@ -177,6 +177,7 @@ void _registerServerCommandReducerTurnTimeoutTests() {
         match: _runningMatch(),
         wireSnapshot: _snapshot(
           DomainState.snapshot(
+            participants: _domainPlayers(),
             units: [unit],
             artifacts: const [artifact],
 

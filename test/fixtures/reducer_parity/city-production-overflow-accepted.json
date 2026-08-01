@@ -204,7 +204,7 @@
           }
         }
       },
-      "runtimeState": {
+      "lifecycle": {
         "submittedPlayerIds": [
           "player_2"
         ],
@@ -340,14 +340,14 @@
           ],
           "workedHexes": [],
           "buildings": [],
-          "productionOverflow": 0,
           "productionQueue": {
             "target": {
               "kind": "building",
               "buildingType": "workshop"
             },
             "investedProduction": 6
-          }
+          },
+          "productionOverflow": 0
         }
       ],
       "artifacts": [],
@@ -363,7 +363,7 @@
           }
         }
       },
-      "runtimeState": {
+      "lifecycle": {
         "submittedPlayerIds": [
           "player_2"
         ],

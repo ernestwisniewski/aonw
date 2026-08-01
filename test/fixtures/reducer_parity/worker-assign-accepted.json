@@ -277,7 +277,7 @@
           }
         }
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "command": {
       "type": "AssignWorkerToHex",
@@ -439,7 +439,7 @@
           }
         }
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "events": []
   }

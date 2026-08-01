@@ -179,7 +179,7 @@ void main() {
       final result = resolveGameIntent(
         reducer,
         withMode.state,
-        SelectWorkerImprovementCommand(worker.id, FieldImprovementType.farm),
+        ChooseWorkerImprovementIntent(worker.id, FieldImprovementType.farm),
       );
 
       final pending = result.state.pendingAction;

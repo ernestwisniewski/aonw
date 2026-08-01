@@ -47,24 +47,6 @@ const reviewedMovementFamilyPatternOccurrences = <String, Map<String, int>>{
     'class:AiTurnCommandExecutor/method:describeCommand::MoveUnitCommand': 1,
     'class:AiTurnCommandExecutor/method:executePlan::MoveUnitCommand': 1,
   },
-  'lib/game/application/services/authoritative_command_policy.dart': {
-    'class:AuthoritativeCommandPolicy/method:isClientOnly::'
-            'AssignMerchantTradeRouteCommand':
-        1,
-    'class:AuthoritativeCommandPolicy/method:isClientOnly::'
-            'AutoExploreUnitCommand':
-        1,
-    'class:AuthoritativeCommandPolicy/method:isClientOnly::'
-            'CancelUnitActionCommand':
-        1,
-    'class:AuthoritativeCommandPolicy/method:isClientOnly::'
-            'DetachTroopCommand':
-        1,
-    'class:AuthoritativeCommandPolicy/method:isClientOnly::'
-            'MoveMerchantToCityCommand':
-        1,
-    'class:AuthoritativeCommandPolicy/method:isClientOnly::MoveUnitCommand': 1,
-  },
   'lib/game/application/services/local_movement_engine_projection.dart': {
     'function:projectLocalMovementEngineResult::'
             'AssignMerchantTradeRouteCommand':
@@ -86,24 +68,6 @@ const reviewedMovementFamilyPatternOccurrences = <String, Map<String, int>>{
     'class:ReplayStep/method:_inferActorPlayerId::MoveUnitCommand': 1,
   },
   'lib/game/presentation/audio/game_sound_cue_mapper.dart': {
-    'class:GameSoundCueMapper/method:_commandBelongsToPlayer::'
-            'AssignMerchantTradeRouteCommand':
-        1,
-    'class:GameSoundCueMapper/method:_commandBelongsToPlayer::'
-            'AutoExploreUnitCommand':
-        1,
-    'class:GameSoundCueMapper/method:_commandBelongsToPlayer::'
-            'CancelUnitActionCommand':
-        1,
-    'class:GameSoundCueMapper/method:_commandBelongsToPlayer::'
-            'DetachTroopCommand':
-        1,
-    'class:GameSoundCueMapper/method:_commandBelongsToPlayer::'
-            'MoveMerchantToCityCommand':
-        1,
-    'class:GameSoundCueMapper/method:_commandBelongsToPlayer::'
-            'MoveUnitCommand':
-        1,
     'class:GameSoundCueMapper/method:forCommand::MoveUnitCommand': 1,
   },
   'packages/aonw_core/lib/ai/mcts/mcts_baseline_command_merger.dart': {

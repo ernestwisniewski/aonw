@@ -1,3 +1,4 @@
+import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/app/app_release_info.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -25,7 +26,7 @@ final mainMenuUpdateNoticeProvider = FutureProvider<MainMenuUpdateNotice?>((
           buildNumber: releaseInfo.buildNumberValue,
         )
         .timeout(_appUpdateCheckTimeout);
-    return _noticeFor(status);
+    return mainMenuUpdateNoticeForStatus(status);
   } catch (_) {
     return null;
   }
@@ -47,7 +48,7 @@ bool get _appUpdateCheckEnabled {
   return hasOverride ? override : kReleaseMode;
 }
 
-MainMenuUpdateNotice? _noticeFor(String status) {
+MainMenuUpdateNotice? mainMenuUpdateNoticeForStatus(String status) {
   return switch (status) {
     'soon' => const MainMenuUpdateNotice(),
     _ => null,

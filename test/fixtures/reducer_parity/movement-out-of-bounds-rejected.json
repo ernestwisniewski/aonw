@@ -226,7 +226,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "command": {
       "type": "MoveUnit",
@@ -333,7 +333,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "events": []
   }

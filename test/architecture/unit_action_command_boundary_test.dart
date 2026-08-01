@@ -13,10 +13,10 @@ const _autoExploreKernelPath =
     'auto_explore_command_resolver.dart';
 const _interactionRulesPath =
     'packages/aonw_core/lib/game/domain/state/'
-    'persisted_interaction_unit_rules.dart';
+    'domain_action_unit_rules.dart';
 const _interactionRulesUri =
     'package:aonw_core/game/domain/state/'
-    'persisted_interaction_unit_rules.dart';
+    'domain_action_unit_rules.dart';
 const _domainAdapterPath =
     'packages/aonw_core/lib/game/domain/movement/'
     'domain_unit_action_command_resolver.dart';
@@ -109,7 +109,7 @@ void main() {
     expect(
       staticMemberReferenceCountsByPath(
         sources,
-        'PersistedInteractionUnitRules',
+        'DomainActionUnitRules',
         'clearOwnedByUnit',
       ),
       {_kernelPath: 2, _autoExploreKernelPath: 2},
@@ -128,7 +128,7 @@ void main() {
         requiredRulesSource,
         path: _interactionRulesPath,
       ),
-      {'PersistedInteractionState', 'String'},
+      {'DomainActionState', 'String'},
     );
     expect(_importUris(requiredRulesSource, _interactionRulesPath), {
       'package:aonw_core/game/domain/state/'

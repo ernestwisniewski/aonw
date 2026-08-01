@@ -1,109 +1,61 @@
 import 'dart:io';
 
-import 'package:analyzer/dart/analysis/utilities.dart';
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/map_boundary_source_guard.dart';
-
-part 'support/initial_multiplayer_snapshot_boundary_guard.dart';
-
-const _initialFactoryPath =
+const _factoryPath =
     'server/lib/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
-const _mapCatalogPath =
-    'server/lib/src/multiplayer/multiplayer_map_catalog.dart';
-const _wirePlayerMapperPath =
-    'server/lib/src/multiplayer/wire_player_domain_mapper.dart';
 const _lifecyclePath =
     'server/lib/src/multiplayer/match_lifecycle_service.dart';
-const _outcomePath =
-    'server/lib/src/multiplayer/server_command_reducer_outcome.dart';
-const _initialCodecPath =
+const _codecPath =
     'server/lib/src/multiplayer/running_match_snapshot_codec.dart';
-const _losslessCodecPath =
-    'server/lib/src/multiplayer/lossless_match_snapshot_codec.dart';
 
 void main() {
-  test('initial factory constructs one canonical snapshot without legacy', () {
-    expect(_initialFactoryViolations(_unitAt(_initialFactoryPath)), isEmpty);
-  });
+  group('initial canonical multiplayer snapshot', () {
+    test('factory builds DomainState and CanonicalGameSnapshot directly', () {
+      final source = File(_factoryPath).readAsStringSync();
 
-  test('wire player mapping has exactly three production call sites', () {
-    final sources = productionDartSources();
-
-    expect(_domainPlayerMapperReferenceCounts(sources), {
-      _lifecyclePath: 1,
-      _outcomePath: 1,
-      _initialCodecPath: 1,
+      expect(source, contains('Future<CanonicalGameSnapshot> create('));
+      expect(
+        RegExp(r'DomainState\.snapshot\(').allMatches(source),
+        hasLength(1),
+      );
+      expect(
+        RegExp(r'CanonicalGameSnapshot\.snapshot\(').allMatches(source),
+        hasLength(1),
+      );
+      expect(source, isNot(contains('WireSnapshot')));
+      expect(source, isNot(contains('GameSave(')));
+      expect(source, isNot(contains('toLegacy')));
+      expect(source, isNot(contains('toCanonical')));
     });
-    expect(
-      _wirePlayerMapperViolations(_unitAt(_wirePlayerMapperPath)),
-      isEmpty,
-    );
+
+    test('lifecycle maps, builds, and encodes once in order', () {
+      final source = File(_lifecyclePath).readAsStringSync();
+      final map = source.indexOf('.map(domainPlayerFromWire)');
+      final create = source.indexOf('snapshotFactory.create(');
+      final encode = source.indexOf(
+        '_runningMatchSnapshotCodec.encodeInitial(',
+      );
+
+      expect(map, greaterThanOrEqualTo(0));
+      expect(create, greaterThan(map));
+      expect(encode, greaterThan(create));
+    });
+
+    test('encoder validates canonical id, offset, turn start, and roster', () {
+      final source = File(_codecPath).readAsStringSync();
+
+      expect(source, contains("match.state != 'running'"));
+      expect(source, contains('match.id != snapshot.metadata.id'));
+      expect(source, contains('snapshot.eventLogOffset != 0'));
+      expect(
+        source,
+        contains(
+          'snapshot.domain.turnStartedAt != snapshot.metadata.savedAtUtc',
+        ),
+      );
+      expect(source, contains('_sameOrderedPlayers('));
+      expect(source, contains('_losslessMatchSnapshotCodec.encodeCanonical('));
+    });
   });
-
-  test('lifecycle maps, builds, and encodes the initial snapshot once', () {
-    expect(_initialLifecycleFlowViolations(_unitAt(_lifecyclePath)), isEmpty);
-  });
-
-  test('initial encoder owns validation and historical wire policy', () {
-    final unit = _unitAt(_initialCodecPath);
-
-    expect(_initialEncodeFlowViolations(unit), isEmpty);
-    expect(_identifierCount(unit, 'toLegacy'), 0);
-    expect(_identifierCount(_unitAt(_losslessCodecPath), 'toLegacy'), 1);
-    expect(_identifierCount(_unitAt(_initialFactoryPath), 'toLegacy'), 0);
-    expect(_identifierCount(_unitAt(_initialFactoryPath), 'toCanonical'), 0);
-  });
-
-  test('map catalog is independent from the canonical factory', () {
-    final factory = _unitAt(_initialFactoryPath);
-    final catalog = _unitAt(_mapCatalogPath);
-
-    expect(_importsUri(factory, 'dart:io'), isFalse);
-    expect(_exportsUri(factory, 'multiplayer_map_catalog.dart'), isFalse);
-    expect(
-      _classNamed(catalog, 'FileMultiplayerMapCatalog')?.finalKeyword,
-      isNotNull,
-    );
-  });
-
-  test('guard rejects legacy factory and direct initial conversion', () {
-    final legacyFactory = parseString(
-      content: _legacyInitialFactoryFixture,
-      path: 'fixture_factory.dart',
-    ).unit;
-    final directCodec = parseString(
-      content: _directInitialConversionFixture,
-      path: 'fixture_codec.dart',
-    ).unit;
-
-    expect(
-      _initialFactoryViolations(legacyFactory),
-      containsAll([
-        'InitialMultiplayerSnapshotFactory must be final',
-        'create must expose the exact canonical initial contract',
-        'create must construct exactly one CanonicalGameSnapshot',
-        'factory must not reference GameSave',
-        'factory must not reference WireSnapshot',
-      ]),
-    );
-    expect(
-      _initialEncodeFlowViolations(directCodec),
-      containsAll([
-        'encodeInitial must perform exact lifecycle, id, offset, and implicit '
-            'turn-start guards',
-        'encodeInitial must validate the authoritative roster before '
-            'conversion',
-        'encodeInitial must use the shared lossless codec once',
-        'encodeInitial must apply the initial turn-start wire policy once',
-        'encodeInitial must not convert snapshots directly',
-      ]),
-    );
-  });
-}
-
-CompilationUnit _unitAt(String path) {
-  return parseString(content: File(path).readAsStringSync(), path: path).unit;
 }

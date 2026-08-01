@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
@@ -48,32 +50,39 @@ void main() {
     expect(SaveSnapshotCodec.toJson(restored), json);
   });
 
-  test('defaults state fields omitted by older snapshots', () {
+  test('decodes omitted optional state fields with canonical defaults', () {
     const discoveredHex = HexCoordinate(col: 5, row: 6);
-    final json = SaveSnapshotCodec.toJson(
-      GameSnapshotFactory.create(
-        save: _save(),
-        fogOfWar: FogOfWarState(
-          players: {
-            'p1': PlayerFogOfWar(
-              playerId: 'p1',
-              discoveredHexes: {discoveredHex},
-            ),
-          },
-        ),
-        research: ResearchState(
-          players: {
-            'p1': PlayerResearchState(
-              activeTechnologyId: TechnologyId.mining,
-              scienceOverflow: 17,
-            ),
-          },
-        ),
-        wonderRegistry: WonderRegistry(
-          completedBy: {WonderType.greatLibrary: 'p1'},
-        ),
-      ),
-    )..remove('wonderRegistry');
+    final json =
+        jsonDecode(
+                jsonEncode(
+                  SaveSnapshotCodec.toJson(
+                    GameSnapshotFactory.create(
+                      save: _save(),
+                      fogOfWar: FogOfWarState(
+                        players: {
+                          'p1': PlayerFogOfWar(
+                            playerId: 'p1',
+                            discoveredHexes: {discoveredHex},
+                          ),
+                        },
+                      ),
+                      research: ResearchState(
+                        players: {
+                          'p1': PlayerResearchState(
+                            activeTechnologyId: TechnologyId.mining,
+                            scienceOverflow: 17,
+                          ),
+                        },
+                      ),
+                      wonderRegistry: WonderRegistry(
+                        completedBy: {WonderType.greatLibrary: 'p1'},
+                      ),
+                    ),
+                  ),
+                ),
+              )
+              as Map<String, dynamic>
+          ..remove('wonderRegistry');
     ((json['fogOfWar'] as List<dynamic>).single as Map<String, dynamic>).remove(
       'visibleHexes',
     );

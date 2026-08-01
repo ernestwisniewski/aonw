@@ -10,6 +10,7 @@ import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -165,7 +166,15 @@ void main() {
         mapData: WorldMap(
           cols: 4,
           rows: 4,
-          tiles: [],
+          tiles: [
+            WorldTile(
+              col: 2,
+              row: 1,
+              terrains: [TerrainType.grassland],
+              resources: [],
+              height: 0,
+            ),
+          ],
           objectives: const [
             MapObjectiveDefinition(
               id: 'pass_1',

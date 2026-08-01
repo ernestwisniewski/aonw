@@ -228,7 +228,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "command": {
       "type": "DetachTroop",
@@ -394,7 +394,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {
+      "lifecycle": {
         "diplomacy": {
           "contacts": [
             "player_1|player_2"

@@ -1,4 +1,5 @@
 import 'package:aonw_core/domain.dart';
+import 'package:aonw_core/protocol.dart';
 
 import 'reducer_parity_fixture.dart';
 

@@ -48,7 +48,7 @@ void main() {
       );
     });
 
-    test('preserves tile identity for hits and sparse misses', () {
+    test('uses one canonical map instance for hits and sparse misses', () {
       final world = WorldMap(
         cols: 2,
         rows: 1,
@@ -78,7 +78,7 @@ void main() {
       expect(identical(first, firstView.tileViews.single), isTrue);
       expect(firstView.tileAt(0, 0), isNull);
       expect(secondView.tileAt(0, 0), isNull);
-      expect(identical(firstView, secondView), isFalse);
+      expect(identical(firstView, secondView), isTrue);
     });
 
     test('exposes the canonical immutable tile collections', () {

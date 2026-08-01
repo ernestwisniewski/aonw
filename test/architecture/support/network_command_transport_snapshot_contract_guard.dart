@@ -16,9 +16,10 @@ List<String> _commandTransportResultViolations(CompilationUnit unit) {
     }
   }
   if (snapshotFields.length != 1 ||
-      snapshotFields.single.type?.toSource() != 'SaveSnapshot?') {
+      snapshotFields.single.type?.toSource() != 'CanonicalGameSnapshot?') {
     violations.add(
-      'CommandTransportResult.snapshot must have exactly type SaveSnapshot?.',
+      'CommandTransportResult.snapshot must have exactly type '
+      'CanonicalGameSnapshot?.',
     );
   }
 
@@ -123,7 +124,7 @@ final class _ForbiddenSnapshotOwnershipCollector
     final type = node.constructorName.type.name.lexeme;
     final constructor = node.constructorName.name?.name;
     if (type == 'GameSave') gameSaveCreations += 1;
-    if (type == 'SaveSnapshot' && constructor == 'fromGameState') {
+    if (type == 'CanonicalGameSnapshot' && constructor == 'fromGameState') {
       fromGameStateCalls += 1;
     }
     super.visitInstanceCreationExpression(node);
@@ -133,7 +134,7 @@ final class _ForbiddenSnapshotOwnershipCollector
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name == 'GameSave') gameSaveCreations += 1;
     if (node.target case SimpleIdentifier(
-      name: 'SaveSnapshot',
+      name: 'CanonicalGameSnapshot',
     ) when node.methodName.name == 'fromGameState') {
       fromGameStateCalls += 1;
     }

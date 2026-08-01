@@ -145,6 +145,9 @@ CanonicalGameSnapshot _snapshot(GameClientState state, {required int offset}) {
       playerStates: const {'player_1': PlayerTurnState.active},
       savedAt: DateTime.utc(2026, 4, 16),
       camera: CameraState.zero,
+      players: const [
+        Player(id: 'player_1', name: 'Player 1', colorValue: 0xFF3D5FA8),
+      ],
     ),
     state: state,
     eventLogOffset: offset,

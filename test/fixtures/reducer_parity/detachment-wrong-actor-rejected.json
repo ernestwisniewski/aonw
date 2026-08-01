@@ -168,7 +168,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "command": {
       "type": "DetachTroop",
@@ -279,7 +279,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "events": []
   }

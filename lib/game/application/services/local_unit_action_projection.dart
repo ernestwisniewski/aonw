@@ -8,7 +8,6 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 GameClientState projectLocalUnitActionPresentation({
   required MapReadView mapView,
   required GameClientState currentState,
-  required CanonicalGameSnapshot baseSnapshot,
   required CanonicalGameSnapshot resultSnapshot,
   required DomainCommand command,
 }) {
@@ -19,7 +18,6 @@ GameClientState projectLocalUnitActionPresentation({
   };
   final projected = _projectCanonicalSlices(
     currentState: currentState,
-    baseSnapshot: baseSnapshot,
     resultSnapshot: resultSnapshot,
   );
   if (currentState.units.byId(unitId) == null) return projected;
@@ -49,24 +47,5 @@ GameClientState _clearOwnedMoveTargeting(GameClientState state, String unitId) {
 
 GameClientState _projectCanonicalSlices({
   required GameClientState currentState,
-  required CanonicalGameSnapshot baseSnapshot,
   required CanonicalGameSnapshot resultSnapshot,
-}) {
-  var state = currentState;
-  if (!identical(resultSnapshot.domain.units, baseSnapshot.domain.units)) {
-    state = state.copyWith(units: resultSnapshot.domain.units);
-  }
-  if (!identical(
-    resultSnapshot.domain.artifacts,
-    baseSnapshot.domain.artifacts,
-  )) {
-    state = state.copyWith(artifacts: resultSnapshot.domain.artifacts);
-  }
-  if (!identical(resultSnapshot.domain.actions, baseSnapshot.domain.actions)) {
-    state = state.copyWithInteraction(
-      cityFoundingDraft: resultSnapshot.domain.actions.cityFoundingDraft,
-      pendingAction: resultSnapshot.domain.actions.pendingAction,
-    );
-  }
-  return state;
-}
+}) => currentState.withDomain(resultSnapshot.domain);

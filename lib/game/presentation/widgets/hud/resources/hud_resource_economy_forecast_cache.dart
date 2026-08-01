@@ -264,7 +264,7 @@ final class _HudCityEconomyForecastKey {
   bool operator ==(Object other) {
     return other is _HudCityEconomyForecastKey &&
         other.playerId == playerId &&
-        identical(other.city, city) &&
+        other.city == city &&
         identical(other.mapData, mapData) &&
         identical(other.cityRuleset, cityRuleset) &&
         identical(other.technologyRuleset, technologyRuleset) &&
@@ -278,7 +278,7 @@ final class _HudCityEconomyForecastKey {
   @override
   int get hashCode => Object.hash(
     playerId,
-    identityHashCode(city),
+    city,
     identityHashCode(mapData),
     identityHashCode(cityRuleset),
     identityHashCode(technologyRuleset),

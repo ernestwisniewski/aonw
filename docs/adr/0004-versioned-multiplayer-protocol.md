@@ -1,137 +1,145 @@
 # ADR 0004: Versioned Multiplayer Protocol
 
-- Status: Superseded by [ADR 0006](0006-current-version-protocol.md)
+- Status: Accepted
 - Date: 2026-07-12
-- Implementation: In progress
+- Implementation: Implemented
 
 ## Context
 
-Shared wire DTOs currently live in `packages/aonw_core/lib/protocol`, while
-Serverpod schemas generate RPC, stream, row, server, and client types. The
-current top-level envelopes use `kProtocolVersion = 3` and reject every other
-version. Nested command/event bodies inherit their envelope version rather than
-carrying independent versions. `GameSave.schemaVersion` is a separate
-persistence concern.
+Multiplayer evolves on two different schedules. A serialized command, event,
+snapshot, ACK, or match envelope changes only when its wire shape changes.
+Player-visible rules, projection, ordering, retry behavior, or server policy
+can change without changing that JSON shape. Treating both as one exact-match
+number either blocks safe rolling releases or makes compatibility implicit.
 
-Version 3 deliberately retired incompatible matches during a coordinated
-client/server rollout. This is safe while sessions are short-lived, but it is
-not a durable strategy for long-running public matches. Generated Serverpod
-types also leak past the intended API adapter in some current presentation
-paths, and there is no typed minimum-client/protocol compatibility response.
+The first deployed envelopes use wire version 3. Clients released before a
+compatibility handshake do not declare a functional multiplayer revision. The
+existing main-menu update notice already has localized text for a client that
+must wait for or install a newer release.
 
 ## Decision
 
-Transport-independent contracts are owned by a logical `contracts` boundary in
-`aonw_core`. Serverpod is an adapter that carries those contracts; generated
-Serverpod types are never the domain or application API.
+ADR 0004 is the single source of truth for multiplayer compatibility. No
+separate current-version ADR is maintained.
 
 ```mermaid
 flowchart LR
-  Raw["Raw transport JSON"] --> Version["Envelope version check"]
-  Version --> Upcast["Bounded upcaster chain"]
-  Upcast --> Current["Current wire DTO"]
-  Current --> Mapper["Contract/domain mapper"]
-  Mapper --> Domain["DomainCommand / DomainState"]
-  Domain --> Project["Recipient projection"]
-  Project --> Encode["Selected write-version envelope"]
-  Encode --> Serverpod["Serverpod transport adapter"]
+  Client["Client build + multiplayer revision"] --> Status["Compatibility status"]
+  Registry["Current revision + compatible revisions"] --> Status
+  Status -->|compatible| Multiplayer["Lobby and live multiplayer"]
+  Status -->|unsupported| Notice["Localized update notice"]
+  Wire["Wire envelope v"] --> Decoder["Strict wire codec"]
+  Decoder --> Multiplayer
 ```
+
+Two explicit versions are maintained:
+
+- `kCurrentMultiplayerVersion` is the functional multiplayer contract. Every
+  change to online rules, ordering, projection, retry, matchmaking, transport,
+  or compatibility behavior increments it, even when the wire JSON is
+  unchanged.
+- `kProtocolVersion` is the serialized top-level envelope schema. It increments
+  only when the wire shape or meaning can no longer be represented by the
+  existing schema.
 
 The binding invariants are:
 
-- Handwritten wire DTOs, codecs, protocol versions, compatibility policy, and
-  upcasters belong to `aonw_core` contracts. Generated Serverpod code is
-  read-only derived output and stays inside client/server adapters.
-- Domain and application code do not import `aonw_server_client`, Serverpod
-  runtime packages, generated rows, or generated transport requests.
-- Every authoritative top-level command, event, snapshot, ACK, and match
-  envelope declares a protocol version. Nested payloads inherit that version
-  unless a future ADR establishes an independently deployed subprotocol.
-- Protocol version and save-schema version are independent. A protocol
-  upcaster cannot silently stand in for a save migration, or vice versa.
-- Raw input is bounded before decoding. Supported old envelopes follow one
-  central, sequential, idempotent upcaster chain to the current shape and are
-  then decoded strictly. Unknown, future, malformed, or too-old versions fail
-  closed.
-- Until the first upcaster is implemented, exact-current-version rejection and
-  coordinated retirement/migration of old matches remain the supported runtime
-  policy. Scattered multi-version conditionals in DTOs are not allowed.
-- Breaking field, enum, command, event, redaction, or semantic changes require
-  a protocol bump. An optional additive field may remain in the current version
-  only when old-new and new-old rollout fixtures prove the default is safe.
-- Canonical server state may contain private identifiers and complete domain
-  data. A recipient-scoped projection is created before the network boundary;
-  an unprojected canonical payload never crosses that boundary and the client
-  never performs security redaction. Visible offsets remain monotonic even when
-  events are replaced by redacted markers.
-- Before join/connect/mutation, the client declares its build, readable
-  protocol range, and writable versions. Compatibility is a typed server
-  response containing platform, current/minimum/latest builds, the server's
-  supported range, one selected write version, and `current`,
-  `updateAvailable`, or `updateRequired`. Unsupported clients are blocked before
-  state access. Neither side emits a version the peer has not declared readable.
-- The selected write version is explicit for the connection/request. If the
-  deployment has only one outbound encoder, changing that version requires a
-  minimum bridge client that can read the new version and draining older
-  sessions first. Concurrent mixed-version delivery is allowed only with
-  explicit, fixture-tested encoders for every selected version; an implicit
-  downcast from the current DTO is forbidden.
-- Generated output and migrations are regenerated in the same change as their
-  source contracts, and drift is a CI failure.
+- `kCompatibleMultiplayerVersions` is the reviewed set of older functional
+  revisions the current server can safely serve. The current revision is
+  always included. A revision is retained only when old and new clients have
+  fixture-tested behavior for the changed surface.
+- The compatibility handshake sends the client build and
+  `kCurrentMultiplayerVersion`. A missing declaration is mapped only to the
+  named `kLegacyUndeclaredMultiplayerVersion`, never guessed from arbitrary
+  request data.
+- A current or explicitly backward-compatible revision may enter multiplayer.
+  An absent legacy revision that is still listed remains compatible during the
+  bridge window.
+- A removed, malformed-equivalent, or future multiplayer revision returns the
+  existing `soon` app-status code. The client presents
+  `mainMenuUpdateSoonTitle` and `mainMenuUpdateSoonBody`; transport errors are
+  not used as the user-facing compatibility signal.
+- Every authoritative command, event, snapshot, ACK, and match envelope carries
+  `v`. Wire decoders accept only explicitly supported wire schemas and fail
+  closed for missing, malformed, future, or retired schemas.
+- A functional revision does not make incompatible wire schemas readable.
+  Supporting an older wire schema requires an explicit bounded reader/upcaster
+  and, when responses differ, an explicit encoder selected for that peer.
+- Optional additive wire fields may keep the same wire schema only when absent
+  defaults are safe in both rollout directions. The functional multiplayer
+  revision still increments.
+- Protocol version and save-schema version remain independent. Neither is an
+  implicit migration for the other.
+- Canonical state is recipient-projected before transport. Compatibility never
+  weakens fog, audience, event ordering, offset monotonicity, or command
+  idempotency.
+- Shared DTOs, compatibility constants, and codecs belong to `aonw_core`.
+  Generated Serverpod models remain adapter output and are regenerated in the
+  same change as their source endpoint or model contract.
+
+The bootstrap revision is multiplayer version 2. Undeclared clients represent
+legacy revision 1, and revisions 1 and 2 are compatible because this change
+adds only the optional status declaration. Wire envelopes remain at version 3.
 
 ## Consequences
 
-The game gains an explicit compatibility boundary and can preserve long-lived
-matches through bounded migrations. The domain remains portable across local,
-server, and future transports. Recipient projection and minimum-client policy
-become enforceable before mutations.
+Compatible additive releases can roll out without disconnecting existing
+players, while incompatible clients receive a localized update message before
+multiplayer fails. Wire migrations remain strict and auditable instead of
+being hidden in a broad semantic version check.
 
-Upcasters and rollout matrices add maintenance cost. Supporting a version has
-an operational and testing cost, so the supported window must be deliberate
-and bounded. Some current presentation code must be moved behind API adapters.
+Every multiplayer change now carries a small review cost: increment the
+functional revision, decide which older revisions remain safe, update rollout
+fixtures, and regenerate Serverpod output when endpoint or model signatures
+change. Keeping an older revision is a tested support promise, not a default.
 
 Rejected alternatives:
 
-- making generated Serverpod types canonical couples the domain to one tool and
-  leaks persistence/transport changes across the app;
-- permanent lockstep-only deployment discards active matches on every breaking
-  change;
-- permissive DTO readers with distributed fallbacks make compatibility
-  unbounded and impossible to audit.
+- exact-current matching for every change prevents safe compatible rollouts;
+- one version for both functional behavior and wire shape forces needless
+  downcasters or hides behavioral incompatibility;
+- permissive readers and scattered fallbacks create an unbounded compatibility
+  surface;
+- maintaining a second compatibility ADR duplicates and can contradict this
+  policy.
 
 ## Migration And Verification
 
-Today, version 3 exact matching, coordinated rollout, recipient projection, and
-generated drift checks are implemented. Upcasters, a supported-version window,
-typed minimum-client policy, and a fully sealed generated-code boundary are not.
+The app-status endpoint accepts an optional multiplayer revision. Current
+clients send revision 2; older clients omit it and are interpreted as reviewed
+legacy revision 1. Both are compatible today. Unsupported revisions and older
+application builds return `soon`, which is already rendered by the localized
+main-menu update block.
 
-First ratchet generated Serverpod imports back toward `lib/api` and server
-adapters, using a named allowlist for current presentation leaks. Add golden
-fixtures for every top-level envelope, strict old/future/malformed rejection,
-mapper round trips, projection, ACK/snapshot/event offsets, and generator
-completeness. Then introduce the compatibility response before adding the first
-old-version upcaster.
+For every multiplayer change:
 
-Bootstrap the compatibility handshake additively from today's version 3:
-deploy a new typed compatibility method while retaining the legacy status
-method; temporarily treat a missing capability declaration as legacy
-read/write-v3; then release a bridge client that prefers the typed method but
-falls back to the legacy method when talking to an older server. Only after the
-minimum client is that bridge build may the server require declarations and
-eventually remove the legacy endpoint/fallback.
+1. increment `kCurrentMultiplayerVersion`;
+2. classify the change as compatible or incompatible for each previously
+   supported revision;
+3. retain only proven compatible revisions in
+   `kCompatibleMultiplayerVersions`;
+4. bump `kProtocolVersion` as well when a wire envelope is incompatible;
+5. add old/new status, codec, retry, reconnect, recipient-projection, and
+   rollout fixtures appropriate to the changed surface;
+6. regenerate Serverpod output when an endpoint or generated model changed;
+7. update `docs/multiplayer-protocol.md` with the active revision table.
 
-For a breaking rollout: add current/next fixtures and the inbound upcaster;
-deploy a server that still selects the old write version; release a bridge
-client that reads both versions and writes only the server-selected version;
-raise the minimum client to that bridge build and drain older sessions; then
-switch the selected writer version and release clients that write the new
-version. Retain old readers only for the bounded support window and raise the
-minimum protocol after incompatible persisted sessions are migrated or
-explicitly retired. Update `docs/multiplayer-protocol.md` with the current
-runtime procedure whenever this ADR's implementation state changes.
+For an incompatible rollout, deploy the status-aware server before requiring
+the new client. The old revision is removed from the compatible set only when
+the newer client is becoming available. During the store propagation window,
+old clients receive the translated update notice. Persisted matches are kept
+only when their wire schema and domain semantics can be migrated explicitly;
+otherwise they are retired deliberately rather than decoded heuristically.
+
+Contract tests cover current, undeclared legacy, removed, and future functional
+revisions. Codec tests cover supported and unsupported wire versions. Generated
+drift, recipient projection, ACK/retry, reconnect, and architecture boundaries
+remain CI gates.
 
 ## Related Decisions And Documentation
 
+- [ADR 0001: Map And State Ownership](0001-map-and-state-ownership.md)
 - [ADR 0003: Command Boundaries](0003-command-boundaries.md)
+- [ADR 0005: Immutable Deployment Promotion](0005-immutable-deployment.md)
 - [Multiplayer protocol](../multiplayer-protocol.md)
 - [Multiplayer scale-out contract](../multiplayer-scale-out.md)

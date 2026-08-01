@@ -8,6 +8,7 @@ WorldMap _map(
   int cols,
   int rows, {
   List<TerrainType> terrains = const [TerrainType.grassland],
+  Map<({int col, int row}), List<TerrainType>> terrainOverrides = const {},
 }) => WorldMap(
   cols: cols,
   rows: rows,
@@ -17,7 +18,7 @@ WorldMap _map(
         WorldTile(
           col: col,
           row: row,
-          terrains: terrains,
+          terrains: terrainOverrides[(col: col, row: row)] ?? terrains,
           resources: const [],
           height: 0,
         ),
@@ -103,9 +104,12 @@ void main() {
     });
 
     test('adds feature movement cost when a hex has multiple terrains', () {
-      final map = _map(3, 1);
-      map.tiles[1] = map.tiles[1].copyWith(
-        terrains: const [TerrainType.grassland, TerrainType.forest],
+      final map = _map(
+        3,
+        1,
+        terrainOverrides: const {
+          (col: 1, row: 0): [TerrainType.grassland, TerrainType.forest],
+        },
       );
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final planner = UnitMovementPlanner(mapData: map, units: [commander]);
@@ -124,13 +128,16 @@ void main() {
     test(
       'allows an artifact carrier to spend the turn entering rough terrain',
       () {
-        final map = _map(3, 1);
-        map.tiles[1] = map.tiles[1].copyWith(
-          terrains: const [
-            TerrainType.grassland,
-            TerrainType.forest,
-            TerrainType.hills,
-          ],
+        final map = _map(
+          3,
+          1,
+          terrainOverrides: const {
+            (col: 1, row: 0): [
+              TerrainType.grassland,
+              TerrainType.forest,
+              TerrainType.hills,
+            ],
+          },
         );
         final carrier = GameUnit(
           id: 'carrier_1',
@@ -175,14 +182,17 @@ void main() {
     );
 
     test('lets low-movement units spend a turn entering snowy forest', () {
-      final map = _map(2, 1);
-      map.tiles[1] = map.tiles[1].copyWith(
-        terrains: const [
-          TerrainType.snow,
-          TerrainType.forest,
-          TerrainType.river,
-          TerrainType.tundra,
-        ],
+      final map = _map(
+        2,
+        1,
+        terrainOverrides: const {
+          (col: 1, row: 0): [
+            TerrainType.snow,
+            TerrainType.forest,
+            TerrainType.river,
+            TerrainType.tundra,
+          ],
+        },
       );
       final scout = GameUnit.produced(
         id: 'scout_1',
@@ -208,11 +218,15 @@ void main() {
     });
 
     test('plans naval movement through coast and ocean but not land', () {
-      final map = _map(4, 1, terrains: const [TerrainType.ocean]);
-      map.tiles[0] = map.tiles[0].copyWith(terrains: const [TerrainType.coast]);
-      map.tiles[2] = map.tiles[2].copyWith(terrains: const [TerrainType.coast]);
-      map.tiles[3] = map.tiles[3].copyWith(
-        terrains: const [TerrainType.grassland],
+      final map = _map(
+        4,
+        1,
+        terrains: const [TerrainType.ocean],
+        terrainOverrides: const {
+          (col: 0, row: 0): [TerrainType.coast],
+          (col: 2, row: 0): [TerrainType.coast],
+          (col: 3, row: 0): [TerrainType.grassland],
+        },
       );
       final ship = GameUnit.produced(
         id: 'ship_1',
@@ -280,9 +294,12 @@ void main() {
 
   group('UnitMovementPathfinder', () {
     test('checks reachability with the same blockers as movement plans', () {
-      final map = _map(3, 3);
-      map.tiles[4] = map.tiles[4].copyWith(
-        terrains: const [TerrainType.mountain],
+      final map = _map(
+        3,
+        3,
+        terrainOverrides: const {
+          (col: 1, row: 1): [TerrainType.mountain],
+        },
       );
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final blocker = GameUnit(

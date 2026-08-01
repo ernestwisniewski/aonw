@@ -236,7 +236,7 @@ DomainState _diplomacyState({
     },
     playerGold: playerGold,
     submittedPlayerIds: submittedPlayerIds,
-    turnStartedAt: turnStartedAt,
+    turnStartedAt: turnStartedAt ?? DateTime.utc(2026, 6, 30, 11),
     diplomacy:
         diplomacy ?? DiplomacyState.empty.addContact('player_1', 'player_2'),
   );

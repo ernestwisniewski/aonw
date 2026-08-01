@@ -58,48 +58,51 @@ typedef _ReplayFixture = ({
 });
 
 void main() {
-  test('preserves sparse roster and map reference benchmark output', () async {
-    final directory = await Directory.systemTemp.createTemp(
-      'aonw-save-ai-benchmark-report.',
-    );
-    addTearDown(() => directory.delete(recursive: true));
-    final snapshot = GameSnapshotFactory.create(save: _sparseRosterSave());
-    final saveFile = File('${directory.path}/snapshot.json');
-    final jsonFile = File('${directory.path}/report.json');
-    final markdownFile = File('${directory.path}/report.md');
-    await saveFile.writeAsString(
-      jsonEncode({'state': SaveSnapshotCodec.toJson(snapshot)}),
-    );
+  test(
+    'preserves canonical roster and map reference benchmark output',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'aonw-save-ai-benchmark-report.',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final snapshot = GameSnapshotFactory.create(save: _benchmarkSave());
+      final saveFile = File('${directory.path}/snapshot.json');
+      final jsonFile = File('${directory.path}/report.json');
+      final markdownFile = File('${directory.path}/report.md');
+      await saveFile.writeAsString(
+        jsonEncode({'state': SaveSnapshotCodec.toJson(snapshot)}),
+      );
 
-    final result = await Process.run('dart', [
-      'run',
-      'tool/run_save_ai_benchmark.dart',
-      '--save',
-      saveFile.path,
-      '--strategy',
-      'random',
-      '--json-out',
-      jsonFile.path,
-      '--markdown-out',
-      markdownFile.path,
-    ]);
+      final result = await Process.run('dart', [
+        'run',
+        'tool/run_save_ai_benchmark.dart',
+        '--save',
+        saveFile.path,
+        '--strategy',
+        'random',
+        '--json-out',
+        jsonFile.path,
+        '--markdown-out',
+        markdownFile.path,
+      ]);
 
-    expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
-    final report =
-        jsonDecode(await jsonFile.readAsString()) as Map<String, dynamic>;
-    final runtime = report['runtime'] as Map<String, dynamic>;
-    final counts = report['counts'] as Map<String, dynamic>;
+      expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+      final report =
+          jsonDecode(await jsonFile.readAsString()) as Map<String, dynamic>;
+      final runtime = report['runtime'] as Map<String, dynamic>;
+      final counts = report['counts'] as Map<String, dynamic>;
 
-    expect(snapshot.domain.participants, hasLength(3));
-    expect(counts['players'], 2);
-    expect(counts['mapTiles'], greaterThan(0));
-    expect((report['save'] as Map<String, dynamic>)['mapName'], 'verdantia');
-    expect(runtime['localSinglePlayer'], isTrue);
-    expect(
-      await markdownFile.readAsString(),
-      contains('local AI yes, local single-player yes'),
-    );
-  });
+      expect(snapshot.domain.participants, hasLength(2));
+      expect(counts['players'], 2);
+      expect(counts['mapTiles'], greaterThan(0));
+      expect((report['save'] as Map<String, dynamic>)['mapName'], 'verdantia');
+      expect(runtime['localSinglePlayer'], isTrue);
+      expect(
+        await markdownFile.readAsString(),
+        contains('local AI yes, local single-player yes'),
+      );
+    },
+  );
 
   test(
     'treats an intended attack on an AI city as an active hostile threat',
@@ -181,7 +184,7 @@ void main() {
   );
 
   test(
-    'replays normal and sparse rosters against pinned report goldens',
+    'replays canonical rosters against pinned report goldens',
     _verifyReplayParity,
   );
 }
@@ -195,7 +198,7 @@ Future<void> _verifyReplayParity() async {
 List<_ReplayFixture> _replayFixtures() => [
   (
     name: 'normal',
-    save: _sparseRosterSave().copyWith(
+    save: _benchmarkSave().copyWith(
       id: 'normal_roster',
       turn: 7,
       playerStates: const {
@@ -232,8 +235,8 @@ List<_ReplayFixture> _replayFixtures() => [
     ],
   ),
   (
-    name: 'sparse',
-    save: _sparseRosterSave(),
+    name: 'single_ai',
+    save: _benchmarkSave(),
     startTurn: 1,
     playerOrder: const [
       ['ai'],
@@ -339,17 +342,16 @@ Future<ProcessResult> _runReplayReport({
   ]);
 }
 
-GameSave _sparseRosterSave() {
+GameSave _benchmarkSave() {
   return GameSave(
     id: 'sparse_roster',
-    name: 'Sparse roster benchmark fixture',
+    name: 'Benchmark fixture',
     mapName: 'verdantia',
     mapSource: MapSource.asset,
     turn: 1,
     playerStates: const {
       'human': PlayerTurnState.active,
       'ai': PlayerTurnState.active,
-      'legacy_missing': PlayerTurnState.active,
     },
     savedAt: DateTime.utc(2026, 7, 29),
     camera: CameraState.zero,

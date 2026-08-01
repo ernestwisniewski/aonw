@@ -260,7 +260,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "command": {
       "type": "AttackHex",
@@ -437,7 +437,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {
+      "lifecycle": {
         "diplomacy": {
           "contacts": [
             "player_1|player_2"

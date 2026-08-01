@@ -3,7 +3,7 @@ part of '../server_command_reducer_test.dart';
 void _registerServerCommandReducerSnapshotTests() {
   group('ServerCommandReducer lossless snapshot boundary', () {
     test(
-      'preserves raw state when an accepted repeat submission changes only save',
+      'preserves canonical state when a repeat submission changes only metadata',
       () async {
         final save = _save(
           playerStates: const {
@@ -16,10 +16,7 @@ void _registerServerCommandReducerSnapshotTests() {
           diplomacy: DiplomacyState.empty.addContact('player_1', 'player_2'),
         );
         final rawSave = save.toJson();
-        final rawState = <String, dynamic>{
-          ...CanonicalGameSnapshotCodec.encodeDomainState(state),
-          'stateCanary': const {'preserve': true},
-        };
+        final rawState = CanonicalGameSnapshotCodec.encodeDomainState(state);
         final rawRuntimeState = rawState['lifecycle']! as Map;
         final snapshot = WireSnapshot(
           v: 37,
@@ -30,7 +27,10 @@ void _registerServerCommandReducerSnapshotTests() {
         );
         final now = DateTime.utc(2026, 6, 30, 11, 1);
 
-        expect(rawRuntimeState.containsKey('turnStartedAt'), isFalse);
+        expect(
+          rawRuntimeState['turnStartedAt'],
+          save.savedAt.toIso8601String(),
+        );
 
         final reduction = await _serverCommandTestDriver.reduce(
           reducer: ServerCommandReducer(
@@ -55,8 +55,7 @@ void _registerServerCommandReducerSnapshotTests() {
           reduction.previousSnapshot.domain.turnStartedAt,
           save.savedAt.toUtc(),
         );
-        expect(wireSnapshot.state, isNot(same(rawState)));
-        expect(wireSnapshot.state['stateCanary'], const {'preserve': true});
+        expect(wireSnapshot.state, same(rawState));
         expect(
           (wireSnapshot.state['lifecycle']! as Map)['turnStartedAt'],
           save.savedAt.toIso8601String(),
@@ -73,13 +72,11 @@ void _registerServerCommandReducerSnapshotTests() {
     );
 
     test(
-      'preserves raw save when accepted diplomacy changes only domain',
+      'preserves canonical save when accepted diplomacy changes only domain',
       () async {
         final save = _save();
         final state = _diplomacyState();
-        final rawSave = Map<String, dynamic>.from(save.toJson())
-          ..remove('schemaVersion')
-          ..['saveCanary'] = const {'preserve': true};
+        final rawSave = save.toJson();
         final rawState = CanonicalGameSnapshotCodec.encodeDomainState(state);
         final snapshot = WireSnapshot(
           v: 37,
@@ -89,7 +86,7 @@ void _registerServerCommandReducerSnapshotTests() {
           state: rawState,
         );
 
-        expect(rawSave.containsKey('schemaVersion'), isFalse);
+        expect(rawSave['schemaVersion'], save.schemaVersion);
 
         final reduction = await _serverCommandTestDriver.reduce(
           reducer: ServerCommandReducer(
@@ -116,14 +113,12 @@ void _registerServerCommandReducerSnapshotTests() {
           nextSnapshot.domain,
           isNot(same(reduction.previousSnapshot.domain)),
         );
-        expect(nextSnapshot.domain, same(reduction.previousSnapshot.domain));
         expect(
           nextSnapshot.metadata,
           same(reduction.previousSnapshot.metadata),
         );
         expect(wireSnapshot.save, same(rawSave));
-        expect(wireSnapshot.save['saveCanary'], const {'preserve': true});
-        expect(wireSnapshot.save.containsKey('schemaVersion'), isFalse);
+        expect(wireSnapshot.save['schemaVersion'], save.schemaVersion);
         expect(GameSave.fromJson(wireSnapshot.save), save);
         expect(wireSnapshot.state, isNot(same(rawState)));
         expect(

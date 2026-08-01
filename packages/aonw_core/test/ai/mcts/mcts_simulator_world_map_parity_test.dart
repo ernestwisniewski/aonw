@@ -16,6 +16,9 @@ void main() {
         row: 0,
       );
       final state = DomainState.snapshot(
+        participants: const [
+          Player(id: 'player_2', name: 'player_2', colorValue: 0),
+        ],
         units: [scout],
         fogOfWar: FogOfWarState(
           players: {

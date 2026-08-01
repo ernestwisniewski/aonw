@@ -41,12 +41,14 @@ class EndpointAppStatus extends _i1.EndpointRef {
   _i2.Future<String> versionStatus({
     required String platform,
     required int buildNumber,
+    int? multiplayerVersion,
   }) => caller.callServerEndpoint<String>(
     'appStatus',
     'versionStatus',
     {
       'platform': platform,
       'buildNumber': buildNumber,
+      'multiplayerVersion': multiplayerVersion,
     },
     authenticated: false,
   );

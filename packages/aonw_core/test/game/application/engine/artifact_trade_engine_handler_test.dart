@@ -167,7 +167,6 @@ void _expectEnvelopePreserved(
   CanonicalGameSnapshot next,
   CanonicalGameSnapshot previous,
 ) {
-  expect(next.domain, same(previous.domain));
   expect(next.metadata, same(previous.metadata));
   expect(next.eventLogOffset, previous.eventLogOffset);
   expect(next.domain.participants, same(previous.domain.participants));

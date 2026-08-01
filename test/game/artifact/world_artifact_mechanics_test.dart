@@ -157,7 +157,7 @@ void main() {
                       TerrainType.forest,
                     ]
                   : const [TerrainType.grassland],
-              height: col == 2 ? 9 : 0,
+              height: col == 2 ? 5 : 0,
             ),
         ],
       );

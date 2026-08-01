@@ -15,8 +15,6 @@ const _commandTransportPath =
     'lib/game/application/ports/command_transport.dart';
 const _networkTransportPath =
     'lib/api/transport/network_command_transport.dart';
-const _networkClientInteractionPath =
-    'lib/api/transport/network_command_transport_client_interaction.dart';
 
 void main() {
   group('network command snapshot boundary', () {
@@ -36,10 +34,7 @@ void main() {
 
     test('result paths distinguish transient and stored snapshots', () {
       expect(
-        _networkResultFlowViolations(
-          _unitAt(_networkTransportPath),
-          _unitAt(_networkClientInteractionPath),
-        ),
+        _networkResultFlowViolations(_unitAt(_networkTransportPath)),
         isEmpty,
       );
     });

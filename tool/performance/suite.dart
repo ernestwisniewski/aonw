@@ -19,7 +19,6 @@ Future<PerformanceReportDocument> runPerformanceSuite() async {
     runAutoExploreWorkload(),
     runCombatCommandWorkload(),
     runFogRevealWorkload(),
-    runMapLookupWorkload(),
     runMovementCommandWorkload(),
     runMovementPathWorkload(),
     runWorldMapLookupWorkload(),

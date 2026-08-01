@@ -76,12 +76,8 @@ const reviewedCityEconomyFamilyPatternSignatures =
         digest: 1602138930146431912,
       ),
       'lib/game/application/services/authoritative_command_policy.dart': (
-        occurrences: 24,
-        digest: 5437926357238653160,
-      ),
-      'lib/game/application/services/game_intent_resolver.dart': (
-        occurrences: 2,
-        digest: 3281745417229852721,
+        occurrences: 3,
+        digest: -2407353448954345130,
       ),
       'lib/game/application/services/'
           'local_city_economy_command_resolver.dart': (
@@ -97,17 +93,9 @@ const reviewedCityEconomyFamilyPatternSignatures =
         occurrences: 19,
         digest: -8963395515821012448,
       ),
-      'lib/game/domain/reducer/interaction/interaction_reducer.dart': (
-        occurrences: 1,
-        digest: -869746894041255394,
-      ),
       'lib/game/presentation/audio/game_sound_cue_mapper.dart': (
-        occurrences: 19,
-        digest: -2757472282667144838,
-      ),
-      'lib/game/presentation/engine/game_renderer_tile_interactions.dart': (
         occurrences: 3,
-        digest: -466922330534588617,
+        digest: -6734356503835873574,
       ),
       'lib/game/presentation/widgets/diplomacy/'
           'diplomacy_player_modal_resource_trade.dart': (
@@ -121,8 +109,8 @@ const reviewedCityEconomyFamilyPatternSignatures =
       ),
       'lib/game/presentation/widgets/hud/command/'
           'hud_command_dispatcher_selection.dart': (
-        occurrences: 3,
-        digest: -7589536156123265190,
+        occurrences: 1,
+        digest: 1983689714316160880,
       ),
       'lib/game/presentation/widgets/hud/selection/'
           'hud_selection_commands.dart': (

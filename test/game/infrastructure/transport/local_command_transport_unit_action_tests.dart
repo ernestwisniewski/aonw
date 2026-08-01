@@ -2,7 +2,7 @@ part of 'local_command_transport_test.dart';
 
 void _registerUnitActionTransportTests() {
   test(
-    'unit action transport preserves sparse canonical session at new offset',
+    'unit action transport preserves canonical lifecycle at new offset',
     () async {
       final unit = GameUnit(
         id: 'unit_1',
@@ -15,23 +15,32 @@ void _registerUnitActionTransportTests() {
       );
       final baseSnapshot = GameSnapshotFactory.create(
         save: _save(
-          players: const [],
+          players: const [
+            Player(id: 'player_1', name: 'One', colorValue: 0xFF010203),
+            Player(id: 'player_2', name: 'Two', colorValue: 0xFF020304),
+            Player(id: 'player_3', name: 'Three', colorValue: 0xFF030405),
+            Player(id: 'player_4', name: 'Four', colorValue: 0xFF040506),
+            Player(id: 'player_5', name: 'Five', colorValue: 0xFF050607),
+            Player(
+              id: 'player_6',
+              name: 'Six',
+              colorValue: 0xFF060708,
+              country: PlayerCountry.canada,
+            ),
+          ],
           gameMode: GameMode.multiplayer,
           playerStates: const {'player_1': PlayerTurnState.active},
         ),
-        playerColors: const {'player_1': 0xFF010203},
-        playerCountries: const {'country_only': PlayerCountry.canada},
         units: [unit],
 
-        submittedPlayerIds: const {'session_only'},
-        timeoutStreaksByPlayerId: const {'timeout_only': 2},
-        afkPlayerIds: const {'afk_only'},
-        kickedPlayerIds: const {'kicked_only'},
+        submittedPlayerIds: const {'player_2'},
+        timeoutStreaksByPlayerId: const {'player_3': 2},
+        afkPlayerIds: const {'player_4'},
+        kickedPlayerIds: const {'player_5'},
 
         eventLogOffset: 73,
       );
       final before = SaveSnapshotCodec.toJson(baseSnapshot);
-      final originalSession = baseSnapshot.domain;
       final repository = _MemoryGameRepository(baseSnapshot);
       final transport = LocalCommandTransport(
         reducer: GameStateReducer(mapData: _map()),
@@ -60,8 +69,11 @@ void _registerUnitActionTransportTests() {
       expect(result.offset, 74);
       expect(snapshot.eventLogOffset, 74);
       expect(snapshot.eventLogOffset, 74);
-      expect(snapshot.domain, originalSession);
-      expect(snapshot.domain.turnStartedAt, baseSnapshot.save.savedAt.toUtc());
+      expect(snapshot.domain.submittedPlayerIds, {'player_2'});
+      expect(snapshot.domain.timeoutStreaksByPlayerId, {'player_3': 2});
+      expect(snapshot.domain.afkPlayerIds, {'player_4'});
+      expect(snapshot.domain.kickedPlayerIds, {'player_5'});
+      expect(snapshot.domain.turnStartedAt, isNull);
       expect(snapshot.persistedTurnStartedAt, isNull);
       expect(snapshot.save.savedAt, DateTime.utc(2026, 7, 30, 12));
       expect(snapshot.units.single.movementPoints, 0);

@@ -1,4 +1,5 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/accepted_engine_command_interaction_source.dart';
 import 'package:aonw/game/application/services/local_movement_engine_projection.dart';
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
@@ -11,7 +12,6 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
-import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
@@ -74,7 +74,12 @@ GameStateTransition resolveMovementCommandForTest(
     return GameStateTransition(state: state);
   }
   final projection = projectLocalMovementEngineResult(
-    currentState: state,
+    currentState: acceptedEngineCommandInteractionSource(
+      currentState: state,
+      command: command,
+      family: GameEngineCommandFamily.movement,
+      domainActions: accepted.snapshot.domain.actions,
+    ),
     result: accepted,
     command: command,
     mapView: mapView,
@@ -164,34 +169,20 @@ final class _TestMapReadView implements MapReadView {
 }
 
 CanonicalGameSnapshot _snapshotFor(GameClientState state) {
-  final ids = <String>{
-    ...state.playerColors.keys,
-    ...state.playerCountries.keys,
-    for (final unit in state.units) unit.ownerPlayerId,
-    for (final city in state.cities) city.ownerPlayerId,
-  }..removeWhere((id) => id.isEmpty);
-  final sortedIds = ids.toList()..sort();
-  final players = [
-    for (final id in sortedIds)
-      Player(
-        id: id,
-        name: id,
-        colorValue: state.playerColors[id] ?? 0,
-        country: state.playerCountries[id] ?? PlayerCountry.poland,
-      ),
-  ];
-  return GameSnapshotFactory.fromClientState(
+  return GameSnapshotFactory.fromDomainState(
     save: GameSave(
       id: 'movement_engine_test',
       name: 'Movement engine test',
       mapName: 'test',
-      turn: 1,
-      playerStates: {for (final id in sortedIds) id: PlayerTurnState.active},
+      turn: state.domain.turn,
+      playerStates: state.domain.turnStatesByPlayerId,
       savedAt: DateTime.utc(1970),
       camera: CameraState.zero,
-      players: players,
+      players: state.domain.participants,
+      gameMode: state.domain.gameMode,
+      matchRules: state.domain.matchRules,
     ),
-    state: state,
+    state: state.domain,
   );
 }
 

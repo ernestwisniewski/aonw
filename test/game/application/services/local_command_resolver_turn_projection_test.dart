@@ -94,7 +94,8 @@ void main() {
 
     expect(result.state.pendingAction, isNull);
     expect(result.state.cityFoundingDraft, isNull);
-    expect(result.state.selection, same(selection));
+    expect(result.state.selection?.type, selection.type);
+    expect(result.state.selectedUnitId, selectedUnit.id);
     expect(result.snapshot.domain.actions.pendingAction, isNull);
     expect(result.snapshot.domain.actions.cityFoundingDraft, isNull);
   });

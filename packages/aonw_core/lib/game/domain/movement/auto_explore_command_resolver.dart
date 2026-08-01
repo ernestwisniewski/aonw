@@ -13,7 +13,7 @@ import 'package:aonw_core/game/domain/movement/scout_auto_explore_planner.dart';
 import 'package:aonw_core/game/domain/movement/scout_auto_explore_target.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_visibility_rules.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
-import 'package:aonw_core/game/domain/state/persisted_interaction_unit_rules.dart';
+import 'package:aonw_core/game/domain/state/domain_action_unit_rules.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
@@ -111,7 +111,7 @@ final class AutoExploreCommandResolver {
     required MapTraversalView mapData,
     required AutoExploreCommandPhase phase,
   }) {
-    final interaction = PersistedInteractionUnitRules.clearOwnedByUnit(
+    final interaction = DomainActionUnitRules.clearOwnedByUnit(
       state.interaction,
       unit.id,
     );
@@ -156,7 +156,7 @@ final class AutoExploreCommandResolver {
       ),
       fogOfWar: state.movement.fogOfWar,
       diplomacy: state.movement.diplomacy,
-      interaction: PersistedInteractionUnitRules.clearOwnedByUnit(
+      interaction: DomainActionUnitRules.clearOwnedByUnit(
         state.interaction,
         unit.id,
       ),

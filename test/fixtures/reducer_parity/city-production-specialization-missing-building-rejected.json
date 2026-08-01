@@ -213,7 +213,7 @@
           }
         }
       },
-      "runtimeState": {
+      "lifecycle": {
         "submittedPlayerIds": [
           "player_2"
         ],
@@ -374,7 +374,7 @@
           }
         }
       },
-      "runtimeState": {
+      "lifecycle": {
         "submittedPlayerIds": [
           "player_2"
         ],

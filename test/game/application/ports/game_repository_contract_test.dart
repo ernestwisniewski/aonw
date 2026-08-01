@@ -70,6 +70,7 @@ void main() {
           name: 'Contract Game',
           mapName: 'verdantia',
           mapSource: MapSource.asset,
+          players: [_player1],
         ),
       );
       final original = await repository.load(saveId);
@@ -84,7 +85,6 @@ void main() {
       await repository.save(
         GameSnapshotFactory.create(
           save: original.save.copyWith(turn: 4),
-          playerColors: const {'player_1': 0xFF4a7fc4},
           units: [unit],
           cities: [city],
 

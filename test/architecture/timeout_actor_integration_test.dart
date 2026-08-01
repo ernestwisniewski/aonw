@@ -215,11 +215,9 @@ List<String> _timeoutSelectionViolations(CompilationUnit unit) {
       '_selectTimeoutActorPlayerId must require match and canonical snapshot',
     if (!body.contains('snapshot.domain.participants'))
       'timeout selection must use canonical domain participants',
-    if (!body.contains('snapshot.session.turnStatesByPlayerId.keys'))
-      'timeout selection must include canonical turn-state players',
-    if (!body.contains('snapshot.session.submittedPlayerIds'))
+    if (!body.contains('snapshot.domain.submittedPlayerIds'))
       'timeout selection must use canonical submitted players',
-    if (!body.contains('snapshot.session.kickedPlayerIds'))
+    if (!body.contains('snapshot.domain.kickedPlayerIds'))
       'timeout selection must use canonical kicked players',
     if (!body.contains('for (final player in match.players)'))
       'timeout selection must preserve the filtered Wire roster',

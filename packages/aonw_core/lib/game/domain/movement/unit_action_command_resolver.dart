@@ -4,7 +4,7 @@ import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_balance.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
-import 'package:aonw_core/game/domain/state/persisted_interaction_unit_rules.dart';
+import 'package:aonw_core/game/domain/state/domain_action_unit_rules.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 /// Persistence-neutral result of a unit action command.
@@ -74,10 +74,7 @@ abstract final class UnitActionCommandResolver {
     return UnitActionCommandResult._accepted(
       units: _replaceUnit(units, updatedUnit),
       artifacts: _cancelArtifactExcavation(artifacts, unit),
-      interaction: PersistedInteractionUnitRules.clearOwnedByUnit(
-        interaction,
-        unit.id,
-      ),
+      interaction: DomainActionUnitRules.clearOwnedByUnit(interaction, unit.id),
     );
   }
 
@@ -136,10 +133,7 @@ abstract final class UnitActionCommandResolver {
     return UnitActionCommandResult._accepted(
       units: _replaceUnit(units, UnitFortificationRules.fortify(unit)),
       artifacts: artifacts,
-      interaction: PersistedInteractionUnitRules.clearOwnedByUnit(
-        interaction,
-        unit.id,
-      ),
+      interaction: DomainActionUnitRules.clearOwnedByUnit(interaction, unit.id),
     );
   }
 

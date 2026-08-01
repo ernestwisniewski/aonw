@@ -264,29 +264,19 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
           )
         : accepted.snapshot;
     if (canonicalSameTurn || !preservesRawTurnStart) {
-      return (
-        snapshot: snapshot,
-        state: snapshot
-            .toClientState(
-              activePlayerId: currentState.activePlayerId,
-              activePlayerCanAct: currentState.activePlayerCanAct,
-            )
-            .copyWithInteraction(
-              cityFoundingDraft:
-                  accepted.snapshot.domain.actions.cityFoundingDraft,
-              pendingAction: accepted.snapshot.domain.actions.pendingAction,
-            ),
-      );
-    }
-    final state = currentState
-        .copyWith(
-          submittedPlayerIds: accepted.snapshot.domain.submittedPlayerIds,
-          turnStartedAt: baseSnapshot.persistedTurnStartedAt,
-        )
-        .copyWithInteraction(
-          cityFoundingDraft: accepted.snapshot.domain.actions.cityFoundingDraft,
-          pendingAction: accepted.snapshot.domain.actions.pendingAction,
+      var state = currentState.withDomain(snapshot.domain);
+      if (command is EndTurnCommand) {
+        state = state.copyWithInteraction(
+          cityFoundingDraft: snapshot.domain.actions.cityFoundingDraft,
+          pendingAction: snapshot.domain.actions.pendingAction,
         );
+      }
+      return (snapshot: snapshot, state: state);
+    }
+    final state = currentState.copyWith(
+      submittedPlayerIds: accepted.snapshot.domain.submittedPlayerIds,
+      turnStartedAt: baseSnapshot.persistedTurnStartedAt,
+    );
     return (
       snapshot: _projectUnfinalizedTurn(
         baseSnapshot: baseSnapshot,

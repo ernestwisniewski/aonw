@@ -81,7 +81,6 @@ DomainState _contactState() {
     submittedPlayerIds: const {_opponentPlayerId},
     timeoutStreaksByPlayerId: const {_opponentPlayerId: 2},
     afkPlayerIds: const {_opponentPlayerId},
-    kickedPlayerIds: const {'removed_player'},
     intendedAttacks: const [
       IntendedAttack(
         attackerUnitId: 'sentinel_attacker',

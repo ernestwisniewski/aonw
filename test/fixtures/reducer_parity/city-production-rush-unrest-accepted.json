@@ -179,7 +179,7 @@
         {
           "id": "player_2",
           "name": "Player 2",
-          "colorValue": 4290263610,
+          "colorValue": 4290001466,
           "country": "japan",
           "kind": "human"
         }
@@ -363,13 +363,14 @@
           }
         }
       },
-      "runtimeState": {
+      "lifecycle": {
         "submittedPlayerIds": [
           "player_2"
         ],
         "timeoutStreaksByPlayerId": {
           "player_2": 1
         },
+        "turnStartedAt": "2026-01-02T01:02:03.000Z",
         "resourceTradeAgreements": [
           {
             "id": "trade_sentinel",
@@ -379,8 +380,7 @@
             "goldPerTurn": 1,
             "remainingTurns": 4
           }
-        ],
-        "turnStartedAt": "2026-01-02T01:02:03.000Z"
+        ]
       },
       "wonderRegistry": {
         "centralBank": "player_2",
@@ -443,7 +443,7 @@
         {
           "id": "player_2",
           "name": "Player 2",
-          "colorValue": 4290263610,
+          "colorValue": 4290001466,
           "country": "japan",
           "kind": "human"
         }
@@ -627,13 +627,14 @@
           }
         }
       },
-      "runtimeState": {
+      "lifecycle": {
         "submittedPlayerIds": [
           "player_2"
         ],
         "timeoutStreaksByPlayerId": {
           "player_2": 1
         },
+        "turnStartedAt": "2026-01-02T01:02:03.000Z",
         "resourceTradeAgreements": [
           {
             "id": "trade_sentinel",
@@ -643,8 +644,7 @@
             "goldPerTurn": 1,
             "remainingTurns": 4
           }
-        ],
-        "turnStartedAt": "2026-01-02T01:02:03.000Z"
+        ]
       },
       "wonderRegistry": {
         "centralBank": "player_2",

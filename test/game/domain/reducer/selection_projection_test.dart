@@ -132,7 +132,7 @@ void main() {
       );
 
       expect(refreshed.state.selection?.type, GameSelectionType.city);
-      expect(refreshed.state.selection?.city, same(foundedCity));
+      expect(refreshed.state.selection?.city, same(state.cities.single));
       expect(refreshed.state.selection?.unit, isNull);
       expect(refreshed.state.selection?.tile, isNull);
       expect(refreshed.state.selection?.cityYield, isNotNull);
@@ -183,7 +183,7 @@ void main() {
         ),
       );
 
-      expect(refreshed.state.selection?.city, same(updatedCity));
+      expect(refreshed.state.selection?.city, same(state.cities.single));
       expect(refreshed.state.selection?.city?.population, 2);
       expect(refreshed.state.selection?.cityYield, isNotNull);
       expect(

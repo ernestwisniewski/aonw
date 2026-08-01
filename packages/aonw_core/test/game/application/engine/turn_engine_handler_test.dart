@@ -116,44 +116,44 @@ void main() {
     });
 
     test('sequential end advances the round after the last player', () {
-      final snapshot =
-          _snapshot(
-            gameMode: GameMode.hotSeat,
-            participants: const [
-              Player(id: _two, name: 'Two', colorValue: 2),
-              Player(id: _one, name: 'One', colorValue: 1),
-            ],
-            units: [
-              GameUnit(
-                id: 'queued_unit',
-                ownerPlayerId: _two,
-                type: GameUnitType.warrior,
-                name: GameUnitType.warrior.defaultNameToken,
-                col: 0,
-                row: 0,
-                movementPoints: 0,
-                queuedPath: QueuedMovePath(
-                  targetCol: 1,
-                  targetRow: 0,
-                  steps: const [
-                    UnitMovementStep(
-                      col: 1,
-                      row: 0,
-                      enterCost: 1,
-                      cumulativeCost: 1,
-                    ),
-                  ],
+      final initial = _snapshot(
+        gameMode: GameMode.hotSeat,
+        participants: const [
+          Player(id: _two, name: 'Two', colorValue: 2),
+          Player(id: _one, name: 'One', colorValue: 1),
+        ],
+        units: [
+          GameUnit(
+            id: 'queued_unit',
+            ownerPlayerId: _two,
+            type: GameUnitType.warrior,
+            name: GameUnitType.warrior.defaultNameToken,
+            col: 0,
+            row: 0,
+            movementPoints: 0,
+            queuedPath: QueuedMovePath(
+              targetCol: 1,
+              targetRow: 0,
+              steps: const [
+                UnitMovementStep(
+                  col: 1,
+                  row: 0,
+                  enterCost: 1,
+                  cumulativeCost: 1,
                 ),
-              ),
-            ],
-          ).copyWith(
-            domain: _snapshot(gameMode: GameMode.hotSeat).domain.copyWith(
-              turnStatesByPlayerId: const {
-                _two: PlayerTurnState.finished,
-                _one: PlayerTurnState.active,
-              },
+              ],
             ),
-          );
+          ),
+        ],
+      );
+      final snapshot = initial.copyWith(
+        domain: initial.domain.copyWith(
+          turnStatesByPlayerId: const {
+            _two: PlayerTurnState.finished,
+            _one: PlayerTurnState.active,
+          },
+        ),
+      );
 
       final accepted = _accepted(
         _apply(

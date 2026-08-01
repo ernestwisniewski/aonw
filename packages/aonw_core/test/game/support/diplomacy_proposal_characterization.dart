@@ -145,7 +145,6 @@ void _registerProposalDiscoveryCatalogTests() {
         playerWarWeariness: const {_player2: 3},
         playerStabilityNet: const {_player2: 4},
         diplomacy: DiplomacyState.empty.addContact(_player1, _player2),
-        submittedPlayerIds: const {_player2},
         dominationHoldTurnsByPlayerId: const {_player2: 2},
       );
       expect(state.knownPlayerIds, contains(_player2));

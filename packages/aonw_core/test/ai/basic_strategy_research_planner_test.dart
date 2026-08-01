@@ -120,5 +120,5 @@ const _assessment = AiEmpireAssessment(
   desiredMilitaryCount: 0,
 );
 
-final _mapData = WorldMap(cols: 0, rows: 0, tiles: []);
+final _mapData = WorldMap(cols: 1, rows: 1, tiles: []);
 final _ruleset = GameRuleset.standard();

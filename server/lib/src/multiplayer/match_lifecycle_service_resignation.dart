@@ -17,17 +17,16 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
       return state;
     }
 
-    final transition = ParticipantResignationTransition.apply(
-      domain: canonicalSnapshot.domain,
-      actorPlayerId: player.id,
+    final nextSnapshot = _snapshotAfterResignationKick(
+      canonicalSnapshot,
+      player.id,
+    );
+    final transition = ParticipantResignationTransition.resolve(
+      domain: nextSnapshot.domain,
       orderedHumanPlayerIds: [
         for (final matchPlayer in state.match.players)
           if (matchPlayer.kind == WirePlayerKind.human) matchPlayer.id,
       ],
-    );
-    final nextSnapshot = _snapshotAfterResignationKick(
-      canonicalSnapshot,
-      player.id,
     );
     final players = [
       for (final matchPlayer in state.match.players)
@@ -45,7 +44,6 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
       ),
     );
     return _stateAfterResignationTransition(
-      originalState: state,
       runningState: runningState,
       transition: transition,
       userIdentifier: userIdentifier,
@@ -54,14 +52,12 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
   }
 
   StoredMatchState _stateAfterResignationTransition({
-    required StoredMatchState originalState,
     required StoredMatchState runningState,
     required ParticipantResignationResult transition,
     required String userIdentifier,
     required DateTime endedAt,
   }) {
     return switch (transition.disposition) {
-      ParticipantResignationDisposition.unchanged => originalState,
       ParticipantResignationDisposition.running => runningState,
       ParticipantResignationDisposition.finished =>
         _finishedStateAfterResignation(

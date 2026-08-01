@@ -268,7 +268,7 @@
           }
         }
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "command": {
       "type": "SelectWorkerImprovement",
@@ -425,7 +425,7 @@
           }
         }
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "events": []
   }

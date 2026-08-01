@@ -207,7 +207,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {
+      "lifecycle": {
         "submittedPlayerIds": [
           "player_2"
         ],
@@ -362,7 +362,7 @@
       "research": {
         "players": {}
       },
-      "runtimeState": {
+      "lifecycle": {
         "submittedPlayerIds": [
           "player_2"
         ],

@@ -16,6 +16,7 @@
 - [ ] `make mutation` passes; any mutation census change is explained and introduces no surviving mutant.
 - [ ] `make critical-e2e-test` passes when local persistence or multiplayer auth/match/command/reconnect behavior changed.
 - [ ] Generator input changes were regenerated deliberately and the resulting build-runner, localization, Serverpod, and migration diffs were reviewed (`make generated-code-check`).
+- [ ] Multiplayer behavior is unchanged, or `kCurrentMultiplayerVersion` was incremented and every retained entry in `kCompatibleMultiplayerVersions` was verified against ADR 0004.
 - [ ] Docs updated when behavior, persistence, APIs, game rules, or build/deploy flows changed.
 - [ ] Architecture boundaries and accepted ADRs respected (see `test/architecture/layer_boundaries_test.dart` and `docs/adr/README.md`).
 

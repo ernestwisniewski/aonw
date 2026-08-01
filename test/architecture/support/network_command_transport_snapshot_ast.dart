@@ -71,16 +71,3 @@ final class _MethodInvocationCollector extends RecursiveAstVisitor<void> {
     super.visitMethodInvocation(node);
   }
 }
-
-final class _NamedReferenceCollector extends RecursiveAstVisitor<void> {
-  _NamedReferenceCollector(this.name);
-
-  final String name;
-  final List<SimpleIdentifier> nodes = [];
-
-  @override
-  void visitSimpleIdentifier(SimpleIdentifier node) {
-    if (node.name == name) nodes.add(node);
-    super.visitSimpleIdentifier(node);
-  }
-}

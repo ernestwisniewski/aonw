@@ -21,7 +21,11 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
         match: fixture.match.copyWith(
           players: [fixture.highWirePlayer, fixture.lowWirePlayer],
         ),
+        save: fixture.save.copyWith(
+          players: [fixture.highDomainPlayer, fixture.lowDomainPlayer],
+        ),
         state: fixture.state.copyWith(
+          participants: [fixture.highDomainPlayer, fixture.lowDomainPlayer],
           submittedPlayerIds: {fixture.lowPlayerId, fixture.highPlayerId},
         ),
       );
@@ -35,6 +39,12 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
       final observation = await fixture.run(
         match: fixture.match.copyWith(
           players: [fixture.highWirePlayer, fixture.lowWirePlayer],
+        ),
+        save: fixture.save.copyWith(
+          players: [fixture.highDomainPlayer, fixture.lowDomainPlayer],
+        ),
+        state: fixture.state.copyWith(
+          participants: [fixture.highDomainPlayer, fixture.lowDomainPlayer],
         ),
       );
 
@@ -64,38 +74,45 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
       _expectAcceptedTimeoutActor(observation, fixture.highPlayerId);
     });
 
-    test('honors a canonicalized submitted participant in Wire', () async {
+    test('honors a canonical submitted participant', () async {
       final fixture = await _createTimeoutActorFixture('wire-phantom');
       const phantomId = '000-wire-only';
+      final phantomWirePlayer = fixture.lowWirePlayer.copyWith(
+        id: phantomId,
+        userId: 'wire-only-user',
+        name: 'Wire only',
+      );
+      final phantomDomainPlayer = fixture.lowDomainPlayer.copyWith(
+        id: phantomId,
+        name: 'Wire only',
+      );
 
       final observation = await fixture.run(
         match: fixture.match.copyWith(
-          players: [
-            fixture.lowWirePlayer.copyWith(
-              id: phantomId,
-              userId: 'wire-only-user',
-              name: 'Wire only',
-            ),
-            ...fixture.match.players,
-          ],
+          players: [phantomWirePlayer, ...fixture.match.players],
+          maxPlayers: fixture.match.maxPlayers + 1,
         ),
         save: fixture.save.copyWith(
+          players: [phantomDomainPlayer, ...fixture.save.players],
           playerStates: {
             ...fixture.save.playerStates,
             phantomId: PlayerTurnState.active,
           },
         ),
-        state: fixture.state.copyWith(submittedPlayerIds: const {phantomId}),
+        state: fixture.state.copyWith(
+          participants: [phantomDomainPlayer, ...fixture.state.participants],
+          submittedPlayerIds: const {phantomId},
+        ),
       );
 
       _expectAcceptedTimeoutActor(observation, phantomId);
     });
 
-    test('ignores a save-only submitted phantom outside Wire', () async {
+    test('rejects a save-only participant outside Wire', () async {
       final fixture = await _createTimeoutActorFixture('save-phantom');
       const phantomId = '000-save-only';
 
-      final observation = await fixture.run(
+      final failure = await fixture.runExpectingRosterFailure(
         save: fixture.save.copyWith(
           players: [
             fixture.lowDomainPlayer.copyWith(id: phantomId, name: 'Save only'),
@@ -106,45 +123,45 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
             phantomId: PlayerTurnState.active,
           },
         ),
-        state: fixture.state.copyWith(submittedPlayerIds: const {phantomId}),
       );
 
-      _expectAcceptedTimeoutActor(observation, fixture.lowPlayerId);
+      _expectRosterFailure(failure);
     });
 
-    test(
-      'honors a canonicalized persistent-state participant in Wire',
-      () async {
-        final fixture = await _createTimeoutActorFixture('state-phantom');
-        const phantomId = '000-state-only';
+    test('honors a canonical persistent-state participant', () async {
+      final fixture = await _createTimeoutActorFixture('state-phantom');
+      const phantomId = '000-state-only';
+      final phantomWirePlayer = fixture.lowWirePlayer.copyWith(
+        id: phantomId,
+        userId: 'state-only-user',
+        name: 'State only',
+      );
+      final phantomDomainPlayer = fixture.lowDomainPlayer.copyWith(
+        id: phantomId,
+        name: 'State only',
+      );
 
-        final observation = await fixture.run(
-          match: fixture.match.copyWith(
-            players: [
-              fixture.lowWirePlayer.copyWith(
-                id: phantomId,
-                userId: 'state-only-user',
-                name: 'State only',
-              ),
-              ...fixture.match.players,
-            ],
-          ),
-          save: fixture.save.copyWith(
-            playerStates: {
-              ...fixture.save.playerStates,
-              phantomId: PlayerTurnState.active,
-            },
-          ),
-          state: fixture.state.copyWith(
-            playerGold: {...fixture.state.playerGold, phantomId: 999},
+      final observation = await fixture.run(
+        match: fixture.match.copyWith(
+          players: [phantomWirePlayer, ...fixture.match.players],
+          maxPlayers: fixture.match.maxPlayers + 1,
+        ),
+        save: fixture.save.copyWith(
+          players: [phantomDomainPlayer, ...fixture.save.players],
+          playerStates: {
+            ...fixture.save.playerStates,
+            phantomId: PlayerTurnState.active,
+          },
+        ),
+        state: fixture.state.copyWith(
+          participants: [phantomDomainPlayer, ...fixture.state.participants],
+          playerGold: {...fixture.state.playerGold, phantomId: 999},
+          submittedPlayerIds: const {phantomId},
+        ),
+      );
 
-            submittedPlayerIds: const {phantomId},
-          ),
-        );
-
-        _expectAcceptedTimeoutActor(observation, phantomId);
-      },
-    );
+      _expectAcceptedTimeoutActor(observation, phantomId);
+    });
 
     test('canonicalizes a participant missing its sparse turn state', () async {
       final fixture = await _createTimeoutActorFixture('save-player-only');
@@ -164,23 +181,20 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
       _expectAcceptedTimeoutActor(observation, fixture.highPlayerId);
     });
 
-    test('accepts players present only in save.playerStates', () async {
+    test('rejects a roster present only in save.playerStates', () async {
       final fixture = await _createTimeoutActorFixture('player-state-only');
 
-      final observation = await fixture.run(
+      final failure = await fixture.runExpectingRosterFailure(
         save: fixture.save.copyWith(players: const []),
-        state: fixture.state.copyWith(
-          submittedPlayerIds: {fixture.highPlayerId},
-        ),
       );
 
-      _expectAcceptedTimeoutActor(observation, fixture.highPlayerId);
+      _expectRosterFailure(failure);
     });
 
-    test('does nothing when no active player intersects Wire', () async {
+    test('rejects a Wire roster absent from the snapshot', () async {
       final fixture = await _createTimeoutActorFixture('no-candidate');
 
-      final observation = await fixture.run(
+      final failure = await fixture.runExpectingRosterFailure(
         match: fixture.match.copyWith(
           players: [
             fixture.lowWirePlayer.copyWith(
@@ -195,24 +209,20 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
         ),
       );
 
-      expect(observation.actorPlayerIds, isEmpty);
-      _expectTimeoutNoOp(observation);
+      _expectRosterFailure(failure);
     });
 
-    test('uses submitted activity across sparse roster sources', () async {
+    test('rejects a roster split across snapshot sources', () async {
       final fixture = await _createTimeoutActorFixture('inconsistent-active');
 
-      final observation = await fixture.run(
+      final failure = await fixture.runExpectingRosterFailure(
         save: fixture.save.copyWith(
           players: [fixture.highDomainPlayer],
           playerStates: {fixture.lowPlayerId: PlayerTurnState.active},
         ),
-        state: fixture.state.copyWith(
-          submittedPlayerIds: {fixture.lowPlayerId},
-        ),
       );
 
-      _expectAcceptedTimeoutActor(observation, fixture.lowPlayerId);
+      _expectRosterFailure(failure);
     });
   });
 }
@@ -318,6 +328,38 @@ final class _TimeoutActorFixture {
       events: await store.listEvents(before.match.id, 0),
     );
   }
+
+  Future<({Object error, StackTrace stackTrace})> runExpectingRosterFailure({
+    WireMatch? match,
+    GameSave? save,
+    DomainState? state,
+  }) async {
+    final arrangedState = state ?? this.state;
+    final timedOutState = arrangedState.copyWith(turnStartedAt: turnStartedAt);
+    final before = stored.copyWith(
+      match: match ?? this.match,
+      snapshot: stored.snapshot.copyWith(
+        save: (save ?? this.save).toJson(),
+        state: CanonicalGameSnapshotCodec.encodeDomainState(timedOutState),
+      ),
+    );
+    await store.saveState(before);
+
+    final failures = await hub.advanceTimedOutTurns(store: store);
+
+    expect(failures, hasLength(1));
+    expect(failures.single.matchId, before.match.id);
+    expect(reducer.actorPlayerIds, isEmpty);
+    expect(await store.listEvents(before.match.id, 0), isEmpty);
+    expect(
+      (await store.findState(before.match.id))!.snapshot,
+      same(before.snapshot),
+    );
+    return (
+      error: failures.single.error,
+      stackTrace: failures.single.stackTrace,
+    );
+  }
 }
 
 final class _TimeoutActorObservation {
@@ -359,6 +401,18 @@ final class _CapturingTimeoutActorReducer extends ServerCommandReducer {
   }
 }
 
+void _expectRosterFailure(({Object error, StackTrace stackTrace}) failure) {
+  expect(
+    failure.error,
+    isA<FormatException>().having(
+      (error) => error.message,
+      'message',
+      'Running snapshot roster must exactly match authoritative players.',
+    ),
+  );
+  expect(failure.stackTrace.toString(), isNotEmpty);
+}
+
 void _expectAcceptedTimeoutActor(
   _TimeoutActorObservation observation,
   String actorPlayerId,
@@ -377,10 +431,4 @@ void _expectAcceptedTimeoutActor(
     (record.command as FinalizeTimedOutTurn).playerIds,
     contains(actorPlayerId),
   );
-}
-
-void _expectTimeoutNoOp(_TimeoutActorObservation observation) {
-  expect(observation.after.snapshot, observation.before.snapshot);
-  expect(observation.after.match, observation.before.match);
-  expect(observation.events, isEmpty);
 }

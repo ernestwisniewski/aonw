@@ -17,20 +17,7 @@ GameClientState projectLocalCityEconomyEngineResult({
   required PaceBalance paceBalance,
 }) {
   final domain = result.snapshot.domain;
-  final canonicalState = currentState.copyWith(
-    playerGold: domain.playerGold,
-    units: domain.units,
-    cities: domain.cities,
-    artifacts: domain.artifacts,
-    research: domain.research,
-    wonderRegistry: domain.wonderRegistry,
-    resourceTradeAgreements: domain.resourceTradeAgreements,
-  );
-  final interaction = result.snapshot.domain.actions;
-  final state = canonicalState.copyWithInteraction(
-    cityFoundingDraft: interaction.cityFoundingDraft,
-    pendingAction: interaction.pendingAction,
-  );
+  final state = currentState.withDomain(domain);
 
   if (command is FoundCityCommand) {
     return _refreshUnitSelection(

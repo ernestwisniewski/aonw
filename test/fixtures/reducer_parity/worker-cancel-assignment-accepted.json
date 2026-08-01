@@ -301,7 +301,7 @@
           }
         }
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "command": {
       "type": "CancelWorkerAssignment",
@@ -457,7 +457,7 @@
           }
         }
       },
-      "runtimeState": {}
+      "lifecycle": {}
     },
     "events": []
   }

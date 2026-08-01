@@ -43,7 +43,7 @@ void main() {
         'attacker_not_controlled',
       );
       expect(results.domain.reason, 'attacker_not_controlled');
-      expect(results.engine.snapshot.domain, same(domain));
+      expect(results.engine.snapshot, same(results.engineInput));
       expect(results.domain.state, same(domain));
       expect(results.kernel.units, same(domain.units));
       expect(results.kernel.cities, same(domain.cities));
@@ -88,6 +88,7 @@ void main() {
 
 typedef _CombatResults = ({
   CombatCommandResult kernel,
+  CanonicalGameSnapshot engineInput,
   GameEngineResult engine,
   DomainCombatCommandResult domain,
 });
@@ -165,6 +166,7 @@ _CombatResults _resolveAll(
   String actorPlayerId = 'player_1',
 }) {
   final map = _map();
+  final engineInput = _snapshot(domain);
   return (
     kernel: const CombatCommandResolver().resolve(
       state: CombatCommandState(
@@ -184,8 +186,9 @@ _CombatResults _resolveAll(
       commandTick: 13,
       mapTiles: map,
     ),
+    engineInput: engineInput,
     engine: const GameEngine().apply(
-      snapshot: _snapshot(domain),
+      snapshot: engineInput,
       command: command,
       context: GameEngineContext(
         actorPlayerId: actorPlayerId,

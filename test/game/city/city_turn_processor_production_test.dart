@@ -7,7 +7,9 @@ import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-WorldMap _grassMap() => WorldMap(
+WorldMap _grassMap({
+  Map<({int col, int row}), List<TerrainType>> terrainOverrides = const {},
+}) => WorldMap(
   cols: 4,
   rows: 4,
   tiles: [
@@ -16,29 +18,21 @@ WorldMap _grassMap() => WorldMap(
         WorldTile(
           col: col,
           row: row,
-          terrains: const [TerrainType.grassland],
+          terrains:
+              terrainOverrides[(col: col, row: row)] ??
+              const [TerrainType.grassland],
           resources: const [],
           height: 0,
         ),
   ],
 );
 
-WorldMap _coastalMap() {
-  final map = _grassMap();
-  final coastIndex = map.tiles.indexWhere(
-    (tile) => tile.col == 2 && tile.row == 1,
-  );
-  map.tiles[coastIndex] = map.tiles[coastIndex].copyWith(
-    terrains: const [TerrainType.coast],
-  );
-  final oceanIndex = map.tiles.indexWhere(
-    (tile) => tile.col == 3 && tile.row == 1,
-  );
-  map.tiles[oceanIndex] = map.tiles[oceanIndex].copyWith(
-    terrains: const [TerrainType.ocean],
-  );
-  return map;
-}
+WorldMap _coastalMap() => _grassMap(
+  terrainOverrides: const {
+    (col: 2, row: 1): [TerrainType.coast],
+    (col: 3, row: 1): [TerrainType.ocean],
+  },
+);
 
 GameCity _city({
   CityProductionQueue? productionQueue,
@@ -443,12 +437,10 @@ void main() {
     });
 
     test('science specialization boosts research project output', () {
-      final productionMap = _grassMap();
-      final hillIndex = productionMap.tiles.indexWhere(
-        (tile) => tile.col == 2 && tile.row == 1,
-      );
-      productionMap.tiles[hillIndex] = productionMap.tiles[hillIndex].copyWith(
-        terrains: const [TerrainType.hills],
+      final productionMap = _grassMap(
+        terrainOverrides: const {
+          (col: 2, row: 1): [TerrainType.hills],
+        },
       );
       final city = _city(
         specialization: CitySpecializationType.science,

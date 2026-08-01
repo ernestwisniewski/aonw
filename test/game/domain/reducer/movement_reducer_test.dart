@@ -13,12 +13,14 @@ import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/movement_engine_test_driver.dart';
 
 part 'movement_reducer_artifact_city_entry_tests.dart';
+part 'movement_reducer_unit_action_tests.dart';
 
 WorldMap _map(
   int cols,
@@ -242,33 +244,7 @@ void main() {
         expect(result.state.artifacts.single.location.row, 1);
       });
 
-      test('cancelUnitAction restores movement after skipping turn', () {
-        final commander = _commander(movementPoints: 2);
-        final skippedState = GameClientState(
-          units: [commander.copyWith(movementPoints: 0)],
-          activePlayerId: 'player_1',
-          interaction: InteractionState(
-            selection: GameSelection.unit(
-              commander.copyWith(movementPoints: 0),
-            ),
-            pendingAction: const PendingUnitTurnSkip(
-              ownerPlayerId: 'player_1',
-              unitId: 'commander_player_1',
-              restoreMovementPoints: 2,
-            ),
-          ),
-        );
-
-        final result = resolveMovementCommandForTest(
-          skippedState,
-          const CancelUnitActionCommand('commander_player_1'),
-          mapData,
-        );
-
-        expect(result.state.units.single.movementPoints, 2);
-        expect(result.state.pendingAction, isNull);
-        expect(result.state.selection?.unit?.movementPoints, 2);
-      });
+      _registerCanonicalSkipCancelTest(() => mapData);
 
       test('cancelUnitAction wakes fortified unit with fresh movement', () {
         final commander = _commander(

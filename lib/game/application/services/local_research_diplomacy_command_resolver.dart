@@ -1,11 +1,11 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/accepted_engine_command_interaction_source.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
-import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 final class LocalResearchDiplomacyCommandResolution {
@@ -41,14 +41,8 @@ final class LocalResearchDiplomacyCommandResolver {
         (!context.hasActor && !currentState.activePlayerCanAct)) {
       return _unchanged(baseSnapshot, currentState, savedAt);
     }
-    final engineInput = baseSnapshot.canonical.copyWith(
-      actions: DomainActionState(
-        cityFoundingDraft: currentState.cityFoundingDraft,
-        pendingAction: currentState.pendingAction,
-      ),
-    );
     final result = const GameEngine().apply(
-      snapshot: engineInput,
+      snapshot: baseSnapshot.canonical,
       command: command,
       context: GameEngineContext(
         actorPlayerId: _actorPlayerId(command, currentState, context),
@@ -62,11 +56,16 @@ final class LocalResearchDiplomacyCommandResolver {
     }
     final accepted = result as GameEngineAccepted;
     return LocalResearchDiplomacyCommandResolution(
-      snapshot: baseSnapshot.withResearchDiplomacyEngineProjection(
+      snapshot: baseSnapshot.withEngineResult(
         resultSnapshot: accepted.snapshot,
         savedAt: savedAt,
       ),
-      state: _projectState(currentState, accepted.snapshot),
+      state: acceptedEngineCommandInteractionSource(
+        currentState: currentState,
+        command: command,
+        family: GameEngine.commandFamily(command)!,
+        domainActions: accepted.snapshot.domain.actions,
+      ).withDomain(accepted.snapshot.domain),
       events: accepted.events,
     );
   }
@@ -77,7 +76,7 @@ final class LocalResearchDiplomacyCommandResolver {
     DateTime savedAt,
   ) {
     return LocalResearchDiplomacyCommandResolution(
-      snapshot: snapshot.withResearchDiplomacyEngineProjection(
+      snapshot: snapshot.withEngineResult(
         resultSnapshot: snapshot.canonical,
         savedAt: savedAt,
       ),
@@ -99,39 +98,5 @@ final class LocalResearchDiplomacyCommandResolver {
       DiplomaticCommand(:final playerId) => playerId,
       _ => '',
     };
-  }
-
-  GameClientState _projectState(
-    GameClientState state,
-    CanonicalGameSnapshot resultSnapshot,
-  ) {
-    final domain = resultSnapshot.domain;
-    final domainChanged =
-        !identical(domain.playerGold, state.playerGold) ||
-        !identical(domain.research, state.research) ||
-        !identical(domain.diplomacy, state.diplomacy) ||
-        !identical(domain.intendedAttacks, state.intendedAttacks) ||
-        !identical(
-          domain.resourceTradeAgreements,
-          state.resourceTradeAgreements,
-        );
-    final domainState = domainChanged
-        ? state.copyWith(
-            playerGold: domain.playerGold,
-            research: domain.research,
-            diplomacy: domain.diplomacy,
-            intendedAttacks: domain.intendedAttacks,
-            resourceTradeAgreements: domain.resourceTradeAgreements,
-          )
-        : state;
-    final interaction = resultSnapshot.domain.actions;
-    if (domainState.cityFoundingDraft == interaction.cityFoundingDraft &&
-        domainState.pendingAction == interaction.pendingAction) {
-      return domainState;
-    }
-    return domainState.copyWithInteraction(
-      cityFoundingDraft: interaction.cityFoundingDraft,
-      pendingAction: interaction.pendingAction,
-    );
   }
 }

@@ -373,7 +373,7 @@
           }
         }
       },
-      "runtimeState": {
+      "lifecycle": {
         "submittedPlayerIds": [
           "player_1"
         ],
@@ -749,7 +749,8 @@
           }
         }
       },
-      "runtimeState": {
+      "lifecycle": {
+        "turnStartedAt": "2026-01-02T03:04:05.000Z",
         "diplomacy": {
           "contacts": [
             "player_1|player_2"
@@ -781,8 +782,7 @@
             "playerId": "player_1",
             "holdTurns": 2
           }
-        ],
-        "turnStartedAt": "2026-01-02T03:04:05.000Z"
+        ]
       }
     },
     "events": [

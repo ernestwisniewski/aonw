@@ -38,6 +38,13 @@ void main() {
         'supported',
       );
       expect(created, hasLength(2));
+      expect(created.last.appStatusRequests, [
+        {
+          'platform': 'macos',
+          'buildNumber': 1,
+          'multiplayerVersion': kCurrentMultiplayerVersion,
+        },
+      ]);
       expect(created.map((value) => value.closeCalls), [0, 1]);
 
       client
@@ -50,6 +57,34 @@ void main() {
         () => client.displayName(token: AuthToken('after-close')),
         throwsStateError,
       );
+    },
+  );
+
+  test(
+    'falls back to the legacy app-status shape during server rollout',
+    () async {
+      final created = <_TrackingServerpodClient>[];
+      final client = NetworkSessionClient(
+        serverpodHost: 'http://localhost:8080',
+        clientFactory: _trackingFactory(
+          created,
+          rejectVersionedAppStatus: true,
+        ),
+      );
+      addTearDown(client.close);
+
+      expect(
+        await client.versionStatus(platform: 'windows', buildNumber: 80),
+        'supported',
+      );
+      expect(created.single.appStatusRequests, [
+        {
+          'platform': 'windows',
+          'buildNumber': 80,
+          'multiplayerVersion': kCurrentMultiplayerVersion,
+        },
+        {'platform': 'windows', 'buildNumber': 80},
+      ]);
     },
   );
 
@@ -159,12 +194,14 @@ void main() {
 }
 
 NetworkSessionServerpodClientFactory _trackingFactory(
-  List<_TrackingServerpodClient> created,
-) {
+  List<_TrackingServerpodClient> created, {
+  bool rejectVersionedAppStatus = false,
+}) {
   return (host, {token, authKeyProvider, connectionTimeout}) {
     final client = _TrackingServerpodClient(
       host,
       connectionTimeout: connectionTimeout,
+      rejectVersionedAppStatus: rejectVersionedAppStatus,
     );
     if (authKeyProvider != null) {
       client.authKeyProvider = authKeyProvider;
@@ -177,11 +214,18 @@ NetworkSessionServerpodClientFactory _trackingFactory(
 }
 
 final class _TrackingServerpodClient extends sp.Client {
-  _TrackingServerpodClient(super.host, {super.connectionTimeout});
+  _TrackingServerpodClient(
+    super.host, {
+    super.connectionTimeout,
+    this.rejectVersionedAppStatus = false,
+  });
+
+  final bool rejectVersionedAppStatus;
 
   var closeCalls = 0;
   final matchRequests = <({String method, sp.CreateMatchRequest request})>[];
   final joinRequests = <({String method, Map<String, dynamic> args})>[];
+  final appStatusRequests = <Map<String, dynamic>>[];
 
   @override
   Future<T> callServerEndpoint<T>(
@@ -194,6 +238,13 @@ final class _TrackingServerpodClient extends sp.Client {
       return 'Test Player' as T;
     }
     if (endpoint == 'appStatus' && method == 'versionStatus') {
+      appStatusRequests.add(Map.unmodifiable(args));
+      if (rejectVersionedAppStatus && args.containsKey('multiplayerVersion')) {
+        throw const sp.ServerpodClientException(
+          'Unknown parameter multiplayerVersion',
+          400,
+        );
+      }
       return 'supported' as T;
     }
     if (endpoint == 'multiplayer' &&

@@ -8,17 +8,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/map_boundary_source_guard.dart';
 import 'support/static_member_reference_guard.dart';
 
-part 'support/canonical_snapshot_conversion_guard.dart';
-
 const _canonicalPipelinePath =
     'packages/aonw_core/lib/game/application/turn/'
     'canonical_turn_pipeline.dart';
-const _saveSnapshotPath = 'lib/game/application/ports/save_snapshot.dart';
-const _localCallSite =
-    'lib/game/application/services/local_command_resolver.dart';
-const _losslessSnapshotCodecPath =
-    'server/lib/src/multiplayer/lossless_match_snapshot_codec.dart';
-const _performanceCallSite = 'tool/performance/turn_finalization_workload.dart';
 const _workedHexKernelPath =
     'packages/aonw_core/lib/game/domain/city/'
     'toggle_worked_hex_resolver.dart';
@@ -132,56 +124,6 @@ void f(WorkedHexAdapter adapter) {
         ),
         sources.keys.toSet(),
       );
-    });
-
-    test(
-      'repo-wide snapshot conversion calls match the transition ratchet',
-      () {
-        final sources = productionDartSources();
-        final counts = _snapshotConversionCounts(sources);
-        expect(counts, _expectedSnapshotConversionCalls);
-        expect(_adapterTypeReferencePaths(sources), _expectedAdapterTypePaths);
-        expect(
-          counts[_canonicalPipelinePath] ?? _zeroConversions,
-          _zeroConversions,
-        );
-        expect(
-          _adapterTypeReferencePaths(sources),
-          isNot(contains(_canonicalPipelinePath)),
-        );
-        expect(counts[_localCallSite] ?? _zeroConversions, _zeroConversions);
-        expect(
-          _adapterTypeReferencePaths(sources),
-          isNot(contains(_localCallSite)),
-        );
-        expect(
-          counts.values.fold(
-            _zeroConversions,
-            (total, current) => (
-              toCanonical: total.toCanonical + current.toCanonical,
-              toLegacy: total.toLegacy + current.toLegacy,
-            ),
-          ),
-          (toCanonical: 3, toLegacy: 3),
-        );
-      },
-    );
-
-    test('conversion ratchet catches a helper outside the allowlist', () {
-      const sources = {
-        'helper.dart':
-            'final class Helper { '
-            'const Helper(this.adapter); '
-            'final LegacyGameSnapshotAdapter adapter; '
-            'Object convert(Object save, Object state) => '
-            'adapter.toCanonical(save: save, state: state); '
-            '}',
-      };
-      final counts = _snapshotConversionCounts(sources);
-
-      expect(counts.keys, {'helper.dart'});
-      expect(counts['helper.dart']?.toCanonical, 1);
-      expect(_adapterTypeReferencePaths(sources), {'helper.dart'});
     });
 
     test('canonical request and result do not expose legacy state types', () {

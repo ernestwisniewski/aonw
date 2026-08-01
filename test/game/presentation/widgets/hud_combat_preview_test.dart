@@ -174,12 +174,12 @@ void main() {
         row: 0,
       );
       final state = _state(attacker: attacker, enemies: [defender]);
-      final map = _map(3, 3);
-      final defenderTileIndex = map.tiles.indexWhere(
-        (tile) => tile.col == defender.col && tile.row == defender.row,
-      );
-      map.tiles[defenderTileIndex] = map.tiles[defenderTileIndex].copyWith(
-        terrains: const [TerrainType.forest],
+      final map = _map(
+        3,
+        3,
+        terrainOverrides: {
+          (col: defender.col, row: defender.row): const [TerrainType.forest],
+        },
       );
 
       final preview = HudCombatPreviewFactory.from(
@@ -436,7 +436,11 @@ FogOfWarState _visible(String playerId, Iterable<HexCoordinate> hexes) {
   );
 }
 
-WorldMap _map(int cols, int rows) => WorldMap(
+WorldMap _map(
+  int cols,
+  int rows, {
+  Map<({int col, int row}), List<TerrainType>> terrainOverrides = const {},
+}) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
@@ -446,7 +450,9 @@ WorldMap _map(int cols, int rows) => WorldMap(
           col: col,
           row: row,
           height: 0,
-          terrains: const [TerrainType.grassland],
+          terrains:
+              terrainOverrides[(col: col, row: row)] ??
+              const [TerrainType.grassland],
           resources: const [],
         ),
   ],

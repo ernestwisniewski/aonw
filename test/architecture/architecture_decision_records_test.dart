@@ -169,7 +169,7 @@ void main() {
           protocol,
           contains('(adr/0004-versioned-multiplayer-protocol.md)'),
         );
-        expect(protocol, contains('currently implemented version-3 behavior'));
+        expect(protocol, contains('active functional revision'));
         expect(deployment, contains('(adr/0005-immutable-deployment.md)'));
         expect(deployment, contains('currently implemented workflow'));
       },

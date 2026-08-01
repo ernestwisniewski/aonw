@@ -70,7 +70,7 @@ const _autoExploreExpectedImports = <String, Set<String>>{
         'unit_movement_visibility_rules.dart',
     'package:aonw_core/game/domain/state/canonical_game_snapshot.dart',
     'package:aonw_core/game/domain/state/'
-        'persisted_interaction_unit_rules.dart',
+        'domain_action_unit_rules.dart',
     'package:aonw_core/game/domain/unit/game_unit.dart',
     'package:aonw_core/map/domain/map_read_view.dart',
     'package:aonw_core/map/domain/map_tile_view.dart',

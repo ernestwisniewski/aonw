@@ -75,7 +75,8 @@ void main() {
       final simulated = _simulate(state, command);
 
       expect(engine.accepted, isTrue);
-      expect(engine.state, same(state));
+      expect(engine.state.units, same(state.units));
+      expect(engine.state.cities, same(state.cities));
       expect(_unitById(simulated.ownUnits, 'warrior_1'), unit);
     });
   });

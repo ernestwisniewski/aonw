@@ -172,7 +172,7 @@ void _registerWorkerReplayTests() {
   );
 
   test(
-    'keeps a preexisting city draft outside authoritative worker replay',
+    'does not replay a client-only city draft as authoritative state',
     () async {
       final harness = _WorkerReplayHarness.create(
         _workerReplayState(
@@ -202,7 +202,7 @@ void _registerWorkerReplayTests() {
       expect(harness.state.units.single.workerJob, isNotNull);
       final replayedStates = await harness.replayedStates();
       expect(replayedStates, hasLength(1));
-      expect(replayedStates.single.cityFoundingDraft, isNotNull);
+      expect(replayedStates.single.cityFoundingDraft, isNull);
       expect(replayedStates.single.units.single.workerJob, isNotNull);
       _expectSameAuthoritativeState(replayedStates.single, harness.state);
     },

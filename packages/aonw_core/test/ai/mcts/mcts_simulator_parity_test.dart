@@ -964,7 +964,7 @@ SimulationGameEngineResult _advancePersistentEconomy(DomainState state) {
   final snapshot = MctsSimulatorParityFixtures.engineSnapshot(state);
   return const SimulationGameEngineAdapter().finalizeSimultaneousTurn(
     snapshot: snapshot,
-    state: state,
+    state: snapshot.domain,
     playerIds: snapshot.domain.participants.map((player) => player.id),
     commandTick: 1,
     mapView: _mapData(),

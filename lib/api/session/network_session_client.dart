@@ -11,6 +11,8 @@ import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as sp_auth;
 import 'package:url_launcher/url_launcher.dart';
 
+part 'network_session_client_version_status.dart';
+
 class NetworkAuthResult {
   final String userId;
   final AuthToken token;
@@ -127,19 +129,6 @@ class NetworkSessionClient {
   }) : _clientFactory = clientFactory ?? createServerpodClient;
 
   bool get isClosed => _closed;
-
-  Future<String> versionStatus({
-    required String platform,
-    required int buildNumber,
-  }) {
-    return _withOwnedClient(
-      connectionTimeout: const Duration(seconds: 3),
-      run: (client) => client.appStatus.versionStatus(
-        platform: platform,
-        buildNumber: buildNumber,
-      ),
-    );
-  }
 
   Future<NetworkAuthResult> login({
     required String email,

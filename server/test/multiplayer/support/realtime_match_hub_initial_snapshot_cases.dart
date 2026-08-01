@@ -61,7 +61,7 @@ void _registerRealtimeMatchHubInitialSnapshotTests() {
       playerIds,
     );
     expect(gameState.fogOfWar.playerIds, containsAll(save.playerStates.keys));
-    expect(rawRuntime, isNot(contains('turnStartedAt')));
+    expect(rawRuntime['turnStartedAt'], startedAt.toUtc().toIso8601String());
     expect(canonical.domain.turnStartedAt, startedAt);
     expect(
       canonical.domain.participants.map((player) => player.id),

@@ -6,7 +6,7 @@ void main() {
     test('copyWith can clear nullable planning metadata', () {
       final context = AiContext(
         ruleset: GameRuleset.defaults,
-        mapData: WorldMap(cols: 0, rows: 0, tiles: []),
+        mapData: WorldMap(cols: 1, rows: 1, tiles: []),
         turn: 3,
         rng: AiRng(42),
         strategicPlan: const StrategicPlan(

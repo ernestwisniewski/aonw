@@ -4,47 +4,26 @@ import 'package:test/test.dart';
 
 void main() {
   group('ParticipantResignationTransition', () {
-    test('updates lifecycle in the same canonical domain state', () {
-      final domain = _domain(alivePlayerIds: const {'p2', 'p3'});
+    test('returns running when multiple non-resigned humans remain', () {
+      final domain = _domain(
+        alivePlayerIds: const {'p2', 'p3'},
+        kickedPlayerIds: const {'p1'},
+      );
 
-      final result = ParticipantResignationTransition.apply(
+      final result = ParticipantResignationTransition.resolve(
         domain: domain,
-        actorPlayerId: 'p1',
         orderedHumanPlayerIds: const ['p1', 'p2', 'p3'],
       );
 
       expect(result.disposition, ParticipantResignationDisposition.running);
-      expect(result.domain.units, same(domain.units));
-      expect(result.domain.turn, domain.turn);
-      expect(
-        result.domain.turnStatesByPlayerId['p1'],
-        PlayerTurnState.finished,
-      );
-      expect(result.domain.submittedPlayerIds, const {'p2'});
-      expect(result.domain.afkPlayerIds, contains('p1'));
-      expect(result.domain.kickedPlayerIds, contains('p1'));
-    });
-
-    test('returns the same state when the actor is already kicked', () {
-      final domain = _domain(
-        alivePlayerIds: const {'p2'},
-        kickedPlayerIds: const {'p1'},
-      );
-
-      final result = ParticipantResignationTransition.apply(
-        domain: domain,
-        actorPlayerId: 'p1',
-        orderedHumanPlayerIds: _throwingRoster(),
-      );
-
-      expect(result.disposition, ParticipantResignationDisposition.unchanged);
-      expect(result.domain, same(domain));
     });
 
     test('finishes with the only living human in the supplied roster', () {
-      final result = ParticipantResignationTransition.apply(
-        domain: _domain(alivePlayerIds: const {'p2', 'domain-phantom'}),
-        actorPlayerId: 'p1',
+      final result = ParticipantResignationTransition.resolve(
+        domain: _domain(
+          alivePlayerIds: const {'p2', 'domain-phantom'},
+          kickedPlayerIds: const {'p1'},
+        ),
         orderedHumanPlayerIds: const ['p1', 'p2', 'p3'],
       );
 
@@ -53,17 +32,18 @@ void main() {
     });
 
     test('distinguishes all resigned from no living humans', () {
-      final noLivingHumans = ParticipantResignationTransition.apply(
-        domain: _domain(alivePlayerIds: const {}),
-        actorPlayerId: 'p1',
-        orderedHumanPlayerIds: const ['p1', 'p2'],
-      );
-      final allResigned = ParticipantResignationTransition.apply(
+      final noLivingHumans = ParticipantResignationTransition.resolve(
         domain: _domain(
           alivePlayerIds: const {},
-          kickedPlayerIds: const {'p2'},
+          kickedPlayerIds: const {'p1'},
         ),
-        actorPlayerId: 'p1',
+        orderedHumanPlayerIds: const ['p1', 'p2'],
+      );
+      final allResigned = ParticipantResignationTransition.resolve(
+        domain: _domain(
+          alivePlayerIds: const {},
+          kickedPlayerIds: const {'p1', 'p2'},
+        ),
         orderedHumanPlayerIds: const ['p1', 'p2'],
       );
 
@@ -74,17 +54,6 @@ void main() {
       expect(
         allResigned.abandonmentReason,
         ParticipantResignationAbandonmentReason.allPlayersResigned,
-      );
-    });
-
-    test('rejects an empty actor identifier', () {
-      expect(
-        () => ParticipantResignationTransition.apply(
-          domain: _domain(alivePlayerIds: const {'p2'}),
-          actorPlayerId: '',
-          orderedHumanPlayerIds: const ['p1', 'p2'],
-        ),
-        throwsArgumentError,
       );
     });
   });
@@ -118,8 +87,4 @@ DomainState _domain({
         GameUnit.startingWarrior(ownerPlayerId: playerId, col: index, row: 0),
     ],
   );
-}
-
-Iterable<String> _throwingRoster() sync* {
-  throw StateError('The roster must not be read for an unchanged result.');
 }
