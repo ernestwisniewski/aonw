@@ -47,6 +47,8 @@ void main() {
       final text = effects.whereType<ShowFloatingTextEffect>().single;
       expect((text.text, text.col, text.row), ('Excavate', 3, 4));
       expect(text.presentation, FloatingTextPresentation.bubble);
+      expect(text.anchor, isA<UnitFloatingTextAnchor>());
+      expect((text.anchor as UnitFloatingTextAnchor).unitId, scout.id);
     });
 
     test('projects carried and stored transitions', () {
@@ -75,10 +77,12 @@ void main() {
           ],
         ),
       );
-      expect(
-        carriedEffects.whereType<ShowFloatingTextEffect>().single.text,
-        'Artifact carried',
-      );
+      final carriedText = carriedEffects
+          .whereType<ShowFloatingTextEffect>()
+          .single;
+      expect(carriedText.text, 'Artifact carried');
+      expect(carriedText.anchor, isA<UnitFloatingTextAnchor>());
+      expect((carriedText.anchor as UnitFloatingTextAnchor).unitId, scout.id);
 
       final storedEffects = ReplayRendererEffectPlanner.effectsForStep(
         interactionEffects: const [],
@@ -102,6 +106,8 @@ void main() {
         (storedText.text, storedText.col, storedText.row),
         ('Artifact stored', 8, 3),
       );
+      expect(storedText.anchor, isA<CityFloatingTextAnchor>());
+      expect((storedText.anchor as CityFloatingTextAnchor).cityId, city.id);
     });
 
     test('uses perspective fog for artifact cue visibility', () {

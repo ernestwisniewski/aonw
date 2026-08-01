@@ -266,7 +266,7 @@ class GameRenderer extends HexWorld
       reduceMotion: _reduceMotion,
     );
     _cloudDriftLayer = CloudDriftLayer(reduceMotion: _reduceMotion);
-    _floatingTextLayer = FloatingTextLayer(reduceMotion: _reduceMotion);
+    _floatingTextLayer = _createFloatingTextLayer();
     _combatHexAlertLayer = CombatHexAlertLayer();
     _threatOverlayLayer = ThreatOverlayLayer();
     _hoverIntentMarkerLayer = HoverIntentMarkerLayer();

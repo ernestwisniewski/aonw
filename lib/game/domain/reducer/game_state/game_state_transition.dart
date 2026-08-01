@@ -104,6 +104,32 @@ class SpawnParticleBurstEffect extends RendererEffect {
 
 enum FloatingTextPresentation { plain, bubble }
 
+sealed class FloatingTextAnchor {
+  const FloatingTextAnchor();
+
+  const factory FloatingTextAnchor.tile() = TileFloatingTextAnchor;
+
+  const factory FloatingTextAnchor.unit(String unitId) = UnitFloatingTextAnchor;
+
+  const factory FloatingTextAnchor.city(String cityId) = CityFloatingTextAnchor;
+}
+
+final class TileFloatingTextAnchor extends FloatingTextAnchor {
+  const TileFloatingTextAnchor();
+}
+
+final class UnitFloatingTextAnchor extends FloatingTextAnchor {
+  final String unitId;
+
+  const UnitFloatingTextAnchor(this.unitId) : assert(unitId != '');
+}
+
+final class CityFloatingTextAnchor extends FloatingTextAnchor {
+  final String cityId;
+
+  const CityFloatingTextAnchor(this.cityId) : assert(cityId != '');
+}
+
 class ShowFloatingTextEffect extends RendererEffect {
   final String text;
   final int col;
@@ -111,6 +137,7 @@ class ShowFloatingTextEffect extends RendererEffect {
   final int colorValue;
   final Duration delay;
   final FloatingTextPresentation presentation;
+  final FloatingTextAnchor anchor;
 
   const ShowFloatingTextEffect({
     required this.text,
@@ -119,10 +146,12 @@ class ShowFloatingTextEffect extends RendererEffect {
     required this.colorValue,
     this.delay = Duration.zero,
     this.presentation = FloatingTextPresentation.plain,
+    this.anchor = const FloatingTextAnchor.tile(),
   });
 }
 
 class ShowCityProductionBubbleEffect extends RendererEffect {
+  final String cityId;
   final CityProductionTarget target;
   final int col;
   final int row;
@@ -130,12 +159,22 @@ class ShowCityProductionBubbleEffect extends RendererEffect {
   final Duration delay;
 
   const ShowCityProductionBubbleEffect({
+    required this.cityId,
     required this.target,
     required this.col,
     required this.row,
     required this.turnsRemaining,
     this.delay = Duration.zero,
   });
+
+  ShowCityProductionBubbleEffect.forCity({
+    required GameCity city,
+    required this.target,
+    required this.turnsRemaining,
+    this.delay = Duration.zero,
+  }) : cityId = city.id,
+       col = city.center.col,
+       row = city.center.row;
 }
 
 enum CombatHexAlertKind { attacked, attacker, fortificationThreat }

@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
@@ -17,8 +18,12 @@ import 'package:flutter/material.dart';
 
 class FloatingTextLayer extends Component with LayerAttachment {
   final DateTime Function() _now;
-  final Map<({int col, int row}), List<_FloatingTextStackEntry>> _recentSpawns =
-      {};
+  final Vector2? Function(String unitId)? _unitPositionFor;
+  final Map<
+    ({int col, int row, String anchorKey}),
+    List<_FloatingTextStackEntry>
+  >
+  _recentSpawns = {};
   final Set<FloatingTextComponent> _components = {};
   bool reduceMotion;
   bool visible;
@@ -27,7 +32,8 @@ class FloatingTextLayer extends Component with LayerAttachment {
   static const double _stackOffsetY = 12;
   static const double _plainRise = -34;
   static const double _bubbleRise = -24;
-  static const double _cityLabelBubbleOffsetY = -38;
+  static const double _unitBubbleOffsetY = -82;
+  static const double _cityBubbleOffsetY = -64;
   static const double _bubbleMoveDuration = 3.05;
   static const double _bubbleFadeDuration = 1.45;
   static const double _bubbleFadeDelay = 2.05;
@@ -35,26 +41,23 @@ class FloatingTextLayer extends Component with LayerAttachment {
 
   FloatingTextLayer({
     DateTime Function()? now,
+    Vector2? Function(String unitId)? unitPositionFor,
     this.reduceMotion = false,
     this.visible = true,
-  }) : _now = now ?? DateTime.now;
+  }) : _now = now ?? DateTime.now,
+       _unitPositionFor = unitPositionFor;
 
   FloatingTextComponent spawn({
     required Component parent,
     required ShowFloatingTextEffect effect,
   }) {
     _pruneDetachedComponents();
-    final stackSlot = _reserveStackSlot(effect.col, effect.row);
+    final stackSlot = _reserveStackSlot(effect);
     final component = FloatingTextComponent(
       text: effect.text,
       color: Color(effect.colorValue),
       position:
-          _worldPositionFor(
-            effect.col,
-            effect.row,
-            presentation: effect.presentation,
-          ) +
-          Vector2(0, stackSlot * _stackOffsetY),
+          _worldPositionFor(effect) + Vector2(0, stackSlot * _stackOffsetY),
       priority: _priorityFor(effect.col, effect.row),
       presentation: effect.presentation,
     );
@@ -126,15 +129,25 @@ class FloatingTextLayer extends Component with LayerAttachment {
     });
   }
 
-  Vector2 _worldPositionFor(
-    int col,
-    int row, {
-    required FloatingTextPresentation presentation,
-  }) {
-    if (presentation == FloatingTextPresentation.bubble) {
-      return CityMarkerLayer.worldPositionFor(col, row) +
-          Vector2(0, _cityLabelBubbleOffsetY);
+  Vector2 _worldPositionFor(ShowFloatingTextEffect effect) {
+    switch (effect.anchor) {
+      case UnitFloatingTextAnchor(:final unitId):
+        final position =
+            _unitPositionFor?.call(unitId) ??
+            UnitMarkerLayer.worldPositionFor(effect.col, effect.row);
+        return position + Vector2(0, _unitBubbleOffsetY);
+      case CityFloatingTextAnchor():
+        final position = CityMarkerLayer.worldPositionFor(
+          effect.col,
+          effect.row,
+        );
+        return position + Vector2(0, _cityBubbleOffsetY);
+      case TileFloatingTextAnchor():
+        return _tileWorldPosition(effect.col, effect.row);
     }
+  }
+
+  Vector2 _tileWorldPosition(int col, int row) {
     final tileCenter = HexGeometry.tilePosition(
       col: col,
       row: row,
@@ -147,11 +160,19 @@ class FloatingTextLayer extends Component with LayerAttachment {
     return MapPriority.perTile(MapPriority.floatingText, col: col, row: row);
   }
 
-  int _reserveStackSlot(int col, int row) {
+  int _reserveStackSlot(ShowFloatingTextEffect effect) {
     final now = _now();
     _pruneOldSpawns(now);
 
-    final key = (col: col, row: row);
+    final key = (
+      col: effect.col,
+      row: effect.row,
+      anchorKey: switch (effect.anchor) {
+        TileFloatingTextAnchor() => 'tile',
+        UnitFloatingTextAnchor(:final unitId) => 'unit:$unitId',
+        CityFloatingTextAnchor(:final cityId) => 'city:$cityId',
+      },
+    );
     final entries = _recentSpawns[key] ?? const <_FloatingTextStackEntry>[];
     final usedSlots = {for (final entry in entries) entry.slot};
     var slot = 0;

@@ -91,6 +91,7 @@ void main() {
       expect(floatingText.row, 5);
       expect(floatingText.delay, Duration.zero);
       expect(floatingText.presentation, FloatingTextPresentation.plain);
+      expect(floatingText.anchor, isA<TileFloatingTextAnchor>());
       const delayedFloatingText = ShowFloatingTextEffect(
         text: 'KO',
         col: 4,
@@ -101,6 +102,7 @@ void main() {
       expect(delayedFloatingText.delay, const Duration(milliseconds: 180));
 
       const productionBubble = ShowCityProductionBubbleEffect(
+        cityId: 'city_1',
         target: UnitProductionTarget(GameUnitType.worker),
         col: 2,
         row: 1,
@@ -108,6 +110,7 @@ void main() {
       );
       expect(productionBubble, isA<UiEffect>());
       expect(productionBubble, isA<RendererEffect>());
+      expect(productionBubble.cityId, 'city_1');
       expect(productionBubble.turnsRemaining, 3);
     });
 

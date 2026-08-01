@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/floating_text_layer.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
@@ -100,22 +101,72 @@ void main() {
       expect(component.children.whereType<RemoveEffect>(), hasLength(1));
     });
 
-    test('anchors city bubbles above the normal tile floating text origin', () {
+    test('anchors unit bubbles above the resolved unit asset', () {
       final parent = Component();
-      final plain = FloatingTextLayer().spawn(
-        parent: parent,
-        effect: _effect(text: '+1'),
+      final layer = FloatingTextLayer(
+        unitPositionFor: (unitId) {
+          expect(unitId, 'unit_1');
+          return Vector2(140, 220);
+        },
       );
-      final bubble = FloatingTextLayer().spawn(
+      final bubble = layer.spawn(
         parent: parent,
         effect: _effect(
-          text: 'Worker • 3 turns',
+          text: 'Artifact carried',
           presentation: FloatingTextPresentation.bubble,
+          anchor: const FloatingTextAnchor.unit('unit_1'),
         ),
       );
 
-      expect(bubble.position.x, closeTo(plain.position.x, 0.0001));
-      expect(bubble.position.y, lessThan(plain.position.y));
+      expect(bubble.position.x, closeTo(140, 0.0001));
+      expect(bubble.position.y, lessThan(220));
+    });
+
+    test('anchors city bubbles above the city asset', () {
+      final parent = Component();
+      final layer = FloatingTextLayer();
+      final bubble = layer.spawn(
+        parent: parent,
+        effect: _effect(
+          text: 'Artifact stored',
+          presentation: FloatingTextPresentation.bubble,
+          anchor: const FloatingTextAnchor.city('city_1'),
+        ),
+      );
+
+      final cityPosition = CityMarkerLayer.worldPositionFor(1, 1);
+      expect(bubble.position.x, closeTo(cityPosition.x, 0.0001));
+      expect(bubble.position.y, lessThan(cityPosition.y));
+    });
+
+    test('stacks independent entity anchors separately on the same hex', () {
+      final parent = Component();
+      final layer = FloatingTextLayer(
+        unitPositionFor: (_) => Vector2(100, 200),
+      );
+
+      final unitBubble = layer.spawn(
+        parent: parent,
+        effect: _effect(
+          text: 'Artifact carried',
+          presentation: FloatingTextPresentation.bubble,
+          anchor: const FloatingTextAnchor.unit('unit_1'),
+        ),
+      );
+      final cityBubble = layer.spawn(
+        parent: parent,
+        effect: _effect(
+          text: 'Artifact stored',
+          presentation: FloatingTextPresentation.bubble,
+          anchor: const FloatingTextAnchor.city('city_1'),
+        ),
+      );
+
+      expect(unitBubble.position.x, closeTo(100, 0.0001));
+      expect(
+        cityBubble.position.x,
+        closeTo(CityMarkerLayer.worldPositionFor(1, 1).x, 0.0001),
+      );
     });
 
     test('keeps text static when reduce motion is enabled', () async {
@@ -156,6 +207,7 @@ ShowFloatingTextEffect _effect({
   int col = 1,
   int row = 1,
   FloatingTextPresentation presentation = FloatingTextPresentation.plain,
+  FloatingTextAnchor anchor = const FloatingTextAnchor.tile(),
 }) {
   return ShowFloatingTextEffect(
     text: text,
@@ -163,5 +215,6 @@ ShowFloatingTextEffect _effect({
     row: row,
     colorValue: 0xFFFF5555,
     presentation: presentation,
+    anchor: anchor,
   );
 }

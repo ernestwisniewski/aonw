@@ -169,10 +169,9 @@ abstract final class TurnReducer {
       final queue = city.productionQueue;
       if (queue == null) continue;
       effects.add(
-        ShowCityProductionBubbleEffect(
+        ShowCityProductionBubbleEffect.forCity(
+          city: city,
           target: queue.target,
-          col: city.center.col,
-          row: city.center.row,
           turnsRemaining: _turnsRemainingForQueue(
             state,
             city,

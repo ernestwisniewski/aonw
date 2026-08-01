@@ -6,7 +6,6 @@ import 'package:aonw/game/domain/reducer/interaction/selection_reducer.dart';
 import 'package:aonw/game/domain/turn/phases/selection_refresh_phase.dart';
 import 'package:aonw/game/domain/turn/turn_context.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
-import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';

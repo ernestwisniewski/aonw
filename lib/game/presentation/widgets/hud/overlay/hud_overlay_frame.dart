@@ -585,22 +585,4 @@ class HudOverlayFrame {
     CityFoundingFailure.invalidControlledHexes =>
       l10n.selectionActionFoundCityInvalidControlledHexes,
   };
-
-  static bool _canStartMoveTargeting(GameUnit? unit) =>
-      unit != null && UnitManualMovementRules.canStartTargeting(unit);
-
-  static String? _moveTargetingBlockedReason(
-    GameUnit? unit,
-    AppLocalizations l10n,
-  ) {
-    if (unit == null) return null;
-    if (unit.queuedPath != null) {
-      return l10n.selectionActionCancelCurrentMoveFirst;
-    }
-    if (unit.isWorking) return l10n.selectionActionUnitWorking;
-    if (UnitManualMovementRules.availableMovementPoints(unit) <= 0) {
-      return l10n.selectionActionNoMovement;
-    }
-    return null;
-  }
 }

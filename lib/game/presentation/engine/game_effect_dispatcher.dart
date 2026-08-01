@@ -285,6 +285,7 @@ class GameEffectDispatcher {
       colorValue: 0xFFFFE5A3,
       delay: effect.delay,
       presentation: FloatingTextPresentation.bubble,
+      anchor: FloatingTextAnchor.city(effect.cityId),
     );
   }
 

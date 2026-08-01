@@ -35,6 +35,14 @@ abstract final class ArtifactEventRendererEffectMapper {
       ArtifactStoredEvent() =>
         l10n?.artifactGuidanceStoredTitle ?? 'Artifact stored',
     };
+    final anchor = switch (event) {
+      ArtifactExcavationStartedEvent(:final unitId) ||
+      ArtifactCarriedEvent(:final unitId) =>
+        unitId == null
+            ? const FloatingTextAnchor.tile()
+            : FloatingTextAnchor.unit(unitId),
+      ArtifactStoredEvent(:final cityId) => FloatingTextAnchor.city(cityId),
+    };
     return [
       SpawnParticleBurstEffect(
         kind: ParticleBurstKind.technologyResearched,
@@ -49,6 +57,7 @@ abstract final class ArtifactEventRendererEffectMapper {
         colorValue: _color,
         delay: _textDelay,
         presentation: FloatingTextPresentation.bubble,
+        anchor: anchor,
       ),
     ];
   }

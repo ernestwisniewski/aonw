@@ -310,7 +310,7 @@ abstract final class DomainEventPresentationProjector {
       AnimateUnitMoveEffect(:final unitId) => unitId,
       PlayCombatAnimationEffect(:final attackerUnitId, :final defenderUnitId) =>
         '$attackerUnitId>$defenderUnitId',
-      ShowCityProductionBubbleEffect(:final col, :final row) => '$col,$row',
+      ShowCityProductionBubbleEffect(:final cityId) => cityId,
       RendererEffect() => '${effect.runtimeType}',
     };
   }

@@ -650,18 +650,18 @@ void main() {
 
       await dispatcher.handleEffect(
         const ShowCityProductionBubbleEffect(
+          cityId: 'city_1',
           target: UnitProductionTarget(GameUnitType.worker),
           col: 1,
           row: 0,
           turnsRemaining: 3,
         ),
       );
-
       final effect = floatingTextLayer.lastEffect!;
       expect(effect.text, 'Worker • 3 turns');
-      expect(effect.col, 1);
-      expect(effect.row, 0);
+      expect((effect.col, effect.row), (1, 0));
       expect(effect.presentation, FloatingTextPresentation.bubble);
+      expect((effect.anchor as CityFloatingTextAnchor).cityId, 'city_1');
     });
   });
 }
