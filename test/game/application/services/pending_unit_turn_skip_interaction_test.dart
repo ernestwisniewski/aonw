@@ -230,7 +230,7 @@ void main() {
         (
           name: 'posture',
           unit: sourceUnit.copyWithPosture(UnitPosture.fortified),
-          keepsMoveMode: false,
+          keepsMoveMode: true,
         ),
       ];
 

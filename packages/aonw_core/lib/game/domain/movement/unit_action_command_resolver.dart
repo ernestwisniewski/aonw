@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/domain/artifact/world_artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
+import 'package:aonw_core/game/domain/movement/unit_manual_movement_rules.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/state/domain_action_unit_rules.dart';

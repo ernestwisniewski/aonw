@@ -325,39 +325,7 @@ List<Player> _participants(GameSave save, _DecodedState state) {
 }
 
 List<Player> _participantsWithoutSave(_DecodedState state) {
-  final playerIds = <String>{
-    ...state.playerColors.keys,
-    ...state.playerCountries.keys,
-    ...state.playerGold.keys,
-    ...state.playerWarWeariness.keys,
-    ...state.playerStabilityNet.keys,
-    ...state.fogOfWar.playerIds,
-    ...state.research.players.keys,
-    ...state.submittedPlayerIds,
-    ...state.timeoutStreaksByPlayerId.keys,
-    ...state.afkPlayerIds,
-    ...state.kickedPlayerIds,
-    ...state.wonderRegistry.completedBy.values,
-    ...state.dominationHoldTurnsByPlayerId.keys,
-    ...state.culturalVictoryHoldTurnsByPlayerId.keys,
-    for (final unit in state.units) unit.ownerPlayerId,
-    for (final city in state.cities) city.ownerPlayerId,
-    for (final city in state.cities) ?city.foundingOwnerPlayerId,
-    for (final relation in state.diplomacy.relations.values) ...[
-      relation.playerAId,
-      relation.playerBId,
-    ],
-    for (final attack in state.intendedAttacks) attack.declaringPlayerId,
-    for (final hold in state.mapObjectiveHoldStatesByObjectiveId.values)
-      hold.playerId,
-    for (final trade in state.resourceTradeAgreements) ...[
-      trade.exporterPlayerId,
-      trade.importerPlayerId,
-    ],
-    ?state.cityFoundingDraft?.ownerPlayerId,
-    ?state.pendingAction?.ownerPlayerId,
-  }..removeWhere((playerId) => playerId.isEmpty);
-  final ordered = playerIds.toList()..sort();
+  final ordered = _statePlayerIds(state).toList()..sort();
   return [
     for (var index = 0; index < ordered.length; index++)
       Player(
@@ -372,8 +340,12 @@ List<Player> _participantsWithoutSave(_DecodedState state) {
 }
 
 Set<String> _knownPlayerIds(GameSave save, _DecodedState state) {
+  return <String>{...save.playerStates.keys, ..._statePlayerIds(state)}
+    ..removeWhere((playerId) => playerId.isEmpty);
+}
+
+Set<String> _statePlayerIds(_DecodedState state) {
   return <String>{
-    ...save.playerStates.keys,
     ...state.playerColors.keys,
     ...state.playerCountries.keys,
     ...state.playerGold.keys,

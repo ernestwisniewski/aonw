@@ -20,6 +20,7 @@ export 'movement/queued_move_path.dart';
 export 'movement/scout_auto_explore_planner.dart';
 export 'movement/scout_auto_explore_target.dart';
 export 'movement/unit_action_command_resolver.dart';
+export 'movement/unit_manual_movement_rules.dart';
 export 'movement/unit_movement_balance.dart';
 export 'movement/unit_movement_cost_rules.dart';
 export 'movement/unit_movement_feasibility.dart';

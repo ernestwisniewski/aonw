@@ -6,11 +6,18 @@ import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 /// authoritative command execution.
 abstract final class UnitManualMovementRules {
   static bool canStartTargeting(GameUnit unit) {
+    return canRetainTargeting(unit) && availableMovementPoints(unit) > 0;
+  }
+
+  /// Whether an existing targeting plan remains meaningful for this unit.
+  ///
+  /// An exhausted unit may retain a next-turn preview, but cannot start a new
+  /// targeting session until movement points are restored.
+  static bool canRetainTargeting(GameUnit unit) {
     return !unit.isWorking &&
         unit.type != GameUnitType.merchant &&
         unit.queuedPath == null &&
-        !unit.isAutoExploring &&
-        availableMovementPoints(unit) > 0;
+        !unit.isAutoExploring;
   }
 
   static int availableMovementPoints(GameUnit unit) {

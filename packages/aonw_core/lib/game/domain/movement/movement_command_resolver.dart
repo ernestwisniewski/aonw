@@ -8,9 +8,9 @@ import 'package:aonw_core/game/domain/movement/movement_command_result.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_state.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_visibility_mode.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_feasibility.dart';
+import 'package:aonw_core/game/domain/movement/unit_manual_movement_rules.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
-import 'package:aonw_core/game/domain/unit/unit_manual_movement_rules.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 

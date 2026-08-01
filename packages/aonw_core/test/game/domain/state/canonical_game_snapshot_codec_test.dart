@@ -68,4 +68,21 @@ void main() {
       throwsUnsupportedError,
     );
   });
+
+  test('domain-only decoding infers a stable participant roster', () {
+    final state = CanonicalGameSnapshotCodec.decodeDomainState(const {
+      'playerColors': {'player_2': 0xFF123456},
+      'playerCountries': {'player_1': 'poland'},
+      'playerGold': {'player_3': 7},
+    });
+
+    expect(state.participants.map((player) => player.id), [
+      'player_1',
+      'player_2',
+      'player_3',
+    ]);
+    expect(state.participants[0].country, PlayerCountry.poland);
+    expect(state.participants[1].colorValue, 0xFF123456);
+    expect(state.participants[2].name, 'player_3');
+  });
 }

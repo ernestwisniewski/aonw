@@ -10,6 +10,7 @@ void main() {
       ).copyWith(movementPoints: 0, posture: UnitPosture.fortified);
 
       expect(UnitManualMovementRules.canStartTargeting(fortified), isTrue);
+      expect(UnitManualMovementRules.canRetainTargeting(fortified), isTrue);
       expect(fortified.movementPoints, 0);
       expect(fortified.posture, UnitPosture.fortified);
 
@@ -29,6 +30,7 @@ void main() {
     ).copyWith(movementPoints: 0);
 
     expect(UnitManualMovementRules.canStartTargeting(exhausted), isFalse);
+    expect(UnitManualMovementRules.canRetainTargeting(exhausted), isTrue);
     expect(
       UnitManualMovementRules.prepareForCommand(exhausted),
       same(exhausted),

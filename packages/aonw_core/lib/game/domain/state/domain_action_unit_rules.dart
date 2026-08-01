@@ -7,8 +7,7 @@ abstract final class DomainActionUnitRules {
     String unitId,
   ) {
     final clearPendingAction = actions.pendingAction?.ownsUnit(unitId) ?? false;
-    final clearCityFoundingDraft =
-        actions.cityFoundingDraft?.unitId == unitId;
+    final clearCityFoundingDraft = actions.cityFoundingDraft?.unitId == unitId;
     if (!clearPendingAction && !clearCityFoundingDraft) return actions;
 
     if (clearPendingAction && clearCityFoundingDraft) {

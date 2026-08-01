@@ -170,7 +170,7 @@ abstract final class MultiplayerInteractionReconciler {
   }
 
   static bool _canKeepMovePreview(GameUnit? unit) {
-    return unit != null && UnitManualMovementRules.canStartTargeting(unit);
+    return unit != null && UnitManualMovementRules.canRetainTargeting(unit);
   }
 
   static bool _pathfindingInputsStayedValid(

@@ -109,13 +109,13 @@ void main() {
   });
 
   test('turn skip expires when the selected unit cannot enter move mode', () {
-    final fortified = _unit().copyWithPosture(UnitPosture.fortified);
+    final merchant = _unit(type: GameUnitType.merchant);
     final state = GameClientState(
       activePlayerId: 'player_1',
-      units: [fortified],
+      units: [merchant],
       interaction: InteractionState(
-        selection: GameSelection.unit(fortified),
-        movePreview: _movePreview(fortified.id),
+        selection: GameSelection.unit(merchant),
+        movePreview: _movePreview(merchant.id),
         pendingAction: _turnSkip(),
         moveCommandActive: true,
       ),
@@ -233,12 +233,13 @@ GameUnit _unit({
   String id = 'unit_1',
   String ownerPlayerId = 'player_1',
   int col = 0,
+  GameUnitType type = GameUnitType.warrior,
 }) {
   return GameUnit(
     id: id,
     ownerPlayerId: ownerPlayerId,
-    type: GameUnitType.warrior,
-    name: GameUnitType.warrior.defaultNameToken,
+    type: type,
+    name: type.defaultNameToken,
     col: col,
     row: 0,
     movementPoints: 0,

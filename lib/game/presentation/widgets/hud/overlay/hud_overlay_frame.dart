@@ -34,6 +34,7 @@ import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';

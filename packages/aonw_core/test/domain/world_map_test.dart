@@ -35,6 +35,47 @@ void main() {
       expect(map.tileAtHex(const HexCoord(col: 1, row: 0)), isNull);
     });
 
+    test(
+      'copyWith preserves defaults and supports explicit metadata changes',
+      () {
+        final original = WorldMap(
+          cols: 1,
+          rows: 1,
+          mapName: 'original',
+          defaultZoom: 1.25,
+          tiles: [_tile(0, 0)],
+          objectives: [_objective()],
+        );
+
+        final unchanged = original.copyWith();
+        final updated = original.copyWith(
+          cols: 2,
+          rows: 2,
+          tiles: [_tile(1, 1)],
+          objectives: const [],
+          mapName: null,
+          defaultZoom: 2,
+        );
+
+        expect(unchanged.cols, original.cols);
+        expect(unchanged.rows, original.rows);
+        expect(
+          unchanged.tiles.map((tile) => tile.coordinate),
+          original.tiles.map((tile) => tile.coordinate),
+        );
+        expect(unchanged.objectives, original.objectives);
+        expect(unchanged.mapName, original.mapName);
+        expect(unchanged.defaultZoom, original.defaultZoom);
+        expect(updated.cols, 2);
+        expect(updated.rows, 2);
+        expect(updated.tiles.single.coordinate, const HexCoord(col: 1, row: 1));
+        expect(updated.objectives, isEmpty);
+        expect(updated.mapName, isNull);
+        expect(updated.defaultZoom, 2);
+        expect(original.mapName, 'original');
+      },
+    );
+
     test('defensively freezes every exposed collection', () {
       final terrains = <TerrainType>[TerrainType.forest];
       final resources = <ResourceType>[ResourceType.deer];

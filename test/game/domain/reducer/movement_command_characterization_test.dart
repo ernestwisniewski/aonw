@@ -217,7 +217,7 @@ void main() {
   });
 
   group('local canonical movement boundary', () {
-    test('fortified zero-MP unit is rejected atomically', () {
+    test('fortified zero-MP unit wakes and moves atomically', () {
       final mover = _mover(movementPoints: 0, posture: UnitPosture.fortified);
       final state = _state(mover);
       final result = resolveMovementCommandForTest(
@@ -226,9 +226,17 @@ void main() {
         _map(cols: 3),
       );
 
-      expect(result.state, same(state));
-      expect(result.events, isEmpty);
-      expect(result.uiEffects, isEmpty);
+      final moved = result.state.units.single;
+      expect((moved.col, moved.row), (1, 0));
+      expect(moved.posture, UnitPosture.active);
+      expect(
+        moved.movementPoints,
+        UnitMovementBalance.maxMovementPointsForType(moved.type) - 1,
+      );
+      expect(result.events, hasLength(1));
+      expect(result.events.single, isA<UnitMovedEvent>());
+      expect(result.uiEffects.whereType<AnimateUnitMoveEffect>(), hasLength(1));
+      expect(result.state.selection?.unit, same(moved));
     });
 
     test('invalid origin is rejected atomically', () {

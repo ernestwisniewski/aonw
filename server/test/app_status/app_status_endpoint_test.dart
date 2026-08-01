@@ -1,5 +1,6 @@
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/app_status/app_status_endpoint.dart';
+import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -42,4 +43,23 @@ void main() {
       'soon',
     );
   });
+
+  test('endpoint delegates the request to the version policy', () async {
+    final endpoint = AppStatusEndpoint();
+
+    expect(
+      await endpoint.versionStatus(
+        _UnusedSession(),
+        platform: 'test',
+        buildNumber: 0,
+        multiplayerVersion: kCurrentMultiplayerVersion,
+      ),
+      'current',
+    );
+  });
+}
+
+final class _UnusedSession implements Session {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

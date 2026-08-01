@@ -22,6 +22,7 @@ const movementKernelImportGraphPaths = {
   '${movementLibraryPath}movement_cost.dart',
   '${movementLibraryPath}movement_hidden_obstacle_rules.dart',
   '${movementLibraryPath}queued_move_path.dart',
+  '${movementLibraryPath}unit_manual_movement_rules.dart',
   '${movementLibraryPath}unit_movement_balance.dart',
   '${movementLibraryPath}unit_movement_cost_rules.dart',
   '${movementLibraryPath}unit_movement_feasibility.dart',
