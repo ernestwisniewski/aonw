@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.1.9 - 2026-08-01
+
 - Completed the canonical state and world-map migration so gameplay, AI,
   multiplayer, replay, persistence, and rendering share one immutable map and
   one authoritative domain state without transitional command or map models.
