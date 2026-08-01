@@ -11,7 +11,6 @@ void main() {
     final _DomainCommandDecoder decoder = codec.fromWire;
 
     expect(encoder, isA<_DomainCommandEncoder>());
-    expect(encoder, isNot(isA<_GameCommandEncoder>()));
     expect(decoder, isA<_DomainCommandDecoder>());
   });
 
@@ -21,7 +20,6 @@ void main() {
     final _DomainEventCommandDecoder decoder = codec.commandFromWire;
 
     expect(encoder, isA<_DomainEventEncoder>());
-    expect(encoder, isNot(isA<_GameEventEncoder>()));
     expect(decoder, isA<_DomainEventCommandDecoder>());
   });
 }
@@ -33,15 +31,6 @@ typedef _DomainCommandEncoder =
       int? turn,
       required String actorPlayerId,
       required DomainCommand command,
-    });
-
-typedef _GameCommandEncoder =
-    WireCommand Function({
-      required String matchId,
-      required int tick,
-      int? turn,
-      required String actorPlayerId,
-      required GameCommand command,
     });
 
 typedef _DomainCommandDecoder = DomainCommand Function(WireCommand wire);
@@ -56,19 +45,6 @@ typedef _DomainEventEncoder =
       int? tick,
       int? turn,
       DomainCommand? command,
-      Iterable<WireMovementExecution> movementExecutions,
-    });
-
-typedef _GameEventEncoder =
-    WireEvent Function({
-      required String matchId,
-      required int offset,
-      required DateTime timestamp,
-      required List<GameEvent> events,
-      String? actorPlayerId,
-      int? tick,
-      int? turn,
-      GameCommand? command,
       Iterable<WireMovementExecution> movementExecutions,
     });
 

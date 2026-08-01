@@ -7,7 +7,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 class HudMapFocusTarget {
-  final GameCommand selectCommand;
+  final GameIntent selectCommand;
   final int col;
   final int row;
 

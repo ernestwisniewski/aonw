@@ -11,11 +11,11 @@ final class _EconomySimulationCommandApplier {
     required int turn,
     required int tick,
     required PersistentGameState state,
-    required GameCommand command,
+    required DomainCommand command,
     required String actorPlayerId,
     required GameRuleset ruleset,
   }) {
-    if (command is DomainCommand && GameEngine.commandFamily(command) != null) {
+    if (GameEngine.commandFamily(command) != null) {
       return _applyEngineCommand(
         tick: tick,
         state: state,

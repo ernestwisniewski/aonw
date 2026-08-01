@@ -1,7 +1,7 @@
 part of 'reducer_parity_accepted_semantics.dart';
 
 String? validateAcceptedUnitActionCommand({
-  required GameCommand command,
+  required DomainCommand command,
   required PersistentGameState before,
   required PersistentGameState after,
   required List<GameEvent> events,

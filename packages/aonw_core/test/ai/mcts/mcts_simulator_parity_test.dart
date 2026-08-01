@@ -972,7 +972,7 @@ SimulationGameEngineResult _advancePersistentEconomy(
 
 SimulatedState _simulate(
   PersistentGameState state,
-  GameCommand command, {
+  DomainCommand command, {
   MapData? mapData,
 }) {
   final actualMapData = mapData ?? _mapData();

@@ -578,7 +578,7 @@ WHERE "matchId" = @matchId
             tick: 1,
             turn: 1,
             actorPlayerId: ownerPlayer.id,
-            command: GameCommandSerializer.toJson(
+            command: DomainCommandCodec.toJson(
               SubmitTurnCommand(ownerPlayer.id),
             ),
           ),
@@ -648,7 +648,7 @@ WHERE "matchId" = @matchId
               tick: 2,
               turn: 1,
               actorPlayerId: guestPlayer.id,
-              command: GameCommandSerializer.toJson(
+              command: DomainCommandCodec.toJson(
                 SubmitTurnCommand(guestPlayer.id),
               ),
             ),
@@ -741,7 +741,7 @@ WHERE "matchId" = @matchId
                 tick: 1,
                 turn: started.turn,
                 actorPlayerId: ownerPlayer.id,
-                command: GameCommandSerializer.toJson(
+                command: DomainCommandCodec.toJson(
                   SubmitTurnCommand(ownerPlayer.id),
                 ),
               ),
@@ -1227,7 +1227,7 @@ Future<WireCommandAck> _connectAndDispatchMove({
           tick: tick,
           turn: save.turn,
           actorPlayerId: actorPlayerId,
-          command: GameCommandSerializer.toJson(move),
+          command: DomainCommandCodec.toJson(move),
         ),
       ),
     );

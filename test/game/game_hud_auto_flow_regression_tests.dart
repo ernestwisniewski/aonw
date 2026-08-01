@@ -92,7 +92,7 @@ void _registerHudAutoFlowRegressionTests() {
 
     await container
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(const CityTappedCommand('resolved_city'));
+        .dispatchIntent(const CityTappedCommand('resolved_city'));
     await tester.pump();
     expect(
       container.read(gameStateProvider('save')).value?.selection?.city?.id,
@@ -142,7 +142,7 @@ void _registerHudAutoFlowRegressionTests() {
 
     await container
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(const CityTappedCommand('city_1'));
+        .dispatchIntent(const CityTappedCommand('city_1'));
     await tester.pump();
     container
         .read(hudCommandDispatcherProvider)
@@ -247,7 +247,7 @@ void _registerHudAutoFlowLifecycleTests() {
 
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const CityTappedCommand('city_1'));
+          .dispatchIntent(const CityTappedCommand('city_1'));
       await tester.pump(const Duration(milliseconds: 300));
       expect(_autoFlowState(container, 'save')?.selection?.city?.id, 'city_1');
 
@@ -257,7 +257,7 @@ void _registerHudAutoFlowLifecycleTests() {
 
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const SelectTileCommand(1, 0));
+          .dispatchIntent(const SelectTileCommand(1, 0));
       await _pumpUntil(
         tester,
         () => _autoFlowState(container, 'save')?.selectedUnitId == 'warrior_1',
@@ -286,7 +286,7 @@ void _registerHudAutoFlowLifecycleTests() {
       );
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const CityTappedCommand('city_1'));
+          .dispatchIntent(const CityTappedCommand('city_1'));
       await tester.pump(const Duration(milliseconds: 300));
       expect(_autoFlowState(container, 'save')?.selection?.city?.id, 'city_1');
 
@@ -360,7 +360,7 @@ void _registerHudAutoFlowLifecycleTests() {
 
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const SelectUnitCommand('warrior_1'));
+          .dispatchIntent(const SelectUnitCommand('warrior_1'));
       await tester.pump();
 
       expect(container.read(hudAutoTurnFlowProvider), isTrue);

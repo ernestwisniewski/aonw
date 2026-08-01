@@ -5,7 +5,7 @@ abstract final class GameCameraEffectNormalizer {
   static const double turnStartCameraTransitionDuration = 0.85;
 
   static List<RendererEffect> forCommand({
-    required GameCommand command,
+    required Object command,
     required Iterable<RendererEffect> effects,
   }) {
     return [
@@ -30,7 +30,7 @@ abstract final class GameCameraEffectNormalizer {
   }
 
   static RendererEffect _normalizeCommandEffect(
-    GameCommand command,
+    Object command,
     RendererEffect effect,
   ) {
     if (command is FocusTurnStartActionCommand && effect is JumpCameraEffect) {

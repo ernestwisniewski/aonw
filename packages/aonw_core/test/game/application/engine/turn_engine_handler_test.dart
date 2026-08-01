@@ -1,6 +1,5 @@
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/game/application/engine/server_system_command.dart';
 import 'package:test/test.dart';
 
 const _one = 'player_1';
@@ -374,7 +373,7 @@ GameEngineResult _apply(
 
 GameEngineResult _applySystem(
   CanonicalGameSnapshot snapshot,
-  ServerSystemCommand command,
+  SystemCommand command,
 ) {
   return const GameEngine().applySystem(
     snapshot: snapshot,

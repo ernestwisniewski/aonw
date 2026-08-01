@@ -20,7 +20,7 @@ final class MctsCommandReconciler {
   }) : _validator = validator,
        _merger = merger;
 
-  List<GameCommand> validatedCommands(
+  List<DomainCommand> validatedCommands(
     List<MctsAction> actions, {
     required SimulatedState rootState,
     required MctsSimulator simulator,
@@ -32,9 +32,9 @@ final class MctsCommandReconciler {
     );
   }
 
-  List<GameCommand> withBaselineSupportCommands(
-    List<GameCommand> commands,
-    List<GameCommand> baseline,
+  List<DomainCommand> withBaselineSupportCommands(
+    List<DomainCommand> commands,
+    List<DomainCommand> baseline,
     GameView view,
     AiContext context, {
     required MctsSimulator simulator,

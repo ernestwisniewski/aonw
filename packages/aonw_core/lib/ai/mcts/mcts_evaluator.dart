@@ -95,7 +95,7 @@ class CommandSequenceEvaluator implements MctsEvaluator {
   }
 
   double _commandScore(
-    GameCommand command, {
+    DomainCommand command, {
     required SimulatedState state,
     AiContext? context,
   }) {

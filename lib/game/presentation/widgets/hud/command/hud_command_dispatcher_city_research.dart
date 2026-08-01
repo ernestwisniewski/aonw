@@ -52,7 +52,7 @@ extension HudCommandDispatcherCityResearch on HudCommandDispatcher {
     return dispatch(SelectTechnologyCommand(activePlayerId, technologyId));
   }
 
-  Future<void> _closeCityProductionAndDispatch(GameCommand command) {
+  Future<void> _closeCityProductionAndDispatch(DomainCommand command) {
     closeCityProductionPanel(playSound: false);
     return dispatch(command);
   }

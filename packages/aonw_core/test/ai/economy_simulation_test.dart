@@ -476,14 +476,14 @@ const _testMctsConfig = MctsConfig(
 final class _FixedPlanStrategy implements AiStrategy {
   const _FixedPlanStrategy(this.commands);
 
-  final List<GameCommand> commands;
+  final List<DomainCommand> commands;
 
   @override
   AiTurnPlan plan(GameView view, AiContext context) =>
       AiTurnPlan(commands: commands);
 }
 
-String _commandSummary(GameCommand command) {
+String _commandSummary(DomainCommand command) {
   return switch (command) {
     AttackHexCommand(
       :final attackerUnitId,

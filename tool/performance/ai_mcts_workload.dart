@@ -174,7 +174,7 @@ Object _actionJson(MctsAction action) {
   final command = action.toCommand();
   return command == null
       ? const {'type': 'EndPlanning'}
-      : GameCommandSerializer.toJson(command);
+      : DomainCommandCodec.toJson(command);
 }
 
 AiContext _context(MapReadView mapView) {

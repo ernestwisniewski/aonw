@@ -14,7 +14,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 const _military = StrategyAwareMilitaryContext();
 
 CommandRanking? rankOpeningSurvivalCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
   StrategicPlan? plan,

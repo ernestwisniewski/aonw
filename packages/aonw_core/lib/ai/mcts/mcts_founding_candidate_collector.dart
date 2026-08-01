@@ -22,7 +22,7 @@ final class MctsFoundingCandidateCollector {
     return 0;
   }
 
-  Iterable<GameCommand> foundingCommandsFor(GameView view) {
+  Iterable<DomainCommand> foundingCommandsFor(GameView view) {
     final founders = [
       for (final unit in view.ownUnits)
         if (_isReadyFounder(unit)) unit,
@@ -30,7 +30,7 @@ final class MctsFoundingCandidateCollector {
     if (founders.isEmpty) return const [];
 
     final cities = _knownCities(view);
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     for (final founder in founders) {
       final centerTile = view.mapData.tileAt(founder.col, founder.row);
       if (centerTile == null) continue;
@@ -102,7 +102,7 @@ final class MctsFoundingCandidateCollector {
     return commands;
   }
 
-  Iterable<GameCommand> spacingMovementCommandsFor(GameView view) {
+  Iterable<DomainCommand> spacingMovementCommandsFor(GameView view) {
     if (view.ownCities.length < 2) return const [];
 
     final founders = [
@@ -111,7 +111,7 @@ final class MctsFoundingCandidateCollector {
     ]..sort((a, b) => a.id.compareTo(b.id));
     if (founders.isEmpty) return const [];
 
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final knownUnits = view.movementBlockingUnits;
     final pathfinder = UnitMovementPathfinder(
       mapData: view.mapData,

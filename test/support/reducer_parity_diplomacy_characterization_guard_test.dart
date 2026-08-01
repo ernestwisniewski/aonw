@@ -35,8 +35,8 @@ void _registerCorpusContractGuards(_FixtureProvider fixtureProvider) {
       returnsNormally,
     );
     for (final fixture in fixtures) {
-      final encoded = GameCommandSerializer.toJson(fixture.command);
-      expect(GameCommandSerializer.fromJson(encoded), fixture.command);
+      final encoded = DomainCommandCodec.toJson(fixture.command);
+      expect(DomainCommandCodec.fromJson(encoded), fixture.command);
     }
   });
 
@@ -239,7 +239,7 @@ void _registerGeneratedIdGuards(_FixtureProvider fixtureProvider) {
 List<ReducerParityFixture> _replace(
   List<ReducerParityFixture> fixtures,
   ReducerParityFixture source, {
-  GameCommand? command,
+  DomainCommand? command,
   ReducerParityFixture? replacement,
 }) {
   final next = replacement ?? _copyFixture(source, command: command);
@@ -251,7 +251,7 @@ List<ReducerParityFixture> _replace(
 
 ReducerParityFixture _copyFixture(
   ReducerParityFixture source, {
-  GameCommand? command,
+  DomainCommand? command,
   bool? expectedAccepted,
   Object? expectedReason = _unchanged,
 }) {

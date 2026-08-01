@@ -16,7 +16,7 @@ void _registerResearchDiplomacyReplayTest() {
         ),
       }),
       eventLog: _MemoryEventLog([
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 1,
           timestamp: DateTime.utc(2026, 4, 24, 12, 1),
           turn: 1,
@@ -26,7 +26,7 @@ void _registerResearchDiplomacyReplayTest() {
             TechnologyId.agriculture,
           ),
         ),
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 2,
           timestamp: DateTime.utc(2026, 4, 24, 12, 2),
           turn: 1,

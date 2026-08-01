@@ -69,13 +69,13 @@ final class BasicStrategyExplorationPlanner {
     ).plan(view, context);
   }
 
-  List<GameCommand> _planFrontierExploration(
+  List<DomainCommand> _planFrontierExploration(
     GameView view,
     AiContext context,
     Set<String> usedUnitIds,
     Set<HexCoordinate> reservedHexes,
   ) {
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final occupied = <String>{
       for (final unit in view.ownUnits) _key(unit.col, unit.row),
       for (final unit in view.visibleEnemyUnits) _key(unit.col, unit.row),

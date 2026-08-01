@@ -17,7 +17,7 @@ final class BasicStrategyFoundingPlanner {
   final BasicStrategyFoundingMovePlanner movePlanner;
   final AiCitySiteScorer siteScorer;
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     AiEmpireAssessment assessment,
@@ -26,7 +26,7 @@ final class BasicStrategyFoundingPlanner {
 
     final knownCities = _knownCities(view);
     final plannedCities = <GameCity>[];
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final reservedCenters = <CityHex>{
       for (final city in knownCities) city.center,
       for (final city in knownCities) ...city.controlledHexes,

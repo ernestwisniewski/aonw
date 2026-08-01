@@ -1,7 +1,7 @@
 part of 'mcts_strategy_test.dart';
 
 class _StaticStrategy implements AiStrategy {
-  final List<GameCommand> commands;
+  final List<DomainCommand> commands;
 
   const _StaticStrategy({required this.commands});
 

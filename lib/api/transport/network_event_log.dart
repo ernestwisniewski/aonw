@@ -4,7 +4,7 @@ import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/transport/multiplayer_backend_client.dart';
 import 'package:aonw/game/application/ports/activity_history_entry.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/services/game_activity_event_projector.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/protocol.dart';
@@ -12,7 +12,7 @@ import 'package:aonw_core/protocol.dart';
 /// Reads command, domain-event and activity history from authoritative events.
 ///
 /// Exact movement execution plans and costs are deliberately not converted
-/// into [LoggedCommand]. Coarse movement domain events remain in its history.
+/// into [RecordedDomainCommand]. Coarse movement domain events remain in its history.
 class NetworkEventLog implements EventLog {
   final String serverpodHost;
   final AuthToken token;
@@ -45,12 +45,12 @@ class NetworkEventLog implements EventLog {
   bool get isClosed => _closed;
 
   @override
-  Future<void> append(String saveId, LoggedCommand command) {
+  Future<void> append(String saveId, RecordedDomainCommand command) {
     throw UnsupportedError('NetworkEventLog is read-only on the client');
   }
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) {
+  Stream<RecordedDomainCommand> readAll(String saveId) {
     return readSince(saveId);
   }
 
@@ -64,12 +64,15 @@ class NetworkEventLog implements EventLog {
   }
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) async* {
+  Stream<RecordedDomainCommand> readSince(
+    String saveId, {
+    int offset = 0,
+  }) async* {
     final afterOffset = offset <= 0 ? 0 : offset - 1;
     await for (final wire in _wireEvents(saveId, afterOffset: afterOffset)) {
       final command = eventCodec.commandFromWire(wire);
       final events = eventCodec.eventsFromWire(wire);
-      yield LoggedCommand(
+      yield RecordedDomainCommand(
         offset: wire.offset,
         timestamp: wire.timestamp,
         turn: wire.turn,

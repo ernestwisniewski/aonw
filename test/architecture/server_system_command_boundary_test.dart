@@ -7,16 +7,24 @@ import 'support/map_boundary_source_guard.dart';
 
 const _systemPath =
     'packages/aonw_core/lib/game/application/engine/'
-    'server_system_command.dart';
+    'system_command.dart';
 const _allowedReferences = <String>{
   'packages/aonw_core/lib/game/application/engine/game_engine.dart',
   'packages/aonw_core/lib/game/application/engine/turn_engine_handler.dart',
   'server/lib/src/multiplayer/server_command_reducer.dart',
+  'server/lib/src/multiplayer/match_command_service_event.dart',
   'server/lib/src/multiplayer/match_lifecycle_service.dart',
   'server/lib/src/multiplayer/match_lifecycle_service_resignation.dart',
 };
+const _systemDeclarations = <String>{
+  'SystemCommand',
+  'SystemCommandCodec',
+  'RecordedSystemCommand',
+  'FinalizeTimedOutTurn',
+  'KickParticipant',
+};
 const _systemTypes = <String>{
-  'ServerSystemCommand',
+  'SystemCommand',
   'FinalizeTimedOutTurn',
   'KickParticipant',
 };
@@ -46,10 +54,10 @@ void main() {
         declaration.namePart.typeName.lexeme: declaration,
     };
 
-    expect(declarations.keys, _systemTypes);
-    expect(declarations['ServerSystemCommand']!.sealedKeyword, isNotNull);
+    expect(declarations.keys, _systemDeclarations);
+    expect(declarations['SystemCommand']!.sealedKeyword, isNotNull);
     expect(
-      declarations['ServerSystemCommand']!.extendsClause,
+      declarations['SystemCommand']!.extendsClause,
       isNull,
       reason: 'Trusted server commands must not be player GameCommands.',
     );

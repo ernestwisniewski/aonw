@@ -13,7 +13,7 @@ typedef AiTurnPresentationStateReader = GameState? Function(String saveId);
 typedef AiTurnHiddenCommandDispatcher =
     Future<DispatchCommandResult> Function({
       required String saveId,
-      required GameCommand command,
+      required DomainCommand command,
       required GameCommandContext context,
     });
 
@@ -37,7 +37,7 @@ final class AiTurnPresentationDriver {
   Future<DispatchCommandResult> dispatchCommand({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     required GameCommandContext context,
   }) async {
     final session = sessionReader();

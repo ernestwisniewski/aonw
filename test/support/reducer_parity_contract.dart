@@ -72,7 +72,7 @@ const reducerParityRequiredRejectionReasons = <String, Set<String>>{
   'turn-finalization': {'turn_player_not_controlled', 'turn_player_not_active'},
 };
 
-typedef _ReducerParityCommandMatcher = bool Function(GameCommand command);
+typedef _ReducerParityCommandMatcher = bool Function(DomainCommand command);
 
 final _reducerParityCommandMatchers = <String, _ReducerParityCommandMatcher>{
   'auto-explore': _matchesAutoExploreCommand,
@@ -92,42 +92,42 @@ final _reducerParityCommandMatchers = <String, _ReducerParityCommandMatcher>{
   'turn-finalization': _matchesTurnFinalizationCommand,
 };
 
-bool reducerParityCommandMatchesFamily(String family, GameCommand command) {
+bool reducerParityCommandMatchesFamily(String family, DomainCommand command) {
   return _reducerParityCommandMatchers[family]?.call(command) ?? false;
 }
 
-bool _matchesAutoExploreCommand(GameCommand command) {
+bool _matchesAutoExploreCommand(DomainCommand command) {
   return command is AutoExploreUnitCommand;
 }
 
-bool _matchesArtifactCommand(GameCommand command) {
+bool _matchesArtifactCommand(DomainCommand command) {
   return command is StartArtifactExcavationCommand ||
       command is StoreArtifactInCityCommand ||
       command is TradeArtifactCommand;
 }
 
-bool _matchesMovementCommand(GameCommand command) {
+bool _matchesMovementCommand(DomainCommand command) {
   return command is MoveUnitCommand;
 }
 
-bool _matchesMerchantRoutingCommand(GameCommand command) {
+bool _matchesMerchantRoutingCommand(DomainCommand command) {
   return command is AssignMerchantTradeRouteCommand ||
       command is MoveMerchantToCityCommand;
 }
 
-bool _matchesCombatCommand(GameCommand command) {
+bool _matchesCombatCommand(DomainCommand command) {
   return command is AttackHexCommand;
 }
 
-bool _matchesCityExpansionCommand(GameCommand command) {
+bool _matchesCityExpansionCommand(DomainCommand command) {
   return command is SelectCityExpansionHexCommand;
 }
 
-bool _matchesCityFoundingCommand(GameCommand command) {
+bool _matchesCityFoundingCommand(DomainCommand command) {
   return command is FoundCityCommand;
 }
 
-bool _matchesCityProductionCommand(GameCommand command) {
+bool _matchesCityProductionCommand(DomainCommand command) {
   return command is StartBuildingCommand ||
       command is StartUnitProductionCommand ||
       command is StartCityProjectCommand ||
@@ -136,30 +136,30 @@ bool _matchesCityProductionCommand(GameCommand command) {
       command is RushProductionCommand;
 }
 
-bool _matchesCityWorkedHexCommand(GameCommand command) {
+bool _matchesCityWorkedHexCommand(DomainCommand command) {
   return command is ToggleWorkedHexCommand;
 }
 
-bool _matchesDetachmentCommand(GameCommand command) {
+bool _matchesDetachmentCommand(DomainCommand command) {
   return command is DetachTroopCommand;
 }
 
-bool _matchesResearchCommand(GameCommand command) {
+bool _matchesResearchCommand(DomainCommand command) {
   return command is SelectTechnologyCommand;
 }
 
-bool _matchesResourceTradeCommand(GameCommand command) {
+bool _matchesResourceTradeCommand(DomainCommand command) {
   return command is OpenResourceTradeCommand ||
       command is OpenResourceExchangeCommand;
 }
 
-bool _matchesUnitActionCommand(GameCommand command) {
+bool _matchesUnitActionCommand(DomainCommand command) {
   return command is CancelUnitActionCommand ||
       command is SkipUnitTurnCommand ||
       command is FortifyUnitCommand;
 }
 
-bool _matchesWorkerCommand(GameCommand command) {
+bool _matchesWorkerCommand(DomainCommand command) {
   return command is SelectWorkerImprovementCommand ||
       command is ConfirmWorkerImprovementCommand ||
       command is CancelWorkerJobCommand ||
@@ -167,6 +167,6 @@ bool _matchesWorkerCommand(GameCommand command) {
       command is CancelWorkerAssignmentCommand;
 }
 
-bool _matchesTurnFinalizationCommand(GameCommand command) {
+bool _matchesTurnFinalizationCommand(DomainCommand command) {
   return command is SubmitTurnCommand;
 }

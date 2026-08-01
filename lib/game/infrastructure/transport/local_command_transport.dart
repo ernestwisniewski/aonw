@@ -2,12 +2,10 @@ import 'package:aonw/game/application/ports/clock.dart';
 import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
-import 'package:aonw/game/application/services/authoritative_command_policy.dart';
 import 'package:aonw/game/application/services/game_activity_event_projector.dart';
-import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -37,54 +35,36 @@ class LocalCommandTransport implements CommandTransport {
   Future<CommandTransportResult> dispatch({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
-  }) async {
-    final clientOnlyResult = _dispatchClientOnly(
-      currentState: currentState,
-      command: command,
-      context: context,
-    );
-    if (clientOnlyResult != null) return clientOnlyResult;
-
-    return _dispatchPersistent(
-      saveId: saveId,
-      currentState: currentState,
-      command: command,
-      context: context,
-    );
-  }
+    bool fromMovePreviewConfirmation = false,
+  }) => _dispatchPersistent(
+    saveId: saveId,
+    currentState: currentState,
+    command: command,
+    context: context,
+    fromMovePreviewConfirmation: fromMovePreviewConfirmation,
+  );
 
   Future<CommandTransportResult> _dispatchPersistent({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     required GameCommandContext context,
+    required bool fromMovePreviewConfirmation,
   }) async {
     final baseSnapshot = await gameRepository.load(saveId);
     final latestOffset = await eventLog.latestOffset(saveId);
     final timestamp = clock.nowUtc();
     final resolver = LocalCommandResolver(reducer: reducer);
-    final authoritativeCommand =
-        AuthoritativeCommandPolicy.authoritativeCommandForClientIntent(
-          currentState,
-          command,
-          context,
-        );
-    final commandToApply = switch (authoritativeCommand ?? command) {
-      final DomainCommand value => value,
-      _ => throw StateError(
-        '${command.runtimeType} reached the authoritative engine boundary.',
-      ),
-    };
     final movementPresentationOrigin =
-        command is TileTappedCommand && authoritativeCommand is MoveUnitCommand
+        fromMovePreviewConfirmation && command is MoveUnitCommand
         ? LocalMovementPresentationOrigin.previewConfirmation
         : LocalMovementPresentationOrigin.direct;
     final resolved = resolver.resolve(
       baseSnapshot: baseSnapshot,
       currentState: currentState,
-      command: commandToApply,
+      command: command,
       savedAt: timestamp,
       context: context,
       movementPresentationOrigin: movementPresentationOrigin,
@@ -98,7 +78,6 @@ class LocalCommandTransport implements CommandTransport {
       resolved: resolved,
       currentState: currentState,
       command: command,
-      authoritativeCommand: authoritativeCommand,
     );
   }
 
@@ -109,24 +88,19 @@ class LocalCommandTransport implements CommandTransport {
     required DateTime timestamp,
     required LocalCommandResolution resolved,
     required GameState currentState,
-    required GameCommand command,
-    required GameCommand? authoritativeCommand,
+    required DomainCommand command,
   }) async {
-    final shouldLogCommand =
-        authoritativeCommand != null ||
-        AuthoritativeCommandPolicy.shouldLogForReplay(currentState, command);
-    final offset = shouldLogCommand ? latestOffset + 1 : latestOffset;
-    final commandToLog = authoritativeCommand ?? command;
+    final offset = latestOffset + 1;
 
     await _appendCommandIfNeeded(
       saveId: saveId,
       turn: baseSnapshot.domain.turn,
       currentState: currentState,
-      commandToLog: commandToLog,
+      commandToLog: command,
       resolved: resolved,
       timestamp: timestamp,
       offset: offset,
-      shouldLog: shouldLogCommand,
+      shouldLog: true,
     );
 
     final snapshot = resolved.snapshot.withEventLogOffset(offset);
@@ -134,11 +108,11 @@ class LocalCommandTransport implements CommandTransport {
 
     final storedSnapshot = await _storeSnapshotIfNeeded(
       saveId: saveId,
-      command: commandToLog,
+      command: command,
       snapshot: snapshot,
       timestamp: timestamp,
       offset: offset,
-      shouldLog: shouldLogCommand,
+      shouldLog: true,
     );
 
     return CommandTransportResult(
@@ -155,7 +129,7 @@ class LocalCommandTransport implements CommandTransport {
 
   Future<bool> _storeSnapshotIfNeeded({
     required String saveId,
-    required GameCommand command,
+    required DomainCommand command,
     required SaveSnapshot snapshot,
     required DateTime timestamp,
     required int offset,
@@ -179,7 +153,7 @@ class LocalCommandTransport implements CommandTransport {
     required String saveId,
     required int turn,
     required GameState currentState,
-    required GameCommand commandToLog,
+    required DomainCommand commandToLog,
     required LocalCommandResolution resolved,
     required DateTime timestamp,
     required int offset,
@@ -189,7 +163,7 @@ class LocalCommandTransport implements CommandTransport {
 
     await eventLog.append(
       saveId,
-      LoggedCommand(
+      RecordedDomainCommand(
         offset: offset,
         timestamp: timestamp,
         turn: turn,
@@ -206,38 +180,5 @@ class LocalCommandTransport implements CommandTransport {
         ),
       ),
     );
-  }
-
-  CommandTransportResult? _dispatchClientOnly({
-    required GameState currentState,
-    required GameCommand command,
-    required GameCommandContext context,
-  }) {
-    final authoritativeCommand =
-        AuthoritativeCommandPolicy.authoritativeCommandForClientIntent(
-          currentState,
-          command,
-          context,
-        );
-    if (authoritativeCommand == null &&
-        AuthoritativeCommandPolicy.isClientOnlyForState(
-          currentState,
-          command,
-        )) {
-      final resolution = resolveClientIntent(
-        reducer,
-        currentState,
-        command,
-        context,
-      );
-      return CommandTransportResult(
-        state: resolution.state,
-        uiEffects: resolution.uiEffects,
-        events: const [],
-        snapshot: null,
-        offset: -1,
-      );
-    }
-    return null;
   }
 }

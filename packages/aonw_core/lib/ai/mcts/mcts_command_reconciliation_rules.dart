@@ -170,7 +170,7 @@ final class MctsCommandReconciliationRules {
     reservedMoveTargets.add(hexKey(moved.col, moved.row));
   }
 
-  String? actingUnitId(GameCommand command) {
+  String? actingUnitId(DomainCommand command) {
     return switch (command) {
       MoveUnitCommand(:final unitId) => unitId,
       AttackHexCommand(:final attackerUnitId) => attackerUnitId,

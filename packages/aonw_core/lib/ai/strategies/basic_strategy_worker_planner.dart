@@ -14,7 +14,7 @@ part 'basic_strategy_worker_movement.dart';
 final class BasicStrategyWorkerPlanner {
   const BasicStrategyWorkerPlanner();
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     Set<String> usedUnitIds,
@@ -28,7 +28,7 @@ final class BasicStrategyWorkerPlanner {
     ]..sort((a, b) => a.id.compareTo(b.id));
     if (workers.isEmpty) return const [];
 
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final occupied = <String>{
       for (final unit in view.ownUnits) _key(unit.col, unit.row),
       for (final unit in view.visibleEnemyUnits) _key(unit.col, unit.row),
@@ -69,7 +69,7 @@ final class BasicStrategyWorkerPlanner {
     return List.unmodifiable(commands);
   }
 
-  GameCommand? _workerAction({
+  DomainCommand? _workerAction({
     required GameUnit worker,
     required GameView view,
     required StrategicWorkerAssignment? assignment,
@@ -95,7 +95,7 @@ final class BasicStrategyWorkerPlanner {
         );
   }
 
-  GameCommand? _idleWorkerAssignment(
+  DomainCommand? _idleWorkerAssignment(
     GameUnit worker,
     GameView view,
     Set<String> usedUnitIds,
@@ -116,7 +116,7 @@ final class BasicStrategyWorkerPlanner {
 
   void _reserveWorkerDestination(
     GameUnit worker,
-    GameCommand command,
+    DomainCommand command,
     Set<String> occupied,
   ) {
     if (command case MoveUnitCommand(:final targetCol, :final targetRow)) {
@@ -126,7 +126,7 @@ final class BasicStrategyWorkerPlanner {
     }
   }
 
-  GameCommand? _strategicWorkerAction({
+  DomainCommand? _strategicWorkerAction({
     required GameUnit worker,
     required StrategicWorkerAssignment? assignment,
     required GameView view,
@@ -158,7 +158,7 @@ final class BasicStrategyWorkerPlanner {
     ];
   }
 
-  GameCommand? _strategicTargetAction({
+  DomainCommand? _strategicTargetAction({
     required GameUnit worker,
     required StrategicWorkerTarget target,
     required GameView view,
@@ -193,7 +193,7 @@ final class BasicStrategyWorkerPlanner {
     return worker.occupies(target.targetHex.col, target.targetHex.row);
   }
 
-  GameCommand? _strategicTargetActionAtCurrentHex({
+  DomainCommand? _strategicTargetActionAtCurrentHex({
     required GameUnit worker,
     required StrategicWorkerTarget target,
     required GameView view,
@@ -204,7 +204,7 @@ final class BasicStrategyWorkerPlanner {
     };
   }
 
-  GameCommand? _strategicAssignmentCommand(
+  DomainCommand? _strategicAssignmentCommand(
     GameUnit worker,
     StrategicWorkerTarget target,
     GameView view,
@@ -214,7 +214,7 @@ final class BasicStrategyWorkerPlanner {
         : null;
   }
 
-  GameCommand? _strategicImprovementCommand(
+  DomainCommand? _strategicImprovementCommand(
     GameUnit worker,
     StrategicWorkerTarget target,
     GameView view,
@@ -322,7 +322,7 @@ final class BasicStrategyWorkerPlanner {
     ).allowed;
   }
 
-  GameCommand? _currentWorkerImprovement({
+  DomainCommand? _currentWorkerImprovement({
     required GameUnit worker,
     required GameView view,
   }) {

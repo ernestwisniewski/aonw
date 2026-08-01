@@ -1,11 +1,11 @@
 import 'package:aonw/game/application/ports/activity_history_entry.dart';
-import 'package:aonw/game/application/ports/logged_game_command_codec.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command_codec.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 
-class LoggedCommand {
+class RecordedDomainCommand {
   final int offset;
   final DateTime timestamp;
 
@@ -19,7 +19,7 @@ class LoggedCommand {
   /// the command that produced them. Such event-only entries remain useful
   /// for activity and hostility tracking, but cannot be reduced during state
   /// replay.
-  final GameCommand? command;
+  final DomainCommand? command;
   final List<GameEvent> events;
   final List<LoggedActivityEntry> activity;
   final String? actorPlayerId;
@@ -27,7 +27,7 @@ class LoggedCommand {
   final int commandTick;
   final bool ignoreFogOfWar;
 
-  const LoggedCommand({
+  const RecordedDomainCommand({
     required this.offset,
     required this.timestamp,
     required this.turn,
@@ -40,10 +40,10 @@ class LoggedCommand {
     this.ignoreFogOfWar = false,
   });
 
-  factory LoggedCommand.fromJson(Map<String, dynamic> json) {
+  factory RecordedDomainCommand.fromJson(Map<String, dynamic> json) {
     final rawEvents = json['events'] as List<dynamic>? ?? const <dynamic>[];
     final rawActivity = json['activity'] as List<dynamic>? ?? const <dynamic>[];
-    return LoggedCommand(
+    return RecordedDomainCommand(
       offset: json['offset'] as int,
       timestamp: DateTime.parse(json['timestamp'] as String).toUtc(),
       turn: json['turn'] as int?,
@@ -52,9 +52,8 @@ class LoggedCommand {
       commandTick: json['commandTick'] as int? ?? 0,
       ignoreFogOfWar: json['ignoreFogOfWar'] as bool? ?? false,
       command: switch (json['command']) {
-        final Map<Object?, Object?> value => LoggedGameCommandCodec.fromJson(
-          Map<String, dynamic>.from(value),
-        ),
+        final Map<Object?, Object?> value =>
+          RecordedDomainCommandCodec.fromJson(Map<String, dynamic>.from(value)),
         null => null,
         final value => throw FormatException(
           'Expected command to be a JSON object or null, got '
@@ -88,7 +87,7 @@ class LoggedCommand {
       'commandTick': commandTick,
       'ignoreFogOfWar': ignoreFogOfWar,
       if (command case final command?)
-        'command': LoggedGameCommandCodec.toJson(command),
+        'command': RecordedDomainCommandCodec.toJson(command),
       'events': events.map(GameEventSerializer.toJson).toList(),
       'activity': activity.map((entry) => entry.toJson()).toList(),
     };

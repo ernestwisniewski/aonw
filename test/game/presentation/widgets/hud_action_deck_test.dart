@@ -813,7 +813,7 @@ void main() {
   testWidgets('combat modal reopens the latest preview after closing', (
     tester,
   ) async {
-    final commands = <GameCommand>[];
+    final commands = <GameIntent>[];
     final container = ProviderContainer(
       overrides: [
         hudCommandDispatcherProvider.overrideWith(
@@ -863,7 +863,7 @@ void main() {
   testWidgets(
     'combat modal blocks back and stays dismissed while command is in flight',
     (tester) async {
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final container = ProviderContainer(
         overrides: [
           hudCommandDispatcherProvider.overrideWith(
@@ -987,7 +987,7 @@ void main() {
   testWidgets('double combat confirmation dispatches one command', (
     tester,
   ) async {
-    final commands = <GameCommand>[];
+    final commands = <GameIntent>[];
     final container = ProviderContainer(
       overrides: [
         hudCommandDispatcherProvider.overrideWith(

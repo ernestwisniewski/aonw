@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 
 class HandoffPresentation {
-  final GameCommand command;
+  final DomainCommand command;
   final GameState state;
   final GameState? previousState;
   final List<UiEffect> uiEffects;

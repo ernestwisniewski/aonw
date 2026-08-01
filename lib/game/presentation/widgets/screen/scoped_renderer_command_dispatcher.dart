@@ -13,7 +13,7 @@ class ScopedRendererCommandDispatcher extends ConsumerStatefulWidget {
   });
 
   final GameSession session;
-  final ValueChanged<Future<void> Function(GameCommand command)?>
+  final ValueChanged<Future<void> Function(GameIntent intent)?>
   onDispatcherChanged;
   final Widget child;
 
@@ -24,7 +24,7 @@ class ScopedRendererCommandDispatcher extends ConsumerStatefulWidget {
 
 class _ScopedRendererCommandDispatcherState
     extends ConsumerState<ScopedRendererCommandDispatcher> {
-  late final Future<void> Function(GameCommand command) _dispatcher = _dispatch;
+  late final Future<void> Function(GameIntent intent) _dispatcher = _dispatch;
 
   @override
   void initState() {
@@ -47,9 +47,11 @@ class _ScopedRendererCommandDispatcherState
     super.dispose();
   }
 
-  Future<void> _dispatch(GameCommand command) async {
+  Future<void> _dispatch(GameIntent command) async {
     if (widget.session.saveId.isEmpty) return;
-    await ref.read(gameCommandControllerProvider.notifier).dispatch(command);
+    await ref
+        .read(gameCommandControllerProvider.notifier)
+        .dispatchIntent(command);
   }
 
   @override

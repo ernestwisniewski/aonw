@@ -33,10 +33,10 @@ final class BenchmarkCommandDispatcher {
 
   BenchmarkCommandTransition apply({
     required GameState state,
-    required GameCommand command,
+    required DomainCommand command,
     required GameCommandContext context,
   }) {
-    if (command is DomainCommand && GameEngine.commandFamily(command) != null) {
+    if (GameEngine.commandFamily(command) != null) {
       return _applyEngineCommand(
         state: state,
         command: command,

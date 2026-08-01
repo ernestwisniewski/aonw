@@ -5,18 +5,18 @@ sealed class MctsAction {
 
   bool get endsPlanning => false;
 
-  GameCommand? toCommand();
+  DomainCommand? toCommand();
 
   String get debugLabel;
 }
 
 final class CommandMctsAction extends MctsAction {
-  final GameCommand command;
+  final DomainCommand command;
 
   const CommandMctsAction(this.command);
 
   @override
-  GameCommand toCommand() => command;
+  DomainCommand toCommand() => command;
 
   @override
   String get debugLabel => command.runtimeType.toString();
@@ -36,7 +36,7 @@ final class EndPlanningAction extends MctsAction {
   bool get endsPlanning => true;
 
   @override
-  GameCommand? toCommand() => null;
+  DomainCommand? toCommand() => null;
 
   @override
   String get debugLabel => 'EndPlanningAction';

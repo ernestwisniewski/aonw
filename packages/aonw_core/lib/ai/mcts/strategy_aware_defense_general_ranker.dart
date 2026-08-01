@@ -4,7 +4,7 @@ class _GeneralDefenseRanker {
   const _GeneralDefenseRanker();
 
   CommandRanking? rank(
-    GameCommand command,
+    DomainCommand command,
     GameView view,
     AiContext context,
     StrategicPlan plan,

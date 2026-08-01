@@ -103,7 +103,7 @@ ReducerParityFixture _rejectedTradeParityFixture(
   required String id,
   required int tickOffset,
   required PersistentGameState state,
-  required GameCommand command,
+  required DomainCommand command,
   required String reason,
 }) {
   return _tradeParityFixture(
@@ -123,7 +123,7 @@ ReducerParityFixture _acceptedTradeParityFixture(
   required String id,
   required int tickOffset,
   required PersistentGameState state,
-  required GameCommand command,
+  required DomainCommand command,
   required PersistentGameState expectedState,
 }) {
   return _tradeParityFixture(
@@ -142,7 +142,7 @@ ReducerParityFixture _tradeParityFixture(
   required String id,
   required int tickOffset,
   required PersistentGameState state,
-  required GameCommand command,
+  required DomainCommand command,
   required bool accepted,
   required PersistentGameState expectedState,
   String? reason,

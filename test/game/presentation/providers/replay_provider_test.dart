@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:aonw/game/application/ports/event_log.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/replay_service.dart';
@@ -89,15 +89,15 @@ final class _EmptyEventLog implements EventLog {
   const _EmptyEventLog();
 
   @override
-  Future<void> append(String saveId, LoggedCommand command) async {}
+  Future<void> append(String saveId, RecordedDomainCommand command) async {}
 
   @override
   Future<int> latestOffset(String saveId) async => 0;
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) =>
+  Stream<RecordedDomainCommand> readSince(String saveId, {int offset = 0}) =>
       const Stream.empty();
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) => const Stream.empty();
+  Stream<RecordedDomainCommand> readAll(String saveId) => const Stream.empty();
 }

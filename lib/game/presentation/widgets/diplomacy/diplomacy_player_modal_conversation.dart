@@ -13,7 +13,7 @@ class _ProposalsSection extends StatelessWidget {
   final DiplomacyState diplomacy;
   final String activePlayerId;
   final String targetPlayerId;
-  final Future<void> Function(GameCommand command) onCommand;
+  final Future<void> Function(DomainCommand command) onCommand;
 
   @override
   Widget build(BuildContext context) {
@@ -238,7 +238,7 @@ class _MessagesSection extends StatelessWidget {
   final DiplomacyState diplomacy;
   final String activePlayerId;
   final String targetPlayerId;
-  final Future<void> Function(GameCommand command) onCommand;
+  final Future<void> Function(DomainCommand command) onCommand;
 
   @override
   Widget build(BuildContext context) {

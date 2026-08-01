@@ -109,7 +109,7 @@ class StrategyAwareMctsActionGenerator implements MctsActionGenerator {
 }
 
 CommandRanking _rankCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
 ) {
@@ -205,7 +205,7 @@ CommandRanking _rankCommand(
 }
 
 CommandRanking _rankByModeOnly(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
 ) {

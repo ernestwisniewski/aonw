@@ -4,7 +4,7 @@ final class _CitySiteDiscoveryRanker {
   const _CitySiteDiscoveryRanker();
 
   CommandRanking? rank(
-    GameCommand command,
+    DomainCommand command,
     GameView view,
     AiContext context,
     StrategicPlan plan,
@@ -89,7 +89,7 @@ final class _SettlerEscortRanker {
   const _SettlerEscortRanker();
 
   CommandRanking? rank(
-    GameCommand command,
+    DomainCommand command,
     GameView view,
     AiContext context,
     StrategicPlan plan,

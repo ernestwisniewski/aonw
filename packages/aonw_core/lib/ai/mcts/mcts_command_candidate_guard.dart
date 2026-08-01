@@ -8,7 +8,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 
 bool isLegalMctsCommandCandidate(
-  GameCommand command,
+  DomainCommand command,
   GameView view, {
   bool allowNonVisibleMoveTarget = false,
 }) {

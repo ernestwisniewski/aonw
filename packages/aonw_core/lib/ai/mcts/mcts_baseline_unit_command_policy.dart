@@ -15,7 +15,7 @@ final class MctsBaselineUnitCommandPolicy {
   }) : _rules = rules;
 
   Set<String> baselinePriorityUnitIds(
-    List<GameCommand> baseline,
+    List<DomainCommand> baseline,
     GameView view,
     AiContext context,
   ) {
@@ -65,7 +65,7 @@ final class MctsBaselineUnitCommandPolicy {
   }
 
   bool isFortifyBlockedByPriorityFallback(
-    GameCommand command,
+    DomainCommand command,
     Set<String> priorityUnitIds,
   ) {
     return command is FortifyUnitCommand &&
@@ -73,7 +73,7 @@ final class MctsBaselineUnitCommandPolicy {
   }
 
   bool canAppendBaselineUnitCommand(
-    GameCommand command, {
+    DomainCommand command, {
     required GameView view,
     required AiContext context,
     required Set<String> actedUnitIds,

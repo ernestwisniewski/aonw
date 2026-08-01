@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/game/application/engine/server_system_command.dart';
+import 'package:aonw_core/game/application/engine/system_command.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
@@ -19,7 +19,7 @@ const _matchLifecycleStateAdapter = MatchLifecycleStateAdapter();
 
 DomainCommand? _decodePlayerDomainCommand(Map<String, dynamic> rawCommand) {
   try {
-    return GameCommandSerializer.fromJson(rawCommand);
+    return DomainCommandCodec.fromJson(rawCommand);
   } on ArgumentError {
     return null;
   }

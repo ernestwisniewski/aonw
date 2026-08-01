@@ -15,7 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('AiTurnCommandExecutor', () {
     test('dispatches planned commands with AI context and UI delays', () async {
-      final commands = <GameCommand>[];
+      final commands = <DomainCommand>[];
       final contexts = <GameCommandContext>[];
       final delays = <Duration>[];
       final executor = AiTurnCommandExecutor(
@@ -61,7 +61,7 @@ void main() {
 
     test('skips terminal and stale move commands before dispatch', () async {
       final logger = _RecordingGameLogger();
-      final commands = <GameCommand>[];
+      final commands = <DomainCommand>[];
       final executor = AiTurnCommandExecutor(
         logger: logger,
         dispatch:

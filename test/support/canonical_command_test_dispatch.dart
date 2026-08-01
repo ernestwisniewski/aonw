@@ -1,5 +1,4 @@
 import 'package:aonw/game/application/ports/save_snapshot.dart';
-import 'package:aonw/game/application/services/authoritative_command_policy.dart';
 import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
@@ -22,33 +21,31 @@ final _savedAt = DateTime.utc(2026, 7, 29);
 GameStateTransition dispatchCanonicalTestCommand({
   required GameStateReducer reducer,
   required GameState state,
-  required GameCommand command,
+  required Object command,
   GameCommandContext context = const GameCommandContext(),
 }) {
-  final authoritativeCommand =
-      AuthoritativeCommandPolicy.authoritativeCommandForClientIntent(
-        state,
-        command,
-        context,
-      );
-  if (authoritativeCommand == null &&
-      AuthoritativeCommandPolicy.isClientOnlyForState(state, command)) {
+  if (command is GameIntent) {
     final intentResolver = GameIntentResolver(
       reducer: reducer,
       context: context,
     );
-    final resolution = switch (command) {
-      GameIntent() => intentResolver.resolve(state.interaction, command, state),
-      SelectWorkerImprovementCommand() =>
-        intentResolver.resolveWorkerImprovementChoice(
-          state.interaction,
-          command,
-          state,
-        ),
-      _ => throw UnsupportedError(
-        '${command.runtimeType} is not a client interaction',
-      ),
-    };
+    final resolution = intentResolver.resolve(
+      state.interaction,
+      command,
+      state,
+    );
+    final authoritativeCommand = resolution.domainCommand;
+    if (authoritativeCommand != null) {
+      return _dispatchDomainTestCommand(
+        reducer: reducer,
+        state: state,
+        command: authoritativeCommand,
+        context: context,
+        fromMovePreviewConfirmation:
+            command is TileTappedCommand &&
+            authoritativeCommand is MoveUnitCommand,
+      );
+    }
     return GameStateTransition(
       state: resolution.interaction == state.interaction
           ? state
@@ -56,24 +53,36 @@ GameStateTransition dispatchCanonicalTestCommand({
       uiEffects: resolution.presentationFocus,
     );
   }
-
-  final domainCommand = authoritativeCommand ?? command;
-  if (domainCommand is! DomainCommand) {
+  if (command is! DomainCommand) {
     throw StateError(
       '${command.runtimeType} reached the authoritative test boundary.',
     );
   }
+  return _dispatchDomainTestCommand(
+    reducer: reducer,
+    state: state,
+    command: command,
+    context: context,
+  );
+}
+
+GameStateTransition _dispatchDomainTestCommand({
+  required GameStateReducer reducer,
+  required GameState state,
+  required DomainCommand command,
+  required GameCommandContext context,
+  bool fromMovePreviewConfirmation = false,
+}) {
   final resolved = LocalCommandResolver(reducer: reducer).resolve(
     baseSnapshot: SaveSnapshot.fromGameState(
       save: _saveFor(state, context),
       state: state,
     ),
     currentState: state,
-    command: domainCommand,
+    command: command,
     savedAt: _savedAt,
     context: context,
-    movementPresentationOrigin:
-        command is TileTappedCommand && authoritativeCommand is MoveUnitCommand
+    movementPresentationOrigin: fromMovePreviewConfirmation
         ? LocalMovementPresentationOrigin.previewConfirmation
         : LocalMovementPresentationOrigin.direct,
   );

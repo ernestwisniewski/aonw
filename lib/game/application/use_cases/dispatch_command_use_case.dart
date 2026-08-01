@@ -38,14 +38,16 @@ class DispatchCommandUseCase {
   Future<DispatchCommandResult> execute({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
+    bool fromMovePreviewConfirmation = false,
   }) async {
     final result = await commandTransport.dispatch(
       saveId: saveId,
       currentState: currentState,
       command: command,
       context: context,
+      fromMovePreviewConfirmation: fromMovePreviewConfirmation,
     );
     return DispatchCommandResult(
       state: result.state,

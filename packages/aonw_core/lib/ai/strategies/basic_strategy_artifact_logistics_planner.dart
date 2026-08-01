@@ -16,7 +16,7 @@ final class BasicStrategyArtifactLogisticsPlanner {
 
   final BasicStrategyDefenseMovement defenseMovement;
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     Set<String> usedUnitIds,
@@ -24,7 +24,7 @@ final class BasicStrategyArtifactLogisticsPlanner {
   ) {
     if (view.artifacts.isEmpty || view.ownUnits.isEmpty) return const [];
 
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final occupied = <String>{
       for (final unit in view.ownUnits) _key(unit.col, unit.row),
       for (final unit in view.visibleEnemyUnits) _key(unit.col, unit.row),
@@ -175,7 +175,7 @@ final class BasicStrategyArtifactLogisticsPlanner {
     return null;
   }
 
-  GameCommand? _artifactCarrierHoldFor(
+  DomainCommand? _artifactCarrierHoldFor(
     GameUnit unit,
     GameView view,
     AiContext context,

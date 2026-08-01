@@ -1,7 +1,7 @@
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/application/services/game_session.dart';
@@ -272,16 +272,16 @@ final class _FakeGameRepository implements GameRepository {
 
 final class _FakeEventLog implements EventLog {
   @override
-  Future<void> append(String saveId, LoggedCommand command) async {}
+  Future<void> append(String saveId, RecordedDomainCommand command) async {}
 
   @override
   Future<int> latestOffset(String saveId) async => 0;
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) => const Stream.empty();
+  Stream<RecordedDomainCommand> readAll(String saveId) => const Stream.empty();
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) {
+  Stream<RecordedDomainCommand> readSince(String saveId, {int offset = 0}) {
     return const Stream.empty();
   }
 }

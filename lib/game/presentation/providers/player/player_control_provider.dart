@@ -204,7 +204,7 @@ class GamePlayerControlController extends _$GamePlayerControlController {
     );
   }
 
-  Future<List<UiEffect>> _dispatchAndHandle(GameCommand command) {
+  Future<List<UiEffect>> _dispatchAndHandle(DomainCommand command) {
     return ref.read(gameCommandControllerProvider.notifier).dispatch(command);
   }
 }

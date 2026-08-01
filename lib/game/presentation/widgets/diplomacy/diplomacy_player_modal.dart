@@ -43,7 +43,7 @@ Future<void> showDiplomacyPlayerModal(
   required MapData mapData,
   required String activePlayerId,
   required String targetPlayerId,
-  required Future<void> Function(GameCommand command) onCommand,
+  required Future<void> Function(DomainCommand command) onCommand,
   ValueListenable<GamepadInputSnapshot>? gamepadInputListenable,
 }) {
   return showGameModal<void>(
@@ -83,7 +83,7 @@ class DiplomacyPlayerModal extends StatelessWidget {
   final MapData mapData;
   final String activePlayerId;
   final String targetPlayerId;
-  final Future<void> Function(GameCommand command) onCommand;
+  final Future<void> Function(DomainCommand command) onCommand;
   final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
 
   @override

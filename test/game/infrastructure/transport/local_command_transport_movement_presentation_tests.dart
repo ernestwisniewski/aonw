@@ -28,13 +28,13 @@ void _registerMovementPresentationTransportTests() {
         ),
       );
 
-      final preview = await transport.dispatch(
+      final preview = await transport.dispatchAcrossBoundary(
         saveId: save.id,
         currentState: selectedState,
         command: const TileTappedCommand(1, 0),
         context: const GameCommandContext(actorPlayerId: 'player_1'),
       );
-      final moved = await transport.dispatch(
+      final moved = await transport.dispatchAcrossBoundary(
         saveId: save.id,
         currentState: preview.state,
         command: const TileTappedCommand(1, 0),
@@ -96,7 +96,7 @@ void _registerMovementPresentationTransportTests() {
       ),
     );
 
-    final result = await transport.dispatch(
+    final result = await transport.dispatchAcrossBoundary(
       saveId: save.id,
       currentState: state,
       command: const TileTappedCommand(0, 0),
@@ -134,13 +134,13 @@ void _registerMovementPresentationTransportTests() {
       ),
     );
 
-    final preview = await transport.dispatch(
+    final preview = await transport.dispatchAcrossBoundary(
       saveId: save.id,
       currentState: selected,
       command: const TileTappedCommand(2, 0),
       context: const GameCommandContext(actorPlayerId: 'player_1'),
     );
-    final result = await transport.dispatch(
+    final result = await transport.dispatchAcrossBoundary(
       saveId: save.id,
       currentState: preview.state,
       command: const TileTappedCommand(2, 0),

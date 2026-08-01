@@ -73,7 +73,7 @@ void _runFixture(ReducerParityFixture fixture) {
       ).resolve(
         baseSnapshot: baseSnapshot,
         currentState: initialState,
-        command: command as DomainCommand,
+        command: command,
         savedAt: fixture.now,
         context: GameCommandContext(
           actorPlayerId: fixture.actorPlayerId,

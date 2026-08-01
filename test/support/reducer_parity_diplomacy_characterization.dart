@@ -258,7 +258,7 @@ void _requireExactDiplomacyCharacterization(
   }
 }
 
-String _diplomacyMode(GameCommand command) => switch (command) {
+String _diplomacyMode(DomainCommand command) => switch (command) {
   SendDiplomaticProposalCommand() => 'proposal-send',
   RespondDiplomaticProposalCommand() => 'proposal-response',
   DeclareWarCommand() => 'war',

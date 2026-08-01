@@ -25,7 +25,7 @@ const _blockedReserveMove = CommandRanking(CandidatePriority.fallback, -940);
 const _blockedDefense = CommandRanking(CandidatePriority.fallback, -950);
 
 CommandRanking? rankEarlyCityDefenseCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
   StrategicPlan plan,
@@ -34,7 +34,7 @@ CommandRanking? rankEarlyCityDefenseCommand(
 }
 
 CommandRanking? rankLastMilitaryReserveCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
 ) {
@@ -42,7 +42,7 @@ CommandRanking? rankLastMilitaryReserveCommand(
 }
 
 CommandRanking? rankReservedGarrisonCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
   StrategicPlan plan,
@@ -59,7 +59,7 @@ CommandRanking? rankPinnedGarrisonMove(
 }
 
 CommandRanking? rankDefenseCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
   StrategicPlan plan,

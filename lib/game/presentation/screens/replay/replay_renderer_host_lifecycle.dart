@@ -10,7 +10,7 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
       initialCamera: widget.timeline.initialCamera,
       initialViewMode: session.viewMode,
       focusActivePlayerOnFirstState: true,
-      onCommand: (GameCommand _) async {},
+      onCommand: (GameIntent _) async {},
       onLoadingProgress: _reportRendererLoadProgress,
       l10n: widget.l10n,
       displaySettings: widget.displaySettings,

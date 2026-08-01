@@ -70,7 +70,7 @@ Future<void> _runFixture(ReducerParityFixture fixture) async {
       tick: fixture.tick,
       turn: fixture.save.turn,
       actorPlayerId: fixture.actorPlayerId,
-      command: GameCommandSerializer.toJson(fixture.command),
+      command: DomainCommandCodec.toJson(fixture.command),
     ),
     actorPlayerId: fixture.actorPlayerId,
     now: fixture.now,

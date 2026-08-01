@@ -15,7 +15,7 @@ final class BasicStrategyResourceTradePlanner {
   final int goldPerTurn;
   final int durationTurns;
 
-  List<GameCommand> plan(GameView view) {
+  List<DomainCommand> plan(GameView view) {
     if (view.rememberedEnemyCities.isEmpty) {
       return const [];
     }

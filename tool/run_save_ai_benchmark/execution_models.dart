@@ -338,12 +338,12 @@ class _ExecutionRun {
   });
 
   final int plannedCommandCount;
-  final List<GameCommand> dispatchedCommands;
-  final List<GameCommand> rejectedCommands;
+  final List<DomainCommand> dispatchedCommands;
+  final List<DomainCommand> rejectedCommands;
   final List<String> rejectedReasons;
-  final List<GameCommand> skippedTerminalCommands;
-  final List<GameCommand> skippedStaleCommands;
-  final GameCommand terminalCommand;
+  final List<DomainCommand> skippedTerminalCommands;
+  final List<DomainCommand> skippedStaleCommands;
+  final DomainCommand terminalCommand;
   final bool terminalChangedState;
   final Duration totalDuration;
   final Duration dispatchDuration;
@@ -534,7 +534,7 @@ class _CommandStats {
   }
 
   factory _CommandStats.fromCommands(
-    Iterable<GameCommand> commands, {
+    Iterable<DomainCommand> commands, {
     required GameView view,
     required Set<String> humanPlayerIds,
     StrategicPlan? strategicPlan,

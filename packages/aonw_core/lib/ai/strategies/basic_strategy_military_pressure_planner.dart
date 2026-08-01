@@ -19,7 +19,7 @@ final class BasicStrategyMilitaryPressurePlanner {
 
   final AiMilitaryAssessment militaryAssessment;
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     AiEmpireAssessment assessment,
@@ -43,7 +43,7 @@ final class BasicStrategyMilitaryPressurePlanner {
         : _pressureTargets(view, warGoals: warGoals);
     if (genericTargets.isEmpty && goalByUnitId.isEmpty) return const [];
 
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final occupied = <String>{
       for (final unit in view.ownUnits) _key(unit.col, unit.row),
       for (final unit in view.visibleEnemyUnits) _key(unit.col, unit.row),

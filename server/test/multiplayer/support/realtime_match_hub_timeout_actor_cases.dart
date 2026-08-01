@@ -398,9 +398,12 @@ void _expectAcceptedTimeoutActor(
   expect(observation.events, hasLength(1));
   final event = observation.events.single;
   expect(event.actorPlayerId, actorPlayerId);
-  final command = GameCommandSerializer.fromJson(event.command!);
-  expect(command, isA<SubmitTurnCommand>());
-  expect((command as SubmitTurnCommand).playerId, actorPlayerId);
+  final record = RecordedSystemCommand.fromJson(event.command!);
+  expect(record.command, isA<FinalizeTimedOutTurn>());
+  expect(
+    (record.command as FinalizeTimedOutTurn).playerIds,
+    contains(actorPlayerId),
+  );
 }
 
 void _expectTimeoutNoOp(_TimeoutActorObservation observation) {

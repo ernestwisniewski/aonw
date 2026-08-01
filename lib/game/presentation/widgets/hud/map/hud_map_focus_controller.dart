@@ -54,7 +54,7 @@ class HudMapFocusController {
     _ref.read(hudPanelControllerProvider.notifier).apply(panelModes);
     await _ref
         .read(hudCommandDispatcherProvider)
-        .dispatch(target.selectCommand);
+        .dispatchIntent(target.selectCommand);
     await _ref
         .read(activeRendererViewModelProvider)
         ?.handleEffect(target.cameraEffect);

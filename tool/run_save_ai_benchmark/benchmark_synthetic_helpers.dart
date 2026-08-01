@@ -412,7 +412,7 @@ void _appendFailingPlannerFindings(
 
 BenchmarkCommandTransition _reduceSyntheticCommand(
   _PreparedPlayer prepared,
-  GameCommand command,
+  DomainCommand command,
 ) {
   final dispatcher = BenchmarkCommandDispatcher(
     snapshot: prepared.snapshot.canonical,
@@ -431,7 +431,7 @@ BenchmarkCommandTransition _reduceSyntheticCommand(
 
 bool _syntheticCommandChangesState(
   _PreparedPlayer prepared,
-  GameCommand command,
+  DomainCommand command,
 ) {
   final state = prepared._executionInitialState();
   final dispatcher = BenchmarkCommandDispatcher(

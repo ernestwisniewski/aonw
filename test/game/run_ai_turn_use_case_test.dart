@@ -1,8 +1,8 @@
 import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/ai_recent_hostility_tracker.dart';
 import 'package:aonw/game/application/services/ai_turn_runner.dart';
@@ -453,7 +453,7 @@ void main() {
       final transport = _RecordingCommandTransport();
       final eventLog = _MemoryEventLog()
         ..commands.add(
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: 1,
             timestamp: DateTime.utc(2026, 4, 27, 12),
             turn: 1,
@@ -674,7 +674,7 @@ RunAiTurnUseCase _useCase({
 }
 
 class _CapturingStrategy implements AiStrategy {
-  final List<GameCommand> commands;
+  final List<DomainCommand> commands;
   GameView? lastView;
   AiContext? lastContext;
 
@@ -689,15 +689,16 @@ class _CapturingStrategy implements AiStrategy {
 }
 
 class _RecordingCommandTransport implements CommandTransport {
-  final commands = <GameCommand>[];
+  final commands = <DomainCommand>[];
   final states = <GameState>[];
 
   @override
   Future<CommandTransportResult> dispatch({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
+    bool fromMovePreviewConfirmation = false,
   }) async {
     commands.add(command);
     states.add(currentState);
@@ -748,10 +749,10 @@ class _MemoryGameRepository implements GameRepository {
 }
 
 class _MemoryEventLog implements EventLog {
-  final commands = <LoggedCommand>[];
+  final commands = <RecordedDomainCommand>[];
 
   @override
-  Future<void> append(String saveId, LoggedCommand command) async {
+  Future<void> append(String saveId, RecordedDomainCommand command) async {
     commands.add(command);
   }
 
@@ -761,10 +762,13 @@ class _MemoryEventLog implements EventLog {
   }
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) => readSince(saveId);
+  Stream<RecordedDomainCommand> readAll(String saveId) => readSince(saveId);
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) async* {
+  Stream<RecordedDomainCommand> readSince(
+    String saveId, {
+    int offset = 0,
+  }) async* {
     for (final command in commands) {
       if (command.offset >= offset) yield command;
     }

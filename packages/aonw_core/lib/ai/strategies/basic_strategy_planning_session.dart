@@ -8,7 +8,7 @@ import 'package:aonw_core/game/domain/movement.dart';
 
 final class BasicStrategyPlanningSession {
   final GameView view;
-  final List<GameCommand> commands = [];
+  final List<DomainCommand> commands = [];
   final List<String> notes = [];
   final Set<String> usedUnitIds = {};
   final Set<HexCoordinate> reservedHexes = {};
@@ -28,7 +28,7 @@ final class BasicStrategyPlanningSession {
   }
 
   void addCommands(
-    Iterable<GameCommand> phaseCommands, {
+    Iterable<DomainCommand> phaseCommands, {
     Iterable<String> additionalUsedUnitIds = const [],
     bool trackUsedUnitIds = true,
     bool reserveMoveHexes = true,
@@ -51,11 +51,11 @@ final class BasicStrategyPlanningSession {
     }
   }
 
-  List<GameCommand> runCommandPhase(
+  List<DomainCommand> runCommandPhase(
     String phase,
-    List<GameCommand> Function() action, {
+    List<DomainCommand> Function() action, {
     Iterable<String> additionalUsedUnitIds = const [],
-    Iterable<String> Function(List<GameCommand> commands)? notesFor,
+    Iterable<String> Function(List<DomainCommand> commands)? notesFor,
     bool trackUsedUnitIds = true,
     bool reserveMoveHexes = true,
   }) {
@@ -96,7 +96,7 @@ final class BasicStrategyPlanningSession {
 }
 
 abstract final class BasicStrategyCommandAnalysis {
-  static Set<String> unitIdsUsedBy(Iterable<GameCommand> commands) {
+  static Set<String> unitIdsUsedBy(Iterable<DomainCommand> commands) {
     return {
       for (final command in commands)
         switch (command) {
@@ -123,7 +123,7 @@ abstract final class BasicStrategyCommandAnalysis {
   }
 
   static Set<HexCoordinate> moveReservationsForCommands(
-    Iterable<GameCommand> commands,
+    Iterable<DomainCommand> commands,
     GameView view,
   ) {
     final reserved = <HexCoordinate>{};

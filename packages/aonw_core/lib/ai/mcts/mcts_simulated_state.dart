@@ -13,14 +13,14 @@ import 'package:aonw_core/game/domain/unit.dart';
 class SimulatedState {
   final GameView view;
   final List<MctsAction> plannedActions;
-  final Set<GameCommand> usedCommands;
+  final Set<DomainCommand> usedCommands;
   final int maxPlanningDepth;
   final bool planningEnded;
 
   SimulatedState({
     required this.view,
     Iterable<MctsAction> plannedActions = const [],
-    Iterable<GameCommand> usedCommands = const {},
+    Iterable<DomainCommand> usedCommands = const {},
     required this.maxPlanningDepth,
     this.planningEnded = false,
   }) : plannedActions = List.unmodifiable(plannedActions),
@@ -47,8 +47,10 @@ class SimulatedState {
 
   bool get isTerminal => planningEnded || depth >= maxPlanningDepth;
 
-  List<GameCommand> get plannedCommands => List.unmodifiable(
-    plannedActions.map((action) => action.toCommand()).whereType<GameCommand>(),
+  List<DomainCommand> get plannedCommands => List.unmodifiable(
+    plannedActions
+        .map((action) => action.toCommand())
+        .whereType<DomainCommand>(),
   );
 
   late final List<GameUnit> visibleTargetableEnemyUnits = List.unmodifiable([
@@ -62,7 +64,7 @@ class SimulatedState {
           if (view.canTargetPlayer(city.ownerPlayerId)) city,
       ]);
 
-  bool hasCommand(GameCommand command) => usedCommands.contains(command);
+  bool hasCommand(DomainCommand command) => usedCommands.contains(command);
 
   SimulatedState apply(MctsAction action) {
     if (isTerminal) return this;
@@ -88,12 +90,11 @@ class SimulatedState {
     );
   }
 
-  MctsSimulatedCommandApplication _applyCommand(GameCommand command) {
+  MctsSimulatedCommandApplication _applyCommand(DomainCommand command) {
     if (_movementCommandApplier.supportsUnitAction(command)) {
       return _movementCommandApplier.applyUnitAction(command);
     }
-    if (command is DomainCommand &&
-        _usesEconomyCommandApplier(GameEngine.commandFamily(command))) {
+    if (_usesEconomyCommandApplier(GameEngine.commandFamily(command))) {
       return _economyCommandApplier.applyEngineCommand(command, depth + 1);
     }
     return switch (command) {

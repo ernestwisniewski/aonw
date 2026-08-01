@@ -2,15 +2,15 @@
 
 - Status: Accepted
 - Date: 2026-07-12
-- Implementation: In progress
+- Implementation: Complete
 
 ## Context
 
-The current sealed `GameCommand` hierarchy represents both authoritative game
-changes and client-only interaction. It includes movement, production, combat,
+The former sealed `GameCommand` hierarchy represented both authoritative game
+changes and client-only interaction. It included movement, production, combat,
 and turn commands, but also taps, selection, focus, targeting modes, and panel
-workflow. The serializer can encode many of those interaction commands, so an
-implementation detail of the Flutter UI can enter replay or multiplayer paths.
+workflow. That umbrella made it possible for a Flutter interaction detail to
+enter replay or multiplayer paths.
 
 Several commands repeat a player id even when the authenticated server session
 already knows the actor. Transport metadata such as match id, tick, turn, and
@@ -60,11 +60,10 @@ The binding invariants are:
   mappings fail closed. Mapper completeness and round-trip tests accompany
   every new serializable command.
 - A separate exhaustive trusted codec records `SystemCommand`; it is never
-  exposed on a player command endpoint. The authoritative log stores a
-  `RecordedCommand` envelope with player/system origin plus the complete actor
-  or system reason, turn/tick, time, seed/entropy, and other engine context
-  needed for deterministic replay. Replay applies both command categories
-  through `GameEngine`.
+  exposed on a player command endpoint. Player history uses
+  `RecordedDomainCommand`; trusted server transitions use a tagged
+  `RecordedSystemCommand`. Both retain the context needed by their owning
+  execution boundary and cannot be decoded as one another.
 - UI effects are projections of accepted transitions/events plus local
   interaction state. They do not become domain commands or events merely to
   drive animation.
@@ -78,10 +77,9 @@ Presentation can evolve without changing the wire protocol, and trusted system
 actions become auditable instead of being disguised as player input. Actor
 spoofing checks have one clear boundary.
 
-Controllers must sometimes translate one `GameIntent` into a local interaction
-update and later a `DomainCommand`. Existing `GameCommand` call sites and the
-large serializer require staged migration. Command envelopes add types but
-remove repeated transport metadata from domain values.
+Controllers sometimes translate one `GameIntent` into a local interaction
+update and later a `DomainCommand`. The type system now prevents transport,
+codec, and event-log APIs from accepting that intent directly.
 
 Rejected alternatives:
 
@@ -93,27 +91,23 @@ Rejected alternatives:
 
 ## Migration And Verification
 
-`GameCommand` is the transitional umbrella. `TileTappedCommand`,
-`CityTappedCommand`, selection/focus commands, and targeting-mode commands are
-known interaction variants that must move to `GameIntent`. Authoritative
-variants retain compatibility names while being moved behind the
-`DomainCommand` contract. Timeout and lifecycle paths move to `SystemCommand`.
-The current synthetic player commands written for timeout processing remain a
-compatibility exception until the trusted system record codec and replay path
-are available.
+The migration is complete:
 
-Migration proceeds by adding characterization tests for each command family,
-introducing the new category at the application boundary, and removing that
-variant from the authoritative serializer only after replay/network fixtures
-prove it is not persisted or transmitted. Existing saves and logs remain
-readable through bounded compatibility codecs. Multi-step worker and pending
-action flows must first separate the complete authoritative command from the UI
-wizard; they must not be reclassified solely from their current class name.
-
-Architecture tests must prevent presentation intents from entering contracts,
-event logs, or server APIs; prevent domain/system commands from importing
-adapters; ratchet serializer completeness; and verify that authenticated actor
-context wins over or rejects caller-supplied identity.
+- the `GameCommand` declaration no longer exists;
+- `GameIntent` and `DomainCommand` are independent sealed roots;
+- `CommandTransport`, `CommandCodec`, replay, AI, MCTS, and server player APIs
+  accept `DomainCommand` only;
+- client intent resolution lives before the transport boundary;
+- the worker picker uses dedicated choose/confirm intents and emits a complete
+  authoritative worker command only on confirmation;
+- timeout finalization and participant kicks use the independent
+  `SystemCommand` root and trusted codec;
+- new local log entries are `RecordedDomainCommand`; historical intent records
+  decode only as non-dispatchable tombstones;
+- server timeout history stores `RecordedSystemCommand`, not a fabricated
+  player `SubmitTurnCommand`;
+- architecture tests reject reintroduction of the umbrella and reject
+  `GameIntent` references in API transport, server, and event-log boundaries.
 
 ## Related Decisions And Documentation
 

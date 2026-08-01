@@ -24,11 +24,11 @@ extension _BasicStrategyPipeline on BasicStrategy {
       technologyScorer: technologyScorer,
     );
     planning.notes.add('strategic mode ${strategicPlan.mode.name}');
-    List<GameCommand> runPhase(
+    List<DomainCommand> runPhase(
       String phase,
-      List<GameCommand> Function() action, {
+      List<DomainCommand> Function() action, {
       Iterable<String> additionalUsedUnitIds = const [],
-      Iterable<String> Function(List<GameCommand> commands)? notesFor,
+      Iterable<String> Function(List<DomainCommand> commands)? notesFor,
     }) {
       return planning.runCommandPhase(
         phase,

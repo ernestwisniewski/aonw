@@ -8,7 +8,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 bool isStaleEconomySimulationCommand({
-  required GameCommand command,
+  required DomainCommand command,
   required PersistentGameState state,
   required String actorPlayerId,
   required GameRuleset ruleset,
@@ -18,7 +18,7 @@ bool isStaleEconomySimulationCommand({
       _isStaleAttackCommand(command, state, actorPlayerId, ruleset, mapTiles);
 }
 
-bool _isStaleMoveCommand(GameCommand command, PersistentGameState state) {
+bool _isStaleMoveCommand(DomainCommand command, PersistentGameState state) {
   if (command is! MoveUnitCommand) return false;
 
   GameUnit? movingUnit;
@@ -34,7 +34,7 @@ bool _isStaleMoveCommand(GameCommand command, PersistentGameState state) {
 }
 
 bool _isStaleAttackCommand(
-  GameCommand command,
+  DomainCommand command,
   PersistentGameState state,
   String actorPlayerId,
   GameRuleset ruleset,

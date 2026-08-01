@@ -5,7 +5,7 @@ import 'reducer_parity_rush_semantics.dart';
 
 bool tryRequireProduction(
   String fixtureId,
-  GameCommand command,
+  DomainCommand command,
   String actorPlayerId,
   PersistentGameState before,
   PersistentGameState after,

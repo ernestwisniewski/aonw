@@ -3,7 +3,6 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw_core/game/domain/command.dart';
 
 enum AuthoritativeSnapshotRequiredReason { redactedCommand, missingGameTurn }
 
@@ -74,11 +73,6 @@ class EventLogReplayService {
         throw AuthoritativeSnapshotRequiredException(
           offset: logged.offset,
           reason: AuthoritativeSnapshotRequiredReason.redactedCommand,
-        );
-      }
-      if (command is! DomainCommand) {
-        throw StateError(
-          'Replay command at offset ${logged.offset} is not authoritative.',
         );
       }
       if (logged.turn == null) {

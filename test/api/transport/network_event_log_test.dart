@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('NetworkEventLog', () {
-    test('reads server events as LoggedCommand entries', () async {
+    test('reads server events as RecordedDomainCommand entries', () async {
       const codec = EventCodec();
       final wire = codec.toWire(
         matchId: 'match_1',
@@ -109,7 +109,7 @@ void main() {
     });
 
     test(
-      'keeps authoritative movement plans out of LoggedCommand history',
+      'keeps authoritative movement plans out of RecordedDomainCommand history',
       () async {
         final wire = WireEvent(
           matchId: 'match_1',

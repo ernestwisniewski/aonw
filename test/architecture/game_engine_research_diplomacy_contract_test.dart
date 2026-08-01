@@ -116,10 +116,6 @@ void main() {
     const command = CancelResearchSelectionCommand('owner');
 
     expect(command, isA<GameIntent>());
-    expect(
-      () => GameCommandSerializer.toJson(command),
-      throwsA(isA<UnsupportedError>()),
-    );
   });
 
   test('handlers and neutral kernels have one composition point', () {

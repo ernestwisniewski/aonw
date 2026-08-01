@@ -70,7 +70,7 @@ void main() {
   });
 
   test('DetachTroopUseCase dispatches detach for the selected unit', () async {
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
     final state = GameState(
       interaction: GameInteractionState(

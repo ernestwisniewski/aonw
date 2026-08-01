@@ -17,7 +17,7 @@ final class BasicStrategyFrontierClearingPlanner {
 
   final AiMilitaryAssessment militaryAssessment;
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     Set<String> usedUnitIds,
@@ -28,7 +28,7 @@ final class BasicStrategyFrontierClearingPlanner {
         const <StrategicFrontierClearingAssignment>[];
     if (assignments.isEmpty) return const [];
 
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final occupied = <String>{
       for (final own in view.ownUnits) _key(own.col, own.row),
       for (final enemy in view.visibleEnemyUnits) _key(enemy.col, enemy.row),
@@ -83,7 +83,7 @@ final class BasicStrategyFrontierClearingPlanner {
     return commands;
   }
 
-  ({GameCommand command, Set<HexCoordinate> reservedHexes})?
+  ({DomainCommand command, Set<HexCoordinate> reservedHexes})?
   _frontierClearingAction({
     required StrategicFrontierClearingAssignment assignment,
     required GameUnit unit,

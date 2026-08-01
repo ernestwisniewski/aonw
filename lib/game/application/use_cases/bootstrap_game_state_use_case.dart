@@ -5,13 +5,17 @@ import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw_core/game/domain/command.dart';
 
 class BootstrapGameStateResult {
   final GameState state;
   final int offset;
+  final bool shouldFocusTurnStart;
 
-  const BootstrapGameStateResult({required this.state, required this.offset});
+  const BootstrapGameStateResult({
+    required this.state,
+    required this.offset,
+    this.shouldFocusTurnStart = false,
+  });
 }
 
 class BootstrapGameStateUseCase {
@@ -100,13 +104,11 @@ class BootstrapGameStateUseCase {
       return BootstrapGameStateResult(state: initialState, offset: offset);
     }
 
-    final focused = await dispatchCommand.execute(
-      saveId: saveId,
-      currentState: initialState,
-      command: FocusTurnStartActionCommand(control.activePlayerId),
+    return BootstrapGameStateResult(
+      state: initialState,
+      offset: offset,
+      shouldFocusTurnStart: true,
     );
-    offset = _maxOffset(offset, focused.offset);
-    return BootstrapGameStateResult(state: focused.state, offset: offset);
   }
 
   PlayerControlState _initialControl(
@@ -117,6 +119,4 @@ class BootstrapGameStateUseCase {
     turnStatesByPlayerId: snapshot.session.turnStatesByPlayerId,
     preferredPlayerId: preferredPlayerId,
   );
-
-  int _maxOffset(int first, int second) => first > second ? first : second;
 }

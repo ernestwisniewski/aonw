@@ -8,7 +8,7 @@ Set<String> _targetableOwnerIds(GameView view) {
 }
 
 Set<String> _attackTargetOwnerIds(
-  Iterable<GameCommand> commands,
+  Iterable<DomainCommand> commands,
   GameView view,
 ) {
   final ownerIds = <String>{};
@@ -20,8 +20,8 @@ Set<String> _attackTargetOwnerIds(
   return ownerIds;
 }
 
-GameCommand? _firstCommandForUnit(
-  Iterable<GameCommand> commands,
+DomainCommand? _firstCommandForUnit(
+  Iterable<DomainCommand> commands,
   String unitId,
 ) {
   for (final command in commands) {
@@ -30,7 +30,7 @@ GameCommand? _firstCommandForUnit(
   return null;
 }
 
-String? _commandPrimaryUnitId(GameCommand command) {
+String? _commandPrimaryUnitId(DomainCommand command) {
   return switch (command) {
     MoveUnitCommand(:final unitId) => unitId,
     CancelUnitActionCommand(:final unitId) => unitId,

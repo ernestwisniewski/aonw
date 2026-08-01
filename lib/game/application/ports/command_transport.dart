@@ -38,7 +38,8 @@ abstract interface class CommandTransport {
   Future<CommandTransportResult> dispatch({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
+    bool fromMovePreviewConfirmation = false,
   });
 }

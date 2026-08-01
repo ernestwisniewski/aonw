@@ -28,7 +28,7 @@ void _registerCombatReplayTest() {
         ),
       }),
       eventLog: _MemoryEventLog([
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 1,
           timestamp: DateTime.utc(2026, 4, 24, 12, 1),
           turn: 1,

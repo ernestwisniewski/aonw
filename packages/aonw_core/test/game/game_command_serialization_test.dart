@@ -2,11 +2,9 @@ import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('GameCommandSerializer', () {
+  group('DomainCommandCodec', () {
     DomainCommand roundTrip(DomainCommand command) {
-      return GameCommandSerializer.fromJson(
-        GameCommandSerializer.toJson(command),
-      );
+      return DomainCommandCodec.fromJson(DomainCommandCodec.toJson(command));
     }
 
     test('round-trips every command type used by transport', () {
@@ -23,7 +21,7 @@ void main() {
       final encodedTypes = <String>{};
 
       for (final fixture in _commandFixtures) {
-        final json = GameCommandSerializer.toJson(fixture.command);
+        final json = DomainCommandCodec.toJson(fixture.command);
         expect(
           json['type'],
           fixture.type,
@@ -35,16 +33,9 @@ void main() {
       expect(encodedTypes, _expectedCommandTypes);
     });
 
-    test('rejects presentation intents', () {
-      expect(
-        () => GameCommandSerializer.toJson(const SelectUnitCommand('u1')),
-        throwsA(isA<UnsupportedError>()),
-      );
-    });
-
     test('rejects removed local lifecycle payloads', () {
       expect(
-        () => GameCommandSerializer.fromJson({
+        () => DomainCommandCodec.fromJson({
           'type': 'SetActivePlayer',
           'playerId': 'p1',
           'canAct': true,
@@ -55,17 +46,15 @@ void main() {
 
     test('rejects presentation intent payloads', () {
       expect(
-        () => GameCommandSerializer.fromJson({
-          'type': 'SelectUnit',
-          'unitId': 'u1',
-        }),
+        () =>
+            DomainCommandCodec.fromJson({'type': 'SelectUnit', 'unitId': 'u1'}),
         throwsA(isA<ArgumentError>()),
       );
     });
 
     test('rejects trusted system command payloads', () {
       expect(
-        () => GameCommandSerializer.fromJson({
+        () => DomainCommandCodec.fromJson({
           'type': 'SetActivePlayer',
           'playerId': 'p1',
           'canAct': true,
@@ -75,7 +64,7 @@ void main() {
     });
 
     test('encodes AttackHex payload used by the server reducer', () {
-      expect(GameCommandSerializer.toJson(const AttackHexCommand('u', 1, 2)), {
+      expect(DomainCommandCodec.toJson(const AttackHexCommand('u', 1, 2)), {
         'type': 'AttackHex',
         'attackerUnitId': 'u',
         'defenderCol': 1,
@@ -91,7 +80,7 @@ void main() {
         cityConquestAction: CityConquestAction.destroy,
       );
 
-      expect(GameCommandSerializer.toJson(command), {
+      expect(DomainCommandCodec.toJson(command), {
         'type': 'AttackHex',
         'attackerUnitId': 'u',
         'defenderCol': 1,
@@ -99,7 +88,7 @@ void main() {
         'cityConquestAction': 'destroy',
       });
       expect(
-        GameCommandSerializer.fromJson(GameCommandSerializer.toJson(command)),
+        DomainCommandCodec.fromJson(DomainCommandCodec.toJson(command)),
         command,
       );
     });
@@ -110,7 +99,7 @@ void main() {
         improvementType: FieldImprovementType.mine,
       );
 
-      expect(GameCommandSerializer.toJson(command), {
+      expect(DomainCommandCodec.toJson(command), {
         'type': 'ConfirmWorkerImprovement',
         'unitId': 'worker_1',
         'improvementType': 'mine',
@@ -120,7 +109,7 @@ void main() {
 
     test('decodes SubmitTurn with transport-only fields ignored', () {
       expect(
-        GameCommandSerializer.fromJson({
+        DomainCommandCodec.fromJson({
           'type': 'SubmitTurn',
           'playerId': 'player_1',
           'timedOut': true,
@@ -131,24 +120,21 @@ void main() {
 
     test('decodes legacy SleepUnit as SkipUnitTurn', () {
       expect(
-        GameCommandSerializer.fromJson({
-          'type': 'SleepUnit',
-          'unitId': 'scout_1',
-        }),
+        DomainCommandCodec.fromJson({'type': 'SleepUnit', 'unitId': 'scout_1'}),
         const SkipUnitTurnCommand('scout_1'),
       );
     });
 
     test('rejects unknown command type', () {
       expect(
-        () => GameCommandSerializer.fromJson({'type': 'UnknownCommand'}),
+        () => DomainCommandCodec.fromJson({'type': 'UnknownCommand'}),
         throwsA(isA<ArgumentError>()),
       );
     });
 
     test('rejects missing AttackHex payload', () {
       expect(
-        () => GameCommandSerializer.fromJson({
+        () => DomainCommandCodec.fromJson({
           'type': 'AttackHex',
           'attackerUnitId': 'warrior_1',
           'defenderCol': 4,
@@ -165,7 +151,7 @@ void main() {
 
     test('rejects invalid enum payload', () {
       expect(
-        () => GameCommandSerializer.fromJson({
+        () => DomainCommandCodec.fromJson({
           'type': 'StartBuilding',
           'cityId': 'city_1',
           'buildingType': 'spaceElevator',

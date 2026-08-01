@@ -23,7 +23,7 @@ final class BasicStrategyCombatReactionsPlanner {
   final AiMilitaryAssessment militaryAssessment;
   final BasicStrategyMilitaryAwareness militaryAwareness;
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     Set<String> usedUnitIds,
@@ -34,8 +34,8 @@ final class BasicStrategyCombatReactionsPlanner {
       return const [];
     }
 
-    final retreats = <GameCommand>[];
-    final attacks = <GameCommand>[];
+    final retreats = <DomainCommand>[];
+    final attacks = <DomainCommand>[];
     final reservedEnemyTargets = <String>{};
     final occupied = <String>{
       for (final own in view.ownUnits) _key(own.col, own.row),

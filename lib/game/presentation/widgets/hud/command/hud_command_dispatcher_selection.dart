@@ -14,7 +14,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     _applyPanelModes(
       _ref.read(hudPanelControllerProvider).closeUnitActionPanels(),
     );
-    unawaited(dispatch(const ToggleMoveTargetingCommand()));
+    unawaited(dispatchIntent(const ToggleMoveTargetingCommand()));
   }
 
   Future<void> focusUnitMapTarget(String unitId) {
@@ -49,13 +49,13 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     _applyPanelModes(
       _ref.read(hudPanelControllerProvider).closePrimaryPanels(),
     );
-    unawaited(dispatch(command));
+    unawaited(dispatchIntent(command));
   }
 
   void cancelAttackTargeting(GameState? state) {
     final unitId = HudPendingActionTargets.attackUnitId(state);
     if (unitId == null) return;
-    unawaited(dispatch(CancelAttackTargetingCommand(unitId)));
+    unawaited(dispatchIntent(CancelAttackTargetingCommand(unitId)));
   }
 
   void detachTroop(TroopType troopType) {
@@ -69,11 +69,11 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
       _ref.read(hudPanelControllerProvider).closeUnitActionPanels(),
     );
     _ref.read(openSelectionDetailControllerProvider.notifier).close();
-    unawaited(dispatch(const StartCityFoundingCommand()));
+    unawaited(dispatchIntent(const StartCityFoundingCommand()));
   }
 
   void cancelCityFounding() {
-    unawaited(dispatch(const CancelCityFoundingCommand()));
+    unawaited(dispatchIntent(const CancelCityFoundingCommand()));
   }
 
   void confirmCityFounding(GameState? state) {
@@ -92,13 +92,13 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     _applyPanelModes(
       _ref.read(hudPanelControllerProvider).closePrimaryPanels(),
     );
-    unawaited(dispatch(command));
+    unawaited(dispatchIntent(command));
   }
 
   void cancelCityWorkedHexSelection(GameState? state) {
     final cityId = HudPendingActionTargets.cityWorkedHexCityId(state);
     if (cityId == null) return;
-    unawaited(dispatch(CancelCityWorkedHexSelectionCommand(cityId)));
+    unawaited(dispatchIntent(CancelCityWorkedHexSelectionCommand(cityId)));
   }
 
   void startCityExpansionSelection(GameState? state) {
@@ -107,7 +107,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     _applyPanelModes(
       _ref.read(hudPanelControllerProvider).closePrimaryPanels(),
     );
-    unawaited(dispatch(command));
+    unawaited(dispatchIntent(command));
   }
 
   void cancelCityExpansionSelection(GameState? state) {
@@ -117,7 +117,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   Future<void> confirmCityExpansionSelection(GameState? state) async {
     final cityId = HudPendingActionTargets.cityExpansionCityId(state);
     if (cityId == null) return;
-    await dispatch(CancelCityExpansionSelectionCommand(cityId));
+    await dispatchIntent(CancelCityExpansionSelectionCommand(cityId));
   }
 
   void startWorkerActionSelection(GameState? state) {
@@ -126,7 +126,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     _applyPanelModes(
       _ref.read(hudPanelControllerProvider).closePrimaryPanels(),
     );
-    unawaited(dispatch(command));
+    unawaited(dispatchIntent(command));
   }
 
   void _clearFeedback() {
@@ -136,7 +136,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   void cancelWorkerActionSelection(GameState? state) {
     final unitId = HudPendingActionTargets.workerUnitId(state);
     if (unitId == null) return;
-    unawaited(dispatch(CancelWorkerActionSelectionCommand(unitId)));
+    unawaited(dispatchIntent(CancelWorkerActionSelectionCommand(unitId)));
   }
 
   void startMerchantTradeRouteSelection(GameState? state) {
@@ -147,13 +147,13 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     _applyPanelModes(
       _ref.read(hudPanelControllerProvider).closePrimaryPanels(),
     );
-    unawaited(dispatch(command));
+    unawaited(dispatchIntent(command));
   }
 
   void cancelMerchantTradeRouteSelection(GameState? state) {
     final unitId = HudPendingActionTargets.merchantUnitId(state);
     if (unitId == null) return;
-    unawaited(dispatch(CancelMerchantTradeRouteSelectionCommand(unitId)));
+    unawaited(dispatchIntent(CancelMerchantTradeRouteSelectionCommand(unitId)));
   }
 
   void assignMerchantTradeRoute(GameState? state, String destinationCityId) {
@@ -173,13 +173,13 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     _applyPanelModes(
       _ref.read(hudPanelControllerProvider).closePrimaryPanels(),
     );
-    unawaited(dispatch(command));
+    unawaited(dispatchIntent(command));
   }
 
   void cancelMerchantMoveToCitySelection(GameState? state) {
     final unitId = HudPendingActionTargets.merchantUnitId(state);
     if (unitId == null) return;
-    unawaited(dispatch(CancelMerchantMoveToCitySelectionCommand(unitId)));
+    unawaited(dispatchIntent(CancelMerchantMoveToCitySelectionCommand(unitId)));
   }
 
   void moveMerchantToCity(GameState? state, String destinationCityId) {
@@ -192,11 +192,11 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   }
 
   void selectWorkerImprovement(String unitId, FieldImprovementType type) {
-    unawaited(dispatch(SelectWorkerImprovementCommand(unitId, type)));
+    unawaited(dispatchIntent(ChooseWorkerImprovementIntent(unitId, type)));
   }
 
   void confirmWorkerImprovement(String unitId) {
-    unawaited(dispatch(ConfirmWorkerImprovementCommand(unitId)));
+    unawaited(dispatchIntent(ConfirmWorkerImprovementIntent(unitId)));
   }
 
   void cancelWorkerJob(GameState? state) {

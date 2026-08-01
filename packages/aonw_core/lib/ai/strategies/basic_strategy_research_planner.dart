@@ -11,7 +11,7 @@ final class BasicStrategyResearchPlanner {
 
   final AiTechnologyScorer technologyScorer;
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     AiEmpireAssessment assessment,

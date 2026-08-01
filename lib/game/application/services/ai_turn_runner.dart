@@ -28,11 +28,11 @@ Future<AiTurnPlan> syncAiPlanExecutor({
 }
 
 class AiTurnReport {
-  final List<GameCommand> plannedCommands;
-  final List<GameCommand> dispatchedCommands;
-  final List<GameCommand> rejectedCommands;
-  final List<GameCommand> skippedTerminalCommands;
-  final List<GameCommand> skippedStaleCommands;
+  final List<DomainCommand> plannedCommands;
+  final List<DomainCommand> dispatchedCommands;
+  final List<DomainCommand> rejectedCommands;
+  final List<DomainCommand> skippedTerminalCommands;
+  final List<DomainCommand> skippedStaleCommands;
   final Duration planningDuration;
   final Duration executionDuration;
   final Duration dispatchDuration;
@@ -42,16 +42,16 @@ class AiTurnReport {
   final int delayedCommandCount;
   final AiPlanSource planningSource;
   final AiDebugInfo? debug;
-  final GameCommand terminalCommand;
+  final DomainCommand terminalCommand;
   final List<UiEffect> terminalUiEffects;
   final GameState finalState;
 
   AiTurnReport({
-    required Iterable<GameCommand> plannedCommands,
-    required Iterable<GameCommand> dispatchedCommands,
-    required Iterable<GameCommand> rejectedCommands,
-    required Iterable<GameCommand> skippedTerminalCommands,
-    Iterable<GameCommand> skippedStaleCommands = const [],
+    required Iterable<DomainCommand> plannedCommands,
+    required Iterable<DomainCommand> dispatchedCommands,
+    required Iterable<DomainCommand> rejectedCommands,
+    required Iterable<DomainCommand> skippedTerminalCommands,
+    Iterable<DomainCommand> skippedStaleCommands = const [],
     required this.planningDuration,
     required this.executionDuration,
     this.dispatchDuration = Duration.zero,
@@ -229,7 +229,7 @@ class AiTurnRunner {
     return ' debug="${notes.join('; ')}"';
   }
 
-  static GameCommand _terminalFor(
+  static DomainCommand _terminalFor(
     AiTerminalCommand terminalCommand,
     String playerId,
   ) {

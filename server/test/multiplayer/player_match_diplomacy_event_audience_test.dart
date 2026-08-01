@@ -90,7 +90,7 @@ WireEvent _storedWireEvent(List<Map<String, dynamic>> stored) {
     actorPlayerId: 'player-2',
     tick: 9,
     turn: 5,
-    command: GameCommandSerializer.toJson(
+    command: DomainCommandCodec.toJson(
       const RespondDiplomaticProposalCommand(
         playerId: 'player-2',
         proposalId: 'proposal-1',

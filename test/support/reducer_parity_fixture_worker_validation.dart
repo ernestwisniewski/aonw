@@ -37,7 +37,7 @@ bool _permitsReviewedWorkerInteraction(ReducerParityFixture fixture) {
   return _workerInteractionMode(fixture) != 'none';
 }
 
-bool _isWorkerCancellation(GameCommand command) {
+bool _isWorkerCancellation(DomainCommand command) {
   return command is CancelWorkerJobCommand ||
       command is CancelWorkerAssignmentCommand;
 }
@@ -244,7 +244,7 @@ GameRuntimeState _expectedWorkerRuntime(
   return runtime;
 }
 
-String _workerCommandUnitId(GameCommand command) {
+String _workerCommandUnitId(DomainCommand command) {
   return switch (command) {
     SelectWorkerImprovementCommand(:final unitId) ||
     ConfirmWorkerImprovementCommand(:final unitId) ||

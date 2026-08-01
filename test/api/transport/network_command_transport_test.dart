@@ -4,10 +4,13 @@ import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/transport/network_command_transport.dart';
+import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
+import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
@@ -21,6 +24,47 @@ import '../../support/network_command_transport_movement_fixtures.dart';
 
 part 'support/network_command_transport_test_helpers.dart';
 part 'support/network_command_transport_transient_snapshot_cases.dart';
+
+extension _NetworkTransportClientBoundary on NetworkCommandTransport {
+  Future<CommandTransportResult> dispatchAcrossBoundary({
+    required String saveId,
+    required GameState currentState,
+    required Object command,
+    GameCommandContext context = const GameCommandContext(),
+  }) async {
+    if (command is DomainCommand) {
+      return dispatch(
+        saveId: saveId,
+        currentState: currentState,
+        command: command,
+        context: context,
+      );
+    }
+    if (command is! GameIntent) throw ArgumentError.value(command, 'command');
+    final resolution = GameIntentResolver(
+      reducer: localReducer,
+      context: context,
+    ).resolve(currentState.interaction, command, currentState);
+    final domainCommand = resolution.domainCommand;
+    if (domainCommand != null) {
+      return dispatch(
+        saveId: saveId,
+        currentState: currentState,
+        command: domainCommand,
+        context: context,
+      );
+    }
+    final nextState = resolution.interaction == currentState.interaction
+        ? currentState
+        : currentState.copyWith(interaction: resolution.interaction);
+    return CommandTransportResult(
+      state: nextState,
+      uiEffects: resolution.presentationFocus,
+      snapshot: null,
+      offset: -1,
+    );
+  }
+}
 
 void main() {
   test('Serverpod dispatcher stays lazy and closes idempotently', () {
@@ -486,7 +530,7 @@ void main() {
         gameRepository: repository,
       );
 
-      final result = await transport.dispatch(
+      final result = await transport.dispatchAcrossBoundary(
         saveId: 'save_1',
         currentState: currentState,
         command: MoveUnitCommand(commander.id, 1, 0),
@@ -612,7 +656,7 @@ void main() {
       final server = _FakeCommandServer(save: _save(), state: state);
       final transport = _transport(server);
 
-      final result = await transport.dispatch(
+      final result = await transport.dispatchAcrossBoundary(
         saveId: 'save_1',
         currentState: state,
         command: const TileTappedCommand(1, 0),
@@ -659,15 +703,15 @@ void main() {
         final server = _FakeCommandServer(save: _save(), state: base);
         final transport = _transport(server);
 
-        final started = await transport.dispatch(
+        final started = await transport.dispatchAcrossBoundary(
           saveId: 'save_1',
           currentState: base,
           command: const StartWorkerActionSelectionCommand('worker_1'),
         );
-        final selected = await transport.dispatch(
+        final selected = await transport.dispatchAcrossBoundary(
           saveId: 'save_1',
           currentState: started.state,
-          command: const SelectWorkerImprovementCommand(
+          command: const ChooseWorkerImprovementIntent(
             'worker_1',
             FieldImprovementType.farm,
           ),
@@ -680,10 +724,10 @@ void main() {
           FieldImprovementType.farm,
         );
 
-        final confirmed = await transport.dispatch(
+        final confirmed = await transport.dispatchAcrossBoundary(
           saveId: 'save_1',
           currentState: selected.state,
-          command: const ConfirmWorkerImprovementCommand('worker_1'),
+          command: const ConfirmWorkerImprovementIntent('worker_1'),
         );
 
         expect(server.sentCommands, hasLength(1));
@@ -716,12 +760,12 @@ void main() {
         final server = _FakeCommandServer(save: _save(), state: state);
         final transport = _transport(server);
 
-        final preview = await transport.dispatch(
+        final preview = await transport.dispatchAcrossBoundary(
           saveId: 'save_1',
           currentState: state,
           command: const TileTappedCommand(1, 0),
         );
-        final moved = await transport.dispatch(
+        final moved = await transport.dispatchAcrossBoundary(
           saveId: 'save_1',
           currentState: preview.state,
           command: const TileTappedCommand(1, 0),
@@ -771,7 +815,7 @@ void main() {
       final server = _FakeCommandServer(save: _save(), state: state);
       final transport = _transport(server);
 
-      final result = await transport.dispatch(
+      final result = await transport.dispatchAcrossBoundary(
         saveId: 'save_1',
         currentState: state,
         command: const TileTappedCommand(1, 0),
@@ -825,7 +869,7 @@ void main() {
       final server = _FakeCommandServer(save: _save(), state: state);
       final transport = _transport(server);
 
-      final result = await transport.dispatch(
+      final result = await transport.dispatchAcrossBoundary(
         saveId: 'save_1',
         currentState: state,
         command: const TileTappedCommand(1, 0),
@@ -878,7 +922,7 @@ void main() {
       final server = _FakeCommandServer(save: _save(), state: state);
       final transport = _transport(server);
 
-      final result = await transport.dispatch(
+      final result = await transport.dispatchAcrossBoundary(
         saveId: 'save_1',
         currentState: state,
         command: const CityTappedCommand('city_player_2'),

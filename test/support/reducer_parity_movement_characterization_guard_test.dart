@@ -36,8 +36,8 @@ void _registerMovementCorpusGuards(_FixtureProvider fixtureProvider) {
       returnsNormally,
     );
     for (final fixture in fixtures) {
-      final encoded = GameCommandSerializer.toJson(fixture.command);
-      expect(GameCommandSerializer.fromJson(encoded), fixture.command);
+      final encoded = DomainCommandCodec.toJson(fixture.command);
+      expect(DomainCommandCodec.fromJson(encoded), fixture.command);
     }
   });
 

@@ -126,7 +126,7 @@ void main() {
 
       const command = StartWonderCommand('city_1', WonderType.greatWall);
       expect(
-        GameCommandSerializer.fromJson(GameCommandSerializer.toJson(command)),
+        DomainCommandCodec.fromJson(DomainCommandCodec.toJson(command)),
         command,
       );
 

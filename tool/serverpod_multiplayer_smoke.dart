@@ -339,7 +339,7 @@ class _RuntimeSmoke {
             tick: 1,
             turn: started.turn,
             actorPlayerId: ownerPlayer.id,
-            command: GameCommandSerializer.toJson(move.command),
+            command: DomainCommandCodec.toJson(move.command),
           ),
         ),
       );
@@ -448,7 +448,7 @@ class _RuntimeSmoke {
           tick: 2,
           turn: started.turn,
           actorPlayerId: ownerPlayer.id,
-          command: GameCommandSerializer.toJson(combatRoutingCommand),
+          command: DomainCommandCodec.toJson(combatRoutingCommand),
         ),
       ),
     );
@@ -507,7 +507,7 @@ class _RuntimeSmoke {
           tick: 3,
           turn: started.turn,
           actorPlayerId: ownerPlayer.id,
-          command: GameCommandSerializer.toJson(diplomacyCommand),
+          command: DomainCommandCodec.toJson(diplomacyCommand),
         ),
       ),
     );
@@ -568,9 +568,7 @@ class _RuntimeSmoke {
         tick: 4,
         turn: started.turn,
         actorPlayerId: ownerPlayer.id,
-        command: GameCommandSerializer.toJson(
-          SubmitTurnCommand(ownerPlayer.id),
-        ),
+        command: DomainCommandCodec.toJson(SubmitTurnCommand(ownerPlayer.id)),
       ),
     );
     ownerInput

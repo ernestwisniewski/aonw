@@ -8,7 +8,7 @@ import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 CommandRanking? rankMapObjectiveCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
 ) {

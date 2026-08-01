@@ -12,13 +12,7 @@ extension GameRendererTileInteractions on GameRenderer {
     final pending = _renderState.pendingAction;
     if (pending is PendingCityExpansionSelection) {
       _artifactTapCycle.clear();
-      await onCommand(
-        SelectCityExpansionHexCommand(
-          pending.cityId,
-          tileData.col,
-          tileData.row,
-        ),
-      );
+      await onCommand(TileTappedCommand(tileData.col, tileData.row));
       return;
     }
     if (_selectedUnitOnCityCenter(tileData) &&
@@ -188,11 +182,11 @@ extension GameRendererTileInteractions on GameRenderer {
   void _handlePreviewWorkerImprovement(String unitId, String optionId) {
     final type = _fieldImprovementTypeById(optionId);
     if (type == null) return;
-    unawaited(onCommand(SelectWorkerImprovementCommand(unitId, type)));
+    unawaited(onCommand(ChooseWorkerImprovementIntent(unitId, type)));
   }
 
   void _handleConfirmWorkerImprovement(String unitId) {
-    unawaited(onCommand(ConfirmWorkerImprovementCommand(unitId)));
+    unawaited(onCommand(ConfirmWorkerImprovementIntent(unitId)));
   }
 
   void _handleCancelWorkerActionSelection(String unitId) {

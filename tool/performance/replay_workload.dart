@@ -1,5 +1,5 @@
 import 'package:aonw/game/application/ports/event_log.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
@@ -136,9 +136,9 @@ SaveSnapshot _initialSnapshot(int events) => SaveSnapshot(
   ],
 );
 
-List<LoggedCommand> _commands(int count) => [
+List<RecordedDomainCommand> _commands(int count) => [
   for (var offset = 1; offset <= count; offset++)
-    LoggedCommand(
+    RecordedDomainCommand(
       offset: offset,
       timestamp: DateTime.utc(2026, 1, 1).add(Duration(seconds: offset)),
       turn: 1,
@@ -150,7 +150,7 @@ List<LoggedCommand> _commands(int count) => [
 
 String _playerId(int offset) => 'player_${((offset - 1) % 4) + 1}';
 
-GameCommand _command(int offset) {
+DomainCommand _command(int offset) {
   final playerId = _playerId(offset);
   return switch (offset % 4) {
     0 => SubmitTurnCommand(playerId),
@@ -249,13 +249,13 @@ class _MemoryReplayStore implements ReplayStore {
 class _MemoryEventLog implements EventLog {
   _MemoryEventLog(this.commands);
 
-  final List<LoggedCommand> commands;
+  final List<RecordedDomainCommand> commands;
   int commandsYielded = 0;
 
   void resetYieldedCommands() => commandsYielded = 0;
 
   @override
-  Future<void> append(String saveId, LoggedCommand command) async {
+  Future<void> append(String saveId, RecordedDomainCommand command) async {
     throw UnsupportedError('The replay performance fixture is immutable.');
   }
 
@@ -264,10 +264,13 @@ class _MemoryEventLog implements EventLog {
       commands.isEmpty ? 0 : commands.last.offset;
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) => readSince(saveId);
+  Stream<RecordedDomainCommand> readAll(String saveId) => readSince(saveId);
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) async* {
+  Stream<RecordedDomainCommand> readSince(
+    String saveId, {
+    int offset = 0,
+  }) async* {
     for (final command in commands) {
       if (command.offset >= offset) {
         commandsYielded++;

@@ -11,7 +11,10 @@ import 'package:aonw_core/game/domain/unit.dart';
 final class MctsCombatCandidateCollector {
   const MctsCombatCandidateCollector();
 
-  Iterable<GameCommand> priorityCommandsFor(GameView view, AiContext context) {
+  Iterable<DomainCommand> priorityCommandsFor(
+    GameView view,
+    AiContext context,
+  ) {
     final priorityTargetPlayerIds = _priorityTargetPlayerIds(view, context);
     if (priorityTargetPlayerIds.isEmpty) return const [];
 
@@ -35,7 +38,7 @@ final class MctsCombatCandidateCollector {
     return _commandsForTargets(view, enemies: enemies, cities: cities);
   }
 
-  Iterable<GameCommand> commandsFor(GameView view) {
+  Iterable<DomainCommand> commandsFor(GameView view) {
     if (view.visibleTargetableEnemyUnits.isEmpty &&
         view.rememberedTargetableEnemyCities.isEmpty) {
       return const [];
@@ -48,7 +51,7 @@ final class MctsCombatCandidateCollector {
     );
   }
 
-  Iterable<GameCommand> _commandsForTargets(
+  Iterable<DomainCommand> _commandsForTargets(
     GameView view, {
     required List<GameUnit> enemies,
     required List<GameCity> cities,

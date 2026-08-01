@@ -11,6 +11,7 @@ export 'game/application/engine/movement_engine_handler.dart';
 export 'game/application/engine/movement_execution_delta.dart';
 export 'game/application/engine/production_engine_handler.dart';
 export 'game/application/engine/research_engine_handler.dart';
+export 'game/application/engine/system_command.dart';
 export 'game/application/engine/turn_engine_handler.dart';
 export 'game/application/engine/worker_engine_handler.dart';
 export 'game/application/lifecycle/match_lifecycle_state.dart';

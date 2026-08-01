@@ -24,12 +24,12 @@ final class MctsSimulatedMovementCommandApplier {
     return _applyEngineMovement(command);
   }
 
-  bool supportsUnitAction(GameCommand command) =>
+  bool supportsUnitAction(DomainCommand command) =>
       command is CancelUnitActionCommand ||
       command is SkipUnitTurnCommand ||
       command is FortifyUnitCommand;
 
-  MctsSimulatedCommandApplication applyUnitAction(GameCommand command) {
+  MctsSimulatedCommandApplication applyUnitAction(DomainCommand command) {
     return switch (command) {
       final CancelUnitActionCommand value => _applyEngineMovement(value),
       final SkipUnitTurnCommand value => _applyEngineMovement(value),

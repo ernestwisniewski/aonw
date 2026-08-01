@@ -127,7 +127,7 @@ final class _ReducerParityCorpusSummary {
   }
 }
 
-String _artifactAcceptanceMode(GameCommand command) {
+String _artifactAcceptanceMode(DomainCommand command) {
   return switch (command) {
     StartArtifactExcavationCommand() => 'excavation',
     StoreArtifactInCityCommand() => 'store',
@@ -136,7 +136,7 @@ String _artifactAcceptanceMode(GameCommand command) {
   };
 }
 
-String _resourceTradeAcceptanceMode(GameCommand command) {
+String _resourceTradeAcceptanceMode(DomainCommand command) {
   return switch (command) {
     OpenResourceTradeCommand() => 'gold',
     OpenResourceExchangeCommand() => 'exchange',

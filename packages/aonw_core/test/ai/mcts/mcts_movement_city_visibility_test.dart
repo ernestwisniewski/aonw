@@ -81,7 +81,7 @@ void main() {
   });
 }
 
-SimulatedState _simulate(PersistentGameState state, GameCommand command) {
+SimulatedState _simulate(PersistentGameState state, DomainCommand command) {
   final view = GameView.fromPersistentState(
     state,
     forPlayerId: 'player_1',

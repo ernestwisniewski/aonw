@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw_core/game/domain/command.dart';
 
@@ -8,7 +8,7 @@ class HumanTraceAnalyzer {
   const HumanTraceAnalyzer();
 
   HumanTraceReport analyze({
-    required List<LoggedCommand> log,
+    required List<RecordedDomainCommand> log,
     required String humanPlayerId,
   }) {
     var turn = 1;
@@ -48,7 +48,7 @@ class HumanTraceAnalyzer {
           turn: turn,
           offset: entry.offset,
           commandType: _commandType(command),
-          command: GameCommandSerializer.toJson(command),
+          command: DomainCommandCodec.toJson(command),
         );
         meaningful.add(decision);
         switch (command) {
@@ -146,7 +146,7 @@ class HumanTraceAnalyzer {
                 () => _RepeatedCommandBucket(
                   playerId: playerId,
                   commandType: type,
-                  command: GameCommandSerializer.toJson(command),
+                  command: DomainCommandCodec.toJson(command),
                 ),
               )
               .update(turn);
@@ -263,55 +263,42 @@ class HumanTraceAnalyzer {
   static void _increment(Map<String, int> counts, String key) =>
       counts[key] = (counts[key] ?? 0) + 1;
 
-  static bool _isMeaningfulHumanCommand(GameCommand command) {
+  static bool _isMeaningfulHumanCommand(DomainCommand command) {
     return switch (command) {
-      SubmitTurnCommand() ||
-      EndTurnCommand() ||
-      StartCityFoundingCommand() ||
-      StartAttackTargetingCommand() ||
-      StartWorkerActionSelectionCommand() ||
-      ToggleMoveTargetingCommand() ||
-      TileTappedCommand() ||
-      CityTappedCommand() ||
-      SelectTileCommand() ||
-      SelectUnitCommand() ||
-      SelectCityCommand() ||
-      FocusNextPendingActionCommand() ||
-      FocusTurnStartActionCommand() => false,
+      SubmitTurnCommand() || EndTurnCommand() => false,
       _ => true,
     };
   }
 
-  static bool _isRepeatedAiCandidate(GameCommand command) => switch (command) {
-    MoveUnitCommand() ||
-    SelectWorkerImprovementCommand() ||
-    AssignWorkerToHexCommand() ||
-    AttackHexCommand() ||
-    FoundCityCommand() => true,
-    _ => false,
-  };
+  static bool _isRepeatedAiCandidate(DomainCommand command) =>
+      switch (command) {
+        MoveUnitCommand() ||
+        SelectWorkerImprovementCommand() ||
+        AssignWorkerToHexCommand() ||
+        AttackHexCommand() ||
+        FoundCityCommand() => true,
+        _ => false,
+      };
 
-  static String? _commandOwner(GameCommand command) {
+  static String? _commandOwner(DomainCommand command) {
     return switch (command) {
       SelectTechnologyCommand(:final playerId) => playerId,
       SubmitTurnCommand(:final playerId) => playerId,
       EndTurnCommand(:final playerId) => playerId,
-      FocusNextPendingActionCommand(:final playerId) => playerId,
-      FocusTurnStartActionCommand(:final playerId) => playerId,
       _ => null,
     };
   }
 
-  static String _commandType(GameCommand command) {
-    final encoded = GameCommandSerializer.toJson(command);
+  static String _commandType(DomainCommand command) {
+    final encoded = DomainCommandCodec.toJson(command);
     return encoded['type'] as String? ?? command.runtimeType.toString();
   }
 
   static String _repeatedKey({
     required String playerId,
-    required GameCommand command,
+    required DomainCommand command,
   }) {
-    return '$playerId|${jsonEncode(GameCommandSerializer.toJson(command))}';
+    return '$playerId|${jsonEncode(DomainCommandCodec.toJson(command))}';
   }
 
   static Map<String, int> _sortedMap(Map<String, int> input) {

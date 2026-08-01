@@ -8,7 +8,7 @@ import 'package:aonw_core/game/domain/event.dart';
 
 abstract final class GameSoundCueMapper {
   static List<GameSoundCue> forCommand({
-    required GameCommand command,
+    required Object command,
     required GameState? previousState,
     required GameState state,
     required Iterable<GameEvent> events,
@@ -156,7 +156,7 @@ abstract final class GameSoundCueMapper {
   }
 
   static String _audiblePlayerIdForCommand(
-    GameCommand command,
+    Object command,
     GameState? previousState,
     GameState state,
   ) {
@@ -164,7 +164,7 @@ abstract final class GameSoundCueMapper {
   }
 
   static bool _commandBelongsToPlayer(
-    GameCommand command,
+    Object command,
     GameState? previousState,
     GameState state,
     String playerId,
@@ -251,6 +251,7 @@ abstract final class GameSoundCueMapper {
         playerId,
       ),
       TileTappedCommand() || SelectTileCommand() => true,
+      _ => true,
     };
   }
 

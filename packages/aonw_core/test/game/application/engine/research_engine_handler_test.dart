@@ -93,8 +93,8 @@ void main() {
       'technologyId': 'agriculture',
     };
 
-    expect(GameCommandSerializer.toJson(command), expected);
-    expect(GameCommandSerializer.fromJson(expected), command);
+    expect(DomainCommandCodec.toJson(command), expected);
+    expect(DomainCommandCodec.fromJson(expected), command);
   });
 }
 

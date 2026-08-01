@@ -119,7 +119,7 @@ void main() {
 
       await presenter.dispatchAndPresent(
         currentState: currentAiState,
-        command: const SelectTileCommand(1, 2),
+        command: const CancelUnitActionCommand('unit_1'),
         context: const GameCommandContext(actorPlayerId: 'ai_1'),
       );
 

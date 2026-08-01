@@ -11,7 +11,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 
 CommandRanking? rankAssignedWarFocusGuard(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
   StrategicPlan plan,
@@ -63,7 +63,7 @@ CommandRanking? rankAssignedWarFocusGuard(
 }
 
 CommandRanking? rankWarCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
   StrategicPlan plan,

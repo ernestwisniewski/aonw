@@ -18,7 +18,7 @@ void main() {
   group('AiTurnPresentationDriver', () {
     test('uses hidden presentation for hot-seat AI commands', () async {
       final applied = <_AppliedTransition>[];
-      final hiddenCommands = <GameCommand>[];
+      final hiddenCommands = <DomainCommand>[];
       final beforeUnit = GameUnit.produced(
         id: 'warrior_1',
         ownerPlayerId: 'ai_1',
@@ -89,7 +89,7 @@ void main() {
     });
 
     test('uses hidden presentation for multiplayer AI commands', () async {
-      final hiddenCommands = <GameCommand>[];
+      final hiddenCommands = <DomainCommand>[];
       final driver = _driver(
         session: _session(gameMode: GameMode.multiplayer),
         hiddenDispatch:

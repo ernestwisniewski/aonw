@@ -19,7 +19,7 @@ final class BasicStrategyLastMilitaryReservePlanner {
   final BasicStrategyGarrisonRules garrisonRules;
   final AiMilitaryAssessment militaryAssessment;
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     Set<String> usedUnitIds,
@@ -27,7 +27,7 @@ final class BasicStrategyLastMilitaryReservePlanner {
   ) {
     if (view.ownCities.isEmpty) return const [];
 
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final claimedUnitIds = <String>{};
     final localUsedUnitIds = {...usedUnitIds};
     final localReservedHexes = {...reservedHexes};

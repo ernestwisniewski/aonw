@@ -13,7 +13,7 @@ final class BasicStrategyProductionPlanner {
 
   final AiProductionScorer scorer;
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     AiEmpireAssessment assessment, {
@@ -29,7 +29,7 @@ final class BasicStrategyProductionPlanner {
     );
     final cities = [...view.citiesWithReassignableProduction]
       ..sort((a, b) => a.id.compareTo(b.id));
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
 
     for (final city in cities) {
       final recommendation = scorer.recommend(
@@ -50,7 +50,7 @@ final class BasicStrategyProductionPlanner {
     return List.unmodifiable(commands);
   }
 
-  GameCommand _commandFor(String cityId, CityProductionTarget target) {
+  DomainCommand _commandFor(String cityId, CityProductionTarget target) {
     return switch (target) {
       UnitProductionTarget(:final unitType) => StartUnitProductionCommand(
         cityId,

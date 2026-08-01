@@ -8,7 +8,7 @@ import 'package:aonw_core/game/domain/command.dart';
 typedef TurnStartFocusMountedCheck = bool Function();
 typedef TurnStartFocusStateReader = GameState? Function();
 typedef TurnStartCommandDispatcher =
-    Future<DispatchCommandResult> Function(GameCommand command);
+    Future<DispatchCommandResult> Function(GameIntent intent);
 typedef TurnStartRendererEffectHandler =
     Future<void> Function(RendererEffect effect);
 

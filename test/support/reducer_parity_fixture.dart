@@ -48,7 +48,7 @@ final class ReducerParityFixture {
   final WireMatch match;
   final GameSave save;
   final PersistentGameState state;
-  final GameCommand command;
+  final DomainCommand command;
   final bool expectedAccepted;
   final String? expectedReason;
   final Map<String, dynamic> expectedSave;
@@ -177,8 +177,8 @@ abstract final class ReducerParityCorpus {
     _requireCanonicalJson(id, 'save', save.toJson(), saveJson);
     _requireCanonicalJson(id, 'state', state.toJson(), stateJson);
     final commandJson = _asMap(input['command'], '$id.command');
-    final command = GameCommandSerializer.fromJson(commandJson);
-    if (!_jsonDeepEquals(GameCommandSerializer.toJson(command), commandJson)) {
+    final command = DomainCommandCodec.fromJson(commandJson);
+    if (!_jsonDeepEquals(DomainCommandCodec.toJson(command), commandJson)) {
       throw FormatException('$id.command is not in canonical serialized form.');
     }
 

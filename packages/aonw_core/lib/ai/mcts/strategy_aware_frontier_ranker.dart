@@ -14,7 +14,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 const _military = StrategyAwareMilitaryContext();
 
 CommandRanking? rankFrontierClearingCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
   StrategicPlan plan,
@@ -37,7 +37,7 @@ CommandRanking? rankFrontierClearingCommand(
 }
 
 CommandRanking? rankFounderPressureClearingCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
 ) {

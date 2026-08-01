@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:aonw/game/analysis/human_trace_analyzer.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 
 void main(List<String> args) async {
   if (_hasFlag(args, '--help') || _hasFlag(args, '-h')) {
@@ -53,11 +53,11 @@ void main(List<String> args) async {
   }
 }
 
-Future<List<LoggedCommand>> _readLog(File file) async {
+Future<List<RecordedDomainCommand>> _readLog(File file) async {
   if (!await file.exists()) {
     throw _UsageException('Event log not found: ${file.path}');
   }
-  final commands = <LoggedCommand>[];
+  final commands = <RecordedDomainCommand>[];
   final lines = file
       .openRead()
       .transform(utf8.decoder)
@@ -65,7 +65,7 @@ Future<List<LoggedCommand>> _readLog(File file) async {
   await for (final line in lines) {
     if (line.trim().isEmpty) continue;
     commands.add(
-      LoggedCommand.fromJson(jsonDecode(line) as Map<String, dynamic>),
+      RecordedDomainCommand.fromJson(jsonDecode(line) as Map<String, dynamic>),
     );
   }
   return commands;

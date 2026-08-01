@@ -162,20 +162,18 @@ class TracingMctsSimulator implements MctsSimulator {
 
   _MctsSimulationEnvelope _applyOpponentCommand({
     required _MctsSimulationEnvelope current,
-    required GameCommand command,
+    required DomainCommand command,
     required String actorPlayerId,
     required int tick,
     required _OpponentPlanningInput input,
   }) {
     final mapData = input.mapData;
     final ruleset = input.ruleset;
-    final family = command is DomainCommand
-        ? GameEngine.commandFamily(command)
-        : null;
+    final family = GameEngine.commandFamily(command);
     if (family != null) {
       return _applySimulationEngineCommand(
         current: current,
-        command: command as DomainCommand,
+        command: command,
         actorPlayerId: actorPlayerId,
         tick: tick,
         mapData: mapData,
@@ -185,7 +183,7 @@ class TracingMctsSimulator implements MctsSimulator {
     return current;
   }
 
-  bool _isTerminal(GameCommand command) {
+  bool _isTerminal(DomainCommand command) {
     return command is EndTurnCommand || command is SubmitTurnCommand;
   }
 }

@@ -19,6 +19,40 @@ final class StartWorkerActionSelectionCommand extends GameIntent
 }
 
 /// Player chooses the intended worker improvement type.
+final class ChooseWorkerImprovementIntent extends GameIntent
+    implements WorkerInteractionCommand {
+  const ChooseWorkerImprovementIntent(this.unitId, this.improvementType);
+
+  final String unitId;
+  final FieldImprovementType improvementType;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ChooseWorkerImprovementIntent &&
+      other.unitId == unitId &&
+      other.improvementType == improvementType;
+
+  @override
+  int get hashCode =>
+      Object.hash(ChooseWorkerImprovementIntent, unitId, improvementType);
+}
+
+/// Client confirmation of the worker improvement selected in the UI.
+final class ConfirmWorkerImprovementIntent extends GameIntent
+    implements WorkerInteractionCommand {
+  const ConfirmWorkerImprovementIntent(this.unitId);
+
+  final String unitId;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ConfirmWorkerImprovementIntent && other.unitId == unitId;
+
+  @override
+  int get hashCode => Object.hash(ConfirmWorkerImprovementIntent, unitId);
+}
+
+/// Authoritative request to begin a specific worker improvement.
 final class SelectWorkerImprovementCommand extends UnitDomainCommand {
   const SelectWorkerImprovementCommand(this.unitId, this.improvementType);
 

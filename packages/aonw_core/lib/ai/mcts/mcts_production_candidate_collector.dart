@@ -7,7 +7,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 final class MctsProductionCandidateCollector {
   const MctsProductionCandidateCollector();
 
-  Iterable<GameCommand> commandsFor(GameView view) sync* {
+  Iterable<DomainCommand> commandsFor(GameView view) sync* {
     final cities = [...view.citiesWithReassignableProduction]
       ..sort((a, b) => a.id.compareTo(b.id));
     for (final city in cities) {

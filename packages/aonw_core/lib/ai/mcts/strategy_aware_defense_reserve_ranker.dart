@@ -3,7 +3,11 @@ part of 'strategy_aware_defense_ranker.dart';
 class _LastMilitaryReserveRanker {
   const _LastMilitaryReserveRanker();
 
-  CommandRanking? rank(GameCommand command, GameView view, AiContext context) {
+  CommandRanking? rank(
+    DomainCommand command,
+    GameView view,
+    AiContext context,
+  ) {
     if (!needsMilitaryReserve(view, context)) return null;
 
     return switch (command) {

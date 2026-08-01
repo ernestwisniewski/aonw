@@ -1,5 +1,5 @@
 import 'package:aonw/game/application/ports/event_log.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_database.dart';
 import 'package:sembast/sembast.dart';
 
@@ -12,13 +12,16 @@ class WebEventLog implements EventLog {
   const WebEventLog({required this.database});
 
   @override
-  Future<void> append(String saveId, LoggedCommand command) async {
+  Future<void> append(String saveId, RecordedDomainCommand command) async {
     final key = _key(saveId, command.offset);
     await _store.record(key).put(database.database, command.toJson());
   }
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) async* {
+  Stream<RecordedDomainCommand> readSince(
+    String saveId, {
+    int offset = 0,
+  }) async* {
     final prefix = '$saveId:';
     final records = await _store.find(
       database.database,
@@ -28,7 +31,7 @@ class WebEventLog implements EventLog {
       ),
     );
     for (final record in records) {
-      final command = LoggedCommand.fromJson(
+      final command = RecordedDomainCommand.fromJson(
         Map<String, dynamic>.from(record.value),
       );
       if (command.offset >= offset) yield command;
@@ -47,13 +50,13 @@ class WebEventLog implements EventLog {
       ),
     );
     if (records.isEmpty) return 0;
-    return LoggedCommand.fromJson(
+    return RecordedDomainCommand.fromJson(
       Map<String, dynamic>.from(records.single.value),
     ).offset;
   }
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) => readSince(saveId);
+  Stream<RecordedDomainCommand> readAll(String saveId) => readSince(saveId);
 
   static String _key(String saveId, int offset) =>
       '$saveId:${offset.toString().padLeft(12, '0')}';

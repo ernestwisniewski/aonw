@@ -11,7 +11,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 final class BasicStrategyCityAssaultPlanner {
   const BasicStrategyCityAssaultPlanner();
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     Set<String> usedUnitIds,
@@ -133,7 +133,7 @@ final class BasicStrategyCityAssaultPlanner {
       return a.cityHex.row.compareTo(b.cityHex.row);
     });
 
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final usedAssaultUnitIds = <String>{};
     final assaultedCityHexes = <String>{};
     for (final candidate in candidates) {

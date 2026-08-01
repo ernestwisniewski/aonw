@@ -30,12 +30,12 @@ class CommandCodec {
       tick: tick,
       turn: turn,
       actorPlayerId: actorPlayerId,
-      command: GameCommandSerializer.toJson(command),
+      command: DomainCommandCodec.toJson(command),
     );
   }
 
   DomainCommand fromWire(WireCommand wire) {
-    return GameCommandSerializer.fromJson(wire.command);
+    return DomainCommandCodec.fromJson(wire.command);
   }
 
   GameCommandContext contextFromWire(WireCommand wire) {
@@ -64,7 +64,7 @@ class EventCodec {
       actorPlayerId: actorPlayerId,
       tick: tick,
       turn: turn,
-      command: command == null ? null : GameCommandSerializer.toJson(command),
+      command: command == null ? null : DomainCommandCodec.toJson(command),
       events: events.map(GameEventSerializer.toJson).toList(),
       movementExecutions: WireMovementExecutionList(movementExecutions),
     );
@@ -95,7 +95,8 @@ class EventCodec {
   DomainCommand? commandFromWire(WireEvent wire) {
     final command = wire.command;
     if (command == null) return null;
-    return GameCommandSerializer.fromJson(command);
+    if (command['recordKind'] == 'system') return null;
+    return DomainCommandCodec.fromJson(command);
   }
 }
 

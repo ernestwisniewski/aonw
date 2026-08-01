@@ -358,11 +358,11 @@ class _PreparedPlayer {
       ruleset: context.ruleset,
     );
     var state = _executionInitialState();
-    final dispatched = <GameCommand>[];
-    final rejected = <GameCommand>[];
+    final dispatched = <DomainCommand>[];
+    final rejected = <DomainCommand>[];
     final rejectedReasons = <String>[];
-    final skippedTerminals = <GameCommand>[];
-    final skippedStale = <GameCommand>[];
+    final skippedTerminals = <DomainCommand>[];
+    final skippedStale = <DomainCommand>[];
     final eventCounts = _ExecutionEventCounts();
     var dispatchDuration = Duration.zero;
 

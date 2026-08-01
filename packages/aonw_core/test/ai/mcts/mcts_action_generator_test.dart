@@ -5062,7 +5062,7 @@ void main() {
 }
 
 class _StaticStrategy implements AiStrategy {
-  final List<GameCommand> commands;
+  final List<DomainCommand> commands;
 
   const _StaticStrategy({required this.commands});
 
@@ -5073,7 +5073,7 @@ class _StaticStrategy implements AiStrategy {
 }
 
 class _CountingStrategy implements AiStrategy {
-  final List<GameCommand> commands;
+  final List<DomainCommand> commands;
   int calls = 0;
 
   _CountingStrategy({required this.commands});
@@ -5096,10 +5096,10 @@ class _StaticActionGenerator implements MctsActionGenerator {
   }
 }
 
-List<GameCommand> _commands(List<MctsAction> actions) {
+List<DomainCommand> _commands(List<MctsAction> actions) {
   return actions
       .map((action) => action.toCommand())
-      .whereType<GameCommand>()
+      .whereType<DomainCommand>()
       .toList();
 }
 

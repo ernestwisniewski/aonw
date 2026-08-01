@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   test('marks only diplomacy service commands as DiplomaticCommand', () {
-    const diplomacyCommands = <GameCommand>[
+    const diplomacyCommands = <DomainCommand>[
       SendDiplomaticProposalCommand(
         playerId: 'player_1',
         targetPlayerId: 'player_2',
@@ -31,7 +31,7 @@ void main() {
         response: DiplomaticMessageResponse.conciliatory,
       ),
     ];
-    const resourceTradeCommands = <GameCommand>[
+    const resourceTradeCommands = <DomainCommand>[
       OpenResourceTradeCommand(
         playerId: 'player_1',
         targetPlayerId: 'player_2',

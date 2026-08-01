@@ -39,7 +39,7 @@ extension GameStateNotifierTurnLifecycle on GameStateNotifier {
   }
 
   Future<List<UiEffect>> dispatch(
-    GameCommand command, {
+    DomainCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) async {
     final result = await dispatchTransition(command, context: context);
@@ -48,11 +48,28 @@ extension GameStateNotifierTurnLifecycle on GameStateNotifier {
 
   /// Use when the caller must coordinate the new state with renderer effects.
   Future<DispatchCommandResult> dispatchTransition(
-    GameCommand command, {
+    DomainCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     return _enqueueDispatch(
       () => _dispatchTransitionNow(command, context: context),
+    );
+  }
+
+  Future<List<UiEffect>> dispatchIntent(
+    GameIntent intent, {
+    GameCommandContext context = const GameCommandContext(),
+  }) async {
+    final result = await dispatchIntentTransition(intent, context: context);
+    return result.uiEffects;
+  }
+
+  Future<DispatchCommandResult> dispatchIntentTransition(
+    GameIntent intent, {
+    GameCommandContext context = const GameCommandContext(),
+  }) {
+    return _enqueueDispatch(
+      () => _resolveIntentTransitionNow(intent, context: context),
     );
   }
 

@@ -1,5 +1,5 @@
 import 'package:aonw/game/application/ports/event_log.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
@@ -68,7 +68,7 @@ class ReplayTimeline {
 
 class ReplayStep {
   final int index;
-  final LoggedCommand loggedCommand;
+  final RecordedDomainCommand loggedCommand;
   final SaveSnapshot snapshot;
   final GameState previousState;
   final GameState state;
@@ -111,7 +111,7 @@ class ReplayStep {
       events.isNotEmpty || loggedCommand.activity.isNotEmpty;
 
   static String? inferEffectiveActorPlayerId({
-    required LoggedCommand loggedCommand,
+    required RecordedDomainCommand loggedCommand,
     required GameState state,
     GameState? previousState,
   }) {
@@ -127,7 +127,7 @@ class ReplayStep {
   }
 
   static String? _inferActorPlayerId({
-    required GameCommand command,
+    required DomainCommand command,
     required GameState state,
     required GameState previousState,
   }) {
@@ -135,9 +135,6 @@ class ReplayStep {
       EndTurnCommand(:final playerId) ||
       SubmitTurnCommand(:final playerId) ||
       SelectTechnologyCommand(:final playerId) ||
-      CancelResearchSelectionCommand(:final playerId) ||
-      FocusNextPendingActionCommand(:final playerId) ||
-      FocusTurnStartActionCommand(:final playerId) ||
       SendDiplomaticProposalCommand(:final playerId) ||
       RespondDiplomaticProposalCommand(:final playerId) ||
       DeclareWarCommand(:final playerId) ||
@@ -152,25 +149,15 @@ class ReplayStep {
       SkipUnitTurnCommand(:final unitId) ||
       FortifyUnitCommand(:final unitId) ||
       AutoExploreUnitCommand(:final unitId) ||
-      StartMerchantTradeRouteSelectionCommand(:final unitId) ||
-      CancelMerchantTradeRouteSelectionCommand(:final unitId) ||
       AssignMerchantTradeRouteCommand(:final unitId) ||
-      StartMerchantMoveToCitySelectionCommand(:final unitId) ||
-      CancelMerchantMoveToCitySelectionCommand(:final unitId) ||
       MoveMerchantToCityCommand(:final unitId) ||
       DetachTroopCommand(:final unitId) ||
       FoundCityCommand(founderId: final unitId) ||
-      StartWorkerActionSelectionCommand(:final unitId) ||
       SelectWorkerImprovementCommand(:final unitId) ||
       ConfirmWorkerImprovementCommand(:final unitId) ||
-      CancelWorkerActionSelectionCommand(:final unitId) ||
       CancelWorkerJobCommand(:final unitId) ||
       AssignWorkerToHexCommand(:final unitId) ||
       CancelWorkerAssignmentCommand(:final unitId) ||
-      StartCommanderMergeSelectionCommand(commanderUnitId: final unitId) ||
-      CancelCommanderMergeSelectionCommand(commanderUnitId: final unitId) ||
-      StartAttackTargetingCommand(attackerUnitId: final unitId) ||
-      CancelAttackTargetingCommand(attackerUnitId: final unitId) ||
       AttackHexCommand(attackerUnitId: final unitId) ||
       StartArtifactExcavationCommand(:final unitId) ||
       StoreArtifactInCityCommand(
@@ -182,26 +169,10 @@ class ReplayStep {
       StartWonderCommand(:final cityId) ||
       SetCitySpecializationCommand(:final cityId) ||
       RushProductionCommand(:final cityId) ||
-      StartCityWorkedHexSelectionCommand(:final cityId) ||
-      CancelCityWorkedHexSelectionCommand(:final cityId) ||
       ToggleWorkedHexCommand(:final cityId) ||
-      StartCityExpansionSelectionCommand(:final cityId) ||
-      CancelCityExpansionSelectionCommand(:final cityId) ||
-      SelectCityExpansionHexCommand(:final cityId) ||
-      CityTappedCommand(:final cityId) ||
-      SelectCityCommand(
+      SelectCityExpansionHexCommand(
         :final cityId,
       ) => _cityOwner(cityId, state: state, previousState: previousState),
-      SelectUnitCommand(:final unitId) => _unitOwner(
-        unitId,
-        state: state,
-        previousState: previousState,
-      ),
-      TileTappedCommand() ||
-      SelectTileCommand() ||
-      ToggleMoveTargetingCommand() ||
-      StartCityFoundingCommand() ||
-      CancelCityFoundingCommand() => null,
     };
   }
 
@@ -312,22 +283,16 @@ class ReplayService {
   }
 }
 
-DomainCommand _authoritativeReplayCommand(LoggedCommand logged) {
-  return switch (logged.command) {
-    final DomainCommand command => command,
-    null => throw ReplayBuildException(
-      ReplayBuildFailureReason.corruptLog,
-      'Replay log entry ${logged.offset} has a redacted command; '
-      'deterministic replay is unavailable.',
-    ),
-    _ => throw ReplayBuildException(
-      ReplayBuildFailureReason.corruptLog,
-      'Replay log entry ${logged.offset} contains a presentation intent.',
-    ),
-  };
+DomainCommand _authoritativeReplayCommand(RecordedDomainCommand logged) {
+  return logged.command ??
+      (throw ReplayBuildException(
+        ReplayBuildFailureReason.corruptLog,
+        'Replay log entry ${logged.offset} has a redacted command; '
+        'deterministic replay is unavailable.',
+      ));
 }
 
-int _originatingReplayTurn(LoggedCommand logged) {
+int _originatingReplayTurn(RecordedDomainCommand logged) {
   return logged.turn ??
       (throw ReplayBuildException(
         ReplayBuildFailureReason.corruptLog,
@@ -337,7 +302,7 @@ int _originatingReplayTurn(LoggedCommand logged) {
 
 LocalCommandResolution _resolveReplayCommand({
   required LocalCommandResolver commandResolver,
-  required LoggedCommand loggedCommand,
+  required RecordedDomainCommand loggedCommand,
   required SaveSnapshot baseSnapshot,
   required GameState currentState,
   required DomainCommand command,
@@ -361,7 +326,7 @@ LocalCommandResolution _resolveReplayCommand({
 
 void _appendReplayStep(
   List<ReplayStep> steps, {
-  required LoggedCommand logged,
+  required RecordedDomainCommand logged,
   required LocalCommandResolution resolved,
   required SaveSnapshot snapshot,
   required GameState previousState,

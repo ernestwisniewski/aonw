@@ -4,7 +4,7 @@ class _ReservedGarrisonRanker {
   const _ReservedGarrisonRanker();
 
   CommandRanking? rank(
-    GameCommand command,
+    DomainCommand command,
     GameView view,
     AiContext context,
     StrategicPlan plan,

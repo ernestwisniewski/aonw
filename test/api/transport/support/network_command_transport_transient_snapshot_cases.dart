@@ -14,7 +14,7 @@ void _registerTransientSnapshotCases() {
     final server = _FakeCommandServer(save: _save(), state: state);
     final transport = _transport(server);
 
-    final result = await transport.dispatch(
+    final result = await transport.dispatchAcrossBoundary(
       saveId: 'save_1',
       currentState: state,
       command: const ToggleMoveTargetingCommand(),
@@ -39,7 +39,7 @@ void _registerTransientSnapshotCases() {
     );
     final server = _FakeCommandServer(save: _save(), state: state);
 
-    final result = await _transport(server).dispatch(
+    final result = await _transport(server).dispatchAcrossBoundary(
       saveId: 'save_1',
       currentState: state,
       command: const CancelCityFoundingCommand(),

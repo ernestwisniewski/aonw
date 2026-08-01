@@ -37,7 +37,7 @@ String _replayErrorBody(AppLocalizations l10n, Object error) {
   return l10n.replayErrorBody(error.toString());
 }
 
-String _commandLabel(GameCommand command) {
+String _commandLabel(DomainCommand command) {
   final raw = command.runtimeType.toString().replaceAll('Command', '');
   return raw.replaceAllMapped(RegExp(r'(?<=[a-z])(?=[A-Z])'), (match) => ' ');
 }

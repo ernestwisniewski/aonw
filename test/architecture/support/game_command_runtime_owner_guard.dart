@@ -110,10 +110,17 @@ void expectCanonicalGameCommandRuntimeOwnership({
   expect(systemPaths.keys, serverSystemCommandTypes);
   expect(
     systemPaths.values.expand((paths) => paths),
-    everyElement(startsWith('server/lib/src/')),
+    everyElement(
+      anyOf(
+        startsWith('server/lib/src/'),
+        equals(
+          'packages/aonw_core/lib/game/application/engine/system_command.dart',
+        ),
+      ),
+    ),
     reason:
-        'Only authoritative server application code may construct '
-        'ServerSystemCommand values.',
+        'Only trusted server code and the closed system codec may construct '
+        'SystemCommand values.',
   );
 
   expect(sources[localCommandResolverPath], isNot(contains('reducer.reduce(')));

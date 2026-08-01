@@ -442,7 +442,7 @@ MultiplayerClientMessage _turnMovementMessage(
       tick: 7,
       turn: 1,
       actorPlayerId: fixture.owner.id,
-      command: GameCommandSerializer.toJson(command),
+      command: DomainCommandCodec.toJson(command),
     ),
   );
 }

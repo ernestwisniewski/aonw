@@ -2,7 +2,7 @@ part of 'reducer_parity_accepted_semantics.dart';
 
 void requireAcceptedUnitAction({
   required String fixtureId,
-  required GameCommand command,
+  required DomainCommand command,
   required PersistentGameState before,
   required PersistentGameState after,
   required List<GameEvent> events,
@@ -77,7 +77,7 @@ String? validateAcceptedMovement({
 
 void requireAcceptedMerchantRouting({
   required String fixtureId,
-  required GameCommand command,
+  required DomainCommand command,
   required PersistentGameState before,
   required PersistentGameState after,
   required List<GameEvent> events,

@@ -1,5 +1,5 @@
 import 'package:aonw/game/application/ports/event_log.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
@@ -37,7 +37,7 @@ void main() {
       final service = _service(
         replayStore: _MemoryReplayStore({'save_1': initial}),
         eventLog: _MemoryEventLog([
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: 1,
             timestamp: DateTime.utc(2026, 4, 24, 12, 1),
             turn: 1,
@@ -83,7 +83,7 @@ void main() {
 
       for (final command in commands) {
         final actorPlayerId = ReplayStep.inferEffectiveActorPlayerId(
-          loggedCommand: LoggedCommand(
+          loggedCommand: RecordedDomainCommand(
             offset: 1,
             timestamp: DateTime.utc(2026, 4, 24, 12, 1),
             turn: 1,
@@ -137,7 +137,7 @@ void main() {
             ),
           }),
           eventLog: _MemoryEventLog([
-            LoggedCommand(
+            RecordedDomainCommand(
               offset: 1,
               timestamp: DateTime.utc(2026, 4, 24, 12, 1),
               turn: 1,
@@ -184,7 +184,7 @@ void main() {
           'save_1': _snapshot(units: [unit], artifacts: [artifact]),
         }),
         eventLog: _MemoryEventLog([
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: 1,
             timestamp: DateTime.utc(2026, 4, 24, 12, 1),
             turn: 1,
@@ -238,7 +238,7 @@ void main() {
           ),
         }),
         eventLog: _MemoryEventLog([
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: 1,
             timestamp: DateTime.utc(2026, 4, 24, 12, 1),
             turn: 1,
@@ -263,7 +263,7 @@ void main() {
       final service = _service(
         replayStore: _MemoryReplayStore({'save_1': _snapshot()}),
         eventLog: _MemoryEventLog([
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: 1,
             timestamp: DateTime.utc(2026, 4, 24, 12, 1),
             turn: 1,
@@ -295,11 +295,11 @@ void main() {
       final service = _service(
         replayStore: _MemoryReplayStore({'save_1': _snapshot()}),
         eventLog: _MemoryEventLog([
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: 2,
             timestamp: DateTime.utc(2026, 4, 24, 12, 1),
             turn: 1,
-            command: const FocusTurnStartActionCommand('p1'),
+            command: const SubmitTurnCommand('p1'),
           ),
         ]),
       );
@@ -322,7 +322,7 @@ void main() {
           'save_1': _snapshot(units: [_actionableUnit()]),
         }),
         eventLog: _MemoryEventLog([
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: 1,
             timestamp: DateTime.utc(2026, 4, 24, 12, 1),
             turn: null,
@@ -457,14 +457,14 @@ class _MemoryReplayStore implements ReplayStore {
 }
 
 class _MemoryEventLog implements EventLog {
-  final List<LoggedCommand> commands;
+  final List<RecordedDomainCommand> commands;
 
-  _MemoryEventLog([List<LoggedCommand> commands = const []])
+  _MemoryEventLog([List<RecordedDomainCommand> commands = const []])
     : commands = List.of(commands)
         ..sort((a, b) => a.offset.compareTo(b.offset));
 
   @override
-  Future<void> append(String saveId, LoggedCommand command) async {
+  Future<void> append(String saveId, RecordedDomainCommand command) async {
     commands
       ..add(command)
       ..sort((a, b) => a.offset.compareTo(b.offset));
@@ -480,10 +480,13 @@ class _MemoryEventLog implements EventLog {
   }
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) => readSince(saveId);
+  Stream<RecordedDomainCommand> readAll(String saveId) => readSince(saveId);
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) async* {
+  Stream<RecordedDomainCommand> readSince(
+    String saveId, {
+    int offset = 0,
+  }) async* {
     for (final command in commands) {
       if (command.offset >= offset) yield command;
     }

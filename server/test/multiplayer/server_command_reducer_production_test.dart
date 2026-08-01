@@ -196,7 +196,7 @@ void main() {
         tick: 1,
         turn: 1,
         actorPlayerId: 'player_2',
-        command: GameCommandSerializer.toJson(const EndTurnCommand('player_2')),
+        command: DomainCommandCodec.toJson(const EndTurnCommand('player_2')),
       ),
       actorPlayerId: 'player_2',
       now: DateTime.utc(2026, 6, 30, 12),
@@ -214,7 +214,7 @@ void main() {
   });
 
   test('routes map-backed commands through the loaded server map', () async {
-    final scenarios = <({GameCommand command, String reason})>[
+    final scenarios = <({DomainCommand command, String reason})>[
       (
         command: FoundCityCommand('missing_settler', controlledHexes: const []),
         reason: 'city_founder_not_found',
@@ -257,7 +257,7 @@ void main() {
 }
 
 Future<ServerCommandTestReduction> _reduceCommand(
-  GameCommand command, {
+  DomainCommand command, {
   required PersistentGameState state,
 }) {
   return const ServerCommandReducerTestDriver().reduce(
@@ -337,12 +337,12 @@ GameSave _save() => GameSave(
   gameMode: GameMode.multiplayer,
 );
 
-WireCommand _wireCommand(GameCommand command) => WireCommand(
+WireCommand _wireCommand(DomainCommand command) => WireCommand(
   matchId: 'match_1',
   tick: 1,
   turn: 1,
   actorPlayerId: 'player_1',
-  command: GameCommandSerializer.toJson(command),
+  command: DomainCommandCodec.toJson(command),
 );
 
 List<GameCity> _tradeCities() => const [

@@ -50,7 +50,27 @@ WireEvent _acceptedTimeoutEventForStorage({
   required int offset,
   required DateTime timestamp,
 }) {
-  return _acceptedCommandEventForStorage(
+  final kickedPlayerIds = previousSnapshot.session.kickedPlayerIds;
+  var playerIds = previousSnapshot.domain.participants
+      .map((player) => player.id)
+      .where((id) => id.isNotEmpty && !kickedPlayerIds.contains(id))
+      .toList();
+  if (playerIds.isEmpty) {
+    playerIds = previousSnapshot.session.turnStatesByPlayerId.keys
+        .where((id) => id.isNotEmpty && !kickedPlayerIds.contains(id))
+        .toList();
+  }
+  final submitted = previousSnapshot.session.submittedPlayerIds;
+  final systemRecord = RecordedSystemCommand(
+    FinalizeTimedOutTurn(
+      playerIds: playerIds,
+      skippedPlayerIds: [
+        for (final playerId in playerIds)
+          if (!submitted.contains(playerId)) playerId,
+      ],
+    ),
+  );
+  final event = _acceptedCommandEventForStorage(
     state: state,
     previousSnapshot: previousSnapshot,
     reduction: reduction,
@@ -59,10 +79,21 @@ WireEvent _acceptedTimeoutEventForStorage({
       tick: offset,
       turn: state.match.turn,
       actorPlayerId: actorPlayerId,
-      command: GameCommandSerializer.toJson(SubmitTurnCommand(actorPlayerId)),
+      command: const <String, dynamic>{},
     ),
     actorPlayerId: actorPlayerId,
     offset: offset,
     timestamp: timestamp,
+  );
+  return WireEvent(
+    matchId: event.matchId,
+    offset: event.offset,
+    timestamp: event.timestamp,
+    actorPlayerId: event.actorPlayerId,
+    tick: event.tick,
+    turn: event.turn,
+    command: systemRecord.toJson(),
+    events: event.events,
+    movementExecutions: event.movementExecutions,
   );
 }

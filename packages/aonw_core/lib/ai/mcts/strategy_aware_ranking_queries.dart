@@ -222,7 +222,7 @@ bool isGrowthBuilding(CityBuildingType type) {
   };
 }
 
-String? unitIdForCommand(GameCommand command) {
+String? unitIdForCommand(DomainCommand command) {
   return switch (command) {
     AttackHexCommand(:final attackerUnitId) => attackerUnitId,
     MoveUnitCommand(:final unitId) => unitId,

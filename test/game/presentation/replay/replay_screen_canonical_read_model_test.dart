@@ -1,5 +1,5 @@
 import 'package:aonw/game/application/ports/activity_history_entry.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/replay_service.dart';
 import 'package:aonw/game/domain/game_save.dart';
@@ -89,7 +89,7 @@ ReplayTimeline _timeline({
   CameraState camera = const CameraState(x: 4, y: 5, zoom: 1.25),
 }) {
   const event = TurnEndedEvent(playerId: 'player_1');
-  final loggedCommand = LoggedCommand(
+  final loggedCommand = RecordedDomainCommand(
     offset: 1,
     timestamp: DateTime.utc(2026, 7, 28, 12),
     turn: 1,

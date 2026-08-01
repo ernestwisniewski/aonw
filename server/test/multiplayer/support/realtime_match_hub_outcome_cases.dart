@@ -191,9 +191,7 @@ MultiplayerClientMessage _naturalOutcomeCommand(
       tick: 1,
       turn: 1,
       actorPlayerId: fixture.owner.id,
-      command: GameCommandSerializer.toJson(
-        SubmitTurnCommand(fixture.owner.id),
-      ),
+      command: DomainCommandCodec.toJson(SubmitTurnCommand(fixture.owner.id)),
     ),
   );
 }
@@ -233,9 +231,7 @@ Future<void> _expectCommandAfterNaturalOutcomeRejected({
         tick: 2,
         turn: 1,
         actorPlayerId: fixture.owner.id,
-        command: GameCommandSerializer.toJson(
-          SubmitTurnCommand(fixture.owner.id),
-        ),
+        command: DomainCommandCodec.toJson(SubmitTurnCommand(fixture.owner.id)),
       ),
     ),
   );
@@ -381,7 +377,7 @@ Future<_DrawOutcomeMessages> _finishDrawOutcome({
         tick: 1,
         turn: _drawOutcomeTurn,
         actorPlayerId: owner.id,
-        command: GameCommandSerializer.toJson(
+        command: DomainCommandCodec.toJson(
           const SkipUnitTurnCommand('draw_owner_unit'),
         ),
       ),

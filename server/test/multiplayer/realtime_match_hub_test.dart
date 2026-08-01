@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
@@ -2120,7 +2121,7 @@ void main() {
           tick: 1,
           turn: 1,
           actorPlayerId: guest.id,
-          command: GameCommandSerializer.toJson(SubmitTurnCommand(guest.id)),
+          command: DomainCommandCodec.toJson(SubmitTurnCommand(guest.id)),
         ),
       ),
     );
@@ -2232,7 +2233,7 @@ void main() {
           tick: 1,
           turn: 1,
           actorPlayerId: owner.id,
-          command: GameCommandSerializer.toJson(
+          command: DomainCommandCodec.toJson(
             MoveUnitCommand(ownerUnit.id, target.col, target.row),
           ),
         ),
@@ -2367,7 +2368,7 @@ void main() {
           tick: 1,
           turn: 1,
           actorPlayerId: owner.id,
-          command: GameCommandSerializer.toJson(
+          command: DomainCommandCodec.toJson(
             SendGoldGiftCommand(
               playerId: owner.id,
               targetPlayerId: guest.id,
@@ -2502,7 +2503,7 @@ void main() {
           tick: 1,
           turn: 1,
           actorPlayerId: owner.id,
-          command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
+          command: DomainCommandCodec.toJson(SubmitTurnCommand(owner.id)),
         ),
       ),
     );
@@ -2617,7 +2618,7 @@ void main() {
           tick: 1,
           turn: 1,
           actorPlayerId: owner.id,
-          command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
+          command: DomainCommandCodec.toJson(SubmitTurnCommand(owner.id)),
         ),
       ),
     );
@@ -2709,7 +2710,7 @@ void main() {
             tick: 1,
             turn: 1,
             actorPlayerId: owner.id,
-            command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
+            command: DomainCommandCodec.toJson(SubmitTurnCommand(owner.id)),
           ),
         ),
       );
@@ -2821,7 +2822,7 @@ void main() {
         tick: 1,
         turn: 1,
         actorPlayerId: owner.id,
-        command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
+        command: DomainCommandCodec.toJson(SubmitTurnCommand(owner.id)),
       ),
     );
     ownerInput
@@ -2878,7 +2879,7 @@ void main() {
             tick: 1,
             turn: 1,
             actorPlayerId: owner.id,
-            command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
+            command: DomainCommandCodec.toJson(SubmitTurnCommand(owner.id)),
           ),
         ),
       )
@@ -2892,7 +2893,7 @@ void main() {
             tick: 1,
             turn: 1,
             actorPlayerId: owner.id,
-            command: GameCommandSerializer.toJson(EndTurnCommand(owner.id)),
+            command: DomainCommandCodec.toJson(EndTurnCommand(owner.id)),
           ),
         ),
       );
@@ -2938,7 +2939,7 @@ void main() {
           tick: 1,
           turn: 1,
           actorPlayerId: owner.id,
-          command: GameCommandSerializer.toJson(SubmitTurnCommand(owner.id)),
+          command: DomainCommandCodec.toJson(SubmitTurnCommand(owner.id)),
         ),
       );
 

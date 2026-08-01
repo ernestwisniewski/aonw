@@ -2,8 +2,8 @@ import 'package:aonw/game/application/ports/clock.dart';
 import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/domain/game_save.dart';
@@ -171,10 +171,10 @@ class _MemoryGameRepository implements GameRepository {
 }
 
 class _MemoryEventLog implements EventLog {
-  final commands = <LoggedCommand>[];
+  final commands = <RecordedDomainCommand>[];
 
   @override
-  Future<void> append(String saveId, LoggedCommand command) async {
+  Future<void> append(String saveId, RecordedDomainCommand command) async {
     commands.add(command);
   }
 
@@ -186,12 +186,15 @@ class _MemoryEventLog implements EventLog {
   }
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) {
+  Stream<RecordedDomainCommand> readAll(String saveId) {
     return readSince(saveId);
   }
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) async* {
+  Stream<RecordedDomainCommand> readSince(
+    String saveId, {
+    int offset = 0,
+  }) async* {
     for (final command in commands) {
       if (command.offset >= offset) yield command;
     }

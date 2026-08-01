@@ -20,7 +20,7 @@ class _ResourceTradeSection extends StatelessWidget {
   final DiplomaticRelation relation;
   final String activePlayerId;
   final String targetPlayerId;
-  final Future<void> Function(GameCommand command) onCommand;
+  final Future<void> Function(DomainCommand command) onCommand;
 
   @override
   Widget build(BuildContext context) {

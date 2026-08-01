@@ -53,8 +53,8 @@ void _registerAutoExploreCorpusGuards(
       returnsNormally,
     );
     for (final fixture in fixtureProvider()) {
-      final encoded = GameCommandSerializer.toJson(fixture.command);
-      expect(GameCommandSerializer.fromJson(encoded), fixture.command);
+      final encoded = DomainCommandCodec.toJson(fixture.command);
+      expect(DomainCommandCodec.fromJson(encoded), fixture.command);
     }
   });
 

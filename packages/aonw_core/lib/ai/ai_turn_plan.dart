@@ -1,10 +1,10 @@
 import 'package:aonw_core/game/domain/command.dart';
 
 class AiTurnPlan {
-  final List<GameCommand> commands;
+  final List<DomainCommand> commands;
   final AiDebugInfo? debug;
 
-  AiTurnPlan({Iterable<GameCommand> commands = const [], this.debug})
+  AiTurnPlan({Iterable<DomainCommand> commands = const [], this.debug})
     : commands = List.unmodifiable(commands);
 
   static final empty = AiTurnPlan();

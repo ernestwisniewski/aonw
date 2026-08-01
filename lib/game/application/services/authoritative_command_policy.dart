@@ -4,105 +4,18 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 
 abstract final class AuthoritativeCommandPolicy {
-  static bool shouldSendToServer(GameCommand command) {
-    return !isClientOnly(command) && !isServerManaged(command);
-  }
-
-  static bool shouldLogForReplay(GameState state, GameCommand command) {
-    return !isClientOnlyForState(state, command);
-  }
-
-  static bool isClientOnly(GameCommand command) {
-    return switch (command) {
-      TileTappedCommand() ||
-      CityTappedCommand() ||
-      ToggleMoveTargetingCommand() ||
-      StartCityFoundingCommand() ||
-      CancelCityFoundingCommand() ||
-      StartCityWorkedHexSelectionCommand() ||
-      CancelCityWorkedHexSelectionCommand() ||
-      StartCityExpansionSelectionCommand() ||
-      CancelCityExpansionSelectionCommand() ||
-      StartWorkerActionSelectionCommand() ||
-      CancelWorkerActionSelectionCommand() ||
-      StartMerchantTradeRouteSelectionCommand() ||
-      CancelMerchantTradeRouteSelectionCommand() ||
-      StartMerchantMoveToCitySelectionCommand() ||
-      CancelMerchantMoveToCitySelectionCommand() ||
-      CancelResearchSelectionCommand() ||
-      StartAttackTargetingCommand() ||
-      CancelAttackTargetingCommand() ||
-      StartCommanderMergeSelectionCommand() ||
-      CancelCommanderMergeSelectionCommand() ||
-      SelectTileCommand() ||
-      SelectUnitCommand() ||
-      SelectCityCommand() ||
-      FocusNextPendingActionCommand() ||
-      FocusTurnStartActionCommand() => true,
-      MoveUnitCommand() ||
-      CancelUnitActionCommand() ||
-      SkipUnitTurnCommand() ||
-      FortifyUnitCommand() ||
-      AutoExploreUnitCommand() ||
-      AssignMerchantTradeRouteCommand() ||
-      MoveMerchantToCityCommand() ||
-      StartArtifactExcavationCommand() ||
-      StoreArtifactInCityCommand() ||
-      TradeArtifactCommand() ||
-      OpenResourceTradeCommand() ||
-      OpenResourceExchangeCommand() ||
-      FoundCityCommand() ||
-      StartBuildingCommand() ||
-      StartUnitProductionCommand() ||
-      StartCityProjectCommand() ||
-      StartWonderCommand() ||
-      SetCitySpecializationCommand() ||
-      RushProductionCommand() ||
-      SelectTechnologyCommand() ||
-      DetachTroopCommand() ||
-      EndTurnCommand() ||
-      SubmitTurnCommand() ||
-      ToggleWorkedHexCommand() ||
-      SelectCityExpansionHexCommand() ||
-      SelectWorkerImprovementCommand() ||
-      ConfirmWorkerImprovementCommand() ||
-      CancelWorkerJobCommand() ||
-      AssignWorkerToHexCommand() ||
-      CancelWorkerAssignmentCommand() ||
-      AttackHexCommand() ||
-      SendDiplomaticProposalCommand() ||
-      RespondDiplomaticProposalCommand() ||
-      DeclareWarCommand() ||
-      SendGoldGiftCommand() ||
-      SendDiplomaticMessageCommand() ||
-      RespondDiplomaticMessageCommand() => false,
-    };
-  }
-
-  static bool isServerManaged(GameCommand command) => false;
-
-  static bool isClientOnlyForState(GameState state, GameCommand command) {
-    if (command is SelectWorkerImprovementCommand) {
-      return state.pendingAction is PendingWorkerActionSelection;
-    }
-    return isClientOnly(command);
-  }
-
-  static GameCommand? authoritativeCommandForClientIntent(
+  static DomainCommand? authoritativeCommandForClientIntent(
     GameState state,
-    GameCommand command,
+    GameIntent intent,
     GameCommandContext context,
   ) {
-    if (command is TileTappedCommand) {
-      return _authoritativeCommandForTileTap(state, command, context);
+    if (intent is TileTappedCommand) {
+      return _authoritativeCommandForTileTap(state, intent, context);
     }
-    if (command is CityTappedCommand) {
-      return _authoritativeCommandForCityTap(state, command, context);
+    if (intent is CityTappedCommand) {
+      return _authoritativeCommandForCityTap(state, intent, context);
     }
-    if (command case ConfirmWorkerImprovementCommand(
-      :final unitId,
-      improvementType: null,
-    )) {
+    if (intent case ConfirmWorkerImprovementIntent(:final unitId)) {
       final pending = state.pendingAction;
       if (pending is PendingWorkerActionSelection &&
           pending.unitId == unitId &&
@@ -116,7 +29,7 @@ abstract final class AuthoritativeCommandPolicy {
     return null;
   }
 
-  static GameCommand? _authoritativeCommandForCityTap(
+  static DomainCommand? _authoritativeCommandForCityTap(
     GameState state,
     CityTappedCommand command,
     GameCommandContext context,
@@ -139,7 +52,7 @@ abstract final class AuthoritativeCommandPolicy {
     return AssignMerchantTradeRouteCommand(selected.id, command.cityId);
   }
 
-  static GameCommand? _authoritativeCommandForTileTap(
+  static DomainCommand? _authoritativeCommandForTileTap(
     GameState state,
     TileTappedCommand command,
     GameCommandContext context,

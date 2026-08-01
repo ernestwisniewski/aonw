@@ -1,8 +1,8 @@
 import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/event_log_replay_service.dart';
 import 'package:aonw/game/application/use_cases/bootstrap_game_state_use_case.dart';
@@ -74,8 +74,8 @@ class _SequenceGameRepository extends _FakeGameRepository {
 }
 
 class _FakeCommandTransport implements CommandTransport {
-  GameCommand? command;
-  final List<GameCommand> commands = [];
+  DomainCommand? command;
+  final List<DomainCommand> commands = [];
   GameCommandContext? context;
   GameState? currentState;
 
@@ -83,8 +83,9 @@ class _FakeCommandTransport implements CommandTransport {
   Future<CommandTransportResult> dispatch({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
+    bool fromMovePreviewConfirmation = false,
   }) async {
     this.command = command;
     commands.add(command);
@@ -99,22 +100,22 @@ class _FakeCommandTransport implements CommandTransport {
 }
 
 class _FakeEventLog implements EventLog {
-  final List<LoggedCommand> commands;
+  final List<RecordedDomainCommand> commands;
 
   const _FakeEventLog(this.commands);
 
   @override
-  Future<void> append(String saveId, LoggedCommand command) async {}
+  Future<void> append(String saveId, RecordedDomainCommand command) async {}
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) {
+  Stream<RecordedDomainCommand> readSince(String saveId, {int offset = 0}) {
     return Stream.fromIterable(
       commands.where((command) => command.offset >= offset),
     );
   }
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) => readSince(saveId);
+  Stream<RecordedDomainCommand> readAll(String saveId) => readSince(saveId);
 
   @override
   Future<int> latestOffset(String saveId) async {
@@ -192,7 +193,7 @@ void main() {
   });
 
   test(
-    'focuses the first turn-start action for local single-player flow',
+    'does not send turn-start presentation through command transport',
     () async {
       final transport = _FakeCommandTransport();
       final save = _save.copyWith(gameMode: GameMode.multiplayer);
@@ -205,13 +206,7 @@ void main() {
 
       await useCase.execute(saveId: save.id);
 
-      expect(transport.commands, [
-        isA<FocusTurnStartActionCommand>().having(
-          (command) => command.playerId,
-          'playerId',
-          'player_1',
-        ),
-      ]);
+      expect(transport.commands, isEmpty);
     },
   );
 
@@ -232,7 +227,7 @@ void main() {
       dispatchCommand: DispatchCommandUseCase(commandTransport: transport),
       eventReplay: EventLogReplayService(
         eventLog: _FakeEventLog([
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: 2,
             timestamp: DateTime.utc(2026, 4, 16, 12),
             turn: 1,
@@ -248,7 +243,7 @@ void main() {
 
     expect(result.offset, 2);
     expect(result.state.units.single.col, 1);
-    expect(transport.commands.first, isA<FocusTurnStartActionCommand>());
+    expect(transport.commands, isEmpty);
   });
 
   test('reloads the authoritative snapshot after redacted history', () async {
@@ -271,7 +266,7 @@ void main() {
       dispatchCommand: DispatchCommandUseCase(commandTransport: transport),
       eventReplay: EventLogReplayService(
         eventLog: _FakeEventLog([
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: 2,
             timestamp: DateTime.utc(2026, 4, 16, 12),
             turn: 1,
@@ -288,7 +283,7 @@ void main() {
     expect(repository.loadCount, 2);
     expect(result.offset, 2);
     expect(result.state.units.single.col, 1);
-    expect(transport.commands.first, isA<FocusTurnStartActionCommand>());
+    expect(transport.commands, isEmpty);
   });
 
   test(
@@ -308,7 +303,7 @@ void main() {
         dispatchCommand: DispatchCommandUseCase(commandTransport: transport),
         eventReplay: EventLogReplayService(
           eventLog: _FakeEventLog([
-            LoggedCommand(
+            RecordedDomainCommand(
               offset: 2,
               timestamp: DateTime.utc(2026, 4, 16, 12),
               turn: 1,

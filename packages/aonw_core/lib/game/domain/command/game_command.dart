@@ -18,21 +18,13 @@ part 'city_commands.dart';
 part 'worker_commands.dart';
 part 'diplomacy_commands.dart';
 
-/// Transitional umbrella for presentation, player-domain, and trusted
-/// server commands.
-///
-/// Serialization is defined separately for each command boundary.
-sealed class GameCommand {
-  const GameCommand();
-}
-
 /// Presentation input handled by application and UI controllers.
-sealed class GameIntent extends GameCommand {
+sealed class GameIntent {
   const GameIntent();
 }
 
 /// A player-authored request to change authoritative game state.
-sealed class DomainCommand extends GameCommand {
+sealed class DomainCommand {
   const DomainCommand();
 }
 

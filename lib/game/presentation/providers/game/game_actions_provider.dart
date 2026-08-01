@@ -49,18 +49,28 @@ class GameCommandController extends _$GameCommandController {
     });
   }
 
-  Future<List<UiEffect>> dispatch(GameCommand command) =>
+  Future<List<UiEffect>> dispatch(DomainCommand command) =>
       dispatchTransition(command).then((result) => result.uiEffects);
 
+  Future<List<UiEffect>> dispatchIntent(GameIntent intent) =>
+      dispatchIntentTransition(intent).then((result) => result.uiEffects);
+
   Future<DispatchCommandResult> dispatchTransition(
-    GameCommand command, {
+    DomainCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     return _enqueueCommand(() => _dispatchAndHandle(command, context: context));
   }
 
+  Future<DispatchCommandResult> dispatchIntentTransition(
+    GameIntent intent, {
+    GameCommandContext context = const GameCommandContext(),
+  }) {
+    return _enqueueCommand(() => _dispatchAndHandle(intent, context: context));
+  }
+
   Future<HandoffPresentation> dispatchForHandoffPresentation(
-    GameCommand command, {
+    DomainCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     return _enqueueCommand(() async {
@@ -227,7 +237,7 @@ class GameCommandController extends _$GameCommandController {
   int? _currentSaveTurn() => _currentSaveTurnFor(ref);
 
   Future<DispatchCommandResult> _dispatchAndHandle(
-    GameCommand command, {
+    Object command, {
     GameCommandContext context = const GameCommandContext(),
   }) async {
     if (!ref.mounted) return const DispatchCommandResult(state: GameState());
@@ -238,7 +248,7 @@ class GameCommandController extends _$GameCommandController {
   }
 
   Future<_CommandDispatchRecord> _dispatchOnly(
-    GameCommand command, {
+    Object command, {
     GameCommandContext context = const GameCommandContext(),
   }) async {
     if (!ref.mounted) {
@@ -261,7 +271,17 @@ class GameCommandController extends _$GameCommandController {
     final notifier = ref.read(gameStateProvider(session.saveId).notifier);
     late final DispatchCommandResult result;
     try {
-      result = await notifier.dispatchTransition(command, context: context);
+      result = await switch (command) {
+        DomainCommand() => notifier.dispatchTransition(
+          command,
+          context: context,
+        ),
+        GameIntent() => notifier.dispatchIntentTransition(
+          command,
+          context: context,
+        ),
+        _ => throw ArgumentError.value(command, 'command'),
+      };
     } catch (error, stackTrace) {
       if (ref.mounted) {
         ref
@@ -349,7 +369,7 @@ class GameCommandController extends _$GameCommandController {
   }
 
   Future<DispatchCommandResult> _dispatchWithoutRendererEffects(
-    GameCommand command, {
+    GameIntent command, {
     GameCommandContext context = const GameCommandContext(),
   }) async {
     if (!ref.mounted) return const DispatchCommandResult(state: GameState());
@@ -378,7 +398,7 @@ class GameCommandController extends _$GameCommandController {
   }
 
   void _playCommandAndTransitionSounds({
-    required GameCommand command,
+    required Object command,
     required GameState? previousState,
     required DispatchCommandResult result,
     required Iterable<RendererEffect> rendererEffects,
@@ -408,7 +428,7 @@ class GameCommandController extends _$GameCommandController {
   }
 
   Future<List<RendererEffect>> _dedupeTurnStartProductionBubbles({
-    required GameCommand command,
+    required Object command,
     required String saveId,
     required Iterable<RendererEffect> effects,
   }) async {

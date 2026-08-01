@@ -149,9 +149,9 @@ presentation. Recovery never infers movement from a snapshot delta.
 
 `listEvents` still exposes safely projected movement evidence for audit and
 history consumers. `NetworkEventLog`, however, intentionally maps commands,
-domain events, and activity entries into `LoggedCommand`; it is not the
-renderer animation-replay surface. It can retain `UnitMovedEvent` activity and
-coarse direct-move history, but it does not translate authoritative
+domain events, and activity entries into `RecordedDomainCommand`; it is not
+the renderer animation-replay surface. It can retain `UnitMovedEvent` activity
+and coarse direct-move history, but it does not translate authoritative
 intermediate coordinates or costs. Durable exact animation replay remains a
 separate event-plan contract.
 

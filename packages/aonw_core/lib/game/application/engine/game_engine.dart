@@ -7,7 +7,7 @@ import 'package:aonw_core/game/application/engine/game_engine_result.dart';
 import 'package:aonw_core/game/application/engine/movement_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/production_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/research_engine_handler.dart';
-import 'package:aonw_core/game/application/engine/server_system_command.dart';
+import 'package:aonw_core/game/application/engine/system_command.dart';
 import 'package:aonw_core/game/application/engine/turn_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/unit_action_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/worker_engine_handler.dart';
@@ -160,7 +160,7 @@ final class GameEngine {
 
   GameEngineResult applySystem({
     required CanonicalGameSnapshot snapshot,
-    required ServerSystemCommand command,
+    required SystemCommand command,
     required GameEngineContext context,
   }) {
     return const TurnEngineHandler().applySystem(

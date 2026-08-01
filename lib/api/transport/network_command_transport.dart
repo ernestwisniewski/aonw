@@ -9,8 +9,6 @@ import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/accepted_engine_command_interaction_source.dart';
-import 'package:aonw/game/application/services/authoritative_command_policy.dart';
-import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/multiplayer_interaction_reconciler.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
@@ -18,8 +16,6 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
-
-part 'network_command_transport_client_interaction.dart';
 
 class ClientTickGenerator {
   int _nextTick;
@@ -233,8 +229,9 @@ class NetworkCommandTransport implements CommandTransport {
   Future<CommandTransportResult> dispatch({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
+    bool fromMovePreviewConfirmation = false,
   }) {
     return _dispatch(
       saveId: saveId,
@@ -247,47 +244,11 @@ class NetworkCommandTransport implements CommandTransport {
   Future<CommandTransportResult> _dispatch({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
     int staleTickRetries = 0,
   }) async {
-    final authoritativeCommand =
-        AuthoritativeCommandPolicy.authoritativeCommandForClientIntent(
-          currentState,
-          command,
-          context,
-        );
-    if (authoritativeCommand != null) {
-      return _dispatch(
-        saveId: saveId,
-        currentState: currentState,
-        command: authoritativeCommand,
-        context: context,
-        staleTickRetries: staleTickRetries,
-      );
-    }
-
-    if (AuthoritativeCommandPolicy.isServerManaged(command)) {
-      final offset = _lastKnownOffsetBySaveId[saveId] ?? -1;
-      return CommandTransportResult(
-        state: currentState,
-        snapshot: null,
-        offset: offset,
-      );
-    }
-
-    if (AuthoritativeCommandPolicy.isClientOnlyForState(
-      currentState,
-      command,
-    )) {
-      return _dispatchClientOnly(
-        saveId: saveId,
-        currentState: currentState,
-        command: command,
-        context: context,
-      );
-    }
-    final domainCommand = command as DomainCommand;
+    final domainCommand = command;
     final actor = context.actorPlayerId ?? actorPlayerId;
     final retryable = _retryableCommand;
     final turn =

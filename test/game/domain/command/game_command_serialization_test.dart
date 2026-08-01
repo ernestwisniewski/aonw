@@ -6,15 +6,15 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('GameCommandSerializer', () {
+  group('DomainCommandCodec', () {
     DomainCommand roundTrip(DomainCommand cmd) {
-      final json = GameCommandSerializer.toJson(cmd);
-      return GameCommandSerializer.fromJson(json);
+      final json = DomainCommandCodec.toJson(cmd);
+      return DomainCommandCodec.fromJson(json);
     }
 
     group('toJson — type discriminator', () {
       test('MoveUnitCommand has type field', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const MoveUnitCommand('u', 1, 2),
         );
         expect(json['type'], isA<String>());
@@ -50,7 +50,7 @@ void main() {
           const AttackHexCommand('u', 1, 2),
         ];
         for (final cmd in commands) {
-          final json = GameCommandSerializer.toJson(cmd);
+          final json = DomainCommandCodec.toJson(cmd);
           expect(
             json['type'],
             isA<String>(),
@@ -92,7 +92,7 @@ void main() {
 
       test('legacy SleepUnit payload decodes as SkipUnitTurnCommand', () {
         expect(
-          GameCommandSerializer.fromJson(const {
+          DomainCommandCodec.fromJson(const {
             'type': 'SleepUnit',
             'unitId': 'unit-7',
           }),
@@ -273,7 +273,7 @@ void main() {
     });
     group('toJson payload', () {
       test('MoveUnitCommand encodes unitId, targetCol, targetRow', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const MoveUnitCommand('unit-7', 4, 8),
         );
         expect(json['unitId'], 'unit-7');
@@ -282,35 +282,35 @@ void main() {
       });
 
       test('CancelUnitActionCommand encodes unitId', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const CancelUnitActionCommand('unit-7'),
         );
         expect(json['unitId'], 'unit-7');
       });
 
       test('SkipUnitTurnCommand encodes unitId', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const SkipUnitTurnCommand('unit-7'),
         );
         expect(json['unitId'], 'unit-7');
       });
 
       test('FortifyUnitCommand encodes unitId', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const FortifyUnitCommand('unit-7'),
         );
         expect(json['unitId'], 'unit-7');
       });
 
       test('AutoExploreUnitCommand encodes unitId', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const AutoExploreUnitCommand('unit-7'),
         );
         expect(json['unitId'], 'unit-7');
       });
 
       test('StartBuildingCommand encodes buildingType as name string', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const StartBuildingCommand('city-1', CityBuildingType.waterMill),
         );
         expect(json['cityId'], 'city-1');
@@ -318,7 +318,7 @@ void main() {
       });
 
       test('StartUnitProductionCommand encodes unitType as name string', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const StartUnitProductionCommand('city-1', GameUnitType.archer),
         );
         expect(json['cityId'], 'city-1');
@@ -326,7 +326,7 @@ void main() {
       });
 
       test('StartCityProjectCommand encodes projectType as name string', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const StartCityProjectCommand('city-1', CityProjectType.research),
         );
         expect(json['cityId'], 'city-1');
@@ -336,7 +336,7 @@ void main() {
       test(
         'SetCitySpecializationCommand encodes specialization as name string',
         () {
-          final json = GameCommandSerializer.toJson(
+          final json = DomainCommandCodec.toJson(
             const SetCitySpecializationCommand(
               'city-1',
               CitySpecializationType.military,
@@ -348,14 +348,14 @@ void main() {
       );
 
       test('RushProductionCommand encodes cityId', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const RushProductionCommand('city-1'),
         );
         expect(json['cityId'], 'city-1');
       });
 
       test('SelectTechnologyCommand encodes technologyId as name string', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const SelectTechnologyCommand('player-1', TechnologyId.mining),
         );
         expect(json['playerId'], 'player-1');
@@ -363,7 +363,7 @@ void main() {
       });
 
       test('SelectCityExpansionHexCommand encodes cityId and coordinates', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const SelectCityExpansionHexCommand('city-1', 1, 2),
         );
         expect(json['cityId'], 'city-1');
@@ -372,7 +372,7 @@ void main() {
       });
 
       test('ToggleWorkedHexCommand encodes cityId and coordinates', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const ToggleWorkedHexCommand('city-1', 1, 2),
         );
         expect(json['cityId'], 'city-1');
@@ -381,7 +381,7 @@ void main() {
       });
 
       test('DetachTroopCommand encodes troopType as name string', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const DetachTroopCommand('unit-1', TroopType.archer),
         );
         expect(json['unitId'], 'unit-1');
@@ -389,7 +389,7 @@ void main() {
       });
 
       test('SubmitTurnCommand encodes playerId', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const SubmitTurnCommand('player-1'),
         );
         expect(json['type'], 'SubmitTurn');
@@ -397,7 +397,7 @@ void main() {
       });
 
       test('AttackHexCommand encodes attackerUnitId and defender hex', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const AttackHexCommand('unit-7', 3, 4),
         );
         expect(json['attackerUnitId'], 'unit-7');
@@ -407,7 +407,7 @@ void main() {
       });
 
       test('AttackHexCommand encodes non-default city conquest action', () {
-        final json = GameCommandSerializer.toJson(
+        final json = DomainCommandCodec.toJson(
           const AttackHexCommand(
             'unit-7',
             3,
@@ -421,26 +421,26 @@ void main() {
     group('fromJson — error handling', () {
       test('unknown type throws ArgumentError', () {
         expect(
-          () => GameCommandSerializer.fromJson({'type': 'UnknownCommandXyz'}),
+          () => DomainCommandCodec.fromJson({'type': 'UnknownCommandXyz'}),
           throwsA(isA<ArgumentError>()),
         );
       });
 
       test('empty type string throws ArgumentError', () {
         expect(
-          () => GameCommandSerializer.fromJson({'type': ''}),
+          () => DomainCommandCodec.fromJson({'type': ''}),
           throwsA(isA<ArgumentError>()),
         );
       });
 
       test('missing type reports discriminator field', () {
         expect(
-          () => GameCommandSerializer.fromJson({}),
+          () => DomainCommandCodec.fromJson({}),
           throwsA(
             isA<ArgumentError>().having(
               (error) => error.name,
               'name',
-              'GameCommand.type',
+              'DomainCommand.type',
             ),
           ),
         );
@@ -448,7 +448,7 @@ void main() {
 
       test('missing payload field reports command field', () {
         expect(
-          () => GameCommandSerializer.fromJson({
+          () => DomainCommandCodec.fromJson({
             'type': 'MoveUnit',
             'targetCol': 4,
             'targetRow': 8,
@@ -465,7 +465,7 @@ void main() {
 
       test('unknown enum payload reports command field', () {
         expect(
-          () => GameCommandSerializer.fromJson({
+          () => DomainCommandCodec.fromJson({
             'type': 'StartBuilding',
             'cityId': 'city-1',
             'buildingType': 'futureBuilding',
@@ -482,7 +482,7 @@ void main() {
 
       test('unknown project payload reports command field', () {
         expect(
-          () => GameCommandSerializer.fromJson({
+          () => DomainCommandCodec.fromJson({
             'type': 'StartCityProject',
             'cityId': 'city-1',
             'projectType': 'futureProject',

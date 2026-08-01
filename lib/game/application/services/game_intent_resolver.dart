@@ -41,25 +41,15 @@ final class ClientInteractionResolution {
 ClientInteractionResolution resolveClientIntent(
   GameStateReducer reducer,
   GameState currentState,
-  GameCommand command,
+  GameIntent intent,
   GameCommandContext context,
 ) {
   final resolver = GameIntentResolver(reducer: reducer, context: context);
-  final resolution = switch (command) {
-    GameIntent() => resolver.resolve(
-      currentState.interaction,
-      command,
-      currentState,
-    ),
-    SelectWorkerImprovementCommand() => resolver.resolveWorkerImprovementChoice(
-      currentState.interaction,
-      command,
-      currentState,
-    ),
-    _ => throw UnsupportedError(
-      '${command.runtimeType} is not a client interaction',
-    ),
-  };
+  final resolution = resolver.resolve(
+    currentState.interaction,
+    intent,
+    currentState,
+  );
   return ClientInteractionResolution(
     state: resolution.interaction == currentState.interaction
         ? currentState
@@ -101,14 +91,14 @@ final class GameIntentResolver {
         : transition.state.interaction;
     return GameIntentResolution(
       interaction: nextInteraction,
-      domainCommand: authoritative as DomainCommand?,
+      domainCommand: authoritative,
       presentationFocus: List<UiEffect>.unmodifiable(transition.uiEffects),
     );
   }
 
   GameIntentResolution resolveWorkerImprovementChoice(
     GameInteractionState interaction,
-    SelectWorkerImprovementCommand command,
+    ChooseWorkerImprovementIntent command,
     GameState view,
   ) {
     final state = view.copyWith(interaction: interaction);
@@ -189,6 +179,11 @@ final class GameIntentResolver {
         state,
         intent,
       ),
+      ChooseWorkerImprovementIntent() => _resolveWorkerImprovementChoice(
+        state,
+        intent,
+      ),
+      ConfirmWorkerImprovementIntent() => GameStateTransition(state: state),
       StartAttackTargetingCommand() => environment.startAttackTargeting(
         state,
         intent,
@@ -203,6 +198,22 @@ final class GameIntentResolver {
         environment.cancelCommanderMergeSelection(state, intent),
       _ => _resolveSelectionInteraction(state, intent, environment),
     };
+  }
+
+  GameStateTransition _resolveWorkerImprovementChoice(
+    GameState state,
+    ChooseWorkerImprovementIntent intent,
+  ) {
+    final nextInteraction = resolveWorkerImprovementChoice(
+      state.interaction,
+      intent,
+      state,
+    ).interaction;
+    return GameStateTransition(
+      state: nextInteraction == state.interaction
+          ? state
+          : state.copyWith(interaction: nextInteraction),
+    );
   }
 
   GameStateTransition _resolveSelectionInteraction(

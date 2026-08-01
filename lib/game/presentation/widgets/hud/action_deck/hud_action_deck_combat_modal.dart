@@ -211,7 +211,9 @@ extension _HudActionDeckCombatModal on _HudActionDeckState {
     unawaited(
       ref
           .read(hudCommandDispatcherProvider)
-          .dispatch(CancelAttackTargetingCommand(pendingAction.attackerUnitId)),
+          .dispatchIntent(
+            CancelAttackTargetingCommand(pendingAction.attackerUnitId),
+          ),
     );
   }
 

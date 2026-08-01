@@ -96,8 +96,7 @@ Map<String, Object?> _stablePlan(AiTurnPlan plan) {
   return {
     'candidateCalls': _metricInt(metrics, 'mcts.candidateCalls'),
     'commandDigest': stableDigest([
-      for (final command in plan.commands)
-        GameCommandSerializer.toJson(command),
+      for (final command in plan.commands) DomainCommandCodec.toJson(command),
     ]),
     'commands': plan.commands.length,
     'exploredNodes': _metricInt(metrics, 'mcts.exploredNodes'),

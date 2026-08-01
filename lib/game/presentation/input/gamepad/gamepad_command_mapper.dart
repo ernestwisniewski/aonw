@@ -7,12 +7,12 @@ import 'package:aonw_core/game/domain/runtime.dart';
 final class GamepadCommandMapper {
   const GamepadCommandMapper();
 
-  List<GameCommand> commandsForFrame({
+  List<GameIntent> commandsForFrame({
     required GamepadControlFrame frame,
     required GameState state,
     TileData? currentTile,
   }) {
-    final commands = <GameCommand>[];
+    final commands = <GameIntent>[];
     final cancelCommand = frame.cancelPressed ? commandForCancel(state) : null;
     if (cancelCommand != null) commands.add(cancelCommand);
     if (frame.moveModePressed && canToggleMoveMode(state)) {
@@ -37,7 +37,7 @@ final class GamepadCommandMapper {
     return commands;
   }
 
-  GameCommand? commandForCancel(GameState state) {
+  GameIntent? commandForCancel(GameState state) {
     if (state.cityFoundingDraft != null) {
       return const CancelCityFoundingCommand();
     }

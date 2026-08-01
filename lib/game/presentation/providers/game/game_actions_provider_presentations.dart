@@ -3,7 +3,7 @@ part of 'game_actions_provider.dart';
 int _nextInteractionSequence = 0;
 
 Iterable<RendererEffect> _allowedInteractionEffects(
-  GameCommand command,
+  Object command,
   Iterable<RendererEffect> effects,
 ) sync* {
   for (final effect in effects) {
@@ -44,7 +44,7 @@ ProjectedGameEffectBatch _commandProjection(
 }
 
 HandoffPresentation _handoffPresentation(
-  GameCommand command,
+  DomainCommand command,
   _CommandDispatchRecord record,
 ) {
   final result = record.result;
@@ -81,7 +81,7 @@ HudFeedbackContent? _artifactGuidanceContent(
 }
 
 class _CommandDispatchRecord {
-  final GameCommand command;
+  final Object command;
   final GameState? previousState;
   final DispatchCommandResult result;
   final String interactionId;

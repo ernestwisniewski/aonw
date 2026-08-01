@@ -13,13 +13,13 @@ final class MctsCommandValidator {
   const MctsCommandValidator({
     MctsCommandReconciliationRules rules = _defaultRules,
   }) : _rules = rules;
-  List<GameCommand> validatedCommands(
+  List<DomainCommand> validatedCommands(
     List<MctsAction> actions, {
     required SimulatedState rootState,
     required MctsSimulator simulator,
   }) {
     var state = rootState;
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final actedUnitIds = <String>{};
     final attackedTargets = <String>{};
     final reservedMoveTargets = <String>{};

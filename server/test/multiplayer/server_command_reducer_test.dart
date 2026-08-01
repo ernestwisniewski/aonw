@@ -261,7 +261,7 @@ WireMatch _runningMatch({
 }
 
 WireCommand _wireCommand(
-  GameCommand command, {
+  DomainCommand command, {
   String actorPlayerId = 'player_1',
 }) {
   return WireCommand(
@@ -269,7 +269,7 @@ WireCommand _wireCommand(
     tick: 1,
     turn: 1,
     actorPlayerId: actorPlayerId,
-    command: GameCommandSerializer.toJson(command),
+    command: DomainCommandCodec.toJson(command),
   );
 }
 

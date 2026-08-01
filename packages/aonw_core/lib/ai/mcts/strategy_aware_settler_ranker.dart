@@ -24,7 +24,7 @@ const _citySiteDiscoveryRanker = _CitySiteDiscoveryRanker();
 const _settlerEscortRanker = _SettlerEscortRanker();
 
 CommandRanking? rankStrategicSettlerCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
   StrategicPlan plan,
@@ -33,7 +33,7 @@ CommandRanking? rankStrategicSettlerCommand(
 }
 
 CommandRanking? rankCitySiteDiscoveryCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
   StrategicPlan plan,
@@ -42,7 +42,7 @@ CommandRanking? rankCitySiteDiscoveryCommand(
 }
 
 CommandRanking? rankSettlerEscortCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
   StrategicPlan plan,

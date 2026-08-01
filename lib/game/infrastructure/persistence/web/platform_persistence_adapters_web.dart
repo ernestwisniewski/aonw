@@ -2,8 +2,8 @@ import 'package:aonw/game/application/ports/clock.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/id_generator.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
@@ -153,11 +153,14 @@ class _LazyWebEventLog implements EventLog {
   }
 
   @override
-  Future<void> append(String saveId, LoggedCommand command) async =>
+  Future<void> append(String saveId, RecordedDomainCommand command) async =>
       (await _resolve()).append(saveId, command);
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) async* {
+  Stream<RecordedDomainCommand> readSince(
+    String saveId, {
+    int offset = 0,
+  }) async* {
     final log = await _resolve();
     yield* log.readSince(saveId, offset: offset);
   }
@@ -167,7 +170,7 @@ class _LazyWebEventLog implements EventLog {
       (await _resolve()).latestOffset(saveId);
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) => readSince(saveId);
+  Stream<RecordedDomainCommand> readAll(String saveId) => readSince(saveId);
 }
 
 class _LazyWebReplayStore implements ReplayStore {

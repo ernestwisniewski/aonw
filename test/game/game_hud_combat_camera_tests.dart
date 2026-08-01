@@ -73,12 +73,12 @@ void _registerHudCombatCameraTests() {
       );
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const StartAttackTargetingCommand('warrior_1'));
+          .dispatchIntent(const StartAttackTargetingCommand('warrior_1'));
       await tester.pump();
       renderer.handledEffects.clear();
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const TileTappedCommand(1, 0));
+          .dispatchIntent(const TileTappedCommand(1, 0));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 

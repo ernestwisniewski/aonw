@@ -504,7 +504,7 @@ void main() {
 }
 
 class _StaticStrategy implements AiStrategy {
-  final List<GameCommand> commands;
+  final List<DomainCommand> commands;
 
   const _StaticStrategy(this.commands);
 
@@ -539,7 +539,7 @@ class _SpinningStrategy implements AiStrategy {
 class _RecordingCommandTransport implements CommandTransport {
   final bool rejectPlannedCommands;
   final List<UiEffect> uiEffectsForPlannedCommands;
-  final commands = <GameCommand>[];
+  final commands = <DomainCommand>[];
   final contexts = <GameCommandContext>[];
 
   _RecordingCommandTransport({
@@ -551,8 +551,9 @@ class _RecordingCommandTransport implements CommandTransport {
   Future<CommandTransportResult> dispatch({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
+    bool fromMovePreviewConfirmation = false,
   }) async {
     commands.add(command);
     contexts.add(context);

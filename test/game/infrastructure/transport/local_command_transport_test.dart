@@ -1,13 +1,15 @@
 import 'dart:convert';
 
 import 'package:aonw/game/application/ports/clock.dart';
+import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
+import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/application/services/replay_service.dart';
 import 'package:aonw/game/domain/game_save.dart';
@@ -35,12 +37,12 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-part 'local_command_transport_test_support.dart';
+part 'local_command_transport_combat_tests.dart';
+part 'local_command_transport_movement_presentation_tests.dart';
 part 'local_command_transport_preview_fast_path_tests.dart';
+part 'local_command_transport_test_support.dart';
 part 'local_command_transport_unit_action_tests.dart';
 part 'local_command_transport_worker_replay_tests.dart';
-part 'local_command_transport_movement_presentation_tests.dart';
-part 'local_command_transport_combat_tests.dart';
 
 void main() {
   group('LocalCommandTransport', () {
@@ -100,7 +102,7 @@ void main() {
       );
       final eventLog = _MemoryEventLog()
         ..commands.add(
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: 1,
             timestamp: DateTime.utc(2026, 4, 24, 11),
             turn: 1,
@@ -463,14 +465,14 @@ class _MemoryGameRepository implements GameRepository {
 }
 
 class _MemoryEventLog implements EventLog {
-  final commands = <LoggedCommand>[];
+  final commands = <RecordedDomainCommand>[];
   final int latestOffsetFloor;
   var accessCalls = 0;
 
   _MemoryEventLog({this.latestOffsetFloor = 0});
 
   @override
-  Future<void> append(String saveId, LoggedCommand command) async {
+  Future<void> append(String saveId, RecordedDomainCommand command) async {
     accessCalls++;
     commands.add(command);
   }
@@ -484,12 +486,15 @@ class _MemoryEventLog implements EventLog {
   }
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) {
+  Stream<RecordedDomainCommand> readAll(String saveId) {
     return readSince(saveId);
   }
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) async* {
+  Stream<RecordedDomainCommand> readSince(
+    String saveId, {
+    int offset = 0,
+  }) async* {
     accessCalls++;
     for (final command in commands) {
       if (command.offset >= offset) yield command;

@@ -1,5 +1,5 @@
 import 'package:aonw/game/analysis/human_trace_analyzer.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -12,7 +12,7 @@ void main() {
       final report = const HumanTraceAnalyzer().analyze(
         humanPlayerId: 'player_1',
         log: [
-          _logged(1, const StartCityFoundingCommand()),
+          _logged(1, FoundCityCommand('settler', controlledHexes: const [])),
           _logged(
             2,
             FoundCityCommand(
@@ -99,7 +99,7 @@ void main() {
       final report = const HumanTraceAnalyzer().analyze(
         humanPlayerId: 'player_1',
         log: [
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: 1,
             timestamp: commandTimestamp.subtract(const Duration(hours: 1)),
             turn: 1,
@@ -108,13 +108,13 @@ void main() {
               UnitKilledEvent(unitId: 'unit_1', ownerPlayerId: 'player_1'),
             ],
           ),
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: 2,
             timestamp: commandTimestamp,
             turn: 1,
-            command: const StartCityFoundingCommand(),
+            command: FoundCityCommand('settler', controlledHexes: const []),
           ),
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: 3,
             timestamp: commandTimestamp.add(const Duration(hours: 1)),
             turn: 1,
@@ -130,13 +130,13 @@ void main() {
   });
 }
 
-LoggedCommand _logged(
+RecordedDomainCommand _logged(
   int offset,
-  GameCommand command, {
+  DomainCommand command, {
   String? actorPlayerId,
   List<GameEvent> events = const [],
 }) {
-  return LoggedCommand(
+  return RecordedDomainCommand(
     offset: offset,
     timestamp: DateTime.utc(2026, 5, 19, 12, 0, offset),
     turn: 1,

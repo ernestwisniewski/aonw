@@ -29,7 +29,7 @@ void main() {
           CityHex(col: 0, row: 1),
         ],
       );
-      final json = GameCommandSerializer.toJson(command);
+      final json = DomainCommandCodec.toJson(command);
 
       expect(json, {
         'type': 'FoundCity',
@@ -39,12 +39,12 @@ void main() {
           {'col': 0, 'row': 1},
         ],
       });
-      expect(GameCommandSerializer.fromJson(json), command);
+      expect(DomainCommandCodec.fromJson(json), command);
     });
 
     test('decodes a legacy payload without controlledHexes', () {
       expect(
-        GameCommandSerializer.fromJson({
+        DomainCommandCodec.fromJson({
           'type': 'FoundCity',
           'founderId': 'settler_1',
         }),

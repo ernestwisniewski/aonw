@@ -92,7 +92,7 @@ abstract final class InteractionReducer {
 
   static GameState selectWorkerImprovement(
     GameState state,
-    SelectWorkerImprovementCommand command,
+    ChooseWorkerImprovementIntent command,
   ) {
     final pending = state.pendingAction;
     if (pending is! PendingWorkerActionSelection) return state;

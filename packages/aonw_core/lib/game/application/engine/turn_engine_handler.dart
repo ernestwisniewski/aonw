@@ -1,7 +1,7 @@
 import 'package:aonw_core/game/application/engine/game_engine_context.dart';
 import 'package:aonw_core/game/application/engine/game_engine_result.dart';
 import 'package:aonw_core/game/application/engine/movement_execution_delta.dart';
-import 'package:aonw_core/game/application/engine/server_system_command.dart';
+import 'package:aonw_core/game/application/engine/system_command.dart';
 import 'package:aonw_core/game/application/turn/canonical_turn_pipeline.dart';
 import 'package:aonw_core/game/domain/command/game_command.dart';
 import 'package:aonw_core/game/domain/event/game_event.dart';
@@ -66,7 +66,7 @@ final class TurnEngineHandler {
 
   GameEngineResult applySystem({
     required CanonicalGameSnapshot snapshot,
-    required ServerSystemCommand command,
+    required SystemCommand command,
     required GameEngineContext context,
   }) {
     return switch (command) {

@@ -1,15 +1,15 @@
 part of 'replay_service_test.dart';
 
 void _registerReplayCommandBoundaryTest() {
-  test('rejects presentation intents in authoritative replay logs', () async {
+  test('rejects redacted commands in authoritative replay logs', () async {
     final service = _service(
       replayStore: _MemoryReplayStore({'save_1': _snapshot()}),
       eventLog: _MemoryEventLog([
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 1,
           timestamp: DateTime.utc(2026, 4, 24, 12, 1),
           turn: 1,
-          command: const FocusTurnStartActionCommand('p1'),
+          command: null,
         ),
       ]),
     );
@@ -26,7 +26,7 @@ void _registerReplayCommandBoundaryTest() {
             .having(
               (error) => error.message,
               'message',
-              contains('presentation intent'),
+              contains('redacted command'),
             ),
       ),
     );

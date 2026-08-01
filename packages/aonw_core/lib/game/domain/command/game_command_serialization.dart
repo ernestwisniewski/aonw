@@ -8,22 +8,17 @@ import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/util/wire_json.dart';
 
-/// JSON serialization / deserialization for the [GameCommand] sealed hierarchy.
+/// Exhaustive JSON codec for the [DomainCommand] sealed hierarchy.
 ///
 /// Used for multiplayer transport — each command is encoded as a flat JSON map
 /// with a `type` discriminator field plus command-specific payload fields.
-abstract final class GameCommandSerializer {
+abstract final class DomainCommandCodec {
   /// Serializes [command] to a JSON-compatible map.
   ///
   /// The `type` key holds a stable string discriminator.
   /// The switch expression is exhaustive over the sealed class, so adding a new
   /// subtype without updating this method will cause a compile-time error.
-  static Map<String, dynamic> toJson(GameCommand command) {
-    if (command is! DomainCommand) {
-      throw UnsupportedError(
-        'Player command serialization only supports DomainCommand values.',
-      );
-    }
+  static Map<String, dynamic> toJson(DomainCommand command) {
     return switch (command) {
       MoveUnitCommand(:final unitId, :final targetCol, :final targetRow) => {
         'type': 'MoveUnit',
@@ -291,11 +286,11 @@ abstract final class GameCommandSerializer {
     };
   }
 
-  /// Deserializes a [GameCommand] from [json] using the `type` discriminator.
+  /// Deserializes a [DomainCommand] from [json] using the `type` discriminator.
   ///
   /// Throws [ArgumentError] if the `type` value is unrecognised.
   static DomainCommand fromJson(Map<String, dynamic> json) {
-    final type = requiredStringField(json, 'GameCommand', 'type');
+    final type = requiredStringField(json, 'DomainCommand', 'type');
     return switch (type) {
       'MoveUnit' => MoveUnitCommand(
         requiredStringField(json, type, 'unitId'),
@@ -513,7 +508,7 @@ abstract final class GameCommandSerializer {
           DiplomaticMessageResponse.values,
         ),
       ),
-      _ => throw ArgumentError('Unknown GameCommand type: "$type"'),
+      _ => throw ArgumentError('Unknown DomainCommand type: "$type"'),
     };
   }
 

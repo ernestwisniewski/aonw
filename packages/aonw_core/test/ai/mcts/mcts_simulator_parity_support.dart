@@ -259,7 +259,7 @@ final class MctsSimulatorParityFixtures {
     );
   }
 
-  static AiStrategy fixedPlanStrategy(List<GameCommand> commands) {
+  static AiStrategy fixedPlanStrategy(List<DomainCommand> commands) {
     return _FixedPlanStrategy(commands);
   }
 }
@@ -267,7 +267,7 @@ final class MctsSimulatorParityFixtures {
 final class _FixedPlanStrategy implements AiStrategy {
   const _FixedPlanStrategy(this.commands);
 
-  final List<GameCommand> commands;
+  final List<DomainCommand> commands;
 
   @override
   AiTurnPlan plan(GameView view, AiContext context) {

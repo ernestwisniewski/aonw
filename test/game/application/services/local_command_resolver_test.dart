@@ -374,7 +374,7 @@ void main() {
           input['state'] as Map<String, dynamic>,
         );
         final mapData = MapDataCodec.fromJson(jsonEncode(input['map']));
-        final command = GameCommandSerializer.fromJson(
+        final command = DomainCommandCodec.fromJson(
           input['command'] as Map<String, dynamic>,
         );
         final actorPlayerId = input['actorPlayerId'] as String;

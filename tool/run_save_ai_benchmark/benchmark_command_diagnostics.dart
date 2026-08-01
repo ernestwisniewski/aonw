@@ -1,13 +1,13 @@
 part of '../run_save_ai_benchmark.dart';
 
-GameCommand _terminalFor(GameMode gameMode, String playerId) {
+DomainCommand _terminalFor(GameMode gameMode, String playerId) {
   return switch (gameMode) {
     GameMode.hotSeat => EndTurnCommand(playerId),
     GameMode.multiplayer => SubmitTurnCommand(playerId),
   };
 }
 
-bool _isTerminal(GameCommand command) {
+bool _isTerminal(DomainCommand command) {
   return command is EndTurnCommand || command is SubmitTurnCommand;
 }
 
@@ -124,7 +124,7 @@ String? _planningTargetOccupantId(GameView view, int col, int row) {
   return null;
 }
 
-String _describeCommand(GameCommand command) {
+String _describeCommand(DomainCommand command) {
   return switch (command) {
     MoveUnitCommand() =>
       'move ${command.unitId} to (${command.targetCol},${command.targetRow})',
@@ -161,7 +161,7 @@ String _describeCommand(GameCommand command) {
 }
 
 String _describeRejectedCommand(
-  GameCommand command,
+  DomainCommand command,
   GameState state,
   MapTraversalView mapData,
   GameCommandContext context,

@@ -363,8 +363,9 @@ class _RuntimeSmokeCommandTransport implements CommandTransport {
   Future<CommandTransportResult> dispatch({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
+    bool fromMovePreviewConfirmation = false,
   }) async {
     final transition = _dispatcher.apply(
       state: currentState,

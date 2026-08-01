@@ -90,7 +90,7 @@ void main() {
     test('dispatches end turn and prepares hotseat handoff', () async {
       final save = _save();
       final repository = _MemoryGameRepository(SaveSnapshot(save: save));
-      final commands = <GameCommand>[];
+      final commands = <DomainCommand>[];
 
       final result =
           await EndTurnUseCase(
@@ -168,7 +168,7 @@ void main() {
           },
         );
         final repository = _MemoryGameRepository(SaveSnapshot(save: save));
-        final commands = <GameCommand>[];
+        final commands = <DomainCommand>[];
         final control = PlayerControlCoordinator.selectPlayer(
           current: PlayerControlCoordinator.initial(save),
           save: save,

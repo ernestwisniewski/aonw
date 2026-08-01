@@ -15,7 +15,7 @@ final class BasicStrategyIdleSweepPlanner {
 
   final BasicStrategyDefenseMovement defenseMovement;
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     Set<String> usedUnitIds,
@@ -23,7 +23,7 @@ final class BasicStrategyIdleSweepPlanner {
   ) {
     if (view.ownUnits.isEmpty) return const [];
 
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final localUsedUnitIds = {...usedUnitIds};
     final localReservedHexes = {...reservedHexes};
     final occupied = <String>{
@@ -68,7 +68,7 @@ final class BasicStrategyIdleSweepPlanner {
     return unit.isReadyToAct && !unit.isFortified;
   }
 
-  ({GameCommand command, Set<HexCoordinate> reservedHexes})? _idleActionFor({
+  ({DomainCommand command, Set<HexCoordinate> reservedHexes})? _idleActionFor({
     required GameUnit unit,
     required GameView view,
     required AiContext context,

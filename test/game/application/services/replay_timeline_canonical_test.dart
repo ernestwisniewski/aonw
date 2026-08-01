@@ -1,4 +1,4 @@
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/replay_service.dart';
 import 'package:aonw/game/domain/game_save.dart';
@@ -60,7 +60,7 @@ void main() {
       steps: [
         ReplayStep(
           index: 1,
-          loggedCommand: LoggedCommand(
+          loggedCommand: RecordedDomainCommand(
             offset: 1,
             timestamp: DateTime.utc(2026, 4, 24, 12, 1),
             turn: 1,

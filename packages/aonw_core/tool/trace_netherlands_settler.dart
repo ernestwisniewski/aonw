@@ -343,9 +343,9 @@ void _printSettler(
   }
 }
 
-String _commands(List<GameCommand> commands) {
+String _commands(List<DomainCommand> commands) {
   return commands
-      .map((command) => jsonEncode(GameCommandSerializer.toJson(command)))
+      .map((command) => jsonEncode(DomainCommandCodec.toJson(command)))
       .join(' | ');
 }
 

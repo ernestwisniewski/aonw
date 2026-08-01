@@ -91,7 +91,7 @@ void main() {
       'gamepad cursor retargets movement without leaving move mode',
       () async {
         final map = _map();
-        final commands = <GameCommand>[];
+        final commands = <GameIntent>[];
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
         final game = await _loadedGame(
           map,
@@ -128,7 +128,7 @@ void main() {
 
     test('gamepad cursor selection does not move the camera', () async {
       final map = _map();
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final game = await _loadedGame(
         map,
@@ -160,7 +160,7 @@ void main() {
 
     test('gamepad cursor reanchors when the selected unit changes', () async {
       final map = _map();
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final firstUnit = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final secondUnit = GameUnit(
         id: 'scout_2',
@@ -210,7 +210,7 @@ void main() {
 
     test('gamepad cancel prioritizes pending worker action', () async {
       final map = _map();
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final worker = GameUnit(
         id: 'worker_1',
         ownerPlayerId: 'player_1',
@@ -247,7 +247,7 @@ void main() {
 
     test('gamepad move toggle ignores pending worker action', () async {
       final map = _map();
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final worker = GameUnit(
         id: 'worker_1',
         ownerPlayerId: 'player_1',
@@ -619,7 +619,7 @@ void main() {
 
     test('long press previews tile inspection and selects a tile', () async {
       final map = _map();
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final events = <String>[];
       final game = await _loadedGame(
         map,
@@ -640,7 +640,7 @@ void main() {
       'long press on an undiscovered tile does not preview or select',
       () async {
         final map = _map();
-        final commands = <GameCommand>[];
+        final commands = <GameIntent>[];
         final events = <String>[];
         final fog = FogOfWarState.empty.updatePlayer(
           PlayerFogOfWar(
@@ -672,7 +672,7 @@ void main() {
 
     test('confirmed long press suppresses the follow-up tile tap', () async {
       final map = _map();
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final game = await _loadedGame(
         map,
         onCommand: (command) async => commands.add(command),
@@ -700,7 +700,7 @@ void main() {
 
     test('long press start suppresses a tile tap before confirm', () async {
       final map = _map();
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final game = await _loadedGame(
         map,
         onCommand: (command) async => commands.add(command),
@@ -727,7 +727,7 @@ void main() {
 
     test('long press cancels unit move mode before tile inspection', () async {
       final map = _map();
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final events = <String>[];
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final game = await _loadedGame(
@@ -769,7 +769,7 @@ void main() {
 
     test('long press inspects a tile while a city is selected', () async {
       final map = _map();
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final events = <String>[];
       final city = _city(id: 'city_1', col: 0, row: 0);
       final game = await _loadedGame(
@@ -802,7 +802,7 @@ void main() {
 
     test('long press cancel clears tile inspection preview', () async {
       final map = _map();
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final events = <String>[];
       final game = await _loadedGame(
         map,
@@ -872,7 +872,7 @@ void main() {
 
 Future<GameRenderer> _loadedGame(
   MapData map, {
-  Future<void> Function(GameCommand command)? onCommand,
+  Future<void> Function(GameIntent command)? onCommand,
   TileInspectionCallback? onTileInspectionPreviewed,
   VoidCallback? onTileInspectionConfirmed,
   VoidCallback? onTileInspectionCanceled,

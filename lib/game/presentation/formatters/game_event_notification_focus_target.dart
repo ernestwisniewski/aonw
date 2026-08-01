@@ -15,7 +15,7 @@ sealed class GameEventNotificationFocusTarget {
   final int col;
   final int row;
 
-  GameCommand get selectCommand;
+  GameIntent get selectCommand;
 }
 
 final class UnitNotificationFocusTarget
@@ -27,7 +27,7 @@ final class UnitNotificationFocusTarget
   });
 
   @override
-  GameCommand get selectCommand => SelectUnitCommand(id);
+  GameIntent get selectCommand => SelectUnitCommand(id);
 }
 
 final class CityNotificationFocusTarget
@@ -39,7 +39,7 @@ final class CityNotificationFocusTarget
   });
 
   @override
-  GameCommand get selectCommand => SelectCityCommand(id);
+  GameIntent get selectCommand => SelectCityCommand(id);
 }
 
 final class TileNotificationFocusTarget
@@ -51,7 +51,7 @@ final class TileNotificationFocusTarget
   });
 
   @override
-  GameCommand get selectCommand => SelectTileCommand(col, row);
+  GameIntent get selectCommand => SelectTileCommand(col, row);
 }
 
 GameEventNotificationFocusTarget? gameEventNotificationFocusTarget(

@@ -37,9 +37,16 @@ class HudCommandDispatcher {
 
   final Ref _ref;
 
-  Future<void> dispatch(GameCommand command) async {
+  Future<void> dispatch(DomainCommand command) async {
     _ref.read(mapInspectionControllerProvider.notifier).clear();
     await _ref.read(gameCommandControllerProvider.notifier).dispatch(command);
+  }
+
+  Future<void> dispatchIntent(GameIntent intent) async {
+    _ref.read(mapInspectionControllerProvider.notifier).clear();
+    await _ref
+        .read(gameCommandControllerProvider.notifier)
+        .dispatchIntent(intent);
   }
 
   void _applyPanelModes(HudPanelModes modes, {bool playSound = true}) {
@@ -74,12 +81,12 @@ class HudCommandDispatcher {
       activePlayerId: activePlayerId,
     );
     if (command == null) return;
-    unawaited(dispatch(command));
+    unawaited(dispatchIntent(command));
   }
 
   void _cancelWorkerActionSelectionIfPending(GameState? state) {
     final command = HudPendingActionCommands.cancelWorkerActionSelection(state);
     if (command == null) return;
-    unawaited(dispatch(command));
+    unawaited(dispatchIntent(command));
   }
 }

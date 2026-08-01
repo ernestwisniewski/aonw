@@ -242,7 +242,7 @@ void main() {
 
     test('tile tap dispatches a TileTappedCommand in renderer mode', () async {
       final map = _map(3, 3);
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       await GameRenderer(
         mapData: map,
         onCommand: (command) async {
@@ -257,7 +257,7 @@ void main() {
     test('artifact marker tap cycles artifact, hex, artifact', () async {
       final map = _map(3, 3);
       final reducer = GameStateReducer(mapData: map);
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final inspectedArtifacts = <WorldArtifact>[];
       final artifact = WorldArtifact.placed(
         type: WorldArtifactType.queensMirror,
@@ -305,7 +305,7 @@ void main() {
     test('second tap on artifact hex opens artifact popup', () async {
       final map = _map(3, 3);
       final reducer = GameStateReducer(mapData: map);
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final inspectedArtifacts = <WorldArtifact>[];
       final artifact = WorldArtifact.placed(
         type: WorldArtifactType.queensMirror,
@@ -350,7 +350,7 @@ void main() {
     test('second tap on selected hex opens hex description popup', () async {
       final map = _map(3, 3);
       final reducer = GameStateReducer(mapData: map);
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final inspectedTiles = <TileData>[];
       var state = GameState(
         activePlayerId: 'player_1',
@@ -404,7 +404,7 @@ void main() {
 
       final map = _map(3, 3);
       final reducer = GameStateReducer(mapData: map);
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final inspectedArtifacts = <WorldArtifact>[];
       final unit = GameUnit(
         id: 'scout_1',
@@ -468,7 +468,7 @@ void main() {
     test('map objective marker tap cycles objective popup and hex', () async {
       final map = _mapWithObjective();
       final reducer = GameStateReducer(mapData: map);
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final inspectedObjectives = <MapObjectiveProgress>[];
       final progress = MapObjectiveRules.snapshot(
         objectives: map.objectives,
@@ -521,7 +521,7 @@ void main() {
     test('occupied objective hex tap cycles unit, objective, hex', () async {
       final map = _mapWithObjective();
       final reducer = GameStateReducer(mapData: map);
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final inspectedObjectives = <MapObjectiveProgress>[];
       final unit = GameUnit(
         id: 'scout_1',
@@ -582,7 +582,7 @@ void main() {
       () async {
         final map = _mapWithObjective();
         final reducer = GameStateReducer(mapData: map);
-        final commands = <GameCommand>[];
+        final commands = <GameIntent>[];
         final inspectedArtifacts = <WorldArtifact>[];
         final inspectedObjectives = <MapObjectiveProgress>[];
         final inspectedTiles = <TileData>[];
@@ -676,7 +676,7 @@ void main() {
     test('hex tap cycles artifact, objective, then hex popup', () async {
       final map = _mapWithObjective();
       final reducer = GameStateReducer(mapData: map);
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final inspectedArtifacts = <WorldArtifact>[];
       final inspectedObjectives = <MapObjectiveProgress>[];
       final inspectedTiles = <TileData>[];
@@ -740,7 +740,7 @@ void main() {
     test('city hex tap opens objective after selecting the city', () async {
       final map = _mapWithObjective();
       final reducer = GameStateReducer(mapData: map);
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final inspectedObjectives = <MapObjectiveProgress>[];
       const city = GameCity(
         id: 'city_1',
@@ -791,7 +791,7 @@ void main() {
       () async {
         final map = _map(3, 3);
         final reducer = GameStateReducer(mapData: map);
-        final commands = <GameCommand>[];
+        final commands = <GameIntent>[];
         final inspectedTiles = <TileData>[];
         const city = GameCity(
           id: 'city_1',
@@ -882,35 +882,32 @@ void main() {
       },
     );
 
-    test(
-      'tile tap during city expansion dispatches expansion selection',
-      () async {
-        final map = _map(3, 3);
-        final commands = <GameCommand>[];
-        final game =
-            GameRenderer(
-              mapData: map,
-              onCommand: (command) async {
-                commands.add(command);
-              },
-            )..applyState(
-              const GameState(
-                interaction: GameInteractionState(
-                  pendingAction: PendingCityExpansionSelection(
-                    ownerPlayerId: 'player_1',
-                    cityId: 'city_1',
-                  ),
+    test('tile tap during city expansion stays a renderer intent', () async {
+      final map = _map(3, 3);
+      final commands = <GameIntent>[];
+      final game =
+          GameRenderer(
+            mapData: map,
+            onCommand: (command) async {
+              commands.add(command);
+            },
+          )..applyState(
+            const GameState(
+              interaction: GameInteractionState(
+                pendingAction: PendingCityExpansionSelection(
+                  ownerPlayerId: 'player_1',
+                  cityId: 'city_1',
                 ),
               ),
-            );
-        addTearDown(game.disposeRenderer);
+            ),
+          );
+      addTearDown(game.disposeRenderer);
 
-        await game.handleTileTappedForTesting(_tile(map, 1, 2));
-        await Future<void>.delayed(Duration.zero);
+      await game.handleTileTappedForTesting(_tile(map, 1, 2));
+      await Future<void>.delayed(Duration.zero);
 
-        expect(commands, [const SelectCityExpansionHexCommand('city_1', 1, 2)]);
-      },
-    );
+      expect(commands, [const TileTappedCommand(1, 2)]);
+    });
 
     test('applyState publishes renderer state to visual test accessors', () {
       final map = _map(3, 3);
@@ -2018,7 +2015,7 @@ void main() {
       'tapping the active unit marker dispatches a tile tap without direct focus',
       () async {
         final map = _map(3, 3);
-        final commands = <GameCommand>[];
+        final commands = <GameIntent>[];
         final commander = GameUnit.startingCommander(
           ownerPlayerId: 'player_1',
           col: 1,
@@ -2065,7 +2062,7 @@ void main() {
       'tapping an enemy marker during attack targeting selects the target',
       () async {
         final map = _map(3, 1);
-        final commands = <GameCommand>[];
+        final commands = <GameIntent>[];
         final attacker = GameUnit(
           id: 'attacker_1',
           ownerPlayerId: 'player_1',
@@ -2134,7 +2131,7 @@ void main() {
       'tapping a unit marker during move targeting dispatches a tile tap',
       () async {
         final map = _map(3, 2);
-        final commands = <GameCommand>[];
+        final commands = <GameIntent>[];
         final commander = GameUnit.produced(
           id: 'commander_1',
           ownerPlayerId: 'player_1',
@@ -2200,7 +2197,7 @@ void main() {
       'tapping a unit marker during city founding dispatches a tile tap',
       () async {
         final map = _map(3, 2);
-        final commands = <GameCommand>[];
+        final commands = <GameIntent>[];
         final settler = GameUnit.produced(
           id: 'settler_1',
           ownerPlayerId: 'player_1',
@@ -2267,7 +2264,7 @@ void main() {
       'tapping a city marker during move targeting dispatches a tile tap',
       () async {
         final map = _map(3, 3);
-        final commands = <GameCommand>[];
+        final commands = <GameIntent>[];
         const city = GameCity(
           id: 'city_1',
           ownerPlayerId: 'player_1',
@@ -2328,7 +2325,7 @@ void main() {
       'tapping a city marker during worker action selection dispatches a tile tap',
       () async {
         final map = _map(3, 3);
-        final commands = <GameCommand>[];
+        final commands = <GameIntent>[];
         const city = GameCity(
           id: 'city_1',
           ownerPlayerId: 'player_1',
@@ -2457,7 +2454,7 @@ void main() {
 
     test('move preview pill confirms the selected target', () async {
       final map = _map(3, 2);
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final commander = GameUnit.produced(
         id: 'commander_1',
         ownerPlayerId: 'player_1',
@@ -2530,7 +2527,7 @@ void main() {
       'move preview pill includes current progress and artifact movement cap',
       () async {
         final map = _map(4, 2);
-        final commands = <GameCommand>[];
+        final commands = <GameIntent>[];
         final warrior = GameUnit.produced(
           id: 'warrior_1',
           ownerPlayerId: 'player_1',
@@ -2667,7 +2664,7 @@ void main() {
 
     test('worker action palette dispatches preview and confirm', () async {
       final map = _map(3, 2);
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final worker = GameUnit.produced(
         id: 'worker_1',
         ownerPlayerId: 'player_1',
@@ -2727,7 +2724,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(commands, [
-        const SelectWorkerImprovementCommand(
+        const ChooseWorkerImprovementIntent(
           'worker_1',
           FieldImprovementType.farm,
         ),
@@ -2738,12 +2735,12 @@ void main() {
         ..actionPaletteComponentForTesting?.tapCtaForTesting();
       await Future<void>.delayed(Duration.zero);
 
-      expect(commands.last, const ConfirmWorkerImprovementCommand('worker_1'));
+      expect(commands.last, const ConfirmWorkerImprovementIntent('worker_1'));
     });
 
     test('worker action palette keeps blocked options local', () async {
       final map = _map(3, 2);
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final worker = GameUnit.produced(
         id: 'worker_1',
         ownerPlayerId: 'player_1',
@@ -2808,7 +2805,7 @@ void main() {
       'tapping the active city icon recenters even without selection change',
       () async {
         final map = _map(3, 3);
-        final commands = <GameCommand>[];
+        final commands = <GameIntent>[];
         const city = GameCity(
           id: 'city_1',
           ownerPlayerId: 'player_1',
@@ -2861,7 +2858,7 @@ void main() {
 
     test('quick double tapping a city opens its description detail', () async {
       final map = _map(3, 3);
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final descriptionRequests = <String>[];
       const city = GameCity(
         id: 'city_1',

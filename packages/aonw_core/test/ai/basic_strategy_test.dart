@@ -6772,7 +6772,7 @@ GameUnit _unit({
   );
 }
 
-String _debugCommand(GameCommand command) {
+String _debugCommand(DomainCommand command) {
   return switch (command) {
     MoveUnitCommand(:final unitId, :final targetCol, :final targetRow) =>
       'MoveUnit($unitId,$targetCol,$targetRow)',

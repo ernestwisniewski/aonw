@@ -24,7 +24,7 @@ extension _HudActionDeckCommands on _HudActionDeckState {
     unawaited(
       ref
           .read(hudCommandDispatcherProvider)
-          .dispatch(CancelWorkerActionSelectionCommand(unitId)),
+          .dispatchIntent(CancelWorkerActionSelectionCommand(unitId)),
     );
   }
 
@@ -175,7 +175,7 @@ extension _HudActionDeckCommands on _HudActionDeckState {
 
     if (state.pendingAction != null) {
       unawaited(
-        dispatcher.dispatch(SelectCityCommand(selectedCity.id)).then((_) {
+        dispatcher.dispatchIntent(SelectCityCommand(selectedCity.id)).then((_) {
           if (!mounted) return;
           unawaited(dispatcher.focusCityMapTarget(selectedCity.id));
           dispatcher.openCityProductionPanel(state: _currentGameState());

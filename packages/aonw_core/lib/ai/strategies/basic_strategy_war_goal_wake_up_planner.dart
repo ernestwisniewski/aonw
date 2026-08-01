@@ -11,7 +11,7 @@ final class BasicStrategyWarGoalWakeUpPlanner {
 
   final AiMilitaryAssessment militaryAssessment;
 
-  List<GameCommand> plan(GameView view, StrategicPlan strategicPlan) {
+  List<DomainCommand> plan(GameView view, StrategicPlan strategicPlan) {
     final goals =
         [
           for (final goal in strategicPlan.warGoals)
@@ -26,7 +26,7 @@ final class BasicStrategyWarGoalWakeUpPlanner {
     if (goals.isEmpty) return const [];
 
     final unitsById = {for (final unit in view.ownUnits) unit.id: unit};
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final usedUnitIds = <String>{};
     for (final goal in goals) {
       final unitIds = [...goal.assignedUnitIds]..sort();

@@ -3,7 +3,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 
 abstract final class HudPendingActionCommands {
-  static GameCommand? cancelResearchSelection({
+  static GameIntent? cancelResearchSelection({
     required GameState? state,
     required String activePlayerId,
   }) {
@@ -13,7 +13,7 @@ abstract final class HudPendingActionCommands {
     return CancelResearchSelectionCommand(pendingAction.ownerPlayerId);
   }
 
-  static GameCommand? cancelWorkerActionSelection(GameState? state) {
+  static GameIntent? cancelWorkerActionSelection(GameState? state) {
     final pendingAction = state?.pendingAction;
     if (pendingAction is! PendingWorkerActionSelection) return null;
     return CancelWorkerActionSelectionCommand(pendingAction.unitId);

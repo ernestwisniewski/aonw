@@ -52,7 +52,7 @@ class BasicPlanMctsActionGenerator implements MctsActionGenerator {
     );
     final sourceCandidateLimit = candidateLimit - founderReserve;
     final candidates = <MctsAction>[];
-    final seen = <GameCommand>{};
+    final seen = <DomainCommand>{};
     _addCommands(
       candidates,
       seen,
@@ -121,7 +121,7 @@ class BasicPlanMctsActionGenerator implements MctsActionGenerator {
 
   void _addResearchCandidates(
     List<MctsAction> candidates,
-    Set<GameCommand> seen,
+    Set<DomainCommand> seen,
     SimulatedState state,
     GameView view,
   ) {
@@ -144,7 +144,7 @@ class BasicPlanMctsActionGenerator implements MctsActionGenerator {
 
   void _addUnitActionCandidates(
     List<MctsAction> candidates,
-    Set<GameCommand> seen,
+    Set<DomainCommand> seen,
     SimulatedState state,
     GameView view,
   ) {
@@ -168,9 +168,9 @@ class BasicPlanMctsActionGenerator implements MctsActionGenerator {
 
   void _addCommands(
     List<MctsAction> candidates,
-    Set<GameCommand> seen,
+    Set<DomainCommand> seen,
     SimulatedState state,
-    Iterable<GameCommand> commands,
+    Iterable<DomainCommand> commands,
   ) {
     for (final command in commands) {
       _addCommand(
@@ -185,9 +185,9 @@ class BasicPlanMctsActionGenerator implements MctsActionGenerator {
 
   void _addCommand({
     required List<MctsAction> candidates,
-    required Set<GameCommand> seen,
+    required Set<DomainCommand> seen,
     required SimulatedState state,
-    required GameCommand command,
+    required DomainCommand command,
   }) {
     if (_isFull(candidates) || _isTerminal(command)) return;
     if (!isLegalMctsCommandCandidate(command, state.view)) return;
@@ -198,7 +198,7 @@ class BasicPlanMctsActionGenerator implements MctsActionGenerator {
   bool _isFull(List<MctsAction> candidates) =>
       candidates.length >= candidateLimit;
 
-  static bool _isTerminal(GameCommand command) {
+  static bool _isTerminal(DomainCommand command) {
     return command is EndTurnCommand || command is SubmitTurnCommand;
   }
 }

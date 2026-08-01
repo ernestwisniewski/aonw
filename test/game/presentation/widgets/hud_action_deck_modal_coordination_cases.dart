@@ -111,7 +111,7 @@ void _registerDetailModalCoordinationTests() {
   testWidgets('detail modal blocks auto-flow until it is fully closed', (
     tester,
   ) async {
-    final commands = <GameCommand>[];
+    final commands = <GameIntent>[];
     final container = ProviderContainer(
       overrides: [
         hudCommandDispatcherProvider.overrideWith(
@@ -182,7 +182,7 @@ void _registerDetailModalCoordinationTests() {
   testWidgets(
     'disposing the deck during modal close leaves no stale callback',
     (tester) async {
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final container = ProviderContainer(
         overrides: [
           hudCommandDispatcherProvider.overrideWith(
@@ -349,8 +349,9 @@ WorkerActionPanelViewModel _workerAction({
 final class _RecordingHudCommandDispatcher extends HudCommandDispatcher {
   _RecordingHudCommandDispatcher(super.ref, this.commands);
 
-  final List<GameCommand> commands;
+  final List<GameIntent> commands;
 
   @override
-  Future<void> dispatch(GameCommand command) async => commands.add(command);
+  Future<void> dispatchIntent(GameIntent command) async =>
+      commands.add(command);
 }

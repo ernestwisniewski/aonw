@@ -281,12 +281,9 @@ class HumanTraceSimulationBenchmark {
       final command = record.command;
       switch (command) {
         case MoveUnitCommand():
-          _increment(moves, jsonEncode(GameCommandSerializer.toJson(command)));
+          _increment(moves, jsonEncode(DomainCommandCodec.toJson(command)));
         case SelectWorkerImprovementCommand():
-          _increment(
-            workers,
-            jsonEncode(GameCommandSerializer.toJson(command)),
-          );
+          _increment(workers, jsonEncode(DomainCommandCodec.toJson(command)));
         default:
           break;
       }
@@ -328,7 +325,7 @@ class HumanTraceSimulationBenchmark {
     return {
       'turn': record.turn,
       'tick': record.tick,
-      'command': GameCommandSerializer.toJson(record.command),
+      'command': DomainCommandCodec.toJson(record.command),
       'reason': record.reason,
     };
   }

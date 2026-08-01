@@ -12,7 +12,7 @@ final class BasicStrategyMapObjectivePlanner {
 
   final int maxMovesPerTurn;
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     Set<String> usedUnitIds,
@@ -25,7 +25,7 @@ final class BasicStrategyMapObjectivePlanner {
     final objectives = _claimableObjectives(view);
     if (objectives.isEmpty) return const [];
 
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final occupied = <String>{
       for (final unit in view.ownUnits) _key(unit.col, unit.row),
       for (final unit in view.visibleEnemyUnits) _key(unit.col, unit.row),

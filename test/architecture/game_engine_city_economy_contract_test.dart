@@ -106,13 +106,6 @@ void main() {
     ];
 
     expect(intents, everyElement(isA<GameIntent>()));
-    for (final intent in intents) {
-      expect(
-        () => GameCommandSerializer.toJson(intent),
-        throwsA(isA<UnsupportedError>()),
-        reason: '${intent.runtimeType} must never enter player wire.',
-      );
-    }
   });
 
   test('city economy handlers have one game engine call-site each', () {

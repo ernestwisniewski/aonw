@@ -310,5 +310,5 @@ DateTime _syntheticReplaySavedAt(DateTime savedAt, {required int cycles}) =>
 DateTime _replaySavedAt(SaveSnapshot snapshot) =>
     _syntheticReplaySavedAt(snapshot.metadata.savedAtUtc, cycles: 1);
 
-GameCommand _replayTerminalCommand(SaveSnapshot snapshot, Player player) =>
+DomainCommand _replayTerminalCommand(SaveSnapshot snapshot, Player player) =>
     _terminalFor(snapshot.session.gameMode, player.id);

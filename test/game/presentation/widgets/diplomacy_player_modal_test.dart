@@ -21,7 +21,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    GameCommand? dispatched;
+    DomainCommand? dispatched;
     await _pumpModal(
       tester,
       gameState: _state(),
@@ -140,7 +140,7 @@ void main() {
         DiplomaticRelationStatus.war,
       ),
     );
-    GameCommand? dispatched;
+    DomainCommand? dispatched;
 
     await _pumpModal(
       tester,
@@ -203,7 +203,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    GameCommand? dispatched;
+    DomainCommand? dispatched;
     await _pumpModal(
       tester,
       gameState: _state().copyWith(playerGold: const {'player_1': 12}),
@@ -262,7 +262,7 @@ Future<void> _pumpModal(
   WidgetTester tester, {
   GameSave? gameSave,
   required GameState gameState,
-  required Future<void> Function(GameCommand command) onCommand,
+  required Future<void> Function(DomainCommand command) onCommand,
 }) {
   return tester.pumpWidget(
     MaterialApp(

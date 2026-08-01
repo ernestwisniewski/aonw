@@ -111,9 +111,9 @@ class EconomySimulationResult {
   final PersistentGameState state;
   final List<EconomySimulationTurnRow> rows;
   final Map<String, List<EconomySimulationTurnRow>> rowsByPlayerId;
-  final List<GameCommand> appliedCommands;
+  final List<DomainCommand> appliedCommands;
   final List<EconomySimulationAppliedCommand> appliedCommandRecords;
-  final List<GameCommand> rejectedCommands;
+  final List<DomainCommand> rejectedCommands;
   final List<EconomySimulationRejectedCommand> rejectedCommandRecords;
   final List<EconomySimulationAiTurnRuntime> aiTurnRuntimes;
   final BalanceTelemetryReport telemetry;
@@ -149,7 +149,7 @@ class EconomySimulationAppliedCommand {
   final int turn;
   final int tick;
   final String playerId;
-  final GameCommand command;
+  final DomainCommand command;
 }
 
 class EconomySimulationRejectedCommand {
@@ -164,7 +164,7 @@ class EconomySimulationRejectedCommand {
   final int turn;
   final int tick;
   final String playerId;
-  final GameCommand command;
+  final DomainCommand command;
   final String? reason;
 }
 

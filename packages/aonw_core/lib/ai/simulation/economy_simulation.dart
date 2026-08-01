@@ -67,9 +67,9 @@ abstract final class EconomySimulation {
       for (final simulationPlayer in players)
         simulationPlayer.id: <EconomySimulationTurnRow>[],
     };
-    final appliedCommands = <GameCommand>[];
+    final appliedCommands = <DomainCommand>[];
     final appliedCommandRecords = <EconomySimulationAppliedCommand>[];
-    final rejectedCommands = <GameCommand>[];
+    final rejectedCommands = <DomainCommand>[];
     final rejectedCommandRecords = <EconomySimulationRejectedCommand>[];
     final aiTurnRuntimes = <EconomySimulationAiTurnRuntime>[];
     final strategicPlansByPlayerId = <String, StrategicPlan>{};
@@ -189,7 +189,7 @@ abstract final class EconomySimulation {
                 command: command,
               ),
             );
-            commandStats.addApplied(command as DomainCommand);
+            commandStats.addApplied(command);
           } else {
             rejectedCommands.add(command);
             rejectedCommandRecords.add(

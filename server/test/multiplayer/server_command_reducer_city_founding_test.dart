@@ -122,12 +122,12 @@ GameSave _save() => GameSave(
   gameMode: GameMode.multiplayer,
 );
 
-WireCommand _wireCommand(GameCommand command) => WireCommand(
+WireCommand _wireCommand(DomainCommand command) => WireCommand(
   matchId: 'match_1',
   tick: 1,
   turn: 1,
   actorPlayerId: 'player_1',
-  command: GameCommandSerializer.toJson(command),
+  command: DomainCommandCodec.toJson(command),
 );
 
 MapData _grasslandMap() => MapData(

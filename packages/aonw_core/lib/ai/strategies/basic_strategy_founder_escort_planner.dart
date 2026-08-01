@@ -20,7 +20,7 @@ final class BasicStrategyFounderEscortPlanner {
   final BasicStrategyDefenseMovement defenseMovement;
   final BasicStrategyMilitaryAwareness militaryAwareness;
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     AiEmpireAssessment assessment,
@@ -56,7 +56,7 @@ final class BasicStrategyFounderEscortPlanner {
           !occupied.contains(_key(tile.col, tile.row)),
     );
 
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     for (final need in needs) {
       if (militaryAwareness.ownMilitaryNear(need.focus, view, 2)) continue;
 

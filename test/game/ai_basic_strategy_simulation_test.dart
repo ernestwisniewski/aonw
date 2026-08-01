@@ -97,8 +97,8 @@ _SimulationResult _simulateBasicAiTurns({
   required Player player,
 }) {
   final reducer = GameStateReducer(mapData: mapData);
-  final plannedCommands = <GameCommand>[];
-  final appliedCommands = <GameCommand>[];
+  final plannedCommands = <DomainCommand>[];
+  final appliedCommands = <DomainCommand>[];
 
   for (var turn = 1; turn <= turns; turn++) {
     final context = GameCommandContext(
@@ -210,6 +210,6 @@ class _SimulationResult {
   });
 
   final GameState state;
-  final List<GameCommand> plannedCommands;
-  final List<GameCommand> appliedCommands;
+  final List<DomainCommand> plannedCommands;
+  final List<DomainCommand> appliedCommands;
 }

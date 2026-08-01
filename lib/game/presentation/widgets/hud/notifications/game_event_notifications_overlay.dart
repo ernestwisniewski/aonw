@@ -162,7 +162,7 @@ class _GameEventNotificationsOverlayState
 
     await ref
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(target.selectCommand);
+        .dispatchIntent(target.selectCommand);
     if (!mounted) return;
     await ref
         .read(activeRendererViewModelProvider)

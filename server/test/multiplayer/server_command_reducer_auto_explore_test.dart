@@ -218,7 +218,7 @@ Future<ServerCommandTestReduction> _reduce({
       tick: 1,
       turn: 1,
       actorPlayerId: _actorPlayerId,
-      command: GameCommandSerializer.toJson(
+      command: DomainCommandCodec.toJson(
         const AutoExploreUnitCommand(_scoutId),
       ),
     ),

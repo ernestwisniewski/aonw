@@ -108,7 +108,7 @@ Map<String, Object?> _summaryJson({
                 'tick': rejected.tick,
                 'playerId': rejected.playerId,
                 'reason': rejected.reason,
-                'command': GameCommandSerializer.toJson(rejected.command),
+                'command': DomainCommandCodec.toJson(rejected.command),
               },
           ],
           'aiTurnRuntime': [

@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('ignores empty player ids before dispatching', () async {
-    final commands = <GameCommand>[];
+    final commands = <GameIntent>[];
     final effects = <RendererEffect>[];
     final coordinator = _coordinator(
       state: const GameState(),
@@ -27,7 +27,7 @@ void main() {
   test(
     'selects a fallback city when focus without camera changes nothing',
     () async {
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final effects = <RendererEffect>[];
       const state = GameState(cities: [_city]);
       final coordinator = _coordinator(
@@ -55,7 +55,7 @@ void main() {
   );
 
   test('accepts camera focus produced by the turn-start command', () async {
-    final commands = <GameCommand>[];
+    final commands = <GameIntent>[];
     final effects = <RendererEffect>[];
     const state = GameState(cities: [_city]);
     final coordinator = _coordinator(
@@ -84,7 +84,7 @@ void main() {
   test(
     'focuses a fallback city when turn-start command has no target',
     () async {
-      final commands = <GameCommand>[];
+      final commands = <GameIntent>[];
       final effects = <RendererEffect>[];
       const state = GameState(cities: [_city]);
       final coordinator = _coordinator(
@@ -130,12 +130,12 @@ const _city = GameCity(
 
 TurnStartFocusCoordinator _coordinator({
   required GameState state,
-  required List<GameCommand> commands,
+  required List<GameIntent> commands,
   required List<RendererEffect> effects,
   TurnStartCommandDispatcher? dispatchWithPresentation,
   TurnStartCommandDispatcher? dispatchWithoutRendererEffects,
 }) {
-  Future<DispatchCommandResult> defaultDispatch(GameCommand command) async {
+  Future<DispatchCommandResult> defaultDispatch(GameIntent command) async {
     commands.add(command);
     return DispatchCommandResult(state: state);
   }

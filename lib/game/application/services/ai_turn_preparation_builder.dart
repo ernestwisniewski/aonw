@@ -170,7 +170,7 @@ final class AiTurnPreparationBuilder {
 
   static AiStrategy _strategyWithPreparation(
     AiStrategy strategy,
-    List<GameCommand> preparationCommands,
+    List<DomainCommand> preparationCommands,
   ) {
     if (preparationCommands.isEmpty) return strategy;
     return _PreparedAiStrategy(strategy, preparationCommands);
@@ -251,10 +251,12 @@ final class PreparedAiTurn {
 
 final class _PreparedAiStrategy implements AiStrategy {
   final AiStrategy delegate;
-  final List<GameCommand> preparationCommands;
+  final List<DomainCommand> preparationCommands;
 
-  _PreparedAiStrategy(this.delegate, Iterable<GameCommand> preparationCommands)
-    : preparationCommands = List.unmodifiable(preparationCommands);
+  _PreparedAiStrategy(
+    this.delegate,
+    Iterable<DomainCommand> preparationCommands,
+  ) : preparationCommands = List.unmodifiable(preparationCommands);
 
   @override
   AiTurnPlan plan(GameView view, AiContext context) {

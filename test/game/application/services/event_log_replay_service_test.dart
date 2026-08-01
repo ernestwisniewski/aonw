@@ -1,5 +1,5 @@
 import 'package:aonw/game/application/ports/event_log.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/event_log_replay_service.dart';
 import 'package:aonw/game/domain/game_save.dart';
@@ -17,14 +17,14 @@ void main() {
     final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
     final service = EventLogReplayService(
       eventLog: _MemoryEventLog([
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 1,
           timestamp: DateTime.utc(2026, 4, 16, 11),
           turn: 1,
           actorPlayerId: 'player_1',
-          command: const SelectUnitCommand('ignored'),
+          command: null,
         ),
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 2,
           timestamp: DateTime.utc(2026, 4, 16, 12),
           turn: 1,
@@ -51,7 +51,7 @@ void main() {
     final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
     final service = EventLogReplayService(
       eventLog: _MemoryEventLog([
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 3,
           timestamp: DateTime.utc(2026, 4, 16, 12),
           turn: 1,
@@ -76,7 +76,7 @@ void main() {
     final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
     final service = EventLogReplayService(
       eventLog: _MemoryEventLog([
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 2,
           timestamp: DateTime.utc(2026, 4, 16, 12),
           turn: 1,
@@ -107,7 +107,7 @@ void main() {
     final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
     final service = EventLogReplayService(
       eventLog: _MemoryEventLog([
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 2,
           timestamp: DateTime.utc(2026, 4, 16, 12),
           turn: null,
@@ -152,22 +152,22 @@ SaveSnapshot _snapshot(GameState state, {required int offset}) {
 }
 
 class _MemoryEventLog implements EventLog {
-  final List<LoggedCommand> commands;
+  final List<RecordedDomainCommand> commands;
 
   const _MemoryEventLog(this.commands);
 
   @override
-  Future<void> append(String saveId, LoggedCommand command) async {}
+  Future<void> append(String saveId, RecordedDomainCommand command) async {}
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) {
+  Stream<RecordedDomainCommand> readSince(String saveId, {int offset = 0}) {
     return Stream.fromIterable(
       commands.where((command) => command.offset >= offset),
     );
   }
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) => readSince(saveId);
+  Stream<RecordedDomainCommand> readAll(String saveId) => readSince(saveId);
 
   @override
   Future<int> latestOffset(String saveId) async {

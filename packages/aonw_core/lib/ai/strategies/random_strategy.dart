@@ -21,7 +21,7 @@ class RandomStrategy implements AiStrategy {
   @override
   AiTurnPlan plan(GameView view, AiContext context) {
     var rng = context.rng;
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final occupied = <String>{
       for (final unit in view.ownUnits) _key(unit.col, unit.row),
       for (final unit in view.visibleEnemyUnits) _key(unit.col, unit.row),

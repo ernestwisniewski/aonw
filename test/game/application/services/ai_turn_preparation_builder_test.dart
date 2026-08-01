@@ -61,7 +61,7 @@ void main() {
 }
 
 class _CapturingStrategy implements AiStrategy {
-  final List<GameCommand> commands;
+  final List<DomainCommand> commands;
   GameView? lastView;
 
   _CapturingStrategy({required this.commands});

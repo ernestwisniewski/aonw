@@ -76,7 +76,7 @@ extension HudCommandDispatcherPanels on HudCommandDispatcher {
     if (key != null) {
       _ref.read(hudResearchAutoPromptControllerProvider.notifier).dismiss(key);
     }
-    unawaited(dispatch(cancelResearchCommand));
+    unawaited(dispatchIntent(cancelResearchCommand));
   }
 
   void toggleObjectivesPanel({

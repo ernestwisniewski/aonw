@@ -59,7 +59,7 @@ GameCity _city({
 GameStateTransition _dispatch(
   GameStateReducer reducer,
   GameState state,
-  GameCommand command, {
+  Object command, {
   GameCommandContext context = const GameCommandContext(),
 }) => resolveWithEffects(reducer, state, command, context: context);
 

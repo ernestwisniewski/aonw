@@ -205,7 +205,7 @@ RunAiTurnUseCase _useCase({
 }
 
 class _CountingStrategy implements AiStrategy {
-  final List<GameCommand> commands;
+  final List<DomainCommand> commands;
   int planCalls = 0;
 
   _CountingStrategy(this.commands);
@@ -218,14 +218,15 @@ class _CountingStrategy implements AiStrategy {
 }
 
 class _RecordingCommandTransport implements CommandTransport {
-  final commands = <GameCommand>[];
+  final commands = <DomainCommand>[];
 
   @override
   Future<CommandTransportResult> dispatch({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
+    bool fromMovePreviewConfirmation = false,
   }) async {
     commands.add(command);
     return CommandTransportResult(

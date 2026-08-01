@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/movement.dart';
 final class MctsMovementCandidateCollector {
   const MctsMovementCandidateCollector();
 
-  Iterable<GameCommand> commandsFor(GameView view) sync* {
+  Iterable<DomainCommand> commandsFor(GameView view) sync* {
     final units = [...view.ownUnits]..sort((a, b) => a.id.compareTo(b.id));
     final pathfinder = UnitMovementPathfinder(
       mapData: view.mapData,

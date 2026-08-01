@@ -9,7 +9,7 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('GameCommand', () {
+  group('independent command boundaries', () {
     group('construction and field access', () {
       test('TileTappedCommand stores col and row', () {
         const cmd = TileTappedCommand(3, 5);
@@ -119,17 +119,17 @@ void main() {
 
       test('ToggleMoveTargetingCommand can be constructed', () {
         const cmd = ToggleMoveTargetingCommand();
-        expect(cmd, isA<GameCommand>());
+        expect(cmd, isA<GameIntent>());
       });
 
       test('StartCityFoundingCommand can be constructed', () {
         const cmd = StartCityFoundingCommand();
-        expect(cmd, isA<GameCommand>());
+        expect(cmd, isA<GameIntent>());
       });
 
       test('CancelCityFoundingCommand can be constructed', () {
         const cmd = CancelCityFoundingCommand();
-        expect(cmd, isA<GameCommand>());
+        expect(cmd, isA<GameIntent>());
       });
 
       test('StartCityWorkedHexSelectionCommand stores cityId', () {
@@ -264,9 +264,9 @@ void main() {
         expect(cmd.playerId, 'player-1');
       });
     });
-    group('exhaustiveness — all subtypes are GameCommand', () {
+    group('boundary ownership', () {
       // Collect one instance of each subtype.
-      final List<GameCommand> allSubtypes = [
+      final List<Object> allSubtypes = [
         const TileTappedCommand(0, 0),
         const CityTappedCommand('c'),
         const MoveUnitCommand('u', 0, 0),
@@ -345,7 +345,9 @@ void main() {
         const SelectCityExpansionHexCommand('c', 1, 2),
         const ToggleWorkedHexCommand('c', 1, 2),
         const StartWorkerActionSelectionCommand('u'),
+        const ChooseWorkerImprovementIntent('u', FieldImprovementType.farm),
         const SelectWorkerImprovementCommand('u', FieldImprovementType.farm),
+        const ConfirmWorkerImprovementIntent('u'),
         const ConfirmWorkerImprovementCommand('u'),
         const CancelWorkerActionSelectionCommand('u'),
         const CancelWorkerJobCommand('u'),
@@ -370,97 +372,16 @@ void main() {
         const FocusTurnStartActionCommand('p'),
       ];
 
-      test('there are exactly 62 subtype instances', () {
-        expect(allSubtypes, hasLength(62));
+      test('there are exactly 64 subtype instances', () {
+        expect(allSubtypes, hasLength(64));
       });
 
-      test('every subtype is a GameCommand', () {
+      test('every subtype has exactly one boundary owner', () {
         for (final cmd in allSubtypes) {
-          expect(
-            cmd,
-            isA<GameCommand>(),
-            reason: '${cmd.runtimeType} should be a GameCommand',
-          );
+          final ownsIntent = cmd is GameIntent;
+          final ownsDomain = cmd is DomainCommand;
+          expect(ownsIntent ^ ownsDomain, isTrue, reason: '${cmd.runtimeType}');
         }
-      });
-
-      test('switch over sealed class is exhaustive (compile-time check)', () {
-        // If a new subtype is added without updating this switch, the Dart
-        // analyzer will flag a non-exhaustive switch error.
-        const GameCommand cmd = TileTappedCommand(0, 0);
-        final String label = switch (cmd) {
-          TileTappedCommand() => 'TileTapped',
-          CityTappedCommand() => 'CityTapped',
-          MoveUnitCommand() => 'MoveUnit',
-          CancelUnitActionCommand() => 'CancelUnitAction',
-          SkipUnitTurnCommand() => 'SkipUnitTurn',
-          FortifyUnitCommand() => 'FortifyUnit',
-          AutoExploreUnitCommand() => 'AutoExploreUnit',
-          StartMerchantTradeRouteSelectionCommand() =>
-            'StartMerchantTradeRouteSelection',
-          CancelMerchantTradeRouteSelectionCommand() =>
-            'CancelMerchantTradeRouteSelection',
-          AssignMerchantTradeRouteCommand() => 'AssignMerchantTradeRoute',
-          StartMerchantMoveToCitySelectionCommand() =>
-            'StartMerchantMoveToCitySelection',
-          CancelMerchantMoveToCitySelectionCommand() =>
-            'CancelMerchantMoveToCitySelection',
-          MoveMerchantToCityCommand() => 'MoveMerchantToCity',
-          FoundCityCommand() => 'FoundCity',
-          StartBuildingCommand() => 'StartBuilding',
-          StartUnitProductionCommand() => 'StartUnitProduction',
-          StartCityProjectCommand() => 'StartCityProject',
-          StartWonderCommand() => 'StartWonder',
-          SetCitySpecializationCommand() => 'SetCitySpecialization',
-          RushProductionCommand() => 'RushProduction',
-          SelectTechnologyCommand() => 'SelectTechnology',
-          CancelResearchSelectionCommand() => 'CancelResearchSelection',
-          DetachTroopCommand() => 'DetachTroop',
-          EndTurnCommand() => 'EndTurn',
-          SubmitTurnCommand() => 'SubmitTurn',
-          SendDiplomaticProposalCommand() => 'SendDiplomaticProposal',
-          RespondDiplomaticProposalCommand() => 'RespondDiplomaticProposal',
-          SendDiplomaticMessageCommand() => 'SendDiplomaticMessage',
-          RespondDiplomaticMessageCommand() => 'RespondDiplomaticMessage',
-          DeclareWarCommand() => 'DeclareWar',
-          SendGoldGiftCommand() => 'SendGoldGift',
-          OpenResourceTradeCommand() => 'OpenResourceTrade',
-          OpenResourceExchangeCommand() => 'OpenResourceExchange',
-          ToggleMoveTargetingCommand() => 'ToggleMoveTargeting',
-          StartCityFoundingCommand() => 'StartCityFounding',
-          CancelCityFoundingCommand() => 'CancelCityFounding',
-          StartCityWorkedHexSelectionCommand() => 'StartCityWorkedHexSelection',
-          CancelCityWorkedHexSelectionCommand() =>
-            'CancelCityWorkedHexSelection',
-          StartCityExpansionSelectionCommand() => 'StartCityExpansionSelection',
-          CancelCityExpansionSelectionCommand() =>
-            'CancelCityExpansionSelection',
-          SelectCityExpansionHexCommand() => 'SelectCityExpansionHex',
-          ToggleWorkedHexCommand() => 'ToggleWorkedHex',
-          StartWorkerActionSelectionCommand() => 'StartWorkerActionSelection',
-          SelectWorkerImprovementCommand() => 'SelectWorkerImprovement',
-          ConfirmWorkerImprovementCommand() => 'ConfirmWorkerImprovement',
-          CancelWorkerActionSelectionCommand() => 'CancelWorkerActionSelection',
-          CancelWorkerJobCommand() => 'CancelWorkerJob',
-          AssignWorkerToHexCommand() => 'AssignWorkerToHex',
-          CancelWorkerAssignmentCommand() => 'CancelWorkerAssignment',
-          StartArtifactExcavationCommand() => 'StartArtifactExcavation',
-          StoreArtifactInCityCommand() => 'StoreArtifactInCity',
-          TradeArtifactCommand() => 'TradeArtifact',
-          StartAttackTargetingCommand() => 'StartAttackTargeting',
-          CancelAttackTargetingCommand() => 'CancelAttackTargeting',
-          AttackHexCommand() => 'AttackHex',
-          StartCommanderMergeSelectionCommand() =>
-            'StartCommanderMergeSelection',
-          CancelCommanderMergeSelectionCommand() =>
-            'CancelCommanderMergeSelection',
-          SelectTileCommand() => 'SelectTile',
-          SelectUnitCommand() => 'SelectUnit',
-          SelectCityCommand() => 'SelectCity',
-          FocusNextPendingActionCommand() => 'FocusNextPendingAction',
-          FocusTurnStartActionCommand() => 'FocusTurnStartAction',
-        };
-        expect(label, 'TileTapped');
       });
     });
     group('value equality', () {

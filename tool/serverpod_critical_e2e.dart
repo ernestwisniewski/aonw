@@ -366,7 +366,7 @@ final class _CriticalE2e {
       tick: tick,
       turn: turn,
       actorPlayerId: playerId,
-      command: GameCommandSerializer.toJson(SubmitTurnCommand(playerId)),
+      command: DomainCommandCodec.toJson(SubmitTurnCommand(playerId)),
     ),
   );
 }

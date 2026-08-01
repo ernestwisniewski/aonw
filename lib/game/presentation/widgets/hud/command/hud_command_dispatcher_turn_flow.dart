@@ -10,7 +10,7 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
   }) async {
     if (activePlayerId.isEmpty) return;
 
-    await dispatch(
+    await dispatchIntent(
       FocusNextPendingActionCommand(
         activePlayerId,
         preferredObjectiveAdvice: preferredObjectiveAdvice,

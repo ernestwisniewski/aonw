@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/technology.dart';
 final class MctsWorkerCandidateCollector {
   const MctsWorkerCandidateCollector();
 
-  Iterable<GameCommand> commandsFor(GameView view) {
+  Iterable<DomainCommand> commandsFor(GameView view) {
     if (view.ownCities.isEmpty) return const [];
 
     final workers = [
@@ -14,7 +14,7 @@ final class MctsWorkerCandidateCollector {
         if (unit.isWorker) unit,
     ]..sort((a, b) => a.id.compareTo(b.id));
     final research = _researchFor(view);
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
 
     for (final worker in workers) {
       if (!worker.isReadyToAct) continue;

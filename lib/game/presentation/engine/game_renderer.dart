@@ -98,7 +98,7 @@ class GameRenderer extends HexWorld
   final CameraState? initialCamera;
   final bool startCameraOffMap;
   final bool focusActivePlayerOnFirstState;
-  final Future<void> Function(GameCommand command) onCommand;
+  final Future<void> Function(GameIntent intent) onCommand;
   final void Function(GameCity city)? onCityDescriptionRequested;
   final TileInspectionCallback? onTileInspected;
   final TileInspectionCallback? onTileInspectionPreviewed;

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/infrastructure/persistence/json_event_log.dart';
@@ -108,7 +108,7 @@ Future<_EventFixture> _prepareEventLog(
   return _EventFixture(contents, utf8.encode(contents).length);
 }
 
-LoggedCommand _loggedCommand(int offset) => LoggedCommand(
+RecordedDomainCommand _loggedCommand(int offset) => RecordedDomainCommand(
   offset: offset,
   timestamp: DateTime.utc(2026, 1, 1).add(Duration(seconds: offset)),
   turn: 1,
@@ -129,7 +129,7 @@ Future<_ScaleResult> _measureEventLog(
   final latestTimings = <Duration>[];
   final readTimings = <Duration>[];
   var latestOffset = 0;
-  var tail = <LoggedCommand>[];
+  var tail = <RecordedDomainCommand>[];
   final readSinceOffset = records > 10 ? records - 9 : 1;
   await eventLog.latestOffset(saveId);
   await eventLog.readSince(saveId, offset: readSinceOffset).toList();

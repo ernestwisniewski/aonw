@@ -19,7 +19,7 @@ class _ActionsSection extends StatelessWidget {
   final int currentTurn;
   final String activePlayerId;
   final String targetPlayerId;
-  final Future<void> Function(GameCommand command) onCommand;
+  final Future<void> Function(DomainCommand command) onCommand;
 
   @override
   Widget build(BuildContext context) {

@@ -4,7 +4,7 @@ class _EarlyCityDefenseRanker {
   const _EarlyCityDefenseRanker();
 
   CommandRanking? rank(
-    GameCommand command,
+    DomainCommand command,
     GameView view,
     AiContext context,
     StrategicPlan plan,

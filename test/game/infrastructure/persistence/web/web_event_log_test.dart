@@ -1,4 +1,4 @@
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_database.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_event_log.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -27,7 +27,7 @@ void main() {
     test('append + readSince round-trip preserves command fields', () async {
       await log.append(
         'save_1',
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 1,
           timestamp: DateTime.utc(2026, 1, 1),
           turn: 1,
@@ -36,7 +36,7 @@ void main() {
       );
       await log.append(
         'save_1',
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 2,
           timestamp: DateTime.utc(2026, 1, 2),
           turn: 1,
@@ -53,7 +53,7 @@ void main() {
       for (var i = 1; i <= 5; i++) {
         await log.append(
           'save_1',
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: i,
             timestamp: DateTime.utc(2026, 1, i),
             turn: 1,
@@ -69,7 +69,7 @@ void main() {
     test('keeps each saveId independent', () async {
       await log.append(
         'save_a',
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 1,
           timestamp: DateTime.utc(2026, 1, 1),
           turn: 1,
@@ -78,7 +78,7 @@ void main() {
       );
       await log.append(
         'save_b',
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 1,
           timestamp: DateTime.utc(2026, 1, 1),
           turn: 1,
@@ -94,7 +94,7 @@ void main() {
       for (final offset in [2, 10, 3]) {
         await log.append(
           'save_a',
-          LoggedCommand(
+          RecordedDomainCommand(
             offset: offset,
             timestamp: DateTime.utc(2026, 1, offset),
             turn: 1,
@@ -104,7 +104,7 @@ void main() {
       }
       await log.append(
         'save_b',
-        LoggedCommand(
+        RecordedDomainCommand(
           offset: 99,
           timestamp: DateTime.utc(2026, 1, 1),
           turn: 1,

@@ -62,22 +62,22 @@ void _registerWorkerReplayTests() {
     () async {
       final harness = _WorkerReplayHarness.create(_workerReplayState());
 
-      await harness.dispatch(
+      await harness.dispatchIntent(
         const StartWorkerActionSelectionCommand('worker_1'),
       );
-      await harness.dispatch(
-        const SelectWorkerImprovementCommand(
+      await harness.dispatchIntent(
+        const ChooseWorkerImprovementIntent(
           'worker_1',
           FieldImprovementType.mine,
         ),
       );
-      await harness.dispatch(
-        const SelectWorkerImprovementCommand(
+      await harness.dispatchIntent(
+        const ChooseWorkerImprovementIntent(
           'worker_1',
           FieldImprovementType.farm,
         ),
       );
-      await harness.dispatch(
+      await harness.dispatchIntent(
         const CancelWorkerActionSelectionCommand('worker_1'),
       );
 
@@ -86,16 +86,18 @@ void _registerWorkerReplayTests() {
       expect(harness.state.pendingAction, isNull);
       expect(harness.state.units.single.workerJob, isNull);
 
-      await harness.dispatch(
+      await harness.dispatchIntent(
         const StartWorkerActionSelectionCommand('worker_1'),
       );
-      await harness.dispatch(
-        const SelectWorkerImprovementCommand(
+      await harness.dispatchIntent(
+        const ChooseWorkerImprovementIntent(
           'worker_1',
           FieldImprovementType.farm,
         ),
       );
-      await harness.dispatch(const ConfirmWorkerImprovementCommand('worker_1'));
+      await harness.dispatchIntent(
+        const ConfirmWorkerImprovementIntent('worker_1'),
+      );
 
       expect(harness.eventLog.commands, hasLength(1));
       expect(harness.repository.snapshot.eventLogOffset, 1);
@@ -144,16 +146,18 @@ void _registerWorkerReplayTests() {
         _workerReplayState(workerCol: 2, workerRow: 2),
       );
 
-      await harness.dispatch(
+      await harness.dispatchIntent(
         const StartWorkerActionSelectionCommand('worker_1'),
       );
-      await harness.dispatch(
-        const SelectWorkerImprovementCommand(
+      await harness.dispatchIntent(
+        const ChooseWorkerImprovementIntent(
           'worker_1',
           FieldImprovementType.farm,
         ),
       );
-      await harness.dispatch(const ConfirmWorkerImprovementCommand('worker_1'));
+      await harness.dispatchIntent(
+        const ConfirmWorkerImprovementIntent('worker_1'),
+      );
 
       expect(harness.eventLog.commands, hasLength(1));
       expect(harness.state.pendingAction, isA<PendingWorkerActionSelection>());
@@ -180,16 +184,18 @@ void _registerWorkerReplayTests() {
         ),
       );
 
-      await harness.dispatch(
+      await harness.dispatchIntent(
         const StartWorkerActionSelectionCommand('worker_1'),
       );
-      await harness.dispatch(
-        const SelectWorkerImprovementCommand(
+      await harness.dispatchIntent(
+        const ChooseWorkerImprovementIntent(
           'worker_1',
           FieldImprovementType.farm,
         ),
       );
-      await harness.dispatch(const ConfirmWorkerImprovementCommand('worker_1'));
+      await harness.dispatchIntent(
+        const ConfirmWorkerImprovementIntent('worker_1'),
+      );
 
       expect(harness.state.cityFoundingDraft, isNull);
       expect(harness.state.units.single.workerJob, isNotNull);
@@ -209,13 +215,13 @@ void _expectSameAuthoritativeState(GameState replayed, GameState live) {
 Object _authoritativeProjection(GameState state) =>
     state.toPersistentState().withoutClientInteractionState();
 
-void _expectExactWorkerCommand(GameCommand? actual, GameCommand expected) {
+void _expectExactWorkerCommand(DomainCommand? actual, DomainCommand expected) {
   expect(actual, isNotNull);
   expect(actual.runtimeType, expected.runtimeType);
   expect(actual, expected);
   expect(
-    GameCommandSerializer.toJson(actual!),
-    GameCommandSerializer.toJson(expected),
+    DomainCommandCodec.toJson(actual!),
+    DomainCommandCodec.toJson(expected),
   );
 }
 
@@ -340,7 +346,7 @@ final class _AcceptedWorkerReplayScenario {
 
   final String name;
   final GameState initialState;
-  final GameCommand command;
+  final DomainCommand command;
   final _AcceptedWorkerEffect effect;
 }
 
@@ -435,7 +441,7 @@ final class _WorkerReplayHarness {
   final LocalCommandTransport transport;
   int? lastDispatchOffset;
 
-  Future<void> dispatch(GameCommand command) async {
+  Future<void> dispatch(DomainCommand command) async {
     final result = await transport.dispatch(
       saveId: repository.snapshot.save.id,
       currentState: state,
@@ -444,6 +450,22 @@ final class _WorkerReplayHarness {
     );
     state = result.state;
     lastDispatchOffset = result.offset;
+  }
+
+  Future<void> dispatchIntent(GameIntent intent) async {
+    final resolution = GameIntentResolver(
+      reducer: reducer,
+      context: const GameCommandContext(actorPlayerId: 'player_1'),
+    ).resolve(state.interaction, intent, state);
+    final command = resolution.domainCommand;
+    if (command != null) {
+      await dispatch(command);
+      return;
+    }
+    state = resolution.interaction == state.interaction
+        ? state
+        : state.copyWith(interaction: resolution.interaction);
+    lastDispatchOffset = null;
   }
 
   Future<ReplayTimeline> replayTimeline() {

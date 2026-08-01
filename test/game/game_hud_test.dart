@@ -6,8 +6,8 @@ import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_logger.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/application/services/game_session.dart';
@@ -120,10 +120,10 @@ class _FakeGameRepository implements GameRepository {
 }
 
 class _FakeEventLog implements EventLog {
-  final commands = <LoggedCommand>[];
+  final commands = <RecordedDomainCommand>[];
 
   @override
-  Future<void> append(String saveId, LoggedCommand command) async {
+  Future<void> append(String saveId, RecordedDomainCommand command) async {
     commands.add(command);
   }
 
@@ -135,10 +135,13 @@ class _FakeEventLog implements EventLog {
   }
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) => readSince(saveId);
+  Stream<RecordedDomainCommand> readAll(String saveId) => readSince(saveId);
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) async* {
+  Stream<RecordedDomainCommand> readSince(
+    String saveId, {
+    int offset = 0,
+  }) async* {
     for (final command in commands) {
       if (command.offset >= offset) yield command;
     }
@@ -3943,7 +3946,7 @@ void main() {
 
     await container
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(const SelectUnitCommand('settler_2'));
+        .dispatchIntent(const SelectUnitCommand('settler_2'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 120));
 
@@ -4596,7 +4599,7 @@ void main() {
       );
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const SelectUnitCommand('warrior_1'));
+          .dispatchIntent(const SelectUnitCommand('warrior_1'));
       await tester.pump(const Duration(milliseconds: 240));
 
       final deckRect = tester.getRect(find.byType(HudActionDeck));
@@ -4680,7 +4683,7 @@ void main() {
       );
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const SelectUnitCommand('warrior_1'));
+          .dispatchIntent(const SelectUnitCommand('warrior_1'));
       await tester.pump(const Duration(milliseconds: 240));
 
       final deckRect = tester.getRect(find.byType(HudActionDeck));
@@ -4778,7 +4781,7 @@ void main() {
     );
     await container
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(const SelectUnitCommand('warrior_1'));
+        .dispatchIntent(const SelectUnitCommand('warrior_1'));
     await tester.pump(const Duration(milliseconds: 240));
 
     await tester.tap(find.byKey(const Key('hudActionDeck.context.terrain')));
@@ -5565,7 +5568,7 @@ void main() {
       );
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const SelectUnitCommand('worker_1'));
+          .dispatchIntent(const SelectUnitCommand('worker_1'));
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(
@@ -5683,7 +5686,7 @@ void main() {
     );
     await container
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(const SelectUnitCommand('worker_1'));
+        .dispatchIntent(const SelectUnitCommand('worker_1'));
     await tester.pump(const Duration(milliseconds: 500));
 
     await tester.tap(find.byKey(const Key('selectionInfo.action.improve')));
@@ -5756,7 +5759,7 @@ void main() {
     );
     await container
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(const SelectUnitCommand('worker_1'));
+        .dispatchIntent(const SelectUnitCommand('worker_1'));
     await tester.pump(const Duration(milliseconds: 500));
 
     final selectedWorker = container
@@ -5818,7 +5821,7 @@ void main() {
     );
     await container
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(const SelectUnitCommand('worker_1'));
+        .dispatchIntent(const SelectUnitCommand('worker_1'));
     await tester.pump(const Duration(milliseconds: 500));
 
     await tester.tap(find.byKey(const Key('selectionInfo.action.improve')));
@@ -5896,7 +5899,7 @@ void main() {
       );
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const SelectUnitCommand('worker_1'));
+          .dispatchIntent(const SelectUnitCommand('worker_1'));
       await tester.pump(const Duration(milliseconds: 500));
       await _cancelMoveTargetingBanner(tester);
 
@@ -5979,7 +5982,7 @@ void main() {
       );
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const SelectUnitCommand('worker_1'));
+          .dispatchIntent(const SelectUnitCommand('worker_1'));
       await tester.pump(const Duration(milliseconds: 500));
       await _cancelMoveTargetingBanner(tester);
 
@@ -6050,7 +6053,7 @@ void main() {
     );
     await container
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(const SelectUnitCommand('settler_1'));
+        .dispatchIntent(const SelectUnitCommand('settler_1'));
     await tester.pump(const Duration(milliseconds: 500));
     await _cancelMoveTargetingBanner(tester);
 
@@ -6109,7 +6112,7 @@ void main() {
     );
     await container
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(const SelectUnitCommand('warrior_1'));
+        .dispatchIntent(const SelectUnitCommand('warrior_1'));
     await tester.pump(const Duration(milliseconds: 500));
 
     await tester.tap(find.byKey(const Key('selectionInfo.action.skip')));
@@ -6161,7 +6164,7 @@ void main() {
     );
     await container
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(const SelectUnitCommand('warrior_1'));
+        .dispatchIntent(const SelectUnitCommand('warrior_1'));
     await tester.pump(const Duration(milliseconds: 500));
 
     await tester.tap(find.byKey(const Key('selectionInfo.action.heal')));
@@ -6343,7 +6346,7 @@ void main() {
 
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const TileTappedCommand(0, 0));
+          .dispatchIntent(const TileTappedCommand(0, 0));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
@@ -6404,7 +6407,7 @@ void main() {
     );
     await container
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(const SelectTileCommand(2, 2));
+        .dispatchIntent(const SelectTileCommand(2, 2));
     await tester.pump();
 
     expect(find.text('ACTION'), findsOneWidget);
@@ -6719,7 +6722,7 @@ void main() {
 
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const CityTappedCommand('city_1'));
+          .dispatchIntent(const CityTappedCommand('city_1'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
@@ -6796,7 +6799,7 @@ void main() {
 
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const CityTappedCommand('city_1'));
+          .dispatchIntent(const CityTappedCommand('city_1'));
       await tester.pump();
       container
           .read(hudCommandDispatcherProvider)
@@ -6877,7 +6880,7 @@ void main() {
 
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const CityTappedCommand('city_1'));
+          .dispatchIntent(const CityTappedCommand('city_1'));
       await tester.pump();
       container
           .read(hudCommandDispatcherProvider)
@@ -6970,7 +6973,7 @@ void main() {
     );
     await container
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(const SelectTileCommand(2, 2));
+        .dispatchIntent(const SelectTileCommand(2, 2));
     await tester.pump();
 
     expect(
@@ -7081,7 +7084,7 @@ void main() {
 
     await container
         .read(gameCommandControllerProvider.notifier)
-        .dispatch(const TileTappedCommand(0, 1));
+        .dispatchIntent(const TileTappedCommand(0, 1));
     await tester.pump();
 
     expect(
@@ -7159,7 +7162,7 @@ void main() {
 
       await container
           .read(gameCommandControllerProvider.notifier)
-          .dispatch(const CancelResearchSelectionCommand('player_1'));
+          .dispatchIntent(const CancelResearchSelectionCommand('player_1'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 

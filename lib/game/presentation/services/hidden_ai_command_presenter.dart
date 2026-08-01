@@ -8,7 +8,7 @@ import 'package:aonw_core/game/domain/event.dart';
 
 typedef HiddenAiCommandDispatch =
     Future<DispatchCommandResult> Function(
-      GameCommand command, {
+      DomainCommand command, {
       required GameCommandContext context,
     });
 
@@ -35,7 +35,7 @@ final class HiddenAiCommandPresenter {
   Future<DispatchCommandResult> dispatchAndPresent({
     String sourceId = 'hidden-ai-preview',
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     required GameCommandContext context,
   }) async {
     final previousRendererState = rendererPlayback.previousRendererState(
@@ -82,7 +82,7 @@ final class HiddenAiCommandPresenter {
     );
   }
 
-  static bool _isTerminalCommand(GameCommand command) => switch (command) {
+  static bool _isTerminalCommand(DomainCommand command) => switch (command) {
     EndTurnCommand() || SubmitTurnCommand() => true,
     _ => false,
   };

@@ -16,7 +16,7 @@ void _registerPreviewFastPathTests() {
       clock: _FixedClock(DateTime.utc(2026, 4, 24, 12)),
     );
 
-    final result = await transport.dispatch(
+    final result = await transport.dispatchAcrossBoundary(
       saveId: save.id,
       currentState: GameState(
         units: [commander],
@@ -52,7 +52,7 @@ void _registerPreviewFastPathTests() {
       clock: _FixedClock(DateTime.utc(2026, 4, 24, 12)),
     );
 
-    final result = await transport.dispatch(
+    final result = await transport.dispatchAcrossBoundary(
       saveId: save.id,
       currentState: GameState(
         units: [commander],

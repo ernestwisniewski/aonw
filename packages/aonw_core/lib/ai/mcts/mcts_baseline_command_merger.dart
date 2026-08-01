@@ -16,9 +16,9 @@ final class MctsBaselineCommandMerger {
   const MctsBaselineCommandMerger({
     MctsCommandReconciliationRules rules = _defaultRules,
   }) : _rules = rules;
-  List<GameCommand> withBaselineSupportCommands(
-    List<GameCommand> commands,
-    List<GameCommand> baseline,
+  List<DomainCommand> withBaselineSupportCommands(
+    List<DomainCommand> commands,
+    List<DomainCommand> baseline,
     GameView view,
     AiContext context, {
     required MctsSimulator simulator,
@@ -193,14 +193,14 @@ final class MctsBaselineCommandMerger {
 
   SimulatedState _applyMergeCommand(
     SimulatedState state,
-    GameCommand command,
+    DomainCommand command,
     MctsSimulator simulator,
   ) {
     return simulator.applyAction(state, CommandMctsAction(command));
   }
 
   bool _commandDidNotChangeState(
-    GameCommand command, {
+    DomainCommand command, {
     required SimulatedState before,
     required SimulatedState after,
   }) {
@@ -233,7 +233,7 @@ final class MctsBaselineCommandMerger {
     };
   }
 
-  String? _productionCityId(GameCommand command) {
+  String? _productionCityId(DomainCommand command) {
     return switch (command) {
       StartUnitProductionCommand(:final cityId) => cityId,
       StartBuildingCommand(:final cityId) => cityId,

@@ -11,7 +11,7 @@ class _ProposalRow extends StatelessWidget {
   final DiplomaticProposal proposal;
   final AppLocalizations l10n;
   final String activePlayerId;
-  final Future<void> Function(GameCommand command) onCommand;
+  final Future<void> Function(DomainCommand command) onCommand;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +69,7 @@ class _MessageRow extends StatelessWidget {
   final DiplomacyState diplomacy;
   final AppLocalizations l10n;
   final String activePlayerId;
-  final Future<void> Function(GameCommand command) onCommand;
+  final Future<void> Function(DomainCommand command) onCommand;
 
   @override
   Widget build(BuildContext context) {

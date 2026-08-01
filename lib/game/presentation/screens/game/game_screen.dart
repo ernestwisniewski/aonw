@@ -112,7 +112,7 @@ class _GameRendererSessionHostState
   late final MapZoomDebugController _mapZoomDebugController;
   late final GameLoadingProgressController _loadingProgressController;
   late Future<void> _startupAssetPreload;
-  Future<void> Function(GameCommand command)? _rendererCommandDispatcher;
+  Future<void> Function(GameIntent intent)? _rendererCommandDispatcher;
   double _startupAssetProgress = 0;
   double _rendererLoadProgress = 0;
   bool _showDiceRollTestOverlay = false;
@@ -305,7 +305,7 @@ class _GameRendererSessionHostState
     );
   }
 
-  Future<void> _dispatchRendererCommand(GameCommand command) async {
+  Future<void> _dispatchRendererCommand(GameIntent command) async {
     ref.read(mapInspectionControllerProvider.notifier).clear();
     await _rendererCommandDispatcher?.call(command);
   }

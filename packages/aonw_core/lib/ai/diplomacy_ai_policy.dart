@@ -9,8 +9,8 @@ class DiplomacyAiPolicy {
 
   const DiplomacyAiPolicy();
 
-  List<GameCommand> commandsFor(GameView view, AiContext context) {
-    final commands = <GameCommand>[
+  List<DomainCommand> commandsFor(GameView view, AiContext context) {
+    final commands = <DomainCommand>[
       ..._proposalResponses(view, context),
       ..._messageResponses(view, context),
     ];
@@ -19,7 +19,7 @@ class DiplomacyAiPolicy {
     return commands;
   }
 
-  Iterable<GameCommand> _proposalResponses(
+  Iterable<DomainCommand> _proposalResponses(
     GameView view,
     AiContext context,
   ) sync* {
@@ -64,7 +64,7 @@ class DiplomacyAiPolicy {
     ).accepted;
   }
 
-  Iterable<GameCommand> _messageResponses(
+  Iterable<DomainCommand> _messageResponses(
     GameView view,
     AiContext context,
   ) sync* {
@@ -116,7 +116,7 @@ class DiplomacyAiPolicy {
     return DiplomaticMessageResponse.evasive;
   }
 
-  GameCommand? _initiativeCommand(GameView view, AiContext context) {
+  DomainCommand? _initiativeCommand(GameView view, AiContext context) {
     final truce = _truceProposal(view, context);
     if (truce != null) return truce;
 
@@ -132,7 +132,7 @@ class DiplomacyAiPolicy {
     return null;
   }
 
-  GameCommand? _messageInitiative(GameView view, AiContext context) {
+  DomainCommand? _messageInitiative(GameView view, AiContext context) {
     final threat = _cityThreatWarning(view, context);
     if (threat != null) return threat;
 
@@ -148,7 +148,7 @@ class DiplomacyAiPolicy {
     return _peacefulPraise(view, context);
   }
 
-  GameCommand? _cityThreatWarning(GameView view, AiContext context) {
+  DomainCommand? _cityThreatWarning(GameView view, AiContext context) {
     for (final threat in view.pendingCityAttackThreats) {
       final target = threat.attackerPlayerId;
       if (_canSendMessage(
@@ -167,7 +167,7 @@ class DiplomacyAiPolicy {
     return null;
   }
 
-  GameCommand? _closeCityComplaint(GameView view, AiContext context) {
+  DomainCommand? _closeCityComplaint(GameView view, AiContext context) {
     const closeCityDistance = 4;
     for (final city in view.rememberedEnemyCities) {
       if (view.ownCities.every(
@@ -202,7 +202,7 @@ class DiplomacyAiPolicy {
     return null;
   }
 
-  GameCommand? _commonEnemyMessage(GameView view, AiContext context) {
+  DomainCommand? _commonEnemyMessage(GameView view, AiContext context) {
     for (final relation in view.diplomacy.relations.values) {
       if (!relation.involves(view.forPlayerId) ||
           relation.status != DiplomaticRelationStatus.war) {
@@ -237,7 +237,7 @@ class DiplomacyAiPolicy {
     return null;
   }
 
-  GameCommand? _deescalationMessage(GameView view, AiContext context) {
+  DomainCommand? _deescalationMessage(GameView view, AiContext context) {
     for (final relation in view.diplomacy.relations.values) {
       if (!relation.involves(view.forPlayerId) ||
           relation.status == DiplomaticRelationStatus.war ||
@@ -265,7 +265,7 @@ class DiplomacyAiPolicy {
     return null;
   }
 
-  GameCommand? _peacefulPraise(GameView view, AiContext context) {
+  DomainCommand? _peacefulPraise(GameView view, AiContext context) {
     for (final relation in view.diplomacy.relations.values) {
       if (!relation.involves(view.forPlayerId) ||
           relation.status == DiplomaticRelationStatus.war ||
@@ -292,7 +292,7 @@ class DiplomacyAiPolicy {
     return null;
   }
 
-  GameCommand? _truceProposal(GameView view, AiContext context) {
+  DomainCommand? _truceProposal(GameView view, AiContext context) {
     for (final relation in view.diplomacy.relations.values) {
       if (!relation.involves(view.forPlayerId) ||
           relation.status != DiplomaticRelationStatus.war ||
@@ -323,7 +323,7 @@ class DiplomacyAiPolicy {
     return null;
   }
 
-  GameCommand? _warDeclaration(GameView view, AiContext context) {
+  DomainCommand? _warDeclaration(GameView view, AiContext context) {
     final plan = context.strategicPlan;
     if (plan == null || plan.warGoals.isEmpty) return null;
     for (final goal in plan.warGoals) {
@@ -348,7 +348,7 @@ class DiplomacyAiPolicy {
     return null;
   }
 
-  GameCommand? _friendshipProposal(GameView view, AiContext context) {
+  DomainCommand? _friendshipProposal(GameView view, AiContext context) {
     for (final relation in view.diplomacy.relations.values) {
       if (!relation.involves(view.forPlayerId) ||
           relation.status != DiplomaticRelationStatus.neutral ||

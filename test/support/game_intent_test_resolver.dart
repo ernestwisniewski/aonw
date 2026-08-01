@@ -11,7 +11,7 @@ import 'canonical_command_test_dispatch.dart';
 GameStateTransition resolveGameIntent(
   GameStateReducer reducer,
   GameState state,
-  GameCommand command, {
+  Object command, {
   GameCommandContext context = const GameCommandContext(),
 }) {
   if (command is! GameIntent) {
@@ -31,7 +31,7 @@ GameStateTransition resolveGameIntent(
     return dispatchCanonicalTestCommand(
       reducer: reducer,
       state: state,
-      command: command,
+      command: domainCommand,
       context: context,
     );
   }
@@ -46,7 +46,7 @@ GameStateTransition resolveGameIntent(
 GameStateTransition resolveWithEffects(
   GameStateReducer reducer,
   GameState state,
-  GameCommand command, {
+  Object command, {
   GameCommandContext context = const GameCommandContext(),
 }) {
   final transition = resolveGameIntent(

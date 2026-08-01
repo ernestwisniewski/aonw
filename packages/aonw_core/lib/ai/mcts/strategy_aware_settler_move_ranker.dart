@@ -15,7 +15,7 @@ final class _StrategicSettlerRanker {
   final _ActiveThirdCitySettlerPushPolicy _thirdCityPushPolicy;
 
   CommandRanking? rank(
-    GameCommand command,
+    DomainCommand command,
     GameView view,
     AiContext context,
     StrategicPlan plan,

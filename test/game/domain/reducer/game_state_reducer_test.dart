@@ -120,7 +120,7 @@ void main() {
   group('stub commands (no-op)', () {
     const state = GameState(activePlayerId: 'p1');
 
-    final stubCommands = <GameCommand>[
+    final stubCommands = <Object>[
       const TileTappedCommand(1, 2),
       const CityTappedCommand('c1'),
       const MoveUnitCommand('u1', 3, 4),

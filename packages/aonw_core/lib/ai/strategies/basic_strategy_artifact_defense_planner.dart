@@ -14,7 +14,7 @@ final class BasicStrategyArtifactDefensePlanner {
 
   final BasicStrategyDefenseMovement defenseMovement;
 
-  List<GameCommand> plan(
+  List<DomainCommand> plan(
     GameView view,
     AiContext context,
     Set<String> usedUnitIds,
@@ -23,7 +23,7 @@ final class BasicStrategyArtifactDefensePlanner {
     final artifactCities = _ownArtifactCities(view);
     if (artifactCities.length < 4) return const [];
 
-    final commands = <GameCommand>[];
+    final commands = <DomainCommand>[];
     final occupied = <String>{
       for (final unit in view.ownUnits) _key(unit.col, unit.row),
       for (final unit in view.visibleEnemyUnits) _key(unit.col, unit.row),

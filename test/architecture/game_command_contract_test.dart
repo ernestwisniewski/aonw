@@ -28,6 +28,8 @@ const _rolePolicy = <String, _CommandRole>{
   'CancelWorkerAssignmentCommand': _CommandRole.domain,
   'CancelWorkerJobCommand': _CommandRole.domain,
   'CityTappedCommand': _CommandRole.intent,
+  'ChooseWorkerImprovementIntent': _CommandRole.intent,
+  'ConfirmWorkerImprovementIntent': _CommandRole.intent,
   'ConfirmWorkerImprovementCommand': _CommandRole.domain,
   'DeclareWarCommand': _CommandRole.domain,
   'DetachTroopCommand': _CommandRole.domain,
@@ -76,7 +78,7 @@ const _rolePolicy = <String, _CommandRole>{
 };
 
 void main() {
-  test('every concrete game command has one explicit boundary role', () {
+  test('every concrete input has one explicit boundary role', () {
     final inventory = _GameCommandInventory.build(
       rolePolicy: _rolePolicy,
       sources: productionDartSources(),
@@ -85,16 +87,39 @@ void main() {
     expect(
       inventory.unclassifiedCommands,
       isEmpty,
-      reason: 'Every GameCommand must have one explicit boundary role.',
+      reason: 'Every intent or domain command must have one boundary role.',
     );
     expect(
       inventory.unknownPolicyCommands,
       isEmpty,
-      reason: 'The role policy may only classify concrete GameCommand types.',
+      reason: 'The role policy may only classify concrete input types.',
     );
     expect(inventory.commandsOutsideTypedRoot, isEmpty);
     expect(inventory.serializedIntents, isEmpty);
     expect(inventory.serializedSystemCommands, isEmpty);
+  });
+
+  test('transitional umbrella and intent leaks stay removed', () {
+    final sources = productionDartSources();
+    final forbidden = <String>[];
+    for (final entry in sources.entries) {
+      if (RegExp(r'\bGameCommand\b').hasMatch(entry.value)) {
+        forbidden.add('${entry.key}: GameCommand');
+      }
+      final guardedPath =
+          entry.key.startsWith('lib/api/') ||
+          entry.key.startsWith('server/') ||
+          entry.key.contains('/application/ports/recorded_') ||
+          entry.key.endsWith('/application/ports/event_log.dart');
+      if (guardedPath && RegExp(r'\bGameIntent\b').hasMatch(entry.value)) {
+        forbidden.add('${entry.key}: GameIntent');
+      }
+    }
+    expect(
+      forbidden,
+      isEmpty,
+      reason: 'Transport, server and event-log boundaries are authoritative.',
+    );
   });
 
   test('inventory includes concrete indirect command subclasses', () {
@@ -193,14 +218,18 @@ const _indirectCommandFixtureSources = <String, String>{
   _commandLibraryPath: '''
 part 'intermediate_command.dart';
 
-sealed class GameCommand {
-  const GameCommand();
+sealed class GameIntent {
+  const GameIntent();
+}
+
+sealed class DomainCommand {
+  const DomainCommand();
 }
 ''',
   'packages/aonw_core/lib/game/domain/command/intermediate_command.dart': '''
 part of 'game_command.dart';
 
-abstract class IntermediateCommand extends GameCommand {
+abstract class IntermediateCommand extends DomainCommand {
   const IntermediateCommand();
 }
 
@@ -319,7 +348,7 @@ extension on _CommandRole {
   String get typedRoot => switch (this) {
     _CommandRole.intent => 'GameIntent',
     _CommandRole.domain => 'DomainCommand',
-    _CommandRole.system => 'ServerSystemCommand',
+    _CommandRole.system => 'SystemCommand',
   };
 }
 
@@ -359,23 +388,22 @@ List<String> _concreteGameCommandNames(
   final names = [
     for (final declaration in declarations.values)
       if (!declaration.isAbstract &&
-          declaration.name != 'GameCommand' &&
-          _isGameCommandSubclass(declaration.name, declarations, <String>{}))
+          _isTypedInputSubclass(declaration.name, declarations, <String>{}))
         declaration.name,
   ]..sort();
   return names;
 }
 
-bool _isGameCommandSubclass(
+bool _isTypedInputSubclass(
   String className,
   Map<String, _CommandDeclaration> declarations,
   Set<String> visited,
 ) {
   if (!visited.add(className)) return false;
   final parentName = declarations[className]?.parentName;
-  if (parentName == 'GameCommand') return true;
+  if (parentName == 'GameIntent' || parentName == 'DomainCommand') return true;
   if (parentName == null || !declarations.containsKey(parentName)) return false;
-  return _isGameCommandSubclass(parentName, declarations, visited);
+  return _isTypedInputSubclass(parentName, declarations, visited);
 }
 
 Set<String> _commandHierarchyNames(
@@ -395,11 +423,7 @@ String? _typedRoot(
   Map<String, _CommandDeclaration> declarations,
 ) {
   final hierarchy = _commandHierarchyNames(className, declarations);
-  for (final root in const [
-    'GameIntent',
-    'DomainCommand',
-    'ServerSystemCommand',
-  ]) {
+  for (final root in const ['GameIntent', 'DomainCommand', 'SystemCommand']) {
     if (hierarchy.contains(root)) return root;
   }
   return null;

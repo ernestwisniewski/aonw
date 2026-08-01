@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/infrastructure/persistence/json_event_log.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -97,8 +97,8 @@ void main() {
   });
 }
 
-LoggedCommand _logged(int offset, String playerId) {
-  return LoggedCommand(
+RecordedDomainCommand _logged(int offset, String playerId) {
+  return RecordedDomainCommand(
     offset: offset,
     timestamp: DateTime.utc(2026, 4, 24, 12, offset),
     turn: 1,

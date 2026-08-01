@@ -44,7 +44,7 @@ class _FakeCommandTransport implements CommandTransport {
   final List<GameEvent> events;
 
   late String saveId;
-  late GameCommand command;
+  late DomainCommand command;
   late GameCommandContext context;
 
   _FakeCommandTransport({
@@ -57,8 +57,9 @@ class _FakeCommandTransport implements CommandTransport {
   Future<CommandTransportResult> dispatch({
     required String saveId,
     required GameState currentState,
-    required GameCommand command,
+    required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
+    bool fromMovePreviewConfirmation = false,
   }) async {
     this.saveId = saveId;
     this.command = command;

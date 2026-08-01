@@ -12,26 +12,26 @@ typedef AiCommandDispatcher =
     Future<DispatchCommandResult> Function({
       required String saveId,
       required GameState currentState,
-      required GameCommand command,
+      required DomainCommand command,
       required GameCommandContext context,
     });
 
 final class AiTurnCommandExecutionReport {
   final GameState finalState;
-  final List<GameCommand> dispatchedCommands;
-  final List<GameCommand> rejectedCommands;
-  final List<GameCommand> skippedTerminalCommands;
-  final List<GameCommand> skippedStaleCommands;
+  final List<DomainCommand> dispatchedCommands;
+  final List<DomainCommand> rejectedCommands;
+  final List<DomainCommand> skippedTerminalCommands;
+  final List<DomainCommand> skippedStaleCommands;
   final Duration dispatchDuration;
   final Duration interCommandDelayDuration;
   final int delayedCommandCount;
 
   AiTurnCommandExecutionReport({
     required this.finalState,
-    required Iterable<GameCommand> dispatchedCommands,
-    required Iterable<GameCommand> rejectedCommands,
-    required Iterable<GameCommand> skippedTerminalCommands,
-    required Iterable<GameCommand> skippedStaleCommands,
+    required Iterable<DomainCommand> dispatchedCommands,
+    required Iterable<DomainCommand> rejectedCommands,
+    required Iterable<DomainCommand> skippedTerminalCommands,
+    required Iterable<DomainCommand> skippedStaleCommands,
     required this.dispatchDuration,
     required this.interCommandDelayDuration,
     required this.delayedCommandCount,
@@ -61,14 +61,14 @@ final class AiTurnCommandExecutor {
     required String playerId,
     required AiContext aiContext,
     required GameState initialState,
-    required Iterable<GameCommand> commands,
+    required Iterable<DomainCommand> commands,
     required Duration interCommandDelay,
   }) async {
     var state = initialState;
-    final dispatched = <GameCommand>[];
-    final rejected = <GameCommand>[];
-    final skippedTerminals = <GameCommand>[];
-    final skippedStale = <GameCommand>[];
+    final dispatched = <DomainCommand>[];
+    final rejected = <DomainCommand>[];
+    final skippedTerminals = <DomainCommand>[];
+    final skippedStale = <DomainCommand>[];
     var dispatchDuration = Duration.zero;
     var interCommandDelayDuration = Duration.zero;
     var delayedCommandCount = 0;
@@ -161,7 +161,7 @@ final class AiTurnCommandExecutor {
     );
   }
 
-  static bool _isTerminal(GameCommand command) {
+  static bool _isTerminal(DomainCommand command) {
     return command is EndTurnCommand || command is SubmitTurnCommand;
   }
 
@@ -174,7 +174,7 @@ final class AiTurnCommandExecutor {
     return false;
   }
 
-  static String describeCommand(GameCommand command) {
+  static String describeCommand(DomainCommand command) {
     return switch (command) {
       MoveUnitCommand() =>
         'move unit ${command.unitId} to '
@@ -210,17 +210,9 @@ final class AiTurnCommandExecutor {
       SkipUnitTurnCommand() => 'skip unit ${command.unitId}',
       FortifyUnitCommand() => 'fortify/heal unit ${command.unitId}',
       AutoExploreUnitCommand() => 'auto-explore unit ${command.unitId}',
-      StartMerchantTradeRouteSelectionCommand() =>
-        'start merchant trade route selection for ${command.unitId}',
-      CancelMerchantTradeRouteSelectionCommand() =>
-        'cancel merchant trade route selection for ${command.unitId}',
       AssignMerchantTradeRouteCommand() =>
         'assign merchant ${command.unitId} trade route to city '
             '${command.destinationCityId}',
-      StartMerchantMoveToCitySelectionCommand() =>
-        'start merchant city travel selection for ${command.unitId}',
-      CancelMerchantMoveToCitySelectionCommand() =>
-        'cancel merchant city travel selection for ${command.unitId}',
       MoveMerchantToCityCommand() =>
         'move merchant ${command.unitId} to city '
             '${command.destinationCityId}',
@@ -246,46 +238,12 @@ final class AiTurnCommandExecutor {
       RushProductionCommand() => 'rush production in city ${command.cityId}',
       DetachTroopCommand() =>
         'detach ${command.troopType.name} from unit ${command.unitId}',
-      TileTappedCommand() => 'tap tile (${command.col}, ${command.row})',
-      CityTappedCommand() => 'tap city ${command.cityId}',
-      SelectTileCommand() => 'select tile (${command.col}, ${command.row})',
-      SelectUnitCommand() => 'select unit ${command.unitId}',
-      SelectCityCommand() => 'select city ${command.cityId}',
-      FocusNextPendingActionCommand() =>
-        'focus next pending action for ${command.playerId}',
-      FocusTurnStartActionCommand() =>
-        'focus turn-start action for ${command.playerId}',
-      StartAttackTargetingCommand() =>
-        'start attack targeting for ${command.attackerUnitId}',
-      CancelAttackTargetingCommand() =>
-        'cancel attack targeting for ${command.attackerUnitId}',
-      StartWorkerActionSelectionCommand() =>
-        'start worker action selection for ${command.unitId}',
-      CancelWorkerActionSelectionCommand() =>
-        'cancel worker action selection for ${command.unitId}',
-      CancelResearchSelectionCommand() =>
-        'cancel research selection for ${command.playerId}',
-      StartCityFoundingCommand() => 'start city founding',
-      CancelCityFoundingCommand() => 'cancel city founding',
-      StartCityWorkedHexSelectionCommand() =>
-        'start worked-hex selection for city ${command.cityId}',
-      CancelCityWorkedHexSelectionCommand() =>
-        'cancel worked-hex selection for city ${command.cityId}',
       ToggleWorkedHexCommand() =>
         'toggle worked hex (${command.col}, ${command.row}) for city '
             '${command.cityId}',
-      StartCityExpansionSelectionCommand() =>
-        'start city expansion selection for city ${command.cityId}',
-      CancelCityExpansionSelectionCommand() =>
-        'cancel city expansion selection for city ${command.cityId}',
       SelectCityExpansionHexCommand() =>
         'select expansion hex (${command.col}, ${command.row}) for city '
             '${command.cityId}',
-      ToggleMoveTargetingCommand() => 'toggle move targeting',
-      StartCommanderMergeSelectionCommand() =>
-        'start commander merge selection for ${command.commanderUnitId}',
-      CancelCommanderMergeSelectionCommand() =>
-        'cancel commander merge selection for ${command.commanderUnitId}',
       StartArtifactExcavationCommand() =>
         'start artifact excavation with unit ${command.unitId}',
       StoreArtifactInCityCommand() =>

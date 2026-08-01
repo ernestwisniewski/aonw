@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:aonw/game/application/ports/event_log.dart';
-import 'package:aonw/game/application/ports/logged_command.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/infrastructure/persistence/game_storage.dart';
 
 class JsonEventLog implements EventLog {
@@ -11,7 +11,7 @@ class JsonEventLog implements EventLog {
   const JsonEventLog({this.savesDir});
 
   @override
-  Future<void> append(String saveId, LoggedCommand command) async {
+  Future<void> append(String saveId, RecordedDomainCommand command) async {
     final file = await _file(saveId);
     await file.parent.create(recursive: true);
     await file.writeAsString(
@@ -22,7 +22,10 @@ class JsonEventLog implements EventLog {
   }
 
   @override
-  Stream<LoggedCommand> readSince(String saveId, {int offset = 0}) async* {
+  Stream<RecordedDomainCommand> readSince(
+    String saveId, {
+    int offset = 0,
+  }) async* {
     final file = await _file(saveId);
     if (!await file.exists()) return;
 
@@ -32,7 +35,7 @@ class JsonEventLog implements EventLog {
         .transform(const LineSplitter());
     await for (final line in lines) {
       if (line.trim().isEmpty) continue;
-      final command = LoggedCommand.fromJson(
+      final command = RecordedDomainCommand.fromJson(
         jsonDecode(line) as Map<String, dynamic>,
       );
       if (command.offset >= offset) yield command;
@@ -40,7 +43,7 @@ class JsonEventLog implements EventLog {
   }
 
   @override
-  Stream<LoggedCommand> readAll(String saveId) {
+  Stream<RecordedDomainCommand> readAll(String saveId) {
     return readSince(saveId);
   }
 
@@ -50,7 +53,7 @@ class JsonEventLog implements EventLog {
     if (!await file.exists()) return 0;
     final line = await _readLastNonEmptyLine(file);
     if (line == null) return 0;
-    return LoggedCommand.fromJson(
+    return RecordedDomainCommand.fromJson(
       jsonDecode(line) as Map<String, dynamic>,
     ).offset;
   }

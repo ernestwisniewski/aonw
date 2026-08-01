@@ -1689,7 +1689,7 @@ MapData _pressureMap() {
   );
 }
 
-int _unitActionCount(List<GameCommand> commands, String targetUnitId) {
+int _unitActionCount(List<DomainCommand> commands, String targetUnitId) {
   return commands.where((command) {
     final commandUnitId = switch (command) {
       MoveUnitCommand(:final unitId) => unitId,

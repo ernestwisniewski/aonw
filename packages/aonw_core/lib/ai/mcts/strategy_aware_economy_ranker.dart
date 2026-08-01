@@ -26,7 +26,7 @@ const _military = StrategyAwareMilitaryContext();
 const _strategicEconomyRanker = _StrategicEconomyRanker();
 
 CommandRanking? rankStrategicEconomyCommand(
-  GameCommand command,
+  DomainCommand command,
   GameView view,
   AiContext context,
   StrategicPlan plan,
@@ -47,7 +47,7 @@ final class _StrategicEconomyRanker {
   final _EconomyQueueRanker _queueRanker;
 
   CommandRanking? rank(
-    GameCommand command,
+    DomainCommand command,
     GameView view,
     AiContext context,
     StrategicPlan plan,
