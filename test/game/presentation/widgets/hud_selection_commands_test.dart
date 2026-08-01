@@ -67,6 +67,42 @@ void main() {
       );
     });
 
+    test('creates merchant targeting and destination commands', () {
+      final state = _stateWithUnit(
+        _unit('merchant_1', type: GameUnitType.merchant),
+      );
+
+      expect(
+        HudSelectionCommands.startMerchantTradeRouteSelection(state),
+        const StartMerchantTradeRouteSelectionCommand('merchant_1'),
+      );
+      expect(
+        HudSelectionCommands.assignMerchantTradeRoute(state, 'city_2'),
+        const AssignMerchantTradeRouteCommand('merchant_1', 'city_2'),
+      );
+      expect(
+        HudSelectionCommands.startMerchantMoveToCitySelection(state),
+        const StartMerchantMoveToCitySelectionCommand('merchant_1'),
+      );
+      expect(
+        HudSelectionCommands.moveMerchantToCity(state, 'city_2'),
+        const MoveMerchantToCityCommand('merchant_1', 'city_2'),
+      );
+    });
+
+    test('creates artifact commands from selected unit', () {
+      final state = _stateWithUnit(_unit('scout_1', type: GameUnitType.scout));
+
+      expect(
+        HudSelectionCommands.startArtifactExcavation(state),
+        const StartArtifactExcavationCommand('scout_1'),
+      );
+      expect(
+        HudSelectionCommands.storeArtifactInCity(state),
+        const StoreArtifactInCityCommand('scout_1'),
+      );
+    });
+
     test('creates city worked hex command from selected city', () {
       final city = _city('city_1');
       final state = GameClientState(

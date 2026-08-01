@@ -251,6 +251,25 @@ void main() {
     expect(find.byKey(const Key('game-screen')), findsNothing);
   });
 
+  testWidgets('synchronizes player limit with loaded custom map capacity', (
+    tester,
+  ) async {
+    final repository = _FakeGameRepository();
+    await _pumpLobby(
+      tester,
+      repository,
+      mapName: 'custom',
+      mapData: _map(cols: 8, rows: 8),
+    );
+
+    await tester.pump();
+
+    expect(find.text('+ ADD PLAYER'), findsNothing);
+    await tester.tap(find.text('START'));
+    await tester.pumpAndSettle();
+    expect(repository.createdRequest?.players, hasLength(2));
+  });
+
   testWidgets('stores selected country for local players', (tester) async {
     final repository = _FakeGameRepository();
     await _pumpLobby(tester, repository);

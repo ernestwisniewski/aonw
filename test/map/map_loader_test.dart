@@ -6,7 +6,16 @@ import 'package:aonw_core/game/domain/objective.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('MapLoader.fromJson', () {
+    test('loads a bundled map asset', () async {
+      final data = await MapLoader.load('assets/maps/verdantia/map.json');
+
+      expect(data.tiles, isNotEmpty);
+      expect(data.mapName, 'verdantia');
+    });
+
     test('parses valid new-format JSON into WorldMap', () {
       const json = '''
       {

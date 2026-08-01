@@ -54,6 +54,36 @@ void main() {
       expect(HudPendingActionTargets.workerUnitId(state), 'pending_worker');
     });
 
+    test('resolves merchant pending actions before selected unit', () {
+      final tradeRouteState = GameClientState(
+        units: [_unit('selected')],
+        interaction: InteractionState(
+          selection: GameSelection.unit(_unit('selected')),
+          pendingAction: const PendingMerchantTradeRouteSelection(
+            ownerPlayerId: 'player_1',
+            unitId: 'trade_merchant',
+          ),
+        ),
+      );
+      final moveToCityState = tradeRouteState.copyWith(
+        interaction: tradeRouteState.interaction.copyWith(
+          pendingAction: const PendingMerchantMoveToCitySelection(
+            ownerPlayerId: 'player_1',
+            unitId: 'move_merchant',
+          ),
+        ),
+      );
+
+      expect(
+        HudPendingActionTargets.merchantUnitId(tradeRouteState),
+        'trade_merchant',
+      );
+      expect(
+        HudPendingActionTargets.merchantUnitId(moveToCityState),
+        'move_merchant',
+      );
+    });
+
     test('prefers pending worked-hex city before selected city', () {
       final state = GameClientState(
         interaction: InteractionState(

@@ -2,6 +2,7 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/widgets/hud/city/hud_city_production_commands.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -27,6 +28,10 @@ void main() {
           CityProjectType.wealth,
         ),
         const StartCityProjectCommand('city_1', CityProjectType.wealth),
+      );
+      expect(
+        HudCityProductionCommands.startWonder('city_1', WonderType.petra),
+        const StartWonderCommand('city_1', WonderType.petra),
       );
       expect(
         HudCityProductionCommands.setSpecialization(

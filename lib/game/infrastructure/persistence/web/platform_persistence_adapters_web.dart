@@ -30,27 +30,41 @@ Future<WebDatabase> _openDatabase() {
   return future;
 }
 
+Future<WebDatabase> _resolveDatabaseFuture(
+  Future<WebDatabase>? databaseFuture,
+) => databaseFuture ?? _openDatabase();
+
 GameRepository createPlatformGameRepository({
   required Clock clock,
   required IdGenerator idGenerator,
+  Future<WebDatabase>? databaseFuture,
 }) {
   return _LazyWebGameRepository(
     clock: clock,
     idGenerator: idGenerator,
-    databaseFuture: _openDatabase(),
+    databaseFuture: _resolveDatabaseFuture(databaseFuture),
   );
 }
 
-EventLog createPlatformEventLog() {
-  return _LazyWebEventLog(databaseFuture: _openDatabase());
+EventLog createPlatformEventLog({Future<WebDatabase>? databaseFuture}) {
+  return _LazyWebEventLog(
+    databaseFuture: _resolveDatabaseFuture(databaseFuture),
+  );
 }
 
-SnapshotStore createPlatformSnapshotStore({required Clock clock}) {
-  return _LazyWebSnapshotStore(databaseFuture: _openDatabase());
+SnapshotStore createPlatformSnapshotStore({
+  required Clock clock,
+  Future<WebDatabase>? databaseFuture,
+}) {
+  return _LazyWebSnapshotStore(
+    databaseFuture: _resolveDatabaseFuture(databaseFuture),
+  );
 }
 
-ReplayStore createPlatformReplayStore() {
-  return _LazyWebReplayStore(databaseFuture: _openDatabase());
+ReplayStore createPlatformReplayStore({Future<WebDatabase>? databaseFuture}) {
+  return _LazyWebReplayStore(
+    databaseFuture: _resolveDatabaseFuture(databaseFuture),
+  );
 }
 
 class _LazyWebGameRepository implements GameRepository {

@@ -63,7 +63,22 @@ void main() {
             ),
             actorPlayerId: 'player_2',
           ),
-          _logged(10, const AttackHexCommand('warrior_player_1', 4, 4)),
+          _logged(
+            10,
+            const AssignWorkerToHexCommand('worker_player_2'),
+            actorPlayerId: 'player_2',
+          ),
+          _logged(
+            11,
+            const AttackHexCommand('warrior_player_2', 4, 4),
+            actorPlayerId: 'player_2',
+          ),
+          _logged(
+            12,
+            FoundCityCommand('settler_player_2', controlledHexes: const []),
+            actorPlayerId: 'player_2',
+          ),
+          _logged(13, const AttackHexCommand('warrior_player_1', 4, 4)),
         ],
       );
 

@@ -153,6 +153,28 @@ void main() {
 
     expect(container.read(hudFeedbackProvider), isEmpty);
   });
+
+  test('attack targeting closes primary panels for the selected unit', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final warrior = _unit(GameUnitType.warrior);
+    container
+        .read(hudPanelControllerProvider.notifier)
+        .apply(const HudPanelModes(objectives: true));
+
+    container
+        .read(hudCommandDispatcherProvider)
+        .startAttackTargeting(
+          GameClientState(
+            units: [warrior],
+            interaction: InteractionState(
+              selection: GameSelection.unit(warrior),
+            ),
+          ),
+        );
+
+    expect(container.read(hudPanelControllerProvider).objectives, isFalse);
+  });
 }
 
 class _RecordingAudioController extends GameAudioController {

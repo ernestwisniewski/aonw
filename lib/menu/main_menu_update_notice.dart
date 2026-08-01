@@ -12,21 +12,36 @@ class MainMenuUpdateNotice {
   const MainMenuUpdateNotice();
 }
 
+typedef MainMenuVersionStatusLoader =
+    Future<String> Function({
+      required String platform,
+      required int buildNumber,
+      int multiplayerVersion,
+    });
+
+final mainMenuUpdateCheckEnabledProvider = Provider<bool>(
+  (_) => _appUpdateCheckEnabled,
+);
+
+final mainMenuVersionStatusLoaderProvider =
+    Provider<MainMenuVersionStatusLoader>(
+      (ref) => ref.watch(networkSessionClientProvider).versionStatus,
+    );
+
 final mainMenuUpdateNoticeProvider = FutureProvider<MainMenuUpdateNotice?>((
   ref,
 ) async {
-  if (!_appUpdateCheckEnabled) return null;
+  if (!ref.watch(mainMenuUpdateCheckEnabledProvider)) return null;
 
   try {
     final releaseInfo = await ref.watch(appReleaseInfoProvider.future);
     final status = await ref
-        .watch(networkSessionClientProvider)
-        .versionStatus(
+        .watch(mainMenuVersionStatusLoaderProvider)(
           platform: resolveAppReleasePlatform(),
           buildNumber: releaseInfo.buildNumberValue,
         )
         .timeout(_appUpdateCheckTimeout);
-    return mainMenuUpdateNoticeForStatus(status);
+    return _noticeFor(status);
   } catch (_) {
     return null;
   }
@@ -49,6 +64,10 @@ bool get _appUpdateCheckEnabled {
 }
 
 MainMenuUpdateNotice? mainMenuUpdateNoticeForStatus(String status) {
+  return _noticeFor(status);
+}
+
+MainMenuUpdateNotice? _noticeFor(String status) {
   return switch (status) {
     'soon' => const MainMenuUpdateNotice(),
     _ => null,

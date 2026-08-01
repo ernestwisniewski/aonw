@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Completed the canonical state and world-map migration so gameplay, AI,
+  multiplayer, replay, persistence, and rendering share one immutable map and
+  one authoritative domain state without transitional command or map models.
+- Versioned multiplayer compatibility explicitly and added a translated update
+  notice for clients that must wait for or install a compatible release.
+- Fixed observed multiplayer movement so exact and visibility-safe coarse
+  movement remain ordered, animate once, and do not leak hidden path details.
+- Made manual movement immediately available for fortified units and cancel
+  fortification when a route is chosen, while keeping movement targeting and
+  route reachability consistent after turn and snapshot reconciliation.
+- Anchored excavation and artifact-transfer notifications above their unit or
+  city on the map instead of presenting them as detached HUD messages.
+- Strengthened root coverage around web persistence composition, lobby map
+  capacity, movement and merchant HUD commands, cultural outcomes, map assets,
+  release notices, and AI trace diagnostics.
+
 ## 1.1.8 - 2026-07-30
 
 - Unified local games, multiplayer, AI simulations, and replay around one

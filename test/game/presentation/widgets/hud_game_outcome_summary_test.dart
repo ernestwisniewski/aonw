@@ -5,6 +5,7 @@ import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -323,6 +324,59 @@ void main() {
         summary.metrics.singleWhere((metric) => metric.label == 'Hold').value,
         '10/10 turns',
       );
+    });
+
+    test('describes cultural progress for a completed local match', () {
+      final culturalRules = MatchRules.standard.copyWith(
+        victory: const VictoryRules(
+          conquestEnabled: false,
+          dominationEnabled: false,
+          dominationControlPercent: 60,
+          dominationHoldTurns: 5,
+          scoreFallbackEnabled: false,
+          culturalRequiredArtifacts: 1,
+          culturalHoldTurns: 1,
+        ),
+      );
+      final summary = HudGameOutcomeSummary.from(
+        l10n: l10n,
+        gameSave: _save(matchRules: culturalRules),
+        gameState: GameClientState(
+          cities: const [
+            GameCity(
+              id: 'city_1',
+              ownerPlayerId: 'player_1',
+              name: 'Heritage City',
+              center: CityHex(col: 0, row: 0),
+            ),
+            GameCity(
+              id: 'city_2',
+              ownerPlayerId: 'player_2',
+              name: 'Rival City',
+              center: CityHex(col: 1, row: 0),
+            ),
+          ],
+          artifacts: const [
+            WorldArtifact(
+              id: 'artifact_1',
+              type: WorldArtifactType.ancientImperialCrown,
+              location: WorldArtifactLocation.stored(cityId: 'city_1'),
+            ),
+          ],
+          culturalVictoryHoldTurnsByPlayerId: const {'player_1': 1},
+        ),
+        mapData: _mapData(4),
+        activePlayerId: 'player_1',
+      );
+
+      expect(summary, isNotNull);
+      expect(summary!.conditionLabel, 'CULTURAL VICTORY');
+      expect(summary.metrics.map((metric) => metric.label), [
+        'Winner',
+        'Condition',
+        'Artifacts',
+        'Held',
+      ]);
     });
   });
 }
