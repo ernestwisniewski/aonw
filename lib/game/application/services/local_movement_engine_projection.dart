@@ -129,7 +129,7 @@ GameState _projectMove({
     moveCommandActive:
         presentationOrigin ==
             LocalMovementPresentationOrigin.previewConfirmation
-        ? updatedUnit?.queuedPath == null
+        ? _canRetargetMove(projected, updatedUnit)
         : currentState.moveCommandActive,
     movePreview: null,
   );

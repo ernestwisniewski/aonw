@@ -952,6 +952,80 @@ void main() {
       },
     );
 
+    test(
+      'new-turn submit ACK clears skip and restores targeting through reconciliation',
+      () async {
+        final skippedUnit = GameUnit.produced(
+          id: 'skipped_unit',
+          ownerPlayerId: 'player_1',
+          type: GameUnitType.warrior,
+          col: 0,
+          row: 0,
+        ).copyWith(movementPoints: 0);
+        final pendingSkip = PendingUnitTurnSkip(
+          ownerPlayerId: 'player_1',
+          unitId: skippedUnit.id,
+          restoreMovementPoints: 3,
+        );
+        final stalePreview = UnitMovementPlan(
+          unitId: skippedUnit.id,
+          targetCol: 1,
+          targetRow: 0,
+          totalCost: 1,
+          availableMovementPoints: 0,
+          steps: const [
+            UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+            UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+          ],
+        );
+        final before = GameState(
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+          turnStartedAt: DateTime.utc(2026, 7, 31, 10),
+          units: [skippedUnit],
+          interaction: GameInteractionState(
+            selection: GameSelection.unit(skippedUnit),
+            movePreview: stalePreview,
+            pendingAction: pendingSkip,
+          ),
+        );
+        final restoredUnit = skippedUnit.copyWith(movementPoints: 3);
+        final advancedSave = _save().copyWith(
+          turn: 2,
+          playerStates: const {'player_1': PlayerTurnState.active},
+        );
+        final server = _FakeCommandServer(
+          save: _save(),
+          state: before,
+          nextAcceptedSnapshot: SaveSnapshot.fromGameState(
+            save: advancedSave,
+            state: GameState(
+              activePlayerId: 'player_1',
+              activePlayerCanAct: true,
+              turnStartedAt: DateTime.utc(2026, 7, 31, 10, 1),
+              units: [restoredUnit],
+            ),
+            eventLogOffset: 1,
+          ),
+        );
+        final transport = _transport(server);
+
+        final result = await transport.dispatch(
+          saveId: 'save_1',
+          currentState: before,
+          command: const SubmitTurnCommand('player_1'),
+        );
+
+        expect(result.snapshot?.save.turn, 2);
+        expect(result.state.activePlayerCanAct, isTrue);
+        expect(result.state.pendingAction, isNull);
+        expect(result.state.movePreview, isNull);
+        expect(result.state.selectedUnit, same(result.state.units.single));
+        expect(result.state.selectedUnit?.movementPoints, 3);
+        expect(result.state.moveCommandActive, isTrue);
+      },
+    );
+
     test('exposes queued movement evidence from accepted snapshots', () async {
       final queued = queuedNetworkCommander();
       final state = GameState(

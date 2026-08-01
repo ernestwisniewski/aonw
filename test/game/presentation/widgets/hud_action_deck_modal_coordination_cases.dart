@@ -89,6 +89,25 @@ HudCombatPreview _combatPreview({
 );
 
 void _registerDetailModalCoordinationTests() {
+  testWidgets('detail request can disappear before the modal opens', (
+    tester,
+  ) async {
+    String? openChipId = SelectionInfoChipId.terrain;
+
+    Future<void> pump() => _pumpDeck(
+      tester,
+      selection: _detailTestSelection,
+      openSelectionDetailChipId: openChipId,
+    );
+
+    await pump();
+    openChipId = null;
+    await pump();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SelectionDetailSheet), findsNothing);
+  });
+
   testWidgets('detail modal blocks auto-flow until it is fully closed', (
     tester,
   ) async {
@@ -159,6 +178,43 @@ void _registerDetailModalCoordinationTests() {
     );
     expect(find.byKey(const Key('selectionInfo.detail.terrain')), findsNothing);
   });
+
+  testWidgets(
+    'disposing the deck during modal close leaves no stale callback',
+    (tester) async {
+      final commands = <GameCommand>[];
+      final container = ProviderContainer(
+        overrides: [
+          hudCommandDispatcherProvider.overrideWith(
+            (ref) => _RecordingHudCommandDispatcher(ref, commands),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await _pumpDeck(
+        tester,
+        gameState: const GameState(),
+        remainingActionCount: 1,
+        selection: _detailTestSelection,
+        openSelectionDetailChipId: SelectionInfoChipId.terrain,
+        providerContainer: container,
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      tester
+          .widget<IconButton>(
+            find.byKey(const Key('selectionInfo.detail.close')),
+          )
+          .onPressed!();
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(commands, isEmpty);
+    },
+  );
 }
 
 Future<void> _pumpDeck(

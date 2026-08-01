@@ -1,6 +1,34 @@
 part of 'local_movement_engine_projection_test.dart';
 
 void _registerLocalMovementRetargetingTests() {
+  test('accepted preview move consuming the last MP ends targeting', () {
+    final result = _resolveAcceptedPreviewMove(
+      movementPoints: 3,
+      targetTerrains: const [TerrainType.snow],
+      expectedCost: 3,
+    );
+
+    expect(result.state.units.single.col, 1);
+    expect(result.state.units.single.movementPoints, 0);
+    expect(result.state.selection?.unit, same(result.state.units.single));
+    expect(result.state.movePreview, isNull);
+    expect(result.state.moveCommandActive, isFalse);
+  });
+
+  test('accepted preview move retaining MP keeps targeting active', () {
+    final result = _resolveAcceptedPreviewMove(
+      movementPoints: 3,
+      targetTerrains: const [TerrainType.grassland],
+      expectedCost: 1,
+    );
+
+    expect(result.state.units.single.col, 1);
+    expect(result.state.units.single.movementPoints, 2);
+    expect(result.state.selection?.unit, same(result.state.units.single));
+    expect(result.state.movePreview, isNull);
+    expect(result.state.moveCommandActive, isTrue);
+  });
+
   test('accepted identity preview confirmation clears stale targeting', () {
     const steps = [
       UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
@@ -93,4 +121,51 @@ void _registerLocalMovementRetargetingTests() {
     expect(result.events, isEmpty);
     expect(result.movementExecutions, isEmpty);
   });
+}
+
+LocalCommandResolution _resolveAcceptedPreviewMove({
+  required int movementPoints,
+  required List<TerrainType> targetTerrains,
+  required int expectedCost,
+}) {
+  final unit = _unit(id: 'mover', movementPoints: movementPoints);
+  final preview = UnitMovementPlan(
+    unitId: unit.id,
+    targetCol: 1,
+    targetRow: 0,
+    totalCost: expectedCost,
+    availableMovementPoints: movementPoints,
+    canSpendTurnEnteringFirstStep: true,
+    steps: [
+      const UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+      UnitMovementStep(
+        col: 1,
+        row: 0,
+        enterCost: expectedCost,
+        cumulativeCost: expectedCost,
+      ),
+    ],
+  );
+  final state = GameState(
+    activePlayerId: _playerId,
+    activePlayerCanAct: true,
+    units: [unit],
+    interaction: GameInteractionState(
+      selection: GameSelection.unit(unit),
+      moveCommandActive: true,
+      movePreview: preview,
+    ),
+  );
+
+  return _resolver(
+    _map(cols: 2, terrainOverrides: {1: targetTerrains}),
+  ).resolve(
+    baseSnapshot: _snapshot(state),
+    currentState: state,
+    command: const MoveUnitCommand('mover', 1, 0),
+    savedAt: DateTime.utc(2026, 7, 31, 10),
+    context: const GameCommandContext(actorPlayerId: _playerId),
+    movementPresentationOrigin:
+        LocalMovementPresentationOrigin.previewConfirmation,
+  );
 }

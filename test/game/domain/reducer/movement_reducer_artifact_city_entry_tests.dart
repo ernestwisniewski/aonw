@@ -65,7 +65,7 @@ void _registerArtifactCarrierPreviewTests() {
     expect((moved.col, moved.row), (1, 0));
     expect(moved.movementPoints, 0);
     expect(moved.queuedPath, isNull);
-    expect(confirmed.state.moveCommandActive, isTrue);
+    expect(confirmed.state.moveCommandActive, isFalse);
     expect(
       confirmed.uiEffects.whereType<AnimateUnitMoveEffect>().single.steps,
       hasLength(1),

@@ -15,6 +15,7 @@ import 'package:aonw/game/presentation/widgets/theme/unit_sprite_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -947,6 +948,77 @@ void main() {
 
     expect(find.byKey(const Key('hudCombatConfirm.surface')), findsNothing);
     expect(find.byType(SelectionDetailSheet), findsOneWidget);
+  });
+
+  testWidgets('combat arriving while detail is open takes modal priority', (
+    tester,
+  ) async {
+    var state = const GameState();
+    HudCombatPreview? preview;
+
+    Future<void> pump() {
+      return _pumpDeck(
+        tester,
+        gameState: state,
+        combatPreview: preview,
+        selection: _detailTestSelection,
+        openSelectionDetailChipId: SelectionInfoChipId.terrain,
+      );
+    }
+
+    await pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(SelectionDetailSheet), findsOneWidget);
+
+    state = _attackState('attacker_1');
+    preview = _combatPreview(
+      attackerUnitId: 'attacker_1',
+      defenderUnitId: 'defender_1',
+      attackerName: 'Attacker',
+      defenderName: 'Defender',
+    );
+    await pump();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SelectionDetailSheet), findsNothing);
+    expect(find.byKey(const Key('hudCombatConfirm.surface')), findsOneWidget);
+  });
+
+  testWidgets('double combat confirmation dispatches one command', (
+    tester,
+  ) async {
+    final commands = <GameCommand>[];
+    final container = ProviderContainer(
+      overrides: [
+        hudCommandDispatcherProvider.overrideWith(
+          (ref) => _RecordingHudCommandDispatcher(ref, commands),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final state = _attackState('attacker_1');
+    final preview = _combatPreview(
+      attackerUnitId: 'attacker_1',
+      defenderUnitId: 'defender_1',
+      attackerName: 'Attacker',
+      defenderName: 'Defender',
+    );
+
+    await _pumpDeck(
+      tester,
+      gameState: state,
+      combatPreview: preview,
+      providerContainer: container,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    final confirm = find.byKey(const Key('hudCombatConfirm.confirm'));
+    final onPressed = tester.widget<EpicButton>(confirm).onPressed!;
+
+    onPressed();
+    onPressed();
+    await tester.pumpAndSettle();
+
+    expect(commands.whereType<AttackHexCommand>(), hasLength(1));
   });
 
   testWidgets('combat confirmation popup adapts to compact and wide sizes', (

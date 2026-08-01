@@ -1,4 +1,6 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
+
 import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/map_pill.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview.dart';
@@ -6,6 +8,8 @@ import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_p
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw/map/domain/map_config.dart';
+import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
@@ -338,6 +342,82 @@ void main() {
       expect(preview.reachablePoints, [isTrue, isTrue, isTrue, isFalse]);
     });
 
+    test(
+      'property: rendered reachability matches every generated plan step',
+      () {
+        final random = math.Random(0xA0118);
+        var roughFirstStepCases = 0;
+
+        for (var scenario = 0; scenario < 160; scenario++) {
+          final forcedRoughFirstStep = scenario % 8 == 0;
+          final cols = forcedRoughFirstStep ? 2 : 2 + random.nextInt(8);
+          final startCol = forcedRoughFirstStep ? 0 : random.nextInt(cols);
+          var targetCol = forcedRoughFirstStep ? 1 : random.nextInt(cols);
+          if (targetCol == startCol) targetCol = (targetCol + 1) % cols;
+          final movementPoints = forcedRoughFirstStep ? 1 : random.nextInt(7);
+          final terrains = [
+            for (var col = 0; col < cols; col++)
+              forcedRoughFirstStep && col == targetCol
+                  ? const [TerrainType.snow, TerrainType.hills]
+                  : _generatedTerrainProfiles[random.nextInt(
+                      _generatedTerrainProfiles.length,
+                    )],
+          ];
+          final map = MapData(
+            cols: cols,
+            rows: 1,
+            tiles: [
+              for (var col = 0; col < cols; col++)
+                TileData(
+                  col: col,
+                  row: 0,
+                  terrains: terrains[col],
+                  resources: const [],
+                  height: 0,
+                ),
+            ],
+          );
+          final unit = GameUnit(
+            id: 'generated_$scenario',
+            ownerPlayerId: 'player_1',
+            type: GameUnitType.warrior,
+            name: 'Generated warrior',
+            col: startCol,
+            row: 0,
+            movementPoints: movementPoints,
+          );
+          final plan = UnitMovementPlanner(
+            mapData: map,
+            units: [unit],
+          ).planMove(unit: unit, targetTile: map.tileAt(targetCol, 0)!);
+
+          expect(plan, isNotNull, reason: 'generated scenario $scenario');
+          final resolvedPlan = plan!;
+          if (resolvedPlan.steps[1].enterCost > movementPoints &&
+              movementPoints > 0) {
+            roughFirstStepCases += 1;
+          }
+          final parent = Component();
+          UnitMovePreviewLayer().sync(parent: parent, preview: resolvedPlan);
+          final rendered = _singlePreviewIn(parent);
+
+          expect(
+            rendered.reachablePoints,
+            hasLength(resolvedPlan.steps.length),
+          );
+          for (var step = 0; step < resolvedPlan.steps.length; step++) {
+            expect(
+              rendered.reachablePoints[step],
+              resolvedPlan.canReachStepThisTurn(resolvedPlan.steps[step]),
+              reason: 'generated scenario $scenario, step $step',
+            );
+          }
+        }
+
+        expect(roughFirstStepCases, greaterThanOrEqualTo(20));
+      },
+    );
+
     _registerRouteSemanticsTests();
 
     test('route dash phase moves forward along the planned path', () {
@@ -558,3 +638,12 @@ void main() {
     });
   });
 }
+
+const _generatedTerrainProfiles = <List<TerrainType>>[
+  [TerrainType.grassland],
+  [TerrainType.plains, TerrainType.forest],
+  [TerrainType.desert],
+  [TerrainType.tundra, TerrainType.hills],
+  [TerrainType.snow],
+  [TerrainType.grassland, TerrainType.jungle, TerrainType.hills],
+];
