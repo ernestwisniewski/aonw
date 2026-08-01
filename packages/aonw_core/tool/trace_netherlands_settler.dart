@@ -18,12 +18,10 @@ import 'package:aonw_core/ai/strategies/basic_strategy.dart';
 import 'package:aonw_core/ai/telemetry/balance_runner.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
-import 'package:aonw_core/game/domain/turn.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
@@ -47,20 +45,9 @@ void main(List<String> args) {
     final result = EconomySimulation.run(config: config);
     final row = result.rowsByPlayerId[playerId]!.last;
     final mapView = _simulationMap().indexedReadView();
-    final state =
-        PersistentTurnMovementProcessor.resetForPlayers(
-          state: result.state,
-          playerIds: const ['player_1', 'player_2', 'player_3', 'player_4'],
-          mapData: mapView,
-        ).state.copyWith(
-          fogOfWar: const FogOfWarService().recompute(
-            current: result.state.fogOfWar,
-            mapData: mapView,
-            playerIds: const ['player_1', 'player_2', 'player_3', 'player_4'],
-            units: result.state.units,
-            cities: result.state.cities,
-          ),
-        );
+    // EconomySimulation already finalizes every turn through GameEngine.
+    // Diagnostic tooling must inspect that authoritative result directly.
+    final state = result.state;
 
     final player = [config.player, ...config.opponents].firstWhere(
       (candidate) => candidate.id == playerId,

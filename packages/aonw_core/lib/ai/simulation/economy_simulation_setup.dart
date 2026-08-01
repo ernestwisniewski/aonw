@@ -1,22 +1,6 @@
 part of 'economy_simulation.dart';
 
 abstract final class _EconomySimulationSetup {
-  static PersistentGameState recomputeFog({
-    required PersistentGameState state,
-    required MapReadView mapView,
-    required Iterable<String> playerIds,
-  }) {
-    return state.copyWith(
-      fogOfWar: const FogOfWarService().recompute(
-        current: state.fogOfWar,
-        mapData: mapView,
-        playerIds: playerIds,
-        units: state.units,
-        cities: state.cities,
-      ),
-    );
-  }
-
   static GameView planningView({
     required PersistentGameState state,
     required String playerId,

@@ -3,6 +3,57 @@ import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('simulation projection carries every authoritative state slice', () {
+    final state = PersistentGameState.snapshot(
+      playerColors: const {'player_1': 99},
+      playerCountries: const {'player_1': PlayerCountry.japan},
+      playerGold: const {'player_1': 17},
+      playerWarWeariness: const {'player_1': 4},
+      playerStabilityNet: const {'player_1': -2},
+      fieldImprovements: const [
+        FieldImprovement(
+          hex: CityHex(col: 2, row: 3),
+          type: FieldImprovementType.farm,
+        ),
+      ],
+      runtimeState: GameRuntimeState.snapshot(
+        dominationHoldTurnsByPlayerId: const {'player_1': 2},
+        culturalVictoryHoldTurnsByPlayerId: const {'player_1': 3},
+        mapObjectiveHoldStatesByObjectiveId: const {
+          'pass_1': MapObjectiveHoldState(
+            objectiveId: 'pass_1',
+            playerId: 'player_1',
+            holdTurns: 4,
+          ),
+        },
+      ),
+    );
+
+    final projected = const SimulationGameEngineAdapter().projectSnapshot(
+      snapshot: _snapshotFor(state),
+      state: state,
+    );
+
+    expect(projected.domain.playerColors, state.playerColors);
+    expect(projected.domain.playerCountries, state.playerCountries);
+    expect(projected.domain.playerGold, state.playerGold);
+    expect(projected.domain.playerWarWeariness, state.playerWarWeariness);
+    expect(projected.domain.playerStabilityNet, state.playerStabilityNet);
+    expect(projected.domain.fieldImprovements, state.fieldImprovements);
+    expect(
+      projected.domain.dominationHoldTurnsByPlayerId,
+      state.runtimeState.dominationHoldTurnsByPlayerId,
+    );
+    expect(
+      projected.domain.culturalVictoryHoldTurnsByPlayerId,
+      state.runtimeState.culturalVictoryHoldTurnsByPlayerId,
+    );
+    expect(
+      projected.domain.mapObjectiveHoldStatesByObjectiveId,
+      state.runtimeState.mapObjectiveHoldStatesByObjectiveId,
+    );
+  });
+
   test(
     'simulation adapter applies migrated unit actions through GameEngine',
     () {

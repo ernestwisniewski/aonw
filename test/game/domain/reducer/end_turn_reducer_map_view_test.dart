@@ -1,6 +1,5 @@
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/turn/end_turn_reducer.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/domain/world_map.dart';
@@ -10,6 +9,8 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../../support/turn_engine_test_driver.dart';
 
 void main() {
   test(
@@ -28,11 +29,7 @@ void main() {
       );
       final MapReadView mapView = WorldMapReadView(_worldMap());
 
-      final result = EndTurnReducer.advanceCitiesForPlayer(
-        state,
-        'player_1',
-        mapView,
-      );
+      final result = resolveEndTurnForTest(state, 'player_1', mapView);
 
       expect(result.state.playerGold['player_1'], 14);
       expect(

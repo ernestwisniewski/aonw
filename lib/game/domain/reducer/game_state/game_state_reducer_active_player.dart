@@ -5,15 +5,12 @@ abstract final class _ActivePlayerReducer {
     GameState state,
     String playerId,
     bool canAct,
-    ReducerEnvironment environment,
   ) {
     final next = _activePlayerChanged(state, playerId, canAct)
         ? _applyControlChange(state, playerId, canAct)
         : _applyPlayerIdentity(state, playerId, canAct);
 
-    return GameStateTransition(
-      state: _recomputeFogOfWarIfNeeded(next, environment),
-    );
+    return GameStateTransition(state: next);
   }
 
   static bool _activePlayerChanged(
@@ -101,31 +98,5 @@ abstract final class _ActivePlayerReducer {
   static bool _isActivePlayerOwned(GameState state, String ownerPlayerId) {
     return state.activePlayerId.isNotEmpty &&
         state.activePlayerId == ownerPlayerId;
-  }
-
-  static GameState _recomputeFogOfWarIfNeeded(
-    GameState state,
-    ReducerEnvironment environment,
-  ) {
-    if (!_hasFogRevealSources(state)) return state;
-
-    final fogOfWar = environment.fogOfWarService.recompute(
-      current: state.fogOfWar,
-      mapData: environment.mapData,
-      playerIds: knownPlayerIds(state),
-      units: state.units,
-      cities: state.cities,
-    );
-    if (fogOfWar == state.fogOfWar) {
-      return withDiscoveredDiplomaticContacts(state);
-    }
-
-    return withDiscoveredDiplomaticContacts(state.copyWith(fogOfWar: fogOfWar));
-  }
-
-  static bool _hasFogRevealSources(GameState state) {
-    return state.units.isNotEmpty ||
-        state.cities.isNotEmpty ||
-        state.fogOfWar.playerIds.isNotEmpty;
   }
 }

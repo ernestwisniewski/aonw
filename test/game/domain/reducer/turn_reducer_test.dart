@@ -6,7 +6,6 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/game/domain/reducer/turn/end_turn_reducer.dart';
 import 'package:aonw/game/domain/reducer/turn/turn_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
@@ -24,6 +23,8 @@ import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../../support/turn_engine_test_driver.dart';
 
 part 'turn_reducer_start_action_feedback_tests.dart';
 
@@ -70,11 +71,7 @@ void main() {
       );
       const state = GameState(cities: [city], activePlayerId: 'player_1');
 
-      final result = EndTurnReducer.advanceCitiesForPlayer(
-        state,
-        'player_1',
-        mapData,
-      );
+      final result = resolveEndTurnForTest(state, 'player_1', mapData);
 
       // CityTurnProcessor should have processed the city
       expect(result.state.cities, isNotEmpty);
@@ -100,11 +97,7 @@ void main() {
         ),
       );
 
-      final result = EndTurnReducer.advanceCitiesForPlayer(
-        state,
-        'player_1',
-        mapData,
-      );
+      final result = resolveEndTurnForTest(state, 'player_1', mapData);
 
       expect(
         result.state.research
@@ -129,7 +122,7 @@ void main() {
       );
       const state = GameState(cities: [city], activePlayerId: 'player_1');
 
-      final result = EndTurnReducer.advanceCitiesForPlayer(
+      final result = resolveEndTurnForTest(
         state,
         'player_1',
         mapData,
@@ -205,7 +198,7 @@ void main() {
       );
       final state = GameState(cities: [city], activePlayerId: 'player_1');
 
-      final result = EndTurnReducer.advanceCitiesForPlayer(
+      final result = resolveEndTurnForTest(
         state,
         'player_1',
         mapData,
@@ -237,11 +230,7 @@ void main() {
         ),
       );
 
-      final result = EndTurnReducer.advanceCitiesForPlayer(
-        state,
-        'player_1',
-        mapData,
-      );
+      final result = resolveEndTurnForTest(state, 'player_1', mapData);
 
       final playerResearch = result.state.research.forPlayer('player_1');
       expect(playerResearch.hasUnlocked(TechnologyId.agriculture), isTrue);
@@ -259,11 +248,7 @@ void main() {
       );
       const state = GameState(cities: [city], activePlayerId: 'player_1');
 
-      final result = EndTurnReducer.advanceCitiesForPlayer(
-        state,
-        'player_1',
-        mapData,
-      );
+      final result = resolveEndTurnForTest(state, 'player_1', mapData);
 
       // No cities for player_1 — city/unit/field data unchanged, but TurnEndedEvent
       // is still emitted and fog is always recomputed.

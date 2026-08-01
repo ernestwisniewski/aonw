@@ -15,7 +15,6 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/game/domain/turn.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract interface class MctsSimulator {
@@ -73,25 +72,31 @@ class TracingMctsSimulator implements MctsSimulator {
             input: opponentInput,
           )
         : initial;
-    final advanced = PersistentTurnEconomyProcessor.advanceForPlayers(
-      state: afterOpponentPlans.state,
-      playerIds: MctsOpponentViewIndex.fromState(
-        afterOpponentPlans.state,
-      ).knownPlayerIds(view.forPlayerId),
-      mapData: mapData,
-      ruleset: ruleset,
-      mapObjectives: mapData.objectives,
-    );
-    final nextTurn = view.turn + 1;
-    final nextSnapshot = const SimulationGameEngineAdapter().projectSnapshot(
-      snapshot: afterOpponentPlans.snapshot,
-      state: advanced.state,
-      turn: nextTurn,
-    );
+    final playerIds = [
+      for (final participant in afterOpponentPlans.snapshot.domain.participants)
+        if (!afterOpponentPlans.snapshot.session.isKicked(participant.id))
+          participant.id,
+    ];
+    final advanced = const SimulationGameEngineAdapter()
+        .finalizeSimultaneousTurn(
+          snapshot: afterOpponentPlans.snapshot,
+          state: afterOpponentPlans.state,
+          playerIds: playerIds,
+          commandTick: 1,
+          mapView: mapData,
+          ruleset: ruleset,
+        );
+    if (!advanced.accepted) {
+      throw StateError(
+        'GameEngine rejected MCTS turn finalization: '
+        '${advanced.reason ?? 'command_rejected'}',
+      );
+    }
+    final nextTurn = advanced.snapshot.domain.turn;
     final nextView = _nextMctsView(
       state: advanced.state,
       previous: view,
-      snapshot: nextSnapshot,
+      snapshot: advanced.snapshot,
       turn: nextTurn,
     );
     return nextView;

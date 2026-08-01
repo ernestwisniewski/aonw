@@ -1,3 +1,4 @@
+import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
@@ -19,10 +20,14 @@ void main() {
       ],
     );
 
-    final result = PersistentTurnPipeline.advancePlayer(
+    final snapshot = _snapshot(state);
+    final result = const SimulationGameEngineAdapter().finalizeSimultaneousTurn(
+      snapshot: snapshot,
       state: state,
-      playerId: 'player_1',
+      playerIds: const ['player_1'],
+      commandTick: 1,
       mapView: mapData,
+      ruleset: GameRuleset.defaults,
     );
 
     expect(
@@ -94,6 +99,32 @@ void main() {
       expect(canonicalMovement.state.units.single.col, 2);
       expect(canonicalMovement.state.units.single.row, 0);
     },
+  );
+}
+
+CanonicalGameSnapshot _snapshot(PersistentGameState state) {
+  return CanonicalGameSnapshot.snapshot(
+    domain: DomainState.snapshot(
+      turn: 1,
+      matchRules: MatchRules.standard,
+      participants: const [
+        Player(id: 'player_1', name: 'Player 1', colorValue: 1),
+      ],
+      playerGold: state.playerGold,
+      units: state.units,
+    ),
+    session: MatchSessionState.snapshot(
+      gameMode: GameMode.hotSeat,
+      turnStatesByPlayerId: const {'player_1': PlayerTurnState.active},
+    ),
+    metadata: GameSnapshotMetadata(
+      id: 'turn_map_view_parity',
+      schemaVersion: 3,
+      name: 'Turn map view parity',
+      world: const WorldReference(name: 'test', source: MapSource.asset),
+      savedAtUtc: DateTime.utc(2026, 1, 1),
+      camera: GameSnapshotCamera.zero,
+    ),
   );
 }
 

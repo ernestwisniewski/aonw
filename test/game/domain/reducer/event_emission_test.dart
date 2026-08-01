@@ -1,6 +1,5 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/reducer/turn/end_turn_reducer.dart';
 import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -10,6 +9,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/movement_engine_test_driver.dart';
+import '../../../support/turn_engine_test_driver.dart';
 
 MapData _map(int cols, int rows) => MapData(
   cols: cols,
@@ -98,11 +98,7 @@ void main() {
         activePlayerId: 'player_1',
       );
 
-      final transition = EndTurnReducer.advanceCitiesForPlayer(
-        scheduled,
-        'player_1',
-        mapData,
-      );
+      final transition = resolveEndTurnForTest(scheduled, 'player_1', mapData);
 
       final event = transition.events.whereType<CityFoundedEvent>().single;
       expect(event, isA<CityFoundedEvent>());
@@ -110,7 +106,7 @@ void main() {
       expect(event.cityId, isNotEmpty);
       expect(transition.state.cities.single.name, 'Paris');
     });
-    test('EndTurnReducer.advanceCitiesForPlayer emits TurnEndedEvent', () {
+    test('GameEngine end turn emits TurnEndedEvent', () {
       final mapData = _map(5, 5);
       const city = GameCity(
         id: 'city_1',
@@ -130,11 +126,7 @@ void main() {
       );
       const state = GameState(cities: [city], activePlayerId: 'player_1');
 
-      final transition = EndTurnReducer.advanceCitiesForPlayer(
-        state,
-        'player_1',
-        mapData,
-      );
+      final transition = resolveEndTurnForTest(state, 'player_1', mapData);
 
       final turnEndedEvents = transition.events.whereType<TurnEndedEvent>();
       expect(turnEndedEvents, hasLength(1));
@@ -152,11 +144,7 @@ void main() {
       );
       const state = GameState(cities: [city], activePlayerId: 'player_1');
 
-      final transition = EndTurnReducer.advanceCitiesForPlayer(
-        state,
-        'player_1',
-        mapData,
-      );
+      final transition = resolveEndTurnForTest(state, 'player_1', mapData);
 
       final event = transition.events.whereType<CityClaimedHexEvent>().single;
       expect(event, isA<CityClaimedHexEvent>());
@@ -169,7 +157,7 @@ void main() {
       );
     });
     test(
-      'EndTurnReducer.advanceCitiesForPlayer emits TurnEndedEvent even when nothing changed',
+      'GameEngine end turn emits TurnEndedEvent even when nothing changed',
       () {
         final mapData = _map(5, 5);
 
@@ -177,11 +165,7 @@ void main() {
         // will return changed: false — exercising the no-change code path.
         const state = GameState(activePlayerId: 'player_2');
 
-        final transition = EndTurnReducer.advanceCitiesForPlayer(
-          state,
-          'player_2',
-          mapData,
-        );
+        final transition = resolveEndTurnForTest(state, 'player_2', mapData);
 
         final turnEndedEvents = transition.events.whereType<TurnEndedEvent>();
         expect(

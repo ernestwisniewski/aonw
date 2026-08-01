@@ -10,6 +10,8 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
+import 'package:aonw/game/domain/turn/phases/selection_refresh_phase.dart';
+import 'package:aonw/game/domain/turn/turn_context.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -206,7 +208,20 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
       savedAt: savedAt,
       preservesRawTurnStart: preservesRawTurnStart,
     );
-    var nextState = projection.state;
+    var nextState = const SelectionRefreshPhase()
+        .apply(
+          TurnContext(
+            state: projection.state,
+            save: projection.snapshot.save,
+            mapTiles: reducer.mapData.mapTiles,
+            ruleset: reducer.ruleset.copyWith(
+              paceBalance: accepted.snapshot.domain.matchRules.paceBalance,
+            ),
+            playerId: _turnPlayerId(command),
+            savedAt: savedAt,
+          ),
+        )
+        .state;
     if (command is SubmitTurnCommand &&
         currentState.activePlayerId == command.playerId) {
       nextState = nextState

@@ -57,6 +57,29 @@ final class _EconomySimulationCommandApplier {
       reason: result.reason,
     );
   }
+
+  _ApplyCommandResult finalizeTurn({
+    required int tick,
+    required PersistentGameState state,
+    required Iterable<String> playerIds,
+    required GameRuleset ruleset,
+  }) {
+    final result = const SimulationGameEngineAdapter().finalizeSimultaneousTurn(
+      snapshot: engineSnapshot,
+      state: state,
+      playerIds: playerIds,
+      commandTick: tick,
+      mapView: mapView,
+      ruleset: ruleset,
+    );
+    if (result.accepted) engineSnapshot = result.snapshot;
+    return _ApplyCommandResult(
+      accepted: result.accepted,
+      state: result.state,
+      events: result.events,
+      reason: result.reason,
+    );
+  }
 }
 
 _EconomySimulationCommandApplier _economySimulationCommandApplierForSetup({

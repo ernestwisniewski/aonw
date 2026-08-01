@@ -3,6 +3,7 @@ import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
+import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
@@ -27,6 +28,68 @@ final class SimulationGameEngineResult {
 /// Projects state-only AI simulations through the authoritative game engine.
 final class SimulationGameEngineAdapter {
   const SimulationGameEngineAdapter();
+
+  /// Finalizes one simultaneous turn exclusively through player commands
+  /// handled by [GameEngine].
+  ///
+  /// Simulation owns the sequencing of submissions, but it does not own a
+  /// second implementation of combat, economy, movement reset, or turn
+  /// advancement.
+  SimulationGameEngineResult finalizeSimultaneousTurn({
+    required CanonicalGameSnapshot snapshot,
+    required PersistentGameState state,
+    required Iterable<String> playerIds,
+    required int commandTick,
+    required MapReadView mapView,
+    required GameRuleset ruleset,
+    DateTime? savedAt,
+  }) {
+    final orderedPlayerIds = _orderedDistinctPlayerIds(playerIds);
+    if (orderedPlayerIds.isEmpty) {
+      return SimulationGameEngineResult(
+        accepted: false,
+        state: state,
+        snapshot: snapshot,
+        reason: 'turn_player_not_active',
+      );
+    }
+
+    var currentState = state;
+    var currentSnapshot = snapshot;
+    final events = <GameEvent>[];
+    for (var index = 0; index < orderedPlayerIds.length; index += 1) {
+      final playerId = orderedPlayerIds[index];
+      final result = apply(
+        snapshot: currentSnapshot,
+        state: currentState,
+        command: SubmitTurnCommand(playerId),
+        actorPlayerId: playerId,
+        commandTick: commandTick + index,
+        mapView: mapView,
+        ruleset: ruleset,
+        turnPlayerIds: orderedPlayerIds,
+        requiredTurnSubmissionPlayerIds: orderedPlayerIds,
+        savedAt: savedAt ?? snapshot.metadata.savedAtUtc,
+      );
+      if (!result.accepted) {
+        return SimulationGameEngineResult(
+          accepted: false,
+          state: state,
+          snapshot: snapshot,
+          reason: result.reason,
+        );
+      }
+      currentState = result.state;
+      currentSnapshot = result.snapshot;
+      events.addAll(result.events);
+    }
+    return SimulationGameEngineResult(
+      accepted: true,
+      state: currentState,
+      snapshot: currentSnapshot,
+      events: List<GameEvent>.unmodifiable(events),
+    );
+  }
 
   SimulationGameEngineResult apply({
     required CanonicalGameSnapshot snapshot,
@@ -96,13 +159,33 @@ final class SimulationGameEngineAdapter {
       snapshot: resultSnapshot,
       events: events,
       state: state.copyWith(
+        playerColors: _replacement(
+          domain.playerColors,
+          engineInput.domain.playerColors,
+        ),
+        playerCountries: _replacement(
+          domain.playerCountries,
+          engineInput.domain.playerCountries,
+        ),
         playerGold: _replacement(
           domain.playerGold,
           engineInput.domain.playerGold,
         ),
+        playerWarWeariness: _replacement(
+          domain.playerWarWeariness,
+          engineInput.domain.playerWarWeariness,
+        ),
+        playerStabilityNet: _replacement(
+          domain.playerStabilityNet,
+          engineInput.domain.playerStabilityNet,
+        ),
         units: _replacement(domain.units, engineInput.domain.units),
         cities: _replacement(domain.cities, engineInput.domain.cities),
         artifacts: _replacement(domain.artifacts, engineInput.domain.artifacts),
+        fieldImprovements: _replacement(
+          domain.fieldImprovements,
+          engineInput.domain.fieldImprovements,
+        ),
         fogOfWar: _replacement(domain.fogOfWar, engineInput.domain.fogOfWar),
         research: _replacement(domain.research, engineInput.domain.research),
         wonderRegistry: _replacement(
@@ -129,6 +212,18 @@ final class SimulationGameEngineAdapter {
       !identical(result.diplomacy, input.diplomacy),
       !identical(result.intendedAttacks, input.intendedAttacks),
       !identical(result.resourceTradeAgreements, input.resourceTradeAgreements),
+      !identical(
+        result.dominationHoldTurnsByPlayerId,
+        input.dominationHoldTurnsByPlayerId,
+      ),
+      !identical(
+        result.culturalVictoryHoldTurnsByPlayerId,
+        input.culturalVictoryHoldTurnsByPlayerId,
+      ),
+      !identical(
+        result.mapObjectiveHoldStatesByObjectiveId,
+        input.mapObjectiveHoldStatesByObjectiveId,
+      ),
       !identical(resultSnapshot.interaction, engineInput.interaction),
       resultSnapshot.session != engineInput.session,
     ].contains(true);
@@ -137,6 +232,11 @@ final class SimulationGameEngineAdapter {
       diplomacy: result.diplomacy,
       intendedAttacks: result.intendedAttacks,
       resourceTradeAgreements: result.resourceTradeAgreements,
+      dominationHoldTurnsByPlayerId: result.dominationHoldTurnsByPlayerId,
+      culturalVictoryHoldTurnsByPlayerId:
+          result.culturalVictoryHoldTurnsByPlayerId,
+      mapObjectiveHoldStatesByObjectiveId:
+          result.mapObjectiveHoldStatesByObjectiveId,
       cityFoundingDraft: resultSnapshot.interaction.cityFoundingDraft,
       pendingAction: resultSnapshot.interaction.pendingAction,
       submittedPlayerIds: resultSnapshot.session.submittedPlayerIds,
@@ -153,6 +253,10 @@ final class SimulationGameEngineAdapter {
     int? turn,
   }) {
     final runtime = state.runtimeState;
+    final participants = _projectParticipants(
+      snapshot.domain.participants,
+      state,
+    );
     final interaction = PersistedInteractionState(
       cityFoundingDraft: runtime.cityFoundingDraft,
       pendingAction: runtime.pendingAction,
@@ -167,6 +271,9 @@ final class SimulationGameEngineAdapter {
     return snapshot.copyWith(
       domain: snapshot.domain.copyWith(
         turn: turn,
+        participants: identical(participants, snapshot.domain.participants)
+            ? null
+            : participants,
         playerGold: state.playerGold,
         playerWarWeariness: state.playerWarWeariness,
         playerStabilityNet: state.playerStabilityNet,
@@ -196,3 +303,32 @@ final class SimulationGameEngineAdapter {
 
 T? _replacement<T extends Object>(T next, T current) =>
     identical(next, current) ? null : next;
+
+List<String> _orderedDistinctPlayerIds(Iterable<String> values) {
+  final seen = <String>{};
+  return [
+    for (final value in values)
+      if (value.isNotEmpty && seen.add(value)) value,
+  ];
+}
+
+List<Player> _projectParticipants(
+  List<Player> current,
+  PersistentGameState state,
+) {
+  var changed = false;
+  final projected = [
+    for (final participant in current)
+      (() {
+        final color = state.playerColors[participant.id];
+        final country = state.playerCountries[participant.id];
+        if ((color == null || color == participant.colorValue) &&
+            (country == null || country == participant.country)) {
+          return participant;
+        }
+        changed = true;
+        return participant.copyWith(colorValue: color, country: country);
+      })(),
+  ];
+  return changed ? projected : current;
+}

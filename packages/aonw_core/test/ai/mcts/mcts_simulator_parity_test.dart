@@ -956,13 +956,16 @@ SimulationGameEngineResult _resolveWorkerAssignment(
   return MctsSimulatorParityFixtures.resolveEngineCommand(state, command);
 }
 
-PersistentTurnEconomyResult _advancePersistentEconomy(
+SimulationGameEngineResult _advancePersistentEconomy(
   PersistentGameState state,
 ) {
-  return PersistentTurnEconomyProcessor.advanceForPlayers(
+  final snapshot = MctsSimulatorParityFixtures.engineSnapshot(state);
+  return const SimulationGameEngineAdapter().finalizeSimultaneousTurn(
+    snapshot: snapshot,
     state: state,
-    playerIds: const ['player_1'],
-    mapData: _mapData(),
+    playerIds: snapshot.domain.participants.map((player) => player.id),
+    commandTick: 1,
+    mapView: _mapData(),
     ruleset: GameRuleset.defaults,
   );
 }

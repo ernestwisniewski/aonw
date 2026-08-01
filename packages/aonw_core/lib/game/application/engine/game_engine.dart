@@ -29,7 +29,8 @@ enum GameEngineCommandFamily {
 
 /// Deterministic dispatcher for authoritative player commands.
 ///
-/// Command families are registered incrementally during the engine migration.
+/// Every concrete [DomainCommand] is classified exactly once. The exhaustive
+/// architecture inventory fails when a new command is not assigned a family.
 final class GameEngine {
   const GameEngine();
 

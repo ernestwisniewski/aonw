@@ -13,8 +13,6 @@ part 'support/canonical_snapshot_conversion_guard.dart';
 const _canonicalPipelinePath =
     'packages/aonw_core/lib/game/application/turn/'
     'canonical_turn_pipeline.dart';
-const _persistentPipelinePath =
-    'packages/aonw_core/lib/game/domain/turn/persistent_turn_pipeline.dart';
 const _saveSnapshotPath = 'lib/game/application/ports/save_snapshot.dart';
 const _localCallSite =
     'lib/game/application/services/local_command_resolver.dart';
@@ -27,54 +25,8 @@ const _workedHexKernelPath =
 const _domainWorkedHexAdapterPath =
     'packages/aonw_core/lib/game/domain/city/'
     'domain_city_worked_hex_resolver.dart';
-const _retiredPersistentTurnTypes = {
-  'PersistentTurnMovementDelta',
-  'PersistentTurnPipelineRequest',
-  'PersistentTurnPipelineResult',
-};
-const _retiredPersistentTurnMethods = {
-  'simultaneousFinalize',
-  '_simultaneousFinalizeAfterCombat',
-};
-
 void main() {
   group('canonical turn pipeline boundary', () {
-    test('persistent turn pipeline keeps only the single-player seam', () {
-      expect(_persistentTurnApiViolations(productionDartSources()), isEmpty);
-    });
-
-    test('persistent turn API ratchet catches every retired declaration', () {
-      const sources = {
-        _persistentPipelinePath: '''
-final class PersistentTurnMovementDelta {}
-typedef PersistentTurnPipelineRequest = Object;
-enum PersistentTurnPipelineResult { value }
-
-abstract final class PersistentTurnPipeline {
-  static void simultaneousFinalize() {}
-  static void _simultaneousFinalizeAfterCombat() {}
-  static void finalizeAllPlayers() {}
-}
-''',
-      };
-
-      expect(
-        _persistentTurnApiViolations(sources),
-        containsAll([
-          'must not declare retired type PersistentTurnMovementDelta',
-          'must not declare retired type PersistentTurnPipelineRequest',
-          'must not declare retired type PersistentTurnPipelineResult',
-          'PersistentTurnPipeline must not declare simultaneousFinalize',
-          'PersistentTurnPipeline must not declare '
-              '_simultaneousFinalizeAfterCombat',
-          'PersistentTurnPipeline must not declare public method '
-              'finalizeAllPlayers',
-          'PersistentTurnPipeline must declare exactly one static '
-              'advancePlayer method',
-        ]),
-      );
-    });
-
     test('worked-hex paths share one state-neutral kernel', () {
       final sources = productionDartSources();
       expect(
@@ -281,59 +233,6 @@ void f(WorkedHexAdapter adapter) {
   });
 }
 
-List<String> _persistentTurnApiViolations(Map<String, String> sources) {
-  final violations = <String>[];
-  for (final entry in sources.entries) {
-    final collector = _DeclaredTypeNameCollector();
-    parseString(content: entry.value, path: entry.key).unit.accept(collector);
-    for (final typeName in collector.names.intersection(
-      _retiredPersistentTurnTypes,
-    )) {
-      violations.add('must not declare retired type $typeName');
-    }
-  }
-
-  final source = sources[_persistentPipelinePath];
-  if (source == null) {
-    violations.add('PersistentTurnPipeline source must exist');
-    return violations;
-  }
-  final unit = parseString(content: source, path: _persistentPipelinePath).unit;
-  final pipelines = unit.declarations.whereType<ClassDeclaration>().where(
-    (declaration) =>
-        declaration.namePart.typeName.lexeme == 'PersistentTurnPipeline',
-  );
-  if (pipelines.length != 1) {
-    violations.add('PersistentTurnPipeline must declare exactly one class');
-    return violations;
-  }
-
-  final methods = pipelines.single.body.members.whereType<MethodDeclaration>();
-  final methodNames = methods.map((method) => method.name.lexeme).toSet();
-  for (final methodName in methodNames.intersection(
-    _retiredPersistentTurnMethods,
-  )) {
-    violations.add('PersistentTurnPipeline must not declare $methodName');
-  }
-  for (final methodName in methodNames.where(
-    (name) => !name.startsWith('_') && name != 'advancePlayer',
-  )) {
-    violations.add(
-      'PersistentTurnPipeline must not declare public method $methodName',
-    );
-  }
-  final advancePlayerMethods = methods.where(
-    (method) => method.name.lexeme == 'advancePlayer' && method.isStatic,
-  );
-  if (advancePlayerMethods.length != 1) {
-    violations.add(
-      'PersistentTurnPipeline must declare exactly one static '
-      'advancePlayer method',
-    );
-  }
-  return violations;
-}
-
 CompilationUnit _unitAt(String path) {
   return parseString(content: File(path).readAsStringSync(), path: path).unit;
 }
@@ -353,39 +252,5 @@ final class _NamedTypeCollector extends RecursiveAstVisitor<void> {
   void visitNamedType(NamedType node) {
     names.add(node.name.lexeme);
     super.visitNamedType(node);
-  }
-}
-
-final class _DeclaredTypeNameCollector extends RecursiveAstVisitor<void> {
-  final Set<String> names = {};
-
-  @override
-  void visitClassDeclaration(ClassDeclaration node) {
-    names.add(node.namePart.typeName.lexeme);
-    super.visitClassDeclaration(node);
-  }
-
-  @override
-  void visitEnumDeclaration(EnumDeclaration node) {
-    names.add(node.namePart.typeName.lexeme);
-    super.visitEnumDeclaration(node);
-  }
-
-  @override
-  void visitExtensionTypeDeclaration(ExtensionTypeDeclaration node) {
-    names.add(node.primaryConstructor.typeName.lexeme);
-    super.visitExtensionTypeDeclaration(node);
-  }
-
-  @override
-  void visitGenericTypeAlias(GenericTypeAlias node) {
-    names.add(node.name.lexeme);
-    super.visitGenericTypeAlias(node);
-  }
-
-  @override
-  void visitMixinDeclaration(MixinDeclaration node) {
-    names.add(node.name.lexeme);
-    super.visitMixinDeclaration(node);
   }
 }

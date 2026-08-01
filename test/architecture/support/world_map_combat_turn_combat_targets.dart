@@ -68,17 +68,6 @@ const _turnCombatTargets = [
     ],
   ),
   _Target(
-    path: 'lib/game/domain/reducer/turn/end_turn_reducer.dart',
-    owner: 'EndTurnReducer',
-    boundaries: [
-      _Boundary.method(
-        'advanceCitiesForPlayer',
-        parameter: 'mapView',
-        type: 'MapReadView',
-      ),
-    ],
-  ),
-  _Target(
     path: 'lib/game/domain/reducer/combat/combat_reducer.dart',
     owner: 'CombatReducer',
     boundaries: [
@@ -141,18 +130,6 @@ const _turnCombatTargets = [
         parameter: 'mapTiles',
         type: 'MapTileLookup',
         nullable: true,
-      ),
-    ],
-  ),
-  _Target(
-    path:
-        'packages/aonw_core/lib/game/domain/turn/persistent_turn_pipeline.dart',
-    owner: 'PersistentTurnPipeline',
-    boundaries: [
-      _Boundary.method(
-        'advancePlayer',
-        parameter: 'mapView',
-        type: 'MapReadView',
       ),
     ],
   ),

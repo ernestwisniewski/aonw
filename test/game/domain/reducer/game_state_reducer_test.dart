@@ -415,7 +415,7 @@ void main() {
       expect(result.uiEffects, isEmpty);
     });
 
-    test('recomputes fog for the selected active player', () {
+    test('does not mutate authoritative fog while switching presentation', () {
       final reducer = GameStateReducer(mapData: _landMap());
       final unit = _unit(ownerPlayerId: 'p2', col: 2, row: 2);
       final state = GameState(activePlayerId: 'p1', units: [unit]);
@@ -426,7 +426,7 @@ void main() {
         canAct: true,
       );
 
-      expect(result.state.activePlayerVisibility.canSeeDynamicAt(2, 2), isTrue);
+      expect(result.state.fogOfWar, same(state.fogOfWar));
     });
   });
 }

@@ -10,7 +10,7 @@ Runbooks describe procedures; ADRs describe constraints and ownership.
 | ADR | Decision | Status | Implementation |
 | --- | --- | --- | --- |
 | [0001](0001-map-and-state-ownership.md) | Map and state ownership | Accepted | In progress |
-| [0002](0002-deterministic-game-engine.md) | Deterministic game engine | Accepted | In progress |
+| [0002](0002-deterministic-game-engine.md) | Deterministic game engine | Accepted | Implemented |
 | [0003](0003-command-boundaries.md) | Command boundaries | Accepted | In progress |
 | [0004](0004-versioned-multiplayer-protocol.md) | Versioned multiplayer protocol | Accepted | In progress |
 | [0005](0005-immutable-deployment.md) | Immutable deployment promotion | Accepted | In progress |

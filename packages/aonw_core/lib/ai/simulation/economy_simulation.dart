@@ -18,7 +18,6 @@ import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/telemetry.dart';
-import 'package:aonw_core/game/domain/turn.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
@@ -79,12 +78,6 @@ abstract final class EconomySimulation {
     ];
 
     for (var turn = 1; turn <= config.turns; turn++) {
-      state = PersistentTurnMovementProcessor.resetForPlayers(
-        state: state,
-        playerIds: playerIds,
-        mapData: mapView,
-      ).state;
-
       final commandStatsByPlayerId = {
         for (final player in players)
           player.id: EconomySimulationCommandStats(),
@@ -93,11 +86,6 @@ abstract final class EconomySimulation {
       var commandTick = 0;
 
       for (final actingPlayer in players) {
-        state = _EconomySimulationSetup.recomputeFog(
-          state: state,
-          mapView: mapView,
-          playerIds: playerIds,
-        );
         final commandStats = commandStatsByPlayerId[actingPlayer.id]!;
         final view = _EconomySimulationSetup.planningView(
           state: state,
@@ -218,29 +206,20 @@ abstract final class EconomySimulation {
         }
       }
 
-      final economy = PersistentTurnEconomyProcessor.advanceForPlayers(
+      final finalized = commandApplier.finalizeTurn(
+        tick: commandTick,
         state: state,
         playerIds: playerIds,
-        mapData: mapView,
         ruleset: config.ruleset,
-        mapObjectives: mapView.objectives,
       );
-      state = economy.state;
-      turnEvents.addAll(economy.events);
-      final dominationHoldTurns = const DominationProgressCalculator()
-          .advanceHoldTurns(
-            playerIds: playerIds,
-            state: state,
-            mapData: mapView,
-            victoryRules: config.matchRules.victory,
-            previousHoldTurnsByPlayerId:
-                state.runtimeState.dominationHoldTurnsByPlayerId,
-          );
-      state = state.copyWith(
-        runtimeState: state.runtimeState.copyWith(
-          dominationHoldTurnsByPlayerId: dominationHoldTurns,
-        ),
-      );
+      if (!finalized.accepted) {
+        throw StateError(
+          'GameEngine rejected simulation turn $turn: '
+          '${finalized.reason ?? 'command_rejected'}',
+        );
+      }
+      state = finalized.state;
+      turnEvents.addAll(finalized.events);
       final dominationProgress = const DominationProgressCalculator().snapshot(
         playerIds: playerIds,
         state: state,

@@ -227,13 +227,19 @@ final class MctsSimulatorParityFixtures {
     MapData? mapData,
   }) {
     final actualMapData = mapData ?? MctsSimulatorParityFixtures.mapData();
-    return PersistentTurnEconomyProcessor.advanceForPlayers(
+    final snapshot = engineSnapshot(state);
+    final result = const SimulationGameEngineAdapter().finalizeSimultaneousTurn(
+      snapshot: snapshot,
       state: state,
-      playerIds: const ['player_1', 'player_2'],
-      mapData: actualMapData,
+      playerIds: snapshot.domain.participants.map((player) => player.id),
+      commandTick: 1,
+      mapView: actualMapData,
       ruleset: GameRuleset.defaults,
-      mapObjectives: actualMapData.objectives,
-    ).state;
+    );
+    if (!result.accepted) {
+      throw StateError(result.reason ?? 'turn finalization rejected');
+    }
+    return result.state;
   }
 
   static MapData explorationMapData() {

@@ -639,10 +639,13 @@ void main() {
     test('active player cannot inspect tiles hidden by fog of war', () {
       final map = _map(6, 6);
       final reducer = GameStateReducer(mapData: map);
-      var state = GameState(
-        units: [_commander()],
-        activePlayerId: 'player_1',
-        activePlayerCanAct: true,
+      var state = _withFog(
+        GameState(
+          units: [_commander()],
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+        ),
+        map,
       );
       state = reducer
           .syncActivePlayer(state, playerId: 'player_1', canAct: true)

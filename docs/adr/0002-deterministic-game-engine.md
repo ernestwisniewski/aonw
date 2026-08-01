@@ -2,15 +2,14 @@
 
 - Status: Accepted
 - Date: 2026-07-12
-- Implementation: In progress
+- Implementation: Implemented
 
 ## Context
 
-Local play currently routes commands through `GameStateReducer` and
-`LocalCommandResolver`. Multiplayer routes them through `ServerCommandReducer`
-and a set of persistent resolvers and turn pipelines. The paths share many
-domain rules, but orchestration, command routing, state shapes, and turn
-finalization are not yet one implementation.
+Local play previously routed authoritative behavior through local reducers,
+while multiplayer and simulations also exposed persistent resolvers and turn
+pipelines. Although those paths shared many domain rules, their separate
+orchestration and state projections allowed behavior to diverge.
 
 This makes local/server divergence possible and complicates replay, AI
 simulation, debugging, and tests. The engine also needs time, actor identity,
@@ -90,30 +89,36 @@ Rejected alternatives:
 
 ## Migration And Verification
 
-The current `GameStateReducer`, `LocalCommandResolver`,
-`ServerCommandReducer`, persistent command resolvers, and turn pipelines are
-transitional implementations. New rules must be added to shared core logic and
-must not create another adapter-specific reducer.
+The migration is complete at the authoritative runtime boundary:
 
-`MctsSimulatedMovementCommandApplier`,
-`MctsSimulatedCombatCommandApplier`,
-`MctsSimulatedEconomyCommandApplier`, `MctsSimulatedState.apply`, and
-`_EconomySimulationCommandApplier` are also explicit transitional command-effect
-implementations. They must not gain new authoritative behavior. Each is removed
-when its command family uses `GameEngine`; a remaining heuristic must be named
-as a scoring approximation and cannot mutate a substitute authoritative state.
+- every concrete `DomainCommand` is exhaustively assigned to exactly one
+  `GameEngine` command family;
+- `LocalCommandResolver` and `ServerCommandReducer` authenticate and prepare
+  context, then invoke the same engine;
+- live AI dispatch, replay, economy simulation, and MCTS simulation execute
+  domain commands through that engine;
+- simultaneous simulation turns submit `SubmitTurnCommand` through the engine
+  instead of invoking economy, movement, fog, or objective processors directly;
+- the retired `EndTurnReducer` and `PersistentTurnPipeline` adapter entry points
+  no longer exist;
+- local reducers and projections own only interaction and presentation state.
+  They may refresh selection or targeting after an accepted transition, but
+  they do not recalculate authoritative domain outcomes.
 
-Before moving behavior, add fixture-based parity tests that apply the same
-serialized state, command, map, rules, actor, time, and seed through the local
-and server paths and compare acceptance, canonical state, and domain events.
-Then extract one command family at a time behind `GameEngine`, keeping the
-fixture green. Remove an old branch only after replay, AI, local, and server
-callers use the shared path.
+Command-family handlers, the canonical turn pipeline, and lower-level domain
+processors remain implementation details composed behind `GameEngine`. Their
+public types support focused domain tests, but production adapters and runnable
+simulation tooling are guarded from calling them as alternative engines.
+Heuristic scoring and planning may remain approximate only when they do not
+mutate an authoritative substitute state.
 
-Verification must include deterministic repeat tests, different-iteration-order
-fixtures, command rejection parity, turn-finalization parity, and a guard that
-keeps the engine free of adapter/framework imports and direct wall-clock or
-random-number access.
+Conformance is ratcheted by the exhaustive command inventory and the
+family-specific engine contract tests. Additional architecture tests verify
+the local/server/AI/replay call sites, prevent direct persistent turn processor
+calls, keep retired entry points removed, and keep presentation synchronization
+free of fog-of-war and diplomacy recalculation. Fixture and parity suites cover
+rejection behavior, turn finalization, canonical snapshot preservation, and
+MCTS/world-map execution through the shared engine.
 
 ## Related Decisions And Documentation
 
