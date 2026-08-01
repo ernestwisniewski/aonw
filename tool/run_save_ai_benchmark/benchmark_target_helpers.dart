@@ -71,7 +71,7 @@ int _cityCountOwnedBy(Iterable<GameCity> cities, Set<String> playerIds) {
 }
 
 List<_HumanCityEndState> _humanCityEndStates(
-  GameState state, {
+  GameClientState state, {
   required Set<String> humanPlayerIds,
 }) {
   final cities =
@@ -131,7 +131,7 @@ List<String> _nearbyNonHumanUnitLabels(
 }
 
 List<String> _readyCityAttackerLabels(
-  GameState state,
+  GameClientState state,
   GameCity city, {
   required Set<String> humanPlayerIds,
 }) {
@@ -160,7 +160,7 @@ List<String> _readyCityAttackerLabels(
 }
 
 bool _hasHostileRelation(
-  GameState state,
+  GameClientState state,
   String attackerId,
   String defenderId,
 ) {
@@ -175,7 +175,7 @@ String? _unitLabel(GameUnit? unit) {
 }
 
 Set<String> _pendingHostilePlayerIds({
-  required SaveSnapshot snapshot,
+  required CanonicalGameSnapshot snapshot,
   required String playerId,
 }) {
   final hostilePlayerIds = <String>{};
@@ -189,7 +189,7 @@ Set<String> _pendingHostilePlayerIds({
 }
 
 bool _targetsPlayer(
-  SaveSnapshot snapshot, {
+  CanonicalGameSnapshot snapshot, {
   required String playerId,
   required IntendedAttack attack,
 }) {
@@ -211,7 +211,7 @@ bool _targetsPlayer(
 }
 
 List<PendingCityAttackThreat> _pendingCityAttackThreats({
-  required SaveSnapshot snapshot,
+  required CanonicalGameSnapshot snapshot,
   required String playerId,
 }) {
   final unitsById = {for (final unit in snapshot.units) unit.id: unit};
@@ -241,7 +241,7 @@ List<PendingCityAttackThreat> _pendingCityAttackThreats({
 }
 
 GameCity? _cityAt(
-  SaveSnapshot snapshot, {
+  CanonicalGameSnapshot snapshot, {
   required String playerId,
   required int col,
   required int row,

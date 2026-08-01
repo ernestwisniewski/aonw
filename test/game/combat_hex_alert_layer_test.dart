@@ -36,7 +36,7 @@ void main() {
 
       layer.syncState(
         parent: parent,
-        state: const GameState(cities: [city]),
+        state: GameClientState(cities: [city]),
         currentTurn: 31,
       );
 
@@ -44,7 +44,7 @@ void main() {
 
       layer.syncState(
         parent: parent,
-        state: const GameState(
+        state: GameClientState(
           cities: [city],
           submittedPlayerIds: {'player_1'},
         ),
@@ -55,7 +55,7 @@ void main() {
 
       layer.syncState(
         parent: parent,
-        state: const GameState(cities: [city]),
+        state: GameClientState(cities: [city]),
         currentTurn: 33,
       );
 
@@ -81,7 +81,7 @@ void main() {
         )
         ..syncState(
           parent: parent,
-          state: GameState(units: [_unitAt(col: 4, row: 5)]),
+          state: GameClientState(units: [_unitAt(col: 4, row: 5)]),
           currentTurn: 31,
         );
 
@@ -93,7 +93,7 @@ void main() {
 
       layer.syncState(
         parent: parent,
-        state: GameState(
+        state: GameClientState(
           units: [_movedUnit],
           submittedPlayerIds: const {'player_1'},
         ),
@@ -108,7 +108,7 @@ void main() {
 
       layer.syncState(
         parent: parent,
-        state: GameState(units: [_movedUnit]),
+        state: GameClientState(units: [_movedUnit]),
         currentTurn: 33,
       );
 
@@ -140,7 +140,7 @@ void main() {
         )
         ..syncState(
           parent: parent,
-          state: const GameState(
+          state: GameClientState(
             cities: [city],
             submittedPlayerIds: {'player_1'},
           ),
@@ -150,14 +150,14 @@ void main() {
 
       layer.syncState(
         parent: parent,
-        state: const GameState(cities: [city]),
+        state: GameClientState(cities: [city]),
       );
 
       expect(layer.hasAlertForTesting('city_1'), isTrue);
 
       layer.syncState(
         parent: parent,
-        state: const GameState(
+        state: GameClientState(
           cities: [city],
           submittedPlayerIds: {'player_1'},
         ),
@@ -190,7 +190,7 @@ void main() {
 
       layer.syncState(
         parent: parent,
-        state: GameState(units: [_movedUnit]),
+        state: GameClientState(units: [_movedUnit]),
       );
 
       expect(layer.hasAlertForTesting('attacker:unit_1'), isTrue);
@@ -201,7 +201,7 @@ void main() {
 
       layer.syncState(
         parent: parent,
-        state: const GameState(submittedPlayerIds: {'player_1'}),
+        state: GameClientState(submittedPlayerIds: {'player_1'}),
       );
 
       expect(layer.hasAlertForTesting('attacker:unit_1'), isFalse);
@@ -226,7 +226,7 @@ void main() {
         )
         ..syncState(
           parent: parent,
-          state: GameState(
+          state: GameClientState(
             units: [
               _movedUnit.copyWith(id: 'enemy', ownerPlayerId: 'player_2'),
             ],
@@ -256,7 +256,7 @@ void main() {
             kind: CombatHexAlertKind.attacked,
           ),
         )
-        ..syncState(parent: parent, state: const GameState());
+        ..syncState(parent: parent, state: GameClientState());
 
       expect(layer.hasAlertForTesting('defender:unit_1'), isFalse);
       expect(layer.alertCountAtHexForTesting(const CityHex(col: 4, row: 5)), 0);
@@ -323,7 +323,7 @@ void main() {
             kind: CombatHexAlertKind.attacked,
           ),
         )
-        ..syncState(parent: parent, state: const GameState());
+        ..syncState(parent: parent, state: GameClientState());
 
       expect(layer.hasAlertForTesting('city_1'), isFalse);
 
@@ -341,7 +341,9 @@ void main() {
         )
         ..syncState(
           parent: parent,
-          state: GameState(cities: [city.copyWith(ownerPlayerId: 'player_2')]),
+          state: GameClientState(
+            cities: [city.copyWith(ownerPlayerId: 'player_2')],
+          ),
         );
 
       expect(layer.hasAlertForTesting('city_1'), isFalse);

@@ -11,7 +11,7 @@ bool _isTerminal(DomainCommand command) {
   return command is EndTurnCommand || command is SubmitTurnCommand;
 }
 
-bool _isUnitAlreadyAtTarget(MoveUnitCommand command, GameState state) {
+bool _isUnitAlreadyAtTarget(MoveUnitCommand command, GameClientState state) {
   for (final unit in state.units) {
     if (unit.id != command.unitId) continue;
     return unit.col == command.targetCol && unit.row == command.targetRow;
@@ -21,7 +21,7 @@ bool _isUnitAlreadyAtTarget(MoveUnitCommand command, GameState state) {
 
 _StaleMoveDiagnostic? _staleMoveDiagnostic(
   MoveUnitCommand command,
-  GameState state, {
+  GameClientState state, {
   GameView? planningView,
   Player? player,
   Iterable<Player> players = const [],
@@ -162,7 +162,7 @@ String _describeCommand(DomainCommand command) {
 
 String _describeRejectedCommand(
   DomainCommand command,
-  GameState state,
+  GameClientState state,
   MapTraversalView mapData,
   GameCommandContext context,
 ) {

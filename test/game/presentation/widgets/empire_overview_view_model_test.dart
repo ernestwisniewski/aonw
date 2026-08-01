@@ -2,8 +2,8 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/empire/empire_overview_view_model.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -71,7 +71,7 @@ void main() {
     );
 
     final viewModel = EmpireOverviewViewModel.fromState(
-      GameState(
+      GameClientState(
         units: [warriorB, enemy, warriorA],
         cities: [cityB, enemyCity, cityA],
         artifacts: [ownArtifact, enemyArtifact],
@@ -109,7 +109,7 @@ void main() {
       controlledHexes: [CityHex(col: 1, row: 0)],
     );
     final viewModel = EmpireOverviewViewModel.fromState(
-      const GameState(cities: [city]),
+      GameClientState(cities: [city]),
       activePlayerId: 'player_1',
       mapData: _map(),
     );
@@ -202,19 +202,19 @@ void main() {
   });
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 2,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.hills],

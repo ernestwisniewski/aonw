@@ -1,7 +1,7 @@
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/resource_requirement_display_names.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -118,7 +118,7 @@ abstract final class CityBuildingsPanelViewModelFactory {
     CityRuleset cityRuleset = CityRulesets.standard,
     ResearchState research = ResearchState.empty,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-    MapData? mapData,
+    WorldMap? mapData,
     int productionPerTurn = 1,
     String? cityName,
     PaceBalance paceBalance = PaceBalance.unlimited,

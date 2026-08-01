@@ -9,11 +9,11 @@ import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_screen.dart';
 import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
@@ -22,6 +22,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+part 'lobby_screen_map_fixture.dart';
 
 class _FakeGameRepository implements GameRepository {
   GameMode? createdMode;
@@ -41,16 +43,17 @@ class _FakeGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async => throw UnimplementedError();
+  Future<CanonicalGameSnapshot> load(String saveId) async =>
+      throw UnimplementedError();
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {}
+  Future<void> save(CanonicalGameSnapshot snapshot) async {}
 
   @override
   Future<void> delete(String saveId) async {}
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
@@ -59,44 +62,20 @@ class _FakeGameRepository implements GameRepository {
   }
 }
 
-MapData _map({
-  int cols = 8,
-  int rows = 8,
-  TerrainType terrain = TerrainType.grassland,
-  List<ResourceType> resources = const [
-    ResourceType.wheat,
-    ResourceType.iron,
-    ResourceType.gold,
-  ],
-}) {
-  return MapData(
-    cols: cols,
-    rows: rows,
-    tiles: [
-      for (var row = 0; row < rows; row++)
-        for (var col = 0; col < cols; col++)
-          TileData(
-            col: col,
-            row: row,
-            terrains: [terrain],
-            resources: resources,
-            height: 0,
-          ),
-    ],
-  );
-}
-
 Future<void> _pumpLobby(
   WidgetTester tester,
   _FakeGameRepository repository, {
   NewGameFlow flow = NewGameFlow.hotSeat,
   String mapName = 'verdantia',
-  MapData? mapData,
+  WorldMap? mapData,
   PlayerCountry? playerCountry = PlayerCountry.poland,
   List<dynamic> overrides = const [],
 }) async {
   final selection = MapSelection(name: mapName, source: MapSource.asset);
-  final resolvedMapData = (mapData ?? _map())..mapName ??= mapName;
+  final sourceMap = mapData ?? _map();
+  final resolvedMapData = sourceMap.mapName == null
+      ? sourceMap.copyWith(mapName: mapName)
+      : sourceMap;
   final router = GoRouter(
     initialLocation:
         '/lobby?name=$mapName&source=asset&mode=${flow.queryValue}',

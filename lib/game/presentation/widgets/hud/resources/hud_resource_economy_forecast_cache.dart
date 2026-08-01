@@ -20,9 +20,9 @@ final class HudResourceEconomyForecastCache {
   int _cityEconomyComputeCount = 0;
 
   HudResourceEconomyForecast forPlayer({
-    required GameState state,
+    required GameClientState state,
     required String playerId,
-    required MapData mapData,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityModifier stabilityModifier,
@@ -66,10 +66,10 @@ final class HudResourceEconomyForecastCache {
   }
 
   CityEconomyBreakdown _economyForCity({
-    required GameState state,
+    required GameClientState state,
     required String playerId,
     required GameCity city,
-    required MapData mapData,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityModifier stabilityModifier,
@@ -146,9 +146,9 @@ final class _HudResourceEconomyForecastKey {
   });
 
   factory _HudResourceEconomyForecastKey.from({
-    required GameState state,
+    required GameClientState state,
     required String playerId,
-    required MapData mapData,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityModifier stabilityModifier,
@@ -169,7 +169,7 @@ final class _HudResourceEconomyForecastKey {
   }
 
   final String playerId;
-  final MapData mapData;
+  final WorldMap mapData;
   final CityRuleset cityRuleset;
   final TechnologyRuleset technologyRuleset;
   final StabilityModifier stabilityModifier;
@@ -227,10 +227,10 @@ final class _HudCityEconomyForecastKey {
   });
 
   factory _HudCityEconomyForecastKey.from({
-    required GameState state,
+    required GameClientState state,
     required String playerId,
     required GameCity city,
-    required MapData mapData,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityModifier stabilityModifier,
@@ -251,7 +251,7 @@ final class _HudCityEconomyForecastKey {
 
   final String playerId;
   final GameCity city;
-  final MapData mapData;
+  final WorldMap mapData;
   final CityRuleset cityRuleset;
   final TechnologyRuleset technologyRuleset;
   final StabilityModifier stabilityModifier;

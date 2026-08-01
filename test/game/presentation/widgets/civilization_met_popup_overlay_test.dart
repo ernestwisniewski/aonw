@@ -204,7 +204,7 @@ void _addCivilizationMetNotification(
 }) {
   container.read(gameEventNotificationsProvider.notifier).addAll(
     [CivilizationMetEvent(playerId: playerId, metPlayerId: metPlayerId)],
-    GameState(
+    GameClientState(
       activePlayerId: playerId,
       playerColors: const {'player_1': 0xFF4A7FC4, 'player_2': 0xFFB83A3A},
       playerCountries: const {

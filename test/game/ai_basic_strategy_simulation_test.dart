@@ -2,9 +2,9 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -32,7 +32,7 @@ void main() {
         final initialUnits = StartingUnits.unitsForPlayers(const [
           player,
         ], mapData: mapData);
-        var state = GameState(
+        var state = GameClientState(
           playerColors: const {'player_1': 0xFFDC2626},
           units: initialUnits,
           activePlayerId: 'player_1',
@@ -91,8 +91,8 @@ void main() {
 }
 
 _SimulationResult _simulateBasicAiTurns({
-  required GameState state,
-  required MapData mapData,
+  required GameClientState state,
+  required WorldMap mapData,
   required int turns,
   required Player player,
 }) {
@@ -112,7 +112,7 @@ _SimulationResult _simulateBasicAiTurns({
       playerId: player.id,
     ).state;
 
-    final view = GameView.fromPersistentState(
+    final view = GameView.fromDomainState(
       _persistentStateFor(state),
       forPlayerId: player.id,
       turn: turn,
@@ -161,7 +161,7 @@ _SimulationResult _simulateBasicAiTurns({
   );
 }
 
-GameState _recomputeFog(GameState state, MapData mapData) {
+GameClientState _recomputeFog(GameClientState state, WorldMap mapData) {
   final fog = const FogOfWarService().recompute(
     current: state.fogOfWar,
     mapData: mapData,
@@ -172,8 +172,8 @@ GameState _recomputeFog(GameState state, MapData mapData) {
   return state.copyWith(fogOfWar: fog);
 }
 
-PersistentGameState _persistentStateFor(GameState state) {
-  return PersistentGameState(
+DomainState _persistentStateFor(GameClientState state) {
+  return DomainState.snapshot(
     playerColors: state.playerColors,
     playerGold: state.playerGold,
     units: state.units,
@@ -184,12 +184,12 @@ PersistentGameState _persistentStateFor(GameState state) {
   );
 }
 
-MapData _plainsMap() {
-  final tiles = <TileData>[];
+WorldMap _plainsMap() {
+  final tiles = <WorldTile>[];
   for (var col = 0; col < 7; col++) {
     for (var row = 0; row < 7; row++) {
       tiles.add(
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],
@@ -199,7 +199,7 @@ MapData _plainsMap() {
       );
     }
   }
-  return MapData(cols: 7, rows: 7, tiles: tiles);
+  return WorldMap(cols: 7, rows: 7, tiles: tiles);
 }
 
 class _SimulationResult {
@@ -209,7 +209,7 @@ class _SimulationResult {
     required this.appliedCommands,
   });
 
-  final GameState state;
+  final GameClientState state;
   final List<DomainCommand> plannedCommands;
   final List<DomainCommand> appliedCommands;
 }

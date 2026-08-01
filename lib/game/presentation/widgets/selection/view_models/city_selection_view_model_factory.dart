@@ -10,8 +10,8 @@ import 'package:aonw/game/presentation/widgets/selection/view_models/selection_y
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/stability.dart';
@@ -26,7 +26,7 @@ abstract final class CitySelectionViewModelFactory {
   static SelectionViewModel from(
     GameSelection selection, {
     CityRuleset cityRuleset = CityRulesets.standard,
-    MapData? mapData,
+    WorldMap? mapData,
     List<GameUnit> units = const [],
     List<GameCity> cities = const [],
     List<WorldArtifact> artifacts = const [],

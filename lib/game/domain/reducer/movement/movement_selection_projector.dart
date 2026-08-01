@@ -2,7 +2,7 @@ part of 'movement_reducer.dart';
 
 abstract final class _MoveSelection {
   static GameSelection forUnit(
-    GameState state,
+    GameClientState state,
     GameUnit unit,
     MapTileLookup mapTiles,
   ) {

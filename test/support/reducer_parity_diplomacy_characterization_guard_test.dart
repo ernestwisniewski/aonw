@@ -112,7 +112,9 @@ void _registerSentinelGuards(_FixtureProvider fixtureProvider) {
   test('every case carries unrelated state sentinels through its oracle', () {
     final fixtures = fixtureProvider();
     for (final fixture in fixtures) {
-      final expected = PersistentGameState.fromJson(fixture.expectedState);
+      final expected = CanonicalGameSnapshotCodec.decodeDomainState(
+        fixture.expectedState,
+      );
       expect(fixture.state.units, hasLength(3), reason: fixture.id);
       expect(expected.units, fixture.state.units, reason: fixture.id);
       expect(expected.cities, fixture.state.cities, reason: fixture.id);
@@ -124,41 +126,37 @@ void _registerSentinelGuards(_FixtureProvider fixtureProvider) {
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.submittedPlayerIds,
-        fixture.state.runtimeState.submittedPlayerIds,
+        expected.submittedPlayerIds,
+        fixture.state.submittedPlayerIds,
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.timeoutStreaksByPlayerId,
-        fixture.state.runtimeState.timeoutStreaksByPlayerId,
+        expected.timeoutStreaksByPlayerId,
+        fixture.state.timeoutStreaksByPlayerId,
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.mapObjectiveHoldStatesByObjectiveId,
-        fixture.state.runtimeState.mapObjectiveHoldStatesByObjectiveId,
+        expected.mapObjectiveHoldStatesByObjectiveId,
+        fixture.state.mapObjectiveHoldStatesByObjectiveId,
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.intendedAttacks.map(
-          (attack) => attack.attackerUnitId,
-        ),
+        expected.intendedAttacks.map((attack) => attack.attackerUnitId),
         containsAll(const ['warrior_player_1', 'missing_attacker']),
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.resourceTradeAgreements.map(
-          (agreement) => agreement.id,
-        ),
+        expected.resourceTradeAgreements.map((agreement) => agreement.id),
         contains('sentinel_observer_trade'),
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.diplomacy.pendingProposals,
+        expected.diplomacy.pendingProposals,
         contains('sentinel_proposal'),
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.diplomacy.messages,
+        expected.diplomacy.messages,
         contains('sentinel_message'),
         reason: fixture.id,
       );
@@ -175,13 +173,11 @@ void _registerMultiEffectGuards(_FixtureProvider fixtureProvider) {
         fixtures,
         'proposal-response-friendship-accepted',
       );
-      final friendshipState = PersistentGameState.fromJson(
+      final friendshipState = CanonicalGameSnapshotCodec.decodeDomainState(
         friendship.expectedState,
       );
       expect(
-        friendshipState.runtimeState.intendedAttacks.map(
-          (attack) => attack.declaredAtTick,
-        ),
+        friendshipState.intendedAttacks.map((attack) => attack.declaredAtTick),
         [43, 44],
       );
       expect(_eventTypes(friendship), [
@@ -191,16 +187,14 @@ void _registerMultiEffectGuards(_FixtureProvider fixtureProvider) {
       ]);
 
       final war = _fixture(fixtures, 'war-selective-effects-accepted');
-      final warState = PersistentGameState.fromJson(war.expectedState);
+      final warState = CanonicalGameSnapshotCodec.decodeDomainState(
+        war.expectedState,
+      );
       expect(
-        warState.runtimeState.resourceTradeAgreements.map(
-          (agreement) => agreement.id,
-        ),
+        warState.resourceTradeAgreements.map((agreement) => agreement.id),
         ['sentinel_observer_trade'],
       );
-      expect(warState.runtimeState.diplomacy.pendingProposals.keys, [
-        'sentinel_proposal',
-      ]);
+      expect(warState.diplomacy.pendingProposals.keys, ['sentinel_proposal']);
       expect(_eventTypes(war), [
         'DiplomaticRelationChanged',
         'DiplomaticScoreChanged',
@@ -211,7 +205,9 @@ void _registerMultiEffectGuards(_FixtureProvider fixtureProvider) {
         fixtures,
         'proposal-response-paid-truce-accepted',
       );
-      final truceState = PersistentGameState.fromJson(paidTruce.expectedState);
+      final truceState = CanonicalGameSnapshotCodec.decodeDomainState(
+        paidTruce.expectedState,
+      );
       expect(truceState.playerGold['player_1'], 10);
       expect(truceState.playerGold['player_2'], 30);
     },

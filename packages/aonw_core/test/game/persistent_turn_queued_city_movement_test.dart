@@ -2,7 +2,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('PersistentTurnMovementProcessor queued city movement', () {
+  group('DomainTurnMovementProcessor queued city movement', () {
     test('queued movement never enters a known foreign city center', () {
       final commander = _queuedCommander(targetCol: 2);
       const city = GameCity(
@@ -12,8 +12,8 @@ void main() {
         center: CityHex(col: 1, row: 0),
       );
 
-      final result = PersistentTurnMovementProcessor.resetForPlayers(
-        state: PersistentGameState(units: [commander], cities: const [city]),
+      final result = DomainTurnMovementProcessor.resetForPlayers(
+        state: DomainState.snapshot(units: [commander], cities: const [city]),
         playerIds: const ['player_1'],
         mapData: _mapData(cols: 3, rows: 1),
       );
@@ -40,8 +40,8 @@ void main() {
         },
       );
 
-      final result = PersistentTurnMovementProcessor.resetForPlayers(
-        state: PersistentGameState(
+      final result = DomainTurnMovementProcessor.resetForPlayers(
+        state: DomainState.snapshot(
           units: [commander],
           cities: const [city],
           fogOfWar: fog,
@@ -77,14 +77,14 @@ GameUnit _queuedCommander({required int targetCol}) {
       );
 }
 
-MapData _mapData({required int cols, required int rows}) {
-  return MapData(
+WorldMap _mapData({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

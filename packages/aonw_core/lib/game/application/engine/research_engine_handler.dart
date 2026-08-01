@@ -43,20 +43,20 @@ final class ResearchEngineHandler {
         : result.state;
     final pendingAction =
         ResearchSelectionPendingActionPolicy.afterAcceptedSelection(
-          pendingAction: snapshot.interaction.pendingAction,
+          pendingAction: snapshot.domain.actions.pendingAction,
           playerId: command.playerId,
         );
     final interaction =
-        identical(pendingAction, snapshot.interaction.pendingAction)
-        ? snapshot.interaction
-        : snapshot.interaction.copyWith(pendingAction: pendingAction);
+        identical(pendingAction, snapshot.domain.actions.pendingAction)
+        ? snapshot.domain.actions
+        : snapshot.domain.actions.copyWith(pendingAction: pendingAction);
     final domainChanged = !identical(domain, snapshot.domain);
-    final interactionChanged = !identical(interaction, snapshot.interaction);
+    final interactionChanged = !identical(interaction, snapshot.domain.actions);
     return GameEngineResult.accepted(
       snapshot: domainChanged || interactionChanged
           ? snapshot.copyWith(
               domain: domainChanged ? domain : null,
-              interaction: interactionChanged ? interaction : null,
+              actions: interactionChanged ? interaction : null,
             )
           : snapshot,
     );

@@ -5,9 +5,9 @@ import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
-GameState projectLocalUnitActionPresentation({
+GameClientState projectLocalUnitActionPresentation({
   required MapReadView mapView,
-  required GameState currentState,
+  required GameClientState currentState,
   required CanonicalGameSnapshot baseSnapshot,
   required CanonicalGameSnapshot resultSnapshot,
   required DomainCommand command,
@@ -39,7 +39,7 @@ GameState projectLocalUnitActionPresentation({
   return targetingCleared.copyWithInteraction(selection: selection);
 }
 
-GameState _clearOwnedMoveTargeting(GameState state, String unitId) {
+GameClientState _clearOwnedMoveTargeting(GameClientState state, String unitId) {
   final owned =
       state.selectedUnitId == unitId || state.movePreview?.unitId == unitId;
   final hasTargeting = state.moveCommandActive || state.movePreview != null;
@@ -47,8 +47,8 @@ GameState _clearOwnedMoveTargeting(GameState state, String unitId) {
   return state.copyWithInteraction(moveCommandActive: false, movePreview: null);
 }
 
-GameState _projectCanonicalSlices({
-  required GameState currentState,
+GameClientState _projectCanonicalSlices({
+  required GameClientState currentState,
   required CanonicalGameSnapshot baseSnapshot,
   required CanonicalGameSnapshot resultSnapshot,
 }) {
@@ -62,10 +62,10 @@ GameState _projectCanonicalSlices({
   )) {
     state = state.copyWith(artifacts: resultSnapshot.domain.artifacts);
   }
-  if (!identical(resultSnapshot.interaction, baseSnapshot.interaction)) {
+  if (!identical(resultSnapshot.domain.actions, baseSnapshot.domain.actions)) {
     state = state.copyWithInteraction(
-      cityFoundingDraft: resultSnapshot.interaction.cityFoundingDraft,
-      pendingAction: resultSnapshot.interaction.pendingAction,
+      cityFoundingDraft: resultSnapshot.domain.actions.cityFoundingDraft,
+      pendingAction: resultSnapshot.domain.actions.pendingAction,
     );
   }
   return state;

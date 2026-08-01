@@ -1,14 +1,14 @@
 import 'package:aonw/map/application/map_repository.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/persistence/local_map_repository.dart';
 import 'package:aonw/map/providers/map_providers.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _FakeMapRepository implements MapRepository {
-  final MapData mapData;
+  final WorldMap mapData;
   final List<MapSelection> maps;
   final String? imagePath;
   String? deletedName;
@@ -23,7 +23,7 @@ class _FakeMapRepository implements MapRepository {
   Future<List<MapSelection>> listAvailableMaps() async => maps;
 
   @override
-  Future<MapData> loadMap(MapSelection selection) async => mapData;
+  Future<WorldMap> loadMap(MapSelection selection) async => mapData;
 
   @override
   Future<String?> resolveImagePath(MapSelection selection) async => imagePath;
@@ -34,11 +34,11 @@ class _FakeMapRepository implements MapRepository {
   }
 }
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 1,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.ocean],

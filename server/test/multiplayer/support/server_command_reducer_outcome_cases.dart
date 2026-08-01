@@ -82,7 +82,7 @@ void _registerServerCommandReducerOutcomeTests() {
 
 Future<ServerCommandTestReduction> _reduceOutcomeCommand({
   required WireMatch match,
-  required PersistentGameState state,
+  required DomainState state,
   required List<Player> savePlayers,
 }) {
   const turn = GameLengthConfig.standard60TurnLimit;
@@ -106,13 +106,13 @@ Future<ServerCommandTestReduction> _reduceOutcomeCommand({
   );
 }
 
-PersistentGameState _outcomeState({
+DomainState _outcomeState({
   Set<String> kickedPlayerIds = const {},
   Map<String, int> playerGold = const {},
   Map<String, int> dominationHoldTurnsByPlayerId = const {},
   List<GameCity> extraCities = const [],
 }) {
-  return PersistentGameState(
+  return DomainState.snapshot(
     playerGold: playerGold,
     units: [
       GameUnit(
@@ -133,10 +133,9 @@ PersistentGameState _outcomeState({
       ),
     ],
     cities: extraCities,
-    runtimeState: GameRuntimeState(
-      kickedPlayerIds: kickedPlayerIds,
-      dominationHoldTurnsByPlayerId: dominationHoldTurnsByPlayerId,
-    ),
+
+    kickedPlayerIds: kickedPlayerIds,
+    dominationHoldTurnsByPlayerId: dominationHoldTurnsByPlayerId,
   );
 }
 

@@ -5,11 +5,9 @@ void _registerHudSelectionCityFoundingTests() {
     final settler = _settler();
 
     final actions = _actions(
-      gameState: GameState(
+      gameState: GameClientState(
         units: [settler],
-        interaction: GameInteractionState(
-          selection: GameSelection.unit(settler),
-        ),
+        interaction: InteractionState(selection: GameSelection.unit(settler)),
       ),
       canStartCityFounding: true,
     );
@@ -25,11 +23,9 @@ void _registerHudSelectionCityFoundingTests() {
     final settler = _settler();
 
     final actions = _actions(
-      gameState: GameState(
+      gameState: GameClientState(
         units: [settler],
-        interaction: GameInteractionState(
-          selection: GameSelection.unit(settler),
-        ),
+        interaction: InteractionState(selection: GameSelection.unit(settler)),
       ),
     );
 
@@ -40,7 +36,7 @@ void _registerHudSelectionCityFoundingTests() {
 
   test('uses the selected map tile to explain invalid city founding', () {
     final settler = _settler();
-    const mountain = TileData(
+    final mountain = WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.mountain],
@@ -49,9 +45,9 @@ void _registerHudSelectionCityFoundingTests() {
     );
 
     final actions = _actions(
-      gameState: GameState(
+      gameState: GameClientState(
         units: [settler],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(settler, tile: mountain),
         ),
       ),
@@ -69,11 +65,9 @@ void _registerHudSelectionCityFoundingTests() {
     var cancelled = false;
 
     final actions = _actions(
-      gameState: GameState(
+      gameState: GameClientState(
         units: [settler],
-        interaction: GameInteractionState(
-          selection: GameSelection.unit(settler),
-        ),
+        interaction: InteractionState(selection: GameSelection.unit(settler)),
       ),
       cityFoundingActive: true,
       onStartCityFounding: () => started = true,
@@ -102,9 +96,9 @@ void _registerHudSelectionCityFoundingTests() {
 
     final actions = _actions(
       gameState:
-          GameState(
+          GameClientState(
             units: [settler],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(settler),
             ),
           ).copyWithInteraction(

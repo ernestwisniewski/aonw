@@ -1,5 +1,5 @@
 /// Visual configuration for hex tile geometry (radius only).
-/// Grid dimensions come from [MapData] loaded from JSON.
+/// Grid dimensions come from [WorldMap] loaded from JSON.
 class MapConfig {
   final double hexRadius;
 

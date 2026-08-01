@@ -3,8 +3,8 @@ part of 'reducer_parity_accepted_semantics.dart';
 void requireAcceptedUnitAction({
   required String fixtureId,
   required DomainCommand command,
-  required PersistentGameState before,
-  required PersistentGameState after,
+  required DomainState before,
+  required DomainState after,
   required List<GameEvent> events,
 }) {
   if (command is AssignMerchantTradeRouteCommand ||
@@ -37,8 +37,8 @@ void requireAcceptedUnitAction({
 
 String? validateAcceptedAutoExplore({
   required AutoExploreUnitCommand command,
-  required PersistentGameState before,
-  required PersistentGameState after,
+  required DomainState before,
+  required DomainState after,
   required List<GameEvent> events,
 }) {
   final unitBefore = before.units.byId(command.unitId);
@@ -63,7 +63,7 @@ String? validateAcceptedAutoExplore({
 
 String? validateAcceptedMovement({
   required MoveUnitCommand command,
-  required PersistentGameState after,
+  required DomainState after,
   required List<GameEvent> events,
 }) {
   final unit = after.units.byId(command.unitId);
@@ -78,8 +78,8 @@ String? validateAcceptedMovement({
 void requireAcceptedMerchantRouting({
   required String fixtureId,
   required DomainCommand command,
-  required PersistentGameState before,
-  required PersistentGameState after,
+  required DomainState before,
+  required DomainState after,
   required List<GameEvent> events,
 }) {
   final (unitId, destinationCityId) = switch (command) {
@@ -130,7 +130,7 @@ void requireAcceptedMerchantRouting({
 
 void _requireAcceptedAssignedMerchantRoute({
   required String fixtureId,
-  required PersistentGameState before,
+  required DomainState before,
   required GameUnit beforeMerchant,
   required GameUnit afterMerchant,
   required GameCity destination,

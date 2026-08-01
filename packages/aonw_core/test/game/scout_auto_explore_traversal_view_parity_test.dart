@@ -3,10 +3,10 @@ import 'package:test/test.dart';
 
 void main() {
   test(
-    'matches MapData with reversed WorldMap tiles and a reserved high ground route',
+    'matches WorldMap with reversed WorldMap tiles and a reserved high ground route',
     () {
       final mapData = _explorationMap();
-      final worldView = WorldMapReadView(_reversedWorldMap(mapData));
+      final worldView = _reversedWorldMap(mapData);
       final scout = _scout(id: 'explorer', col: 1, row: 1);
       final reservingScout = _reservingScout();
       final fog = _knownWesternFog();
@@ -62,14 +62,14 @@ void main() {
   );
 }
 
-MapData _explorationMap() {
-  return MapData(
+WorldMap _explorationMap() {
+  return WorldMap(
     cols: 6,
     rows: 3,
     tiles: [
       for (var row = 0; row < 3; row++)
         for (var col = 0; col < 6; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: _terrainsAt(col, row),
@@ -94,12 +94,12 @@ int _heightAt(int col, int row) {
   return row == 2 ? 2 : 0;
 }
 
-WorldMap _reversedWorldMap(MapData mapData) {
+WorldMap _reversedWorldMap(WorldMap mapData) {
   return WorldMap(
     cols: mapData.cols,
     rows: mapData.rows,
     tiles: mapData.tiles.reversed.map(
-      (tile) => WorldTile(
+      (tile) => WorldTile.at(
         coordinate: HexCoord(col: tile.col, row: tile.row),
         terrains: tile.terrains,
         resources: tile.resources,

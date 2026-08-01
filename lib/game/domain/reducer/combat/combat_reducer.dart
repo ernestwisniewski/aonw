@@ -25,7 +25,7 @@ typedef _CityAttackSetup = ({GameUnit attacker, GameCity city});
 /// Authoritative combat application is owned by `GameEngine`.
 abstract final class CombatReducer {
   static GameStateTransition selectAttackTargetWithEnvironment(
-    GameState state,
+    GameClientState state,
     AttackHexCommand command,
     ReducerEnvironment environment,
   ) {
@@ -40,7 +40,7 @@ abstract final class CombatReducer {
   }
 
   static GameStateTransition selectAttackTarget(
-    GameState state,
+    GameClientState state,
     AttackHexCommand command,
     MapTileLookup mapTiles, {
     CombatRuleset combatRuleset = CombatRuleset.standard,
@@ -92,7 +92,7 @@ abstract final class CombatReducer {
   }
 
   static GameStateTransition _rejectedAttackTransition(
-    GameState state,
+    GameClientState state,
     AttackHexCommand command, {
     required GameCommandContext context,
   }) {
@@ -110,7 +110,7 @@ abstract final class CombatReducer {
   }
 
   static bool _selectionTargetsProtectedPlayer(
-    GameState state,
+    GameClientState state,
     AttackHexCommand command,
     GameCommandContext context,
   ) {
@@ -134,7 +134,7 @@ abstract final class CombatReducer {
   }
 
   static bool _isProtectedRelation(
-    GameState state,
+    GameClientState state,
     String attackerPlayerId,
     String defenderPlayerId,
   ) {

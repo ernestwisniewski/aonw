@@ -11,13 +11,13 @@ import 'package:aonw_core/game/domain/command.dart';
 typedef AiCommandDispatcher =
     Future<DispatchCommandResult> Function({
       required String saveId,
-      required GameState currentState,
+      required GameClientState currentState,
       required DomainCommand command,
       required GameCommandContext context,
     });
 
 final class AiTurnCommandExecutionReport {
-  final GameState finalState;
+  final GameClientState finalState;
   final List<DomainCommand> dispatchedCommands;
   final List<DomainCommand> rejectedCommands;
   final List<DomainCommand> skippedTerminalCommands;
@@ -60,7 +60,7 @@ final class AiTurnCommandExecutor {
     required String saveId,
     required String playerId,
     required AiContext aiContext,
-    required GameState initialState,
+    required GameClientState initialState,
     required Iterable<DomainCommand> commands,
     required Duration interCommandDelay,
   }) async {
@@ -165,7 +165,10 @@ final class AiTurnCommandExecutor {
     return command is EndTurnCommand || command is SubmitTurnCommand;
   }
 
-  static bool _isMoveAlreadyAtTarget(MoveUnitCommand command, GameState state) {
+  static bool _isMoveAlreadyAtTarget(
+    MoveUnitCommand command,
+    GameClientState state,
+  ) {
     for (final unit in state.units) {
       if (unit.id == command.unitId) {
         return unit.occupies(command.targetCol, command.targetRow);

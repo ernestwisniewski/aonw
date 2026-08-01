@@ -20,7 +20,7 @@ void main() {
     'reconnect snapshot precedes retry and suppresses the caller backlog echo',
     () async {
       final reconnected = Completer<void>();
-      final resynced = Completer<SaveSnapshot>();
+      final resynced = Completer<CanonicalGameSnapshot>();
       final received = <LiveServerEvent>[];
       final connector = _FakeConnector(
         onConnect: (count) {
@@ -65,7 +65,10 @@ void main() {
           offset: 9,
           snapshot: snapshotCodec.toWire(
             matchId: 'match_1',
-            snapshot: SaveSnapshot(save: _save(), eventLogOffset: 9),
+            snapshot: GameSnapshotFactory.create(
+              save: _save(),
+              eventLogOffset: 9,
+            ),
           ),
         ),
       );
@@ -216,7 +219,7 @@ WireCommandAck _ack({required WireMovementExecutionList movementExecutions}) {
     offset: 9,
     snapshot: snapshotCodec.toWire(
       matchId: 'match_1',
-      snapshot: SaveSnapshot(save: _save(), eventLogOffset: 9),
+      snapshot: GameSnapshotFactory.create(save: _save(), eventLogOffset: 9),
     ),
     movementExecutions: movementExecutions,
   );

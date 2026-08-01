@@ -32,7 +32,7 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
           cities: const [],
           diplomacy: DiplomacyState.empty,
           fogOfWar: fog,
-          interaction: PersistedInteractionState.empty,
+          interaction: DomainActionState.empty,
         );
         final turn = TurnMovementOrchestrator.resetForPlayers(
           state: turnInput,
@@ -42,7 +42,7 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
             mapData: map,
           ),
         );
-        final persistent = PersistentTurnMovementProcessor.resetForPlayers(
+        final persistent = DomainTurnMovementProcessor.resetForPlayers(
           state: input,
           playerIds: const {_playerId},
           mapData: map,
@@ -50,7 +50,7 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
 
         expect(kernel.accepted, isTrue);
         expect(
-          kernel.state.runtimeState.diplomacy.hasContact(_playerId, 'player_2'),
+          kernel.state.diplomacy.hasContact(_playerId, 'player_2'),
           isTrue,
         );
         expect(
@@ -77,10 +77,7 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
         expect(persistentFog.visibleHexes, kernelFog.visibleHexes);
         expect(turn.state.diplomacy.hasContact(_playerId, 'player_2'), isTrue);
         expect(
-          persistent.state.runtimeState.diplomacy.hasContact(
-            _playerId,
-            'player_2',
-          ),
+          persistent.state.diplomacy.hasContact(_playerId, 'player_2'),
           isTrue,
         );
       },
@@ -147,7 +144,7 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
         cities: const [],
         diplomacy: DiplomacyState.empty,
         fogOfWar: fog,
-        interaction: PersistedInteractionState.empty,
+        interaction: DomainActionState.empty,
       );
       final context = TurnMovementContext(
         playerIds: const {_playerId},
@@ -162,7 +159,7 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
         units: [scout],
         fogOfWar: fog,
       );
-      final persistent = PersistentTurnMovementProcessor.resetForPlayers(
+      final persistent = DomainTurnMovementProcessor.resetForPlayers(
         state: persistentInput,
         playerIds: const {_playerId},
         mapData: map,
@@ -180,7 +177,7 @@ void _registerTurnAutoExploreContinuationCharacterizationTests() {
         persistent.state.units.map(_autoExploreTurnUnitSnapshot),
         turn.state.units.map(_autoExploreTurnUnitSnapshot),
       );
-      expect(persistent.state.runtimeState, same(persistentInput.runtimeState));
+      expect(persistent.state, same(persistentInput));
       expect(_eventSnapshots(autoOnly.events), ['turn_auto_scout:0,0->1,0']);
       expect(_executionSnapshots(autoOnly.executions), [
         'turn_auto_scout:0,0->1,0',
@@ -237,18 +234,18 @@ _TurnKernelPair _runTurnAndKernel({
   );
 }
 
-PersistentGameState _persistentTurnState({
+DomainState _persistentTurnState({
   required List<GameUnit> units,
   required FogOfWarState fogOfWar,
   List<GameCity> cities = const [],
   DiplomacyState diplomacy = DiplomacyState.empty,
 }) {
-  return PersistentGameState.snapshot(
+  return DomainState.snapshot(
     playerColors: const {_playerId: 0xFF112233, 'player_2': 0xFF445566},
     units: units,
     cities: cities,
     fogOfWar: fogOfWar,
-    runtimeState: GameRuntimeState.snapshot(diplomacy: diplomacy),
+    diplomacy: diplomacy,
   );
 }
 
@@ -265,7 +262,7 @@ DiplomacyState _warDiplomacy() {
 }
 
 _KernelContinuationEvidence _resolveKernelContinuations({
-  required PersistentGameState state,
+  required DomainState state,
   required List<String> unitIds,
   required MapTraversalView mapData,
 }) {
@@ -327,27 +324,27 @@ void _expectImmutableEvidence(
 }
 
 typedef _TurnKernelPair = ({
-  PersistentGameState kernelInput,
+  DomainState kernelInput,
   TurnAutoExploreAdvance turn,
   _AutoExploreKernelResult kernel,
 });
 
 typedef _KernelContinuationEvidence = ({
-  PersistentGameState state,
+  DomainState state,
   List<String> eventSnapshots,
   List<String> executionSnapshots,
 });
 
 typedef _AutoExploreKernelResult = ({
   bool accepted,
-  PersistentGameState state,
+  DomainState state,
   List<GameEvent> events,
   MovementCommandExecution? execution,
   String? reason,
 });
 
 _AutoExploreKernelResult _resolveAutoExploreKernel({
-  required PersistentGameState state,
+  required DomainState state,
   required AutoExploreUnitCommand command,
   required String actorPlayerId,
   required MapTraversalView mapData,
@@ -359,12 +356,12 @@ _AutoExploreKernelResult _resolveAutoExploreKernel({
         units: state.units,
         cities: state.cities,
         fogOfWar: state.fogOfWar,
-        diplomacy: state.runtimeState.diplomacy,
+        diplomacy: state.diplomacy,
         playerIds: state.knownPlayerIds,
       ),
-      interaction: PersistedInteractionState(
-        cityFoundingDraft: state.runtimeState.cityFoundingDraft,
-        pendingAction: state.runtimeState.pendingAction,
+      interaction: DomainActionState(
+        cityFoundingDraft: state.actions.cityFoundingDraft,
+        pendingAction: state.actions.pendingAction,
       ),
     ),
     command: command,
@@ -381,17 +378,16 @@ _AutoExploreKernelResult _resolveAutoExploreKernel({
       reason: result.reason,
     );
   }
-  final runtime = state.runtimeState.copyWith(
-    diplomacy: result.diplomacy,
-    cityFoundingDraft: result.interaction.cityFoundingDraft,
-    pendingAction: result.interaction.pendingAction,
-  );
   return (
     accepted: true,
     state: state.copyWith(
       units: result.units,
       fogOfWar: result.fogOfWar,
-      runtimeState: runtime,
+      diplomacy: result.diplomacy,
+      actions: DomainActionState(
+        cityFoundingDraft: result.interaction.cityFoundingDraft,
+        pendingAction: result.interaction.pendingAction,
+      ),
     ),
     events: result.events,
     execution: result.execution,

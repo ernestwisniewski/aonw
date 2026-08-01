@@ -14,15 +14,15 @@ String _workerAcceptanceMode(ReducerParityFixture fixture) {
 }
 
 String _workerInteractionMode(ReducerParityFixture fixture) {
-  final runtime = fixture.state.runtimeState;
-  final pending = runtime.pendingAction;
+  final runtime = fixture.state;
+  final pending = runtime.actions.pendingAction;
   final unitId = _workerCommandUnitId(fixture.command);
   if (fixture.command is ConfirmWorkerImprovementCommand &&
       pending is PendingWorkerActionSelection &&
       pending.ownerPlayerId == fixture.actorPlayerId &&
       pending.unitId == unitId &&
       pending.improvementType != null &&
-      runtime.cityFoundingDraft == null) {
+      runtime.actions.cityFoundingDraft == null) {
     return 'matching-pending-cleared';
   }
   if (_isWorkerCancellation(fixture.command) &&
@@ -46,9 +46,9 @@ bool _hasReviewedUnrelatedWorkerInteraction(
   ReducerParityFixture fixture,
   String unitId,
 ) {
-  final runtime = fixture.state.runtimeState;
-  final pending = runtime.pendingAction;
-  final draft = runtime.cityFoundingDraft;
+  final runtime = fixture.state;
+  final pending = runtime.actions.pendingAction;
+  final draft = runtime.actions.cityFoundingDraft;
   if (pending is! PendingWorkerActionSelection ||
       pending.ownerPlayerId != fixture.actorPlayerId ||
       pending.unitId == unitId ||
@@ -92,7 +92,7 @@ void _requireWorkerAcceptanceCoverage(
 
 void _requireAcceptedParityWorker(
   ReducerParityFixture fixture,
-  PersistentGameState state,
+  DomainState state,
   List<GameEvent> events,
 ) {
   if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||
@@ -122,15 +122,21 @@ void _requireAcceptedParityWorker(
   ];
   final expectedState = fixture.state.copyWith(
     units: expectedUnits,
-    runtimeState: _expectedWorkerRuntime(fixture, unitId),
+    actions: _expectedWorkerActions(fixture, unitId),
   );
   final exactUnits =
       state.units.length == fixture.state.units.length &&
       _sameWorkerUnitOrder(fixture.state.units, state.units) &&
       _unrelatedWorkerUnitsPreserved(fixture.state, state, unitId);
   if (!exactUnits ||
-      !_jsonDeepEquals(fixture.expectedState, expectedState.toJson()) ||
-      !_jsonDeepEquals(state.toJson(), expectedState.toJson())) {
+      !_jsonDeepEquals(
+        fixture.expectedState,
+        CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
+      ) ||
+      !_jsonDeepEquals(
+        CanonicalGameSnapshotCodec.encodeDomainState(state),
+        CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
+      )) {
     ReducerParityCorpus._fail(
       fixture,
       'must apply only the independently derived worker transition',
@@ -187,7 +193,7 @@ FieldImprovementType _confirmedWorkerImprovement(
   ConfirmWorkerImprovementCommand command,
 ) {
   if (command.improvementType case final improvement?) return improvement;
-  final pending = fixture.state.runtimeState.pendingAction;
+  final pending = fixture.state.actions.pendingAction;
   final pendingImprovement =
       pending is PendingWorkerActionSelection &&
           pending.ownerPlayerId == fixture.actorPlayerId &&
@@ -225,12 +231,12 @@ GameUnit _workerStartingReviewedJob(
       );
 }
 
-GameRuntimeState _expectedWorkerRuntime(
+DomainActionState _expectedWorkerActions(
   ReducerParityFixture fixture,
   String unitId,
 ) {
-  final runtime = fixture.state.runtimeState;
-  final pending = runtime.pendingAction;
+  final actions = fixture.state.actions;
+  final pending = actions.pendingAction;
   final clearsMatchingPending =
       fixture.command is SelectWorkerImprovementCommand ||
       fixture.command is ConfirmWorkerImprovementCommand ||
@@ -239,9 +245,9 @@ GameRuntimeState _expectedWorkerRuntime(
       pending is PendingWorkerActionSelection &&
       pending.ownerPlayerId == fixture.actorPlayerId &&
       pending.unitId == unitId) {
-    return runtime.copyWith(pendingAction: null);
+    return actions.copyWith(pendingAction: null);
   }
-  return runtime;
+  return actions;
 }
 
 String _workerCommandUnitId(DomainCommand command) {
@@ -264,8 +270,8 @@ bool _sameWorkerUnitOrder(List<GameUnit> before, List<GameUnit> after) {
 }
 
 bool _unrelatedWorkerUnitsPreserved(
-  PersistentGameState before,
-  PersistentGameState after,
+  DomainState before,
+  DomainState after,
   String workerId,
 ) {
   for (var index = 0; index < before.units.length; index++) {

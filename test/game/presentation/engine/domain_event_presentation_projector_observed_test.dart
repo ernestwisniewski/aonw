@@ -208,8 +208,8 @@ void main() {
       );
       final effects = DomainEventPresentationProjector.projectObserved(
         interactionEffects: const [],
-        previousState: GameState(units: [attacker, defender, mover]),
-        state: GameState(
+        previousState: GameClientState(units: [attacker, defender, mover]),
+        state: GameClientState(
           units: [attacker, defender, mover.copyWith(col: 3)],
           cities: const [city],
         ),
@@ -365,8 +365,8 @@ void main() {
   });
 }
 
-GameState _state({required int aCol, int? bCol}) {
-  return GameState(
+GameClientState _state({required int aCol, int? bCol}) {
+  return GameClientState(
     units: [
       GameUnit.produced(
         id: 'unit_a',

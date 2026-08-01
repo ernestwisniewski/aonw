@@ -66,9 +66,9 @@ class _GameEventNotificationMessageFormatter {
     required this.roster,
   });
 
-  GameState get state => notification.state;
+  GameClientState get state => notification.state;
 
-  GameState? get previousState => notification.previousState;
+  GameClientState? get previousState => notification.previousState;
 
   GameActivityContext get activityContext => notification.context;
 
@@ -473,7 +473,7 @@ final class IconEventNotificationThumbnail
 GameEventNotificationMessage _civilizationMetMessage({
   required AppLocalizations l10n,
   required _GameEventPlayerRoster? roster,
-  required GameState state,
+  required GameClientState state,
   required String metPlayerId,
 }) {
   final country = _playerCountry(roster, state, metPlayerId);
@@ -495,8 +495,8 @@ GameEventNotificationMessage _civilizationMetMessage({
 GameEventNotificationMessage _combatMessage({
   required AppLocalizations l10n,
   required _GameEventPlayerRoster? roster,
-  required GameState state,
-  required GameState? previousState,
+  required GameClientState state,
+  required GameClientState? previousState,
   required String attackerUnitId,
   required String defenderUnitId,
   required CombatOutcome outcome,
@@ -644,7 +644,7 @@ String _attackerCombatResult(AppLocalizations l10n, CombatOutcome outcome) {
 GameEventNotificationMessage _dominationThresholdMessage({
   required AppLocalizations l10n,
   required _GameEventPlayerRoster? roster,
-  required GameState state,
+  required GameClientState state,
   required String playerId,
   required double controlPercent,
   required double requiredControlPercent,
@@ -711,7 +711,7 @@ String _statTargetLabel(AppLocalizations l10n, CombatStatTarget target) {
 
 String _cityName(
   AppLocalizations l10n,
-  GameState state,
+  GameClientState state,
   String cityId, [
   GameActivityContext activityContext = GameActivityContext.empty,
 ]) {
@@ -724,9 +724,9 @@ String _cityName(
 
 String _unitName(
   AppLocalizations l10n,
-  GameState state,
+  GameClientState state,
   String unitId, [
-  GameState? previousState,
+  GameClientState? previousState,
   GameActivityContext activityContext = GameActivityContext.empty,
 ]) {
   return _unitNameOrNull(l10n, state, unitId, previousState, activityContext) ??
@@ -735,9 +735,9 @@ String _unitName(
 
 String? _unitNameOrNull(
   AppLocalizations l10n,
-  GameState state,
+  GameClientState state,
   String unitId, [
-  GameState? previousState,
+  GameClientState? previousState,
   GameActivityContext activityContext = GameActivityContext.empty,
 ]) {
   return _resolvedUnitName(
@@ -755,9 +755,9 @@ String _turnsLabel(AppLocalizations l10n, int count) =>
     l10n.eventTurnCountLabel(count);
 
 UnitEventNotificationThumbnail? _unitThumbnail(
-  GameState state,
+  GameClientState state,
   String unitId, [
-  GameState? previousState,
+  GameClientState? previousState,
   GameActivityContext activityContext = GameActivityContext.empty,
 ]) {
   return _resolvedUnitThumbnail(
@@ -828,9 +828,9 @@ String? _resolvedCityOwnerPlayerId(Object? city) {
 }
 
 Object? _resolveUnit(
-  GameState state,
+  GameClientState state,
   String unitId, {
-  GameState? previousState,
+  GameClientState? previousState,
   GameActivityContext activityContext = GameActivityContext.empty,
   bool preferPreviousState = false,
 }) {
@@ -843,9 +843,9 @@ Object? _resolveUnit(
 }
 
 Object? _resolveCity(
-  GameState state,
+  GameClientState state,
   String cityId, {
-  GameState? previousState,
+  GameClientState? previousState,
   GameActivityContext activityContext = GameActivityContext.empty,
   bool preferPreviousState = false,
 }) {

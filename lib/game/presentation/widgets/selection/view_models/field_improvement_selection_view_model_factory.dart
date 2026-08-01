@@ -14,7 +14,7 @@ import 'package:aonw_core/game/domain/tile_yield.dart';
 abstract final class FieldImprovementSelectionViewModelFactory {
   static SelectionViewModel from(
     GameSelection selection, {
-    GameState? gameState,
+    GameClientState? gameState,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     required AppLocalizations l10n,
@@ -91,7 +91,7 @@ abstract final class FieldImprovementSelectionViewModelFactory {
 
   static GameCity? _cityFor(
     FieldImprovement improvement,
-    GameState? gameState,
+    GameClientState? gameState,
   ) {
     if (gameState == null) return null;
     final builtByCityId = improvement.builtByCityId;
@@ -106,7 +106,7 @@ abstract final class FieldImprovementSelectionViewModelFactory {
 
   static int _eraColumnForImprovement({
     required GameCity? city,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required TechnologyRuleset technologyRuleset,
   }) {
     final ownerPlayerId = city?.ownerPlayerId;

@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
 import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/player.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/map_player_capacity.dart';
 
 typedef SinglePlayerLeaderNameResolver = String Function(PlayerCountry country);
@@ -61,8 +61,8 @@ abstract final class NewGameSinglePlayerSetup {
     });
   }
 
-  static int playerCountForMapData(MapData mapData) {
-    return MapPlayerCapacityRules.singlePlayerPlayersForMapData(mapData);
+  static int playerCountForWorldMap(WorldMap mapData) {
+    return MapPlayerCapacityRules.singlePlayerPlayersForWorldMap(mapData);
   }
 
   static int playerCountForMapName(String? mapName) {

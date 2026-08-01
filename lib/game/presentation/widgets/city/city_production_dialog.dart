@@ -16,9 +16,9 @@ import 'package:aonw/game/presentation/widgets/city/wonder_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/game/presentation/widgets/unit/unit_details_panel.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -37,7 +37,7 @@ class CityProductionDialog extends StatelessWidget {
   final TechnologyRuleset technologyRuleset;
   final WonderRegistry wonderRegistry;
   final WonderRuleset wonderRuleset;
-  final MapData? mapData;
+  final WorldMap? mapData;
   final List<GameCity> cities;
   final List<GameUnit> units;
   final List<WorldArtifact> artifacts;
@@ -123,7 +123,7 @@ class CityProductionPanel extends StatefulWidget {
   final TechnologyRuleset technologyRuleset;
   final WonderRegistry wonderRegistry;
   final WonderRuleset wonderRuleset;
-  final MapData? mapData;
+  final WorldMap? mapData;
   final List<GameCity> cities;
   final List<GameUnit> units;
   final List<WorldArtifact> artifacts;

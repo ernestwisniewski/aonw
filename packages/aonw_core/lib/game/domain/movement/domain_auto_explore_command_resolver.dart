@@ -5,7 +5,6 @@ import 'package:aonw_core/game/domain/movement/auto_explore_command_resolver.dar
 import 'package:aonw_core/game/domain/movement/auto_explore_command_state.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_state.dart';
-import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -21,7 +20,7 @@ final class DomainAutoExploreCommandResult {
 
   final bool accepted;
   final DomainState state;
-  final PersistedInteractionState interaction;
+  final DomainActionState interaction;
   final List<GameEvent> events;
   final MovementCommandExecution? execution;
   final String? reason;
@@ -37,7 +36,7 @@ final class DomainAutoExploreCommandResolver {
 
   DomainAutoExploreCommandResult resolve({
     required DomainState state,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required AutoExploreUnitCommand command,
     required String actorPlayerId,
     required MapTraversalView mapData,

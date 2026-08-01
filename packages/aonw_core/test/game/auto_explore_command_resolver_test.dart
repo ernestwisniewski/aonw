@@ -118,7 +118,7 @@ void main() {
         unitId: autoExploreUnitId,
         restoreMovementPoints: 5,
       );
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         cityFoundingDraft: unrelatedDraft,
         pendingAction: ownedPending,
       );

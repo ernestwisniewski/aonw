@@ -2,8 +2,8 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/combat/hud_combat_preview.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -360,7 +360,7 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         units: [attacker, defender],
         fogOfWar: _visible('p1', const [
@@ -380,14 +380,14 @@ void main() {
   });
 }
 
-GameState _state({
+GameClientState _state({
   required GameUnit attacker,
   required List<GameUnit> enemies,
   List<GameCity> cities = const [],
   int? defenderCol,
   int? defenderRow,
 }) {
-  return GameState(
+  return GameClientState(
     activePlayerId: attacker.ownerPlayerId,
     units: [attacker, ...enemies],
     cities: cities,
@@ -396,7 +396,7 @@ GameState _state({
       for (final enemy in enemies)
         HexCoordinate(col: enemy.col, row: enemy.row),
     ]),
-    interaction: GameInteractionState(
+    interaction: InteractionState(
       pendingAction: PendingAttackTargeting(
         ownerPlayerId: attacker.ownerPlayerId,
         attackerUnitId: attacker.id,
@@ -436,13 +436,13 @@ FogOfWarState _visible(String playerId, Iterable<HexCoordinate> hexes) {
   );
 }
 
-MapData _map(int cols, int rows) => MapData(
+WorldMap _map(int cols, int rows) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (var col = 0; col < cols; col++)
       for (var row = 0; row < rows; row++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           height: 0,

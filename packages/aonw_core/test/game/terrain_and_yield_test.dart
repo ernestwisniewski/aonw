@@ -21,7 +21,7 @@ void main() {
 
   group('TileYieldRules', () {
     test('combines base terrain, river, and resources', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.grassland, TerrainType.river],
@@ -37,7 +37,7 @@ void main() {
     });
 
     test('builds assessment input from tile', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.river, TerrainType.hills],

@@ -26,8 +26,8 @@ void main() {
             row: 4,
           ),
         ],
-        previousState: GameState(units: [scout], artifacts: [artifact]),
-        state: GameState(
+        previousState: GameClientState(units: [scout], artifacts: [artifact]),
+        state: GameClientState(
           units: [scout.copyWith(excavatingArtifactId: artifact.id)],
           artifacts: [
             artifact.copyWith(
@@ -65,8 +65,8 @@ void main() {
             row: 4,
           ),
         ],
-        previousState: GameState(units: [scout], artifacts: [artifact]),
-        state: GameState(
+        previousState: GameClientState(units: [scout], artifacts: [artifact]),
+        state: GameClientState(
           units: [scout.copyWith(carriedArtifactId: artifact.id)],
           artifacts: [
             artifact.copyWith(
@@ -92,8 +92,8 @@ void main() {
             row: 3,
           ),
         ],
-        previousState: GameState(units: [scout], cities: [city]),
-        state: GameState(units: [scout], cities: [city]),
+        previousState: GameClientState(units: [scout], cities: [city]),
+        state: GameClientState(units: [scout], cities: [city]),
       );
       final storedText = storedEffects
           .whereType<ShowFloatingTextEffect>()
@@ -116,7 +116,7 @@ void main() {
       );
 
       bool isVisible(Set<HexCoordinate> visibleHexes) {
-        final state = GameState(
+        final state = GameClientState(
           activePlayerId: 'player_1',
           cities: [city],
           fogOfWar: _fogForPlayer('player_1', visibleHexes),

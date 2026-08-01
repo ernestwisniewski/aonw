@@ -9,13 +9,13 @@ abstract interface class GameRepository {
 
   Future<List<GameSaveIndex>> list();
 
-  Future<SaveSnapshot> load(String saveId);
+  Future<CanonicalGameSnapshot> load(String saveId);
 
-  Future<void> save(SaveSnapshot snapshot);
+  Future<void> save(CanonicalGameSnapshot snapshot);
 
   Future<void> delete(String saveId);
 
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,

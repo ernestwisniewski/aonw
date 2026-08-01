@@ -9,7 +9,7 @@ void main() {
   group('fortification threat renderer effects', () {
     test('shows blue threat borders while focusing the fortifier', () {
       final fortifier = _fortifier();
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [
           fortifier,
@@ -46,7 +46,7 @@ void main() {
     test('keeps the marker attached to the detected unit', () {
       final fortifier = _fortifier();
       final enemy = _enemy(id: 'enemy', col: 4, row: 4);
-      final previousState = GameState(
+      final previousState = GameClientState(
         activePlayerId: 'player_1',
         units: [fortifier, enemy],
       );
@@ -89,7 +89,7 @@ void main() {
             ],
           ),
         ],
-        state: GameState(units: [fortifier, enemy]),
+        state: GameClientState(units: [fortifier, enemy]),
       );
 
       expect(effects, isEmpty);

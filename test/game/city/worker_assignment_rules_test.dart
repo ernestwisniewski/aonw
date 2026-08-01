@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -65,13 +65,13 @@ void main() {
   });
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 3,
     rows: 1,
     tiles: [
       for (var col = 0; col < 3; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.grassland],

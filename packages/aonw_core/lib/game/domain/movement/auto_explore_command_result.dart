@@ -11,7 +11,7 @@ final class AutoExploreCommandResult {
     required List<GameUnit> units,
     required FogOfWarState fogOfWar,
     required DiplomacyState diplomacy,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     Iterable<GameEvent> events = const [],
     MovementCommandExecution? execution,
   }) {
@@ -53,7 +53,7 @@ final class AutoExploreCommandResult {
   final List<GameUnit> units;
   final FogOfWarState fogOfWar;
   final DiplomacyState diplomacy;
-  final PersistedInteractionState interaction;
+  final DomainActionState interaction;
   final List<GameEvent> events;
   final MovementCommandExecution? execution;
 }

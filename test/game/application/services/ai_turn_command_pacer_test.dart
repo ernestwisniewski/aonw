@@ -15,9 +15,9 @@ void main() {
       );
 
       final report = await pacer.pauseAfterDispatch(
-        result: const DispatchCommandResult(
-          state: GameState(),
-          uiEffects: [JumpCameraEffect(col: 1, row: 2)],
+        result: DispatchCommandResult(
+          state: GameClientState(),
+          uiEffects: [const JumpCameraEffect(col: 1, row: 2)],
         ),
         interCommandDelay: const Duration(milliseconds: 40),
       );
@@ -37,13 +37,13 @@ void main() {
         );
 
         final noEffects = await pacer.pauseAfterDispatch(
-          result: const DispatchCommandResult(state: GameState()),
+          result: DispatchCommandResult(state: GameClientState()),
           interCommandDelay: const Duration(milliseconds: 40),
         );
         final noDelay = await pacer.pauseAfterDispatch(
-          result: const DispatchCommandResult(
-            state: GameState(),
-            uiEffects: [JumpCameraEffect(col: 1, row: 2)],
+          result: DispatchCommandResult(
+            state: GameClientState(),
+            uiEffects: [const JumpCameraEffect(col: 1, row: 2)],
           ),
           interCommandDelay: Duration.zero,
         );

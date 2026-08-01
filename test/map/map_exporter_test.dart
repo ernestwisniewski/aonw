@@ -1,51 +1,51 @@
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/persistence/map_loader.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('MapLoader.toJson round-trip', () {
-    test('serializes and re-parses to identical MapData', () {
-      final original = MapData(
+    test('serializes and re-parses to identical WorldMap', () {
+      final original = WorldMap(
         cols: 3,
         rows: 2,
         tiles: [
-          const TileData(
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.ocean],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 1,
             row: 0,
             terrains: [TerrainType.plains],
             resources: [ResourceType.iron],
             height: 2,
           ),
-          const TileData(
+          WorldTile(
             col: 2,
             row: 0,
             terrains: [TerrainType.mountain],
             resources: [],
             height: 5,
           ),
-          const TileData(
+          WorldTile(
             col: 0,
             row: 1,
             terrains: [TerrainType.grassland],
             resources: [],
             height: 1,
           ),
-          const TileData(
+          WorldTile(
             col: 1,
             row: 1,
             terrains: [TerrainType.desert],
             resources: [],
             height: 3,
           ),
-          const TileData(
+          WorldTile(
             col: 2,
             row: 1,
             terrains: [TerrainType.snow],

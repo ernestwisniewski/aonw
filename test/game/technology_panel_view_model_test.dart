@@ -2,8 +2,8 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,7 +14,7 @@ void main() {
     test('marks foundation techs as available and later techs as locked', () {
       final city = _city();
       final model = TechnologyPanelViewModelFactory.create(
-        state: GameState(cities: [city]),
+        state: GameClientState(cities: [city]),
         playerId: 'player_1',
         ruleset: TechnologyRulesets.standard,
         mapData: _map(),
@@ -47,7 +47,7 @@ void main() {
     test('marks active technology with progress and turns remaining', () {
       final city = _city();
       final model = TechnologyPanelViewModelFactory.create(
-        state: GameState(
+        state: GameClientState(
           cities: [city],
           research: ResearchState(
             players: {
@@ -76,7 +76,7 @@ void main() {
 
     test('marks researched technologies as completed', () {
       final model = TechnologyPanelViewModelFactory.create(
-        state: GameState(
+        state: GameClientState(
           cities: [_city()],
           research: ResearchState(
             players: {
@@ -98,7 +98,7 @@ void main() {
 
     test('exposes at most three selectable recommended technologies', () {
       final model = TechnologyPanelViewModelFactory.create(
-        state: GameState(cities: [_city()]),
+        state: GameClientState(cities: [_city()]),
         playerId: 'player_1',
         ruleset: TechnologyRulesets.standard,
         mapData: _mapWithResource(ResourceType.wheat),
@@ -138,12 +138,12 @@ GameCity _city() {
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 1,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
@@ -154,12 +154,12 @@ MapData _map() {
   );
 }
 
-MapData _mapWithResource(ResourceType resource) {
-  return MapData(
+WorldMap _mapWithResource(ResourceType resource) {
+  return WorldMap(
     cols: 1,
     rows: 1,
     tiles: [
-      TileData(
+      WorldTile(
         col: 0,
         row: 0,
         terrains: const [TerrainType.plains],

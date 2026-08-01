@@ -173,13 +173,14 @@ class _FakeGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => saves;
 
   @override
-  Future<SaveSnapshot> load(String saveId) async => throw UnimplementedError();
+  Future<CanonicalGameSnapshot> load(String saveId) async =>
+      throw UnimplementedError();
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {}
+  Future<void> save(CanonicalGameSnapshot snapshot) async {}
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,

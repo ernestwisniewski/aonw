@@ -2,15 +2,15 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/interaction/selection_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-TileData _tile(int col, int row) => TileData(
+WorldTile _tile(int col, int row) => WorldTile(
   col: col,
   row: row,
   terrains: const [TerrainType.grassland],
@@ -18,8 +18,8 @@ TileData _tile(int col, int row) => TileData(
   height: 0,
 );
 
-MapData _mapWith(List<TileData> tiles) =>
-    MapData(cols: 10, rows: 10, tiles: tiles);
+WorldMap _mapWith(List<WorldTile> tiles) =>
+    WorldMap(cols: 10, rows: 10, tiles: tiles);
 
 GameUnit _unit({
   String id = 'u1',
@@ -58,7 +58,7 @@ FieldImprovement _improvement({
 );
 
 /// Creates fog where all listed tiles are visible for the player.
-FogOfWarState _fogVisible(String playerId, List<TileData> tiles) {
+FogOfWarState _fogVisible(String playerId, List<WorldTile> tiles) {
   final hexes = {
     for (final tile in tiles) HexCoordinate(col: tile.col, row: tile.row),
   };
@@ -86,9 +86,9 @@ void main() {
         ownerPlayerId: 'p1',
         center: const CityHex(col: 0, row: 0),
       );
-      final state = const GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
-        interaction: GameInteractionState(moveCommandActive: true),
+        interaction: const InteractionState(moveCommandActive: true),
       ).copyWithInteraction(cityFoundingDraft: draft);
 
       final result = SelectionReducer.selectTile(
@@ -108,7 +108,7 @@ void main() {
 
     test('returns unchanged state when tile not found in mapData', () {
       final mapData = _mapWith([]);
-      const state = GameState(activePlayerId: 'p1');
+      final state = GameClientState(activePlayerId: 'p1');
 
       final result = SelectionReducer.selectTile(
         state,
@@ -128,7 +128,7 @@ void main() {
         final unit = _unit(col: 1, row: 2);
         final tile = _tile(1, 2);
         final mapData = _mapWith([tile]);
-        final state = GameState(activePlayerId: 'p1', units: [unit]);
+        final state = GameClientState(activePlayerId: 'p1', units: [unit]);
 
         final result = SelectionReducer.selectUnit(
           state,
@@ -147,7 +147,7 @@ void main() {
       final unit = _unit(ownerPlayerId: 'p2', col: 1, row: 2);
       final tile = _tile(1, 2);
       final mapData = _mapWith([tile]);
-      final state = GameState(activePlayerId: 'p1', units: [unit]);
+      final state = GameClientState(activePlayerId: 'p1', units: [unit]);
 
       final result = SelectionReducer.selectUnit(
         state,
@@ -164,7 +164,7 @@ void main() {
       final merchant = _unit(type: GameUnitType.merchant, col: 1, row: 2);
       final tile = _tile(1, 2);
       final mapData = _mapWith([tile]);
-      final state = GameState(activePlayerId: 'p1', units: [merchant]);
+      final state = GameClientState(activePlayerId: 'p1', units: [merchant]);
 
       final result = SelectionReducer.selectUnit(
         state,
@@ -178,7 +178,7 @@ void main() {
 
     test('returns unchanged state when unit not found', () {
       final mapData = _mapWith([]);
-      const state = GameState(activePlayerId: 'p1');
+      final state = GameClientState(activePlayerId: 'p1');
 
       final result = SelectionReducer.selectUnit(
         state,
@@ -196,7 +196,7 @@ void main() {
       final city = _city(col: 2, row: 2);
       final tile = _tile(2, 2);
       final mapData = _mapWith([tile]);
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         cities: [city],
         playerColors: const {'p1': 0xFF0000FF},
@@ -221,7 +221,7 @@ void main() {
       final city = _city(col: 2, row: 2);
       final tile = _tile(2, 2);
       final mapData = _mapWith([tile]);
-      final state = GameState(activePlayerId: 'p1', cities: [city]);
+      final state = GameClientState(activePlayerId: 'p1', cities: [city]);
 
       final result = SelectionReducer.selectCity(
         state,
@@ -234,7 +234,7 @@ void main() {
 
     test('returns unchanged state when city not found', () {
       final mapData = _mapWith([]);
-      const state = GameState(activePlayerId: 'p1');
+      final state = GameClientState(activePlayerId: 'p1');
 
       final result = SelectionReducer.selectCity(
         state,
@@ -253,7 +253,7 @@ void main() {
       final mapData = _mapWith([tile]);
       final fog = _fogHidden('p1');
       final selection = GameSelection.tile(_tile(0, 0));
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         fogOfWar: fog,
       ).copyWithInteraction(selection: selection);
@@ -279,11 +279,11 @@ void main() {
         // Only (1,1) visible; (3,3) is hidden
         final fog = _fogVisible('p1', [tile11]);
         final state =
-            GameState(
+            GameClientState(
               activePlayerId: 'p1',
               units: [unit],
               fogOfWar: fog,
-              interaction: const GameInteractionState(moveCommandActive: true),
+              interaction: const InteractionState(moveCommandActive: true),
             ).copyWithInteraction(
               selection: GameSelection.unit(unit, tile: tile11),
             );
@@ -308,7 +308,7 @@ void main() {
         ownerPlayerId: 'p1',
         center: const CityHex(col: 0, row: 0),
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         fogOfWar: fog,
       ).copyWithInteraction(cityFoundingDraft: draft);
@@ -329,11 +329,11 @@ void main() {
       final fog = _fogVisible('p1', [tile]);
 
       // Step 1: Start with unit selected + move active
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         units: [unit],
         fogOfWar: fog,
-        interaction: const GameInteractionState(moveCommandActive: true),
+        interaction: const InteractionState(moveCommandActive: true),
       ).copyWithInteraction(selection: GameSelection.unit(unit, tile: tile));
 
       // Step 2: Tap the unit's own tile -> selects the hex.
@@ -366,11 +366,11 @@ void main() {
         final fog = _fogVisible('p1', [tile11, tile33]);
 
         final state =
-            GameState(
+            GameClientState(
               activePlayerId: 'p1',
               units: [unit1, unit2],
               fogOfWar: fog,
-              interaction: const GameInteractionState(moveCommandActive: true),
+              interaction: const InteractionState(moveCommandActive: true),
             ).copyWithInteraction(
               selection: GameSelection.unit(unit1, tile: tile11),
             );
@@ -393,7 +393,7 @@ void main() {
       final mapData = _mapWith([tile]);
       final fog = _fogVisible('p1', [tile]);
 
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         units: [enemyUnit],
         fogOfWar: fog,
@@ -419,7 +419,7 @@ void main() {
       final fog = _fogVisible('p1', [tile]);
 
       final state =
-          GameState(
+          GameClientState(
             activePlayerId: 'p1',
             units: [enemyUnit],
             fogOfWar: fog,
@@ -447,7 +447,7 @@ void main() {
         final tile = _tile(3, 3);
         final mapData = _mapWith([tile]);
         final fog = _fogVisible('p1', [tile]);
-        var state = GameState(
+        var state = GameClientState(
           activePlayerId: 'p1',
           units: [unit],
           fieldImprovements: [improvement],
@@ -489,7 +489,7 @@ void main() {
       final tile = _tile(3, 3);
       final mapData = _mapWith([tile]);
       final fog = _fogVisible('p1', [tile]);
-      var state = GameState(
+      var state = GameClientState(
         activePlayerId: 'p1',
         fieldImprovements: [improvement],
         fogOfWar: fog,
@@ -522,11 +522,11 @@ void main() {
       final fog = _fogVisible('p1', [tile11, tile33]);
 
       final state =
-          GameState(
+          GameClientState(
             activePlayerId: 'p1',
             units: [ownUnit, enemyUnit],
             fogOfWar: fog,
-            interaction: const GameInteractionState(moveCommandActive: true),
+            interaction: const InteractionState(moveCommandActive: true),
           ).copyWithInteraction(
             selection: GameSelection.unit(ownUnit, tile: tile11),
           );
@@ -549,7 +549,7 @@ void main() {
       final mapData = _mapWith([tile]);
       final fog = _fogVisible('p1', [tile]);
 
-      final state = GameState(activePlayerId: 'p1', fogOfWar: fog);
+      final state = GameClientState(activePlayerId: 'p1', fogOfWar: fog);
 
       final result = SelectionReducer.handleTileTapped(
         state,
@@ -564,7 +564,7 @@ void main() {
 
     test('returns unchanged when tile not in mapData', () {
       final mapData = _mapWith([]);
-      const state = GameState(activePlayerId: 'p1');
+      final state = GameClientState(activePlayerId: 'p1');
 
       final result = SelectionReducer.handleTileTapped(
         state,
@@ -586,7 +586,7 @@ void main() {
       final fog = _fogVisible('p1', [tile]);
 
       // Start: no selection
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         units: [unit],
         cities: [city],
@@ -620,7 +620,7 @@ void main() {
       final mapData = _mapWith([tile]);
       final fog = _fogVisible('p1', [tile]);
 
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         cities: [city],
         playerColors: const {'p1': 0xFF0000FF},
@@ -646,7 +646,7 @@ void main() {
       final mapData = _mapWith([tile]);
       final fog = _fogVisible('p1', [tile]);
 
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         activePlayerCanAct: false,
         cities: [city],
@@ -670,7 +670,7 @@ void main() {
       final mapData = _mapWith([tile]);
       final fog = _fogVisible('p1', [tile]);
 
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         units: [unit],
         cities: [city],
@@ -692,7 +692,7 @@ void main() {
       final mapData = _mapWith([tile]);
       final fog = _fogVisible('p1', [tile]);
 
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         cities: [city],
         fogOfWar: fog,
@@ -712,7 +712,7 @@ void main() {
         center: const CityHex(col: 0, row: 0),
       );
 
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         cities: [city],
       ).copyWithInteraction(cityFoundingDraft: draft);

@@ -9,10 +9,9 @@ void _registerResearchDiplomacyReplayTest() {
             Player(id: 'p1', name: 'Alice', colorValue: 0xFF4A7FC4),
             Player(id: 'p2', name: 'Bob', colorValue: 0xFFC47F4A),
           ],
-          runtimeState: GameRuntimeState(
-            diplomacy: DiplomacyState.empty.addContact('p1', 'p2'),
-            pendingAction: const PendingResearchSelection(ownerPlayerId: 'p1'),
-          ),
+
+          diplomacy: DiplomacyState.empty.addContact('p1', 'p2'),
+          pendingAction: const PendingResearchSelection(ownerPlayerId: 'p1'),
         ),
       }),
       eventLog: _MemoryEventLog([

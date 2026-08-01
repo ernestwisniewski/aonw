@@ -2,11 +2,9 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/selection/hud_selection_commands.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -57,7 +55,6 @@ void main() {
       final scout = _unit('scout_1', type: GameUnitType.scout, col: 1);
       final command = HudSelectionCommands.autoExploreSelectedUnit(
         _stateWithUnit(scout),
-        _grassMap(cols: 6, rows: 1),
       );
 
       expect(
@@ -72,9 +69,9 @@ void main() {
 
     test('creates city worked hex command from selected city', () {
       final city = _city('city_1');
-      final state = GameState(
+      final state = GameClientState(
         cities: [city],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.city(
             city,
             cityYield: TileYield.zero,
@@ -91,9 +88,9 @@ void main() {
 
     test('creates city expansion command from selected city', () {
       final city = _city('city_1');
-      final state = GameState(
+      final state = GameClientState(
         cities: [city],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.city(
             city,
             cityYield: TileYield.zero,
@@ -111,26 +108,29 @@ void main() {
     test('returns null without matching selection', () {
       expect(HudSelectionCommands.startAttackTargeting(null), isNull);
       expect(
-        HudSelectionCommands.startCityWorkedHexSelection(const GameState()),
+        HudSelectionCommands.startCityWorkedHexSelection(GameClientState()),
         isNull,
       );
       expect(
-        HudSelectionCommands.startCityExpansionSelection(const GameState()),
+        HudSelectionCommands.startCityExpansionSelection(GameClientState()),
         isNull,
       );
       expect(
-        HudSelectionCommands.cancelSelectedUnitAction(const GameState()),
+        HudSelectionCommands.cancelSelectedUnitAction(GameClientState()),
         isNull,
       );
     });
   });
 }
 
-GameState _stateWithUnit(GameUnit unit, {List<GameCity> cities = const []}) {
-  return GameState(
+GameClientState _stateWithUnit(
+  GameUnit unit, {
+  List<GameCity> cities = const [],
+}) {
+  return GameClientState(
     units: [unit],
     cities: cities,
-    interaction: GameInteractionState(selection: GameSelection.unit(unit)),
+    interaction: InteractionState(selection: GameSelection.unit(unit)),
   );
 }
 
@@ -147,24 +147,6 @@ GameUnit _unit(
     name: type.defaultNameToken,
     col: col,
     row: row,
-  );
-}
-
-MapData _grassMap({required int cols, required int rows}) {
-  return MapData(
-    cols: cols,
-    rows: rows,
-    tiles: [
-      for (var col = 0; col < cols; col++)
-        for (var row = 0; row < rows; row++)
-          TileData(
-            col: col,
-            row: row,
-            terrains: const [TerrainType.grassland],
-            resources: const [],
-            height: 0,
-          ),
-    ],
   );
 }
 

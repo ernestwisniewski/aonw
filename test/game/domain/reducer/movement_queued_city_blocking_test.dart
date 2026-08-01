@@ -3,8 +3,8 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -23,7 +23,7 @@ void main() {
         name: 'Foreign city',
         center: CityHex(col: 1, row: 0),
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [commander],
         cities: const [city],
         activePlayerId: 'player_1',
@@ -52,7 +52,7 @@ void main() {
         name: 'Hidden foreign city',
         center: CityHex(col: 1, row: 0),
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [commander],
         cities: const [city],
         activePlayerId: 'player_1',
@@ -73,13 +73,13 @@ void main() {
   });
 }
 
-MapData _map(int cols, int rows) => MapData(
+WorldMap _map(int cols, int rows) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (var row = 0; row < rows; row++)
       for (var col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],

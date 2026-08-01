@@ -2,7 +2,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('WorldMapReadView', () {
+  group('WorldMap', () {
     test('borrows canonical sparse tiles and metadata without projection', () {
       const objective = MapObjectiveDefinition(
         id: 'pass_1',
@@ -14,13 +14,13 @@ void main() {
         rows: 6,
         mapName: 'sparse',
         tiles: [
-          WorldTile(
+          WorldTile.at(
             coordinate: const HexCoord(col: 6, row: 4),
             terrains: const [TerrainType.hills, TerrainType.forest],
             resources: const [ResourceType.iron],
             height: 3,
           ),
-          WorldTile(
+          WorldTile.at(
             coordinate: const HexCoord(col: 1, row: 0),
             terrains: const [TerrainType.plains],
             resources: const [],
@@ -29,7 +29,7 @@ void main() {
         ],
         objectives: const [objective],
       );
-      final view = WorldMapReadView(world);
+      final view = world;
 
       expect(view.cols, 8);
       expect(view.rows, 6);
@@ -53,7 +53,7 @@ void main() {
         cols: 2,
         rows: 1,
         tiles: [
-          WorldTile(
+          WorldTile.at(
             coordinate: const HexCoord(col: 1, row: 0),
             terrains: const [TerrainType.plains],
             resources: const [ResourceType.wheat],
@@ -61,8 +61,8 @@ void main() {
           ),
         ],
       );
-      final firstView = WorldMapReadView(world);
-      final secondView = WorldMapReadView(world);
+      final firstView = world;
+      final secondView = world;
 
       final first = firstView.tileAt(1, 0);
       final repeated = firstView.tileAt(1, 0);
@@ -72,7 +72,7 @@ void main() {
       expect(identical(first, repeated), isTrue);
       expect(identical(first, fromSecondView), isTrue);
       expect(
-        identical(first, world.tileAt(const HexCoord(col: 1, row: 0))),
+        identical(first, world.tileAtHex(const HexCoord(col: 1, row: 0))),
         isTrue,
       );
       expect(identical(first, firstView.tileViews.single), isTrue);
@@ -86,7 +86,7 @@ void main() {
         cols: 1,
         rows: 1,
         tiles: [
-          WorldTile(
+          WorldTile.at(
             coordinate: const HexCoord(col: 0, row: 0),
             terrains: const [TerrainType.hills],
             resources: const [ResourceType.iron],
@@ -94,7 +94,7 @@ void main() {
           ),
         ],
       );
-      final tile = WorldMapReadView(world).tileAt(0, 0)!;
+      final tile = world.tileAt(0, 0)!;
 
       expect(identical(tile.terrains, world.tiles.single.terrains), isTrue);
       expect(identical(tile.resources, world.tiles.single.resources), isTrue);

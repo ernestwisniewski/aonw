@@ -2,17 +2,18 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import '../../../support/game_intent_test_resolver.dart';
 
 void main() {
   group('MerchantTradeRouteReducer', () {
-    late MapData mapData;
+    late WorldMap mapData;
     late GameStateReducer reducer;
 
     setUp(() {
@@ -23,13 +24,11 @@ void main() {
     test('starts merchant move-to-city selection from outside a city', () {
       final merchant = _merchant(col: 1);
       final city = _city(id: 'city_1', col: 3);
-      final state = GameState(
+      final state = GameClientState(
         units: [merchant],
         cities: [city],
         activePlayerId: 'player_1',
-        interaction: GameInteractionState(
-          selection: GameSelection.unit(merchant),
-        ),
+        interaction: InteractionState(selection: GameSelection.unit(merchant)),
       );
 
       final result = resolveGameIntent(
@@ -51,11 +50,11 @@ void main() {
       final merchant = _merchant(col: 1);
       final guard = _warrior(id: 'guard_1', col: 3);
       final city = _city(id: 'city_1', col: 3);
-      final state = GameState(
+      final state = GameClientState(
         units: [merchant, guard],
         cities: [city],
         activePlayerId: 'player_1',
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(merchant),
           pendingAction: PendingMerchantMoveToCitySelection(
             ownerPlayerId: merchant.ownerPlayerId,
@@ -80,13 +79,13 @@ void main() {
   });
 }
 
-MapData _map(int cols, int rows) => MapData(
+WorldMap _map(int cols, int rows) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (var row = 0; row < rows; row++)
       for (var col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],

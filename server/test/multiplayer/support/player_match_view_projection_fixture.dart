@@ -54,7 +54,7 @@ final _playerMatchViewOwnerFog = PlayerFogOfWar(
   },
 );
 
-final _playerMatchViewState = PersistentGameState(
+final _playerMatchViewState = DomainState.snapshot(
   playerColors: const {'player-owner': 1, 'player-guest': 2, 'player-ai': 3},
   playerCountries: const {
     'player-owner': PlayerCountry.poland,
@@ -190,166 +190,164 @@ final _playerMatchViewState = PersistentGameState(
       ),
     },
   ),
-  runtimeState: GameRuntimeState(
-    cityFoundingDraft: CityFoundingDraft(
-      unitId: 'hidden-enemy-unit',
-      ownerPlayerId: 'player-guest',
-      center: const CityHex(col: 8, row: 8),
+
+  cityFoundingDraft: CityFoundingDraft(
+    unitId: 'hidden-enemy-unit',
+    ownerPlayerId: 'player-guest',
+    center: const CityHex(col: 8, row: 8),
+  ),
+  pendingAction: const PendingResearchSelection(ownerPlayerId: 'player-guest'),
+  submittedPlayerIds: const {'player-owner', 'player-guest'},
+  timeoutStreaksByPlayerId: const {'player-owner': 1, 'player-guest': 9},
+  afkPlayerIds: const {'player-guest'},
+  kickedPlayerIds: const {'player-ai'},
+  intendedAttacks: const [
+    IntendedAttack(
+      attackerUnitId: 'own-unit',
+      defenderCol: 1,
+      defenderRow: 1,
+      declaredAtTick: 1,
+      declaringPlayerId: 'player-owner',
     ),
-    pendingAction: const PendingResearchSelection(
-      ownerPlayerId: 'player-guest',
+    IntendedAttack(
+      attackerUnitId: 'hidden-enemy-unit',
+      defenderCol: 9,
+      defenderRow: 9,
+      declaredAtTick: 2,
+      declaringPlayerId: 'player-guest',
     ),
-    submittedPlayerIds: const {'player-owner', 'player-guest'},
-    timeoutStreaksByPlayerId: const {'player-owner': 1, 'player-guest': 9},
-    afkPlayerIds: const {'player-guest'},
-    kickedPlayerIds: const {'player-ai'},
-    intendedAttacks: const [
-      IntendedAttack(
-        attackerUnitId: 'own-unit',
-        defenderCol: 1,
-        defenderRow: 1,
-        declaredAtTick: 1,
-        declaringPlayerId: 'player-owner',
+  ],
+  diplomacy: DiplomacyState(
+    contactKeys: {
+      DiplomacyState.relationKey('player-owner', 'player-guest'),
+      DiplomacyState.relationKey('player-owner', 'player-ai'),
+      DiplomacyState.relationKey('player-guest', 'player-ai'),
+    },
+    relations: {
+      DiplomacyState.relationKey(
+        'player-owner',
+        'player-guest',
+      ): DiplomaticRelation.between(
+        playerAId: 'player-owner',
+        playerBId: 'player-guest',
+        relationScore: -10,
       ),
-      IntendedAttack(
-        attackerUnitId: 'hidden-enemy-unit',
-        defenderCol: 9,
-        defenderRow: 9,
-        declaredAtTick: 2,
-        declaringPlayerId: 'player-guest',
+      DiplomacyState.relationKey(
+        'player-guest',
+        'player-ai',
+      ): DiplomaticRelation.between(
+        playerAId: 'player-guest',
+        playerBId: 'player-ai',
+        relationScore: 99,
       ),
-    ],
-    diplomacy: DiplomacyState(
-      contactKeys: {
-        DiplomacyState.relationKey('player-owner', 'player-guest'),
-        DiplomacyState.relationKey('player-owner', 'player-ai'),
-        DiplomacyState.relationKey('player-guest', 'player-ai'),
-      },
-      relations: {
-        DiplomacyState.relationKey(
-          'player-owner',
-          'player-guest',
-        ): DiplomaticRelation.between(
+    },
+    pendingProposals: const {
+      'owner-proposal': DiplomaticProposal(
+        id: 'owner-proposal',
+        fromPlayerId: 'player-owner',
+        toPlayerId: 'player-ai',
+        kind: DiplomaticProposalKind.friendship,
+        createdTurn: 1,
+        expiresOnTurn: 9,
+      ),
+      'guest-secret-proposal': DiplomaticProposal(
+        id: 'guest-secret-proposal',
+        fromPlayerId: 'player-guest',
+        toPlayerId: 'player-ai',
+        kind: DiplomaticProposalKind.truce,
+        createdTurn: 2,
+        expiresOnTurn: 10,
+      ),
+    },
+    messages: const {
+      'owner-message': DiplomaticMessage(
+        id: 'owner-message',
+        fromPlayerId: 'player-ai',
+        toPlayerId: 'player-owner',
+        topic: DiplomaticMessageTopic.peacefulPraise,
+        category: DiplomaticMessageCategory.praise,
+        createdTurn: 1,
+        expiresOnTurn: 9,
+      ),
+      'guest-secret-message': DiplomaticMessage(
+        id: 'guest-secret-message',
+        fromPlayerId: 'player-ai',
+        toPlayerId: 'player-guest',
+        topic: DiplomaticMessageTopic.troopsNearCities,
+        category: DiplomaticMessageCategory.warning,
+        createdTurn: 2,
+        expiresOnTurn: 10,
+      ),
+    },
+    scoreHistory: {
+      'corrupt-mixed-key': [
+        DiplomaticScoreEntry.between(
           playerAId: 'player-owner',
           playerBId: 'player-guest',
-          relationScore: -10,
+          turn: 1,
+          delta: 1,
+          scoreAfter: 1,
+          reason: DiplomaticScoreChangeReason.manual,
+          sourceId: 'shared-score',
         ),
-        DiplomacyState.relationKey(
-          'player-guest',
-          'player-ai',
-        ): DiplomaticRelation.between(
+        DiplomaticScoreEntry.between(
+          playerAId: 'player-owner',
+          playerBId: 'player-ai',
+          turn: 1,
+          delta: 2,
+          scoreAfter: 2,
+          reason: DiplomaticScoreChangeReason.manual,
+          sourceId: 'owner-secret-score',
+        ),
+        DiplomaticScoreEntry.between(
           playerAId: 'player-guest',
           playerBId: 'player-ai',
-          relationScore: 99,
+          turn: 1,
+          delta: 99,
+          scoreAfter: 99,
+          reason: DiplomaticScoreChangeReason.manual,
+          sourceId: 'guest-secret-score',
         ),
-      },
-      pendingProposals: const {
-        'owner-proposal': DiplomaticProposal(
-          id: 'owner-proposal',
-          fromPlayerId: 'player-owner',
-          toPlayerId: 'player-ai',
-          kind: DiplomaticProposalKind.friendship,
-          createdTurn: 1,
-          expiresOnTurn: 9,
-        ),
-        'guest-secret-proposal': DiplomaticProposal(
-          id: 'guest-secret-proposal',
-          fromPlayerId: 'player-guest',
-          toPlayerId: 'player-ai',
-          kind: DiplomaticProposalKind.truce,
-          createdTurn: 2,
-          expiresOnTurn: 10,
-        ),
-      },
-      messages: const {
-        'owner-message': DiplomaticMessage(
-          id: 'owner-message',
-          fromPlayerId: 'player-ai',
-          toPlayerId: 'player-owner',
-          topic: DiplomaticMessageTopic.peacefulPraise,
-          category: DiplomaticMessageCategory.praise,
-          createdTurn: 1,
-          expiresOnTurn: 9,
-        ),
-        'guest-secret-message': DiplomaticMessage(
-          id: 'guest-secret-message',
-          fromPlayerId: 'player-ai',
-          toPlayerId: 'player-guest',
-          topic: DiplomaticMessageTopic.troopsNearCities,
-          category: DiplomaticMessageCategory.warning,
-          createdTurn: 2,
-          expiresOnTurn: 10,
-        ),
-      },
-      scoreHistory: {
-        'corrupt-mixed-key': [
-          DiplomaticScoreEntry.between(
-            playerAId: 'player-owner',
-            playerBId: 'player-guest',
-            turn: 1,
-            delta: 1,
-            scoreAfter: 1,
-            reason: DiplomaticScoreChangeReason.manual,
-            sourceId: 'shared-score',
-          ),
-          DiplomaticScoreEntry.between(
-            playerAId: 'player-owner',
-            playerBId: 'player-ai',
-            turn: 1,
-            delta: 2,
-            scoreAfter: 2,
-            reason: DiplomaticScoreChangeReason.manual,
-            sourceId: 'owner-secret-score',
-          ),
-          DiplomaticScoreEntry.between(
-            playerAId: 'player-guest',
-            playerBId: 'player-ai',
-            turn: 1,
-            delta: 99,
-            scoreAfter: 99,
-            reason: DiplomaticScoreChangeReason.manual,
-            sourceId: 'guest-secret-score',
-          ),
-        ],
-      },
-    ),
-    dominationHoldTurnsByPlayerId: const {'player-owner': 2, 'player-guest': 8},
-    culturalVictoryHoldTurnsByPlayerId: const {
-      'player-owner': 3,
-      'player-guest': 7,
+      ],
     },
-    mapObjectiveHoldStatesByObjectiveId: const {
-      'objective-own': MapObjectiveHoldState(
-        objectiveId: 'objective-own',
-        playerId: 'player-owner',
-        holdTurns: 1,
-      ),
-      'objective-guest': MapObjectiveHoldState(
-        objectiveId: 'objective-guest',
-        playerId: 'player-guest',
-        holdTurns: 9,
-      ),
-    },
-    resourceTradeAgreements: const [
-      ResourceTradeAgreement(
-        id: 'own-trade',
-        exporterPlayerId: 'player-owner',
-        importerPlayerId: 'player-guest',
-        resource: ResourceType.iron,
-        goldPerTurn: 2,
-        remainingTurns: 3,
-      ),
-      ResourceTradeAgreement(
-        id: 'guest-secret-trade',
-        exporterPlayerId: 'player-guest',
-        importerPlayerId: 'player-ai',
-        resource: ResourceType.uranium,
-        goldPerTurn: 99,
-        remainingTurns: 9,
-      ),
-    ],
-    turnStartedAt: DateTime.utc(2026, 7, 10),
   ),
+  dominationHoldTurnsByPlayerId: const {'player-owner': 2, 'player-guest': 8},
+  culturalVictoryHoldTurnsByPlayerId: const {
+    'player-owner': 3,
+    'player-guest': 7,
+  },
+  mapObjectiveHoldStatesByObjectiveId: const {
+    'objective-own': MapObjectiveHoldState(
+      objectiveId: 'objective-own',
+      playerId: 'player-owner',
+      holdTurns: 1,
+    ),
+    'objective-guest': MapObjectiveHoldState(
+      objectiveId: 'objective-guest',
+      playerId: 'player-guest',
+      holdTurns: 9,
+    ),
+  },
+  resourceTradeAgreements: const [
+    ResourceTradeAgreement(
+      id: 'own-trade',
+      exporterPlayerId: 'player-owner',
+      importerPlayerId: 'player-guest',
+      resource: ResourceType.iron,
+      goldPerTurn: 2,
+      remainingTurns: 3,
+    ),
+    ResourceTradeAgreement(
+      id: 'guest-secret-trade',
+      exporterPlayerId: 'player-guest',
+      importerPlayerId: 'player-ai',
+      resource: ResourceType.uranium,
+      goldPerTurn: 99,
+      remainingTurns: 9,
+    ),
+  ],
+  turnStartedAt: DateTime.utc(2026, 7, 10),
+
   wonderRegistry: WonderRegistry(
     completedBy: const {WonderType.greatLibrary: 'player-owner'},
   ),
@@ -360,7 +358,7 @@ final playerMatchViewProjectionFixture = WireSnapshot(
   offset: 6,
   save: _playerMatchViewSave.toJson(),
   state: {
-    ..._playerMatchViewState.toJson(),
+    ...CanonicalGameSnapshotCodec.encodeDomainState(_playerMatchViewState),
     'phase': 'abandoned',
     'reason': 'owner_left',
     'leftUserIdentifier': 'owner-auth-id',

@@ -2,7 +2,7 @@ part of 'game_renderer.dart';
 
 extension GameRendererStateSync on GameRenderer {
   void _applyState(
-    GameState state, {
+    GameClientState state, {
     required bool suppressCameraFocus,
     int? currentTurn,
   }) {
@@ -17,7 +17,7 @@ extension GameRendererStateSync on GameRenderer {
   }
 
   Future<void> _applyTransitionNow(
-    GameState state,
+    GameClientState state,
     Iterable<RendererEffect> effects, {
     int? currentTurn,
   }) async {
@@ -266,7 +266,10 @@ extension GameRendererStateSync on GameRenderer {
     );
   }
 
-  void _syncHoverIntentForTile(TileData tileData, {bool forceInspect = false}) {
+  void _syncHoverIntentForTile(
+    WorldTile tileData, {
+    bool forceInspect = false,
+  }) {
     if (!_isReady) return;
     final cacheKey = (
       col: tileData.col,
@@ -318,7 +321,7 @@ extension GameRendererStateSync on GameRenderer {
 
   void _publishViewModelFromState() {
     if (_isDisposed) return;
-    final viewModel = GameRenderViewModel.fromState(_renderState);
+    final viewModel = RenderState.fromState(_renderState);
     if (_viewModelNotifier.value == viewModel) return;
     _viewModelNotifier.value = viewModel;
   }

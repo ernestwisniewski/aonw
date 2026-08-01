@@ -224,7 +224,7 @@ final class _MovementCommandFixture {
       rows: dimensions.rows,
       tiles: [
         for (var index = 0; index < scale; index++)
-          WorldTile(
+          WorldTile.at(
             coordinate: HexCoord(
               col: index % dimensions.cols,
               row: index ~/ dimensions.cols,
@@ -291,7 +291,6 @@ final class _MovementCommandFixture {
       domainState: domain,
       engineSnapshot: CanonicalGameSnapshot.snapshot(
         domain: domain,
-        session: MatchSessionState.snapshot(gameMode: GameMode.hotSeat),
         metadata: GameSnapshotMetadata(
           id: 'movement_performance',
           schemaVersion: 3,
@@ -318,7 +317,7 @@ final class _MovementCommandFixture {
   final CanonicalGameSnapshot engineSnapshot;
   final MoveUnitCommand command;
 
-  MapReadView mapView() => WorldMapReadView(worldMap);
+  MapReadView mapView() => worldMap;
 }
 
 final class _MovementCommandBatch {

@@ -7,21 +7,15 @@
 ## Context
 
 Before this migration, the game had parallel representations of the same map
-concepts. `MapData` is mutable for the editor and is also consumed by gameplay,
-while `MapDefinition` was an immutable rules-oriented representation used by
-shared pipelines and the server. Both performed linear tile lookup and
-conversion code existed at application boundaries. `MapDefinition` has since
-been retired; `MapData` remains the transitional persistence and editor DTO.
-Coordinates also appear as `HexCoordinate`, `CityHex`, records, and repeated
-`col`/`row` pairs.
+concepts. Mutable `MapData` and immutable `MapDefinition` crossed gameplay,
+editor, client, AI, and server boundaries, performed linear tile lookup, and
+required point-to-point conversions. Coordinates also appeared as
+`HexCoordinate`, `CityHex`, records, and repeated `col`/`row` pairs.
 
-State is similarly split. The Flutter client uses `GameState`, including
-selection and other interaction state, while persistence and the server use
-`PersistentGameState`. `GameSave` combines save metadata and turn metadata,
-and wire snapshots carry separate untyped `save` and `state` maps. These models
-can drift even when local and multiplayer rules are intended to be identical.
-`SaveSnapshot`, `Snapshot`, and server/wire rows also repeat event offsets, so
-there is more than one value that can claim to be the snapshot boundary.
+State was similarly split between client `GameState`, persisted
+`PersistentGameState`, `GameRuntimeState`, session state, and wire maps. Those
+models could drift even when local and multiplayer rules were intended to be
+identical, while several snapshot wrappers repeated the event offset.
 
 The editor needs mutation, rendering needs derived caches, and UI interaction
 is client-local. Those needs must not make the authoritative world or game
@@ -51,7 +45,8 @@ The binding invariants are:
   map, game, Flutter, Flame, persistence, or Serverpod type.
 - `WorldMap` is immutable after construction. It owns dimensions, immutable
   tiles, terrain/resources, and map objectives. It validates duplicate and
-  out-of-bounds coordinates once and provides O(1) `tileAt(HexCoord)` lookup.
+  out-of-bounds coordinates once and provides O(1) `tileAtHex(HexCoord)` and
+  representation-neutral `MapTileLookup.tileAt(col, row)` lookup.
 - `MapDraft` is the only mutable map representation. It belongs to the editor
   boundary and must be validated and frozen before gameplay, AI, persistence,
   or server code can use it.
@@ -82,9 +77,9 @@ The binding invariants are:
   `PlayerViewState`, and the visible offset. It is a projection for client sync
   and rendering, may omit hidden domain data, and must never be accepted as a
   canonical snapshot or engine input.
-- Persistence and wire codecs translate at the boundary. Legacy save or map
-  shapes are migrated before construction of current domain objects; migration
-  fields do not leak into the domain model.
+- Persistence and wire codecs translate at the boundary and accept only the
+  current supported schema. Historical migration fields do not leak into the
+  domain model.
 - New parallel map/state models or handwritten point-to-point converters are
   not allowed. A temporary adapter must name the legacy source, the canonical
   target, and its removal condition.
@@ -110,28 +105,35 @@ Rejected alternatives:
 
 ## Migration And Verification
 
-The repository does not yet fully conform. `MapData`, `GameState`,
-`PersistentGameState`, and conversions between them are explicit transitional
-exceptions. Legacy map JSON enters through `MapDataCodec` and is validated by
-constructing `WorldMap`; `MapDefinition` has been removed. `SaveSnapshot`/
-`Snapshot` offset duplication and the mixed domain/interaction content of
-`GameRuntimeState` are also transitional.
+The authoritative roots are now migrated:
 
-Migrate in this order:
+- `MapData`, `TileData`, `MapDefinition`, and `WorldMapReadView` are removed;
+  editor mutation ends at `MapDraft.freeze`, which produces `WorldMap`;
+- `PersistentGameState`, `GameRuntimeState`, `MatchSessionState`, the former
+  client `GameState`, and their conversion adapters are removed;
+- `DomainState` owns rule and lifecycle data, while `GameClientState` composes
+  it with `InteractionState` and renderer caches use `RenderState`;
+- `CanonicalGameSnapshot` owns exactly metadata, one `DomainState`, and one
+  event offset; `RecipientSnapshot` is a nominal recipient-only projection;
+- current save and wire codecs construct the canonical envelope directly.
 
-1. introduce `HexCoord` and compatibility adapters;
-2. introduce indexed `WorldMap`, then isolate editor mutation in `MapDraft`;
-3. introduce `DomainState` and parity fixtures for current client/server state;
-4. move interaction and rendering fields out of authoritative state;
-5. change persistence to `CanonicalGameSnapshot` and wire sync to an explicit
-   `RecipientSnapshot`, each with one verified offset;
-6. retain legacy readers until fixture-based migration tests cover supported
-   saves, maps, and replays, then remove old models and adapters.
+The implementation remains `In progress` for two explicit reasons. First,
+several presentation calculators and rendering layers still accept concrete
+`WorldMap` even when a smaller `MapTileLookup`, `MapTraversalView`, or
+`MapReadView` port is sufficient. Composition may own `WorldMap`; leaf HUD and
+renderer code must be narrowed before the map boundary is complete. Second,
+`DomainActionState` still contains the deterministic portions of pending
+workflows while matching prompts are projected into `InteractionState`; every
+pending subtype still needs a final rules-evidence versus client-workflow
+classification before that boundary can be declared complete.
 
-Every migration step must keep existing save fixtures readable, keep bundled
-maps valid, pass local/server reducer parity tests, and avoid adding a new
-authoritative representation. Architecture tests should reject dependencies
-from world/domain types to Flutter, Flame, Serverpod, or adapter packages.
+AST architecture tests inventory production sources, including `tool/`, and
+reject removed map/state types, adapters, duplicate canonical fields, and
+recipient snapshots entering the engine. Contract tests prove defensive map
+ownership, O(1) indexed lookup, canonical codec round trips, server roster
+validation, and local/server/AI/replay engine parity. Completion requires the
+two named exceptions above to reach zero; a raw text search alone is not the
+definition of done.
 
 ## Related Decisions And Documentation
 

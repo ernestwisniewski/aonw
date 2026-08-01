@@ -27,14 +27,8 @@ void _registerDeclinedProposalFundingBoundaryTest() {
     expect(result.accepted, isTrue);
     expect(result.reason, isNull);
     expect(result.state.playerGold, same(state.playerGold));
-    expect(result.state.runtimeState.diplomacy.pendingProposals, isEmpty);
-    expect(
-      result.state.runtimeState.diplomacy.relationScoreBetween(
-        _player1,
-        _player2,
-      ),
-      -6,
-    );
+    expect(result.state.diplomacy.pendingProposals, isEmpty);
+    expect(result.state.diplomacy.relationScoreBetween(_player1, _player2), -6);
     expect(result.events, hasLength(2));
     expect(result.events[0], isA<DiplomaticProposalRespondedEvent>());
     final score = result.events[1] as DiplomaticScoreChangedEvent;
@@ -66,7 +60,7 @@ void _registerProposalResponseWithoutDiscoveryTest() {
     );
 
     expect(result.accepted, isTrue);
-    expect(result.state.runtimeState.diplomacy.pendingProposals, isEmpty);
+    expect(result.state.diplomacy.pendingProposals, isEmpty);
     expect(result.events, hasLength(2));
   });
 }
@@ -100,7 +94,7 @@ void _registerMessageResponseWithoutDiscoveryTest() {
     );
 
     expect(result.accepted, isTrue);
-    final updated = result.state.runtimeState.diplomacy.messages['message_1']!;
+    final updated = result.state.diplomacy.messages['message_1']!;
     expect(updated.response, DiplomaticMessageResponse.neutral);
     expect(updated.relationScoreDelta, 2);
     expect(updated.relationScoreAfter, 2);
@@ -108,9 +102,7 @@ void _registerMessageResponseWithoutDiscoveryTest() {
   });
 }
 
-PersistentGameState _stateWithoutKnownDiplomacyPlayers(
-  DiplomacyState diplomacy,
-) {
+DomainState _stateWithoutKnownDiplomacyPlayers(DiplomacyState diplomacy) {
   return _diplomacyState(
     playerColors: const {_sentinelPlayer: 99},
     playerCountries: const {_sentinelPlayer: PlayerCountry.greece},

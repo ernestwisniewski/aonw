@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/player.dart';
 abstract final class AiPrecomputeScheduleKey {
   static String build({
     required GameSave save,
-    required GameState gameState,
+    required GameClientState gameState,
     required Player player,
   }) {
     final ai = player.ai;
@@ -16,13 +16,13 @@ abstract final class AiPrecomputeScheduleKey {
         '${worldStateHash(gameState)}';
   }
 
-  static int worldStateHash(GameState state) {
+  static int worldStateHash(GameClientState state) {
     return state
         .copyWith(
           activePlayerId: '',
           activePlayerCanAct: true,
           submittedPlayerIds: const {},
-          interaction: GameInteractionState.empty,
+          interaction: InteractionState.empty,
           intendedAttacks: const <IntendedAttack>[],
         )
         .hashCode;

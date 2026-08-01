@@ -71,8 +71,8 @@ AiContext _context() {
 }
 
 GameView _view({List<GameUnit> units = const []}) {
-  return GameView.fromPersistentState(
-    PersistentGameState(units: units),
+  return GameView.fromDomainState(
+    DomainState.snapshot(units: units),
     forPlayerId: 'player_1',
     turn: 1,
     mapData: _mapData(),
@@ -93,13 +93,13 @@ GameUnit _unit(String id, {int col = 0, int row = 0}) {
   );
 }
 
-MapData _mapData() {
-  return MapData(
+WorldMap _mapData() {
+  return WorldMap(
     cols: 4,
     rows: 1,
     tiles: [
       for (var col = 0; col < 4; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.plains],

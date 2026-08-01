@@ -46,8 +46,8 @@ const _detailTestSelection = SelectionViewModel(
   selectionKey: 'tile:0,0',
 );
 
-GameState _attackState(String attackerUnitId) => GameState(
-  interaction: GameInteractionState(
+GameClientState _attackState(String attackerUnitId) => GameClientState(
+  interaction: InteractionState(
     pendingAction: PendingAttackTargeting(
       ownerPlayerId: 'player_1',
       attackerUnitId: attackerUnitId,
@@ -124,7 +124,7 @@ void _registerDetailModalCoordinationTests() {
 
     Future<void> pump() => _pumpDeck(
       tester,
-      gameState: const GameState(),
+      gameState: GameClientState(),
       remainingActionCount: 1,
       selection: _detailTestSelection,
       openSelectionDetailChipId: openChipId,
@@ -194,7 +194,7 @@ void _registerDetailModalCoordinationTests() {
 
       await _pumpDeck(
         tester,
-        gameState: const GameState(),
+        gameState: GameClientState(),
         remainingActionCount: 1,
         selection: _detailTestSelection,
         openSelectionDetailChipId: SelectionInfoChipId.terrain,
@@ -220,7 +220,7 @@ void _registerDetailModalCoordinationTests() {
 Future<void> _pumpDeck(
   WidgetTester tester, {
   ValueNotifier<Set<String>>? animatingUnitIdsListenable,
-  GameState gameState = const GameState(),
+  GameClientState? gameState,
   bool readyToEndTurn = false,
   int remainingActionCount = 0,
   int currentActionIndex = 0,
@@ -242,6 +242,7 @@ Future<void> _pumpDeck(
   VoidCallback? onCloseSelectionDetail,
   ProviderContainer? providerContainer,
 }) async {
+  final resolvedGameState = gameState ?? GameClientState();
   if (screenSize != null) {
     tester.view.physicalSize = screenSize;
     tester.view.devicePixelRatio = 1;
@@ -257,7 +258,7 @@ Future<void> _pumpDeck(
       gameSave: _save,
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      gameState: gameState,
+      gameState: resolvedGameState,
       readyToEndTurn: readyToEndTurn,
       remainingActionCount: remainingActionCount,
       currentActionIndex: currentActionIndex,

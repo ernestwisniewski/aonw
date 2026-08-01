@@ -333,7 +333,7 @@ CanonicalGameSnapshot _snapshot({
   FogOfWarState? fogOfWar,
 }) {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
+    domain: (DomainState.snapshot(
       turn: 7,
       matchRules: MatchRules.standard,
       participants: const [
@@ -343,8 +343,8 @@ CanonicalGameSnapshot _snapshot({
       units: units,
       cities: cities,
       fogOfWar: fogOfWar ?? _visibleFog,
-    ),
-    session: MatchSessionState.snapshot(gameMode: GameMode.multiplayer),
+    )).copyWith(gameMode: GameMode.multiplayer),
+
     metadata: GameSnapshotMetadata(
       id: 'combat',
       schemaVersion: 3,
@@ -377,18 +377,16 @@ final _visibleFog = FogOfWarState(
   },
 );
 
-final _map = WorldMapReadView(
-  WorldMap(
-    cols: 3,
-    rows: 1,
-    tiles: [
-      for (var col = 0; col < 3; col++)
-        WorldTile(
-          coordinate: HexCoord(col: col, row: 0),
-          terrains: const [TerrainType.grassland],
-          resources: const [],
-          height: 0,
-        ),
-    ],
-  ),
+final _map = WorldMap(
+  cols: 3,
+  rows: 1,
+  tiles: [
+    for (var col = 0; col < 3; col++)
+      WorldTile.at(
+        coordinate: HexCoord(col: col, row: 0),
+        terrains: const [TerrainType.grassland],
+        resources: const [],
+        height: 0,
+      ),
+  ],
 );

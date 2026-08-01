@@ -34,7 +34,7 @@ final class HiddenAiCommandPresenter {
 
   Future<DispatchCommandResult> dispatchAndPresent({
     String sourceId = 'hidden-ai-preview',
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     required GameCommandContext context,
   }) async {
@@ -92,6 +92,6 @@ final class HiddenAiCommandPresenter {
       final completedTurn = GameEventDescriptor.forEvent(event).completedTurn;
       if (completedTurn != null) return completedTurn;
     }
-    return result.snapshot?.save.turn;
+    return result.snapshot?.domain.turn;
   }
 }

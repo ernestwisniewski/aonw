@@ -2,10 +2,10 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -59,15 +59,15 @@ void main() {
 
 StrategicPlan _resolve(
   AiStrategicPlanProvider provider,
-  SaveSnapshot snapshot,
+  CanonicalGameSnapshot snapshot,
 ) {
   final player = snapshot.save.players.singleWhere((p) => p.id == 'player_2');
   final ai = player.ai!;
   final ruleset = GameRuleset.defaults.copyWith(
     paceBalance: snapshot.save.matchRules.paceBalance,
   );
-  final view = GameView.fromPersistentState(
-    snapshot.persistentState,
+  final view = GameView.fromDomainState(
+    snapshot.domain,
     forPlayerId: player.id,
     turn: snapshot.save.turn,
     mapData: _mapData,
@@ -98,13 +98,13 @@ StrategicPlan _resolve(
   );
 }
 
-SaveSnapshot _snapshot({
+CanonicalGameSnapshot _snapshot({
   required int turn,
   List<GameCity> cities = _healthyCities,
   List<GameUnit>? units,
   int gold = 50,
 }) {
-  return SaveSnapshot(
+  return GameSnapshotFactory.create(
     save: _save(turn: turn),
     cities: cities,
     units: units ?? _healthyWorkers,
@@ -112,7 +112,7 @@ SaveSnapshot _snapshot({
   );
 }
 
-SaveSnapshot _collapsedSnapshot({required int turn}) {
+CanonicalGameSnapshot _collapsedSnapshot({required int turn}) {
   return _snapshot(
     turn: turn,
     cities: const [_cityA],
@@ -197,13 +197,13 @@ final _workerC = GameUnit.produced(
 
 final _healthyWorkers = [_workerA, _workerB, _workerC];
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 5,
   rows: 5,
   tiles: [
     for (var row = 0; row < 5; row++)
       for (var col = 0; col < 5; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],

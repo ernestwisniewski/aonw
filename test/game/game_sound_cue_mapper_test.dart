@@ -32,8 +32,8 @@ void main() {
         col: 1,
         row: 0,
       );
-      final before = GameState(units: [beforeUnit]);
-      final after = GameState(units: [afterUnit]);
+      final before = GameClientState(units: [beforeUnit]);
+      final after = GameClientState(units: [afterUnit]);
       const effect = AnimateUnitMoveEffect(
         unitId: 'cavalry_1',
         fromCol: 0,
@@ -64,7 +64,7 @@ void main() {
     });
 
     test('does not play command cues for no-op commands', () {
-      const state = GameState();
+      final state = GameClientState();
 
       expect(
         GameSoundCueMapper.forCommand(
@@ -83,7 +83,7 @@ void main() {
         GameSoundCueMapper.forCommand(
           command: const TileTappedCommand(0, 0),
           previousState: null,
-          state: const GameState(activePlayerId: 'player_1'),
+          state: GameClientState(activePlayerId: 'player_1'),
           events: const [],
           uiEffects: const [],
         ),
@@ -104,13 +104,11 @@ void main() {
       expect(
         GameSoundCueMapper.forCommand(
           command: const TileTappedCommand(0, 0),
-          previousState: const GameState(activePlayerId: 'player_1'),
-          state: GameState(
+          previousState: GameClientState(activePlayerId: 'player_1'),
+          state: GameClientState(
             activePlayerId: 'player_1',
             units: [unit],
-            interaction: GameInteractionState(
-              selection: GameSelection.unit(unit),
-            ),
+            interaction: InteractionState(selection: GameSelection.unit(unit)),
           ),
           events: const [],
           uiEffects: const [],
@@ -130,14 +128,14 @@ void main() {
       expect(
         GameSoundCueMapper.forCommand(
           command: const CityTappedCommand('city_1'),
-          previousState: const GameState(
+          previousState: GameClientState(
             activePlayerId: 'player_1',
             cities: [city],
           ),
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             cities: const [city],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.city(
                 city,
                 cityYield: TileYield.zero,
@@ -173,11 +171,14 @@ void main() {
       expect(
         GameSoundCueMapper.forCommand(
           command: const MoveUnitCommand('cavalry_1', 1, 0),
-          previousState: GameState(
+          previousState: GameClientState(
             activePlayerId: 'player_1',
             units: [beforeUnit],
           ),
-          state: GameState(activePlayerId: 'player_1', units: [afterUnit]),
+          state: GameClientState(
+            activePlayerId: 'player_1',
+            units: [afterUnit],
+          ),
           events: const [],
           uiEffects: const [],
         ),
@@ -194,10 +195,10 @@ void main() {
         col: 0,
         row: 0,
       );
-      final previous = GameState(
+      final previous = GameClientState(
         activePlayerId: 'player_1',
         units: [unit],
-        interaction: GameInteractionState(selection: GameSelection.unit(unit)),
+        interaction: InteractionState(selection: GameSelection.unit(unit)),
       );
 
       expect(
@@ -235,13 +236,14 @@ void main() {
       expect(
         GameSoundCueMapper.forCommand(
           command: const StartWorkerActionSelectionCommand('worker_1'),
-          previousState: GameState(activePlayerId: 'player_1', units: [unit]),
-          state: GameState(
+          previousState: GameClientState(
             activePlayerId: 'player_1',
             units: [unit],
-            interaction: GameInteractionState(
-              selection: GameSelection.unit(unit),
-            ),
+          ),
+          state: GameClientState(
+            activePlayerId: 'player_1',
+            units: [unit],
+            interaction: InteractionState(selection: GameSelection.unit(unit)),
           ),
           events: const [],
           uiEffects: const [],
@@ -251,7 +253,7 @@ void main() {
     });
 
     test('keeps technology selection silent and maps turn command cue', () {
-      const state = GameState(activePlayerId: 'player_1');
+      final state = GameClientState(activePlayerId: 'player_1');
 
       expect(
         GameSoundCueMapper.forCommand(
@@ -278,7 +280,7 @@ void main() {
         GameSoundCueMapper.forCommand(
           command: const FocusTurnStartActionCommand('player_2'),
           previousState: state,
-          state: const GameState(activePlayerId: 'player_2'),
+          state: GameClientState(activePlayerId: 'player_2'),
           events: const [],
           uiEffects: const [],
         ),
@@ -336,12 +338,12 @@ void main() {
                 technologyId: TechnologyId.agriculture,
               ),
             ],
-            state: GameState(
+            state: GameClientState(
               activePlayerId: 'player_1',
               cities: const [city],
               units: [attacker, defender],
             ),
-            previousState: GameState(
+            previousState: GameClientState(
               activePlayerId: 'player_1',
               cities: const [city],
               units: [attacker, defender],
@@ -372,8 +374,8 @@ void main() {
               technologyId: TechnologyId.agriculture,
             ),
           ],
-          state: const GameState(activePlayerId: 'player_1', cities: [city]),
-          previousState: const GameState(
+          state: GameClientState(activePlayerId: 'player_1', cities: [city]),
+          previousState: GameClientState(
             activePlayerId: 'player_1',
             cities: [city],
           ),
@@ -391,8 +393,8 @@ void main() {
               defenderUnitId: 'enemy_1',
             ),
           ],
-          state: const GameState(activePlayerId: 'player_1'),
-          previousState: const GameState(activePlayerId: 'player_1'),
+          state: GameClientState(activePlayerId: 'player_1'),
+          previousState: GameClientState(activePlayerId: 'player_1'),
         ),
         isEmpty,
       );

@@ -90,8 +90,8 @@ void main() {
         interactionEffects: const [JumpCameraEffect(col: 1, row: 2)],
         events: const [],
         visibleMovementExecutions: const [],
-        state: const GameState(),
-        previousState: const GameState(),
+        state: GameClientState(),
+        previousState: GameClientState(),
       );
     }
 
@@ -115,16 +115,16 @@ void main() {
         interactionEffects: const [JumpCameraEffect(col: 1, row: 2)],
         events: const [],
         visibleMovementExecutions: const [],
-        state: const GameState(),
-        previousState: const GameState(),
+        state: GameClientState(),
+        previousState: GameClientState(),
       );
     }
 
     final cached = batch('intent_1');
-    await renderer.applyProjectedTransition(const GameState(), cached);
-    await renderer.applyProjectedTransition(const GameState(), cached);
+    await renderer.applyProjectedTransition(GameClientState(), cached);
+    await renderer.applyProjectedTransition(GameClientState(), cached);
     await renderer.applyProjectedTransition(
-      const GameState(),
+      GameClientState(),
       batch('intent_2'),
     );
 
@@ -150,7 +150,7 @@ void main() {
       col: 3,
       row: 2,
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [fortifier, enemy],
     );
@@ -204,16 +204,16 @@ void main() {
       final renderer = _RecordingRendererViewModel()
         ..activateProjectedEffectSource('match_a');
       await renderer.applyProjectedTransition(
-        const GameState(),
+        GameClientState(),
         batch('match_a', 10),
       );
       renderer.activateProjectedEffectSource('match_b');
       await renderer.applyProjectedTransition(
-        const GameState(),
+        GameClientState(),
         batch('match_b', 1),
       );
       await renderer.applyProjectedTransition(
-        const GameState(),
+        GameClientState(),
         batch('match_a', 10),
       );
 
@@ -229,15 +229,15 @@ void main() {
       );
       final first = _RecordingRendererViewModel()
         ..activateProjectedEffectSource('match_1');
-      await first.applyProjectedTransition(const GameState(), batch);
-      await first.applyProjectedTransition(const GameState(), batch);
+      await first.applyProjectedTransition(GameClientState(), batch);
+      await first.applyProjectedTransition(GameClientState(), batch);
       expect(first.applied, hasLength(1));
 
       final recreated = _RecordingRendererViewModel()
         ..activateProjectedEffectSource('match_1');
-      await recreated.applyProjectedTransition(const GameState(), batch);
+      await recreated.applyProjectedTransition(GameClientState(), batch);
       recreated.resetProjectedEffectCursorForReplaySeek();
-      await recreated.applyProjectedTransition(const GameState(), batch);
+      await recreated.applyProjectedTransition(GameClientState(), batch);
 
       expect(recreated.applied, hasLength(2));
     },
@@ -270,7 +270,7 @@ final class _RecordingRendererViewModel implements RendererViewModel {
 
   @override
   Future<void> applyTransition(
-    GameState state,
+    GameClientState state,
     Iterable<RendererEffect> effects, {
     int? currentTurn,
   }) async {
@@ -278,7 +278,10 @@ final class _RecordingRendererViewModel implements RendererViewModel {
   }
 
   @override
-  void applyStateWithoutCameraFocus(GameState state, {int? currentTurn}) {}
+  void applyStateWithoutCameraFocus(
+    GameClientState state, {
+    int? currentTurn,
+  }) {}
 
   @override
   Future<void> handleEffect(RendererEffect effect) async {

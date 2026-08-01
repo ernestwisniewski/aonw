@@ -104,10 +104,8 @@ abstract final class CanonicalTurnPipeline {
         : economy.state.culturalVictoryHoldTurnsByPlayerId;
     final nextDomain = economy.state.copyWith(
       culturalVictoryHoldTurnsByPlayerId: culturalHoldTurns,
-    );
-    final nextSession = snapshot.session.copyWith(
       turnStatesByPlayerId: {
-        ...snapshot.session.turnStatesByPlayerId,
+        ...snapshot.domain.turnStatesByPlayerId,
         playerId: PlayerTurnState.finished,
       },
     );
@@ -115,7 +113,6 @@ abstract final class CanonicalTurnPipeline {
     return CanonicalTurnPipelineResult(
       snapshot: snapshot.copyWith(
         domain: nextDomain,
-        session: nextSession,
         metadata: snapshot.metadata.copyWith(savedAtUtc: savedAtUtc),
       ),
       events: [

@@ -59,8 +59,8 @@ class GameActivityContext {
 
   factory GameActivityContext.capture({
     required GameEvent event,
-    required GameState state,
-    GameState? previousState,
+    required GameClientState state,
+    GameClientState? previousState,
   }) {
     final descriptor = GameEventDescriptor.forEvent(event);
     final unitIds = descriptor.unitIds;

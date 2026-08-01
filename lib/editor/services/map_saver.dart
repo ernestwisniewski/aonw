@@ -29,7 +29,7 @@ abstract final class MapSaver {
       ..freeze();
     final file = await MapStorage.jsonFile(safeName);
     await file.parent.create(recursive: true);
-    await file.writeAsString(MapLoader.toJson(draft.toMapData()));
+    await file.writeAsString(MapLoader.toJson(draft.toWorldMap()));
   }
 
   /// Opens the gallery picker and returns the picked image path.

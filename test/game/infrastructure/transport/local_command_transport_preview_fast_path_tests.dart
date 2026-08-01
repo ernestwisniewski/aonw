@@ -5,7 +5,7 @@ void _registerPreviewFastPathTests() {
     final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
     final save = _save(players: const [_player1]);
     final repository = _MemoryGameRepository(
-      SaveSnapshot(save: save, units: [commander]),
+      GameSnapshotFactory.create(save: save, units: [commander]),
     );
     final eventLog = _MemoryEventLog();
     final transport = LocalCommandTransport(
@@ -18,7 +18,7 @@ void _registerPreviewFastPathTests() {
 
     final result = await transport.dispatchAcrossBoundary(
       saveId: save.id,
-      currentState: GameState(
+      currentState: GameClientState(
         units: [commander],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
@@ -40,7 +40,7 @@ void _registerPreviewFastPathTests() {
     final save = _save(players: const [_player1]);
     final mapData = _map();
     final repository = _MemoryGameRepository(
-      SaveSnapshot(save: save, units: [commander]),
+      GameSnapshotFactory.create(save: save, units: [commander]),
     );
     final eventLog = _MemoryEventLog();
     final snapshotStore = _MemorySnapshotStore();
@@ -54,11 +54,11 @@ void _registerPreviewFastPathTests() {
 
     final result = await transport.dispatchAcrossBoundary(
       saveId: save.id,
-      currentState: GameState(
+      currentState: GameClientState(
         units: [commander],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander, tile: mapData.tileAt(0, 0)),
           moveCommandActive: true,
         ),

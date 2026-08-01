@@ -13,7 +13,7 @@ class AiRecentHostilityTracker {
   }) : assert(commandWindow > 0);
 
   Future<Set<String>> hostilePlayerIds({
-    required SaveSnapshot snapshot,
+    required CanonicalGameSnapshot snapshot,
     required String playerId,
   }) async {
     final startOffset = _startOffset(snapshot.eventLogOffset, commandWindow);

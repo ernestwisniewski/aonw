@@ -3519,13 +3519,13 @@ void main() {
     );
 
     test('prioritizes only-city protection over distant war attacks', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 5,
         rows: 3,
         tiles: [
           for (var col = 0; col < 5; col++)
             for (var row = 0; row < 3; row++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: const [TerrainType.plains],
@@ -3623,12 +3623,12 @@ void main() {
     });
 
     test('drops raids by the last military unit away from owned cities', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 5,
         rows: 1,
         tiles: [
           for (var col = 0; col < 5; col++)
-            TileData(
+            WorldTile(
               col: col,
               row: 0,
               terrains: const [TerrainType.plains],
@@ -5104,7 +5104,7 @@ List<DomainCommand> _commands(List<MctsAction> actions) {
 }
 
 AiContext _context({
-  MapData? mapData,
+  WorldMap? mapData,
   StrategicPlan? strategicPlan,
   CivilizationProfile civProfile = CivilizationProfiles.poland,
 }) {
@@ -5146,7 +5146,7 @@ StrategicPlan _strategicPlan({
 }
 
 GameView _view({
-  MapData? mapData,
+  WorldMap? mapData,
   PlayerResearchState? research,
   List<GameUnit> units = const [],
   List<GameCity> cities = const [],
@@ -5160,12 +5160,12 @@ GameView _view({
       ? ResearchState.empty
       : ResearchState(players: {_playerId: research});
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       units: units,
       cities: cities,
       fieldImprovements: fieldImprovements,
       research: researchState,
-      runtimeState: GameRuntimeState(diplomacy: diplomacy),
+      diplomacy: diplomacy,
       fogOfWar: fogOfWar ?? _visibleFog(actualMapData),
     ),
     forPlayerId: _playerId,
@@ -5176,30 +5176,30 @@ GameView _view({
   );
 }
 
-MapData _mapData() => _squareMap(cols: 3, rows: 2);
+WorldMap _mapData() => _squareMap(cols: 3, rows: 2);
 
-MapData _lineMap(int cols) => _squareMap(cols: cols, rows: 1);
+WorldMap _lineMap(int cols) => _squareMap(cols: cols, rows: 1);
 
-MapData _highCostLineMap() {
-  return MapData(
+WorldMap _highCostLineMap() {
+  return WorldMap(
     cols: 3,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.snow, TerrainType.forest, TerrainType.tundra],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 2,
         row: 0,
         terrains: [TerrainType.plains],
@@ -5210,14 +5210,14 @@ MapData _highCostLineMap() {
   );
 }
 
-MapData _squareMap({required int cols, required int rows}) {
-  return MapData(
+WorldMap _squareMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var col = 0; col < cols; col++)
         for (var row = 0; row < rows; row++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
@@ -5228,7 +5228,7 @@ MapData _squareMap({required int cols, required int rows}) {
   );
 }
 
-FogOfWarState _visibleFog(MapData mapData) {
+FogOfWarState _visibleFog(WorldMap mapData) {
   return _fogForHexes(_playerId, {
     for (final tile in mapData.tiles) HexCoordinate.fromTile(tile),
   });

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:aonw_core/domain.dart';
 
 int reviewedRushProductionPerTurn({
-  required PersistentGameState state,
+  required DomainState state,
   required GameCity city,
   required CityProductionTarget target,
   required MapTileLookup mapTiles,
@@ -57,8 +57,8 @@ void requireAcceptedRushProduction({
   required String fixtureId,
   required RushProductionCommand command,
   required String actorPlayerId,
-  required PersistentGameState before,
-  required PersistentGameState after,
+  required DomainState before,
+  required DomainState after,
   required List<GameEvent> events,
   required MapTileLookup mapTiles,
   required PaceBalance paceBalance,
@@ -85,7 +85,7 @@ _AcceptedRushContext _requireAcceptedRushContext({
   required String fixtureId,
   required RushProductionCommand command,
   required String actorPlayerId,
-  required PersistentGameState before,
+  required DomainState before,
   required MapTileLookup mapTiles,
   required PaceBalance paceBalance,
 }) {
@@ -354,7 +354,7 @@ final class _AcceptedRushContext {
 
   final String fixtureId;
   final String actorPlayerId;
-  final PersistentGameState before;
+  final DomainState before;
   final MapTileLookup mapTiles;
   final PaceBalance paceBalance;
   final int cityIndex;
@@ -369,6 +369,6 @@ final class _AcceptedRushContext {
 final class _ExpectedRushProduction {
   const _ExpectedRushProduction({required this.state, this.events = const []});
 
-  final PersistentGameState state;
+  final DomainState state;
   final List<GameEvent> events;
 }

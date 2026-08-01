@@ -46,7 +46,7 @@ class _GamePlayerControlSyncState extends ConsumerState<GamePlayerControlSync> {
   }
 
   bool _gameStateMatchesControl(
-    GameState? gameState,
+    GameClientState? gameState,
     PlayerControlState control,
   ) {
     return gameState != null &&

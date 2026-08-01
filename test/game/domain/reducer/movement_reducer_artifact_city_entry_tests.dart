@@ -5,7 +5,7 @@ void _registerArtifactCarrierDirectMoveTest() {
     final roughMap = _artifactCarrierRoughCityMap();
     final carrier = _artifactCarrier();
     final city = _city(id: 'city_1', col: 1);
-    final state = GameState(
+    final state = GameClientState(
       units: [carrier],
       cities: [city],
       activePlayerId: 'player_1',
@@ -73,7 +73,7 @@ void _registerArtifactCarrierPreviewTests() {
   });
 }
 
-MapData _artifactCarrierRoughCityMap() => _map(
+WorldMap _artifactCarrierRoughCityMap() => _map(
   2,
   1,
   terrainOverrides: {
@@ -93,12 +93,13 @@ GameUnit _artifactCarrier() => GameUnit.produced(
   row: 0,
 ).copyWith(movementPoints: 2).copyWithCarriedArtifact('artifact_1');
 
-GameState _artifactCarrierSelectedState(GameUnit carrier) => GameState(
-  units: [carrier],
-  cities: [_city(id: 'city_1', col: 1)],
-  activePlayerId: 'player_1',
-  interaction: GameInteractionState(
-    selection: GameSelection.unit(carrier),
-    moveCommandActive: true,
-  ),
-);
+GameClientState _artifactCarrierSelectedState(GameUnit carrier) =>
+    GameClientState(
+      units: [carrier],
+      cities: [_city(id: 'city_1', col: 1)],
+      activePlayerId: 'player_1',
+      interaction: InteractionState(
+        selection: GameSelection.unit(carrier),
+        moveCommandActive: true,
+      ),
+    );

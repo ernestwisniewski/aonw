@@ -1,15 +1,15 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-TileData _tile({
+WorldTile _tile({
   required int col,
   required int row,
   List<TerrainType> terrains = const [TerrainType.grassland],
 }) {
-  return TileData(
+  return WorldTile(
     col: col,
     row: row,
     terrains: terrains,
@@ -18,7 +18,7 @@ TileData _tile({
   );
 }
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 4,
   rows: 4,
   tiles: [

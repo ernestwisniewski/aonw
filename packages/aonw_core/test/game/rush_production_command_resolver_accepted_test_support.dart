@@ -92,7 +92,7 @@ _RushKernelScenario _acceptedWonderRushKernelScenario() {
 _RushKernelScenario _acceptedScenario({
   required String name,
   required _RushKernelAcceptance acceptance,
-  required PersistentGameState state,
+  required DomainState state,
   WonderRuleset wonderRuleset = WonderRuleset.standard,
   PaceBalance paceBalance = PaceBalance.unlimited,
 }) {
@@ -158,7 +158,7 @@ void _expectAcceptedRushSlices(
 
 void _expectAcceptedRushIdentities(
   _RushKernelAcceptance acceptance,
-  PersistentGameState persistentBefore,
+  DomainState persistentBefore,
   DomainState domainBefore,
   RushProductionCommandResult direct,
   DomainCityProductionResult domain,
@@ -224,7 +224,7 @@ void _expectSliceIdentity(Object after, Object before, bool changed) {
 }
 
 void _expectAcceptedRushImmutability(
-  PersistentGameState before,
+  DomainState before,
   RushProductionCommandResult direct,
   DomainCityProductionResult domain,
 ) {
@@ -266,7 +266,7 @@ void _expectRegistryImmutable(WonderRegistry registry) {
 }
 
 void _expectCompletedBuilding(
-  PersistentGameState before,
+  DomainState before,
   RushProductionCommandResult direct,
 ) {
   expect(direct.units, same(before.units));
@@ -278,7 +278,7 @@ void _expectCompletedBuilding(
 }
 
 void _expectCompletedUnit(
-  PersistentGameState before,
+  DomainState before,
   RushProductionCommandResult direct,
 ) {
   expect(direct.units, hasLength(before.units.length + 1));
@@ -294,7 +294,7 @@ void _expectCompletedUnit(
 }
 
 void _expectCompletedWonder(
-  PersistentGameState before,
+  DomainState before,
   RushProductionCommandResult direct,
 ) {
   expect(direct.units, same(before.units));

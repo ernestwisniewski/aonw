@@ -6,9 +6,7 @@ import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -33,13 +31,13 @@ void main() {
           investedProduction: 0,
         ),
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [unit],
         cities: [city],
         research: _activeResearch(),
       );
-      final MapTileLookup mapTiles = WorldMapReadView(_worldMap());
+      final MapTileLookup mapTiles = _worldMap();
 
       expect(
         TurnReducer.pendingTurnActionCount(state, 'player_1', mapTiles),
@@ -78,12 +76,12 @@ void main() {
       center: CityHex(col: 2, row: 2),
       controlledHexes: [CityHex(col: 1, row: 2)],
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       cities: const [city],
       research: _activeResearch(),
     );
-    final MapTileLookup mapTiles = WorldMapReadView(_worldMap());
+    final MapTileLookup mapTiles = _worldMap();
 
     final targets = TurnReducer.pendingTurnActionTargets(
       state,
@@ -121,7 +119,7 @@ WorldMap _worldMap() {
     tiles: [
       for (var row = 0; row < 5; row += 1)
         for (var col = 0; col < 5; col += 1)
-          WorldTile(
+          WorldTile.at(
             coordinate: HexCoord(col: col, row: row),
             terrains: const [TerrainType.plains],
             resources: const [],

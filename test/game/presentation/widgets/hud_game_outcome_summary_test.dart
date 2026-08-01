@@ -2,9 +2,9 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_game_outcome_summary.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -28,7 +28,7 @@ void main() {
       final summary = HudGameOutcomeSummary.from(
         l10n: l10n,
         gameSave: _save(),
-        gameState: GameState(
+        gameState: GameClientState(
           units: [
             _unit('warrior_1', 'player_1', 0),
             _unit('warrior_2', 'player_2', 1),
@@ -45,7 +45,7 @@ void main() {
       final summary = HudGameOutcomeSummary.from(
         l10n: l10n,
         gameSave: _save(),
-        gameState: GameState(units: [_unit('warrior_1', 'player_1', 0)]),
+        gameState: GameClientState(units: [_unit('warrior_1', 'player_1', 0)]),
         mapData: _mapData(4),
         activePlayerId: 'player_1',
       );
@@ -61,7 +61,7 @@ void main() {
       final summary = HudGameOutcomeSummary.from(
         l10n: l10n,
         gameSave: _save(),
-        gameState: GameState(units: [_unit('warrior_1', 'player_1', 0)]),
+        gameState: GameClientState(units: [_unit('warrior_1', 'player_1', 0)]),
         mapData: _mapData(4),
         activePlayerId: 'player_2',
       );
@@ -76,7 +76,7 @@ void main() {
       final summary = HudGameOutcomeSummary.from(
         l10n: l10n,
         gameSave: _save(gameMode: GameMode.multiplayer),
-        gameState: GameState(units: [_unit('warrior_1', 'player_1', 0)]),
+        gameState: GameClientState(units: [_unit('warrior_1', 'player_1', 0)]),
         mapData: _mapData(4),
         activePlayerId: 'player_1',
       );
@@ -90,7 +90,7 @@ void main() {
       final summary = HudGameOutcomeSummary.from(
         l10n: l10n,
         gameSave: _save(gameMode: GameMode.multiplayer),
-        gameState: GameState(
+        gameState: GameClientState(
           units: [_unit('warrior_1', 'player_1', 0)],
           fogOfWar: _fogFor('player_2', const [HexCoordinate(col: 0, row: 0)]),
         ),
@@ -108,7 +108,7 @@ void main() {
         final summary = HudGameOutcomeSummary.from(
           l10n: l10n,
           gameSave: _save(gameMode: GameMode.multiplayer),
-          gameState: GameState(
+          gameState: GameClientState(
             playerColors: const {
               'player_1': 0xFF4a7fc4,
               'player_2': 0xFFc45050,
@@ -138,7 +138,7 @@ void main() {
       final summary = HudGameOutcomeSummary.from(
         l10n: l10n,
         gameSave: _save(gameMode: GameMode.multiplayer),
-        gameState: GameState(
+        gameState: GameClientState(
           playerGold: const {'player_1': 0, 'player_2': 0},
           units: [_unit('warrior_1', 'player_1', 0)],
           fogOfWar: FogOfWarState(
@@ -160,7 +160,7 @@ void main() {
     });
 
     test('uses terminal server metadata for projected multiplayer state', () {
-      final projectedState = GameState(
+      final projectedState = GameClientState(
         activePlayerId: 'player_1',
         playerGold: const {'player_2': 0},
         units: [_unit('warrior_1', 'player_1', 0)],
@@ -202,7 +202,7 @@ void main() {
       final summary = HudGameOutcomeSummary.from(
         l10n: l10n,
         gameSave: _save(gameMode: GameMode.multiplayer),
-        gameState: GameState(
+        gameState: GameClientState(
           playerGold: const {'player_1': 0},
           fogOfWar: _fogFor('player_1', const []),
         ),
@@ -226,7 +226,7 @@ void main() {
       final summary = HudGameOutcomeSummary.from(
         l10n: l10n,
         gameSave: _save(gameMode: GameMode.multiplayer),
-        gameState: GameState(
+        gameState: GameClientState(
           playerGold: const {'player_2': 0},
           fogOfWar: _fogFor('player_2', const []),
         ),
@@ -254,7 +254,7 @@ void main() {
           turn: turnLimit,
           matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
         ),
-        gameState: GameState(
+        gameState: GameClientState(
           units: [
             _unit('warrior_1', 'player_1', 0),
             _unit('warrior_2', 'player_2', 1),
@@ -277,7 +277,7 @@ void main() {
         gameSave: _save(
           matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
         ),
-        gameState: GameState(
+        gameState: GameClientState(
           cities: [
             const GameCity(
               id: 'city_1',
@@ -374,13 +374,13 @@ GameUnit _unit(String id, String ownerPlayerId, int col) {
   );
 }
 
-MapData _mapData(int validTiles) {
-  return MapData(
+WorldMap _mapData(int validTiles) {
+  return WorldMap(
     cols: validTiles,
     rows: 1,
     tiles: [
       for (var col = 0; col < validTiles; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.grassland],

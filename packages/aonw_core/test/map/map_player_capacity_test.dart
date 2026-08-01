@@ -46,7 +46,7 @@ void main() {
       expect(MapPlayerCapacityRules.maxPlayersForTileCount(120), 2);
     });
 
-    test('uses map metadata primitives without requiring MapData', () {
+    test('uses map metadata primitives without requiring WorldMap', () {
       expect(
         MapPlayerCapacityRules.maxPlayersForMap(
           mapName: 'verdantia',
@@ -77,23 +77,18 @@ void main() {
       );
     });
 
-    test('legacy MapData helpers delegate to metadata primitives', () {
-      final map = MapData(
-        cols: 1,
-        rows: 1,
-        mapName: 'terenos',
-        tiles: const [],
-      );
+    test('legacy WorldMap helpers delegate to metadata primitives', () {
+      final map = WorldMap(cols: 1, rows: 1, mapName: 'terenos', tiles: []);
 
       expect(
-        MapPlayerCapacityRules.maxPlayersForMapData(map),
+        MapPlayerCapacityRules.maxPlayersForWorldMap(map),
         MapPlayerCapacityRules.maxPlayersForMap(
           mapName: map.mapName,
           tileCount: map.tileCount,
         ),
       );
       expect(
-        MapPlayerCapacityRules.singlePlayerPlayersForMapData(map),
+        MapPlayerCapacityRules.singlePlayerPlayersForWorldMap(map),
         MapPlayerCapacityRules.singlePlayerPlayersForMap(
           mapName: map.mapName,
           tileCount: map.tileCount,

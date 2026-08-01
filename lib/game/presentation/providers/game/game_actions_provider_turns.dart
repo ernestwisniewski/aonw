@@ -1,6 +1,6 @@
 part of 'game_actions_provider.dart';
 
-GameState? _currentGameStateFor(Ref ref) {
+GameClientState? _currentGameStateFor(Ref ref) {
   if (!ref.mounted) return null;
   final session = ref.read(activeGameSessionProvider);
   if (session == null || session.saveId.isEmpty) return null;
@@ -16,7 +16,7 @@ int? _currentSaveTurnFor(Ref ref) {
 
 extension GameCommandControllerTurnContext on GameCommandController {
   int? _turnFor(DispatchCommandResult result) =>
-      result.snapshot?.save.turn ?? _currentSaveTurn();
+      result.snapshot?.domain.turn ?? _currentSaveTurn();
 
   int? _eventTurnFor(DispatchCommandResult result) {
     for (final event in result.events) {

@@ -12,7 +12,7 @@ import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _MemoryGameRepository implements GameRepository {
-  SaveSnapshot snapshot;
+  CanonicalGameSnapshot snapshot;
 
   _MemoryGameRepository(this.snapshot);
 
@@ -29,15 +29,15 @@ class _MemoryGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async => snapshot;
+  Future<CanonicalGameSnapshot> load(String saveId) async => snapshot;
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {
+  Future<void> save(CanonicalGameSnapshot snapshot) async {
     this.snapshot = snapshot;
   }
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
@@ -89,7 +89,9 @@ void main() {
 
     test('dispatches end turn and prepares hotseat handoff', () async {
       final save = _save();
-      final repository = _MemoryGameRepository(SaveSnapshot(save: save));
+      final repository = _MemoryGameRepository(
+        GameSnapshotFactory.create(save: save),
+      );
       final commands = <DomainCommand>[];
 
       final result =
@@ -101,8 +103,8 @@ void main() {
             control: PlayerControlCoordinator.initial(save),
             dispatch: (command) async {
               commands.add(command);
-              repository.snapshot = repository.snapshot.copyWith(
-                save: _runtimeInstance(AdvanceTurnPhase.new).advanceSave(
+              repository.snapshot = repository.snapshot.withGameSave(
+                _runtimeInstance(AdvanceTurnPhase.new).advanceSave(
                   repository.snapshot.save,
                   playerId: (command as EndTurnCommand).playerId,
                 ),
@@ -132,7 +134,9 @@ void main() {
           ),
         ],
       );
-      final repository = _MemoryGameRepository(SaveSnapshot(save: save));
+      final repository = _MemoryGameRepository(
+        GameSnapshotFactory.create(save: save),
+      );
 
       final result =
           await EndTurnUseCase(
@@ -142,8 +146,8 @@ void main() {
             save: save,
             control: PlayerControlCoordinator.initial(save),
             dispatch: (command) async {
-              repository.snapshot = repository.snapshot.copyWith(
-                save: _runtimeInstance(AdvanceTurnPhase.new).advanceSave(
+              repository.snapshot = repository.snapshot.withGameSave(
+                _runtimeInstance(AdvanceTurnPhase.new).advanceSave(
                   repository.snapshot.save,
                   playerId: (command as EndTurnCommand).playerId,
                 ),
@@ -167,7 +171,9 @@ void main() {
             'player_2': PlayerTurnState.active,
           },
         );
-        final repository = _MemoryGameRepository(SaveSnapshot(save: save));
+        final repository = _MemoryGameRepository(
+          GameSnapshotFactory.create(save: save),
+        );
         final commands = <DomainCommand>[];
         final control = PlayerControlCoordinator.selectPlayer(
           current: PlayerControlCoordinator.initial(save),
@@ -184,8 +190,8 @@ void main() {
               control: control,
               dispatch: (command) async {
                 commands.add(command);
-                repository.snapshot = repository.snapshot.copyWith(
-                  save: repository.snapshot.save.withNewTurn(),
+                repository.snapshot = repository.snapshot.withGameSave(
+                  repository.snapshot.save.withNewTurn(),
                 );
                 return const [];
               },
@@ -211,7 +217,9 @@ void main() {
       );
       final result =
           await ConfirmHandoffUseCase(
-            repository: _MemoryGameRepository(SaveSnapshot(save: save)),
+            repository: _MemoryGameRepository(
+              GameSnapshotFactory.create(save: save),
+            ),
           ).execute(
             saveId: save.id,
             current: const PlayerControlState(activePlayerId: 'player_2'),

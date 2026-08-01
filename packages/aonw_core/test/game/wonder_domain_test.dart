@@ -304,14 +304,14 @@ ResearchState _researchWithAll(Set<TechnologyId> technologyIds) {
   );
 }
 
-MapData _mapData({bool withAdjacentRiver = false}) {
-  return MapData(
+WorldMap _mapData({bool withAdjacentRiver = false}) {
+  return WorldMap(
     cols: 5,
     rows: 5,
     tiles: [
       for (var row = 0; row < 5; row++)
         for (var col = 0; col < 5; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: col == 2 && row == 1 && withAdjacentRiver

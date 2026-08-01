@@ -9,8 +9,8 @@ import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_tile.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
+import 'package:aonw_core/domain/world_map.dart' show WorldTile;
 import 'package:aonw_core/game/domain/objective.dart';
-import 'package:aonw_core/map/domain/map_data.dart' show TileData;
 import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -25,7 +25,7 @@ void main() {
           cols: 1,
           rows: 1,
           tiles: [
-            const TileData(
+            WorldTile(
               col: 0,
               row: 0,
               terrains: [TerrainType.ocean],
@@ -76,14 +76,14 @@ void main() {
           cols: 2,
           rows: 1,
           tiles: [
-            const TileData(
+            WorldTile(
               col: 0,
               row: 0,
               terrains: [TerrainType.grassland, TerrainType.hills],
               resources: [ResourceType.iron],
               height: 2,
             ),
-            const TileData(
+            WorldTile(
               col: 1,
               row: 0,
               terrains: [TerrainType.ocean],
@@ -120,14 +120,14 @@ void main() {
                 cols: 1,
                 rows: 2,
                 tiles: [
-                  const TileData(
+                  WorldTile(
                     col: 0,
                     row: 0,
                     terrains: [TerrainType.ocean],
                     resources: [],
                     height: 0,
                   ),
-                  const TileData(
+                  WorldTile(
                     col: 0,
                     row: 1,
                     terrains: [TerrainType.ocean],
@@ -233,7 +233,7 @@ void main() {
         cols: 1,
         rows: 1,
         tiles: [
-          const TileData(
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.grassland],
@@ -277,7 +277,7 @@ void main() {
           rows: 1,
           tiles: [
             for (var col = 0; col <= removedCol; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: 0,
                 terrains: const [TerrainType.grassland],
@@ -320,7 +320,7 @@ void main() {
         cols: 1,
         rows: 1,
         tiles: [
-          const TileData(
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.grassland, TerrainType.hills],
@@ -365,21 +365,21 @@ void main() {
         cols: 3,
         rows: 1,
         tiles: [
-          const TileData(
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.grassland],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 1,
             row: 0,
             terrains: [TerrainType.coast],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 2,
             row: 0,
             terrains: [TerrainType.ocean],
@@ -418,35 +418,35 @@ void main() {
         cols: 7,
         rows: 1,
         tiles: [
-          const TileData(
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.grassland],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 1,
             row: 0,
             terrains: [TerrainType.coast],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 2,
             row: 0,
             terrains: [TerrainType.ocean],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 3,
             row: 0,
             terrains: [TerrainType.grassland, TerrainType.mountain],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 4,
             row: 0,
             terrains: [
@@ -458,14 +458,14 @@ void main() {
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 5,
             row: 0,
             terrains: [TerrainType.snow, TerrainType.forest],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 6,
             row: 0,
             terrains: [
@@ -503,7 +503,7 @@ void main() {
         cols: 1,
         rows: 1,
         tiles: [
-          const TileData(
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.grassland],
@@ -581,7 +581,7 @@ MapDraft _filledMapData({
   tiles: [
     for (int row = 0; row < rows; row++)
       for (int col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: [terrain],

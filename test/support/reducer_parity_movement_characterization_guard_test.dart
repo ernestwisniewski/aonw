@@ -102,7 +102,9 @@ void _registerMovementCorpusGuards(_FixtureProvider fixtureProvider) {
 void _registerMovementOracleGuards(_FixtureProvider fixtureProvider) {
   test('every expected state preserves unrelated movement sentinels', () {
     for (final fixture in fixtureProvider()) {
-      final expected = PersistentGameState.fromJson(fixture.expectedState);
+      final expected = CanonicalGameSnapshotCodec.decodeDomainState(
+        fixture.expectedState,
+      );
       expect(
         expected.units.map((unit) => unit.id),
         contains('movement_sentinel'),
@@ -131,53 +133,53 @@ void _registerMovementOracleGuards(_FixtureProvider fixtureProvider) {
         reason: fixture.id,
       );
       expect(
-        fixture.state.runtimeState.cityFoundingDraft,
+        fixture.state.actions.cityFoundingDraft,
         isNotNull,
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.cityFoundingDraft,
-        fixture.state.runtimeState.cityFoundingDraft,
+        expected.actions.cityFoundingDraft,
+        fixture.state.actions.cityFoundingDraft,
         reason: fixture.id,
       );
       expect(
-        fixture.state.runtimeState.pendingAction,
+        fixture.state.actions.pendingAction,
         isNotNull,
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.pendingAction,
-        fixture.state.runtimeState.pendingAction,
+        expected.actions.pendingAction,
+        fixture.state.actions.pendingAction,
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.submittedPlayerIds,
-        fixture.state.runtimeState.submittedPlayerIds,
+        expected.submittedPlayerIds,
+        fixture.state.submittedPlayerIds,
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.timeoutStreaksByPlayerId,
-        fixture.state.runtimeState.timeoutStreaksByPlayerId,
+        expected.timeoutStreaksByPlayerId,
+        fixture.state.timeoutStreaksByPlayerId,
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.mapObjectiveHoldStatesByObjectiveId,
-        fixture.state.runtimeState.mapObjectiveHoldStatesByObjectiveId,
+        expected.mapObjectiveHoldStatesByObjectiveId,
+        fixture.state.mapObjectiveHoldStatesByObjectiveId,
         reason: fixture.id,
       );
       expect(
-        fixture.state.runtimeState.resourceTradeAgreements,
+        fixture.state.resourceTradeAgreements,
         isNotEmpty,
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.resourceTradeAgreements,
-        fixture.state.runtimeState.resourceTradeAgreements,
+        expected.resourceTradeAgreements,
+        fixture.state.resourceTradeAgreements,
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.turnStartedAt,
-        fixture.state.runtimeState.turnStartedAt,
+        expected.turnStartedAt,
+        fixture.state.turnStartedAt,
         reason: fixture.id,
       );
     }
@@ -189,7 +191,9 @@ void _registerMovementOracleGuards(_FixtureProvider fixtureProvider) {
       fixtures,
       'partial-queued-accepted',
     );
-    final partialState = PersistentGameState.fromJson(partial.expectedState);
+    final partialState = CanonicalGameSnapshotCodec.decodeDomainState(
+      partial.expectedState,
+    );
     final partialUnit = partialState.units.first;
     expect((partialUnit.col, partialUnit.movementPoints), (2, 0));
     expect(partialUnit.queuedPath?.targetCol, 4);
@@ -207,7 +211,10 @@ void _registerMovementOracleGuards(_FixtureProvider fixtureProvider) {
       'hidden-intermediate-no-op-accepted',
     ]) {
       final hidden = _movementFixtureBySuffix(fixtures, suffix);
-      expect(hidden.expectedState, hidden.state.toJson());
+      expect(
+        hidden.expectedState,
+        CanonicalGameSnapshotCodec.encodeDomainState(hidden.state),
+      );
       expect(hidden.expectedEvents, isEmpty);
     }
 
@@ -215,10 +222,10 @@ void _registerMovementOracleGuards(_FixtureProvider fixtureProvider) {
       fixtures,
       'contact-discovery-accepted',
     );
-    final contactState = PersistentGameState.fromJson(contact.expectedState);
-    expect(contactState.runtimeState.diplomacy.contactKeys, {
-      'player_1|player_2',
-    });
+    final contactState = CanonicalGameSnapshotCodec.decodeDomainState(
+      contact.expectedState,
+    );
+    expect(contactState.diplomacy.contactKeys, {'player_1|player_2'});
     expect(
       contactState.fogOfWar.fogForPlayer('player_1').visibleHexes,
       hasLength(4),

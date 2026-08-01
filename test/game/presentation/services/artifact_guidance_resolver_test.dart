@@ -30,12 +30,12 @@ void main() {
     );
 
     final content = resolver.resolve(
-      previousState: const GameState(
+      previousState: GameClientState(
         activePlayerId: _playerId,
         cities: [city],
         artifacts: [previousArtifact],
       ),
-      state: const GameState(cities: [city], artifacts: [storedArtifact]),
+      state: GameClientState(cities: [city], artifacts: [storedArtifact]),
       events: const [
         ArtifactStoredEvent(
           artifactId: _artifactId,
@@ -64,11 +64,11 @@ void main() {
     );
 
     final content = resolver.resolve(
-      previousState: GameState(
+      previousState: GameClientState(
         activePlayerId: _playerId,
         units: [previousUnit],
       ),
-      state: GameState(units: [carryingUnit], artifacts: [artifact]),
+      state: GameClientState(units: [carryingUnit], artifacts: [artifact]),
       events: const [
         ArtifactCarriedEvent(
           artifactId: _artifactId,
@@ -94,8 +94,8 @@ void main() {
     );
 
     final content = resolver.resolve(
-      previousState: const GameState(activePlayerId: _playerId),
-      state: GameState(units: [unit], artifacts: [artifact]),
+      previousState: GameClientState(activePlayerId: _playerId),
+      state: GameClientState(units: [unit], artifacts: [artifact]),
       events: const [
         UnitMovedEvent(
           unitId: _unitId,
@@ -127,13 +127,13 @@ void main() {
       );
 
       final content = resolver.resolve(
-        previousState: const GameState(
+        previousState: GameClientState(
           activePlayerId: _playerId,
           artifacts: [previousArtifact],
         ),
-        state: const GameState(
+        state: GameClientState(
           cities: [
-            GameCity(
+            const GameCity(
               id: 'city_1',
               ownerPlayerId: _playerId,
               name: 'Capital',

@@ -18,7 +18,7 @@ class GameMapFocusTarget {
 }
 
 class GameMapFocusTargetResolver {
-  final GameState? state;
+  final GameClientState? state;
 
   const GameMapFocusTargetResolver(this.state);
 

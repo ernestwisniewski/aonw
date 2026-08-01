@@ -3,9 +3,9 @@ import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_info_item.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 abstract final class CityObjectiveSelectionItemsFactory {
   static List<SelectionInfoItem> descriptionItems({
     required GameCity city,
-    required MapData? mapData,
+    required WorldMap? mapData,
     required List<GameUnit> units,
     required AppLocalizations l10n,
   }) {

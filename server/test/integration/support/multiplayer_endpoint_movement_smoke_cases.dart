@@ -182,7 +182,7 @@ String _movementExecutionCoordinates(WireMovementExecution execution) {
 }
 
 Map<String, ({int col, int row})> _unitPositionsFor(
-  PersistentGameState state,
+  DomainState state,
   String playerId,
 ) {
   return {

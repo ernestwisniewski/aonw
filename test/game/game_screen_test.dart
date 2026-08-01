@@ -27,13 +27,13 @@ import 'package:aonw/game/presentation/widgets/selection/selection.dart';
 import 'package:aonw/game/presentation/widgets/selection_info/selection_detail_sheet.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_dialog.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/shared/providers/performance_settings_provider.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_options_panel.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -52,7 +52,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 part 'game_screen_visual_assertions.dart';
 
 class _FakeGameRepository implements GameRepository {
-  final Map<String, SaveSnapshot> snapshots;
+  final Map<String, CanonicalGameSnapshot> snapshots;
 
   _FakeGameRepository({required this.snapshots});
 
@@ -82,14 +82,14 @@ class _FakeGameRepository implements GameRepository {
   }
 
   @override
-  Future<SaveSnapshot> load(String saveId) async {
+  Future<CanonicalGameSnapshot> load(String saveId) async {
     final snapshot = snapshots[saveId];
     if (snapshot == null) throw StateError('missing save');
     return snapshot;
   }
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {
+  Future<void> save(CanonicalGameSnapshot snapshot) async {
     snapshots[snapshot.save.id] = snapshot;
   }
 
@@ -99,14 +99,14 @@ class _FakeGameRepository implements GameRepository {
   }
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
   }) async {
     final snapshot = await load(saveId);
-    final updated = snapshot.copyWith(
-      save: snapshot.save.copyWith(
+    final updated = snapshot.withGameSave(
+      snapshot.save.copyWith(
         camera: camera,
         savedAt: savedAt ?? snapshot.save.savedAt,
       ),
@@ -161,13 +161,13 @@ class _FakeSnapshotStore implements SnapshotStore {
 
 const _player1 = Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4);
 
-MapData _makeMap() => MapData(
+WorldMap _makeMap() => WorldMap(
   cols: 3,
   rows: 3,
   tiles: [
     for (int r = 0; r < 3; r++)
       for (int c = 0; c < 3; c++)
-        TileData(
+        WorldTile(
           col: c,
           row: r,
           terrains: const [TerrainType.ocean],
@@ -179,22 +179,6 @@ MapData _makeMap() => MapData(
 
 const _selection = MapSelection(name: 'test', source: MapSource.asset);
 const _otherSelection = MapSelection(name: 'other', source: MapSource.asset);
-
-MapData _makeOtherMap() => MapData(
-  cols: 4,
-  rows: 2,
-  tiles: [
-    for (int r = 0; r < 2; r++)
-      for (int c = 0; c < 4; c++)
-        TileData(
-          col: c,
-          row: r,
-          terrains: const [TerrainType.plains],
-          resources: const [],
-          height: 0,
-        ),
-  ],
-);
 
 GameSave _makeSave({
   String id = 'save_1',
@@ -218,12 +202,16 @@ GameSave _makeSave({
   );
 }
 
-SaveSnapshot _makeSnapshot({
+CanonicalGameSnapshot _makeSnapshot({
   required GameSave save,
   List<GameUnit> units = const [],
   FogOfWarState fogOfWar = FogOfWarState.empty,
 }) {
-  return SaveSnapshot(save: save, units: units, fogOfWar: fogOfWar);
+  return GameSnapshotFactory.create(
+    save: save,
+    units: units,
+    fogOfWar: fogOfWar,
+  );
 }
 
 FogOfWarState _visibleFog(
@@ -241,7 +229,7 @@ FogOfWarState _visibleFog(
 }
 
 ProviderContainer _makeContainer({
-  AsyncValue<MapData>? mapAsync,
+  AsyncValue<WorldMap>? mapAsync,
   AsyncValue<String?> imagePathAsync = const AsyncData(null),
   AsyncValue<CameraState?> cameraAsync = const AsyncData(null),
   AsyncValue<GameSave?> saveAsync = const AsyncData(null),
@@ -612,9 +600,9 @@ void main() {
         for (var row = 0; row < 3; row++)
           for (var col = 0; col < 3; col++) HexCoordinate(col: col, row: row),
       };
-      final snapshot = SaveSnapshot.fromGameState(
+      final snapshot = GameSnapshotFactory.fromClientState(
         save: save,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: _player1.id,
           units: [unit],
           cities: [city],
@@ -759,13 +747,13 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final panelMap = MapData(
+    final panelMap = WorldMap(
       cols: 5,
       rows: 5,
       tiles: [
         for (var row = 0; row < 5; row++)
           for (var col = 0; col < 5; col++)
-            TileData(
+            WorldTile(
               col: col,
               row: row,
               terrains: [
@@ -842,7 +830,7 @@ void main() {
       for (var row = 0; row < 5; row++)
         for (var col = 0; col < 5; col++) HexCoordinate(col: col, row: row),
     };
-    final baseState = GameState(
+    final baseState = GameClientState(
       activePlayerId: _player1.id,
       playerColors: {_player1.id: _player1.colorValue},
       playerGold: {_player1.id: 128},
@@ -886,8 +874,11 @@ void main() {
 
     Future<void> verifyPanel({
       required String name,
-      required GameState state,
-      required Future<void> Function(ProviderContainer scoped, GameState state)?
+      required GameClientState state,
+      required Future<void> Function(
+        ProviderContainer scoped,
+        GameClientState state,
+      )?
       prepare,
       required Future<void> Function() openPanel,
       required Type panelType,
@@ -898,7 +889,10 @@ void main() {
       final save = _makeSave(id: 'save_panel_$name');
       final gameRepository = _FakeGameRepository(
         snapshots: {
-          save.id: SaveSnapshot.fromGameState(save: save, state: state),
+          save.id: GameSnapshotFactory.fromClientState(
+            save: save,
+            state: state,
+          ),
         },
       );
       final container = ProviderContainer(

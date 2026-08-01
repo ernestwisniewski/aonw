@@ -13,8 +13,8 @@ class ArtifactGuidanceResolver {
   const ArtifactGuidanceResolver({required this.l10n});
 
   HudFeedbackContent? resolve({
-    required GameState previousState,
-    required GameState state,
+    required GameClientState previousState,
+    required GameClientState state,
     required Iterable<GameEvent> events,
   }) {
     final change = _ArtifactGuidanceChangeDetector(
@@ -72,7 +72,7 @@ class ArtifactGuidanceResolver {
 }
 
 class _ArtifactGuidanceChangeDetector {
-  final GameState state;
+  final GameClientState state;
   final Iterable<GameEvent> events;
   final String playerId;
 
@@ -134,14 +134,14 @@ class _ArtifactGuidanceChangeDetector {
         unit.excavatingArtifactId == null;
   }
 
-  WorldArtifact? _artifactById(GameState state, String artifactId) {
+  WorldArtifact? _artifactById(GameClientState state, String artifactId) {
     for (final artifact in state.artifacts) {
       if (artifact.id == artifactId) return artifact;
     }
     return null;
   }
 
-  WorldArtifact? _mapArtifactAt(GameState state, int col, int row) {
+  WorldArtifact? _mapArtifactAt(GameClientState state, int col, int row) {
     for (final artifact in state.artifacts) {
       final location = artifact.location;
       if (location.isOnMap && location.col == col && location.row == row) {

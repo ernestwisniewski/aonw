@@ -226,8 +226,8 @@ void _requireReviewedStartWonderFixtureShape(ReducerParityFixture fixture) {
   }
   final sentinel = fixture.state.cities.first;
   if (sentinel.id != 'city_sentinel' ||
-      fixture.state.runtimeState.turnStartedAt == null ||
-      fixture.state.runtimeState.submittedPlayerIds.isEmpty ||
+      fixture.state.turnStartedAt == null ||
+      fixture.state.submittedPlayerIds.isEmpty ||
       fixture.state.wonderRegistry.ownerOf(WonderType.centralBank) == null ||
       fixture.expectedEvents.isNotEmpty) {
     ReducerParityCorpus._fail(

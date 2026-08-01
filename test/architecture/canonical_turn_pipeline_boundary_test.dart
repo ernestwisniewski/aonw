@@ -53,7 +53,7 @@ void main() {
           'PersistentGameState',
           'DomainState',
           'CanonicalGameSnapshot',
-          'GameState',
+          'GameClientState',
         }),
         isEmpty,
       );

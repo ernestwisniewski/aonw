@@ -13,7 +13,7 @@ final class _HudResearchAutoPromptPolicy {
   final TechnologyRuleset technologyRuleset;
   final GameSave gameSave;
 
-  String? actionKeyFor(GameState? state) {
+  String? actionKeyFor(GameClientState? state) {
     if (state == null) return null;
     if (remainingActionCount != 1) return null;
     if (activePlayerId.isEmpty) return null;

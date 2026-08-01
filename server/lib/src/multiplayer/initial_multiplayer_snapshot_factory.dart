@@ -18,7 +18,9 @@ final class InitialMultiplayerSnapshotFactory {
   }) async {
     final players = List<Player>.unmodifiable(participants);
     final mapData = await _mapCatalog.loadAssetMap(mapName);
-    mapData.mapName ??= mapName;
+    final worldMap = mapData.mapName == null
+        ? mapData.copyWith(mapName: mapName)
+        : mapData;
     final startPositionSeed = StartingPositionSeed.fromParts([
       startedAt,
       matchId,
@@ -28,18 +30,18 @@ final class InitialMultiplayerSnapshotFactory {
     ]);
     final units = StartingUnits.unitsForPlayers(
       players,
-      mapData: mapData,
+      mapData: worldMap,
       startPositionSeed: startPositionSeed,
     );
     final artifacts = WorldArtifactGenerator.generate(
-      mapData: mapData,
+      mapData: worldMap,
       startingUnits: units,
       seed: startPositionSeed,
     );
     final playerIds = players.map((player) => player.id);
     final fogOfWar = const FogOfWarService().recompute(
       current: FogOfWarState.empty,
-      mapData: mapData,
+      mapData: worldMap,
       playerIds: playerIds,
       units: units,
       cities: const [],
@@ -60,8 +62,6 @@ final class InitialMultiplayerSnapshotFactory {
         artifacts: artifacts,
         fogOfWar: fogOfWar,
         diplomacy: diplomacy,
-      ),
-      session: MatchSessionState.snapshot(
         gameMode: GameMode.multiplayer,
         turnStatesByPlayerId: {
           for (final player in players) player.id: PlayerTurnState.active,

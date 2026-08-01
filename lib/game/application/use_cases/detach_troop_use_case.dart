@@ -7,7 +7,7 @@ class DetachTroopUseCase {
   const DetachTroopUseCase();
 
   Future<bool> execute({
-    required GameState? state,
+    required GameClientState? state,
     required TroopType troopType,
     required DispatchGameCommand dispatch,
   }) async {

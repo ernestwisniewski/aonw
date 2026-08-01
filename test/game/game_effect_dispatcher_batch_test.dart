@@ -7,8 +7,8 @@ import 'package:aonw/game/presentation/engine/rendering_layers/effects/floating_
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/particle_effects_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/unit_animation_controller.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -36,11 +36,11 @@ const _a2 = AnimateUnitMoveEffect(
 
 const _chainedMoves = <RendererEffect>[_a1, _b1, _a2];
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 1,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.grassland],

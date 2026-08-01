@@ -48,8 +48,8 @@ void main() {
             ),
           ),
         ],
-        previousState: GameState(units: [attacker, defender]),
-        state: GameState(units: [attacker]),
+        previousState: GameClientState(units: [attacker, defender]),
+        state: GameClientState(units: [attacker]),
       );
 
       final animation = effects.whereType<PlayCombatAnimationEffect>().single;
@@ -89,8 +89,8 @@ void main() {
             ],
           ),
         ],
-        previousState: GameState(units: [scout]),
-        state: GameState(units: [movedScout]),
+        previousState: GameClientState(units: [scout]),
+        state: GameClientState(units: [movedScout]),
       );
 
       final move = effects.whereType<AnimateUnitMoveEffect>().single;
@@ -128,8 +128,8 @@ void main() {
             ],
           ),
         ],
-        previousState: GameState(units: [merchant]),
-        state: GameState(units: [movedMerchant]),
+        previousState: GameClientState(units: [merchant]),
+        state: GameClientState(units: [movedMerchant]),
       );
 
       final move = effects.whereType<AnimateUnitMoveEffect>().single;
@@ -163,8 +163,8 @@ void main() {
             ],
           ),
         ],
-        previousState: GameState(units: [scout]),
-        state: GameState(units: [movedScout]),
+        previousState: GameClientState(units: [scout]),
+        state: GameClientState(units: [movedScout]),
       );
 
       expect(effects.whereType<AnimateUnitMoveEffect>(), hasLength(1));
@@ -188,12 +188,12 @@ void main() {
 
       final visible = ReplayRendererEffectPlanner.hasPerspectiveVisibleMovement(
         effects: const [effect],
-        previousState: GameState(
+        previousState: GameClientState(
           activePlayerId: 'player_1',
           units: [scout],
           fogOfWar: _fogForPlayer('player_1', const {}),
         ),
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [movedScout],
           fogOfWar: _fogForPlayer('player_1', const {}),
@@ -223,14 +223,14 @@ void main() {
 
       final visible = ReplayRendererEffectPlanner.hasPerspectiveVisibleMovement(
         effects: const [effect],
-        previousState: GameState(
+        previousState: GameClientState(
           activePlayerId: 'player_1',
           units: [enemy],
           fogOfWar: _fogForPlayer('player_1', {
             const HexCoordinate(col: 4, row: 1),
           }),
         ),
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [movedEnemy],
           fogOfWar: _fogForPlayer('player_1', {
@@ -262,12 +262,12 @@ void main() {
 
       final visible = ReplayRendererEffectPlanner.hasPerspectiveVisibleMovement(
         effects: const [effect],
-        previousState: GameState(
+        previousState: GameClientState(
           activePlayerId: 'player_1',
           units: [enemy],
           fogOfWar: _fogForPlayer('player_1', const {}),
         ),
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [movedEnemy],
           fogOfWar: _fogForPlayer('player_1', const {}),

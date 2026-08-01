@@ -1,19 +1,19 @@
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/stability/stability_input_builder.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:test/test.dart';
 
 void main() {
   test('forPlayer sums building, technology, luxury and artifact sources', () {
-    final mapData = MapData(
+    final mapData = WorldMap(
       cols: 1,
       rows: 1,
-      tiles: const [
-        TileData(
+      tiles: [
+        WorldTile(
           col: 0,
           row: 0,
           terrains: [TerrainType.grassland],
@@ -22,7 +22,7 @@ void main() {
         ),
       ],
     );
-    final state = PersistentGameState(
+    final state = DomainState.snapshot(
       cities: const [
         GameCity(
           id: 'city-a',
@@ -64,11 +64,11 @@ void main() {
   });
 
   test('forPlayer skips the luxury scan when includeLuxuries is false', () {
-    final mapData = MapData(
+    final mapData = WorldMap(
       cols: 1,
       rows: 1,
-      tiles: const [
-        TileData(
+      tiles: [
+        WorldTile(
           col: 0,
           row: 0,
           terrains: [TerrainType.grassland],
@@ -77,9 +77,9 @@ void main() {
         ),
       ],
     );
-    const state = PersistentGameState(
+    final state = DomainState.snapshot(
       cities: [
-        GameCity(
+        const GameCity(
           id: 'city-a',
           ownerPlayerId: 'a',
           name: 'A',

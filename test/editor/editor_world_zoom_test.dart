@@ -2,7 +2,7 @@ import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/engine/editor_state.dart';
 import 'package:aonw/editor/engine/editor_world.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -14,8 +14,8 @@ void main() {
       draft: MapDraft(
         cols: 1,
         rows: 1,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.ocean],

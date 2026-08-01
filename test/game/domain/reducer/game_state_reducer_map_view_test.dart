@@ -14,17 +14,16 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import '../../../support/game_intent_test_resolver.dart';
 
 void main() {
   late MapReadView mapView;
 
   setUp(() {
-    mapView = WorldMapReadView(_worldMap());
+    mapView = _worldMap();
   });
 
   test(
@@ -38,7 +37,7 @@ void main() {
         controlledHexes: [CityHex(col: 1, row: 1)],
       );
       final reducer = GameStateReducer(mapData: mapView);
-      final initial = GameState(
+      final initial = GameClientState(
         cities: const [city],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
@@ -50,7 +49,7 @@ void main() {
             ),
           },
         ),
-        interaction: const GameInteractionState(
+        interaction: const InteractionState(
           pendingAction: PendingResearchSelection(ownerPlayerId: 'player_1'),
         ),
       );
@@ -114,7 +113,7 @@ void main() {
       ],
       gameMode: GameMode.multiplayer,
     );
-    const state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_2',
       activePlayerCanAct: true,
       submittedPlayerIds: {'player_1'},
@@ -122,7 +121,10 @@ void main() {
     final reducer = GameStateReducer(mapData: mapView);
 
     final result = LocalCommandResolver(reducer: reducer).resolve(
-      baseSnapshot: SaveSnapshot.fromGameState(save: save, state: state),
+      baseSnapshot: GameSnapshotFactory.fromClientState(
+        save: save,
+        state: state,
+      ),
       currentState: state,
       command: const SubmitTurnCommand('player_2'),
       savedAt: savedAt,
@@ -144,7 +146,7 @@ WorldMap _worldMap() {
     tiles: [
       for (var row = 0; row < 3; row += 1)
         for (var col = 0; col < 3; col += 1)
-          WorldTile(
+          WorldTile.at(
             coordinate: HexCoord(col: col, row: row),
             terrains: const [TerrainType.plains],
             resources: const [],

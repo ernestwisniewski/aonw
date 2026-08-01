@@ -33,13 +33,11 @@ final class PreparedPlayerMatchSnapshot {
     required this.wire,
     required this.publicSave,
     required this.canonicalSnapshot,
-    required this.hasSerializedTurnStartedAt,
   });
 
   final WireSnapshot wire;
   final Map<String, dynamic>? publicSave;
   final CanonicalGameSnapshot? canonicalSnapshot;
-  final bool hasSerializedTurnStartedAt;
 }
 
 /// Canonical server message prepared once for any number of recipients.
@@ -126,7 +124,6 @@ final class PlayerMatchViewProjector {
         wire: canonical,
         publicSave: null,
         canonicalSnapshot: null,
-        hasSerializedTurnStartedAt: false,
       );
     }
     _playerMatchWireSchemaGuard.validateGameSaveEnvelope(canonical.save);
@@ -134,7 +131,8 @@ final class PlayerMatchViewProjector {
     final save = _prepareSave(decoded.save);
     _playerMatchWireSchemaGuard.validateCanonicalRoster(
       save: save,
-      state: decoded.state,
+      state: decoded.wire.state,
+      canonical: decoded.canonical,
     );
     return PreparedPlayerMatchSnapshot._(
       wire: canonical,
@@ -149,7 +147,6 @@ final class PlayerMatchViewProjector {
             .toJson(),
       ),
       canonicalSnapshot: decoded.canonical,
-      hasSerializedTurnStartedAt: decoded.hasSerializedTurnStartedAt,
     );
   }
 
@@ -185,14 +182,21 @@ final class PlayerMatchViewProjector {
         recipient.playerId,
       ),
     );
+    final recipientSnapshot = RecipientSnapshot(
+      metadata: canonicalSnapshot.metadata.copyWith(
+        camera: GameSnapshotCamera.zero,
+      ),
+      state: playerViewState,
+      visibleOffset: canonical.offset,
+    );
     return ProjectedWireSnapshot._(
       WireSnapshot(
         v: canonical.v,
         matchId: canonical.matchId,
-        offset: canonical.offset,
+        offset: recipientSnapshot.visibleOffset,
         save: publicSave,
         state: {
-          ..._encodePlayerViewState(prepared, playerViewState),
+          ..._encodePlayerViewState(recipientSnapshot.state),
           ..._lifecycleState(canonical.state),
         },
       ),
@@ -322,8 +326,6 @@ final class PlayerMatchViewProjector {
   }) {
     return const PlayerViewStateProjector().project(
       domain: canonicalSnapshot.domain,
-      session: canonicalSnapshot.session,
-      interaction: canonicalSnapshot.interaction,
       recipientPlayerId: playerId,
       knownDiplomacyPlayerIds: knownDiplomacyPlayerIds,
     );
@@ -344,39 +346,8 @@ final class PlayerMatchViewProjector {
     return value is Map ? value.keys.whereType<String>() : const [];
   }
 
-  Map<String, dynamic> _encodePlayerViewState(
-    PreparedPlayerMatchSnapshot prepared,
-    PlayerViewState state,
-  ) {
-    final encoded = _preserveRawRosterEncoding(
-      prepared,
-      const PlayerViewStateWireCodec().encode(state),
-    );
-    if (prepared.hasSerializedTurnStartedAt) return encoded;
-    final runtime = encoded['runtimeState'];
-    if (runtime is! Map) return encoded;
-    final projectedRuntime = Map<String, dynamic>.from(runtime)
-      ..remove('turnStartedAt');
-    return {...encoded, 'runtimeState': projectedRuntime};
-  }
-
-  Map<String, dynamic> _preserveRawRosterEncoding(
-    PreparedPlayerMatchSnapshot prepared,
-    Map<String, dynamic> encoded,
-  ) {
-    final projected = Map<String, dynamic>.from(encoded);
-    for (final field in const {'playerColors', 'playerCountries'}) {
-      final raw = prepared.wire.state[field];
-      if (raw is Map) {
-        projected[field] = Map<String, dynamic>.unmodifiable(
-          Map<String, dynamic>.from(raw),
-        );
-      } else {
-        projected.remove(field);
-      }
-    }
-    return projected;
-  }
+  Map<String, dynamic> _encodePlayerViewState(PlayerViewState state) =>
+      const PlayerViewStateWireCodec().encode(state);
 
   Player _publicPlayer(Player player) {
     final ai = player.ai;

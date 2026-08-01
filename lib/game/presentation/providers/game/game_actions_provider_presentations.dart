@@ -117,7 +117,7 @@ extension GameCommandControllerDispatch on GameCommandController {
         command: command,
         previousState: previousState,
         result: DispatchCommandResult(
-          state: previousState ?? const GameState(),
+          state: previousState ?? GameClientState(),
         ),
       );
     }
@@ -142,14 +142,14 @@ extension GameCommandControllerDispatch on GameCommandController {
     return _CommandDispatchRecord(
       command: command,
       previousState: null,
-      result: const DispatchCommandResult(state: GameState()),
+      result: DispatchCommandResult(state: GameClientState()),
     );
   }
 }
 
 class _CommandDispatchRecord {
   final Object command;
-  final GameState? previousState;
+  final GameClientState? previousState;
   final DispatchCommandResult result;
   final String interactionId;
 

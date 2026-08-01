@@ -50,7 +50,7 @@ void main() {
 List<String> _violations(
   String source,
   _Target target, {
-  Set<String> mapDataTypeNames = const {'MapData'},
+  Set<String> mapDataTypeNames = const {'WorldMap'},
   Set<String> mapBoundaryTypeNames = _mapBoundaryRootTypeNames,
 }) {
   final unit = parseString(content: source, path: target.path).unit;
@@ -128,7 +128,7 @@ void _checkBoundary(
       mapDataTypeNames,
     )) {
       violations.add(
-        '$memberLabel must not expose MapData through parameter '
+        '$memberLabel must not expose WorldMap through parameter '
         '$parameterName',
       );
     }
@@ -161,13 +161,12 @@ void _checkBoundary(
       violations: violations,
     );
     if (_containsAnyNamedType(fieldType, mapDataTypeNames)) {
-      violations.add('$fieldLabel must not expose MapData');
+      violations.add('$fieldLabel must not expose WorldMap');
     }
   }
 }
 
 const _mapBoundaryRootTypeNames = {
-  'MapData',
   'MapDefinition',
   'MapSurvey',
   'MapTileCatalog',

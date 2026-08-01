@@ -3,7 +3,7 @@ import 'package:aonw_core/domain.dart';
 const unitCharacterizationPlayerId = 'player_1';
 const unitCharacterizationOtherPlayerId = 'player_2';
 
-PersistentGameState unitCharacterizationState({
+DomainState unitCharacterizationState({
   required List<GameCity> cities,
   List<GameUnit>? units,
   List<WorldArtifact>? artifacts,
@@ -11,7 +11,7 @@ PersistentGameState unitCharacterizationState({
   ResearchState research = ResearchState.empty,
   List<ResourceTradeAgreement> resourceTradeAgreements = const [],
 }) {
-  return PersistentGameState.snapshot(
+  return DomainState.snapshot(
     playerColors: const {
       unitCharacterizationPlayerId: 0xFF336699,
       unitCharacterizationOtherPlayerId: 0xFF993333,
@@ -57,17 +57,17 @@ PersistentGameState unitCharacterizationState({
           ),
         ],
     research: research,
-    runtimeState: GameRuntimeState.snapshot(
-      submittedPlayerIds: const {unitCharacterizationOtherPlayerId},
-      timeoutStreaksByPlayerId: const {unitCharacterizationOtherPlayerId: 1},
-      afkPlayerIds: const {unitCharacterizationOtherPlayerId},
-      dominationHoldTurnsByPlayerId: const {unitCharacterizationPlayerId: 2},
-      culturalVictoryHoldTurnsByPlayerId: const {
-        unitCharacterizationOtherPlayerId: 3,
-      },
-      resourceTradeAgreements: resourceTradeAgreements,
-      turnStartedAt: DateTime.utc(2026, 7, 18, 12),
-    ),
+
+    submittedPlayerIds: const {unitCharacterizationOtherPlayerId},
+    timeoutStreaksByPlayerId: const {unitCharacterizationOtherPlayerId: 1},
+    afkPlayerIds: const {unitCharacterizationOtherPlayerId},
+    dominationHoldTurnsByPlayerId: const {unitCharacterizationPlayerId: 2},
+    culturalVictoryHoldTurnsByPlayerId: const {
+      unitCharacterizationOtherPlayerId: 3,
+    },
+    resourceTradeAgreements: resourceTradeAgreements,
+    turnStartedAt: DateTime.utc(2026, 7, 18, 12),
+
     wonderRegistry: WonderRegistry.empty.complete(
       type: WonderType.greatLibrary,
       playerId: unitCharacterizationOtherPlayerId,
@@ -141,26 +141,24 @@ ResourceTradeAgreement unitCharacterizationIronImport() {
 }
 
 MapReadView unitCharacterizationMap({bool coastal = false}) {
-  return WorldMapReadView(
-    WorldMap(
-      cols: 7,
-      rows: 7,
-      mapName: 'start_unit_characterization',
-      tiles: [
-        for (var row = 0; row < 7; row++)
-          for (var col = 0; col < 7; col++)
-            WorldTile(
-              coordinate: HexCoord(col: col, row: row),
-              terrains: coastal && col == 2 && row == 1
-                  ? const [TerrainType.coast]
-                  : coastal && col == 3 && row == 1
-                  ? const [TerrainType.ocean]
-                  : const [TerrainType.grassland],
-              resources: const [],
-              height: 0,
-            ),
-      ],
-    ),
+  return WorldMap(
+    cols: 7,
+    rows: 7,
+    mapName: 'start_unit_characterization',
+    tiles: [
+      for (var row = 0; row < 7; row++)
+        for (var col = 0; col < 7; col++)
+          WorldTile.at(
+            coordinate: HexCoord(col: col, row: row),
+            terrains: coastal && col == 2 && row == 1
+                ? const [TerrainType.coast]
+                : coastal && col == 3 && row == 1
+                ? const [TerrainType.ocean]
+                : const [TerrainType.grassland],
+            resources: const [],
+            height: 0,
+          ),
+    ],
   );
 }
 

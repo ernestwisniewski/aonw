@@ -11,7 +11,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('GameInteractionState', () {
+  group('InteractionState', () {
     test('keeps copyWith, equality, and hashCode contract in sync', () {
       final unit = GameUnit.startingCommander(ownerPlayerId: 'p1');
       final selection = GameSelection.unit(unit);
@@ -30,14 +30,14 @@ void main() {
       );
       const pendingAction = PendingResearchSelection(ownerPlayerId: 'p1');
 
-      final state = GameInteractionState(
+      final state = InteractionState(
         selection: selection,
         movePreview: movePreview,
         cityFoundingDraft: cityFoundingDraft,
         pendingAction: pendingAction,
         moveCommandActive: true,
       );
-      final sameState = GameInteractionState(
+      final sameState = InteractionState(
         selection: selection,
         movePreview: movePreview,
         cityFoundingDraft: cityFoundingDraft,
@@ -76,7 +76,7 @@ void main() {
         center: const CityHex(col: 1, row: 1),
       );
       const pendingAction = PendingResearchSelection(ownerPlayerId: 'p1');
-      final state = GameInteractionState(
+      final state = InteractionState(
         selection: selection,
         movePreview: movePreview,
         cityFoundingDraft: cityFoundingDraft,
@@ -100,10 +100,10 @@ void main() {
     });
   });
 
-  group('GameState', () {
+  group('GameClientState', () {
     group('default constructor', () {
       test('produces empty/default state', () {
-        const state = GameState();
+        final state = GameClientState();
         expect(state.playerColors, isEmpty);
         expect(state.units, isEmpty);
         expect(state.cities, isEmpty);
@@ -122,7 +122,7 @@ void main() {
 
     group('copyWith', () {
       test('replaces specified fields', () {
-        const state = GameState();
+        final state = GameClientState();
         final unit = GameUnit.startingCommander(
           ownerPlayerId: 'p1',
           col: 1,
@@ -166,7 +166,7 @@ void main() {
       });
 
       test('leaves all fields unchanged when no arguments passed', () {
-        const original = GameState(
+        final original = GameClientState(
           activePlayerId: 'p2',
           activePlayerCanAct: true,
         );
@@ -177,7 +177,7 @@ void main() {
 
     group('copyWith selection', () {
       test('sets selection', () {
-        const state = GameState();
+        final state = GameClientState();
         final unit = GameUnit.startingCommander(ownerPlayerId: 'p1');
         final sel = GameSelection.unit(unit);
         final updated = state.copyWithInteraction(selection: sel);
@@ -187,7 +187,7 @@ void main() {
       test('clears selection when null passed', () {
         final unit = GameUnit.startingCommander(ownerPlayerId: 'p1');
         final sel = GameSelection.unit(unit);
-        final state = const GameState().copyWithInteraction(selection: sel);
+        final state = GameClientState().copyWithInteraction(selection: sel);
         final cleared = state.copyWithInteraction(selection: null);
         expect(cleared.selection, isNull);
       });
@@ -195,7 +195,7 @@ void main() {
 
     group('copyWith movePreview', () {
       test('sets move preview', () {
-        const state = GameState();
+        final state = GameClientState();
         final plan = UnitMovementPlan(
           unitId: 'commander_p1',
           targetCol: 3,
@@ -217,7 +217,7 @@ void main() {
           availableMovementPoints: 4,
           steps: const [],
         );
-        final state = const GameState().copyWithInteraction(movePreview: plan);
+        final state = GameClientState().copyWithInteraction(movePreview: plan);
         final cleared = state.copyWithInteraction(movePreview: null);
         expect(cleared.movePreview, isNull);
       });
@@ -225,7 +225,7 @@ void main() {
 
     group('copyWith cityFoundingDraft', () {
       test('sets city founding draft', () {
-        const state = GameState();
+        final state = GameClientState();
         final draft = CityFoundingDraft(
           unitId: 'commander_p1',
           ownerPlayerId: 'p1',
@@ -241,7 +241,7 @@ void main() {
           ownerPlayerId: 'p1',
           center: const CityHex(col: 0, row: 0),
         );
-        final state = const GameState().copyWithInteraction(
+        final state = GameClientState().copyWithInteraction(
           cityFoundingDraft: draft,
         );
         final cleared = state.copyWithInteraction(cityFoundingDraft: null);
@@ -251,14 +251,14 @@ void main() {
 
     group('equality', () {
       test('two default instances are equal', () {
-        const a = GameState();
-        const b = GameState();
+        final a = GameClientState();
+        final b = GameClientState();
         expect(a, equals(b));
       });
 
       test('compares all fields', () {
-        const a = GameState(activePlayerId: 'p1', activePlayerCanAct: true);
-        const b = GameState(activePlayerId: 'p2', activePlayerCanAct: true);
+        final a = GameClientState(activePlayerId: 'p1');
+        final b = GameClientState(activePlayerId: 'p2');
         expect(a, isNot(equals(b)));
       });
 
@@ -273,28 +273,28 @@ void main() {
           col: 1,
           row: 1,
         );
-        final a = GameState(units: [unit1]);
-        final b = GameState(units: [unit2]);
+        final a = GameClientState(units: [unit1]);
+        final b = GameClientState(units: [unit2]);
         expect(a, isNot(equals(b)));
       });
 
       test('equal instances have same hashCode', () {
-        const a = GameState(activePlayerId: 'p1');
-        const b = GameState(activePlayerId: 'p1');
+        final a = GameClientState(activePlayerId: 'p1');
+        final b = GameClientState(activePlayerId: 'p1');
         expect(a.hashCode, equals(b.hashCode));
       });
     });
 
     group('derived getters', () {
       test('selectedUnitId returns null when no selection', () {
-        const state = GameState();
+        final state = GameClientState();
         expect(state.selectedUnitId, isNull);
       });
 
       test('selectedUnitId returns unit id when unit is selected', () {
         final unit = GameUnit.startingCommander(ownerPlayerId: 'p1');
         final sel = GameSelection.unit(unit);
-        final state = GameState(
+        final state = GameClientState(
           units: [unit],
         ).copyWithInteraction(selection: sel);
         expect(state.selectedUnitId, equals(unit.id));
@@ -307,24 +307,24 @@ void main() {
           row: 0,
         );
         final sel = GameSelection.unit(unit);
-        final state = GameState(
+        final state = GameClientState(
           units: [unit],
         ).copyWithInteraction(selection: sel);
         expect(state.selectedUnit, equals(unit));
       });
 
       test('selectedUnit returns null when selection is not a unit', () {
-        const state = GameState();
+        final state = GameClientState();
         expect(state.selectedUnit, isNull);
       });
 
       test('colorForPlayer returns color for known player', () {
-        const state = GameState(playerColors: {'p1': 0xFFFF0000});
+        final state = GameClientState(playerColors: {'p1': 0xFFFF0000});
         expect(state.colorForPlayer('p1'), equals(0xFFFF0000));
       });
 
       test('colorForPlayer returns null for unknown player', () {
-        const state = GameState();
+        final state = GameClientState();
         expect(state.colorForPlayer('unknown'), isNull);
       });
 
@@ -335,7 +335,7 @@ void main() {
           name: 'City',
           center: CityHex(col: 0, row: 0),
         );
-        const state = GameState(activePlayerId: '');
+        final state = GameClientState(activePlayerId: '');
         expect(state.canControlCity(city), isTrue);
       });
 
@@ -346,7 +346,7 @@ void main() {
           name: 'City',
           center: CityHex(col: 0, row: 0),
         );
-        const state = GameState(activePlayerId: 'p1', activePlayerCanAct: true);
+        final state = GameClientState(activePlayerId: 'p1');
         expect(state.canControlCity(city), isTrue);
       });
 
@@ -357,7 +357,7 @@ void main() {
           name: 'City',
           center: CityHex(col: 0, row: 0),
         );
-        const state = GameState(activePlayerId: 'p1', activePlayerCanAct: true);
+        final state = GameClientState(activePlayerId: 'p1');
         expect(state.canControlCity(city), isFalse);
       });
 
@@ -368,7 +368,7 @@ void main() {
           name: 'City',
           center: CityHex(col: 0, row: 0),
         );
-        const state = GameState(
+        final state = GameClientState(
           activePlayerId: 'p1',
           activePlayerCanAct: false,
         );
@@ -379,7 +379,7 @@ void main() {
         'canControlUnit is true when active player owns unit and can act',
         () {
           final unit = GameUnit.startingCommander(ownerPlayerId: 'p1');
-          const state = GameState(
+          final state = GameClientState(
             activePlayerId: 'p1',
             activePlayerCanAct: true,
           );
@@ -389,7 +389,7 @@ void main() {
 
       test('canControlUnit is false when player cannot act', () {
         final unit = GameUnit.startingCommander(ownerPlayerId: 'p1');
-        const state = GameState(
+        final state = GameClientState(
           activePlayerId: 'p1',
           activePlayerCanAct: false,
         );
@@ -398,7 +398,7 @@ void main() {
 
       test('canControlUnit is false when unit belongs to different player', () {
         final unit = GameUnit.startingCommander(ownerPlayerId: 'p2');
-        const state = GameState(activePlayerId: 'p1', activePlayerCanAct: true);
+        final state = GameClientState(activePlayerId: 'p1');
         expect(state.canControlUnit(unit), isFalse);
       });
 
@@ -408,7 +408,7 @@ void main() {
           col: 3,
           row: 5,
         );
-        final state = GameState(units: [unit]);
+        final state = GameClientState(units: [unit]);
         expect(state.unitAt(3, 5), equals(unit));
       });
 
@@ -418,7 +418,7 @@ void main() {
           col: 3,
           row: 5,
         );
-        final state = GameState(units: [unit]);
+        final state = GameClientState(units: [unit]);
         expect(state.unitAt(0, 0), isNull);
       });
 
@@ -429,14 +429,14 @@ void main() {
           name: 'Warsaw',
           center: CityHex(col: 4, row: 6),
         );
-        const state = GameState(cities: [city]);
+        final state = GameClientState(cities: [city]);
         expect(state.cityAt(4, 6), equals(city));
         expect(state.cityAt(0, 0), isNull);
       });
 
       test('activePlayerVisibility returns query for active player', () {
         const fog = FogOfWarState.empty;
-        const state = GameState(activePlayerId: 'p1', fogOfWar: fog);
+        final state = GameClientState(activePlayerId: 'p1', fogOfWar: fog);
         final query = state.activePlayerVisibility;
         expect(query.playerId, equals('p1'));
         expect(query.state, equals(fog));
@@ -454,7 +454,7 @@ void main() {
             col: 2,
             row: 2,
           );
-          const state = GameState(activePlayerId: '');
+          final state = GameClientState(activePlayerId: '');
           final stateWithUnits = state.copyWith(units: [unit1, unit2]);
           expect(
             stateWithUnits.unitsVisibleToActivePlayer,
@@ -478,7 +478,7 @@ void main() {
             visibleHexes: {const HexCoordinate(col: 1, row: 1)},
           );
           final fog = FogOfWarState(players: {'p1': playerFog});
-          final state = GameState(
+          final state = GameClientState(
             activePlayerId: 'p1',
             units: [unit1, unit2],
             fogOfWar: fog,
@@ -506,7 +506,7 @@ void main() {
             playerId: 'p1',
             visibleHexes: {const HexCoordinate(col: 1, row: 1)},
           );
-          final state = GameState(
+          final state = GameClientState(
             activePlayerId: 'p1',
             units: [ownUnit, hiddenEnemy, visibleEnemy],
             fogOfWar: FogOfWarState(players: {'p1': playerFog}),
@@ -533,7 +533,7 @@ void main() {
             name: 'City 2',
             center: CityHex(col: 5, row: 5),
           );
-          const state = GameState(activePlayerId: '');
+          final state = GameClientState(activePlayerId: '');
           final stateWithCities = state.copyWith(cities: [city1, city2]);
           expect(
             stateWithCities.citiesKnownToActivePlayer,
@@ -559,7 +559,7 @@ void main() {
             discoveredHexes: {const HexCoordinate(col: 1, row: 1)},
           );
           final fog = FogOfWarState(players: {'p1': playerFog});
-          final state = GameState(
+          final state = GameClientState(
             activePlayerId: 'p1',
             cities: [city1, city2],
             fogOfWar: fog,

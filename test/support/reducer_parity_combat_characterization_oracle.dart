@@ -15,10 +15,7 @@ const _combatRejectedFixtureIds = <String>{
   'combat-characterization-target-out-of-range-rejected',
 };
 
-PersistentGameState _combatExpectedState(
-  String fixtureId,
-  PersistentGameState input,
-) {
+DomainState _combatExpectedState(String fixtureId, DomainState input) {
   if (_combatRejectedFixtureIds.contains(fixtureId)) return input;
   return switch (fixtureId) {
     'combat-characterization-unit-accepted' => _combatUnitExpectedState(input),
@@ -48,7 +45,7 @@ List<GameEvent> _combatExpectedEvents(String fixtureId) {
   };
 }
 
-PersistentGameState _combatUnitExpectedState(PersistentGameState input) {
+DomainState _combatUnitExpectedState(DomainState input) {
   final attacker = _combatInputUnit(
     input,
     'combat_attacker',
@@ -64,9 +61,7 @@ PersistentGameState _combatUnitExpectedState(PersistentGameState input) {
   );
 }
 
-PersistentGameState _combatDefendedCityUnitExpectedState(
-  PersistentGameState input,
-) {
+DomainState _combatDefendedCityUnitExpectedState(DomainState input) {
   final attacker = _combatInputUnit(
     input,
     'defended_attacker',
@@ -88,7 +83,7 @@ PersistentGameState _combatDefendedCityUnitExpectedState(
   );
 }
 
-PersistentGameState _combatRetreatExpectedState(PersistentGameState input) {
+DomainState _combatRetreatExpectedState(DomainState input) {
   final attacker = _combatInputUnit(
     input,
     'retreat_attacker',
@@ -103,7 +98,7 @@ PersistentGameState _combatRetreatExpectedState(PersistentGameState input) {
   );
 }
 
-PersistentGameState _combatCityCaptureExpectedState(PersistentGameState input) {
+DomainState _combatCityCaptureExpectedState(DomainState input) {
   final attacker = _combatInputUnit(
     input,
     'capture_attacker',
@@ -121,7 +116,7 @@ PersistentGameState _combatCityCaptureExpectedState(PersistentGameState input) {
   );
 }
 
-PersistentGameState _combatCityDestroyExpectedState(PersistentGameState input) {
+DomainState _combatCityDestroyExpectedState(DomainState input) {
   final attacker = _combatInputUnit(
     input,
     'destroy_attacker',
@@ -144,8 +139,8 @@ PersistentGameState _combatCityDestroyExpectedState(PersistentGameState input) {
   );
 }
 
-PersistentGameState _combatAcceptedState(
-  PersistentGameState input, {
+DomainState _combatAcceptedState(
+  DomainState input, {
   List<GameUnit> replacements = const [],
   Set<String> removedUnitIds = const {},
   List<GameCity> cityReplacements = const [],
@@ -166,19 +161,17 @@ PersistentGameState _combatAcceptedState(
         if (!removedCityIds.contains(city.id)) citiesById[city.id] ?? city,
     ],
     artifacts: artifacts ?? input.artifacts,
-    runtimeState: input.runtimeState.copyWith(
-      diplomacy: diplomacy,
-      resourceTradeAgreements:
-          resourceTradeAgreements ?? input.runtimeState.resourceTradeAgreements,
-    ),
+    diplomacy: diplomacy,
+    resourceTradeAgreements:
+        resourceTradeAgreements ?? input.resourceTradeAgreements,
   );
 }
 
-GameUnit _combatInputUnit(PersistentGameState state, String id) {
+GameUnit _combatInputUnit(DomainState state, String id) {
   return state.units.singleWhere((unit) => unit.id == id);
 }
 
-GameCity _combatInputCity(PersistentGameState state, String id) {
+GameCity _combatInputCity(DomainState state, String id) {
   return state.cities.singleWhere((city) => city.id == id);
 }
 

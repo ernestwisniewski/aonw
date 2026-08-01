@@ -39,7 +39,7 @@ AiContext _context({required int baseSeed}) {
 
 GameView _view() {
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       playerGold: const {_playerId: 12, _enemyId: 8},
       units: [
         GameUnit.produced(
@@ -123,13 +123,13 @@ FogOfWarState _visibleFog() {
   );
 }
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 4,
   rows: 3,
   tiles: [
     for (var col = 0; col < 4; col++)
       for (var row = 0; row < 3; row++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],

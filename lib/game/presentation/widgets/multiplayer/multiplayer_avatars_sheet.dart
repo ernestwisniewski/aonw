@@ -3,7 +3,7 @@ part of 'multiplayer_avatars_rail.dart';
 Future<void> _showPlayersSheet(
   BuildContext context, {
   required List<MultiplayerAvatarTileData> tiles,
-  GameState? gameState,
+  GameClientState? gameState,
   required ValueChanged<String> onAvatarTapped,
   Key? sheetRouteKey,
   ValueListenable<GamepadInputSnapshot>? gamepadInputListenable,

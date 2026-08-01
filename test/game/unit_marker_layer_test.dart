@@ -8,23 +8,23 @@ import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_badges.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
 import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 4,
   rows: 2,
   tiles: [
     for (var row = 0; row < 2; row++)
       for (var col = 0; col < 4; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],

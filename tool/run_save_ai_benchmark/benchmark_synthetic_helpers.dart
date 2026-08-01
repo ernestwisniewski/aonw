@@ -46,7 +46,7 @@ bool _shouldPressureHumanPlayer({
 }
 
 _PreparedPlayer _prepareSyntheticPlayer({
-  required SaveSnapshot snapshot,
+  required CanonicalGameSnapshot snapshot,
   required MapReadView mapView,
   required String playerId,
   required Set<String> humanPlayerIds,
@@ -64,19 +64,19 @@ _PreparedPlayer _prepareSyntheticPlayer({
   );
 }
 
-MapData _syntheticMapData({
+WorldMap _syntheticMapData({
   required int cols,
   required int rows,
   required String mapName,
 }) {
-  return MapData(
+  return WorldMap(
     cols: cols,
     rows: rows,
     mapName: mapName,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
@@ -87,7 +87,7 @@ MapData _syntheticMapData({
   );
 }
 
-SaveSnapshot _syntheticDiplomacySnapshot(MapData mapData) {
+CanonicalGameSnapshot _syntheticDiplomacySnapshot(WorldMap mapData) {
   const aiId = 'ai_synthetic';
   const warHumanId = 'human_war';
   const hostileHumanId = 'human_hostile';
@@ -176,7 +176,7 @@ SaveSnapshot _syntheticDiplomacySnapshot(MapData mapData) {
     reason: DiplomaticRelationChangeReason.manual,
   );
   final savedAt = DateTime.utc(2026, 5, 29, 10);
-  return SaveSnapshot(
+  return GameSnapshotFactory.create(
     save: _syntheticSave(
       id: 'synthetic_diplomacy_guard',
       name: 'Synthetic diplomacy target filter',
@@ -259,14 +259,13 @@ SaveSnapshot _syntheticDiplomacySnapshot(MapData mapData) {
       ),
     ],
     fogOfWar: _syntheticVisibleFog(mapData, players),
-    runtimeState: GameRuntimeState.snapshot(
-      diplomacy: diplomacy,
-      turnStartedAt: savedAt,
-    ),
+
+    diplomacy: diplomacy,
+    turnStartedAt: savedAt,
   );
 }
 
-SaveSnapshot _syntheticFortifiedWakeUpSnapshot(MapData mapData) {
+CanonicalGameSnapshot _syntheticFortifiedWakeUpSnapshot(WorldMap mapData) {
   const aiId = 'ai_synthetic';
   const humanId = 'human_war';
   final players = [
@@ -298,7 +297,7 @@ SaveSnapshot _syntheticFortifiedWakeUpSnapshot(MapData mapData) {
     reason: DiplomaticRelationChangeReason.manual,
   );
   final savedAt = DateTime.utc(2026, 5, 29, 10, 1);
-  return SaveSnapshot(
+  return GameSnapshotFactory.create(
     save: _syntheticSave(
       id: 'synthetic_fortified_wakeup_guard',
       name: 'Synthetic fortified offensive wake-up',
@@ -345,10 +344,9 @@ SaveSnapshot _syntheticFortifiedWakeUpSnapshot(MapData mapData) {
       ),
     ],
     fogOfWar: _syntheticVisibleFog(mapData, players),
-    runtimeState: GameRuntimeState.snapshot(
-      diplomacy: diplomacy,
-      turnStartedAt: savedAt,
-    ),
+
+    diplomacy: diplomacy,
+    turnStartedAt: savedAt,
   );
 }
 
@@ -375,7 +373,7 @@ GameSave _syntheticSave({
   );
 }
 
-FogOfWarState _syntheticVisibleFog(MapData mapData, Iterable<Player> players) {
+FogOfWarState _syntheticVisibleFog(WorldMap mapData, Iterable<Player> players) {
   final visibleHexes = _allHexesIn(mapData);
   return FogOfWarState(
     players: {
@@ -388,7 +386,7 @@ FogOfWarState _syntheticVisibleFog(MapData mapData, Iterable<Player> players) {
   );
 }
 
-Set<HexCoordinate> _allHexesIn(MapData mapData) {
+Set<HexCoordinate> _allHexesIn(WorldMap mapData) {
   return {
     for (final tile in mapData.tiles)
       HexCoordinate(col: tile.col, row: tile.row),
@@ -415,7 +413,7 @@ BenchmarkCommandTransition _reduceSyntheticCommand(
   DomainCommand command,
 ) {
   final dispatcher = BenchmarkCommandDispatcher(
-    snapshot: prepared.snapshot.canonical,
+    snapshot: prepared.snapshot,
     mapView: prepared.context.mapData,
     ruleset: prepared.context.ruleset,
   );
@@ -435,7 +433,7 @@ bool _syntheticCommandChangesState(
 ) {
   final state = prepared._executionInitialState();
   final dispatcher = BenchmarkCommandDispatcher(
-    snapshot: prepared.snapshot.canonical,
+    snapshot: prepared.snapshot,
     mapView: prepared.context.mapData,
     ruleset: prepared.context.ruleset,
   );

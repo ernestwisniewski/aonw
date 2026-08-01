@@ -21,7 +21,7 @@ void main() {
       final registry = resolver.resolve(
         playerId: 'ai_1',
         save: _save(turn: AiRuntimeThrottler.adaptiveLateGameTurnThreshold),
-        gameState: const GameState(),
+        gameState: GameClientState(),
         networkSession: null,
       );
 
@@ -48,7 +48,7 @@ void main() {
       final registry = resolver.resolve(
         playerId: 'ai_1',
         save: _save(turn: 1),
-        gameState: const GameState(),
+        gameState: GameClientState(),
         networkSession: null,
       );
 
@@ -72,7 +72,7 @@ void main() {
       final registry = resolver.resolve(
         playerId: 'ai_1',
         save: _save(turn: 1),
-        gameState: const GameState(),
+        gameState: GameClientState(),
         networkSession: null,
       );
 

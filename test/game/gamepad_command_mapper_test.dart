@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,8 +15,8 @@ void main() {
     test('maps cancel to the active pending action cancel command', () {
       final commands = mapper.commandsForFrame(
         frame: const GamepadControlFrame(cancelPressed: true),
-        state: const GameState(
-          interaction: GameInteractionState(
+        state: GameClientState(
+          interaction: const InteractionState(
             moveCommandActive: true,
             pendingAction: PendingWorkerActionSelection(
               ownerPlayerId: 'player_1',
@@ -32,8 +32,8 @@ void main() {
     test('prioritizes city founding cancel over other interaction state', () {
       final commands = mapper.commandsForFrame(
         frame: const GamepadControlFrame(cancelPressed: true),
-        state: GameState(
-          interaction: GameInteractionState(
+        state: GameClientState(
+          interaction: InteractionState(
             cityFoundingDraft: CityFoundingDraft(
               unitId: 'settler_1',
               ownerPlayerId: 'player_1',
@@ -53,8 +53,8 @@ void main() {
     test('blocks move toggle outside standard and move targeting modes', () {
       final commands = mapper.commandsForFrame(
         frame: const GamepadControlFrame(moveModePressed: true),
-        state: const GameState(
-          interaction: GameInteractionState(
+        state: GameClientState(
+          interaction: const InteractionState(
             pendingAction: PendingWorkerActionSelection(
               ownerPlayerId: 'player_1',
               unitId: 'worker_1',
@@ -73,8 +73,8 @@ void main() {
           focusNextPressed: true,
           confirmPressed: true,
         ),
-        state: const GameState(activePlayerId: 'player_1'),
-        currentTile: const TileData(
+        state: GameClientState(activePlayerId: 'player_1'),
+        currentTile: WorldTile(
           col: 2,
           row: 3,
           terrains: [],
@@ -96,7 +96,7 @@ void main() {
           hudFocusPreviousPressed: true,
           hudFocusNextPressed: true,
         ),
-        state: const GameState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
       );
 
       expect(commands, isEmpty);

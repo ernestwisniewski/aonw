@@ -98,21 +98,21 @@ void main() {
   });
 }
 
-MapData _map({
+WorldMap _map({
   required int cols,
   required int rows,
   required TerrainType terrain,
   required List<ResourceType> Function(({int col, int row}) coordinate)
   resourcesFor,
 }) {
-  return MapData(
+  return WorldMap(
     cols: cols,
     rows: rows,
     mapName: 'fixture',
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: [terrain],

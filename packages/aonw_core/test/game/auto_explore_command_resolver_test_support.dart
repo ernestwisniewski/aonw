@@ -10,7 +10,7 @@ AutoExploreCommandState autoExploreState({
   List<GameCity> cities = const [],
   FogOfWarState fogOfWar = FogOfWarState.empty,
   DiplomacyState diplomacy = DiplomacyState.empty,
-  PersistedInteractionState interaction = PersistedInteractionState.empty,
+  DomainActionState interaction = DomainActionState.empty,
 }) {
   return AutoExploreCommandState(
     movement: MovementCommandState(
@@ -87,28 +87,26 @@ MapTraversalView autoExploreMap({
   int rows = 1,
   Map<({int col, int row}), List<TerrainType>> terrainOverrides = const {},
 }) {
-  return WorldMapReadView(
-    WorldMap(
-      cols: cols,
-      rows: rows,
-      tiles: [
-        for (var col = 0; col < cols; col++)
-          for (var row = 0; row < rows; row++)
-            WorldTile(
-              coordinate: HexCoord(col: col, row: row),
-              terrains:
-                  terrainOverrides[(col: col, row: row)] ??
-                  const [TerrainType.grassland],
-              resources: const [],
-              height: 0,
-            ),
-      ],
-    ),
+  return WorldMap(
+    cols: cols,
+    rows: rows,
+    tiles: [
+      for (var col = 0; col < cols; col++)
+        for (var row = 0; row < rows; row++)
+          WorldTile.at(
+            coordinate: HexCoord(col: col, row: row),
+            terrains:
+                terrainOverrides[(col: col, row: row)] ??
+                const [TerrainType.grassland],
+            resources: const [],
+            height: 0,
+          ),
+    ],
   );
 }
 
-PersistedInteractionState ownedAutoExploreInteraction() {
-  return PersistedInteractionState(
+DomainActionState ownedAutoExploreInteraction() {
+  return DomainActionState(
     cityFoundingDraft: CityFoundingDraft(
       unitId: autoExploreUnitId,
       ownerPlayerId: autoExploreActorId,
@@ -122,8 +120,8 @@ PersistedInteractionState ownedAutoExploreInteraction() {
   );
 }
 
-PersistedInteractionState unrelatedAutoExploreInteraction() {
-  return PersistedInteractionState(
+DomainActionState unrelatedAutoExploreInteraction() {
+  return DomainActionState(
     cityFoundingDraft: CityFoundingDraft(
       unitId: 'other_unit',
       ownerPlayerId: autoExploreActorId,

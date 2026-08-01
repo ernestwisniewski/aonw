@@ -77,7 +77,7 @@ Future<CameraState?> savedCamera(Ref ref, String saveId) async {
 }
 
 @Riverpod(retry: _doNotRetry)
-Future<SaveSnapshot?> gameSaveSnapshot(Ref ref, String saveId) async {
+Future<CanonicalGameSnapshot?> gameSaveSnapshot(Ref ref, String saveId) async {
   if (saveId.isEmpty) return null;
   return gameRepositoryForSave(ref, saveId).load(saveId);
 }

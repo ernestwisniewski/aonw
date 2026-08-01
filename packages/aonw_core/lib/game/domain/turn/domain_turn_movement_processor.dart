@@ -1,7 +1,6 @@
 import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_service.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
-import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_movement_context.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_movement_orchestrator.dart';
@@ -11,14 +10,12 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 final class DomainTurnMovementResult {
   factory DomainTurnMovementResult({
     required DomainState state,
-    required PersistedInteractionState interaction,
     bool changed = false,
     Iterable<GameEvent> events = const [],
     Iterable<MovementCommandExecution> executions = const [],
   }) {
     return DomainTurnMovementResult._(
       state: state,
-      interaction: interaction,
       changed: changed,
       events: events.isEmpty ? const [] : List.unmodifiable(events),
       executions: executions.isEmpty ? const [] : List.unmodifiable(executions),
@@ -27,14 +24,12 @@ final class DomainTurnMovementResult {
 
   const DomainTurnMovementResult._({
     required this.state,
-    required this.interaction,
     required this.changed,
     required this.events,
     required this.executions,
   });
 
   final DomainState state;
-  final PersistedInteractionState interaction;
   final bool changed;
   final List<GameEvent> events;
   final List<MovementCommandExecution> executions;
@@ -44,7 +39,6 @@ final class DomainTurnMovementResult {
 abstract final class DomainTurnMovementProcessor {
   static DomainTurnMovementResult resetForPlayers({
     required DomainState state,
-    required PersistedInteractionState interaction,
     required Iterable<String> playerIds,
     required MapTraversalView mapData,
     FogOfWarService fogOfWarService = const FogOfWarService(),
@@ -55,7 +49,7 @@ abstract final class DomainTurnMovementProcessor {
         cities: state.cities,
         diplomacy: state.diplomacy,
         fogOfWar: state.fogOfWar,
-        interaction: interaction,
+        interaction: state.actions,
       ),
       context: TurnMovementContext(
         playerIds: playerIds,
@@ -65,7 +59,7 @@ abstract final class DomainTurnMovementProcessor {
       ),
     );
     if (!movement.changed) {
-      return DomainTurnMovementResult(state: state, interaction: interaction);
+      return DomainTurnMovementResult(state: state);
     }
     final unitsChanged = !identical(movement.state.units, state.units);
     final fogChanged = !identical(movement.state.fogOfWar, state.fogOfWar);
@@ -79,9 +73,9 @@ abstract final class DomainTurnMovementProcessor {
               units: unitsChanged ? movement.state.units : null,
               fogOfWar: fogChanged ? movement.state.fogOfWar : null,
               diplomacy: diplomacyChanged ? movement.state.diplomacy : null,
+              actions: movement.state.interaction,
             )
-          : state,
-      interaction: movement.state.interaction,
+          : state.copyWith(actions: movement.state.interaction),
       changed: true,
       events: movement.events,
       executions: movement.executions,

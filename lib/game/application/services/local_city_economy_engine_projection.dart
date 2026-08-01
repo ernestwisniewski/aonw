@@ -8,8 +8,8 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
-GameState projectLocalCityEconomyEngineResult({
-  required GameState currentState,
+GameClientState projectLocalCityEconomyEngineResult({
+  required GameClientState currentState,
   required GameEngineAccepted result,
   required DomainCommand command,
   required MapTileLookup mapTiles,
@@ -26,7 +26,7 @@ GameState projectLocalCityEconomyEngineResult({
     wonderRegistry: domain.wonderRegistry,
     resourceTradeAgreements: domain.resourceTradeAgreements,
   );
-  final interaction = result.snapshot.interaction;
+  final interaction = result.snapshot.domain.actions;
   final state = canonicalState.copyWithInteraction(
     cityFoundingDraft: interaction.cityFoundingDraft,
     pendingAction: interaction.pendingAction,
@@ -100,8 +100,8 @@ bool _clearsSelection(DomainCommand command) =>
     command is StoreArtifactInCityCommand ||
     command is TradeArtifactCommand;
 
-GameState _refreshUnitSelection(
-  GameState state,
+GameClientState _refreshUnitSelection(
+  GameClientState state,
   String unitId,
   MapTileLookup mapTiles, {
   bool onlyWhenAlreadySelected = false,
@@ -117,8 +117,8 @@ GameState _refreshUnitSelection(
   );
 }
 
-GameState _refreshCitySelection(
-  GameState state,
+GameClientState _refreshCitySelection(
+  GameClientState state,
   String cityId,
   MapTileLookup mapTiles,
   GameRuleset ruleset,

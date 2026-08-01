@@ -2,11 +2,11 @@ part of 'game_renderer.dart';
 
 extension GameRendererTestingHooks on GameRenderer {
   @visibleForTesting
-  Future<void> handleTileTappedForTesting(TileData tileData) =>
+  Future<void> handleTileTappedForTesting(WorldTile tileData) =>
       _handleTileTapped(tileData);
 
   @visibleForTesting
-  void handleTileInspectedForTesting(TileData tileData) {
+  void handleTileInspectedForTesting(WorldTile tileData) {
     _handleTileInspected(tileData);
   }
 
@@ -31,7 +31,7 @@ extension GameRendererTestingHooks on GameRenderer {
   }
 
   @visibleForTesting
-  void handleTileInspectionPreviewedForTesting(TileData tileData) {
+  void handleTileInspectionPreviewedForTesting(WorldTile tileData) {
     _suppressTapsUntilNextPointerDown = true;
     _longPressInspectActive = true;
     _longPressInspectionPreviewActive = true;
@@ -40,7 +40,7 @@ extension GameRendererTestingHooks on GameRenderer {
   }
 
   @visibleForTesting
-  void handleTileLongPressedForTesting(TileData tileData) {
+  void handleTileLongPressedForTesting(WorldTile tileData) {
     _selectTileFromLongPress(tileData);
   }
 
@@ -56,7 +56,7 @@ extension GameRendererTestingHooks on GameRenderer {
 
   @visibleForTesting
   void syncHoverIntentForTesting(
-    TileData tileData, {
+    WorldTile tileData, {
     bool forceInspect = false,
   }) {
     _syncHoverIntentForTile(tileData, forceInspect: forceInspect);
@@ -160,8 +160,7 @@ extension GameRendererTestingHooks on GameRenderer {
       _cityManagementOverlayLayer.overlayHexesForTesting;
 
   @visibleForTesting
-  ValueListenable<GameRenderViewModel> get viewModelListenable =>
-      _viewModelNotifier;
+  ValueListenable<RenderState> get viewModelListenable => _viewModelNotifier;
 
   ValueListenable<bool> get readyListenable => _readyNotifier;
 

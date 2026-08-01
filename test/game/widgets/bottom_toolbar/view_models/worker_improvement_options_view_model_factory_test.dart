@@ -2,8 +2,8 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models/worker_action_panel_models.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models/worker_improvement_options_view_model_factory.dart';
 import 'package:aonw/l10n/generated/app_localizations_pl.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +20,7 @@ void main() {
         row: 1,
       );
       final map = _mapWithWorkerTile(
-        const TileData(
+        WorldTile(
           col: 1,
           row: 1,
           terrains: [TerrainType.grassland],
@@ -65,12 +65,12 @@ const _city = GameCity(
   controlledHexes: [CityHex(col: 1, row: 1)],
 );
 
-MapData _mapWithWorkerTile(TileData workerTile) {
-  return MapData(
+WorldMap _mapWithWorkerTile(WorldTile workerTile) {
+  return WorldMap(
     cols: 2,
     rows: 2,
     tiles: [
-      const TileData(
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.grassland],

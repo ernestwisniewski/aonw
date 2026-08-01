@@ -11,8 +11,8 @@ import 'package:aonw_core/game/domain/runtime.dart';
 /// Canonical game data always comes from the server snapshot. This projector
 /// prevents migrated engine commands from being replayed through the legacy
 /// reducer merely to update ephemeral selection and targeting state.
-GameState acceptedEngineCommandInteractionSource({
-  required GameState currentState,
+GameClientState acceptedEngineCommandInteractionSource({
+  required GameClientState currentState,
   required DomainCommand command,
   required GameEngineCommandFamily family,
 }) {
@@ -28,8 +28,8 @@ GameState acceptedEngineCommandInteractionSource({
   };
 }
 
-GameState _acceptedStrategicInteractionSource({
-  required GameState currentState,
+GameClientState _acceptedStrategicInteractionSource({
+  required GameClientState currentState,
   required DomainCommand command,
   required GameEngineCommandFamily family,
 }) {
@@ -49,7 +49,7 @@ GameState _acceptedStrategicInteractionSource({
 
 extension AcceptedNetworkCommandTransition on GameStateReducer {
   GameStateTransition acceptedNetworkCommandTransition(
-    GameState currentState,
+    GameClientState currentState,
     DomainCommand command,
     GameCommandContext context,
   ) {
@@ -69,7 +69,10 @@ extension AcceptedNetworkCommandTransition on GameStateReducer {
   }
 }
 
-GameState _researchDiplomacy(GameState state, DomainCommand command) {
+GameClientState _researchDiplomacy(
+  GameClientState state,
+  DomainCommand command,
+) {
   if (command case SelectTechnologyCommand(:final playerId)) {
     final pending = state.pendingAction;
     if (pending is PendingResearchSelection &&
@@ -80,7 +83,7 @@ GameState _researchDiplomacy(GameState state, DomainCommand command) {
   return state;
 }
 
-GameState _cityEconomy(GameState state, DomainCommand command) {
+GameClientState _cityEconomy(GameClientState state, DomainCommand command) {
   return switch (command) {
     FoundCityCommand(:final founderId) => _clearOwnedInteraction(
       state,
@@ -106,7 +109,7 @@ GameState _cityEconomy(GameState state, DomainCommand command) {
   };
 }
 
-GameState _unitAction(GameState state, DomainCommand command) {
+GameClientState _unitAction(GameClientState state, DomainCommand command) {
   final unitId = switch (command) {
     SkipUnitTurnCommand(:final unitId) ||
     FortifyUnitCommand(:final unitId) => unitId,
@@ -115,7 +118,7 @@ GameState _unitAction(GameState state, DomainCommand command) {
   return _clearOwnedInteraction(state, unitId, clearPending: true);
 }
 
-GameState _movement(GameState state, DomainCommand command) {
+GameClientState _movement(GameClientState state, DomainCommand command) {
   return switch (command) {
     MoveUnitCommand() => state.copyWithInteraction(movePreview: null),
     CancelUnitActionCommand(:final unitId) ||
@@ -138,7 +141,7 @@ GameState _movement(GameState state, DomainCommand command) {
   };
 }
 
-GameState _combat(GameState state, DomainCommand command) {
+GameClientState _combat(GameClientState state, DomainCommand command) {
   if (command case AttackHexCommand(:final attackerUnitId)) {
     return _clearOwnedInteraction(
       state,
@@ -151,8 +154,8 @@ GameState _combat(GameState state, DomainCommand command) {
   return state;
 }
 
-GameState _clearOwnedInteraction(
-  GameState state,
+GameClientState _clearOwnedInteraction(
+  GameClientState state,
   String unitId, {
   bool clearPending = false,
   bool clearDraft = false,

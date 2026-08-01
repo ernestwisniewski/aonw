@@ -14,12 +14,18 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
+part 'turn_reducer_action_category.dart';
+
+typedef _ClientState = GameClientState;
+
 abstract final class TurnReducer {
-  static GameStateTransition submitTurn(GameState state, String playerId) {
+  static GameStateTransition submitTurn(
+    GameClientState state,
+    String playerId,
+  ) {
     if (playerId.isEmpty || state.submittedPlayerIds.contains(playerId)) {
       return GameStateTransition(state: state);
     }
-
     var next = state.copyWith(
       submittedPlayerIds: {...state.submittedPlayerIds, playerId},
     );
@@ -41,7 +47,7 @@ abstract final class TurnReducer {
   /// Repeated calls cycle through available units, cities without production,
   /// and missing research instead of restarting from the first priority.
   static GameStateTransition focusNextPendingAction(
-    GameState state,
+    GameClientState state,
     String playerId,
     MapTileLookup mapTiles, {
     GameRuleset ruleset = GameRuleset.defaults,
@@ -57,7 +63,6 @@ abstract final class TurnReducer {
       ruleset.technology,
     );
     if (actions.isEmpty) return GameStateTransition(state: state);
-
     final requestedIndex = actionIndex;
     final nextIndex = requestedIndex != null
         ? _wrapTurnActionIndex(requestedIndex, actions.length)
@@ -80,7 +85,7 @@ abstract final class TurnReducer {
   }
 
   static int _nextTurnActionIndex({
-    required GameState state,
+    required _ClientState state,
     required String playerId,
     required List<_PendingTurnAction> actions,
     required GameObjectiveAdvice? preferredObjectiveAdvice,
@@ -112,7 +117,7 @@ abstract final class TurnReducer {
 
   /// Focuses the first turn-start action without cycling from old selection.
   static GameStateTransition focusTurnStartAction(
-    GameState state,
+    GameClientState state,
     String playerId,
     MapTileLookup mapTiles, {
     GameRuleset ruleset = GameRuleset.defaults,
@@ -151,7 +156,7 @@ abstract final class TurnReducer {
   }
 
   static List<ShowCityProductionBubbleEffect> _turnStartProductionEffects(
-    GameState state,
+    _ClientState state,
     String playerId,
     MapTileLookup mapTiles, {
     GameRuleset ruleset = GameRuleset.defaults,
@@ -184,7 +189,7 @@ abstract final class TurnReducer {
   }
 
   static int? _turnsRemainingForQueue(
-    GameState state,
+    _ClientState state,
     GameCity city,
     CityProductionQueue queue,
     MapTileLookup mapTiles, {
@@ -213,7 +218,7 @@ abstract final class TurnReducer {
   }
 
   static int _productionPerTurnForQueue(
-    GameState state,
+    _ClientState state,
     GameCity city,
     CityProductionQueue queue,
     MapTileLookup mapTiles, {
@@ -265,7 +270,7 @@ abstract final class TurnReducer {
   }
 
   static int pendingTurnActionCount(
-    GameState? state,
+    GameClientState? state,
     String playerId,
     MapTileLookup mapTiles, {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -280,7 +285,7 @@ abstract final class TurnReducer {
   }
 
   static List<TurnActionTarget> pendingTurnActionTargets(
-    GameState? state,
+    GameClientState? state,
     String playerId,
     MapTileLookup mapTiles, {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -303,7 +308,7 @@ abstract final class TurnReducer {
   }
 
   static int currentPendingTurnActionIndex(
-    GameState? state,
+    GameClientState? state,
     String playerId,
     MapTileLookup mapTiles, {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -320,7 +325,7 @@ abstract final class TurnReducer {
   }
 
   static GameStateTransition _focusUnitAction(
-    GameState state,
+    _ClientState state,
     GameUnit unit,
     MapTileLookup mapTiles,
   ) {
@@ -340,7 +345,7 @@ abstract final class TurnReducer {
   }
 
   static GameStateTransition _focusPendingTurnAction(
-    GameState state,
+    _ClientState state,
     String playerId,
     _PendingTurnAction action,
     MapTileLookup mapTiles, {
@@ -365,7 +370,7 @@ abstract final class TurnReducer {
   }
 
   static GameStateTransition _focusCityProductionAction(
-    GameState state,
+    _ClientState state,
     GameCity city,
     MapTileLookup mapTiles, {
     GameRuleset ruleset = GameRuleset.defaults,
@@ -392,7 +397,7 @@ abstract final class TurnReducer {
   }
 
   static GameStateTransition _focusResearchAction(
-    GameState state,
+    _ClientState state,
     String playerId,
   ) => GameStateTransition(
     state: state.copyWithInteraction(
@@ -404,7 +409,7 @@ abstract final class TurnReducer {
   );
 
   static List<_PendingTurnAction> _pendingTurnActions(
-    GameState state,
+    _ClientState state,
     String playerId,
     MapTileLookup mapTiles,
     TechnologyRuleset technologyRuleset,
@@ -446,7 +451,7 @@ abstract final class TurnReducer {
   }
 
   static int _currentTurnActionIndex(
-    GameState state,
+    _ClientState state,
     String playerId,
     List<_PendingTurnAction> actions,
   ) {
@@ -546,7 +551,7 @@ abstract final class TurnReducer {
     };
   }
 
-  static bool _researchSelectionIsCurrent(GameState state, String playerId) {
+  static bool _researchSelectionIsCurrent(_ClientState state, String playerId) {
     return switch (state.pendingAction) {
       PendingResearchSelection(ownerPlayerId: final ownerPlayerId)
           when ownerPlayerId == playerId =>
@@ -555,7 +560,7 @@ abstract final class TurnReducer {
     };
   }
 
-  static String? _currentTurnActionUnitId(GameState state, String playerId) {
+  static String? _currentTurnActionUnitId(_ClientState state, String playerId) {
     switch (state.pendingAction) {
       case PendingAttackTargeting(
             ownerPlayerId: final ownerPlayerId,
@@ -585,7 +590,7 @@ abstract final class TurnReducer {
     return null;
   }
 
-  static String? _currentTurnActionCityId(GameState state, String playerId) {
+  static String? _currentTurnActionCityId(_ClientState state, String playerId) {
     switch (state.pendingAction) {
       case PendingCityWorkedHexSelection(
             ownerPlayerId: final ownerPlayerId,
@@ -610,7 +615,7 @@ abstract final class TurnReducer {
   }
 
   static bool _needsResearchSelection(
-    GameState state,
+    _ClientState state,
     String playerId,
     TechnologyRuleset ruleset,
   ) {
@@ -626,19 +631,6 @@ abstract final class TurnReducer {
       if (availability == TechnologyAvailability.available) return true;
     }
     return false;
-  }
-
-  static bool _needsManualUnitAction(GameUnit unit, String playerId) =>
-      UnitTurnActionRules.needsManualOrder(unit, playerId: playerId);
-
-  static _UnitActionCategory _unitActionCategory(GameUnit unit) {
-    if (UnitCombatStats.derive(unit).attack > 0) {
-      return _UnitActionCategory.combat;
-    }
-    if (unit.type == GameUnitType.worker || unit.type == GameUnitType.settler) {
-      return _UnitActionCategory.worker;
-    }
-    return _UnitActionCategory.other;
   }
 }
 

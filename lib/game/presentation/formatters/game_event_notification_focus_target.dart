@@ -56,7 +56,7 @@ final class TileNotificationFocusTarget
 
 GameEventNotificationFocusTarget? gameEventNotificationFocusTarget(
   GameEvent event,
-  GameState state, {
+  GameClientState state, {
   String? viewerPlayerId,
 }) {
   for (final hint in GameEventDescriptor.forEvent(event).focusHints) {
@@ -72,7 +72,7 @@ GameEventNotificationFocusTarget? gameEventNotificationFocusTarget(
 
 GameEventNotificationFocusTarget? _focusTargetForHint(
   GameEventFocusHint hint,
-  GameState state, {
+  GameClientState state, {
   String? viewerPlayerId,
 }) {
   return switch (hint) {
@@ -97,7 +97,7 @@ GameEventNotificationFocusTarget? _focusTargetForHint(
 }
 
 UnitNotificationFocusTarget? _unitTarget(
-  GameState state,
+  GameClientState state,
   String unitId, {
   String? viewerPlayerId,
 }) {
@@ -114,7 +114,7 @@ UnitNotificationFocusTarget? _unitTarget(
 }
 
 CityNotificationFocusTarget? _cityTarget(
-  GameState state,
+  GameClientState state,
   String cityId, {
   String? viewerPlayerId,
 }) {
@@ -135,7 +135,7 @@ CityNotificationFocusTarget? _cityTarget(
 }
 
 GameEventNotificationFocusTarget? _playerAnchorTarget(
-  GameState state,
+  GameClientState state,
   String playerId, {
   String? viewerPlayerId,
 }) {

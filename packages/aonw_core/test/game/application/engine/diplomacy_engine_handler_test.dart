@@ -43,9 +43,12 @@ void main() {
         accepted.snapshot.domain.intendedAttacks,
         same(snapshot.domain.intendedAttacks),
       );
-      expect(accepted.snapshot.session, same(snapshot.session));
+      expect(
+        accepted.snapshot.domain.turnStatesByPlayerId,
+        same(snapshot.domain.turnStatesByPlayerId),
+      );
       expect(accepted.snapshot.metadata, same(snapshot.metadata));
-      expect(accepted.snapshot.interaction, same(snapshot.interaction));
+      expect(accepted.snapshot.domain.actions, same(snapshot.domain.actions));
       expect(accepted.snapshot.eventLogOffset, snapshot.eventLogOffset);
     });
 
@@ -276,27 +279,32 @@ void _expectRejected(
 
 CanonicalGameSnapshot _snapshot({DiplomacyState? diplomacy}) {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
-      turn: 5,
-      matchRules: MatchRules.standard,
-      participants: const [
-        Player(id: _playerId, name: 'One', colorValue: 1),
-        Player(id: _otherPlayerId, name: 'Two', colorValue: 2),
-        Player(id: _hiddenPlayerId, name: 'Hidden', colorValue: 3),
-      ],
-      playerGold: const {_playerId: 20, _otherPlayerId: 3, _hiddenPlayerId: 11},
-      diplomacy:
-          diplomacy ??
-          DiplomacyState.empty.addContact(_playerId, _otherPlayerId),
-    ),
-    session: MatchSessionState.snapshot(
-      gameMode: GameMode.multiplayer,
-      turnStatesByPlayerId: const {
-        _playerId: PlayerTurnState.active,
-        _otherPlayerId: PlayerTurnState.active,
-        _hiddenPlayerId: PlayerTurnState.active,
-      },
-    ),
+    domain:
+        (DomainState.snapshot(
+          turn: 5,
+          matchRules: MatchRules.standard,
+          participants: const [
+            Player(id: _playerId, name: 'One', colorValue: 1),
+            Player(id: _otherPlayerId, name: 'Two', colorValue: 2),
+            Player(id: _hiddenPlayerId, name: 'Hidden', colorValue: 3),
+          ],
+          playerGold: const {
+            _playerId: 20,
+            _otherPlayerId: 3,
+            _hiddenPlayerId: 11,
+          },
+          diplomacy:
+              diplomacy ??
+              DiplomacyState.empty.addContact(_playerId, _otherPlayerId),
+        )).copyWith(
+          gameMode: GameMode.multiplayer,
+          turnStatesByPlayerId: const {
+            _playerId: PlayerTurnState.active,
+            _otherPlayerId: PlayerTurnState.active,
+            _hiddenPlayerId: PlayerTurnState.active,
+          },
+        ),
+
     metadata: GameSnapshotMetadata(
       id: 'diplomacy',
       schemaVersion: 3,
@@ -309,17 +317,15 @@ CanonicalGameSnapshot _snapshot({DiplomacyState? diplomacy}) {
   );
 }
 
-final _map = WorldMapReadView(
-  WorldMap(
-    cols: 1,
-    rows: 1,
-    tiles: [
-      WorldTile(
-        coordinate: const HexCoord(col: 0, row: 0),
-        terrains: const [TerrainType.grassland],
-        resources: const [],
-        height: 0,
-      ),
-    ],
-  ),
+final _map = WorldMap(
+  cols: 1,
+  rows: 1,
+  tiles: [
+    WorldTile.at(
+      coordinate: const HexCoord(col: 0, row: 0),
+      terrains: const [TerrainType.grassland],
+      resources: const [],
+      height: 0,
+    ),
+  ],
 );

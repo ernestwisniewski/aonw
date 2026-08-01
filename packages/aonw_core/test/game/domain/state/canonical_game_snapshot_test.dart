@@ -14,7 +14,7 @@ void main() {
       center: const CityHex(col: 1, row: 2),
       controlledHexes: const [CityHex(col: 1, row: 3)],
     );
-    final interaction = PersistedInteractionState(
+    final interaction = DomainActionState(
       cityFoundingDraft: draft,
       pendingAction: const PendingResearchSelection(ownerPlayerId: 'player-1'),
     );
@@ -38,13 +38,12 @@ void main() {
     expect(() => first.copyWith(eventLogOffset: -1), throwsArgumentError);
   });
 
-  test('canonical envelope rejects session players outside the roster', () {
+  test('canonical envelope rejects lifecycle players outside the roster', () {
     final snapshot = _snapshot();
 
     expect(
       () => snapshot.copyWith(
-        session: MatchSessionState.snapshot(
-          gameMode: GameMode.multiplayer,
+        domain: snapshot.domain.copyWith(
           turnStatesByPlayerId: const {
             'player-1': PlayerTurnState.active,
             'session-only': PlayerTurnState.finished,
@@ -65,14 +64,21 @@ void main() {
 
 CanonicalGameSnapshot _snapshot() {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
-      turn: 1,
-      matchRules: MatchRules.standard,
-      participants: const [
-        Player(id: 'player-1', name: 'Player', colorValue: 0xFF000001),
-      ],
-    ),
-    session: MatchSessionState.snapshot(gameMode: GameMode.multiplayer),
+    domain:
+        ((DomainState.snapshot(
+          turn: 1,
+          matchRules: MatchRules.standard,
+          participants: const [
+            Player(id: 'player-1', name: 'Player', colorValue: 0xFF000001),
+          ],
+        )).copyWith(gameMode: GameMode.multiplayer)).copyWith(
+          actions: DomainActionState(
+            pendingAction: const PendingResearchSelection(
+              ownerPlayerId: 'player-1',
+            ),
+          ),
+        ),
+
     metadata: GameSnapshotMetadata(
       id: 'save-1',
       schemaVersion: 3,
@@ -81,9 +87,7 @@ CanonicalGameSnapshot _snapshot() {
       savedAtUtc: DateTime.utc(2026, 7, 17),
       camera: GameSnapshotCamera.zero,
     ),
-    interaction: PersistedInteractionState(
-      pendingAction: const PendingResearchSelection(ownerPlayerId: 'player-1'),
-    ),
+
     eventLogOffset: 7,
   );
 }

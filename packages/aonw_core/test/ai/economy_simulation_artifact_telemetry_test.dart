@@ -17,7 +17,7 @@ void main() {
 EconomySimulationTurnRow _artifactTelemetryRow({WorldArtifact? artifact}) {
   return EconomySimulationTurnRowProjector.project(
     turn: 1,
-    state: PersistentGameState(
+    state: DomainState.snapshot(
       playerColors: const {'player_1': 0xFFDC2626},
       playerGold: const {'player_1': 0},
       cities: const [_city],
@@ -50,11 +50,11 @@ const _astronomersTablets = WorldArtifact(
   location: WorldArtifactLocation.stored(cityId: 'artifact_city'),
 );
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 1,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],

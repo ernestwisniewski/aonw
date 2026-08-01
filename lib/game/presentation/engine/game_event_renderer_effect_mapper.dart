@@ -19,6 +19,8 @@ import 'package:aonw_core/game/domain/unit.dart';
 part 'fortification_threat_renderer_effect_mapper.dart';
 part 'unit_movement_renderer_effect_mapper.dart';
 
+typedef _S = GameClientState;
+
 abstract final class GameEventRendererEffectMapper {
   static const Duration _combatResultCueDelay = Duration(milliseconds: 180);
   static const int _damageTextColor = 0xFFF87171;
@@ -26,8 +28,8 @@ abstract final class GameEventRendererEffectMapper {
 
   static List<RendererEffect> effectsFor({
     required Iterable<GameEvent> events,
-    required GameState state,
-    GameState? previousState,
+    required GameClientState state,
+    GameClientState? previousState,
     Set<String> skipUnitMoveIds = const {},
     AppLocalizations? l10n,
     String? viewerPlayerId,
@@ -46,8 +48,8 @@ abstract final class GameEventRendererEffectMapper {
 
   static List<RendererEffect> _effectsForEvent(
     GameEvent event,
-    GameState state,
-    GameState? previousState, {
+    GameClientState state,
+    GameClientState? previousState, {
     required Set<String> skipUnitMoveIds,
     AppLocalizations? l10n,
     String? viewerPlayerId,
@@ -148,8 +150,8 @@ abstract final class GameEventRendererEffectMapper {
   }
 
   static RendererEffect? _workerCompletedJobEffect(
-    GameState state,
-    GameState? previousState,
+    GameClientState state,
+    GameClientState? previousState,
     String unitId, {
     AppLocalizations? l10n,
     String? viewerPlayerId,
@@ -179,7 +181,7 @@ abstract final class GameEventRendererEffectMapper {
   }
 
   static RendererEffect? _cityFoundedEffect(
-    GameState state,
+    GameClientState state,
     String cityId,
     String ownerPlayerId, {
     String? viewerPlayerId,
@@ -203,7 +205,7 @@ abstract final class GameEventRendererEffectMapper {
   }
 
   static RendererEffect? _cityProducedUnitEffect(
-    GameState state,
+    GameClientState state,
     String cityId, {
     String? viewerPlayerId,
   }) {
@@ -226,7 +228,7 @@ abstract final class GameEventRendererEffectMapper {
   }
 
   static RendererEffect? _claimedHexEffect(
-    GameState state,
+    GameClientState state,
     String cityId,
     int col,
     int row, {
@@ -251,8 +253,8 @@ abstract final class GameEventRendererEffectMapper {
   }
 
   static List<RendererEffect> _unitKilledEffects(
-    GameState state,
-    GameState? previousState,
+    GameClientState state,
+    GameClientState? previousState,
     String unitId,
     String ownerPlayerId, {
     String? viewerPlayerId,
@@ -286,7 +288,7 @@ abstract final class GameEventRendererEffectMapper {
   }
 
   static RendererEffect? _technologyResearchedEffect(
-    GameState state,
+    GameClientState state,
     String playerId, {
     String? viewerPlayerId,
   }) {
@@ -308,7 +310,7 @@ abstract final class GameEventRendererEffectMapper {
     );
   }
 
-  static ({int col, int row})? _playerAnchor(GameState state, String playerId) {
+  static ({int col, int row})? _playerAnchor(_S state, String playerId) {
     for (final city in state.cities) {
       if (city.ownerPlayerId == playerId) {
         return (col: city.center.col, row: city.center.row);
@@ -323,7 +325,7 @@ abstract final class GameEventRendererEffectMapper {
   }
 
   static bool _canRenderTransientAt(
-    GameState state,
+    GameClientState state,
     int col,
     int row, {
     String? viewerPlayerId,
@@ -336,7 +338,7 @@ abstract final class GameEventRendererEffectMapper {
     );
   }
 
-  static int _colorForPlayer(GameState state, String playerId) {
+  static int _colorForPlayer(GameClientState state, String playerId) {
     return PlayerColorTheme.resolveValue(
       state.colorForPlayer(playerId) ?? Player.palette.first,
     );
@@ -392,8 +394,8 @@ abstract final class GameEventRendererEffectMapper {
 
 List<RendererEffect> rendererEffectsForEvent({
   required GameEvent event,
-  required GameState state,
-  GameState? previousState,
+  required GameClientState state,
+  GameClientState? previousState,
   AppLocalizations? l10n,
   String? viewerPlayerId,
   int? turn,
@@ -421,8 +423,8 @@ List<RendererEffect> rendererEffectsForEvent({
 
 List<RendererEffect> _effectsForEvents({
   required Iterable<GameEvent> events,
-  required GameState state,
-  required GameState? previousState,
+  required GameClientState state,
+  required GameClientState? previousState,
   required Set<String> skipUnitMoveIds,
   required AppLocalizations? l10n,
   required String? viewerPlayerId,

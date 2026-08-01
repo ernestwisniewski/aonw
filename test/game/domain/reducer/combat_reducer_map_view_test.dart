@@ -10,9 +10,7 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -24,12 +22,12 @@ void main() {
       name: 'City',
       center: CityHex(col: 1, row: 0),
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [attacker],
       cities: const [city],
       fogOfWar: _visibleCombatFog(),
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(attacker),
         pendingAction: const PendingAttackTargeting(
           ownerPlayerId: 'player_1',
@@ -37,7 +35,7 @@ void main() {
         ),
       ),
     );
-    final MapTileLookup mapTiles = WorldMapReadView(_worldMap());
+    final MapTileLookup mapTiles = _worldMap();
     const command = AttackHexCommand('attacker', 1, 0);
 
     final preview = CombatReducer.selectAttackTarget(
@@ -108,7 +106,7 @@ WorldMap _worldMap() {
     tiles: [
       for (var row = 0; row < 3; row += 1)
         for (var col = 0; col < 3; col += 1)
-          WorldTile(
+          WorldTile.at(
             coordinate: HexCoord(col: col, row: row),
             terrains: [
               if (col == 1 && row == 0)

@@ -7,7 +7,7 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 
 class BootstrapGameStateResult {
-  final GameState state;
+  final GameClientState state;
   final int offset;
   final bool shouldFocusTurnStart;
 
@@ -31,7 +31,7 @@ class BootstrapGameStateUseCase {
     this.eventReplay,
   });
 
-  Future<GameState> execute({
+  Future<GameClientState> execute({
     required String saveId,
     String? preferredPlayerId,
   }) async {
@@ -46,12 +46,12 @@ class BootstrapGameStateUseCase {
     String? preferredPlayerId,
   }) async {
     if (saveId.isEmpty) {
-      return const BootstrapGameStateResult(state: GameState(), offset: 0);
+      return BootstrapGameStateResult(state: GameClientState(), offset: 0);
     }
 
-    late SaveSnapshot snapshot;
+    late CanonicalGameSnapshot snapshot;
     late PlayerControlState control;
-    late GameState initialState;
+    late GameClientState initialState;
     late int offset;
     var requiresLiveCatchup = false;
     for (
@@ -62,12 +62,12 @@ class BootstrapGameStateUseCase {
       snapshot = await repository.load(saveId);
       control = _initialControl(snapshot, preferredPlayerId);
       offset = snapshot.eventLogOffset;
-      initialState = snapshot.toGameState(
+      initialState = snapshot.toClientState(
         activePlayerId: control.activePlayerId,
         activePlayerCanAct: control.canAct,
       );
       final replay = eventReplay;
-      if (snapshot.session.gameMode == GameMode.multiplayer && replay != null) {
+      if (snapshot.domain.gameMode == GameMode.multiplayer && replay != null) {
         try {
           final replayed = await replay.replaySinceSnapshot(
             saveId: saveId,
@@ -100,7 +100,7 @@ class BootstrapGameStateUseCase {
       return BootstrapGameStateResult(state: initialState, offset: offset);
     }
 
-    if (snapshot.session.gameMode != GameMode.multiplayer || !canAct) {
+    if (snapshot.domain.gameMode != GameMode.multiplayer || !canAct) {
       return BootstrapGameStateResult(state: initialState, offset: offset);
     }
 
@@ -112,11 +112,11 @@ class BootstrapGameStateUseCase {
   }
 
   PlayerControlState _initialControl(
-    SaveSnapshot snapshot,
+    CanonicalGameSnapshot snapshot,
     String? preferredPlayerId,
   ) => PlayerControlCoordinator.initialFromCollections(
     orderedPlayers: snapshot.domain.participants,
-    turnStatesByPlayerId: snapshot.session.turnStatesByPlayerId,
+    turnStatesByPlayerId: snapshot.domain.turnStatesByPlayerId,
     preferredPlayerId: preferredPlayerId,
   );
 }

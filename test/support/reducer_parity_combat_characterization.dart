@@ -119,7 +119,10 @@ void _requireExactCombatCharacterization(List<ReducerParityFixture> fixtures) {
           fixture.expectedSave,
           reducerParitySave(fixture.save),
         ) ||
-        !_combatJsonEquals(fixture.expectedState, expectedState.toJson()) ||
+        !_combatJsonEquals(
+          fixture.expectedState,
+          CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
+        ) ||
         !_combatJsonEquals(
           fixture.expectedEvents,
           reducerParityEvents(expectedEvents),

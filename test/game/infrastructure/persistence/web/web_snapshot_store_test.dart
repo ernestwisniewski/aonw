@@ -33,17 +33,21 @@ void main() {
       await store.save(
         'save_1',
         Snapshot(
-          offset: 3,
           createdAt: DateTime.utc(2026, 4, 24, 12),
-          state: SaveSnapshot(save: _save(turn: 1), eventLogOffset: 3),
+          state: GameSnapshotFactory.create(
+            save: _save(turn: 1),
+            eventLogOffset: 3,
+          ),
         ),
       );
       await store.save(
         'save_1',
         Snapshot(
-          offset: 4,
           createdAt: DateTime.utc(2026, 4, 24, 13),
-          state: SaveSnapshot(save: _save(turn: 2), eventLogOffset: 4),
+          state: GameSnapshotFactory.create(
+            save: _save(turn: 2),
+            eventLogOffset: 4,
+          ),
         ),
       );
 
@@ -60,17 +64,21 @@ void main() {
       await store.save(
         'save_a',
         Snapshot(
-          offset: 1,
           createdAt: DateTime.utc(2026, 1, 1),
-          state: SaveSnapshot(save: _save(turn: 1), eventLogOffset: 1),
+          state: GameSnapshotFactory.create(
+            save: _save(turn: 1),
+            eventLogOffset: 1,
+          ),
         ),
       );
       await store.save(
         'save_b',
         Snapshot(
-          offset: 7,
           createdAt: DateTime.utc(2026, 1, 2),
-          state: SaveSnapshot(save: _save(turn: 9), eventLogOffset: 7),
+          state: GameSnapshotFactory.create(
+            save: _save(turn: 9),
+            eventLogOffset: 7,
+          ),
         ),
       );
 
@@ -82,17 +90,21 @@ void main() {
       await store.save(
         'save_a',
         Snapshot(
-          offset: 1,
           createdAt: DateTime.utc(2026, 1, 1),
-          state: SaveSnapshot(save: _save(turn: 1), eventLogOffset: 1),
+          state: GameSnapshotFactory.create(
+            save: _save(turn: 1),
+            eventLogOffset: 1,
+          ),
         ),
       );
       await store.save(
         'save_b',
         Snapshot(
-          offset: 2,
           createdAt: DateTime.utc(2026, 1, 2),
-          state: SaveSnapshot(save: _save(turn: 2), eventLogOffset: 2),
+          state: GameSnapshotFactory.create(
+            save: _save(turn: 2),
+            eventLogOffset: 2,
+          ),
         ),
       );
 

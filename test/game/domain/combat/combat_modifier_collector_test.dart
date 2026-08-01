@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -370,8 +370,8 @@ GameUnit _unit({GameUnitType type = GameUnitType.warrior}) {
   );
 }
 
-TileData _tile({List<TerrainType> terrains = const [TerrainType.grassland]}) {
-  return TileData(
+WorldTile _tile({List<TerrainType> terrains = const [TerrainType.grassland]}) {
+  return WorldTile(
     col: 1,
     row: 1,
     terrains: terrains,

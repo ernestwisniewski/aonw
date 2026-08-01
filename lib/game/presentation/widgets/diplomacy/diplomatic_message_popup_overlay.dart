@@ -138,7 +138,7 @@ class _DiplomaticMessagePopupOverlayState
     }
   }
 
-  void _scanIncomingMessages(String activePlayerId, GameState? state) {
+  void _scanIncomingMessages(String activePlayerId, GameClientState? state) {
     if (activePlayerId.isEmpty || state == null) return;
     for (final proposal in state.diplomacy.proposalsFor(activePlayerId)) {
       if (!_shouldPromptProposal(proposal, activePlayerId)) continue;

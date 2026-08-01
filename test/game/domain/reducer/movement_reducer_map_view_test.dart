@@ -9,9 +9,7 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/movement_engine_test_driver.dart';
@@ -23,13 +21,13 @@ void main() {
 
   test('previews and executes movement through a canonical traversal view', () {
     final world = _canonicalWorld(cols: 4);
-    final MapTraversalView mapView = WorldMapReadView(world);
+    final MapTraversalView mapView = world;
     final unit = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [unit],
       fogOfWar: _originFog(),
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(unit),
         moveCommandActive: true,
       ),
@@ -84,13 +82,13 @@ void main() {
 
   test('executes a direct command through a canonical traversal view', () {
     final world = _canonicalWorld(cols: 3);
-    final MapTraversalView mapView = WorldMapReadView(world);
+    final MapTraversalView mapView = world;
     final unit = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [unit],
       fogOfWar: _originFog(),
-      interaction: GameInteractionState(selection: GameSelection.unit(unit)),
+      interaction: InteractionState(selection: GameSelection.unit(unit)),
     );
     expect(
       state.fogOfWar.isVisible('player_1', const HexCoordinate(col: 1, row: 0)),
@@ -131,15 +129,15 @@ void main() {
 
   test('queues a canonical move at zero movement without jumping', () {
     final world = _canonicalWorld(cols: 4);
-    final MapTraversalView mapView = WorldMapReadView(world);
+    final MapTraversalView mapView = world;
     final unit = GameUnit.startingCommander(
       ownerPlayerId: 'player_1',
     ).copyWith(movementPoints: 0);
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [unit],
       fogOfWar: _originFog(),
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(unit),
         moveCommandActive: true,
       ),
@@ -179,7 +177,7 @@ void main() {
 
   test('execution animates the current partial route after a new blocker', () {
     final world = _canonicalWorld(cols: 3, rows: 2);
-    final MapTraversalView mapView = WorldMapReadView(world);
+    final MapTraversalView mapView = world;
     final unit = GameUnit.startingCommander(
       ownerPlayerId: 'player_1',
     ).copyWith(movementPoints: 3);
@@ -188,11 +186,11 @@ void main() {
       col: 1,
       row: 0,
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [unit],
       fogOfWar: _originFog(),
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(unit),
         moveCommandActive: true,
       ),
@@ -242,7 +240,7 @@ void main() {
 
   test('execution uses the current full route after a blocker leaves', () {
     final world = _canonicalWorld(cols: 3, rows: 2);
-    final MapTraversalView mapView = WorldMapReadView(world);
+    final MapTraversalView mapView = world;
     final unit = GameUnit.startingCommander(
       ownerPlayerId: 'player_1',
     ).copyWith(movementPoints: 3);
@@ -251,11 +249,11 @@ void main() {
       col: 1,
       row: 0,
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [unit, blocker],
       fogOfWar: _originFog(),
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(unit),
         moveCommandActive: true,
       ),
@@ -302,7 +300,7 @@ void main() {
 
   test('auto-explores through a canonical traversal view', () {
     final world = _canonicalWorld(cols: 8, rows: 3);
-    final MapTraversalView mapView = WorldMapReadView(world);
+    final MapTraversalView mapView = world;
     final scout = GameUnit.produced(
       id: 'scout_1',
       ownerPlayerId: 'player_1',
@@ -310,10 +308,10 @@ void main() {
       col: 1,
       row: 1,
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [scout],
-      interaction: GameInteractionState(selection: GameSelection.unit(scout)),
+      interaction: InteractionState(selection: GameSelection.unit(scout)),
     );
 
     final result = resolveMovementCommandForTest(
@@ -343,7 +341,7 @@ void main() {
     );
     expect(
       world
-          .tileAt(HexCoord(col: movedScout.col, row: movedScout.row))
+          .tileAtHex(HexCoord(col: movedScout.col, row: movedScout.row))
           ?.resources,
       const [ResourceType.oil, ResourceType.wheat],
     );
@@ -353,7 +351,7 @@ void main() {
     'resets and executes a queued path through a canonical traversal view',
     () {
       final world = _canonicalWorld(cols: 4);
-      final MapTraversalView mapView = WorldMapReadView(world);
+      final MapTraversalView mapView = world;
       final unit = GameUnit.startingCommander(ownerPlayerId: 'player_1')
           .copyWith(movementPoints: 0)
           .copyWithQueuedPath(
@@ -382,11 +380,11 @@ void main() {
               ],
             ),
           );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [unit],
         fogOfWar: _originFog(),
-        interaction: GameInteractionState(selection: GameSelection.unit(unit)),
+        interaction: InteractionState(selection: GameSelection.unit(unit)),
       );
 
       final result = MovementReducer.resetUnitMovementForNewTurn(
@@ -425,7 +423,7 @@ WorldMap _canonicalWorld({required int cols, int rows = 1}) {
     tiles: [
       for (var row = 0; row < rows; row += 1)
         for (var col = 0; col < cols; col += 1)
-          WorldTile(
+          WorldTile.at(
             coordinate: HexCoord(col: col, row: row),
             terrains: const [TerrainType.plains],
             resources: const [ResourceType.oil, ResourceType.wheat],

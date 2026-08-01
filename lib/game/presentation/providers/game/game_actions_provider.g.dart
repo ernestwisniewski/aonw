@@ -63,7 +63,7 @@ final class GameCommandControllerProvider
 }
 
 String _$gameCommandControllerHash() =>
-    r'936e3093003aef69e296553ee67b1d24ff00a456';
+    r'db2d946495589ef8a2f100df6be0d89a64f79850';
 
 /// Coordinates player commands with the active save and renderer view model.
 

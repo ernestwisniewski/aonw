@@ -20,7 +20,7 @@ void main() {
       );
       expect(
         hudPlayerReadyToEndTurn(
-          gameState: GameState(units: [_unit(movementPoints: 1)]),
+          gameState: GameClientState(units: [_unit(movementPoints: 1)]),
           activePlayerId: 'player_1',
           technologyViewModel: TechnologyPanelViewModel.empty,
         ),
@@ -28,7 +28,7 @@ void main() {
       );
       expect(
         hudPlayerReadyToEndTurn(
-          gameState: GameState(cities: [_city(productionQueued: false)]),
+          gameState: GameClientState(cities: [_city(productionQueued: false)]),
           activePlayerId: 'player_1',
           technologyViewModel: TechnologyPanelViewModel.empty,
         ),
@@ -36,7 +36,7 @@ void main() {
       );
       expect(
         hudPlayerReadyToEndTurn(
-          gameState: GameState(
+          gameState: GameClientState(
             units: [_unit(movementPoints: 0)],
             cities: [_city()],
           ),
@@ -47,7 +47,7 @@ void main() {
       );
       expect(
         hudPlayerReadyToEndTurn(
-          gameState: GameState(
+          gameState: GameClientState(
             units: [_unit(movementPoints: 0)],
             cities: [_city()],
           ),
@@ -61,7 +61,7 @@ void main() {
     test('treats auto-exploring scout as ready with movement points', () {
       expect(
         hudPlayerReadyToEndTurn(
-          gameState: GameState(
+          gameState: GameClientState(
             units: [
               _unit(
                 type: GameUnitType.scout,
@@ -86,7 +86,7 @@ void main() {
 
       expect(
         hudPlayerReadyToEndTurn(
-          gameState: GameState(units: [merchant], cities: [_city()]),
+          gameState: GameClientState(units: [merchant], cities: [_city()]),
           activePlayerId: 'player_1',
           technologyViewModel: TechnologyPanelViewModel.empty,
         ),
@@ -97,7 +97,7 @@ void main() {
     test('still requires an idle merchant without a trade route', () {
       expect(
         hudPlayerReadyToEndTurn(
-          gameState: GameState(
+          gameState: GameClientState(
             units: [_unit(type: GameUnitType.merchant, movementPoints: 2)],
             cities: [_city()],
           ),
@@ -113,7 +113,7 @@ void main() {
     test('prefers unit orders before city production and research', () {
       final label = hudTurnHintLabel(
         l10n: l10n,
-        gameState: GameState(
+        gameState: GameClientState(
           units: [_unit(movementPoints: 1)],
           cities: [_city(productionQueued: false)],
         ),
@@ -131,7 +131,7 @@ void main() {
     test('uses city production when units are already handled', () {
       final label = hudTurnHintLabel(
         l10n: l10n,
-        gameState: GameState(
+        gameState: GameClientState(
           units: [_unit(movementPoints: 0)],
           cities: [_city(productionQueued: false)],
         ),
@@ -149,7 +149,7 @@ void main() {
     test('ignores auto-exploring scouts when choosing the next hint', () {
       final label = hudTurnHintLabel(
         l10n: l10n,
-        gameState: GameState(
+        gameState: GameClientState(
           units: [
             _unit(
               type: GameUnitType.scout,
@@ -177,7 +177,7 @@ void main() {
       ).copyWithMerchantTradeRoute(_tradeRoute());
       final label = hudTurnHintLabel(
         l10n: l10n,
-        gameState: GameState(
+        gameState: GameClientState(
           units: [merchant],
           cities: [_city(productionQueued: false)],
         ),
@@ -195,7 +195,7 @@ void main() {
     test('uses idle merchant as next unit hint before city production', () {
       final label = hudTurnHintLabel(
         l10n: l10n,
-        gameState: GameState(
+        gameState: GameClientState(
           units: [_unit(type: GameUnitType.merchant, movementPoints: 2)],
           cities: [_city(productionQueued: false)],
         ),
@@ -213,7 +213,7 @@ void main() {
     test('uses research after units and cities are ready', () {
       final label = hudTurnHintLabel(
         l10n: l10n,
-        gameState: GameState(
+        gameState: GameClientState(
           units: [_unit(movementPoints: 0)],
           cities: [_city()],
         ),
@@ -231,7 +231,7 @@ void main() {
     test('uses score advice for the closest matching unit action', () {
       final label = hudTurnHintLabel(
         l10n: l10n,
-        gameState: GameState(
+        gameState: GameClientState(
           units: [
             _unit(id: 'warrior_1', movementPoints: 1),
             _unit(id: 'worker_1', type: GameUnitType.worker, movementPoints: 1),
@@ -258,7 +258,7 @@ void main() {
     test('uses unit score advice for the closest combat unit action', () {
       final label = hudTurnHintLabel(
         l10n: l10n,
-        gameState: GameState(
+        gameState: GameClientState(
           units: [
             _unit(id: 'worker_1', type: GameUnitType.worker, movementPoints: 1),
             _unit(id: 'warrior_1', movementPoints: 1),
@@ -285,7 +285,7 @@ void main() {
     test('uses protect-lead advice for a combat unit action', () {
       final label = hudTurnHintLabel(
         l10n: l10n,
-        gameState: GameState(
+        gameState: GameClientState(
           units: [_unit(id: 'warrior_1', movementPoints: 1)],
           cities: [_city()],
         ),
@@ -309,7 +309,7 @@ void main() {
     test('uses score advice for city production action', () {
       final label = hudTurnHintLabel(
         l10n: l10n,
-        gameState: GameState(
+        gameState: GameClientState(
           units: [_unit(movementPoints: 0)],
           cities: [_city(productionQueued: false)],
         ),
@@ -333,7 +333,7 @@ void main() {
     test('uses economy score advice for city production action', () {
       final label = hudTurnHintLabel(
         l10n: l10n,
-        gameState: GameState(
+        gameState: GameClientState(
           units: [_unit(movementPoints: 0)],
           cities: [_city(productionQueued: false)],
         ),
@@ -357,7 +357,7 @@ void main() {
     test('uses score advice for research action', () {
       final label = hudTurnHintLabel(
         l10n: l10n,
-        gameState: GameState(
+        gameState: GameClientState(
           units: [_unit(movementPoints: 0)],
           cities: [_city()],
         ),
@@ -381,7 +381,7 @@ void main() {
     test('shows score advice when falling back to the active objective', () {
       final label = hudTurnHintLabel(
         l10n: l10n,
-        gameState: GameState(
+        gameState: GameClientState(
           units: [_unit(movementPoints: 0)],
           cities: [_city()],
           research: ResearchState(
@@ -417,7 +417,7 @@ void main() {
         definition: GameObjectiveTracker.earlyGameObjectives.first,
         currentValue: 0,
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [_unit(movementPoints: 0)],
         cities: [_city()],
       );

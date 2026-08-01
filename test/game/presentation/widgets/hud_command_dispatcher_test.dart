@@ -10,12 +10,10 @@ import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.da
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdown_controller.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -95,7 +93,7 @@ void main() {
         .read(hudCommandDispatcherProvider)
         .openTechnologyPanel(
           activePlayerId: 'player-1',
-          state: const GameState(activePlayerId: 'player-1'),
+          state: GameClientState(activePlayerId: 'player-1'),
         );
 
     expect(container.read(hudPanelControllerProvider).technology, isTrue);
@@ -146,14 +144,11 @@ void main() {
     container
         .read(hudCommandDispatcherProvider)
         .autoExploreSelectedUnit(
-          GameState(
+          GameClientState(
             units: [scout],
             fogOfWar: _fullyDiscoveredFog(cols: 2, rows: 1),
-            interaction: GameInteractionState(
-              selection: GameSelection.unit(scout),
-            ),
+            interaction: InteractionState(selection: GameSelection.unit(scout)),
           ),
-          _grassMap(cols: 2, rows: 1),
         );
 
     expect(container.read(hudFeedbackProvider), isEmpty);
@@ -182,24 +177,6 @@ GameUnit _unit(GameUnitType type) {
     name: type.defaultNameToken,
     col: 0,
     row: 0,
-  );
-}
-
-MapData _grassMap({required int cols, required int rows}) {
-  return MapData(
-    cols: cols,
-    rows: rows,
-    tiles: [
-      for (var row = 0; row < rows; row++)
-        for (var col = 0; col < cols; col++)
-          TileData(
-            col: col,
-            row: row,
-            terrains: const [TerrainType.grassland],
-            resources: const [],
-            height: 0,
-          ),
-    ],
   );
 }
 

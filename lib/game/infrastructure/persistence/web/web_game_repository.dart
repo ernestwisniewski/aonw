@@ -6,14 +6,10 @@ import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/domain/game_save.dart';
+import 'package:aonw/game/infrastructure/persistence/initial_game_snapshot_factory.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_database.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_replay_store.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_snapshot_store.dart';
-import 'package:aonw_core/game/domain/artifact.dart';
-import 'package:aonw_core/game/domain/diplomacy.dart';
-import 'package:aonw_core/game/domain/fog.dart';
-import 'package:aonw_core/game/domain/player.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:sembast/sembast.dart';
 
@@ -56,67 +52,16 @@ class WebGameRepository implements GameRepository {
           request.players.length,
           for (final player in request.players) player.id,
         ]);
-    final save = GameSave(
+    final initial = createInitialGameSnapshot(
       id: id,
-      name: request.name,
-      mapName: request.mapName,
-      mapSource: request.mapSource,
-      turn: 1,
-      playerStates: {
-        for (final player in request.players) player.id: PlayerTurnState.active,
-      },
-      savedAt: now,
-      camera: CameraState.zero,
-      matchRules: request.matchRules,
-      players: request.players,
-      gameMode: request.gameMode,
-    );
-    final units = StartingUnits.unitsForPlayers(
-      request.players,
-      mapData: request.mapData,
+      now: now,
+      request: request,
       startPositionSeed: startPositionSeed,
     );
-    final artifacts = request.mapData == null
-        ? const <WorldArtifact>[]
-        : WorldArtifactGenerator.generate(
-            mapData: request.mapData!,
-            startingUnits: units,
-            seed: startPositionSeed,
-          );
-    final fogOfWar = request.mapData == null
-        ? FogOfWarState.empty
-        : const FogOfWarService().recompute(
-            current: FogOfWarState.empty,
-            mapData: request.mapData!,
-            playerIds: request.players.map((player) => player.id),
-            units: units,
-            cities: const [],
-          );
-    final diplomacy = DiplomaticContact.mergeDiscoveredContacts(
-      diplomacy: DiplomacyState.empty,
-      fogOfWar: fogOfWar,
-      units: units,
-      cities: const [],
-      playerIds: request.players.map((player) => player.id),
-    );
-    final snapshot = SaveSnapshot(
-      save: save,
-      playerColors: {
-        for (final player in request.players) player.id: player.colorValue,
-      },
-      playerCountries: {
-        for (final player in request.players) player.id: player.country,
-      },
-      units: units,
-      artifacts: artifacts,
-      fogOfWar: fogOfWar,
-      runtimeState: GameRuntimeState.snapshot(diplomacy: diplomacy),
-    );
+    final save = initial.save;
+    final snapshot = initial.snapshot;
 
-    await snapshotStore.save(
-      id,
-      Snapshot(offset: 0, state: snapshot, createdAt: now),
-    );
+    await snapshotStore.save(id, Snapshot(state: snapshot, createdAt: now));
     await replayStore.saveInitialSnapshot(id, snapshot);
     await _writeIndex(save);
     return id;
@@ -147,7 +92,7 @@ class WebGameRepository implements GameRepository {
   }
 
   @override
-  Future<SaveSnapshot> load(String saveId) async {
+  Future<CanonicalGameSnapshot> load(String saveId) async {
     final snapshot = await snapshotStore.latest(saveId);
     if (snapshot == null) {
       throw StateError('Save snapshot not found: $saveId');
@@ -156,14 +101,10 @@ class WebGameRepository implements GameRepository {
   }
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {
+  Future<void> save(CanonicalGameSnapshot snapshot) async {
     await snapshotStore.save(
       snapshot.save.id,
-      Snapshot(
-        offset: snapshot.eventLogOffset,
-        state: snapshot,
-        createdAt: snapshot.save.savedAt,
-      ),
+      Snapshot(state: snapshot, createdAt: snapshot.save.savedAt),
     );
     await _writeIndex(snapshot.save);
   }
@@ -176,17 +117,15 @@ class WebGameRepository implements GameRepository {
   }
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
   }) async {
     final snapshot = await load(saveId);
-    final updated = snapshot.copyWith(
-      save: snapshot.save.copyWith(
-        camera: camera,
-        savedAt: savedAt?.toUtc() ?? clock.nowUtc(),
-      ),
+    final updated = snapshot.withCamera(
+      camera,
+      savedAt: savedAt?.toUtc() ?? clock.nowUtc(),
     );
     await save(updated);
     return updated;

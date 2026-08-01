@@ -14,7 +14,7 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
   _HudOverlayGamepadFocus _resolveHudGamepadFocus({
     required HudOverlayFrame frame,
     required HudCommandDispatcher dispatcher,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required String activePlayerId,
     required bool enabled,
     required List<Widget> selectionActions,
@@ -65,7 +65,7 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
   void _openTurnTimeline({
     required HudCommandDispatcher dispatcher,
     required HudOverlayFrame frame,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required String activePlayerId,
   }) {
     dispatcher.closeResourceBreakdown();
@@ -105,7 +105,7 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
   List<HudGamepadFocusTarget> _topResourceFocusTargets({
     required HudOverlayFrame frame,
     required String activePlayerId,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required VoidCallback onGoldPressed,
     required VoidCallback onSciencePressed,
     required VoidCallback onStabilityPressed,
@@ -190,7 +190,7 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
   List<HudGamepadFocusTarget> _selectionActionFocusTargets(
     List<Widget> actions, {
     required String activePlayerId,
-    required GameState? gameState,
+    required GameClientState? gameState,
   }) {
     return [
       for (final action in actions)
@@ -215,7 +215,7 @@ extension _GameHudOverlayHostGamepadFocus on _GameHudOverlayHostState {
   Object _topResourceActivationKey(
     String resourceId,
     String activePlayerId,
-    GameState? gameState,
+    GameClientState? gameState,
   ) {
     return Object.hash(
       widget.gameSave.id,

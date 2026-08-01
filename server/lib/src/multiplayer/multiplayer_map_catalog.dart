@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:aonw_core/domain.dart';
 
 abstract interface class MultiplayerMapCatalog {
-  Future<MapData> loadAssetMap(String mapName);
+  Future<WorldMap> loadAssetMap(String mapName);
 }
 
 final class FileMultiplayerMapCatalog implements MultiplayerMapCatalog {
@@ -12,13 +12,13 @@ final class FileMultiplayerMapCatalog implements MultiplayerMapCatalog {
   final List<String>? _roots;
 
   @override
-  Future<MapData> loadAssetMap(String mapName) async {
+  Future<WorldMap> loadAssetMap(String mapName) async {
     final safeName = _safeMapName(mapName);
     final roots = _roots ?? const ['assets/maps', '../assets/maps'];
     for (final root in roots) {
       final file = File('$root/$safeName/map.json');
       if (await file.exists()) {
-        return MapDataCodec.fromJson(await file.readAsString());
+        return WorldMapCodec.fromJson(await file.readAsString());
       }
     }
     throw StateError('Map asset not found: $safeName');

@@ -9,16 +9,16 @@ void main() {
     test('calculates control percent over valid domination tiles', () {
       final progress = calculator.snapshot(
         playerIds: players,
-        state: const PersistentGameState(
+        state: DomainState.snapshot(
           cities: [
-            GameCity(
+            const GameCity(
               id: 'city_1',
               ownerPlayerId: 'player_1',
               name: 'Roma',
               center: CityHex(col: 0, row: 0),
               controlledHexes: [CityHex(col: 1, row: 0)],
             ),
-            GameCity(
+            const GameCity(
               id: 'city_2',
               ownerPlayerId: 'player_2',
               name: 'Antium',
@@ -47,16 +47,16 @@ void main() {
       () {
         final next = calculator.advanceHoldTurns(
           playerIds: players,
-          state: const PersistentGameState(
+          state: DomainState.snapshot(
             cities: [
-              GameCity(
+              const GameCity(
                 id: 'city_1',
                 ownerPlayerId: 'player_1',
                 name: 'Roma',
                 center: CityHex(col: 0, row: 0),
                 controlledHexes: [CityHex(col: 1, row: 0)],
               ),
-              GameCity(
+              const GameCity(
                 id: 'city_2',
                 ownerPlayerId: 'player_2',
                 name: 'Antium',
@@ -81,9 +81,9 @@ void main() {
       () {
         final progress = calculator.snapshot(
           playerIds: players,
-          state: const PersistentGameState(
+          state: DomainState.snapshot(
             cities: [
-              GameCity(
+              const GameCity(
                 id: 'city_1',
                 ownerPlayerId: 'player_1',
                 name: 'Roma',
@@ -96,9 +96,9 @@ void main() {
         );
         final next = calculator.advanceHoldTurns(
           playerIds: players,
-          state: const PersistentGameState(
+          state: DomainState.snapshot(
             cities: [
-              GameCity(
+              const GameCity(
                 id: 'city_1',
                 ownerPlayerId: 'player_1',
                 name: 'Roma',
@@ -118,16 +118,16 @@ void main() {
     );
 
     test('emits threshold event only when a domination hold starts', () {
-      const state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [
-          GameCity(
+          const GameCity(
             id: 'city_1',
             ownerPlayerId: 'player_1',
             name: 'Roma',
             center: CityHex(col: 0, row: 0),
             controlledHexes: [CityHex(col: 1, row: 0)],
           ),
-          GameCity(
+          const GameCity(
             id: 'city_2',
             ownerPlayerId: 'player_2',
             name: 'Antium',
@@ -176,16 +176,16 @@ void main() {
     test(
       'matches a WorldMap read view for sparse tiles regardless of order',
       () {
-        const state = PersistentGameState(
+        final state = DomainState.snapshot(
           cities: [
-            GameCity(
+            const GameCity(
               id: 'city_1',
               ownerPlayerId: 'player_1',
               name: 'Roma',
               center: CityHex(col: 6, row: 4),
               controlledHexes: [CityHex(col: 1, row: 2)],
             ),
-            GameCity(
+            const GameCity(
               id: 'city_2',
               ownerPlayerId: 'player_2',
               name: 'Antium',
@@ -194,32 +194,32 @@ void main() {
             ),
           ],
         );
-        final mapData = MapData(
+        final mapData = WorldMap(
           cols: 8,
           rows: 6,
-          tiles: const [
-            TileData(
+          tiles: [
+            WorldTile(
               col: 6,
               row: 4,
               terrains: [TerrainType.grassland],
               resources: [],
               height: 0,
             ),
-            TileData(
+            WorldTile(
               col: 1,
               row: 2,
               terrains: [TerrainType.mountain],
               resources: [],
               height: 5,
             ),
-            TileData(
+            WorldTile(
               col: 2,
               row: 3,
               terrains: [TerrainType.plains],
               resources: [],
               height: 0,
             ),
-            TileData(
+            WorldTile(
               col: 7,
               row: 5,
               terrains: [TerrainType.ocean],
@@ -238,7 +238,7 @@ void main() {
         final canonical = calculator.snapshot(
           playerIds: const ['player_2', 'player_1', 'player_2', ''],
           state: state,
-          mapData: WorldMapReadView(worldMap),
+          mapData: worldMap,
           victoryRules: VictoryRules.standard,
         );
 
@@ -313,13 +313,13 @@ List<Map<String, Object>> _snapshotShape(DominationProgressSnapshot snapshot) {
   ];
 }
 
-WorldMap _worldMapFromDataInReverse(MapData mapData) {
+WorldMap _worldMapFromDataInReverse(WorldMap mapData) {
   return WorldMap(
     cols: mapData.cols,
     rows: mapData.rows,
     tiles: [
       for (final tile in mapData.tiles.reversed)
-        WorldTile(
+        WorldTile.at(
           coordinate: HexCoord(col: tile.col, row: tile.row),
           terrains: tile.terrains,
           resources: tile.resources,
@@ -347,16 +347,16 @@ DominationProgressEntry _entry({
   );
 }
 
-MapData _mapData(List<TileData> tiles) {
-  return MapData(cols: tiles.length, rows: 1, tiles: tiles);
+WorldMap _mapData(List<WorldTile> tiles) {
+  return WorldMap(cols: tiles.length, rows: 1, tiles: tiles);
 }
 
-TileData _tile(
+WorldTile _tile(
   int col,
   int row, [
   TerrainType terrain = TerrainType.grassland,
 ]) {
-  return TileData(
+  return WorldTile(
     col: col,
     row: row,
     terrains: [terrain],

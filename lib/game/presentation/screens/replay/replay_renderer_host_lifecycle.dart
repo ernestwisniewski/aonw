@@ -153,7 +153,7 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
 
   void _applyReplaySeek(
     GameRenderer renderer,
-    GameState state, {
+    GameClientState state, {
     required bool shouldFocusInitialState,
     required int previousIndex,
     required int targetIndex,
@@ -179,12 +179,15 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
     );
   }
 
-  GameState _stateForStep(int index) {
+  GameClientState _stateForStep(int index) {
     if (index <= 0) return widget.timeline.initialState;
     return widget.timeline.steps[index - 1].state;
   }
 
-  GameState _displayState(GameState state, {bool forInitialFocus = false}) {
+  GameClientState _displayState(
+    GameClientState state, {
+    bool forInitialFocus = false,
+  }) {
     return state.copyWith(
       activePlayerId:
           _perspectivePlayerId ??
@@ -226,8 +229,8 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
 ProjectedGameEffectBatch _replayEffectBatch(
   ReplayTimeline timeline,
   ReplayStep step, {
-  required GameState state,
-  required GameState previousState,
+  required GameClientState state,
+  required GameClientState previousState,
   required AppLocalizations l10n,
 }) {
   return ReplayRendererEffectPlanner.batchForStep(

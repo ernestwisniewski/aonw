@@ -15,7 +15,7 @@ import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_summar
 import 'package:aonw/game/presentation/widgets/resources/top_resource_overlay.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,13 +40,13 @@ class HudTopResourceSlot extends ConsumerWidget {
 
   final bool show;
   final HudResourceSummary resourceSummary;
-  final GameState? gameState;
+  final GameClientState? gameState;
   final HudActiveTechnologySummary activeTechnologySummary;
   final String? playerName;
   final Color? playerColor;
   final int turnNumber;
   final GameSave gameSave;
-  final MapData mapData;
+  final WorldMap mapData;
   final String? activePlayerId;
   final AppLocalizations l10n;
   final String? gamepadFocusedTargetId;

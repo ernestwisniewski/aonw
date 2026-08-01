@@ -27,7 +27,7 @@ class MultiplayerStatusSheet extends StatelessWidget {
   });
 
   final List<MultiplayerAvatarTileData> tiles;
-  final GameState? gameState;
+  final GameClientState? gameState;
   final ValueChanged<String> onAvatarTapped;
 
   @override

@@ -8,7 +8,7 @@ import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 
 class CommandTransportResult {
-  final GameState state;
+  final GameClientState state;
   final List<UiEffect> uiEffects;
   final List<GameEvent> events;
   final List<CombatAnimationFact> combatAnimations;
@@ -18,7 +18,7 @@ class CommandTransportResult {
   ///
   /// Network commands handled only on the client or managed entirely by the
   /// server do not fabricate a persistence snapshot.
-  final SaveSnapshot? snapshot;
+  final CanonicalGameSnapshot? snapshot;
   final int offset;
   final bool storedSnapshot;
 
@@ -37,7 +37,7 @@ class CommandTransportResult {
 abstract interface class CommandTransport {
   Future<CommandTransportResult> dispatch({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
     bool fromMovePreviewConfirmation = false,

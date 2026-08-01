@@ -224,7 +224,7 @@ void main() {
           'PersistentGameState',
           'DomainState',
           'CanonicalGameSnapshot',
-          'GameState',
+          'GameClientState',
           'GameRuntimeState',
         }),
         isEmpty,

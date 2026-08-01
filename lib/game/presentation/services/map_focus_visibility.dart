@@ -5,7 +5,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 
 abstract final class MapFocusVisibility {
   static FogVisibilityQuery queryFor(
-    GameState state, {
+    GameClientState state, {
     String? viewerPlayerId,
   }) {
     return FogVisibilityQuery(
@@ -15,7 +15,7 @@ abstract final class MapFocusVisibility {
   }
 
   static bool canRenderTransientAt(
-    GameState state,
+    GameClientState state,
     int col,
     int row, {
     String? viewerPlayerId,
@@ -24,7 +24,7 @@ abstract final class MapFocusVisibility {
   }
 
   static bool canAutoFocusAt(
-    GameState state,
+    GameClientState state,
     int col,
     int row, {
     String? viewerPlayerId,
@@ -33,7 +33,7 @@ abstract final class MapFocusVisibility {
   }
 
   static bool canFocusUnit(
-    GameState state,
+    GameClientState state,
     GameUnit unit, {
     String? viewerPlayerId,
   }) {
@@ -48,7 +48,7 @@ abstract final class MapFocusVisibility {
   }
 
   static bool canFocusCity(
-    GameState state,
+    GameClientState state,
     GameCity city, {
     String? viewerPlayerId,
   }) {
@@ -63,7 +63,7 @@ abstract final class MapFocusVisibility {
   }
 
   static bool canAutoFocusCity(
-    GameState state,
+    GameClientState state,
     GameCity city, {
     String? viewerPlayerId,
   }) {
@@ -78,7 +78,7 @@ abstract final class MapFocusVisibility {
   }
 
   static bool canSeeDynamicAt(
-    GameState state,
+    GameClientState state,
     int col,
     int row, {
     String? viewerPlayerId,
@@ -89,7 +89,7 @@ abstract final class MapFocusVisibility {
   }
 
   static bool canRememberStaticAt(
-    GameState state,
+    GameClientState state,
     int col,
     int row, {
     String? viewerPlayerId,
@@ -99,7 +99,10 @@ abstract final class MapFocusVisibility {
     return visibility.canRememberStaticAt(col, row);
   }
 
-  static bool _hasFogForViewer(GameState state, FogVisibilityQuery visibility) {
+  static bool _hasFogForViewer(
+    GameClientState state,
+    FogVisibilityQuery visibility,
+  ) {
     return visibility.isEnabled &&
         state.fogOfWar.playerIds.contains(visibility.playerId);
   }

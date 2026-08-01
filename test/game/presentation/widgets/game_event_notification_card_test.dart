@@ -27,15 +27,15 @@ void main() {
   test('formats stability band changes for the owning player', () {
     final message = GameEventNotificationMessage.from(
       AppLocalizationsEn(),
-      const GameEventNotification(
+      GameEventNotification(
         id: 1,
-        event: StabilityBandChangedEvent(
+        event: const StabilityBandChangedEvent(
           playerId: 'player_1',
           previousBand: StabilityBand.stable,
           newBand: StabilityBand.strained,
           net: -2,
         ),
-        state: GameState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
         playerId: 'player_1',
       ),
       null,
@@ -152,7 +152,7 @@ void main() {
       col: 1,
       row: 1,
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       cities: const [city],
       units: [worker],
@@ -407,7 +407,7 @@ void main() {
       col: 2,
       row: 1,
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [attacker.copyWithHitPoints(8), defender.copyWithHitPoints(4)],
     );
@@ -492,16 +492,16 @@ void main() {
             final l10n = AppLocalizations.of(context);
             final rejected = GameEventNotificationMessage.from(
               l10n,
-              const GameEventNotification(
+              GameEventNotification(
                 id: 1,
-                event: DiplomaticProposalRespondedEvent(
+                event: const DiplomaticProposalRespondedEvent(
                   proposalId: 'proposal_1',
                   fromPlayerId: 'player_1',
                   toPlayerId: 'player_2',
                   kind: DiplomaticProposalKind.truce,
                   accepted: false,
                 ),
-                state: GameState(activePlayerId: 'player_2'),
+                state: GameClientState(activePlayerId: 'player_2'),
                 playerId: 'player_1',
                 turn: 4,
               ),
@@ -509,15 +509,15 @@ void main() {
             );
             final expired = GameEventNotificationMessage.from(
               l10n,
-              const GameEventNotification(
+              GameEventNotification(
                 id: 2,
-                event: DiplomaticProposalExpiredEvent(
+                event: const DiplomaticProposalExpiredEvent(
                   proposalId: 'proposal_2',
                   fromPlayerId: 'player_1',
                   toPlayerId: 'player_2',
                   kind: DiplomaticProposalKind.truce,
                 ),
-                state: GameState(activePlayerId: 'player_2'),
+                state: GameClientState(activePlayerId: 'player_2'),
                 playerId: 'player_2',
                 turn: 5,
               ),
@@ -570,9 +570,9 @@ void main() {
             final l10n = AppLocalizations.of(context);
             final dispatch = GameEventNotificationMessage.from(
               l10n,
-              const GameEventNotification(
+              GameEventNotification(
                 id: 1,
-                event: DiplomaticMessageSentEvent(
+                event: const DiplomaticMessageSentEvent(
                   messageId: 'message_1',
                   fromPlayerId: 'player_1',
                   toPlayerId: 'player_2',
@@ -580,7 +580,7 @@ void main() {
                   category: DiplomaticMessageCategory.cooperation,
                   expiresOnTurn: 8,
                 ),
-                state: GameState(activePlayerId: 'player_1'),
+                state: GameClientState(activePlayerId: 'player_1'),
                 playerId: 'player_1',
                 turn: 4,
               ),
@@ -588,16 +588,16 @@ void main() {
             );
             final score = GameEventNotificationMessage.from(
               l10n,
-              const GameEventNotification(
+              GameEventNotification(
                 id: 2,
-                event: DiplomaticScoreChangedEvent(
+                event: const DiplomaticScoreChangedEvent(
                   playerAId: 'player_1',
                   playerBId: 'player_2',
                   delta: 12,
                   scoreAfter: 24,
                   reason: DiplomaticScoreChangeReason.messageResponse,
                 ),
-                state: GameState(activePlayerId: 'player_1'),
+                state: GameClientState(activePlayerId: 'player_1'),
                 playerId: 'player_1',
                 turn: 5,
               ),
@@ -636,7 +636,7 @@ void main() {
       col: 2,
       row: 1,
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [attacker.copyWithHitPoints(10), defender.copyWithHitPoints(9)],
     );
@@ -718,7 +718,7 @@ void main() {
   testWidgets('domination threshold formatter marks opponent pressure', (
     tester,
   ) async {
-    const state = GameState(activePlayerId: 'player_1');
+    final state = GameClientState(activePlayerId: 'player_1');
     final save = GameSave(
       id: 'save',
       name: 'Game',
@@ -746,9 +746,9 @@ void main() {
           builder: (context) {
             final message = GameEventNotificationMessage.from(
               AppLocalizations.of(context),
-              const GameEventNotification(
+              GameEventNotification(
                 id: 1,
-                event: DominationThresholdReachedEvent(
+                event: const DominationThresholdReachedEvent(
                   playerId: 'player_2',
                   controlPercent: 55,
                   requiredControlPercent: 45,
@@ -801,11 +801,11 @@ void main() {
       col: 2,
       row: 1,
     );
-    final previousState = GameState(
+    final previousState = GameClientState(
       activePlayerId: 'player_1',
       units: [attacker, defender],
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [attacker.copyWithHitPoints(9)],
     );

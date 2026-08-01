@@ -1,13 +1,13 @@
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/persistence/map_loader.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('MapLoader.fromJson', () {
-    test('parses valid new-format JSON into MapData', () {
+    test('parses valid new-format JSON into WorldMap', () {
       const json = '''
       {
         "cols": 2,
@@ -103,9 +103,9 @@ void main() {
     });
   });
 
-  group('TileData.copyWith', () {
+  group('WorldTile.copyWith', () {
     test('changes only terrains', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 1,
         row: 2,
         terrains: [TerrainType.ocean],
@@ -121,7 +121,7 @@ void main() {
     });
 
     test('changes resources to non-empty', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.grassland],
@@ -134,7 +134,7 @@ void main() {
     });
 
     test('clears resources by passing empty list', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.grassland],
@@ -146,7 +146,7 @@ void main() {
     });
 
     test('changes height', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
@@ -158,9 +158,9 @@ void main() {
     });
   });
 
-  group('TileData.toJson', () {
+  group('WorldTile.toJson', () {
     test('serializes all fields in new format', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 3,
         row: 2,
         terrains: [TerrainType.plains],
@@ -176,7 +176,7 @@ void main() {
     });
 
     test('serializes empty resources as empty list', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.ocean],
@@ -188,9 +188,9 @@ void main() {
     });
   });
 
-  group('TileData.primaryTerrain', () {
+  group('WorldTile.primaryTerrain', () {
     test('returns first terrain when list is non-empty', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains, TerrainType.grassland],
@@ -201,7 +201,7 @@ void main() {
     });
 
     test('returns ocean when terrains is empty', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 0,
         row: 0,
         terrains: [],
@@ -214,32 +214,32 @@ void main() {
 
   group('mapName', () {
     test('toJson includes mapName when set', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 2,
         rows: 2,
         tiles: [
-          const TileData(
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.ocean],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 0,
             row: 1,
             terrains: [TerrainType.ocean],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 1,
             row: 0,
             terrains: [TerrainType.ocean],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 1,
             row: 1,
             terrains: [TerrainType.ocean],
@@ -254,32 +254,32 @@ void main() {
     });
 
     test('toJson omits mapName when null', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 2,
         rows: 2,
         tiles: [
-          const TileData(
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.ocean],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 0,
             row: 1,
             terrains: [TerrainType.ocean],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 1,
             row: 0,
             terrains: [TerrainType.ocean],
             resources: [],
             height: 0,
           ),
-          const TileData(
+          WorldTile(
             col: 1,
             row: 1,
             terrains: [TerrainType.ocean],
@@ -354,7 +354,7 @@ void main() {
     });
 
     test('toJson writes map objectives when present', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 1,
         rows: 1,
         objectives: const [
@@ -366,7 +366,7 @@ void main() {
           ),
         ],
         tiles: [
-          const TileData(
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.plains],
@@ -385,11 +385,11 @@ void main() {
     });
 
     test('toJson omits objectives when empty', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 1,
         rows: 1,
         tiles: [
-          const TileData(
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.plains],

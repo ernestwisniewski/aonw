@@ -10,7 +10,7 @@ abstract final class ArtifactEventRendererEffectMapper {
 
   static List<RendererEffect> effectsFor(
     ArtifactLifecycleEvent event,
-    GameState state, {
+    GameClientState state, {
     AppLocalizations? l10n,
     String? viewerPlayerId,
   }) {

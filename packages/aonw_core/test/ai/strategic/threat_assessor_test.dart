@@ -5,7 +5,7 @@ void main() {
   group('ThreatAssessor', () {
     test('ranks a closer equally armed rival higher', () {
       final mapData = _map(7, 7);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'own_warrior',
@@ -47,7 +47,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 4,
@@ -73,7 +73,7 @@ void main() {
 
     test('keeps a recently aggressive rival in threat memory', () {
       final mapData = _map(4, 4);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'own_warrior',
@@ -92,7 +92,7 @@ void main() {
           ),
         ],
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 8,
@@ -126,7 +126,7 @@ void main() {
         'player_2',
         DiplomaticRelationStatus.neutral,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'own_warrior',
@@ -144,9 +144,9 @@ void main() {
             center: CityHex(col: 0, row: 0),
           ),
         ],
-        runtimeState: GameRuntimeState(diplomacy: diplomacy),
+        diplomacy: diplomacy,
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 8,
@@ -178,7 +178,7 @@ void main() {
         'player_2',
         DiplomaticRelationStatus.neutral,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'own_warrior',
@@ -211,9 +211,9 @@ void main() {
             ),
           },
         ),
-        runtimeState: GameRuntimeState(diplomacy: diplomacy),
+        diplomacy: diplomacy,
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 8,
@@ -246,7 +246,7 @@ void main() {
         'player_2',
         DiplomaticRelationStatus.war,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'own_warrior',
@@ -278,9 +278,9 @@ void main() {
             ),
           },
         ),
-        runtimeState: GameRuntimeState(diplomacy: diplomacy),
+        diplomacy: diplomacy,
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 10,
@@ -376,14 +376,14 @@ EmpireScoreBreakdown _score(String playerId, {required int totalCityScore}) {
   );
 }
 
-MapData _map(int cols, int rows) {
-  return MapData(
+WorldMap _map(int cols, int rows) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var col = 0; col < cols; col++)
         for (var row = 0; row < rows; row++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
@@ -394,7 +394,7 @@ MapData _map(int cols, int rows) {
   );
 }
 
-Set<HexCoordinate> _allHexesIn(MapData mapData) {
+Set<HexCoordinate> _allHexesIn(WorldMap mapData) {
   return {
     for (final tile in mapData.tiles)
       HexCoordinate(col: tile.col, row: tile.row),

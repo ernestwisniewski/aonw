@@ -606,10 +606,10 @@ WHERE "matchId" = @matchId
         expect(persistedSnapshots, hasLength(1));
         expect(persistedSnapshots.single.id, snapshotRowId);
         expect(persistedSnapshots.single.offset, persistedEvents.single.offset);
-        final canonicalState = PersistentGameState.fromJson(
+        final canonicalState = CanonicalGameSnapshotCodec.decodeDomainState(
           persistedSnapshots.single.snapshot.state,
         );
-        final projectedState = PersistentGameState.fromJson(
+        final projectedState = CanonicalGameSnapshotCodec.decodeDomainState(
           acks.first.ack!.snapshot.state,
         );
         expect(acks.first.ack!.snapshot.matchId, created.id);
@@ -821,7 +821,7 @@ WHERE "matchId" = @matchId
           owner.session,
           started.id,
         );
-        final initialState = PersistentGameState.fromJson(
+        final initialState = CanonicalGameSnapshotCodec.decodeDomainState(
           initialSnapshot.state,
         );
         final initialUnitPositions = _unitPositionsFor(
@@ -845,7 +845,7 @@ WHERE "matchId" = @matchId
           reason: 'first-session move rejected: ${firstAck.reason}',
         );
         expect(firstAck.offset, initialSnapshot.offset + 1);
-        final firstState = PersistentGameState.fromJson(
+        final firstState = CanonicalGameSnapshotCodec.decodeDomainState(
           firstAck.snapshot.state,
         );
         final firstUnitPositions = _unitPositionsFor(
@@ -870,7 +870,7 @@ WHERE "matchId" = @matchId
           reason: 'post-resume move rejected: ${resumedAck.reason}',
         );
         expect(resumedAck.offset, firstAck.offset + 1);
-        final resumedState = PersistentGameState.fromJson(
+        final resumedState = CanonicalGameSnapshotCodec.decodeDomainState(
           resumedAck.snapshot.state,
         );
         expect(
@@ -1182,7 +1182,7 @@ Future<WireCommandAck> _connectAndDispatchMove({
   required String matchId,
   required int afterOffset,
   required String actorPlayerId,
-  required MapData mapData,
+  required WorldMap mapData,
   required int tick,
   required String clientMessageId,
 }) async {
@@ -1211,7 +1211,7 @@ Future<WireCommandAck> _connectAndDispatchMove({
     final initialMessage = await initial.future.timeout(_streamTimeout);
     final snapshot = initialMessage.snapshot!;
     final save = GameSave.fromJson(snapshot.save);
-    final state = PersistentGameState.fromJson(snapshot.state);
+    final state = CanonicalGameSnapshotCodec.decodeDomainState(snapshot.state);
     final move = _legalMoveCommandFor(
       mapData: mapData,
       state: state,
@@ -1240,8 +1240,8 @@ Future<WireCommandAck> _connectAndDispatchMove({
 }
 
 MoveUnitCommand _legalMoveCommandFor({
-  required MapData mapData,
-  required PersistentGameState state,
+  required WorldMap mapData,
+  required DomainState state,
   required String actorPlayerId,
 }) {
   final pathfinder = UnitMovementPathfinder(

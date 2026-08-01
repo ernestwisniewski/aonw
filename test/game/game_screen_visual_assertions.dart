@@ -1,5 +1,21 @@
 part of 'game_screen_test.dart';
 
+WorldMap _makeOtherMap() => WorldMap(
+  cols: 4,
+  rows: 2,
+  tiles: [
+    for (int r = 0; r < 2; r++)
+      for (int c = 0; c < 4; c++)
+        WorldTile(
+          col: c,
+          row: r,
+          terrains: const [TerrainType.plains],
+          resources: const [],
+          height: 0,
+        ),
+  ],
+);
+
 void _expectWarmPanelSurface(
   WidgetTester tester,
   Key key, {

@@ -171,11 +171,11 @@ const _astronomersTablets = WorldArtifact(
   location: WorldArtifactLocation.stored(cityId: 'city_1'),
 );
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 1,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],

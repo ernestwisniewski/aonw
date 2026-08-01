@@ -11,3 +11,23 @@ class HudVictoryStatusDetail {
     this.highlighted = false,
   });
 }
+
+Map<String, int> _victoryScores(
+  GameSave gameSave,
+  GameClientState? gameState,
+  WorldMap? mapData,
+  EmpireScoreCalculator scoreCalculator,
+) {
+  if (gameState == null) return const {};
+  return scoreCalculator.scoresForCollections(
+    playerIds: gameSave.players.map((player) => player.id),
+    cities: gameState.cities,
+    units: gameState.units,
+    fieldImprovements: gameState.fieldImprovements,
+    research: gameState.research,
+    playerGold: gameState.playerGold,
+    mapObjectives: mapData?.objectives ?? const [],
+    mapObjectiveHoldStatesByObjectiveId:
+        gameState.mapObjectiveHoldStatesByObjectiveId,
+  );
+}

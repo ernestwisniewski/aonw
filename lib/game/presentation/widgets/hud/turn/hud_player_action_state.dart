@@ -14,7 +14,7 @@ class HudPlayerActionState {
   });
 
   factory HudPlayerActionState.from({
-    required GameState? gameState,
+    required GameClientState? gameState,
     required GameSave gameSave,
     required String activePlayerId,
     required bool activePlayerCanAct,

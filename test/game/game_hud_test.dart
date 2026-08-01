@@ -40,13 +40,13 @@ import 'package:aonw/game/presentation/widgets/selection/selection.dart';
 import 'package:aonw/game/presentation/widgets/selection_info/selection_detail_sheet.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_dialog.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -72,10 +72,10 @@ part 'game_hud_combat_camera_tests.dart';
 part 'game_hud_visual_assertions.dart';
 
 class _FakeGameRepository implements GameRepository {
-  _FakeGameRepository({SaveSnapshot? snapshot})
-    : snapshot = snapshot ?? SaveSnapshot(save: _save);
+  _FakeGameRepository({CanonicalGameSnapshot? snapshot})
+    : snapshot = snapshot ?? GameSnapshotFactory.create(save: _save);
 
-  SaveSnapshot snapshot;
+  CanonicalGameSnapshot snapshot;
   CameraState? savedCamera;
   Completer<void>? loadGate;
 
@@ -91,7 +91,7 @@ class _FakeGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async {
+  Future<CanonicalGameSnapshot> load(String saveId) async {
     final gate = loadGate;
     if (gate != null) {
       loadGate = null;
@@ -101,7 +101,7 @@ class _FakeGameRepository implements GameRepository {
   }
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {
+  Future<void> save(CanonicalGameSnapshot snapshot) async {
     this.snapshot = snapshot;
   }
 
@@ -109,13 +109,13 @@ class _FakeGameRepository implements GameRepository {
   Future<void> delete(String saveId) async {}
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
   }) async {
     savedCamera = camera;
-    snapshot = snapshot.copyWith(save: snapshot.save.copyWith(camera: camera));
+    snapshot = snapshot.withGameSave(snapshot.save.copyWith(camera: camera));
     return snapshot;
   }
 }
@@ -184,11 +184,11 @@ class _SpyGameRenderer extends GameRenderer {
   _SpyGameRenderer({required super.mapData}) : super(onCommand: (_) async {});
 
   final handledEffects = <RendererEffect>[];
-  final appliedStates = <GameState>[];
+  final appliedStates = <GameClientState>[];
 
   @override
   Future<void> applyTransition(
-    GameState state,
+    GameClientState state,
     Iterable<RendererEffect> effects, {
     int? currentTurn,
   }) async {
@@ -230,13 +230,13 @@ final _save = GameSave(
   players: const [_player],
 );
 
-MapData _makeMap() => MapData(
+WorldMap _makeMap() => WorldMap(
   cols: 3,
   rows: 3,
   tiles: [
     for (int row = 0; row < 3; row++)
       for (int col = 0; col < 3; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],
@@ -247,7 +247,7 @@ MapData _makeMap() => MapData(
 );
 
 GameSession _makeSession(
-  MapData mapData, {
+  WorldMap mapData, {
   GameMode gameMode = GameMode.hotSeat,
 }) => GameSession(
   mapData: mapData,
@@ -436,7 +436,7 @@ Future<void> _openHelpEntryById(WidgetTester tester, String popupId) async {
   await tester.pump(const Duration(milliseconds: 300));
 }
 
-GameState? _readGameState(WidgetTester tester) {
+GameClientState? _readGameState(WidgetTester tester) {
   final container = ProviderScope.containerOf(
     tester.element(find.byType(GameHud)),
     listen: false,
@@ -531,7 +531,9 @@ void main() {
 
     await _pumpHud(
       tester,
-      repository: _FakeGameRepository(snapshot: SaveSnapshot(save: save)),
+      repository: _FakeGameRepository(
+        snapshot: GameSnapshotFactory.create(save: save),
+      ),
       gameSave: save,
       showEntryHandoff: true,
     );
@@ -551,9 +553,9 @@ void main() {
       },
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: save,
-        state: const GameState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
 
@@ -620,9 +622,9 @@ void main() {
         },
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: save,
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             research: ResearchState(
               players: {
@@ -680,9 +682,9 @@ void main() {
         },
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: save,
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             research: ResearchState(
               players: {
@@ -779,9 +781,9 @@ void main() {
       );
       final renderer = _SpyGameRenderer(mapData: _makeMap());
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: save,
-          state: const GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             activePlayerCanAct: false,
           ),
@@ -976,9 +978,9 @@ void main() {
       ).copyWith(movementPoints: 0);
       final renderer = _SpyGameRenderer(mapData: _makeMap());
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: save,
-          state: GameState(
+          state: GameClientState(
             units: [queuedUnit, aiUnit2, aiUnit3, aiUnit4],
             activePlayerId: 'player_1',
             activePlayerCanAct: false,
@@ -1075,9 +1077,9 @@ void main() {
       },
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: save,
-        state: const GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
         ),
@@ -1152,9 +1154,9 @@ void main() {
       final logger = _RecordingGameLogger();
       final eventLog = _FakeEventLog();
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: save,
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
             units: [humanUnit, aiUnit],
@@ -1274,9 +1276,9 @@ void main() {
       row: 2,
     ).copyWith(movementPoints: 0);
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: save,
-        state: GameState(
+        state: GameClientState(
           units: [commander, aiCommander],
           activePlayerId: 'player_1',
           activePlayerCanAct: false,
@@ -1361,9 +1363,9 @@ void main() {
       ),
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: save,
-        state: GameState(
+        state: GameClientState(
           units: [aiCommander],
           cities: [city],
           activePlayerId: 'player_1',
@@ -1487,9 +1489,12 @@ void main() {
       row: 2,
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: save,
-        state: GameState(units: [unit, otherUnit], activePlayerId: 'player_2'),
+        state: GameClientState(
+          units: [unit, otherUnit],
+          activePlayerId: 'player_2',
+        ),
       ),
     );
     final renderer = _SpyGameRenderer(mapData: _makeMap());
@@ -1617,9 +1622,9 @@ void main() {
         row: 2,
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: save,
-          state: GameState(
+          state: GameClientState(
             units: [previousUnit, thirdPlayerUnit, fourthPlayerUnit],
             activePlayerId: 'player_2',
             activePlayerCanAct: false,
@@ -1690,9 +1695,9 @@ void main() {
       center: CityHex(col: 1, row: 1),
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: const GameState(cities: [city], activePlayerId: 'player_1'),
+        state: GameClientState(cities: [city], activePlayerId: 'player_1'),
       ),
     );
 
@@ -1729,13 +1734,13 @@ void main() {
       center: CityHex(col: 1, row: 1),
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(
+        state: GameClientState(
           units: [unit],
           cities: const [city],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.city(
               city,
               cityYield: TileYield.zero,
@@ -1777,9 +1782,9 @@ void main() {
       ),
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(
+        state: GameClientState(
           cities: [city],
           activePlayerId: 'player_1',
           research: ResearchState(
@@ -1821,9 +1826,9 @@ void main() {
     tester,
   ) async {
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: const GameState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
 
@@ -1871,9 +1876,9 @@ void main() {
 
   testWidgets('anchored map inspection shows compact hex menu', (tester) async {
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: const GameState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
 
@@ -1927,9 +1932,9 @@ void main() {
     tester,
   ) async {
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: const GameState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
 
@@ -1975,11 +1980,11 @@ void main() {
     (tester) async {
       final map = _makeMap();
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.tile(map.tileAt(1, 1)!),
             ),
           ),
@@ -2029,9 +2034,9 @@ void main() {
     'anchored map inspection marks unlocked improvement technology green',
     (tester) async {
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             research: ResearchState(
               players: {
@@ -2084,9 +2089,9 @@ void main() {
         center: CityHex(col: 1, row: 1),
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: const GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             cities: [city],
             playerGold: {'player_1': 17},
@@ -2172,9 +2177,9 @@ void main() {
       center: CityHex(col: 1, row: 1),
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: save,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           cities: const [city],
           units: [
@@ -2260,9 +2265,9 @@ void main() {
         center: CityHex(col: 2, row: 2),
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: save,
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             cities: const [activeCity, leaderCity],
             units: [
@@ -2325,9 +2330,9 @@ void main() {
       },
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: save,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [
             GameUnit.produced(
@@ -2374,9 +2379,9 @@ void main() {
       },
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: save,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_2',
           units: [
             GameUnit.produced(
@@ -2422,9 +2427,9 @@ void main() {
         },
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: save,
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             units: [
               GameUnit.produced(
@@ -2468,9 +2473,9 @@ void main() {
         },
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: save,
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             playerGold: const {'player_2': 0},
             units: [
@@ -2532,9 +2537,9 @@ void main() {
       },
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: save,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_2',
           playerGold: const {'player_1': 0},
           fogOfWar: FogOfWarState(
@@ -2580,9 +2585,9 @@ void main() {
       },
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: save,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           playerGold: const {'player_2': 0},
           fogOfWar: FogOfWarState(
@@ -2630,9 +2635,9 @@ void main() {
       },
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: save,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [
             GameUnit.produced(
@@ -2699,12 +2704,12 @@ void main() {
       row: 1,
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: firstTurnSave,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [settler],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(settler),
             moveCommandActive: true,
           ),
@@ -2905,12 +2910,12 @@ void main() {
       row: 1,
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: firstTurnSave,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [settler],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(settler),
             moveCommandActive: true,
           ),
@@ -2984,12 +2989,12 @@ void main() {
       row: 1,
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: firstTurnSave,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [settler],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(settler),
             moveCommandActive: true,
           ),
@@ -3081,12 +3086,12 @@ void main() {
       row: 1,
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: firstTurnSave,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [settler],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(settler),
             moveCommandActive: true,
           ),
@@ -3173,9 +3178,9 @@ void main() {
     await _pumpHud(
       tester,
       repository: _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: firstTurnSave,
-          state: const GameState(activePlayerId: ''),
+          state: GameClientState(activePlayerId: ''),
         ),
       ),
       gameSave: firstTurnSave,
@@ -3192,9 +3197,9 @@ void main() {
       playerStates: const {'player_1': PlayerTurnState.active},
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: readyFirstTurnSave,
-        state: const GameState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
 
@@ -3227,12 +3232,12 @@ void main() {
     final focusReady = ValueNotifier(false);
     addTearDown(focusReady.dispose);
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: firstTurnSave,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [settler],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(settler),
             moveCommandActive: true,
           ),
@@ -3272,9 +3277,9 @@ void main() {
     await _pumpHud(
       tester,
       repository: _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: const GameState(activePlayerId: 'player_1'),
+          state: GameClientState(activePlayerId: 'player_1'),
         ),
       ),
       gamepadInputListenable: gamepadInput,
@@ -3334,13 +3339,13 @@ void main() {
   testWidgets('top right resource pill opens controlled resources popup', (
     tester,
   ) async {
-    final mapData = MapData(
+    final mapData = WorldMap(
       cols: 3,
       rows: 3,
       tiles: [
         for (var row = 0; row < 3; row++)
           for (var col = 0; col < 3; col++)
-            TileData(
+            WorldTile(
               col: col,
               row: row,
               terrains: const [TerrainType.grassland],
@@ -3361,9 +3366,9 @@ void main() {
       controlledHexes: [CityHex(col: 2, row: 1)],
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: const GameState(cities: [city]),
+        state: GameClientState(cities: [city]),
       ),
     );
 
@@ -3436,9 +3441,9 @@ void main() {
       ),
     ];
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           cities: const [city],
           units: units,
@@ -3517,9 +3522,9 @@ void main() {
       ),
     ];
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           cities: const [city],
           units: units,
@@ -3574,9 +3579,9 @@ void main() {
     });
 
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: const GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           playerGold: {'player_1': 17},
         ),
@@ -3673,7 +3678,9 @@ void main() {
 
     await _pumpHud(
       tester,
-      repository: _FakeGameRepository(snapshot: SaveSnapshot(save: save)),
+      repository: _FakeGameRepository(
+        snapshot: GameSnapshotFactory.create(save: save),
+      ),
       gameSave: save,
       session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
     );
@@ -3719,9 +3726,9 @@ void main() {
         },
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: save,
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             research: ResearchState(
               players: {
@@ -3796,7 +3803,9 @@ void main() {
 
       await _pumpHud(
         tester,
-        repository: _FakeGameRepository(snapshot: SaveSnapshot(save: save)),
+        repository: _FakeGameRepository(
+          snapshot: GameSnapshotFactory.create(save: save),
+        ),
         gameSave: save,
         session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
       );
@@ -3833,7 +3842,9 @@ void main() {
 
     await _pumpHud(
       tester,
-      repository: _FakeGameRepository(snapshot: SaveSnapshot(save: save)),
+      repository: _FakeGameRepository(
+        snapshot: GameSnapshotFactory.create(save: save),
+      ),
       gameSave: save,
     );
     await tester.pump();
@@ -3857,9 +3868,9 @@ void main() {
       },
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: save,
-        state: GameState(
+        state: GameClientState(
           playerColors: const {'player_1': 0xFF4a7fc4, 'player_2': 0xFFc45050},
           playerGold: const {'player_2': 0},
           units: [
@@ -3972,9 +3983,9 @@ void main() {
     tester,
   ) async {
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: const GameState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
     await _pumpHud(
@@ -4009,9 +4020,9 @@ void main() {
     tester,
   ) async {
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: const GameState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
     await _pumpHud(
@@ -4057,9 +4068,9 @@ void main() {
 
   testWidgets('global action popup stays above the left menu', (tester) async {
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: const GameState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
     await _pumpHud(
@@ -4090,9 +4101,9 @@ void main() {
     'left menu keeps objectives and activity log between options and help',
     (tester) async {
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: const GameState(activePlayerId: 'player_1'),
+          state: GameClientState(activePlayerId: 'player_1'),
         ),
       );
       await _pumpHud(
@@ -4164,9 +4175,9 @@ void main() {
     });
 
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: const GameState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
     await _pumpHud(
@@ -4210,44 +4221,15 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final city = GameCity(
-      id: 'city_1',
-      ownerPlayerId: 'player_1',
-      name: 'City 4',
-      center: const CityHex(col: 1, row: 1),
-      population: 17,
-      productionQueue: CityProductionQueue.building(
-        buildingType: CityBuildingType.granary,
-        investedProduction: 0,
-      ),
-    );
-    final state = GameState(
-      activePlayerId: 'player_1',
-      cities: [city],
-      playerGold: const {'player_1': 4496},
-      interaction: GameInteractionState(
-        selection: GameSelection.city(
-          city,
-          cityYield: const TileYield(
-            food: 10,
-            production: 35,
-            gold: 0,
-            defense: 0,
-          ),
-          playerColor: _player.colorValue,
-        ),
-      ),
-    );
-    const scenarios = [
-      (name: 'compact portrait', size: Size(678, 1442)),
-      (name: 'tablet portrait', size: Size(840, 1436)),
-      (name: 'desktop wide', size: Size(2592, 1438)),
-    ];
+    final state = _hudQaState();
 
-    for (final scenario in scenarios) {
+    for (final scenario in _hudQaScenarios) {
       tester.view.physicalSize = scenario.size;
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(save: _save, state: state),
+        snapshot: GameSnapshotFactory.fromClientState(
+          save: _save,
+          state: state,
+        ),
       );
 
       await _pumpHud(
@@ -4347,9 +4329,9 @@ void main() {
     });
 
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: const GameState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
     for (final size in const [Size(678, 1442), Size(840, 1436)]) {
@@ -4480,9 +4462,9 @@ void main() {
         size: size,
         name: 'technology $size',
         repository: _FakeGameRepository(
-          snapshot: SaveSnapshot.fromGameState(
+          snapshot: GameSnapshotFactory.fromClientState(
             save: _save,
-            state: const GameState(activePlayerId: 'player_1'),
+            state: GameClientState(activePlayerId: 'player_1'),
           ),
         ),
         openPanel: () =>
@@ -4495,9 +4477,9 @@ void main() {
         size: size,
         name: 'empire $size',
         repository: _FakeGameRepository(
-          snapshot: SaveSnapshot.fromGameState(
+          snapshot: GameSnapshotFactory.fromClientState(
             save: _save,
-            state: GameState(
+            state: GameClientState(
               activePlayerId: 'player_1',
               units: [warrior],
               cities: [
@@ -4522,13 +4504,13 @@ void main() {
         size: size,
         name: 'production $size',
         repository: _FakeGameRepository(
-          snapshot: SaveSnapshot.fromGameState(
+          snapshot: GameSnapshotFactory.fromClientState(
             save: _save,
-            state: GameState(
+            state: GameClientState(
               activePlayerId: 'player_1',
               cities: const [city],
               research: activeResearch,
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.city(
                   city,
                   cityYield: const TileYield(
@@ -4569,9 +4551,9 @@ void main() {
         row: 1,
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(activePlayerId: 'player_1', units: [warrior]),
+          state: GameClientState(activePlayerId: 'player_1', units: [warrior]),
         ),
       );
 
@@ -4652,9 +4634,9 @@ void main() {
         row: 1,
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(activePlayerId: 'player_1', units: [warrior]),
+          state: GameClientState(activePlayerId: 'player_1', units: [warrior]),
         ),
       );
 
@@ -4750,9 +4732,9 @@ void main() {
       row: 1,
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(activePlayerId: 'player_1', units: [warrior]),
+        state: GameClientState(activePlayerId: 'player_1', units: [warrior]),
       ),
     );
 
@@ -4835,9 +4817,9 @@ void main() {
       center: CityHex(col: 2, row: 2),
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(
+        state: GameClientState(
           units: [warriorA, warriorB, worker, enemy],
           cities: const [city, enemyCity],
         ),
@@ -4884,9 +4866,9 @@ void main() {
       center: CityHex(col: 1, row: 1),
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(units: [warrior], cities: const [city]),
+        state: GameClientState(units: [warrior], cities: const [city]),
       ),
     );
 
@@ -4952,7 +4934,7 @@ void main() {
         name: 'Roma',
         center: CityHex(col: 1, row: 1),
       );
-      final state = GameState(
+      final state = GameClientState(
         cities: const [city],
         units: [worker, enemy],
         activePlayerId: 'player_1',
@@ -5127,7 +5109,7 @@ void main() {
       name: 'Roma',
       center: CityHex(col: 1, row: 1),
     );
-    const state = GameState(cities: [city], activePlayerId: 'player_1');
+    final state = GameClientState(cities: [city], activePlayerId: 'player_1');
 
     await _pumpHud(tester, repository: _FakeGameRepository());
     final container = ProviderScope.containerOf(
@@ -5273,7 +5255,7 @@ void main() {
       camera: CameraState.zero,
       players: const [_player, _player2],
     );
-    const state = GameState(
+    final state = GameClientState(
       cities: [ownCity, otherCity],
       activePlayerId: 'player_1',
     );
@@ -5315,7 +5297,7 @@ void main() {
       name: 'Roma',
       center: CityHex(col: 1, row: 1),
     );
-    const state = GameState(cities: [city], activePlayerId: 'player_1');
+    final state = GameClientState(cities: [city], activePlayerId: 'player_1');
 
     await _pumpHud(tester, repository: _FakeGameRepository());
     final container = ProviderScope.containerOf(
@@ -5372,9 +5354,9 @@ void main() {
       },
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(
+        state: GameClientState(
           units: [attacker],
           activePlayerId: 'player_1',
           research: activeResearch,
@@ -5443,9 +5425,9 @@ void main() {
       },
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(
+        state: GameClientState(
           units: [attacker],
           activePlayerId: 'player_1',
           research: activeResearch,
@@ -5538,9 +5520,13 @@ void main() {
         },
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(units: [worker], cities: [city], research: research),
+          state: GameClientState(
+            units: [worker],
+            cities: [city],
+            research: research,
+          ),
         ),
       );
 
@@ -5651,9 +5637,9 @@ void main() {
       },
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [worker],
           cities: const [city],
@@ -5724,9 +5710,9 @@ void main() {
       builtByCityId: 'city_1',
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [worker],
           cities: const [city],
@@ -5791,9 +5777,13 @@ void main() {
       },
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(units: [worker], cities: [city], research: research),
+        state: GameClientState(
+          units: [worker],
+          cities: [city],
+          research: research,
+        ),
       ),
     );
 
@@ -5864,9 +5854,9 @@ void main() {
         },
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             units: [worker],
             cities: const [city],
@@ -5951,9 +5941,9 @@ void main() {
         builtByCityId: 'city_1',
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             units: [worker],
             cities: const [city],
@@ -6019,9 +6009,9 @@ void main() {
       center: CityHex(col: 1, row: 1),
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [settler],
           cities: const [city],
@@ -6081,9 +6071,9 @@ void main() {
       movementPoints: 2,
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(units: [warrior]),
+        state: GameClientState(units: [warrior]),
       ),
     );
 
@@ -6133,9 +6123,9 @@ void main() {
       movementPoints: 2,
     ).copyWithHitPoints(7);
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(units: [warrior]),
+        state: GameClientState(units: [warrior]),
       ),
     );
 
@@ -6189,9 +6179,9 @@ void main() {
       controlledHexes: [CityHex(col: 1, row: 1)],
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: const GameState(cities: [city]),
+        state: GameClientState(cities: [city]),
       ),
     );
 
@@ -6265,9 +6255,9 @@ void main() {
         ),
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(units: [unit], cities: [city]),
+          state: GameClientState(units: [unit], cities: [city]),
         ),
       );
 
@@ -6375,9 +6365,9 @@ void main() {
       ),
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(units: [unit], cities: [city]),
+        state: GameClientState(units: [unit], cities: [city]),
       ),
     );
 
@@ -6442,9 +6432,9 @@ void main() {
       ),
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(units: [unit], cities: [city]),
+        state: GameClientState(units: [unit], cities: [city]),
       ),
     );
     final renderer = _SpyGameRenderer(mapData: _makeMap());
@@ -6491,9 +6481,9 @@ void main() {
       ),
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(units: [unit], cities: [city]),
+        state: GameClientState(units: [unit], cities: [city]),
       ),
     );
 
@@ -6608,9 +6598,9 @@ void main() {
         ),
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(units: [unit], cities: [city]),
+          state: GameClientState(units: [unit], cities: [city]),
         ),
       );
 
@@ -6682,9 +6672,13 @@ void main() {
         },
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(units: [unit], cities: [city], research: research),
+          state: GameClientState(
+            units: [unit],
+            cities: [city],
+            research: research,
+          ),
         ),
       );
       final renderer = _SpyGameRenderer(mapData: _makeMap());
@@ -6764,9 +6758,13 @@ void main() {
         },
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(units: [unit], cities: [city], research: research),
+          state: GameClientState(
+            units: [unit],
+            cities: [city],
+            research: research,
+          ),
         ),
       );
       final renderer = _SpyGameRenderer(mapData: _makeMap());
@@ -6841,9 +6839,9 @@ void main() {
         },
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             cities: const [city],
             research: research,
@@ -6935,9 +6933,9 @@ void main() {
       },
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(
+        state: GameClientState(
           units: [firstUnit, secondUnit],
           cities: [city],
           research: research,
@@ -7031,9 +7029,9 @@ void main() {
       ),
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(units: [unit], cities: [city]),
+        state: GameClientState(units: [unit], cities: [city]),
       ),
     );
 
@@ -7088,11 +7086,11 @@ void main() {
         ownerPlayerId: 'player_1',
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: const GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
-            interaction: GameInteractionState(pendingAction: pendingResearch),
+            interaction: const InteractionState(pendingAction: pendingResearch),
           ),
         ),
       );
@@ -7202,9 +7200,9 @@ void main() {
         playerStates: const {'player_1': PlayerTurnState.finished},
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: finishedSave,
-          state: const GameState(activePlayerId: 'player_1'),
+          state: GameClientState(activePlayerId: 'player_1'),
         ),
       );
 

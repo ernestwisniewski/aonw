@@ -113,7 +113,7 @@ void main() {
         merchant: routeMerchant,
         originCity: cities.first,
         destinationCity: cities.last,
-        mapData: WorldMapReadView(worldMap),
+        mapData: worldMap,
         units: [routeMerchant, blocker],
         cities: cities,
       );
@@ -142,7 +142,7 @@ void main() {
       final canonicalMove = MerchantTradeRouteRules.planMoveToCity(
         merchant: cityMerchant,
         destinationCity: cities.last,
-        mapData: WorldMapReadView(worldMap),
+        mapData: worldMap,
         units: [cityMerchant, blocker],
         cities: cities,
       );
@@ -255,13 +255,13 @@ MerchantTradeRoute _route({
   );
 }
 
-MapData _lineMap(int cols) {
-  return MapData(
+WorldMap _lineMap(int cols) {
+  return WorldMap(
     cols: cols,
     rows: 1,
     tiles: [
       for (var col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.plains],
@@ -272,33 +272,33 @@ MapData _lineMap(int cols) {
   );
 }
 
-MapData _mixedLineMap() {
-  return MapData(
+WorldMap _mixedLineMap() {
+  return WorldMap(
     cols: 4,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains, TerrainType.forest],
         resources: [],
         height: 1,
       ),
-      TileData(
+      WorldTile(
         col: 2,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 3,
         row: 0,
         terrains: [TerrainType.plains, TerrainType.hills],
@@ -309,10 +309,10 @@ MapData _mixedLineMap() {
   );
 }
 
-WorldMap _worldMapFrom(MapData mapData, {required bool reverseTiles}) {
+WorldMap _worldMapFrom(WorldMap mapData, {required bool reverseTiles}) {
   final tiles = [
     for (final tile in mapData.tiles)
-      WorldTile(
+      WorldTile.at(
         coordinate: HexCoord(col: tile.col, row: tile.row),
         terrains: tile.terrains,
         resources: tile.resources,

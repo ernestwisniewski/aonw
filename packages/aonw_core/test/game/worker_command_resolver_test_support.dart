@@ -3,7 +3,7 @@ part of 'worker_command_resolver_test.dart';
 WorkerCommandResult _select({
   List<GameUnit>? units,
   ResearchState? research,
-  PersistedInteractionState interaction = PersistedInteractionState.empty,
+  DomainActionState interaction = DomainActionState.empty,
   PaceBalance paceBalance = PaceBalance.unlimited,
 }) {
   return WorkerCommandResolver.selectWorkerImprovement(
@@ -27,7 +27,7 @@ WorkerCommandResult _select({
 WorkerCommandResult _confirm({
   List<GameUnit>? units,
   ResearchState? research,
-  PersistedInteractionState interaction = PersistedInteractionState.empty,
+  DomainActionState interaction = DomainActionState.empty,
   ConfirmWorkerImprovementCommand command =
       const ConfirmWorkerImprovementCommand(_workerId),
 }) {
@@ -49,7 +49,7 @@ WorkerCommandResult _confirm({
 WorkerCommandResult _assign({
   List<GameUnit>? units,
   List<FieldImprovement>? fieldImprovements,
-  PersistedInteractionState interaction = PersistedInteractionState.empty,
+  DomainActionState interaction = DomainActionState.empty,
 }) {
   return WorkerCommandResolver.assignWorkerToHex(
     units: units ?? [_worker()],
@@ -73,7 +73,7 @@ WorkerCommandResult _assign({
 void _expectRejected(
   WorkerCommandResult result, {
   required List<GameUnit> units,
-  required PersistedInteractionState interaction,
+  required DomainActionState interaction,
   required String reason,
 }) {
   expect(result.accepted, isFalse);
@@ -82,8 +82,8 @@ void _expectRejected(
   expect(identical(result.interaction, interaction), isTrue);
 }
 
-PersistedInteractionState _workerInteraction() {
-  return PersistedInteractionState(
+DomainActionState _workerInteraction() {
+  return DomainActionState(
     cityFoundingDraft: CityFoundingDraft(
       unitId: 'settler',
       ownerPlayerId: _playerId,
@@ -139,22 +139,20 @@ ResearchState _researchWithAgriculture() {
   );
 }
 
-MapTileLookup _mapTiles() => WorldMapReadView(
-  WorldMap(
-    cols: 4,
-    rows: 4,
-    mapName: 'duel',
-    tiles: [
-      for (var row = 0; row < 4; row++)
-        for (var col = 0; col < 4; col++)
-          WorldTile(
-            coordinate: HexCoord(col: col, row: row),
-            terrains: const [TerrainType.grassland],
-            resources: const [],
-            height: 0,
-          ),
-    ],
-  ),
+MapTileLookup _mapTiles() => WorldMap(
+  cols: 4,
+  rows: 4,
+  mapName: 'duel',
+  tiles: [
+    for (var row = 0; row < 4; row++)
+      for (var col = 0; col < 4; col++)
+        WorldTile.at(
+          coordinate: HexCoord(col: col, row: row),
+          terrains: const [TerrainType.grassland],
+          resources: const [],
+          height: 0,
+        ),
+  ],
 );
 
 const _playerId = 'player_1';

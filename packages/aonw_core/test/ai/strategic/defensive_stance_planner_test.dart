@@ -5,7 +5,7 @@ void main() {
   group('DefensiveStancePlanner', () {
     test('assigns the nearest military unit to a threatened city', () {
       final mapData = _openMap(cols: 9, rows: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'home_guard',
@@ -72,7 +72,7 @@ void main() {
 
     test('caps low-risk garrisons during offensive military pressure', () {
       final mapData = _openMap(cols: 9, rows: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           for (var index = 0; index < 8; index++)
             _unit(
@@ -148,7 +148,7 @@ void main() {
 
     test('caps wartime garrisons even when mode is still consolidating', () {
       final mapData = _openMap(cols: 12, rows: 4);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           for (var index = 0; index < 14; index++)
             _unit(
@@ -207,7 +207,7 @@ void main() {
 
     test('leaves most of a mature wartime army free for offense', () {
       final mapData = _openMap(cols: 14, rows: 4);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           for (var index = 0; index < 13; index++)
             _unit(
@@ -266,7 +266,7 @@ void main() {
 
     test('keeps a defense entry when no garrison is available', () {
       final mapData = _openMap(cols: 5, rows: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'enemy_1',
@@ -308,7 +308,7 @@ void main() {
 
     test('reserves a baseline garrison for a lone early city', () {
       final mapData = _openMap(cols: 5, rows: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'home_guard',
@@ -347,7 +347,7 @@ void main() {
 
     test('reserves baseline garrisons for a fragile two-city opening', () {
       final mapData = _openMap(cols: 8, rows: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'capital_guard',
@@ -406,7 +406,7 @@ void main() {
 
     test('keeps scouts free when regular garrisons are available', () {
       final mapData = _openMap(cols: 8, rows: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'near_scout',
@@ -475,7 +475,7 @@ void main() {
 
     test('marks an ungarrisoned second city as needing defense production', () {
       final mapData = _openMap(cols: 8, rows: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'capital_guard',
@@ -527,7 +527,7 @@ void main() {
       'garrisons a city after a recent attack even without visible enemies',
       () {
         final mapData = _openMap(cols: 7, rows: 3);
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             _unit(
               id: 'home_guard',
@@ -592,7 +592,7 @@ void main() {
 
     test('treats a pending city attack as an urgent defense assignment', () {
       final mapData = _openMap(cols: 6, rows: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'home_guard',
@@ -655,7 +655,7 @@ void main() {
 
     test('StrategicPlanner publishes defensive stances', () {
       final mapData = _openMap(cols: 5, rows: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'home_guard',
@@ -693,7 +693,7 @@ void main() {
 
     test('StrategicPlanner keeps defensive garrisons out of war goals', () {
       final mapData = _openMap(cols: 7, rows: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'home_guard',
@@ -754,13 +754,13 @@ void main() {
 }
 
 GameView _view(
-  PersistentGameState state,
-  MapData mapData, {
+  DomainState state,
+  WorldMap mapData, {
   Iterable<String> recentHostilePlayerIds = const [],
   Iterable<String> pressureTargetPlayerIds = const [],
   Iterable<PendingCityAttackThreat> pendingCityAttackThreats = const [],
 }) {
-  return GameView.fromPersistentState(
+  return GameView.fromDomainState(
     state,
     forPlayerId: 'player_1',
     turn: 4,
@@ -773,7 +773,7 @@ GameView _view(
 }
 
 AiContext _context(
-  MapData mapData, {
+  WorldMap mapData, {
   CivilizationProfile profile = CivilizationProfiles.poland,
 }) {
   return AiContext(
@@ -802,7 +802,7 @@ GameUnit _unit({
   );
 }
 
-FogOfWarState _fog(MapData mapData) {
+FogOfWarState _fog(WorldMap mapData) {
   return FogOfWarState(
     players: {
       'player_1': PlayerFogOfWar(
@@ -816,14 +816,14 @@ FogOfWarState _fog(MapData mapData) {
   );
 }
 
-MapData _openMap({required int cols, required int rows}) {
-  return MapData(
+WorldMap _openMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

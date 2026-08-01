@@ -7,19 +7,28 @@ import 'package:aonw/game/domain/reducer/turn/turn_reducer.dart';
 import 'package:aonw_core/game/domain/command.dart';
 
 extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
-  GameStateTransition selectTile(GameState state, SelectTileCommand command) {
+  GameStateTransition selectTile(
+    GameClientState state,
+    SelectTileCommand command,
+  ) {
     return GameStateTransition(
       state: SelectionReducer.selectTile(state, command, mapData),
     );
   }
 
-  GameStateTransition selectUnit(GameState state, SelectUnitCommand command) {
+  GameStateTransition selectUnit(
+    GameClientState state,
+    SelectUnitCommand command,
+  ) {
     return GameStateTransition(
       state: SelectionReducer.selectUnit(state, command, mapData),
     );
   }
 
-  GameStateTransition selectCity(GameState state, SelectCityCommand command) {
+  GameStateTransition selectCity(
+    GameClientState state,
+    SelectCityCommand command,
+  ) {
     return GameStateTransition(
       state: SelectionReducer.selectCity(
         state,
@@ -32,7 +41,7 @@ extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
   }
 
   GameStateTransition handleSelectionTileTapped(
-    GameState state,
+    GameClientState state,
     TileTappedCommand command,
   ) {
     return SelectionReducer.handleTileTapped(
@@ -45,7 +54,7 @@ extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
   }
 
   GameStateTransition handleSelectionCityTapped(
-    GameState state,
+    GameClientState state,
     GameCity city,
   ) {
     return GameStateTransition(
@@ -60,7 +69,7 @@ extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
   }
 
   GameStateTransition focusNextPendingAction(
-    GameState state,
+    GameClientState state,
     FocusNextPendingActionCommand command,
   ) {
     return TurnReducer.focusNextPendingAction(
@@ -76,7 +85,7 @@ extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
   }
 
   GameStateTransition focusTurnStartAction(
-    GameState state,
+    GameClientState state,
     FocusTurnStartActionCommand command,
   ) {
     return TurnReducer.focusTurnStartAction(

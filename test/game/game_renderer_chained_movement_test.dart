@@ -4,8 +4,8 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_renderer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/unit_animation_controller.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,13 +24,13 @@ void main() {
 
       game
         ..applyState(
-          GameState(units: [unitA, unitB], activePlayerId: 'player_1'),
+          GameClientState(units: [unitA, unitB], activePlayerId: 'player_1'),
         )
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
 
       final transition = game.applyTransition(
-        GameState(
+        GameClientState(
           units: [
             unitA.copyWith(col: 2, row: 0),
             unitB.copyWith(col: 1, row: 1),
@@ -106,13 +106,13 @@ void main() {
       final game = GameRenderer(mapData: _map(), onCommand: (_) async {});
       addTearDown(game.disposeRenderer);
       game.applyState(
-        GameState(units: [unitA, unitB], activePlayerId: 'player_1'),
+        GameClientState(units: [unitA, unitB], activePlayerId: 'player_1'),
       );
 
       var transitionCompleted = false;
       final transition = game
           .applyTransition(
-            GameState(
+            GameClientState(
               units: [
                 unitA.copyWith(col: 2, row: 0),
                 unitB.copyWith(col: 1, row: 1),
@@ -207,10 +207,10 @@ void main() {
     final unit = _unit('unit_a', col: 0, row: 0);
     final game = GameRenderer(mapData: _map(), onCommand: (_) async {});
     addTearDown(game.disposeRenderer);
-    game.applyState(GameState(units: [unit], activePlayerId: 'player_1'));
+    game.applyState(GameClientState(units: [unit], activePlayerId: 'player_1'));
 
     final transition = game.applyTransition(
-      GameState(
+      GameClientState(
         units: [unit.copyWith(col: 1, row: 0)],
         activePlayerId: 'player_1',
       ),
@@ -253,9 +253,9 @@ void main() {
     final unit = _unit('unit_a', col: 0, row: 0);
     final game = GameRenderer(mapData: _map(), onCommand: (_) async {});
     addTearDown(game.disposeRenderer);
-    game.applyState(GameState(units: [unit], activePlayerId: 'player_1'));
+    game.applyState(GameClientState(units: [unit], activePlayerId: 'player_1'));
     final transition = game.applyTransition(
-      GameState(
+      GameClientState(
         units: [unit.copyWith(col: 1, row: 0)],
         activePlayerId: 'player_1',
       ),
@@ -282,7 +282,7 @@ void main() {
     final unit = _unit('unit_a', col: 0, row: 0);
     final game = GameRenderer(mapData: _map(), onCommand: (_) async {});
     addTearDown(game.disposeRenderer);
-    game.applyState(GameState(units: [unit], activePlayerId: 'player_1'));
+    game.applyState(GameClientState(units: [unit], activePlayerId: 'player_1'));
     final first = _moveTransition(game, unit: unit, fromCol: 0, toCol: 1);
     final second = _moveTransition(game, unit: unit, fromCol: 1, toCol: 2);
     final firstExpectation = expectLater(first, throwsA(isA<StateError>()));
@@ -303,7 +303,7 @@ void main() {
       onLoadingProgress: (_) => throw error,
     );
     addTearDown(game.disposeRenderer);
-    game.applyState(GameState(units: [unit], activePlayerId: 'player_1'));
+    game.applyState(GameClientState(units: [unit], activePlayerId: 'player_1'));
     final transition = _moveTransition(game, unit: unit, fromCol: 0, toCol: 1);
     final transitionExpectation = expectLater(transition, throwsA(same(error)));
     await _flush();
@@ -416,13 +416,13 @@ void main() {
   });
 }
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 3,
   rows: 2,
   tiles: [
     for (var row = 0; row < 2; row++)
       for (var col = 0; col < 3; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],
@@ -449,7 +449,7 @@ Future<void> _moveTransition(
   required int toCol,
 }) {
   return game.applyTransition(
-    GameState(
+    GameClientState(
       units: [unit.copyWith(col: toCol, row: 0)],
       activePlayerId: 'player_1',
     ),

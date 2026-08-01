@@ -24,7 +24,7 @@ List<WorldArtifact> _storedCollection({required String cityId, int count = 6}) {
 void main() {
   group('CulturalVictoryProgressCalculator', () {
     test('counts distinct stored types only in own cities', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [_city('own', 'p1'), _city('foreign', 'p2')],
         artifacts: [
           ..._storedCollection(cityId: 'own', count: 2),
@@ -72,7 +72,7 @@ void main() {
     });
 
     test('advanceHoldTurns increments holders and drops the rest', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [_city('own', 'p1')],
         artifacts: _storedCollection(cityId: 'own'),
       );
@@ -87,7 +87,7 @@ void main() {
     });
 
     test('progressForPlayer reports collection and hold state', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [_city('own', 'p1')],
         artifacts: _storedCollection(cityId: 'own'),
       );
@@ -122,7 +122,7 @@ void main() {
     });
 
     test('winnerCandidate requires a held full collection', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [_city('own', 'p1')],
         artifacts: _storedCollection(cityId: 'own'),
       );

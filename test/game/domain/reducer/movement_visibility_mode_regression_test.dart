@@ -6,9 +6,7 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/movement_engine_test_driver.dart';
@@ -23,7 +21,7 @@ void main() {
         ownerPlayerId: 'player_2',
         col: 1,
       );
-      final state = GameState(
+      final state = GameClientState(
         playerColors: const {'player_1': 0xff112233, 'player_2': 0xff445566},
         activePlayerId: 'player_1',
         units: [mover, blocker],
@@ -69,19 +67,17 @@ GameUnit _unit({
   movementPoints: 5,
 );
 
-MapTraversalView _map() => WorldMapReadView(
-  WorldMap(
-    cols: 3,
-    rows: 2,
-    tiles: [
-      for (var col = 0; col < 3; col++)
-        for (var row = 0; row < 2; row++)
-          WorldTile(
-            coordinate: HexCoord(col: col, row: row),
-            terrains: const [TerrainType.grassland],
-            resources: const [],
-            height: 0,
-          ),
-    ],
-  ),
+MapTraversalView _map() => WorldMap(
+  cols: 3,
+  rows: 2,
+  tiles: [
+    for (var col = 0; col < 3; col++)
+      for (var row = 0; row < 2; row++)
+        WorldTile.at(
+          coordinate: HexCoord(col: col, row: row),
+          terrains: const [TerrainType.grassland],
+          resources: const [],
+          height: 0,
+        ),
+  ],
 );

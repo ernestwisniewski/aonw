@@ -5,9 +5,7 @@ void main() {
   group('DetachTroopResolver validation order', () {
     test('rejects a missing unit before reading the map', () {
       final units = <GameUnit>[];
-      final mapTiles = _CountingMapTileLookup(
-        WorldMapReadView(_worldMap(cols: 3, rows: 3)),
-      );
+      final mapTiles = _CountingMapTileLookup(_worldMap(cols: 3, rows: 3));
 
       final result = _detach(
         units: units,
@@ -21,9 +19,7 @@ void main() {
 
     test('rejects a wrong actor before reading the map', () {
       final units = <GameUnit>[_commander()];
-      final mapTiles = _CountingMapTileLookup(
-        WorldMapReadView(_worldMap(cols: 3, rows: 3)),
-      );
+      final mapTiles = _CountingMapTileLookup(_worldMap(cols: 3, rows: 3));
 
       final result = _detach(
         units: units,
@@ -42,9 +38,7 @@ void main() {
 
     test('rejects an unavailable troop before reading the map', () {
       final units = <GameUnit>[_commander()];
-      final mapTiles = _CountingMapTileLookup(
-        WorldMapReadView(_worldMap(cols: 3, rows: 3)),
-      );
+      final mapTiles = _CountingMapTileLookup(_worldMap(cols: 3, rows: 3));
 
       final result = _detach(
         units: units,
@@ -62,9 +56,7 @@ void main() {
 
     test('rejects an out-of-bounds source before searching neighbors', () {
       final units = <GameUnit>[_commander(col: 9, row: 9)];
-      final mapTiles = _CountingMapTileLookup(
-        WorldMapReadView(_worldMap(cols: 3, rows: 3)),
-      );
+      final mapTiles = _CountingMapTileLookup(_worldMap(cols: 3, rows: 3));
 
       final result = _detach(
         units: units,
@@ -82,8 +74,10 @@ void main() {
 
     test('preserves every branch by identity when no destination exists', () {
       final units = <GameUnit>[_commander(col: 0, row: 0)];
-      final mapTiles = WorldMapReadView(
-        _worldMap(cols: 2, rows: 2, included: {const HexCoord(col: 0, row: 0)}),
+      final mapTiles = _worldMap(
+        cols: 2,
+        rows: 2,
+        included: {const HexCoord(col: 0, row: 0)},
       );
 
       final result = _detach(
@@ -125,7 +119,7 @@ void main() {
         playerIds: const ['player_1'],
         command: const DetachTroopCommand('commander_1', TroopType.warrior),
         actorPlayerId: 'player_1',
-        mapTiles: WorldMapReadView(_worldMap(cols: 4, rows: 4)),
+        mapTiles: _worldMap(cols: 4, rows: 4),
       );
 
       expect(result.accepted, isTrue);
@@ -140,12 +134,10 @@ void main() {
         _commander(col: 1, row: 1),
         _unit(id: 'occupied', col: 2, row: 1),
       ];
-      final mapTiles = WorldMapReadView(
-        _worldMap(
-          cols: 4,
-          rows: 4,
-          mountains: {const HexCoord(col: 2, row: 2)},
-        ),
+      final mapTiles = _worldMap(
+        cols: 4,
+        rows: 4,
+        mountains: {const HexCoord(col: 2, row: 2)},
       );
 
       final result = _detach(
@@ -177,7 +169,7 @@ void main() {
       final result = _detach(
         units: units,
         command: const DetachTroopCommand('commander_1', TroopType.warrior),
-        mapTiles: WorldMapReadView(_worldMap(cols: 4, rows: 4)),
+        mapTiles: _worldMap(cols: 4, rows: 4),
         visibility: const FogVisibilityQuery(
           playerId: '',
           state: FogOfWarState.empty,
@@ -262,7 +254,7 @@ WorldMap _worldMap({
         for (var col = 0; col < cols; col++)
           if (included == null ||
               included.contains(HexCoord(col: col, row: row)))
-            WorldTile(
+            WorldTile.at(
               coordinate: HexCoord(col: col, row: row),
               terrains: [
                 if (mountains.contains(HexCoord(col: col, row: row)))

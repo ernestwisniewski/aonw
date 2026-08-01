@@ -5,7 +5,7 @@ void main() {
   group('WorkerAssignmentPlanner', () {
     test('assigns a worker to the nearest productive city', () {
       final mapData = _openMap(cols: 5, rows: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'worker_1',
@@ -57,7 +57,7 @@ void main() {
 
     test('ranks a legal resource specialist improvement first', () {
       final mapData = _resourceMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'worker_1',
@@ -103,7 +103,7 @@ void main() {
       'prefers a new build target before assigning an existing improvement',
       () {
         final mapData = _openMap(cols: 3, rows: 1);
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'worker_1',
@@ -155,7 +155,7 @@ void main() {
 
     test('StrategicPlanner publishes worker assignments', () {
       final mapData = _resourceMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'worker_1',
@@ -194,8 +194,8 @@ void main() {
   });
 }
 
-GameView _view(PersistentGameState state, MapData mapData) {
-  return GameView.fromPersistentState(
+GameView _view(DomainState state, WorldMap mapData) {
+  return GameView.fromDomainState(
     state,
     forPlayerId: 'player_1',
     turn: 1,
@@ -204,7 +204,7 @@ GameView _view(PersistentGameState state, MapData mapData) {
   );
 }
 
-AiContext _context(MapData mapData) {
+AiContext _context(WorldMap mapData) {
   return AiContext(
     ruleset: GameRuleset.defaults,
     mapData: mapData,
@@ -221,7 +221,7 @@ ResearchState _researchWith(Set<TechnologyId> technologies) {
   );
 }
 
-FogOfWarState _fog(MapData mapData) {
+FogOfWarState _fog(WorldMap mapData) {
   return FogOfWarState(
     players: {
       'player_1': PlayerFogOfWar(
@@ -235,14 +235,14 @@ FogOfWarState _fog(MapData mapData) {
   );
 }
 
-MapData _openMap({required int cols, required int rows}) {
-  return MapData(
+WorldMap _openMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
@@ -253,33 +253,33 @@ MapData _openMap({required int cols, required int rows}) {
   );
 }
 
-MapData _resourceMap() {
-  return MapData(
+WorldMap _resourceMap() {
+  return WorldMap(
     cols: 2,
     rows: 2,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.grassland],
         resources: [ResourceType.sheep],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 0,
         row: 1,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 1,
         terrains: [TerrainType.plains],

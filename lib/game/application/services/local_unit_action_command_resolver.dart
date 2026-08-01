@@ -16,8 +16,8 @@ final class LocalUnitActionCommandResolution {
     required this.events,
   });
 
-  final SaveSnapshot snapshot;
-  final GameState state;
+  final CanonicalGameSnapshot snapshot;
+  final GameClientState state;
   final List<GameEvent> events;
 }
 
@@ -31,8 +31,8 @@ final class LocalUnitActionCommandResolver {
   final GameRuleset ruleset;
 
   LocalUnitActionCommandResolution resolve({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
@@ -71,15 +71,15 @@ final class LocalUnitActionCommandResolver {
 
   LocalUnitActionCommandResolution _accepted({
     required GameEngineResult result,
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
   }) {
     final snapshot = baseSnapshot.withUnitActionEngineProjection(
       units: result.snapshot.domain.units,
       artifacts: result.snapshot.domain.artifacts,
-      interaction: result.snapshot.interaction,
+      interaction: result.snapshot.domain.actions,
       savedAt: savedAt,
     );
     return LocalUnitActionCommandResolution(
@@ -96,15 +96,15 @@ final class LocalUnitActionCommandResolver {
   }
 
   LocalUnitActionCommandResolution _unchanged(
-    SaveSnapshot snapshot,
-    GameState state,
+    CanonicalGameSnapshot snapshot,
+    GameClientState state,
     DateTime savedAt,
   ) {
     return LocalUnitActionCommandResolution(
       snapshot: snapshot.withUnitActionEngineProjection(
         units: snapshot.units,
         artifacts: snapshot.artifacts,
-        interaction: snapshot.interaction,
+        interaction: snapshot.domain.actions,
         savedAt: savedAt,
       ),
       state: state,
@@ -113,8 +113,8 @@ final class LocalUnitActionCommandResolver {
   }
 
   String _actorPlayerId({
-    required SaveSnapshot snapshot,
-    required GameState state,
+    required CanonicalGameSnapshot snapshot,
+    required GameClientState state,
     required DomainCommand command,
     required GameCommandContext context,
   }) {

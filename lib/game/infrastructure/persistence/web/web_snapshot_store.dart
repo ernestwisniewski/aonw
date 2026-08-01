@@ -15,19 +15,26 @@ class WebSnapshotStore implements SnapshotStore {
   Future<Snapshot?> latest(String saveId) async {
     final record = await _store.record(saveId).get(database.database);
     if (record == null) return null;
+    final rawState = Map<String, dynamic>.from(record['state'] as Map);
+    var state = SaveSnapshotCodec.fromJson(rawState);
+    final legacyOffset = record['offset'];
+    if (legacyOffset is int && rawState['eventLogOffset'] == null) {
+      state = state.copyWith(eventLogOffset: legacyOffset);
+    } else if (legacyOffset is int && legacyOffset != state.eventLogOffset) {
+      throw StateError(
+        'Snapshot offset mismatch: record=$legacyOffset, '
+        'canonical=${state.eventLogOffset}.',
+      );
+    }
     return Snapshot(
-      offset: record['offset'] as int,
       createdAt: DateTime.parse(record['createdAt'] as String).toUtc(),
-      state: SaveSnapshotCodec.fromJson(
-        Map<String, dynamic>.from(record['state'] as Map),
-      ),
+      state: state,
     );
   }
 
   @override
   Future<void> save(String saveId, Snapshot snapshot) async {
     await _store.record(saveId).put(database.database, {
-      'offset': snapshot.offset,
       'createdAt': snapshot.createdAt.toUtc().toIso8601String(),
       'state': SaveSnapshotCodec.toJson(snapshot.state),
     });

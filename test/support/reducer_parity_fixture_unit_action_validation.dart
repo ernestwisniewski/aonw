@@ -1,7 +1,7 @@
 part of 'reducer_parity_fixture.dart';
 
 bool _permitsReviewedUnitActionPendingAction(ReducerParityFixture fixture) {
-  final pendingAction = fixture.state.runtimeState.pendingAction;
+  final pendingAction = fixture.state.actions.pendingAction;
   return fixture.family == 'unit-actions' &&
       fixture.expectedAccepted &&
       switch (fixture.command) {
@@ -15,7 +15,7 @@ bool _permitsReviewedUnitActionPendingAction(ReducerParityFixture fixture) {
 }
 
 String _unitActionAcceptanceMode(ReducerParityFixture fixture) {
-  final pendingAction = fixture.state.runtimeState.pendingAction;
+  final pendingAction = fixture.state.actions.pendingAction;
   return switch (fixture.command) {
     final CancelUnitActionCommand command
         when pendingAction is PendingUnitTurnSkip &&
@@ -54,7 +54,7 @@ void _requireUnitActionAcceptanceCoverage(
 
 void _requireAcceptedParityUnitAction(
   ReducerParityFixture fixture,
-  PersistentGameState state,
+  DomainState state,
   List<GameEvent> events,
 ) {
   if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||

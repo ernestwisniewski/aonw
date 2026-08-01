@@ -2,7 +2,7 @@ part of 'city_selection_view_model_factory.dart';
 
 List<SelectionInfoItem> _objectives(
   GameCity city,
-  MapData? mapData,
+  WorldMap? mapData,
   List<GameUnit> units,
   AppLocalizations l10n,
 ) => CityObjectiveSelectionItemsFactory.descriptionItems(

@@ -61,7 +61,7 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
 
   void syncState({
     required Component parent,
-    required GameState state,
+    required GameClientState state,
     int? currentTurn,
     bool reduceMotion = false,
   }) {
@@ -181,11 +181,11 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
         kindLayer;
   }
 
-  GameCity? _knownCityById(GameState state, String cityId) {
+  GameCity? _knownCityById(GameClientState state, String cityId) {
     return state.citiesKnownToActivePlayer.byId(cityId);
   }
 
-  GameUnit? _trackedUnit(GameState state, CombatHexAlertOverlay overlay) {
+  GameUnit? _trackedUnit(GameClientState state, CombatHexAlertOverlay overlay) {
     final unit = state.unitById(overlay.unitId!);
     if (unit == null) return null;
     if (overlay.kind == CombatHexAlertKind.fortificationThreat) return unit;

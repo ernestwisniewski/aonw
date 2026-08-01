@@ -2,7 +2,7 @@ part of 'reducer_parity_fixture.dart';
 
 void _requireAcceptedParityCityExpansion(
   ReducerParityFixture fixture,
-  PersistentGameState state,
+  DomainState state,
   List<GameEvent> events,
 ) {
   final command = fixture.command as SelectCityExpansionHexCommand;
@@ -10,7 +10,7 @@ void _requireAcceptedParityCityExpansion(
     (city) => city.id == command.cityId,
   );
   if (beforeIndex < 0 ||
-      fixture.state.runtimeState.submittedPlayerIds.isEmpty ||
+      fixture.state.submittedPlayerIds.isEmpty ||
       events.isNotEmpty) {
     ReducerParityCorpus._fail(
       fixture,
@@ -30,7 +30,10 @@ void _requireAcceptedParityCityExpansion(
       preferredExpansionHex: CityHex(col: command.col, row: command.row),
     );
   final expectedState = fixture.state.copyWith(cities: expectedCities);
-  if (!_jsonDeepEquals(state.toJson(), expectedState.toJson())) {
+  if (!_jsonDeepEquals(
+    CanonicalGameSnapshotCodec.encodeDomainState(state),
+    CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
+  )) {
     ReducerParityCorpus._fail(
       fixture,
       'must only select the reviewed city preferred expansion hex',

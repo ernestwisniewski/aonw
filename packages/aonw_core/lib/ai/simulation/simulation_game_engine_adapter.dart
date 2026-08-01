@@ -3,9 +3,7 @@ import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
-import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -19,7 +17,7 @@ final class SimulationGameEngineResult {
   });
 
   final bool accepted;
-  final PersistentGameState state;
+  final DomainState state;
   final CanonicalGameSnapshot snapshot;
   final List<GameEvent> events;
   final String? reason;
@@ -37,7 +35,7 @@ final class SimulationGameEngineAdapter {
   /// advancement.
   SimulationGameEngineResult finalizeSimultaneousTurn({
     required CanonicalGameSnapshot snapshot,
-    required PersistentGameState state,
+    required DomainState state,
     required Iterable<String> playerIds,
     required int commandTick,
     required MapReadView mapView,
@@ -93,7 +91,7 @@ final class SimulationGameEngineAdapter {
 
   SimulationGameEngineResult apply({
     required CanonicalGameSnapshot snapshot,
-    required PersistentGameState state,
+    required DomainState state,
     required DomainCommand command,
     required String actorPlayerId,
     required int commandTick,
@@ -139,170 +137,23 @@ final class SimulationGameEngineAdapter {
         events: result.events,
       );
     }
-    return _projectAcceptedResult(
-      state: state,
-      engineInput: engineInput,
-      resultSnapshot: result.snapshot,
-      events: result.events,
-    );
-  }
-
-  SimulationGameEngineResult _projectAcceptedResult({
-    required PersistentGameState state,
-    required CanonicalGameSnapshot engineInput,
-    required CanonicalGameSnapshot resultSnapshot,
-    required List<GameEvent> events,
-  }) {
-    final domain = resultSnapshot.domain;
     return SimulationGameEngineResult(
       accepted: true,
-      snapshot: resultSnapshot,
-      events: events,
-      state: state.copyWith(
-        playerColors: _replacement(
-          domain.playerColors,
-          engineInput.domain.playerColors,
-        ),
-        playerCountries: _replacement(
-          domain.playerCountries,
-          engineInput.domain.playerCountries,
-        ),
-        playerGold: _replacement(
-          domain.playerGold,
-          engineInput.domain.playerGold,
-        ),
-        playerWarWeariness: _replacement(
-          domain.playerWarWeariness,
-          engineInput.domain.playerWarWeariness,
-        ),
-        playerStabilityNet: _replacement(
-          domain.playerStabilityNet,
-          engineInput.domain.playerStabilityNet,
-        ),
-        units: _replacement(domain.units, engineInput.domain.units),
-        cities: _replacement(domain.cities, engineInput.domain.cities),
-        artifacts: _replacement(domain.artifacts, engineInput.domain.artifacts),
-        fieldImprovements: _replacement(
-          domain.fieldImprovements,
-          engineInput.domain.fieldImprovements,
-        ),
-        fogOfWar: _replacement(domain.fogOfWar, engineInput.domain.fogOfWar),
-        research: _replacement(domain.research, engineInput.domain.research),
-        wonderRegistry: _replacement(
-          domain.wonderRegistry,
-          engineInput.domain.wonderRegistry,
-        ),
-        runtimeState: _projectRuntime(
-          state.runtimeState,
-          engineInput,
-          resultSnapshot,
-        ),
-      ),
-    );
-  }
-
-  GameRuntimeState? _projectRuntime(
-    GameRuntimeState runtime,
-    CanonicalGameSnapshot engineInput,
-    CanonicalGameSnapshot resultSnapshot,
-  ) {
-    final input = engineInput.domain;
-    final result = resultSnapshot.domain;
-    final changed = [
-      !identical(result.diplomacy, input.diplomacy),
-      !identical(result.intendedAttacks, input.intendedAttacks),
-      !identical(result.resourceTradeAgreements, input.resourceTradeAgreements),
-      !identical(
-        result.dominationHoldTurnsByPlayerId,
-        input.dominationHoldTurnsByPlayerId,
-      ),
-      !identical(
-        result.culturalVictoryHoldTurnsByPlayerId,
-        input.culturalVictoryHoldTurnsByPlayerId,
-      ),
-      !identical(
-        result.mapObjectiveHoldStatesByObjectiveId,
-        input.mapObjectiveHoldStatesByObjectiveId,
-      ),
-      !identical(resultSnapshot.interaction, engineInput.interaction),
-      resultSnapshot.session != engineInput.session,
-    ].contains(true);
-    if (!changed) return null;
-    return runtime.copyWith(
-      diplomacy: result.diplomacy,
-      intendedAttacks: result.intendedAttacks,
-      resourceTradeAgreements: result.resourceTradeAgreements,
-      dominationHoldTurnsByPlayerId: result.dominationHoldTurnsByPlayerId,
-      culturalVictoryHoldTurnsByPlayerId:
-          result.culturalVictoryHoldTurnsByPlayerId,
-      mapObjectiveHoldStatesByObjectiveId:
-          result.mapObjectiveHoldStatesByObjectiveId,
-      cityFoundingDraft: resultSnapshot.interaction.cityFoundingDraft,
-      pendingAction: resultSnapshot.interaction.pendingAction,
-      submittedPlayerIds: resultSnapshot.session.submittedPlayerIds,
-      timeoutStreaksByPlayerId: resultSnapshot.session.timeoutStreaksByPlayerId,
-      afkPlayerIds: resultSnapshot.session.afkPlayerIds,
-      kickedPlayerIds: resultSnapshot.session.kickedPlayerIds,
-      turnStartedAt: resultSnapshot.session.turnStartedAt,
+      state: result.snapshot.domain,
+      snapshot: result.snapshot,
+      events: result.events,
     );
   }
 
   CanonicalGameSnapshot projectSnapshot({
     required CanonicalGameSnapshot snapshot,
-    required PersistentGameState state,
+    required DomainState state,
     int? turn,
   }) {
-    final runtime = state.runtimeState;
-    final participants = _projectParticipants(
-      snapshot.domain.participants,
-      state,
-    );
-    final interaction = PersistedInteractionState(
-      cityFoundingDraft: runtime.cityFoundingDraft,
-      pendingAction: runtime.pendingAction,
-    );
-    final session = snapshot.session.copyWith(
-      submittedPlayerIds: runtime.submittedPlayerIds,
-      timeoutStreaksByPlayerId: runtime.timeoutStreaksByPlayerId,
-      afkPlayerIds: runtime.afkPlayerIds,
-      kickedPlayerIds: runtime.kickedPlayerIds,
-      turnStartedAt: runtime.turnStartedAt ?? snapshot.session.turnStartedAt,
-    );
-    return snapshot.copyWith(
-      domain: snapshot.domain.copyWith(
-        turn: turn,
-        participants: identical(participants, snapshot.domain.participants)
-            ? null
-            : participants,
-        playerGold: state.playerGold,
-        playerWarWeariness: state.playerWarWeariness,
-        playerStabilityNet: state.playerStabilityNet,
-        units: state.units,
-        cities: state.cities,
-        artifacts: state.artifacts,
-        fieldImprovements: state.fieldImprovements,
-        fogOfWar: state.fogOfWar,
-        research: state.research,
-        wonderRegistry: state.wonderRegistry,
-        intendedAttacks: runtime.intendedAttacks,
-        diplomacy: runtime.diplomacy,
-        resourceTradeAgreements: runtime.resourceTradeAgreements,
-        dominationHoldTurnsByPlayerId: runtime.dominationHoldTurnsByPlayerId,
-        culturalVictoryHoldTurnsByPlayerId:
-            runtime.culturalVictoryHoldTurnsByPlayerId,
-        mapObjectiveHoldStatesByObjectiveId:
-            runtime.mapObjectiveHoldStatesByObjectiveId,
-      ),
-      session: session == snapshot.session ? snapshot.session : session,
-      interaction: interaction == snapshot.interaction
-          ? snapshot.interaction
-          : interaction,
-    );
+    final domain = turn == null ? state : state.copyWith(turn: turn);
+    return snapshot.copyWith(domain: domain);
   }
 }
-
-T? _replacement<T extends Object>(T next, T current) =>
-    identical(next, current) ? null : next;
 
 List<String> _orderedDistinctPlayerIds(Iterable<String> values) {
   final seen = <String>{};
@@ -310,25 +161,4 @@ List<String> _orderedDistinctPlayerIds(Iterable<String> values) {
     for (final value in values)
       if (value.isNotEmpty && seen.add(value)) value,
   ];
-}
-
-List<Player> _projectParticipants(
-  List<Player> current,
-  PersistentGameState state,
-) {
-  var changed = false;
-  final projected = [
-    for (final participant in current)
-      (() {
-        final color = state.playerColors[participant.id];
-        final country = state.playerCountries[participant.id];
-        if ((color == null || color == participant.colorValue) &&
-            (country == null || country == participant.country)) {
-          return participant;
-        }
-        changed = true;
-        return participant.copyWith(colorValue: color, country: country);
-      })(),
-  ];
-  return changed ? projected : current;
 }

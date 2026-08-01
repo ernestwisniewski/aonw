@@ -6,7 +6,6 @@ import 'map_boundary_source_guard.dart';
 import 'movement_command_boundary_guard.dart';
 
 const _mapBoundaryTypes = {
-  'MapData',
   'MapDefinition',
   'MapSurvey',
   'MapTileCatalog',

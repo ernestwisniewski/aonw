@@ -4,16 +4,14 @@ void _registerServerCommandReducerResourceTradeTests() {
   group('ServerCommandReducer resource trade', () {
     test('opens gold-for-resource trade authoritatively', () async {
       final reducer = ServerCommandReducer(
-        mapCatalog: _FakeMapCatalog(
-          _RawTileLookupRejectingMapData(_resourceTradeMap()),
-        ),
+        mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
       );
 
       final reduction = await const ServerCommandReducerTestDriver().reduce(
         reducer: reducer,
         match: _runningMatch(),
         wireSnapshot: _snapshot(
-          PersistentGameState(
+          DomainState.snapshot(
             playerGold: const {'player_1': 8},
             cities: _tradeCities(),
             research: _researchWithMany({
@@ -53,16 +51,14 @@ void _registerServerCommandReducerResourceTradeTests() {
 
     test('opens resource exchange authoritatively', () async {
       final reducer = ServerCommandReducer(
-        mapCatalog: _FakeMapCatalog(
-          _RawTileLookupRejectingMapData(_resourceTradeMap()),
-        ),
+        mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
       );
 
       final reduction = await const ServerCommandReducerTestDriver().reduce(
         reducer: reducer,
         match: _runningMatch(),
         wireSnapshot: _snapshot(
-          PersistentGameState(
+          DomainState.snapshot(
             cities: _tradeCities(),
             research: _researchWithMany({
               'player_1': {TechnologyId.ironWorking},
@@ -116,7 +112,7 @@ void _registerServerCommandReducerResourceTradeTests() {
         mapCatalog: _FakeMapCatalog(_resourceTradeMap()),
       );
       final snapshot = _snapshot(
-        PersistentGameState(
+        DomainState.snapshot(
           playerGold: const {'player_2': 8},
           cities: _tradeCities(),
           research: _researchWithMany({

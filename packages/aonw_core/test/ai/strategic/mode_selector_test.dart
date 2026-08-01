@@ -263,7 +263,7 @@ void main() {
 }
 
 AiContext _context(
-  MapData mapData,
+  WorldMap mapData,
   CivilizationProfile profile, {
   int turn = 8,
 }) {
@@ -277,33 +277,33 @@ AiContext _context(
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 2,
     rows: 2,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 0,
         row: 1,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 1,
         terrains: [TerrainType.plains],

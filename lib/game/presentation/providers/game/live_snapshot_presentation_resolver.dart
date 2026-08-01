@@ -5,7 +5,7 @@ import 'package:aonw/game/application/services/live_snapshot_presentation_policy
 LiveSnapshotPresentationDecision resolve(
   int previousOffset,
   LiveServerEvent? liveEvent,
-  SaveSnapshot snapshot,
+  CanonicalGameSnapshot snapshot,
 ) {
   return LiveSnapshotPresentationPolicy.decide(
     previousOffset: previousOffset,

@@ -148,7 +148,7 @@ void main() {
   });
 }
 
-AiContext _context(MapData mapData) {
+AiContext _context(WorldMap mapData) {
   return AiContext(
     ruleset: GameRuleset.defaults,
     mapData: mapData,
@@ -157,8 +157,8 @@ AiContext _context(MapData mapData) {
   );
 }
 
-GameView _view({required MapData mapData, required PersistentGameState state}) {
-  return GameView.fromPersistentState(
+GameView _view({required WorldMap mapData, required DomainState state}) {
+  return GameView.fromDomainState(
     state,
     forPlayerId: 'player_1',
     turn: 2,
@@ -167,14 +167,14 @@ GameView _view({required MapData mapData, required PersistentGameState state}) {
   );
 }
 
-PersistentGameState _state({
-  required MapData mapData,
+DomainState _state({
+  required WorldMap mapData,
   required int playerGold,
   required GameCity city,
   required ResearchState research,
   List<GameUnit> units = const [],
 }) {
-  return PersistentGameState(
+  return DomainState.snapshot(
     units: units,
     cities: [city],
     playerGold: {'player_1': playerGold},
@@ -198,19 +198,19 @@ ResearchState _researchWithUnlocked(TechnologyId technologyId) {
   );
 }
 
-MapData _productionMap() {
-  return MapData(
+WorldMap _productionMap() {
+  return WorldMap(
     cols: 2,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.hills],
@@ -221,19 +221,19 @@ MapData _productionMap() {
   );
 }
 
-MapData _ivoryMap() {
-  return MapData(
+WorldMap _ivoryMap() {
+  return WorldMap(
     cols: 2,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains],
@@ -244,19 +244,19 @@ MapData _ivoryMap() {
   );
 }
 
-MapData _pastureMap() {
-  return MapData(
+WorldMap _pastureMap() {
+  return WorldMap(
     cols: 2,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.grassland],
@@ -267,7 +267,7 @@ MapData _pastureMap() {
   );
 }
 
-Set<HexCoordinate> _allHexesIn(MapData mapData) {
+Set<HexCoordinate> _allHexesIn(WorldMap mapData) {
   return {
     for (var col = 0; col < mapData.cols; col++)
       for (var row = 0; row < mapData.rows; row++)

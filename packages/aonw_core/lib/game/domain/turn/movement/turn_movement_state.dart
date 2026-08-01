@@ -20,7 +20,7 @@ final class TurnMovementState {
   final List<GameCity> cities;
   final DiplomacyState diplomacy;
   final FogOfWarState fogOfWar;
-  final PersistedInteractionState interaction;
+  final DomainActionState interaction;
 }
 
 /// Persistence-neutral output of the movement phase of a turn.

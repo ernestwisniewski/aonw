@@ -109,8 +109,8 @@ void _requireReviewedStartUnitFixtureShape(ReducerParityFixture fixture) {
   }
   if (fixture.state.cities.length < 2 ||
       fixture.state.cities.first.id != 'city_sentinel' ||
-      fixture.state.runtimeState.turnStartedAt == null ||
-      fixture.state.runtimeState.submittedPlayerIds.isEmpty ||
+      fixture.state.turnStartedAt == null ||
+      fixture.state.submittedPlayerIds.isEmpty ||
       fixture.expectedEvents.isNotEmpty) {
     ReducerParityCorpus._fail(
       fixture,
@@ -287,8 +287,7 @@ _StartUnitConditions _reviewedStartUnitConditions(
       mapTiles: fixture.mapData,
       ruleset: CityRulesets.standard,
       research: fixture.state.research,
-      resourceTradeAgreements:
-          fixture.state.runtimeState.resourceTradeAgreements,
+      resourceTradeAgreements: fixture.state.resourceTradeAgreements,
     ),
     coastAvailable: CityUnitProductionRules.canProduceInCity(
       city: city,
@@ -313,7 +312,7 @@ bool _canQueueReviewedStartUnit(
     units: fixture.state.units,
     artifacts: artifacts ?? fixture.state.artifacts,
     fieldImprovements: fieldImprovements ?? fixture.state.fieldImprovements,
-    mapView: fixture.mapData.indexedReadView(),
+    mapView: fixture.mapData,
     cityRuleset: CityRulesets.standard,
     research: fixture.state.research,
     technologyRuleset: TechnologyRulesets.standard,
@@ -365,7 +364,7 @@ void _validateImportedCoastalStartUnitReplacement(
 
 void _requireReviewedImportedIron(ReducerParityFixture fixture, String cityId) {
   final city = fixture.state.cities.byId(cityId)!;
-  final importsIron = fixture.state.runtimeState.resourceTradeAgreements.any(
+  final importsIron = fixture.state.resourceTradeAgreements.any(
     (agreement) =>
         agreement.resource == ResourceType.iron &&
         agreement.importsFor(city.ownerPlayerId),

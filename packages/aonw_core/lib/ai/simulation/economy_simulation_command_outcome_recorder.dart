@@ -15,9 +15,9 @@ final class _EconomySimulationCommandOutcomeRecorder {
   final List<EconomySimulationRejectedCommand> rejectedCommandRecords;
   final _EconomySimulationHostilityMemory hostilityMemory;
 
-  PersistentGameState record({
+  DomainState record({
     required _ApplyCommandResult result,
-    required PersistentGameState currentState,
+    required DomainState currentState,
     required DomainCommand command,
     required int turn,
     required int tick,

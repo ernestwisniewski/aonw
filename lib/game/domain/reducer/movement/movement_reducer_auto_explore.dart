@@ -2,7 +2,7 @@ part of 'movement_reducer.dart';
 
 abstract final class _AutoExploreProcessor {
   static TurnAutoExploreAdvance advanceForNewTurn({
-    required GameState state,
+    required GameClientState state,
     required MapTraversalView mapView,
     required String? resetPlayerId,
     required FogOfWarService fogOfWarService,
@@ -15,7 +15,7 @@ abstract final class _AutoExploreProcessor {
       cities: state.cities,
       diplomacy: state.diplomacy,
       fogOfWar: state.fogOfWar,
-      interaction: PersistedInteractionState(
+      interaction: DomainActionState(
         cityFoundingDraft: state.cityFoundingDraft,
         pendingAction: state.pendingAction,
       ),

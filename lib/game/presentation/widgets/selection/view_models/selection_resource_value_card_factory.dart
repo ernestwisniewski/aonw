@@ -15,7 +15,7 @@ abstract final class SelectionResourceValueCardFactory {
   static List<SelectionResourceValueCard> fromTile({
     required MapTileView tile,
     required HexAssessment assessment,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required AppLocalizations l10n,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
@@ -46,7 +46,7 @@ abstract final class SelectionResourceValueCardFactory {
     required ResourceType resource,
     required MapTileView tile,
     required TileYield tileYield,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required AppLocalizations l10n,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
@@ -156,7 +156,7 @@ abstract final class SelectionResourceValueCardFactory {
 
   static _TileCityStatus _cityStatusFor({
     required MapTileView tile,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required AppLocalizations l10n,
     required String Function(GameCity city) cityName,
   }) {
@@ -208,7 +208,7 @@ abstract final class SelectionResourceValueCardFactory {
   }
 
   static bool _hasTechnologyUnlocked(
-    GameState? gameState,
+    GameClientState? gameState,
     TechnologyId technologyId,
   ) {
     if (gameState == null) return false;

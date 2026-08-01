@@ -8,7 +8,7 @@ void main() {
     test('scores stronger rollout state above weaker state', () {
       const evaluator = StateHeuristicEvaluator();
       final strong = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           playerGold: const {'player_1': 50},
           units: [
             GameUnit(
@@ -59,7 +59,7 @@ void main() {
         ),
       );
       final weak = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'enemy_1',
@@ -83,7 +83,7 @@ void main() {
     test('keeps scores normalized', () {
       const evaluator = StateHeuristicEvaluator();
       final state = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           playerGold: const {'player_1': 10000},
           units: [
             for (var i = 0; i < 20; i++)
@@ -131,7 +131,7 @@ void main() {
       final mapData = _squareMap(cols: 40, rows: 1);
       final context = _context(mapData: mapData);
 
-      PersistentGameState empire(List<int> cityCols) => PersistentGameState(
+      DomainState empire(List<int> cityCols) => DomainState.snapshot(
         cities: [
           for (var i = 0; i < cityCols.length; i++)
             GameCity(
@@ -165,9 +165,9 @@ void main() {
         center: CityHex(col: 0, row: 0),
       );
       final context = _context();
-      final peaceful = _state(const PersistentGameState(cities: [city]));
+      final peaceful = _state(DomainState.snapshot(cities: [city]));
       final weary = _state(
-        const PersistentGameState(
+        DomainState.snapshot(
           playerWarWeariness: {'player_1': 8},
           cities: [city],
         ),
@@ -188,7 +188,7 @@ void main() {
         center: CityHex(col: 0, row: 0),
         controlledHexes: [CityHex(col: 0, row: 0)],
       );
-      const state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerWarWeariness: {'player_1': 7},
         cities: [city],
       );
@@ -216,7 +216,7 @@ void main() {
     test('prioritizes order buildings while the empire is in unrest', () {
       const evaluator = CommandSequenceEvaluator();
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           playerStabilityNet: const {'player_1': -4},
           cities: const [
             GameCity(
@@ -255,7 +255,7 @@ void main() {
     test('rewards queued settlers while expansion is still desired', () {
       const evaluator = CommandSequenceEvaluator();
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'warrior_1',
@@ -327,7 +327,7 @@ void main() {
     test('devalues settler production before any military coverage', () {
       const evaluator = CommandSequenceEvaluator();
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: const [],
           cities: const [
             GameCity(
@@ -374,7 +374,7 @@ void main() {
       const evaluator = CommandSequenceEvaluator();
       final mapData = _squareMap(cols: 8, rows: 8);
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'warrior_1',
@@ -432,7 +432,7 @@ void main() {
     test('rewards reinforced second-city settler over projects', () {
       const evaluator = CommandSequenceEvaluator();
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'worker_1',
@@ -509,7 +509,7 @@ void main() {
       const evaluator = CommandSequenceEvaluator();
       final mapData = _squareMap(cols: 8, rows: 5);
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'warrior_1',
@@ -587,7 +587,7 @@ void main() {
       () {
         const evaluator = CommandSequenceEvaluator();
         final base = _state(
-          PersistentGameState(
+          DomainState.snapshot(
             units: [
               GameUnit(
                 id: 'warrior_1',
@@ -665,7 +665,7 @@ void main() {
     test('rewards fortifying assigned garrisons near a threatened city', () {
       const evaluator = CommandSequenceEvaluator();
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'warrior_1',
@@ -725,7 +725,7 @@ void main() {
       const evaluator = CommandSequenceEvaluator();
       final mapData = _squareMap(cols: 8, rows: 8);
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'warrior_1',
@@ -787,7 +787,7 @@ void main() {
       const evaluator = CommandSequenceEvaluator();
       final mapData = _squareMap(cols: 8, rows: 8);
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'warrior_1',
@@ -864,7 +864,7 @@ void main() {
       const evaluator = CommandSequenceEvaluator();
       final mapData = _squareMap(cols: 8, rows: 8);
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'warrior_1',
@@ -942,7 +942,7 @@ void main() {
         const evaluator = CommandSequenceEvaluator();
         final mapData = _squareMap(cols: 8, rows: 8);
         final base = _state(
-          PersistentGameState(
+          DomainState.snapshot(
             units: [
               for (var i = 1; i <= 3; i++)
                 GameUnit(
@@ -1013,7 +1013,7 @@ void main() {
     test('rewards worker production before background projects', () {
       const evaluator = CommandSequenceEvaluator();
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'warrior_1',
@@ -1071,7 +1071,7 @@ void main() {
       () {
         const evaluator = CommandSequenceEvaluator();
         final base = _state(
-          PersistentGameState(
+          DomainState.snapshot(
             units: [
               GameUnit(
                 id: 'warrior_1',
@@ -1130,7 +1130,7 @@ void main() {
       const evaluator = CommandSequenceEvaluator();
       SimulatedState stateWithEnemy({int? enemyHitPoints}) {
         return _state(
-          PersistentGameState(
+          DomainState.snapshot(
             units: [
               GameUnit(
                 id: 'warrior_1',
@@ -1182,7 +1182,7 @@ void main() {
         for (var col = 0; col < 5; col++) HexCoordinate(col: col, row: 0),
       };
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'warrior_1',
@@ -1276,7 +1276,7 @@ void main() {
             HexCoordinate.fromTile(tile),
       };
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'settler_1',
@@ -1326,7 +1326,7 @@ void main() {
       const evaluator = CommandSequenceEvaluator();
       final mapData = _squareMap(cols: 6, rows: 5);
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'settler_1',
@@ -1384,7 +1384,7 @@ void main() {
       const evaluator = CommandSequenceEvaluator();
       final mapData = _squareMap(cols: 6, rows: 5);
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'settler_1',
@@ -1465,7 +1465,7 @@ void main() {
       const evaluator = CommandSequenceEvaluator();
       final mapData = _squareMap(cols: 5, rows: 5);
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'settler_1',
@@ -1539,7 +1539,7 @@ void main() {
             HexCoordinate.fromTile(tile),
       };
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'settler_1',
@@ -1606,7 +1606,7 @@ void main() {
       const evaluator = CommandSequenceEvaluator();
       final mapData = _squareMap(cols: 8, rows: 8);
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'settler_1',
@@ -1687,7 +1687,7 @@ void main() {
       const evaluator = CommandSequenceEvaluator();
       final mapData = _squareMap(cols: 8, rows: 8);
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'settler_1',
@@ -1770,7 +1770,7 @@ void main() {
       const evaluator = CommandSequenceEvaluator();
       final mapData = _squareMap(cols: 8, rows: 8);
       final base = _state(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [
             GameUnit(
               id: 'settler_1',
@@ -1836,7 +1836,7 @@ void main() {
         const evaluator = CommandSequenceEvaluator();
         final mapData = _squareMap(cols: 6, rows: 6);
         final base = _state(
-          PersistentGameState(
+          DomainState.snapshot(
             units: [
               GameUnit(
                 id: 'settler_1',
@@ -1915,7 +1915,7 @@ void main() {
           for (final tile in mapData.tiles) HexCoordinate.fromTile(tile),
         };
         final base = _state(
-          PersistentGameState(
+          DomainState.snapshot(
             units: [
               GameUnit(
                 id: 'settler_1',
@@ -1968,7 +1968,7 @@ void main() {
 
 AiContext _context({
   StrategicPlan? strategicPlan,
-  MapData? mapData,
+  WorldMap? mapData,
   AiPersona persona = AiPersona.balanced,
   CivilizationProfile civProfile = CivilizationProfiles.poland,
   double ownControlPercent = 0,
@@ -2013,7 +2013,7 @@ StrategicPlan _strategicPlan({
   );
 }
 
-SimulatedState _state(PersistentGameState state, {MapData? mapData}) {
+SimulatedState _state(DomainState state, {WorldMap? mapData}) {
   return MctsSimulatorParityFixtures.simulatedState(
     state,
     mapData: mapData ?? _mapData(),
@@ -2045,16 +2045,16 @@ FogOfWarState _fogForHexes(Set<HexCoordinate> visibleHexes) {
   );
 }
 
-MapData _mapData() {
+WorldMap _mapData() {
   return _squareMap(cols: 2, rows: 1);
 }
 
-MapData _singleTileMap({required List<ResourceType> resources}) {
-  return MapData(
+WorldMap _singleTileMap({required List<ResourceType> resources}) {
+  return WorldMap(
     cols: 1,
     rows: 1,
     tiles: [
-      TileData(
+      WorldTile(
         col: 0,
         row: 0,
         terrains: const [TerrainType.plains],
@@ -2065,8 +2065,8 @@ MapData _singleTileMap({required List<ResourceType> resources}) {
   );
 }
 
-PersistentGameState _developedEmpire({required int cityCount}) {
-  return PersistentGameState(
+DomainState _developedEmpire({required int cityCount}) {
+  return DomainState.snapshot(
     playerGold: const {'player_1': 500},
     units: [
       for (var i = 0; i < cityCount * 2; i++)
@@ -2103,14 +2103,14 @@ PersistentGameState _developedEmpire({required int cityCount}) {
   );
 }
 
-MapData _squareMap({required int cols, required int rows}) {
-  return MapData(
+WorldMap _squareMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var col = 0; col < cols; col++)
         for (var row = 0; row < rows; row++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

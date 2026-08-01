@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_founding_preview.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
@@ -20,7 +20,7 @@ class CityFoundingPreviewLayer extends Component with LayerAttachment {
   void sync({
     required Component parent,
     required CityFoundingDraft? draft,
-    required MapData mapData,
+    required WorldMap mapData,
     required Iterable<GameCity> cities,
     bool Function(CityHex hex)? canShowHex,
   }) {

@@ -12,7 +12,7 @@ void main() {
       'plays command effects in the previous renderer perspective',
       () async {
         final applied = <_AppliedTransition>[];
-        const currentAiState = GameState(
+        final currentAiState = GameClientState(
           activePlayerId: 'ai_1',
           activePlayerCanAct: true,
         );
@@ -24,12 +24,12 @@ void main() {
           row: 3,
         );
         final afterUnit = beforeUnit.copyWith(col: 3);
-        final humanRendererState = GameState(
+        final humanRendererState = GameClientState(
           activePlayerId: 'human',
           activePlayerCanAct: false,
           units: [beforeUnit],
         );
-        final reducerState = GameState(
+        final reducerState = GameClientState(
           activePlayerId: 'ai_1',
           activePlayerCanAct: false,
           units: [afterUnit],
@@ -103,7 +103,7 @@ void main() {
       'uses fallback state and skips apply when there are no effects',
       () async {
         var applied = false;
-        const currentAiState = GameState(
+        final currentAiState = GameClientState(
           activePlayerId: 'ai_1',
           activePlayerCanAct: true,
         );
@@ -120,7 +120,7 @@ void main() {
         );
         final report = await playback.playCommandEffects(
           previousRendererState: previousRendererState,
-          commandState: const GameState(activePlayerId: 'ai_1'),
+          commandState: GameClientState(activePlayerId: 'ai_1'),
           uiEffects: const [],
           events: const [],
         );
@@ -135,7 +135,7 @@ void main() {
 }
 
 final class _AppliedTransition {
-  final GameState state;
+  final GameClientState state;
   final List<RendererEffect> effects;
 
   const _AppliedTransition(this.state, this.effects);

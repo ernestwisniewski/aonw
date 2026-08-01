@@ -8,8 +8,8 @@ void main() {
   group('HudPendingActionCommands', () {
     test('creates cancel research command for matching active player', () {
       final command = HudPendingActionCommands.cancelResearchSelection(
-        state: const GameState(
-          interaction: GameInteractionState(
+        state: GameClientState(
+          interaction: const InteractionState(
             pendingAction: PendingResearchSelection(ownerPlayerId: 'player_1'),
           ),
         ),
@@ -21,8 +21,8 @@ void main() {
 
     test('does not cancel research owned by another player', () {
       final command = HudPendingActionCommands.cancelResearchSelection(
-        state: const GameState(
-          interaction: GameInteractionState(
+        state: GameClientState(
+          interaction: const InteractionState(
             pendingAction: PendingResearchSelection(ownerPlayerId: 'player_2'),
           ),
         ),
@@ -34,8 +34,8 @@ void main() {
 
     test('creates cancel worker command from pending worker action', () {
       final command = HudPendingActionCommands.cancelWorkerActionSelection(
-        const GameState(
-          interaction: GameInteractionState(
+        GameClientState(
+          interaction: const InteractionState(
             pendingAction: PendingWorkerActionSelection(
               ownerPlayerId: 'player_1',
               unitId: 'worker_1',
@@ -49,8 +49,8 @@ void main() {
 
     test('ignores unrelated pending actions', () {
       final command = HudPendingActionCommands.cancelWorkerActionSelection(
-        const GameState(
-          interaction: GameInteractionState(
+        GameClientState(
+          interaction: const InteractionState(
             pendingAction: PendingResearchSelection(ownerPlayerId: 'player_1'),
           ),
         ),

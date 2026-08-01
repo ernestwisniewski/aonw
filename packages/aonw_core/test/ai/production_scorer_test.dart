@@ -6,12 +6,12 @@ import 'package:aonw_core/ai/production_counter_pressure_scorer.dart';
 import 'package:aonw_core/ai/production_scorer.dart';
 import 'package:aonw_core/ai/production_scoring_cache.dart';
 import 'package:aonw_core/ai/production_unit_scorer.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:test/test.dart';
 
@@ -410,7 +410,7 @@ GameView _view(
   List<GameUnit> visibleEnemyUnits = const [],
   PlayerResearchState ownResearch = PlayerResearchState.empty,
   int ownStabilityNet = 0,
-  MapData? mapData,
+  WorldMap? mapData,
 }) {
   final actualMapData = mapData ?? _mapData;
   return GameView(
@@ -466,11 +466,11 @@ AiContext _context(GameView view) {
   );
 }
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 1,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.grassland],
@@ -480,13 +480,13 @@ final _mapData = MapData(
   ],
 );
 
-final _expansionMapData = MapData(
+final _expansionMapData = WorldMap(
   cols: 8,
   rows: 8,
   tiles: [
     for (var col = 0; col < 8; col++)
       for (var row = 0; row < 8; row++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],

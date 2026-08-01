@@ -8,21 +8,21 @@ import 'package:aonw/game/application/services/replay_service.dart';
 import 'package:aonw/game/presentation/providers/replay/replay_providers.dart';
 import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:aonw/game/presentation/providers/session/session_providers.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/providers/map_providers.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('builds replay reducer from one indexed session map view', () async {
     const selection = MapSelection(name: 'map', source: MapSource.asset);
-    final mapData = MapData(
+    final mapData = WorldMap(
       cols: 1,
       rows: 1,
-      tiles: const [
-        TileData(
+      tiles: [
+        WorldTile(
           col: 0,
           row: 0,
           terrains: [TerrainType.plains],
@@ -73,12 +73,12 @@ final class _MissingReplayStore implements ReplayStore {
   const _MissingReplayStore();
 
   @override
-  Future<SaveSnapshot?> initialSnapshot(String saveId) async => null;
+  Future<CanonicalGameSnapshot?> initialSnapshot(String saveId) async => null;
 
   @override
   Future<void> saveInitialSnapshot(
     String saveId,
-    SaveSnapshot snapshot,
+    CanonicalGameSnapshot snapshot,
   ) async {}
 
   @override

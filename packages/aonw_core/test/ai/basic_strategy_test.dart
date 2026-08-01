@@ -4,18 +4,18 @@ import 'package:test/test.dart';
 void main() {
   group('BasicStrategy', () {
     test('matches RandomStrategy when no founder is available', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 2,
         rows: 1,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.plains],
             resources: [],
             height: 0,
           ),
-          TileData(
+          WorldTile(
             col: 1,
             row: 0,
             terrains: [TerrainType.plains],
@@ -24,7 +24,7 @@ void main() {
           ),
         ],
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.startingCommander(ownerPlayerId: 'player_1', col: 0, row: 0),
         ],
@@ -47,7 +47,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,
@@ -82,7 +82,7 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [scout],
         artifacts: [artifact],
         fogOfWar: FogOfWarState(
@@ -95,7 +95,7 @@ void main() {
         ),
         research: _researchWithActiveTarget(),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 3,
@@ -129,7 +129,7 @@ void main() {
         type: WorldArtifactType.heroSword,
         location: WorldArtifactLocation.carried(unitId: 'warrior_1'),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [carrier],
         cities: const [city],
         artifacts: const [artifact],
@@ -143,7 +143,7 @@ void main() {
         ),
         research: _researchWithActiveTarget(),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 3,
@@ -200,7 +200,7 @@ void main() {
         col: 4,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [carrier, scout],
         cities: const [city, satellite],
         artifacts: [carried, mapArtifact],
@@ -214,7 +214,7 @@ void main() {
         ),
         research: _researchWithActiveTarget(),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 3,
@@ -232,7 +232,7 @@ void main() {
     test('plans a FoundCityCommand when commander stands on a valid centerTile '
         'with a settler in its army', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.startingCommander(
             ownerPlayerId: 'player_1',
@@ -250,7 +250,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,
@@ -281,7 +281,7 @@ void main() {
 
     test('plans a FoundCityCommand for a standalone settler', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -300,7 +300,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,
@@ -329,7 +329,7 @@ void main() {
       'founds an adequate opening site instead of chasing richer terrain',
       () {
         final mapData = _citySiteChoiceMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'settler_player_1',
@@ -348,7 +348,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 1,
@@ -387,7 +387,7 @@ void main() {
       'moves first settler instead of founding adjacent to enemy military',
       () {
         final mapData = _roomyExpansionMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'settler_player_1',
@@ -414,7 +414,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 1,
@@ -451,7 +451,7 @@ void main() {
     test('does not send the first settler to a hidden strategic site', () {
       final mapData = _hiddenRichSiteMap();
       const hiddenSite = CityHex(col: 5, row: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -496,7 +496,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,
@@ -530,7 +530,7 @@ void main() {
 
     test('does not found multiple same-turn cities too close together', () {
       final mapData = _roomyExpansionMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_west',
@@ -556,7 +556,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,
@@ -578,7 +578,7 @@ void main() {
 
     test('moves a settler toward a much stronger nearby city site', () {
       final mapData = _citySiteChoiceMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -613,7 +613,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,
@@ -636,7 +636,7 @@ void main() {
 
     test('uses strategic settler assignment before local founding', () {
       final mapData = _roomyExpansionMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -664,7 +664,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,
@@ -702,7 +702,7 @@ void main() {
 
     test('targets distant assigned city sites so movement can be queued', () {
       final mapData = _roomyExpansionMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -735,7 +735,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 35,
@@ -771,7 +771,7 @@ void main() {
 
     test('founds a good current second-city site under expansion pressure', () {
       final mapData = _roomyExpansionMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -799,7 +799,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 24,
@@ -860,7 +860,7 @@ void main() {
 
     test('founds a good current third-city site under expansion pressure', () {
       final mapData = _roomyExpansionMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -895,7 +895,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 40,
@@ -961,7 +961,7 @@ void main() {
       'waits to found an assigned site until its exclusion zone is known',
       () {
         final mapData = _roomyExpansionMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'settler_player_1',
@@ -999,7 +999,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 1,
@@ -1041,7 +1041,7 @@ void main() {
       final mapData = _roomyExpansionMap();
       final visibleHexes = _allHexesIn(mapData)
         ..remove(const HexCoordinate(col: 2, row: 2));
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -1088,7 +1088,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 42,
@@ -1134,7 +1134,7 @@ void main() {
       'retreats an unassigned third-city settler from adjacent military',
       () {
         final mapData = _roomyExpansionMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'settler_player_1',
@@ -1174,7 +1174,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 44,
@@ -1228,7 +1228,7 @@ void main() {
               2)
             HexCoordinate.fromTile(tile),
       };
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -1256,7 +1256,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,
@@ -1287,7 +1287,7 @@ void main() {
 
     test('waits for escort before pushing an unescorted settler frontier', () {
       final mapData = _roomyExpansionMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -1322,7 +1322,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 32,
@@ -1351,7 +1351,7 @@ void main() {
       'does not let a third-city settler outrun origin cover under pressure',
       () {
         final mapData = _roomyExpansionMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'settler_player_1',
@@ -1392,7 +1392,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 36,
@@ -1432,7 +1432,7 @@ void main() {
       'lets a pressured third-city settler step away from visible danger',
       () {
         final mapData = _roomyExpansionMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'settler_player_1',
@@ -1472,7 +1472,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 36,
@@ -1511,7 +1511,7 @@ void main() {
     test('moves spare military to escort a pressured third-city settler', () {
       final mapData = _roomyExpansionMap();
       const assignment = CityHex(col: 5, row: 6);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -1572,7 +1572,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 24,
@@ -1635,7 +1635,7 @@ void main() {
 
     test('reserves queued settler path before moving military pressure', () {
       final mapData = _roomyExpansionMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -1675,7 +1675,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 30,
@@ -1755,7 +1755,7 @@ void main() {
                   2)
             HexCoordinate.fromTile(tile),
       };
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -1809,7 +1809,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 38,
@@ -1859,7 +1859,7 @@ void main() {
 
     test('uses assigned military to clear a blocker near a spare settler', () {
       final mapData = _roomyExpansionMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_1',
@@ -1913,7 +1913,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 42,
@@ -1958,7 +1958,7 @@ void main() {
 
     test('trains a scout when a third-city settler has no legal site', () {
       final mapData = _largeExpansionMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_1',
@@ -2046,7 +2046,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 42,
@@ -2102,7 +2102,7 @@ void main() {
         center: CityHex(col: 2, row: 1),
         controlledHexes: [CityHex(col: 1, row: 1)],
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_player_1',
@@ -2129,7 +2129,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,
@@ -2157,11 +2157,11 @@ void main() {
 
     test('skips founding when there is no valid neighbour', () {
       // 1x1 map: no neighbours, so no controlledHexes can be picked.
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 1,
         rows: 1,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.plains],
@@ -2170,7 +2170,7 @@ void main() {
           ),
         ],
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.startingCommander(
             ownerPlayerId: 'player_1',
@@ -2188,7 +2188,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,
@@ -2209,8 +2209,8 @@ void main() {
 
     test('plans SelectTechnologyCommand when no research is active', () {
       final mapData = _foundingScenarioMap();
-      final view = GameView.fromPersistentState(
-        const PersistentGameState(),
+      final view = GameView.fromDomainState(
+        DomainState.snapshot(),
         forPlayerId: 'player_1',
         turn: 1,
         mapData: mapData,
@@ -2236,8 +2236,8 @@ void main() {
 
     test('uses persona weights when selecting an early technology', () {
       final mapData = _foundingScenarioMap();
-      final view = GameView.fromPersistentState(
-        const PersistentGameState(),
+      final view = GameView.fromDomainState(
+        DomainState.snapshot(),
         forPlayerId: 'player_1',
         turn: 1,
         mapData: mapData,
@@ -2278,7 +2278,7 @@ void main() {
       'prioritizes technology that unlocks visible resource improvements',
       () {
         final mapData = _pastureResourceMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.startingWarrior(ownerPlayerId: 'player_1', col: 0, row: 0),
           ],
@@ -2307,7 +2307,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 2,
@@ -2337,7 +2337,7 @@ void main() {
 
     test('uses persona to choose unlocked city specialization', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: const [
           GameCity(
             id: 'city_1',
@@ -2349,7 +2349,7 @@ void main() {
         ],
         research: _researchWithUnlocked(TechnologyId.specialization),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -2379,7 +2379,7 @@ void main() {
 
     test('skips research when a technology is already active', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         research: ResearchState(
           players: {
             'player_1': PlayerResearchState(
@@ -2388,7 +2388,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,
@@ -2409,7 +2409,7 @@ void main() {
 
     test('starts defender production when an empty city has no garrison', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: const [_TestCities.capital],
         research: ResearchState(
           players: {
@@ -2419,7 +2419,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -2447,7 +2447,7 @@ void main() {
       'starts second-city settler when an empty city already has a worker and guard',
       () {
         final mapData = _foundingScenarioMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'worker_1',
@@ -2480,7 +2480,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 2,
@@ -2509,7 +2509,7 @@ void main() {
       'prioritizes a settler before granary when there is room to expand',
       () {
         final mapData = _roomyExpansionMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'worker_1',
@@ -2542,7 +2542,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 2,
@@ -2578,7 +2578,7 @@ void main() {
         center: CityHex(col: 3, row: 5),
         buildings: {CityBuildingType.granary},
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'worker_1',
@@ -2645,7 +2645,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 18,
@@ -2681,7 +2681,7 @@ void main() {
           investedProduction: 0,
         ),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'worker_1',
@@ -2712,7 +2712,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 4,
@@ -2738,7 +2738,7 @@ void main() {
 
     test('aggressive persona trains military before a granary', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'worker_1',
@@ -2764,7 +2764,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -2794,7 +2794,7 @@ void main() {
       'german roomy opening trains a reserve defender before first settler',
       () {
         final mapData = _roomyExpansionMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_1',
@@ -2813,7 +2813,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 2,
@@ -2850,7 +2850,7 @@ void main() {
       'german one-city recovery fills reserve before a second-city settler',
       () {
         final mapData = _roomyExpansionMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'worker_1',
@@ -2876,7 +2876,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 24,
@@ -2913,7 +2913,7 @@ void main() {
       'balanced one-city recovery starts a second-city settler with one guard',
       () {
         final mapData = _roomyExpansionMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_1',
@@ -2932,7 +2932,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 20,
@@ -2971,7 +2971,7 @@ void main() {
         population: 3,
         center: CityHex(col: 5, row: 5),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'worker_1',
@@ -3004,7 +3004,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 28,
@@ -3061,7 +3061,7 @@ void main() {
           population: 3,
           center: CityHex(col: 5, row: 5),
         );
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'worker_1',
@@ -3094,7 +3094,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 32,
@@ -3159,7 +3159,7 @@ void main() {
             investedProduction: 0,
           ),
         );
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'worker_1',
@@ -3192,7 +3192,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 34,
@@ -3240,7 +3240,7 @@ void main() {
 
     test('threatened city without garrison trains a defender', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'worker_1',
@@ -3266,7 +3266,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -3308,7 +3308,7 @@ void main() {
 
     test('threatened one-city core trains defense before worker recovery', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'warrior_1',
@@ -3349,7 +3349,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 68,
@@ -3389,7 +3389,7 @@ void main() {
 
     test('uses city research project instead of spamming combat units', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: const {'player_1': 16},
         units: [
           GameUnit.produced(
@@ -3427,7 +3427,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -3454,7 +3454,7 @@ void main() {
 
     test('starts an unlocked city building when empire basics are covered', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: const {'player_1': 20},
         units: [
           GameUnit.produced(
@@ -3493,7 +3493,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 4,
@@ -3521,7 +3521,7 @@ void main() {
       'economic persona prefers wealth over research at modest reserves',
       () {
         final mapData = _foundingScenarioMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           playerGold: const {'player_1': 16},
           units: [
             GameUnit.produced(
@@ -3559,7 +3559,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 2,
@@ -3587,7 +3587,7 @@ void main() {
 
     test('uses city wealth project when treasury is low and gold is flat', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: const {'player_1': 0},
         units: [
           GameUnit.produced(
@@ -3625,7 +3625,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -3651,7 +3651,7 @@ void main() {
 
     test('uses city wealth project when there is no research target', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: const {'player_1': 20},
         units: [
           GameUnit.produced(
@@ -3694,7 +3694,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -3721,7 +3721,7 @@ void main() {
 
     test('starts second settler before projects when expansion is thin', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'worker_1',
@@ -3759,7 +3759,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -3788,7 +3788,7 @@ void main() {
       'rebuilds a second-city settler once one-city defense is reinforced',
       () {
         final mapData = _roomyExpansionMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'worker_1',
@@ -3840,7 +3840,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 48,
@@ -3870,7 +3870,7 @@ void main() {
 
     test('trains an opening worker before chaining settlers', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_1',
@@ -3908,7 +3908,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -3947,7 +3947,7 @@ void main() {
         center: CityHex(col: 0, row: 0),
         buildings: {CityBuildingType.granary},
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'worker_1',
@@ -3979,7 +3979,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -4006,7 +4006,7 @@ void main() {
 
     test('skips production when a city already has a production queue', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [
           _TestCities.capital.copyWith(
             productionQueue: CityProductionQueue.unit(
@@ -4023,7 +4023,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -4056,7 +4056,7 @@ void main() {
           projectType: CityProjectType.research,
         ),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'warrior_1',
@@ -4090,7 +4090,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 8,
@@ -4117,7 +4117,7 @@ void main() {
 
     test('assigns an idle worker standing on an improved city tile', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'worker_1',
@@ -4149,7 +4149,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 3,
@@ -4179,7 +4179,7 @@ void main() {
       'moves an idle worker off an improved tile to build a new improvement',
       () {
         final mapData = _pastureResourceMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             _unit(
               id: 'worker_1',
@@ -4225,7 +4225,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 3,
@@ -4253,7 +4253,7 @@ void main() {
       'starts a farm when an idle worker is on a controlled plains tile',
       () {
         final mapData = _foundingScenarioMap();
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             _unit(
               id: 'worker_1',
@@ -4278,7 +4278,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 3,
@@ -4314,7 +4314,7 @@ void main() {
 
     test('moves an idle worker from city center toward an improvable tile', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'worker_1',
@@ -4339,7 +4339,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 3,
@@ -4367,7 +4367,7 @@ void main() {
 
     test('fallback moves a worker toward a farther improvable tile', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'worker_1',
@@ -4396,7 +4396,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 3,
@@ -4425,7 +4425,7 @@ void main() {
 
     test('uses strategic worker target before the local tile fallback', () {
       final mapData = _pastureResourceMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'worker_1',
@@ -4464,7 +4464,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 3,
@@ -4537,7 +4537,7 @@ void main() {
               totalTurns: 2,
             ),
           );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [worker],
         cities: [
           _TestCities.capital.copyWith(
@@ -4554,7 +4554,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 3,
@@ -4600,7 +4600,7 @@ void main() {
         ),
         technology: TechnologyRulesets.standard,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -4634,7 +4634,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -4682,7 +4682,7 @@ void main() {
         ),
         technology: TechnologyRulesets.standard,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -4716,7 +4716,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -4755,7 +4755,7 @@ void main() {
 
     test('skips a low-impact adjacent skirmish without a strategic reason', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -4788,7 +4788,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -4809,7 +4809,7 @@ void main() {
 
     test('attacks a low-impact target when it has clear force advantage', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -4856,7 +4856,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -4880,7 +4880,7 @@ void main() {
 
     test('prefers a war goal target when multiple enemies can be attacked', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -4921,7 +4921,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -4965,7 +4965,7 @@ void main() {
 
     test('prefers a pressure target when multiple enemies can be attacked', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -5006,7 +5006,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -5035,7 +5035,7 @@ void main() {
 
     test('prioritizes a unit currently attacking one of its cities', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -5084,7 +5084,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -5121,7 +5121,7 @@ void main() {
 
     test('does not stack multiple attacks into the same enemy hex', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -5162,7 +5162,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -5187,7 +5187,7 @@ void main() {
 
     test('moves military toward a visible enemy beyond attack range', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -5220,7 +5220,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -5253,7 +5253,7 @@ void main() {
           name: 'Second',
           center: CityHex(col: 5, row: 5),
         );
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             _unit(
               id: 'warrior_1',
@@ -5294,7 +5294,7 @@ void main() {
             },
           ),
         );
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 34,
@@ -5337,7 +5337,7 @@ void main() {
         name: 'Second',
         center: CityHex(col: 5, row: 5),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -5385,7 +5385,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 34,
@@ -5417,7 +5417,7 @@ void main() {
 
     test('moves assigned military toward its war goal city', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -5457,7 +5457,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -5499,7 +5499,7 @@ void main() {
 
     test('does not move assault units onto enemy city centers', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'tank_1',
@@ -5533,7 +5533,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -5573,7 +5573,7 @@ void main() {
 
     test('keeps assigned offensive military focused on its war target', () {
       final mapData = _roomyExpansionMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -5615,7 +5615,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 90,
@@ -5662,7 +5662,7 @@ void main() {
 
     test('clears frontline blockers near an assigned war goal', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -5704,7 +5704,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 90,
@@ -5745,7 +5745,7 @@ void main() {
 
     test('wakes fortified units assigned to an offensive war goal', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit(
             id: 'warrior_1',
@@ -5788,7 +5788,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 92,
@@ -5835,7 +5835,7 @@ void main() {
 
     test('attacks a war-goal city already in range', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'tank_1',
@@ -5869,7 +5869,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 80,
@@ -5916,7 +5916,7 @@ void main() {
 
     test('prioritizes an exposed pressure city over a generic unit attack', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'tank_1',
@@ -5957,7 +5957,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 80,
@@ -5987,7 +5987,7 @@ void main() {
 
     test('keeps defensive war-goal pressure near its anchor', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -6035,7 +6035,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -6080,7 +6080,7 @@ void main() {
 
     test('moves assigned garrison toward defended city', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -6114,7 +6114,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -6153,7 +6153,7 @@ void main() {
 
     test('keeps assigned garrison in place when already defending city', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -6194,7 +6194,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -6235,7 +6235,7 @@ void main() {
 
     test('keeps a calm assigned garrison reserved from pressure', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'tank_1',
@@ -6275,7 +6275,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 80,
@@ -6317,7 +6317,7 @@ void main() {
 
     test('fortifies assigned garrison in a threatened defense area', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -6359,7 +6359,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -6398,7 +6398,7 @@ void main() {
 
     test('keeps assigned garrison from chasing adjacent enemies', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -6439,7 +6439,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -6479,7 +6479,7 @@ void main() {
 
     test('lets assigned garrison attack a pressure target in range', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'tank_1',
@@ -6520,7 +6520,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 80,
@@ -6559,7 +6559,7 @@ void main() {
 
     test('pulls the last military unit back instead of raiding far away', () {
       final mapData = _combatPressureMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -6600,7 +6600,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -6631,7 +6631,7 @@ void main() {
 
     test('moves away from an adjacent visible enemy when low on hp', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'warrior_1',
@@ -6665,7 +6665,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 2,
@@ -6696,7 +6696,7 @@ void main() {
 
     test('produces the same plan for the same seed and view', () {
       final mapData = _foundingScenarioMap();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.startingCommander(
             ownerPlayerId: 'player_1',
@@ -6714,7 +6714,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,
@@ -6810,7 +6810,7 @@ ResearchState _researchWithActiveTarget() {
   );
 }
 
-AiContext _contextFor(MapData mapData, {int turn = 1}) {
+AiContext _contextFor(WorldMap mapData, {int turn = 1}) {
   return AiContext(
     ruleset: GameRuleset.defaults,
     mapData: mapData,
@@ -6819,12 +6819,12 @@ AiContext _contextFor(MapData mapData, {int turn = 1}) {
   );
 }
 
-MapData _foundingScenarioMap() {
-  final tiles = <TileData>[];
+WorldMap _foundingScenarioMap() {
+  final tiles = <WorldTile>[];
   for (var col = 0; col < 3; col++) {
     for (var row = 0; row < 3; row++) {
       tiles.add(
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],
@@ -6834,15 +6834,15 @@ MapData _foundingScenarioMap() {
       );
     }
   }
-  return MapData(cols: 3, rows: 3, tiles: tiles);
+  return WorldMap(cols: 3, rows: 3, tiles: tiles);
 }
 
-MapData _roomyExpansionMap() {
-  final tiles = <TileData>[];
+WorldMap _roomyExpansionMap() {
+  final tiles = <WorldTile>[];
   for (var col = 0; col < 8; col++) {
     for (var row = 0; row < 8; row++) {
       tiles.add(
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],
@@ -6852,23 +6852,23 @@ MapData _roomyExpansionMap() {
       );
     }
   }
-  return MapData(cols: 8, rows: 8, tiles: tiles);
+  return WorldMap(cols: 8, rows: 8, tiles: tiles);
 }
 
-MapData _hiddenRichSiteMap() {
+WorldMap _hiddenRichSiteMap() {
   final richHexes = {
     const HexCoordinate(col: 5, row: 3): ResourceType.wheat,
     const HexCoordinate(col: 5, row: 2): ResourceType.deer,
     const HexCoordinate(col: 5, row: 4): ResourceType.iron,
     const HexCoordinate(col: 6, row: 3): ResourceType.gold,
   };
-  final tiles = <TileData>[];
+  final tiles = <WorldTile>[];
   for (var col = 0; col < 8; col++) {
     for (var row = 0; row < 8; row++) {
       final hex = HexCoordinate(col: col, row: row);
       final resource = richHexes[hex];
       tiles.add(
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: [
@@ -6882,15 +6882,15 @@ MapData _hiddenRichSiteMap() {
       );
     }
   }
-  return MapData(cols: 8, rows: 8, tiles: tiles);
+  return WorldMap(cols: 8, rows: 8, tiles: tiles);
 }
 
-MapData _largeExpansionMap() {
-  final tiles = <TileData>[];
+WorldMap _largeExpansionMap() {
+  final tiles = <WorldTile>[];
   for (var col = 0; col < 10; col++) {
     for (var row = 0; row < 10; row++) {
       tiles.add(
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],
@@ -6900,11 +6900,11 @@ MapData _largeExpansionMap() {
       );
     }
   }
-  return MapData(cols: 10, rows: 10, tiles: tiles);
+  return WorldMap(cols: 10, rows: 10, tiles: tiles);
 }
 
-MapData _citySiteChoiceMap() {
-  final tiles = <TileData>[];
+WorldMap _citySiteChoiceMap() {
+  final tiles = <WorldTile>[];
   for (var col = 0; col < 5; col++) {
     for (var row = 0; row < 3; row++) {
       final resources = <ResourceType>[];
@@ -6927,7 +6927,7 @@ MapData _citySiteChoiceMap() {
         resources.add(ResourceType.iron);
       }
       tiles.add(
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: [terrain],
@@ -6937,16 +6937,16 @@ MapData _citySiteChoiceMap() {
       );
     }
   }
-  return MapData(cols: 5, rows: 3, tiles: tiles);
+  return WorldMap(cols: 5, rows: 3, tiles: tiles);
 }
 
-MapData _combatPressureMap() {
-  return MapData(
+WorldMap _combatPressureMap() {
+  return WorldMap(
     cols: 5,
     rows: 1,
     tiles: [
       for (var col = 0; col < 5; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.plains],
@@ -6957,33 +6957,33 @@ MapData _combatPressureMap() {
   );
 }
 
-MapData _pastureResourceMap() {
-  return MapData(
+WorldMap _pastureResourceMap() {
+  return WorldMap(
     cols: 2,
     rows: 2,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.grassland],
         resources: [ResourceType.sheep],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 0,
         row: 1,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 1,
         terrains: [TerrainType.plains],
@@ -6994,7 +6994,7 @@ MapData _pastureResourceMap() {
   );
 }
 
-Set<HexCoordinate> _allHexesIn(MapData mapData) {
+Set<HexCoordinate> _allHexesIn(WorldMap mapData) {
   return {
     for (var col = 0; col < mapData.cols; col++)
       for (var row = 0; row < mapData.rows; row++)

@@ -111,7 +111,7 @@ final class _MovementPathFixture {
   final GameUnit unit;
 
   MapTraversalView traversalView() {
-    return WorldMapReadView(worldMap);
+    return worldMap;
   }
 }
 
@@ -223,7 +223,7 @@ WorldMap _openPlainsWorldMap(int scale) {
     rows: dimensions.rows,
     tiles: [
       for (var index = 0; index < scale; index++)
-        WorldTile(
+        WorldTile.at(
           coordinate: HexCoord(
             col: index % dimensions.cols,
             row: index ~/ dimensions.cols,

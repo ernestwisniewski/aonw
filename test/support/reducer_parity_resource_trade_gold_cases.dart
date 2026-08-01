@@ -2,7 +2,7 @@ part of 'reducer_parity_resource_trade_characterization.dart';
 
 List<ReducerParityFixture> _goldTradeParityCases(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   final unavailable = _tradeParityWithoutTargetHorses(baseState);
   final duplicate = _tradeParityWithAgreements(unavailable, const [
@@ -49,7 +49,7 @@ List<ReducerParityFixture> _goldTradeParityCases(
 
 ReducerParityFixture _goldActorParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,
@@ -69,7 +69,7 @@ ReducerParityFixture _goldActorParityCase(
 
 ReducerParityFixture _goldTargetParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,
@@ -89,7 +89,7 @@ ReducerParityFixture _goldTargetParityCase(
 
 ReducerParityFixture _goldTermsParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,
@@ -109,7 +109,7 @@ ReducerParityFixture _goldTermsParityCase(
 
 ReducerParityFixture _goldWarParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,
@@ -129,7 +129,7 @@ ReducerParityFixture _goldWarParityCase(
 
 ReducerParityFixture _goldBalanceParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,
@@ -149,7 +149,7 @@ ReducerParityFixture _goldBalanceParityCase(
 
 ReducerParityFixture _goldDuplicateParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,
@@ -169,7 +169,7 @@ ReducerParityFixture _goldDuplicateParityCase(
 
 ReducerParityFixture _goldExportParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,

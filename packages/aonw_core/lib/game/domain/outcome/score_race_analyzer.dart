@@ -97,7 +97,7 @@ class ScoreRaceAnalyzer {
   ScoreRaceAnalysis? analyzeForPlayer({
     required String playerId,
     required Iterable<String> playerIds,
-    required PersistentGameState state,
+    required DomainState state,
     required int turn,
     required int? turnLimit,
     required bool scoreFallbackEnabled,
@@ -189,7 +189,7 @@ class ScoreRaceAnalyzer {
   Set<String> pressureTargetPlayerIds({
     required String playerId,
     required Iterable<String> playerIds,
-    required PersistentGameState state,
+    required DomainState state,
     required int turn,
     required int? turnLimit,
     required bool scoreFallbackEnabled,
@@ -209,7 +209,7 @@ class ScoreRaceAnalyzer {
 
   Map<String, EmpireScoreBreakdown> _breakdownByPlayerId({
     required Iterable<String> playerIds,
-    required PersistentGameState state,
+    required DomainState state,
     required Iterable<MapObjectiveDefinition> mapObjectives,
   }) {
     return {

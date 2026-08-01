@@ -3,12 +3,12 @@ part of 'reducer_parity_accepted_semantics.dart';
 void requireAcceptedResourceTrade({
   required String fixtureId,
   required DomainCommand command,
-  required PersistentGameState before,
-  required PersistentGameState after,
+  required DomainState before,
+  required DomainState after,
   required List<GameEvent> events,
 }) {
-  final beforeAgreements = before.runtimeState.resourceTradeAgreements;
-  final afterAgreements = after.runtimeState.resourceTradeAgreements;
+  final beforeAgreements = before.resourceTradeAgreements;
+  final afterAgreements = after.resourceTradeAgreements;
   final expected = switch (command) {
     final OpenResourceTradeCommand value => _expectedGoldTradeAgreements(
       value,
@@ -21,9 +21,7 @@ void requireAcceptedResourceTrade({
   final expectedAgreements = [...beforeAgreements, ...expected]
     ..sort((left, right) => left.id.compareTo(right.id));
   final expectedState = before.copyWith(
-    runtimeState: before.runtimeState.copyWith(
-      resourceTradeAgreements: expectedAgreements,
-    ),
+    resourceTradeAgreements: expectedAgreements,
   );
   if (events.isNotEmpty ||
       afterAgreements.length != beforeAgreements.length + expected.length ||
@@ -113,14 +111,12 @@ String _expectedExchangeAgreementId({
 
 void requireAcceptedRichTurnFinalization(
   String fixtureId,
-  PersistentGameState before,
-  PersistentGameState after,
+  DomainState before,
+  DomainState after,
   List<GameEvent> events,
 ) {
   if (fixtureId != 'turn-rich-map-finalization-accepted') return;
-  final hold = after
-      .runtimeState
-      .mapObjectiveHoldStatesByObjectiveId['strategic_pass_1'];
+  final hold = after.mapObjectiveHoldStatesByObjectiveId['strategic_pass_1'];
   final objectiveEvents = events.whereType<MapObjectiveSecuredEvent>().toList();
   final objective = objectiveEvents.singleOrNull;
   if ((
@@ -185,13 +181,13 @@ void requireAcceptedTurnSubmission({
   required Iterable<String> playerIds,
   required Object? expectedTurn,
   required Map<String, dynamic> expectedPlayerStates,
-  required PersistentGameState before,
-  required PersistentGameState after,
+  required DomainState before,
+  required DomainState after,
   required DateTime now,
   required List<GameEvent> events,
 }) {
   if (expectedTurn == inputTurn) {
-    if (!after.runtimeState.hasSubmitted(command.playerId) ||
+    if (!after.hasSubmitted(command.playerId) ||
         expectedPlayerStates[command.playerId] != 'finished' ||
         events.isNotEmpty) {
       throw FormatException(
@@ -208,8 +204,8 @@ void requireAcceptedTurnSubmission({
       .map((event) => event.playerId)
       .toList();
   if (expectedTurn != inputTurn + 1 ||
-      after.runtimeState.submittedPlayerIds.isNotEmpty ||
-      after.runtimeState.turnStartedAt != now ||
+      after.submittedPlayerIds.isNotEmpty ||
+      after.turnStartedAt != now ||
       expectedPlayerStates.values.any((value) => value != 'active') ||
       allSubmitted.length != 1 ||
       !_sameOrderedValues(allSubmitted.single.playerIds, expectedPlayerIds) ||

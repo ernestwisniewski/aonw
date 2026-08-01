@@ -29,14 +29,14 @@ void _warnGameState(
 }
 
 extension GameStateNotifierTurnLifecycle on GameStateNotifier {
-  Future<GameState> _buildState(String saveId) async {
+  Future<GameClientState> _buildState(String saveId) async {
     _providerRef.onDispose(() => unawaited(_closeLiveEvents()));
     await _closeLiveEvents();
     _saveId = saveId;
     final session = _providerRef.watch(activeGameSessionProvider);
     if (session == null || saveId.isEmpty) {
       _dispatchCommand = null;
-      return const GameState();
+      return GameClientState();
     }
     final reducer = _createReducer(session);
     _reducer = reducer;
@@ -86,7 +86,7 @@ extension GameStateNotifierTurnLifecycle on GameStateNotifier {
 
   GameStateReducer _createReducer(GameSession session) {
     return GameStateReducer(
-      mapData: session.mapData.indexedReadView(),
+      mapData: session.mapData,
       ruleset: GameRuleset.standard().copyWith(
         city: _providerRef.watch(cityRulesetProvider),
         technology: _providerRef.watch(technologyRulesetProvider),
@@ -100,14 +100,14 @@ extension GameStateNotifierTurnLifecycle on GameStateNotifier {
     GameCommandContext context = const GameCommandContext(),
   }) async {
     if (!_isMounted) {
-      return const DispatchCommandResult(state: GameState());
+      return DispatchCommandResult(state: GameClientState());
     }
     var current = _stateValue;
     if (current == null) {
       try {
         current = await _stateFuture;
       } catch (_) {
-        return const DispatchCommandResult(state: GameState());
+        return DispatchCommandResult(state: GameClientState());
       }
       if (!_isMounted) return DispatchCommandResult(state: current);
     }
@@ -130,14 +130,14 @@ extension GameStateNotifierTurnLifecycle on GameStateNotifier {
     GameCommandContext context = const GameCommandContext(),
   }) async {
     if (!_isMounted) {
-      return const DispatchCommandResult(state: GameState(), offset: -1);
+      return DispatchCommandResult(state: GameClientState(), offset: -1);
     }
     var current = _stateValue;
     if (current == null) {
       try {
         current = await _stateFuture;
       } catch (_) {
-        return const DispatchCommandResult(state: GameState(), offset: -1);
+        return DispatchCommandResult(state: GameClientState(), offset: -1);
       }
     }
     final reducer = _reducer;
@@ -169,7 +169,7 @@ extension GameStateNotifierTurnLifecycle on GameStateNotifier {
   }
 
   Future<DispatchCommandResult> _dispatchResolvedDomainCommand({
-    required GameState current,
+    required GameClientState current,
     required GameIntent intent,
     required DomainCommand command,
     required GameCommandContext context,
@@ -257,7 +257,7 @@ extension GameStateNotifierTurnLifecycle on GameStateNotifier {
 
   void _queueNetworkSnapshotApply({
     required String saveId,
-    required SaveSnapshot snapshot,
+    required CanonicalGameSnapshot snapshot,
     LiveServerEvent? liveEvent,
   }) {
     _networkSnapshotQueue = _networkSnapshotQueue.then(

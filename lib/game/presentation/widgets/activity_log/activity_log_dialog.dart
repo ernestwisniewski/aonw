@@ -44,7 +44,7 @@ class ActivityLogDialog extends StatelessWidget {
 
   final List<GameEventNotification> entries;
   final GameSave gameSave;
-  final GameState? currentState;
+  final GameClientState? currentState;
   final String? activePlayerId;
   final ValueChanged<GameEventNotification>? onEntrySelected;
 
@@ -75,7 +75,7 @@ class ActivityLogPanel extends ConsumerStatefulWidget {
 
   final List<GameEventNotification> entries;
   final GameSave gameSave;
-  final GameState? currentState;
+  final GameClientState? currentState;
   final String? activePlayerId;
   final double? maxHeight;
   final ValueChanged<GameEventNotification>? onEntrySelected;

@@ -2,9 +2,9 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
@@ -67,7 +67,7 @@ void main() {
           turn: turnLimit - 1,
           matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
         ),
-        gameState: GameState(
+        gameState: GameClientState(
           units: [
             GameUnit.produced(
               id: 'warrior_1',
@@ -98,9 +98,9 @@ void main() {
           turn: 10,
           matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
         ),
-        gameState: const GameState(
+        gameState: GameClientState(
           cities: [
-            GameCity(
+            const GameCity(
               id: 'city_1',
               ownerPlayerId: 'player_1',
               name: 'Roma',
@@ -225,11 +225,11 @@ void main() {
   });
 }
 
-GameState _stateWithCulturalAndDominationRace({
+GameClientState _stateWithCulturalAndDominationRace({
   required int culturalHoldTurns,
   required int dominationHoldTurns,
 }) {
-  return GameState(
+  return GameClientState(
     cities: [
       const GameCity(
         id: 'city_1',
@@ -281,8 +281,8 @@ GameSave _save({int turn = 2, MatchRules matchRules = MatchRules.standard}) {
   );
 }
 
-GameState _state() {
-  return GameState(
+GameClientState _state() {
+  return GameClientState(
     units: [
       GameUnit.produced(
         id: 'warrior_1',
@@ -310,11 +310,11 @@ GameState _state() {
   );
 }
 
-GameState _stateWithOpponentControl(
+GameClientState _stateWithOpponentControl(
   int controlledTiles, {
   Map<String, int> holdTurnsByPlayerId = const {},
 }) {
-  return GameState(
+  return GameClientState(
     cities: [
       const GameCity(
         id: 'city_1',
@@ -337,13 +337,13 @@ GameState _stateWithOpponentControl(
   );
 }
 
-MapData _mapData(int validTiles) {
-  return MapData(
+WorldMap _mapData(int validTiles) {
+  return WorldMap(
     cols: validTiles,
     rows: 1,
     tiles: [
       for (var col = 0; col < validTiles; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.grassland],

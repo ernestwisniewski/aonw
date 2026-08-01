@@ -13,10 +13,12 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 
+typedef _ClientState = GameClientState;
+
 abstract final class SelectionReducer {
   /// Selects a tile by coordinates. Clears move/founding state.
-  static GameState selectTile(
-    GameState state,
+  static GameClientState selectTile(
+    GameClientState state,
     SelectTileCommand command,
     MapTileLookup mapTiles,
   ) {
@@ -31,8 +33,8 @@ abstract final class SelectionReducer {
   }
 
   /// Selects a unit by ID. Auto-starts move targeting for controllable units.
-  static GameState selectUnit(
-    GameState state,
+  static GameClientState selectUnit(
+    GameClientState state,
     SelectUnitCommand command,
     MapTileLookup mapTiles,
   ) {
@@ -63,8 +65,8 @@ abstract final class SelectionReducer {
   }
 
   /// Selects a city by ID. Calculates yield and economy breakdown.
-  static GameState selectCity(
-    GameState state,
+  static GameClientState selectCity(
+    GameClientState state,
     SelectCityCommand command,
     MapTileLookup mapTiles, {
     GameRuleset ruleset = GameRuleset.defaults,
@@ -84,7 +86,7 @@ abstract final class SelectionReducer {
 
   /// Handles a tile tap with full selection cycling logic.
   static GameStateTransition handleTileTapped(
-    GameState state,
+    GameClientState state,
     TileTappedCommand command,
     MapTileLookup mapTiles, {
     GameRuleset ruleset = GameRuleset.defaults,
@@ -150,8 +152,8 @@ abstract final class SelectionReducer {
     );
   }
 
-  static GameState _handleStandardSelection(
-    GameState state,
+  static _ClientState _handleStandardSelection(
+    _ClientState state,
     MapTileView tile,
     FogVisibilityQuery visibility,
     MapTileLookup mapTiles, {
@@ -200,8 +202,8 @@ abstract final class SelectionReducer {
   }
 
   /// Handles city tapped with selection cycling logic.
-  static GameState handleCityTapped(
-    GameState state,
+  static GameClientState handleCityTapped(
+    GameClientState state,
     GameCity city,
     MapTileLookup mapTiles, {
     GameRuleset ruleset = GameRuleset.defaults,
@@ -260,8 +262,8 @@ abstract final class SelectionReducer {
     );
   }
 
-  static GameState _handleFieldImprovementTapped(
-    GameState state,
+  static _ClientState _handleFieldImprovementTapped(
+    _ClientState state,
     FieldImprovement improvement,
     MapTileView tile,
     GameUnit? unitOnTile,
@@ -299,12 +301,12 @@ abstract final class SelectionReducer {
     return _selectFieldImprovementDirect(state, improvement, tile);
   }
 
-  static bool _isSelectedUnit(GameState state, GameUnit unit) {
+  static bool _isSelectedUnit(GameClientState state, GameUnit unit) {
     return state.selection?.type == GameSelectionType.unit &&
         state.selection?.unit?.id == unit.id;
   }
 
-  static GameState _selectTileDirect(GameState state, MapTileView tile) {
+  static _ClientState _selectTileDirect(_ClientState state, MapTileView tile) {
     final visibleTile = _visibleTileForActivePlayer(state, tile);
     return _withFreshInteractionSelection(
       state,
@@ -312,8 +314,8 @@ abstract final class SelectionReducer {
     );
   }
 
-  static GameState _selectUnitDirect(
-    GameState state,
+  static _ClientState _selectUnitDirect(
+    _ClientState state,
     GameUnit unit,
     MapTileLookup mapTiles,
   ) {
@@ -336,8 +338,8 @@ abstract final class SelectionReducer {
     return next;
   }
 
-  static GameState _selectFieldImprovementDirect(
-    GameState state,
+  static _ClientState _selectFieldImprovementDirect(
+    _ClientState state,
     FieldImprovement improvement,
     MapTileView tile,
   ) {
@@ -348,8 +350,8 @@ abstract final class SelectionReducer {
     );
   }
 
-  static GameState _selectCityDirect(
-    GameState state,
+  static _ClientState _selectCityDirect(
+    _ClientState state,
     GameCity city,
     MapTileLookup mapTiles, {
     GameRuleset ruleset = GameRuleset.defaults,
@@ -367,8 +369,8 @@ abstract final class SelectionReducer {
     );
   }
 
-  static GameState _selectCityCenterTile(
-    GameState state,
+  static _ClientState _selectCityCenterTile(
+    _ClientState state,
     GameCity city,
     MapTileLookup mapTiles,
   ) {
@@ -379,13 +381,13 @@ abstract final class SelectionReducer {
     return _withFreshInteractionSelection(state, null);
   }
 
-  static bool _isActivePlayerOwned(GameState state, String ownerPlayerId) {
+  static bool _isActivePlayerOwned(_ClientState state, String ownerPlayerId) {
     return state.activePlayerId.isNotEmpty &&
         state.activePlayerId == ownerPlayerId;
   }
 
   static SelectedTile _visibleTileForActivePlayer(
-    GameState state,
+    GameClientState state,
     MapTileView tile,
   ) {
     final snapshot = SelectedTile.fromMapTileView(tile);
@@ -399,7 +401,7 @@ abstract final class SelectionReducer {
   }
 
   static FieldImprovement? _fieldImprovementAt(
-    GameState state,
+    GameClientState state,
     MapTileView tile,
     FogVisibilityQuery visibility,
   ) {
@@ -415,8 +417,8 @@ abstract final class SelectionReducer {
   }
 }
 
-GameState _withFreshInteractionSelection(
-  GameState state,
+GameClientState _withFreshInteractionSelection(
+  GameClientState state,
   GameSelection? selection,
 ) {
   return state.copyWith(

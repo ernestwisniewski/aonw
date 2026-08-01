@@ -116,9 +116,9 @@ GameUnit _unit({
   );
 }
 
-GameView _view({required MapData mapData, required List<GameUnit> units}) {
-  return GameView.fromPersistentState(
-    PersistentGameState(
+GameView _view({required WorldMap mapData, required List<GameUnit> units}) {
+  return GameView.fromDomainState(
+    DomainState.snapshot(
       units: units,
       fogOfWar: FogOfWarState(
         players: {
@@ -166,14 +166,14 @@ AiContext _context(
   );
 }
 
-MapData _map({required int cols, required int rows}) {
-  return MapData(
+WorldMap _map({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var col = 0; col < cols; col++)
         for (var row = 0; row < rows; row++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
@@ -184,7 +184,7 @@ MapData _map({required int cols, required int rows}) {
   );
 }
 
-Set<HexCoordinate> _allHexesIn(MapData mapData) {
+Set<HexCoordinate> _allHexesIn(WorldMap mapData) {
   return {
     for (var col = 0; col < mapData.cols; col++)
       for (var row = 0; row < mapData.rows; row++)

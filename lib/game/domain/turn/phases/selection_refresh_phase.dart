@@ -25,7 +25,7 @@ class SelectionRefreshPhase extends TurnPhase {
     return context.copyWith(state: refreshedState);
   }
 
-  GameState _refreshUnitSelection(TurnContext context) {
+  GameClientState _refreshUnitSelection(TurnContext context) {
     final state = context.state;
     final selectedId = state.selection?.unit?.id;
     if (selectedId == null) return state;
@@ -66,7 +66,7 @@ class SelectionRefreshPhase extends TurnPhase {
     return state.copyWithInteraction(selection: selection);
   }
 
-  GameState _refreshFieldImprovementSelection(TurnContext context) {
+  GameClientState _refreshFieldImprovementSelection(TurnContext context) {
     final state = context.state;
     final selected = state.selection?.fieldImprovement;
     if (selected == null) return state.copyWithInteraction(selection: null);
@@ -96,7 +96,7 @@ class SelectionRefreshPhase extends TurnPhase {
     return state.copyWithInteraction(selection: selection);
   }
 
-  GameState _refreshCitySelection(TurnContext context) {
+  GameClientState _refreshCitySelection(TurnContext context) {
     final state = context.state;
     final selectedId = state.selection?.city?.id;
     if (selectedId == null) return state;

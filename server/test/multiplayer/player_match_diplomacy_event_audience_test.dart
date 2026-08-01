@@ -154,35 +154,36 @@ void _expectProjectionImmutability(_FriendshipProjectionFixture fixture) {
 
 CanonicalGameSnapshot _diplomacySnapshot() {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
-      turn: 5,
-      matchRules: MatchRules.standard,
-      participants: const [
-        Player(id: 'player-1', name: 'One', colorValue: 1),
-        Player(id: 'player-2', name: 'Two', colorValue: 2),
-        Player(id: 'hidden', name: 'Hidden', colorValue: 3),
-      ],
-      diplomacy: DiplomacyState.empty
-          .addContact('player-1', 'player-2')
-          .addProposal(
-            const DiplomaticProposal(
-              id: 'proposal-1',
-              fromPlayerId: 'player-1',
-              toPlayerId: 'player-2',
-              kind: DiplomaticProposalKind.friendship,
-              createdTurn: 4,
-              expiresOnTurn: 9,
-            ),
-          ),
-    ),
-    session: MatchSessionState.snapshot(
-      gameMode: GameMode.multiplayer,
-      turnStatesByPlayerId: const {
-        'player-1': PlayerTurnState.active,
-        'player-2': PlayerTurnState.active,
-        'hidden': PlayerTurnState.active,
-      },
-    ),
+    domain:
+        (DomainState.snapshot(
+          turn: 5,
+          matchRules: MatchRules.standard,
+          participants: const [
+            Player(id: 'player-1', name: 'One', colorValue: 1),
+            Player(id: 'player-2', name: 'Two', colorValue: 2),
+            Player(id: 'hidden', name: 'Hidden', colorValue: 3),
+          ],
+          diplomacy: DiplomacyState.empty
+              .addContact('player-1', 'player-2')
+              .addProposal(
+                const DiplomaticProposal(
+                  id: 'proposal-1',
+                  fromPlayerId: 'player-1',
+                  toPlayerId: 'player-2',
+                  kind: DiplomaticProposalKind.friendship,
+                  createdTurn: 4,
+                  expiresOnTurn: 9,
+                ),
+              ),
+        )).copyWith(
+          gameMode: GameMode.multiplayer,
+          turnStatesByPlayerId: const {
+            'player-1': PlayerTurnState.active,
+            'player-2': PlayerTurnState.active,
+            'hidden': PlayerTurnState.active,
+          },
+        ),
+
     metadata: GameSnapshotMetadata(
       id: 'diplomacy-audience',
       schemaVersion: 3,
@@ -234,17 +235,15 @@ const _expectedFriendshipEvents = <Map<String, dynamic>>[
   },
 ];
 
-final _map = WorldMapReadView(
-  WorldMap(
-    cols: 1,
-    rows: 1,
-    tiles: [
-      WorldTile(
-        coordinate: const HexCoord(col: 0, row: 0),
-        terrains: const [TerrainType.grassland],
-        resources: const [],
-        height: 0,
-      ),
-    ],
-  ),
+final _map = WorldMap(
+  cols: 1,
+  rows: 1,
+  tiles: [
+    WorldTile.at(
+      coordinate: const HexCoord(col: 0, row: 0),
+      terrains: const [TerrainType.grassland],
+      resources: const [],
+      height: 0,
+    ),
+  ],
 );

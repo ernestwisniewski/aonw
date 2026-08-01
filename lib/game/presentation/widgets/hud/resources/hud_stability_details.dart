@@ -1,13 +1,12 @@
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 
 final class HudStabilityDetails {
   HudStabilityDetails({
-    required GameState state,
+    required GameClientState state,
     required String playerId,
-    required MapData mapData,
+    required WorldMap mapData,
     StabilityRuleset ruleset = StabilityRuleset.standard,
   }) : _state = state,
        _playerId = playerId,
@@ -32,9 +31,9 @@ final class HudStabilityDetails {
          standingAdjustment: standingAdjustment,
        );
 
-  final GameState? _state;
+  final GameClientState? _state;
   final String _playerId;
-  final MapData? _mapData;
+  final WorldMap? _mapData;
   final StabilityRuleset _ruleset;
 
   ({StabilityBreakdown breakdown, int standingAdjustment})? _computed;
@@ -52,11 +51,22 @@ final class HudStabilityDetails {
     if (state == null || mapData == null || _playerId.isEmpty) {
       return _emptyDetails;
     }
-    final inputs = StabilityInputBuilder.forPlayers(
-      state: state.toPersistentState(),
+    final inputs = StabilityInputBuilder.forPlayersFromCollections(
+      cities: state.cities,
+      artifacts: state.artifacts,
+      research: state.research,
+      wonderRegistry: state.wonderRegistry,
+      knownPlayerIds: {
+        ...state.playerColors.keys,
+        ...state.playerCountries.keys,
+        ...state.playerGold.keys,
+        ...state.units.map((unit) => unit.ownerPlayerId),
+        ...state.cities.map((city) => city.ownerPlayerId),
+      },
       playerIds: [_playerId],
       mapData: mapData,
       ruleset: _ruleset,
+      warWearinessByPlayerId: state.playerWarWeariness,
     )[_playerId];
     if (inputs == null) return _emptyDetails;
     final breakdown = StabilityCalculator.calculate(

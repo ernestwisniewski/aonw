@@ -15,7 +15,7 @@ void main() {
   group('DispatchCommandUseCase', () {
     test('delegates command dispatch to CommandTransport', () async {
       final transport = _FakeCommandTransport(
-        state: const GameState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
         uiEffects: const [JumpCameraEffect(col: 2, row: 3)],
         events: const [TurnEndedEvent(playerId: 'player_1')],
       );
@@ -23,7 +23,7 @@ void main() {
 
       final result = await useCase.execute(
         saveId: 'save_1',
-        currentState: const GameState(),
+        currentState: GameClientState(),
         command: const EndTurnCommand('player_1'),
         context: const GameCommandContext(actorPlayerId: 'player_1'),
       );
@@ -39,7 +39,7 @@ void main() {
 }
 
 class _FakeCommandTransport implements CommandTransport {
-  final GameState state;
+  final GameClientState state;
   final List<UiEffect> uiEffects;
   final List<GameEvent> events;
 
@@ -56,7 +56,7 @@ class _FakeCommandTransport implements CommandTransport {
   @override
   Future<CommandTransportResult> dispatch({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
     bool fromMovePreviewConfirmation = false,
@@ -69,7 +69,7 @@ class _FakeCommandTransport implements CommandTransport {
       state: state,
       uiEffects: uiEffects,
       events: events,
-      snapshot: SaveSnapshot(save: _save()),
+      snapshot: GameSnapshotFactory.create(save: _save()),
       offset: 1,
     );
   }

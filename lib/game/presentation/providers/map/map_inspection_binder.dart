@@ -4,7 +4,7 @@ import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/presentation/formatters/map_objective_progress_for_tile.dart';
 import 'package:aonw/game/presentation/providers/game/game_state_provider.dart';
 import 'package:aonw/game/presentation/providers/map/map_inspection_provider.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,7 +14,7 @@ final class MapInspectionBinder {
   final WidgetRef ref;
   final GameSession session;
 
-  void inspectTile(TileData tileData, Offset? anchor) {
+  void inspectTile(WorldTile tileData, Offset? anchor) {
     ref
         .read(mapInspectionControllerProvider.notifier)
         .inspectTile(
@@ -24,7 +24,7 @@ final class MapInspectionBinder {
         );
   }
 
-  void previewTile(TileData tileData, Offset? anchor) {
+  void previewTile(WorldTile tileData, Offset? anchor) {
     ref
         .read(mapInspectionControllerProvider.notifier)
         .previewTile(
@@ -34,7 +34,7 @@ final class MapInspectionBinder {
         );
   }
 
-  MapObjectiveProgress? _objectiveProgressFor(TileData tileData) {
+  MapObjectiveProgress? _objectiveProgressFor(WorldTile tileData) {
     return mapObjectiveProgressForTile(
       mapData: session.mapData,
       tileData: tileData,

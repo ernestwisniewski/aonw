@@ -159,7 +159,7 @@ GameView _view({
   required List<GameCity> rememberedEnemyCities,
   required DiplomacyState diplomacy,
   List<ResourceTradeAgreement> resourceTradeAgreements = const [],
-  MapData? mapData,
+  WorldMap? mapData,
 }) {
   return GameView(
     forPlayerId: 'player_1',
@@ -208,14 +208,14 @@ ResearchState _researchWith(Map<String, Set<TechnologyId>> technologies) {
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 3,
     rows: 3,
     tiles: [
       for (var row = 0; row < 3; row++)
         for (var col = 0; col < 3; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
@@ -228,14 +228,14 @@ MapData _map() {
   );
 }
 
-MapData _exchangeMap() {
-  return MapData(
+WorldMap _exchangeMap() {
+  return WorldMap(
     cols: 3,
     rows: 3,
     tiles: [
       for (var row = 0; row < 3; row++)
         for (var col = 0; col < 3; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

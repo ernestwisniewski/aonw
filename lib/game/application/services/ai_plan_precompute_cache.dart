@@ -32,7 +32,7 @@ class AiTurnPlanPrecomputeKey {
   });
 
   factory AiTurnPlanPrecomputeKey.fromSnapshot({
-    required SaveSnapshot snapshot,
+    required CanonicalGameSnapshot snapshot,
     required Player player,
   }) {
     final ai = player.ai;
@@ -43,7 +43,7 @@ class AiTurnPlanPrecomputeKey {
     return AiTurnPlanPrecomputeKey(
       saveId: snapshot.metadata.id,
       turn: snapshot.domain.turn,
-      gameMode: snapshot.session.gameMode,
+      gameMode: snapshot.domain.gameMode,
       playerId: player.id,
       country: player.country,
       strategyId: ai.strategyId,
@@ -93,7 +93,7 @@ class AiTurnPlanPrecomputeKey {
         'worldStateHash: $worldStateHash)';
   }
 
-  static int _worldStateHash(SaveSnapshot snapshot) {
+  static int _worldStateHash(CanonicalGameSnapshot snapshot) {
     return AiDomainStateFingerprint.hash(
       snapshot.domain,
       includeIntendedAttacks: true,

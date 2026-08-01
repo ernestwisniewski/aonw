@@ -5,7 +5,7 @@ void main() {
   group('MapObjectiveRules', () {
     test('advances hold turns for a lone unit on an objective', () {
       final objective = _objective(requiredHoldTurns: 2);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.startingWarrior(ownerPlayerId: 'player_1', col: 2, row: 1),
         ],
@@ -45,7 +45,7 @@ void main() {
           holdTurns: 2,
         ),
       };
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.startingWarrior(ownerPlayerId: 'player_1', col: 2, row: 1),
           GameUnit.startingWarrior(ownerPlayerId: 'player_2', col: 2, row: 1),
@@ -73,9 +73,9 @@ void main() {
 
     test('uses city territory as map objective control', () {
       final objective = _objective(requiredHoldTurns: 1);
-      const state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [
-          GameCity(
+          const GameCity(
             id: 'city_1',
             ownerPlayerId: 'player_1',
             name: 'Krakow',
@@ -111,7 +111,7 @@ void main() {
           holdTurns: 3,
         ),
       };
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.startingWarrior(ownerPlayerId: 'player_2', col: 2, row: 1),
         ],

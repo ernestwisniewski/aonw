@@ -5,7 +5,7 @@ import 'package:aonw_core/game/domain/runtime.dart';
 
 abstract final class AuthoritativeCommandPolicy {
   static DomainCommand? authoritativeCommandForClientIntent(
-    GameState state,
+    GameClientState state,
     GameIntent intent,
     GameCommandContext context,
   ) {
@@ -30,7 +30,7 @@ abstract final class AuthoritativeCommandPolicy {
   }
 
   static DomainCommand? _authoritativeCommandForCityTap(
-    GameState state,
+    GameClientState state,
     CityTappedCommand command,
     GameCommandContext context,
   ) {
@@ -53,7 +53,7 @@ abstract final class AuthoritativeCommandPolicy {
   }
 
   static DomainCommand? _authoritativeCommandForTileTap(
-    GameState state,
+    GameClientState state,
     TileTappedCommand command,
     GameCommandContext context,
   ) {

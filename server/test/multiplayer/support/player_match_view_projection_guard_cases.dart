@@ -20,12 +20,12 @@ void _registerPlayerMatchProjectionGuardTests({
   test('fails closed when runtime schema gains an unreviewed field', () {
     final canonical = playerMatchViewProjectionFixture;
     final runtime = Map<String, dynamic>.from(
-      canonical.state['runtimeState'] as Map,
+      canonical.state['lifecycle'] as Map,
     );
     final withUnknownField = canonical.copyWith(
       state: {
         ...canonical.state,
-        'runtimeState': {...runtime, 'futureRuntimeSecret': true},
+        'lifecycle': {...runtime, 'futureRuntimeSecret': true},
       },
     );
 
@@ -58,14 +58,14 @@ void _registerPlayerMatchProjectionGuardTests({
   test('omits a serialized null turnStartedAt from the projected wire', () {
     final canonical = playerMatchViewProjectionFixture;
     final runtime = Map<String, dynamic>.from(
-      canonical.state['runtimeState']! as Map,
+      canonical.state['lifecycle']! as Map,
     )..['turnStartedAt'] = null;
     final withExplicitNull = canonical.copyWith(
-      state: {...canonical.state, 'runtimeState': runtime},
+      state: {...canonical.state, 'lifecycle': runtime},
     );
 
     final projected = projector.snapshotFor(withExplicitNull, owner);
-    final projectedRuntime = projected.state['runtimeState']! as Map;
+    final projectedRuntime = projected.state['lifecycle']! as Map;
 
     expect(projectedRuntime, isNot(contains('turnStartedAt')));
   });
@@ -102,12 +102,12 @@ void _registerPlayerMatchProjectionGuardTests({
     );
 
     final projected = projector.snapshotFor(sparseRoster, owner);
-    final state = PersistentGameState.fromJson(projected.state);
+    final state = CanonicalGameSnapshotCodec.decodeDomainState(projected.state);
 
     expect(state.playerColors, isNot(contains('player-ai')));
     expect(state.playerCountries, isNot(contains('player-ai')));
     expect(
-      state.runtimeState.diplomacy.contactKeys,
+      state.diplomacy.contactKeys,
       isNot(contains(DiplomacyState.relationKey('player-owner', 'player-ai'))),
     );
   });
@@ -115,7 +115,7 @@ void _registerPlayerMatchProjectionGuardTests({
   test('fails closed when private state references a phantom player', () {
     final canonical = playerMatchViewProjectionFixture;
     final runtime = Map<String, dynamic>.from(
-      canonical.state['runtimeState']! as Map,
+      canonical.state['lifecycle']! as Map,
     );
     final pendingAction = Map<String, dynamic>.from(
       runtime['pendingAction']! as Map,
@@ -123,7 +123,7 @@ void _registerPlayerMatchProjectionGuardTests({
     final phantomOwner = canonical.copyWith(
       state: {
         ...canonical.state,
-        'runtimeState': {...runtime, 'pendingAction': pendingAction},
+        'lifecycle': {...runtime, 'pendingAction': pendingAction},
       },
     );
 
@@ -136,7 +136,7 @@ void _registerPlayerMatchProjectionGuardTests({
   test('fails closed when diplomacy references a phantom player', () {
     final canonical = playerMatchViewProjectionFixture;
     final runtime = Map<String, dynamic>.from(
-      canonical.state['runtimeState']! as Map,
+      canonical.state['lifecycle']! as Map,
     );
     final diplomacy = Map<String, dynamic>.from(runtime['diplomacy']! as Map);
     final proposals = [
@@ -147,7 +147,7 @@ void _registerPlayerMatchProjectionGuardTests({
     final phantomDiplomacy = canonical.copyWith(
       state: {
         ...canonical.state,
-        'runtimeState': {
+        'lifecycle': {
           ...runtime,
           'diplomacy': {...diplomacy, 'pendingProposals': proposals},
         },
@@ -163,13 +163,13 @@ void _registerPlayerMatchProjectionGuardTests({
   test('fails closed when diplomacy contains an unknown contact', () {
     final canonical = playerMatchViewProjectionFixture;
     final runtime = Map<String, dynamic>.from(
-      canonical.state['runtimeState']! as Map,
+      canonical.state['lifecycle']! as Map,
     );
     final diplomacy = Map<String, dynamic>.from(runtime['diplomacy']! as Map);
     final unknownContact = canonical.copyWith(
       state: {
         ...canonical.state,
-        'runtimeState': {
+        'lifecycle': {
           ...runtime,
           'diplomacy': {
             ...diplomacy,
@@ -216,9 +216,12 @@ void _registerPlayerMatchProjectionGuardTests({
       owner,
     );
 
-    expect(PersistentGameState.fromJson(projected.snapshot!.state).playerGold, {
-      'player-owner': 111,
-    });
+    expect(
+      CanonicalGameSnapshotCodec.decodeDomainState(
+        projected.snapshot!.state,
+      ).playerGold,
+      {'player-owner': 111},
+    );
   });
 
   final preparedSnapshot = playerMatchViewProjectionFixture;

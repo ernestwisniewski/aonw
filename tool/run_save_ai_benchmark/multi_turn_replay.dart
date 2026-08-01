@@ -11,7 +11,7 @@ class _MultiTurnReplayRunner {
     required this.strategyOverride,
   });
 
-  final SaveSnapshot snapshot;
+  final CanonicalGameSnapshot snapshot;
   final String savePath;
   final MapReadView mapView;
   final int cycles;
@@ -37,7 +37,7 @@ class _MultiTurnReplayRunner {
     // That state remains part of the replay aggregate.
     // The reset below applies only to persisted roster turn states.
     var state = _prepareReplayCycleState(
-      snapshot.toGameState(activePlayerId: '', activePlayerCanAct: true),
+      snapshot.toClientState(activePlayerId: '', activePlayerCanAct: true),
       snapshot: snapshot,
       humanPlayerIds: humanPlayerIds,
     );
@@ -59,7 +59,7 @@ class _MultiTurnReplayRunner {
       final playerTurns = <_MultiTurnPlayerReport>[];
 
       for (final player in aiPlayers) {
-        final turnSnapshot = replaySnapshot.withGameState(state);
+        final turnSnapshot = replaySnapshot.withClientState(state);
         final prepared = _PreparedPlayer.fromSnapshot(
           snapshot: turnSnapshot,
           player: player,
@@ -153,8 +153,8 @@ class _MultiTurnReplayRunner {
   }
 
   _ReplayTurnResult _executeReplayTurn({
-    required SaveSnapshot snapshot,
-    required GameState state,
+    required CanonicalGameSnapshot snapshot,
+    required GameClientState state,
     required Player player,
     required GameView view,
     required AiContext context,
@@ -162,7 +162,7 @@ class _MultiTurnReplayRunner {
     required Set<String> humanPlayerIds,
   }) {
     final dispatcher = BenchmarkCommandDispatcher(
-      snapshot: snapshot.canonical,
+      snapshot: snapshot,
       mapView: context.mapData,
       ruleset: context.ruleset,
     );
@@ -258,10 +258,8 @@ class _MultiTurnReplayRunner {
     currentState = terminalTransition.state;
     final savedAt = _replaySavedAt(currentSnapshot);
 
-    currentSnapshot = SaveSnapshot.fromCanonical(
-      dispatcher.snapshot.copyWith(
-        metadata: dispatcher.snapshot.metadata.copyWith(savedAtUtc: savedAt),
-      ),
+    currentSnapshot = dispatcher.snapshot.copyWith(
+      metadata: dispatcher.snapshot.metadata.copyWith(savedAtUtc: savedAt),
     );
 
     executionStopwatch.stop();
@@ -281,12 +279,12 @@ class _MultiTurnReplayRunner {
   }
 }
 
-GameState _prepareReplayCycleState(
-  GameState state, {
-  required SaveSnapshot snapshot,
+GameClientState _prepareReplayCycleState(
+  GameClientState state, {
+  required CanonicalGameSnapshot snapshot,
   required Set<String> humanPlayerIds,
 }) {
-  if (snapshot.session.gameMode != GameMode.multiplayer) return state;
+  if (snapshot.domain.gameMode != GameMode.multiplayer) return state;
   return state
       .copyWith(
         activePlayerId: '',
@@ -307,8 +305,10 @@ GameState _prepareReplayCycleState(
 DateTime _syntheticReplaySavedAt(DateTime savedAt, {required int cycles}) =>
     savedAt.toUtc().add(Duration(seconds: cycles));
 
-DateTime _replaySavedAt(SaveSnapshot snapshot) =>
+DateTime _replaySavedAt(CanonicalGameSnapshot snapshot) =>
     _syntheticReplaySavedAt(snapshot.metadata.savedAtUtc, cycles: 1);
 
-DomainCommand _replayTerminalCommand(SaveSnapshot snapshot, Player player) =>
-    _terminalFor(snapshot.session.gameMode, player.id);
+DomainCommand _replayTerminalCommand(
+  CanonicalGameSnapshot snapshot,
+  Player player,
+) => _terminalFor(snapshot.domain.gameMode, player.id);

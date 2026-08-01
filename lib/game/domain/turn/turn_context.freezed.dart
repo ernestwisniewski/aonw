@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TurnContext {
 
- GameState get state; GameSave? get save; MapTileLookup get mapTiles; GameRuleset get ruleset; String get playerId; DateTime? get savedAt; List<GameEvent> get events; List<UiEffect> get uiEffects; ScienceYieldBreakdown get bonusScience;
+ GameClientState get state; GameSave? get save; MapTileLookup get mapTiles; GameRuleset get ruleset; String get playerId; DateTime? get savedAt; List<GameEvent> get events; List<UiEffect> get uiEffects; ScienceYieldBreakdown get bonusScience;
 /// Create a copy of TurnContext
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -45,11 +45,11 @@ abstract mixin class $TurnContextCopyWith<$Res>  {
   factory $TurnContextCopyWith(TurnContext value, $Res Function(TurnContext) _then) = _$TurnContextCopyWithImpl;
 @useResult
 $Res call({
- GameState state, GameSave? save, MapTileLookup mapTiles, GameRuleset ruleset, String playerId, DateTime? savedAt, List<GameEvent> events, List<UiEffect> uiEffects, ScienceYieldBreakdown bonusScience
+ GameClientState state, GameSave? save, MapTileLookup mapTiles, GameRuleset ruleset, String playerId, DateTime? savedAt, List<GameEvent> events, List<UiEffect> uiEffects, ScienceYieldBreakdown bonusScience
 });
 
 
-$GameStateCopyWith<$Res> get state;$GameSaveCopyWith<$Res>? get save;
+$GameSaveCopyWith<$Res>? get save;
 
 }
 /// @nodoc
@@ -65,7 +65,7 @@ class _$TurnContextCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') @override $Res call({Object? state = null,Object? save = freezed,Object? mapTiles = null,Object? ruleset = null,Object? playerId = null,Object? savedAt = freezed,Object? events = null,Object? uiEffects = null,Object? bonusScience = null,}) {
   return _then(_self.copyWith(
 state: null == state ? _self.state : state // ignore: cast_nullable_to_non_nullable
-as GameState,save: freezed == save ? _self.save : save // ignore: cast_nullable_to_non_nullable
+as GameClientState,save: freezed == save ? _self.save : save // ignore: cast_nullable_to_non_nullable
 as GameSave?,mapTiles: null == mapTiles ? _self.mapTiles : mapTiles // ignore: cast_nullable_to_non_nullable
 as MapTileLookup,ruleset: null == ruleset ? _self.ruleset : ruleset // ignore: cast_nullable_to_non_nullable
 as GameRuleset,playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
@@ -77,15 +77,6 @@ as ScienceYieldBreakdown,
   ));
 }
 /// Create a copy of TurnContext
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$GameStateCopyWith<$Res> get state {
-  
-  return $GameStateCopyWith<$Res>(_self.state, (value) {
-    return _then(_self.copyWith(state: value));
-  });
-}/// Create a copy of TurnContext
 /// with the given fields replaced by the non-null parameter values.
 @override
 @pragma('vm:prefer-inline')
@@ -179,7 +170,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GameState state,  GameSave? save,  MapTileLookup mapTiles,  GameRuleset ruleset,  String playerId,  DateTime? savedAt,  List<GameEvent> events,  List<UiEffect> uiEffects,  ScienceYieldBreakdown bonusScience)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GameClientState state,  GameSave? save,  MapTileLookup mapTiles,  GameRuleset ruleset,  String playerId,  DateTime? savedAt,  List<GameEvent> events,  List<UiEffect> uiEffects,  ScienceYieldBreakdown bonusScience)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TurnContext() when $default != null:
 return $default(_that.state,_that.save,_that.mapTiles,_that.ruleset,_that.playerId,_that.savedAt,_that.events,_that.uiEffects,_that.bonusScience);case _:
@@ -200,7 +191,7 @@ return $default(_that.state,_that.save,_that.mapTiles,_that.ruleset,_that.player
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GameState state,  GameSave? save,  MapTileLookup mapTiles,  GameRuleset ruleset,  String playerId,  DateTime? savedAt,  List<GameEvent> events,  List<UiEffect> uiEffects,  ScienceYieldBreakdown bonusScience)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GameClientState state,  GameSave? save,  MapTileLookup mapTiles,  GameRuleset ruleset,  String playerId,  DateTime? savedAt,  List<GameEvent> events,  List<UiEffect> uiEffects,  ScienceYieldBreakdown bonusScience)  $default,) {final _that = this;
 switch (_that) {
 case _TurnContext():
 return $default(_that.state,_that.save,_that.mapTiles,_that.ruleset,_that.playerId,_that.savedAt,_that.events,_that.uiEffects,_that.bonusScience);case _:
@@ -220,7 +211,7 @@ return $default(_that.state,_that.save,_that.mapTiles,_that.ruleset,_that.player
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GameState state,  GameSave? save,  MapTileLookup mapTiles,  GameRuleset ruleset,  String playerId,  DateTime? savedAt,  List<GameEvent> events,  List<UiEffect> uiEffects,  ScienceYieldBreakdown bonusScience)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GameClientState state,  GameSave? save,  MapTileLookup mapTiles,  GameRuleset ruleset,  String playerId,  DateTime? savedAt,  List<GameEvent> events,  List<UiEffect> uiEffects,  ScienceYieldBreakdown bonusScience)?  $default,) {final _that = this;
 switch (_that) {
 case _TurnContext() when $default != null:
 return $default(_that.state,_that.save,_that.mapTiles,_that.ruleset,_that.playerId,_that.savedAt,_that.events,_that.uiEffects,_that.bonusScience);case _:
@@ -238,7 +229,7 @@ class _TurnContext extends TurnContext {
   const _TurnContext({required this.state, this.save, required this.mapTiles, required this.ruleset, required this.playerId, this.savedAt, final  List<GameEvent> events = const <GameEvent>[], final  List<UiEffect> uiEffects = const <UiEffect>[], this.bonusScience = ScienceYieldBreakdown.empty}): _events = events,_uiEffects = uiEffects,super._();
   
 
-@override final  GameState state;
+@override final  GameClientState state;
 @override final  GameSave? save;
 @override final  MapTileLookup mapTiles;
 @override final  GameRuleset ruleset;
@@ -290,11 +281,11 @@ abstract mixin class _$TurnContextCopyWith<$Res> implements $TurnContextCopyWith
   factory _$TurnContextCopyWith(_TurnContext value, $Res Function(_TurnContext) _then) = __$TurnContextCopyWithImpl;
 @override @useResult
 $Res call({
- GameState state, GameSave? save, MapTileLookup mapTiles, GameRuleset ruleset, String playerId, DateTime? savedAt, List<GameEvent> events, List<UiEffect> uiEffects, ScienceYieldBreakdown bonusScience
+ GameClientState state, GameSave? save, MapTileLookup mapTiles, GameRuleset ruleset, String playerId, DateTime? savedAt, List<GameEvent> events, List<UiEffect> uiEffects, ScienceYieldBreakdown bonusScience
 });
 
 
-@override $GameStateCopyWith<$Res> get state;@override $GameSaveCopyWith<$Res>? get save;
+@override $GameSaveCopyWith<$Res>? get save;
 
 }
 /// @nodoc
@@ -310,7 +301,7 @@ class __$TurnContextCopyWithImpl<$Res>
 @override @pragma('vm:prefer-inline') $Res call({Object? state = null,Object? save = freezed,Object? mapTiles = null,Object? ruleset = null,Object? playerId = null,Object? savedAt = freezed,Object? events = null,Object? uiEffects = null,Object? bonusScience = null,}) {
   return _then(_TurnContext(
 state: null == state ? _self.state : state // ignore: cast_nullable_to_non_nullable
-as GameState,save: freezed == save ? _self.save : save // ignore: cast_nullable_to_non_nullable
+as GameClientState,save: freezed == save ? _self.save : save // ignore: cast_nullable_to_non_nullable
 as GameSave?,mapTiles: null == mapTiles ? _self.mapTiles : mapTiles // ignore: cast_nullable_to_non_nullable
 as MapTileLookup,ruleset: null == ruleset ? _self.ruleset : ruleset // ignore: cast_nullable_to_non_nullable
 as GameRuleset,playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
@@ -323,15 +314,6 @@ as ScienceYieldBreakdown,
 }
 
 /// Create a copy of TurnContext
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$GameStateCopyWith<$Res> get state {
-  
-  return $GameStateCopyWith<$Res>(_self.state, (value) {
-    return _then(_self.copyWith(state: value));
-  });
-}/// Create a copy of TurnContext
 /// with the given fields replaced by the non-null parameter values.
 @override
 @pragma('vm:prefer-inline')

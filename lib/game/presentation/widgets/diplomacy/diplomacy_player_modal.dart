@@ -15,6 +15,7 @@ import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -22,7 +23,6 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -39,8 +39,8 @@ part 'diplomacy_player_modal_resource_trade.dart';
 Future<void> showDiplomacyPlayerModal(
   BuildContext context, {
   required GameSave gameSave,
-  required GameState gameState,
-  required MapData mapData,
+  required GameClientState gameState,
+  required WorldMap mapData,
   required String activePlayerId,
   required String targetPlayerId,
   required Future<void> Function(DomainCommand command) onCommand,
@@ -79,8 +79,8 @@ class DiplomacyPlayerModal extends StatelessWidget {
   });
 
   final GameSave gameSave;
-  final GameState gameState;
-  final MapData mapData;
+  final GameClientState gameState;
+  final WorldMap mapData;
   final String activePlayerId;
   final String targetPlayerId;
   final Future<void> Function(DomainCommand command) onCommand;

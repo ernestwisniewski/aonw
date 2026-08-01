@@ -2,7 +2,7 @@ part of 'city_production_dialog_view_model.dart';
 
 TileYield _currentCityYieldFor({
   required GameCity city,
-  required MapData mapData,
+  required WorldMap mapData,
   required List<GameUnit> units,
   required List<WorldArtifact> artifacts,
   required List<FieldImprovement> fieldImprovements,
@@ -74,7 +74,7 @@ CityUnitSupplyBreakdown? _unitSupplyFor({
   required List<GameUnit> units,
   required List<WorldArtifact> artifacts,
   required List<FieldImprovement> fieldImprovements,
-  required MapData? mapData,
+  required WorldMap? mapData,
   required CityRuleset cityRuleset,
   required ResearchState research,
   required TechnologyRuleset technologyRuleset,
@@ -97,7 +97,7 @@ CityUnitSupplyBreakdown? _unitSupplyFor({
 List<CityProductionItem> _wonderItems({
   required GameCity city,
   required List<GameCity> cities,
-  required MapData mapData,
+  required WorldMap mapData,
   required ResearchState research,
   required WonderRuleset ruleset,
   required WonderRegistry registry,
@@ -129,7 +129,7 @@ List<CityProductionItem> _wonderItems({
 CityProductionItem _wonderItem({
   required GameCity city,
   required List<GameCity> cities,
-  required MapData mapData,
+  required WorldMap mapData,
   required ResearchState research,
   required WonderRuleset ruleset,
   required WonderRegistry registry,
@@ -235,7 +235,7 @@ CityProductionSortMetrics _buildingSortMetricsFor(
   GameCity city,
   CityBuildingType type, {
   required CityRuleset cityRuleset,
-  required MapData? mapData,
+  required WorldMap? mapData,
 }) {
   var food = 0;
   var production = 0;
@@ -291,7 +291,7 @@ int _effectiveApplications(int count, int? maxApplications) {
   return count < maxApplications ? count : maxApplications;
 }
 
-int _riverHexCount(GameCity city, MapData mapData) {
+int _riverHexCount(GameCity city, WorldMap mapData) {
   var count = 0;
   for (final hex in city.territoryHexes) {
     final tile = mapData.tileAt(hex.col, hex.row);

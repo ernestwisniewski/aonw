@@ -5,8 +5,8 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class CityFoundingReducer {
-  static GameState startCityFounding(
-    GameState state,
+  static GameClientState startCityFounding(
+    GameClientState state,
     MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
     CityRuleset cityRuleset = CityRulesets.standard,
@@ -49,12 +49,12 @@ abstract final class CityFoundingReducer {
     );
   }
 
-  static GameState cancelCityFounding(GameState state) {
+  static GameClientState cancelCityFounding(GameClientState state) {
     return state.copyWithInteraction(cityFoundingDraft: null);
   }
 
-  static GameState toggleControlledHex(
-    GameState state,
+  static GameClientState toggleControlledHex(
+    GameClientState state,
     TileTappedCommand command,
     MapTileLookup mapTiles,
   ) {

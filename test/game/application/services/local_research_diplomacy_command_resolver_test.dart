@@ -13,15 +13,15 @@ void main() {
     () {
       final savedAt = DateTime.utc(2026, 7, 30, 12);
       const pending = PendingResearchSelection(ownerPlayerId: 'player_1');
-      const state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        interaction: GameInteractionState(
+        interaction: const InteractionState(
           pendingAction: pending,
           moveCommandActive: true,
         ),
       );
-      final baseSnapshot = SaveSnapshot.fromGameState(
+      final baseSnapshot = GameSnapshotFactory.fromClientState(
         save: GameSave(
           id: 'save_1',
           name: 'Research envelope',
@@ -75,7 +75,7 @@ void main() {
         result.snapshot.domain.participants,
         same(baseSnapshot.domain.participants),
       );
-      expect(result.snapshot.session.turnStatesByPlayerId, {
+      expect(result.snapshot.domain.turnStatesByPlayerId, {
         'player_1': PlayerTurnState.active,
         'player_2': PlayerTurnState.active,
       });
@@ -87,12 +87,12 @@ void main() {
   test(
     'local diplomacy emits ordered events without entering the legacy reducer',
     () {
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         diplomacy: DiplomacyState.empty.addContact('player_1', 'player_2'),
-        interaction: const GameInteractionState(moveCommandActive: true),
+        interaction: const InteractionState(moveCommandActive: true),
       );
-      final baseSnapshot = SaveSnapshot.fromGameState(
+      final baseSnapshot = GameSnapshotFactory.fromClientState(
         save: GameSave(
           id: 'save_1',
           name: 'Diplomacy envelope',
@@ -149,13 +149,13 @@ void main() {
   );
 
   test('cancel research selection remains on the local intent reducer', () {
-    const state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
-      interaction: GameInteractionState(
+      interaction: const InteractionState(
         pendingAction: PendingResearchSelection(ownerPlayerId: 'player_1'),
       ),
     );
-    final snapshot = SaveSnapshot.fromGameState(
+    final snapshot = GameSnapshotFactory.fromClientState(
       save: GameSave(
         id: 'save_1',
         name: 'Cancel research',
@@ -179,15 +179,18 @@ void main() {
         );
 
     expect(result.interaction.pendingAction, isNull);
-    expect(snapshot.interaction.pendingAction, isA<PendingResearchSelection>());
+    expect(
+      snapshot.domain.actions.pendingAction,
+      isA<PendingResearchSelection>(),
+    );
   });
 }
 
-MapData _mapData() => MapData(
+WorldMap _mapData() => WorldMap(
   cols: 1,
   rows: 1,
   tiles: [
-    const TileData(
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],

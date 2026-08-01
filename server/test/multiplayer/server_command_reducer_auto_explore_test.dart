@@ -51,7 +51,7 @@ Future<void> _forwardsMovementAndContact() async {
   _expectUnrelatedStateShared(before, after);
 }
 
-PersistentGameState _contactState() {
+DomainState _contactState() {
   final unrelatedDraft = CityFoundingDraft(
     unitId: 'other_unit',
     ownerPlayerId: _actorPlayerId,
@@ -71,30 +71,29 @@ PersistentGameState _contactState() {
         movementPoints: 1,
       ),
     ],
-    runtimeState: GameRuntimeState.snapshot(
-      cityFoundingDraft: unrelatedDraft,
-      pendingAction: const PendingUnitTurnSkip(
-        ownerPlayerId: _actorPlayerId,
-        unitId: _scoutId,
-        restoreMovementPoints: 1,
-      ),
-      submittedPlayerIds: const {_opponentPlayerId},
-      timeoutStreaksByPlayerId: const {_opponentPlayerId: 2},
-      afkPlayerIds: const {_opponentPlayerId},
-      kickedPlayerIds: const {'removed_player'},
-      intendedAttacks: const [
-        IntendedAttack(
-          attackerUnitId: 'sentinel_attacker',
-          defenderCol: 6,
-          defenderRow: 6,
-          declaredAtTick: 17,
-          declaringPlayerId: _opponentPlayerId,
-        ),
-      ],
-      dominationHoldTurnsByPlayerId: const {_opponentPlayerId: 3},
-      culturalVictoryHoldTurnsByPlayerId: const {_opponentPlayerId: 4},
-      turnStartedAt: DateTime.utc(2026, 7, 22, 11),
+
+    cityFoundingDraft: unrelatedDraft,
+    pendingAction: const PendingUnitTurnSkip(
+      ownerPlayerId: _actorPlayerId,
+      unitId: _scoutId,
+      restoreMovementPoints: 1,
     ),
+    submittedPlayerIds: const {_opponentPlayerId},
+    timeoutStreaksByPlayerId: const {_opponentPlayerId: 2},
+    afkPlayerIds: const {_opponentPlayerId},
+    kickedPlayerIds: const {'removed_player'},
+    intendedAttacks: const [
+      IntendedAttack(
+        attackerUnitId: 'sentinel_attacker',
+        defenderCol: 6,
+        defenderRow: 6,
+        declaredAtTick: 17,
+        declaringPlayerId: _opponentPlayerId,
+      ),
+    ],
+    dominationHoldTurnsByPlayerId: const {_opponentPlayerId: 3},
+    culturalVictoryHoldTurnsByPlayerId: const {_opponentPlayerId: 4},
+    turnStartedAt: DateTime.utc(2026, 7, 22, 11),
   );
 }
 
@@ -128,7 +127,7 @@ void _expectMovementAndContact(
     after.domain.diplomacy.hasContact(_actorPlayerId, _opponentPlayerId),
     isTrue,
   );
-  expect(after.interaction.pendingAction, isNull);
+  expect(after.domain.actions.pendingAction, isNull);
 }
 
 void _expectUnrelatedStateShared(
@@ -136,8 +135,8 @@ void _expectUnrelatedStateShared(
   CanonicalGameSnapshot after,
 ) {
   expect(
-    after.interaction.cityFoundingDraft,
-    same(before.interaction.cityFoundingDraft),
+    after.domain.actions.cityFoundingDraft,
+    same(before.domain.actions.cityFoundingDraft),
   );
   expect(after.domain.playerColors, same(before.domain.playerColors));
   expect(after.domain.playerGold, same(before.domain.playerGold));
@@ -147,15 +146,15 @@ void _expectUnrelatedStateShared(
   expect(after.domain.research, same(before.domain.research));
   expect(after.domain.wonderRegistry, same(before.domain.wonderRegistry));
   expect(
-    after.session.submittedPlayerIds,
-    same(before.session.submittedPlayerIds),
+    after.domain.submittedPlayerIds,
+    same(before.domain.submittedPlayerIds),
   );
   expect(
-    after.session.timeoutStreaksByPlayerId,
-    same(before.session.timeoutStreaksByPlayerId),
+    after.domain.timeoutStreaksByPlayerId,
+    same(before.domain.timeoutStreaksByPlayerId),
   );
-  expect(after.session.afkPlayerIds, same(before.session.afkPlayerIds));
-  expect(after.session.kickedPlayerIds, same(before.session.kickedPlayerIds));
+  expect(after.domain.afkPlayerIds, same(before.domain.afkPlayerIds));
+  expect(after.domain.kickedPlayerIds, same(before.domain.kickedPlayerIds));
   expect(after.domain.intendedAttacks, same(before.domain.intendedAttacks));
   expect(
     after.domain.dominationHoldTurnsByPlayerId,
@@ -165,21 +164,40 @@ void _expectUnrelatedStateShared(
     after.domain.culturalVictoryHoldTurnsByPlayerId,
     same(before.domain.culturalVictoryHoldTurnsByPlayerId),
   );
-  expect(after.session.turnStartedAt, before.session.turnStartedAt);
+  expect(after.domain.turnStartedAt, before.domain.turnStartedAt);
 }
 
-PersistentGameState _state({
+DomainState _state({
   required List<GameUnit> units,
-  GameRuntimeState runtimeState = GameRuntimeState.empty,
+  CityFoundingDraft? cityFoundingDraft,
+  PendingPlayerAction? pendingAction,
+  Set<String> submittedPlayerIds = const {},
+  Map<String, int> timeoutStreaksByPlayerId = const {},
+  Set<String> afkPlayerIds = const {},
+  Set<String> kickedPlayerIds = const {},
+  List<IntendedAttack> intendedAttacks = const [],
+  Map<String, int> dominationHoldTurnsByPlayerId = const {},
+  Map<String, int> culturalVictoryHoldTurnsByPlayerId = const {},
+  DateTime? turnStartedAt,
 }) {
   const origin = HexCoordinate(col: 0, row: 0);
-  return PersistentGameState.snapshot(
+  return DomainState.snapshot(
     playerColors: const {
       _actorPlayerId: 0xFF112233,
       _opponentPlayerId: 0xFF445566,
     },
     playerGold: const {_actorPlayerId: 11, _opponentPlayerId: 13},
     units: units,
+    cityFoundingDraft: cityFoundingDraft,
+    pendingAction: pendingAction,
+    submittedPlayerIds: submittedPlayerIds,
+    timeoutStreaksByPlayerId: timeoutStreaksByPlayerId,
+    afkPlayerIds: afkPlayerIds,
+    kickedPlayerIds: kickedPlayerIds,
+    intendedAttacks: intendedAttacks,
+    dominationHoldTurnsByPlayerId: dominationHoldTurnsByPlayerId,
+    culturalVictoryHoldTurnsByPlayerId: culturalVictoryHoldTurnsByPlayerId,
+    turnStartedAt: turnStartedAt,
     fogOfWar: FogOfWarState(
       players: {
         _actorPlayerId: PlayerFogOfWar(
@@ -189,7 +207,6 @@ PersistentGameState _state({
         ),
       },
     ),
-    runtimeState: runtimeState,
   );
 }
 
@@ -207,7 +224,7 @@ GameUnit _scout({int movementPoints = 2}) {
 
 Future<ServerCommandTestReduction> _reduce({
   required WireSnapshot snapshot,
-  required MapData mapData,
+  required WorldMap mapData,
 }) {
   return const ServerCommandReducerTestDriver().reduce(
     reducer: ServerCommandReducer(mapCatalog: _AutoExploreMapCatalog(mapData)),
@@ -227,11 +244,11 @@ Future<ServerCommandTestReduction> _reduce({
   );
 }
 
-WireSnapshot _snapshot(PersistentGameState state) => WireSnapshot(
+WireSnapshot _snapshot(DomainState state) => WireSnapshot(
   matchId: 'match_1',
   offset: 0,
   save: _save().toJson(),
-  state: state.toJson(),
+  state: CanonicalGameSnapshotCodec.encodeDomainState(state),
 );
 
 GameSave _save() => GameSave(
@@ -292,13 +309,13 @@ WireMatch _runningMatch() => WireMatch(
   createdAt: DateTime.utc(2026, 7, 22, 11),
 );
 
-MapData _map({required int cols}) => MapData(
+WorldMap _map({required int cols}) => WorldMap(
   cols: cols,
   rows: 1,
   mapName: _mapName,
   tiles: [
     for (var col = 0; col < cols; col++)
-      TileData(
+      WorldTile(
         col: col,
         row: 0,
         terrains: const [TerrainType.grassland],
@@ -311,10 +328,10 @@ MapData _map({required int cols}) => MapData(
 final class _AutoExploreMapCatalog implements MultiplayerMapCatalog {
   const _AutoExploreMapCatalog(this.mapData);
 
-  final MapData mapData;
+  final WorldMap mapData;
 
   @override
-  Future<MapData> loadAssetMap(String mapName) async {
+  Future<WorldMap> loadAssetMap(String mapName) async {
     if (mapName != _mapName) {
       throw StateError('Unexpected auto-explore map: $mapName.');
     }

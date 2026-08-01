@@ -186,7 +186,7 @@ class SmoothCameraEffect extends RendererEffect {
 }
 
 class GameStateTransition {
-  final GameState state;
+  final GameClientState state;
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
 

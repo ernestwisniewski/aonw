@@ -389,7 +389,7 @@ void main() {
     });
 
     test('computes terrain movement cost', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains, TerrainType.forest],

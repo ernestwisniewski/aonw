@@ -201,12 +201,12 @@ GameUnit _enemyWarrior(String id, int col, int row) {
 }
 
 GameView _view({
-  required MapData mapData,
+  required WorldMap mapData,
   required List<GameUnit> units,
   required List<GameCity> cities,
 }) {
-  return GameView.fromPersistentState(
-    PersistentGameState(
+  return GameView.fromDomainState(
+    DomainState.snapshot(
       units: units,
       cities: cities,
       fogOfWar: FogOfWarState(
@@ -255,18 +255,18 @@ AiContext _context(
   );
 }
 
-MapData _map({
+WorldMap _map({
   required int cols,
   required int rows,
   Map<({int col, int row}), List<TerrainType>> terrainOverrides = const {},
 }) {
-  return MapData(
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var col = 0; col < cols; col++)
         for (var row = 0; row < rows; row++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains:
@@ -279,7 +279,7 @@ MapData _map({
   );
 }
 
-Set<HexCoordinate> _allHexesIn(MapData mapData) {
+Set<HexCoordinate> _allHexesIn(WorldMap mapData) {
   return {
     for (var col = 0; col < mapData.cols; col++)
       for (var row = 0; row < mapData.rows; row++)

@@ -86,7 +86,7 @@ class NetworkGameRepository implements GameRepository {
   }
 
   @override
-  Future<SaveSnapshot> load(String saveId) async {
+  Future<CanonicalGameSnapshot> load(String saveId) async {
     final snapshot = await _loadNetworkSnapshot(saveId);
     if (snapshot == null) {
       throw StateError('Save snapshot not found: $saveId');
@@ -95,7 +95,7 @@ class NetworkGameRepository implements GameRepository {
   }
 
   @override
-  Future<void> save(SaveSnapshot snapshot) {
+  Future<void> save(CanonicalGameSnapshot snapshot) {
     throw UnsupportedError(
       'NetworkGameRepository is read-only; dispatch commands to mutate matches',
     );
@@ -107,7 +107,7 @@ class NetworkGameRepository implements GameRepository {
   }
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
@@ -134,11 +134,7 @@ class NetworkGameRepository implements GameRepository {
     try {
       final wire = await _backend().loadSnapshot(saveId);
       final state = snapshotCodec.fromWire(wire);
-      final snapshot = Snapshot(
-        offset: wire.offset,
-        state: state,
-        createdAt: state.save.savedAt,
-      );
+      final snapshot = Snapshot(state: state, createdAt: state.save.savedAt);
       await _saveCachedSnapshot(saveId, snapshot);
       return snapshot;
     } catch (error) {

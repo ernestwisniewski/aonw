@@ -17,7 +17,7 @@ class AiStrategicPlanProvider {
   }) : assert(recomputeInterval > 0);
 
   StrategicPlan resolve({
-    required SaveSnapshot snapshot,
+    required CanonicalGameSnapshot snapshot,
     required Player player,
     required GameView view,
     required AiContext context,
@@ -167,13 +167,13 @@ class _StrategicPlanIdentity {
   });
 
   factory _StrategicPlanIdentity.from({
-    required SaveSnapshot snapshot,
+    required CanonicalGameSnapshot snapshot,
     required Player player,
     required AiPersona persona,
   }) {
     final ai = player.ai!;
     return _StrategicPlanIdentity(
-      gameMode: snapshot.session.gameMode,
+      gameMode: snapshot.domain.gameMode,
       country: player.country,
       strategyId: ai.strategyId,
       difficulty: ai.difficulty,
@@ -319,7 +319,7 @@ class _CachedStrategicPlan {
   });
 }
 
-int _worldStateHash(SaveSnapshot snapshot) {
+int _worldStateHash(CanonicalGameSnapshot snapshot) {
   return AiDomainStateFingerprint.hash(snapshot.domain);
 }
 

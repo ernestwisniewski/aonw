@@ -11,7 +11,6 @@ import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/domain/intended_attack.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/player.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -64,7 +63,7 @@ void main() {
       'aonw-save-ai-benchmark-report.',
     );
     addTearDown(() => directory.delete(recursive: true));
-    final snapshot = SaveSnapshot(save: _sparseRosterSave());
+    final snapshot = GameSnapshotFactory.create(save: _sparseRosterSave());
     final saveFile = File('${directory.path}/snapshot.json');
     final jsonFile = File('${directory.path}/report.json');
     final markdownFile = File('${directory.path}/report.md');
@@ -257,7 +256,9 @@ Future<void> _verifyReplayFixture(_ReplayFixture fixture) async {
   final markdownFile = File('${directory.path}/report.md');
   await saveFile.writeAsString(
     jsonEncode({
-      'state': SaveSnapshotCodec.toJson(SaveSnapshot(save: fixture.save)),
+      'state': SaveSnapshotCodec.toJson(
+        GameSnapshotFactory.create(save: fixture.save),
+      ),
     }),
   );
 
@@ -366,10 +367,10 @@ GameSave _sparseRosterSave() {
   );
 }
 
-SaveSnapshot _pendingCityAttackSnapshot() {
+CanonicalGameSnapshot _pendingCityAttackSnapshot() {
   const humanId = 'human_attacker';
   const aiId = 'ai_defender';
-  return SaveSnapshot(
+  return GameSnapshotFactory.create(
     save: GameSave(
       id: 'pending_city_attack',
       name: 'Pending city attack benchmark fixture',
@@ -420,16 +421,15 @@ SaveSnapshot _pendingCityAttackSnapshot() {
         center: CityHex(col: 1, row: 1),
       ),
     ],
-    runtimeState: const GameRuntimeState(
-      intendedAttacks: [
-        IntendedAttack(
-          attackerUnitId: 'human_attacker_unit',
-          defenderCol: 1,
-          defenderRow: 1,
-          declaredAtTick: 20,
-          declaringPlayerId: humanId,
-        ),
-      ],
-    ),
+
+    intendedAttacks: [
+      const IntendedAttack(
+        attackerUnitId: 'human_attacker_unit',
+        defenderCol: 1,
+        defenderRow: 1,
+        declaredAtTick: 20,
+        declaringPlayerId: humanId,
+      ),
+    ],
   );
 }

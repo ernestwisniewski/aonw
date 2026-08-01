@@ -55,8 +55,8 @@ final class MctsSimulatedEconomyCommandApplier {
 
   ResearchState get _researchState => view.research;
 
-  PersistentGameState _persistentState() {
-    return MctsSimulationProjection.persistentStateFromView(
+  DomainState _persistentState() {
+    return MctsSimulationProjection.domainStateFromView(
       view,
       units: view.movementBlockingUnits,
       cities: [...ownCities, ...rememberedEnemyCities],
@@ -65,10 +65,10 @@ final class MctsSimulatedEconomyCommandApplier {
   }
 
   MctsSimulatedCommandApplication _applicationFromPersistent(
-    PersistentGameState state, {
+    DomainState state, {
     CanonicalGameSnapshot? engineSnapshot,
   }) {
-    final nextView = MctsSimulationProjection.viewFromPersistentState(
+    final nextView = MctsSimulationProjection.viewFromDomainState(
       state,
       previousView: view,
       engineSnapshot:

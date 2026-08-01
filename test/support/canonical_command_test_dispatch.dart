@@ -4,7 +4,6 @@ import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
@@ -20,7 +19,7 @@ final _savedAt = DateTime.utc(2026, 7, 29);
 /// through [LocalCommandResolver] and therefore the canonical game engine.
 GameStateTransition dispatchCanonicalTestCommand({
   required GameStateReducer reducer,
-  required GameState state,
+  required GameClientState state,
   required Object command,
   GameCommandContext context = const GameCommandContext(),
 }) {
@@ -68,13 +67,13 @@ GameStateTransition dispatchCanonicalTestCommand({
 
 GameStateTransition _dispatchDomainTestCommand({
   required GameStateReducer reducer,
-  required GameState state,
+  required GameClientState state,
   required DomainCommand command,
   required GameCommandContext context,
   bool fromMovePreviewConfirmation = false,
 }) {
   final resolved = LocalCommandResolver(reducer: reducer).resolve(
-    baseSnapshot: SaveSnapshot.fromGameState(
+    baseSnapshot: GameSnapshotFactory.fromClientState(
       save: _saveFor(state, context),
       state: state,
     ),
@@ -93,9 +92,9 @@ GameStateTransition _dispatchDomainTestCommand({
   );
 }
 
-GameSave _saveFor(GameState state, GameCommandContext context) {
+GameSave _saveFor(GameClientState state, GameCommandContext context) {
   final playerIds = <String>{
-    ...state.toPersistentState().knownPlayerIds,
+    ...state.domain.knownPlayerIds,
     if (state.activePlayerId.isNotEmpty) state.activePlayerId,
     if (context.hasActor) context.actorPlayerId!,
   };

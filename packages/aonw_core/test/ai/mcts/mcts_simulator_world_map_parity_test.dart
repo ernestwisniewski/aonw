@@ -15,7 +15,7 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [scout],
         fogOfWar: FogOfWarState(
           players: {
@@ -38,9 +38,7 @@ void main() {
         command: command,
         actorPlayerId: 'player_2',
         commandTick: 0,
-        mapView: WorldMapReadView(
-          MctsSimulatorParityFixtures.worldMap(mapData: mapData),
-        ),
+        mapView: MctsSimulatorParityFixtures.worldMap(mapData: mapData),
         ruleset: GameRuleset.defaults,
         movementVisibilityMode: MovementCommandVisibilityMode.unrestricted,
       );

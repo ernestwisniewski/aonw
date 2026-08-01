@@ -5,7 +5,7 @@ void main() {
   group('FrontierClearingPlanner', () {
     test('assigns a spare military unit to clear a blocker near a settler', () {
       final mapData = _openMap(cols: 8, rows: 6);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'settler_1',
@@ -73,7 +73,7 @@ void main() {
 
     test('skips units already reserved by higher priority plans', () {
       final mapData = _openMap(cols: 8, rows: 6);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'settler_1',
@@ -145,7 +145,7 @@ void main() {
 
     test('can use one surplus unit after city defenses are reserved', () {
       final mapData = _openMap(cols: 8, rows: 6);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit(
             id: 'settler_1',
@@ -218,7 +218,7 @@ void main() {
       'protects an assigned one-city settler when the target is pressured',
       () {
         final mapData = _openMap(cols: 8, rows: 6);
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             _unit(
               id: 'settler_1',
@@ -283,8 +283,8 @@ void main() {
   });
 }
 
-GameView _view(PersistentGameState state, MapData mapData) {
-  return GameView.fromPersistentState(
+GameView _view(DomainState state, WorldMap mapData) {
+  return GameView.fromDomainState(
     state,
     forPlayerId: 'player_1',
     turn: 1,
@@ -293,7 +293,7 @@ GameView _view(PersistentGameState state, MapData mapData) {
   );
 }
 
-AiContext _context(MapData mapData) {
+AiContext _context(WorldMap mapData) {
   return AiContext(
     ruleset: GameRuleset.defaults,
     mapData: mapData,
@@ -318,7 +318,7 @@ GameUnit _unit({
   );
 }
 
-FogOfWarState _fog(MapData mapData) {
+FogOfWarState _fog(WorldMap mapData) {
   return FogOfWarState(
     players: {
       'player_1': PlayerFogOfWar(
@@ -332,14 +332,14 @@ FogOfWarState _fog(MapData mapData) {
   );
 }
 
-MapData _openMap({required int cols, required int rows}) {
-  return MapData(
+WorldMap _openMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

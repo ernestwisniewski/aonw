@@ -30,14 +30,10 @@ final class TurnEngineHandler {
     }
     final movement = DomainTurnMovementProcessor.resetForPlayers(
       state: snapshot.domain,
-      interaction: snapshot.interaction,
       playerIds: orderedPlayerIds,
       mapData: context.mapView,
     );
-    final nextSnapshot = snapshot.copyWith(
-      domain: movement.state,
-      interaction: movement.interaction,
-    );
+    final nextSnapshot = snapshot.copyWith(domain: movement.state);
     return GameEngineResult.accepted(
       snapshot: nextSnapshot == snapshot ? snapshot : nextSnapshot,
       events: movement.events.cast<DomainEvent>(),
@@ -99,16 +95,13 @@ final class TurnEngineHandler {
         reason: 'turn_player_not_active',
       );
     }
-    if (snapshot.session.hasSubmitted(command.playerId)) {
+    if (snapshot.domain.hasSubmitted(command.playerId)) {
       return GameEngineResult.accepted(snapshot: snapshot);
     }
 
-    final submitted = {
-      ...snapshot.session.submittedPlayerIds,
-      command.playerId,
-    };
+    final submitted = {...snapshot.domain.submittedPlayerIds, command.playerId};
     final submittedSnapshot = snapshot.copyWith(
-      session: snapshot.session.copyWith(
+      domain: snapshot.domain.copyWith(
         submittedPlayerIds: submitted,
         turnStatesByPlayerId: _finishedTurnStates(snapshot, command.playerId),
       ),
@@ -194,22 +187,22 @@ final class TurnEngineHandler {
     List<String> orderedPlayerIds,
   ) {
     final activePlayerIds = _orderedDistinct(orderedPlayerIds)
-        .where((playerId) => !snapshot.session.isKicked(playerId))
+        .where((playerId) => !snapshot.domain.isKicked(playerId))
         .toList(growable: false);
     if (activePlayerIds.isEmpty ||
         activePlayerIds.any(
           (playerId) =>
-              snapshot.session.turnStatesByPlayerId[playerId] !=
+              snapshot.domain.turnStatesByPlayerId[playerId] !=
               PlayerTurnState.finished,
         )) {
       return snapshot;
     }
     return snapshot.copyWith(
-      domain: snapshot.domain.copyWith(turn: snapshot.domain.turn + 1),
-      session: snapshot.session.copyWith(
+      domain: snapshot.domain.copyWith(
+        turn: snapshot.domain.turn + 1,
         turnStatesByPlayerId: {
-          for (final entry in snapshot.session.turnStatesByPlayerId.entries)
-            entry.key: snapshot.session.isKicked(entry.key)
+          for (final entry in snapshot.domain.turnStatesByPlayerId.entries)
+            entry.key: snapshot.domain.isKicked(entry.key)
                 ? PlayerTurnState.finished
                 : PlayerTurnState.active,
         },
@@ -230,9 +223,9 @@ final class TurnEngineHandler {
     for (var offset = 1; offset < ordered.length; offset += 1) {
       final index = (start < 0 ? offset - 1 : start + offset) % ordered.length;
       final playerId = ordered[index];
-      if (snapshot.session.turnStatesByPlayerId[playerId] ==
+      if (snapshot.domain.turnStatesByPlayerId[playerId] ==
               PlayerTurnState.active &&
-          !snapshot.session.isKicked(playerId)) {
+          !snapshot.domain.isKicked(playerId)) {
         return playerId;
       }
     }
@@ -286,20 +279,17 @@ final class TurnEngineHandler {
         reason: 'turn_player_not_active',
       );
     }
-    if (snapshot.session.isKicked(command.playerId)) {
+    if (snapshot.domain.isKicked(command.playerId)) {
       return GameEngineResult.accepted(snapshot: snapshot);
     }
     final next = snapshot.copyWith(
-      session: snapshot.session.copyWith(
+      domain: snapshot.domain.copyWith(
         turnStatesByPlayerId: _finishedTurnStates(snapshot, command.playerId),
-        submittedPlayerIds: snapshot.session.submittedPlayerIds.difference({
+        submittedPlayerIds: snapshot.domain.submittedPlayerIds.difference({
           command.playerId,
         }),
-        afkPlayerIds: {...snapshot.session.afkPlayerIds, command.playerId},
-        kickedPlayerIds: {
-          ...snapshot.session.kickedPlayerIds,
-          command.playerId,
-        },
+        afkPlayerIds: {...snapshot.domain.afkPlayerIds, command.playerId},
+        kickedPlayerIds: {...snapshot.domain.kickedPlayerIds, command.playerId},
       ),
     );
     return GameEngineResult.accepted(
@@ -327,7 +317,7 @@ List<String> _turnPlayerIds(
       ? snapshot.domain.participants.map((participant) => participant.id)
       : context.turnPlayerIds;
   return _orderedDistinct(source)
-      .where((playerId) => !snapshot.session.isKicked(playerId))
+      .where((playerId) => !snapshot.domain.isKicked(playerId))
       .toList(growable: false);
 }
 
@@ -343,11 +333,11 @@ Map<String, PlayerTurnState> _finishedTurnStates(
   CanonicalGameSnapshot snapshot,
   String playerId,
 ) {
-  if (!snapshot.session.turnStatesByPlayerId.containsKey(playerId)) {
-    return snapshot.session.turnStatesByPlayerId;
+  if (!snapshot.domain.turnStatesByPlayerId.containsKey(playerId)) {
+    return snapshot.domain.turnStatesByPlayerId;
   }
   return {
-    ...snapshot.session.turnStatesByPlayerId,
+    ...snapshot.domain.turnStatesByPlayerId,
     playerId: PlayerTurnState.finished,
   };
 }

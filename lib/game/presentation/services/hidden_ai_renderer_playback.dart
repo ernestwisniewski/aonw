@@ -6,15 +6,18 @@ import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 
-typedef HiddenAiRendererStateReader = GameState? Function();
+typedef HiddenAiRendererStateReader = GameClientState? Function();
 typedef HiddenAiLocalizationReader = AppLocalizations? Function();
 typedef HiddenAiTransitionApplier =
-    Future<void> Function(GameState state, List<RendererEffect> effects);
+    Future<void> Function(GameClientState state, List<RendererEffect> effects);
 typedef HiddenAiProjectedTransitionApplier =
-    Future<void> Function(GameState state, ProjectedGameEffectBatch effects);
+    Future<void> Function(
+      GameClientState state,
+      ProjectedGameEffectBatch effects,
+    );
 
 final class HiddenAiRendererPlaybackReport {
-  final GameState rendererState;
+  final GameClientState rendererState;
   final List<RendererEffect> rendererEffects;
 
   HiddenAiRendererPlaybackReport({
@@ -38,13 +41,13 @@ final class HiddenAiRendererPlayback {
     this.applyProjectedTransition,
   });
 
-  GameState previousRendererState(GameState fallbackState) {
+  GameClientState previousRendererState(GameClientState fallbackState) {
     return rendererStateReader() ?? fallbackState;
   }
 
   Future<HiddenAiRendererPlaybackReport> playCommandEffects({
-    required GameState previousRendererState,
-    required GameState commandState,
+    required GameClientState previousRendererState,
+    required GameClientState commandState,
     required Iterable<UiEffect> uiEffects,
     required Iterable<GameEvent> events,
     String sourceId = 'hidden-ai-preview',
@@ -89,7 +92,10 @@ final class HiddenAiRendererPlayback {
     );
   }
 
-  static GameState withActionContext(GameState state, GameState source) {
+  static GameClientState withActionContext(
+    GameClientState state,
+    GameClientState source,
+  ) {
     return state.copyWith(
       activePlayerId: source.activePlayerId,
       activePlayerCanAct: source.activePlayerCanAct,

@@ -102,7 +102,7 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
     final gameStateProviderValue = gameStateProvider(widget.session.saveId);
     final actions = _actions;
     ref
-      ..listen<AsyncValue<GameState>>(gameStateProviderValue, (_, next) {
+      ..listen<AsyncValue<GameClientState>>(gameStateProviderValue, (_, next) {
         if (!mounted) return;
         _syncModesWithState(next.value);
       })
@@ -201,7 +201,7 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
       cityFoundingActive: frame.cityFoundingDraft != null,
       onMoveSelectedUnit: dispatcher.moveSelectedUnit,
       onAutoExploreSelectedUnit: () =>
-          dispatcher.autoExploreSelectedUnit(gameState, widget.session.mapData),
+          dispatcher.autoExploreSelectedUnit(gameState),
       onStartAttackTargeting: () => dispatcher.startAttackTargeting(gameState),
       onCancelAttackTargeting: () =>
           dispatcher.cancelAttackTargeting(gameState),

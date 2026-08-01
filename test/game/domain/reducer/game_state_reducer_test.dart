@@ -4,8 +4,8 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -17,9 +17,9 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../support/canonical_command_test_dispatch.dart';
 import '../../../support/game_intent_test_resolver.dart';
 
-MapData _emptyMap() => MapData(cols: 5, rows: 5, tiles: []);
+WorldMap _emptyMap() => WorldMap(cols: 5, rows: 5, tiles: []);
 
-MapData _landMap() => MapData(
+WorldMap _landMap() => WorldMap(
   cols: 5,
   rows: 5,
   tiles: [
@@ -54,7 +54,7 @@ GameCity _city({
   center: CityHex(col: col, row: row),
 );
 
-TileData _tile(int col, int row) => TileData(
+WorldTile _tile(int col, int row) => WorldTile(
   col: col,
   row: row,
   terrains: const [TerrainType.grassland],
@@ -70,8 +70,8 @@ void main() {
 
   group('GameStateTransition', () {
     test('holds state and defaults to empty uiEffects and events', () {
-      const state = GameState();
-      const transition = GameStateTransition(state: state);
+      final state = GameClientState();
+      final transition = GameStateTransition(state: state);
       expect(transition.state, same(state));
       expect(transition.uiEffects, isEmpty);
       expect(transition.events, isEmpty);
@@ -118,7 +118,7 @@ void main() {
   });
 
   group('stub commands (no-op)', () {
-    const state = GameState(activePlayerId: 'p1');
+    final state = GameClientState(activePlayerId: 'p1');
 
     final stubCommands = <Object>[
       const TileTappedCommand(1, 2),
@@ -156,7 +156,7 @@ void main() {
       final mapData = _landMap();
       final reducer = GameStateReducer(mapData: mapData);
       const pendingAction = PendingResearchSelection(ownerPlayerId: 'p1');
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         fogOfWar: FogOfWarState(
           players: {
@@ -166,7 +166,7 @@ void main() {
             ),
           },
         ),
-        interaction: const GameInteractionState(
+        interaction: const InteractionState(
           pendingAction: pendingAction,
           moveCommandActive: true,
         ),
@@ -188,7 +188,10 @@ void main() {
 
   group('active player interaction sync', () {
     test('updates activePlayerId and activePlayerCanAct', () {
-      const state = GameState(activePlayerId: 'p1', activePlayerCanAct: true);
+      final state = GameClientState(
+        activePlayerId: 'p1',
+        activePlayerCanAct: true,
+      );
       final result = reducer.syncActivePlayer(
         state,
         playerId: 'p2',
@@ -199,9 +202,9 @@ void main() {
     });
 
     test('clears moveCommandActive', () {
-      const state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
-        interaction: GameInteractionState(moveCommandActive: true),
+        interaction: const InteractionState(moveCommandActive: true),
       );
       final result = reducer.syncActivePlayer(
         state,
@@ -222,7 +225,7 @@ void main() {
           UnitMovementStep(col: 2, row: 3, enterCost: 1, cumulativeCost: 1),
         ],
       );
-      final state = const GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
       ).copyWithInteraction(movePreview: plan);
 
@@ -241,7 +244,7 @@ void main() {
         ownerPlayerId: unit.ownerPlayerId,
         center: CityHex(col: unit.col, row: unit.row),
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         units: [unit],
       ).copyWithInteraction(cityFoundingDraft: draft);
@@ -257,10 +260,10 @@ void main() {
     test(
       'preserves pendingAction when SetActivePlayer targets same player',
       () {
-        const state = GameState(
+        final state = GameClientState(
           activePlayerId: 'p1',
           activePlayerCanAct: true,
-          interaction: GameInteractionState(
+          interaction: const InteractionState(
             pendingAction: PendingAttackTargeting(
               ownerPlayerId: 'p1',
               attackerUnitId: 'u1',
@@ -283,7 +286,7 @@ void main() {
       () {
         final unit = _unit(ownerPlayerId: 'p1');
         final selection = GameSelection.unit(unit);
-        final state = GameState(
+        final state = GameClientState(
           activePlayerId: 'p1',
           activePlayerCanAct: true,
           units: [unit],
@@ -307,7 +310,7 @@ void main() {
           cityYield: TileYield.zero,
           playerColor: 0xFF0000FF,
         );
-        final state = GameState(
+        final state = GameClientState(
           activePlayerId: 'p1',
           activePlayerCanAct: true,
           cities: [city],
@@ -325,7 +328,7 @@ void main() {
     test('preserves tile selection when switching player', () {
       final tile = _tile(3, 4);
       final selection = GameSelection.tile(tile);
-      final state = const GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         activePlayerCanAct: true,
       ).copyWithInteraction(selection: selection);
@@ -344,7 +347,7 @@ void main() {
       () {
         final unit = _unit(ownerPlayerId: 'p2');
         final selection = GameSelection.unit(unit);
-        final state = GameState(
+        final state = GameClientState(
           activePlayerId: 'p1',
           activePlayerCanAct: true,
           units: [unit],
@@ -363,7 +366,7 @@ void main() {
     test('preserves own unit selection when active player starts waiting', () {
       final unit = _unit(ownerPlayerId: 'p1');
       final selection = GameSelection.unit(unit);
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         activePlayerCanAct: true,
         units: [unit],
@@ -389,7 +392,7 @@ void main() {
           cityYield: TileYield.zero,
           playerColor: 0xFF0000FF,
         );
-        final state = GameState(
+        final state = GameClientState(
           activePlayerId: 'p1',
           activePlayerCanAct: true,
           cities: [city],
@@ -406,7 +409,7 @@ void main() {
     );
 
     test('returns no UI effects', () {
-      const state = GameState(activePlayerId: 'p1');
+      final state = GameClientState(activePlayerId: 'p1');
       final result = reducer.syncActivePlayer(
         state,
         playerId: 'p2',
@@ -418,7 +421,7 @@ void main() {
     test('does not mutate authoritative fog while switching presentation', () {
       final reducer = GameStateReducer(mapData: _landMap());
       final unit = _unit(ownerPlayerId: 'p2', col: 2, row: 2);
-      final state = GameState(activePlayerId: 'p1', units: [unit]);
+      final state = GameClientState(activePlayerId: 'p1', units: [unit]);
 
       final result = reducer.syncActivePlayer(
         state,

@@ -8,7 +8,7 @@ abstract final class CombatHexAlertEffectFactory {
     required int col,
     required int row,
     required CombatHexAlertKind kind,
-    required GameState state,
+    required GameClientState state,
     required int? turn,
     String? unitId,
     String? cityId,

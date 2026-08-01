@@ -253,7 +253,7 @@ void _registerGeneratedMessageTest() {
     );
 
     const generatedId = 'message.9.p1.p2.blockedRoutes.2';
-    final next = result.state.runtimeState.diplomacy.messages[generatedId];
+    final next = result.state.diplomacy.messages[generatedId];
     expect(
       next,
       const DiplomaticMessage(
@@ -272,14 +272,8 @@ void _registerGeneratedMessageTest() {
         promiseBroken: false,
       ),
     );
-    expect(
-      result.state.runtimeState.diplomacy.messages['unrelated_1'],
-      same(unrelated1),
-    );
-    expect(
-      result.state.runtimeState.diplomacy.messages['unrelated_2'],
-      same(unrelated2),
-    );
+    expect(result.state.diplomacy.messages['unrelated_1'], same(unrelated1));
+    expect(result.state.diplomacy.messages['unrelated_2'], same(unrelated2));
     expect(result.events, hasLength(1));
     final event = result.events.single as DiplomaticMessageSentEvent;
     expect(event.messageId, generatedId);
@@ -319,7 +313,7 @@ void _registerMessageIdReuseTest() {
     );
 
     expect(result.accepted, isTrue);
-    expect(result.state.runtimeState.diplomacy.messages, {
+    expect(result.state.diplomacy.messages, {
       'shared_id': const DiplomaticMessage(
         id: 'shared_id',
         fromPlayerId: _player1,
@@ -341,7 +335,7 @@ void _registerMessageIdReuseTest() {
 }
 
 _DiplomacyTestResult _sendMessage(
-  PersistentGameState state, {
+  DomainState state, {
   required DiplomaticMessageTopic topic,
   required int turn,
 }) {

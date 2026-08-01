@@ -8,7 +8,7 @@ typedef WorldMapInvariantViolation = Never Function(String message);
 /// Validates map-wide invariants and builds the canonical coordinate index.
 ///
 /// The returned map borrows tile values while owning an immutable index. This
-/// keeps validation independent of both [WorldTile] and legacy [TileData]
+/// keeps validation independent of both [WorldTile] and legacy [WorldTile]
 /// representations.
 Map<HexCoord, TTile> buildValidatedWorldMapIndex<TTile extends MapTileView>({
   required int cols,

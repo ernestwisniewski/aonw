@@ -4,8 +4,8 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/domain_event_presentation_projector.dart';
 import 'package:aonw/game/presentation/engine/game_renderer.dart';
 import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -27,12 +27,15 @@ void main() {
         col: 0,
         row: 0,
       );
-      final before = GameState(
+      final before = GameClientState(
         activePlayerId: 'player_1',
         fogOfWar: _fog({const HexCoordinate(col: 0, row: 0)}),
         units: [enemy],
       );
-      final after = GameState(activePlayerId: 'player_1', fogOfWar: _fog({}));
+      final after = GameClientState(
+        activePlayerId: 'player_1',
+        fogOfWar: _fog({}),
+      );
       const event = UnitMovedEvent(
         unitId: 'enemy',
         fromCol: 0,
@@ -139,12 +142,12 @@ FogOfWarState _fog(Set<HexCoordinate> visible) => FogOfWarState(
   },
 );
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 4,
   rows: 1,
   tiles: [
     for (var col = 0; col < 4; col++)
-      TileData(
+      WorldTile(
         col: col,
         row: 0,
         terrains: const [TerrainType.grassland],

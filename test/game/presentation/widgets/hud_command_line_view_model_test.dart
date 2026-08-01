@@ -40,9 +40,9 @@ void main() {
       gameSave: _save,
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      gameState: GameState(
+      gameState: GameClientState(
         units: [unit],
-        interaction: GameInteractionState(selection: GameSelection.unit(unit)),
+        interaction: InteractionState(selection: GameSelection.unit(unit)),
       ),
       isUnitAnimating: false,
       readyToEndTurn: true,
@@ -64,7 +64,7 @@ void main() {
       gameSave: _save,
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      gameState: const GameState(),
+      gameState: GameClientState(),
       isUnitAnimating: false,
       readyToEndTurn: false,
       actionHintLabel: 'Next step: Warrior',
@@ -75,7 +75,7 @@ void main() {
       gameSave: _save,
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      gameState: const GameState(),
+      gameState: GameClientState(),
       isUnitAnimating: true,
       readyToEndTurn: false,
       actionHintLabel: 'Next step: Warrior',
@@ -97,7 +97,7 @@ void main() {
       gameSave: save,
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      gameState: const GameState(
+      gameState: GameClientState(
         activePlayerId: 'player_1',
         submittedPlayerIds: {'player_1'},
       ),

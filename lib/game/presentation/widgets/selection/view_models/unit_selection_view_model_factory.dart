@@ -10,8 +10,8 @@ import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/l10n/game_text.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/movement.dart';
@@ -22,8 +22,8 @@ import 'package:flutter/material.dart';
 abstract final class UnitSelectionViewModelFactory {
   static SelectionViewModel from(
     GameSelection selection, {
-    GameState? gameState,
-    MapData? mapData,
+    GameClientState? gameState,
+    WorldMap? mapData,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     required AppLocalizations l10n,
@@ -131,8 +131,8 @@ abstract final class UnitSelectionViewModelFactory {
 
   static WorkerActionPanelViewModel? _workerActionFor(
     GameUnit unit, {
-    required GameState? gameState,
-    required MapData? mapData,
+    required GameClientState? gameState,
+    required WorldMap? mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required AppLocalizations l10n,

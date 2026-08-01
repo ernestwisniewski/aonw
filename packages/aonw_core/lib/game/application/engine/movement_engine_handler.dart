@@ -95,7 +95,7 @@ final class MovementEngineHandler {
   ) {
     final result = unitActionResolver.cancelUnitAction(
       state: snapshot.domain,
-      interaction: snapshot.interaction,
+      interaction: snapshot.domain.actions,
       command: command,
       actorPlayerId: context.actorPlayerId,
     );
@@ -114,7 +114,7 @@ final class MovementEngineHandler {
   ) {
     final result = autoExploreResolver.resolve(
       state: snapshot.domain,
-      interaction: snapshot.interaction,
+      interaction: snapshot.domain.actions,
       command: command,
       actorPlayerId: context.actorPlayerId,
       mapData: context.mapView,
@@ -156,21 +156,21 @@ final class MovementEngineHandler {
   static GameEngineResult _accepted(
     CanonicalGameSnapshot snapshot, {
     required DomainState domain,
-    PersistedInteractionState? interaction,
+    DomainActionState? interaction,
     List<GameEvent> events = const [],
     MovementCommandExecution? execution,
   }) {
     final domainChanged = !identical(domain, snapshot.domain);
-    final nextInteraction = interaction ?? snapshot.interaction;
+    final nextInteraction = interaction ?? snapshot.domain.actions;
     final interactionChanged = !identical(
       nextInteraction,
-      snapshot.interaction,
+      snapshot.domain.actions,
     );
     return GameEngineResult.accepted(
       snapshot: domainChanged || interactionChanged
           ? snapshot.copyWith(
               domain: domainChanged ? domain : null,
-              interaction: interactionChanged ? nextInteraction : null,
+              actions: interactionChanged ? nextInteraction : null,
             )
           : snapshot,
       events: [for (final event in events) event as DomainEvent],

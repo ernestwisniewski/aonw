@@ -166,7 +166,7 @@ final class AutoExploreCommandResolver {
   static AutoExploreCommandResult _acceptMoved({
     required AutoExploreCommandState state,
     required MovementCommandResult moved,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required String unitId,
     required AutoExploreCommandPhase phase,
   }) {

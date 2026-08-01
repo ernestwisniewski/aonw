@@ -2,7 +2,7 @@ part of 'movement_reducer_map_view_test.dart';
 
 typedef _UnitAction =
     GameStateTransition Function(
-      GameState state,
+      GameClientState state,
       MapTileLookup mapTiles,
       GameUnit unit,
     );
@@ -23,22 +23,18 @@ void _registerCanonicalMapLookupActionTests() {
     test(
       '${action.name} refreshes selection through a canonical map lookup',
       () {
-        final canonicalTile = WorldTile(
+        final canonicalTile = WorldTile.at(
           coordinate: const HexCoord(col: 0, row: 0),
           terrains: const [TerrainType.plains],
           resources: const [ResourceType.oil, ResourceType.wheat],
           height: 0,
         );
-        final mapTiles = WorldMapReadView(
-          WorldMap(cols: 1, rows: 1, tiles: [canonicalTile]),
-        );
+        final mapTiles = WorldMap(cols: 1, rows: 1, tiles: [canonicalTile]);
         final unit = GameUnit.startingWarrior(ownerPlayerId: 'player_1');
-        final state = GameState(
+        final state = GameClientState(
           activePlayerId: 'player_1',
           units: [unit],
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(unit),
-          ),
+          interaction: InteractionState(selection: GameSelection.unit(unit)),
         );
 
         final result = action.apply(state, mapTiles, unit);
@@ -61,14 +57,12 @@ void _registerMissingCanonicalTileSelectionTest() {
   test(
     'selection keeps the updated unit when its canonical tile is absent',
     () {
-      final mapTiles = WorldMapReadView(
-        WorldMap(cols: 1, rows: 1, tiles: const []),
-      );
+      final mapTiles = WorldMap(cols: 1, rows: 1, tiles: []);
       final unit = GameUnit.startingWarrior(ownerPlayerId: 'player_1');
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [unit],
-        interaction: GameInteractionState(selection: GameSelection.unit(unit)),
+        interaction: InteractionState(selection: GameSelection.unit(unit)),
       );
 
       final result = resolveMovementCommandForTest(

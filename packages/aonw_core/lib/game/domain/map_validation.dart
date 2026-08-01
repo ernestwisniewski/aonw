@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
@@ -7,7 +8,6 @@ import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/terrain.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 enum MapValidationSeverity { error, warning }
@@ -125,7 +125,7 @@ abstract final class MapValidator {
   static const MapValidationRules defaultRules = MapValidationRules();
 
   static MapValidationResult validate({
-    required MapData mapData,
+    required WorldMap mapData,
     required int playerCount,
     GameLengthConfig gameLength = GameLengthConfig.unlimited,
     MapValidationRules rules = defaultRules,
@@ -259,7 +259,7 @@ abstract final class MapValidator {
 
   static void _validateStartSites({
     required String mapName,
-    required MapData mapData,
+    required WorldMap mapData,
     required List<MapStartSiteReport> startSites,
     required List<MapValidationIssue> issues,
     required MapValidationRules rules,
@@ -315,7 +315,7 @@ abstract final class MapValidator {
 
   static void _validateFirstContact({
     required String mapName,
-    required MapData mapData,
+    required WorldMap mapData,
     required int playerCount,
     required List<MapStartSiteReport> startSites,
     required GameLengthConfig gameLength,
@@ -371,7 +371,7 @@ abstract final class MapValidator {
 
   static List<MapStartSiteReport> _startSites({
     required String mapName,
-    required MapData mapData,
+    required WorldMap mapData,
     required int playerCount,
     required List<MapValidationIssue> issues,
   }) {
@@ -446,7 +446,7 @@ abstract final class MapValidator {
 
   static MapStartSiteReport _startSiteReport({
     required int playerIndex,
-    required MapData mapData,
+    required WorldMap mapData,
     required GameUnit warrior,
     required GameUnit settler,
   }) {
@@ -506,7 +506,7 @@ abstract final class MapValidator {
     return null;
   }
 
-  static MapResourceSummary _resourceSummary(MapData mapData) {
+  static MapResourceSummary _resourceSummary(WorldMap mapData) {
     var resourceTiles = 0;
     var foodResources = 0;
     var luxuryResources = 0;
@@ -527,7 +527,7 @@ abstract final class MapValidator {
     );
   }
 
-  static bool _isPassable(TileData tile) {
+  static bool _isPassable(WorldTile tile) {
     return !UnitMovementCostRules.costToEnter(
       TileTerrainProfileRules.fromTile(tile),
     ).blocked;

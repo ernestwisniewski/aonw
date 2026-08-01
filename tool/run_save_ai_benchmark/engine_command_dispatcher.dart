@@ -10,7 +10,7 @@ final class BenchmarkCommandTransition {
   });
 
   final bool accepted;
-  final GameState state;
+  final GameClientState state;
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
   final List<String> rejectionReasons;
@@ -32,7 +32,7 @@ final class BenchmarkCommandDispatcher {
   CanonicalGameSnapshot get snapshot => _engineSnapshot;
 
   BenchmarkCommandTransition apply({
-    required GameState state,
+    required GameClientState state,
     required DomainCommand command,
     required GameCommandContext context,
   }) {
@@ -52,13 +52,13 @@ final class BenchmarkCommandDispatcher {
   }
 
   BenchmarkCommandTransition _applyEngineCommand({
-    required GameState state,
+    required GameClientState state,
     required DomainCommand command,
     required GameCommandContext context,
   }) {
     final result = const SimulationGameEngineAdapter().apply(
       snapshot: _engineSnapshot,
-      state: state.toPersistentState(),
+      state: state.domain,
       command: command,
       actorPlayerId: context.actorPlayerId ?? state.activePlayerId,
       commandTick: context.commandTick,
@@ -72,17 +72,17 @@ final class BenchmarkCommandDispatcher {
           : CombatCommandVisibilityMode.authoritative,
       turnPlayerIds: [
         for (final participant in _engineSnapshot.domain.participants)
-          if (!_engineSnapshot.session.isKicked(participant.id)) participant.id,
+          if (!_engineSnapshot.domain.isKicked(participant.id)) participant.id,
       ],
       requiredTurnSubmissionPlayerIds: [
         for (final participant in _engineSnapshot.domain.participants)
-          if (!_engineSnapshot.session.isKicked(participant.id)) participant.id,
+          if (!_engineSnapshot.domain.isKicked(participant.id)) participant.id,
       ],
       savedAt: _engineSnapshot.metadata.savedAtUtc,
     );
     _engineSnapshot = result.snapshot;
     final nextState = result.accepted
-        ? state.copyWithPersistentState(result.state)
+        ? state.copyWith(domain: result.state)
         : state;
     return BenchmarkCommandTransition(
       accepted: result.accepted && nextState != state,

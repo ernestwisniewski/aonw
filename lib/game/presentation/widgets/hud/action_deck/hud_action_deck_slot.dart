@@ -47,7 +47,7 @@ class HudActionDeckSlot extends StatelessWidget {
   final GameSave gameSave;
   final String activePlayerId;
   final bool activePlayerCanAct;
-  final GameState? gameState;
+  final GameClientState? gameState;
   final bool readyToEndTurn;
   final int remainingActionCount;
   final int currentActionIndex;

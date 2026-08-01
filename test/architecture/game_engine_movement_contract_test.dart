@@ -191,7 +191,7 @@ Object secondMovementFamilySwitch(Object command) => switch (command) {
       constructedTypeViolations(benchmarkSources, type: 'PersistentGameState'),
       isEmpty,
       reason:
-          'Benchmark replay must use GameState.toPersistentState so new '
+          'Benchmark replay must use GameClientState.toPersistentState so new '
           'persistent slices cannot be silently dropped.',
     );
   });

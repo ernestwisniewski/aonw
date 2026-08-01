@@ -101,7 +101,7 @@ StrategicPlan _plan({Map<String, CityHex> settlerAssignments = const {}}) {
   );
 }
 
-AiContext _context({MapData? mapData}) {
+AiContext _context({WorldMap? mapData}) {
   final actualMapData = mapData ?? _mapData();
   return AiContext(
     ruleset: GameRuleset.defaults,
@@ -114,11 +114,11 @@ AiContext _context({MapData? mapData}) {
 GameView _view({
   List<GameUnit> units = const [],
   List<GameCity> cities = const [],
-  MapData? mapData,
+  WorldMap? mapData,
 }) {
   final actualMapData = mapData ?? _mapData();
-  return GameView.fromPersistentState(
-    PersistentGameState(units: units, cities: cities),
+  return GameView.fromDomainState(
+    DomainState.snapshot(units: units, cities: cities),
     forPlayerId: 'player_1',
     turn: 1,
     mapData: actualMapData,
@@ -145,14 +145,14 @@ GameUnit _unit(
   );
 }
 
-MapData _mapData({int cols = 4, int rows = 4}) {
-  return MapData(
+WorldMap _mapData({int cols = 4, int rows = 4}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var col = 0; col < cols; col++)
         for (var row = 0; row < rows; row++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

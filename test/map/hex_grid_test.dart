@@ -2,22 +2,22 @@ import 'dart:math' as math;
 
 import 'package:aonw/map/domain/hex_grid_topology.dart';
 import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_tile.dart';
 import 'package:aonw/map/rendering/hex_tile_markers.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 2,
   rows: 2,
   tiles: [
     for (int r = 0; r < 2; r++)
       for (int c = 0; c < 2; c++)
-        TileData(
+        WorldTile(
           col: c,
           row: r,
           terrains: const [TerrainType.ocean],
@@ -105,13 +105,13 @@ void main() {
 
   group('HexGrid selection', () {
     test('outline neighbor heights are ordered by top outline edge', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 3,
         rows: 3,
         tiles: [
           for (var row = 0; row < 3; row++)
             for (var col = 0; col < 3; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: const [TerrainType.ocean],

@@ -7,8 +7,8 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/turn/turn_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
@@ -28,25 +28,9 @@ import '../../../support/turn_engine_test_driver.dart';
 
 part 'turn_reducer_start_action_feedback_tests.dart';
 
-MapData _map(int cols, int rows) => MapData(
-  cols: cols,
-  rows: rows,
-  tiles: [
-    for (int row = 0; row < rows; row++)
-      for (int col = 0; col < cols; col++)
-        TileData(
-          col: col,
-          row: row,
-          terrains: const [TerrainType.plains],
-          resources: const [],
-          height: 0,
-        ),
-  ],
-);
-
 void main() {
   group('TurnReducer', () {
-    late MapData mapData;
+    late WorldMap mapData;
 
     setUp(() {
       mapData = _map(5, 5);
@@ -69,7 +53,7 @@ void main() {
         ],
         population: 1,
       );
-      const state = GameState(cities: [city], activePlayerId: 'player_1');
+      final state = GameClientState(cities: [city], activePlayerId: 'player_1');
 
       final result = resolveEndTurnForTest(state, 'player_1', mapData);
 
@@ -85,7 +69,7 @@ void main() {
         center: CityHex(col: 2, row: 2),
         population: 1,
       );
-      final state = GameState(
+      final state = GameClientState(
         cities: [city],
         activePlayerId: 'player_1',
         research: ResearchState(
@@ -120,7 +104,7 @@ void main() {
         center: CityHex(col: 2, row: 2),
         population: 1,
       );
-      const state = GameState(cities: [city], activePlayerId: 'player_1');
+      final state = GameClientState(cities: [city], activePlayerId: 'player_1');
 
       final result = resolveEndTurnForTest(
         state,
@@ -145,6 +129,9 @@ void main() {
         savedAt: DateTime.utc(2026, 7, 11),
         camera: CameraState.zero,
         matchRules: MatchRules.standard.copyWith(victory: victoryRules),
+        players: const [
+          Player(id: 'player_1', name: 'Player 1', colorValue: 0),
+        ],
       );
       final diplomacy = DiplomacyState.empty.setStatus(
         'player_1',
@@ -153,7 +140,7 @@ void main() {
         turn: 7,
         reason: DiplomaticRelationChangeReason.proposalAccepted,
       );
-      final state = GameState(
+      final state = GameClientState(
         playerWarWeariness: const {'player_1': 5},
         culturalVictoryHoldTurnsByPlayerId: const {'player_1': 3},
         diplomacy: diplomacy,
@@ -164,7 +151,10 @@ void main() {
       );
 
       final result = resolver.resolve(
-        baseSnapshot: SaveSnapshot.fromGameState(save: save, state: state),
+        baseSnapshot: GameSnapshotFactory.fromClientState(
+          save: save,
+          state: state,
+        ),
         currentState: state,
         command: const EndTurnCommand('player_1'),
         savedAt: DateTime.utc(2026, 7, 11, 12),
@@ -196,7 +186,7 @@ void main() {
           investedProduction: 0,
         ),
       );
-      final state = GameState(cities: [city], activePlayerId: 'player_1');
+      final state = GameClientState(cities: [city], activePlayerId: 'player_1');
 
       final result = resolveEndTurnForTest(
         state,
@@ -217,7 +207,7 @@ void main() {
         center: CityHex(col: 2, row: 2),
         population: 1,
       );
-      final state = GameState(
+      final state = GameClientState(
         cities: [city],
         activePlayerId: 'player_1',
         research: ResearchState(
@@ -246,7 +236,7 @@ void main() {
         controlledHexes: [CityHex(col: 2, row: 2)],
         population: 1,
       );
-      const state = GameState(cities: [city], activePlayerId: 'player_1');
+      final state = GameClientState(cities: [city], activePlayerId: 'player_1');
 
       final result = resolveEndTurnForTest(state, 'player_1', mapData);
 
@@ -262,7 +252,10 @@ void main() {
         col: 2,
         row: 2,
       );
-      final state = GameState(units: [commander], activePlayerId: 'player_1');
+      final state = GameClientState(
+        units: [commander],
+        activePlayerId: 'player_1',
+      );
 
       final result = TurnReducer.focusNextPendingAction(
         state,
@@ -307,7 +300,7 @@ void main() {
           col: 4,
           row: 4,
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [worker, patrol, engaged, enemy],
           activePlayerId: 'player_1',
         );
@@ -341,7 +334,7 @@ void main() {
           col: 2,
           row: 2,
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [warrior, worker],
           activePlayerId: 'player_1',
           research: ResearchState(
@@ -351,7 +344,7 @@ void main() {
               ),
             },
           ),
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(
               warrior,
               tile: mapData.tileAt(warrior.col, warrior.row),
@@ -391,7 +384,7 @@ void main() {
           controlledHexes: [CityHex(col: 2, row: 2)],
           productionQueue: null,
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [warrior],
           cities: [city],
           activePlayerId: 'player_1',
@@ -436,7 +429,7 @@ void main() {
           controlledHexes: [CityHex(col: 2, row: 2)],
           productionQueue: null,
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [worker],
           cities: [city],
           activePlayerId: 'player_1',
@@ -447,7 +440,7 @@ void main() {
               ),
             },
           ),
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(
               worker,
               tile: mapData.tileAt(worker.col, worker.row),
@@ -476,7 +469,7 @@ void main() {
         row: 2,
         movementPoints: 0,
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [commander],
         activePlayerId: 'player_1',
         research: ResearchState(
@@ -520,7 +513,7 @@ void main() {
           population: 1,
           productionQueue: null, // no queue
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           cities: [city],
           activePlayerId: 'player_1',
@@ -549,7 +542,7 @@ void main() {
           investedProduction: 0,
         ),
       );
-      final state = GameState(cities: [city], activePlayerId: 'player_1');
+      final state = GameClientState(cities: [city], activePlayerId: 'player_1');
 
       final result = TurnReducer.focusNextPendingAction(
         state,
@@ -580,7 +573,7 @@ void main() {
         controlledHexes: [CityHex(col: 2, row: 2)],
         productionQueue: null,
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [unit],
         cities: [city],
         activePlayerId: 'player_1',
@@ -632,11 +625,11 @@ void main() {
         controlledHexes: [CityHex(col: 2, row: 2)],
         productionQueue: null,
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [unit],
         cities: [city],
         activePlayerId: 'player_1',
-        interaction: GameInteractionState(selection: GameSelection.unit(unit)),
+        interaction: InteractionState(selection: GameSelection.unit(unit)),
       );
 
       final research = TurnReducer.focusNextPendingAction(
@@ -682,7 +675,7 @@ void main() {
         controlledHexes: [CityHex(col: 2, row: 2)],
         productionQueue: null,
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [unit],
         cities: [city],
         activePlayerId: 'player_1',
@@ -724,11 +717,11 @@ void main() {
         controlledHexes: [CityHex(col: 2, row: 2)],
         productionQueue: null,
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [unit],
         cities: [city],
         activePlayerId: 'player_1',
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.city(
             city,
             cityYield: TileYield.zero,
@@ -768,7 +761,7 @@ void main() {
         controlledHexes: [CityHex(col: 2, row: 2)],
         productionQueue: null,
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [unit],
         cities: [city],
         activePlayerId: 'player_1',
@@ -813,7 +806,7 @@ void main() {
         controlledHexes: [CityHex(col: 1, row: 1)],
         productionQueue: null,
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [merchant],
         cities: [city],
         activePlayerId: 'player_1',
@@ -854,7 +847,7 @@ void main() {
           col: 2,
           row: 2,
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [firstUnit, secondUnit],
           activePlayerId: 'player_1',
           research: ResearchState(
@@ -894,7 +887,7 @@ void main() {
           investedProduction: 0,
         ),
       );
-      final state = GameState(
+      final state = GameClientState(
         cities: [city],
         activePlayerId: 'player_1',
         research: ResearchState(

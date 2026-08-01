@@ -8,7 +8,7 @@ import 'package:aonw_core/game/domain/command.dart';
 
 extension ReducerEnvironmentDispatch on ReducerEnvironment {
   GameStateTransition startMerchantTradeRouteSelection(
-    GameState state,
+    GameClientState state,
     StartMerchantTradeRouteSelectionCommand command,
   ) {
     return MerchantTradeRouteReducer.startSelection(
@@ -20,12 +20,12 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
   }
 
   GameStateTransition cancelMerchantTradeRouteSelection(
-    GameState state,
+    GameClientState state,
     CancelMerchantTradeRouteSelectionCommand command,
   ) => MerchantTradeRouteReducer.cancelSelection(state, command);
 
   GameStateTransition startMerchantMoveToCitySelection(
-    GameState state,
+    GameClientState state,
     StartMerchantMoveToCitySelectionCommand command,
   ) {
     return MerchantTradeRouteReducer.startMoveToCitySelection(
@@ -37,12 +37,12 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
   }
 
   GameStateTransition cancelMerchantMoveToCitySelection(
-    GameState state,
+    GameClientState state,
     CancelMerchantMoveToCitySelectionCommand command,
   ) => MerchantTradeRouteReducer.cancelMoveToCitySelection(state, command);
 
   GameStateTransition cancelResearchSelection(
-    GameState state,
+    GameClientState state,
     CancelResearchSelectionCommand command,
   ) {
     return GameStateTransition(
@@ -54,7 +54,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
     );
   }
 
-  GameStateTransition startCityFounding(GameState state) {
+  GameStateTransition startCityFounding(GameClientState state) {
     return GameStateTransition(
       state: CityFoundingReducer.startCityFounding(
         state,
@@ -65,14 +65,14 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
     );
   }
 
-  GameStateTransition cancelCityFounding(GameState state) {
+  GameStateTransition cancelCityFounding(GameClientState state) {
     return GameStateTransition(
       state: CityFoundingReducer.cancelCityFounding(state),
     );
   }
 
   GameStateTransition startCityWorkedHexSelection(
-    GameState state,
+    GameClientState state,
     StartCityWorkedHexSelectionCommand command,
   ) {
     return GameStateTransition(
@@ -85,7 +85,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
   }
 
   GameStateTransition cancelCityWorkedHexSelection(
-    GameState state,
+    GameClientState state,
     CancelCityWorkedHexSelectionCommand command,
   ) {
     return GameStateTransition(
@@ -94,7 +94,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
   }
 
   GameStateTransition startCityExpansionSelection(
-    GameState state,
+    GameClientState state,
     StartCityExpansionSelectionCommand command,
   ) {
     return GameStateTransition(
@@ -107,7 +107,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
   }
 
   GameStateTransition cancelCityExpansionSelection(
-    GameState state,
+    GameClientState state,
     CancelCityExpansionSelectionCommand command,
   ) {
     return GameStateTransition(
@@ -115,25 +115,27 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
     );
   }
 
-  GameStateTransition workerInteraction(GameState state, GameIntent command) =>
-      GameStateTransition(
-        state: switch (command) {
-          StartWorkerActionSelectionCommand() =>
-            InteractionReducer.startWorkerActionSelection(
-              state,
-              command,
-              context: context,
-            ),
-          CancelWorkerActionSelectionCommand() =>
-            InteractionReducer.cancelWorkerActionSelection(state, command),
-          _ => throw UnsupportedError(
-            '${command.runtimeType} is not a worker interaction command',
-          ),
-        },
-      );
+  GameStateTransition workerInteraction(
+    GameClientState state,
+    GameIntent command,
+  ) => GameStateTransition(
+    state: switch (command) {
+      StartWorkerActionSelectionCommand() =>
+        InteractionReducer.startWorkerActionSelection(
+          state,
+          command,
+          context: context,
+        ),
+      CancelWorkerActionSelectionCommand() =>
+        InteractionReducer.cancelWorkerActionSelection(state, command),
+      _ => throw UnsupportedError(
+        '${command.runtimeType} is not a worker interaction command',
+      ),
+    },
+  );
 
   GameStateTransition startAttackTargeting(
-    GameState state,
+    GameClientState state,
     StartAttackTargetingCommand command,
   ) {
     return GameStateTransition(
@@ -146,7 +148,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
   }
 
   GameStateTransition cancelAttackTargeting(
-    GameState state,
+    GameClientState state,
     CancelAttackTargetingCommand command,
   ) {
     return GameStateTransition(
@@ -155,7 +157,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
   }
 
   GameStateTransition startCommanderMergeSelection(
-    GameState state,
+    GameClientState state,
     StartCommanderMergeSelectionCommand command,
   ) {
     return GameStateTransition(
@@ -168,7 +170,7 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
   }
 
   GameStateTransition cancelCommanderMergeSelection(
-    GameState state,
+    GameClientState state,
     CancelCommanderMergeSelectionCommand command,
   ) {
     return GameStateTransition(

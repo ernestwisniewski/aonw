@@ -13,11 +13,11 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/domain/intended_attack.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
@@ -26,7 +26,6 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -95,12 +94,11 @@ void main() {
         save: _save(gameMode: GameMode.hotSeat),
         strategy: strategy,
         transport: transport,
-        runtimeState: GameRuntimeState(
-          diplomacy: DiplomacyState.empty.setStatus(
-            'player_1',
-            'player_2',
-            DiplomaticRelationStatus.friendly,
-          ),
+
+        diplomacy: DiplomacyState.empty.setStatus(
+          'player_1',
+          'player_2',
+          DiplomaticRelationStatus.friendly,
         ),
       );
 
@@ -121,12 +119,11 @@ void main() {
         save: _save(gameMode: GameMode.hotSeat),
         strategy: strategy,
         transport: transport,
-        runtimeState: GameRuntimeState(
-          diplomacy: DiplomacyState.empty.setStatus(
-            'player_1',
-            'player_2',
-            DiplomaticRelationStatus.neutral,
-          ),
+
+        diplomacy: DiplomacyState.empty.setStatus(
+          'player_1',
+          'player_2',
+          DiplomaticRelationStatus.neutral,
         ),
       );
 
@@ -166,12 +163,11 @@ void main() {
         transport: transport,
         cities: cities,
         artifacts: artifacts,
-        runtimeState: GameRuntimeState(
-          diplomacy: DiplomacyState.empty.setStatus(
-            'player_1',
-            'player_2',
-            DiplomaticRelationStatus.neutral,
-          ),
+
+        diplomacy: DiplomacyState.empty.setStatus(
+          'player_1',
+          'player_2',
+          DiplomaticRelationStatus.neutral,
         ),
       );
 
@@ -192,12 +188,11 @@ void main() {
         save: _save(gameMode: GameMode.hotSeat),
         strategy: strategy,
         transport: transport,
-        runtimeState: GameRuntimeState(
-          diplomacy: DiplomacyState.empty.setStatus(
-            'player_1',
-            'player_2',
-            DiplomaticRelationStatus.war,
-          ),
+
+        diplomacy: DiplomacyState.empty.setStatus(
+          'player_1',
+          'player_2',
+          DiplomaticRelationStatus.war,
         ),
       );
 
@@ -218,12 +213,11 @@ void main() {
         save: _save(gameMode: GameMode.hotSeat),
         strategy: strategy,
         transport: transport,
-        runtimeState: GameRuntimeState(
-          diplomacy: DiplomacyState.empty.setStatus(
-            'player_1',
-            'player_2',
-            DiplomaticRelationStatus.hostile,
-          ),
+
+        diplomacy: DiplomacyState.empty.setStatus(
+          'player_1',
+          'player_2',
+          DiplomaticRelationStatus.hostile,
         ),
       );
 
@@ -292,12 +286,11 @@ void main() {
             center: CityHex(col: 1, row: 0),
           ),
         ],
-        runtimeState: GameRuntimeState(
-          diplomacy: DiplomacyState.empty.setStatus(
-            'player_1',
-            'player_2',
-            DiplomaticRelationStatus.neutral,
-          ),
+
+        diplomacy: DiplomacyState.empty.setStatus(
+          'player_1',
+          'player_2',
+          DiplomaticRelationStatus.neutral,
         ),
       );
 
@@ -439,7 +432,7 @@ void main() {
       final report = await useCase.execute(
         saveId: 'save_1',
         playerId: 'player_2',
-        snapshot: SaveSnapshot(
+        snapshot: GameSnapshotFactory.create(
           save: _save(gameMode: GameMode.hotSeat).copyWith(id: 'other_save'),
         ),
         interCommandDelay: Duration.zero,
@@ -500,17 +493,16 @@ void main() {
         save: _save(gameMode: GameMode.multiplayer),
         strategy: strategy,
         transport: transport,
-        runtimeState: const GameRuntimeState(
-          intendedAttacks: [
-            IntendedAttack(
-              attackerUnitId: 'commander_player_1',
-              defenderCol: 1,
-              defenderRow: 0,
-              declaredAtTick: 7,
-              declaringPlayerId: 'player_1',
-            ),
-          ],
-        ),
+
+        intendedAttacks: [
+          const IntendedAttack(
+            attackerUnitId: 'commander_player_1',
+            defenderCol: 1,
+            defenderRow: 0,
+            declaredAtTick: 7,
+            declaringPlayerId: 'player_1',
+          ),
+        ],
       );
 
       final report = await useCase.execute(
@@ -537,22 +529,21 @@ void main() {
           save: _save(gameMode: GameMode.multiplayer),
           strategy: strategy,
           transport: transport,
-          runtimeState: GameRuntimeState(
-            diplomacy: DiplomacyState.empty.setStatus(
-              'player_1',
-              'player_2',
-              DiplomaticRelationStatus.neutral,
-            ),
-            intendedAttacks: const [
-              IntendedAttack(
-                attackerUnitId: 'commander_player_1',
-                defenderCol: 1,
-                defenderRow: 0,
-                declaredAtTick: 7,
-                declaringPlayerId: 'player_1',
-              ),
-            ],
+
+          diplomacy: DiplomacyState.empty.setStatus(
+            'player_1',
+            'player_2',
+            DiplomaticRelationStatus.neutral,
           ),
+          intendedAttacks: const [
+            IntendedAttack(
+              attackerUnitId: 'commander_player_1',
+              defenderCol: 1,
+              defenderRow: 0,
+              declaredAtTick: 7,
+              declaringPlayerId: 'player_1',
+            ),
+          ],
         );
 
         final report = await useCase.execute(
@@ -590,17 +581,16 @@ void main() {
             center: CityHex(col: 1, row: 0),
           ),
         ],
-        runtimeState: const GameRuntimeState(
-          intendedAttacks: [
-            IntendedAttack(
-              attackerUnitId: 'commander_player_1',
-              defenderCol: 1,
-              defenderRow: 0,
-              declaredAtTick: 9,
-              declaringPlayerId: 'player_1',
-            ),
-          ],
-        ),
+
+        intendedAttacks: [
+          const IntendedAttack(
+            attackerUnitId: 'commander_player_1',
+            defenderCol: 1,
+            defenderRow: 0,
+            declaredAtTick: 9,
+            declaringPlayerId: 'player_1',
+          ),
+        ],
       );
 
       final report = await useCase.execute(
@@ -635,13 +625,14 @@ RunAiTurnUseCase _useCase({
   List<GameUnit>? units,
   List<GameCity>? cities,
   List<WorldArtifact> artifacts = const [],
-  GameRuntimeState runtimeState = GameRuntimeState.empty,
+  DiplomacyState diplomacy = DiplomacyState.empty,
+  List<IntendedAttack> intendedAttacks = const [],
   int eventLogOffset = 0,
   AiRecentHostilityTracker? recentHostilityTracker,
 }) {
   return RunAiTurnUseCase(
     repository: _MemoryGameRepository(
-      SaveSnapshot(
+      GameSnapshotFactory.create(
         save: save,
         units:
             units ??
@@ -659,7 +650,9 @@ RunAiTurnUseCase _useCase({
             ],
         cities: cities ?? const [],
         artifacts: artifacts,
-        runtimeState: runtimeState.copyWith(turnStartedAt: save.savedAt),
+        diplomacy: diplomacy,
+        intendedAttacks: intendedAttacks,
+        turnStartedAt: save.savedAt,
         eventLogOffset: eventLogOffset,
       ),
     ),
@@ -692,12 +685,12 @@ class _CapturingStrategy implements AiStrategy {
 
 class _RecordingCommandTransport implements CommandTransport {
   final commands = <DomainCommand>[];
-  final states = <GameState>[];
+  final states = <GameClientState>[];
 
   @override
   Future<CommandTransportResult> dispatch({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
     bool fromMovePreviewConfirmation = false,
@@ -711,14 +704,16 @@ class _RecordingCommandTransport implements CommandTransport {
     };
     return CommandTransportResult(
       state: nextState,
-      snapshot: SaveSnapshot(save: _save(gameMode: GameMode.hotSeat)),
+      snapshot: GameSnapshotFactory.create(
+        save: _save(gameMode: GameMode.hotSeat),
+      ),
       offset: commands.length,
     );
   }
 }
 
 class _MemoryGameRepository implements GameRepository {
-  final SaveSnapshot snapshot;
+  final CanonicalGameSnapshot snapshot;
 
   const _MemoryGameRepository(this.snapshot);
 
@@ -735,13 +730,13 @@ class _MemoryGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async => snapshot;
+  Future<CanonicalGameSnapshot> load(String saveId) async => snapshot;
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {}
+  Future<void> save(CanonicalGameSnapshot snapshot) async {}
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
@@ -804,18 +799,18 @@ GameSave _save({
   );
 }
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 2,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 1,
       row: 0,
       terrains: [TerrainType.plains],

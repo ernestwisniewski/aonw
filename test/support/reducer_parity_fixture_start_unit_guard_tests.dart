@@ -242,7 +242,7 @@ void _addReviewedIronImport(Map<String, dynamic> json) {
   final state = _inputState(json);
   final city = _inputCity(json, 'city_1');
   final playerId = city['ownerPlayerId'] as String;
-  final runtime = state['runtimeState'] as Map<String, dynamic>;
+  final runtime = state['lifecycle'] as Map<String, dynamic>;
   runtime['resourceTradeAgreements'] = [
     {
       'id': 'trade_iron_guard',

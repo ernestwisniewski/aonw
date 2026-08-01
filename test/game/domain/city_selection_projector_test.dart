@@ -1,8 +1,8 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/city_selection_projector.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
@@ -28,7 +28,7 @@ void main() {
       );
 
       final selection = CitySelectionProjector.project(
-        state: const GameState(cities: [city], artifacts: [artifact]),
+        state: GameClientState(cities: [city], artifacts: [artifact]),
         city: city,
         mapTiles: _mapData(),
         ruleset: GameRuleset.defaults,
@@ -74,7 +74,7 @@ void main() {
         );
 
         final selection = CitySelectionProjector.project(
-          state: GameState(
+          state: GameClientState(
             cities: const [selectedCity, wonderHostCity],
             wonderRegistry: completedRegistry,
           ),
@@ -98,7 +98,7 @@ void main() {
       );
 
       final selection = CitySelectionProjector.project(
-        state: const GameState(cities: [city]),
+        state: GameClientState(cities: [city]),
         city: city,
         mapTiles: _mapData(),
         ruleset: GameRuleset.defaults,
@@ -115,7 +115,7 @@ void main() {
 
       for (final testCase in _stabilityProjectionCases) {
         final selection = CitySelectionProjector.project(
-          state: GameState(
+          state: GameClientState(
             cities: const [_stabilityCity],
             playerStabilityNet: testCase.playerStabilityNet,
             activePlayerId: testCase.activePlayerId,
@@ -284,18 +284,18 @@ final _stabilityProjectionCases =
       ),
     ];
 
-MapData _mapData() => MapData(
+WorldMap _mapData() => WorldMap(
   cols: 2,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 1,
       row: 0,
       terrains: [TerrainType.plains],

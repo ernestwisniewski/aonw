@@ -1,16 +1,16 @@
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/era_tint_overlay_layer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 2,
   rows: 1,
   tiles: [
     for (var col = 0; col < 2; col++)
-      TileData(
+      WorldTile(
         col: col,
         row: 0,
         terrains: const [TerrainType.grassland],

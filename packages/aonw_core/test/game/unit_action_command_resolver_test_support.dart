@@ -3,7 +3,7 @@ part of 'unit_action_command_resolver_test.dart';
 void _expectFortifyRejected(
   List<GameUnit> units,
   List<WorldArtifact> artifacts,
-  PersistedInteractionState interaction, {
+  DomainActionState interaction, {
   required String unitId,
   required String actorPlayerId,
   required String reason,
@@ -27,7 +27,7 @@ void _expectRejected(
   UnitActionCommandResult result, {
   required List<GameUnit> units,
   required List<WorldArtifact> artifacts,
-  required PersistedInteractionState interaction,
+  required DomainActionState interaction,
   required String reason,
 }) {
   expect((result.accepted, result.reason), (false, reason));

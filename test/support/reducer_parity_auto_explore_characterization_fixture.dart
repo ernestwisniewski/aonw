@@ -76,8 +76,8 @@ GameUnit _autoExploreUnit({
   );
 }
 
-PersistentGameState _autoExploreState(
-  PersistentGameState source, {
+DomainState _autoExploreState(
+  DomainState source, {
   required List<GameUnit> units,
   List<GameCity> cities = const [],
   FogOfWarState? fogOfWar,
@@ -95,7 +95,8 @@ PersistentGameState _autoExploreState(
           visible: {const HexCoordinate(col: 0, row: 0)},
         ),
     research: _autoExploreSentinelResearch,
-    runtimeState: GameRuntimeState.snapshot(
+
+    actions: DomainActionState(
       cityFoundingDraft: CityFoundingDraft(
         unitId: interactionUnitId,
         ownerPlayerId: _autoExploreActorId,
@@ -107,57 +108,58 @@ PersistentGameState _autoExploreState(
         unitId: interactionUnitId,
         restoreMovementPoints: 2,
       ),
-      submittedPlayerIds: const {'sentinel_submitted'},
-      timeoutStreaksByPlayerId: const {'sentinel_timeout': 2},
-      afkPlayerIds: const {'sentinel_afk'},
-      kickedPlayerIds: const {'sentinel_kicked'},
-      intendedAttacks: const [
-        IntendedAttack(
-          attackerUnitId: 'sentinel_attacker',
-          defenderCol: 30,
-          defenderRow: 30,
-          declaredAtTick: 43,
-          declaringPlayerId: 'sentinel_player',
-        ),
-      ],
-      diplomacy: _autoExploreSentinelDiplomacy,
-      dominationHoldTurnsByPlayerId: const {'sentinel_player': 3},
-      culturalVictoryHoldTurnsByPlayerId: const {'sentinel_player': 4},
-      mapObjectiveHoldStatesByObjectiveId: const {
-        'sentinel_objective': MapObjectiveHoldState(
-          objectiveId: 'sentinel_objective',
-          playerId: 'sentinel_player',
-          holdTurns: 2,
-        ),
-      },
-      resourceTradeAgreements: const [
-        ResourceTradeAgreement(
-          id: 'auto_explore_sentinel_trade',
-          exporterPlayerId: _autoExploreOpponentId,
-          importerPlayerId: _autoExploreActorId,
-          resource: ResourceType.coal,
-          goldPerTurn: 7,
-          remainingTurns: 9,
-        ),
-      ],
-      turnStartedAt: DateTime.utc(2026, 7, 1, 12),
     ),
+    submittedPlayerIds: const {'sentinel_submitted'},
+    timeoutStreaksByPlayerId: const {'sentinel_timeout': 2},
+    afkPlayerIds: const {'sentinel_afk'},
+    kickedPlayerIds: const {'sentinel_kicked'},
+    intendedAttacks: const [
+      IntendedAttack(
+        attackerUnitId: 'sentinel_attacker',
+        defenderCol: 30,
+        defenderRow: 30,
+        declaredAtTick: 43,
+        declaringPlayerId: 'sentinel_player',
+      ),
+    ],
+    diplomacy: _autoExploreSentinelDiplomacy,
+    dominationHoldTurnsByPlayerId: const {'sentinel_player': 3},
+    culturalVictoryHoldTurnsByPlayerId: const {'sentinel_player': 4},
+    mapObjectiveHoldStatesByObjectiveId: const {
+      'sentinel_objective': MapObjectiveHoldState(
+        objectiveId: 'sentinel_objective',
+        playerId: 'sentinel_player',
+        holdTurns: 2,
+      ),
+    },
+    resourceTradeAgreements: const [
+      ResourceTradeAgreement(
+        id: 'auto_explore_sentinel_trade',
+        exporterPlayerId: _autoExploreOpponentId,
+        importerPlayerId: _autoExploreActorId,
+        resource: ResourceType.coal,
+        goldPerTurn: 7,
+        remainingTurns: 9,
+      ),
+    ],
+    turnStartedAt: DateTime.utc(2026, 7, 1, 12),
+
     wonderRegistry: _autoExploreSentinelWonderRegistry,
   );
 }
 
-MapData _autoExploreMap(
+WorldMap _autoExploreMap(
   ReducerParityFixture template, {
   required int cols,
   Map<int, List<TerrainType>> terrainOverrides = const {},
 }) {
-  return MapData(
+  return WorldMap(
     cols: cols,
     rows: 1,
     mapName: template.save.mapName,
     tiles: [
       for (var col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: terrainOverrides[col] ?? const [TerrainType.grassland],
@@ -203,8 +205,8 @@ ReducerParityFixture _autoExploreFixture(
   ReducerParityFixture template, {
   required String id,
   required int tickOffset,
-  required MapData mapData,
-  required PersistentGameState state,
+  required WorldMap mapData,
+  required DomainState state,
   required AutoExploreUnitCommand command,
 }) {
   final required = _requiredAutoExploreCharacterization[id]!;
@@ -222,7 +224,9 @@ ReducerParityFixture _autoExploreFixture(
     expectedAccepted: required.accepted,
     expectedReason: required.reason,
     expectedSave: reducerParitySave(template.save),
-    expectedState: _autoExploreExpectedState(id, state).toJson(),
+    expectedState: CanonicalGameSnapshotCodec.encodeDomainState(
+      _autoExploreExpectedState(id, state),
+    ),
     expectedEvents: reducerParityEvents(_autoExploreExpectedEvents(id)),
   );
 }

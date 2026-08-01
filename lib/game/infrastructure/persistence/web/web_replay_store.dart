@@ -13,14 +13,17 @@ class WebReplayStore implements ReplayStore {
   const WebReplayStore({required this.database});
 
   @override
-  Future<SaveSnapshot?> initialSnapshot(String saveId) async {
+  Future<CanonicalGameSnapshot?> initialSnapshot(String saveId) async {
     final json = await _store.record(saveId).get(database.database);
     if (json == null) return null;
     return SaveSnapshotCodec.fromJson(Map<String, dynamic>.from(json));
   }
 
   @override
-  Future<void> saveInitialSnapshot(String saveId, SaveSnapshot snapshot) async {
+  Future<void> saveInitialSnapshot(
+    String saveId,
+    CanonicalGameSnapshot snapshot,
+  ) async {
     if (await _store.record(saveId).exists(database.database)) return;
     await _store
         .record(saveId)

@@ -122,7 +122,7 @@ void _registerWarValidationTests() {
 
       expect(result.accepted, isTrue);
       expect(
-        result.state.runtimeState.diplomacy.statusBetween(_player1, _player2),
+        result.state.diplomacy.statusBetween(_player1, _player2),
         DiplomaticRelationStatus.war,
       );
     });
@@ -206,7 +206,7 @@ void _registerWarSuccessTests() {
       turn: 9,
     );
 
-    final next = result.state.runtimeState.diplomacy;
+    final next = result.state.diplomacy;
     expect(
       next.statusBetween(_player1, _player2),
       DiplomaticRelationStatus.war,
@@ -216,14 +216,11 @@ void _registerWarSuccessTests() {
     expect(next.relationScoreBetween(_player1, _player4), -8);
     expect(next.relationScoreBetween(_player1, 'p5'), 0);
     expect(next.pendingProposals, {'unrelated_proposal': unrelatedProposal});
-    expect(result.state.runtimeState.resourceTradeAgreements, const [
+    expect(result.state.resourceTradeAgreements, const [
       unrelatedTrade,
       _sentinelTrade,
     ]);
-    expect(
-      result.state.runtimeState.intendedAttacks,
-      same(state.runtimeState.intendedAttacks),
-    );
+    expect(result.state.intendedAttacks, same(state.intendedAttacks));
     _expectWarEvents(result.events);
     _expectOuterSentinelsUnchanged(result, state);
     _expectRuntimeSentinelsUnchanged(result, state, tradesChanged: true);
@@ -358,13 +355,7 @@ void _registerGoldGiftSuccessTests() {
       _player2: 100,
       _sentinelPlayer: 97,
     });
-    expect(
-      result.state.runtimeState.diplomacy.relationScoreBetween(
-        _player1,
-        _player2,
-      ),
-      12,
-    );
+    expect(result.state.diplomacy.relationScoreBetween(_player1, _player2), 12);
     expect(result.events, hasLength(1));
     final score = result.events.single as DiplomaticScoreChangedEvent;
     expect(score.playerAId, _player1);
@@ -416,7 +407,7 @@ void _registerGoldGiftSuccessTests() {
 }
 
 _DiplomacyTestResult _sendGift(
-  PersistentGameState state, {
+  DomainState state, {
   required int amount,
   int turn = 10,
 }) {

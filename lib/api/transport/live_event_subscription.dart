@@ -176,7 +176,7 @@ class LiveEventSubscription {
     required int fromOffset,
     int Function()? nextOffset,
     required void Function(LiveServerEvent event) onEvent,
-    required void Function(SaveSnapshot snapshot) onSnapshotResync,
+    required void Function(CanonicalGameSnapshot snapshot) onSnapshotResync,
     void Function(WireMatch match)? onMatch,
     void Function()? onConnected,
     void Function()? onReconnecting,
@@ -223,7 +223,7 @@ class _LiveEventSubscriptionController {
   final MultiplayerAuthTokenReader? tokenReader;
   final int Function()? nextOffset;
   final void Function(LiveServerEvent event) onEvent;
-  final void Function(SaveSnapshot snapshot) onSnapshotResync;
+  final void Function(CanonicalGameSnapshot snapshot) onSnapshotResync;
   final void Function(WireMatch match)? onMatch;
   final void Function()? onConnected;
   final void Function()? onReconnecting;
@@ -357,7 +357,7 @@ class _LiveEventSubscriptionController {
 
     final snapshot = message.snapshot;
     final event = message.event;
-    SaveSnapshot? saveSnapshot;
+    CanonicalGameSnapshot? saveSnapshot;
     if (snapshot != null) {
       saveSnapshot = snapshotCodec.fromWire(snapshot);
       _advanceTrackedOffset(saveSnapshot.eventLogOffset);

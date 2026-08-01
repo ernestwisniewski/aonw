@@ -7,9 +7,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/movement_engine_test_driver.dart';
@@ -19,15 +17,13 @@ void main() {
     final merchant = _merchant(col: 0);
     final origin = _city('origin', 0);
     final destination = _city('destination', 3);
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [merchant],
       cities: [origin, destination],
-      interaction: GameInteractionState(
-        selection: GameSelection.unit(merchant),
-      ),
+      interaction: InteractionState(selection: GameSelection.unit(merchant)),
     );
-    final MapTraversalView mapView = WorldMapReadView(_worldMap());
+    final MapTraversalView mapView = _worldMap();
 
     final started = MerchantTradeRouteReducer.startSelection(
       state,
@@ -78,15 +74,13 @@ void main() {
       col: 3,
       row: 0,
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [merchant, guard],
       cities: [destination],
-      interaction: GameInteractionState(
-        selection: GameSelection.unit(merchant),
-      ),
+      interaction: InteractionState(selection: GameSelection.unit(merchant)),
     );
-    final MapTraversalView mapView = WorldMapReadView(_worldMap());
+    final MapTraversalView mapView = _worldMap();
 
     final started = MerchantTradeRouteReducer.startMoveToCitySelection(
       state,
@@ -135,11 +129,11 @@ void main() {
       ownerPlayerId: 'player_1',
       center: const CityHex(col: 2, row: 0),
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [merchant],
       cities: [origin, destination],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(merchant),
         cityFoundingDraft: draft,
         pendingAction: pending,
@@ -150,7 +144,7 @@ void main() {
     final result = resolveMovementCommandForTest(
       state,
       const AssignMerchantTradeRouteCommand('merchant_1', 'destination'),
-      WorldMapReadView(_worldMap()),
+      _worldMap(),
     );
 
     expect(result.state.pendingAction, same(pending));
@@ -165,11 +159,11 @@ void main() {
 
   test('accepted routing clears transient interaction owned by merchant', () {
     final merchant = _merchant(col: 0);
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [merchant],
       cities: [_city('origin', 0), _city('destination', 3)],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(merchant),
         cityFoundingDraft: CityFoundingDraft(
           unitId: merchant.id,
@@ -187,7 +181,7 @@ void main() {
     final result = resolveMovementCommandForTest(
       state,
       const AssignMerchantTradeRouteCommand('merchant_1', 'destination'),
-      WorldMapReadView(_worldMap()),
+      _worldMap(),
     );
 
     expect(result.state.pendingAction, isNull);
@@ -198,15 +192,13 @@ void main() {
 
   test('accepted unchanged trade route preserves full state identity', () {
     final merchant = _merchant(col: 0);
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [merchant],
       cities: [_city('origin', 0), _city('destination', 3)],
-      interaction: GameInteractionState(
-        selection: GameSelection.unit(merchant),
-      ),
+      interaction: InteractionState(selection: GameSelection.unit(merchant)),
     );
-    final mapView = WorldMapReadView(_worldMap());
+    final mapView = _worldMap();
     const command = AssignMerchantTradeRouteCommand(
       'merchant_1',
       'destination',
@@ -224,15 +216,13 @@ void main() {
 
   test('accepted unchanged merchant move preserves full state identity', () {
     final merchant = _merchant(col: 1);
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [merchant],
       cities: [_city('destination', 3)],
-      interaction: GameInteractionState(
-        selection: GameSelection.unit(merchant),
-      ),
+      interaction: InteractionState(selection: GameSelection.unit(merchant)),
     );
-    final mapView = WorldMapReadView(_worldMap());
+    final mapView = _worldMap();
     const command = MoveMerchantToCityCommand('merchant_1', 'destination');
 
     final first = resolveMovementCommandForTest(state, command, mapView);
@@ -247,19 +237,17 @@ void main() {
 
   test('rejected routing preserves the complete local state identity', () {
     final merchant = _merchant(col: 0);
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_2',
       units: [merchant],
       cities: [_city('origin', 0), _city('destination', 3)],
-      interaction: GameInteractionState(
-        selection: GameSelection.unit(merchant),
-      ),
+      interaction: InteractionState(selection: GameSelection.unit(merchant)),
     );
 
     final result = resolveMovementCommandForTest(
       state,
       const AssignMerchantTradeRouteCommand('merchant_1', 'destination'),
-      WorldMapReadView(_worldMap()),
+      _worldMap(),
     );
 
     expect(result.state, same(state));
@@ -292,7 +280,7 @@ WorldMap _worldMap() {
     rows: 1,
     tiles: [
       for (var col = 0; col < 4; col += 1)
-        WorldTile(
+        WorldTile.at(
           coordinate: HexCoord(col: col, row: 0),
           terrains: const [TerrainType.plains],
           resources: col <= 1

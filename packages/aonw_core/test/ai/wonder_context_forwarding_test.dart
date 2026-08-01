@@ -98,7 +98,7 @@ void main() {
         name: 'Opponent City',
         center: CityHex(col: 0, row: 0),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: const [opponentCity],
         wonderRegistry: _completedWonderRegistry,
       );
@@ -153,8 +153,8 @@ EconomySimulationTurnRow _telemetryRow({required bool wonderCompleted}) {
   );
 }
 
-PersistentGameState _state({required bool wonderCompleted}) {
-  return PersistentGameState(
+DomainState _state({required bool wonderCompleted}) {
+  return DomainState.snapshot(
     playerGold: const {_playerId: 0},
     cities: _cities,
     wonderRegistry: _registry(wonderCompleted),
@@ -273,18 +273,18 @@ final _hostOnlyRuleset = GameRuleset.defaults.copyWith(
   ),
 );
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 2,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 1,
       row: 0,
       terrains: [TerrainType.plains],

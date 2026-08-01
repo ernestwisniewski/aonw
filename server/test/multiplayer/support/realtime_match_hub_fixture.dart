@@ -1,5 +1,10 @@
 part of '../realtime_match_hub_test.dart';
 
+extension _DomainStateTestJson on DomainState {
+  Map<String, dynamic> toJson() =>
+      CanonicalGameSnapshotCodec.encodeDomainState(this);
+}
+
 final class _CreateConflictOnceMatchStore extends _MemoryMatchStore {
   var _conflictPending = true;
 
@@ -46,13 +51,13 @@ int _compareTestMatchesNewestFirst(WireMatch first, WireMatch second) {
 class _FakeMapCatalog implements MultiplayerMapCatalog {
   const _FakeMapCatalog(this.mapData);
 
-  final MapData mapData;
+  final WorldMap mapData;
 
   @override
-  Future<MapData> loadAssetMap(String mapName) async => mapData;
+  Future<WorldMap> loadAssetMap(String mapName) async => mapData;
 }
 
-MapData _testMap() => _realtimeMatchHubFixtureMap();
+WorldMap _testMap() => _realtimeMatchHubFixtureMap();
 
 Future<WireMatch> _startRunningMatchInStore({
   required RealtimeMatchHub hub,
@@ -90,14 +95,14 @@ String _clientMessageKey(
   String clientMessageId,
 ) => '$matchId:$actorPlayerId:$clientMessageId';
 
-MapData _realtimeMatchHubFixtureMap() {
-  return MapData(
+WorldMap _realtimeMatchHubFixtureMap() {
+  return WorldMap(
     cols: 6,
     rows: 6,
     tiles: [
       for (var col = 0; col < 6; col++)
         for (var row = 0; row < 6; row++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.grassland],

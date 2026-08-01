@@ -3,7 +3,6 @@ import 'package:aonw_core/game/domain/city/city_rulesets.dart';
 import 'package:aonw_core/game/domain/city/worker_command_resolver.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
-import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
@@ -19,7 +18,7 @@ final class DomainWorkerCommandResult {
 
   final bool accepted;
   final DomainState state;
-  final PersistedInteractionState interaction;
+  final DomainActionState interaction;
   final String? reason;
 }
 
@@ -29,7 +28,7 @@ final class DomainWorkerCommandResolver {
 
   DomainWorkerCommandResult selectWorkerImprovement({
     required DomainState state,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required SelectWorkerImprovementCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
@@ -58,7 +57,7 @@ final class DomainWorkerCommandResolver {
 
   DomainWorkerCommandResult confirmWorkerImprovement({
     required DomainState state,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required ConfirmWorkerImprovementCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
@@ -87,7 +86,7 @@ final class DomainWorkerCommandResolver {
 
   DomainWorkerCommandResult cancelWorkerJob({
     required DomainState state,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required CancelWorkerJobCommand command,
     required String actorPlayerId,
   }) {
@@ -105,7 +104,7 @@ final class DomainWorkerCommandResolver {
 
   DomainWorkerCommandResult assignWorkerToHex({
     required DomainState state,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required AssignWorkerToHexCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
@@ -127,7 +126,7 @@ final class DomainWorkerCommandResolver {
 
   DomainWorkerCommandResult cancelWorkerAssignment({
     required DomainState state,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required CancelWorkerAssignmentCommand command,
     required String actorPlayerId,
   }) {
@@ -145,7 +144,7 @@ final class DomainWorkerCommandResolver {
 
   static DomainWorkerCommandResult _apply(
     DomainState state,
-    PersistedInteractionState interaction,
+    DomainActionState interaction,
     WorkerCommandResult result,
   ) {
     if (!result.accepted) {

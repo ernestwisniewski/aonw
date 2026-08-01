@@ -5,8 +5,8 @@ import 'package:aonw/game/application/services/event_log_replay_service.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -35,7 +35,7 @@ void main() {
       reducer: GameStateReducer(mapData: _map()),
     );
 
-    final state = GameState(units: [commander]);
+    final state = GameClientState(units: [commander]);
     final replayed = await service.replaySinceSnapshot(
       saveId: 'save_1',
       snapshot: _snapshot(state, offset: 1),
@@ -65,8 +65,8 @@ void main() {
     await expectLater(
       service.replaySinceSnapshot(
         saveId: 'save_1',
-        snapshot: _snapshot(GameState(units: [commander]), offset: 1),
-        state: GameState(units: [commander]),
+        snapshot: _snapshot(GameClientState(units: [commander]), offset: 1),
+        state: GameClientState(units: [commander]),
       ),
       throwsA(isA<StateError>()),
     );
@@ -90,8 +90,8 @@ void main() {
     await expectLater(
       service.replaySinceSnapshot(
         saveId: 'save_1',
-        snapshot: _snapshot(GameState(units: [commander]), offset: 1),
-        state: GameState(units: [commander]),
+        snapshot: _snapshot(GameClientState(units: [commander]), offset: 1),
+        state: GameClientState(units: [commander]),
       ),
       throwsA(
         isA<AuthoritativeSnapshotRequiredException>().having(
@@ -121,8 +121,8 @@ void main() {
     await expectLater(
       service.replaySinceSnapshot(
         saveId: 'save_1',
-        snapshot: _snapshot(GameState(units: [commander]), offset: 1),
-        state: GameState(units: [commander]),
+        snapshot: _snapshot(GameClientState(units: [commander]), offset: 1),
+        state: GameClientState(units: [commander]),
       ),
       throwsA(
         isA<AuthoritativeSnapshotRequiredException>().having(
@@ -135,8 +135,8 @@ void main() {
   });
 }
 
-SaveSnapshot _snapshot(GameState state, {required int offset}) {
-  return SaveSnapshot.fromGameState(
+CanonicalGameSnapshot _snapshot(GameClientState state, {required int offset}) {
+  return GameSnapshotFactory.fromClientState(
     save: GameSave(
       id: 'save_1',
       name: 'Replay',
@@ -179,13 +179,13 @@ class _MemoryEventLog implements EventLog {
   }
 }
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 3,
   rows: 3,
   tiles: [
     for (var row = 0; row < 3; row++)
       for (var col = 0; col < 3; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],

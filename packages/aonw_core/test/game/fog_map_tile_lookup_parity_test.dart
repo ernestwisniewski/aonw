@@ -145,7 +145,7 @@ Set<HexCoordinate> _visibleHexes(MapTileLookup mapData) {
   );
 }
 
-MapTileLookup _worldMapLookup(MapData mapData) {
+MapTileLookup _worldMapLookup(WorldMap mapData) {
   final worldMap = WorldMap.fromTileViews(
     cols: mapData.cols,
     rows: mapData.rows,
@@ -154,63 +154,63 @@ MapTileLookup _worldMapLookup(MapData mapData) {
     mapName: mapData.mapName,
     defaultZoom: mapData.defaultZoom,
   );
-  return WorldMapReadView(worldMap);
+  return worldMap;
 }
 
-MapData _sparseFogMap() => MapData(
+WorldMap _sparseFogMap() => WorldMap(
   cols: 5,
   rows: 5,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 1,
       row: 2,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 2,
       row: 2,
       terrains: [TerrainType.mountain],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 3,
       row: 2,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 1,
       row: 3,
       terrains: [TerrainType.plains],
       resources: [],
       height: 2,
     ),
-    TileData(
+    WorldTile(
       col: 1,
       row: 4,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 1,
       row: 1,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 1,
       row: 0,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 4,
       row: 4,
       terrains: [TerrainType.plains],

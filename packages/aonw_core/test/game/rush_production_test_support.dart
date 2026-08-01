@@ -3,7 +3,7 @@ import 'package:aonw_core/domain.dart';
 const rushCharacterizationPlayerId = 'player_1';
 const rushCharacterizationOtherPlayerId = 'player_2';
 
-PersistentGameState rushCharacterizationState({
+DomainState rushCharacterizationState({
   required List<GameCity> cities,
   Map<String, int>? playerGold,
   Map<String, int>? playerStabilityNet,
@@ -13,7 +13,7 @@ PersistentGameState rushCharacterizationState({
   ResearchState research = ResearchState.empty,
   WonderRegistry? wonderRegistry,
 }) {
-  return PersistentGameState.snapshot(
+  return DomainState.snapshot(
     playerColors: const {
       rushCharacterizationPlayerId: 0xFF336699,
       rushCharacterizationOtherPlayerId: 0xFF993333,
@@ -67,16 +67,16 @@ PersistentGameState rushCharacterizationState({
           ),
         ],
     research: research,
-    runtimeState: GameRuntimeState.snapshot(
-      submittedPlayerIds: const {rushCharacterizationOtherPlayerId},
-      timeoutStreaksByPlayerId: const {rushCharacterizationOtherPlayerId: 1},
-      afkPlayerIds: const {rushCharacterizationOtherPlayerId},
-      dominationHoldTurnsByPlayerId: const {rushCharacterizationPlayerId: 2},
-      culturalVictoryHoldTurnsByPlayerId: const {
-        rushCharacterizationOtherPlayerId: 3,
-      },
-      turnStartedAt: DateTime.utc(2026, 7, 18, 12),
-    ),
+
+    submittedPlayerIds: const {rushCharacterizationOtherPlayerId},
+    timeoutStreaksByPlayerId: const {rushCharacterizationOtherPlayerId: 1},
+    afkPlayerIds: const {rushCharacterizationOtherPlayerId},
+    dominationHoldTurnsByPlayerId: const {rushCharacterizationPlayerId: 2},
+    culturalVictoryHoldTurnsByPlayerId: const {
+      rushCharacterizationOtherPlayerId: 3,
+    },
+    turnStartedAt: DateTime.utc(2026, 7, 18, 12),
+
     wonderRegistry:
         wonderRegistry ??
         WonderRegistry.empty.complete(
@@ -149,24 +149,22 @@ CityProductionQueue rushCharacterizationUnitQueue({
 MapTileLookup rushCharacterizationMap({
   TerrainType workedTerrain = TerrainType.grassland,
 }) {
-  return WorldMapReadView(
-    WorldMap(
-      cols: 7,
-      rows: 7,
-      mapName: 'rush_characterization',
-      tiles: [
-        for (var row = 0; row < 7; row++)
-          for (var col = 0; col < 7; col++)
-            WorldTile(
-              coordinate: HexCoord(col: col, row: row),
-              terrains: col == 2 && row == 1
-                  ? [workedTerrain]
-                  : const [TerrainType.grassland],
-              resources: const [],
-              height: 0,
-            ),
-      ],
-    ),
+  return WorldMap(
+    cols: 7,
+    rows: 7,
+    mapName: 'rush_characterization',
+    tiles: [
+      for (var row = 0; row < 7; row++)
+        for (var col = 0; col < 7; col++)
+          WorldTile.at(
+            coordinate: HexCoord(col: col, row: row),
+            terrains: col == 2 && row == 1
+                ? [workedTerrain]
+                : const [TerrainType.grassland],
+            resources: const [],
+            height: 0,
+          ),
+    ],
   );
 }
 

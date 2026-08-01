@@ -187,22 +187,21 @@ class _ScoreComebackScenario {
 
   final String id;
   final String label;
-  final PersistentGameState state;
+  final DomainState state;
 }
 
-const _productionGap = _ScoreComebackScenario(
+final _productionGap = _ScoreComebackScenario(
   id: 'production_gap',
   label: 'Production gap',
-  state: PersistentGameState(
-    units: [],
+  state: _scoreState(
     cities: [
-      GameCity(
+      const GameCity(
         id: 'score_active_city',
         ownerPlayerId: ScoreComebackTelemetryFixture.activePlayerId,
         name: 'Active',
         center: CityHex(col: 0, row: 0),
       ),
-      GameCity(
+      const GameCity(
         id: 'score_leader_city',
         ownerPlayerId: ScoreComebackTelemetryFixture.leaderPlayerId,
         name: 'Leader',
@@ -220,8 +219,10 @@ const _productionGap = _ScoreComebackScenario(
 final _researchGap = _ScoreComebackScenario(
   id: 'research_gap',
   label: 'Research gap',
-  state: PersistentGameState.snapshot(
-    units: [],
+  state: DomainState.snapshot(
+    turn: 0,
+    matchRules: MatchRules.standard,
+    participants: _scorePlayers,
     cities: [
       const GameCity(
         id: 'score_active_city',
@@ -254,23 +255,22 @@ final _researchGap = _ScoreComebackScenario(
   ),
 );
 
-const _economyGap = _ScoreComebackScenario(
+final _economyGap = _ScoreComebackScenario(
   id: 'economy_gap',
   label: 'Economy gap',
-  state: PersistentGameState(
+  state: _scoreState(
     playerGold: {
       ScoreComebackTelemetryFixture.activePlayerId: 0,
       ScoreComebackTelemetryFixture.leaderPlayerId: 250,
     },
-    units: [],
     cities: [
-      GameCity(
+      const GameCity(
         id: 'score_active_city',
         ownerPlayerId: ScoreComebackTelemetryFixture.activePlayerId,
         name: 'Active',
         center: CityHex(col: 0, row: 0),
       ),
-      GameCity(
+      const GameCity(
         id: 'score_leader_city',
         ownerPlayerId: ScoreComebackTelemetryFixture.leaderPlayerId,
         name: 'Leader',
@@ -279,3 +279,29 @@ const _economyGap = _ScoreComebackScenario(
     ],
   ),
 );
+
+DomainState _scoreState({
+  Map<String, int> playerGold = const {},
+  List<GameCity> cities = const [],
+}) {
+  return DomainState.snapshot(
+    turn: 0,
+    matchRules: MatchRules.standard,
+    participants: _scorePlayers,
+    playerGold: playerGold,
+    cities: cities,
+  );
+}
+
+const _scorePlayers = [
+  Player(
+    id: ScoreComebackTelemetryFixture.activePlayerId,
+    name: 'Active',
+    colorValue: 0xFF101010,
+  ),
+  Player(
+    id: ScoreComebackTelemetryFixture.leaderPlayerId,
+    name: 'Leader',
+    colorValue: 0xFF202020,
+  ),
+];

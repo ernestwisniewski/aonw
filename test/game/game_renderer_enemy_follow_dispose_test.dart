@@ -3,8 +3,8 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_renderer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -32,7 +32,7 @@ void main() {
       addTearDown(game.disposeRenderer);
       game
         ..applyState(
-          GameState(
+          GameClientState(
             units: [selected, enemy],
             activePlayerId: 'player_1',
             fogOfWar: FogOfWarState(
@@ -47,7 +47,7 @@ void main() {
                 ),
               },
             ),
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(selected),
             ),
           ),
@@ -84,13 +84,13 @@ void main() {
   );
 }
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 3,
   rows: 2,
   tiles: [
     for (var row = 0; row < 2; row++)
       for (var col = 0; col < 3; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],

@@ -1,6 +1,8 @@
 import 'package:aonw_core/ai/ai_context.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulated_state.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -12,7 +14,16 @@ abstract final class MctsStabilityScores {
     final forPlayerId = view.forPlayerId;
     if (forPlayerId.isEmpty) return 0.0;
     final ruleset = context.ruleset.stability;
-    final projectedState = PersistentGameState.snapshot(
+    final projectedState = DomainState.snapshot(
+      turn: view.turn,
+      matchRules: MatchRules.standard,
+      participants: [
+        Player(
+          id: forPlayerId,
+          name: forPlayerId,
+          colorValue: Player.palette.first,
+        ),
+      ],
       playerWarWeariness: {forPlayerId: view.ownWarWeariness},
       cities: state.ownCities,
       artifacts: view.artifacts,

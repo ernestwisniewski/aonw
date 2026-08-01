@@ -27,15 +27,14 @@ void main() {
     test('conquest wins over simultaneous domination, cultural, and score', () {
       final outcome = detector.evaluate(
         playerIds: _players,
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           cities: [
             _city(ownerPlayerId: 'p1', col: 0, controlledCols: const [1]),
           ],
           artifacts: [_storedArtifact(ownerPlayerId: 'p1')],
-          runtimeState: const GameRuntimeState(
-            dominationHoldTurnsByPlayerId: {'p1': _requiredHoldTurns},
-            culturalVictoryHoldTurnsByPlayerId: {'p1': _requiredHoldTurns},
-          ),
+
+          dominationHoldTurnsByPlayerId: {'p1': _requiredHoldTurns},
+          culturalVictoryHoldTurnsByPlayerId: {'p1': _requiredHoldTurns},
         ),
         matchRules: _allVictoryRules,
         mapData: _mapData(2),
@@ -48,17 +47,16 @@ void main() {
     test('domination wins over simultaneous cultural and score victories', () {
       final outcome = detector.evaluate(
         playerIds: _players,
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           cities: [
             _city(ownerPlayerId: 'p1', col: 0, controlledCols: const [1, 2]),
             _city(ownerPlayerId: 'p2', col: 3),
           ],
           artifacts: [_storedArtifact(ownerPlayerId: 'p2')],
           playerGold: const {'p2': 10000},
-          runtimeState: const GameRuntimeState(
-            dominationHoldTurnsByPlayerId: {'p1': _requiredHoldTurns},
-            culturalVictoryHoldTurnsByPlayerId: {'p2': _requiredHoldTurns},
-          ),
+
+          dominationHoldTurnsByPlayerId: {'p1': _requiredHoldTurns},
+          culturalVictoryHoldTurnsByPlayerId: {'p2': _requiredHoldTurns},
         ),
         matchRules: _allVictoryRules,
         mapData: _mapData(4),
@@ -71,19 +69,18 @@ void main() {
     test('a map domination tie falls through to a unique cultural winner', () {
       final outcome = detector.evaluate(
         playerIds: _players,
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           cities: [
             _city(ownerPlayerId: 'p1', col: 0, controlledCols: const [1]),
             _city(ownerPlayerId: 'p2', col: 2, controlledCols: const [3]),
           ],
           artifacts: [_storedArtifact(ownerPlayerId: 'p2')],
-          runtimeState: const GameRuntimeState(
-            dominationHoldTurnsByPlayerId: {
-              'p1': _requiredHoldTurns,
-              'p2': _requiredHoldTurns,
-            },
-            culturalVictoryHoldTurnsByPlayerId: {'p2': _requiredHoldTurns},
-          ),
+
+          dominationHoldTurnsByPlayerId: {
+            'p1': _requiredHoldTurns,
+            'p2': _requiredHoldTurns,
+          },
+          culturalVictoryHoldTurnsByPlayerId: {'p2': _requiredHoldTurns},
         ),
         matchRules: _allVictoryRules,
         mapData: _mapData(4),
@@ -96,14 +93,13 @@ void main() {
     test('cultural victory wins over a higher turn-cap score', () {
       final outcome = detector.evaluate(
         playerIds: _players,
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [_warrior('p2', col: 1)],
           cities: [_city(ownerPlayerId: 'p1', col: 0)],
           artifacts: [_storedArtifact(ownerPlayerId: 'p1')],
           playerGold: const {'p2': 10000},
-          runtimeState: const GameRuntimeState(
-            culturalVictoryHoldTurnsByPlayerId: {'p1': _requiredHoldTurns},
-          ),
+
+          culturalVictoryHoldTurnsByPlayerId: {'p1': _requiredHoldTurns},
         ),
         matchRules: _allVictoryRules,
         turn: _turnLimit,
@@ -115,7 +111,7 @@ void main() {
     test('a cultural tie falls through to the exact score outcome', () {
       final outcome = detector.evaluate(
         playerIds: _players,
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           cities: [
             _city(ownerPlayerId: 'p1', col: 0),
             _city(ownerPlayerId: 'p2', col: 1),
@@ -125,12 +121,11 @@ void main() {
             _storedArtifact(ownerPlayerId: 'p2'),
           ],
           playerGold: const {'p2': 100},
-          runtimeState: const GameRuntimeState(
-            culturalVictoryHoldTurnsByPlayerId: {
-              'p1': _requiredHoldTurns,
-              'p2': _requiredHoldTurns,
-            },
-          ),
+
+          culturalVictoryHoldTurnsByPlayerId: {
+            'p1': _requiredHoldTurns,
+            'p2': _requiredHoldTurns,
+          },
         ),
         matchRules: _allVictoryRules,
         turn: _turnLimit,
@@ -148,7 +143,7 @@ void main() {
     test('an equal turn-cap score is a draw with the complete score map', () {
       final outcome = detector.evaluate(
         playerIds: _players,
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [_warrior('p1', col: 0), _warrior('p2', col: 1)],
         ),
         matchRules: _allVictoryRules,
@@ -162,7 +157,7 @@ void main() {
     });
 
     test('the score fallback starts exactly at the configured turn limit', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [_warrior('p1', col: 0), _warrior('p2', col: 1)],
         playerGold: const {'p1': 100},
       );
@@ -193,14 +188,13 @@ void main() {
     test('an equal runtime domination hold keeps the game ongoing', () {
       final outcome = detector.evaluate(
         playerIds: _players,
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [_warrior('p1', col: 0), _warrior('p2', col: 1)],
-          runtimeState: const GameRuntimeState(
-            dominationHoldTurnsByPlayerId: {
-              'p1': _requiredHoldTurns,
-              'p2': _requiredHoldTurns,
-            },
-          ),
+
+          dominationHoldTurnsByPlayerId: {
+            'p1': _requiredHoldTurns,
+            'p2': _requiredHoldTurns,
+          },
         ),
         matchRules: _allVictoryRules,
         turn: _turnLimit - 1,
@@ -246,13 +240,13 @@ WorldArtifact _storedArtifact({required String ownerPlayerId}) {
   );
 }
 
-MapData _mapData(int validTiles) {
-  return MapData(
+WorldMap _mapData(int validTiles) {
+  return WorldMap(
     cols: validTiles,
     rows: 1,
     tiles: [
       for (var col = 0; col < validTiles; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.grassland],

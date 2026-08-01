@@ -34,7 +34,7 @@ class HudCommandLineViewModel {
     required GameSave gameSave,
     required String activePlayerId,
     required bool activePlayerCanAct,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required bool isUnitAnimating,
     required bool readyToEndTurn,
     int remainingActionCount = 0,
@@ -95,7 +95,7 @@ class HudCommandLineViewModel {
 
   static String _waitingForLabel({
     required GameSave gameSave,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required bool submitted,
     required bool multiplayer,
     required AppLocalizations l10n,
@@ -114,7 +114,10 @@ class HudCommandLineViewModel {
     return l10n.bottomToolbarWaitingFor('$visible$suffix');
   }
 
-  static String _selectionLabel(AppLocalizations l10n, GameState? gameState) {
+  static String _selectionLabel(
+    AppLocalizations l10n,
+    GameClientState? gameState,
+  ) {
     final selection = gameState?.selection;
     final city = selection?.city;
     if (city != null) {

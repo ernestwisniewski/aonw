@@ -181,7 +181,7 @@ List<Directory> _defaultSaveRoots() {
   ];
 }
 
-Future<SaveSnapshot> _loadSnapshot(File file) async {
+Future<CanonicalGameSnapshot> _loadSnapshot(File file) async {
   final json = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
   final state = json['state'] as Map<String, dynamic>?;
   if (state == null) {
@@ -190,7 +190,10 @@ Future<SaveSnapshot> _loadSnapshot(File file) async {
   return SaveSnapshotCodec.fromJson(state);
 }
 
-Future<MapData> _loadMap(SaveSnapshot snapshot, String? mapPath) async {
+Future<WorldMap> _loadMap(
+  CanonicalGameSnapshot snapshot,
+  String? mapPath,
+) async {
   final file = File(
     mapPath ?? 'assets/maps/${snapshot.metadata.world.name}/map.json',
   );
@@ -201,7 +204,7 @@ Future<MapData> _loadMap(SaveSnapshot snapshot, String? mapPath) async {
   }
   final json = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
   final tilesJson = json['tiles'] as List<dynamic>;
-  return MapData(
+  return WorldMap(
     cols: json['cols'] as int,
     rows: json['rows'] as int,
     mapName: json['mapName'] as String?,
@@ -212,8 +215,8 @@ Future<MapData> _loadMap(SaveSnapshot snapshot, String? mapPath) async {
   );
 }
 
-TileData _tileFromJson(Map<String, dynamic> json) {
-  return TileData(
+WorldTile _tileFromJson(Map<String, dynamic> json) {
+  return WorldTile(
     col: json['col'] as int,
     row: json['row'] as int,
     terrains: [

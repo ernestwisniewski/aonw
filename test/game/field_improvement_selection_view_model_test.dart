@@ -4,9 +4,9 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,7 +27,7 @@ void main() {
         type: FieldImprovementType.farm,
         builtByCityId: city.id,
       );
-      const tile = TileData(
+      final tile = WorldTile(
         col: 3,
         row: 3,
         height: 0,
@@ -35,7 +35,7 @@ void main() {
         resources: [],
       );
       final selection = GameSelection.fieldImprovement(improvement, tile: tile);
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'p1',
         cities: [city],
         fieldImprovements: [improvement],

@@ -1,12 +1,12 @@
 import 'package:aonw/game/domain/movement.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-TileData _tile(int col, int row) => TileData(
+WorldTile _tile(int col, int row) => WorldTile(
   col: col,
   row: row,
   terrains: const [TerrainType.plains],

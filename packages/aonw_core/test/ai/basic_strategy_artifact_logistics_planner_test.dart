@@ -2,6 +2,7 @@ import 'package:aonw_core/ai/ai_context.dart';
 import 'package:aonw_core/ai/ai_rng.dart';
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/ai/strategies/basic_strategy_artifact_logistics_planner.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -10,7 +11,6 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:test/test.dart';
 
@@ -289,7 +289,7 @@ GameView _view({
   required List<GameUnit> units,
   required List<GameCity> cities,
   required List<WorldArtifact> artifacts,
-  MapData? mapData,
+  WorldMap? mapData,
 }) {
   return GameView(
     forPlayerId: 'player_1',
@@ -337,12 +337,12 @@ const _satellite = GameCity(
   center: CityHex(col: 2, row: 0),
 );
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 5,
   rows: 1,
   tiles: [
     for (var col = 0; col < 5; col++)
-      TileData(
+      WorldTile(
         col: col,
         row: 0,
         terrains: const [TerrainType.plains],
@@ -352,18 +352,18 @@ final _mapData = MapData(
   ],
 );
 
-MapData _map({
+WorldMap _map({
   required int cols,
   required int rows,
   Map<({int col, int row}), List<TerrainType>> terrainOverrides = const {},
 }) {
-  return MapData(
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains:

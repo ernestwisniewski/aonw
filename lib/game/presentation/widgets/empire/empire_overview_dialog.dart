@@ -4,19 +4,19 @@ import 'package:aonw/game/presentation/widgets/empire/empire_overview_content.da
 import 'package:aonw/game/presentation/widgets/empire/empire_overview_header.dart';
 import 'package:aonw/game/presentation/widgets/empire/empire_overview_view_model.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/material.dart';
 
 class EmpireOverviewDialog extends StatelessWidget {
-  final GameState state;
+  final GameClientState state;
   final String activePlayerId;
-  final MapData? mapData;
+  final WorldMap? mapData;
   final CityRuleset cityRuleset;
   final TechnologyRuleset technologyRuleset;
   final PaceBalance paceBalance;
@@ -55,9 +55,9 @@ class EmpireOverviewDialog extends StatelessWidget {
 }
 
 class EmpireOverviewPanel extends StatelessWidget {
-  final GameState state;
+  final GameClientState state;
   final String activePlayerId;
-  final MapData? mapData;
+  final WorldMap? mapData;
   final CityRuleset cityRuleset;
   final TechnologyRuleset technologyRuleset;
   final PaceBalance paceBalance;

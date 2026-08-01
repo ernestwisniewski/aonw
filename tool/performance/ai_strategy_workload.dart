@@ -132,7 +132,7 @@ final class _StrategyFixture {
 
   factory _StrategyFixture.create() {
     final mapData = _mapData();
-    final mapView = mapData.indexedReadView();
+    final mapView = mapData;
     return _StrategyFixture(
       view: _view(mapView),
       context: AiContext(
@@ -149,7 +149,7 @@ final class _StrategyFixture {
 }
 
 GameView _view(MapReadView mapView) {
-  final state = PersistentGameState.snapshot(
+  final state = DomainState.snapshot(
     playerGold: const {_playerId: 12, _enemyId: 8},
     units: [
       GameUnit.produced(
@@ -213,7 +213,7 @@ GameView _view(MapReadView mapView) {
     ),
     fogOfWar: _visibleFog(mapView),
   );
-  final engineSnapshot = SaveSnapshot.fromPersistentState(
+  final engineSnapshot = GameSnapshotFactory.fromDomainState(
     save: GameSave(
       id: 'performance-ai-strategy',
       name: 'Performance AI strategy',
@@ -231,8 +231,8 @@ GameView _view(MapReadView mapView) {
       ],
     ),
     state: state,
-  ).canonical;
-  return GameView.fromPersistentState(
+  );
+  return GameView.fromDomainState(
     state,
     forPlayerId: _playerId,
     turn: 5,
@@ -254,13 +254,13 @@ FogOfWarState _visibleFog(MapReadView mapView) => FogOfWarState(
   },
 );
 
-MapData _mapData() => MapData(
+WorldMap _mapData() => WorldMap(
   cols: 4,
   rows: 3,
   tiles: [
     for (var col = 0; col < 4; col++)
       for (var row = 0; row < 3; row++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],

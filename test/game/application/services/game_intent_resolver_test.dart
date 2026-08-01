@@ -3,8 +3,8 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -16,18 +16,16 @@ void main() {
   final resolver = GameIntentResolver(reducer: reducer);
 
   test('resolves every concrete GameIntent without authoritative mutation', () {
-    final state = GameState(
+    final state = GameClientState(
       units: [commander],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      interaction: GameInteractionState(
-        selection: GameSelection.unit(commander),
-      ),
+      interaction: InteractionState(selection: GameSelection.unit(commander)),
     );
 
     for (final intent in _allIntents) {
       final result = resolver.resolve(state.interaction, intent, state);
-      expect(result.interaction, isA<GameInteractionState>());
+      expect(result.interaction, isA<InteractionState>());
       expect(result.presentationFocus, isA<List<UiEffect>>());
     }
   });
@@ -35,13 +33,11 @@ void main() {
   test(
     'toggle changes interaction only and never creates a domain command',
     () {
-      final state = GameState(
+      final state = GameClientState(
         units: [commander],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        interaction: GameInteractionState(
-          selection: GameSelection.unit(commander),
-        ),
+        interaction: InteractionState(selection: GameSelection.unit(commander)),
       );
 
       final result = resolver.resolve(
@@ -58,7 +54,7 @@ void main() {
   );
 
   test('no-op intent preserves the interaction identity', () {
-    const state = GameState();
+    final state = GameClientState();
 
     final result = resolver.resolve(
       state.interaction,
@@ -82,11 +78,11 @@ void main() {
         UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
       ],
     );
-    final state = GameState(
+    final state = GameClientState(
       units: [commander],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(commander),
         moveCommandActive: true,
         movePreview: preview,
@@ -119,11 +115,11 @@ void main() {
         UnitMovementStep(col: 3, row: 0, enterCost: 1, cumulativeCost: 3),
       ],
     );
-    final state = GameState(
+    final state = GameClientState(
       units: [movingCommander],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(movingCommander),
         moveCommandActive: true,
         movePreview: preview,
@@ -174,13 +170,13 @@ const _allIntents = <GameIntent>[
   CancelWorkerActionSelectionCommand('unit'),
 ];
 
-MapData _map({int cols = 2, int rows = 2}) => MapData(
+WorldMap _map({int cols = 2, int rows = 2}) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (var row = 0; row < rows; row++)
       for (var col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],

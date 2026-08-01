@@ -762,10 +762,10 @@ void main() {
 
 AiContext _context({
   DateTime? deadline,
-  MapData? mapData,
+  WorldMap? mapData,
   StrategicPlan? strategicPlan,
 }) {
-  final actualMapData = mapData ?? MapData(cols: 1, rows: 1, tiles: const []);
+  final actualMapData = mapData ?? WorldMap(cols: 1, rows: 1, tiles: []);
   return AiContext(
     ruleset: GameRuleset.defaults,
     mapData: actualMapData,
@@ -777,9 +777,9 @@ AiContext _context({
 }
 
 GameView _view() {
-  final mapData = MapData(cols: 1, rows: 1, tiles: const []);
+  final mapData = WorldMap(cols: 1, rows: 1, tiles: []);
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    const PersistentGameState(),
+    DomainState.snapshot(),
     forPlayerId: 'player_1',
     turn: 1,
     mapData: mapData,
@@ -790,7 +790,7 @@ GameView _view() {
 GameView _unitView() {
   final mapData = _unitMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       units: [
         GameUnit(
           id: 'warrior_1',
@@ -823,7 +823,7 @@ GameView _unitView() {
 GameView _lateNoTargetView() {
   final mapData = _unitMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       cities: const [
         GameCity(
           id: 'city_1',
@@ -864,7 +864,7 @@ GameView _lateNoTargetView() {
 GameView _cityUnitView() {
   final mapData = _unitMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       cities: const [
         GameCity(
           id: 'city_1',
@@ -905,7 +905,7 @@ GameView _cityUnitView() {
 GameView _focusFireView({int turn = 1, bool extraEnemy = false}) {
   final mapData = _focusFireMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       units: [
         GameUnit(
           id: 'warrior_1',
@@ -972,7 +972,7 @@ GameView _civilianSupportView({
 }) {
   final mapData = _wideUnitMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       cities: [
         if (withOwnCity)
           const GameCity(
@@ -1041,7 +1041,7 @@ GameView _civilianSupportView({
 GameView _reconSupportView() {
   final mapData = _wideUnitMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       units: [
         GameUnit(
           id: 'scout_1',
@@ -1083,7 +1083,7 @@ GameView _reconSupportView() {
 GameView _partialMoveReservationView() {
   final mapData = _partialMoveReservationMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       units: [
         GameUnit(
           id: 'settler_1',
@@ -1127,7 +1127,7 @@ GameView _partialMoveReservationView() {
 GameView _supportOriginReservationView() {
   final mapData = _wideUnitMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       units: [
         GameUnit(
           id: 'warrior_war',
@@ -1169,7 +1169,7 @@ GameView _supportOriginReservationView() {
 GameView _alternateApproachReservationView({int scoutMovementPoints = 1}) {
   final mapData = _pressureMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       units: [
         GameUnit(
           id: 'scout_1',
@@ -1215,7 +1215,7 @@ GameView _alternateApproachReservationView({int scoutMovementPoints = 1}) {
 GameView _founderPressureSupportView() {
   final mapData = _pressureMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       cities: const [
         GameCity(
           id: 'city_1',
@@ -1284,7 +1284,7 @@ GameView _founderPressureSupportView() {
 GameView _warGoalSupportView({bool enemyAtTarget = false}) {
   final mapData = _wideUnitMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       units: [
         GameUnit(
           id: 'warrior_war',
@@ -1335,7 +1335,7 @@ GameView _warGoalSupportView({bool enemyAtTarget = false}) {
 GameView _warGoalCitySupportView() {
   final mapData = _wideUnitMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       units: [
         GameUnit(
           id: 'tank_war',
@@ -1385,7 +1385,7 @@ GameView _warGoalCitySupportView() {
 GameView _pressureMoveSupportView() {
   final mapData = _wideUnitMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       units: [
         GameUnit(
           id: 'warrior_pressure',
@@ -1428,7 +1428,7 @@ GameView _pressureMoveSupportView() {
 GameView _combatRetreatReservationView({bool enemyAtAdjacentTarget = false}) {
   final mapData = _pressureMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       units: [
         GameUnit(
           id: 'warrior_attack',
@@ -1511,19 +1511,19 @@ StrategicPlan _warGoalPlan({required String unitId}) {
   );
 }
 
-MapData _unitMap() {
-  return MapData(
+WorldMap _unitMap() {
+  return WorldMap(
     cols: 2,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains],
@@ -1534,33 +1534,33 @@ MapData _unitMap() {
   );
 }
 
-MapData _focusFireMap() {
-  return MapData(
+WorldMap _focusFireMap() {
+  return WorldMap(
     cols: 2,
     rows: 2,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 0,
         row: 1,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 1,
         terrains: [TerrainType.plains],
@@ -1571,26 +1571,26 @@ MapData _focusFireMap() {
   );
 }
 
-MapData _wideUnitMap() {
-  return MapData(
+WorldMap _wideUnitMap() {
+  return WorldMap(
     cols: 3,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 2,
         row: 0,
         terrains: [TerrainType.plains],
@@ -1601,33 +1601,33 @@ MapData _wideUnitMap() {
   );
 }
 
-MapData _partialMoveReservationMap() {
-  return MapData(
+WorldMap _partialMoveReservationMap() {
+  return WorldMap(
     cols: 4,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 2,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 3,
         row: 0,
         terrains: [TerrainType.plains],
@@ -1638,47 +1638,47 @@ MapData _partialMoveReservationMap() {
   );
 }
 
-MapData _pressureMap() {
-  return MapData(
+WorldMap _pressureMap() {
+  return WorldMap(
     cols: 3,
     rows: 2,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 2,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 0,
         row: 1,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 1,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 2,
         row: 1,
         terrains: [TerrainType.plains],

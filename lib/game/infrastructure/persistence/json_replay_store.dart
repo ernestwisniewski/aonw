@@ -11,7 +11,7 @@ class JsonReplayStore implements ReplayStore {
   const JsonReplayStore({this.savesDir});
 
   @override
-  Future<SaveSnapshot?> initialSnapshot(String saveId) async {
+  Future<CanonicalGameSnapshot?> initialSnapshot(String saveId) async {
     final file = await _file(saveId);
     if (!await file.exists()) return null;
 
@@ -19,7 +19,10 @@ class JsonReplayStore implements ReplayStore {
   }
 
   @override
-  Future<void> saveInitialSnapshot(String saveId, SaveSnapshot snapshot) async {
+  Future<void> saveInitialSnapshot(
+    String saveId,
+    CanonicalGameSnapshot snapshot,
+  ) async {
     final file = await _file(saveId);
     await file.parent.create(recursive: true);
     if (await file.exists()) return;

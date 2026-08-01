@@ -73,18 +73,18 @@ void main() {
 
   group('HexNeighbors', () {
     test('filters neighbors to existing map tiles', () {
-      final map = MapData(
+      final map = WorldMap(
         cols: 2,
         rows: 1,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.plains],
             resources: [],
             height: 0,
           ),
-          TileData(
+          WorldTile(
             col: 1,
             row: 0,
             terrains: [TerrainType.grassland],

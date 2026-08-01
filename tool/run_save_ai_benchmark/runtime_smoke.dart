@@ -8,7 +8,7 @@ class _RuntimeUseCaseSmokeRunner {
     required this.runtime,
   });
 
-  final SaveSnapshot snapshot;
+  final CanonicalGameSnapshot snapshot;
   final String savePath;
   final MapReadView mapView;
   final _BenchmarkRuntimeReport runtime;
@@ -110,7 +110,10 @@ class _RuntimeUseCaseSmokeRunner {
     return result;
   }
 
-  SaveSnapshot _unsubmitPlayer(SaveSnapshot source, String playerId) {
+  CanonicalGameSnapshot _unsubmitPlayer(
+    CanonicalGameSnapshot source,
+    String playerId,
+  ) {
     return source.withPlayerUnsubmitted(playerId);
   }
 }
@@ -301,9 +304,9 @@ class _RuntimeUseCaseSmokePlayerReport {
 class _RuntimeSmokeRepository implements GameRepository {
   _RuntimeSmokeRepository(this.snapshot);
 
-  SaveSnapshot snapshot;
+  CanonicalGameSnapshot snapshot;
 
-  void replace(SaveSnapshot next) {
+  void replace(CanonicalGameSnapshot next) {
     snapshot = next;
   }
 
@@ -320,15 +323,15 @@ class _RuntimeSmokeRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async => snapshot;
+  Future<CanonicalGameSnapshot> load(String saveId) async => snapshot;
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {
+  Future<void> save(CanonicalGameSnapshot snapshot) async {
     this.snapshot = snapshot;
   }
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
@@ -354,7 +357,7 @@ class _RuntimeSmokeCommandTransport implements CommandTransport {
       );
   late final BenchmarkCommandDispatcher _dispatcher =
       BenchmarkCommandDispatcher(
-        snapshot: repository.snapshot.canonical,
+        snapshot: repository.snapshot,
         mapView: mapView,
         ruleset: ruleset,
       );
@@ -362,7 +365,7 @@ class _RuntimeSmokeCommandTransport implements CommandTransport {
   @override
   Future<CommandTransportResult> dispatch({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
     bool fromMovePreviewConfirmation = false,
@@ -372,7 +375,7 @@ class _RuntimeSmokeCommandTransport implements CommandTransport {
       command: command,
       context: context,
     );
-    final nextSnapshot = repository.snapshot.withGameState(
+    final nextSnapshot = repository.snapshot.withClientState(
       transition.state,
       eventLogOffset: _offsetSequence.next(),
     );

@@ -1,17 +1,17 @@
 import 'package:aonw/game/application/services/game_session_factory.dart';
 import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 2,
   rows: 2,
   tiles: [
     for (int row = 0; row < 2; row++)
       for (int col = 0; col < 2; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.ocean],

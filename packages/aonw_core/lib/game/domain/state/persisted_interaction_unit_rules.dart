@@ -2,8 +2,8 @@ import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 
 /// Selectively clears persisted interaction state owned by a unit.
 abstract final class PersistedInteractionUnitRules {
-  static PersistedInteractionState clearOwnedByUnit(
-    PersistedInteractionState interaction,
+  static DomainActionState clearOwnedByUnit(
+    DomainActionState interaction,
     String unitId,
   ) {
     final clearPendingAction =

@@ -7,6 +7,7 @@ import 'package:aonw_core/ai/strategic/economy_expectations.dart';
 import 'package:aonw_core/ai/strategic/strategic_mode.dart';
 import 'package:aonw_core/ai/strategic/strategic_plan.dart';
 import 'package:aonw_core/ai/strategies/basic_strategy_founder_escort_planner.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -14,7 +15,6 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:test/test.dart';
 
@@ -260,13 +260,13 @@ const _second = GameCity(
   center: CityHex(col: 7, row: 0),
 );
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 8,
   rows: 8,
   tiles: [
     for (var row = 0; row < 8; row++)
       for (var col = 0; col < 8; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],

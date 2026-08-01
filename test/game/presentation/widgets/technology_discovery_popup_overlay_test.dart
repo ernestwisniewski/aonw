@@ -369,7 +369,7 @@ void _addTechnologyNotification(
 }) {
   container.read(gameEventNotificationsProvider.notifier).addAll([
     TechnologyResearchedEvent(playerId: playerId, technologyId: technologyId),
-  ], GameState(activePlayerId: playerId));
+  ], GameClientState(activePlayerId: playerId));
 }
 
 String _technologyDiscoveryPopupId(TechnologyId technologyId) {

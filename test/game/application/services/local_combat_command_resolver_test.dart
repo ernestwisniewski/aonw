@@ -15,12 +15,12 @@ void main() {
     () {
       final attacker = _unit('attacker', 'player_1', 0);
       final defender = _unit('defender', 'player_2', 1);
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
         units: [attacker, defender],
         fogOfWar: _visibleFog,
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(attacker),
           moveCommandActive: true,
           movePreview: UnitMovementPlan(
@@ -44,7 +44,7 @@ void main() {
           ),
         ),
       );
-      final snapshot = SaveSnapshot.fromGameState(
+      final snapshot = GameSnapshotFactory.fromClientState(
         save: _save(),
         state: state,
         eventLogOffset: 19,
@@ -84,7 +84,7 @@ void main() {
       expect(result.state.selectedUnit, same(result.state.units.first));
       expect(result.snapshot.units, result.state.units);
       expect(result.snapshot.fogOfWar, result.state.fogOfWar);
-      expect(result.snapshot.runtimeState.diplomacy, result.state.diplomacy);
+      expect(result.snapshot.domain.diplomacy, result.state.diplomacy);
       expect(result.snapshot.eventLogOffset, 19);
       expect(result.snapshot.save.players, snapshot.save.players);
       expect(result.snapshot.save.savedAt, savedAt);
@@ -94,7 +94,7 @@ void main() {
   test('treaty rejection remains presentation-only engine feedback', () {
     final attacker = _unit('attacker', 'player_1', 0);
     final defender = _unit('defender', 'player_2', 1);
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
       units: [attacker, defender],
@@ -105,7 +105,10 @@ void main() {
         DiplomaticRelationStatus.truce,
       ),
     );
-    final snapshot = SaveSnapshot.fromGameState(save: _save(), state: state);
+    final snapshot = GameSnapshotFactory.fromClientState(
+      save: _save(),
+      state: state,
+    );
     final reducer = GameStateReducer(mapData: _map);
 
     final result = LocalCommandResolver(reducer: reducer).resolve(
@@ -171,12 +174,12 @@ final _visibleFog = FogOfWarState(
   },
 );
 
-final _map = MapData(
+final _map = WorldMap(
   cols: 3,
   rows: 1,
   tiles: [
     for (var col = 0; col < 3; col++)
-      TileData(
+      WorldTile(
         col: col,
         row: 0,
         terrains: const [TerrainType.plains],

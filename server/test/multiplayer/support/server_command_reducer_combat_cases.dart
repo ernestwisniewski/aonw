@@ -118,7 +118,7 @@ _projectAuthoritativeCombatSequence() async {
         connectionState: WirePlayerConnectionState.connected,
       ),
   ];
-  final state = PersistentGameState.snapshot(
+  final state = DomainState.snapshot(
     playerColors: {
       for (var index = 0; index < participantIds.length; index++)
         participantIds[index]: index + 1,
@@ -294,8 +294,8 @@ final class _CombatPrivacyCase {
   final DiplomacyState diplomacy;
 }
 
-PersistentGameState _combatPrivacyState(_CombatPrivacyCase privacyCase) {
-  return PersistentGameState.snapshot(
+DomainState _combatPrivacyState(_CombatPrivacyCase privacyCase) {
+  return DomainState.snapshot(
     playerColors: const {'player_1': 0xFF3D5FA8, 'player_2': 0xFFB83A3A},
     units: [_combatUnit('attacker', 'player_1', 0, 0), ...privacyCase.units],
     cities: privacyCase.cities,
@@ -314,7 +314,7 @@ PersistentGameState _combatPrivacyState(_CombatPrivacyCase privacyCase) {
         ),
       },
     ),
-    runtimeState: GameRuntimeState(diplomacy: privacyCase.diplomacy),
+    diplomacy: privacyCase.diplomacy,
   );
 }
 

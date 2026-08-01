@@ -68,7 +68,7 @@ class _MapEditorScreenState extends ConsumerState<MapEditorScreen> {
         final imagePath = await mapRepository.resolveImagePath(selection);
         if (!mounted) return;
 
-        final draft = MapDraft.fromMapData(sourceMap);
+        final draft = MapDraft.fromWorldMap(sourceMap);
         ref.read(editorMapProvider.notifier).load(draft);
         setState(() {
           _activeImagePath = imagePath;

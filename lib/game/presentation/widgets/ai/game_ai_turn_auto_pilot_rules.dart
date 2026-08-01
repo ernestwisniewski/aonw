@@ -17,7 +17,7 @@ final class GameAiTurnAutoPilotRules {
   static Player? aiPlayerToRun({
     required GameSave save,
     required PlayerControlState control,
-    required GameState? gameState,
+    required GameClientState? gameState,
   }) {
     if (gameState == null || control.activePlayerId.isEmpty) return null;
 

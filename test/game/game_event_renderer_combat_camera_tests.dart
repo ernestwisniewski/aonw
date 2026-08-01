@@ -19,8 +19,8 @@ void _registerCityCombatCameraEffectTests() {
       row: 5,
     );
     final retreatedDefender = defender.copyWith(col: 6, row: 7);
-    final state = GameState(units: [attacker, retreatedDefender]);
-    final previousState = GameState(units: [attacker, defender]);
+    final state = GameClientState(units: [attacker, retreatedDefender]);
+    final previousState = GameClientState(units: [attacker, defender]);
 
     final effects = GameEventRendererEffectMapper.effectsFor(
       events: [
@@ -108,12 +108,12 @@ void _registerCityCombatCameraEffectTests() {
       name: 'Capital',
       center: CityHex(col: 4, row: 5),
     );
-    final previousState = GameState(
+    final previousState = GameClientState(
       activePlayerId: 'player_1',
       units: [attacker],
       cities: const [city],
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [attacker],
       cities: const [city],
@@ -203,13 +203,13 @@ void _registerCityCombatCameraEffectTests() {
         ),
       },
     );
-    final previousState = GameState(
+    final previousState = GameClientState(
       activePlayerId: 'player_1',
       units: [attacker],
       cities: const [city],
       fogOfWar: fog,
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [attacker],
       cities: const [city],

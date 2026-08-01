@@ -184,14 +184,14 @@ MovementCommandExecution? _engineExecution(GameEngineAccepted result) {
 
 CanonicalGameSnapshot _engineSnapshot(DomainState domain) {
   return CanonicalGameSnapshot.snapshot(
-    domain: domain,
-    session: MatchSessionState.snapshot(
+    domain: (domain).copyWith(
       gameMode: GameMode.multiplayer,
       turnStatesByPlayerId: const {
         movementActorId: PlayerTurnState.active,
         movementOpponentId: PlayerTurnState.active,
       },
     ),
+
     metadata: GameSnapshotMetadata(
       id: 'movement_parity',
       schemaVersion: 3,
@@ -273,22 +273,20 @@ MapReadView movementMap({
   int rows = 1,
   Map<({int col, int row}), List<TerrainType>> terrainOverrides = const {},
 }) {
-  return WorldMapReadView(
-    WorldMap(
-      cols: cols,
-      rows: rows,
-      tiles: [
-        for (var col = 0; col < cols; col++)
-          for (var row = 0; row < rows; row++)
-            WorldTile(
-              coordinate: HexCoord(col: col, row: row),
-              terrains:
-                  terrainOverrides[(col: col, row: row)] ??
-                  const [TerrainType.grassland],
-              resources: const [],
-              height: 0,
-            ),
-      ],
-    ),
+  return WorldMap(
+    cols: cols,
+    rows: rows,
+    tiles: [
+      for (var col = 0; col < cols; col++)
+        for (var row = 0; row < rows; row++)
+          WorldTile.at(
+            coordinate: HexCoord(col: col, row: row),
+            terrains:
+                terrainOverrides[(col: col, row: row)] ??
+                const [TerrainType.grassland],
+            resources: const [],
+            height: 0,
+          ),
+    ],
   );
 }

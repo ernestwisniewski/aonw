@@ -4,6 +4,7 @@ import 'package:aonw_core/ai/simulation/economy_simulation_command_stats.dart';
 import 'package:aonw_core/ai/simulation/economy_simulation_models.dart';
 import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/application.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -19,7 +20,6 @@ import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/telemetry.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
@@ -49,8 +49,7 @@ abstract final class EconomySimulation {
     final players = [player, ...config.opponents];
     final playerIds = [for (final player in players) player.id];
     final mapData = config.mapData ?? _EconomySimulationSetup.simulationMap();
-    validateMapDataTileInvariants(mapData);
-    final mapView = mapData.indexedReadView();
+    final mapView = mapData;
     var state = _EconomySimulationSetup.initialState(
       player: player,
       opponents: config.opponents,
@@ -295,9 +294,9 @@ abstract final class EconomySimulation {
 abstract final class EconomySimulationTurnRowProjector {
   static EconomySimulationTurnRow project({
     required int turn,
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
-    required MapReadView mapData,
+    required WorldMap mapData,
     required GameRuleset ruleset,
   }) {
     return const _EconomySimulationTurnRowFactory().rowFor(

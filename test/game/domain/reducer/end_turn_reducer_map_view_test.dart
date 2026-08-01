@@ -5,9 +5,7 @@ import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/turn_engine_test_driver.dart';
@@ -21,13 +19,13 @@ void main() {
         col: 1,
         row: 1,
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         playerGold: const {'player_1': 10},
         units: [unit],
-        interaction: GameInteractionState(selection: GameSelection.unit(unit)),
+        interaction: InteractionState(selection: GameSelection.unit(unit)),
       );
-      final MapReadView mapView = WorldMapReadView(_worldMap());
+      final MapReadView mapView = _worldMap();
 
       final result = resolveEndTurnForTest(state, 'player_1', mapView);
 
@@ -54,7 +52,7 @@ WorldMap _worldMap() {
     tiles: [
       for (var row = 0; row < 3; row += 1)
         for (var col = 0; col < 3; col += 1)
-          WorldTile(
+          WorldTile.at(
             coordinate: HexCoord(col: col, row: row),
             terrains: const [TerrainType.plains],
             resources: const [],

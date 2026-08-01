@@ -74,10 +74,10 @@ const _artifactSupplyCases =
     ];
 
 void main() {
-  test('MapData and WorldMap read views produce identical unit supply', () {
+  test('WorldMap and WorldMap read views produce identical unit supply', () {
     final mapData = _mapData();
     final worldMap = _worldMapFromData(mapData);
-    final views = <MapReadView>[mapData, WorldMapReadView(worldMap)];
+    final views = <MapReadView>[mapData, worldMap];
     final city = GameCity(
       id: 'city_1',
       ownerPlayerId: 'player_1',
@@ -188,7 +188,7 @@ void main() {
   test('sparse terrain survey binds the same non-minimum map capacity', () {
     final mapData = _largeSparseMapData();
     final worldMap = _worldMapFromData(mapData);
-    final views = <MapReadView>[mapData, WorldMapReadView(worldMap)];
+    final views = <MapReadView>[mapData, worldMap];
     final cities = [
       for (var index = 0; index < 4; index++)
         GameCity(
@@ -225,7 +225,7 @@ void main() {
   });
 }
 
-WorldMap _worldMapFromData(MapData source) {
+WorldMap _worldMapFromData(WorldMap source) {
   return WorldMap.fromTileViews(
     cols: source.cols,
     rows: source.rows,
@@ -246,15 +246,15 @@ Map<String, Object> _snapshot(CityUnitSupplyBreakdown breakdown) => {
   'usedSupplyByType': breakdown.usedSupplyByType,
 };
 
-MapData _mapData() {
-  return MapData(
+WorldMap _mapData() {
+  return WorldMap(
     cols: 3,
     rows: 3,
     mapName: 'myranth',
     tiles: [
       for (var row = 0; row < 3; row++)
         for (var col = 0; col < 3; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: col == 2 && row == 2
@@ -267,14 +267,14 @@ MapData _mapData() {
   );
 }
 
-MapData _largeSparseMapData() {
-  return MapData(
+WorldMap _largeSparseMapData() {
+  return WorldMap(
     cols: 30,
     rows: 20,
     mapName: 'supply-cap-survey',
     tiles: [
       for (var index = 0; index < 219; index++)
-        TileData(
+        WorldTile(
           col: index % 30,
           row: index ~/ 30,
           terrains: index < 160

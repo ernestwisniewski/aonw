@@ -33,8 +33,12 @@ void main() {
     });
 
     test('creates notification target from current state first', () {
-      final staleState = GameState(cities: [_city('city_1', col: 1, row: 1)]);
-      final currentState = GameState(cities: [_city('city_1', col: 6, row: 7)]);
+      final staleState = GameClientState(
+        cities: [_city('city_1', col: 1, row: 1)],
+      );
+      final currentState = GameClientState(
+        cities: [_city('city_1', col: 6, row: 7)],
+      );
       final notification = GameEventNotification(
         id: 1,
         event: const CityFoundedEvent(
@@ -62,7 +66,7 @@ void main() {
           cityId: 'city_1',
           ownerPlayerId: 'player_1',
         ),
-        state: GameState(cities: [_city('city_1', col: 8, row: 9)]),
+        state: GameClientState(cities: [_city('city_1', col: 8, row: 9)]),
         playerId: 'player_1',
       );
 
@@ -77,13 +81,13 @@ void main() {
     });
 
     test('returns null for notification without focus target', () {
-      const notification = GameEventNotification(
+      final notification = GameEventNotification(
         id: 1,
-        event: TechnologyResearchedEvent(
+        event: const TechnologyResearchedEvent(
           playerId: 'player_1',
           technologyId: TechnologyId.mining,
         ),
-        state: GameState(),
+        state: GameClientState(),
         playerId: 'player_1',
       );
 
@@ -97,15 +101,15 @@ void main() {
     });
 
     test('anchors technology notification on player city', () {
-      const notification = GameEventNotification(
+      final notification = GameEventNotification(
         id: 1,
-        event: TechnologyResearchedEvent(
+        event: const TechnologyResearchedEvent(
           playerId: 'player_1',
           technologyId: TechnologyId.mining,
         ),
-        state: GameState(
+        state: GameClientState(
           cities: [
-            GameCity(
+            const GameCity(
               id: 'city_1',
               ownerPlayerId: 'player_1',
               name: 'Roma',
@@ -141,7 +145,7 @@ void main() {
           unitType: GameUnitType.warrior,
           producedUnitId: 'warrior_2',
         ),
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           cities: const [hiddenCity],
           fogOfWar: _fog(visible: {const HexCoordinate(col: 0, row: 0)}),
@@ -172,7 +176,7 @@ void main() {
           unitType: GameUnitType.warrior,
           producedUnitId: 'warrior_2',
         ),
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           cities: const [rememberedCity],
           fogOfWar: _fog(
@@ -211,7 +215,7 @@ void main() {
           playerId: 'player_1',
           metPlayerId: 'player_2',
         ),
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           cities: const [hiddenCapital],
           units: [visibleWarrior],
@@ -251,7 +255,7 @@ void main() {
             playerId: 'player_1',
             metPlayerId: 'player_2',
           ),
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             cities: const [rememberedCapital],
             units: [visibleWarrior],

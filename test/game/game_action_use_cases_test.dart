@@ -27,21 +27,21 @@ class _FakeGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async {
+  Future<CanonicalGameSnapshot> load(String saveId) async {
     throw UnimplementedError();
   }
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {}
+  Future<void> save(CanonicalGameSnapshot snapshot) async {}
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
   }) async {
     savedCamera = camera;
-    return SaveSnapshot(save: _save.copyWith(camera: camera));
+    return GameSnapshotFactory.create(save: _save.copyWith(camera: camera));
   }
 }
 
@@ -72,10 +72,8 @@ void main() {
   test('DetachTroopUseCase dispatches detach for the selected unit', () async {
     final commands = <DomainCommand>[];
     final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-    final state = GameState(
-      interaction: GameInteractionState(
-        selection: GameSelection.unit(commander),
-      ),
+    final state = GameClientState(
+      interaction: InteractionState(selection: GameSelection.unit(commander)),
     );
 
     final dispatched = await const DetachTroopUseCase().execute(

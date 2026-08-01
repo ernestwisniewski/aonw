@@ -12,7 +12,7 @@ const _opponentMessageId = 'message_from_first_opponent';
 void main() {
   test('each opponent observes the canonical commands applied before it', () {
     final strategy = _CapturingOpponentStrategy();
-    final mapView = MctsSimulatorParityFixtures.mapData().indexedReadView();
+    final mapView = MctsSimulatorParityFixtures.mapData();
     final initialState = _initialState();
     final baseSnapshot = MctsSimulatorParityFixtures.engineSnapshot(
       initialState,
@@ -21,7 +21,7 @@ void main() {
       domain: baseSnapshot.domain.copyWith(turn: 9),
     );
     final root = SimulatedState.fromView(
-      GameView.fromPersistentState(
+      GameView.fromDomainState(
         initialState,
         forPlayerId: 'player_1',
         turn: 9,
@@ -61,20 +61,19 @@ void main() {
 
     final nextView = advanced.view;
     final nextSnapshot = nextView.engineSnapshot!;
-    final persistentProjection =
-        MctsSimulationProjection.persistentStateFromView(
-          nextView,
-          units: nextView.movementBlockingUnits,
-          cities: [...nextView.ownCities, ...nextView.rememberedEnemyCities],
-          research: nextView.research,
-        );
+    final persistentProjection = MctsSimulationProjection.domainStateFromView(
+      nextView,
+      units: nextView.movementBlockingUnits,
+      cities: [...nextView.ownCities, ...nextView.rememberedEnemyCities],
+      research: nextView.research,
+    );
     final finalMessage = nextView.diplomacy.messages[_opponentMessageId]!;
 
     expect(nextView.turn, 10);
     expect(finalMessage.response, DiplomaticMessageResponse.conciliatory);
     expect(finalMessage.respondedTurn, 9);
     expect(persistentProjection.research, nextView.research);
-    expect(persistentProjection.runtimeState.diplomacy, nextView.diplomacy);
+    expect(persistentProjection.diplomacy, nextView.diplomacy);
     expect(nextSnapshot.domain.turn, nextView.turn);
     expect(nextSnapshot.domain.research, nextView.research);
     expect(nextSnapshot.domain.diplomacy, nextView.diplomacy);
@@ -130,8 +129,8 @@ final class _CapturingOpponentStrategy implements AiStrategy {
   }
 }
 
-PersistentGameState _initialState() {
-  return PersistentGameState.snapshot(
+DomainState _initialState() {
+  return DomainState.snapshot(
     playerColors: const {
       'player_1': 1,
       _firstOpponentId: 2,
@@ -142,11 +141,10 @@ PersistentGameState _initialState() {
       _unit('unit_2', _firstOpponentId, 1),
       _unit('unit_3', _secondOpponentId, 2),
     ],
-    runtimeState: GameRuntimeState.snapshot(
-      diplomacy: DiplomacyState.empty
-          .addContact('player_1', _firstOpponentId)
-          .addContact(_firstOpponentId, _secondOpponentId),
-    ),
+
+    diplomacy: DiplomacyState.empty
+        .addContact('player_1', _firstOpponentId)
+        .addContact(_firstOpponentId, _secondOpponentId),
   );
 }
 

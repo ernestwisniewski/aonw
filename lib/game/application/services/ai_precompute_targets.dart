@@ -8,7 +8,7 @@ abstract final class AiPrecomputeTargets {
   static List<Player> duringHumanTurn({
     required GameSave save,
     required PlayerControlState control,
-    required GameState gameState,
+    required GameClientState gameState,
   }) {
     if (!_isStableHumanTurn(
       save: save,
@@ -45,7 +45,7 @@ abstract final class AiPrecomputeTargets {
   static bool _isStableHumanTurn({
     required GameSave save,
     required PlayerControlState control,
-    required GameState gameState,
+    required GameClientState gameState,
   }) {
     if (!control.canAct || control.activePlayerId.isEmpty) return false;
     if (gameState.activePlayerId != control.activePlayerId ||

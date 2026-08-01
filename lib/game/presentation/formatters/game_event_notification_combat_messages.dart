@@ -3,8 +3,8 @@ part of 'game_event_notification_message.dart';
 GameEventNotificationMessage _combatEventMessage({
   required AppLocalizations l10n,
   required _GameEventPlayerRoster? roster,
-  required GameState state,
-  required GameState? previousState,
+  required GameClientState state,
+  required GameClientState? previousState,
   required GameActivityContext activityContext,
   required GameEvent event,
 }) {

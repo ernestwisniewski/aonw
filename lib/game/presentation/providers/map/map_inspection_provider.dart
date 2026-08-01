@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_info_chip_id.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,7 +42,7 @@ class MapInspectionController extends Notifier<MapInspectionState> {
   MapInspectionState build() => MapInspectionState.empty;
 
   void inspectTile(
-    TileData tileData, {
+    WorldTile tileData, {
     Offset? anchor,
     MapObjectiveProgress? objectiveProgress,
   }) {
@@ -63,7 +63,7 @@ class MapInspectionController extends Notifier<MapInspectionState> {
   }
 
   void previewTile(
-    TileData tileData, {
+    WorldTile tileData, {
     Offset? anchor,
     MapObjectiveProgress? objectiveProgress,
   }) {

@@ -332,19 +332,19 @@ const _presets = [
 ];
 
 final _scoreChaserFixtures = [
-  const _ScoreChaserFixture(
+  _ScoreChaserFixture(
     id: 'production_gap',
     label: 'Production gap',
-    state: PersistentGameState(
+    state: DomainState.snapshot(
       units: [],
       cities: [
-        GameCity(
+        const GameCity(
           id: 'city_1',
           ownerPlayerId: 'player_1',
           name: 'Active',
           center: CityHex(col: 0, row: 0),
         ),
-        GameCity(
+        const GameCity(
           id: 'city_2',
           ownerPlayerId: 'player_2',
           name: 'Leader',
@@ -361,7 +361,7 @@ final _scoreChaserFixtures = [
   _ScoreChaserFixture(
     id: 'research_gap',
     label: 'Research gap',
-    state: PersistentGameState.snapshot(
+    state: DomainState.snapshot(
       units: const [],
       cities: const [
         GameCity(
@@ -394,20 +394,20 @@ final _scoreChaserFixtures = [
       ),
     ),
   ),
-  const _ScoreChaserFixture(
+  _ScoreChaserFixture(
     id: 'economy_gap',
     label: 'Economy gap',
-    state: PersistentGameState(
+    state: DomainState.snapshot(
       playerGold: {'player_1': 0, 'player_2': 250},
       units: [],
       cities: [
-        GameCity(
+        const GameCity(
           id: 'city_1',
           ownerPlayerId: 'player_1',
           name: 'Active',
           center: CityHex(col: 0, row: 0),
         ),
-        GameCity(
+        const GameCity(
           id: 'city_2',
           ownerPlayerId: 'player_2',
           name: 'Leader',
@@ -430,7 +430,7 @@ class _SimulationPreset {
 }
 
 class _ScoreChaserFixture {
-  const _ScoreChaserFixture({
+  _ScoreChaserFixture({
     required this.id,
     required this.label,
     required this.state,
@@ -438,7 +438,7 @@ class _ScoreChaserFixture {
 
   final String id;
   final String label;
-  final PersistentGameState state;
+  final DomainState state;
 
   _ScoreChaserRow evaluate() {
     const activePlayerId = 'player_1';

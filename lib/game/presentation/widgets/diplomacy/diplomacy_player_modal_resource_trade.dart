@@ -15,8 +15,8 @@ class _ResourceTradeSection extends StatelessWidget {
   });
 
   final AppLocalizations l10n;
-  final GameState gameState;
-  final MapData mapData;
+  final GameClientState gameState;
+  final WorldMap mapData;
   final DiplomaticRelation relation;
   final String activePlayerId;
   final String targetPlayerId;
@@ -159,7 +159,7 @@ class _ResourceTradeSummary extends StatelessWidget {
   });
 
   final AppLocalizations l10n;
-  final GameState gameState;
+  final GameClientState gameState;
   final String activePlayerId;
   final String targetPlayerId;
 

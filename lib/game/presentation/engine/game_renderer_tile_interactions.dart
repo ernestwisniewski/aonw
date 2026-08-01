@@ -1,7 +1,7 @@
 part of 'game_renderer.dart';
 
 extension GameRendererTileInteractions on GameRenderer {
-  Future<void> _handleTileTapped(TileData tileData) async {
+  Future<void> _handleTileTapped(WorldTile tileData) async {
     if (_shouldSuppressTapAfterLongPress()) return;
     final selectedId = _renderState.selectedUnitId;
     if (selectedId != null &&
@@ -44,11 +44,11 @@ extension GameRendererTileInteractions on GameRenderer {
     await onCommand(TileTappedCommand(tileData.col, tileData.row));
   }
 
-  bool _selectionMatchesTile(TileData tileData) {
+  bool _selectionMatchesTile(WorldTile tileData) {
     return _selectionMatchesTileCoordinates(tileData.col, tileData.row);
   }
 
-  bool _selectedUnitOnCityCenter(TileData tileData) {
+  bool _selectedUnitOnCityCenter(WorldTile tileData) {
     final selected = _renderState.selectedUnit;
     if (selected == null ||
         selected.col != tileData.col ||
@@ -60,7 +60,7 @@ extension GameRendererTileInteractions on GameRenderer {
     );
   }
 
-  bool _selectedTileIsCityCenter(TileData tileData) {
+  bool _selectedTileIsCityCenter(WorldTile tileData) {
     final selection = _renderState.selection;
     if (selection?.type != GameSelectionType.tile ||
         selection?.tile?.col != tileData.col ||
@@ -79,14 +79,14 @@ extension GameRendererTileInteractions on GameRenderer {
         selectedTile.row == row;
   }
 
-  void _handleTileInspected(TileData tileData, {Offset? anchor}) {
+  void _handleTileInspected(WorldTile tileData, {Offset? anchor}) {
     onTileInspected?.call(
       _visibleTileForActivePlayer(tileData),
       anchor ?? _inspectionAnchorForTile(tileData),
     );
   }
 
-  void _handleTileInspectionPreviewed(TileData tileData, {Offset? anchor}) {
+  void _handleTileInspectionPreviewed(WorldTile tileData, {Offset? anchor}) {
     final onPreview = onTileInspectionPreviewed;
     if (onPreview != null) {
       onPreview(
@@ -98,7 +98,7 @@ extension GameRendererTileInteractions on GameRenderer {
     _handleTileInspected(tileData, anchor: anchor);
   }
 
-  TileData _visibleTileForActivePlayer(TileData tileData) {
+  WorldTile _visibleTileForActivePlayer(WorldTile tileData) {
     return ResourceVisibilityRules.visibleTile(
       tile: tileData,
       playerId: _renderState.activePlayerId,

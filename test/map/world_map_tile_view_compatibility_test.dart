@@ -14,7 +14,7 @@ void main() {
 
       for (final mapName in discoveredMapNames) {
         final source = File('assets/maps/$mapName/map.json').readAsStringSync();
-        final mapData = MapDataCodec.fromJson(source);
+        final mapData = WorldMapCodec.fromJson(source);
         final world = _worldMapFromData(mapData);
 
         _expectWorldMatchesMapData(world, mapData, reason: mapName);
@@ -43,7 +43,7 @@ Set<String> _bundledMapNames() {
       .toSet();
 }
 
-WorldMap _worldMapFromData(MapData source) {
+WorldMap _worldMapFromData(WorldMap source) {
   return WorldMap.fromTileViews(
     cols: source.cols,
     rows: source.rows,
@@ -56,7 +56,7 @@ WorldMap _worldMapFromData(MapData source) {
 
 void _expectWorldMatchesMapData(
   WorldMap world,
-  MapData source, {
+  WorldMap source, {
   required String reason,
 }) {
   expect(world.cols, source.cols, reason: reason);
@@ -95,7 +95,7 @@ void _expectWorldMatchesMapData(
     reason: reason,
   );
   for (final tile in source.tiles) {
-    final indexed = world.tileAt(HexCoord(col: tile.col, row: tile.row));
+    final indexed = world.tileAtHex(HexCoord(col: tile.col, row: tile.row));
     expect(indexed, isNotNull, reason: '$reason ${tile.col},${tile.row}');
   }
 }

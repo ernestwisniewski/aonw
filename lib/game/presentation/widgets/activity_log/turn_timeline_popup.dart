@@ -16,7 +16,7 @@ class TurnTimelinePopup extends ConsumerStatefulWidget {
   final List<GameEventNotification> entries;
   final GameSave gameSave;
   final int currentTurn;
-  final GameState? currentState;
+  final GameClientState? currentState;
   final String? activePlayerId;
   final ValueChanged<GameEventNotification>? onEntrySelected;
   final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;

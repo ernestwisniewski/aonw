@@ -65,8 +65,8 @@ extension _ReplayRendererHostControls on _ReplayRendererHostState {
   bool _shouldFastForwardStep(
     ReplayStep step,
     Iterable<RendererEffect> effects,
-    GameState state,
-    GameState previousState,
+    GameClientState state,
+    GameClientState previousState,
   ) {
     if (!_playbackPolicy.shouldFastForwardStep(step)) return false;
     return !ReplayRendererEffectPlanner.hasPerspectiveVisibleEffect(

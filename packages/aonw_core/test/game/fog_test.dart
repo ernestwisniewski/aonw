@@ -36,18 +36,18 @@ void main() {
 
   group('FogRevealCalculator', () {
     test('reveals source and adjacent passable tiles', () {
-      final map = MapData(
+      final map = WorldMap(
         cols: 2,
         rows: 1,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.plains],
             resources: [],
             height: 0,
           ),
-          TileData(
+          WorldTile(
             col: 1,
             row: 0,
             terrains: [TerrainType.forest],
@@ -77,13 +77,13 @@ void main() {
 
   group('FogOfWarService', () {
     test('recomputes a moved unit owner without changing other players', () {
-      final map = MapData(
+      final map = WorldMap(
         cols: 8,
         rows: 8,
         tiles: [
           for (var row = 0; row < 8; row++)
             for (var col = 0; col < 8; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: const [TerrainType.plains],
@@ -157,7 +157,7 @@ void main() {
           ),
         },
       );
-      final map = MapData(cols: 1, rows: 1, tiles: const []);
+      final map = WorldMap(cols: 1, rows: 1, tiles: []);
 
       final next = const FogOfWarService().recomputePlayer(
         current: state,
@@ -256,14 +256,14 @@ void main() {
   });
 }
 
-MapData _flatMap(int cols, int rows) {
-  return MapData(
+WorldMap _flatMap(int cols, int rows) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
@@ -274,14 +274,14 @@ MapData _flatMap(int cols, int rows) {
   );
 }
 
-MapData _heightBonusMap() {
-  return MapData(
+WorldMap _heightBonusMap() {
+  return WorldMap(
     cols: 8,
     rows: 8,
     tiles: [
       for (var row = 0; row < 8; row++)
         for (var col = 0; col < 8; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

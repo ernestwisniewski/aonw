@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-07-12
-- Implementation: Implemented
+- Implementation: In progress
 
 ## Context
 
@@ -89,7 +89,13 @@ Rejected alternatives:
 
 ## Migration And Verification
 
-The migration is complete at the authoritative runtime boundary:
+The command families are routed through one `GameEngine`, but the exact result
+boundary is not complete yet. Some handlers still update persisted interaction
+workflow state, and `GameEngineResult` still carries animation-oriented facts
+and a snapshot envelope rather than only the next `DomainState` plus ordered
+domain facts. Those are explicit transitional exceptions.
+
+The completed portion at the authoritative runtime boundary is:
 
 - every concrete `DomainCommand` is exhaustively assigned to exactly one
   `GameEngine` command family;

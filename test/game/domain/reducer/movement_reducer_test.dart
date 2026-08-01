@@ -4,8 +4,8 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
@@ -20,17 +20,17 @@ import '../../../support/movement_engine_test_driver.dart';
 
 part 'movement_reducer_artifact_city_entry_tests.dart';
 
-MapData _map(
+WorldMap _map(
   int cols,
   int rows, {
   Map<({int col, int row}), List<TerrainType>> terrainOverrides = const {},
-}) => MapData(
+}) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (int row = 0; row < rows; row++)
       for (int col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains:
@@ -78,7 +78,7 @@ GameCity _city({required String id, required int col, int row = 0}) => GameCity(
 
 void main() {
   group('MovementReducer', () {
-    late MapData mapData;
+    late WorldMap mapData;
 
     setUp(() {
       mapData = _map(5, 5);
@@ -87,10 +87,10 @@ void main() {
     group('unit action commands', () {
       test('merchant cannot use ordinary tile movement targeting', () {
         final merchant = _merchant(movementPoints: 2);
-        final state = GameState(
+        final state = GameClientState(
           units: [merchant],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(merchant),
             moveCommandActive: true,
           ),
@@ -115,10 +115,10 @@ void main() {
               QueuedMovePath(targetCol: 3, targetRow: 0, steps: []),
             )
             .copyWithHitPoints(1);
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -151,12 +151,10 @@ void main() {
             totalTurns: 2,
           ),
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [worker],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(worker),
-          ),
+          interaction: InteractionState(selection: GameSelection.unit(worker)),
         );
 
         final result = resolveMovementCommandForTest(
@@ -188,12 +186,10 @@ void main() {
             totalTurns: 1,
           ),
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [settler],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(settler),
-          ),
+          interaction: InteractionState(selection: GameSelection.unit(settler)),
         );
 
         final result = resolveMovementCommandForTest(
@@ -226,13 +222,11 @@ void main() {
             remainingTurns: 2,
           ),
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [scout],
           artifacts: const [artifact],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(scout),
-          ),
+          interaction: InteractionState(selection: GameSelection.unit(scout)),
         );
 
         final result = resolveMovementCommandForTest(
@@ -250,10 +244,10 @@ void main() {
 
       test('cancelUnitAction restores movement after skipping turn', () {
         final commander = _commander(movementPoints: 2);
-        final skippedState = GameState(
+        final skippedState = GameClientState(
           units: [commander.copyWith(movementPoints: 0)],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(
               commander.copyWith(movementPoints: 0),
             ),
@@ -280,10 +274,10 @@ void main() {
         final commander = _commander(
           movementPoints: 0,
         ).copyWithPosture(UnitPosture.fortified);
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
           ),
         );
@@ -313,12 +307,10 @@ void main() {
           col: 1,
           row: 1,
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [scout],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(scout),
-          ),
+          interaction: InteractionState(selection: GameSelection.unit(scout)),
         );
 
         final result = resolveMovementCommandForTest(
@@ -350,13 +342,11 @@ void main() {
         final knownHexes = {
           for (var col = 0; col <= 4; col++) HexCoordinate(col: col, row: 0),
         };
-        final state = GameState(
+        final state = GameClientState(
           units: [scout],
           activePlayerId: 'player_1',
           fogOfWar: _fog(discovered: knownHexes, visible: knownHexes),
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(scout),
-          ),
+          interaction: InteractionState(selection: GameSelection.unit(scout)),
         );
 
         final result = resolveMovementCommandForTest(
@@ -399,7 +389,7 @@ void main() {
             for (var row = 0; row <= 1; row++)
               HexCoordinate(col: col, row: row),
         };
-        final state = GameState(
+        final state = GameClientState(
           units: [firstScout, secondScout],
           activePlayerId: 'player_1',
           fogOfWar: _fog(discovered: knownHexes, visible: knownHexes),
@@ -451,12 +441,10 @@ void main() {
           row: 1,
           posture: UnitPosture.autoExploring,
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [scout],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(scout),
-          ),
+          interaction: InteractionState(selection: GameSelection.unit(scout)),
         );
 
         final result = resolveMovementCommandForTest(
@@ -479,12 +467,10 @@ void main() {
           row: 1,
           posture: UnitPosture.autoExploring,
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [scout],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
-            selection: GameSelection.unit(scout),
-          ),
+          interaction: InteractionState(selection: GameSelection.unit(scout)),
         );
 
         final result = resolveMovementCommandForTest(
@@ -505,7 +491,7 @@ void main() {
           name: 'Enemy',
           center: CityHex(col: 1, row: 0),
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           cities: const [city],
           activePlayerId: 'player_1',
@@ -529,7 +515,7 @@ void main() {
           name: 'Friend',
           center: CityHex(col: 1, row: 0),
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           cities: const [city],
           activePlayerId: 'player_1',
@@ -564,7 +550,10 @@ void main() {
           },
         );
         final warrior = _warrior(id: 'warrior_1');
-        final state = GameState(units: [warrior], activePlayerId: 'player_1');
+        final state = GameClientState(
+          units: [warrior],
+          activePlayerId: 'player_1',
+        );
 
         final result = resolveMovementCommandForTest(
           state,
@@ -586,10 +575,10 @@ void main() {
     group('toggleMoveTargeting', () {
       test('activates for selected controllable unit', () {
         final commander = _commander();
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: false,
           ),
@@ -602,10 +591,10 @@ void main() {
 
       test('deactivates when already active', () {
         final commander = _commander();
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -617,9 +606,9 @@ void main() {
       });
 
       test('clears when no selected unit', () {
-        const state = GameState(
+        final state = GameClientState(
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(moveCommandActive: true),
+          interaction: const InteractionState(moveCommandActive: true),
         );
         final result = MovementReducer.toggleMoveTargeting(state);
         expect(result.moveCommandActive, isFalse);
@@ -628,10 +617,10 @@ void main() {
 
       test('clears preview when deactivating', () {
         final commander = _commander();
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -657,10 +646,10 @@ void main() {
     group('handleMoveTargetTile — preview', () {
       test('sets preview for adjacent tile', () {
         final commander = _commander();
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -678,10 +667,10 @@ void main() {
 
       test('sets preview for non-adjacent reachable tile', () {
         final commander = _commander();
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -700,10 +689,10 @@ void main() {
         // Place commander at (0,0); use a 1x1 map so there's nowhere to go
         final smallMap = _map(1, 1);
         final commander = _commander();
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -735,11 +724,11 @@ void main() {
           name: 'Capital',
           center: CityHex(col: 1, row: 0),
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [commander, garrison],
           cities: const [city],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -762,11 +751,11 @@ void main() {
           col: commander.col,
           row: commander.row,
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
           fogOfWar: _fog(discovered: {currentHex}, visible: {currentHex}),
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -794,11 +783,11 @@ void main() {
           name: 'Enemy',
           center: CityHex(col: 1, row: 0),
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           cities: const [city],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -823,7 +812,7 @@ void main() {
           name: 'Friend',
           center: CityHex(col: 1, row: 0),
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           cities: const [city],
           activePlayerId: 'player_1',
@@ -832,7 +821,7 @@ void main() {
             'player_2',
             DiplomaticRelationStatus.friendly,
           ),
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -850,18 +839,18 @@ void main() {
       });
 
       test('reports impassable terrain', () {
-        final mountainMap = MapData(
+        final mountainMap = WorldMap(
           cols: 2,
           rows: 1,
-          tiles: const [
-            TileData(
+          tiles: [
+            WorldTile(
               col: 0,
               row: 0,
               terrains: [TerrainType.plains],
               resources: [],
               height: 0,
             ),
-            TileData(
+            WorldTile(
               col: 1,
               row: 0,
               terrains: [TerrainType.mountain],
@@ -871,10 +860,10 @@ void main() {
           ],
         );
         final commander = _commander();
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -908,10 +897,10 @@ void main() {
           },
         );
         final warrior = _warrior(id: 'warrior_1');
-        final state = GameState(
+        final state = GameClientState(
           units: [warrior],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(warrior),
             moveCommandActive: true,
           ),
@@ -939,10 +928,10 @@ void main() {
     group('handleMoveTargetTile — own tile', () {
       test('cancels move mode when tapping own tile', () {
         final commander = _commander();
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -959,10 +948,10 @@ void main() {
 
       test('keeps unit selected after cancelling on own tile', () {
         final commander = _commander();
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -981,10 +970,10 @@ void main() {
     group('handleMoveTargetTile — execute previewed move', () {
       test('executes the previewed move', () {
         final commander = _commander();
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -1014,10 +1003,10 @@ void main() {
 
       test('unit position updates after execution', () {
         final commander = _commander();
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -1040,10 +1029,10 @@ void main() {
 
       test('preview is cleared after execution', () {
         final commander = _commander();
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -1064,10 +1053,10 @@ void main() {
 
       test('selection updated to moved unit', () {
         final commander = _commander();
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -1090,10 +1079,10 @@ void main() {
       test('movement points decrease after move', () {
         final commander = _commander();
         final initialMP = commander.movementPoints;
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: true,
           ),
@@ -1116,9 +1105,9 @@ void main() {
 
     group('handleMoveTargetTile — no controllable unit', () {
       test('clears move mode when no unit selected', () {
-        const state = GameState(
+        final state = GameClientState(
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(moveCommandActive: true),
+          interaction: const InteractionState(moveCommandActive: true),
         );
         final tileData = mapData.tileAt(1, 0)!;
         final result = MovementReducer.handleMoveTargetTile(
@@ -1132,7 +1121,10 @@ void main() {
     group('resetUnitMovementForNewTurn', () {
       test('resets MP for player units', () {
         final commander = _commander(movementPoints: 0);
-        final state = GameState(units: [commander], activePlayerId: 'player_1');
+        final state = GameClientState(
+          units: [commander],
+          activePlayerId: 'player_1',
+        );
         final result = MovementReducer.resetUnitMovementForNewTurn(
           state,
           mapData,
@@ -1148,7 +1140,7 @@ void main() {
           col: 2,
           row: 2,
         ).copyWith(movementPoints: 0);
-        final state = GameState(
+        final state = GameClientState(
           units: [commander, otherCommander],
           activePlayerId: 'player_1',
         );
@@ -1166,7 +1158,10 @@ void main() {
       test('returns unchanged state when nothing changed', () {
         // Start with full MP so reset doesn't change anything
         final commander = _commander(); // default full MP
-        final state = GameState(units: [commander], activePlayerId: 'player_1');
+        final state = GameClientState(
+          units: [commander],
+          activePlayerId: 'player_1',
+        );
         final result = MovementReducer.resetUnitMovementForNewTurn(
           state,
           mapData,
@@ -1182,7 +1177,10 @@ void main() {
 
       test('resets movement and recomputes fog when movement changed', () {
         final commander = _commander(movementPoints: 0);
-        final state = GameState(units: [commander], activePlayerId: 'player_1');
+        final state = GameClientState(
+          units: [commander],
+          activePlayerId: 'player_1',
+        );
         final result = MovementReducer.resetUnitMovementForNewTurn(
           state,
           mapData,
@@ -1200,11 +1198,11 @@ void main() {
 
       test('reactivates move targeting for the selected ready unit', () {
         final commander = _commander(movementPoints: 0);
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: false,
           ),
@@ -1234,13 +1232,11 @@ void main() {
             movementPoints: 0,
             posture: UnitPosture.autoExploring,
           );
-          final state = GameState(
+          final state = GameClientState(
             units: [scout],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
-            interaction: GameInteractionState(
-              selection: GameSelection.unit(scout),
-            ),
+            interaction: InteractionState(selection: GameSelection.unit(scout)),
           );
 
           final result = MovementReducer.resetUnitMovementForNewTurn(
@@ -1281,7 +1277,7 @@ void main() {
           movementPoints: 0,
           posture: UnitPosture.autoExploring,
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [firstScout, secondScout],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
@@ -1316,11 +1312,11 @@ void main() {
             col: 2,
             row: 2,
           );
-          final state = GameState(
+          final state = GameClientState(
             units: [commander, otherCommander],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(commander),
               moveCommandActive: false,
             ),
@@ -1364,10 +1360,10 @@ void main() {
             ],
           ),
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
           ),
         );
@@ -1422,11 +1418,11 @@ void main() {
             );
         final guard = _warrior(id: 'guard_1', col: 3);
         final city = _city(id: 'city_1', col: 3);
-        final state = GameState(
+        final state = GameClientState(
           units: [merchant, guard],
           cities: [city],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(merchant),
           ),
         );
@@ -1447,10 +1443,10 @@ void main() {
 
       test('executing a target at 0 MP queues the path without moving', () {
         final commander = _commander(movementPoints: 0);
-        final start = GameState(
+        final start = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
             moveCommandActive: false,
           ),
@@ -1546,7 +1542,10 @@ void main() {
             ],
           ),
         );
-        final state = GameState(units: [commander], activePlayerId: 'player_1');
+        final state = GameClientState(
+          units: [commander],
+          activePlayerId: 'player_1',
+        );
 
         final result = MovementReducer.resetUnitMovementForNewTurn(
           state,

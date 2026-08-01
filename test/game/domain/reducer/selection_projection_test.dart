@@ -5,7 +5,6 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/interaction/selection_reducer.dart';
 import 'package:aonw/game/domain/turn/phases/selection_refresh_phase.dart';
 import 'package:aonw/game/domain/turn/turn_context.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/world_map.dart';
@@ -15,7 +14,6 @@ import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -29,7 +27,7 @@ void main() {
       center: CityHex(col: 1, row: 1),
       controlledHexes: [CityHex(col: 1, row: 1)],
     );
-    const state = GameState(
+    final state = GameClientState(
       cities: [city],
       activePlayerId: 'player_1',
       playerColors: {'player_1': 0xFF123456},
@@ -49,8 +47,8 @@ void main() {
   });
 
   test('tile tap leaves stale move mode before standard selection', () {
-    const state = GameState(
-      interaction: GameInteractionState(moveCommandActive: true),
+    final state = GameClientState(
+      interaction: const InteractionState(moveCommandActive: true),
     );
 
     final transition = SelectionReducer.handleTileTapped(
@@ -74,7 +72,7 @@ void main() {
         population: 1,
         center: CityHex(col: 1, row: 1),
       );
-      const state = GameState(
+      final state = GameClientState(
         cities: [city],
         activePlayerId: 'player_1',
         playerStabilityNet: {'player_1': -2},
@@ -108,9 +106,7 @@ void main() {
   );
 
   group('SelectionRefreshPhase', () {
-    final MapTileLookup mapTiles = WorldMapReadView(
-      _selectionRefreshWorldMap(),
-    );
+    final MapTileLookup mapTiles = _selectionRefreshWorldMap();
 
     test('selects a city founded by the previously selected unit', () {
       final founder = GameUnit.startingCommander(
@@ -125,12 +121,10 @@ void main() {
         center: CityHex(col: 1, row: 1),
         controlledHexes: [CityHex(col: 1, row: 1)],
       );
-      final state = GameState(
+      final state = GameClientState(
         cities: const [foundedCity],
         activePlayerId: 'player_1',
-        interaction: GameInteractionState(
-          selection: GameSelection.unit(founder),
-        ),
+        interaction: InteractionState(selection: GameSelection.unit(founder)),
       );
 
       final refreshed = const SelectionRefreshPhase().apply(
@@ -166,11 +160,11 @@ void main() {
         controlledHexes: [CityHex(col: 1, row: 1)],
         population: 2,
       );
-      final state = GameState(
+      final state = GameClientState(
         cities: const [updatedCity],
         activePlayerId: 'player_1',
         playerStabilityNet: const {'player_1': -2},
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.city(
             selectedCity,
             cityYield: TileYield.zero,
@@ -205,9 +199,9 @@ void main() {
         name: 'Removed city',
         center: CityHex(col: 1, row: 1),
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.city(
             removedCity,
             cityYield: TileYield.zero,
@@ -230,10 +224,10 @@ void main() {
         row: 1,
       ).copyWith(movementPoints: 0);
       final updatedUnit = selectedUnit.copyWith(movementPoints: 2);
-      final state = GameState(
+      final state = GameClientState(
         units: [updatedUnit],
         activePlayerId: 'player_1',
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(selectedUnit),
         ),
       );
@@ -263,7 +257,7 @@ void main() {
           type: FieldImprovementType.farm,
           builtByCityId: 'city_1',
         );
-        final state = GameState(
+        final state = GameClientState(
           fieldImprovements: const [updatedImprovement],
           activePlayerId: 'player_1',
           research: ResearchState(
@@ -273,7 +267,7 @@ void main() {
               ),
             },
           ),
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.fieldImprovement(selectedImprovement),
           ),
         );
@@ -305,7 +299,7 @@ final _customStabilityRuleset = StabilityRuleset.standard.copyWith(
 );
 
 TurnContext _context(
-  GameState state,
+  GameClientState state,
   MapTileLookup mapTiles, {
   GameRuleset? ruleset,
 }) => TurnContext(
@@ -315,13 +309,13 @@ TurnContext _context(
   playerId: 'player_1',
 );
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 3,
   rows: 3,
   tiles: [
     for (var row = 0; row < 3; row += 1)
       for (var col = 0; col < 3; col += 1)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],
@@ -338,7 +332,7 @@ WorldMap _selectionRefreshWorldMap() {
     tiles: [
       for (var row = 0; row < 3; row += 1)
         for (var col = 0; col < 3; col += 1)
-          WorldTile(
+          WorldTile.at(
             coordinate: HexCoord(col: col, row: row),
             terrains: const [TerrainType.plains],
             resources: switch ((col, row)) {

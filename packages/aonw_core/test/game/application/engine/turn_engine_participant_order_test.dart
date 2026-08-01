@@ -5,24 +5,25 @@ import 'package:test/test.dart';
 void main() {
   test('sequential end advances from a middle canonical participant', () {
     final snapshot = CanonicalGameSnapshot.snapshot(
-      domain: DomainState.snapshot(
-        turn: 7,
-        matchRules: MatchRules.standard,
-        participants: const [
-          Player(id: 'player_2', name: 'Two', colorValue: 2),
-          Player(id: 'player_1', name: 'One', colorValue: 1),
-          Player(id: 'player_3', name: 'Three', colorValue: 3),
-        ],
-        units: [_queuedUnit],
-      ),
-      session: MatchSessionState.snapshot(
-        gameMode: GameMode.hotSeat,
-        turnStatesByPlayerId: const {
-          'player_2': PlayerTurnState.active,
-          'player_1': PlayerTurnState.active,
-          'player_3': PlayerTurnState.active,
-        },
-      ),
+      domain:
+          (DomainState.snapshot(
+            turn: 7,
+            matchRules: MatchRules.standard,
+            participants: const [
+              Player(id: 'player_2', name: 'Two', colorValue: 2),
+              Player(id: 'player_1', name: 'One', colorValue: 1),
+              Player(id: 'player_3', name: 'Three', colorValue: 3),
+            ],
+            units: [_queuedUnit],
+          )).copyWith(
+            gameMode: GameMode.hotSeat,
+            turnStatesByPlayerId: const {
+              'player_2': PlayerTurnState.active,
+              'player_1': PlayerTurnState.active,
+              'player_3': PlayerTurnState.active,
+            },
+          ),
+
       metadata: GameSnapshotMetadata(
         id: 'turn',
         schemaVersion: 3,
@@ -71,18 +72,16 @@ final _queuedUnit = GameUnit(
   ),
 );
 
-final _map = WorldMapReadView(
-  WorldMap(
-    cols: 2,
-    rows: 1,
-    tiles: [
-      for (var col = 0; col < 2; col++)
-        WorldTile(
-          coordinate: HexCoord(col: col, row: 0),
-          terrains: const [TerrainType.grassland],
-          resources: const [],
-          height: 0,
-        ),
-    ],
-  ),
+final _map = WorldMap(
+  cols: 2,
+  rows: 1,
+  tiles: [
+    for (var col = 0; col < 2; col++)
+      WorldTile.at(
+        coordinate: HexCoord(col: col, row: 0),
+        terrains: const [TerrainType.grassland],
+        resources: const [],
+        height: 0,
+      ),
+  ],
 );

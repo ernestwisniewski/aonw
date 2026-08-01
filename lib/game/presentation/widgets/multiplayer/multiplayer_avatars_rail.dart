@@ -18,15 +18,15 @@ import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/player.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-part 'multiplayer_avatars_sheet.dart';
 part 'multiplayer_avatars_rail_gamepad.dart';
+part 'multiplayer_avatars_sheet.dart';
 
 class MultiplayerAvatarsRailOverlay extends ConsumerStatefulWidget {
   static const double rightOffset = 12;
@@ -183,7 +183,7 @@ class MultiplayerAvatarsRail extends StatelessWidget {
   final Map<String, String> timerLabels;
   final Set<String> timedOutPlayerIds;
   final DiplomacyState diplomacy;
-  final GameState? gameState;
+  final GameClientState? gameState;
   final String? gamepadFocusedTargetId;
   final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
   final ValueChanged<bool>? onGamepadSheetOpenChanged;
@@ -272,7 +272,7 @@ class MultiplayerAvatarsRail extends StatelessWidget {
     required GameSave gameSave,
     required String activePlayerId,
     DiplomacyState diplomacy = DiplomacyState.empty,
-    GameState? gameState,
+    GameClientState? gameState,
     Map<String, String> timerLabels = const {},
     Set<String> timedOutPlayerIds = const {},
   }) {
@@ -312,7 +312,7 @@ class MultiplayerAvatarsRail extends StatelessWidget {
     DiplomacyState diplomacy = DiplomacyState.empty,
     Map<String, String> timerLabels = const {},
     Set<String> timedOutPlayerIds = const {},
-    GameState? gameState,
+    GameClientState? gameState,
     Key? sheetRouteKey,
     ValueListenable<GamepadInputSnapshot>? gamepadInputListenable,
   }) {
@@ -353,7 +353,7 @@ class MultiplayerAvatarsRail extends StatelessWidget {
   }
 
   static bool _hasDiplomaticContact({
-    required GameState? gameState,
+    required GameClientState? gameState,
     required DiplomacyState diplomacy,
     required String playerId,
     required String targetPlayerId,

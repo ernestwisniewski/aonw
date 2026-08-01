@@ -19,7 +19,7 @@ void main() {
         },
       );
       const control = PlayerControlState(activePlayerId: 'ai_1');
-      const gameState = GameState(
+      final gameState = GameClientState(
         activePlayerId: 'ai_1',
         activePlayerCanAct: true,
       );
@@ -43,7 +43,7 @@ void main() {
         },
       );
       const control = PlayerControlState(activePlayerId: 'human');
-      const gameState = GameState(
+      final gameState = GameClientState(
         activePlayerId: 'human',
         activePlayerCanAct: true,
       );
@@ -70,7 +70,7 @@ void main() {
         activePlayerId: 'human',
         canAct: false,
       );
-      const gameState = GameState(
+      final gameState = GameClientState(
         activePlayerId: 'human',
         activePlayerCanAct: false,
       );

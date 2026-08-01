@@ -14,7 +14,7 @@ class _ActionsSection extends StatelessWidget {
   });
 
   final AppLocalizations l10n;
-  final GameState gameState;
+  final GameClientState gameState;
   final DiplomaticRelation relation;
   final int currentTurn;
   final String activePlayerId;

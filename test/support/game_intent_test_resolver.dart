@@ -8,7 +8,7 @@ import 'canonical_command_test_dispatch.dart';
 
 GameStateTransition resolveGameIntent(
   GameStateReducer reducer,
-  GameState state,
+  GameClientState state,
   Object command, {
   GameCommandContext context = const GameCommandContext(),
 }) {
@@ -22,7 +22,7 @@ GameStateTransition resolveGameIntent(
 
 GameStateTransition resolveWithEffects(
   GameStateReducer reducer,
-  GameState state,
+  GameClientState state,
   Object command, {
   GameCommandContext context = const GameCommandContext(),
 }) {

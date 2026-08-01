@@ -160,22 +160,22 @@ void main() {
         final unit = _unitAt(path);
         if (path == _localResolverPath) {
           expect(
-            _targetPropertyReadCount(unit, 'snapshot', 'runtimeState'),
+            _targetPropertyReadCount(unit, 'snapshot', 'lifecycle'),
             0,
             reason: path,
           );
           continue;
         }
         final names = _namesIn(unit);
-        expect(names, isNot(contains('runtimeState')), reason: path);
+        expect(names, isNot(contains('lifecycle')), reason: path);
       }
     });
 
     test('AI builder uses canonical and lossless snapshot APIs only', () {
       final unit = _unitAt(_aiTurnPreparationBuilderPath);
       expect(_propertyReadCount(unit, 'save'), 0);
-      expect(_propertyReadCount(unit, 'runtimeState'), 0);
-      expect(_propertyReadCount(unit, 'withGameState'), 1);
+      expect(_propertyReadCount(unit, 'lifecycle'), 0);
+      expect(_propertyReadCount(unit, 'withClientState'), 1);
       expect(_propertyReadCount(unit, 'persistedTurnStartedAt'), 1);
       expect(_propertyReadCount(unit, 'metadata'), 2);
       expect(_propertyReadCount(unit, 'session'), 1);

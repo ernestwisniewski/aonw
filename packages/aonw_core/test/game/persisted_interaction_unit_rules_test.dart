@@ -7,7 +7,7 @@ import 'package:test/test.dart';
 void main() {
   group('PersistedInteractionUnitRules.clearOwnedByUnit', () {
     test('clears pending action and city draft owned by the unit', () {
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         cityFoundingDraft: _draft('unit_1'),
         pendingAction: const PendingAttackTargeting(
           ownerPlayerId: 'player_1',
@@ -21,11 +21,11 @@ void main() {
       );
 
       expect(result, isNot(same(interaction)));
-      expect(result, PersistedInteractionState.empty);
+      expect(result, DomainActionState.empty);
     });
 
     test('clears only the owned side of mixed interaction state', () {
-      final pendingOwned = PersistedInteractionState(
+      final pendingOwned = DomainActionState(
         cityFoundingDraft: _draft('unit_2'),
         pendingAction: const PendingAttackTargeting(
           ownerPlayerId: 'player_1',
@@ -43,7 +43,7 @@ void main() {
       expect(clearedPending.pendingAction, isNull);
       expect(clearedPending.cityFoundingDraft, same(pendingOwnedDraft));
 
-      final draftOwned = PersistedInteractionState(
+      final draftOwned = DomainActionState(
         cityFoundingDraft: _draft('unit_1'),
         pendingAction: const PendingAttackTargeting(
           ownerPlayerId: 'player_1',
@@ -63,7 +63,7 @@ void main() {
     });
 
     test('preserves identity when every interaction belongs elsewhere', () {
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         cityFoundingDraft: _draft('unit_2'),
         pendingAction: const PendingAttackTargeting(
           ownerPlayerId: 'player_1',
@@ -80,7 +80,7 @@ void main() {
     });
 
     test('preserves identity when both interaction slices are null', () {
-      final interaction = PersistedInteractionState();
+      const interaction = DomainActionState.empty;
 
       final result = PersistedInteractionUnitRules.clearOwnedByUnit(
         interaction,

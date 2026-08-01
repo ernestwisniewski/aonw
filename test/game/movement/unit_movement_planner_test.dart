@@ -1,20 +1,20 @@
 import 'package:aonw/game/domain/movement.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _map(
+WorldMap _map(
   int cols,
   int rows, {
   List<TerrainType> terrains = const [TerrainType.grassland],
-}) => MapData(
+}) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (int row = 0; row < rows; row++)
       for (int col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: terrains,
@@ -24,7 +24,7 @@ MapData _map(
   ],
 );
 
-TileData _tile(MapData map, int col, int row) =>
+WorldTile _tile(WorldMap map, int col, int row) =>
     map.tiles.firstWhere((tile) => tile.col == col && tile.row == row);
 
 void main() {

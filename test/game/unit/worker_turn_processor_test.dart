@@ -1,16 +1,16 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 3,
   rows: 3,
   tiles: [
     for (var row = 0; row < 3; row++)
       for (var col = 0; col < 3; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],
@@ -100,13 +100,13 @@ void main() {
     });
 
     test('completing fishing boats works on controlled coastal fish', () {
-      final coastalMap = MapData(
+      final coastalMap = WorldMap(
         cols: 3,
         rows: 3,
         tiles: [
           for (var row = 0; row < 3; row++)
             for (var col = 0; col < 3; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: col == 1 && row == 0
@@ -153,13 +153,13 @@ void main() {
     });
 
     test('completing pearl divers works on controlled coastal pearls', () {
-      final coastalMap = MapData(
+      final coastalMap = WorldMap(
         cols: 3,
         rows: 3,
         tiles: [
           for (var row = 0; row < 3; row++)
             for (var col = 0; col < 3; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: col == 1 && row == 0

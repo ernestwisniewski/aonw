@@ -52,11 +52,11 @@ void main() {
 
   test('last turn follows the resulting replay step snapshot', () {
     final initialSave = _save();
-    final initialSnapshot = SaveSnapshot(save: initialSave);
+    final initialSnapshot = GameSnapshotFactory.create(save: initialSave);
     final timeline = ReplayTimeline(
       saveId: initialSave.id,
       initialSnapshot: initialSnapshot,
-      initialState: const GameState(),
+      initialState: GameClientState(),
       steps: [
         ReplayStep(
           index: 1,
@@ -66,13 +66,13 @@ void main() {
             turn: 1,
             command: const EndTurnCommand('p1'),
           ),
-          snapshot: SaveSnapshot.fromGameState(
+          snapshot: GameSnapshotFactory.fromClientState(
             save: initialSave.copyWith(turn: 2),
-            state: const GameState(),
+            state: GameClientState(),
             eventLogOffset: 1,
           ),
-          previousState: const GameState(),
-          state: const GameState(),
+          previousState: GameClientState(),
+          state: GameClientState(),
           events: const [],
           uiEffects: const [],
         ),
@@ -85,11 +85,11 @@ void main() {
 }
 
 ReplayTimeline _timeline(GameSave save) {
-  final snapshot = SaveSnapshot(save: save);
+  final snapshot = GameSnapshotFactory.create(save: save);
   return ReplayTimeline(
     saveId: save.id,
     initialSnapshot: snapshot,
-    initialState: const GameState(),
+    initialState: GameClientState(),
     steps: const [],
   );
 }

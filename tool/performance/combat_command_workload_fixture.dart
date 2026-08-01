@@ -83,7 +83,6 @@ final class _CombatCommandFixture {
       domainState: domain,
       snapshot: CanonicalGameSnapshot.snapshot(
         domain: domain,
-        session: MatchSessionState.snapshot(gameMode: GameMode.hotSeat),
         metadata: GameSnapshotMetadata(
           id: 'combat-benchmark',
           schemaVersion: 3,
@@ -127,21 +126,19 @@ FogOfWarState _combatVisibleFog() {
 }
 
 MapReadView _combatMap() {
-  return WorldMapReadView(
-    WorldMap(
-      cols: 5,
-      rows: 5,
-      tiles: [
-        for (var row = 0; row < 5; row++)
-          for (var col = 0; col < 5; col++)
-            WorldTile(
-              coordinate: HexCoord(col: col, row: row),
-              terrains: const [TerrainType.grassland],
-              resources: const [],
-              height: 0,
-            ),
-      ],
-    ),
+  return WorldMap(
+    cols: 5,
+    rows: 5,
+    tiles: [
+      for (var row = 0; row < 5; row++)
+        for (var col = 0; col < 5; col++)
+          WorldTile.at(
+            coordinate: HexCoord(col: col, row: row),
+            terrains: const [TerrainType.grassland],
+            resources: const [],
+            height: 0,
+          ),
+    ],
   );
 }
 

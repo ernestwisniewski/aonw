@@ -41,7 +41,9 @@ Future<void> _eliminatePlayersInStoredMatch({
   required Set<String> playerIds,
 }) async {
   final stored = (await store.findState(matchId))!;
-  final state = PersistentGameState.fromJson(stored.snapshot.state);
+  final state = CanonicalGameSnapshotCodec.decodeDomainState(
+    stored.snapshot.state,
+  );
   await store.saveState(
     stored.copyWith(
       snapshot: stored.snapshot.copyWith(

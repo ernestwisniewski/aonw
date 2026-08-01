@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('world artifacts', () {
     test('artifact generation ignores unreachable passable tiles', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 7,
         rows: 3,
         tiles: [
@@ -55,7 +55,7 @@ void main() {
     test(
       'artifact generation ignores tiles beyond starting unit movement capacity',
       () {
-        final mapData = MapData(
+        final mapData = WorldMap(
           cols: 3,
           rows: 2,
           tiles: [
@@ -134,7 +134,7 @@ void main() {
     });
 
     test('artifact generation avoids map objective hexes', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 5,
         rows: 1,
         objectives: const [
@@ -199,7 +199,7 @@ void main() {
         row: 3,
         movementPoints: 5,
       );
-      final state = PersistentGameState(units: [scout], artifacts: [artifact]);
+      final state = DomainState.snapshot(units: [scout], artifacts: [artifact]);
 
       final result = ArtifactCommandResolver.startExcavation(
         units: state.units,
@@ -215,25 +215,27 @@ void main() {
       expect(result.artifacts.single.location.isBeingExcavated, isTrue);
       expect(result.artifacts.single.location.remainingTurns, 2);
 
-      final pending = PersistentArtifactTurnProcessor.advanceForPlayers(
-        state: state.copyWith(units: result.units, artifacts: result.artifacts),
+      final pending = ArtifactTurnProcessor.advanceForPlayers(
+        units: result.units,
+        artifacts: result.artifacts,
         playerIds: const ['p1'],
       );
 
       expect(pending.changed, isTrue);
-      expect(pending.state.units.single.excavatingArtifactId, artifact.id);
-      expect(pending.state.units.single.carriedArtifactId, isNull);
-      expect(pending.state.artifacts.single.location.remainingTurns, 1);
+      expect(pending.units.single.excavatingArtifactId, artifact.id);
+      expect(pending.units.single.carriedArtifactId, isNull);
+      expect(pending.artifacts.single.location.remainingTurns, 1);
 
-      final completed = PersistentArtifactTurnProcessor.advanceForPlayers(
-        state: pending.state,
+      final completed = ArtifactTurnProcessor.advanceForPlayers(
+        units: pending.units,
+        artifacts: pending.artifacts,
         playerIds: const ['p1'],
       );
 
       expect(completed.changed, isTrue);
-      expect(completed.state.units.single.excavatingArtifactId, isNull);
-      expect(completed.state.units.single.carriedArtifactId, artifact.id);
-      expect(completed.state.artifacts.single.location.isCarried, isTrue);
+      expect(completed.units.single.excavatingArtifactId, isNull);
+      expect(completed.units.single.carriedArtifactId, artifact.id);
+      expect(completed.artifacts.single.location.isCarried, isTrue);
     });
 
     test('all unit types use the same two-turn excavation timing', () {
@@ -247,7 +249,7 @@ void main() {
         col: 1,
         row: 1,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [warrior],
         artifacts: [artifact],
       );
@@ -263,28 +265,27 @@ void main() {
       expect(excavation.artifacts.single.location.isBeingExcavated, isTrue);
       expect(excavation.artifacts.single.location.remainingTurns, 2);
 
-      final pending = PersistentArtifactTurnProcessor.advanceForPlayers(
-        state: state.copyWith(
-          units: excavation.units,
-          artifacts: excavation.artifacts,
-        ),
+      final pending = ArtifactTurnProcessor.advanceForPlayers(
+        units: excavation.units,
+        artifacts: excavation.artifacts,
         playerIds: const ['p1'],
       );
 
       expect(pending.changed, isTrue);
-      expect(pending.state.units.single.excavatingArtifactId, artifact.id);
-      expect(pending.state.units.single.carriedArtifactId, isNull);
-      expect(pending.state.artifacts.single.location.remainingTurns, 1);
+      expect(pending.units.single.excavatingArtifactId, artifact.id);
+      expect(pending.units.single.carriedArtifactId, isNull);
+      expect(pending.artifacts.single.location.remainingTurns, 1);
 
-      final completed = PersistentArtifactTurnProcessor.advanceForPlayers(
-        state: pending.state,
+      final completed = ArtifactTurnProcessor.advanceForPlayers(
+        units: pending.units,
+        artifacts: pending.artifacts,
         playerIds: const ['p1'],
       );
 
       expect(completed.changed, isTrue);
-      expect(completed.state.units.single.excavatingArtifactId, isNull);
-      expect(completed.state.units.single.carriedArtifactId, artifact.id);
-      expect(completed.state.artifacts.single.location.isCarried, isTrue);
+      expect(completed.units.single.excavatingArtifactId, isNull);
+      expect(completed.units.single.carriedArtifactId, artifact.id);
+      expect(completed.artifacts.single.location.isCarried, isTrue);
     });
 
     test('a city stores only one artifact', () {
@@ -305,7 +306,7 @@ void main() {
         type: WorldArtifactType.merchantsSeal,
         location: WorldArtifactLocation.stored(cityId: 'city_1'),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [unit.copyWithCarriedArtifact(carried.id)],
         cities: [city],
         artifacts: [carried, stored],
@@ -341,7 +342,7 @@ void main() {
         type: WorldArtifactType.heroSword,
         location: WorldArtifactLocation.stored(cityId: 'city_p1'),
       );
-      const state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: {'p1': 10, 'p2': 1},
         cities: [playerCity, targetCity],
         artifacts: [artifact],
@@ -389,7 +390,7 @@ void main() {
         type: WorldArtifactType.queensMirror,
         location: WorldArtifactLocation.stored(cityId: 'city_p2'),
       );
-      const state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: {'p1': 10, 'p2': 20},
         cities: [playerCity, targetCity],
         artifacts: [offered, requested],
@@ -437,7 +438,7 @@ void main() {
             ),
         ];
 
-        final full = PersistentGameState(cities: cities, artifacts: artifacts);
+        final full = DomainState.snapshot(cities: cities, artifacts: artifacts);
         final advanced = CulturalVictoryProgressCalculator.advanceHoldTurns(
           playerIds: const ['p1'],
           state: full,
@@ -481,12 +482,11 @@ void main() {
             ),
           ),
       ];
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [...culturalCities, rivalCity],
         artifacts: artifacts,
-        runtimeState: const GameRuntimeState(
-          culturalVictoryHoldTurnsByPlayerId: {'p1': 5},
-        ),
+
+        culturalVictoryHoldTurnsByPlayerId: {'p1': 5},
       );
 
       final outcome = const GameOutcomeDetector().evaluate(
@@ -524,14 +524,14 @@ void main() {
   });
 }
 
-TileData _artifactTestTile(
+WorldTile _artifactTestTile(
   int col,
   int row, {
   required List<TerrainType> terrains,
   List<ResourceType> resources = const [],
   int height = 0,
 }) {
-  return TileData(
+  return WorldTile(
     col: col,
     row: row,
     terrains: terrains,
@@ -540,11 +540,11 @@ TileData _artifactTestTile(
   );
 }
 
-MapData _loadMapData(String path) {
+WorldMap _loadMapData(String path) {
   final json =
       jsonDecode(File(path).readAsStringSync()) as Map<String, Object?>;
   final tilesJson = json['tiles']! as List<Object?>;
-  return MapData(
+  return WorldMap(
     cols: json['cols']! as int,
     rows: json['rows']! as int,
     mapName: json['mapName'] as String?,
@@ -556,8 +556,8 @@ MapData _loadMapData(String path) {
   );
 }
 
-TileData _tileFromJson(Map<String, Object?> json) {
-  return TileData(
+WorldTile _tileFromJson(Map<String, Object?> json) {
+  return WorldTile(
     col: json['col']! as int,
     row: json['row']! as int,
     terrains: [

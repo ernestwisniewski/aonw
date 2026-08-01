@@ -1,6 +1,6 @@
 # ADR 0004: Versioned Multiplayer Protocol
 
-- Status: Accepted
+- Status: Superseded by [ADR 0006](0006-current-version-protocol.md)
 - Date: 2026-07-12
 - Implementation: In progress
 

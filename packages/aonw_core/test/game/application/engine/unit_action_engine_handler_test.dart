@@ -79,7 +79,7 @@ void main() {
             ),
           ),
         ],
-        interaction: PersistedInteractionState(
+        interaction: DomainActionState(
           cityFoundingDraft: CityFoundingDraft(
             unitId: 'unit_1',
             ownerPlayerId: _playerId,
@@ -97,9 +97,9 @@ void main() {
       final accepted = _expectAcceptedBoundaryReplacement(result, snapshot);
       expect(accepted.snapshot.domain.units.single.movementPoints, 0);
       expect(accepted.snapshot.domain.units.single.queuedPath, isNull);
-      expect(accepted.snapshot.interaction.cityFoundingDraft, isNull);
+      expect(accepted.snapshot.domain.actions.cityFoundingDraft, isNull);
       expect(
-        accepted.snapshot.interaction.pendingAction,
+        accepted.snapshot.domain.actions.pendingAction,
         const PendingUnitTurnSkip(
           ownerPlayerId: _playerId,
           unitId: 'unit_1',
@@ -133,7 +133,7 @@ void main() {
     test('fortify clears interaction owned by the unit', () {
       final snapshot = _snapshot(
         units: [_unit()],
-        interaction: PersistedInteractionState(
+        interaction: DomainActionState(
           cityFoundingDraft: CityFoundingDraft(
             unitId: 'unit_1',
             ownerPlayerId: _playerId,
@@ -153,13 +153,13 @@ void main() {
       );
 
       final accepted = _expectAcceptedBoundaryReplacement(result, snapshot);
-      expect(accepted.snapshot.interaction, PersistedInteractionState.empty);
+      expect(accepted.snapshot.domain.actions, DomainActionState.empty);
     });
 
     test('accepted semantic no-op retains snapshot identity', () {
       final snapshot = _snapshot(
         units: [_unit(movementPoints: 0, posture: UnitPosture.fortified)],
-        interaction: PersistedInteractionState(
+        interaction: DomainActionState(
           pendingAction: const PendingResearchSelection(
             ownerPlayerId: _playerId,
           ),
@@ -198,7 +198,10 @@ GameEngineAccepted _expectAcceptedBoundaryReplacement(
   final accepted = result as GameEngineAccepted;
   expect(accepted.events, isEmpty);
   expect(accepted.snapshot, isNot(same(snapshot)));
-  expect(accepted.snapshot.session, same(snapshot.session));
+  expect(
+    accepted.snapshot.domain.turnStatesByPlayerId,
+    same(snapshot.domain.turnStatesByPlayerId),
+  );
   expect(accepted.snapshot.metadata, same(snapshot.metadata));
   expect(accepted.snapshot.eventLogOffset, snapshot.eventLogOffset);
   expect(
@@ -211,43 +214,45 @@ GameEngineAccepted _expectAcceptedBoundaryReplacement(
 
 CanonicalGameSnapshot _snapshot({
   List<GameUnit> units = const [],
-  PersistedInteractionState interaction = PersistedInteractionState.empty,
+  DomainActionState interaction = DomainActionState.empty,
 }) {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
-      turn: 7,
-      matchRules: MatchRules.standard,
-      participants: const [
-        Player(
-          id: _playerId,
-          name: 'One',
-          colorValue: 1,
-          country: PlayerCountry.poland,
-        ),
-        Player(
-          id: _otherPlayerId,
-          name: 'Two',
-          colorValue: 2,
-          country: PlayerCountry.france,
-        ),
-      ],
-      playerGold: const {_playerId: 17, _otherPlayerId: 11},
-      units: units,
-      artifacts: const [
-        WorldArtifact(
-          id: 'artifact_1',
-          type: WorldArtifactType.astronomersTablets,
-          location: WorldArtifactLocation.map(col: 4, row: 1),
-        ),
-      ],
-    ),
-    session: MatchSessionState.snapshot(
-      gameMode: GameMode.multiplayer,
-      turnStatesByPlayerId: const {
-        _playerId: PlayerTurnState.active,
-        _otherPlayerId: PlayerTurnState.active,
-      },
-    ),
+    domain:
+        ((DomainState.snapshot(
+              turn: 7,
+              matchRules: MatchRules.standard,
+              participants: const [
+                Player(
+                  id: _playerId,
+                  name: 'One',
+                  colorValue: 1,
+                  country: PlayerCountry.poland,
+                ),
+                Player(
+                  id: _otherPlayerId,
+                  name: 'Two',
+                  colorValue: 2,
+                  country: PlayerCountry.france,
+                ),
+              ],
+              playerGold: const {_playerId: 17, _otherPlayerId: 11},
+              units: units,
+              artifacts: const [
+                WorldArtifact(
+                  id: 'artifact_1',
+                  type: WorldArtifactType.astronomersTablets,
+                  location: WorldArtifactLocation.map(col: 4, row: 1),
+                ),
+              ],
+            )).copyWith(
+              gameMode: GameMode.multiplayer,
+              turnStatesByPlayerId: const {
+                _playerId: PlayerTurnState.active,
+                _otherPlayerId: PlayerTurnState.active,
+              },
+            ))
+            .copyWith(actions: interaction),
+
     metadata: GameSnapshotMetadata(
       id: 'save_1',
       schemaVersion: 3,
@@ -256,7 +261,7 @@ CanonicalGameSnapshot _snapshot({
       savedAtUtc: DateTime.utc(2026, 7, 29),
       camera: GameSnapshotCamera.zero,
     ),
-    interaction: interaction,
+
     eventLogOffset: 41,
   );
 }

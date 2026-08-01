@@ -76,8 +76,8 @@ final class GameEventDescriptor {
   final _CriticalNotificationResolver? _criticalNotificationResolver;
 
   List<String> playerIdsFor({
-    required GameState state,
-    GameState? previousState,
+    required GameClientState state,
+    GameClientState? previousState,
     String? visiblePlayerId,
   }) {
     return _playerIdsResolver?.call(state, previousState, visiblePlayerId) ??
@@ -85,7 +85,7 @@ final class GameEventDescriptor {
   }
 
   bool isCriticalNotificationFor({
-    required GameState state,
+    required GameClientState state,
     required String playerId,
   }) {
     return criticalNotification ||

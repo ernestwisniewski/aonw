@@ -5,7 +5,7 @@ import 'package:aonw_core/game/domain/state.dart';
 
 export 'cultural_victory_progress_resolver.dart';
 
-/// Compatibility facade for callers that still own [PersistentGameState].
+/// Compatibility facade for callers that still own [DomainState].
 abstract final class CulturalVictoryProgressCalculator {
   static const int requiredStoredArtifactCount =
       CulturalVictoryProgressResolver.requiredStoredArtifactCount;
@@ -25,7 +25,7 @@ abstract final class CulturalVictoryProgressCalculator {
 
   static bool hasFullStoredCollection({
     required String playerId,
-    required PersistentGameState state,
+    required DomainState state,
     int requiredArtifactCount = requiredStoredArtifactCount,
   }) => hasFullStoredCollectionForArtifacts(
     playerId: playerId,
@@ -48,7 +48,7 @@ abstract final class CulturalVictoryProgressCalculator {
 
   static Map<String, int> advanceHoldTurns({
     required Iterable<String> playerIds,
-    required PersistentGameState state,
+    required DomainState state,
     required Map<String, int> previousHoldTurnsByPlayerId,
     int requiredArtifactCount = requiredStoredArtifactCount,
   }) => advanceHoldTurnsForArtifacts(
@@ -75,14 +75,14 @@ abstract final class CulturalVictoryProgressCalculator {
 
   static CulturalVictoryProgress progressForPlayer({
     required String playerId,
-    required PersistentGameState state,
+    required DomainState state,
     int requiredArtifactCount = requiredStoredArtifactCount,
     int requiredHoldTurns = CulturalVictoryProgressCalculator.requiredHoldTurns,
   }) => progressForPlayerFromCollections(
     playerId: playerId,
     artifacts: state.artifacts,
     cities: state.cities,
-    holdTurnsByPlayerId: state.runtimeState.culturalVictoryHoldTurnsByPlayerId,
+    holdTurnsByPlayerId: state.culturalVictoryHoldTurnsByPlayerId,
     requiredArtifactCount: requiredArtifactCount,
     requiredHoldTurns: requiredHoldTurns,
   );
@@ -105,14 +105,14 @@ abstract final class CulturalVictoryProgressCalculator {
 
   static String? winnerCandidate({
     required Iterable<String> playerIds,
-    required PersistentGameState state,
+    required DomainState state,
     int requiredArtifactCount = requiredStoredArtifactCount,
     int requiredHoldTurns = CulturalVictoryProgressCalculator.requiredHoldTurns,
   }) => winnerCandidateFromCollections(
     playerIds: playerIds,
     artifacts: state.artifacts,
     cities: state.cities,
-    holdTurnsByPlayerId: state.runtimeState.culturalVictoryHoldTurnsByPlayerId,
+    holdTurnsByPlayerId: state.culturalVictoryHoldTurnsByPlayerId,
     requiredArtifactCount: requiredArtifactCount,
     requiredHoldTurns: requiredHoldTurns,
   );

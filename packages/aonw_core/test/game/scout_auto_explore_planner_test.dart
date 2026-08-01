@@ -160,25 +160,25 @@ void main() {
     });
 
     test('does not issue a movement command through blocked tiles', () {
-      final map = MapData(
+      final map = WorldMap(
         cols: 3,
         rows: 1,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.mountain],
             resources: [],
             height: 3,
           ),
-          TileData(
+          WorldTile(
             col: 1,
             row: 0,
             terrains: [TerrainType.grassland],
             resources: [],
             height: 0,
           ),
-          TileData(
+          WorldTile(
             col: 2,
             row: 0,
             terrains: [TerrainType.mountain],
@@ -222,14 +222,14 @@ void main() {
   });
 }
 
-MapData _grassMap({required int cols, required int rows}) {
-  return MapData(
+WorldMap _grassMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var col = 0; col < cols; col++)
         for (var row = 0; row < rows; row++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.grassland],

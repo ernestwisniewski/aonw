@@ -30,7 +30,7 @@ void main() {
         col: 3,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [mover, hiddenFriendlyBlocker, executionWitness],
         fogOfWar: FogOfWarState(
           players: {
@@ -48,7 +48,7 @@ void main() {
         command: command,
         actorPlayerId: 'player_2',
         commandTick: 0,
-        mapView: mapData.indexedReadView(),
+        mapView: mapData,
         ruleset: GameRuleset.defaults,
         movementVisibilityMode:
             MovementCommandVisibilityMode.unrestrictedPathing,
@@ -59,7 +59,7 @@ void main() {
         command: command,
         actorPlayerId: 'player_2',
         commandTick: 0,
-        mapView: mapData.indexedReadView(),
+        mapView: mapData,
         ruleset: GameRuleset.defaults,
         movementVisibilityMode: MovementCommandVisibilityMode.unrestricted,
       );
@@ -107,13 +107,13 @@ void main() {
   );
 }
 
-MapData _mapData() {
-  return MapData(
+WorldMap _mapData() {
+  return WorldMap(
     cols: 5,
     rows: 1,
     tiles: [
       for (var col = 0; col < 5; col += 1)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.plains],

@@ -49,7 +49,7 @@ abstract final class StrategicResourceDiscoveryRules {
   static List<StrategicResourceDiscovery> discoveriesForTechnology({
     required String playerId,
     required TechnologyId technologyId,
-    required PersistentGameState state,
+    required DomainState state,
     required MapTileCatalog mapData,
   }) {
     return discoveriesForTechnologyFromCities(
@@ -89,7 +89,7 @@ abstract final class StrategicResourceDiscoveryRules {
   static List<StrategicResourceDiscoveredEvent> eventsForTechnology({
     required String playerId,
     required TechnologyId technologyId,
-    required PersistentGameState state,
+    required DomainState state,
     required MapTileCatalog mapData,
   }) {
     return eventsForTechnologyFromCities(

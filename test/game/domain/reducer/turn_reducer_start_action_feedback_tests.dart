@@ -1,6 +1,22 @@
 part of 'turn_reducer_test.dart';
 
-void _registerTurnStartActionFeedbackTests(MapData Function() mapData) {
+WorldMap _map(int cols, int rows) => WorldMap(
+  cols: cols,
+  rows: rows,
+  tiles: [
+    for (int row = 0; row < rows; row++)
+      for (int col = 0; col < cols; col++)
+        WorldTile(
+          col: col,
+          row: row,
+          terrains: const [TerrainType.plains],
+          resources: const [],
+          height: 0,
+        ),
+  ],
+);
+
+void _registerTurnStartActionFeedbackTests(WorldMap Function() mapData) {
   test(
     'focusTurnStartAction emits production bubbles without focusing active city queues',
     () {
@@ -24,7 +40,7 @@ void _registerTurnStartActionFeedbackTests(MapData Function() mapData) {
           investedProduction: 1,
         ),
       );
-      final state = GameState(
+      final state = GameClientState(
         cities: [city],
         activePlayerId: 'player_1',
         research: ResearchState(
@@ -75,7 +91,7 @@ void _registerTurnStartActionFeedbackTests(MapData Function() mapData) {
         investedProduction: 0,
       ),
     );
-    final state = GameState(
+    final state = GameClientState(
       cities: [city],
       activePlayerId: 'player_1',
       playerStabilityNet: const {'player_1': -4},
@@ -131,7 +147,7 @@ void _registerTurnStartActionFeedbackTests(MapData Function() mapData) {
     );
 
     final result = TurnReducer.focusTurnStartAction(
-      GameState(cities: [city], activePlayerId: 'player_1'),
+      GameClientState(cities: [city], activePlayerId: 'player_1'),
       'player_1',
       mapData(),
       ruleset: GameRuleset.defaults.copyWith(
@@ -166,7 +182,7 @@ void _registerTurnStartActionFeedbackTests(MapData Function() mapData) {
         ),
       );
       final currentMap = mapData();
-      final state = GameState(
+      final state = GameClientState(
         units: [unit],
         cities: [city],
         activePlayerId: 'player_1',
@@ -177,7 +193,7 @@ void _registerTurnStartActionFeedbackTests(MapData Function() mapData) {
             ),
           },
         ),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(
             unit,
             tile: currentMap.tileAt(unit.col, unit.row),
@@ -217,7 +233,7 @@ void _registerTurnStartActionFeedbackTests(MapData Function() mapData) {
         projectType: CityProjectType.wealth,
       ),
     );
-    final state = GameState(
+    final state = GameClientState(
       units: [unit],
       cities: [city],
       activePlayerId: 'player_1',
@@ -252,7 +268,7 @@ void _registerTurnStartActionFeedbackTests(MapData Function() mapData) {
           projectType: CityProjectType.wealth,
         ),
       );
-      final state = GameState(cities: [city], activePlayerId: 'player_1');
+      final state = GameClientState(cities: [city], activePlayerId: 'player_1');
 
       final result = TurnReducer.focusTurnStartAction(
         state,

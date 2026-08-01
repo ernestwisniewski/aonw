@@ -14,7 +14,10 @@ void main() {
       col: 0,
       row: 0,
     );
-    final state = GameState(units: [commander], activePlayerId: 'player_1');
+    final state = GameClientState(
+      units: [commander],
+      activePlayerId: 'player_1',
+    );
 
     final result = resolveMovementCommandForTest(
       state,

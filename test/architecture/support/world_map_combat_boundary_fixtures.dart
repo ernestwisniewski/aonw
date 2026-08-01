@@ -2,7 +2,7 @@ part of '../world_map_combat_boundary_test.dart';
 
 void _registerWorldMapCombatBoundaryFixtures() {
   test(
-    'guard rejects MapData at a method boundary despite an unrelated WorldMap',
+    'guard rejects WorldMap at a method boundary despite an unrelated WorldMap',
     () {
       const target = _Target(
         path: 'lib/persistent_combat_command_resolver.dart',
@@ -20,7 +20,7 @@ void _registerWorldMapCombatBoundaryFixtures() {
 class PersistentCombatCommandResolver {
   final WorldMap cachedWorldMap;
 
-  void resolve({required MapData mapTiles}) {}
+  void resolve({required WorldMap mapTiles}) {}
 }
 ''', target);
 
@@ -28,15 +28,15 @@ class PersistentCombatCommandResolver {
         violations,
         containsAll([
           'PersistentCombatCommandResolver.resolve.mapTiles must have type '
-              'MapTileLookup; found MapData',
-          'PersistentCombatCommandResolver.resolve must not expose MapData '
+              'MapTileLookup; found WorldMap',
+          'PersistentCombatCommandResolver.resolve must not expose WorldMap '
               'through parameter mapTiles',
         ]),
       );
     },
   );
 
-  test('guard rejects MapData in the economy context map field', () {
+  test('guard rejects WorldMap in the economy context map field', () {
     const target = _Target(
       path: 'lib/turn_economy_context.dart',
       owner: 'TurnEconomyContext',
@@ -51,7 +51,7 @@ final class TurnEconomyContext {
     required this.mapData,
   });
 
-  final MapData mapData;
+  final WorldMap mapData;
   final WorldMap cachedWorldMap;
 }
 ''', target);
@@ -60,10 +60,10 @@ final class TurnEconomyContext {
       violations,
       containsAll([
         'TurnEconomyContext.<unnamed>.mapData must '
-            'have type MapReadView; found MapData',
+            'have type MapReadView; found WorldMap',
         'TurnEconomyContext.mapData field must have type '
-            'MapReadView; found MapData',
-        'TurnEconomyContext.mapData field must not expose MapData',
+            'MapReadView; found WorldMap',
+        'TurnEconomyContext.mapData field must not expose WorldMap',
       ]),
     );
   });
@@ -100,7 +100,7 @@ abstract final class PersistentTurnCombatResolver {
     );
   });
 
-  test('guard rejects MapData nested inside boundary parameter types', () {
+  test('guard rejects WorldMap nested inside boundary parameter types', () {
     const target = _Target(
       path: 'lib/persistent_combat_command_resolver.dart',
       owner: 'PersistentCombatCommandResolver',
@@ -117,8 +117,8 @@ abstract final class PersistentTurnCombatResolver {
 class PersistentCombatCommandResolver {
   void resolve({
     required MapTileLookup mapTiles,
-    required List<MapData> snapshots,
-    required Map<String, MapData?> archivedById,
+    required List<WorldMap> snapshots,
+    required Map<String, WorldMap?> archivedById,
   }) {}
 }
 ''', target);
@@ -126,44 +126,47 @@ class PersistentCombatCommandResolver {
     expect(
       violations,
       containsAll([
-        'PersistentCombatCommandResolver.resolve must not expose MapData '
+        'PersistentCombatCommandResolver.resolve must not expose WorldMap '
             'through parameter snapshots',
-        'PersistentCombatCommandResolver.resolve must not expose MapData '
+        'PersistentCombatCommandResolver.resolve must not expose WorldMap '
             'through parameter archivedById',
       ]),
     );
   });
 
-  test('guard rejects MapData nested inside the economy context map field', () {
-    const target = _Target(
-      path: 'lib/turn_economy_context.dart',
-      owner: 'TurnEconomyContext',
-      boundaries: [
-        _Boundary.constructor('', parameter: 'mapData', type: 'MapReadView'),
-      ],
-    );
+  test(
+    'guard rejects WorldMap nested inside the economy context map field',
+    () {
+      const target = _Target(
+        path: 'lib/turn_economy_context.dart',
+        owner: 'TurnEconomyContext',
+        boundaries: [
+          _Boundary.constructor('', parameter: 'mapData', type: 'MapReadView'),
+        ],
+      );
 
-    final violations = _violations('''
+      final violations = _violations('''
 final class TurnEconomyContext {
   TurnEconomyContext({
     required this.mapData,
   });
 
-  final List<MapData> mapData;
+  final List<WorldMap> mapData;
 }
 ''', target);
 
-    expect(
-      violations,
-      containsAll([
-        'TurnEconomyContext.<unnamed> must not expose MapData through '
-            'parameter mapData',
-        'TurnEconomyContext.mapData field must not expose MapData',
-      ]),
-    );
-  });
+      expect(
+        violations,
+        containsAll([
+          'TurnEconomyContext.<unnamed> must not expose WorldMap through '
+              'parameter mapData',
+          'TurnEconomyContext.mapData field must not expose WorldMap',
+        ]),
+      );
+    },
+  );
 
-  test('guard rejects MapData imported through a typedef alias', () {
+  test('guard rejects WorldMap imported through a typedef alias', () {
     const target = _Target(
       path: 'lib/persistent_combat_command_resolver.dart',
       owner: 'PersistentCombatCommandResolver',
@@ -177,7 +180,7 @@ final class TurnEconomyContext {
     );
     final sources = <String, String>{
       'lib/legacy_payload.dart': '''
-typedef LegacyPayload = List<MapData>;
+typedef LegacyPayload = List<WorldMap>;
 ''',
       target.path: '''
 import 'legacy_payload.dart';
@@ -200,7 +203,7 @@ class PersistentCombatCommandResolver {
     expect(
       violations,
       contains(
-        'PersistentCombatCommandResolver.resolve must not expose MapData '
+        'PersistentCombatCommandResolver.resolve must not expose WorldMap '
         'through parameter payload',
       ),
     );

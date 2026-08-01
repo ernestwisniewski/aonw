@@ -1,16 +1,16 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _grassMap() => MapData(
+WorldMap _grassMap() => WorldMap(
   cols: 4,
   rows: 4,
   tiles: [
     for (var row = 0; row < 4; row++)
       for (var col = 0; col < 4; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],

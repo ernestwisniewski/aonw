@@ -52,7 +52,7 @@ class ActionPaletteLayer extends Component with LayerAttachment {
 
   void sync({
     required Component parent,
-    required GameState state,
+    required GameClientState state,
     required List<ActionPaletteOption> options,
   }) {
     ensureAttachedTo(parent);
@@ -74,7 +74,7 @@ class ActionPaletteLayer extends Component with LayerAttachment {
 
   void _syncWorker({
     required Component parent,
-    required GameState state,
+    required GameClientState state,
     required PendingWorkerActionSelection pending,
     required List<ActionPaletteOption> options,
   }) {
@@ -121,7 +121,7 @@ class ActionPaletteLayer extends Component with LayerAttachment {
 
   void _syncMovePreviewPill({
     required Component parent,
-    required GameState state,
+    required GameClientState state,
   }) {
     final preview = state.movePreview;
     if (preview == null) {
@@ -198,7 +198,7 @@ class ActionPaletteLayer extends Component with LayerAttachment {
     _movePreviewPillKey = null;
   }
 
-  GameUnit? _workerFor(GameState state, String unitId) {
+  GameUnit? _workerFor(GameClientState state, String unitId) {
     final unit = state.unitById(unitId);
     return unit?.type == GameUnitType.worker ? unit : null;
   }
@@ -208,7 +208,7 @@ class ActionPaletteLayer extends Component with LayerAttachment {
         Vector2(0, -_unitVerticalOffset);
   }
 
-  GameUnit? _unitFor(GameState state, String unitId) {
+  GameUnit? _unitFor(GameClientState state, String unitId) {
     return state.unitById(unitId);
   }
 

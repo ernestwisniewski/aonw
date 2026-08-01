@@ -300,14 +300,14 @@ AiContext _context() {
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 4,
     rows: 4,
     tiles: [
       for (var row = 0; row < 4; row++)
         for (var col = 0; col < 4; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

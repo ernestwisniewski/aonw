@@ -1,6 +1,7 @@
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/game/domain/city.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -8,16 +9,25 @@ import 'package:aonw_core/game/domain/unit.dart';
 final class MctsSimulationProjection {
   const MctsSimulationProjection._();
 
-  static PersistentGameState persistentStateFromView(
+  static DomainState domainStateFromView(
     GameView view, {
     required Iterable<GameUnit> units,
     required Iterable<GameCity> cities,
     required ResearchState research,
   }) {
     final canonicalDomain = view.engineSnapshot?.domain;
-    return PersistentGameState.snapshot(
-      playerColors: canonicalDomain?.playerColors ?? const {},
-      playerCountries: canonicalDomain?.playerCountries ?? const {},
+    return DomainState.snapshot(
+      turn: canonicalDomain?.turn ?? view.turn,
+      matchRules: canonicalDomain?.matchRules ?? MatchRules.standard,
+      participants:
+          canonicalDomain?.participants ??
+          [
+            Player(
+              id: view.forPlayerId,
+              name: view.forPlayerId,
+              colorValue: Player.palette.first,
+            ),
+          ],
       playerGold: _withPlayerValue(
         canonicalDomain?.playerGold,
         playerId: view.forPlayerId,
@@ -39,22 +49,20 @@ final class MctsSimulationProjection {
       fieldImprovements: view.ownImprovements,
       fogOfWar: view.visibility.state,
       research: research,
-      runtimeState: GameRuntimeState.snapshot(
-        diplomacy: view.diplomacy,
-        mapObjectiveHoldStatesByObjectiveId:
-            view.mapObjectiveHoldStatesByObjectiveId,
-        resourceTradeAgreements: view.resourceTradeAgreements,
-      ),
+      diplomacy: view.diplomacy,
+      mapObjectiveHoldStatesByObjectiveId:
+          view.mapObjectiveHoldStatesByObjectiveId,
+      resourceTradeAgreements: view.resourceTradeAgreements,
       wonderRegistry: view.wonderRegistry,
     );
   }
 
-  static GameView viewFromPersistentState(
-    PersistentGameState state, {
+  static GameView viewFromDomainState(
+    DomainState state, {
     required GameView previousView,
     required CanonicalGameSnapshot engineSnapshot,
   }) {
-    return GameView.fromPersistentState(
+    return GameView.fromDomainState(
       state,
       forPlayerId: previousView.forPlayerId,
       turn: previousView.turn,

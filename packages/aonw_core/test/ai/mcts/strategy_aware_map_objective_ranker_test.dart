@@ -48,15 +48,14 @@ void main() {
         const MoveUnitCommand('warrior_1', 1, 0),
         _view(
           units: [_unit('warrior_1')],
-          runtimeState: const GameRuntimeState(
-            mapObjectiveHoldStatesByObjectiveId: {
-              'pass_1': MapObjectiveHoldState(
-                objectiveId: 'pass_1',
-                playerId: 'player_1',
-                holdTurns: 2,
-              ),
-            },
-          ),
+
+          mapObjectiveHoldStatesByObjectiveId: {
+            'pass_1': const MapObjectiveHoldState(
+              objectiveId: 'pass_1',
+              playerId: 'player_1',
+              holdTurns: 2,
+            ),
+          },
         ),
         _context(),
       );
@@ -98,13 +97,14 @@ AiContext _context() {
 GameView _view({
   List<GameUnit> units = const [],
   List<GameCity> cities = const [],
-  GameRuntimeState runtimeState = GameRuntimeState.empty,
+  Map<String, MapObjectiveHoldState> mapObjectiveHoldStatesByObjectiveId =
+      const {},
 }) {
-  return GameView.fromPersistentState(
-    PersistentGameState(
+  return GameView.fromDomainState(
+    DomainState.snapshot(
       units: units,
       cities: cities,
-      runtimeState: runtimeState,
+      mapObjectiveHoldStatesByObjectiveId: mapObjectiveHoldStatesByObjectiveId,
     ),
     forPlayerId: 'player_1',
     turn: 1,
@@ -131,8 +131,8 @@ GameUnit _unit(
   );
 }
 
-MapData _mapData() {
-  return MapData(
+WorldMap _mapData() {
+  return WorldMap(
     cols: 4,
     rows: 1,
     objectives: const [
@@ -147,7 +147,7 @@ MapData _mapData() {
     ],
     tiles: [
       for (var col = 0; col < 4; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.plains],

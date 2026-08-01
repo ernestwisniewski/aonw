@@ -7,10 +7,10 @@ import 'package:aonw/game/application/services/replay_service.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/application.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -89,7 +89,7 @@ void main() {
             turn: 1,
             command: command,
           ),
-          state: GameState(units: [merchant]),
+          state: GameClientState(units: [merchant]),
         );
 
         expect(actorPlayerId, 'p1');
@@ -372,7 +372,7 @@ void main() {
 ReplayService _service({
   required ReplayStore replayStore,
   required EventLog eventLog,
-  MapData? mapData,
+  WorldMap? mapData,
 }) {
   final reducer = GameStateReducer(mapData: mapData ?? _map());
   return ReplayService(
@@ -382,13 +382,14 @@ ReplayService _service({
   );
 }
 
-SaveSnapshot _snapshot({
+CanonicalGameSnapshot _snapshot({
   List<GameUnit> units = const [],
   List<GameCity> cities = const [],
   List<WorldArtifact> artifacts = const [],
   FogOfWarState fogOfWar = FogOfWarState.empty,
   ResearchState research = ResearchState.empty,
-  GameRuntimeState runtimeState = GameRuntimeState.empty,
+  DiplomacyState diplomacy = DiplomacyState.empty,
+  PendingPlayerAction? pendingAction,
   List<Player> players = const [
     Player(id: 'p1', name: 'Alice', colorValue: 0xFF4A7FC4),
   ],
@@ -396,7 +397,7 @@ SaveSnapshot _snapshot({
     'p1': PlayerTurnState.active,
   },
 }) {
-  return SaveSnapshot(
+  return GameSnapshotFactory.create(
     save: GameSave(
       id: 'save_1',
       name: 'Campaign',
@@ -413,18 +414,19 @@ SaveSnapshot _snapshot({
     artifacts: artifacts,
     fogOfWar: fogOfWar,
     research: research,
-    runtimeState: runtimeState,
+    diplomacy: diplomacy,
+    pendingAction: pendingAction,
   );
 }
 
-MapData _map({int cols = 1, int rows = 1}) {
-  return MapData(
+WorldMap _map({int cols = 1, int rows = 1}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
@@ -436,9 +438,9 @@ MapData _map({int cols = 1, int rows = 1}) {
 }
 
 class _MemoryReplayStore implements ReplayStore {
-  final Map<String, SaveSnapshot> snapshots;
+  final Map<String, CanonicalGameSnapshot> snapshots;
 
-  _MemoryReplayStore([Map<String, SaveSnapshot>? snapshots])
+  _MemoryReplayStore([Map<String, CanonicalGameSnapshot>? snapshots])
     : snapshots = Map.of(snapshots ?? const {});
 
   @override
@@ -447,11 +449,14 @@ class _MemoryReplayStore implements ReplayStore {
   }
 
   @override
-  Future<SaveSnapshot?> initialSnapshot(String saveId) async =>
+  Future<CanonicalGameSnapshot?> initialSnapshot(String saveId) async =>
       snapshots[saveId];
 
   @override
-  Future<void> saveInitialSnapshot(String saveId, SaveSnapshot snapshot) async {
+  Future<void> saveInitialSnapshot(
+    String saveId,
+    CanonicalGameSnapshot snapshot,
+  ) async {
     snapshots.putIfAbsent(saveId, () => snapshot);
   }
 }

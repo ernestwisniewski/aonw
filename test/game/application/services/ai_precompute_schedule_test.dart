@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('AiPrecomputeScheduleKey', () {
     test('ignores save and UI metadata but changes when the world changes', () {
-      final baseState = GameState(
+      final baseState = GameClientState(
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
         units: [GameUnit.startingCommander(ownerPlayerId: 'player_2')],

@@ -1,16 +1,16 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 5,
   rows: 5,
   tiles: [
     for (var row = 0; row < 5; row++)
       for (var col = 0; col < 5; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],
@@ -20,7 +20,7 @@ MapData _map() => MapData(
   ],
 );
 
-TileData _tile(MapData map, int col, int row) => map.tileAt(col, row)!;
+WorldTile _tile(WorldMap map, int col, int row) => map.tileAt(col, row)!;
 
 GameCity _city({
   required int centerCol,
@@ -135,13 +135,13 @@ void main() {
     );
 
     test('allows controlled hex candidates on mountain and water tiles', () {
-      final map = MapData(
+      final map = WorldMap(
         cols: 5,
         rows: 5,
         tiles: [
           for (var row = 0; row < 5; row++)
             for (var col = 0; col < 5; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: col == 3 && row == 2

@@ -47,7 +47,6 @@ void main() {
       path: _kernelPath,
     );
     final mapBoundaryTypes = typeNamesBackedBy(sources, const {
-      'MapData',
       'MapDefinition',
       'MapSurvey',
       'MapTileCatalog',
@@ -64,9 +63,9 @@ void main() {
         'PersistentGameState',
         'DomainState',
         'CanonicalGameSnapshot',
-        'GameState',
+        'GameClientState',
         'GameRuntimeState',
-        'GameInteractionState',
+        'InteractionState',
         'GameSelection',
         ...mapBoundaryTypes,
       }),

@@ -269,7 +269,7 @@ void main() {
           name: 'Capital',
           center: CityHex(col: 2, row: 3),
         );
-        final snapshot = SaveSnapshot(
+        final snapshot = GameSnapshotFactory.create(
           save: _save(),
           playerColors: const {'player_1': 0xFF2563EB},
           playerCountries: const {'player_1': PlayerCountry.france},
@@ -293,15 +293,15 @@ void main() {
               ),
             },
           ),
-          runtimeState: const GameRuntimeState(
-            pendingAction: PendingAttackTargeting(
-              ownerPlayerId: 'player_1',
-              attackerUnitId: 'commander_player_1',
-              defenderCol: 2,
-              defenderRow: 3,
-            ),
-            submittedPlayerIds: {'player_1'},
+
+          pendingAction: const PendingAttackTargeting(
+            ownerPlayerId: 'player_1',
+            attackerUnitId: 'commander_player_1',
+            defenderCol: 2,
+            defenderRow: 3,
           ),
+          submittedPlayerIds: {'player_1'},
+
           eventLogOffset: 12,
         );
 
@@ -333,14 +333,14 @@ void main() {
           isTrue,
         );
         expect(
-          restored.runtimeState.pendingAction,
+          restored.domain.actions.pendingAction,
           isA<PendingAttackTargeting>(),
         );
         final pending =
-            restored.runtimeState.pendingAction as PendingAttackTargeting;
+            restored.domain.actions.pendingAction as PendingAttackTargeting;
         expect(pending.defenderCol, 2);
         expect(pending.defenderRow, 3);
-        expect(restored.runtimeState.submittedPlayerIds, {'player_1'});
+        expect(restored.domain.submittedPlayerIds, {'player_1'});
         expect(restored.eventLogOffset, 12);
       },
     );

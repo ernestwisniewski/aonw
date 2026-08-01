@@ -5,24 +5,24 @@ import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer_animator.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
 import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 
-part 'unit_marker_layer_testing.dart';
 part 'unit_marker_layer_animation_lifecycle.dart';
+part 'unit_marker_layer_testing.dart';
 
 enum _CityUnitMarkerPlacement { none, primary, companion }
 
 class UnitMarkerLayer extends Component with LayerAttachment {
-  final MapData mapData;
+  final WorldMap mapData;
   final int Function(String playerId) colorForPlayer;
   final void Function(String unitId)? onUnitTapped;
   final Map<String, UnitMarker> _markers = {};

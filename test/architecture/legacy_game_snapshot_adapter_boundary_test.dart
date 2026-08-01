@@ -46,7 +46,7 @@ void main() {
       final forbiddenTypes = typeNames.where((name) {
         final normalized = name.toLowerCase();
         return name == 'PlayerViewState' ||
-            name == 'MapData' ||
+            name == 'WorldMap' ||
             normalized.contains('wire') ||
             normalized.contains('protocol');
       }).toSet();

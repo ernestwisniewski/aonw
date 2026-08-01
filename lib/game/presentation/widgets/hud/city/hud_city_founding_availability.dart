@@ -4,7 +4,7 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class HudCityFoundingAvailability {
   static bool canStart({
-    required GameState? state,
+    required GameClientState? state,
     required MapTileLookup mapTiles,
   }) {
     if (state == null) return false;

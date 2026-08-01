@@ -9,9 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('AuthoritativeCommandPolicy', () {
     test('only translates client intents into domain commands', () {
-      const state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
-        interaction: GameInteractionState(
+        interaction: const InteractionState(
           pendingAction: PendingWorkerActionSelection(
             ownerPlayerId: 'player_1',
             unitId: 'worker_1',
@@ -47,7 +47,7 @@ void main() {
     test('does not fabricate confirmation without a matching selection', () {
       expect(
         AuthoritativeCommandPolicy.authoritativeCommandForClientIntent(
-          const GameState(),
+          GameClientState(),
           const ConfirmWorkerImprovementIntent('worker_1'),
           const GameCommandContext(actorPlayerId: 'player_1'),
         ),

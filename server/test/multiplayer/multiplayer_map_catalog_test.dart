@@ -20,7 +20,7 @@ void main() {
     await assetDirectory.create(recursive: true);
     await File(
       '${assetDirectory.path}/map.json',
-    ).writeAsString(MapDataCodec.toJson(_catalogFixtureMap()));
+    ).writeAsString(WorldMapCodec.toJson(_catalogFixtureMap()));
 
     final loaded = await FileMultiplayerMapCatalog(
       roots: ['${tempDirectory.path}/missing', '${tempDirectory.path}/assets'],
@@ -73,13 +73,13 @@ void main() {
   });
 }
 
-MapData _catalogFixtureMap() {
-  return MapData(
+WorldMap _catalogFixtureMap() {
+  return WorldMap(
     cols: 1,
     rows: 1,
     mapName: 'catalog-fixture',
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.forest],

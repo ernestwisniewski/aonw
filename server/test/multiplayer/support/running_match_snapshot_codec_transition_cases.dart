@@ -17,7 +17,7 @@ void _registerRunningMatchSnapshotCodecTransitionTests(
       );
     });
 
-    test('metadata-only savedAt change serializes the stable turn start', () {
+    test('metadata-only savedAt change reuses the stable domain encoding', () {
       final fixture = _fixture();
       final decoded = codec.decode(
         match: fixture.match,
@@ -33,10 +33,10 @@ void _registerRunningMatchSnapshotCodecTransitionTests(
 
       final encoded = codec.encodeCanonical(decoded, next);
 
-      expect(encoded.state, isNot(same(fixture.wire.state)));
+      expect(encoded.state, same(fixture.wire.state));
       expect(encoded.save, isNot(same(fixture.wire.save)));
       expect(
-        (encoded.state['runtimeState']! as Map)['turnStartedAt'],
+        (encoded.state['lifecycle']! as Map)['turnStartedAt'],
         fixture.save.savedAt.toIso8601String(),
       );
       expect(
@@ -45,7 +45,7 @@ void _registerRunningMatchSnapshotCodecTransitionTests(
       );
     });
 
-    test('domain-only change preserves raw save and implicit timeout', () {
+    test('domain-only change preserves raw save and explicit turn start', () {
       final fixture = _fixture();
       final decoded = codec.decode(
         match: fixture.match,
@@ -62,12 +62,12 @@ void _registerRunningMatchSnapshotCodecTransitionTests(
       expect(encoded.save, same(fixture.wire.save));
       expect(encoded.state['playerGold'], const {'player-1': 17});
       expect(
-        (encoded.state['runtimeState']! as Map).containsKey('turnStartedAt'),
-        isFalse,
+        (encoded.state['lifecycle']! as Map)['turnStartedAt'],
+        fixture.save.savedAt.toIso8601String(),
       );
     });
 
-    test('writes turnStartedAt only when the canonical value changes', () {
+    test('writes a changed turnStartedAt', () {
       final fixture = _fixture();
       final decoded = codec.decode(
         match: fixture.match,
@@ -75,13 +75,13 @@ void _registerRunningMatchSnapshotCodecTransitionTests(
       );
       final startedAt = fixture.save.savedAt.add(const Duration(minutes: 1));
       final next = decoded.canonical.copyWith(
-        session: decoded.canonical.session.copyWith(turnStartedAt: startedAt),
+        domain: decoded.canonical.domain.copyWith(turnStartedAt: startedAt),
       );
 
       final encoded = codec.encodeCanonical(decoded, next);
 
       expect(
-        (encoded.state['runtimeState']! as Map)['turnStartedAt'],
+        (encoded.state['lifecycle']! as Map)['turnStartedAt'],
         startedAt.toIso8601String(),
       );
     });
@@ -93,7 +93,7 @@ void _registerRunningMatchSnapshotCodecTransitionTests(
         snapshot: fixture.wire,
       );
       final next = decoded.canonical.copyWith(
-        session: decoded.canonical.session.copyWith(turnStartedAt: null),
+        domain: decoded.canonical.domain.copyWith(turnStartedAt: null),
       );
 
       expect(() => codec.encodeCanonical(decoded, next), throwsArgumentError);

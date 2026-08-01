@@ -2,11 +2,11 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +25,7 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
   final List<_Cloudlet> _clouds = [];
   bool _reduceMotion;
   double _spawnCountdown;
-  MapData? _mapData;
+  WorldMap? _mapData;
   Path? _discoveredClipPath;
   Rect _mapBounds = Rect.zero;
 
@@ -82,7 +82,7 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
 
   void sync({
     required Component parent,
-    required MapData mapData,
+    required WorldMap mapData,
     required FogVisibilityQuery visibility,
   }) {
     if (!visibility.isEnabled) {
@@ -355,7 +355,7 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
   }
 
   _DiscoveredCloudClip? _buildDiscoveredClip({
-    required MapData mapData,
+    required WorldMap mapData,
     required FogVisibilityQuery visibility,
   }) {
     final path = Path();
@@ -370,7 +370,7 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
     return hasKnownTile ? _DiscoveredCloudClip(path) : null;
   }
 
-  Rect _mapBoundsFor(MapData mapData) {
+  Rect _mapBoundsFor(WorldMap mapData) {
     if (mapData.tiles.isEmpty) return Rect.zero;
 
     var minX = double.infinity;
@@ -411,7 +411,7 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
     return Vector2(point.x, point.y * HexGrid.perspectiveY);
   }
 
-  int _priorityFor(MapData mapData) {
+  int _priorityFor(WorldMap mapData) {
     var maxMarkerPriority = MapPriority.city;
     for (final tile in mapData.tiles) {
       maxMarkerPriority = math.max(

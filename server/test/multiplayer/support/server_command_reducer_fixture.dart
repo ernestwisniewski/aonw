@@ -1,11 +1,11 @@
 part of '../server_command_reducer_test.dart';
 
-WireSnapshot _snapshot(PersistentGameState state, {GameSave? save}) {
+WireSnapshot _snapshot(DomainState state, {GameSave? save}) {
   return WireSnapshot(
     matchId: 'match_1',
     offset: 0,
     save: (save ?? _save()).toJson(),
-    state: state.toJson(),
+    state: CanonicalGameSnapshotCodec.encodeDomainState(state),
   );
 }
 

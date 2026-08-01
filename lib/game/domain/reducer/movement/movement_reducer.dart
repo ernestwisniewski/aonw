@@ -22,15 +22,15 @@ part 'movement_selection_projector.dart';
 part 'movement_reducer_turn_reset.dart';
 
 abstract final class MovementReducer {
-  static GameState toggleMoveTargetingWithEnvironment(
-    GameState state,
+  static GameClientState toggleMoveTargetingWithEnvironment(
+    GameClientState state,
     ReducerEnvironment environment,
   ) {
     return toggleMoveTargeting(state, context: environment.context);
   }
 
   static GameStateTransition handleMoveTargetTileWithEnvironment(
-    GameState state,
+    GameClientState state,
     MapTileView targetTile,
     ReducerEnvironment environment,
   ) {
@@ -44,7 +44,7 @@ abstract final class MovementReducer {
   }
 
   static GameStateTransition resetUnitMovementForNewTurnWithEnvironment(
-    GameState state,
+    GameClientState state,
     ReducerEnvironment environment, {
     String? playerId,
   }) {
@@ -57,8 +57,8 @@ abstract final class MovementReducer {
   }
 
   /// Toggles move-command mode for the currently selected unit.
-  static GameState toggleMoveTargeting(
-    GameState state, {
+  static GameClientState toggleMoveTargeting(
+    GameClientState state, {
     GameCommandContext context = const GameCommandContext(),
   }) {
     final selected = state.selectedUnit;
@@ -81,7 +81,7 @@ abstract final class MovementReducer {
 
   /// Handles a tile tap while move mode is active.
   static GameStateTransition handleMoveTargetTile(
-    GameState state,
+    GameClientState state,
     MapTileView targetTile,
     MapTraversalView mapView, {
     GameCommandContext context = const GameCommandContext(),
@@ -129,7 +129,7 @@ abstract final class MovementReducer {
 
   /// Resets MP for a player's units and processes queued paths.
   static GameStateTransition resetUnitMovementForNewTurn(
-    GameState state,
+    GameClientState state,
     MapTraversalView mapView, {
     String? playerId,
     FogOfWarService fogOfWarService = const FogOfWarService(),
@@ -146,7 +146,7 @@ abstract final class MovementReducer {
   }
 
   static bool _blocksForeignCityCenter(
-    GameState state,
+    GameClientState state,
     GameUnit unit,
     int col,
     int row,
@@ -161,7 +161,7 @@ abstract final class MovementReducer {
   }
 
   static bool _canCarryArtifactIntoTargetCity({
-    required GameState state,
+    required GameClientState state,
     required GameUnit unit,
     required MapTileView targetTile,
     required UnitMovementStep step,
@@ -174,7 +174,10 @@ abstract final class MovementReducer {
     return city?.ownerPlayerId == unit.ownerPlayerId;
   }
 
-  static bool _canAutoActivateMoveTargeting(GameState state, GameUnit unit) {
+  static bool _canAutoActivateMoveTargeting(
+    GameClientState state,
+    GameUnit unit,
+  ) {
     return state.canControlUnit(unit) &&
         !unit.isWorking &&
         !unit.isMerchant &&
@@ -183,15 +186,15 @@ abstract final class MovementReducer {
         !unit.isAutoExploring;
   }
 
-  static GameState _clearMoveTargeting(GameState state) {
+  static GameClientState _clearMoveTargeting(GameClientState state) {
     return state.copyWithInteraction(
       moveCommandActive: false,
       movePreview: null,
     );
   }
 
-  static GameState _selectUpdatedUnit(
-    GameState state,
+  static GameClientState _selectUpdatedUnit(
+    GameClientState state,
     GameUnit unit,
     MapTileLookup mapTiles,
   ) {
@@ -201,7 +204,7 @@ abstract final class MovementReducer {
   }
 }
 
-GameState _startMoveTargeting(GameState state) {
+GameClientState _startMoveTargeting(GameClientState state) {
   return state.copyWith(
     interaction: state.interaction
         .clearMapState(clearPendingAction: true)

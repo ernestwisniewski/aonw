@@ -8,17 +8,21 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
       final survivor = fixture.player('guest-two');
       final stored = await fixture.state();
       final save = GameSave.fromJson(stored.snapshot.save);
-      final state = PersistentGameState.fromJson(stored.snapshot.state);
-      final seededRuntime = state.runtimeState.copyWith(
+      final state = CanonicalGameSnapshotCodec.decodeDomainState(
+        stored.snapshot.state,
+      );
+      final seededRuntime = state.copyWith(
         submittedPlayerIds: {actor.id, survivor.id},
         timeoutStreaksByPlayerId: {survivor.id: 2},
         afkPlayerIds: {survivor.id},
         kickedPlayerIds: const {},
         turnStartedAt: DateTime.utc(2026, 7, 21, 11, 55),
       );
-      final seededState = state.copyWith(runtimeState: seededRuntime);
+      final seededState = seededRuntime;
       final seeded = stored.copyWith(
-        snapshot: stored.snapshot.copyWith(state: seededState.toJson()),
+        snapshot: stored.snapshot.copyWith(
+          state: CanonicalGameSnapshotCodec.encodeDomainState(seededState),
+        ),
       );
       await fixture.store.saveState(seeded);
       final saveCallsBefore = fixture.store.saveStateCalls;
@@ -30,7 +34,7 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
         afkPlayerIds: {survivor.id, actor.id},
         kickedPlayerIds: {actor.id},
       );
-      final expectedState = seededState.copyWith(runtimeState: expectedRuntime);
+      final expectedState = expectedRuntime;
       final expectedSave = save.copyWith(
         playerStates: {
           ...save.playerStates,
@@ -57,7 +61,9 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
         seeded.snapshot
             .copyWith(
               save: expectedSave.toJson(),
-              state: expectedState.toJson(),
+              state: CanonicalGameSnapshotCodec.encodeDomainState(
+                expectedState,
+              ),
             )
             .toJson(),
       );
@@ -70,7 +76,9 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
       final actor = fixture.player('guest-one');
       final stored = await fixture.state();
       final save = GameSave.fromJson(stored.snapshot.save);
-      final persistent = PersistentGameState.fromJson(stored.snapshot.state);
+      final persistent = CanonicalGameSnapshotCodec.decodeDomainState(
+        stored.snapshot.state,
+      );
       final withoutActor = save.copyWith(
         playerStates: {
           for (final entry in save.playerStates.entries)
@@ -87,16 +95,15 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
       final result = await fixture.resign(actor);
       final updated = await fixture.state();
       final updatedSave = GameSave.fromJson(updated.snapshot.save);
-      final updatedState = PersistentGameState.fromJson(updated.snapshot.state);
+      final updatedState = CanonicalGameSnapshotCodec.decodeDomainState(
+        updated.snapshot.state,
+      );
 
       expect(result.state, 'running');
       expect(updatedSave.playerStates, withoutActor.playerStates);
-      expect(updatedState.runtimeState.afkPlayerIds, {
-        ...persistent.runtimeState.afkPlayerIds,
-        actor.id,
-      });
-      expect(updatedState.runtimeState.kickedPlayerIds, {
-        ...persistent.runtimeState.kickedPlayerIds,
+      expect(updatedState.afkPlayerIds, {...persistent.afkPlayerIds, actor.id});
+      expect(updatedState.kickedPlayerIds, {
+        ...persistent.kickedPlayerIds,
         actor.id,
       });
       expect(fixture.store.saveStateCalls, saveCallsBefore + 1);
@@ -227,7 +234,9 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
         final actor = fixture.player('guest-one');
         final survivor = fixture.player('guest-two');
         final stored = await fixture.state();
-        final state = PersistentGameState.fromJson(stored.snapshot.state);
+        final state = CanonicalGameSnapshotCodec.decodeDomainState(
+          stored.snapshot.state,
+        );
         await fixture.store.saveState(
           stored.copyWith(
             match: stored.match.copyWith(
@@ -243,10 +252,8 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
             snapshot: stored.snapshot.copyWith(
               state: state
                   .copyWith(
-                    runtimeState: state.runtimeState.copyWith(
-                      afkPlayerIds: {survivor.id},
-                      kickedPlayerIds: {kicked.id},
-                    ),
+                    afkPlayerIds: {survivor.id},
+                    kickedPlayerIds: {kicked.id},
                   )
                   .toJson(),
             ),
@@ -260,15 +267,12 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
         expect(result.outcomeCondition, 'resignation');
         expect(result.winnerPlayerId, survivor.id);
         expect(result.winnerPlayerId, isNot(kicked.id));
-        final updatedState = PersistentGameState.fromJson(
+        final updatedState = CanonicalGameSnapshotCodec.decodeDomainState(
           updated.snapshot.state,
         );
-        expect(updatedState.runtimeState.afkPlayerIds, contains(survivor.id));
-        expect(updatedState.runtimeState.kickedPlayerIds, contains(kicked.id));
-        expect(
-          updatedState.runtimeState.kickedPlayerIds,
-          isNot(contains(survivor.id)),
-        );
+        expect(updatedState.afkPlayerIds, contains(survivor.id));
+        expect(updatedState.kickedPlayerIds, contains(kicked.id));
+        expect(updatedState.kickedPlayerIds, isNot(contains(survivor.id)));
         expect(
           updated.match.players
               .singleWhere((player) => player.id == survivor.id)
@@ -286,16 +290,16 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
         fixture.player('guest-one').id,
       };
       final stored = await fixture.state();
-      final state = PersistentGameState.fromJson(stored.snapshot.state);
+      final state = CanonicalGameSnapshotCodec.decodeDomainState(
+        stored.snapshot.state,
+      );
       await fixture.store.saveState(
         stored.copyWith(
           snapshot: stored.snapshot.copyWith(
             state: state
                 .copyWith(
-                  runtimeState: state.runtimeState.copyWith(
-                    afkPlayerIds: alreadyResigned,
-                    kickedPlayerIds: alreadyResigned,
-                  ),
+                  afkPlayerIds: alreadyResigned,
+                  kickedPlayerIds: alreadyResigned,
                 )
                 .toJson(),
           ),

@@ -32,7 +32,7 @@ import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -124,7 +124,7 @@ class HudOverlayFrame {
     required GameSession session,
     required GameSave gameSave,
     required PlayerControlState playerControl,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,
@@ -436,7 +436,7 @@ class HudOverlayFrame {
     );
   }
 
-  static bool _cityExpansionHexSelected(GameState? gameState) {
+  static bool _cityExpansionHexSelected(GameClientState? gameState) {
     final pendingAction = gameState?.pendingAction;
     if (pendingAction is! PendingCityExpansionSelection) return false;
     return gameState?.cities.any(
@@ -466,12 +466,8 @@ class HudOverlayFrame {
     };
   }
 
-  static bool _hasOwnedCity(GameState? gameState, String activePlayerId) =>
-      gameState?.cities.any((city) => city.ownerPlayerId == activePlayerId) ??
-      false;
-
   static bool _hasCityNeedingProduction(
-    GameState? gameState,
+    GameClientState? gameState,
     String activePlayerId,
   ) {
     return gameState?.cities.any(
@@ -494,8 +490,8 @@ class HudOverlayFrame {
 
   static String? _workerActionBlockedReason({
     required GameUnit? unit,
-    required GameState? gameState,
-    required MapData mapData,
+    required GameClientState? gameState,
+    required WorldMap mapData,
     required SelectionViewModel? selectedInfoModel,
     required AppLocalizations l10n,
   }) {
@@ -514,8 +510,8 @@ class HudOverlayFrame {
 
   static String? _workerTileBlockedReason({
     required GameUnit unit,
-    required GameState? gameState,
-    required MapData mapData,
+    required GameClientState? gameState,
+    required WorldMap mapData,
     required AppLocalizations l10n,
   }) {
     final hex = CityHex(col: unit.col, row: unit.row);
@@ -554,7 +550,7 @@ class HudOverlayFrame {
   }
 
   static String? _cityFoundingBlockedReason({
-    required GameState? gameState,
+    required GameClientState? gameState,
     required MapTileLookup mapTiles,
     required AppLocalizations l10n,
   }) {

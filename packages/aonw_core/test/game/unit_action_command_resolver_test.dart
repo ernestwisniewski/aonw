@@ -11,7 +11,7 @@ void main() {
     test('rejects in exact validation order and preserves identities', () {
       final units = <GameUnit>[];
       final artifacts = <WorldArtifact>[];
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         pendingAction: const PendingResearchSelection(ownerPlayerId: _playerId),
       );
 
@@ -95,7 +95,7 @@ void main() {
       );
       final units = [unit, untouchedUnit];
       final artifacts = <WorldArtifact>[artifact, untouchedArtifact];
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         cityFoundingDraft: _draft('unit_1'),
         pendingAction: const PendingAttackTargeting(
           ownerPlayerId: _playerId,
@@ -139,7 +139,7 @@ void main() {
         _unit(excavatingArtifactId: 'artifact_map'),
       ]);
       final artifacts = List<WorldArtifact>.unmodifiable([_mapArtifact()]);
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         pendingAction: const PendingResearchSelection(ownerPlayerId: _playerId),
       );
 
@@ -163,7 +163,7 @@ void main() {
       final unit = _unit();
       final units = List<GameUnit>.unmodifiable([unit]);
       final artifacts = List<WorldArtifact>.unmodifiable([_mapArtifact()]);
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         cityFoundingDraft: _draft('unit_2'),
         pendingAction: const PendingResearchSelection(ownerPlayerId: _playerId),
       );
@@ -187,7 +187,7 @@ void main() {
       final unit = _unit(movementPoints: 0);
       final units = [unit];
       const artifacts = <WorldArtifact>[];
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         pendingAction: const PendingUnitTurnSkip(
           ownerPlayerId: _playerId,
           unitId: 'unit_1',
@@ -216,7 +216,7 @@ void main() {
       final result = UnitActionCommandResolver.cancelUnitAction(
         units: [unit],
         artifacts: artifacts,
-        interaction: PersistedInteractionState.empty,
+        interaction: DomainActionState.empty,
         command: const CancelUnitActionCommand('unit_1'),
         actorPlayerId: _playerId,
       );
@@ -239,7 +239,7 @@ void main() {
     test('rejects in exact validation order and preserves identities', () {
       final units = <GameUnit>[];
       final artifacts = <WorldArtifact>[];
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         cityFoundingDraft: _draft('unit_1'),
       );
 
@@ -282,7 +282,7 @@ void main() {
       final untouched = _unit(id: 'unit_2', col: 4);
       final units = [unit, untouched];
       final artifacts = List<WorldArtifact>.unmodifiable([_mapArtifact()]);
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         cityFoundingDraft: _draft('unit_1'),
       );
 
@@ -318,7 +318,7 @@ void main() {
     test('rejects in exact validation order and preserves identities', () {
       final units = <GameUnit>[];
       final artifacts = <WorldArtifact>[];
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         pendingAction: const PendingResearchSelection(ownerPlayerId: _playerId),
       );
 
@@ -364,7 +364,7 @@ void main() {
       ).copyWithHitPoints(7);
       final units = [unit];
       final artifacts = List<WorldArtifact>.unmodifiable([_mapArtifact()]);
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         cityFoundingDraft: _draft('unit_1'),
         pendingAction: const PendingAttackTargeting(
           ownerPlayerId: _playerId,
@@ -394,7 +394,7 @@ void main() {
     test('preserves unrelated pending action and city draft', () {
       final units = [_unit()];
       final artifacts = List<WorldArtifact>.unmodifiable([_mapArtifact()]);
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         cityFoundingDraft: _draft('unit_2'),
         pendingAction: const PendingAttackTargeting(
           ownerPlayerId: _playerId,

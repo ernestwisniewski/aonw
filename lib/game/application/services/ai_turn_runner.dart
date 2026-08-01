@@ -44,7 +44,7 @@ class AiTurnReport {
   final AiDebugInfo? debug;
   final DomainCommand terminalCommand;
   final List<UiEffect> terminalUiEffects;
-  final GameState finalState;
+  final GameClientState finalState;
 
   AiTurnReport({
     required Iterable<DomainCommand> plannedCommands,
@@ -98,7 +98,7 @@ class AiTurnRunner {
     required String playerId,
     required AiStrategy strategy,
     required AiContext context,
-    required GameState initialState,
+    required GameClientState initialState,
     required GameView view,
     Future<AiTurnPlan>? precomputedPlan,
     AiTerminalCommand terminalCommand = AiTerminalCommand.endTurn,

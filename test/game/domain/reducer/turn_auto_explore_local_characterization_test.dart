@@ -1,8 +1,8 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
@@ -98,7 +98,7 @@ void main() {
         units: [scout],
         fogOfWar: _originOnlyFog(),
         mapData: _map(cols: 3),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           cityFoundingDraft: unrelatedDraft,
           pendingAction: const PendingUnitTurnSkip(
             ownerPlayerId: _playerId,
@@ -364,13 +364,13 @@ GameUnit _autoExploringScout({
 GameStateTransition _reset({
   required List<GameUnit> units,
   required FogOfWarState fogOfWar,
-  required MapData mapData,
+  required WorldMap mapData,
   List<GameCity> cities = const [],
   DiplomacyState diplomacy = DiplomacyState.empty,
-  GameInteractionState interaction = GameInteractionState.empty,
+  InteractionState interaction = InteractionState.empty,
 }) {
   return MovementReducer.resetUnitMovementForNewTurn(
-    GameState(
+    GameClientState(
       playerColors: const {_playerId: 0xff112233, _opponentId: 0xff445566},
       activePlayerId: _playerId,
       units: units,
@@ -387,7 +387,7 @@ GameStateTransition _reset({
 AutoExploreCommandResult _resolveCoreContinuation({
   required GameUnit scout,
   required FogOfWarState fogOfWar,
-  required MapData mapData,
+  required WorldMap mapData,
   List<GameUnit> additionalUnits = const [],
   List<GameCity> cities = const [],
 }) {
@@ -400,7 +400,7 @@ AutoExploreCommandResult _resolveCoreContinuation({
         diplomacy: DiplomacyState.empty,
         playerIds: const [_playerId, _opponentId],
       ),
-      interaction: PersistedInteractionState.empty,
+      interaction: DomainActionState.empty,
     ),
     command: AutoExploreUnitCommand(scout.id),
     actorPlayerId: _playerId,
@@ -429,14 +429,14 @@ FogOfWarState _fog({
   );
 }
 
-MapData _map({required int cols, int rows = 1}) {
-  return MapData(
+WorldMap _map({required int cols, int rows = 1}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.grassland],

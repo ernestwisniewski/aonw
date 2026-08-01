@@ -1,11 +1,11 @@
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 
 MapObjectiveProgress? mapObjectiveProgressForTile({
-  required MapData mapData,
-  required TileData tileData,
-  required GameState? gameState,
+  required WorldMap mapData,
+  required WorldTile tileData,
+  required GameClientState? gameState,
 }) {
   final objective = _objectiveAt(mapData, tileData);
   if (objective == null) return null;
@@ -24,7 +24,7 @@ MapObjectiveProgress? mapObjectiveProgressForTile({
   ).entryFor(objective.id);
 }
 
-MapObjectiveDefinition? _objectiveAt(MapData mapData, TileData tileData) {
+MapObjectiveDefinition? _objectiveAt(WorldMap mapData, WorldTile tileData) {
   for (final objective in mapData.objectives) {
     if (objective.hex.col == tileData.col &&
         objective.hex.row == tileData.row) {

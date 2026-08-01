@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 
 void main() {
   test('simulated states preserve the request-scoped map view identity', () {
-    final mapView = _mapData().indexedReadView();
+    final mapView = _mapData();
     final root = SimulatedState.fromView(
       _view(mapView: mapView),
       maxPlanningDepth: 4,
@@ -86,7 +86,7 @@ void main() {
     final wonders = WonderRegistry(
       completedBy: {WonderType.greatLibrary: 'player_1'},
     );
-    final mapView = _mapData().indexedReadView();
+    final mapView = _mapData();
     final rootView = _view(
       mapView: mapView,
       research: research,
@@ -157,7 +157,7 @@ void main() {
               expiresOnTurn: 20,
             ),
           );
-      final mapView = _mapData().indexedReadView();
+      final mapView = _mapData();
       final root = SimulatedState.fromView(
         _view(
           mapView: mapView,
@@ -278,11 +278,11 @@ void main() {
             ],
           ),
         );
-    final view = _view(mapView: _mapData().indexedReadView(), ownUnits: [unit]);
+    final view = _view(mapView: _mapData(), ownUnits: [unit]);
     final expected = UnitActionCommandResolver.skipUnitTurn(
       units: [unit],
       artifacts: view.artifacts,
-      interaction: PersistedInteractionState.empty,
+      interaction: DomainActionState.empty,
       command: const SkipUnitTurnCommand('warrior_1'),
       actorPlayerId: 'player_1',
     );
@@ -299,10 +299,7 @@ void main() {
   });
 
   test('lightweight unit actions fail loudly without an engine envelope', () {
-    final view = _view(
-      mapView: _mapData().indexedReadView(),
-      includeEngineSnapshot: false,
-    );
+    final view = _view(mapView: _mapData(), includeEngineSnapshot: false);
     final root = SimulatedState.fromView(view, maxPlanningDepth: 2);
 
     for (final command in const [
@@ -342,14 +339,11 @@ void main() {
           totalTurns: 3,
         ),
       );
-      final view = _view(
-        mapView: _mapData().indexedReadView(),
-        ownUnits: [warrior, worker],
-      );
+      final view = _view(mapView: _mapData(), ownUnits: [warrior, worker]);
       final expected = UnitActionCommandResolver.fortifyUnit(
         units: [warrior, worker],
         artifacts: view.artifacts,
-        interaction: PersistedInteractionState.empty,
+        interaction: DomainActionState.empty,
         command: const FortifyUnitCommand('warrior_1'),
         actorPlayerId: 'player_1',
       );
@@ -435,7 +429,7 @@ CanonicalGameSnapshot _engineSnapshot(
   required bool includeOpponent,
 }) {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
+    domain: (DomainState.snapshot(
       turn: turn,
       matchRules: MatchRules.standard,
       participants: [
@@ -446,8 +440,8 @@ CanonicalGameSnapshot _engineSnapshot(
       units: units,
       research: research,
       diplomacy: diplomacy,
-    ),
-    session: MatchSessionState.snapshot(gameMode: GameMode.hotSeat),
+    )).copyWith(gameMode: GameMode.hotSeat),
+
     metadata: GameSnapshotMetadata(
       id: 'mcts_test',
       schemaVersion: 3,
@@ -459,26 +453,26 @@ CanonicalGameSnapshot _engineSnapshot(
   );
 }
 
-MapData _mapData() {
-  return MapData(
+WorldMap _mapData() {
+  return WorldMap(
     cols: 3,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 2,
         row: 0,
         terrains: [TerrainType.plains],

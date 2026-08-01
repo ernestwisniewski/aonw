@@ -15,11 +15,11 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/services/ai_turn_process_preparer.dart';
 import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_rules.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,7 +29,9 @@ void main() {
     test('builds a use case only for the current local AI session', () async {
       final mapData = _mapData();
       final save = _save();
-      final repository = _FakeGameRepository(SaveSnapshot(save: save));
+      final repository = _FakeGameRepository(
+        GameSnapshotFactory.create(save: save),
+      );
       final precomputeCache = AiTurnPlanPrecomputeCache();
       final strategicPlanProvider = AiStrategicPlanProvider();
       var strategyCalls = 0;
@@ -85,7 +87,9 @@ void main() {
     });
 
     test('reuses the prepared snapshot for precompute and execution', () async {
-      final repository = _FakeGameRepository(SaveSnapshot(save: _save()));
+      final repository = _FakeGameRepository(
+        GameSnapshotFactory.create(save: _save()),
+      );
       final precomputeCache = AiTurnPlanPrecomputeCache();
 
       final preparer = _preparer(
@@ -114,7 +118,7 @@ void main() {
       'skips a scheduled AI turn when the loaded snapshot moved on',
       () async {
         final repository = _FakeGameRepository(
-          SaveSnapshot(save: _save(turn: 2)),
+          GameSnapshotFactory.create(save: _save(turn: 2)),
         );
         final logger = _RecordingGameLogger();
         var strategyCalls = 0;
@@ -160,10 +164,11 @@ void main() {
 
     test('rechecks the active session after loading the snapshot', () async {
       GameSession? session = _session();
-      final repository = _FakeGameRepository(SaveSnapshot(save: _save()))
-        ..onLoad = () {
-          session = null;
-        };
+      final repository =
+          _FakeGameRepository(GameSnapshotFactory.create(save: _save()))
+            ..onLoad = () {
+              session = null;
+            };
       var strategyCalls = 0;
 
       final preparer = _preparer(
@@ -197,7 +202,9 @@ void main() {
     });
 
     test('does not load the save when local AI cannot own the mode', () async {
-      final repository = _FakeGameRepository(SaveSnapshot(save: _save()));
+      final repository = _FakeGameRepository(
+        GameSnapshotFactory.create(save: _save()),
+      );
 
       final preparer = _preparer(
         repository: repository,
@@ -231,7 +238,7 @@ AiTurnProcessPreparer _preparer({
     dispatch:
         ({
           required saveId,
-          required GameState currentState,
+          required GameClientState currentState,
           required command,
           required context,
         }) async {
@@ -259,7 +266,7 @@ AiTurnProcessPreparer _preparer({
 AiStrategyRegistry _strategyRegistry({
   required String playerId,
   required GameSave save,
-  required GameState gameState,
+  required GameClientState gameState,
   required NetworkSession? networkSession,
 }) {
   return buildRuntimeAiStrategyRegistry(
@@ -270,7 +277,7 @@ AiStrategyRegistry _strategyRegistry({
 GameSession _session({
   String saveId = 'save_1',
   GameMode gameMode = GameMode.hotSeat,
-  MapData? mapData,
+  WorldMap? mapData,
 }) {
   return GameSession(
     mapData: mapData ?? _mapData(),
@@ -311,12 +318,12 @@ GameSave _save({int turn = 1}) {
   );
 }
 
-MapData _mapData() {
-  return MapData(
+WorldMap _mapData() {
+  return WorldMap(
     cols: 1,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
@@ -328,7 +335,7 @@ MapData _mapData() {
 }
 
 final class _FakeGameRepository implements GameRepository {
-  SaveSnapshot snapshot;
+  CanonicalGameSnapshot snapshot;
   void Function()? onLoad;
   int loadCount = 0;
 
@@ -350,14 +357,14 @@ final class _FakeGameRepository implements GameRepository {
   }
 
   @override
-  Future<SaveSnapshot> load(String saveId) async {
+  Future<CanonicalGameSnapshot> load(String saveId) async {
     loadCount += 1;
     onLoad?.call();
     return snapshot;
   }
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {
+  Future<void> save(CanonicalGameSnapshot snapshot) async {
     this.snapshot = snapshot;
   }
 
@@ -367,7 +374,7 @@ final class _FakeGameRepository implements GameRepository {
   }
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,

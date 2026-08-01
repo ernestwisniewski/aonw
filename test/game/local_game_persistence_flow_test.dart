@@ -12,11 +12,11 @@ import 'package:aonw/game/infrastructure/persistence/json_event_log.dart';
 import 'package:aonw/game/infrastructure/persistence/json_game_repository.dart';
 import 'package:aonw/game/infrastructure/persistence/json_snapshot_store.dart';
 import 'package:aonw/game/infrastructure/transport/local_command_transport.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/persistence/map_catalog.dart';
 import 'package:aonw/map/persistence/map_loader.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/map_validation.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
@@ -178,7 +178,7 @@ class _LocalRuntime {
 
   factory _LocalRuntime.open({
     required Directory savesDir,
-    required MapData mapData,
+    required WorldMap mapData,
     required Clock clock,
   }) {
     final snapshotStore = JsonSnapshotStore(savesDir: savesDir, clock: clock);
@@ -227,14 +227,14 @@ class _FixedIdGenerator implements IdGenerator {
   String nextId() => 'critical_save';
 }
 
-MapData _flatMap({required int cols, required int rows}) {
-  return MapData(
+WorldMap _flatMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
@@ -252,7 +252,7 @@ MapData _flatMap({required int cols, required int rows}) {
 Future<void> _persistSavedMap({
   required Directory mapsDir,
   required MapSelection selection,
-  required MapData mapData,
+  required WorldMap mapData,
 }) async {
   final file = File('${mapsDir.path}/${selection.name}/map.json');
   await file.parent.create(recursive: true);

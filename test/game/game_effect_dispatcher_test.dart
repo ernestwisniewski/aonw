@@ -9,8 +9,8 @@ import 'package:aonw/game/presentation/engine/rendering_layers/effects/particle_
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/unit_animation_controller.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/animation.dart';
@@ -18,12 +18,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 part 'game_effect_dispatcher_combat_camera_tests.dart';
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 2,
   rows: 1,
   tiles: [
     for (var col = 0; col < 2; col++)
-      TileData(
+      WorldTile(
         col: col,
         row: 0,
         terrains: const [TerrainType.grassland],

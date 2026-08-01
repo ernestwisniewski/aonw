@@ -1,14 +1,14 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 
 abstract final class HudCityEconomyCalculator {
   static CityEconomyBreakdown forCity({
     required GameCity city,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required TechnologyEffectSummary technologyEffects,
     required StabilityModifier stabilityModifier,

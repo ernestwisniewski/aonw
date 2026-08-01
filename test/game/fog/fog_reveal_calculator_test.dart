@@ -1,20 +1,20 @@
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _map(List<TileData> tiles) {
-  return MapData(cols: 5, rows: 5, tiles: tiles);
+WorldMap _map(List<WorldTile> tiles) {
+  return WorldMap(cols: 5, rows: 5, tiles: tiles);
 }
 
-TileData _tile(
+WorldTile _tile(
   int col,
   int row, {
   List<TerrainType> terrains = const [TerrainType.plains],
   int height = 0,
 }) {
-  return TileData(
+  return WorldTile(
     col: col,
     row: row,
     terrains: terrains,

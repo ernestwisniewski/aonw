@@ -1,16 +1,11 @@
 part of 'reducer_parity_diplomacy_characterization.dart';
 
-PersistentGameState _withDiplomacyOracle(
-  PersistentGameState state,
-  DiplomacyState diplomacy,
-) {
-  return state.copyWith(
-    runtimeState: state.runtimeState.copyWith(diplomacy: diplomacy),
-  );
+DomainState _withDiplomacyOracle(DomainState state, DiplomacyState diplomacy) {
+  return state.copyWith(diplomacy: diplomacy);
 }
 
-PersistentGameState _withRelationOracle(
-  PersistentGameState state, {
+DomainState _withRelationOracle(
+  DomainState state, {
   required String playerAId,
   required String playerBId,
   required DiplomaticRelationStatus status,
@@ -18,7 +13,7 @@ PersistentGameState _withRelationOracle(
   int? lastChangedTurn,
   DiplomaticRelationChangeReason? lastChangeReason,
 }) {
-  final diplomacy = state.runtimeState.diplomacy;
+  final diplomacy = state.diplomacy;
   final key = DiplomacyState.relationKey(playerAId, playerBId);
   final existing = diplomacy.relations[key];
   final relation = DiplomaticRelation.between(
@@ -39,15 +34,15 @@ PersistentGameState _withRelationOracle(
   );
 }
 
-({PersistentGameState state, DiplomaticScoreEntry entry}) _adjustScoreOracle(
-  PersistentGameState state, {
+({DomainState state, DiplomaticScoreEntry entry}) _adjustScoreOracle(
+  DomainState state, {
   required String playerAId,
   required String playerBId,
   required int delta,
   required DiplomaticScoreChangeReason reason,
   String? sourceId,
 }) {
-  final diplomacy = state.runtimeState.diplomacy;
+  final diplomacy = state.diplomacy;
   final key = DiplomacyState.relationKey(playerAId, playerBId);
   final existing =
       diplomacy.relations[key] ??
@@ -92,11 +87,8 @@ PersistentGameState _withRelationOracle(
   );
 }
 
-PersistentGameState _addProposalOracle(
-  PersistentGameState state,
-  DiplomaticProposal proposal,
-) {
-  final diplomacy = state.runtimeState.diplomacy;
+DomainState _addProposalOracle(DomainState state, DiplomaticProposal proposal) {
+  final diplomacy = state.diplomacy;
   final key = DiplomacyState.relationKey(
     proposal.fromPlayerId,
     proposal.toPlayerId,
@@ -110,11 +102,8 @@ PersistentGameState _addProposalOracle(
   );
 }
 
-PersistentGameState _removeProposalOracle(
-  PersistentGameState state,
-  String proposalId,
-) {
-  final diplomacy = state.runtimeState.diplomacy;
+DomainState _removeProposalOracle(DomainState state, String proposalId) {
+  final diplomacy = state.diplomacy;
   return _withDiplomacyOracle(
     state,
     diplomacy.copyWith(
@@ -123,11 +112,8 @@ PersistentGameState _removeProposalOracle(
   );
 }
 
-PersistentGameState _addMessageOracle(
-  PersistentGameState state,
-  DiplomaticMessage message,
-) {
-  final diplomacy = state.runtimeState.diplomacy;
+DomainState _addMessageOracle(DomainState state, DiplomaticMessage message) {
+  final diplomacy = state.diplomacy;
   final key = DiplomacyState.relationKey(
     message.fromPlayerId,
     message.toPlayerId,
@@ -141,19 +127,16 @@ PersistentGameState _addMessageOracle(
   );
 }
 
-PersistentGameState _updateMessageOracle(
-  PersistentGameState state,
-  DiplomaticMessage message,
-) {
-  final diplomacy = state.runtimeState.diplomacy;
+DomainState _updateMessageOracle(DomainState state, DiplomaticMessage message) {
+  final diplomacy = state.diplomacy;
   return _withDiplomacyOracle(
     state,
     diplomacy.copyWith(messages: {...diplomacy.messages, message.id: message}),
   );
 }
 
-PersistentGameState _acceptedProposalResponseOracle(
-  PersistentGameState state,
+DomainState _acceptedProposalResponseOracle(
+  DomainState state,
   DiplomaticProposal proposal, {
   required DiplomaticRelationStatus status,
   required int relationDelta,
@@ -178,10 +161,8 @@ PersistentGameState _acceptedProposalResponseOracle(
     reason: DiplomaticScoreChangeReason.proposalAccepted,
     sourceId: proposal.id,
   ).state;
-  final retainedAttacks = state.runtimeState.intendedAttacks.sublist(2);
-  next = next.copyWith(
-    runtimeState: next.runtimeState.copyWith(intendedAttacks: retainedAttacks),
-  );
+  final retainedAttacks = state.intendedAttacks.sublist(2);
+  next = next.copyWith(intendedAttacks: retainedAttacks);
   if (proposal.goldPayment <= 0) return next;
   return next.copyWith(
     playerGold: {
@@ -194,8 +175,8 @@ PersistentGameState _acceptedProposalResponseOracle(
   );
 }
 
-PersistentGameState _declinedProposalResponseOracle(
-  PersistentGameState state,
+DomainState _declinedProposalResponseOracle(
+  DomainState state,
   DiplomaticProposal proposal,
 ) {
   return _adjustScoreOracle(
@@ -208,7 +189,7 @@ PersistentGameState _declinedProposalResponseOracle(
   ).state;
 }
 
-PersistentGameState _warOracle(PersistentGameState state) {
+DomainState _warOracle(DomainState state) {
   final pairKey = DiplomacyState.relationKey(
     _diplomacyActorId,
     _diplomacyTargetId,
@@ -221,7 +202,7 @@ PersistentGameState _warOracle(PersistentGameState state) {
     lastChangedTurn: _diplomacyTurn,
     lastChangeReason: DiplomaticRelationChangeReason.declarationOfWar,
   );
-  final diplomacy = next.runtimeState.diplomacy;
+  final diplomacy = next.diplomacy;
   next = _withDiplomacyOracle(
     next,
     diplomacy.copyWith(
@@ -252,14 +233,10 @@ PersistentGameState _warOracle(PersistentGameState state) {
     reason: DiplomaticScoreChangeReason.warmongerPenalty,
     sourceId: 'warmonger.7.declarationOfWar.player_1.player_2',
   ).state;
-  return next.copyWith(
-    runtimeState: next.runtimeState.copyWith(
-      resourceTradeAgreements: const [_unrelatedTrade],
-    ),
-  );
+  return next.copyWith(resourceTradeAgreements: const [_unrelatedTrade]);
 }
 
-PersistentGameState _giftOracle(PersistentGameState state, int amount) {
+DomainState _giftOracle(DomainState state, int amount) {
   final next = _adjustScoreOracle(
     state,
     playerAId: _diplomacyActorId,
@@ -277,8 +254,8 @@ PersistentGameState _giftOracle(PersistentGameState state, int amount) {
   );
 }
 
-PersistentGameState _messageResponseOracle(
-  PersistentGameState state,
+DomainState _messageResponseOracle(
+  DomainState state,
   DiplomaticMessage message,
   DiplomaticMessageResponse response, {
   required int delta,

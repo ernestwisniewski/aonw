@@ -10,7 +10,7 @@ final class _HudAutoFlowSignatureBuilder {
   final _HudUnitOrderPredicate unitNeedsManualOrder;
 
   String signatureFor({
-    required GameState state,
+    required GameClientState state,
     required GameSave gameSave,
     required bool readyToEndTurn,
     required int remainingActionCount,

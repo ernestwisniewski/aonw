@@ -29,11 +29,8 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
         .focusCityMapTarget(cityId);
   }
 
-  void autoExploreSelectedUnit(GameState? state, MapData mapData) {
-    final command = HudSelectionCommands.autoExploreSelectedUnit(
-      state,
-      mapData,
-    );
+  void autoExploreSelectedUnit(GameClientState? state) {
+    final command = HudSelectionCommands.autoExploreSelectedUnit(state);
     if (command == null) return;
 
     _clearFeedback();
@@ -43,7 +40,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     unawaited(dispatch(command));
   }
 
-  void startAttackTargeting(GameState? state) {
+  void startAttackTargeting(GameClientState? state) {
     final command = HudSelectionCommands.startAttackTargeting(state);
     if (command == null) return;
     _applyPanelModes(
@@ -52,7 +49,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     unawaited(dispatchIntent(command));
   }
 
-  void cancelAttackTargeting(GameState? state) {
+  void cancelAttackTargeting(GameClientState? state) {
     final unitId = HudPendingActionTargets.attackUnitId(state);
     if (unitId == null) return;
     unawaited(dispatchIntent(CancelAttackTargetingCommand(unitId)));
@@ -76,7 +73,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     unawaited(dispatchIntent(const CancelCityFoundingCommand()));
   }
 
-  void confirmCityFounding(GameState? state) {
+  void confirmCityFounding(GameClientState? state) {
     final draft = state?.cityFoundingDraft;
     if (draft == null || !draft.canConfirm) return;
     unawaited(
@@ -86,7 +83,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     );
   }
 
-  void startCityWorkedHexSelection(GameState? state) {
+  void startCityWorkedHexSelection(GameClientState? state) {
     final command = HudSelectionCommands.startCityWorkedHexSelection(state);
     if (command == null) return;
     _applyPanelModes(
@@ -95,13 +92,13 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     unawaited(dispatchIntent(command));
   }
 
-  void cancelCityWorkedHexSelection(GameState? state) {
+  void cancelCityWorkedHexSelection(GameClientState? state) {
     final cityId = HudPendingActionTargets.cityWorkedHexCityId(state);
     if (cityId == null) return;
     unawaited(dispatchIntent(CancelCityWorkedHexSelectionCommand(cityId)));
   }
 
-  void startCityExpansionSelection(GameState? state) {
+  void startCityExpansionSelection(GameClientState? state) {
     final command = HudSelectionCommands.startCityExpansionSelection(state);
     if (command == null) return;
     _applyPanelModes(
@@ -110,17 +107,17 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     unawaited(dispatchIntent(command));
   }
 
-  void cancelCityExpansionSelection(GameState? state) {
+  void cancelCityExpansionSelection(GameClientState? state) {
     unawaited(confirmCityExpansionSelection(state));
   }
 
-  Future<void> confirmCityExpansionSelection(GameState? state) async {
+  Future<void> confirmCityExpansionSelection(GameClientState? state) async {
     final cityId = HudPendingActionTargets.cityExpansionCityId(state);
     if (cityId == null) return;
     await dispatchIntent(CancelCityExpansionSelectionCommand(cityId));
   }
 
-  void startWorkerActionSelection(GameState? state) {
+  void startWorkerActionSelection(GameClientState? state) {
     final command = HudSelectionCommands.startWorkerActionSelection(state);
     if (command == null) return;
     _applyPanelModes(
@@ -133,13 +130,13 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     _ref.read(hudFeedbackProvider.notifier).clear();
   }
 
-  void cancelWorkerActionSelection(GameState? state) {
+  void cancelWorkerActionSelection(GameClientState? state) {
     final unitId = HudPendingActionTargets.workerUnitId(state);
     if (unitId == null) return;
     unawaited(dispatchIntent(CancelWorkerActionSelectionCommand(unitId)));
   }
 
-  void startMerchantTradeRouteSelection(GameState? state) {
+  void startMerchantTradeRouteSelection(GameClientState? state) {
     final command = HudSelectionCommands.startMerchantTradeRouteSelection(
       state,
     );
@@ -150,13 +147,16 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     unawaited(dispatchIntent(command));
   }
 
-  void cancelMerchantTradeRouteSelection(GameState? state) {
+  void cancelMerchantTradeRouteSelection(GameClientState? state) {
     final unitId = HudPendingActionTargets.merchantUnitId(state);
     if (unitId == null) return;
     unawaited(dispatchIntent(CancelMerchantTradeRouteSelectionCommand(unitId)));
   }
 
-  void assignMerchantTradeRoute(GameState? state, String destinationCityId) {
+  void assignMerchantTradeRoute(
+    GameClientState? state,
+    String destinationCityId,
+  ) {
     final command = HudSelectionCommands.assignMerchantTradeRoute(
       state,
       destinationCityId,
@@ -165,7 +165,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     unawaited(dispatch(command));
   }
 
-  void startMerchantMoveToCitySelection(GameState? state) {
+  void startMerchantMoveToCitySelection(GameClientState? state) {
     final command = HudSelectionCommands.startMerchantMoveToCitySelection(
       state,
     );
@@ -176,13 +176,13 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     unawaited(dispatchIntent(command));
   }
 
-  void cancelMerchantMoveToCitySelection(GameState? state) {
+  void cancelMerchantMoveToCitySelection(GameClientState? state) {
     final unitId = HudPendingActionTargets.merchantUnitId(state);
     if (unitId == null) return;
     unawaited(dispatchIntent(CancelMerchantMoveToCitySelectionCommand(unitId)));
   }
 
-  void moveMerchantToCity(GameState? state, String destinationCityId) {
+  void moveMerchantToCity(GameClientState? state, String destinationCityId) {
     final command = HudSelectionCommands.moveMerchantToCity(
       state,
       destinationCityId,
@@ -199,37 +199,37 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     unawaited(dispatchIntent(ConfirmWorkerImprovementIntent(unitId)));
   }
 
-  void cancelWorkerJob(GameState? state) {
+  void cancelWorkerJob(GameClientState? state) {
     final command = HudSelectionCommands.cancelWorkerJob(state);
     if (command == null) return;
     unawaited(dispatch(command));
   }
 
-  void startArtifactExcavation(GameState? state) {
+  void startArtifactExcavation(GameClientState? state) {
     final command = HudSelectionCommands.startArtifactExcavation(state);
     if (command == null) return;
     unawaited(dispatch(command));
   }
 
-  void storeArtifactInCity(GameState? state) {
+  void storeArtifactInCity(GameClientState? state) {
     final command = HudSelectionCommands.storeArtifactInCity(state);
     if (command == null) return;
     unawaited(dispatch(command));
   }
 
-  void cancelSelectedUnitAction(GameState? state) {
+  void cancelSelectedUnitAction(GameClientState? state) {
     final command = HudSelectionCommands.cancelSelectedUnitAction(state);
     if (command == null) return;
     unawaited(dispatch(command));
   }
 
-  void skipSelectedUnitTurn(GameState? state) {
+  void skipSelectedUnitTurn(GameClientState? state) {
     final command = HudSelectionCommands.skipSelectedUnitTurn(state);
     if (command == null) return;
     unawaited(dispatch(command));
   }
 
-  void fortifySelectedUnit(GameState? state) {
+  void fortifySelectedUnit(GameClientState? state) {
     final command = HudSelectionCommands.fortifySelectedUnit(state);
     if (command == null) return;
     unawaited(dispatch(command));

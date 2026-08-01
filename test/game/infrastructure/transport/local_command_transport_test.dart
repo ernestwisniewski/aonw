@@ -15,14 +15,13 @@ import 'package:aonw/game/application/services/replay_service.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw/game/infrastructure/transport/local_command_transport.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
@@ -33,6 +32,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,8 +42,8 @@ part 'local_command_transport_movement_presentation_tests.dart';
 part 'local_command_transport_preview_fast_path_tests.dart';
 part 'local_command_transport_test_support.dart';
 part 'local_command_transport_unit_action_tests.dart';
-part 'local_command_transport_worker_replay_tests.dart';
 part 'local_command_transport_worker_replay_support.dart';
+part 'local_command_transport_worker_replay_tests.dart';
 
 void main() {
   group('LocalCommandTransport', () {
@@ -59,7 +59,7 @@ void main() {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
         final save = _save(players: const [_player1]);
         final repository = _MemoryGameRepository(
-          SaveSnapshot(save: save, units: [commander]),
+          GameSnapshotFactory.create(save: save, units: [commander]),
         );
         final eventLog = _MemoryEventLog();
         final snapshotStore = _MemorySnapshotStore();
@@ -73,7 +73,7 @@ void main() {
 
         final result = await transport.dispatch(
           saveId: save.id,
-          currentState: GameState(
+          currentState: GameClientState(
             units: [commander],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
@@ -99,7 +99,7 @@ void main() {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final save = _save(players: const [_player1]);
       final repository = _MemoryGameRepository(
-        SaveSnapshot(save: save, units: [commander]),
+        GameSnapshotFactory.create(save: save, units: [commander]),
       );
       final eventLog = _MemoryEventLog()
         ..commands.add(
@@ -122,7 +122,7 @@ void main() {
 
       final result = await transport.dispatch(
         saveId: save.id,
-        currentState: GameState(
+        currentState: GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
@@ -140,7 +140,9 @@ void main() {
       'end turn updates save turn metadata and always stores a snapshot',
       () async {
         final save = _save(players: const [_player1, _player2]);
-        final repository = _MemoryGameRepository(SaveSnapshot(save: save));
+        final repository = _MemoryGameRepository(
+          GameSnapshotFactory.create(save: save),
+        );
         final snapshotStore = _MemorySnapshotStore();
         final transport = LocalCommandTransport(
           reducer: GameStateReducer(mapData: _map()),
@@ -152,7 +154,7 @@ void main() {
 
         final result = await transport.dispatch(
           saveId: save.id,
-          currentState: const GameState(activePlayerId: 'player_1'),
+          currentState: GameClientState(activePlayerId: 'player_1'),
           command: const EndTurnCommand('player_1'),
         );
 
@@ -174,7 +176,9 @@ void main() {
         players: const [_player1, _player2],
         gameMode: GameMode.multiplayer,
       );
-      final repository = _MemoryGameRepository(SaveSnapshot(save: save));
+      final repository = _MemoryGameRepository(
+        GameSnapshotFactory.create(save: save),
+      );
       final transport = LocalCommandTransport(
         reducer: GameStateReducer(mapData: _map()),
         gameRepository: repository,
@@ -185,7 +189,7 @@ void main() {
 
       final result = await transport.dispatch(
         saveId: save.id,
-        currentState: const GameState(
+        currentState: GameClientState(
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
         ),
@@ -214,13 +218,11 @@ void main() {
           },
         );
         final repository = _MemoryGameRepository(
-          SaveSnapshot(
+          GameSnapshotFactory.create(
             save: save,
             units: [_queuedCommander()],
             cities: const [_damagedCity],
-            runtimeState: const GameRuntimeState(
-              submittedPlayerIds: {'player_1'},
-            ),
+            submittedPlayerIds: {'player_1'},
           ),
         );
         final transport = LocalCommandTransport(
@@ -233,7 +235,7 @@ void main() {
 
         final result = await transport.dispatch(
           saveId: save.id,
-          currentState: GameState(
+          currentState: GameClientState(
             units: [_queuedCommander()],
             cities: const [_damagedCity],
             activePlayerId: 'player_2',
@@ -306,13 +308,11 @@ void main() {
           },
         );
         final repository = _MemoryGameRepository(
-          SaveSnapshot(
+          GameSnapshotFactory.create(
             save: save,
             units: [scout],
             fogOfWar: fog,
-            runtimeState: const GameRuntimeState(
-              submittedPlayerIds: {'player_1'},
-            ),
+            submittedPlayerIds: {'player_1'},
           ),
         );
         final transport = LocalCommandTransport(
@@ -325,7 +325,7 @@ void main() {
 
         final result = await transport.dispatch(
           saveId: save.id,
-          currentState: GameState(
+          currentState: GameClientState(
             units: [scout],
             fogOfWar: fog,
             activePlayerId: 'player_2',
@@ -377,13 +377,12 @@ void main() {
           },
         );
         final repository = _MemoryGameRepository(
-          SaveSnapshot(
+          GameSnapshotFactory.create(
             save: save,
             units: [unit],
             artifacts: const [artifact],
-            runtimeState: const GameRuntimeState(
-              submittedPlayerIds: {'player_1'},
-            ),
+
+            submittedPlayerIds: {'player_1'},
           ),
         );
         final transport = LocalCommandTransport(
@@ -396,7 +395,7 @@ void main() {
 
         final result = await transport.dispatch(
           saveId: save.id,
-          currentState: GameState(
+          currentState: GameClientState(
             units: [unit],
             artifacts: const [artifact],
             activePlayerId: 'player_2',
@@ -425,7 +424,7 @@ class _FixedClock extends Clock {
 }
 
 class _MemoryGameRepository implements GameRepository {
-  SaveSnapshot snapshot;
+  CanonicalGameSnapshot snapshot;
   var loadCalls = 0;
   var saveCalls = 0;
 
@@ -444,19 +443,19 @@ class _MemoryGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async {
+  Future<CanonicalGameSnapshot> load(String saveId) async {
     loadCalls++;
     return snapshot;
   }
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {
+  Future<void> save(CanonicalGameSnapshot snapshot) async {
     saveCalls++;
     this.snapshot = snapshot;
   }
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,

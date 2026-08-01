@@ -2,7 +2,7 @@ part of 'movement_reducer.dart';
 
 abstract final class _MovementTurnResetProcessor {
   static GameStateTransition run(
-    GameState state,
+    GameClientState state,
     MapTraversalView mapView, {
     required String? playerId,
     required FogOfWarService fogOfWarService,
@@ -189,7 +189,7 @@ abstract final class _MovementTurnResetProcessor {
   }
 
   static _QueuedPathReplan _replanQueuedPath({
-    required GameState state,
+    required GameClientState state,
     required GameUnit unit,
     required List<GameUnit> allUnits,
     required MapTraversalView mapView,
@@ -229,7 +229,7 @@ abstract final class _MovementTurnResetProcessor {
   }
 
   static UnitMovementPlan? _planQueuedPath({
-    required GameState state,
+    required GameClientState state,
     required GameUnit unit,
     required List<GameUnit> allUnits,
     required MapTraversalView mapView,
@@ -266,8 +266,8 @@ abstract final class _MovementTurnResetProcessor {
     ).plan(unit: unit, targetTile: targetTile);
   }
 
-  static GameState _refreshSelectedUnit(
-    GameState state,
+  static GameClientState _refreshSelectedUnit(
+    GameClientState state,
     List<GameUnit> units,
     MapTileLookup mapTiles, {
     String? resetPlayerId,
@@ -295,8 +295,8 @@ abstract final class _MovementTurnResetProcessor {
     return next;
   }
 
-  static GameState withoutResetPlayerTurnInteraction(
-    GameState state,
+  static GameClientState withoutResetPlayerTurnInteraction(
+    GameClientState state,
     String? resetPlayerId,
   ) {
     final pendingAction = state.pendingAction;
@@ -337,7 +337,7 @@ bool _clearTurnSkip(
     (resetPlayerId == null || pendingAction.ownerPlayerId == resetPlayerId);
 
 bool _clearMovePreview(
-  GameState state,
+  GameClientState state,
   String? resetPlayerId,
   GameUnit? previewUnit,
 ) =>
@@ -348,7 +348,7 @@ bool _clearMovePreview(
         previewUnit.ownerPlayerId == resetPlayerId);
 
 bool _deactivateMoveCommand(
-  GameState state,
+  GameClientState state,
   String? resetPlayerId,
   GameUnit? selectedUnit,
   bool clearMovePreview,
@@ -381,7 +381,7 @@ abstract final class _TurnProjection {
     ];
   }
 
-  static bool changed(GameState state, PersistedInteractionState interaction) {
+  static bool changed(GameClientState state, DomainActionState interaction) {
     return interaction.cityFoundingDraft != state.cityFoundingDraft ||
         interaction.pendingAction != state.pendingAction;
   }
@@ -392,7 +392,7 @@ abstract final class _TurnProjection {
   ) => contactsChanged || interactionChanged;
 
   static GameStateTransition unchangedTurn({
-    required GameState state,
+    required GameClientState state,
     required List<GameUnit> currentUnits,
     required MapTraversalView mapView,
     required String? playerId,
@@ -408,7 +408,7 @@ abstract final class _TurnProjection {
   }
 
   static GameStateTransition project({
-    required GameState state,
+    required GameClientState state,
     required List<GameUnit> units,
     required FogOfWarState fogOfWar,
     required TurnAutoExploreAdvance autoExplore,

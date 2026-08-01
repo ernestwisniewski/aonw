@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 
 void main() {
   test('context carries deterministic engine inputs', () {
-    final mapView = MapData(cols: 1, rows: 1, tiles: const []);
+    final mapView = WorldMap(cols: 1, rows: 1, tiles: []);
     final context = GameEngineContext(
       actorPlayerId: 'player-1',
       mapView: mapView,
@@ -88,14 +88,14 @@ void main() {
 
 CanonicalGameSnapshot _snapshot() {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
+    domain: (DomainState.snapshot(
       turn: 1,
       matchRules: MatchRules.standard,
       participants: const [
         Player(id: 'player-1', name: 'Player', colorValue: 0xFF000001),
       ],
-    ),
-    session: MatchSessionState.snapshot(gameMode: GameMode.multiplayer),
+    )).copyWith(gameMode: GameMode.multiplayer),
+
     metadata: GameSnapshotMetadata(
       id: 'save-1',
       schemaVersion: 3,

@@ -20,7 +20,7 @@ final class TurnAutoExploreAdvance {
     required List<GameUnit> units,
     required FogOfWarState fogOfWar,
     required DiplomacyState diplomacy,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     bool changed = false,
     Iterable<GameEvent> events = const [],
     Iterable<MovementCommandExecution> executions = const [],
@@ -49,7 +49,7 @@ final class TurnAutoExploreAdvance {
   final List<GameUnit> units;
   final FogOfWarState fogOfWar;
   final DiplomacyState diplomacy;
-  final PersistedInteractionState interaction;
+  final DomainActionState interaction;
   final bool changed;
   final List<GameEvent> events;
   final List<MovementCommandExecution> executions;
@@ -60,7 +60,7 @@ abstract final class TurnAutoExploreAdvancer {
     required List<GameUnit> units,
     required FogOfWarState fogOfWar,
     required DiplomacyState diplomacy,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required List<GameCity> cities,
     required Set<String> playerIds,
     required Set<String> phaseKnownPlayerIds,
@@ -123,7 +123,7 @@ abstract final class TurnAutoExploreAdvancer {
     required FogOfWarState fogOfWar,
     required DiplomacyState diplomacy,
     required Set<String> playerIds,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
   }) {
     return AutoExploreCommandState(
       movement: MovementCommandState(

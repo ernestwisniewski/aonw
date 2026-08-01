@@ -4,9 +4,9 @@ import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -44,7 +44,7 @@ void main() {
         saveId: 'save_1',
         playerId: 'ai_1',
         aiContext: _context(turn: 7),
-        initialState: const GameState(activePlayerId: 'ai_1'),
+        initialState: GameClientState(activePlayerId: 'ai_1'),
         commands: const [SkipUnitTurnCommand('unit_1')],
         interCommandDelay: const Duration(milliseconds: 40),
       );
@@ -88,7 +88,7 @@ void main() {
         saveId: 'save_1',
         playerId: 'ai_1',
         aiContext: _context(turn: 8),
-        initialState: GameState(
+        initialState: GameClientState(
           activePlayerId: 'ai_1',
           units: [
             GameUnit(
@@ -136,11 +136,11 @@ AiContext _context({required int turn}) {
   );
 }
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 1,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],

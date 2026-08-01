@@ -130,7 +130,7 @@ final class _FogRevealFixture {
       rows: dimensions.rows,
       tiles: [
         for (var index = 0; index < scale; index++)
-          WorldTile(
+          WorldTile.at(
             coordinate: HexCoord(
               col: index % dimensions.cols,
               row: index ~/ dimensions.cols,
@@ -149,7 +149,7 @@ final class _FogRevealFixture {
       range: _fogRevealRange,
       observerHeight: 0,
     );
-    final mapTiles = WorldMapReadView(worldMap);
+    final mapTiles = worldMap;
     return _FogRevealFixture(
       worldMap: worldMap,
       mapTiles: mapTiles,

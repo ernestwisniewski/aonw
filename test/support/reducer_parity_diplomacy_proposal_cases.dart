@@ -2,7 +2,7 @@ part of 'reducer_parity_diplomacy_characterization.dart';
 
 List<ReducerParityFixture> _proposalParityCases(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   return [
     ..._proposalSendParityCases(template, baseState),
@@ -12,7 +12,7 @@ List<ReducerParityFixture> _proposalParityCases(
 
 List<ReducerParityFixture> _proposalSendParityCases(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   const duplicateProposal = DiplomaticProposal(
     id: 'pair_duplicate_proposal',
@@ -55,8 +55,8 @@ List<ReducerParityFixture> _proposalSendParityCases(
 
 List<ReducerParityFixture> _proposalSendRejections(
   ReducerParityFixture template,
-  PersistentGameState baseState,
-  PersistentGameState duplicateState,
+  DomainState baseState,
+  DomainState duplicateState,
 ) {
   return [
     _rejectedDiplomacyFixture(
@@ -113,8 +113,8 @@ List<ReducerParityFixture> _proposalSendRejections(
 
 List<ReducerParityFixture> _proposalSendAcceptances(
   ReducerParityFixture template,
-  PersistentGameState baseState,
-  PersistentGameState warState,
+  DomainState baseState,
+  DomainState warState,
   DiplomaticProposal generatedFriendship,
   DiplomaticProposal generatedPaidTruce,
 ) {
@@ -167,7 +167,7 @@ List<ReducerParityFixture> _proposalSendAcceptances(
 
 List<ReducerParityFixture> _proposalResponseParityCases(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   const friendship = DiplomaticProposal(
     id: 'pair_friendship_proposal',
@@ -247,7 +247,7 @@ List<ReducerParityFixture> _proposalResponseParityCases(
 
 ReducerParityFixture _acceptedProposalDeclineFixture(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
   DiplomaticProposal proposal,
 ) {
   return _acceptedDiplomacyFixture(
@@ -284,7 +284,7 @@ ReducerParityFixture _acceptedProposalDeclineFixture(
 
 ReducerParityFixture _acceptedProposalFriendshipFixture(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
   DiplomaticProposal proposal,
 ) {
   return _acceptedDiplomacyFixture(
@@ -333,7 +333,7 @@ ReducerParityFixture _acceptedProposalFriendshipFixture(
 
 ReducerParityFixture _acceptedProposalTruceFixture(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
   DiplomaticProposal proposal,
 ) {
   return _acceptedDiplomacyFixture(

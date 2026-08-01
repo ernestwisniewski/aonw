@@ -9,8 +9,8 @@ import 'package:aonw_core/game/domain/event.dart';
 abstract final class GameSoundCueMapper {
   static List<GameSoundCue> forCommand({
     required Object command,
-    required GameState? previousState,
-    required GameState state,
+    required GameClientState? previousState,
+    required GameClientState state,
     required Iterable<GameEvent> events,
     required Iterable<UiEffect> uiEffects,
   }) {
@@ -48,8 +48,8 @@ abstract final class GameSoundCueMapper {
 
   static List<GameSoundCue> forEvents({
     required Iterable<GameEvent> events,
-    required GameState state,
-    required GameState? previousState,
+    required GameClientState state,
+    required GameClientState? previousState,
   }) {
     final audiblePlayerId = _audiblePlayerId(previousState, state);
     final cues = <GameSoundCue>[];
@@ -67,15 +67,15 @@ abstract final class GameSoundCueMapper {
 
   static List<GameSoundCue> forRendererEffects({
     required Iterable<RendererEffect> effects,
-    required GameState state,
-    required GameState? previousState,
+    required GameClientState state,
+    required GameClientState? previousState,
   }) {
     return const [];
   }
 
   static bool _commandHadEffect(
-    GameState? previousState,
-    GameState state,
+    GameClientState? previousState,
+    GameClientState state,
     Iterable<GameEvent> events,
     Iterable<UiEffect> uiEffects,
   ) {
@@ -86,7 +86,7 @@ abstract final class GameSoundCueMapper {
   }
 
   static List<GameSoundCue> _tileTapCues({
-    required GameState state,
+    required GameClientState state,
     required Iterable<UiEffect> uiEffects,
   }) {
     if (uiEffects.whereType<AnimateUnitMoveEffect>().isNotEmpty) {
@@ -104,8 +104,8 @@ abstract final class GameSoundCueMapper {
 
   static GameSoundCue? _cueForEvent(
     GameEvent event,
-    GameState state,
-    GameState? previousState, {
+    GameClientState state,
+    GameClientState? previousState, {
     required String audiblePlayerId,
   }) {
     final descriptor = GameEventDescriptor.forEvent(event);
@@ -125,8 +125,8 @@ abstract final class GameSoundCueMapper {
   }
 
   static List<GameSoundCue> _moveTargetingCues(
-    GameState? previousState,
-    GameState state,
+    GameClientState? previousState,
+    GameClientState state,
   ) {
     if (state.moveCommandActive &&
         !(previousState?.moveCommandActive ?? false)) {
@@ -137,8 +137,8 @@ abstract final class GameSoundCueMapper {
 
   static bool _eventBelongsToAudiblePlayer(
     GameEventDescriptor descriptor,
-    GameState state,
-    GameState? previousState,
+    GameClientState state,
+    GameClientState? previousState,
     String playerId,
   ) {
     if (playerId.isEmpty) return true;
@@ -147,7 +147,10 @@ abstract final class GameSoundCueMapper {
         .contains(playerId);
   }
 
-  static String _audiblePlayerId(GameState? previousState, GameState state) {
+  static String _audiblePlayerId(
+    GameClientState? previousState,
+    GameClientState state,
+  ) {
     final previousActivePlayerId = previousState?.activePlayerId;
     if (previousActivePlayerId != null && previousActivePlayerId.isNotEmpty) {
       return previousActivePlayerId;
@@ -157,16 +160,16 @@ abstract final class GameSoundCueMapper {
 
   static String _audiblePlayerIdForCommand(
     Object command,
-    GameState? previousState,
-    GameState state,
+    GameClientState? previousState,
+    GameClientState state,
   ) {
     return _audiblePlayerId(previousState, state);
   }
 
   static bool _commandBelongsToPlayer(
     Object command,
-    GameState? previousState,
-    GameState state,
+    GameClientState? previousState,
+    GameClientState state,
     String playerId,
   ) {
     if (playerId.isEmpty) return true;
@@ -203,7 +206,10 @@ abstract final class GameSoundCueMapper {
     };
   }
 
-  static bool _selectedOwnerBelongsToPlayer(GameState state, String playerId) {
+  static bool _selectedOwnerBelongsToPlayer(
+    GameClientState state,
+    String playerId,
+  ) {
     final selection = state.selection;
     return switch (selection?.type) {
       GameSelectionType.unit => _belongsToPlayer(
@@ -226,8 +232,8 @@ abstract final class GameSoundCueMapper {
 
 bool _intentBelongsToPlayer(
   GameIntent intent,
-  GameState? previousState,
-  GameState state,
+  GameClientState? previousState,
+  GameClientState state,
   String playerId,
 ) {
   final unitId = _primaryUnitIntentId(intent) ?? _modeUnitIntentId(intent);

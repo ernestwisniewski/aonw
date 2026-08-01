@@ -41,14 +41,18 @@ const _unrelatedTrade = ResourceTradeAgreement(
   remainingTurns: 4,
 );
 
-PersistentGameState _diplomacyParityBaseState(PersistentGameState source) {
+DomainState _diplomacyParityBaseState(DomainState source) {
   final diplomacy = _diplomacySentinelState();
-  return source.copyWith(
-    playerColors: {...source.playerColors, _diplomacyObserverId: 0xFF4A8F63},
-    playerCountries: {
-      ...source.playerCountries,
-      _diplomacyObserverId: PlayerCountry.france,
-    },
+  final base = source.copyWith(
+    participants: [
+      ...source.participants,
+      const Player(
+        id: _diplomacyObserverId,
+        name: _diplomacyObserverId,
+        colorValue: 0xFF4A8F63,
+        country: PlayerCountry.france,
+      ),
+    ],
     playerGold: {...source.playerGold, _diplomacyObserverId: 31},
     playerWarWeariness: {...source.playerWarWeariness, _diplomacyObserverId: 6},
     playerStabilityNet: {...source.playerStabilityNet, _diplomacyObserverId: 7},
@@ -62,8 +66,8 @@ PersistentGameState _diplomacyParityBaseState(PersistentGameState source) {
         ),
       },
     ),
-    runtimeState: _diplomacySentinelRuntime(diplomacy),
   );
+  return _withDiplomacySentinelRuntime(base, diplomacy);
 }
 
 DiplomacyState _diplomacySentinelState() {
@@ -115,8 +119,11 @@ List<GameUnit> _diplomacySentinelUnits() {
   ];
 }
 
-GameRuntimeState _diplomacySentinelRuntime(DiplomacyState diplomacy) {
-  return GameRuntimeState.snapshot(
+DomainState _withDiplomacySentinelRuntime(
+  DomainState source,
+  DiplomacyState diplomacy,
+) {
+  return source.copyWith(
     submittedPlayerIds: const {'sentinel_submitted'},
     timeoutStreaksByPlayerId: const {'sentinel_timeout': 2},
     afkPlayerIds: const {'sentinel_afk'},
@@ -170,7 +177,7 @@ ReducerParityFixture _rejectedDiplomacyFixture(
   ReducerParityFixture template, {
   required String id,
   required int tickOffset,
-  required PersistentGameState state,
+  required DomainState state,
   required DiplomaticCommand command,
   required String reason,
   String actorPlayerId = _diplomacyActorId,
@@ -193,9 +200,9 @@ ReducerParityFixture _acceptedDiplomacyFixture(
   ReducerParityFixture template, {
   required String id,
   required int tickOffset,
-  required PersistentGameState state,
+  required DomainState state,
   required DiplomaticCommand command,
-  required PersistentGameState expectedState,
+  required DomainState expectedState,
   required List<GameEvent> expectedEvents,
   String actorPlayerId = _diplomacyActorId,
 }) {
@@ -217,10 +224,10 @@ ReducerParityFixture _diplomacyFixture(
   required String id,
   required int tickOffset,
   required String actorPlayerId,
-  required PersistentGameState state,
+  required DomainState state,
   required DiplomaticCommand command,
   required bool accepted,
-  required PersistentGameState expectedState,
+  required DomainState expectedState,
   required List<GameEvent> expectedEvents,
   String? reason,
 }) {
@@ -238,14 +245,14 @@ ReducerParityFixture _diplomacyFixture(
     expectedAccepted: accepted,
     expectedReason: reason,
     expectedSave: reducerParitySave(template.save),
-    expectedState: expectedState.toJson(),
+    expectedState: CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
     expectedEvents: reducerParityEvents(expectedEvents),
   );
 }
 
-PersistentGameState _withoutPairContact(PersistentGameState state) {
+DomainState _withoutPairContact(DomainState state) {
   final key = DiplomacyState.relationKey(_diplomacyActorId, _diplomacyTargetId);
-  final diplomacy = state.runtimeState.diplomacy;
+  final diplomacy = state.diplomacy;
   return _withDiplomacyOracle(
     state,
     diplomacy.copyWith(
@@ -255,8 +262,8 @@ PersistentGameState _withoutPairContact(PersistentGameState state) {
   );
 }
 
-PersistentGameState _withPairStatus(
-  PersistentGameState state,
+DomainState _withPairStatus(
+  DomainState state,
   DiplomaticRelationStatus status, {
   int? expiresOnTurn,
 }) {

@@ -3,7 +3,7 @@ part of 'hud_command_dispatcher.dart';
 extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
   Future<void> focusNextAction({
     required String activePlayerId,
-    required GameState? Function() currentState,
+    required GameClientState? Function() currentState,
     GameObjectiveAdvice? preferredObjectiveAdvice,
     int? actionIndex,
     int actionStep = 1,
@@ -42,7 +42,7 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
 
   Future<void> focusTurnStartMapTarget({
     required String activePlayerId,
-    GameState? state,
+    GameClientState? state,
     bool moveCamera = true,
   }) async {
     if (activePlayerId.isEmpty) return;
@@ -66,7 +66,7 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
   }
 
   void _applyPanelModesForTurnFocus({
-    required GameState? state,
+    required GameClientState? state,
     required String activePlayerId,
   }) {
     final modes = _ref.read(hudPanelControllerProvider);
@@ -82,7 +82,7 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
     required GameSave gameSave,
     required String activePlayerId,
     required bool readyToEndTurn,
-    required GameState? Function() currentState,
+    required GameClientState? Function() currentState,
     GameObjectiveAdvice? preferredObjectiveAdvice,
   }) async {
     if (animatingUnitIdsListenable.value.isNotEmpty) return;

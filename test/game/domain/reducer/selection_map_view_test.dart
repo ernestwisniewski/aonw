@@ -6,9 +6,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -17,7 +15,7 @@ void main() {
       cols: 1,
       rows: 1,
       tiles: [
-        WorldTile(
+        WorldTile.at(
           coordinate: const HexCoord(col: 0, row: 0),
           terrains: const [TerrainType.grassland],
           resources: const [ResourceType.oil, ResourceType.wheat],
@@ -25,8 +23,8 @@ void main() {
         ),
       ],
     );
-    final canonicalTile = world.tileAt(const HexCoord(col: 0, row: 0))!;
-    final MapTileLookup mapTiles = WorldMapReadView(world);
+    final canonicalTile = world.tileAtHex(const HexCoord(col: 0, row: 0))!;
+    final MapTileLookup mapTiles = world;
     final fog = FogOfWarState(
       players: {
         'p1': PlayerFogOfWar(
@@ -37,7 +35,7 @@ void main() {
     );
 
     final hiddenResult = SelectionReducer.handleTileTapped(
-      GameState(activePlayerId: 'p1', fogOfWar: fog),
+      GameClientState(activePlayerId: 'p1', fogOfWar: fog),
       const TileTappedCommand(0, 0),
       mapTiles,
     );
@@ -57,7 +55,7 @@ void main() {
     );
 
     final visibleResult = SelectionReducer.handleTileTapped(
-      GameState(
+      GameClientState(
         activePlayerId: 'p1',
         fogOfWar: fog,
         research: ResearchState(

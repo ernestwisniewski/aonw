@@ -12,7 +12,7 @@ void main() {
     final commands = <GameIntent>[];
     final effects = <RendererEffect>[];
     final coordinator = _coordinator(
-      state: const GameState(),
+      state: GameClientState(),
       commands: commands,
       effects: effects,
     );
@@ -29,14 +29,14 @@ void main() {
     () async {
       final commands = <GameIntent>[];
       final effects = <RendererEffect>[];
-      const state = GameState(cities: [_city]);
+      final state = GameClientState(cities: [_city]);
       final coordinator = _coordinator(
         state: state,
         commands: commands,
         effects: effects,
         dispatchWithoutRendererEffects: (command) async {
           commands.add(command);
-          return const DispatchCommandResult(state: state);
+          return DispatchCommandResult(state: state);
         },
       );
 
@@ -57,16 +57,16 @@ void main() {
   test('accepts camera focus produced by the turn-start command', () async {
     final commands = <GameIntent>[];
     final effects = <RendererEffect>[];
-    const state = GameState(cities: [_city]);
+    final state = GameClientState(cities: [_city]);
     final coordinator = _coordinator(
       state: state,
       commands: commands,
       effects: effects,
       dispatchWithPresentation: (command) async {
         commands.add(command);
-        return const DispatchCommandResult(
+        return DispatchCommandResult(
           state: state,
-          uiEffects: [JumpCameraEffect(col: 3, row: 4)],
+          uiEffects: [const JumpCameraEffect(col: 3, row: 4)],
         );
       },
     );
@@ -86,14 +86,14 @@ void main() {
     () async {
       final commands = <GameIntent>[];
       final effects = <RendererEffect>[];
-      const state = GameState(cities: [_city]);
+      final state = GameClientState(cities: [_city]);
       final coordinator = _coordinator(
         state: state,
         commands: commands,
         effects: effects,
         dispatchWithPresentation: (command) async {
           commands.add(command);
-          return const DispatchCommandResult(state: state);
+          return DispatchCommandResult(state: state);
         },
       );
 
@@ -129,7 +129,7 @@ const _city = GameCity(
 );
 
 TurnStartFocusCoordinator _coordinator({
-  required GameState state,
+  required GameClientState state,
   required List<GameIntent> commands,
   required List<RendererEffect> effects,
   TurnStartCommandDispatcher? dispatchWithPresentation,

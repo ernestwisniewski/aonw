@@ -11,11 +11,11 @@ abstract interface class RendererViewModel {
 
   Future<void> handleEffect(RendererEffect effect);
   Future<void> applyTransition(
-    GameState state,
+    GameClientState state,
     Iterable<RendererEffect> effects, {
     int? currentTurn,
   });
-  void applyStateWithoutCameraFocus(GameState state, {int? currentTurn});
+  void applyStateWithoutCameraFocus(GameClientState state, {int? currentTurn});
 }
 
 final class GameRendererViewModel implements RendererViewModel {
@@ -43,7 +43,7 @@ final class GameRendererViewModel implements RendererViewModel {
 
   @override
   Future<void> applyTransition(
-    GameState state,
+    GameClientState state,
     Iterable<RendererEffect> effects, {
     int? currentTurn,
   }) {
@@ -51,7 +51,7 @@ final class GameRendererViewModel implements RendererViewModel {
   }
 
   Future<void> applyAuthoritativeProjection(
-    GameState state,
+    GameClientState state,
     ProjectedGameEffectBatch batch, {
     int? currentTurn,
   }) {
@@ -63,7 +63,7 @@ final class GameRendererViewModel implements RendererViewModel {
   }
 
   @override
-  void applyStateWithoutCameraFocus(GameState state, {int? currentTurn}) {
+  void applyStateWithoutCameraFocus(GameClientState state, {int? currentTurn}) {
     _renderer.applyStateWithoutCameraFocus(state, currentTurn: currentTurn);
   }
 }
@@ -76,7 +76,7 @@ extension ProjectedRendererViewModel on RendererViewModel {
   }
 
   Future<void> applyProjectedTransition(
-    GameState state,
+    GameClientState state,
     ProjectedGameEffectBatch batch, {
     int? currentTurn,
   }) {

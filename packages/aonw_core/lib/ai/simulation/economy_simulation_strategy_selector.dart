@@ -5,7 +5,7 @@ abstract final class _EconomySimulationStrategySelector {
     required AiPlayer player,
     required EconomySimulationConfig config,
     required int turn,
-    required PersistentGameState state,
+    required DomainState state,
     required List<Player> players,
   }) {
     if (config.strategyOverride case final strategy?) {
@@ -30,7 +30,7 @@ abstract final class _EconomySimulationStrategySelector {
     required AiPlayer player,
     required EconomySimulationConfig config,
     required int turn,
-    required PersistentGameState state,
+    required DomainState state,
     required List<Player> players,
   }) {
     final mctsConfig = config.mctsConfig;
@@ -63,7 +63,7 @@ abstract final class _EconomySimulationStrategySelector {
   static _MctsRuntimeChoice _mctsRuntimeChoiceFor({
     required EconomySimulationMctsProfileMode mode,
     required int turn,
-    required PersistentGameState state,
+    required DomainState state,
     required List<Player> players,
   }) {
     return switch (mode) {
@@ -88,7 +88,7 @@ abstract final class _EconomySimulationStrategySelector {
 
   static _MctsRuntimeChoice _adaptiveLocalSinglePlayerMctsProfile({
     required int turn,
-    required PersistentGameState state,
+    required DomainState state,
     required List<Player> players,
   }) {
     final localSinglePlayer = _isLocalSinglePlayer(players);

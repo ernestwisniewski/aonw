@@ -4,16 +4,16 @@ import 'package:test/test.dart';
 void main() {
   group('StrategicResourceDiscoveryRules', () {
     test('summarizes newly revealed strategic resources', () {
-      const state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [
-          GameCity(
+          const GameCity(
             id: 'city_1',
             ownerPlayerId: 'player_1',
             name: 'Krakow',
             center: CityHex(col: 0, row: 0),
             controlledHexes: [CityHex(col: 1, row: 0)],
           ),
-          GameCity(
+          const GameCity(
             id: 'city_2',
             ownerPlayerId: 'player_2',
             name: 'Roma',
@@ -71,7 +71,7 @@ void main() {
       final events = StrategicResourceDiscoveryRules.eventsForTechnology(
         playerId: 'player_1',
         technologyId: TechnologyId.flight,
-        state: const PersistentGameState(),
+        state: DomainState.snapshot(),
         mapData: _map(),
       );
 
@@ -81,15 +81,15 @@ void main() {
     test(
       'matches a reordered WorldMap view and resolves nearest ties stably',
       () {
-        const state = PersistentGameState(
+        final state = DomainState.snapshot(
           cities: [
-            GameCity(
+            const GameCity(
               id: 'city_1',
               ownerPlayerId: 'player_1',
               name: 'Krakow',
               center: CityHex(col: 3, row: 2),
             ),
-            GameCity(
+            const GameCity(
               id: 'city_2',
               ownerPlayerId: 'player_2',
               name: 'Roma',
@@ -97,39 +97,39 @@ void main() {
             ),
           ],
         );
-        final mapData = MapData(
+        final mapData = WorldMap(
           cols: 8,
           rows: 5,
-          tiles: const [
-            TileData(
+          tiles: [
+            WorldTile(
               col: 3,
               row: 2,
               terrains: [TerrainType.plains],
               resources: [ResourceType.oil, ResourceType.wheat],
               height: 0,
             ),
-            TileData(
+            WorldTile(
               col: 2,
               row: 2,
               terrains: [TerrainType.plains],
               resources: [ResourceType.oil],
               height: 0,
             ),
-            TileData(
+            WorldTile(
               col: 4,
               row: 2,
               terrains: [TerrainType.plains],
               resources: [ResourceType.oil],
               height: 0,
             ),
-            TileData(
+            WorldTile(
               col: 6,
               row: 2,
               terrains: [TerrainType.plains],
               resources: [ResourceType.oil],
               height: 0,
             ),
-            TileData(
+            WorldTile(
               col: 0,
               row: 4,
               terrains: [TerrainType.hills],
@@ -151,7 +151,7 @@ void main() {
               playerId: 'player_1',
               technologyId: TechnologyId.combustion,
               state: state,
-              mapData: WorldMapReadView(worldMap),
+              mapData: worldMap,
             );
 
         expect(_discoveryShape(canonical), _discoveryShape(legacy));
@@ -211,13 +211,13 @@ List<Map<String, Object?>> _discoveryShape(
   ];
 }
 
-WorldMap _worldMapFromDataInReverse(MapData mapData) {
+WorldMap _worldMapFromDataInReverse(WorldMap mapData) {
   return WorldMap(
     cols: mapData.cols,
     rows: mapData.rows,
     tiles: [
       for (final tile in mapData.tiles.reversed)
-        WorldTile(
+        WorldTile.at(
           coordinate: HexCoord(col: tile.col, row: tile.row),
           terrains: tile.terrains,
           resources: tile.resources,
@@ -227,54 +227,54 @@ WorldMap _worldMapFromDataInReverse(MapData mapData) {
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 7,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [ResourceType.oil],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 2,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 3,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 4,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [ResourceType.oil],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 5,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 6,
         row: 0,
         terrains: [TerrainType.plains],

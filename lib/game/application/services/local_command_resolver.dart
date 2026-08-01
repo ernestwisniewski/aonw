@@ -7,7 +7,6 @@ import 'package:aonw/game/application/services/local_research_diplomacy_command_
 import 'package:aonw/game/application/services/local_unit_action_command_resolver.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/turn/phases/selection_refresh_phase.dart';
@@ -20,8 +19,8 @@ import 'package:aonw_core/game/domain/movement.dart';
 part 'local_command_resolver_research_diplomacy.dart';
 
 class LocalCommandResolution {
-  final SaveSnapshot snapshot;
-  final GameState state;
+  final CanonicalGameSnapshot snapshot;
+  final GameClientState state;
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
   final List<CombatAnimationFact> combatAnimations;
@@ -45,8 +44,8 @@ class LocalCommandResolver {
   const LocalCommandResolver({required this.reducer});
 
   LocalCommandResolution resolve({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     GameCommandContext context = const GameCommandContext(),
@@ -88,8 +87,8 @@ class LocalCommandResolver {
   }
 
   LocalCommandResolution _resolveRemainingFamily({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
@@ -135,8 +134,8 @@ class LocalCommandResolver {
 
 extension _LocalCommandResolverImplementation on LocalCommandResolver {
   LocalCommandResolution _resolveTurn({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
@@ -150,7 +149,9 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
     );
     if (result is GameEngineRejected) {
       return LocalCommandResolution(
-        snapshot: baseSnapshot.withSavedAt(savedAt).withGameState(currentState),
+        snapshot: baseSnapshot
+            .withSavedAt(savedAt)
+            .withClientState(currentState),
         state: currentState,
         events: const [],
         uiEffects: const [],
@@ -168,15 +169,15 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
   }
 
   GameEngineResult _applyTurnEngine({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
   }) {
     final playerIds = _activePlayerIds(baseSnapshot);
     return const GameEngine().apply(
-      snapshot: baseSnapshot.withGameState(currentState).canonical,
+      snapshot: baseSnapshot.withClientState(currentState).canonical,
       command: command,
       context: GameEngineContext(
         actorPlayerId: context.actorPlayerId ?? _turnPlayerId(command),
@@ -191,8 +192,8 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
   }
 
   LocalCommandResolution _acceptedTurnResolution({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
@@ -235,7 +236,7 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
     }
     final movement = accepted.movementDelta;
     return LocalCommandResolution(
-      snapshot: projection.snapshot.withGameState(nextState),
+      snapshot: projection.snapshot.withClientState(nextState),
       state: nextState,
       events: accepted.events,
       uiEffects: const [],
@@ -244,9 +245,10 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
     );
   }
 
-  ({SaveSnapshot snapshot, GameState state}) _acceptedTurnProjection({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+  ({CanonicalGameSnapshot snapshot, GameClientState state})
+  _acceptedTurnProjection({
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required GameEngineAccepted accepted,
     required DateTime savedAt,
@@ -254,38 +256,36 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
   }) {
     final canonicalSameTurn =
         preservesRawTurnStart && command is EndTurnCommand;
-    final snapshot = SaveSnapshot.fromCanonical(accepted.snapshot);
-    final persistent = preservesRawTurnStart
-        ? snapshot.rawPersistentState.copyWith(
-            runtimeState: snapshot.rawPersistentState.runtimeState.copyWith(
+    final snapshot = preservesRawTurnStart
+        ? accepted.snapshot.copyWith(
+            domain: accepted.snapshot.domain.copyWith(
               turnStartedAt: baseSnapshot.persistedTurnStartedAt,
             ),
           )
-        : snapshot.rawPersistentState;
+        : accepted.snapshot;
     if (canonicalSameTurn || !preservesRawTurnStart) {
       return (
-        snapshot: SaveSnapshot.fromPersistentState(
-          save: snapshot.save,
-          state: persistent,
-          eventLogOffset: snapshot.eventLogOffset,
-        ),
-        state: currentState
-            .copyWithPersistentState(persistent)
+        snapshot: snapshot,
+        state: snapshot
+            .toClientState(
+              activePlayerId: currentState.activePlayerId,
+              activePlayerCanAct: currentState.activePlayerCanAct,
+            )
             .copyWithInteraction(
               cityFoundingDraft:
-                  accepted.snapshot.interaction.cityFoundingDraft,
-              pendingAction: accepted.snapshot.interaction.pendingAction,
+                  accepted.snapshot.domain.actions.cityFoundingDraft,
+              pendingAction: accepted.snapshot.domain.actions.pendingAction,
             ),
       );
     }
     final state = currentState
         .copyWith(
-          submittedPlayerIds: accepted.snapshot.session.submittedPlayerIds,
+          submittedPlayerIds: accepted.snapshot.domain.submittedPlayerIds,
           turnStartedAt: baseSnapshot.persistedTurnStartedAt,
         )
         .copyWithInteraction(
-          cityFoundingDraft: accepted.snapshot.interaction.cityFoundingDraft,
-          pendingAction: accepted.snapshot.interaction.pendingAction,
+          cityFoundingDraft: accepted.snapshot.domain.actions.cityFoundingDraft,
+          pendingAction: accepted.snapshot.domain.actions.pendingAction,
         );
     return (
       snapshot: _projectUnfinalizedTurn(
@@ -298,27 +298,27 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
     );
   }
 
-  SaveSnapshot _projectUnfinalizedTurn({
-    required SaveSnapshot baseSnapshot,
-    required GameState state,
+  CanonicalGameSnapshot _projectUnfinalizedTurn({
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState state,
     required DomainCommand command,
     required DateTime savedAt,
   }) {
-    var projected = baseSnapshot.withSavedAt(savedAt).withGameState(state);
+    var projected = baseSnapshot.withSavedAt(savedAt).withClientState(state);
     final playerId = switch (command) {
       SubmitTurnCommand(:final playerId) ||
       EndTurnCommand(:final playerId) => playerId,
       _ => null,
     };
     if (playerId != null &&
-        projected.session.turnStatesByPlayerId.containsKey(playerId)) {
+        projected.domain.turnStatesByPlayerId.containsKey(playerId)) {
       projected = projected.withPlayerFinished(playerId);
     }
     return projected;
   }
 
   GameCommandContext _effectiveContext(
-    SaveSnapshot snapshot,
+    CanonicalGameSnapshot snapshot,
     GameCommandContext context,
   ) {
     return context.copyWith(
@@ -329,8 +329,8 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
   }
 
   LocalCommandResolution _resolveMovement({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
@@ -359,8 +359,8 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
   }
 
   LocalCommandResolution _resolveCityEconomy({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
@@ -386,8 +386,8 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
   }
 
   LocalCommandResolution _resolveCombat({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required AttackHexCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
@@ -414,8 +414,8 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
   }
 
   LocalCommandResolution _resolveUnitAction({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,

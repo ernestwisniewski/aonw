@@ -2,7 +2,7 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -35,9 +35,9 @@ class EmpireOverviewViewModel {
       '${empireUnitCountLabel(l10n, units.length)}';
 
   factory EmpireOverviewViewModel.fromState(
-    GameState state, {
+    GameClientState state, {
     required String activePlayerId,
-    MapData? mapData,
+    WorldMap? mapData,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
@@ -68,9 +68,9 @@ class EmpireOverviewViewModel {
   }
 
   static List<EmpireCityComparison> _cityComparisons({
-    required GameState state,
+    required GameClientState state,
     required List<GameCity> cities,
-    required MapData? mapData,
+    required WorldMap? mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required PaceBalance paceBalance,
@@ -97,9 +97,9 @@ class EmpireOverviewViewModel {
   }
 
   static EmpireCityComparison _cityComparison({
-    required GameState state,
+    required GameClientState state,
     required GameCity city,
-    required MapData? mapData,
+    required WorldMap? mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required PaceBalance paceBalance,
@@ -163,7 +163,7 @@ class EmpireOverviewViewModel {
   static int _nonNegative(int value) => value < 0 ? 0 : value;
 
   static Map<String, WorldArtifact> _storedArtifactsByCityId(
-    GameState state,
+    GameClientState state,
     List<GameCity> cities,
   ) {
     final cityIds = {for (final city in cities) city.id};
@@ -189,7 +189,10 @@ class EmpireOverviewViewModel {
     return null;
   }
 
-  static List<GameUnit> _ownedUnits(GameState state, String activePlayerId) {
+  static List<GameUnit> _ownedUnits(
+    GameClientState state,
+    String activePlayerId,
+  ) {
     final units =
         [
           for (final unit in state.units)
@@ -204,7 +207,10 @@ class EmpireOverviewViewModel {
     return List.unmodifiable(units);
   }
 
-  static List<GameCity> _ownedCities(GameState state, String activePlayerId) {
+  static List<GameCity> _ownedCities(
+    GameClientState state,
+    String activePlayerId,
+  ) {
     final cities =
         [
           for (final city in state.cities)

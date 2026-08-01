@@ -10,9 +10,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('HudPendingActionTargets', () {
     test('prefers pending attack unit before selected unit', () {
-      final state = GameState(
+      final state = GameClientState(
         units: [_unit('selected')],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(_unit('selected')),
           pendingAction: const PendingAttackTargeting(
             ownerPlayerId: 'player_1',
@@ -27,9 +27,9 @@ void main() {
     test(
       'falls back to selected unit when no matching pending action exists',
       () {
-        final state = GameState(
+        final state = GameClientState(
           units: [_unit('selected')],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(_unit('selected')),
           ),
         );
@@ -40,9 +40,9 @@ void main() {
     );
 
     test('prefers pending worker action unit before selected unit', () {
-      final state = GameState(
+      final state = GameClientState(
         units: [_unit('selected')],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(_unit('selected')),
           pendingAction: const PendingWorkerActionSelection(
             ownerPlayerId: 'player_1',
@@ -55,8 +55,8 @@ void main() {
     });
 
     test('prefers pending worked-hex city before selected city', () {
-      final state = GameState(
-        interaction: GameInteractionState(
+      final state = GameClientState(
+        interaction: InteractionState(
           selection: GameSelection.city(
             _city('selected_city'),
             cityYield: TileYield.zero,
@@ -76,8 +76,8 @@ void main() {
     });
 
     test('prefers pending expansion city before selected city', () {
-      final state = GameState(
-        interaction: GameInteractionState(
+      final state = GameClientState(
+        interaction: InteractionState(
           selection: GameSelection.city(
             _city('selected_city'),
             cityYield: TileYield.zero,

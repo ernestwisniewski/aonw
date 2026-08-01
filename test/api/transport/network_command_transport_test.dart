@@ -29,7 +29,7 @@ part 'support/network_command_transport_transient_snapshot_cases.dart';
 extension _NetworkTransportClientBoundary on NetworkCommandTransport {
   Future<CommandTransportResult> dispatchAcrossBoundary({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required Object command,
     GameCommandContext context = const GameCommandContext(),
   }) async {
@@ -91,7 +91,7 @@ void main() {
   });
 
   test('NetworkCommandTransport closes its convenience dispatcher', () {
-    final server = _FakeCommandServer(save: _save(), state: const GameState());
+    final server = _FakeCommandServer(save: _save(), state: GameClientState());
     final transport = NetworkCommandTransport(
       serverpodHost: 'http://localhost:8080',
       token: AuthToken('jwt-token'),
@@ -118,7 +118,7 @@ void main() {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
         final server = _FakeCommandServer(
           save: _save(),
-          state: GameState(
+          state: GameClientState(
             units: [commander],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
@@ -157,7 +157,7 @@ void main() {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
         final server = _FakeCommandServer(
           save: _save(),
-          state: GameState(
+          state: GameClientState(
             units: [commander],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
@@ -184,11 +184,11 @@ void main() {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
         final server = _FakeCommandServer(
           save: _save(),
-          state: GameState(
+          state: GameClientState(
             units: [commander],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(
                 commander,
                 tile: _map().tileAt(0, 0),
@@ -201,7 +201,7 @@ void main() {
 
         final result = await transport.dispatch(
           saveId: 'save_1',
-          currentState: server.snapshot.toGameState(
+          currentState: server.snapshot.toClientState(
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
           ),
@@ -219,7 +219,7 @@ void main() {
 
     test('increments the client tick for each dispatch', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final initial = GameState(
+      final initial = GameClientState(
         units: [commander],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
@@ -246,7 +246,7 @@ void main() {
 
     test('keeps command ids unique when a match is resumed', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final initial = GameState(
+      final initial = GameClientState(
         units: [commander],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
@@ -285,7 +285,7 @@ void main() {
 
     test('reuses the client tick when the same command is retried', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final initial = GameState(
+      final initial = GameClientState(
         units: [commander],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
@@ -333,7 +333,7 @@ void main() {
       'keeps the retry wire command when the repository turn changed',
       () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-        final initial = GameState(
+        final initial = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
@@ -362,8 +362,8 @@ void main() {
           ),
           throwsA(isA<TimeoutException>()),
         );
-        repository.snapshot = repository.snapshot.copyWith(
-          save: repository.snapshot.save.copyWith(turn: 2),
+        repository.snapshot = repository.snapshot.withGameSave(
+          repository.snapshot.save.copyWith(turn: 2),
         );
         await transport.dispatch(
           saveId: 'save_1',
@@ -383,14 +383,14 @@ void main() {
       'applies the authoritative snapshot and emits feedback when rejected',
       () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-        final currentState = GameState(
+        final currentState = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
         );
-        final authoritativeSnapshot = SaveSnapshot.fromGameState(
+        final authoritativeSnapshot = GameSnapshotFactory.fromClientState(
           save: _save(),
-          state: GameState(
+          state: GameClientState(
             units: [commander.copyWith(col: 2, row: 0)],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
@@ -443,15 +443,15 @@ void main() {
     for (final errorCode in const ['stale_tick', 'stale_turn']) {
       test('reloads snapshot when the server reports a $errorCode', () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-        final currentState = GameState(
+        final currentState = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
         );
         final authoritative = commander.copyWith(col: 3, row: 0);
-        final snapshot = SaveSnapshot.fromGameState(
+        final snapshot = GameSnapshotFactory.fromClientState(
           save: _save(),
-          state: GameState(
+          state: GameClientState(
             units: [authoritative],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
@@ -487,13 +487,13 @@ void main() {
 
     test('bumps the client tick and retries stale tick conflicts', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final currentState = GameState(
+      final currentState = GameClientState(
         units: [commander],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
       );
       final repository = _SnapshotRepository(
-        SaveSnapshot.fromGameState(
+        GameSnapshotFactory.fromClientState(
           save: _save(),
           state: currentState,
           eventLogOffset: 7,
@@ -504,12 +504,12 @@ void main() {
         if (sentCommand.call == 1) {
           throw _commandConflict('stale_tick', nextTick: 8);
         }
-        final movedState = GameState(
+        final movedState = GameClientState(
           units: [commander.copyWith(col: 1, row: 0)],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
         );
-        final snapshot = SaveSnapshot.fromGameState(
+        final snapshot = GameSnapshotFactory.fromClientState(
           save: _save(),
           state: movedState,
           eventLogOffset: 8,
@@ -552,17 +552,17 @@ void main() {
       'applies the server snapshot when stale turn is returned as a rejected ACK',
       () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-        final currentState = GameState(
+        final currentState = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
         );
-        final authoritativeState = GameState(
+        final authoritativeState = GameClientState(
           units: [commander.copyWith(col: 3, row: 0)],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
         );
-        final authoritativeSnapshot = SaveSnapshot.fromGameState(
+        final authoritativeSnapshot = GameSnapshotFactory.fromClientState(
           save: _save().copyWith(turn: 2),
           state: authoritativeState,
           eventLogOffset: 12,
@@ -609,7 +609,7 @@ void main() {
 
     test('tracks the snapshot offset when a cached ACK is older', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final state = GameState(
+      final state = GameClientState(
         units: [commander],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
@@ -617,9 +617,9 @@ void main() {
       final server = _FakeCommandServer(
         save: _save(),
         state: state,
-        nextAcceptedSnapshot: SaveSnapshot.fromGameState(
+        nextAcceptedSnapshot: GameSnapshotFactory.fromClientState(
           save: _save(),
-          state: GameState(
+          state: GameClientState(
             units: [commander.copyWith(col: 1, row: 0)],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
@@ -645,11 +645,11 @@ void main() {
 
     test('handles tile taps for movement preview locally', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final state = GameState(
+      final state = GameClientState(
         units: [commander],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander, tile: _map().tileAt(0, 0)),
           moveCommandActive: true,
         ),
@@ -685,7 +685,7 @@ void main() {
           center: CityHex(col: 0, row: 0),
           controlledHexes: [CityHex(col: 1, row: 1)],
         );
-        final base = GameState(
+        final base = GameClientState(
           units: [worker],
           cities: const [city],
           research: ResearchState(
@@ -697,7 +697,7 @@ void main() {
           ),
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(worker, tile: _map().tileAt(1, 1)),
           ),
         );
@@ -749,11 +749,11 @@ void main() {
       'translates confirmed tile movement to MoveUnit for the server',
       () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-        final state = GameState(
+        final state = GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander, tile: _map().tileAt(0, 0)),
             moveCommandActive: true,
           ),
@@ -792,7 +792,7 @@ void main() {
         col: 1,
         row: 1,
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [settler],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
@@ -804,7 +804,7 @@ void main() {
             ),
           },
         ),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(settler, tile: _map().tileAt(1, 1)),
           cityFoundingDraft: CityFoundingDraft(
             unitId: 'settler_player_1',
@@ -844,7 +844,7 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [attacker, defender],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
@@ -859,7 +859,7 @@ void main() {
             ),
           },
         ),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(attacker, tile: _map().tileAt(0, 0)),
           pendingAction: const PendingAttackTargeting(
             ownerPlayerId: 'player_1',
@@ -896,7 +896,7 @@ void main() {
         name: 'Enemy',
         center: CityHex(col: 1, row: 0),
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [attacker],
         cities: const [city],
         activePlayerId: 'player_1',
@@ -912,7 +912,7 @@ void main() {
             ),
           },
         ),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(attacker, tile: _map().tileAt(0, 0)),
           pendingAction: const PendingAttackTargeting(
             ownerPlayerId: 'player_1',
@@ -936,7 +936,7 @@ void main() {
     });
 
     test('keeps the active player waiting after accepted submit', () async {
-      const state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
       );
@@ -960,7 +960,7 @@ void main() {
     test(
       're-enables the active player when submit starts a new turn',
       () async {
-        const state = GameState(
+        final state = GameClientState(
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
         );
@@ -971,9 +971,9 @@ void main() {
         final server = _FakeCommandServer(
           save: _save(),
           state: state,
-          nextAcceptedSnapshot: SaveSnapshot.fromGameState(
+          nextAcceptedSnapshot: GameSnapshotFactory.fromClientState(
             save: advancedSave,
-            state: const GameState(
+            state: GameClientState(
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
             ),
@@ -1023,12 +1023,12 @@ void main() {
             UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
           ],
         );
-        final before = GameState(
+        final before = GameClientState(
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
           turnStartedAt: DateTime.utc(2026, 7, 31, 10),
           units: [skippedUnit],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(skippedUnit),
             movePreview: stalePreview,
             pendingAction: pendingSkip,
@@ -1042,9 +1042,9 @@ void main() {
         final server = _FakeCommandServer(
           save: _save(),
           state: before,
-          nextAcceptedSnapshot: SaveSnapshot.fromGameState(
+          nextAcceptedSnapshot: GameSnapshotFactory.fromClientState(
             save: advancedSave,
-            state: GameState(
+            state: GameClientState(
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               turnStartedAt: DateTime.utc(2026, 7, 31, 10, 1),
@@ -1073,7 +1073,7 @@ void main() {
 
     test('exposes queued movement evidence from accepted snapshots', () async {
       final queued = queuedNetworkCommander();
-      final state = GameState(
+      final state = GameClientState(
         units: [queued],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
@@ -1085,9 +1085,9 @@ void main() {
       final server = _FakeCommandServer(
         save: _save(),
         state: state,
-        nextAcceptedSnapshot: SaveSnapshot.fromGameState(
+        nextAcceptedSnapshot: GameSnapshotFactory.fromClientState(
           save: advancedSave,
-          state: GameState(
+          state: GameClientState(
             units: [queued.copyWith(col: 2, row: 0).copyWithQueuedPath(null)],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,

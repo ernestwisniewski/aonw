@@ -5,8 +5,8 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 abstract final class InteractionReducer {
-  static GameState startCityWorkedHexSelection(
-    GameState state,
+  static GameClientState startCityWorkedHexSelection(
+    GameClientState state,
     StartCityWorkedHexSelectionCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
@@ -27,8 +27,8 @@ abstract final class InteractionReducer {
     return next;
   }
 
-  static GameState cancelCityWorkedHexSelection(
-    GameState state,
+  static GameClientState cancelCityWorkedHexSelection(
+    GameClientState state,
     CancelCityWorkedHexSelectionCommand command,
   ) {
     final pending = state.pendingAction;
@@ -37,8 +37,8 @@ abstract final class InteractionReducer {
     return state.copyWithInteraction(pendingAction: null);
   }
 
-  static GameState startCityExpansionSelection(
-    GameState state,
+  static GameClientState startCityExpansionSelection(
+    GameClientState state,
     StartCityExpansionSelectionCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
@@ -57,8 +57,8 @@ abstract final class InteractionReducer {
     return next;
   }
 
-  static GameState cancelCityExpansionSelection(
-    GameState state,
+  static GameClientState cancelCityExpansionSelection(
+    GameClientState state,
     CancelCityExpansionSelectionCommand command,
   ) {
     final pending = state.pendingAction;
@@ -67,8 +67,8 @@ abstract final class InteractionReducer {
     return state.copyWithInteraction(pendingAction: null);
   }
 
-  static GameState startWorkerActionSelection(
-    GameState state,
+  static GameClientState startWorkerActionSelection(
+    GameClientState state,
     StartWorkerActionSelectionCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
@@ -90,8 +90,8 @@ abstract final class InteractionReducer {
     return next;
   }
 
-  static GameState selectWorkerImprovement(
-    GameState state,
+  static GameClientState selectWorkerImprovement(
+    GameClientState state,
     ChooseWorkerImprovementIntent command,
   ) {
     final pending = state.pendingAction;
@@ -106,8 +106,8 @@ abstract final class InteractionReducer {
     );
   }
 
-  static GameState cancelWorkerActionSelection(
-    GameState state,
+  static GameClientState cancelWorkerActionSelection(
+    GameClientState state,
     CancelWorkerActionSelectionCommand command,
   ) {
     final pending = state.pendingAction;
@@ -116,8 +116,8 @@ abstract final class InteractionReducer {
     return state.copyWithInteraction(pendingAction: null);
   }
 
-  static GameState cancelResearchSelection(
-    GameState state,
+  static GameClientState cancelResearchSelection(
+    GameClientState state,
     CancelResearchSelectionCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
@@ -137,8 +137,8 @@ abstract final class InteractionReducer {
     return state.copyWithInteraction(pendingAction: null);
   }
 
-  static GameState startAttackTargeting(
-    GameState state,
+  static GameClientState startAttackTargeting(
+    GameClientState state,
     StartAttackTargetingCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
@@ -155,8 +155,8 @@ abstract final class InteractionReducer {
     return next;
   }
 
-  static GameState cancelAttackTargeting(
-    GameState state,
+  static GameClientState cancelAttackTargeting(
+    GameClientState state,
     CancelAttackTargetingCommand command,
   ) {
     final pending = state.pendingAction;
@@ -165,8 +165,8 @@ abstract final class InteractionReducer {
     return state.copyWithInteraction(pendingAction: null);
   }
 
-  static GameState startCommanderMergeSelection(
-    GameState state,
+  static GameClientState startCommanderMergeSelection(
+    GameClientState state,
     StartCommanderMergeSelectionCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) {
@@ -186,8 +186,8 @@ abstract final class InteractionReducer {
     return next;
   }
 
-  static GameState cancelCommanderMergeSelection(
-    GameState state,
+  static GameClientState cancelCommanderMergeSelection(
+    GameClientState state,
     CancelCommanderMergeSelectionCommand command,
   ) {
     final pending = state.pendingAction;
@@ -196,11 +196,11 @@ abstract final class InteractionReducer {
     return state.copyWithInteraction(pendingAction: null);
   }
 
-  static GameState _clearTransientModes(GameState state) {
+  static GameClientState _clearTransientModes(GameClientState state) {
     return state.copyWith(interaction: state.interaction.clearTransientModes());
   }
 
-  static GameUnit? _findUnit(GameState state, String unitId) {
+  static GameUnit? _findUnit(GameClientState state, String unitId) {
     return state.unitById(unitId);
   }
 }

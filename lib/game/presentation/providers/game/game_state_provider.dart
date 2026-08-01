@@ -59,12 +59,12 @@ class GameStateNotifier extends _$GameStateNotifier {
   int _eventLogOffset = 0;
   Ref get _providerRef => ref;
   bool get _isMounted => ref.mounted;
-  GameState? get _stateValue => state.value;
-  Future<GameState> get _stateFuture => future;
-  set _stateValue(GameState value) => state = AsyncData(value);
+  GameClientState? get _stateValue => state.value;
+  Future<GameClientState> get _stateFuture => future;
+  set _stateValue(GameClientState value) => state = AsyncData(value);
 
   @override
-  Future<GameState> build(String saveId) => _buildState(saveId);
+  Future<GameClientState> build(String saveId) => _buildState(saveId);
 
   Future<void> syncActivePlayer({
     required String playerId,
@@ -249,7 +249,7 @@ class GameStateNotifier extends _$GameStateNotifier {
 
   Future<void> _applyNetworkSnapshot({
     required String saveId,
-    required SaveSnapshot snapshot,
+    required CanonicalGameSnapshot snapshot,
     LiveServerEvent? liveEvent,
   }) async {
     if (!ref.mounted || _saveId != saveId) return;
@@ -282,7 +282,7 @@ class GameStateNotifier extends _$GameStateNotifier {
       save: snapshot.save,
       preferredPlayerId: viewerPlayerId,
     );
-    final authoritativeState = snapshot.toGameState(
+    final authoritativeState = snapshot.toClientState(
       activePlayerId: control.activePlayerId,
       activePlayerCanAct: control.canAct,
     );
@@ -316,7 +316,7 @@ class GameStateNotifier extends _$GameStateNotifier {
 
   Future<void> _cacheAppliedSnapshot({
     required String saveId,
-    required SaveSnapshot snapshot,
+    required CanonicalGameSnapshot snapshot,
     required int offset,
   }) async {
     if (!ref.mounted || _saveId != saveId) return;
@@ -328,8 +328,7 @@ class GameStateNotifier extends _$GameStateNotifier {
           .save(
             _multiplayerCacheKey(session.userId, saveId),
             Snapshot(
-              offset: offset,
-              state: snapshot,
+              state: snapshot.withEventLogOffset(offset),
               createdAt: ref.read(gameClockProvider).nowUtc(),
             ),
           );

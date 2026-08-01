@@ -84,7 +84,7 @@ void main() {
 
 GameView _view() {
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       research: ResearchState(
         players: {
           'player_1': PlayerResearchState(
@@ -110,7 +110,7 @@ AiContext _context({DateTime? deadline}) {
   );
 }
 
-final _mapData = MapData(cols: 1, rows: 1, tiles: const []);
+final _mapData = WorldMap(cols: 1, rows: 1, tiles: []);
 
 final class _RushStrategy implements AiStrategy {
   const _RushStrategy();

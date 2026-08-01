@@ -1,6 +1,6 @@
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/game/domain/technology/technology_id.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class ResourceVisibilityRules {
@@ -57,8 +57,8 @@ abstract final class ResourceVisibilityRules {
     ];
   }
 
-  static TileData visibleTile({
-    required TileData tile,
+  static WorldTile visibleTile({
+    required WorldTile tile,
     required String playerId,
     required ResearchState research,
   }) {
@@ -71,12 +71,12 @@ abstract final class ResourceVisibilityRules {
     );
   }
 
-  static MapData visibleMap({
-    required MapData mapData,
+  static WorldMap visibleMap({
+    required WorldMap mapData,
     required String playerId,
     required ResearchState research,
   }) {
-    return MapData(
+    return WorldMap(
       cols: mapData.cols,
       rows: mapData.rows,
       tiles: [

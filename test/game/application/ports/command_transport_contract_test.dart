@@ -11,9 +11,9 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/infrastructure/transport/local_command_transport.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -23,7 +23,7 @@ void main() {
   test('cannot report a stored snapshot without carrying it', () {
     expect(
       () => CommandTransportResult(
-        state: const GameState(),
+        state: GameClientState(),
         snapshot: null,
         offset: 0,
         storedSnapshot: true,
@@ -39,7 +39,7 @@ void main() {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
         final save = _save(players: const [_player1]);
         final repository = _MemoryGameRepository(
-          SaveSnapshot(save: save, units: [commander]),
+          GameSnapshotFactory.create(save: save, units: [commander]),
         );
         final eventLog = _MemoryEventLog();
         final transport = _transport(
@@ -50,7 +50,7 @@ void main() {
 
         final result = await transport.dispatch(
           saveId: save.id,
-          currentState: GameState(
+          currentState: GameClientState(
             units: [commander],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
@@ -75,7 +75,9 @@ void main() {
       'dispatch stores a durable snapshot when the command requires it',
       () async {
         final save = _save(players: const [_player1, _player2]);
-        final repository = _MemoryGameRepository(SaveSnapshot(save: save));
+        final repository = _MemoryGameRepository(
+          GameSnapshotFactory.create(save: save),
+        );
         final snapshotStore = _MemorySnapshotStore();
         final transport = _transport(
           repository: repository,
@@ -85,7 +87,7 @@ void main() {
 
         final result = await transport.dispatch(
           saveId: save.id,
-          currentState: const GameState(activePlayerId: 'player_1'),
+          currentState: GameClientState(activePlayerId: 'player_1'),
           command: const EndTurnCommand('player_1'),
         );
 
@@ -129,7 +131,7 @@ class _FixedClock extends Clock {
 }
 
 class _MemoryGameRepository implements GameRepository {
-  SaveSnapshot snapshot;
+  CanonicalGameSnapshot snapshot;
 
   _MemoryGameRepository(this.snapshot);
 
@@ -146,21 +148,21 @@ class _MemoryGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async => snapshot;
+  Future<CanonicalGameSnapshot> load(String saveId) async => snapshot;
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {
+  Future<void> save(CanonicalGameSnapshot snapshot) async {
     this.snapshot = snapshot;
   }
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
   }) async {
-    final updated = snapshot.copyWith(
-      save: snapshot.save.copyWith(
+    final updated = snapshot.withGameSave(
+      snapshot.save.copyWith(
         camera: camera,
         savedAt: savedAt ?? snapshot.save.savedAt,
       ),
@@ -232,13 +234,13 @@ GameSave _save({required List<Player> players}) {
   );
 }
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 3,
   rows: 3,
   tiles: [
     for (var row = 0; row < 3; row++)
       for (var col = 0; col < 3; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],

@@ -1,11 +1,11 @@
 import 'dart:ui' as ui;
 
 import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_tile.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
@@ -174,7 +174,7 @@ final class _RendererFixture {
     );
   }
 
-  final MapData map;
+  final WorldMap map;
   final _BenchmarkHexGrid grid;
   final _TilePaintCollector paintCollector;
   final String scenarioDigest;
@@ -192,7 +192,7 @@ final class _BenchmarkHexGrid extends HexGrid {
 
   @override
   HexTile buildTileComponent({
-    required TileData tileData,
+    required WorldTile tileData,
     required Vector2 position,
     required void Function() onTapped,
     required List<int?> neighborHeights,
@@ -260,7 +260,7 @@ final class _TilePaintCollector {
   void recordPaint() => paintCalls++;
 }
 
-MapData _syntheticMap(({int cols, int rows}) dimensions) => MapData(
+WorldMap _syntheticMap(({int cols, int rows}) dimensions) => WorldMap(
   cols: dimensions.cols,
   rows: dimensions.rows,
   tiles: [
@@ -270,13 +270,13 @@ MapData _syntheticMap(({int cols, int rows}) dimensions) => MapData(
   ],
 );
 
-TileData _syntheticTile({
+WorldTile _syntheticTile({
   required int col,
   required int row,
   required int cols,
 }) {
   final index = row * cols + col;
-  return TileData(
+  return WorldTile(
     col: col,
     row: row,
     terrains: [
@@ -289,7 +289,7 @@ TileData _syntheticTile({
   );
 }
 
-String _scenarioDigest(MapData map) => stableDigest({
+String _scenarioDigest(WorldMap map) => stableDigest({
   'renderer': 'HexGrid.renderTree.headless',
   'assetMode': rendererAssetMode,
   'dimensions': {'cols': map.cols, 'rows': map.rows},

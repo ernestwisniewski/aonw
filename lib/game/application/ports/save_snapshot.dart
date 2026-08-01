@@ -1,36 +1,25 @@
-import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
-import 'package:aonw_core/game/compatibility.dart';
+import 'package:aonw_core/domain/intended_attack.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
+import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/fog.dart';
+import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 
-part 'save_snapshot_combat_engine_projection.dart';
-part 'save_snapshot_city_economy_engine_projection.dart';
-part 'save_snapshot_persistent_projection.dart';
-part 'save_snapshot_research_diplomacy_engine_projection.dart';
+export 'package:aonw_core/game/domain/state.dart' show CanonicalGameSnapshot;
 
-const _saveSnapshotAdapter = LegacyGameSnapshotAdapter();
-
-/// Frozen, lossless application boundary for persisted and wire snapshots.
-///
-/// The raw save and persistent state remain the source of serialization.
-/// [canonical] is a memoized semantic view and may infer values, such as a
-/// multiplayer turn start, that were intentionally absent from the raw input.
-final class SaveSnapshot {
-  final GameSave save;
-  final PersistentGameState _rawState;
-  final CanonicalGameSnapshot? _canonicalProjection;
-  final int eventLogOffset;
-
-  factory SaveSnapshot({
+/// Composes the canonical persistence envelope directly from application
+/// inputs. It does not materialize a second authoritative state model.
+abstract final class GameSnapshotFactory {
+  static CanonicalGameSnapshot create({
     required GameSave save,
     Map<String, int> playerColors = const {},
     Map<String, PlayerCountry> playerCountries = const {},
@@ -44,12 +33,39 @@ final class SaveSnapshot {
     FogOfWarState fogOfWar = FogOfWarState.empty,
     ResearchState research = ResearchState.empty,
     WonderRegistry wonderRegistry = WonderRegistry.empty,
-    GameRuntimeState runtimeState = GameRuntimeState.empty,
+    CityFoundingDraft? cityFoundingDraft,
+    PendingPlayerAction? pendingAction,
+    Set<String> submittedPlayerIds = const {},
+    Map<String, int> timeoutStreaksByPlayerId = const {},
+    Set<String> afkPlayerIds = const {},
+    Set<String> kickedPlayerIds = const {},
+    List<IntendedAttack> intendedAttacks = const [],
+    DiplomacyState diplomacy = DiplomacyState.empty,
+    List<ResourceTradeAgreement> resourceTradeAgreements = const [],
+    Map<String, int> dominationHoldTurnsByPlayerId = const {},
+    Map<String, int> culturalVictoryHoldTurnsByPlayerId = const {},
+    Map<String, MapObjectiveHoldState> mapObjectiveHoldStatesByObjectiveId =
+        const {},
+    DateTime? turnStartedAt,
     int eventLogOffset = 0,
-  }) {
-    return SaveSnapshot._owned(
-      save: _ownedSave(save),
-      rawState: PersistentGameState.snapshot(
+  }) => fromDomainState(
+    save: save,
+    state: (() {
+      return DomainState.snapshot(
+        turn: save.turn,
+        matchRules: save.matchRules,
+        participants: save.players,
+        gameMode: save.gameMode,
+        turnStatesByPlayerId: save.playerStates,
+        submittedPlayerIds: submittedPlayerIds,
+        timeoutStreaksByPlayerId: timeoutStreaksByPlayerId,
+        afkPlayerIds: afkPlayerIds,
+        kickedPlayerIds: kickedPlayerIds,
+        turnStartedAt: turnStartedAt,
+        actions: DomainActionState(
+          cityFoundingDraft: cityFoundingDraft,
+          pendingAction: pendingAction,
+        ),
         playerColors: playerColors,
         playerCountries: playerCountries,
         playerGold: playerGold,
@@ -62,397 +78,215 @@ final class SaveSnapshot {
         fogOfWar: fogOfWar,
         research: research,
         wonderRegistry: wonderRegistry,
-        runtimeState: runtimeState,
-      ),
-      eventLogOffset: eventLogOffset,
-    );
-  }
-
-  SaveSnapshot._owned({
-    required this.save,
-    required PersistentGameState rawState,
-    required this.eventLogOffset,
-    CanonicalGameSnapshot? canonicalProjection,
-  }) : _rawState = rawState,
-       _canonicalProjection = canonicalProjection;
-
-  factory SaveSnapshot.fromGameState({
-    required GameSave save,
-    required GameState state,
-    int eventLogOffset = 0,
-  }) {
-    return SaveSnapshot.fromPersistentState(
-      save: save,
-      state: state.toPersistentState(),
-      eventLogOffset: eventLogOffset,
-    );
-  }
-
-  factory SaveSnapshot.fromPersistentState({
-    required GameSave save,
-    required PersistentGameState state,
-    int eventLogOffset = 0,
-  }) {
-    return SaveSnapshot._owned(
-      save: _ownedSave(save),
-      rawState: state.immutableSnapshot(),
-      eventLogOffset: eventLogOffset,
-    );
-  }
-
-  factory SaveSnapshot.fromCanonical(CanonicalGameSnapshot snapshot) {
-    final legacy = _saveSnapshotAdapter.toLegacy(snapshot);
-    final candidate = SaveSnapshot._owned(
-      save: _ownedSave(legacy.save),
-      rawState: legacy.state.immutableSnapshot(),
-      eventLogOffset: legacy.eventLogOffset,
-    );
-    if (candidate.canonical != snapshot) {
-      throw ArgumentError.value(
-        snapshot,
-        'snapshot',
-        'Canonical snapshot cannot be represented losslessly by legacy '
-            'save/state',
+        intendedAttacks: intendedAttacks,
+        diplomacy: diplomacy,
+        resourceTradeAgreements: resourceTradeAgreements,
+        dominationHoldTurnsByPlayerId: dominationHoldTurnsByPlayerId,
+        culturalVictoryHoldTurnsByPlayerId: culturalVictoryHoldTurnsByPlayerId,
+        mapObjectiveHoldStatesByObjectiveId:
+            mapObjectiveHoldStatesByObjectiveId,
       );
-    }
-    return candidate;
-  }
-
-  /// Exact owned state received from persistence or transport.
-  ///
-  /// Codecs must serialize this view instead of [persistentState] or
-  /// [canonical], both of which may contain semantic roster defaults.
-  PersistentGameState get rawPersistentState => _rawState;
-
-  /// Legacy semantic projection retained for callers that expect countries
-  /// from save metadata to fill missing raw roster entries.
-  late final PersistentGameState persistentState = _stateWithCountryDefaults(
-    save,
-    _rawState,
+    })(),
+    eventLogOffset: eventLogOffset,
   );
 
-  Map<String, int> get playerColors => _rawState.playerColors;
-  Map<String, PlayerCountry> get playerCountries => _rawState.playerCountries;
-  Map<String, int> get playerGold => _rawState.playerGold;
-  Map<String, int> get playerWarWeariness => _rawState.playerWarWeariness;
-  Map<String, int> get playerStabilityNet => _rawState.playerStabilityNet;
-  List<GameUnit> get units => _rawState.units;
-  List<GameCity> get cities => _rawState.cities;
-  List<WorldArtifact> get artifacts => _rawState.artifacts;
-  List<FieldImprovement> get fieldImprovements => _rawState.fieldImprovements;
-  FogOfWarState get fogOfWar => _rawState.fogOfWar;
-  ResearchState get research => _rawState.research;
-  WonderRegistry get wonderRegistry => _rawState.wonderRegistry;
-  GameRuntimeState get runtimeState => _rawState.runtimeState;
+  static CanonicalGameSnapshot fromClientState({
+    required GameSave save,
+    required GameClientState state,
+    int eventLogOffset = 0,
+  }) => fromDomainState(
+    save: save,
+    state: state.domain,
+    eventLogOffset: eventLogOffset,
+  );
 
-  /// Exact persisted turn start without the canonical multiplayer fallback.
-  DateTime? get persistedTurnStartedAt => _rawState.runtimeState.turnStartedAt;
+  static CanonicalGameSnapshot fromDomainState({
+    required GameSave save,
+    required DomainState state,
+    int eventLogOffset = 0,
+  }) => CanonicalGameSnapshot.snapshot(
+    domain: state.copyWith(
+      turn: save.turn,
+      matchRules: save.matchRules,
+      participants: save.players,
+      gameMode: save.gameMode,
+      turnStatesByPlayerId: save.playerStates,
+    ),
+    metadata: _metadataFromSave(save),
+    eventLogOffset: eventLogOffset,
+  );
+}
 
-  /// Exact player roster persisted in the legacy save without canonical
-  /// fallback participants.
-  List<Player> get persistedPlayers => save.players;
+/// Client-side operations on the one canonical persistence envelope.
+extension CanonicalGameSnapshotApplication on CanonicalGameSnapshot {
+  CanonicalGameSnapshot get canonical => this;
 
-  late final CanonicalGameSnapshot canonical =
-      _canonicalProjection ??
-      _saveSnapshotAdapter.toCanonical(
-        save: save,
-        state: _rawState,
-        eventLogOffset: eventLogOffset,
-      );
+  GameSave get save =>
+      GameSave.fromJson(CanonicalGameSnapshotCodec.encode(this).save);
 
-  GameSnapshotMetadata get metadata => canonical.metadata;
-  DomainState get domain => canonical.domain;
-  MatchSessionState get session => canonical.session;
-  PersistedInteractionState get interaction => canonical.interaction;
+  Map<String, int> get playerColors => domain.playerColors;
+  Map<String, PlayerCountry> get playerCountries => domain.playerCountries;
+  Map<String, int> get playerGold => domain.playerGold;
+  Map<String, int> get playerWarWeariness => domain.playerWarWeariness;
+  Map<String, int> get playerStabilityNet => domain.playerStabilityNet;
+  List<GameUnit> get units => domain.units;
+  List<GameCity> get cities => domain.cities;
+  List<WorldArtifact> get artifacts => domain.artifacts;
+  List<FieldImprovement> get fieldImprovements => domain.fieldImprovements;
+  FogOfWarState get fogOfWar => domain.fogOfWar;
+  ResearchState get research => domain.research;
+  WonderRegistry get wonderRegistry => domain.wonderRegistry;
+  DateTime? get persistedTurnStartedAt => domain.turnStartedAt;
+  List<Player> get persistedPlayers => domain.participants;
+  Map<String, PlayerCountry> get effectivePlayerCountries =>
+      domain.playerCountries;
 
-  SaveSnapshot withGameState(GameState state, {int? eventLogOffset}) {
-    final nextOffset = eventLogOffset ?? this.eventLogOffset;
-    final rawState = state.toPersistentState().immutableSnapshot();
-    return SaveSnapshot._owned(
-      save: save,
-      rawState: rawState,
-      eventLogOffset: nextOffset,
-      canonicalProjection: _projectionAfterUpdate(
-        canonical,
-        save: save,
-        state: rawState,
-        eventLogOffset: nextOffset,
+  CanonicalGameSnapshot withClientState(
+    GameClientState state, {
+    int? eventLogOffset,
+  }) => copyWith(
+    domain: state.domain.copyWith(
+      turn: domain.turn,
+      matchRules: domain.matchRules,
+      participants: domain.participants,
+      gameMode: domain.gameMode,
+      turnStatesByPlayerId: domain.turnStatesByPlayerId,
+    ),
+    eventLogOffset: eventLogOffset,
+  );
+
+  CanonicalGameSnapshot withSavedAt(DateTime savedAt) {
+    return copyWith(metadata: metadata.copyWith(savedAtUtc: savedAt.toUtc()));
+  }
+
+  CanonicalGameSnapshot withCamera(CameraState camera, {DateTime? savedAt}) {
+    return copyWith(
+      metadata: metadata.copyWith(
+        savedAtUtc: savedAt?.toUtc(),
+        camera: GameSnapshotCamera(x: camera.x, y: camera.y, zoom: camera.zoom),
       ),
     );
   }
 
-  SaveSnapshot withSavedAt(DateTime savedAt) {
-    return copyWith(save: save.copyWith(savedAt: savedAt.toUtc()));
-  }
-
-  SaveSnapshot withCamera(CameraState camera, {DateTime? savedAt}) {
+  CanonicalGameSnapshot withPlayerUnsubmitted(String playerId) {
+    if (!domain.submittedPlayerIds.contains(playerId)) return this;
     return copyWith(
-      save: save.copyWith(camera: camera, savedAt: savedAt ?? save.savedAt),
-    );
-  }
-
-  SaveSnapshot withPlayerUnsubmitted(String playerId) {
-    final submitted = _rawState.runtimeState.submittedPlayerIds;
-    if (!submitted.contains(playerId)) return this;
-    return copyWith(
-      runtimeState: _rawState.runtimeState.copyWith(
+      domain: domain.copyWith(
         submittedPlayerIds: {
-          for (final submittedPlayerId in submitted)
+          for (final submittedPlayerId in domain.submittedPlayerIds)
             if (submittedPlayerId != playerId) submittedPlayerId,
         },
       ),
     );
   }
 
-  SaveSnapshot withPlayerFinished(String playerId) {
-    return copyWith(save: save.withPlayerFinished(playerId));
+  CanonicalGameSnapshot withPlayerFinished(String playerId) {
+    final nextSave = save.withPlayerFinished(playerId);
+    if (nextSave == save) return this;
+    return withGameSave(nextSave);
   }
 
-  /// Resets the persisted roster for an isolated benchmark replay cycle.
-  ///
-  /// This deliberately follows the legacy save roster rather than canonical
-  /// fallback participants so sparse historical snapshots keep their replay
-  /// semantics.
-  SaveSnapshot withReplayPlayerTurnsReset() {
-    final playerIds = persistedPlayers
+  CanonicalGameSnapshot withGameSave(GameSave save, {int? eventLogOffset}) =>
+      _withGameSave(this, save).copyWith(eventLogOffset: eventLogOffset);
+
+  CanonicalGameSnapshot withReplayPlayerTurnsReset() {
+    final playerIds = domain.participants
         .map((player) => player.id)
         .where((playerId) => playerId.isNotEmpty);
-    final playerStates = {
-      for (final playerId in playerIds) playerId: PlayerTurnState.active,
-    };
-    if (playerStates.isEmpty) {
-      for (final playerId in session.turnStatesByPlayerId.keys) {
-        if (playerId.isNotEmpty) {
-          playerStates[playerId] = PlayerTurnState.active;
-        }
-      }
-    }
-    return copyWith(save: save.copyWith(playerStates: playerStates));
+    return copyWith(
+      domain: domain.copyWith(
+        turnStatesByPlayerId: {
+          for (final playerId in playerIds) playerId: PlayerTurnState.active,
+        },
+      ),
+    );
   }
 
-  GameState toGameState({
+  GameClientState toClientState({
     String activePlayerId = '',
     bool activePlayerCanAct = true,
-  }) {
-    return GameState(
-      playerColors: playerColors,
-      playerCountries: effectivePlayerCountries,
-      playerGold: playerGold,
-      playerWarWeariness: playerWarWeariness,
-      playerStabilityNet: playerStabilityNet,
-      units: units,
-      cities: cities,
-      artifacts: artifacts,
-      fieldImprovements: fieldImprovements,
-      fogOfWar: fogOfWar,
-      research: research,
-      wonderRegistry: wonderRegistry,
-      diplomacy: runtimeState.diplomacy,
-      activePlayerId: activePlayerId,
-      activePlayerCanAct: activePlayerCanAct,
-      submittedPlayerIds: runtimeState.submittedPlayerIds,
-      timeoutStreaksByPlayerId: runtimeState.timeoutStreaksByPlayerId,
-      afkPlayerIds: runtimeState.afkPlayerIds,
-      kickedPlayerIds: runtimeState.kickedPlayerIds,
-      intendedAttacks: runtimeState.intendedAttacks,
-      resourceTradeAgreements: runtimeState.resourceTradeAgreements,
-      dominationHoldTurnsByPlayerId: runtimeState.dominationHoldTurnsByPlayerId,
-      culturalVictoryHoldTurnsByPlayerId:
-          runtimeState.culturalVictoryHoldTurnsByPlayerId,
-      mapObjectiveHoldStatesByObjectiveId:
-          runtimeState.mapObjectiveHoldStatesByObjectiveId,
-      turnStartedAt: runtimeState.turnStartedAt,
-      interaction: GameInteractionState(
-        cityFoundingDraft: runtimeState.cityFoundingDraft,
-        pendingAction: runtimeState.pendingAction,
-      ),
-    );
-  }
+  }) => GameClientState.fromDomain(
+    domain: domain,
+    activePlayerId: activePlayerId,
+    activePlayerCanAct: activePlayerCanAct,
+    interaction: InteractionState(
+      cityFoundingDraft: domain.actions.cityFoundingDraft,
+      pendingAction: domain.actions.pendingAction,
+    ),
+  );
 
-  SaveSnapshot copyWith({
-    GameSave? save,
-    Map<String, int>? playerColors,
-    Map<String, PlayerCountry>? playerCountries,
-    Map<String, int>? playerGold,
-    Map<String, int>? playerWarWeariness,
-    Map<String, int>? playerStabilityNet,
-    List<GameUnit>? units,
-    List<GameCity>? cities,
-    List<WorldArtifact>? artifacts,
-    List<FieldImprovement>? fieldImprovements,
-    FogOfWarState? fogOfWar,
-    ResearchState? research,
-    WonderRegistry? wonderRegistry,
-    GameRuntimeState? runtimeState,
-    int? eventLogOffset,
-  }) {
-    final nextSave = save == null ? this.save : _ownedSave(save);
-    final nextState = _rawState.copyWith(
-      playerColors: playerColors,
-      playerCountries: playerCountries,
-      playerGold: playerGold,
-      playerWarWeariness: playerWarWeariness,
-      playerStabilityNet: playerStabilityNet,
-      units: units,
-      cities: cities,
-      artifacts: artifacts,
-      fieldImprovements: fieldImprovements,
-      fogOfWar: fogOfWar,
-      research: research,
-      wonderRegistry: wonderRegistry,
-      runtimeState: runtimeState,
-    );
-    final nextOffset = eventLogOffset ?? this.eventLogOffset;
-    return SaveSnapshot._owned(
-      save: nextSave,
-      rawState: nextState,
-      eventLogOffset: nextOffset,
-      canonicalProjection: _projectionAfterUpdate(
-        canonical,
-        save: nextSave,
-        state: nextState,
-        eventLogOffset: nextOffset,
-      ),
-    );
-  }
-
-  Map<String, PlayerCountry> get effectivePlayerCountries =>
-      _withSaveCountryDefaults(save, playerCountries);
-
-  static Map<String, PlayerCountry> _withSaveCountryDefaults(
-    GameSave save,
-    Map<String, PlayerCountry> playerCountries,
-  ) {
-    return {
-      for (final player in save.players) player.id: player.country,
-      ...playerCountries,
-    };
-  }
-}
-
-extension SaveSnapshotEngineProjection on SaveSnapshot {
-  /// Applies the only legacy persistence slices reviewed for engine-backed
-  /// unit actions without materializing canonical roster/session defaults.
-  SaveSnapshot withUnitActionEngineProjection({
+  CanonicalGameSnapshot withUnitActionEngineProjection({
     required List<GameUnit> units,
     required List<WorldArtifact> artifacts,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required DateTime savedAt,
   }) {
-    final runtime = _rawState.runtimeState;
-    final interactionChanged =
-        runtime.cityFoundingDraft != interaction.cityFoundingDraft ||
-        runtime.pendingAction != interaction.pendingAction;
-    final projectedRawState = _rawState.copyWith(
-      units: identical(units, this.units) ? null : units,
-      artifacts: identical(artifacts, this.artifacts) ? null : artifacts,
-      runtimeState: interactionChanged
-          ? runtime.copyWith(
-              cityFoundingDraft: interaction.cityFoundingDraft,
-              pendingAction: interaction.pendingAction,
-            )
-          : null,
-    );
-    final canonicalProjection = canonical.copyWith(
-      domain: canonical.domain.copyWith(units: units, artifacts: artifacts),
-      metadata: canonical.metadata.copyWith(savedAtUtc: savedAt.toUtc()),
-      interaction: interaction,
-    );
-    return SaveSnapshot._owned(
-      save: _ownedSave(save.copyWith(savedAt: savedAt.toUtc())),
-      rawState: projectedRawState,
-      eventLogOffset: eventLogOffset,
-      canonicalProjection: canonicalProjection,
+    return copyWith(
+      domain: domain.copyWith(units: units, artifacts: artifacts),
+      metadata: metadata.copyWith(savedAtUtc: savedAt.toUtc()),
+      actions: interaction,
     );
   }
 
-  /// Applies the reviewed movement-family slices without materializing
-  /// canonical roster or session defaults into the raw persistence envelope.
-  SaveSnapshot withMovementEngineProjection({
+  CanonicalGameSnapshot withMovementEngineProjection({
     required CanonicalGameSnapshot resultSnapshot,
     required DateTime savedAt,
-  }) {
-    final domain = resultSnapshot.domain;
-    final runtime = _rawState.runtimeState;
-    final interaction = resultSnapshot.interaction;
-    final runtimeChanged =
-        !identical(domain.diplomacy, runtime.diplomacy) ||
-        runtime.cityFoundingDraft != interaction.cityFoundingDraft ||
-        runtime.pendingAction != interaction.pendingAction;
-    final projectedRawState = _rawState.copyWith(
-      units: identical(domain.units, units) ? null : domain.units,
-      artifacts: identical(domain.artifacts, artifacts)
-          ? null
-          : domain.artifacts,
-      fogOfWar: identical(domain.fogOfWar, fogOfWar) ? null : domain.fogOfWar,
-      runtimeState: runtimeChanged
-          ? runtime.copyWith(
-              diplomacy: domain.diplomacy,
-              cityFoundingDraft: interaction.cityFoundingDraft,
-              pendingAction: interaction.pendingAction,
-            )
-          : null,
-    );
-    return SaveSnapshot._owned(
-      save: _ownedSave(save.copyWith(savedAt: savedAt.toUtc())),
-      rawState: projectedRawState,
-      eventLogOffset: eventLogOffset,
-      canonicalProjection: resultSnapshot.copyWith(
-        metadata: resultSnapshot.metadata.copyWith(savedAtUtc: savedAt.toUtc()),
-      ),
-    );
-  }
+  }) => _savedEngineResult(resultSnapshot, savedAt);
 
-  /// Changes only the replay offset while retaining any lossless canonical
-  /// projection already attached to this snapshot.
-  SaveSnapshot withEventLogOffset(int eventLogOffset) {
-    final canonicalProjection = _canonicalProjection;
-    return SaveSnapshot._owned(
-      save: save,
-      rawState: _rawState,
-      eventLogOffset: eventLogOffset,
-      canonicalProjection: canonicalProjection?.copyWith(
-        eventLogOffset: eventLogOffset,
-      ),
-    );
+  CanonicalGameSnapshot withCityEconomyEngineProjection({
+    required CanonicalGameSnapshot resultSnapshot,
+    required DateTime savedAt,
+  }) => _savedEngineResult(resultSnapshot, savedAt);
+
+  CanonicalGameSnapshot withCombatEngineProjection({
+    required CanonicalGameSnapshot resultSnapshot,
+    required DateTime savedAt,
+  }) => _savedEngineResult(resultSnapshot, savedAt);
+
+  CanonicalGameSnapshot withResearchDiplomacyEngineProjection({
+    required CanonicalGameSnapshot resultSnapshot,
+    required DateTime savedAt,
+  }) => _savedEngineResult(resultSnapshot, savedAt);
+
+  CanonicalGameSnapshot withEventLogOffset(int eventLogOffset) {
+    return copyWith(eventLogOffset: eventLogOffset);
   }
 }
 
-PersistentGameState _stateWithCountryDefaults(
+CanonicalGameSnapshot _savedEngineResult(
+  CanonicalGameSnapshot result,
+  DateTime savedAt,
+) {
+  return result.copyWith(
+    metadata: result.metadata.copyWith(savedAtUtc: savedAt.toUtc()),
+  );
+}
+
+CanonicalGameSnapshot _withGameSave(
+  CanonicalGameSnapshot snapshot,
   GameSave save,
-  PersistentGameState rawState,
 ) {
-  final effectiveCountries = SaveSnapshot._withSaveCountryDefaults(
-    save,
-    rawState.playerCountries,
-  );
-  if (_sameCountryEntries(effectiveCountries, rawState.playerCountries)) {
-    return rawState;
-  }
-  return rawState.copyWith(playerCountries: effectiveCountries);
-}
-
-bool _sameCountryEntries(
-  Map<String, PlayerCountry> left,
-  Map<String, PlayerCountry> right,
-) {
-  return left.length == right.length &&
-      left.entries.every((entry) => right[entry.key] == entry.value);
-}
-
-GameSave _ownedSave(GameSave source) {
-  return GameSave(
-    id: source.id,
-    schemaVersion: source.schemaVersion,
-    name: source.name,
-    mapName: source.mapName,
-    mapSource: source.mapSource,
-    turn: source.turn,
-    playerStates: Map.unmodifiable(source.playerStates),
-    savedAt: source.savedAt,
-    camera: source.camera,
-    matchRules: source.matchRules,
-    players: List.unmodifiable(source.players),
-    gameMode: source.gameMode,
+  return snapshot.copyWith(
+    domain: snapshot.domain.copyWith(
+      turn: save.turn,
+      matchRules: save.matchRules,
+      participants: save.players,
+      gameMode: save.gameMode,
+      turnStatesByPlayerId: save.playerStates,
+    ),
+    metadata: _metadataFromSave(save),
   );
 }
+
+GameSnapshotMetadata _metadataFromSave(GameSave save) => GameSnapshotMetadata(
+  id: save.id,
+  schemaVersion: save.schemaVersion,
+  name: save.name,
+  world: WorldReference(name: save.mapName, source: save.mapSource),
+  savedAtUtc: save.savedAt,
+  camera: GameSnapshotCamera(
+    x: save.camera.x,
+    y: save.camera.y,
+    zoom: save.camera.zoom,
+  ),
+);

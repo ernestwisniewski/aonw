@@ -45,7 +45,7 @@ void main() {
         col: 13,
         row: 4,
       );
-      final state = GameState(units: [unit]);
+      final state = GameClientState(units: [unit]);
       final step = ReplayStep(
         index: 1,
         loggedCommand: RecordedDomainCommand(
@@ -54,7 +54,10 @@ void main() {
           turn: 8,
           command: const StartArtifactExcavationCommand('warrior_player_1'),
         ),
-        snapshot: SaveSnapshot.fromGameState(save: _save, state: state),
+        snapshot: GameSnapshotFactory.fromClientState(
+          save: _save,
+          state: state,
+        ),
         previousState: state,
         state: state.copyWith(
           units: [unit.copyWithExcavatingArtifact('artifact_1')],

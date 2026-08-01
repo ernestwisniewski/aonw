@@ -16,7 +16,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('SaveSnapshotCodec', () {
     test('rejects schema-2 snapshots without an upcaster', () {
-      final json = SaveSnapshotCodec.toJson(SaveSnapshot(save: _save()));
+      final json = SaveSnapshotCodec.toJson(
+        GameSnapshotFactory.create(save: _save()),
+      );
       final save = json['save'] as Map<String, dynamic>;
       save['schemaVersion'] = 2;
 
@@ -34,7 +36,9 @@ void main() {
 
     test('rejects unknown older and future save schemas', () {
       for (final schemaVersion in [1, gameSaveCurrentSchemaVersion + 1]) {
-        final json = SaveSnapshotCodec.toJson(SaveSnapshot(save: _save()));
+        final json = SaveSnapshotCodec.toJson(
+          GameSnapshotFactory.create(save: _save()),
+        );
         final save = json['save'] as Map<String, dynamic>;
         save['schemaVersion'] = schemaVersion;
 
@@ -59,7 +63,7 @@ void main() {
         name: 'Capital',
         center: CityHex(col: 2, row: 3),
       );
-      final snapshot = SaveSnapshot(
+      final snapshot = GameSnapshotFactory.create(
         save: _save(),
         playerColors: const {'p1': 0xFF4a7fc4},
         playerCountries: const {'p1': PlayerCountry.japan},
@@ -68,24 +72,24 @@ void main() {
         playerStabilityNet: const {'p1': -2},
         units: [unit],
         cities: [city],
-        runtimeState: GameRuntimeState(
-          pendingAction: const PendingCityWorkedHexSelection(
-            ownerPlayerId: 'p1',
-            cityId: 'city_1',
-          ),
-          submittedPlayerIds: const {'p1'},
-          dominationHoldTurnsByPlayerId: const {'p1': 2},
-          turnStartedAt: DateTime.utc(2026, 4, 27, 12),
-          intendedAttacks: const [
-            IntendedAttack(
-              attackerUnitId: 'warrior_1',
-              defenderCol: 4,
-              defenderRow: 5,
-              declaredAtTick: 7,
-              declaringPlayerId: 'p1',
-            ),
-          ],
+
+        pendingAction: const PendingCityWorkedHexSelection(
+          ownerPlayerId: 'p1',
+          cityId: 'city_1',
         ),
+        submittedPlayerIds: const {'p1'},
+        dominationHoldTurnsByPlayerId: const {'p1': 2},
+        turnStartedAt: DateTime.utc(2026, 4, 27, 12),
+        intendedAttacks: const [
+          IntendedAttack(
+            attackerUnitId: 'warrior_1',
+            defenderCol: 4,
+            defenderRow: 5,
+            declaredAtTick: 7,
+            declaringPlayerId: 'p1',
+          ),
+        ],
+
         eventLogOffset: 9,
       );
 
@@ -102,26 +106,24 @@ void main() {
       expect(restored.units.single.id, unit.id);
       expect(restored.cities.single.id, city.id);
       expect(
-        restored.runtimeState.pendingAction,
+        restored.domain.actions.pendingAction,
         isA<PendingCityWorkedHexSelection>(),
       );
-      expect(restored.runtimeState.submittedPlayerIds, {'p1'});
-      expect(restored.runtimeState.dominationHoldTurnsByPlayerId, {'p1': 2});
+      expect(restored.domain.submittedPlayerIds, {'p1'});
+      expect(restored.domain.dominationHoldTurnsByPlayerId, {'p1': 2});
+      expect(restored.domain.turnStartedAt, DateTime.utc(2026, 4, 27, 12));
       expect(
-        restored.runtimeState.turnStartedAt,
-        DateTime.utc(2026, 4, 27, 12),
-      );
-      expect(
-        restored.runtimeState.intendedAttacks.single.attackerUnitId,
+        restored.domain.intendedAttacks.single.attackerUnitId,
         'warrior_1',
       );
       expect(restored.eventLogOffset, 9);
     });
 
     test('defaults stability state for snapshots created before stability', () {
-      final json = SaveSnapshotCodec.toJson(SaveSnapshot(save: _save()))
-        ..remove('playerWarWeariness')
-        ..remove('playerStabilityNet');
+      final json =
+          SaveSnapshotCodec.toJson(GameSnapshotFactory.create(save: _save()))
+            ..remove('playerWarWeariness')
+            ..remove('playerStabilityNet');
 
       final restored = SaveSnapshotCodec.fromJson(json);
 
@@ -130,7 +132,7 @@ void main() {
     });
 
     test('round-trips match rules in save metadata', () {
-      final snapshot = SaveSnapshot(
+      final snapshot = GameSnapshotFactory.create(
         save: _save().copyWith(
           matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
         ),
@@ -147,33 +149,32 @@ void main() {
     });
 
     test('drops unknown pending runtime actions while loading', () {
-      final snapshot = SaveSnapshot(
+      final snapshot = GameSnapshotFactory.create(
         save: _save(),
-        runtimeState: const GameRuntimeState(
-          pendingAction: PendingCityWorkedHexSelection(
-            ownerPlayerId: 'p1',
-            cityId: 'city_1',
-          ),
+
+        pendingAction: const PendingCityWorkedHexSelection(
+          ownerPlayerId: 'p1',
+          cityId: 'city_1',
         ),
       );
       final json = SaveSnapshotCodec.toJson(snapshot);
-      (json['runtimeState'] as Map<String, dynamic>)['pendingAction'] = {
+      (json['lifecycle'] as Map<String, dynamic>)['pendingAction'] = {
         'type': 'futurePendingAction',
         'ownerPlayerId': 'p1',
       };
 
       final restored = SaveSnapshotCodec.fromJson(json);
 
-      expect(restored.runtimeState.pendingAction, isNull);
+      expect(restored.domain.actions.pendingAction, isNull);
     });
 
     test('drops invalid submitted players while loading runtime state', () {
-      final snapshot = SaveSnapshot(
+      final snapshot = GameSnapshotFactory.create(
         save: _save(),
-        runtimeState: const GameRuntimeState(submittedPlayerIds: {'p1'}),
+        submittedPlayerIds: {'p1'},
       );
       final json = SaveSnapshotCodec.toJson(snapshot);
-      (json['runtimeState'] as Map<String, dynamic>)['submittedPlayerIds'] = [
+      (json['lifecycle'] as Map<String, dynamic>)['submittedPlayerIds'] = [
         'p1',
         '',
         7,
@@ -182,26 +183,25 @@ void main() {
 
       final restored = SaveSnapshotCodec.fromJson(json);
 
-      expect(restored.runtimeState.submittedPlayerIds, {'p1', 'p2'});
+      expect(restored.domain.submittedPlayerIds, {'p1', 'p2'});
     });
 
     test('drops invalid intended attacks while loading runtime state', () {
-      final snapshot = SaveSnapshot(
+      final snapshot = GameSnapshotFactory.create(
         save: _save(),
-        runtimeState: const GameRuntimeState(
-          intendedAttacks: [
-            IntendedAttack(
-              attackerUnitId: 'warrior_1',
-              defenderCol: 4,
-              defenderRow: 5,
-              declaredAtTick: 7,
-              declaringPlayerId: 'p1',
-            ),
-          ],
-        ),
+
+        intendedAttacks: [
+          const IntendedAttack(
+            attackerUnitId: 'warrior_1',
+            defenderCol: 4,
+            defenderRow: 5,
+            declaredAtTick: 7,
+            declaringPlayerId: 'p1',
+          ),
+        ],
       );
       final json = SaveSnapshotCodec.toJson(snapshot);
-      (json['runtimeState'] as Map<String, dynamic>)['intendedAttacks'] = [
+      (json['lifecycle'] as Map<String, dynamic>)['intendedAttacks'] = [
         {
           'attackerUnitId': 'warrior_1',
           'defenderCol': 4,
@@ -220,60 +220,58 @@ void main() {
 
       final restored = SaveSnapshotCodec.fromJson(json);
 
-      expect(restored.runtimeState.intendedAttacks, hasLength(1));
+      expect(restored.domain.intendedAttacks, hasLength(1));
       expect(
-        restored.runtimeState.intendedAttacks.single.attackerUnitId,
+        restored.domain.intendedAttacks.single.attackerUnitId,
         'warrior_1',
       );
     });
 
     test('drops invalid turnStartedAt while loading runtime state', () {
-      final snapshot = SaveSnapshot(
+      final snapshot = GameSnapshotFactory.create(
         save: _save(),
-        runtimeState: GameRuntimeState(
-          turnStartedAt: DateTime.utc(2026, 4, 27, 12),
-        ),
+
+        turnStartedAt: DateTime.utc(2026, 4, 27, 12),
       );
       final json = SaveSnapshotCodec.toJson(snapshot);
-      (json['runtimeState'] as Map<String, dynamic>)['turnStartedAt'] = 'nope';
+      (json['lifecycle'] as Map<String, dynamic>)['turnStartedAt'] = 'nope';
 
       final restored = SaveSnapshotCodec.fromJson(json);
 
-      expect(restored.runtimeState.turnStartedAt, isNull);
+      expect(restored.domain.turnStartedAt, isNull);
     });
 
     test('clears unknown worker improvement type while loading', () {
-      final snapshot = SaveSnapshot(
+      final snapshot = GameSnapshotFactory.create(
         save: _save(),
-        runtimeState: const GameRuntimeState(
-          pendingAction: PendingWorkerActionSelection(
-            ownerPlayerId: 'p1',
-            unitId: 'worker_1',
-            improvementType: FieldImprovementType.mine,
-          ),
+
+        pendingAction: const PendingWorkerActionSelection(
+          ownerPlayerId: 'p1',
+          unitId: 'worker_1',
+          improvementType: FieldImprovementType.mine,
         ),
       );
       final json = SaveSnapshotCodec.toJson(snapshot);
       final pendingAction =
-          (json['runtimeState'] as Map<String, dynamic>)['pendingAction']
+          (json['lifecycle'] as Map<String, dynamic>)['pendingAction']
               as Map<String, dynamic>;
       pendingAction['improvementType'] = 'futureImprovement';
 
       final restored = SaveSnapshotCodec.fromJson(json);
 
       expect(
-        restored.runtimeState.pendingAction,
+        restored.domain.actions.pendingAction,
         isA<PendingWorkerActionSelection>(),
       );
       expect(
-        (restored.runtimeState.pendingAction as PendingWorkerActionSelection)
+        (restored.domain.actions.pendingAction as PendingWorkerActionSelection)
             .improvementType,
         isNull,
       );
     });
 
     test('filters unknown research technology ids while loading', () {
-      final snapshot = SaveSnapshot(
+      final snapshot = GameSnapshotFactory.create(
         save: _save(),
         research: ResearchState(
           players: {
@@ -309,7 +307,9 @@ void main() {
     });
 
     test('defaults malformed research payload to empty state', () {
-      final json = SaveSnapshotCodec.toJson(SaveSnapshot(save: _save()));
+      final json = SaveSnapshotCodec.toJson(
+        GameSnapshotFactory.create(save: _save()),
+      );
       json['research'] = {'players': <dynamic>[]};
 
       final restored = SaveSnapshotCodec.fromJson(json);
@@ -318,7 +318,7 @@ void main() {
     });
 
     test('filters malformed fog entries while loading', () {
-      final snapshot = SaveSnapshot(
+      final snapshot = GameSnapshotFactory.create(
         save: _save(),
         fogOfWar: FogOfWarState(
           players: {
@@ -350,7 +350,9 @@ void main() {
     });
 
     test('defaults malformed fog payload to empty state', () {
-      final json = SaveSnapshotCodec.toJson(SaveSnapshot(save: _save()));
+      final json = SaveSnapshotCodec.toJson(
+        GameSnapshotFactory.create(save: _save()),
+      );
       json['fogOfWar'] = {'players': <dynamic>[]};
 
       final restored = SaveSnapshotCodec.fromJson(json);

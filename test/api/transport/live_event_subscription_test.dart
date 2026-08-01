@@ -18,6 +18,8 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter_test/flutter_test.dart';
 
+part 'live_event_subscription_fixture.dart';
+
 void main() {
   group('ServerpodMultiplayerStreamConnector', () {
     test('creates lazily and closes exactly once when cancelled', () async {
@@ -235,7 +237,7 @@ void main() {
             offset: 9,
             snapshot: snapshotCodec.toWire(
               matchId: 'match_1',
-              snapshot: SaveSnapshot(save: _save(), eventLogOffset: 9),
+              snapshot: _snapshot(9),
             ),
             movementExecutions: WireMovementExecutionList(const []),
           ),
@@ -254,8 +256,8 @@ void main() {
         serverpodHost: 'http://localhost:8080',
         connector: connector.connect,
       );
-      final received = Completer<SaveSnapshot>();
-      final snapshot = SaveSnapshot(save: _save(), eventLogOffset: 4);
+      final received = Completer<CanonicalGameSnapshot>();
+      final snapshot = _snapshot(4);
 
       final handle = await live.subscribe(
         matchId: 'match_1',
@@ -293,7 +295,7 @@ void main() {
         );
         final received = Completer<LiveServerEvent>();
         var standaloneSnapshotResyncs = 0;
-        final snapshot = SaveSnapshot(save: _save(), eventLogOffset: 4);
+        final snapshot = _snapshot(4);
 
         final handle = await live.subscribe(
           matchId: 'match_1',
@@ -691,22 +693,6 @@ Future<void> _waitFor(bool Function() condition) async {
     await Future<void>.delayed(const Duration(milliseconds: 10));
   }
   fail('Condition was not met in time.');
-}
-
-GameSave _save() {
-  return GameSave(
-    id: 'save_1',
-    name: 'Game',
-    mapName: 'verdantia',
-    mapSource: MapSource.asset,
-    turn: 1,
-    playerStates: const {'player_1': PlayerTurnState.active},
-    savedAt: DateTime.utc(2026, 1, 1),
-    camera: CameraState.zero,
-    players: const [
-      Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4),
-    ],
-  );
 }
 
 WireMatch _wireMatch({required String state, required int players}) {

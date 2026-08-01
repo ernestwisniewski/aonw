@@ -12,7 +12,7 @@ typedef _TargetingAttacker = ({
 /// Authoritative validation and execution belong to [CombatCommandResolver].
 abstract final class _CombatTargetingPolicy {
   static _AttackSetup? unitTarget(
-    GameState state,
+    GameClientState state,
     AttackHexCommand command,
     MapTileLookup mapTiles, {
     required CombatRuleset combatRuleset,
@@ -68,7 +68,7 @@ abstract final class _CombatTargetingPolicy {
   }
 
   static _CityAttackSetup? cityTarget(
-    GameState state,
+    GameClientState state,
     AttackHexCommand command,
     MapTileLookup mapTiles, {
     required CombatRuleset combatRuleset,
@@ -120,7 +120,7 @@ abstract final class _CombatTargetingPolicy {
   }
 
   static _TargetingAttacker? _attackerForTargeting(
-    GameState state,
+    GameClientState state,
     AttackHexCommand command,
     MapTileLookup mapTiles, {
     required CombatRuleset combatRuleset,
@@ -167,7 +167,7 @@ abstract final class _CombatTargetingPolicy {
   }
 
   static bool _canUseAttacker(
-    GameState state,
+    GameClientState state,
     GameUnit attacker,
     GameCommandContext context,
   ) {
@@ -177,7 +177,7 @@ abstract final class _CombatTargetingPolicy {
   }
 
   static bool pendingAllowsCommand({
-    required GameState state,
+    required GameClientState state,
     required AttackHexCommand command,
     required GameUnit attacker,
     required bool allowExistingTargetOverride,
@@ -196,7 +196,7 @@ abstract final class _CombatTargetingPolicy {
   }
 
   static bool _canAttackDefender(
-    GameState state,
+    GameClientState state,
     GameUnit attacker,
     GameUnit defender,
   ) {
@@ -205,7 +205,7 @@ abstract final class _CombatTargetingPolicy {
   }
 
   static bool _canAttackTargetOwner(
-    GameState state,
+    GameClientState state,
     GameUnit attacker,
     String targetOwnerPlayerId,
   ) {
@@ -219,7 +219,7 @@ abstract final class _CombatTargetingPolicy {
 
   static bool _targetIsVisible(
     GameCommandContext context,
-    GameState state,
+    GameClientState state,
     int col,
     int row,
   ) {
@@ -236,7 +236,7 @@ abstract final class _CombatTargetingPolicy {
   }
 
   static bool _cityTargetHasOtherUnit(
-    GameState state,
+    GameClientState state,
     AttackHexCommand command,
     GameUnit attacker,
   ) {
@@ -248,7 +248,7 @@ abstract final class _CombatTargetingPolicy {
   }
 
   static GameCity? _attackableCityAt(
-    GameState state,
+    GameClientState state,
     AttackHexCommand command,
     GameUnit attacker,
   ) {

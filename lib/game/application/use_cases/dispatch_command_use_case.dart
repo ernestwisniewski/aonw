@@ -9,16 +9,16 @@ import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 
 class DispatchCommandResult {
-  final GameState state;
+  final GameClientState state;
   final List<UiEffect> uiEffects;
   final List<GameEvent> events;
   final List<CombatAnimationFact> combatAnimations;
   final List<MovementCommandExecution> movementExecutions;
-  final SaveSnapshot? snapshot;
+  final CanonicalGameSnapshot? snapshot;
   final int offset;
   final bool storedSnapshot;
 
-  const DispatchCommandResult({
+  DispatchCommandResult({
     required this.state,
     this.uiEffects = const [],
     this.events = const [],
@@ -37,7 +37,7 @@ class DispatchCommandUseCase {
 
   Future<DispatchCommandResult> execute({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
     bool fromMovePreviewConfirmation = false,

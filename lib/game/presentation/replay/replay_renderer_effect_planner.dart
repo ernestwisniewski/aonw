@@ -11,8 +11,8 @@ abstract final class ReplayRendererEffectPlanner {
     required Iterable<RendererEffect> interactionEffects,
     required Iterable<GameEvent> events,
     Iterable<MovementCommandExecution> movementExecutions = const [],
-    required GameState state,
-    required GameState previousState,
+    required GameClientState state,
+    required GameClientState previousState,
     AppLocalizations? l10n,
   }) {
     return batchForStep(
@@ -34,8 +34,8 @@ abstract final class ReplayRendererEffectPlanner {
     required Iterable<RendererEffect> interactionEffects,
     required Iterable<GameEvent> events,
     Iterable<MovementCommandExecution> movementExecutions = const [],
-    required GameState state,
-    required GameState previousState,
+    required GameClientState state,
+    required GameClientState previousState,
     AppLocalizations? l10n,
   }) {
     final replayInteractionEffects = [
@@ -56,8 +56,8 @@ abstract final class ReplayRendererEffectPlanner {
 
   static bool hasPerspectiveVisibleEffect({
     required Iterable<RendererEffect> effects,
-    required GameState state,
-    required GameState previousState,
+    required GameClientState state,
+    required GameClientState previousState,
     required String? perspectivePlayerId,
   }) {
     if (hasPerspectiveVisibleMovement(
@@ -96,8 +96,8 @@ abstract final class ReplayRendererEffectPlanner {
 
   static bool hasPerspectiveVisibleMovement({
     required Iterable<RendererEffect> effects,
-    required GameState state,
-    required GameState previousState,
+    required GameClientState state,
+    required GameClientState previousState,
     required String? perspectivePlayerId,
   }) {
     final perspective = perspectivePlayerId;
@@ -117,7 +117,10 @@ abstract final class ReplayRendererEffectPlanner {
     return false;
   }
 
-  static bool _canSeeMovement(AnimateUnitMoveEffect effect, GameState state) {
+  static bool _canSeeMovement(
+    AnimateUnitMoveEffect effect,
+    GameClientState state,
+  ) {
     if (_canSeeDynamicAt(state, effect.fromCol, effect.fromRow)) return true;
     for (final step in effect.steps) {
       if (_canSeeDynamicAt(state, step.col, step.row)) return true;
@@ -128,8 +131,8 @@ abstract final class ReplayRendererEffectPlanner {
   static bool _canSeeEffectAt(
     int col,
     int row, {
-    required GameState state,
-    required GameState previousState,
+    required GameClientState state,
+    required GameClientState previousState,
     required String? perspectivePlayerId,
   }) {
     if (perspectivePlayerId == null || perspectivePlayerId.isEmpty) {
@@ -139,7 +142,7 @@ abstract final class ReplayRendererEffectPlanner {
         _canSeeDynamicAt(state, col, row);
   }
 
-  static bool _canSeeDynamicAt(GameState state, int col, int row) {
+  static bool _canSeeDynamicAt(GameClientState state, int col, int row) {
     final visibility = state.activePlayerVisibility;
     if (!visibility.isEnabled ||
         !state.fogOfWar.playerIds.contains(visibility.playerId)) {

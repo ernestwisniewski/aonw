@@ -32,7 +32,7 @@ class HudMapFocusController {
 
   Future<void> focusActivityLogEntry({
     required GameEventNotification notification,
-    required GameState? currentState,
+    required GameClientState? currentState,
   }) async {
     final target = HudMapFocusTarget.notification(
       notification: notification,

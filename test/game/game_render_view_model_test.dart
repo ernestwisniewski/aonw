@@ -6,8 +6,8 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('GameRenderViewModel', () {
-    test('projects renderer-facing fields from GameState', () {
+  group('RenderState', () {
+    test('projects renderer-facing fields from GameClientState', () {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final selection = GameSelection.unit(commander);
       final draft = CityFoundingDraft(
@@ -15,17 +15,17 @@ void main() {
         ownerPlayerId: commander.ownerPlayerId,
         center: CityHex(col: commander.col, row: commander.row),
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: commander.ownerPlayerId,
         units: [commander],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: selection,
           moveCommandActive: true,
           cityFoundingDraft: draft,
         ),
       );
 
-      final viewModel = GameRenderViewModel.fromState(state);
+      final viewModel = RenderState.fromState(state);
 
       expect(viewModel.selection, selection);
       expect(viewModel.moveCommandActive, isTrue);

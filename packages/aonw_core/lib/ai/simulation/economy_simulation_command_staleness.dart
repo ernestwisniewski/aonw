@@ -9,7 +9,7 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 
 bool isStaleEconomySimulationCommand({
   required DomainCommand command,
-  required PersistentGameState state,
+  required DomainState state,
   required String actorPlayerId,
   required GameRuleset ruleset,
   required MapTileLookup mapTiles,
@@ -18,7 +18,7 @@ bool isStaleEconomySimulationCommand({
       _isStaleAttackCommand(command, state, actorPlayerId, ruleset, mapTiles);
 }
 
-bool _isStaleMoveCommand(DomainCommand command, PersistentGameState state) {
+bool _isStaleMoveCommand(DomainCommand command, DomainState state) {
   if (command is! MoveUnitCommand) return false;
 
   GameUnit? movingUnit;
@@ -35,7 +35,7 @@ bool _isStaleMoveCommand(DomainCommand command, PersistentGameState state) {
 
 bool _isStaleAttackCommand(
   DomainCommand command,
-  PersistentGameState state,
+  DomainState state,
   String actorPlayerId,
   GameRuleset ruleset,
   MapTileLookup mapTiles,
@@ -117,11 +117,11 @@ bool _isStaleAttackCommand(
 }
 
 bool _isProtectedAttack(
-  PersistentGameState state,
+  DomainState state,
   String attackerPlayerId,
   String defenderPlayerId,
 ) {
-  final status = state.runtimeState.diplomacy.statusBetween(
+  final status = state.diplomacy.statusBetween(
     attackerPlayerId,
     defenderPlayerId,
   );

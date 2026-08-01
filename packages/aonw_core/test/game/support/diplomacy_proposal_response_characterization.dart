@@ -105,7 +105,7 @@ void _registerProposalResponseValidationTests() {
         'diplomacy_proposal_payment_unavailable',
       );
       expect(
-        result.state.runtimeState.diplomacy.pendingProposals['proposal_1'],
+        result.state.diplomacy.pendingProposals['proposal_1'],
         same(proposal),
       );
     });
@@ -145,7 +145,7 @@ void _registerAcceptedProposalResponseTests() {
       turn: 6,
     );
 
-    final next = result.state.runtimeState.diplomacy;
+    final next = result.state.diplomacy;
     final relation = next.relationBetween(_player1, _player2);
     expect(next.pendingProposals, isEmpty);
     expect(relation.status, DiplomaticRelationStatus.friendly);
@@ -193,7 +193,7 @@ void _registerRejectedProposalResponseTests() {
     );
 
     expect(result.accepted, isTrue);
-    expect(result.state.runtimeState.diplomacy.pendingProposals, isEmpty);
+    expect(result.state.diplomacy.pendingProposals, isEmpty);
     expect(result.events, hasLength(2));
   });
 
@@ -222,7 +222,7 @@ void _registerRejectedProposalResponseTests() {
       turn: 6,
     );
 
-    final next = result.state.runtimeState.diplomacy;
+    final next = result.state.diplomacy;
     expect(next.pendingProposals, {'unrelated_proposal': unrelated});
     expect(
       next.statusBetween(_player1, _player2),
@@ -250,7 +250,7 @@ void _registerRejectedProposalResponseTests() {
 }
 
 ({
-  PersistentGameState state,
+  DomainState state,
   DiplomaticProposal unrelatedProposal,
   List<IntendedAttack> preservedAttacks,
 })
@@ -335,7 +335,7 @@ _paidTruceFixture() {
 void _expectPaidTruceState(
   _DiplomacyTestResult result,
   ({
-    PersistentGameState state,
+    DomainState state,
     DiplomaticProposal unrelatedProposal,
     List<IntendedAttack> preservedAttacks,
   })
@@ -346,7 +346,7 @@ void _expectPaidTruceState(
     _player2: 10,
     _sentinelPlayer: 97,
   });
-  final nextDiplomacy = result.state.runtimeState.diplomacy;
+  final nextDiplomacy = result.state.diplomacy;
   expect(nextDiplomacy.pendingProposals, {
     'unrelated_proposal': fixture.unrelatedProposal,
   });
@@ -370,7 +370,7 @@ void _expectPaidTruceState(
       sourceId: 'proposal_1',
     ),
   ]);
-  expect(result.state.runtimeState.intendedAttacks, fixture.preservedAttacks);
+  expect(result.state.intendedAttacks, fixture.preservedAttacks);
   _expectAcceptedTruceEvents(result.events);
   _expectOuterSentinelsUnchanged(result, fixture.state, goldChanged: true);
   _expectRuntimeSentinelsUnchanged(

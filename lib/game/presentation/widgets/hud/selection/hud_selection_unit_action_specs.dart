@@ -2,7 +2,7 @@ part of 'hud_selection_actions.dart';
 
 _HudSelectionActionSpec _moveActionFor({
   required GameUnit unit,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required bool moveModeActive,
   required String? lockedReason,
   required AppLocalizations l10n,
@@ -59,7 +59,7 @@ int _queuedPathPaidCost(GameUnit unit, QueuedMovePath queuedPath) {
 
 _HudSelectionActionSpec? _attackActionFor({
   required GameUnit unit,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required String? lockedReason,
   required AppLocalizations l10n,
   required VoidCallback onStartAttackTargeting,
@@ -160,7 +160,7 @@ _HudSelectionActionSpec _commanderArmyActionFor({
 
 _HudSelectionActionSpec _cityFoundingActionFor({
   required GameUnit unit,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required GameSelection? selection,
   required bool canStartCityFounding,
   required bool cityFoundingActive,
@@ -199,7 +199,7 @@ _HudSelectionActionSpec _cityFoundingActionFor({
 
 _HudSelectionActionSpec _workerBuildActionFor({
   required GameUnit unit,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required WorkerActionPanelViewModel? workerAction,
   required String? lockedReason,
   required AppLocalizations l10n,
@@ -248,7 +248,7 @@ _HudSelectionActionSpec _workerBuildActionFor({
 
 _HudSelectionActionSpec _skipTurnActionFor({
   required GameUnit unit,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required String? lockedReason,
   required AppLocalizations l10n,
   required VoidCallback onSkipSelectedUnitTurn,
@@ -303,7 +303,7 @@ _HudSelectionActionSpec _fortifyActionFor({
 
 _HudSelectionActionSpec? _fallbackCancelActionFor({
   required GameUnit unit,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required String? lockedReason,
   required AppLocalizations l10n,
   required VoidCallback onCancelSelectedUnitAction,

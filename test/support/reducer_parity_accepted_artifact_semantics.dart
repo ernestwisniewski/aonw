@@ -2,8 +2,8 @@ part of 'reducer_parity_accepted_semantics.dart';
 
 String? validateAcceptedArtifactCommand({
   required DomainCommand command,
-  required PersistentGameState before,
-  required PersistentGameState after,
+  required DomainState before,
+  required DomainState after,
   required List<GameEvent> events,
 }) {
   final stateFailure = switch (command) {
@@ -45,7 +45,7 @@ String? validateAcceptedArtifactCommand({
 
 String? _validateArtifactExcavationEvent(
   StartArtifactExcavationCommand command,
-  PersistentGameState before,
+  DomainState before,
   GameEvent event,
 ) {
   final unit = before.units.byId(command.unitId);
@@ -66,7 +66,7 @@ String? _validateArtifactExcavationEvent(
 
 String? _validateArtifactStoreEvent(
   StoreArtifactInCityCommand command,
-  PersistentGameState before,
+  DomainState before,
   GameEvent event,
 ) {
   final unit = before.units.byId(command.unitId);
@@ -90,7 +90,7 @@ String? _validateArtifactStoreEvent(
 
 String? _validateArtifactTradeEvent(
   TradeArtifactCommand command,
-  PersistentGameState before,
+  DomainState before,
   GameEvent event,
 ) {
   final targetCities = [
@@ -114,8 +114,8 @@ String? _validateArtifactTradeEvent(
 
 String? _validateAcceptedArtifactExcavation(
   StartArtifactExcavationCommand command,
-  PersistentGameState before,
-  PersistentGameState after,
+  DomainState before,
+  DomainState after,
 ) {
   final beforeUnit = before.units.byId(command.unitId);
   final beforeArtifact = beforeUnit == null
@@ -155,8 +155,8 @@ String? _validateAcceptedArtifactExcavation(
 
 String? _validateAcceptedArtifactStore(
   StoreArtifactInCityCommand command,
-  PersistentGameState before,
-  PersistentGameState after,
+  DomainState before,
+  DomainState after,
 ) {
   final beforeUnit = before.units.byId(command.unitId);
   final artifactId = beforeUnit?.carriedArtifactId;
@@ -190,8 +190,8 @@ String? _validateAcceptedArtifactStore(
 
 String? _validateAcceptedArtifactTrade(
   TradeArtifactCommand command,
-  PersistentGameState before,
-  PersistentGameState after,
+  DomainState before,
+  DomainState after,
 ) {
   final offered = _artifactFixtureById(
     before.artifacts,

@@ -38,10 +38,10 @@ void _registerLocalMovementRetargetingTests() {
     final unit = _unit(id: 'mover', movementPoints: 0).copyWithQueuedPath(
       QueuedMovePath(targetCol: 2, targetRow: 0, steps: steps),
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: _playerId,
       units: [unit],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(unit),
         moveCommandActive: true,
         movePreview: UnitMovementPlan(
@@ -94,11 +94,11 @@ void _registerLocalMovementRetargetingTests() {
         UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
       ],
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: _playerId,
       units: [unit, blocker],
       fogOfWar: _fog(visibleCols: 1),
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(unit),
         moveCommandActive: true,
         movePreview: preview,
@@ -146,11 +146,11 @@ LocalCommandResolution _resolveAcceptedPreviewMove({
       ),
     ],
   );
-  final state = GameState(
+  final state = GameClientState(
     activePlayerId: _playerId,
     activePlayerCanAct: true,
     units: [unit],
-    interaction: GameInteractionState(
+    interaction: InteractionState(
       selection: GameSelection.unit(unit),
       moveCommandActive: true,
       movePreview: preview,

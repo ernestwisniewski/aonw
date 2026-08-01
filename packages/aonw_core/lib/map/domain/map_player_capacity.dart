@@ -1,4 +1,4 @@
-import 'package:aonw_core/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 
 class MapPlayerCapacity {
   const MapPlayerCapacity({
@@ -23,14 +23,14 @@ abstract final class MapPlayerCapacityRules {
     MapPlayerCapacity(mapName: 'terenos', maxPlayers: 3),
   ];
 
-  static int maxPlayersForMapData(MapData mapData) {
+  static int maxPlayersForWorldMap(WorldMap mapData) {
     return maxPlayersForMap(
       mapName: mapData.mapName,
       tileCount: mapData.tileCount,
     );
   }
 
-  static int singlePlayerPlayersForMapData(MapData mapData) {
+  static int singlePlayerPlayersForWorldMap(WorldMap mapData) {
     return singlePlayerPlayersForMap(
       mapName: mapData.mapName,
       tileCount: mapData.tileCount,

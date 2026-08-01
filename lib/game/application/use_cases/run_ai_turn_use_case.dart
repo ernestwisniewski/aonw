@@ -34,7 +34,7 @@ class RunAiTurnUseCase {
   Future<AiTurnPrecomputeHandle?> precompute({
     required String saveId,
     required String playerId,
-    SaveSnapshot? snapshot,
+    CanonicalGameSnapshot? snapshot,
     AiPlanExecutor planExecutor = syncAiPlanExecutor,
   }) async {
     final cache = precomputeCache;
@@ -61,7 +61,7 @@ class RunAiTurnUseCase {
   Future<AiTurnReport?> execute({
     required String saveId,
     required String playerId,
-    SaveSnapshot? snapshot,
+    CanonicalGameSnapshot? snapshot,
     AiTerminalCommand? terminalCommand,
     Duration interCommandDelay = const Duration(milliseconds: 200),
     Future<void> Function()? onStalePrecomputeDropped,
@@ -105,7 +105,7 @@ class RunAiTurnUseCase {
   Future<PreparedAiTurn?> _prepare({
     required String saveId,
     required String playerId,
-    SaveSnapshot? snapshot,
+    CanonicalGameSnapshot? snapshot,
   }) {
     return AiTurnPreparationBuilder(
       repository: repository,

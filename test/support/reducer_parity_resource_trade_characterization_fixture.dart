@@ -30,55 +30,51 @@ const _parityOfferedTrade = ResourceTradeAgreement(
   remainingTurns: 4,
 );
 
-PersistentGameState _tradeParityBaseState(PersistentGameState source) {
+DomainState _tradeParityBaseState(DomainState source) {
   return source.copyWith(
-    runtimeState: GameRuntimeState.snapshot(
-      submittedPlayerIds: const {'sentinel'},
-      timeoutStreaksByPlayerId: const {'sentinel': 2},
-      afkPlayerIds: const {'sentinel'},
-      kickedPlayerIds: const {'removed_player'},
-      intendedAttacks: const [
-        IntendedAttack(
-          attackerUnitId: 'sentinel_attacker',
-          defenderCol: 2,
-          defenderRow: 0,
-          declaredAtTick: 41,
-          declaringPlayerId: 'sentinel',
-        ),
-      ],
-      diplomacy: source.runtimeState.diplomacy,
-      dominationHoldTurnsByPlayerId: const {'sentinel': 3},
-      culturalVictoryHoldTurnsByPlayerId: const {'sentinel': 4},
-      mapObjectiveHoldStatesByObjectiveId: const {
-        'sentinel_objective': MapObjectiveHoldState(
-          objectiveId: 'sentinel_objective',
-          playerId: 'sentinel',
-          holdTurns: 2,
-        ),
-      },
-      resourceTradeAgreements: const [_parityUnrelatedTrade],
-      turnStartedAt: DateTime.utc(2026, 7, 1, 12),
-    ),
-  );
-}
-
-PersistentGameState _tradeParityAtWar(PersistentGameState state) {
-  return state.copyWith(
-    runtimeState: state.runtimeState.copyWith(
-      diplomacy: state.runtimeState.diplomacy.setStatus(
-        _tradeActorId,
-        _tradeTargetId,
-        DiplomaticRelationStatus.war,
+    submittedPlayerIds: const {'sentinel'},
+    timeoutStreaksByPlayerId: const {'sentinel': 2},
+    afkPlayerIds: const {'sentinel'},
+    kickedPlayerIds: const {'removed_player'},
+    intendedAttacks: const [
+      IntendedAttack(
+        attackerUnitId: 'sentinel_attacker',
+        defenderCol: 2,
+        defenderRow: 0,
+        declaredAtTick: 41,
+        declaringPlayerId: 'sentinel',
       ),
+    ],
+    diplomacy: source.diplomacy,
+    dominationHoldTurnsByPlayerId: const {'sentinel': 3},
+    culturalVictoryHoldTurnsByPlayerId: const {'sentinel': 4},
+    mapObjectiveHoldStatesByObjectiveId: const {
+      'sentinel_objective': MapObjectiveHoldState(
+        objectiveId: 'sentinel_objective',
+        playerId: 'sentinel',
+        holdTurns: 2,
+      ),
+    },
+    resourceTradeAgreements: const [_parityUnrelatedTrade],
+    turnStartedAt: DateTime.utc(2026, 7, 1, 12),
+  );
+}
+
+DomainState _tradeParityAtWar(DomainState state) {
+  return state.copyWith(
+    diplomacy: state.diplomacy.setStatus(
+      _tradeActorId,
+      _tradeTargetId,
+      DiplomaticRelationStatus.war,
     ),
   );
 }
 
-PersistentGameState _tradeParityWithGold(PersistentGameState state, int gold) {
+DomainState _tradeParityWithGold(DomainState state, int gold) {
   return state.copyWith(playerGold: {...state.playerGold, _tradeActorId: gold});
 }
 
-PersistentGameState _tradeParityWithoutTargetHorses(PersistentGameState state) {
+DomainState _tradeParityWithoutTargetHorses(DomainState state) {
   return state.copyWith(
     research: state.research.updatePlayer(
       _tradeTargetId,
@@ -87,22 +83,18 @@ PersistentGameState _tradeParityWithoutTargetHorses(PersistentGameState state) {
   );
 }
 
-PersistentGameState _tradeParityWithAgreements(
-  PersistentGameState state,
+DomainState _tradeParityWithAgreements(
+  DomainState state,
   List<ResourceTradeAgreement> agreements,
 ) {
-  return state.copyWith(
-    runtimeState: state.runtimeState.copyWith(
-      resourceTradeAgreements: agreements,
-    ),
-  );
+  return state.copyWith(resourceTradeAgreements: agreements);
 }
 
 ReducerParityFixture _rejectedTradeParityFixture(
   ReducerParityFixture template, {
   required String id,
   required int tickOffset,
-  required PersistentGameState state,
+  required DomainState state,
   required DomainCommand command,
   required String reason,
 }) {
@@ -122,9 +114,9 @@ ReducerParityFixture _acceptedTradeParityFixture(
   ReducerParityFixture template, {
   required String id,
   required int tickOffset,
-  required PersistentGameState state,
+  required DomainState state,
   required DomainCommand command,
-  required PersistentGameState expectedState,
+  required DomainState expectedState,
 }) {
   return _tradeParityFixture(
     template,
@@ -141,10 +133,10 @@ ReducerParityFixture _tradeParityFixture(
   ReducerParityFixture template, {
   required String id,
   required int tickOffset,
-  required PersistentGameState state,
+  required DomainState state,
   required DomainCommand command,
   required bool accepted,
-  required PersistentGameState expectedState,
+  required DomainState expectedState,
   String? reason,
 }) {
   return ReducerParityFixture(
@@ -161,7 +153,7 @@ ReducerParityFixture _tradeParityFixture(
     expectedAccepted: accepted,
     expectedReason: reason,
     expectedSave: reducerParitySave(template.save),
-    expectedState: expectedState.toJson(),
+    expectedState: CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
     expectedEvents: const [],
   );
 }

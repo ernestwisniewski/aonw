@@ -11,9 +11,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/movement_engine_test_driver.dart';
@@ -128,7 +126,7 @@ void main() {
       final input = _state(
         scout,
         fogOfWar: _originOnlyFog(),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(scout),
           cityFoundingDraft: unrelatedDraft,
           pendingAction: const PendingUnitTurnSkip(
@@ -262,26 +260,25 @@ GameUnit _scout({int col = 0}) => GameUnit(
   movementPoints: 2,
 );
 
-GameState _state(
+GameClientState _state(
   GameUnit scout, {
   List<GameCity> cities = const [],
   FogOfWarState fogOfWar = FogOfWarState.empty,
-  GameInteractionState? interaction,
+  InteractionState? interaction,
 }) {
-  return GameState(
+  return GameClientState(
     playerColors: const {'player_1': 0xff112233, 'player_2': 0xff445566},
     activePlayerId: _actorId,
     units: [scout],
     cities: cities,
     fogOfWar: fogOfWar,
     interaction:
-        interaction ??
-        GameInteractionState(selection: GameSelection.unit(scout)),
+        interaction ?? InteractionState(selection: GameSelection.unit(scout)),
   );
 }
 
-GameInteractionState _ownedInteraction(String unitId) {
-  return GameInteractionState(
+InteractionState _ownedInteraction(String unitId) {
+  return InteractionState(
     pendingAction: PendingUnitTurnSkip(
       ownerPlayerId: _actorId,
       unitId: unitId,
@@ -338,24 +335,25 @@ MapTraversalView _map({
   required int cols,
   Map<int, List<TerrainType>> terrainOverrides = const {},
 }) {
-  return WorldMapReadView(
-    WorldMap(
-      cols: cols,
-      rows: 1,
-      tiles: [
-        for (var col = 0; col < cols; col++)
-          WorldTile(
-            coordinate: HexCoord(col: col, row: 0),
-            terrains: terrainOverrides[col] ?? const [TerrainType.grassland],
-            resources: const [],
-            height: 0,
-          ),
-      ],
-    ),
+  return WorldMap(
+    cols: cols,
+    rows: 1,
+    tiles: [
+      for (var col = 0; col < cols; col++)
+        WorldTile.at(
+          coordinate: HexCoord(col: col, row: 0),
+          terrains: terrainOverrides[col] ?? const [TerrainType.grassland],
+          resources: const [],
+          height: 0,
+        ),
+    ],
   );
 }
 
-_AutoExplorePair _resolveAutoExplore(GameState input, MapTraversalView map) {
+_AutoExplorePair _resolveAutoExplore(
+  GameClientState input,
+  MapTraversalView map,
+) {
   return (
     localInput: input,
     local: resolveMovementCommandForTest(
@@ -384,4 +382,7 @@ List<({int col, int row, int enterCost, int cumulativeCost})> _stepSnapshots(
     ),
 ];
 
-typedef _AutoExplorePair = ({GameState localInput, GameStateTransition local});
+typedef _AutoExplorePair = ({
+  GameClientState localInput,
+  GameStateTransition local,
+});

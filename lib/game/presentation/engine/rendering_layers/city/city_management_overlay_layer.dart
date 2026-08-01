@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_management_overlay.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
@@ -24,8 +24,8 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
 
   void sync({
     required Component parent,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     bool Function(CityHex hex)? canShowHex,
     bool dimmed = false,
@@ -91,8 +91,8 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
   List<CityManagementOverlayHex> _cityWorkedHexes({
     required String cityId,
     required PendingPlayerAction pending,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required bool Function(CityHex hex)? canShowHex,
   }) {
@@ -120,8 +120,8 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
 
   List<CityManagementOverlayHex> _cityExpansionHexes({
     required GameCity city,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required bool Function(CityHex hex)? canShowHex,
   }) {
@@ -188,8 +188,8 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
   }
 
   List<CityManagementOverlayHex> _selectedWorkerImprovementHexes({
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required bool Function(CityHex hex)? canShowHex,
   }) {
@@ -232,7 +232,7 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
     return List.unmodifiable(result);
   }
 
-  GameUnit? _selectedControllableWorker(GameState state) {
+  GameUnit? _selectedControllableWorker(GameClientState state) {
     final unit = state.selectedUnit;
     if (unit == null ||
         !unit.isWorker ||
@@ -247,8 +247,8 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
   _workerImprovementOverlay({
     required GameUnit worker,
     required CityHex hex,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
   }) {
     if (_isOwnCityCenter(worker.ownerPlayerId, hex, state.cities)) {
@@ -335,8 +335,8 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
   TileYield? _bestImprovedYieldFor({
     required GameUnit worker,
     required CityHex hex,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
   }) {
     final tile = mapData.tileAt(hex.col, hex.row);
@@ -396,8 +396,8 @@ class CityManagementOverlayLayer extends Component with LayerAttachment {
 
   List<CityManagementOverlayHex> _workedHexes({
     required GameCity city,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required bool Function(CityHex hex)? canShowHex,
   }) {

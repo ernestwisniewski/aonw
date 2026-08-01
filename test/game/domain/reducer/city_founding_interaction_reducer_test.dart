@@ -2,16 +2,16 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/city/city_founding_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  late MapData mapData;
+  late WorldMap mapData;
   late GameUnit settler;
-  late GameState state;
+  late GameClientState state;
 
   setUp(() {
     mapData = _map7x7();
@@ -21,10 +21,10 @@ void main() {
       row: 3,
       army: const [ArmyTroop(type: TroopType.settler, count: 1)],
     );
-    state = GameState(
+    state = GameClientState(
       units: [settler],
       activePlayerId: 'player_1',
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(settler),
         moveCommandActive: true,
       ),
@@ -83,13 +83,13 @@ void main() {
   });
 }
 
-MapData _map7x7() => MapData(
+WorldMap _map7x7() => WorldMap(
   cols: 7,
   rows: 7,
   tiles: [
     for (var row = 0; row < 7; row++)
       for (var col = 0; col < 7; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],

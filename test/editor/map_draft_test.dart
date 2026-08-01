@@ -1,6 +1,5 @@
 import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/map/domain/map_constraints.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/world_map.dart';
@@ -12,7 +11,7 @@ void main() {
     test('preserves the complete map contract through freeze', () {
       final source = _sentinelMap();
 
-      final draft = MapDraft.fromMapData(source);
+      final draft = MapDraft.fromWorldMap(source);
       final frozen = draft.freeze();
 
       _expectFrozenWorldMatches(frozen, source);
@@ -20,16 +19,7 @@ void main() {
 
     test('owns deep copies across persistence and freeze boundaries', () {
       final source = _sentinelMap();
-      final draft = MapDraft.fromMapData(source);
-
-      source
-        ..cols = 1
-        ..rows = 1
-        ..mapName = 'changed'
-        ..defaultZoom = 3
-        ..objectives = const [];
-      source.tiles.first.terrains.add(TerrainType.river);
-      source.tiles.clear();
+      final draft = MapDraft.fromWorldMap(source);
 
       expect(draft.cols, 2);
       expect(draft.rows, 1);
@@ -46,10 +36,9 @@ void main() {
         throwsUnsupportedError,
       );
 
-      draft.toMapData()
-        ..tiles.clear()
-        ..objectives = const []
-        ..mapName = 'legacy-change';
+      final projected = draft.toWorldMap();
+      expect(() => projected.tiles.clear(), throwsUnsupportedError);
+      expect(() => projected.objectives.clear(), throwsUnsupportedError);
 
       expect(draft.tiles, hasLength(2));
       expect(draft.objectives.single.id, 'pass_1');
@@ -72,7 +61,7 @@ void main() {
       expect(frozen.mapName, 'exported');
       expect(frozen.defaultZoom, 1.75);
       expect(frozen.objectives.single.id, 'pass_1');
-      expect(frozen.tileAt(const HexCoord(col: 1, row: 0))?.terrains, [
+      expect(frozen.tileAtHex(const HexCoord(col: 1, row: 0))?.terrains, [
         TerrainType.hills,
         TerrainType.forest,
       ]);
@@ -83,7 +72,7 @@ void main() {
     });
 
     test('keeps incomplete terrain editable until freeze', () {
-      final draft = MapDraft.fromMapData(_sentinelMap());
+      final draft = MapDraft.fromWorldMap(_sentinelMap());
 
       expect(draft.clearTerrainsAt(1, 0), isTrue);
       expect(draft.tileAt(1, 0)?.terrains, isEmpty);
@@ -92,7 +81,7 @@ void main() {
     });
 
     test('validates tile values before map metadata when freezing', () {
-      final draft = MapDraft.fromMapData(_sentinelMap())
+      final draft = MapDraft.fromWorldMap(_sentinelMap())
         ..defaultZoom = 0
         ..clearTerrainsAt(1, 0);
 
@@ -117,7 +106,7 @@ void main() {
         tiles: [
           for (var row = 0; row < rows; row++)
             for (var col = 0; col < cols; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: const [TerrainType.plains],
@@ -181,16 +170,13 @@ void main() {
     });
 
     test('rejects invalid dimensions, coordinates, and duplicate tiles', () {
-      expect(
-        () => MapDraft(cols: 0, rows: 1, tiles: const []),
-        throwsArgumentError,
-      );
+      expect(() => MapDraft(cols: 0, rows: 1, tiles: []), throwsArgumentError);
       expect(
         () => MapDraft(
           cols: 1,
           rows: 1,
-          tiles: const [
-            TileData(
+          tiles: [
+            WorldTile(
               col: 1,
               row: 0,
               terrains: [TerrainType.ocean],
@@ -205,15 +191,15 @@ void main() {
         () => MapDraft(
           cols: 1,
           rows: 1,
-          tiles: const [
-            TileData(
+          tiles: [
+            WorldTile(
               col: 0,
               row: 0,
               terrains: [TerrainType.ocean],
               resources: [],
               height: 0,
             ),
-            TileData(
+            WorldTile(
               col: 0,
               row: 0,
               terrains: [TerrainType.plains],
@@ -234,7 +220,7 @@ MapDraft _filledDraft({required int cols, required int rows}) => MapDraft(
   tiles: [
     for (var row = 0; row < rows; row++)
       for (var col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: [TerrainType.ocean],
@@ -244,25 +230,25 @@ MapDraft _filledDraft({required int cols, required int rows}) => MapDraft(
   ],
 );
 
-MapData _sentinelMap() {
+WorldMap _sentinelMap() {
   final oceanTerrains = <TerrainType>[TerrainType.ocean];
   final hillsTerrains = <TerrainType>[TerrainType.hills, TerrainType.forest];
   final ironResources = <ResourceType>[ResourceType.iron];
 
-  return MapData(
+  return WorldMap(
     cols: 2,
     rows: 1,
     mapName: 'sentinel',
     defaultZoom: 1.75,
     tiles: [
-      TileData(
+      WorldTile(
         col: 0,
         row: 0,
         terrains: oceanTerrains,
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: hillsTerrains,
@@ -283,7 +269,7 @@ MapData _sentinelMap() {
   );
 }
 
-void _expectFrozenWorldMatches(WorldMap world, MapData source) {
+void _expectFrozenWorldMatches(WorldMap world, WorldMap source) {
   expect(world.cols, source.cols);
   expect(world.rows, source.rows);
   expect(world.mapName, source.mapName);

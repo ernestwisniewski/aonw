@@ -9,7 +9,7 @@ extension GameRendererInputHandling on GameRenderer {
     return _selectTileFromLongPress(tileData, widgetPosition: widgetPosition);
   }
 
-  bool _selectTileFromLongPress(TileData tileData, {Vector2? widgetPosition}) {
+  bool _selectTileFromLongPress(WorldTile tileData, {Vector2? widgetPosition}) {
     _suppressTapsUntilNextPointerDown = true;
     if (_cancelMoveTargetingForLongPress()) {
       return true;
@@ -52,7 +52,7 @@ extension GameRendererInputHandling on GameRenderer {
     return true;
   }
 
-  bool _canInspectTileFromLongPress(TileData tileData) {
+  bool _canInspectTileFromLongPress(WorldTile tileData) {
     final playerId = _renderState.activePlayerId;
     if (playerId.isEmpty || playerId == GameRenderer._loadingPlayerId) {
       return true;
@@ -75,7 +75,7 @@ extension GameRendererInputHandling on GameRenderer {
     _syncHoverIntentForTile(tileData!, forceInspect: true);
   }
 
-  bool _matchesLongPressInspectHex(TileData? tileData) {
+  bool _matchesLongPressInspectHex(WorldTile? tileData) {
     final inspectHex = _longPressInspectHex;
     return inspectHex != null &&
         tileData != null &&

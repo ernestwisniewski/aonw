@@ -2,8 +2,8 @@ part of 'local_command_resolver.dart';
 
 extension LocalCommandResolverResearchDiplomacy on LocalCommandResolver {
   LocalCommandResolution _resolveResearchDiplomacy({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
@@ -28,14 +28,14 @@ extension LocalCommandResolverResearchDiplomacy on LocalCommandResolver {
     );
   }
 
-  List<String> _activePlayerIds(SaveSnapshot snapshot) {
+  List<String> _activePlayerIds(CanonicalGameSnapshot snapshot) {
     final ids = snapshot.domain.participants
         .map((player) => player.id)
         .where((id) => id.isNotEmpty)
         .toList();
     if (ids.isNotEmpty) return ids;
 
-    return snapshot.session.turnStatesByPlayerId.keys
+    return snapshot.domain.turnStatesByPlayerId.keys
         .where((id) => id.isNotEmpty)
         .toList();
   }

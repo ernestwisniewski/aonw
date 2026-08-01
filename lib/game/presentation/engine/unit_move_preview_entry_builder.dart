@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 
 abstract final class UnitMovePreviewEntryBuilder {
   static UnitMovePreviewLayerEntry? queuedPath({
-    required GameState state,
+    required GameClientState state,
     required GameUnit unit,
     required bool dimmed,
   }) {
@@ -76,7 +76,7 @@ abstract final class UnitMovePreviewEntryBuilder {
 
   static UnitMovePreviewLayerEntry _entry({
     required String id,
-    required GameState state,
+    required GameClientState state,
     required GameUnit unit,
     required UnitMovementPlan plan,
     required List<UnitMovementStep> displaySteps,

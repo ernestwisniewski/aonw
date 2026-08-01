@@ -59,14 +59,14 @@ List<String> _orderedPlayerIds(Iterable<String?> playerIds) {
   return List.unmodifiable(ordered);
 }
 
-String? _cityOwner(GameState? state, String cityId) {
+String? _cityOwner(GameClientState? state, String cityId) {
   return state?.cityById(cityId)?.ownerPlayerId;
 }
 
-String? _unitOwner(GameState? state, String unitId) {
+String? _unitOwner(GameClientState? state, String unitId) {
   return state?.unitById(unitId)?.ownerPlayerId;
 }
 
-bool _unitBelongsTo(GameState state, String unitId, String playerId) {
+bool _unitBelongsTo(GameClientState state, String unitId, String playerId) {
   return _unitOwner(state, unitId) == playerId;
 }

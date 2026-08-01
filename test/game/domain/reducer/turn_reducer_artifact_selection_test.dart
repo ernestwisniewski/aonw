@@ -1,8 +1,8 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/turn/turn_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -20,7 +20,7 @@ void main() {
       type: WorldArtifactType.merchantsSeal,
       location: WorldArtifactLocation.stored(cityId: 'city_1'),
     );
-    const state = GameState(
+    final state = GameClientState(
       cities: [city],
       artifacts: [artifact],
       activePlayerId: 'player_1',
@@ -46,14 +46,14 @@ void main() {
   });
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 3,
     rows: 3,
     tiles: [
       for (var row = 0; row < 3; row++)
         for (var col = 0; col < 3; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

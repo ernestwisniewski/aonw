@@ -18,14 +18,18 @@ void main() {
       codec.toWire(matchId: wire.matchId, snapshot: snapshot).toJson(),
       expectedWireJson,
     );
-    expect(snapshot.rawPersistentState.playerColors, {'player_1': 0xFF112233});
-    expect(snapshot.rawPersistentState.playerCountries, {
+    expect(snapshot.domain.playerColors, {
+      'player_1': 0xFF112233,
+      'player_2': 0xFF445566,
+    });
+    expect(snapshot.domain.playerCountries, {
+      'player_1': PlayerCountry.france,
       'player_2': PlayerCountry.canada,
     });
-    expect(snapshot.rawPersistentState.runtimeState.turnStartedAt, isNull);
+    expect(snapshot.domain.turnStartedAt, _savedAt);
 
-    final firstCanonical = snapshot.canonical;
-    final secondCanonical = snapshot.canonical;
+    final firstCanonical = snapshot;
+    final secondCanonical = snapshot;
 
     expect(identical(firstCanonical, secondCanonical), isTrue);
     expect(firstCanonical.metadata.id, 'save_lossless');
@@ -44,7 +48,7 @@ void main() {
       firstCanonical.domain.participants.last.country,
       PlayerCountry.canada,
     );
-    expect(firstCanonical.session.turnStartedAt, _savedAt);
+    expect(firstCanonical.domain.turnStartedAt, _savedAt);
 
     final encodedAfterCanonicalReads = codec.toWire(
       matchId: wire.matchId,
@@ -57,28 +61,30 @@ void main() {
     expect(encodedAfterCanonicalReads.save, expectedWireJson['save']);
     expect(encodedAfterCanonicalReads.state['playerColors'], {
       'player_1': 0xFF112233,
+      'player_2': 0xFF445566,
     });
     expect(encodedAfterCanonicalReads.state['playerCountries'], {
+      'player_1': 'france',
       'player_2': 'canada',
     });
     expect(encodedAfterCanonicalReads.state['wonderRegistry'], {
       'greatLibrary': 'player_1',
     });
     expect(
-      encodedAfterCanonicalReads.state['runtimeState'],
-      isNot(contains('turnStartedAt')),
+      (encodedAfterCanonicalReads.state['lifecycle']! as Map)['turnStartedAt'],
+      _savedAt.toIso8601String(),
     );
 
     final secondSnapshot = codec.fromWire(
       WireSnapshot.fromJson(_jsonClone(encodedAfterCanonicalReads.toJson())),
     );
-    final secondRoundCanonical = secondSnapshot.canonical;
+    final secondRoundCanonical = secondSnapshot;
     final secondWire = codec.toWire(
       matchId: encodedAfterCanonicalReads.matchId,
       snapshot: secondSnapshot,
     );
 
-    expect(secondRoundCanonical.session.turnStartedAt, _savedAt);
+    expect(secondRoundCanonical.domain.turnStartedAt, _savedAt);
     expect(secondWire.toJson(), expectedWireJson);
   });
 }
@@ -92,8 +98,8 @@ Map<String, dynamic> _expectedWireJson() {
     'offset': 73,
     'save': _save().toJson(),
     'state': {
-      'playerColors': {'player_1': 0xFF112233},
-      'playerCountries': {'player_2': 'canada'},
+      'playerColors': {'player_1': 0xFF112233, 'player_2': 0xFF445566},
+      'playerCountries': {'player_1': 'france', 'player_2': 'canada'},
       'playerGold': {'player_1': 17},
       'playerWarWeariness': <String, int>{},
       'playerStabilityNet': <String, int>{},
@@ -104,8 +110,9 @@ Map<String, dynamic> _expectedWireJson() {
       'fogOfWar': <dynamic>[],
       'research': {'players': <String, dynamic>{}},
       'wonderRegistry': {'greatLibrary': 'player_1'},
-      'runtimeState': {
+      'lifecycle': {
         'submittedPlayerIds': ['player_1'],
+        'turnStartedAt': _savedAt.toIso8601String(),
       },
     },
   };
@@ -128,14 +135,14 @@ GameSave _save() {
       Player(
         id: 'player_1',
         name: 'Alice',
-        colorValue: 0xFFAA0000,
+        colorValue: 0xFF112233,
         country: PlayerCountry.france,
       ),
       Player(
         id: 'player_2',
         name: 'Bob',
         colorValue: 0xFF445566,
-        country: PlayerCountry.japan,
+        country: PlayerCountry.canada,
       ),
     ],
     gameMode: GameMode.multiplayer,

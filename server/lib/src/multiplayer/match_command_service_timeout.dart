@@ -160,7 +160,7 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
     final activePlayerIds = {
       for (final player in snapshot.domain.participants)
         if (player.id.isNotEmpty) player.id,
-      for (final playerId in snapshot.session.turnStatesByPlayerId.keys)
+      for (final playerId in snapshot.domain.turnStatesByPlayerId.keys)
         if (playerId.isNotEmpty) playerId,
     };
     return TimeoutActorSelector.select(
@@ -168,8 +168,8 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
         for (final player in match.players)
           if (activePlayerIds.contains(player.id)) player.id,
       ],
-      submittedPlayerIds: snapshot.session.submittedPlayerIds,
-      kickedPlayerIds: snapshot.session.kickedPlayerIds,
+      submittedPlayerIds: snapshot.domain.submittedPlayerIds,
+      kickedPlayerIds: snapshot.domain.kickedPlayerIds,
     );
   }
 

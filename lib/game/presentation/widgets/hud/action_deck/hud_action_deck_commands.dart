@@ -1,7 +1,7 @@
 part of 'hud_action_deck.dart';
 
 extension _HudActionDeckCommands on _HudActionDeckState {
-  GameState? _currentGameState() {
+  GameClientState? _currentGameState() {
     return ref.read(gameStateProvider(widget.gameSave.id)).value ??
         widget.gameState;
   }
@@ -74,7 +74,7 @@ extension _HudActionDeckCommands on _HudActionDeckState {
     );
   }
 
-  void _clearDismissedResearchActionForManualRequest(GameState? state) {
+  void _clearDismissedResearchActionForManualRequest(GameClientState? state) {
     if (state == null) return;
     _clearDismissedResearchAction(_researchActionKey(state));
   }
@@ -87,7 +87,7 @@ extension _HudActionDeckCommands on _HudActionDeckState {
     );
   }
 
-  bool _closeCityExpansionSelectionBeforeNextAction(GameState state) {
+  bool _closeCityExpansionSelectionBeforeNextAction(GameClientState state) {
     final pendingAction = state.pendingAction;
     if (pendingAction is! PendingCityExpansionSelection ||
         pendingAction.ownerPlayerId != widget.activePlayerId) {
@@ -104,7 +104,7 @@ extension _HudActionDeckCommands on _HudActionDeckState {
     return true;
   }
 
-  bool _focusBlockingManualDecision(GameState state) {
+  bool _focusBlockingManualDecision(GameClientState state) {
     final dispatcher = ref.read(hudCommandDispatcherProvider);
     final cityFoundingDraft = state.cityFoundingDraft;
     if (cityFoundingDraft != null) {
@@ -159,7 +159,7 @@ extension _HudActionDeckCommands on _HudActionDeckState {
   }
 
   bool _restoreSelectedCityProduction(
-    GameState state,
+    GameClientState state,
     HudCommandDispatcher dispatcher,
   ) {
     if (widget.cityProductionPanelOpen && widget.remainingActionCount > 1) {

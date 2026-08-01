@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_control_frame.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 
@@ -9,8 +9,8 @@ final class GamepadCommandMapper {
 
   List<GameIntent> commandsForFrame({
     required GamepadControlFrame frame,
-    required GameState state,
-    TileData? currentTile,
+    required GameClientState state,
+    WorldTile? currentTile,
   }) {
     final commands = <GameIntent>[];
     final cancelCommand = frame.cancelPressed ? commandForCancel(state) : null;
@@ -37,7 +37,7 @@ final class GamepadCommandMapper {
     return commands;
   }
 
-  GameIntent? commandForCancel(GameState state) {
+  GameIntent? commandForCancel(GameClientState state) {
     if (state.cityFoundingDraft != null) {
       return const CancelCityFoundingCommand();
     }
@@ -65,7 +65,7 @@ final class GamepadCommandMapper {
     return null;
   }
 
-  bool canToggleMoveMode(GameState state) {
+  bool canToggleMoveMode(GameClientState state) {
     return switch (state.interactionMode) {
       GameInteractionMode.standard || GameInteractionMode.moveTargeting => true,
       _ => false,

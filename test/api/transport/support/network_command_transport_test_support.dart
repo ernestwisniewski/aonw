@@ -60,7 +60,7 @@ class _ScriptedCommandDispatcher implements WireCommandDispatcher {
 }
 
 class _SnapshotRepository implements GameRepository {
-  SaveSnapshot snapshot;
+  CanonicalGameSnapshot snapshot;
 
   _SnapshotRepository(this.snapshot);
 
@@ -77,21 +77,21 @@ class _SnapshotRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async => snapshot;
+  Future<CanonicalGameSnapshot> load(String saveId) async => snapshot;
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {
+  Future<void> save(CanonicalGameSnapshot snapshot) async {
     this.snapshot = snapshot;
   }
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
   }) async {
-    final updated = snapshot.copyWith(
-      save: snapshot.save.copyWith(
+    final updated = snapshot.withGameSave(
+      snapshot.save.copyWith(
         camera: camera,
         savedAt: savedAt ?? snapshot.save.savedAt,
       ),
@@ -117,13 +117,13 @@ GameSave _save() {
   );
 }
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 4,
   rows: 4,
   tiles: [
     for (var row = 0; row < 4; row++)
       for (var col = 0; col < 4; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],

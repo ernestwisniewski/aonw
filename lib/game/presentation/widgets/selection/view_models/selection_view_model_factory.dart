@@ -8,7 +8,7 @@ import 'package:aonw/game/presentation/widgets/selection/view_models/selection_v
 import 'package:aonw/game/presentation/widgets/selection/view_models/tile_selection_view_model_factory.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/unit_selection_view_model_factory.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -17,8 +17,8 @@ import 'package:aonw_core/game/domain/unit.dart';
 abstract final class SelectionViewModelFactory {
   static SelectionViewModel from(
     GameSelection? selection, {
-    GameState? gameState,
-    MapData? mapData,
+    GameClientState? gameState,
+    WorldMap? mapData,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     StabilityRuleset stabilityRuleset = StabilityRuleset.standard,

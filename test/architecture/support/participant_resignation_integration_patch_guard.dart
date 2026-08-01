@@ -33,7 +33,7 @@ List<String> _legacyAccessViolations(CompilationUnit unit) {
     'GameSave',
     'PersistentGameState',
     'GameRuntimeState',
-    'runtimeState',
+    'lifecycle',
     'toJson',
     'toLegacy',
     'toCanonical',

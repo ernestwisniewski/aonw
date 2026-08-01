@@ -44,7 +44,6 @@ extension _ServerCommandReducerOutcome on ServerCommandReducer {
       outcome: _gameOutcome(
         match: match,
         domain: nextSnapshot.domain,
-        session: nextSnapshot.session,
         mapView: mapView,
       ),
     );
@@ -53,12 +52,10 @@ extension _ServerCommandReducerOutcome on ServerCommandReducer {
   GameOutcome _gameOutcome({
     required WireMatch match,
     required DomainState domain,
-    required MatchSessionState session,
     required MapReadView mapView,
   }) {
     return const GameOutcomeDetector().evaluateCanonical(
       state: _reconcileOutcomeParticipants(match: match, domain: domain),
-      session: session,
       mapData: mapView,
     );
   }

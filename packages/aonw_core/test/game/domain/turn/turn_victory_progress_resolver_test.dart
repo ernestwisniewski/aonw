@@ -5,16 +5,16 @@ void main() {
   group('TurnVictoryProgressResolver parity', () {
     test('matches persistent domination holds and threshold event', () {
       const players = ['p1', 'p2'];
-      const state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [
-          GameCity(
+          const GameCity(
             id: 'city_p1',
             ownerPlayerId: 'p1',
             name: 'City one',
             center: CityHex(col: 0, row: 0),
             controlledHexes: [CityHex(col: 1, row: 0)],
           ),
-          GameCity(
+          const GameCity(
             id: 'city_p2',
             ownerPlayerId: 'p2',
             name: 'City two',
@@ -67,15 +67,15 @@ void main() {
     test('matches persistent cultural hold advancement', () {
       const players = ['p1', 'p2'];
       const previousCulturalHolds = {'p1': 2, 'p2': 3};
-      const state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [
-          GameCity(
+          const GameCity(
             id: 'city_p1',
             ownerPlayerId: 'p1',
             name: 'City one',
             center: CityHex(col: 0, row: 0),
           ),
-          GameCity(
+          const GameCity(
             id: 'city_p2',
             ownerPlayerId: 'p2',
             name: 'City two',
@@ -83,20 +83,19 @@ void main() {
           ),
         ],
         artifacts: [
-          WorldArtifact(
+          const WorldArtifact(
             id: 'artifact_1',
             type: WorldArtifactType.ancientImperialCrown,
             location: WorldArtifactLocation.stored(cityId: 'city_p1'),
           ),
-          WorldArtifact(
+          const WorldArtifact(
             id: 'artifact_2',
             type: WorldArtifactType.astronomersTablets,
             location: WorldArtifactLocation.stored(cityId: 'city_p1'),
           ),
         ],
-        runtimeState: GameRuntimeState(
-          culturalVictoryHoldTurnsByPlayerId: previousCulturalHolds,
-        ),
+
+        culturalVictoryHoldTurnsByPlayerId: previousCulturalHolds,
       );
       final rules = VictoryRules.standard.copyWith(
         dominationEnabled: false,
@@ -130,13 +129,13 @@ void main() {
 List<Map<String, dynamic>> _eventJson(Iterable<GameEvent> events) =>
     events.map(GameEventSerializer.toJson).toList();
 
-MapData _mapData(int cols) {
-  return MapData(
+WorldMap _mapData(int cols) {
+  return WorldMap(
     cols: cols,
     rows: 1,
     tiles: [
       for (var col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.grassland],

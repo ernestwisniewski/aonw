@@ -4,9 +4,9 @@ import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/use_cases/create_local_game_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -31,13 +31,14 @@ final class _RecordingGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async => throw UnimplementedError();
+  Future<CanonicalGameSnapshot> load(String saveId) async =>
+      throw UnimplementedError();
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {}
+  Future<void> save(CanonicalGameSnapshot snapshot) async {}
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
@@ -110,14 +111,14 @@ void main() {
   });
 }
 
-MapData _map({required bool valid}) => MapData(
+WorldMap _map({required bool valid}) => WorldMap(
   cols: 20,
   rows: 20,
   mapName: 'verdantia',
   tiles: [
     for (var row = 0; row < 20; row++)
       for (var col = 0; col < 20; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: [valid ? TerrainType.grassland : TerrainType.ocean],

@@ -1,7 +1,7 @@
 import 'package:aonw_core/game/domain/city/field_improvement.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/objective/map_objective.dart';
-import 'package:aonw_core/game/domain/state/persistent_game_state.dart';
+import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
@@ -58,7 +58,7 @@ class EmpireScoreCalculator {
 
   Map<String, int> scoresFor({
     required Iterable<String> playerIds,
-    required PersistentGameState state,
+    required DomainState state,
     Iterable<MapObjectiveDefinition> mapObjectives = const [],
   }) => scoresForCollections(
     playerIds: playerIds,
@@ -69,7 +69,7 @@ class EmpireScoreCalculator {
     playerGold: state.playerGold,
     mapObjectives: mapObjectives,
     mapObjectiveHoldStatesByObjectiveId:
-        state.runtimeState.mapObjectiveHoldStatesByObjectiveId,
+        state.mapObjectiveHoldStatesByObjectiveId,
   );
 
   Map<String, int> scoresForCollections({
@@ -105,7 +105,7 @@ class EmpireScoreCalculator {
 
   EmpireScoreBreakdown scoreFor({
     required String playerId,
-    required PersistentGameState state,
+    required DomainState state,
     Iterable<MapObjectiveDefinition> mapObjectives = const [],
   }) => scoreForCollections(
     playerId: playerId,
@@ -116,7 +116,7 @@ class EmpireScoreCalculator {
     playerGold: state.playerGold,
     mapObjectives: mapObjectives,
     mapObjectiveHoldStatesByObjectiveId:
-        state.runtimeState.mapObjectiveHoldStatesByObjectiveId,
+        state.mapObjectiveHoldStatesByObjectiveId,
   );
 
   EmpireScoreBreakdown scoreForCollections({

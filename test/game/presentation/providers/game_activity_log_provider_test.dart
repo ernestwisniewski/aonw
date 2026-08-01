@@ -22,7 +22,7 @@ void main() {
           playerIds: const ['player_1', 'player_2'],
         ),
         const CommandRejectedEvent(reason: 'stale_turn'),
-      ], const GameState(activePlayerId: 'player_1'));
+      ], GameClientState(activePlayerId: 'player_1'));
 
       final queued = container.read(gameEventNotificationsProvider);
       expect(queued, hasLength(1));
@@ -42,7 +42,7 @@ void main() {
     container.read(gameEventNotificationsProvider.notifier).addAll([
       for (var index = 0; index < 45; index++)
         CommandRejectedEvent(reason: 'reason_$index'),
-    ], const GameState(activePlayerId: 'player_1'));
+    ], GameClientState(activePlayerId: 'player_1'));
 
     final queued = container.read(gameEventNotificationsProvider);
     expect(queued, hasLength(40));
@@ -76,7 +76,7 @@ void main() {
       name: 'Roma',
       center: CityHex(col: 1, row: 1),
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       cities: const [city],
       units: [attacker],
@@ -148,11 +148,11 @@ void main() {
       col: 2,
       row: 1,
     );
-    final previousState = GameState(
+    final previousState = GameClientState(
       activePlayerId: 'player_1',
       units: [attacker, defender],
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [defender.copyWithHitPoints(1)],
     );
@@ -188,7 +188,7 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    const state = GameState(activePlayerId: 'player_1');
+    final state = GameClientState(activePlayerId: 'player_1');
 
     container.read(gameEventNotificationsProvider.notifier).addAll(const [
       DominationThresholdReachedEvent(
@@ -210,7 +210,7 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    const previousState = GameState(
+    final previousState = GameClientState(
       activePlayerId: 'player_1',
       playerColors: {'player_1': 0xff0000, 'player_2': 0x00ff00},
     );
@@ -250,7 +250,7 @@ void main() {
       name: 'Roma',
       center: CityHex(col: 3, row: 4),
     );
-    final previousState = GameState(
+    final previousState = GameClientState(
       activePlayerId: 'player_1',
       units: [attacker],
       cities: const [city],

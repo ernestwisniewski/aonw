@@ -143,7 +143,7 @@ const _protocolSnapshotProperties = {
   'playerStabilityNet',
   'playerWarWeariness',
   'research',
-  'runtimeState',
+  'lifecycle',
   'units',
   'wonderRegistry',
 };

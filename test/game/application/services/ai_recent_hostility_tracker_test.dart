@@ -158,8 +158,11 @@ RecordedDomainCommand _logged({
   );
 }
 
-SaveSnapshot _snapshot({required int eventLogOffset}) {
-  return SaveSnapshot(save: _save(), eventLogOffset: eventLogOffset);
+CanonicalGameSnapshot _snapshot({required int eventLogOffset}) {
+  return GameSnapshotFactory.create(
+    save: _save(),
+    eventLogOffset: eventLogOffset,
+  );
 }
 
 GameSave _save() {

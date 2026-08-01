@@ -3,8 +3,8 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -21,11 +21,11 @@ void main() {
         row: 0,
       );
       final currentHex = HexCoordinate(col: commander.col, row: commander.row);
-      final state = GameState(
+      final state = GameClientState(
         units: [commander, enemy],
         activePlayerId: 'player_1',
         fogOfWar: _fog(discovered: {currentHex}, visible: {currentHex}),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander),
           moveCommandActive: true,
         ),
@@ -56,11 +56,11 @@ void main() {
         row: 0,
       );
       final currentHex = HexCoordinate(col: commander.col, row: commander.row);
-      final state = GameState(
+      final state = GameClientState(
         units: [commander, enemy],
         activePlayerId: 'player_1',
         fogOfWar: _fog(discovered: {currentHex}, visible: {currentHex}),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander),
           moveCommandActive: true,
         ),
@@ -85,10 +85,10 @@ void main() {
     test('missing actor fog entry does not limit preview distance', () {
       final lineMap = _map(6, 1);
       final commander = _commander();
-      final state = GameState(
+      final state = GameClientState(
         units: [commander],
         activePlayerId: 'player_1',
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander),
           moveCommandActive: true,
         ),
@@ -113,7 +113,7 @@ void main() {
         name: 'Hidden enemy city',
         center: CityHex(col: 1, row: 0),
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [commander],
         cities: const [city],
         activePlayerId: 'player_1',
@@ -124,7 +124,7 @@ void main() {
           },
           visible: {const HexCoordinate(col: 0, row: 0)},
         ),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander),
           moveCommandActive: true,
         ),
@@ -149,11 +149,11 @@ void main() {
         name: 'Intermediate enemy city',
         center: CityHex(col: 1, row: 0),
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [commander],
         cities: const [city],
         activePlayerId: 'player_1',
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander),
           moveCommandActive: true,
         ),
@@ -174,13 +174,13 @@ void main() {
   });
 }
 
-MapData _map(int cols, int rows) => MapData(
+WorldMap _map(int cols, int rows) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (var row = 0; row < rows; row++)
       for (var col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],

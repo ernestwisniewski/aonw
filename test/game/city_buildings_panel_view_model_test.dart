@@ -1,8 +1,8 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -34,14 +34,14 @@ void main() {
       );
     }
 
-    MapData mapWithCenterTerrain(TerrainType terrain) {
-      return MapData(
+    WorldMap mapWithCenterTerrain(TerrainType terrain) {
+      return WorldMap(
         cols: 3,
         rows: 3,
         tiles: [
           for (int row = 0; row < 3; row++)
             for (int col = 0; col < 3; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: [
@@ -54,14 +54,14 @@ void main() {
       );
     }
 
-    MapData mapWithCenterResource(ResourceType resource) {
-      return MapData(
+    WorldMap mapWithCenterResource(ResourceType resource) {
+      return WorldMap(
         cols: 3,
         rows: 3,
         tiles: [
           for (int row = 0; row < 3; row++)
             for (int col = 0; col < 3; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: const [TerrainType.grassland],

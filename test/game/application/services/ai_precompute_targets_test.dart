@@ -12,7 +12,7 @@ void main() {
         final targets = AiPrecomputeTargets.duringHumanTurn(
           save: _save(),
           control: const PlayerControlState(activePlayerId: 'player_1'),
-          gameState: const GameState(
+          gameState: GameClientState(
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
           ),
@@ -36,7 +36,7 @@ void main() {
           },
         ),
         control: const PlayerControlState(activePlayerId: 'player_1'),
-        gameState: const GameState(
+        gameState: GameClientState(
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
         ),
@@ -57,7 +57,7 @@ void main() {
           },
         ),
         control: const PlayerControlState(activePlayerId: 'player_1'),
-        gameState: const GameState(
+        gameState: GameClientState(
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
         ),
@@ -77,7 +77,7 @@ void main() {
           },
         ),
         control: const PlayerControlState(activePlayerId: 'player_1'),
-        gameState: const GameState(
+        gameState: GameClientState(
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
         ),
@@ -90,7 +90,7 @@ void main() {
       final targets = AiPrecomputeTargets.duringHumanTurn(
         save: _save(),
         control: const PlayerControlState(activePlayerId: 'player_1'),
-        gameState: const GameState(
+        gameState: GameClientState(
           activePlayerId: 'player_2',
           activePlayerCanAct: true,
         ),

@@ -15,7 +15,7 @@ import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 GameStateTransition resolveEndTurnForTest(
-  GameState state,
+  GameClientState state,
   String playerId,
   MapReadView mapView, {
   CityRuleset cityRuleset = CityRulesets.standard,
@@ -57,7 +57,10 @@ GameStateTransition resolveEndTurnForTest(
       LocalCommandResolver(
         reducer: GameStateReducer(mapData: mapView, ruleset: ruleset),
       ).resolve(
-        baseSnapshot: SaveSnapshot.fromGameState(save: save, state: state),
+        baseSnapshot: GameSnapshotFactory.fromClientState(
+          save: save,
+          state: state,
+        ),
         currentState: state,
         command: EndTurnCommand(playerId),
         savedAt: savedAt,
@@ -69,7 +72,7 @@ GameStateTransition resolveEndTurnForTest(
   );
 }
 
-List<String> _playerIds(GameState state, String actorPlayerId) {
+List<String> _playerIds(GameClientState state, String actorPlayerId) {
   final ids = <String>{
     actorPlayerId,
     ...state.playerColors.keys,

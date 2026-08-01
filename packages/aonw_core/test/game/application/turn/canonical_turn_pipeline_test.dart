@@ -30,18 +30,18 @@ void _preservesCanonicalBoundaries() {
   expect(snapshot.eventLogOffset, input.eventLogOffset);
   expect(snapshot.domain.turn, 2);
   expect(snapshot.domain.intendedAttacks, isEmpty);
-  expect(snapshot.session.gameMode, GameMode.multiplayer);
-  expect(snapshot.session.turnStatesByPlayerId, {
+  expect(snapshot.domain.gameMode, GameMode.multiplayer);
+  expect(snapshot.domain.turnStatesByPlayerId, {
     'p1': PlayerTurnState.active,
     'p2': PlayerTurnState.active,
     'p3': PlayerTurnState.finished,
   });
-  expect(snapshot.session.submittedPlayerIds, isEmpty);
-  expect(snapshot.session.timeoutStreaksByPlayerId, {'p2': 3});
-  expect(snapshot.session.afkPlayerIds, {'p2'});
-  expect(snapshot.session.kickedPlayerIds, {'p3'});
-  expect(snapshot.session.turnStartedAt, _finalizedAt);
-  expect(snapshot.interaction, input.interaction);
+  expect(snapshot.domain.submittedPlayerIds, isEmpty);
+  expect(snapshot.domain.timeoutStreaksByPlayerId, {'p2': 3});
+  expect(snapshot.domain.afkPlayerIds, {'p2'});
+  expect(snapshot.domain.kickedPlayerIds, {'p3'});
+  expect(snapshot.domain.turnStartedAt, _finalizedAt);
+  expect(snapshot.domain.actions, input.domain.actions);
   expect(snapshot.metadata.id, input.metadata.id);
   expect(snapshot.metadata.schemaVersion, input.metadata.schemaVersion);
   expect(snapshot.metadata.name, input.metadata.name);
@@ -160,97 +160,106 @@ CanonicalTurnPipelineRequest _canonicalRequest(CanonicalGameSnapshot snapshot) {
 
 CanonicalGameSnapshot _canonicalInput() {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
-      turn: 1,
-      matchRules: MatchRules.standard,
-      participants: _players,
-      playerWarWeariness: const {'p3': 17},
-      playerStabilityNet: const {'p3': -9},
-      units: [
-        GameUnit.startingWarrior(
-          ownerPlayerId: 'p1',
-          col: 1,
-          row: 1,
-        ).copyWith(movementPoints: 0),
-      ],
-      intendedAttacks: const [
-        IntendedAttack(
-          attackerUnitId: 'missing_attacker',
-          defenderCol: 2,
-          defenderRow: 2,
-          declaredAtTick: 1,
-          declaringPlayerId: 'p1',
-        ),
-      ],
-      artifacts: const [
-        WorldArtifact(
-          id: 'benchmark_boundary_artifact',
-          type: WorldArtifactType.heroSword,
-          location: WorldArtifactLocation.stored(cityId: 'outside_scope'),
-        ),
-      ],
-      wonderRegistry: WonderRegistry(
-        completedBy: const {WonderType.greatWall: 'p3'},
-      ),
-    ),
-    session: MatchSessionState.snapshot(
-      gameMode: GameMode.multiplayer,
-      turnStatesByPlayerId: _finishedPlayerStates,
-      submittedPlayerIds: const {'p1', 'p2'},
-      timeoutStreaksByPlayerId: const {'p2': 2},
-      afkPlayerIds: const {'p2'},
-      kickedPlayerIds: const {'p3'},
-      turnStartedAt: _startedAt,
-    ),
+    domain:
+        ((DomainState.snapshot(
+              turn: 1,
+              matchRules: MatchRules.standard,
+              participants: _players,
+              playerWarWeariness: const {'p3': 17},
+              playerStabilityNet: const {'p3': -9},
+              units: [
+                GameUnit.startingWarrior(
+                  ownerPlayerId: 'p1',
+                  col: 1,
+                  row: 1,
+                ).copyWith(movementPoints: 0),
+              ],
+              intendedAttacks: const [
+                IntendedAttack(
+                  attackerUnitId: 'missing_attacker',
+                  defenderCol: 2,
+                  defenderRow: 2,
+                  declaredAtTick: 1,
+                  declaringPlayerId: 'p1',
+                ),
+              ],
+              artifacts: const [
+                WorldArtifact(
+                  id: 'benchmark_boundary_artifact',
+                  type: WorldArtifactType.heroSword,
+                  location: WorldArtifactLocation.stored(
+                    cityId: 'outside_scope',
+                  ),
+                ),
+              ],
+              wonderRegistry: WonderRegistry(
+                completedBy: const {WonderType.greatWall: 'p3'},
+              ),
+            )).copyWith(
+              gameMode: GameMode.multiplayer,
+              turnStatesByPlayerId: _finishedPlayerStates,
+              submittedPlayerIds: const {'p1', 'p2'},
+              timeoutStreaksByPlayerId: const {'p2': 2},
+              afkPlayerIds: const {'p2'},
+              kickedPlayerIds: const {'p3'},
+              turnStartedAt: _startedAt,
+            ))
+            .copyWith(
+              actions: DomainActionState(
+                cityFoundingDraft: CityFoundingDraft(
+                  unitId: 'warrior_p1',
+                  ownerPlayerId: 'p1',
+                  center: const CityHex(col: 1, row: 1),
+                ),
+                pendingAction: const PendingResearchSelection(
+                  ownerPlayerId: 'p1',
+                ),
+              ),
+            ),
+
     metadata: _metadata(),
-    interaction: PersistedInteractionState(
-      cityFoundingDraft: CityFoundingDraft(
-        unitId: 'warrior_p1',
-        ownerPlayerId: 'p1',
-        center: const CityHex(col: 1, row: 1),
-      ),
-      pendingAction: const PendingResearchSelection(ownerPlayerId: 'p1'),
-    ),
+
     eventLogOffset: 41,
   );
 }
 
 CanonicalGameSnapshot _combatInput() {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
-      turn: 1,
-      matchRules: MatchRules.standard,
-      participants: _players,
-      units: [
-        GameUnit(
-          id: 'warrior_p1',
-          ownerPlayerId: 'p1',
-          type: GameUnitType.warrior,
-          name: 'Warrior',
-          col: 0,
-          row: 0,
-        ),
-      ],
-      cities: const [
-        GameCity(
-          id: 'city_p2',
-          ownerPlayerId: 'p2',
-          name: 'City two',
-          center: CityHex(col: 1, row: 0),
-          hitPoints: 10,
-        ),
-      ],
-      intendedAttacks: const [
-        IntendedAttack(
-          attackerUnitId: 'warrior_p1',
-          defenderCol: 1,
-          defenderRow: 0,
-          declaredAtTick: 7,
-          declaringPlayerId: 'p1',
-        ),
-      ],
+    domain: _withLifecycle(
+      DomainState.snapshot(
+        turn: 1,
+        matchRules: MatchRules.standard,
+        participants: _players,
+        units: [
+          GameUnit(
+            id: 'warrior_p1',
+            ownerPlayerId: 'p1',
+            type: GameUnitType.warrior,
+            name: 'Warrior',
+            col: 0,
+            row: 0,
+          ),
+        ],
+        cities: const [
+          GameCity(
+            id: 'city_p2',
+            ownerPlayerId: 'p2',
+            name: 'City two',
+            center: CityHex(col: 1, row: 0),
+            hitPoints: 10,
+          ),
+        ],
+        intendedAttacks: const [
+          IntendedAttack(
+            attackerUnitId: 'warrior_p1',
+            defenderCol: 1,
+            defenderRow: 0,
+            declaredAtTick: 7,
+            declaringPlayerId: 'p1',
+          ),
+        ],
+      ),
     ),
-    session: _baseSession(),
     metadata: _metadata(),
     eventLogOffset: 73,
   );
@@ -271,20 +280,21 @@ CanonicalGameSnapshot _movementInput() {
         ),
       );
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
-      turn: 1,
-      matchRules: MatchRules.standard,
-      participants: _players,
-      units: [commander],
+    domain: _withLifecycle(
+      DomainState.snapshot(
+        turn: 1,
+        matchRules: MatchRules.standard,
+        participants: _players,
+        units: [commander],
+      ),
     ),
-    session: _baseSession(),
     metadata: _metadata(),
     eventLogOffset: 91,
   );
 }
 
-MatchSessionState _baseSession() {
-  return MatchSessionState.snapshot(
+DomainState _withLifecycle(DomainState state) {
+  return state.copyWith(
     gameMode: GameMode.multiplayer,
     turnStatesByPlayerId: _finishedPlayerStates,
     turnStartedAt: _startedAt,
@@ -302,14 +312,14 @@ GameSnapshotMetadata _metadata() {
   );
 }
 
-MapData _mapData() {
-  return MapData(
+WorldMap _mapData() {
+  return WorldMap(
     cols: 3,
     rows: 3,
     tiles: [
       for (var col = 0; col < 3; col++)
         for (var row = 0; row < 3; row++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.grassland],

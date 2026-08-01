@@ -11,7 +11,22 @@ bool _sameDomainState(DomainState left, DomainState right) {
 bool _sameDomainIdentity(DomainState left, DomainState right) {
   return left.turn == right.turn &&
       left.matchRules == right.matchRules &&
-      listEquals(left.participants, right.participants);
+      listEquals(left.participants, right.participants) &&
+      left.gameMode == right.gameMode &&
+      _sameDomainTurnLifecycle(left, right);
+}
+
+bool _sameDomainTurnLifecycle(DomainState left, DomainState right) {
+  return mapEquals(left.turnStatesByPlayerId, right.turnStatesByPlayerId) &&
+      setEquals(left.submittedPlayerIds, right.submittedPlayerIds) &&
+      mapEquals(
+        left.timeoutStreaksByPlayerId,
+        right.timeoutStreaksByPlayerId,
+      ) &&
+      setEquals(left.afkPlayerIds, right.afkPlayerIds) &&
+      setEquals(left.kickedPlayerIds, right.kickedPlayerIds) &&
+      left.turnStartedAt == right.turnStartedAt &&
+      left.actions == right.actions;
 }
 
 bool _sameDomainEconomy(DomainState left, DomainState right) {
@@ -65,6 +80,14 @@ int _domainIdentityHash(DomainState state) => Object.hash(
   state.turn,
   state.matchRules,
   Object.hashAll(state.participants),
+  state.gameMode,
+  mapHash(state.turnStatesByPlayerId),
+  Object.hashAllUnordered(state.submittedPlayerIds),
+  mapHash(state.timeoutStreaksByPlayerId),
+  Object.hashAllUnordered(state.afkPlayerIds),
+  Object.hashAllUnordered(state.kickedPlayerIds),
+  state.turnStartedAt,
+  state.actions,
 );
 
 int _domainEconomyHash(DomainState state) => Object.hash(

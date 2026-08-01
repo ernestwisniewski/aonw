@@ -9,7 +9,7 @@ import 'package:aonw_core/map/domain/map_tile_view.dart';
 export 'domination_progress.dart';
 export 'domination_progress_resolver.dart';
 
-/// Compatibility facade for callers that still own [PersistentGameState].
+/// Compatibility facade for callers that still own [DomainState].
 final class DominationProgressCalculator {
   const DominationProgressCalculator();
 
@@ -17,7 +17,7 @@ final class DominationProgressCalculator {
 
   DominationProgressSnapshot snapshot({
     required Iterable<String> playerIds,
-    required PersistentGameState state,
+    required DomainState state,
     required MapTileCatalog mapData,
     required VictoryRules victoryRules,
     Map<String, int>? holdTurnsByPlayerId,
@@ -27,7 +27,7 @@ final class DominationProgressCalculator {
     mapData: mapData,
     victoryRules: victoryRules,
     holdTurnsByPlayerId:
-        holdTurnsByPlayerId ?? state.runtimeState.dominationHoldTurnsByPlayerId,
+        holdTurnsByPlayerId ?? state.dominationHoldTurnsByPlayerId,
   );
 
   DominationProgressSnapshot snapshotForCities({
@@ -46,7 +46,7 @@ final class DominationProgressCalculator {
 
   Map<String, int> advanceHoldTurns({
     required Iterable<String> playerIds,
-    required PersistentGameState state,
+    required DomainState state,
     required MapTileCatalog mapData,
     required VictoryRules victoryRules,
     Map<String, int>? previousHoldTurnsByPlayerId,
@@ -56,8 +56,7 @@ final class DominationProgressCalculator {
     mapData: mapData,
     victoryRules: victoryRules,
     previousHoldTurnsByPlayerId:
-        previousHoldTurnsByPlayerId ??
-        state.runtimeState.dominationHoldTurnsByPlayerId,
+        previousHoldTurnsByPlayerId ?? state.dominationHoldTurnsByPlayerId,
   );
 
   Map<String, int> advanceHoldTurnsForCities({
@@ -76,7 +75,7 @@ final class DominationProgressCalculator {
 
   List<DominationThresholdReachedEvent> thresholdReachedEvents({
     required Iterable<String> playerIds,
-    required PersistentGameState state,
+    required DomainState state,
     required MapTileCatalog mapData,
     required VictoryRules victoryRules,
     required Map<String, int> previousHoldTurnsByPlayerId,

@@ -17,7 +17,7 @@ abstract final class _EconomySimulationTelemetry {
 
   static Map<String, BalanceTelemetryObjectiveActionSample> objectiveActions({
     required int turn,
-    required PersistentGameState state,
+    required DomainState state,
     required Iterable<String> playerIds,
     required MatchRules matchRules,
     required GameRuleset ruleset,

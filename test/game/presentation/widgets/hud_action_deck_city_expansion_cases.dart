@@ -14,9 +14,9 @@ void _registerHudActionDeckCityExpansionCases() {
 
       await _pumpDeck(
         tester,
-        gameState: const GameState(
+        gameState: GameClientState(
           cities: [city],
-          interaction: GameInteractionState(
+          interaction: const InteractionState(
             pendingAction: PendingCityExpansionSelection(
               ownerPlayerId: 'player_1',
               cityId: 'city_1',
@@ -62,9 +62,9 @@ void _registerHudActionDeckCityExpansionCases() {
 
     await _pumpDeck(
       tester,
-      gameState: const GameState(
+      gameState: GameClientState(
         cities: [city],
-        interaction: GameInteractionState(
+        interaction: const InteractionState(
           pendingAction: PendingCityExpansionSelection(
             ownerPlayerId: 'player_1',
             cityId: 'city_1',

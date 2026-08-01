@@ -17,8 +17,8 @@ final class LocalCityEconomyCommandResolution {
     required this.events,
   });
 
-  final SaveSnapshot snapshot;
-  final GameState state;
+  final CanonicalGameSnapshot snapshot;
+  final GameClientState state;
   final List<GameEvent> events;
 }
 
@@ -32,8 +32,8 @@ final class LocalCityEconomyCommandResolver {
   final GameRuleset ruleset;
 
   LocalCityEconomyCommandResolution resolve({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
@@ -43,7 +43,7 @@ final class LocalCityEconomyCommandResolver {
       return _unchanged(baseSnapshot, currentState, savedAt);
     }
     final engineSnapshot = baseSnapshot.canonical.copyWith(
-      interaction: PersistedInteractionState(
+      actions: DomainActionState(
         cityFoundingDraft: currentState.cityFoundingDraft,
         pendingAction: currentState.pendingAction,
       ),
@@ -86,8 +86,8 @@ final class LocalCityEconomyCommandResolver {
   }
 
   LocalCityEconomyCommandResolution _unchanged(
-    SaveSnapshot snapshot,
-    GameState state,
+    CanonicalGameSnapshot snapshot,
+    GameClientState state,
     DateTime savedAt,
   ) {
     return LocalCityEconomyCommandResolution(
@@ -101,8 +101,8 @@ final class LocalCityEconomyCommandResolver {
   }
 
   String _actorPlayerId({
-    required SaveSnapshot snapshot,
-    required GameState state,
+    required CanonicalGameSnapshot snapshot,
+    required GameClientState state,
     required DomainCommand command,
     required GameCommandContext context,
   }) {
@@ -115,13 +115,13 @@ final class LocalCityEconomyCommandResolver {
         '';
   }
 
-  String? _unitOwner(SaveSnapshot snapshot, DomainCommand command) {
+  String? _unitOwner(CanonicalGameSnapshot snapshot, DomainCommand command) {
     return command is! UnitDomainCommand
         ? null
         : snapshot.domain.units.byId(command.unitId)?.ownerPlayerId;
   }
 
-  String? _cityOwner(SaveSnapshot snapshot, DomainCommand command) {
+  String? _cityOwner(CanonicalGameSnapshot snapshot, DomainCommand command) {
     return command is! CityTargetDomainCommand
         ? null
         : snapshot.domain.cities.byId(command.cityId)?.ownerPlayerId;

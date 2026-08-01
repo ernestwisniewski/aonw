@@ -1,17 +1,17 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 4,
   rows: 4,
   tiles: [
     for (var row = 0; row < 4; row++)
       for (var col = 0; col < 4; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: switch ((col, row)) {
@@ -93,13 +93,13 @@ void main() {
     });
 
     test('allows fishing boats on controlled coastal fish', () {
-      final coastalMap = MapData(
+      final coastalMap = WorldMap(
         cols: 4,
         rows: 4,
         tiles: [
           for (var row = 0; row < 4; row++)
             for (var col = 0; col < 4; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: col == 1 && row == 0
@@ -134,13 +134,13 @@ void main() {
     });
 
     test('allows pearl divers on controlled coastal pearls', () {
-      final coastalMap = MapData(
+      final coastalMap = WorldMap(
         cols: 4,
         rows: 4,
         tiles: [
           for (var row = 0; row < 4; row++)
             for (var col = 0; col < 4; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: col == 1 && row == 0

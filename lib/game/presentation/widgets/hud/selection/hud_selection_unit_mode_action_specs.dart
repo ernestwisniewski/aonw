@@ -2,8 +2,8 @@ part of 'hud_selection_actions.dart';
 
 List<_HudSelectionActionSpec>? _activeUnitModeActionsFor({
   required GameUnit unit,
-  required GameState? gameState,
-  required MapData mapData,
+  required GameClientState? gameState,
+  required WorldMap mapData,
   required WorkerActionPanelViewModel? workerAction,
   required bool cityFoundingActive,
   required bool actionsLocked,

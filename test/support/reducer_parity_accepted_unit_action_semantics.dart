@@ -2,8 +2,8 @@ part of 'reducer_parity_accepted_semantics.dart';
 
 String? validateAcceptedUnitActionCommand({
   required DomainCommand command,
-  required PersistentGameState before,
-  required PersistentGameState after,
+  required DomainState before,
+  required DomainState after,
   required List<GameEvent> events,
 }) {
   if (events.isNotEmpty) {
@@ -31,13 +31,13 @@ String? validateAcceptedUnitActionCommand({
 
 String? _validateAcceptedUnitActionCancel(
   CancelUnitActionCommand command,
-  PersistentGameState before,
-  PersistentGameState after,
+  DomainState before,
+  DomainState after,
 ) {
   final unit = before.units.byId(command.unitId);
   if (unit == null) return 'must cancel an existing unit action';
 
-  final pendingSkip = before.runtimeState.pendingAction;
+  final pendingSkip = before.actions.pendingAction;
   final restoredMovementPoints =
       pendingSkip is PendingUnitTurnSkip && pendingSkip.unitId == unit.id
       ? pendingSkip.restoreMovementPoints
@@ -62,7 +62,7 @@ String? _validateAcceptedUnitActionCancel(
       before.artifacts,
       unit,
     ),
-    runtimeState: _clearUnitActionFixtureRuntime(before.runtimeState, unit.id),
+    actions: _clearUnitActionFixtureActions(before.actions, unit.id),
   );
   return after == expected
       ? null
@@ -71,8 +71,8 @@ String? _validateAcceptedUnitActionCancel(
 
 String? _validateAcceptedUnitActionSkip(
   SkipUnitTurnCommand command,
-  PersistentGameState before,
-  PersistentGameState after,
+  DomainState before,
+  DomainState after,
 ) {
   final unit = before.units.byId(command.unitId);
   if (unit == null) return 'must skip an existing unit';
@@ -83,11 +83,10 @@ String? _validateAcceptedUnitActionSkip(
       .copyWithPosture(UnitPosture.active);
   final expected = before.copyWith(
     units: _replaceUnitActionFixtureUnit(before.units, updated),
-    runtimeState: before.runtimeState.copyWith(
-      cityFoundingDraft:
-          before.runtimeState.cityFoundingDraft?.unitId == unit.id
+    actions: before.actions.copyWith(
+      cityFoundingDraft: before.actions.cityFoundingDraft?.unitId == unit.id
           ? null
-          : before.runtimeState.cityFoundingDraft,
+          : before.actions.cityFoundingDraft,
       pendingAction: PendingUnitTurnSkip(
         ownerPlayerId: unit.ownerPlayerId,
         unitId: unit.id,
@@ -102,8 +101,8 @@ String? _validateAcceptedUnitActionSkip(
 
 String? _validateAcceptedUnitActionFortify(
   FortifyUnitCommand command,
-  PersistentGameState before,
-  PersistentGameState after,
+  DomainState before,
+  DomainState after,
 ) {
   final unit = before.units.byId(command.unitId);
   if (unit == null || unit.isWorking) {
@@ -115,23 +114,23 @@ String? _validateAcceptedUnitActionFortify(
       before.units,
       UnitFortificationRules.fortify(unit),
     ),
-    runtimeState: _clearUnitActionFixtureRuntime(before.runtimeState, unit.id),
+    actions: _clearUnitActionFixtureActions(before.actions, unit.id),
   );
   return after == expected
       ? null
       : 'must fortify only the unit and clear only its owned runtime action';
 }
 
-GameRuntimeState _clearUnitActionFixtureRuntime(
-  GameRuntimeState runtime,
+DomainActionState _clearUnitActionFixtureActions(
+  DomainActionState actions,
   String unitId,
 ) {
-  final clearPending = runtime.pendingAction?.ownsUnit(unitId) ?? false;
-  final clearDraft = runtime.cityFoundingDraft?.unitId == unitId;
-  if (!clearPending && !clearDraft) return runtime;
-  return runtime.copyWith(
-    cityFoundingDraft: clearDraft ? null : runtime.cityFoundingDraft,
-    pendingAction: clearPending ? null : runtime.pendingAction,
+  final clearPending = actions.pendingAction?.ownsUnit(unitId) ?? false;
+  final clearDraft = actions.cityFoundingDraft?.unitId == unitId;
+  if (!clearPending && !clearDraft) return actions;
+  return actions.copyWith(
+    cityFoundingDraft: clearDraft ? null : actions.cityFoundingDraft,
+    pendingAction: clearPending ? null : actions.pendingAction,
   );
 }
 

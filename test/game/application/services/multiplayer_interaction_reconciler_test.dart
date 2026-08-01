@@ -1,8 +1,8 @@
 import 'package:aonw/game/application/services/multiplayer_interaction_reconciler.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/stability.dart';
@@ -15,10 +15,10 @@ void main() {
     test('preserves a valid local worker draft over a network snapshot', () {
       final worker = _unit('worker_1', GameUnitType.worker);
       final updatedWorker = worker.copyWith(movementPoints: 1);
-      final source = GameState(
+      final source = GameClientState(
         activePlayerId: 'player_1',
         units: [worker],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(worker, tile: _tile),
           pendingAction: const PendingWorkerActionSelection(
             ownerPlayerId: 'player_1',
@@ -27,7 +27,7 @@ void main() {
           ),
         ),
       );
-      final authoritative = GameState(
+      final authoritative = GameClientState(
         activePlayerId: 'player_1',
         units: [updatedWorker],
       );
@@ -52,14 +52,14 @@ void main() {
           ownerPlayerId: 'player_1',
           center: const CityHex(col: 0, row: 0),
         );
-        final foundingSource = GameState(
+        final foundingSource = GameClientState(
           activePlayerId: 'player_1',
           units: [settler, warrior],
-          interaction: GameInteractionState(cityFoundingDraft: draft),
+          interaction: InteractionState(cityFoundingDraft: draft),
         );
 
         final foundingResult = MultiplayerInteractionReconciler.reconcile(
-          authoritativeState: GameState(
+          authoritativeState: GameClientState(
             activePlayerId: 'player_1',
             units: [settler, warrior],
           ),
@@ -68,7 +68,7 @@ void main() {
         expect(foundingResult.cityFoundingDraft, draft);
 
         final targetingSource = foundingSource.copyWith(
-          interaction: const GameInteractionState(
+          interaction: const InteractionState(
             pendingAction: PendingAttackTargeting(
               ownerPlayerId: 'player_1',
               attackerUnitId: 'warrior_1',
@@ -76,7 +76,7 @@ void main() {
           ),
         );
         final targetingResult = MultiplayerInteractionReconciler.reconcile(
-          authoritativeState: GameState(
+          authoritativeState: GameClientState(
             activePlayerId: 'player_1',
             units: [settler, warrior],
           ),
@@ -88,10 +88,10 @@ void main() {
 
     test('drops transient actions whose entity disappeared', () {
       final warrior = _unit('warrior_1', GameUnitType.warrior);
-      final source = GameState(
+      final source = GameClientState(
         activePlayerId: 'player_1',
         units: [warrior],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(warrior, tile: _tile),
           pendingAction: const PendingAttackTargeting(
             ownerPlayerId: 'player_1',
@@ -101,7 +101,7 @@ void main() {
       );
 
       final result = MultiplayerInteractionReconciler.reconcile(
-        authoritativeState: const GameState(activePlayerId: 'player_1'),
+        authoritativeState: GameClientState(activePlayerId: 'player_1'),
         interactionSource: source,
       );
 
@@ -111,20 +111,20 @@ void main() {
 
     test('prefers server-owned pending state', () {
       final worker = _unit('worker_1', GameUnitType.worker);
-      final source = GameState(
+      final source = GameClientState(
         activePlayerId: 'player_1',
         units: [worker],
-        interaction: const GameInteractionState(
+        interaction: const InteractionState(
           pendingAction: PendingWorkerActionSelection(
             ownerPlayerId: 'player_1',
             unitId: 'worker_1',
           ),
         ),
       );
-      final authoritative = GameState(
+      final authoritative = GameClientState(
         activePlayerId: 'player_1',
         units: [worker],
-        interaction: const GameInteractionState(
+        interaction: const InteractionState(
           pendingAction: PendingUnitTurnSkip(
             ownerPlayerId: 'player_1',
             unitId: 'worker_1',
@@ -143,10 +143,10 @@ void main() {
 
     test('drops local action drafts after the player submits the turn', () {
       final worker = _unit('worker_1', GameUnitType.worker);
-      final source = GameState(
+      final source = GameClientState(
         activePlayerId: 'player_1',
         units: [worker],
-        interaction: const GameInteractionState(
+        interaction: const InteractionState(
           pendingAction: PendingWorkerActionSelection(
             ownerPlayerId: 'player_1',
             unitId: 'worker_1',
@@ -155,7 +155,7 @@ void main() {
       );
 
       final result = MultiplayerInteractionReconciler.reconcile(
-        authoritativeState: GameState(
+        authoritativeState: GameClientState(
           activePlayerId: 'player_1',
           activePlayerCanAct: false,
           units: [worker],
@@ -203,10 +203,10 @@ void main() {
         foodDeposit: 0,
         growthCost: 10,
       );
-      final source = GameState(
+      final source = GameClientState(
         activePlayerId: 'player_1',
         cities: const [sourceCity],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.city(
             sourceCity,
             cityYield: rawYield,
@@ -218,7 +218,7 @@ void main() {
       );
 
       final result = MultiplayerInteractionReconciler.reconcile(
-        authoritativeState: const GameState(
+        authoritativeState: GameClientState(
           activePlayerId: 'player_1',
           cities: [authoritativeCity],
           playerStabilityNet: {'player_1': 4},
@@ -240,7 +240,7 @@ void main() {
   });
 }
 
-const _tile = TileData(
+final _tile = WorldTile(
   col: 0,
   row: 0,
   terrains: [TerrainType.plains],

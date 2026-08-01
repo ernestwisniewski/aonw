@@ -12,7 +12,7 @@ void main() {
       final savedAt = DateTime.utc(2026, 7, 9, 12);
       const mapTiles = _EmptyMapTiles();
       final context = TurnContext(
-        state: const GameState(),
+        state: GameClientState(),
         save: GameSave(
           id: 'save_1',
           name: 'Game',

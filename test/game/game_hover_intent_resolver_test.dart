@@ -3,15 +3,12 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/engine/game_hover_intent_resolver.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/hover_intent_marker.dart';
-import 'package:aonw/map/domain/map_data.dart' show MapData, TileData;
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -19,9 +16,9 @@ void main() {
     test('marks impassable move targets as blocked', () {
       final map = _map(blockedHex: const CityHex(col: 1, row: 1));
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final state = GameState(
+      final state = GameClientState(
         units: [commander],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
           moveCommandActive: true,
         ),
@@ -63,16 +60,16 @@ void main() {
         col: 0,
         row: 0,
       );
-      final scoutState = GameState(
+      final scoutState = GameClientState(
         units: [scout],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(scout, tile: _tile(map, 0, 0)),
           moveCommandActive: true,
         ),
       );
-      final cavalryState = GameState(
+      final cavalryState = GameClientState(
         units: [cavalry],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(cavalry, tile: _tile(map, 0, 0)),
           moveCommandActive: true,
         ),
@@ -112,7 +109,7 @@ void main() {
         col: 0,
         row: 0,
       ).copyWith(movementPoints: 2).copyWithCarriedArtifact('artifact_1');
-      final state = GameState(
+      final state = GameClientState(
         units: [carrier],
         cities: const [
           GameCity(
@@ -122,7 +119,7 @@ void main() {
             center: CityHex(col: 1, row: 0),
           ),
         ],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(carrier, tile: _tile(map, 0, 0)),
           moveCommandActive: true,
         ),
@@ -145,11 +142,11 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [commander, enemy],
         fogOfWar: _movementFog(),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
           moveCommandActive: true,
         ),
@@ -173,12 +170,12 @@ void main() {
         name: 'Hidden city',
         center: CityHex(col: 1, row: 0),
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [commander],
         cities: const [city],
         fogOfWar: _movementFog(),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
           moveCommandActive: true,
         ),
@@ -196,10 +193,10 @@ void main() {
     test('missing actor fog entry does not limit movement hover distance', () {
       final map = _map(cols: 5, rows: 1);
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [commander],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
           moveCommandActive: true,
         ),
@@ -216,9 +213,9 @@ void main() {
 
     test('uses founding player color and reduce-motion preference', () {
       final map = _map();
-      final state = GameState(
+      final state = GameClientState(
         playerColors: {'player_1': 0xFF123456},
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           cityFoundingDraft: CityFoundingDraft(
             unitId: 'settler_1',
             ownerPlayerId: 'player_1',
@@ -239,7 +236,7 @@ void main() {
     });
 
     test('keeps inspect hover active only during long-press inspection', () {
-      final resolver = _resolver(const GameState(), _map());
+      final resolver = _resolver(GameClientState(), _map());
 
       expect(
         resolver.isStale(HoverIntentKind.inspect, longPressInspectActive: true),
@@ -268,7 +265,7 @@ FogOfWarState _movementFog() {
 }
 
 GameHoverIntentResolver _resolver(
-  GameState state,
+  GameClientState state,
   MapTraversalView mapView, {
   bool reduceMotion = false,
 }) {
@@ -281,17 +278,15 @@ GameHoverIntentResolver _resolver(
 }
 
 List<HoverIntentMarkerSpec?> _moveIntents(
-  GameState state,
-  MapData legacyMap, {
+  GameClientState state,
+  WorldMap legacyMap, {
   required int col,
   required int row,
 }) {
-  final canonicalView = WorldMapReadView(
-    WorldMap.fromTileViews(
-      cols: legacyMap.cols,
-      rows: legacyMap.rows,
-      tiles: legacyMap.tiles,
-    ),
+  final canonicalView = WorldMap.fromTileViews(
+    cols: legacyMap.cols,
+    rows: legacyMap.rows,
+    tiles: legacyMap.tiles,
   );
   return [
     _resolver(state, legacyMap).resolve(legacyMap.tileAt(col, row)!),
@@ -299,19 +294,19 @@ List<HoverIntentMarkerSpec?> _moveIntents(
   ];
 }
 
-MapData _map({
+WorldMap _map({
   CityHex? blockedHex,
   int cols = 3,
   int rows = 3,
   Map<({int col, int row}), List<TerrainType>> terrainOverrides = const {},
 }) {
-  return MapData(
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains:
@@ -326,6 +321,6 @@ MapData _map({
   );
 }
 
-TileData _tile(MapData map, int col, int row) {
+WorldTile _tile(WorldMap map, int col, int row) {
   return map.tiles.firstWhere((tile) => tile.col == col && tile.row == row);
 }

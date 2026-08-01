@@ -53,8 +53,8 @@ void main() {
 
     test('specializes coastal cities for commerce', () {
       final view = _view(
-        mapData: _map(const [
-          TileData(
+        mapData: _map([
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.coast],
@@ -75,8 +75,8 @@ void main() {
 
     test('specializes food-rich cities for growth', () {
       final view = _view(
-        mapData: _map(const [
-          TileData(
+        mapData: _map([
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.grassland],
@@ -164,8 +164,8 @@ void main() {
 
     test('keeps current specialization when the new fit is only marginal', () {
       final view = _view(
-        mapData: _map(const [
-          TileData(
+        mapData: _map([
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.coast],
@@ -202,8 +202,8 @@ void main() {
 
     test('does not specialize around unrevealed strategic resources', () {
       final view = _view(
-        mapData: _map(const [
-          TileData(
+        mapData: _map([
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.plains],
@@ -256,13 +256,13 @@ ResearchState _researchWithUnlockedSpecialization() {
 }
 
 GameView _view({
-  required MapData mapData,
+  required WorldMap mapData,
   required ResearchState research,
   List<GameCity> cities = const [_capital],
   List<PendingCityAttackThreat> pendingCityAttackThreats = const [],
 }) {
-  return GameView.fromPersistentState(
-    PersistentGameState(cities: cities, research: research),
+  return GameView.fromDomainState(
+    DomainState.snapshot(cities: cities, research: research),
     forPlayerId: 'player_1',
     turn: 2,
     mapData: mapData,
@@ -285,16 +285,20 @@ AiContext _context(GameView view, {AiPersona persona = AiPersona.balanced}) {
   );
 }
 
-MapData _map([
-  List<TileData> tiles = const [
-    TileData(
-      col: 0,
-      row: 0,
-      terrains: [TerrainType.plains],
-      resources: [],
-      height: 0,
-    ),
-  ],
-]) {
-  return MapData(cols: 1, rows: 1, tiles: tiles);
+WorldMap _map([List<WorldTile>? tiles]) {
+  return WorldMap(
+    cols: 1,
+    rows: 1,
+    tiles:
+        tiles ??
+        [
+          WorldTile(
+            col: 0,
+            row: 0,
+            terrains: [TerrainType.plains],
+            resources: [],
+            height: 0,
+          ),
+        ],
+  );
 }

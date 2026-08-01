@@ -8,10 +8,10 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/services/isolated_ai_plan_executor.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -42,7 +42,7 @@ void main() {
           SkipUnitTurnCommand('commander_player_1'),
         ]),
         context: _context(turn: 3),
-        initialState: const GameState(activePlayerId: 'player_1'),
+        initialState: GameClientState(activePlayerId: 'player_1'),
         view: _view(),
         interCommandDelay: Duration.zero,
       );
@@ -95,7 +95,7 @@ void main() {
           StartCityProjectCommand('city_1', CityProjectType.wealth),
         ]),
         context: _context(turn: 3),
-        initialState: const GameState(activePlayerId: 'player_1'),
+        initialState: GameClientState(activePlayerId: 'player_1'),
         view: _view(),
         interCommandDelay: const Duration(milliseconds: 40),
       );
@@ -120,7 +120,7 @@ void main() {
         playerId: 'player_1',
         strategy: const _StaticStrategy([MoveUnitCommand('unit_1', 0, 1)]),
         context: _context(turn: 3),
-        initialState: const GameState(activePlayerId: 'player_1'),
+        initialState: GameClientState(activePlayerId: 'player_1'),
         view: _view(),
         interCommandDelay: const Duration(milliseconds: 40),
       );
@@ -143,7 +143,7 @@ void main() {
         playerId: 'player_1',
         strategy: const _StaticStrategy([MoveUnitCommand('unit_1', 2, 3)]),
         context: _context(turn: 3),
-        initialState: const GameState(activePlayerId: 'player_1'),
+        initialState: GameClientState(activePlayerId: 'player_1'),
         view: _view(),
         interCommandDelay: Duration.zero,
       );
@@ -184,7 +184,7 @@ void main() {
         playerId: 'player_2',
         strategy: const _StaticStrategy([EndTurnCommand('player_2')]),
         context: _context(turn: 4),
-        initialState: const GameState(activePlayerId: 'player_2'),
+        initialState: GameClientState(activePlayerId: 'player_2'),
         view: _view(forPlayerId: 'player_2'),
         terminalCommand: AiTerminalCommand.submitTurn,
         interCommandDelay: Duration.zero,
@@ -211,7 +211,7 @@ void main() {
         playerId: 'player_1',
         strategy: const _StaticStrategy([command]),
         context: _context(turn: 5),
-        initialState: const GameState(activePlayerId: 'player_1'),
+        initialState: GameClientState(activePlayerId: 'player_1'),
         view: _view(),
         interCommandDelay: Duration.zero,
       );
@@ -234,7 +234,7 @@ void main() {
         playerId: 'player_1',
         strategy: const _StaticStrategy([command]),
         context: _context(turn: 5),
-        initialState: GameState(
+        initialState: GameClientState(
           activePlayerId: 'player_1',
           units: [
             GameUnit(
@@ -280,7 +280,7 @@ void main() {
           playerId: 'player_1',
           strategy: const _StaticStrategy([command]),
           context: _context(turn: 5),
-          initialState: GameState(
+          initialState: GameClientState(
             activePlayerId: 'player_1',
             units: [
               GameUnit(
@@ -340,7 +340,7 @@ void main() {
           playerId: 'player_1',
           strategy: const _ThrowingStrategy(),
           context: _context(turn: 6),
-          initialState: const GameState(activePlayerId: 'player_1'),
+          initialState: GameClientState(activePlayerId: 'player_1'),
           view: _view(),
           interCommandDelay: Duration.zero,
         );
@@ -372,7 +372,7 @@ void main() {
         playerId: 'player_1',
         strategy: const _ThrowingStrategy(),
         context: _context(turn: 6),
-        initialState: const GameState(activePlayerId: 'player_1'),
+        initialState: GameClientState(activePlayerId: 'player_1'),
         view: _view(),
         precomputedPlan: Future.value(AiTurnPlan(commands: const [command])),
         interCommandDelay: Duration.zero,
@@ -419,7 +419,7 @@ void main() {
         playerId: 'player_1',
         strategy: const _ThrowingStrategy(),
         context: _context(turn: 6),
-        initialState: const GameState(activePlayerId: 'player_1'),
+        initialState: GameClientState(activePlayerId: 'player_1'),
         view: _view(),
         precomputedPlan: Future<AiTurnPlan>.error(StateError('stale')),
         interCommandDelay: Duration.zero,
@@ -552,7 +552,7 @@ class _RecordingCommandTransport implements CommandTransport {
   @override
   Future<CommandTransportResult> dispatch({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
     bool fromMovePreviewConfirmation = false,
@@ -567,7 +567,7 @@ class _RecordingCommandTransport implements CommandTransport {
     };
     return CommandTransportResult(
       state: nextState,
-      snapshot: SaveSnapshot(save: _save),
+      snapshot: GameSnapshotFactory.create(save: _save),
       offset: commands.length,
       uiEffects: switch (command) {
         EndTurnCommand() ||
@@ -618,11 +618,11 @@ GameView _view({String forPlayerId = 'player_1'}) {
   );
 }
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 1,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],

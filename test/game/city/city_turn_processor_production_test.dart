@@ -1,19 +1,19 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _grassMap() => MapData(
+WorldMap _grassMap() => WorldMap(
   cols: 4,
   rows: 4,
   tiles: [
     for (var row = 0; row < 4; row++)
       for (var col = 0; col < 4; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],
@@ -23,7 +23,7 @@ MapData _grassMap() => MapData(
   ],
 );
 
-MapData _coastalMap() {
+WorldMap _coastalMap() {
   final map = _grassMap();
   final coastIndex = map.tiles.indexWhere(
     (tile) => tile.col == 2 && tile.row == 1,
@@ -192,13 +192,13 @@ void main() {
     });
 
     test('uses city production yield as build investment', () {
-      final productionMap = MapData(
+      final productionMap = WorldMap(
         cols: 4,
         rows: 4,
         tiles: [
           for (var row = 0; row < 4; row++)
             for (var col = 0; col < 4; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: col == 2 && row == 1
@@ -227,13 +227,13 @@ void main() {
     });
 
     test('stores production overflow when completing a building', () {
-      final productionMap = MapData(
+      final productionMap = WorldMap(
         cols: 4,
         rows: 4,
         tiles: [
           for (var row = 0; row < 4; row++)
             for (var col = 0; col < 4; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: col == 2 && row == 1
@@ -267,13 +267,13 @@ void main() {
     });
 
     test('adds strategic resource production from unlocked technologies', () {
-      final coalMap = MapData(
+      final coalMap = WorldMap(
         cols: 4,
         rows: 4,
         tiles: [
           for (var row = 0; row < 4; row++)
             for (var col = 0; col < 4; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: const [TerrainType.grassland],

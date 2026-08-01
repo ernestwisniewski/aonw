@@ -41,16 +41,16 @@ void main() {
       steps: const [],
     );
     final selection = GameSelection.unit(selectedUnit);
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [actedUnit, selectedUnit],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: selection,
         movePreview: preview,
         moveCommandActive: true,
       ),
     );
-    final baseSnapshot = SaveSnapshot.fromGameState(
+    final baseSnapshot = GameSnapshotFactory.fromClientState(
       save: _unitActionSave(),
       state: state,
     );
@@ -90,16 +90,16 @@ void main() {
       availableMovementPoints: 3,
       steps: const [],
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [actedUnit],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(actedUnit),
         movePreview: preview,
         moveCommandActive: true,
       ),
     );
-    final baseSnapshot = SaveSnapshot.fromGameState(
+    final baseSnapshot = GameSnapshotFactory.fromClientState(
       save: _unitActionSave(),
       state: state,
     );
@@ -132,7 +132,7 @@ void main() {
       row: 0,
       movementPoints: 3,
     );
-    final baseSnapshot = SaveSnapshot(
+    final baseSnapshot = GameSnapshotFactory.create(
       save: _unitActionSave().copyWith(
         players: const [],
         gameMode: GameMode.multiplayer,
@@ -140,12 +140,12 @@ void main() {
       playerColors: const {'player_1': 0xFF010203},
       playerCountries: const {'country_only': PlayerCountry.canada},
       units: [unit],
-      runtimeState: GameRuntimeState.snapshot(
-        submittedPlayerIds: const {'session_only'},
-        timeoutStreaksByPlayerId: const {'timeout_only': 2},
-        afkPlayerIds: const {'afk_only'},
-        kickedPlayerIds: const {'kicked_only'},
-      ),
+
+      submittedPlayerIds: const {'session_only'},
+      timeoutStreaksByPlayerId: const {'timeout_only': 2},
+      afkPlayerIds: const {'afk_only'},
+      kickedPlayerIds: const {'kicked_only'},
+
       eventLogOffset: 73,
     );
     final before = SaveSnapshotCodec.toJson(baseSnapshot);
@@ -159,7 +159,7 @@ void main() {
           reducer: GameStateReducer(mapData: mapData, ruleset: ruleset),
         ).resolve(
           baseSnapshot: baseSnapshot,
-          currentState: baseSnapshot.toGameState(activePlayerId: 'player_1'),
+          currentState: baseSnapshot.toClientState(activePlayerId: 'player_1'),
           command: command,
           savedAt: savedAt,
           context: const GameCommandContext(
@@ -168,7 +168,7 @@ void main() {
           ),
         );
     final serverEngine = const GameEngine().apply(
-      snapshot: baseSnapshot.canonical,
+      snapshot: baseSnapshot,
       command: command,
       context: GameEngineContext(
         actorPlayerId: 'player_1',
@@ -178,8 +178,8 @@ void main() {
       ),
     );
     final ai = const SimulationGameEngineAdapter().apply(
-      snapshot: baseSnapshot.canonical,
-      state: baseSnapshot.rawPersistentState,
+      snapshot: baseSnapshot,
+      state: baseSnapshot.domain,
       command: command,
       actorPlayerId: 'player_1',
       commandTick: 3,
@@ -200,16 +200,19 @@ void main() {
     expect(result.snapshot.eventLogOffset, 73);
     expect(result.snapshot.units.single.movementPoints, 0);
     expect(result.snapshot.persistedTurnStartedAt, isNull);
-    expect(result.snapshot.runtimeState.submittedPlayerIds, {'session_only'});
-    expect(result.snapshot.runtimeState.timeoutStreaksByPlayerId, {
+    expect(result.snapshot.domain.submittedPlayerIds, {'session_only'});
+    expect(result.snapshot.domain.timeoutStreaksByPlayerId, {
       'timeout_only': 2,
     });
-    expect(result.snapshot.runtimeState.afkPlayerIds, {'afk_only'});
-    expect(result.snapshot.runtimeState.kickedPlayerIds, {'kicked_only'});
+    expect(result.snapshot.domain.afkPlayerIds, {'afk_only'});
+    expect(result.snapshot.domain.kickedPlayerIds, {'kicked_only'});
     expect(ai.snapshot, serverEngine.snapshot);
     expect(result.snapshot.domain, serverEngine.snapshot.domain);
-    expect(result.snapshot.session, serverEngine.snapshot.session);
-    expect(result.snapshot.interaction, serverEngine.snapshot.interaction);
+    expect(result.snapshot.domain, serverEngine.snapshot.domain);
+    expect(
+      result.snapshot.domain.actions,
+      serverEngine.snapshot.domain.actions,
+    );
   });
 }
 
@@ -219,7 +222,7 @@ String _unreviewedUnitActionEnvelopeBytes(Map<String, dynamic> source) {
   copy
     ..remove('units')
     ..remove('artifacts');
-  (copy['runtimeState'] as Map<String, dynamic>)
+  (copy['lifecycle'] as Map<String, dynamic>)
     ..remove('cityFoundingDraft')
     ..remove('pendingAction');
   return jsonEncode(copy);
@@ -238,11 +241,11 @@ GameSave _unitActionSave() => GameSave(
   ],
 );
 
-MapData _mapData() => MapData(
+WorldMap _mapData() => WorldMap(
   cols: 1,
   rows: 1,
   tiles: [
-    const TileData(
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],

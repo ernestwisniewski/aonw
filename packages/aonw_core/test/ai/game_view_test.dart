@@ -17,7 +17,7 @@ void main() {
         name: 'Rival',
         center: CityHex(col: 2, row: 0),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.startingCommander(ownerPlayerId: 'player_1', col: 0, row: 0),
           GameUnit.startingCommander(ownerPlayerId: 'player_2', col: 1, row: 0),
@@ -56,7 +56,7 @@ void main() {
         ),
       );
 
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 4,
@@ -110,7 +110,7 @@ void main() {
         col: 2,
         row: 1,
       ).copyWithCarriedArtifact('hidden_carried');
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [ownCarrier, hiddenCarrier],
         cities: const [ownCity, hiddenEnemyCity],
         artifacts: const [
@@ -158,7 +158,7 @@ void main() {
         ),
       );
 
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 4,
@@ -181,7 +181,7 @@ void main() {
         name: 'Rival',
         center: CityHex(col: 2, row: 0),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.startingCommander(ownerPlayerId: 'player_1', col: 0, row: 0),
           GameUnit.produced(
@@ -203,7 +203,7 @@ void main() {
         ),
       );
 
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 4,
@@ -219,7 +219,7 @@ void main() {
 
     test('can also expose dynamic units for diagnostic simulations', () {
       final mapData = _mapData();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'hidden_worker',
@@ -239,7 +239,7 @@ void main() {
         ),
       );
 
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 4,
@@ -259,7 +259,7 @@ void main() {
           .setStatus('player_1', 'neutral', DiplomaticRelationStatus.neutral)
           .setStatus('player_1', 'hostile', DiplomaticRelationStatus.hostile)
           .setStatus('player_1', 'war', DiplomaticRelationStatus.war);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'friendly_unit',
@@ -350,10 +350,10 @@ void main() {
             ),
           },
         ),
-        runtimeState: GameRuntimeState(diplomacy: diplomacy),
+        diplomacy: diplomacy,
       );
 
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 4,
@@ -380,7 +380,7 @@ void main() {
         name: 'Pressure Target',
         center: CityHex(col: 2, row: 0),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'warrior_2',
@@ -405,7 +405,7 @@ void main() {
         ),
       );
 
-      final neutralView = GameView.fromPersistentState(
+      final neutralView = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 4,
@@ -413,7 +413,7 @@ void main() {
         ruleset: GameRuleset.defaults,
         defaultNeutralPlayerIds: const ['player_2'],
       );
-      final pressuredView = GameView.fromPersistentState(
+      final pressuredView = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 4,
@@ -444,7 +444,7 @@ void main() {
           name: 'Neutral Target',
           center: CityHex(col: 2, row: 0),
         );
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_2',
@@ -467,10 +467,10 @@ void main() {
               ),
             },
           ),
-          runtimeState: GameRuntimeState(diplomacy: diplomacy),
+          diplomacy: diplomacy,
         );
 
-        final view = GameView.fromPersistentState(
+        final view = GameView.fromDomainState(
           state,
           forPlayerId: 'player_1',
           turn: 4,
@@ -499,7 +499,7 @@ void main() {
         name: 'Active Attacker',
         center: CityHex(col: 2, row: 0),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'warrior_2',
@@ -522,10 +522,10 @@ void main() {
             ),
           },
         ),
-        runtimeState: GameRuntimeState(diplomacy: diplomacy),
+        diplomacy: diplomacy,
       );
 
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 4,
@@ -541,7 +541,7 @@ void main() {
 
     test('projects available technology ids from own research', () {
       final mapData = _mapData();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         research: ResearchState(
           players: {
             'player_1': PlayerResearchState(
@@ -551,7 +551,7 @@ void main() {
         ),
       );
 
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 4,
@@ -577,14 +577,14 @@ void main() {
   });
 }
 
-MapData _mapData() {
-  return MapData(
+WorldMap _mapData() {
+  return WorldMap(
     cols: 3,
     rows: 2,
     tiles: [
       for (var col = 0; col < 3; col++)
         for (var row = 0; row < 2; row++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

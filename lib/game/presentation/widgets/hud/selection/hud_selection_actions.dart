@@ -7,8 +7,8 @@ import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models/worker
 import 'package:aonw/game/presentation/widgets/selection/selection.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -22,13 +22,13 @@ part 'hud_selection_action_rules.dart';
 part 'hud_selection_action_spec.dart';
 part 'hud_selection_artifact_action_specs.dart';
 part 'hud_selection_unit_action_groups.dart';
-part 'hud_selection_unit_mode_action_specs.dart';
-part 'hud_selection_unit_merchant_action_specs.dart';
 part 'hud_selection_unit_action_specs.dart';
+part 'hud_selection_unit_merchant_action_specs.dart';
+part 'hud_selection_unit_mode_action_specs.dart';
 
 List<Widget> buildHudSelectionActionChips({
-  required GameState? gameState,
-  required MapData mapData,
+  required GameClientState? gameState,
+  required WorldMap mapData,
   required String activePlayerId,
   required bool actionsLocked,
   required bool moveModeActive,
@@ -217,7 +217,7 @@ const _cityActionColor = GameUiTheme.gold;
 
 ({bool active, VoidCallback onTap})? _cityExpansionActionFor({
   required GameCity city,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required CityRuleset cityRuleset,
   required TechnologyRuleset technologyRuleset,
   required VoidCallback onStartCityExpansionSelection,

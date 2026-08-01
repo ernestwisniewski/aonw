@@ -91,8 +91,8 @@ class _ReplayTurnResult {
     required this.rejectedCommandDescriptions,
   });
 
-  final SaveSnapshot snapshot;
-  final GameState state;
+  final CanonicalGameSnapshot snapshot;
+  final GameClientState state;
   final int applied;
   final int rejected;
   final int stale;

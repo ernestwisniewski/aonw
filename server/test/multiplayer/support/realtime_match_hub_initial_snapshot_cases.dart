@@ -37,11 +37,13 @@ void _registerRealtimeMatchHubInitialSnapshotTests() {
     );
     final state = await store.findState(match.id);
     final save = GameSave.fromJson(state!.snapshot.save);
-    final gameState = PersistentGameState.fromJson(state.snapshot.state);
+    final gameState = CanonicalGameSnapshotCodec.decodeDomainState(
+      state.snapshot.state,
+    );
     final canonical = const LosslessMatchSnapshotDecoder()
         .decode(state.snapshot)
         .canonical;
-    final rawRuntime = state.snapshot.state['runtimeState']! as Map;
+    final rawRuntime = state.snapshot.state['lifecycle']! as Map;
 
     expect(started.state, 'running');
     expect(started.turn, 1);
@@ -60,7 +62,7 @@ void _registerRealtimeMatchHubInitialSnapshotTests() {
     );
     expect(gameState.fogOfWar.playerIds, containsAll(save.playerStates.keys));
     expect(rawRuntime, isNot(contains('turnStartedAt')));
-    expect(canonical.session.turnStartedAt, startedAt);
+    expect(canonical.domain.turnStartedAt, startedAt);
     expect(
       canonical.domain.participants.map((player) => player.id),
       started.players.map((player) => player.id),

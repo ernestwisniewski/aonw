@@ -34,9 +34,9 @@ SimulatedState _state() {
 }
 
 GameView _view() {
-  final mapData = MapData(cols: 1, rows: 1, tiles: const []);
-  return GameView.fromPersistentState(
-    const PersistentGameState(),
+  final mapData = WorldMap(cols: 1, rows: 1, tiles: []);
+  return GameView.fromDomainState(
+    DomainState.snapshot(),
     forPlayerId: 'player_1',
     turn: 1,
     mapData: mapData,

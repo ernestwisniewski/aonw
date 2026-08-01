@@ -4,13 +4,13 @@ import 'package:aonw_core/ai/empire_assessment.dart';
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/ai/production_scorer.dart';
 import 'package:aonw_core/ai/strategies/basic_strategy_production_planner.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -195,5 +195,5 @@ const _assessment = AiEmpireAssessment(
   desiredMilitaryCount: 0,
 );
 
-final _mapData = MapData(cols: 0, rows: 0, tiles: const []);
+final _mapData = WorldMap(cols: 0, rows: 0, tiles: []);
 final _ruleset = GameRuleset.standard();

@@ -1,6 +1,9 @@
 part of 'hud_selection_actions.dart';
 
-int _visibleEnemyUnitAttackTargetCount(GameUnit unit, GameState gameState) {
+int _visibleEnemyUnitAttackTargetCount(
+  GameUnit unit,
+  GameClientState gameState,
+) {
   final combatStats = UnitCombatStats.derive(unit);
   if (combatStats.attack <= 0) return 0;
 
@@ -77,7 +80,7 @@ String? _attackBlockedReason({
 String? _cityFoundingBlockedReason({
   required AppLocalizations l10n,
   required GameUnit unit,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required GameSelection? selection,
 }) {
   final selectedTile = selection?.tile;

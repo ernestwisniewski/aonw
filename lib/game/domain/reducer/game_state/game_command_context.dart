@@ -12,8 +12,8 @@ abstract interface class CommandAuthorizer {
   bool get canAct;
   bool get hasActor;
 
-  bool canControlUnit(GameState state, GameUnit unit);
-  bool canControlCity(GameState state, GameCity city);
+  bool canControlUnit(GameClientState state, GameUnit unit);
+  bool canControlCity(GameClientState state, GameCity city);
 }
 
 abstract interface class CommandCombatSeed {
@@ -28,12 +28,12 @@ abstract interface class CommandPacing {
 abstract interface class CommandVisibilityProvider {
   bool get ignoreFogOfWar;
 
-  FogVisibilityQuery visibilityFor(GameState state);
+  FogVisibilityQuery visibilityFor(GameClientState state);
 }
 
 /// Runtime metadata for command authorization.
 ///
-/// Hotseat can omit [actorPlayerId] and keep using [GameState.activePlayerId].
+/// Hotseat can omit [actorPlayerId] and keep using [GameClientState.activePlayerId].
 /// Online multiplayer can pass the player issuing a command without mutating
 /// the shared game state just to validate that single command.
 @freezed
@@ -60,21 +60,21 @@ abstract class GameCommandContext
   bool get hasActor => actorPlayerId != null && actorPlayerId!.isNotEmpty;
 
   @override
-  bool canControlUnit(GameState state, GameUnit unit) {
+  bool canControlUnit(GameClientState state, GameUnit unit) {
     if (!canAct) return false;
     if (hasActor) return unit.ownerPlayerId == actorPlayerId;
     return state.canControlUnit(unit);
   }
 
   @override
-  bool canControlCity(GameState state, GameCity city) {
+  bool canControlCity(GameClientState state, GameCity city) {
     if (!canAct) return false;
     if (hasActor) return city.ownerPlayerId == actorPlayerId;
     return state.canControlCity(city);
   }
 
   @override
-  FogVisibilityQuery visibilityFor(GameState state) {
+  FogVisibilityQuery visibilityFor(GameClientState state) {
     if (ignoreFogOfWar) {
       return FogVisibilityQuery(playerId: '', state: state.fogOfWar);
     }

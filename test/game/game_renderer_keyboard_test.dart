@@ -14,9 +14,9 @@ import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker_
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -34,13 +34,13 @@ import '../support/game_intent_test_resolver.dart';
 
 part 'game_renderer_keyboard_movement_fixture.dart';
 
-MapData _minimalMap() => MapData(
+WorldMap _minimalMap() => WorldMap(
   cols: 2,
   rows: 2,
   tiles: [
     for (int r = 0; r < 2; r++)
       for (int c = 0; c < 2; c++)
-        TileData(
+        WorldTile(
           col: c,
           row: r,
           terrains: const [TerrainType.grassland],
@@ -50,13 +50,13 @@ MapData _minimalMap() => MapData(
   ],
 );
 
-MapData _map(int cols, int rows) => MapData(
+WorldMap _map(int cols, int rows) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (int r = 0; r < rows; r++)
       for (int c = 0; c < cols; c++)
-        TileData(
+        WorldTile(
           col: c,
           row: r,
           terrains: const [TerrainType.grassland],
@@ -66,7 +66,7 @@ MapData _map(int cols, int rows) => MapData(
   ],
 );
 
-MapData _mapWithObjective() => MapData(
+WorldMap _mapWithObjective() => WorldMap(
   cols: 3,
   rows: 3,
   objectives: const [
@@ -80,7 +80,7 @@ MapData _mapWithObjective() => MapData(
   tiles: [
     for (int r = 0; r < 3; r++)
       for (int c = 0; c < 3; c++)
-        TileData(
+        WorldTile(
           col: c,
           row: r,
           terrains: const [TerrainType.grassland],
@@ -90,7 +90,7 @@ MapData _mapWithObjective() => MapData(
   ],
 );
 
-TileData _tile(MapData map, int col, int row) =>
+WorldTile _tile(WorldMap map, int col, int row) =>
     map.tiles.firstWhere((tile) => tile.col == col && tile.row == row);
 
 void main() {
@@ -235,7 +235,7 @@ void main() {
       expect(
         () => game
           ..disposeRenderer()
-          ..applyState(const GameState(activePlayerId: 'player_1')),
+          ..applyState(GameClientState(activePlayerId: 'player_1')),
         returnsNormally,
       );
     });
@@ -264,7 +264,7 @@ void main() {
         col: 1,
         row: 1,
       );
-      var state = GameState(artifacts: [artifact]);
+      var state = GameClientState(artifacts: [artifact]);
       late final GameRenderer game;
       game = GameRenderer(
         mapData: map,
@@ -312,7 +312,10 @@ void main() {
         col: 1,
         row: 1,
       );
-      var state = GameState(activePlayerId: 'player_1', artifacts: [artifact]);
+      var state = GameClientState(
+        activePlayerId: 'player_1',
+        artifacts: [artifact],
+      );
       state = state.copyWith(
         fogOfWar: _fog(visible: {const HexCoordinate(col: 1, row: 1)}),
       );
@@ -351,8 +354,8 @@ void main() {
       final map = _map(3, 3);
       final reducer = GameStateReducer(mapData: map);
       final commands = <GameIntent>[];
-      final inspectedTiles = <TileData>[];
-      var state = GameState(
+      final inspectedTiles = <WorldTile>[];
+      var state = GameClientState(
         activePlayerId: 'player_1',
         fogOfWar: _fog(visible: {const HexCoordinate(col: 1, row: 1)}),
       );
@@ -419,12 +422,12 @@ void main() {
         col: 1,
         row: 1,
       );
-      var state = GameState(
+      var state = GameClientState(
         activePlayerId: 'player_1',
         units: [unit],
         artifacts: [artifact],
         fogOfWar: _fog(visible: {const HexCoordinate(col: 1, row: 1)}),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(unit, tile: _tile(map, 1, 1)),
         ),
       );
@@ -476,7 +479,7 @@ void main() {
         units: const [],
         holdStatesByObjectiveId: const {},
       ).entryFor('pass_1')!;
-      var state = const GameState(activePlayerId: 'player_1');
+      var state = GameClientState(activePlayerId: 'player_1');
       late final GameRenderer game;
       game = GameRenderer(
         mapData: map,
@@ -537,10 +540,10 @@ void main() {
         units: [unit],
         holdStatesByObjectiveId: const {},
       ).entryFor('pass_1')!;
-      var state = GameState(
+      var state = GameClientState(
         activePlayerId: 'player_1',
         units: [unit],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(unit, tile: _tile(map, 1, 1)),
         ),
       );
@@ -585,7 +588,7 @@ void main() {
         final commands = <GameIntent>[];
         final inspectedArtifacts = <WorldArtifact>[];
         final inspectedObjectives = <MapObjectiveProgress>[];
-        final inspectedTiles = <TileData>[];
+        final inspectedTiles = <WorldTile>[];
         final unit = GameUnit(
           id: 'scout_1',
           ownerPlayerId: 'player_1',
@@ -599,7 +602,7 @@ void main() {
           col: 1,
           row: 1,
         );
-        var state = GameState(
+        var state = GameClientState(
           activePlayerId: 'player_1',
           units: [unit],
           artifacts: [artifact],
@@ -679,13 +682,13 @@ void main() {
       final commands = <GameIntent>[];
       final inspectedArtifacts = <WorldArtifact>[];
       final inspectedObjectives = <MapObjectiveProgress>[];
-      final inspectedTiles = <TileData>[];
+      final inspectedTiles = <WorldTile>[];
       final artifact = WorldArtifact.placed(
         type: WorldArtifactType.queensMirror,
         col: 1,
         row: 1,
       );
-      var state = GameState(
+      var state = GameClientState(
         activePlayerId: 'player_1',
         artifacts: [artifact],
         fogOfWar: _fog(visible: {const HexCoordinate(col: 1, row: 1)}),
@@ -748,7 +751,7 @@ void main() {
         name: 'City',
         center: CityHex(col: 1, row: 1),
       );
-      var state = const GameState(activePlayerId: 'player_1', cities: [city]);
+      var state = GameClientState(activePlayerId: 'player_1', cities: [city]);
       late final GameRenderer game;
       game = GameRenderer(
         mapData: map,
@@ -792,7 +795,7 @@ void main() {
         final map = _map(3, 3);
         final reducer = GameStateReducer(mapData: map);
         final commands = <GameIntent>[];
-        final inspectedTiles = <TileData>[];
+        final inspectedTiles = <WorldTile>[];
         const city = GameCity(
           id: 'city_1',
           ownerPlayerId: 'player_1',
@@ -806,7 +809,7 @@ void main() {
           col: 1,
           row: 1,
         );
-        var state = GameState(
+        var state = GameClientState(
           activePlayerId: 'player_1',
           units: [unit],
           cities: const [city],
@@ -892,8 +895,8 @@ void main() {
               commands.add(command);
             },
           )..applyState(
-            const GameState(
-              interaction: GameInteractionState(
+            GameClientState(
+              interaction: const InteractionState(
                 pendingAction: PendingCityExpansionSelection(
                   ownerPlayerId: 'player_1',
                   cityId: 'city_1',
@@ -925,10 +928,10 @@ void main() {
       );
       final game = GameRenderer(mapData: map, onCommand: (_) async {})
         ..applyState(
-          GameState(
+          GameClientState(
             units: [commander],
             activePlayerId: 'player_1',
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
               moveCommandActive: true,
               movePreview: preview,
@@ -961,7 +964,7 @@ void main() {
 
       game
         ..onGameResize(Vector2(800, 600))
-        ..applyState(const GameState(cities: [city]));
+        ..applyState(GameClientState(cities: [city]));
       await game.onLoad();
 
       expect(game.cityTerritoryStrategicViewForTesting, isFalse);
@@ -985,7 +988,7 @@ void main() {
 
       game
         ..onGameResize(Vector2(800, 600))
-        ..applyState(const GameState(cities: [city]));
+        ..applyState(GameClientState(cities: [city]));
       await game.onLoad();
 
       game.setZoom(1);
@@ -1077,7 +1080,7 @@ void main() {
       final map = _map(4, 1);
       final game = GameRenderer(mapData: map, onCommand: (_) async {})
         ..applyState(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_1',
             fogOfWar: _fog(
               discovered: {const HexCoordinate(col: 3, row: 0)},
@@ -1149,7 +1152,7 @@ void main() {
         addTearDown(game.disposeRenderer);
 
         game
-          ..applyState(GameState(units: [attacker, defender]))
+          ..applyState(GameClientState(units: [attacker, defender]))
           ..onGameResize(Vector2(800, 600));
         await game.onLoad();
         game.camera.viewfinder
@@ -1158,9 +1161,9 @@ void main() {
         final attackPoint = game.unitMarkerPositionForTesting(attacker.id)!;
 
         final transition = game.applyTransition(
-          GameState(
+          GameClientState(
             units: [defender],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(defender, tile: _tile(map, 2, 1)),
             ),
           ),
@@ -1197,7 +1200,7 @@ void main() {
       addTearDown(game.disposeRenderer);
 
       game
-        ..applyState(GameState(units: [unit]))
+        ..applyState(GameClientState(units: [unit]))
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
       await game.handleEffect(const JumpCameraEffect(col: 3, row: 0));
@@ -1248,7 +1251,7 @@ void main() {
       addTearDown(game.disposeRenderer);
 
       game
-        ..applyState(GameState(units: [unit]))
+        ..applyState(GameClientState(units: [unit]))
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
 
@@ -1256,7 +1259,7 @@ void main() {
       var secondCompleted = false;
       final first = game
           .applyTransition(
-            GameState(units: [unit.copyWith(col: 1, row: 0)]),
+            GameClientState(units: [unit.copyWith(col: 1, row: 0)]),
             const [
               AnimateUnitMoveEffect(
                 unitId: 'warrior_1',
@@ -1278,7 +1281,7 @@ void main() {
           });
       final second = game
           .applyTransition(
-            GameState(units: [unit.copyWith(col: 2, row: 0)]),
+            GameClientState(units: [unit.copyWith(col: 2, row: 0)]),
             const [
               AnimateUnitMoveEffect(
                 unitId: 'warrior_1',
@@ -1336,7 +1339,7 @@ void main() {
 
       game
         ..applyState(
-          GameState(units: [hiddenEnemy], activePlayerId: 'player_1'),
+          GameClientState(units: [hiddenEnemy], activePlayerId: 'player_1'),
         )
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
@@ -1372,7 +1375,11 @@ void main() {
 
       game
         ..applyState(
-          GameState(activePlayerId: 'player_1', fogOfWar: fog, units: [enemy]),
+          GameClientState(
+            activePlayerId: 'player_1',
+            fogOfWar: fog,
+            units: [enemy],
+          ),
         )
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
@@ -1380,7 +1387,7 @@ void main() {
       expect(game.unitMarkerPositionForTesting(enemy.id), isNotNull);
 
       final transition = game.applyTransition(
-        GameState(
+        GameClientState(
           activePlayerId: 'player_1',
           fogOfWar: fog,
           units: [enemy.copyWith(col: 1, row: 0)],
@@ -1425,7 +1432,9 @@ void main() {
       addTearDown(game.disposeRenderer);
 
       game
-        ..applyState(GameState(units: [commander], activePlayerId: 'player_1'))
+        ..applyState(
+          GameClientState(units: [commander], activePlayerId: 'player_1'),
+        )
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
 
@@ -1454,7 +1463,7 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_1',
             units: [playerOneUnit, playerTwoUnit],
           ),
@@ -1475,7 +1484,7 @@ void main() {
       final movedPlayerTwoUnit = playerTwoUnit.copyWith(col: 4, row: 4);
       game
         ..applyStateWithoutCameraFocus(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_2',
             units: [playerOneUnit, movedPlayerTwoUnit],
           ),
@@ -1509,7 +1518,7 @@ void main() {
 
         game
           ..applyState(
-            GameState(units: [commander], activePlayerId: 'player_1'),
+            GameClientState(units: [commander], activePlayerId: 'player_1'),
           )
           ..onGameResize(Vector2.zero());
         await game.onLoad();
@@ -1542,7 +1551,7 @@ void main() {
         addTearDown(game.disposeRenderer);
         game
           ..applyState(
-            GameState(units: [commander], activePlayerId: 'player_1'),
+            GameClientState(units: [commander], activePlayerId: 'player_1'),
           )
           ..onGameResize(Vector2(800, 600));
         await game.onLoad();
@@ -1577,10 +1586,10 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               units: [commander, settler],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(settler, tile: _tile(map, 1, 0)),
               ),
             ),
@@ -1590,10 +1599,10 @@ void main() {
         game
           ..update(0)
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               units: [commander, settler],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(
                   commander,
                   tile: _tile(map, 0, 0),
@@ -1619,7 +1628,7 @@ void main() {
         addTearDown(game.disposeRenderer);
 
         game
-          ..applyState(GameState(units: [commander]))
+          ..applyState(GameClientState(units: [commander]))
           ..onGameResize(Vector2(800, 600));
         await game.onLoad();
         game.camera.viewfinder
@@ -1629,9 +1638,9 @@ void main() {
         final target = UnitMarkerLayer.worldPositionFor(1, 1);
 
         game.applyState(
-          GameState(
+          GameClientState(
             units: [commander],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(commander, tile: _tile(map, 1, 1)),
             ),
           ),
@@ -1661,7 +1670,7 @@ void main() {
       addTearDown(game.disposeRenderer);
 
       game
-        ..applyState(GameState(units: [commander]))
+        ..applyState(GameClientState(units: [commander]))
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
       game.camera.viewfinder
@@ -1670,9 +1679,9 @@ void main() {
       final start = _visibleCenter(game).clone();
 
       game.applyStateWithoutCameraFocus(
-        GameState(
+        GameClientState(
           units: [commander],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander, tile: _tile(map, 1, 1)),
           ),
         ),
@@ -1695,7 +1704,7 @@ void main() {
         addTearDown(game.disposeRenderer);
 
         game
-          ..applyState(const GameState(cities: [city]))
+          ..applyState(GameClientState(cities: [city]))
           ..onGameResize(Vector2(800, 600));
         await game.onLoad();
         game.camera.viewfinder
@@ -1705,9 +1714,9 @@ void main() {
         final target = CityMarkerLayer.worldPositionFor(1, 1);
 
         game.applyState(
-          GameState(
+          GameClientState(
             cities: const [city],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.city(
                 city,
                 cityYield: const TileYield(
@@ -1747,7 +1756,7 @@ void main() {
       addTearDown(game.disposeRenderer);
 
       game
-        ..applyState(const GameState(cities: [city]))
+        ..applyState(GameClientState(cities: [city]))
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
 
@@ -1758,9 +1767,9 @@ void main() {
       expect(game.cityMarkerPaintsLabelForTesting(city.id), isTrue);
 
       game.applyState(
-        GameState(
+        GameClientState(
           cities: const [city],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.city(
               city,
               cityYield: const TileYield(
@@ -1792,7 +1801,7 @@ void main() {
       addTearDown(game.disposeRenderer);
 
       game
-        ..applyState(GameState(units: [warrior]))
+        ..applyState(GameClientState(units: [warrior]))
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
 
@@ -1846,7 +1855,7 @@ void main() {
       addTearDown(game.disposeRenderer);
 
       game
-        ..applyState(GameState(cities: [city], units: [warrior]))
+        ..applyState(GameClientState(cities: [city], units: [warrior]))
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
 
@@ -1882,7 +1891,7 @@ void main() {
       addTearDown(game.disposeRenderer);
 
       game
-        ..applyState(GameState(units: [warrior]))
+        ..applyState(GameClientState(units: [warrior]))
         ..onGameResize(Vector2(678, 1442));
       await game.onLoad();
 
@@ -1944,7 +1953,7 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_1',
             cities: [playerCity, enemyCity],
             fogOfWar: knownCitiesFog,
@@ -1968,11 +1977,11 @@ void main() {
       expect(game.cityProductionParticleEmitterCountForTesting, 1);
 
       game.applyState(
-        GameState(
+        GameClientState(
           activePlayerId: 'player_1',
           cities: [playerCity, enemyCity],
           fogOfWar: knownCitiesFog,
-          interaction: const GameInteractionState(
+          interaction: const InteractionState(
             pendingAction: PendingAttackTargeting(
               ownerPlayerId: 'player_1',
               attackerUnitId: 'unit_1',
@@ -1984,7 +1993,7 @@ void main() {
       expect(game.cityProductionParticleEmitterCountForTesting, 0);
 
       game.applyState(
-        GameState(
+        GameClientState(
           activePlayerId: 'player_1',
           cities: [playerCity, enemyCity],
           fogOfWar: knownCitiesFog,
@@ -2001,7 +2010,7 @@ void main() {
       );
 
       game.applyState(
-        GameState(
+        GameClientState(
           activePlayerId: 'player_1',
           cities: [playerCity.copyWith(productionQueue: null), enemyCity],
           fogOfWar: knownCitiesFog,
@@ -2029,9 +2038,9 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               units: [commander],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(
                   commander,
                   tile: _tile(map, 1, 1),
@@ -2087,7 +2096,7 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               units: [attacker, defender],
               fogOfWar: FogOfWarState(
@@ -2101,7 +2110,7 @@ void main() {
                   ),
                 },
               ),
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(attacker, tile: _tile(map, 0, 0)),
                 pendingAction: const PendingAttackTargeting(
                   ownerPlayerId: 'player_1',
@@ -2154,7 +2163,7 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [commander, unitOnTarget],
@@ -2169,7 +2178,7 @@ void main() {
                   ),
                 },
               ),
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(
                   commander,
                   tile: _tile(map, 0, 0),
@@ -2220,7 +2229,7 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [settler, unitOnTarget],
@@ -2235,7 +2244,7 @@ void main() {
                   ),
                 },
               ),
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(settler, tile: _tile(map, 0, 0)),
                 cityFoundingDraft: CityFoundingDraft(
                   unitId: 'settler_1',
@@ -2286,7 +2295,7 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [commander],
@@ -2302,7 +2311,7 @@ void main() {
                   ),
                 },
               ),
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(
                   commander,
                   tile: _tile(map, 0, 0),
@@ -2347,7 +2356,7 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [worker],
@@ -2363,7 +2372,7 @@ void main() {
                   ),
                 },
               ),
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(worker, tile: _tile(map, 0, 0)),
                 pendingAction: const PendingWorkerActionSelection(
                   ownerPlayerId: 'player_1',
@@ -2424,11 +2433,11 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [worker],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(worker, tile: _tile(map, 1, 0)),
                 pendingAction: const PendingWorkerActionSelection(
                   ownerPlayerId: 'player_1',
@@ -2491,11 +2500,11 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
             units: [commander],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
               movePreview: preview,
               moveCommandActive: true,
@@ -2552,11 +2561,11 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [warrior],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.tile(_tile(map, 1, 0)),
                 movePreview: preview,
                 moveCommandActive: true,
@@ -2601,11 +2610,11 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [settler],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(settler, tile: _tile(map, 1, 1)),
                 cityFoundingDraft: draft,
               ),
@@ -2643,11 +2652,11 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               activePlayerCanAct: true,
               units: [settler],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(settler, tile: _tile(map, 1, 1)),
                 cityFoundingDraft: draft,
               ),
@@ -2701,19 +2710,20 @@ void main() {
       );
       addTearDown(game.disposeRenderer);
 
-      GameState state({FieldImprovementType? improvementType}) => GameState(
-        activePlayerId: 'player_1',
-        activePlayerCanAct: true,
-        units: [worker],
-        interaction: GameInteractionState(
-          selection: GameSelection.unit(worker, tile: _tile(map, 1, 0)),
-          pendingAction: PendingWorkerActionSelection(
-            ownerPlayerId: 'player_1',
-            unitId: 'worker_1',
-            improvementType: improvementType,
-          ),
-        ),
-      );
+      GameClientState state({FieldImprovementType? improvementType}) =>
+          GameClientState(
+            activePlayerId: 'player_1',
+            activePlayerCanAct: true,
+            units: [worker],
+            interaction: InteractionState(
+              selection: GameSelection.unit(worker, tile: _tile(map, 1, 0)),
+              pendingAction: PendingWorkerActionSelection(
+                ownerPlayerId: 'player_1',
+                unitId: 'worker_1',
+                improvementType: improvementType,
+              ),
+            ),
+          );
 
       game
         ..applyState(state())
@@ -2775,11 +2785,11 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
             units: [worker],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(worker, tile: _tile(map, 1, 0)),
               pendingAction: const PendingWorkerActionSelection(
                 ownerPlayerId: 'player_1',
@@ -2820,9 +2830,9 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               cities: const [city],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.city(
                   city,
                   cityYield: const TileYield(
@@ -2874,7 +2884,7 @@ void main() {
       addTearDown(game.disposeRenderer);
 
       game
-        ..applyState(const GameState(cities: [city]))
+        ..applyState(GameClientState(cities: [city]))
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
 
@@ -2914,13 +2924,13 @@ void main() {
         addTearDown(game.disposeRenderer);
 
         game
-          ..applyState(GameState(units: [attacker, defender]))
+          ..applyState(GameClientState(units: [attacker, defender]))
           ..onGameResize(Vector2(800, 600));
         await game.onLoad();
         game.update(0);
 
         final future = game.applyTransition(
-          GameState(units: [attacker.copyWith(movementPoints: 0)]),
+          GameClientState(units: [attacker.copyWith(movementPoints: 0)]),
           const [
             PlayCombatAnimationEffect(
               attackerUnitId: 'attacker',
@@ -2961,13 +2971,13 @@ void main() {
     );
 
     test('syncs city-site planning markers from current game state', () async {
-      final map = MapData(
+      final map = WorldMap(
         cols: 4,
         rows: 2,
         tiles: [
           for (int r = 0; r < 2; r++)
             for (int c = 0; c < 4; c++)
-              TileData(
+              WorldTile(
                 col: c,
                 row: r,
                 terrains: c == 2 && r == 1
@@ -2989,7 +2999,7 @@ void main() {
       addTearDown(game.disposeRenderer);
 
       game
-        ..applyState(const GameState(cities: [city]))
+        ..applyState(GameClientState(cities: [city]))
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
 
@@ -3023,9 +3033,9 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             units: [settler],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(settler),
             ),
           ),
@@ -3038,45 +3048,45 @@ void main() {
       expect(candidate.canFoundCity, isTrue);
       expect(candidate.forceShowCitySite, isTrue);
 
-      game.applyState(GameState(units: [settler]));
+      game.applyState(GameClientState(units: [settler]));
 
       expect(game.tileMarkersForTesting(1, 0).forceShowCitySite, isFalse);
     });
 
     test('selected settler highlights best city-site markers', () async {
-      final map = MapData(
+      final map = WorldMap(
         cols: 5,
         rows: 1,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.tundra],
             resources: [],
             height: 0,
           ),
-          TileData(
+          WorldTile(
             col: 1,
             row: 0,
             terrains: [TerrainType.grassland],
             resources: [ResourceType.wheat],
             height: 0,
           ),
-          TileData(
+          WorldTile(
             col: 2,
             row: 0,
             terrains: [TerrainType.hills],
             resources: [ResourceType.iron],
             height: 0,
           ),
-          TileData(
+          WorldTile(
             col: 3,
             row: 0,
             terrains: [TerrainType.grassland],
             resources: [ResourceType.deer],
             height: 0,
           ),
-          TileData(
+          WorldTile(
             col: 4,
             row: 0,
             terrains: [TerrainType.plains],
@@ -3102,11 +3112,11 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_1',
             fogOfWar: fogOfWar,
             units: [settler],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(settler, tile: _tile(map, 2, 0)),
             ),
           ),
@@ -3130,7 +3140,9 @@ void main() {
         expect(marker.forceShowCitySite, isTrue);
       }
 
-      game.applyState(GameState(activePlayerId: 'player_1', units: [settler]));
+      game.applyState(
+        GameClientState(activePlayerId: 'player_1', units: [settler]),
+      );
 
       expect(game.tileMarkersForTesting(1, 0).recommendedCitySite, isFalse);
       expect(game.tileMarkersForTesting(1, 0).forceShowCitySite, isFalse);
@@ -3139,13 +3151,13 @@ void main() {
     test(
       'selected settler recommends city sites with nearby resources',
       () async {
-        final map = MapData(
+        final map = WorldMap(
           cols: 9,
           rows: 4,
           tiles: [
             for (int row = 0; row < 4; row++)
               for (int col = 0; col < 9; col++)
-                TileData(
+                WorldTile(
                   col: col,
                   row: row,
                   terrains: const [TerrainType.plains],
@@ -3188,12 +3200,12 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               fogOfWar: fogOfWar,
               units: [settler],
               cities: [ownCity, enemyCity],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(settler, tile: _tile(map, 3, 1)),
               ),
             ),
@@ -3249,7 +3261,7 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               units: [attacker, defender, distantEnemy],
               fogOfWar: FogOfWarState(
@@ -3263,7 +3275,7 @@ void main() {
                   ),
                 },
               ),
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(attacker),
                 pendingAction: const PendingAttackTargeting(
                   ownerPlayerId: 'player_1',
@@ -3289,7 +3301,7 @@ void main() {
         );
 
         game.applyState(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_1',
             units: [attacker, defender, distantEnemy],
             fogOfWar: FogOfWarState(
@@ -3303,7 +3315,7 @@ void main() {
                 ),
               },
             ),
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(attacker),
             ),
           ),
@@ -3316,13 +3328,13 @@ void main() {
     );
 
     test('syncs worker improvement hints for selected worker', () async {
-      final map = MapData(
+      final map = WorldMap(
         cols: 3,
         rows: 2,
         tiles: [
           for (int r = 0; r < 2; r++)
             for (int c = 0; c < 3; c++)
-              TileData(
+              WorldTile(
                 col: c,
                 row: r,
                 terrains: c == 0 && r == 1
@@ -3357,7 +3369,7 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             units: [worker],
             cities: const [city],
             fieldImprovements: const [
@@ -3374,7 +3386,7 @@ void main() {
                 ),
               },
             ),
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(worker),
             ),
           ),
@@ -3439,12 +3451,12 @@ void main() {
     test(
       'marks current worker hex green when a build can start there',
       () async {
-        final map = MapData(
+        final map = WorldMap(
           cols: 3,
           rows: 1,
           tiles: [
             for (int c = 0; c < 3; c++)
-              TileData(
+              WorldTile(
                 col: c,
                 row: 0,
                 terrains: const [TerrainType.grassland],
@@ -3473,7 +3485,7 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               units: [worker],
               cities: const [city],
               research: ResearchState(
@@ -3483,7 +3495,7 @@ void main() {
                   ),
                 },
               ),
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(worker),
               ),
             ),
@@ -3510,7 +3522,7 @@ void main() {
           col: 0,
           row: 0,
         );
-        var state = GameState(units: [commander]);
+        var state = GameClientState(units: [commander]);
         late final GameRenderer game;
         game = GameRenderer(
           mapData: map,
@@ -3563,45 +3575,4 @@ void main() {
       },
     );
   });
-}
-
-CityManagementOverlayHexKind? _overlayKindFor(GameRenderer game, CityHex hex) {
-  return _overlayFor(game, hex)?.kind;
-}
-
-CityManagementOverlayHex? _overlayFor(GameRenderer game, CityHex hex) {
-  for (final overlayHex in game.cityManagementOverlayHexesForTesting) {
-    if (overlayHex.hex == hex) return overlayHex;
-  }
-  return null;
-}
-
-Vector2 _visibleCenter(GameRenderer game) {
-  final zoom = game.camera.viewfinder.zoom;
-  return game.camera.viewfinder.position +
-      game.camera.viewport.size / (2 * zoom);
-}
-
-FogOfWarState _fog({
-  Set<HexCoordinate> discovered = const {},
-  Set<HexCoordinate> visible = const {},
-}) {
-  return FogOfWarState(
-    players: {
-      'player_1': PlayerFogOfWar(
-        playerId: 'player_1',
-        discoveredHexes: discovered,
-        visibleHexes: visible,
-      ),
-    },
-  );
-}
-
-void _expectVectorClose(
-  Vector2 actual,
-  Vector2 expected, {
-  double tolerance = 0.0001,
-}) {
-  expect(actual.x, closeTo(expected.x, tolerance));
-  expect(actual.y, closeTo(expected.y, tolerance));
 }

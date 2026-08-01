@@ -53,7 +53,7 @@ class TracingMctsSimulator implements MctsSimulator {
     final ruleset = view.ruleset;
     final opponentInput = (turn: view.turn, mapData: mapData, ruleset: ruleset);
     final initial = (
-      state: MctsSimulationProjection.persistentStateFromView(
+      state: MctsSimulationProjection.domainStateFromView(
         view,
         units: view.movementBlockingUnits,
         cities: [...state.ownCities, ...state.rememberedEnemyCities],
@@ -74,7 +74,7 @@ class TracingMctsSimulator implements MctsSimulator {
         : initial;
     final playerIds = [
       for (final participant in afterOpponentPlans.snapshot.domain.participants)
-        if (!afterOpponentPlans.snapshot.session.isKicked(participant.id))
+        if (!afterOpponentPlans.snapshot.domain.isKicked(participant.id))
           participant.id,
     ];
     final advanced = const SimulationGameEngineAdapter()
@@ -195,7 +195,7 @@ typedef _OpponentPlanningInput = ({
 });
 
 typedef _MctsSimulationEnvelope = ({
-  PersistentGameState state,
+  DomainState state,
   CanonicalGameSnapshot snapshot,
 });
 
@@ -210,12 +210,12 @@ SimulatedState _completePlanning(SimulatedState state, GameView view) {
 }
 
 GameView _nextMctsView({
-  required PersistentGameState state,
+  required DomainState state,
   required GameView previous,
   required CanonicalGameSnapshot snapshot,
   required int turn,
 }) {
-  return GameView.fromPersistentState(
+  return GameView.fromDomainState(
     state,
     forPlayerId: previous.forPlayerId,
     turn: turn,

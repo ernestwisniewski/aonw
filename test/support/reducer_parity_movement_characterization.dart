@@ -131,7 +131,10 @@ void _requireExactMovementCharacterization(
           fixture.expectedSave,
           reducerParitySave(fixture.save),
         ) ||
-        !_movementJsonEquals(fixture.expectedState, expectedState.toJson()) ||
+        !_movementJsonEquals(
+          fixture.expectedState,
+          CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
+        ) ||
         !_movementJsonEquals(
           fixture.expectedEvents,
           reducerParityEvents(expectedEvents),

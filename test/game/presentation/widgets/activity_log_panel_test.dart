@@ -19,6 +19,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+part 'activity_log_panel_non_combat_fixture.dart';
+
 void main() {
   testWidgets('renders full activity timeline and filters by type', (
     tester,
@@ -305,27 +307,30 @@ List<GameEventNotification> _thumbnailEntries() {
     name: 'Roma',
     center: CityHex(col: 1, row: 1),
   );
-  const state = GameState(activePlayerId: 'player_1', cities: [city]);
+  final state = GameClientState(activePlayerId: 'player_1', cities: [city]);
 
   return [
-    const GameEventNotification(
+    GameEventNotification(
       id: 1,
-      event: CityFoundedEvent(cityId: 'city_1', ownerPlayerId: 'player_1'),
+      event: const CityFoundedEvent(
+        cityId: 'city_1',
+        ownerPlayerId: 'player_1',
+      ),
       state: state,
       playerId: 'player_1',
     ),
-    const GameEventNotification(
+    GameEventNotification(
       id: 2,
-      event: CityBuiltBuildingEvent(
+      event: const CityBuiltBuildingEvent(
         cityId: 'city_1',
         buildingType: CityBuildingType.granary,
       ),
       state: state,
       playerId: 'player_1',
     ),
-    const GameEventNotification(
+    GameEventNotification(
       id: 3,
-      event: CityProducedUnitEvent(
+      event: const CityProducedUnitEvent(
         cityId: 'city_1',
         unitType: GameUnitType.worker,
         producedUnitId: 'worker_1',
@@ -333,9 +338,9 @@ List<GameEventNotification> _thumbnailEntries() {
       state: state,
       playerId: 'player_1',
     ),
-    const GameEventNotification(
+    GameEventNotification(
       id: 4,
-      event: TechnologyResearchedEvent(
+      event: const TechnologyResearchedEvent(
         playerId: 'player_1',
         technologyId: TechnologyId.agriculture,
       ),
@@ -420,7 +425,7 @@ List<GameEventNotification> _entries() {
     col: 2,
     row: 1,
   );
-  final state = GameState(
+  final state = GameClientState(
     activePlayerId: 'player_1',
     cities: const [city],
     units: [warrior, enemy],
@@ -502,7 +507,7 @@ List<GameEventNotification> _timelineEntries() {
     col: 2,
     row: 1,
   );
-  final state = GameState(
+  final state = GameClientState(
     activePlayerId: 'player_1',
     cities: const [city],
     units: [warrior, enemy],
@@ -555,36 +560,6 @@ List<GameEventNotification> _timelineEntries() {
     GameEventNotification(
       id: 4,
       event: const TechnologyResearchedEvent(
-        playerId: 'player_1',
-        technologyId: TechnologyId.agriculture,
-      ),
-      state: state,
-      playerId: 'player_1',
-      turn: 5,
-    ),
-  ];
-}
-
-List<GameEventNotification> _nonCombatTimelineEntries() {
-  const city = GameCity(
-    id: 'city_1',
-    ownerPlayerId: 'player_1',
-    name: 'Roma',
-    center: CityHex(col: 1, row: 1),
-  );
-  const state = GameState(activePlayerId: 'player_1', cities: [city]);
-
-  return [
-    const GameEventNotification(
-      id: 1,
-      event: CityFoundedEvent(cityId: 'city_1', ownerPlayerId: 'player_1'),
-      state: state,
-      playerId: 'player_1',
-      turn: 2,
-    ),
-    const GameEventNotification(
-      id: 2,
-      event: TechnologyResearchedEvent(
         playerId: 'player_1',
         technologyId: TechnologyId.agriculture,
       ),

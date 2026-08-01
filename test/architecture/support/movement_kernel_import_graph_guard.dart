@@ -46,7 +46,7 @@ const movementKernelForbiddenRootTypes = {
   'DomainMoveUnitResult',
   'CanonicalGameSnapshot',
   'MatchSessionState',
-  'GameState',
+  'GameClientState',
   'GameRuntimeState',
   'GameSave',
   'GameRuleset',
@@ -59,11 +59,10 @@ const movementKernelForbiddenRootTypes = {
   'UiEffect',
   'RendererEffect',
   'AnimateUnitMoveEffect',
-  'GameInteractionState',
+  'InteractionState',
   'PersistedInteractionState',
   'GameSelection',
   'UnitCommandValidator',
-  'MapData',
   'MapDefinition',
   'MapReadView',
   'MapSurvey',
@@ -71,7 +70,7 @@ const movementKernelForbiddenRootTypes = {
   'MapTileLookup',
   'WorldMap',
   'WorldMapReadView',
-  'TileData',
+  'WorldTile',
 };
 
 const _leafDependencyUris = {

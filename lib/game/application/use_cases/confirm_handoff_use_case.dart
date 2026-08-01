@@ -1,4 +1,5 @@
 import 'package:aonw/game/application/ports/game_repository.dart';
+import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 
 class ConfirmHandoffResult {

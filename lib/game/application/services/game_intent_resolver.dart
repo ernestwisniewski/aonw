@@ -23,7 +23,7 @@ final class GameIntentResolution {
     this.presentationFocus = const [],
   });
 
-  final GameInteractionState interaction;
+  final InteractionState interaction;
   final DomainCommand? domainCommand;
   final List<UiEffect> presentationFocus;
 }
@@ -34,13 +34,13 @@ final class ClientInteractionResolution {
     required this.uiEffects,
   });
 
-  final GameState state;
+  final GameClientState state;
   final List<UiEffect> uiEffects;
 }
 
 ClientInteractionResolution resolveClientIntent(
   GameStateReducer reducer,
-  GameState currentState,
+  GameClientState currentState,
   GameIntent intent,
   GameCommandContext context,
 ) {
@@ -69,9 +69,9 @@ final class GameIntentResolver {
   final GameCommandContext context;
 
   GameIntentResolution resolve(
-    GameInteractionState interaction,
+    InteractionState interaction,
     GameIntent intent,
-    GameState view,
+    GameClientState view,
   ) {
     final state = view.copyWith(interaction: interaction);
     final authoritative =
@@ -97,9 +97,9 @@ final class GameIntentResolver {
   }
 
   GameIntentResolution resolveWorkerImprovementChoice(
-    GameInteractionState interaction,
+    InteractionState interaction,
     ChooseWorkerImprovementIntent command,
-    GameState view,
+    GameClientState view,
   ) {
     final state = view.copyWith(interaction: interaction);
     return GameIntentResolution(
@@ -111,7 +111,7 @@ final class GameIntentResolver {
   }
 
   GameStateTransition _resolveInteraction(
-    GameState state,
+    GameClientState state,
     GameIntent intent,
     ReducerEnvironment environment,
   ) {
@@ -135,7 +135,7 @@ final class GameIntentResolver {
   }
 
   GameStateTransition _resolveModeInteraction(
-    GameState state,
+    GameClientState state,
     GameIntent intent,
     ReducerEnvironment environment,
   ) {
@@ -165,7 +165,7 @@ final class GameIntentResolver {
   }
 
   GameStateTransition _resolveRemainingInteraction(
-    GameState state,
+    GameClientState state,
     GameIntent intent,
     ReducerEnvironment environment,
   ) {
@@ -184,7 +184,7 @@ final class GameIntentResolver {
   }
 
   GameStateTransition _resolveCombatInteraction(
-    GameState state,
+    GameClientState state,
     GameIntent intent,
     ReducerEnvironment environment,
   ) {
@@ -206,7 +206,7 @@ final class GameIntentResolver {
   }
 
   GameStateTransition _resolveWorkerInteraction(
-    GameState state,
+    GameClientState state,
     GameIntent intent,
     ReducerEnvironment environment,
   ) {
@@ -226,7 +226,7 @@ final class GameIntentResolver {
   }
 
   GameStateTransition _resolveWorkerImprovementChoice(
-    GameState state,
+    GameClientState state,
     ChooseWorkerImprovementIntent intent,
   ) {
     final nextInteraction = resolveWorkerImprovementChoice(
@@ -242,7 +242,7 @@ final class GameIntentResolver {
   }
 
   GameStateTransition _resolveSelectionInteraction(
-    GameState state,
+    GameClientState state,
     GameIntent intent,
     ReducerEnvironment environment,
   ) {

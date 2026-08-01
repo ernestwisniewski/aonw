@@ -7,11 +7,12 @@ extension _ServerCommandReducerMapCache on ServerCommandReducer {
     if (cached != null) return cached;
 
     final source = Future<_LoadedServerMap>.sync(() async {
-      final sourceMapData = await _mapCatalog.loadAssetMap(mapName);
-      sourceMapData.mapName ??= mapName;
-      validateMapDataTileInvariants(sourceMapData);
-      final mapView = sourceMapData.indexedReadView();
-      return _LoadedServerMap(mapView);
+      final worldMap = await _mapCatalog.loadAssetMap(mapName);
+      return _LoadedServerMap(
+        worldMap.mapName == null
+            ? worldMap.copyWith(mapName: mapName)
+            : worldMap,
+      );
     });
     late final Future<_LoadedServerMap> loading;
     loading = source.onError((Object error, StackTrace stackTrace) {
@@ -28,7 +29,5 @@ extension _ServerCommandReducerMapCache on ServerCommandReducer {
 final class _LoadedServerMap {
   const _LoadedServerMap(this.mapView);
 
-  // The mutable MapData container ends at load/index time; only its view is
-  // retained by the reducer cache.
-  final MapReadView mapView;
+  final WorldMap mapView;
 }

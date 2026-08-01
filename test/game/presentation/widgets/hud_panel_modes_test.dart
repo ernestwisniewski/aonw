@@ -12,11 +12,9 @@ void main() {
   group('normalizeHudPanelModes', () {
     test('closes city panel when selection is not a city', () {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final state = GameState(
+      final state = GameClientState(
         units: [commander],
-        interaction: GameInteractionState(
-          selection: GameSelection.unit(commander),
-        ),
+        interaction: InteractionState(selection: GameSelection.unit(commander)),
       );
 
       final result = normalizeHudPanelModes(
@@ -32,9 +30,9 @@ void main() {
 
     test('keeps city panel open while a city remains selected', () {
       final city = _city();
-      final state = GameState(
+      final state = GameClientState(
         cities: [city],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.city(
             city,
             cityYield: TileYield.zero,
@@ -53,9 +51,9 @@ void main() {
 
     test('pending worker action does not open a legacy worker panel', () {
       final worker = _worker();
-      final state = GameState(
+      final state = GameClientState(
         units: [worker],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(worker),
           pendingAction: const PendingWorkerActionSelection(
             ownerPlayerId: 'player_1',
@@ -74,9 +72,9 @@ void main() {
 
     test('ignores pending worker action when selected unit is not a city', () {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final state = GameState(
+      final state = GameClientState(
         units: [commander],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander),
           pendingAction: const PendingWorkerActionSelection(
             ownerPlayerId: 'player_1',

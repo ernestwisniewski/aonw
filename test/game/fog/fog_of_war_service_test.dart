@@ -1,19 +1,19 @@
 import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _landMap(int cols, int rows) {
-  return MapData(
+WorldMap _landMap(int cols, int rows) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
@@ -124,7 +124,7 @@ void main() {
       final tiles = [
         for (var row = 0; row < 5; row++)
           for (var col = 0; col < 5; col++)
-            TileData(
+            WorldTile(
               col: col,
               row: row,
               terrains: const [TerrainType.plains],
@@ -132,7 +132,7 @@ void main() {
               height: (col == 1 && row == 1) ? 2 : 0,
             ),
       ];
-      final map = MapData(cols: 5, rows: 5, tiles: tiles);
+      final map = WorldMap(cols: 5, rows: 5, tiles: tiles);
 
       final commander = GameUnit.startingCommander(
         ownerPlayerId: 'player_1',
@@ -213,7 +213,7 @@ void main() {
         final tiles = [
           for (var row = 0; row < 9; row++)
             for (var col = 0; col < 9; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: const [TerrainType.plains],
@@ -221,7 +221,7 @@ void main() {
                 height: (col == 4 && row == 4) ? 4 : 0,
               ),
         ];
-        final map = MapData(cols: 9, rows: 9, tiles: tiles);
+        final map = WorldMap(cols: 9, rows: 9, tiles: tiles);
 
         final commander = GameUnit.startingCommander(
           ownerPlayerId: 'player_1',

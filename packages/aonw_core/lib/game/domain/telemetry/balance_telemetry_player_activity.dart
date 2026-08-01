@@ -90,10 +90,7 @@ class _PlayerSnapshotSummary {
   final int improvementCount;
   final Map<String, HexCoordinate> unitPositions;
 
-  factory _PlayerSnapshotSummary.fromState(
-    PersistentGameState state,
-    String playerId,
-  ) {
+  factory _PlayerSnapshotSummary.fromState(DomainState state, String playerId) {
     final cities = [
       for (final city in state.cities)
         if (city.ownerPlayerId == playerId) city,
@@ -158,8 +155,8 @@ class _PlayerSnapshotSummary {
 
 bool _isDeadTurn({
   required String playerId,
-  required PersistentGameState previous,
-  required PersistentGameState current,
+  required DomainState previous,
+  required DomainState current,
   required _EventOwnershipTransition ownership,
   required Iterable<GameEvent> events,
   required int commandCount,
@@ -177,7 +174,7 @@ bool _isDeadTurn({
   return !currentSummary.hasProgressAfter(previousSummary);
 }
 
-bool _hasContact(PersistentGameState state, String playerId) {
+bool _hasContact(DomainState state, String playerId) {
   final fog = state.fogOfWar.fogForPlayer(playerId);
   return state.units.any(
         (unit) =>
@@ -236,8 +233,8 @@ bool _eventBelongsToPlayer({
 }
 
 _EventOwnershipTransition _eventOwnershipTransition({
-  required PersistentGameState? previous,
-  required PersistentGameState next,
+  required DomainState? previous,
+  required DomainState next,
   required bool hasEvents,
 }) {
   if (!hasEvents) return _emptyEventOwnershipTransition;

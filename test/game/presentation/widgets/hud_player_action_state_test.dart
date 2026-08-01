@@ -8,7 +8,7 @@ void main() {
   group('HudPlayerActionState', () {
     test('allows active player HUD actions while the turn is open', () {
       final state = HudPlayerActionState.from(
-        gameState: const GameState(),
+        gameState: GameClientState(),
         gameSave: _save(),
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
@@ -21,7 +21,7 @@ void main() {
 
     test('locks actions after player submitted the turn', () {
       final state = HudPlayerActionState.from(
-        gameState: const GameState(submittedPlayerIds: {'player_1'}),
+        gameState: GameClientState(submittedPlayerIds: {'player_1'}),
         gameSave: _save(),
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
@@ -34,7 +34,7 @@ void main() {
 
     test('locks actions when player control is inactive', () {
       final state = HudPlayerActionState.from(
-        gameState: const GameState(),
+        gameState: GameClientState(),
         gameSave: _save(),
         activePlayerId: 'player_1',
         activePlayerCanAct: false,
@@ -47,7 +47,7 @@ void main() {
 
     test('hides player HUD chrome without an active player', () {
       final state = HudPlayerActionState.from(
-        gameState: const GameState(),
+        gameState: GameClientState(),
         gameSave: _save(),
         activePlayerId: '',
         activePlayerCanAct: true,

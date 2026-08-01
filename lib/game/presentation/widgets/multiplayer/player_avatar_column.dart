@@ -17,7 +17,7 @@ class PlayerAvatarColumn extends StatelessWidget {
   final String activePlayerId;
   final ValueChanged<String> onAvatarTapped;
   final DiplomacyState diplomacy;
-  final GameState? gameState;
+  final GameClientState? gameState;
 
   const PlayerAvatarColumn({
     required this.gameSave,

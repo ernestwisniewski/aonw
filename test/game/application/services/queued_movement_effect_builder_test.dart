@@ -89,25 +89,25 @@ void main() {
             center: CityHex(col: 2, row: 0),
           ),
         ];
-        final map = MapData(
+        final map = WorldMap(
           cols: 3,
           rows: 1,
-          tiles: const [
-            TileData(
+          tiles: [
+            WorldTile(
               col: 0,
               row: 0,
               terrains: [TerrainType.grassland],
               resources: [],
               height: 0,
             ),
-            TileData(
+            WorldTile(
               col: 1,
               row: 0,
               terrains: [TerrainType.desert],
               resources: [],
               height: 0,
             ),
-            TileData(
+            WorldTile(
               col: 2,
               row: 0,
               terrains: [TerrainType.grassland],
@@ -131,7 +131,6 @@ void main() {
             units: [merchant],
             cities: cities,
           ),
-          interaction: PersistedInteractionState.empty,
           playerIds: const ['player_1'],
           mapData: map,
         );

@@ -134,7 +134,7 @@ void main() {
 const _playerId = 'player_1';
 const _opponentId = 'player_2';
 
-({MapData map, GameUnit secondScout, MovementCommandState state})
+({WorldMap map, GameUnit secondScout, MovementCommandState state})
 _reservationFixture() {
   final map = _grassMap(cols: 6, rows: 2);
   final firstScout = _scout(id: 'first_scout', col: 2, row: 0)
@@ -183,14 +183,14 @@ _reservationFixture() {
   );
 }
 
-MapData _grassMap({required int cols, required int rows}) {
-  return MapData(
+WorldMap _grassMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var col = 0; col < cols; col++)
         for (var row = 0; row < rows; row++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.grassland],

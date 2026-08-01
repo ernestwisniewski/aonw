@@ -15,7 +15,7 @@ const _sentinelTrade = ResourceTradeAgreement(
   remainingTurns: 9,
 );
 
-PersistentGameState _diplomacyState({
+DomainState _diplomacyState({
   Map<String, int> playerColors = const {
     _player1: 1,
     _player2: 2,
@@ -54,7 +54,7 @@ PersistentGameState _diplomacyState({
   },
   List<ResourceTradeAgreement> resourceTradeAgreements = const [_sentinelTrade],
 }) {
-  return PersistentGameState.snapshot(
+  return DomainState.snapshot(
     playerColors: playerColors,
     playerCountries: playerCountries,
     playerGold: playerGold,
@@ -63,37 +63,35 @@ PersistentGameState _diplomacyState({
     units: units,
     cities: cities,
     fogOfWar: fogOfWar,
-    runtimeState: GameRuntimeState.snapshot(
-      submittedPlayerIds: submittedPlayerIds,
-      timeoutStreaksByPlayerId: timeoutStreaksByPlayerId,
-      afkPlayerIds: afkPlayerIds,
-      kickedPlayerIds: kickedPlayerIds,
-      intendedAttacks: intendedAttacks,
-      diplomacy:
-          diplomacy ?? DiplomacyState.empty.addContact(_player1, _player2),
-      dominationHoldTurnsByPlayerId: dominationHoldTurnsByPlayerId,
-      culturalVictoryHoldTurnsByPlayerId: culturalVictoryHoldTurnsByPlayerId,
-      mapObjectiveHoldStatesByObjectiveId: const {
-        'sentinel_objective': MapObjectiveHoldState(
-          objectiveId: 'sentinel_objective',
-          playerId: _sentinelPlayer,
-          holdTurns: 2,
-        ),
-      },
-      resourceTradeAgreements: resourceTradeAgreements,
-      turnStartedAt: DateTime.utc(2026, 7, 1, 12),
-    ),
+
+    submittedPlayerIds: submittedPlayerIds,
+    timeoutStreaksByPlayerId: timeoutStreaksByPlayerId,
+    afkPlayerIds: afkPlayerIds,
+    kickedPlayerIds: kickedPlayerIds,
+    intendedAttacks: intendedAttacks,
+    diplomacy: diplomacy ?? DiplomacyState.empty.addContact(_player1, _player2),
+    dominationHoldTurnsByPlayerId: dominationHoldTurnsByPlayerId,
+    culturalVictoryHoldTurnsByPlayerId: culturalVictoryHoldTurnsByPlayerId,
+    mapObjectiveHoldStatesByObjectiveId: const {
+      'sentinel_objective': MapObjectiveHoldState(
+        objectiveId: 'sentinel_objective',
+        playerId: _sentinelPlayer,
+        holdTurns: 2,
+      ),
+    },
+    resourceTradeAgreements: resourceTradeAgreements,
+    turnStartedAt: DateTime.utc(2026, 7, 1, 12),
   );
 }
 
 _DiplomacyTestResult _route(
-  PersistentGameState state,
+  DomainState state,
   DiplomaticCommand command, {
   required String actorPlayerId,
   int turn = 10,
   bool canAct = true,
 }) {
-  final runtime = state.runtimeState;
+  final runtime = state;
   final resolved = DiplomacyCommandResolver.resolve(
     state: DiplomacyCommandState(
       playerColors: state.playerColors,
@@ -118,37 +116,26 @@ _DiplomacyTestResult _route(
       reason: resolved.reason,
     );
   }
-  final runtimeChanged =
-      !identical(resolved.diplomacy, runtime.diplomacy) ||
-      !identical(resolved.intendedAttacks, runtime.intendedAttacks) ||
-      !identical(
-        resolved.resourceTradeAgreements,
-        runtime.resourceTradeAgreements,
-      );
   return _DiplomacyTestResult(
     accepted: true,
     state: state.copyWith(
       playerGold: identical(resolved.playerGold, state.playerGold)
           ? null
           : resolved.playerGold,
-      runtimeState: runtimeChanged
-          ? runtime.copyWith(
-              diplomacy: identical(resolved.diplomacy, runtime.diplomacy)
-                  ? null
-                  : resolved.diplomacy,
-              intendedAttacks:
-                  identical(resolved.intendedAttacks, runtime.intendedAttacks)
-                  ? null
-                  : resolved.intendedAttacks,
-              resourceTradeAgreements:
-                  identical(
-                    resolved.resourceTradeAgreements,
-                    runtime.resourceTradeAgreements,
-                  )
-                  ? null
-                  : resolved.resourceTradeAgreements,
-            )
-          : null,
+      diplomacy: identical(resolved.diplomacy, runtime.diplomacy)
+          ? null
+          : resolved.diplomacy,
+      intendedAttacks:
+          identical(resolved.intendedAttacks, runtime.intendedAttacks)
+          ? null
+          : resolved.intendedAttacks,
+      resourceTradeAgreements:
+          identical(
+            resolved.resourceTradeAgreements,
+            runtime.resourceTradeAgreements,
+          )
+          ? null
+          : resolved.resourceTradeAgreements,
     ),
     events: resolved.events,
   );
@@ -163,39 +150,33 @@ final class _DiplomacyTestResult {
   });
 
   final bool accepted;
-  final PersistentGameState state;
+  final DomainState state;
   final List<GameEvent> events;
   final String? reason;
 }
 
 void _expectRejectedDiplomacy(
   _DiplomacyTestResult result,
-  PersistentGameState input,
+  DomainState input,
   String reason,
 ) {
   expect(result.accepted, isFalse);
   expect(result.reason, reason);
   expect(result.events, isEmpty);
   expect(result.state, same(input));
-  expect(result.state.runtimeState, same(input.runtimeState));
+  expect(result.state, same(input));
+  expect(result.state.diplomacy, same(input.diplomacy));
+  expect(result.state.intendedAttacks, same(input.intendedAttacks));
   expect(
-    result.state.runtimeState.diplomacy,
-    same(input.runtimeState.diplomacy),
-  );
-  expect(
-    result.state.runtimeState.intendedAttacks,
-    same(input.runtimeState.intendedAttacks),
-  );
-  expect(
-    result.state.runtimeState.resourceTradeAgreements,
-    same(input.runtimeState.resourceTradeAgreements),
+    result.state.resourceTradeAgreements,
+    same(input.resourceTradeAgreements),
   );
   expect(result.state.playerGold, same(input.playerGold));
 }
 
 void _expectOuterSentinelsUnchanged(
   _DiplomacyTestResult result,
-  PersistentGameState input, {
+  DomainState input, {
   bool goldChanged = false,
 }) {
   expect(result.accepted, isTrue);
@@ -216,12 +197,12 @@ void _expectOuterSentinelsUnchanged(
 
 void _expectRuntimeSentinelsUnchanged(
   _DiplomacyTestResult result,
-  PersistentGameState input, {
+  DomainState input, {
   bool intendedAttacksChanged = false,
   bool tradesChanged = false,
 }) {
-  final actual = result.state.runtimeState;
-  final original = input.runtimeState;
+  final actual = result.state;
+  final original = input;
   expect(actual.submittedPlayerIds, same(original.submittedPlayerIds));
   expect(
     actual.timeoutStreaksByPlayerId,

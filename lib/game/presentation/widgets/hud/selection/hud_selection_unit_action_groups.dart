@@ -2,9 +2,9 @@ part of 'hud_selection_actions.dart';
 
 List<List<_HudSelectionActionSpec>> _unitActionGroups({
   required GameUnit unit,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required GameSelection? selection,
-  required MapData mapData,
+  required WorldMap mapData,
   required bool actionsLocked,
   required bool moveModeActive,
   required bool armyDetailActive,

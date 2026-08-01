@@ -2,7 +2,6 @@ import 'package:aonw_core/game/domain/outcome/game_outcome.dart';
 import 'package:aonw_core/game/domain/outcome/game_outcome_resolver.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
-import 'package:aonw_core/game/domain/state/match_session_state.dart';
 
 /// The lifecycle decision produced after a participant resigns.
 enum ParticipantResignationDisposition {
@@ -21,13 +20,13 @@ enum ParticipantResignationAbandonmentReason {
 /// Persistence-neutral result of applying a participant resignation.
 final class ParticipantResignationResult {
   const ParticipantResignationResult._({
-    required this.session,
+    required this.domain,
     required this.disposition,
     this.outcome,
     this.abandonmentReason,
   });
 
-  final MatchSessionState session;
+  final DomainState domain;
   final ParticipantResignationDisposition disposition;
   final GameOutcome? outcome;
   final ParticipantResignationAbandonmentReason? abandonmentReason;
@@ -43,7 +42,6 @@ final class ParticipantResignationResult {
 abstract final class ParticipantResignationTransition {
   static ParticipantResignationResult apply({
     required DomainState domain,
-    required MatchSessionState session,
     required String actorPlayerId,
     required Iterable<String> orderedHumanPlayerIds,
   }) {
@@ -54,46 +52,42 @@ abstract final class ParticipantResignationTransition {
         'Must not be empty',
       );
     }
-    if (session.isKicked(actorPlayerId)) {
+    if (domain.isKicked(actorPlayerId)) {
       return ParticipantResignationResult._(
-        session: session,
+        domain: domain,
         disposition: ParticipantResignationDisposition.unchanged,
       );
     }
 
-    final nextSession = _sessionAfterResignation(session, actorPlayerId);
+    final nextDomain = _domainAfterResignation(domain, actorPlayerId);
     final remainingHumanPlayerIds = [
       for (final playerId in orderedHumanPlayerIds)
-        if (!nextSession.isKicked(playerId)) playerId,
+        if (!nextDomain.isKicked(playerId)) playerId,
     ];
     return _resolveLifecycle(
-      domain: domain,
-      session: nextSession,
+      domain: nextDomain,
       remainingHumanPlayerIds: remainingHumanPlayerIds,
     );
   }
 
-  static MatchSessionState _sessionAfterResignation(
-    MatchSessionState session,
+  static DomainState _domainAfterResignation(
+    DomainState domain,
     String actorPlayerId,
   ) {
-    return session.copyWith(
+    return domain.copyWith(
       turnStatesByPlayerId: {
-        ...session.turnStatesByPlayerId,
-        if (session.turnStatesByPlayerId.containsKey(actorPlayerId))
+        ...domain.turnStatesByPlayerId,
+        if (domain.turnStatesByPlayerId.containsKey(actorPlayerId))
           actorPlayerId: PlayerTurnState.finished,
       },
-      submittedPlayerIds: session.submittedPlayerIds.difference({
-        actorPlayerId,
-      }),
-      afkPlayerIds: {...session.afkPlayerIds, actorPlayerId},
-      kickedPlayerIds: {...session.kickedPlayerIds, actorPlayerId},
+      submittedPlayerIds: domain.submittedPlayerIds.difference({actorPlayerId}),
+      afkPlayerIds: {...domain.afkPlayerIds, actorPlayerId},
+      kickedPlayerIds: {...domain.kickedPlayerIds, actorPlayerId},
     );
   }
 
   static ParticipantResignationResult _resolveLifecycle({
     required DomainState domain,
-    required MatchSessionState session,
     required List<String> remainingHumanPlayerIds,
   }) {
     final alivePlayerIds = const GameOutcomeResolver().alivePlayerIds(
@@ -104,14 +98,14 @@ abstract final class ParticipantResignationTransition {
 
     if (alivePlayerIds.length == 1) {
       return ParticipantResignationResult._(
-        session: session,
+        domain: domain,
         disposition: ParticipantResignationDisposition.finished,
         outcome: GameOutcome.resignation(alivePlayerIds.single),
       );
     }
     if (alivePlayerIds.isEmpty) {
       return ParticipantResignationResult._(
-        session: session,
+        domain: domain,
         disposition: ParticipantResignationDisposition.abandoned,
         abandonmentReason: remainingHumanPlayerIds.isEmpty
             ? ParticipantResignationAbandonmentReason.allPlayersResigned
@@ -120,7 +114,7 @@ abstract final class ParticipantResignationTransition {
       );
     }
     return ParticipantResignationResult._(
-      session: session,
+      domain: domain,
       disposition: ParticipantResignationDisposition.running,
     );
   }

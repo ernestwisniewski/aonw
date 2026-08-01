@@ -86,14 +86,14 @@ GameUnit _workerWithJob() {
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 2,
     rows: 2,
     tiles: [
       for (var row = 0; row < 2; row++)
         for (var col = 0; col < 2; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: col == 1 && row == 0

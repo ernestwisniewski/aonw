@@ -11,8 +11,8 @@ void main() {
     test('opens technology for active player research selection', () {
       expect(
         HudNextActionPanelResolver.afterFocus(
-          state: const GameState(
-            interaction: GameInteractionState(
+          state: GameClientState(
+            interaction: const InteractionState(
               pendingAction: PendingResearchSelection(
                 ownerPlayerId: 'player_1',
               ),
@@ -27,8 +27,8 @@ void main() {
     test('ignores research selection owned by another player', () {
       expect(
         HudNextActionPanelResolver.afterFocus(
-          state: const GameState(
-            interaction: GameInteractionState(
+          state: GameClientState(
+            interaction: const InteractionState(
               pendingAction: PendingResearchSelection(
                 ownerPlayerId: 'player_2',
               ),
@@ -47,9 +47,9 @@ void main() {
 
         expect(
           HudNextActionPanelResolver.afterFocus(
-            state: GameState(
+            state: GameClientState(
               cities: [city],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.city(
                   city,
                   cityYield: TileYield.zero,
@@ -69,9 +69,9 @@ void main() {
 
       expect(
         HudNextActionPanelResolver.afterFocus(
-          state: GameState(
+          state: GameClientState(
             cities: [city],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.city(
                 city,
                 cityYield: TileYield.zero,

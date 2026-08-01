@@ -35,7 +35,7 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
     required bool activityLogAvailable,
     required bool globalActionsAvailable,
     required String activePlayerId,
-    required GameState? gameState,
+    required GameClientState? gameState,
   }) {
     if (menuCollapsed) {
       return [
@@ -141,7 +141,7 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
   Object _sideMenuActivationKey(
     String targetId,
     String activePlayerId,
-    GameState? gameState,
+    GameClientState? gameState,
   ) {
     return Object.hash(
       widget.session.saveId,
@@ -152,7 +152,10 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
     );
   }
 
-  void _toggleObjectivesPanel(String activePlayerId, GameState? gameState) {
+  void _toggleObjectivesPanel(
+    String activePlayerId,
+    GameClientState? gameState,
+  ) {
     _closeOptions();
     ref
         .read(hudCommandDispatcherProvider)
@@ -162,7 +165,10 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
         );
   }
 
-  void _toggleActivityLogPanel(String activePlayerId, GameState? gameState) {
+  void _toggleActivityLogPanel(
+    String activePlayerId,
+    GameClientState? gameState,
+  ) {
     _closeOptions();
     ref
         .read(hudCommandDispatcherProvider)
@@ -172,7 +178,10 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
         );
   }
 
-  void _toggleTechnologyPanel(String activePlayerId, GameState? gameState) {
+  void _toggleTechnologyPanel(
+    String activePlayerId,
+    GameClientState? gameState,
+  ) {
     _closeOptions();
     ref
         .read(hudCommandDispatcherProvider)
@@ -182,7 +191,7 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
         );
   }
 
-  void _toggleEmpirePanel(String activePlayerId, GameState? gameState) {
+  void _toggleEmpirePanel(String activePlayerId, GameClientState? gameState) {
     _closeOptions();
     ref
         .read(hudCommandDispatcherProvider)
@@ -191,7 +200,7 @@ extension _GameOptionsOverlaySideMenu on _GameOptionsOverlayState {
 
   void _closeHudSidePanels({
     required String activePlayerId,
-    required GameState? gameState,
+    required GameClientState? gameState,
   }) {
     final dispatcher = ref.read(hudCommandDispatcherProvider)
       ..closeObjectivesPanel()

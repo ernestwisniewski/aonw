@@ -64,7 +64,7 @@ void _registerActorGuardCharacterizationTests() {
 
       expect(result.accepted, isTrue);
       expect(
-        result.state.runtimeState.diplomacy.pendingProposals,
+        result.state.diplomacy.pendingProposals,
         contains('ghost_proposal'),
       );
     });

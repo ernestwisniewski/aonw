@@ -121,7 +121,9 @@ Future<_NaturalOutcomeFixture> _startNaturalOutcomeFixture() async {
 
 Future<void> _seedNaturalOutcome(_NaturalOutcomeFixture fixture) async {
   final stored = (await fixture.store.findState(fixture.match.id))!;
-  final state = PersistentGameState.fromJson(stored.snapshot.state);
+  final state = CanonicalGameSnapshotCodec.decodeDomainState(
+    stored.snapshot.state,
+  );
   await fixture.store.saveState(
     stored.copyWith(
       snapshot: stored.snapshot.copyWith(
@@ -298,11 +300,11 @@ Future<void> _seedDrawOutcome({
   );
 }
 
-PersistentGameState _drawOutcomeState({
+DomainState _drawOutcomeState({
   required WirePlayer owner,
   required WirePlayer guest,
 }) {
-  return PersistentGameState(
+  return DomainState.snapshot(
     units: [
       GameUnit(
         id: 'draw_owner_unit',

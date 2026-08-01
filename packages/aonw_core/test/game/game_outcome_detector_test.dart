@@ -9,7 +9,7 @@ void main() {
     test('keeps the game ongoing while multiple players have map presence', () {
       final outcome = detector.evaluate(
         playerIds: players,
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_1',
@@ -38,7 +38,7 @@ void main() {
     test('declares a winner when only one player has units or cities', () {
       final outcome = detector.evaluate(
         playerIds: players,
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_1',
@@ -61,9 +61,9 @@ void main() {
         playerIds: players,
         mapData: _mapData(4),
         matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
-        state: const PersistentGameState(
+        state: DomainState.snapshot(
           cities: [
-            GameCity(
+            const GameCity(
               id: 'city_1',
               ownerPlayerId: 'player_1',
               name: 'Roma',
@@ -71,9 +71,8 @@ void main() {
               controlledHexes: [CityHex(col: 1, row: 0)],
             ),
           ],
-          runtimeState: GameRuntimeState(
-            dominationHoldTurnsByPlayerId: {'player_1': 2},
-          ),
+
+          dominationHoldTurnsByPlayerId: {'player_1': 2},
         ),
       );
 
@@ -90,7 +89,7 @@ void main() {
         matchRules: matchRules.copyWith(
           victory: matchRules.victory.copyWith(conquestEnabled: false),
         ),
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_1',
@@ -109,7 +108,7 @@ void main() {
     });
 
     test('does not finish single-player or malformed player lists', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'warrior_1',
@@ -134,7 +133,7 @@ void main() {
     test('ignores map presence for ids outside the match roster', () {
       final outcome = detector.evaluate(
         playerIds: players,
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'outsider_unit',
@@ -155,7 +154,7 @@ void main() {
         playerIds: players,
         turn: 200,
         matchRules: MatchRules.standard,
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_1',
@@ -184,7 +183,7 @@ void main() {
         playerIds: players,
         mapData: _mapData(4),
         matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_2',
@@ -206,9 +205,8 @@ void main() {
               ],
             ),
           ],
-          runtimeState: const GameRuntimeState(
-            dominationHoldTurnsByPlayerId: {'player_1': 10},
-          ),
+
+          dominationHoldTurnsByPlayerId: {'player_1': 10},
         ),
       );
 
@@ -222,7 +220,7 @@ void main() {
         playerIds: players,
         mapData: _mapData(4),
         matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_2',
@@ -244,9 +242,8 @@ void main() {
               ],
             ),
           ],
-          runtimeState: const GameRuntimeState(
-            dominationHoldTurnsByPlayerId: {'player_1': 9},
-          ),
+
+          dominationHoldTurnsByPlayerId: {'player_1': 9},
         ),
       );
 
@@ -258,7 +255,7 @@ void main() {
       final outcome = detector.evaluate(
         playerIds: players,
         matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_1',
@@ -275,9 +272,8 @@ void main() {
               row: 0,
             ),
           ],
-          runtimeState: const GameRuntimeState(
-            dominationHoldTurnsByPlayerId: {'player_1': 10},
-          ),
+
+          dominationHoldTurnsByPlayerId: {'player_1': 10},
         ),
       );
 
@@ -292,7 +288,7 @@ void main() {
         playerIds: players,
         turn: matchRules.victory.turnLimit,
         matchRules: matchRules,
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_1',
@@ -337,7 +333,7 @@ void main() {
         playerIds: players,
         turn: matchRules.victory.turnLimit,
         matchRules: matchRules,
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_1',
@@ -377,7 +373,7 @@ void main() {
         turn: matchRules.victory.turnLimit,
         matchRules: matchRules,
         mapData: _mapData(2, objectives: const [objective]),
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_1',
@@ -394,15 +390,14 @@ void main() {
               row: 0,
             ),
           ],
-          runtimeState: const GameRuntimeState(
-            mapObjectiveHoldStatesByObjectiveId: {
-              'pass_1': MapObjectiveHoldState(
-                objectiveId: 'pass_1',
-                playerId: 'player_1',
-                holdTurns: 2,
-              ),
-            },
-          ),
+
+          mapObjectiveHoldStatesByObjectiveId: {
+            'pass_1': const MapObjectiveHoldState(
+              objectiveId: 'pass_1',
+              playerId: 'player_1',
+              holdTurns: 2,
+            ),
+          },
         ),
       );
 
@@ -414,17 +409,17 @@ void main() {
   });
 }
 
-MapData _mapData(
+WorldMap _mapData(
   int validTiles, {
   Iterable<MapObjectiveDefinition> objectives = const [],
 }) {
-  return MapData(
+  return WorldMap(
     cols: validTiles,
     rows: 1,
     objectives: objectives,
     tiles: [
       for (var col = 0; col < validTiles; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.grassland],

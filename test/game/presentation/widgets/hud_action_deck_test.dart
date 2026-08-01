@@ -680,8 +680,8 @@ void main() {
   testWidgets('worker action mode opens build selection sheet', (tester) async {
     await _pumpDeck(
       tester,
-      gameState: const GameState(
-        interaction: GameInteractionState(
+      gameState: GameClientState(
+        interaction: const InteractionState(
           pendingAction: PendingWorkerActionSelection(
             ownerPlayerId: 'player_1',
             unitId: 'worker_1',
@@ -727,8 +727,8 @@ void main() {
   ) async {
     await _pumpDeck(
       tester,
-      gameState: const GameState(
-        interaction: GameInteractionState(
+      gameState: GameClientState(
+        interaction: const InteractionState(
           pendingAction: PendingAttackTargeting(
             ownerPlayerId: 'player_1',
             attackerUnitId: 'attacker_1',
@@ -938,7 +938,7 @@ void main() {
     expect(find.byKey(const Key('hudCombatConfirm.surface')), findsOneWidget);
     expect(find.byType(SelectionDetailSheet), findsNothing);
 
-    state = const GameState();
+    state = GameClientState();
     preview = null;
     await pump();
     await tester.pump(const Duration(milliseconds: 100));
@@ -954,7 +954,7 @@ void main() {
   testWidgets('combat arriving while detail is open takes modal priority', (
     tester,
   ) async {
-    var state = const GameState();
+    var state = GameClientState();
     HudCombatPreview? preview;
 
     Future<void> pump() {
@@ -1033,8 +1033,8 @@ void main() {
         tester,
         screenSize: scenario.size,
         textScaleFactor: scenario.textScale,
-        gameState: const GameState(
-          interaction: GameInteractionState(
+        gameState: GameClientState(
+          interaction: const InteractionState(
             pendingAction: PendingAttackTargeting(
               ownerPlayerId: 'player_1',
               attackerUnitId: 'attacker_1',

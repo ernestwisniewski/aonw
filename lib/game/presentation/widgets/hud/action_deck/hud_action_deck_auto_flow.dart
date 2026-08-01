@@ -141,7 +141,7 @@ extension _HudActionDeckAutoFlow on _HudActionDeckState {
     _lastManualAutoTargetKey = manualTargetKey;
   }
 
-  void _invalidateCompletedManualCityKey(GameState state) {
+  void _invalidateCompletedManualCityKey(GameClientState state) {
     final completedKey = _completedManualCityTargetKey;
     if (completedKey == null) return;
     final selectedCity = state.selection?.city;

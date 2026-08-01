@@ -21,13 +21,13 @@ final class UnitActionEngineHandler {
     final result = switch (command) {
       final SkipUnitTurnCommand value => _resolver.skipUnitTurn(
         state: snapshot.domain,
-        interaction: snapshot.interaction,
+        interaction: snapshot.domain.actions,
         command: value,
         actorPlayerId: context.actorPlayerId,
       ),
       final FortifyUnitCommand value => _resolver.fortifyUnit(
         state: snapshot.domain,
-        interaction: snapshot.interaction,
+        interaction: snapshot.domain.actions,
         command: value,
         actorPlayerId: context.actorPlayerId,
       ),
@@ -48,13 +48,13 @@ final class UnitActionEngineHandler {
     final domainChanged = !identical(result.state, snapshot.domain);
     final interactionChanged = !identical(
       result.interaction,
-      snapshot.interaction,
+      snapshot.domain.actions,
     );
     return GameEngineResult.accepted(
       snapshot: domainChanged || interactionChanged
           ? snapshot.copyWith(
               domain: domainChanged ? result.state : null,
-              interaction: interactionChanged ? result.interaction : null,
+              actions: interactionChanged ? result.interaction : null,
             )
           : snapshot,
     );

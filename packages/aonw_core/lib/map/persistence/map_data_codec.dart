@@ -1,33 +1,27 @@
 import 'dart:convert';
 
+import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/domain/world_map.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
-class MapDataLoadException implements Exception {
-  const MapDataLoadException(this.message);
+class WorldMapLoadException implements Exception {
+  const WorldMapLoadException(this.message);
 
   final String message;
 
   @override
-  String toString() => 'MapDataLoadException: $message';
+  String toString() => 'WorldMapLoadException: $message';
 }
 
-abstract final class MapDataCodec {
-  static MapData fromJson(String jsonString) {
+abstract final class WorldMapCodec {
+  static WorldMap fromJson(String jsonString) {
     try {
       final map = json.decode(jsonString) as Map<String, dynamic>;
 
-      if (!map.containsKey('cols')) {
-        throw const MapDataLoadException('Missing field: cols');
-      }
-      if (!map.containsKey('rows')) {
-        throw const MapDataLoadException('Missing field: rows');
-      }
-      if (!map.containsKey('tiles')) {
-        throw const MapDataLoadException('Missing field: tiles');
-      }
+      _requireMapField(map, 'cols');
+      _requireMapField(map, 'rows');
+      _requireMapField(map, 'tiles');
 
       final cols = map['cols'] as int;
       final rows = map['rows'] as int;
@@ -35,105 +29,122 @@ abstract final class MapDataCodec {
       final mapName = map['mapName'] as String?;
       final objectivesJson = (map['objectives'] as List<dynamic>?) ?? const [];
 
-      final tiles = tilesJson.map((entry) {
-        final tile = entry as Map<String, dynamic>;
-        try {
-          final terrains = (tile['terrains'] as List<dynamic>)
-              .map((value) => TerrainType.fromString(value as String))
-              .toList();
-          final resources = (tile['resources'] as List<dynamic>)
-              .map((value) => ResourceType.fromString(value as String))
-              .toList();
-
-          if (terrains.isEmpty) {
-            throw const MapDataLoadException(
-              'Tile terrains list must not be empty',
-            );
-          }
-
-          return TileData(
-            col: tile['col'] as int,
-            row: tile['row'] as int,
-            terrains: terrains,
-            resources: resources,
-            height: tile['height'] as int,
-          );
-        } on MapDataLoadException {
-          rethrow;
-        } on ArgumentError catch (error) {
-          throw MapDataLoadException(error.message.toString());
-        }
-      }).toList();
-
-      for (final tile in tiles) {
-        if (tile.col < 0 || tile.col >= cols) {
-          throw MapDataLoadException(
-            'Tile col ${tile.col} out of range [0, $cols)',
-          );
-        }
-        if (tile.row < 0 || tile.row >= rows) {
-          throw MapDataLoadException(
-            'Tile row ${tile.row} out of range [0, $rows)',
-          );
-        }
-        if (tile.height < 0 || tile.height > 5) {
-          throw MapDataLoadException(
-            'Tile height ${tile.height} out of range [0, 5]',
-          );
-        }
-      }
+      final tiles = tilesJson.map(_decodeWorldTile).toList();
+      _validateTileBounds(tiles, cols: cols, rows: rows);
 
       final defaultZoom = (map['defaultZoom'] as num?)?.toDouble() ?? 1.0;
       return _validateCanonicalMap(
-        MapData(
+        WorldMap(
           cols: cols,
           rows: rows,
           tiles: tiles,
-          objectives: objectivesJson.map((entry) {
-            if (entry is! Map<String, dynamic>) {
-              throw const MapDataLoadException(
-                'Map objective entries must be JSON objects',
-              );
-            }
-            return MapObjectiveDefinition.fromJson(entry);
-          }),
+          objectives: objectivesJson.map(_decodeMapObjective),
           mapName: mapName,
           defaultZoom: defaultZoom,
         ),
       );
-    } on MapDataLoadException {
+    } on WorldMapLoadException {
       rethrow;
+    } on WorldMapException catch (error) {
+      throw WorldMapLoadException(error.message);
     } catch (error) {
-      throw MapDataLoadException('Failed to parse map JSON: $error');
+      throw WorldMapLoadException('Failed to parse map JSON: $error');
     }
   }
 
-  static String toJson(MapData mapData) {
-    _validateCanonicalMap(mapData);
+  static String toJson(WorldMap worldMap) {
+    _validateCanonicalMap(worldMap);
     final map = <String, dynamic>{
-      'cols': mapData.cols,
-      'rows': mapData.rows,
-      if (mapData.mapName != null) 'mapName': mapData.mapName,
-      if (mapData.defaultZoom != 1.0) 'defaultZoom': mapData.defaultZoom,
-      if (mapData.objectives.isNotEmpty)
+      'cols': worldMap.cols,
+      'rows': worldMap.rows,
+      if (worldMap.mapName != null) 'mapName': worldMap.mapName,
+      if (worldMap.defaultZoom != 1.0) 'defaultZoom': worldMap.defaultZoom,
+      if (worldMap.objectives.isNotEmpty)
         'objectives': [
-          for (final objective in mapData.objectives) objective.toJson(),
+          for (final objective in worldMap.objectives) objective.toJson(),
         ],
-      'tiles': mapData.tiles.map((tile) => tile.toJson()).toList(),
+      'tiles': worldMap.tiles.map((tile) => tile.toJson()).toList(),
     };
     return const JsonEncoder.withIndent('  ').convert(map);
   }
 }
 
-MapData _validateCanonicalMap(MapData mapData) {
+void _requireMapField(Map<String, dynamic> map, String field) {
+  if (map.containsKey(field)) return;
+  throw WorldMapLoadException('Missing field: $field');
+}
+
+WorldTile _decodeWorldTile(Object? entry) {
+  final tile = entry as Map<String, dynamic>;
   try {
-    // Canonical freezing validates each tile before map-wide metadata.
-    // Preserve that public error ordering without materializing a throwaway
-    // canonical map.
-    validateMapDataTileInvariants(mapData);
-    mapData.indexedReadView();
-    return mapData;
+    final terrains = (tile['terrains'] as List<dynamic>)
+        .map((value) => TerrainType.fromString(value as String))
+        .toList();
+    final resources = (tile['resources'] as List<dynamic>)
+        .map((value) => ResourceType.fromString(value as String))
+        .toList();
+    if (terrains.isEmpty) {
+      throw const WorldMapLoadException('Tile terrains list must not be empty');
+    }
+    return WorldTile.at(
+      coordinate: HexCoord(col: tile['col'] as int, row: tile['row'] as int),
+      terrains: terrains,
+      resources: resources,
+      height: tile['height'] as int,
+    );
+  } on WorldMapLoadException {
+    rethrow;
+  } on ArgumentError catch (error) {
+    throw WorldMapLoadException(error.message.toString());
+  }
+}
+
+void _validateTileBounds(
+  Iterable<WorldTile> tiles, {
+  required int cols,
+  required int rows,
+}) {
+  for (final tile in tiles) {
+    if (tile.col < 0 || tile.col >= cols) {
+      throw WorldMapLoadException(
+        'Tile col ${tile.col} out of range [0, $cols)',
+      );
+    }
+    if (tile.row < 0 || tile.row >= rows) {
+      throw WorldMapLoadException(
+        'Tile row ${tile.row} out of range [0, $rows)',
+      );
+    }
+    if (tile.height < 0 || tile.height > 5) {
+      throw WorldMapLoadException(
+        'Tile height ${tile.height} out of range [0, 5]',
+      );
+    }
+  }
+}
+
+MapObjectiveDefinition _decodeMapObjective(Object? entry) {
+  if (entry is Map<String, dynamic>) {
+    return MapObjectiveDefinition.fromJson(entry);
+  }
+  throw const WorldMapLoadException(
+    'Map objective entries must be JSON objects',
+  );
+}
+
+WorldMap _validateCanonicalMap(WorldMap worldMap) {
+  try {
+    // Re-freezing preserves the validation/error boundary even when a map
+    // came from a custom implementation or was constructed in a fixture.
+    return WorldMap.fromTileViews(
+      cols: worldMap.cols,
+      rows: worldMap.rows,
+      tiles: worldMap.tiles,
+      objectives: worldMap.objectives,
+      mapName: worldMap.mapName,
+      defaultZoom: worldMap.defaultZoom,
+    );
   } on WorldMapException catch (error) {
-    throw MapDataLoadException(error.message);
+    throw WorldMapLoadException(error.message);
   }
 }

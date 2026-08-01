@@ -2,20 +2,20 @@ part of 'server_command_reducer.dart';
 
 extension ServerCommandReducerTurns on ServerCommandReducer {
   List<String> _turnPlayerIds(CanonicalGameSnapshot snapshot) {
-    final kickedPlayerIds = snapshot.session.kickedPlayerIds;
+    final kickedPlayerIds = snapshot.domain.kickedPlayerIds;
     final ids = snapshot.domain.participants
         .map((player) => player.id)
         .where((id) => id.isNotEmpty && !kickedPlayerIds.contains(id))
         .toList();
     if (ids.isNotEmpty) return ids;
-    return snapshot.session.turnStatesByPlayerId.keys
+    return snapshot.domain.turnStatesByPlayerId.keys
         .where((id) => id.isNotEmpty && !kickedPlayerIds.contains(id))
         .toList();
   }
 
   bool _turnTimedOut(CanonicalGameSnapshot snapshot, DateTime now) {
     final turnStartedAt =
-        snapshot.session.turnStartedAt ?? snapshot.metadata.savedAtUtc;
+        snapshot.domain.turnStartedAt ?? snapshot.metadata.savedAtUtc;
     final deadline = turnStartedAt.toUtc().add(_turnTimeout);
     return !now.toUtc().isBefore(deadline);
   }

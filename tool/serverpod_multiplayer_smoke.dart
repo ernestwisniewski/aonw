@@ -301,7 +301,7 @@ class _RuntimeSmoke {
     late final _SmokeMove move;
     late final WireCommandAck moveAck;
     late final sp.MultiplayerServerMessage guestLiveBroadcast;
-    late final SaveSnapshot guestLiveState;
+    late final CanonicalGameSnapshot guestLiveState;
     try {
       final ownerInitial = await ownerInitialMessage.future.timeout(
         config.streamTimeout,
@@ -492,7 +492,7 @@ class _RuntimeSmoke {
       playerId: diplomacyCommand.playerId,
       targetPlayerId: diplomacyCommand.targetPlayerId,
       knownPlayerIds: started.players.map((player) => player.id),
-      diplomacy: postMoveSnapshot.runtimeState.diplomacy,
+      diplomacy: postMoveSnapshot.domain.diplomacy,
       fogOfWar: postMoveSnapshot.fogOfWar,
       units: postMoveSnapshot.units,
       cities: postMoveSnapshot.cities,
@@ -901,14 +901,14 @@ class _RuntimeSmoke {
     return host.endsWith('/') ? host : '$host/';
   }
 
-  static Future<MapData> _loadMap(String mapName) async {
+  static Future<WorldMap> _loadMap(String mapName) async {
     final safeName = _safeMapName(mapName);
     final file = File('assets/maps/$safeName/map.json');
     if (!await file.exists()) {
       throw StateError('Bundled map not found: ${file.path}');
     }
-    return MapDataCodec.fromJson(await file.readAsString())
-      ..mapName ??= safeName;
+    final worldMap = WorldMapCodec.fromJson(await file.readAsString());
+    return worldMap.copyWith(mapName: worldMap.mapName ?? safeName);
   }
 
   static String _safeMapName(String mapName) {
@@ -920,8 +920,8 @@ class _RuntimeSmoke {
   }
 
   static _SmokeMove _movementCommandFor({
-    required MapData mapData,
-    required SaveSnapshot snapshot,
+    required WorldMap mapData,
+    required CanonicalGameSnapshot snapshot,
     required String actorPlayerId,
   }) {
     final pathfinder = UnitMovementPathfinder(

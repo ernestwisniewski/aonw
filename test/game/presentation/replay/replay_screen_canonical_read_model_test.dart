@@ -8,10 +8,10 @@ import 'package:aonw/game/presentation/providers/replay/replay_providers.dart';
 import 'package:aonw/game/presentation/providers/session/session_providers.dart';
 import 'package:aonw/game/presentation/screens/replay/replay_screen.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/providers/map_providers.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -106,18 +106,20 @@ ReplayTimeline _timeline({
           ]
         : const [],
   );
-  final snapshot = SaveSnapshot(save: _save.copyWith(camera: camera));
+  final snapshot = GameSnapshotFactory.create(
+    save: _save.copyWith(camera: camera),
+  );
   return ReplayTimeline(
     saveId: _save.id,
     initialSnapshot: snapshot,
-    initialState: const GameState(activePlayerId: 'player_1'),
+    initialState: GameClientState(activePlayerId: 'player_1'),
     steps: [
       ReplayStep(
         index: 1,
         loggedCommand: loggedCommand,
         snapshot: snapshot,
-        previousState: const GameState(activePlayerId: 'player_1'),
-        state: const GameState(activePlayerId: 'player_1'),
+        previousState: GameClientState(activePlayerId: 'player_1'),
+        state: GameClientState(activePlayerId: 'player_1'),
         events: const [event],
         uiEffects: const [],
       ),
@@ -125,11 +127,11 @@ ReplayTimeline _timeline({
   );
 }
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 1,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],

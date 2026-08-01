@@ -7,8 +7,8 @@ import 'package:aonw/game/presentation/widgets/city/city_production_list.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list_tile.dart';
 import 'package:aonw/game/presentation/widgets/unit/unit_details_panel.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/material.dart';
@@ -612,12 +612,12 @@ List<ProductionListTile> _selectedProductionTiles(WidgetTester tester) {
       .toList();
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 1,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
@@ -628,19 +628,19 @@ MapData _map() {
   );
 }
 
-MapData _richFoodMap() {
-  return MapData(
+WorldMap _richFoodMap() {
+  return WorldMap(
     cols: 2,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains],

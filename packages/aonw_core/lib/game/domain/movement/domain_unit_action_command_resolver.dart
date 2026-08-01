@@ -1,6 +1,5 @@
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/movement/unit_action_command_resolver.dart';
-import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
 
 final class DomainUnitActionCommandResult {
@@ -13,7 +12,7 @@ final class DomainUnitActionCommandResult {
 
   final bool accepted;
   final DomainState state;
-  final PersistedInteractionState interaction;
+  final DomainActionState interaction;
   final String? reason;
 }
 
@@ -23,7 +22,7 @@ final class DomainUnitActionCommandResolver {
 
   DomainUnitActionCommandResult cancelUnitAction({
     required DomainState state,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required CancelUnitActionCommand command,
     required String actorPlayerId,
   }) {
@@ -42,7 +41,7 @@ final class DomainUnitActionCommandResolver {
 
   DomainUnitActionCommandResult skipUnitTurn({
     required DomainState state,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required SkipUnitTurnCommand command,
     required String actorPlayerId,
   }) {
@@ -61,7 +60,7 @@ final class DomainUnitActionCommandResolver {
 
   DomainUnitActionCommandResult fortifyUnit({
     required DomainState state,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required FortifyUnitCommand command,
     required String actorPlayerId,
   }) {
@@ -80,7 +79,7 @@ final class DomainUnitActionCommandResolver {
 
   static DomainUnitActionCommandResult _apply(
     DomainState state,
-    PersistedInteractionState interaction,
+    DomainActionState interaction,
     UnitActionCommandResult result,
   ) {
     if (!result.accepted) {

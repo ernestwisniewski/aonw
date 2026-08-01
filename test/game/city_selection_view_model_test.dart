@@ -4,9 +4,9 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_view_model_factory.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/stability.dart';
@@ -155,7 +155,7 @@ void main() {
           cityYield: TileYield.zero,
           playerColor: 0xFF4488cc,
         ),
-        gameState: const GameState(cities: [capital, frontier]),
+        gameState: GameClientState(cities: [capital, frontier]),
         l10n: l10n,
       );
 
@@ -172,7 +172,7 @@ void main() {
 
       final vm = SelectionViewModelFactory.from(
         citySelection(population: 2),
-        gameState: const GameState(artifacts: [artifact]),
+        gameState: GameClientState(artifacts: [artifact]),
         l10n: l10n,
       );
 
@@ -187,7 +187,7 @@ void main() {
     test('adds controlled map objectives to city description info', () {
       final vm = SelectionViewModelFactory.from(
         citySelection(population: 2),
-        gameState: const GameState(activePlayerId: 'player_1'),
+        gameState: GameClientState(activePlayerId: 'player_1'),
         mapData: _mapWithObjective(),
         l10n: l10n,
       );
@@ -242,7 +242,7 @@ void main() {
           cityEconomy: economy,
           playerColor: 0xFF4488cc,
         ),
-        gameState: const GameState(
+        gameState: GameClientState(
           cities: [authoritativeCity],
           artifacts: [storedArtifact],
         ),
@@ -282,14 +282,14 @@ void main() {
   });
 }
 
-MapData _mapWithObjective() {
-  return MapData(
+WorldMap _mapWithObjective() {
+  return WorldMap(
     cols: 3,
     rows: 3,
     tiles: [
       for (var row = 0; row < 3; row++)
         for (var col = 0; col < 3; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.grassland],

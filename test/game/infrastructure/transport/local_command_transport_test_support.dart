@@ -3,7 +3,7 @@ part of 'local_command_transport_test.dart';
 extension _LocalTransportClientBoundary on LocalCommandTransport {
   Future<CommandTransportResult> dispatchAcrossBoundary({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required Object command,
     GameCommandContext context = const GameCommandContext(),
   }) async {
@@ -45,13 +45,13 @@ extension _LocalTransportClientBoundary on LocalCommandTransport {
   }
 }
 
-MapData _map({int cols = 3, int rows = 3}) => MapData(
+WorldMap _map({int cols = 3, int rows = 3}) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (var row = 0; row < rows; row++)
       for (var col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],

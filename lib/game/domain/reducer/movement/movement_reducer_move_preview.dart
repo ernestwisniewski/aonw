@@ -2,7 +2,7 @@ part of 'movement_reducer.dart';
 
 abstract final class _MovePreviewReducer {
   static GameStateTransition setPreview(
-    GameState state,
+    GameClientState state,
     GameUnit selected,
     MapTileView targetTile,
     MapTraversalView mapView, {
@@ -62,7 +62,7 @@ abstract final class _MovePreviewReducer {
 
   static ({String actorPlayerId, FogVisibilityQuery visibility})
   _previewVisibility(
-    GameState state,
+    GameClientState state,
     GameUnit selected,
     GameCommandContext context,
   ) {
@@ -82,7 +82,7 @@ abstract final class _MovePreviewReducer {
   }
 
   static GameStateTransition _noPlanTransition({
-    required GameState state,
+    required GameClientState state,
     required GameUnit selected,
     required MapTileView targetTile,
     required FogVisibilityQuery visibility,
@@ -101,7 +101,7 @@ abstract final class _MovePreviewReducer {
   }
 
   static bool _canPreviewEventuallyTraverse({
-    required GameState state,
+    required GameClientState state,
     required GameUnit selected,
     required UnitMovementPlan plan,
     required MapTileView targetTile,
@@ -120,7 +120,7 @@ abstract final class _MovePreviewReducer {
   }
 
   static UnitMovementPlan? _planPreview({
-    required GameState state,
+    required GameClientState state,
     required GameUnit selected,
     required MapTileView targetTile,
     required MapTraversalView mapView,
@@ -152,7 +152,7 @@ abstract final class _MovePreviewReducer {
   }
 
   static GameStateTransition confirmPreview(
-    GameState state,
+    GameClientState state,
     MapTraversalView mapView, {
     required GameCommandContext context,
     required FogOfWarService fogOfWarService,
@@ -163,7 +163,7 @@ abstract final class _MovePreviewReducer {
   }
 
   static ShowHudFeedbackEffect? _blockedFeedback({
-    required GameState state,
+    required GameClientState state,
     required GameUnit unit,
     required MapTileView targetTile,
     required FogVisibilityQuery visibility,

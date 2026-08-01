@@ -221,8 +221,8 @@ void _requireReviewedStartBuildingFixtureShape(ReducerParityFixture fixture) {
   }
   if (fixture.state.cities.length < 2 ||
       fixture.state.cities.first.id != 'city_sentinel' ||
-      fixture.state.runtimeState.turnStartedAt == null ||
-      fixture.state.runtimeState.submittedPlayerIds.isEmpty) {
+      fixture.state.turnStartedAt == null ||
+      fixture.state.submittedPlayerIds.isEmpty) {
     ReducerParityCorpus._fail(
       fixture,
       'must preserve an unrelated city and non-empty runtime sentinels',

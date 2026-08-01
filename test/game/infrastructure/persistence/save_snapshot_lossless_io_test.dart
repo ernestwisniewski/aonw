@@ -14,16 +14,18 @@ void main() {
       final snapshot = SaveSnapshotCodec.fromJson(_jsonClone(expectedJson));
 
       expect(SaveSnapshotCodec.toJson(snapshot), expectedJson);
-      expect(snapshot.rawPersistentState.playerColors, {
+      expect(snapshot.domain.playerColors, {
         'player_1': 0xFF112233,
+        'player_2': 0xFF445566,
       });
-      expect(snapshot.rawPersistentState.playerCountries, {
+      expect(snapshot.domain.playerCountries, {
+        'player_1': PlayerCountry.france,
         'player_2': PlayerCountry.canada,
       });
-      expect(snapshot.rawPersistentState.runtimeState.turnStartedAt, isNull);
+      expect(snapshot.domain.turnStartedAt, _savedAt);
 
-      final firstCanonical = snapshot.canonical;
-      final secondCanonical = snapshot.canonical;
+      final firstCanonical = snapshot;
+      final secondCanonical = snapshot;
 
       expect(identical(firstCanonical, secondCanonical), isTrue);
       expect(firstCanonical.metadata.id, 'save_lossless');
@@ -42,7 +44,7 @@ void main() {
         firstCanonical.domain.participants.last.country,
         PlayerCountry.canada,
       );
-      expect(firstCanonical.session.turnStartedAt, _savedAt);
+      expect(firstCanonical.domain.turnStartedAt, _savedAt);
 
       final encodedAfterCanonicalReads = SaveSnapshotCodec.toJson(snapshot);
 
@@ -51,21 +53,23 @@ void main() {
       expect(encodedAfterCanonicalReads['eventLogOffset'], 73);
       expect(encodedAfterCanonicalReads['playerColors'], {
         'player_1': 0xFF112233,
+        'player_2': 0xFF445566,
       });
       expect(encodedAfterCanonicalReads['playerCountries'], {
+        'player_1': 'france',
         'player_2': 'canada',
       });
       expect(
-        encodedAfterCanonicalReads['runtimeState'],
-        isNot(contains('turnStartedAt')),
+        (encodedAfterCanonicalReads['lifecycle']! as Map)['turnStartedAt'],
+        _savedAt.toIso8601String(),
       );
 
       final secondSnapshot = SaveSnapshotCodec.fromJson(
         _jsonClone(encodedAfterCanonicalReads),
       );
-      final secondRoundCanonical = secondSnapshot.canonical;
+      final secondRoundCanonical = secondSnapshot;
 
-      expect(secondRoundCanonical.session.turnStartedAt, _savedAt);
+      expect(secondRoundCanonical.domain.turnStartedAt, _savedAt);
       expect(SaveSnapshotCodec.toJson(secondSnapshot), expectedJson);
     },
   );
@@ -76,8 +80,8 @@ final DateTime _savedAt = DateTime.utc(2026, 7, 21, 12, 34, 56);
 Map<String, dynamic> _expectedPersistenceJson() {
   return {
     'save': _save().toJson(),
-    'playerColors': {'player_1': 0xFF112233},
-    'playerCountries': {'player_2': 'canada'},
+    'playerColors': {'player_1': 0xFF112233, 'player_2': 0xFF445566},
+    'playerCountries': {'player_1': 'france', 'player_2': 'canada'},
     'playerGold': {'player_1': 17},
     'playerWarWeariness': <String, int>{},
     'playerStabilityNet': <String, int>{},
@@ -87,8 +91,9 @@ Map<String, dynamic> _expectedPersistenceJson() {
     'fieldImprovements': <dynamic>[],
     'fogOfWar': <dynamic>[],
     'research': {'players': <String, dynamic>{}},
-    'runtimeState': {
+    'lifecycle': {
       'submittedPlayerIds': ['player_1'],
+      'turnStartedAt': _savedAt.toIso8601String(),
     },
     'eventLogOffset': 73,
   };
@@ -111,14 +116,14 @@ GameSave _save() {
       Player(
         id: 'player_1',
         name: 'Alice',
-        colorValue: 0xFFAA0000,
+        colorValue: 0xFF112233,
         country: PlayerCountry.france,
       ),
       Player(
         id: 'player_2',
         name: 'Bob',
         colorValue: 0xFF445566,
-        country: PlayerCountry.japan,
+        country: PlayerCountry.canada,
       ),
     ],
     gameMode: GameMode.multiplayer,

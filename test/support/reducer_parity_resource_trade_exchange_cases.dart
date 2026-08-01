@@ -2,7 +2,7 @@ part of 'reducer_parity_resource_trade_characterization.dart';
 
 List<ReducerParityFixture> _resourceExchangeParityCases(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   final unavailable = _tradeParityWithoutTargetHorses(baseState);
   final requestedDuplicate = _tradeParityWithAgreements(unavailable, const [
@@ -67,7 +67,7 @@ List<ReducerParityFixture> _resourceExchangeParityCases(
 
 ReducerParityFixture _exchangeActorParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,
@@ -87,7 +87,7 @@ ReducerParityFixture _exchangeActorParityCase(
 
 ReducerParityFixture _exchangeTargetParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,
@@ -107,7 +107,7 @@ ReducerParityFixture _exchangeTargetParityCase(
 
 ReducerParityFixture _exchangeTermsParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,
@@ -127,7 +127,7 @@ ReducerParityFixture _exchangeTermsParityCase(
 
 ReducerParityFixture _exchangeWarParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,
@@ -147,7 +147,7 @@ ReducerParityFixture _exchangeWarParityCase(
 
 ReducerParityFixture _exchangeRequestedDuplicateParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,
@@ -167,7 +167,7 @@ ReducerParityFixture _exchangeRequestedDuplicateParityCase(
 
 ReducerParityFixture _exchangeOfferedDuplicateParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,
@@ -187,7 +187,7 @@ ReducerParityFixture _exchangeOfferedDuplicateParityCase(
 
 ReducerParityFixture _exchangeOfferParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,
@@ -207,7 +207,7 @@ ReducerParityFixture _exchangeOfferParityCase(
 
 ReducerParityFixture _exchangeRequestParityCase(
   ReducerParityFixture template,
-  PersistentGameState state,
+  DomainState state,
 ) {
   return _rejectedTradeParityFixture(
     template,

@@ -10,7 +10,7 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 
 abstract final class MerchantTradeRouteReducer {
   static GameStateTransition startSelection(
-    GameState state,
+    GameClientState state,
     StartMerchantTradeRouteSelectionCommand command,
     MapTraversalView mapView, {
     GameCommandContext context = const GameCommandContext(),
@@ -60,7 +60,7 @@ abstract final class MerchantTradeRouteReducer {
   }
 
   static GameStateTransition cancelSelection(
-    GameState state,
+    GameClientState state,
     CancelMerchantTradeRouteSelectionCommand command,
   ) {
     final pending = state.pendingAction;
@@ -76,7 +76,7 @@ abstract final class MerchantTradeRouteReducer {
   }
 
   static GameStateTransition startMoveToCitySelection(
-    GameState state,
+    GameClientState state,
     StartMerchantMoveToCitySelectionCommand command,
     MapTraversalView mapView, {
     GameCommandContext context = const GameCommandContext(),
@@ -121,7 +121,7 @@ abstract final class MerchantTradeRouteReducer {
   }
 
   static GameStateTransition cancelMoveToCitySelection(
-    GameState state,
+    GameClientState state,
     CancelMerchantMoveToCitySelectionCommand command,
   ) {
     final pending = state.pendingAction;
@@ -136,11 +136,11 @@ abstract final class MerchantTradeRouteReducer {
     );
   }
 
-  static GameState _clearTransientModes(GameState state) =>
+  static GameClientState _clearTransientModes(GameClientState state) =>
       state.copyWith(interaction: state.interaction.clearTransientModes());
 
   static GameSelection _unitSelection(
-    GameState state,
+    GameClientState state,
     GameUnit unit,
     MapTileLookup mapTiles,
   ) {
@@ -151,7 +151,7 @@ abstract final class MerchantTradeRouteReducer {
     );
   }
 
-  static GameUnit? _findUnit(GameState state, String unitId) {
+  static GameUnit? _findUnit(GameClientState state, String unitId) {
     return state.unitById(unitId);
   }
 }

@@ -4,13 +4,13 @@ import 'package:aonw_core/ai/ai_strategy.dart';
 import 'package:aonw_core/ai/ai_strategy_id.dart';
 import 'package:aonw_core/ai/mcts/mcts_config.dart';
 import 'package:aonw_core/ai/mcts/mcts_strategy.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/telemetry.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 
 enum EconomySimulationMctsProfileMode {
   simulation,
@@ -64,7 +64,7 @@ class EconomySimulationConfig {
     EconomySimulationMctsProfileMode mctsProfileMode =
         EconomySimulationMctsProfileMode.simulation,
     AiStrategy? strategyOverride,
-    MapData? mapData,
+    WorldMap? mapData,
   }) {
     final matchRules = MatchRules.forGameLength(gameLength);
     return EconomySimulationConfig(
@@ -92,7 +92,7 @@ class EconomySimulationConfig {
   final MctsConfig? mctsConfig;
   final EconomySimulationMctsProfileMode mctsProfileMode;
   final AiStrategy? strategyOverride;
-  final MapData? mapData;
+  final WorldMap? mapData;
 }
 
 class EconomySimulationResult {
@@ -108,7 +108,7 @@ class EconomySimulationResult {
     required this.telemetry,
   });
 
-  final PersistentGameState state;
+  final DomainState state;
   final List<EconomySimulationTurnRow> rows;
   final Map<String, List<EconomySimulationTurnRow>> rowsByPlayerId;
   final List<DomainCommand> appliedCommands;

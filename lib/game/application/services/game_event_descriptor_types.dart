@@ -67,10 +67,10 @@ final class PlayerAnchorGameEventFocusHint extends GameEventFocusHint {
 
 typedef _GameEventPlayerIdsResolver =
     List<String> Function(
-      GameState state,
-      GameState? previousState,
+      GameClientState state,
+      GameClientState? previousState,
       String? visiblePlayerId,
     );
 
 typedef _CriticalNotificationResolver =
-    bool Function(GameState state, String playerId);
+    bool Function(GameClientState state, String playerId);

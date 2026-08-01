@@ -190,8 +190,8 @@ final class MovementCommandExecution {
       root: '''
 import 'package:aonw_core/game/domain/movement/stealth_rules.dart';
 import 'package:aonw_core/game/domain/city.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
-MapData widen(MapData map) => map;
+import 'package:aonw_core/domain/world_map.dart';
+WorldMap widen(WorldMap map) => map;
 ''',
       helper: '''
 PersistentGameState leak(PersistentGameState state) => state;
@@ -201,7 +201,7 @@ PersistentGameState leak(PersistentGameState state) => state;
     final violations = movementKernelImportGraphViolations(
       graph,
       expectedPaths: const {root},
-      forbiddenTypes: const {'PersistentGameState', 'MapData'},
+      forbiddenTypes: const {'PersistentGameState', 'WorldMap'},
     );
 
     expect(graph.keys.toSet(), {root, helper});
@@ -210,12 +210,12 @@ PersistentGameState leak(PersistentGameState state) => state;
       allOf(
         contains('unexpected movement-kernel graph path'),
         contains('PersistentGameState'),
-        contains('MapData'),
+        contains('WorldMap'),
         contains(
           'unapproved dependency package:aonw_core/game/domain/city.dart',
         ),
         contains(
-          'unapproved dependency package:aonw_core/map/domain/map_data.dart',
+          'unapproved dependency package:aonw_core/domain/world_map.dart',
         ),
       ),
     );

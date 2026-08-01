@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -15,9 +15,9 @@ class RecommendedCitySitePlanner {
   _RecommendedCitySiteCache? _cache;
 
   Set<(int, int)> coordinates({
-    required GameState state,
+    required GameClientState state,
     required GameUnit founder,
-    required MapData mapData,
+    required WorldMap mapData,
   }) {
     final cacheKey = _RecommendedCitySiteCacheKey.fromState(
       state: state,
@@ -39,9 +39,9 @@ class RecommendedCitySitePlanner {
   }
 
   Set<(int, int)> _computeCoordinates({
-    required GameState state,
+    required GameClientState state,
     required GameUnit founder,
-    required MapData mapData,
+    required WorldMap mapData,
   }) {
     final visibility = state.activePlayerVisibility;
     final candidates =
@@ -98,10 +98,10 @@ class RecommendedCitySitePlanner {
   }
 
   double _scoreRecommendedCitySite({
-    required TileData tile,
-    required GameState state,
+    required WorldTile tile,
+    required GameClientState state,
     required GameUnit founder,
-    required MapData mapData,
+    required WorldMap mapData,
   }) {
     final center = CityHex(col: tile.col, row: tile.row);
     final founderDistance = HexDistance.between(
@@ -154,10 +154,10 @@ class RecommendedCitySitePlanner {
         _citySiteFounderDistancePenalty(founderDistance);
   }
 
-  Iterable<TileData> _citySiteExpansionTiles({
+  Iterable<WorldTile> _citySiteExpansionTiles({
     required CityHex center,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     required Set<CityHex> initialHexes,
   }) sync* {
     final draft = CityFoundingDraft(
@@ -210,9 +210,9 @@ class RecommendedCitySitePlanner {
     }
   }
 
-  Iterable<TileData> _tilesInCitySiteRadius(
+  Iterable<WorldTile> _tilesInCitySiteRadius(
     CityHex center,
-    MapData mapData,
+    WorldMap mapData,
   ) sync* {
     final visited = <CityHex>{center};
     var frontier = <CityHex>[center];
@@ -239,14 +239,14 @@ class RecommendedCitySitePlanner {
     }
   }
 
-  double _weightedCitySiteYieldTotal(Iterable<TileData> tiles) {
+  double _weightedCitySiteYieldTotal(Iterable<WorldTile> tiles) {
     return tiles.fold<double>(
       0,
       (total, tile) => total + _weightedCitySiteYield(tile),
     );
   }
 
-  double _weightedCitySiteYield(TileData tile) {
+  double _weightedCitySiteYield(WorldTile tile) {
     final yield = CityTileYieldRules.forTile(
       tile,
       ruleset: CityRulesets.standard,
@@ -258,7 +258,7 @@ class RecommendedCitySitePlanner {
   }
 
   double _citySiteResourceScoreTotal(
-    Iterable<TileData> tiles, {
+    Iterable<WorldTile> tiles, {
     required Set<ResourceType> visibleResourceTypes,
     required int distance,
   }) {
@@ -275,7 +275,7 @@ class RecommendedCitySitePlanner {
   }
 
   double _citySiteResourceScore(
-    TileData tile, {
+    WorldTile tile, {
     required Set<ResourceType> visibleResourceTypes,
     required int distance,
   }) {
@@ -331,8 +331,8 @@ class RecommendedCitySitePlanner {
   }
 
   double _citySiteTerrainScore(
-    TileData centerTile,
-    Iterable<TileData> initialTiles,
+    WorldTile centerTile,
+    Iterable<WorldTile> initialTiles,
   ) {
     var score = 0.0;
     if (CityTileYieldRules.hasRiver(centerTile)) score += 1.2;
@@ -395,7 +395,7 @@ class RecommendedCitySitePlanner {
     return 0.54 + (distance - 3) * 0.42;
   }
 
-  bool _canUseAsCityCenter(TileData tile, Iterable<GameCity> cities) {
+  bool _canUseAsCityCenter(WorldTile tile, Iterable<GameCity> cities) {
     if (!CitySiteRules.canFoundCityOn(tile)) return false;
     final hex = CityHex(col: tile.col, row: tile.row);
     return !_isControlledByAnyCity(hex, cities) &&
@@ -448,9 +448,9 @@ class _RecommendedCitySiteCacheKey {
   });
 
   factory _RecommendedCitySiteCacheKey.fromState({
-    required GameState state,
+    required GameClientState state,
     required GameUnit founder,
-    required MapData mapData,
+    required WorldMap mapData,
   }) {
     final playerFog = state.activePlayerId.isEmpty
         ? null
@@ -524,7 +524,7 @@ class _CitySiteExpansionTile {
     required this.score,
   });
 
-  final TileData tile;
+  final WorldTile tile;
   final int distance;
   final int score;
 }

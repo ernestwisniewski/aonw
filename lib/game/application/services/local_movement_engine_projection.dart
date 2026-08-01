@@ -15,12 +15,12 @@ final class LocalMovementEngineProjection {
     required this.movementExecutions,
   });
 
-  final GameState state;
+  final GameClientState state;
   final List<MovementCommandExecution> movementExecutions;
 }
 
 LocalMovementEngineProjection projectLocalMovementEngineResult({
-  required GameState currentState,
+  required GameClientState currentState,
   required GameEngineAccepted result,
   required DomainCommand command,
   required MapReadView mapView,
@@ -70,8 +70,8 @@ LocalMovementEngineProjection projectLocalMovementEngineResult({
   );
 }
 
-GameState _projectCanonicalSlices({
-  required GameState currentState,
+GameClientState _projectCanonicalSlices({
+  required GameClientState currentState,
   required GameEngineAccepted result,
 }) {
   final domain = result.snapshot.domain;
@@ -88,7 +88,7 @@ GameState _projectCanonicalSlices({
   if (domain.diplomacy != currentState.diplomacy) {
     state = state.copyWith(diplomacy: domain.diplomacy);
   }
-  final interaction = result.snapshot.interaction;
+  final interaction = result.snapshot.domain.actions;
   final cityFoundingDraft =
       state.cityFoundingDraft == interaction.cityFoundingDraft
       ? state.cityFoundingDraft
@@ -106,9 +106,9 @@ GameState _projectCanonicalSlices({
   return state;
 }
 
-GameState _projectMove({
-  required GameState currentState,
-  required GameState projected,
+GameClientState _projectMove({
+  required GameClientState currentState,
+  required GameClientState projected,
   required String unitId,
   required MapReadView mapView,
   required LocalMovementPresentationOrigin presentationOrigin,
@@ -139,7 +139,7 @@ GameState _projectMove({
   return state;
 }
 
-bool _canRetargetMove(GameState state, GameUnit? unit) {
+bool _canRetargetMove(GameClientState state, GameUnit? unit) {
   return unit != null &&
       state.canControlUnit(unit) &&
       unit.movementPoints > 0 &&
@@ -150,9 +150,9 @@ bool _canRetargetMove(GameState state, GameUnit? unit) {
       !unit.isAutoExploring;
 }
 
-GameState _projectCancel({
-  required GameState currentState,
-  required GameState projected,
+GameClientState _projectCancel({
+  required GameClientState currentState,
+  required GameClientState projected,
   required String unitId,
   required MapReadView mapView,
 }) {
@@ -184,7 +184,7 @@ GameState _projectCancel({
 bool _shouldReactivateMoveTargeting({
   required GameUnit previousUnit,
   required GameUnit updatedUnit,
-  required GameState state,
+  required GameClientState state,
 }) {
   return previousUnit.isFortified &&
       state.selectedUnitId == updatedUnit.id &&
@@ -196,8 +196,8 @@ bool _shouldReactivateMoveTargeting({
       !updatedUnit.isAutoExploring;
 }
 
-GameState _projectAutoExplore({
-  required GameState projected,
+GameClientState _projectAutoExplore({
+  required GameClientState projected,
   required String unitId,
   required MapReadView mapView,
 }) {
@@ -211,9 +211,9 @@ GameState _projectAutoExplore({
   return state;
 }
 
-GameState _projectMerchant({
-  required GameState currentState,
-  required GameState projected,
+GameClientState _projectMerchant({
+  required GameClientState currentState,
+  required GameClientState projected,
   required String unitId,
   required MapReadView mapView,
 }) {
@@ -237,8 +237,8 @@ GameState _projectMerchant({
   return state;
 }
 
-GameState _projectDetachment({
-  required GameState projected,
+GameClientState _projectDetachment({
+  required GameClientState projected,
   required String unitId,
   required MapReadView mapView,
 }) {
@@ -250,8 +250,8 @@ GameState _projectDetachment({
   return _selectUpdatedUnit(state, unitId, mapView);
 }
 
-GameState _selectUpdatedUnit(
-  GameState state,
+GameClientState _selectUpdatedUnit(
+  GameClientState state,
   String unitId,
   MapTileLookup mapTiles,
 ) {

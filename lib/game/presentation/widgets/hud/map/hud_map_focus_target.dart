@@ -35,7 +35,7 @@ class HudMapFocusTarget {
 
   static HudMapFocusTarget? notification({
     required GameEventNotification notification,
-    required GameState? currentState,
+    required GameClientState? currentState,
   }) {
     final target = gameEventNotificationFocusTarget(
       notification.event,

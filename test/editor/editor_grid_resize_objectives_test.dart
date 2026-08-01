@@ -5,8 +5,8 @@ import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/domain/map_constraints.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -21,7 +21,7 @@ void main() {
           tiles: [
             for (var row = 0; row <= removedRow; row++)
               for (var col = 0; col < MapConstraints.minCols; col++)
-                TileData(
+                WorldTile(
                   col: col,
                   row: row,
                   terrains: const [TerrainType.grassland],

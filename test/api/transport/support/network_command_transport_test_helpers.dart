@@ -75,11 +75,11 @@ void _registerEngineFamilyRoutingTests() {
         col: 1,
         row: 0,
       );
-      final before = GameState(
+      final before = GameClientState(
         units: [attacker, defender],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        interaction: const GameInteractionState(
+        interaction: const InteractionState(
           pendingAction: PendingAttackTargeting(
             ownerPlayerId: 'player_1',
             attackerUnitId: 'attacker',
@@ -92,9 +92,9 @@ void _registerEngineFamilyRoutingTests() {
         units: fixture.name == 'movement'
             ? [attacker.copyWith(col: 1, row: 0), defender]
             : [attacker],
-        interaction: const GameInteractionState(),
+        interaction: const InteractionState(),
       );
-      final snapshot = SaveSnapshot.fromGameState(
+      final snapshot = GameSnapshotFactory.fromClientState(
         save: _save(),
         state: after,
         eventLogOffset: 1,
@@ -123,7 +123,7 @@ void _registerEngineFamilyRoutingTests() {
         tickGenerator: ClientTickGenerator(),
         localReducer: reducer,
         gameRepository: _SnapshotRepository(
-          SaveSnapshot.fromGameState(
+          GameSnapshotFactory.fromClientState(
             save: _save(),
             state: before,
             eventLogOffset: 0,
@@ -157,10 +157,10 @@ void _registerEngineFamilyRoutingTests() {
 
   test('routes accepted research through its engine family without '
       'the legacy reducer', () async {
-    const before = GameState(
+    final before = GameClientState(
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      interaction: GameInteractionState(
+      interaction: const InteractionState(
         pendingAction: PendingResearchSelection(ownerPlayerId: 'player_1'),
       ),
     );
@@ -172,9 +172,9 @@ void _registerEngineFamilyRoutingTests() {
           ),
         },
       ),
-      interaction: const GameInteractionState(),
+      interaction: const InteractionState(),
     );
-    final snapshot = SaveSnapshot.fromGameState(
+    final snapshot = GameSnapshotFactory.fromClientState(
       save: _save(),
       state: after,
       eventLogOffset: 1,
@@ -200,7 +200,7 @@ void _registerEngineFamilyRoutingTests() {
       tickGenerator: ClientTickGenerator(),
       localReducer: reducer,
       gameRepository: _SnapshotRepository(
-        SaveSnapshot.fromGameState(save: _save(), state: before),
+        GameSnapshotFactory.fromClientState(save: _save(), state: before),
       ),
     );
 
@@ -222,10 +222,10 @@ void _registerEngineFamilyRoutingTests() {
 
   test('routes accepted diplomacy through its engine family without '
       'the legacy reducer', () async {
-    const before = GameState(
+    final before = GameClientState(
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      interaction: GameInteractionState(
+      interaction: const InteractionState(
         pendingAction: PendingResearchSelection(ownerPlayerId: 'player_1'),
       ),
     );
@@ -243,7 +243,7 @@ void _registerEngineFamilyRoutingTests() {
             ),
           ),
     );
-    final snapshot = SaveSnapshot.fromGameState(
+    final snapshot = GameSnapshotFactory.fromClientState(
       save: _save(),
       state: after,
       eventLogOffset: 1,
@@ -269,7 +269,7 @@ void _registerEngineFamilyRoutingTests() {
       tickGenerator: ClientTickGenerator(),
       localReducer: reducer,
       gameRepository: _SnapshotRepository(
-        SaveSnapshot.fromGameState(save: _save(), state: before),
+        GameSnapshotFactory.fromClientState(save: _save(), state: before),
       ),
     );
 
@@ -332,8 +332,8 @@ class _FakeCommandServer implements WireCommandDispatcher {
   final SnapshotCodec snapshotCodec = const SnapshotCodec();
   final List<_SentCommand> sentCommands = [];
   GameSave save;
-  GameState state;
-  SaveSnapshot? nextAcceptedSnapshot;
+  GameClientState state;
+  CanonicalGameSnapshot? nextAcceptedSnapshot;
   WireMovementExecutionList nextMovementExecutions;
   WireCommandAck? lastAck;
   Object? nextError;
@@ -394,7 +394,7 @@ class _FakeCommandServer implements WireCommandDispatcher {
         resolution.snapshot.copyWith(eventLogOffset: offset);
     nextAcceptedSnapshot = null;
     save = nextSnapshot.save;
-    state = nextSnapshot.toGameState(
+    state = nextSnapshot.toClientState(
       activePlayerId: state.activePlayerId,
       activePlayerCanAct: state.activePlayerCanAct,
     );
@@ -411,7 +411,7 @@ class _FakeCommandServer implements WireCommandDispatcher {
     );
   }
 
-  SaveSnapshot get snapshot => SaveSnapshot.fromGameState(
+  CanonicalGameSnapshot get snapshot => GameSnapshotFactory.fromClientState(
     save: save,
     state: state,
     eventLogOffset: offset,

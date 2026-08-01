@@ -228,7 +228,7 @@ class NetworkCommandTransport implements CommandTransport {
   @override
   Future<CommandTransportResult> dispatch({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
     bool fromMovePreviewConfirmation = false,
@@ -243,7 +243,7 @@ class NetworkCommandTransport implements CommandTransport {
 
   Future<CommandTransportResult> _dispatch({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
     int staleTickRetries = 0,
@@ -282,7 +282,7 @@ class NetworkCommandTransport implements CommandTransport {
         _clearRetryableCommand(wire);
         tickGenerator.ensureAtLeast(nextTick);
         final snapshot = await gameRepository.load(saveId);
-        _rememberSnapshot(saveId, snapshot);
+        _remember(saveId, snapshot);
         return _dispatch(
           saveId: saveId,
           currentState: _stateFromSnapshot(
@@ -319,7 +319,7 @@ class NetworkCommandTransport implements CommandTransport {
           offset: effectiveOffset,
         );
       }
-      _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
+      _remember(saveId, snapshot, offset: effectiveOffset);
       final nextState = _stateFromSnapshot(
         snapshot: snapshot,
         currentState: currentState,
@@ -347,7 +347,7 @@ class NetworkCommandTransport implements CommandTransport {
         storedSnapshot: true,
       );
     }
-    _rememberSnapshot(saveId, snapshot, offset: effectiveOffset);
+    _remember(saveId, snapshot, offset: effectiveOffset);
     final localTransition = localReducer.acceptedNetworkCommandTransition(
       currentState,
       domainCommand,
@@ -449,11 +449,11 @@ class NetworkCommandTransport implements CommandTransport {
 
   Future<CommandTransportResult> _reloadAfterStaleCommand({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
   }) async {
     final snapshot = await gameRepository.load(saveId);
-    _rememberSnapshot(saveId, snapshot);
+    _remember(saveId, snapshot);
     final nextState = _stateFromSnapshot(
       snapshot: snapshot,
       currentState: currentState,
@@ -470,12 +470,12 @@ class NetworkCommandTransport implements CommandTransport {
 
   CommandTransportResult _snapshotRecoveryResult({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
-    required SaveSnapshot snapshot,
+    required CanonicalGameSnapshot snapshot,
     required int offset,
   }) {
-    _rememberSnapshot(saveId, snapshot, offset: offset);
+    _remember(saveId, snapshot, offset: offset);
     final nextState = _stateFromSnapshot(
       snapshot: snapshot,
       currentState: currentState,
@@ -520,37 +520,37 @@ class NetworkCommandTransport implements CommandTransport {
     return error.nextTick;
   }
 
-  int _effectiveOffset(int ackOffset, SaveSnapshot snapshot) {
+  int _effectiveOffset(int ackOffset, CanonicalGameSnapshot snapshot) {
     return snapshot.eventLogOffset > ackOffset
         ? snapshot.eventLogOffset
         : ackOffset;
   }
 
-  void _rememberSnapshot(String saveId, SaveSnapshot snapshot, {int? offset}) {
+  void _remember(String saveId, CanonicalGameSnapshot snapshot, {int? offset}) {
     _lastKnownTurnBySaveId[saveId] = snapshot.domain.turn;
     _lastKnownOffsetBySaveId[saveId] = offset ?? snapshot.eventLogOffset;
   }
 
   bool _activePlayerCanActAfter({
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
-    required SaveSnapshot snapshot,
+    required CanonicalGameSnapshot snapshot,
   }) {
     if (command case SubmitTurnCommand(
       :final playerId,
     ) when playerId == currentState.activePlayerId) {
-      return !snapshot.session.hasSubmitted(playerId);
+      return !snapshot.domain.hasSubmitted(playerId);
     }
     return currentState.activePlayerCanAct;
   }
 
-  GameState _stateFromSnapshot({
-    required SaveSnapshot snapshot,
-    required GameState currentState,
+  GameClientState _stateFromSnapshot({
+    required CanonicalGameSnapshot snapshot,
+    required GameClientState currentState,
     required DomainCommand command,
-    required GameState interactionSource,
+    required GameClientState interactionSource,
   }) {
-    final authoritative = snapshot.toGameState(
+    final authoritative = snapshot.toClientState(
       activePlayerId: currentState.activePlayerId,
       activePlayerCanAct: _activePlayerCanActAfter(
         currentState: currentState,

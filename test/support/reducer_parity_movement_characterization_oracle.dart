@@ -18,10 +18,7 @@ const _movementIdentityStateFixtureIds = <String>{
   'movement-characterization-no-fog-occupied-rejected',
 };
 
-PersistentGameState _movementExpectedState(
-  String fixtureId,
-  PersistentGameState input,
-) {
+DomainState _movementExpectedState(String fixtureId, DomainState input) {
   if (_movementIdentityStateFixtureIds.contains(fixtureId)) return input;
   return switch (fixtureId) {
     'movement-characterization-partial-queued-accepted' =>
@@ -77,7 +74,7 @@ List<GameEvent> _movementExpectedEvents(String fixtureId) {
   };
 }
 
-PersistentGameState _contactDiscoveryExpectedState(PersistentGameState input) {
+DomainState _contactDiscoveryExpectedState(DomainState input) {
   final moved = _inputMovementUnit(input)
       .copyWith(col: 1, row: 0, movementPoints: 4, posture: UnitPosture.active)
       .copyWithQueuedPath(null);
@@ -101,16 +98,13 @@ PersistentGameState _contactDiscoveryExpectedState(PersistentGameState input) {
     },
   );
   final diplomacy = DiplomacyState(contactKeys: const {'player_1|player_2'});
-  return _movementStateWithUnit(input, moved).copyWith(
-    fogOfWar: fog,
-    runtimeState: input.runtimeState.copyWith(diplomacy: diplomacy),
-  );
+  return _movementStateWithUnit(
+    input,
+    moved,
+  ).copyWith(fogOfWar: fog, diplomacy: diplomacy);
 }
 
-PersistentGameState _movementStateWithUnit(
-  PersistentGameState state,
-  GameUnit replacement,
-) {
+DomainState _movementStateWithUnit(DomainState state, GameUnit replacement) {
   return state.copyWith(
     units: [
       for (final unit in state.units)
@@ -119,7 +113,7 @@ PersistentGameState _movementStateWithUnit(
   );
 }
 
-GameUnit _inputMovementUnit(PersistentGameState state) {
+GameUnit _inputMovementUnit(DomainState state) {
   return state.units.singleWhere((unit) => unit.id == _movementUnitId);
 }
 

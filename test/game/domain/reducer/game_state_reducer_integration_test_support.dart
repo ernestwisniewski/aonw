@@ -1,8 +1,8 @@
 part of 'game_state_reducer_integration_test.dart';
 
-GameState _withRememberedFog(
-  GameState state,
-  MapData mapData,
+GameClientState _withRememberedFog(
+  GameClientState state,
+  WorldMap mapData,
   Iterable<HexCoordinate> rememberedHexes,
 ) {
   final visibleState = _withFog(state, mapData);

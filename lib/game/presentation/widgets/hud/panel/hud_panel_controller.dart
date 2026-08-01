@@ -33,11 +33,11 @@ class HudPanelController extends Notifier<HudPanelModes> {
   @override
   HudPanelModes build() => const HudPanelModes();
 
-  HudPanelModes normalized(GameState? gameState) {
+  HudPanelModes normalized(GameClientState? gameState) {
     return normalizeHudPanelModes(current: state, gameState: gameState);
   }
 
-  HudPanelModes syncWithGameState(GameState? gameState) {
+  HudPanelModes syncWithGameState(GameClientState? gameState) {
     final next = normalized(gameState);
     state = next;
     return next;

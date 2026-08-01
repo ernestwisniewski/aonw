@@ -95,8 +95,9 @@ String _$availableMapsHash() => r'96c2f5dc46e97e901332a91b935658535831db67';
 final activeMapProvider = ActiveMapFamily._();
 
 final class ActiveMapProvider
-    extends $FunctionalProvider<AsyncValue<MapData>, MapData, FutureOr<MapData>>
-    with $FutureModifier<MapData>, $FutureProvider<MapData> {
+    extends
+        $FunctionalProvider<AsyncValue<WorldMap>, WorldMap, FutureOr<WorldMap>>
+    with $FutureModifier<WorldMap>, $FutureProvider<WorldMap> {
   ActiveMapProvider._({
     required ActiveMapFamily super.from,
     required MapSelection super.argument,
@@ -120,11 +121,11 @@ final class ActiveMapProvider
 
   @$internal
   @override
-  $FutureProviderElement<MapData> $createElement($ProviderPointer pointer) =>
+  $FutureProviderElement<WorldMap> $createElement($ProviderPointer pointer) =>
       $FutureProviderElement(pointer);
 
   @override
-  FutureOr<MapData> create(Ref ref) {
+  FutureOr<WorldMap> create(Ref ref) {
     final argument = this.argument as MapSelection;
     return activeMap(ref, argument);
   }
@@ -140,10 +141,10 @@ final class ActiveMapProvider
   }
 }
 
-String _$activeMapHash() => r'8f7f7dc6f7e271a58b6def3cedf6cdad3bc91031';
+String _$activeMapHash() => r'69d2563ee82766b228ea547442645ccfb17680d1';
 
 final class ActiveMapFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<MapData>, MapSelection> {
+    with $FunctionalFamilyOverride<FutureOr<WorldMap>, MapSelection> {
   ActiveMapFamily._()
     : super(
         retry: _doNotRetry,

@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 
@@ -11,7 +11,7 @@ class NewGameRequest {
   final GameMode gameMode;
   final MatchRules matchRules;
   final List<Player> players;
-  final MapData? mapData;
+  final WorldMap? mapData;
   final int? startPositionSeed;
 
   const NewGameRequest({

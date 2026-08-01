@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/infrastructure/persistence/game_storage.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -106,13 +106,13 @@ void main() {
     test(
       'uses separate land tiles near map corners when map data is available',
       () {
-        final mapData = MapData(
+        final mapData = WorldMap(
           cols: 5,
           rows: 5,
           tiles: [
             for (var row = 0; row < 5; row++)
               for (var col = 0; col < 5; col++)
-                TileData(
+                WorldTile(
                   col: col,
                   row: row,
                   terrains: col == 0 && row == 0
@@ -146,13 +146,13 @@ void main() {
     );
 
     test('skips mixed-terrain mountain blockers when placing warriors', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 3,
         rows: 3,
         tiles: [
           for (var row = 0; row < 3; row++)
             for (var col = 0; col < 3; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: col == 0 && row == 0
@@ -175,11 +175,11 @@ void main() {
     test(
       'keeps warriors inside the map when there are fewer tiles than players',
       () {
-        final mapData = MapData(
+        final mapData = WorldMap(
           cols: 1,
           rows: 1,
-          tiles: const [
-            TileData(
+          tiles: [
+            WorldTile(
               col: 0,
               row: 0,
               terrains: [TerrainType.plains],

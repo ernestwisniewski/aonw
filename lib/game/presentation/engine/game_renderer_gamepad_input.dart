@@ -113,7 +113,7 @@ extension GameRendererGamepadInput on GameRenderer {
     _syncGamepadCursorTile(tile);
   }
 
-  void _syncGamepadCursorTile(TileData tile) {
+  void _syncGamepadCursorTile(WorldTile tile) {
     if (_gamepadCursorShouldSelectTile) {
       unawaited(onCommand(SelectTileCommand(tile.col, tile.row)));
       return;
@@ -127,7 +127,7 @@ extension GameRendererGamepadInput on GameRenderer {
 
   void _dispatchGamepadCommands(
     GamepadControlFrame frame, {
-    TileData? currentTile,
+    WorldTile? currentTile,
   }) {
     if (!_isReady || _isDisposed) return;
     final commands = const GamepadCommandMapper().commandsForFrame(
@@ -172,7 +172,7 @@ extension GameRendererGamepadInput on GameRenderer {
     return fallback;
   }
 
-  TileData? _currentGamepadTile() {
+  WorldTile? _currentGamepadTile() {
     final cursor = _currentGamepadCursorHex();
     if (cursor == null) return null;
     return mapData.tileAt(cursor.col, cursor.row);
@@ -219,7 +219,7 @@ extension GameRendererGamepadInput on GameRenderer {
     return CityHex(col: tile.col, row: tile.row);
   }
 
-  TileData? _nextCursorTile(CityHex current, GamepadMapDirection direction) {
+  WorldTile? _nextCursorTile(CityHex current, GamepadMapDirection direction) {
     var candidate = current;
     final maxSteps = mapData.cols + mapData.rows;
     for (var step = 0; step < maxSteps; step += 1) {

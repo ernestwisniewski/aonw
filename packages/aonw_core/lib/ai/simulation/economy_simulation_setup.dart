@@ -2,7 +2,7 @@ part of 'economy_simulation.dart';
 
 abstract final class _EconomySimulationSetup {
   static GameView planningView({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
     required int turn,
     required MapReadView mapView,
@@ -10,7 +10,7 @@ abstract final class _EconomySimulationSetup {
     required CanonicalGameSnapshot engineSnapshot,
     required Iterable<String> recentHostilePlayerIds,
   }) {
-    return GameView.fromPersistentState(
+    return GameView.fromDomainState(
       state,
       forPlayerId: playerId,
       turn: turn,
@@ -24,45 +24,19 @@ abstract final class _EconomySimulationSetup {
 
   static CanonicalGameSnapshot engineSnapshot({
     required EconomySimulationConfig config,
-    required PersistentGameState state,
+    required DomainState state,
     required MapReadView mapView,
   }) {
-    final runtime = state.runtimeState;
     return CanonicalGameSnapshot.snapshot(
-      domain: DomainState.snapshot(
+      domain: state.copyWith(
         turn: 0,
         matchRules: config.matchRules,
         participants: [config.player, ...config.opponents],
-        playerGold: state.playerGold,
-        playerWarWeariness: state.playerWarWeariness,
-        playerStabilityNet: state.playerStabilityNet,
-        units: state.units,
-        cities: state.cities,
-        artifacts: state.artifacts,
-        fieldImprovements: state.fieldImprovements,
-        fogOfWar: state.fogOfWar,
-        research: state.research,
-        wonderRegistry: state.wonderRegistry,
-        intendedAttacks: runtime.intendedAttacks,
-        diplomacy: runtime.diplomacy,
-        resourceTradeAgreements: runtime.resourceTradeAgreements,
-        dominationHoldTurnsByPlayerId: runtime.dominationHoldTurnsByPlayerId,
-        culturalVictoryHoldTurnsByPlayerId:
-            runtime.culturalVictoryHoldTurnsByPlayerId,
-        mapObjectiveHoldStatesByObjectiveId:
-            runtime.mapObjectiveHoldStatesByObjectiveId,
-      ),
-      session: MatchSessionState.snapshot(
         gameMode: GameMode.hotSeat,
         turnStatesByPlayerId: {
           for (final player in [config.player, ...config.opponents])
             player.id: PlayerTurnState.active,
         },
-        submittedPlayerIds: runtime.submittedPlayerIds,
-        timeoutStreaksByPlayerId: runtime.timeoutStreaksByPlayerId,
-        afkPlayerIds: runtime.afkPlayerIds,
-        kickedPlayerIds: runtime.kickedPlayerIds,
-        turnStartedAt: runtime.turnStartedAt,
       ),
       metadata: GameSnapshotMetadata(
         id: 'economy_simulation',
@@ -75,25 +49,20 @@ abstract final class _EconomySimulationSetup {
         savedAtUtc: DateTime.utc(1970),
         camera: GameSnapshotCamera.zero,
       ),
-      interaction: PersistedInteractionState(
-        cityFoundingDraft: runtime.cityFoundingDraft,
-        pendingAction: runtime.pendingAction,
-      ),
     );
   }
 
-  static PersistentGameState initialState({
+  static DomainState initialState({
     required Player player,
     required List<Player> opponents,
     required MapReadView mapView,
   }) {
     final players = [player, ...opponents];
     final units = StartingUnits.unitsForPlayers(players, mapData: mapView);
-    final state = PersistentGameState.snapshot(
-      playerColors: {
-        for (final simulationPlayer in players)
-          simulationPlayer.id: simulationPlayer.colorValue,
-      },
+    final state = DomainState.snapshot(
+      turn: 0,
+      matchRules: MatchRules.standard,
+      participants: players,
       playerGold: {
         for (final simulationPlayer in players) simulationPlayer.id: 0,
       },
@@ -109,9 +78,9 @@ abstract final class _EconomySimulationSetup {
     return state.copyWith(fogOfWar: fogOfWar);
   }
 
-  static MapData simulationMap() {
+  static WorldMap simulationMap() {
     const size = 9;
-    return MapData(
+    return WorldMap(
       cols: size,
       rows: size,
       mapName: 'economy_simulation',
@@ -122,7 +91,7 @@ abstract final class _EconomySimulationSetup {
     );
   }
 
-  static TileData _tile(int col, int row) {
+  static WorldTile _tile(int col, int row) {
     final resource = switch ((col, row)) {
       (3, 2) || (7, 7) => ResourceType.wheat,
       (2, 4) || (8, 6) => ResourceType.iron,
@@ -135,7 +104,7 @@ abstract final class _EconomySimulationSetup {
       2 => TerrainType.grassland,
       _ => TerrainType.plains,
     };
-    return TileData(
+    return WorldTile(
       col: col,
       row: row,
       terrains: [terrain],

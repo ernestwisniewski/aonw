@@ -46,7 +46,7 @@ final class WorkerEngineHandler {
     snapshot,
     resolver.selectWorkerImprovement(
       state: snapshot.domain,
-      interaction: snapshot.interaction,
+      interaction: snapshot.domain.actions,
       command: command,
       actorPlayerId: context.actorPlayerId,
       mapTiles: context.mapView,
@@ -64,7 +64,7 @@ final class WorkerEngineHandler {
     snapshot,
     resolver.confirmWorkerImprovement(
       state: snapshot.domain,
-      interaction: snapshot.interaction,
+      interaction: snapshot.domain.actions,
       command: command,
       actorPlayerId: context.actorPlayerId,
       mapTiles: context.mapView,
@@ -82,7 +82,7 @@ final class WorkerEngineHandler {
     snapshot,
     resolver.cancelWorkerJob(
       state: snapshot.domain,
-      interaction: snapshot.interaction,
+      interaction: snapshot.domain.actions,
       command: command,
       actorPlayerId: context.actorPlayerId,
     ),
@@ -96,7 +96,7 @@ final class WorkerEngineHandler {
     snapshot,
     resolver.assignWorkerToHex(
       state: snapshot.domain,
-      interaction: snapshot.interaction,
+      interaction: snapshot.domain.actions,
       command: command,
       actorPlayerId: context.actorPlayerId,
       mapTiles: context.mapView,
@@ -111,7 +111,7 @@ final class WorkerEngineHandler {
     snapshot,
     resolver.cancelWorkerAssignment(
       state: snapshot.domain,
-      interaction: snapshot.interaction,
+      interaction: snapshot.domain.actions,
       command: command,
       actorPlayerId: context.actorPlayerId,
     ),
@@ -130,13 +130,13 @@ final class WorkerEngineHandler {
     final domainChanged = !identical(result.state, snapshot.domain);
     final interactionChanged = !identical(
       result.interaction,
-      snapshot.interaction,
+      snapshot.domain.actions,
     );
     return GameEngineResult.accepted(
       snapshot: domainChanged || interactionChanged
           ? snapshot.copyWith(
               domain: domainChanged ? result.state : null,
-              interaction: interactionChanged ? result.interaction : null,
+              actions: interactionChanged ? result.interaction : null,
             )
           : snapshot,
     );

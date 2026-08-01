@@ -121,7 +121,9 @@ void _registerAutoExploreCorpusGuards(
 void _registerAutoExploreOracleGuards(_FixtureProvider fixtureProvider) {
   test('every expected state preserves unrelated sentinels', () {
     for (final fixture in fixtureProvider()) {
-      final expected = PersistentGameState.fromJson(fixture.expectedState);
+      final expected = CanonicalGameSnapshotCodec.decodeDomainState(
+        fixture.expectedState,
+      );
       expect(
         expected.units.map((unit) => unit.id),
         contains('auto_explore_sentinel_unit'),
@@ -145,23 +147,23 @@ void _registerAutoExploreOracleGuards(_FixtureProvider fixtureProvider) {
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.submittedPlayerIds,
-        fixture.state.runtimeState.submittedPlayerIds,
+        expected.submittedPlayerIds,
+        fixture.state.submittedPlayerIds,
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.timeoutStreaksByPlayerId,
-        fixture.state.runtimeState.timeoutStreaksByPlayerId,
+        expected.timeoutStreaksByPlayerId,
+        fixture.state.timeoutStreaksByPlayerId,
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.resourceTradeAgreements,
-        fixture.state.runtimeState.resourceTradeAgreements,
+        expected.resourceTradeAgreements,
+        fixture.state.resourceTradeAgreements,
         reason: fixture.id,
       );
       expect(
-        expected.runtimeState.turnStartedAt,
-        fixture.state.runtimeState.turnStartedAt,
+        expected.turnStartedAt,
+        fixture.state.turnStartedAt,
         reason: fixture.id,
       );
     }
@@ -173,7 +175,9 @@ void _registerAutoExploreOracleGuards(_FixtureProvider fixtureProvider) {
       fixtures,
       'partial-queued-accepted',
     );
-    final partialState = PersistentGameState.fromJson(partial.expectedState);
+    final partialState = CanonicalGameSnapshotCodec.decodeDomainState(
+      partial.expectedState,
+    );
     final partialUnit = partialState.units.singleWhere(
       (unit) => unit.id == 'auto_explore_scout',
     );
@@ -185,7 +189,7 @@ void _registerAutoExploreOracleGuards(_FixtureProvider fixtureProvider) {
     expect(partialUnit.queuedPath?.steps, hasLength(6));
     expect(partial.expectedEvents.single['type'], 'UnitMoved');
 
-    final tieBreak = PersistentGameState.fromJson(
+    final tieBreak = CanonicalGameSnapshotCodec.decodeDomainState(
       _autoExploreFixtureBySuffix(fixtures, 'tie-break-accepted').expectedState,
     );
     expect(
@@ -197,7 +201,9 @@ void _registerAutoExploreOracleGuards(_FixtureProvider fixtureProvider) {
       fixtures,
       'hidden-city-no-op-accepted',
     );
-    final hiddenState = PersistentGameState.fromJson(hidden.expectedState);
+    final hiddenState = CanonicalGameSnapshotCodec.decodeDomainState(
+      hidden.expectedState,
+    );
     final hiddenUnit = hiddenState.units.singleWhere(
       (unit) => unit.id == 'auto_explore_scout',
     );
@@ -207,18 +213,18 @@ void _registerAutoExploreOracleGuards(_FixtureProvider fixtureProvider) {
     );
     expect(hidden.expectedEvents, isEmpty);
 
-    final noFog = PersistentGameState.fromJson(
+    final noFog = CanonicalGameSnapshotCodec.decodeDomainState(
       _autoExploreFixtureBySuffix(fixtures, 'no-fog-accepted').expectedState,
     );
     expect(noFog.fogOfWar.fogForPlayer('player_1').visibleHexes, hasLength(3));
 
-    final contact = PersistentGameState.fromJson(
+    final contact = CanonicalGameSnapshotCodec.decodeDomainState(
       _autoExploreFixtureBySuffix(
         fixtures,
         'contact-discovery-accepted',
       ).expectedState,
     );
-    expect(contact.runtimeState.diplomacy.contactKeys, {
+    expect(contact.diplomacy.contactKeys, {
       'player_1|player_2',
       'player_2|player_3',
     });
@@ -226,23 +232,21 @@ void _registerAutoExploreOracleGuards(_FixtureProvider fixtureProvider) {
 
   test('accepted cases clear owned interaction; rejections preserve it', () {
     for (final fixture in fixtureProvider()) {
-      final expected = PersistentGameState.fromJson(fixture.expectedState);
+      final expected = CanonicalGameSnapshotCodec.decodeDomainState(
+        fixture.expectedState,
+      );
       if (fixture.expectedAccepted) {
-        expect(expected.runtimeState.pendingAction, isNull, reason: fixture.id);
-        expect(
-          expected.runtimeState.cityFoundingDraft,
-          isNull,
-          reason: fixture.id,
-        );
+        expect(expected.actions.pendingAction, isNull, reason: fixture.id);
+        expect(expected.actions.cityFoundingDraft, isNull, reason: fixture.id);
       } else {
         expect(
-          expected.runtimeState.pendingAction,
-          fixture.state.runtimeState.pendingAction,
+          expected.actions.pendingAction,
+          fixture.state.actions.pendingAction,
           reason: fixture.id,
         );
         expect(
-          expected.runtimeState.cityFoundingDraft,
-          fixture.state.runtimeState.cityFoundingDraft,
+          expected.actions.cityFoundingDraft,
+          fixture.state.actions.cityFoundingDraft,
           reason: fixture.id,
         );
       }

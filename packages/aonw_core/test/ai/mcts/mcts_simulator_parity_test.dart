@@ -16,7 +16,10 @@ void main() {
         col: 0,
         row: 0,
       );
-      final state = PersistentGameState(units: [unit], fogOfWar: _visibleFog());
+      final state = DomainState.snapshot(
+        units: [unit],
+        fogOfWar: _visibleFog(),
+      );
       const command = MoveUnitCommand('warrior_1', 1, 0);
 
       final engine = MctsSimulatorParityFixtures.resolveEngineCommand(
@@ -40,7 +43,10 @@ void main() {
         col: 0,
         row: 0,
       ).copyWith(movementPoints: 1);
-      final state = PersistentGameState(units: [unit], fogOfWar: _visibleFog());
+      final state = DomainState.snapshot(
+        units: [unit],
+        fogOfWar: _visibleFog(),
+      );
       const command = MoveUnitCommand('warrior_1', 2, 0);
 
       final engine = MctsSimulatorParityFixtures.resolveEngineCommand(
@@ -65,14 +71,17 @@ void main() {
         col: 0,
         row: 0,
       );
-      final state = PersistentGameState(units: [unit], fogOfWar: _visibleFog());
+      final state = DomainState.snapshot(
+        units: [unit],
+        fogOfWar: _visibleFog(),
+      );
       const command = MoveUnitCommand('warrior_1', 2, 0);
       final mapData = _highCostMapData();
 
       final engine = MctsSimulatorParityFixtures.resolveEngineCommand(
         state,
         command,
-        mapView: mapData.indexedReadView(),
+        mapView: mapData,
       );
       final simulated = _simulate(state, command, mapData: mapData);
 
@@ -101,7 +110,7 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [unit, blocker],
         fogOfWar: _visibleFog(),
       );
@@ -132,7 +141,7 @@ void main() {
         col: 2,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [unit, blocker],
         fogOfWar: _visibleFog(),
       );
@@ -166,7 +175,7 @@ void main() {
         col: 2,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [unit, blocker],
         fogOfWar: _visibleFog(),
       );
@@ -203,7 +212,7 @@ void main() {
         posture: UnitPosture.fortified,
       );
       const command = CancelUnitActionCommand('warrior_1');
-      final state = PersistentGameState(units: [unit]);
+      final state = DomainState.snapshot(units: [unit]);
 
       final engine = MctsSimulatorParityFixtures.resolveEngineCommand(
         state,
@@ -228,7 +237,7 @@ void main() {
         col: 0,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [settler],
         fogOfWar: _visibleFog(),
       );
@@ -256,7 +265,7 @@ void main() {
         col: 0,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [settler],
         fogOfWar: _visibleFog(),
       );
@@ -275,7 +284,7 @@ void main() {
   });
 
   group('TracingMctsSimulator combat parity', () {
-    test('resolves lethal attack like PersistentTurnCombatResolver', () {
+    test('resolves lethal attack like DomainTurnCombatResolver', () {
       final attacker = GameUnit.produced(
         id: 'warrior_1',
         ownerPlayerId: 'player_1',
@@ -290,7 +299,7 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [attacker, defender],
         fogOfWar: _visibleFog(),
       );
@@ -324,7 +333,7 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [attacker, defender],
         fogOfWar: _visibleFog(),
       );
@@ -359,15 +368,13 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [attacker, defender],
         fogOfWar: _visibleFog(),
-        runtimeState: GameRuntimeState(
-          diplomacy: DiplomacyState.empty.setStatus(
-            'player_1',
-            'player_2',
-            DiplomaticRelationStatus.friendly,
-          ),
+        diplomacy: DiplomacyState.empty.setStatus(
+          'player_1',
+          'player_2',
+          DiplomaticRelationStatus.friendly,
         ),
       );
 
@@ -395,7 +402,7 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [attacker, defender],
         cities: [_city(ownerPlayerId: 'player_2')],
         fogOfWar: _visibleFog(),
@@ -421,16 +428,14 @@ void main() {
         row: 0,
       );
       final city = _city(ownerPlayerId: 'player_2').copyWithHitPoints(1);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [attacker],
         cities: [city],
         fogOfWar: _visibleFog(),
-        runtimeState: GameRuntimeState(
-          diplomacy: DiplomacyState.empty.setStatus(
-            'player_1',
-            'player_2',
-            DiplomaticRelationStatus.friendly,
-          ),
+        diplomacy: DiplomacyState.empty.setStatus(
+          'player_1',
+          'player_2',
+          DiplomaticRelationStatus.friendly,
         ),
       );
 
@@ -458,7 +463,7 @@ void main() {
         row: 0,
       );
       final city = _city(ownerPlayerId: 'player_2').copyWithHitPoints(1);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [attacker],
         cities: [city],
         fogOfWar: _visibleFog(),
@@ -496,7 +501,7 @@ void main() {
         row: 0,
       );
       final city = _city(ownerPlayerId: 'player_2').copyWithHitPoints(1);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [attacker, blocker],
         cities: [city],
         fogOfWar: _visibleFog(),
@@ -520,7 +525,7 @@ void main() {
 
   group('TracingMctsSimulator city production parity', () {
     test('starts building production like the canonical game engine', () {
-      final state = PersistentGameState(cities: [_city()]);
+      final state = DomainState.snapshot(cities: [_city()]);
       const command = StartBuildingCommand('city_1', CityBuildingType.granary);
 
       final persistent = MctsSimulatorParityFixtures.resolveEngineCommand(
@@ -537,7 +542,7 @@ void main() {
     });
 
     test('leaves city unchanged when building is locked', () {
-      final state = PersistentGameState(cities: [_city()]);
+      final state = DomainState.snapshot(cities: [_city()]);
       const command = StartBuildingCommand('city_1', CityBuildingType.workshop);
 
       final persistent = MctsSimulatorParityFixtures.resolveEngineCommand(
@@ -551,7 +556,7 @@ void main() {
     });
 
     test('starts unit production like the canonical game engine', () {
-      final state = PersistentGameState(cities: [_city()]);
+      final state = DomainState.snapshot(cities: [_city()]);
       const command = StartUnitProductionCommand(
         'city_1',
         GameUnitType.warrior,
@@ -571,7 +576,7 @@ void main() {
     });
 
     test('starts city project like the canonical game engine', () {
-      final state = PersistentGameState(cities: [_city()]);
+      final state = DomainState.snapshot(cities: [_city()]);
       const command = StartCityProjectCommand(
         'city_1',
         CityProjectType.research,
@@ -592,7 +597,7 @@ void main() {
 
     test('uses overflow rollover when starting fresh production', () {
       final city = _city().copyWith(productionOverflow: 12);
-      final state = PersistentGameState(cities: [city]);
+      final state = DomainState.snapshot(cities: [city]);
       const command = StartBuildingCommand('city_1', CityBuildingType.granary);
 
       final persistent = MctsSimulatorParityFixtures.resolveEngineCommand(
@@ -609,7 +614,7 @@ void main() {
     });
 
     test('sets city specialization like the canonical game engine', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [
           _city(buildings: {CityBuildingType.workshop}),
         ],
@@ -634,7 +639,7 @@ void main() {
     });
 
     test('leaves city unchanged when specialization is locked', () {
-      final state = PersistentGameState(cities: [_city()]);
+      final state = DomainState.snapshot(cities: [_city()]);
       const command = SetCitySpecializationCommand(
         'city_1',
         CitySpecializationType.industry,
@@ -657,7 +662,7 @@ void main() {
         'player_1',
         TechnologyId.agriculture,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [_city()],
         fogOfWar: _visibleFog(),
       );
@@ -677,7 +682,7 @@ void main() {
         'player_1',
         TechnologyId.specialization,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [_city()],
         fogOfWar: _visibleFog(),
       );
@@ -695,7 +700,7 @@ void main() {
 
   group('TracingMctsSimulator worker parity', () {
     test('starts worker improvement like the canonical game engine', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [_worker()],
         cities: [
           _city(controlledHexes: const [CityHex(col: 2, row: 0)]),
@@ -719,7 +724,7 @@ void main() {
     });
 
     test('assigns worker like the canonical game engine', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [_worker()],
         cities: [
           _city(controlledHexes: const [CityHex(col: 2, row: 0)]),
@@ -757,7 +762,7 @@ void main() {
           investedProduction: granaryCost - 1,
         ),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: const {'player_1': 3},
         cities: [city],
         fogOfWar: _visibleFog(),
@@ -800,7 +805,7 @@ void main() {
           totalTurns: 1,
         ),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [worker],
         cities: [
           _city(controlledHexes: const [CityHex(col: 2, row: 0)]),
@@ -842,7 +847,7 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [settler, warrior],
         fogOfWar: _visibleFog(),
       );
@@ -866,7 +871,7 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [settler, warrior],
         fogOfWar: _visibleFog(),
       );
@@ -888,7 +893,7 @@ void main() {
           investedProduction: granaryCost - 1,
         ),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [city],
         fogOfWar: _visibleFog(),
       );
@@ -905,62 +910,57 @@ void main() {
 }
 
 SimulationGameEngineResult _resolvePersistentFounding(
-  PersistentGameState state,
+  DomainState state,
   FoundCityCommand command,
 ) {
   return MctsSimulatorParityFixtures.resolveEngineCommand(state, command);
 }
 
-PersistentTurnCombatResult _resolvePersistentCombat(
-  PersistentGameState state,
+DomainTurnCombatResult _resolvePersistentCombat(
+  DomainState state,
   AttackHexCommand command,
 ) {
   final withIntent = state.copyWith(
-    runtimeState: state.runtimeState.copyWith(
-      intendedAttacks: [
-        IntendedAttack(
-          attackerUnitId: command.attackerUnitId,
-          defenderCol: command.defenderCol,
-          defenderRow: command.defenderRow,
-          declaredAtTick: 1,
-          declaringPlayerId: 'player_1',
-          cityConquestAction: command.cityConquestAction,
-        ),
-      ],
-    ),
+    intendedAttacks: [
+      IntendedAttack(
+        attackerUnitId: command.attackerUnitId,
+        defenderCol: command.defenderCol,
+        defenderRow: command.defenderRow,
+        declaredAtTick: 1,
+        declaringPlayerId: 'player_1',
+        cityConquestAction: command.cityConquestAction,
+      ),
+    ],
   );
-  return PersistentTurnCombatResolver.resolve(
-    turn: 1,
+  return DomainTurnCombatResolver.resolve(
     state: withIntent,
-    mapTiles: WorldMapReadView(_worldMap()),
+    mapTiles: _worldMap(),
     ruleset: GameRuleset.defaults,
   );
 }
 
 SimulationGameEngineResult _resolvePersistentResearch(
-  PersistentGameState state,
+  DomainState state,
   SelectTechnologyCommand command,
 ) {
   return MctsSimulatorParityFixtures.resolveEngineCommand(state, command);
 }
 
 SimulationGameEngineResult _resolveWorkerImprovement(
-  PersistentGameState state,
+  DomainState state,
   SelectWorkerImprovementCommand command,
 ) {
   return MctsSimulatorParityFixtures.resolveEngineCommand(state, command);
 }
 
 SimulationGameEngineResult _resolveWorkerAssignment(
-  PersistentGameState state,
+  DomainState state,
   AssignWorkerToHexCommand command,
 ) {
   return MctsSimulatorParityFixtures.resolveEngineCommand(state, command);
 }
 
-SimulationGameEngineResult _advancePersistentEconomy(
-  PersistentGameState state,
-) {
+SimulationGameEngineResult _advancePersistentEconomy(DomainState state) {
   final snapshot = MctsSimulatorParityFixtures.engineSnapshot(state);
   return const SimulationGameEngineAdapter().finalizeSimultaneousTurn(
     snapshot: snapshot,
@@ -973,12 +973,12 @@ SimulationGameEngineResult _advancePersistentEconomy(
 }
 
 SimulatedState _simulate(
-  PersistentGameState state,
+  DomainState state,
   DomainCommand command, {
-  MapData? mapData,
+  WorldMap? mapData,
 }) {
   final actualMapData = mapData ?? _mapData();
-  final view = GameView.fromPersistentState(
+  final view = GameView.fromDomainState(
     state,
     forPlayerId: 'player_1',
     turn: 1,
@@ -993,9 +993,9 @@ SimulatedState _simulate(
 }
 
 SimulatedState _advanceSimulatedTurn(
-  PersistentGameState state, {
+  DomainState state, {
   TracingMctsSimulator simulator = const TracingMctsSimulator(),
-  MapData? mapData,
+  WorldMap? mapData,
   bool ignoreFogOfWar = false,
 }) => MctsSimulatorParityFixtures.advanceSimulatedTurn(
   state,
@@ -1088,6 +1088,6 @@ FogOfWarState _visibleFog() {
   );
 }
 
-MapData _mapData() => MctsSimulatorParityFixtures.mapData();
+WorldMap _mapData() => MctsSimulatorParityFixtures.mapData();
 
 WorldMap _worldMap() => MctsSimulatorParityFixtures.worldMap();

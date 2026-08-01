@@ -230,7 +230,7 @@ _ScaleResult _measureSnapshot(int records, int timingSamples) {
   final encodeTimings = <Duration>[];
   final decodeTimings = <Duration>[];
   late List<int> encoded;
-  late SaveSnapshot restored;
+  late CanonicalGameSnapshot restored;
   final warmupEncoded = utf8.encode(
     jsonEncode(SaveSnapshotCodec.toJson(snapshot)),
   );
@@ -269,7 +269,7 @@ _ScaleResult _measureSnapshot(int records, int timingSamples) {
   );
 }
 
-SaveSnapshot _snapshot(int records) => SaveSnapshot(
+CanonicalGameSnapshot _snapshot(int records) => GameSnapshotFactory.create(
   save: GameSave(
     id: 'performance_snapshot_$records',
     name: 'Performance snapshot $records',

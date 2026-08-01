@@ -1,7 +1,7 @@
 part of 'game_state_reducer.dart';
 
-GameState _clearMapInteractionState(
-  GameState state, {
+GameClientState _clearMapInteractionState(
+  GameClientState state, {
   bool clearPendingAction = false,
 }) {
   return state.copyWith(

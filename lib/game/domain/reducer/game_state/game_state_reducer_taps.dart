@@ -16,7 +16,7 @@ import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 abstract final class GameIntentTapResolver {
   static GameStateTransition handleTileTapped(
-    GameState state,
+    GameClientState state,
     TileTappedCommand command,
     ReducerEnvironment environment,
   ) {
@@ -26,7 +26,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static GameStateTransition handleCityTapped(
-    GameState state,
+    GameClientState state,
     CityTappedCommand command,
     ReducerEnvironment environment,
   ) {
@@ -49,7 +49,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static GameStateTransition handleUnitSelected(
-    GameState state,
+    GameClientState state,
     SelectUnitCommand command,
     ReducerEnvironment environment,
   ) {
@@ -73,7 +73,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static GameStateTransition _selectTappedTile(
-    GameState state,
+    GameClientState state,
     TileTappedCommand command,
     ReducerEnvironment environment,
   ) {
@@ -81,7 +81,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static GameStateTransition _selectTappedCity(
-    GameState state,
+    GameClientState state,
     GameCity city,
     ReducerEnvironment environment,
   ) {
@@ -89,7 +89,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static GameStateTransition? _pendingTileTap(
-    GameState state,
+    GameClientState state,
     TileTappedCommand command,
     ReducerEnvironment environment,
   ) {
@@ -126,7 +126,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static GameStateTransition _selectTileAttackTarget(
-    GameState state,
+    GameClientState state,
     TileTappedCommand command,
     PendingAttackTargeting pendingAction,
     ReducerEnvironment environment,
@@ -139,7 +139,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static GameStateTransition _workerActionTileTap(
-    GameState state,
+    GameClientState state,
     PendingWorkerActionSelection pendingAction,
     TileTappedCommand command,
     ReducerEnvironment environment,
@@ -169,7 +169,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static GameStateTransition _cityFoundingDraftTileTap(
-    GameState state,
+    GameClientState state,
     TileTappedCommand command,
     MapTileLookup mapTiles,
   ) {
@@ -184,7 +184,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static GameStateTransition? _movementTargetingTileTap(
-    GameState state,
+    GameClientState state,
     TileTappedCommand command,
     ReducerEnvironment environment,
   ) {
@@ -217,7 +217,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static bool _shouldSelectTappedOwnUnitAfterMoveMiss({
-    required GameState state,
+    required GameClientState state,
     required MapTileView tile,
     required GameStateTransition moveResult,
     required GameCommandContext context,
@@ -237,7 +237,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static bool _moveResultLeftStateUntouched(
-    GameState state,
+    GameClientState state,
     GameStateTransition moveResult,
   ) {
     return moveResult.state == state &&
@@ -246,7 +246,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static GameStateTransition _selectTappedOwnUnit(
-    GameState state,
+    GameClientState state,
     MapTileView tile,
     ReducerEnvironment environment,
   ) {
@@ -255,7 +255,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static bool _canRetargetWorkerAction(
-    GameState state,
+    GameClientState state,
     GameUnit? worker,
     GameCommandContext context,
   ) {
@@ -274,7 +274,7 @@ abstract final class GameIntentTapResolver {
   }
 
   static GameStateTransition _selectCityAttackTarget(
-    GameState state,
+    GameClientState state,
     GameCity city,
     PendingAttackTargeting pendingAction,
     ReducerEnvironment environment,
@@ -293,8 +293,8 @@ abstract final class GameIntentTapResolver {
     );
   }
 
-  static GameState _selectInspectionTileDuringResearch(
-    GameState state,
+  static GameClientState _selectInspectionTileDuringResearch(
+    GameClientState state,
     TileTappedCommand command,
     MapTileLookup mapTiles,
   ) {

@@ -1,6 +1,7 @@
 import 'package:aonw/game/application/ports/clock.dart';
 import 'package:aonw/game/application/ports/id_generator.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
+import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_database.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_game_repository.dart';
@@ -64,8 +65,8 @@ void main() {
       );
 
       final loaded = await repository.load(id);
-      final updated = loaded.copyWith(
-        save: loaded.save.copyWith(turn: 5, savedAt: DateTime.utc(2026, 6, 1)),
+      final updated = loaded.withGameSave(
+        loaded.save.copyWith(turn: 5, savedAt: DateTime.utc(2026, 6, 1)),
       );
       await repository.save(updated);
 
@@ -88,10 +89,7 @@ void main() {
         await snapshotStore.save(
           id,
           Snapshot(
-            offset: 0,
-            state: loaded.copyWith(
-              save: loaded.save.copyWith(schemaVersion: 1),
-            ),
+            state: loaded.withGameSave(loaded.save.copyWith(schemaVersion: 1)),
             createdAt: DateTime.utc(2026, 4, 24),
           ),
         );
@@ -136,8 +134,8 @@ void main() {
       );
       final firstLoaded = await repository.load(firstId);
       await repository.save(
-        firstLoaded.copyWith(
-          save: firstLoaded.save.copyWith(savedAt: DateTime.utc(2026, 1, 1)),
+        firstLoaded.withGameSave(
+          firstLoaded.save.copyWith(savedAt: DateTime.utc(2026, 1, 1)),
         ),
       );
       final secondId = await repository.create(
@@ -150,8 +148,8 @@ void main() {
       );
       final secondLoaded = await repository.load(secondId);
       await repository.save(
-        secondLoaded.copyWith(
-          save: secondLoaded.save.copyWith(savedAt: DateTime.utc(2026, 6, 1)),
+        secondLoaded.withGameSave(
+          secondLoaded.save.copyWith(savedAt: DateTime.utc(2026, 6, 1)),
         ),
       );
 

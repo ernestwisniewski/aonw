@@ -15,8 +15,8 @@ final class LocalResearchDiplomacyCommandResolution {
     required this.events,
   });
 
-  final SaveSnapshot snapshot;
-  final GameState state;
+  final CanonicalGameSnapshot snapshot;
+  final GameClientState state;
   final List<GameEvent> events;
 }
 
@@ -31,8 +31,8 @@ final class LocalResearchDiplomacyCommandResolver {
   final GameRuleset ruleset;
 
   LocalResearchDiplomacyCommandResolution resolve({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
@@ -42,7 +42,7 @@ final class LocalResearchDiplomacyCommandResolver {
       return _unchanged(baseSnapshot, currentState, savedAt);
     }
     final engineInput = baseSnapshot.canonical.copyWith(
-      interaction: PersistedInteractionState(
+      actions: DomainActionState(
         cityFoundingDraft: currentState.cityFoundingDraft,
         pendingAction: currentState.pendingAction,
       ),
@@ -72,8 +72,8 @@ final class LocalResearchDiplomacyCommandResolver {
   }
 
   LocalResearchDiplomacyCommandResolution _unchanged(
-    SaveSnapshot snapshot,
-    GameState state,
+    CanonicalGameSnapshot snapshot,
+    GameClientState state,
     DateTime savedAt,
   ) {
     return LocalResearchDiplomacyCommandResolution(
@@ -88,7 +88,7 @@ final class LocalResearchDiplomacyCommandResolver {
 
   String _actorPlayerId(
     DomainCommand command,
-    GameState state,
+    GameClientState state,
     GameCommandContext context,
   ) {
     final contextActor = context.actorPlayerId;
@@ -101,8 +101,8 @@ final class LocalResearchDiplomacyCommandResolver {
     };
   }
 
-  GameState _projectState(
-    GameState state,
+  GameClientState _projectState(
+    GameClientState state,
     CanonicalGameSnapshot resultSnapshot,
   ) {
     final domain = resultSnapshot.domain;
@@ -124,7 +124,7 @@ final class LocalResearchDiplomacyCommandResolver {
             resourceTradeAgreements: domain.resourceTradeAgreements,
           )
         : state;
-    final interaction = resultSnapshot.interaction;
+    final interaction = resultSnapshot.domain.actions;
     if (domainState.cityFoundingDraft == interaction.cityFoundingDraft &&
         domainState.pendingAction == interaction.pendingAction) {
       return domainState;

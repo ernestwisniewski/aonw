@@ -15,12 +15,12 @@ void _registerServerCommandReductionContractTests() {
     final reduction = ServerCommandReduction(
       accepted: true,
       nextSnapshot: CanonicalGameSnapshot.snapshot(
-        domain: DomainState.snapshot(
+        domain: (DomainState.snapshot(
           turn: 1,
           matchRules: MatchRules.standard,
           participants: _domainPlayers(),
-        ),
-        session: MatchSessionState.snapshot(gameMode: GameMode.multiplayer),
+        )).copyWith(gameMode: GameMode.multiplayer),
+
         metadata: GameSnapshotMetadata(
           id: 'save_1',
           schemaVersion: 1,
@@ -205,21 +205,22 @@ CanonicalGameSnapshot _reducerGuardSnapshot({
   DateTime? turnStartedAt,
 }) {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
-      turn: 1,
-      matchRules: MatchRules.standard,
-      participants: _domainPlayers(),
-    ),
-    session: MatchSessionState.snapshot(
-      gameMode: GameMode.multiplayer,
-      turnStatesByPlayerId: const {
-        'player_1': PlayerTurnState.active,
-        'player_2': PlayerTurnState.active,
-      },
-      submittedPlayerIds: submittedPlayerIds,
-      kickedPlayerIds: kickedPlayerIds,
-      turnStartedAt: turnStartedAt,
-    ),
+    domain:
+        (DomainState.snapshot(
+          turn: 1,
+          matchRules: MatchRules.standard,
+          participants: _domainPlayers(),
+        )).copyWith(
+          gameMode: GameMode.multiplayer,
+          turnStatesByPlayerId: const {
+            'player_1': PlayerTurnState.active,
+            'player_2': PlayerTurnState.active,
+          },
+          submittedPlayerIds: submittedPlayerIds,
+          kickedPlayerIds: kickedPlayerIds,
+          turnStartedAt: turnStartedAt,
+        ),
+
     metadata: GameSnapshotMetadata(
       id: 'save_1',
       schemaVersion: 1,

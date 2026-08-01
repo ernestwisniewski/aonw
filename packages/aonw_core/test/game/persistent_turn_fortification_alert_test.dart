@@ -2,7 +2,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('PersistentTurnMovementProcessor fortification alerts', () {
+  group('DomainTurnMovementProcessor fortification alerts', () {
     test('keeps fortified unit idle and healing without a visible enemy', () {
       final warrior = GameUnit.startingWarrior(ownerPlayerId: 'player_1')
           .copyWith(movementPoints: 0, posture: UnitPosture.fortified)
@@ -113,8 +113,8 @@ void main() {
     });
 
     test('orders multiple alerts by owner and unit identity', () {
-      final result = PersistentTurnMovementProcessor.resetForPlayers(
-        state: PersistentGameState(
+      final result = DomainTurnMovementProcessor.resetForPlayers(
+        state: DomainState.snapshot(
           units: [
             _fortifier(id: 'unit_z', owner: 'player_1', row: 2),
             _unit(id: 'enemy', owner: 'player_3', col: 1, row: 1),
@@ -136,9 +136,9 @@ void main() {
   });
 }
 
-PersistentTurnMovementResult _reset(List<GameUnit> units) {
-  return PersistentTurnMovementProcessor.resetForPlayers(
-    state: PersistentGameState(units: units),
+DomainTurnMovementResult _reset(List<GameUnit> units) {
+  return DomainTurnMovementProcessor.resetForPlayers(
+    state: DomainState.snapshot(units: units),
     playerIds: const ['player_1'],
     mapData: _mapData(),
   );
@@ -179,14 +179,14 @@ GameUnit _unit({
   );
 }
 
-MapData _mapData() {
-  return MapData(
+WorldMap _mapData() {
+  return WorldMap(
     cols: 5,
     rows: 5,
     tiles: [
       for (var row = 0; row < 5; row++)
         for (var col = 0; col < 5; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

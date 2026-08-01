@@ -1,9 +1,9 @@
 part of 'game_event_renderer_effect_mapper.dart';
 
 List<RendererEffect> fortificationThreatRendererEffects(
-  GameState state,
+  GameClientState state,
   FortifiedUnitThreatenedEvent event, {
-  GameState? previousState,
+  GameClientState? previousState,
   String? viewerPlayerId,
 }) {
   final viewerId = viewerPlayerId ?? state.activePlayerId;
@@ -39,8 +39,8 @@ bool _isCurrentFortifier(GameUnit unit, String ownerPlayerId) =>
     unit.ownerPlayerId == ownerPlayerId && unit.isFortified;
 
 ShowCombatHexAlertEffect? _fortificationTargetAlert({
-  required GameState state,
-  required GameState detectionState,
+  required GameClientState state,
+  required GameClientState detectionState,
   required FortifiedUnitThreatenedEvent event,
   required FortifiedUnitThreatTarget target,
   required String? viewerPlayerId,

@@ -38,7 +38,7 @@ final class WorkerCommandResult {
   final bool accepted;
   final String? reason;
   final List<GameUnit> units;
-  final PersistedInteractionState interaction;
+  final DomainActionState interaction;
 }
 
 /// Applies authoritative worker rules without depending on a state container.
@@ -48,7 +48,7 @@ abstract final class WorkerCommandResolver {
     required List<GameCity> cities,
     required List<FieldImprovement> fieldImprovements,
     required ResearchState research,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required SelectWorkerImprovementCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
@@ -77,7 +77,7 @@ abstract final class WorkerCommandResolver {
     required List<GameCity> cities,
     required List<FieldImprovement> fieldImprovements,
     required ResearchState research,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required ConfirmWorkerImprovementCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
@@ -119,7 +119,7 @@ abstract final class WorkerCommandResolver {
 
   static WorkerCommandResult cancelWorkerJob({
     required List<GameUnit> units,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required CancelWorkerJobCommand command,
     required String actorPlayerId,
   }) {
@@ -148,7 +148,7 @@ abstract final class WorkerCommandResolver {
     required List<GameUnit> units,
     required List<GameCity> cities,
     required List<FieldImprovement> fieldImprovements,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required AssignWorkerToHexCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
@@ -193,7 +193,7 @@ abstract final class WorkerCommandResolver {
 
   static WorkerCommandResult cancelWorkerAssignment({
     required List<GameUnit> units,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required CancelWorkerAssignmentCommand command,
     required String actorPlayerId,
   }) {
@@ -225,7 +225,7 @@ abstract final class WorkerCommandResolver {
     required List<GameCity> cities,
     required List<FieldImprovement> fieldImprovements,
     required ResearchState research,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required String unitId,
     required FieldImprovementType improvementType,
     required String actorPlayerId,
@@ -304,7 +304,7 @@ abstract final class WorkerCommandResolver {
     required List<GameUnit> units,
     required int unitIndex,
     required GameUnit updatedWorker,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
   }) {
     if (units[unitIndex] == updatedWorker) {
       return WorkerCommandResult._accepted(
@@ -323,7 +323,7 @@ abstract final class WorkerCommandResolver {
 
   static WorkerCommandResult _reject(
     List<GameUnit> units,
-    PersistedInteractionState interaction,
+    DomainActionState interaction,
     String reason,
   ) {
     return WorkerCommandResult._rejected(
@@ -333,8 +333,8 @@ abstract final class WorkerCommandResolver {
     );
   }
 
-  static PersistedInteractionState _clearMatchingWorkerPendingAction(
-    PersistedInteractionState interaction, {
+  static DomainActionState _clearMatchingWorkerPendingAction(
+    DomainActionState interaction, {
     required String actorPlayerId,
     required String unitId,
   }) {

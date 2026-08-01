@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
@@ -49,8 +49,8 @@ class HudObjectiveSummary {
   });
 
   factory HudObjectiveSummary.fromGameState({
-    required GameState? state,
-    MapData? mapData,
+    required GameClientState? state,
+    WorldMap? mapData,
     required String activePlayerId,
     required HudPanelModes modes,
     required bool cityProductionOpen,
@@ -105,8 +105,8 @@ class HudObjectiveSummary {
   }
 
   static List<MapObjectiveProgress> _mapObjectiveProgress({
-    required GameState? state,
-    required MapData? mapData,
+    required GameClientState? state,
+    required WorldMap? mapData,
   }) {
     if (state == null || mapData == null || mapData.objectives.isEmpty) {
       return const [];

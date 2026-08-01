@@ -28,8 +28,9 @@ void _registerWorkerReplayTests() {
         isNot(equals(initialAuthoritative)),
       );
       expect(
-        harness.repository.snapshot.persistentState
-            .withoutClientInteractionState(),
+        harness.repository.snapshot.domain.copyWith(
+          actions: DomainActionState.empty,
+        ),
         _authoritativeProjection(harness.state),
       );
 
@@ -208,12 +209,15 @@ void _registerWorkerReplayTests() {
   );
 }
 
-void _expectSameAuthoritativeState(GameState replayed, GameState live) {
+void _expectSameAuthoritativeState(
+  GameClientState replayed,
+  GameClientState live,
+) {
   expect(_authoritativeProjection(replayed), _authoritativeProjection(live));
 }
 
-Object _authoritativeProjection(GameState state) =>
-    state.toPersistentState().withoutClientInteractionState();
+Object _authoritativeProjection(GameClientState state) =>
+    state.domain.copyWith(actions: DomainActionState.empty);
 
 void _expectExactWorkerCommand(DomainCommand? actual, DomainCommand expected) {
   expect(actual, isNotNull);
@@ -227,8 +231,8 @@ void _expectExactWorkerCommand(DomainCommand? actual, DomainCommand expected) {
 
 void _expectAcceptedWorkerEffect(
   _AcceptedWorkerEffect effect, {
-  required GameState before,
-  required GameState after,
+  required GameClientState before,
+  required GameClientState after,
 }) {
   final workerBefore = before.units.single;
   final workerAfter = after.units.single;
@@ -345,12 +349,12 @@ final class _AcceptedWorkerReplayScenario {
   });
 
   final String name;
-  final GameState initialState;
+  final GameClientState initialState;
   final DomainCommand command;
   final _AcceptedWorkerEffect effect;
 }
 
-GameState _workerReplayState({
+GameClientState _workerReplayState({
   int workerCol = 1,
   int workerRow = 1,
   CityFoundingDraft? cityFoundingDraft,
@@ -368,7 +372,7 @@ GameState _workerReplayState({
     workerJob: workerJob,
     workerAssignment: workerAssignment,
   );
-  return GameState(
+  return GameClientState(
     units: [worker],
     cities: const [
       GameCity(
@@ -389,7 +393,7 @@ GameState _workerReplayState({
     ),
     activePlayerId: 'player_1',
     activePlayerCanAct: true,
-    interaction: GameInteractionState(cityFoundingDraft: cityFoundingDraft),
+    interaction: InteractionState(cityFoundingDraft: cityFoundingDraft),
   );
 }
 
@@ -403,9 +407,9 @@ final class _WorkerReplayHarness {
     required this.transport,
   });
 
-  factory _WorkerReplayHarness.create(GameState initialState) {
+  factory _WorkerReplayHarness.create(GameClientState initialState) {
     final save = _save(players: const [_player1]);
-    final initialSnapshot = SaveSnapshot.fromGameState(
+    final initialSnapshot = GameSnapshotFactory.fromClientState(
       save: save,
       state: initialState,
     );
@@ -421,7 +425,7 @@ final class _WorkerReplayHarness {
       clock: _FixedClock(DateTime.utc(2026, 7, 18, 12)),
     );
     return _WorkerReplayHarness._(
-      state: initialSnapshot.toGameState(
+      state: initialSnapshot.toClientState(
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
       ),
@@ -433,7 +437,7 @@ final class _WorkerReplayHarness {
     );
   }
 
-  GameState state;
+  GameClientState state;
   final _MemoryGameRepository repository;
   final _MemoryEventLog eventLog;
   final _MemoryReplayStore replayStore;
@@ -476,7 +480,7 @@ final class _WorkerReplayHarness {
     ).buildTimeline(repository.snapshot.save.id);
   }
 
-  Future<List<GameState>> replayedStates() async {
+  Future<List<GameClientState>> replayedStates() async {
     final timeline = await replayTimeline();
     return [for (final step in timeline.steps) step.state];
   }

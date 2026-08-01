@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_city_economy_calculator.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -27,9 +27,9 @@ final class HudResourceEconomyForecast {
   final int sciencePerTurn;
 
   factory HudResourceEconomyForecast.forPlayer({
-    required GameState state,
+    required GameClientState state,
     required String playerId,
-    required MapData mapData,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityModifier stabilityModifier,
@@ -57,9 +57,9 @@ final class HudResourceEconomyForecast {
   }
 
   static HudResourceEconomyForecast _computeForPlayer({
-    required GameState state,
+    required GameClientState state,
     required String playerId,
-    required MapData mapData,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityModifier stabilityModifier,

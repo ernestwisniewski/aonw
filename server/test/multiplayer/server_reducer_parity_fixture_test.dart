@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/game/compatibility.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
@@ -16,7 +15,6 @@ import '../../../test/support/reducer_parity_resource_trade_characterization.dar
 import 'support/server_command_reducer_test_driver.dart';
 
 const _repeatCount = 3;
-const _snapshotAdapter = LegacyGameSnapshotAdapter();
 const _reducerDriver = ServerCommandReducerTestDriver();
 
 void main() {
@@ -59,7 +57,7 @@ Future<void> _runFixture(ReducerParityFixture fixture) async {
     matchId: fixture.match.id,
     offset: 0,
     save: fixture.save.toJson(),
-    state: fixture.state.toJson(),
+    state: CanonicalGameSnapshotCodec.encodeDomainState(fixture.state),
   );
   final reduction = await _reducerDriver.reduce(
     reducer: reducer,
@@ -82,7 +80,7 @@ Future<void> _runFixture(ReducerParityFixture fixture) async {
 
   if (fixture.expectedAccepted) {
     final nextSnapshot = reduction.nextSnapshot!;
-    final expectedPrevious = _snapshotAdapter.toCanonical(
+    final expectedPrevious = _canonical(
       save: fixture.save,
       state: fixture.state,
     );
@@ -90,9 +88,11 @@ Future<void> _runFixture(ReducerParityFixture fixture) async {
       ...fixture.expectedSave,
       'savedAt': fixture.save.savedAt.toUtc().toIso8601String(),
     });
-    final expectedBeforeTimestampUpdate = _snapshotAdapter.toCanonical(
+    final expectedBeforeTimestampUpdate = _canonical(
       save: expectedSaveBeforeTimestampUpdate,
-      state: PersistentGameState.fromJson(fixture.expectedState),
+      state: CanonicalGameSnapshotCodec.decodeDomainState(
+        fixture.expectedState,
+      ),
     );
     final expectedNext = expectedBeforeTimestampUpdate.copyWith(
       metadata: expectedBeforeTimestampUpdate.metadata.copyWith(
@@ -112,36 +112,55 @@ Future<void> _runFixture(ReducerParityFixture fixture) async {
   } else {
     final resultWire = reduction.wireSnapshot;
     final resultSave = GameSave.fromJson(resultWire.save);
-    final resultState = PersistentGameState.fromJson(resultWire.state);
+    final resultState = CanonicalGameSnapshotCodec.decodeDomainState(
+      resultWire.state,
+    );
     expect(reduction.nextSnapshot, isNull);
     expect(reduction.outcome, isNull);
     expect(resultWire, same(snapshot));
     expect(resultWire.toJson(), snapshot.toJson());
     expect(reducerParitySave(resultSave), fixture.expectedSave);
-    expect(resultState.toJson(), fixture.expectedState);
+    expect(
+      CanonicalGameSnapshotCodec.encodeDomainState(resultState),
+      fixture.expectedState,
+    );
     expect(resultSave.savedAt, fixture.save.savedAt);
   }
 }
 
 Map<String, Object?> _canonicalParitySnapshot(CanonicalGameSnapshot snapshot) {
-  final legacy = _snapshotAdapter.toLegacy(snapshot);
+  final encoded = CanonicalGameSnapshotCodec.encode(snapshot);
   return {
-    'save': legacy.save.toJson(),
-    'state': legacy.state.toJson(),
-    'eventLogOffset': legacy.eventLogOffset,
+    'save': encoded.save,
+    'state': encoded.state,
+    'eventLogOffset': encoded.eventLogOffset,
   };
+}
+
+CanonicalGameSnapshot _canonical({
+  required GameSave save,
+  required DomainState state,
+  int eventLogOffset = 0,
+}) {
+  return CanonicalGameSnapshotCodec.decode(
+    CanonicalGameSnapshotData(
+      save: save.toJson(),
+      state: CanonicalGameSnapshotCodec.encodeDomainState(state),
+      eventLogOffset: eventLogOffset,
+    ),
+  );
 }
 
 final class _FixtureMapCatalog implements MultiplayerMapCatalog {
   const _FixtureMapCatalog(this.mapData);
 
-  final MapData mapData;
+  final WorldMap mapData;
 
   @override
-  Future<MapData> loadAssetMap(String mapName) async {
+  Future<WorldMap> loadAssetMap(String mapName) async {
     if (mapName != mapData.mapName) {
       throw StateError('Unexpected parity map: $mapName.');
     }
-    return MapDataCodec.fromJson(MapDataCodec.toJson(mapData));
+    return WorldMapCodec.fromJson(WorldMapCodec.toJson(mapData));
   }
 }

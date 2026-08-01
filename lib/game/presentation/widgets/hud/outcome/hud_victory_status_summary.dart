@@ -1,14 +1,12 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
-import 'package:aonw_core/game/domain/state.dart';
 
 part 'hud_victory_status_detail.dart';
 part 'hud_victory_status_domination.dart';
@@ -35,14 +33,13 @@ class HudVictoryStatusSummary {
 
   factory HudVictoryStatusSummary.from({
     required GameSave gameSave,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required AppLocalizations l10n,
-    MapData? mapData,
+    WorldMap? mapData,
     String? activePlayerId,
     EmpireScoreCalculator scoreCalculator = const EmpireScoreCalculator(),
   }) {
     final victory = gameSave.matchRules.victory;
-    final persistentState = gameState?.toPersistentState();
     final scoreStatus = _scoreStatus(
       gameSave: gameSave,
       gameState: gameState,
@@ -76,7 +73,7 @@ class HudVictoryStatusSummary {
     if (culturalStatus != null && dominationStatus != null) {
       if (_shouldShowCulturalBeforeDomination(
         gameSave: gameSave,
-        state: persistentState!,
+        state: gameState!,
         mapData: mapData!,
       )) {
         return culturalStatus;
@@ -115,16 +112,17 @@ class HudVictoryStatusSummary {
 
   static bool _shouldShowCulturalBeforeDomination({
     required GameSave gameSave,
-    required PersistentGameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
   }) {
     final cultural = _culturalLeader(gameSave: gameSave, state: state);
     final domination = const DominationProgressCalculator()
-        .snapshot(
+        .snapshotForCities(
           playerIds: gameSave.players.map((player) => player.id),
-          state: state,
+          cities: state.cities,
           mapData: mapData,
           victoryRules: gameSave.matchRules.victory,
+          holdTurnsByPlayerId: state.dominationHoldTurnsByPlayerId,
         )
         .leader;
     if (cultural == null || domination == null) return cultural != null;
@@ -138,7 +136,7 @@ class HudVictoryStatusSummary {
 
   static CulturalVictoryProgress? _culturalLeader({
     required GameSave gameSave,
-    required PersistentGameState state,
+    required GameClientState state,
   }) {
     final victory = gameSave.matchRules.victory;
     final playerIds = [
@@ -148,9 +146,11 @@ class HudVictoryStatusSummary {
     final snapshots =
         [
           for (final playerId in playerIds)
-            CulturalVictoryProgressCalculator.progressForPlayer(
+            CulturalVictoryProgressCalculator.progressForPlayerFromCollections(
               playerId: playerId,
-              state: state,
+              artifacts: state.artifacts,
+              cities: state.cities,
+              holdTurnsByPlayerId: state.culturalVictoryHoldTurnsByPlayerId,
               requiredArtifactCount: victory.culturalRequiredArtifacts,
               requiredHoldTurns: victory.culturalHoldTurns,
             ),
@@ -171,14 +171,13 @@ class HudVictoryStatusSummary {
 
   static HudVictoryStatusSummary? _culturalStatus({
     required GameSave gameSave,
-    required GameState gameState,
+    required GameClientState gameState,
     required AppLocalizations l10n,
     required String? activePlayerId,
     required HudVictoryStatusSummary? scoreStatus,
   }) {
     final victory = gameSave.matchRules.victory;
-    final state = gameState.toPersistentState();
-    final leader = _culturalLeader(gameSave: gameSave, state: state);
+    final leader = _culturalLeader(gameSave: gameSave, state: gameState);
     if (leader == null) return null;
     final leaderLabel = _playerName(gameSave, leader.playerId);
     final activePlayerIsLeader =
@@ -226,9 +225,9 @@ class HudVictoryStatusSummary {
 
   static HudVictoryStatusSummary? _scoreStatus({
     required GameSave gameSave,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required AppLocalizations l10n,
-    required MapData? mapData,
+    required WorldMap? mapData,
     required EmpireScoreCalculator scoreCalculator,
   }) {
     final victory = gameSave.matchRules.victory;
@@ -240,13 +239,12 @@ class HudVictoryStatusSummary {
     final remainingTurns = (turnLimit - gameSave.turn)
         .clamp(0, turnLimit)
         .toInt();
-    final scores = gameState == null
-        ? const <String, int>{}
-        : scoreCalculator.scoresFor(
-            playerIds: gameSave.players.map((player) => player.id),
-            state: gameState.toPersistentState(),
-            mapObjectives: mapData?.objectives ?? const [],
-          );
+    final scores = _victoryScores(
+      gameSave,
+      gameState,
+      mapData,
+      scoreCalculator,
+    );
     final leaderLabel = _leaderLabel(
       gameSave: gameSave,
       l10n: l10n,
@@ -292,20 +290,20 @@ class HudVictoryStatusSummary {
 
   static HudVictoryStatusSummary? _dominationStatus({
     required GameSave gameSave,
-    required GameState gameState,
-    required MapData mapData,
+    required GameClientState gameState,
+    required WorldMap mapData,
     required AppLocalizations l10n,
     required String? activePlayerId,
     required HudVictoryStatusSummary? scoreStatus,
   }) {
-    final progress = const DominationProgressCalculator().snapshot(
+    final progress = const DominationProgressCalculator().snapshotForCities(
       playerIds: gameSave.players.map((player) => player.id),
-      state: gameState.toPersistentState(),
+      cities: gameState.cities,
       mapData: mapData,
       victoryRules: gameSave.matchRules.victory,
+      holdTurnsByPlayerId: gameState.dominationHoldTurnsByPlayerId,
     );
     if (progress.validTileCount == 0) return null;
-
     final leader = progress.leader;
     if (leader == null) return null;
 

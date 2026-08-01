@@ -203,51 +203,6 @@ class GameView {
     return true;
   }
 
-  factory GameView.fromPersistentState(
-    PersistentGameState state, {
-    required String forPlayerId,
-    required int turn,
-    required MapReadView mapData,
-    required GameRuleset ruleset,
-    CanonicalGameSnapshot? engineSnapshot,
-    Iterable<String> recentHostilePlayerIds = const [],
-    Iterable<String> activeHostilePlayerIds = const [],
-    Iterable<String> pressureTargetPlayerIds = const [],
-    Iterable<String> defaultNeutralPlayerIds = const [],
-    Iterable<PendingCityAttackThreat> pendingCityAttackThreats = const [],
-    Iterable<String> forcedVisibleEnemyUnitIds = const [],
-    bool ignoreFogOfWar = false,
-    bool ignoreDynamicFogOfWar = false,
-  }) => GameView._fromStateValues(
-    forPlayerId: forPlayerId,
-    turn: turn,
-    mapData: mapData,
-    ruleset: ruleset,
-    engineSnapshot: engineSnapshot,
-    units: state.units,
-    cities: state.cities,
-    artifacts: state.artifacts,
-    playerGold: state.playerGold,
-    playerWarWeariness: state.playerWarWeariness,
-    playerStabilityNet: state.playerStabilityNet,
-    research: state.research,
-    fieldImprovements: state.fieldImprovements,
-    fogOfWar: state.fogOfWar,
-    resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
-    mapObjectiveHoldStatesByObjectiveId:
-        state.runtimeState.mapObjectiveHoldStatesByObjectiveId,
-    diplomacy: state.runtimeState.diplomacy,
-    wonderRegistry: state.wonderRegistry,
-    recentHostilePlayerIds: recentHostilePlayerIds,
-    activeHostilePlayerIds: activeHostilePlayerIds,
-    pressureTargetPlayerIds: pressureTargetPlayerIds,
-    defaultNeutralPlayerIds: defaultNeutralPlayerIds,
-    pendingCityAttackThreats: pendingCityAttackThreats,
-    forcedVisibleEnemyUnitIds: forcedVisibleEnemyUnitIds,
-    ignoreFogOfWar: ignoreFogOfWar,
-    ignoreDynamicFogOfWar: ignoreDynamicFogOfWar,
-  );
-
   factory GameView.fromDomainState(
     DomainState state, {
     required String forPlayerId,

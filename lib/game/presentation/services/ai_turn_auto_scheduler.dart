@@ -23,7 +23,7 @@ typedef AiTurnPlayerSelector =
     Player? Function({
       required GameSave save,
       required PlayerControlState control,
-      required GameState? gameState,
+      required GameClientState? gameState,
     });
 typedef AiTurnRequestDispatcher = void Function(AiTurnRunRequest request);
 typedef AiTurnPendingPrecomputeScheduler = void Function();
@@ -62,7 +62,7 @@ final class AiTurnAutoScheduler {
     required PlayerControlState control,
     required HandoffData? handoff,
     required NetworkSession? networkSession,
-    required GameState? gameState,
+    required GameClientState? gameState,
   }) {
     if (runScheduler.running || save == null || handoff != null) {
       return;
@@ -88,7 +88,7 @@ final class AiTurnAutoScheduler {
   bool _scheduleRunnableAi({
     required GameSave save,
     required PlayerControlState control,
-    required GameState? gameState,
+    required GameClientState? gameState,
   }) {
     final player = aiPlayerToRun(
       save: save,
@@ -112,7 +112,7 @@ final class AiTurnAutoScheduler {
     required GameSave save,
     required PlayerControlState control,
     required NetworkSession? networkSession,
-    required GameState? gameState,
+    required GameClientState? gameState,
   }) {
     if (gameState == null || precomputeCoordinator.lifecyclePaused) return;
     if (!shouldRunLocalAi(save: save, networkSession: networkSession)) {

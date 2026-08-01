@@ -127,12 +127,12 @@ GameUnit _warrior2({required int col, required int row}) {
 }
 
 GameView _view({
-  required MapData mapData,
+  required WorldMap mapData,
   required List<GameUnit> units,
   List<GameCity> cities = const [_capital],
 }) {
-  return GameView.fromPersistentState(
-    PersistentGameState(
+  return GameView.fromDomainState(
+    DomainState.snapshot(
       units: units,
       cities: cities,
       fogOfWar: FogOfWarState(
@@ -181,14 +181,14 @@ AiContext _context(
   );
 }
 
-MapData _map({required int cols, required int rows}) {
-  return MapData(
+WorldMap _map({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var col = 0; col < cols; col++)
         for (var row = 0; row < rows; row++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
@@ -199,7 +199,7 @@ MapData _map({required int cols, required int rows}) {
   );
 }
 
-Set<HexCoordinate> _allHexesIn(MapData mapData) {
+Set<HexCoordinate> _allHexesIn(WorldMap mapData) {
   return {
     for (var col = 0; col < mapData.cols; col++)
       for (var row = 0; row < mapData.rows; row++)

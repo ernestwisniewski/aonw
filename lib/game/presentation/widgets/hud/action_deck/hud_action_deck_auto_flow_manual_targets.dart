@@ -29,7 +29,7 @@ final class _HudManualAutoTarget {
   }
 
   static _HudManualAutoTarget? resolve({
-    required GameState state,
+    required GameClientState state,
     required String activePlayerId,
     required _HudUnitOrderPredicate unitNeedsManualOrder,
   }) {
@@ -100,7 +100,7 @@ final class _HudManualAutoTarget {
   }
 
   bool stillNeedsOrder({
-    required GameState state,
+    required GameClientState state,
     required String activePlayerId,
     required _HudUnitOrderPredicate unitNeedsManualOrder,
   }) {

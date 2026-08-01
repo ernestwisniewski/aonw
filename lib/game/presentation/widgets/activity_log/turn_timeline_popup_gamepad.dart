@@ -4,7 +4,7 @@ Future<void> showTurnTimelinePopup(
   BuildContext context, {
   required List<GameEventNotification> entries,
   required GameSave gameSave,
-  GameState? currentState,
+  GameClientState? currentState,
   String? activePlayerId,
   ValueChanged<GameEventNotification>? onEntrySelected,
   ValueListenable<GamepadInputSnapshot>? gamepadInputListenable,

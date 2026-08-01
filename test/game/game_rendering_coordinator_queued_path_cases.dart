@@ -1,5 +1,22 @@
 part of 'game_rendering_coordinator_test.dart';
 
+WorldMap _mapWithObjectives(List<MapObjectiveDefinition> objectives) =>
+    WorldMap(
+      cols: 4,
+      rows: 1,
+      objectives: objectives,
+      tiles: [
+        for (var col = 0; col < 4; col++)
+          WorldTile(
+            col: col,
+            row: 0,
+            terrains: const [TerrainType.grassland],
+            resources: const [],
+            height: 0,
+          ),
+      ],
+    );
+
 void _registerQueuedPathRenderingTests() {
   test('rebases a queued path after the unit has already travelled', () {
     final map = _map();
@@ -27,15 +44,15 @@ void _registerQueuedPathRenderingTests() {
     final movePreview = _RecordingMovePreviewLayer();
 
     _coordinator(map: map, movePreview: movePreview).syncAll(
-      state: GameState(
+      state: GameClientState(
         activePlayerId: 'player_1',
         units: [warrior],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(warrior, tile: _tile(map, 1)),
         ),
       ),
       parent: Component(),
-      viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+      viewModelNotifier: ValueNotifier(RenderState.empty),
     );
 
     expect(movePreview.lastPreview?.path, const [

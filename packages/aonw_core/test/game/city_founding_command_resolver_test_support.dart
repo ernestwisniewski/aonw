@@ -127,26 +127,24 @@ MapTileLookup _map({
   CityHex? missing,
   TerrainType centerTerrain = TerrainType.grassland,
 }) {
-  return WorldMapReadView(
-    WorldMap(
-      cols: 8,
-      rows: 8,
-      tiles: [
-        for (var row = 0; row < 8; row++)
-          for (var col = 0; col < 8; col++)
-            if (missing == null || !missing.occupies(col, row))
-              WorldTile(
-                coordinate: HexCoord(col: col, row: row),
-                terrains: [
-                  if (col == 1 && row == 1)
-                    centerTerrain
-                  else
-                    TerrainType.grassland,
-                ],
-                resources: const [],
-                height: 0,
-              ),
-      ],
-    ),
+  return WorldMap(
+    cols: 8,
+    rows: 8,
+    tiles: [
+      for (var row = 0; row < 8; row++)
+        for (var col = 0; col < 8; col++)
+          if (missing == null || !missing.occupies(col, row))
+            WorldTile.at(
+              coordinate: HexCoord(col: col, row: row),
+              terrains: [
+                if (col == 1 && row == 1)
+                  centerTerrain
+                else
+                  TerrainType.grassland,
+              ],
+              resources: const [],
+              height: 0,
+            ),
+    ],
   );
 }

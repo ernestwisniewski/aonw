@@ -39,7 +39,7 @@ void main() {
         ),
         handoff: null,
         networkSession: null,
-        gameState: const GameState(
+        gameState: GameClientState(
           activePlayerId: 'human',
           activePlayerCanAct: false,
         ),
@@ -69,7 +69,7 @@ void main() {
           pendingStarts: pendingStarts,
         );
         final save = _save(gameMode: GameMode.hotSeat);
-        const gameState = GameState(
+        final gameState = GameClientState(
           activePlayerId: 'human',
           activePlayerCanAct: true,
         );
@@ -103,7 +103,7 @@ void main() {
         pendingStarts: pendingStarts,
       );
       final save = _save(gameMode: GameMode.hotSeat);
-      const gameState = GameState(
+      final gameState = GameClientState(
         activePlayerId: 'human',
         activePlayerCanAct: true,
       );
@@ -151,7 +151,7 @@ void main() {
         throttleReasons: throttleReasons,
       );
       final save = _save(gameMode: GameMode.hotSeat);
-      const gameState = GameState(
+      final gameState = GameClientState(
         activePlayerId: 'human',
         activePlayerCanAct: true,
       );
@@ -185,7 +185,7 @@ void main() {
           control: const PlayerControlState(activePlayerId: 'human'),
           handoff: null,
           networkSession: null,
-          gameState: const GameState(activePlayerId: 'human'),
+          gameState: GameClientState(activePlayerId: 'human'),
         )
         ..evaluate(
           save: _save(gameMode: GameMode.hotSeat),
@@ -197,7 +197,7 @@ void main() {
             turnNumber: 9,
           ),
           networkSession: null,
-          gameState: const GameState(activePlayerId: 'human'),
+          gameState: GameClientState(activePlayerId: 'human'),
         );
 
       expect(turnRequests, isEmpty);
@@ -244,7 +244,7 @@ Future<AiTurnPlan> _emptyPlan() async {
 
 String _scheduleKey({
   required GameSave save,
-  required GameState gameState,
+  required GameClientState gameState,
   required Player player,
 }) {
   return AiPrecomputeScheduleKey.build(

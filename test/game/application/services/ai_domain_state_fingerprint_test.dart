@@ -4,7 +4,6 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/domain/intended_attack.dart';
 import 'package:aonw_core/game/domain/player.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -12,30 +11,17 @@ void main() {
   group('AiDomainStateFingerprint', () {
     test('preserves the legacy cache invalidation partition', () {
       final base = _snapshot();
-      final variants = <({String label, SaveSnapshot snapshot})>[
+      final variants = <({String label, CanonicalGameSnapshot snapshot})>[
         (label: 'gold', snapshot: _snapshot(gold: 11)),
         (label: 'unit', snapshot: _snapshot(unitCol: 1)),
         (
           label: 'session',
-          snapshot: _snapshot(
-            runtimeState: const GameRuntimeState(
-              submittedPlayerIds: {'player-1'},
-            ),
-          ),
+          snapshot: _snapshot(submittedPlayerIds: {'player-1'}),
         ),
-        (
-          label: 'attack',
-          snapshot: _snapshot(
-            runtimeState: const GameRuntimeState(intendedAttacks: [_attack]),
-          ),
-        ),
+        (label: 'attack', snapshot: _snapshot(intendedAttacks: [_attack])),
         (
           label: 'victory progress',
-          snapshot: _snapshot(
-            runtimeState: const GameRuntimeState(
-              dominationHoldTurnsByPlayerId: {'player-1': 2},
-            ),
-          ),
+          snapshot: _snapshot(dominationHoldTurnsByPlayerId: {'player-1': 2}),
         ),
       ];
 
@@ -45,7 +31,7 @@ void main() {
           includeIntendedAttacks: includeAttacks,
         );
         final canonicalBase = AiDomainStateFingerprint.hash(
-          base.canonical.domain,
+          base.domain,
           includeIntendedAttacks: includeAttacks,
         );
 
@@ -58,7 +44,7 @@ void main() {
               legacyBase;
           final canonicalEqual =
               AiDomainStateFingerprint.hash(
-                variant.snapshot.canonical.domain,
+                variant.snapshot.domain,
                 includeIntendedAttacks: includeAttacks,
               ) ==
               canonicalBase;
@@ -73,7 +59,7 @@ void main() {
     });
 
     test('ignores domain fields owned by other cache triggers', () {
-      final domain = _snapshot().canonical.domain;
+      final domain = _snapshot().domain;
       final changed = domain.copyWith(
         turn: domain.turn + 1,
         dominationHoldTurnsByPlayerId: const {'player-1': 3},
@@ -91,7 +77,7 @@ void main() {
     });
 
     test('uses canonical participant colors but not presentation names', () {
-      final domain = _snapshot(includeRawRoster: false).canonical.domain;
+      final domain = _snapshot(includeRawRoster: false).domain;
       final renamed = domain.copyWith(
         participants: [
           domain.participants.single.copyWith(name: 'Renamed player'),
@@ -116,24 +102,27 @@ void main() {
 }
 
 int _legacyFingerprint(
-  SaveSnapshot snapshot, {
+  CanonicalGameSnapshot snapshot, {
   required bool includeIntendedAttacks,
 }) {
-  final runtime = GameRuntimeState.snapshot(
-    intendedAttacks: includeIntendedAttacks
-        ? snapshot.runtimeState.intendedAttacks
-        : const [],
-  );
-  return snapshot.persistentState.copyWith(runtimeState: runtime).hashCode;
+  return snapshot.domain
+      .copyWith(
+        intendedAttacks: includeIntendedAttacks
+            ? snapshot.domain.intendedAttacks
+            : const [],
+      )
+      .hashCode;
 }
 
-SaveSnapshot _snapshot({
+CanonicalGameSnapshot _snapshot({
   int gold = 10,
   int unitCol = 0,
-  GameRuntimeState runtimeState = GameRuntimeState.empty,
+  Set<String> submittedPlayerIds = const {},
+  List<IntendedAttack> intendedAttacks = const [],
+  Map<String, int> dominationHoldTurnsByPlayerId = const {},
   bool includeRawRoster = true,
 }) {
-  return SaveSnapshot(
+  return GameSnapshotFactory.create(
     save: _save(),
     playerColors: includeRawRoster ? const {'player-1': 0xFF2563EB} : const {},
     playerCountries: includeRawRoster
@@ -143,7 +132,9 @@ SaveSnapshot _snapshot({
     units: [
       GameUnit.startingCommander(ownerPlayerId: 'player-1', col: unitCol),
     ],
-    runtimeState: runtimeState,
+    submittedPlayerIds: submittedPlayerIds,
+    intendedAttacks: intendedAttacks,
+    dominationHoldTurnsByPlayerId: dominationHoldTurnsByPlayerId,
   );
 }
 

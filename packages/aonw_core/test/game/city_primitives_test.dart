@@ -1,8 +1,8 @@
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:test/test.dart';
 
@@ -250,7 +250,7 @@ void main() {
     });
 
     test('checks field improvement requirements against core tile data', () {
-      const riverGrassland = TileData(
+      final riverGrassland = WorldTile(
         col: 1,
         row: 2,
         terrains: [TerrainType.grassland, TerrainType.river],

@@ -109,7 +109,7 @@ void _requireExactAutoExploreCharacterization(
         ) ||
         !_autoExploreJsonEquals(
           fixture.expectedState,
-          expectedState.toJson(),
+          CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
         ) ||
         !_autoExploreJsonEquals(
           fixture.expectedEvents,

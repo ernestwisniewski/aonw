@@ -13,7 +13,7 @@ part of 'game_state_provider.dart';
 final gameStateProvider = GameStateNotifierFamily._();
 
 final class GameStateNotifierProvider
-    extends $AsyncNotifierProvider<GameStateNotifier, GameState> {
+    extends $AsyncNotifierProvider<GameStateNotifier, GameClientState> {
   GameStateNotifierProvider._({
     required GameStateNotifierFamily super.from,
     required String super.argument,
@@ -56,15 +56,15 @@ final class GameStateNotifierProvider
   }
 }
 
-String _$gameStateNotifierHash() => r'db06265c6a4931d5d77bee0ec884a1883c398423';
+String _$gameStateNotifierHash() => r'375ffa764bcab1cf5ce708d46e9ec3f068b062aa';
 
 final class GameStateNotifierFamily extends $Family
     with
         $ClassFamilyOverride<
           GameStateNotifier,
-          AsyncValue<GameState>,
-          GameState,
-          FutureOr<GameState>,
+          AsyncValue<GameClientState>,
+          GameClientState,
+          FutureOr<GameClientState>,
           String
         > {
   GameStateNotifierFamily._()
@@ -92,20 +92,20 @@ final class GameStateNotifierFamily extends $Family
   String toString() => r'gameStateProvider';
 }
 
-abstract class _$GameStateNotifier extends $AsyncNotifier<GameState> {
+abstract class _$GameStateNotifier extends $AsyncNotifier<GameClientState> {
   late final _$args = ref.$arg as String;
   String get saveId => _$args;
 
-  FutureOr<GameState> build(String saveId);
+  FutureOr<GameClientState> build(String saveId);
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<GameState>, GameState>;
+    final ref = this.ref as $Ref<AsyncValue<GameClientState>, GameClientState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<GameState>, GameState>,
-              AsyncValue<GameState>,
+              AnyNotifier<AsyncValue<GameClientState>, GameClientState>,
+              AsyncValue<GameClientState>,
               Object?,
               Object?
             >;

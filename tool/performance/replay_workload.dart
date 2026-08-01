@@ -5,13 +5,13 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/application/services/replay_service.dart';
 import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -47,7 +47,7 @@ Future<_ReplayScaleResult> _runScale(int events, int timingSamples) async {
   final snapshot = _initialSnapshot(events);
   final commands = _commands(events);
   final eventLog = _MemoryEventLog(commands);
-  final mapView = _map().indexedReadView();
+  final mapView = _map();
   final service = ReplayService(
     replayStore: _MemoryReplayStore(snapshot),
     eventLog: eventLog,
@@ -96,45 +96,46 @@ Future<_ReplayScaleResult> _runScale(int events, int timingSamples) async {
   );
 }
 
-SaveSnapshot _initialSnapshot(int events) => SaveSnapshot(
-  save: GameSave(
-    id: 'replay_performance_$events',
-    name: 'Replay performance $events',
-    mapName: 'synthetic',
-    mapSource: MapSource.saved,
-    turn: 1,
-    playerStates: const {
-      'player_1': PlayerTurnState.active,
-      'player_2': PlayerTurnState.active,
-      'player_3': PlayerTurnState.active,
-      'player_4': PlayerTurnState.active,
-    },
-    savedAt: DateTime.utc(2026, 1, 1),
-    camera: CameraState.zero,
-    players: const [
-      Player(id: 'player_1', name: 'Player 1', colorValue: 0xFF3D5FA8),
-      Player(id: 'player_2', name: 'Player 2', colorValue: 0xFFB83A3A),
-      Player(id: 'player_3', name: 'Player 3', colorValue: 0xFF6D4A8C),
-      Player(id: 'player_4', name: 'Player 4', colorValue: 0xFFC8741F),
-    ],
-  ),
-  playerColors: const {
-    'player_1': 0xFF3D5FA8,
-    'player_2': 0xFFB83A3A,
-    'player_3': 0xFF6D4A8C,
-    'player_4': 0xFFC8741F,
-  },
-  units: [
-    for (var player = 1; player <= 4; player++)
-      GameUnit.produced(
-        id: 'unit_$player',
-        ownerPlayerId: 'player_$player',
-        type: GameUnitType.warrior,
-        col: (player - 1) % 2,
-        row: (player - 1) ~/ 2,
+CanonicalGameSnapshot _initialSnapshot(int events) =>
+    GameSnapshotFactory.create(
+      save: GameSave(
+        id: 'replay_performance_$events',
+        name: 'Replay performance $events',
+        mapName: 'synthetic',
+        mapSource: MapSource.saved,
+        turn: 1,
+        playerStates: const {
+          'player_1': PlayerTurnState.active,
+          'player_2': PlayerTurnState.active,
+          'player_3': PlayerTurnState.active,
+          'player_4': PlayerTurnState.active,
+        },
+        savedAt: DateTime.utc(2026, 1, 1),
+        camera: CameraState.zero,
+        players: const [
+          Player(id: 'player_1', name: 'Player 1', colorValue: 0xFF3D5FA8),
+          Player(id: 'player_2', name: 'Player 2', colorValue: 0xFFB83A3A),
+          Player(id: 'player_3', name: 'Player 3', colorValue: 0xFF6D4A8C),
+          Player(id: 'player_4', name: 'Player 4', colorValue: 0xFFC8741F),
+        ],
       ),
-  ],
-);
+      playerColors: const {
+        'player_1': 0xFF3D5FA8,
+        'player_2': 0xFFB83A3A,
+        'player_3': 0xFF6D4A8C,
+        'player_4': 0xFFC8741F,
+      },
+      units: [
+        for (var player = 1; player <= 4; player++)
+          GameUnit.produced(
+            id: 'unit_$player',
+            ownerPlayerId: 'player_$player',
+            type: GameUnitType.warrior,
+            col: (player - 1) % 2,
+            row: (player - 1) ~/ 2,
+          ),
+      ],
+    );
 
 List<RecordedDomainCommand> _commands(int count) => [
   for (var offset = 1; offset <= count; offset++)
@@ -180,7 +181,7 @@ Map<String, int> _commandKindCounts(int events) {
 }
 
 String _stateDigest(ReplayStep step) => stableDigest({
-  'persistent': step.state.toPersistentState().toJson(),
+  'domain': CanonicalGameSnapshotCodec.encodeDomainState(step.state.domain),
   'activePlayerId': step.state.activePlayerId,
   'activePlayerCanAct': step.state.activePlayerCanAct,
 });
@@ -193,32 +194,32 @@ void _requireYieldedCommands(_MemoryEventLog eventLog, int expected) {
   }
 }
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 2,
   rows: 2,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 1,
       row: 0,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 0,
       row: 1,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 1,
       row: 1,
       terrains: [TerrainType.plains],
@@ -231,17 +232,20 @@ MapData _map() => MapData(
 class _MemoryReplayStore implements ReplayStore {
   _MemoryReplayStore(this.snapshot);
 
-  final SaveSnapshot snapshot;
+  final CanonicalGameSnapshot snapshot;
 
   @override
   Future<void> delete(String saveId) async {}
 
   @override
-  Future<SaveSnapshot?> initialSnapshot(String saveId) async =>
+  Future<CanonicalGameSnapshot?> initialSnapshot(String saveId) async =>
       saveId == snapshot.save.id ? snapshot : null;
 
   @override
-  Future<void> saveInitialSnapshot(String saveId, SaveSnapshot snapshot) async {
+  Future<void> saveInitialSnapshot(
+    String saveId,
+    CanonicalGameSnapshot snapshot,
+  ) async {
     throw UnsupportedError('The replay performance fixture is immutable.');
   }
 }

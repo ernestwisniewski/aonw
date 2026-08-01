@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 
 void main() {
   test('simulation projection carries every authoritative state slice', () {
-    final state = PersistentGameState.snapshot(
+    final state = DomainState.snapshot(
       playerColors: const {'player_1': 99},
       playerCountries: const {'player_1': PlayerCountry.japan},
       playerGold: const {'player_1': 17},
@@ -16,17 +16,16 @@ void main() {
           type: FieldImprovementType.farm,
         ),
       ],
-      runtimeState: GameRuntimeState.snapshot(
-        dominationHoldTurnsByPlayerId: const {'player_1': 2},
-        culturalVictoryHoldTurnsByPlayerId: const {'player_1': 3},
-        mapObjectiveHoldStatesByObjectiveId: const {
-          'pass_1': MapObjectiveHoldState(
-            objectiveId: 'pass_1',
-            playerId: 'player_1',
-            holdTurns: 4,
-          ),
-        },
-      ),
+
+      dominationHoldTurnsByPlayerId: const {'player_1': 2},
+      culturalVictoryHoldTurnsByPlayerId: const {'player_1': 3},
+      mapObjectiveHoldStatesByObjectiveId: const {
+        'pass_1': MapObjectiveHoldState(
+          objectiveId: 'pass_1',
+          playerId: 'player_1',
+          holdTurns: 4,
+        ),
+      },
     );
 
     final projected = const SimulationGameEngineAdapter().projectSnapshot(
@@ -42,22 +41,22 @@ void main() {
     expect(projected.domain.fieldImprovements, state.fieldImprovements);
     expect(
       projected.domain.dominationHoldTurnsByPlayerId,
-      state.runtimeState.dominationHoldTurnsByPlayerId,
+      state.dominationHoldTurnsByPlayerId,
     );
     expect(
       projected.domain.culturalVictoryHoldTurnsByPlayerId,
-      state.runtimeState.culturalVictoryHoldTurnsByPlayerId,
+      state.culturalVictoryHoldTurnsByPlayerId,
     );
     expect(
       projected.domain.mapObjectiveHoldStatesByObjectiveId,
-      state.runtimeState.mapObjectiveHoldStatesByObjectiveId,
+      state.mapObjectiveHoldStatesByObjectiveId,
     );
   });
 
   test(
     'simulation adapter applies migrated unit actions through GameEngine',
     () {
-      final state = PersistentGameState.snapshot(
+      final state = DomainState.snapshot(
         playerColors: const {'player_1': 1},
         playerCountries: const {'player_1': PlayerCountry.poland},
         playerGold: const {'player_1': 17},
@@ -84,10 +83,9 @@ void main() {
         wonderRegistry: WonderRegistry(
           completedBy: const {WonderType.greatLibrary: 'player_1'},
         ),
-        runtimeState: GameRuntimeState.snapshot(
-          pendingAction: const PendingResearchSelection(
-            ownerPlayerId: 'player_1',
-          ),
+
+        pendingAction: const PendingResearchSelection(
+          ownerPlayerId: 'player_1',
         ),
       );
 
@@ -105,7 +103,7 @@ void main() {
       expect(result.reason, isNull);
       expect(result.state.units.single.movementPoints, 0);
       expect(
-        result.state.runtimeState.pendingAction,
+        result.state.actions.pendingAction,
         const PendingUnitTurnSkip(
           ownerPlayerId: 'player_1',
           unitId: 'unit_1',
@@ -127,7 +125,7 @@ void main() {
   );
 
   test('simulation adapter preserves rejected state identity', () {
-    final state = PersistentGameState.snapshot(
+    final state = DomainState.snapshot(
       playerColors: const {'player_1': 1},
       playerCountries: const {'player_1': PlayerCountry.poland},
     );
@@ -148,7 +146,15 @@ void main() {
   });
 
   test('simulation adapter uses the supplied lossless canonical envelope', () {
-    final state = PersistentGameState.snapshot(
+    final state = DomainState.snapshot(
+      gameMode: GameMode.multiplayer,
+      participants: const [
+        Player(id: 'player_1', name: 'Actor', colorValue: 1),
+        Player(id: 'session_only', name: 'Submitted', colorValue: 2),
+        Player(id: 'timeout_only', name: 'Timeout', colorValue: 3),
+        Player(id: 'afk_only', name: 'AFK', colorValue: 4),
+        Player(id: 'kicked_only', name: 'Kicked', colorValue: 5),
+      ],
       units: [
         GameUnit(
           id: 'unit_1',
@@ -160,33 +166,15 @@ void main() {
           movementPoints: 3,
         ),
       ],
-      runtimeState: GameRuntimeState.snapshot(
-        submittedPlayerIds: const {'session_only'},
-        timeoutStreaksByPlayerId: const {'timeout_only': 2},
-        afkPlayerIds: const {'afk_only'},
-        kickedPlayerIds: const {'kicked_only'},
-      ),
+
+      submittedPlayerIds: const {'session_only'},
+      timeoutStreaksByPlayerId: const {'timeout_only': 2},
+      afkPlayerIds: const {'afk_only'},
+      kickedPlayerIds: const {'kicked_only'},
     );
     final snapshot = CanonicalGameSnapshot.snapshot(
-      domain: DomainState.snapshot(
-        turn: 7,
-        matchRules: MatchRules.standard,
-        participants: const [
-          Player(id: 'player_1', name: 'Actor', colorValue: 1),
-          Player(id: 'session_only', name: 'Submitted', colorValue: 2),
-          Player(id: 'timeout_only', name: 'Timeout', colorValue: 3),
-          Player(id: 'afk_only', name: 'AFK', colorValue: 4),
-          Player(id: 'kicked_only', name: 'Kicked', colorValue: 5),
-        ],
-        units: state.units,
-      ),
-      session: MatchSessionState.snapshot(
-        gameMode: GameMode.multiplayer,
-        submittedPlayerIds: state.runtimeState.submittedPlayerIds,
-        timeoutStreaksByPlayerId: state.runtimeState.timeoutStreaksByPlayerId,
-        afkPlayerIds: state.runtimeState.afkPlayerIds,
-        kickedPlayerIds: state.runtimeState.kickedPlayerIds,
-      ),
+      domain: state.copyWith(turn: 7),
+
       metadata: GameSnapshotMetadata(
         id: 'faithful_snapshot',
         schemaVersion: 3,
@@ -209,31 +197,38 @@ void main() {
     );
 
     expect(result.accepted, isTrue);
-    expect(result.snapshot.session, same(snapshot.session));
+    expect(
+      result.snapshot.domain.turnStatesByPlayerId,
+      same(snapshot.domain.turnStatesByPlayerId),
+    );
     expect(result.snapshot.metadata, same(snapshot.metadata));
     expect(result.snapshot.eventLogOffset, 73);
     expect(result.snapshot.domain.units.single.movementPoints, 0);
-    expect(result.state.runtimeState.submittedPlayerIds, {'session_only'});
-    expect(result.state.runtimeState.timeoutStreaksByPlayerId, {
-      'timeout_only': 2,
-    });
-    expect(result.state.runtimeState.afkPlayerIds, {'afk_only'});
-    expect(result.state.runtimeState.kickedPlayerIds, {'kicked_only'});
+    expect(result.state.submittedPlayerIds, {'session_only'});
+    expect(result.state.timeoutStreaksByPlayerId, {'timeout_only': 2});
+    expect(result.state.afkPlayerIds, {'afk_only'});
+    expect(result.state.kickedPlayerIds, {'kicked_only'});
   });
 }
 
-CanonicalGameSnapshot _snapshotFor(PersistentGameState state) {
+CanonicalGameSnapshot _snapshotFor(DomainState state) {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
-      turn: 7,
-      matchRules: MatchRules.standard,
-      participants: const [
-        Player(id: 'player_1', name: 'Actor', colorValue: 1),
-      ],
-      units: state.units,
-      artifacts: state.artifacts,
-    ),
-    session: MatchSessionState.snapshot(gameMode: GameMode.hotSeat),
+    domain:
+        ((DomainState.snapshot(
+          turn: 7,
+          matchRules: MatchRules.standard,
+          participants: const [
+            Player(id: 'player_1', name: 'Actor', colorValue: 1),
+          ],
+          units: state.units,
+          artifacts: state.artifacts,
+        )).copyWith(gameMode: GameMode.hotSeat)).copyWith(
+          actions: DomainActionState(
+            cityFoundingDraft: state.actions.cityFoundingDraft,
+            pendingAction: state.actions.pendingAction,
+          ),
+        ),
+
     metadata: GameSnapshotMetadata(
       id: 'simulation_test',
       schemaVersion: 3,
@@ -241,10 +236,6 @@ CanonicalGameSnapshot _snapshotFor(PersistentGameState state) {
       world: const WorldReference(name: 'verdantia', source: MapSource.asset),
       savedAtUtc: DateTime.utc(2026, 7, 29),
       camera: GameSnapshotCamera.zero,
-    ),
-    interaction: PersistedInteractionState(
-      cityFoundingDraft: state.runtimeState.cityFoundingDraft,
-      pendingAction: state.runtimeState.pendingAction,
     ),
   );
 }

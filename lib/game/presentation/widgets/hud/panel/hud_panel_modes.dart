@@ -90,7 +90,7 @@ abstract class HudPanelModes with _$HudPanelModes {
 
 HudPanelModes normalizeHudPanelModes({
   required HudPanelModes current,
-  required GameState? gameState,
+  required GameClientState? gameState,
 }) {
   final selection = gameState?.selection;
   var cityBuildings = current.cityBuildings;

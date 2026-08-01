@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 void main() {
   group('MctsOpponentViewIndex', () {
     test('returns sorted opponents and keeps active player in known ids', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           _unit('unit_3', 'player_3', col: 3),
           _unit('unit_1', 'player_1'),
@@ -46,7 +46,7 @@ void main() {
         type: FieldImprovementType.camp,
         builtByCityId: playerCity.id,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: const {'player_2': 7},
         playerWarWeariness: const {'player_2': 2},
         playerStabilityNet: const {'player_2': -1},
@@ -63,7 +63,7 @@ void main() {
         state: state,
         opponentId: 'player_2',
         turn: 5,
-        mapData: MapData(cols: 5, rows: 1, tiles: const []),
+        mapData: WorldMap(cols: 5, rows: 1, tiles: []),
         ruleset: GameRuleset.standard(),
       );
 
@@ -118,8 +118,8 @@ void main() {
   });
 }
 
-PersistentGameState _artifactVisibilityState() {
-  return PersistentGameState(
+DomainState _artifactVisibilityState() {
+  return DomainState.snapshot(
     units: [
       _unit('unit_1', 'player_1'),
       _unit('unit_2', 'player_2', col: 2),
@@ -136,14 +136,14 @@ PersistentGameState _artifactVisibilityState() {
 
 GameView _viewFor(
   MctsOpponentViewIndex index,
-  PersistentGameState state,
+  DomainState state,
   String playerId,
 ) {
   return index.viewFor(
     state: state,
     opponentId: playerId,
     turn: 1,
-    mapData: MapData(cols: 5, rows: 1, tiles: const []),
+    mapData: WorldMap(cols: 5, rows: 1, tiles: []),
     ruleset: GameRuleset.standard(),
   );
 }

@@ -11,7 +11,10 @@ Map<String, dynamic> _encodeDomainCommand(DomainCommand command) {
       _encodeDiplomaticProposalCommand(command) ??
       _encodeDiplomaticTradeCommand(command) ??
       _encodeDiplomaticMessageCommand(command) ??
-      (throw ArgumentError.value(command, 'command', 'Unsupported command'));
+      (throw StateError(
+        'DomainCommand encoder inventory is incomplete for '
+        '${command.runtimeType}.',
+      ));
 }
 
 Map<String, dynamic>? _encodeUnitCommand(DomainCommand command) {

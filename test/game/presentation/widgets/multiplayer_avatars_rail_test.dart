@@ -61,7 +61,7 @@ Future<void> _pumpRail(
   Map<String, String> timerLabels = const {},
   Set<String> timedOutPlayerIds = const {},
   DiplomacyState diplomacy = DiplomacyState.empty,
-  GameState? gameState,
+  GameClientState? gameState,
   Size? screenSize,
 }) {
   if (screenSize != null) {
@@ -306,7 +306,7 @@ void main() {
   testWidgets('full list sheet includes empire stats when state is available', (
     tester,
   ) async {
-    final gameState = GameState(
+    final gameState = GameClientState(
       activePlayerId: 'player_1',
       cities: const [
         GameCity(
@@ -437,7 +437,7 @@ void main() {
   testWidgets('status sheet marks rival stats unknown for scoped snapshots', (
     tester,
   ) async {
-    final gameState = GameState(
+    final gameState = GameClientState(
       fogOfWar: FogOfWarState(
         players: {'player_1': PlayerFogOfWar(playerId: 'player_1')},
       ),

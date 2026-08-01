@@ -9,26 +9,26 @@ List<CityHex> foundingHexes(int ac, int ar, int bc, int br) => [
 final class MctsSimulatorParityFixtures {
   const MctsSimulatorParityFixtures._();
 
-  static MapData mapData() {
-    return MapData(
+  static WorldMap mapData() {
+    return WorldMap(
       cols: 3,
       rows: 1,
-      tiles: const [
-        TileData(
+      tiles: [
+        WorldTile(
           col: 0,
           row: 0,
           terrains: [TerrainType.plains],
           resources: [],
           height: 0,
         ),
-        TileData(
+        WorldTile(
           col: 1,
           row: 0,
           terrains: [TerrainType.plains],
           resources: [],
           height: 0,
         ),
-        TileData(
+        WorldTile(
           col: 2,
           row: 0,
           terrains: [TerrainType.plains],
@@ -39,7 +39,7 @@ final class MctsSimulatorParityFixtures {
     );
   }
 
-  static WorldMap worldMap({MapData? mapData}) {
+  static WorldMap worldMap({WorldMap? mapData}) {
     final source = mapData ?? MctsSimulatorParityFixtures.mapData();
     return WorldMap.fromTileViews(
       cols: source.cols,
@@ -52,14 +52,14 @@ final class MctsSimulatorParityFixtures {
   }
 
   static SimulatedState advanceSimulatedTurn(
-    PersistentGameState state, {
+    DomainState state, {
     TracingMctsSimulator simulator = const TracingMctsSimulator(),
-    MapData? mapData,
+    WorldMap? mapData,
     bool ignoreFogOfWar = false,
     bool includeEngineSnapshot = true,
   }) {
     final actualMapData = mapData ?? MctsSimulatorParityFixtures.mapData();
-    final view = GameView.fromPersistentState(
+    final view = GameView.fromDomainState(
       state,
       forPlayerId: 'player_1',
       turn: 1,
@@ -73,7 +73,7 @@ final class MctsSimulatorParityFixtures {
     );
   }
 
-  static CanonicalGameSnapshot engineSnapshot(PersistentGameState state) {
+  static CanonicalGameSnapshot engineSnapshot(DomainState state) {
     final playerIds = state.knownPlayerIds.isEmpty
         ? const {'player_1'}
         : state.knownPlayerIds;
@@ -86,32 +86,39 @@ final class MctsSimulatorParityFixtures {
           country: state.playerCountries[playerId] ?? PlayerCountry.poland,
         ),
     ];
-    final runtime = state.runtimeState;
+    final runtime = state;
     return CanonicalGameSnapshot.snapshot(
-      domain: DomainState.snapshot(
-        turn: 1,
-        matchRules: MatchRules.standard,
-        participants: participants,
-        playerGold: state.playerGold,
-        playerWarWeariness: state.playerWarWeariness,
-        playerStabilityNet: state.playerStabilityNet,
-        units: state.units,
-        cities: state.cities,
-        artifacts: state.artifacts,
-        fieldImprovements: state.fieldImprovements,
-        fogOfWar: state.fogOfWar,
-        research: state.research,
-        wonderRegistry: state.wonderRegistry,
-        intendedAttacks: runtime.intendedAttacks,
-        diplomacy: runtime.diplomacy,
-        resourceTradeAgreements: runtime.resourceTradeAgreements,
-        dominationHoldTurnsByPlayerId: runtime.dominationHoldTurnsByPlayerId,
-        culturalVictoryHoldTurnsByPlayerId:
-            runtime.culturalVictoryHoldTurnsByPlayerId,
-        mapObjectiveHoldStatesByObjectiveId:
-            runtime.mapObjectiveHoldStatesByObjectiveId,
-      ),
-      session: MatchSessionState.snapshot(gameMode: GameMode.hotSeat),
+      domain:
+          ((DomainState.snapshot(
+            turn: 1,
+            matchRules: MatchRules.standard,
+            participants: participants,
+            playerGold: state.playerGold,
+            playerWarWeariness: state.playerWarWeariness,
+            playerStabilityNet: state.playerStabilityNet,
+            units: state.units,
+            cities: state.cities,
+            artifacts: state.artifacts,
+            fieldImprovements: state.fieldImprovements,
+            fogOfWar: state.fogOfWar,
+            research: state.research,
+            wonderRegistry: state.wonderRegistry,
+            intendedAttacks: runtime.intendedAttacks,
+            diplomacy: runtime.diplomacy,
+            resourceTradeAgreements: runtime.resourceTradeAgreements,
+            dominationHoldTurnsByPlayerId:
+                runtime.dominationHoldTurnsByPlayerId,
+            culturalVictoryHoldTurnsByPlayerId:
+                runtime.culturalVictoryHoldTurnsByPlayerId,
+            mapObjectiveHoldStatesByObjectiveId:
+                runtime.mapObjectiveHoldStatesByObjectiveId,
+          )).copyWith(gameMode: GameMode.hotSeat)).copyWith(
+            actions: DomainActionState(
+              cityFoundingDraft: runtime.actions.cityFoundingDraft,
+              pendingAction: runtime.actions.pendingAction,
+            ),
+          ),
+
       metadata: GameSnapshotMetadata(
         id: 'mcts_parity',
         schemaVersion: 3,
@@ -120,15 +127,11 @@ final class MctsSimulatorParityFixtures {
         savedAtUtc: DateTime.utc(1970),
         camera: GameSnapshotCamera.zero,
       ),
-      interaction: PersistedInteractionState(
-        cityFoundingDraft: runtime.cityFoundingDraft,
-        pendingAction: runtime.pendingAction,
-      ),
     );
   }
 
   static GameView viewFromPersistentState(
-    PersistentGameState state, {
+    DomainState state, {
     required String forPlayerId,
     required int turn,
     required MapReadView mapData,
@@ -142,7 +145,7 @@ final class MctsSimulatorParityFixtures {
     bool ignoreFogOfWar = false,
     bool ignoreDynamicFogOfWar = false,
   }) {
-    return GameView.fromPersistentState(
+    return GameView.fromDomainState(
       state,
       forPlayerId: forPlayerId,
       turn: turn,
@@ -161,7 +164,7 @@ final class MctsSimulatorParityFixtures {
   }
 
   static SimulatedState simulatedState(
-    PersistentGameState state, {
+    DomainState state, {
     required MapReadView mapData,
     int maxPlanningDepth = 4,
   }) {
@@ -178,7 +181,7 @@ final class MctsSimulatorParityFixtures {
   }
 
   static SimulationGameEngineResult resolveEngineCommand(
-    PersistentGameState state,
+    DomainState state,
     DomainCommand command, {
     MapReadView? mapView,
     String actorPlayerId = 'player_1',
@@ -189,7 +192,7 @@ final class MctsSimulatorParityFixtures {
       command: command,
       actorPlayerId: actorPlayerId,
       commandTick: 0,
-      mapView: mapView ?? WorldMapReadView(worldMap()),
+      mapView: mapView ?? worldMap(),
       ruleset: GameRuleset.defaults,
     );
   }
@@ -198,8 +201,8 @@ final class MctsSimulatorParityFixtures {
     return units.singleWhere((unit) => unit.id == id);
   }
 
-  static PersistentGameState opponentWorkerState() {
-    return PersistentGameState(
+  static DomainState opponentWorkerState() {
+    return DomainState.snapshot(
       units: [
         GameUnit(
           id: 'worker_2',
@@ -222,9 +225,9 @@ final class MctsSimulatorParityFixtures {
     );
   }
 
-  static PersistentGameState advancePersistentEconomyForPlayers(
-    PersistentGameState state, {
-    MapData? mapData,
+  static DomainState advancePersistentEconomyForPlayers(
+    DomainState state, {
+    WorldMap? mapData,
   }) {
     final actualMapData = mapData ?? MctsSimulatorParityFixtures.mapData();
     final snapshot = engineSnapshot(state);
@@ -242,13 +245,13 @@ final class MctsSimulatorParityFixtures {
     return result.state;
   }
 
-  static MapData explorationMapData() {
-    return MapData(
+  static WorldMap explorationMapData() {
+    return WorldMap(
       cols: 6,
       rows: 1,
       tiles: [
         for (var col = 0; col < 6; col += 1)
-          TileData(
+          WorldTile(
             col: col,
             row: 0,
             terrains: const [TerrainType.plains],

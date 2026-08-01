@@ -3,8 +3,8 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/selection/hud_selection_info_model.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,7 +39,7 @@ void main() {
           cityYield: TileYield.zero,
           playerColor: 0xFF4488cc,
         ),
-        gameState: const GameState(cities: [city]),
+        gameState: GameClientState(cities: [city]),
         mapData: _mapData(),
         cityRuleset: CityRulesets.standard,
         technologyRuleset: TechnologyRulesets.standard,
@@ -55,7 +55,7 @@ void main() {
       final tile = _mapData().tiles.first;
       final model = HudSelectionInfoModelFactory.from(
         selection: GameSelection.tile(tile),
-        gameState: const GameState(),
+        gameState: GameClientState(),
         mapData: _mapData(),
         cityRuleset: CityRulesets.standard,
         technologyRuleset: TechnologyRulesets.standard,
@@ -82,7 +82,7 @@ void main() {
       final tile = mapData.tiles.first;
       final model = HudSelectionInfoModelFactory.from(
         selection: GameSelection.tile(tile),
-        gameState: const GameState(),
+        gameState: GameClientState(),
         mapData: mapData,
         cityRuleset: CityRulesets.standard,
         technologyRuleset: TechnologyRulesets.standard,
@@ -102,14 +102,14 @@ void main() {
   });
 }
 
-MapData _mapData({TerrainType terrain = TerrainType.grassland}) {
-  return MapData(
+WorldMap _mapData({TerrainType terrain = TerrainType.grassland}) {
+  return WorldMap(
     cols: 2,
     rows: 2,
     tiles: [
       for (var row = 0; row < 2; row++)
         for (var col = 0; col < 2; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: [terrain],

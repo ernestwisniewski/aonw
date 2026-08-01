@@ -4,10 +4,10 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/engine/game_renderer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/hover_intent_marker.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -55,9 +55,8 @@ void main() {
     test('standard mode does not show a hover marker', () async {
       final map = _map();
       final game = await _loadedGame(map);
-
       game
-        ..applyState(const GameState())
+        ..applyState(GameClientState())
         ..syncHoverIntentForTesting(_tile(map, 1, 1));
 
       expect(game.hoverIntentKindForTesting, isNull);
@@ -68,12 +67,11 @@ void main() {
       final map = _map();
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final game = await _loadedGame(map);
-
       game
         ..applyState(
-          GameState(
+          GameClientState(
             units: [commander],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
               moveCommandActive: true,
             ),
@@ -100,10 +98,10 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               units: [commander],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(
                   commander,
                   tile: _tile(map, 0, 0),
@@ -136,10 +134,10 @@ void main() {
       );
 
       game.applyStateWithoutCameraFocus(
-        GameState(
+        GameClientState(
           activePlayerId: 'player_1',
           units: [commander],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
           ),
         ),
@@ -177,10 +175,10 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_1',
             units: [firstUnit, secondUnit],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(firstUnit, tile: _tile(map, 0, 0)),
               moveCommandActive: true,
             ),
@@ -192,10 +190,10 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_1',
             units: [firstUnit, secondUnit],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(secondUnit, tile: _tile(map, 0, 2)),
               moveCommandActive: true,
             ),
@@ -226,10 +224,10 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_1',
             units: [worker],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(worker, tile: _tile(map, 0, 0)),
               moveCommandActive: true,
               pendingAction: const PendingWorkerActionSelection(
@@ -263,10 +261,10 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_1',
             units: [worker],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(worker, tile: _tile(map, 0, 0)),
               pendingAction: const PendingWorkerActionSelection(
                 ownerPlayerId: 'player_1',
@@ -294,11 +292,11 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_1',
             fogOfWar: fog,
             units: [commander],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
               moveCommandActive: true,
             ),
@@ -327,11 +325,11 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               fogOfWar: fog,
               units: [commander],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(
                   commander,
                   tile: _tile(map, 0, 0),
@@ -361,9 +359,9 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               units: [commander],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(
                   commander,
                   tile: _tile(map, 0, 0),
@@ -391,9 +389,9 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             units: [attacker],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               pendingAction: PendingAttackTargeting(
                 ownerPlayerId: attacker.ownerPlayerId,
                 attackerUnitId: attacker.id,
@@ -420,9 +418,9 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               units: [attacker],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 pendingAction: PendingAttackTargeting(
                   ownerPlayerId: attacker.ownerPlayerId,
                   attackerUnitId: attacker.id,
@@ -434,7 +432,7 @@ void main() {
 
         expect(game.hoverIntentKindForTesting, HoverIntentKind.attack);
 
-        game.applyState(GameState(units: [attacker]));
+        game.applyState(GameClientState(units: [attacker]));
 
         expect(game.hoverIntentKindForTesting, isNull);
         expect(game.hoverIntentTileForTesting, isNull);
@@ -447,9 +445,9 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             playerColors: const {'player_1': 0xFF123456},
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               cityFoundingDraft: CityFoundingDraft(
                 unitId: 'settler_1',
                 ownerPlayerId: 'player_1',
@@ -471,8 +469,8 @@ void main() {
 
       game
         ..applyState(
-          GameState(
-            interaction: GameInteractionState(
+          GameClientState(
+            interaction: InteractionState(
               cityFoundingDraft: CityFoundingDraft(
                 unitId: 'settler_1',
                 ownerPlayerId: 'player_1',
@@ -485,7 +483,7 @@ void main() {
 
       expect(game.hoverIntentKindForTesting, HoverIntentKind.founding);
 
-      game.applyState(const GameState());
+      game.applyState(GameClientState());
 
       expect(game.hoverIntentKindForTesting, isNull);
       expect(game.hoverIntentTileForTesting, isNull);
@@ -497,8 +495,8 @@ void main() {
 
       game
         ..applyState(
-          const GameState(
-            interaction: GameInteractionState(
+          GameClientState(
+            interaction: const InteractionState(
               pendingAction: PendingCityWorkedHexSelection(
                 ownerPlayerId: 'player_1',
                 cityId: 'city_1',
@@ -522,8 +520,8 @@ void main() {
 
       game
         ..applyState(
-          const GameState(
-            interaction: GameInteractionState(
+          GameClientState(
+            interaction: const InteractionState(
               pendingAction: PendingCityExpansionSelection(
                 ownerPlayerId: 'player_1',
                 cityId: 'city_1',
@@ -551,9 +549,9 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             units: [worker],
-            interaction: const GameInteractionState(
+            interaction: const InteractionState(
               pendingAction: PendingWorkerActionSelection(
                 ownerPlayerId: 'player_1',
                 unitId: 'worker_1',
@@ -574,7 +572,7 @@ void main() {
       final game = await _loadedGame(map);
 
       game
-        ..applyState(const GameState())
+        ..applyState(GameClientState())
         ..syncHoverIntentForTesting(_tile(map, 2, 0), forceInspect: true);
 
       expect(game.hoverIntentKindForTesting, HoverIntentKind.inspect);
@@ -597,11 +595,11 @@ void main() {
 
         game
           ..applyState(
-            GameState(
+            GameClientState(
               activePlayerId: 'player_1',
               fogOfWar: fog,
               units: [commander],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(
                   commander,
                   tile: _tile(map, 0, 0),
@@ -659,7 +657,9 @@ void main() {
         final tile = _tile(map, 2, 1);
 
         game
-          ..applyState(GameState(activePlayerId: 'player_1', fogOfWar: fog))
+          ..applyState(
+            GameClientState(activePlayerId: 'player_1', fogOfWar: fog),
+          )
           ..handleTileLongPressedForTesting(tile)
           ..confirmTileInspectionForTesting();
         await game.handleTileTappedForTesting(tile);
@@ -737,9 +737,9 @@ void main() {
             events.add('preview:${tile.col},${tile.row}'),
       );
       final tile = _tile(map, 2, 1);
-      final movingState = GameState(
+      final movingState = GameClientState(
         units: [commander],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
           moveCommandActive: true,
         ),
@@ -782,9 +782,9 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             cities: [city],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.city(
                 city,
                 cityYield: TileYield.zero,
@@ -833,10 +833,10 @@ void main() {
 
       game
         ..applyState(
-          GameState(
+          GameClientState(
             activePlayerId: 'player_1',
             fogOfWar: fog,
-            interaction: const GameInteractionState(moveCommandActive: true),
+            interaction: const InteractionState(moveCommandActive: true),
           ),
         )
         ..syncHoverIntentForTesting(_tile(map, 1, 1));
@@ -855,8 +855,8 @@ void main() {
 
       game
         ..applyState(
-          const GameState(
-            interaction: GameInteractionState(moveCommandActive: true),
+          GameClientState(
+            interaction: const InteractionState(moveCommandActive: true),
           ),
         )
         ..syncHoverIntentForTesting(_tile(map, 1, 1));
@@ -871,7 +871,7 @@ void main() {
 }
 
 Future<GameRenderer> _loadedGame(
-  MapData map, {
+  WorldMap map, {
   Future<void> Function(GameIntent command)? onCommand,
   TileInspectionCallback? onTileInspectionPreviewed,
   VoidCallback? onTileInspectionConfirmed,
@@ -890,13 +890,13 @@ Future<GameRenderer> _loadedGame(
   return game;
 }
 
-MapData _map({CityHex? blockedHex, int cols = 3, int rows = 3}) => MapData(
+WorldMap _map({CityHex? blockedHex, int cols = 3, int rows = 3}) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (int row = 0; row < rows; row++)
       for (int col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: blockedHex?.col == col && blockedHex?.row == row
@@ -908,7 +908,7 @@ MapData _map({CityHex? blockedHex, int cols = 3, int rows = 3}) => MapData(
   ],
 );
 
-TileData _tile(MapData map, int col, int row) {
+WorldTile _tile(WorldMap map, int col, int row) {
   return map.tiles.firstWhere((tile) => tile.col == col && tile.row == row);
 }
 

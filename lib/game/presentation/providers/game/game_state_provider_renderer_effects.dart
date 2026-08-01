@@ -2,8 +2,8 @@ part of 'game_state_provider.dart';
 
 extension GameStateNotifierRendererEffects on GameStateNotifier {
   Future<void> _presentExternalSnapshot({
-    required GameState? previousState,
-    required GameState nextState,
+    required GameClientState? previousState,
+    required GameClientState nextState,
     required List<GameEvent> events,
     required List<MovementCommandExecution> movementExecutions,
     required PresentationBatchIdentity identity,

@@ -2,7 +2,7 @@ part of 'hud_selection_actions.dart';
 
 _HudSelectionActionSpec? _artifactExcavationActionFor({
   required GameUnit unit,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required String? lockedReason,
   required AppLocalizations l10n,
   required VoidCallback onStartArtifactExcavation,
@@ -37,7 +37,7 @@ _HudSelectionActionSpec? _artifactExcavationActionFor({
 
 _HudSelectionActionSpec? _storeArtifactActionFor({
   required GameUnit unit,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required String? lockedReason,
   required AppLocalizations l10n,
   required VoidCallback onStoreArtifactInCity,
@@ -65,7 +65,7 @@ _HudSelectionActionSpec? _storeArtifactActionFor({
   );
 }
 
-WorldArtifact? _mapArtifactAtUnit(GameUnit unit, GameState? gameState) {
+WorldArtifact? _mapArtifactAtUnit(GameUnit unit, GameClientState? gameState) {
   if (gameState == null) return null;
   for (final artifact in gameState.artifacts) {
     final location = artifact.location;
@@ -78,7 +78,7 @@ WorldArtifact? _mapArtifactAtUnit(GameUnit unit, GameState? gameState) {
   return null;
 }
 
-GameCity? _ownCityAtUnit(GameUnit unit, GameState? gameState) {
+GameCity? _ownCityAtUnit(GameUnit unit, GameClientState? gameState) {
   if (gameState == null) return null;
   for (final city in gameState.cities) {
     if (city.ownerPlayerId == unit.ownerPlayerId &&
@@ -89,7 +89,7 @@ GameCity? _ownCityAtUnit(GameUnit unit, GameState? gameState) {
   return null;
 }
 
-bool _cityAlreadyStoresArtifact(String cityId, GameState? gameState) {
+bool _cityAlreadyStoresArtifact(String cityId, GameClientState? gameState) {
   if (gameState == null) return false;
   for (final artifact in gameState.artifacts) {
     final location = artifact.location;

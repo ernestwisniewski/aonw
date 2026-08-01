@@ -16,10 +16,7 @@ import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
-import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 
 import 'measurement.dart';
 
@@ -139,7 +136,7 @@ final class _MapFixture {
     final dimensions = _dimensionsFor(scale);
     final backingTiles = [
       for (var index = 0; index < scale; index++)
-        TileData(
+        WorldTile(
           col: index % dimensions.cols,
           row: index ~/ dimensions.cols,
           terrains: const [TerrainType.ocean],
@@ -147,11 +144,11 @@ final class _MapFixture {
           height: 0,
         ),
     ];
-    final tiles = _CountingList<TileData>(backingTiles);
+    final tiles = _CountingList<WorldTile>(backingTiles);
     final middle = backingTiles[scale ~/ 2];
 
     return _MapFixture(
-      map: MapData(cols: dimensions.cols, rows: dimensions.rows, tiles: tiles),
+      map: WorldMap(cols: dimensions.cols, rows: dimensions.rows, tiles: tiles),
       tiles: tiles,
       probes: [
         const _Probe('first', 0, 0),
@@ -162,8 +159,8 @@ final class _MapFixture {
     );
   }
 
-  final MapData map;
-  final _CountingList<TileData> tiles;
+  final WorldMap map;
+  final _CountingList<WorldTile> tiles;
   final List<_Probe> probes;
 }
 

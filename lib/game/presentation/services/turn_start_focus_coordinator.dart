@@ -6,7 +6,7 @@ import 'package:aonw/game/presentation/services/game_map_focus_target_resolver.d
 import 'package:aonw_core/game/domain/command.dart';
 
 typedef TurnStartFocusMountedCheck = bool Function();
-typedef TurnStartFocusStateReader = GameState? Function();
+typedef TurnStartFocusStateReader = GameClientState? Function();
 typedef TurnStartCommandDispatcher =
     Future<DispatchCommandResult> Function(GameIntent intent);
 typedef TurnStartRendererEffectHandler =
@@ -80,7 +80,10 @@ final class TurnStartFocusCoordinator {
     return true;
   }
 
-  bool _stateChanged(DispatchCommandResult result, GameState? beforeState) {
+  bool _stateChanged(
+    DispatchCommandResult result,
+    GameClientState? beforeState,
+  ) {
     return result.state != beforeState;
   }
 
@@ -90,7 +93,7 @@ final class TurnStartFocusCoordinator {
 
   bool _shouldFocusPlayerStart(
     DispatchCommandResult result,
-    GameState? beforeState,
+    GameClientState? beforeState,
   ) {
     return _stateChanged(result, beforeState) ||
         result.uiEffects.whereType<ShowCityProductionBubbleEffect>().isNotEmpty;

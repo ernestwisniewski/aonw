@@ -8,7 +8,7 @@ void _registerMovementPresentationTransportTests() {
       final save = _save(players: const [_player1]);
       final mapData = _map();
       final repository = _MemoryGameRepository(
-        SaveSnapshot(save: save, units: [commander]),
+        GameSnapshotFactory.create(save: save, units: [commander]),
       );
       final eventLog = _MemoryEventLog();
       final transport = LocalCommandTransport(
@@ -18,11 +18,11 @@ void _registerMovementPresentationTransportTests() {
         snapshotStore: _MemorySnapshotStore(),
         clock: _FixedClock(DateTime.utc(2026, 4, 24, 12)),
       );
-      final selectedState = GameState(
+      final selectedState = GameClientState(
         units: [commander],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(commander, tile: mapData.tileAt(0, 0)),
           moveCommandActive: true,
         ),
@@ -66,7 +66,7 @@ void _registerMovementPresentationTransportTests() {
     final save = _save(players: const [_player1]);
     final mapData = _map();
     final repository = _MemoryGameRepository(
-      SaveSnapshot(save: save, units: [commander]),
+      GameSnapshotFactory.create(save: save, units: [commander]),
     );
     final transport = LocalCommandTransport(
       reducer: GameStateReducer(mapData: mapData),
@@ -85,11 +85,11 @@ void _registerMovementPresentationTransportTests() {
         UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
       ],
     );
-    final state = GameState(
+    final state = GameClientState(
       units: [commander],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(commander, tile: mapData.tileAt(0, 0)),
         moveCommandActive: true,
         movePreview: preview,
@@ -115,7 +115,7 @@ void _registerMovementPresentationTransportTests() {
     final save = _save(players: const [_player1]);
     final mapData = _map();
     final repository = _MemoryGameRepository(
-      SaveSnapshot(save: save, units: [commander]),
+      GameSnapshotFactory.create(save: save, units: [commander]),
     );
     final transport = LocalCommandTransport(
       reducer: GameStateReducer(mapData: mapData),
@@ -124,11 +124,11 @@ void _registerMovementPresentationTransportTests() {
       snapshotStore: _MemorySnapshotStore(),
       clock: _FixedClock(DateTime.utc(2026, 4, 24, 12)),
     );
-    final selected = GameState(
+    final selected = GameClientState(
       units: [commander],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(commander, tile: mapData.tileAt(0, 0)),
         moveCommandActive: true,
       ),

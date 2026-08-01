@@ -50,17 +50,17 @@ WireEvent _acceptedTimeoutEventForStorage({
   required int offset,
   required DateTime timestamp,
 }) {
-  final kickedPlayerIds = previousSnapshot.session.kickedPlayerIds;
+  final kickedPlayerIds = previousSnapshot.domain.kickedPlayerIds;
   var playerIds = previousSnapshot.domain.participants
       .map((player) => player.id)
       .where((id) => id.isNotEmpty && !kickedPlayerIds.contains(id))
       .toList();
   if (playerIds.isEmpty) {
-    playerIds = previousSnapshot.session.turnStatesByPlayerId.keys
+    playerIds = previousSnapshot.domain.turnStatesByPlayerId.keys
         .where((id) => id.isNotEmpty && !kickedPlayerIds.contains(id))
         .toList();
   }
-  final submitted = previousSnapshot.session.submittedPlayerIds;
+  final submitted = previousSnapshot.domain.submittedPlayerIds;
   final systemRecord = RecordedSystemCommand(
     FinalizeTimedOutTurn(
       playerIds: playerIds,

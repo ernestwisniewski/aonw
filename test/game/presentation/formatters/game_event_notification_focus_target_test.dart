@@ -24,7 +24,7 @@ void main() {
         name: 'Target',
         center: CityHex(col: 4, row: 5),
       );
-      final state = GameState(units: [attacker], cities: const [city]);
+      final state = GameClientState(units: [attacker], cities: const [city]);
 
       final target = gameEventNotificationFocusTarget(
         _combat(attackerUnitId: attacker.id, defenderUnitId: city.id),
@@ -51,7 +51,7 @@ void main() {
           victoryPoints: 2,
           goldPerTurn: 1,
         ),
-        const GameState(),
+        GameClientState(),
       );
 
       expect(target, isA<TileNotificationFocusTarget>());

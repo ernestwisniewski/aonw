@@ -9,9 +9,9 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -181,7 +181,7 @@ NetworkCommandTransport _transport({
   );
 }
 
-GameState _beforeState() {
+GameClientState _beforeState() {
   final unitA =
       GameUnit.produced(
         id: 'unit_a',
@@ -208,14 +208,14 @@ GameState _beforeState() {
     col: 0,
     row: 1,
   );
-  return GameState(
+  return GameClientState(
     units: [unitA, unitB],
     activePlayerId: 'player_1',
     activePlayerCanAct: true,
   );
 }
 
-GameState _afterState() {
+GameClientState _afterState() {
   final before = _beforeState();
   return before.copyWith(
     units: [
@@ -258,7 +258,7 @@ WireMovementExecution _wireExecution(
 }
 
 WireCommandAck _acceptedAck({
-  required GameState after,
+  required GameClientState after,
   required WireMovementExecutionList movementExecutions,
 }) {
   const snapshotCodec = SnapshotCodec();
@@ -345,7 +345,7 @@ class _CommitThenDropDispatcher implements WireCommandDispatcher {
 final class _Repository implements GameRepository {
   _Repository(this.snapshot);
 
-  SaveSnapshot snapshot;
+  CanonicalGameSnapshot snapshot;
 
   @override
   String defaultSaveName(String mapDisplayName, DateTime now) => mapDisplayName;
@@ -360,15 +360,15 @@ final class _Repository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async => snapshot;
+  Future<CanonicalGameSnapshot> load(String saveId) async => snapshot;
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {
+  Future<void> save(CanonicalGameSnapshot snapshot) async {
     this.snapshot = snapshot;
   }
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
@@ -377,12 +377,12 @@ final class _Repository implements GameRepository {
   }
 }
 
-SaveSnapshot _snapshot(
-  GameState state, {
+CanonicalGameSnapshot _snapshot(
+  GameClientState state, {
   required int offset,
   required int turn,
 }) {
-  return SaveSnapshot.fromGameState(
+  return GameSnapshotFactory.fromClientState(
     save: _save(turn),
     state: state,
     eventLogOffset: offset,
@@ -405,14 +405,14 @@ GameSave _save(int turn) {
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 4,
     rows: 4,
     tiles: [
       for (var row = 0; row < 4; row++)
         for (var col = 0; col < 4; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

@@ -14,7 +14,7 @@ List<ReducerParityFixture> _combatRejectionCases(
 
 List<ReducerParityFixture> _combatAttackerGuardRejectionCases(
   ReducerParityFixture template,
-  MapData map,
+  WorldMap map,
   FogOfWarState visibleFog,
 ) {
   return [
@@ -92,7 +92,7 @@ List<ReducerParityFixture> _combatAttackerGuardRejectionCases(
 
 List<ReducerParityFixture> _combatCapabilityRejectionCases(
   ReducerParityFixture template,
-  MapData map,
+  WorldMap map,
   FogOfWarState visibleFog,
 ) {
   return [
@@ -160,7 +160,7 @@ List<ReducerParityFixture> _combatCapabilityRejectionCases(
 
 List<ReducerParityFixture> _combatTargetPolicyRejectionCases(
   ReducerParityFixture template,
-  MapData map,
+  WorldMap map,
   FogOfWarState visibleFog,
 ) {
   return [
@@ -265,7 +265,7 @@ List<ReducerParityFixture> _combatAcceptanceCases(
 
 List<ReducerParityFixture> _combatUnitAcceptanceCases(
   ReducerParityFixture template,
-  MapData map,
+  WorldMap map,
   FogOfWarState fog,
 ) {
   return [
@@ -345,7 +345,7 @@ List<ReducerParityFixture> _combatUnitAcceptanceCases(
 
 List<ReducerParityFixture> _combatCityAcceptanceCases(
   ReducerParityFixture template,
-  MapData map,
+  WorldMap map,
   FogOfWarState fog,
 ) {
   return [

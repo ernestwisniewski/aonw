@@ -75,8 +75,8 @@ GameView _view({
   bool rememberedEnemyCity = false,
 }) {
   final mapData = _map();
-  return GameView.fromPersistentState(
-    PersistentGameState(
+  return GameView.fromDomainState(
+    DomainState.snapshot(
       cities: [
         const GameCity(
           id: 'capital',
@@ -131,14 +131,14 @@ GameView _view({
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 4,
     rows: 4,
     tiles: [
       for (var col = 0; col < 4; col++)
         for (var row = 0; row < 4; row++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

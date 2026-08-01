@@ -188,7 +188,7 @@ class _GameEventNotificationsOverlayState
     );
   }
 
-  GameState? _currentState() {
+  GameClientState? _currentState() {
     final saveId = widget.gameSave?.id;
     if (saveId == null || saveId.isEmpty) return null;
     return ref.read(gameStateProvider(saveId)).value;

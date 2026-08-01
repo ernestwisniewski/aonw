@@ -5,7 +5,7 @@ enum HudNextActionPanel { none, technology, cityProduction }
 
 abstract final class HudNextActionPanelResolver {
   static HudNextActionPanel afterFocus({
-    required GameState? state,
+    required GameClientState? state,
     required String activePlayerId,
   }) {
     if (state == null || activePlayerId.isEmpty) {

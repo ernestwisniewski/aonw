@@ -606,7 +606,7 @@ void main() {
   });
 }
 
-PersistentGameState _state({
+DomainState _state({
   Set<TechnologyId> unlockedTechs = const {},
   Set<CityBuildingType> buildings = const {},
   bool secondCity = false,
@@ -617,7 +617,7 @@ PersistentGameState _state({
   ResearchState? research,
   Map<String, int> playerGold = const {},
 }) {
-  return PersistentGameState(
+  return DomainState.snapshot(
     playerGold: playerGold,
     units:
         units ??
@@ -667,7 +667,7 @@ class _ScoreChaserScenario {
   });
 
   final String name;
-  final PersistentGameState state;
+  final DomainState state;
   final GameObjectiveAdvice advice;
   final BalanceTelemetryObjectiveActionTarget target;
 }

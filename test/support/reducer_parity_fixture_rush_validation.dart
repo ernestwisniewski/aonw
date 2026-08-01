@@ -188,9 +188,9 @@ void _requireReviewedRushFixtureShape(ReducerParityFixture fixture) {
       state.fieldImprovements.isEmpty ||
       state.research.players.isEmpty ||
       state.wonderRegistry.toJson().isEmpty ||
-      state.runtimeState.turnStartedAt == null ||
-      state.runtimeState.submittedPlayerIds.isEmpty ||
-      state.runtimeState.resourceTradeAgreements.isEmpty) {
+      state.turnStartedAt == null ||
+      state.submittedPlayerIds.isEmpty ||
+      state.resourceTradeAgreements.isEmpty) {
     ReducerParityCorpus._fail(
       fixture,
       'must preserve city, unit, artifact, improvement, research, registry, '

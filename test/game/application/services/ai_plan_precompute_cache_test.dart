@@ -9,15 +9,14 @@ import 'package:aonw/game/application/use_cases/run_ai_turn_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/domain/intended_attack.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -37,7 +36,7 @@ void main() {
             'player_2': PlayerTurnState.active,
           },
         ),
-        runtimeState: const GameRuntimeState(submittedPlayerIds: {'player_1'}),
+        submittedPlayerIds: {'player_1'},
         units: [GameUnit.startingCommander(ownerPlayerId: 'player_2')],
       );
       final changedWorld = _snapshot(
@@ -47,17 +46,16 @@ void main() {
       final afterAttackIntent = _snapshot(
         save: _save(),
         units: [GameUnit.startingCommander(ownerPlayerId: 'player_2')],
-        runtimeState: const GameRuntimeState(
-          intendedAttacks: [
-            IntendedAttack(
-              attackerUnitId: 'warrior_player_1',
-              defenderCol: 0,
-              defenderRow: 0,
-              declaredAtTick: 3,
-              declaringPlayerId: 'player_1',
-            ),
-          ],
-        ),
+
+        intendedAttacks: [
+          const IntendedAttack(
+            attackerUnitId: 'warrior_player_1',
+            defenderCol: 0,
+            defenderRow: 0,
+            declaredAtTick: 3,
+            declaringPlayerId: 'player_1',
+          ),
+        ],
       );
 
       final baseKey = AiTurnPlanPrecomputeKey.fromSnapshot(
@@ -114,7 +112,7 @@ void main() {
             'player_2': PlayerTurnState.active,
           },
         ),
-        runtimeState: const GameRuntimeState(submittedPlayerIds: {'player_1'}),
+        submittedPlayerIds: {'player_1'},
         units: [GameUnit.startingCommander(ownerPlayerId: 'player_2')],
       );
       var staleDropped = false;
@@ -223,7 +221,7 @@ class _RecordingCommandTransport implements CommandTransport {
   @override
   Future<CommandTransportResult> dispatch({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
     bool fromMovePreviewConfirmation = false,
@@ -231,14 +229,14 @@ class _RecordingCommandTransport implements CommandTransport {
     commands.add(command);
     return CommandTransportResult(
       state: currentState.copyWith(activePlayerCanAct: false),
-      snapshot: SaveSnapshot(save: _save()),
+      snapshot: GameSnapshotFactory.create(save: _save()),
       offset: commands.length,
     );
   }
 }
 
 class _MutableGameRepository implements GameRepository {
-  SaveSnapshot snapshot;
+  CanonicalGameSnapshot snapshot;
 
   _MutableGameRepository(this.snapshot);
 
@@ -255,15 +253,15 @@ class _MutableGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async => snapshot;
+  Future<CanonicalGameSnapshot> load(String saveId) async => snapshot;
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {
+  Future<void> save(CanonicalGameSnapshot snapshot) async {
     this.snapshot = snapshot;
   }
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
@@ -272,12 +270,18 @@ class _MutableGameRepository implements GameRepository {
   }
 }
 
-SaveSnapshot _snapshot({
+CanonicalGameSnapshot _snapshot({
   required GameSave save,
   List<GameUnit> units = const [],
-  GameRuntimeState runtimeState = GameRuntimeState.empty,
+  Set<String> submittedPlayerIds = const {},
+  List<IntendedAttack> intendedAttacks = const [],
 }) {
-  return SaveSnapshot(save: save, units: units, runtimeState: runtimeState);
+  return GameSnapshotFactory.create(
+    save: save,
+    units: units,
+    submittedPlayerIds: submittedPlayerIds,
+    intendedAttacks: intendedAttacks,
+  );
 }
 
 GameSave _save({
@@ -312,18 +316,18 @@ const _aiPlayer = Player(
   ai: AiPlayer(strategyId: AiStrategyId.basic, seed: 99),
 );
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 2,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 1,
       row: 0,
       terrains: [TerrainType.plains],

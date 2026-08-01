@@ -7,78 +7,16 @@ import 'support/game_command_runtime_owner_guard.dart';
 import 'support/map_boundary_source_guard.dart';
 
 part 'support/game_command_contract_ast_visitors.dart';
+part 'support/game_command_contract_policy.dart';
 
 const _commandLibraryPath =
     'packages/aonw_core/lib/game/domain/command/game_command.dart';
 const _serializerPath =
     'packages/aonw_core/lib/game/domain/command/game_command_serialization.dart';
-const _rolePolicy = <String, _CommandRole>{
-  'AssignMerchantTradeRouteCommand': _CommandRole.domain,
-  'AssignWorkerToHexCommand': _CommandRole.domain,
-  'AttackHexCommand': _CommandRole.domain,
-  'AutoExploreUnitCommand': _CommandRole.domain,
-  'CancelAttackTargetingCommand': _CommandRole.intent,
-  'CancelCityExpansionSelectionCommand': _CommandRole.intent,
-  'CancelCityFoundingCommand': _CommandRole.intent,
-  'CancelCityWorkedHexSelectionCommand': _CommandRole.intent,
-  'CancelCommanderMergeSelectionCommand': _CommandRole.intent,
-  'CancelMerchantMoveToCitySelectionCommand': _CommandRole.intent,
-  'CancelMerchantTradeRouteSelectionCommand': _CommandRole.intent,
-  'CancelResearchSelectionCommand': _CommandRole.intent,
-  'CancelUnitActionCommand': _CommandRole.domain,
-  'CancelWorkerActionSelectionCommand': _CommandRole.intent,
-  'CancelWorkerAssignmentCommand': _CommandRole.domain,
-  'CancelWorkerJobCommand': _CommandRole.domain,
-  'CityTappedCommand': _CommandRole.intent,
-  'ChooseWorkerImprovementIntent': _CommandRole.intent,
-  'ConfirmWorkerImprovementIntent': _CommandRole.intent,
-  'ConfirmWorkerImprovementCommand': _CommandRole.domain,
-  'DeclareWarCommand': _CommandRole.domain,
-  'DetachTroopCommand': _CommandRole.domain,
-  'EndTurnCommand': _CommandRole.domain,
-  'FocusNextPendingActionCommand': _CommandRole.intent,
-  'FocusTurnStartActionCommand': _CommandRole.intent,
-  'FortifyUnitCommand': _CommandRole.domain,
-  'FoundCityCommand': _CommandRole.domain,
-  'MoveMerchantToCityCommand': _CommandRole.domain,
-  'MoveUnitCommand': _CommandRole.domain,
-  'OpenResourceExchangeCommand': _CommandRole.domain,
-  'OpenResourceTradeCommand': _CommandRole.domain,
-  'RespondDiplomaticMessageCommand': _CommandRole.domain,
-  'RespondDiplomaticProposalCommand': _CommandRole.domain,
-  'RushProductionCommand': _CommandRole.domain,
-  'SelectCityCommand': _CommandRole.intent,
-  'SelectCityExpansionHexCommand': _CommandRole.domain,
-  'SelectTechnologyCommand': _CommandRole.domain,
-  'SelectTileCommand': _CommandRole.intent,
-  'SelectUnitCommand': _CommandRole.intent,
-  'SelectWorkerImprovementCommand': _CommandRole.domain,
-  'SendDiplomaticMessageCommand': _CommandRole.domain,
-  'SendDiplomaticProposalCommand': _CommandRole.domain,
-  'SendGoldGiftCommand': _CommandRole.domain,
-  'SetCitySpecializationCommand': _CommandRole.domain,
-  'SkipUnitTurnCommand': _CommandRole.domain,
-  'StartArtifactExcavationCommand': _CommandRole.domain,
-  'StartAttackTargetingCommand': _CommandRole.intent,
-  'StartBuildingCommand': _CommandRole.domain,
-  'StartCityExpansionSelectionCommand': _CommandRole.intent,
-  'StartCityFoundingCommand': _CommandRole.intent,
-  'StartCityProjectCommand': _CommandRole.domain,
-  'StartCityWorkedHexSelectionCommand': _CommandRole.intent,
-  'StartCommanderMergeSelectionCommand': _CommandRole.intent,
-  'StartMerchantMoveToCitySelectionCommand': _CommandRole.intent,
-  'StartMerchantTradeRouteSelectionCommand': _CommandRole.intent,
-  'StartUnitProductionCommand': _CommandRole.domain,
-  'StartWonderCommand': _CommandRole.domain,
-  'StartWorkerActionSelectionCommand': _CommandRole.intent,
-  'StoreArtifactInCityCommand': _CommandRole.domain,
-  'SubmitTurnCommand': _CommandRole.domain,
-  'TileTappedCommand': _CommandRole.intent,
-  'ToggleMoveTargetingCommand': _CommandRole.intent,
-  'ToggleWorkedHexCommand': _CommandRole.domain,
-  'TradeArtifactCommand': _CommandRole.domain,
-};
-
+const _encoderPath =
+    'packages/aonw_core/lib/game/domain/command/game_command_json_encoding.dart';
+const _decoderPath =
+    'packages/aonw_core/lib/game/domain/command/game_command_json_decoding.dart';
 void main() {
   test('every concrete input has one explicit boundary role', () {
     final inventory = _GameCommandInventory.build(
@@ -99,6 +37,26 @@ void main() {
     expect(inventory.commandsOutsideTypedRoot, isEmpty);
     expect(inventory.serializedIntents, isEmpty);
     expect(inventory.serializedSystemCommands, isEmpty);
+    expect(
+      inventory.unencodedDomainCommands,
+      isEmpty,
+      reason: 'Every DomainCommand must have an encoder mapping.',
+    );
+    expect(
+      inventory.undecodedDomainCommands,
+      isEmpty,
+      reason: 'Every DomainCommand must have a decoder mapping.',
+    );
+    expect(
+      inventory.multiplyEncodedDomainCommands,
+      isEmpty,
+      reason: 'Every DomainCommand must have exactly one encoder mapping.',
+    );
+    expect(
+      inventory.multiplyDecodedDomainCommands,
+      isEmpty,
+      reason: 'Every DomainCommand must have exactly one decoder mapping.',
+    );
   });
 
   test('transitional umbrella and intent leaks stay removed', () {
@@ -216,32 +174,6 @@ void main() {
   });
 }
 
-const _indirectCommandFixtureSources = <String, String>{
-  _commandLibraryPath: '''
-part 'intermediate_command.dart';
-
-sealed class GameIntent {
-  const GameIntent();
-}
-
-sealed class DomainCommand {
-  const DomainCommand();
-}
-''',
-  'packages/aonw_core/lib/game/domain/command/intermediate_command.dart': '''
-part of 'game_command.dart';
-
-abstract class IntermediateCommand extends DomainCommand {
-  const IntermediateCommand();
-}
-
-final class IndirectCommand extends IntermediateCommand {
-  const IndirectCommand();
-}
-''',
-  _serializerPath: '',
-};
-
 enum _CommandRole { intent, domain, system }
 
 final class _GameCommandInventory {
@@ -257,7 +189,12 @@ final class _GameCommandInventory {
     final commandPaths = _commandLibraryPaths(sources[_commandLibraryPath]!);
     final declarations = _commandDeclarations(sources, commandPaths);
     final commandNames = _concreteGameCommandNames(declarations);
-    final serializerNames = _identifiersIn(sources[_serializerPath]!);
+    final encoderMappingCounts = _objectPatternTypeNameCountsIn(
+      sources[_encoderPath] ?? '',
+    );
+    final decoderMappingCounts = _constructedTypeNameCountsIn(
+      sources[_decoderPath] ?? '',
+    );
 
     return _GameCommandInventory(
       entries: [
@@ -266,7 +203,8 @@ final class _GameCommandInventory {
             className: className,
             role: rolePolicy[className],
             typedRoot: _typedRoot(className, declarations),
-            serialized: serializerNames.contains(className),
+            encoderMappingCount: encoderMappingCounts[className] ?? 0,
+            decoderMappingCount: decoderMappingCounts[className] ?? 0,
             localHandlers: _semanticCommandPaths(
               sources,
               _commandHierarchyNames(className, declarations),
@@ -303,14 +241,36 @@ final class _GameCommandInventory {
 
   List<String> get serializedIntents => [
     for (final entry in entries)
-      if (entry.role == _CommandRole.intent && entry.serialized)
-        entry.className,
+      if (entry.role == _CommandRole.intent && entry.encoded) entry.className,
   ];
 
   List<String> get serializedSystemCommands => [
     for (final entry in entries)
-      if (entry.role == _CommandRole.system && entry.serialized)
+      if (entry.role == _CommandRole.system && entry.encoded) entry.className,
+  ];
+
+  List<String> get unencodedDomainCommands => [
+    for (final entry in entries)
+      if (entry.role == _CommandRole.domain && entry.encoderMappingCount == 0)
         entry.className,
+  ];
+
+  List<String> get undecodedDomainCommands => [
+    for (final entry in entries)
+      if (entry.role == _CommandRole.domain && entry.decoderMappingCount == 0)
+        entry.className,
+  ];
+
+  List<String> get multiplyEncodedDomainCommands => [
+    for (final entry in entries)
+      if (entry.role == _CommandRole.domain && entry.encoderMappingCount > 1)
+        '${entry.className}: ${entry.encoderMappingCount}',
+  ];
+
+  List<String> get multiplyDecodedDomainCommands => [
+    for (final entry in entries)
+      if (entry.role == _CommandRole.domain && entry.decoderMappingCount > 1)
+        '${entry.className}: ${entry.decoderMappingCount}',
   ];
 
   List<String> get commandsOutsideTypedRoot => [
@@ -325,7 +285,8 @@ final class _GameCommandInventoryEntry {
     required this.className,
     required this.role,
     required this.typedRoot,
-    required this.serialized,
+    required this.encoderMappingCount,
+    required this.decoderMappingCount,
     required this.localHandlers,
     required this.serverHandlers,
     required this.aiConsumers,
@@ -334,7 +295,10 @@ final class _GameCommandInventoryEntry {
   final String className;
   final _CommandRole? role;
   final String? typedRoot;
-  final bool serialized;
+  final int encoderMappingCount;
+  final int decoderMappingCount;
+
+  bool get encoded => encoderMappingCount > 0;
 
   /// Reducer paths with an AST command pattern or `is` guard.
   final List<String> localHandlers;
@@ -459,10 +423,20 @@ final class _CommandDeclaration {
   final bool isAbstract;
 }
 
-Set<String> _identifiersIn(String source) {
-  final identifiers = <String>{};
-  parseString(content: source).unit.accept(_IdentifierCollector(identifiers));
-  return identifiers;
+Map<String, int> _objectPatternTypeNameCountsIn(String source) {
+  final typeNameCounts = <String, int>{};
+  parseString(
+    content: source,
+  ).unit.accept(_ObjectPatternTypeCountCollector(typeNameCounts));
+  return typeNameCounts;
+}
+
+Map<String, int> _constructedTypeNameCountsIn(String source) {
+  final typeNameCounts = <String, int>{};
+  parseString(
+    content: source,
+  ).unit.accept(_ConstructedTypeCountCollector(typeNameCounts));
+  return typeNameCounts;
 }
 
 Set<String> _dispatchTypeNamesIn(String source) {

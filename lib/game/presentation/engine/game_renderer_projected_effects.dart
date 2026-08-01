@@ -9,7 +9,7 @@ extension GameRendererProjectedEffects on GameRenderer {
   }
 
   Future<void> applyProjectedTransition(
-    GameState state,
+    GameClientState state,
     ProjectedGameEffectBatch batch, {
     int? currentTurn,
   }) {

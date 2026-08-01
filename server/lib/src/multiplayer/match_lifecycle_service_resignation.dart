@@ -13,13 +13,12 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
     );
     final canonicalSnapshot = _runningMatchSnapshotCodec
         .canonicalWithValidatedRoster(decodedSnapshot, match: state.match);
-    if (canonicalSnapshot.session.isKicked(player.id)) {
+    if (canonicalSnapshot.domain.isKicked(player.id)) {
       return state;
     }
 
     final transition = ParticipantResignationTransition.apply(
       domain: canonicalSnapshot.domain,
-      session: canonicalSnapshot.session,
       actorPlayerId: player.id,
       orderedHumanPlayerIds: [
         for (final matchPlayer in state.match.players)
@@ -118,7 +117,7 @@ CanonicalGameSnapshot _snapshotAfterResignationKick(
     command: KickParticipant(
       playerId: playerId,
       reason: 'resignation',
-      timeoutStreak: snapshot.session.timeoutStreaksByPlayerId[playerId] ?? 0,
+      timeoutStreak: snapshot.domain.timeoutStreaksByPlayerId[playerId] ?? 0,
     ),
     context: GameEngineContext(
       actorPlayerId: 'server',

@@ -4,18 +4,18 @@ import 'package:test/test.dart';
 void main() {
   group('RandomStrategy', () {
     test('plans deterministic legal movement commands from visible tiles', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 2,
         rows: 1,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.plains],
             resources: [],
             height: 0,
           ),
-          TileData(
+          WorldTile(
             col: 1,
             row: 0,
             terrains: [TerrainType.plains],
@@ -24,7 +24,7 @@ void main() {
           ),
         ],
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.startingCommander(ownerPlayerId: 'player_1', col: 0, row: 0),
         ],
@@ -40,7 +40,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,
@@ -63,18 +63,18 @@ void main() {
     });
 
     test('does not move into a reserved target hex', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 2,
         rows: 1,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.plains],
             resources: [],
             height: 0,
           ),
-          TileData(
+          WorldTile(
             col: 1,
             row: 0,
             terrains: [TerrainType.plains],
@@ -83,7 +83,7 @@ void main() {
           ),
         ],
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.startingCommander(ownerPlayerId: 'player_1', col: 0, row: 0),
         ],
@@ -99,7 +99,7 @@ void main() {
           },
         ),
       );
-      final view = GameView.fromPersistentState(
+      final view = GameView.fromDomainState(
         state,
         forPlayerId: 'player_1',
         turn: 1,

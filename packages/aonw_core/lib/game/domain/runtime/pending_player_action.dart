@@ -1,4 +1,5 @@
-part of 'game_runtime_state.dart';
+import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/util/collection_equality.dart';
 
 typedef _PendingPlayerActionParser =
     PendingPlayerAction Function(
@@ -199,16 +200,17 @@ final class PendingCityExpansionSelection extends PendingPlayerAction {
   List<Object?> get equalityFields => [cityId];
 }
 
-@freezed
-abstract class PendingWorkerActionSelection extends PendingPlayerAction
-    with _$PendingWorkerActionSelection {
-  const PendingWorkerActionSelection._();
+final class PendingWorkerActionSelection extends PendingPlayerAction {
+  const PendingWorkerActionSelection({
+    required this.ownerPlayerId,
+    required this.unitId,
+    this.improvementType,
+  });
 
-  const factory PendingWorkerActionSelection({
-    required String ownerPlayerId,
-    required String unitId,
-    FieldImprovementType? improvementType,
-  }) = _PendingWorkerActionSelection;
+  @override
+  final String ownerPlayerId;
+  final String unitId;
+  final FieldImprovementType? improvementType;
 
   @override
   GameInteractionMode get mode => GameInteractionMode.workerAction;
@@ -224,6 +226,18 @@ abstract class PendingWorkerActionSelection extends PendingPlayerAction
 
   @override
   List<Object?> get equalityFields => [unitId, improvementType];
+
+  PendingWorkerActionSelection copyWith({
+    String? ownerPlayerId,
+    String? unitId,
+    Object? improvementType = _unset,
+  }) => PendingWorkerActionSelection(
+    ownerPlayerId: ownerPlayerId ?? this.ownerPlayerId,
+    unitId: unitId ?? this.unitId,
+    improvementType: identical(improvementType, _unset)
+        ? this.improvementType
+        : improvementType as FieldImprovementType?,
+  );
 }
 
 final class PendingMerchantTradeRouteSelection extends PendingPlayerAction {
@@ -302,17 +316,19 @@ final class PendingUnitTurnSkip extends PendingPlayerAction {
   List<Object?> get equalityFields => [unitId, restoreMovementPoints];
 }
 
-@freezed
-abstract class PendingAttackTargeting extends PendingPlayerAction
-    with _$PendingAttackTargeting {
-  const PendingAttackTargeting._();
+final class PendingAttackTargeting extends PendingPlayerAction {
+  const PendingAttackTargeting({
+    required this.ownerPlayerId,
+    required this.attackerUnitId,
+    this.defenderCol,
+    this.defenderRow,
+  });
 
-  const factory PendingAttackTargeting({
-    required String ownerPlayerId,
-    required String attackerUnitId,
-    int? defenderCol,
-    int? defenderRow,
-  }) = _PendingAttackTargeting;
+  @override
+  final String ownerPlayerId;
+  final String attackerUnitId;
+  final int? defenderCol;
+  final int? defenderRow;
 
   bool get hasDefenderTarget => defenderCol != null && defenderRow != null;
 
@@ -335,6 +351,22 @@ abstract class PendingAttackTargeting extends PendingPlayerAction
     defenderCol,
     defenderRow,
   ];
+
+  PendingAttackTargeting copyWith({
+    String? ownerPlayerId,
+    String? attackerUnitId,
+    Object? defenderCol = _unset,
+    Object? defenderRow = _unset,
+  }) => PendingAttackTargeting(
+    ownerPlayerId: ownerPlayerId ?? this.ownerPlayerId,
+    attackerUnitId: attackerUnitId ?? this.attackerUnitId,
+    defenderCol: identical(defenderCol, _unset)
+        ? this.defenderCol
+        : defenderCol as int?,
+    defenderRow: identical(defenderRow, _unset)
+        ? this.defenderRow
+        : defenderRow as int?,
+  );
 }
 
 final class PendingCommanderMergeSelection extends PendingPlayerAction {
@@ -359,3 +391,5 @@ final class PendingCommanderMergeSelection extends PendingPlayerAction {
   @override
   List<Object?> get equalityFields => [commanderUnitId];
 }
+
+const Object _unset = Object();

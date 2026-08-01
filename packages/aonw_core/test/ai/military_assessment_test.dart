@@ -7,8 +7,8 @@ void main() {
       'counts combat units and queued military without civilian carriers',
       () {
         final mapData = _map();
-        final view = GameView.fromPersistentState(
-          PersistentGameState(
+        final view = GameView.fromDomainState(
+          DomainState.snapshot(
             units: [
               GameUnit.produced(
                 id: 'warrior_1',
@@ -208,13 +208,13 @@ GameUnit _unit({
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 4,
     rows: 1,
     tiles: [
       for (var col = 0; col < 4; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.plains],

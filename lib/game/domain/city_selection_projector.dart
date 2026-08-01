@@ -11,7 +11,7 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 /// Projects the canonical city state into the local interaction selection.
 abstract final class CitySelectionProjector {
   static GameSelection project({
-    required GameState state,
+    required GameClientState state,
     required GameCity city,
     required MapTileLookup mapTiles,
     required GameRuleset ruleset,

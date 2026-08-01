@@ -7,13 +7,13 @@ import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provid
 import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
 import 'package:aonw/game/presentation/widgets/options/game_options_overlay.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/shared/providers/gameplay_settings_provider.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_options_panel.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter/material.dart';
@@ -34,20 +34,20 @@ final _save = GameSave(
   players: const [_player],
 );
 
-const _activityEntry = GameEventNotification(
+final _activityEntry = GameEventNotification(
   id: 1,
-  event: CityFoundedEvent(cityId: 'city_1', ownerPlayerId: 'player_1'),
-  state: GameState(activePlayerId: 'player_1'),
+  event: const CityFoundedEvent(cityId: 'city_1', ownerPlayerId: 'player_1'),
+  state: GameClientState(activePlayerId: 'player_1'),
   playerId: 'player_1',
 );
 
 GameSession _testSession() {
   return GameSession(
-    mapData: MapData(
+    mapData: WorldMap(
       cols: 1,
       rows: 1,
-      tiles: const [
-        TileData(
+      tiles: [
+        WorldTile(
           col: 0,
           row: 0,
           terrains: [TerrainType.grassland],
@@ -150,7 +150,7 @@ void main() {
     await _pumpOptionsOverlay(
       tester,
       gameSave: _save,
-      activityLog: const [_activityEntry],
+      activityLog: [_activityEntry],
     );
 
     expect(find.byKey(const Key('globalHud.action.research')), findsOneWidget);

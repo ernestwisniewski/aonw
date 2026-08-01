@@ -19,10 +19,10 @@ import 'package:aonw/game/presentation/providers/session/repository_providers.da
 import 'package:aonw/game/presentation/providers/session/session_providers.dart';
 import 'package:aonw/game/presentation/screens/game/game_primary_action_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,9 +49,9 @@ void main() {
       final save = _save();
       final session = _session();
       final repository = _FakeGameRepository(
-        SaveSnapshot.fromGameState(
+        GameSnapshotFactory.fromClientState(
           save: save,
-          state: const GameState(activePlayerId: 'player_1', cities: [city]),
+          state: GameClientState(activePlayerId: 'player_1', cities: [city]),
         ),
       );
 
@@ -193,14 +193,14 @@ GameSession _session() {
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 3,
     rows: 3,
     tiles: [
       for (var row = 0; row < 3; row++)
         for (var col = 0; col < 3; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.grassland],
@@ -214,7 +214,7 @@ MapData _map() {
 final class _FakeGameRepository implements GameRepository {
   _FakeGameRepository(this.snapshot);
 
-  SaveSnapshot snapshot;
+  CanonicalGameSnapshot snapshot;
 
   @override
   String defaultSaveName(String mapDisplayName, DateTime now) {
@@ -241,13 +241,13 @@ final class _FakeGameRepository implements GameRepository {
   }
 
   @override
-  Future<SaveSnapshot> load(String saveId) async {
+  Future<CanonicalGameSnapshot> load(String saveId) async {
     if (saveId != snapshot.save.id) throw StateError('missing save');
     return snapshot;
   }
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {
+  Future<void> save(CanonicalGameSnapshot snapshot) async {
     this.snapshot = snapshot;
   }
 
@@ -255,13 +255,13 @@ final class _FakeGameRepository implements GameRepository {
   Future<void> delete(String saveId) async {}
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
   }) async {
-    snapshot = snapshot.copyWith(
-      save: snapshot.save.copyWith(
+    snapshot = snapshot.withGameSave(
+      snapshot.save.copyWith(
         camera: camera,
         savedAt: savedAt ?? snapshot.save.savedAt,
       ),

@@ -282,7 +282,7 @@ void main() {
 
     test('pressures a priority target once the army can support conquest', () {
       final mapData = _openMap(cols: 7, rows: 2);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'warrior_1',
@@ -379,7 +379,7 @@ void main() {
 
     test('keeps pressure on a priority target with parity-sized army', () {
       final mapData = _openMap(cols: 9, rows: 5);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           for (var index = 0; index < 5; index++)
             GameUnit.produced(
@@ -480,7 +480,7 @@ void main() {
           'player_2',
           DiplomaticRelationStatus.neutral,
         );
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_1',
@@ -519,7 +519,7 @@ void main() {
             ),
           ],
           fogOfWar: _fog(mapData),
-          runtimeState: GameRuntimeState(diplomacy: diplomacy),
+          diplomacy: diplomacy,
         );
         final view = _view(
           state,
@@ -571,7 +571,7 @@ void main() {
           'player_2',
           DiplomaticRelationStatus.war,
         );
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             for (var index = 0; index < 5; index++)
               GameUnit.produced(
@@ -629,7 +629,7 @@ void main() {
             ),
           ],
           fogOfWar: _fog(mapData),
-          runtimeState: GameRuntimeState(diplomacy: diplomacy),
+          diplomacy: diplomacy,
         );
         final view = _view(
           state,
@@ -682,7 +682,7 @@ void main() {
           'player_2',
           DiplomaticRelationStatus.war,
         );
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: [
             for (var index = 0; index < 6; index++)
               GameUnit.produced(
@@ -714,7 +714,7 @@ void main() {
             ),
           ],
           fogOfWar: _fog(mapData),
-          runtimeState: GameRuntimeState(diplomacy: diplomacy),
+          diplomacy: diplomacy,
         );
         final view = _view(
           state,
@@ -788,7 +788,7 @@ void main() {
 
     test('captures a nearby city when active expansion is boxed in', () {
       final mapData = _openMap(cols: 6, rows: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_1',
@@ -878,7 +878,7 @@ void main() {
 
     test('boxed expansion targets the city closest to expansion anchors', () {
       final mapData = _openMap(cols: 8, rows: 6);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_1',
@@ -979,7 +979,7 @@ void main() {
 
     test('creates a defensive reinforcement goal for a recent aggressor', () {
       final mapData = _openMap(cols: 6, rows: 2);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'home_guard',
@@ -1040,7 +1040,7 @@ void main() {
 
     test('keeps hostile pressure defensive before military surplus', () {
       final mapData = _openMap(cols: 6, rows: 2);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'home_guard',
@@ -1097,7 +1097,7 @@ void main() {
 
     test('counterattacks a recent aggressor when clearly ahead on units', () {
       final mapData = _openMap(cols: 6, rows: 2);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'warrior_1',
@@ -1177,8 +1177,8 @@ void main() {
   });
 }
 
-PersistentGameState _warGoalState(MapData mapData) {
-  return PersistentGameState(
+DomainState _warGoalState(WorldMap mapData) {
+  return DomainState.snapshot(
     units: [
       GameUnit.produced(
         id: 'warrior_1',
@@ -1221,13 +1221,13 @@ PersistentGameState _warGoalState(MapData mapData) {
 }
 
 GameView _view(
-  PersistentGameState state,
-  MapData mapData, {
+  DomainState state,
+  WorldMap mapData, {
   Iterable<String> activeHostilePlayerIds = const [],
   Iterable<String> recentHostilePlayerIds = const [],
   Iterable<String> pressureTargetPlayerIds = const [],
 }) {
-  return GameView.fromPersistentState(
+  return GameView.fromDomainState(
     state,
     forPlayerId: 'player_1',
     turn: 6,
@@ -1245,7 +1245,7 @@ Iterable<String> _lazyUnitIds() sync* {
 }
 
 AiContext _context(
-  MapData mapData,
+  WorldMap mapData,
   CivilizationProfile profile, {
   AiDifficulty difficulty = AiDifficulty.normal,
 }) {
@@ -1292,7 +1292,7 @@ AiEmpireAssessment _postOpeningAssessment({required int militaryCount}) {
   );
 }
 
-FogOfWarState _fog(MapData mapData) {
+FogOfWarState _fog(WorldMap mapData) {
   return FogOfWarState(
     players: {
       'player_1': PlayerFogOfWar(
@@ -1306,14 +1306,14 @@ FogOfWarState _fog(MapData mapData) {
   );
 }
 
-MapData _openMap({required int cols, required int rows}) {
-  return MapData(
+WorldMap _openMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

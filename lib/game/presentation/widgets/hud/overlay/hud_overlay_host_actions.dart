@@ -128,7 +128,7 @@ class HudOverlayHostActions {
         );
   }
 
-  GameState? currentState() {
+  GameClientState? currentState() {
     if (session.saveId.isEmpty) return null;
     return ref.read(gameStateProvider(session.saveId)).value;
   }

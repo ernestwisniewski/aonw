@@ -3,9 +3,9 @@ import 'package:test/test.dart';
 
 void main() {
   group('UnitMovementPathfinder traversal view', () {
-    test('matches MapData on sparse mixed terrain with occupied hexes', () {
+    test('matches WorldMap on sparse mixed terrain with occupied hexes', () {
       final mapData = _sparseMixedMap();
-      final worldView = WorldMapReadView(_reversedWorldMap(mapData));
+      final worldView = _reversedWorldMap(mapData);
       final movingUnit = _unit(id: 'scout', col: 0, row: 1);
       final units = [
         movingUnit,
@@ -66,11 +66,11 @@ void main() {
     });
 
     test('caches borrowed traversal hits and misses once per coordinate', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 100,
         rows: 100,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 40,
             row: 50,
             terrains: [TerrainType.plains],
@@ -79,9 +79,7 @@ void main() {
           ),
         ],
       );
-      final counted = _CountingTraversalView(
-        WorldMapReadView(_reversedWorldMap(mapData)),
-      );
+      final counted = _CountingTraversalView(_reversedWorldMap(mapData));
 
       final pathfinder = UnitMovementPathfinder(
         mapData: counted,
@@ -105,15 +103,15 @@ void main() {
       final source = _CountingTileSource(
         cols: 3,
         rows: 1,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.plains],
             resources: [],
             height: 0,
           ),
-          TileData(
+          WorldTile(
             col: 2,
             row: 0,
             terrains: [TerrainType.grassland],
@@ -137,11 +135,11 @@ void main() {
   });
 }
 
-final class _CountingTileSource implements MapTileSource<TileData> {
+final class _CountingTileSource implements MapTileSource<WorldTile> {
   _CountingTileSource({
     required this.cols,
     required this.rows,
-    required List<TileData> tiles,
+    required List<WorldTile> tiles,
   }) : sourceTiles = List.unmodifiable(tiles);
 
   @override
@@ -150,18 +148,18 @@ final class _CountingTileSource implements MapTileSource<TileData> {
   @override
   final int rows;
 
-  final List<TileData> sourceTiles;
+  final List<WorldTile> sourceTiles;
   int tileCollectionReads = 0;
   int tileLookupReads = 0;
 
   @override
-  Iterable<TileData> get tiles {
+  Iterable<WorldTile> get tiles {
     tileCollectionReads++;
     return sourceTiles;
   }
 
   @override
-  TileData? tileAt(int col, int row) {
+  WorldTile? tileAt(int col, int row) {
     tileLookupReads++;
     for (final tile in sourceTiles) {
       if (tile.col == col && tile.row == row) return tile;
@@ -170,89 +168,89 @@ final class _CountingTileSource implements MapTileSource<TileData> {
   }
 }
 
-MapData _sparseMixedMap() {
-  return MapData(
+WorldMap _sparseMixedMap() {
+  return WorldMap(
     cols: 6,
     rows: 4,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 1,
         terrains: [TerrainType.grassland],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 1,
         terrains: [TerrainType.plains, TerrainType.forest],
         resources: [],
         height: 1,
       ),
-      TileData(
+      WorldTile(
         col: 2,
         row: 1,
         terrains: [TerrainType.grassland],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 3,
         row: 1,
         terrains: [TerrainType.desert],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 4,
         row: 1,
         terrains: [TerrainType.grassland],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 5,
         row: 1,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 0,
         row: 2,
         terrains: [TerrainType.grassland],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 2,
         terrains: [TerrainType.grassland],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 2,
         row: 2,
         terrains: [TerrainType.plains, TerrainType.hills],
         resources: [],
         height: 2,
       ),
-      TileData(
+      WorldTile(
         col: 3,
         row: 2,
         terrains: [TerrainType.mountain],
         resources: [],
         height: 5,
       ),
-      TileData(
+      WorldTile(
         col: 4,
         row: 2,
         terrains: [TerrainType.grassland],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 5,
         row: 2,
         terrains: [TerrainType.tundra],
@@ -263,12 +261,12 @@ MapData _sparseMixedMap() {
   );
 }
 
-WorldMap _reversedWorldMap(MapData mapData) {
+WorldMap _reversedWorldMap(WorldMap mapData) {
   return WorldMap(
     cols: mapData.cols,
     rows: mapData.rows,
     tiles: mapData.tiles.reversed.map(
-      (tile) => WorldTile(
+      (tile) => WorldTile.at(
         coordinate: HexCoord(col: tile.col, row: tile.row),
         terrains: tile.terrains,
         resources: tile.resources,

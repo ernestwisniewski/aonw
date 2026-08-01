@@ -44,8 +44,8 @@ void main() {
         final effects = DomainEventPresentationProjector.project(
           interactionEffects: const [],
           events: [event],
-          previousState: GameState(units: [attacker, defender]),
-          state: GameState(
+          previousState: GameClientState(units: [attacker, defender]),
+          state: GameClientState(
             units: [attacker, defender.copyWith(col: 2, hitPoints: 1)],
           ),
         );
@@ -86,8 +86,8 @@ void main() {
           name: 'New city',
           center: CityHex(col: 3, row: 0),
         );
-        final previousState = GameState(units: [attacker, defender]);
-        final state = GameState(
+        final previousState = GameClientState(units: [attacker, defender]);
+        final state = GameClientState(
           units: [attacker, defender],
           cities: const [city],
         );
@@ -165,8 +165,8 @@ void main() {
             row: 0,
           ),
         ],
-        previousState: const GameState(),
-        state: const GameState(),
+        previousState: GameClientState(),
+        state: GameClientState(),
       );
 
       expect(

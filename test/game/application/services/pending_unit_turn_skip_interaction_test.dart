@@ -4,8 +4,8 @@ import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
@@ -24,11 +24,11 @@ void main() {
   group('PendingUnitTurnSkip interaction', () {
     test('does not block an active movement-targeting tile tap', () {
       final unit = _unit();
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: _playerId,
         activePlayerCanAct: true,
         units: [unit],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(unit),
           moveCommandActive: true,
           pendingAction: PendingUnitTurnSkip(
@@ -69,23 +69,23 @@ void main() {
           unitId: skipped.id,
           restoreMovementPoints: 3,
         );
-        final source = GameState(
+        final source = GameClientState(
           activePlayerId: _playerId,
           activePlayerCanAct: true,
           turnStartedAt: _turnOneStartedAt,
           units: [skipped],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(skipped),
             movePreview: preview,
             pendingAction: pending,
           ),
         );
-        final authoritative = GameState(
+        final authoritative = GameClientState(
           activePlayerId: _playerId,
           activePlayerCanAct: true,
           turnStartedAt: _turnTwoStartedAt,
           units: [ready],
-          interaction: GameInteractionState(pendingAction: pending),
+          interaction: InteractionState(pendingAction: pending),
         );
 
         final result = MultiplayerInteractionReconciler.reconcile(
@@ -103,18 +103,18 @@ void main() {
     test('same-turn snapshot preserves a still-valid movement preview', () {
       final unit = _unit();
       final preview = _preview();
-      final source = GameState(
+      final source = GameClientState(
         activePlayerId: _playerId,
         activePlayerCanAct: true,
         turnStartedAt: _turnOneStartedAt,
         units: [unit],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(unit),
           moveCommandActive: true,
           movePreview: preview,
         ),
       );
-      final authoritative = GameState(
+      final authoritative = GameClientState(
         activePlayerId: _playerId,
         activePlayerCanAct: true,
         turnStartedAt: _turnOneStartedAt,
@@ -138,22 +138,22 @@ void main() {
         unitId: skipped.id,
         restoreMovementPoints: 3,
       );
-      final source = GameState(
+      final source = GameClientState(
         activePlayerId: _playerId,
         activePlayerCanAct: true,
         units: [skipped],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(skipped),
           movePreview: preview,
           pendingAction: pending,
         ),
       );
-      final authoritative = GameState(
+      final authoritative = GameClientState(
         activePlayerId: _playerId,
         activePlayerCanAct: true,
         turnStartedAt: _turnOneStartedAt,
         units: [skipped],
-        interaction: GameInteractionState(pendingAction: pending),
+        interaction: InteractionState(pendingAction: pending),
       );
 
       final result = MultiplayerInteractionReconciler.reconcile(
@@ -174,20 +174,20 @@ void main() {
         unitId: skipped.id,
         restoreMovementPoints: 3,
       );
-      final source = GameState(
+      final source = GameClientState(
         activePlayerId: _playerId,
         activePlayerCanAct: true,
         units: [skipped],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(skipped),
           pendingAction: pending,
         ),
       );
-      final authoritative = GameState(
+      final authoritative = GameClientState(
         activePlayerId: _playerId,
         activePlayerCanAct: true,
         units: [ready],
-        interaction: GameInteractionState(pendingAction: pending),
+        interaction: InteractionState(pendingAction: pending),
       );
 
       final result = MultiplayerInteractionReconciler.reconcile(
@@ -202,12 +202,12 @@ void main() {
     test('snapshot invalidates preview after relevant unit state changes', () {
       final sourceUnit = _unit();
       final preview = _preview();
-      final source = GameState(
+      final source = GameClientState(
         activePlayerId: _playerId,
         activePlayerCanAct: true,
         turnStartedAt: _turnOneStartedAt,
         units: [sourceUnit],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(sourceUnit),
           moveCommandActive: true,
           movePreview: preview,
@@ -235,7 +235,7 @@ void main() {
       ];
 
       for (final testCase in cases) {
-        final authoritative = GameState(
+        final authoritative = GameClientState(
           activePlayerId: _playerId,
           activePlayerCanAct: true,
           turnStartedAt: _turnOneStartedAt,
@@ -267,21 +267,21 @@ void main() {
         row: 0,
         movementPoints: 3,
       );
-      final source = GameState(
+      final source = GameClientState(
         activePlayerId: _playerId,
         activePlayerCanAct: true,
         turnStartedAt: _turnOneStartedAt,
         units: [selected, other],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(selected),
           moveCommandActive: true,
           movePreview: _preview(),
         ),
       );
       final authoritativeBase = source.copyWith(
-        interaction: GameInteractionState.empty,
+        interaction: InteractionState.empty,
       );
-      final cases = <({String name, GameState state})>[
+      final cases = <({String name, GameClientState state})>[
         (
           name: 'another unit',
           state: authoritativeBase.copyWith(
@@ -361,19 +361,19 @@ UnitMovementPlan _preview({int availableMovementPoints = 3}) {
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 2,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.grassland],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.grassland],

@@ -1,11 +1,10 @@
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact/world_artifact.dart';
 import 'package:aonw_core/game/domain/artifact/world_artifact_type.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/terrain.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
-import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class WorldArtifactGenerator {
@@ -14,7 +13,7 @@ abstract final class WorldArtifactGenerator {
   static const int fallbackStartDistance = 2;
 
   static List<WorldArtifact> generate({
-    required MapData mapData,
+    required WorldMap mapData,
     required Iterable<GameUnit> startingUnits,
     int? seed,
   }) {
@@ -45,7 +44,7 @@ abstract final class WorldArtifactGenerator {
       for (final unit in starts) HexCoordinate(col: unit.col, row: unit.row),
     ];
     final rng = _ArtifactPlacementRng(seed ?? _seedFromMap(mapData));
-    final selected = <TileData>[];
+    final selected = <WorldTile>[];
 
     for (var i = 0; i < WorldArtifactType.values.length; i++) {
       final anchor = _anchorFor(mapData, i);
@@ -94,9 +93,9 @@ abstract final class WorldArtifactGenerator {
     ];
   }
 
-  static List<TileData> _candidatePool({
-    required Iterable<TileData> pool,
-    required Iterable<TileData> selected,
+  static List<WorldTile> _candidatePool({
+    required Iterable<WorldTile> pool,
+    required Iterable<WorldTile> selected,
     required Iterable<HexCoordinate> startHexes,
     required int minStartDistance,
   }) {
@@ -109,14 +108,14 @@ abstract final class WorldArtifactGenerator {
     ];
   }
 
-  static TileData _bestTile({
-    required List<TileData> candidates,
+  static WorldTile _bestTile({
+    required List<WorldTile> candidates,
     required ({int col, int row}) anchor,
-    required List<TileData> selected,
+    required List<WorldTile> selected,
     required List<HexCoordinate> startHexes,
     required _ArtifactPlacementRng rng,
   }) {
-    final sorted = List<TileData>.of(candidates)
+    final sorted = List<WorldTile>.of(candidates)
       ..sort((left, right) {
         final score =
             _score(
@@ -143,9 +142,9 @@ abstract final class WorldArtifactGenerator {
   }
 
   static int _score(
-    TileData tile, {
+    WorldTile tile, {
     required ({int col, int row}) anchor,
-    required List<TileData> selected,
+    required List<WorldTile> selected,
     required List<HexCoordinate> startHexes,
     required int jitter,
   }) {
@@ -173,7 +172,7 @@ abstract final class WorldArtifactGenerator {
         jitter;
   }
 
-  static int _terrainScore(TileData tile) {
+  static int _terrainScore(WorldTile tile) {
     final terrains = tile.terrains.toSet();
     var score = tile.height;
     if (terrains.contains(TerrainType.desert)) score += 4;
@@ -187,7 +186,7 @@ abstract final class WorldArtifactGenerator {
     return score;
   }
 
-  static ({int col, int row}) _anchorFor(MapData mapData, int index) {
+  static ({int col, int row}) _anchorFor(WorldMap mapData, int index) {
     final cols = mapData.cols > 0 ? mapData.cols : 1;
     final rows = mapData.rows > 0 ? mapData.rows : 1;
     final anchors = <({int col, int row})>[
@@ -203,14 +202,14 @@ abstract final class WorldArtifactGenerator {
     return anchors[index % anchors.length];
   }
 
-  static bool _isBlocked(TileData tile) {
+  static bool _isBlocked(WorldTile tile) {
     return UnitMovementCostRules.costToEnter(
       TileTerrainProfileRules.fromTile(tile),
     ).blocked;
   }
 
   static Set<String> _reachableTileKeys(
-    MapData mapData,
+    WorldMap mapData,
     Iterable<GameUnit> startingUnits,
   ) {
     final reachable = <String>{};
@@ -243,7 +242,7 @@ abstract final class WorldArtifactGenerator {
   }
 
   static int _distanceToNearestStart(
-    TileData tile,
+    WorldTile tile,
     Iterable<HexCoordinate> starts,
   ) {
     var best = 9999;
@@ -263,7 +262,7 @@ abstract final class WorldArtifactGenerator {
     return dc * dc + dr * dr;
   }
 
-  static int _seedFromMap(MapData mapData) {
+  static int _seedFromMap(WorldMap mapData) {
     var seed = Object.hash(mapData.cols, mapData.rows, mapData.mapName ?? '');
     for (final tile in mapData.tiles.take(32)) {
       seed = Object.hash(seed, tile.col, tile.row, tile.height);

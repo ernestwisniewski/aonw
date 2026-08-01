@@ -45,7 +45,7 @@ abstract final class MapExporter {
     }
 
     draft.freeze(mapName: safeName);
-    final exportMapData = draft.toMapData(mapName: safeName);
+    final exportMapData = draft.toWorldMap(mapName: safeName);
     final jsonBytes = MapLoader.toJson(exportMapData).codeUnits;
     archive.addFile(
       ArchiveFile('$safeName/map.json', jsonBytes.length, jsonBytes),

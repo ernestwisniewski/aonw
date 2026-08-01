@@ -7,26 +7,26 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('GameStateTransition', () {
-    const state = GameState();
+    final state = GameClientState();
 
     test('defaults to empty uiEffects and events', () {
-      const t = GameStateTransition(state: state);
+      final t = GameStateTransition(state: state);
       expect(t.uiEffects, isEmpty);
       expect(t.events, isEmpty);
     });
 
     test('uiEffects accepts JumpCameraEffect', () {
-      const t = GameStateTransition(
+      final t = GameStateTransition(
         state: state,
-        uiEffects: [JumpCameraEffect(col: 1, row: 2)],
+        uiEffects: [const JumpCameraEffect(col: 1, row: 2)],
       );
       expect(t.uiEffects, [isA<JumpCameraEffect>()]);
     });
 
     test('events accepts GameEvent list', () {
-      const t = GameStateTransition(
+      final t = GameStateTransition(
         state: state,
-        events: [TurnEndedEvent(playerId: 'p1')],
+        events: [const TurnEndedEvent(playerId: 'p1')],
       );
       expect(t.events, [isA<TurnEndedEvent>()]);
     });

@@ -436,8 +436,8 @@ GameUnit _unit({GameUnitType type = GameUnitType.warrior}) {
   );
 }
 
-TileData _tile({List<TerrainType> terrains = const [TerrainType.grassland]}) {
-  return TileData(
+WorldTile _tile({List<TerrainType> terrains = const [TerrainType.grassland]}) {
+  return WorldTile(
     col: 1,
     row: 1,
     terrains: terrains,

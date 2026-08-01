@@ -363,7 +363,7 @@ final class CombatCommandResolver {
 }
 ''',
         combatCommandStatePath: '''
-typedef HiddenMap = MapData;
+typedef HiddenMap = WorldMap;
 HiddenMap? leakedMap;
 ''',
         combatCommandResultPath: '''
@@ -375,9 +375,9 @@ DomainState? leakedState;
 
       final report = combatCommandKernelBoundaryViolations(sources).join('\n');
       for (final expected in const {
-        'GameState',
+        'GameClientState',
         'PersistentGameState',
-        'MapData',
+        'WorldMap',
         'HiddenMap',
         'DomainState',
         'package:aonw/',

@@ -35,9 +35,9 @@ void _registerHudCombatCameraTests() {
         movementPoints: 2,
       );
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             units: [attacker, defender],
             fogOfWar: FogOfWarState(
@@ -51,7 +51,7 @@ void _registerHudCombatCameraTests() {
                 ),
               },
             ),
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(attacker),
             ),
           ),

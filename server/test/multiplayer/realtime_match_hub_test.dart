@@ -500,13 +500,19 @@ void main() {
     final owner = fixture.match.players.first;
     final guest = fixture.match.players.last;
     final stored = (await fixture.store.findState(fixture.match.id))!;
-    final canonicalState = PersistentGameState.fromJson(stored.snapshot.state);
+    final canonicalState = CanonicalGameSnapshotCodec.decodeDomainState(
+      stored.snapshot.state,
+    );
     final stateWithCanaries = canonicalState.copyWith(
       playerGold: {owner.id: 111, guest.id: 999},
     );
     await fixture.store.saveState(
       stored.copyWith(
-        snapshot: stored.snapshot.copyWith(state: stateWithCanaries.toJson()),
+        snapshot: stored.snapshot.copyWith(
+          state: CanonicalGameSnapshotCodec.encodeDomainState(
+            stateWithCanaries,
+          ),
+        ),
       ),
     );
 
@@ -521,9 +527,12 @@ void main() {
         )
         .asBroadcastStream();
     final initial = await stream.first;
-    expect(PersistentGameState.fromJson(initial.snapshot!.state).playerGold, {
-      guest.id: 999,
-    });
+    expect(
+      CanonicalGameSnapshotCodec.decodeDomainState(
+        initial.snapshot!.state,
+      ).playerGold,
+      {guest.id: 999},
+    );
 
     final requestedSnapshot = stream.firstWhere(
       (message) => message.snapshot != null,
@@ -536,9 +545,12 @@ void main() {
       ),
     );
     final requested = await requestedSnapshot;
-    expect(PersistentGameState.fromJson(requested.snapshot!.state).playerGold, {
-      guest.id: 999,
-    });
+    expect(
+      CanonicalGameSnapshotCodec.decodeDomainState(
+        requested.snapshot!.state,
+      ).playerGold,
+      {guest.id: 999},
+    );
     expect(requested.toJson().toString(), isNot(contains('owner-user')));
 
     final latest = (await fixture.store.findState(fixture.match.id))!;
@@ -1157,7 +1169,7 @@ void main() {
         .firstWhere((player) => player.userId == 'guest-user')
         .id;
     final save = GameSave.fromJson(running.snapshot.save);
-    final persistentState = PersistentGameState.fromJson(
+    final persistentState = CanonicalGameSnapshotCodec.decodeDomainState(
       running.snapshot.state,
     );
     await store.saveState(
@@ -1180,10 +1192,8 @@ void main() {
                 cities: persistentState.cities
                     .where((city) => city.ownerPlayerId != guestPlayerId)
                     .toList(),
-                runtimeState: persistentState.runtimeState.copyWith(
-                  submittedPlayerIds: {ownerPlayerId},
-                  turnStartedAt: now,
-                ),
+                submittedPlayerIds: {ownerPlayerId},
+                turnStartedAt: now,
               )
               .toJson(),
         ),
@@ -1234,7 +1244,9 @@ void main() {
       ]),
     );
     expect(
-      PersistentGameState.fromJson(projectedUpdate.snapshot!.state).playerGold,
+      CanonicalGameSnapshotCodec.decodeDomainState(
+        projectedUpdate.snapshot!.state,
+      ).playerGold,
       {guestPlayerId: 999},
     );
 
@@ -1261,19 +1273,14 @@ void main() {
         mapCatalog: mapCatalog,
       );
       final running = (await store.findState(started.id))!;
-      final persistentState = PersistentGameState.fromJson(
+      final persistentState = CanonicalGameSnapshotCodec.decodeDomainState(
         running.snapshot.state,
       );
       await store.saveState(
         running.copyWith(
           snapshot: running.snapshot.copyWith(
             state: persistentState
-                .copyWith(
-                  runtimeState: persistentState.runtimeState.copyWith(
-                    submittedPlayerIds: const {},
-                    turnStartedAt: now,
-                  ),
-                )
+                .copyWith(submittedPlayerIds: const {}, turnStartedAt: now)
                 .toJson(),
           ),
         ),
@@ -1284,7 +1291,9 @@ void main() {
 
       final updated = (await store.findState(started.id))!;
       final updatedSave = GameSave.fromJson(updated.snapshot.save);
-      final updatedState = PersistentGameState.fromJson(updated.snapshot.state);
+      final updatedState = CanonicalGameSnapshotCodec.decodeDomainState(
+        updated.snapshot.state,
+      );
       final events = await store.listEvents(started.id, 0);
       final timedOutEvents = events.single.events
           .map(GameEventSerializer.fromJson)
@@ -1295,7 +1304,7 @@ void main() {
       expect(timedOutEvents.map((event) => event.playerId).toSet(), {
         for (final player in started.players) player.id,
       });
-      expect(updatedState.runtimeState.timeoutStreaksByPlayerId, {
+      expect(updatedState.timeoutStreaksByPlayerId, {
         for (final player in started.players) player.id: 1,
       });
     },
@@ -1319,19 +1328,14 @@ void main() {
       mapCatalog: mapCatalog,
     );
     final running = (await store.findState(started.id))!;
-    final persistentState = PersistentGameState.fromJson(
+    final persistentState = CanonicalGameSnapshotCodec.decodeDomainState(
       running.snapshot.state,
     );
     await store.saveState(
       running.copyWith(
         snapshot: running.snapshot.copyWith(
           state: persistentState
-              .copyWith(
-                runtimeState: persistentState.runtimeState.copyWith(
-                  submittedPlayerIds: const {},
-                  turnStartedAt: now,
-                ),
-              )
+              .copyWith(submittedPlayerIds: const {}, turnStartedAt: now)
               .toJson(),
         ),
       ),
@@ -1402,19 +1406,14 @@ void main() {
     );
     for (final match in [failing, healthy]) {
       final running = (await store.findState(match.id))!;
-      final persistentState = PersistentGameState.fromJson(
+      final persistentState = CanonicalGameSnapshotCodec.decodeDomainState(
         running.snapshot.state,
       );
       await store.saveState(
         running.copyWith(
           snapshot: running.snapshot.copyWith(
             state: persistentState
-                .copyWith(
-                  runtimeState: persistentState.runtimeState.copyWith(
-                    submittedPlayerIds: const {},
-                    turnStartedAt: now,
-                  ),
-                )
+                .copyWith(submittedPlayerIds: const {}, turnStartedAt: now)
                 .toJson(),
           ),
         ),
@@ -1469,7 +1468,7 @@ void main() {
       );
       for (final match in [stale, healthy]) {
         final running = (await store.findState(match.id))!;
-        final persistentState = PersistentGameState.fromJson(
+        final persistentState = CanonicalGameSnapshotCodec.decodeDomainState(
           running.snapshot.state,
         );
         await store.saveState(
@@ -1477,12 +1476,7 @@ void main() {
             snapshot: running.snapshot.copyWith(
               v: match.id == stale.id ? kProtocolVersion - 1 : null,
               state: persistentState
-                  .copyWith(
-                    runtimeState: persistentState.runtimeState.copyWith(
-                      submittedPlayerIds: const {},
-                      turnStartedAt: now,
-                    ),
-                  )
+                  .copyWith(submittedPlayerIds: const {}, turnStartedAt: now)
                   .toJson(),
             ),
           ),
@@ -1654,16 +1648,15 @@ void main() {
         (player) => player.userId == 'guest-one',
       );
       final runningSave = GameSave.fromJson(running.snapshot.save);
-      final runningState = PersistentGameState.fromJson(running.snapshot.state);
+      final runningState = CanonicalGameSnapshotCodec.decodeDomainState(
+        running.snapshot.state,
+      );
 
       expect(afterFirstResign.state, 'running');
       expect(afterFirstResign.endedAt, isNull);
       expect(firstGuest.connectionState, WirePlayerConnectionState.offline);
       expect(runningSave.playerStates[firstGuest.id], PlayerTurnState.finished);
-      expect(
-        runningState.runtimeState.kickedPlayerIds,
-        contains(firstGuest.id),
-      );
+      expect(runningState.kickedPlayerIds, contains(firstGuest.id));
 
       final afterSecondResign = await hub.resignMatch(
         store: store,
@@ -2089,7 +2082,9 @@ void main() {
     final owner = fixture.match.players.first;
     final guest = fixture.match.players.last;
     final stored = (await fixture.store.findState(fixture.match.id))!;
-    final canonicalState = PersistentGameState.fromJson(stored.snapshot.state);
+    final canonicalState = CanonicalGameSnapshotCodec.decodeDomainState(
+      stored.snapshot.state,
+    );
     await fixture.store.saveState(
       stored.copyWith(
         snapshot: stored.snapshot.copyWith(
@@ -2131,9 +2126,12 @@ void main() {
     expect(ack.accepted, isFalse);
     expect(ack.events, isEmpty);
     expect(ack.movementExecutions.isEmpty, isTrue);
-    expect(PersistentGameState.fromJson(ack.snapshot.state).playerGold, {
-      owner.id: 111,
-    });
+    expect(
+      CanonicalGameSnapshotCodec.decodeDomainState(
+        ack.snapshot.state,
+      ).playerGold,
+      {owner.id: 111},
+    );
     expect(await fixture.store.listEvents(fixture.match.id, 0), isEmpty);
     expect(
       logs,
@@ -2180,7 +2178,9 @@ void main() {
     final owner = match.players.first;
     final guest = match.players.last;
     final stored = (await store.findState(match.id))!;
-    final initialState = PersistentGameState.fromJson(stored.snapshot.state);
+    final initialState = CanonicalGameSnapshotCodec.decodeDomainState(
+      stored.snapshot.state,
+    );
     final ownerUnit = initialState.units.firstWhere(
       (unit) => unit.ownerPlayerId == owner.id,
     );
@@ -2243,7 +2243,7 @@ void main() {
 
     final ackMessage = await ownerAck;
     final guestMessage = await guestEvent;
-    final nextState = PersistentGameState.fromJson(
+    final nextState = CanonicalGameSnapshotCodec.decodeDomainState(
       ackMessage.ack!.snapshot.state,
     );
     final moved = nextState.units.firstWhere((unit) => unit.id == ownerUnit.id);
@@ -2268,7 +2268,6 @@ void main() {
   });
 
   _registerRealtimeMatchHubOutcomeTests();
-
   test('routes diplomacy commands through the authoritative hub', () async {
     final mapCatalog = _FakeMapCatalog(_testMap());
     final hub = RealtimeMatchHub(
@@ -2301,18 +2300,19 @@ void main() {
     );
     final owner = match.players.first;
     final guest = match.players.last;
-
     final stored = (await store.findState(match.id))!;
-    final baseState = PersistentGameState.fromJson(stored.snapshot.state);
+    final baseState = CanonicalGameSnapshotCodec.decodeDomainState(
+      stored.snapshot.state,
+    );
     final patchedState = baseState.copyWith(
       playerGold: {owner.id: 20, guest.id: 0},
-      runtimeState: baseState.runtimeState.copyWith(
-        diplomacy: DiplomacyState.empty.addContact(owner.id, guest.id),
-      ),
+      diplomacy: DiplomacyState.empty.addContact(owner.id, guest.id),
     );
     await store.saveState(
       stored.copyWith(
-        snapshot: stored.snapshot.copyWith(state: patchedState.toJson()),
+        snapshot: stored.snapshot.copyWith(
+          state: CanonicalGameSnapshotCodec.encodeDomainState(patchedState),
+        ),
       ),
     );
 
@@ -2383,17 +2383,14 @@ void main() {
     final ackMessage = await ownerAck;
     final eventMessage = await guestEvent;
     final secondOwnerEventMessage = await secondOwnerEvent;
-    final nextState = PersistentGameState.fromJson(
+    final nextState = CanonicalGameSnapshotCodec.decodeDomainState(
       ackMessage.ack!.snapshot.state,
     );
 
     expect(ackMessage.ack?.accepted, isTrue);
     expect(nextState.playerGold[owner.id], 10);
     expect(nextState.playerGold, isNot(contains(guest.id)));
-    expect(
-      nextState.runtimeState.diplomacy.relationScoreBetween(owner.id, guest.id),
-      2,
-    );
+    expect(nextState.diplomacy.relationScoreBetween(owner.id, guest.id), 2);
     expect(ackMessage.ack!.events.map(GameEventSerializer.fromJson).toList(), [
       isA<DiplomaticScoreChangedEvent>(),
     ]);
@@ -2413,7 +2410,9 @@ void main() {
       [isA<DiplomaticScoreChangedEvent>()],
     );
     expect(
-      PersistentGameState.fromJson(eventMessage.snapshot!.state).playerGold,
+      CanonicalGameSnapshotCodec.decodeDomainState(
+        eventMessage.snapshot!.state,
+      ).playerGold,
       {guest.id: 10},
     );
 
@@ -2421,7 +2420,6 @@ void main() {
     await secondOwnerInput.close();
     await guestInput.close();
   });
-
   test('broadcasts accepted commands with one authoritative offset', () async {
     final mapCatalog = _FakeMapCatalog(_testMap());
     final hub = RealtimeMatchHub(
@@ -2738,7 +2736,7 @@ void main() {
         isNot(authoritative!.snapshot.toJson()),
       );
       expect(
-        PersistentGameState.fromJson(
+        CanonicalGameSnapshotCodec.decodeDomainState(
           reconnectMessage.snapshot!.state,
         ).playerGold.keys,
         everyElement(guest.id),
@@ -2788,7 +2786,9 @@ void main() {
     final owner = match.players.first;
     final guest = match.players.last;
     final stored = (await store.findState(match.id))!;
-    final canonicalState = PersistentGameState.fromJson(stored.snapshot.state);
+    final canonicalState = CanonicalGameSnapshotCodec.decodeDomainState(
+      stored.snapshot.state,
+    );
     await store.saveState(
       stored.copyWith(
         snapshot: stored.snapshot.copyWith(
@@ -2837,7 +2837,7 @@ void main() {
     for (final message in ackMessages) {
       expect(message.ack!.events, isEmpty);
       expect(
-        PersistentGameState.fromJson(
+        CanonicalGameSnapshotCodec.decodeDomainState(
           message.ack!.snapshot.state,
         ).playerGold.keys,
         [owner.id],

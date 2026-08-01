@@ -1,22 +1,17 @@
-import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/game/infrastructure/persistence/migrations/game_fog_of_war_state_migrator.dart';
-import 'package:aonw/game/infrastructure/persistence/migrations/game_research_state_migrator.dart';
-import 'package:aonw/game/infrastructure/persistence/migrations/game_runtime_state_migrator.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/game/domain/technology.dart';
 
 abstract final class SaveSnapshotCodec {
-  static Map<String, dynamic> toJson(SaveSnapshot snapshot) {
+  static Map<String, dynamic> toJson(CanonicalGameSnapshot snapshot) {
+    final data = CanonicalGameSnapshotCodec.encode(snapshot);
     return {
-      'save': snapshot.save.toJson(),
-      ...snapshot.rawPersistentState.toJson(),
-      'eventLogOffset': snapshot.eventLogOffset,
+      'save': data.save,
+      ...data.state,
+      'eventLogOffset': data.eventLogOffset,
     };
   }
 
-  static SaveSnapshot fromJson(Map<String, dynamic> json) {
+  static CanonicalGameSnapshot fromJson(Map<String, dynamic> json) {
     final rawSave = json['save'] as Map<String, dynamic>;
     final schemaVersion = rawSave['schemaVersion'];
     if (schemaVersion != gameSaveCurrentSchemaVersion) {
@@ -25,53 +20,18 @@ abstract final class SaveSnapshotCodec {
         '(expected $gameSaveCurrentSchemaVersion)',
       );
     }
-    final rawPlayerColors =
-        json['playerColors'] as Map<String, dynamic>? ?? const {};
-    final rawPlayerCountries =
-        json['playerCountries'] as Map<String, dynamic>? ?? const {};
-    final rawPlayerGold =
-        json['playerGold'] as Map<String, dynamic>? ?? const {};
-    final rawPlayerWarWeariness =
-        json['playerWarWeariness'] as Map<String, dynamic>? ?? const {};
-    final rawPlayerStabilityNet =
-        json['playerStabilityNet'] as Map<String, dynamic>? ?? const {};
-    final rawUnits = json['units'] as List<dynamic>? ?? const <dynamic>[];
-    final rawCities = json['cities'] as List<dynamic>? ?? const <dynamic>[];
-    final rawArtifacts =
-        json['artifacts'] as List<dynamic>? ?? const <dynamic>[];
-    final rawFieldImprovements =
-        json['fieldImprovements'] as List<dynamic>? ?? const <dynamic>[];
+    final state = <String, dynamic>{
+      for (final entry in json.entries)
+        if (entry.key != 'save' && entry.key != 'eventLogOffset')
+          entry.key: entry.value,
+    };
 
-    final rawPersistentState = PersistentGameState.fromJson({
-      'playerColors': rawPlayerColors,
-      'playerCountries': rawPlayerCountries,
-      'playerGold': rawPlayerGold,
-      'playerWarWeariness': rawPlayerWarWeariness,
-      'playerStabilityNet': rawPlayerStabilityNet,
-      'units': rawUnits,
-      'cities': rawCities,
-      'artifacts': rawArtifacts,
-      'fieldImprovements': rawFieldImprovements,
-      'fogOfWar': GameFogOfWarStateMigrator.migrate(json['fogOfWar']),
-      'research': switch (json['research']) {
-        final Map<String, dynamic> value => GameResearchStateMigrator.migrate(
-          value,
-        ),
-        _ => ResearchState.empty.toJson(),
-      },
-      'wonderRegistry': json['wonderRegistry'],
-      'runtimeState': switch (json['runtimeState']) {
-        final Map<String, dynamic> value => GameRuntimeStateMigrator.migrate(
-          value,
-        ),
-        _ => GameRuntimeState.empty.toJson(),
-      },
-    });
-
-    return SaveSnapshot.fromPersistentState(
-      save: GameSave.fromJson(rawSave),
-      state: rawPersistentState,
-      eventLogOffset: json['eventLogOffset'] as int? ?? 0,
+    return CanonicalGameSnapshotCodec.decode(
+      CanonicalGameSnapshotData(
+        save: rawSave,
+        state: state,
+        eventLogOffset: json['eventLogOffset'] as int? ?? 0,
+      ),
     );
   }
 }

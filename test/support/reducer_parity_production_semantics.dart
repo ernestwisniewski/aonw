@@ -7,8 +7,8 @@ bool tryRequireProduction(
   String fixtureId,
   DomainCommand command,
   String actorPlayerId,
-  PersistentGameState before,
-  PersistentGameState after,
+  DomainState before,
+  DomainState after,
   List<GameEvent> events,
   MapReadView mapView,
   PaceBalance paceBalance,
@@ -82,8 +82,8 @@ void _requireAcceptedStartUnitProduction({
   required String fixtureId,
   required StartUnitProductionCommand command,
   required String actorPlayerId,
-  required PersistentGameState before,
-  required PersistentGameState after,
+  required DomainState before,
+  required DomainState after,
   required List<GameEvent> events,
   required MapReadView mapView,
   required PaceBalance paceBalance,
@@ -93,7 +93,7 @@ void _requireAcceptedStartUnitProduction({
   );
   if (cityIndex < 0 ||
       before.cities.length < 2 ||
-      before.runtimeState.turnStartedAt == null ||
+      before.turnStartedAt == null ||
       events.isNotEmpty) {
     throw FormatException(
       '$fixtureId must target an existing city beside an unrelated sentinel, '
@@ -115,7 +115,7 @@ void _requireAcceptedStartUnitProduction({
     mapTiles: mapView.mapTiles,
     ruleset: CityRulesets.standard,
     research: before.research,
-    resourceTradeAgreements: before.runtimeState.resourceTradeAgreements,
+    resourceTradeAgreements: before.resourceTradeAgreements,
   );
   final coastAvailable = CityUnitProductionRules.canProduceInCity(
     city: beforeCity,
@@ -186,8 +186,8 @@ void _requireAcceptedStartBuilding({
   required String fixtureId,
   required StartBuildingCommand command,
   required String actorPlayerId,
-  required PersistentGameState before,
-  required PersistentGameState after,
+  required DomainState before,
+  required DomainState after,
   required List<GameEvent> events,
   required MapTileLookup mapTiles,
   required PaceBalance paceBalance,
@@ -197,7 +197,7 @@ void _requireAcceptedStartBuilding({
   );
   if (cityIndex < 0 ||
       before.cities.length < 2 ||
-      before.runtimeState.turnStartedAt == null ||
+      before.turnStartedAt == null ||
       events.isNotEmpty) {
     throw FormatException(
       '$fixtureId must target an existing city beside an unrelated sentinel, '
@@ -272,8 +272,8 @@ void _requireAcceptedCitySpecialization(
   String fixtureId,
   SetCitySpecializationCommand command,
   String actorPlayerId,
-  PersistentGameState before,
-  PersistentGameState after,
+  DomainState before,
+  DomainState after,
   List<GameEvent> events,
 ) {
   final cityIndex = before.cities.indexWhere(
@@ -281,7 +281,7 @@ void _requireAcceptedCitySpecialization(
   );
   if (cityIndex < 0 ||
       before.cities.length < 2 ||
-      before.runtimeState.turnStartedAt == null ||
+      before.turnStartedAt == null ||
       events.isNotEmpty) {
     throw FormatException(
       '$fixtureId must target an existing city beside an unrelated sentinel, '
@@ -320,8 +320,8 @@ void _requireAcceptedCitySpecialization(
 void _requireAcceptedCityProject(
   String fixtureId,
   StartCityProjectCommand command,
-  PersistentGameState before,
-  PersistentGameState after,
+  DomainState before,
+  DomainState after,
   List<GameEvent> events,
 ) {
   final cityIndex = before.cities.indexWhere(
@@ -359,8 +359,8 @@ void _requireAcceptedStartWonder({
   required String fixtureId,
   required StartWonderCommand command,
   required String actorPlayerId,
-  required PersistentGameState before,
-  required PersistentGameState after,
+  required DomainState before,
+  required DomainState after,
   required List<GameEvent> events,
   required MapTileLookup mapTiles,
   required PaceBalance paceBalance,
@@ -370,7 +370,7 @@ void _requireAcceptedStartWonder({
   );
   if (cityIndex < 0 ||
       before.cities.length < 2 ||
-      before.runtimeState.turnStartedAt == null ||
+      before.turnStartedAt == null ||
       events.isNotEmpty) {
     throw FormatException(
       '$fixtureId must target an existing city beside an unrelated sentinel, '

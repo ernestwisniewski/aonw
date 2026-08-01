@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 
-Set<String> knownPlayerIds(GameState state) => {
+Set<String> knownPlayerIds(GameClientState state) => {
   ...state.playerColors.keys,
   ...state.playerCountries.keys,
   ...state.playerGold.keys,
@@ -20,8 +20,8 @@ Set<String> knownPlayerIds(GameState state) => {
   for (final relation in state.diplomacy.relations.values) relation.playerBId,
 }..removeWhere((playerId) => playerId.isEmpty);
 
-GameState withDiscoveredDiplomaticContacts(
-  GameState state, {
+GameClientState withDiscoveredDiplomaticContacts(
+  GameClientState state, {
   Iterable<String>? playerIds,
 }) {
   final diplomacy = DiplomaticContact.mergeDiscoveredContacts(

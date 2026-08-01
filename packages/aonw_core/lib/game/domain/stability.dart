@@ -1,7 +1,6 @@
 export 'stability/cohesion_calculator.dart';
 export 'stability/core_city_locator.dart';
 export 'stability/hegemony_pressure_calculator.dart';
-export 'stability/persistent_stability_processor.dart';
 export 'stability/stability_band.dart';
 export 'stability/stability_breakdown.dart';
 export 'stability/stability_calculator.dart';

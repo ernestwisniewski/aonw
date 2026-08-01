@@ -154,25 +154,23 @@ MapTileLookup _productionMapTiles({
   ResourceType? resource,
   TerrainType hostTerrain = TerrainType.grassland,
 }) {
-  return WorldMapReadView(
-    WorldMap(
-      cols: 5,
-      rows: 5,
-      tiles: [
-        for (var row = 0; row < 5; row++)
-          for (var col = 0; col < 5; col++)
-            WorldTile(
-              coordinate: HexCoord(col: col, row: row),
-              terrains: col == 1 && row == 1
-                  ? [hostTerrain]
-                  : const [TerrainType.grassland],
-              resources: col == 1 && row == 1 && resource != null
-                  ? [resource]
-                  : const [],
-              height: 0,
-            ),
-      ],
-    ),
+  return WorldMap(
+    cols: 5,
+    rows: 5,
+    tiles: [
+      for (var row = 0; row < 5; row++)
+        for (var col = 0; col < 5; col++)
+          WorldTile.at(
+            coordinate: HexCoord(col: col, row: row),
+            terrains: col == 1 && row == 1
+                ? [hostTerrain]
+                : const [TerrainType.grassland],
+            resources: col == 1 && row == 1 && resource != null
+                ? [resource]
+                : const [],
+            height: 0,
+          ),
+    ],
   );
 }
 

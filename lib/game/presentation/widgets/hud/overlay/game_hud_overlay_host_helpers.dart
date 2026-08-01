@@ -10,7 +10,7 @@ extension _GameHudOverlayHostHelpers on _GameHudOverlayHostState {
     );
   }
 
-  void _syncModesWithState(GameState? gameState) {
+  void _syncModesWithState(GameClientState? gameState) {
     ref.read(hudPanelControllerProvider.notifier).syncWithGameState(gameState);
   }
 

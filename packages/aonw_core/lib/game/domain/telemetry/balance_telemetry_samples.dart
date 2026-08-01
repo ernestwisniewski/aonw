@@ -13,7 +13,7 @@ class BalanceTelemetryTurnSample {
   });
 
   final int turn;
-  final PersistentGameState state;
+  final DomainState state;
   final List<GameEvent> events;
   final Map<String, int> meaningfulCommandsByPlayerId;
   final Map<String, BalanceTelemetryDominationSample> dominationByPlayerId;

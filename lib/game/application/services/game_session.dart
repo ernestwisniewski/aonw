@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
+import 'package:aonw_core/domain/world_map.dart';
 
 /// Immutable snapshot of an active game session.
 ///
@@ -9,7 +9,7 @@ import 'package:aonw/map/domain/map_view_mode.dart';
 /// [saveId] is the persistent save slot identifier.
 /// [gameMode] is fixed when the save is created.
 class GameSession {
-  final MapData mapData;
+  final WorldMap mapData;
   final MapViewMode viewMode;
   final CameraState? initialCamera;
   final GameMode gameMode;

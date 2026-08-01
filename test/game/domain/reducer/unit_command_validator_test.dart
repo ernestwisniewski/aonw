@@ -10,7 +10,7 @@ void main() {
   group('UnitCommandValidator', () {
     test('accepts a controllable unit', () {
       final unit = GameUnit.startingWarrior(ownerPlayerId: 'player_1');
-      final state = GameState(activePlayerId: 'player_1', units: [unit]);
+      final state = GameClientState(activePlayerId: 'player_1', units: [unit]);
 
       final result = UnitCommandValidator.controllableUnit(
         state,
@@ -23,7 +23,7 @@ void main() {
 
     test('rejects a unit controlled by another player', () {
       final unit = GameUnit.startingWarrior(ownerPlayerId: 'player_2');
-      final state = GameState(activePlayerId: 'player_1', units: [unit]);
+      final state = GameClientState(activePlayerId: 'player_1', units: [unit]);
 
       final result = UnitCommandValidator.controllableUnit(
         state,
@@ -42,7 +42,7 @@ void main() {
     });
 
     test('reports a missing unit through every validation layer', () {
-      const state = GameState(activePlayerId: 'player_1');
+      final state = GameClientState(activePlayerId: 'player_1');
       const context = GameCommandContext();
       final validations = <UnitCommandValidationResult Function()>[
         () => UnitCommandValidator.controllableUnit(
@@ -83,7 +83,7 @@ void main() {
         col: 0,
         row: 0,
       );
-      final state = GameState(activePlayerId: 'player_1', units: [unit]);
+      final state = GameClientState(activePlayerId: 'player_1', units: [unit]);
       const context = GameCommandContext();
       final validations = <UnitCommandValidationResult Function()>[
         () => UnitCommandValidator.movableUnit(
@@ -130,7 +130,7 @@ void main() {
       final fortified = GameUnit.startingWarrior(
         ownerPlayerId: 'player_1',
       ).copyWithPosture(UnitPosture.fortified);
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [working, fortified],
       );
@@ -169,7 +169,10 @@ void main() {
         col: 0,
         row: 0,
       );
-      final state = GameState(activePlayerId: 'player_1', units: [merchant]);
+      final state = GameClientState(
+        activePlayerId: 'player_1',
+        units: [merchant],
+      );
 
       expect(
         UnitCommandValidator.movableUnit(
@@ -198,7 +201,7 @@ void main() {
               totalTurns: 1,
             ),
           );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [ready, working],
       );
@@ -251,7 +254,7 @@ void main() {
             ),
           );
       final warrior = GameUnit.startingWarrior(ownerPlayerId: 'player_1');
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [scout, queuedScout, warrior],
       );
@@ -305,7 +308,7 @@ void main() {
         col: 0,
         row: 0,
       ).copyWith(movementPoints: 1);
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [stoppedScout, movingScout],
       );

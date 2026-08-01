@@ -57,7 +57,7 @@ class _FixedGenerator implements MctsActionGenerator {
 }
 
 AiContext _context() {
-  final mapData = MapData(cols: 1, rows: 1, tiles: const []);
+  final mapData = WorldMap(cols: 1, rows: 1, tiles: []);
   return AiContext(
     ruleset: GameRuleset.defaults,
     mapData: mapData,
@@ -67,9 +67,9 @@ AiContext _context() {
 }
 
 GameView _view() {
-  final mapData = MapData(cols: 1, rows: 1, tiles: const []);
+  final mapData = WorldMap(cols: 1, rows: 1, tiles: []);
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    const PersistentGameState(),
+    DomainState.snapshot(),
     forPlayerId: 'player_1',
     turn: 1,
     mapData: mapData,

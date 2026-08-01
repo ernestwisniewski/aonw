@@ -99,9 +99,9 @@ final class _HudManualDecisionPolicy {
 
   final String activePlayerId;
   final _HudUnitOrderPredicate unitNeedsManualOrder;
-  final bool Function(GameState state) canAutoOpenResearchAction;
+  final bool Function(GameClientState state) canAutoOpenResearchAction;
 
-  bool waitsForManualDecision(GameState state) {
+  bool waitsForManualDecision(GameClientState state) {
     return state.cityFoundingDraft != null ||
         state.movePreview != null ||
         _pendingActionRequiresManualDecision(state) ||
@@ -109,7 +109,7 @@ final class _HudManualDecisionPolicy {
         _selectedCityNeedsProduction(state.selection?.city);
   }
 
-  bool _pendingActionRequiresManualDecision(GameState state) {
+  bool _pendingActionRequiresManualDecision(GameClientState state) {
     return switch (state.pendingAction) {
       null || PendingUnitTurnSkip() => false,
       PendingResearchSelection(:final ownerPlayerId)
@@ -143,7 +143,7 @@ final class _HudResolvedSelectionPolicy {
   final String activePlayerId;
   final _HudUnitOrderPredicate unitNeedsManualOrder;
 
-  bool hasResolvedSelection(GameState state) {
+  bool hasResolvedSelection(GameClientState state) {
     return _selectedUnitIsResolved(state.selectedUnit) ||
         _selectedCityIsResolved(state.selection?.city);
   }
@@ -170,19 +170,19 @@ final class _HudAutoStartCandidatePolicy {
   final String activePlayerId;
   final _HudUnitOrderPredicate unitNeedsManualOrder;
 
-  bool hasActionCandidate(GameState state) {
+  bool hasActionCandidate(GameClientState state) {
     if (_hasManualInteractionInProgress(state)) return false;
     return _hasUnitNeedingOrders(state) || _hasCityNeedingProduction(state);
   }
 
-  bool _hasUnitNeedingOrders(GameState state) {
+  bool _hasUnitNeedingOrders(GameClientState state) {
     return state.units.any(
       (unit) =>
           unit.ownerPlayerId == activePlayerId && unitNeedsManualOrder(unit),
     );
   }
 
-  bool _hasCityNeedingProduction(GameState state) {
+  bool _hasCityNeedingProduction(GameClientState state) {
     return state.cities.any(
       (city) =>
           city.ownerPlayerId == activePlayerId && city.productionQueue == null,
@@ -196,7 +196,7 @@ final class _HudResolvedCityInspectionPolicy {
   final String activePlayerId;
 
   bool isInspectingResolvedCityWithPendingActions(
-    GameState state, {
+    GameClientState state, {
     required int pendingActionCount,
   }) {
     return pendingActionCount > 0 &&
@@ -210,7 +210,7 @@ final class _HudResolvedCityInspectionPolicy {
   }
 }
 
-bool _hasManualInteractionInProgress(GameState state) {
+bool _hasManualInteractionInProgress(GameClientState state) {
   return state.pendingAction != null ||
       state.cityFoundingDraft != null ||
       state.movePreview != null;

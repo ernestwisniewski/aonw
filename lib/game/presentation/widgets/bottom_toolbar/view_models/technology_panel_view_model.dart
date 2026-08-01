@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/turn_eta.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -124,11 +124,11 @@ class TechnologyPanelViewModel {
 
 abstract final class TechnologyPanelViewModelFactory {
   static TechnologyPanelViewModel create({
-    required GameState? state,
+    required GameClientState? state,
     required String playerId,
     required TechnologyRuleset ruleset,
     CityRuleset cityRuleset = CityRulesets.standard,
-    MapData? mapData,
+    WorldMap? mapData,
     int? currentTurn,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
@@ -180,8 +180,8 @@ abstract final class TechnologyPanelViewModelFactory {
     required TechnologyDefinition technology,
     required String playerId,
     required PlayerResearchState playerResearch,
-    required GameState state,
-    required MapData? mapData,
+    required GameClientState state,
+    required WorldMap? mapData,
     required int cityCount,
     required int sciencePerTurn,
     required TechnologyRuleset ruleset,

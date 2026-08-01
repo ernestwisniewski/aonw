@@ -60,7 +60,7 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
   AiStrategyRegistry _strategyRegistryFor({
     required String playerId,
     required GameSave save,
-    required GameState gameState,
+    required GameClientState gameState,
     required NetworkSession? networkSession,
   }) {
     return _aiRuntimeStrategyResolver().resolve(

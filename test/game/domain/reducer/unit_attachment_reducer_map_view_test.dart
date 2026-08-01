@@ -8,9 +8,7 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/movement_engine_test_driver.dart';
@@ -50,7 +48,7 @@ void main() {
       center: const CityHex(col: 1, row: 1),
     );
     const pendingAction = PendingResearchSelection(ownerPlayerId: 'player_1');
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [commander, enemy],
       fogOfWar: FogOfWarState(
@@ -64,7 +62,7 @@ void main() {
           ),
         },
       ),
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(commander),
         movePreview: movePreview,
         cityFoundingDraft: cityFoundingDraft,
@@ -72,7 +70,7 @@ void main() {
         moveCommandActive: true,
       ),
     );
-    final MapTileLookup mapTiles = WorldMapReadView(_worldMap());
+    final MapTileLookup mapTiles = _worldMap();
 
     final result = resolveMovementCommandForTest(
       state,
@@ -99,7 +97,7 @@ void main() {
       isTrue,
     );
     expect(
-      result.state.runtimeState.diplomacy.hasContact('player_1', 'player_2'),
+      result.state.domain.diplomacy.hasContact('player_1', 'player_2'),
       isTrue,
     );
   });
@@ -114,8 +112,8 @@ void main() {
       row: 1,
       army: const [ArmyTroop(type: TroopType.warrior, count: 1)],
     );
-    final state = GameState(activePlayerId: '', units: [commander]);
-    final MapTileLookup mapTiles = WorldMapReadView(_worldMap());
+    final state = GameClientState(activePlayerId: '', units: [commander]);
+    final MapTileLookup mapTiles = _worldMap();
 
     final result = resolveMovementCommandForTest(
       state,
@@ -134,7 +132,7 @@ WorldMap _worldMap() {
     tiles: [
       for (var row = 0; row < 4; row += 1)
         for (var col = 0; col < 5; col += 1)
-          WorldTile(
+          WorldTile.at(
             coordinate: HexCoord(col: col, row: row),
             terrains: const [TerrainType.grassland],
             resources: const [],

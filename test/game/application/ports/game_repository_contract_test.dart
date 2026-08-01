@@ -82,17 +82,17 @@ void main() {
       final unit = GameUnit.startingCommander(ownerPlayerId: 'player_1');
 
       await repository.save(
-        SaveSnapshot(
+        GameSnapshotFactory.create(
           save: original.save.copyWith(turn: 4),
           playerColors: const {'player_1': 0xFF4a7fc4},
           units: [unit],
           cities: [city],
-          runtimeState: const GameRuntimeState(
-            pendingAction: PendingCityWorkedHexSelection(
-              ownerPlayerId: 'player_1',
-              cityId: 'city_1',
-            ),
+
+          pendingAction: const PendingCityWorkedHexSelection(
+            ownerPlayerId: 'player_1',
+            cityId: 'city_1',
           ),
+
           eventLogOffset: 9,
         ),
       );
@@ -104,7 +104,7 @@ void main() {
       expect(reloaded.units.single.id, unit.id);
       expect(reloaded.cities.single.id, city.id);
       expect(
-        reloaded.runtimeState.pendingAction,
+        reloaded.domain.actions.pendingAction,
         isA<PendingCityWorkedHexSelection>(),
       );
       expect(reloaded.eventLogOffset, 9);

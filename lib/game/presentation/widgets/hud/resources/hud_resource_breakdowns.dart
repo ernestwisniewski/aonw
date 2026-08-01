@@ -3,16 +3,16 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_gold_breakdown_calculator.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_science_breakdown_calculator.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flutter/foundation.dart';
 
 final class HudResourceBreakdowns {
   HudResourceBreakdowns({
-    required GameState state,
+    required GameClientState state,
     required String playerId,
-    required MapData mapData,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityModifier stabilityModifier,
@@ -45,9 +45,9 @@ final class HudResourceBreakdowns {
        _gold = gold,
        _science = science;
 
-  final GameState? _state;
+  final GameClientState? _state;
   final String _playerId;
-  final MapData? _mapData;
+  final WorldMap? _mapData;
   final CityRuleset _cityRuleset;
   final TechnologyRuleset _technologyRuleset;
   final StabilityModifier _stabilityModifier;

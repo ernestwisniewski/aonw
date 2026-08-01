@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('ResourceTradeCommandResolver', () {
     test('opens gold-for-resource trade when exporter controls resource', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: const {'player_1': 8},
         cities: const [
           GameCity(
@@ -21,8 +21,8 @@ void main() {
         playerGold: state.playerGold,
         cities: state.cities,
         research: state.research,
-        diplomacy: state.runtimeState.diplomacy,
-        resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+        diplomacy: state.diplomacy,
+        resourceTradeAgreements: state.resourceTradeAgreements,
         command: const OpenResourceTradeCommand(
           playerId: 'player_1',
           targetPlayerId: 'player_2',
@@ -49,10 +49,10 @@ void main() {
     });
 
     test('rejects trade when exporter does not reveal the resource', () {
-      const state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: {'player_1': 8},
         cities: [
-          GameCity(
+          const GameCity(
             id: 'city_1',
             ownerPlayerId: 'player_2',
             name: 'Exporter',
@@ -65,8 +65,8 @@ void main() {
         playerGold: state.playerGold,
         cities: state.cities,
         research: state.research,
-        diplomacy: state.runtimeState.diplomacy,
-        resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+        diplomacy: state.diplomacy,
+        resourceTradeAgreements: state.resourceTradeAgreements,
         command: const OpenResourceTradeCommand(
           playerId: 'player_1',
           targetPlayerId: 'player_2',
@@ -82,12 +82,12 @@ void main() {
       expect(result.reason, 'resource_trade_export_unavailable');
       expect(
         result.resourceTradeAgreements,
-        same(state.runtimeState.resourceTradeAgreements),
+        same(state.resourceTradeAgreements),
       );
     });
 
     test('rejects trade when all matching exports are already committed', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: const {'player_1': 8, 'player_3': 8},
         cities: const [
           GameCity(
@@ -98,26 +98,25 @@ void main() {
           ),
         ],
         research: _researchWith('player_2', TechnologyId.animalHusbandry),
-        runtimeState: const GameRuntimeState(
-          resourceTradeAgreements: [
-            ResourceTradeAgreement(
-              id: 'trade_1',
-              exporterPlayerId: 'player_2',
-              importerPlayerId: 'player_1',
-              resource: ResourceType.horses,
-              goldPerTurn: 3,
-              remainingTurns: 5,
-            ),
-          ],
-        ),
+
+        resourceTradeAgreements: [
+          const ResourceTradeAgreement(
+            id: 'trade_1',
+            exporterPlayerId: 'player_2',
+            importerPlayerId: 'player_1',
+            resource: ResourceType.horses,
+            goldPerTurn: 3,
+            remainingTurns: 5,
+          ),
+        ],
       );
 
       final result = ResourceTradeCommandResolver.openGoldForResourceTrade(
         playerGold: state.playerGold,
         cities: state.cities,
         research: state.research,
-        diplomacy: state.runtimeState.diplomacy,
-        resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+        diplomacy: state.diplomacy,
+        resourceTradeAgreements: state.resourceTradeAgreements,
         command: const OpenResourceTradeCommand(
           playerId: 'player_3',
           targetPlayerId: 'player_2',
@@ -134,14 +133,13 @@ void main() {
     });
 
     test('actor rejection wins over every trade-rule rejection', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: const {'player_1': 8},
-        runtimeState: GameRuntimeState(
-          diplomacy: DiplomacyState.empty.setStatus(
-            'player_1',
-            'player_2',
-            DiplomaticRelationStatus.war,
-          ),
+
+        diplomacy: DiplomacyState.empty.setStatus(
+          'player_1',
+          'player_2',
+          DiplomaticRelationStatus.war,
         ),
       );
 
@@ -149,8 +147,8 @@ void main() {
         playerGold: state.playerGold,
         cities: state.cities,
         research: state.research,
-        diplomacy: state.runtimeState.diplomacy,
-        resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+        diplomacy: state.diplomacy,
+        resourceTradeAgreements: state.resourceTradeAgreements,
         command: const OpenResourceTradeCommand(
           playerId: 'player_1',
           targetPlayerId: 'player_2',
@@ -169,7 +167,7 @@ void main() {
     test(
       'opens resource-for-resource trade when both exports are available',
       () {
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           cities: const [
             GameCity(
               id: 'city_1',
@@ -194,9 +192,8 @@ void main() {
             ResourceTradeCommandResolver.openResourceForResourceTrade(
               cities: state.cities,
               research: state.research,
-              diplomacy: state.runtimeState.diplomacy,
-              resourceTradeAgreements:
-                  state.runtimeState.resourceTradeAgreements,
+              diplomacy: state.diplomacy,
+              resourceTradeAgreements: state.resourceTradeAgreements,
               command: const OpenResourceExchangeCommand(
                 playerId: 'player_1',
                 targetPlayerId: 'player_2',
@@ -232,7 +229,7 @@ void main() {
     );
 
     test('rejects resource exchange when offered resource is unavailable', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: const [
           GameCity(
             id: 'city_1',
@@ -255,8 +252,8 @@ void main() {
       final result = ResourceTradeCommandResolver.openResourceForResourceTrade(
         cities: state.cities,
         research: state.research,
-        diplomacy: state.runtimeState.diplomacy,
-        resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+        diplomacy: state.diplomacy,
+        resourceTradeAgreements: state.resourceTradeAgreements,
         command: const OpenResourceExchangeCommand(
           playerId: 'player_1',
           targetPlayerId: 'player_2',
@@ -272,7 +269,7 @@ void main() {
       expect(result.reason, 'resource_trade_offer_unavailable');
       expect(
         result.resourceTradeAgreements,
-        same(state.runtimeState.resourceTradeAgreements),
+        same(state.resourceTradeAgreements),
       );
     });
   });
@@ -294,43 +291,39 @@ ResearchState _researchWithMany(Map<String, Set<TechnologyId>> technologies) {
 }
 
 MapTileLookup _resourceMap(ResourceType resource) {
-  return WorldMapReadView(
-    WorldMap(
-      cols: 3,
-      rows: 3,
-      tiles: [
-        for (var row = 0; row < 3; row++)
-          for (var col = 0; col < 3; col++)
-            WorldTile(
-              coordinate: HexCoord(col: col, row: row),
-              terrains: const [TerrainType.plains],
-              resources: col == 1 && row == 1 ? [resource] : const [],
-              height: 0,
-            ),
-      ],
-    ),
+  return WorldMap(
+    cols: 3,
+    rows: 3,
+    tiles: [
+      for (var row = 0; row < 3; row++)
+        for (var col = 0; col < 3; col++)
+          WorldTile.at(
+            coordinate: HexCoord(col: col, row: row),
+            terrains: const [TerrainType.plains],
+            resources: col == 1 && row == 1 ? [resource] : const [],
+            height: 0,
+          ),
+    ],
   );
 }
 
 MapTileLookup _exchangeResourceMap() {
-  return WorldMapReadView(
-    WorldMap(
-      cols: 3,
-      rows: 3,
-      tiles: [
-        for (var row = 0; row < 3; row++)
-          for (var col = 0; col < 3; col++)
-            WorldTile(
-              coordinate: HexCoord(col: col, row: row),
-              terrains: const [TerrainType.plains],
-              resources: switch ((col, row)) {
-                (0, 0) => const [ResourceType.iron],
-                (2, 2) => const [ResourceType.horses],
-                _ => const [],
-              },
-              height: 0,
-            ),
-      ],
-    ),
+  return WorldMap(
+    cols: 3,
+    rows: 3,
+    tiles: [
+      for (var row = 0; row < 3; row++)
+        for (var col = 0; col < 3; col++)
+          WorldTile.at(
+            coordinate: HexCoord(col: col, row: row),
+            terrains: const [TerrainType.plains],
+            resources: switch ((col, row)) {
+              (0, 0) => const [ResourceType.iron],
+              (2, 2) => const [ResourceType.horses],
+              _ => const [],
+            },
+            height: 0,
+          ),
+    ],
   );
 }

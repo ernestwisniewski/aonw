@@ -4,12 +4,12 @@ import 'package:aonw/editor/providers/editor_providers.dart';
 import 'package:aonw/editor/widgets/editor_top_bar.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/application/map_repository.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/map/rendering/hex_tile.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
@@ -28,13 +28,13 @@ void main() {
         source: MapSource.asset,
       );
       final repository = _FakeMapRepository(
-        mapData: MapData(
+        mapData: WorldMap(
           cols: 1,
           rows: 1,
           mapName: 'editor_fixture',
           defaultZoom: 1.25,
-          tiles: const [
-            TileData(
+          tiles: [
+            WorldTile(
               col: 0,
               row: 0,
               terrains: [TerrainType.hills],
@@ -140,7 +140,7 @@ Future<void> _pumpUntil(WidgetTester tester, Finder finder) async {
 final class _FakeMapRepository implements MapRepository {
   const _FakeMapRepository({required this.mapData});
 
-  final MapData mapData;
+  final WorldMap mapData;
 
   @override
   Future<void> deleteSavedMap(String name) async {}
@@ -149,7 +149,7 @@ final class _FakeMapRepository implements MapRepository {
   Future<List<MapSelection>> listAvailableMaps() async => const [];
 
   @override
-  Future<MapData> loadMap(MapSelection selection) async => mapData;
+  Future<WorldMap> loadMap(MapSelection selection) async => mapData;
 
   @override
   Future<String?> resolveImagePath(MapSelection selection) async => null;

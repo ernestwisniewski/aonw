@@ -205,7 +205,7 @@ class _CivilizationMetPopupModel {
   factory _CivilizationMetPopupModel.from({
     required AppLocalizations l10n,
     required GameSave? save,
-    required GameState state,
+    required GameClientState state,
     required String playerId,
   }) {
     final player = save?.playerById(playerId);

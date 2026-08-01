@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:aonw/map/domain/hex_grid_topology.dart';
 import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_selection_overlay.dart';
@@ -10,23 +9,24 @@ import 'package:aonw/map/rendering/hex_tile.dart';
 import 'package:aonw/map/rendering/hex_tile_markers.dart';
 import 'package:aonw/shared/performance/dev_performance.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Color;
 
-typedef HexTileMarkerBuilder = HexTileMarkers Function(TileData tileData);
+typedef HexTileMarkerBuilder = HexTileMarkers Function(WorldTile tileData);
 
 /// Grid of [HexTile]s laid out from a read-only [MapTileSource].
 ///
 /// Applies Y-scale for isometric perspective.
-class HexGrid<T extends MapTileSource<TileData>> extends PositionComponent {
+class HexGrid<T extends MapTileSource<WorldTile>> extends PositionComponent {
   final T mapData;
   final MapConfig config;
   MapViewMode _viewMode;
   HexDisplaySettings _displaySettings;
   Set<ResourceType>? _visibleResourceTypes;
-  final void Function(TileData tileData)? onTileTapped;
+  final void Function(WorldTile tileData)? onTileTapped;
   final bool autoSelectOnTap;
   final HexTileMarkerBuilder? tileMarkerBuilder;
 
@@ -86,7 +86,7 @@ class HexGrid<T extends MapTileSource<TileData>> extends PositionComponent {
     return tile?.markers ?? HexTileMarkers.none;
   }
 
-  TileData? tileDataAtWorldPoint(Vector2 worldPoint) {
+  WorldTile? tileDataAtWorldPoint(Vector2 worldPoint) {
     final localPoint = absoluteToLocal(worldPoint);
     final coords = HexGeometry.tileAt(
       point: localPoint,
@@ -116,7 +116,7 @@ class HexGrid<T extends MapTileSource<TileData>> extends PositionComponent {
     rebuild();
   }
 
-  /// Builds a height lookup map from MapData: (col, row) → height.
+  /// Builds a height lookup map from WorldMap: (col, row) → height.
   Map<(int, int), int> buildHeightMap() {
     return {for (final t in mapData.tiles) (t.col, t.row): t.height};
   }
@@ -153,7 +153,7 @@ class HexGrid<T extends MapTileSource<TileData>> extends PositionComponent {
   }
 
   HexTile buildTileComponent({
-    required TileData tileData,
+    required WorldTile tileData,
     required Vector2 position,
     required void Function() onTapped,
     required List<int?> neighborHeights,
@@ -182,7 +182,7 @@ class HexGrid<T extends MapTileSource<TileData>> extends PositionComponent {
     );
   }
 
-  List<ResourceType> _resourcesForTile(TileData tileData) {
+  List<ResourceType> _resourcesForTile(WorldTile tileData) {
     final visible = _visibleResourceTypes;
     if (visible == null) return tileData.resources;
     return [
@@ -192,7 +192,7 @@ class HexGrid<T extends MapTileSource<TileData>> extends PositionComponent {
   }
 
   @protected
-  HexTileMarkers markersForTile(TileData tileData) {
+  HexTileMarkers markersForTile(WorldTile tileData) {
     final key = (tileData.col, tileData.row);
     if (_usesDynamicMarkers) {
       return _dynamicMarkersByCoordinate[key] ?? HexTileMarkers.none;
@@ -270,7 +270,7 @@ class HexGrid<T extends MapTileSource<TileData>> extends PositionComponent {
     unawaited(Future<void>.value(addAll(tiles)));
   }
 
-  void _onTileTapped(HexTile tile, TileData tileData) {
+  void _onTileTapped(HexTile tile, WorldTile tileData) {
     if (autoSelectOnTap) {
       if (_selectedTile == tile) {
         clearSelection();
@@ -350,5 +350,4 @@ class HexGrid<T extends MapTileSource<TileData>> extends PositionComponent {
   }
 }
 
-/// Runtime grid backed by the legacy map DTO while migration is in progress.
-typedef LegacyMapGrid = HexGrid<MapData>;
+typedef WorldMapGrid = HexGrid<WorldMap>;

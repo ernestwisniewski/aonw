@@ -9,7 +9,7 @@ void main() {
   group('research engine handler', () {
     test('selects research and clears only the matching pending action', () {
       final snapshot = _snapshot(
-        interaction: PersistedInteractionState(
+        interaction: DomainActionState(
           pendingAction: const PendingResearchSelection(
             ownerPlayerId: _playerId,
           ),
@@ -28,13 +28,16 @@ void main() {
             .activeTechnologyId,
         TechnologyId.agriculture,
       );
-      expect(accepted.snapshot.interaction.pendingAction, isNull);
+      expect(accepted.snapshot.domain.actions.pendingAction, isNull);
       expect(accepted.events, isEmpty);
       expect(
         accepted.snapshot.domain.participants,
         same(snapshot.domain.participants),
       );
-      expect(accepted.snapshot.session, same(snapshot.session));
+      expect(
+        accepted.snapshot.domain.turnStatesByPlayerId,
+        same(snapshot.domain.turnStatesByPlayerId),
+      );
       expect(accepted.snapshot.metadata, same(snapshot.metadata));
       expect(accepted.snapshot.eventLogOffset, snapshot.eventLogOffset);
     });
@@ -134,25 +137,27 @@ void _expectRejected(
 
 CanonicalGameSnapshot _snapshot({
   ResearchState research = ResearchState.empty,
-  PersistedInteractionState interaction = PersistedInteractionState.empty,
+  DomainActionState interaction = DomainActionState.empty,
 }) {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
-      turn: 5,
-      matchRules: MatchRules.standard,
-      participants: const [
-        Player(id: _playerId, name: 'One', colorValue: 1),
-        Player(id: _otherPlayerId, name: 'Two', colorValue: 2),
-      ],
-      research: research,
-    ),
-    session: MatchSessionState.snapshot(
-      gameMode: GameMode.multiplayer,
-      turnStatesByPlayerId: const {
-        _playerId: PlayerTurnState.active,
-        _otherPlayerId: PlayerTurnState.active,
-      },
-    ),
+    domain:
+        ((DomainState.snapshot(
+              turn: 5,
+              matchRules: MatchRules.standard,
+              participants: const [
+                Player(id: _playerId, name: 'One', colorValue: 1),
+                Player(id: _otherPlayerId, name: 'Two', colorValue: 2),
+              ],
+              research: research,
+            )).copyWith(
+              gameMode: GameMode.multiplayer,
+              turnStatesByPlayerId: const {
+                _playerId: PlayerTurnState.active,
+                _otherPlayerId: PlayerTurnState.active,
+              },
+            ))
+            .copyWith(actions: interaction),
+
     metadata: GameSnapshotMetadata(
       id: 'research',
       schemaVersion: 3,
@@ -161,22 +166,20 @@ CanonicalGameSnapshot _snapshot({
       savedAtUtc: DateTime.utc(2026, 7, 30),
       camera: GameSnapshotCamera.zero,
     ),
-    interaction: interaction,
+
     eventLogOffset: 17,
   );
 }
 
-final _map = WorldMapReadView(
-  WorldMap(
-    cols: 1,
-    rows: 1,
-    tiles: [
-      WorldTile(
-        coordinate: const HexCoord(col: 0, row: 0),
-        terrains: const [TerrainType.grassland],
-        resources: const [],
-        height: 0,
-      ),
-    ],
-  ),
+final _map = WorldMap(
+  cols: 1,
+  rows: 1,
+  tiles: [
+    WorldTile.at(
+      coordinate: const HexCoord(col: 0, row: 0),
+      terrains: const [TerrainType.grassland],
+      resources: const [],
+      height: 0,
+    ),
+  ],
 );

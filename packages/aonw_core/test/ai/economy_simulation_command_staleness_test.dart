@@ -5,16 +5,13 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
-import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('Economy simulation command staleness', () {
     test('accepts a valid attack using WorldMap tiles', () {
-      final mapTiles = _CountingMapTiles(WorldMapReadView(_worldMap()));
+      final mapTiles = _CountingMapTiles(_worldMap());
 
       expect(_isStale(mapTiles: mapTiles), isFalse);
       expect(mapTiles.reads, {(col: 0, row: 0): 1, (col: 1, row: 0): 1});
@@ -23,7 +20,7 @@ void main() {
     test(
       'rejects an attack when its attacker tile is absent from WorldMap',
       () {
-        final mapTiles = WorldMapReadView(_worldMap(includeAttacker: false));
+        final mapTiles = _worldMap(includeAttacker: false);
 
         expect(_isStale(mapTiles: mapTiles), isTrue);
       },
@@ -34,7 +31,7 @@ void main() {
 bool _isStale({required MapTileLookup mapTiles}) {
   return isStaleEconomySimulationCommand(
     command: const AttackHexCommand('attacker', 1, 0),
-    state: PersistentGameState(
+    state: DomainState.snapshot(
       units: [
         _unit('attacker', 'player_1', 0, 0),
         _unit('defender', 'player_2', 1, 0),
@@ -80,7 +77,7 @@ WorldMap _worldMap({bool includeAttacker = true}) {
 }
 
 WorldTile _tile(int col) {
-  return WorldTile(
+  return WorldTile.at(
     coordinate: HexCoord(col: col, row: 0),
     terrains: const [TerrainType.plains],
     resources: const [],

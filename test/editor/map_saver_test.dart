@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+
 import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/services/map_saver.dart';
 import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:flutter/material.dart';
@@ -77,7 +77,7 @@ void main() {
         cols: 1,
         rows: 1,
         tiles: [
-          const TileData(
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.ocean],
@@ -102,8 +102,8 @@ void main() {
         cols: 1,
         rows: 1,
         mapName: 'invalid',
-        tiles: const [
-          TileData(col: 0, row: 0, terrains: [], resources: [], height: 0),
+        tiles: [
+          WorldTile(col: 0, row: 0, terrains: [], resources: [], height: 0),
         ],
       );
 

@@ -3,9 +3,9 @@ import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -261,7 +261,7 @@ void main() {
 Future<void> _pumpModal(
   WidgetTester tester, {
   GameSave? gameSave,
-  required GameState gameState,
+  required GameClientState gameState,
   required Future<void> Function(DomainCommand command) onCommand,
 }) {
   return tester.pumpWidget(
@@ -307,7 +307,7 @@ GameSave _save({int turn = 6}) {
   );
 }
 
-GameState _state() {
+GameClientState _state() {
   final message =
       DiplomaticMessage.create(
         id: 'message_1',
@@ -330,7 +330,7 @@ GameState _state() {
     createdTurn: 6,
     expiresOnTurn: 11,
   );
-  return GameState(
+  return GameClientState(
     activePlayerId: 'player_1',
     diplomacy: DiplomacyState.empty
         .adjustRelationScore(
@@ -442,13 +442,13 @@ GameState _state() {
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 3,
     rows: 1,
     tiles: [
       for (var col = 0; col < 3; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.plains],

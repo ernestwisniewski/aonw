@@ -24,14 +24,14 @@ void main() {
 
         final message = GameEventNotificationMessage.from(
           AppLocalizationsEn(),
-          const GameEventNotification(
+          GameEventNotification(
             id: 1,
-            event: CityProducedUnitEvent(
+            event: const CityProducedUnitEvent(
               cityId: 'city_1',
               unitType: GameUnitType.warrior,
               producedUnitId: 'warrior_1',
             ),
-            state: GameState(cities: [city]),
+            state: GameClientState(cities: [city]),
             playerId: 'player_1',
           ),
           null,
@@ -46,15 +46,15 @@ void main() {
     test('formats system-adjacent turn events through descriptor groups', () {
       final message = GameEventNotificationMessage.from(
         AppLocalizationsEn(),
-        const GameEventNotification(
+        GameEventNotification(
           id: 2,
-          event: StabilityBandChangedEvent(
+          event: const StabilityBandChangedEvent(
             playerId: 'player_1',
             previousBand: StabilityBand.stable,
             newBand: StabilityBand.strained,
             net: -2,
           ),
-          state: GameState(activePlayerId: 'player_1'),
+          state: GameClientState(activePlayerId: 'player_1'),
           playerId: 'player_1',
         ),
         null,
@@ -79,10 +79,10 @@ void main() {
         camera: CameraState.zero,
         players: players,
       );
-      const notification = GameEventNotification(
+      final notification = GameEventNotification(
         id: 3,
-        event: TurnEndedEvent(playerId: 'player_1'),
-        state: GameState(),
+        event: const TurnEndedEvent(playerId: 'player_1'),
+        state: GameClientState(),
         playerId: 'player_1',
       );
 
@@ -113,15 +113,15 @@ void main() {
           country: PlayerCountry.germany,
         ),
       ];
-      const state = GameState(
+      final state = GameClientState(
         playerCountries: {'player_2': PlayerCountry.france},
       );
 
       final civilization = GameEventNotificationMessage.fromPlayers(
         l10n,
-        const GameEventNotification(
+        GameEventNotification(
           id: 4,
-          event: CivilizationMetEvent(
+          event: const CivilizationMetEvent(
             playerId: 'player_1',
             metPlayerId: 'player_2',
           ),
@@ -132,9 +132,9 @@ void main() {
       );
       final timeout = GameEventNotificationMessage.fromPlayers(
         l10n,
-        const GameEventNotification(
+        GameEventNotification(
           id: 5,
-          event: PlayerTimedOutEvent(turn: 7, playerId: 'player_2'),
+          event: const PlayerTimedOutEvent(turn: 7, playerId: 'player_2'),
           state: state,
           playerId: 'player_2',
         ),
@@ -150,17 +150,17 @@ void main() {
     test('canonical roster formats destroyed city attacker', () {
       final message = GameEventNotificationMessage.fromPlayers(
         AppLocalizationsEn(),
-        const GameEventNotification(
+        GameEventNotification(
           id: 6,
-          event: CityDestroyedEvent(
+          event: const CityDestroyedEvent(
             cityId: 'city_1',
             previousOwnerPlayerId: 'player_2',
             attackerOwnerPlayerId: 'player_1',
           ),
-          state: GameState(),
-          previousState: GameState(
+          state: GameClientState(),
+          previousState: GameClientState(
             cities: [
-              GameCity(
+              const GameCity(
                 id: 'city_1',
                 ownerPlayerId: 'player_2',
                 name: 'Old capital',

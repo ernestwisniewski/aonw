@@ -3,7 +3,7 @@ part of 'game_event_notification_message.dart';
 GameEventNotificationMessage _cityNotificationMessage({
   required AppLocalizations l10n,
   required _GameEventPlayerRoster? roster,
-  required GameState state,
+  required GameClientState state,
   required GameActivityContext activityContext,
   required GameEvent event,
 }) {

@@ -3,19 +3,18 @@ import 'dart:collection';
 import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/map/domain/map_constraints.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 /// Mutable map state owned exclusively by the map editor.
 ///
 /// It deliberately permits incomplete tile data while a user is painting. Call
 /// [freeze] at a persistence boundary to validate it as an immutable
-/// [WorldMap]. [toMapData] is the single editor JSON/persistence projection.
-final class MapDraft implements MapTileSource<TileData> {
+/// [WorldMap]. [toWorldMap] is the single editor JSON/persistence projection.
+final class MapDraft implements MapTileSource<WorldTile> {
   MapDraft({
     required int cols,
     required int rows,
-    required Iterable<TileData> tiles,
+    required Iterable<WorldTile> tiles,
     Iterable<MapObjectiveDefinition> objectives = const [],
     this.mapName,
     this.defaultZoom = 1.0,
@@ -27,14 +26,14 @@ final class MapDraft implements MapTileSource<TileData> {
     _reindex();
   }
 
-  factory MapDraft.fromMapData(MapData mapData) {
+  factory MapDraft.fromWorldMap(WorldMap worldMap) {
     return MapDraft(
-      cols: mapData.cols,
-      rows: mapData.rows,
-      tiles: mapData.tiles,
-      objectives: mapData.objectives,
-      mapName: mapData.mapName,
-      defaultZoom: mapData.defaultZoom,
+      cols: worldMap.cols,
+      rows: worldMap.rows,
+      tiles: worldMap.tiles,
+      objectives: worldMap.objectives,
+      mapName: worldMap.mapName,
+      defaultZoom: worldMap.defaultZoom,
     );
   }
 
@@ -49,7 +48,7 @@ final class MapDraft implements MapTileSource<TileData> {
       tiles: [
         for (var row = 0; row < rows; row++)
           for (var col = 0; col < cols; col++)
-            TileData(
+            WorldTile(
               col: col,
               row: row,
               terrains: [defaultTerrain],
@@ -62,7 +61,7 @@ final class MapDraft implements MapTileSource<TileData> {
 
   int _cols;
   int _rows;
-  final List<TileData> _tiles;
+  final List<WorldTile> _tiles;
   final List<MapObjectiveDefinition> _objectives;
   final Map<(int, int), int> _tileIndices = {};
   String? mapName;
@@ -75,13 +74,13 @@ final class MapDraft implements MapTileSource<TileData> {
   int get rows => _rows;
 
   @override
-  List<TileData> get tiles => UnmodifiableListView(_tiles);
+  List<WorldTile> get tiles => UnmodifiableListView(_tiles);
 
   List<MapObjectiveDefinition> get objectives =>
       UnmodifiableListView(_objectives);
 
   @override
-  TileData? tileAt(int col, int row) {
+  WorldTile? tileAt(int col, int row) {
     final index = _tileIndices[(col, row)];
     return index == null ? null : _tiles[index];
   }
@@ -95,7 +94,7 @@ final class MapDraft implements MapTileSource<TileData> {
   }) {
     final index = _tileIndices[(col, row)];
     if (index == null) return false;
-    _tiles[index] = TileData(
+    _tiles[index] = WorldTile(
       col: col,
       row: row,
       terrains: List.unmodifiable(terrains),
@@ -138,7 +137,7 @@ final class MapDraft implements MapTileSource<TileData> {
     final newCol = _cols;
     for (var row = 0; row < _rows; row++) {
       _tiles.add(
-        TileData(
+        WorldTile(
           col: newCol,
           row: row,
           terrains: List.unmodifiable(terrainValues),
@@ -168,7 +167,7 @@ final class MapDraft implements MapTileSource<TileData> {
     final newRow = _rows;
     for (var col = 0; col < _cols; col++) {
       _tiles.add(
-        TileData(
+        WorldTile(
           col: col,
           row: newRow,
           terrains: List.unmodifiable(terrainValues),
@@ -192,8 +191,8 @@ final class MapDraft implements MapTileSource<TileData> {
     return true;
   }
 
-  MapData toMapData({String? mapName}) {
-    return MapData(
+  WorldMap toWorldMap({String? mapName}) {
+    return WorldMap(
       cols: _cols,
       rows: _rows,
       tiles: [for (final tile in _tiles) _copyTile(tile)],
@@ -260,8 +259,8 @@ final class MapDraft implements MapTileSource<TileData> {
   }
 }
 
-TileData _copyTile(TileData tile) {
-  return TileData(
+WorldTile _copyTile(WorldTile tile) {
+  return WorldTile(
     col: tile.col,
     row: tile.row,
     terrains: List.unmodifiable(tile.terrains),

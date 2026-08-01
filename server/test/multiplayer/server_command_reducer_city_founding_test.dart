@@ -14,14 +14,13 @@ void main() {
       ),
       match: _runningMatch(),
       wireSnapshot: _snapshot(
-        PersistentGameState(
+        DomainState.snapshot(
           units: [_settler()],
-          runtimeState: GameRuntimeState(
-            cityFoundingDraft: CityFoundingDraft(
-              unitId: 'settler_1',
-              ownerPlayerId: 'player_1',
-              center: const CityHex(col: 1, row: 1),
-            ),
+
+          cityFoundingDraft: CityFoundingDraft(
+            unitId: 'settler_1',
+            ownerPlayerId: 'player_1',
+            center: const CityHex(col: 1, row: 1),
           ),
         ),
       ),
@@ -40,7 +39,7 @@ void main() {
     final nextSnapshot = reduction.nextSnapshot!;
 
     expect(reduction.accepted, isTrue);
-    expect(nextSnapshot.interaction.cityFoundingDraft, isNull);
+    expect(nextSnapshot.domain.actions.cityFoundingDraft, isNull);
     expect(nextSnapshot.domain.units.single.cityFoundingJob, isNotNull);
   });
 }
@@ -87,11 +86,11 @@ WireMatch _runningMatch() => WireMatch(
   createdAt: DateTime.utc(2026, 6, 30, 11),
 );
 
-WireSnapshot _snapshot(PersistentGameState state) => WireSnapshot(
+WireSnapshot _snapshot(DomainState state) => WireSnapshot(
   matchId: 'match_1',
   offset: 0,
   save: _save().toJson(),
-  state: state.toJson(),
+  state: CanonicalGameSnapshotCodec.encodeDomainState(state),
 );
 
 GameSave _save() => GameSave(
@@ -130,13 +129,13 @@ WireCommand _wireCommand(DomainCommand command) => WireCommand(
   command: DomainCommandCodec.toJson(command),
 );
 
-MapData _grasslandMap() => MapData(
+WorldMap _grasslandMap() => WorldMap(
   cols: 4,
   rows: 4,
   tiles: [
     for (var row = 0; row < 4; row++)
       for (var col = 0; col < 4; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],
@@ -149,8 +148,8 @@ MapData _grasslandMap() => MapData(
 final class _FoundingMapCatalog implements MultiplayerMapCatalog {
   const _FoundingMapCatalog(this.mapData);
 
-  final MapData mapData;
+  final WorldMap mapData;
 
   @override
-  Future<MapData> loadAssetMap(String mapName) async => mapData;
+  Future<WorldMap> loadAssetMap(String mapName) async => mapData;
 }

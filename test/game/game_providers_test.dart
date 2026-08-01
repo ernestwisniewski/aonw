@@ -25,11 +25,11 @@ import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/providers.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/providers/map_providers.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -37,7 +37,6 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/protocol.dart';
@@ -50,14 +49,14 @@ part 'support/game_provider_renderer_fixtures.dart';
 part 'support/game_provider_turn_lifecycle_cases.dart';
 
 class _FakeGameRepository implements GameRepository {
-  final Map<String, SaveSnapshot> snapshots;
+  final Map<String, CanonicalGameSnapshot> snapshots;
   final Map<String, GameSave>? saves;
   final bool throwOnLoad;
   final Completer<void>? loadGate;
   int loadCount = 0;
 
   _FakeGameRepository({
-    Map<String, SaveSnapshot>? snapshots,
+    Map<String, CanonicalGameSnapshot>? snapshots,
     this.saves,
     this.throwOnLoad = false,
     this.loadGate,
@@ -85,7 +84,7 @@ class _FakeGameRepository implements GameRepository {
       players: request.players,
       gameMode: request.gameMode,
     );
-    snapshots[id] = SaveSnapshot(save: save);
+    snapshots[id] = GameSnapshotFactory.create(save: save);
     return id;
   }
 
@@ -105,19 +104,19 @@ class _FakeGameRepository implements GameRepository {
   }
 
   @override
-  Future<SaveSnapshot> load(String saveId) async {
+  Future<CanonicalGameSnapshot> load(String saveId) async {
     await loadGate?.future;
     loadCount++;
     if (throwOnLoad) throw StateError('load failed');
     final save = saves?[saveId];
-    if (save != null) return SaveSnapshot(save: save);
+    if (save != null) return GameSnapshotFactory.create(save: save);
     final snapshot = snapshots[saveId];
     if (snapshot == null) throw StateError('missing save');
     return snapshot;
   }
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {
+  Future<void> save(CanonicalGameSnapshot snapshot) async {
     saves?[snapshot.save.id] = snapshot.save;
     snapshots[snapshot.save.id] = snapshot;
   }
@@ -129,14 +128,14 @@ class _FakeGameRepository implements GameRepository {
   }
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
   }) async {
     final snapshot = await load(saveId);
-    final updated = snapshot.copyWith(
-      save: snapshot.save.copyWith(
+    final updated = snapshot.withGameSave(
+      snapshot.save.copyWith(
         camera: camera,
         savedAt: savedAt ?? DateTime.now().toUtc(),
       ),
@@ -344,13 +343,13 @@ ProviderContainer _liveMovementContainer({
   );
 }
 
-MapData _makeMap() => MapData(
+WorldMap _makeMap() => WorldMap(
   cols: 5,
   rows: 5,
   tiles: [
     for (int r = 0; r < 5; r++)
       for (int c = 0; c < 5; c++)
-        TileData(
+        WorldTile(
           col: c,
           row: r,
           terrains: const [TerrainType.ocean],
@@ -360,13 +359,13 @@ MapData _makeMap() => MapData(
   ],
 );
 
-MapData _makeLandMap() => MapData(
+WorldMap _makeLandMap() => WorldMap(
   cols: 5,
   rows: 5,
   tiles: [
     for (int r = 0; r < 5; r++)
       for (int c = 0; c < 5; c++)
-        TileData(
+        WorldTile(
           col: c,
           row: r,
           terrains: const [TerrainType.plains],
@@ -399,7 +398,7 @@ GameSave _makeSave({
   gameMode: gameMode,
 );
 
-SaveSnapshot _makeSnapshot({
+CanonicalGameSnapshot _makeSnapshot({
   GameSave? save,
   Map<String, int> playerColors = const {},
   List<GameUnit> units = const [],
@@ -407,10 +406,10 @@ SaveSnapshot _makeSnapshot({
   List<FieldImprovement> fieldImprovements = const [],
   FogOfWarState fogOfWar = FogOfWarState.empty,
   ResearchState research = ResearchState.empty,
-  GameRuntimeState runtimeState = GameRuntimeState.empty,
+  Set<String> submittedPlayerIds = const {},
   int eventLogOffset = 0,
 }) {
-  return SaveSnapshot(
+  return GameSnapshotFactory.create(
     save: save ?? _makeSave(),
     playerColors: playerColors,
     units: units,
@@ -418,14 +417,14 @@ SaveSnapshot _makeSnapshot({
     fieldImprovements: fieldImprovements,
     fogOfWar: fogOfWar,
     research: research,
-    runtimeState: runtimeState,
+    submittedPlayerIds: submittedPlayerIds,
     eventLogOffset: eventLogOffset,
   );
 }
 
 GameSession _makeSession({
   String saveId = 'save_1',
-  MapData? mapData,
+  WorldMap? mapData,
   GameMode gameMode = GameMode.hotSeat,
 }) {
   final map = mapData ?? _makeMap();
@@ -438,7 +437,7 @@ GameSession _makeSession({
 }
 
 class _SpyGameRenderer extends GameRenderer {
-  _SpyGameRenderer({MapData? mapData})
+  _SpyGameRenderer({WorldMap? mapData})
     : super(
         mapData: mapData ?? _makeMap(),
         initialViewMode: MapViewMode.tile,
@@ -449,7 +448,7 @@ class _SpyGameRenderer extends GameRenderer {
 
   @override
   Future<void> applyTransition(
-    GameState state,
+    GameClientState state,
     Iterable<RendererEffect> effects, {
     int? currentTurn,
   }) async {
@@ -467,7 +466,7 @@ void main() {
     const selection = MapSelection(name: 'verdantia', source: MapSource.asset);
 
     ProviderContainer makeContainer({
-      required AsyncValue<MapData> mapAsync,
+      required AsyncValue<WorldMap> mapAsync,
       AsyncValue<String?> imagePathAsync = const AsyncData(null),
       AsyncValue<CameraState?> cameraAsync = const AsyncData(null),
       AsyncValue<GameSave?> saveAsync = const AsyncData(null),
@@ -548,7 +547,7 @@ void main() {
     });
 
     test('setViewMode is no-op when state is not AsyncData', () async {
-      final container = makeContainer(mapAsync: const AsyncLoading<MapData>());
+      final container = makeContainer(mapAsync: const AsyncLoading<WorldMap>());
       addTearDown(container.dispose);
 
       // should not throw
@@ -1400,12 +1399,12 @@ void main() {
         expect(wire.actorPlayerId, 'player_1');
         expect(wire.command['type'], 'MoveUnit');
         final moved = commander.copyWith(col: 1, row: 0, movementPoints: 2);
-        final serverState = GameState(
+        final serverState = GameClientState(
           units: [moved],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
         );
-        final snapshot = SaveSnapshot.fromGameState(
+        final snapshot = GameSnapshotFactory.fromClientState(
           save: save,
           state: serverState,
           eventLogOffset: 4,
@@ -1519,12 +1518,12 @@ void main() {
 
         final wire = fakeStream.clientMessages.single.command!;
         final moved = commander.copyWith(col: 1, row: 0, movementPoints: 2);
-        final serverState = GameState(
+        final serverState = GameClientState(
           units: [moved],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
         );
-        final snapshot = SaveSnapshot.fromGameState(
+        final snapshot = GameSnapshotFactory.fromClientState(
           save: save,
           state: serverState,
           eventLogOffset: 4,
@@ -1619,7 +1618,7 @@ void main() {
       );
       expect(
         container.read(gameStateProvider('broken')),
-        isA<AsyncError<GameState>>(),
+        isA<AsyncError<GameClientState>>(),
       );
     });
   });
@@ -1675,13 +1674,13 @@ void main() {
       await container
           .read(gameCommandControllerProvider.notifier)
           .presentHandoffPresentation(
-            const HandoffPresentation(
-              command: CancelUnitActionCommand('unit_1'),
-              state: GameState(),
-              previousState: GameState(),
+            HandoffPresentation(
+              command: const CancelUnitActionCommand('unit_1'),
+              state: GameClientState(),
+              previousState: GameClientState(),
               events: [],
               uiEffects: [
-                ShowHudFeedbackEffect(
+                const ShowHudFeedbackEffect(
                   title: 'City occupied',
                   body: 'Only one unit can stand in a city.',
                 ),
@@ -2323,9 +2322,9 @@ void main() {
         );
         final submittedSnapshot = _makeSnapshot(
           save: submittedSave,
-          runtimeState: const GameRuntimeState(
-            submittedPlayerIds: {'player_1'},
-          ),
+
+          submittedPlayerIds: {'player_1'},
+
           eventLogOffset: 1,
         );
         final localRepository = _FakeGameRepository(throwOnLoad: true);
@@ -2497,7 +2496,7 @@ void main() {
     test('lists saves through repository', () async {
       final save = _makeSave();
       final gameRepository = _FakeGameRepository(
-        snapshots: {save.id: SaveSnapshot(save: save)},
+        snapshots: {save.id: GameSnapshotFactory.create(save: save)},
       );
       final container = ProviderContainer(
         overrides: [gameRepositoryProvider.overrideWithValue(gameRepository)],

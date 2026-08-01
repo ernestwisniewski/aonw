@@ -1,7 +1,6 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
 
@@ -27,8 +26,8 @@ class HudScorePressureContext {
 
   factory HudScorePressureContext.from({
     required GameSave? gameSave,
-    required GameState? gameState,
-    MapData? mapData,
+    required GameClientState? gameState,
+    WorldMap? mapData,
   }) {
     if (gameSave == null) return empty;
 
@@ -64,8 +63,8 @@ class HudScorePressureContext {
 
   static Map<String, EmpireScoreBreakdown> _scoreBreakdownByPlayerId({
     required GameSave gameSave,
-    required GameState? gameState,
-    required MapData? mapData,
+    required GameClientState? gameState,
+    required WorldMap? mapData,
   }) {
     final victory = gameSave.matchRules.victory;
     if (!victory.scoreFallbackEnabled ||
@@ -73,14 +72,19 @@ class HudScorePressureContext {
         gameState == null) {
       return const {};
     }
-    final state = gameState.toPersistentState();
     return {
       for (final player in gameSave.players)
         if (player.id.isNotEmpty)
-          player.id: const EmpireScoreCalculator().scoreFor(
+          player.id: const EmpireScoreCalculator().scoreForCollections(
             playerId: player.id,
-            state: state,
+            cities: gameState.cities,
+            units: gameState.units,
+            fieldImprovements: gameState.fieldImprovements,
+            research: gameState.research,
+            playerGold: gameState.playerGold,
             mapObjectives: mapData?.objectives ?? const [],
+            mapObjectiveHoldStatesByObjectiveId:
+                gameState.mapObjectiveHoldStatesByObjectiveId,
           ),
     };
   }

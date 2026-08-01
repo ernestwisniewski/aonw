@@ -1,6 +1,5 @@
 import 'package:aonw_core/game/domain/city/city_founding_command_resolver.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -14,7 +13,7 @@ final class DomainCityFoundingResult {
 
   final bool accepted;
   final DomainState state;
-  final PersistedInteractionState interaction;
+  final DomainActionState interaction;
   final String? reason;
 }
 
@@ -24,7 +23,7 @@ final class DomainCityFoundingResolver {
 
   DomainCityFoundingResult foundCity({
     required DomainState state,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required FoundCityCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,

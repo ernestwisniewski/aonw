@@ -65,7 +65,6 @@ abstract final class CanonicalTurnSuffix {
     final beforeMovementUnits = request.snapshot.domain.units;
     final movement = DomainTurnMovementProcessor.resetForPlayers(
       state: request.snapshot.domain,
-      interaction: request.snapshot.interaction,
       playerIds: request.playerIds,
       mapData: request.mapView,
       fogOfWarService: request.fogOfWarService,
@@ -91,7 +90,6 @@ abstract final class CanonicalTurnSuffix {
       snapshot: _snapshotAfterTurn(
         request: request,
         state: movement.state,
-        interaction: movement.interaction,
         diplomacy: diplomacy,
         victory: victory,
         skippedPlayerIds: skippedPlayerIds,
@@ -132,12 +130,16 @@ abstract final class CanonicalTurnSuffix {
   static CanonicalGameSnapshot _snapshotAfterTurn({
     required CanonicalTurnSuffixRequest request,
     required DomainState state,
-    required PersistedInteractionState interaction,
     required DiplomacyTurnResolution diplomacy,
     required TurnVictoryProgressResult victory,
     required List<String> skippedPlayerIds,
     required DateTime savedAt,
   }) {
+    final lifecycle = _lifecycleAfterTurn(
+      request: request,
+      skippedPlayerIds: skippedPlayerIds,
+      savedAt: savedAt,
+    );
     return request.snapshot.copyWith(
       domain: state.copyWith(
         turn: state.turn + 1,
@@ -145,23 +147,21 @@ abstract final class CanonicalTurnSuffix {
         diplomacy: diplomacy.diplomacy,
         dominationHoldTurnsByPlayerId: victory.dominationHoldTurns,
         culturalVictoryHoldTurnsByPlayerId: victory.culturalHoldTurns,
-      ),
-      session: _sessionAfterTurn(
-        request: request,
-        skippedPlayerIds: skippedPlayerIds,
-        savedAt: savedAt,
+        turnStatesByPlayerId: lifecycle.turnStatesByPlayerId,
+        submittedPlayerIds: lifecycle.submittedPlayerIds,
+        timeoutStreaksByPlayerId: lifecycle.timeoutStreaksByPlayerId,
+        turnStartedAt: lifecycle.turnStartedAt,
       ),
       metadata: request.snapshot.metadata.copyWith(savedAtUtc: savedAt),
-      interaction: interaction,
     );
   }
 
-  static MatchSessionState _sessionAfterTurn({
+  static DomainState _lifecycleAfterTurn({
     required CanonicalTurnSuffixRequest request,
     required List<String> skippedPlayerIds,
     required DateTime savedAt,
   }) {
-    final session = request.snapshot.session;
+    final session = request.snapshot.domain;
     return session.copyWith(
       turnStatesByPlayerId: _turnStatesAfterTurn(request),
       submittedPlayerIds: const {},
@@ -181,7 +181,7 @@ abstract final class CanonicalTurnSuffix {
   ) {
     final activePlayerIds = request.playerIds.toSet();
     return {
-      for (final entry in request.snapshot.session.turnStatesByPlayerId.entries)
+      for (final entry in request.snapshot.domain.turnStatesByPlayerId.entries)
         entry.key:
             request.preserveNonParticipantPlayerStates &&
                 !activePlayerIds.contains(entry.key)

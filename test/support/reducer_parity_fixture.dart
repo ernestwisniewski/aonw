@@ -18,6 +18,7 @@ part 'reducer_parity_fixture_start_unit_validation.dart';
 part 'reducer_parity_fixture_start_wonder_validation.dart';
 part 'reducer_parity_fixture_unit_action_validation.dart';
 part 'reducer_parity_fixture_validation.dart';
+part 'reducer_parity_fixture_validation_tail.dart';
 part 'reducer_parity_fixture_worker_validation.dart';
 
 final class ReducerParityFixture {
@@ -44,10 +45,10 @@ final class ReducerParityFixture {
   final DateTime now;
   final String actorPlayerId;
   final int tick;
-  final MapData mapData;
+  final WorldMap mapData;
   final WireMatch match;
   final GameSave save;
-  final PersistentGameState state;
+  final DomainState state;
   final DomainCommand command;
   final bool expectedAccepted;
   final String? expectedReason;
@@ -160,22 +161,22 @@ abstract final class ReducerParityCorpus {
     final tick = _asInt(input['tick'], '$id.tick');
     if (tick < 0) throw FormatException('$id.tick must be non-negative.');
     final mapJson = _asMap(input['map'], '$id.map');
-    final mapData = MapDataCodec.fromJson(jsonEncode(mapJson));
+    final mapData = WorldMapCodec.fromJson(jsonEncode(mapJson));
     final matchJson = _asMap(input['match'], '$id.match');
     final match = WireMatch.fromJson(matchJson);
     final saveJson = _asMap(input['save'], '$id.save');
     final save = GameSave.fromJson(saveJson);
     final stateJson = _asMap(input['state'], '$id.state');
-    final state = PersistentGameState.fromJson(stateJson);
+    final state = CanonicalGameSnapshotCodec.decodeDomainState(stateJson);
     _requireCanonicalJson(
       id,
       'map',
-      jsonDecode(MapDataCodec.toJson(mapData)),
+      jsonDecode(WorldMapCodec.toJson(mapData)),
       mapJson,
     );
     _requireCanonicalJson(id, 'match', match.toJson(), matchJson);
     _requireCanonicalJson(id, 'save', save.toJson(), saveJson);
-    _requireCanonicalJson(id, 'state', state.toJson(), stateJson);
+    _requireCanonicalDomainStateJson(id, state, stateJson);
     final commandJson = _asMap(input['command'], '$id.command');
     final command = DomainCommandCodec.fromJson(commandJson);
     if (!_jsonDeepEquals(DomainCommandCodec.toJson(command), commandJson)) {
@@ -283,7 +284,9 @@ abstract final class ReducerParityCorpus {
       fixture.expectedSave,
     );
     final inputSave = reducerParitySave(fixture.save);
-    final inputState = fixture.state.toJson();
+    final inputState = CanonicalGameSnapshotCodec.encodeDomainState(
+      fixture.state,
+    );
     if (!fixture.expectedAccepted) {
       if (!_jsonDeepEquals(fixture.expectedSave, inputSave) ||
           !_jsonDeepEquals(fixture.expectedState, inputState) ||

@@ -4,8 +4,8 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -19,13 +19,13 @@ import '../../../support/game_intent_test_resolver.dart';
 
 part 'game_state_reducer_integration_test_support.dart';
 
-MapData _map(int cols, int rows) => MapData(
+WorldMap _map(int cols, int rows) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (int row = 0; row < rows; row++)
       for (int col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],
@@ -60,12 +60,12 @@ GameCity _city({
 
 GameStateTransition _dispatch(
   GameStateReducer reducer,
-  GameState state,
+  GameClientState state,
   Object command, {
   GameCommandContext context = const GameCommandContext(),
 }) => resolveWithEffects(reducer, state, command, context: context);
 
-GameState _withFog(GameState state, MapData mapData) {
+GameClientState _withFog(GameClientState state, WorldMap mapData) {
   return state.copyWith(
     fogOfWar: const FogOfWarService().recompute(
       current: state.fogOfWar,
@@ -85,7 +85,7 @@ void main() {
         final map = _map(3, 3);
         final reducer = GameStateReducer(mapData: map);
         var state = _withFog(
-          GameState(
+          GameClientState(
             units: [_commander()],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
@@ -114,7 +114,7 @@ void main() {
       final map = _map(3, 3);
       final reducer = GameStateReducer(mapData: map);
       var state = _withFog(
-        GameState(
+        GameClientState(
           units: [_commander()],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
@@ -166,11 +166,11 @@ void main() {
           row: 0,
         );
         final state = _withFog(
-          GameState(
+          GameClientState(
             units: [commander, worker],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(commander, tile: map.tileAt(0, 0)),
               moveCommandActive: true,
             ),
@@ -199,11 +199,11 @@ void main() {
           row: 0,
         );
         final state = _withFog(
-          GameState(
+          GameClientState(
             units: [commander, enemy],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(commander, tile: map.tileAt(0, 0)),
               moveCommandActive: true,
             ),
@@ -227,11 +227,11 @@ void main() {
         controlledHexes: const [CityHex(col: 2, row: 1)],
       );
       final state = _withFog(
-        GameState(
+        GameClientState(
           cities: [city],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.city(
               city,
               cityYield: const TileYield(
@@ -278,7 +278,7 @@ void main() {
           row: 1,
           controlledHexes: const [CityHex(col: 2, row: 1)],
         );
-        final state = GameState(
+        final state = GameClientState(
           cities: [city],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
@@ -288,7 +288,7 @@ void main() {
               unlockedTechnologyIds: {TechnologyId.urbanization},
             ),
           ),
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.city(
               city,
               cityYield: const TileYield(
@@ -345,11 +345,11 @@ void main() {
       final reducer = GameStateReducer(mapData: map);
       final commander = _commander();
       var state = _withFog(
-        GameState(
+        GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
           ),
         ),
@@ -381,7 +381,7 @@ void main() {
       final reducer = GameStateReducer(mapData: map);
       final commander = _commander().copyWith(movementPoints: 1);
       final state = _withFog(
-        GameState(
+        GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
@@ -414,11 +414,11 @@ void main() {
       final reducer = GameStateReducer(mapData: map);
       final commander = _commander().copyWith(movementPoints: 0);
       final state = _withFog(
-        GameState(
+        GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander),
           ),
         ),
@@ -448,7 +448,7 @@ void main() {
         col: 2,
         row: 0,
       );
-      final state = GameState(
+      final state = GameClientState(
         units: [commander, blocker],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
@@ -500,7 +500,7 @@ void main() {
         row: 0,
       );
       final state = _withFog(
-        GameState(
+        GameClientState(
           units: [commander, blocker],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
@@ -537,7 +537,7 @@ void main() {
         row: 0,
       );
       final state = _withFog(
-        GameState(
+        GameClientState(
           units: [otherCommander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
@@ -564,7 +564,7 @@ void main() {
           col: 0,
           row: 0,
         );
-        final state = GameState(
+        final state = GameClientState(
           units: [playerTwoCommander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
@@ -593,7 +593,7 @@ void main() {
       final map = _map(3, 3);
       final reducer = GameStateReducer(mapData: map);
       final city = _city(ownerPlayerId: 'player_2');
-      final state = GameState(
+      final state = GameClientState(
         cities: [city],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
@@ -624,7 +624,7 @@ void main() {
       final map = _map(6, 6);
       final reducer = GameStateReducer(mapData: map);
       var state = _withFog(
-        GameState(
+        GameClientState(
           units: [_commander()],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
@@ -647,7 +647,7 @@ void main() {
         final map = _map(6, 6);
         final reducer = GameStateReducer(mapData: map);
         var state = _withFog(
-          GameState(
+          GameClientState(
             units: [_commander()],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
@@ -668,7 +668,7 @@ void main() {
       final map = _map(5, 1);
       final reducer = GameStateReducer(mapData: map);
       var state = _withFog(
-        GameState(
+        GameClientState(
           units: [_commander()],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
@@ -708,7 +708,7 @@ void main() {
       final map = _map(6, 1);
       final reducer = GameStateReducer(mapData: map);
       var state = _withRememberedFog(
-        GameState(
+        GameClientState(
           units: [_commander()],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
@@ -732,7 +732,7 @@ void main() {
         final map = _map(7, 1);
         final reducer = GameStateReducer(mapData: map);
         var state = _withRememberedFog(
-          GameState(
+          GameClientState(
             units: [_commander()],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,
@@ -779,7 +779,7 @@ void main() {
       final commander = _commander(col: 1, row: 1);
       final city = _city(col: 1, row: 1);
       var state = _withFog(
-        GameState(
+        GameClientState(
           units: [commander],
           cities: [city],
           activePlayerId: 'player_1',
@@ -815,7 +815,7 @@ void main() {
       );
       final hiddenEnemyCity = _city(ownerPlayerId: 'player_3', col: 6, row: 6);
       var state = _withRememberedFog(
-        GameState(
+        GameClientState(
           units: [_commander()],
           cities: [rememberedEnemyCity, hiddenEnemyCity],
           activePlayerId: 'player_1',
@@ -846,7 +846,7 @@ void main() {
       final playerCity = _city(ownerPlayerId: 'player_1', col: 1, row: 1);
       final opponentCity = _city(ownerPlayerId: 'player_2', col: 2, row: 1);
       var state = _withFog(
-        GameState(
+        GameClientState(
           cities: [playerCity, opponentCity],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
@@ -876,11 +876,11 @@ void main() {
       final reducer = GameStateReducer(mapData: map);
       final commander = _commander();
       var state = _withFog(
-        GameState(
+        GameClientState(
           units: [commander],
           activePlayerId: 'player_1',
           activePlayerCanAct: true,
-          interaction: const GameInteractionState(moveCommandActive: true),
+          interaction: const InteractionState(moveCommandActive: true),
         ),
         map,
       );
@@ -906,7 +906,7 @@ void main() {
         final reducer = GameStateReducer(mapData: map);
         final commander = _commander(col: 3, row: 4);
         final state = _withFog(
-          GameState(
+          GameClientState(
             units: [commander],
             activePlayerId: 'player_1',
             activePlayerCanAct: true,

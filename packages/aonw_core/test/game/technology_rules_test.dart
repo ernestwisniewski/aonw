@@ -336,13 +336,13 @@ TechnologyRuleset _rulesetWithTradeBlockedByMining() {
   );
 }
 
-MapData _map({Map<int, Set<ResourceType>> resourcesByCol = const {}}) {
-  return MapData(
+WorldMap _map({Map<int, Set<ResourceType>> resourcesByCol = const {}}) {
+  return WorldMap(
     cols: 3,
     rows: 1,
     tiles: [
       for (var col = 0; col < 3; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.plains],

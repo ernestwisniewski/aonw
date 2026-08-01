@@ -15,13 +15,13 @@ import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/application/use_cases/run_ai_turn_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/application.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -34,31 +34,29 @@ import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_visibility_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 import 'run_save_ai_benchmark/runtime_smoke_offset_sequence.dart';
 
-part 'run_save_ai_benchmark/report_models.dart';
-part 'run_save_ai_benchmark/synthetic_suite.dart';
-part 'run_save_ai_benchmark/runtime_smoke.dart';
-part 'run_save_ai_benchmark/multi_turn_replay.dart';
-part 'run_save_ai_benchmark/multi_turn_replay_report.dart';
-part 'run_save_ai_benchmark/multi_turn_replay_cycle_models.dart';
-part 'run_save_ai_benchmark/multi_turn_replay_player_report.dart';
-part 'run_save_ai_benchmark/multi_turn_replay_execution_models.dart';
-part 'run_save_ai_benchmark/execution_models.dart';
-part 'run_save_ai_benchmark/engine_command_dispatcher.dart';
-part 'run_save_ai_benchmark/cli_helpers.dart';
+part 'run_save_ai_benchmark/benchmark_command_diagnostics.dart';
+part 'run_save_ai_benchmark/benchmark_format_helpers.dart';
 part 'run_save_ai_benchmark/benchmark_synthetic_helpers.dart';
 part 'run_save_ai_benchmark/benchmark_target_helpers.dart';
 part 'run_save_ai_benchmark/benchmark_target_pressure_helpers.dart';
-part 'run_save_ai_benchmark/benchmark_command_diagnostics.dart';
-part 'run_save_ai_benchmark/benchmark_format_helpers.dart';
 part 'run_save_ai_benchmark/cli_argument_helpers.dart';
+part 'run_save_ai_benchmark/cli_helpers.dart';
+part 'run_save_ai_benchmark/engine_command_dispatcher.dart';
+part 'run_save_ai_benchmark/execution_models.dart';
+part 'run_save_ai_benchmark/multi_turn_replay.dart';
+part 'run_save_ai_benchmark/multi_turn_replay_cycle_models.dart';
+part 'run_save_ai_benchmark/multi_turn_replay_execution_models.dart';
+part 'run_save_ai_benchmark/multi_turn_replay_player_report.dart';
+part 'run_save_ai_benchmark/multi_turn_replay_report.dart';
+part 'run_save_ai_benchmark/report_models.dart';
+part 'run_save_ai_benchmark/runtime_smoke.dart';
+part 'run_save_ai_benchmark/synthetic_suite.dart';
 
 const _defaultMinTurn = 100;
 const _singlePlayerDelay = Duration(milliseconds: 40);
@@ -130,9 +128,9 @@ class _SaveAiBenchmark {
     required this.multiTurnCycles,
   });
 
-  final SaveSnapshot snapshot;
+  final CanonicalGameSnapshot snapshot;
   final String savePath;
-  final MapData mapData;
+  final WorldMap mapData;
   final List<_ProfileSelection> profiles;
   final int repeats;
   final bool includeDeadline;
@@ -140,7 +138,7 @@ class _SaveAiBenchmark {
   final int multiTurnCycles;
 
   Future<_BenchmarkReport> run() async {
-    final mapView = mapData.indexedReadView();
+    final mapView = mapData;
     final runtime = _BenchmarkRuntimeReport.fromSnapshot(snapshot);
     final playerResults = <_PlayerBenchmarkResult>[];
     final humanPlayerIds = {
@@ -214,7 +212,7 @@ class _PreparedPlayer {
     required this.strategicPlan,
   });
 
-  final SaveSnapshot snapshot;
+  final CanonicalGameSnapshot snapshot;
   final Player player;
   final AiPlayer ai;
   final Set<String> humanPlayerIds;
@@ -224,7 +222,7 @@ class _PreparedPlayer {
   final StrategicPlan strategicPlan;
 
   factory _PreparedPlayer.fromSnapshot({
-    required SaveSnapshot snapshot,
+    required CanonicalGameSnapshot snapshot,
     required Player player,
     required Set<String> humanPlayerIds,
     required MapReadView mapView,
@@ -251,7 +249,7 @@ class _PreparedPlayer {
       turn: snapshot.domain.turn,
       mapData: mapView,
       ruleset: ruleset,
-      engineSnapshot: snapshot.canonical,
+      engineSnapshot: snapshot,
       activeHostilePlayerIds: _pendingHostilePlayerIds(
         snapshot: snapshot,
         playerId: player.id,
@@ -281,7 +279,7 @@ class _PreparedPlayer {
       civProfile: civProfile,
       deadline: includeDeadline
           ? _deadlineFor(
-              gameMode: snapshot.session.gameMode,
+              gameMode: snapshot.domain.gameMode,
               savedAt: snapshot.metadata.savedAtUtc,
               turnStartedAt: snapshot.persistedTurnStartedAt,
             )
@@ -353,7 +351,7 @@ class _PreparedPlayer {
 
   _ExecutionRun _executePlan(AiTurnPlan plan) {
     final dispatcher = BenchmarkCommandDispatcher(
-      snapshot: snapshot.canonical,
+      snapshot: snapshot,
       mapView: context.mapData,
       ruleset: context.ruleset,
     );
@@ -404,7 +402,7 @@ class _PreparedPlayer {
       dispatched.add(command);
     }
 
-    final terminalCommand = _terminalFor(snapshot.session.gameMode, player.id);
+    final terminalCommand = _terminalFor(snapshot.domain.gameMode, player.id);
     final terminalStopwatch = Stopwatch()..start();
     final terminalTransition = dispatcher.apply(
       state: state,
@@ -435,12 +433,12 @@ class _PreparedPlayer {
     );
   }
 
-  GameState _executionInitialState() {
-    final state = snapshot.toGameState(
+  GameClientState _executionInitialState() {
+    final state = snapshot.toClientState(
       activePlayerId: player.id,
       activePlayerCanAct: true,
     );
-    if (snapshot.session.gameMode != GameMode.multiplayer ||
+    if (snapshot.domain.gameMode != GameMode.multiplayer ||
         !state.submittedPlayerIds.contains(player.id)) {
       return state;
     }

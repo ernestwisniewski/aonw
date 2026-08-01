@@ -82,8 +82,8 @@ GameUnit _movementUnit({
   );
 }
 
-PersistentGameState _movementState(
-  PersistentGameState source, {
+DomainState _movementState(
+  DomainState source, {
   required int mapCols,
   required List<GameUnit> units,
   List<GameCity> cities = const [],
@@ -97,44 +97,46 @@ PersistentGameState _movementState(
     fieldImprovements: const [_movementSentinelFieldImprovement],
     fogOfWar: fogOfWar ?? _movementVisibleFog(mapCols),
     research: _movementSentinelResearch,
-    runtimeState: GameRuntimeState.snapshot(
+
+    actions: DomainActionState(
       cityFoundingDraft: _movementSentinelCityFoundingDraft,
       pendingAction: _movementSentinelPendingAction,
-      submittedPlayerIds: const {'sentinel_submitted'},
-      timeoutStreaksByPlayerId: const {'sentinel_timeout': 2},
-      afkPlayerIds: const {'sentinel_afk'},
-      kickedPlayerIds: const {'sentinel_kicked'},
-      intendedAttacks: const [
-        IntendedAttack(
-          attackerUnitId: 'sentinel_attacker',
-          defenderCol: 30,
-          defenderRow: 30,
-          declaredAtTick: 41,
-          declaringPlayerId: 'sentinel_player',
-        ),
-      ],
-      diplomacy: diplomacy ?? _movementContactDiplomacy,
-      dominationHoldTurnsByPlayerId: const {'sentinel_player': 3},
-      culturalVictoryHoldTurnsByPlayerId: const {'sentinel_player': 4},
-      mapObjectiveHoldStatesByObjectiveId: const {
-        'sentinel_objective': MapObjectiveHoldState(
-          objectiveId: 'sentinel_objective',
-          playerId: 'sentinel_player',
-          holdTurns: 2,
-        ),
-      },
-      resourceTradeAgreements: const [
-        ResourceTradeAgreement(
-          id: 'movement_sentinel_trade',
-          exporterPlayerId: _movementOpponentId,
-          importerPlayerId: _movementActorId,
-          resource: ResourceType.coal,
-          goldPerTurn: 7,
-          remainingTurns: 9,
-        ),
-      ],
-      turnStartedAt: DateTime.utc(2026, 7, 1, 12),
     ),
+    submittedPlayerIds: const {'sentinel_submitted'},
+    timeoutStreaksByPlayerId: const {'sentinel_timeout': 2},
+    afkPlayerIds: const {'sentinel_afk'},
+    kickedPlayerIds: const {'sentinel_kicked'},
+    intendedAttacks: const [
+      IntendedAttack(
+        attackerUnitId: 'sentinel_attacker',
+        defenderCol: 30,
+        defenderRow: 30,
+        declaredAtTick: 41,
+        declaringPlayerId: 'sentinel_player',
+      ),
+    ],
+    diplomacy: diplomacy ?? _movementContactDiplomacy,
+    dominationHoldTurnsByPlayerId: const {'sentinel_player': 3},
+    culturalVictoryHoldTurnsByPlayerId: const {'sentinel_player': 4},
+    mapObjectiveHoldStatesByObjectiveId: const {
+      'sentinel_objective': MapObjectiveHoldState(
+        objectiveId: 'sentinel_objective',
+        playerId: 'sentinel_player',
+        holdTurns: 2,
+      ),
+    },
+    resourceTradeAgreements: const [
+      ResourceTradeAgreement(
+        id: 'movement_sentinel_trade',
+        exporterPlayerId: _movementOpponentId,
+        importerPlayerId: _movementActorId,
+        resource: ResourceType.coal,
+        goldPerTurn: 7,
+        remainingTurns: 9,
+      ),
+    ],
+    turnStartedAt: DateTime.utc(2026, 7, 1, 12),
+
     wonderRegistry: _movementSentinelWonderRegistry,
   );
 }
@@ -143,18 +145,18 @@ final _movementContactDiplomacy = DiplomacyState(
   contactKeys: {'player_1|player_2'},
 );
 
-MapData _movementMap(
+WorldMap _movementMap(
   ReducerParityFixture template, {
   required int cols,
   Map<({int col, int row}), List<TerrainType>> terrainOverrides = const {},
 }) {
-  return MapData(
+  return WorldMap(
     cols: cols,
     rows: 1,
     mapName: template.save.mapName,
     tiles: [
       for (var col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains:
@@ -193,8 +195,8 @@ ReducerParityFixture _movementFixture(
   ReducerParityFixture template, {
   required String id,
   required int tickOffset,
-  required MapData mapData,
-  required PersistentGameState state,
+  required WorldMap mapData,
+  required DomainState state,
   required MoveUnitCommand command,
 }) {
   final required = _requiredMovementCharacterization[id]!;
@@ -212,7 +214,9 @@ ReducerParityFixture _movementFixture(
     expectedAccepted: required.accepted,
     expectedReason: required.reason,
     expectedSave: reducerParitySave(template.save),
-    expectedState: _movementExpectedState(id, state).toJson(),
+    expectedState: CanonicalGameSnapshotCodec.encodeDomainState(
+      _movementExpectedState(id, state),
+    ),
     expectedEvents: reducerParityEvents(_movementExpectedEvents(id)),
   );
 }

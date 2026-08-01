@@ -110,19 +110,19 @@ GameCity _navalCity() {
   );
 }
 
-MapData _mapData({
+WorldMap _mapData({
   int cols = 1,
   int rows = 1,
   Set<CityHex> coast = const {},
   Set<CityHex> ocean = const {},
 }) {
-  return MapData(
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: _terrainFor(

@@ -23,7 +23,7 @@ final class AiRuntimeStrategyResolver {
   AiStrategyRegistry resolve({
     required String playerId,
     required GameSave save,
-    required GameState gameState,
+    required GameClientState gameState,
     required NetworkSession? networkSession,
   }) {
     final throttle = throttler.snapshotFor(

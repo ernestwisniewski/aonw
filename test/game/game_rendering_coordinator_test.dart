@@ -18,10 +18,10 @@ import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview_layer.dart';
 import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/map_objective_marker_layer.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -36,12 +36,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 part 'game_rendering_coordinator_queued_path_cases.dart';
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 4,
   rows: 1,
   tiles: [
     for (var col = 0; col < 4; col++)
-      TileData(
+      WorldTile(
         col: col,
         row: 0,
         terrains: const [TerrainType.grassland],
@@ -51,23 +51,7 @@ MapData _map() => MapData(
   ],
 );
 
-MapData _mapWithObjectives(List<MapObjectiveDefinition> objectives) => MapData(
-  cols: 4,
-  rows: 1,
-  objectives: objectives,
-  tiles: [
-    for (var col = 0; col < 4; col++)
-      TileData(
-        col: col,
-        row: 0,
-        terrains: const [TerrainType.grassland],
-        resources: const [],
-        height: 0,
-      ),
-  ],
-);
-
-TileData _tile(MapData map, int col) =>
+WorldTile _tile(WorldMap map, int col) =>
     map.tiles.firstWhere((tile) => tile.col == col && tile.row == 0);
 
 QueuedMovePath _queuedPath() => QueuedMovePath(
@@ -81,7 +65,7 @@ QueuedMovePath _queuedPath() => QueuedMovePath(
 );
 
 GameRenderingCoordinator _coordinator({
-  required MapData map,
+  required WorldMap map,
   required _RecordingMovePreviewLayer movePreview,
   UnitMarkerLayer? unitMarkers,
   FieldImprovementMarkerLayer? fieldImprovementMarkers,
@@ -131,15 +115,15 @@ void main() {
       final movePreview = _RecordingMovePreviewLayer();
 
       _coordinator(map: map, movePreview: movePreview).syncAll(
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [enemy],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(enemy, tile: _tile(map, 0)),
           ),
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(movePreview.lastPreview, isNull);
@@ -153,15 +137,15 @@ void main() {
       final movePreview = _RecordingMovePreviewLayer();
 
       _coordinator(map: map, movePreview: movePreview).syncAll(
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [commander],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander, tile: _tile(map, 0)),
           ),
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(movePreview.lastPreview?.unitId, commander.id);
@@ -184,9 +168,9 @@ void main() {
       final movePreview = _RecordingMovePreviewLayer();
 
       _coordinator(map: map, movePreview: movePreview).syncAll(
-        state: GameState(activePlayerId: 'player_1', units: [commander]),
+        state: GameClientState(activePlayerId: 'player_1', units: [commander]),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(movePreview.lastPreview?.unitId, commander.id);
@@ -234,12 +218,12 @@ void main() {
       final movePreview = _RecordingMovePreviewLayer();
 
       _coordinator(map: map, movePreview: movePreview).syncAll(
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [commander, worker],
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(
@@ -287,15 +271,15 @@ void main() {
       final movePreview = _RecordingMovePreviewLayer();
 
       _coordinator(map: map, movePreview: movePreview).syncAll(
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [merchant],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(merchant, tile: _tile(map, 1)),
           ),
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(movePreview.lastPreview?.unitId, merchant.id);
@@ -325,17 +309,17 @@ void main() {
       final movePreview = _RecordingMovePreviewLayer();
 
       _coordinator(map: map, movePreview: movePreview).syncAll(
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [commander],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(commander, tile: _tile(map, 0)),
             movePreview: preview,
             moveCommandActive: true,
           ),
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(movePreview.lastPreview, preview);
@@ -365,16 +349,16 @@ void main() {
       final movePreview = _RecordingMovePreviewLayer();
 
       _coordinator(map: map, movePreview: movePreview).syncAll(
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [commander],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             movePreview: preview,
             moveCommandActive: true,
           ),
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(movePreview.lastPreview, preview);
@@ -409,16 +393,16 @@ void main() {
       final movePreview = _RecordingMovePreviewLayer();
 
       _coordinator(map: map, movePreview: movePreview).syncAll(
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [enemy],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(enemy, tile: _tile(map, 0)),
             movePreview: preview,
           ),
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(movePreview.lastPreview, isNull);
@@ -440,9 +424,9 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         cityMarkers: cityMarkers,
       ).syncAll(
-        state: const GameState(cities: [city]),
+        state: GameClientState(cities: [city]),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(cityMarkers.lastHealthFractions[city.id], closeTo(0.25, 0.0001));
@@ -463,9 +447,9 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         cityMarkers: cityMarkers,
       ).syncAll(
-        state: const GameState(cities: [city]),
+        state: GameClientState(cities: [city]),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
         showCityLabels: false,
       );
 
@@ -492,9 +476,9 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         cityMarkers: cityMarkers,
       ).syncAll(
-        state: const GameState(cities: [city], artifacts: [artifact]),
+        state: GameClientState(cities: [city], artifacts: [artifact]),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(cityMarkers.lastCitiesWithStoredArtifacts, {city.id});
@@ -522,9 +506,9 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         cityMarkers: cityMarkers,
       ).syncAll(
-        state: GameState(cities: [city], research: research),
+        state: GameClientState(cities: [city], research: research),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(cityMarkers.lastResearch, research);
@@ -558,13 +542,13 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         fieldImprovementMarkers: fieldImprovementMarkers,
       ).syncAll(
-        state: GameState(
+        state: GameClientState(
           cities: const [city],
           fieldImprovements: const [improvement],
           research: research,
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(fieldImprovementMarkers.lastImprovements, const [improvement]);
@@ -587,9 +571,9 @@ void main() {
       final grid = coordinator.grid;
 
       coordinator.syncAll(
-        state: GameState(
+        state: GameClientState(
           fieldImprovements: const [improvement],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.fieldImprovement(
               improvement,
               tile: _tile(map, 1),
@@ -597,7 +581,7 @@ void main() {
           ),
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(fieldImprovementMarkers.lastSelectedHex, improvement.hex);
@@ -629,13 +613,13 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         artifactMarkers: artifactMarkers,
       ).syncAll(
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           artifacts: [artifact, carried],
           fogOfWar: fog,
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(artifactMarkers.lastArtifacts, [artifact]);
@@ -679,14 +663,14 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         unitMarkers: unitMarkers,
       ).syncAll(
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [ownUnit, hiddenEnemy],
           artifacts: [artifact],
           fogOfWar: fog,
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(unitMarkers.lastUnits.map((unit) => unit.id), [ownUnit.id]);
@@ -730,14 +714,14 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         artifactMarkers: artifactMarkers,
       ).syncAll(
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [unit],
           artifacts: [occupiedArtifact, clearArtifact],
           fogOfWar: fog,
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(artifactMarkers.lastArtifacts, [occupiedArtifact, clearArtifact]);
@@ -768,13 +752,13 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         artifactMarkers: artifactMarkers,
       ).syncAll(
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           artifacts: [artifact],
           fogOfWar: fog,
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(artifactMarkers.lastArtifacts, isEmpty);
@@ -813,7 +797,7 @@ void main() {
           movePreview: _RecordingMovePreviewLayer(),
           mapObjectiveMarkers: objectiveMarkers,
         ).syncAll(
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             units: [unit],
             fogOfWar: fog,
@@ -826,7 +810,7 @@ void main() {
             },
           ),
           parent: Component(),
-          viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+          viewModelNotifier: ValueNotifier(RenderState.empty),
         );
 
         expect(objectiveMarkers.lastObjectives, hasLength(1));
@@ -859,9 +843,9 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         mapObjectiveMarkers: objectiveMarkers,
       ).syncAll(
-        state: GameState(activePlayerId: 'player_1', fogOfWar: fog),
+        state: GameClientState(activePlayerId: 'player_1', fogOfWar: fog),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(objectiveMarkers.lastObjectives, isEmpty);
@@ -892,10 +876,10 @@ void main() {
           cityTerritory: cityTerritory,
           cityMarkers: cityMarkers,
         ).syncAll(
-          state: GameState(
+          state: GameClientState(
             cities: const [city],
             fieldImprovements: const [improvement],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.fieldImprovement(
                 improvement,
                 tile: _tile(map, 1),
@@ -903,7 +887,7 @@ void main() {
             ),
           ),
           parent: Component(),
-          viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+          viewModelNotifier: ValueNotifier(RenderState.empty),
         );
 
         expect(cityTerritory.lastSelectedCityId, city.id);
@@ -920,9 +904,9 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         cityTerritory: cityTerritory,
       ).syncAll(
-        state: const GameState(
+        state: GameClientState(
           cities: [
-            GameCity(
+            const GameCity(
               id: 'city_1',
               ownerPlayerId: 'player_1',
               name: 'City',
@@ -931,7 +915,7 @@ void main() {
           ],
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
         strategicView: true,
       );
 
@@ -965,13 +949,13 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         cityTerritory: cityTerritory,
       ).syncAll(
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           cities: const [city],
           fogOfWar: fog,
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(cityTerritory.lastCities, const [city]);
@@ -985,10 +969,10 @@ void main() {
       final map = _map();
       final threatOverlay = _RecordingThreatOverlayLayer();
       final warrior = GameUnit.startingWarrior(ownerPlayerId: 'player_1');
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [warrior],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(warrior, tile: _tile(map, 0)),
           pendingAction: PendingAttackTargeting(
             ownerPlayerId: warrior.ownerPlayerId,
@@ -1004,7 +988,7 @@ void main() {
       ).syncAll(
         state: state,
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(threatOverlay.lastState, same(state));
@@ -1022,15 +1006,15 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         threatOverlay: threatOverlay,
       ).syncAll(
-        state: GameState(
+        state: GameClientState(
           activePlayerId: 'player_1',
           units: [warrior],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(warrior, tile: _tile(map, 0)),
           ),
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(threatOverlay.clearCount, 1);
@@ -1055,14 +1039,14 @@ void main() {
         movePreview: _RecordingMovePreviewLayer(),
         threatOverlay: threatOverlay,
       ).syncAll(
-        state: GameState(
+        state: GameClientState(
           units: [worker, enemy],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(worker, tile: _tile(map, 0)),
           ),
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(threatOverlay.clearCount, 1);
@@ -1084,15 +1068,15 @@ void main() {
         cityManagement: cityManagement,
         threatOverlay: threatOverlay,
       ).syncAll(
-        state: GameState(
+        state: GameClientState(
           units: [warrior],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(warrior, tile: _tile(map, 0)),
             moveCommandActive: true,
           ),
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(movePreview.lastDimmed, isFalse);
@@ -1121,16 +1105,16 @@ void main() {
           movePreview: movePreview,
           cityManagement: cityManagement,
         ).syncAll(
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             units: [worker],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(worker, tile: _tile(map, 0)),
               moveCommandActive: true,
             ),
           ),
           parent: Component(),
-          viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+          viewModelNotifier: ValueNotifier(RenderState.empty),
         );
 
         expect(cityManagement.lastDimmed, isFalse);
@@ -1159,9 +1143,9 @@ void main() {
         movePreview: movePreview,
         threatOverlay: threatOverlay,
       ).syncAll(
-        state: GameState(
+        state: GameClientState(
           units: [attacker],
-          interaction: GameInteractionState(
+          interaction: InteractionState(
             selection: GameSelection.unit(attacker, tile: _tile(map, 0)),
             pendingAction: PendingAttackTargeting(
               ownerPlayerId: attacker.ownerPlayerId,
@@ -1171,7 +1155,7 @@ void main() {
           ),
         ),
         parent: Component(),
-        viewModelNotifier: ValueNotifier(GameRenderViewModel.empty),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
       expect(movePreview.lastDimmed, isTrue);
@@ -1181,7 +1165,7 @@ void main() {
 }
 
 class _NoopUnitMarkerLayer extends UnitMarkerLayer {
-  _NoopUnitMarkerLayer(MapData map)
+  _NoopUnitMarkerLayer(WorldMap map)
     : super(mapData: map, colorForPlayer: (_) => 0);
 
   @override
@@ -1198,7 +1182,7 @@ class _NoopUnitMarkerLayer extends UnitMarkerLayer {
 }
 
 class _RecordingUnitMarkerLayer extends UnitMarkerLayer {
-  _RecordingUnitMarkerLayer(MapData map)
+  _RecordingUnitMarkerLayer(WorldMap map)
     : super(mapData: map, colorForPlayer: (_) => 0);
 
   List<GameUnit> lastUnits = const [];
@@ -1398,7 +1382,7 @@ class _NoopEraTintOverlayLayer extends EraTintOverlayLayer {
   @override
   void sync({
     required Component parent,
-    required MapData mapData,
+    required WorldMap mapData,
     required PlayerResearchState playerResearch,
   }) {}
 }
@@ -1407,8 +1391,8 @@ class _NoopCityManagementOverlayLayer extends CityManagementOverlayLayer {
   @override
   void sync({
     required Component parent,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     bool Function(CityHex hex)? canShowHex,
     bool dimmed = false,
@@ -1421,8 +1405,8 @@ class _RecordingCityManagementOverlayLayer extends CityManagementOverlayLayer {
   @override
   void sync({
     required Component parent,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     bool Function(CityHex hex)? canShowHex,
     bool dimmed = false,
@@ -1438,7 +1422,7 @@ class _NoopCityFoundingPreviewLayer extends CityFoundingPreviewLayer {
   void sync({
     required Component parent,
     required CityFoundingDraft? draft,
-    required MapData mapData,
+    required WorldMap mapData,
     required Iterable<GameCity> cities,
     bool Function(CityHex hex)? canShowHex,
   }) {}
@@ -1448,7 +1432,7 @@ class _NoopFogOfWarOverlayLayer extends FogOfWarOverlayLayer {
   @override
   void sync({
     required Component parent,
-    required MapData mapData,
+    required WorldMap mapData,
     required FogVisibilityQuery visibility,
   }) {}
 }
@@ -1457,8 +1441,8 @@ class _NoopThreatOverlayLayer extends ThreatOverlayLayer {
   @override
   void sync({
     required Component parent,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     CombatRuleset combatRuleset = CombatRuleset.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     bool dimmed = false,
@@ -1466,16 +1450,16 @@ class _NoopThreatOverlayLayer extends ThreatOverlayLayer {
 }
 
 class _RecordingThreatOverlayLayer extends ThreatOverlayLayer {
-  GameState? lastState;
-  MapData? lastMapData;
+  GameClientState? lastState;
+  WorldMap? lastMapData;
   bool? lastDimmed;
   var clearCount = 0;
 
   @override
   void sync({
     required Component parent,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     CombatRuleset combatRuleset = CombatRuleset.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     bool dimmed = false,

@@ -20,8 +20,8 @@ abstract final class DomainEventPresentationProjector {
     required Iterable<RendererEffect> interactionEffects,
     required Iterable<GameEvent> events,
     required Iterable<MovementCommandExecution> visibleMovementExecutions,
-    required GameState state,
-    required GameState previousState,
+    required GameClientState state,
+    required GameClientState previousState,
     AppLocalizations? l10n,
     String? viewerPlayerId,
     int? turn,
@@ -48,8 +48,8 @@ abstract final class DomainEventPresentationProjector {
   static List<RendererEffect> project({
     required Iterable<RendererEffect> interactionEffects,
     required Iterable<GameEvent> events,
-    required GameState state,
-    required GameState previousState,
+    required GameClientState state,
+    required GameClientState previousState,
     AppLocalizations? l10n,
     String? viewerPlayerId,
     int? turn,
@@ -75,8 +75,8 @@ abstract final class DomainEventPresentationProjector {
     required Iterable<RendererEffect> interactionEffects,
     required Iterable<GameEvent> events,
     required Iterable<MovementCommandExecution> visibleMovementExecutions,
-    required GameState state,
-    required GameState previousState,
+    required GameClientState state,
+    required GameClientState previousState,
     AppLocalizations? l10n,
     String? viewerPlayerId,
     int? turn,
@@ -110,8 +110,8 @@ abstract final class DomainEventPresentationProjector {
     required List<GameEvent> events,
     required MovementEventExecutionPlan movementPlan,
     required Set<String> combatRetreatUnitIds,
-    required GameState state,
-    required GameState previousState,
+    required GameClientState state,
+    required GameClientState previousState,
     AppLocalizations? l10n,
     String? viewerPlayerId,
     int? turn,
@@ -174,8 +174,8 @@ abstract final class DomainEventPresentationProjector {
     required Iterable<RendererEffect> interactionEffects,
     required Iterable<AnimateUnitMoveEffect> movementEffects,
     required Iterable<GameEvent> events,
-    required GameState state,
-    required GameState previousState,
+    required GameClientState state,
+    required GameClientState previousState,
     Set<String> skipUnitMoveIds = const {},
     AppLocalizations? l10n,
     String? viewerPlayerId,
@@ -207,8 +207,8 @@ abstract final class DomainEventPresentationProjector {
 
   static List<CombatAnimationFact> _combatFacts({
     required List<GameEvent> events,
-    required GameState previousState,
-    required GameState state,
+    required GameClientState previousState,
+    required GameClientState state,
   }) {
     final unitPositions = {
       for (final unit in previousState.units) unit.id: (unit.col, unit.row),
@@ -246,12 +246,12 @@ abstract final class DomainEventPresentationProjector {
     return facts;
   }
 
-  static (int, int)? _unitPosition(GameState state, String unitId) {
+  static (int, int)? _unitPosition(GameClientState state, String unitId) {
     final unit = state.unitById(unitId);
     return unit == null ? null : (unit.col, unit.row);
   }
 
-  static (int, int)? _cityPosition(GameState state, String cityId) {
+  static (int, int)? _cityPosition(GameClientState state, String cityId) {
     final city = state.cityById(cityId);
     return city == null ? null : (city.center.col, city.center.row);
   }

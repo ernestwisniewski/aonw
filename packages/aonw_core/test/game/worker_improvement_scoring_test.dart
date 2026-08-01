@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('WorkerImprovementScoring', () {
     test('uses unified city tile yield as base yield', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.grassland],
@@ -26,7 +26,7 @@ void main() {
     });
 
     test('responds to injected ruleset base yields', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.grassland],

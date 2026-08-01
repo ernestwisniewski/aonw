@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -11,13 +11,13 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../support/movement_engine_test_driver.dart';
 import '../../../support/turn_engine_test_driver.dart';
 
-MapData _map(int cols, int rows) => MapData(
+WorldMap _map(int cols, int rows) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (int row = 0; row < rows; row++)
       for (int col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],
@@ -27,13 +27,13 @@ MapData _map(int cols, int rows) => MapData(
   ],
 );
 
-MapData _map7x7() => MapData(
+WorldMap _map7x7() => WorldMap(
   cols: 7,
   rows: 7,
   tiles: [
     for (int row = 0; row < 7; row++)
       for (int col = 0; col < 7; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],
@@ -61,7 +61,7 @@ void main() {
     test('resolveMovementCommandForTest emits UnitMovedEvent', () {
       final mapData = _map(5, 5);
       final unit = _commander(col: 2, row: 3);
-      final state = GameState(units: [unit], activePlayerId: 'player_1');
+      final state = GameClientState(units: [unit], activePlayerId: 'player_1');
 
       final command = MoveUnitCommand(unit.id, 3, 3);
       final transition = resolveMovementCommandForTest(state, command, mapData);
@@ -80,7 +80,7 @@ void main() {
       final mapData = _map7x7();
       final settler = _settler(col: 3, row: 3);
 
-      final scheduled = GameState(
+      final scheduled = GameClientState(
         playerCountries: const {'player_1': PlayerCountry.france},
         units: [
           settler.copyWithCityFoundingJob(
@@ -124,7 +124,7 @@ void main() {
         ],
         population: 1,
       );
-      const state = GameState(cities: [city], activePlayerId: 'player_1');
+      final state = GameClientState(cities: [city], activePlayerId: 'player_1');
 
       final transition = resolveEndTurnForTest(state, 'player_1', mapData);
 
@@ -142,7 +142,7 @@ void main() {
         center: CityHex(col: 3, row: 3),
         storedFood: 100,
       );
-      const state = GameState(cities: [city], activePlayerId: 'player_1');
+      final state = GameClientState(cities: [city], activePlayerId: 'player_1');
 
       final transition = resolveEndTurnForTest(state, 'player_1', mapData);
 
@@ -163,7 +163,7 @@ void main() {
 
         // State has no cities or units owned by 'player_2', so all processors
         // will return changed: false — exercising the no-change code path.
-        const state = GameState(activePlayerId: 'player_2');
+        final state = GameClientState(activePlayerId: 'player_2');
 
         final transition = resolveEndTurnForTest(state, 'player_2', mapData);
 

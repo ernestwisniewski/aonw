@@ -8,13 +8,14 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/infrastructure/persistence/json_game_repository.dart';
 import 'package:aonw/game/infrastructure/persistence/json_replay_store.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -65,7 +66,7 @@ void main() {
         'p1',
         'p2',
       });
-      expect(snapshot.runtimeState, GameRuntimeState.empty);
+      expect(snapshot.domain.actions, DomainActionState.empty);
       expect(
         await File('${tempDir.path}/$saveId/snapshot.json').exists(),
         isTrue,
@@ -126,13 +127,13 @@ void main() {
 
     test('creates new saves with known fog around starting warriors', () async {
       const players = [Player(id: 'p1', name: 'Alice', colorValue: 0xFF4a7fc4)];
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 5,
         rows: 5,
         tiles: [
           for (var row = 0; row < 5; row++)
             for (var col = 0; col < 5; col++)
-              TileData(
+              WorldTile(
                 col: col,
                 row: row,
                 terrains: const [TerrainType.plains],
@@ -227,17 +228,17 @@ void main() {
       final unit = GameUnit.startingCommander(ownerPlayerId: 'p1');
 
       await repository.save(
-        SaveSnapshot(
+        GameSnapshotFactory.create(
           save: original.save.copyWith(turn: 3),
           playerColors: const {'p1': 0xFF4a7fc4},
           units: [unit],
           cities: [city],
-          runtimeState: const GameRuntimeState(
-            pendingAction: PendingCityWorkedHexSelection(
-              ownerPlayerId: 'p1',
-              cityId: 'city_1',
-            ),
+
+          pendingAction: const PendingCityWorkedHexSelection(
+            ownerPlayerId: 'p1',
+            cityId: 'city_1',
           ),
+
           eventLogOffset: 7,
         ),
       );
@@ -248,7 +249,7 @@ void main() {
       expect(reloaded.cities.single.id, city.id);
       expect(reloaded.eventLogOffset, 7);
       expect(
-        reloaded.runtimeState.pendingAction,
+        reloaded.domain.actions.pendingAction,
         isA<PendingCityWorkedHexSelection>(),
       );
       expect(await File('${tempDir.path}/$saveId/game.json').exists(), isFalse);
@@ -274,8 +275,8 @@ void main() {
       final replayStore = JsonReplayStore(savesDir: tempDir);
 
       await repository.save(
-        original.copyWith(
-          save: original.save.copyWith(turn: 5),
+        original.withGameSave(
+          original.save.copyWith(turn: 5),
           eventLogOffset: 12,
         ),
       );
@@ -347,7 +348,7 @@ void main() {
         );
 
         await repository.save(
-          SaveSnapshot(
+          GameSnapshotFactory.create(
             save: original.save.copyWith(turn: 4),
             units: [unit],
             eventLogOffset: 11,
@@ -383,14 +384,14 @@ class _SequenceIdGenerator implements IdGenerator {
   String nextId() => 'save_${_next++}';
 }
 
-MapData _flatMap({required int cols, required int rows}) {
-  return MapData(
+WorldMap _flatMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

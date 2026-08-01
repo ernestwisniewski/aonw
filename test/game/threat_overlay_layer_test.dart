@@ -3,9 +3,9 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/threat_overlay.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/threat_overlay_layer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -31,9 +31,9 @@ void main() {
       final layer = ThreatOverlayLayer()
         ..sync(
           parent: Component(),
-          state: GameState(
+          state: GameClientState(
             units: [selected, enemy],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(selected, tile: _tile(map, 0, 1)),
             ),
           ),
@@ -89,11 +89,11 @@ void main() {
       final layer = ThreatOverlayLayer()
         ..sync(
           parent: Component(),
-          state: GameState(
+          state: GameClientState(
             activePlayerId: 'player_1',
             units: [selected, hiddenEnemy, worker],
             fogOfWar: fog,
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(selected, tile: _tile(map, 0, 1)),
             ),
           ),
@@ -120,9 +120,9 @@ void main() {
       final layer = ThreatOverlayLayer()
         ..sync(
           parent: Component(),
-          state: GameState(
+          state: GameClientState(
             units: [selected, enemy],
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(selected, tile: _tile(map, 0, 1)),
             ),
           ),
@@ -133,7 +133,7 @@ void main() {
 
       layer.sync(
         parent: Component(),
-        state: GameState(units: [selected, enemy]),
+        state: GameClientState(units: [selected, enemy]),
         mapData: map,
       );
 
@@ -161,13 +161,13 @@ void main() {
   });
 }
 
-MapData _map(int cols, int rows) => MapData(
+WorldMap _map(int cols, int rows) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (var row = 0; row < rows; row++)
       for (var col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],
@@ -177,7 +177,7 @@ MapData _map(int cols, int rows) => MapData(
   ],
 );
 
-TileData _tile(MapData map, int col, int row) =>
+WorldTile _tile(WorldMap map, int col, int row) =>
     map.tiles.firstWhere((tile) => tile.col == col && tile.row == row);
 
 GameUnit _unit({

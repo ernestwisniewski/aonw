@@ -347,7 +347,7 @@ class HudModeBannerSpec {
   /// Returns the banner spec for the current UI state, or null when no
   /// contextual mode is active.
   ///
-  /// [moveTargetingActive] reflects [GameState.moveCommandActive]; it is a
+  /// [moveTargetingActive] reflects [GameClientState.moveCommandActive]; it is a
   /// transient UI flag (not a [PendingPlayerAction]) but the player perceives
   /// it as a mode they entered, so the banner treats it on equal footing.
   static HudModeBannerSpec? resolve({

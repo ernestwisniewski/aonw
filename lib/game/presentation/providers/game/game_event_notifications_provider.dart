@@ -28,8 +28,8 @@ final gameActivityLogProvider =
 class GameEventNotification {
   final int id;
   final GameEvent event;
-  final GameState state;
-  final GameState? previousState;
+  final GameClientState state;
+  final GameClientState? previousState;
   final String playerId;
   final int? turn;
   final GameActivityContext context;
@@ -57,8 +57,8 @@ class GameEventNotificationsNotifier
 
   void addAll(
     List<GameEvent> events,
-    GameState gameState, {
-    GameState? previousState,
+    GameClientState gameState, {
+    GameClientState? previousState,
     String? visiblePlayerId,
     int? turn,
   }) {

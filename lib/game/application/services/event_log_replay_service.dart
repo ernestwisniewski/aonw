@@ -29,8 +29,8 @@ final class AuthoritativeSnapshotRequiredException implements Exception {
 }
 
 class EventLogReplayResult {
-  final GameState state;
-  final SaveSnapshot snapshot;
+  final GameClientState state;
+  final CanonicalGameSnapshot snapshot;
   final int offset;
 
   const EventLogReplayResult({
@@ -51,8 +51,8 @@ class EventLogReplayService {
 
   Future<EventLogReplayResult> replaySinceSnapshot({
     required String saveId,
-    required SaveSnapshot snapshot,
-    required GameState state,
+    required CanonicalGameSnapshot snapshot,
+    required GameClientState state,
   }) async {
     var currentSnapshot = snapshot;
     var currentState = state;

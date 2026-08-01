@@ -7,9 +7,9 @@ import 'package:aonw/game/presentation/widgets/selection_info/contents/resources
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,7 +19,7 @@ void main() {
     final l10n = AppLocalizationsEn();
 
     test('describe current yield, improvement and future resource hooks', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.grassland],
@@ -36,7 +36,7 @@ void main() {
 
       final model = HudSelectionInfoModelFactory.from(
         selection: GameSelection.tile(tile),
-        gameState: const GameState(activePlayerId: 'player_1', cities: [city]),
+        gameState: GameClientState(activePlayerId: 'player_1', cities: [city]),
         mapData: _mapData(tile),
         cityRuleset: CityRulesets.standard,
         technologyRuleset: TechnologyRulesets.standard,
@@ -62,7 +62,7 @@ void main() {
     });
 
     test('keeps strategic resources visible as expansion targets', () {
-      const tile = TileData(
+      final tile = WorldTile(
         col: 2,
         row: 0,
         terrains: [TerrainType.hills],
@@ -72,7 +72,7 @@ void main() {
 
       final model = HudSelectionInfoModelFactory.from(
         selection: GameSelection.tile(tile),
-        gameState: const GameState(activePlayerId: 'player_1'),
+        gameState: GameClientState(activePlayerId: 'player_1'),
         mapData: _mapData(tile),
         cityRuleset: CityRulesets.standard,
         technologyRuleset: TechnologyRulesets.standard,
@@ -166,6 +166,6 @@ void main() {
   });
 }
 
-MapData _mapData(TileData tile) {
-  return MapData(cols: 4, rows: 4, tiles: [tile]);
+WorldMap _mapData(WorldTile tile) {
+  return WorldMap(cols: 4, rows: 4, tiles: [tile]);
 }

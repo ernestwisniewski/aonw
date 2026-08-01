@@ -20,13 +20,17 @@ class _MemorySnapshotStore implements SnapshotStore {
 final class _MemoryReplayStore implements ReplayStore {
   _MemoryReplayStore(this.snapshot);
 
-  SaveSnapshot? snapshot;
+  CanonicalGameSnapshot? snapshot;
 
   @override
-  Future<SaveSnapshot?> initialSnapshot(String saveId) async => snapshot;
+  Future<CanonicalGameSnapshot?> initialSnapshot(String saveId) async =>
+      snapshot;
 
   @override
-  Future<void> saveInitialSnapshot(String saveId, SaveSnapshot snapshot) async {
+  Future<void> saveInitialSnapshot(
+    String saveId,
+    CanonicalGameSnapshot snapshot,
+  ) async {
     this.snapshot = snapshot;
   }
 

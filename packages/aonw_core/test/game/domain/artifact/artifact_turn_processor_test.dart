@@ -2,41 +2,41 @@ import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('ArtifactTurnProcessor parity', () {
-    test('matches the persistent wrapper through excavation completion', () {
+  group('ArtifactTurnProcessor', () {
+    test('advances excavation through completion', () {
       final input = _excavationInput(remainingTurns: 2);
-      final pending = _advanceBoth(input);
+      final pending = _advance(input);
 
-      expect(pending.neutral.changed, isTrue);
-      expect(pending.neutral.events, isEmpty);
-      expect(pending.neutral.artifacts.first.location.remainingTurns, 1);
-      expect(pending.neutral.units.first.excavatingArtifactId, 'artifact_1');
-      expect(pending.neutral.units.last, input.units.last);
+      expect(pending.changed, isTrue);
+      expect(pending.events, isEmpty);
+      expect(pending.artifacts.first.location.remainingTurns, 1);
+      expect(pending.units.first.excavatingArtifactId, 'artifact_1');
+      expect(pending.units.last, input.units.last);
 
-      final completed = _advanceBoth(
-        PersistentGameState(
-          units: pending.neutral.units,
-          artifacts: pending.neutral.artifacts,
+      final completed = _advance(
+        DomainState.snapshot(
+          units: pending.units,
+          artifacts: pending.artifacts,
         ),
       );
-      final unit = completed.neutral.units.first;
-      final artifact = completed.neutral.artifacts.first;
+      final unit = completed.units.first;
+      final artifact = completed.artifacts.first;
 
-      expect(completed.neutral.changed, isTrue);
+      expect(completed.changed, isTrue);
       expect(unit.excavatingArtifactId, isNull);
       expect(unit.carriedArtifactId, artifact.id);
       expect(artifact.location.isCarried, isTrue);
       expect(artifact.location.unitId, unit.id);
       expect(
-        completed.neutral.events.single,
+        completed.events.single,
         isA<ArtifactCarriedEvent>()
             .having((event) => event.artifactId, 'artifactId', 'artifact_1')
             .having((event) => event.ownerPlayerId, 'owner', 'p1')
             .having((event) => event.unitId, 'unit', 'scout_1')
             .having((event) => (event.col, event.row), 'hex', (0, 0)),
       );
-      expect(() => completed.neutral.units.clear(), throwsUnsupportedError);
-      expect(() => completed.neutral.artifacts.clear(), throwsUnsupportedError);
+      expect(() => completed.units.clear(), throwsUnsupportedError);
+      expect(() => completed.artifacts.clear(), throwsUnsupportedError);
     });
 
     test('matches cancellation of an invalid excavation binding', () {
@@ -60,16 +60,16 @@ void main() {
         ),
       );
 
-      final result = _advanceBoth(
-        PersistentGameState(units: [unit], artifacts: const [artifact]),
+      final result = _advance(
+        DomainState.snapshot(units: [unit], artifacts: const [artifact]),
       );
 
-      expect(result.neutral.changed, isTrue);
-      expect(result.neutral.units.single.excavatingArtifactId, isNull);
-      expect(result.neutral.artifacts.single.location.isOnMap, isTrue);
-      expect(result.neutral.artifacts.single.location.col, 0);
-      expect(result.neutral.artifacts.single.location.row, 0);
-      expect(result.neutral.events, isEmpty);
+      expect(result.changed, isTrue);
+      expect(result.units.single.excavatingArtifactId, isNull);
+      expect(result.artifacts.single.location.isOnMap, isTrue);
+      expect(result.artifacts.single.location.col, 0);
+      expect(result.artifacts.single.location.row, 0);
+      expect(result.events, isEmpty);
     });
 
     test(
@@ -81,42 +81,24 @@ void main() {
           artifacts: input.artifacts,
           playerIds: const ['', ''],
         );
-        final persistent = PersistentArtifactTurnProcessor.advanceForPlayers(
-          state: input,
-          playerIds: const ['', ''],
-        );
-
         expect(neutral.changed, isFalse);
         expect(identical(neutral.units, input.units), isTrue);
         expect(identical(neutral.artifacts, input.artifacts), isTrue);
-        expect(persistent.changed, isFalse);
-        expect(identical(persistent.state, input), isTrue);
         expect(neutral.events, isEmpty);
-        expect(persistent.events, isEmpty);
       },
     );
   });
 }
 
-({ArtifactTurnResult neutral, PersistentArtifactTurnResult persistent})
-_advanceBoth(PersistentGameState input) {
-  final neutral = ArtifactTurnProcessor.advanceForPlayers(
+ArtifactTurnResult _advance(DomainState input) {
+  return ArtifactTurnProcessor.advanceForPlayers(
     units: input.units,
     artifacts: input.artifacts,
     playerIds: const ['p1', 'p1', ''],
   );
-  final persistent = PersistentArtifactTurnProcessor.advanceForPlayers(
-    state: input,
-    playerIds: const ['p1', 'p1', ''],
-  );
-
-  expect(neutral.changed, persistent.changed);
-  expect(neutral.units, persistent.state.units);
-  expect(neutral.artifacts, persistent.state.artifacts);
-  return (neutral: neutral, persistent: persistent);
 }
 
-PersistentGameState _excavationInput({required int remainingTurns}) {
+DomainState _excavationInput({required int remainingTurns}) {
   final selected = GameUnit(
     id: 'scout_1',
     ownerPlayerId: 'p1',
@@ -135,7 +117,7 @@ PersistentGameState _excavationInput({required int remainingTurns}) {
     row: 0,
     excavatingArtifactId: 'artifact_2',
   );
-  return PersistentGameState(
+  return DomainState.snapshot(
     units: [selected, foreign],
     artifacts: [
       WorldArtifact(

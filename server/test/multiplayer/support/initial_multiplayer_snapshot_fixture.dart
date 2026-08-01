@@ -66,12 +66,21 @@ final _initialSnapshotPlayers = [
   ),
 ];
 
-WireSnapshot _legacyInitialSnapshotOracle({
-  required MapData mapData,
+WireSnapshot _currentInitialSnapshotOracle({
+  required WorldMap mapData,
   required WireMatch match,
   required DateTime startedAt,
 }) {
-  mapData.mapName ??= match.mapName;
+  final effectiveMap = mapData.mapName != null
+      ? mapData
+      : WorldMap(
+          cols: mapData.cols,
+          rows: mapData.rows,
+          tiles: mapData.tiles,
+          objectives: mapData.objectives,
+          mapName: match.mapName,
+          defaultZoom: mapData.defaultZoom,
+        );
   final startPositionSeed = StartingPositionSeed.fromParts([
     startedAt,
     match.id,
@@ -81,18 +90,18 @@ WireSnapshot _legacyInitialSnapshotOracle({
   ]);
   final units = StartingUnits.unitsForPlayers(
     _initialSnapshotPlayers,
-    mapData: mapData,
+    mapData: effectiveMap,
     startPositionSeed: startPositionSeed,
   );
   final artifacts = WorldArtifactGenerator.generate(
-    mapData: mapData,
+    mapData: effectiveMap,
     startingUnits: units,
     seed: startPositionSeed,
   );
   final playerIds = _initialSnapshotPlayers.map((player) => player.id);
   final fogOfWar = const FogOfWarService().recompute(
     current: FogOfWarState.empty,
-    mapData: mapData,
+    mapData: effectiveMap,
     playerIds: playerIds,
     units: units,
     cities: const [],
@@ -120,7 +129,7 @@ WireSnapshot _legacyInitialSnapshotOracle({
     players: _initialSnapshotPlayers,
     gameMode: GameMode.multiplayer,
   );
-  final state = PersistentGameState.snapshot(
+  final state = DomainState.snapshot(
     playerColors: {
       for (final player in _initialSnapshotPlayers)
         player.id: player.colorValue,
@@ -131,24 +140,25 @@ WireSnapshot _legacyInitialSnapshotOracle({
     units: units,
     artifacts: artifacts,
     fogOfWar: fogOfWar,
-    runtimeState: GameRuntimeState.snapshot(diplomacy: diplomacy),
+    diplomacy: diplomacy,
+    turnStartedAt: startedAt,
   );
   return WireSnapshot(
     matchId: match.id,
     offset: 0,
     save: save.toJson(),
-    state: state.toJson(),
+    state: CanonicalGameSnapshotCodec.encodeDomainState(state),
   );
 }
 
-MapData _initialSnapshotMap() {
-  return MapData(
+WorldMap _initialSnapshotMap() {
+  return WorldMap(
     cols: 8,
     rows: 8,
     tiles: [
       for (var col = 0; col < 8; col += 1)
         for (var row = 0; row < 8; row += 1)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.grassland],
@@ -162,8 +172,8 @@ MapData _initialSnapshotMap() {
 final class _InitialSnapshotMapCatalog implements MultiplayerMapCatalog {
   const _InitialSnapshotMapCatalog(this.mapData);
 
-  final MapData mapData;
+  final WorldMap mapData;
 
   @override
-  Future<MapData> loadAssetMap(String mapName) async => mapData;
+  Future<WorldMap> loadAssetMap(String mapName) async => mapData;
 }

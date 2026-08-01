@@ -20,10 +20,10 @@ const _playerId = 'player_1';
 void main() {
   test('direct local move preserves inactive presentation targeting', () {
     final unit = _unit(id: 'mover', movementPoints: 4);
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: _playerId,
       units: [unit],
-      interaction: GameInteractionState(selection: GameSelection.unit(unit)),
+      interaction: InteractionState(selection: GameSelection.unit(unit)),
     );
     final baseSnapshot = _snapshot(state);
     final savedAt = DateTime.utc(2026, 7, 29, 18);
@@ -60,7 +60,7 @@ void main() {
 
   test('capacity rejection keeps state and projects stable HUD feedback', () {
     final unit = _unit(id: 'mover', movementPoints: 10);
-    final state = GameState(activePlayerId: _playerId, units: [unit]);
+    final state = GameClientState(activePlayerId: _playerId, units: [unit]);
     final baseSnapshot = _snapshot(state);
 
     final result =
@@ -109,10 +109,10 @@ void main() {
         UnitMovementStep(col: 1, row: 0, enterCost: 4, cumulativeCost: 4),
       ],
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: _playerId,
       units: [unit],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(unit),
         moveCommandActive: true,
         movePreview: preview,
@@ -154,10 +154,10 @@ void main() {
 
   test('preview confirmation ends targeting when the player cannot act', () {
     final unit = _unit(id: 'mover');
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: _playerId,
       units: [unit],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(unit),
         moveCommandActive: true,
         movePreview: UnitMovementPlan(
@@ -202,10 +202,10 @@ void main() {
         movementPoints: 0,
         posture: UnitPosture.fortified,
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: _playerId,
         units: [unit],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(unit),
           pendingAction: const PendingUnitTurnSkip(
             ownerPlayerId: _playerId,
@@ -240,11 +240,11 @@ void main() {
         type: GameUnitType.scout,
         movementPoints: 3,
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: _playerId,
         units: [scout],
         fogOfWar: _fog(visibleCols: 1),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(scout),
           moveCommandActive: true,
           cityFoundingDraft: CityFoundingDraft(
@@ -275,11 +275,11 @@ void main() {
 
   test('merchant and detachment project their exact interaction cleanup', () {
     final merchant = _unit(id: 'merchant', type: GameUnitType.merchant);
-    final merchantState = GameState(
+    final merchantState = GameClientState(
       activePlayerId: _playerId,
       units: [merchant],
       cities: [_city('origin', 0), _city('destination', 3)],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(merchant),
         pendingAction: const PendingMerchantTradeRouteSelection(
           ownerPlayerId: _playerId,
@@ -317,11 +317,11 @@ void main() {
       row: 1,
       army: const [ArmyTroop(type: TroopType.warrior, count: 1)],
     );
-    final detachmentState = GameState(
+    final detachmentState = GameClientState(
       activePlayerId: _playerId,
       units: [commander],
       fogOfWar: _fogGrid(cols: 4, rows: 3),
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.tile(_map(cols: 4, rows: 3).tileAt(0, 0)!),
         moveCommandActive: true,
         cityFoundingDraft: CityFoundingDraft(
@@ -350,7 +350,7 @@ void main() {
 
   test('accepted merchant identity still clears its presentation draft', () {
     final merchant = _unit(id: 'merchant', type: GameUnitType.merchant);
-    final initial = GameState(
+    final initial = GameClientState(
       activePlayerId: _playerId,
       units: [merchant],
       cities: [_city('origin', 0), _city('destination', 3)],
@@ -407,17 +407,17 @@ void main() {
 
   test('movement projection preserves sparse raw persistence envelope', () {
     final unit = _unit(id: 'mover', movementPoints: 3);
-    final baseSnapshot = SaveSnapshot(
+    final baseSnapshot = GameSnapshotFactory.create(
       save: _save().copyWith(players: const [], gameMode: GameMode.multiplayer),
       playerColors: const {_playerId: 0xFF010203},
       playerCountries: const {'country_only': PlayerCountry.canada},
       units: [unit],
-      runtimeState: GameRuntimeState.snapshot(
-        submittedPlayerIds: const {'session_only'},
-        timeoutStreaksByPlayerId: const {'timeout_only': 2},
-        afkPlayerIds: const {'afk_only'},
-        kickedPlayerIds: const {'kicked_only'},
-      ),
+
+      submittedPlayerIds: const {'session_only'},
+      timeoutStreaksByPlayerId: const {'timeout_only': 2},
+      afkPlayerIds: const {'afk_only'},
+      kickedPlayerIds: const {'kicked_only'},
+
       eventLogOffset: 73,
     );
     final before = SaveSnapshotCodec.toJson(baseSnapshot);
@@ -425,7 +425,7 @@ void main() {
 
     final result = _resolver(_map(cols: 2)).resolve(
       baseSnapshot: baseSnapshot,
-      currentState: baseSnapshot.toGameState(activePlayerId: _playerId),
+      currentState: baseSnapshot.toClientState(activePlayerId: _playerId),
       command: const MoveUnitCommand('mover', 1, 0),
       savedAt: savedAt,
       context: const GameCommandContext(actorPlayerId: _playerId),
@@ -440,6 +440,6 @@ void main() {
     expect(result.snapshot.eventLogOffset, 73);
     expect(result.snapshot.units.single.col, 1);
     expect(result.snapshot.persistedTurnStartedAt, isNull);
-    expect(result.snapshot.runtimeState.submittedPlayerIds, {'session_only'});
+    expect(result.snapshot.domain.submittedPlayerIds, {'session_only'});
   });
 }

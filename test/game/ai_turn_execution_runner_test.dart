@@ -302,7 +302,7 @@ AiTurnReport _report({
     planningSource: planningSource,
     terminalCommand: const EndTurnCommand('ai_1'),
     terminalUiEffects: const [JumpCameraEffect(col: 2, row: 3)],
-    finalState: const GameState(activePlayerId: 'ai_1'),
+    finalState: GameClientState(activePlayerId: 'ai_1'),
   );
 }
 

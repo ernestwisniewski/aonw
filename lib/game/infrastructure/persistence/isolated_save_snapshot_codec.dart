@@ -10,7 +10,7 @@ import 'package:aonw/game/infrastructure/persistence/save_snapshot_envelope_code
 abstract final class IsolatedSaveSnapshotCodec {
   static const _isolateDecodeThreshold = 256 * 1024;
 
-  static Future<SaveSnapshot> decode(String source) async {
+  static Future<CanonicalGameSnapshot> decode(String source) async {
     if (source.length < _isolateDecodeThreshold) {
       return _decode(source);
     }
@@ -19,7 +19,7 @@ abstract final class IsolatedSaveSnapshotCodec {
     });
   }
 
-  static Future<String> encode(SaveSnapshot snapshot) {
+  static Future<String> encode(CanonicalGameSnapshot snapshot) {
     return Isolate.run(() => jsonEncode(SaveSnapshotCodec.toJson(snapshot)));
   }
 
@@ -37,7 +37,7 @@ abstract final class IsolatedSaveSnapshotCodec {
   }
 }
 
-SaveSnapshot _decode(String source) {
+CanonicalGameSnapshot _decode(String source) {
   final json = jsonDecode(source) as Map<String, dynamic>;
   return SaveSnapshotCodec.fromJson(json);
 }

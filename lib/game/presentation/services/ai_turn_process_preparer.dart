@@ -43,14 +43,14 @@ typedef AiTurnStrategyRegistryFactory =
     AiStrategyRegistry Function({
       required String playerId,
       required GameSave save,
-      required GameState gameState,
+      required GameClientState gameState,
       required NetworkSession? networkSession,
     });
 
 final class PreparedAiTurnProcess {
   final GameRepository repository;
   final RunAiTurnUseCase useCase;
-  final SaveSnapshot snapshot;
+  final CanonicalGameSnapshot snapshot;
   final String saveId;
   final String playerId;
 
@@ -154,7 +154,7 @@ final class AiTurnProcessPreparer {
       return null;
     }
 
-    final currentState = snapshot.toGameState(
+    final currentState = snapshot.toClientState(
       activePlayerId: playerId,
       activePlayerCanAct: true,
     );
@@ -177,7 +177,7 @@ final class AiTurnProcessPreparer {
           planExecutor: planExecutor,
         ),
         ruleset: rulesetReader(),
-        mapData: currentSession.mapData.indexedReadView(),
+        mapData: currentSession.mapData,
         precomputeCache: precomputeCache,
         strategicPlanProvider: strategicPlanProvider,
         recentHostilityTracker: AiRecentHostilityTracker(

@@ -2,9 +2,7 @@ import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -63,20 +61,18 @@ void main() {
 }
 
 MapTraversalView _canonicalMapView({required int cols, required int rows}) {
-  return WorldMapReadView(
-    WorldMap(
-      cols: cols,
-      rows: rows,
-      tiles: [
-        for (var row = 0; row < rows; row += 1)
-          for (var col = 0; col < cols; col += 1)
-            WorldTile(
-              coordinate: HexCoord(col: col, row: row),
-              terrains: const [TerrainType.plains],
-              resources: const [],
-              height: 0,
-            ),
-      ],
-    ),
+  return WorldMap(
+    cols: cols,
+    rows: rows,
+    tiles: [
+      for (var row = 0; row < rows; row += 1)
+        for (var col = 0; col < cols; col += 1)
+          WorldTile.at(
+            coordinate: HexCoord(col: col, row: row),
+            terrains: const [TerrainType.plains],
+            resources: const [],
+            height: 0,
+          ),
+    ],
   );
 }

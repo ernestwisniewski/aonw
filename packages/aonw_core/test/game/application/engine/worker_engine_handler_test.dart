@@ -31,7 +31,7 @@ void main() {
         );
         final snapshot = _snapshot(
           units: [_worker()],
-          interaction: PersistedInteractionState(
+          interaction: DomainActionState(
             cityFoundingDraft: cityDraft,
             pendingAction: const PendingWorkerActionSelection(
               ownerPlayerId: _actorId,
@@ -54,10 +54,10 @@ void main() {
           accepted.snapshot.domain.units.single.workerJob?.improvementType,
           FieldImprovementType.farm,
         );
-        expect(accepted.snapshot.interaction.pendingAction, isNull);
+        expect(accepted.snapshot.domain.actions.pendingAction, isNull);
         expect(
-          accepted.snapshot.interaction.cityFoundingDraft,
-          same(snapshot.interaction.cityFoundingDraft),
+          accepted.snapshot.domain.actions.cityFoundingDraft,
+          same(snapshot.domain.actions.cityFoundingDraft),
         );
         _expectEnvelopePreserved(accepted.snapshot, snapshot);
       },
@@ -133,7 +133,7 @@ void _expectEnvelopePreserved(
   CanonicalGameSnapshot next,
   CanonicalGameSnapshot previous,
 ) {
-  expect(next.session, same(previous.session));
+  expect(next.domain, same(previous.domain));
   expect(next.metadata, same(previous.metadata));
   expect(next.eventLogOffset, previous.eventLogOffset);
   expect(next.domain.participants, same(previous.domain.participants));
@@ -141,10 +141,10 @@ void _expectEnvelopePreserved(
 
 CanonicalGameSnapshot _snapshot({
   List<GameUnit> units = const [],
-  PersistedInteractionState interaction = PersistedInteractionState.empty,
+  DomainActionState interaction = DomainActionState.empty,
 }) {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
+    domain: ((DomainState.snapshot(
       turn: 3,
       matchRules: MatchRules.standard,
       participants: const [
@@ -168,8 +168,8 @@ CanonicalGameSnapshot _snapshot({
           ),
         },
       ),
-    ),
-    session: MatchSessionState.snapshot(gameMode: GameMode.multiplayer),
+    )).copyWith(gameMode: GameMode.multiplayer)).copyWith(actions: interaction),
+
     metadata: GameSnapshotMetadata(
       id: 'worker',
       schemaVersion: 3,
@@ -178,7 +178,7 @@ CanonicalGameSnapshot _snapshot({
       savedAtUtc: DateTime.utc(2026, 7, 29),
       camera: GameSnapshotCamera.zero,
     ),
-    interaction: interaction,
+
     eventLogOffset: 13,
   );
 }
@@ -200,18 +200,16 @@ GameUnit _worker({
   );
 }
 
-final _map = WorldMapReadView(
-  WorldMap(
-    cols: 2,
-    rows: 1,
-    tiles: [
-      for (var col = 0; col < 2; col++)
-        WorldTile(
-          coordinate: HexCoord(col: col, row: 0),
-          terrains: const [TerrainType.grassland],
-          resources: const [],
-          height: 0,
-        ),
-    ],
-  ),
+final _map = WorldMap(
+  cols: 2,
+  rows: 1,
+  tiles: [
+    for (var col = 0; col < 2; col++)
+      WorldTile.at(
+        coordinate: HexCoord(col: col, row: 0),
+        terrains: const [TerrainType.grassland],
+        resources: const [],
+        height: 0,
+      ),
+  ],
 );

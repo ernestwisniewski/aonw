@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,16 +48,16 @@ void main() {
 }
 
 void _runFixture(ReducerParityFixture fixture) {
-  final baseSnapshot = SaveSnapshot.fromPersistentState(
+  final baseSnapshot = GameSnapshotFactory.fromDomainState(
     save: fixture.save,
     state: fixture.state,
   );
-  final initialState = baseSnapshot.toGameState(
+  final initialState = baseSnapshot.toClientState(
     activePlayerId: fixture.actorPlayerId,
   );
   expect(
-    initialState.toPersistentState().toJson(),
-    fixture.state.toJson(),
+    CanonicalGameSnapshotCodec.encodeDomainState(initialState.domain),
+    CanonicalGameSnapshotCodec.encodeDomainState(fixture.state),
     reason: '${fixture.id} cannot lose canonical input before reduction',
   );
 
@@ -82,7 +81,10 @@ void _runFixture(ReducerParityFixture fixture) {
       );
 
   expect(reducerParitySave(result.snapshot.save), fixture.expectedSave);
-  expect(result.state.toPersistentState().toJson(), fixture.expectedState);
+  expect(
+    CanonicalGameSnapshotCodec.encodeDomainState(result.state.domain),
+    fixture.expectedState,
+  );
   expect(reducerParityEvents(result.events), fixture.expectedEvents);
   expect(result.snapshot.metadata.savedAtUtc, fixture.now);
   if (!fixture.expectedAccepted &&
@@ -95,6 +97,9 @@ void _runFixture(ReducerParityFixture fixture) {
   }
   if (!fixture.expectedAccepted) {
     expect(result.events, isEmpty);
-    expect(result.state.toPersistentState().toJson(), fixture.state.toJson());
+    expect(
+      CanonicalGameSnapshotCodec.encodeDomainState(result.state.domain),
+      CanonicalGameSnapshotCodec.encodeDomainState(fixture.state),
+    );
   }
 }

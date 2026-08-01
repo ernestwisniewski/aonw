@@ -12,17 +12,15 @@ void _registerServerCommandReducerSnapshotTests() {
           },
         );
         final state = _diplomacyState(
-          runtimeState: GameRuntimeState(
-            submittedPlayerIds: const {'player_1'},
-            diplomacy: DiplomacyState.empty.addContact('player_1', 'player_2'),
-          ),
+          submittedPlayerIds: const {'player_1'},
+          diplomacy: DiplomacyState.empty.addContact('player_1', 'player_2'),
         );
         final rawSave = save.toJson();
         final rawState = <String, dynamic>{
-          ...state.toJson(),
+          ...CanonicalGameSnapshotCodec.encodeDomainState(state),
           'stateCanary': const {'preserve': true},
         };
-        final rawRuntimeState = rawState['runtimeState']! as Map;
+        final rawRuntimeState = rawState['lifecycle']! as Map;
         final snapshot = WireSnapshot(
           v: 37,
           matchId: 'match_1',
@@ -51,16 +49,16 @@ void _registerServerCommandReducerSnapshotTests() {
         expect(nextSnapshot.domain.turn, save.turn);
         expect(reduction.events, isEmpty);
         expect(nextSnapshot.domain, same(reduction.previousSnapshot.domain));
-        expect(nextSnapshot.session, reduction.previousSnapshot.session);
+        expect(nextSnapshot.domain, reduction.previousSnapshot.domain);
         expect(nextSnapshot.metadata.savedAtUtc, now);
         expect(
-          reduction.previousSnapshot.session.turnStartedAt,
+          reduction.previousSnapshot.domain.turnStartedAt,
           save.savedAt.toUtc(),
         );
         expect(wireSnapshot.state, isNot(same(rawState)));
         expect(wireSnapshot.state['stateCanary'], const {'preserve': true});
         expect(
-          (wireSnapshot.state['runtimeState']! as Map)['turnStartedAt'],
+          (wireSnapshot.state['lifecycle']! as Map)['turnStartedAt'],
           save.savedAt.toIso8601String(),
         );
         expect(wireSnapshot.save, isNot(same(rawSave)));
@@ -82,7 +80,7 @@ void _registerServerCommandReducerSnapshotTests() {
         final rawSave = Map<String, dynamic>.from(save.toJson())
           ..remove('schemaVersion')
           ..['saveCanary'] = const {'preserve': true};
-        final rawState = state.toJson();
+        final rawState = CanonicalGameSnapshotCodec.encodeDomainState(state);
         final snapshot = WireSnapshot(
           v: 37,
           matchId: 'match_1',
@@ -118,7 +116,7 @@ void _registerServerCommandReducerSnapshotTests() {
           nextSnapshot.domain,
           isNot(same(reduction.previousSnapshot.domain)),
         );
-        expect(nextSnapshot.session, same(reduction.previousSnapshot.session));
+        expect(nextSnapshot.domain, same(reduction.previousSnapshot.domain));
         expect(
           nextSnapshot.metadata,
           same(reduction.previousSnapshot.metadata),

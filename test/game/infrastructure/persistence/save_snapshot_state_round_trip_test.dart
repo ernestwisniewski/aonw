@@ -13,7 +13,7 @@ void main() {
   test('round-trips current fog, research, and wonder sentinels', () {
     const discoveredOnlyHex = HexCoordinate(col: 1, row: 2);
     const visibleHex = HexCoordinate(col: 3, row: 4);
-    final snapshot = SaveSnapshot(
+    final snapshot = GameSnapshotFactory.create(
       save: _save(),
       fogOfWar: FogOfWarState(
         players: {
@@ -51,7 +51,7 @@ void main() {
   test('defaults state fields omitted by older snapshots', () {
     const discoveredHex = HexCoordinate(col: 5, row: 6);
     final json = SaveSnapshotCodec.toJson(
-      SaveSnapshot(
+      GameSnapshotFactory.create(
         save: _save(),
         fogOfWar: FogOfWarState(
           players: {

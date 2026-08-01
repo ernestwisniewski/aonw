@@ -8,8 +8,8 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/util/collection_equality.dart';
 
-GameState projectLocalCombatEngineResult({
-  required GameState currentState,
+GameClientState projectLocalCombatEngineResult({
+  required GameClientState currentState,
   required GameEngineAccepted result,
   required AttackHexCommand command,
   required MapReadView mapView,
@@ -66,8 +66,8 @@ String? _changedCityId(Iterable<DomainEvent> events) {
   return null;
 }
 
-GameState _refreshSelection(
-  GameState state,
+GameClientState _refreshSelection(
+  GameClientState state,
   MapTileLookup mapTiles, {
   required String? changedCityId,
 }) {
@@ -83,8 +83,8 @@ GameState _refreshSelection(
   };
 }
 
-GameState _refreshUnit(
-  GameState state,
+GameClientState _refreshUnit(
+  GameClientState state,
   GameSelection selection,
   MapTileLookup mapTiles,
 ) {

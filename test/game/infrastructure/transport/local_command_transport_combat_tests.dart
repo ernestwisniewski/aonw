@@ -18,7 +18,7 @@ void _registerCombatTransportTests() {
     );
     final save = _save(players: const [_player1, _player2], turn: 7);
     final repository = _MemoryGameRepository(
-      SaveSnapshot(
+      GameSnapshotFactory.create(
         save: save,
         units: [attacker, defender],
         fogOfWar: _visible('player_1', const [
@@ -38,7 +38,7 @@ void _registerCombatTransportTests() {
 
     final result = await transport.dispatch(
       saveId: save.id,
-      currentState: GameState(
+      currentState: GameClientState(
         units: [attacker, defender],
         activePlayerId: 'player_1',
         activePlayerCanAct: true,

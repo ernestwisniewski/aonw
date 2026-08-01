@@ -13,7 +13,7 @@ const LosslessMatchSnapshotCodec _losslessMatchSnapshotCodec =
 const PlayerMatchWireSchemaGuard _playerMatchWireSchemaGuard =
     PlayerMatchWireSchemaGuard();
 
-/// Decodes only running snapshots and preserves their original wire envelope.
+/// Decodes and encodes only current-version running snapshots.
 final class RunningMatchSnapshotCodec {
   const RunningMatchSnapshotCodec();
 
@@ -52,12 +52,13 @@ final class RunningMatchSnapshotCodec {
     };
     final expectedPlayerIds = expectedColors.keys.toSet();
     final save = source.save;
-    final state = source.state;
+    final state = source.wire.state;
+    final canonical = source.canonical;
     _playerMatchWireSchemaGuard.validateCanonicalRoster(
       save: save,
       state: state,
+      canonical: canonical,
     );
-    final canonical = source.canonical;
     _requireMatchingRoster(source.wire.matchId == match.id);
     _requireMatchingRoster(canonical.metadata.id == match.id);
     _requireMatchingRoster(
@@ -66,24 +67,22 @@ final class RunningMatchSnapshotCodec {
     _requireMatchingRoster(
       _sameOrderedPlayers(canonical.domain.participants, expectedParticipants),
     );
-    _requireMatchingRoster(_sameMap(state.playerColors, expectedColors));
-    _requireMatchingRoster(_sameMap(state.playerCountries, expectedCountries));
+    _requireMatchingRoster(_sameRawMap(state['playerColors'], expectedColors));
+    _requireMatchingRoster(
+      _sameRawMap(
+        state['playerCountries'],
+        expectedCountries.map(
+          (playerId, country) => MapEntry(playerId, country.name),
+        ),
+      ),
+    );
     _requireMatchingRoster(
       save.playerStates.keys.every(expectedPlayerIds.contains),
     );
     return canonical;
   }
 
-  WireSnapshot encode(
-    DecodedRunningMatchSnapshot source, {
-    GameSave? save,
-    PersistentGameState? state,
-  }) {
-    if (save == null && state == null) return source.wire;
-    return source.wire.copyWith(save: save?.toJson(), state: state?.toJson());
-  }
-
-  /// Encodes a canonical initial match while retaining the historical wire.
+  /// Encodes a canonical initial match.
   WireSnapshot encodeInitial({
     required WireMatch match,
     required CanonicalGameSnapshot snapshot,
@@ -107,9 +106,9 @@ final class RunningMatchSnapshotCodec {
         'An initial snapshot must have event offset zero.',
       );
     }
-    if (snapshot.session.turnStartedAt != snapshot.metadata.savedAtUtc) {
+    if (snapshot.domain.turnStartedAt != snapshot.metadata.savedAtUtc) {
       throw ArgumentError.value(
-        snapshot.session.turnStartedAt,
+        snapshot.domain.turnStartedAt,
         'snapshot',
         'Initial turn start must match the saved-at timestamp.',
       );
@@ -121,25 +120,20 @@ final class RunningMatchSnapshotCodec {
     _requireMatchingRoster(
       _sameOrderedPlayers(snapshot.domain.participants, expectedParticipants) &&
           _sameSet(
-            snapshot.session.turnStatesByPlayerId.keys.toSet(),
+            snapshot.domain.turnStatesByPlayerId.keys.toSet(),
             expectedPlayerIds,
           ),
     );
-    final legacy = _losslessMatchSnapshotCodec.encodeCanonical(snapshot);
-    final state = _withoutInitialTurnStartedAt(legacy.state);
+    final encoded = _losslessMatchSnapshotCodec.encodeCanonical(snapshot);
     return WireSnapshot(
       matchId: snapshot.metadata.id,
       offset: snapshot.eventLogOffset,
-      save: legacy.save.toJson(),
-      state: state.toJson(),
+      save: encoded.save,
+      state: encoded.state,
     );
   }
 
-  /// Encodes one canonical transition while preserving unchanged raw halves.
-  ///
-  /// Compatibility conversion is intentionally confined to this wire I/O
-  /// boundary. An absent legacy `turnStartedAt` remains absent unless the
-  /// canonical transition changed its semantic value.
+  /// Encodes one canonical current-version transition.
   WireSnapshot encodeCanonical(
     DecodedRunningMatchSnapshot source,
     CanonicalGameSnapshot next,
@@ -155,70 +149,46 @@ final class RunningMatchSnapshotCodec {
     _requireUnchangedEventLogOffset(previous, next);
     _requireRepresentableRunningTurnStart(next);
 
-    final legacy = _losslessMatchSnapshotCodec.encodeCanonical(next);
-    final nextSave = legacy.save.copyWith(players: source.save.players);
-    final nextState = _preserveImplicitTurnStartedAt(
-      source: source,
-      previous: previous,
-      next: next,
-      state: legacy.state.copyWith(
-        playerColors: source.state.playerColors,
-        playerCountries: source.state.playerCountries,
-      ),
-    );
-    return _encodeCanonicalParts(
-      source,
-      save: nextSave == source.save ? null : nextSave,
-      state: nextState == source.state ? null : nextState,
+    final encoded = _losslessMatchSnapshotCodec.encodeCanonical(next);
+    return source.wire.copyWith(
+      save: _jsonEquals(encoded.save, source.wire.save)
+          ? source.wire.save
+          : encoded.save,
+      state: _jsonEquals(encoded.state, source.wire.state)
+          ? source.wire.state
+          : encoded.state,
     );
   }
 }
 
-WireSnapshot _encodeCanonicalParts(
-  DecodedRunningMatchSnapshot source, {
-  GameSave? save,
-  PersistentGameState? state,
-}) {
-  if (save == null && state == null) return source.wire;
-  return source.wire.copyWith(
-    save: save == null
-        ? null
-        : _preserveRawFields(save.toJson(), source.wire.save, const {
-            'players',
-          }),
-    state: state == null
-        ? null
-        : _preserveRawFields(state.toJson(), source.wire.state, const {
-            'playerColors',
-            'playerCountries',
-          }),
-  );
+bool _jsonEquals(Object? left, Object? right) {
+  if (identical(left, right) || left == right) return true;
+  if (left is Map<Object?, Object?> && right is Map<Object?, Object?>) {
+    return _jsonMapsEqual(left, right);
+  }
+  if (left is List<Object?> && right is List<Object?>) {
+    return _jsonListsEqual(left, right);
+  }
+  return false;
 }
 
-Map<String, dynamic> _preserveRawFields(
-  Map<String, dynamic> candidate,
-  Map<String, dynamic> raw,
-  Set<String> fields,
-) {
-  final preserved = Map<String, dynamic>.from(candidate);
-  for (final entry in raw.entries) {
-    preserved.putIfAbsent(entry.key, () => entry.value);
-  }
-  for (final field in fields) {
-    if (raw.containsKey(field)) {
-      preserved[field] = raw[field];
-    } else {
-      preserved.remove(field);
+bool _jsonMapsEqual(Map<Object?, Object?> left, Map<Object?, Object?> right) {
+  if (left.length != right.length) return false;
+  for (final entry in left.entries) {
+    if (!right.containsKey(entry.key) ||
+        !_jsonEquals(entry.value, right[entry.key])) {
+      return false;
     }
   }
-  return preserved;
+  return true;
 }
 
-PersistentGameState _withoutInitialTurnStartedAt(PersistentGameState state) {
-  if (state.runtimeState.turnStartedAt == null) return state;
-  return state.copyWith(
-    runtimeState: state.runtimeState.copyWith(turnStartedAt: null),
-  );
+bool _jsonListsEqual(List<Object?> left, List<Object?> right) {
+  if (left.length != right.length) return false;
+  for (var index = 0; index < left.length; index += 1) {
+    if (!_jsonEquals(left[index], right[index])) return false;
+  }
+  return true;
 }
 
 bool _sameOrderedPlayers(List<Player> actual, List<Player> expected) {
@@ -241,6 +211,11 @@ bool _sameMap<K, V>(Map<K, V> actual, Map<K, V> expected) {
   return true;
 }
 
+bool _sameRawMap<K, V>(Object? raw, Map<K, V> expected) {
+  if (raw is! Map<Object?, Object?>) return expected.isEmpty;
+  return _sameMap(Map<K, V>.from(raw), expected);
+}
+
 bool _sameSet<T>(Set<T> actual, Set<T> expected) {
   return actual.length == expected.length && actual.containsAll(expected);
 }
@@ -253,9 +228,9 @@ void _requireMatchingRoster(bool matches) {
 }
 
 void _requireRepresentableRunningTurnStart(CanonicalGameSnapshot snapshot) {
-  if (snapshot.session.turnStartedAt != null) return;
+  if (snapshot.domain.turnStartedAt != null) return;
   throw ArgumentError.value(
-    snapshot.session.turnStartedAt,
+    snapshot.domain.turnStartedAt,
     'next',
     'A running snapshot must have a turn start timestamp.',
   );
@@ -270,21 +245,5 @@ void _requireUnchangedEventLogOffset(
     next.eventLogOffset,
     'next',
     'Running snapshot event offset is owned by the persistence transaction.',
-  );
-}
-
-PersistentGameState _preserveImplicitTurnStartedAt({
-  required DecodedRunningMatchSnapshot source,
-  required CanonicalGameSnapshot previous,
-  required CanonicalGameSnapshot next,
-  required PersistentGameState state,
-}) {
-  if (source.hasSerializedTurnStartedAt ||
-      next.session.turnStartedAt != previous.session.turnStartedAt ||
-      next.session.turnStartedAt != next.metadata.savedAtUtc) {
-    return state;
-  }
-  return state.copyWith(
-    runtimeState: state.runtimeState.copyWith(turnStartedAt: null),
   );
 }

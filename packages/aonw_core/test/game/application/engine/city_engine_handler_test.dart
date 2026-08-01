@@ -39,7 +39,7 @@ void main() {
       );
       final snapshot = _snapshot(
         units: [_settler()],
-        interaction: PersistedInteractionState(
+        interaction: DomainActionState(
           cityFoundingDraft: draft,
           pendingAction: const PendingResearchSelection(
             ownerPlayerId: _otherId,
@@ -56,10 +56,10 @@ void main() {
 
       expect(accepted.snapshot.domain.units.single.cityFoundingJob, isNotNull);
       expect(accepted.snapshot.domain.units.single.movementPoints, 0);
-      expect(accepted.snapshot.interaction.cityFoundingDraft, isNull);
+      expect(accepted.snapshot.domain.actions.cityFoundingDraft, isNull);
       expect(
-        accepted.snapshot.interaction.pendingAction,
-        same(snapshot.interaction.pendingAction),
+        accepted.snapshot.domain.actions.pendingAction,
+        same(snapshot.domain.actions.pendingAction),
       );
       _expectEnvelopePreserved(accepted.snapshot, snapshot);
     });
@@ -86,7 +86,7 @@ void main() {
         CityHex(col: 2, row: 1),
       ]);
       expect(accepted.snapshot.domain.units, same(snapshot.domain.units));
-      expect(accepted.snapshot.interaction, same(snapshot.interaction));
+      expect(accepted.snapshot.domain.actions, same(snapshot.domain.actions));
       _expectEnvelopePreserved(accepted.snapshot, snapshot);
     });
 
@@ -144,7 +144,7 @@ void _expectEnvelopePreserved(
   CanonicalGameSnapshot next,
   CanonicalGameSnapshot previous,
 ) {
-  expect(next.session, same(previous.session));
+  expect(next.domain, same(previous.domain));
   expect(next.metadata, same(previous.metadata));
   expect(next.eventLogOffset, previous.eventLogOffset);
   expect(next.domain.participants, same(previous.domain.participants));
@@ -153,10 +153,10 @@ void _expectEnvelopePreserved(
 CanonicalGameSnapshot _snapshot({
   List<GameUnit> units = const [],
   List<GameCity> cities = const [],
-  PersistedInteractionState interaction = PersistedInteractionState.empty,
+  DomainActionState interaction = DomainActionState.empty,
 }) {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
+    domain: ((DomainState.snapshot(
       turn: 3,
       matchRules: MatchRules.standard,
       participants: const [
@@ -165,8 +165,8 @@ CanonicalGameSnapshot _snapshot({
       ],
       units: units,
       cities: cities,
-    ),
-    session: MatchSessionState.snapshot(gameMode: GameMode.multiplayer),
+    )).copyWith(gameMode: GameMode.multiplayer)).copyWith(actions: interaction),
+
     metadata: GameSnapshotMetadata(
       id: 'city',
       schemaVersion: 3,
@@ -175,7 +175,7 @@ CanonicalGameSnapshot _snapshot({
       savedAtUtc: DateTime.utc(2026, 7, 29),
       camera: GameSnapshotCamera.zero,
     ),
-    interaction: interaction,
+
     eventLogOffset: 11,
   );
 }
@@ -211,19 +211,17 @@ GameCity _city({
   );
 }
 
-final _map = WorldMapReadView(
-  WorldMap(
-    cols: 4,
-    rows: 4,
-    tiles: [
-      for (var row = 0; row < 4; row++)
-        for (var col = 0; col < 4; col++)
-          WorldTile(
-            coordinate: HexCoord(col: col, row: row),
-            terrains: const [TerrainType.grassland],
-            resources: const [],
-            height: 0,
-          ),
-    ],
-  ),
+final _map = WorldMap(
+  cols: 4,
+  rows: 4,
+  tiles: [
+    for (var row = 0; row < 4; row++)
+      for (var col = 0; col < 4; col++)
+        WorldTile.at(
+          coordinate: HexCoord(col: col, row: row),
+          terrains: const [TerrainType.grassland],
+          resources: const [],
+          height: 0,
+        ),
+  ],
 );

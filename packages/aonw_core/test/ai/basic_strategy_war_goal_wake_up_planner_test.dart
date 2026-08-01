@@ -71,9 +71,9 @@ const _expectations = EconomyExpectations(
   minimumSciencePerTurn: 3,
 );
 
-GameView _view({required MapData mapData, required List<GameUnit> units}) {
-  return GameView.fromPersistentState(
-    PersistentGameState(units: units),
+GameView _view({required WorldMap mapData, required List<GameUnit> units}) {
+  return GameView.fromDomainState(
+    DomainState.snapshot(units: units),
     forPlayerId: 'player_1',
     turn: 2,
     mapData: mapData,
@@ -81,13 +81,13 @@ GameView _view({required MapData mapData, required List<GameUnit> units}) {
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 4,
     rows: 1,
     tiles: [
       for (var col = 0; col < 4; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: const [TerrainType.plains],

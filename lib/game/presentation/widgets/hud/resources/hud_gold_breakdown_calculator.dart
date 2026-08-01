@@ -2,16 +2,16 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_city_economy_calculator.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 abstract final class HudGoldResourceCalculator {
   static HudGoldForecast forecastForPlayer({
-    required GameState state,
+    required GameClientState state,
     required String playerId,
-    required MapData mapData,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityModifier stabilityModifier,
@@ -28,9 +28,9 @@ abstract final class HudGoldResourceCalculator {
   }
 
   static GoldBreakdown breakdownForPlayer({
-    required GameState state,
+    required GameClientState state,
     required String playerId,
-    required MapData mapData,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityModifier stabilityModifier,
@@ -47,9 +47,9 @@ abstract final class HudGoldResourceCalculator {
   }
 
   static _GoldComputation _computeForPlayer({
-    required GameState state,
+    required GameClientState state,
     required String playerId,
-    required MapData mapData,
+    required WorldMap mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required StabilityModifier stabilityModifier,

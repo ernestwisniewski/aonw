@@ -14,7 +14,7 @@ abstract class TurnContext with _$TurnContext {
   const TurnContext._();
 
   const factory TurnContext({
-    required GameState state,
+    required GameClientState state,
     GameSave? save,
     required MapTileLookup mapTiles,
     required GameRuleset ruleset,

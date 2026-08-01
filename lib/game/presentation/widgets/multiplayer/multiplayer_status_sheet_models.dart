@@ -26,7 +26,7 @@ class MultiplayerStatusSheetData {
 
   static MultiplayerStatusSheetData from({
     required List<MultiplayerAvatarTileData> tiles,
-    GameState? gameState,
+    GameClientState? gameState,
   }) {
     final cityCounts = <String, int>{};
     final populations = <String, int>{};
@@ -96,7 +96,7 @@ class MultiplayerStatusSheetData {
 
   static String? _scopedStatsPlayerId({
     required List<MultiplayerAvatarTileData> tiles,
-    required GameState gameState,
+    required GameClientState gameState,
   }) {
     if (tiles.length <= 1) return null;
     final fogPlayerIds = gameState.fogOfWar.playerIds.toList();

@@ -54,7 +54,7 @@ class ServerCommandReducer {
     }
 
     final domain = snapshot.domain;
-    final session = snapshot.session;
+    final session = snapshot.domain;
     final command = _decodePlayerDomainCommand(wireCommand.command);
     if (command == null) {
       return _reject('invalid_command_payload');
@@ -111,7 +111,7 @@ class ServerCommandReducer {
     if (!_turnTimedOut(snapshot, nowUtc)) {
       return _reject('turn_not_timed_out');
     }
-    if (snapshot.session.isKicked(actorPlayerId)) {
+    if (snapshot.domain.isKicked(actorPlayerId)) {
       return _reject('player_eliminated');
     }
 
@@ -124,7 +124,7 @@ class ServerCommandReducer {
     final ruleset = GameRuleset.standard().copyWith(
       paceBalance: snapshot.domain.matchRules.paceBalance,
     );
-    final submittedPlayerIds = snapshot.session.submittedPlayerIds;
+    final submittedPlayerIds = snapshot.domain.submittedPlayerIds;
     final skippedPlayerIds = playerIds
         .where((playerId) => !submittedPlayerIds.contains(playerId))
         .toList();
@@ -229,7 +229,7 @@ class ServerCommandReducer {
   }) {
     final playerIds = _turnPlayerIds(snapshot);
     final timedOut = _turnTimedOut(snapshot, now);
-    if (timedOut && snapshot.session.hasSubmitted(command.playerId)) {
+    if (timedOut && snapshot.domain.hasSubmitted(command.playerId)) {
       return _commandApplicationFromEngine(
         snapshot,
         const GameEngine().applySystem(
@@ -238,7 +238,7 @@ class ServerCommandReducer {
             playerIds: playerIds,
             skippedPlayerIds: [
               for (final id in playerIds)
-                if (!snapshot.session.hasSubmitted(id)) id,
+                if (!snapshot.domain.hasSubmitted(id)) id,
             ],
           ),
           context: GameEngineContext(

@@ -13,8 +13,8 @@ void main() {
 
       final bestFit = CitySpecializationScorer.bestLocalFit(
         city: city,
-        mapData: _map(const [
-          TileData(
+        mapData: _map([
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.coast],
@@ -35,8 +35,8 @@ void main() {
         name: 'Oil',
         center: CityHex(col: 0, row: 0),
       );
-      final mapData = _map(const [
-        TileData(
+      final mapData = _map([
+        WorldTile(
           col: 0,
           row: 0,
           terrains: [TerrainType.plains],
@@ -71,6 +71,6 @@ void main() {
   });
 }
 
-MapData _map(List<TileData> tiles) {
-  return MapData(cols: 1, rows: 1, tiles: tiles);
+WorldMap _map(List<WorldTile> tiles) {
+  return WorldMap(cols: 1, rows: 1, tiles: tiles);
 }

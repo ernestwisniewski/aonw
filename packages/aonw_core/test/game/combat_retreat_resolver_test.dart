@@ -53,7 +53,7 @@ final _defender = GameUnit(
   row: 0,
 );
 
-TileData _tile(int col, int row) => TileData(
+WorldTile _tile(int col, int row) => WorldTile(
   col: col,
   row: row,
   terrains: const [TerrainType.grassland],

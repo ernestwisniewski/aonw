@@ -1,10 +1,10 @@
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/ai/strategies/basic_strategy_planning_session.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -24,7 +24,7 @@ void main() {
             playerId: '',
             state: FogOfWarState.empty,
           ),
-          mapData: MapData(cols: 0, rows: 0, tiles: const []),
+          mapData: WorldMap(cols: 0, rows: 0, tiles: []),
           ruleset: GameRuleset.standard(),
         ),
       );

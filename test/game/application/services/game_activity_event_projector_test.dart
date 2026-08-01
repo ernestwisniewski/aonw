@@ -26,7 +26,7 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = GameState(units: [attacker, defender]);
+      final state = GameClientState(units: [attacker, defender]);
 
       final activity = GameActivityEventProjector.project(
         events: [
@@ -55,7 +55,7 @@ void main() {
         col: 1,
         row: 0,
       );
-      final state = GameState(units: [attacker, defender]);
+      final state = GameClientState(units: [attacker, defender]);
 
       final activity = GameActivityEventProjector.project(
         events: [
@@ -84,7 +84,7 @@ void main() {
         name: 'Warszawa',
         center: CityHex(col: 3, row: 4),
       );
-      final state = GameState(units: [attacker], cities: const [city]);
+      final state = GameClientState(units: [attacker], cities: const [city]);
 
       final activity = GameActivityEventProjector.project(
         events: [_combat(attackerUnitId: attacker.id, defenderUnitId: city.id)],
@@ -112,7 +112,7 @@ void main() {
             goldPerTurn: 1,
           ),
         ],
-        state: const GameState(),
+        state: GameClientState(),
         visiblePlayerId: 'player_1',
       );
 
@@ -132,7 +132,7 @@ void main() {
             net: -2,
           ),
         ],
-        state: const GameState(),
+        state: GameClientState(),
         visiblePlayerId: 'player_2',
       );
       final visible = GameActivityEventProjector.project(
@@ -144,7 +144,7 @@ void main() {
             net: -2,
           ),
         ],
-        state: const GameState(),
+        state: GameClientState(),
         visiblePlayerId: 'player_1',
       );
 
@@ -161,7 +161,7 @@ void main() {
           ),
           const CommandRejectedEvent(reason: 'stale_turn'),
         ],
-        state: const GameState(),
+        state: GameClientState(),
         visiblePlayerId: 'player_2',
       );
 
@@ -172,7 +172,7 @@ void main() {
     });
 
     test('projects first contact from durable diplomacy exactly once', () {
-      const before = GameState(
+      final before = GameClientState(
         playerColors: {'player_1': 0xff0000, 'player_2': 0x00ff00},
       );
       final met = before.copyWith(
@@ -203,7 +203,7 @@ void main() {
     });
 
     test('projects one first-contact event for each player perspective', () {
-      const before = GameState(
+      final before = GameClientState(
         playerColors: {'player_1': 0xff0000, 'player_2': 0x00ff00},
       );
       final met = before.copyWith(

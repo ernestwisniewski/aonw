@@ -30,7 +30,7 @@ final class InvalidUnit extends UnitCommandValidationResult {
 
 abstract final class UnitCommandValidator {
   static UnitCommandValidationResult controllableUnit(
-    GameState state, {
+    GameClientState state, {
     required String unitId,
     required GameCommandContext context,
   }) {
@@ -47,7 +47,7 @@ abstract final class UnitCommandValidator {
   }
 
   static UnitCommandValidationResult movableUnit(
-    GameState state, {
+    GameClientState state, {
     required String unitId,
     required GameCommandContext context,
   }) {
@@ -69,7 +69,7 @@ abstract final class UnitCommandValidator {
   }
 
   static UnitCommandValidationResult fortifiableUnit(
-    GameState state, {
+    GameClientState state, {
     required String unitId,
     required GameCommandContext context,
   }) {
@@ -82,7 +82,7 @@ abstract final class UnitCommandValidator {
   }
 
   static UnitCommandValidationResult autoExplorableScout(
-    GameState state, {
+    GameClientState state, {
     required String unitId,
     required GameCommandContext context,
   }) {

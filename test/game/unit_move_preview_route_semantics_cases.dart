@@ -44,12 +44,12 @@ bool _verifyGeneratedReachability(math.Random random, int scenario) {
               _generatedTerrainProfiles.length,
             )],
   ];
-  final map = MapData(
+  final map = WorldMap(
     cols: cols,
     rows: 1,
     tiles: [
       for (var col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: 0,
           terrains: terrains[col],

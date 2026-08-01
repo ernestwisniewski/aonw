@@ -3,9 +3,9 @@ import 'dart:math' as math;
 
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/animation.dart';
@@ -13,7 +13,7 @@ import 'package:flutter/animation.dart';
 /// Controls the in-game camera: zoom, positioning, and restoring saved state.
 class GameCameraController {
   final CameraComponent _camera;
-  final MapData _mapData;
+  final WorldMap _mapData;
   bool _reduceMotion;
   static final ComponentKey _shakeEffectKey = ComponentKey.named(
     'camera-shake',
@@ -23,7 +23,7 @@ class GameCameraController {
 
   GameCameraController({
     required CameraComponent camera,
-    required MapData mapData,
+    required WorldMap mapData,
     bool reduceMotion = false,
   }) : _camera = camera,
        _mapData = mapData,

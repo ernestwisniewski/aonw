@@ -244,7 +244,7 @@ final class LosslessMatchSnapshotCodec {
 ''';
 
 const _invalidLosslessConversionDecoyFixture = '''
-const _legacyGameSnapshotAdapter = LegacyGameSnapshotAdapter();
+final _legacyGameSnapshotAdapter = LegacyGameSnapshotAdapter();
 
 final class LosslessMatchSnapshotCodec {
   CanonicalGameSnapshot canonical(DecodedRunningMatchSnapshot snapshot) {

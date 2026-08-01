@@ -5,7 +5,7 @@ void main() {
   group('CitySitePlanner', () {
     test('populates ranking and assigns settlers to distinct slots', () {
       final mapData = _openMap(cols: 7, rows: 5);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_west',
@@ -45,7 +45,7 @@ void main() {
 
     test('greedy ranking pushes second site away from first', () {
       final mapData = _openMap(cols: 8, rows: 5);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_1',
@@ -96,7 +96,7 @@ void main() {
 
     test('does not rank city centers too close to existing cities', () {
       final mapData = _openMap(cols: 5, rows: 5);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_1',
@@ -142,7 +142,7 @@ void main() {
 
     test('assigns settlers by site utility instead of nearest slot only', () {
       final mapData = _openMap(cols: 7, rows: 3);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_1',
@@ -173,7 +173,7 @@ void main() {
 
     test('does not chase a marginally better distant third-city slot', () {
       final mapData = _openMap(cols: 10, rows: 5);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_1',
@@ -218,7 +218,7 @@ void main() {
 
     test('assigns partially discovered sites so settlers can reveal them', () {
       final mapData = _openMap(cols: 7, rows: 7);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_1',
@@ -263,7 +263,7 @@ void main() {
 
     test('uses strategic map knowledge for undiscovered city sites', () {
       final mapData = _openMap(cols: 8, rows: 5);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_1',
@@ -324,18 +324,17 @@ void main() {
       );
       final importedOilScore = _scoreStrategicResourceTestSite(
         center: const CityHex(col: 3, row: 2),
-        runtimeState: const GameRuntimeState(
-          resourceTradeAgreements: [
-            ResourceTradeAgreement(
-              id: 'oil_import',
-              exporterPlayerId: 'player_2',
-              importerPlayerId: 'player_1',
-              resource: ResourceType.oil,
-              goldPerTurn: 2,
-              remainingTurns: 5,
-            ),
-          ],
-        ),
+
+        resourceTradeAgreements: [
+          const ResourceTradeAgreement(
+            id: 'oil_import',
+            exporterPlayerId: 'player_2',
+            importerPlayerId: 'player_1',
+            resource: ResourceType.oil,
+            goldPerTurn: 2,
+            remainingTurns: 5,
+          ),
+        ],
       );
 
       expect(importedOilScore, lessThan(missingOilScore));
@@ -343,7 +342,7 @@ void main() {
 
     test('assigns known sites outside the current visible corridor', () {
       final mapData = _openMap(cols: 8, rows: 5);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_1',
@@ -401,8 +400,8 @@ void main() {
   });
 }
 
-GameView _view(PersistentGameState state, MapData mapData) {
-  return GameView.fromPersistentState(
+GameView _view(DomainState state, WorldMap mapData) {
+  return GameView.fromDomainState(
     state,
     forPlayerId: 'player_1',
     turn: 1,
@@ -412,7 +411,7 @@ GameView _view(PersistentGameState state, MapData mapData) {
 }
 
 AiContext _context(
-  MapData mapData, {
+  WorldMap mapData, {
   CivilizationProfile civProfile = CivilizationProfiles.poland,
 }) {
   return AiContext(
@@ -426,7 +425,7 @@ AiContext _context(
 
 double _scoreStrategicResourceTestSite({
   required CityHex center,
-  GameRuntimeState runtimeState = GameRuntimeState.empty,
+  List<ResourceTradeAgreement> resourceTradeAgreements = const [],
 }) {
   final mapData = _strategicResourceMap();
   final founder = GameUnit.produced(
@@ -436,9 +435,9 @@ double _scoreStrategicResourceTestSite({
     col: 2,
     row: 2,
   );
-  final state = PersistentGameState(
+  final state = DomainState.snapshot(
     units: [founder],
-    runtimeState: runtimeState,
+    resourceTradeAgreements: resourceTradeAgreements,
     research: ResearchState(
       players: {
         'player_1': PlayerResearchState(
@@ -464,7 +463,7 @@ double _scoreStrategicResourceTestSite({
   return score!.score;
 }
 
-FogOfWarState _fog(MapData mapData) {
+FogOfWarState _fog(WorldMap mapData) {
   return _fogForHexes({
     for (final tile in mapData.tiles)
       HexCoordinate(col: tile.col, row: tile.row),
@@ -482,14 +481,14 @@ FogOfWarState _fogForHexes(Set<HexCoordinate> visibleHexes) {
   );
 }
 
-MapData _openMap({required int cols, required int rows}) {
-  return MapData(
+WorldMap _openMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
@@ -500,14 +499,14 @@ MapData _openMap({required int cols, required int rows}) {
   );
 }
 
-MapData _strategicResourceMap() {
-  return MapData(
+WorldMap _strategicResourceMap() {
+  return WorldMap(
     cols: 5,
     rows: 5,
     tiles: [
       for (var row = 0; row < 5; row++)
         for (var col = 0; col < 5; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: col == 1 && row == 2

@@ -2,7 +2,7 @@ part of 'game_state_reducer.dart';
 
 abstract final class _ActivePlayerReducer {
   static GameStateTransition handleSetActivePlayer(
-    GameState state,
+    GameClientState state,
     String playerId,
     bool canAct,
   ) {
@@ -14,7 +14,7 @@ abstract final class _ActivePlayerReducer {
   }
 
   static bool _activePlayerChanged(
-    GameState state,
+    GameClientState state,
     String playerId,
     bool canAct,
   ) {
@@ -22,8 +22,8 @@ abstract final class _ActivePlayerReducer {
         state.activePlayerCanAct != canAct;
   }
 
-  static GameState _applyControlChange(
-    GameState state,
+  static GameClientState _applyControlChange(
+    GameClientState state,
     String playerId,
     bool canAct,
   ) {
@@ -34,23 +34,26 @@ abstract final class _ActivePlayerReducer {
     return _clearSelectionIfUnavailable(next, state.selection);
   }
 
-  static GameState _applyPlayerIdentity(
-    GameState state,
+  static GameClientState _applyPlayerIdentity(
+    GameClientState state,
     String playerId,
     bool canAct,
   ) {
     return state.copyWith(activePlayerId: playerId, activePlayerCanAct: canAct);
   }
 
-  static GameState _clearSelectionIfUnavailable(
-    GameState state,
+  static GameClientState _clearSelectionIfUnavailable(
+    GameClientState state,
     GameSelection? selection,
   ) {
     if (selection == null || _canKeepSelection(state, selection)) return state;
     return state.copyWithInteraction(selection: null);
   }
 
-  static bool _canKeepSelection(GameState state, GameSelection selection) {
+  static bool _canKeepSelection(
+    GameClientState state,
+    GameSelection selection,
+  ) {
     return switch (selection.type) {
       GameSelectionType.tile => true,
       GameSelectionType.fieldImprovement => _canKeepFieldImprovementSelection(
@@ -63,7 +66,7 @@ abstract final class _ActivePlayerReducer {
   }
 
   static bool _canKeepFieldImprovementSelection(
-    GameState state,
+    GameClientState state,
     GameSelection selection,
   ) {
     final improvement = selection.fieldImprovement;
@@ -79,7 +82,10 @@ abstract final class _ActivePlayerReducer {
     );
   }
 
-  static bool _canKeepUnitSelection(GameState state, GameSelection selection) {
+  static bool _canKeepUnitSelection(
+    GameClientState state,
+    GameSelection selection,
+  ) {
     final unit = selection.unit;
     if (unit == null) return false;
     final liveUnit = state.unitById(unit.id);
@@ -88,14 +94,20 @@ abstract final class _ActivePlayerReducer {
         _isActivePlayerOwned(state, liveUnit.ownerPlayerId);
   }
 
-  static bool _canKeepCitySelection(GameState state, GameSelection selection) {
+  static bool _canKeepCitySelection(
+    GameClientState state,
+    GameSelection selection,
+  ) {
     final city = selection.city;
     if (city == null) return false;
     return state.canControlCity(city) ||
         _isActivePlayerOwned(state, city.ownerPlayerId);
   }
 
-  static bool _isActivePlayerOwned(GameState state, String ownerPlayerId) {
+  static bool _isActivePlayerOwned(
+    GameClientState state,
+    String ownerPlayerId,
+  ) {
     return state.activePlayerId.isNotEmpty &&
         state.activePlayerId == ownerPlayerId;
   }

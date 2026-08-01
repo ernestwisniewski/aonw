@@ -198,9 +198,8 @@ class _NewGameScreenState extends ConsumerState<NewGameScreen> {
         ? null
         : ref.watch(activeMapProvider(_selectedMap!));
     final reviewSinglePlayerPlayerCount = switch (reviewMapAsync) {
-      AsyncData(:final value) => NewGameSinglePlayerSetup.playerCountForMapData(
-        value,
-      ),
+      AsyncData(:final value) =>
+        NewGameSinglePlayerSetup.playerCountForWorldMap(value),
       _ => NewGameSinglePlayerSetup.playerCountForMapName(_selectedMap?.name),
     };
     final reviewMapValidation = switch (reviewMapAsync) {
@@ -420,7 +419,7 @@ class _NewGameScreenState extends ConsumerState<NewGameScreen> {
     try {
       final l10n = context.l10n;
       final mapData = await ref.read(activeMapProvider(map).future);
-      final playerCount = NewGameSinglePlayerSetup.playerCountForMapData(
+      final playerCount = NewGameSinglePlayerSetup.playerCountForWorldMap(
         mapData,
       );
       final validation = MapValidator.validate(
@@ -501,9 +500,8 @@ class _NewGameScreenState extends ConsumerState<NewGameScreen> {
     if (map == null) return NewGameFlowX.singlePlayerPlayerCount;
     final mapAsync = ref.watch(activeMapProvider(map));
     return switch (mapAsync) {
-      AsyncData(:final value) => NewGameSinglePlayerSetup.playerCountForMapData(
-        value,
-      ),
+      AsyncData(:final value) =>
+        NewGameSinglePlayerSetup.playerCountForWorldMap(value),
       _ => NewGameSinglePlayerSetup.playerCountForMapName(map.name),
     };
   }

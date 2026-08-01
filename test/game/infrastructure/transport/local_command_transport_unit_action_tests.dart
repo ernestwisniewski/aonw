@@ -13,7 +13,7 @@ void _registerUnitActionTransportTests() {
         row: 0,
         movementPoints: 3,
       );
-      final baseSnapshot = SaveSnapshot(
+      final baseSnapshot = GameSnapshotFactory.create(
         save: _save(
           players: const [],
           gameMode: GameMode.multiplayer,
@@ -22,16 +22,16 @@ void _registerUnitActionTransportTests() {
         playerColors: const {'player_1': 0xFF010203},
         playerCountries: const {'country_only': PlayerCountry.canada},
         units: [unit],
-        runtimeState: GameRuntimeState.snapshot(
-          submittedPlayerIds: const {'session_only'},
-          timeoutStreaksByPlayerId: const {'timeout_only': 2},
-          afkPlayerIds: const {'afk_only'},
-          kickedPlayerIds: const {'kicked_only'},
-        ),
+
+        submittedPlayerIds: const {'session_only'},
+        timeoutStreaksByPlayerId: const {'timeout_only': 2},
+        afkPlayerIds: const {'afk_only'},
+        kickedPlayerIds: const {'kicked_only'},
+
         eventLogOffset: 73,
       );
       final before = SaveSnapshotCodec.toJson(baseSnapshot);
-      final originalSession = baseSnapshot.session;
+      final originalSession = baseSnapshot.domain;
       final repository = _MemoryGameRepository(baseSnapshot);
       final transport = LocalCommandTransport(
         reducer: GameStateReducer(mapData: _map()),
@@ -43,7 +43,7 @@ void _registerUnitActionTransportTests() {
 
       final result = await transport.dispatch(
         saveId: baseSnapshot.save.id,
-        currentState: baseSnapshot.toGameState(activePlayerId: 'player_1'),
+        currentState: baseSnapshot.toClientState(activePlayerId: 'player_1'),
         command: const SkipUnitTurnCommand('unit_1'),
         context: const GameCommandContext(
           actorPlayerId: 'player_1',
@@ -59,9 +59,9 @@ void _registerUnitActionTransportTests() {
       );
       expect(result.offset, 74);
       expect(snapshot.eventLogOffset, 74);
-      expect(snapshot.canonical.eventLogOffset, 74);
-      expect(snapshot.session, originalSession);
-      expect(snapshot.session.turnStartedAt, baseSnapshot.save.savedAt.toUtc());
+      expect(snapshot.eventLogOffset, 74);
+      expect(snapshot.domain, originalSession);
+      expect(snapshot.domain.turnStartedAt, baseSnapshot.save.savedAt.toUtc());
       expect(snapshot.persistedTurnStartedAt, isNull);
       expect(snapshot.save.savedAt, DateTime.utc(2026, 7, 30, 12));
       expect(snapshot.units.single.movementPoints, 0);
@@ -76,7 +76,7 @@ String _unreviewedTransportEnvelopeBytes(Map<String, dynamic> source) {
     ..remove('units')
     ..remove('artifacts')
     ..remove('eventLogOffset');
-  (copy['runtimeState'] as Map<String, dynamic>)
+  (copy['lifecycle'] as Map<String, dynamic>)
     ..remove('cityFoundingDraft')
     ..remove('pendingAction');
   return jsonEncode(copy);

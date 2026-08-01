@@ -288,7 +288,7 @@ String _mapStackCycleId(
   return 'stack:$col:$row:${unitId ?? '-'}:${artifactId ?? '-'}:${objectiveId ?? '-'}';
 }
 
-TileData? _tileForArtifactLocation(
+WorldTile? _tileForArtifactLocation(
   GameRenderer renderer,
   WorldArtifactLocation location,
 ) {

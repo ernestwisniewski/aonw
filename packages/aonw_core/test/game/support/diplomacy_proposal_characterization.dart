@@ -131,13 +131,13 @@ void _registerProposalDiscoveryCatalogTests() {
 
         expect(result.accepted, isTrue);
         expect(
-          result.state.runtimeState.diplomacy.pendingProposals,
+          result.state.diplomacy.pendingProposals,
           contains('known_target'),
         );
       });
     }
 
-    test('broader PersistentGameState.knownPlayerIds is not consulted', () {
+    test('broader DomainState.knownPlayerIds is not consulted', () {
       final state = _diplomacyState(
         playerColors: const {_player1: 1},
         playerCountries: const {},
@@ -329,7 +329,7 @@ void _registerProposalRelationPolicyTests() {
   });
 }
 
-PersistentGameState _stateWithKnownTargetFrom(_KnownTargetSource source) {
+DomainState _stateWithKnownTargetFrom(_KnownTargetSource source) {
   return _diplomacyState(
     playerColors: source == _KnownTargetSource.colors
         ? const {_player2: 2}

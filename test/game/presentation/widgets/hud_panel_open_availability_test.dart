@@ -9,9 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('HudPanelOpenAvailability', () {
     test('allows city production only for selected city and closed panel', () {
-      final state = GameState(
+      final state = GameClientState(
         cities: [_city()],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.city(
             _city(),
             cityYield: TileYield.zero,
@@ -37,7 +37,7 @@ void main() {
       expect(
         HudPanelOpenAvailability.cityProduction(
           modes: const HudPanelModes(),
-          state: const GameState(),
+          state: GameClientState(),
         ),
         isFalse,
       );
@@ -78,7 +78,7 @@ void main() {
       expect(
         HudPanelOpenAvailability.empire(
           modes: const HudPanelModes(),
-          state: const GameState(),
+          state: GameClientState(),
           activePlayerId: 'player_1',
         ),
         isTrue,

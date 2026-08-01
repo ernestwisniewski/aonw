@@ -31,7 +31,7 @@ void _registerServerCommandReducerTurnTimeoutTests() {
 
         expect(reduction.accepted, isTrue);
         expect(nextSnapshot.domain.turn, 2);
-        expect(nextSnapshot.session.timeoutStreaksByPlayerId, {'player_2': 1});
+        expect(nextSnapshot.domain.timeoutStreaksByPlayerId, {'player_2': 1});
         expect(
           reduction.events.whereType<PlayerTimedOutEvent>().single.playerId,
           'player_2',
@@ -57,10 +57,10 @@ void _registerServerCommandReducerTurnTimeoutTests() {
       expect(reduction.accepted, isTrue);
       expect(nextSnapshot.domain.turn, 1);
       expect(
-        nextSnapshot.session.turnStatesByPlayerId['player_1'],
+        nextSnapshot.domain.turnStatesByPlayerId['player_1'],
         PlayerTurnState.finished,
       );
-      expect(nextSnapshot.session.submittedPlayerIds, {'player_1'});
+      expect(nextSnapshot.domain.submittedPlayerIds, {'player_1'});
       expect(reduction.events, isEmpty);
       expect(reduction.movementExecutions, isEmpty);
     });
@@ -77,10 +77,8 @@ void _registerServerCommandReducerTurnTimeoutTests() {
       );
       final snapshot = _snapshot(
         _diplomacyState(
-          runtimeState: GameRuntimeState(
-            submittedPlayerIds: const {'player_1'},
-            turnStartedAt: DateTime.utc(2026, 6, 30, 11),
-          ),
+          submittedPlayerIds: const {'player_1'},
+          turnStartedAt: DateTime.utc(2026, 6, 30, 11),
         ),
         save: _save(
           playerStates: const {
@@ -102,7 +100,7 @@ void _registerServerCommandReducerTurnTimeoutTests() {
 
       expect(reduction.accepted, isTrue);
       expect(nextSnapshot.domain.turn, 2);
-      expect(nextSnapshot.session.timeoutStreaksByPlayerId, {'player_2': 1});
+      expect(nextSnapshot.domain.timeoutStreaksByPlayerId, {'player_2': 1});
       expect(
         reduction.events.whereType<PlayerTimedOutEvent>().single.playerId,
         'player_2',
@@ -178,12 +176,11 @@ void _registerServerCommandReducerTurnTimeoutTests() {
         reducer: reducer,
         match: _runningMatch(),
         wireSnapshot: _snapshot(
-          PersistentGameState(
+          DomainState.snapshot(
             units: [unit],
             artifacts: const [artifact],
-            runtimeState: const GameRuntimeState(
-              submittedPlayerIds: {'player_1'},
-            ),
+
+            submittedPlayerIds: {'player_1'},
           ),
           save: _save(
             playerStates: const {
@@ -244,9 +241,7 @@ Future<void> _preservesGlobalTurnMovementExecutionOrder() async {
 
 WireSnapshot _turnMovementExecutionSnapshot() {
   return _snapshot(
-    _diplomacyState(
-      runtimeState: const GameRuntimeState(submittedPlayerIds: {'player_1'}),
-    ).copyWith(
+    _diplomacyState(submittedPlayerIds: {'player_1'}).copyWith(
       units: [
         _queuedTurnMovementUnit(
           id: 'unit_a',
@@ -326,14 +321,14 @@ String _movementExecutionSnapshot(MovementCommandExecution execution) {
   return '${execution.unitId}:${execution.fromCol},${execution.fromRow}->$steps';
 }
 
-MapData _turnMovementExecutionMap() {
-  return MapData(
+WorldMap _turnMovementExecutionMap() {
+  return WorldMap(
     cols: 6,
     rows: 2,
     tiles: [
       for (var row = 0; row < 2; row++)
         for (var col = 0; col < 6; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.grassland],

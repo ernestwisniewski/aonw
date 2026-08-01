@@ -3,10 +3,10 @@ import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/ai_turn_preparation_builder.dart';
 import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
@@ -19,7 +19,7 @@ void main() {
       final strategy = _CapturingStrategy(
         commands: const [SkipUnitTurnCommand('commander_player_2')],
       );
-      final snapshot = SaveSnapshot(
+      final snapshot = GameSnapshotFactory.create(
         save: _save(gameMode: GameMode.hotSeat),
         units: [
           GameUnit.startingCommander(ownerPlayerId: 'player_1', col: 0, row: 0),
@@ -74,7 +74,7 @@ class _CapturingStrategy implements AiStrategy {
 }
 
 class _MemoryGameRepository implements GameRepository {
-  final SaveSnapshot snapshot;
+  final CanonicalGameSnapshot snapshot;
 
   const _MemoryGameRepository(this.snapshot);
 
@@ -91,13 +91,13 @@ class _MemoryGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async => snapshot;
+  Future<CanonicalGameSnapshot> load(String saveId) async => snapshot;
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {}
+  Future<void> save(CanonicalGameSnapshot snapshot) async {}
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
@@ -139,18 +139,18 @@ const _players = [
   ),
 ];
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 2,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 1,
       row: 0,
       terrains: [TerrainType.plains],

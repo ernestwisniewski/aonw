@@ -32,9 +32,11 @@ void main() {
 
     test('inline envelope matches isolated encoding and round-trips', () async {
       final snapshot = Snapshot(
-        offset: 3,
         createdAt: DateTime.utc(2026, 4, 24, 12),
-        state: SaveSnapshot(save: _save(turn: 1), eventLogOffset: 3),
+        state: GameSnapshotFactory.create(
+          save: _save(turn: 1),
+          eventLogOffset: 3,
+        ),
       );
 
       final inline = SaveSnapshotEnvelopeCodec.encode(snapshot);
@@ -49,7 +51,10 @@ void main() {
     });
 
     test('large snapshot and envelope decode off the caller isolate', () async {
-      final state = SaveSnapshot(save: _save(turn: 1), eventLogOffset: 3);
+      final state = GameSnapshotFactory.create(
+        save: _save(turn: 1),
+        eventLogOffset: 3,
+      );
       final stateJson = SaveSnapshotCodec.toJson(state)
         ..['padding'] = List.filled(300 * 1024, 'x').join();
       final decodedState = await IsolatedSaveSnapshotCodec.decode(
@@ -59,7 +64,6 @@ void main() {
           jsonDecode(
                   SaveSnapshotEnvelopeCodec.encode(
                     Snapshot(
-                      offset: 3,
                       createdAt: DateTime.utc(2026, 4, 24, 12),
                       state: state,
                     ),
@@ -80,17 +84,21 @@ void main() {
       await store.save(
         'save_1',
         Snapshot(
-          offset: 3,
           createdAt: DateTime.utc(2026, 4, 24, 12),
-          state: SaveSnapshot(save: _save(turn: 1), eventLogOffset: 3),
+          state: GameSnapshotFactory.create(
+            save: _save(turn: 1),
+            eventLogOffset: 3,
+          ),
         ),
       );
       await store.save(
         'save_1',
         Snapshot(
-          offset: 4,
           createdAt: DateTime.utc(2026, 4, 24, 13),
-          state: SaveSnapshot(save: _save(turn: 2), eventLogOffset: 4),
+          state: GameSnapshotFactory.create(
+            save: _save(turn: 2),
+            eventLogOffset: 4,
+          ),
         ),
       );
 
@@ -107,9 +115,11 @@ void main() {
       await store.save(
         'save_1',
         Snapshot(
-          offset: 1,
           createdAt: DateTime.utc(2026, 4, 24, 11),
-          state: SaveSnapshot(save: _save(turn: 1), eventLogOffset: 1),
+          state: GameSnapshotFactory.create(
+            save: _save(turn: 1),
+            eventLogOffset: 1,
+          ),
         ),
       );
 
@@ -118,9 +128,8 @@ void main() {
           store.save(
             'save_1',
             Snapshot(
-              offset: offset,
               createdAt: DateTime.utc(2026, 4, 24, 11, offset),
-              state: SaveSnapshot(
+              state: GameSnapshotFactory.create(
                 save: _save(turn: offset),
                 eventLogOffset: offset,
               ),

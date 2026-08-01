@@ -1,7 +1,7 @@
 part of 'hud_action_deck.dart';
 
 extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
-  bool _canAutoAdvance(GameState? state, {bool force = false}) {
+  bool _canAutoAdvance(GameClientState? state, {bool force = false}) {
     if (state == null) return false;
 
     final context = _HudAutoAdvanceContext(
@@ -34,7 +34,7 @@ extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
     return const _HudAutoAdvancePolicy().canAdvance(context);
   }
 
-  bool _autoTurnFlowCanStartFrom(GameState state) {
+  bool _autoTurnFlowCanStartFrom(GameClientState state) {
     return _autoTurnFlowPrimed ||
         _autoTurnFlowAdvancedThisTurn ||
         _hasResolvedActiveSelection(state) ||
@@ -48,7 +48,7 @@ extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
     );
   }
 
-  String? _manualAutoTargetKey(GameState state) {
+  String? _manualAutoTargetKey(GameClientState state) {
     return _HudManualAutoTarget.resolve(
       state: state,
       activePlayerId: widget.activePlayerId,
@@ -56,7 +56,10 @@ extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
     )?.storageKey;
   }
 
-  bool _manualAutoTargetStillNeedsOrder(GameState state, String targetKey) {
+  bool _manualAutoTargetStillNeedsOrder(
+    GameClientState state,
+    String targetKey,
+  ) {
     return _HudManualAutoTarget.parse(targetKey)?.stillNeedsOrder(
           state: state,
           activePlayerId: widget.activePlayerId,
@@ -65,7 +68,7 @@ extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
         false;
   }
 
-  bool _waitsForManualDecision(GameState state) {
+  bool _waitsForManualDecision(GameClientState state) {
     return _HudManualDecisionPolicy(
       activePlayerId: widget.activePlayerId,
       unitNeedsManualOrder: _unitNeedsManualOrder,
@@ -73,21 +76,21 @@ extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
     ).waitsForManualDecision(state);
   }
 
-  bool _hasResolvedActiveSelection(GameState state) {
+  bool _hasResolvedActiveSelection(GameClientState state) {
     return _HudResolvedSelectionPolicy(
       activePlayerId: widget.activePlayerId,
       unitNeedsManualOrder: _unitNeedsManualOrder,
     ).hasResolvedSelection(state);
   }
 
-  bool _hasUnitOrCityActionToStartAuto(GameState state) {
+  bool _hasUnitOrCityActionToStartAuto(GameClientState state) {
     return _HudAutoStartCandidatePolicy(
       activePlayerId: widget.activePlayerId,
       unitNeedsManualOrder: _unitNeedsManualOrder,
     ).hasActionCandidate(state);
   }
 
-  bool _isInspectingResolvedCityWithPendingActions(GameState state) {
+  bool _isInspectingResolvedCityWithPendingActions(GameClientState state) {
     return _HudResolvedCityInspectionPolicy(
       activePlayerId: widget.activePlayerId,
     ).isInspectingResolvedCityWithPendingActions(
@@ -96,25 +99,25 @@ extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
     );
   }
 
-  bool _resolvedCityCompletionCanAdvance(GameState state) {
+  bool _resolvedCityCompletionCanAdvance(GameClientState state) {
     final selectedCity = state.selection?.city;
     return selectedCity != null &&
         _completedManualCityTargetKey ==
             _HudManualAutoTarget.city(selectedCity.id).storageKey;
   }
 
-  bool _canAutoOpenResearchAction(GameState state) {
+  bool _canAutoOpenResearchAction(GameClientState state) {
     final key = _researchActionKey(state);
     return key != null && !_researchActionDismissed(state);
   }
 
-  bool _researchActionDismissed(GameState state) {
+  bool _researchActionDismissed(GameClientState state) {
     final key = _researchActionKey(state);
     return key != null &&
         ref.read(hudResearchAutoPromptControllerProvider).contains(key);
   }
 
-  String? _researchActionKey([GameState? stateOverride]) {
+  String? _researchActionKey([GameClientState? stateOverride]) {
     return _HudResearchAutoPromptPolicy(
       remainingActionCount: widget.remainingActionCount,
       activePlayerId: widget.activePlayerId,
@@ -139,7 +142,7 @@ extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
     );
   }
 
-  String _autoTurnFlowSignature(GameState state) {
+  String _autoTurnFlowSignature(GameClientState state) {
     return _HudAutoFlowSignatureBuilder(
       activePlayerId: widget.activePlayerId,
       unitNeedsManualOrder: _unitNeedsManualOrder,

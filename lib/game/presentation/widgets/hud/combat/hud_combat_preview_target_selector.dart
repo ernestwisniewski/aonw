@@ -114,7 +114,7 @@ final class _PreviewTarget {
 
   final GameUnit? defender;
   final GameCity? city;
-  final TileData tile;
+  final WorldTile tile;
   final int distance;
 
   bool get isCity => city != null;

@@ -15,7 +15,7 @@ void main() {
       test('$mapName passes up to its player capacity', () async {
         final mapData = await _loadBundledMap(mapName);
         expect(
-          MapPlayerCapacityRules.maxPlayersForMapData(mapData),
+          MapPlayerCapacityRules.maxPlayersForWorldMap(mapData),
           maxPlayers,
         );
 
@@ -188,12 +188,12 @@ void main() {
   });
 }
 
-Future<MapData> _loadBundledMap(String mapName) async {
+Future<WorldMap> _loadBundledMap(String mapName) async {
   final file = File('assets/maps/$mapName/map.json');
   return MapLoader.fromJson(await file.readAsString());
 }
 
-Map<ResourceType, int> _resourceCounts(MapData mapData) {
+Map<ResourceType, int> _resourceCounts(WorldMap mapData) {
   final counts = <ResourceType, int>{};
   for (final tile in mapData.tiles) {
     for (final resource in tile.resources) {

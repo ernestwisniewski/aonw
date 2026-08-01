@@ -58,8 +58,8 @@ void _validateInputs(List<int> counts, int samplesPerCase) {
 
 Measured<_AiSearchSample> _measureSearch(int iterations) {
   final generator = _CountingActionGenerator();
-  final mapData = MapData(cols: 1, rows: 1, tiles: const []);
-  final mapView = mapData.indexedReadView();
+  final mapData = WorldMap(cols: 1, rows: 1, tiles: []);
+  final mapView = mapData;
   final search = MctsSearch(
     actionGenerator: generator,
     simulator: const TracingMctsSimulator(
@@ -187,7 +187,7 @@ AiContext _context(MapReadView mapView) {
 }
 
 GameView _view(MapReadView mapView) {
-  const state = PersistentGameState();
+  final state = DomainState.snapshot();
   final engineSnapshot = CanonicalGameSnapshot.snapshot(
     domain: DomainState.snapshot(
       turn: 1,
@@ -195,8 +195,6 @@ GameView _view(MapReadView mapView) {
       participants: const [
         Player(id: 'player_1', name: 'player_1', colorValue: 0),
       ],
-    ),
-    session: MatchSessionState.snapshot(
       gameMode: GameMode.hotSeat,
       turnStatesByPlayerId: const {'player_1': PlayerTurnState.active},
     ),
@@ -212,7 +210,7 @@ GameView _view(MapReadView mapView) {
       camera: GameSnapshotCamera.zero,
     ),
   );
-  return GameView.fromPersistentState(
+  return GameView.fromDomainState(
     state,
     forPlayerId: 'player_1',
     turn: 1,

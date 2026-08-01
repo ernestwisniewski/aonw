@@ -1,5 +1,5 @@
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:test/test.dart';
 
@@ -66,18 +66,18 @@ void main() {
     });
 
     test('filters tile and map resources for the player research state', () {
-      final mapData = MapData(
+      final mapData = WorldMap(
         cols: 2,
         rows: 1,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.grassland],
             resources: [ResourceType.horses, ResourceType.iron],
             height: 0,
           ),
-          TileData(
+          WorldTile(
             col: 1,
             row: 0,
             terrains: [TerrainType.desert],

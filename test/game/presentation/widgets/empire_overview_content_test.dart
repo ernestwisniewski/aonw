@@ -43,7 +43,11 @@ void main() {
       location: WorldArtifactLocation.stored(cityId: 'city_1'),
     );
     final viewModel = EmpireOverviewViewModel.fromState(
-      GameState(units: [unit, scout], cities: [city], artifacts: [artifact]),
+      GameClientState(
+        units: [unit, scout],
+        cities: [city],
+        artifacts: [artifact],
+      ),
       activePlayerId: 'player_1',
     );
     GameUnit? selectedUnit;
@@ -156,7 +160,7 @@ void main() {
       center: CityHex(col: 1, row: 1),
     );
     final viewModel = EmpireOverviewViewModel.fromState(
-      GameState(units: [unit], cities: [city]),
+      GameClientState(units: [unit], cities: [city]),
       activePlayerId: 'player_1',
     );
 

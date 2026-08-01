@@ -65,7 +65,7 @@ class GameActivityHistoryRecord {
   bool isVisibleTo(String activePlayerId) =>
       activePlayerId.isNotEmpty && playerId == activePlayerId;
 
-  GameEventNotification toNotification(GameState state) {
+  GameEventNotification toNotification(GameClientState state) {
     return GameEventNotification(
       id: id,
       event: event,

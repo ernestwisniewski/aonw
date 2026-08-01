@@ -1,8 +1,8 @@
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/city/hud_city_founding_availability.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -10,12 +10,10 @@ void main() {
   group('HudCityFoundingAvailability', () {
     test('allows controlled settler on a valid tile', () {
       final settler = _settler(ownerPlayerId: 'player_1');
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [settler],
-        interaction: GameInteractionState(
-          selection: GameSelection.unit(settler),
-        ),
+        interaction: InteractionState(selection: GameSelection.unit(settler)),
       );
 
       expect(
@@ -34,7 +32,7 @@ void main() {
       );
       expect(
         HudCityFoundingAvailability.canStart(
-          state: const GameState(activePlayerId: 'player_1'),
+          state: GameClientState(activePlayerId: 'player_1'),
           mapTiles: _mapData(),
         ),
         isFalse,
@@ -43,12 +41,10 @@ void main() {
 
     test('rejects unit controlled by another active player', () {
       final settler = _settler(ownerPlayerId: 'player_2');
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [settler],
-        interaction: GameInteractionState(
-          selection: GameSelection.unit(settler),
-        ),
+        interaction: InteractionState(selection: GameSelection.unit(settler)),
       );
 
       expect(
@@ -62,12 +58,10 @@ void main() {
 
     test('rejects selected settler outside map data', () {
       final settler = _settler(ownerPlayerId: 'player_1', col: 8, row: 8);
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         units: [settler],
-        interaction: GameInteractionState(
-          selection: GameSelection.unit(settler),
-        ),
+        interaction: InteractionState(selection: GameSelection.unit(settler)),
       );
 
       expect(
@@ -91,14 +85,14 @@ GameUnit _settler({required String ownerPlayerId, int col = 0, int row = 0}) {
   );
 }
 
-MapData _mapData() {
-  return MapData(
+WorldMap _mapData() {
+  return WorldMap(
     cols: 2,
     rows: 2,
     tiles: [
       for (var row = 0; row < 2; row++)
         for (var col = 0; col < 2; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.grassland],

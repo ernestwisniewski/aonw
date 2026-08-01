@@ -123,8 +123,8 @@ void main() {
       events: [event],
       combatAnimations: const [],
     );
-    final before = GameState(units: [enemyBefore]);
-    final after = GameState(units: [enemyBefore.copyWith(col: 2)]);
+    final before = GameClientState(units: [enemyBefore]);
+    final after = GameClientState(units: [enemyBefore.copyWith(col: 2)]);
 
     ProjectedGameEffectBatch project() =>
         DomainEventPresentationProjector.projectObservedBatch(
@@ -196,8 +196,8 @@ void main() {
           interactionEffects: const [],
           events: events,
           visibleMovementExecutions: const [],
-          previousState: const GameState(),
-          state: const GameState(),
+          previousState: GameClientState(),
+          state: GameClientState(),
         ),
     };
     final expected = batches['local']!.domainEffects.map(_snapshot).toList();
@@ -241,8 +241,8 @@ void main() {
 }
 
 ({
-  GameState before,
-  GameState after,
+  GameClientState before,
+  GameClientState after,
   List<GameEvent> events,
   List<MovementCommandExecution> executions,
 })
@@ -272,8 +272,8 @@ _fixture() {
     steps: [AttackStep(damage: 4), RetaliationStep(damage: 2)],
   );
   return (
-    before: GameState(units: [attacker, defender]),
-    after: GameState(
+    before: GameClientState(units: [attacker, defender]),
+    after: GameClientState(
       units: [
         attacker.copyWith(col: 1, hitPoints: 8),
         defender.copyWith(col: 3),

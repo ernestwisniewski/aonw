@@ -43,7 +43,6 @@ import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/services/map_focus_visibility.dart';
 import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
@@ -53,6 +52,7 @@ import 'package:aonw/map/rendering/map_objective_marker_layer.dart';
 import 'package:aonw/map/rendering/world_projection.dart';
 import 'package:aonw/shared/input/hex_input_behavior.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -73,6 +73,7 @@ part 'game_renderer_camera_rendering.dart';
 part 'game_renderer_gamepad_input.dart';
 part 'game_renderer_input.dart';
 part 'game_renderer_projected_effects.dart';
+part 'game_renderer_state_application.dart';
 part 'game_renderer_state_sync.dart';
 part 'game_renderer_testing.dart';
 part 'game_renderer_tile_interactions.dart';
@@ -83,7 +84,7 @@ part 'game_renderer_world_lifecycle.dart';
 /// Flame renderer for the game map.
 ///
 /// Owns the world hierarchy, forwards input as commands, and keeps visual
-/// layers in sync with [GameState].
+/// layers in sync with [GameClientState].
 class GameRenderer extends HexWorld
     with KeyboardEvents, LongPressDetector, HexInputBehavior {
   static const _loadingPlayerId = '__loading__';
@@ -93,7 +94,7 @@ class GameRenderer extends HexWorld
   );
   static const MarkerDensityPolicy _markerDensityPolicy = MarkerDensityPolicy();
 
-  final MapData mapData;
+  final WorldMap mapData;
   final String? imagePath;
   final CameraState? initialCamera;
   final bool startCameraOffMap;
@@ -159,7 +160,7 @@ class GameRenderer extends HexWorld
   Vector2? _lastHoverWidgetPosition;
   ({int col, int row, bool forceInspect})? _lastSyncedHoverHex;
   GameHoverIntentResolver? _cachedHoverIntentResolver;
-  GameState? _cachedHoverIntentResolverState;
+  GameClientState? _cachedHoverIntentResolverState;
   bool? _cachedHoverIntentResolverReduceMotion;
   int? _currentTurn;
   bool _longPressInspectActive = false;
@@ -169,11 +170,11 @@ class GameRenderer extends HexWorld
       CityDescriptionTapTracker.withStopwatch();
   final ArtifactMarkerTapCycle _artifactTapCycle = ArtifactMarkerTapCycle();
   CityHex? _longPressInspectHex;
-  GameState _renderState = const GameState(activePlayerId: _loadingPlayerId);
+  var _renderState = GameClientState(activePlayerId: _loadingPlayerId);
   final _queuedRendererEffects = _QueuedRendererEffectQueue();
   WorkerActionPaletteOptionsBuilder? _workerActionPaletteOptionsBuilder;
-  final ValueNotifier<GameRenderViewModel> _viewModelNotifier = ValueNotifier(
-    GameRenderViewModel.empty,
+  final ValueNotifier<RenderState> _viewModelNotifier = ValueNotifier(
+    RenderState.empty,
   );
   final ValueNotifier<bool> _readyNotifier = ValueNotifier(false);
   final ValueNotifier<double> _zoomNotifier = ValueNotifier(1.0);
@@ -519,14 +520,11 @@ class GameRenderer extends HexWorld
     _clearHoverIntent();
   }
 
-  void applyState(GameState state, {int? currentTurn}) =>
+  void applyState(GameClientState state, {int? currentTurn}) =>
       _applyState(state, suppressCameraFocus: false, currentTurn: currentTurn);
 
-  void applyStateWithoutCameraFocus(GameState state, {int? currentTurn}) =>
-      _applyState(state, suppressCameraFocus: true, currentTurn: currentTurn);
-
   Future<void> applyTransition(
-    GameState state,
+    GameClientState state,
     Iterable<RendererEffect> effects, {
     int? currentTurn,
   }) {
@@ -555,14 +553,14 @@ class GameRenderer extends HexWorld
   }
 
   @visibleForTesting
-  TileData? tileDataAtWidgetPositionForTesting(Vector2 widgetPosition) {
+  WorldTile? tileDataAtWidgetPositionForTesting(Vector2 widgetPosition) {
     if (!_isReady) return null;
     final inputPosition = worldInputPointForWidget(widgetPosition);
     final worldPoint = camera.globalToLocal(inputPosition);
     return _sceneBuilder.grid.tileDataAtWorldPoint(worldPoint);
   }
 
-  Offset _inspectionAnchorForTile(TileData tileData, {Vector2? fallback}) {
+  Offset _inspectionAnchorForTile(WorldTile tileData, {Vector2? fallback}) {
     if (!_isReady) {
       return Offset(fallback?.x ?? 0, fallback?.y ?? 0);
     }

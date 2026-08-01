@@ -12,11 +12,11 @@ void main() {
       );
 
       _expectAcceptedParity(results);
-      expect(results.engine.snapshot.session.submittedPlayerIds, const {
+      expect(results.engine.snapshot.domain.submittedPlayerIds, const {
         'player_2',
       });
       expect(
-        results.engine.snapshot.session.turnStartedAt,
+        results.engine.snapshot.domain.turnStartedAt,
         DateTime.utc(2026, 7, 20),
       );
       expect(
@@ -237,13 +237,13 @@ void _expectAcceptedParity(_CombatResults results) {
 
 CanonicalGameSnapshot _snapshot(DomainState domain) {
   return CanonicalGameSnapshot.snapshot(
-    domain: domain,
-    session: MatchSessionState.snapshot(
+    domain: (domain).copyWith(
       gameMode: GameMode.hotSeat,
       submittedPlayerIds: const {'player_2'},
       timeoutStreaksByPlayerId: const {'player_2': 2},
       turnStartedAt: DateTime.utc(2026, 7, 20),
     ),
+
     metadata: GameSnapshotMetadata(
       id: 'combat-parity',
       schemaVersion: 3,
@@ -286,19 +286,17 @@ FogOfWarState _visibleFog() {
 }
 
 MapReadView _map() {
-  return WorldMapReadView(
-    WorldMap(
-      cols: 3,
-      rows: 1,
-      tiles: [
-        for (var col = 0; col < 3; col++)
-          WorldTile(
-            coordinate: HexCoord(col: col, row: 0),
-            terrains: const [TerrainType.grassland],
-            resources: const [],
-            height: 0,
-          ),
-      ],
-    ),
+  return WorldMap(
+    cols: 3,
+    rows: 1,
+    tiles: [
+      for (var col = 0; col < 3; col++)
+        WorldTile.at(
+          coordinate: HexCoord(col: col, row: 0),
+          terrains: const [TerrainType.grassland],
+          resources: const [],
+          height: 0,
+        ),
+    ],
   );
 }

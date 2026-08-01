@@ -55,8 +55,10 @@ void main() {
     final projected = projector.snapshotFor(canonical, owner);
     final projectedGuest = projector.snapshotFor(canonical, guest);
     final save = GameSave.fromJson(projected.save);
-    final state = PersistentGameState.fromJson(projected.state);
-    final guestState = PersistentGameState.fromJson(projectedGuest.state);
+    final state = CanonicalGameSnapshotCodec.decodeDomainState(projected.state);
+    final guestState = CanonicalGameSnapshotCodec.decodeDomainState(
+      projectedGuest.state,
+    );
 
     _expectPublicSave(save);
     _expectOwnerRuleProjection(state);
@@ -72,7 +74,7 @@ void main() {
 
   test('projects only recipient events and command acknowledgements', () {
     final snapshot = playerMatchViewProjectionFixture;
-    final state = PersistentGameState.fromJson(snapshot.state);
+    final state = CanonicalGameSnapshotCodec.decodeDomainState(snapshot.state);
     final storedEvents = PlayerMatchEventAudience.annotateForStorage(
       events: const [
         TechnologyResearchedEvent(
@@ -146,9 +148,12 @@ void main() {
     expect(projectedOther.command, isNull);
     expect(projectedOther.events, hasLength(2));
     expect(ack.events, hasLength(2));
-    expect(PersistentGameState.fromJson(ack.snapshot.state).playerGold, {
-      'player-owner': 111,
-    });
+    expect(
+      CanonicalGameSnapshotCodec.decodeDomainState(
+        ack.snapshot.state,
+      ).playerGold,
+      {'player-owner': 111},
+    );
 
     final guestOnlyEvent = ownEvent.copyWith(
       actorPlayerId: 'player-guest',
@@ -205,7 +210,7 @@ void _expectPublicSave(GameSave save) {
   expect(save.players.last.ai?.seed, 0);
 }
 
-void _expectOwnerRuleProjection(PersistentGameState state) {
+void _expectOwnerRuleProjection(DomainState state) {
   expect(state.playerColors, {
     'player-owner': 1,
     'player-guest': 2,
@@ -249,10 +254,10 @@ void _expectOwnerRuleProjection(PersistentGameState state) {
   expect(state.wonderRegistry.ownerOf(WonderType.greatLibrary), 'player-owner');
 }
 
-void _expectOwnerRuntimeProjection(PersistentGameState state) {
-  final runtime = state.runtimeState;
-  expect(runtime.cityFoundingDraft, isNull);
-  expect(runtime.pendingAction, isNull);
+void _expectOwnerRuntimeProjection(DomainState state) {
+  final runtime = state;
+  expect(runtime.actions.cityFoundingDraft, isNull);
+  expect(runtime.actions.pendingAction, isNull);
   expect(runtime.submittedPlayerIds, {'player-owner', 'player-guest'});
   expect(runtime.timeoutStreaksByPlayerId, {'player-owner': 1});
   expect(runtime.afkPlayerIds, {'player-guest'});
@@ -281,10 +286,10 @@ void _expectOwnerRuntimeProjection(PersistentGameState state) {
   expect(runtime.resourceTradeAgreements, hasLength(1));
 }
 
-void _expectGuestProjection(PersistentGameState state) {
-  final runtime = state.runtimeState;
-  expect(runtime.cityFoundingDraft?.ownerPlayerId, 'player-guest');
-  expect(runtime.pendingAction, isA<PendingResearchSelection>());
+void _expectGuestProjection(DomainState state) {
+  final runtime = state;
+  expect(runtime.actions.cityFoundingDraft?.ownerPlayerId, 'player-guest');
+  expect(runtime.actions.pendingAction, isA<PendingResearchSelection>());
   expect(runtime.timeoutStreaksByPlayerId, {'player-guest': 9});
   expect(runtime.intendedAttacks, hasLength(1));
   expect(runtime.dominationHoldTurnsByPlayerId, {'player-guest': 8});

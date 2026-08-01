@@ -6,8 +6,8 @@ import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/services/ai_turn_presentation_driver.dart';
 import 'package:aonw/game/presentation/services/hidden_ai_renderer_playback.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
@@ -28,7 +28,7 @@ void main() {
       );
       final driver = _driver(
         session: _session(gameMode: GameMode.hotSeat),
-        rendererState: GameState(
+        rendererState: GameClientState(
           activePlayerId: 'human',
           activePlayerCanAct: false,
           units: [beforeUnit],
@@ -40,7 +40,7 @@ void main() {
             ({required saveId, required command, required context}) async {
               hiddenCommands.add(command);
               return DispatchCommandResult(
-                state: GameState(
+                state: GameClientState(
                   activePlayerId: 'ai_1',
                   activePlayerCanAct: false,
                   units: [beforeUnit.copyWith(col: 3)],
@@ -68,7 +68,7 @@ void main() {
 
       final result = await driver.dispatchCommand(
         saveId: 'save_1',
-        currentState: const GameState(
+        currentState: GameClientState(
           activePlayerId: 'ai_1',
           activePlayerCanAct: true,
         ),
@@ -95,15 +95,15 @@ void main() {
         hiddenDispatch:
             ({required saveId, required command, required context}) async {
               hiddenCommands.add(command);
-              return const DispatchCommandResult(
-                state: GameState(activePlayerId: 'ai_1'),
+              return DispatchCommandResult(
+                state: GameClientState(activePlayerId: 'ai_1'),
               );
             },
       );
 
       final result = await driver.dispatchCommand(
         saveId: 'save_1',
-        currentState: const GameState(
+        currentState: GameClientState(
           activePlayerId: 'ai_1',
           activePlayerCanAct: true,
         ),
@@ -126,7 +126,7 @@ void main() {
               },
         );
 
-        const currentState = GameState(activePlayerId: 'ai_1');
+        final currentState = GameClientState(activePlayerId: 'ai_1');
         final result = await driver.dispatchCommand(
           saveId: 'save_1',
           currentState: currentState,
@@ -142,7 +142,7 @@ void main() {
       final applied = <_AppliedTransition>[];
       final driver = _driver(
         session: _session(),
-        rendererState: const GameState(activePlayerId: 'human'),
+        rendererState: GameClientState(activePlayerId: 'human'),
         applyTransition: (state, effects) async {
           applied.add(_AppliedTransition(state, effects));
         },
@@ -196,15 +196,19 @@ void main() {
   });
 }
 
+const _defaultRendererState = Object();
+
 AiTurnPresentationDriver _driver({
   required GameSession? session,
-  GameState? rendererState = const GameState(activePlayerId: 'human'),
+  Object? rendererState = _defaultRendererState,
   HiddenAiTransitionApplier? applyTransition,
   AiTurnHiddenCommandDispatcher? hiddenDispatch,
 }) {
   return AiTurnPresentationDriver(
     sessionReader: () => session,
-    stateReader: (_) => rendererState,
+    stateReader: (_) => identical(rendererState, _defaultRendererState)
+        ? GameClientState(activePlayerId: 'human')
+        : rendererState as GameClientState?,
     localizationReader: () => null,
     applyTransition:
         applyTransition ??
@@ -214,7 +218,7 @@ AiTurnPresentationDriver _driver({
     hiddenDispatch:
         hiddenDispatch ??
         ({required saveId, required command, required context}) async {
-          return const DispatchCommandResult(state: GameState());
+          return DispatchCommandResult(state: GameClientState());
         },
   );
 }
@@ -224,7 +228,7 @@ GameSession _session({
   GameMode gameMode = GameMode.hotSeat,
 }) {
   return GameSession(
-    mapData: MapData(cols: 1, rows: 1, tiles: const []),
+    mapData: WorldMap(cols: 1, rows: 1, tiles: []),
     viewMode: MapViewMode.tile,
     saveId: saveId,
     gameMode: gameMode,
@@ -242,7 +246,7 @@ const _commandMoveSteps = [
 ];
 
 final class _AppliedTransition {
-  final GameState state;
+  final GameClientState state;
   final List<RendererEffect> effects;
 
   const _AppliedTransition(this.state, this.effects);

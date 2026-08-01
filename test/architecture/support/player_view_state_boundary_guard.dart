@@ -13,12 +13,9 @@ void _expectCanonicalProjectionInputs({
     'wire': 'WireSnapshot',
     'publicSave': 'Map<String, dynamic>?',
     'canonicalSnapshot': 'CanonicalGameSnapshot?',
-    'hasSerializedTurnStartedAt': 'bool',
   });
   expect(_parameterTypes(_methodNamed(stateProjector, 'project')), {
     'domain': 'DomainState',
-    'session': 'MatchSessionState',
-    'interaction': 'PersistedInteractionState',
     'recipientPlayerId': 'String',
     'knownDiplomacyPlayerIds': 'Set<String>',
   });

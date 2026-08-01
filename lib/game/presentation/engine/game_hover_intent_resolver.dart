@@ -12,7 +12,7 @@ import 'package:flutter/material.dart' show Color;
 typedef PlayerColorResolver = int Function(String playerId);
 
 final class GameHoverIntentResolver {
-  final GameState state;
+  final GameClientState state;
   final MapTraversalView mapView;
   final bool reduceMotion;
   final PlayerColorResolver colorForPlayer;

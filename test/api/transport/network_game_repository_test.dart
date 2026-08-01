@@ -106,7 +106,7 @@ void main() {
     test('loads snapshots from the network snapshot endpoint', () async {
       const codec = SnapshotCodec();
       final cache = _MemorySnapshotStore();
-      final snapshot = SaveSnapshot(
+      final snapshot = GameSnapshotFactory.create(
         save: _save(),
         playerColors: const {'player_1': 0xFF2563EB},
         eventLogOffset: 12,
@@ -139,8 +139,7 @@ void main() {
       await cache.save(
         multiplayerSnapshotCacheKey(userId: 'user_1', matchId: 'match_1'),
         Snapshot(
-          offset: 8,
-          state: SaveSnapshot(
+          state: GameSnapshotFactory.create(
             save: _save(),
             playerColors: const {'player_1': 0xFF2563EB},
             eventLogOffset: 8,
@@ -167,8 +166,7 @@ void main() {
       () async {
         final cache = _MemorySnapshotStore();
         final cached = Snapshot(
-          offset: 8,
-          state: SaveSnapshot(
+          state: GameSnapshotFactory.create(
             save: _save(),
             playerGold: const {'player_1': 999},
             eventLogOffset: 8,
@@ -200,8 +198,7 @@ void main() {
       await cache.save(
         'multiplayer-v1.dXNlcl8x.bWF0Y2hfMQ',
         Snapshot(
-          offset: 8,
-          state: SaveSnapshot(
+          state: GameSnapshotFactory.create(
             save: _save(),
             playerGold: const {'other-player': 999999},
             eventLogOffset: 8,
@@ -239,7 +236,7 @@ void main() {
       final repository = _repository(_FakeMultiplayerBackend());
 
       expect(
-        () => repository.save(SaveSnapshot(save: _save())),
+        () => repository.save(GameSnapshotFactory.create(save: _save())),
         throwsA(isA<UnsupportedError>()),
       );
       expect(

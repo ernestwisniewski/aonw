@@ -11,8 +11,8 @@ ProjectedGameEffectBatch projectCommandDispatchPresentation({
   required Iterable<RendererEffect> interactionEffects,
   required Iterable<GameEvent> events,
   required Iterable<MovementCommandExecution> movementExecutions,
-  required GameState state,
-  required GameState previousState,
+  required GameClientState state,
+  required GameClientState previousState,
   required AppLocalizations? l10n,
   required int? turn,
 }) {

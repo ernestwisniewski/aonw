@@ -20,7 +20,7 @@ import 'package:flutter/material.dart';
 abstract final class TileSelectionViewModelFactory {
   static SelectionViewModel from(
     MapTileView? tile, {
-    GameState? gameState,
+    GameClientState? gameState,
     CityRuleset cityRuleset = CityRulesets.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     required AppLocalizations l10n,
@@ -121,7 +121,7 @@ abstract final class TileSelectionViewModelFactory {
 
   static List<SelectionImprovementItem> _improvementsFor({
     required MapTileView tile,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required AppLocalizations l10n,
@@ -202,7 +202,7 @@ abstract final class TileSelectionViewModelFactory {
 
   static _TileCityStatus _cityStatusFor({
     required MapTileView tile,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required AppLocalizations l10n,
     required String Function(GameCity city) cityName,
   }) {

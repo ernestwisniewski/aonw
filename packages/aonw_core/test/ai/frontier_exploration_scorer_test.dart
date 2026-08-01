@@ -7,7 +7,7 @@ void main() {
       'pulls scouts toward hidden legal city centers beyond reveal range',
       () {
         final mapData = _openMap(cols: 9, rows: 9);
-        final state = PersistentGameState(
+        final state = DomainState.snapshot(
           units: const [],
           cities: const [
             GameCity(
@@ -71,7 +71,7 @@ void main() {
 
     test('scores hidden second-city centers around a one-city empire', () {
       final mapData = _openMap(cols: 9, rows: 9);
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [
           GameUnit.produced(
             id: 'settler_1',
@@ -131,8 +131,8 @@ void main() {
   });
 }
 
-GameView _view(PersistentGameState state, MapData mapData) {
-  return GameView.fromPersistentState(
+GameView _view(DomainState state, WorldMap mapData) {
+  return GameView.fromDomainState(
     state,
     forPlayerId: 'player_1',
     turn: 1,
@@ -156,14 +156,14 @@ FogOfWarState _fogForHexes({
   );
 }
 
-MapData _openMap({required int cols, required int rows}) {
-  return MapData(
+WorldMap _openMap({required int cols, required int rows}) {
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],

@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/services/map_exporter.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/world_map.dart';
@@ -103,8 +102,8 @@ void main() {
             requiredHoldTurns: 2,
           ),
         ],
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.plains],
@@ -139,8 +138,8 @@ void main() {
       final draft = MapDraft(
         cols: 1,
         rows: 1,
-        tiles: const [
-          TileData(col: 0, row: 0, terrains: [], resources: [], height: 0),
+        tiles: [
+          WorldTile(col: 0, row: 0, terrains: [], resources: [], height: 0),
         ],
       );
 
@@ -157,8 +156,8 @@ void main() {
       final draft = MapDraft(
         cols: 1,
         rows: 1,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.plains],

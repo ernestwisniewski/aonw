@@ -44,9 +44,9 @@ ResearchState _autoFlowActiveResearch() => ResearchState(
 
 _FakeGameRepository _autoFlowManualPauseRepository(GameSave save) =>
     _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: save,
-        state: GameState(
+        state: GameClientState(
           units: [_autoFlowUnit('warrior_1')],
           cities: [_autoFlowCity('city_1', col: 2, row: 2)],
           research: _autoFlowActiveResearch(),
@@ -54,7 +54,7 @@ _FakeGameRepository _autoFlowManualPauseRepository(GameSave save) =>
       ),
     );
 
-GameState? _autoFlowState(ProviderContainer container, String saveId) =>
+GameClientState? _autoFlowState(ProviderContainer container, String saveId) =>
     container.read(gameStateProvider(saveId)).value;
 
 void _registerHudAutoFlowRegressionTests() {
@@ -69,9 +69,9 @@ void _registerHudAutoFlowRegressionTests() {
       productionSelected: false,
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(
+        state: GameClientState(
           cities: [resolvedCity, pendingCity],
           research: _autoFlowActiveResearch(),
         ),
@@ -120,9 +120,9 @@ void _registerHudAutoFlowRegressionTests() {
       productionSelected: false,
     );
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(cities: [firstCity, secondCity]),
+        state: GameClientState(cities: [firstCity, secondCity]),
       ),
     );
     final renderer = _SpyGameRenderer(mapData: _makeMap());
@@ -332,13 +332,13 @@ void _registerHudAutoFlowLifecycleTests() {
       final firstUnit = _autoFlowUnit('warrior_1');
       final nextUnit = _autoFlowUnit('warrior_2', col: 2);
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(
+          state: GameClientState(
             units: [firstUnit, nextUnit],
             cities: [_autoFlowCity('city_1', col: 2, row: 2)],
             research: _autoFlowActiveResearch(),
-            interaction: GameInteractionState(
+            interaction: InteractionState(
               selection: GameSelection.unit(
                 firstUnit,
                 tile: map.tileAt(firstUnit.col, firstUnit.row),
@@ -394,9 +394,9 @@ void _registerHudAutoFlowLifecycleTests() {
     (tester) async {
       final unit = _autoFlowUnit('warrior_1');
       final repository = _FakeGameRepository(
-        snapshot: SaveSnapshot.fromGameState(
+        snapshot: GameSnapshotFactory.fromClientState(
           save: _save,
-          state: GameState(
+          state: GameClientState(
             units: [unit],
             cities: [_autoFlowCity('city_1')],
             research: _autoFlowActiveResearch(),
@@ -444,9 +444,9 @@ void _registerHudAutoFlowLifecycleTests() {
   ) async {
     final unit = _autoFlowUnit('warrior_1');
     final repository = _FakeGameRepository(
-      snapshot: SaveSnapshot.fromGameState(
+      snapshot: GameSnapshotFactory.fromClientState(
         save: _save,
-        state: GameState(
+        state: GameClientState(
           units: [unit],
           cities: [_autoFlowCity('city_1')],
           research: _autoFlowActiveResearch(),

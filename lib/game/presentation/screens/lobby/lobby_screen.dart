@@ -15,7 +15,6 @@ import 'package:aonw/game/presentation/screens/new_game/initial_player_country.d
 import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/menu/menu_click_sound.dart';
@@ -24,6 +23,7 @@ import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/game_toast.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_app_bar.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_screen_header.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/map_validation.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -42,9 +42,10 @@ part 'lobby_screen_form_widgets.dart';
 part 'lobby_screen_game_setup_widgets.dart';
 part 'lobby_screen_layout_widgets.dart';
 part 'lobby_screen_local_setup_panel.dart';
-part 'lobby_screen_multiplayer_panels.dart';
+part 'lobby_screen_map_capacity.dart';
 part 'lobby_screen_multiplayer_action_summary.dart';
 part 'lobby_screen_multiplayer_panel_builder.dart';
+part 'lobby_screen_multiplayer_panels.dart';
 part 'lobby_screen_multiplayer_profile_panel.dart';
 part 'lobby_screen_multiplayer_status_widgets.dart';
 part 'lobby_screen_player_list_widgets.dart';
@@ -354,7 +355,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     );
   }
 
-  MapValidationResult _validateMapSetup(MapData mapData) {
+  MapValidationResult _validateMapSetup(WorldMap mapData) {
     return MapValidator.validate(
       mapData: mapData,
       playerCount: _players.playerCount,
@@ -362,25 +363,13 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     );
   }
 
-  bool _applyMapPlayerCapacity(MapData mapData) {
+  bool _applyMapPlayerCapacity(WorldMap mapData) {
     return _players.updateMaximumPlayers(
-      MapPlayerCapacityRules.maxPlayersForMapData(mapData),
+      MapPlayerCapacityRules.maxPlayersForWorldMap(mapData),
     );
   }
 
-  void _scheduleMapPlayerCapacitySync(MapData mapData) {
-    final maximumPlayers = MapPlayerCapacityRules.maxPlayersForMapData(mapData);
-    if (_players.maximumPlayers == maximumPlayers ||
-        _scheduledMapMaximumPlayers == maximumPlayers) {
-      return;
-    }
-    _scheduledMapMaximumPlayers = maximumPlayers;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _scheduledMapMaximumPlayers = null;
-      if (_players.updateMaximumPlayers(maximumPlayers)) setState(() {});
-    });
-  }
+  void _refreshAfterMapCapacityChange() => setState(() {});
 
   @override
   Widget build(BuildContext context) {

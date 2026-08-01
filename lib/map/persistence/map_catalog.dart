@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/persistence/map_loader.dart';
 import 'package:aonw/map/persistence/map_storage.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 
@@ -31,7 +31,7 @@ abstract final class MapCatalog {
     return allMaps;
   }
 
-  static Future<MapData> loadMap(
+  static Future<WorldMap> loadMap(
     MapSelection selection, {
     AssetBundle? bundle,
     Directory? savedMapsDirectory,
@@ -43,7 +43,9 @@ abstract final class MapCatalog {
         directory: savedMapsDirectory,
       ),
     };
-    return mapData..mapName ??= selection.name;
+    return mapData.mapName == null
+        ? mapData.copyWith(mapName: selection.name)
+        : mapData;
   }
 
   /// Lists saved maps by scanning for `<mapsDir>/<name>/map.json`.
@@ -67,7 +69,7 @@ abstract final class MapCatalog {
     return results;
   }
 
-  static Future<MapData> _loadSavedMap(
+  static Future<WorldMap> _loadSavedMap(
     String name, {
     Directory? directory,
   }) async {
@@ -100,7 +102,7 @@ abstract final class MapCatalog {
         .toList();
   }
 
-  static Future<MapData> _loadBundledMap(
+  static Future<WorldMap> _loadBundledMap(
     String name, {
     AssetBundle? bundle,
   }) async {

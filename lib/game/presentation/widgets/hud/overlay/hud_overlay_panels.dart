@@ -14,7 +14,7 @@ import 'package:aonw/game/presentation/widgets/empire/empire_overview_dialog.dar
 import 'package:aonw/game/presentation/widgets/hud/map/hud_map_focus_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/overlay/hud_overlay_panel_slot.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_dialog.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/foundation.dart';
@@ -27,12 +27,12 @@ class HudOverlayPanels extends ConsumerWidget {
   final bool empireActive;
   final bool activityLogActive;
   final GameCity? cityProductionCity;
-  final GameState? gameState;
+  final GameClientState? gameState;
   final String activePlayerId;
   final TechnologyPanelViewModel technologyViewModel;
   final CityRuleset cityRuleset;
   final TechnologyRuleset technologyRuleset;
-  final MapData mapData;
+  final WorldMap mapData;
   final int cityProductionPerTurn;
   final List<GameEventNotification> activityLogEntries;
   final GameSave gameSave;
@@ -106,7 +106,7 @@ class HudOverlayPanels extends ConsumerWidget {
 
   Widget _buildCityProductionPanel(
     GameCity city,
-    GameState state,
+    GameClientState state,
     HudCommandDispatcher dispatcher,
   ) {
     return HudOverlayPanelSlot(
@@ -149,7 +149,7 @@ class HudOverlayPanels extends ConsumerWidget {
   }
 
   Widget _buildEmpirePanel(
-    GameState state,
+    GameClientState state,
     HudCommandDispatcher dispatcher,
     HudMapFocusController focusController,
   ) {

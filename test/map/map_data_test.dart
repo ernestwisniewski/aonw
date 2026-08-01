@@ -1,14 +1,14 @@
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 3,
   rows: 3,
   tiles: [
     for (int row = 0; row < 3; row++)
       for (int col = 0; col < 3; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.ocean],
@@ -19,7 +19,7 @@ MapData _map() => MapData(
 );
 
 void main() {
-  group('MapData.tileAt', () {
+  group('WorldMap.tileAt', () {
     test('returns the tile at the given coordinates', () {
       final map = _map();
 

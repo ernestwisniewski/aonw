@@ -44,13 +44,13 @@ final class CombatEngineHandler {
     }
     final domainChanged = !identical(result.state, snapshot.domain);
     final interaction = _interactionAfterAcceptedCombat(snapshot, command);
-    final interactionChanged = !identical(interaction, snapshot.interaction);
+    final interactionChanged = !identical(interaction, snapshot.domain.actions);
     final events = [for (final event in result.events) event as DomainEvent];
     return GameEngineResult.accepted(
       snapshot: domainChanged || interactionChanged
           ? snapshot.copyWith(
               domain: domainChanged ? result.state : null,
-              interaction: interactionChanged ? interaction : null,
+              actions: interactionChanged ? interaction : null,
             )
           : snapshot,
       events: events,
@@ -62,18 +62,18 @@ final class CombatEngineHandler {
     );
   }
 
-  static PersistedInteractionState _interactionAfterAcceptedCombat(
+  static DomainActionState _interactionAfterAcceptedCombat(
     CanonicalGameSnapshot snapshot,
     AttackHexCommand command,
   ) {
-    final pending = snapshot.interaction.pendingAction;
+    final pending = snapshot.domain.actions.pendingAction;
     final clearPending =
         pending is PendingAttackTargeting &&
         pending.attackerUnitId == command.attackerUnitId;
-    if (!clearPending && snapshot.interaction.cityFoundingDraft == null) {
-      return snapshot.interaction;
+    if (!clearPending && snapshot.domain.actions.cityFoundingDraft == null) {
+      return snapshot.domain.actions;
     }
-    return snapshot.interaction.copyWith(
+    return snapshot.domain.actions.copyWith(
       cityFoundingDraft: null,
       pendingAction: clearPending ? null : pending,
     );

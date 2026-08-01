@@ -2,8 +2,8 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -11,15 +11,16 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import '../../../support/game_intent_test_resolver.dart';
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 5,
   rows: 5,
   tiles: [
     for (var row = 0; row < 5; row++)
       for (var col = 0; col < 5; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],
@@ -58,11 +59,11 @@ void main() {
 
   test('start city worked hex selection enters pending interaction mode', () {
     final city = _city();
-    final state = GameState(
+    final state = GameClientState(
       cities: [city],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      interaction: const GameInteractionState(moveCommandActive: true),
+      interaction: const InteractionState(moveCommandActive: true),
     );
 
     final result = resolveGameIntent(
@@ -82,8 +83,8 @@ void main() {
   });
 
   test('cancel city worked hex selection clears matching pending mode', () {
-    const state = GameState(
-      interaction: GameInteractionState(
+    final state = GameClientState(
+      interaction: const InteractionState(
         pendingAction: PendingCityWorkedHexSelection(
           ownerPlayerId: 'player_1',
           cityId: 'city_1',
@@ -102,11 +103,11 @@ void main() {
 
   test('start city expansion selection enters pending interaction mode', () {
     final city = _city();
-    final state = GameState(
+    final state = GameClientState(
       cities: [city],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      interaction: const GameInteractionState(moveCommandActive: true),
+      interaction: const InteractionState(moveCommandActive: true),
     );
 
     final result = resolveGameIntent(
@@ -126,8 +127,8 @@ void main() {
   });
 
   test('cancel city expansion selection clears matching pending mode', () {
-    const state = GameState(
-      interaction: GameInteractionState(
+    final state = GameClientState(
+      interaction: const InteractionState(
         pendingAction: PendingCityExpansionSelection(
           ownerPlayerId: 'player_1',
           cityId: 'city_1',
@@ -148,7 +149,7 @@ void main() {
     'select worker improvement records the previewed type without starting a job',
     () {
       final worker = _worker();
-      final startingState = GameState(
+      final startingState = GameClientState(
         units: [worker],
         cities: const [
           GameCity(
@@ -193,7 +194,7 @@ void main() {
 
   test('confirm worker improvement creates the job and clears the preview', () {
     final worker = _worker();
-    final startingState = GameState(
+    final startingState = GameClientState(
       units: [worker],
       cities: const [
         GameCity(
@@ -244,11 +245,11 @@ void main() {
       commander,
       tile: _map().tileAt(commander.col, commander.row),
     );
-    final state = GameState(
+    final state = GameClientState(
       units: [commander],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: selected,
         pendingAction: const PendingAttackTargeting(
           ownerPlayerId: 'player_1',
@@ -271,7 +272,7 @@ void main() {
       worker,
       tile: _map().tileAt(worker.col, worker.row),
     );
-    final state = GameState(
+    final state = GameClientState(
       units: [worker],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
@@ -286,7 +287,7 @@ void main() {
           ),
         },
       ),
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: selected,
         pendingAction: PendingWorkerActionSelection(
           ownerPlayerId: worker.ownerPlayerId,
@@ -317,9 +318,9 @@ void main() {
   });
 
   test('set active player clears pending interaction mode', () {
-    const state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
-      interaction: GameInteractionState(
+      interaction: const InteractionState(
         pendingAction: PendingCommanderMergeSelection(
           ownerPlayerId: 'player_1',
           commanderUnitId: 'commander_player_1',

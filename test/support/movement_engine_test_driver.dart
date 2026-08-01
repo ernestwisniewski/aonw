@@ -18,7 +18,7 @@ import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 GameStateTransition resolveMovementCommandForTest(
-  GameState state,
+  GameClientState state,
   DomainCommand command,
   MapTileLookup mapTiles, {
   GameCommandContext context = const GameCommandContext(),
@@ -38,7 +38,7 @@ GameStateTransition resolveMovementCommandForTest(
           ? state.activePlayerId
           : _commandOwner(snapshot, command));
   final result = const GameEngine().apply(
-    snapshot: snapshot.canonical,
+    snapshot: snapshot,
     command: command,
     context: GameEngineContext(
       actorPlayerId: actorPlayerId,
@@ -67,7 +67,7 @@ GameStateTransition resolveMovementCommandForTest(
     );
   }
   final accepted = result as GameEngineAccepted;
-  if (identical(accepted.snapshot, snapshot.canonical) &&
+  if (identical(accepted.snapshot, snapshot) &&
       accepted.events.isEmpty &&
       accepted.movementDelta.executions.isEmpty &&
       command is! CancelUnitActionCommand) {
@@ -90,7 +90,7 @@ GameStateTransition resolveMovementCommandForTest(
 }
 
 LocalMovementPresentationOrigin _presentationOrigin(
-  GameState state,
+  GameClientState state,
   DomainCommand command,
 ) {
   final preview = state.movePreview;
@@ -102,12 +102,12 @@ LocalMovementPresentationOrigin _presentationOrigin(
       : LocalMovementPresentationOrigin.direct;
 }
 
-bool _canAct(GameState state, GameCommandContext context) {
+bool _canAct(GameClientState state, GameCommandContext context) {
   return context.canAct && (context.hasActor || state.activePlayerCanAct);
 }
 
 MovementCommandVisibilityMode _visibilityMode({
-  required GameState state,
+  required GameClientState state,
   required GameCommandContext context,
   required MovementCommandVisibilityMode requested,
 }) {
@@ -163,7 +163,7 @@ final class _TestMapReadView implements MapReadView {
   }
 }
 
-SaveSnapshot _snapshotFor(GameState state) {
+CanonicalGameSnapshot _snapshotFor(GameClientState state) {
   final ids = <String>{
     ...state.playerColors.keys,
     ...state.playerCountries.keys,
@@ -180,7 +180,7 @@ SaveSnapshot _snapshotFor(GameState state) {
         country: state.playerCountries[id] ?? PlayerCountry.poland,
       ),
   ];
-  return SaveSnapshot.fromGameState(
+  return GameSnapshotFactory.fromClientState(
     save: GameSave(
       id: 'movement_engine_test',
       name: 'Movement engine test',
@@ -195,7 +195,7 @@ SaveSnapshot _snapshotFor(GameState state) {
   );
 }
 
-String _commandOwner(SaveSnapshot snapshot, DomainCommand command) {
+String _commandOwner(CanonicalGameSnapshot snapshot, DomainCommand command) {
   final unitId = switch (command) {
     MoveUnitCommand(:final unitId) ||
     CancelUnitActionCommand(:final unitId) ||

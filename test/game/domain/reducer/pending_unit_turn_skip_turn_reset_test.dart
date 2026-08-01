@@ -1,8 +1,8 @@
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/movement/movement_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -21,11 +21,11 @@ void main() {
         row: 0,
         movementPoints: 0,
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
         units: [skipped],
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(skipped),
           movePreview: _movePreview(skipped.id),
           pendingAction: const PendingUnitTurnSkip(
@@ -64,11 +64,11 @@ void main() {
     const requiredResearch = PendingResearchSelection(
       ownerPlayerId: 'player_1',
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
       units: [spent],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(spent),
         pendingAction: requiredResearch,
       ),
@@ -86,10 +86,10 @@ void main() {
 
   test('turn skip expires without a selected unit', () {
     final skipped = _unit();
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [skipped],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         movePreview: _movePreview(skipped.id),
         pendingAction: _turnSkip(),
         moveCommandActive: true,
@@ -110,10 +110,10 @@ void main() {
 
   test('turn skip expires when the selected unit cannot enter move mode', () {
     final fortified = _unit().copyWithPosture(UnitPosture.fortified);
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [fortified],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(fortified),
         movePreview: _movePreview(fortified.id),
         pendingAction: _turnSkip(),
@@ -143,10 +143,10 @@ void main() {
       ownerPlayerId: 'player_2',
       unitId: foreignSkipped.id,
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [selected, foreignSkipped],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(selected),
         pendingAction: foreignPending,
       ),
@@ -170,10 +170,10 @@ void main() {
     final resetUnit = _unit();
     final foreignUnit = _unit(id: 'unit_2', ownerPlayerId: 'player_2', col: 1);
     final foreignPreview = _movePreview(foreignUnit.id);
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_2',
       units: [resetUnit, foreignUnit],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: GameSelection.unit(foreignUnit),
         movePreview: foreignPreview,
         moveCommandActive: true,
@@ -191,10 +191,10 @@ void main() {
   });
 
   test('turn boundary clears a preview whose unit no longer exists', () {
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [_unit()],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         movePreview: _movePreview('missing_unit'),
         moveCommandActive: true,
       ),
@@ -211,10 +211,10 @@ void main() {
   });
 
   test('turn boundary disables ownerless movement targeting', () {
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [_unit()],
-      interaction: const GameInteractionState(moveCommandActive: true),
+      interaction: const InteractionState(moveCommandActive: true),
     );
 
     final result = MovementReducer.resetUnitMovementForNewTurn(
@@ -270,19 +270,19 @@ UnitMovementPlan _movePreview(String unitId) {
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 2,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.grassland],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.grassland],

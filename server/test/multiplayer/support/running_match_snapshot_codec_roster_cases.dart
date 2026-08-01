@@ -105,9 +105,10 @@ void _registerRunningMatchSnapshotCodecRosterTests(
     test('rejects a missing raw player color', () {
       final fixture = _fixture(includeSecondPlayer: true);
       final wire = fixture.wire.copyWith(
-        state: fixture.state
-            .copyWith(playerColors: const {'player-1': 0xFF123456})
-            .toJson(),
+        state: {
+          ...CanonicalGameSnapshotCodec.encodeDomainState(fixture.state),
+          'playerColors': const {'player-1': 0xFF123456},
+        },
       );
       final decoded = codec.decode(match: fixture.match, snapshot: wire);
 
@@ -120,9 +121,10 @@ void _registerRunningMatchSnapshotCodecRosterTests(
     test('rejects a missing raw player country', () {
       final fixture = _fixture(includeSecondPlayer: true);
       final wire = fixture.wire.copyWith(
-        state: fixture.state
-            .copyWith(playerCountries: const {'player-1': PlayerCountry.poland})
-            .toJson(),
+        state: {
+          ...CanonicalGameSnapshotCodec.encodeDomainState(fixture.state),
+          'playerCountries': const {'player-1': 'poland'},
+        },
       );
       final decoded = codec.decode(match: fixture.match, snapshot: wire);
 
@@ -171,25 +173,25 @@ void _registerRunningMatchSnapshotCodecRosterTests(
     test('rejects a player referenced only by private diplomacy state', () {
       final fixture = _fixture();
       final state = fixture.state.copyWith(
-        runtimeState: fixture.state.runtimeState.copyWith(
-          diplomacy: DiplomacyState(
-            messages: const {
-              'phantom-message': DiplomaticMessage(
-                id: 'phantom-message',
-                fromPlayerId: 'player-1',
-                toPlayerId: 'phantom',
-                topic: DiplomaticMessageTopic.peacefulPraise,
-                category: DiplomaticMessageCategory.praise,
-                createdTurn: 1,
-                expiresOnTurn: 2,
-              ),
-            },
-          ),
+        diplomacy: DiplomacyState(
+          messages: const {
+            'phantom-message': DiplomaticMessage(
+              id: 'phantom-message',
+              fromPlayerId: 'player-1',
+              toPlayerId: 'phantom',
+              topic: DiplomaticMessageTopic.peacefulPraise,
+              category: DiplomaticMessageCategory.praise,
+              createdTurn: 1,
+              expiresOnTurn: 2,
+            ),
+          },
         ),
       );
       final decoded = codec.decode(
         match: fixture.match,
-        snapshot: fixture.wire.copyWith(state: state.toJson()),
+        snapshot: fixture.wire.copyWith(
+          state: CanonicalGameSnapshotCodec.encodeDomainState(state),
+        ),
       );
 
       expect(

@@ -2,10 +2,10 @@ part of '../realtime_match_hub_test.dart';
 
 const _turnMovementClientMessageId = 'turn-movement-final-submit';
 
-Future<TileData> _makeMovementVisibleToGuest({
+Future<WorldTile> _makeMovementVisibleToGuest({
   required _MemoryMatchStore store,
   required StoredMatchState stored,
-  required PersistentGameState state,
+  required DomainState state,
   required GameUnit ownerUnit,
   required String guestId,
 }) async {
@@ -34,7 +34,9 @@ Future<TileData> _makeMovementVisibleToGuest({
   );
   await store.saveState(
     stored.copyWith(
-      snapshot: stored.snapshot.copyWith(state: visibleState.toJson()),
+      snapshot: stored.snapshot.copyWith(
+        state: CanonicalGameSnapshotCodec.encodeDomainState(visibleState),
+      ),
     ),
   );
   return target;
@@ -43,7 +45,7 @@ Future<TileData> _makeMovementVisibleToGuest({
 void _expectGuestObservedMovement(
   MultiplayerServerMessage message,
   GameUnit ownerUnit,
-  TileData target,
+  WorldTile target,
 ) {
   final coarseMovement = message.event!.events
       .map(GameEventSerializer.fromJson)
@@ -86,7 +88,9 @@ Future<void> _streamsMovementEventForExactPathLeavingView() async {
     matchId: fixture.match.id,
   );
   expect(
-    PersistentGameState.fromJson(before.state).units.byId('unit-a'),
+    CanonicalGameSnapshotCodec.decodeDomainState(
+      before.state,
+    ).units.byId('unit-a'),
     isNotNull,
   );
 
@@ -101,7 +105,9 @@ Future<void> _streamsMovementEventForExactPathLeavingView() async {
     final streamed = await observerEvent;
 
     expect(acknowledgement.ack?.accepted, isTrue);
-    final after = PersistentGameState.fromJson(streamed.snapshot!.state);
+    final after = CanonicalGameSnapshotCodec.decodeDomainState(
+      streamed.snapshot!.state,
+    );
     expect(after.units.byId('unit-a'), isNull);
     final streamedMovements = streamed.event!.events
         .map(GameEventSerializer.fromJson)
@@ -316,7 +322,7 @@ Future<void> _seedTurnMovementState(
       fixture.observer.id: PlayerTurnState.finished,
     },
   );
-  final state = PersistentGameState(
+  final state = DomainState.snapshot(
     playerColors: {
       for (final player in fixture.match.players) player.id: player.colorValue,
     },
@@ -357,15 +363,14 @@ Future<void> _seedTurnMovementState(
             : PlayerFogOfWar(playerId: fixture.observer.id),
       },
     ),
-    runtimeState: GameRuntimeState(
-      submittedPlayerIds: {fixture.unitBPlayer.id, fixture.observer.id},
-    ),
+
+    submittedPlayerIds: {fixture.unitBPlayer.id, fixture.observer.id},
   );
   await fixture.store.saveState(
     stored.copyWith(
       snapshot: stored.snapshot.copyWith(
         save: save.toJson(),
-        state: state.toJson(),
+        state: CanonicalGameSnapshotCodec.encodeDomainState(state),
       ),
     ),
   );
@@ -408,14 +413,14 @@ PlayerFogOfWar _turnMovementOriginFog(String playerId, {required int row}) {
   );
 }
 
-MapData _turnMovementMap() {
-  return MapData(
+WorldMap _turnMovementMap() {
+  return WorldMap(
     cols: 6,
     rows: 2,
     tiles: [
       for (var row = 0; row < 2; row++)
         for (var col = 0; col < 6; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.grassland],

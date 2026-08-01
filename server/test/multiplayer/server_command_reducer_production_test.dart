@@ -13,7 +13,7 @@ void main() {
         mapCatalog: _ProductionMapCatalog(_resourceTradeMap()),
       ),
       match: _runningMatch(),
-      wireSnapshot: _snapshot(PersistentGameState(cities: _tradeCities())),
+      wireSnapshot: _snapshot(DomainState.snapshot(cities: _tradeCities())),
       wireCommand: _wireCommand(
         const StartUnitProductionCommand('city_1', GameUnitType.warrior),
       ),
@@ -35,7 +35,7 @@ void main() {
   test('routes city projects through the production boundary', () async {
     final reduction = await _reduceCommand(
       const StartCityProjectCommand('city_1', CityProjectType.wealth),
-      state: PersistentGameState(cities: _tradeCities()),
+      state: DomainState.snapshot(cities: _tradeCities()),
     );
     final domain = reduction.nextSnapshot!.domain;
 
@@ -55,7 +55,7 @@ void main() {
     );
     final reduction = await _reduceCommand(
       const RushProductionCommand('city_1'),
-      state: PersistentGameState.snapshot(
+      state: DomainState.snapshot(
         playerGold: const {'player_1': 2},
         units: [
           GameUnit.produced(
@@ -93,7 +93,7 @@ void main() {
     () async {
       final reduction = await _reduceCommand(
         const EndTurnCommand('player_1'),
-        state: const PersistentGameState(),
+        state: DomainState.snapshot(),
       );
 
       expect(reduction.accepted, isTrue);
@@ -160,7 +160,7 @@ void main() {
         ),
       ],
     );
-    final state = PersistentGameState(
+    final state = DomainState.snapshot(
       units: [
         GameUnit(
           id: 'queued_unit',
@@ -189,7 +189,7 @@ void main() {
         matchId: 'match_1',
         offset: 0,
         save: save.toJson(),
-        state: state.toJson(),
+        state: CanonicalGameSnapshotCodec.encodeDomainState(state),
       ),
       wireCommand: WireCommand(
         matchId: 'match_1',
@@ -243,7 +243,7 @@ void main() {
     for (final scenario in scenarios) {
       final reduction = await _reduceCommand(
         scenario.command,
-        state: const PersistentGameState(),
+        state: DomainState.snapshot(),
       );
 
       expect(
@@ -258,7 +258,7 @@ void main() {
 
 Future<ServerCommandTestReduction> _reduceCommand(
   DomainCommand command, {
-  required PersistentGameState state,
+  required DomainState state,
 }) {
   return const ServerCommandReducerTestDriver().reduce(
     reducer: ServerCommandReducer(
@@ -302,11 +302,11 @@ WireMatch _runningMatch() => WireMatch(
   createdAt: DateTime.utc(2026, 6, 30, 11),
 );
 
-WireSnapshot _snapshot(PersistentGameState state) => WireSnapshot(
+WireSnapshot _snapshot(DomainState state) => WireSnapshot(
   matchId: 'match_1',
   offset: 0,
   save: _save().toJson(),
-  state: state.toJson(),
+  state: CanonicalGameSnapshotCodec.encodeDomainState(state),
 );
 
 GameSave _save() => GameSave(
@@ -360,13 +360,13 @@ List<GameCity> _tradeCities() => const [
   ),
 ];
 
-MapData _resourceTradeMap() => MapData(
+WorldMap _resourceTradeMap() => WorldMap(
   cols: 3,
   rows: 3,
   tiles: [
     for (var row = 0; row < 3; row++)
       for (var col = 0; col < 3; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],
@@ -383,8 +383,8 @@ MapData _resourceTradeMap() => MapData(
 final class _ProductionMapCatalog implements MultiplayerMapCatalog {
   const _ProductionMapCatalog(this.mapData);
 
-  final MapData mapData;
+  final WorldMap mapData;
 
   @override
-  Future<MapData> loadAssetMap(String mapName) async => mapData;
+  Future<WorldMap> loadAssetMap(String mapName) async => mapData;
 }

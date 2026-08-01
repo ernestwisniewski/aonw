@@ -7,9 +7,9 @@ import 'package:aonw/game/presentation/widgets/hud/overlay/hud_overlay_panel_slo
 import 'package:aonw/game/presentation/widgets/hud/overlay/hud_overlay_panels.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_dialog.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flutter/material.dart';
@@ -66,7 +66,7 @@ void main() {
         _app(
           _panels(
             cityProductionCity: city,
-            gameState: const GameState(cities: [city]),
+            gameState: GameClientState(cities: [city]),
           ),
         ),
       );
@@ -95,7 +95,7 @@ Widget _app(Widget child) {
 HudOverlayPanels _panels({
   bool technologyActive = false,
   GameCity? cityProductionCity,
-  GameState? gameState,
+  GameClientState? gameState,
 }) {
   return HudOverlayPanels(
     panelPadding: EdgeInsets.zero,
@@ -115,14 +115,14 @@ HudOverlayPanels _panels({
   );
 }
 
-MapData _mapData() {
-  return MapData(
+WorldMap _mapData() {
+  return WorldMap(
     cols: 2,
     rows: 2,
     tiles: [
       for (var row = 0; row < 2; row++)
         for (var col = 0; col < 2; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.grassland],

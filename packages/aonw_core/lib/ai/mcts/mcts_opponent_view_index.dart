@@ -23,7 +23,7 @@ final class MctsOpponentViewIndex {
        _artifactsByOwner = _freezeListMap(artifactsByOwner),
        _improvementsByOwner = _freezeListMap(improvementsByOwner);
 
-  factory MctsOpponentViewIndex.fromState(PersistentGameState state) {
+  factory MctsOpponentViewIndex.fromState(DomainState state) {
     final unitsByOwner = <String, List<GameUnit>>{};
     final unitOwnersById = <String, String>{};
     for (final unit in state.units) {
@@ -66,7 +66,7 @@ final class MctsOpponentViewIndex {
   }
 
   GameView viewFor({
-    required PersistentGameState state,
+    required DomainState state,
     required String opponentId,
     required int turn,
     required MapReadView mapData,
@@ -85,7 +85,7 @@ final class MctsOpponentViewIndex {
       ownResearch: state.research.forPlayer(opponentId),
       ownImprovements: _improvementsByOwner[opponentId] ?? const [],
       artifacts: _artifactsByOwner[opponentId] ?? const [],
-      diplomacy: state.runtimeState.diplomacy,
+      diplomacy: state.diplomacy,
       visibleEnemyUnits: _indexedValuesExceptOwner(_unitsByOwner, opponentId),
       rememberedEnemyCities: _indexedValuesExceptOwner(
         _citiesByOwner,

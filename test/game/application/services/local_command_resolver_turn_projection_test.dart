@@ -10,7 +10,10 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('sequential turn follows canonical participant order', () {
     final queuedUnit = _queuedUnit(ownerPlayerId: 'player_1');
-    final state = GameState(activePlayerId: 'player_2', units: [queuedUnit]);
+    final state = GameClientState(
+      activePlayerId: 'player_2',
+      units: [queuedUnit],
+    );
     final snapshot = _snapshot(
       state: state,
       playerStates: const {
@@ -53,10 +56,10 @@ void main() {
       movementPoints: 0,
     );
     final selection = GameSelection.unit(selectedUnit);
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [queuedUnit, selectedUnit],
-      interaction: GameInteractionState(
+      interaction: InteractionState(
         selection: selection,
         pendingAction: const PendingUnitTurnSkip(
           ownerPlayerId: 'player_2',
@@ -92,8 +95,8 @@ void main() {
     expect(result.state.pendingAction, isNull);
     expect(result.state.cityFoundingDraft, isNull);
     expect(result.state.selection, same(selection));
-    expect(result.snapshot.interaction.pendingAction, isNull);
-    expect(result.snapshot.interaction.cityFoundingDraft, isNull);
+    expect(result.snapshot.domain.actions.pendingAction, isNull);
+    expect(result.snapshot.domain.actions.cityFoundingDraft, isNull);
   });
 }
 
@@ -101,12 +104,12 @@ final _resolver = LocalCommandResolver(
   reducer: GameStateReducer(mapData: _lineMapData()),
 );
 
-SaveSnapshot _snapshot({
-  required GameState state,
+CanonicalGameSnapshot _snapshot({
+  required GameClientState state,
   required Map<String, PlayerTurnState> playerStates,
   required List<Player> players,
 }) {
-  return SaveSnapshot.fromGameState(
+  return GameSnapshotFactory.fromClientState(
     save: GameSave(
       id: 'save_1',
       name: 'Turn projection',
@@ -146,12 +149,12 @@ GameUnit _queuedUnit({
   );
 }
 
-MapData _lineMapData() => MapData(
+WorldMap _lineMapData() => WorldMap(
   cols: 2,
   rows: 1,
   tiles: [
     for (var col = 0; col < 2; col++)
-      TileData(
+      WorldTile(
         col: col,
         row: 0,
         terrains: const [TerrainType.plains],

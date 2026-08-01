@@ -241,7 +241,7 @@ AiTurnReport _report() {
     delayedCommandCount: 0,
     planningSource: AiPlanSource.fresh,
     terminalCommand: const EndTurnCommand('ai_1'),
-    finalState: const GameState(activePlayerId: 'ai_1'),
+    finalState: GameClientState(activePlayerId: 'ai_1'),
   );
 }
 

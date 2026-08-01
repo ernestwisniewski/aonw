@@ -67,8 +67,8 @@ void main() {
   });
 }
 
-AiContext _context({MapData? mapData}) {
-  final actualMapData = mapData ?? MapData(cols: 1, rows: 1, tiles: const []);
+AiContext _context({WorldMap? mapData}) {
+  final actualMapData = mapData ?? WorldMap(cols: 1, rows: 1, tiles: []);
   return AiContext(
     ruleset: GameRuleset.defaults,
     mapData: actualMapData,
@@ -80,7 +80,7 @@ AiContext _context({MapData? mapData}) {
 GameView _unitView() {
   final mapData = _unitMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       units: [
         GameUnit(
           id: 'warrior_1',
@@ -113,7 +113,7 @@ GameView _unitView() {
 GameView _cityUnitView() {
   final mapData = _unitMap();
   return MctsSimulatorParityFixtures.viewFromPersistentState(
-    PersistentGameState(
+    DomainState.snapshot(
       cities: const [
         GameCity(
           id: 'city_1',
@@ -151,19 +151,19 @@ GameView _cityUnitView() {
   );
 }
 
-MapData _unitMap() {
-  return MapData(
+WorldMap _unitMap() {
+  return WorldMap(
     cols: 2,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.grassland],
         resources: [],
         height: 1,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.grassland],

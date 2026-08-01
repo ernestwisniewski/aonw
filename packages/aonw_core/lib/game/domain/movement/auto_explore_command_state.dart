@@ -12,5 +12,5 @@ final class AutoExploreCommandState {
   });
 
   final MovementCommandState movement;
-  final PersistedInteractionState interaction;
+  final DomainActionState interaction;
 }

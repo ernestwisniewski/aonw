@@ -25,20 +25,20 @@ void main() {
         const HexCoord(col: 0, row: 0),
       ]);
       expect(
-        map.tileAt(const HexCoord(col: 0, row: 0))?.primaryTerrain,
+        map.tileAtHex(const HexCoord(col: 0, row: 0))?.primaryTerrain,
         TerrainType.plains,
       );
       expect(
-        map.tileAt(const HexCoord(col: 2, row: 1))?.primaryTerrain,
+        map.tileAtHex(const HexCoord(col: 2, row: 1))?.primaryTerrain,
         TerrainType.ocean,
       );
-      expect(map.tileAt(const HexCoord(col: 1, row: 0)), isNull);
+      expect(map.tileAtHex(const HexCoord(col: 1, row: 0)), isNull);
     });
 
     test('defensively freezes every exposed collection', () {
       final terrains = <TerrainType>[TerrainType.forest];
       final resources = <ResourceType>[ResourceType.deer];
-      final tile = WorldTile(
+      final tile = WorldTile.at(
         coordinate: const HexCoord(col: 0, row: 0),
         terrains: terrains,
         resources: resources,
@@ -58,15 +58,14 @@ void main() {
       tiles.clear();
       objectives.clear();
 
-      expect(tile.terrains, [TerrainType.forest]);
-      expect(tile.resources, [ResourceType.deer]);
-      expect(map.tiles, [tile]);
+      expect(map.tiles.single.terrains, [TerrainType.forest]);
+      expect(map.tiles.single.resources, [ResourceType.deer]);
       expect(map.objectives.single.id, 'objective_1');
       expect(
-        () => tile.terrains.add(TerrainType.hills),
+        () => map.tiles.single.terrains.add(TerrainType.hills),
         throwsUnsupportedError,
       );
-      expect(() => tile.resources.clear(), throwsUnsupportedError);
+      expect(() => map.tiles.single.resources.clear(), throwsUnsupportedError);
       expect(() => map.tiles.clear(), throwsUnsupportedError);
       expect(() => map.objectives.clear(), throwsUnsupportedError);
     });
@@ -78,15 +77,15 @@ void main() {
         rows: 2,
         mapName: 'views',
         defaultZoom: 1.75,
-        tiles: const [
-          TileData(
+        tiles: [
+          WorldTile(
             col: 2,
             row: 1,
             terrains: [TerrainType.hills, TerrainType.forest],
             resources: [ResourceType.iron],
             height: 3,
           ),
-          TileData(
+          WorldTile(
             col: 0,
             row: 0,
             terrains: [TerrainType.ocean],
@@ -154,8 +153,8 @@ void main() {
           cols: 0,
           rows: 1,
           defaultZoom: 0,
-          tiles: const [
-            TileData(col: 0, row: 0, terrains: [], resources: [], height: 0),
+          tiles: [
+            WorldTile(col: 0, row: 0, terrains: [], resources: [], height: 0),
           ],
         ),
         _failsWith('Tile terrains must not be empty'),
@@ -164,35 +163,41 @@ void main() {
 
     test('rejects invalid dimensions', () {
       expect(
-        () => WorldMap(cols: 0, rows: 1, tiles: const []),
+        () => WorldMap(cols: 0, rows: 1, tiles: []),
         _failsWith('Map cols must be positive, got 0'),
       );
       expect(
-        () => WorldMap(cols: 1, rows: 0, tiles: const []),
+        () => WorldMap(cols: 1, rows: 0, tiles: []),
         _failsWith('Map rows must be positive, got 0'),
       );
       expect(
-        () => WorldMap(cols: 1, rows: 1, tiles: const [], defaultZoom: 0),
+        () => WorldMap(cols: 1, rows: 1, tiles: [], defaultZoom: 0),
         _failsContaining('default zoom must be finite and positive'),
       );
       expect(
-        () => WorldMap(
-          cols: 1,
-          rows: 1,
-          tiles: const [],
-          defaultZoom: double.infinity,
-        ),
+        () =>
+            WorldMap(cols: 1, rows: 1, tiles: [], defaultZoom: double.infinity),
         _failsContaining('default zoom must be finite and positive'),
       );
     });
 
     test('rejects invalid tile data', () {
       expect(
-        () => _tile(0, 0, terrains: const []),
+        () => WorldMap(
+          cols: 1,
+          rows: 1,
+          tiles: [_tile(0, 0, terrains: const [])],
+        ),
         _failsWith('Tile terrains must not be empty'),
       );
-      expect(() => _tile(0, 0, height: -1), _failsContaining('height -1'));
-      expect(() => _tile(0, 0, height: 6), _failsContaining('height 6'));
+      expect(
+        () => WorldMap(cols: 1, rows: 1, tiles: [_tile(0, 0, height: -1)]),
+        _failsContaining('height -1'),
+      );
+      expect(
+        () => WorldMap(cols: 1, rows: 1, tiles: [_tile(0, 0, height: 6)]),
+        _failsContaining('height 6'),
+      );
     });
 
     test('rejects out-of-bounds and duplicate tiles', () {
@@ -337,7 +342,7 @@ WorldTile _tile(
   List<ResourceType> resources = const [],
   int height = 0,
 }) {
-  return WorldTile(
+  return WorldTile.at(
     coordinate: HexCoord(col: col, row: row),
     terrains: terrains,
     resources: resources,

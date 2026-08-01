@@ -17,7 +17,7 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class StabilityInputBuilder {
   static Map<String, StabilityInputs> forPlayers({
-    required PersistentGameState state,
+    required DomainState state,
     required Iterable<String> playerIds,
     required MapReadView mapData,
     StabilityRuleset ruleset = StabilityRuleset.standard,
@@ -80,7 +80,7 @@ abstract final class StabilityInputBuilder {
   }
 
   static ({double controlPercent, int playerCount}) hegemonyContextFor({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
     required MapReadView mapData,
   }) {
@@ -118,7 +118,7 @@ abstract final class StabilityInputBuilder {
   }
 
   static StabilityInputs forPlayer({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
     required MapReadView mapData,
     StabilityRuleset ruleset = StabilityRuleset.standard,
@@ -197,7 +197,7 @@ abstract final class StabilityInputBuilder {
   }
 
   static List<String> orderedKnownPlayerIds(
-    PersistentGameState state,
+    DomainState state,
     Iterable<String> playerIds,
   ) {
     return orderedKnownPlayerIdsFrom(

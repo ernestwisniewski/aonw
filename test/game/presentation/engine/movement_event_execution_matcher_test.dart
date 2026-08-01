@@ -128,11 +128,11 @@ List<RendererEffect> _project({
     events: events,
     visibleMovementExecutions: executions,
     previousState: _state(0),
-    state: GameState(units: [_unit(2)], cities: const [city]),
+    state: GameClientState(units: [_unit(2)], cities: const [city]),
   );
 }
 
-GameState _state(int col) => GameState(units: [_unit(col)]);
+GameClientState _state(int col) => GameClientState(units: [_unit(col)]);
 
 GameUnit _unit(int col) => GameUnit.produced(
   id: 'unit_a',

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
@@ -9,6 +8,7 @@ import 'package:aonw/map/rendering/map_palette.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
@@ -19,14 +19,14 @@ class EraTintOverlay extends PositionComponent with HasPaint<String> {
     'era-tint-color-effect',
   );
 
-  MapData _mapData;
+  WorldMap _mapData;
   TechnologyEra _era;
   final double hexRadius;
   Rect _bounds = Rect.zero;
   List<Path> _tilePaths = const [];
 
   EraTintOverlay({
-    required MapData mapData,
+    required WorldMap mapData,
     required TechnologyEra era,
     this.hexRadius = MapConfig.defaultHexRadius,
   }) : _mapData = mapData,
@@ -45,7 +45,7 @@ class EraTintOverlay extends PositionComponent with HasPaint<String> {
 
   int get tilePathCountForTesting => _tilePaths.length;
 
-  void syncState({required MapData mapData, required TechnologyEra era}) {
+  void syncState({required WorldMap mapData, required TechnologyEra era}) {
     if (!identical(_mapData, mapData)) {
       _mapData = mapData;
       _rebuildGeometry();
@@ -130,7 +130,7 @@ class EraTintOverlay extends PositionComponent with HasPaint<String> {
   }
 
   static Rect mapBoundsFor(
-    MapData mapData, {
+    WorldMap mapData, {
     double hexRadius = MapConfig.defaultHexRadius,
   }) {
     if (mapData.tiles.isEmpty) return Rect.zero;
@@ -184,7 +184,7 @@ class EraTintOverlayLayer extends Component with LayerAttachment {
 
   void sync({
     required Component parent,
-    required MapData mapData,
+    required WorldMap mapData,
     required PlayerResearchState playerResearch,
   }) {
     ensureAttachedTo(parent);

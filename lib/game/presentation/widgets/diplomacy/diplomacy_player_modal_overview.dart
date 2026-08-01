@@ -140,7 +140,7 @@ class _StatsSection extends StatelessWidget {
   });
 
   final AppLocalizations l10n;
-  final GameState gameState;
+  final GameClientState gameState;
   final String activePlayerId;
   final String targetPlayerId;
 

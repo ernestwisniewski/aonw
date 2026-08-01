@@ -10,9 +10,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
-import 'package:aonw_core/map/domain/world_map_read_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/movement_engine_test_driver.dart';
@@ -141,7 +139,7 @@ void main() {
       );
       final state = _state(
         mover,
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(mover),
           movePreview: preview,
           cityFoundingDraft: draft,
@@ -202,7 +200,7 @@ void main() {
         mover,
         additionalUnits: [_enemy(col: 1)],
         fogOfWar: _originOnlyFog(),
-        interaction: GameInteractionState(
+        interaction: InteractionState(
           selection: GameSelection.unit(mover),
           moveCommandActive: true,
         ),
@@ -373,18 +371,18 @@ GameUnit _enemy({required int col}) => GameUnit(
   row: 0,
 );
 
-GameState _state(
+GameClientState _state(
   GameUnit mover, {
   List<GameUnit> additionalUnits = const [],
   FogOfWarState fogOfWar = FogOfWarState.empty,
-  GameInteractionState? interaction,
-}) => GameState(
+  InteractionState? interaction,
+}) => GameClientState(
   playerColors: const {'player_1': 0xff112233, 'player_2': 0xff445566},
   activePlayerId: 'player_1',
   units: [mover, ...additionalUnits],
   fogOfWar: fogOfWar,
   interaction:
-      interaction ?? GameInteractionState(selection: GameSelection.unit(mover)),
+      interaction ?? InteractionState(selection: GameSelection.unit(mover)),
 );
 
 FogOfWarState _originOnlyFog() => FogOfWarState(
@@ -412,18 +410,16 @@ FogOfWarState _visibleFog({required int cols}) {
   );
 }
 
-MapTraversalView _map({required int cols}) => WorldMapReadView(
-  WorldMap(
-    cols: cols,
-    rows: 1,
-    tiles: [
-      for (var col = 0; col < cols; col++)
-        WorldTile(
-          coordinate: HexCoord(col: col, row: 0),
-          terrains: const [TerrainType.grassland],
-          resources: const [],
-          height: 0,
-        ),
-    ],
-  ),
+MapTraversalView _map({required int cols}) => WorldMap(
+  cols: cols,
+  rows: 1,
+  tiles: [
+    for (var col = 0; col < cols; col++)
+      WorldTile.at(
+        coordinate: HexCoord(col: col, row: 0),
+        terrains: const [TerrainType.grassland],
+        resources: const [],
+        height: 0,
+      ),
+  ],
 );

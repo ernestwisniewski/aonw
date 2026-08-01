@@ -4,7 +4,6 @@ import 'package:aonw_server/src/multiplayer/running_match_snapshot_codec.dart';
 import 'package:test/test.dart';
 
 part 'support/running_match_snapshot_codec_roster_cases.dart';
-part 'support/running_match_snapshot_codec_lossless_roster_cases.dart';
 part 'support/running_match_snapshot_codec_transition_cases.dart';
 
 void main() {
@@ -19,7 +18,7 @@ void main() {
           matchId: fixture.wire.matchId,
           offset: fixture.wire.offset,
           save: const {'malformed': true},
-          state: const {'runtimeState': 'not-a-json-object'},
+          state: const {'lifecycle': 'not-a-json-object'},
         );
 
         expect(
@@ -34,14 +33,14 @@ void main() {
   });
 
   group('DecodedRunningMatchSnapshot', () {
-    test('can inspect state without parsing a malformed save', () {
+    test('can retain raw state without parsing a malformed save', () {
       final fixture = _fixture();
       final decoded = codec.decode(
         match: fixture.match,
         snapshot: fixture.wire.copyWith(save: const {'turn': 'not-an-integer'}),
       );
 
-      expect(decoded.state, fixture.state);
+      expect(decoded.wire.state, fixture.wire.state);
       expect(() => decoded.save, throwsA(anything));
     });
 
@@ -50,12 +49,13 @@ void main() {
       final decoded = codec.decode(
         match: fixture.match,
         snapshot: fixture.wire.copyWith(
-          state: const {'runtimeState': 'not-a-map'},
+          state: const {'lifecycle': 'not-a-map'},
         ),
       );
 
       expect(decoded.save, fixture.save);
-      expect(() => decoded.state, throwsA(anything));
+      expect(decoded.wire.state, const {'lifecycle': 'not-a-map'});
+      expect(() => decoded.canonical, throwsA(anything));
     });
 
     test('canonical decoding is lazy and memoized', () {
@@ -83,48 +83,12 @@ void main() {
 
       expect(decoded.wire, same(fixture.wire));
       expect(decoded.save, fixture.save);
-      expect(decoded.state, fixture.state);
+      expect(decoded.wire.state, fixture.wire.state);
       expect(decoded.eventLogOffset, fixture.wire.offset);
       expect(decoded.canonical, same(canonical));
     });
 
-    test('keeps an absent turnStartedAt as a raw encoding decision', () {
-      final fixture = _fixture();
-      final decoded = codec.decode(
-        match: fixture.match,
-        snapshot: fixture.wire,
-      );
-      final rawRuntime = fixture.wire.state['runtimeState']! as Map;
-
-      expect(rawRuntime.containsKey('turnStartedAt'), isFalse);
-      expect(decoded.hasSerializedTurnStartedAt, isFalse);
-      expect(decoded.state.runtimeState.turnStartedAt, isNull);
-      expect(decoded.canonical.session.turnStartedAt, fixture.save.savedAt);
-      expect(
-        (decoded.wire.state['runtimeState']! as Map).containsKey(
-          'turnStartedAt',
-        ),
-        isFalse,
-      );
-    });
-
-    test('treats a serialized null turnStartedAt as an implicit value', () {
-      final fixture = _fixture();
-      final rawRuntime = Map<String, dynamic>.from(
-        fixture.wire.state['runtimeState']! as Map,
-      )..['turnStartedAt'] = null;
-      final wire = fixture.wire.copyWith(
-        state: {...fixture.wire.state, 'runtimeState': rawRuntime},
-      );
-
-      final decoded = codec.decode(match: fixture.match, snapshot: wire);
-
-      expect(decoded.hasSerializedTurnStartedAt, isFalse);
-      expect(decoded.state.runtimeState.turnStartedAt, isNull);
-      expect(decoded.canonical.session.turnStartedAt, fixture.save.savedAt);
-    });
-
-    test('detects and preserves an explicit turnStartedAt', () {
+    test('preserves the explicitly serialized turnStartedAt', () {
       final startedAt = DateTime.utc(2026, 7, 21, 15, 30);
       final fixture = _fixture(turnStartedAt: startedAt);
       final decoded = codec.decode(
@@ -133,79 +97,27 @@ void main() {
       );
       final rawState = fixture.wire.state;
 
-      expect(decoded.hasSerializedTurnStartedAt, isTrue);
-      expect(decoded.state.runtimeState.turnStartedAt, startedAt);
-      expect(decoded.canonical.session.turnStartedAt, startedAt);
+      expect(decoded.canonical.domain.turnStartedAt, startedAt);
 
-      final encoded = codec.encode(
+      final encoded = codec.encodeCanonical(
         decoded,
-        save: decoded.save.copyWith(name: 'Renamed match'),
+        decoded.canonical.copyWith(
+          metadata: decoded.canonical.metadata.copyWith(name: 'Renamed match'),
+        ),
       );
 
       expect(encoded.state, same(rawState));
       expect(
-        (encoded.state['runtimeState']! as Map)['turnStartedAt'],
+        (encoded.state['lifecycle']! as Map)['turnStartedAt'],
         startedAt.toIso8601String(),
       );
     });
   });
 
   _registerRunningMatchSnapshotCodecRosterTests(codec);
-  _registerRunningMatchSnapshotCodecLosslessRosterTests(codec);
-
-  group('RunningMatchSnapshotCodec encoding', () {
-    test('returns the original wire snapshot without replacements', () {
-      final fixture = _fixture();
-      final decoded = codec.decode(
-        match: fixture.match,
-        snapshot: fixture.wire,
-      );
-
-      expect(codec.encode(decoded), same(fixture.wire));
-    });
-
-    test('replaces save while preserving raw state and wire envelope', () {
-      final fixture = _fixture(wireVersion: 37, offset: 41);
-      final decoded = codec.decode(
-        match: fixture.match,
-        snapshot: fixture.wire,
-      );
-      final rawState = fixture.wire.state;
-      final replacement = decoded.save.copyWith(turn: decoded.save.turn + 1);
-
-      final encoded = codec.encode(decoded, save: replacement);
-
-      expect(encoded.v, fixture.wire.v);
-      expect(encoded.matchId, fixture.wire.matchId);
-      expect(encoded.offset, fixture.wire.offset);
-      expect(encoded.save, replacement.toJson());
-      expect(encoded.state, same(rawState));
-      expect(encoded.state, fixture.wire.state);
-      expect(fixture.wire.save, fixture.save.toJson());
-    });
-
-    test('replaces state while preserving raw save identity and shape', () {
-      final fixture = _fixture();
-      final decoded = codec.decode(
-        match: fixture.match,
-        snapshot: fixture.wire,
-      );
-      final rawSave = fixture.wire.save;
-      final replacement = decoded.state.copyWith(
-        playerGold: const {'player-1': 17},
-      );
-
-      final encoded = codec.encode(decoded, state: replacement);
-
-      expect(encoded.save, same(rawSave));
-      expect(encoded.save, fixture.wire.save);
-      expect(encoded.state, replacement.toJson());
-      expect(fixture.wire.state, fixture.state.toJson());
-    });
-  });
 
   group('RunningMatchSnapshotCodec initial encoding', () {
-    test('round-trips canonical state without serializing turnStartedAt', () {
+    test('round-trips canonical state with an explicit turnStartedAt', () {
       final fixture = _fixture();
       final decoded = codec.decode(
         match: fixture.match,
@@ -221,10 +133,13 @@ void main() {
       expect(encoded.matchId, fixture.match.id);
       expect(encoded.offset, 0);
       expect(encoded.save, fixture.save.toJson());
-      expect(encoded.state, fixture.state.toJson());
       expect(
-        (encoded.state['runtimeState']! as Map).containsKey('turnStartedAt'),
-        isFalse,
+        encoded.state,
+        CanonicalGameSnapshotCodec.encodeDomainState(fixture.state),
+      );
+      expect(
+        (encoded.state['lifecycle']! as Map)['turnStartedAt'],
+        fixture.save.savedAt.toIso8601String(),
       );
       expect(
         codec.decode(match: fixture.match, snapshot: encoded).canonical,
@@ -261,7 +176,7 @@ void main() {
       );
     });
 
-    test('rejects an implicit turn start that cannot round-trip', () {
+    test('rejects an invalid initial turn start', () {
       final fixture = _fixture();
       final initial = codec
           .decode(match: fixture.match, snapshot: fixture.wire)
@@ -276,9 +191,7 @@ void main() {
           () => codec.encodeInitial(
             match: fixture.match,
             snapshot: initial.copyWith(
-              session: initial.session.copyWith(
-                turnStartedAt: invalidTurnStart,
-              ),
+              domain: initial.domain.copyWith(turnStartedAt: invalidTurnStart),
             ),
           ),
           throwsArgumentError,
@@ -295,7 +208,7 @@ typedef _CodecFixture = ({
   WireMatch match,
   WireSnapshot wire,
   GameSave save,
-  PersistentGameState state,
+  DomainState state,
 });
 
 _CodecFixture _fixture({
@@ -367,17 +280,17 @@ _CodecFixture _fixture({
     players: players,
     gameMode: GameMode.multiplayer,
   );
-  final state = PersistentGameState.snapshot(
+  final state = DomainState.snapshot(
     playerColors: playerColors,
     playerCountries: playerCountries,
-    runtimeState: GameRuntimeState.snapshot(turnStartedAt: turnStartedAt),
+    turnStartedAt: turnStartedAt ?? savedAt,
   );
   final wire = WireSnapshot(
     v: wireVersion,
     matchId: 'match-1',
     offset: offset,
     save: save.toJson(),
-    state: state.toJson(),
+    state: CanonicalGameSnapshotCodec.encodeDomainState(state),
   );
   final match = WireMatch(
     v: wireVersion,

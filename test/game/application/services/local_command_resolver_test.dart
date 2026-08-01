@@ -10,7 +10,6 @@ import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw_core/ai/simulation/simulation_game_engine_adapter.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/game/compatibility.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -24,14 +23,17 @@ void main() {
       savedAt: DateTime.utc(2026, 7, 11),
       camera: CameraState.zero,
     );
-    const state = GameState(activePlayerId: 'player_1');
+    final state = GameClientState(activePlayerId: 'player_1');
     final savedAt = DateTime.utc(2026, 7, 11, 12);
 
     final result =
         LocalCommandResolver(
           reducer: GameStateReducer(mapData: _mapData()),
         ).resolve(
-          baseSnapshot: SaveSnapshot.fromGameState(save: save, state: state),
+          baseSnapshot: GameSnapshotFactory.fromClientState(
+            save: save,
+            state: state,
+          ),
           currentState: state,
           command: const SubmitTurnCommand('not-a-player'),
           savedAt: savedAt,
@@ -70,13 +72,16 @@ void main() {
         Player(id: 'player_1', name: 'Alice', colorValue: 0xFF000001),
       ],
     );
-    const state = GameState(activePlayerId: 'legacy_only');
+    final state = GameClientState(activePlayerId: 'legacy_only');
 
     final result =
         LocalCommandResolver(
           reducer: GameStateReducer(mapData: _mapData()),
         ).resolve(
-          baseSnapshot: SaveSnapshot.fromGameState(save: save, state: state),
+          baseSnapshot: GameSnapshotFactory.fromClientState(
+            save: save,
+            state: state,
+          ),
           currentState: state,
           command: const SubmitTurnCommand('legacy_only'),
           savedAt: DateTime.utc(2026, 7, 11, 12),
@@ -84,7 +89,7 @@ void main() {
         );
 
     expect(
-      result.snapshot.session.turnStatesByPlayerId['legacy_only'],
+      result.snapshot.domain.turnStatesByPlayerId['legacy_only'],
       PlayerTurnState.finished,
     );
     expect(result.state.submittedPlayerIds, {'legacy_only'});
@@ -110,8 +115,11 @@ void main() {
         ],
         gameMode: GameMode.multiplayer,
       );
-      const state = GameState(activePlayerId: 'player_1');
-      final base = SaveSnapshot.fromGameState(save: save, state: state);
+      final state = GameClientState(activePlayerId: 'player_1');
+      final base = GameSnapshotFactory.fromClientState(
+        save: save,
+        state: state,
+      );
       expect(base.persistedTurnStartedAt, isNull);
 
       final result =
@@ -131,7 +139,7 @@ void main() {
       expect(result.snapshot.domain.turn, 7);
       expect(result.snapshot.persistedTurnStartedAt, isNull);
       expect(restored.persistedTurnStartedAt, isNull);
-      expect(restored.session.turnStartedAt, restored.metadata.savedAtUtc);
+      expect(restored.domain.turnStartedAt, restored.metadata.savedAtUtc);
     },
   );
 
@@ -156,13 +164,13 @@ void main() {
         gameMode: GameMode.multiplayer,
       );
       const pendingAction = PendingResearchSelection(ownerPlayerId: 'player_1');
-      const state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
         submittedPlayerIds: {'player_1'},
-        interaction: GameInteractionState(pendingAction: pendingAction),
+        interaction: const InteractionState(pendingAction: pendingAction),
       );
-      final baseSnapshot = SaveSnapshot.fromGameState(
+      final baseSnapshot = GameSnapshotFactory.fromClientState(
         save: save,
         state: state,
         eventLogOffset: 17,
@@ -196,7 +204,7 @@ void main() {
     'local skip uses canonical engine state and preserves presentation envelope',
     () {
       final savedAt = DateTime.utc(2026, 7, 29, 14);
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         activePlayerCanAct: true,
         units: [
@@ -223,7 +231,7 @@ void main() {
           ),
         ],
       );
-      final baseSnapshot = SaveSnapshot.fromGameState(
+      final baseSnapshot = GameSnapshotFactory.fromClientState(
         save: GameSave(
           id: 'save_1',
           name: 'Local engine',
@@ -268,7 +276,7 @@ void main() {
       );
       expect(result.snapshot.domain.units, result.state.units);
       expect(
-        result.snapshot.interaction.pendingAction,
+        result.snapshot.domain.actions.pendingAction,
         result.state.pendingAction,
       );
       expect(result.snapshot.eventLogOffset, 23);
@@ -295,14 +303,14 @@ void main() {
       movementPoints: 0,
       posture: UnitPosture.fortified,
     );
-    final state = GameState(
+    final state = GameClientState(
       activePlayerId: 'player_1',
       units: [unit],
-      interaction: const GameInteractionState(
+      interaction: const InteractionState(
         pendingAction: PendingResearchSelection(ownerPlayerId: 'player_1'),
       ),
     );
-    final baseSnapshot = SaveSnapshot.fromGameState(
+    final baseSnapshot = GameSnapshotFactory.fromClientState(
       save: GameSave(
         id: 'save_1',
         name: 'Local identity',
@@ -347,7 +355,7 @@ void main() {
     expect(rejected.snapshot.domain, baseSnapshot.domain);
     expect(noOp.state, same(state));
     expect(noOp.snapshot.domain, baseSnapshot.domain);
-    expect(noOp.snapshot.interaction, baseSnapshot.interaction);
+    expect(noOp.snapshot.domain.actions, baseSnapshot.domain.actions);
     expect(inactive.state, same(inactiveState));
     expect(inactive.snapshot.domain.units.single, unit);
   });
@@ -370,16 +378,16 @@ void main() {
         final expected = fixture['expected'] as Map<String, dynamic>;
         final now = DateTime.parse(input['now'] as String);
         final save = GameSave.fromJson(input['save'] as Map<String, dynamic>);
-        final persistent = PersistentGameState.fromJson(
+        final persistent = CanonicalGameSnapshotCodec.decodeDomainState(
           input['state'] as Map<String, dynamic>,
         );
-        final mapData = MapDataCodec.fromJson(jsonEncode(input['map']));
+        final mapData = WorldMapCodec.fromJson(jsonEncode(input['map']));
         final command = DomainCommandCodec.fromJson(
           input['command'] as Map<String, dynamic>,
         );
         final actorPlayerId = input['actorPlayerId'] as String;
         final tick = input['tick'] as int;
-        final baseSnapshot = SaveSnapshot.fromPersistentState(
+        final baseSnapshot = GameSnapshotFactory.fromDomainState(
           save: save,
           state: persistent,
         );
@@ -392,7 +400,7 @@ void main() {
               reducer: GameStateReducer(mapData: mapData, ruleset: ruleset),
             ).resolve(
               baseSnapshot: baseSnapshot,
-              currentState: baseSnapshot.toGameState(
+              currentState: baseSnapshot.toClientState(
                 activePlayerId: actorPlayerId,
               ),
               command: command,
@@ -403,7 +411,7 @@ void main() {
               ),
             );
         final ai = const SimulationGameEngineAdapter().apply(
-          snapshot: baseSnapshot.canonical,
+          snapshot: baseSnapshot,
           state: persistent,
           command: command,
           actorPlayerId: actorPlayerId,
@@ -412,7 +420,7 @@ void main() {
           ruleset: ruleset,
         );
         final engineOracle = const GameEngine().apply(
-          snapshot: baseSnapshot.canonical,
+          snapshot: baseSnapshot,
           command: command,
           context: GameEngineContext(
             actorPlayerId: actorPlayerId,
@@ -421,19 +429,19 @@ void main() {
             ruleset: ruleset,
           ),
         );
-        final serverOracle = SaveSnapshot.fromPersistentState(
+        final serverOracle = GameSnapshotFactory.fromDomainState(
           save: GameSave.fromJson({
             ...expected['save'] as Map<String, dynamic>,
             'savedAt': now.toIso8601String(),
           }),
-          state: PersistentGameState.fromJson(
+          state: CanonicalGameSnapshotCodec.decodeDomainState(
             expected['state'] as Map<String, dynamic>,
           ),
-        ).canonical;
+        );
 
         expect(ai.accepted, isTrue, reason: fixtureName);
         expect(
-          _canonicalSnapshotBytes(local.snapshot.canonical),
+          _canonicalSnapshotBytes(local.snapshot),
           _canonicalSnapshotBytes(serverOracle),
           reason: fixtureName,
         );
@@ -444,19 +452,19 @@ void main() {
 }
 
 String _canonicalSnapshotBytes(CanonicalGameSnapshot snapshot) {
-  final legacy = const LegacyGameSnapshotAdapter().toLegacy(snapshot);
+  final encoded = CanonicalGameSnapshotCodec.encode(snapshot);
   return jsonEncode({
-    'save': legacy.save.toJson(),
-    'state': legacy.state.toJson(),
-    'eventLogOffset': legacy.eventLogOffset,
+    'save': encoded.save,
+    'state': encoded.state,
+    'eventLogOffset': encoded.eventLogOffset,
   });
 }
 
-MapData _mapData() => MapData(
+WorldMap _mapData() => WorldMap(
   cols: 1,
   rows: 1,
   tiles: [
-    const TileData(
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],

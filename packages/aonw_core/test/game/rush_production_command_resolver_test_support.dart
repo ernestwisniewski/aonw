@@ -2,7 +2,7 @@ part of 'rush_production_command_resolver_test.dart';
 
 typedef _RushKernelScenario = ({
   String name,
-  PersistentGameState state,
+  DomainState state,
   RushProductionCommand command,
   String actorPlayerId,
   bool accepted,
@@ -56,7 +56,7 @@ List<_RushKernelScenario> _rushKernelRejections() {
 
 _RushKernelScenario _scenario({
   required String name,
-  required PersistentGameState state,
+  required DomainState state,
   RushProductionCommand command = const RushProductionCommand('city_1'),
   String actorPlayerId = rushCharacterizationPlayerId,
   required String reason,
@@ -74,7 +74,7 @@ _RushKernelScenario _scenario({
   );
 }
 
-PersistentGameState _stateWithQueue(
+DomainState _stateWithQueue(
   CityProductionQueue? queue, {
   Map<String, int>? playerGold,
   List<WorldArtifact>? artifacts,
@@ -152,7 +152,7 @@ void _expectRushOutcome(
 }
 
 void _expectRejectedRushSlices(
-  PersistentGameState persistentBefore,
+  DomainState persistentBefore,
   DomainState domainBefore,
   RushProductionCommandResult direct,
   DomainCityProductionResult domain,
@@ -166,7 +166,7 @@ void _expectRejectedRushSlices(
   expect(domain.state, same(domainBefore));
 }
 
-DomainState _domainFromPersistent(PersistentGameState state) {
+DomainState _domainFromPersistent(DomainState state) {
   return DomainState.snapshot(
     turn: 7,
     matchRules: MatchRules.standard,

@@ -17,7 +17,6 @@ import 'package:aonw/game/presentation/widgets/hud/selection/hud_selection_comma
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/game/presentation/widgets/selection_info/selection_info.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -73,7 +72,7 @@ class HudCommandDispatcher {
   }
 
   void _cancelResearchSelectionIfPending({
-    required GameState? state,
+    required GameClientState? state,
     String activePlayerId = '',
   }) {
     final command = HudPendingActionCommands.cancelResearchSelection(
@@ -84,7 +83,7 @@ class HudCommandDispatcher {
     unawaited(dispatchIntent(command));
   }
 
-  void _cancelWorkerActionSelectionIfPending(GameState? state) {
+  void _cancelWorkerActionSelectionIfPending(GameClientState? state) {
     final command = HudPendingActionCommands.cancelWorkerActionSelection(state);
     if (command == null) return;
     unawaited(dispatchIntent(command));

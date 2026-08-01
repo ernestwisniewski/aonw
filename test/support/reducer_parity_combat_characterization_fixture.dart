@@ -117,8 +117,8 @@ GameUnit _combatUnit({
   );
 }
 
-PersistentGameState _combatState(
-  PersistentGameState source, {
+DomainState _combatState(
+  DomainState source, {
   required List<GameUnit> units,
   required List<GameCity> cities,
   required FogOfWarState fogOfWar,
@@ -132,50 +132,50 @@ PersistentGameState _combatState(
     fieldImprovements: const [_combatSentinelFieldImprovement],
     fogOfWar: fogOfWar,
     research: _combatSentinelResearch,
-    runtimeState: GameRuntimeState.snapshot(
-      submittedPlayerIds: const {_combatSentinelPlayerId},
-      timeoutStreaksByPlayerId: const {_combatSentinelPlayerId: 2},
-      afkPlayerIds: const {_combatSentinelPlayerId},
-      kickedPlayerIds: const {_combatSentinelPlayerId},
-      intendedAttacks: const [
-        IntendedAttack(
-          attackerUnitId: _combatSentinelUnitId,
-          defenderCol: 0,
-          defenderRow: 1,
-          declaredAtTick: 41,
-          declaringPlayerId: _combatSentinelPlayerId,
-        ),
-      ],
-      diplomacy: diplomacy ?? _combatBaseDiplomacy,
-      dominationHoldTurnsByPlayerId: const {_combatSentinelPlayerId: 3},
-      culturalVictoryHoldTurnsByPlayerId: const {_combatSentinelPlayerId: 4},
-      mapObjectiveHoldStatesByObjectiveId: const {
-        'combat_sentinel_objective': MapObjectiveHoldState(
-          objectiveId: 'combat_sentinel_objective',
-          playerId: _combatSentinelPlayerId,
-          holdTurns: 2,
-        ),
-      },
-      resourceTradeAgreements: const [_combatPairTrade, _combatUnrelatedTrade],
-      turnStartedAt: DateTime.utc(2026, 7, 1, 12),
-    ),
+
+    submittedPlayerIds: const {_combatSentinelPlayerId},
+    timeoutStreaksByPlayerId: const {_combatSentinelPlayerId: 2},
+    afkPlayerIds: const {_combatSentinelPlayerId},
+    kickedPlayerIds: const {_combatSentinelPlayerId},
+    intendedAttacks: const [
+      IntendedAttack(
+        attackerUnitId: _combatSentinelUnitId,
+        defenderCol: 0,
+        defenderRow: 1,
+        declaredAtTick: 41,
+        declaringPlayerId: _combatSentinelPlayerId,
+      ),
+    ],
+    diplomacy: diplomacy ?? _combatBaseDiplomacy,
+    dominationHoldTurnsByPlayerId: const {_combatSentinelPlayerId: 3},
+    culturalVictoryHoldTurnsByPlayerId: const {_combatSentinelPlayerId: 4},
+    mapObjectiveHoldStatesByObjectiveId: const {
+      'combat_sentinel_objective': MapObjectiveHoldState(
+        objectiveId: 'combat_sentinel_objective',
+        playerId: _combatSentinelPlayerId,
+        holdTurns: 2,
+      ),
+    },
+    resourceTradeAgreements: const [_combatPairTrade, _combatUnrelatedTrade],
+    turnStartedAt: DateTime.utc(2026, 7, 1, 12),
+
     wonderRegistry: _combatSentinelWonderRegistry,
   );
 }
 
-MapData _combatMap(
+WorldMap _combatMap(
   ReducerParityFixture template, {
   required int cols,
   required int rows,
 }) {
-  return MapData(
+  return WorldMap(
     cols: cols,
     rows: rows,
     mapName: template.save.mapName,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.grassland],
@@ -228,8 +228,8 @@ ReducerParityFixture _combatFixture(
   ReducerParityFixture template, {
   required String id,
   required int tickOffset,
-  required MapData mapData,
-  required PersistentGameState state,
+  required WorldMap mapData,
+  required DomainState state,
   required AttackHexCommand command,
   String actorPlayerId = _combatActorId,
 }) {
@@ -248,7 +248,9 @@ ReducerParityFixture _combatFixture(
     expectedAccepted: required.accepted,
     expectedReason: required.reason,
     expectedSave: reducerParitySave(template.save),
-    expectedState: _combatExpectedState(id, state).toJson(),
+    expectedState: CanonicalGameSnapshotCodec.encodeDomainState(
+      _combatExpectedState(id, state),
+    ),
     expectedEvents: reducerParityEvents(_combatExpectedEvents(id)),
   );
 }

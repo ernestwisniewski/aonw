@@ -193,8 +193,7 @@ void _registerMessagePromiseTests() {
           response: DiplomaticMessageResponse.conciliatory,
           turn: 10,
         );
-        final updated =
-            result.state.runtimeState.diplomacy.messages['message_1']!;
+        final updated = result.state.diplomacy.messages['message_1']!;
         final event = result.events[0] as DiplomaticMessageRespondedEvent;
 
         expect(updated.promiseDueTurn, createsPromise ? 13 : isNull);
@@ -214,12 +213,7 @@ void _registerMessagePromiseTests() {
       );
 
       expect(
-        result
-            .state
-            .runtimeState
-            .diplomacy
-            .messages['message_1']!
-            .promiseDueTurn,
+        result.state.diplomacy.messages['message_1']!.promiseDueTurn,
         isNull,
       );
     });
@@ -258,7 +252,7 @@ void _registerMessageScoreSaturationTest() {
 }
 
 _DiplomacyTestResult _respondToMessage(
-  PersistentGameState state, {
+  DomainState state, {
   DiplomaticMessageResponse response = DiplomaticMessageResponse.conciliatory,
   int turn = 10,
 }) {
@@ -276,14 +270,14 @@ _DiplomacyTestResult _respondToMessage(
 
 void _expectMessageResponseSuccess(
   _DiplomacyTestResult result, {
-  required PersistentGameState input,
+  required DomainState input,
   required DiplomaticMessage original,
   required DiplomaticMessageResponse response,
   required int expectedDelta,
   required int expectedScore,
   required DiplomaticScoreChangeReason expectedReason,
 }) {
-  final updated = result.state.runtimeState.diplomacy.messages[original.id]!;
+  final updated = result.state.diplomacy.messages[original.id]!;
   expect(updated.id, original.id);
   expect(updated.fromPlayerId, original.fromPlayerId);
   expect(updated.toPlayerId, original.toPlayerId);

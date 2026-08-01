@@ -3,7 +3,7 @@ import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models/worker_action_panel_models.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models/worker_improvement_options_view_model_factory.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -16,7 +16,7 @@ abstract final class WorkerActionPanelViewModelFactory {
     required GameUnit unit,
     required Iterable<GameCity> cities,
     required Iterable<FieldImprovement> fieldImprovements,
-    required MapData mapData,
+    required WorldMap mapData,
     required ResearchState research,
     required PendingPlayerAction? pendingAction,
     required AppLocalizations l10n,

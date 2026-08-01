@@ -3,7 +3,7 @@ part of 'reducer_parity_accepted_semantics.dart';
 void requireAcceptedCombat(
   String fixtureId,
   String attackerUnitId,
-  PersistentGameState after,
+  DomainState after,
   List<GameEvent> events,
 ) {
   final attacker = after.units.byId(attackerUnitId);
@@ -21,8 +21,8 @@ void requireAcceptedCombat(
 
 String? validateAcceptedDetachment({
   required DetachTroopCommand command,
-  required PersistentGameState before,
-  required PersistentGameState after,
+  required DomainState before,
+  required DomainState after,
   required String actorPlayerId,
   required List<GameEvent> events,
 }) {
@@ -39,9 +39,7 @@ String? validateAcceptedDetachment({
   final expectedState = before.copyWith(
     units: after.units,
     fogOfWar: after.fogOfWar,
-    runtimeState: before.runtimeState.copyWith(
-      diplomacy: after.runtimeState.diplomacy,
-    ),
+    diplomacy: after.diplomacy,
   );
   if ((sourceAfter, after.units.length, after, events.isEmpty) !=
       (
@@ -101,8 +99,8 @@ String? validateAcceptedDetachment({
 
 String? _validateDiscoveredContact({
   required String actorPlayerId,
-  required PersistentGameState before,
-  required PersistentGameState after,
+  required DomainState before,
+  required DomainState after,
   required Set<HexCoordinate> newlyVisible,
 }) {
   final contactedPlayers = <String>{
@@ -116,25 +114,18 @@ String? _validateDiscoveredContact({
         city.ownerPlayerId,
   }..removeWhere((playerId) => playerId.isEmpty);
   final expectedDiplomacy = DiplomaticContact.mergeDiscoveredContacts(
-    diplomacy: before.runtimeState.diplomacy,
+    diplomacy: before.diplomacy,
     fogOfWar: after.fogOfWar,
     units: after.units,
     cities: after.cities,
     playerIds: before.knownPlayerIds,
   );
-  if ((contactedPlayers.length, after.runtimeState.diplomacy) !=
-      (1, expectedDiplomacy)) {
+  if ((contactedPlayers.length, after.diplomacy) != (1, expectedDiplomacy)) {
     return 'must discover exactly one opponent and merge diplomatic contact';
   }
   final contactedPlayerId = contactedPlayers.single;
-  if (before.runtimeState.diplomacy.hasContact(
-        actorPlayerId,
-        contactedPlayerId,
-      ) ||
-      !after.runtimeState.diplomacy.hasContact(
-        actorPlayerId,
-        contactedPlayerId,
-      )) {
+  if (before.diplomacy.hasContact(actorPlayerId, contactedPlayerId) ||
+      !after.diplomacy.hasContact(actorPlayerId, contactedPlayerId)) {
     return 'must add the newly visible opponent contact';
   }
   return null;

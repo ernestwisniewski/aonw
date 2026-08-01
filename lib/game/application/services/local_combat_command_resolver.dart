@@ -20,8 +20,8 @@ final class LocalCombatCommandResolution {
     required this.combatAnimations,
   });
 
-  final SaveSnapshot snapshot;
-  final GameState state;
+  final CanonicalGameSnapshot snapshot;
+  final GameClientState state;
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
   final List<CombatAnimationFact> combatAnimations;
@@ -37,8 +37,8 @@ final class LocalCombatCommandResolver {
   final GameRuleset ruleset;
 
   LocalCombatCommandResolution resolve({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required AttackHexCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
@@ -89,8 +89,8 @@ final class LocalCombatCommandResolver {
   }
 
   GameEngineResult _applyEngine({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required AttackHexCommand command,
     required GameCommandContext context,
   }) {
@@ -115,8 +115,8 @@ final class LocalCombatCommandResolver {
   }
 
   LocalCombatCommandResolution _unchanged({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DateTime savedAt,
     List<UiEffect> uiEffects = const [],
   }) {
@@ -133,7 +133,7 @@ final class LocalCombatCommandResolver {
   }
 
   List<UiEffect> _rejectionEffects(
-    GameState state,
+    GameClientState state,
     AttackHexCommand command,
     String reason,
     GameCommandContext context,
@@ -150,8 +150,8 @@ final class LocalCombatCommandResolver {
   }
 
   String _actorPlayerId({
-    required SaveSnapshot snapshot,
-    required GameState state,
+    required CanonicalGameSnapshot snapshot,
+    required GameClientState state,
     required AttackHexCommand command,
     required GameCommandContext context,
   }) {

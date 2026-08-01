@@ -6,7 +6,7 @@ void main() {
     const calculator = EmpireScoreCalculator();
 
     test('scores cities, population, territory, buildings and units', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: const {'player_1': 75},
         units: [
           GameUnit.produced(
@@ -68,7 +68,7 @@ void main() {
     test(
       'caps large gold stockpiles so score fallback rewards economy shape',
       () {
-        const state = PersistentGameState(playerGold: {'player_1': 20000});
+        final state = DomainState.snapshot(playerGold: {'player_1': 20000});
 
         final score = calculator.scoreFor(playerId: 'player_1', state: state);
 
@@ -85,24 +85,23 @@ void main() {
         requiredHoldTurns: 2,
         victoryPoints: 7,
       );
-      const state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [
-          GameCity(
+          const GameCity(
             id: 'city_1',
             ownerPlayerId: 'player_1',
             name: 'Roma',
             center: CityHex(col: 0, row: 0),
           ),
         ],
-        runtimeState: GameRuntimeState(
-          mapObjectiveHoldStatesByObjectiveId: {
-            'pass_1': MapObjectiveHoldState(
-              objectiveId: 'pass_1',
-              playerId: 'player_1',
-              holdTurns: 2,
-            ),
-          },
-        ),
+
+        mapObjectiveHoldStatesByObjectiveId: {
+          'pass_1': const MapObjectiveHoldState(
+            objectiveId: 'pass_1',
+            playerId: 'player_1',
+            holdTurns: 2,
+          ),
+        },
       );
 
       final score = calculator.scoreFor(
@@ -177,7 +176,7 @@ void main() {
     test('returns stable sorted scores for the requested roster only', () {
       final scores = calculator.scoresFor(
         playerIds: const ['player_2', 'outsider', 'player_1', 'player_2'],
-        state: PersistentGameState(
+        state: DomainState.snapshot(
           units: [
             GameUnit.produced(
               id: 'warrior_1',

@@ -1,8 +1,8 @@
 part of 'reducer_parity_fixture.dart';
 
 void _validateReducerParityInteractionScope(ReducerParityFixture fixture) {
-  final runtime = fixture.state.runtimeState;
-  final pendingAction = runtime.pendingAction;
+  final runtime = fixture.state;
+  final pendingAction = runtime.actions.pendingAction;
   final command = fixture.command;
   if ((fixture.family == 'artifacts' ||
           fixture.family == 'city-expansion' ||
@@ -21,7 +21,7 @@ void _validateReducerParityInteractionScope(ReducerParityFixture fixture) {
       pendingAction.ownerPlayerId == command.playerId;
   final permitsUnitAction = _permitsReviewedUnitActionPendingAction(fixture);
   final permitsWorker = _permitsReviewedWorkerInteraction(fixture);
-  if ((runtime.cityFoundingDraft != null && !permitsWorker) ||
+  if ((runtime.actions.cityFoundingDraft != null && !permitsWorker) ||
       (pendingAction != null &&
           !permitsReviewedResearchPendingAction &&
           !permitsUnitAction &&
@@ -253,7 +253,9 @@ void _requireRejectionCoverage(
 }
 
 void _validateReducerParityAcceptedSemantics(ReducerParityFixture fixture) {
-  final state = PersistentGameState.fromJson(fixture.expectedState);
+  final state = CanonicalGameSnapshotCodec.decodeDomainState(
+    fixture.expectedState,
+  );
   const parseEvent = GameEventSerializer.fromJson;
   final events = fixture.expectedEvents.map(parseEvent).toList(growable: false);
   if (tryRequireProduction(
@@ -273,7 +275,7 @@ void _validateReducerParityAcceptedSemantics(ReducerParityFixture fixture) {
 
 void _validateReducerParityAcceptedCommand(
   ReducerParityFixture fixture,
-  PersistentGameState state,
+  DomainState state,
   List<GameEvent> events,
 ) {
   switch (fixture.family) {
@@ -319,7 +321,7 @@ void _validateReducerParityAcceptedCommand(
 
 void _requireAcceptedParityArtifact(
   ReducerParityFixture fixture,
-  PersistentGameState state,
+  DomainState state,
   List<GameEvent> events,
 ) {
   if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save))) {
@@ -338,7 +340,7 @@ void _requireAcceptedParityArtifact(
 
 void _requireAcceptedParityCityWorkedHex(
   ReducerParityFixture fixture,
-  PersistentGameState state,
+  DomainState state,
   List<GameEvent> events,
 ) {
   final command = fixture.command as ToggleWorkedHexCommand;
@@ -369,7 +371,10 @@ void _requireAcceptedParityCityWorkedHex(
   final expectedCities = [...fixture.state.cities]
     ..[beforeIndex] = beforeCity.copyWith(workedHexes: expectedWorkedHexes);
   final expectedState = fixture.state.copyWith(cities: expectedCities);
-  if (!_jsonDeepEquals(state.toJson(), expectedState.toJson())) {
+  if (!_jsonDeepEquals(
+    CanonicalGameSnapshotCodec.encodeDomainState(state),
+    CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
+  )) {
     ReducerParityCorpus._fail(
       fixture,
       'must only toggle the reviewed city worked hex',
@@ -379,7 +384,7 @@ void _requireAcceptedParityCityWorkedHex(
 
 void _requireAcceptedParityCombat(
   ReducerParityFixture fixture,
-  PersistentGameState state,
+  DomainState state,
   List<GameEvent> events,
 ) {
   final command = fixture.command as AttackHexCommand;
@@ -388,7 +393,7 @@ void _requireAcceptedParityCombat(
 
 void _requireAcceptedParityDetachment(
   ReducerParityFixture fixture,
-  PersistentGameState state,
+  DomainState state,
   List<GameEvent> events,
 ) {
   final failure = validateAcceptedDetachment(
@@ -403,11 +408,11 @@ void _requireAcceptedParityDetachment(
 
 void _requireAcceptedParityResearch(
   ReducerParityFixture fixture,
-  PersistentGameState state,
+  DomainState state,
   List<GameEvent> events,
 ) {
   final command = fixture.command as SelectTechnologyCommand;
-  final pendingAction = fixture.state.runtimeState.pendingAction;
+  final pendingAction = fixture.state.actions.pendingAction;
   if (pendingAction is! PendingResearchSelection ||
       pendingAction.ownerPlayerId != command.playerId) {
     ReducerParityCorpus._fail(
@@ -429,7 +434,7 @@ void _requireAcceptedParityResearch(
       'must commit the reviewed research selection',
     );
   }
-  if (state.runtimeState.pendingAction != null) {
+  if (state.actions.pendingAction != null) {
     ReducerParityCorpus._fail(
       fixture,
       'must clear the matching pending research selection',
@@ -437,12 +442,14 @@ void _requireAcceptedParityResearch(
   }
 
   final expectedReviewedState = <String, dynamic>{
-    ...fixture.state.toJson(),
+    ...CanonicalGameSnapshotCodec.encodeDomainState(fixture.state),
     // Research stays an independent fixture oracle; do not reproduce overflow.
     'research': fixture.expectedState['research'],
-    'runtimeState': fixture.state.runtimeState
-        .copyWith(pendingAction: null)
-        .toJson(),
+    'lifecycle': CanonicalGameSnapshotCodec.encodeDomainState(
+      fixture.state.copyWith(
+        actions: fixture.state.actions.copyWith(pendingAction: null),
+      ),
+    )['lifecycle'],
   };
   if (!_jsonDeepEquals(fixture.expectedState, expectedReviewedState)) {
     ReducerParityCorpus._fail(
@@ -450,46 +457,4 @@ void _requireAcceptedParityResearch(
       'must only update research and clear its matching pending action',
     );
   }
-}
-
-void _requireAcceptedParityResourceTrade(
-  ReducerParityFixture fixture,
-  PersistentGameState state,
-  List<GameEvent> events,
-) {
-  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save))) {
-    ReducerParityCorpus._fail(
-      fixture,
-      'must preserve save metadata for resource trade',
-    );
-  }
-  requireAcceptedResourceTrade(
-    fixtureId: fixture.id,
-    command: fixture.command,
-    before: fixture.state,
-    after: state,
-    events: events,
-  );
-}
-
-void _requireAcceptedParityTurn(
-  ReducerParityFixture fixture,
-  PersistentGameState state,
-  List<GameEvent> events,
-) {
-  requireAcceptedTurnSubmission(
-    fixtureId: fixture.id,
-    command: fixture.command as SubmitTurnCommand,
-    inputTurn: fixture.save.turn,
-    playerIds: fixture.save.players.map((player) => player.id),
-    expectedTurn: fixture.expectedSave['turn'],
-    expectedPlayerStates: _asMap(
-      fixture.expectedSave['playerStates'],
-      '${fixture.id}.expected.save.playerStates',
-    ),
-    before: fixture.state,
-    after: state,
-    now: fixture.now,
-    events: events,
-  );
 }

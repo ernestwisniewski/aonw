@@ -6,8 +6,8 @@ import 'package:aonw/game/presentation/widgets/city/city_production_item_view_mo
 import 'package:aonw/game/presentation/widgets/city/city_project_item_factory.dart';
 import 'package:aonw/game/presentation/widgets/city/city_specialization_item_factory.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -95,7 +95,7 @@ class CityProductionDialogViewModel {
     required TechnologyRuleset technologyRuleset,
     WonderRegistry wonderRegistry = WonderRegistry.empty,
     WonderRuleset wonderRuleset = WonderRuleset.standard,
-    required MapData? mapData,
+    required WorldMap? mapData,
     required List<GameCity> cities,
     required List<GameUnit> units,
     List<WorldArtifact> artifacts = const [],

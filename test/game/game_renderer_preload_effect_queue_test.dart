@@ -3,8 +3,8 @@ import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_renderer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,13 +24,15 @@ void main() {
       );
       final game = GameRenderer(mapData: _map(), onCommand: (_) async {});
       addTearDown(game.disposeRenderer);
-      game.applyState(GameState(units: [unit], activePlayerId: 'player_1'));
+      game.applyState(
+        GameClientState(units: [unit], activePlayerId: 'player_1'),
+      );
       await game.handleEffect(
         const SmoothCameraEffect(col: 2, row: 1, duration: 0.48),
       );
 
       final transition = game.applyTransition(
-        GameState(
+        GameClientState(
           units: [unit.copyWith(col: 1, row: 0)],
           activePlayerId: 'player_1',
         ),
@@ -63,13 +65,13 @@ void main() {
   );
 }
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 3,
   rows: 2,
   tiles: [
     for (var row = 0; row < 2; row++)
       for (var col = 0; col < 3; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],

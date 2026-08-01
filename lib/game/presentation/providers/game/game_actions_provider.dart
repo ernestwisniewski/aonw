@@ -234,7 +234,7 @@ class GameCommandController extends _$GameCommandController {
     ref.invalidate(gameSaveSnapshotProvider(saveId));
   }
 
-  GameState? _currentGameState() => _currentGameStateFor(ref);
+  GameClientState? _currentGameState() => _currentGameStateFor(ref);
 
   int? _currentSaveTurn() => _currentSaveTurnFor(ref);
 
@@ -242,7 +242,7 @@ class GameCommandController extends _$GameCommandController {
     Object command, {
     GameCommandContext context = const GameCommandContext(),
   }) async {
-    if (!ref.mounted) return const DispatchCommandResult(state: GameState());
+    if (!ref.mounted) return _emptyDispatchResult();
     final record = await _dispatchOnly(command, context: context);
     if (!ref.mounted) return record.result;
     await _presentDispatchRecord(record);
@@ -312,7 +312,7 @@ class GameCommandController extends _$GameCommandController {
     GameIntent command, {
     GameCommandContext context = const GameCommandContext(),
   }) async {
-    if (!ref.mounted) return const DispatchCommandResult(state: GameState());
+    if (!ref.mounted) return _emptyDispatchResult();
     final record = await _dispatchOnly(command, context: context);
     if (!ref.mounted) return record.result;
 
@@ -339,7 +339,7 @@ class GameCommandController extends _$GameCommandController {
 
   void _playCommandAndTransitionSounds({
     required Object command,
-    required GameState? previousState,
+    required GameClientState? previousState,
     required DispatchCommandResult result,
     required Iterable<RendererEffect> rendererEffects,
   }) {
@@ -400,7 +400,7 @@ class GameCommandController extends _$GameCommandController {
     if (saveId.isEmpty || playerId.isEmpty) return null;
     try {
       final snapshot = await ref.read(gameRepositoryProvider).load(saveId);
-      return '$saveId|${snapshot.save.turn}|$playerId';
+      return '$saveId|${snapshot.domain.turn}|$playerId';
     } catch (_) {
       return null;
     }
@@ -433,3 +433,6 @@ class GameCommandController extends _$GameCommandController {
     }
   }
 }
+
+DispatchCommandResult _emptyDispatchResult() =>
+    DispatchCommandResult(state: GameClientState());

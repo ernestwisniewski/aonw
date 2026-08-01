@@ -3,7 +3,7 @@ part of '../server_command_reducer_test.dart';
 void _registerServerCommandReducerMapCacheTests() {
   group('ServerCommandReducer map cache', () {
     test('reuses a loaded map across sequential reductions', () async {
-      final map = _CountingMapData(_resourceTradeMap());
+      final map = _resourceTradeMap();
       final catalog = _CountingMapCatalog({'test_map': map});
       final reducer = ServerCommandReducer(mapCatalog: catalog);
 
@@ -11,7 +11,6 @@ void _registerServerCommandReducerMapCacheTests() {
       await _reduceForMap(reducer, 'test_map');
 
       expect(catalog.loadCountFor('test_map'), 1);
-      expect(map.indexedReadViewCalls, 1);
     });
 
     test('deduplicates concurrent loads for the same map', () async {
@@ -33,8 +32,8 @@ void _registerServerCommandReducerMapCacheTests() {
     });
 
     test('keeps separate cache entries for different maps', () async {
-      final mapA = _CountingMapData(_resourceTradeMap());
-      final mapB = _CountingMapData(_resourceTradeMap());
+      final mapA = _resourceTradeMap();
+      final mapB = _resourceTradeMap();
       final catalog = _CountingMapCatalog({'map_a': mapA, 'map_b': mapB});
       final reducer = ServerCommandReducer(mapCatalog: catalog);
 
@@ -44,56 +43,6 @@ void _registerServerCommandReducerMapCacheTests() {
 
       expect(catalog.loadCountFor('map_a'), 1);
       expect(catalog.loadCountFor('map_b'), 1);
-      expect(mapA.indexedReadViewCalls, 1);
-      expect(mapB.indexedReadViewCalls, 1);
-    });
-
-    test('validates tiles before indexing and evicts an invalid map', () async {
-      final map = _CountingMapData(
-        MapData(
-          cols: 0,
-          rows: 1,
-          tiles: [
-            const TileData(
-              col: 0,
-              row: 0,
-              terrains: [],
-              resources: [],
-              height: 0,
-            ),
-          ],
-        ),
-      );
-      final catalog = _CountingMapCatalog({'test_map': map});
-      final reducer = ServerCommandReducer(mapCatalog: catalog);
-
-      await expectLater(
-        _reduceForMap(reducer, 'test_map'),
-        throwsA(
-          isA<WorldMapException>().having(
-            (error) => error.message,
-            'message',
-            'Tile terrains must not be empty',
-          ),
-        ),
-      );
-      expect(map.indexedReadViewCalls, 0);
-      expect(catalog.loadCountFor('test_map'), 1);
-
-      map
-        ..cols = 1
-        ..tiles[0] = const TileData(
-          col: 0,
-          row: 0,
-          terrains: [TerrainType.plains],
-          resources: [],
-          height: 0,
-        );
-      final retried = await _reduceForMap(reducer, 'test_map');
-
-      expect(retried.accepted, isTrue);
-      expect(map.indexedReadViewCalls, 1);
-      expect(catalog.loadCountFor('test_map'), 2);
     });
 
     test('evicts a failed load so the map can be retried', () async {
@@ -135,43 +84,6 @@ Future<ServerCommandTestReduction> _reduceForMap(
   );
 }
 
-final class _CountingMapData extends MapData {
-  _CountingMapData(MapData source)
-    : super(
-        cols: source.cols,
-        rows: source.rows,
-        tiles: source.tiles,
-        objectives: source.objectives,
-        mapName: source.mapName,
-        defaultZoom: source.defaultZoom,
-      );
-
-  int indexedReadViewCalls = 0;
-
-  @override
-  MapReadView indexedReadView() {
-    indexedReadViewCalls += 1;
-    return super.indexedReadView();
-  }
-}
-
-final class _RawTileLookupRejectingMapData extends MapData {
-  _RawTileLookupRejectingMapData(MapData source)
-    : super(
-        cols: source.cols,
-        rows: source.rows,
-        tiles: source.tiles,
-        objectives: source.objectives,
-        mapName: source.mapName,
-        defaultZoom: source.defaultZoom,
-      );
-
-  @override
-  TileData? tileAt(int col, int row) {
-    throw StateError('Resource trade must use the cached map view.');
-  }
-}
-
 class _CountingMapCatalog implements MultiplayerMapCatalog {
   _CountingMapCatalog(
     this._maps, {
@@ -179,7 +91,7 @@ class _CountingMapCatalog implements MultiplayerMapCatalog {
     this.release,
   }) : _failuresRemaining = Map.of(failuresBeforeSuccess);
 
-  final Map<String, MapData> _maps;
+  final Map<String, WorldMap> _maps;
   final Completer<void>? release;
   final Map<String, int> _failuresRemaining;
   final Map<String, int> _loadCounts = {};
@@ -190,7 +102,7 @@ class _CountingMapCatalog implements MultiplayerMapCatalog {
   int loadCountFor(String mapName) => _loadCounts[mapName] ?? 0;
 
   @override
-  Future<MapData> loadAssetMap(String mapName) async {
+  Future<WorldMap> loadAssetMap(String mapName) async {
     _loadCounts.update(mapName, (count) => count + 1, ifAbsent: () => 1);
     if (!_firstLoadStarted.isCompleted) _firstLoadStarted.complete();
 

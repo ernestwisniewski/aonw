@@ -16,6 +16,7 @@ import 'package:aonw_core/ai/strategic/city_site_planner.dart';
 import 'package:aonw_core/ai/strategic/strategic_planner.dart';
 import 'package:aonw_core/ai/strategies/basic_strategy.dart';
 import 'package:aonw_core/ai/telemetry/balance_runner.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -23,7 +24,6 @@ import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 void main(List<String> args) {
@@ -44,7 +44,7 @@ void main(List<String> args) {
     );
     final result = EconomySimulation.run(config: config);
     final row = result.rowsByPlayerId[playerId]!.last;
-    final mapView = _simulationMap().indexedReadView();
+    final mapView = _simulationMap();
     // EconomySimulation already finalizes every turn through GameEngine.
     // Diagnostic tooling must inspect that authoritative result directly.
     final state = result.state;
@@ -70,7 +70,7 @@ void main(List<String> args) {
       difficulty: ai.difficulty,
       civProfile: civProfile,
     );
-    final view = GameView.fromPersistentState(
+    final view = GameView.fromDomainState(
       state,
       forPlayerId: playerId,
       turn: turn + 1,
@@ -356,9 +356,9 @@ String _coord(HexCoordinate hex) => '(${hex.col},${hex.row})';
 String _queued(QueuedMovePath path) =>
     '(${path.targetCol},${path.targetRow}) ${path.steps.length}';
 
-MapData _simulationMap() {
+WorldMap _simulationMap() {
   const size = 9;
-  return MapData(
+  return WorldMap(
     cols: size,
     rows: size,
     mapName: 'economy_simulation',
@@ -369,7 +369,7 @@ MapData _simulationMap() {
   );
 }
 
-TileData _tile(int col, int row) {
+WorldTile _tile(int col, int row) {
   final resource = switch ((col, row)) {
     (3, 2) || (7, 7) => ResourceType.wheat,
     (2, 4) || (8, 6) => ResourceType.iron,
@@ -382,7 +382,7 @@ TileData _tile(int col, int row) {
     2 => TerrainType.grassland,
     _ => TerrainType.plains,
   };
-  return TileData(
+  return WorldTile(
     col: col,
     row: row,
     terrains: [terrain],

@@ -34,7 +34,7 @@ class LocalCommandTransport implements CommandTransport {
   @override
   Future<CommandTransportResult> dispatch({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
     bool fromMovePreviewConfirmation = false,
@@ -48,7 +48,7 @@ class LocalCommandTransport implements CommandTransport {
 
   Future<CommandTransportResult> _dispatchPersistent({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     required GameCommandContext context,
     required bool fromMovePreviewConfirmation,
@@ -83,11 +83,11 @@ class LocalCommandTransport implements CommandTransport {
 
   Future<CommandTransportResult> _persistResolution({
     required String saveId,
-    required SaveSnapshot baseSnapshot,
+    required CanonicalGameSnapshot baseSnapshot,
     required int latestOffset,
     required DateTime timestamp,
     required LocalCommandResolution resolved,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
   }) async {
     final offset = latestOffset + 1;
@@ -130,7 +130,7 @@ class LocalCommandTransport implements CommandTransport {
   Future<bool> _storeSnapshotIfNeeded({
     required String saveId,
     required DomainCommand command,
-    required SaveSnapshot snapshot,
+    required CanonicalGameSnapshot snapshot,
     required DateTime timestamp,
     required int offset,
     required bool shouldLog,
@@ -144,7 +144,7 @@ class LocalCommandTransport implements CommandTransport {
 
     await snapshotStore.save(
       saveId,
-      Snapshot(offset: offset, state: snapshot, createdAt: timestamp),
+      Snapshot(state: snapshot, createdAt: timestamp),
     );
     return true;
   }
@@ -152,7 +152,7 @@ class LocalCommandTransport implements CommandTransport {
   Future<void> _appendCommandIfNeeded({
     required String saveId,
     required int turn,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand commandToLog,
     required LocalCommandResolution resolved,
     required DateTime timestamp,

@@ -1,18 +1,18 @@
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/movement.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Minimal plains map.
-MapData _simpleMap({int cols = 3, int rows = 3}) => MapData(
+WorldMap _simpleMap({int cols = 3, int rows = 3}) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
     for (var row = 0; row < rows; row++)
       for (var col = 0; col < cols; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],

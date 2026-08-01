@@ -2,8 +2,8 @@ part of 'hud_selection_actions.dart';
 
 _HudSelectionActionSpec _merchantTradeRouteActionFor({
   required GameUnit unit,
-  required GameState? gameState,
-  required MapData mapData,
+  required GameClientState? gameState,
+  required WorldMap mapData,
   required String? lockedReason,
   required AppLocalizations l10n,
   required VoidCallback onStartMerchantTradeRouteSelection,
@@ -59,8 +59,8 @@ _HudSelectionActionSpec _merchantTradeRouteActionFor({
 
 List<_HudSelectionActionSpec> _merchantTradeRouteCityActionsFor({
   required GameUnit unit,
-  required GameState? gameState,
-  required MapData mapData,
+  required GameClientState? gameState,
+  required WorldMap mapData,
   required String? lockedReason,
   required AppLocalizations l10n,
   required ValueChanged<String> onAssignMerchantTradeRoute,
@@ -91,8 +91,8 @@ List<_HudSelectionActionSpec> _merchantTradeRouteCityActionsFor({
 
 _HudSelectionActionSpec _merchantMoveToCityActionFor({
   required GameUnit unit,
-  required GameState? gameState,
-  required MapData mapData,
+  required GameClientState? gameState,
+  required WorldMap mapData,
   required String? lockedReason,
   required AppLocalizations l10n,
   required VoidCallback onStartMerchantMoveToCitySelection,
@@ -149,8 +149,8 @@ _HudSelectionActionSpec _merchantMoveToCityActionFor({
 
 List<_HudSelectionActionSpec> _merchantMoveToCityActionsFor({
   required GameUnit unit,
-  required GameState? gameState,
-  required MapData mapData,
+  required GameClientState? gameState,
+  required WorldMap mapData,
   required String? lockedReason,
   required AppLocalizations l10n,
   required ValueChanged<String> onMoveMerchantToCity,
@@ -181,8 +181,8 @@ List<_HudSelectionActionSpec> _merchantMoveToCityActionsFor({
 
 List<GameCity> _merchantReachableDestinations({
   required GameUnit unit,
-  required GameState? gameState,
-  required MapData mapData,
+  required GameClientState? gameState,
+  required WorldMap mapData,
   required AppLocalizations l10n,
 }) {
   if (gameState == null || unit.type != GameUnitType.merchant) return const [];
@@ -217,8 +217,8 @@ List<GameCity> _merchantReachableDestinations({
 
 List<GameCity> _merchantReachableMoveToCityDestinations({
   required GameUnit unit,
-  required GameState? gameState,
-  required MapData mapData,
+  required GameClientState? gameState,
+  required WorldMap mapData,
   required AppLocalizations l10n,
 }) {
   if (gameState == null || unit.type != GameUnitType.merchant) return const [];
@@ -247,8 +247,8 @@ List<GameCity> _merchantReachableMoveToCityDestinations({
 
 String? _merchantTradeRouteBlockedReason({
   required GameUnit unit,
-  required GameState? gameState,
-  required MapData mapData,
+  required GameClientState? gameState,
+  required WorldMap mapData,
   required AppLocalizations l10n,
   required List<GameCity> reachableDestinations,
 }) {
@@ -271,7 +271,7 @@ String? _merchantTradeRouteBlockedReason({
 
 String? _merchantMoveToCityBlockedReason({
   required GameUnit unit,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required AppLocalizations l10n,
   required List<GameCity> reachableDestinations,
 }) {

@@ -36,7 +36,7 @@ final class MctsSimulatedCombatCommandApplier {
       for (final unit in ownUnits) unit.id,
       for (final unit in visibleEnemyUnits) unit.id,
     };
-    final state = MctsSimulationProjection.persistentStateFromView(
+    final state = MctsSimulationProjection.domainStateFromView(
       view,
       units: [
         ...ownUnits,
@@ -60,7 +60,7 @@ final class MctsSimulatedCombatCommandApplier {
           : CombatCommandVisibilityMode.unrestricted,
     );
     if (!result.accepted) return _unchangedCommandApplication;
-    final nextView = MctsSimulationProjection.viewFromPersistentState(
+    final nextView = MctsSimulationProjection.viewFromDomainState(
       result.state,
       previousView: view,
       engineSnapshot: result.snapshot,

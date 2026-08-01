@@ -15,8 +15,8 @@ abstract final class GameEventRendererCombatEffects {
   static const int _damageTextColor = 0xFFF87171;
 
   static List<RendererEffect> combatResolvedEffects(
-    GameState state,
-    GameState? previousState,
+    GameClientState state,
+    GameClientState? previousState,
     CombatResolvedEvent event, {
     String? viewerPlayerId,
     int? turn,
@@ -212,8 +212,8 @@ abstract final class GameEventRendererCombatEffects {
 
   static void _addCityDamageEffects(
     List<RendererEffect> effects,
-    GameState state,
-    GameState? previousState,
+    GameClientState state,
+    GameClientState? previousState,
     GameCity city,
     int damage, {
     String? viewerPlayerId,
@@ -273,7 +273,7 @@ abstract final class GameEventRendererCombatEffects {
   }
 
   static bool _isViewerCity(
-    GameState state,
+    GameClientState state,
     GameCity city, {
     String? viewerPlayerId,
   }) {
@@ -282,7 +282,7 @@ abstract final class GameEventRendererCombatEffects {
   }
 
   static bool _canRenderTransientAt(
-    GameState state,
+    GameClientState state,
     int col,
     int row, {
     String? viewerPlayerId,
@@ -296,8 +296,8 @@ abstract final class GameEventRendererCombatEffects {
   }
 
   static bool _unitCanRenderTransientAtEither(
-    GameState state,
-    GameState? previousState,
+    GameClientState state,
+    GameClientState? previousState,
     GameUnit? unit, {
     String? viewerPlayerId,
   }) {
@@ -312,8 +312,8 @@ abstract final class GameEventRendererCombatEffects {
   }
 
   static bool _canRenderTransientAtEither(
-    GameState state,
-    GameState? previousState,
+    GameClientState state,
+    GameClientState? previousState,
     int col,
     int row, {
     String? viewerPlayerId,
@@ -335,7 +335,7 @@ abstract final class GameEventRendererCombatEffects {
     );
   }
 
-  static int colorForPlayer(GameState state, String playerId) {
+  static int colorForPlayer(GameClientState state, String playerId) {
     return PlayerColorTheme.resolveValue(
       state.colorForPlayer(playerId) ?? Player.palette.first,
     );

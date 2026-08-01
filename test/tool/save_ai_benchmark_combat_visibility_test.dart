@@ -22,7 +22,7 @@ void main() {
       col: 1,
       row: 0,
     );
-    final state = GameState(
+    final state = GameClientState(
       units: [attacker, defender],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
@@ -35,11 +35,14 @@ void main() {
         },
       ),
     );
-    final snapshot = SaveSnapshot.fromGameState(save: _save(), state: state);
+    final snapshot = GameSnapshotFactory.fromClientState(
+      save: _save(),
+      state: state,
+    );
 
     final authoritative =
         benchmark.BenchmarkCommandDispatcher(
-          snapshot: snapshot.canonical,
+          snapshot: snapshot,
           mapView: _map,
           ruleset: GameRuleset.standard(),
         ).apply(
@@ -52,7 +55,7 @@ void main() {
         );
     final unrestricted =
         benchmark.BenchmarkCommandDispatcher(
-          snapshot: snapshot.canonical,
+          snapshot: snapshot,
           mapView: _map,
           ruleset: GameRuleset.standard(),
         ).apply(
@@ -88,12 +91,12 @@ GameSave _save() => GameSave(
   ],
 );
 
-final _map = MapData(
+final _map = WorldMap(
   cols: 3,
   rows: 1,
   tiles: [
     for (var col = 0; col < 3; col++)
-      TileData(
+      WorldTile(
         col: col,
         row: 0,
         terrains: const [TerrainType.plains],

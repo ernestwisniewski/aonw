@@ -12,7 +12,7 @@ String _playerName(
 String _playerCountryName(
   AppLocalizations l10n,
   _GameEventPlayerRoster? roster,
-  GameState state,
+  GameClientState state,
   String? playerId,
 ) {
   if (playerId == null || playerId.isEmpty) return '';
@@ -29,7 +29,7 @@ String _playerCountryName(
 
 PlayerCountry _playerCountry(
   _GameEventPlayerRoster? roster,
-  GameState state,
+  GameClientState state,
   String playerId,
 ) {
   return roster?.playerById(playerId)?.country ??

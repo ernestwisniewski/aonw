@@ -101,7 +101,7 @@ final class _WorldMapFixture {
     final dimensions = _dimensionsFor(scale);
     final tiles = [
       for (var index = 0; index < scale; index++)
-        WorldTile(
+        WorldTile.at(
           coordinate: HexCoord(
             col: index % dimensions.cols,
             row: index ~/ dimensions.cols,
@@ -119,7 +119,7 @@ final class _WorldMapFixture {
     );
     return _WorldMapFixture(
       map: map,
-      view: WorldMapReadView(map),
+      view: map,
       probes: [
         const _Probe('first', 0, 0),
         _Probe('middle', middle.col, middle.row),
@@ -130,7 +130,7 @@ final class _WorldMapFixture {
   }
 
   final WorldMap map;
-  final WorldMapReadView view;
+  final WorldMap view;
   final List<_Probe> probes;
 }
 

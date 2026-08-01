@@ -35,7 +35,7 @@ final class PlayerMatchWireSchemaGuard {
       );
     }
 
-    final rawRuntime = state['runtimeState'];
+    final rawRuntime = state['lifecycle'];
     if (rawRuntime == null) return;
     if (rawRuntime is! Map<Object?, Object?>) {
       throw const FormatException(
@@ -75,15 +75,18 @@ final class PlayerMatchWireSchemaGuard {
 
   void validateCanonicalRoster({
     required GameSave save,
-    required PersistentGameState state,
+    required Map<String, dynamic> state,
+    required CanonicalGameSnapshot canonical,
   }) {
     final rosterIds = _validatedRosterIds(save.players);
-    final candidateIds = _candidateParticipantIds(save, state, rosterIds);
+    final candidateIds = {
+      for (final participant in canonical.domain.participants) participant.id,
+    };
     _rejectPrivateOnlyParticipants(
       candidateIds,
-      _alreadyPublicPlayerIds(save, state, rosterIds),
+      _alreadyPublicPlayerIds(save, state, canonical, rosterIds),
     );
-    _validateDiplomacyParticipants(state.runtimeState.diplomacy, candidateIds);
+    _validateDiplomacyParticipants(canonical.domain.diplomacy, candidateIds);
   }
 
   void _requireKnownFields(
@@ -111,53 +114,27 @@ Set<String> _validatedRosterIds(List<Player> players) {
   return rosterIds;
 }
 
-Set<String> _candidateParticipantIds(
-  GameSave save,
-  PersistentGameState state,
-  Set<String> rosterIds,
-) {
-  return _withoutEmptyPlayerIds({
-    ...rosterIds,
-    ...save.playerStates.keys,
-    ...state.knownPlayerIds,
-    ...state.research.players.keys,
-    ..._runtimeCandidateParticipantIds(state.runtimeState),
-  });
-}
-
-Set<String> _runtimeCandidateParticipantIds(GameRuntimeState runtime) {
-  return {
-    ...runtime.timeoutStreaksByPlayerId.keys,
-    ...runtime.afkPlayerIds,
-    ...runtime.kickedPlayerIds,
-    for (final attack in runtime.intendedAttacks) attack.declaringPlayerId,
-    for (final hold in runtime.mapObjectiveHoldStatesByObjectiveId.values)
-      hold.playerId,
-    for (final trade in runtime.resourceTradeAgreements) ...[
-      trade.exporterPlayerId,
-      trade.importerPlayerId,
-    ],
-    ?runtime.cityFoundingDraft?.ownerPlayerId,
-    ?runtime.pendingAction?.ownerPlayerId,
-  };
-}
-
 Set<String> _alreadyPublicPlayerIds(
   GameSave save,
-  PersistentGameState state,
+  Map<String, dynamic> state,
+  CanonicalGameSnapshot canonical,
   Set<String> rosterIds,
 ) {
-  final runtime = state.runtimeState;
+  final session = canonical.domain;
   return _withoutEmptyPlayerIds({
     ...rosterIds,
     ...save.playerStates.keys,
-    ...state.playerColors.keys,
-    ...state.playerCountries.keys,
-    ...runtime.submittedPlayerIds,
-    ...runtime.afkPlayerIds,
-    ...runtime.kickedPlayerIds,
-    ...state.wonderRegistry.completedBy.values,
+    ..._stringMapKeys(state['playerColors']),
+    ..._stringMapKeys(state['playerCountries']),
+    ...session.submittedPlayerIds,
+    ...session.afkPlayerIds,
+    ...session.kickedPlayerIds,
+    ...canonical.domain.wonderRegistry.completedBy.values,
   });
+}
+
+Iterable<String> _stringMapKeys(Object? value) {
+  return value is Map ? value.keys.whereType<String>() : const [];
 }
 
 void _rejectPrivateOnlyParticipants(
@@ -295,7 +272,7 @@ const _knownSnapshotStateFields = {
   'fieldImprovements',
   'fogOfWar',
   'research',
-  'runtimeState',
+  'lifecycle',
   'wonderRegistry',
   'phase',
   'reason',

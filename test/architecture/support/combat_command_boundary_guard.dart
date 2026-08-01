@@ -63,10 +63,10 @@ const turnCombatOrchestratorCallSites = {
 };
 
 const combatCommandForbiddenStateTypes = {
-  'GameState',
+  'GameClientState',
   'PersistentGameState',
   'DomainState',
-  'MapData',
+  'WorldMap',
 };
 
 Map<String, String> combatCommandRuntimeSources(Map<String, String> sources) =>

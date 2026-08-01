@@ -49,7 +49,7 @@ final class CityEngineHandler {
   ) {
     final result = foundingResolver.foundCity(
       state: snapshot.domain,
-      interaction: snapshot.interaction,
+      interaction: snapshot.domain.actions,
       command: command,
       actorPlayerId: context.actorPlayerId,
       mapTiles: context.mapView,
@@ -97,19 +97,19 @@ final class CityEngineHandler {
   static GameEngineResult _accept(
     CanonicalGameSnapshot snapshot, {
     required DomainState domain,
-    PersistedInteractionState? interaction,
+    DomainActionState? interaction,
   }) {
-    final nextInteraction = interaction ?? snapshot.interaction;
+    final nextInteraction = interaction ?? snapshot.domain.actions;
     final domainChanged = !identical(domain, snapshot.domain);
     final interactionChanged = !identical(
       nextInteraction,
-      snapshot.interaction,
+      snapshot.domain.actions,
     );
     return GameEngineResult.accepted(
       snapshot: domainChanged || interactionChanged
           ? snapshot.copyWith(
               domain: domainChanged ? domain : null,
-              interaction: interactionChanged ? nextInteraction : null,
+              actions: interactionChanged ? nextInteraction : null,
             )
           : snapshot,
     );

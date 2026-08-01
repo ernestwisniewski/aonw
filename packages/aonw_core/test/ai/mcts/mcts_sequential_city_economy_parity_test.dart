@@ -7,7 +7,7 @@ import 'mcts_simulator_parity_support.dart';
 void main() {
   group('TracingMctsSimulator sequential city economy parity', () {
     test('carries excavation artifacts and snapshot into the next command', () {
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [_scout('scout_1'), _scout('scout_2')],
         artifacts: const [
           WorldArtifact(
@@ -35,7 +35,7 @@ void main() {
 
     test('carries resource trade agreement into duplicate validation', () {
       final mapData = _resourceTradeMapData();
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: const {'player_1': 8},
         cities: const [
           GameCity(
@@ -79,7 +79,7 @@ void main() {
       expect(canonical.accepted, [true, false]);
       expect(
         simulated.view.resourceTradeAgreements,
-        canonical.state.runtimeState.resourceTradeAgreements,
+        canonical.state.resourceTradeAgreements,
       );
       expect(simulated.view.resourceTradeAgreements, hasLength(1));
       expect(simulated.view.engineSnapshot, canonical.snapshot);
@@ -89,7 +89,7 @@ void main() {
       final wonderCost = CityProductionRules.wonderProductionCost(
         WonderType.greatLibrary,
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         playerGold: const {'player_1': 10},
         cities: [
           _city(
@@ -128,13 +128,13 @@ void main() {
 }
 
 SimulatedState _simulateCommands(
-  PersistentGameState initialState,
+  DomainState initialState,
   List<DomainCommand> commands, {
-  MapData? mapData,
+  WorldMap? mapData,
 }) {
   final actualMapData = mapData ?? MctsSimulatorParityFixtures.mapData();
   var simulated = SimulatedState.fromView(
-    GameView.fromPersistentState(
+    GameView.fromDomainState(
       initialState,
       forPlayerId: 'player_1',
       turn: 1,
@@ -153,15 +153,11 @@ SimulatedState _simulateCommands(
   return simulated;
 }
 
-({
-  PersistentGameState state,
-  CanonicalGameSnapshot snapshot,
-  List<bool> accepted,
-})
+({DomainState state, CanonicalGameSnapshot snapshot, List<bool> accepted})
 _resolveEngineSequence(
-  PersistentGameState initialState,
+  DomainState initialState,
   List<DomainCommand> commands, {
-  MapData? mapData,
+  WorldMap? mapData,
 }) {
   final actualMapData = mapData ?? MctsSimulatorParityFixtures.mapData();
   var state = initialState;
@@ -238,26 +234,26 @@ FogOfWarState _visibleFog() {
   );
 }
 
-MapData _resourceTradeMapData() {
-  return MapData(
+WorldMap _resourceTradeMapData() {
+  return WorldMap(
     cols: 3,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 2,
         row: 0,
         terrains: [TerrainType.plains],

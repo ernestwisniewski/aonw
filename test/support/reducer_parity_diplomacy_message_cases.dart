@@ -2,7 +2,7 @@ part of 'reducer_parity_diplomacy_characterization.dart';
 
 List<ReducerParityFixture> _messageParityCases(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   return [
     ..._messageSendParityCases(template, baseState),
@@ -12,7 +12,7 @@ List<ReducerParityFixture> _messageParityCases(
 
 List<ReducerParityFixture> _messageSendParityCases(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   final cooldownMessage = DiplomaticMessage.create(
     id: 'pair_message_on_cooldown',
@@ -95,7 +95,7 @@ List<ReducerParityFixture> _messageSendParityCases(
 
 List<ReducerParityFixture> _messageResponseParityCases(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   final responded =
       DiplomaticMessage.create(
@@ -127,7 +127,7 @@ List<ReducerParityFixture> _messageResponseParityCases(
 
 List<ReducerParityFixture> _messageResponseRejections(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
   DiplomaticMessage responded,
   DiplomaticMessage expired,
 ) {
@@ -188,7 +188,7 @@ List<ReducerParityFixture> _messageResponseRejections(
 
 List<ReducerParityFixture> _messageResponseAcceptances(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   return [
     _acceptedMessageResponseFixture(
@@ -239,7 +239,7 @@ List<ReducerParityFixture> _messageResponseAcceptances(
 
 ReducerParityFixture _acceptedMessageResponseFixture(
   ReducerParityFixture template,
-  PersistentGameState baseState, {
+  DomainState baseState, {
   required String id,
   required int tickOffset,
   required DiplomaticMessageTopic topic,
@@ -300,7 +300,7 @@ ReducerParityFixture _acceptedMessageResponseFixture(
 
 ReducerParityFixture _acceptedCommonEnemyResponseFixture(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   final sharedWarState = _withRelationOracle(
     _withRelationOracle(

@@ -1,15 +1,13 @@
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/domain/game_state_conversions.dart';
 import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw/l10n/game_text.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
-import 'package:aonw_core/game/domain/state.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/protocol.dart';
 
 part 'hud_game_outcome_summary_helpers.dart';
@@ -45,8 +43,8 @@ class HudGameOutcomeSummary {
   static HudGameOutcomeSummary? from({
     required AppLocalizations l10n,
     required GameSave gameSave,
-    required GameState? gameState,
-    required MapData mapData,
+    required GameClientState? gameState,
+    required WorldMap mapData,
     required String? activePlayerId,
     WireMatch? multiplayerMatch,
     bool networkBackedMultiplayer = false,
@@ -69,10 +67,19 @@ class HudGameOutcomeSummary {
     }
     if (gameState == null) return null;
 
-    final persistentState = gameState.toPersistentState();
-    final outcome = detector.evaluate(
+    final outcome = detector.evaluateCollections(
       playerIds: gameSave.players.map((player) => player.id),
-      state: persistentState,
+      units: gameState.units,
+      cities: gameState.cities,
+      artifacts: gameState.artifacts,
+      fieldImprovements: gameState.fieldImprovements,
+      research: gameState.research,
+      playerGold: gameState.playerGold,
+      dominationHoldTurnsByPlayerId: gameState.dominationHoldTurnsByPlayerId,
+      culturalVictoryHoldTurnsByPlayerId:
+          gameState.culturalVictoryHoldTurnsByPlayerId,
+      mapObjectiveHoldStatesByObjectiveId:
+          gameState.mapObjectiveHoldStatesByObjectiveId,
       matchRules: gameSave.matchRules,
       mapData: mapData,
       turn: gameSave.turn,
@@ -82,7 +89,7 @@ class HudGameOutcomeSummary {
     return HudGameOutcomeSummary._fromOutcome(
       l10n: l10n,
       gameSave: gameSave,
-      state: persistentState,
+      state: gameState,
       mapData: mapData,
       activePlayerId: activePlayerId,
       outcome: outcome,
@@ -92,8 +99,8 @@ class HudGameOutcomeSummary {
   factory HudGameOutcomeSummary._fromOutcome({
     required AppLocalizations l10n,
     required GameSave gameSave,
-    required PersistentGameState? state,
-    required MapData mapData,
+    required GameClientState? state,
+    required WorldMap mapData,
     required String? activePlayerId,
     required GameOutcome outcome,
   }) {
@@ -210,8 +217,8 @@ class HudGameOutcomeSummary {
   static HudGameOutcomeSummary _dominationSummary({
     required AppLocalizations l10n,
     required GameSave gameSave,
-    required PersistentGameState? state,
-    required MapData mapData,
+    required GameClientState? state,
+    required WorldMap mapData,
     required GameOutcome outcome,
     required HudGameOutcomeTone tone,
     required String title,
@@ -219,11 +226,12 @@ class HudGameOutcomeSummary {
   }) {
     final progress = state == null
         ? null
-        : const DominationProgressCalculator().snapshot(
+        : const DominationProgressCalculator().snapshotForCities(
             playerIds: gameSave.players.map((player) => player.id),
-            state: state,
+            cities: state.cities,
             mapData: mapData,
             victoryRules: gameSave.matchRules.victory,
+            holdTurnsByPlayerId: state.dominationHoldTurnsByPlayerId,
           );
     final winnerEntry = outcome.winnerPlayerId == null || progress == null
         ? null
@@ -270,7 +278,7 @@ class HudGameOutcomeSummary {
   static HudGameOutcomeSummary _culturalSummary({
     required AppLocalizations l10n,
     required GameSave gameSave,
-    required PersistentGameState? state,
+    required GameClientState? state,
     required GameOutcome outcome,
     required HudGameOutcomeTone tone,
     required String title,
@@ -280,9 +288,11 @@ class HudGameOutcomeSummary {
     final victory = gameSave.matchRules.victory;
     final progress = winnerId == null || state == null
         ? null
-        : CulturalVictoryProgressCalculator.progressForPlayer(
+        : CulturalVictoryProgressCalculator.progressForPlayerFromCollections(
             playerId: winnerId,
-            state: state,
+            artifacts: state.artifacts,
+            cities: state.cities,
+            holdTurnsByPlayerId: state.culturalVictoryHoldTurnsByPlayerId,
             requiredArtifactCount: victory.culturalRequiredArtifacts,
             requiredHoldTurns: victory.culturalHoldTurns,
           );

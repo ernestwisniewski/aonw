@@ -104,21 +104,19 @@ MerchantTradeRoute _route() {
 }
 
 MapTraversalView _lineMap({int? blockedCol}) {
-  return WorldMapReadView(
-    WorldMap(
-      cols: 4,
-      rows: 1,
-      tiles: [
-        for (var col = 0; col < 4; col++)
-          WorldTile(
-            coordinate: HexCoord(col: col, row: 0),
-            terrains: [
-              if (col == blockedCol) TerrainType.ocean else TerrainType.plains,
-            ],
-            resources: const [],
-            height: 0,
-          ),
-      ],
-    ),
+  return WorldMap(
+    cols: 4,
+    rows: 1,
+    tiles: [
+      for (var col = 0; col < 4; col++)
+        WorldTile.at(
+          coordinate: HexCoord(col: col, row: 0),
+          terrains: [
+            if (col == blockedCol) TerrainType.ocean else TerrainType.plains,
+          ],
+          resources: const [],
+          height: 0,
+        ),
+    ],
   );
 }

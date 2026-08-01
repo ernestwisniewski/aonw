@@ -7,8 +7,8 @@ import 'package:aonw_core/game/domain/event.dart';
 abstract final class GameActivityEventProjector {
   static List<LoggedActivityEntry> project({
     required List<GameEvent> events,
-    required GameState state,
-    GameState? previousState,
+    required GameClientState state,
+    GameClientState? previousState,
     String? visiblePlayerId,
   }) {
     final activityEvents = [
@@ -66,8 +66,8 @@ abstract final class GameActivityEventProjector {
 
   static List<String> playerIdsFor(
     GameEvent event,
-    GameState state, {
-    GameState? previousState,
+    GameClientState state, {
+    GameClientState? previousState,
     String? visiblePlayerId,
   }) {
     return GameEventDescriptor.forEvent(event).playerIdsFor(
@@ -78,8 +78,8 @@ abstract final class GameActivityEventProjector {
   }
 
   static List<CivilizationMetEvent> _civilizationMetEvents(
-    GameState state,
-    GameState? previousState, {
+    GameClientState state,
+    GameClientState? previousState, {
     required List<String> playerIds,
   }) {
     if (previousState == null) return const [];
@@ -103,8 +103,8 @@ abstract final class GameActivityEventProjector {
   }
 
   static List<String> _civilizationMetPlayerIds(
-    GameState state,
-    GameState? previousState, {
+    GameClientState state,
+    GameClientState? previousState, {
     required String? visiblePlayerId,
   }) {
     if (visiblePlayerId != null && visiblePlayerId.isNotEmpty) {
@@ -127,7 +127,7 @@ abstract final class GameActivityEventProjector {
   }
 
   static Set<String> _contactOpponentPlayerIds(
-    GameState state,
+    GameClientState state,
     String playerId,
   ) {
     // Contact keys are durable and add-only for the lifetime of a game. Fog

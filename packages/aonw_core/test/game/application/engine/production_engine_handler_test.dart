@@ -33,7 +33,7 @@ void main() {
         const ProjectProductionTarget(CityProjectType.wealth),
       );
       expect(accepted.snapshot.domain.units, same(snapshot.domain.units));
-      expect(accepted.snapshot.interaction, same(snapshot.interaction));
+      expect(accepted.snapshot.domain.actions, same(snapshot.domain.actions));
       _expectEnvelopePreserved(accepted.snapshot, snapshot);
     });
 
@@ -103,7 +103,7 @@ void _expectEnvelopePreserved(
   CanonicalGameSnapshot next,
   CanonicalGameSnapshot previous,
 ) {
-  expect(next.session, same(previous.session));
+  expect(next.domain, same(previous.domain));
   expect(next.metadata, same(previous.metadata));
   expect(next.eventLogOffset, previous.eventLogOffset);
   expect(next.domain.participants, same(previous.domain.participants));
@@ -111,7 +111,7 @@ void _expectEnvelopePreserved(
 
 CanonicalGameSnapshot _snapshot({List<GameCity> cities = const []}) {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
+    domain: (DomainState.snapshot(
       turn: 3,
       matchRules: MatchRules.standard,
       participants: const [
@@ -120,8 +120,8 @@ CanonicalGameSnapshot _snapshot({List<GameCity> cities = const []}) {
       ],
       playerGold: const {_actorId: 100, _otherId: 50},
       cities: cities,
-    ),
-    session: MatchSessionState.snapshot(gameMode: GameMode.multiplayer),
+    )).copyWith(gameMode: GameMode.multiplayer),
+
     metadata: GameSnapshotMetadata(
       id: 'production',
       schemaVersion: 3,
@@ -149,19 +149,17 @@ GameCity _city({
   );
 }
 
-final _map = WorldMapReadView(
-  WorldMap(
-    cols: 3,
-    rows: 3,
-    tiles: [
-      for (var row = 0; row < 3; row++)
-        for (var col = 0; col < 3; col++)
-          WorldTile(
-            coordinate: HexCoord(col: col, row: row),
-            terrains: const [TerrainType.grassland],
-            resources: const [],
-            height: 0,
-          ),
-    ],
-  ),
+final _map = WorldMap(
+  cols: 3,
+  rows: 3,
+  tiles: [
+    for (var row = 0; row < 3; row++)
+      for (var col = 0; col < 3; col++)
+        WorldTile.at(
+          coordinate: HexCoord(col: col, row: row),
+          terrains: const [TerrainType.grassland],
+          resources: const [],
+          height: 0,
+        ),
+  ],
 );

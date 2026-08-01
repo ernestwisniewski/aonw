@@ -23,7 +23,7 @@ void main() {
         name: 'Warszawa',
         center: CityHex(col: 3, row: 4),
       );
-      final state = GameState(units: [attacker], cities: const [city]);
+      final state = GameClientState(units: [attacker], cities: const [city]);
       final event = _combat(
         attackerUnitId: attacker.id,
         defenderUnitId: city.id,
@@ -65,7 +65,7 @@ void main() {
       expect(descriptor.messageGroup, GameEventMessageGroup.objective);
       expect(descriptor.rendererEffectKind, GameEventRendererEffectKind.none);
       expect(descriptor.soundCueKind, GameEventSoundCueKind.none);
-      expect(descriptor.playerIdsFor(state: const GameState()), ['player_1']);
+      expect(descriptor.playerIdsFor(state: GameClientState()), ['player_1']);
       final focusHint = descriptor.focusHints.single;
       expect(focusHint, isA<TileGameEventFocusHint>());
       expect((focusHint as TileGameEventFocusHint).id, 'objective_pass_1');
@@ -84,7 +84,7 @@ void main() {
       expect(descriptor.activityWorthy, isTrue);
       expect(descriptor.showAsTopNotification, isFalse);
       expect(descriptor.completedTurn, 4);
-      expect(descriptor.playerIdsFor(state: const GameState()), [
+      expect(descriptor.playerIdsFor(state: GameClientState()), [
         'player_1',
         'player_2',
       ]);

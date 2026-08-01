@@ -156,7 +156,7 @@ void main() {
   });
 }
 
-AiContext _context(MapData mapData) {
+AiContext _context(WorldMap mapData) {
   return AiContext(
     ruleset: GameRuleset.defaults,
     mapData: mapData,
@@ -165,8 +165,8 @@ AiContext _context(MapData mapData) {
   );
 }
 
-GameView _view(MapData mapData, PersistentGameState state) {
-  return GameView.fromPersistentState(
+GameView _view(WorldMap mapData, DomainState state) {
+  return GameView.fromDomainState(
     state,
     forPlayerId: 'player_1',
     turn: 9,
@@ -175,12 +175,12 @@ GameView _view(MapData mapData, PersistentGameState state) {
   );
 }
 
-PersistentGameState _state({
-  required MapData mapData,
+DomainState _state({
+  required WorldMap mapData,
   required int gold,
   required List<GameUnit> units,
 }) {
-  return PersistentGameState(
+  return DomainState.snapshot(
     units: units,
     cities: const [
       GameCity(
@@ -205,33 +205,33 @@ PersistentGameState _state({
   );
 }
 
-MapData _map() {
-  return MapData(
+WorldMap _map() {
+  return WorldMap(
     cols: 2,
     rows: 2,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 0,
         row: 1,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 1,
         terrains: [TerrainType.plains],

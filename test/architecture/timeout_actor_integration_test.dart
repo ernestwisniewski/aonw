@@ -225,7 +225,7 @@ List<String> _timeoutSelectionViolations(CompilationUnit unit) {
       'timeout selection must preserve the filtered Wire roster',
     if (body.contains('.sort('))
       'timeout selection must preserve Wire player order without sort',
-    if (body.contains('runtimeState') || body.contains('GameSave'))
+    if (body.contains('lifecycle') || body.contains('GameSave'))
       'timeout selection must not read legacy save or runtime state',
   ];
 }

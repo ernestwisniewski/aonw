@@ -3,7 +3,7 @@ part of 'balance_telemetry.dart';
 abstract final class BalanceTelemetryObjectiveActionDiagnostics {
   static Map<String, BalanceTelemetryObjectiveActionSample>
   scorePressureSamplesFor({
-    required PersistentGameState state,
+    required DomainState state,
     required Iterable<String> playerIds,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
   }) {
@@ -29,7 +29,7 @@ abstract final class BalanceTelemetryObjectiveActionDiagnostics {
   }
 
   static BalanceTelemetryObjectiveActionSample sampleFor({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
     required GameObjectiveAdvice advice,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -46,7 +46,7 @@ abstract final class BalanceTelemetryObjectiveActionDiagnostics {
   }
 
   static BalanceTelemetryObjectiveActionTarget targetFor({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
     required GameObjectiveAdvice advice,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
@@ -63,7 +63,7 @@ abstract final class BalanceTelemetryObjectiveActionDiagnostics {
   }
 
   static Map<String, EmpireScoreBreakdown> _scoreBreakdownsFor({
-    required PersistentGameState state,
+    required DomainState state,
     required Iterable<String> playerIds,
   }) {
     return {
@@ -77,7 +77,7 @@ abstract final class BalanceTelemetryObjectiveActionDiagnostics {
 
   static Iterable<_ObjectiveActionTargetCandidate>
   _objectiveActionTargetCandidates({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
     required GameObjectiveAdvice advice,
     required TechnologyRuleset technologyRuleset,
@@ -109,7 +109,7 @@ abstract final class BalanceTelemetryObjectiveActionDiagnostics {
   }
 
   static bool _hasMatchingUnit({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
     required GameObjectiveAdvice advice,
   }) {
@@ -143,7 +143,7 @@ abstract final class BalanceTelemetryObjectiveActionDiagnostics {
   }
 
   static bool _hasCityWithoutProduction({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
   }) {
     return state.cities.any(
@@ -166,7 +166,7 @@ abstract final class BalanceTelemetryObjectiveActionDiagnostics {
   }
 
   static bool _needsResearchSelection({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
     required TechnologyRuleset technologyRuleset,
   }) {

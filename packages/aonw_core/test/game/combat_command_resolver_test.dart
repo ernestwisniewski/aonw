@@ -354,19 +354,17 @@ FogOfWarState _visibleFog() {
 MapTileLookup _map({
   List<TerrainType> targetTerrains = const [TerrainType.grassland],
 }) {
-  return WorldMapReadView(
-    WorldMap(
-      cols: 3,
-      rows: 1,
-      tiles: [
-        for (var col = 0; col < 3; col++)
-          WorldTile(
-            coordinate: HexCoord(col: col, row: 0),
-            terrains: col == 1 ? targetTerrains : const [TerrainType.grassland],
-            resources: const [],
-            height: 0,
-          ),
-      ],
-    ),
+  return WorldMap(
+    cols: 3,
+    rows: 1,
+    tiles: [
+      for (var col = 0; col < 3; col++)
+        WorldTile.at(
+          coordinate: HexCoord(col: col, row: 0),
+          terrains: col == 1 ? targetTerrains : const [TerrainType.grassland],
+          resources: const [],
+          height: 0,
+        ),
+    ],
   );
 }

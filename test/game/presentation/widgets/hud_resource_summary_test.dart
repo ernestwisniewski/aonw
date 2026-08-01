@@ -2,8 +2,8 @@ import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_economy_forecast.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_summary.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,7 +12,7 @@ void main() {
   group('HudResourceSummary', () {
     test('returns empty summary without active player', () {
       final summary = HudResourceSummary.fromGameState(
-        state: const GameState(playerGold: {'player_1': 12}),
+        state: GameClientState(playerGold: {'player_1': 12}),
         playerId: '',
         mapData: _map(),
         cityRuleset: CityRulesets.standard,
@@ -27,7 +27,7 @@ void main() {
 
     test('uses active player treasury and empty breakdowns by default', () {
       final summary = HudResourceSummary.fromGameState(
-        state: const GameState(playerGold: {'player_1': 12}),
+        state: GameClientState(playerGold: {'player_1': 12}),
         playerId: 'player_1',
         mapData: _map(),
         cityRuleset: CityRulesets.standard,
@@ -53,7 +53,10 @@ void main() {
       );
 
       final summary = HudResourceSummary.fromGameState(
-        state: GameState(cities: [city], playerGold: const {'player_1': 12}),
+        state: GameClientState(
+          cities: [city],
+          playerGold: const {'player_1': 12},
+        ),
         playerId: 'player_1',
         mapData: _landMap(),
         cityRuleset: CityRulesets.standard,
@@ -80,7 +83,7 @@ void main() {
       );
 
       final summary = HudResourceSummary.fromGameState(
-        state: GameState(cities: [city]),
+        state: GameClientState(cities: [city]),
         playerId: 'player_1',
         mapData: _landMap(),
         cityRuleset: CityRulesets.standard,
@@ -119,7 +122,7 @@ void main() {
       );
 
       final summary = HudResourceSummary.fromGameState(
-        state: GameState(
+        state: GameClientState(
           cities: [wealthCity, researchCity],
           playerGold: const {'player_1': 12},
         ),
@@ -160,7 +163,7 @@ void main() {
             projectType: CityProjectType.wealth,
           ),
         );
-        final state = GameState(
+        final state = GameClientState(
           cities: [city],
           playerGold: const {'player_1': 12},
         );
@@ -209,7 +212,7 @@ void main() {
           projectType: CityProjectType.research,
         ),
       );
-      final state = GameState(
+      final state = GameClientState(
         cities: [playerCity, opponentCity],
         playerGold: const {'player_1': 12, 'player_2': 6},
       );
@@ -270,7 +273,7 @@ void main() {
       final mapData = _twoCityLandMap();
 
       final first = HudResourceSummary.fromGameState(
-        state: const GameState(cities: [stableCity, firstVersionCity]),
+        state: GameClientState(cities: [stableCity, firstVersionCity]),
         playerId: 'player_1',
         mapData: mapData,
         cityRuleset: CityRulesets.standard,
@@ -278,7 +281,7 @@ void main() {
         economyForecastCache: forecastCache,
       );
       final second = HudResourceSummary.fromGameState(
-        state: GameState(cities: [stableCity, secondVersionCity]),
+        state: GameClientState(cities: [stableCity, secondVersionCity]),
         playerId: 'player_1',
         mapData: mapData,
         cityRuleset: CityRulesets.standard,
@@ -302,7 +305,7 @@ void main() {
       );
 
       final summary = HudResourceSummary.fromGameState(
-        state: const GameState(
+        state: GameClientState(
           cities: [city],
           playerStabilityNet: {'player_1': -4},
         ),
@@ -320,14 +323,14 @@ void main() {
   });
 }
 
-MapData _map() => MapData(cols: 1, rows: 1, tiles: const []);
+WorldMap _map() => WorldMap(cols: 1, rows: 1, tiles: []);
 
-MapData _landMap() {
-  return MapData(
+WorldMap _landMap() {
+  return WorldMap(
     cols: 1,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
@@ -338,19 +341,19 @@ MapData _landMap() {
   );
 }
 
-MapData _twoCityLandMap() {
-  return MapData(
+WorldMap _twoCityLandMap() {
+  return WorldMap(
     cols: 2,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.plains],
         resources: [],
         height: 0,
       ),
-      TileData(
+      WorldTile(
         col: 1,
         row: 0,
         terrains: [TerrainType.plains],

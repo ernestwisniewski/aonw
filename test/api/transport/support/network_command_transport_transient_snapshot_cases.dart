@@ -3,13 +3,11 @@ part of '../network_command_transport_test.dart';
 void _registerTransientSnapshotCases() {
   test('applies client-only commands locally without HTTP', () async {
     final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-    final state = GameState(
+    final state = GameClientState(
       units: [commander],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,
-      interaction: GameInteractionState(
-        selection: GameSelection.unit(commander),
-      ),
+      interaction: InteractionState(selection: GameSelection.unit(commander)),
     );
     final server = _FakeCommandServer(save: _save(), state: state);
     final transport = _transport(server);
@@ -32,7 +30,7 @@ void _registerTransientSnapshotCases() {
 
   test('does not send another presentation-only interaction', () async {
     final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-    final state = GameState(
+    final state = GameClientState(
       units: [commander],
       activePlayerId: 'player_1',
       activePlayerCanAct: true,

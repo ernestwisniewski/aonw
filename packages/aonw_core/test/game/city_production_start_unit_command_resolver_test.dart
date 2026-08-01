@@ -152,7 +152,7 @@ void main() {
 }
 
 CityProductionCommandResult _startKernel({
-  required PersistentGameState state,
+  required DomainState state,
   required StartUnitProductionCommand command,
   required MapReadView mapView,
   String actorPlayerId = unitCharacterizationPlayerId,
@@ -166,7 +166,7 @@ CityProductionCommandResult _startKernel({
     artifacts: state.artifacts,
     fieldImprovements: state.fieldImprovements,
     research: state.research,
-    resourceTradeAgreements: state.runtimeState.resourceTradeAgreements,
+    resourceTradeAgreements: state.resourceTradeAgreements,
     mapView: mapView,
     command: command,
     actorPlayerId: actorPlayerId,
@@ -177,7 +177,7 @@ CityProductionCommandResult _startKernel({
 }
 
 void _expectKernelRejected({
-  required PersistentGameState state,
+  required DomainState state,
   required StartUnitProductionCommand command,
   required String reason,
   String actorPlayerId = unitCharacterizationPlayerId,

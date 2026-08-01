@@ -19,7 +19,7 @@ void main() {
       col: 1,
       row: 0,
     );
-    final state = PersistentGameState(units: [ownUnit, opponent]);
+    final state = DomainState.snapshot(units: [ownUnit, opponent]);
     final simulator = TracingMctsSimulator(
       opponentStrategy: MctsSimulatorParityFixtures.fixedPlanStrategy(const [
         SkipUnitTurnCommand('warrior_2'),

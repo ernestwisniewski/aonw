@@ -98,7 +98,9 @@ void _registerCombatOracleGuards(_FixtureProvider fixtureProvider) {
   test('every expected state preserves unrelated combat sentinels', () {
     for (final fixture in fixtureProvider()) {
       final before = fixture.state;
-      final expected = PersistentGameState.fromJson(fixture.expectedState);
+      final expected = CanonicalGameSnapshotCodec.decodeDomainState(
+        fixture.expectedState,
+      );
       expect(
         expected.units.map((unit) => unit.id),
         contains('combat_sentinel_unit'),
@@ -123,48 +125,31 @@ void _registerCombatOracleGuards(_FixtureProvider fixtureProvider) {
       expect(expected.fieldImprovements, before.fieldImprovements);
       expect(expected.research, before.research);
       expect(expected.wonderRegistry, before.wonderRegistry);
+      expect(expected.submittedPlayerIds, before.submittedPlayerIds);
       expect(
-        expected.runtimeState.submittedPlayerIds,
-        before.runtimeState.submittedPlayerIds,
+        expected.timeoutStreaksByPlayerId,
+        before.timeoutStreaksByPlayerId,
+      );
+      expect(expected.afkPlayerIds, before.afkPlayerIds);
+      expect(expected.kickedPlayerIds, before.kickedPlayerIds);
+      expect(expected.intendedAttacks, before.intendedAttacks);
+      expect(
+        expected.dominationHoldTurnsByPlayerId,
+        before.dominationHoldTurnsByPlayerId,
       );
       expect(
-        expected.runtimeState.timeoutStreaksByPlayerId,
-        before.runtimeState.timeoutStreaksByPlayerId,
+        expected.culturalVictoryHoldTurnsByPlayerId,
+        before.culturalVictoryHoldTurnsByPlayerId,
       );
       expect(
-        expected.runtimeState.afkPlayerIds,
-        before.runtimeState.afkPlayerIds,
+        expected.mapObjectiveHoldStatesByObjectiveId,
+        before.mapObjectiveHoldStatesByObjectiveId,
       );
       expect(
-        expected.runtimeState.kickedPlayerIds,
-        before.runtimeState.kickedPlayerIds,
-      );
-      expect(
-        expected.runtimeState.intendedAttacks,
-        before.runtimeState.intendedAttacks,
-      );
-      expect(
-        expected.runtimeState.dominationHoldTurnsByPlayerId,
-        before.runtimeState.dominationHoldTurnsByPlayerId,
-      );
-      expect(
-        expected.runtimeState.culturalVictoryHoldTurnsByPlayerId,
-        before.runtimeState.culturalVictoryHoldTurnsByPlayerId,
-      );
-      expect(
-        expected.runtimeState.mapObjectiveHoldStatesByObjectiveId,
-        before.runtimeState.mapObjectiveHoldStatesByObjectiveId,
-      );
-      expect(
-        expected.runtimeState.resourceTradeAgreements.map(
-          (agreement) => agreement.id,
-        ),
+        expected.resourceTradeAgreements.map((agreement) => agreement.id),
         contains('combat_unrelated_trade'),
       );
-      expect(
-        expected.runtimeState.turnStartedAt,
-        before.runtimeState.turnStartedAt,
-      );
+      expect(expected.turnStartedAt, before.turnStartedAt);
     }
   });
 
@@ -188,7 +173,10 @@ void _registerCombatOracleGuards(_FixtureProvider fixtureProvider) {
       'attack_target_out_of_range',
     ]);
     for (final fixture in rejected) {
-      expect(fixture.expectedState, fixture.state.toJson());
+      expect(
+        fixture.expectedState,
+        CanonicalGameSnapshotCodec.encodeDomainState(fixture.state),
+      );
       expect(fixture.expectedEvents, isEmpty);
     }
   });
@@ -241,7 +229,9 @@ void _registerCombatOracleGuards(_FixtureProvider fixtureProvider) {
       'UnitGainedExperience',
       'UnitGainedExperience',
     ]);
-    final unitState = PersistentGameState.fromJson(unit.expectedState);
+    final unitState = CanonicalGameSnapshotCodec.decodeDomainState(
+      unit.expectedState,
+    );
     expect(
       (
         unitState.units.byId('combat_attacker')?.hitPoints,
@@ -280,12 +270,16 @@ void _registerCombatOracleGuards(_FixtureProvider fixtureProvider) {
       'UnitGainedExperience',
       'UnitGainedExperience',
     ]);
-    final retreatState = PersistentGameState.fromJson(retreat.expectedState);
+    final retreatState = CanonicalGameSnapshotCodec.decodeDomainState(
+      retreat.expectedState,
+    );
     final retreated = retreatState.units.byId('retreat_defender');
     expect((retreated?.col, retreated?.row, retreated?.hitPoints), (1, 1, 1));
 
     final capture = _combatFixtureBySuffix(fixtures, 'city-capture-accepted');
-    final captureState = PersistentGameState.fromJson(capture.expectedState);
+    final captureState = CanonicalGameSnapshotCodec.decodeDomainState(
+      capture.expectedState,
+    );
     expect(_combatEventTypes(capture), [
       'CityAttacked',
       'CombatResolved',
@@ -296,7 +290,9 @@ void _registerCombatOracleGuards(_FixtureProvider fixtureProvider) {
     expect(captureState.cities.byId('capture_city')?.hitPoints, 8);
 
     final destroy = _combatFixtureBySuffix(fixtures, 'city-destroy-accepted');
-    final destroyState = PersistentGameState.fromJson(destroy.expectedState);
+    final destroyState = CanonicalGameSnapshotCodec.decodeDomainState(
+      destroy.expectedState,
+    );
     expect(_combatEventTypes(destroy), [
       'CityAttacked',
       'CombatResolved',

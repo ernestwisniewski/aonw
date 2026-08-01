@@ -1,8 +1,8 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/map_objective_progress_for_tile.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +20,7 @@ void main() {
     final progress = mapObjectiveProgressForTile(
       mapData: _map(objective),
       tileData: _tile(1),
-      gameState: GameState(
+      gameState: GameClientState(
         units: [
           GameUnit.produced(
             id: 'guard',
@@ -57,15 +57,15 @@ void main() {
           ),
         ),
         tileData: _tile(0),
-        gameState: const GameState(),
+        gameState: GameClientState(),
       ),
       isNull,
     );
   });
 }
 
-MapData _map(MapObjectiveDefinition objective) {
-  return MapData(
+WorldMap _map(MapObjectiveDefinition objective) {
+  return WorldMap(
     cols: 2,
     rows: 1,
     objectives: [objective],
@@ -73,8 +73,8 @@ MapData _map(MapObjectiveDefinition objective) {
   );
 }
 
-TileData _tile(int col) {
-  return TileData(
+WorldTile _tile(int col) {
+  return WorldTile(
     col: col,
     row: 0,
     terrains: const [TerrainType.grassland],

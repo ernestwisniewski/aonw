@@ -53,7 +53,6 @@ void _registerProposalPaymentNormalizationTests() {
         expect(
           result
               .state
-              .runtimeState
               .diplomacy
               .pendingProposals['normalized_payment']!
               .goldPayment,
@@ -87,7 +86,7 @@ void _registerProposalDuplicateDirectionTests() {
     );
 
     expect(result.accepted, isTrue);
-    expect(result.state.runtimeState.diplomacy.pendingProposals, {
+    expect(result.state.diplomacy.pendingProposals, {
       'reverse_proposal': reverse,
       'forward_proposal': const DiplomaticProposal(
         id: 'forward_proposal',
@@ -129,8 +128,7 @@ void _registerProposalIdTests() {
     );
 
     const generatedId = 'proposal.7.p1.p2.truce.1';
-    final proposal =
-        result.state.runtimeState.diplomacy.pendingProposals[generatedId];
+    final proposal = result.state.diplomacy.pendingProposals[generatedId];
     expect(
       proposal,
       const DiplomaticProposal(
@@ -144,11 +142,7 @@ void _registerProposalIdTests() {
       ),
     );
     expect(
-      result
-          .state
-          .runtimeState
-          .diplomacy
-          .pendingProposals['unrelated_proposal'],
+      result.state.diplomacy.pendingProposals['unrelated_proposal'],
       same(unrelated),
     );
     expect(result.state.playerGold, same(state.playerGold));
@@ -188,7 +182,7 @@ void _registerProposalIdTests() {
     );
 
     expect(result.accepted, isTrue);
-    expect(result.state.runtimeState.diplomacy.pendingProposals, {
+    expect(result.state.diplomacy.pendingProposals, {
       'shared_id': const DiplomaticProposal(
         id: 'shared_id',
         fromPlayerId: _player1,

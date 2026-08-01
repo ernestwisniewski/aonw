@@ -2,7 +2,7 @@ part of 'reducer_parity_diplomacy_characterization.dart';
 
 List<ReducerParityFixture> _warAndGiftParityCases(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   return [
     ..._warParityCases(template, baseState),
@@ -12,7 +12,7 @@ List<ReducerParityFixture> _warAndGiftParityCases(
 
 List<ReducerParityFixture> _warParityCases(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   const pairProposal = DiplomaticProposal(
     id: 'war_cleared_pair_proposal',
@@ -98,7 +98,7 @@ ReducerParityFixture _acceptedWarFixture(
   ReducerParityFixture template, {
   required String id,
   required int tickOffset,
-  required PersistentGameState state,
+  required DomainState state,
   required DiplomaticRelationStatus oldStatus,
 }) {
   return _acceptedDiplomacyFixture(
@@ -140,7 +140,7 @@ ReducerParityFixture _acceptedWarFixture(
 
 List<ReducerParityFixture> _giftParityCases(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   final cooldownState = _giftCooldownState(baseState);
   return [
@@ -151,8 +151,8 @@ List<ReducerParityFixture> _giftParityCases(
 
 List<ReducerParityFixture> _giftRejectionCases(
   ReducerParityFixture template,
-  PersistentGameState baseState,
-  PersistentGameState cooldownState,
+  DomainState baseState,
+  DomainState cooldownState,
 ) {
   return [
     _rejectedDiplomacyFixture(
@@ -244,7 +244,7 @@ List<ReducerParityFixture> _giftRejectionCases(
 
 ReducerParityFixture _giftAcceptanceCase(
   ReducerParityFixture template,
-  PersistentGameState baseState,
+  DomainState baseState,
 ) {
   return _acceptedDiplomacyFixture(
     template,
@@ -270,8 +270,8 @@ ReducerParityFixture _giftAcceptanceCase(
   );
 }
 
-PersistentGameState _giftCooldownState(PersistentGameState state) {
-  final diplomacy = state.runtimeState.diplomacy;
+DomainState _giftCooldownState(DomainState state) {
+  final diplomacy = state.diplomacy;
   final key = DiplomacyState.relationKey(_diplomacyActorId, _diplomacyTargetId);
   final entry = DiplomaticScoreEntry.between(
     playerAId: _diplomacyActorId,

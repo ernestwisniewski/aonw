@@ -17,7 +17,7 @@ class GameStateReducer {
   });
 
   GameStateTransition syncActivePlayer(
-    GameState state, {
+    GameClientState state, {
     required String playerId,
     required bool canAct,
   }) => _ActivePlayerReducer.handleSetActivePlayer(state, playerId, canAct);

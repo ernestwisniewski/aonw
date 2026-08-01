@@ -1,9 +1,6 @@
 part of 'reducer_parity_auto_explore_characterization.dart';
 
-PersistentGameState _autoExploreExpectedState(
-  String fixtureId,
-  PersistentGameState state,
-) {
+DomainState _autoExploreExpectedState(String fixtureId, DomainState state) {
   if (fixtureId.endsWith('-rejected')) return state;
   return switch (fixtureId) {
     'auto-explore-characterization-partial-queued-accepted' =>
@@ -47,9 +44,7 @@ PersistentGameState _autoExploreExpectedState(
           discovered: _autoExploreLineHexes(4),
           visible: _autoExploreLineHexes(4),
         ),
-        diplomacy: state.runtimeState.diplomacy.addContactKeys(const {
-          'player_1|player_2',
-        }),
+        diplomacy: state.diplomacy.addContactKeys(const {'player_1|player_2'}),
       ),
     _ => throw StateError('Missing auto-explore oracle: $fixtureId.'),
   };
@@ -89,8 +84,8 @@ List<GameEvent> _autoExploreExpectedEvents(String fixtureId) {
   };
 }
 
-PersistentGameState _autoExploreAfterMove(
-  PersistentGameState state, {
+DomainState _autoExploreAfterMove(
+  DomainState state, {
   required int fromCol,
   required int toCol,
   required int movementPoints,
@@ -115,15 +110,15 @@ PersistentGameState _autoExploreAfterMove(
   return state.copyWith(
     units: _autoExploreReplaceUnit(state.units, moved),
     fogOfWar: fogOfWar,
-    runtimeState: state.runtimeState.copyWith(
+    actions: state.actions.copyWith(
       cityFoundingDraft: null,
       pendingAction: null,
-      diplomacy: diplomacy ?? state.runtimeState.diplomacy,
     ),
+    diplomacy: diplomacy ?? state.diplomacy,
   );
 }
 
-PersistentGameState _autoExploreAfterAcceptedNoOp(PersistentGameState state) {
+DomainState _autoExploreAfterAcceptedNoOp(DomainState state) {
   final unit = state.units.singleWhere(
     (candidate) => candidate.id == _autoExploreUnitId,
   );
@@ -132,7 +127,7 @@ PersistentGameState _autoExploreAfterAcceptedNoOp(PersistentGameState state) {
       .copyWithQueuedPath(null);
   return state.copyWith(
     units: _autoExploreReplaceUnit(state.units, exploring),
-    runtimeState: state.runtimeState.copyWith(
+    actions: state.actions.copyWith(
       cityFoundingDraft: null,
       pendingAction: null,
     ),

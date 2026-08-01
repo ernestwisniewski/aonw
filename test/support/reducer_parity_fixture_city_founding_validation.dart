@@ -8,8 +8,8 @@ String _cityFoundingAcceptanceMode(ReducerParityFixture fixture) {
   if (command is FoundCityCommand &&
       command.controlledHexes.length ==
           CityFoundingDraft.requiredControlledHexes &&
-      fixture.state.runtimeState.cityFoundingDraft == null &&
-      fixture.state.runtimeState.pendingAction == null) {
+      fixture.state.actions.cityFoundingDraft == null &&
+      fixture.state.actions.pendingAction == null) {
     return 'self-contained';
   }
   return 'unexpected';
@@ -29,7 +29,7 @@ void _requireCityFoundingAcceptanceCoverage(
 
 void _requireAcceptedParityCityFounding(
   ReducerParityFixture fixture,
-  PersistentGameState state,
+  DomainState state,
   List<GameEvent> events,
 ) {
   final command = fixture.command as FoundCityCommand;
@@ -55,8 +55,14 @@ void _requireAcceptedParityCityFounding(
     founderIndex,
     draft,
   );
-  if (!_jsonDeepEquals(fixture.expectedState, expectedState.toJson()) ||
-      !_jsonDeepEquals(state.toJson(), expectedState.toJson())) {
+  if (!_jsonDeepEquals(
+        fixture.expectedState,
+        CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
+      ) ||
+      !_jsonDeepEquals(
+        CanonicalGameSnapshotCodec.encodeDomainState(state),
+        CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
+      )) {
     ReducerParityCorpus._fail(
       fixture,
       'must only schedule the independently derived founding job',
@@ -150,7 +156,7 @@ void _requireValidCityFoundingDraft(
   }
 }
 
-PersistentGameState _expectedCityFoundingState(
+DomainState _expectedCityFoundingState(
   ReducerParityFixture fixture,
   FoundCityCommand command,
   GameUnit founder,
@@ -200,8 +206,8 @@ void _requireCityFoundingSentinels(
       sentinelCityCount != 1 ||
       sentinelUnitIndex >= founderIndex ||
       units[sentinelUnitIndex].movementPoints <= 0 ||
-      fixture.state.runtimeState.submittedPlayerIds.isEmpty ||
-      fixture.state.runtimeState.turnStartedAt == null) {
+      fixture.state.submittedPlayerIds.isEmpty ||
+      fixture.state.turnStartedAt == null) {
     ReducerParityCorpus._fail(
       fixture,
       'must preserve unrelated unit, city, and runtime sentinels',

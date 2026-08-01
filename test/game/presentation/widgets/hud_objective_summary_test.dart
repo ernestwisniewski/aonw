@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/objective/hud_objective_summary.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
-import 'package:aonw/map/domain/map_data.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
@@ -16,7 +16,7 @@ void main() {
   group('HudObjectiveSummary', () {
     test('is empty without an active player', () {
       final summary = HudObjectiveSummary.fromGameState(
-        state: const GameState(),
+        state: GameClientState(),
         activePlayerId: '',
         modes: const HudPanelModes(objectives: true),
         cityProductionOpen: false,
@@ -29,7 +29,7 @@ void main() {
 
     test('shows objective overlay when objectives panel is active', () {
       final summary = HudObjectiveSummary.fromGameState(
-        state: const GameState(),
+        state: GameClientState(),
         activePlayerId: 'player_1',
         modes: const HudPanelModes(objectives: true),
         cityProductionOpen: false,
@@ -42,7 +42,7 @@ void main() {
 
     test('passes pace balance to objective targets', () {
       final summary = HudObjectiveSummary.fromGameState(
-        state: GameState(fogOfWar: _fog(discoveredCount: 4)),
+        state: GameClientState(fogOfWar: _fog(discoveredCount: 4)),
         activePlayerId: 'player_1',
         modes: const HudPanelModes(objectives: true),
         cityProductionOpen: false,
@@ -59,7 +59,7 @@ void main() {
 
     test('prepends domination pressure objective when hold is active', () {
       final summary = HudObjectiveSummary.fromGameState(
-        state: const GameState(dominationHoldTurnsByPlayerId: {'player_2': 2}),
+        state: GameClientState(dominationHoldTurnsByPlayerId: {'player_2': 2}),
         activePlayerId: 'player_1',
         modes: const HudPanelModes(objectives: true),
         cityProductionOpen: false,
@@ -103,7 +103,7 @@ void main() {
         goldScore: 2,
       );
       final summary = HudObjectiveSummary.fromGameState(
-        state: const GameState(),
+        state: GameClientState(),
         activePlayerId: 'player_1',
         modes: const HudPanelModes(objectives: true),
         cityProductionOpen: false,
@@ -150,7 +150,7 @@ void main() {
 
     test('prepends map objective pressure when a rival hold is active', () {
       final summary = HudObjectiveSummary.fromGameState(
-        state: GameState(
+        state: GameClientState(
           units: [
             GameUnit.startingWarrior(ownerPlayerId: 'player_2', col: 2, row: 1),
           ],
@@ -162,10 +162,10 @@ void main() {
             ),
           },
         ),
-        mapData: MapData(
+        mapData: WorldMap(
           cols: 4,
           rows: 4,
-          tiles: const [],
+          tiles: [],
           objectives: const [
             MapObjectiveDefinition(
               id: 'pass_1',
@@ -196,7 +196,7 @@ void main() {
 
     test('continues objectives after early-game goals', () {
       final summary = HudObjectiveSummary.fromGameState(
-        state: GameState(
+        state: GameClientState(
           cities: const [
             GameCity(
               id: 'capital',
@@ -265,7 +265,7 @@ void main() {
 
     test('hides objective overlay behind competing panels', () {
       final summary = HudObjectiveSummary.fromGameState(
-        state: const GameState(),
+        state: GameClientState(),
         activePlayerId: 'player_1',
         modes: const HudPanelModes(objectives: true, technology: true),
         cityProductionOpen: false,

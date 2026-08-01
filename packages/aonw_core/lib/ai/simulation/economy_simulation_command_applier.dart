@@ -10,7 +10,7 @@ final class _EconomySimulationCommandApplier {
   _ApplyCommandResult apply({
     required int turn,
     required int tick,
-    required PersistentGameState state,
+    required DomainState state,
     required DomainCommand command,
     required String actorPlayerId,
     required GameRuleset ruleset,
@@ -33,7 +33,7 @@ final class _EconomySimulationCommandApplier {
 
   _ApplyCommandResult _applyEngineCommand({
     required int tick,
-    required PersistentGameState state,
+    required DomainState state,
     required DomainCommand command,
     required String actorPlayerId,
     required GameRuleset ruleset,
@@ -60,7 +60,7 @@ final class _EconomySimulationCommandApplier {
 
   _ApplyCommandResult finalizeTurn({
     required int tick,
-    required PersistentGameState state,
+    required DomainState state,
     required Iterable<String> playerIds,
     required GameRuleset ruleset,
   }) {
@@ -84,7 +84,7 @@ final class _EconomySimulationCommandApplier {
 
 _EconomySimulationCommandApplier _economySimulationCommandApplierForSetup({
   required EconomySimulationConfig config,
-  required PersistentGameState state,
+  required DomainState state,
   required MapReadView mapView,
 }) {
   return _EconomySimulationCommandApplier(
@@ -105,7 +105,7 @@ class _ApplyCommandResult {
     this.reason,
   });
   final bool accepted;
-  final PersistentGameState state;
+  final DomainState state;
   final List<GameEvent> events;
   final String? reason;
 }

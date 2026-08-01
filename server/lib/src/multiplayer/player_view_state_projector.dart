@@ -7,8 +7,6 @@ final class PlayerViewStateProjector {
 
   PlayerViewState project({
     required DomainState domain,
-    required MatchSessionState session,
-    required PersistedInteractionState interaction,
     required String recipientPlayerId,
     required Set<String> knownDiplomacyPlayerIds,
   }) {
@@ -22,8 +20,6 @@ final class PlayerViewStateProjector {
       recipientPlayerId: recipientPlayerId,
       projectedState: _projectedState(
         domain,
-        session,
-        interaction,
         recipientPlayerId,
         knownDiplomacyPlayerIds: knownDiplomacyPlayerIds,
         visibility: visibility,
@@ -34,50 +30,57 @@ final class PlayerViewStateProjector {
   }
 }
 
-PersistentGameState _projectedState(
+Map<String, dynamic> _projectedState(
   DomainState domain,
-  MatchSessionState session,
-  PersistedInteractionState interaction,
   String playerId, {
   required Set<String> knownDiplomacyPlayerIds,
   required FogVisibilityQuery visibility,
   required Set<String> ownCityIds,
   required Set<String> ownUnitIds,
 }) {
-  return PersistentGameState.snapshot(
-    playerColors: domain.playerColors,
-    playerCountries: domain.playerCountries,
-    playerGold: _ownEntry(domain.playerGold, playerId),
-    playerWarWeariness: _ownEntry(domain.playerWarWeariness, playerId),
-    playerStabilityNet: _ownEntry(domain.playerStabilityNet, playerId),
-    units: _unitsFor(domain, playerId, visibility),
-    cities: _citiesFor(domain, playerId, visibility),
-    artifacts: _artifactsFor(
-      domain,
-      visibility: visibility,
-      ownCityIds: ownCityIds,
-      ownUnitIds: ownUnitIds,
+  final units = _unitsFor(domain, playerId, visibility);
+  final cities = _citiesFor(domain, playerId, visibility);
+  final artifacts = _artifactsFor(
+    domain,
+    visibility: visibility,
+    ownCityIds: ownCityIds,
+    ownUnitIds: ownUnitIds,
+  );
+  final fieldImprovements = _fieldImprovementsFor(
+    domain,
+    visibility: visibility,
+    ownCityIds: ownCityIds,
+  );
+  final fogOfWar = FogOfWarState(
+    players: {playerId: domain.fogOfWar.fogForPlayer(playerId)},
+  );
+  final research = ResearchState(
+    players: {playerId: domain.research.forPlayer(playerId)},
+  );
+  return {
+    'playerColors': {...domain.playerColors},
+    'playerCountries': domain.playerCountries.map(
+      (id, country) => MapEntry(id, country.name),
     ),
-    fieldImprovements: _fieldImprovementsFor(
-      domain,
-      visibility: visibility,
-      ownCityIds: ownCityIds,
-    ),
-    fogOfWar: FogOfWarState(
-      players: {playerId: domain.fogOfWar.fogForPlayer(playerId)},
-    ),
-    research: ResearchState(
-      players: {playerId: domain.research.forPlayer(playerId)},
-    ),
-    runtimeState: _runtimeFor(
+    'playerGold': _ownEntry(domain.playerGold, playerId),
+    'playerWarWeariness': _ownEntry(domain.playerWarWeariness, playerId),
+    'playerStabilityNet': _ownEntry(domain.playerStabilityNet, playerId),
+    'units': [for (final unit in units) unit.toJson()],
+    'cities': [for (final city in cities) city.toJson()],
+    'artifacts': [for (final artifact in artifacts) artifact.toJson()],
+    'fieldImprovements': [
+      for (final improvement in fieldImprovements) improvement.toJson(),
+    ],
+    'fogOfWar': fogOfWar.toJson(),
+    'research': research.toJson(),
+    'lifecycle': _runtimeFor(
       domain: domain,
-      session: session,
-      interaction: interaction,
       playerId: playerId,
       knownPlayerIds: knownDiplomacyPlayerIds,
     ),
-    wonderRegistry: domain.wonderRegistry,
-  );
+    if (domain.wonderRegistry.completedBy.isNotEmpty)
+      'wonderRegistry': domain.wonderRegistry.toJson(),
+  };
 }
 
 Set<String> _ownCityIds(DomainState state, String playerId) {
@@ -157,52 +160,116 @@ List<FieldImprovement> _fieldImprovementsFor(
   ];
 }
 
-GameRuntimeState _runtimeFor({
+Map<String, dynamic> _runtimeFor({
   required DomainState domain,
-  required MatchSessionState session,
-  required PersistedInteractionState interaction,
   required String playerId,
   required Set<String> knownPlayerIds,
 }) {
-  return GameRuntimeState.snapshot(
-    cityFoundingDraft: interaction.cityFoundingDraft?.ownerPlayerId == playerId
-        ? interaction.cityFoundingDraft
-        : null,
-    pendingAction: interaction.pendingAction?.ownerPlayerId == playerId
-        ? interaction.pendingAction
-        : null,
-    submittedPlayerIds: session.submittedPlayerIds,
-    timeoutStreaksByPlayerId: _ownEntry(
-      session.timeoutStreaksByPlayerId,
-      playerId,
-    ),
-    afkPlayerIds: session.afkPlayerIds,
-    kickedPlayerIds: session.kickedPlayerIds,
-    intendedAttacks: [
-      for (final attack in domain.intendedAttacks)
-        if (attack.declaringPlayerId == playerId) attack,
-    ],
-    diplomacy: _diplomacyFor(domain.diplomacy, playerId, knownPlayerIds),
-    dominationHoldTurnsByPlayerId: _ownEntry(
-      domain.dominationHoldTurnsByPlayerId,
-      playerId,
-    ),
-    culturalVictoryHoldTurnsByPlayerId: _ownEntry(
-      domain.culturalVictoryHoldTurnsByPlayerId,
-      playerId,
-    ),
-    mapObjectiveHoldStatesByObjectiveId: {
-      for (final entry in domain.mapObjectiveHoldStatesByObjectiveId.entries)
-        if (entry.value.playerId == playerId) entry.key: entry.value,
-    },
-    resourceTradeAgreements: [
-      for (final agreement in domain.resourceTradeAgreements)
-        if (agreement.exporterPlayerId == playerId ||
-            agreement.importerPlayerId == playerId)
-          agreement,
-    ],
-    turnStartedAt: session.turnStartedAt,
+  return {
+    ..._actionLifecycleFor(domain, playerId),
+    ..._turnLifecycleFor(domain, playerId),
+    ..._diplomacyLifecycleFor(domain, playerId, knownPlayerIds),
+    ..._victoryLifecycleFor(domain, playerId),
+  };
+}
+
+Map<String, dynamic> _actionLifecycleFor(DomainState domain, String playerId) {
+  final cityFoundingDraft =
+      domain.actions.cityFoundingDraft?.ownerPlayerId == playerId
+      ? domain.actions.cityFoundingDraft
+      : null;
+  final pendingAction = domain.actions.pendingAction?.ownerPlayerId == playerId
+      ? domain.actions.pendingAction
+      : null;
+  return {
+    if (cityFoundingDraft != null)
+      'cityFoundingDraft': cityFoundingDraft.toJson(),
+    if (pendingAction != null) 'pendingAction': pendingAction.toJson(),
+  };
+}
+
+Map<String, dynamic> _turnLifecycleFor(DomainState domain, String playerId) {
+  final timeoutStreaksByPlayerId = _ownEntry(
+    domain.timeoutStreaksByPlayerId,
+    playerId,
   );
+  return {
+    if (domain.submittedPlayerIds.isNotEmpty)
+      'submittedPlayerIds': _sortedStrings(domain.submittedPlayerIds),
+    if (timeoutStreaksByPlayerId.isNotEmpty)
+      'timeoutStreaksByPlayerId': _sortedIntMap(timeoutStreaksByPlayerId),
+    if (domain.afkPlayerIds.isNotEmpty)
+      'afkPlayerIds': _sortedStrings(domain.afkPlayerIds),
+    if (domain.kickedPlayerIds.isNotEmpty)
+      'kickedPlayerIds': _sortedStrings(domain.kickedPlayerIds),
+    if (domain.turnStartedAt != null)
+      'turnStartedAt': domain.turnStartedAt!.toUtc().toIso8601String(),
+  };
+}
+
+Map<String, dynamic> _diplomacyLifecycleFor(
+  DomainState domain,
+  String playerId,
+  Set<String> knownPlayerIds,
+) {
+  final intendedAttacks = [
+    for (final attack in domain.intendedAttacks)
+      if (attack.declaringPlayerId == playerId) attack,
+  ];
+  final diplomacy = _diplomacyFor(domain.diplomacy, playerId, knownPlayerIds);
+  final resourceTrades = _resourceTradesFor(domain, playerId);
+  return {
+    if (intendedAttacks.isNotEmpty)
+      'intendedAttacks': [
+        for (final attack in intendedAttacks) attack.toJson(),
+      ],
+    if (diplomacy.isNotEmpty) 'diplomacy': diplomacy.toJson(),
+    if (resourceTrades.isNotEmpty)
+      'resourceTradeAgreements': [
+        for (final agreement in resourceTrades) agreement.toJson(),
+      ],
+  };
+}
+
+List<ResourceTradeAgreement> _resourceTradesFor(
+  DomainState domain,
+  String playerId,
+) {
+  return [
+    for (final agreement in domain.resourceTradeAgreements)
+      if (agreement.exporterPlayerId == playerId ||
+          agreement.importerPlayerId == playerId)
+        agreement,
+  ]..sort((left, right) => left.id.compareTo(right.id));
+}
+
+Map<String, dynamic> _victoryLifecycleFor(DomainState domain, String playerId) {
+  final dominationHoldTurnsByPlayerId = _ownEntry(
+    domain.dominationHoldTurnsByPlayerId,
+    playerId,
+  );
+  final culturalVictoryHoldTurnsByPlayerId = _ownEntry(
+    domain.culturalVictoryHoldTurnsByPlayerId,
+    playerId,
+  );
+  final mapObjectiveHolds = [
+    for (final entry in domain.mapObjectiveHoldStatesByObjectiveId.entries)
+      if (entry.value.playerId == playerId) entry.value,
+  ]..sort((left, right) => left.objectiveId.compareTo(right.objectiveId));
+  return {
+    if (dominationHoldTurnsByPlayerId.isNotEmpty)
+      'dominationHoldTurnsByPlayerId': _sortedIntMap(
+        dominationHoldTurnsByPlayerId,
+      ),
+    if (culturalVictoryHoldTurnsByPlayerId.isNotEmpty)
+      'culturalVictoryHoldTurnsByPlayerId': _sortedIntMap(
+        culturalVictoryHoldTurnsByPlayerId,
+      ),
+    if (mapObjectiveHolds.isNotEmpty)
+      'mapObjectiveHoldStates': [
+        for (final hold in mapObjectiveHolds) hold.toJson(),
+      ],
+  };
 }
 
 DiplomacyState _diplomacyFor(
@@ -332,4 +399,14 @@ bool _artifactVisible(
 Map<String, int> _ownEntry(Map<String, int> values, String playerId) {
   final value = values[playerId];
   return value == null ? const {} : {playerId: value};
+}
+
+List<String> _sortedStrings(Iterable<String> values) {
+  return values.toList()..sort();
+}
+
+Map<String, int> _sortedIntMap(Map<String, int> values) {
+  final entries = values.entries.toList()
+    ..sort((left, right) => left.key.compareTo(right.key));
+  return {for (final entry in entries) entry.key: entry.value};
 }

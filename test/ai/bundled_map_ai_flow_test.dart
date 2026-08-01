@@ -13,7 +13,7 @@ void main() {
         () async {
           final mapData = await _loadBundledMap(mapName);
           final playerCount =
-              MapPlayerCapacityRules.singlePlayerPlayersForMapData(mapData);
+              MapPlayerCapacityRules.singlePlayerPlayersForWorldMap(mapData);
           final players = _players(playerCount);
           final result = EconomySimulation.run(
             config: EconomySimulationConfig(
@@ -57,7 +57,7 @@ void main() {
   });
 }
 
-Future<MapData> _loadBundledMap(String mapName) async {
+Future<WorldMap> _loadBundledMap(String mapName) async {
   final file = File('assets/maps/$mapName/map.json');
   return MapLoader.fromJson(await file.readAsString());
 }

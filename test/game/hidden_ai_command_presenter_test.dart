@@ -15,7 +15,7 @@ void main() {
       'presents hidden AI command without switching renderer perspective',
       () async {
         final applied = <_AppliedTransition>[];
-        const currentAiState = GameState(
+        final currentAiState = GameClientState(
           activePlayerId: 'ai_1',
           activePlayerCanAct: true,
         );
@@ -27,12 +27,12 @@ void main() {
           row: 3,
         );
         final afterUnit = beforeUnit.copyWith(col: 3);
-        final humanRendererState = GameState(
+        final humanRendererState = GameClientState(
           activePlayerId: 'human',
           activePlayerCanAct: false,
           units: [beforeUnit],
         );
-        final reducerState = GameState(
+        final reducerState = GameClientState(
           activePlayerId: 'ai_1',
           activePlayerCanAct: false,
           units: [afterUnit],
@@ -98,11 +98,11 @@ void main() {
 
     test('uses current AI state when renderer has no prior state', () async {
       final applied = <_AppliedTransition>[];
-      const currentAiState = GameState(
+      final currentAiState = GameClientState(
         activePlayerId: 'ai_1',
         activePlayerCanAct: true,
       );
-      const reducerState = GameState(activePlayerId: 'ai_1');
+      final reducerState = GameClientState(activePlayerId: 'ai_1');
       final presenter = HiddenAiCommandPresenter(
         rendererStateReader: () => null,
         localizationReader: () => null,
@@ -110,9 +110,9 @@ void main() {
           applied.add(_AppliedTransition(state, effects));
         },
         dispatchTransition: (command, {required context}) async {
-          return const DispatchCommandResult(
+          return DispatchCommandResult(
             state: reducerState,
-            uiEffects: [JumpCameraEffect(col: 1, row: 2)],
+            uiEffects: [const JumpCameraEffect(col: 1, row: 2)],
           );
         },
       );
@@ -130,16 +130,16 @@ void main() {
     test('does not apply renderer effects for terminal commands', () async {
       var applied = false;
       final presenter = HiddenAiCommandPresenter(
-        rendererStateReader: () => const GameState(activePlayerId: 'human'),
+        rendererStateReader: () => GameClientState(activePlayerId: 'human'),
         localizationReader: () => null,
         applyTransition: (state, effects) async {
           applied = true;
         },
         dispatchTransition: (command, {required context}) async {
-          return const DispatchCommandResult(
-            state: GameState(activePlayerId: 'ai_1'),
+          return DispatchCommandResult(
+            state: GameClientState(activePlayerId: 'ai_1'),
             uiEffects: [
-              ShowFloatingTextEffect(
+              const ShowFloatingTextEffect(
                 text: 'done',
                 col: 0,
                 row: 0,
@@ -147,7 +147,7 @@ void main() {
               ),
             ],
             events: [
-              UnitMovedEvent(
+              const UnitMovedEvent(
                 unitId: 'warrior_1',
                 fromCol: 1,
                 fromRow: 1,
@@ -160,7 +160,7 @@ void main() {
       );
 
       final result = await presenter.dispatchAndPresent(
-        currentState: const GameState(
+        currentState: GameClientState(
           activePlayerId: 'ai_1',
           activePlayerCanAct: true,
         ),
@@ -186,14 +186,14 @@ void main() {
         );
         final presenter = HiddenAiCommandPresenter(
           rendererStateReader: () =>
-              GameState(activePlayerId: 'human', units: [beforeUnit]),
+              GameClientState(activePlayerId: 'human', units: [beforeUnit]),
           localizationReader: () => null,
           applyTransition: (state, effects) async {
             applied.add(_AppliedTransition(state, effects));
           },
           dispatchTransition: (command, {required context}) async {
             return DispatchCommandResult(
-              state: GameState(
+              state: GameClientState(
                 activePlayerId: 'ai_1',
                 units: [beforeUnit.copyWith(col: 2)],
               ),
@@ -226,7 +226,7 @@ void main() {
         );
 
         await presenter.dispatchAndPresent(
-          currentState: const GameState(activePlayerId: 'ai_1'),
+          currentState: GameClientState(activePlayerId: 'ai_1'),
           command: const EndTurnCommand('ai_1'),
           context: const GameCommandContext(actorPlayerId: 'ai_1'),
         );
@@ -249,7 +249,7 @@ void main() {
 }
 
 final class _AppliedTransition {
-  final GameState state;
+  final GameClientState state;
   final List<RendererEffect> effects;
 
   const _AppliedTransition(this.state, this.effects);

@@ -346,8 +346,8 @@ void main() {
 
 WireMovementExecutionList _annotate({
   required Iterable<MovementCommandExecution> executions,
-  required PersistentGameState previous,
-  required PersistentGameState next,
+  required DomainState previous,
+  required DomainState next,
 }) {
   return PlayerMatchMovementAudience.annotateForStorage(
     executions: executions,
@@ -412,12 +412,12 @@ WireMovementExecution _wire(
   );
 }
 
-PersistentGameState _state({
+DomainState _state({
   required _Point a,
   required _Point b,
   Set<HexCoordinate> observerVisible = const {},
 }) {
-  return PersistentGameState(
+  return DomainState.snapshot(
     units: [
       _unit(id: 'unit-a', ownerPlayerId: _playerA, at: a),
       _unit(id: 'unit-b', ownerPlayerId: _playerB, at: b),

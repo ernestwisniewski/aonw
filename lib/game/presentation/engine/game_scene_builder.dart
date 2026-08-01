@@ -1,20 +1,20 @@
 import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/map_image_layer.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 
-typedef GameTileTapCallback = void Function(TileData tileData);
+typedef GameTileTapCallback = void Function(WorldTile tileData);
 
 class GameSceneBuilder {
-  LegacyMapGrid? _grid;
+  WorldMapGrid? _grid;
   MapImageLayer? _imageLayer;
   bool _hasReferenceImage = false;
 
-  LegacyMapGrid get grid {
+  WorldMapGrid get grid {
     assert(_grid != null, 'Call build() before accessing grid');
     return _grid!;
   }
@@ -28,7 +28,7 @@ class GameSceneBuilder {
 
   Future<void> build({
     required Component parent,
-    required MapData mapData,
+    required WorldMap mapData,
     String? imagePath,
     required MapViewMode viewMode,
     required HexDisplaySettings displaySettings,

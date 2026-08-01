@@ -10,10 +10,10 @@ import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_tile.dart';
 import 'package:aonw/map/rendering/hex_tile_markers.dart';
+import 'package:aonw_core/domain/world_map.dart' show WorldTile;
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart' show TileData;
 import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 
@@ -31,7 +31,7 @@ class EditorGrid extends HexGrid<MapDraft> {
 
   @override
   HexTile buildTileComponent({
-    required TileData tileData,
+    required WorldTile tileData,
     required Vector2 position,
     required void Function() onTapped,
     required List<int?> neighborHeights,
@@ -67,14 +67,14 @@ class EditorGrid extends HexGrid<MapDraft> {
   }
 
   @override
-  HexTileMarkers markersForTile(TileData tileData) {
+  HexTileMarkers markersForTile(WorldTile tileData) {
     return HexTileMarkers(
       canFoundCity: CitySiteRules.canFoundCityOn(tileData),
       canGrowCity: CityTileYieldRules.canCityControlTile(tileData),
     );
   }
 
-  static bool _blocksWarriorMovement(TileData tileData) {
+  static bool _blocksWarriorMovement(WorldTile tileData) {
     final cost = UnitMovementCostRules.costToEnterTile(
       tileData,
       unitType: GameUnitType.warrior,

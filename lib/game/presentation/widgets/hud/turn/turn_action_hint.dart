@@ -12,7 +12,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 bool hudPlayerReadyToEndTurn({
-  required GameState? gameState,
+  required GameClientState? gameState,
   required String activePlayerId,
   required TechnologyPanelViewModel technologyViewModel,
 }) {
@@ -39,7 +39,7 @@ bool hudPlayerReadyToEndTurn({
 
 String? hudTurnHintLabel({
   required AppLocalizations l10n,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required String activePlayerId,
   required bool activePlayerCanAct,
   required bool actionsLocked,
@@ -102,7 +102,7 @@ String? hudTurnHintLabel({
 
 List<HudTurnActionOption> hudTurnActionOptions({
   required AppLocalizations l10n,
-  required GameState? gameState,
+  required GameClientState? gameState,
   required String activePlayerId,
   required MapTileLookup mapTiles,
   required TechnologyRuleset technologyRuleset,
@@ -215,7 +215,7 @@ int _cityActionVisualLevel(GameCity city) {
 }
 
 bool hudNeedsResearchSelection({
-  required GameState gameState,
+  required GameClientState gameState,
   required String activePlayerId,
   required TechnologyPanelViewModel technologyViewModel,
 }) {
@@ -241,7 +241,7 @@ bool _isScorePressureObjective(GameObjectiveId id) {
 }
 
 GameUnit? _unitNeedingOrders({
-  required GameState gameState,
+  required GameClientState gameState,
   required String activePlayerId,
   required GameObjectiveAdvice? scoreAdvice,
 }) {

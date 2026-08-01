@@ -19,7 +19,7 @@ void main() {
         name: 'Foreign city',
         center: CityHex(col: 1, row: 0),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [unit],
         cities: const [city],
         fogOfWar: _visibleFog(),
@@ -50,7 +50,7 @@ void main() {
         name: 'Remembered city',
         center: CityHex(col: 1, row: 0),
       );
-      final state = PersistentGameState(
+      final state = DomainState.snapshot(
         units: [unit],
         cities: const [city],
         fogOfWar: FogOfWarState(
@@ -81,8 +81,8 @@ void main() {
   });
 }
 
-SimulatedState _simulate(PersistentGameState state, DomainCommand command) {
-  final view = GameView.fromPersistentState(
+SimulatedState _simulate(DomainState state, DomainCommand command) {
+  final view = GameView.fromDomainState(
     state,
     forPlayerId: 'player_1',
     turn: 1,

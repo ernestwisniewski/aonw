@@ -16,8 +16,8 @@ void main() {
       );
 
       expect(accepted.snapshot.domain.turn, 7);
-      expect(accepted.snapshot.session.submittedPlayerIds, {_one});
-      expect(accepted.snapshot.session.turnStatesByPlayerId, {
+      expect(accepted.snapshot.domain.submittedPlayerIds, {_one});
+      expect(accepted.snapshot.domain.turnStatesByPlayerId, {
         _one: PlayerTurnState.finished,
         _two: PlayerTurnState.active,
       });
@@ -32,7 +32,7 @@ void main() {
       );
 
       expect(accepted.snapshot.domain.turn, 8);
-      expect(accepted.snapshot.session.submittedPlayerIds, isEmpty);
+      expect(accepted.snapshot.domain.submittedPlayerIds, isEmpty);
       expect(accepted.events.map((event) => event.runtimeType).toList(), [
         AllPlayersSubmittedEvent,
         TurnEndedEvent,
@@ -55,7 +55,7 @@ void main() {
       expect(accepted.events.map((event) => event.runtimeType).toList(), [
         TurnEndedEvent,
       ]);
-      expect(accepted.snapshot.session.turnStatesByPlayerId, {
+      expect(accepted.snapshot.domain.turnStatesByPlayerId, {
         _one: PlayerTurnState.finished,
         _two: PlayerTurnState.active,
       });
@@ -147,7 +147,7 @@ void main() {
               ),
             ],
           ).copyWith(
-            session: _snapshot(gameMode: GameMode.hotSeat).session.copyWith(
+            domain: _snapshot(gameMode: GameMode.hotSeat).domain.copyWith(
               turnStatesByPlayerId: const {
                 _two: PlayerTurnState.finished,
                 _one: PlayerTurnState.active,
@@ -164,7 +164,7 @@ void main() {
       );
 
       expect(accepted.snapshot.domain.turn, 8);
-      expect(accepted.snapshot.session.turnStatesByPlayerId, {
+      expect(accepted.snapshot.domain.turnStatesByPlayerId, {
         _one: PlayerTurnState.active,
         _two: PlayerTurnState.active,
       });
@@ -258,7 +258,7 @@ void main() {
           TurnEndedEvent,
           TurnEndedEvent,
         ]);
-        expect(accepted.snapshot.session.timeoutStreaksByPlayerId, {_two: 1});
+        expect(accepted.snapshot.domain.timeoutStreaksByPlayerId, {_two: 1});
       },
     );
 
@@ -276,11 +276,11 @@ void main() {
         ),
       );
 
-      expect(accepted.snapshot.session.kickedPlayerIds, {_one});
-      expect(accepted.snapshot.session.afkPlayerIds, {_one});
-      expect(accepted.snapshot.session.submittedPlayerIds, isEmpty);
+      expect(accepted.snapshot.domain.kickedPlayerIds, {_one});
+      expect(accepted.snapshot.domain.afkPlayerIds, {_one});
+      expect(accepted.snapshot.domain.submittedPlayerIds, isEmpty);
       expect(
-        accepted.snapshot.session.turnStatesByPlayerId[_one],
+        accepted.snapshot.domain.turnStatesByPlayerId[_one],
         PlayerTurnState.finished,
       );
       expect(
@@ -297,8 +297,8 @@ void main() {
       final snapshot = base.copyWith(
         domain: base.domain.copyWith(
           participants: const [Player(id: _one, name: 'One', colorValue: 1)],
+          turnStatesByPlayerId: const {},
         ),
-        session: base.session.copyWith(turnStatesByPlayerId: const {}),
       );
 
       final accepted = _accepted(
@@ -312,9 +312,9 @@ void main() {
         ),
       );
 
-      expect(accepted.snapshot.session.turnStatesByPlayerId, isEmpty);
-      expect(accepted.snapshot.session.afkPlayerIds, contains(_one));
-      expect(accepted.snapshot.session.kickedPlayerIds, contains(_one));
+      expect(accepted.snapshot.domain.turnStatesByPlayerId, isEmpty);
+      expect(accepted.snapshot.domain.afkPlayerIds, contains(_one));
+      expect(accepted.snapshot.domain.kickedPlayerIds, contains(_one));
     });
 
     test('kick rejects an identity outside the canonical roster', () {
@@ -337,9 +337,9 @@ void main() {
 
       expect(
         () => base.copyWith(
-          session: base.session.copyWith(
+          domain: base.domain.copyWith(
             turnStatesByPlayerId: {
-              ...base.session.turnStatesByPlayerId,
+              ...base.domain.turnStatesByPlayerId,
               'ghost': PlayerTurnState.active,
             },
           ),
@@ -403,21 +403,22 @@ CanonicalGameSnapshot _snapshot({
   ],
 }) {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
-      turn: 7,
-      matchRules: MatchRules.standard,
-      participants: participants,
-      units: units,
-    ),
-    session: MatchSessionState.snapshot(
-      gameMode: gameMode,
-      turnStatesByPlayerId: const {
-        _one: PlayerTurnState.active,
-        _two: PlayerTurnState.active,
-      },
-      submittedPlayerIds: submittedPlayerIds,
-      turnStartedAt: DateTime.utc(2026, 7, 30, 11),
-    ),
+    domain:
+        (DomainState.snapshot(
+          turn: 7,
+          matchRules: MatchRules.standard,
+          participants: participants,
+          units: units,
+        )).copyWith(
+          gameMode: gameMode,
+          turnStatesByPlayerId: const {
+            _one: PlayerTurnState.active,
+            _two: PlayerTurnState.active,
+          },
+          submittedPlayerIds: submittedPlayerIds,
+          turnStartedAt: DateTime.utc(2026, 7, 30, 11),
+        ),
+
     metadata: GameSnapshotMetadata(
       id: 'turn',
       schemaVersion: 3,
@@ -429,23 +430,21 @@ CanonicalGameSnapshot _snapshot({
   );
 }
 
-final _map = WorldMapReadView(
-  WorldMap(
-    cols: 2,
-    rows: 1,
-    tiles: [
-      WorldTile(
-        coordinate: const HexCoord(col: 0, row: 0),
-        terrains: const [TerrainType.grassland],
-        resources: const [],
-        height: 0,
-      ),
-      WorldTile(
-        coordinate: const HexCoord(col: 1, row: 0),
-        terrains: const [TerrainType.grassland],
-        resources: const [],
-        height: 0,
-      ),
-    ],
-  ),
+final _map = WorldMap(
+  cols: 2,
+  rows: 1,
+  tiles: [
+    WorldTile.at(
+      coordinate: const HexCoord(col: 0, row: 0),
+      terrains: const [TerrainType.grassland],
+      resources: const [],
+      height: 0,
+    ),
+    WorldTile.at(
+      coordinate: const HexCoord(col: 1, row: 0),
+      terrains: const [TerrainType.grassland],
+      resources: const [],
+      height: 0,
+    ),
+  ],
 );

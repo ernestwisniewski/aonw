@@ -78,7 +78,7 @@ class GamePlayerAvatarsOverlay extends ConsumerWidget {
   }
 
   bool _hasDiplomaticContact({
-    required GameState gameState,
+    required GameClientState gameState,
     required DiplomacyState diplomacy,
     required String playerId,
     required String targetPlayerId,

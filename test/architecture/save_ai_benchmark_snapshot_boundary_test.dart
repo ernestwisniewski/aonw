@@ -51,7 +51,7 @@ void main() {
       'tool/fixture_benchmark/hidden_helper.dart': '''
 part of '../fixture_benchmark.dart';
 
-PersistentGameState rebuild(GameState state) =>
+PersistentGameState rebuild(GameClientState state) =>
     PersistentGameState.snapshot(runtimeState: state.runtimeState);
 
 void finalize(PersistentGameState state, MapReadView mapView) {
@@ -101,7 +101,7 @@ void finalize(PersistentGameState state, MapReadView mapView) {
 
     expect(_propertyReadCount(unit, 'save'), 0);
     expect(_propertyReadCount(unit, 'persistentState'), 0);
-    expect(_propertyReadCount(unit, 'runtimeState'), 0);
+    expect(_propertyReadCount(unit, 'lifecycle'), 0);
     expect(_propertyReadCount(unit, 'domain'), greaterThan(0));
     expect(_propertyReadCount(unit, 'session'), greaterThan(0));
     expect(_propertyReadCount(unit, 'metadata'), greaterThan(0));
@@ -112,7 +112,7 @@ void finalize(PersistentGameState state, MapReadView mapView) {
 
     expect(_propertyReadCount(unit, 'save'), 0);
     expect(_propertyReadCount(unit, 'persistentState'), 0);
-    expect(_propertyReadCount(unit, 'runtimeState'), 0);
+    expect(_propertyReadCount(unit, 'lifecycle'), 0);
     expect(_propertyReadCount(unit, 'domain'), greaterThan(0));
     expect(_propertyReadCount(unit, 'session'), greaterThan(0));
     expect(_propertyReadCount(unit, 'metadata'), greaterThan(0));
@@ -124,7 +124,7 @@ void finalize(PersistentGameState state, MapReadView mapView) {
 
     expect(_propertyReadCount(unit, 'save'), 0);
     expect(_propertyReadCount(unit, 'persistentState'), 0);
-    expect(_propertyReadCount(unit, 'runtimeState'), 0);
+    expect(_propertyReadCount(unit, 'lifecycle'), 0);
     expect(_propertyReadCount(unit, 'domain'), greaterThan(0));
     expect(_propertyReadCount(unit, 'metadata'), greaterThan(0));
   });
@@ -134,7 +134,7 @@ void finalize(PersistentGameState state, MapReadView mapView) {
 
     expect(_propertyReadCount(unit, 'save'), 0);
     expect(_propertyReadCount(unit, 'persistentState'), 0);
-    expect(_propertyReadCount(unit, 'runtimeState'), 0);
+    expect(_propertyReadCount(unit, 'lifecycle'), 0);
     expect(_propertyReadCount(unit, 'domain'), greaterThan(0));
     expect(_propertyReadCount(unit, 'session'), greaterThan(0));
     expect(_propertyReadCount(unit, 'metadata'), greaterThan(0));
@@ -159,7 +159,7 @@ void finalize(PersistentGameState state, MapReadView mapView) {
 
       expect(_propertyReadCount(unit, 'save'), 0);
       expect(_propertyReadCount(unit, 'persistentState'), 0);
-      expect(_propertyReadCount(unit, 'runtimeState'), 0);
+      expect(_propertyReadCount(unit, 'lifecycle'), 0);
     });
   }
 }
@@ -292,7 +292,7 @@ final class _SnapshotBoundaryVisitor extends RecursiveAstVisitor<void> {
     if (name == 'PersistentGameState' || name.startsWith('PersistentTurn')) {
       violations.add('$path: $name is forbidden');
     }
-    if (name == 'save' || name == 'persistentState' || name == 'runtimeState') {
+    if (name == 'save' || name == 'persistentState' || name == 'lifecycle') {
       final parent = node.parent;
       if (parent is PrefixedIdentifier && identical(parent.identifier, node) ||
           parent is PropertyAccess && identical(parent.propertyName, node)) {

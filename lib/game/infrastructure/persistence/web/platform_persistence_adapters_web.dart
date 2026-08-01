@@ -95,18 +95,18 @@ class _LazyWebGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => (await _resolve()).list();
 
   @override
-  Future<SaveSnapshot> load(String saveId) async =>
+  Future<CanonicalGameSnapshot> load(String saveId) async =>
       (await _resolve()).load(saveId);
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async =>
+  Future<void> save(CanonicalGameSnapshot snapshot) async =>
       (await _resolve()).save(snapshot);
 
   @override
   Future<void> delete(String saveId) async => (await _resolve()).delete(saveId);
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
@@ -189,13 +189,13 @@ class _LazyWebReplayStore implements ReplayStore {
   }
 
   @override
-  Future<SaveSnapshot?> initialSnapshot(String saveId) async =>
+  Future<CanonicalGameSnapshot?> initialSnapshot(String saveId) async =>
       (await _resolve()).initialSnapshot(saveId);
 
   @override
   Future<void> saveInitialSnapshot(
     String saveId,
-    SaveSnapshot snapshot,
+    CanonicalGameSnapshot snapshot,
   ) async => (await _resolve()).saveInitialSnapshot(saveId, snapshot);
 
   @override

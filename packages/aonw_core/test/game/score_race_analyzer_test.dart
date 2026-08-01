@@ -82,30 +82,29 @@ void main() {
         requiredHoldTurns: 1,
         victoryPoints: 100,
       );
-      const state = PersistentGameState(
+      final state = DomainState.snapshot(
         cities: [
-          GameCity(
+          const GameCity(
             id: 'own_city',
             ownerPlayerId: 'player_1',
             name: 'Own city',
             center: CityHex(col: 0, row: 0),
           ),
-          GameCity(
+          const GameCity(
             id: 'rival_city',
             ownerPlayerId: 'player_2',
             name: 'Rival city',
             center: CityHex(col: 1, row: 0),
           ),
         ],
-        runtimeState: GameRuntimeState(
-          mapObjectiveHoldStatesByObjectiveId: {
-            'strategic_pass': MapObjectiveHoldState(
-              objectiveId: 'strategic_pass',
-              playerId: 'player_2',
-              holdTurns: 1,
-            ),
-          },
-        ),
+
+        mapObjectiveHoldStatesByObjectiveId: {
+          'strategic_pass': const MapObjectiveHoldState(
+            objectiveId: 'strategic_pass',
+            playerId: 'player_2',
+            holdTurns: 1,
+          ),
+        },
       );
 
       final analysis = analyzer.analyzeForPlayer(
@@ -160,8 +159,8 @@ void main() {
   });
 }
 
-PersistentGameState _state({required List<GameCity> cities}) {
-  return PersistentGameState(cities: cities);
+DomainState _state({required List<GameCity> cities}) {
+  return DomainState.snapshot(cities: cities);
 }
 
 GameCity _city(String id, String ownerPlayerId, int col) {

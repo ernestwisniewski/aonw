@@ -48,7 +48,7 @@ void main() {
         ),
       );
       expect(accepted.snapshot.domain.cities, same(snapshot.domain.cities));
-      expect(accepted.snapshot.interaction, same(snapshot.interaction));
+      expect(accepted.snapshot.domain.actions, same(snapshot.domain.actions));
       expect(
         accepted.events.single,
         isA<ArtifactExcavationStartedEvent>()
@@ -167,7 +167,7 @@ void _expectEnvelopePreserved(
   CanonicalGameSnapshot next,
   CanonicalGameSnapshot previous,
 ) {
-  expect(next.session, same(previous.session));
+  expect(next.domain, same(previous.domain));
   expect(next.metadata, same(previous.metadata));
   expect(next.eventLogOffset, previous.eventLogOffset);
   expect(next.domain.participants, same(previous.domain.participants));
@@ -179,7 +179,7 @@ CanonicalGameSnapshot _snapshot({
   List<WorldArtifact> artifacts = const [],
 }) {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
+    domain: (DomainState.snapshot(
       turn: 3,
       matchRules: MatchRules.standard,
       participants: const [
@@ -190,8 +190,8 @@ CanonicalGameSnapshot _snapshot({
       units: units,
       cities: cities,
       artifacts: artifacts,
-    ),
-    session: MatchSessionState.snapshot(gameMode: GameMode.multiplayer),
+    )).copyWith(gameMode: GameMode.multiplayer),
+
     metadata: GameSnapshotMetadata(
       id: 'artifact',
       schemaVersion: 3,
@@ -216,18 +216,16 @@ GameUnit _unit({String ownerPlayerId = _actorId}) {
   );
 }
 
-final _map = WorldMapReadView(
-  WorldMap(
-    cols: 2,
-    rows: 1,
-    tiles: [
-      for (var col = 0; col < 2; col++)
-        WorldTile(
-          coordinate: HexCoord(col: col, row: 0),
-          terrains: const [TerrainType.grassland],
-          resources: const [],
-          height: 0,
-        ),
-    ],
-  ),
+final _map = WorldMap(
+  cols: 2,
+  rows: 1,
+  tiles: [
+    for (var col = 0; col < 2; col++)
+      WorldTile.at(
+        coordinate: HexCoord(col: col, row: 0),
+        terrains: const [TerrainType.grassland],
+        resources: const [],
+        height: 0,
+      ),
+  ],
 );

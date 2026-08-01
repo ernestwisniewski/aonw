@@ -30,7 +30,7 @@ final class UnitActionCommandResult {
   final String? reason;
   final List<GameUnit> units;
   final List<WorldArtifact> artifacts;
-  final PersistedInteractionState interaction;
+  final DomainActionState interaction;
 }
 
 /// Applies map-independent unit actions without depending on a state container.
@@ -38,7 +38,7 @@ abstract final class UnitActionCommandResolver {
   static UnitActionCommandResult cancelUnitAction({
     required List<GameUnit> units,
     required List<WorldArtifact> artifacts,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required CancelUnitActionCommand command,
     required String actorPlayerId,
   }) {
@@ -84,7 +84,7 @@ abstract final class UnitActionCommandResolver {
   static UnitActionCommandResult skipUnitTurn({
     required List<GameUnit> units,
     required List<WorldArtifact> artifacts,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required SkipUnitTurnCommand command,
     required String actorPlayerId,
   }) {
@@ -120,7 +120,7 @@ abstract final class UnitActionCommandResolver {
   static UnitActionCommandResult fortifyUnit({
     required List<GameUnit> units,
     required List<WorldArtifact> artifacts,
-    required PersistedInteractionState interaction,
+    required DomainActionState interaction,
     required FortifyUnitCommand command,
     required String actorPlayerId,
   }) {
@@ -159,7 +159,7 @@ abstract final class UnitActionCommandResolver {
   static UnitActionCommandResult _reject(
     List<GameUnit> units,
     List<WorldArtifact> artifacts,
-    PersistedInteractionState interaction,
+    DomainActionState interaction,
     String reason,
   ) {
     return UnitActionCommandResult._rejected(

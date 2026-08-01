@@ -4,8 +4,8 @@ LocalCommandResolver _resolver(MapReadView mapView) {
   return LocalCommandResolver(reducer: GameStateReducer(mapData: mapView));
 }
 
-SaveSnapshot _snapshot(GameState state) {
-  return SaveSnapshot.fromGameState(save: _save(), state: state);
+CanonicalGameSnapshot _snapshot(GameClientState state) {
+  return GameSnapshotFactory.fromClientState(save: _save(), state: state);
 }
 
 GameSave _save() => GameSave(
@@ -94,21 +94,19 @@ MapReadView _map({
   int rows = 1,
   Map<int, List<TerrainType>> terrainOverrides = const {},
 }) {
-  return WorldMapReadView(
-    WorldMap(
-      cols: cols,
-      rows: rows,
-      tiles: [
-        for (var row = 0; row < rows; row++)
-          for (var col = 0; col < cols; col++)
-            WorldTile(
-              coordinate: HexCoord(col: col, row: row),
-              terrains: terrainOverrides[col] ?? const [TerrainType.grassland],
-              resources: const [],
-              height: 0,
-            ),
-      ],
-    ),
+  return WorldMap(
+    cols: cols,
+    rows: rows,
+    tiles: [
+      for (var row = 0; row < rows; row++)
+        for (var col = 0; col < cols; col++)
+          WorldTile.at(
+            coordinate: HexCoord(col: col, row: row),
+            terrains: terrainOverrides[col] ?? const [TerrainType.grassland],
+            resources: const [],
+            height: 0,
+          ),
+    ],
   );
 }
 
@@ -118,7 +116,7 @@ String _unreviewedMovementEnvelopeBytes(Map<String, dynamic> source) {
   copy
     ..remove('units')
     ..remove('fogOfWar');
-  (copy['runtimeState'] as Map<String, dynamic>)
+  (copy['lifecycle'] as Map<String, dynamic>)
     ..remove('diplomacy')
     ..remove('cityFoundingDraft')
     ..remove('pendingAction');

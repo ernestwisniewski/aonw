@@ -37,7 +37,7 @@ class GameRuntimeBinding extends ConsumerStatefulWidget {
 }
 
 class _GameRuntimeBindingState extends ConsumerState<GameRuntimeBinding> {
-  GameState? _appliedState;
+  GameClientState? _appliedState;
 
   @override
   void initState() {
@@ -91,7 +91,7 @@ class _GameRuntimeBindingState extends ConsumerState<GameRuntimeBinding> {
   }
 
   void _listenForBootstrapState() {
-    ref.listen<AsyncValue<GameState>>(
+    ref.listen<AsyncValue<GameClientState>>(
       gameStateProvider(widget.session.saveId),
       (_, next) {
         if (next.isLoading) return;

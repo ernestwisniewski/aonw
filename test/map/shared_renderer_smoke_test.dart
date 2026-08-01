@@ -4,23 +4,23 @@ import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/engine/editor_grid.dart';
 import 'package:aonw/editor/engine/editor_state.dart';
 import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_tile.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _makeMap() => MapData(
+WorldMap _makeMap() => WorldMap(
   cols: 2,
   rows: 2,
   tiles: [
     for (int row = 0; row < 2; row++)
       for (int col = 0; col < 2; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.ocean],
@@ -73,7 +73,7 @@ void main() {
 
   test('editor EditorGrid paint and resize paths keep renderer valid', () {
     final grid = EditorGrid(
-      draft: MapDraft.fromMapData(_makeMap()),
+      draft: MapDraft.fromWorldMap(_makeMap()),
       config: MapConfig.defaultConfig,
       editorState: const EditorState(
         selectedTerrains: {TerrainType.desert},

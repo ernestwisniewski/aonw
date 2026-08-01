@@ -11,16 +11,16 @@ import 'package:aonw/game/domain/game_command_context.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _FakeGameRepository implements GameRepository {
-  final Map<String, SaveSnapshot> snapshots;
+  final Map<String, CanonicalGameSnapshot> snapshots;
   final bool throwOnLoad;
 
   _FakeGameRepository({required this.snapshots, this.throwOnLoad = false});
@@ -38,7 +38,7 @@ class _FakeGameRepository implements GameRepository {
   Future<List<GameSaveIndex>> list() async => const [];
 
   @override
-  Future<SaveSnapshot> load(String saveId) async {
+  Future<CanonicalGameSnapshot> load(String saveId) async {
     if (throwOnLoad) throw StateError('broken save');
     final snapshot = snapshots[saveId];
     if (snapshot == null) throw StateError('missing save');
@@ -46,10 +46,10 @@ class _FakeGameRepository implements GameRepository {
   }
 
   @override
-  Future<void> save(SaveSnapshot snapshot) async {}
+  Future<void> save(CanonicalGameSnapshot snapshot) async {}
 
   @override
-  Future<SaveSnapshot> saveCamera(
+  Future<CanonicalGameSnapshot> saveCamera(
     String saveId,
     CameraState camera, {
     DateTime? savedAt,
@@ -59,13 +59,13 @@ class _FakeGameRepository implements GameRepository {
 }
 
 class _SequenceGameRepository extends _FakeGameRepository {
-  final List<SaveSnapshot> sequence;
+  final List<CanonicalGameSnapshot> sequence;
   var loadCount = 0;
 
   _SequenceGameRepository(this.sequence) : super(snapshots: const {});
 
   @override
-  Future<SaveSnapshot> load(String saveId) async {
+  Future<CanonicalGameSnapshot> load(String saveId) async {
     if (sequence.isEmpty) throw StateError('missing save');
     final index = loadCount < sequence.length ? loadCount : sequence.length - 1;
     loadCount++;
@@ -77,12 +77,12 @@ class _FakeCommandTransport implements CommandTransport {
   DomainCommand? command;
   final List<DomainCommand> commands = [];
   GameCommandContext? context;
-  GameState? currentState;
+  GameClientState? currentState;
 
   @override
   Future<CommandTransportResult> dispatch({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
     bool fromMovePreviewConfirmation = false,
@@ -93,7 +93,7 @@ class _FakeCommandTransport implements CommandTransport {
     this.currentState = currentState;
     return CommandTransportResult(
       state: currentState.copyWithInteraction(moveCommandActive: true),
-      snapshot: SaveSnapshot(save: _save),
+      snapshot: GameSnapshotFactory.create(save: _save),
       offset: 1,
     );
   }
@@ -147,7 +147,7 @@ void main() {
     final useCase = BootstrapGameStateUseCase(
       repository: _FakeGameRepository(
         snapshots: {
-          _save.id: SaveSnapshot(
+          _save.id: GameSnapshotFactory.create(
             save: _save,
             playerColors: const {'player_1': 0xFF4a7fc4},
           ),
@@ -178,7 +178,7 @@ void main() {
     );
     final useCase = BootstrapGameStateUseCase(
       repository: _FakeGameRepository(
-        snapshots: {save.id: SaveSnapshot(save: save)},
+        snapshots: {save.id: GameSnapshotFactory.create(save: save)},
       ),
       dispatchCommand: DispatchCommandUseCase(commandTransport: transport),
     );
@@ -199,7 +199,7 @@ void main() {
       final save = _save.copyWith(gameMode: GameMode.multiplayer);
       final useCase = BootstrapGameStateUseCase(
         repository: _FakeGameRepository(
-          snapshots: {save.id: SaveSnapshot(save: save)},
+          snapshots: {save.id: GameSnapshotFactory.create(save: save)},
         ),
         dispatchCommand: DispatchCommandUseCase(commandTransport: transport),
       );
@@ -217,9 +217,9 @@ void main() {
     final useCase = BootstrapGameStateUseCase(
       repository: _FakeGameRepository(
         snapshots: {
-          save.id: SaveSnapshot.fromGameState(
+          save.id: GameSnapshotFactory.fromClientState(
             save: save,
-            state: GameState(units: [commander]),
+            state: GameClientState(units: [commander]),
             eventLogOffset: 1,
           ),
         },
@@ -249,14 +249,14 @@ void main() {
   test('reloads the authoritative snapshot after redacted history', () async {
     final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
     final save = _save.copyWith(gameMode: GameMode.multiplayer);
-    final first = SaveSnapshot.fromGameState(
+    final first = GameSnapshotFactory.fromClientState(
       save: save,
-      state: GameState(units: [commander]),
+      state: GameClientState(units: [commander]),
       eventLogOffset: 1,
     );
-    final second = SaveSnapshot.fromGameState(
+    final second = GameSnapshotFactory.fromClientState(
       save: save,
-      state: GameState(units: [commander.copyWith(col: 1)]),
+      state: GameClientState(units: [commander.copyWith(col: 1)]),
       eventLogOffset: 2,
     );
     final repository = _SequenceGameRepository([first, second]);
@@ -291,9 +291,9 @@ void main() {
     () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final save = _save.copyWith(gameMode: GameMode.multiplayer);
-      final snapshot = SaveSnapshot.fromGameState(
+      final snapshot = GameSnapshotFactory.fromClientState(
         save: save,
-        state: GameState(units: [commander]),
+        state: GameClientState(units: [commander]),
         eventLogOffset: 1,
       );
       final repository = _SequenceGameRepository([snapshot, snapshot]);
@@ -340,13 +340,13 @@ void main() {
   });
 }
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 3,
   rows: 3,
   tiles: [
     for (var row = 0; row < 3; row++)
       for (var col = 0; col < 3; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.plains],

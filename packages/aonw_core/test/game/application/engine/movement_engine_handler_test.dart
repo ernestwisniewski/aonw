@@ -183,7 +183,7 @@ void main() {
         units: [
           _unit(id: 'mover', posture: UnitPosture.fortified, movementPoints: 0),
         ],
-        interaction: PersistedInteractionState(
+        interaction: DomainActionState(
           pendingAction: const PendingUnitTurnSkip(
             ownerPlayerId: _playerId,
             unitId: 'mover',
@@ -201,7 +201,7 @@ void main() {
       final accepted = _expectAccepted(result);
       expect(accepted.snapshot.domain.units.single.posture, UnitPosture.active);
       expect(accepted.snapshot.domain.units.single.movementPoints, 3);
-      expect(accepted.snapshot.interaction, PersistedInteractionState.empty);
+      expect(accepted.snapshot.domain.actions, DomainActionState.empty);
     });
 
     test(
@@ -232,7 +232,10 @@ void main() {
           accepted.snapshot.domain.units.map((unit) => unit.id),
           contains('commander_warrior_1'),
         );
-        expect(accepted.snapshot.session, same(snapshot.session));
+        expect(
+          accepted.snapshot.domain.turnStatesByPlayerId,
+          same(snapshot.domain.turnStatesByPlayerId),
+        );
         expect(accepted.snapshot.metadata, same(snapshot.metadata));
         expect(accepted.events, isEmpty);
       },
@@ -278,38 +281,40 @@ CanonicalGameSnapshot _snapshot({
   List<GameUnit> units = const [],
   List<GameCity> cities = const [],
   FogOfWarState fogOfWar = FogOfWarState.empty,
-  PersistedInteractionState interaction = PersistedInteractionState.empty,
+  DomainActionState interaction = DomainActionState.empty,
 }) {
   return CanonicalGameSnapshot.snapshot(
-    domain: DomainState.snapshot(
-      turn: 7,
-      matchRules: MatchRules.standard,
-      participants: const [
-        Player(
-          id: _playerId,
-          name: 'One',
-          colorValue: 1,
-          country: PlayerCountry.poland,
-        ),
-        Player(
-          id: _otherPlayerId,
-          name: 'Two',
-          colorValue: 2,
-          country: PlayerCountry.france,
-        ),
-      ],
-      playerGold: const {_playerId: 17, _otherPlayerId: 11},
-      units: units,
-      cities: cities,
-      fogOfWar: fogOfWar,
-    ),
-    session: MatchSessionState.snapshot(
-      gameMode: GameMode.multiplayer,
-      turnStatesByPlayerId: const {
-        _playerId: PlayerTurnState.active,
-        _otherPlayerId: PlayerTurnState.active,
-      },
-    ),
+    domain:
+        ((DomainState.snapshot(
+              turn: 7,
+              matchRules: MatchRules.standard,
+              participants: const [
+                Player(
+                  id: _playerId,
+                  name: 'One',
+                  colorValue: 1,
+                  country: PlayerCountry.poland,
+                ),
+                Player(
+                  id: _otherPlayerId,
+                  name: 'Two',
+                  colorValue: 2,
+                  country: PlayerCountry.france,
+                ),
+              ],
+              playerGold: const {_playerId: 17, _otherPlayerId: 11},
+              units: units,
+              cities: cities,
+              fogOfWar: fogOfWar,
+            )).copyWith(
+              gameMode: GameMode.multiplayer,
+              turnStatesByPlayerId: const {
+                _playerId: PlayerTurnState.active,
+                _otherPlayerId: PlayerTurnState.active,
+              },
+            ))
+            .copyWith(actions: interaction),
+
     metadata: GameSnapshotMetadata(
       id: 'save_1',
       schemaVersion: 3,
@@ -318,7 +323,7 @@ CanonicalGameSnapshot _snapshot({
       savedAtUtc: DateTime.utc(2026, 7, 29),
       camera: GameSnapshotCamera.zero,
     ),
-    interaction: interaction,
+
     eventLogOffset: 41,
   );
 }
@@ -391,26 +396,24 @@ MapReadView _map({
   int rows = 1,
   Set<int> blockedCols = const {},
 }) {
-  return WorldMapReadView(
-    WorldMap(
-      cols: cols,
-      rows: rows,
-      tiles: [
-        for (var row = 0; row < rows; row++)
-          for (var col = 0; col < cols; col++)
-            WorldTile(
-              coordinate: HexCoord(col: col, row: row),
-              terrains: [
-                if (blockedCols.contains(col))
-                  TerrainType.ocean
-                else
-                  TerrainType.grassland,
-              ],
-              resources: const [],
-              height: 0,
-            ),
-      ],
-    ),
+  return WorldMap(
+    cols: cols,
+    rows: rows,
+    tiles: [
+      for (var row = 0; row < rows; row++)
+        for (var col = 0; col < cols; col++)
+          WorldTile.at(
+            coordinate: HexCoord(col: col, row: row),
+            terrains: [
+              if (blockedCols.contains(col))
+                TerrainType.ocean
+              else
+                TerrainType.grassland,
+            ],
+            resources: const [],
+            height: 0,
+          ),
+    ],
   );
 }
 

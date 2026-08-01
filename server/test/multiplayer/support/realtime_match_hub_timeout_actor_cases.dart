@@ -7,9 +7,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
 
       final observation = await fixture.run(
         state: fixture.state.copyWith(
-          runtimeState: fixture.state.runtimeState.copyWith(
-            submittedPlayerIds: {fixture.highPlayerId},
-          ),
+          submittedPlayerIds: {fixture.highPlayerId},
         ),
       );
 
@@ -24,9 +22,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
           players: [fixture.highWirePlayer, fixture.lowWirePlayer],
         ),
         state: fixture.state.copyWith(
-          runtimeState: fixture.state.runtimeState.copyWith(
-            submittedPlayerIds: {fixture.lowPlayerId, fixture.highPlayerId},
-          ),
+          submittedPlayerIds: {fixture.lowPlayerId, fixture.highPlayerId},
         ),
       );
 
@@ -50,10 +46,8 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
 
       final observation = await fixture.run(
         state: fixture.state.copyWith(
-          runtimeState: fixture.state.runtimeState.copyWith(
-            submittedPlayerIds: {fixture.highPlayerId},
-            kickedPlayerIds: {fixture.highPlayerId},
-          ),
+          submittedPlayerIds: {fixture.highPlayerId},
+          kickedPlayerIds: {fixture.highPlayerId},
         ),
       );
 
@@ -64,11 +58,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
       final fixture = await _createTimeoutActorFixture('kicked-fallback');
 
       final observation = await fixture.run(
-        state: fixture.state.copyWith(
-          runtimeState: fixture.state.runtimeState.copyWith(
-            kickedPlayerIds: {fixture.lowPlayerId},
-          ),
-        ),
+        state: fixture.state.copyWith(kickedPlayerIds: {fixture.lowPlayerId}),
       );
 
       _expectAcceptedTimeoutActor(observation, fixture.highPlayerId);
@@ -95,11 +85,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
             phantomId: PlayerTurnState.active,
           },
         ),
-        state: fixture.state.copyWith(
-          runtimeState: fixture.state.runtimeState.copyWith(
-            submittedPlayerIds: const {phantomId},
-          ),
-        ),
+        state: fixture.state.copyWith(submittedPlayerIds: const {phantomId}),
       );
 
       _expectAcceptedTimeoutActor(observation, phantomId);
@@ -120,11 +106,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
             phantomId: PlayerTurnState.active,
           },
         ),
-        state: fixture.state.copyWith(
-          runtimeState: fixture.state.runtimeState.copyWith(
-            submittedPlayerIds: const {phantomId},
-          ),
-        ),
+        state: fixture.state.copyWith(submittedPlayerIds: const {phantomId}),
       );
 
       _expectAcceptedTimeoutActor(observation, fixture.lowPlayerId);
@@ -155,9 +137,8 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
           ),
           state: fixture.state.copyWith(
             playerGold: {...fixture.state.playerGold, phantomId: 999},
-            runtimeState: fixture.state.runtimeState.copyWith(
-              submittedPlayerIds: const {phantomId},
-            ),
+
+            submittedPlayerIds: const {phantomId},
           ),
         );
 
@@ -176,9 +157,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
           },
         ),
         state: fixture.state.copyWith(
-          runtimeState: fixture.state.runtimeState.copyWith(
-            submittedPlayerIds: {fixture.highPlayerId},
-          ),
+          submittedPlayerIds: {fixture.highPlayerId},
         ),
       );
 
@@ -191,9 +170,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
       final observation = await fixture.run(
         save: fixture.save.copyWith(players: const []),
         state: fixture.state.copyWith(
-          runtimeState: fixture.state.runtimeState.copyWith(
-            submittedPlayerIds: {fixture.highPlayerId},
-          ),
+          submittedPlayerIds: {fixture.highPlayerId},
         ),
       );
 
@@ -231,9 +208,7 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
           playerStates: {fixture.lowPlayerId: PlayerTurnState.active},
         ),
         state: fixture.state.copyWith(
-          runtimeState: fixture.state.runtimeState.copyWith(
-            submittedPlayerIds: {fixture.lowPlayerId},
-          ),
+          submittedPlayerIds: {fixture.lowPlayerId},
         ),
       );
 
@@ -259,7 +234,9 @@ Future<_TimeoutActorFixture> _createTimeoutActorFixture(String suffix) async {
   );
   final stored = (await store.findState(started.id))!;
   final save = GameSave.fromJson(stored.snapshot.save);
-  final state = PersistentGameState.fromJson(stored.snapshot.state);
+  final state = CanonicalGameSnapshotCodec.decodeDomainState(
+    stored.snapshot.state,
+  );
   final wirePlayers = [...stored.match.players]
     ..sort((left, right) => left.id.compareTo(right.id));
   final domainPlayersById = {
@@ -303,7 +280,7 @@ final class _TimeoutActorFixture {
   final _CapturingTimeoutActorReducer reducer;
   final StoredMatchState stored;
   final GameSave save;
-  final PersistentGameState state;
+  final DomainState state;
   final WirePlayer lowWirePlayer;
   final WirePlayer highWirePlayer;
   final Player lowDomainPlayer;
@@ -317,19 +294,15 @@ final class _TimeoutActorFixture {
   Future<_TimeoutActorObservation> run({
     WireMatch? match,
     GameSave? save,
-    PersistentGameState? state,
+    DomainState? state,
   }) async {
     final arrangedState = state ?? this.state;
-    final timedOutState = arrangedState.copyWith(
-      runtimeState: arrangedState.runtimeState.copyWith(
-        turnStartedAt: turnStartedAt,
-      ),
-    );
+    final timedOutState = arrangedState.copyWith(turnStartedAt: turnStartedAt);
     final before = stored.copyWith(
       match: match ?? this.match,
       snapshot: stored.snapshot.copyWith(
         save: (save ?? this.save).toJson(),
-        state: timedOutState.toJson(),
+        state: CanonicalGameSnapshotCodec.encodeDomainState(timedOutState),
       ),
     );
     await store.saveState(before);

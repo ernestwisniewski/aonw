@@ -206,7 +206,7 @@ void main() {
 }
 
 Future<ServerCommandTestReduction> _reduceDiplomacyCommand({
-  required PersistentGameState state,
+  required DomainState state,
   required DiplomaticCommand command,
   String actorPlayerId = 'player_1',
 }) {
@@ -222,25 +222,23 @@ Future<ServerCommandTestReduction> _reduceDiplomacyCommand({
   );
 }
 
-PersistentGameState _diplomacyState({
+DomainState _diplomacyState({
   Map<String, int> playerGold = const {},
   DiplomacyState? diplomacy,
-  GameRuntimeState? runtimeState,
+  Set<String> submittedPlayerIds = const {},
+  DateTime? turnStartedAt,
 }) {
-  return PersistentGameState(
+  return DomainState.snapshot(
     playerColors: const {'player_1': 0xFF3D5FA8, 'player_2': 0xFFB83A3A},
     playerCountries: const {
       'player_1': PlayerCountry.poland,
       'player_2': PlayerCountry.france,
     },
     playerGold: playerGold,
-    runtimeState:
-        runtimeState ??
-        GameRuntimeState(
-          diplomacy:
-              diplomacy ??
-              DiplomacyState.empty.addContact('player_1', 'player_2'),
-        ),
+    submittedPlayerIds: submittedPlayerIds,
+    turnStartedAt: turnStartedAt,
+    diplomacy:
+        diplomacy ?? DiplomacyState.empty.addContact('player_1', 'player_2'),
   );
 }
 
@@ -339,7 +337,7 @@ ResearchState _researchWithMany(Map<String, Set<TechnologyId>> technologies) {
   );
 }
 
-PersistentGameState _combatState({
+DomainState _combatState({
   required List<GameUnit> units,
   List<GameCity> cities = const [],
 }) {
@@ -348,7 +346,7 @@ PersistentGameState _combatState({
     const HexCoordinate(col: 1, row: 0),
     const HexCoordinate(col: 2, row: 0),
   };
-  return PersistentGameState(
+  return DomainState.snapshot(
     playerColors: const {'player_1': 0xFF3D5FA8, 'player_2': 0xFFB83A3A},
     units: units,
     cities: cities,
@@ -378,14 +376,14 @@ GameUnit _combatUnit(
   );
 }
 
-MapData _resourceTradeMap() {
-  return MapData(
+WorldMap _resourceTradeMap() {
+  return WorldMap(
     cols: 3,
     rows: 3,
     tiles: [
       for (var row = 0; row < 3; row++)
         for (var col = 0; col < 3; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
@@ -403,8 +401,8 @@ MapData _resourceTradeMap() {
 class _FakeMapCatalog implements MultiplayerMapCatalog {
   const _FakeMapCatalog(this.mapData);
 
-  final MapData mapData;
+  final WorldMap mapData;
 
   @override
-  Future<MapData> loadAssetMap(String mapName) async => mapData;
+  Future<WorldMap> loadAssetMap(String mapName) async => mapData;
 }

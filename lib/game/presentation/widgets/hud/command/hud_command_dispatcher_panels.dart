@@ -1,7 +1,7 @@
 part of 'hud_command_dispatcher.dart';
 
 extension HudCommandDispatcherPanels on HudCommandDispatcher {
-  void toggleCityProductionPanel({required GameState? state}) {
+  void toggleCityProductionPanel({required GameClientState? state}) {
     final modes = _ref.read(hudPanelControllerProvider);
     if (modes.cityBuildings) {
       closeCityProductionPanel();
@@ -10,7 +10,7 @@ extension HudCommandDispatcherPanels on HudCommandDispatcher {
     }
   }
 
-  void openCityProductionPanel({required GameState? state}) {
+  void openCityProductionPanel({required GameClientState? state}) {
     final modes = _ref.read(hudPanelControllerProvider);
     if (!HudPanelOpenAvailability.cityProduction(modes: modes, state: state)) {
       return;
@@ -29,7 +29,7 @@ extension HudCommandDispatcherPanels on HudCommandDispatcher {
 
   void toggleTechnologyPanel({
     required String activePlayerId,
-    required GameState? state,
+    required GameClientState? state,
   }) {
     final modes = _ref.read(hudPanelControllerProvider);
     if (modes.technology) {
@@ -41,7 +41,7 @@ extension HudCommandDispatcherPanels on HudCommandDispatcher {
 
   void openTechnologyPanel({
     required String activePlayerId,
-    required GameState? state,
+    required GameClientState? state,
   }) {
     final modes = _ref.read(hudPanelControllerProvider);
     if (!HudPanelOpenAvailability.technology(
@@ -58,7 +58,7 @@ extension HudCommandDispatcherPanels on HudCommandDispatcher {
 
   void closeTechnologyPanel({
     required String activePlayerId,
-    required GameState? state,
+    required GameClientState? state,
   }) {
     final modes = _ref.read(hudPanelControllerProvider);
     if (!modes.technology) return;
@@ -81,7 +81,7 @@ extension HudCommandDispatcherPanels on HudCommandDispatcher {
 
   void toggleObjectivesPanel({
     required String activePlayerId,
-    required GameState? state,
+    required GameClientState? state,
   }) {
     final modes = _ref.read(hudPanelControllerProvider);
     if (modes.objectives) {
@@ -93,7 +93,7 @@ extension HudCommandDispatcherPanels on HudCommandDispatcher {
 
   void openObjectivesPanel({
     required String activePlayerId,
-    required GameState? state,
+    required GameClientState? state,
   }) {
     final modes = _ref.read(hudPanelControllerProvider);
     if (!HudPanelOpenAvailability.objectives(
@@ -120,7 +120,7 @@ extension HudCommandDispatcherPanels on HudCommandDispatcher {
 
   void toggleEmpirePanel({
     required String activePlayerId,
-    required GameState? state,
+    required GameClientState? state,
   }) {
     final modes = _ref.read(hudPanelControllerProvider);
     if (modes.empire) {
@@ -132,7 +132,7 @@ extension HudCommandDispatcherPanels on HudCommandDispatcher {
 
   void openEmpirePanel({
     required String activePlayerId,
-    required GameState? state,
+    required GameClientState? state,
   }) {
     final modes = _ref.read(hudPanelControllerProvider);
     if (!HudPanelOpenAvailability.empire(
@@ -159,7 +159,7 @@ extension HudCommandDispatcherPanels on HudCommandDispatcher {
 
   void toggleActivityLogPanel({
     required String activePlayerId,
-    required GameState? state,
+    required GameClientState? state,
   }) {
     final modes = _ref.read(hudPanelControllerProvider);
     if (modes.activityLog) {
@@ -171,7 +171,7 @@ extension HudCommandDispatcherPanels on HudCommandDispatcher {
 
   void openActivityLogPanel({
     required String activePlayerId,
-    required GameState? state,
+    required GameClientState? state,
   }) {
     final modes = _ref.read(hudPanelControllerProvider);
     if (!HudPanelOpenAvailability.activityLog(

@@ -86,7 +86,7 @@ _AutoExploreOutput _executeAutoExplore(
         diplomacy: DiplomacyState.empty,
         playerIds: const ['benchmark_player'],
       ),
-      interaction: PersistedInteractionState.empty,
+      interaction: DomainActionState.empty,
     ),
     command: AutoExploreUnitCommand(fixture.unit.id),
     actorPlayerId: fixture.unit.ownerPlayerId,
@@ -164,7 +164,7 @@ final class _AutoExploreFixture {
   final GameUnit unit;
 
   MapTraversalView traversalView() {
-    return WorldMapReadView(worldMap);
+    return worldMap;
   }
 }
 

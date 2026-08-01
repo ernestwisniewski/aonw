@@ -3,20 +3,20 @@ import 'dart:ui' as ui;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_war_overlay.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_war_overlay_layer.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MapData _map() => MapData(
+WorldMap _map() => WorldMap(
   cols: 2,
   rows: 2,
   tiles: [
     for (int row = 0; row < 2; row++)
       for (int col = 0; col < 2; col++)
-        TileData(
+        WorldTile(
           col: col,
           row: row,
           terrains: const [TerrainType.grassland],
@@ -184,11 +184,11 @@ void main() {
 }
 
 FogOfWarOverlay _singleVisibleTileOverlay() {
-  final map = MapData(
+  final map = WorldMap(
     cols: 1,
     rows: 1,
-    tiles: const [
-      TileData(
+    tiles: [
+      WorldTile(
         col: 0,
         row: 0,
         terrains: [TerrainType.grassland],

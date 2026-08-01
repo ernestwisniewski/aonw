@@ -28,12 +28,12 @@ void main() {
       'player_2',
       DiplomaticRelationStatus.hostile,
     );
-    final persistent = PersistentGameState(
+    final persistent = DomainState.snapshot(
       units: units,
       cities: cities,
       playerGold: const {'player_1': 42},
       fogOfWar: fog,
-      runtimeState: GameRuntimeState(diplomacy: diplomacy),
+      diplomacy: diplomacy,
     );
     final canonical = DomainState.snapshot(
       turn: 4,
@@ -63,7 +63,7 @@ void main() {
   });
 }
 
-GameView _legacyView(PersistentGameState state) => GameView.fromPersistentState(
+GameView _legacyView(DomainState state) => GameView.fromDomainState(
   state,
   forPlayerId: 'player_1',
   turn: 4,
@@ -79,18 +79,18 @@ GameView _canonicalView(DomainState state) => GameView.fromDomainState(
   ruleset: GameRuleset.defaults,
 );
 
-final _mapData = MapData(
+final _mapData = WorldMap(
   cols: 2,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 1,
       row: 0,
       terrains: [TerrainType.plains],

@@ -17,8 +17,8 @@ class _ResourceExchangeOffer {
 }
 
 List<_ResourceTradeOffer> _resourceTradeOffers({
-  required GameState gameState,
-  required MapData mapData,
+  required GameClientState gameState,
+  required WorldMap mapData,
   required String activePlayerId,
   required String targetPlayerId,
 }) {
@@ -62,8 +62,8 @@ List<_ResourceTradeOffer> _resourceTradeOffers({
 }
 
 List<_ResourceExchangeOffer> _resourceExchangeOffers({
-  required GameState gameState,
-  required MapData mapData,
+  required GameClientState gameState,
+  required WorldMap mapData,
   required String activePlayerId,
   required String targetPlayerId,
 }) {

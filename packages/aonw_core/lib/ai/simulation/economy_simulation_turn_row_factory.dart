@@ -5,7 +5,7 @@ final class _EconomySimulationTurnRowFactory {
 
   EconomySimulationTurnRow rowFor({
     required int turn,
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
     required MapReadView mapView,
     required GameRuleset ruleset,
@@ -102,7 +102,7 @@ final class _EconomySimulationTurnRowFactory {
   }
 
   CityUnitSupplyBreakdown _unitSupplyForPlayer(
-    PersistentGameState state,
+    DomainState state,
     String playerId,
     MapReadView mapView,
     GameRuleset ruleset,
@@ -121,7 +121,7 @@ final class _EconomySimulationTurnRowFactory {
   }
 
   int _baseScienceForPlayer(
-    PersistentGameState state,
+    DomainState state,
     String playerId,
     GameRuleset ruleset,
   ) {
@@ -138,7 +138,7 @@ final class _EconomySimulationTurnRowFactory {
   }
 
   _GoldBreakdown _goldBreakdownForPlayer({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
     required MapReadView mapView,
     required GameRuleset ruleset,
@@ -184,7 +184,7 @@ final class _EconomySimulationTurnRowFactory {
   }
 
   int _researchProjectScienceForPlayer({
-    required PersistentGameState state,
+    required DomainState state,
     required String playerId,
     required MapReadView mapView,
     required GameRuleset ruleset,
@@ -220,7 +220,7 @@ final class _EconomySimulationTurnRowFactory {
 
   CityEconomyBreakdown _economyFor({
     required GameCity city,
-    required PersistentGameState state,
+    required DomainState state,
     required MapReadView mapView,
     required GameRuleset ruleset,
     required TechnologyEffectSummary technologyEffects,

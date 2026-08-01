@@ -101,7 +101,7 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
   bool get _overlayPanelActive =>
       !_menuCollapsed && (_optionsOpen || _helpOpen);
 
-  void _toggleOptions(String activePlayerId, GameState? gameState) {
+  void _toggleOptions(String activePlayerId, GameClientState? gameState) {
     final opening = !_optionsOpen;
     if (opening) {
       _closeHudSidePanels(activePlayerId: activePlayerId, gameState: gameState);
@@ -113,7 +113,7 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
     _publishOverlayPanelActive();
   }
 
-  void _toggleHelpPanel(String activePlayerId, GameState? gameState) {
+  void _toggleHelpPanel(String activePlayerId, GameClientState? gameState) {
     final opening = !_helpOpen;
     if (opening) {
       _closeHudSidePanels(activePlayerId: activePlayerId, gameState: gameState);
@@ -134,7 +134,7 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
     _publishOverlayPanelActive();
   }
 
-  void _collapseMenu(String activePlayerId, GameState? gameState) {
+  void _collapseMenu(String activePlayerId, GameClientState? gameState) {
     _closeHudSidePanels(activePlayerId: activePlayerId, gameState: gameState);
     setState(() {
       _menuCollapsed = true;

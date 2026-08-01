@@ -23,7 +23,7 @@ final class LiveServerEvent {
     required WireEvent wire,
     required Iterable<GameEvent> events,
     required Iterable<CombatAnimationFact> combatAnimations,
-    SaveSnapshot? snapshot,
+    CanonicalGameSnapshot? snapshot,
   }) {
     return LiveServerEvent(
       wire: wire,
@@ -39,6 +39,6 @@ final class LiveServerEvent {
   final WireEvent wire;
   final List<GameEvent> events;
   final List<CombatAnimationFact> combatAnimations;
-  final SaveSnapshot? snapshot;
+  final CanonicalGameSnapshot? snapshot;
   final List<MovementCommandExecution> movementExecutions;
 }

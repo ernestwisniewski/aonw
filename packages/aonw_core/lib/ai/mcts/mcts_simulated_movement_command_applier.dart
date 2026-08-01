@@ -44,7 +44,7 @@ final class MctsSimulatedMovementCommandApplier {
         (throw StateError(
           'MCTS unit actions require a canonical engine snapshot.',
         ));
-    final state = MctsSimulationProjection.persistentStateFromView(
+    final state = MctsSimulationProjection.domainStateFromView(
       view,
       units: view.movementBlockingUnits,
       cities: [...ownCities, ...rememberedEnemyCities],
@@ -67,7 +67,7 @@ final class MctsSimulatedMovementCommandApplier {
       return (nextView: view);
     }
     return (
-      nextView: MctsSimulationProjection.viewFromPersistentState(
+      nextView: MctsSimulationProjection.viewFromDomainState(
         result.state,
         previousView: view,
         engineSnapshot: result.snapshot,

@@ -39,23 +39,22 @@ final class AiTurnPreparationBuilder {
   Future<PreparedAiTurn?> prepare({
     required String saveId,
     required String playerId,
-    SaveSnapshot? snapshot,
+    CanonicalGameSnapshot? snapshot,
   }) async {
     final resolvedSnapshot = snapshot ?? await repository.load(saveId);
     final player = _aiPlayerFor(resolvedSnapshot, saveId, playerId);
     if (player == null) return null;
     final domain = resolvedSnapshot.domain;
-    final session = resolvedSnapshot.session;
     final metadata = resolvedSnapshot.metadata;
     final ai = player.ai!;
     const civRegistry = CivilizationProfileRegistry();
     final civProfile = civRegistry.profileFor(player.country);
-    final initialState = resolvedSnapshot.toGameState(
+    final initialState = resolvedSnapshot.toClientState(
       activePlayerId: playerId,
       activePlayerCanAct: true,
     );
     final planningState = initialState;
-    final planningSnapshot = resolvedSnapshot.withGameState(planningState);
+    final planningSnapshot = resolvedSnapshot.withClientState(planningState);
     final planningDomain = planningSnapshot.canonical.domain;
     final effectiveRuleset = ruleset.copyWith(
       paceBalance: domain.matchRules.paceBalance,
@@ -108,7 +107,7 @@ final class AiTurnPreparationBuilder {
       civProfile: civProfile,
       scoreRace: pressureTargets.scoreRace,
       deadline: _deadlineFor(
-        gameMode: session.gameMode,
+        gameMode: domain.gameMode,
         savedAt: metadata.savedAtUtc,
         rawTurnStartedAt: resolvedSnapshot.persistedTurnStartedAt,
       ),
@@ -150,7 +149,11 @@ final class AiTurnPreparationBuilder {
     );
   }
 
-  Player? _aiPlayerFor(SaveSnapshot snapshot, String saveId, String playerId) {
+  Player? _aiPlayerFor(
+    CanonicalGameSnapshot snapshot,
+    String saveId,
+    String playerId,
+  ) {
     if (snapshot.metadata.id != saveId) return null;
     final player = snapshot.domain.participants.byId(playerId);
     if (player?.kind != PlayerKind.ai || player?.ai == null) return null;
@@ -177,7 +180,7 @@ final class AiTurnPreparationBuilder {
   }
 
   static GameView _aiPlanningView({
-    required SaveSnapshot snapshot,
+    required CanonicalGameSnapshot snapshot,
     required DomainState domain,
     required String playerId,
     required MapReadView mapData,
@@ -232,8 +235,8 @@ final class AiTurnPreparationBuilder {
 }
 
 final class PreparedAiTurn {
-  final SaveSnapshot snapshot;
-  final GameState initialState;
+  final CanonicalGameSnapshot snapshot;
+  final GameClientState initialState;
   final GameView view;
   final AiContext context;
   final AiStrategy strategy;

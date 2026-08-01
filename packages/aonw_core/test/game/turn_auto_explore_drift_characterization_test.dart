@@ -40,7 +40,7 @@ void main() {
       expect(peace.units.single.posture, UnitPosture.active);
       expect(peace.fogOfWar, same(fog));
       expect(peace.diplomacy, DiplomacyState.empty);
-      expect(peace.interaction, PersistedInteractionState.empty);
+      expect(peace.interaction, DomainActionState.empty);
       expect(peace.events, isEmpty);
       expect(peace.executions, isEmpty);
 
@@ -49,7 +49,7 @@ void main() {
       expect(war.units.single.posture, UnitPosture.active);
       expect(war.fogOfWar, same(fog));
       expect(war.diplomacy, warDiplomacy);
-      expect(war.interaction, PersistedInteractionState.empty);
+      expect(war.interaction, DomainActionState.empty);
       expect(war.events, isEmpty);
       expect(war.executions, isEmpty);
     });
@@ -83,11 +83,8 @@ void main() {
         expect(pair.turn.changed, isFalse);
         expect(pair.turn.units, pair.kernelInput.units);
         expect(pair.turn.fogOfWar, same(pair.kernelInput.fogOfWar));
-        expect(
-          pair.turn.diplomacy,
-          same(pair.kernelInput.runtimeState.diplomacy),
-        );
-        expect(pair.turn.interaction, same(PersistedInteractionState.empty));
+        expect(pair.turn.diplomacy, same(pair.kernelInput.diplomacy));
+        expect(pair.turn.interaction, same(DomainActionState.empty));
         expect(pair.turn.events, isEmpty);
         expect(pair.turn.executions, isEmpty);
         expect(pair.kernel.accepted, isFalse);
@@ -180,7 +177,7 @@ void main() {
           cities: const [],
           diplomacy: DiplomacyState.empty,
           fogOfWar: _originOnlyFog(),
-          interaction: PersistedInteractionState.empty,
+          interaction: DomainActionState.empty,
         ),
         context: TurnMovementContext(
           playerIds: const {_playerId},
@@ -304,7 +301,7 @@ TurnAutoExploreAdvance _advance({
   required MapTraversalView mapData,
   List<GameCity> cities = const [],
   DiplomacyState diplomacy = DiplomacyState.empty,
-  PersistedInteractionState interaction = PersistedInteractionState.empty,
+  DomainActionState interaction = DomainActionState.empty,
 }) {
   return TurnAutoExploreAdvancer.advance(
     units: units,
@@ -343,18 +340,18 @@ Set<HexCoordinate> _lineHexes(int count) => {
   for (var col = 0; col < count; col++) HexCoordinate(col: col, row: 0),
 };
 
-MapData _map({
+WorldMap _map({
   required int cols,
   int rows = 1,
   Map<int, List<TerrainType>> terrainOverrides = const {},
 }) {
-  return MapData(
+  return WorldMap(
     cols: cols,
     rows: rows,
     tiles: [
       for (var row = 0; row < rows; row++)
         for (var col = 0; col < cols; col++)
-          TileData(
+          WorldTile(
             col: col,
             row: row,
             terrains: terrainOverrides[col] ?? const [TerrainType.grassland],

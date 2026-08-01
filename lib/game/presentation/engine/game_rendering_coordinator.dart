@@ -41,7 +41,7 @@ class GameRenderingCoordinator {
   final FogOfWarOverlayLayer fogOfWar;
   final ThreatOverlayLayer threatOverlay;
   final ActionPaletteLayer actionPalette;
-  final LegacyMapGrid grid;
+  final WorldMapGrid grid;
   final GamePlanningMarkerCoordinator _planningMarkers;
 
   GameRenderingCoordinator({
@@ -62,9 +62,9 @@ class GameRenderingCoordinator {
   }) : _planningMarkers = GamePlanningMarkerCoordinator(grid: grid);
 
   void syncAll({
-    required GameState state,
+    required GameClientState state,
     required Component parent,
-    required ValueNotifier<GameRenderViewModel> viewModelNotifier,
+    required ValueNotifier<RenderState> viewModelNotifier,
     List<ActionPaletteOption> workerActionPaletteOptions = const [],
     bool showCityLabels = true,
     bool strategicView = false,
@@ -73,7 +73,7 @@ class GameRenderingCoordinator {
       playerId: state.activePlayerId,
       research: state.research,
     );
-    final viewModel = GameRenderViewModel.fromState(state);
+    final viewModel = RenderState.fromState(state);
     _publishViewModel(viewModel, viewModelNotifier);
     _syncGridSelection(grid, viewModel);
     _planningMarkers.sync(state);
@@ -109,14 +109,14 @@ class GameRenderingCoordinator {
   }
 
   void _publishViewModel(
-    GameRenderViewModel viewModel,
-    ValueNotifier<GameRenderViewModel> viewModelNotifier,
+    RenderState viewModel,
+    ValueNotifier<RenderState> viewModelNotifier,
   ) {
     if (viewModelNotifier.value == viewModel) return;
     viewModelNotifier.value = viewModel;
   }
 
-  void _syncGridSelection(LegacyMapGrid grid, GameRenderViewModel viewModel) {
+  void _syncGridSelection(WorldMapGrid grid, RenderState viewModel) {
     final selection = viewModel.selection;
     final tile = selection?.tile;
     if (selection?.type == GameSelectionType.tile && tile != null) {
@@ -127,7 +127,7 @@ class GameRenderingCoordinator {
   }
 
   void _syncCityMarkers(
-    GameState state,
+    GameClientState state,
     Component world, {
     required bool showCityLabels,
     required bool strategicView,
@@ -162,7 +162,7 @@ class GameRenderingCoordinator {
     );
   }
 
-  Set<String> _citiesWithStoredArtifacts(GameState state) {
+  Set<String> _citiesWithStoredArtifacts(GameClientState state) {
     return {
       for (final artifact in state.artifacts)
         if (artifact.location.isStored && artifact.location.cityId != null)
@@ -194,7 +194,7 @@ class GameRenderingCoordinator {
     return null;
   }
 
-  void _syncFieldImprovementMarkers(GameState state, Component world) {
+  void _syncFieldImprovementMarkers(GameClientState state, Component world) {
     final visibility = state.activePlayerVisibility;
     final visibleImprovements = state.fieldImprovements
         .where(
@@ -215,7 +215,7 @@ class GameRenderingCoordinator {
     );
   }
 
-  void _syncArtifactMarkers(GameState state, Component world) {
+  void _syncArtifactMarkers(GameClientState state, Component world) {
     final visibility = state.activePlayerVisibility;
     final occupiedHexes = {
       for (final unit in state.unitsVisibleToActivePlayer)
@@ -237,7 +237,7 @@ class GameRenderingCoordinator {
     );
   }
 
-  void _syncMapObjectiveMarkers(GameState state, Component world) {
+  void _syncMapObjectiveMarkers(GameClientState state, Component world) {
     final visibility = state.activePlayerVisibility;
     final occupiedHexes = {
       for (final unit in state.unitsVisibleToActivePlayer)
@@ -276,7 +276,7 @@ class GameRenderingCoordinator {
     };
   }
 
-  CityHex? _selectedArtifactHex(GameState state) {
+  CityHex? _selectedArtifactHex(GameClientState state) {
     final selection = state.selection;
     final tile = selection?.tile;
     if (tile == null) return null;
@@ -287,14 +287,14 @@ class GameRenderingCoordinator {
     return null;
   }
 
-  CityHex? _selectedFieldImprovementHex(GameState state) {
+  CityHex? _selectedFieldImprovementHex(GameClientState state) {
     final selection = state.selection;
     if (selection?.type != GameSelectionType.fieldImprovement) return null;
     return selection?.fieldImprovement?.hex;
   }
 
   Map<String, double> _cityHealthFractions(
-    GameState state,
+    GameClientState state,
     Iterable<GameCity> cities,
   ) {
     return {
@@ -302,7 +302,7 @@ class GameRenderingCoordinator {
     };
   }
 
-  void _syncCityManagement(GameState state, {required bool dimmed}) {
+  void _syncCityManagement(GameClientState state, {required bool dimmed}) {
     final visibility = state.activePlayerVisibility;
     cityManagement.sync(
       parent: grid,
@@ -317,7 +317,7 @@ class GameRenderingCoordinator {
   }
 
   void _syncThreatOverlay(
-    GameState state, {
+    GameClientState state, {
     required bool enabled,
     required bool dimmed,
   }) {
@@ -333,7 +333,7 @@ class GameRenderingCoordinator {
     );
   }
 
-  void _syncFogOfWar(GameState state) {
+  void _syncFogOfWar(GameClientState state) {
     fogOfWar.sync(
       parent: grid,
       mapData: grid.mapData,
@@ -341,7 +341,7 @@ class GameRenderingCoordinator {
     );
   }
 
-  void _syncEraTint(GameState state) {
+  void _syncEraTint(GameClientState state) {
     eraTint.sync(
       parent: grid,
       mapData: grid.mapData,
@@ -349,7 +349,7 @@ class GameRenderingCoordinator {
     );
   }
 
-  void _syncUnitMarkers(GameState state, Component world) {
+  void _syncUnitMarkers(GameClientState state, Component world) {
     final cityTiles = {
       for (final city in state.citiesKnownToActivePlayer)
         (col: city.center.col, row: city.center.row),
@@ -365,7 +365,7 @@ class GameRenderingCoordinator {
     );
   }
 
-  Map<String, int> _artifactExcavationTurnsByUnitId(GameState state) {
+  Map<String, int> _artifactExcavationTurnsByUnitId(GameClientState state) {
     return {
       for (final artifact in state.artifacts)
         if (artifact.location.isBeingExcavated &&
@@ -374,7 +374,7 @@ class GameRenderingCoordinator {
     };
   }
 
-  Set<String> _attackTargetUnitIds(GameState state) {
+  Set<String> _attackTargetUnitIds(GameClientState state) {
     final attacker = _planningMarkers.selectedAttackTargetingUnit(state);
     if (attacker == null) return const {};
 
@@ -388,7 +388,7 @@ class GameRenderingCoordinator {
   }
 
   void _syncMovePreview(
-    GameState state,
+    GameClientState state,
     Component parent, {
     required bool dimmed,
   }) {
@@ -430,20 +430,20 @@ class GameRenderingCoordinator {
     movePreview.syncMany(parent: parent, previews: entries);
   }
 
-  bool _canShowPathForUnit(GameState state, String unitId) {
+  bool _canShowPathForUnit(GameClientState state, String unitId) {
     final unit = state.unitById(unitId);
     return unit != null && state.canControlUnit(unit);
   }
 
-  bool _shouldShowThreatOverlay(GameState state) {
+  bool _shouldShowThreatOverlay(GameClientState state) {
     return state.interactionMode == GameInteractionMode.attackTargeting;
   }
 
-  bool _shouldDimThreatOverlay(GameState state) {
+  bool _shouldDimThreatOverlay(GameClientState state) {
     return state.interactionMode != GameInteractionMode.attackTargeting;
   }
 
-  bool _shouldDimCityManagementOverlay(GameState state) {
+  bool _shouldDimCityManagementOverlay(GameClientState state) {
     final mode = state.interactionMode;
     final selectedUnit = state.selectedUnit;
     if (mode == GameInteractionMode.moveTargeting &&
@@ -459,7 +459,7 @@ class GameRenderingCoordinator {
         mode != GameInteractionMode.cityExpansionSelection;
   }
 
-  void _syncCityFounding(GameState state, Component world) {
+  void _syncCityFounding(GameClientState state, Component world) {
     if (!grid.isMounted) return;
     final visibility = state.activePlayerVisibility;
     cityFounding.sync(

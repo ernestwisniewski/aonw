@@ -361,11 +361,13 @@ final gameSaveSnapshotProvider = GameSaveSnapshotFamily._();
 final class GameSaveSnapshotProvider
     extends
         $FunctionalProvider<
-          AsyncValue<SaveSnapshot?>,
-          SaveSnapshot?,
-          FutureOr<SaveSnapshot?>
+          AsyncValue<CanonicalGameSnapshot?>,
+          CanonicalGameSnapshot?,
+          FutureOr<CanonicalGameSnapshot?>
         >
-    with $FutureModifier<SaveSnapshot?>, $FutureProvider<SaveSnapshot?> {
+    with
+        $FutureModifier<CanonicalGameSnapshot?>,
+        $FutureProvider<CanonicalGameSnapshot?> {
   GameSaveSnapshotProvider._({
     required GameSaveSnapshotFamily super.from,
     required String super.argument,
@@ -389,12 +391,12 @@ final class GameSaveSnapshotProvider
 
   @$internal
   @override
-  $FutureProviderElement<SaveSnapshot?> $createElement(
+  $FutureProviderElement<CanonicalGameSnapshot?> $createElement(
     $ProviderPointer pointer,
   ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<SaveSnapshot?> create(Ref ref) {
+  FutureOr<CanonicalGameSnapshot?> create(Ref ref) {
     final argument = this.argument as String;
     return gameSaveSnapshot(ref, argument);
   }
@@ -410,10 +412,10 @@ final class GameSaveSnapshotProvider
   }
 }
 
-String _$gameSaveSnapshotHash() => r'6dac830148451806a53c549bc62fd471773319db';
+String _$gameSaveSnapshotHash() => r'c895326944c7becdb04e297fa935401e5cbd4be2';
 
 final class GameSaveSnapshotFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<SaveSnapshot?>, String> {
+    with $FunctionalFamilyOverride<FutureOr<CanonicalGameSnapshot?>, String> {
   GameSaveSnapshotFamily._()
     : super(
         retry: _doNotRetry,

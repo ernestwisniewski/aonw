@@ -17,15 +17,15 @@ class _BenchmarkRuntimeReport {
   final int totalUnitCount;
   final int totalCityCount;
   final List<_Finding> findings;
-  factory _BenchmarkRuntimeReport.fromSnapshot(SaveSnapshot snapshot) {
+  factory _BenchmarkRuntimeReport.fromSnapshot(CanonicalGameSnapshot snapshot) {
     final domain = snapshot.domain;
     final shouldRunLocalAi = shouldRunLocalAiForMode(
-      gameMode: snapshot.session.gameMode,
+      gameMode: snapshot.domain.gameMode,
       saveId: snapshot.metadata.id,
       networkSession: null,
     );
     final localSinglePlayer = isLocalSinglePlayerAiRuntimeForParticipants(
-      gameMode: snapshot.session.gameMode,
+      gameMode: snapshot.domain.gameMode,
       saveId: snapshot.metadata.id,
       participants: snapshot.persistedPlayers,
       networkSession: null,
@@ -106,8 +106,8 @@ class _BenchmarkReport {
   });
 
   final String savePath;
-  final SaveSnapshot snapshot;
-  final MapData mapData;
+  final CanonicalGameSnapshot snapshot;
+  final WorldMap mapData;
   final _BenchmarkRuntimeReport runtime;
   final List<_PlayerBenchmarkResult> playerResults;
   final int repeats;
@@ -141,7 +141,7 @@ class _BenchmarkReport {
         'turn': snapshot.domain.turn,
         'savedAt': snapshot.metadata.savedAtUtc.toIso8601String(),
         'mapName': snapshot.metadata.world.name,
-        'gameMode': snapshot.session.gameMode.name,
+        'gameMode': snapshot.domain.gameMode.name,
       },
       'runtime': runtime.toJson(),
       'parameters': {

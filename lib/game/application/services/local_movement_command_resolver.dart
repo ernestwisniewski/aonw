@@ -21,8 +21,8 @@ final class LocalMovementCommandResolution {
     this.movementExecutions = const [],
   });
 
-  final SaveSnapshot snapshot;
-  final GameState state;
+  final CanonicalGameSnapshot snapshot;
+  final GameClientState state;
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
   final List<MovementCommandExecution> movementExecutions;
@@ -38,8 +38,8 @@ final class LocalMovementCommandResolver {
   final GameRuleset ruleset;
 
   LocalMovementCommandResolution resolve({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameCommandContext context,
@@ -83,8 +83,8 @@ final class LocalMovementCommandResolver {
   }
 
   GameEngineResult _applyEngine({
-    required SaveSnapshot snapshot,
-    required GameState state,
+    required CanonicalGameSnapshot snapshot,
+    required GameClientState state,
     required DomainCommand command,
     required GameCommandContext context,
   }) {
@@ -107,8 +107,8 @@ final class LocalMovementCommandResolver {
   }
 
   LocalMovementCommandResolution _acceptedResolution({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     required GameEngineAccepted accepted,
@@ -133,12 +133,12 @@ final class LocalMovementCommandResolver {
     );
   }
 
-  bool _canAct(GameState state, GameCommandContext context) {
+  bool _canAct(GameClientState state, GameCommandContext context) {
     return context.canAct && (context.hasActor || state.activePlayerCanAct);
   }
 
   MovementCommandVisibilityMode _visibilityMode(
-    GameState state,
+    GameClientState state,
     GameCommandContext context,
   ) {
     if (context.ignoreFogOfWar ||
@@ -149,8 +149,8 @@ final class LocalMovementCommandResolver {
   }
 
   LocalMovementCommandResolution _unchanged({
-    required SaveSnapshot baseSnapshot,
-    required GameState currentState,
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
     String? rejectionReason,
@@ -198,8 +198,8 @@ final class LocalMovementCommandResolver {
   }
 
   String _actorPlayerId({
-    required SaveSnapshot snapshot,
-    required GameState state,
+    required CanonicalGameSnapshot snapshot,
+    required GameClientState state,
     required DomainCommand command,
     required GameCommandContext context,
   }) {

@@ -1,16 +1,14 @@
 import 'package:aonw_core/application.dart';
-import 'package:aonw_core/game/compatibility.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
-import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/map_data.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
@@ -83,10 +81,27 @@ void _validateInputs(List<int> entityCounts, int timingSamples) {
 }
 
 _BoundaryResult _executeBoundaryRoundTrip(_TurnFinalizationFixture fixture) {
-  const adapter = LegacyGameSnapshotAdapter();
-  final canonicalInput = adapter.toCanonical(
-    save: fixture.save,
-    state: fixture.state,
+  final save = fixture.save;
+  final canonicalInput = CanonicalGameSnapshot.snapshot(
+    domain: fixture.state.copyWith(
+      turn: save.turn,
+      matchRules: save.matchRules,
+      participants: save.players,
+      gameMode: save.gameMode,
+      turnStatesByPlayerId: save.playerStates,
+    ),
+    metadata: GameSnapshotMetadata(
+      id: save.id,
+      schemaVersion: save.schemaVersion,
+      name: save.name,
+      world: WorldReference(name: save.mapName, source: save.mapSource),
+      savedAtUtc: save.savedAt,
+      camera: GameSnapshotCamera(
+        x: save.camera.x,
+        y: save.camera.y,
+        zoom: save.camera.zoom,
+      ),
+    ),
     eventLogOffset: fixture.eventLogOffset,
   );
   final playerIds = _players.map((player) => player.id).toList();
@@ -104,7 +119,7 @@ _BoundaryResult _executeBoundaryRoundTrip(_TurnFinalizationFixture fixture) {
     ),
   );
   return _BoundaryResult(
-    legacy: adapter.toLegacy(canonicalResult.snapshot),
+    snapshot: canonicalResult.snapshot,
     events: canonicalResult.events,
     movementDelta: canonicalResult.movementDelta,
   );
@@ -114,15 +129,16 @@ Map<String, Object?> _stableResult(
   _TurnFinalizationFixture fixture,
   _BoundaryResult result,
 ) {
-  final outputEntities = _entityCount(result.legacy.state);
+  final output = result.snapshot;
+  final outputEntities = _entityCount(output.domain);
   if (outputEntities != fixture.entityCount ||
-      result.legacy.eventLogOffset != fixture.eventLogOffset ||
-      result.legacy.save.turn != fixture.save.turn + 1) {
+      output.eventLogOffset != fixture.eventLogOffset ||
+      output.domain.turn != fixture.save.turn + 1) {
     throw StateError(
       'Turn finalization did not preserve the bounded fixture at '
       '${fixture.entityCount} entities: outputEntities=$outputEntities, '
-      'offset=${result.legacy.eventLogOffset}/'
-      '${fixture.eventLogOffset}, turn=${result.legacy.save.turn}/'
+      'offset=${output.eventLogOffset}/'
+      '${fixture.eventLogOffset}, turn=${output.domain.turn}/'
       '${fixture.save.turn + 1}.',
     );
   }
@@ -154,18 +170,25 @@ Map<String, Object?> _stableResult(
     'inputUnits': fixture.state.units.length,
     'movementAfterUnits': movementDelta.afterUnits.length,
     'movementBeforeUnits': movementDelta.beforeUnits.length,
-    'offsetPreserved': result.legacy.eventLogOffset == fixture.eventLogOffset,
-    'outputArtifacts': result.legacy.state.artifacts.length,
+    'offsetPreserved': output.eventLogOffset == fixture.eventLogOffset,
+    'outputArtifacts': output.domain.artifacts.length,
     'outputDigest': stableDigest({
-      'save': result.legacy.save.toJson(),
-      'state': result.legacy.state.toJson(),
-      'eventLogOffset': result.legacy.eventLogOffset,
+      'metadata': {
+        'id': output.metadata.id,
+        'schemaVersion': output.metadata.schemaVersion,
+        'name': output.metadata.name,
+        'world': output.metadata.world.name,
+        'worldSource': output.metadata.world.source.name,
+        'savedAtUtc': output.metadata.savedAtUtc.toIso8601String(),
+      },
+      'domain': CanonicalGameSnapshotCodec.encodeDomainState(output.domain),
+      'eventLogOffset': output.eventLogOffset,
       'events': eventJson,
     }),
     'outputEntities': outputEntities,
-    'outputOffset': result.legacy.eventLogOffset,
-    'outputTurn': result.legacy.save.turn,
-    'outputUnits': result.legacy.state.units.length,
+    'outputOffset': output.eventLogOffset,
+    'outputTurn': output.domain.turn,
+    'outputUnits': output.domain.units.length,
   };
 }
 
@@ -182,7 +205,7 @@ void _requireStableSamples(
   }
 }
 
-int _entityCount(PersistentGameState state) {
+int _entityCount(DomainState state) {
   return state.units.length +
       state.cities.length +
       state.artifacts.length +
@@ -239,7 +262,7 @@ final class _TurnFinalizationFixture {
         players: _players,
         gameMode: GameMode.multiplayer,
       ),
-      state: PersistentGameState.snapshot(
+      state: DomainState.snapshot(
         playerColors: const {'player_1': 0xFF3D5FA8, 'player_2': 0xFFB83A3A},
         playerCountries: const {
           'player_1': PlayerCountry.poland,
@@ -248,19 +271,18 @@ final class _TurnFinalizationFixture {
         playerGold: const {'player_1': 100, 'player_2': 100},
         units: units,
         artifacts: artifacts,
-        runtimeState: GameRuntimeState.snapshot(
-          submittedPlayerIds: const {'player_1'},
-          intendedAttacks: const [
-            IntendedAttack(
-              attackerUnitId: 'unit_0',
-              defenderCol: 1,
-              defenderRow: 0,
-              declaredAtTick: 1,
-              declaringPlayerId: 'player_1',
-            ),
-          ],
-          turnStartedAt: DateTime.utc(2026, 7, 17, 11),
-        ),
+
+        submittedPlayerIds: const {'player_1'},
+        intendedAttacks: const [
+          IntendedAttack(
+            attackerUnitId: 'unit_0',
+            defenderCol: 1,
+            defenderRow: 0,
+            declaredAtTick: 1,
+            declaringPlayerId: 'player_1',
+          ),
+        ],
+        turnStartedAt: DateTime.utc(2026, 7, 17, 11),
       ),
       mapView: _mapView(),
     );
@@ -269,34 +291,34 @@ final class _TurnFinalizationFixture {
   final int entityCount;
   final int eventLogOffset;
   final GameSave save;
-  final PersistentGameState state;
+  final DomainState state;
   final MapReadView mapView;
 }
 
 final class _BoundaryResult {
   const _BoundaryResult({
-    required this.legacy,
+    required this.snapshot,
     required this.events,
     required this.movementDelta,
   });
 
-  final LegacyGameSnapshotParts legacy;
+  final CanonicalGameSnapshot snapshot;
   final List<GameEvent> events;
   final MovementExecutionDelta movementDelta;
 }
 
-MapReadView _mapView() => MapData(
+MapReadView _mapView() => WorldMap(
   cols: 2,
   rows: 1,
-  tiles: const [
-    TileData(
+  tiles: [
+    WorldTile(
       col: 0,
       row: 0,
       terrains: [TerrainType.plains],
       resources: [],
       height: 0,
     ),
-    TileData(
+    WorldTile(
       col: 1,
       row: 0,
       terrains: [TerrainType.plains],
@@ -304,4 +326,4 @@ MapReadView _mapView() => MapData(
       height: 0,
     ),
   ],
-).indexedReadView();
+);

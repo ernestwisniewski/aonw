@@ -5,7 +5,7 @@ extension _MultiplayerAvatarsRailOverlayGamepad
   void _handleAvatarTapped(
     BuildContext context, {
     required GameSave gameSave,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required String activePlayerId,
     required String playerId,
   }) {
@@ -44,8 +44,8 @@ extension _MultiplayerAvatarsRailOverlayGamepad
   Future<void> _showDiplomacyPopup(
     BuildContext context, {
     required GameSave gameSave,
-    required GameState gameState,
-    required MapData mapData,
+    required GameClientState gameState,
+    required WorldMap mapData,
     required String activePlayerId,
     required String targetPlayerId,
   }) async {
@@ -72,7 +72,7 @@ extension _MultiplayerAvatarsRailOverlayGamepad
   Future<void> _showRequestedPlayersSheet({
     required MultiplayerStatusSheetRequest next,
     required GameSave gameSave,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required DiplomacyState diplomacy,
     required String activePlayerId,
   }) async {
@@ -108,7 +108,7 @@ extension _MultiplayerAvatarsRailOverlayGamepad
   List<HudGamepadFocusTarget> _playerGamepadFocusTargets({
     required AppLocalizations l10n,
     required GameSave gameSave,
-    required GameState? gameState,
+    required GameClientState? gameState,
     required String activePlayerId,
   }) {
     return [

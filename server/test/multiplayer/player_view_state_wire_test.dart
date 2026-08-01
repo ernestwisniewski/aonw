@@ -7,7 +7,7 @@ import 'package:test/test.dart';
 
 void main() {
   test('preserves the projected state wire JSON bit for bit', () {
-    final canonicalState = PersistentGameState.snapshot(
+    final canonicalState = DomainState.snapshot(
       playerColors: const {'player-owner': 1},
       playerCountries: const {'player-owner': PlayerCountry.poland},
       playerGold: const {'player-owner': 111},
@@ -20,7 +20,10 @@ void main() {
         players: const {'player-owner': PlayerResearchState.empty},
       ),
     );
-    final expectedState = {...canonicalState.toJson(), 'phase': 'running'};
+    final expectedState = {
+      ...CanonicalGameSnapshotCodec.encodeDomainState(canonicalState),
+      'phase': 'running',
+    };
     final canonical = WireSnapshot(
       matchId: 'match-1',
       offset: 1,

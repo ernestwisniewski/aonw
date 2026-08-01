@@ -398,7 +398,7 @@ void _addDiplomaticMessageNotification(ProviderContainer container) {
     createdTurn: 1,
     expiresOnTurn: 6,
   );
-  final state = GameState(
+  final state = GameClientState(
     activePlayerId: 'player_2',
     playerColors: const {'player_1': 0xFF4A7FC4, 'player_2': 0xFFC45050},
     diplomacy: DiplomacyState.empty.addMessage(message),
@@ -430,7 +430,7 @@ void _addDiplomaticProposalNotification(ProviderContainer container) {
     createdTurn: 1,
     expiresOnTurn: 6,
   );
-  final state = GameState(
+  final state = GameClientState(
     activePlayerId: 'player_2',
     playerColors: const {'player_1': 0xFF4A7FC4, 'player_2': 0xFFC45050},
     diplomacy: DiplomacyState.empty.addProposal(proposal),
@@ -453,7 +453,7 @@ void _addDiplomaticProposalNotification(ProviderContainer container) {
 }
 
 void _addExpiredProposalNotification(ProviderContainer container) {
-  const state = GameState(
+  final state = GameClientState(
     activePlayerId: 'player_2',
     playerColors: {'player_1': 0xFF4A7FC4, 'player_2': 0xFFC45050},
   );

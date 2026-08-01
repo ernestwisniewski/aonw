@@ -29,8 +29,8 @@ class ReplayBuildException implements Exception {
 
 class ReplayTimeline {
   final String saveId;
-  final SaveSnapshot initialSnapshot;
-  final GameState initialState;
+  final CanonicalGameSnapshot initialSnapshot;
+  final GameClientState initialState;
   final List<ReplayStep> steps;
 
   const ReplayTimeline({
@@ -42,7 +42,6 @@ class ReplayTimeline {
 
   GameSnapshotMetadata get metadata => initialSnapshot.metadata;
   List<Player> get participants => initialSnapshot.domain.participants;
-  MatchSessionState get session => initialSnapshot.session;
   CameraState get initialCamera {
     final camera = metadata.camera;
     return CameraState(x: camera.x, y: camera.y, zoom: camera.zoom);
@@ -52,7 +51,7 @@ class ReplayTimeline {
     final ids = [
       for (final player in participants)
         if (player.id.isNotEmpty) player.id,
-      for (final playerId in session.turnStatesByPlayerId.keys)
+      for (final playerId in initialSnapshot.domain.turnStatesByPlayerId.keys)
         if (playerId.isNotEmpty) playerId,
     ];
     return ids.toSet().toList()..sort();
@@ -69,9 +68,9 @@ class ReplayTimeline {
 class ReplayStep {
   final int index;
   final RecordedDomainCommand loggedCommand;
-  final SaveSnapshot snapshot;
-  final GameState previousState;
-  final GameState state;
+  final CanonicalGameSnapshot snapshot;
+  final GameClientState previousState;
+  final GameClientState state;
   final List<GameEvent> events;
   final List<UiEffect> uiEffects;
   final List<CombatAnimationFact> combatAnimations;
@@ -93,7 +92,6 @@ class ReplayStep {
 
   GameSnapshotMetadata get metadata => snapshot.metadata;
   DomainState get domain => snapshot.domain;
-  MatchSessionState get session => snapshot.session;
 
   int get offset => loggedCommand.offset;
 
@@ -112,8 +110,8 @@ class ReplayStep {
 
   static String? inferEffectiveActorPlayerId({
     required RecordedDomainCommand loggedCommand,
-    required GameState state,
-    GameState? previousState,
+    required GameClientState state,
+    GameClientState? previousState,
   }) {
     final actorPlayerId = loggedCommand.actorPlayerId;
     if (actorPlayerId != null) return actorPlayerId;
@@ -128,8 +126,8 @@ class ReplayStep {
 
   static String? _inferActorPlayerId({
     required DomainCommand command,
-    required GameState state,
-    required GameState previousState,
+    required GameClientState state,
+    required GameClientState previousState,
   }) {
     return switch (command) {
       EndTurnCommand(:final playerId) ||
@@ -178,8 +176,8 @@ class ReplayStep {
 
   static String? _unitOwner(
     String unitId, {
-    required GameState state,
-    required GameState previousState,
+    required GameClientState state,
+    required GameClientState previousState,
   }) {
     return state.unitById(unitId)?.ownerPlayerId ??
         previousState.unitById(unitId)?.ownerPlayerId;
@@ -187,8 +185,8 @@ class ReplayStep {
 
   static String? _cityOwner(
     String cityId, {
-    required GameState state,
-    required GameState previousState,
+    required GameClientState state,
+    required GameClientState previousState,
   }) {
     return state.cityById(cityId)?.ownerPlayerId ??
         previousState.cityById(cityId)?.ownerPlayerId;
@@ -216,7 +214,7 @@ class ReplayService {
     }
 
     var currentSnapshot = initialSnapshot;
-    var currentState = initialSnapshot.toGameState();
+    var currentState = initialSnapshot.toClientState();
     final steps = <ReplayStep>[];
     try {
       await for (final logged in eventLog.readSince(
@@ -277,7 +275,7 @@ class ReplayService {
     return ReplayTimeline(
       saveId: saveId,
       initialSnapshot: initialSnapshot,
-      initialState: initialSnapshot.toGameState(),
+      initialState: initialSnapshot.toClientState(),
       steps: List.unmodifiable(steps),
     );
   }
@@ -303,8 +301,8 @@ int _originatingReplayTurn(RecordedDomainCommand logged) {
 LocalCommandResolution _resolveReplayCommand({
   required LocalCommandResolver commandResolver,
   required RecordedDomainCommand loggedCommand,
-  required SaveSnapshot baseSnapshot,
-  required GameState currentState,
+  required CanonicalGameSnapshot baseSnapshot,
+  required GameClientState currentState,
   required DomainCommand command,
   required DateTime savedAt,
   required GameCommandContext context,
@@ -328,8 +326,8 @@ void _appendReplayStep(
   List<ReplayStep> steps, {
   required RecordedDomainCommand logged,
   required LocalCommandResolution resolved,
-  required SaveSnapshot snapshot,
-  required GameState previousState,
+  required CanonicalGameSnapshot snapshot,
+  required GameClientState previousState,
   required int originatingTurn,
 }) {
   steps.add(

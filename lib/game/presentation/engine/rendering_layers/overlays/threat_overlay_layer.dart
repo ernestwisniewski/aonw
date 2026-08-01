@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/threat_overlay.dart';
-import 'package:aonw/map/domain/map_data.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
+import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -24,8 +24,8 @@ class ThreatOverlayLayer extends Component with LayerAttachment {
 
   void sync({
     required Component parent,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     CombatRuleset combatRuleset = CombatRuleset.standard,
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     bool dimmed = false,
@@ -78,8 +78,8 @@ class ThreatOverlayLayer extends Component with LayerAttachment {
 
   List<ThreatOverlayHex> _threatenedHexes({
     required GameUnit selectedUnit,
-    required GameState state,
-    required MapData mapData,
+    required GameClientState state,
+    required WorldMap mapData,
     required CombatRuleset combatRuleset,
     required TechnologyRuleset technologyRuleset,
   }) {

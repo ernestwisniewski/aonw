@@ -41,9 +41,9 @@ void main() {
       final result = container
           .read(hudPanelControllerProvider.notifier)
           .syncWithGameState(
-            GameState(
+            GameClientState(
               units: [commander],
-              interaction: GameInteractionState(
+              interaction: InteractionState(
                 selection: GameSelection.unit(commander),
               ),
             ),

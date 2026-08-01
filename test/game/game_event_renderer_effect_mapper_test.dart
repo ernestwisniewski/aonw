@@ -26,7 +26,7 @@ void main() {
         name: 'Capital',
         center: CityHex(col: 2, row: 3),
       );
-      const state = GameState(
+      final state = GameClientState(
         playerColors: {'player_1': 0xFF123456},
         cities: [city],
       );
@@ -53,7 +53,7 @@ void main() {
         name: 'Hidden',
         center: CityHex(col: 4, row: 4),
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_1',
         playerColors: const {'player_2': 0xFF654321},
         cities: const [hiddenCity],
@@ -78,7 +78,7 @@ void main() {
         name: 'Capital',
         center: CityHex(col: 2, row: 3),
       );
-      const state = GameState(
+      final state = GameClientState(
         playerColors: {'player_1': 0xFF123456},
         cities: [city],
       );
@@ -102,7 +102,7 @@ void main() {
         name: 'Capital',
         center: CityHex(col: 2, row: 3),
       );
-      const state = GameState(
+      final state = GameClientState(
         playerColors: {'player_1': 0xFF123456},
         cities: [city],
       );
@@ -133,7 +133,7 @@ void main() {
         name: 'Hidden',
         center: CityHex(col: 8, row: 9),
       );
-      final state = GameState(
+      final state = GameClientState(
         activePlayerId: 'player_2',
         cities: const [hiddenCity],
         fogOfWar: _fog(visible: {const HexCoordinate(col: 0, row: 0)}),
@@ -169,7 +169,7 @@ void main() {
         name: 'Hidden',
         center: CityHex(col: 8, row: 9),
       );
-      final previousState = GameState(
+      final previousState = GameClientState(
         activePlayerId: 'player_2',
         units: [attacker],
         cities: const [hiddenCity],
@@ -206,7 +206,7 @@ void main() {
     });
 
     test('maps unit moved event to a unit movement animation', () {
-      const state = GameState();
+      final state = GameClientState();
 
       final effects = GameEventRendererEffectMapper.effectsFor(
         events: const [
@@ -230,7 +230,7 @@ void main() {
     });
 
     test('skips unit moved event when command effects already animate it', () {
-      const state = GameState();
+      final state = GameClientState();
 
       final effects = GameEventRendererEffectMapper.effectsFor(
         events: const [
@@ -258,11 +258,11 @@ void main() {
         col: 4,
         row: 5,
       );
-      final previousState = GameState(
+      final previousState = GameClientState(
         playerColors: const {'player_1': 0xFF123456},
         units: [killed],
       );
-      const state = GameState(playerColors: {'player_1': 0xFF123456});
+      final state = GameClientState(playerColors: {'player_1': 0xFF123456});
 
       final effects = GameEventRendererEffectMapper.effectsFor(
         events: const [
@@ -290,7 +290,7 @@ void main() {
     _registerCityCombatCameraEffectTests();
 
     test('maps retreat event to a delayed floating cue', () {
-      const state = GameState();
+      final state = GameClientState();
 
       final effects = GameEventRendererEffectMapper.effectsFor(
         events: const [
@@ -332,8 +332,8 @@ void main() {
         col: 4,
         row: 5,
       );
-      final previousState = GameState(units: [attacker, defender]);
-      final state = GameState(
+      final previousState = GameClientState(units: [attacker, defender]);
+      final state = GameClientState(
         units: [attacker],
         playerColors: const {'player_2': 0xFF222222},
       );
@@ -400,8 +400,8 @@ void main() {
           totalTurns: 2,
         ),
       );
-      final previousState = GameState(units: [worker]);
-      const state = GameState();
+      final previousState = GameClientState(units: [worker]);
+      final state = GameClientState();
 
       final effects = GameEventRendererEffectMapper.effectsFor(
         events: const [WorkerCompletedJobEvent(unitId: 'worker_1')],
@@ -424,7 +424,7 @@ void main() {
         name: 'Capital',
         center: CityHex(col: 6, row: 7),
       );
-      const state = GameState(cities: [city]);
+      final state = GameClientState(cities: [city]);
 
       final effects = GameEventRendererEffectMapper.effectsFor(
         events: const [
@@ -448,7 +448,7 @@ void main() {
         col: 1,
         row: 2,
       );
-      final state = GameState(units: [unit]);
+      final state = GameClientState(units: [unit]);
 
       final effects = GameEventRendererEffectMapper.effectsFor(
         events: const [
@@ -467,7 +467,7 @@ void main() {
     });
 
     test('ignores events without a renderable anchor', () {
-      const state = GameState();
+      final state = GameClientState();
 
       final effects = GameEventRendererEffectMapper.effectsFor(
         events: const [

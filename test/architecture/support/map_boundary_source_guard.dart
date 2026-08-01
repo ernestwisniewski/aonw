@@ -38,7 +38,7 @@ Map<String, String> productionDartSources({String? containing}) {
 }
 
 Set<String> mapDataBackedTypeNames(Map<String, String> sources) {
-  return typeNamesBackedBy(sources, const {'MapData'});
+  return typeNamesBackedBy(sources, const {'WorldMap'});
 }
 
 Set<String> namedTypeReferencesInSource(

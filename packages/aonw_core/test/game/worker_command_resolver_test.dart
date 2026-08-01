@@ -9,7 +9,7 @@ void main() {
       final worker = _worker();
       final guard = _unit(id: 'guard');
       final units = [worker, guard];
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         pendingAction: const PendingCityExpansionSelection(
           ownerPlayerId: _playerId,
           cityId: 'city_1',
@@ -56,14 +56,14 @@ void main() {
 
     test('preserves foreign and unrelated pending actions by identity', () {
       final interactions = [
-        PersistedInteractionState(
+        DomainActionState(
           pendingAction: const PendingWorkerActionSelection(
             ownerPlayerId: _otherPlayerId,
             unitId: _workerId,
             improvementType: FieldImprovementType.farm,
           ),
         ),
-        PersistedInteractionState(
+        DomainActionState(
           pendingAction: const PendingWorkerActionSelection(
             ownerPlayerId: _playerId,
             unitId: 'other_worker',
@@ -138,7 +138,7 @@ void main() {
     });
 
     test('accepts a self-contained command without pending interaction', () {
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         pendingAction: const PendingCityExpansionSelection(
           ownerPlayerId: _playerId,
           cityId: 'city_1',
@@ -162,7 +162,7 @@ void main() {
     });
 
     test('preserves exact rejection precedence and input identity', () {
-      final foreignPendingWithoutSelection = PersistedInteractionState(
+      final foreignPendingWithoutSelection = DomainActionState(
         pendingAction: const PendingWorkerActionSelection(
           ownerPlayerId: _otherPlayerId,
           unitId: _workerId,
@@ -179,7 +179,7 @@ void main() {
         reason: 'worker_improvement_not_selected',
       );
 
-      final foreignPending = PersistedInteractionState(
+      final foreignPending = DomainActionState(
         pendingAction: const PendingWorkerActionSelection(
           ownerPlayerId: _otherPlayerId,
           unitId: _workerId,
@@ -202,7 +202,7 @@ void main() {
       _expectRejected(
         _confirm(units: missing, command: explicit),
         units: missing,
-        interaction: PersistedInteractionState.empty,
+        interaction: DomainActionState.empty,
         reason: 'worker_not_found',
       );
 
@@ -214,7 +214,7 @@ void main() {
           research: ResearchState.empty,
         ),
         units: foreign,
-        interaction: PersistedInteractionState.empty,
+        interaction: DomainActionState.empty,
         reason: 'worker_not_controlled',
       );
 
@@ -226,7 +226,7 @@ void main() {
           research: ResearchState.empty,
         ),
         units: locked,
-        interaction: PersistedInteractionState.empty,
+        interaction: DomainActionState.empty,
         reason: 'worker_improvement_unavailable',
       );
     });
@@ -342,7 +342,7 @@ void main() {
     });
 
     test('preserves unrelated interaction by identity', () {
-      final interaction = PersistedInteractionState(
+      final interaction = DomainActionState(
         pendingAction: const PendingWorkerActionSelection(
           ownerPlayerId: _playerId,
           unitId: 'other_worker',

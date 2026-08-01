@@ -9,7 +9,8 @@ import 'package:aonw/game/presentation/services/hidden_ai_renderer_playback.dart
 import 'package:aonw_core/game/domain/command.dart';
 
 typedef AiTurnPresentationSessionReader = GameSession? Function();
-typedef AiTurnPresentationStateReader = GameState? Function(String saveId);
+typedef AiTurnPresentationStateReader =
+    GameClientState? Function(String saveId);
 typedef AiTurnHiddenCommandDispatcher =
     Future<DispatchCommandResult> Function({
       required String saveId,
@@ -36,7 +37,7 @@ final class AiTurnPresentationDriver {
 
   Future<DispatchCommandResult> dispatchCommand({
     required String saveId,
-    required GameState currentState,
+    required GameClientState currentState,
     required DomainCommand command,
     required GameCommandContext context,
   }) async {

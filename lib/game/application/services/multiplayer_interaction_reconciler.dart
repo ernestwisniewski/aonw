@@ -9,12 +9,12 @@ import 'package:aonw_core/util/collection_equality.dart';
 /// Reapplies valid client-owned interaction state over a network snapshot.
 ///
 /// Multiplayer snapshots are authoritative for game data, but selection and
-/// targeting drafts live only on the client. Replacing the whole [GameState]
+/// targeting drafts live only on the client. Replacing the whole [GameClientState]
 /// would otherwise cancel an in-progress action whenever any player acts.
 abstract final class MultiplayerInteractionReconciler {
-  static GameState reconcile({
-    required GameState authoritativeState,
-    required GameState interactionSource,
+  static GameClientState reconcile({
+    required GameClientState authoritativeState,
+    required GameClientState interactionSource,
   }) {
     final sourceInteraction = interactionSource.interaction;
     final turnAdvanced = _turnAdvanced(
@@ -68,8 +68,8 @@ abstract final class MultiplayerInteractionReconciler {
   }
 
   static PendingPlayerAction? _reconciledPendingAction(
-    GameState authoritativeState,
-    GameState interactionSource, {
+    GameClientState authoritativeState,
+    GameClientState interactionSource, {
     required bool turnAdvanced,
   }) {
     final resolved =
@@ -82,8 +82,8 @@ abstract final class MultiplayerInteractionReconciler {
   }
 
   static ({UnitMovementPlan? preview, bool active}) _reconciledMovement({
-    required GameState authoritativeState,
-    required GameState interactionSource,
+    required GameClientState authoritativeState,
+    required GameClientState interactionSource,
     required GameUnit? selectedUnit,
     required bool canKeepSelectedUnitAction,
     required bool turnAdvanced,
@@ -110,8 +110,8 @@ abstract final class MultiplayerInteractionReconciler {
   }
 
   static bool _canPreserveMovePreview({
-    required GameState authoritativeState,
-    required GameState interactionSource,
+    required GameClientState authoritativeState,
+    required GameClientState interactionSource,
     required GameUnit? selectedUnit,
     required bool canKeepSelectedUnitAction,
     required bool turnAdvanced,
@@ -143,8 +143,8 @@ abstract final class MultiplayerInteractionReconciler {
       source.posture == authoritative.posture;
 
   static bool _turnAdvanced({
-    required GameState authoritativeState,
-    required GameState interactionSource,
+    required GameClientState authoritativeState,
+    required GameClientState interactionSource,
   }) {
     final authoritativeStart = authoritativeState.turnStartedAt;
     final sourceStart = interactionSource.turnStartedAt;
@@ -178,8 +178,8 @@ abstract final class MultiplayerInteractionReconciler {
   }
 
   static bool _pathfindingInputsStayedValid(
-    GameState authoritativeState,
-    GameState interactionSource,
+    GameClientState authoritativeState,
+    GameClientState interactionSource,
   ) {
     return listEquals(authoritativeState.units, interactionSource.units) &&
         listEquals(authoritativeState.cities, interactionSource.cities) &&
@@ -188,7 +188,7 @@ abstract final class MultiplayerInteractionReconciler {
   }
 
   static GameSelection? _refreshedSelection(
-    GameState state,
+    GameClientState state,
     GameSelection? selection,
   ) {
     if (selection == null) return null;
@@ -208,7 +208,7 @@ abstract final class MultiplayerInteractionReconciler {
   }
 
   static GameSelection? _refreshedUnitSelection(
-    GameState state,
+    GameClientState state,
     GameSelection selection,
   ) {
     final unitId = selection.unit?.id;
@@ -219,7 +219,7 @@ abstract final class MultiplayerInteractionReconciler {
   }
 
   static GameSelection? _refreshedCitySelection(
-    GameState state,
+    GameClientState state,
     GameSelection selection,
   ) {
     final cityId = selection.city?.id;
@@ -240,7 +240,7 @@ abstract final class MultiplayerInteractionReconciler {
   }
 
   static PendingPlayerAction? _validPendingAction(
-    GameState state,
+    GameClientState state,
     PendingPlayerAction? pending,
   ) {
     if (pending == null) return null;
@@ -269,7 +269,7 @@ abstract final class MultiplayerInteractionReconciler {
   }
 
   static CityFoundingDraft? _validCityFoundingDraft(
-    GameState state,
+    GameClientState state,
     CityFoundingDraft? draft,
   ) {
     if (draft == null) return null;
@@ -280,7 +280,7 @@ abstract final class MultiplayerInteractionReconciler {
   }
 
   static bool _canKeepAttackTargeting(
-    GameState state,
+    GameClientState state,
     String unitId,
     String ownerPlayerId,
   ) {
@@ -291,15 +291,26 @@ abstract final class MultiplayerInteractionReconciler {
         !unit.isWorking;
   }
 
-  static bool _ownsUnit(GameState state, String unitId, String ownerPlayerId) {
+  static bool _ownsUnit(
+    GameClientState state,
+    String unitId,
+    String ownerPlayerId,
+  ) {
     return state.unitById(unitId)?.ownerPlayerId == ownerPlayerId;
   }
 
-  static bool _ownsCity(GameState state, String cityId, String ownerPlayerId) {
+  static bool _ownsCity(
+    GameClientState state,
+    String cityId,
+    String ownerPlayerId,
+  ) {
     return state.cityById(cityId)?.ownerPlayerId == ownerPlayerId;
   }
 
-  static bool _canPreserveInteraction(GameState state, String ownerPlayerId) {
+  static bool _canPreserveInteraction(
+    GameClientState state,
+    String ownerPlayerId,
+  ) {
     return state.activePlayerCanAct &&
         (state.activePlayerId.isEmpty || state.activePlayerId == ownerPlayerId);
   }
