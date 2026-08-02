@@ -1,6 +1,104 @@
 part of 'game_renderer.dart';
 
+/// Owns Flame lifecycle callbacks and renderer resource disposal.
+mixin GameRendererLifecycle on HexWorld {
+  GameRenderer get _lifecycleRenderer => this as GameRenderer;
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    final renderer = _lifecycleRenderer;
+    if (renderer._isReady && !renderer._isDisposed) {
+      renderer._cameraController.update(dt);
+    }
+    renderer._syncFastCameraRendering(dt);
+  }
+
+  @override
+  Future<void> buildWorld() => _lifecycleRenderer._buildRendererWorldSafely();
+
+  void disposeRenderer() {
+    final renderer = _lifecycleRenderer;
+    if (renderer._isDisposed) return;
+    renderer
+      .._isDisposed = true
+      .._cancelRendererTransitions()
+      .._readyNotifier.dispose()
+      .._zoomNotifier.dispose()
+      .._initialCameraFocusReadyNotifier.dispose()
+      .._viewModelNotifier.dispose()
+      .._unitAnimationController.dispose();
+  }
+}
+
 extension GameRendererWorldLifecycle on GameRenderer {
+  bool get hasReferenceImage => _sceneBuilder.hasReferenceImage;
+
+  void _initializeRendererComponents() {
+    final localizations = l10n;
+    final turnCostLabelBuilder = localizations == null
+        ? null
+        : (int count) => localizations.turnCountLabel(count);
+    final moveConfirmationLabelBuilder = localizations == null
+        ? null
+        : (int count) => localizations.selectionActionConfirmWithTurns(
+            localizations.turnCountLabel(count),
+          );
+    _unitMarkerLayer = UnitMarkerLayer(
+      mapData: mapData,
+      colorForPlayer: _colorForPlayer,
+      onUnitTapped: _handleUnitMarkerTapped,
+      reduceMotion: _reduceMotion,
+    );
+    _movePreviewLayer = UnitMovePreviewLayer(
+      turnCostLabelBuilder: turnCostLabelBuilder,
+      confirmationLabelBuilder: moveConfirmationLabelBuilder,
+      confirmationLabel: localizations?.selectionActionConfirm,
+    );
+    _fieldImprovementMarkerLayer = FieldImprovementMarkerLayer();
+    _artifactMarkerLayer = ArtifactMarkerLayer(
+      onArtifactTapped: _handleArtifactMarkerTapped,
+    );
+    _mapObjectiveMarkerLayer = MapObjectiveMarkerLayer(
+      colorForPlayer: _colorForPlayer,
+      onObjectiveTapped: _handleMapObjectiveMarkerTapped,
+    );
+    _cityMarkerLayer = CityMarkerLayer(
+      colorForPlayer: _colorForPlayer,
+      onCityTapped: _handleCityMarkerTapped,
+      reduceMotion: _reduceMotion,
+    );
+    _cityTerritoryOverlayLayer = CityTerritoryOverlayLayer(
+      colorForPlayer: _colorForPlayer,
+    );
+    _eraTintOverlayLayer = EraTintOverlayLayer();
+    _cityManagementOverlayLayer = CityManagementOverlayLayer();
+    _cityFoundingPreviewLayer = CityFoundingPreviewLayer(
+      colorForPlayer: _colorForPlayer,
+    );
+    _fogOfWarOverlayLayer = FogOfWarOverlayLayer();
+    _particleEffectsLayer = ParticleEffectsLayer();
+    _cityProductionParticleLayer = CityProductionParticleLayer(
+      reduceMotion: _reduceMotion,
+    );
+    _cloudDriftLayer = CloudDriftLayer(reduceMotion: _reduceMotion);
+    _floatingTextLayer = _createFloatingTextLayer();
+    _combatHexAlertLayer = CombatHexAlertLayer();
+    _threatOverlayLayer = ThreatOverlayLayer();
+    _hoverIntentMarkerLayer = HoverIntentMarkerLayer();
+    _actionPaletteLayer = ActionPaletteLayer(
+      onPreviewWorkerImprovement: _handlePreviewWorkerImprovement,
+      onConfirmWorkerImprovement: _handleConfirmWorkerImprovement,
+      onCancelWorkerActionSelection: _handleCancelWorkerActionSelection,
+      onConfirmMovePreview: _handleConfirmMovePreview,
+      turnCostLabelBuilder: turnCostLabelBuilder,
+      confirmationLabelBuilder: moveConfirmationLabelBuilder,
+      confirmationLabel: localizations?.selectionActionConfirm,
+    );
+
+    _unitAnimationController = UnitAnimationController(_unitMarkerLayer);
+  }
+
   Future<void> _buildRendererWorldSafely() async {
     try {
       await _buildRendererWorld();

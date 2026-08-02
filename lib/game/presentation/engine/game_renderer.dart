@@ -67,26 +67,34 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Offset;
 
 part 'game_renderer_artifact_taps.dart';
+part 'game_renderer_camera.dart';
 part 'game_renderer_camera_focus.dart';
 part 'game_renderer_camera_policy.dart';
 part 'game_renderer_camera_rendering.dart';
 part 'game_renderer_gamepad_input.dart';
 part 'game_renderer_input.dart';
+part 'game_renderer_lifecycle.dart';
 part 'game_renderer_projected_effects.dart';
-part 'game_renderer_state_application.dart';
 part 'game_renderer_state_sync.dart';
 part 'game_renderer_testing.dart';
 part 'game_renderer_tile_interactions.dart';
-part 'game_renderer_transition_queue.dart';
+part 'game_renderer_transitions.dart';
 part 'game_renderer_types.dart';
-part 'game_renderer_world_lifecycle.dart';
 
 /// Flame renderer for the game map.
 ///
 /// Owns the world hierarchy, forwards input as commands, and keeps visual
 /// layers in sync with [GameClientState].
 class GameRenderer extends HexWorld
-    with KeyboardEvents, LongPressDetector, HexInputBehavior {
+    with
+        KeyboardEvents,
+        LongPressDetector,
+        HexInputBehavior,
+        GameRendererInput,
+        GameRendererCamera,
+        GameRendererStateSync,
+        GameRendererTransitions,
+        GameRendererLifecycle {
   static const _loadingPlayerId = '__loading__';
   static const double _selectionCameraTransitionDuration = 0.42;
   static const WorldProjection _roundEarthProjection = WorldProjection(
@@ -181,9 +189,6 @@ class GameRenderer extends HexWorld
   final ValueNotifier<bool> _initialCameraFocusReadyNotifier;
   Future<void> _transitionQueue = Future<void>.value();
 
-  ValueListenable<Set<String>> get animatingUnitIdsListenable =>
-      _unitAnimationController.animatingUnitIdsListenable;
-
   GameRenderer({
     required this.mapData,
     this.imagePath,
@@ -219,363 +224,6 @@ class GameRenderer extends HexWorld
          !focusActivePlayerOnFirstState,
        ),
        _workerActionPaletteOptionsBuilder = workerActionPaletteOptionsBuilder {
-    final localizations = l10n;
-    final turnCostLabelBuilder = localizations == null
-        ? null
-        : (int count) => localizations.turnCountLabel(count);
-    final moveConfirmationLabelBuilder = localizations == null
-        ? null
-        : (int count) => localizations.selectionActionConfirmWithTurns(
-            localizations.turnCountLabel(count),
-          );
-    _unitMarkerLayer = UnitMarkerLayer(
-      mapData: mapData,
-      colorForPlayer: _colorForPlayer,
-      onUnitTapped: _handleUnitMarkerTapped,
-      reduceMotion: _reduceMotion,
-    );
-    _movePreviewLayer = UnitMovePreviewLayer(
-      turnCostLabelBuilder: turnCostLabelBuilder,
-      confirmationLabelBuilder: moveConfirmationLabelBuilder,
-      confirmationLabel: localizations?.selectionActionConfirm,
-    );
-    _fieldImprovementMarkerLayer = FieldImprovementMarkerLayer();
-    _artifactMarkerLayer = ArtifactMarkerLayer(
-      onArtifactTapped: _handleArtifactMarkerTapped,
-    );
-    _mapObjectiveMarkerLayer = MapObjectiveMarkerLayer(
-      colorForPlayer: _colorForPlayer,
-      onObjectiveTapped: _handleMapObjectiveMarkerTapped,
-    );
-    _cityMarkerLayer = CityMarkerLayer(
-      colorForPlayer: _colorForPlayer,
-      onCityTapped: _handleCityMarkerTapped,
-      reduceMotion: _reduceMotion,
-    );
-    _cityTerritoryOverlayLayer = CityTerritoryOverlayLayer(
-      colorForPlayer: _colorForPlayer,
-    );
-    _eraTintOverlayLayer = EraTintOverlayLayer();
-    _cityManagementOverlayLayer = CityManagementOverlayLayer();
-    _cityFoundingPreviewLayer = CityFoundingPreviewLayer(
-      colorForPlayer: _colorForPlayer,
-    );
-    _fogOfWarOverlayLayer = FogOfWarOverlayLayer();
-    _particleEffectsLayer = ParticleEffectsLayer();
-    _cityProductionParticleLayer = CityProductionParticleLayer(
-      reduceMotion: _reduceMotion,
-    );
-    _cloudDriftLayer = CloudDriftLayer(reduceMotion: _reduceMotion);
-    _floatingTextLayer = _createFloatingTextLayer();
-    _combatHexAlertLayer = CombatHexAlertLayer();
-    _threatOverlayLayer = ThreatOverlayLayer();
-    _hoverIntentMarkerLayer = HoverIntentMarkerLayer();
-    _actionPaletteLayer = ActionPaletteLayer(
-      onPreviewWorkerImprovement: _handlePreviewWorkerImprovement,
-      onConfirmWorkerImprovement: _handleConfirmWorkerImprovement,
-      onCancelWorkerActionSelection: _handleCancelWorkerActionSelection,
-      onConfirmMovePreview: _handleConfirmMovePreview,
-      turnCostLabelBuilder: turnCostLabelBuilder,
-      confirmationLabelBuilder: moveConfirmationLabelBuilder,
-      confirmationLabel: localizations?.selectionActionConfirm,
-    );
-
-    _unitAnimationController = UnitAnimationController(_unitMarkerLayer);
-  }
-
-  double get defaultZoom => mapData.defaultZoom;
-
-  @override
-  void setZoom(double zoom) {
-    _setFastCameraRendering(true);
-    super.setZoom(zoom);
-    _publishZoom();
-    if (!_isReady) return;
-    _syncMarkerDensityForZoom();
-  }
-
-  @override
-  void panByScreenDelta(Vector2 screenDelta) {
-    _setFastCameraRendering(true);
-    super.panByScreenDelta(screenDelta);
-  }
-
-  @override
-  void onGameResize(Vector2 size) {
-    super.onGameResize(size);
-    if (!_isReady || _isDisposed) return;
-    _applyDeferredInitialFocusIfReady();
-    _syncMarkerDensityForZoom(force: true);
-  }
-
-  MapViewMode get viewMode => _viewMode;
-
-  set viewMode(MapViewMode value) {
-    if (_viewMode == value) return;
-    _viewMode = value;
-    _applyViewMode();
-  }
-
-  set workerActionPaletteOptionsBuilder(
-    WorkerActionPaletteOptionsBuilder? value,
-  ) {
-    if (_workerActionPaletteOptionsBuilder == value) return;
-    _workerActionPaletteOptionsBuilder = value;
-    if (_isReady) _syncAfterAction();
-  }
-
-  set displaySettings(HexDisplaySettings value) {
-    if (_displaySettings == value) return;
-    _displaySettings = value;
-    if (_isReady) {
-      _sceneBuilder.grid.displaySettings = value;
-      _syncGridSelection();
-    }
-  }
-
-  bool get reduceMotion => _reduceMotion;
-
-  set reduceMotion(bool value) {
-    if (_reduceMotion == value) return;
-    _reduceMotion = value;
-    _syncReduceMotion();
-  }
-
-  bool get moveCameraForUnitMovement => _moveCameraForUnitMovement;
-
-  set moveCameraForUnitMovement(bool value) {
-    if (_moveCameraForUnitMovement == value) return;
-    _moveCameraForUnitMovement = value;
-  }
-
-  bool get followUnitMovementCamera => _followUnitMovementCamera;
-
-  set followUnitMovementCamera(bool value) {
-    if (_followUnitMovementCamera == value) return;
-    _followUnitMovementCamera = value;
-  }
-
-  bool get followEnemyUnitCamera => _followEnemyUnitCamera;
-
-  set followEnemyUnitCamera(bool value) {
-    if (_followEnemyUnitCamera != value) _followEnemyUnitCamera = value;
-  }
-
-  bool get cinematicCameraEnabled => _cinematicCameraEnabled;
-
-  set cinematicCameraEnabled(bool value) {
-    if (_cinematicCameraEnabled == value) return;
-    _cinematicCameraEnabled = value;
-    _lastSyncedHoverHex = null;
-    _refreshHoverIntent();
-  }
-
-  bool get hasReferenceImage => _sceneBuilder.hasReferenceImage;
-
-  @override
-  WorldProjection get worldProjection => _cinematicCameraEnabled
-      ? _roundEarthProjection
-      : WorldProjection.disabled;
-
-  @override
-  void onLongPressStart(LongPressStartInfo info) {
-    handleViewportLongPressStart(info.eventPosition.widget);
-  }
-
-  @override
-  void update(double dt) {
-    super.update(dt);
-    if (_isReady && !_isDisposed) _cameraController.update(dt);
-    _syncFastCameraRendering(dt);
-  }
-
-  @override
-  void onLongPressMoveUpdate(LongPressMoveUpdateInfo info) {
-    handleViewportLongPressMoveUpdate(info.eventPosition.widget);
-  }
-
-  @override
-  void onLongPressUp() {
-    handleViewportLongPressUp();
-  }
-
-  @override
-  void onLongPressEnd(LongPressEndInfo info) {
-    handleViewportLongPressEnd(info.eventPosition.widget);
-  }
-
-  @override
-  void onLongPressCancel() {
-    handleViewportLongPressCancel();
-  }
-
-  @override
-  void handleViewportLongPressStart(Vector2 position) {
-    _startLongPressInspectAtWidgetPosition(position);
-  }
-
-  @override
-  void handleViewportLongPressMoveUpdate(Vector2 position) {
-    _updateLongPressInspectAtWidgetPosition(position);
-  }
-
-  @override
-  void handleViewportLongPressUp() {
-    _confirmLongPressInspect();
-    _clearHoverIntent();
-  }
-
-  @override
-  void handleViewportLongPressEnd(Vector2 position) {
-    _confirmLongPressInspect();
-    _clearHoverIntent();
-  }
-
-  @override
-  void handleViewportLongPressCancel() {
-    _cancelLongPressInspect();
-    _clearHoverIntent();
-  }
-
-  @override
-  void handleViewportPointerDown(int pointerId, Vector2 position) {
-    final inputPosition = worldInputPointForWidget(position);
-    final hadActiveLongPressInspect = _longPressInspectActive;
-    if (hadActiveLongPressInspect) {
-      _cancelLongPressInspect();
-    }
-    _suppressTapsUntilNextPointerDown = hadActiveLongPressInspect;
-    super.handleViewportPointerDown(pointerId, inputPosition);
-    _syncHoverIntentAtWidgetPosition(position);
-  }
-
-  @override
-  void handleViewportPointerMove(int pointerId, Vector2 position) {
-    final inputPosition = worldInputPointForWidget(position);
-    if (_longPressInspectActive) {
-      _updateLongPressInspectAtWidgetPosition(position);
-      return;
-    }
-    super.handleViewportPointerMove(pointerId, inputPosition);
-    if (isDragging || hasMultipleViewportPointers) {
-      _clearHoverIntent();
-      return;
-    }
-    _syncHoverIntentAtWidgetPosition(position);
-  }
-
-  @override
-  void handleViewportPointerUp(int pointerId) {
-    _confirmLongPressInspect();
-    super.handleViewportPointerUp(pointerId);
-    _clearHoverIntent();
-  }
-
-  @override
-  void handleViewportPointerCancel(int pointerId) {
-    _cancelLongPressInspect();
-    super.handleViewportPointerCancel(pointerId);
-    _clearHoverIntent();
-  }
-
-  @override
-  void handleViewportPointerHover(Vector2 position) {
-    _syncHoverIntentAtWidgetPosition(position);
-  }
-
-  @override
-  void handleViewportPointerExit() {
-    _clearHoverIntent();
-  }
-
-  @override
-  void handleViewportPanZoomStart(Vector2 focalPoint) {
-    _cancelLongPressInspect();
-    super.handleViewportPanZoomStart(worldInputPointForWidget(focalPoint));
-    _clearHoverIntent();
-  }
-
-  @override
-  void handleViewportPanZoomUpdate({
-    required Vector2 panDelta,
-    required double scale,
-    required Vector2 focalPoint,
-  }) {
-    _cancelLongPressInspect();
-    final inputFocalPoint = worldInputPointForWidget(focalPoint);
-    final inputPreviousFocalPoint = worldInputPointForWidget(
-      focalPoint - panDelta,
-    );
-    super.handleViewportPanZoomUpdate(
-      panDelta: inputFocalPoint - inputPreviousFocalPoint,
-      scale: scale,
-      focalPoint: inputFocalPoint,
-    );
-    _clearHoverIntent();
-  }
-
-  @override
-  void handleViewportPanZoomEnd() {
-    super.handleViewportPanZoomEnd();
-    _clearHoverIntent();
-  }
-
-  void applyState(GameClientState state, {int? currentTurn}) =>
-      _applyState(state, suppressCameraFocus: false, currentTurn: currentTurn);
-
-  Future<void> applyTransition(
-    GameClientState state,
-    Iterable<RendererEffect> effects, {
-    int? currentTurn,
-  }) {
-    return _enqueueTransition(
-      () => _applyTransitionNow(state, effects, currentTurn: currentTurn),
-    );
-  }
-
-  Future<void> handleEffects(Iterable<RendererEffect> effects) =>
-      _enqueueTransition(() => _handleEffectsNow(effects));
-
-  Future<void> handleEffect(RendererEffect effect) => handleEffects([effect]);
-
-  @override
-  Future<void> buildWorld() => _buildRendererWorldSafely();
-
-  void disposeRenderer() {
-    if (_isDisposed) return;
-    _isDisposed = true;
-    _cancelRendererTransitions();
-    _readyNotifier.dispose();
-    _zoomNotifier.dispose();
-    _initialCameraFocusReadyNotifier.dispose();
-    _viewModelNotifier.dispose();
-    _unitAnimationController.dispose();
-  }
-
-  @visibleForTesting
-  WorldTile? tileDataAtWidgetPositionForTesting(Vector2 widgetPosition) {
-    if (!_isReady) return null;
-    final inputPosition = worldInputPointForWidget(widgetPosition);
-    final worldPoint = camera.globalToLocal(inputPosition);
-    return _sceneBuilder.grid.tileDataAtWorldPoint(worldPoint);
-  }
-
-  Offset _inspectionAnchorForTile(WorldTile tileData, {Vector2? fallback}) {
-    if (!_isReady) {
-      return Offset(fallback?.x ?? 0, fallback?.y ?? 0);
-    }
-    final tileCenter = HexGeometry.tilePosition(
-      col: tileData.col,
-      row: tileData.row,
-      hexRadius: _sceneBuilder.grid.config.hexRadius,
-    );
-    final worldPoint = Vector2(
-      tileCenter.x,
-      tileCenter.y * HexGrid.perspectiveY - 16,
-    );
-    final viewportPoint =
-        (worldPoint - camera.viewfinder.position) * camera.viewfinder.zoom;
-    final projectedPoint = worldOutputPointForWidget(viewportPoint);
-    return Offset(projectedPoint.x, projectedPoint.y);
+    _initializeRendererComponents();
   }
 }

@@ -1,6 +1,66 @@
 part of 'game_renderer.dart';
 
-extension GameRendererStateSync on GameRenderer {
+/// Publishes canonical game state to the renderer-owned presentation model.
+mixin GameRendererStateSync on HexWorld {
+  GameRenderer get _stateSyncRenderer => this as GameRenderer;
+
+  MapViewMode get viewMode => _stateSyncRenderer._viewMode;
+
+  set viewMode(MapViewMode value) {
+    final renderer = _stateSyncRenderer;
+    if (renderer._viewMode == value) return;
+    renderer
+      .._viewMode = value
+      .._applyViewMode();
+  }
+
+  set workerActionPaletteOptionsBuilder(
+    WorkerActionPaletteOptionsBuilder? value,
+  ) {
+    final renderer = _stateSyncRenderer;
+    if (renderer._workerActionPaletteOptionsBuilder == value) return;
+    renderer._workerActionPaletteOptionsBuilder = value;
+    if (renderer._isReady) renderer._syncAfterAction();
+  }
+
+  set displaySettings(HexDisplaySettings value) {
+    final renderer = _stateSyncRenderer;
+    if (renderer._displaySettings == value) return;
+    renderer._displaySettings = value;
+    if (renderer._isReady) {
+      renderer._sceneBuilder.grid.displaySettings = value;
+      renderer._syncGridSelection();
+    }
+  }
+
+  bool get reduceMotion => _stateSyncRenderer._reduceMotion;
+
+  set reduceMotion(bool value) {
+    final renderer = _stateSyncRenderer;
+    if (renderer._reduceMotion == value) return;
+    renderer
+      .._reduceMotion = value
+      .._syncReduceMotion();
+  }
+
+  void applyState(GameClientState state, {int? currentTurn}) =>
+      _stateSyncRenderer._applyState(
+        state,
+        suppressCameraFocus: false,
+        currentTurn: currentTurn,
+      );
+
+  void applyStateWithoutCameraFocus(
+    GameClientState state, {
+    int? currentTurn,
+  }) => _stateSyncRenderer._applyState(
+    state,
+    suppressCameraFocus: true,
+    currentTurn: currentTurn,
+  );
+}
+
+extension _GameRendererStateSyncInternals on GameRenderer {
   void _applyState(
     GameClientState state, {
     required bool suppressCameraFocus,
@@ -13,64 +73,6 @@ extension GameRendererStateSync on GameRenderer {
       _syncAfterAction(suppressCameraFocus: suppressCameraFocus);
     } else {
       _publishViewModelFromState();
-    }
-  }
-
-  Future<void> _applyTransitionNow(
-    GameClientState state,
-    Iterable<RendererEffect> effects, {
-    int? currentTurn,
-  }) async {
-    _ensureRendererActive();
-    final pending = effects.toList(growable: false);
-    final transitionControlsCamera = _transitionControlsCamera(pending);
-    final animatedIds = <String>{
-      for (final e in pending)
-        if (e is AnimateUnitMoveEffect) e.unitId,
-    };
-    final combatAnimatedIds = <String>{
-      for (final e in pending)
-        if (e is PlayCombatAnimationEffect) ...[
-          e.attackerUnitId,
-          e.defenderUnitId,
-        ],
-    };
-    final animationUnitIds = {...animatedIds, ...combatAnimatedIds};
-    final combatAnimatedCityIds = <String>{
-      for (final effect in pending.whereType<PlayCombatAnimationEffect>()) ...[
-        if (_renderState.cityById(effect.attackerUnitId) != null ||
-            state.cityById(effect.attackerUnitId) != null)
-          effect.attackerUnitId,
-        if (_renderState.cityById(effect.defenderUnitId) != null ||
-            state.cityById(effect.defenderUnitId) != null)
-          effect.defenderUnitId,
-      ],
-    };
-    _unitMarkerLayer
-      ..pinPendingMovePositions(animatedIds)
-      ..retainPendingMoveMarkers(animatedIds)
-      ..retainPendingAnimationMarkers(combatAnimatedIds);
-    _cityMarkerLayer.retainPendingAnimationMarkers(combatAnimatedCityIds);
-    var completed = false;
-    try {
-      _applyState(
-        state,
-        suppressCameraFocus: transitionControlsCamera,
-        currentTurn: currentTurn,
-      );
-      await _handleEffectsNow(pending, waitForQueuedPlayback: true);
-      completed = true;
-    } finally {
-      _unitAnimationController.finishUnitAnimationTransition(
-        animationUnitIds,
-        completed: completed,
-        synchronizeAfterFailure: () =>
-            _syncAfterAction(suppressCameraFocus: true),
-      );
-      _cityMarkerLayer.releasePendingAnimationMarkers(combatAnimatedCityIds);
-      if (!_isDisposed && combatAnimatedCityIds.isNotEmpty) {
-        _syncAfterAction(suppressCameraFocus: true);
-      }
     }
   }
 
