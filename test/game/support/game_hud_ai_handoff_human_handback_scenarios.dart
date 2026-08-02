@@ -1,0 +1,170 @@
+part of '../game_hud_test.dart';
+
+void _registerGameHudAiHandoffHumanHandbackScenarios() {
+  testWidgets('single-player AI handback focuses the human ready unit', (
+    tester,
+  ) async {
+    final aiPlayer = _player2.copyWith(
+      name: 'AI Bob',
+      kind: PlayerKind.ai,
+      ai: const AiPlayer(
+        strategyId: AiStrategyId.random,
+        difficulty: AiDifficulty.normal,
+        persona: AiPersona.balanced,
+        seed: 42,
+      ),
+    );
+    final save = _save.copyWith(
+      gameMode: GameMode.multiplayer,
+      players: [_player, aiPlayer],
+      playerStates: const {
+        'player_1': PlayerTurnState.finished,
+        'player_2': PlayerTurnState.active,
+      },
+    );
+    final commander = GameUnit.startingCommander(
+      ownerPlayerId: 'player_1',
+      col: 0,
+      row: 0,
+    ).copyWith(movementPoints: 0);
+    final aiCommander = GameUnit.startingCommander(
+      ownerPlayerId: 'player_2',
+      col: 2,
+      row: 2,
+    ).copyWith(movementPoints: 0);
+    final repository = _FakeGameRepository(
+      snapshot: GameSnapshotFactory.fromClientState(
+        save: save,
+        state: GameClientState(
+          units: [commander, aiCommander],
+          activePlayerId: 'player_1',
+          activePlayerCanAct: false,
+          submittedPlayerIds: const {'player_1'},
+        ),
+      ),
+    );
+    final renderer = _SpyGameRenderer(mapData: _makeMap());
+
+    await _pumpHud(
+      tester,
+      repository: repository,
+      gameSave: save,
+      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      renderer: renderer,
+      aiAutopilotEnabled: true,
+    );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(GameHud)),
+      listen: false,
+    );
+    await container.read(gameStateProvider('save').future);
+    await tester.pump();
+
+    await _pumpUntil(tester, () {
+      final state = container.read(gameStateProvider('save')).value;
+      return repository.snapshot.save.turn > save.turn &&
+          state?.selectedUnitId == commander.id;
+    });
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final state = container.read(gameStateProvider('save')).value;
+    expect(repository.snapshot.save.turn, save.turn + 1);
+    expect(state?.activePlayerId, 'player_1');
+    expect(state?.activePlayerCanAct, isTrue);
+    expect(state?.selectedUnitId, commander.id);
+    expect(state?.moveCommandActive, isTrue);
+    expect(
+      renderer.handledEffects.whereType<SmoothCameraEffect>().any(
+        (effect) => effect.col == commander.col && effect.row == commander.row,
+      ),
+      isTrue,
+    );
+  });
+  testWidgets('AI handback focuses the human map start when research is next', (
+    tester,
+  ) async {
+    final aiPlayer = _player2.copyWith(
+      name: 'AI Bob',
+      kind: PlayerKind.ai,
+      ai: const AiPlayer(
+        strategyId: AiStrategyId.random,
+        difficulty: AiDifficulty.normal,
+        persona: AiPersona.balanced,
+        seed: 42,
+      ),
+    );
+    final save = _save.copyWith(
+      gameMode: GameMode.multiplayer,
+      players: [_player, aiPlayer],
+      playerStates: const {
+        'player_1': PlayerTurnState.finished,
+        'player_2': PlayerTurnState.active,
+      },
+    );
+    final aiCommander = GameUnit.startingCommander(
+      ownerPlayerId: 'player_2',
+      col: 2,
+      row: 2,
+    ).copyWith(movementPoints: 0);
+    final city = GameCity(
+      id: 'city_1',
+      ownerPlayerId: 'player_1',
+      name: 'City',
+      center: const CityHex(col: 0, row: 0),
+      controlledHexes: const [CityHex(col: 0, row: 0)],
+      productionQueue: CityProductionQueue.building(
+        buildingType: CityBuildingType.granary,
+        investedProduction: 0,
+      ),
+    );
+    final repository = _FakeGameRepository(
+      snapshot: GameSnapshotFactory.fromClientState(
+        save: save,
+        state: GameClientState(
+          units: [aiCommander],
+          cities: [city],
+          activePlayerId: 'player_1',
+          activePlayerCanAct: false,
+          submittedPlayerIds: const {'player_1'},
+        ),
+      ),
+    );
+    final renderer = _SpyGameRenderer(mapData: _makeMap());
+
+    await _pumpHud(
+      tester,
+      repository: repository,
+      gameSave: save,
+      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      renderer: renderer,
+      aiAutopilotEnabled: true,
+    );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(GameHud)),
+      listen: false,
+    );
+    await container.read(gameStateProvider('save').future);
+    await tester.pump();
+
+    await _pumpUntil(tester, () {
+      final state = container.read(gameStateProvider('save')).value;
+      return repository.snapshot.save.turn > save.turn &&
+          state?.pendingAction is PendingResearchSelection &&
+          (state?.activePlayerCanAct ?? false);
+    });
+    await tester.pump();
+
+    final state = container.read(gameStateProvider('save')).value;
+    expect(repository.snapshot.save.turn, save.turn + 1);
+    expect(state?.activePlayerId, 'player_1');
+    expect(state?.activePlayerCanAct, isTrue);
+    expect(state?.pendingAction, isA<PendingResearchSelection>());
+    final smoothEffects = renderer.handledEffects
+        .whereType<SmoothCameraEffect>()
+        .toList(growable: false);
+    expect(smoothEffects, isNotEmpty);
+    expect(smoothEffects.last.col, city.center.col);
+    expect(smoothEffects.last.row, city.center.row);
+  });
+}

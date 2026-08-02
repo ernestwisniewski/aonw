@@ -394,9 +394,7 @@
     },
     "core_test": {
       "files": {
-        "packages/aonw_core/test/ai/basic_strategy_test.dart": 7003,
         "packages/aonw_core/test/ai/game_view_test.dart": 596,
-        "packages/aonw_core/test/ai/mcts/mcts_action_generator_test.dart": 5243,
         "packages/aonw_core/test/ai/mcts/mcts_evaluator_test.dart": 2122,
         "packages/aonw_core/test/ai/mcts/mcts_simulator_parity_test.dart": 1093,
         "packages/aonw_core/test/ai/mcts/mcts_strategy_test.dart": 1705,
@@ -411,19 +409,13 @@
       "legacyFiles": {},
       "declarations": {},
       "callableLines": {
-        "packages/aonw_core/test/ai/basic_strategy_test.dart::function:main/closure:group[BasicStrategy]#1": 153,
-        "packages/aonw_core/test/ai/basic_strategy_test.dart::function:main/closure:group[BasicStrategy]#1/closure:test[moves_spare_military_to_escort_a_pressured_third-city_settler]#1": 122,
-        "packages/aonw_core/test/ai/basic_strategy_test.dart::function:main/closure:group[BasicStrategy]#1/closure:test[trains_a_scout_when_a_third-city_settler_has_no_legal_site]#1": 135,
-        "packages/aonw_core/test/ai/basic_strategy_test.dart::function:main/closure:group[BasicStrategy]#1/closure:test[uses_spare_scouts_to_reveal_legal_third-city_frontiers]#1": 121,
         "packages/aonw_core/test/ai/telemetry/balance_runner_test.dart::function:main/closure:group[BalanceRunner]#1/closure:test[runs_a_deterministic_batch_and_aggregates_per-player_metrics]#1": 185,
         "packages/aonw_core/test/game/balance_telemetry_test.dart::function:main/closure:group[BalanceTelemetryAnalyzer]#1/closure:test[exposes_tuning_target_windows_per_pace_profile]#1": 132,
         "packages/aonw_core/test/game/game_event_serialization_test.dart::function:main/closure:group[GameEventSerializer]#1/closure:test[round-trips_representative_gameplay_events]#1": 183
       },
       "nesting": {},
       "cyclomaticComplexity": {},
-      "cognitiveComplexity": {
-        "packages/aonw_core/test/ai/basic_strategy_test.dart::function:_citySiteChoiceMap": 23
-      }
+      "cognitiveComplexity": {}
     },
     "core_tool": {
       "files": {
@@ -1123,9 +1115,6 @@
         "test/game/domain/reducer/selection_reducer_test.dart": 724,
         "test/game/domain/reducer/turn_reducer_test.dart": 912,
         "test/game/game_effect_dispatcher_test.dart": 667,
-        "test/game/game_hud_test.dart": 7251,
-        "test/game/game_providers_test.dart": 2590,
-        "test/game/game_renderer_keyboard_test.dart": 3578,
         "test/game/game_rendering_coordinator_test.dart": 1479,
         "test/game/game_screen_test.dart": 1422,
         "test/game/hover_intent_marker_test.dart": 923,
@@ -1157,14 +1146,6 @@
         "test/architecture/architecture_configuration_guard_test.dart::function:main/closure:test[architecture_policy_owns_every_Dart_source_with_coherent_targets]#1": 155,
         "test/architecture/critical_e2e_configuration_guard_test.dart::function:main/closure:test[live_harness_fails_closed_around_process__secrets__and_database]#1": 161,
         "test/architecture/lint_configuration_guard_test.dart::function:main/closure:test[Make_owns_fatal_analyzers_and_CI_delegates_without_command_drift]#1": 297,
-        "test/game/game_hud_test.dart::function:main": 186,
-        "test/game/game_hud_test.dart::function:main/closure:testWidgets[event_notifications_show_concrete_events_and_skip_routine_noise]#1": 187,
-        "test/game/game_hud_test.dart::function:main/closure:testWidgets[first_turn_first_game_walks_through_unit-led_coachmarks]#1": 201,
-        "test/game/game_hud_test.dart::function:main/closure:testWidgets[hotseat_autopilot_chains_multiple_AI_players_without_exposing_AI_fog]#1": 136,
-        "test/game/game_hud_test.dart::function:main/closure:testWidgets[local_multiplayer_AI_chain_keeps_camera_and_perspective_on_the_human]#1": 148,
-        "test/game/game_providers_test.dart::function:main/closure:group[GameStateNotifier]#1/closure:test[ignores_local_live_command_echoes_while_waiting_for_the_ACK]#1": 143,
-        "test/game/game_providers_test.dart::function:main/closure:group[GameStateNotifier]#1/closure:test[uses_network_transport_for_a_connected_multiplayer_session]#1": 122,
-        "test/game/game_renderer_keyboard_test.dart::function:main/closure:group[GameRenderer_renderer_bridge]#1": 140,
         "test/game/game_screen_test.dart::function:main/closure:testWidgets[full_GameScreen_mobile_panel_capture_keeps_sheets_above_map]#1": 140,
         "test/game/game_screen_test.dart::function:main/closure:testWidgets[full_map_HUD_capture_keeps_marker_density_and_HUD_aligned]#1": 182,
         "test/game/local_game_persistence_flow_test.dart::function:main/closure:test[creates__saves__and_reloads_a_local_game_with_fresh_adapters]#1": 122,
@@ -1313,15 +1294,13 @@
     },
     "server_test": {
       "files": {
-        "server/test/integration/multiplayer_endpoint_smoke.dart": 1285,
-        "server/test/multiplayer/realtime_match_hub_test.dart": 3529
+        "server/test/integration/multiplayer_endpoint_smoke.dart": 1285
       },
       "legacyFiles": {},
       "declarations": {},
       "callableLines": {
         "server/test/architecture/server_operability_config_test.dart::function:main/closure:group[Server_operability_configuration]#1/closure:test[Compose_profiles_select_immutable_Serverpod_run_modes]#1": 140,
-        "server/test/integration/multiplayer_endpoint_smoke.dart::function:main/closure:withServerpod[MultiplayerEndpoint]#1/closure:test[creates__joins__starts__and_loads_a_persisted_match]#1": 219,
-        "server/test/multiplayer/realtime_match_hub_test.dart::function:main/closure:test[routes_diplomacy_commands_through_the_authoritative_hub]#1": 149
+        "server/test/integration/multiplayer_endpoint_smoke.dart::function:main/closure:withServerpod[MultiplayerEndpoint]#1/closure:test[creates__joins__starts__and_loads_a_persisted_match]#1": 219
       },
       "nesting": {},
       "cyclomaticComplexity": {},
