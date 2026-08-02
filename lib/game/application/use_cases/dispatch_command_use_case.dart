@@ -16,6 +16,8 @@ class DispatchCommandResult {
   final List<MovementCommandExecution> movementExecutions;
   final CanonicalGameSnapshot? snapshot;
   final int offset;
+  final int authoritativeTick;
+  final int authoritativeStartMicrosUtc;
   final bool storedSnapshot;
 
   DispatchCommandResult({
@@ -26,8 +28,13 @@ class DispatchCommandResult {
     this.movementExecutions = const [],
     this.snapshot,
     this.offset = 0,
+    int? authoritativeTick,
+    int? authoritativeStartMicrosUtc,
     this.storedSnapshot = false,
-  });
+  }) : authoritativeTick = authoritativeTick ?? offset,
+       authoritativeStartMicrosUtc =
+           authoritativeStartMicrosUtc ??
+           (authoritativeTick ?? offset) * Duration.microsecondsPerSecond;
 }
 
 class DispatchCommandUseCase {
@@ -57,6 +64,8 @@ class DispatchCommandUseCase {
       movementExecutions: result.movementExecutions,
       snapshot: result.snapshot,
       offset: result.offset,
+      authoritativeTick: result.authoritativeTick,
+      authoritativeStartMicrosUtc: result.authoritativeStartMicrosUtc,
       storedSnapshot: result.storedSnapshot,
     );
   }

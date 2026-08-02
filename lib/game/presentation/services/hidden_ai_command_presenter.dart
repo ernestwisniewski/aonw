@@ -20,11 +20,11 @@ final class HiddenAiCommandPresenter {
     required this.dispatchTransition,
     required HiddenAiRendererStateReader rendererStateReader,
     required HiddenAiLocalizationReader localizationReader,
-    required HiddenAiTransitionApplier applyTransition,
+    required HiddenAiProjectedTransitionApplier applyProjectedTransition,
   }) : rendererPlayback = HiddenAiRendererPlayback(
          rendererStateReader: rendererStateReader,
          localizationReader: localizationReader,
-         applyTransition: applyTransition,
+         applyProjectedTransition: applyProjectedTransition,
        );
 
   const HiddenAiCommandPresenter.withPlayback({
@@ -51,6 +51,8 @@ final class HiddenAiCommandPresenter {
         events: result.events,
         sourceId: sourceId,
         eventOffset: result.offset,
+        authoritativeTick: result.authoritativeTick,
+        authoritativeStartMicrosUtc: result.authoritativeStartMicrosUtc,
         movementExecutions: result.movementExecutions,
         turn: _eventTurnFor(result),
       );
@@ -62,6 +64,8 @@ final class HiddenAiCommandPresenter {
         events: result.events.whereType<UnitMovedEvent>(),
         sourceId: sourceId,
         eventOffset: result.offset,
+        authoritativeTick: result.authoritativeTick,
+        authoritativeStartMicrosUtc: result.authoritativeStartMicrosUtc,
         movementExecutions: result.movementExecutions,
         turn: _eventTurnFor(result),
       );
@@ -78,6 +82,8 @@ final class HiddenAiCommandPresenter {
       movementExecutions: result.movementExecutions,
       snapshot: result.snapshot,
       offset: result.offset,
+      authoritativeTick: result.authoritativeTick,
+      authoritativeStartMicrosUtc: result.authoritativeStartMicrosUtc,
       storedSnapshot: result.storedSnapshot,
     );
   }

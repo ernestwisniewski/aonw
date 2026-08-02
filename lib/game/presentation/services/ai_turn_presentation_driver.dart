@@ -17,13 +17,15 @@ typedef AiTurnHiddenCommandDispatcher =
       required DomainCommand command,
       required GameCommandContext context,
     });
+typedef AiTurnTransitionApplier =
+    Future<void> Function(GameClientState state, List<RendererEffect> effects);
 
 final class AiTurnPresentationDriver {
   final AiTurnPresentationSessionReader sessionReader;
   final AiTurnPresentationStateReader stateReader;
   final HiddenAiLocalizationReader localizationReader;
-  final HiddenAiTransitionApplier applyTransition;
-  final HiddenAiProjectedTransitionApplier? applyProjectedTransition;
+  final AiTurnTransitionApplier applyTransition;
+  final HiddenAiProjectedTransitionApplier applyProjectedTransition;
   final AiTurnHiddenCommandDispatcher hiddenDispatch;
 
   const AiTurnPresentationDriver({
@@ -31,7 +33,7 @@ final class AiTurnPresentationDriver {
     required this.stateReader,
     required this.localizationReader,
     required this.applyTransition,
-    this.applyProjectedTransition,
+    required this.applyProjectedTransition,
     required this.hiddenDispatch,
   });
 
@@ -50,7 +52,6 @@ final class AiTurnPresentationDriver {
       rendererPlayback: HiddenAiRendererPlayback(
         rendererStateReader: () => stateReader(saveId),
         localizationReader: localizationReader,
-        applyTransition: applyTransition,
         applyProjectedTransition: applyProjectedTransition,
       ),
       dispatchTransition: (command, {required context}) {

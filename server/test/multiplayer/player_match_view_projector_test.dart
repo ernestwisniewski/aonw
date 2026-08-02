@@ -125,6 +125,8 @@ void main() {
         matchId: snapshot.matchId,
         accepted: true,
         offset: 7,
+        tick: ownEvent.tick,
+        timestamp: ownEvent.timestamp,
         snapshot: snapshot,
         events: ownEvent.events,
         movementExecutions: WireMovementExecutionList(const []),
@@ -143,6 +145,8 @@ void main() {
       isNot(contains('_serverAudiencePlayerIds')),
     );
     expect(projectedOther.actorPlayerId, 'player-guest');
+    expect(ack.tick, ownEvent.tick);
+    expect(ack.timestamp, ownEvent.timestamp);
     expect(projectedOther.tick, isNull);
     expect(projectedOther.turn, 5);
     expect(projectedOther.command, isNull);

@@ -251,6 +251,8 @@ final class PlayerMatchViewProjector {
         matchId: canonical.matchId,
         accepted: canonical.accepted,
         offset: canonical.offset,
+        tick: canonical.tick,
+        timestamp: canonical.timestamp,
         snapshot: projectSnapshot(snapshot, recipient),
         events: PlayerMatchEventAudience.projectForRecipient(
           canonical.events,

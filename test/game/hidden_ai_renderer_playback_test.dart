@@ -45,8 +45,8 @@ void main() {
         final playback = HiddenAiRendererPlayback(
           rendererStateReader: () => humanRendererState,
           localizationReader: () => null,
-          applyTransition: (state, effects) async {
-            applied.add(_AppliedTransition(state, effects));
+          applyProjectedTransition: (state, batch) async {
+            applied.add(_AppliedTransition(state, batch.effects));
           },
         );
 
@@ -110,7 +110,7 @@ void main() {
         final playback = HiddenAiRendererPlayback(
           rendererStateReader: () => null,
           localizationReader: () => null,
-          applyTransition: (state, effects) async {
+          applyProjectedTransition: (state, batch) async {
             applied = true;
           },
         );

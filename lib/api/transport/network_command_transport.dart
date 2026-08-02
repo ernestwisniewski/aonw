@@ -330,12 +330,12 @@ class NetworkCommandTransport implements CommandTransport {
                 : reason,
           ),
       ]);
-      return CommandTransportResult(
+      return acknowledgedCommandTransportResult(
+        acknowledgment: ack,
         state: nextState,
         snapshot: snapshot,
         offset: effectiveOffset,
         events: rejectionEvents,
-        storedSnapshot: true,
       );
     }
     _remember(saveId, snapshot, offset: effectiveOffset);
@@ -354,7 +354,8 @@ class NetworkCommandTransport implements CommandTransport {
       localEffects: localTransition.uiEffects,
       movementExecutions: ack.movementExecutions,
     );
-    return CommandTransportResult(
+    return acknowledgedCommandTransportResult(
+      acknowledgment: ack,
       state: nextState,
       uiEffects: presentation.interactionEffects,
       snapshot: snapshot,
@@ -362,7 +363,6 @@ class NetworkCommandTransport implements CommandTransport {
       events: eventCodec.eventsFromJsonList(ack.events),
       movementExecutions: presentation.movementExecutions,
       combatAnimations: eventCodec.combatAnimationFactsFromJsonList(ack.events),
-      storedSnapshot: true,
     );
   }
 

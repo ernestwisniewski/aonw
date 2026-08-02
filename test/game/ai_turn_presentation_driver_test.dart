@@ -33,8 +33,8 @@ void main() {
           activePlayerCanAct: false,
           units: [beforeUnit],
         ),
-        applyTransition: (state, effects) async {
-          applied.add(_AppliedTransition(state, effects));
+        applyProjectedTransition: (state, batch) async {
+          applied.add(_AppliedTransition(state, batch.effects));
         },
         hiddenDispatch:
             ({required saveId, required command, required context}) async {
@@ -201,7 +201,8 @@ const _defaultRendererState = Object();
 AiTurnPresentationDriver _driver({
   required GameSession? session,
   Object? rendererState = _defaultRendererState,
-  HiddenAiTransitionApplier? applyTransition,
+  AiTurnTransitionApplier? applyTransition,
+  HiddenAiProjectedTransitionApplier? applyProjectedTransition,
   AiTurnHiddenCommandDispatcher? hiddenDispatch,
 }) {
   return AiTurnPresentationDriver(
@@ -214,6 +215,11 @@ AiTurnPresentationDriver _driver({
         applyTransition ??
         (state, effects) async {
           fail('unexpected renderer transition');
+        },
+    applyProjectedTransition:
+        applyProjectedTransition ??
+        (state, batch) async {
+          fail('unexpected projected renderer transition');
         },
     hiddenDispatch:
         hiddenDispatch ??

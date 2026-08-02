@@ -28,6 +28,8 @@ ProjectedGameEffectBatch _commandProjection(
     identity: PresentationBatchIdentity(
       sourceId: sourceId,
       eventOffset: result.offset,
+      authoritativeTick: result.authoritativeTick,
+      authoritativeStartMicrosUtc: result.authoritativeStartMicrosUtc,
       interactionId: record.interactionId,
     ),
     interactionEffects: _allowedInteractionEffects(

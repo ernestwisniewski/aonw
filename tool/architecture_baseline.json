@@ -1289,7 +1289,7 @@
       "callableLines": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 116,
         "server/lib/src/multiplayer/initial_multiplayer_snapshot_factory.dart::class:InitialMultiplayerSnapshotFactory/method:create": 68,
-        "server/lib/src/multiplayer/match_command_service_handling.dart::extension:MatchCommandServiceHandling/method:_handleCommand": 139,
+        "server/lib/src/multiplayer/match_command_service_handling.dart::extension:MatchCommandServiceHandling/method:_handleCommand": 125,
         "server/lib/src/multiplayer/match_command_service_timeout.dart::extension:MatchCommandServiceTimeouts/method:advanceTimedOutTurn/closure:transaction#1": 69,
         "server/lib/src/multiplayer/match_connection_registry_connect.dart::extension:MatchConnectionRegistryConnect/method:_connect/closure:_enqueueMatch#1": 61,
         "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 70,

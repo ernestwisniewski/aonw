@@ -60,11 +60,27 @@ Map<String, Object?> interactionPresentationSnapshot(
 
 Map<String, Object?> presentationBatchSnapshot(ProjectedGameEffectBatch batch) {
   return {
+    'plans': batch.animationPlans
+        .map(
+          (plan) => {
+            'eventId': plan.eventId,
+            'eventType': plan.eventType,
+            'policy': plan.policy,
+            'batchSequence': plan.batchSequence,
+            'eventSequence': plan.eventSequence,
+            'authoritativeTick': plan.authoritativeTick,
+            'authoritativeStartMicrosUtc': plan.authoritativeStartMicrosUtc,
+            'startOffsetMicros': plan.startOffset.inMicroseconds,
+            'durationMicros': plan.duration.inMicroseconds,
+            'endOffsetMicros': plan.endOffset.inMicroseconds,
+          },
+        )
+        .toList(growable: false),
     'interaction': batch.projectedInteractionEffects
-        .map(_projectedEffectSnapshot)
+        .map(projectedAnimationTraceSnapshot)
         .toList(growable: false),
     'domain': batch.domainEffects
-        .map(_projectedEffectSnapshot)
+        .map(projectedAnimationTraceSnapshot)
         .toList(growable: false),
   };
 }
@@ -81,13 +97,23 @@ Map<String, Object?> uiEffectSnapshot(UiEffect effect) {
   };
 }
 
-Map<String, Object?> _projectedEffectSnapshot(ProjectedGameEffect projected) {
+Map<String, Object?> projectedAnimationTraceSnapshot(
+  ProjectedGameEffect projected,
+) {
   return {
     'sourceId': projected.sourceId,
+    'eventId': projected.eventId,
     'animationId': projected.animationId,
     'eventOffset': projected.eventOffset,
+    'eventSequence': projected.eventSequence,
+    'authoritativeTick': projected.authoritativeTick,
+    'authoritativeStartMicrosUtc': projected.authoritativeStartMicrosUtc,
     'ordinal': projected.ordinal,
     'startOffsetMicros': projected.startOffset.inMicroseconds,
+    'durationMicros': projected.duration.inMicroseconds,
+    'endOffsetMicros': projected.endOffset.inMicroseconds,
+    'logicalStartMicrosUtc': projected.logicalStartMicrosUtc,
+    'logicalEndMicrosUtc': projected.logicalEndMicrosUtc,
     'effect': rendererEffectSnapshot(projected.effect),
   };
 }

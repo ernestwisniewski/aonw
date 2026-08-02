@@ -1,7 +1,8 @@
 import 'package:aonw/game/application/services/queued_movement_effect_builder.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/game/presentation/engine/game_effect_logical_timeline.dart';
+import 'package:aonw/game/presentation/engine/domain_event_animation_policy.dart';
+import 'package:aonw/game/presentation/engine/domain_event_animation_scheduler.dart';
 import 'package:aonw/game/presentation/engine/game_event_renderer_effect_mapper.dart';
 import 'package:aonw/game/presentation/engine/movement_event_execution_matcher.dart';
 import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
@@ -26,8 +27,7 @@ abstract final class DomainEventPresentationProjector {
     String? viewerPlayerId,
     int? turn,
   }) {
-    final domainEffects = projectObserved(
-      interactionEffects: const [],
+    final projections = _projectObservedEventEffects(
       events: events,
       visibleMovementExecutions: visibleMovementExecutions,
       state: state,
@@ -36,12 +36,10 @@ abstract final class DomainEventPresentationProjector {
       viewerPlayerId: viewerPlayerId,
       turn: turn,
     );
-    return ProjectedGameEffectBatch(
-      projectedInteractionEffects: _scheduleInteraction(
-        identity,
-        interactionEffects,
-      ),
-      domainEffects: _schedule(identity, domainEffects),
+    return DomainEventAnimationScheduler.schedule(
+      identity: identity,
+      interactionEffects: interactionEffects,
+      eventProjections: projections,
     );
   }
 
@@ -81,6 +79,32 @@ abstract final class DomainEventPresentationProjector {
     String? viewerPlayerId,
     int? turn,
   }) {
+    final effects = <RendererEffect>[
+      ...interactionEffects,
+      ..._projectObservedEventEffects(
+        events: events,
+        visibleMovementExecutions: visibleMovementExecutions,
+        state: state,
+        previousState: previousState,
+        l10n: l10n,
+        viewerPlayerId: viewerPlayerId,
+        turn: turn,
+      ).expand((projection) => projection.effects),
+    ];
+    return effects.isEmpty
+        ? const []
+        : List<RendererEffect>.unmodifiable(effects);
+  }
+
+  static List<DomainEventEffectProjection> _projectObservedEventEffects({
+    required Iterable<GameEvent> events,
+    required Iterable<MovementCommandExecution> visibleMovementExecutions,
+    required GameClientState state,
+    required GameClientState previousState,
+    AppLocalizations? l10n,
+    String? viewerPlayerId,
+    int? turn,
+  }) {
     final orderedEvents = events.toList(growable: false);
     final movementPlan = MovementEventExecutionMatcher.match(
       events: orderedEvents,
@@ -93,7 +117,6 @@ abstract final class DomainEventPresentationProjector {
         if (event.outcome.defenderRetreated) event.defenderUnitId,
     };
     return _projectObservedInEventOrder(
-      interactionEffects: interactionEffects,
       events: orderedEvents,
       movementPlan: movementPlan,
       combatRetreatUnitIds: combatRetreatUnitIds,
@@ -105,8 +128,7 @@ abstract final class DomainEventPresentationProjector {
     );
   }
 
-  static List<RendererEffect> _projectObservedInEventOrder({
-    required Iterable<RendererEffect> interactionEffects,
+  static List<DomainEventEffectProjection> _projectObservedInEventOrder({
     required List<GameEvent> events,
     required MovementEventExecutionPlan movementPlan,
     required Set<String> combatRetreatUnitIds,
@@ -124,36 +146,36 @@ abstract final class DomainEventPresentationProjector {
       ))
         fact.eventIndex: fact,
     };
-    final effects = <RendererEffect>[...interactionEffects];
+    final projections = <DomainEventEffectProjection>[];
     if (movementPlan.hasUnanchoredExecutions) {
-      effects.addAll(
-        _movementEffectsFromExecutions(
+      projections.add((
+        eventSequence: -1,
+        eventType: 'AuthoritativeMovementEvidence',
+        policy: 'recipient-visible authoritative movement evidence',
+        effects: _movementEffectsFromExecutions(
           movementPlan.validExecutions(excludedUnitIds: combatRetreatUnitIds),
         ),
-      );
+      ));
     }
     var eventIndex = 0;
     while (eventIndex < events.length) {
       final event = events[eventIndex];
+      final policy = DomainEventAnimationPolicy.forEvent(event);
       if (event is UnitMovedEvent) {
-        final movementBlockStart = eventIndex;
-        while (eventIndex < events.length &&
-            events[eventIndex] is UnitMovedEvent) {
-          eventIndex += 1;
-        }
-        effects.addAll(
-          _observedMovementEffects(
-            events: events,
-            start: movementBlockStart,
-            end: eventIndex,
-            movementPlan: movementPlan,
-            excludedUnitIds: combatRetreatUnitIds,
-          ),
+        eventIndex = _appendObservedMovementBlock(
+          projections: projections,
+          events: events,
+          start: eventIndex,
+          movementPlan: movementPlan,
+          excludedUnitIds: combatRetreatUnitIds,
         );
         continue;
       }
-      effects.addAll(
-        rendererEffectsForEvent(
+      projections.add((
+        eventSequence: eventIndex,
+        eventType: '${event.runtimeType}',
+        policy: policy.reviewReason,
+        effects: rendererEffectsForEvent(
           event: event,
           state: state,
           previousState: previousState,
@@ -162,12 +184,12 @@ abstract final class DomainEventPresentationProjector {
           turn: turn,
           combatAnimation: combatFacts[eventIndex],
         ),
-      );
+      ));
       eventIndex += 1;
     }
-    return effects.isEmpty
+    return projections.isEmpty
         ? const []
-        : List<RendererEffect>.unmodifiable(effects);
+        : List<DomainEventEffectProjection>.unmodifiable(projections);
   }
 
   static List<RendererEffect> _project({
@@ -255,68 +277,44 @@ abstract final class DomainEventPresentationProjector {
     final city = state.cityById(cityId);
     return city == null ? null : (city.center.col, city.center.row);
   }
-
-  static List<ProjectedGameEffect> _schedule(
-    PresentationBatchIdentity identity,
-    Iterable<RendererEffect> effects,
-  ) {
-    var startOffset = Duration.zero;
-    var ordinal = 0;
-    final projected = <ProjectedGameEffect>[];
-    for (final effect in effects) {
-      projected.add(
-        ProjectedGameEffect(
-          effect: effect,
-          sourceId: identity.sourceId,
-          animationId:
-              '${identity.sourceId}:${identity.eventOffset}:'
-              '${effect.runtimeType}:${_effectEntity(effect)}:$ordinal',
-          eventOffset: identity.eventOffset,
-          ordinal: ordinal,
-          startOffset: startOffset,
-        ),
-      );
-      startOffset += GameEffectLogicalTimeline.durationFor(effect);
-      ordinal += 1;
-    }
-    return projected;
-  }
-
-  static List<ProjectedGameEffect> _scheduleInteraction(
-    PresentationBatchIdentity identity,
-    Iterable<RendererEffect> effects,
-  ) {
-    final interactionId =
-        identity.interactionId ??
-        '${identity.sourceId}:${identity.eventOffset}:interaction';
-    var ordinal = 0;
-    return [
-      for (final effect in effects)
-        ProjectedGameEffect(
-          effect: effect,
-          sourceId: identity.sourceId,
-          animationId:
-              '${identity.sourceId}:interaction:$interactionId:'
-              '${effect.runtimeType}:${_effectEntity(effect)}:${ordinal++}',
-          eventOffset: identity.eventOffset,
-          ordinal: ordinal - 1,
-          startOffset: Duration.zero,
-        ),
-    ];
-  }
-
-  static String _effectEntity(RendererEffect effect) {
-    return switch (effect) {
-      AnimateUnitMoveEffect(:final unitId) => unitId,
-      PlayCombatAnimationEffect(:final attackerUnitId, :final defenderUnitId) =>
-        '$attackerUnitId>$defenderUnitId',
-      ShowCityProductionBubbleEffect(:final cityId) => cityId,
-      RendererEffect() => '${effect.runtimeType}',
-    };
-  }
 }
 
-List<RendererEffect> _observedMovementEffects({
+int _appendObservedMovementBlock({
+  required List<DomainEventEffectProjection> projections,
+  required List<GameEvent> events,
+  required int start,
+  required MovementEventExecutionPlan movementPlan,
+  required Set<String> excludedUnitIds,
+}) {
+  var end = start;
+  while (end < events.length && events[end] is UnitMovedEvent) {
+    end += 1;
+  }
+  final movementProjections = _observedMovementProjections(
+    events: events,
+    start: start,
+    end: end,
+    movementPlan: movementPlan,
+    excludedUnitIds: excludedUnitIds,
+  );
+  projections.addAll(movementProjections);
+  final plannedSequences = {
+    for (final projection in movementProjections) projection.eventSequence,
+  };
+  for (var index = start; index < end; index += 1) {
+    if (plannedSequences.contains(index)) continue;
+    final movementEvent = events[index];
+    projections.add((
+      eventSequence: index,
+      eventType: '${movementEvent.runtimeType}',
+      policy: DomainEventAnimationPolicy.forEvent(movementEvent).reviewReason,
+      effects: const [],
+    ));
+  }
+  return end;
+}
+
+List<DomainEventEffectProjection> _observedMovementProjections({
   required List<GameEvent> events,
   required int start,
   required int end,
@@ -340,19 +338,53 @@ List<RendererEffect> _observedMovementEffects({
     movementPlan: movementPlan,
     excludedUnitIds: excludedUnitIds,
   );
-  final effects = <RendererEffect>[];
+  final projections = <DomainEventEffectProjection>[];
   var fallbackIndex = 0;
   for (final match in matches) {
     while (fallbackIndex < fallbacks.length &&
         fallbacks[fallbackIndex].eventIndex < match.eventIndex) {
-      effects.addAll(_fallbackEffects(fallbacks[fallbackIndex++].movement));
+      final fallback = fallbacks[fallbackIndex++];
+      projections.add(
+        _movementProjection(
+          events,
+          fallback.eventIndex,
+          _fallbackEffects(fallback.movement),
+        ),
+      );
     }
-    effects.addAll(_movementEffectsFromExecutions([match.execution]));
+    projections.add(
+      _movementProjection(
+        events,
+        match.eventIndex,
+        _movementEffectsFromExecutions([match.execution]),
+      ),
+    );
   }
   while (fallbackIndex < fallbacks.length) {
-    effects.addAll(_fallbackEffects(fallbacks[fallbackIndex++].movement));
+    final fallback = fallbacks[fallbackIndex++];
+    projections.add(
+      _movementProjection(
+        events,
+        fallback.eventIndex,
+        _fallbackEffects(fallback.movement),
+      ),
+    );
   }
-  return effects;
+  return projections;
+}
+
+DomainEventEffectProjection _movementProjection(
+  List<GameEvent> events,
+  int eventIndex,
+  List<RendererEffect> effects,
+) {
+  final event = events[eventIndex];
+  return (
+    eventSequence: eventIndex,
+    eventType: '${event.runtimeType}',
+    policy: DomainEventAnimationPolicy.forEvent(event).reviewReason,
+    effects: effects,
+  );
 }
 
 List<({int eventIndex, UnitMovedEvent movement})> _movementFallbacks({

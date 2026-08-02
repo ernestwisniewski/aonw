@@ -202,7 +202,7 @@ extension GameStateNotifierMultiplayerSync on GameStateNotifier {
       nextState: nextState,
       events: _presentedLiveEvents(presentation, liveEvent),
       movementExecutions: presentation.movementExecutions,
-      identity: _liveBatchIdentity(saveId, incomingOffset),
+      identity: _liveBatchIdentity(saveId, incomingOffset, liveEvent),
       viewerPlayerId: viewerPlayerId,
       turn: snapshot.save.turn,
       renderer: _providerRef.read(activeRendererViewModelProvider),

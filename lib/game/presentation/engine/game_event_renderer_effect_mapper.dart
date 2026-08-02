@@ -2,6 +2,7 @@ import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/artifact_event_renderer_effect_mapper.dart';
+import 'package:aonw/game/presentation/engine/domain_event_animation_policy.dart';
 import 'package:aonw/game/presentation/engine/game_camera_effect_normalizer.dart';
 import 'package:aonw/game/presentation/engine/game_event_renderer_combat_effects.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
@@ -401,6 +402,8 @@ List<RendererEffect> rendererEffectsForEvent({
   int? turn,
   CombatAnimationFact? combatAnimation,
 }) {
+  final policy = DomainEventAnimationPolicy.forEvent(event);
+  if (!policy.hasRendererEffects) return const [];
   if (event is ArtifactLifecycleEvent) {
     return ArtifactEventRendererEffectMapper.effectsFor(
       event,

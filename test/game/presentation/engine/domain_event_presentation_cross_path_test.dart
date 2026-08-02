@@ -218,12 +218,12 @@ void main() {
     expect(
       batches['local']!.domainEffects.map((effect) => effect.animationId),
       const [
-        'match_1:18:SpawnParticleBurstEffect:SpawnParticleBurstEffect:0',
-        'match_1:18:ShowFloatingTextEffect:ShowFloatingTextEffect:1',
-        'match_1:18:SpawnParticleBurstEffect:SpawnParticleBurstEffect:2',
-        'match_1:18:ShowFloatingTextEffect:ShowFloatingTextEffect:3',
-        'match_1:18:SpawnParticleBurstEffect:SpawnParticleBurstEffect:4',
-        'match_1:18:ShowFloatingTextEffect:ShowFloatingTextEffect:5',
+        'match_1:18:0:SpawnParticleBurstEffect:SpawnParticleBurstEffect:0',
+        'match_1:18:0:ShowFloatingTextEffect:ShowFloatingTextEffect:1',
+        'match_1:18:1:SpawnParticleBurstEffect:SpawnParticleBurstEffect:0',
+        'match_1:18:1:ShowFloatingTextEffect:ShowFloatingTextEffect:1',
+        'match_1:18:2:SpawnParticleBurstEffect:SpawnParticleBurstEffect:0',
+        'match_1:18:2:ShowFloatingTextEffect:ShowFloatingTextEffect:1',
       ],
     );
     expect(

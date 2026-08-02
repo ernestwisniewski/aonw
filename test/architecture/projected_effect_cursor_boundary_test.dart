@@ -23,16 +23,36 @@ void main() {
         .map((parameter) => parameter.name?.lexeme)
         .toSet();
 
-    expect(parameterNames, {'projectedInteractionEffects', 'domainEffects'});
+    expect(parameterNames, {
+      'identity',
+      'projectedInteractionEffects',
+      'animationPlans',
+      'domainEffects',
+    });
 
     for (final path in const [
       'lib/game/presentation/engine/game_renderer_projected_effects.dart',
       'lib/game/presentation/engine/renderer_view_model.dart',
     ]) {
       final source = File(path).readAsStringSync();
-      expect(source, contains('batch.projectedEffects'), reason: path);
+      expect(
+        source,
+        contains('_projectedTransitionQueue.enqueue('),
+        reason: path,
+      );
+      expect(
+        source,
+        contains('_projectedEffectCursor.consumeBatch('),
+        reason: path,
+      );
+      expect(source, contains('transition.batch'), reason: path);
       expect(source, isNot(contains('batch.interactionEffects')), reason: path);
     }
+
+    final productionHost = File(
+      'lib/game/presentation/screens/game/game_screen.dart',
+    ).readAsStringSync();
+    expect(productionHost, contains('presentationClock:'));
   });
 
   test('production renderer hosts explicitly activate one source', () {

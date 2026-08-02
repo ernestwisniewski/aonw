@@ -230,6 +230,7 @@ class _GameRendererSessionHostState
       },
       onLoadingProgress: _reportRendererLoadProgress,
       l10n: widget.l10n,
+      presentationClock: ref.read(gameClockProvider),
       followUnitMovementCamera: gameplaySettings.followUnitMovementCamera,
       followEnemyUnitCamera: gameplaySettings.followEnemyUnitCamera,
       cinematicCameraEnabled: gameplaySettings.cinematicCameraEnabled,
@@ -273,9 +274,8 @@ class _GameRendererSessionHostState
         onProgress: _reportStartupAssetProgress,
       );
     } catch (_) {
-      // Renderer loading still reports asset failures; the preloader should not
-      // leave the player stuck behind an overlay if a platform-specific cache
-      // warmup fails.
+      // Renderer loading reports failures, so a platform cache warmup must not
+      // leave the player stuck behind an overlay.
       _reportStartupAssetProgress(1);
     }
   }

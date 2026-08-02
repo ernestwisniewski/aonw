@@ -7,6 +7,8 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 
+const multiplayerPresentationStartBuffer = Duration(milliseconds: 500);
+
 class CommandTransportResult {
   final GameClientState state;
   final List<UiEffect> uiEffects;
@@ -20,18 +22,26 @@ class CommandTransportResult {
   /// server do not fabricate a persistence snapshot.
   final CanonicalGameSnapshot? snapshot;
   final int offset;
+  final int authoritativeTick;
+  final int authoritativeStartMicrosUtc;
   final bool storedSnapshot;
 
   const CommandTransportResult({
     required this.state,
     required this.snapshot,
     required this.offset,
+    int? authoritativeTick,
+    int? authoritativeStartMicrosUtc,
     this.uiEffects = const [],
     this.events = const [],
     this.combatAnimations = const [],
     this.movementExecutions = const [],
     this.storedSnapshot = false,
-  }) : assert(!storedSnapshot || snapshot != null);
+  }) : authoritativeTick = authoritativeTick ?? offset,
+       authoritativeStartMicrosUtc =
+           authoritativeStartMicrosUtc ??
+           (authoritativeTick ?? offset) * Duration.microsecondsPerSecond,
+       assert(!storedSnapshot || snapshot != null);
 }
 
 abstract interface class CommandTransport {

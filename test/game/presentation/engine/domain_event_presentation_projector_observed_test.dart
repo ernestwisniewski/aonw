@@ -45,8 +45,8 @@ void main() {
       final observed = project();
       expect(acknowledged.projectedInteractionEffects, hasLength(1));
       expect(acknowledged.domainEffects.map((item) => item.animationId), [
-        'match_1:42:AnimateUnitMoveEffect:unit_a:0',
-        'match_1:42:AnimateUnitMoveEffect:unit_a:1',
+        'match_1:42:0:AnimateUnitMoveEffect:unit_a:0',
+        'match_1:42:0:AnimateUnitMoveEffect:unit_a:1',
       ]);
       expect(
         observed.domainEffects.map((item) => item.animationId),

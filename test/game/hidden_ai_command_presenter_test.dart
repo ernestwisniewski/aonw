@@ -48,8 +48,8 @@ void main() {
         final presenter = HiddenAiCommandPresenter(
           rendererStateReader: () => humanRendererState,
           localizationReader: () => null,
-          applyTransition: (state, effects) async {
-            applied.add(_AppliedTransition(state, effects));
+          applyProjectedTransition: (state, batch) async {
+            applied.add(_AppliedTransition(state, batch.effects));
           },
           dispatchTransition: (command, {required context}) async {
             expect(command, const MoveUnitCommand('warrior_1', 3, 3));
@@ -106,8 +106,8 @@ void main() {
       final presenter = HiddenAiCommandPresenter(
         rendererStateReader: () => null,
         localizationReader: () => null,
-        applyTransition: (state, effects) async {
-          applied.add(_AppliedTransition(state, effects));
+        applyProjectedTransition: (state, batch) async {
+          applied.add(_AppliedTransition(state, batch.effects));
         },
         dispatchTransition: (command, {required context}) async {
           return DispatchCommandResult(
@@ -132,7 +132,7 @@ void main() {
       final presenter = HiddenAiCommandPresenter(
         rendererStateReader: () => GameClientState(activePlayerId: 'human'),
         localizationReader: () => null,
-        applyTransition: (state, effects) async {
+        applyProjectedTransition: (state, batch) async {
           applied = true;
         },
         dispatchTransition: (command, {required context}) async {
@@ -188,8 +188,8 @@ void main() {
           rendererStateReader: () =>
               GameClientState(activePlayerId: 'human', units: [beforeUnit]),
           localizationReader: () => null,
-          applyTransition: (state, effects) async {
-            applied.add(_AppliedTransition(state, effects));
+          applyProjectedTransition: (state, batch) async {
+            applied.add(_AppliedTransition(state, batch.effects));
           },
           dispatchTransition: (command, {required context}) async {
             return DispatchCommandResult(

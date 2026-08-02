@@ -15,6 +15,8 @@ abstract class WireCommandAck with _$WireCommandAck {
     required String matchId,
     required bool accepted,
     required int offset,
+    int? tick,
+    DateTime? timestamp,
     required WireSnapshot snapshot,
     @Default(<Map<String, dynamic>>[]) List<Map<String, dynamic>> events,
     String? reason,
@@ -44,6 +46,10 @@ abstract class WireCommandAck with _$WireCommandAck {
       matchId: WireJson.requiredString(json, 'WireCommandAck', 'matchId'),
       accepted: accepted,
       offset: WireJson.requiredInt(json, 'WireCommandAck', 'offset'),
+      tick: WireJson.optionalInt(json, 'WireCommandAck', 'tick'),
+      timestamp: json['timestamp'] == null
+          ? null
+          : WireJson.requiredDateTimeUtc(json, 'WireCommandAck', 'timestamp'),
       snapshot: WireSnapshot.fromJson(
         WireJson.requiredMap(json['snapshot'], 'WireCommandAck.snapshot'),
       ),
@@ -64,6 +70,8 @@ abstract class WireCommandAck with _$WireCommandAck {
     'matchId': matchId,
     'accepted': accepted,
     'offset': offset,
+    if (tick != null) 'tick': tick,
+    if (timestamp != null) 'timestamp': timestamp!.toUtc().toIso8601String(),
     'snapshot': snapshot.toJson(),
     'events': events.map(Map<String, dynamic>.from).toList(),
     if (reason != null) 'reason': reason,

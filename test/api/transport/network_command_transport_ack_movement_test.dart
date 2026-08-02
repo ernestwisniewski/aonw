@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/transport/network_command_transport.dart';
+import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
@@ -46,6 +47,16 @@ void main() {
         );
 
         expect(result.snapshot, isNotNull);
+        expect(result.authoritativeTick, 7);
+        expect(
+          result.authoritativeStartMicrosUtc,
+          DateTime.utc(
+            2026,
+            4,
+            26,
+            12,
+          ).add(multiplayerPresentationStartBuffer).microsecondsSinceEpoch,
+        );
         expect(result.uiEffects, isEmpty);
         expect(result.movementExecutions.map(_movementSnapshot), const [
           ('unit_a', 0, 0, 1, 0, 7, 7),
@@ -266,6 +277,8 @@ WireCommandAck _acceptedAck({
     matchId: 'save_1',
     accepted: true,
     offset: 1,
+    tick: 7,
+    timestamp: DateTime.utc(2026, 4, 26, 12),
     snapshot: snapshotCodec.toWire(
       matchId: 'save_1',
       snapshot: _snapshot(after, offset: 1, turn: 2),

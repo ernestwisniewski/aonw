@@ -82,10 +82,19 @@ extension GameStateNotifierEffects on GameStateNotifier {
   }
 }
 
-PresentationBatchIdentity _liveBatchIdentity(String sourceId, int eventOffset) {
+PresentationBatchIdentity _liveBatchIdentity(
+  String sourceId,
+  int eventOffset,
+  LiveServerEvent? liveEvent,
+) {
+  final wire = liveEvent?.wire;
   return PresentationBatchIdentity(
     sourceId: sourceId,
     eventOffset: eventOffset,
+    authoritativeTick: wire?.tick,
+    authoritativeStartMicrosUtc: wire?.timestamp
+        .add(multiplayerPresentationStartBuffer)
+        .microsecondsSinceEpoch,
   );
 }
 

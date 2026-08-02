@@ -42,14 +42,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
           matchId: state.match.id,
           offset: duplicate.offset,
           match: _matchUpdateUnlessRunning(state),
-          ack: WireCommandAck(
-            matchId: state.match.id,
-            accepted: true,
-            offset: duplicate.offset,
-            snapshot: state.snapshot,
-            events: duplicate.events,
-            movementExecutions: duplicate.movementExecutions,
-          ),
+          ack: _acceptedCommandAck(state, duplicate),
         ),
       );
     }
@@ -127,14 +120,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
         matchId: state.match.id,
         offset: event.offset,
         match: updated.match.state == state.match.state ? null : updated.match,
-        ack: WireCommandAck(
-          matchId: state.match.id,
-          accepted: true,
-          offset: event.offset,
-          snapshot: updated.snapshot,
-          events: event.events,
-          movementExecutions: event.movementExecutions,
-        ),
+        ack: _acceptedCommandAck(updated, event),
       ),
       recipient: caller,
     );
@@ -212,6 +198,19 @@ extension MatchCommandServiceHandling on MatchCommandService {
       ),
     );
   }
+}
+
+WireCommandAck _acceptedCommandAck(StoredMatchState state, WireEvent event) {
+  return WireCommandAck(
+    matchId: state.match.id,
+    accepted: true,
+    offset: event.offset,
+    tick: event.tick,
+    timestamp: event.timestamp,
+    snapshot: state.snapshot,
+    events: event.events,
+    movementExecutions: event.movementExecutions,
+  );
 }
 
 WireMatch? _matchUpdateUnlessRunning(StoredMatchState state) =>

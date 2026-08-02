@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:aonw/game/application/ports/clock.dart';
 import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/artifact_marker_tap_cycle.dart';
+import 'package:aonw/game/presentation/engine/authoritative_presentation_scheduler.dart';
 import 'package:aonw/game/presentation/engine/city_description_tap_tracker.dart';
 import 'package:aonw/game/presentation/engine/game_camera_controller.dart';
 import 'package:aonw/game/presentation/engine/game_effect_dispatcher.dart';
@@ -117,6 +119,7 @@ class GameRenderer extends HexWorld
   final VoidCallback? onTileInspectionCanceled;
   final ValueChanged<double>? onLoadingProgress;
   final AppLocalizations? l10n;
+  final Clock? presentationClock;
 
   MapViewMode _viewMode;
   HexDisplaySettings _displaySettings;
@@ -205,6 +208,7 @@ class GameRenderer extends HexWorld
     this.onTileInspectionCanceled,
     this.onLoadingProgress,
     this.l10n,
+    this.presentationClock,
     WorkerActionPaletteOptionsBuilder? workerActionPaletteOptionsBuilder,
     MapViewMode initialViewMode = MapViewMode.tile,
     HexDisplaySettings? displaySettings,

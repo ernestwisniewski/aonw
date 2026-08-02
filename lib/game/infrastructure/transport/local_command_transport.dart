@@ -123,6 +123,10 @@ class LocalCommandTransport implements CommandTransport {
       movementExecutions: resolved.movementExecutions,
       snapshot: snapshot,
       offset: offset,
+      authoritativeTick: resolved.context.commandTick == 0
+          ? offset
+          : resolved.context.commandTick,
+      authoritativeStartMicrosUtc: clock.nowUtc().microsecondsSinceEpoch,
       storedSnapshot: storedSnapshot,
     );
   }

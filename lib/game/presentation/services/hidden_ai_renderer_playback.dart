@@ -8,8 +8,6 @@ import 'package:aonw_core/game/domain/movement.dart';
 
 typedef HiddenAiRendererStateReader = GameClientState? Function();
 typedef HiddenAiLocalizationReader = AppLocalizations? Function();
-typedef HiddenAiTransitionApplier =
-    Future<void> Function(GameClientState state, List<RendererEffect> effects);
 typedef HiddenAiProjectedTransitionApplier =
     Future<void> Function(
       GameClientState state,
@@ -31,14 +29,12 @@ final class HiddenAiRendererPlaybackReport {
 final class HiddenAiRendererPlayback {
   final HiddenAiRendererStateReader rendererStateReader;
   final HiddenAiLocalizationReader localizationReader;
-  final HiddenAiTransitionApplier applyTransition;
-  final HiddenAiProjectedTransitionApplier? applyProjectedTransition;
+  final HiddenAiProjectedTransitionApplier applyProjectedTransition;
 
   const HiddenAiRendererPlayback({
     required this.rendererStateReader,
     required this.localizationReader,
-    required this.applyTransition,
-    this.applyProjectedTransition,
+    required this.applyProjectedTransition,
   });
 
   GameClientState previousRendererState(GameClientState fallbackState) {
@@ -52,6 +48,8 @@ final class HiddenAiRendererPlayback {
     required Iterable<GameEvent> events,
     String sourceId = 'hidden-ai-preview',
     int eventOffset = 0,
+    int? authoritativeTick,
+    int? authoritativeStartMicrosUtc,
     Iterable<MovementCommandExecution> movementExecutions = const [],
     int? turn,
   }) async {
@@ -64,6 +62,8 @@ final class HiddenAiRendererPlayback {
           identity: PresentationBatchIdentity(
             sourceId: sourceId,
             eventOffset: eventOffset,
+            authoritativeTick: authoritativeTick,
+            authoritativeStartMicrosUtc: authoritativeStartMicrosUtc,
           ),
           interactionEffects: uiEffects.rendererEffects.where(
             (effect) =>
@@ -78,12 +78,7 @@ final class HiddenAiRendererPlayback {
         );
 
     if (rendererEffects.effects.isNotEmpty) {
-      final projectedApplier = applyProjectedTransition;
-      if (projectedApplier == null) {
-        await applyTransition(rendererState, rendererEffects.effects);
-      } else {
-        await projectedApplier(rendererState, rendererEffects);
-      }
+      await applyProjectedTransition(rendererState, rendererEffects);
     }
 
     return HiddenAiRendererPlaybackReport(

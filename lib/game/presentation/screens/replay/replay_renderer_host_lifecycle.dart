@@ -237,6 +237,8 @@ ProjectedGameEffectBatch _replayEffectBatch(
     identity: PresentationBatchIdentity(
       sourceId: timeline.saveId,
       eventOffset: step.offset,
+      authoritativeTick: step.loggedCommand.commandTick,
+      authoritativeStartMicrosUtc: step.timestamp.microsecondsSinceEpoch,
     ),
     interactionEffects: step.uiEffects.rendererEffects,
     events: step.events,

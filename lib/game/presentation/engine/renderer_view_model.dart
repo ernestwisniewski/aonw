@@ -69,17 +69,24 @@ final class GameRendererViewModel implements RendererViewModel {
 }
 
 final Expando<ProjectedGameEffectCursor> _projectedEffectCursors = Expando();
+final Expando<ProjectedGameTransitionQueue<GameClientState>>
+_projectedTransitionQueues = Expando();
 
 extension ProjectedRendererViewModel on RendererViewModel {
   ProjectedGameEffectCursor get _projectedEffectCursor {
     return _projectedEffectCursors[this] ??= ProjectedGameEffectCursor();
   }
 
+  ProjectedGameTransitionQueue<GameClientState> get _projectedTransitionQueue {
+    return _projectedTransitionQueues[this] ??=
+        ProjectedGameTransitionQueue<GameClientState>();
+  }
+
   Future<void> applyProjectedTransition(
     GameClientState state,
     ProjectedGameEffectBatch batch, {
     int? currentTurn,
-  }) {
+  }) async {
     if (this case final GameRendererViewModel production) {
       return production.applyAuthoritativeProjection(
         state,
@@ -87,19 +94,43 @@ extension ProjectedRendererViewModel on RendererViewModel {
         currentTurn: currentTurn,
       );
     }
-    final effects = _projectedEffectCursor.consume(batch.projectedEffects);
-    return applyTransition(state, effects, currentTurn: currentTurn);
+    final ready = _projectedTransitionQueue.enqueue(
+      ProjectedGameTransition(
+        state: state,
+        batch: batch,
+        currentTurn: currentTurn,
+      ),
+    );
+    for (final transition in ready) {
+      final effects = _projectedEffectCursor.consumeBatch(transition.batch);
+      await applyTransition(
+        transition.state,
+        effects,
+        currentTurn: transition.currentTurn,
+      );
+    }
   }
 
   void resetProjectedEffectCursorForReplaySeek() {
     _projectedEffectCursor.resetForReplaySeek();
+    _projectedTransitionQueue.resetForReplaySeek();
   }
 
-  void activateProjectedEffectSource(String sourceId) {
+  void activateProjectedEffectSource(String sourceId, {int? nextEventOffset}) {
     if (this case final GameRendererViewModel production) {
-      production._renderer.activateProjectedEffectSource(sourceId);
+      production._renderer.activateProjectedEffectSource(
+        sourceId,
+        nextEventOffset: nextEventOffset,
+      );
       return;
     }
-    _projectedEffectCursor.activateSource(sourceId);
+    _projectedEffectCursor.activateSource(
+      sourceId,
+      nextEventOffset: nextEventOffset,
+    );
+    _projectedTransitionQueue.activateSource(
+      sourceId,
+      nextEventOffset: nextEventOffset,
+    );
   }
 }

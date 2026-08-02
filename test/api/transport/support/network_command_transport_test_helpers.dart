@@ -374,11 +374,12 @@ class _FakeCommandServer implements WireCommandDispatcher {
 
     final command = commandCodec.fromWire(wire);
     final context = commandCodec.contextFromWire(wire);
+    final timestamp = DateTime.utc(2026, 4, 26, 12, 0, offset);
     final resolution = LocalCommandResolver(reducer: reducer).resolve(
       baseSnapshot: snapshot,
       currentState: state,
       command: command,
-      savedAt: DateTime.utc(2026, 4, 26, 12, 0, offset),
+      savedAt: timestamp,
       context: context,
     );
     final transition = GameStateTransition(
@@ -402,6 +403,8 @@ class _FakeCommandServer implements WireCommandDispatcher {
       matchId: wire.matchId,
       accepted: true,
       offset: offset,
+      tick: wire.tick,
+      timestamp: timestamp,
       snapshot: snapshotCodec.toWire(
         matchId: wire.matchId,
         snapshot: nextSnapshot,

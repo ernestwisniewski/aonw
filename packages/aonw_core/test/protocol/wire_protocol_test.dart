@@ -9,6 +9,8 @@ void main() {
         matchId: 'match_1',
         accepted: false,
         offset: 3,
+        tick: 17,
+        timestamp: DateTime.utc(2026, 8, 2, 12),
         snapshot: const WireSnapshot(
           matchId: 'match_1',
           offset: 3,
@@ -25,6 +27,8 @@ void main() {
       expect(restored.v, kProtocolVersion);
       expect(restored.matchId, 'match_1');
       expect(restored.accepted, isFalse);
+      expect(restored.tick, 17);
+      expect(restored.timestamp, DateTime.utc(2026, 8, 2, 12));
       expect(restored.snapshot.state['units'], isEmpty);
       expect(restored.events.single['reason'], 'not_allowed');
     });

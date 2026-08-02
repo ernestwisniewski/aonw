@@ -39,6 +39,55 @@ void main() {
     },
   );
 
+  test('buffers out-of-order batches and drains canonical sequence once', () {
+    final cursor = ProjectedGameEffectCursor()
+      ..activateSource('match_1', nextEventOffset: 7);
+    final later = _batch(offset: 8);
+    final expected = _batch(offset: 7);
+
+    expect(cursor.consumeProjectedBatch(later), isEmpty);
+    expect(cursor.pendingSequenceCount, 1);
+    expect(
+      cursor
+          .consumeProjectedBatch(expected)
+          .map((effect) => effect.eventOffset),
+      [7, 8],
+    );
+    expect(cursor.consumeProjectedBatch(later), isEmpty);
+    expect(cursor.pendingSequenceCount, 0);
+  });
+
+  test('an intentional no-animation plan closes a sequence gap', () {
+    final cursor = ProjectedGameEffectCursor()
+      ..activateSource('match_1', nextEventOffset: 7);
+    final later = _batch(offset: 8);
+    final noAnimation = ProjectedGameEffectBatch(
+      identity: const PresentationBatchIdentity(
+        sourceId: 'match_1',
+        eventOffset: 7,
+      ),
+      animationPlans: [
+        AnimationPlan(
+          eventId: 'match_1:7:0',
+          eventType: 'TurnEndedEvent',
+          policy: 'turn lifecycle is state-driven',
+          batchSequence: 7,
+          eventSequence: 0,
+          authoritativeTick: 7,
+          authoritativeStartMicrosUtc: 7000000,
+          startOffset: Duration.zero,
+          animations: const [],
+        ),
+      ],
+    );
+
+    expect(cursor.consumeProjectedBatch(later), isEmpty);
+    expect(
+      cursor.consumeProjectedBatch(noAnimation).map((item) => item.eventOffset),
+      [8],
+    );
+  });
+
   test('replay seek explicitly resets the cursor', () {
     final cursor = ProjectedGameEffectCursor();
     final effect = _effect(offset: 8, ordinal: 0);
@@ -130,6 +179,27 @@ void main() {
 
     expect(renderer.applied.whereType<JumpCameraEffect>(), hasLength(2));
   });
+
+  test(
+    'application boundary buffers state with out-of-order effects',
+    () async {
+      final renderer = _RecordingRendererViewModel()
+        ..activateProjectedEffectSource('match_1', nextEventOffset: 7);
+      final state7 = GameClientState(activePlayerId: 'player_7');
+      final state8 = GameClientState(activePlayerId: 'player_8');
+
+      await renderer.applyProjectedTransition(state8, _batch(offset: 8));
+      expect(renderer.appliedStates, isEmpty);
+
+      await renderer.applyProjectedTransition(state7, _batch(offset: 7));
+
+      expect(renderer.appliedStates.map((state) => state.activePlayerId), [
+        'player_7',
+        'player_8',
+      ]);
+      expect(renderer.applied, hasLength(2));
+    },
+  );
 
   test('reconnect does not repeat a fortification threat animation', () {
     final fortifier = GameUnit(
@@ -252,15 +322,34 @@ ProjectedGameEffect _effect({
   return ProjectedGameEffect(
     effect: const JumpCameraEffect(col: 1, row: 2),
     sourceId: sourceId,
+    eventId: '$sourceId:$offset:0',
     animationId: '$sourceId:$offset:JumpCameraEffect:1,2:$ordinal',
     eventOffset: offset,
+    eventSequence: 0,
+    authoritativeTick: offset,
+    authoritativeStartMicrosUtc: offset * Duration.microsecondsPerSecond,
     ordinal: ordinal,
     startOffset: Duration(milliseconds: ordinal),
+    duration: Duration.zero,
+  );
+}
+
+ProjectedGameEffectBatch _batch({required int offset}) {
+  final effect = _effect(offset: offset, ordinal: 0);
+  return ProjectedGameEffectBatch(
+    identity: PresentationBatchIdentity(
+      sourceId: effect.sourceId,
+      eventOffset: offset,
+      authoritativeTick: effect.authoritativeTick,
+      authoritativeStartMicrosUtc: effect.authoritativeStartMicrosUtc,
+    ),
+    domainEffects: [effect],
   );
 }
 
 final class _RecordingRendererViewModel implements RendererViewModel {
   final List<RendererEffect> applied = [];
+  final List<GameClientState> appliedStates = [];
 
   @override
   CameraState get cameraState => const CameraState(x: 0, y: 0, zoom: 1);
@@ -274,6 +363,7 @@ final class _RecordingRendererViewModel implements RendererViewModel {
     Iterable<RendererEffect> effects, {
     int? currentTurn,
   }) async {
+    appliedStates.add(state);
     applied.addAll(effects);
   }
 

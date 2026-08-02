@@ -1,0 +1,86 @@
+[
+  {
+    "sourceId": "presentation_trace_match",
+    "eventId": "presentation_trace_match:1:0",
+    "animationId": "presentation_trace_match:1:0:SpawnParticleBurstEffect:SpawnParticleBurstEffect:0",
+    "eventOffset": 1,
+    "eventSequence": 0,
+    "authoritativeTick": 101,
+    "authoritativeStartMicrosUtc": 2000000000,
+    "ordinal": 0,
+    "startOffsetMicros": 0,
+    "durationMicros": 180000,
+    "endOffsetMicros": 180000,
+    "logicalStartMicrosUtc": 2000000000,
+    "logicalEndMicrosUtc": 2000180000,
+    "effect": {
+      "type": "particleBurst",
+      "kind": "cityFounded",
+      "col": 3,
+      "row": 1,
+      "colorValue": 4280640491
+    },
+    "startedMicrosUtc": 2000000000,
+    "completedMicrosUtc": 2000180000,
+    "completed": true
+  },
+  {
+    "sourceId": "presentation_trace_match",
+    "eventId": "presentation_trace_match:1:1",
+    "animationId": "presentation_trace_match:1:1:AnimateUnitMoveEffect:attacker_1:0",
+    "eventOffset": 1,
+    "eventSequence": 1,
+    "authoritativeTick": 101,
+    "authoritativeStartMicrosUtc": 2000000000,
+    "ordinal": 1,
+    "startOffsetMicros": 180000,
+    "durationMicros": 180000,
+    "endOffsetMicros": 360000,
+    "logicalStartMicrosUtc": 2000180000,
+    "logicalEndMicrosUtc": 2000360000,
+    "effect": {
+      "type": "unitMove",
+      "unitId": "attacker_1",
+      "from": [
+        0,
+        0
+      ],
+      "steps": [
+        {
+          "col": 1,
+          "row": 0,
+          "enterCost": 0,
+          "cumulativeCost": 0
+        }
+      ]
+    },
+    "startedMicrosUtc": 2000180000,
+    "completedMicrosUtc": 2000360000,
+    "completed": true
+  },
+  {
+    "sourceId": "presentation_trace_match",
+    "eventId": "presentation_trace_match:1:2",
+    "animationId": "presentation_trace_match:1:2:SpawnParticleBurstEffect:SpawnParticleBurstEffect:0",
+    "eventOffset": 1,
+    "eventSequence": 2,
+    "authoritativeTick": 101,
+    "authoritativeStartMicrosUtc": 2000000000,
+    "ordinal": 2,
+    "startOffsetMicros": 360000,
+    "durationMicros": 180000,
+    "endOffsetMicros": 540000,
+    "logicalStartMicrosUtc": 2000360000,
+    "logicalEndMicrosUtc": 2000540000,
+    "effect": {
+      "type": "particleBurst",
+      "kind": "technologyResearched",
+      "col": 3,
+      "row": 1,
+      "colorValue": 4280640491
+    },
+    "startedMicrosUtc": 2000360000,
+    "completedMicrosUtc": 2000540000,
+    "completed": true
+  }
+]
