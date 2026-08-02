@@ -286,7 +286,7 @@ void main() {
 
   test('macOS Developer ID export keeps required runtime capabilities', () {
     final entitlements = File(
-      'macos/Runner/Release.entitlements',
+      'macos/Runner/DeveloperID.entitlements',
     ).readAsStringSync();
     final exportOptions = File(
       'macos/DeveloperIDExportOptions.plist',
@@ -308,6 +308,7 @@ void main() {
       ),
     );
     expect(entitlements, isNot(contains('com.apple.security.get-task-allow')));
+    expect(entitlements, isNot(contains('com.apple.developer.applesignin')));
     expect(
       exportOptions,
       contains('<key>method</key>\n\t<string>developer-id</string>'),
@@ -317,6 +318,12 @@ void main() {
       contains(
         '<key>signingCertificate</key>\n'
         '\t<string>Developer ID Application</string>',
+      ),
+    );
+    expect(
+      makefile,
+      contains(
+        r'CODE_SIGN_ENTITLEMENTS="$(CURDIR)/$(MACOS_DEVELOPER_ID_ENTITLEMENTS)"',
       ),
     );
   });

@@ -7,6 +7,9 @@
 - Unified Steam, Google, Apple, and email sign-in across web, iOS, Android,
   macOS, Windows, and Linux, including browser-based Apple authentication for
   Developer ID builds distributed through Steam and itch.io.
+- Separated Mac App Store and Developer ID signing entitlements so native Apple
+  sign-in remains available in store builds while notarized Steam and itch.io
+  packages use the supported browser flow.
 - Added server-managed Apple and Google browser callbacks with expiring state,
   PKCE verification, polling, rate limits, and cleanup of expired requests.
 - Repaired Steam OpenID response verification, bounded provider traffic, and

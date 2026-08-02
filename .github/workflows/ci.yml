@@ -68,6 +68,14 @@ jobs:
             git cat-file -e "${ref}^{commit}"
           done
 
+      - name: Normalize synchronized dev ratchets
+        if: github.event_name == 'push' && github.ref_name == 'dev'
+        run: |
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
+            echo "COVERAGE_RATCHET_REF=origin/main" >> "$GITHUB_ENV"
+            echo "ARCHITECTURE_RATCHET_REF=origin/main" >> "$GITHUB_ENV"
+          fi
+
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
@@ -153,6 +161,13 @@ jobs:
             git fetch --no-tags origin "$MUTATION_RATCHET_REF"
           fi
           git cat-file -e "${MUTATION_RATCHET_REF}^{commit}"
+
+      - name: Normalize synchronized dev mutation ratchet
+        if: github.event_name == 'push' && github.ref_name == 'dev'
+        run: |
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
+            echo "MUTATION_RATCHET_REF=origin/main" >> "$GITHUB_ENV"
+          fi
 
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2

@@ -119,6 +119,7 @@ STEAM_MACOS_BUILD_DIR ?= $(STEAM_MACOS_EXPORT_DIR)
 STEAM_MACOS_APP ?= $(STEAM_MACOS_BUILD_DIR)/$(STEAM_MACOS_APP_NAME)
 STEAM_MACOS_ZIP ?= $(STEAM_DIST_DIR)/aonw-macos-steam.zip
 MACOS_EXPORT_OPTIONS ?= macos/DeveloperIDExportOptions.plist
+MACOS_DEVELOPER_ID_ENTITLEMENTS ?= macos/Runner/DeveloperID.entitlements
 MACOS_DEVELOPER_IDENTITY ?= Developer ID Application: Ernest Wisniewski (H64KBQ6T2S)
 MACOS_DEVELOPMENT_TEAM ?= H64KBQ6T2S
 MACOS_NOTARY_PROFILE ?= aonw-notary
@@ -1149,6 +1150,11 @@ macos-distribution-preflight:
 		command -v "$$command" >/dev/null || { echo "$$command is required for macOS distribution."; exit 1; }; \
 	done
 	@test -f "$(MACOS_EXPORT_OPTIONS)" || { echo "Developer ID export options not found: $(MACOS_EXPORT_OPTIONS)"; exit 1; }
+	@test -f "$(MACOS_DEVELOPER_ID_ENTITLEMENTS)" || { echo "Developer ID entitlements not found: $(MACOS_DEVELOPER_ID_ENTITLEMENTS)"; exit 1; }
+	@if rg -F 'com.apple.developer.applesignin' "$(MACOS_DEVELOPER_ID_ENTITLEMENTS)" >/dev/null; then \
+		echo "Developer ID entitlements must not request Sign in with Apple."; \
+		exit 1; \
+	fi
 	@case "$(STEAM_MACOS_ARCHIVE)" in \
 		build/macos/*.xcarchive) ;; \
 		*) echo "STEAM_MACOS_ARCHIVE must be a .xcarchive below build/macos."; exit 1 ;; \
@@ -1194,6 +1200,7 @@ steam-macos: macos-distribution-preflight
 	  -archivePath "$(STEAM_MACOS_ARCHIVE)" \
 	  -allowProvisioningUpdates \
 	  DEVELOPMENT_TEAM="$(MACOS_DEVELOPMENT_TEAM)" \
+	  CODE_SIGN_ENTITLEMENTS="$(CURDIR)/$(MACOS_DEVELOPER_ID_ENTITLEMENTS)" \
 	  FLUTTER_BUILD_NAME="$$build_name" \
 	  FLUTTER_BUILD_NUMBER="$$build_number" \
 	  DART_DEFINES="$$api_define"; \

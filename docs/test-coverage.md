@@ -69,6 +69,11 @@ an uncovered new delivery. The `origin/main` comparison remains as the
 cumulative long-lived-branch gate. Set
 `COVERAGE_RATCHET_REF=<trusted-git-ref>` only when reproducing that exact CI
 state; do not point it at an intermediate commit from the change under review.
+When a release synchronization makes `dev` byte-for-byte identical to
+`origin/main`, CI normalizes the coverage, architecture, and mutation ratchets
+to `origin/main`. That commit has already passed the `main` gates, while the
+normal previous-remote-SHA ratchet remains active for every `dev` push that
+contains work not yet present on `main`.
 
 ## Baseline And Ratchet
 

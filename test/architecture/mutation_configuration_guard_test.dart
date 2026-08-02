@@ -190,7 +190,7 @@ void main() {
     );
 
     final steps = (job['steps'] as YamlList).cast<YamlMap>();
-    expect(steps, hasLength(5));
+    expect(steps, hasLength(6));
     final checkout = _step(steps, 'Checkout repository');
     expect(checkout.keys.toSet(), {'name', 'uses', 'with'});
     expect((checkout['with'] as YamlMap)['fetch-depth'], 0);
@@ -201,6 +201,7 @@ void main() {
       contains(r'git fetch --no-tags origin "$MUTATION_RATCHET_REF"'),
     );
     expect(steps.indexOf(fetchRatchet), greaterThan(steps.indexOf(checkout)));
+    _expectSynchronizedDevMutationRatchet(steps, fetchRatchet);
     final flutter = _step(steps, 'Set up Flutter');
     expect((flutter['with'] as YamlMap)['flutter-version-file'], '.fvmrc');
     final check = _step(steps, 'Check critical mutation gates');
@@ -236,6 +237,27 @@ void main() {
       contains('`make mutation` passes'),
     );
   });
+}
+
+void _expectSynchronizedDevMutationRatchet(
+  List<YamlMap> steps,
+  YamlMap fetchRatchet,
+) {
+  final normalize = _step(steps, 'Normalize synchronized dev mutation ratchet');
+  expect(normalize.keys.toSet(), {'name', 'if', 'run'});
+  expect(
+    normalize['if'],
+    "github.event_name == 'push' && github.ref_name == 'dev'",
+  );
+  expect(
+    normalize['run'],
+    contains(r'"$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"'),
+  );
+  expect(
+    normalize['run'],
+    contains(r'echo "MUTATION_RATCHET_REF=origin/main" >> "$GITHUB_ENV"'),
+  );
+  expect(steps.indexOf(normalize), greaterThan(steps.indexOf(fetchRatchet)));
 }
 
 YamlMap _step(List<YamlMap> steps, String name) =>

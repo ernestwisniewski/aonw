@@ -26,6 +26,7 @@ void expectQualityGateSteps(List<YamlMap> steps) {
   );
   expect(fetchRatchets['run'], contains(r'git fetch --no-tags origin "$ref"'));
   expect(steps.indexOf(fetchRatchets), greaterThan(steps.indexOf(checkout)));
+  _expectSynchronizedDevRatchetsStep(steps, fetchRatchets);
   final analyze = _stepNamed(steps, 'Analyze');
   expect(_keySet(analyze), {'name', 'run'});
   expect(analyze, containsPair('run', r'${{ matrix.analyze }}'));
@@ -104,6 +105,31 @@ fi
     greaterThan(steps.indexOf(buildCoverageDiagnostic)),
   );
   expect(steps.any((step) => step['name'] == 'Get dependencies'), isFalse);
+}
+
+void _expectSynchronizedDevRatchetsStep(
+  List<YamlMap> steps,
+  YamlMap fetchRatchets,
+) {
+  final normalize = _stepNamed(steps, 'Normalize synchronized dev ratchets');
+  expect(_keySet(normalize), {'name', 'if', 'run'});
+  expect(
+    normalize['if'],
+    "github.event_name == 'push' && github.ref_name == 'dev'",
+  );
+  expect(
+    normalize['run'],
+    contains(r'"$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"'),
+  );
+  expect(
+    normalize['run'],
+    contains(r'echo "COVERAGE_RATCHET_REF=origin/main" >> "$GITHUB_ENV"'),
+  );
+  expect(
+    normalize['run'],
+    contains(r'echo "ARCHITECTURE_RATCHET_REF=origin/main" >> "$GITHUB_ENV"'),
+  );
+  expect(steps.indexOf(normalize), greaterThan(steps.indexOf(fetchRatchets)));
 }
 
 YamlMap _stepNamed(List<YamlMap> steps, String name) =>
