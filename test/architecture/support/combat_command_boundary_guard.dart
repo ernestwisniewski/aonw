@@ -35,7 +35,7 @@ const combatHiddenAiPlaybackPath =
     'lib/game/presentation/services/hidden_ai_renderer_playback.dart';
 const combatGameStateRendererEffectsPath =
     'lib/game/presentation/providers/game/'
-    'game_state_provider_renderer_effects.dart';
+    'game_state_provider_effects.dart';
 const domainTurnCombatResolverPath =
     'packages/aonw_core/lib/game/domain/turn/'
     'domain_turn_combat_resolver.dart';

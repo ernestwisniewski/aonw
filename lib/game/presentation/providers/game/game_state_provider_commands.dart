@@ -1,99 +1,17 @@
 part of 'game_state_provider.dart';
 
-Duration? _doNotRetry(int retryCount, Object error) => null;
-
-const _liveSnapshotRetryDelays = [
-  Duration(milliseconds: 150),
-  Duration(milliseconds: 350),
-  Duration(milliseconds: 750),
-];
-
-LiveServerEvent? _presentedLiveEvent(
-  LiveSnapshotPresentationDecision presentation,
-  LiveServerEvent? event,
-) => presentation.canPresentLiveTransition ? event : null;
-
-String _multiplayerCacheKey(String userId, String saveId) {
-  return multiplayerSnapshotCacheKey(userId: userId, matchId: saveId);
-}
-
-void _warnGameState(
-  Ref ref,
-  String message,
-  Object? error,
-  StackTrace? stackTrace,
-) {
-  ref
-      .read(gameLoggerProvider)
-      .warn('GameStateNotifier', message, error, stackTrace);
-}
-
-extension GameStateNotifierTurnLifecycle on GameStateNotifier {
-  Future<GameClientState> _buildState(String saveId) async {
-    _providerRef.onDispose(() => unawaited(_closeLiveEvents()));
-    await _closeLiveEvents();
-    _saveId = saveId;
-    final session = _providerRef.watch(activeGameSessionProvider);
-    if (session == null || saveId.isEmpty) {
-      _dispatchCommand = null;
-      return GameClientState();
-    }
-    final reducer = _createReducer(session);
-    _reducer = reducer;
-    final liveCommandDispatcher = session.gameMode == GameMode.multiplayer
-        ? LiveWireCommandDispatcher(
-            liveHandle: _liveCommandHandle,
-            fallback: _providerRef.watch(wireCommandDispatcherProvider),
-          )
-        : null;
-    _dispatchCommand = buildDispatchCommandUseCase(
-      _providerRef,
-      reducer,
-      session.gameMode,
-      saveId: saveId,
-      commandDispatcher: liveCommandDispatcher,
-    );
-    final bootstrap = BootstrapGameStateUseCase(
-      repository: gameRepositoryForSave(_providerRef, saveId),
-      dispatchCommand: _dispatchCommand!,
-    );
-    final bootstrapped = await bootstrap.executeWithResult(
-      saveId: saveId,
-      preferredPlayerId: _providerRef.read(networkSessionProvider)?.playerId,
-    );
-    _eventLogOffset = bootstrapped.offset;
-    var synchronized = reducer
-        .syncActivePlayer(
-          bootstrapped.state,
-          playerId: bootstrapped.state.activePlayerId,
-          canAct: bootstrapped.state.activePlayerCanAct,
-        )
+extension GameStateNotifierCommands on GameStateNotifier {
+  Future<void> syncActivePlayer({
+    required String playerId,
+    required bool canAct,
+  }) => _enqueueDispatch(() async {
+    final current = _stateValue;
+    final reducer = _reducer;
+    if (!_isMounted || current == null || reducer == null) return;
+    _stateValue = reducer
+        .syncActivePlayer(current, playerId: playerId, canAct: canAct)
         .state;
-    if (bootstrapped.shouldFocusTurnStart) {
-      final focus = GameIntentResolver(reducer: reducer).resolve(
-        synchronized.interaction,
-        FocusTurnStartActionCommand(synchronized.activePlayerId),
-        synchronized,
-      );
-      if (focus.interaction != synchronized.interaction) {
-        synchronized = synchronized.copyWith(interaction: focus.interaction);
-      }
-    }
-    if (!_isMounted) return synchronized;
-    unawaited(_startLiveEvents(saveId, gameMode: session.gameMode));
-    return synchronized;
-  }
-
-  GameStateReducer _createReducer(GameSession session) {
-    return GameStateReducer(
-      mapData: session.mapData,
-      ruleset: GameRuleset.standard().copyWith(
-        city: _providerRef.watch(cityRulesetProvider),
-        technology: _providerRef.watch(technologyRulesetProvider),
-        stability: _providerRef.watch(stabilityRulesetProvider),
-      ),
-    );
-  }
+  });
 
   Future<DispatchCommandResult> _dispatchTransitionNow(
     DomainCommand command, {
@@ -249,38 +167,5 @@ extension GameStateNotifierTurnLifecycle on GameStateNotifier {
     return _enqueueDispatch(
       () => _resolveIntentTransitionNow(intent, context: context),
     );
-  }
-
-  FutureOr<LiveEventSubscriptionHandle?> _liveCommandHandle() {
-    return _liveEvents ?? _liveEventsStarting;
-  }
-
-  void _queueNetworkSnapshotApply({
-    required String saveId,
-    required CanonicalGameSnapshot snapshot,
-    LiveServerEvent? liveEvent,
-  }) {
-    _networkSnapshotQueue = _networkSnapshotQueue.then(
-      (_) => _applyNetworkSnapshot(
-        saveId: saveId,
-        snapshot: snapshot,
-        liveEvent: liveEvent,
-      ),
-      onError: (Object error, StackTrace stackTrace) {
-        _warn('Previous network snapshot apply failed', error, stackTrace);
-        return _applyNetworkSnapshot(
-          saveId: saveId,
-          snapshot: snapshot,
-          liveEvent: liveEvent,
-        );
-      },
-    );
-  }
-
-  Future<void> _closeLiveEvents() async {
-    final liveEvents = _liveEvents;
-    _liveEvents = null;
-    _liveEventsStarting = null;
-    await liveEvents?.close();
   }
 }

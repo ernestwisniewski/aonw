@@ -1,6 +1,17 @@
 part of 'game_state_provider.dart';
 
-extension GameStateNotifierRendererEffects on GameStateNotifier {
+void _warnGameState(
+  Ref ref,
+  String message,
+  Object? error,
+  StackTrace? stackTrace,
+) {
+  ref
+      .read(gameLoggerProvider)
+      .warn('GameStateNotifier', message, error, stackTrace);
+}
+
+extension GameStateNotifierEffects on GameStateNotifier {
   Future<void> _presentExternalSnapshot({
     required GameClientState? previousState,
     required GameClientState nextState,
@@ -64,6 +75,11 @@ extension GameStateNotifierRendererEffects on GameStateNotifier {
     }
     return fallbackTurn;
   }
+
+  void _warn(String message, [Object? error, StackTrace? stackTrace]) {
+    if (!_isMounted) return;
+    _warnGameState(_providerRef, message, error, stackTrace);
+  }
 }
 
 PresentationBatchIdentity _liveBatchIdentity(String sourceId, int eventOffset) {
@@ -77,5 +93,6 @@ List<GameEvent> _presentedLiveEvents(
   LiveSnapshotPresentationDecision presentation,
   LiveServerEvent? liveEvent,
 ) {
-  return _presentedLiveEvent(presentation, liveEvent)?.events ?? const [];
+  final event = presentation.canPresentLiveTransition ? liveEvent : null;
+  return event?.events ?? const [];
 }
