@@ -13,14 +13,15 @@ Serverpod multiplayer client.
   Serverpod endpoints, including snapshot reads for bootstrap and reconnect.
 - `LiveEventSubscription` owns the active Serverpod two-way match stream for
   events, match updates, snapshot resync, and command ACKs.
-- `LiveWireCommandDispatcher` routes gameplay commands through the active live
-  stream once it is ready, with the transient Serverpod command stream kept as
-  startup fallback only.
+- `LiveEventSubscription` implements the application-owned
+  `LiveMultiplayerEvents` port. The application-owned
+  `LiveWireCommandDispatcher` routes commands through its active handle, with
+  the transient Serverpod command stream kept as startup fallback only.
 
 Server-side persistence is owned by Serverpod ORM tables for matches, players,
-snapshots, and events. Client-side adapters should stay behind application
-ports and use the generated Serverpod endpoint and stream contracts for
-multiplayer runtime state.
+snapshots, and events. Client-side adapters stay behind application ports; only
+the composition root constructs them or sees generated Serverpod endpoint and
+stream contracts.
 
 See [ADR 0003](../../../docs/adr/0003-command-boundaries.md) and
 [ADR 0004](../../../docs/adr/0004-versioned-multiplayer-protocol.md) for the

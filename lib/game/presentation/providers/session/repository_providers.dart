@@ -1,13 +1,11 @@
 import 'dart:async';
 
 import 'package:aonw/api/client/api_config.dart';
-import 'package:aonw/api/session/connection_state.dart';
-import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_refresh_coordinator.dart';
-import 'package:aonw/api/session/network_session_state_machine.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
+import 'package:aonw/api/session/serverpod_native_social_auth_session.dart';
 import 'package:aonw/api/transport/live_event_subscription.dart';
 import 'package:aonw/api/transport/network_command_transport.dart';
 import 'package:aonw/api/transport/network_event_log.dart';
@@ -17,8 +15,13 @@ import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_logger.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/id_generator.dart';
+import 'package:aonw/game/application/ports/live_multiplayer_events.dart';
+import 'package:aonw/game/application/ports/native_social_auth.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
+import 'package:aonw/game/application/services/network_session_state_machine.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
@@ -176,6 +179,14 @@ MultiplayerStreamConnector multiplayerStreamConnector(Ref ref) {
 }
 
 @Riverpod(keepAlive: true)
+LiveMultiplayerEvents liveMultiplayerEvents(Ref ref) {
+  return LiveEventSubscription(
+    serverpodHost: ref.watch(apiConfigProvider).baseUrl.toString(),
+    connector: ref.watch(multiplayerStreamConnectorProvider),
+  );
+}
+
+@Riverpod(keepAlive: true)
 WireCommandDispatcher wireCommandDispatcher(Ref ref) {
   final host = ref.watch(apiConfigProvider).baseUrl.toString();
   final dispatcher = ServerpodWireCommandDispatcher(
@@ -187,7 +198,7 @@ WireCommandDispatcher wireCommandDispatcher(Ref ref) {
 }
 
 @Riverpod(keepAlive: true)
-NetworkSessionClient networkSessionClient(Ref ref) {
+MultiplayerSessionGateway networkSessionClient(Ref ref) {
   final client = NetworkSessionClient(
     serverpodHost: ref.watch(apiConfigProvider).baseUrl.toString(),
     authKeyProviderFactory: _authKeyProviderFactory(ref),
@@ -197,7 +208,13 @@ NetworkSessionClient networkSessionClient(Ref ref) {
 }
 
 @Riverpod(keepAlive: true)
-NetworkSessionStore networkSessionStore(Ref ref) {
+NativeSocialAuthSessionFactory nativeSocialAuthSessionFactory(Ref ref) {
+  final host = ref.watch(apiConfigProvider).baseUrl.toString();
+  return () => ServerpodNativeSocialAuthSession(host);
+}
+
+@Riverpod(keepAlive: true)
+NetworkSessionStorePort networkSessionStore(Ref ref) {
   return NetworkSessionStore();
 }
 

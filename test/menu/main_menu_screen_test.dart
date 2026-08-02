@@ -1,6 +1,7 @@
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_store.dart';
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
@@ -10,7 +11,6 @@ import 'package:aonw/menu/main_menu_screen.dart';
 import 'package:aonw/menu/main_menu_update_notice.dart';
 import 'package:aonw/menu/manual_screen.dart';
 import 'package:aonw_core/protocol.dart';
-import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -385,9 +385,8 @@ void main() {
       );
       final client = _FakeNetworkSessionClient(
         match: _runningMatch(),
-        loadMatchError: const sp.ServerpodClientException(
-          'Service temporarily unavailable',
-          503,
+        loadMatchError: const MultiplayerFailure.connection(
+          message: 'Service temporarily unavailable',
         ),
       );
       await _pumpResumeMenu(tester, store: store, client: client);
@@ -433,7 +432,7 @@ void main() {
       );
       final client = _FakeNetworkSessionClient(
         match: _runningMatch(),
-        loadMatchError: sp.MultiplayerException(
+        loadMatchError: MultiplayerFailure.multiplayer(
           code: code,
           message: 'No resumable match.',
         ),

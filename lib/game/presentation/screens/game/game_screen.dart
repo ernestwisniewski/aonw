@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:aonw/api/session/connection_state.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';

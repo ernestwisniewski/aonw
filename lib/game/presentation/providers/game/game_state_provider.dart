@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:aonw/api/session/connection_state.dart';
-import 'package:aonw/api/transport/live_event_subscription.dart';
-import 'package:aonw/api/transport/live_wire_command_dispatcher.dart';
-import 'package:aonw/api/transport/multiplayer_snapshot_cache_key.dart';
+import 'package:aonw/game/application/ports/live_multiplayer_events.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/live_snapshot_presentation_policy.dart';
+import 'package:aonw/game/application/services/live_wire_command_dispatcher.dart';
 import 'package:aonw/game/application/services/multiplayer_interaction_reconciler.dart';
+import 'package:aonw/game/application/services/multiplayer_snapshot_cache_key.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/application/use_cases/bootstrap_game_state_use_case.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
@@ -53,8 +53,8 @@ part 'game_state_provider_multiplayer_sync.dart';
 class GameStateNotifier extends _$GameStateNotifier {
   DispatchCommandUseCase? _dispatchCommand;
   GameStateReducer? _reducer;
-  LiveEventSubscriptionHandle? _liveEvents;
-  Future<LiveEventSubscriptionHandle?>? _liveEventsStarting;
+  LiveMultiplayerEventHandle? _liveEvents;
+  Future<LiveMultiplayerEventHandle?>? _liveEventsStarting;
   String _saveId = '';
   Future<void> _dispatchQueue = Future<void>.value();
   Future<void> _networkSnapshotQueue = Future<void>.value();

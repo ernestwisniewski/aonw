@@ -1,4 +1,4 @@
-import 'package:aonw/api/session/connection_state.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

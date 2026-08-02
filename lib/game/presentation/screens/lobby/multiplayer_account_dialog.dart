@@ -1,20 +1,17 @@
 import 'dart:async';
 
-import 'package:aonw/api/session/network_session_client.dart';
-import 'package:aonw/api/session/serverpod_auth_client.dart';
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
+import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
+import 'package:aonw/game/application/ports/native_social_auth.dart';
 import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
-import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
-    as sp_auth
-    show AuthSuccess;
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 part 'multiplayer_account_dialog_config.dart';
@@ -48,7 +45,7 @@ class _MultiplayerAccountDialog extends ConsumerStatefulWidget {
 class _MultiplayerAccountDialogState
     extends ConsumerState<_MultiplayerAccountDialog> {
   late final TextEditingController _nicknameController;
-  late final sp.Client? _socialAuthClient;
+  late final NativeSocialAuthSession? _socialAuthClient;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   _AccountMode _mode = _AccountMode.signIn;
@@ -75,6 +72,7 @@ class _MultiplayerAccountDialogState
 
   @override
   void dispose() {
+    _socialAuthClient?.close();
     _nicknameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -132,16 +130,16 @@ class _MultiplayerAccountDialogState
     });
   }
 
-  Future<void> _initializeSocialAuth(sp.Client client) async {
+  Future<void> _initializeSocialAuth(NativeSocialAuthSession client) async {
     try {
       if (_supportsNativeGoogleSignIn) {
-        await client.auth.initializeGoogleSignIn(
+        await client.initializeGoogle(
           clientId: _googleClientId(),
           serverClientId: _googleServerClientId(),
         );
       }
       if (_supportsNativeAppleSignIn) {
-        await client.auth.initializeAppleSignIn(
+        await client.initializeApple(
           serviceIdentifier: _appleServiceIdentifier(),
           redirectUri: _appleRedirectUri(),
         );
@@ -202,7 +200,7 @@ class _MultiplayerAccountDialogState
   Future<void> _completeSocialAuth() async {
     final socialAuthClient = _socialAuthClient;
     final completeSocialAuth = widget.completeSocialAuth;
-    final auth = socialAuthClient?.auth.authInfo;
+    final auth = socialAuthClient?.authSuccess;
     if (socialAuthClient == null ||
         completeSocialAuth == null ||
         auth == null) {
@@ -219,7 +217,7 @@ class _MultiplayerAccountDialogState
     });
 
     try {
-      final result = await completeSocialAuth(auth: auth);
+      final result = await completeSocialAuth(authSuccess: auth);
       if (!mounted) return;
       Navigator.of(context).pop(result);
     } catch (error, stackTrace) {

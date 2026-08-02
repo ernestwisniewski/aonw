@@ -3,11 +3,10 @@ import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_store.dart';
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_network_session_coordinator.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
-    as sp_auth;
 
 void main() {
   group('LobbyNetworkSessionCoordinator', () {
@@ -134,7 +133,9 @@ void main() {
           );
         },
         refreshToken: ({required refreshToken}) async {
-          throw sp_auth.RefreshTokenExpiredException();
+          throw const MultiplayerFailure.authentication(
+            code: 'refresh_rejected',
+          );
         },
       );
 

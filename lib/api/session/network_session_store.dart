@@ -1,37 +1,13 @@
 import 'dart:async';
 
+import 'package:aonw/game/application/ports/network_session_store.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class StoredNetworkSession {
-  final String userId;
-  final String refreshToken;
-  final String displayName;
-  final String? matchId;
+export 'package:aonw/game/application/ports/network_session_store.dart';
 
-  const StoredNetworkSession({
-    required this.userId,
-    required this.refreshToken,
-    required this.displayName,
-    this.matchId,
-  });
-
-  StoredNetworkSession copyWith({Object? matchId = _undefined}) {
-    return StoredNetworkSession(
-      userId: userId,
-      refreshToken: refreshToken,
-      displayName: displayName,
-      matchId: identical(matchId, _undefined)
-          ? this.matchId
-          : matchId as String?,
-    );
-  }
-}
-
-const Object _undefined = Object();
-
-class NetworkSessionStore {
+class NetworkSessionStore implements NetworkSessionStorePort {
   static const _userIdKey = 'network.session.userId';
   static const _refreshTokenKey = 'network.session.refreshToken';
   static const _displayNameKey = 'network.session.displayName';
@@ -44,6 +20,7 @@ class NetworkSessionStore {
     this.secureTokens = const FlutterSecureSessionTokenStore(),
   });
 
+  @override
   Future<StoredNetworkSession?> load() => _serialize(() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString(_userIdKey);
@@ -57,11 +34,13 @@ class NetworkSessionStore {
     );
   });
 
+  @override
   Future<String> loadDisplayName() => _serialize(() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_displayNameKey) ?? 'Player';
   });
 
+  @override
   Future<void> save(StoredNetworkSession session) => _serialize(() async {
     final prefs = await SharedPreferences.getInstance();
     await _detachCredentialOwner(prefs, nextUserId: session.userId);
@@ -87,6 +66,7 @@ class NetworkSessionStore {
   ///
   /// Refresh can race with nickname edits, leave/resign, or match navigation;
   /// those independent writes must not be reverted by an older session copy.
+  @override
   Future<void> saveCredentials({
     required String userId,
     required String refreshToken,
@@ -118,6 +98,7 @@ class NetworkSessionStore {
     }
   }
 
+  @override
   Future<void> saveDisplayName(String displayName) => _serialize(() async {
     final normalized = displayName.trim().replaceAll(RegExp(r'\s+'), ' ');
     final prefs = await SharedPreferences.getInstance();
@@ -128,6 +109,7 @@ class NetworkSessionStore {
     }
   });
 
+  @override
   Future<void> saveMatchId(String? matchId) => _serialize(() async {
     final prefs = await SharedPreferences.getInstance();
     if (matchId == null || matchId.isEmpty) {
@@ -137,6 +119,7 @@ class NetworkSessionStore {
     }
   });
 
+  @override
   Future<void> clear() => _serialize(() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userIdKey);
@@ -231,11 +214,4 @@ class FlutterSecureSessionTokenStore implements SecureSessionTokenStore {
   Future<void> delete(String key) {
     return storage.delete(key: key);
   }
-}
-
-final class NetworkSessionCredentialPersistenceException implements Exception {
-  const NetworkSessionCredentialPersistenceException();
-
-  @override
-  String toString() => 'NetworkSessionCredentialPersistenceException';
 }

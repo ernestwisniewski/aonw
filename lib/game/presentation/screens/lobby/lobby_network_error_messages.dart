@@ -10,10 +10,12 @@ final class _LobbyNetworkErrorMessages {
     if (error is NetworkSignInRequiredException) {
       return l10n.multiplayerSignInRequired;
     }
-    if (error is sp.MultiplayerException) {
+    if (error is MultiplayerFailure &&
+        error.kind == MultiplayerFailureKind.multiplayer) {
       return _multiplayerExceptionText(error);
     }
-    if (error is sp.AccountAuthException) {
+    if (error is MultiplayerFailure &&
+        error.kind == MultiplayerFailureKind.authentication) {
       return _authExceptionText(error);
     }
     if (_isConnectionError(error)) {
@@ -23,13 +25,13 @@ final class _LobbyNetworkErrorMessages {
     return l10n.multiplayerQueueGenericError;
   }
 
-  String _multiplayerExceptionText(sp.MultiplayerException error) {
+  String _multiplayerExceptionText(MultiplayerFailure error) {
     final mapped = _mappedMultiplayerExceptionText(error);
     if (mapped != null) return mapped;
     return _nonEmptyMessageOrFallback(error.message);
   }
 
-  String _authExceptionText(sp.AccountAuthException error) {
+  String _authExceptionText(MultiplayerFailure error) {
     return _nonEmptyMessageOrFallback(error.message);
   }
 
@@ -38,7 +40,7 @@ final class _LobbyNetworkErrorMessages {
     return l10n.multiplayerQueueGenericError;
   }
 
-  String? _mappedMultiplayerExceptionText(sp.MultiplayerException error) {
+  String? _mappedMultiplayerExceptionText(MultiplayerFailure error) {
     return switch (error.code) {
       'auth_required' => l10n.multiplayerSignInRequired,
       'match_not_found' ||
@@ -58,7 +60,7 @@ final class _LobbyNetworkErrorMessages {
 
   bool _isConnectionError(Object error) {
     return error is TimeoutException ||
-        error is sp.MethodStreamException ||
-        error is sp.ServerpodClientException;
+        (error is MultiplayerFailure &&
+            error.kind == MultiplayerFailureKind.connection);
   }
 }

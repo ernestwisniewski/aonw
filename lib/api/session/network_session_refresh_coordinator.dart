@@ -2,9 +2,12 @@ import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_client.dart';
-import 'package:aonw/api/session/network_session_store.dart';
+import 'package:aonw/game/application/ports/network_session_authentication.dart';
+import 'package:aonw/game/application/ports/network_session_store.dart';
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as sp_auth;
+
+export 'package:aonw/game/application/ports/network_session_authentication.dart';
 
 typedef NetworkSessionReader = NetworkSession? Function();
 typedef NetworkSessionWriter = void Function(NetworkSession? session);
@@ -28,7 +31,7 @@ final class NetworkSessionRefreshCoordinator {
 
   final NetworkSessionReader currentSession;
   final NetworkSessionWriter setSession;
-  final NetworkSessionStore sessionStore;
+  final NetworkSessionStorePort sessionStore;
   final NetworkSessionTokenRefresher refreshToken;
   final NetworkSessionClock now;
 
@@ -633,32 +636,6 @@ final class NetworkSessionAuthKeyProvider
       return sp_auth.RefreshAuthKeyResult.failedOther;
     }
   }
-}
-
-sealed class NetworkSessionAuthenticationException implements Exception {
-  const NetworkSessionAuthenticationException();
-}
-
-final class NetworkSessionUnavailableException
-    extends NetworkSessionAuthenticationException {
-  const NetworkSessionUnavailableException();
-
-  @override
-  String toString() => 'NetworkSessionUnavailableException';
-}
-
-final class NetworkSessionRefreshFailedException
-    extends NetworkSessionAuthenticationException {
-  final Object cause;
-  final bool rejected;
-
-  const NetworkSessionRefreshFailedException(
-    this.cause, {
-    this.rejected = false,
-  });
-
-  @override
-  String toString() => 'NetworkSessionRefreshFailedException($cause)';
 }
 
 final class _RefreshSupersededException implements Exception {

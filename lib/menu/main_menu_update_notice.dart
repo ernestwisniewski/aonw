@@ -1,4 +1,3 @@
-import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/app/app_release_info.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';

@@ -3,6 +3,7 @@ import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_store.dart';
+import 'package:aonw/api/transport/live_event_subscription.dart';
 import 'package:aonw/game/presentation/controllers/lobby_connection_controller.dart';
 import 'package:aonw_core/game/domain/map_validation.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -32,8 +33,7 @@ void main() {
           mapSource: MapSource.asset,
           sessionClient: client,
           sessionStore: store,
-          streamConnector: _emptyStreamConnector,
-          serverpodHost: 'http://localhost:8080',
+          liveEvents: _emptyLiveEvents(),
           now: () => DateTime.utc(2026, 6, 2, 12),
           canContinue: () => true,
           currentSession: () => currentSession,
@@ -101,8 +101,7 @@ void main() {
           mapSource: MapSource.asset,
           sessionClient: client,
           sessionStore: store,
-          streamConnector: _emptyStreamConnector,
-          serverpodHost: 'http://localhost:8080',
+          liveEvents: _emptyLiveEvents(),
           now: () => DateTime.utc(2026, 6, 2, 12),
           canContinue: () => true,
           currentSession: () => currentSession,
@@ -188,8 +187,7 @@ void main() {
           mapSource: MapSource.asset,
           sessionClient: client,
           sessionStore: store,
-          streamConnector: _emptyStreamConnector,
-          serverpodHost: 'http://localhost:8080',
+          liveEvents: _emptyLiveEvents(),
           now: () => DateTime.utc(2026, 6, 2, 12),
           canContinue: () => true,
           currentSession: () => currentSession,
@@ -250,8 +248,7 @@ void main() {
         mapSource: MapSource.asset,
         sessionClient: client,
         sessionStore: store,
-        streamConnector: _emptyStreamConnector,
-        serverpodHost: 'http://localhost:8080',
+        liveEvents: _emptyLiveEvents(),
         now: () => DateTime.utc(2026, 6, 2, 12),
         canContinue: () => true,
         currentSession: () => currentSession,
@@ -309,8 +306,7 @@ void main() {
         mapSource: MapSource.asset,
         sessionClient: client,
         sessionStore: store,
-        streamConnector: _emptyStreamConnector,
-        serverpodHost: 'http://localhost:8080',
+        liveEvents: _emptyLiveEvents(),
         now: () => DateTime.utc(2026, 6, 2, 12),
         canContinue: () => true,
         currentSession: () => currentSession,
@@ -357,8 +353,7 @@ void main() {
         mapSource: MapSource.asset,
         sessionClient: client,
         sessionStore: store,
-        streamConnector: _emptyStreamConnector,
-        serverpodHost: 'http://localhost:8080',
+        liveEvents: _emptyLiveEvents(),
         now: () => DateTime.utc(2026, 6, 2, 12),
         canContinue: () => true,
         currentSession: () => currentSession,
@@ -405,8 +400,7 @@ void main() {
         mapSource: MapSource.asset,
         sessionClient: client,
         sessionStore: store,
-        streamConnector: _emptyStreamConnector,
-        serverpodHost: 'http://localhost:8080',
+        liveEvents: _emptyLiveEvents(),
         now: () => DateTime.utc(2026, 6, 2, 12),
         canContinue: () => true,
         currentSession: () => currentSession,
@@ -444,6 +438,11 @@ Stream<sp.MultiplayerServerMessage> _emptyStreamConnector({
 }) {
   return const Stream<sp.MultiplayerServerMessage>.empty();
 }
+
+LiveEventSubscription _emptyLiveEvents() => LiveEventSubscription(
+  serverpodHost: 'http://localhost:8080',
+  connector: _emptyStreamConnector,
+);
 
 MapValidationResult _validValidation() {
   return MapValidationResult(

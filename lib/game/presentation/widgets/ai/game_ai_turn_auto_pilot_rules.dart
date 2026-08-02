@@ -1,4 +1,4 @@
-import 'package:aonw/api/session/network_session.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/services/ai_runtime_mode.dart'
     as runtime_mode;
 import 'package:aonw/game/application/services/player_control_coordinator.dart';

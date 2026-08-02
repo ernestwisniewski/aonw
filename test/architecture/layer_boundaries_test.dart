@@ -71,6 +71,7 @@ void main() {
             disallowed: const [
               _ImportRule.dartIo,
               _ImportRule.frameworks,
+              _ImportRule.appShell,
               _ImportRule.gameInfrastructure,
               _ImportRule.gamePresentation,
             ],
@@ -108,10 +109,28 @@ void main() {
       () {
         expect(
           _violations(
-            roots: const ['lib/game/presentation'],
+            roots: const ['lib/game/presentation', 'lib/menu'],
             disallowed: const [_ImportRule.gameInfrastructure],
             allowedPaths: const {
               'lib/game/presentation/providers/session/repository_providers.dart',
+            },
+          ),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
+      'game presentation imports API adapters only from repository providers',
+      () {
+        expect(
+          _violations(
+            roots: const ['lib/game/presentation'],
+            disallowed: const [_ImportRule.generatedServerClient],
+            disallowedUriPrefixes: const {'package:aonw/api/'},
+            allowedPaths: const {
+              'lib/game/presentation/providers/session/'
+                  'repository_providers.dart',
             },
           ),
           isEmpty,
@@ -227,6 +246,7 @@ import 'package:aonw_server/fixture.dart';
 List<String> _violations({
   required List<String> roots,
   required List<_ImportRule> disallowed,
+  Set<String> disallowedUriPrefixes = const {},
   Set<String> allowedPaths = const {},
 }) {
   final violations = <String>[];
@@ -242,6 +262,13 @@ List<String> _violations({
         if (rule.matches(import.uri)) {
           violations.add(
             '$relativePath:${import.line} ${rule.message}: ${import.uri}',
+          );
+        }
+      }
+      for (final prefix in disallowedUriPrefixes) {
+        if (import.uri.startsWith(prefix)) {
+          violations.add(
+            '$relativePath:${import.line} depends on API adapters',
           );
         }
       }

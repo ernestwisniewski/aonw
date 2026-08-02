@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:aonw/api/session/network_session.dart';
-import 'package:aonw/api/transport/live_event_subscription.dart';
+import 'package:aonw/game/application/ports/live_multiplayer_events.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw_core/protocol.dart';
 
@@ -26,7 +26,7 @@ abstract interface class LobbyLiveMatchStreamHandle {
 
 final class LiveEventLobbyMatchStreamHandle
     implements LobbyLiveMatchStreamHandle {
-  final LiveEventSubscriptionHandle _handle;
+  final LiveMultiplayerEventHandle _handle;
 
   const LiveEventLobbyMatchStreamHandle(this._handle);
 

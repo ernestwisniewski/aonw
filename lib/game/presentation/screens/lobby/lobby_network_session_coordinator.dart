@@ -1,15 +1,14 @@
 import 'dart:async';
 
-import 'package:aonw/api/session/connection_state.dart';
-import 'package:aonw/api/session/network_session.dart';
-import 'package:aonw/api/session/network_session_client.dart';
-import 'package:aonw/api/session/network_session_refresh_coordinator.dart';
-import 'package:aonw/api/session/network_session_state_machine.dart';
-import 'package:aonw/api/session/network_session_store.dart';
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
+import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
+import 'package:aonw/game/application/ports/network_session_authentication.dart';
+import 'package:aonw/game/application/ports/network_session_store.dart';
+import 'package:aonw/game/application/services/network_session_state_machine.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw_core/protocol.dart';
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
-    as sp_auth;
 
 typedef LobbyCurrentSessionReader = NetworkSession? Function();
 typedef LobbySessionSetter = void Function(NetworkSession? session);
@@ -235,10 +234,9 @@ final class LobbyNetworkSessionCoordinator {
   }
 
   bool _isRejectedRefreshToken(Object error) {
-    return error is sp_auth.RefreshTokenMalformedException ||
-        error is sp_auth.RefreshTokenNotFoundException ||
-        error is sp_auth.RefreshTokenExpiredException ||
-        error is sp_auth.RefreshTokenInvalidSecretException;
+    return error is MultiplayerFailure &&
+        error.kind == MultiplayerFailureKind.authentication &&
+        error.code == 'refresh_rejected';
   }
 
   bool _tokenNeedsRefresh(NetworkSession session, DateTime now) {

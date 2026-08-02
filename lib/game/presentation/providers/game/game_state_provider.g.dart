@@ -56,7 +56,7 @@ final class GameStateNotifierProvider
   }
 }
 
-String _$gameStateNotifierHash() => r'67cec75b7e4447b04554e805eeddc80131010f6f';
+String _$gameStateNotifierHash() => r'f1a97c5fe3fcd626c7ff26dcbae856896f84fd72';
 
 final class GameStateNotifierFamily extends $Family
     with

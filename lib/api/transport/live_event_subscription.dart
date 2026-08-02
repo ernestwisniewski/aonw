@@ -5,13 +5,16 @@ import 'package:aonw/api/protocol/codecs.dart';
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/network_session_refresh_coordinator.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
-import 'package:aonw/api/transport/live_server_event.dart';
+import 'package:aonw/api/session/serverpod_multiplayer_failure_mapper.dart';
+import 'package:aonw/game/application/ports/live_multiplayer_events.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/foundation.dart';
 
 export 'package:aonw/api/transport/live_server_event.dart';
+
+part 'live_event_subscription_echo_guard.dart';
 
 const _defaultReconnectDelays = [
   Duration(seconds: 1),
@@ -155,7 +158,7 @@ Stream<sp.MultiplayerServerMessage> _ownedConnectionStream(
   return controller.stream;
 }
 
-class LiveEventSubscription {
+class LiveEventSubscription implements LiveMultiplayerEvents {
   final EventCodec eventCodec;
   final SnapshotCodec snapshotCodec;
   final MultiplayerStreamConnector _connect;
@@ -169,6 +172,7 @@ class LiveEventSubscription {
            connector ??
            ServerpodMultiplayerStreamConnector(serverpodHost).connect;
 
+  @override
   Future<LiveEventSubscriptionHandle> subscribe({
     required String matchId,
     required AuthToken token,
@@ -330,11 +334,11 @@ class _LiveEventSubscriptionController {
         try {
           _handleMessage(message);
         } catch (error, stackTrace) {
-          onError?.call(error, stackTrace);
+          _reportError(error, stackTrace);
         }
       },
       onError: (Object error, StackTrace stackTrace) {
-        onError?.call(error, stackTrace);
+        _reportError(error, stackTrace);
         unawaited(_reconnect());
       },
       onDone: () {
@@ -397,7 +401,7 @@ class _LiveEventSubscriptionController {
         _reconnecting = false;
         return;
       } catch (error, stackTrace) {
-        onError?.call(error, stackTrace);
+        _reportError(error, stackTrace);
         if (error is NetworkSessionAuthenticationException) {
           _closed = true;
           await _disconnectCurrent();
@@ -417,6 +421,10 @@ class _LiveEventSubscriptionController {
     _failPendingAcks(TimeoutException('Live event stream disconnected.'));
     await subscription?.cancel();
     await input?.close();
+  }
+
+  void _reportError(Object error, StackTrace stackTrace) {
+    onError?.call(mapServerpodMultiplayerFailure(error), stackTrace);
   }
 
   int _offsetForReconnect() {
@@ -457,76 +465,17 @@ class _LiveEventSubscriptionController {
   }
 }
 
-class _LocalCommandEchoGuard {
-  static const _ttl = Duration(seconds: 10);
-  static const _maxKeys = 128;
-
-  final Queue<_LocalCommandEchoKey> _keys = Queue();
-
-  void remember(WireCommand wire) {
-    _prune();
-    _keys.addLast(
-      _LocalCommandEchoKey(
-        matchId: wire.matchId,
-        actorPlayerId: wire.actorPlayerId,
-        tick: wire.tick,
-        rememberedAt: DateTime.now(),
-      ),
-    );
-    while (_keys.length > _maxKeys) {
-      _keys.removeFirst();
-    }
-  }
-
-  bool isLocalEcho(WireEvent event) {
-    _prune();
-    for (final key in _keys) {
-      if (key.matches(event)) return true;
-    }
-    return false;
-  }
-
-  void clear() {
-    _keys.clear();
-  }
-
-  void _prune() {
-    final cutoff = DateTime.now().subtract(_ttl);
-    while (_keys.isNotEmpty && _keys.first.rememberedAt.isBefore(cutoff)) {
-      _keys.removeFirst();
-    }
-  }
-}
-
-class _LocalCommandEchoKey {
-  const _LocalCommandEchoKey({
-    required this.matchId,
-    required this.actorPlayerId,
-    required this.tick,
-    required this.rememberedAt,
-  });
-
-  final String matchId;
-  final String actorPlayerId;
-  final int tick;
-  final DateTime rememberedAt;
-
-  bool matches(WireEvent event) {
-    return event.matchId == matchId &&
-        event.actorPlayerId == actorPlayerId &&
-        event.tick == tick;
-  }
-}
-
-class LiveEventSubscriptionHandle {
+class LiveEventSubscriptionHandle implements LiveMultiplayerEventHandle {
   final _LiveEventSubscriptionController _controller;
 
   const LiveEventSubscriptionHandle._(this._controller);
 
+  @override
   Future<void> close() async {
     await _controller.close();
   }
 
+  @override
   Future<WireCommandAck> sendCommand({
     required int afterOffset,
     required WireCommand wire,

@@ -1,9 +1,8 @@
 import 'package:aonw/api/session/auth_token.dart';
-import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/external_auth_browser.dart';
-import 'package:aonw/api/session/network_session.dart';
-import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
+import 'package:aonw/api/session/serverpod_multiplayer_failure_mapper.dart';
+import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/map/domain/map_player_capacity.dart';
 import 'package:aonw_core/protocol.dart';
@@ -11,95 +10,11 @@ import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as sp_auth;
 
+export 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
+
 part 'network_session_client_version_status.dart';
 part 'network_session_client_lobby_requests.dart';
-
-class NetworkAuthResult {
-  final String userId;
-  final AuthToken token;
-  final String? refreshToken;
-  final String displayName;
-
-  const NetworkAuthResult({
-    required this.userId,
-    required this.token,
-    required this.displayName,
-    this.refreshToken,
-  });
-
-  NetworkSession toSession({DateTime? changedAt}) {
-    return NetworkSession(
-      userId: userId,
-      token: token,
-      refreshToken: refreshToken,
-      connectionState: NetworkConnectionState(
-        status: NetworkConnectionStatus.connected,
-        changedAt: changedAt,
-      ),
-    );
-  }
-
-  StoredNetworkSession? toStoredSession({required String displayName}) {
-    final refresh = refreshToken;
-    if (refresh == null || refresh.isEmpty) return null;
-    return StoredNetworkSession(
-      userId: userId,
-      refreshToken: refresh,
-      displayName: displayName,
-    );
-  }
-}
-
-class NetworkSessionRefreshResult {
-  final AuthToken token;
-  final String refreshToken;
-
-  const NetworkSessionRefreshResult({
-    required this.token,
-    required this.refreshToken,
-  });
-}
-
-/// Public-lobby metadata supported by the Serverpod create-match endpoint.
-///
-/// Online rules, account display names, and player kinds are server-owned and
-/// intentionally do not belong to this request.
-class CreateMatchRequest {
-  final String name;
-  final String mapName;
-  final int maxPlayers;
-  final int minPlayers;
-  final PlayerCountry? country;
-
-  const CreateMatchRequest({
-    required this.name,
-    required this.mapName,
-    required this.maxPlayers,
-    this.minPlayers = MapPlayerCapacityRules.minPlayers,
-    this.country,
-  });
-}
-
-class QuickplayMatchRequest {
-  final String mapName;
-  final PlayerCountry? country;
-
-  const QuickplayMatchRequest({required this.mapName, this.country});
-}
-
-class CreatePrivateMatchRequest {
-  final String mapName;
-  final PlayerCountry? country;
-
-  const CreatePrivateMatchRequest({required this.mapName, this.country});
-}
-
-class JoinPrivateMatchRequest {
-  final String inviteCode;
-  final PlayerCountry? country;
-
-  const JoinPrivateMatchRequest({required this.inviteCode, this.country});
-}
+part 'network_session_client_support.dart';
 
 typedef NetworkSessionServerpodClientFactory =
     sp.Client Function(
@@ -115,7 +30,8 @@ typedef NetworkSessionServerpodClientFactory =
 /// calls share one refresh-aware client when [authKeyProviderFactory] is
 /// available. Explicit one-off credentials are isolated in short-lived clients
 /// that are always closed after the request settles.
-class NetworkSessionClient extends _NetworkSessionLobbyRequests {
+class NetworkSessionClient extends _NetworkSessionLobbyRequests
+    implements MultiplayerSessionGateway {
   final String serverpodHost;
   final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
   final NetworkSessionServerpodClientFactory _clientFactory;
@@ -129,37 +45,43 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
     NetworkSessionServerpodClientFactory? clientFactory,
   }) : _clientFactory = clientFactory ?? createServerpodClient;
 
+  @override
   bool get isClosed => _closed;
 
+  @override
   Future<NetworkAuthResult> login({
     required String email,
     required String password,
   }) async {
-    final auth = await _activeAnonymousClient.emailIdp.login(
-      email: email,
-      password: password,
+    final auth = await _withAnonymousClient(
+      (client) => client.emailIdp.login(email: email, password: password),
     );
     return _authResult(auth);
   }
 
+  @override
   Future<NetworkAuthResult> createAccount({
     required String email,
     required String password,
     required String displayName,
   }) async {
     final normalizedDisplayName = _normalizeDisplayName(displayName);
-    final auth = await _activeAnonymousClient.emailIdp.createAccount(
-      email: email,
-      password: password,
-      displayName: normalizedDisplayName,
+    final auth = await _withAnonymousClient(
+      (client) => client.emailIdp.createAccount(
+        email: email,
+        password: password,
+        displayName: normalizedDisplayName,
+      ),
     );
     return _authResult(auth, displayName: normalizedDisplayName);
   }
 
+  @override
   Future<String> displayName({required AuthToken token}) {
     return _withToken(token, (client) => client.emailIdp.displayName());
   }
 
+  @override
   Future<String> updateDisplayName({
     required AuthToken token,
     required String displayName,
@@ -170,11 +92,13 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
     );
   }
 
+  @override
   Future<NetworkSessionRefreshResult> refresh({
     required String refreshToken,
   }) async {
-    final auth = await _activeAnonymousClient.jwtRefresh.refreshAccessToken(
-      refreshToken: refreshToken,
+    final auth = await _withAnonymousClient(
+      (client) =>
+          client.jwtRefresh.refreshAccessToken(refreshToken: refreshToken),
     );
     final rotatedRefreshToken = auth.refreshToken;
     if (rotatedRefreshToken == null || rotatedRefreshToken.isEmpty) {
@@ -191,13 +115,15 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
   /// The refresh token is preferred because it still works after the
   /// short-lived access token expires. Clients without one can fall back to
   /// Serverpod Auth's current-device sign-out endpoint.
+  @override
   Future<void> signOutCurrentSession({
     AuthToken? token,
     String? refreshToken,
   }) async {
     if (refreshToken != null && refreshToken.isNotEmpty) {
-      await _activeAnonymousClient.authStatus.signOutRefreshToken(
-        refreshToken: refreshToken,
+      await _withAnonymousClient(
+        (client) =>
+            client.authStatus.signOutRefreshToken(refreshToken: refreshToken),
       );
       return;
     }
@@ -208,9 +134,18 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
     );
   }
 
-  Future<NetworkAuthResult> completeSocialAuth({
-    required sp_auth.AuthSuccess auth,
+  @override
+  Future<NetworkAuthResult> completeNativeSocialAuth({
+    required Object authSuccess,
   }) async {
+    if (authSuccess is! sp_auth.AuthSuccess) {
+      throw ArgumentError.value(
+        authSuccess,
+        'authSuccess',
+        'Expected Serverpod AuthSuccess',
+      );
+    }
+    final auth = authSuccess;
     final token = AuthToken(auth.token, expiresAt: auth.tokenExpiresAt);
     final displayName = await _withExplicitToken(
       token,
@@ -219,12 +154,13 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
     return _authResult(auth, displayName: displayName);
   }
 
+  @override
   Future<NetworkAuthResult> loginWithSteam() async {
     final browser = prepareExternalAuthBrowser();
     final client = _activeAnonymousClient;
     var navigated = false;
     try {
-      final start = await client.steamAuth.start();
+      final start = await _mapRequest(client.steamAuth.start);
       final opened = await browser.navigate(Uri.parse(start.authUrl));
       if (!opened) {
         throw StateError('Could not open Steam sign-in.');
@@ -233,10 +169,12 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
 
       while (DateTime.now().toUtc().isBefore(start.expiresAt.toUtc())) {
         await Future<void>.delayed(const Duration(seconds: 1));
-        final poll = await client.steamAuth.poll(requestId: start.requestId);
+        final poll = await _mapRequest(
+          () => client.steamAuth.poll(requestId: start.requestId),
+        );
         final auth = poll.auth;
         if (auth != null) {
-          final result = await completeSocialAuth(auth: auth);
+          final result = await completeNativeSocialAuth(authSuccess: auth);
           browser.close();
           return result;
         }
@@ -254,6 +192,7 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
     }
   }
 
+  @override
   Future<NetworkAuthResult> loginWithExternalProvider({
     required String provider,
   }) async {
@@ -264,7 +203,9 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
     final client = _activeAnonymousClient;
     var navigated = false;
     try {
-      final start = await client.externalAuth.start(provider: provider);
+      final start = await _mapRequest(
+        () => client.externalAuth.start(provider: provider),
+      );
       final opened = await browser.navigate(Uri.parse(start.authUrl));
       if (!opened) {
         throw StateError('Could not open $provider sign-in.');
@@ -273,10 +214,12 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
 
       while (DateTime.now().toUtc().isBefore(start.expiresAt.toUtc())) {
         await Future<void>.delayed(const Duration(seconds: 1));
-        final poll = await client.externalAuth.poll(requestId: start.requestId);
+        final poll = await _mapRequest(
+          () => client.externalAuth.poll(requestId: start.requestId),
+        );
         final auth = poll.auth;
         if (auth != null) {
-          final result = await completeSocialAuth(auth: auth);
+          final result = await completeNativeSocialAuth(authSuccess: auth);
           browser.close();
           return result;
         }
@@ -294,6 +237,21 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
     }
   }
 
+  @override
+  Future<String> versionStatus({
+    required String platform,
+    required int buildNumber,
+    required int multiplayerVersion,
+  }) {
+    return loadNetworkSessionVersionStatus(
+      this,
+      platform: platform,
+      buildNumber: buildNumber,
+      multiplayerVersion: multiplayerVersion,
+    );
+  }
+
+  @override
   Future<List<WireMatch>> listMatches({
     required AuthToken token,
     String? status,
@@ -301,6 +259,7 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
     return _withToken(token, (client) => client.multiplayer.listMatches());
   }
 
+  @override
   Future<void> leaveMatch({required AuthToken token, required String matchId}) {
     return _withToken(
       token,
@@ -308,6 +267,7 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
     );
   }
 
+  @override
   Future<WireMatch> startMatch({
     required AuthToken token,
     required String matchId,
@@ -318,6 +278,7 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
     );
   }
 
+  @override
   Future<WireMatch> markMapLoaded({
     required AuthToken token,
     required String matchId,
@@ -328,6 +289,7 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
     );
   }
 
+  @override
   Future<WireMatch> resignMatch({
     required AuthToken token,
     required String matchId,
@@ -338,6 +300,7 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
     );
   }
 
+  @override
   Future<WireMatch> loadMatch({
     required AuthToken token,
     required String matchId,
@@ -349,57 +312,18 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
   Future<T> _withToken<T>(
     AuthToken token,
     Future<T> Function(sp.Client client) run,
-  ) {
-    if (authKeyProviderFactory != null) {
-      return run(_activeAuthenticatedClient);
-    }
-    return _withOwnedClient(token: token, run: run);
-  }
-
-  Future<T> _withExplicitToken<T>(
-    AuthToken token,
-    Future<T> Function(sp.Client client) run,
-  ) {
-    return _withOwnedClient(token: token, run: run);
-  }
-
-  Future<T> _withOwnedClient<T>({
-    AuthToken? token,
-    Duration? connectionTimeout,
-    required Future<T> Function(sp.Client client) run,
-  }) async {
-    _ensureOpen();
-    final client = _clientFactory(
-      serverpodHost,
-      token: token,
-      connectionTimeout: connectionTimeout,
-    );
+  ) async {
     try {
-      return await run(client);
-    } finally {
-      client.close();
+      if (authKeyProviderFactory != null) {
+        return await run(_activeAuthenticatedClient);
+      }
+      return await _withOwnedClient(token: token, run: run);
+    } catch (error, stackTrace) {
+      throwMappedServerpodMultiplayerFailure(error, stackTrace);
     }
   }
 
-  sp.Client get _activeAnonymousClient {
-    _ensureOpen();
-    return _anonymousClient ??= _clientFactory(serverpodHost);
-  }
-
-  sp.Client get _activeAuthenticatedClient {
-    _ensureOpen();
-    final active = _authenticatedClient;
-    if (active != null) return active;
-    final providerFactory = authKeyProviderFactory;
-    if (providerFactory == null) {
-      throw StateError('No refresh-aware auth provider is configured.');
-    }
-    return _authenticatedClient = _clientFactory(
-      serverpodHost,
-      authKeyProvider: providerFactory(),
-    );
-  }
-
+  @override
   void close() {
     if (_closed) return;
     _closed = true;
@@ -407,10 +331,6 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests {
     _anonymousClient = null;
     _authenticatedClient?.close();
     _authenticatedClient = null;
-  }
-
-  void _ensureOpen() {
-    if (_closed) throw StateError('Network session client is closed.');
   }
 
   Future<NetworkAuthResult> _authResult(

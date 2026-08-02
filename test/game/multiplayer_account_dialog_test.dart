@@ -1,8 +1,8 @@
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/network_session_client.dart';
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
 import 'package:aonw/game/presentation/screens/lobby/multiplayer_account_dialog.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -272,7 +272,11 @@ void main() {
       tester,
       createAccount:
           ({required email, required password, required displayName}) async {
-            throw sp.AccountAuthException(code: 'account_exists');
+            throw const MultiplayerFailure(
+              kind: MultiplayerFailureKind.authentication,
+              code: 'account_exists',
+              cause: 'test',
+            );
           },
     );
     await _openEmailForm(tester);
@@ -305,7 +309,11 @@ void main() {
       tester,
       createAccount:
           ({required email, required password, required displayName}) async {
-            throw sp.AccountAuthException(code: 'display_name_taken');
+            throw const MultiplayerFailure(
+              kind: MultiplayerFailureKind.authentication,
+              code: 'display_name_taken',
+              cause: 'test',
+            );
           },
     );
     await _openEmailForm(tester);

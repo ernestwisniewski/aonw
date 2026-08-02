@@ -8,6 +8,7 @@ import 'package:aonw/api/transport/wire_command_message_id.dart';
 import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/ports/wire_command_dispatcher.dart';
 import 'package:aonw/game/application/services/accepted_engine_command_interaction_source.dart';
 import 'package:aonw/game/application/services/multiplayer_interaction_reconciler.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -16,6 +17,8 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
+
+export 'package:aonw/game/application/ports/wire_command_dispatcher.dart';
 
 class ClientTickGenerator {
   int _nextTick;
@@ -59,18 +62,6 @@ class NetworkCommandConflictException implements Exception {
     final suffix = nextTick == null ? '' : ', nextTick=$nextTick';
     return 'NetworkCommandConflictException(code: $code$suffix)';
   }
-}
-
-abstract interface class WireCommandDispatcher {
-  /// Sends one delivery attempt of [wire]. Retries of the same command must
-  /// reuse [clientMessageId] so the server can deduplicate them safely.
-  Future<WireCommandAck> send({
-    required String saveId,
-    required AuthToken token,
-    required int afterOffset,
-    required WireCommand wire,
-    required String clientMessageId,
-  });
 }
 
 typedef CommandAuthTokenReader = Future<AuthToken> Function();

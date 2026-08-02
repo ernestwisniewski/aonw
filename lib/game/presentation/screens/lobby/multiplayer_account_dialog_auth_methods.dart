@@ -114,7 +114,7 @@ class _AuthMethodButtons extends StatelessWidget {
   static const _minimumButtonWidth = 240.0;
   static const _preferredButtonWidth = 300.0;
 
-  final sp.Client? client;
+  final NativeSocialAuthSession? client;
   final bool socialAuthReady;
   final bool showNativeGoogle;
   final bool showNativeApple;
@@ -191,7 +191,7 @@ class _AuthMethodButtons extends StatelessWidget {
           ? _DisabledGoogleButton(width: width)
           : GoogleSignInWidget(
               key: const Key('multiplayer.account.google'),
-              client: readyAuthClient,
+              client: readyAuthClient.clientHandle as ServerpodClientShared,
               onAuthenticated: onAuthenticated,
               onError: onError,
               shape: GSIButtonShape.rectangular,
@@ -221,7 +221,7 @@ class _AuthMethodButtons extends StatelessWidget {
       width: width,
       child: AppleSignInWidget(
         key: const Key('multiplayer.account.apple'),
-        client: authClient,
+        client: authClient.clientHandle as ServerpodClientShared,
         onAuthenticated: onAuthenticated,
         onError: onError,
         shape: AppleButtonShape.rectangular,
@@ -315,18 +315,6 @@ class _DisabledGoogleButton extends StatelessWidget {
   }
 }
 
-class _EphemeralAuthSuccessStorage implements ClientAuthSuccessStorage {
-  sp_auth.AuthSuccess? _auth;
-
-  @override
-  Future<sp_auth.AuthSuccess?> get() async => _auth;
-
-  @override
-  Future<void> set(sp_auth.AuthSuccess? data) async {
-    _auth = data;
-  }
-}
-
 String? _googleClientId() {
   const configured = String.fromEnvironment('GOOGLE_CLIENT_ID');
   if (configured.isNotEmpty) return configured;
@@ -409,7 +397,8 @@ String? _accountLocalError({
 }
 
 String _accountErrorText(AppLocalizations l10n, Object error) {
-  if (error is sp.AccountAuthException) {
+  if (error is MultiplayerFailure &&
+      error.kind == MultiplayerFailureKind.authentication) {
     return switch (error.code) {
       'invalid_email' => l10n.multiplayerAccountInvalidEmail,
       'invalid_credentials' => l10n.multiplayerAccountInvalidCredentials,

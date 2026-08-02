@@ -32,7 +32,7 @@ class _AccountDialogView extends StatelessWidget {
   final AppLocalizations l10n;
   final bool busy;
   final bool externalAuthBusy;
-  final sp.Client? socialAuthClient;
+  final NativeSocialAuthSession? socialAuthClient;
   final bool socialAuthReady;
   final bool showNativeGoogle;
   final bool showNativeApple;

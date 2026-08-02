@@ -1,9 +1,10 @@
 import 'dart:async';
 
-import 'package:aonw/api/session/network_session.dart';
-import 'package:aonw/api/session/network_session_client.dart';
-import 'package:aonw/api/session/network_session_store.dart';
-import 'package:aonw/api/transport/live_event_subscription.dart';
+import 'package:aonw/game/application/ports/live_multiplayer_events.dart';
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
+import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
+import 'package:aonw/game/application/ports/network_session_store.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_auto_start_coordinator.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_live_match_coordinator.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_action_coordinator.dart';
@@ -14,7 +15,6 @@ import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/game/domain/map_validation.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
-import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/foundation.dart';
 
 part 'lobby_connection_session_actions.dart';
@@ -55,10 +55,9 @@ typedef LobbyConnectionRouter = void Function(String location);
 final class LobbyConnectionController extends ChangeNotifier {
   final String mapName;
   final MapSource mapSource;
-  final NetworkSessionClient sessionClient;
-  final NetworkSessionStore sessionStore;
-  final MultiplayerStreamConnector streamConnector;
-  final String serverpodHost;
+  final MultiplayerSessionGateway sessionClient;
+  final NetworkSessionStorePort sessionStore;
+  final LiveMultiplayerEvents liveEvents;
   final LobbyConnectionClock now;
   final LobbyConnectionContinuation canContinue;
   final LobbyConnectionSessionReader currentSession;
@@ -96,8 +95,7 @@ final class LobbyConnectionController extends ChangeNotifier {
     required this.mapSource,
     required this.sessionClient,
     required this.sessionStore,
-    required this.streamConnector,
-    required this.serverpodHost,
+    required this.liveEvents,
     required this.now,
     required this.canContinue,
     required this.currentSession,
@@ -296,7 +294,10 @@ final class LobbyConnectionController extends ChangeNotifier {
   }
 
   bool _shouldReportLobbyStreamError(Object error) {
-    if (error is sp.MultiplayerException) return true;
+    if (error is MultiplayerFailure &&
+        error.kind == MultiplayerFailureKind.multiplayer) {
+      return true;
+    }
     final match = _activeMatch;
     return match == null || LobbyMatchStatusRules.canEnter(match);
   }
@@ -388,19 +389,15 @@ final class LobbyConnectionController extends ChangeNotifier {
     required void Function(WireMatch match) onMatch,
     required void Function(Object error, StackTrace stackTrace) onError,
   }) async {
-    final handle =
-        await LiveEventSubscription(
-          serverpodHost: serverpodHost,
-          connector: streamConnector,
-        ).subscribe(
-          matchId: match.id,
-          token: session.token,
-          fromOffset: 0,
-          onEvent: (_) {},
-          onSnapshotResync: (_) {},
-          onMatch: onMatch,
-          onError: onError,
-        );
+    final handle = await liveEvents.subscribe(
+      matchId: match.id,
+      token: session.token,
+      fromOffset: 0,
+      onEvent: (_) {},
+      onSnapshotResync: (_) {},
+      onMatch: onMatch,
+      onError: onError,
+    );
     return LiveEventLobbyMatchStreamHandle(handle);
   }
 

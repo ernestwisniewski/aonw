@@ -25,13 +25,10 @@ extension GameStateNotifierMultiplayerSync on GameStateNotifier {
       return;
     }
 
-    final starting = Completer<LiveEventSubscriptionHandle?>();
+    final starting = Completer<LiveMultiplayerEventHandle?>();
     _liveEventsStarting = starting.future;
     try {
-      final subscription = LiveEventSubscription(
-        serverpodHost: _providerRef.read(apiConfigProvider).baseUrl.toString(),
-        connector: _providerRef.read(multiplayerStreamConnectorProvider),
-      );
+      final subscription = _providerRef.read(liveMultiplayerEventsProvider);
       final handle = await subscription.subscribe(
         matchId: saveId,
         token: session.token,
@@ -286,7 +283,7 @@ extension GameStateNotifierMultiplayerSync on GameStateNotifier {
     }
   }
 
-  FutureOr<LiveEventSubscriptionHandle?> _liveCommandHandle() {
+  FutureOr<LiveMultiplayerEventHandle?> _liveCommandHandle() {
     return _liveEvents ?? _liveEventsStarting;
   }
 

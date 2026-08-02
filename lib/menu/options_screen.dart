@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -18,7 +19,6 @@ import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
 import 'package:aonw/shared/widgets/game_ui/game_toast.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_app_bar.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_screen_header.dart';
-import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -313,7 +313,7 @@ class _MultiplayerProfileSectionState
   }
 
   String _profileErrorText(AppLocalizations l10n, Object error) {
-    if (error is sp.AccountAuthException) {
+    if (error is MultiplayerFailure && error.isAuthentication) {
       return switch (error.code) {
         'invalid_display_name' => l10n.multiplayerAccountInvalidNickname,
         'display_name_taken' => l10n.multiplayerAccountNicknameTaken,

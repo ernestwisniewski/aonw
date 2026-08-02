@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:aonw/api/session/network_session_client.dart';
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
+import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
 import 'package:aonw/game/application/use_cases/create_local_game_use_case.dart';
 import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/controllers/lobby_connection_controller.dart';
@@ -29,7 +30,6 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/map/domain/map_player_capacity.dart';
 import 'package:aonw_core/protocol.dart';
-import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -118,8 +118,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       mapSource: widget.mapSource,
       sessionClient: ref.read(networkSessionClientProvider),
       sessionStore: ref.read(networkSessionStoreProvider),
-      streamConnector: ref.read(multiplayerStreamConnectorProvider),
-      serverpodHost: ref.read(apiConfigProvider).baseUrl.toString(),
+      liveEvents: ref.read(liveMultiplayerEventsProvider),
       now: () => ref.read(gameClockProvider).nowUtc(),
       canContinue: () => mounted,
       currentSession: () => ref.read(networkSessionProvider),

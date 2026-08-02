@@ -37,9 +37,9 @@ typedef MultiplayerCreateAccountAction =
       required String password,
       required String displayName,
     });
-typedef MultiplayerSocialAuthClientFactory = sp.Client Function();
+typedef MultiplayerSocialAuthClientFactory = NativeSocialAuthSessionFactory;
 typedef MultiplayerCompleteSocialAuthAction =
-    Future<NetworkAuthResult> Function({required sp_auth.AuthSuccess auth});
+    Future<NetworkAuthResult> Function({required Object authSuccess});
 typedef MultiplayerExternalAuthAction =
     Future<NetworkAuthResult> Function({required String provider});
 typedef MultiplayerSteamAuthAction = Future<NetworkAuthResult> Function();
@@ -52,10 +52,3 @@ const _appleExternalAuthProvider = 'apple';
 const _googleExternalAuthProvider = 'google';
 
 enum _AccountMode { signIn, create }
-
-sp.Client createMultiplayerSocialAuthClient(String serverpodHost) {
-  return createServerpodClient(serverpodHost)
-    ..authSessionManager = FlutterAuthSessionManager(
-      storage: _EphemeralAuthSuccessStorage(),
-    );
-}

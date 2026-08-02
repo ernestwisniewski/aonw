@@ -385,6 +385,54 @@ final class MultiplayerStreamConnectorProvider
 String _$multiplayerStreamConnectorHash() =>
     r'be3240c4bc189e6fda5c788abafac8941e9db0ee';
 
+@ProviderFor(liveMultiplayerEvents)
+final liveMultiplayerEventsProvider = LiveMultiplayerEventsProvider._();
+
+final class LiveMultiplayerEventsProvider
+    extends
+        $FunctionalProvider<
+          LiveMultiplayerEvents,
+          LiveMultiplayerEvents,
+          LiveMultiplayerEvents
+        >
+    with $Provider<LiveMultiplayerEvents> {
+  LiveMultiplayerEventsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'liveMultiplayerEventsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$liveMultiplayerEventsHash();
+
+  @$internal
+  @override
+  $ProviderElement<LiveMultiplayerEvents> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  LiveMultiplayerEvents create(Ref ref) {
+    return liveMultiplayerEvents(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(LiveMultiplayerEvents value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<LiveMultiplayerEvents>(value),
+    );
+  }
+}
+
+String _$liveMultiplayerEventsHash() =>
+    r'f74cf78eb781644dde9a2b15a193663dbb00605b';
+
 @ProviderFor(wireCommandDispatcher)
 final wireCommandDispatcherProvider = WireCommandDispatcherProvider._();
 
@@ -439,11 +487,11 @@ final networkSessionClientProvider = NetworkSessionClientProvider._();
 final class NetworkSessionClientProvider
     extends
         $FunctionalProvider<
-          NetworkSessionClient,
-          NetworkSessionClient,
-          NetworkSessionClient
+          MultiplayerSessionGateway,
+          MultiplayerSessionGateway,
+          MultiplayerSessionGateway
         >
-    with $Provider<NetworkSessionClient> {
+    with $Provider<MultiplayerSessionGateway> {
   NetworkSessionClientProvider._()
     : super(
         from: null,
@@ -460,26 +508,77 @@ final class NetworkSessionClientProvider
 
   @$internal
   @override
-  $ProviderElement<NetworkSessionClient> $createElement(
+  $ProviderElement<MultiplayerSessionGateway> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  NetworkSessionClient create(Ref ref) {
+  MultiplayerSessionGateway create(Ref ref) {
     return networkSessionClient(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(NetworkSessionClient value) {
+  Override overrideWithValue(MultiplayerSessionGateway value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<NetworkSessionClient>(value),
+      providerOverride: $SyncValueProvider<MultiplayerSessionGateway>(value),
     );
   }
 }
 
 String _$networkSessionClientHash() =>
-    r'f73dde97b5ad75b41ea532c8cf4fb6d6f970f92f';
+    r'71d333aff4069f2580d2e841c0b649c02ace3d85';
+
+@ProviderFor(nativeSocialAuthSessionFactory)
+final nativeSocialAuthSessionFactoryProvider =
+    NativeSocialAuthSessionFactoryProvider._();
+
+final class NativeSocialAuthSessionFactoryProvider
+    extends
+        $FunctionalProvider<
+          NativeSocialAuthSessionFactory,
+          NativeSocialAuthSessionFactory,
+          NativeSocialAuthSessionFactory
+        >
+    with $Provider<NativeSocialAuthSessionFactory> {
+  NativeSocialAuthSessionFactoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'nativeSocialAuthSessionFactoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$nativeSocialAuthSessionFactoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<NativeSocialAuthSessionFactory> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  NativeSocialAuthSessionFactory create(Ref ref) {
+    return nativeSocialAuthSessionFactory(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(NativeSocialAuthSessionFactory value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<NativeSocialAuthSessionFactory>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$nativeSocialAuthSessionFactoryHash() =>
+    r'835913d71f694b00874699e8c9d57773e730556c';
 
 @ProviderFor(networkSessionStore)
 final networkSessionStoreProvider = NetworkSessionStoreProvider._();
@@ -487,11 +586,11 @@ final networkSessionStoreProvider = NetworkSessionStoreProvider._();
 final class NetworkSessionStoreProvider
     extends
         $FunctionalProvider<
-          NetworkSessionStore,
-          NetworkSessionStore,
-          NetworkSessionStore
+          NetworkSessionStorePort,
+          NetworkSessionStorePort,
+          NetworkSessionStorePort
         >
-    with $Provider<NetworkSessionStore> {
+    with $Provider<NetworkSessionStorePort> {
   NetworkSessionStoreProvider._()
     : super(
         from: null,
@@ -508,26 +607,26 @@ final class NetworkSessionStoreProvider
 
   @$internal
   @override
-  $ProviderElement<NetworkSessionStore> $createElement(
+  $ProviderElement<NetworkSessionStorePort> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  NetworkSessionStore create(Ref ref) {
+  NetworkSessionStorePort create(Ref ref) {
     return networkSessionStore(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(NetworkSessionStore value) {
+  Override overrideWithValue(NetworkSessionStorePort value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<NetworkSessionStore>(value),
+      providerOverride: $SyncValueProvider<NetworkSessionStorePort>(value),
     );
   }
 }
 
 String _$networkSessionStoreHash() =>
-    r'f1551fa436a91a4a32d644b1952d85130ee0e906';
+    r'a91296581e87840454967535a4d5880b18b9a641';
 
 @ProviderFor(NetworkSessionState)
 final networkSessionStateProvider = NetworkSessionStateProvider._();

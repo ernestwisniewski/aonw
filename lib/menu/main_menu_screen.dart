@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:aonw/app/app_release_info.dart';
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
@@ -16,7 +17,6 @@ import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/game_toast.dart';
 import 'package:aonw/shared/widgets/game_ui/gold_divider.dart';
 import 'package:aonw_core/protocol.dart';
-import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/foundation.dart' show ValueListenable, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -218,8 +218,8 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
   }
 
   bool _isAuthoritativeMissingResumeMatch(Object error) {
-    return error is sp.MultiplayerException &&
-        (error.code == 'match_not_found' || error.code == 'not_match_player');
+    if (error is! MultiplayerFailure || !error.isMultiplayer) return false;
+    return error.code == 'match_not_found' || error.code == 'not_match_player';
   }
 
   String? _playerIdForUser(WireMatch match, String userId) {

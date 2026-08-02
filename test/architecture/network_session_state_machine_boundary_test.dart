@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-const _stateMachinePath = 'lib/api/session/network_session_state_machine.dart';
+const _stateMachinePath =
+    'lib/game/application/services/network_session_state_machine.dart';
 const _providerPath =
     'lib/game/presentation/providers/session/repository_providers.dart';
 
