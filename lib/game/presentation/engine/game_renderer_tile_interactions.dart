@@ -82,7 +82,7 @@ extension GameRendererTileInteractions on GameRenderer {
   void _handleTileInspected(WorldTile tileData, {Offset? anchor}) {
     onTileInspected?.call(
       _visibleTileForActivePlayer(tileData),
-      anchor ?? _inspectionAnchorForTile(tileData),
+      anchor ?? inspectionAnchorForTile(tileData),
     );
   }
 
@@ -91,7 +91,7 @@ extension GameRendererTileInteractions on GameRenderer {
     if (onPreview != null) {
       onPreview(
         _visibleTileForActivePlayer(tileData),
-        anchor ?? _inspectionAnchorForTile(tileData),
+        anchor ?? inspectionAnchorForTile(tileData),
       );
       return;
     }
@@ -177,7 +177,8 @@ extension GameRendererTileInteractions on GameRenderer {
   void _handleMapObjectiveMarkerTapped(MapObjectiveProgress progress) =>
       _handleRendererMapObjectiveMarkerTapped(this, progress);
 
-  bool _shouldSuppressTapAfterLongPress() => _suppressTapsUntilNextPointerDown;
+  bool _shouldSuppressTapAfterLongPress() =>
+      inputHandler.suppressTapsUntilNextPointerDown;
 
   void _handlePreviewWorkerImprovement(String unitId, String optionId) {
     final type = _fieldImprovementTypeById(optionId);

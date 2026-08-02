@@ -32,26 +32,22 @@ extension GameRendererTestingHooks on GameRenderer {
 
   @visibleForTesting
   void handleTileInspectionPreviewedForTesting(WorldTile tileData) {
-    _suppressTapsUntilNextPointerDown = true;
-    _longPressInspectActive = true;
-    _longPressInspectionPreviewActive = true;
-    _longPressInspectHex = CityHex(col: tileData.col, row: tileData.row);
-    _handleTileInspectionPreviewed(tileData);
+    inputHandler.beginPreviewForTesting(tileData);
   }
 
   @visibleForTesting
   void handleTileLongPressedForTesting(WorldTile tileData) {
-    _selectTileFromLongPress(tileData);
+    inputHandler.selectTile(tileData);
   }
 
   @visibleForTesting
   void confirmTileInspectionForTesting() {
-    _confirmLongPressInspect();
+    inputHandler.confirm();
   }
 
   @visibleForTesting
   void cancelTileInspectionForTesting() {
-    _cancelLongPressInspect();
+    inputHandler.cancel();
   }
 
   @visibleForTesting
@@ -247,7 +243,7 @@ extension GameRendererTestingHooks on GameRenderer {
   bool get reduceMotionForTesting => _reduceMotion;
 
   @visibleForTesting
-  bool get cinematicCameraEnabledForTesting => _cinematicCameraEnabled;
+  bool get cinematicCameraEnabledForTesting => cinematicCameraEnabled;
 
   @visibleForTesting
   bool unitMarkerReduceMotionForTesting(String unitId) =>

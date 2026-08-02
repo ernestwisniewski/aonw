@@ -17,15 +17,15 @@ extension _GameRendererCameraPolicy on GameRenderer {
   }
 
   bool _moveCameraForUnitMovementEffect(String unitId) {
-    if (!_moveCameraForUnitMovement) return false;
+    if (!moveCameraForUnitMovement) return false;
     final unit = _renderState.unitById(unitId);
     if (unit == null) return false;
     if (!_isEnemyUnit(unit)) return true;
-    return _followEnemyUnitCamera;
+    return followEnemyUnitCamera;
   }
 
   Future<void> _restoreCameraAfterUnitMovementEffect(String unitId) async {
-    if (_isDisposed || !_followEnemyUnitCamera) return;
+    if (_isDisposed || !followEnemyUnitCamera) return;
     final unit = _renderState.unitById(unitId);
     if (unit == null || !_isEnemyUnit(unit)) return;
     _focusSelection(_renderState.selection);

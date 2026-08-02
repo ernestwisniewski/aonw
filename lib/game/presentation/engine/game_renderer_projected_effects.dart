@@ -49,9 +49,9 @@ extension GameRendererProjectedEffects on GameRenderer {
         );
         continue;
       }
-      await _enqueueTransition(() async {
+      await _transitionHandler.enqueue(() async {
         await scheduler.waitFor(transition.batch);
-        await _applyTransitionNow(
+        await _transitionHandler.applyNow(
           transition.state,
           projectedEffects,
           currentTurn: transition.currentTurn,

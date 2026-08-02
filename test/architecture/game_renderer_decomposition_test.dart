@@ -6,40 +6,64 @@ const _rendererDirectory = 'lib/game/presentation/engine';
 const _rendererPath = '$_rendererDirectory/game_renderer.dart';
 
 void main() {
-  test('GameRenderer delegates its five runtime responsibilities', () {
+  test('GameRenderer composes its five runtime responsibilities', () {
     final source = File(_rendererPath).readAsStringSync();
-    const modules = {
-      'game_renderer_input.dart': 'mixin GameRendererInput',
-      'game_renderer_camera.dart': 'mixin GameRendererCamera',
-      'game_renderer_state_sync.dart': 'mixin GameRendererStateSync',
-      'game_renderer_transitions.dart': 'mixin GameRendererTransitions',
-      'game_renderer_lifecycle.dart': 'mixin GameRendererLifecycle',
+    const services = {
+      'game_renderer_input_handler.dart': 'class GameRendererInputHandler',
+      'game_renderer_camera_settings.dart':
+          'class GameRendererCameraSettings',
+      'game_renderer_state_sync_handler.dart':
+          'class GameRendererStateSyncHandler',
+      'game_renderer_transition_handler.dart':
+          'class GameRendererTransitionHandler',
+      'game_renderer_lifecycle_handler.dart':
+          'class GameRendererLifecycleHandler',
     };
 
-    for (final entry in modules.entries) {
-      expect(source, contains("part '${entry.key}';"), reason: entry.key);
-      final moduleSource = File(
+    for (final entry in services.entries) {
+      expect(
+        source,
+        contains("engine/${entry.key}';"),
+        reason: entry.key,
+      );
+      final serviceSource = File(
         '$_rendererDirectory/${entry.key}',
       ).readAsStringSync();
-      expect(moduleSource, contains(entry.value), reason: entry.key);
+      expect(serviceSource, contains(entry.value), reason: entry.key);
+      expect(serviceSource, isNot(contains("part of 'game_renderer.dart';")));
     }
 
-    expect(source.split('\n'), hasLength(lessThan(250)));
-    expect(source, isNot(contains('void handleViewportPointerDown(')));
-    expect(source, isNot(contains('void setZoom(')));
-    expect(source, isNot(contains('void applyState(')));
-    expect(source, isNot(contains('Future<void> applyTransition(')));
-    expect(source, isNot(contains('Future<void> buildWorld(')));
+    expect(source.split('\n'), hasLength(lessThan(500)));
+    expect(source, contains('GameRendererInputHandler inputHandler'));
+    expect(source, contains('GameRendererCameraSettings _cameraSettings'));
+    expect(source, contains('GameRendererStateSyncHandler _stateSyncHandler'));
+    expect(source, contains('GameRendererTransitionHandler _transitionHandler'));
+    expect(source, contains('GameRendererLifecycleHandler _lifecycleHandler'));
 
-    for (final removedFile in const [
+    for (final removedPart in const [
+      'game_renderer_input.dart',
+      'game_renderer_camera.dart',
+      'game_renderer_state_sync.dart',
+      'game_renderer_transitions.dart',
+      'game_renderer_lifecycle.dart',
+    ]) {
+      expect(source, isNot(contains("part '$removedPart';")));
+      expect(
+        File('$_rendererDirectory/$removedPart').existsSync(),
+        isFalse,
+        reason: removedPart,
+      );
+    }
+
+    for (final legacyFile in const [
       'game_renderer_state_application.dart',
       'game_renderer_transition_queue.dart',
       'game_renderer_world_lifecycle.dart',
     ]) {
       expect(
-        File('$_rendererDirectory/$removedFile').existsSync(),
+        File('$_rendererDirectory/$legacyFile').existsSync(),
         isFalse,
-        reason: removedFile,
+        reason: legacyFile,
       );
     }
   });

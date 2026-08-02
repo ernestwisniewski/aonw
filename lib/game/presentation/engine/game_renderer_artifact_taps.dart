@@ -38,7 +38,7 @@ void _handleRendererArtifactMarkerTapped(
       renderer.onArtifactInspected != null) {
     renderer.onArtifactInspected?.call(
       artifact,
-      renderer._inspectionAnchorForTile(tile),
+      renderer.inspectionAnchorForTile(tile),
     );
     return;
   }
@@ -75,7 +75,7 @@ void _handleRendererMapObjectiveMarkerTapped(
       renderer.onObjectiveInspected != null) {
     renderer.onObjectiveInspected?.call(
       progress,
-      renderer._inspectionAnchorForTile(tile),
+      renderer.inspectionAnchorForTile(tile),
     );
     return;
   }
@@ -181,13 +181,13 @@ bool _handleStackedMapObjectTap(
       if (artifact == null) return false;
       renderer.onArtifactInspected?.call(
         artifact,
-        renderer._inspectionAnchorForTile(tile),
+        renderer.inspectionAnchorForTile(tile),
       );
     case ArtifactMarkerTapTarget.objective:
       if (objective == null) return false;
       renderer.onObjectiveInspected?.call(
         objective,
-        renderer._inspectionAnchorForTile(tile),
+        renderer.inspectionAnchorForTile(tile),
       );
     case ArtifactMarkerTapTarget.tileInspection:
       renderer._handleTileInspected(tile);
