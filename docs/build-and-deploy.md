@@ -458,11 +458,13 @@ Keychain profile before starting a release:
 make macos-distribution-preflight
 ```
 
-`make steam-macos` builds the app, signs it with the configured Developer ID
-identity and hardened runtime, submits a temporary ZIP to Apple, staples the
-accepted ticket, validates it, and requires Gatekeeper acceptance before
-creating the final distribution ZIP. `deploy-all` runs the same preflight
-before its quality gates or version commit.
+`make steam-macos` creates an Xcode archive and exports it with
+`macos/DeveloperIDExportOptions.plist`. This preserves the app sandbox,
+network, and Keychain entitlements while Xcode signs the app with Developer ID
+and hardened runtime. The exported app is submitted to Apple, stapled,
+validated, and must pass Gatekeeper before the final distribution ZIP is
+created. `deploy-all` runs the same preflight before its quality gates or
+version commit.
 
 Linux:
 

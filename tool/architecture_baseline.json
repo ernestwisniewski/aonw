@@ -1142,7 +1142,7 @@
         "test/game/hover_intent_marker_test.dart": 923,
         "test/game/infrastructure/transport/local_command_transport_test.dart": 555,
         "test/game/lobby_connection_controller_test.dart": 656,
-        "test/game/lobby_screen_test.dart": 561,
+        "test/game/lobby_screen_test.dart": 553,
         "test/game/presentation/widgets/activity_log_panel_test.dart": 571,
         "test/game/presentation/widgets/bottom_toolbar/end_turn_button_test.dart": 552,
         "test/game/presentation/widgets/city_production_dialog_view_model_test.dart": 627,

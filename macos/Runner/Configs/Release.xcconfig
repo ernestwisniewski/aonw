@@ -1,2 +1,6 @@
 #include "../../Flutter/Flutter-Release.xcconfig"
+
+// Developer ID notarization requires release signatures to use the hardened
+// runtime, including builds produced outside the Makefile release target.
+ENABLE_HARDENED_RUNTIME = YES
 #include "Warnings.xcconfig"

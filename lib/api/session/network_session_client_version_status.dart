@@ -4,7 +4,7 @@ extension NetworkSessionClientVersionStatus on NetworkSessionClient {
   Future<String> versionStatus({
     required String platform,
     required int buildNumber,
-    int multiplayerVersion = kCurrentMultiplayerVersion,
+    required int multiplayerVersion,
   }) {
     return _withOwnedClient(
       connectionTimeout: const Duration(seconds: 3),

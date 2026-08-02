@@ -34,7 +34,11 @@ void main() {
       expect(authProviderFactoryCalls, 1);
 
       expect(
-        await client.versionStatus(platform: 'macos', buildNumber: 1),
+        await client.versionStatus(
+          platform: 'macos',
+          buildNumber: 1,
+          multiplayerVersion: kCurrentMultiplayerVersion,
+        ),
         'supported',
       );
       expect(created, hasLength(2));
@@ -74,7 +78,11 @@ void main() {
       addTearDown(client.close);
 
       expect(
-        await client.versionStatus(platform: 'windows', buildNumber: 80),
+        await client.versionStatus(
+          platform: 'windows',
+          buildNumber: 80,
+          multiplayerVersion: kCurrentMultiplayerVersion,
+        ),
         'supported',
       );
       expect(created.single.appStatusRequests, [

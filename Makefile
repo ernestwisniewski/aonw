@@ -113,9 +113,12 @@ PLATFORM_SMOKE_WINDOWS ?= auto
 STEAM_API_BASE_URL ?= https://api.aonw.net
 STEAM_DIST_DIR ?= dist
 STEAM_MACOS_APP_NAME ?= aonw.app
-STEAM_MACOS_BUILD_DIR ?= build/macos/Build/Products/Release
+STEAM_MACOS_ARCHIVE ?= build/macos/aonw-steam.xcarchive
+STEAM_MACOS_EXPORT_DIR ?= build/macos/developer-id
+STEAM_MACOS_BUILD_DIR ?= $(STEAM_MACOS_EXPORT_DIR)
 STEAM_MACOS_APP ?= $(STEAM_MACOS_BUILD_DIR)/$(STEAM_MACOS_APP_NAME)
 STEAM_MACOS_ZIP ?= $(STEAM_DIST_DIR)/aonw-macos-steam.zip
+MACOS_EXPORT_OPTIONS ?= macos/DeveloperIDExportOptions.plist
 MACOS_DEVELOPER_IDENTITY ?= Developer ID Application: Ernest Wisniewski (H64KBQ6T2S)
 MACOS_DEVELOPMENT_TEAM ?= H64KBQ6T2S
 MACOS_NOTARY_PROFILE ?= aonw-notary
@@ -349,6 +352,7 @@ help:
 	@echo "  PLATFORM_SMOKE_ANDROID=1|0    multiplayer-platform-smoke Android debug build. Default: $(PLATFORM_SMOKE_ANDROID)"
 	@echo "  PLATFORM_SMOKE_WINDOWS=auto|1|0 multiplayer-platform-smoke Windows debug build. Default: $(PLATFORM_SMOKE_WINDOWS)"
 	@echo "  STEAM_API_BASE_URL=https://... Steam builds only. Default: $(STEAM_API_BASE_URL)"
+	@echo "  MACOS_EXPORT_OPTIONS=path      Developer ID export plist. Default: $(MACOS_EXPORT_OPTIONS)"
 	@echo "  MACOS_DEVELOPER_IDENTITY=...   Developer ID identity. Default: $(MACOS_DEVELOPER_IDENTITY)"
 	@echo "  MACOS_DEVELOPMENT_TEAM=...     Apple Developer team. Default: $(MACOS_DEVELOPMENT_TEAM)"
 	@echo "  MACOS_NOTARY_PROFILE=name      notarytool Keychain profile. Default: $(MACOS_NOTARY_PROFILE)"
@@ -1139,9 +1143,21 @@ steam-release-from-dist: steam-macos steam-prepare-from-dist steam-upload
 
 macos-distribution-preflight:
 	@test "$$(uname -s)" = "Darwin" || { echo "macOS distribution requires a macOS host."; exit 1; }
-	@for command in codesign security spctl xcrun ditto; do \
+	@for command in codesign security spctl xcodebuild xcrun ditto plutil rg strings; do \
 		command -v "$$command" >/dev/null || { echo "$$command is required for macOS distribution."; exit 1; }; \
 	done
+	@test -f "$(MACOS_EXPORT_OPTIONS)" || { echo "Developer ID export options not found: $(MACOS_EXPORT_OPTIONS)"; exit 1; }
+	@case "$(STEAM_MACOS_ARCHIVE)" in \
+		build/macos/*.xcarchive) ;; \
+		*) echo "STEAM_MACOS_ARCHIVE must be a .xcarchive below build/macos."; exit 1 ;; \
+	esac
+	@case "$(STEAM_MACOS_EXPORT_DIR)" in \
+		build/macos/?*) ;; \
+		*) echo "STEAM_MACOS_EXPORT_DIR must be below build/macos."; exit 1 ;; \
+	esac
+	@case "$(STEAM_MACOS_ARCHIVE) $(STEAM_MACOS_EXPORT_DIR)" in \
+		*..*) echo "macOS archive and export paths must not contain '..'."; exit 1 ;; \
+	esac
 	@test -n "$(MACOS_DEVELOPER_IDENTITY)" || { echo "MACOS_DEVELOPER_IDENTITY is required."; exit 1; }
 	@test -n "$(MACOS_DEVELOPMENT_TEAM)" || { echo "MACOS_DEVELOPMENT_TEAM is required."; exit 1; }
 	@test -n "$(MACOS_NOTARY_PROFILE)" || { echo "MACOS_NOTARY_PROFILE is required."; exit 1; }
@@ -1160,8 +1176,30 @@ steam-macos: macos-distribution-preflight
 	@command -v unzip >/dev/null || { echo "unzip is required for steam-macos."; exit 1; }
 	@test "$$(uname -s)" = "Darwin" || { echo "steam-macos requires a macOS host."; exit 1; }
 	@echo "Building macOS Steam release with API=$(STEAM_API_BASE_URL)..."
-	@flutter pub get
-	@flutter build macos --release --no-pub "--dart-define=AONW_API_BASE_URL=$(STEAM_API_BASE_URL)"
+	@set -e; \
+	build_name=$$(sed -n 's/^version:[[:space:]]*\([^+]*\)+.*/\1/p' "$(PUBSPEC)" | head -n 1); \
+	build_number=$$(sed -n 's/^version:.*+\([0-9][0-9]*\).*$$/\1/p' "$(PUBSPEC)" | head -n 1); \
+	test -n "$$build_name" || { echo "Could not parse version name from $(PUBSPEC)"; exit 1; }; \
+	test -n "$$build_number" || { echo "Could not parse build number from $(PUBSPEC)"; exit 1; }; \
+	api_define=$$(printf 'AONW_API_BASE_URL=%s' "$(STEAM_API_BASE_URL)" | base64 | tr -d '\n'); \
+	flutter pub get; \
+	rm -rf "$(STEAM_MACOS_ARCHIVE)" "$(STEAM_MACOS_EXPORT_DIR)"; \
+	xcodebuild -quiet archive \
+	  -workspace macos/Runner.xcworkspace \
+	  -scheme Runner \
+	  -configuration Release \
+	  -destination 'generic/platform=macOS' \
+	  -archivePath "$(STEAM_MACOS_ARCHIVE)" \
+	  -allowProvisioningUpdates \
+	  DEVELOPMENT_TEAM="$(MACOS_DEVELOPMENT_TEAM)" \
+	  FLUTTER_BUILD_NAME="$$build_name" \
+	  FLUTTER_BUILD_NUMBER="$$build_number" \
+	  DART_DEFINES="$$api_define"; \
+	xcodebuild -exportArchive \
+	  -archivePath "$(STEAM_MACOS_ARCHIVE)" \
+	  -exportPath "$(STEAM_MACOS_EXPORT_DIR)" \
+	  -exportOptionsPlist "$(MACOS_EXPORT_OPTIONS)" \
+	  -allowProvisioningUpdates
 	@test -d "$(STEAM_MACOS_APP)" || { echo "Expected macOS app not found: $(STEAM_MACOS_APP)"; exit 1; }
 	@app_binary=$$(find "$(STEAM_MACOS_APP)/Contents/Frameworks/App.framework" -type f -name App -print -quit); \
 	test -n "$$app_binary" || { echo "Expected Flutter App.framework binary not found in $(STEAM_MACOS_APP)"; exit 1; }; \
@@ -1172,9 +1210,28 @@ steam-macos: macos-distribution-preflight
 	verification_dir=$$(mktemp -d "$${TMPDIR:-/tmp}/aonw-macos-verify.XXXXXX"); \
 	trap 'rm -rf "$$submission_dir" "$$verification_dir"' EXIT HUP INT TERM; \
 	submission_zip="$$submission_dir/aonw-macos-notary.zip"; \
-	codesign --force --deep --options runtime --timestamp \
-		--sign "$(MACOS_DEVELOPER_IDENTITY)" "$(STEAM_MACOS_APP)"; \
 	codesign --verify --deep --strict --verbose=2 "$(STEAM_MACOS_APP)"; \
+	signature=$$(codesign -d --verbose=4 "$(STEAM_MACOS_APP)" 2>&1); \
+	printf '%s\n' "$$signature" | rg '^CodeDirectory .* flags=.*runtime' >/dev/null \
+		|| { echo "Exported macOS app is missing the hardened runtime signature flag."; exit 1; }; \
+	printf '%s\n' "$$signature" | rg -F 'Authority=$(MACOS_DEVELOPER_IDENTITY)' >/dev/null \
+		|| { echo "Exported macOS app was signed by an unexpected identity."; exit 1; }; \
+	printf '%s\n' "$$signature" | rg -F 'TeamIdentifier=$(MACOS_DEVELOPMENT_TEAM)' >/dev/null \
+		|| { echo "Exported macOS app has an unexpected team identifier."; exit 1; }; \
+	printf '%s\n' "$$signature" | rg '^Timestamp=.+$$' >/dev/null \
+		|| { echo "Exported macOS app signature is missing a trusted timestamp."; exit 1; }; \
+	entitlements_file="$$submission_dir/aonw-entitlements.plist"; \
+	codesign -d --xml --entitlements "$$entitlements_file" "$(STEAM_MACOS_APP)" >/dev/null 2>&1; \
+	test "$$(plutil -extract 'com\.apple\.security\.app-sandbox' raw -o - "$$entitlements_file")" = true \
+		|| { echo "Exported macOS app is missing the sandbox entitlement."; exit 1; }; \
+	test "$$(plutil -extract 'com\.apple\.security\.network\.client' raw -o - "$$entitlements_file")" = true \
+		|| { echo "Exported macOS app is missing the network client entitlement."; exit 1; }; \
+	test "$$(plutil -extract keychain-access-groups.0 raw -o - "$$entitlements_file")" = "$(MACOS_DEVELOPMENT_TEAM).com.google.GIDSignIn" \
+		|| { echo "Exported macOS app has an unexpected Google Keychain access group."; exit 1; }; \
+	if plutil -extract 'com\.apple\.security\.get-task-allow' raw -o - "$$entitlements_file" >/dev/null 2>&1; then \
+		echo "Developer ID app must not carry get-task-allow."; \
+		exit 1; \
+	fi; \
 	ditto -c -k --keepParent --norsrc --noextattr --noqtn --noacl "$(STEAM_MACOS_APP)" "$$submission_zip"; \
 	xcrun notarytool submit "$$submission_zip" --wait \
 		--keychain-profile "$(MACOS_NOTARY_PROFILE)"; \

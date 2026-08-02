@@ -2,6 +2,7 @@ import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/app/app_release_info.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/protocol.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,7 +17,7 @@ typedef MainMenuVersionStatusLoader =
     Future<String> Function({
       required String platform,
       required int buildNumber,
-      int multiplayerVersion,
+      required int multiplayerVersion,
     });
 
 final mainMenuUpdateCheckEnabledProvider = Provider<bool>(
@@ -39,6 +40,7 @@ final mainMenuUpdateNoticeProvider = FutureProvider<MainMenuUpdateNotice?>((
         .watch(mainMenuVersionStatusLoaderProvider)(
           platform: resolveAppReleasePlatform(),
           buildNumber: releaseInfo.buildNumberValue,
+          multiplayerVersion: kCurrentMultiplayerVersion,
         )
         .timeout(_appUpdateCheckTimeout);
     return _noticeFor(status);

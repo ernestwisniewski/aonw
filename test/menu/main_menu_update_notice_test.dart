@@ -1,5 +1,6 @@
 import 'package:aonw/app/app_release_info.dart';
 import 'package:aonw/menu/main_menu_update_notice.dart';
+import 'package:aonw_core/protocol.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,6 +16,7 @@ void main() {
     () async {
       String? requestedPlatform;
       int? requestedBuildNumber;
+      int? requestedMultiplayerVersion;
       final container = ProviderContainer(
         overrides: [
           mainMenuUpdateCheckEnabledProvider.overrideWithValue(true),
@@ -25,10 +27,11 @@ void main() {
           mainMenuVersionStatusLoaderProvider.overrideWithValue(({
             required platform,
             required buildNumber,
-            multiplayerVersion = 0,
+            required multiplayerVersion,
           }) async {
             requestedPlatform = platform;
             requestedBuildNumber = buildNumber;
+            requestedMultiplayerVersion = multiplayerVersion;
             return 'soon';
           }),
         ],
@@ -40,6 +43,7 @@ void main() {
       expect(notice, isA<MainMenuUpdateNotice>());
       expect(requestedPlatform, isNotEmpty);
       expect(requestedBuildNumber, 42);
+      expect(requestedMultiplayerVersion, kCurrentMultiplayerVersion);
     },
   );
 

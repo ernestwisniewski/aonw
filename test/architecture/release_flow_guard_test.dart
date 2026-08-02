@@ -229,8 +229,8 @@ void main() {
       nextTarget: 'steam-windows',
     );
     final orderedSteps = [
-      'flutter build macos',
-      'codesign --force',
+      'xcodebuild -quiet archive',
+      'xcodebuild -exportArchive',
       'codesign --verify',
       r'ditto -c -k --keepParent --norsrc --noextattr --noqtn --noacl '
           r'"$(STEAM_MACOS_APP)" "$$submission_zip"',
@@ -250,13 +250,64 @@ void main() {
       previous = offset;
     }
     expect(macos, contains(r'--keychain-profile "$(MACOS_NOTARY_PROFILE)"'));
-    expect(macos, contains(r'--options runtime'));
-    expect(macos, contains(r'--timestamp'));
+    expect(macos, contains(r'-exportOptionsPlist "$(MACOS_EXPORT_OPTIONS)"'));
+    expect(macos, contains(r'flags=.*runtime'));
+    expect(macos, contains(r'Authority=$(MACOS_DEVELOPER_IDENTITY)'));
+    expect(macos, contains(r'TeamIdentifier=$(MACOS_DEVELOPMENT_TEAM)'));
+    expect(macos, contains(r"rg '^Timestamp=.+$$'"));
+    expect(macos, contains(r'com\.apple\.security\.network\.client'));
+    expect(macos, contains('keychain-access-groups'));
+    expect(macos, contains(r'com\.apple\.security\.get-task-allow'));
     expect(macos, contains('AppleDouble or __MACOSX entries'));
     expect(
       macos,
       contains(
         r'codesign --verify --deep --strict --verbose=2 "$$verification_dir/$(STEAM_MACOS_APP_NAME)"',
+      ),
+    );
+  });
+
+  test('macOS release builds enable the hardened runtime', () {
+    final releaseConfig = File(
+      'macos/Runner/Configs/Release.xcconfig',
+    ).readAsStringSync();
+
+    expect(releaseConfig, contains('ENABLE_HARDENED_RUNTIME = YES'));
+  });
+
+  test('macOS Developer ID export keeps required runtime capabilities', () {
+    final entitlements = File(
+      'macos/Runner/Release.entitlements',
+    ).readAsStringSync();
+    final exportOptions = File(
+      'macos/DeveloperIDExportOptions.plist',
+    ).readAsStringSync();
+
+    expect(
+      entitlements,
+      contains(
+        '<key>com.apple.security.network.client</key>\n'
+        '\t<true/>',
+      ),
+    );
+    expect(
+      entitlements,
+      contains(
+        '<key>keychain-access-groups</key>\n'
+        '\t<array>\n'
+        '\t\t<string>\$(AppIdentifierPrefix)com.google.GIDSignIn</string>',
+      ),
+    );
+    expect(entitlements, isNot(contains('com.apple.security.get-task-allow')));
+    expect(
+      exportOptions,
+      contains('<key>method</key>\n\t<string>developer-id</string>'),
+    );
+    expect(
+      exportOptions,
+      contains(
+        '<key>signingCertificate</key>\n'
+        '\t<string>Developer ID Application</string>',
       ),
     );
   });

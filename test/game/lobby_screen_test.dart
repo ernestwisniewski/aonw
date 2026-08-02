@@ -23,7 +23,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-part 'lobby_screen_map_fixture.dart';
+part 'lobby_screen_test_support.dart';
 
 class _FakeGameRepository implements GameRepository {
   GameMode? createdMode;
@@ -126,17 +126,9 @@ Future<void> _pumpLobby(
   );
 }
 
-Future<void> _selectGameLength(WidgetTester tester, String label) async {
-  final dropdown = find.byKey(const Key('game-length-dropdown'));
-  await tester.ensureVisible(dropdown);
-  await tester.pumpAndSettle();
-  await tester.tap(dropdown);
-  await tester.pumpAndSettle();
-  await tester.tap(find.text(label).last);
-  await tester.pumpAndSettle();
-}
-
 void main() {
+  _registerLobbyMapCapacityTests();
+
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
@@ -249,25 +241,6 @@ void main() {
 
     expect(repository.createdRequest, isNull);
     expect(find.byKey(const Key('game-screen')), findsNothing);
-  });
-
-  testWidgets('synchronizes player limit with loaded custom map capacity', (
-    tester,
-  ) async {
-    final repository = _FakeGameRepository();
-    await _pumpLobby(
-      tester,
-      repository,
-      mapName: 'custom',
-      mapData: _map(cols: 8, rows: 8),
-    );
-
-    await tester.pump();
-
-    expect(find.text('+ ADD PLAYER'), findsNothing);
-    await tester.tap(find.text('START'));
-    await tester.pumpAndSettle();
-    expect(repository.createdRequest?.players, hasLength(2));
   });
 
   testWidgets('stores selected country for local players', (tester) async {
