@@ -4,6 +4,7 @@ import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_refresh_coordinator.dart';
+import 'package:aonw/api/session/network_session_state_machine.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw_core/protocol.dart';
@@ -26,6 +27,7 @@ typedef LobbyValidSessionEnsurer = Future<NetworkSession> Function();
 
 final class LobbyNetworkSessionCoordinator {
   static const tokenRefreshSkew = Duration(seconds: 30);
+  static const _sessionReducer = NetworkSessionReducer();
 
   final LobbyCurrentSessionReader currentSession;
   final LobbySessionSetter setSession;
@@ -102,44 +104,72 @@ final class LobbyNetworkSessionCoordinator {
       clearActiveMatch(session);
       return;
     }
-    setSession(sessionForMatch(session: session, match: match));
-    unawaited(saveMatchId(match.id));
+    final transition = _activeMatchTransition(session: session, match: match);
+    setSession(transition.state.session);
+    unawaited(_effectRunner.runAll(transition.effects));
   }
 
   void clearActiveMatch(NetworkSession session) {
-    setSession(sessionWithoutActiveMatch(session));
-    unawaited(saveMatchId(null));
+    final base = _latestSessionFor(session);
+    final transition = _sessionReducer.reduce(
+      NetworkSessionTransportState(session: base),
+      ClearNetworkMatchAction(expectedUserId: base.userId, changedAt: now()),
+    );
+    setSession(transition.state.session);
+    unawaited(_effectRunner.runAll(transition.effects));
   }
 
   NetworkSession sessionForMatch({
     required NetworkSession session,
     required WireMatch match,
   }) {
-    final latest = currentSession();
-    final base = latest?.userId == session.userId ? latest! : session;
-    return NetworkSession(
-      userId: base.userId,
-      playerId: LobbyMatchStatusRules.playerIdForUser(match, base.userId),
-      token: base.token,
-      refreshToken: base.refreshToken,
-      matchId: match.id,
-      connectionState: NetworkConnectionState(
-        status: NetworkConnectionStatus.connected,
+    return _activeMatchTransition(
+      session: session,
+      match: match,
+    ).state.session!;
+  }
+
+  NetworkSession sessionWithoutActiveMatch(NetworkSession session) {
+    final base = _latestSessionFor(session);
+    return _sessionReducer
+        .reduce(
+          NetworkSessionTransportState(session: base),
+          ClearNetworkMatchAction(
+            expectedUserId: base.userId,
+            changedAt: now(),
+          ),
+        )
+        .state
+        .session!;
+  }
+
+  NetworkSessionTransition _activeMatchTransition({
+    required NetworkSession session,
+    required WireMatch match,
+  }) {
+    final base = _latestSessionFor(session);
+    return _sessionReducer.reduce(
+      NetworkSessionTransportState(session: base),
+      ActivateNetworkMatchAction(
+        expectedUserId: base.userId,
+        playerId: LobbyMatchStatusRules.playerIdForUser(match, base.userId),
+        matchId: match.id,
         changedAt: now(),
       ),
     );
   }
 
-  NetworkSession sessionWithoutActiveMatch(NetworkSession session) {
+  NetworkSession _latestSessionFor(NetworkSession session) {
     final latest = currentSession();
-    final base = latest?.userId == session.userId ? latest! : session;
-    return NetworkSession(
-      userId: base.userId,
-      token: base.token,
-      refreshToken: base.refreshToken,
-      connectionState: base.connectionState.copyWith(changedAt: now()),
-    );
+    return latest?.userId == session.userId ? latest! : session;
   }
+
+  NetworkSessionEffectRunner get _effectRunner => NetworkSessionEffectRunner(
+    persistMatchId: saveMatchId,
+    publishTransportStatus: (_) {},
+    clearTransportStatus: (_) {},
+    onError: (_, _) {},
+  );
 
   bool _canReuseCurrentSession({
     required NetworkSession? current,

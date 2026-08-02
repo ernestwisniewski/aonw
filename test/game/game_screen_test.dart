@@ -256,32 +256,34 @@ ProviderContainer _makeMultiplayerGameContainer(
   );
   final eventLog = _FakeEventLog();
   return ProviderContainer(
-    overrides: [
-      activeMapProvider(_selection).overrideWithValue(AsyncData(_makeMap())),
-      mapImagePathProvider(_selection).overrideWithValue(const AsyncData(null)),
-      gameRepositoryProvider.overrideWithValue(gameRepository),
-      networkGameRepositoryProvider.overrideWithValue(gameRepository),
-      eventLogProvider.overrideWithValue(eventLog),
-      networkEventLogProvider.overrideWithValue(eventLog),
-      snapshotStoreProvider.overrideWithValue(_FakeSnapshotStore()),
-      if (sessionClient != null)
-        networkSessionClientProvider.overrideWithValue(sessionClient),
-      networkSessionProvider.overrideWithValue(
-        NetworkSession(
-          userId: 'user_1',
-          playerId: 'player_1',
-          token: AuthToken('jwt-token'),
-          refreshToken: 'refresh-token',
-          matchId: save.id,
-          connectionState: connected
-              ? const NetworkConnectionState(
-                  status: NetworkConnectionStatus.connected,
-                )
-              : NetworkConnectionState.offline,
-        ),
+      overrides: [
+        activeMapProvider(_selection).overrideWithValue(AsyncData(_makeMap())),
+        mapImagePathProvider(
+          _selection,
+        ).overrideWithValue(const AsyncData(null)),
+        gameRepositoryProvider.overrideWithValue(gameRepository),
+        networkGameRepositoryProvider.overrideWithValue(gameRepository),
+        eventLogProvider.overrideWithValue(eventLog),
+        networkEventLogProvider.overrideWithValue(eventLog),
+        snapshotStoreProvider.overrideWithValue(_FakeSnapshotStore()),
+        if (sessionClient != null)
+          networkSessionClientProvider.overrideWithValue(sessionClient),
+      ],
+    )
+    ..read(networkSessionStateProvider.notifier).set(
+      NetworkSession(
+        userId: 'user_1',
+        playerId: 'player_1',
+        token: AuthToken('jwt-token'),
+        refreshToken: 'refresh-token',
+        matchId: save.id,
+        connectionState: connected
+            ? const NetworkConnectionState(
+                status: NetworkConnectionStatus.connected,
+              )
+            : NetworkConnectionState.offline,
       ),
-    ],
-  );
+    );
 }
 
 final class _RecordingMapLoadedClient extends NetworkSessionClient {
@@ -484,7 +486,6 @@ void main() {
     await tester.pump();
     await tester.pump();
     await _pumpCappedGameFrame(tester);
-
     expect(find.byType(GameHud), findsOneWidget);
 
     final closeGame = tester.widget<GameHud>(find.byType(GameHud)).onClose;
@@ -492,7 +493,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     await tester.pump();
-
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('network.session.matchId'), 'match_1');
     expect(find.byKey(const Key('main-menu-screen')), findsOneWidget);

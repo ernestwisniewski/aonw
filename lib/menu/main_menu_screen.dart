@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:aonw/api/session/connection_state.dart';
-import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/app/app_release_info.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
@@ -155,23 +153,24 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
           .loadMatch(token: refreshedSession.token, matchId: matchId);
       final playerId = _playerIdForUser(match, stored.userId);
       if (!LobbyMatchStatusRules.isRunning(match) || playerId == null) {
-        await _handleResumeFailure(store, forgetPersistedMatch: true);
+        await _handleResumeFailure(forgetPersistedMatch: true);
         return;
       }
       final latestSession = ref.read(networkSessionProvider);
       if (latestSession == null || latestSession.userId != stored.userId) {
-        await _handleResumeFailure(store, forgetPersistedMatch: true);
+        await _handleResumeFailure(forgetPersistedMatch: true);
         return;
       }
-      final session = latestSession.copyWith(
-        matchId: match.id,
-        playerId: playerId,
-        connectionState: NetworkConnectionState(
-          status: NetworkConnectionStatus.connected,
-          changedAt: ref.read(gameClockProvider).nowUtc(),
-        ),
-      );
-      ref.read(networkSessionStateProvider.notifier).set(session);
+      await ref
+          .read(networkSessionStateProvider.notifier)
+          .activateMatch(
+            expectedUserId: stored.userId,
+            playerId: playerId,
+            matchId: match.id,
+            changedAt: ref.read(gameClockProvider).nowUtc(),
+            persistMatchId: false,
+          );
+
       if (!mounted) return;
       context.go(
         '/game?saveId=${match.id}'
@@ -186,7 +185,6 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
         sessionEnded = ref.read(networkSessionProvider) == null;
       }
       await _handleResumeFailure(
-        store,
         forgetPersistedMatch:
             sessionEnded || _isAuthoritativeMissingResumeMatch(error),
       );
@@ -195,19 +193,21 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
     }
   }
 
-  Future<void> _handleResumeFailure(
-    NetworkSessionStore store, {
+  Future<void> _handleResumeFailure({
     required bool forgetPersistedMatch,
   }) async {
-    if (forgetPersistedMatch) await store.saveMatchId(null);
     if (!mounted) return;
     if (forgetPersistedMatch) {
       final session = ref.read(networkSessionProvider);
       if (session != null) {
-        ref
+        await ref
             .read(networkSessionStateProvider.notifier)
-            .set(session.copyWith(playerId: null, matchId: null));
+            .clearMatch(
+              expectedUserId: session.userId,
+              changedAt: ref.read(gameClockProvider).nowUtc(),
+            );
       }
+      if (!mounted) return;
       setState(() => _resumeMatchId = null);
     }
     GameToast.show(

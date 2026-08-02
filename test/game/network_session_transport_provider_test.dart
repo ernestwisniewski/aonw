@@ -4,6 +4,7 @@ import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/transport/network_command_transport.dart';
 import 'package:aonw/api/transport/network_event_log.dart';
 import 'package:aonw/api/transport/network_game_repository.dart';
+import 'package:aonw/game/presentation/providers/multiplayer/multiplayer_connection_status_provider.dart';
 import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,4 +88,44 @@ void main() {
     expect(dispatcher.isClosed, isTrue);
     expect(sessionClient.isClosed, isTrue);
   });
+
+  test(
+    'live status is reduced separately from authenticated session',
+    () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final session = NetworkSession(
+        userId: 'user_1',
+        playerId: 'player_1',
+        token: AuthToken('jwt-1'),
+        matchId: 'match_1',
+        connectionState: const NetworkConnectionState(
+          status: NetworkConnectionStatus.connected,
+        ),
+      );
+      final changedAt = DateTime.utc(2026, 8, 2, 12);
+
+      container.read(networkSessionStateProvider.notifier)
+        ..set(session)
+        ..reportTransportStatus(
+          saveId: 'match_1',
+          status: NetworkConnectionStatus.reconnecting,
+          message: 'stream closed',
+          changedAt: changedAt,
+        );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(container.read(networkSessionProvider)?.isConnected, isTrue);
+      final state = container.read(networkSessionStateProvider);
+      expect(
+        state.transportConnection.status,
+        NetworkConnectionStatus.reconnecting,
+      );
+      expect(state.transportMessage, 'stream closed');
+      final published = container.read(multiplayerConnectionStatusProvider);
+      expect(published?.saveId, 'match_1');
+      expect(published?.status, NetworkConnectionStatus.reconnecting);
+      expect(published?.changedAt, changedAt);
+    },
+  );
 }

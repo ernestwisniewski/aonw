@@ -533,7 +533,8 @@ String _$networkSessionStoreHash() =>
 final networkSessionStateProvider = NetworkSessionStateProvider._();
 
 final class NetworkSessionStateProvider
-    extends $NotifierProvider<NetworkSessionState, NetworkSession?> {
+    extends
+        $NotifierProvider<NetworkSessionState, NetworkSessionTransportState> {
   NetworkSessionStateProvider._()
     : super(
         from: null,
@@ -553,28 +554,34 @@ final class NetworkSessionStateProvider
   NetworkSessionState create() => NetworkSessionState();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(NetworkSession? value) {
+  Override overrideWithValue(NetworkSessionTransportState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<NetworkSession?>(value),
+      providerOverride: $SyncValueProvider<NetworkSessionTransportState>(value),
     );
   }
 }
 
 String _$networkSessionStateHash() =>
-    r'3421fed17622edeb729c0b8e0c818dae96d36921';
+    r'c41683b924566c0b819b7dfd3acf4fc913f20f79';
 
-abstract class _$NetworkSessionState extends $Notifier<NetworkSession?> {
-  NetworkSession? build();
+abstract class _$NetworkSessionState
+    extends $Notifier<NetworkSessionTransportState> {
+  NetworkSessionTransportState build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<NetworkSession?, NetworkSession?>;
+    final ref =
+        this.ref
+            as $Ref<NetworkSessionTransportState, NetworkSessionTransportState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<NetworkSession?, NetworkSession?>,
-              NetworkSession?,
+              AnyNotifier<
+                NetworkSessionTransportState,
+                NetworkSessionTransportState
+              >,
+              NetworkSessionTransportState,
               Object?,
               Object?
             >;
@@ -622,4 +629,4 @@ final class NetworkSessionProvider
   }
 }
 
-String _$networkSessionHash() => r'd6e393ad6f5cc15fa8c443f8d390d493039b121b';
+String _$networkSessionHash() => r'cb9d95796d17209b0743a3d5626ed1ad5c718fb0';

@@ -319,14 +319,16 @@ class _GameRendererSessionHostState
   void _scheduleResumeMatchPersistence() {
     final matchId = _activeMultiplayerMatchId();
     if (matchId == null) return;
-    unawaited(ref.read(networkSessionStoreProvider).saveMatchId(matchId));
+    unawaited(
+      ref.read(networkSessionStateProvider.notifier).rememberMatch(matchId),
+    );
   }
 
   Future<void> _rememberActiveMultiplayerMatch() async {
     final matchId = _activeMultiplayerMatchId();
     if (matchId == null) return;
 
-    await ref.read(networkSessionStoreProvider).saveMatchId(matchId);
+    await ref.read(networkSessionStateProvider.notifier).rememberMatch(matchId);
   }
 
   String? _activeMultiplayerMatchId() {
@@ -701,14 +703,12 @@ class _GameStartupLoadingOverlayState
             if (!mounted) return;
             if (_mapLoadedSentFor == widget.saveId) _mapLoadedSentFor = null;
             ref
-                .read(multiplayerConnectionStatusProvider.notifier)
-                .setStatus(
-                  MultiplayerConnectionStatusSnapshot(
-                    saveId: widget.saveId,
-                    status: NetworkConnectionStatus.reconnecting,
-                    message: error.toString(),
-                    changedAt: ref.read(gameClockProvider).nowUtc(),
-                  ),
+                .read(networkSessionStateProvider.notifier)
+                .reportTransportStatus(
+                  saveId: widget.saveId,
+                  status: NetworkConnectionStatus.reconnecting,
+                  message: error.toString(),
+                  changedAt: ref.read(gameClockProvider).nowUtc(),
                 );
           }),
     );

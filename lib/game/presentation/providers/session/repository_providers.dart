@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:aonw/api/client/api_config.dart';
+import 'package:aonw/api/session/connection_state.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_refresh_coordinator.dart';
+import 'package:aonw/api/session/network_session_state_machine.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/transport/live_event_subscription.dart';
@@ -24,6 +28,7 @@ import 'package:aonw/game/infrastructure/persistence/platform_persistence_adapte
 import 'package:aonw/game/infrastructure/system/system_clock.dart';
 import 'package:aonw/game/infrastructure/system/timestamp_id_generator.dart';
 import 'package:aonw/game/infrastructure/transport/local_command_transport.dart';
+import 'package:aonw/game/presentation/providers/multiplayer/multiplayer_connection_status_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' as fr;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -208,17 +213,119 @@ final networkSessionRefreshCoordinatorProvider =
       );
     });
 
+final networkSessionReducerProvider = fr.Provider<NetworkSessionReducer>(
+  (ref) => const NetworkSessionReducer(),
+);
+
+final networkSessionEffectRunnerProvider =
+    fr.Provider<NetworkSessionEffectRunner>((ref) {
+      final store = ref.watch(networkSessionStoreProvider);
+      final statusNotifier = ref.watch(
+        multiplayerConnectionStatusProvider.notifier,
+      );
+      final logger = ref.watch(gameLoggerProvider);
+      return NetworkSessionEffectRunner(
+        persistMatchId: store.saveMatchId,
+        publishTransportStatus: (effect) {
+          statusNotifier.setStatus(
+            MultiplayerConnectionStatusSnapshot(
+              saveId: effect.saveId,
+              status: effect.status,
+              changedAt: effect.changedAt,
+              message: effect.message,
+            ),
+          );
+        },
+        clearTransportStatus: statusNotifier.clear,
+        onError: (error, stackTrace) {
+          logger.warn(
+            'NetworkSessionEffectRunner',
+            'Could not run a network session effect',
+            error,
+            stackTrace,
+          );
+        },
+      );
+    });
+
 @Riverpod(keepAlive: true)
 class NetworkSessionState extends _$NetworkSessionState {
   @override
-  NetworkSession? build() => null;
+  NetworkSessionTransportState build() => NetworkSessionTransportState.initial;
 
-  void set(NetworkSession? session) => state = session;
+  void set(NetworkSession? session) {
+    unawaited(dispatch(ReplaceNetworkSessionAction(session)));
+  }
+
+  Future<void> activateMatch({
+    required String expectedUserId,
+    String? playerId,
+    required String matchId,
+    required DateTime changedAt,
+    bool persistMatchId = true,
+  }) {
+    return dispatch(
+      ActivateNetworkMatchAction(
+        expectedUserId: expectedUserId,
+        playerId: playerId,
+        matchId: matchId,
+        changedAt: changedAt,
+        persistMatchId: persistMatchId,
+      ),
+    );
+  }
+
+  Future<void> clearMatch({
+    required String expectedUserId,
+    required DateTime changedAt,
+  }) {
+    return dispatch(
+      ClearNetworkMatchAction(
+        expectedUserId: expectedUserId,
+        changedAt: changedAt,
+      ),
+    );
+  }
+
+  Future<void> rememberMatch(String matchId) {
+    return dispatch(RememberNetworkMatchAction(matchId));
+  }
+
+  void reportTransportStatus({
+    required String saveId,
+    required NetworkConnectionStatus status,
+    required DateTime changedAt,
+    String? message,
+  }) {
+    unawaited(
+      dispatch(
+        ReportNetworkTransportStatusAction(
+          saveId: saveId,
+          status: status,
+          changedAt: changedAt,
+          message: message,
+        ),
+      ),
+    );
+  }
+
+  Future<void> dispatch(NetworkSessionAction action) async {
+    final transition = ref
+        .read(networkSessionReducerProvider)
+        .reduce(state, action);
+    if (!identical(transition.state, state)) state = transition.state;
+    if (transition.effects.isEmpty) return;
+    await ref
+        .read(networkSessionEffectRunnerProvider)
+        .runAll(transition.effects);
+  }
 }
 
 @riverpod
 NetworkSession? networkSession(Ref ref) {
-  return ref.watch(networkSessionStateProvider);
+  return ref.watch(
+    networkSessionStateProvider.select((state) => state.session),
+  );
 }
 
 DispatchCommandUseCase buildDispatchCommandUseCase(

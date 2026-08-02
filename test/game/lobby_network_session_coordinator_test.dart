@@ -176,7 +176,7 @@ void main() {
       },
     );
 
-    test('applies active and terminal match sessions', () {
+    test('applies active and terminal match sessions', () async {
       final setSessions = <NetworkSession?>[];
       final savedMatchIds = <String?>[];
       final coordinator = _coordinator(
@@ -191,6 +191,7 @@ void main() {
           session: session,
           match: _match(state: 'finished'),
         );
+      await Future<void>.delayed(Duration.zero);
 
       expect(setSessions.first?.matchId, 'match_1');
       expect(setSessions.first?.playerId, 'player_1');

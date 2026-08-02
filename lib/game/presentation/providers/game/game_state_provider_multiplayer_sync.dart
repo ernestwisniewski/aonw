@@ -164,21 +164,13 @@ extension GameStateNotifierMultiplayerSync on GameStateNotifier {
     if (!_isMounted) return;
     final session = _providerRef.read(networkSessionProvider);
     if (session == null || session.matchId != saveId) return;
-    final current = _providerRef.read(multiplayerConnectionStatusProvider);
-    if (current?.saveId == saveId &&
-        current?.status == status &&
-        current?.message == message) {
-      return;
-    }
     _providerRef
-        .read(multiplayerConnectionStatusProvider.notifier)
-        .setStatus(
-          MultiplayerConnectionStatusSnapshot(
-            saveId: saveId,
-            status: status,
-            message: message,
-            changedAt: _providerRef.read(gameClockProvider).nowUtc(),
-          ),
+        .read(networkSessionStateProvider.notifier)
+        .reportTransportStatus(
+          saveId: saveId,
+          status: status,
+          message: message,
+          changedAt: _providerRef.read(gameClockProvider).nowUtc(),
         );
   }
 

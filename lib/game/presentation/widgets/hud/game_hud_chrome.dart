@@ -209,21 +209,15 @@ extension _GameHudNetworkActions on _GameHudState {
       await ref
           .read(networkSessionClientProvider)
           .resignMatch(token: session.token, matchId: matchId);
-      await ref.read(networkSessionStoreProvider).saveMatchId(null);
       final latestSession = ref.read(networkSessionProvider);
       if (latestSession == null || latestSession.userId != session.userId) {
         return;
       }
-      ref
+      await ref
           .read(networkSessionStateProvider.notifier)
-          .set(
-            latestSession.copyWith(
-              playerId: null,
-              matchId: null,
-              connectionState: latestSession.connectionState.copyWith(
-                changedAt: ref.read(gameClockProvider).nowUtc(),
-              ),
-            ),
+          .clearMatch(
+            expectedUserId: latestSession.userId,
+            changedAt: ref.read(gameClockProvider).nowUtc(),
           );
       if (!mounted) return;
       widget.onClose();
