@@ -44,6 +44,57 @@ abstract interface class AuthRequestLimiter {
 
 /// Persistent authentication abuse limits shared by every server instance.
 final class DatabaseAuthRateLimiter implements AuthRequestLimiter {
+  static const _policies = <AuthRateLimitAction, AuthRateLimitPolicy>{
+    AuthRateLimitAction.emailLogin: AuthRateLimitPolicy(
+      timeframe: Duration(minutes: 15),
+      maxIpAttempts: 60,
+      maxCredentialAttempts: 10,
+    ),
+    AuthRateLimitAction.emailCreate: AuthRateLimitPolicy(
+      timeframe: Duration(hours: 1),
+      maxIpAttempts: 10,
+      maxCredentialAttempts: 3,
+    ),
+    AuthRateLimitAction.steamStart: AuthRateLimitPolicy(
+      timeframe: Duration(minutes: 10),
+      maxIpAttempts: 20,
+    ),
+    AuthRateLimitAction.steamPoll: AuthRateLimitPolicy(
+      timeframe: Duration(minutes: 15),
+      maxIpAttempts: 2000,
+      maxCredentialAttempts: 700,
+    ),
+    AuthRateLimitAction.steamCallback: AuthRateLimitPolicy(
+      timeframe: Duration(minutes: 15),
+      maxIpAttempts: 60,
+      maxCredentialAttempts: 5,
+    ),
+    AuthRateLimitAction.externalAuthStart: AuthRateLimitPolicy(
+      timeframe: Duration(minutes: 10),
+      maxIpAttempts: 20,
+    ),
+    AuthRateLimitAction.externalAuthPoll: AuthRateLimitPolicy(
+      timeframe: Duration(minutes: 15),
+      maxIpAttempts: 2000,
+      maxCredentialAttempts: 700,
+    ),
+    AuthRateLimitAction.externalAuthCallback: AuthRateLimitPolicy(
+      timeframe: Duration(minutes: 15),
+      maxIpAttempts: 60,
+      maxCredentialAttempts: 5,
+    ),
+    AuthRateLimitAction.jwtRefresh: AuthRateLimitPolicy(
+      timeframe: Duration(minutes: 15),
+      maxIpAttempts: 120,
+      maxCredentialAttempts: 12,
+    ),
+    AuthRateLimitAction.sessionLogout: AuthRateLimitPolicy(
+      timeframe: Duration(minutes: 15),
+      maxIpAttempts: 120,
+      maxCredentialAttempts: 6,
+    ),
+  };
+
   DatabaseAuthRateLimiter({
     ServerOperationalEventSink Function(Session session)? operationalEventsFor,
     AuthRateLimitClientIdentityResolver clientIdentityResolver =
@@ -124,56 +175,7 @@ final class DatabaseAuthRateLimiter implements AuthRequestLimiter {
   }
 
   static AuthRateLimitPolicy policyFor(AuthRateLimitAction action) {
-    return switch (action) {
-      AuthRateLimitAction.emailLogin => const AuthRateLimitPolicy(
-        timeframe: Duration(minutes: 15),
-        maxIpAttempts: 60,
-        maxCredentialAttempts: 10,
-      ),
-      AuthRateLimitAction.emailCreate => const AuthRateLimitPolicy(
-        timeframe: Duration(hours: 1),
-        maxIpAttempts: 10,
-        maxCredentialAttempts: 3,
-      ),
-      AuthRateLimitAction.steamStart => const AuthRateLimitPolicy(
-        timeframe: Duration(minutes: 10),
-        maxIpAttempts: 20,
-      ),
-      AuthRateLimitAction.steamPoll => const AuthRateLimitPolicy(
-        timeframe: Duration(minutes: 15),
-        maxIpAttempts: 2000,
-        maxCredentialAttempts: 700,
-      ),
-      AuthRateLimitAction.steamCallback => const AuthRateLimitPolicy(
-        timeframe: Duration(minutes: 15),
-        maxIpAttempts: 60,
-        maxCredentialAttempts: 5,
-      ),
-      AuthRateLimitAction.externalAuthStart => const AuthRateLimitPolicy(
-        timeframe: Duration(minutes: 10),
-        maxIpAttempts: 20,
-      ),
-      AuthRateLimitAction.externalAuthPoll => const AuthRateLimitPolicy(
-        timeframe: Duration(minutes: 15),
-        maxIpAttempts: 2000,
-        maxCredentialAttempts: 700,
-      ),
-      AuthRateLimitAction.externalAuthCallback => const AuthRateLimitPolicy(
-        timeframe: Duration(minutes: 15),
-        maxIpAttempts: 60,
-        maxCredentialAttempts: 5,
-      ),
-      AuthRateLimitAction.jwtRefresh => const AuthRateLimitPolicy(
-        timeframe: Duration(minutes: 15),
-        maxIpAttempts: 120,
-        maxCredentialAttempts: 12,
-      ),
-      AuthRateLimitAction.sessionLogout => const AuthRateLimitPolicy(
-        timeframe: Duration(minutes: 15),
-        maxIpAttempts: 120,
-        maxCredentialAttempts: 6,
-      ),
-    };
+    return _policies[action]!;
   }
 
   static String refreshTokenCredential(String refreshToken) {

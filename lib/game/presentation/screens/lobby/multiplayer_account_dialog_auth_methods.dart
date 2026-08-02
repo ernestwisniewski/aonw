@@ -128,109 +128,127 @@ class _AuthMethodButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authClient = client;
-    final readyAuthClient = socialAuthReady ? authClient : null;
-
     return LayoutBuilder(
-      builder: (context, constraints) {
-        final buttonWidth = _buttonWidthFor(constraints);
-        return Align(
-          alignment: Alignment.center,
-          child: Wrap(
-            alignment: WrapAlignment.center,
-            runAlignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              if (onSteamPressed != null)
-                _methodSlot(
-                  width: buttonWidth,
-                  child: EpicButton.outlined(
-                    key: const Key('multiplayer.account.steam'),
-                    onPressed: onSteamPressed,
-                    label: 'Steam',
-                    icon: Icons.sports_esports_rounded,
-                    minWidth: buttonWidth,
-                  ),
-                ),
-              if (onGooglePressed != null)
-                _methodSlot(
-                  width: buttonWidth,
-                  child: _ExternalProviderButton(
-                    key: const Key('multiplayer.account.google'),
-                    onPressed: onGooglePressed!,
-                    label: 'Google',
-                    icon: Icons.account_circle_outlined,
-                    width: buttonWidth,
-                  ),
-                )
-              else if (showNativeGoogle && authClient != null)
-                _methodSlot(
-                  width: buttonWidth,
-                  child: readyAuthClient == null
-                      ? _DisabledGoogleButton(width: buttonWidth)
-                      : GoogleSignInWidget(
-                          key: const Key('multiplayer.account.google'),
-                          client: readyAuthClient,
-                          onAuthenticated: onAuthenticated,
-                          onError: onError,
-                          shape: GSIButtonShape.rectangular,
-                          logoAlignment: GSIButtonLogoAlignment.left,
-                          minimumWidth: buttonWidth,
-                        ),
-                ),
-              if (onApplePressed != null)
-                _methodSlot(
-                  width: buttonWidth,
-                  child: _ExternalProviderButton(
-                    key: const Key('multiplayer.account.apple'),
-                    onPressed: onApplePressed!,
-                    label: 'Apple',
-                    icon: Icons.apple,
-                    width: buttonWidth,
-                  ),
-                )
-              else if (showNativeApple && readyAuthClient != null)
-                _methodSlot(
-                  width: buttonWidth,
-                  child: AppleSignInWidget(
-                    key: const Key('multiplayer.account.apple'),
-                    client: readyAuthClient,
-                    onAuthenticated: onAuthenticated,
-                    onError: onError,
-                    shape: AppleButtonShape.rectangular,
-                    logoAlignment: AppleButtonLogoAlignment.left,
-                    minimumWidth: buttonWidth,
-                  ),
-                ),
-              _methodSlot(
-                width: buttonWidth,
-                child: emailSelected
-                    ? EpicButton.primary(
-                        key: const Key('multiplayer.account.emailMethod'),
-                        onPressed: onEmailPressed,
-                        label: AppLocalizations.of(
-                          context,
-                        ).multiplayerAccountEmailLabel,
-                        icon: Icons.mail_outline_rounded,
-                        minWidth: buttonWidth,
-                      )
-                    : EpicButton.outlined(
-                        key: const Key('multiplayer.account.emailMethod'),
-                        onPressed: onEmailPressed,
-                        label: AppLocalizations.of(
-                          context,
-                        ).multiplayerAccountEmailLabel,
-                        icon: Icons.mail_outline_rounded,
-                        minWidth: buttonWidth,
-                      ),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (context, constraints) => _layout(context, constraints),
     );
+  }
+
+  Widget _layout(BuildContext context, BoxConstraints constraints) {
+    final width = _buttonWidthFor(constraints);
+    final google = _googleButton(width);
+    final apple = _appleButton(width);
+    return Align(
+      alignment: Alignment.center,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        runAlignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 10,
+        runSpacing: 10,
+        children: [
+          if (onSteamPressed != null) _steamButton(width),
+          ?google,
+          ?apple,
+          _emailButton(context, width),
+        ],
+      ),
+    );
+  }
+
+  Widget _steamButton(double width) {
+    return _methodSlot(
+      width: width,
+      child: EpicButton.outlined(
+        key: const Key('multiplayer.account.steam'),
+        onPressed: onSteamPressed,
+        label: 'Steam',
+        icon: Icons.sports_esports_rounded,
+        minWidth: width,
+      ),
+    );
+  }
+
+  Widget? _googleButton(double width) {
+    final external = onGooglePressed;
+    if (external != null) {
+      return _methodSlot(
+        width: width,
+        child: _ExternalProviderButton(
+          key: const Key('multiplayer.account.google'),
+          onPressed: external,
+          label: 'Google',
+          icon: Icons.account_circle_outlined,
+          width: width,
+        ),
+      );
+    }
+    final authClient = client;
+    if (!showNativeGoogle || authClient == null) return null;
+    final readyAuthClient = socialAuthReady ? authClient : null;
+    return _methodSlot(
+      width: width,
+      child: readyAuthClient == null
+          ? _DisabledGoogleButton(width: width)
+          : GoogleSignInWidget(
+              key: const Key('multiplayer.account.google'),
+              client: readyAuthClient,
+              onAuthenticated: onAuthenticated,
+              onError: onError,
+              shape: GSIButtonShape.rectangular,
+              logoAlignment: GSIButtonLogoAlignment.left,
+              minimumWidth: width,
+            ),
+    );
+  }
+
+  Widget? _appleButton(double width) {
+    final external = onApplePressed;
+    if (external != null) {
+      return _methodSlot(
+        width: width,
+        child: _ExternalProviderButton(
+          key: const Key('multiplayer.account.apple'),
+          onPressed: external,
+          label: 'Apple',
+          icon: Icons.apple,
+          width: width,
+        ),
+      );
+    }
+    final authClient = socialAuthReady ? client : null;
+    if (!showNativeApple || authClient == null) return null;
+    return _methodSlot(
+      width: width,
+      child: AppleSignInWidget(
+        key: const Key('multiplayer.account.apple'),
+        client: authClient,
+        onAuthenticated: onAuthenticated,
+        onError: onError,
+        shape: AppleButtonShape.rectangular,
+        logoAlignment: AppleButtonLogoAlignment.left,
+        minimumWidth: width,
+      ),
+    );
+  }
+
+  Widget _emailButton(BuildContext context, double width) {
+    final label = AppLocalizations.of(context).multiplayerAccountEmailLabel;
+    final button = emailSelected
+        ? EpicButton.primary(
+            key: const Key('multiplayer.account.emailMethod'),
+            onPressed: onEmailPressed,
+            label: label,
+            icon: Icons.mail_outline_rounded,
+            minWidth: width,
+          )
+        : EpicButton.outlined(
+            key: const Key('multiplayer.account.emailMethod'),
+            onPressed: onEmailPressed,
+            label: label,
+            icon: Icons.mail_outline_rounded,
+            minWidth: width,
+          );
+    return _methodSlot(width: width, child: button);
   }
 
   double _buttonWidthFor(BoxConstraints constraints) {

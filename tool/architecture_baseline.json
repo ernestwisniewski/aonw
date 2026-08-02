@@ -538,7 +538,6 @@
         "lib/shared/widgets/game_ui/game_ui_options_panel.dart": 353
       },
       "declarations": {
-        "lib/api/session/network_session_client.dart::class:NetworkSessionClient": 354,
         "lib/api/session/network_session_refresh_coordinator.dart::class:NetworkSessionRefreshCoordinator": 573,
         "lib/api/transport/network_command_transport.dart::class:NetworkCommandTransport": 392,
         "lib/developer/assets_editor_screen.dart::class:_AssetsEditorScreenState": 408,
@@ -635,8 +634,6 @@
         "lib/game/presentation/screens/lobby/lobby_screen_public_lobby_panel.dart::class:_PublicLobbyBrowserPanel/method:build": 93,
         "lib/game/presentation/screens/lobby/lobby_screen_public_lobby_panel.dart::class:_PublicMatchPanel/method:build": 76,
         "lib/game/presentation/screens/lobby/lobby_screen_queue_countdown.dart::class:_QueueCountdownClockPainter/method:paint": 80,
-        "lib/game/presentation/screens/lobby/multiplayer_account_dialog.dart::class:_MultiplayerAccountDialogState/method:build": 84,
-        "lib/game/presentation/screens/lobby/multiplayer_account_dialog_auth_methods.dart::class:_AuthMethodButtons/method:build/closure:LayoutBuilder#1": 76,
         "lib/game/presentation/screens/lobby/multiplayer_account_dialog_auth_methods.dart::class:_EmailAccountForm/method:build": 69,
         "lib/game/presentation/screens/new_game/new_game_review_card.dart::class:_ReviewCard/method:build": 100,
         "lib/game/presentation/screens/new_game/new_game_screen.dart::class:_NewGameScreenState/method:_buildActionBar": 69,
@@ -927,7 +924,6 @@
         "lib/game/presentation/screens/lobby/lobby_screen_multiplayer_panels.dart::class:_MultiplayerQueuePanel/method:build": 12,
         "lib/game/presentation/screens/lobby/lobby_screen_private_match_panel.dart::class:_PrivateMatchPanel/method:build": 14,
         "lib/game/presentation/screens/lobby/lobby_screen_public_lobby_panel.dart::class:_PublicLobbyBrowserPanel/method:build": 11,
-        "lib/game/presentation/screens/lobby/multiplayer_account_dialog.dart::class:_MultiplayerAccountDialogState/method:build": 16,
         "lib/game/presentation/screens/new_game/new_game_screen.dart::class:_NewGameScreenState/method:_buildActionBar": 13,
         "lib/game/presentation/screens/new_game/new_game_screen.dart::class:_NewGameScreenState/method:_buildContent": 19,
         "lib/game/presentation/screens/new_game/new_game_screen_plan_summary_widgets.dart::class:_ModeChoiceCard/method:build/closure:MenuGamepadAction#1": 19,
@@ -1063,7 +1059,6 @@
         "lib/game/presentation/screens/game/load_game_screen.dart::class:LoadGameScreen/method:_buildSaves": 25,
         "lib/game/presentation/screens/lobby/lobby_screen_game_setup_widgets.dart::class:_MapValidationNotice/method:build": 19,
         "lib/game/presentation/screens/lobby/lobby_screen_private_match_panel.dart::class:_PrivateMatchPanel/method:build": 22,
-        "lib/game/presentation/screens/lobby/multiplayer_account_dialog.dart::class:_MultiplayerAccountDialogState/method:build": 18,
         "lib/game/presentation/screens/new_game/new_game_screen.dart::class:_NewGameScreenState/method:_buildActionBar": 17,
         "lib/game/presentation/screens/new_game/new_game_screen_plan_summary_widgets.dart::class:_ModeChoiceCard/method:build/closure:MenuGamepadAction#1": 21,
         "lib/game/presentation/screens/new_game/new_game_screen_review_step.dart::class:_NewGameMapValidationNotice/method:build": 19,
@@ -1295,10 +1290,10 @@
       "files": {},
       "legacyFiles": {},
       "declarations": {
-        "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService": 427
+        "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService": 423
       },
       "callableLines": {
-        "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 120,
+        "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 116,
         "server/lib/src/multiplayer/initial_multiplayer_snapshot_factory.dart::class:InitialMultiplayerSnapshotFactory/method:create": 68,
         "server/lib/src/multiplayer/match_command_service_handling.dart::extension:MatchCommandServiceHandling/method:_handleCommand": 139,
         "server/lib/src/multiplayer/match_command_service_timeout.dart::extension:MatchCommandServiceTimeouts/method:advanceTimedOutTurn/closure:transaction#1": 69,

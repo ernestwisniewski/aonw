@@ -19,6 +19,7 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 part 'multiplayer_account_dialog_config.dart';
 part 'multiplayer_account_dialog_auth_methods.dart';
+part 'multiplayer_account_dialog_view.dart';
 
 class _MultiplayerAccountDialog extends ConsumerStatefulWidget {
   const _MultiplayerAccountDialog({
@@ -85,113 +86,41 @@ class _MultiplayerAccountDialogState
     final l10n = AppLocalizations.of(context);
     final showSocialAuth =
         _socialAuthClient != null && widget.completeSocialAuth != null;
-    final showSteamAuth = _supportsSteamSignIn && widget.steamAuth != null;
-    final showExternalApple =
-        _usesExternalAppleSignIn && widget.externalAuth != null;
-    final showExternalGoogle =
-        _usesExternalGoogleSignIn && widget.externalAuth != null;
-    return GameModalScaffold(
-      size: GameModalSize.regular,
-      surfaceKey: const Key('multiplayer.account.surface'),
-      header: GameModalHeader(
-        title: l10n.multiplayerAccountTitle,
-        subtitle: l10n.multiplayerAccountSubtitle,
-        icon: Icons.lock_outline,
-        onClose: _busy && !_externalAuthBusy
-            ? null
-            : () => Navigator.of(context).pop(),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          IgnorePointer(
-            ignoring: _busy,
-            child: Opacity(
-              opacity: _busy ? 0.62 : 1,
-              child: _AuthMethodButtons(
-                client: showSocialAuth ? _socialAuthClient : null,
-                socialAuthReady: _socialAuthReady,
-                showNativeGoogle: showSocialAuth && _supportsNativeGoogleSignIn,
-                showNativeApple: showSocialAuth && _supportsNativeAppleSignIn,
-                emailSelected: _emailFormExpanded,
-                onEmailPressed: _showEmailForm,
-                onAuthenticated: () => unawaited(_completeSocialAuth()),
-                onError: _handleSocialAuthError,
-                onGooglePressed: showExternalGoogle
-                    ? () => unawaited(
-                        _signInWithExternalProvider(
-                          _googleExternalAuthProvider,
-                        ),
-                      )
-                    : null,
-                onApplePressed: showExternalApple
-                    ? () => unawaited(
-                        _signInWithExternalProvider(_appleExternalAuthProvider),
-                      )
-                    : null,
-                onSteamPressed: showSteamAuth
-                    ? () => unawaited(_signInWithSteam())
-                    : null,
-              ),
-            ),
-          ),
-          AnimatedSize(
-            duration: GameMotion.slide,
-            curve: GameMotion.stateChange,
-            alignment: Alignment.topCenter,
-            child: _emailFormExpanded
-                ? Padding(
-                    padding: const EdgeInsets.only(top: 18),
-                    child: _EmailAccountForm(
-                      l10n: l10n,
-                      mode: _mode,
-                      busy: _busy,
-                      nicknameController: _nicknameController,
-                      emailController: _emailController,
-                      passwordController: _passwordController,
-                      onModeChanged: (mode) {
-                        setState(() {
-                          _mode = mode;
-                          _error = null;
-                        });
-                      },
-                      onSubmitted: () => unawaited(_submit()),
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              key: const Key('multiplayer.account.error'),
-              _error!,
-              style: GameUiTheme.bodyStrong.copyWith(color: GameUiTheme.danger),
-            ),
-          ],
-        ],
-      ),
-      actions: [
-        GameModalAction(
-          label: l10n.selectionActionCancel,
-          variant: EpicButtonVariant.text,
-          onPressed: _busy && !_externalAuthBusy
-              ? null
-              : () => Navigator.of(context).pop(),
-        ),
-        if (_emailFormExpanded)
-          GameModalAction(
-            key: const Key('multiplayer.account.submit'),
-            label: _mode == _AccountMode.signIn
-                ? l10n.multiplayerAccountSignInAction
-                : l10n.multiplayerAccountCreateAction,
-            variant: EpicButtonVariant.primary,
-            icon: _mode == _AccountMode.signIn
-                ? Icons.login_rounded
-                : Icons.person_add_alt_1_rounded,
-            onPressed: _busy ? null : () => unawaited(_submit()),
-          ),
-      ],
+    return _AccountDialogView(
+      l10n: l10n,
+      busy: _busy,
+      externalAuthBusy: _externalAuthBusy,
+      socialAuthClient: showSocialAuth ? _socialAuthClient : null,
+      socialAuthReady: _socialAuthReady,
+      showNativeGoogle: showSocialAuth && _supportsNativeGoogleSignIn,
+      showNativeApple: showSocialAuth && _supportsNativeAppleSignIn,
+      showExternalGoogle:
+          _usesExternalGoogleSignIn && widget.externalAuth != null,
+      showExternalApple:
+          _usesExternalAppleSignIn && widget.externalAuth != null,
+      showSteam: _supportsSteamSignIn && widget.steamAuth != null,
+      emailFormExpanded: _emailFormExpanded,
+      mode: _mode,
+      error: _error,
+      nicknameController: _nicknameController,
+      emailController: _emailController,
+      passwordController: _passwordController,
+      onClose: () => Navigator.of(context).pop(),
+      onEmailPressed: _showEmailForm,
+      onAuthenticated: () => unawaited(_completeSocialAuth()),
+      onSocialError: _handleSocialAuthError,
+      onGooglePressed: () =>
+          unawaited(_signInWithExternalProvider(_googleExternalAuthProvider)),
+      onApplePressed: () =>
+          unawaited(_signInWithExternalProvider(_appleExternalAuthProvider)),
+      onSteamPressed: () => unawaited(_signInWithSteam()),
+      onModeChanged: (mode) {
+        setState(() {
+          _mode = mode;
+          _error = null;
+        });
+      },
+      onSubmitted: () => unawaited(_submit()),
     );
   }
 

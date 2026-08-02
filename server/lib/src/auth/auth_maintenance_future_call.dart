@@ -1,3 +1,4 @@
+import 'package:aonw_server/src/auth/auth_maintenance_serverpod_store.dart';
 import 'package:aonw_server/src/auth/auth_maintenance_service.dart';
 import 'package:aonw_server/src/scheduling/background_task_support.dart';
 import 'package:aonw_server/src/scheduling/reconciled_future_call_scheduler.dart';
@@ -7,8 +8,6 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
 
 const authMaintenanceFutureCallName = 'authMaintenance';
 const authMaintenanceFutureCallIdentifier = 'auth-maintenance';
-const authMaintenanceBacklogFollowUpInterval = Duration(minutes: 1);
-const authMaintenanceFailureFollowUpInterval = Duration(minutes: 15);
 const authMaintenanceScheduleReconcileInterval = Duration(minutes: 15);
 const authMaintenanceReconcilerShutdownTaskId =
     'auth-maintenance-schedule-reconciler';
@@ -59,14 +58,7 @@ final class AuthMaintenanceFutureCall extends FutureCall<SerializableModel> {
         );
       }
       if (result.totalDeleted > 0) {
-        session.log(
-          'event=auth_maintenance_completed '
-          'refresh_tokens=${result.deletedRefreshTokens} '
-          'steam_requests=${result.deletedSteamAuthRequests} '
-          'external_auth_requests=${result.deletedExternalAuthRequests} '
-          'rate_limit_attempts=${result.deletedRateLimitAttempts}',
-          level: LogLevel.info,
-        );
+        _logMaintenanceCompletion(session, result);
       }
     } catch (error, stackTrace) {
       followUpDelay = authMaintenanceFailureFollowUpInterval;
@@ -84,12 +76,15 @@ final class AuthMaintenanceFutureCall extends FutureCall<SerializableModel> {
   }
 }
 
-Duration authMaintenanceFollowUpDelay(AuthMaintenanceResult result) {
-  if (result.backlogRemaining) return authMaintenanceBacklogFollowUpInterval;
-  if (result.failures.isNotEmpty) {
-    return authMaintenanceFailureFollowUpInterval;
-  }
-  return authMaintenanceInterval;
+void _logMaintenanceCompletion(Session session, AuthMaintenanceResult result) {
+  session.log(
+    'event=auth_maintenance_completed '
+    'refresh_tokens=${result.deletedRefreshTokens} '
+    'steam_requests=${result.deletedSteamAuthRequests} '
+    'external_auth_requests=${result.deletedExternalAuthRequests} '
+    'rate_limit_attempts=${result.deletedRateLimitAttempts}',
+    level: LogLevel.info,
+  );
 }
 
 final class AuthMaintenanceScheduleReconciler {

@@ -12,6 +12,7 @@ import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as sp_auth;
 
 part 'network_session_client_version_status.dart';
+part 'network_session_client_lobby_requests.dart';
 
 class NetworkAuthResult {
   final String userId;
@@ -114,7 +115,7 @@ typedef NetworkSessionServerpodClientFactory =
 /// calls share one refresh-aware client when [authKeyProviderFactory] is
 /// available. Explicit one-off credentials are isolated in short-lived clients
 /// that are always closed after the request settles.
-class NetworkSessionClient {
+class NetworkSessionClient extends _NetworkSessionLobbyRequests {
   final String serverpodHost;
   final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
   final NetworkSessionServerpodClientFactory _clientFactory;
@@ -300,89 +301,6 @@ class NetworkSessionClient {
     return _withToken(token, (client) => client.multiplayer.listMatches());
   }
 
-  Future<WireMatch> createMatch({
-    required AuthToken token,
-    required CreateMatchRequest request,
-  }) {
-    return _withToken(
-      token,
-      (client) => client.multiplayer.createMatch(
-        sp.CreateMatchRequest(
-          name: request.name,
-          mapName: request.mapName,
-          maxPlayers: request.maxPlayers,
-          minPlayers: request.minPlayers,
-          private: false,
-          countryId: request.country?.name,
-        ),
-      ),
-    );
-  }
-
-  Future<WireMatch> quickplay({
-    required AuthToken token,
-    required QuickplayMatchRequest request,
-  }) {
-    return _withToken(
-      token,
-      (client) => client.multiplayer.quickplay(
-        sp.CreateMatchRequest(
-          name: 'Quickplay',
-          mapName: request.mapName,
-          maxPlayers: 4,
-          minPlayers: 2,
-          private: false,
-          countryId: request.country?.name,
-        ),
-      ),
-    );
-  }
-
-  Future<WireMatch> createPrivateMatch({
-    required AuthToken token,
-    required CreatePrivateMatchRequest request,
-  }) {
-    return _withToken(
-      token,
-      (client) => client.multiplayer.createMatch(
-        sp.CreateMatchRequest(
-          name: 'Private match',
-          mapName: request.mapName,
-          maxPlayers: MapPlayerCapacityRules.maxPlayersForMapName(
-            request.mapName,
-          ),
-          minPlayers: 2,
-          private: true,
-          countryId: request.country?.name,
-        ),
-      ),
-    );
-  }
-
-  Future<WireMatch> joinPrivateMatch({
-    required AuthToken token,
-    required JoinPrivateMatchRequest request,
-  }) {
-    return _withToken(
-      token,
-      (client) => client.multiplayer.joinPrivateMatch(
-        request.inviteCode,
-        request.country?.name,
-      ),
-    );
-  }
-
-  Future<WireMatch> joinMatch({
-    required AuthToken token,
-    required String matchId,
-    PlayerCountry? country,
-  }) {
-    return _withToken(
-      token,
-      (client) => client.multiplayer.joinMatch(matchId, country?.name),
-    );
-  }
-
   Future<void> leaveMatch({required AuthToken token, required String matchId}) {
     return _withToken(
       token,
@@ -427,6 +345,7 @@ class NetworkSessionClient {
     return _withToken(token, (client) => client.multiplayer.loadMatch(matchId));
   }
 
+  @override
   Future<T> _withToken<T>(
     AuthToken token,
     Future<T> Function(sp.Client client) run,

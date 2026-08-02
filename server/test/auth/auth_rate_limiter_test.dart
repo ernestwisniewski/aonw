@@ -45,6 +45,12 @@ void main() {
   });
 
   test('policies bound both credential and IP attempts where applicable', () {
+    for (final action in AuthRateLimitAction.values) {
+      expect(
+        DatabaseAuthRateLimiter.policyFor(action).maxIpAttempts,
+        greaterThan(0),
+      );
+    }
     final login = DatabaseAuthRateLimiter.policyFor(
       AuthRateLimitAction.emailLogin,
     );
@@ -54,6 +60,15 @@ void main() {
     final steamStart = DatabaseAuthRateLimiter.policyFor(
       AuthRateLimitAction.steamStart,
     );
+    final externalStart = DatabaseAuthRateLimiter.policyFor(
+      AuthRateLimitAction.externalAuthStart,
+    );
+    final externalPoll = DatabaseAuthRateLimiter.policyFor(
+      AuthRateLimitAction.externalAuthPoll,
+    );
+    final externalCallback = DatabaseAuthRateLimiter.policyFor(
+      AuthRateLimitAction.externalAuthCallback,
+    );
 
     expect(login.maxCredentialAttempts, 10);
     expect(login.maxIpAttempts, 60);
@@ -62,5 +77,14 @@ void main() {
     expect(creation.timeframe, const Duration(hours: 1));
     expect(steamStart.maxCredentialAttempts, isNull);
     expect(steamStart.maxIpAttempts, 20);
+    expect(externalStart.timeframe, const Duration(minutes: 10));
+    expect(externalStart.maxIpAttempts, 20);
+    expect(externalStart.maxCredentialAttempts, isNull);
+    expect(externalPoll.timeframe, const Duration(minutes: 15));
+    expect(externalPoll.maxIpAttempts, 2000);
+    expect(externalPoll.maxCredentialAttempts, 700);
+    expect(externalCallback.timeframe, const Duration(minutes: 15));
+    expect(externalCallback.maxIpAttempts, 60);
+    expect(externalCallback.maxCredentialAttempts, 5);
   });
 }

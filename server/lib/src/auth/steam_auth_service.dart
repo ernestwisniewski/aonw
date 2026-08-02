@@ -11,6 +11,12 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
 
 enum _SteamCallbackCommit { completed, alreadyCompleted, expired, rejected }
 
+const _invalidSteamSignatureResult = (
+  success: false,
+  title: 'Steam sign-in failed',
+  message: 'Steam could not validate this sign-in response.',
+);
+
 class SteamAuthService {
   SteamAuthService({
     SteamOpenIdVerification? openIdVerifier,
@@ -219,21 +225,10 @@ class SteamAuthService {
       );
     }
 
-    final verification = await _openIdVerifier.verify(query);
-    if (!verification.valid) {
-      session.log(
-        'Steam OpenID verification rejected for request '
-        '${requestId.substring(0, 8)} '
-        '(reason=${verification.diagnostic}, '
-        'httpStatus=${verification.httpStatus ?? 'none'}).',
-        level: LogLevel.warning,
-      );
+    final ok = await _verify(session, _openIdVerifier, query, requestId);
+    if (!ok) {
       await _failRequest(session, requestId, 'invalid_signature');
-      return (
-        success: false,
-        title: 'Steam sign-in failed',
-        message: 'Steam could not validate this sign-in response.',
-      );
+      return _invalidSteamSignatureResult;
     }
 
     final commit = await _commitVerifiedCallback(
@@ -444,4 +439,22 @@ class SteamAuthService {
     final bytes = List<int>.generate(32, (_) => random.nextInt(256));
     return base64UrlEncode(bytes).replaceAll('=', '');
   }
+}
+
+Future<bool> _verify(
+  Session session,
+  SteamOpenIdVerification verifier,
+  Map<String, String> query,
+  String requestId,
+) async {
+  final verification = await verifier.verify(query);
+  if (verification.valid) return true;
+  session.log(
+    'Steam OpenID verification rejected for request '
+    '${requestId.substring(0, 8)} '
+    '(reason=${verification.diagnostic}, '
+    'httpStatus=${verification.httpStatus ?? 'none'}).',
+    level: LogLevel.warning,
+  );
+  return false;
 }

@@ -67,12 +67,12 @@
       "layers": {
         "api": {
           "files": {
-            "hit": 20,
-            "found": 20
+            "hit": 22,
+            "found": 23
           },
           "lines": {
-            "hit": 942,
-            "found": 1145
+            "hit": 943,
+            "found": 1172
           }
         },
         "app": {
@@ -131,7 +131,7 @@
             "found": 44
           },
           "lines": {
-            "hit": 1894,
+            "hit": 1896,
             "found": 2093
           }
         },
@@ -157,12 +157,12 @@
         },
         "game_presentation_screens": {
           "files": {
-            "hit": 53,
-            "found": 57
+            "hit": 54,
+            "found": 58
           },
           "lines": {
-            "hit": 3466,
-            "found": 4507
+            "hit": 3554,
+            "found": 4602
           }
         },
         "game_presentation_support": {
@@ -212,7 +212,7 @@
           },
           "lines": {
             "hit": 1600,
-            "found": 1724
+            "found": 1726
           }
         },
         "shared": {
@@ -227,6 +227,7 @@
         }
       },
       "missingFiles": [
+        "lib/api/session/external_auth_browser_web.dart",
         "lib/developer/asset_adjustment_file_store_stub.dart",
         "lib/game/application/services/local_movement_presentation_origin.dart",
         "lib/game/presentation/audio/game_sound_cue.dart",
@@ -239,12 +240,12 @@
       "layers": {
         "auth": {
           "files": {
-            "hit": 9,
-            "found": 16
+            "hit": 8,
+            "found": 23
           },
           "lines": {
-            "hit": 220,
-            "found": 368
+            "hit": 231,
+            "found": 280
           }
         },
         "bootstrap_and_status": {
@@ -301,8 +302,16 @@
       "missingFiles": [
         "server/lib/server.dart",
         "server/lib/src/auth/account_profile_endpoint.dart",
+        "server/lib/src/auth/auth_maintenance_future_call.dart",
+        "server/lib/src/auth/auth_maintenance_serverpod_store.dart",
         "server/lib/src/auth/auth_status_endpoint.dart",
         "server/lib/src/auth/email_idp_endpoint.dart",
+        "server/lib/src/auth/external_auth_callback_flow.dart",
+        "server/lib/src/auth/external_auth_callback_state.dart",
+        "server/lib/src/auth/external_auth_endpoint.dart",
+        "server/lib/src/auth/external_auth_provider_support.dart",
+        "server/lib/src/auth/external_auth_route.dart",
+        "server/lib/src/auth/external_auth_service.dart",
         "server/lib/src/auth/jwt_refresh_endpoint.dart",
         "server/lib/src/auth/steam_auth_endpoint.dart",
         "server/lib/src/auth/steam_auth_route.dart",

@@ -90,6 +90,21 @@ void main() {
     await handled;
   });
 
+  test('reports a non-success Steam response status', () async {
+    final handled = server.first.then((request) async {
+      await request.drain<void>();
+      request.response.statusCode = HttpStatus.serviceUnavailable;
+      await request.response.close();
+    });
+
+    final verified = await _verifier(server).verify(_query);
+
+    expect(verified.valid, isFalse);
+    expect(verified.diagnostic, 'http_status');
+    expect(verified.httpStatus, HttpStatus.serviceUnavailable);
+    await handled;
+  });
+
   test(
     'fails closed when Steam does not respond before the deadline',
     () async {

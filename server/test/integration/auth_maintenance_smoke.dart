@@ -1,10 +1,11 @@
 import 'dart:typed_data';
 
+import 'package:aonw_server/src/auth/auth_maintenance_serverpod_store.dart';
 import 'package:aonw_server/src/auth/auth_maintenance_service.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/scheduling/reconciled_future_call_scheduler.dart';
 import 'package:serverpod/protocol.dart' show FutureCallEntry;
-import 'package:serverpod/serverpod.dart' show UuidValue;
+import 'package:serverpod/serverpod.dart' show Session, UuidValue;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
 import 'package:serverpod_auth_idp_server/core.dart' as auth_idp;
@@ -20,96 +21,11 @@ void main() {
         final session = sessionBuilder.build();
         final now = DateTime.utc(2026, 7, 10, 12);
         const refreshLifetime = Duration(days: 14);
-        final oldRefreshTimestamp = now
-            .subtract(refreshLifetime)
-            .subtract(expiredRefreshTokenRetention)
-            .subtract(const Duration(days: 1));
-        final retainedRefreshTimestamp = now
-            .subtract(refreshLifetime)
-            .subtract(expiredRefreshTokenRetention);
-        final oldExpiry = now
-            .subtract(expiredSteamAuthRequestRetention)
-            .subtract(const Duration(days: 1));
-        final retainedExpiry = now.subtract(expiredSteamAuthRequestRetention);
-        final oldExternalExpiry = now
-            .subtract(expiredExternalAuthRequestRetention)
-            .subtract(const Duration(days: 1));
-        final retainedExternalExpiry = now.subtract(
-          expiredExternalAuthRequestRetention,
-        );
-        final oldAttempt = now
-            .subtract(expiredAuthRateLimitAttemptRetention)
-            .subtract(const Duration(days: 1));
-        final retainedAttempt = now.subtract(
-          expiredAuthRateLimitAttemptRetention,
-        );
-
-        final authUser = await auth_core.AuthUser.db.insertRow(
+        await _seedMaintenanceRows(
           session,
-          auth_core.AuthUser(scopeNames: const <String>{}),
+          now: now,
+          refreshLifetime: refreshLifetime,
         );
-        await auth_core.RefreshToken.db.insert(session, [
-          for (var index = 0; index < 3; index += 1)
-            _refreshToken(
-              authUserId: authUser.id!,
-              lastUpdatedAt: oldRefreshTimestamp,
-            ),
-          _refreshToken(
-            authUserId: authUser.id!,
-            lastUpdatedAt: retainedRefreshTimestamp,
-          ),
-        ]);
-        await SteamAuthRequest.db.insert(session, [
-          for (var index = 0; index < 3; index += 1)
-            SteamAuthRequest(
-              requestId: 'expired-$index',
-              status: 'expired',
-              expiresAt: oldExpiry,
-            ),
-          SteamAuthRequest(
-            requestId: 'retained',
-            status: 'expired',
-            expiresAt: retainedExpiry,
-          ),
-        ]);
-        await ExternalAuthRequest.db.insert(session, [
-          for (var index = 0; index < 3; index += 1)
-            ExternalAuthRequest(
-              requestId: 'external-expired-$index',
-              state: 'external-expired-state-$index',
-              provider: 'apple',
-              status: 'expired',
-              expiresAt: oldExternalExpiry,
-            ),
-          ExternalAuthRequest(
-            requestId: 'external-retained',
-            state: 'external-retained-state',
-            provider: 'apple',
-            status: 'expired',
-            expiresAt: retainedExternalExpiry,
-          ),
-        ]);
-        await auth_idp.RateLimitedRequestAttempt.db.insert(session, [
-          for (var index = 0; index < 3; index += 1)
-            auth_idp.RateLimitedRequestAttempt(
-              domain: aonwAuthRateLimitDomain,
-              source: 'login',
-              nonce: 'expired-$index',
-              attemptedAt: oldAttempt,
-            ),
-          auth_idp.RateLimitedRequestAttempt(
-            domain: aonwAuthRateLimitDomain,
-            source: 'login',
-            nonce: 'retained',
-            attemptedAt: retainedAttempt,
-          ),
-          auth_idp.RateLimitedRequestAttempt(
-            domain: 'another_auth_provider',
-            source: 'login',
-            nonce: 'foreign-domain',
-            attemptedAt: oldAttempt,
-          ),
-        ]);
 
         final result =
             await const AuthMaintenanceService(
@@ -188,6 +104,101 @@ void main() {
     rollbackDatabase: RollbackDatabase.afterEach,
     testServerOutputMode: TestServerOutputMode.normal,
   );
+}
+
+Future<void> _seedMaintenanceRows(
+  Session session, {
+  required DateTime now,
+  required Duration refreshLifetime,
+}) async {
+  final oldRefreshTimestamp = now
+      .subtract(refreshLifetime)
+      .subtract(expiredRefreshTokenRetention)
+      .subtract(const Duration(days: 1));
+  final retainedRefreshTimestamp = now
+      .subtract(refreshLifetime)
+      .subtract(expiredRefreshTokenRetention);
+  final oldExpiry = now
+      .subtract(expiredSteamAuthRequestRetention)
+      .subtract(const Duration(days: 1));
+  final retainedExpiry = now.subtract(expiredSteamAuthRequestRetention);
+  final oldExternalExpiry = now
+      .subtract(expiredExternalAuthRequestRetention)
+      .subtract(const Duration(days: 1));
+  final retainedExternalExpiry = now.subtract(
+    expiredExternalAuthRequestRetention,
+  );
+  final oldAttempt = now
+      .subtract(expiredAuthRateLimitAttemptRetention)
+      .subtract(const Duration(days: 1));
+  final retainedAttempt = now.subtract(expiredAuthRateLimitAttemptRetention);
+
+  final authUser = await auth_core.AuthUser.db.insertRow(
+    session,
+    auth_core.AuthUser(scopeNames: const <String>{}),
+  );
+  await auth_core.RefreshToken.db.insert(session, [
+    for (var index = 0; index < 3; index += 1)
+      _refreshToken(
+        authUserId: authUser.id!,
+        lastUpdatedAt: oldRefreshTimestamp,
+      ),
+    _refreshToken(
+      authUserId: authUser.id!,
+      lastUpdatedAt: retainedRefreshTimestamp,
+    ),
+  ]);
+  await SteamAuthRequest.db.insert(session, [
+    for (var index = 0; index < 3; index += 1)
+      SteamAuthRequest(
+        requestId: 'expired-$index',
+        status: 'expired',
+        expiresAt: oldExpiry,
+      ),
+    SteamAuthRequest(
+      requestId: 'retained',
+      status: 'expired',
+      expiresAt: retainedExpiry,
+    ),
+  ]);
+  await ExternalAuthRequest.db.insert(session, [
+    for (var index = 0; index < 3; index += 1)
+      ExternalAuthRequest(
+        requestId: 'external-expired-$index',
+        state: 'external-expired-state-$index',
+        provider: 'apple',
+        status: 'expired',
+        expiresAt: oldExternalExpiry,
+      ),
+    ExternalAuthRequest(
+      requestId: 'external-retained',
+      state: 'external-retained-state',
+      provider: 'apple',
+      status: 'expired',
+      expiresAt: retainedExternalExpiry,
+    ),
+  ]);
+  await auth_idp.RateLimitedRequestAttempt.db.insert(session, [
+    for (var index = 0; index < 3; index += 1)
+      auth_idp.RateLimitedRequestAttempt(
+        domain: aonwAuthRateLimitDomain,
+        source: 'login',
+        nonce: 'expired-$index',
+        attemptedAt: oldAttempt,
+      ),
+    auth_idp.RateLimitedRequestAttempt(
+      domain: aonwAuthRateLimitDomain,
+      source: 'login',
+      nonce: 'retained',
+      attemptedAt: retainedAttempt,
+    ),
+    auth_idp.RateLimitedRequestAttempt(
+      domain: 'another_auth_provider',
+      source: 'login',
+      nonce: 'foreign-domain',
+      attemptedAt: oldAttempt,
+    ),
+  ]);
 }
 
 auth_core.RefreshToken _refreshToken({

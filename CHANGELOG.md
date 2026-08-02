@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 1.1.10 - 2026-08-02
+
+- Unified Steam, Google, Apple, and email sign-in across web, iOS, Android,
+  macOS, Windows, and Linux, including browser-based Apple authentication for
+  Developer ID builds distributed through Steam and itch.io.
+- Added server-managed Apple and Google browser callbacks with expiring state,
+  PKCE verification, polling, rate limits, and cleanup of expired requests.
+- Repaired Steam OpenID response verification, bounded provider traffic, and
+  added actionable server diagnostics for rejected signatures and HTTP errors.
+- Fixed Flutter WASM startup on the demo site by passing the multiplayer
+  protocol version explicitly instead of invoking an incompatible tear-off.
+- Expanded social-auth integration coverage and kept release architecture and
+  coverage baselines aligned with the cross-platform authentication flow.
+
 ## 1.1.9 - 2026-08-01
 
 - Completed the canonical state and world-map migration so gameplay, AI,
