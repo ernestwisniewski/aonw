@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
@@ -15,6 +13,8 @@ import 'package:aonw/game/presentation/widgets/hud/map/hud_map_focus_controller.
 import 'package:aonw/game/presentation/widgets/hud/overlay/hud_overlay_panel_slot.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_dialog.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/foundation.dart';

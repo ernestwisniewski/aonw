@@ -10,8 +10,7 @@ void main() {
     final source = File(_rendererPath).readAsStringSync();
     const services = {
       'game_renderer_input_handler.dart': 'class GameRendererInputHandler',
-      'game_renderer_camera_settings.dart':
-          'class GameRendererCameraSettings',
+      'game_renderer_camera_settings.dart': 'class GameRendererCameraSettings',
       'game_renderer_state_sync_handler.dart':
           'class GameRendererStateSyncHandler',
       'game_renderer_transition_handler.dart':
@@ -21,11 +20,7 @@ void main() {
     };
 
     for (final entry in services.entries) {
-      expect(
-        source,
-        contains("engine/${entry.key}';"),
-        reason: entry.key,
-      );
+      expect(source, contains("engine/${entry.key}';"), reason: entry.key);
       final serviceSource = File(
         '$_rendererDirectory/${entry.key}',
       ).readAsStringSync();
@@ -37,7 +32,10 @@ void main() {
     expect(source, contains('GameRendererInputHandler inputHandler'));
     expect(source, contains('GameRendererCameraSettings _cameraSettings'));
     expect(source, contains('GameRendererStateSyncHandler _stateSyncHandler'));
-    expect(source, contains('GameRendererTransitionHandler _transitionHandler'));
+    expect(
+      source,
+      contains('GameRendererTransitionHandler _transitionHandler'),
+    );
     expect(source, contains('GameRendererLifecycleHandler _lifecycleHandler'));
 
     for (final removedPart in const [

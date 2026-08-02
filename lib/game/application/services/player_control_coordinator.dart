@@ -1,5 +1,5 @@
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
 
 class PlayerControlState {
   final String activePlayerId;

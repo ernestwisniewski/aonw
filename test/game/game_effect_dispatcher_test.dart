@@ -1,5 +1,3 @@
-import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_camera_controller.dart';
 import 'package:aonw/game/presentation/engine/game_effect_dispatcher.dart';
@@ -9,9 +7,11 @@ import 'package:aonw/game/presentation/engine/rendering_layers/effects/particle_
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/unit_animation_controller.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/animation.dart';
 import 'package:flutter_test/flutter_test.dart';

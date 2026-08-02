@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_world.dart';
 import 'package:aonw/shared/input/hex_input_behavior.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';

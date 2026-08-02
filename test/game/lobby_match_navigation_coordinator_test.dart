@@ -1,8 +1,8 @@
-import 'package:aonw/api/session/auth_token.dart';
-import 'package:aonw/api/session/connection_state.dart';
-import 'package:aonw/api/session/network_session.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_navigation_coordinator.dart';
-import 'package:aonw/map/domain/map_selection.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:flutter_test/flutter_test.dart';
 

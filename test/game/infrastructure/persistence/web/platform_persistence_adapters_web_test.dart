@@ -5,9 +5,9 @@ import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/infrastructure/persistence/web/platform_persistence_adapters_web.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_database.dart';
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sembast/sembast_memory.dart';
 

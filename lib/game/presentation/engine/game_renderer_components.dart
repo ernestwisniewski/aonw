@@ -1,4 +1,3 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/artifacts/artifact_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_founding_preview_layer.dart';
@@ -21,6 +20,7 @@ import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/rendering/map_objective_marker_layer.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 
 /// Stable bundle of visual layers constructed before the Flame world loads.

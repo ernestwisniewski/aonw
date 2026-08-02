@@ -1,7 +1,7 @@
 import 'package:aonw/api/protocol/codecs.dart';
-import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/transport/multiplayer_backend_client.dart';
 import 'package:aonw/api/transport/network_event_log.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/protocol.dart';

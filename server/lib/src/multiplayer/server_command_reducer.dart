@@ -8,8 +8,6 @@ import 'package:aonw_server/src/multiplayer/server_command_outcome_projector.dar
 import 'package:aonw_server/src/multiplayer/server_map_cache.dart';
 import 'package:aonw_server/src/multiplayer/server_turn_policy.dart';
 
-export 'server_command_outcome_projector.dart' show ServerCommandReduction;
-
 const defaultMultiplayerTurnTimeout = Duration(seconds: 115);
 const _matchLifecycleStateAdapter = MatchLifecycleStateAdapter();
 

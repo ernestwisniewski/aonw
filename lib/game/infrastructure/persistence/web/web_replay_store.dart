@@ -1,7 +1,7 @@
 import 'package:aonw/game/application/ports/replay_store.dart';
-import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_database.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:sembast/sembast.dart';
 
 class WebReplayStore implements ReplayStore {

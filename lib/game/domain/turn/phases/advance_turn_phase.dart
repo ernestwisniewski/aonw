@@ -1,6 +1,6 @@
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/turn/turn_context.dart';
 import 'package:aonw/game/domain/turn/turn_phase.dart';
+import 'package:aonw_core/game/domain/save.dart';
 
 class AdvanceTurnPhase extends TurnPhase {
   const AdvanceTurnPhase();

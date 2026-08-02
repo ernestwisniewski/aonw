@@ -1,7 +1,7 @@
-import 'package:aonw/api/session/auth_token.dart';
-import 'package:aonw/api/session/connection_state.dart';
-import 'package:aonw/api/session/network_session.dart';
-import 'package:aonw/api/session/network_session_client.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
+import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_action_coordinator.dart';
 import 'package:aonw_core/game/domain/map_validation.dart';
 import 'package:aonw_core/game/domain/player.dart';

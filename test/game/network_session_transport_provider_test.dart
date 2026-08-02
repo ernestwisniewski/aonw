@@ -1,9 +1,9 @@
-import 'package:aonw/api/session/auth_token.dart';
-import 'package:aonw/api/session/connection_state.dart';
-import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/transport/network_command_transport.dart';
 import 'package:aonw/api/transport/network_event_log.dart';
 import 'package:aonw/api/transport/network_game_repository.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/presentation/providers/multiplayer/multiplayer_connection_status_provider.dart';
 import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

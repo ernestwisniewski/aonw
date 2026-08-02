@@ -5,11 +5,12 @@ import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/infrastructure/persistence/initial_game_snapshot_factory.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_database.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_replay_store.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_snapshot_store.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:sembast/sembast.dart';
 

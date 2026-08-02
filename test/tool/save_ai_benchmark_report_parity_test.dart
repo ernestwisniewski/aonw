@@ -4,14 +4,15 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:aonw/game/application/ports/save_snapshot.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/domain/intended_attack.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 part 'save_ai_benchmark_report_parity_goldens.dart';

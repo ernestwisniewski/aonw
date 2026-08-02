@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/hex_assessment.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 MapTileView _tile(

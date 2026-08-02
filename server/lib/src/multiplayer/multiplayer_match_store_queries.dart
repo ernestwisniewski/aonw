@@ -2,6 +2,7 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/multiplayer/game_match_row_mapper.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store_limits.dart';
 import 'package:serverpod/serverpod.dart';
 
 /// Owns bounded multiplayer discovery, resume, and event queries.

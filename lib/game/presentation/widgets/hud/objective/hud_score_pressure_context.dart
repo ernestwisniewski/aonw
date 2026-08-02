@@ -1,8 +1,8 @@
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
+import 'package:aonw_core/game/domain/save.dart';
 
 class HudScorePressureContext {
   final Map<String, EmpireScoreBreakdown> breakdownByPlayerId;

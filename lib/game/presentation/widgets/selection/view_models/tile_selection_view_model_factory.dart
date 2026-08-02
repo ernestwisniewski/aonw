@@ -1,4 +1,3 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/hex_assessment.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/hex_assessment_presenter.dart';
@@ -10,11 +9,12 @@ import 'package:aonw/game/presentation/widgets/selection/view_models/selection_v
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_yield_item.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/material.dart';
 
 abstract final class TileSelectionViewModelFactory {

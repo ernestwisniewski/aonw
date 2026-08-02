@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/shared/persistence/app_data_directory.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter/services.dart';
 
 abstract final class MapStorage {

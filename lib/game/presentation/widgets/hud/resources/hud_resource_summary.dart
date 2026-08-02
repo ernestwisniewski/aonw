@@ -1,4 +1,3 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdowns.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_economy_forecast.dart';
@@ -6,6 +5,7 @@ import 'package:aonw/game/presentation/widgets/hud/resources/hud_stability_detai
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart'
     show GoldBreakdown;
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 

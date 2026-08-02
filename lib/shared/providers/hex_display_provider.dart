@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/rendering/map_palette.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

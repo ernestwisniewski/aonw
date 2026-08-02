@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:aonw/game/domain/movement.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/map_pill.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview.dart';
-import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:flame/components.dart';
 
 class UnitMovePreviewLayerEntry {

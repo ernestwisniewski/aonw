@@ -13,6 +13,7 @@ import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/infrastructure/system/system_clock.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/state.dart';
 
 class LocalCommandTransport implements CommandTransport {
   final GameStateReducer reducer;

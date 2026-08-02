@@ -3,6 +3,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/generated/protocol.dart' hide GameEvent;
+import 'package:aonw_server/src/multiplayer/lossless_match_snapshot_codec.dart';
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
 import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
 import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
@@ -12,6 +13,7 @@ import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
 import 'package:aonw_server/src/multiplayer/player_match_movement_audience.dart';
 import 'package:aonw_server/src/multiplayer/running_match_snapshot_codec.dart';
+import 'package:aonw_server/src/multiplayer/server_command_outcome_projector.dart';
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 
 part 'match_command_service_event.dart';

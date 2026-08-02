@@ -1,13 +1,13 @@
-import 'package:aonw/api/session/auth_token.dart';
-import 'package:aonw/api/session/connection_state.dart';
-import 'package:aonw/api/session/network_session.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/services/ai_runtime_mode.dart';
 import 'package:aonw/game/application/services/ai_runtime_strategy_registry.dart';
 import 'package:aonw/game/application/services/ai_runtime_throttler.dart';
-import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
@@ -28,13 +27,14 @@ import 'package:aonw/game/presentation/widgets/selection_info/selection_info.dar
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-part 'game_hud_overlay_host_helpers.dart';
 part 'game_hud_overlay_host_gamepad_focus.dart';
+part 'game_hud_overlay_host_helpers.dart';
 
 class GameHudOverlayHost extends ConsumerStatefulWidget {
   final GameSession session;

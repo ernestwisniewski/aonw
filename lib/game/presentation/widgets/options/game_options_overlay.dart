@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/providers/game/game_state_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/game_options_overlay_open_provider.dart';
@@ -26,13 +25,14 @@ import 'package:aonw/game/presentation/widgets/options/game_options_layout.dart'
 import 'package:aonw/game/presentation/widgets/options/game_options_panel.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/shared/providers/gameplay_settings_provider.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_options_panel.dart';
 import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

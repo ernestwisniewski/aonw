@@ -7,13 +7,14 @@ import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/infrastructure/persistence/game_storage.dart';
 import 'package:aonw/game/infrastructure/persistence/initial_game_snapshot_factory.dart';
 import 'package:aonw/game/infrastructure/persistence/json_replay_store.dart';
 import 'package:aonw/game/infrastructure/persistence/json_snapshot_store.dart';
 import 'package:aonw/game/infrastructure/system/system_clock.dart';
 import 'package:aonw/game/infrastructure/system/timestamp_id_generator.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 class JsonGameRepository implements GameRepository {

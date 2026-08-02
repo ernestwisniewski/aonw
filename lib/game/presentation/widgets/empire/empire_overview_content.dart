@@ -1,8 +1,8 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/widgets/empire/empire_overview_sections.dart';
 import 'package:aonw/game/presentation/widgets/empire/empire_overview_statistics.dart';
 import 'package:aonw/game/presentation/widgets/empire/empire_overview_view_model.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/material.dart';
 

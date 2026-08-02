@@ -1,10 +1,10 @@
 import 'package:aonw/editor/services/map_saver.dart';
-import 'package:aonw/map/domain/map_constraints.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
+import 'package:aonw_core/map/domain/map_constraints.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/material.dart';
 
 typedef NewMapDialogResult = ({int cols, int rows, TerrainType defaultTerrain});

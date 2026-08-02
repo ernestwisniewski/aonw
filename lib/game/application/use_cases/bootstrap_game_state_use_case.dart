@@ -3,8 +3,8 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/event_log_replay_service.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw_core/game/domain/state.dart';
 
 class BootstrapGameStateResult {
   final GameClientState state;

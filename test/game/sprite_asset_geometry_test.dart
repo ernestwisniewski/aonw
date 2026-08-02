@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asset_cap.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_sprite_catalog.dart';
@@ -10,7 +9,6 @@ import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/building_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/technology_sprite_catalog.dart';
-import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_geometry_layout.dart';
@@ -18,8 +16,10 @@ import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:aonw/shared/assets/sprite_atlas_frame_bounds.dart';
 import 'package:aonw/shared/assets/sprite_atlas_geometry.dart';
 import 'package:aonw/shared/assets/ui_image_cache.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
 

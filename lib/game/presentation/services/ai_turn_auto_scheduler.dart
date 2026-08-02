@@ -8,11 +8,11 @@ import 'package:aonw/game/application/services/ai_turn_precompute_scheduler.dart
 import 'package:aonw/game/application/services/ai_turn_run_scheduler.dart';
 import 'package:aonw/game/application/services/game_handoff.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/services/ai_turn_precompute_coordinator.dart';
 import 'package:aonw/game/presentation/services/ai_turn_precompute_runner.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
 
 typedef AiTurnLocalAiPredicate =
     bool Function({

@@ -1,13 +1,14 @@
 import 'dart:async';
 
 import 'package:aonw/api/protocol/codecs.dart';
-import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/transport/network_command_transport.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/ports/wire_command_dispatcher.dart';
 import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/domain/game_command_context.dart';
@@ -112,44 +113,41 @@ void main() {
   group('NetworkCommandTransport', () {
     _registerEngineFamilyRoutingTests();
 
-    test(
-      'posts a WireCommand and applies the server snapshot response',
-      () async {
-        final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-        final server = _FakeCommandServer(
-          save: _save(),
-          state: GameClientState(
-            units: [commander],
-            activePlayerId: 'player_1',
-            activePlayerCanAct: true,
-          ),
-        );
-        final transport = _transport(server, startTickAt: 41);
+    test('applies the server snapshot response', () async {
+      final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+      final server = _FakeCommandServer(
+        save: _save(),
+        state: GameClientState(
+          units: [commander],
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+        ),
+      );
+      final transport = _transport(server, startTickAt: 41);
 
-        final result = await transport.dispatch(
-          saveId: 'save_1',
-          currentState: server.state,
-          command: MoveUnitCommand(commander.id, 1, 0),
-        );
+      final result = await transport.dispatch(
+        saveId: 'save_1',
+        currentState: server.state,
+        command: MoveUnitCommand(commander.id, 1, 0),
+      );
 
-        final sentCommand = server.sentCommands.single;
-        expect(sentCommand.saveId, 'save_1');
-        expect(sentCommand.token.value, 'jwt-token');
-        expect(sentCommand.afterOffset, 0);
-        final sent = sentCommand.wire;
-        expect(sent.tick, 41);
-        expect(sent.turn, 1);
-        expect(sent.actorPlayerId, 'player_1');
-        expect(sent.command['type'], 'MoveUnit');
-        expect(result.offset, 1);
-        expect(result.state.units.single.col, 1);
-        expect(result.state.activePlayerId, 'player_1');
-        expect(result.events.single, isA<UnitMovedEvent>());
-        expect(result.snapshot, isNotNull);
-        expect(result.snapshot!.eventLogOffset, 1);
-        expect(result.storedSnapshot, isTrue);
-      },
-    );
+      final sentCommand = server.sentCommands.single;
+      expect(sentCommand.saveId, 'save_1');
+      expect(sentCommand.token.value, 'jwt-token');
+      expect(sentCommand.afterOffset, 0);
+      final sent = sentCommand.wire;
+      expect(sent.tick, 41);
+      expect(sent.turn, 1);
+      expect(sent.actorPlayerId, 'player_1');
+      expect(sent.command['type'], 'MoveUnit');
+      expect(result.offset, 1);
+      expect(result.state.units.single.col, 1);
+      expect(result.state.activePlayerId, 'player_1');
+      expect(result.events.single, isA<UnitMovedEvent>());
+      expect(result.snapshot, isNotNull);
+      expect(result.snapshot!.eventLogOffset, 1);
+      expect(result.storedSnapshot, isTrue);
+    });
 
     test(
       'reads the current JWT immediately before sending a command',

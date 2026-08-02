@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as sp_auth;

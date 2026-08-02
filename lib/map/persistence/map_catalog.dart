@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/persistence/map_loader.dart';
 import 'package:aonw/map/persistence/map_storage.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 

@@ -1,4 +1,4 @@
-import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class HexResourceGroups {
   static const foodCity = {

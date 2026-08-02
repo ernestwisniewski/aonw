@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+
 import 'package:aonw/editor/domain/map_draft.dart';
-import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/persistence/map_loader.dart';
 import 'package:aonw/map/persistence/map_storage.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 

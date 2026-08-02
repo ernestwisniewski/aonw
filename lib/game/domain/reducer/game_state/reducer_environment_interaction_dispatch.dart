@@ -1,9 +1,9 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/reducer_environment.dart';
 import 'package:aonw/game/domain/reducer/interaction/selection_reducer.dart';
 import 'package:aonw/game/domain/reducer/turn/turn_reducer.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 
 extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {

@@ -1,6 +1,3 @@
-export 'package:aonw/game/application/services/game_handoff.dart'
-    show HandoffData;
-
 export 'providers/audio/game_audio_provider.dart';
 export 'providers/game/game_actions_provider.dart';
 export 'providers/game/game_activity_history_provider.dart';

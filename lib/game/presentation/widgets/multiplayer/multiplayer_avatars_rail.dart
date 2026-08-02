@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
@@ -14,13 +13,14 @@ import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_avatars_r
 import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_avatars_rail_metrics.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_status_sheet.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

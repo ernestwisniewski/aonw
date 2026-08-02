@@ -12,8 +12,8 @@ import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-part 'local_movement_engine_projection_test_support.dart';
 part 'local_movement_engine_projection_retargeting_cases.dart';
+part 'local_movement_engine_projection_test_support.dart';
 
 const _playerId = 'player_1';
 

@@ -3,9 +3,9 @@ import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/services/ai_runtime_mode.dart';
 import 'package:aonw/game/application/services/ai_runtime_strategy_registry.dart';
 import 'package:aonw/game/application/services/ai_runtime_throttler.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/game/domain/save.dart';
 
 typedef AiRuntimeBatterySaverReader = bool Function();
 

@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/ai/pressure_target_resolver.dart';
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/objective.dart';

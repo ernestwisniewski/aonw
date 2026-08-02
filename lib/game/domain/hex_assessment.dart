@@ -1,5 +1,3 @@
-export 'package:aonw_core/game/domain/hex_assessment/hex_assessment_input.dart';
-
 export 'hex_assessment/hex_assessment_model.dart';
 export 'hex_assessment/hex_assessment_rules.dart';
 export 'hex_assessment/hex_kind_groups.dart';

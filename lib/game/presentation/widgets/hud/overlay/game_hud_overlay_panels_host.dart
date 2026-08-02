@@ -1,6 +1,5 @@
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_deck.dart';
@@ -11,6 +10,7 @@ import 'package:aonw/game/presentation/widgets/hud/panel/hud_activity_log_entrie
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
 import 'package:aonw/game/presentation/widgets/hud/turn/hud_player_action_state.dart';
+import 'package:aonw_core/game/domain/save.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

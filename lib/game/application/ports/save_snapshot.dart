@@ -15,8 +15,6 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/util/collection_equality.dart';
 
-export 'package:aonw_core/game/domain/state.dart' show CanonicalGameSnapshot;
-
 /// Composes the canonical persistence envelope directly from application
 /// inputs. It does not materialize a second authoritative state model.
 abstract final class GameSnapshotFactory {

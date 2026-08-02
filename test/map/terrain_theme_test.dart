@@ -1,5 +1,5 @@
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/terrain_theme.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,5 +1,5 @@
 import 'package:aonw/game/application/ports/network_session.dart';
-import 'package:aonw/map/domain/map_selection.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:aonw_core/protocol.dart';
 
 typedef LobbyNavigationActiveMatchReader = WireMatch? Function();

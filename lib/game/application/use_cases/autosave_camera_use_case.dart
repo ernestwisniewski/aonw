@@ -1,5 +1,5 @@
 import 'package:aonw/game/application/ports/game_repository.dart';
-import 'package:aonw/game/domain/game_save.dart';
+import 'package:aonw_core/game/domain/save.dart';
 
 class AutosaveCameraUseCase {
   final GameRepository repository;

@@ -1,8 +1,8 @@
 import 'package:aonw/game/application/services/game_session_factory.dart';
-import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/map/domain/map_view_mode.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 WorldMap _map() => WorldMap(

@@ -5,9 +5,6 @@ import 'package:aonw_server/src/multiplayer/lossless_match_snapshot_codec.dart';
 import 'package:aonw_server/src/multiplayer/player_match_wire_schema_guard.dart';
 import 'package:aonw_server/src/multiplayer/wire_player_domain_mapper.dart';
 
-export 'package:aonw_server/src/multiplayer/lossless_match_snapshot_codec.dart'
-    show DecodedRunningMatchSnapshot;
-
 const LosslessMatchSnapshotCodec _losslessMatchSnapshotCodec =
     LosslessMatchSnapshotCodec();
 const PlayerMatchWireSchemaGuard _playerMatchWireSchemaGuard =

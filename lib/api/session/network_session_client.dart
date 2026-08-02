@@ -1,7 +1,7 @@
-import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/external_auth_browser.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/session/serverpod_multiplayer_failure_mapper.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/map/domain/map_player_capacity.dart';
@@ -10,11 +10,9 @@ import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as sp_auth;
 
-export 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
-
-part 'network_session_client_version_status.dart';
 part 'network_session_client_lobby_requests.dart';
 part 'network_session_client_support.dart';
+part 'network_session_client_version_status.dart';
 
 typedef NetworkSessionServerpodClientFactory =
     sp.Client Function(

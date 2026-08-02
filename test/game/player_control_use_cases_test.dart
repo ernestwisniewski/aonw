@@ -1,14 +1,16 @@
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/end_turn_strategy.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/application/use_cases/confirm_handoff_use_case.dart';
 import 'package:aonw/game/application/use_cases/end_turn_use_case.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/turn.dart';
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/game/domain/state.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _MemoryGameRepository implements GameRepository {

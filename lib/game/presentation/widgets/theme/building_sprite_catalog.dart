@@ -1,5 +1,5 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/widgets/theme/sprite_atlas_icon.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:flutter/material.dart';
 
 abstract final class BuildingSpriteCatalog {

@@ -1,8 +1,5 @@
 import 'dart:async';
 
-import 'package:aonw/map/domain/hex_grid_topology.dart';
-import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_selection_overlay.dart';
 import 'package:aonw/map/rendering/hex_tile.dart';
@@ -10,6 +7,9 @@ import 'package:aonw/map/rendering/hex_tile_markers.dart';
 import 'package:aonw/shared/performance/dev_performance.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/map/domain/hex_grid_topology.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';

@@ -1,4 +1,4 @@
-import 'package:aonw/api/session/auth_token.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 
 typedef ServerpodAuthKeyProviderFactory = sp.ClientAuthKeyProvider Function();

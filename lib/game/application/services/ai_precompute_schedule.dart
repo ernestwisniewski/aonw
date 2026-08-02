@@ -1,7 +1,7 @@
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/domain/intended_attack.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
 
 abstract final class AiPrecomputeScheduleKey {
   static String build({

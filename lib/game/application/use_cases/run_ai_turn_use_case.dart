@@ -5,9 +5,9 @@ import 'package:aonw/game/application/services/ai_recent_hostility_tracker.dart'
 import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
 import 'package:aonw/game/application/services/ai_turn_preparation_builder.dart';
 import 'package:aonw/game/application/services/ai_turn_runner.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 class RunAiTurnUseCase {

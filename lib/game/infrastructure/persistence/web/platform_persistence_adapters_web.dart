@@ -5,14 +5,14 @@ import 'package:aonw/game/application/ports/id_generator.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
-import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_database.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_event_log.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_game_repository.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_replay_store.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_snapshot_store.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/game/domain/state.dart';
 
 WebDatabase? _database;
 Future<WebDatabase>? _databaseFuture;

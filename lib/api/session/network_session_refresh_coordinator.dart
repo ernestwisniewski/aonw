@@ -1,13 +1,11 @@
-import 'package:aonw/api/session/auth_token.dart';
-import 'package:aonw/api/session/connection_state.dart';
-import 'package:aonw/api/session/network_session.dart';
-import 'package:aonw/api/session/network_session_client.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
+import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/ports/network_session_authentication.dart';
 import 'package:aonw/game/application/ports/network_session_store.dart';
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as sp_auth;
-
-export 'package:aonw/game/application/ports/network_session_authentication.dart';
 
 typedef NetworkSessionReader = NetworkSession? Function();
 typedef NetworkSessionWriter = void Function(NetworkSession? session);

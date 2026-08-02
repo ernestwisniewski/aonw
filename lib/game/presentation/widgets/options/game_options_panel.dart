@@ -2,13 +2,13 @@ import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/presentation/widgets/options/map_overlay_toggle.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/l10n.dart';
-import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/widgets/map_view_mode_toggle.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_options_panel.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flutter/material.dart';
 
 class GameOptionsPanel extends StatelessWidget {

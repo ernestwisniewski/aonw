@@ -1,8 +1,8 @@
 import 'package:aonw/game/domain/hex_assessment/hex_assessment_model.dart';
 import 'package:aonw/game/domain/hex_assessment/hex_score.dart';
 import 'package:aonw/game/domain/hex_assessment/resource_groups.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/hex_assessment/hex_assessment_input.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class HexKindRules {
   static HexAssessmentKind classify(HexAssessmentInput input, HexScore score) {

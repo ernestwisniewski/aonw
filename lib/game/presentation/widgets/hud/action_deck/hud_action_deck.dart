@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/turn.dart';
@@ -31,41 +29,43 @@ import 'package:aonw/game/presentation/widgets/theme/game_hud_theme.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-part 'hud_action_deck_detail_modal.dart';
-part 'hud_action_deck_combat_modal.dart';
-part 'hud_action_deck_modals.dart';
-part 'hud_action_deck_combat_dialog.dart';
-part 'hud_action_deck_combat_explanation.dart';
-part 'hud_action_deck_combat_forecast.dart';
-part 'hud_action_deck_combat_hp_ring.dart';
-part 'hud_action_deck_commands.dart';
-part 'hud_action_deck_compact_widgets.dart';
 part 'hud_action_deck_auto_flow.dart';
 part 'hud_action_deck_auto_flow_decisions.dart';
 part 'hud_action_deck_auto_flow_manual_targets.dart';
 part 'hud_action_deck_auto_flow_predicates.dart';
 part 'hud_action_deck_auto_flow_research.dart';
 part 'hud_action_deck_auto_flow_signature.dart';
+part 'hud_action_deck_combat_dialog.dart';
+part 'hud_action_deck_combat_explanation.dart';
+part 'hud_action_deck_combat_forecast.dart';
+part 'hud_action_deck_combat_hp_ring.dart';
+part 'hud_action_deck_combat_modal.dart';
+part 'hud_action_deck_commands.dart';
+part 'hud_action_deck_compact_widgets.dart';
+part 'hud_action_deck_detail_modal.dart';
 part 'hud_action_deck_gamepad_focus.dart';
 part 'hud_action_deck_layout.dart';
+part 'hud_action_deck_modals.dart';
 
 class HudActionDeck extends ConsumerStatefulWidget {
   const HudActionDeck({

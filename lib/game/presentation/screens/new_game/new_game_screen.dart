@@ -9,7 +9,6 @@ import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
 import 'package:aonw/game/presentation/screens/new_game/new_game_single_player_setup.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/map/widgets/map_selection_tile.dart';
 import 'package:aonw/menu/menu_click_sound.dart';
@@ -27,6 +26,7 @@ import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/map_validation.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,11 +34,11 @@ import 'package:go_router/go_router.dart';
 
 part 'new_game_review_card.dart';
 part 'new_game_screen_layout_widgets.dart';
-part 'new_game_screen_plan_step.dart';
-part 'new_game_screen_single_player_panels.dart';
-part 'new_game_screen_plan_summary_widgets.dart';
 part 'new_game_screen_map_step.dart';
+part 'new_game_screen_plan_step.dart';
+part 'new_game_screen_plan_summary_widgets.dart';
 part 'new_game_screen_review_step.dart';
+part 'new_game_screen_single_player_panels.dart';
 
 enum _NewGameStep { plan, map, review }
 

@@ -1,5 +1,4 @@
 import 'package:aonw/l10n/l10n.dart';
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/map/widgets/map_selection_tile.dart';
 import 'package:aonw/menu/menu_click_sound.dart';
@@ -10,6 +9,7 @@ import 'package:aonw/shared/widgets/game_ui/game_ui_app_bar.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_screen_header.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_section_header.dart';
 import 'package:aonw/shared/widgets/scrollable_error_view.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

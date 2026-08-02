@@ -1,5 +1,3 @@
-import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/engine/game_render_view_model.dart';
 import 'package:aonw/game/presentation/engine/game_renderer.dart'
     show WorkerActionPaletteOptionsBuilder;
@@ -10,12 +8,14 @@ import 'package:aonw/game/presentation/engine/game_renderer_state_sync_handler.d
 import 'package:aonw/game/presentation/engine/game_scene_builder.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/marker_density_policy.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/rendering/hex_world.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 

@@ -1,5 +1,5 @@
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 
 String terrainDisplayName(AppLocalizations l10n, TerrainType terrain) {
   return switch (terrain) {

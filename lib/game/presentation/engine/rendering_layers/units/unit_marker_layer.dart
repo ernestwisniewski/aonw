@@ -4,7 +4,6 @@ import 'package:aonw/game/presentation/engine/rendering_layers/units/marker_heal
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer_animator.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
-import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
@@ -13,6 +12,7 @@ import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 

@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:aonw/game/application/ports/network_session.dart';
+import 'package:aonw/game/application/services/game_handoff.dart';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
@@ -29,7 +29,6 @@ import 'package:aonw/game/presentation/widgets/screen/game_player_control_sync.d
 import 'package:aonw/game/presentation/widgets/selection_info/providers.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_discovery_popup_overlay.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
@@ -39,6 +38,8 @@ import 'package:aonw/shared/widgets/game_ui/game_toast.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,10 +79,9 @@ class GameHud extends ConsumerStatefulWidget {
     this.initialCameraFocusReadyListenable = const AlwaysStoppedAnimation<bool>(
       true,
     ),
-    this.gamepadInputListenable =
-        const AlwaysStoppedAnimation<GamepadInputSnapshot>(
-          GamepadInputSnapshot.empty,
-        ),
+    this.gamepadInputListenable = const AlwaysStoppedAnimation(
+      GamepadInputSnapshot.empty,
+    ),
     required this.allowGraphicMode,
     required this.onViewModeChanged,
     required this.onClose,
@@ -308,7 +308,6 @@ class _GameHudState extends ConsumerState<GameHud> {
     if (!widget.showEntryHandoff) return null;
     if (save == null || save.gameMode != GameMode.hotSeat) return null;
     if (_confirmedEntryHandoffs.contains(save.id)) return null;
-
     final control = PlayerControlCoordinator.initial(save);
     if (control.activePlayerId.isEmpty) return null;
     final player = save.playerById(control.activePlayerId);

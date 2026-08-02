@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:aonw/api/session/network_session_store.dart';
+import 'package:aonw/game/application/ports/network_session_store.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';

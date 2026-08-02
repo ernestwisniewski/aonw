@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:aonw/game/application/ports/replay_store.dart';
-import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/infrastructure/persistence/game_storage.dart';
 import 'package:aonw/game/infrastructure/persistence/isolated_save_snapshot_codec.dart';
+import 'package:aonw_core/game/domain/state.dart';
 
 class JsonReplayStore implements ReplayStore {
   final Directory? savesDir;

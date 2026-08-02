@@ -1,10 +1,10 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/map_objective_progress_for_tile.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

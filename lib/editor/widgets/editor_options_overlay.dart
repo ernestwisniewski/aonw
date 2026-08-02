@@ -1,7 +1,7 @@
-import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/widgets/map_view_mode_toggle.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_options_panel.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flutter/material.dart';
 
 /// Top-right ⚙ button + dropdown options panel for the map editor.

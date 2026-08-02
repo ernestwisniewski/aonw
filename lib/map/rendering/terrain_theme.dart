@@ -1,4 +1,4 @@
-import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/material.dart';
 
 abstract final class TerrainTheme {

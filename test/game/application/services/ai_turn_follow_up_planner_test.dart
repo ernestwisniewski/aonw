@@ -1,8 +1,8 @@
 import 'package:aonw/game/application/services/ai_turn_follow_up_planner.dart';
-import 'package:aonw/game/domain/game_save.dart';
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

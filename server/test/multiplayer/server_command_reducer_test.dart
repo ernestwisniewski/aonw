@@ -6,6 +6,7 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
 import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
 import 'package:aonw_server/src/multiplayer/player_match_view_projector.dart';
+import 'package:aonw_server/src/multiplayer/server_command_outcome_projector.dart';
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 import 'package:test/test.dart';
 

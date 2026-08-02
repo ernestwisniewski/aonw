@@ -1,8 +1,8 @@
 import 'package:aonw/game/application/ports/auth_token.dart';
-import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/protocol.dart';
 
 final class LiveServerEvent {

@@ -1,4 +1,3 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/resource_requirement_display_names.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
@@ -6,15 +5,16 @@ import 'package:aonw/game/presentation/widgets/city/city_production_item_view_mo
 import 'package:aonw/game/presentation/widgets/city/city_project_item_factory.dart';
 import 'package:aonw/game/presentation/widgets/city/city_specialization_item_factory.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 
 part 'city_production_dialog_view_model_helpers.dart';
 

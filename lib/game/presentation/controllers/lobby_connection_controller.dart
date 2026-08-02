@@ -11,14 +11,14 @@ import 'package:aonw/game/presentation/screens/lobby/lobby_match_action_coordina
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_navigation_coordinator.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_network_session_coordinator.dart';
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw_core/game/domain/map_validation.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:flutter/foundation.dart';
 
-part 'lobby_connection_session_actions.dart';
 part 'lobby_connection_public_actions.dart';
+part 'lobby_connection_session_actions.dart';
 
 enum LobbyMultiplayerMode {
   home,

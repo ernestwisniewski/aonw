@@ -1,4 +1,3 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_sort_controls.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_sorting.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_header.dart';
@@ -8,6 +7,7 @@ import 'package:aonw/game/presentation/widgets/city/city_production_list_tile.da
 import 'package:aonw/game/presentation/widgets/city/city_specialization_list_tile.dart';
 import 'package:aonw/game/presentation/widgets/shared/selected_panel_item_revealer.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/material.dart';

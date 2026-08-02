@@ -1,11 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/cloud_drift_layer.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
 

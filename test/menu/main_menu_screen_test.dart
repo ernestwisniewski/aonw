@@ -1,7 +1,9 @@
-import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_store.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw/game/application/ports/multiplayer_failure.dart';
+import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
+import 'package:aonw/game/application/ports/network_session_store.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
@@ -372,51 +374,45 @@ void main() {
     expect(find.byKey(const Key('game-screen')), findsOneWidget);
   });
 
-  testWidgets(
-    'main menu keeps the persisted match after a transient resume failure',
-    (tester) async {
-      final store = _FakeNetworkSessionStore(
-        const StoredNetworkSession(
-          userId: 'user_1',
-          refreshToken: 'refresh-token',
-          displayName: 'Alice',
-          matchId: 'match_1',
-        ),
-      );
-      final client = _FakeNetworkSessionClient(
-        match: _runningMatch(),
-        loadMatchError: const MultiplayerFailure.connection(
-          message: 'Service temporarily unavailable',
-        ),
-      );
-      await _pumpResumeMenu(tester, store: store, client: client);
+  testWidgets('keeps match after a transient resume failure', (tester) async {
+    final store = _FakeNetworkSessionStore(
+      const StoredNetworkSession(
+        userId: 'user_1',
+        refreshToken: 'refresh-token',
+        displayName: 'Alice',
+        matchId: 'match_1',
+      ),
+    );
+    final client = _FakeNetworkSessionClient(
+      match: _runningMatch(),
+      loadMatchError: const MultiplayerFailure.connection(
+        message: 'Service temporarily unavailable',
+      ),
+    );
+    await _pumpResumeMenu(tester, store: store, client: client);
 
-      await tester.tap(find.text('RESUME GAME'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('RESUME GAME'));
+    await tester.pumpAndSettle();
 
-      expect(client.refreshTokens, ['refresh-token']);
-      expect(store.savedMatchIds, isEmpty);
-      expect(store.session?.matchId, 'match_1');
-      expect(store.session?.refreshToken, 'rotated-refresh-token-1');
-      expect(find.text('RESUME GAME'), findsOneWidget);
-      expect(find.byKey(const Key('game-screen')), findsNothing);
-      expect(
-        find.text('Could not resume the last multiplayer session.'),
-        findsOneWidget,
-      );
+    expect(client.refreshTokens, ['refresh-token']);
+    expect(store.savedMatchIds, isEmpty);
+    expect(store.session?.matchId, 'match_1');
+    expect(store.session?.refreshToken, 'rotated-refresh-token-1');
+    expect(find.text('RESUME GAME'), findsOneWidget);
+    expect(find.byKey(const Key('game-screen')), findsNothing);
+    expect(
+      find.text('Could not resume the last multiplayer session.'),
+      findsOneWidget,
+    );
 
-      await tester.tap(find.text('RESUME GAME'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('RESUME GAME'));
+    await tester.pumpAndSettle();
 
-      expect(client.refreshTokens, [
-        'refresh-token',
-        'rotated-refresh-token-1',
-      ]);
-      expect(store.savedMatchIds, isEmpty);
-      expect(store.session?.matchId, 'match_1');
-      expect(find.byKey(const Key('game-screen')), findsOneWidget);
-    },
-  );
+    expect(client.refreshTokens, ['refresh-token', 'rotated-refresh-token-1']);
+    expect(store.savedMatchIds, isEmpty);
+    expect(store.session?.matchId, 'match_1');
+    expect(find.byKey(const Key('game-screen')), findsOneWidget);
+  });
 
   for (final code in const ['match_not_found', 'not_match_player']) {
     testWidgets('main menu forgets a match after authoritative $code', (

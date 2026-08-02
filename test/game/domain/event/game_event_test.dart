@@ -1,4 +1,4 @@
-import 'package:aonw/game/domain/city.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/technology.dart';

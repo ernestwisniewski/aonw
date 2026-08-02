@@ -1,4 +1,3 @@
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
@@ -8,6 +7,7 @@ import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/outcome.dart';
+import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/protocol.dart';
 
 part 'hud_game_outcome_summary_helpers.dart';

@@ -6,7 +6,6 @@ import 'package:aonw/game/application/services/ai_runtime_strategy_resolver.dart
 import 'package:aonw/game/application/services/ai_runtime_throttler.dart';
 import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
 import 'package:aonw/game/application/services/ai_turn_run_scheduler.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/engine/renderer_view_model.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
@@ -26,6 +25,7 @@ import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/providers/ai_settings_provider.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/save.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

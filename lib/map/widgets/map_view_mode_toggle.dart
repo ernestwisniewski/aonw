@@ -1,6 +1,6 @@
 import 'package:aonw/l10n/l10n.dart';
-import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flutter/material.dart';
 
 class MapViewModeToggle extends StatelessWidget {

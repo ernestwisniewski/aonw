@@ -1,8 +1,8 @@
 import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/engine/editor_state.dart';
-import 'package:aonw/map/domain/map_constraints.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/map/domain/map_constraints.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'editor_providers.g.dart';

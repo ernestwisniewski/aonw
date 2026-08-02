@@ -11,6 +11,6 @@ The multiplayer boundary is owned by the game application layer:
 - `MultiplayerFailure` is the stable error contract exposed to presentation.
 
 Concrete Serverpod and platform implementations live under `lib/api` and are
-created in the session repository provider composition root. Compatibility
-files in `lib/api/session` and `lib/api/transport` may re-export these contracts
-but must not become their owner again.
+created in the session repository provider composition root. Adapter libraries
+must not re-export these contracts: callers import the application-owned port
+and the concrete adapter separately when they compose the runtime.

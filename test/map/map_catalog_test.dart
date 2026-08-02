@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:aonw/map/domain/map_selection.dart';
+
 import 'package:aonw/map/persistence/map_catalog.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 

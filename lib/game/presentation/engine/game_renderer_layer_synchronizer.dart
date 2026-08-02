@@ -15,11 +15,11 @@ import 'package:aonw/game/presentation/engine/rendering_layers/map/marker_densit
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview_layer.dart';
 import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';
-import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/rendering/map_objective_marker_layer.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 

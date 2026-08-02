@@ -1,7 +1,7 @@
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/recorded_domain_command.dart';
-import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/state.dart';
 
 class AiRecentHostilityTracker {
   final EventLog eventLog;

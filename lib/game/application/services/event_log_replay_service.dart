@@ -3,6 +3,7 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
+import 'package:aonw_core/game/domain/state.dart';
 
 enum AuthoritativeSnapshotRequiredReason { redactedCommand, missingGameTurn }
 

@@ -6,18 +6,19 @@ import 'package:aonw/game/application/services/ai_plan_precompute_cache.dart';
 import 'package:aonw/game/application/services/ai_turn_runner.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/application/use_cases/run_ai_turn_use_case.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
-import 'package:aonw/map/domain/map_selection.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/domain/intended_attack.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

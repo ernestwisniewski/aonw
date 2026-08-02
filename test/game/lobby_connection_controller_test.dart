@@ -1,87 +1,84 @@
-import 'package:aonw/api/session/auth_token.dart';
-import 'package:aonw/api/session/connection_state.dart';
-import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/api/transport/live_event_subscription.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
+import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
+import 'package:aonw/game/application/ports/network_session_store.dart';
 import 'package:aonw/game/presentation/controllers/lobby_connection_controller.dart';
-import 'package:aonw_core/game/domain/map_validation.dart';
-import 'package:aonw_core/game/domain/player.dart';
-import 'package:aonw_core/map/domain/map_selection.dart';
+import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('LobbyConnectionController', () {
-    test(
-      'quickplay authenticates, stores session and publishes match',
-      () async {
-        final client = _FakeNetworkSessionClient(
-          quickplayMatch: _match(state: 'open'),
-        );
-        final store = _MemoryNetworkSessionStore(displayName: 'Stored Alice');
-        NetworkSession? currentSession;
-        final published = <WireMatch>[];
-        final presentedErrors = <String>[];
-        final primaryDisplayNames = <String>[];
-        final routes = <String>[];
-        var authCount = 0;
+    test('quickplay publishes an authenticated stored session', () async {
+      final client = _FakeNetworkSessionClient(
+        quickplayMatch: _match(state: 'open'),
+      );
+      final store = _MemoryNetworkSessionStore(displayName: 'Stored Alice');
+      NetworkSession? currentSession;
+      final published = <WireMatch>[];
+      final presentedErrors = <String>[];
+      final primaryDisplayNames = <String>[];
+      final routes = <String>[];
+      var authCount = 0;
 
-        final controller = LobbyConnectionController(
-          mapName: 'verdantia',
-          mapSource: MapSource.asset,
-          sessionClient: client,
-          sessionStore: store,
-          liveEvents: _emptyLiveEvents(),
-          now: () => DateTime.utc(2026, 6, 2, 12),
-          canContinue: () => true,
-          currentSession: () => currentSession,
-          setSession: (session) => currentSession = session,
-          authenticate: ({required initialDisplayName}) async {
-            authCount += 1;
-            expect(initialDisplayName, 'Lobby Alice');
-            return NetworkAuthResult(
-              userId: 'user_1',
-              token: AuthToken('fresh-token'),
-              refreshToken: 'refresh-token',
-              displayName: 'Authenticated Alice',
-            );
-          },
-          displayName: () => 'Lobby Alice',
-          setPrimaryDisplayName: primaryDisplayNames.add,
-          country: () => PlayerCountry.china,
-          validateMap: () async => _validValidation(),
-          mapNotReadyMessage: () => 'Map is not ready',
-          inviteCodeRequiredMessage: () => 'Invite code required',
-          errorTextFor: (error) => 'mapped $error',
-          presentError: presentedErrors.add,
-          publishMatch: published.add,
-          navigateTo: routes.add,
-        );
-        addTearDown(controller.dispose);
+      final controller = LobbyConnectionController(
+        mapName: 'verdantia',
+        mapSource: MapSource.asset,
+        sessionClient: client,
+        sessionStore: store,
+        liveEvents: _emptyLiveEvents(),
+        now: () => DateTime.utc(2026, 6, 2, 12),
+        canContinue: () => true,
+        currentSession: () => currentSession,
+        setSession: (session) => currentSession = session,
+        authenticate: ({required initialDisplayName}) async {
+          authCount += 1;
+          expect(initialDisplayName, 'Lobby Alice');
+          return NetworkAuthResult(
+            userId: 'user_1',
+            token: AuthToken('fresh-token'),
+            refreshToken: 'refresh-token',
+            displayName: 'Authenticated Alice',
+          );
+        },
+        displayName: () => 'Lobby Alice',
+        setPrimaryDisplayName: primaryDisplayNames.add,
+        country: () => PlayerCountry.china,
+        validateMap: () async => _validValidation(),
+        mapNotReadyMessage: () => 'Map is not ready',
+        inviteCodeRequiredMessage: () => 'Invite code required',
+        errorTextFor: (error) => 'mapped $error',
+        presentError: presentedErrors.add,
+        publishMatch: published.add,
+        navigateTo: routes.add,
+      );
+      addTearDown(controller.dispose);
 
-        await controller.startQuickplayQueue();
-        await Future<void>.delayed(Duration.zero);
+      await controller.startQuickplayQueue();
+      await Future<void>.delayed(Duration.zero);
 
-        expect(authCount, 1);
-        expect(controller.mode, LobbyMultiplayerMode.quickplay);
-        expect(controller.busy, isFalse);
-        expect(controller.error, isNull);
-        expect(controller.activeMatch?.id, 'match_1');
-        expect(client.quickplayRequest?.mapName, 'verdantia');
-        expect(client.quickplayRequest?.country, PlayerCountry.china);
-        expect(store.displayName, 'Authenticated Alice');
-        expect(store.stored?.refreshToken, 'refresh-token');
-        expect(store.savedMatchIds, ['match_1']);
-        expect(currentSession?.userId, 'user_1');
-        expect(currentSession?.matchId, 'match_1');
-        expect(primaryDisplayNames, ['Authenticated Alice']);
-        expect(published.map((match) => match.id), ['match_1']);
-        expect(presentedErrors, isEmpty);
-        expect(routes, isEmpty);
-      },
-    );
+      expect(authCount, 1);
+      expect(controller.mode, LobbyMultiplayerMode.quickplay);
+      expect(controller.busy, isFalse);
+      expect(controller.error, isNull);
+      expect(controller.activeMatch?.id, 'match_1');
+      expect(client.quickplayRequest?.mapName, 'verdantia');
+      expect(client.quickplayRequest?.country, PlayerCountry.china);
+      expect(store.displayName, 'Authenticated Alice');
+      expect(store.stored?.refreshToken, 'refresh-token');
+      expect(store.savedMatchIds, ['match_1']);
+      expect(currentSession?.userId, 'user_1');
+      expect(currentSession?.matchId, 'match_1');
+      expect(primaryDisplayNames, ['Authenticated Alice']);
+      expect(published.map((match) => match.id), ['match_1']);
+      expect(presentedErrors, isEmpty);
+      expect(routes, isEmpty);
+    });
 
     test(
       'authentication remains memory-only when credentials cannot persist',

@@ -2,10 +2,10 @@ import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/services/ai_runtime_mode.dart'
     as runtime_mode;
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
 
 final class GameAiTurnAutoPilotRules {
   const GameAiTurnAutoPilotRules._();

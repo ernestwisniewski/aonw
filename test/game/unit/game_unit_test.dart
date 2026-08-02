@@ -1,5 +1,5 @@
-import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/domain/movement.dart';
+import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_test/flutter_test.dart';
 

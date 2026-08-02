@@ -1,5 +1,5 @@
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter/material.dart';
 
 class MapSelectionTile extends StatelessWidget {

@@ -3,9 +3,9 @@ import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/ai_runtime_throttler.dart';
 import 'package:aonw/game/application/services/ai_turn_run_scheduler.dart';
 import 'package:aonw/game/application/services/ai_turn_runner.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/services/ai_turn_process_preparer.dart';
+import 'package:aonw_core/game/domain/save.dart';
 
 typedef AiTurnExecutionStarter =
     Future<AiTurnExecutedProcess?> Function({

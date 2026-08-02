@@ -1,6 +1,6 @@
 import 'package:aonw/game/application/ports/network_session.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
 
 bool shouldRunLocalAiForMode({
   required GameMode gameMode,

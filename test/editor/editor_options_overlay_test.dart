@@ -1,6 +1,6 @@
 import 'package:aonw/editor/widgets/editor_options_overlay.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/map/domain/map_view_mode.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,4 +1,4 @@
-import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw_core/game/domain/state.dart';
 
 class Snapshot {
   final CanonicalGameSnapshot state;

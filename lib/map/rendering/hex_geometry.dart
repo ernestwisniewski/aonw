@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
-import 'package:aonw/map/domain/hex_grid_topology.dart';
-import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
+import 'package:aonw_core/map/domain/hex_grid_topology.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:flame/components.dart';
 
 /// Pure geometric helpers for flat-top hexagons.

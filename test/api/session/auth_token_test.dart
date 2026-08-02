@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:aonw/api/session/auth_token.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

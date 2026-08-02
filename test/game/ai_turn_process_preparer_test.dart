@@ -1,7 +1,7 @@
-import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_logger.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
@@ -11,17 +11,18 @@ import 'package:aonw/game/application/services/ai_runtime_throttler.dart';
 import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/services/ai_turn_process_preparer.dart';
 import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_rules.dart';
-import 'package:aonw/map/domain/map_selection.dart';
-import 'package:aonw/map/domain/map_view_mode.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/game/domain/state.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

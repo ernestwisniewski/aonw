@@ -3,11 +3,11 @@ import 'package:aonw/editor/widgets/editor_action_button.dart';
 import 'package:aonw/editor/widgets/editor_color_picker.dart';
 import 'package:aonw/editor/widgets/editor_toolbar_chips.dart';
 import 'package:aonw/editor/widgets/editor_toolbar_row.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/terrain_theme.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/material.dart';
 
 class EditorTerrainToolbarSection extends StatelessWidget {

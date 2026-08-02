@@ -12,6 +12,9 @@ import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_endpoint.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store_limits.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store_persistence.dart';
+import 'package:aonw_server/src/multiplayer/server_command_outcome_projector.dart';
 import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 import 'package:aonw_server/src/observability/server_operational_event_sink.dart';
 import 'package:test/test.dart';
@@ -30,61 +33,58 @@ part 'support/realtime_match_hub_timeout_actor_cases.dart';
 void main() {
   _registerRealtimeMatchHubTurnMovementTests();
   _registerRealtimeMatchHubInitialSnapshotTests();
-  test(
-    'quickplay preserves requested civilizations for lobby players',
-    () async {
-      final hub = RealtimeMatchHub();
-      final store = _MemoryMatchStore();
+  test('quickplay preserves requested civilizations', () async {
+    final hub = RealtimeMatchHub();
+    final store = _MemoryMatchStore();
 
-      final waiting = await hub.quickplay(
+    final waiting = await hub.quickplay(
+      store: store,
+      userIdentifier: 'owner-user',
+      request: CreateMatchRequest(
+        name: 'Quickplay',
+        mapName: 'verdantia',
+        maxPlayers: 3,
+        minPlayers: 2,
+        private: false,
+        countryId: PlayerCountry.japan.name,
+      ),
+    );
+    expect(waiting.players.single.country, PlayerCountry.japan);
+    expect(waiting.maxPlayers, 4);
+    expect(waiting.minPlayers, 2);
+    expect(waiting.quickplay, isTrue);
+    expect(waiting.autoStartAt, isNull);
+
+    final joined = await hub.quickplay(
+      store: store,
+      userIdentifier: 'guest-user',
+      request: CreateMatchRequest(
+        name: 'Quickplay',
+        mapName: 'verdantia',
+        maxPlayers: 3,
+        minPlayers: 2,
+        private: false,
+        countryId: PlayerCountry.france.name,
+      ),
+    );
+
+    expect(joined.maxPlayers, 4);
+    expect(joined.minPlayers, 2);
+    expect(joined.autoStartAt, isNotNull);
+    expect(joined.players.map((player) => player.country), [
+      PlayerCountry.japan,
+      PlayerCountry.france,
+    ]);
+    await expectLater(
+      hub.joinMatch(
         store: store,
-        userIdentifier: 'owner-user',
-        request: CreateMatchRequest(
-          name: 'Quickplay',
-          mapName: 'verdantia',
-          maxPlayers: 3,
-          minPlayers: 2,
-          private: false,
-          countryId: PlayerCountry.japan.name,
-        ),
-      );
-      expect(waiting.players.single.country, PlayerCountry.japan);
-      expect(waiting.maxPlayers, 4);
-      expect(waiting.minPlayers, 2);
-      expect(waiting.quickplay, isTrue);
-      expect(waiting.autoStartAt, isNull);
-
-      final joined = await hub.quickplay(
-        store: store,
-        userIdentifier: 'guest-user',
-        request: CreateMatchRequest(
-          name: 'Quickplay',
-          mapName: 'verdantia',
-          maxPlayers: 3,
-          minPlayers: 2,
-          private: false,
-          countryId: PlayerCountry.france.name,
-        ),
-      );
-
-      expect(joined.maxPlayers, 4);
-      expect(joined.minPlayers, 2);
-      expect(joined.autoStartAt, isNotNull);
-      expect(joined.players.map((player) => player.country), [
-        PlayerCountry.japan,
-        PlayerCountry.france,
-      ]);
-      await expectLater(
-        hub.joinMatch(
-          store: store,
-          userIdentifier: 'third-user',
-          matchId: joined.id,
-          countryId: PlayerCountry.japan.name,
-        ),
-        throwsA(_multiplayerError('country_unavailable')),
-      );
-    },
-  );
+        userIdentifier: 'third-user',
+        matchId: joined.id,
+        countryId: PlayerCountry.japan.name,
+      ),
+      throwsA(_multiplayerError('country_unavailable')),
+    );
+  });
 
   test('quickplay uses one global queue regardless of requested map', () async {
     final hub = RealtimeMatchHub();
@@ -120,74 +120,71 @@ void main() {
     expect(myranth.players, hasLength(2));
   });
 
-  test(
-    'quickplay starts after two players and a 30 second countdown',
-    () async {
-      final mapCatalog = _FakeMapCatalog(_testMap());
-      var now = DateTime.utc(2026, 6, 12, 9);
-      final hub = RealtimeMatchHub(
-        nowUtc: () => now,
-        commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
-      );
-      final store = _MemoryMatchStore();
+  test('quickplay starts a 30 second countdown at two players', () async {
+    final mapCatalog = _FakeMapCatalog(_testMap());
+    var now = DateTime.utc(2026, 6, 12, 9);
+    final hub = RealtimeMatchHub(
+      nowUtc: () => now,
+      commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
+    );
+    final store = _MemoryMatchStore();
 
-      final waiting = await hub.quickplay(
-        store: store,
-        userIdentifier: 'owner-user',
-        request: CreateMatchRequest(
-          name: 'Ignored',
-          mapName: 'verdantia',
-          maxPlayers: 2,
-          minPlayers: 2,
-          private: false,
-          countryId: PlayerCountry.japan.name,
-        ),
-      );
+    final waiting = await hub.quickplay(
+      store: store,
+      userIdentifier: 'owner-user',
+      request: CreateMatchRequest(
+        name: 'Ignored',
+        mapName: 'verdantia',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+        countryId: PlayerCountry.japan.name,
+      ),
+    );
 
-      expect(waiting.state, 'open');
-      expect(waiting.maxPlayers, 4);
-      expect(waiting.minPlayers, 2);
-      expect(waiting.autoStartAt, isNull);
+    expect(waiting.state, 'open');
+    expect(waiting.maxPlayers, 4);
+    expect(waiting.minPlayers, 2);
+    expect(waiting.autoStartAt, isNull);
 
-      final countingDown = await hub.quickplay(
-        store: store,
-        userIdentifier: 'guest-user',
-        request: CreateMatchRequest(
-          name: 'Ignored',
-          mapName: 'verdantia',
-          maxPlayers: 2,
-          minPlayers: 2,
-          private: false,
-          countryId: PlayerCountry.france.name,
-        ),
-      );
+    final countingDown = await hub.quickplay(
+      store: store,
+      userIdentifier: 'guest-user',
+      request: CreateMatchRequest(
+        name: 'Ignored',
+        mapName: 'verdantia',
+        maxPlayers: 2,
+        minPlayers: 2,
+        private: false,
+        countryId: PlayerCountry.france.name,
+      ),
+    );
 
-      expect(countingDown.state, 'open');
-      expect(countingDown.autoStartAt, DateTime.utc(2026, 6, 12, 9, 0, 30));
+    expect(countingDown.state, 'open');
+    expect(countingDown.autoStartAt, DateTime.utc(2026, 6, 12, 9, 0, 30));
 
-      now = DateTime.utc(2026, 6, 12, 9, 0, 31);
-      final started = await hub.loadMatch(
-        store: store,
-        userIdentifier: 'owner-user',
-        matchId: countingDown.id,
-        snapshotFactory: InitialMultiplayerSnapshotFactory(
-          mapCatalog: mapCatalog,
-        ),
-      );
+    now = DateTime.utc(2026, 6, 12, 9, 0, 31);
+    final started = await hub.loadMatch(
+      store: store,
+      userIdentifier: 'owner-user',
+      matchId: countingDown.id,
+      snapshotFactory: InitialMultiplayerSnapshotFactory(
+        mapCatalog: mapCatalog,
+      ),
+    );
 
-      final state = await store.findState(started.id);
-      expect(started.state, 'running');
-      expect(started.turn, 1);
-      expect(started.autoStartAt, isNull);
-      expect(
-        MapPlayerCapacityRules.official.map((profile) => profile.mapName),
-        contains(started.mapName),
-      );
-      final save = GameSave.fromJson(state!.snapshot.save);
-      expect(save.mapName, started.mapName);
-      expect(save.players, hasLength(2));
-    },
-  );
+    final state = await store.findState(started.id);
+    expect(started.state, 'running');
+    expect(started.turn, 1);
+    expect(started.autoStartAt, isNull);
+    expect(
+      MapPlayerCapacityRules.official.map((profile) => profile.mapName),
+      contains(started.mapName),
+    );
+    final save = GameSave.fromJson(state!.snapshot.save);
+    expect(save.mapName, started.mapName);
+    expect(save.players, hasLength(2));
+  });
 
   test('quickplay updates a returning player civilization selection', () async {
     final now = DateTime.utc(2026, 6, 12, 9);

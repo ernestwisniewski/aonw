@@ -1,9 +1,9 @@
 import 'package:aonw/game/application/services/game_handoff.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/application/use_cases/game_command_dispatcher.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
 
 typedef ReloadGameSave = Future<GameSave> Function();
 

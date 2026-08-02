@@ -2,11 +2,11 @@ import 'package:aonw/game/application/ports/game_logger.dart';
 import 'package:aonw/game/application/services/ai_plan_precompute_cache.dart';
 import 'package:aonw/game/application/services/ai_runtime_throttler.dart';
 import 'package:aonw/game/application/services/ai_turn_precompute_scheduler.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/services/ai_turn_precompute_coordinator.dart';
 import 'package:aonw/game/presentation/services/ai_turn_precompute_runner.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

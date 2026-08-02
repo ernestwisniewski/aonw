@@ -1,4 +1,4 @@
-import 'package:aonw/game/domain/city.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 
 enum SelectionImprovementState {

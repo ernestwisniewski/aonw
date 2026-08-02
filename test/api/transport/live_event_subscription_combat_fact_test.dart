@@ -1,8 +1,9 @@
 import 'dart:async';
 
 import 'package:aonw/api/protocol/codecs.dart';
-import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/transport/live_event_subscription.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
+import 'package:aonw/game/application/ports/live_multiplayer_events.dart';
 import 'package:aonw_core/application.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';

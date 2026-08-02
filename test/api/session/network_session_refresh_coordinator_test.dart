@@ -1,11 +1,13 @@
 import 'dart:async';
 
-import 'package:aonw/api/session/auth_token.dart';
-import 'package:aonw/api/session/connection_state.dart';
-import 'package:aonw/api/session/network_session.dart';
-import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_refresh_coordinator.dart';
 import 'package:aonw/api/session/network_session_store.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
+import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
+import 'package:aonw/game/application/ports/network_session_authentication.dart';
+import 'package:aonw/game/application/ports/network_session_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as sp_auth;
@@ -62,48 +64,42 @@ void main() {
       expect(refreshCalls, 1, reason: 'a delayed 401 used the old JWT');
     });
 
-    test(
-      'keeps a rotated session in memory and retries secure persistence',
-      () async {
-        final store = _MemorySessionStore(
-          _storedSession(),
-          credentialSaveFailuresRemaining: 1,
-        );
-        NetworkSession? current = _activeSession();
-        final coordinator = _coordinator(
-          store: store,
-          currentSession: () => current,
-          setSession: (session) => current = session,
-          refreshToken: ({required refreshToken}) async {
-            expect(refreshToken, 'refresh-1');
-            return NetworkSessionRefreshResult(
-              token: AuthToken(
-                'jwt-2',
-                expiresAt: DateTime.utc(2026, 7, 10, 13),
-              ),
-              refreshToken: 'refresh-2',
-            );
-          },
-        );
-        final authKeys = NetworkSessionAuthKeyProvider(coordinator);
-        expect(await authKeys.authHeaderValue, 'Bearer jwt-1');
+    test('retries persistence after rotating the session', () async {
+      final store = _MemorySessionStore(
+        _storedSession(),
+        credentialSaveFailuresRemaining: 1,
+      );
+      NetworkSession? current = _activeSession();
+      final coordinator = _coordinator(
+        store: store,
+        currentSession: () => current,
+        setSession: (session) => current = session,
+        refreshToken: ({required refreshToken}) async {
+          expect(refreshToken, 'refresh-1');
+          return NetworkSessionRefreshResult(
+            token: AuthToken('jwt-2', expiresAt: DateTime.utc(2026, 7, 10, 13)),
+            refreshToken: 'refresh-2',
+          );
+        },
+      );
+      final authKeys = NetworkSessionAuthKeyProvider(coordinator);
+      expect(await authKeys.authHeaderValue, 'Bearer jwt-1');
 
-        expect(
-          await authKeys.refreshAuthKey(),
-          sp_auth.RefreshAuthKeyResult.success,
-        );
+      expect(
+        await authKeys.refreshAuthKey(),
+        sp_auth.RefreshAuthKeyResult.success,
+      );
 
-        expect(current?.token.value, 'jwt-2');
-        expect(current?.refreshToken, 'refresh-2');
-        expect(store.stored?.refreshToken, 'refresh-1');
-        expect(store.clearCount, 0);
-        expect(store.credentialSaveAttempts, 1);
+      expect(current?.token.value, 'jwt-2');
+      expect(current?.refreshToken, 'refresh-2');
+      expect(store.stored?.refreshToken, 'refresh-1');
+      expect(store.clearCount, 0);
+      expect(store.credentialSaveAttempts, 1);
 
-        expect(await authKeys.authHeaderValue, 'Bearer jwt-2');
-        expect(store.stored?.refreshToken, 'refresh-2');
-        expect(store.credentialSaveAttempts, 2);
-      },
-    );
+      expect(await authKeys.authHeaderValue, 'Bearer jwt-2');
+      expect(store.stored?.refreshToken, 'refresh-2');
+      expect(store.credentialSaveAttempts, 2);
+    });
 
     test(
       'retries login credentials without overwriting newer match metadata',

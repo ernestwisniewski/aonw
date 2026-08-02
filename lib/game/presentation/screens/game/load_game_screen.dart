@@ -1,4 +1,3 @@
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/l10n/game_text.dart';
@@ -11,6 +10,7 @@ import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_app_bar.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_screen_header.dart';
 import 'package:aonw/shared/widgets/scrollable_error_view.dart';
+import 'package:aonw_core/game/domain/save.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

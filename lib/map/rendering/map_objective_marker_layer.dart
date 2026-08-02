@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
@@ -10,7 +8,9 @@ import 'package:aonw/map/rendering/map_priority.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:aonw/shared/math/scale_clamp.dart';
 import 'package:aonw_core/domain/hex_coord.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:flame/components.dart';
 
 class MapObjectiveMarkerLayer extends Component with LayerAttachment {

@@ -4,7 +4,6 @@ import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/live_wire_command_dispatcher.dart';
 import 'package:aonw/game/application/use_cases/bootstrap_game_state_use_case.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/presentation/providers/game/game_state_provider_multiplayer_sync.dart';
@@ -14,6 +13,7 @@ import 'package:aonw/game/presentation/providers/session/repository_providers.da
 import 'package:aonw/game/presentation/providers/session/session_providers.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/save.dart';
 
 final class GameStateApplicationBootstrap {
   const GameStateApplicationBootstrap({

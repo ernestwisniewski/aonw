@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/hex_assessment/hex_score.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 
 enum HexAssessmentKind {
   idealCitySite,

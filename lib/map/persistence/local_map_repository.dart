@@ -1,8 +1,8 @@
 import 'package:aonw/map/application/map_repository.dart';
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/map/persistence/map_catalog.dart';
 import 'package:aonw/map/persistence/map_storage.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 
 class LocalMapRepository implements MapRepository {
   const LocalMapRepository();

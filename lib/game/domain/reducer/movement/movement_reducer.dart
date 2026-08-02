@@ -9,6 +9,7 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_auto_explore_advancer.dart';
@@ -18,8 +19,8 @@ import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 part 'movement_reducer_auto_explore.dart';
 part 'movement_reducer_move_preview.dart';
-part 'movement_selection_projector.dart';
 part 'movement_reducer_turn_reset.dart';
+part 'movement_selection_projector.dart';
 
 abstract final class MovementReducer {
   static GameClientState toggleMoveTargetingWithEnvironment(

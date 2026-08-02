@@ -1,4 +1,3 @@
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_tile_markers.dart';
@@ -9,6 +8,7 @@ import 'package:aonw/map/rendering/tile/hex_tile_geometry_layout.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_overlay_geometry.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_painter.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';

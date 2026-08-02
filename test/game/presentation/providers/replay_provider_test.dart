@@ -3,15 +3,15 @@ import 'dart:async';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
-import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/replay_service.dart';
 import 'package:aonw/game/presentation/providers/replay/replay_providers.dart';
 import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:aonw/game/presentation/providers/session/session_providers.dart';
-import 'package:aonw/map/domain/map_selection.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/game/domain/state.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

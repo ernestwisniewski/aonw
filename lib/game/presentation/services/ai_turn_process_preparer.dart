@@ -10,10 +10,11 @@ import 'package:aonw/game/application/services/ai_turn_command_executor.dart';
 import 'package:aonw/game/application/services/ai_turn_runner.dart';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/use_cases/run_ai_turn_use_case.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/game/domain/state.dart';
 
 typedef AiTurnSessionReader = GameSession? Function();
 

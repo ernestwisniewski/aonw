@@ -5,6 +5,7 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store_limits.dart';
 import 'package:serverpod/serverpod.dart' show QueryParameters;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
@@ -20,15 +21,12 @@ void main() {
     (sessionBuilder, endpoints) {
       _registerMultiplayerEndpointMovementSmokeTests(sessionBuilder, endpoints);
 
-      test(
-        'rejects unauthenticated calls through Serverpod dispatch',
-        () async {
-          await expectLater(
-            endpoints.multiplayer.listMatches(sessionBuilder),
-            throwsA(isA<ServerpodUnauthenticatedException>()),
-          );
-        },
-      );
+      test('rejects unauthenticated Serverpod calls', () async {
+        await expectLater(
+          endpoints.multiplayer.listMatches(sessionBuilder),
+          throwsA(isA<ServerpodUnauthenticatedException>()),
+        );
+      });
 
       test('rejects duplicate multiplayer nicknames', () async {
         _ensureAuthServices();

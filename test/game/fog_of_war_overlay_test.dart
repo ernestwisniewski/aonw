@@ -3,10 +3,10 @@ import 'dart:ui' as ui;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_war_overlay.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_war_overlay_layer.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
 

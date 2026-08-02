@@ -1,5 +1,5 @@
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'editor_state.freezed.dart';

@@ -1,9 +1,9 @@
 import 'package:aonw/map/application/map_repository.dart';
-import 'package:aonw/map/domain/map_selection.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/persistence/local_map_repository.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

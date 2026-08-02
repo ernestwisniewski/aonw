@@ -1,6 +1,6 @@
-import 'package:aonw/api/session/auth_token.dart';
-import 'package:aonw/api/session/network_session_client.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw/game/application/ports/multiplayer_failure.dart';
+import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
 import 'package:aonw/game/presentation/screens/lobby/multiplayer_account_dialog.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:flutter/foundation.dart';

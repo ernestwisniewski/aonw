@@ -1,6 +1,6 @@
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
+import 'package:aonw_core/game/domain/save.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final hudPanelControllerProvider =

@@ -3,9 +3,9 @@ import 'dart:ui' as ui;
 
 import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/services/map_saver.dart';
-import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';

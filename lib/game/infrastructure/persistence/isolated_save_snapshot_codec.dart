@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:isolate';
 
-import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/infrastructure/persistence/save_snapshot_codec.dart';
 import 'package:aonw/game/infrastructure/persistence/save_snapshot_envelope_codec.dart';
+import 'package:aonw_core/game/domain/state.dart';
 
 /// Moves potentially large save/replay JSON work away from the UI isolate.
 abstract final class IsolatedSaveSnapshotCodec {

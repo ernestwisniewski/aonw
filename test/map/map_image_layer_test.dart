@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:aonw/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/map_image_layer.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;

@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:aonw/game/application/ports/activity_history_entry.dart';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/replay_service.dart';
@@ -15,28 +16,28 @@ import 'package:aonw/game/presentation/widgets.dart';
 import 'package:aonw/game/presentation/widgets/hud/overlay/turn_start_banner_overlay.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/shared/providers/gameplay_settings_provider.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/scrollable_error_view.dart';
 import 'package:aonw/shared/widgets/viewport_gesture_layer.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-part 'replay_renderer_host.dart';
-part 'replay_renderer_host_lifecycle.dart';
-part 'replay_renderer_host_controls.dart';
-part 'replay_surface_widgets.dart';
-part 'replay_controls.dart';
-part 'replay_event_summary.dart';
-part 'replay_control_selectors.dart';
 part 'replay_control_buttons.dart';
+part 'replay_control_selectors.dart';
+part 'replay_controls.dart';
 part 'replay_error_view.dart';
+part 'replay_event_summary.dart';
+part 'replay_renderer_host.dart';
+part 'replay_renderer_host_controls.dart';
+part 'replay_renderer_host_lifecycle.dart';
+part 'replay_surface_widgets.dart';
 
 const _replayViewportSize = Size(640, 360);
 

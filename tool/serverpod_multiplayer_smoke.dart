@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:aonw/api/protocol/codecs.dart';
-import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';

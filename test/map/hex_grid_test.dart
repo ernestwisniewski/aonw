@@ -1,14 +1,14 @@
 import 'dart:math' as math;
 
-import 'package:aonw/map/domain/hex_grid_topology.dart';
-import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_tile.dart';
 import 'package:aonw/map/rendering/hex_tile_markers.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/map/domain/hex_grid_topology.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 WorldMap _map() => WorldMap(

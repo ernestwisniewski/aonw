@@ -1,6 +1,6 @@
 import 'package:aonw/game/application/services/game_event_descriptor.dart';
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 

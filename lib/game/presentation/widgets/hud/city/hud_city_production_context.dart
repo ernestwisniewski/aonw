@@ -1,6 +1,6 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
+import 'package:aonw_core/game/domain/city.dart';
 
 class HudCityProductionContext {
   final GameCity? city;

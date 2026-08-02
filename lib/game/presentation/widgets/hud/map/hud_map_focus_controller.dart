@@ -1,4 +1,3 @@
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
@@ -6,6 +5,7 @@ import 'package:aonw/game/presentation/providers/renderer/renderer_provider.dart
 import 'package:aonw/game/presentation/widgets/hud/map/hud_map_focus_target.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

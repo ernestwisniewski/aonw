@@ -1,7 +1,5 @@
 import 'package:aonw/game/application/ports/activity_history_entry.dart';
 import 'package:aonw/game/application/services/game_event_descriptor.dart';
-import 'package:aonw/game/domain/city.dart';
-import 'package:aonw/game/domain/game_save.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/combat_modifier_labels.dart';
 import 'package:aonw/game/presentation/formatters/diplomacy_history_presenter.dart';
@@ -10,15 +8,17 @@ import 'package:aonw/game/presentation/formatters/game_value_formatters.dart';
 import 'package:aonw/game/presentation/formatters/stability_event_messages.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
-part 'game_event_notification_combat_messages.dart';
 part 'game_event_notification_city_messages.dart';
+part 'game_event_notification_combat_messages.dart';
 part 'game_event_notification_player_names.dart';
 
 class GameEventNotificationMessage {

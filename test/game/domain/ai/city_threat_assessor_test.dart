@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/ai/city_threat_assessor.dart';
-import 'package:aonw/game/domain/city.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/domain/intended_attack.dart';
+import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';

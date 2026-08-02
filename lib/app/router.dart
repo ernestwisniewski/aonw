@@ -4,12 +4,12 @@ import 'package:aonw/editor/editor_map_picker_screen.dart';
 import 'package:aonw/editor/map_editor_screen.dart';
 import 'package:aonw/game/presentation/screens.dart';
 import 'package:aonw/game/presentation/screens/new_game/initial_player_country.dart';
-import 'package:aonw/map/domain/map_selection.dart';
 import 'package:aonw/menu/credits_screen.dart';
 import 'package:aonw/menu/main_menu_screen.dart';
 import 'package:aonw/menu/manual_screen.dart';
 import 'package:aonw/menu/options_screen.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

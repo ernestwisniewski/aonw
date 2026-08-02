@@ -1,9 +1,9 @@
-import 'package:aonw/map/domain/map_config.dart';
-import 'package:aonw/map/domain/map_view_mode.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/map_image_layer.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 

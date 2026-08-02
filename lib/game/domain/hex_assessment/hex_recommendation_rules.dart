@@ -1,7 +1,7 @@
 import 'package:aonw/game/domain/hex_assessment/hex_assessment_model.dart';
 import 'package:aonw/game/domain/hex_assessment/hex_kind_groups.dart';
 import 'package:aonw/game/domain/hex_assessment/hex_score.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class HexRecommendationRules {
   static HexRecommendation recommend({

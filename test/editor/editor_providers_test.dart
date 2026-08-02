@@ -1,9 +1,9 @@
 import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/engine/editor_state.dart';
 import 'package:aonw/editor/providers/editor_providers.dart';
-import 'package:aonw/map/domain/map_constraints.dart';
-import 'package:aonw/map/domain/terrain_type.dart';
 import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/map/domain/map_constraints.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
