@@ -260,12 +260,12 @@
         },
         "multiplayer": {
           "files": {
-            "hit": 50,
-            "found": 52
+            "hit": 59,
+            "found": 59
           },
           "lines": {
-            "hit": 2260,
-            "found": 2798
+            "hit": 2579,
+            "found": 2803
           }
         },
         "observability": {
@@ -274,7 +274,7 @@
             "found": 1
           },
           "lines": {
-            "hit": 34,
+            "hit": 36,
             "found": 39
           }
         },
