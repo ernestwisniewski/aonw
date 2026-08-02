@@ -4,6 +4,8 @@ import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/presentation_parity_events.dart';
+
 const _eventDirectory = 'packages/aonw_core/lib/game/domain/event';
 const _descriptorPath =
     'lib/game/application/services/game_event_descriptor.dart';
@@ -249,6 +251,14 @@ void _expectCompleteInventory(
   expect(descriptorCases.toSet(), hasLength(descriptorCases.length));
   expect(concreteEvents, hasLength(41));
   expect(_presentationCatalog.keys.toSet(), concreteEvents);
+  expect(
+    presentationGameEvents.map((event) => '${event.runtimeType}').toSet(),
+    concreteEvents,
+  );
+  expect(
+    presentationGameEvents.map((event) => '${event.runtimeType}').toSet(),
+    hasLength(presentationGameEvents.length),
+  );
   expect(
     _presentationCatalog.values.every(
       (decision) => decision.rationale.trim().isNotEmpty,
