@@ -1,4 +1,6 @@
 import 'package:aonw_server/src/auth/auth_maintenance_future_call.dart';
+import 'package:aonw_server/src/auth/external_auth_route.dart';
+import 'package:aonw_server/src/auth/external_auth_service.dart';
 import 'package:aonw_server/src/auth/steam_auth_route.dart';
 import 'package:aonw_server/src/auth/steam_auth_service.dart';
 import 'package:aonw_server/src/generated/endpoints.dart';
@@ -17,18 +19,33 @@ Future<void> run(List<String> args) async {
   final turnTimeoutSweepRegistered = _registerTurnTimeoutSweep(pod);
   final authMaintenanceRegistered = _registerAuthMaintenance(pod);
   final appleConfigured = _appleIdpConfigured(pod);
+  final googleConfigured = _hasPassword(pod, 'googleClientSecret');
 
   pod.initializeAuthServices(
     tokenManagerBuilders: [auth_core.JwtConfigFromPasswords()],
     identityProviderBuilders: [
-      if (_hasPassword(pod, 'googleClientSecret'))
-        google.GoogleIdpConfigFromPasswords(),
+      if (googleConfigured) google.GoogleIdpConfigFromPasswords(),
       if (appleConfigured) apple.AppleIdpConfigFromPasswords(),
     ],
   );
 
   if (appleConfigured) {
-    pod.configureAppleIdpRoutes();
+    pod.configureAppleIdpRoutes(webAuthenticationCallbackRoutePath: null);
+    pod.webServer.addRoute(
+      AppleExternalAuthCallbackRoute(
+        androidPackageIdentifier: pod.getPassword(
+          'appleAndroidPackageIdentifier',
+        ),
+        webRedirectUri: pod.getPassword('appleWebRedirectUri'),
+      ),
+      ExternalAuthService.appleCallbackPath,
+    );
+  }
+  if (googleConfigured) {
+    pod.webServer.addRoute(
+      GoogleExternalAuthCallbackRoute(),
+      ExternalAuthService.googleCallbackPath,
+    );
   }
   pod.webServer.addRoute(
     SteamAuthCallbackRoute(),

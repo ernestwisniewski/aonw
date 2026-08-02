@@ -1,5 +1,6 @@
 import 'package:aonw/api/session/auth_token.dart';
 import 'package:aonw/api/session/connection_state.dart';
+import 'package:aonw/api/session/external_auth_browser.dart';
 import 'package:aonw/api/session/network_session.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
@@ -9,7 +10,6 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as sp_auth;
-import 'package:url_launcher/url_launcher.dart';
 
 part 'network_session_client_version_status.dart';
 
@@ -219,29 +219,78 @@ class NetworkSessionClient {
   }
 
   Future<NetworkAuthResult> loginWithSteam() async {
+    final browser = prepareExternalAuthBrowser();
     final client = _activeAnonymousClient;
-    final start = await client.steamAuth.start();
-    final opened = await launchUrl(
-      Uri.parse(start.authUrl),
-      mode: LaunchMode.externalApplication,
-    );
-    if (!opened) {
-      throw StateError('Could not open Steam sign-in.');
-    }
-
-    while (DateTime.now().toUtc().isBefore(start.expiresAt.toUtc())) {
-      await Future<void>.delayed(const Duration(seconds: 1));
-      final poll = await client.steamAuth.poll(requestId: start.requestId);
-      final auth = poll.auth;
-      if (auth != null) {
-        return completeSocialAuth(auth: auth);
+    var navigated = false;
+    try {
+      final start = await client.steamAuth.start();
+      final opened = await browser.navigate(Uri.parse(start.authUrl));
+      if (!opened) {
+        throw StateError('Could not open Steam sign-in.');
       }
-      if (poll.status != 'pending') {
-        throw StateError('Steam sign-in failed: ${poll.error ?? poll.status}');
-      }
-    }
+      navigated = true;
 
-    throw StateError('Steam sign-in expired.');
+      while (DateTime.now().toUtc().isBefore(start.expiresAt.toUtc())) {
+        await Future<void>.delayed(const Duration(seconds: 1));
+        final poll = await client.steamAuth.poll(requestId: start.requestId);
+        final auth = poll.auth;
+        if (auth != null) {
+          final result = await completeSocialAuth(auth: auth);
+          browser.close();
+          return result;
+        }
+        if (poll.status != 'pending') {
+          throw StateError(
+            'Steam sign-in failed: ${poll.error ?? poll.status}',
+          );
+        }
+      }
+
+      throw StateError('Steam sign-in expired.');
+    } catch (_) {
+      if (!navigated) browser.close();
+      rethrow;
+    }
+  }
+
+  Future<NetworkAuthResult> loginWithExternalProvider({
+    required String provider,
+  }) async {
+    if (provider != 'apple' && provider != 'google') {
+      throw ArgumentError.value(provider, 'provider', 'Unsupported provider');
+    }
+    final browser = prepareExternalAuthBrowser();
+    final client = _activeAnonymousClient;
+    var navigated = false;
+    try {
+      final start = await client.externalAuth.start(provider: provider);
+      final opened = await browser.navigate(Uri.parse(start.authUrl));
+      if (!opened) {
+        throw StateError('Could not open $provider sign-in.');
+      }
+      navigated = true;
+
+      while (DateTime.now().toUtc().isBefore(start.expiresAt.toUtc())) {
+        await Future<void>.delayed(const Duration(seconds: 1));
+        final poll = await client.externalAuth.poll(requestId: start.requestId);
+        final auth = poll.auth;
+        if (auth != null) {
+          final result = await completeSocialAuth(auth: auth);
+          browser.close();
+          return result;
+        }
+        if (poll.status != 'pending' && poll.status != 'processing') {
+          throw StateError(
+            '$provider sign-in failed: ${poll.error ?? poll.status}',
+          );
+        }
+      }
+
+      throw StateError('$provider sign-in expired.');
+    } catch (_) {
+      if (!navigated) browser.close();
+      rethrow;
+    }
   }
 
   Future<List<WireMatch>> listMatches({

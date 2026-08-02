@@ -15,6 +15,9 @@ enum AuthRateLimitAction {
   steamStart,
   steamPoll,
   steamCallback,
+  externalAuthStart,
+  externalAuthPoll,
+  externalAuthCallback,
   jwtRefresh,
   sessionLogout,
 }
@@ -142,6 +145,20 @@ final class DatabaseAuthRateLimiter implements AuthRequestLimiter {
         maxCredentialAttempts: 700,
       ),
       AuthRateLimitAction.steamCallback => const AuthRateLimitPolicy(
+        timeframe: Duration(minutes: 15),
+        maxIpAttempts: 60,
+        maxCredentialAttempts: 5,
+      ),
+      AuthRateLimitAction.externalAuthStart => const AuthRateLimitPolicy(
+        timeframe: Duration(minutes: 10),
+        maxIpAttempts: 20,
+      ),
+      AuthRateLimitAction.externalAuthPoll => const AuthRateLimitPolicy(
+        timeframe: Duration(minutes: 15),
+        maxIpAttempts: 2000,
+        maxCredentialAttempts: 700,
+      ),
+      AuthRateLimitAction.externalAuthCallback => const AuthRateLimitPolicy(
         timeframe: Duration(minutes: 15),
         maxIpAttempts: 60,
         maxCredentialAttempts: 5,

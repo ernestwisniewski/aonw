@@ -20,6 +20,7 @@ extension _LobbyScreenSessionActions on _LobbyScreenState {
       socialAuthClientFactory: () =>
           createMultiplayerSocialAuthClient(client.serverpodHost),
       completeSocialAuth: client.completeSocialAuth,
+      externalAuth: client.loginWithExternalProvider,
       steamAuth: client.loginWithSteam,
       initialDisplayName: initialDisplayName,
     );

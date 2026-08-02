@@ -7,6 +7,15 @@ import '../../tool/release/options.dart';
 void main() {
   final makefile = File('Makefile').readAsStringSync();
   final docs = File('docs/build-and-deploy.md').readAsStringSync();
+  final webIndex = File('web/index.html').readAsStringSync();
+
+  test('web shell loads the Apple sign-in SDK', () {
+    const appleSdk =
+        'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/'
+        'en_US/appleid.auth.js';
+    expect(webIndex, contains(appleSdk));
+    expect(makefile, contains('rg -F "$appleSdk" build/web/index.html'));
+  });
 
   test('public release options have one documented default registry', () {
     expect(releaseOptions, hasLength(17));

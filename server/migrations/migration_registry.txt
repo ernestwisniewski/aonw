@@ -11,3 +11,4 @@
 20260710114609962-multiplayer-query-indexes
 20260711112611502-quickplay-map-index
 20260711223706381-public-multiplayer-stats
+20260802115854448-external-desktop-auth

@@ -18,23 +18,29 @@ import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i4;
 import 'auth/models/account.dart' as _i5;
 import 'auth/models/account_auth_exception.dart' as _i6;
-import 'auth/models/steam_account.dart' as _i7;
-import 'auth/models/steam_auth_poll_result.dart' as _i8;
-import 'auth/models/steam_auth_request.dart' as _i9;
-import 'auth/models/steam_auth_start.dart' as _i10;
-import 'multiplayer/models/create_match_request.dart' as _i11;
-import 'multiplayer/models/game_event.dart' as _i12;
-import 'multiplayer/models/game_match.dart' as _i13;
-import 'multiplayer/models/game_player.dart' as _i14;
-import 'multiplayer/models/game_snapshot.dart' as _i15;
-import 'multiplayer/models/multiplayer_client_message.dart' as _i16;
-import 'multiplayer/models/multiplayer_exception.dart' as _i17;
-import 'multiplayer/models/multiplayer_server_message.dart' as _i18;
-import 'package:aonw_core/protocol.dart' as _i19;
-import 'package:aonw_core/protocol/wire_match.dart' as _i20;
-import 'package:aonw_core/protocol/wire_event.dart' as _i21;
+import 'auth/models/external_auth_poll_result.dart' as _i7;
+import 'auth/models/external_auth_request.dart' as _i8;
+import 'auth/models/external_auth_start.dart' as _i9;
+import 'auth/models/steam_account.dart' as _i10;
+import 'auth/models/steam_auth_poll_result.dart' as _i11;
+import 'auth/models/steam_auth_request.dart' as _i12;
+import 'auth/models/steam_auth_start.dart' as _i13;
+import 'multiplayer/models/create_match_request.dart' as _i14;
+import 'multiplayer/models/game_event.dart' as _i15;
+import 'multiplayer/models/game_match.dart' as _i16;
+import 'multiplayer/models/game_player.dart' as _i17;
+import 'multiplayer/models/game_snapshot.dart' as _i18;
+import 'multiplayer/models/multiplayer_client_message.dart' as _i19;
+import 'multiplayer/models/multiplayer_exception.dart' as _i20;
+import 'multiplayer/models/multiplayer_server_message.dart' as _i21;
+import 'package:aonw_core/protocol.dart' as _i22;
+import 'package:aonw_core/protocol/wire_match.dart' as _i23;
+import 'package:aonw_core/protocol/wire_event.dart' as _i24;
 export 'auth/models/account.dart';
 export 'auth/models/account_auth_exception.dart';
+export 'auth/models/external_auth_poll_result.dart';
+export 'auth/models/external_auth_request.dart';
+export 'auth/models/external_auth_start.dart';
 export 'auth/models/steam_account.dart';
 export 'auth/models/steam_auth_poll_result.dart';
 export 'auth/models/steam_auth_request.dart';
@@ -286,6 +292,186 @@ class Protocol extends _i1.SerializationManagerServer {
           ],
           type: 'btree',
           isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'aonw_external_auth_request',
+      dartName: 'ExternalAuthRequest',
+      schema: 'public',
+      module: 'aonw',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'gen_random_uuid_v7()',
+        ),
+        _i2.ColumnDefinition(
+          name: 'requestId',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'state',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'provider',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'status',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'codeVerifier',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'error',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'authStrategy',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'token',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'tokenExpiresAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'refreshToken',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'authUserId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'scopeNames',
+          columnType: _i2.ColumnType.json,
+          isNullable: true,
+          dartType: 'List<String>?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'completedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'consumedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'aonw_external_auth_request_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'aonw_external_auth_request_request_id_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'requestId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'aonw_external_auth_request_state_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'state',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'aonw_external_auth_request_status_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'status',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'aonw_external_auth_request_expires_at_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'expiresAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
           isPrimary: false,
         ),
       ],
@@ -1041,41 +1227,50 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i6.AccountAuthException) {
       return _i6.AccountAuthException.fromJson(data) as T;
     }
-    if (t == _i7.SteamAccount) {
-      return _i7.SteamAccount.fromJson(data) as T;
+    if (t == _i7.ExternalAuthPollResult) {
+      return _i7.ExternalAuthPollResult.fromJson(data) as T;
     }
-    if (t == _i8.SteamAuthPollResult) {
-      return _i8.SteamAuthPollResult.fromJson(data) as T;
+    if (t == _i8.ExternalAuthRequest) {
+      return _i8.ExternalAuthRequest.fromJson(data) as T;
     }
-    if (t == _i9.SteamAuthRequest) {
-      return _i9.SteamAuthRequest.fromJson(data) as T;
+    if (t == _i9.ExternalAuthStart) {
+      return _i9.ExternalAuthStart.fromJson(data) as T;
     }
-    if (t == _i10.SteamAuthStart) {
-      return _i10.SteamAuthStart.fromJson(data) as T;
+    if (t == _i10.SteamAccount) {
+      return _i10.SteamAccount.fromJson(data) as T;
     }
-    if (t == _i11.CreateMatchRequest) {
-      return _i11.CreateMatchRequest.fromJson(data) as T;
+    if (t == _i11.SteamAuthPollResult) {
+      return _i11.SteamAuthPollResult.fromJson(data) as T;
     }
-    if (t == _i12.GameEvent) {
-      return _i12.GameEvent.fromJson(data) as T;
+    if (t == _i12.SteamAuthRequest) {
+      return _i12.SteamAuthRequest.fromJson(data) as T;
     }
-    if (t == _i13.GameMatch) {
-      return _i13.GameMatch.fromJson(data) as T;
+    if (t == _i13.SteamAuthStart) {
+      return _i13.SteamAuthStart.fromJson(data) as T;
     }
-    if (t == _i14.GamePlayer) {
-      return _i14.GamePlayer.fromJson(data) as T;
+    if (t == _i14.CreateMatchRequest) {
+      return _i14.CreateMatchRequest.fromJson(data) as T;
     }
-    if (t == _i15.GameSnapshot) {
-      return _i15.GameSnapshot.fromJson(data) as T;
+    if (t == _i15.GameEvent) {
+      return _i15.GameEvent.fromJson(data) as T;
     }
-    if (t == _i16.MultiplayerClientMessage) {
-      return _i16.MultiplayerClientMessage.fromJson(data) as T;
+    if (t == _i16.GameMatch) {
+      return _i16.GameMatch.fromJson(data) as T;
     }
-    if (t == _i17.MultiplayerException) {
-      return _i17.MultiplayerException.fromJson(data) as T;
+    if (t == _i17.GamePlayer) {
+      return _i17.GamePlayer.fromJson(data) as T;
     }
-    if (t == _i18.MultiplayerServerMessage) {
-      return _i18.MultiplayerServerMessage.fromJson(data) as T;
+    if (t == _i18.GameSnapshot) {
+      return _i18.GameSnapshot.fromJson(data) as T;
+    }
+    if (t == _i19.MultiplayerClientMessage) {
+      return _i19.MultiplayerClientMessage.fromJson(data) as T;
+    }
+    if (t == _i20.MultiplayerException) {
+      return _i20.MultiplayerException.fromJson(data) as T;
+    }
+    if (t == _i21.MultiplayerServerMessage) {
+      return _i21.MultiplayerServerMessage.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.AonwAccount?>()) {
       return (data != null ? _i5.AonwAccount.fromJson(data) : null) as T;
@@ -1084,153 +1279,173 @@ class Protocol extends _i1.SerializationManagerServer {
       return (data != null ? _i6.AccountAuthException.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i7.SteamAccount?>()) {
-      return (data != null ? _i7.SteamAccount.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i8.SteamAuthPollResult?>()) {
-      return (data != null ? _i8.SteamAuthPollResult.fromJson(data) : null)
+    if (t == _i1.getType<_i7.ExternalAuthPollResult?>()) {
+      return (data != null ? _i7.ExternalAuthPollResult.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i9.SteamAuthRequest?>()) {
-      return (data != null ? _i9.SteamAuthRequest.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i10.SteamAuthStart?>()) {
-      return (data != null ? _i10.SteamAuthStart.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i11.CreateMatchRequest?>()) {
-      return (data != null ? _i11.CreateMatchRequest.fromJson(data) : null)
+    if (t == _i1.getType<_i8.ExternalAuthRequest?>()) {
+      return (data != null ? _i8.ExternalAuthRequest.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i12.GameEvent?>()) {
-      return (data != null ? _i12.GameEvent.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i9.ExternalAuthStart?>()) {
+      return (data != null ? _i9.ExternalAuthStart.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i13.GameMatch?>()) {
-      return (data != null ? _i13.GameMatch.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i10.SteamAccount?>()) {
+      return (data != null ? _i10.SteamAccount.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i14.GamePlayer?>()) {
-      return (data != null ? _i14.GamePlayer.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i11.SteamAuthPollResult?>()) {
+      return (data != null ? _i11.SteamAuthPollResult.fromJson(data) : null)
+          as T;
     }
-    if (t == _i1.getType<_i15.GameSnapshot?>()) {
-      return (data != null ? _i15.GameSnapshot.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i12.SteamAuthRequest?>()) {
+      return (data != null ? _i12.SteamAuthRequest.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i16.MultiplayerClientMessage?>()) {
+    if (t == _i1.getType<_i13.SteamAuthStart?>()) {
+      return (data != null ? _i13.SteamAuthStart.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i14.CreateMatchRequest?>()) {
+      return (data != null ? _i14.CreateMatchRequest.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i15.GameEvent?>()) {
+      return (data != null ? _i15.GameEvent.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i16.GameMatch?>()) {
+      return (data != null ? _i16.GameMatch.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i17.GamePlayer?>()) {
+      return (data != null ? _i17.GamePlayer.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i18.GameSnapshot?>()) {
+      return (data != null ? _i18.GameSnapshot.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i19.MultiplayerClientMessage?>()) {
       return (data != null
-              ? _i16.MultiplayerClientMessage.fromJson(data)
+              ? _i19.MultiplayerClientMessage.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i17.MultiplayerException?>()) {
-      return (data != null ? _i17.MultiplayerException.fromJson(data) : null)
+    if (t == _i1.getType<_i20.MultiplayerException?>()) {
+      return (data != null ? _i20.MultiplayerException.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i18.MultiplayerServerMessage?>()) {
+    if (t == _i1.getType<_i21.MultiplayerServerMessage?>()) {
       return (data != null
-              ? _i18.MultiplayerServerMessage.fromJson(data)
+              ? _i21.MultiplayerServerMessage.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i19.WireEvent) {
-      return _i19.WireEvent.fromJson(data) as T;
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i14.GamePlayer>) {
-      return (data as List).map((e) => deserialize<_i14.GamePlayer>(e)).toList()
+    if (t == _i1.getType<List<String>?>()) {
+      return (data != null
+              ? (data as List).map((e) => deserialize<String>(e)).toList()
+              : null)
           as T;
     }
-    if (t == _i1.getType<List<_i14.GamePlayer>?>()) {
+    if (t == _i22.WireEvent) {
+      return _i22.WireEvent.fromJson(data) as T;
+    }
+    if (t == List<_i17.GamePlayer>) {
+      return (data as List).map((e) => deserialize<_i17.GamePlayer>(e)).toList()
+          as T;
+    }
+    if (t == _i1.getType<List<_i17.GamePlayer>?>()) {
       return (data != null
               ? (data as List)
-                    .map((e) => deserialize<_i14.GamePlayer>(e))
+                    .map((e) => deserialize<_i17.GamePlayer>(e))
                     .toList()
               : null)
           as T;
     }
-    if (t == List<_i15.GameSnapshot>) {
+    if (t == List<_i18.GameSnapshot>) {
       return (data as List)
-              .map((e) => deserialize<_i15.GameSnapshot>(e))
+              .map((e) => deserialize<_i18.GameSnapshot>(e))
               .toList()
           as T;
     }
-    if (t == _i1.getType<List<_i15.GameSnapshot>?>()) {
+    if (t == _i1.getType<List<_i18.GameSnapshot>?>()) {
       return (data != null
               ? (data as List)
-                    .map((e) => deserialize<_i15.GameSnapshot>(e))
+                    .map((e) => deserialize<_i18.GameSnapshot>(e))
                     .toList()
               : null)
           as T;
     }
-    if (t == List<_i12.GameEvent>) {
-      return (data as List).map((e) => deserialize<_i12.GameEvent>(e)).toList()
+    if (t == List<_i15.GameEvent>) {
+      return (data as List).map((e) => deserialize<_i15.GameEvent>(e)).toList()
           as T;
     }
-    if (t == _i1.getType<List<_i12.GameEvent>?>()) {
+    if (t == _i1.getType<List<_i15.GameEvent>?>()) {
       return (data != null
               ? (data as List)
-                    .map((e) => deserialize<_i12.GameEvent>(e))
+                    .map((e) => deserialize<_i15.GameEvent>(e))
                     .toList()
               : null)
           as T;
     }
-    if (t == _i19.WireSnapshot) {
-      return _i19.WireSnapshot.fromJson(data) as T;
+    if (t == _i22.WireSnapshot) {
+      return _i22.WireSnapshot.fromJson(data) as T;
     }
-    if (t == _i1.getType<_i19.WireCommand?>()) {
-      return (data != null ? _i19.WireCommand.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.WireCommand?>()) {
+      return (data != null ? _i22.WireCommand.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.WireMatch?>()) {
-      return (data != null ? _i19.WireMatch.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.WireMatch?>()) {
+      return (data != null ? _i22.WireMatch.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.WireSnapshot?>()) {
-      return (data != null ? _i19.WireSnapshot.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.WireSnapshot?>()) {
+      return (data != null ? _i22.WireSnapshot.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.WireEvent?>()) {
-      return (data != null ? _i19.WireEvent.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.WireEvent?>()) {
+      return (data != null ? _i22.WireEvent.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.WireCommandAck?>()) {
-      return (data != null ? _i19.WireCommandAck.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.WireCommandAck?>()) {
+      return (data != null ? _i22.WireCommandAck.fromJson(data) : null) as T;
     }
-    if (t == List<_i20.WireMatch>) {
-      return (data as List).map((e) => deserialize<_i20.WireMatch>(e)).toList()
+    if (t == List<_i23.WireMatch>) {
+      return (data as List).map((e) => deserialize<_i23.WireMatch>(e)).toList()
           as T;
     }
-    if (t == List<_i21.WireEvent>) {
-      return (data as List).map((e) => deserialize<_i21.WireEvent>(e)).toList()
+    if (t == List<_i24.WireEvent>) {
+      return (data as List).map((e) => deserialize<_i24.WireEvent>(e)).toList()
           as T;
     }
-    if (t == _i19.WireAiPlayer) {
-      return _i19.WireAiPlayer.fromJson(data) as T;
+    if (t == _i22.WireAiPlayer) {
+      return _i22.WireAiPlayer.fromJson(data) as T;
     }
-    if (t == _i19.WireCommand) {
-      return _i19.WireCommand.fromJson(data) as T;
+    if (t == _i22.WireCommand) {
+      return _i22.WireCommand.fromJson(data) as T;
     }
-    if (t == _i19.WireCommandAck) {
-      return _i19.WireCommandAck.fromJson(data) as T;
+    if (t == _i22.WireCommandAck) {
+      return _i22.WireCommandAck.fromJson(data) as T;
     }
-    if (t == _i19.WireMatch) {
-      return _i19.WireMatch.fromJson(data) as T;
+    if (t == _i22.WireMatch) {
+      return _i22.WireMatch.fromJson(data) as T;
     }
-    if (t == _i19.WirePlayer) {
-      return _i19.WirePlayer.fromJson(data) as T;
+    if (t == _i22.WirePlayer) {
+      return _i22.WirePlayer.fromJson(data) as T;
     }
-    if (t == _i1.getType<_i19.WireAiPlayer?>()) {
-      return (data != null ? _i19.WireAiPlayer.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.WireAiPlayer?>()) {
+      return (data != null ? _i22.WireAiPlayer.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.WireCommand?>()) {
-      return (data != null ? _i19.WireCommand.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.WireCommand?>()) {
+      return (data != null ? _i22.WireCommand.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.WireCommandAck?>()) {
-      return (data != null ? _i19.WireCommandAck.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.WireCommandAck?>()) {
+      return (data != null ? _i22.WireCommandAck.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.WireEvent?>()) {
-      return (data != null ? _i19.WireEvent.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.WireEvent?>()) {
+      return (data != null ? _i22.WireEvent.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.WireMatch?>()) {
-      return (data != null ? _i19.WireMatch.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.WireMatch?>()) {
+      return (data != null ? _i22.WireMatch.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.WirePlayer?>()) {
-      return (data != null ? _i19.WirePlayer.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.WirePlayer?>()) {
+      return (data != null ? _i22.WirePlayer.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.WireSnapshot?>()) {
-      return (data != null ? _i19.WireSnapshot.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.WireSnapshot?>()) {
+      return (data != null ? _i22.WireSnapshot.fromJson(data) : null) as T;
     }
     try {
       return _i3.Protocol().deserialize<T>(data, t);
@@ -1246,27 +1461,30 @@ class Protocol extends _i1.SerializationManagerServer {
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
-      _i19.WireAiPlayer => 'WireAiPlayer',
-      _i19.WireCommand => 'WireCommand',
-      _i19.WireCommandAck => 'WireCommandAck',
-      _i19.WireEvent => 'WireEvent',
-      _i19.WireMatch => 'WireMatch',
-      _i19.WirePlayer => 'WirePlayer',
-      _i19.WireSnapshot => 'WireSnapshot',
+      _i22.WireAiPlayer => 'WireAiPlayer',
+      _i22.WireCommand => 'WireCommand',
+      _i22.WireCommandAck => 'WireCommandAck',
+      _i22.WireEvent => 'WireEvent',
+      _i22.WireMatch => 'WireMatch',
+      _i22.WirePlayer => 'WirePlayer',
+      _i22.WireSnapshot => 'WireSnapshot',
       _i5.AonwAccount => 'AonwAccount',
       _i6.AccountAuthException => 'AccountAuthException',
-      _i7.SteamAccount => 'SteamAccount',
-      _i8.SteamAuthPollResult => 'SteamAuthPollResult',
-      _i9.SteamAuthRequest => 'SteamAuthRequest',
-      _i10.SteamAuthStart => 'SteamAuthStart',
-      _i11.CreateMatchRequest => 'CreateMatchRequest',
-      _i12.GameEvent => 'GameEvent',
-      _i13.GameMatch => 'GameMatch',
-      _i14.GamePlayer => 'GamePlayer',
-      _i15.GameSnapshot => 'GameSnapshot',
-      _i16.MultiplayerClientMessage => 'MultiplayerClientMessage',
-      _i17.MultiplayerException => 'MultiplayerException',
-      _i18.MultiplayerServerMessage => 'MultiplayerServerMessage',
+      _i7.ExternalAuthPollResult => 'ExternalAuthPollResult',
+      _i8.ExternalAuthRequest => 'ExternalAuthRequest',
+      _i9.ExternalAuthStart => 'ExternalAuthStart',
+      _i10.SteamAccount => 'SteamAccount',
+      _i11.SteamAuthPollResult => 'SteamAuthPollResult',
+      _i12.SteamAuthRequest => 'SteamAuthRequest',
+      _i13.SteamAuthStart => 'SteamAuthStart',
+      _i14.CreateMatchRequest => 'CreateMatchRequest',
+      _i15.GameEvent => 'GameEvent',
+      _i16.GameMatch => 'GameMatch',
+      _i17.GamePlayer => 'GamePlayer',
+      _i18.GameSnapshot => 'GameSnapshot',
+      _i19.MultiplayerClientMessage => 'MultiplayerClientMessage',
+      _i20.MultiplayerException => 'MultiplayerException',
+      _i21.MultiplayerServerMessage => 'MultiplayerServerMessage',
       _ => null,
     };
   }
@@ -1281,47 +1499,53 @@ class Protocol extends _i1.SerializationManagerServer {
     }
 
     switch (data) {
-      case _i19.WireAiPlayer():
+      case _i22.WireAiPlayer():
         return 'WireAiPlayer';
-      case _i19.WireCommand():
+      case _i22.WireCommand():
         return 'WireCommand';
-      case _i19.WireCommandAck():
+      case _i22.WireCommandAck():
         return 'WireCommandAck';
-      case _i19.WireEvent():
+      case _i22.WireEvent():
         return 'WireEvent';
-      case _i19.WireMatch():
+      case _i22.WireMatch():
         return 'WireMatch';
-      case _i19.WirePlayer():
+      case _i22.WirePlayer():
         return 'WirePlayer';
-      case _i19.WireSnapshot():
+      case _i22.WireSnapshot():
         return 'WireSnapshot';
       case _i5.AonwAccount():
         return 'AonwAccount';
       case _i6.AccountAuthException():
         return 'AccountAuthException';
-      case _i7.SteamAccount():
+      case _i7.ExternalAuthPollResult():
+        return 'ExternalAuthPollResult';
+      case _i8.ExternalAuthRequest():
+        return 'ExternalAuthRequest';
+      case _i9.ExternalAuthStart():
+        return 'ExternalAuthStart';
+      case _i10.SteamAccount():
         return 'SteamAccount';
-      case _i8.SteamAuthPollResult():
+      case _i11.SteamAuthPollResult():
         return 'SteamAuthPollResult';
-      case _i9.SteamAuthRequest():
+      case _i12.SteamAuthRequest():
         return 'SteamAuthRequest';
-      case _i10.SteamAuthStart():
+      case _i13.SteamAuthStart():
         return 'SteamAuthStart';
-      case _i11.CreateMatchRequest():
+      case _i14.CreateMatchRequest():
         return 'CreateMatchRequest';
-      case _i12.GameEvent():
+      case _i15.GameEvent():
         return 'GameEvent';
-      case _i13.GameMatch():
+      case _i16.GameMatch():
         return 'GameMatch';
-      case _i14.GamePlayer():
+      case _i17.GamePlayer():
         return 'GamePlayer';
-      case _i15.GameSnapshot():
+      case _i18.GameSnapshot():
         return 'GameSnapshot';
-      case _i16.MultiplayerClientMessage():
+      case _i19.MultiplayerClientMessage():
         return 'MultiplayerClientMessage';
-      case _i17.MultiplayerException():
+      case _i20.MultiplayerException():
         return 'MultiplayerException';
-      case _i18.MultiplayerServerMessage():
+      case _i21.MultiplayerServerMessage():
         return 'MultiplayerServerMessage';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -1346,25 +1570,25 @@ class Protocol extends _i1.SerializationManagerServer {
       return super.deserializeByClassName(data);
     }
     if (dataClassName == 'WireAiPlayer') {
-      return deserialize<_i19.WireAiPlayer>(data['data']);
+      return deserialize<_i22.WireAiPlayer>(data['data']);
     }
     if (dataClassName == 'WireCommand') {
-      return deserialize<_i19.WireCommand>(data['data']);
+      return deserialize<_i22.WireCommand>(data['data']);
     }
     if (dataClassName == 'WireCommandAck') {
-      return deserialize<_i19.WireCommandAck>(data['data']);
+      return deserialize<_i22.WireCommandAck>(data['data']);
     }
     if (dataClassName == 'WireEvent') {
-      return deserialize<_i19.WireEvent>(data['data']);
+      return deserialize<_i22.WireEvent>(data['data']);
     }
     if (dataClassName == 'WireMatch') {
-      return deserialize<_i19.WireMatch>(data['data']);
+      return deserialize<_i22.WireMatch>(data['data']);
     }
     if (dataClassName == 'WirePlayer') {
-      return deserialize<_i19.WirePlayer>(data['data']);
+      return deserialize<_i22.WirePlayer>(data['data']);
     }
     if (dataClassName == 'WireSnapshot') {
-      return deserialize<_i19.WireSnapshot>(data['data']);
+      return deserialize<_i22.WireSnapshot>(data['data']);
     }
     if (dataClassName == 'AonwAccount') {
       return deserialize<_i5.AonwAccount>(data['data']);
@@ -1372,41 +1596,50 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'AccountAuthException') {
       return deserialize<_i6.AccountAuthException>(data['data']);
     }
+    if (dataClassName == 'ExternalAuthPollResult') {
+      return deserialize<_i7.ExternalAuthPollResult>(data['data']);
+    }
+    if (dataClassName == 'ExternalAuthRequest') {
+      return deserialize<_i8.ExternalAuthRequest>(data['data']);
+    }
+    if (dataClassName == 'ExternalAuthStart') {
+      return deserialize<_i9.ExternalAuthStart>(data['data']);
+    }
     if (dataClassName == 'SteamAccount') {
-      return deserialize<_i7.SteamAccount>(data['data']);
+      return deserialize<_i10.SteamAccount>(data['data']);
     }
     if (dataClassName == 'SteamAuthPollResult') {
-      return deserialize<_i8.SteamAuthPollResult>(data['data']);
+      return deserialize<_i11.SteamAuthPollResult>(data['data']);
     }
     if (dataClassName == 'SteamAuthRequest') {
-      return deserialize<_i9.SteamAuthRequest>(data['data']);
+      return deserialize<_i12.SteamAuthRequest>(data['data']);
     }
     if (dataClassName == 'SteamAuthStart') {
-      return deserialize<_i10.SteamAuthStart>(data['data']);
+      return deserialize<_i13.SteamAuthStart>(data['data']);
     }
     if (dataClassName == 'CreateMatchRequest') {
-      return deserialize<_i11.CreateMatchRequest>(data['data']);
+      return deserialize<_i14.CreateMatchRequest>(data['data']);
     }
     if (dataClassName == 'GameEvent') {
-      return deserialize<_i12.GameEvent>(data['data']);
+      return deserialize<_i15.GameEvent>(data['data']);
     }
     if (dataClassName == 'GameMatch') {
-      return deserialize<_i13.GameMatch>(data['data']);
+      return deserialize<_i16.GameMatch>(data['data']);
     }
     if (dataClassName == 'GamePlayer') {
-      return deserialize<_i14.GamePlayer>(data['data']);
+      return deserialize<_i17.GamePlayer>(data['data']);
     }
     if (dataClassName == 'GameSnapshot') {
-      return deserialize<_i15.GameSnapshot>(data['data']);
+      return deserialize<_i18.GameSnapshot>(data['data']);
     }
     if (dataClassName == 'MultiplayerClientMessage') {
-      return deserialize<_i16.MultiplayerClientMessage>(data['data']);
+      return deserialize<_i19.MultiplayerClientMessage>(data['data']);
     }
     if (dataClassName == 'MultiplayerException') {
-      return deserialize<_i17.MultiplayerException>(data['data']);
+      return deserialize<_i20.MultiplayerException>(data['data']);
     }
     if (dataClassName == 'MultiplayerServerMessage') {
-      return deserialize<_i18.MultiplayerServerMessage>(data['data']);
+      return deserialize<_i21.MultiplayerServerMessage>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -1446,18 +1679,20 @@ class Protocol extends _i1.SerializationManagerServer {
     switch (t) {
       case _i5.AonwAccount:
         return _i5.AonwAccount.t;
-      case _i7.SteamAccount:
-        return _i7.SteamAccount.t;
-      case _i9.SteamAuthRequest:
-        return _i9.SteamAuthRequest.t;
-      case _i12.GameEvent:
-        return _i12.GameEvent.t;
-      case _i13.GameMatch:
-        return _i13.GameMatch.t;
-      case _i14.GamePlayer:
-        return _i14.GamePlayer.t;
-      case _i15.GameSnapshot:
-        return _i15.GameSnapshot.t;
+      case _i8.ExternalAuthRequest:
+        return _i8.ExternalAuthRequest.t;
+      case _i10.SteamAccount:
+        return _i10.SteamAccount.t;
+      case _i12.SteamAuthRequest:
+        return _i12.SteamAuthRequest.t;
+      case _i15.GameEvent:
+        return _i15.GameEvent.t;
+      case _i16.GameMatch:
+        return _i16.GameMatch.t;
+      case _i17.GamePlayer:
+        return _i17.GamePlayer.t;
+      case _i18.GameSnapshot:
+        return _i18.GameSnapshot.t;
     }
     return null;
   }

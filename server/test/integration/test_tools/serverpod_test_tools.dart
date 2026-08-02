@@ -16,19 +16,23 @@ import 'package:serverpod/serverpod.dart' as _i2;
 import 'dart:async' as _i3;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i4;
-import 'package:aonw_server/src/generated/auth/models/steam_auth_start.dart'
+import 'package:aonw_server/src/generated/auth/models/external_auth_start.dart'
     as _i5;
-import 'package:aonw_server/src/generated/auth/models/steam_auth_poll_result.dart'
+import 'package:aonw_server/src/generated/auth/models/external_auth_poll_result.dart'
     as _i6;
-import 'package:aonw_core/protocol/wire_match.dart' as _i7;
-import 'package:aonw_server/src/generated/multiplayer/models/create_match_request.dart'
+import 'package:aonw_server/src/generated/auth/models/steam_auth_start.dart'
+    as _i7;
+import 'package:aonw_server/src/generated/auth/models/steam_auth_poll_result.dart'
     as _i8;
-import 'package:aonw_core/protocol/wire_snapshot.dart' as _i9;
-import 'package:aonw_core/protocol/wire_event.dart' as _i10;
+import 'package:aonw_core/protocol/wire_match.dart' as _i9;
+import 'package:aonw_server/src/generated/multiplayer/models/create_match_request.dart'
+    as _i10;
+import 'package:aonw_core/protocol/wire_snapshot.dart' as _i11;
+import 'package:aonw_core/protocol/wire_event.dart' as _i12;
 import 'package:aonw_server/src/generated/multiplayer/models/multiplayer_server_message.dart'
-    as _i11;
+    as _i13;
 import 'package:aonw_server/src/generated/multiplayer/models/multiplayer_client_message.dart'
-    as _i12;
+    as _i14;
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -153,6 +157,8 @@ class TestEndpoints {
 
   late final _EmailIdpEndpoint emailIdp;
 
+  late final _ExternalAuthEndpoint externalAuth;
+
   late final _GoogleIdpEndpoint googleIdp;
 
   late final _JwtRefreshEndpoint jwtRefresh;
@@ -186,6 +192,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     emailIdp = _EmailIdpEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    externalAuth = _ExternalAuthEndpoint(
       endpoints,
       serializationManager,
     );
@@ -589,6 +599,79 @@ class _EmailIdpEndpoint {
   }
 }
 
+class _ExternalAuthEndpoint {
+  _ExternalAuthEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _i2.EndpointDispatch _endpointDispatch;
+
+  final _i2.SerializationManager _serializationManager;
+
+  _i3.Future<_i5.ExternalAuthStart> start(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required String provider,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'externalAuth',
+            method: 'start',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'externalAuth',
+          methodName: 'start',
+          parameters: _i1.testObjectToJson({'provider': provider}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i5.ExternalAuthStart>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i6.ExternalAuthPollResult> poll(
+    _i1.TestSessionBuilder sessionBuilder, {
+    required String requestId,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'externalAuth',
+            method: 'poll',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'externalAuth',
+          methodName: 'poll',
+          parameters: _i1.testObjectToJson({'requestId': requestId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i6.ExternalAuthPollResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
 class _GoogleIdpEndpoint {
   _GoogleIdpEndpoint(
     this._endpointDispatch,
@@ -715,7 +798,7 @@ class _SteamAuthEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i5.SteamAuthStart> start(
+  _i3.Future<_i7.SteamAuthStart> start(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -737,7 +820,7 @@ class _SteamAuthEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i5.SteamAuthStart>);
+                as _i3.Future<_i7.SteamAuthStart>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -745,7 +828,7 @@ class _SteamAuthEndpoint {
     });
   }
 
-  _i3.Future<_i6.SteamAuthPollResult> poll(
+  _i3.Future<_i8.SteamAuthPollResult> poll(
     _i1.TestSessionBuilder sessionBuilder, {
     required String requestId,
   }) async {
@@ -768,7 +851,7 @@ class _SteamAuthEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i6.SteamAuthPollResult>);
+                as _i3.Future<_i8.SteamAuthPollResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -787,7 +870,7 @@ class _MultiplayerEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<List<_i7.WireMatch>> listMatches(
+  _i3.Future<List<_i9.WireMatch>> listMatches(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -809,7 +892,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i7.WireMatch>>);
+                as _i3.Future<List<_i9.WireMatch>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -817,9 +900,9 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<_i7.WireMatch> createMatch(
+  _i3.Future<_i9.WireMatch> createMatch(
     _i1.TestSessionBuilder sessionBuilder,
-    _i8.CreateMatchRequest request,
+    _i10.CreateMatchRequest request,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -840,7 +923,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i7.WireMatch>);
+                as _i3.Future<_i9.WireMatch>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -848,9 +931,9 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<_i7.WireMatch> quickplay(
+  _i3.Future<_i9.WireMatch> quickplay(
     _i1.TestSessionBuilder sessionBuilder,
-    _i8.CreateMatchRequest request,
+    _i10.CreateMatchRequest request,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -871,7 +954,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i7.WireMatch>);
+                as _i3.Future<_i9.WireMatch>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -879,7 +962,7 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<_i7.WireMatch> joinMatch(
+  _i3.Future<_i9.WireMatch> joinMatch(
     _i1.TestSessionBuilder sessionBuilder,
     String matchId, [
     String? countryId,
@@ -906,7 +989,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i7.WireMatch>);
+                as _i3.Future<_i9.WireMatch>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -914,7 +997,7 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<_i7.WireMatch> joinPrivateMatch(
+  _i3.Future<_i9.WireMatch> joinPrivateMatch(
     _i1.TestSessionBuilder sessionBuilder,
     String inviteCode, [
     String? countryId,
@@ -941,7 +1024,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i7.WireMatch>);
+                as _i3.Future<_i9.WireMatch>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -949,7 +1032,7 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<_i7.WireMatch> loadMatch(
+  _i3.Future<_i9.WireMatch> loadMatch(
     _i1.TestSessionBuilder sessionBuilder,
     String matchId,
   ) async {
@@ -972,7 +1055,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i7.WireMatch>);
+                as _i3.Future<_i9.WireMatch>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -980,7 +1063,7 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<_i9.WireSnapshot> loadSnapshot(
+  _i3.Future<_i11.WireSnapshot> loadSnapshot(
     _i1.TestSessionBuilder sessionBuilder,
     String matchId,
   ) async {
@@ -1003,7 +1086,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i9.WireSnapshot>);
+                as _i3.Future<_i11.WireSnapshot>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1011,7 +1094,7 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<List<_i10.WireEvent>> listEvents(
+  _i3.Future<List<_i12.WireEvent>> listEvents(
     _i1.TestSessionBuilder sessionBuilder,
     String matchId,
     int afterOffset,
@@ -1038,7 +1121,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i10.WireEvent>>);
+                as _i3.Future<List<_i12.WireEvent>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1046,7 +1129,7 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<_i7.WireMatch> startMatch(
+  _i3.Future<_i9.WireMatch> startMatch(
     _i1.TestSessionBuilder sessionBuilder,
     String matchId,
   ) async {
@@ -1069,7 +1152,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i7.WireMatch>);
+                as _i3.Future<_i9.WireMatch>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1077,7 +1160,7 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<_i7.WireMatch> markMapLoaded(
+  _i3.Future<_i9.WireMatch> markMapLoaded(
     _i1.TestSessionBuilder sessionBuilder,
     String matchId,
   ) async {
@@ -1100,7 +1183,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i7.WireMatch>);
+                as _i3.Future<_i9.WireMatch>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1108,7 +1191,7 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Future<_i7.WireMatch> resignMatch(
+  _i3.Future<_i9.WireMatch> resignMatch(
     _i1.TestSessionBuilder sessionBuilder,
     String matchId,
   ) async {
@@ -1131,7 +1214,7 @@ class _MultiplayerEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i7.WireMatch>);
+                as _i3.Future<_i9.WireMatch>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1170,14 +1253,14 @@ class _MultiplayerEndpoint {
     });
   }
 
-  _i3.Stream<_i11.MultiplayerServerMessage> connect(
+  _i3.Stream<_i13.MultiplayerServerMessage> connect(
     _i1.TestSessionBuilder sessionBuilder,
     String matchId,
     int afterOffset,
-    _i3.Stream<_i12.MultiplayerClientMessage> input,
+    _i3.Stream<_i14.MultiplayerClientMessage> input,
   ) {
     var _localTestStreamManager =
-        _i1.TestStreamManager<_i11.MultiplayerServerMessage>();
+        _i1.TestStreamManager<_i13.MultiplayerServerMessage>();
     _i1.callStreamFunctionAndHandleExceptions(
       () async {
         var _localUniqueSession =

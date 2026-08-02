@@ -26,6 +26,7 @@ class _MultiplayerAccountDialog extends ConsumerStatefulWidget {
     required this.createAccount,
     required this.socialAuthClientFactory,
     required this.completeSocialAuth,
+    required this.externalAuth,
     required this.steamAuth,
     required this.initialDisplayName,
   });
@@ -34,6 +35,7 @@ class _MultiplayerAccountDialog extends ConsumerStatefulWidget {
   final MultiplayerCreateAccountAction createAccount;
   final MultiplayerSocialAuthClientFactory? socialAuthClientFactory;
   final MultiplayerCompleteSocialAuthAction? completeSocialAuth;
+  final MultiplayerExternalAuthAction? externalAuth;
   final MultiplayerSteamAuthAction? steamAuth;
   final String initialDisplayName;
 
@@ -61,7 +63,7 @@ class _MultiplayerAccountDialogState
     _nicknameController = TextEditingController(
       text: widget.initialDisplayName.trim(),
     );
-    _socialAuthClient = _supportsGoogleAppleSignIn
+    _socialAuthClient = _supportsNativeSocialSignIn
         ? widget.socialAuthClientFactory?.call()
         : null;
     final socialAuthClient = _socialAuthClient;
@@ -84,6 +86,10 @@ class _MultiplayerAccountDialogState
     final showSocialAuth =
         _socialAuthClient != null && widget.completeSocialAuth != null;
     final showSteamAuth = _supportsSteamSignIn && widget.steamAuth != null;
+    final showExternalApple =
+        _usesExternalAppleSignIn && widget.externalAuth != null;
+    final showExternalGoogle =
+        _usesExternalGoogleSignIn && widget.externalAuth != null;
     return GameModalScaffold(
       size: GameModalSize.regular,
       surfaceKey: const Key('multiplayer.account.surface'),
@@ -106,10 +112,24 @@ class _MultiplayerAccountDialogState
               child: _AuthMethodButtons(
                 client: showSocialAuth ? _socialAuthClient : null,
                 socialAuthReady: _socialAuthReady,
+                showNativeGoogle: showSocialAuth && _supportsNativeGoogleSignIn,
+                showNativeApple: showSocialAuth && _supportsNativeAppleSignIn,
                 emailSelected: _emailFormExpanded,
                 onEmailPressed: _showEmailForm,
                 onAuthenticated: () => unawaited(_completeSocialAuth()),
                 onError: _handleSocialAuthError,
+                onGooglePressed: showExternalGoogle
+                    ? () => unawaited(
+                        _signInWithExternalProvider(
+                          _googleExternalAuthProvider,
+                        ),
+                      )
+                    : null,
+                onApplePressed: showExternalApple
+                    ? () => unawaited(
+                        _signInWithExternalProvider(_appleExternalAuthProvider),
+                      )
+                    : null,
                 onSteamPressed: showSteamAuth
                     ? () => unawaited(_signInWithSteam())
                     : null,
@@ -185,14 +205,18 @@ class _MultiplayerAccountDialogState
 
   Future<void> _initializeSocialAuth(sp.Client client) async {
     try {
-      await client.auth.initializeGoogleSignIn(
-        clientId: _googleClientId(),
-        serverClientId: _googleServerClientId(),
-      );
-      await client.auth.initializeAppleSignIn(
-        serviceIdentifier: _appleServiceIdentifier(),
-        redirectUri: _appleRedirectUri(),
-      );
+      if (_supportsNativeGoogleSignIn) {
+        await client.auth.initializeGoogleSignIn(
+          clientId: _googleClientId(),
+          serverClientId: _googleServerClientId(),
+        );
+      }
+      if (_supportsNativeAppleSignIn) {
+        await client.auth.initializeAppleSignIn(
+          serviceIdentifier: _appleServiceIdentifier(),
+          redirectUri: _appleRedirectUri(),
+        );
+      }
       if (!mounted) return;
       setState(() => _socialAuthReady = true);
     } catch (error, stackTrace) {
@@ -297,6 +321,37 @@ class _MultiplayerAccountDialogState
       Navigator.of(context).pop(result);
     } catch (error, stackTrace) {
       _logWarning('Steam sign-in error.', error, stackTrace);
+      if (!mounted) return;
+      setState(
+        () => _error = _accountErrorText(AppLocalizations.of(context), error),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _externalAuthBusy = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _signInWithExternalProvider(String provider) async {
+    final externalAuth = widget.externalAuth;
+    if (externalAuth == null) return;
+
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _busy = true;
+      _externalAuthBusy = true;
+      _error = null;
+    });
+
+    try {
+      final result = await externalAuth(provider: provider);
+      if (!mounted) return;
+      Navigator.of(context).pop(result);
+    } catch (error, stackTrace) {
+      _logWarning('$provider sign-in error.', error, stackTrace);
       if (!mounted) return;
       setState(
         () => _error = _accountErrorText(AppLocalizations.of(context), error),

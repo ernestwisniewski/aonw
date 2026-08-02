@@ -96,6 +96,7 @@ services:
       - SERVERPOD_PASSWORD_appleKeyId=${SERVERPOD_PASSWORD_appleKeyId:-}
       - SERVERPOD_PASSWORD_appleAndroidPackageIdentifier=${SERVERPOD_PASSWORD_appleAndroidPackageIdentifier:-}
       - SERVERPOD_PASSWORD_appleWebRedirectUri=${SERVERPOD_PASSWORD_appleWebRedirectUri:-}
+      - SERVERPOD_PASSWORD_googleDesktopRedirectUri=${SERVERPOD_PASSWORD_googleDesktopRedirectUri:-}
     ports:
       - "${AONW_SERVER_BIND:-127.0.0.1}:${AONW_SERVER_PUBLIC_PORT:-8080}:${SERVERPOD_API_SERVER_PORT:-8080}"
       - "127.0.0.1:${AONW_INSIGHTS_PUBLIC_PORT:-8081}:${SERVERPOD_INSIGHTS_SERVER_PORT:-8081}"

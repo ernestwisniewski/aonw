@@ -31,6 +31,12 @@ void main() {
           limit: authMaintenanceBatchSize,
         ),
       ]);
+      expect(store.externalCalls, [
+        _DeleteCall(
+          cutoff: now.subtract(expiredExternalAuthRequestRetention),
+          limit: authMaintenanceBatchSize,
+        ),
+      ]);
       expect(store.rateLimitCalls, [
         _DeleteCall(
           cutoff: now.subtract(expiredAuthRateLimitAttemptRetention),
@@ -56,12 +62,14 @@ void main() {
 
       expect(result.deletedRefreshTokens, 5);
       expect(result.deletedSteamAuthRequests, 0);
+      expect(result.deletedExternalAuthRequests, 0);
       expect(result.deletedRateLimitAttempts, 2);
       expect(result.totalDeleted, 7);
       expect(result.failures, isEmpty);
       expect(result.backlogRemaining, isFalse);
       expect(store.refreshCalls, hasLength(3));
       expect(store.steamCalls, hasLength(1));
+      expect(store.externalCalls, hasLength(1));
       expect(store.rateLimitCalls, hasLength(2));
     },
   );
@@ -70,6 +78,7 @@ void main() {
     final store = _FakeAuthMaintenanceStore(
       refreshResults: [2, 2, 2, 2],
       steamResults: [2, 2, 2, 2],
+      externalResults: [2, 2, 2, 2],
       rateLimitResults: [2, 2, 2, 2],
     );
 
@@ -80,6 +89,7 @@ void main() {
 
     expect(result.deletedRefreshTokens, 6);
     expect(result.deletedSteamAuthRequests, 6);
+    expect(result.deletedExternalAuthRequests, 6);
     expect(result.deletedRateLimitAttempts, 6);
     expect(result.backlogTargets, AuthMaintenanceTarget.values.toSet());
     expect(
@@ -88,6 +98,7 @@ void main() {
     );
     expect(store.refreshCalls, hasLength(3));
     expect(store.steamCalls, hasLength(3));
+    expect(store.externalCalls, hasLength(3));
     expect(store.rateLimitCalls, hasLength(3));
   });
 
@@ -108,6 +119,7 @@ void main() {
 
       expect(result.deletedRefreshTokens, 0);
       expect(result.deletedSteamAuthRequests, 1);
+      expect(result.deletedExternalAuthRequests, 0);
       expect(result.deletedRateLimitAttempts, 1);
       expect(result.failures, hasLength(1));
       expect(
@@ -195,17 +207,21 @@ final class _FakeAuthMaintenanceStore implements AuthMaintenanceStore {
   _FakeAuthMaintenanceStore({
     List<Object>? refreshResults,
     List<Object>? steamResults,
+    List<Object>? externalResults,
     List<Object>? rateLimitResults,
   }) : _refreshResults = [...?refreshResults],
        _steamResults = [...?steamResults],
+       _externalResults = [...?externalResults],
        _rateLimitResults = [...?rateLimitResults];
 
   final List<Object> _refreshResults;
   final List<Object> _steamResults;
+  final List<Object> _externalResults;
   final List<Object> _rateLimitResults;
 
   final List<_DeleteCall> refreshCalls = [];
   final List<_DeleteCall> steamCalls = [];
+  final List<_DeleteCall> externalCalls = [];
   final List<_DeleteCall> rateLimitCalls = [];
 
   @override
@@ -224,6 +240,15 @@ final class _FakeAuthMaintenanceStore implements AuthMaintenanceStore {
   }) async {
     steamCalls.add(_DeleteCall(cutoff: cutoff, limit: limit));
     return _next(_steamResults);
+  }
+
+  @override
+  Future<int> deleteExpiredExternalAuthRequests({
+    required DateTime cutoff,
+    required int limit,
+  }) async {
+    externalCalls.add(_DeleteCall(cutoff: cutoff, limit: limit));
+    return _next(_externalResults);
   }
 
   @override

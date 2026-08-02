@@ -63,6 +63,7 @@ final class AuthMaintenanceFutureCall extends FutureCall<SerializableModel> {
           'event=auth_maintenance_completed '
           'refresh_tokens=${result.deletedRefreshTokens} '
           'steam_requests=${result.deletedSteamAuthRequests} '
+          'external_auth_requests=${result.deletedExternalAuthRequests} '
           'rate_limit_attempts=${result.deletedRateLimitAttempts}',
           level: LogLevel.info,
         );

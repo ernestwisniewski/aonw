@@ -25,9 +25,18 @@ final mainMenuUpdateCheckEnabledProvider = Provider<bool>(
 );
 
 final mainMenuVersionStatusLoaderProvider =
-    Provider<MainMenuVersionStatusLoader>(
-      (ref) => ref.watch(networkSessionClientProvider).versionStatus,
-    );
+    Provider<MainMenuVersionStatusLoader>((ref) {
+      final client = ref.watch(networkSessionClientProvider);
+      return ({
+        required String platform,
+        required int buildNumber,
+        required int multiplayerVersion,
+      }) => client.versionStatus(
+        platform: platform,
+        buildNumber: buildNumber,
+        multiplayerVersion: multiplayerVersion,
+      );
+    });
 
 final mainMenuUpdateNoticeProvider = FutureProvider<MainMenuUpdateNotice?>((
   ref,

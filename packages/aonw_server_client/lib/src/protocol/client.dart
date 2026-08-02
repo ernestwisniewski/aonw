@@ -16,20 +16,24 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _i3;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i4;
-import 'package:aonw_server_client/src/protocol/auth/models/steam_auth_start.dart'
+import 'package:aonw_server_client/src/protocol/auth/models/external_auth_start.dart'
     as _i5;
-import 'package:aonw_server_client/src/protocol/auth/models/steam_auth_poll_result.dart'
+import 'package:aonw_server_client/src/protocol/auth/models/external_auth_poll_result.dart'
     as _i6;
-import 'package:aonw_core/protocol/wire_match.dart' as _i7;
-import 'package:aonw_server_client/src/protocol/multiplayer/models/create_match_request.dart'
+import 'package:aonw_server_client/src/protocol/auth/models/steam_auth_start.dart'
+    as _i7;
+import 'package:aonw_server_client/src/protocol/auth/models/steam_auth_poll_result.dart'
     as _i8;
-import 'package:aonw_core/protocol/wire_snapshot.dart' as _i9;
-import 'package:aonw_core/protocol/wire_event.dart' as _i10;
+import 'package:aonw_core/protocol/wire_match.dart' as _i9;
+import 'package:aonw_server_client/src/protocol/multiplayer/models/create_match_request.dart'
+    as _i10;
+import 'package:aonw_core/protocol/wire_snapshot.dart' as _i11;
+import 'package:aonw_core/protocol/wire_event.dart' as _i12;
 import 'package:aonw_server_client/src/protocol/multiplayer/models/multiplayer_server_message.dart'
-    as _i11;
+    as _i13;
 import 'package:aonw_server_client/src/protocol/multiplayer/models/multiplayer_client_message.dart'
-    as _i12;
-import 'protocol.dart' as _i13;
+    as _i14;
+import 'protocol.dart' as _i15;
 
 /// {@category Endpoint}
 class EndpointAppStatus extends _i1.EndpointRef {
@@ -194,6 +198,30 @@ class EndpointEmailIdp extends _i1.EndpointRef {
   );
 }
 
+/// {@category Endpoint}
+class EndpointExternalAuth extends _i1.EndpointRef {
+  EndpointExternalAuth(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'externalAuth';
+
+  _i2.Future<_i5.ExternalAuthStart> start({required String provider}) =>
+      caller.callServerEndpoint<_i5.ExternalAuthStart>(
+        'externalAuth',
+        'start',
+        {'provider': provider},
+        authenticated: false,
+      );
+
+  _i2.Future<_i6.ExternalAuthPollResult> poll({required String requestId}) =>
+      caller.callServerEndpoint<_i6.ExternalAuthPollResult>(
+        'externalAuth',
+        'poll',
+        {'requestId': requestId},
+        authenticated: false,
+      );
+}
+
 /// Google account endpoint backed by Serverpod Auth IDP.
 /// {@category Endpoint}
 class EndpointGoogleIdp extends _i3.EndpointGoogleIdpBase {
@@ -253,16 +281,16 @@ class EndpointSteamAuth extends _i1.EndpointRef {
   @override
   String get name => 'steamAuth';
 
-  _i2.Future<_i5.SteamAuthStart> start() =>
-      caller.callServerEndpoint<_i5.SteamAuthStart>(
+  _i2.Future<_i7.SteamAuthStart> start() =>
+      caller.callServerEndpoint<_i7.SteamAuthStart>(
         'steamAuth',
         'start',
         {},
         authenticated: false,
       );
 
-  _i2.Future<_i6.SteamAuthPollResult> poll({required String requestId}) =>
-      caller.callServerEndpoint<_i6.SteamAuthPollResult>(
+  _i2.Future<_i8.SteamAuthPollResult> poll({required String requestId}) =>
+      caller.callServerEndpoint<_i8.SteamAuthPollResult>(
         'steamAuth',
         'poll',
         {'requestId': requestId},
@@ -277,31 +305,31 @@ class EndpointMultiplayer extends _i1.EndpointRef {
   @override
   String get name => 'multiplayer';
 
-  _i2.Future<List<_i7.WireMatch>> listMatches() =>
-      caller.callServerEndpoint<List<_i7.WireMatch>>(
+  _i2.Future<List<_i9.WireMatch>> listMatches() =>
+      caller.callServerEndpoint<List<_i9.WireMatch>>(
         'multiplayer',
         'listMatches',
         {},
       );
 
-  _i2.Future<_i7.WireMatch> createMatch(_i8.CreateMatchRequest request) =>
-      caller.callServerEndpoint<_i7.WireMatch>(
+  _i2.Future<_i9.WireMatch> createMatch(_i10.CreateMatchRequest request) =>
+      caller.callServerEndpoint<_i9.WireMatch>(
         'multiplayer',
         'createMatch',
         {'request': request},
       );
 
-  _i2.Future<_i7.WireMatch> quickplay(_i8.CreateMatchRequest request) =>
-      caller.callServerEndpoint<_i7.WireMatch>(
+  _i2.Future<_i9.WireMatch> quickplay(_i10.CreateMatchRequest request) =>
+      caller.callServerEndpoint<_i9.WireMatch>(
         'multiplayer',
         'quickplay',
         {'request': request},
       );
 
-  _i2.Future<_i7.WireMatch> joinMatch(
+  _i2.Future<_i9.WireMatch> joinMatch(
     String matchId, [
     String? countryId,
-  ]) => caller.callServerEndpoint<_i7.WireMatch>(
+  ]) => caller.callServerEndpoint<_i9.WireMatch>(
     'multiplayer',
     'joinMatch',
     {
@@ -310,10 +338,10 @@ class EndpointMultiplayer extends _i1.EndpointRef {
     },
   );
 
-  _i2.Future<_i7.WireMatch> joinPrivateMatch(
+  _i2.Future<_i9.WireMatch> joinPrivateMatch(
     String inviteCode, [
     String? countryId,
-  ]) => caller.callServerEndpoint<_i7.WireMatch>(
+  ]) => caller.callServerEndpoint<_i9.WireMatch>(
     'multiplayer',
     'joinPrivateMatch',
     {
@@ -322,24 +350,24 @@ class EndpointMultiplayer extends _i1.EndpointRef {
     },
   );
 
-  _i2.Future<_i7.WireMatch> loadMatch(String matchId) =>
-      caller.callServerEndpoint<_i7.WireMatch>(
+  _i2.Future<_i9.WireMatch> loadMatch(String matchId) =>
+      caller.callServerEndpoint<_i9.WireMatch>(
         'multiplayer',
         'loadMatch',
         {'matchId': matchId},
       );
 
-  _i2.Future<_i9.WireSnapshot> loadSnapshot(String matchId) =>
-      caller.callServerEndpoint<_i9.WireSnapshot>(
+  _i2.Future<_i11.WireSnapshot> loadSnapshot(String matchId) =>
+      caller.callServerEndpoint<_i11.WireSnapshot>(
         'multiplayer',
         'loadSnapshot',
         {'matchId': matchId},
       );
 
-  _i2.Future<List<_i10.WireEvent>> listEvents(
+  _i2.Future<List<_i12.WireEvent>> listEvents(
     String matchId,
     int afterOffset,
-  ) => caller.callServerEndpoint<List<_i10.WireEvent>>(
+  ) => caller.callServerEndpoint<List<_i12.WireEvent>>(
     'multiplayer',
     'listEvents',
     {
@@ -348,22 +376,22 @@ class EndpointMultiplayer extends _i1.EndpointRef {
     },
   );
 
-  _i2.Future<_i7.WireMatch> startMatch(String matchId) =>
-      caller.callServerEndpoint<_i7.WireMatch>(
+  _i2.Future<_i9.WireMatch> startMatch(String matchId) =>
+      caller.callServerEndpoint<_i9.WireMatch>(
         'multiplayer',
         'startMatch',
         {'matchId': matchId},
       );
 
-  _i2.Future<_i7.WireMatch> markMapLoaded(String matchId) =>
-      caller.callServerEndpoint<_i7.WireMatch>(
+  _i2.Future<_i9.WireMatch> markMapLoaded(String matchId) =>
+      caller.callServerEndpoint<_i9.WireMatch>(
         'multiplayer',
         'markMapLoaded',
         {'matchId': matchId},
       );
 
-  _i2.Future<_i7.WireMatch> resignMatch(String matchId) =>
-      caller.callServerEndpoint<_i7.WireMatch>(
+  _i2.Future<_i9.WireMatch> resignMatch(String matchId) =>
+      caller.callServerEndpoint<_i9.WireMatch>(
         'multiplayer',
         'resignMatch',
         {'matchId': matchId},
@@ -376,14 +404,14 @@ class EndpointMultiplayer extends _i1.EndpointRef {
         {'matchId': matchId},
       );
 
-  _i2.Stream<_i11.MultiplayerServerMessage> connect(
+  _i2.Stream<_i13.MultiplayerServerMessage> connect(
     String matchId,
     int afterOffset,
-    _i2.Stream<_i12.MultiplayerClientMessage> input,
+    _i2.Stream<_i14.MultiplayerClientMessage> input,
   ) =>
       caller.callStreamingServerEndpoint<
-        _i2.Stream<_i11.MultiplayerServerMessage>,
-        _i11.MultiplayerServerMessage
+        _i2.Stream<_i13.MultiplayerServerMessage>,
+        _i13.MultiplayerServerMessage
       >(
         'multiplayer',
         'connect',
@@ -426,7 +454,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i13.Protocol(),
+         _i15.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -440,6 +468,7 @@ class Client extends _i1.ServerpodClientShared {
     appleIdp = EndpointAppleIdp(this);
     authStatus = EndpointAuthStatus(this);
     emailIdp = EndpointEmailIdp(this);
+    externalAuth = EndpointExternalAuth(this);
     googleIdp = EndpointGoogleIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
     steamAuth = EndpointSteamAuth(this);
@@ -456,6 +485,8 @@ class Client extends _i1.ServerpodClientShared {
   late final EndpointAuthStatus authStatus;
 
   late final EndpointEmailIdp emailIdp;
+
+  late final EndpointExternalAuth externalAuth;
 
   late final EndpointGoogleIdp googleIdp;
 
@@ -474,6 +505,7 @@ class Client extends _i1.ServerpodClientShared {
     'appleIdp': appleIdp,
     'authStatus': authStatus,
     'emailIdp': emailIdp,
+    'externalAuth': externalAuth,
     'googleIdp': googleIdp,
     'jwtRefresh': jwtRefresh,
     'steamAuth': steamAuth,

@@ -69,6 +69,7 @@ void main() {
     try {
       var socialFactoryCalls = 0;
       var steamCalls = 0;
+      final externalProviders = <String>[];
       NetworkAuthResult? result;
 
       await _pumpDialog(
@@ -77,6 +78,10 @@ void main() {
         socialAuthClientFactory: () {
           socialFactoryCalls++;
           throw StateError('Social auth should not initialize on Windows.');
+        },
+        externalAuth: ({required provider}) async {
+          externalProviders.add(provider);
+          return _authResult(userId: '${provider}_user');
         },
         steamAuth: () async {
           steamCalls++;
@@ -89,16 +94,67 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.byKey(const Key('multiplayer.account.google.initializing')),
-        findsNothing,
+        find.byKey(const Key('multiplayer.account.google')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('multiplayer.account.apple')),
+        findsOneWidget,
       );
       expect(socialFactoryCalls, 0);
+
+      await tester.tap(find.byKey(const Key('multiplayer.account.apple')));
+      await tester.pumpAndSettle();
+
+      expect(externalProviders, ['apple']);
+      expect(result?.userId, 'apple_user');
+
+      result = null;
+      externalProviders.clear();
+      await _pumpDialog(
+        tester,
+        onResult: (value) => result = value,
+        externalAuth: ({required provider}) async {
+          externalProviders.add(provider);
+          return _authResult(userId: '${provider}_user');
+        },
+        steamAuth: () async {
+          steamCalls++;
+          return _authResult(userId: 'steam_user');
+        },
+      );
 
       await tester.tap(find.byKey(const Key('multiplayer.account.steam')));
       await tester.pumpAndSettle();
 
       expect(steamCalls, 1);
       expect(result?.userId, 'steam_user');
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
+  testWidgets('uses browser Apple auth on macOS distributions', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+
+    try {
+      String? selectedProvider;
+      await _pumpDialog(
+        tester,
+        externalAuth: ({required String provider}) async {
+          selectedProvider = provider;
+          return _authResult();
+        },
+      );
+
+      expect(
+        find.byKey(const Key('multiplayer.account.apple')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('multiplayer.account.apple')));
+      await tester.pumpAndSettle();
+
+      expect(selectedProvider, 'apple');
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
@@ -280,6 +336,7 @@ Future<void> _pumpDialog(
   MultiplayerAccountAction? login,
   MultiplayerCreateAccountAction? createAccount,
   MultiplayerSocialAuthClientFactory? socialAuthClientFactory,
+  MultiplayerExternalAuthAction? externalAuth,
   MultiplayerSteamAuthAction? steamAuth,
   ValueChanged<NetworkAuthResult?>? onResult,
 }) async {
@@ -302,6 +359,7 @@ Future<void> _pumpDialog(
                   login: login ?? _defaultAccountAction,
                   createAccount: createAccount ?? _defaultCreateAccountAction,
                   socialAuthClientFactory: socialAuthClientFactory,
+                  externalAuth: externalAuth,
                   steamAuth: steamAuth,
                   initialDisplayName: 'Alice',
                 );

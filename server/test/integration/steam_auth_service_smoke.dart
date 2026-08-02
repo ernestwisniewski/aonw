@@ -154,7 +154,9 @@ final class _AcceptingVerifier implements SteamOpenIdVerification {
   const _AcceptingVerifier();
 
   @override
-  Future<bool> verify(Map<String, String> query) async => true;
+  Future<SteamOpenIdVerificationResult> verify(
+    Map<String, String> query,
+  ) async => const SteamOpenIdVerificationResult.valid();
 }
 
 final class _BlockingVerifier implements SteamOpenIdVerification {
@@ -162,10 +164,12 @@ final class _BlockingVerifier implements SteamOpenIdVerification {
   final release = Completer<void>();
 
   @override
-  Future<bool> verify(Map<String, String> query) async {
+  Future<SteamOpenIdVerificationResult> verify(
+    Map<String, String> query,
+  ) async {
     entered.complete();
     await release.future;
-    return true;
+    return const SteamOpenIdVerificationResult.valid();
   }
 }
 
@@ -173,9 +177,11 @@ final class _CountingVerifier implements SteamOpenIdVerification {
   var calls = 0;
 
   @override
-  Future<bool> verify(Map<String, String> query) async {
+  Future<SteamOpenIdVerificationResult> verify(
+    Map<String, String> query,
+  ) async {
     calls += 1;
-    return true;
+    return const SteamOpenIdVerificationResult.valid();
   }
 }
 

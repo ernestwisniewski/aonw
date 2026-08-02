@@ -31,6 +31,12 @@ void main() {
             .subtract(expiredSteamAuthRequestRetention)
             .subtract(const Duration(days: 1));
         final retainedExpiry = now.subtract(expiredSteamAuthRequestRetention);
+        final oldExternalExpiry = now
+            .subtract(expiredExternalAuthRequestRetention)
+            .subtract(const Duration(days: 1));
+        final retainedExternalExpiry = now.subtract(
+          expiredExternalAuthRequestRetention,
+        );
         final oldAttempt = now
             .subtract(expiredAuthRateLimitAttemptRetention)
             .subtract(const Duration(days: 1));
@@ -64,6 +70,23 @@ void main() {
             requestId: 'retained',
             status: 'expired',
             expiresAt: retainedExpiry,
+          ),
+        ]);
+        await ExternalAuthRequest.db.insert(session, [
+          for (var index = 0; index < 3; index += 1)
+            ExternalAuthRequest(
+              requestId: 'external-expired-$index',
+              state: 'external-expired-state-$index',
+              provider: 'apple',
+              status: 'expired',
+              expiresAt: oldExternalExpiry,
+            ),
+          ExternalAuthRequest(
+            requestId: 'external-retained',
+            state: 'external-retained-state',
+            provider: 'apple',
+            status: 'expired',
+            expiresAt: retainedExternalExpiry,
           ),
         ]);
         await auth_idp.RateLimitedRequestAttempt.db.insert(session, [
@@ -100,10 +123,12 @@ void main() {
 
         expect(result.deletedRefreshTokens, 3);
         expect(result.deletedSteamAuthRequests, 3);
+        expect(result.deletedExternalAuthRequests, 3);
         expect(result.deletedRateLimitAttempts, 3);
         expect(result.failures, isEmpty);
         expect(await auth_core.RefreshToken.db.count(session), 1);
         expect(await SteamAuthRequest.db.count(session), 1);
+        expect(await ExternalAuthRequest.db.count(session), 1);
         expect(
           await auth_idp.RateLimitedRequestAttempt.db.count(
             session,

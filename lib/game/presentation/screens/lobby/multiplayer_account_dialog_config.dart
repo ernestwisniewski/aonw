@@ -6,6 +6,7 @@ Future<NetworkAuthResult?> showMultiplayerAccountDialog({
   required MultiplayerCreateAccountAction createAccount,
   MultiplayerSocialAuthClientFactory? socialAuthClientFactory,
   MultiplayerCompleteSocialAuthAction? completeSocialAuth,
+  MultiplayerExternalAuthAction? externalAuth,
   MultiplayerSteamAuthAction? steamAuth,
   String initialDisplayName = '',
 }) {
@@ -18,6 +19,7 @@ Future<NetworkAuthResult?> showMultiplayerAccountDialog({
       createAccount: createAccount,
       socialAuthClientFactory: socialAuthClientFactory,
       completeSocialAuth: completeSocialAuth,
+      externalAuth: externalAuth,
       steamAuth: steamAuth,
       initialDisplayName: initialDisplayName,
     ),
@@ -38,12 +40,16 @@ typedef MultiplayerCreateAccountAction =
 typedef MultiplayerSocialAuthClientFactory = sp.Client Function();
 typedef MultiplayerCompleteSocialAuthAction =
     Future<NetworkAuthResult> Function({required sp_auth.AuthSuccess auth});
+typedef MultiplayerExternalAuthAction =
+    Future<NetworkAuthResult> Function({required String provider});
 typedef MultiplayerSteamAuthAction = Future<NetworkAuthResult> Function();
 
 const _defaultGoogleWebClientId =
     '421226196002-m0f4ncq3o59uc0vvpj0lniuq99os9bbg.apps.googleusercontent.com';
 const _defaultAppleServiceIdentifier = 'aonw.net.game.signin';
 const _defaultAppleRedirectUri = 'https://api.aonw.net/auth/apple/callback';
+const _appleExternalAuthProvider = 'apple';
+const _googleExternalAuthProvider = 'google';
 
 enum _AccountMode { signIn, create }
 

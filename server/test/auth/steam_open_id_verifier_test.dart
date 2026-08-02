@@ -20,7 +20,12 @@ void main() {
       request.response.write('ns:http://specs.openid.net/auth/2.0\n');
       request.response.write('is_valid:true\n');
       await request.response.close();
-      return (method: request.method, body: body);
+      return (
+        method: request.method,
+        body: body,
+        contentLength: request.contentLength,
+        transferEncoding: request.headers.value('transfer-encoding'),
+      );
     });
 
     final verified = await _verifier(
@@ -28,11 +33,29 @@ void main() {
     ).verify({..._query, 'ignored': 'not-forwarded'});
     final request = await handled;
 
-    expect(verified, isTrue);
+    expect(verified.valid, isTrue);
+    expect(verified.diagnostic, 'valid');
     expect(request.method, 'POST');
+    expect(request.contentLength, utf8.encode(request.body).length);
+    expect(request.transferEncoding, isNull);
     expect(request.body, contains('openid.mode=check_authentication'));
     expect(request.body, contains('openid.claimed_id='));
     expect(request.body, isNot(contains('ignored')));
+  });
+
+  test('accepts a gzip-compressed Steam verification response', () async {
+    final handled = server.first.then((request) async {
+      await request.drain<void>();
+      request.response.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
+      request.response.add(gzip.encode(utf8.encode('is_valid:true\n')));
+      await request.response.close();
+    });
+
+    final verified = await _verifier(server).verify(_query);
+
+    expect(verified.valid, isTrue);
+    expect(verified.diagnostic, 'valid');
+    await handled;
   });
 
   test('rejects oversized verification requests before network I/O', () async {
@@ -46,7 +69,8 @@ void main() {
       'openid.sig': List.filled(128, 'x').join(),
     });
 
-    expect(verified, isFalse);
+    expect(verified.valid, isFalse);
+    expect(verified.diagnostic, 'request_too_large');
   });
 
   test('rejects oversized verification responses', () async {
@@ -60,7 +84,9 @@ void main() {
       maxResponseBytes: 32,
     );
 
-    expect(await verifier.verify(_query), isFalse);
+    final verified = await verifier.verify(_query);
+    expect(verified.valid, isFalse);
+    expect(verified.diagnostic, 'response_too_large');
     await handled;
   });
 
@@ -82,7 +108,9 @@ void main() {
         timeout: const Duration(milliseconds: 50),
       );
 
-      expect(await verifier.verify(_query), isFalse);
+      final verified = await verifier.verify(_query);
+      expect(verified.valid, isFalse);
+      expect(verified.diagnostic, 'timeout');
       await handled;
     },
   );
@@ -93,7 +121,8 @@ void main() {
       'openid.op_endpoint': 'https://attacker.example/openid',
     });
 
-    expect(verified, isFalse);
+    expect(verified.valid, isFalse);
+    expect(verified.diagnostic, 'invalid_provider_response');
   });
 
   test('rejects mismatched claimed and identity values before I/O', () async {
@@ -103,7 +132,8 @@ void main() {
           'https://steamcommunity.com/openid/id/00000000000000000',
     });
 
-    expect(verified, isFalse);
+    expect(verified.valid, isFalse);
+    expect(verified.diagnostic, 'invalid_provider_response');
   });
 }
 

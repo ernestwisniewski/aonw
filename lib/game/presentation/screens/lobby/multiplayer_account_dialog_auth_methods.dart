@@ -102,8 +102,12 @@ class _AuthMethodButtons extends StatelessWidget {
     required this.onEmailPressed,
     this.client,
     this.socialAuthReady = false,
+    this.showNativeGoogle = false,
+    this.showNativeApple = false,
     this.onAuthenticated,
     this.onError,
+    this.onGooglePressed,
+    this.onApplePressed,
     this.onSteamPressed,
   });
 
@@ -112,22 +116,20 @@ class _AuthMethodButtons extends StatelessWidget {
 
   final sp.Client? client;
   final bool socialAuthReady;
+  final bool showNativeGoogle;
+  final bool showNativeApple;
   final bool emailSelected;
   final VoidCallback onEmailPressed;
   final VoidCallback? onAuthenticated;
   final void Function(Object error)? onError;
+  final VoidCallback? onGooglePressed;
+  final VoidCallback? onApplePressed;
   final VoidCallback? onSteamPressed;
 
   @override
   Widget build(BuildContext context) {
     final authClient = client;
     final readyAuthClient = socialAuthReady ? authClient : null;
-    final showApple =
-        readyAuthClient != null &&
-        (kIsWeb ||
-            defaultTargetPlatform == TargetPlatform.iOS ||
-            defaultTargetPlatform == TargetPlatform.macOS ||
-            defaultTargetPlatform == TargetPlatform.android);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -152,7 +154,18 @@ class _AuthMethodButtons extends StatelessWidget {
                     minWidth: buttonWidth,
                   ),
                 ),
-              if (authClient != null)
+              if (onGooglePressed != null)
+                _methodSlot(
+                  width: buttonWidth,
+                  child: _ExternalProviderButton(
+                    key: const Key('multiplayer.account.google'),
+                    onPressed: onGooglePressed!,
+                    label: 'Google',
+                    icon: Icons.account_circle_outlined,
+                    width: buttonWidth,
+                  ),
+                )
+              else if (showNativeGoogle && authClient != null)
                 _methodSlot(
                   width: buttonWidth,
                   child: readyAuthClient == null
@@ -167,7 +180,18 @@ class _AuthMethodButtons extends StatelessWidget {
                           minimumWidth: buttonWidth,
                         ),
                 ),
-              if (showApple)
+              if (onApplePressed != null)
+                _methodSlot(
+                  width: buttonWidth,
+                  child: _ExternalProviderButton(
+                    key: const Key('multiplayer.account.apple'),
+                    onPressed: onApplePressed!,
+                    label: 'Apple',
+                    icon: Icons.apple,
+                    width: buttonWidth,
+                  ),
+                )
+              else if (showNativeApple && readyAuthClient != null)
                 _methodSlot(
                   width: buttonWidth,
                   child: AppleSignInWidget(
@@ -218,6 +242,31 @@ class _AuthMethodButtons extends StatelessWidget {
 
   Widget _methodSlot({required double width, required Widget child}) {
     return SizedBox(width: width, child: child);
+  }
+}
+
+class _ExternalProviderButton extends StatelessWidget {
+  const _ExternalProviderButton({
+    required super.key,
+    required this.onPressed,
+    required this.label,
+    required this.icon,
+    required this.width,
+  });
+
+  final VoidCallback onPressed;
+  final String label;
+  final IconData icon;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    return EpicButton.outlined(
+      onPressed: onPressed,
+      label: label,
+      icon: icon,
+      minWidth: width,
+    );
   }
 }
 
@@ -285,18 +334,40 @@ String _appleRedirectUri() {
   return _defaultAppleRedirectUri;
 }
 
-bool get _supportsGoogleAppleSignIn {
+bool get _supportsNativeGoogleSignIn {
   return kIsWeb ||
       defaultTargetPlatform == TargetPlatform.android ||
       defaultTargetPlatform == TargetPlatform.iOS ||
       defaultTargetPlatform == TargetPlatform.macOS;
 }
 
-bool get _supportsSteamSignIn {
+bool get _supportsNativeAppleSignIn {
+  return kIsWeb ||
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+}
+
+bool get _supportsNativeSocialSignIn =>
+    _supportsNativeGoogleSignIn || _supportsNativeAppleSignIn;
+
+bool get _usesExternalAppleSignIn {
   return !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.macOS ||
           defaultTargetPlatform == TargetPlatform.windows ||
           defaultTargetPlatform == TargetPlatform.linux);
+}
+
+bool get _usesExternalGoogleSignIn {
+  return !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux);
+}
+
+bool get _supportsSteamSignIn {
+  return kIsWeb ||
+      defaultTargetPlatform == TargetPlatform.macOS ||
+      defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.linux;
 }
 
 String? _accountLocalError({

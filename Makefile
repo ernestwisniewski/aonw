@@ -717,7 +717,9 @@ build-web:
 	  perl -0pi -e 's/"mainWasmPath":"main\.dart\.wasm"/"mainWasmPath":"main.dart.wasm?v='"$$build_id"'"/g; s/"jsSupportRuntimePath":"main\.dart\.mjs"/"jsSupportRuntimePath":"main.dart.mjs?v='"$$build_id"'"/g; s/"mainJsPath":"main\.dart\.js"/"mainJsPath":"main.dart.js?v='"$$build_id"'"/g' build/web/flutter_bootstrap.js; \
 	  perl -0pi -e 's/src="flutter_bootstrap\.js(?:\?v=[^"]*)?"/src="flutter_bootstrap.js?v='"$$build_id"'"/g' build/web/index.html
 	@rg -a -F "$(WEB_API_BASE_URL)" build/web >/dev/null
+	@rg -F "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" build/web/index.html >/dev/null
 	@echo "Verified web build API: $(WEB_API_BASE_URL)"
+	@echo "Verified web Apple sign-in SDK."
 
 # Compatibility wrapper for one-off deployments. The aggregate immutable
 # release flow can build once and call deploy-web-files separately.

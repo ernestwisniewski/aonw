@@ -13,6 +13,9 @@ emailIdp:
   - displayName:
   - updateDisplayName:
   - hasAccount:
+externalAuth:
+  - start:
+  - poll:
 googleIdp:
   - login:
   - hasAccount:

@@ -219,8 +219,15 @@ class SteamAuthService {
       );
     }
 
-    final valid = await _openIdVerifier.verify(query);
-    if (!valid) {
+    final verification = await _openIdVerifier.verify(query);
+    if (!verification.valid) {
+      session.log(
+        'Steam OpenID verification rejected for request '
+        '${requestId.substring(0, 8)} '
+        '(reason=${verification.diagnostic}, '
+        'httpStatus=${verification.httpStatus ?? 'none'}).',
+        level: LogLevel.warning,
+      );
       await _failRequest(session, requestId, 'invalid_signature');
       return (
         success: false,

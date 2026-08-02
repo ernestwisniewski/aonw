@@ -3,7 +3,27 @@ import 'dart:convert';
 import 'dart:io';
 
 abstract interface class SteamOpenIdVerification {
-  Future<bool> verify(Map<String, String> query);
+  Future<SteamOpenIdVerificationResult> verify(Map<String, String> query);
+}
+
+final class SteamOpenIdVerificationResult {
+  const SteamOpenIdVerificationResult._({
+    required this.valid,
+    required this.diagnostic,
+    this.httpStatus,
+  });
+
+  const SteamOpenIdVerificationResult.valid()
+    : this._(valid: true, diagnostic: 'valid');
+
+  const SteamOpenIdVerificationResult.rejected(
+    String diagnostic, {
+    int? httpStatus,
+  }) : this._(valid: false, diagnostic: diagnostic, httpStatus: httpStatus);
+
+  final bool valid;
+  final String diagnostic;
+  final int? httpStatus;
 }
 
 final class SteamOpenIdVerifier implements SteamOpenIdVerification {
@@ -27,22 +47,32 @@ final class SteamOpenIdVerifier implements SteamOpenIdVerification {
   final int maxResponseBytes;
 
   @override
-  Future<bool> verify(Map<String, String> query) async {
-    if (!_isSteamProviderResponse(query)) return false;
-    final body = _verificationBody(query);
-    if (utf8.encode(body).length > maxRequestBytes) return false;
+  Future<SteamOpenIdVerificationResult> verify(
+    Map<String, String> query,
+  ) async {
+    if (!_isSteamProviderResponse(query)) {
+      return const SteamOpenIdVerificationResult.rejected(
+        'invalid_provider_response',
+      );
+    }
+    final body = utf8.encode(_verificationBody(query));
+    if (body.length > maxRequestBytes) {
+      return const SteamOpenIdVerificationResult.rejected('request_too_large');
+    }
 
     final client = HttpClient()
-      ..autoUncompress = false
+      ..autoUncompress = true
       ..connectionTimeout = timeout;
     try {
       return await _exchange(client, body).timeout(timeout);
     } on TimeoutException {
-      return false;
+      return const SteamOpenIdVerificationResult.rejected('timeout');
     } on IOException {
-      return false;
+      return const SteamOpenIdVerificationResult.rejected('network_error');
     } on FormatException {
-      return false;
+      return const SteamOpenIdVerificationResult.rejected(
+        'invalid_response_encoding',
+      );
     } finally {
       client.close(force: true);
     }
@@ -68,7 +98,10 @@ final class SteamOpenIdVerifier implements SteamOpenIdVerification {
     return query[key]?.isNotEmpty ?? false;
   }
 
-  Future<bool> _exchange(HttpClient client, String body) async {
+  Future<SteamOpenIdVerificationResult> _exchange(
+    HttpClient client,
+    List<int> body,
+  ) async {
     final request = await client.postUrl(endpoint);
     request
       ..followRedirects = false
@@ -77,19 +110,32 @@ final class SteamOpenIdVerifier implements SteamOpenIdVerification {
         'x-www-form-urlencoded',
         charset: 'utf-8',
       )
-      ..write(body);
+      ..contentLength = body.length
+      ..add(body);
     final response = await request.close();
-    if (response.statusCode < 200 || response.statusCode >= 300) return false;
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      return SteamOpenIdVerificationResult.rejected(
+        'http_status',
+        httpStatus: response.statusCode,
+      );
+    }
 
     final bytes = <int>[];
     await for (final chunk in response) {
-      if (bytes.length + chunk.length > maxResponseBytes) return false;
+      if (bytes.length + chunk.length > maxResponseBytes) {
+        return const SteamOpenIdVerificationResult.rejected(
+          'response_too_large',
+        );
+      }
       bytes.addAll(chunk);
     }
     final responseBody = utf8.decode(bytes);
-    return responseBody
+    final valid = responseBody
         .split('\n')
         .any((line) => line.trim() == 'is_valid:true');
+    return valid
+        ? const SteamOpenIdVerificationResult.valid()
+        : const SteamOpenIdVerificationResult.rejected('provider_rejected');
   }
 
   String _verificationBody(Map<String, String> query) {

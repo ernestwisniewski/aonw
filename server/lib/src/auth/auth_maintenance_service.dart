@@ -25,6 +25,9 @@ const expiredRefreshTokenRetention = Duration(days: 7);
 /// Grace period after a Steam authentication request has expired.
 const expiredSteamAuthRequestRetention = Duration(days: 7);
 
+/// Grace period after an external browser authentication request has expired.
+const expiredExternalAuthRequestRetention = Duration(days: 7);
+
 /// Retention for rate-limit attempts. The longest live policy is one hour, so
 /// seven days leaves a conservative operational buffer.
 const expiredAuthRateLimitAttemptRetention = Duration(days: 7);
@@ -32,6 +35,7 @@ const expiredAuthRateLimitAttemptRetention = Duration(days: 7);
 enum AuthMaintenanceTarget {
   refreshTokens,
   steamAuthRequests,
+  externalAuthRequests,
   rateLimitAttempts,
 }
 
@@ -55,6 +59,7 @@ final class AuthMaintenanceResult {
   const AuthMaintenanceResult({
     required this.deletedRefreshTokens,
     required this.deletedSteamAuthRequests,
+    required this.deletedExternalAuthRequests,
     required this.deletedRateLimitAttempts,
     required this.failures,
     required this.backlogTargets,
@@ -62,6 +67,7 @@ final class AuthMaintenanceResult {
 
   final int deletedRefreshTokens;
   final int deletedSteamAuthRequests;
+  final int deletedExternalAuthRequests;
   final int deletedRateLimitAttempts;
   final List<AuthMaintenanceFailure> failures;
   final Set<AuthMaintenanceTarget> backlogTargets;
@@ -69,6 +75,7 @@ final class AuthMaintenanceResult {
   int get totalDeleted =>
       deletedRefreshTokens +
       deletedSteamAuthRequests +
+      deletedExternalAuthRequests +
       deletedRateLimitAttempts;
 
   bool get backlogRemaining => backlogTargets.isNotEmpty;
@@ -81,6 +88,11 @@ abstract interface class AuthMaintenanceStore {
   });
 
   Future<int> deleteExpiredSteamAuthRequests({
+    required DateTime cutoff,
+    required int limit,
+  });
+
+  Future<int> deleteExpiredExternalAuthRequests({
     required DateTime cutoff,
     required int limit,
   });
@@ -130,6 +142,12 @@ final class AuthMaintenanceService {
         limit: limit,
       ),
     );
+    final externalAuthRequests = await _deleteInBatches(
+      (limit) => store.deleteExpiredExternalAuthRequests(
+        cutoff: nowUtc.subtract(expiredExternalAuthRequestRetention),
+        limit: limit,
+      ),
+    );
     final rateLimitAttempts = await _deleteInBatches(
       (limit) => store.deleteExpiredRateLimitAttempts(
         cutoff: nowUtc.subtract(expiredAuthRateLimitAttemptRetention),
@@ -139,6 +157,7 @@ final class AuthMaintenanceService {
     final outcomes = <AuthMaintenanceTarget, _BatchDeletionResult>{
       AuthMaintenanceTarget.refreshTokens: refreshTokens,
       AuthMaintenanceTarget.steamAuthRequests: steamAuthRequests,
+      AuthMaintenanceTarget.externalAuthRequests: externalAuthRequests,
       AuthMaintenanceTarget.rateLimitAttempts: rateLimitAttempts,
     };
     final failures = <AuthMaintenanceFailure>[
@@ -159,6 +178,7 @@ final class AuthMaintenanceService {
     return AuthMaintenanceResult(
       deletedRefreshTokens: refreshTokens.deleted,
       deletedSteamAuthRequests: steamAuthRequests.deleted,
+      deletedExternalAuthRequests: externalAuthRequests.deleted,
       deletedRateLimitAttempts: rateLimitAttempts.deleted,
       failures: List.unmodifiable(failures),
       backlogTargets: Set.unmodifiable(backlogTargets),
@@ -272,6 +292,27 @@ final class ServerpodAuthMaintenanceStore implements AuthMaintenanceStore {
     if (ids.isEmpty) return 0;
 
     final deleted = await SteamAuthRequest.db.deleteWhere(
+      _session,
+      where: (table) => table.id.inSet(ids) & (table.expiresAt < cutoff),
+    );
+    return deleted.length;
+  }
+
+  @override
+  Future<int> deleteExpiredExternalAuthRequests({
+    required DateTime cutoff,
+    required int limit,
+  }) async {
+    final candidates = await ExternalAuthRequest.db.find(
+      _session,
+      where: (table) => table.expiresAt < cutoff,
+      orderBy: (table) => table.expiresAt,
+      limit: limit,
+    );
+    final ids = _requiredIds(candidates.map((row) => row.id));
+    if (ids.isEmpty) return 0;
+
+    final deleted = await ExternalAuthRequest.db.deleteWhere(
       _session,
       where: (table) => table.id.inSet(ids) & (table.expiresAt < cutoff),
     );

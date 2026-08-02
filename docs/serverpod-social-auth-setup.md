@@ -27,6 +27,8 @@ All secrets live in the environment (there is no `passwords.yaml`). Set them in
 1. Keep the existing JWT and email secrets (`SERVERPOD_PASSWORD_*`).
 2. Set the downloaded Google Web OAuth client JSON, base64-encoded, in
    `AONW_GOOGLE_CLIENT_SECRET_B64` (for example `base64 -w0 client.json`).
+   The same Web client must authorize the desktop broker callback stored in
+   `SERVERPOD_PASSWORD_googleDesktopRedirectUri`.
 3. Set the Apple fields:
    - `SERVERPOD_PASSWORD_appleServiceIdentifier`
    - `SERVERPOD_PASSWORD_appleBundleIdentifier`
@@ -36,8 +38,9 @@ All secrets live in the environment (there is no `passwords.yaml`). Set them in
    - `AONW_APPLE_KEY_B64` — the sign-in private key PEM, base64-encoded
    - `SERVERPOD_PASSWORD_appleAndroidPackageIdentifier` for Android
    - `SERVERPOD_PASSWORD_appleWebRedirectUri` for Flutter Web
-4. Apply the new Serverpod migration before using social sign-in in a shared
-   environment.
+4. Apply the Serverpod migrations before using social sign-in in a shared
+   environment. The external browser broker uses
+   `aonw_external_auth_request` for short-lived, one-time handoffs.
 
 The server only enables Google and Apple providers when their required password
 values are present, so local email/password development can still run without
@@ -60,6 +63,18 @@ https://your-api-domain/auth/steam/callback
    - `https://www.googleapis.com/auth/userinfo.profile`
 5. Create a Web OAuth client and paste the downloaded JSON into
    `googleClientSecret`. This Web client is the server-side OAuth client.
+   Add this authorized redirect URI to that client and keep the JSON's
+   `redirect_uris` array in sync:
+
+   ```text
+   https://api.aonw.net/auth/google/callback
+   ```
+
+   Set the same value in `.env`:
+
+   ```text
+   SERVERPOD_PASSWORD_googleDesktopRedirectUri=https://api.aonw.net/auth/google/callback
+   ```
 6. Create platform OAuth clients as needed:
    - Android: package name `aonw.net.game` and SHA-1 certificate fingerprint.
    - iOS: bundle ID `aonw.net.game`.
@@ -184,7 +199,10 @@ https://your-api-domain/auth/apple/callback
    base64-encoded, in `AONW_APPLE_KEY_B64`.
 7. For Android, the `signinwithapple` callback activity is already declared in
    `android/app/src/main/AndroidManifest.xml`.
-8. For iOS/macOS, enable the Sign in with Apple capability in Xcode.
+8. For iOS App Store builds, enable the Sign in with Apple capability in
+   Xcode. Developer ID macOS builds distributed through Steam or itch cannot
+   use the native Sign in with Apple entitlement and therefore use the system
+   browser plus the server callback instead.
 9. For Android/Web Flutter builds, pass:
 
 ```sh
@@ -198,8 +216,10 @@ tunnel or a development domain with TLS.
 
 ## Steam
 
-Steam sign-in is intended for desktop builds, including Steam distribution on
-macOS, Windows, and Linux.
+Steam sign-in is available in the web app and in desktop builds, including
+Steam and itch distribution on macOS, Windows, and Linux. Web opens a popup
+synchronously from the button press, then navigates it after the server creates
+the short-lived request; this prevents browser popup blocking.
 
 1. Make sure the Serverpod web server public host points to the public API
    domain used by players.
@@ -213,8 +233,23 @@ https://your-api-domain/auth/steam/callback
    - `aonw_steam_account`
    - `aonw_steam_auth_request`
 4. No social sign-in secret is required for Steam OpenID.
-5. The Flutter desktop app opens Steam in the system browser and polls the
-   server for the completed authentication request.
+5. The Flutter app opens Steam in a browser and polls the server for the
+   completed authentication request.
+
+## Platform matrix
+
+| Distribution | Google | Apple | Steam |
+| --- | --- | --- | --- |
+| Web | Google web widget | Apple web widget | Browser popup + poll |
+| iOS App Store | Native | Native | Hidden |
+| Android | Native | Apple callback activity | Hidden |
+| macOS Steam / itch | Native | Browser callback + poll | Browser + poll |
+| Windows Steam / itch | Browser callback + poll | Browser callback + poll | Browser + poll |
+| Linux Steam / itch | Browser callback + poll | Browser callback + poll | Browser + poll |
+
+The desktop Apple and Google callbacks terminate at `api.aonw.net`; no custom
+URL scheme and no provider token are placed in the browser URL. The app
+receives a one-time Serverpod auth result by polling with a random request ID.
 
 For production AONW, the expected callback is:
 
