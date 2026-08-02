@@ -1,18 +1,25 @@
-part of 'game_state_provider.dart';
+import 'package:aonw/game/application/ports/command_transport.dart';
+import 'package:aonw/game/application/ports/live_multiplayer_events.dart';
+import 'package:aonw/game/application/services/game_event_descriptor.dart';
+import 'package:aonw/game/application/services/live_snapshot_presentation_policy.dart';
+import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
+import 'package:aonw/game/presentation/audio/game_sound_cue_mapper.dart';
+import 'package:aonw/game/presentation/engine/domain_event_presentation_projector.dart';
+import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
+import 'package:aonw/game/presentation/engine/renderer_view_model.dart';
+import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
+import 'package:aonw/game/presentation/providers/game/game_state_runtime.dart';
+import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
+import 'package:aonw_core/game/domain/event.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 
-void _warnGameState(
-  Ref ref,
-  String message,
-  Object? error,
-  StackTrace? stackTrace,
-) {
-  ref
-      .read(gameLoggerProvider)
-      .warn('GameStateNotifier', message, error, stackTrace);
-}
+final class GameStateEffects {
+  const GameStateEffects(this._binding);
 
-extension GameStateNotifierEffects on GameStateNotifier {
-  Future<void> _presentExternalSnapshot({
+  final GameStateBinding _binding;
+
+  Future<void> presentExternalSnapshot({
     required GameClientState? previousState,
     required GameClientState nextState,
     required List<GameEvent> events,
@@ -23,7 +30,6 @@ extension GameStateNotifierEffects on GameStateNotifier {
     required RendererViewModel? renderer,
     required GameAudioController audioController,
     required GameEventNotificationsNotifier notifications,
-    required bool Function() isMounted,
   }) async {
     if (previousState == null) return;
     final transitionEffects =
@@ -35,7 +41,7 @@ extension GameStateNotifierEffects on GameStateNotifier {
           events: events,
           visibleMovementExecutions: movementExecutions,
           viewerPlayerId: viewerPlayerId,
-          turn: _eventTurnFor(events, fallbackTurn: turn),
+          turn: eventTurnFor(events, fallbackTurn: turn),
         );
     final cues = [
       ...GameSoundCueMapper.forRendererEffects(
@@ -49,9 +55,7 @@ extension GameStateNotifierEffects on GameStateNotifier {
         previousState: previousState,
       ),
     ];
-    if (cues.isNotEmpty) {
-      audioController.playAll(cues);
-    }
+    if (cues.isNotEmpty) audioController.playAll(cues);
     if (renderer != null) {
       await renderer.applyProjectedTransition(
         nextState,
@@ -59,7 +63,7 @@ extension GameStateNotifierEffects on GameStateNotifier {
         currentTurn: turn,
       );
     }
-    if (!isMounted()) return;
+    if (!_binding.isMounted()) return;
     notifications.addAll(
       events,
       nextState,
@@ -68,7 +72,7 @@ extension GameStateNotifierEffects on GameStateNotifier {
     );
   }
 
-  int? _eventTurnFor(Iterable<GameEvent> events, {required int fallbackTurn}) {
+  int eventTurnFor(Iterable<GameEvent> events, {required int fallbackTurn}) {
     for (final event in events) {
       final completedTurn = GameEventDescriptor.forEvent(event).completedTurn;
       if (completedTurn != null) return completedTurn;
@@ -76,13 +80,15 @@ extension GameStateNotifierEffects on GameStateNotifier {
     return fallbackTurn;
   }
 
-  void _warn(String message, [Object? error, StackTrace? stackTrace]) {
-    if (!_isMounted) return;
-    _warnGameState(_providerRef, message, error, stackTrace);
+  void warn(String message, [Object? error, StackTrace? stackTrace]) {
+    if (!_binding.isMounted()) return;
+    _binding.ref
+        .read(gameLoggerProvider)
+        .warn('GameStateNotifier', message, error, stackTrace);
   }
 }
 
-PresentationBatchIdentity _liveBatchIdentity(
+PresentationBatchIdentity liveBatchIdentity(
   String sourceId,
   int eventOffset,
   LiveServerEvent? liveEvent,
@@ -98,7 +104,7 @@ PresentationBatchIdentity _liveBatchIdentity(
   );
 }
 
-List<GameEvent> _presentedLiveEvents(
+List<GameEvent> presentedLiveEvents(
   LiveSnapshotPresentationDecision presentation,
   LiveServerEvent? liveEvent,
 ) {

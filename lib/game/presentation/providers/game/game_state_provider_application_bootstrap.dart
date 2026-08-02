@@ -1,41 +1,68 @@
-part of 'game_state_provider.dart';
+import 'dart:async';
 
-Duration? _doNotRetry(int retryCount, Object error) => null;
+import 'package:aonw/game/application/services/game_intent_resolver.dart';
+import 'package:aonw/game/application/services/game_session.dart';
+import 'package:aonw/game/application/services/live_wire_command_dispatcher.dart';
+import 'package:aonw/game/application/use_cases/bootstrap_game_state_use_case.dart';
+import 'package:aonw/game/domain/game_save.dart';
+import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
+import 'package:aonw/game/presentation/providers/game/game_state_provider_multiplayer_sync.dart';
+import 'package:aonw/game/presentation/providers/game/game_state_runtime.dart';
+import 'package:aonw/game/presentation/providers/ruleset/ruleset_providers.dart';
+import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
+import 'package:aonw/game/presentation/providers/session/session_providers.dart';
+import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
 
-extension GameStateNotifierApplicationBootstrap on GameStateNotifier {
-  Future<GameClientState> _buildState(String saveId) async {
-    _providerRef.onDispose(() => unawaited(_closeLiveEvents()));
-    await _closeLiveEvents();
-    _saveId = saveId;
-    final session = _providerRef.watch(activeGameSessionProvider);
+final class GameStateApplicationBootstrap {
+  const GameStateApplicationBootstrap({
+    required GameStateBinding binding,
+    required GameStateRuntime runtime,
+    required GameStateMultiplayerSync multiplayerSync,
+  }) : _binding = binding,
+       _runtime = runtime,
+       _multiplayerSync = multiplayerSync;
+
+  final GameStateBinding _binding;
+  final GameStateRuntime _runtime;
+  final GameStateMultiplayerSync _multiplayerSync;
+
+  Future<GameClientState> buildState(String saveId) async {
+    if (!_binding.isMounted()) return GameClientState();
+    _binding.ref.onDispose(() => unawaited(_multiplayerSync.closeLiveEvents()));
+    await _multiplayerSync.closeLiveEvents();
+    if (!_binding.isMounted()) return GameClientState();
+    _runtime.saveId = saveId;
+    final session = _binding.ref.watch(activeGameSessionProvider);
     if (session == null || saveId.isEmpty) {
-      _dispatchCommand = null;
+      _runtime.dispatchCommand = null;
       return GameClientState();
     }
     final reducer = _createReducer(session);
-    _reducer = reducer;
+    _runtime.reducer = reducer;
     final liveCommandDispatcher = session.gameMode == GameMode.multiplayer
         ? LiveWireCommandDispatcher(
-            liveHandle: _liveCommandHandle,
-            fallback: _providerRef.watch(wireCommandDispatcherProvider),
+            liveHandle: _multiplayerSync.liveCommandHandle,
+            fallback: _binding.ref.watch(wireCommandDispatcherProvider),
           )
         : null;
-    _dispatchCommand = buildDispatchCommandUseCase(
-      _providerRef,
+    _runtime.dispatchCommand = buildDispatchCommandUseCase(
+      _binding.ref,
       reducer,
       session.gameMode,
       saveId: saveId,
       commandDispatcher: liveCommandDispatcher,
     );
     final bootstrap = BootstrapGameStateUseCase(
-      repository: gameRepositoryForSave(_providerRef, saveId),
-      dispatchCommand: _dispatchCommand!,
+      repository: gameRepositoryForSave(_binding.ref, saveId),
+      dispatchCommand: _runtime.dispatchCommand!,
     );
     final bootstrapped = await bootstrap.executeWithResult(
       saveId: saveId,
-      preferredPlayerId: _providerRef.read(networkSessionProvider)?.playerId,
+      preferredPlayerId: _binding.ref.read(networkSessionProvider)?.playerId,
     );
-    _eventLogOffset = bootstrapped.offset;
+    _runtime.eventLogOffset = bootstrapped.offset;
     var synchronized = reducer
         .syncActivePlayer(
           bootstrapped.state,
@@ -53,8 +80,10 @@ extension GameStateNotifierApplicationBootstrap on GameStateNotifier {
         synchronized = synchronized.copyWith(interaction: focus.interaction);
       }
     }
-    if (!_isMounted) return synchronized;
-    unawaited(_startLiveEvents(saveId, gameMode: session.gameMode));
+    if (!_binding.isMounted()) return synchronized;
+    unawaited(
+      _multiplayerSync.startLiveEvents(saveId, gameMode: session.gameMode),
+    );
     return synchronized;
   }
 
@@ -62,9 +91,9 @@ extension GameStateNotifierApplicationBootstrap on GameStateNotifier {
     return GameStateReducer(
       mapData: session.mapData,
       ruleset: GameRuleset.standard().copyWith(
-        city: _providerRef.watch(cityRulesetProvider),
-        technology: _providerRef.watch(technologyRulesetProvider),
-        stability: _providerRef.watch(stabilityRulesetProvider),
+        city: _binding.ref.watch(cityRulesetProvider),
+        technology: _binding.ref.watch(technologyRulesetProvider),
+        stability: _binding.ref.watch(stabilityRulesetProvider),
       ),
     );
   }

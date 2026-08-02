@@ -8,22 +8,33 @@ const _providerPath = '$_providerDirectory/game_state_provider.dart';
 void main() {
   test('GameStateNotifier delegates its four runtime responsibilities', () {
     final source = File(_providerPath).readAsStringSync();
-    const parts = {
+    const services = {
       'game_state_provider_application_bootstrap.dart':
-          'GameStateNotifierApplicationBootstrap',
-      'game_state_provider_commands.dart': 'GameStateNotifierCommands',
-      'game_state_provider_multiplayer_sync.dart':
-          'GameStateNotifierMultiplayerSync',
-      'game_state_provider_effects.dart': 'GameStateNotifierEffects',
+          'GameStateApplicationBootstrap',
+      'game_state_provider_commands.dart': 'GameStateCommands',
+      'game_state_provider_multiplayer_sync.dart': 'GameStateMultiplayerSync',
+      'game_state_effects.dart': 'GameStateEffects',
     };
 
-    for (final entry in parts.entries) {
-      expect(source, contains("part '${entry.key}';"), reason: entry.key);
-      final partSource = File(
+    for (final entry in services.entries) {
+      expect(source, contains(entry.value), reason: entry.key);
+      final serviceSource = File(
         '$_providerDirectory/${entry.key}',
       ).readAsStringSync();
-      expect(partSource, contains('extension ${entry.value}'));
+      expect(serviceSource, contains('final class ${entry.value}'));
+      expect(
+        serviceSource,
+        isNot(contains("part of 'game_state_provider.dart'")),
+      );
     }
+
+    expect(
+      RegExp(
+        r"^part '(?!game_state_provider\.g\.dart)",
+        multiLine: true,
+      ).hasMatch(source),
+      isFalse,
+    );
 
     expect(source.split('\n'), hasLength(lessThan(100)));
     expect(

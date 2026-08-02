@@ -1,40 +1,63 @@
-part of 'game_state_provider.dart';
+import 'package:aonw/game/application/services/game_intent_resolver.dart';
+import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
+import 'package:aonw/game/domain/game_command_context.dart';
+import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_transition.dart';
+import 'package:aonw/game/presentation/providers/game/game_activity_history_provider.dart';
+import 'package:aonw/game/presentation/providers/game/game_state_provider_multiplayer_sync.dart';
+import 'package:aonw/game/presentation/providers/game/game_state_runtime.dart';
+import 'package:aonw_core/game/domain/command.dart';
 
-extension GameStateNotifierCommands on GameStateNotifier {
+final class GameStateCommands {
+  GameStateCommands({
+    required GameStateBinding binding,
+    required GameStateRuntime runtime,
+    required GameStateMultiplayerSync multiplayerSync,
+  }) : _binding = binding,
+       _runtime = runtime,
+       _multiplayerSync = multiplayerSync;
+
+  final GameStateBinding _binding;
+  final GameStateRuntime _runtime;
+  final GameStateMultiplayerSync _multiplayerSync;
+  Future<void> _dispatchQueue = Future<void>.value();
+
   Future<void> syncActivePlayer({
     required String playerId,
     required bool canAct,
   }) => _enqueueDispatch(() async {
-    final current = _stateValue;
-    final reducer = _reducer;
-    if (!_isMounted || current == null || reducer == null) return;
-    _stateValue = reducer
-        .syncActivePlayer(current, playerId: playerId, canAct: canAct)
-        .state;
+    final current = _binding.readState();
+    final reducer = _runtime.reducer;
+    if (!_binding.isMounted() || current == null || reducer == null) return;
+    _binding.writeState(
+      reducer
+          .syncActivePlayer(current, playerId: playerId, canAct: canAct)
+          .state,
+    );
   });
 
   Future<DispatchCommandResult> _dispatchTransitionNow(
     DomainCommand command, {
     GameCommandContext context = const GameCommandContext(),
   }) async {
-    if (!_isMounted) {
+    if (!_binding.isMounted()) {
       return DispatchCommandResult(state: GameClientState());
     }
-    var current = _stateValue;
+    var current = _binding.readState();
     if (current == null) {
       try {
-        current = await _stateFuture;
+        current = await _binding.readStateFuture();
       } catch (_) {
         return DispatchCommandResult(state: GameClientState());
       }
-      if (!_isMounted) return DispatchCommandResult(state: current);
+      if (!_binding.isMounted()) return DispatchCommandResult(state: current);
     }
-    final useCase = _dispatchCommand;
-    if (useCase == null || _saveId.isEmpty) {
+    final useCase = _runtime.dispatchCommand;
+    if (useCase == null || _runtime.saveId.isEmpty) {
       return DispatchCommandResult(state: current);
     }
     final result = await useCase.execute(
-      saveId: _saveId,
+      saveId: _runtime.saveId,
       currentState: current,
       command: command,
       context: context,
@@ -47,19 +70,19 @@ extension GameStateNotifierCommands on GameStateNotifier {
     GameIntent intent, {
     GameCommandContext context = const GameCommandContext(),
   }) async {
-    if (!_isMounted) {
+    if (!_binding.isMounted()) {
       return DispatchCommandResult(state: GameClientState(), offset: -1);
     }
-    var current = _stateValue;
+    var current = _binding.readState();
     if (current == null) {
       try {
-        current = await _stateFuture;
+        current = await _binding.readStateFuture();
       } catch (_) {
         return DispatchCommandResult(state: GameClientState(), offset: -1);
       }
     }
-    final reducer = _reducer;
-    if (!_isMounted || reducer == null) {
+    final reducer = _runtime.reducer;
+    if (!_binding.isMounted() || reducer == null) {
       return DispatchCommandResult(state: current, offset: -1);
     }
     final resolution = GameIntentResolver(
@@ -78,7 +101,7 @@ extension GameStateNotifierCommands on GameStateNotifier {
     final next = resolution.interaction == current.interaction
         ? current
         : current.copyWith(interaction: resolution.interaction);
-    if (_isMounted) _stateValue = next;
+    if (_binding.isMounted()) _binding.writeState(next);
     return DispatchCommandResult(
       state: next,
       uiEffects: resolution.presentationFocus,
@@ -92,12 +115,12 @@ extension GameStateNotifierCommands on GameStateNotifier {
     required DomainCommand command,
     required GameCommandContext context,
   }) async {
-    final useCase = _dispatchCommand;
-    if (useCase == null || _saveId.isEmpty) {
+    final useCase = _runtime.dispatchCommand;
+    if (useCase == null || _runtime.saveId.isEmpty) {
       return DispatchCommandResult(state: current, offset: -1);
     }
     final result = await useCase.execute(
-      saveId: _saveId,
+      saveId: _runtime.saveId,
       currentState: current,
       command: command,
       context: context,
@@ -109,16 +132,16 @@ extension GameStateNotifierCommands on GameStateNotifier {
   }
 
   Future<void> _publishDispatchResult(DispatchCommandResult result) async {
-    if (_isMounted) {
+    if (_binding.isMounted()) {
       if (result.offset >= 0) {
-        _eventLogOffset = result.offset;
-        _providerRef.invalidate(gameActivityHistoryProvider(_saveId));
+        _runtime.eventLogOffset = result.offset;
+        _binding.ref.invalidate(gameActivityHistoryProvider(_runtime.saveId));
       }
-      _stateValue = result.state;
+      _binding.writeState(result.state);
     }
     if (result.storedSnapshot && result.snapshot != null) {
-      await _cacheAppliedSnapshot(
-        saveId: _saveId,
+      await _multiplayerSync.cacheAppliedSnapshot(
+        saveId: _runtime.saveId,
         snapshot: result.snapshot!,
         offset: result.offset,
       );
