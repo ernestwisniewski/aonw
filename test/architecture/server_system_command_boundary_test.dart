@@ -11,7 +11,8 @@ const _systemPath =
 const _allowedReferences = <String>{
   'packages/aonw_core/lib/game/application/engine/game_engine.dart',
   'packages/aonw_core/lib/game/application/engine/turn_engine_handler.dart',
-  'server/lib/src/multiplayer/server_command_reducer.dart',
+  'server/lib/src/multiplayer/server_command_dispatcher.dart',
+  'server/lib/src/multiplayer/server_command_engine.dart',
   'server/lib/src/multiplayer/match_command_service_event.dart',
   'server/lib/src/multiplayer/match_lifecycle_service.dart',
   'server/lib/src/multiplayer/match_lifecycle_service_resignation.dart',

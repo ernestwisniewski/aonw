@@ -1,165 +1,168 @@
-part of 'multiplayer_match_store.dart';
+import 'package:aonw_core/protocol.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/game_match_row_mapper.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
+import 'package:serverpod/serverpod.dart';
 
-Future<List<WireMatch>> _listVisibleMatches(
-  ServerpodMultiplayerMatchStore store,
-  String userIdentifier,
-) async {
-  final participantRows = await GameMatch.db.find(
-    store._session,
-    where: (table) =>
-        ((table.state.equals('open')) | (table.state.equals('running'))) &
-        table.players.any(
-          (player) => player.userIdentifier.equals(userIdentifier),
-        ),
-    orderByList: _newestMatchOrder,
-    limit: multiplayerVisibleParticipantMatchLimit,
-    transaction: store._transaction,
-    include: GameMatch.include(
-      players: GamePlayer.includeList(orderBy: (table) => table.seatOrder),
-    ),
-  );
-  final publicRows = await GameMatch.db.find(
-    store._session,
-    where: (table) =>
-        table.state.equals('open') &
-        table.private.equals(false) &
-        table.inviteCode.equals(null),
-    orderByList: _newestMatchOrder,
-    limit: multiplayerVisiblePublicLobbyLimit,
-    transaction: store._transaction,
-    include: GameMatch.include(
-      players: GamePlayer.includeList(orderBy: (table) => table.seatOrder),
-    ),
-  );
+/// Owns bounded multiplayer discovery, resume, and event queries.
+final class MultiplayerMatchQueryStore {
+  const MultiplayerMatchQueryStore(this._store);
 
-  final participantIds = {for (final row in participantRows) row.publicId};
-  final matchesById = <String, WireMatch>{};
-  for (final row in [...participantRows, ...publicRows]) {
-    matchesById.putIfAbsent(row.publicId, () => _wireMatch(row, row.players!));
-  }
-  final matches = matchesById.values.toList()
-    ..sort(
+  final ServerpodMultiplayerMatchStore _store;
+
+  Future<List<WireMatch>> listVisibleMatches(String userIdentifier) async {
+    final participantRows = await GameMatch.db.find(
+      _store.sessionForCapabilities,
+      where: (table) =>
+          ((table.state.equals('open')) | (table.state.equals('running'))) &
+          table.players.any(
+            (player) => player.userIdentifier.equals(userIdentifier),
+          ),
+      orderByList: _newestMatchOrder,
+      limit: multiplayerVisibleParticipantMatchLimit,
+      transaction: _store.transactionForCapabilities,
+      include: GameMatch.include(
+        players: GamePlayer.includeList(orderBy: (table) => table.seatOrder),
+      ),
+    );
+    final publicRows = await GameMatch.db.find(
+      _store.sessionForCapabilities,
+      where: (table) =>
+          table.state.equals('open') &
+          table.private.equals(false) &
+          table.inviteCode.equals(null),
+      orderByList: _newestMatchOrder,
+      limit: multiplayerVisiblePublicLobbyLimit,
+      transaction: _store.transactionForCapabilities,
+      include: GameMatch.include(
+        players: GamePlayer.includeList(orderBy: (table) => table.seatOrder),
+      ),
+    );
+
+    final participantIds = {for (final row in participantRows) row.publicId};
+    final matchesById = <String, WireMatch>{};
+    for (final row in [...participantRows, ...publicRows]) {
+      matchesById.putIfAbsent(
+        row.publicId,
+        () => wireMatchFromRow(row, row.players!),
+      );
+    }
+    return matchesById.values.toList()..sort(
       (first, second) =>
           _compareVisibleMatches(first, second, participantIds: participantIds),
     );
-  return matches;
-}
-
-Future<StoredMatchState?> _findOpenQuickplayCandidate(
-  ServerpodMultiplayerMatchStore store,
-  CreateMatchRequest request,
-) async {
-  final rows = await GameMatch.db.find(
-    store._session,
-    where: (table) =>
-        table.state.equals('open') &
-        table.private.equals(false) &
-        table.quickplay.equals(true) &
-        table.inviteCode.equals(null) &
-        table.mapName.equals(request.mapName),
-    orderByList: (table) => [
-      Order(column: table.createdAt),
-      Order(column: table.publicId),
-    ],
-    limit: multiplayerQuickplayCandidateScanLimit,
-    transaction: store._transaction,
-    lockMode: store._transaction == null ? null : LockMode.forUpdate,
-    lockBehavior: store._transaction == null ? null : LockBehavior.wait,
-  );
-
-  for (final row in rows) {
-    final state = await store._stateFromRow(row);
-    if (state.match.mapName == request.mapName &&
-        state.match.players.length < state.match.maxPlayers) {
-      return state;
-    }
   }
-  return null;
-}
 
-Future<List<WireEvent>> _listEvents(
-  ServerpodMultiplayerMatchStore store,
-  String matchId,
-  int afterOffset,
-) async {
-  final row = await store._requireMatchRow(matchId);
-  final eventRows = await GameEvent.db.find(
-    store._session,
-    where: (table) =>
-        table.matchId.equals(row.id!) & (table.offset > afterOffset),
-    orderBy: (table) => table.offset,
-    limit: multiplayerEventPageSize,
-    transaction: store._transaction,
-  );
-  return [for (final eventRow in eventRows) eventRow.event];
-}
+  Future<StoredMatchState?> findOpenQuickplayCandidate(
+    CreateMatchRequest request,
+  ) async {
+    final rows = await GameMatch.db.find(
+      _store.sessionForCapabilities,
+      where: (table) =>
+          table.state.equals('open') &
+          table.private.equals(false) &
+          table.quickplay.equals(true) &
+          table.inviteCode.equals(null) &
+          table.mapName.equals(request.mapName),
+      orderByList: (table) => [
+        Order(column: table.createdAt),
+        Order(column: table.publicId),
+      ],
+      limit: multiplayerQuickplayCandidateScanLimit,
+      transaction: _store.transactionForCapabilities,
+      lockMode: _store.transactionForCapabilities == null
+          ? null
+          : LockMode.forUpdate,
+      lockBehavior: _store.transactionForCapabilities == null
+          ? null
+          : LockBehavior.wait,
+    );
 
-Future<RunningMatchStatePage> _listRunningStates(
-  ServerpodMultiplayerMatchStore store, {
-  RunningMatchCursor? after,
-}) async {
-  final rows = await GameMatch.db.find(
-    store._session,
-    where: (table) {
-      final running = table.state.equals('running');
-      if (after == null) return running;
-      return running &
-          ((table.createdAt > after.createdAt) |
-              (table.createdAt.equals(after.createdAt) &
-                  (table.publicId > after.publicId)));
-    },
-    orderByList: (table) => [
-      Order(column: table.createdAt),
-      Order(column: table.publicId),
-    ],
-    // One look-ahead row distinguishes a full final page from a page that
-    // actually has a successor, while keeping the query strictly bounded.
-    limit: multiplayerRunningMatchPageSize + 1,
-    transaction: store._transaction,
-    include: GameMatch.include(
-      players: GamePlayer.includeList(orderBy: (table) => table.seatOrder),
-      snapshots: GameSnapshot.includeList(
-        orderBy: (table) => table.offset,
-        orderDescending: true,
-      ),
-    ),
-  );
-  final pageRows = rows.take(multiplayerRunningMatchPageSize).toList();
-  final states = <StoredMatchState>[];
-  for (final row in pageRows) {
-    try {
-      final snapshots = row.snapshots;
-      if (snapshots == null || snapshots.isEmpty) {
-        throw StateError('Running match snapshot not found.');
+    for (final row in rows) {
+      final state = await _store.stateFromRowForCapabilities(row);
+      if (state.match.mapName == request.mapName &&
+          state.match.players.length < state.match.maxPlayers) {
+        return state;
       }
-      states.add(
-        StoredMatchState(
-          match: _wireMatch(row, row.players!),
-          snapshot: snapshots
-              .reduce(
-                (latest, candidate) =>
-                    candidate.offset > latest.offset ? candidate : latest,
-              )
-              .snapshot,
-        ),
-      );
-    } on ArgumentError {
-      // Old snapshots can remain in the database after a wire protocol bump.
-      // They cannot be resumed by the current server, but they also must not
-      // stop timeout processing for healthy running matches.
     }
+    return null;
   }
-  final lastRawRow = pageRows.isEmpty ? null : pageRows.last;
-  return RunningMatchStatePage(
-    states: states,
-    nextCursor:
-        rows.length <= multiplayerRunningMatchPageSize || lastRawRow == null
-        ? null
-        : RunningMatchCursor(
-            createdAt: lastRawRow.createdAt,
-            publicId: lastRawRow.publicId,
+
+  Future<List<WireEvent>> listEvents(String matchId, int afterOffset) async {
+    final row = await _store.requireMatchRowForCapabilities(matchId);
+    final eventRows = await GameEvent.db.find(
+      _store.sessionForCapabilities,
+      where: (table) =>
+          table.matchId.equals(row.id!) & (table.offset > afterOffset),
+      orderBy: (table) => table.offset,
+      limit: multiplayerEventPageSize,
+      transaction: _store.transactionForCapabilities,
+    );
+    return [for (final eventRow in eventRows) eventRow.event];
+  }
+
+  Future<RunningMatchStatePage> listRunningStates({
+    RunningMatchCursor? after,
+  }) async {
+    final rows = await GameMatch.db.find(
+      _store.sessionForCapabilities,
+      where: (table) {
+        final running = table.state.equals('running');
+        if (after == null) return running;
+        return running &
+            ((table.createdAt > after.createdAt) |
+                (table.createdAt.equals(after.createdAt) &
+                    (table.publicId > after.publicId)));
+      },
+      orderByList: (table) => [
+        Order(column: table.createdAt),
+        Order(column: table.publicId),
+      ],
+      limit: multiplayerRunningMatchPageSize + 1,
+      transaction: _store.transactionForCapabilities,
+      include: GameMatch.include(
+        players: GamePlayer.includeList(orderBy: (table) => table.seatOrder),
+        snapshots: GameSnapshot.includeList(
+          orderBy: (table) => table.offset,
+          orderDescending: true,
+        ),
+      ),
+    );
+    final pageRows = rows.take(multiplayerRunningMatchPageSize).toList();
+    final states = <StoredMatchState>[];
+    for (final row in pageRows) {
+      try {
+        final snapshots = row.snapshots;
+        if (snapshots == null || snapshots.isEmpty) {
+          throw StateError('Running match snapshot not found.');
+        }
+        states.add(
+          StoredMatchState(
+            match: wireMatchFromRow(row, row.players!),
+            snapshot: snapshots
+                .reduce(
+                  (latest, candidate) =>
+                      candidate.offset > latest.offset ? candidate : latest,
+                )
+                .snapshot,
           ),
-  );
+        );
+      } on ArgumentError {
+        // Incompatible snapshots must not stop healthy timeout processing.
+      }
+    }
+    final lastRawRow = pageRows.isEmpty ? null : pageRows.last;
+    return RunningMatchStatePage(
+      states: states,
+      nextCursor:
+          rows.length <= multiplayerRunningMatchPageSize || lastRawRow == null
+          ? null
+          : RunningMatchCursor(
+              createdAt: lastRawRow.createdAt,
+              publicId: lastRawRow.publicId,
+            ),
+    );
+  }
 }
 
 List<Order> _newestMatchOrder(GameMatchTable table) => [
@@ -174,7 +177,6 @@ int _compareVisibleMatches(
 }) {
   final createdAtOrder = second.createdAt.compareTo(first.createdAt);
   if (createdAtOrder != 0) return createdAtOrder;
-
   final firstIsParticipant = participantIds.contains(first.id);
   final secondIsParticipant = participantIds.contains(second.id);
   if (firstIsParticipant != secondIsParticipant) {

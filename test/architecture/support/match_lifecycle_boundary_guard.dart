@@ -38,7 +38,7 @@ const _expectedRawLifecycleValues = <String, Map<String, int>>{
   },
   lifecycleServerAdapterPath: {'running': 1, 'finished': 2, 'abandoned': 2},
   'server/lib/src/multiplayer/game_match_row_mapper.dart': {'running': 1},
-  'server/lib/src/multiplayer/multiplayer_match_store_creation.dart': {
+  'server/lib/src/multiplayer/multiplayer_match_store_persistence.dart': {
     'running': 1,
   },
   'server/lib/src/multiplayer/multiplayer_match_store_queries.dart': {

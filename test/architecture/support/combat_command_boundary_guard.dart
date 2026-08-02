@@ -17,8 +17,6 @@ const combatEngineHandlerPath =
     'combat_engine_handler.dart';
 const combatLocalCallSite =
     'lib/game/application/services/local_combat_command_resolver.dart';
-const combatServerCallSite =
-    'server/lib/src/multiplayer/server_command_reducer_unit_action.dart';
 const combatPerformanceWorkloadPath =
     'tool/performance/combat_command_workload.dart';
 const combatAnimationFactCodecPath =
@@ -35,7 +33,7 @@ const combatHiddenAiPlaybackPath =
     'lib/game/presentation/services/hidden_ai_renderer_playback.dart';
 const combatGameStateRendererEffectsPath =
     'lib/game/presentation/providers/game/'
-    'game_state_provider_effects.dart';
+    'game_state_effects.dart';
 const domainTurnCombatResolverPath =
     'packages/aonw_core/lib/game/domain/turn/'
     'domain_turn_combat_resolver.dart';

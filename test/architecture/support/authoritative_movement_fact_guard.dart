@@ -8,7 +8,7 @@ const movementFactProjectorPath =
 const movementFactGameActionsPath =
     'lib/game/presentation/engine/command_dispatch_presentation_projector.dart';
 const movementFactExternalPath =
-    'lib/game/presentation/providers/game/game_state_provider_effects.dart';
+    'lib/game/presentation/providers/game/game_state_effects.dart';
 const movementFactHiddenAiPath =
     'lib/game/presentation/services/hidden_ai_renderer_playback.dart';
 const movementFactReplayPath =

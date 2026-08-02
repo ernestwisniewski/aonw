@@ -198,10 +198,6 @@ const reviewedResearchDiplomacyFamilyPatternSignatures =
         occurrences: 2,
         digest: 6473497038187237735,
       ),
-      'server/lib/src/multiplayer/server_command_reducer.dart': (
-        occurrences: 2,
-        digest: -2790206016143467265,
-      ),
       'tool/performance/ai_mcts_workload.dart': (
         occurrences: 2,
         digest: 4184325178705214729,

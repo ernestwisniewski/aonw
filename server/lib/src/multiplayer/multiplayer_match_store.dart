@@ -1,16 +1,15 @@
-import 'dart:convert';
-
-import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/multiplayer/game_match_row_mapper.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store_persistence.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store_queries.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store_snapshots.dart';
 import 'package:aonw_server/src/observability/server_operational_event_sink.dart';
 import 'package:serverpod/serverpod.dart';
 
-part 'multiplayer_match_store_creation.dart';
-part 'multiplayer_match_store_limits.dart';
-part 'multiplayer_match_store_queries.dart';
-part 'multiplayer_match_store_snapshots.dart';
+export 'multiplayer_match_store_limits.dart';
+export 'multiplayer_match_store_persistence.dart'
+    show InviteCodeConflictException;
 
 class StoredMatchState {
   const StoredMatchState({required this.match, required this.snapshot});
@@ -114,10 +113,20 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
     required Transaction? transaction,
     required this.operationalEvents,
   }) : _session = session,
-       _transaction = transaction;
+       _transaction = transaction {
+    _queries = MultiplayerMatchQueryStore(this);
+    _persistence = MultiplayerMatchPersistenceStore(this);
+    _snapshots = MultiplayerMatchSnapshotStore(session, transaction);
+  }
 
   final Session _session;
   final Transaction? _transaction;
+  late final MultiplayerMatchQueryStore _queries;
+  late final MultiplayerMatchPersistenceStore _persistence;
+  late final MultiplayerMatchSnapshotStore _snapshots;
+
+  Session get sessionForCapabilities => _session;
+  Transaction? get transactionForCapabilities => _transaction;
 
   @override
   final ServerOperationalEventSink operationalEvents;
@@ -142,17 +151,17 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
 
   @override
   Future<List<WireMatch>> listVisibleMatches(String userIdentifier) =>
-      _listVisibleMatches(this, userIdentifier);
+      _queries.listVisibleMatches(userIdentifier);
 
   @override
   Future<RunningMatchStatePage> listRunningStates({
     RunningMatchCursor? after,
-  }) => _listRunningStates(this, after: after);
+  }) => _queries.listRunningStates(after: after);
 
   @override
   Future<StoredMatchState?> findOpenQuickplayCandidate(
     CreateMatchRequest request,
-  ) => _findOpenQuickplayCandidate(this, request);
+  ) => _queries.findOpenQuickplayCandidate(request);
 
   @override
   Future<StoredMatchState?> findState(String matchId, {bool lock = false}) {
@@ -175,23 +184,11 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
 
   @override
   Future<StoredMatchState> createState(StoredMatchState state) =>
-      _createState(this, state);
+      _persistence.create(state);
 
   @override
-  Future<StoredMatchState> saveState(StoredMatchState state) {
-    return transaction((store) async {
-      final txStore = store as ServerpodMultiplayerMatchStore;
-      final row = await txStore._requireMatchRow(state.match.id, lock: true);
-      final updatedRow = await GameMatch.db.updateRow(
-        txStore._session,
-        gameMatchRowForState(row, state.match, DateTime.now().toUtc()),
-        transaction: txStore._transaction,
-      );
-      await txStore._replacePlayers(updatedRow.id!, state.match.players);
-      await txStore._saveLatestSnapshot(updatedRow.id!, state.snapshot);
-      return state;
-    });
-  }
+  Future<StoredMatchState> saveState(StoredMatchState state) =>
+      _persistence.save(state);
 
   @override
   Future<StoredMatchState> appendEvent(
@@ -199,53 +196,27 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
     WireEvent event, {
     String? actorPlayerId,
     String? clientMessageId,
-  }) {
-    return transaction((store) async {
-      final txStore = store as ServerpodMultiplayerMatchStore;
-      final row = await txStore._requireMatchRow(state.match.id, lock: true);
-      final updatedRow = await GameMatch.db.updateRow(
-        txStore._session,
-        gameMatchRowForState(row, state.match, DateTime.now().toUtc()),
-        transaction: txStore._transaction,
-      );
-      await GameEvent.db.insertRow(
-        txStore._session,
-        GameEvent(
-          matchId: updatedRow.id!,
-          offset: event.offset,
-          actorPlayerId: actorPlayerId,
-          clientMessageId: clientMessageId,
-          event: event,
-          createdAt: event.timestamp,
-        ),
-        transaction: txStore._transaction,
-      );
-      await txStore._saveLatestSnapshot(updatedRow.id!, state.snapshot);
-      return state;
-    });
-  }
+  }) => _persistence.appendEvent(
+    state,
+    event,
+    actorPlayerId: actorPlayerId,
+    clientMessageId: clientMessageId,
+  );
 
   @override
   Future<WireEvent?> findEventByClientMessageId(
     String matchId, {
     required String actorPlayerId,
     required String clientMessageId,
-  }) async {
-    final row = await _requireMatchRow(matchId);
-    final eventRow = await GameEvent.db.findFirstRow(
-      _session,
-      where: (table) =>
-          (table.matchId.equals(row.id!)) &
-          (table.actorPlayerId.equals(actorPlayerId)) &
-          (table.clientMessageId.equals(clientMessageId)),
-      transaction: _transaction,
-    );
-    return eventRow?.event;
-  }
+  }) => _persistence.findEventByClientMessageId(
+    matchId,
+    actorPlayerId: actorPlayerId,
+    clientMessageId: clientMessageId,
+  );
 
   @override
   Future<List<WireEvent>> listEvents(String matchId, int afterOffset) =>
-      _listEvents(this, matchId, afterOffset);
+      _queries.listEvents(matchId, afterOffset);
 
   Future<StoredMatchState?> _findStateBy({
     required Expression<dynamic> Function(GameMatchTable table) where,
@@ -259,10 +230,10 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
       lockBehavior: lock && _transaction != null ? LockBehavior.wait : null,
     );
     if (row == null) return null;
-    return _stateFromRow(row);
+    return stateFromRowForCapabilities(row);
   }
 
-  Future<GameMatch> _requireMatchRow(
+  Future<GameMatch> requireMatchRowForCapabilities(
     String matchId, {
     bool lock = false,
   }) async {
@@ -279,7 +250,7 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
     return row;
   }
 
-  Future<StoredMatchState> _stateFromRow(GameMatch row) async {
+  Future<StoredMatchState> stateFromRowForCapabilities(GameMatch row) async {
     final players = await GamePlayer.db.find(
       _session,
       where: (table) => table.matchId.equals(row.id!),
@@ -297,12 +268,15 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
       throw StateError('Match snapshot not found.');
     }
     return StoredMatchState(
-      match: _wireMatch(row, players),
+      match: wireMatchFromRow(row, players),
       snapshot: snapshot.snapshot,
     );
   }
 
-  Future<void> _replacePlayers(int matchRowId, List<WirePlayer> players) async {
+  Future<void> replacePlayersForCapabilities(
+    int matchRowId,
+    List<WirePlayer> players,
+  ) async {
     await GamePlayer.db.deleteWhere(
       _session,
       where: (table) => table.matchId.equals(matchRowId),
@@ -311,58 +285,12 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
     if (players.isEmpty) return;
     await GamePlayer.db.insert(_session, [
       for (var index = 0; index < players.length; index++)
-        _gamePlayer(matchRowId, players[index], index),
+        gamePlayerRow(matchRowId, players[index], index),
     ], transaction: _transaction);
   }
-}
 
-WireMatch _wireMatch(GameMatch row, List<GamePlayer> players) {
-  return WireMatch(
-    id: row.publicId,
-    ownerUserId: row.ownerUserIdentifier,
-    name: row.name,
-    mapName: row.mapName,
-    players: [for (final player in players) _wirePlayer(player)],
-    maxPlayers: row.maxPlayers,
-    minPlayers: row.minPlayers,
-    quickplay: row.quickplay,
-    turn: row.turn,
-    state: row.state,
-    createdAt: row.createdAt,
-    endedAt: row.endedAt,
-    outcomeCondition: row.outcomeCondition,
-    winnerPlayerId: row.winnerPlayerId,
-    autoStartAt: row.autoStartAt,
-    inviteCode: row.inviteCode,
-  );
-}
-
-WirePlayer _wirePlayer(GamePlayer row) {
-  return WirePlayer(
-    id: row.publicPlayerId,
-    userId: row.userIdentifier,
-    name: row.displayName,
-    colorValue: row.colorValue,
-    country: PlayerCountry.values.byName(row.countryId),
-    kind: WirePlayerKind.values.byName(row.kind),
-    connectionState: WirePlayerConnectionState.values.byName(
-      row.connectionState,
-    ),
-    ready: row.ready,
-  );
-}
-
-GamePlayer _gamePlayer(int matchRowId, WirePlayer player, int seatOrder) {
-  return GamePlayer(
-    matchId: matchRowId,
-    publicPlayerId: player.id,
-    userIdentifier: player.userId,
-    displayName: player.name,
-    colorValue: player.colorValue,
-    countryId: player.country.name,
-    kind: player.kind.name,
-    connectionState: player.connectionState.name,
-    ready: player.ready,
-    seatOrder: seatOrder,
-  );
+  Future<void> saveSnapshotForCapabilities(
+    int matchRowId,
+    WireSnapshot snapshot,
+  ) => _snapshots.saveLatest(matchRowId, snapshot);
 }

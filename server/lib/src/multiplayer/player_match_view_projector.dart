@@ -1,20 +1,17 @@
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/game/view.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/multiplayer/lossless_match_snapshot_codec.dart';
-import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
-import 'package:aonw_server/src/multiplayer/player_match_movement_audience.dart';
-import 'package:aonw_server/src/multiplayer/player_match_wire_schema_guard.dart';
-import 'package:aonw_server/src/multiplayer/player_view_state_projector.dart';
+import 'package:aonw_server/src/multiplayer/player_match_event_projector.dart';
+import 'package:aonw_server/src/multiplayer/player_match_identity_projector.dart';
+import 'package:aonw_server/src/multiplayer/player_match_snapshot_projector.dart';
 
 typedef PlayerMatchSnapshotDecoder =
     DecodedRunningMatchSnapshot Function(WireSnapshot snapshot);
 
 const LosslessMatchSnapshotDecoder _playerMatchSnapshotDecoder =
     LosslessMatchSnapshotDecoder();
-const _playerMatchWireSchemaGuard = PlayerMatchWireSchemaGuard();
 
 DecodedRunningMatchSnapshot _decodePlayerMatchSnapshot(WireSnapshot snapshot) {
   return _playerMatchSnapshotDecoder.decode(snapshot);
@@ -29,7 +26,7 @@ final class MatchRecipient {
 
 /// Canonical snapshot decoded once before recipient-specific projection.
 final class PreparedPlayerMatchSnapshot {
-  const PreparedPlayerMatchSnapshot._({
+  const PreparedPlayerMatchSnapshot.prepared({
     required this.wire,
     required this.publicSave,
     required this.canonicalSnapshot,
@@ -42,7 +39,7 @@ final class PreparedPlayerMatchSnapshot {
 
 /// Canonical server message prepared once for any number of recipients.
 final class PreparedPlayerMatchMessage {
-  const PreparedPlayerMatchMessage._({
+  const PreparedPlayerMatchMessage.prepared({
     required this.canonical,
     required this.snapshot,
     required this.ackSnapshot,
@@ -55,217 +52,65 @@ final class PreparedPlayerMatchMessage {
 
 /// Nominal proof that a server message passed recipient projection.
 final class ProjectedPlayerMatchMessage {
-  const ProjectedPlayerMatchMessage._(this.wire);
+  const ProjectedPlayerMatchMessage.projected(this.wire);
 
   final MultiplayerServerMessage wire;
 }
 
-/// Nominal proof that a match passed recipient projection.
-///
-/// Implements the canonical wire type, so projected values flow into generated
-/// protocol signatures unchanged, while the private constructor forces every
-/// boundary that declares this return type through the projector.
-extension type const ProjectedWireMatch._(WireMatch wire)
+extension type const ProjectedWireMatch.projected(WireMatch wire)
     implements WireMatch {}
 
-/// Nominal proof that a snapshot passed recipient projection.
-extension type const ProjectedWireSnapshot._(WireSnapshot wire)
+extension type const ProjectedWireSnapshot.projected(WireSnapshot wire)
     implements WireSnapshot {}
 
-/// Nominal proof that an event passed recipient projection.
-extension type const ProjectedWireEvent._(WireEvent wire)
+extension type const ProjectedWireEvent.projected(WireEvent wire)
     implements WireEvent {}
 
-/// Nominal proof that a command ack passed recipient projection.
-extension type const ProjectedWireCommandAck._(WireCommandAck wire)
+extension type const ProjectedWireCommandAck.projected(WireCommandAck wire)
     implements WireCommandAck {}
 
-/// Builds a fail-closed, recipient-specific view of canonical match state.
-///
-/// Canonical snapshots and events remain in the store. Every network boundary
-/// must call this projector before returning or publishing them to a client.
+/// Recipient projection façade composed from identity, snapshot, and event
+/// capabilities. Canonical values never leave this boundary directly.
 final class PlayerMatchViewProjector {
   const PlayerMatchViewProjector({
     PlayerMatchSnapshotDecoder decodeSnapshot = _decodePlayerMatchSnapshot,
   }) : _decodeSnapshot = decodeSnapshot;
 
+  static const PlayerMatchIdentityProjector _identity =
+      PlayerMatchIdentityProjector();
   final PlayerMatchSnapshotDecoder _decodeSnapshot;
+
+  PlayerMatchSnapshotProjector get _snapshots =>
+      PlayerMatchSnapshotProjector(_decodeSnapshot);
+  PlayerMatchEventProjector get _events =>
+      PlayerMatchEventProjector(_snapshots);
 
   ProjectedWireMatch matchFor(
     WireMatch canonical, {
     required String userIdentifier,
-  }) {
-    _playerMatchWireSchemaGuard.validateMatch(canonical);
-    final isOwner = canonical.ownerUserId == userIdentifier;
-    final owner = canonical.players.where(
-      (player) => player.userId == canonical.ownerUserId,
-    );
-    final publicOwnerId = owner.isEmpty ? canonical.id : owner.first.id;
-    return ProjectedWireMatch._(
-      canonical.copyWith(
-        ownerUserId: isOwner ? userIdentifier : publicOwnerId,
-        players: [
-          for (final player in canonical.players)
-            player.copyWith(
-              userId: player.userId == userIdentifier
-                  ? userIdentifier
-                  : player.id,
-            ),
-        ],
-        inviteCode: isOwner ? canonical.inviteCode : null,
-      ),
-    );
-  }
+  }) => _identity.project(canonical, userIdentifier: userIdentifier);
 
-  PreparedPlayerMatchSnapshot prepareSnapshot(WireSnapshot canonical) {
-    _playerMatchWireSchemaGuard.validateSnapshotState(canonical.state);
-    if (canonical.save.isEmpty) {
-      return PreparedPlayerMatchSnapshot._(
-        wire: canonical,
-        publicSave: null,
-        canonicalSnapshot: null,
-      );
-    }
-    _playerMatchWireSchemaGuard.validateGameSaveEnvelope(canonical.save);
-    final decoded = _decodeSnapshot(canonical);
-    final save = _prepareSave(decoded.save);
-    _playerMatchWireSchemaGuard.validateCanonicalRoster(
-      save: save,
-      state: decoded.wire.state,
-      canonical: decoded.canonical,
-    );
-    return PreparedPlayerMatchSnapshot._(
-      wire: canonical,
-      publicSave: Map.unmodifiable(
-        save
-            .copyWith(
-              camera: CameraState.zero,
-              players: [
-                for (final player in save.players) _publicPlayer(player),
-              ],
-            )
-            .toJson(),
-      ),
-      canonicalSnapshot: decoded.canonical,
-    );
-  }
-
-  GameSave _prepareSave(GameSave save) {
-    _playerMatchWireSchemaGuard.validateGameSavePlayers(save.players);
-    return save;
-  }
+  PreparedPlayerMatchSnapshot prepareSnapshot(WireSnapshot canonical) =>
+      _snapshots.prepare(canonical);
 
   ProjectedWireSnapshot snapshotFor(
     WireSnapshot canonical,
     MatchRecipient recipient,
-  ) {
-    return projectSnapshot(prepareSnapshot(canonical), recipient);
-  }
+  ) => projectSnapshot(prepareSnapshot(canonical), recipient);
 
   ProjectedWireSnapshot projectSnapshot(
     PreparedPlayerMatchSnapshot prepared,
     MatchRecipient recipient,
-  ) {
-    final canonical = prepared.wire;
-    final publicSave = prepared.publicSave;
-    final canonicalSnapshot = prepared.canonicalSnapshot;
-    if (publicSave == null || canonicalSnapshot == null) {
-      return ProjectedWireSnapshot._(
-        canonical.copyWith(state: _lifecycleState(canonical.state)),
-      );
-    }
-    final playerViewState = _stateFor(
-      canonicalSnapshot,
-      recipient.playerId,
-      knownDiplomacyPlayerIds: _knownDiplomacyPlayerIds(
-        prepared,
-        recipient.playerId,
-      ),
-    );
-    final recipientSnapshot = RecipientSnapshot(
-      metadata: canonicalSnapshot.metadata.copyWith(
-        camera: GameSnapshotCamera.zero,
-      ),
-      state: playerViewState,
-      visibleOffset: canonical.offset,
-    );
-    return ProjectedWireSnapshot._(
-      WireSnapshot(
-        v: canonical.v,
-        matchId: canonical.matchId,
-        offset: recipientSnapshot.visibleOffset,
-        save: publicSave,
-        state: {
-          ..._encodePlayerViewState(recipientSnapshot.state),
-          ..._lifecycleState(canonical.state),
-        },
-      ),
-    );
-  }
+  ) => _snapshots.project(prepared, recipient);
 
-  ProjectedWireEvent eventFor(WireEvent canonical, MatchRecipient recipient) {
-    final isActor = canonical.actorPlayerId == recipient.playerId;
-    final events = PlayerMatchEventAudience.projectForRecipient(
-      canonical.events,
-      recipientPlayerId: recipient.playerId,
-    );
-    final actorIsVisible = isActor || events.isNotEmpty;
-    return ProjectedWireEvent._(
-      WireEvent(
-        v: canonical.v,
-        matchId: canonical.matchId,
-        offset: canonical.offset,
-        timestamp: canonical.timestamp,
-        actorPlayerId: actorIsVisible ? canonical.actorPlayerId : null,
-        tick: isActor ? canonical.tick : null,
-        turn: canonical.turn,
-        command: isActor ? canonical.command : null,
-        events: events,
-        movementExecutions: PlayerMatchMovementAudience.projectForRecipient(
-          canonical.movementExecutions,
-          recipientPlayerId: recipient.playerId,
-        ),
-      ),
-    );
-  }
+  ProjectedWireEvent eventFor(WireEvent canonical, MatchRecipient recipient) =>
+      _events.eventFor(canonical, recipient);
 
   ProjectedWireCommandAck ackFor(
     WireCommandAck canonical,
     MatchRecipient recipient,
-  ) {
-    return _ackForPrepared(
-      canonical,
-      prepareSnapshot(canonical.snapshot),
-      recipient,
-    );
-  }
-
-  ProjectedWireCommandAck _ackForPrepared(
-    WireCommandAck canonical,
-    PreparedPlayerMatchSnapshot snapshot,
-    MatchRecipient recipient,
-  ) {
-    return ProjectedWireCommandAck._(
-      WireCommandAck(
-        v: canonical.v,
-        matchId: canonical.matchId,
-        accepted: canonical.accepted,
-        offset: canonical.offset,
-        tick: canonical.tick,
-        timestamp: canonical.timestamp,
-        snapshot: projectSnapshot(snapshot, recipient),
-        events: PlayerMatchEventAudience.projectForRecipient(
-          canonical.events,
-          recipientPlayerId: recipient.playerId,
-        ),
-        reason: canonical.reason,
-        movementExecutions: PlayerMatchMovementAudience.projectForRecipient(
-          canonical.movementExecutions,
-          recipientPlayerId: recipient.playerId,
-        ),
-      ),
-    );
-  }
+  ) =>
+      _events.ackFor(canonical, prepareSnapshot(canonical.snapshot), recipient);
 
   PreparedPlayerMatchMessage prepareMessage(
     MultiplayerServerMessage canonical,
@@ -278,7 +123,7 @@ final class PlayerMatchViewProjector {
         : canonical.ack!.snapshot == canonical.snapshot
         ? snapshot
         : prepareSnapshot(canonical.ack!.snapshot);
-    return PreparedPlayerMatchMessage._(
+    return PreparedPlayerMatchMessage.prepared(
       canonical: canonical,
       snapshot: snapshot,
       ackSnapshot: ackSnapshot,
@@ -288,16 +133,14 @@ final class PlayerMatchViewProjector {
   MultiplayerServerMessage messageFor(
     MultiplayerServerMessage canonical,
     MatchRecipient recipient,
-  ) {
-    return projectMessage(prepareMessage(canonical), recipient).wire;
-  }
+  ) => projectMessage(prepareMessage(canonical), recipient).wire;
 
   ProjectedPlayerMatchMessage projectMessage(
     PreparedPlayerMatchMessage prepared,
     MatchRecipient recipient,
   ) {
     final canonical = prepared.canonical;
-    return ProjectedPlayerMatchMessage._(
+    return ProjectedPlayerMatchMessage.projected(
       MultiplayerServerMessage(
         serverMessageId: canonical.serverMessageId,
         matchId: canonical.matchId,
@@ -316,60 +159,8 @@ final class PlayerMatchViewProjector {
             : eventFor(canonical.event!, recipient),
         ack: canonical.ack == null
             ? null
-            : _ackForPrepared(canonical.ack!, prepared.ackSnapshot!, recipient),
+            : _events.ackFor(canonical.ack!, prepared.ackSnapshot!, recipient),
       ),
     );
-  }
-
-  PlayerViewState _stateFor(
-    CanonicalGameSnapshot canonicalSnapshot,
-    String playerId, {
-    required Set<String> knownDiplomacyPlayerIds,
-  }) {
-    return const PlayerViewStateProjector().project(
-      domain: canonicalSnapshot.domain,
-      recipientPlayerId: playerId,
-      knownDiplomacyPlayerIds: knownDiplomacyPlayerIds,
-    );
-  }
-
-  Set<String> _knownDiplomacyPlayerIds(
-    PreparedPlayerMatchSnapshot prepared,
-    String recipientPlayerId,
-  ) {
-    return {
-      recipientPlayerId,
-      ..._stringMapKeys(prepared.wire.state['playerColors']),
-      ..._stringMapKeys(prepared.wire.state['playerCountries']),
-    };
-  }
-
-  Iterable<String> _stringMapKeys(Object? value) {
-    return value is Map ? value.keys.whereType<String>() : const [];
-  }
-
-  Map<String, dynamic> _encodePlayerViewState(PlayerViewState state) =>
-      const PlayerViewStateWireCodec().encode(state);
-
-  Player _publicPlayer(Player player) {
-    final ai = player.ai;
-    return ai == null
-        ? player
-        : player.copyWith(
-            ai: AiPlayer(
-              strategyId: ai.strategyId,
-              difficulty: ai.difficulty,
-              persona: ai.persona,
-              seed: 0,
-            ),
-          );
-  }
-
-  Map<String, dynamic> _lifecycleState(Map<String, dynamic> state) {
-    const allowed = {'phase', 'reason', 'mapName'};
-    return {
-      for (final entry in state.entries)
-        if (allowed.contains(entry.key)) entry.key: entry.value,
-    };
   }
 }

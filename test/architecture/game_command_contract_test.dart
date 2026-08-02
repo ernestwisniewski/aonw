@@ -110,6 +110,7 @@ void main() {
 
     expect(submitTurn.localHandlers, isEmpty);
     expect(submitTurn.serverHandlers, [
+      'server/lib/src/multiplayer/server_command_dispatcher.dart',
       'server/lib/src/multiplayer/server_command_reducer.dart',
     ]);
     expect(
@@ -130,9 +131,7 @@ void main() {
         (candidate) => candidate.className == className,
       );
       expect(entry.localHandlers, isEmpty);
-      expect(entry.serverHandlers, [
-        'server/lib/src/multiplayer/server_command_reducer.dart',
-      ]);
+      expect(entry.serverHandlers, isEmpty);
     }
   });
 

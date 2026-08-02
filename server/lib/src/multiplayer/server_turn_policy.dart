@@ -1,7 +1,13 @@
-part of 'server_command_reducer.dart';
+import 'package:aonw_core/domain.dart';
+import 'package:aonw_core/protocol.dart';
 
-extension ServerCommandReducerTurns on ServerCommandReducer {
-  List<String> _turnPlayerIds(CanonicalGameSnapshot snapshot) {
+/// Owns multiplayer turn membership, timeout, and submission policy.
+final class ServerTurnPolicy {
+  const ServerTurnPolicy(this.turnTimeout);
+
+  final Duration turnTimeout;
+
+  List<String> playerIds(CanonicalGameSnapshot snapshot) {
     final kickedPlayerIds = snapshot.domain.kickedPlayerIds;
     final ids = snapshot.domain.participants
         .map((player) => player.id)
@@ -13,14 +19,14 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
         .toList();
   }
 
-  bool _turnTimedOut(CanonicalGameSnapshot snapshot, DateTime now) {
+  bool hasTimedOut(CanonicalGameSnapshot snapshot, DateTime now) {
     final turnStartedAt =
         snapshot.domain.turnStartedAt ?? snapshot.metadata.savedAtUtc;
-    final deadline = turnStartedAt.toUtc().add(_turnTimeout);
+    final deadline = turnStartedAt.toUtc().add(turnTimeout);
     return !now.toUtc().isBefore(deadline);
   }
 
-  List<String> _requiredTurnSubmissionPlayerIds({
+  List<String> requiredSubmissionPlayerIds({
     required WireMatch match,
     required List<String> playerIds,
   }) {
@@ -29,11 +35,11 @@ extension ServerCommandReducerTurns on ServerCommandReducer {
     };
     return [
       for (final playerId in playerIds)
-        if (_requiresTurnSubmission(wirePlayersById[playerId])) playerId,
+        if (_requiresSubmission(wirePlayersById[playerId])) playerId,
     ];
   }
 
-  bool _requiresTurnSubmission(WirePlayer? player) {
+  bool _requiresSubmission(WirePlayer? player) {
     if (player == null) return true;
     if (player.kind == WirePlayerKind.ai) return false;
     return switch (player.connectionState) {

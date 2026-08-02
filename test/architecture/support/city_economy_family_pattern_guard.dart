@@ -268,10 +268,6 @@ const reviewedCityEconomyFamilyPatternSignatures =
         occurrences: 4,
         digest: 6695705971934485808,
       ),
-      'server/lib/src/multiplayer/server_command_reducer.dart': (
-        occurrences: 19,
-        digest: -9108413536824560433,
-      ),
     };
 
 Future<Map<String, CityEconomyPatternSignature>>

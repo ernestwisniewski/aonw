@@ -1,6 +1,9 @@
 part of '../network_command_transport_snapshot_boundary_test.dart';
 
-List<String> _networkResultFlowViolations(CompilationUnit unit) {
+List<String> _networkResultFlowViolations(
+  CompilationUnit unit,
+  CompilationUnit acknowledgedPresentation,
+) {
   final transport = _classNamed(unit, 'NetworkCommandTransport');
   if (transport == null) {
     return const ['NetworkCommandTransport must remain declared.'];
@@ -11,13 +14,18 @@ List<String> _networkResultFlowViolations(CompilationUnit unit) {
   final reload = _methodNamed(transport, '_reloadAfterStaleCommand');
   final recovery = _methodNamed(transport, '_snapshotRecoveryResult');
   final allResults = _resultCreations(transport);
+  final acknowledgedResults = _resultCreations(acknowledgedPresentation);
 
-  if (allResults.length != 4) {
+  if (allResults.length != 2 || acknowledgedResults.length != 1) {
     violations.add(
-      'NetworkCommandTransport must keep exactly four reviewed result sites.',
+      'Network transport must keep two recovery result sites and one shared '
+      'acknowledgment result site.',
     );
   }
-  if (allResults.any((result) => !_isStoredSnapshotResult(result))) {
+  if ([
+    ...allResults,
+    ...acknowledgedResults,
+  ].any((result) => !_isStoredSnapshotResult(result))) {
     violations.add(
       'Every network result must expose the canonical stored snapshot.',
     );
@@ -36,6 +44,12 @@ List<String> _networkResultFlowViolations(CompilationUnit unit) {
       _methodInvocationCount(dispatch, '_snapshotRecoveryResult') != 1) {
     violations.add(
       'Dispatch must retain both reviewed stale snapshot recovery routes.',
+    );
+  }
+  if (_methodInvocationCount(dispatch, 'acknowledgedCommandTransportResult') !=
+      2) {
+    violations.add(
+      'Dispatch must retain both reviewed acknowledgment result routes.',
     );
   }
   return violations;

@@ -194,22 +194,6 @@ const reviewedMovementFamilyPatternOccurrences = <String, Map<String, int>>{
             'MoveUnitCommand':
         1,
   },
-  'server/lib/src/multiplayer/server_command_reducer.dart': {
-    'class:ServerCommandReducer/method:_applyCommand::'
-            'AssignMerchantTradeRouteCommand':
-        1,
-    'class:ServerCommandReducer/method:_applyCommand::'
-            'AutoExploreUnitCommand':
-        1,
-    'class:ServerCommandReducer/method:_applyCommand::'
-            'CancelUnitActionCommand':
-        1,
-    'class:ServerCommandReducer/method:_applyCommand::DetachTroopCommand': 1,
-    'class:ServerCommandReducer/method:_applyCommand::'
-            'MoveMerchantToCityCommand':
-        1,
-    'class:ServerCommandReducer/method:_applyCommand::MoveUnitCommand': 1,
-  },
 };
 
 Map<String, Map<String, int>> movementFamilyPatternOccurrencesByPath(

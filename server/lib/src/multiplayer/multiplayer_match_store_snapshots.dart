@@ -1,11 +1,16 @@
-part of 'multiplayer_match_store.dart';
+import 'dart:convert';
 
-extension ServerpodMultiplayerMatchStoreSnapshots
-    on ServerpodMultiplayerMatchStore {
-  Future<void> _saveLatestSnapshot(
-    int matchRowId,
-    WireSnapshot snapshot,
-  ) async {
+import 'package:aonw_core/protocol.dart';
+import 'package:serverpod/serverpod.dart';
+
+/// Persists exactly one monotonic authoritative snapshot per match.
+final class MultiplayerMatchSnapshotStore {
+  const MultiplayerMatchSnapshotStore(this._session, this._transaction);
+
+  final Session _session;
+  final Transaction? _transaction;
+
+  Future<void> saveLatest(int matchRowId, WireSnapshot snapshot) async {
     final latestRows = await _session.db.unsafeQuery(
       '''
 SELECT "id", "offset"
@@ -28,49 +33,61 @@ LIMIT 1
 
     final now = DateTime.now().toUtc();
     if (latest == null) {
-      final inserted = await _session.db.unsafeExecute(
-        '''
+      await _insertSnapshot(matchRowId, snapshot, now);
+    } else {
+      await _updateSnapshot(latest[0] as int, snapshot, now);
+    }
+    await _deleteSupersededSnapshots(matchRowId, snapshot.offset);
+  }
+
+  Future<void> _insertSnapshot(
+    int matchRowId,
+    WireSnapshot snapshot,
+    DateTime createdAt,
+  ) async {
+    final inserted = await _session.db.unsafeExecute(
+      '''
 INSERT INTO "aonw_snapshot" ("matchId", "offset", "snapshot", "createdAt")
 VALUES (@matchId, @offset, CAST(@snapshot AS json), @createdAt)
 ''',
-        transaction: _transaction,
-        parameters: QueryParameters.named({
-          'matchId': matchRowId,
-          ..._snapshotPayloadQueryParameterValues(
-            snapshot: snapshot,
-            createdAt: now,
-          ),
-        }),
-      );
-      if (inserted != 1) {
-        throw StateError('Failed to insert the authoritative snapshot.');
-      }
-    } else {
-      final latestId = latest[0] as int;
-      final updated = await _session.db.unsafeExecute(
-        '''
+      transaction: _transaction,
+      parameters: QueryParameters.named({
+        'matchId': matchRowId,
+        ..._snapshotPayload(snapshot, createdAt),
+      }),
+    );
+    if (inserted != 1) {
+      throw StateError('Failed to insert the authoritative snapshot.');
+    }
+  }
+
+  Future<void> _updateSnapshot(
+    int snapshotId,
+    WireSnapshot snapshot,
+    DateTime createdAt,
+  ) async {
+    final updated = await _session.db.unsafeExecute(
+      '''
 UPDATE "aonw_snapshot"
 SET "offset" = @offset,
     "snapshot" = CAST(@snapshot AS json),
     "createdAt" = @createdAt
 WHERE "id" = @snapshotId AND "offset" <= @offset
 ''',
-        transaction: _transaction,
-        parameters: QueryParameters.named({
-          ..._snapshotPayloadQueryParameterValues(
-            snapshot: snapshot,
-            createdAt: now,
-          ),
-          'snapshotId': latestId,
-        }),
+      transaction: _transaction,
+      parameters: QueryParameters.named({
+        ..._snapshotPayload(snapshot, createdAt),
+        'snapshotId': snapshotId,
+      }),
+    );
+    if (updated != 1) {
+      throw StateError(
+        'The authoritative snapshot changed while it was being saved.',
       );
-      if (updated != 1) {
-        throw StateError(
-          'The authoritative snapshot changed while it was being saved.',
-        );
-      }
     }
+  }
 
+  Future<void> _deleteSupersededSnapshots(int matchRowId, int offset) async {
     await _session.db.unsafeExecute(
       '''
 DELETE FROM "aonw_snapshot"
@@ -79,19 +96,17 @@ WHERE "matchId" = @matchId AND "offset" < @offset
       transaction: _transaction,
       parameters: QueryParameters.named({
         'matchId': matchRowId,
-        'offset': snapshot.offset,
+        'offset': offset,
       }),
     );
   }
 
-  Map<String, Object?> _snapshotPayloadQueryParameterValues({
-    required WireSnapshot snapshot,
-    required DateTime createdAt,
-  }) {
-    return {
-      'offset': snapshot.offset,
-      'snapshot': jsonEncode(snapshot.toJson()),
-      'createdAt': createdAt,
-    };
-  }
+  Map<String, Object?> _snapshotPayload(
+    WireSnapshot snapshot,
+    DateTime createdAt,
+  ) => {
+    'offset': snapshot.offset,
+    'snapshot': jsonEncode(snapshot.toJson()),
+    'createdAt': createdAt,
+  };
 }

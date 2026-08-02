@@ -14,6 +14,8 @@ const _projectorPath =
     'server/lib/src/multiplayer/player_match_view_projector.dart';
 const _stateProjectorPath =
     'server/lib/src/multiplayer/player_view_state_projector.dart';
+const _snapshotProjectorPath =
+    'server/lib/src/multiplayer/player_match_snapshot_projector.dart';
 const _viewStatePath =
     'packages/aonw_core/lib/game/view/player_view_state.dart';
 
@@ -25,14 +27,18 @@ void main() {
       _unitAt(_stateProjectorPath),
       'PlayerViewStateProjector',
     );
+    final snapshotProjector = _classNamed(
+      _unitAt(_snapshotProjectorPath),
+      'PlayerMatchSnapshotProjector',
+    );
 
     _expectCanonicalProjectionInputs(
       matchUnit: matchUnit,
       matchProjector: matchProjector,
       stateProjector: stateProjector,
     );
-    _expectSnapshotPreparationOrder(matchProjector);
-    _expectFanoutPreparationBoundary(matchProjector);
+    _expectSnapshotPreparationOrder(snapshotProjector);
+    _expectFanoutPreparationBoundary(matchProjector, snapshotProjector);
     _expectLosslessDecoderBoundary(matchUnit);
   });
 
@@ -79,13 +85,6 @@ final class PlayerMatchViewProjector {
 
   test('player projection returns and constructs only nominal view state', () {
     final sources = productionDartSources();
-    final matchProjector = _classNamed(
-      _unitAt(_projectorPath),
-      'PlayerMatchViewProjector',
-    );
-    final stateFor = matchProjector.body.members
-        .whereType<MethodDeclaration>()
-        .singleWhere((member) => member.name.lexeme == '_stateFor');
     final stateProjector = _classNamed(
       _unitAt(_stateProjectorPath),
       'PlayerViewStateProjector',
@@ -94,7 +93,6 @@ final class PlayerMatchViewProjector {
         .whereType<MethodDeclaration>()
         .singleWhere((member) => member.name.lexeme == 'project');
 
-    expect(stateFor.returnType?.toSource(), 'PlayerViewState');
     expect(project.returnType?.toSource(), 'PlayerViewState');
 
     final outsideStateProjector = Map<String, String>.from(sources)
@@ -227,6 +225,7 @@ MethodInvocation _singleCall(AstNode node, String name) {
 }
 
 Expression? _singleReturnedExpression(FunctionBody body) {
+  if (body is ExpressionFunctionBody) return body.expression;
   if (body is! BlockFunctionBody || body.block.statements.length != 1) {
     return null;
   }

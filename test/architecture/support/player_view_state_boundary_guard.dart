@@ -31,8 +31,8 @@ void _expectCanonicalProjectionInputs({
   );
 }
 
-void _expectSnapshotPreparationOrder(ClassDeclaration matchProjector) {
-  final prepareSnapshot = _methodNamed(matchProjector, 'prepareSnapshot');
+void _expectSnapshotPreparationOrder(ClassDeclaration snapshotProjector) {
+  final prepareSnapshot = _methodNamed(snapshotProjector, 'prepare');
   expect(_identifierCount(prepareSnapshot.body, '_decodeSnapshot'), 1);
   final prepareBody = prepareSnapshot.body as BlockFunctionBody;
   final lifecycleReturn = prepareBody.block.statements
@@ -74,7 +74,10 @@ void _expectSnapshotPreparationOrder(ClassDeclaration matchProjector) {
   );
 }
 
-void _expectFanoutPreparationBoundary(ClassDeclaration matchProjector) {
+void _expectFanoutPreparationBoundary(
+  ClassDeclaration matchProjector,
+  ClassDeclaration snapshotProjector,
+) {
   expect(_preparationWrapperViolations(matchProjector), isEmpty);
   expect(_prepareMessageContractViolations(matchProjector), isEmpty);
 
@@ -83,8 +86,10 @@ void _expectFanoutPreparationBoundary(ClassDeclaration matchProjector) {
     final methodName = method.name.lexeme;
     expect(
       _identifierCount(method.body, '_decodeSnapshot'),
-      methodName == 'prepareSnapshot' ? 1 : 0,
-      reason: '$methodName must not decode outside snapshot preparation.',
+      methodName == '_snapshots' ? 1 : 0,
+      reason:
+          '$methodName must not decode outside the reviewed snapshot '
+          'capability injection.',
     );
     if (!const {
       'prepareSnapshot',
@@ -92,6 +97,8 @@ void _expectFanoutPreparationBoundary(ClassDeclaration matchProjector) {
       'snapshotFor',
       'messageFor',
       'ackFor',
+      'projectMessage',
+      '_snapshots',
     }.contains(methodName)) {
       expect(
         _projectionCapabilityReferences(method.body),
@@ -99,6 +106,14 @@ void _expectFanoutPreparationBoundary(ClassDeclaration matchProjector) {
         reason: '$methodName must project an already-prepared snapshot.',
       );
     }
+  }
+  for (final method
+      in snapshotProjector.body.members.whereType<MethodDeclaration>()) {
+    expect(
+      _identifierCount(method.body, '_decodeSnapshot'),
+      method.name.lexeme == 'prepare' ? 1 : 0,
+      reason: '${method.name.lexeme} must preserve the decode-once boundary.',
+    );
   }
 }
 
@@ -126,7 +141,7 @@ Map<String, String> _preparationWrapperViolations(ClassDeclaration projector) {
   const expectedReturns = {
     'snapshotFor': 'projectSnapshot(prepareSnapshot(canonical), recipient)',
     'ackFor':
-        '_ackForPrepared(canonical, prepareSnapshot(canonical.snapshot), '
+        '_events.ackFor(canonical, prepareSnapshot(canonical.snapshot), '
         'recipient)',
     'messageFor': 'projectMessage(prepareMessage(canonical), recipient).wire',
   };
@@ -161,7 +176,7 @@ Map<String, String> _prepareMessageContractViolations(
     violations['prepareSnapshot'] = 'exactly two guarded call sites';
   }
   if (_blockReturnExpression(method.body)?.toSource() !=
-      'PreparedPlayerMatchMessage._(canonical: canonical, '
+      'PreparedPlayerMatchMessage.prepared(canonical: canonical, '
           'snapshot: snapshot, ackSnapshot: ackSnapshot)') {
     violations['return'] = 'construct the prepared message from local values';
   }

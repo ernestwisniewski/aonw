@@ -1,4 +1,9 @@
-part of 'server_command_reducer.dart';
+import 'package:aonw_core/application.dart';
+import 'package:aonw_core/domain.dart';
+import 'package:aonw_core/protocol.dart';
+
+import 'package:aonw_server/src/multiplayer/server_command_application.dart';
+import 'package:aonw_server/src/multiplayer/wire_player_domain_mapper.dart';
 
 final class ServerCommandReduction {
   ServerCommandReduction({
@@ -9,9 +14,9 @@ final class ServerCommandReduction {
     Iterable<CombatAnimationFact> combatAnimations = const [],
     this.outcome,
     this.reason,
-  }) : events = _ownedList(events),
-       movementExecutions = _ownedList(movementExecutions),
-       combatAnimations = _ownedList(combatAnimations),
+  }) : events = List.unmodifiable(events),
+       movementExecutions = List.unmodifiable(movementExecutions),
+       combatAnimations = List.unmodifiable(combatAnimations),
        assert(
          !accepted || (nextSnapshot != null && outcome != null),
          'Accepted reductions must expose their canonical result.',
@@ -26,49 +31,34 @@ final class ServerCommandReduction {
   final String? reason;
 }
 
-List<T> _ownedList<T>(Iterable<T> values) => List<T>.unmodifiable(values);
+/// Converts engine applications into the server's canonical reduction result.
+final class ServerCommandOutcomeProjector {
+  const ServerCommandOutcomeProjector();
 
-extension _ServerCommandReducerOutcome on ServerCommandReducer {
-  ServerCommandReduction _acceptedReduction({
+  ServerCommandReduction accepted({
     required WireMatch match,
-    required _CommandApplication result,
+    required ServerCommandApplication application,
     required MapReadView mapView,
   }) {
-    final nextSnapshot = result.snapshot;
+    final nextSnapshot = application.snapshot;
     return ServerCommandReduction(
       accepted: true,
       nextSnapshot: nextSnapshot,
-      events: result.events,
-      movementExecutions: result.movementExecutions,
-      combatAnimations: result.combatAnimations,
-      outcome: _gameOutcome(
-        match: match,
-        domain: nextSnapshot.domain,
-        mapView: mapView,
+      events: application.events,
+      movementExecutions: application.movementExecutions,
+      combatAnimations: application.combatAnimations,
+      outcome: const GameOutcomeDetector().evaluateCanonical(
+        state: _reconcileParticipants(match, nextSnapshot.domain),
+        mapData: mapView,
       ),
     );
   }
 
-  GameOutcome _gameOutcome({
-    required WireMatch match,
-    required DomainState domain,
-    required MapReadView mapView,
-  }) {
-    return const GameOutcomeDetector().evaluateCanonical(
-      state: _reconcileOutcomeParticipants(match: match, domain: domain),
-      mapData: mapView,
-    );
-  }
-
-  ServerCommandReduction _reject(String reason) {
-    return ServerCommandReduction(accepted: false, reason: reason);
-  }
+  ServerCommandReduction reject(String reason) =>
+      ServerCommandReduction(accepted: false, reason: reason);
 }
 
-DomainState _reconcileOutcomeParticipants({
-  required WireMatch match,
-  required DomainState domain,
-}) {
+DomainState _reconcileParticipants(WireMatch match, DomainState domain) {
   final authoritativePlayersById = <String, WirePlayer>{};
   for (final player in match.players) {
     if (player.id.isEmpty) continue;

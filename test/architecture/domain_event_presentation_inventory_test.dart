@@ -47,7 +47,7 @@ void main() {
     () {
       const productionPaths = [
         'lib/game/presentation/engine/command_dispatch_presentation_projector.dart',
-        'lib/game/presentation/providers/game/game_state_provider_effects.dart',
+        'lib/game/presentation/providers/game/game_state_effects.dart',
         'lib/game/presentation/replay/replay_renderer_effect_planner.dart',
         'lib/game/presentation/services/hidden_ai_renderer_playback.dart',
       ];

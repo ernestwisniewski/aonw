@@ -45,7 +45,7 @@ void main() {
       expect(load.returnType?.toSource(), 'Future<WorldMap>');
       expect(
         File(
-          'server/lib/src/multiplayer/server_command_reducer_map_cache.dart',
+          'server/lib/src/multiplayer/server_map_cache.dart',
         ).readAsStringSync(),
         isNot(contains('indexedReadView')),
       );

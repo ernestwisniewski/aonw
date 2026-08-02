@@ -1294,8 +1294,6 @@
         "server/lib/src/multiplayer/match_connection_registry_connect.dart::extension:MatchConnectionRegistryConnect/method:_connect/closure:_enqueueMatch#1": 61,
         "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 70,
         "server/lib/src/multiplayer/matchmaking_service_transactions.dart::extension:MatchmakingServiceTransactions/method:quickplay/closure:transaction#1": 67,
-        "server/lib/src/multiplayer/multiplayer_match_store_snapshots.dart::extension:ServerpodMultiplayerMatchStoreSnapshots/method:_saveLatestSnapshot": 81,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 63,
         "server/lib/src/public_stats/public_multiplayer_stats_service.dart::class:PublicMultiplayerStatsService/method:_load": 70,
         "server/lib/src/public_stats/public_multiplayer_stats_store.dart::class:ServerpodPublicMultiplayerStatsStore/method:loadSnapshot": 217,
         "server/lib/src/scheduling/reconciled_future_call_scheduler.dart::class:ReconciledFutureCallScheduler/method:scheduleNoLaterThan/closure:transaction#1": 65
@@ -1307,8 +1305,7 @@
         "server/lib/src/multiplayer/client_message_guard.dart::class:ClientMessageGuard/method:_validate": 13,
         "server/lib/src/multiplayer/client_message_guard.dart::class:_PayloadBudget/method:visit": 12,
         "server/lib/src/multiplayer/match_lifecycle_service_quickplay.dart::extension:MatchLifecycleServiceQuickplay/method:advanceQuickplayLobby": 11,
-        "server/lib/src/multiplayer/match_request_validator.dart::class:MatchRequestValidator/method:validate": 12,
-        "server/lib/src/multiplayer/server_command_reducer.dart::class:ServerCommandReducer/method:_applyCommand": 33
+        "server/lib/src/multiplayer/match_request_validator.dart::class:MatchRequestValidator/method:validate": 12
       },
       "cognitiveComplexity": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 17

@@ -13,8 +13,10 @@ const _detectorPath =
     'packages/aonw_core/lib/game/domain/outcome/game_outcome_detector.dart';
 const _serverReducerPath =
     'server/lib/src/multiplayer/server_command_reducer.dart';
+const _serverApplicationPath =
+    'server/lib/src/multiplayer/server_command_application.dart';
 const _serverOutcomePath =
-    'server/lib/src/multiplayer/server_command_reducer_outcome.dart';
+    'server/lib/src/multiplayer/server_command_outcome_projector.dart';
 
 const _forbiddenResolverStateTypes = {
   'PersistentGameState',
@@ -127,16 +129,19 @@ void main() {
 
     test('accepted reduction evaluates outcome from its canonical result', () {
       final outcome = _unitAt(_serverOutcomePath);
-      final method = _singleMethod(outcome, '_acceptedReduction')!;
+      final method = _singleMethod(outcome, 'accepted')!;
       final body = method.body.toSource();
       expect(_namedParameterTypes(method), {
         'match': 'WireMatch',
-        'result': '_CommandApplication',
+        'application': 'ServerCommandApplication',
         'mapView': 'MapReadView',
       });
-      expect(body, contains('final nextSnapshot = result.snapshot;'));
+      expect(body, contains('final nextSnapshot = application.snapshot;'));
       expect(body, contains('nextSnapshot: nextSnapshot'));
-      expect(body, contains('domain: nextSnapshot.domain'));
+      expect(
+        body,
+        contains('state: _reconcileParticipants(match, nextSnapshot.domain)'),
+      );
       expect(body, isNot(contains('session:')));
       expect(body, isNot(contains('encode(')));
       expect(body, isNot(contains('toCanonical')));
@@ -222,13 +227,13 @@ List<String> _canonicalReducerBoundaryViolations(
     violations.add('ServerCommandReduction fields must be canonical and exact');
   }
 
-  final reducer = sources[_serverReducerPath];
-  final application = reducer == null
+  final applicationSource = sources[_serverApplicationPath];
+  final application = applicationSource == null
       ? null
-      : _singleClass(reducer, '_CommandApplication');
+      : _singleClass(applicationSource, 'ServerCommandApplication');
   if (application == null ||
       _fieldTypes(application)['snapshot'] != 'CanonicalGameSnapshot') {
-    violations.add('_CommandApplication must own one canonical snapshot');
+    violations.add('ServerCommandApplication must own one canonical snapshot');
   }
   return violations;
 }
@@ -237,9 +242,7 @@ Map<String, CompilationUnit> _serverReducerSources() {
   return {
     for (final entry in productionDartSources().entries)
       if (entry.key == _serverReducerPath ||
-          entry.key.startsWith(
-            'server/lib/src/multiplayer/server_command_reducer_',
-          ))
+          entry.key.startsWith('server/lib/src/multiplayer/server_command_'))
         entry.key: parseString(content: entry.value, path: entry.key).unit,
   };
 }

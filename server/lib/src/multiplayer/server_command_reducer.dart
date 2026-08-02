@@ -1,17 +1,14 @@
-import 'dart:async';
-
-import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
-import 'package:aonw_server/src/multiplayer/wire_player_domain_mapper.dart';
+import 'package:aonw_server/src/multiplayer/server_command_dispatcher.dart';
+import 'package:aonw_server/src/multiplayer/server_command_outcome_projector.dart';
+import 'package:aonw_server/src/multiplayer/server_map_cache.dart';
+import 'package:aonw_server/src/multiplayer/server_turn_policy.dart';
 
-part 'server_command_reducer_map_cache.dart';
-part 'server_command_reducer_outcome.dart';
-part 'server_command_reducer_turns.dart';
-part 'server_command_reducer_unit_action.dart';
+export 'server_command_outcome_projector.dart' show ServerCommandReduction;
 
 const defaultMultiplayerTurnTimeout = Duration(seconds: 115);
 const _matchLifecycleStateAdapter = MatchLifecycleStateAdapter();
@@ -24,21 +21,27 @@ DomainCommand? _decodePlayerDomainCommand(Map<String, dynamic> rawCommand) {
   }
 }
 
+/// Validates wire commands and coordinates reducer capabilities.
 class ServerCommandReducer {
   ServerCommandReducer({
     MultiplayerMapCatalog mapCatalog = const FileMultiplayerMapCatalog(),
     Duration turnTimeout = defaultMultiplayerTurnTimeout,
-  }) : _mapCatalog = mapCatalog,
-       _turnTimeout = turnTimeout;
+  }) {
+    _mapCache = ServerMapCache(mapCatalog);
+    _turnPolicy = ServerTurnPolicy(turnTimeout);
+    _dispatcher = ServerCommandDispatcher(turnPolicy: _turnPolicy);
+  }
 
-  final MultiplayerMapCatalog _mapCatalog;
-  final Duration _turnTimeout;
-  final Map<String, Future<_LoadedServerMap>> _loadedMaps = {};
+  late final ServerMapCache _mapCache;
+  late final ServerTurnPolicy _turnPolicy;
+  late final ServerCommandDispatcher _dispatcher;
+  final ServerCommandOutcomeProjector _outcomes =
+      const ServerCommandOutcomeProjector();
 
   bool hasTurnTimedOut({
     required CanonicalGameSnapshot snapshot,
     required DateTime now,
-  }) => _turnTimedOut(snapshot, now);
+  }) => _turnPolicy.hasTimedOut(snapshot, now);
 
   Future<ServerCommandReduction> reduce({
     required WireMatch match,
@@ -47,52 +50,34 @@ class ServerCommandReducer {
     required String actorPlayerId,
     required DateTime now,
   }) async {
-    if (!_matchLifecycleStateAdapter.isRunningWireMatch(match)) {
-      // Outcome construction lives in its part, keeping the reducer focused on
-      // command validation and application.
-      return _reject('match_not_running');
-    }
-
-    final domain = snapshot.domain;
-    final session = snapshot.domain;
-    final command = _decodePlayerDomainCommand(wireCommand.command);
-    if (command == null) {
-      return _reject('invalid_command_payload');
-    }
-    if (wireCommand.turn != null && wireCommand.turn != domain.turn) {
-      return _reject('stale_turn');
-    }
-    if (session.isKicked(actorPlayerId)) {
-      return _reject('player_eliminated');
-    }
-    if (command is! SubmitTurnCommand &&
-        command is! EndTurnCommand &&
-        session.hasSubmitted(actorPlayerId)) {
-      return _reject('player_already_submitted');
-    }
-
-    final loadedMap = await _loadServerMap(snapshot.metadata.world.name);
-    final ruleset = GameRuleset.standard().copyWith(
-      paceBalance: domain.matchRules.paceBalance,
+    final rejection = _validateCommand(
+      match: match,
+      snapshot: snapshot,
+      wireCommand: wireCommand,
+      actorPlayerId: actorPlayerId,
     );
-    final result = _applyCommand(
+    if (rejection != null) return _outcomes.reject(rejection);
+
+    final command = _decodePlayerDomainCommand(wireCommand.command)!;
+    final loadedMap = await _mapCache.load(snapshot.metadata.world.name);
+    final application = _dispatcher.apply(
       snapshot: snapshot,
       match: match,
       command: command,
       commandTick: wireCommand.tick,
       actorPlayerId: actorPlayerId,
       now: now.toUtc(),
-      loadedMap: loadedMap,
-      ruleset: ruleset,
+      mapView: loadedMap.mapView,
+      ruleset: _ruleset(snapshot),
     );
-    if (!result.accepted) {
-      return _reject(result.reason ?? 'command_rejected');
+    if (!application.accepted) {
+      return _outcomes.reject(application.reason ?? 'command_rejected');
     }
-
-    final nextSnapshot = _withSavedAt(result.snapshot, now.toUtc());
-    return _acceptedReduction(
+    return _outcomes.accepted(
       match: match,
-      result: result.withSnapshot(nextSnapshot),
+      application: application.withSnapshot(
+        _withSavedAt(application.snapshot, now.toUtc()),
+      ),
       mapView: loadedMap.mapView,
     );
   }
@@ -103,243 +88,78 @@ class ServerCommandReducer {
     required String actorPlayerId,
     required DateTime now,
   }) async {
-    if (!_matchLifecycleStateAdapter.isRunningWireMatch(match)) {
-      return _reject('match_not_running');
-    }
+    final rejection = _validateTimedOutTurn(
+      match: match,
+      snapshot: snapshot,
+      actorPlayerId: actorPlayerId,
+      now: now,
+    );
+    if (rejection != null) return _outcomes.reject(rejection);
 
     final nowUtc = now.toUtc();
-    if (!_turnTimedOut(snapshot, nowUtc)) {
-      return _reject('turn_not_timed_out');
-    }
-    if (snapshot.domain.isKicked(actorPlayerId)) {
-      return _reject('player_eliminated');
-    }
-
-    final playerIds = _turnPlayerIds(snapshot);
-    if (playerIds.isEmpty || !playerIds.contains(actorPlayerId)) {
-      return _reject('turn_player_not_active');
-    }
-
-    final loadedMap = await _loadServerMap(snapshot.metadata.world.name);
-    final ruleset = GameRuleset.standard().copyWith(
-      paceBalance: snapshot.domain.matchRules.paceBalance,
-    );
-    final submittedPlayerIds = snapshot.domain.submittedPlayerIds;
-    final skippedPlayerIds = playerIds
-        .where((playerId) => !submittedPlayerIds.contains(playerId))
-        .toList();
-    final engineResult = const GameEngine().applySystem(
+    final loadedMap = await _mapCache.load(snapshot.metadata.world.name);
+    final application = _dispatcher.finalizeTimedOutTurn(
       snapshot: snapshot,
-      command: FinalizeTimedOutTurn(
-        playerIds: playerIds,
-        skippedPlayerIds: skippedPlayerIds,
-      ),
-      context: GameEngineContext(
-        actorPlayerId: actorPlayerId,
-        mapView: loadedMap.mapView,
-        ruleset: ruleset,
-        commandTick: snapshot.eventLogOffset,
-        savedAt: nowUtc,
-        preserveNonParticipantTurnStates: true,
-        trackTimeoutStreaks: true,
-      ),
+      actorPlayerId: actorPlayerId,
+      now: nowUtc,
+      mapView: loadedMap.mapView,
+      ruleset: _ruleset(snapshot),
     );
-    final result = _commandApplicationFromEngine(snapshot, engineResult);
-
-    return _acceptedReduction(
+    return _outcomes.accepted(
       match: match,
-      result: result.withSnapshot(_withSavedAt(result.snapshot, nowUtc)),
+      application: application.withSnapshot(
+        _withSavedAt(application.snapshot, nowUtc),
+      ),
       mapView: loadedMap.mapView,
     );
   }
 
-  _CommandApplication _applyCommand({
-    required CanonicalGameSnapshot snapshot,
+  String? _validateCommand({
     required WireMatch match,
-    required DomainCommand command,
-    required int commandTick,
+    required CanonicalGameSnapshot snapshot,
+    required WireCommand wireCommand,
     required String actorPlayerId,
-    required DateTime now,
-    required _LoadedServerMap loadedMap,
-    required GameRuleset ruleset,
   }) {
-    switch (command) {
-      case SubmitTurnCommand(:final playerId):
-      case EndTurnCommand(:final playerId):
-        return _applyTurnCommand(
-          snapshot: snapshot,
-          match: match,
-          command: _submitTurnCommand(command, playerId),
-          actorPlayerId: actorPlayerId,
-          commandTick: commandTick,
-          now: now,
-          mapView: loadedMap.mapView,
-          ruleset: ruleset,
-        );
-      case MoveUnitCommand():
-      case CancelUnitActionCommand():
-      case AutoExploreUnitCommand():
-      case AssignMerchantTradeRouteCommand():
-      case MoveMerchantToCityCommand():
-      case DetachTroopCommand():
-      case SkipUnitTurnCommand():
-      case FortifyUnitCommand():
-      case AttackHexCommand():
-      case FoundCityCommand():
-      case ToggleWorkedHexCommand():
-      case SelectCityExpansionHexCommand():
-      case StartBuildingCommand():
-      case StartUnitProductionCommand():
-      case StartCityProjectCommand():
-      case StartWonderCommand():
-      case SetCitySpecializationCommand():
-      case RushProductionCommand():
-      case SelectWorkerImprovementCommand():
-      case ConfirmWorkerImprovementCommand():
-      case CancelWorkerJobCommand():
-      case AssignWorkerToHexCommand():
-      case CancelWorkerAssignmentCommand():
-      case StartArtifactExcavationCommand():
-      case StoreArtifactInCityCommand():
-      case TradeArtifactCommand():
-      case OpenResourceTradeCommand():
-      case OpenResourceExchangeCommand():
-      case DiplomaticCommand():
-      case SelectTechnologyCommand():
-        return _applyDomainCommandEngine(
-          snapshot,
-          command,
-          actorPlayerId,
-          commandTick,
-          loadedMap.mapView,
-          ruleset,
-        );
+    if (!_matchLifecycleStateAdapter.isRunningWireMatch(match)) {
+      return 'match_not_running';
     }
+    final command = _decodePlayerDomainCommand(wireCommand.command);
+    if (command == null) return 'invalid_command_payload';
+    if (wireCommand.turn != null && wireCommand.turn != snapshot.domain.turn) {
+      return 'stale_turn';
+    }
+    if (snapshot.domain.isKicked(actorPlayerId)) return 'player_eliminated';
+    if (command is! SubmitTurnCommand &&
+        command is! EndTurnCommand &&
+        snapshot.domain.hasSubmitted(actorPlayerId)) {
+      return 'player_already_submitted';
+    }
+    return null;
   }
 
-  _CommandApplication _applyTurnCommand({
-    required CanonicalGameSnapshot snapshot,
+  String? _validateTimedOutTurn({
     required WireMatch match,
-    required SubmitTurnCommand command,
+    required CanonicalGameSnapshot snapshot,
     required String actorPlayerId,
-    required int commandTick,
     required DateTime now,
-    required MapReadView mapView,
-    required GameRuleset ruleset,
   }) {
-    final playerIds = _turnPlayerIds(snapshot);
-    final timedOut = _turnTimedOut(snapshot, now);
-    if (timedOut && snapshot.domain.hasSubmitted(command.playerId)) {
-      return _commandApplicationFromEngine(
-        snapshot,
-        const GameEngine().applySystem(
-          snapshot: snapshot,
-          command: FinalizeTimedOutTurn(
-            playerIds: playerIds,
-            skippedPlayerIds: [
-              for (final id in playerIds)
-                if (!snapshot.domain.hasSubmitted(id)) id,
-            ],
-          ),
-          context: GameEngineContext(
-            actorPlayerId: actorPlayerId,
-            mapView: mapView,
-            ruleset: ruleset,
-            commandTick: commandTick,
-            savedAt: now,
-            preserveNonParticipantTurnStates: true,
-            trackTimeoutStreaks: true,
-          ),
-        ),
-      );
+    if (!_matchLifecycleStateAdapter.isRunningWireMatch(match)) {
+      return 'match_not_running';
     }
-    final requiredPlayerIds = timedOut
-        ? [command.playerId]
-        : _requiredTurnSubmissionPlayerIds(match: match, playerIds: playerIds);
-    return _applyDomainCommandEngine(
-      snapshot,
-      command,
-      actorPlayerId,
-      commandTick,
-      mapView,
-      ruleset,
-      turnPlayerIds: playerIds,
-      requiredTurnSubmissionPlayerIds: requiredPlayerIds,
-      savedAt: now,
-      preserveNonParticipantTurnStates: true,
-      trackTimeoutStreaks: true,
-    );
+    if (!_turnPolicy.hasTimedOut(snapshot, now.toUtc())) {
+      return 'turn_not_timed_out';
+    }
+    if (snapshot.domain.isKicked(actorPlayerId)) return 'player_eliminated';
+    final playerIds = _turnPolicy.playerIds(snapshot);
+    if (playerIds.isEmpty || !playerIds.contains(actorPlayerId)) {
+      return 'turn_player_not_active';
+    }
+    return null;
   }
-}
 
-SubmitTurnCommand _submitTurnCommand(DomainCommand command, String playerId) {
-  return command is SubmitTurnCommand ? command : SubmitTurnCommand(playerId);
-}
-
-_CommandApplication _commandApplicationFromEngine(
-  CanonicalGameSnapshot snapshot,
-  GameEngineResult result,
-) {
-  return switch (result) {
-    GameEngineAccepted() => _CommandApplication.accept(
-      snapshot: result.snapshot,
-      events: result.events,
-      movementExecutions: result.movementDelta.executions,
-      combatAnimations: result.combatAnimations,
-    ),
-    final GameEngineRejected rejected => _CommandApplication.reject(
-      snapshot: snapshot,
-      reason: rejected.reason,
-    ),
-  };
-}
-
-class _CommandApplication {
-  _CommandApplication({
-    required this.accepted,
-    required this.snapshot,
-    this.events = const [],
-    Iterable<MovementCommandExecution> movementExecutions = const [],
-    Iterable<CombatAnimationFact> combatAnimations = const [],
-    this.reason,
-  }) : movementExecutions = _ownedList(movementExecutions),
-       combatAnimations = _ownedList(combatAnimations);
-
-  final bool accepted;
-  final CanonicalGameSnapshot snapshot;
-  final List<GameEvent> events;
-  final List<MovementCommandExecution> movementExecutions;
-  final List<CombatAnimationFact> combatAnimations;
-  final String? reason;
-
-  factory _CommandApplication.accept({
-    required CanonicalGameSnapshot snapshot,
-    List<GameEvent> events = const [],
-    Iterable<MovementCommandExecution> movementExecutions = const [],
-    Iterable<CombatAnimationFact> combatAnimations = const [],
-  }) => _CommandApplication(
-    accepted: true,
-    snapshot: snapshot,
-    events: events,
-    movementExecutions: movementExecutions,
-    combatAnimations: combatAnimations,
-  );
-
-  factory _CommandApplication.reject({
-    required CanonicalGameSnapshot snapshot,
-    required String reason,
-  }) =>
-      _CommandApplication(accepted: false, snapshot: snapshot, reason: reason);
-
-  _CommandApplication withSnapshot(CanonicalGameSnapshot nextSnapshot) {
-    if (identical(nextSnapshot, snapshot)) return this;
-    return _CommandApplication(
-      accepted: accepted,
-      snapshot: nextSnapshot,
-      events: events,
-      movementExecutions: movementExecutions,
-      combatAnimations: combatAnimations,
-      reason: reason,
+  GameRuleset _ruleset(CanonicalGameSnapshot snapshot) {
+    return GameRuleset.standard().copyWith(
+      paceBalance: snapshot.domain.matchRules.paceBalance,
     );
   }
 }

@@ -1,5 +1,3 @@
-part of 'multiplayer_match_store.dart';
-
 /// Maximum number of running matches inspected by one timeout sweep.
 const multiplayerRunningMatchPageSize = 64;
 
