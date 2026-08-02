@@ -32,7 +32,7 @@ void main() {
     test(
       'updates the latest snapshot monotonically in one transaction',
       () async {
-      const transaction = FakeTransaction();
+        const transaction = FakeTransaction();
         final database = FakeMultiplayerDatabase()
           ..queueUnsafeQuery([
             [17, 3],
