@@ -137,6 +137,21 @@ base must remain comparable with the rollout anchor. This preserves
 improvements already present on the trusted branch and detects baseline resets
 across force pushes.
 
+## Library Aggregate Ratchet
+
+The file and callable checks are complemented by a logical-library aggregate
+gate. A standalone Dart source owns its own library; every handwritten `part`
+is resolved through its URI-based `part of` directive and charged to that same
+owner. Moving code from a host into parts therefore cannot reset its budget.
+
+For each library the gate sums source lines, callable count, exclusive callable
+lines, cyclomatic complexity, and cognitive complexity. Role-specific targets
+live in `tool/architecture_aggregate_policy.json`; exact over-target values live
+in `tool/architecture_aggregate_baseline.json`. New aggregate debt and growth of
+existing debt fail the historical ratchet, while reductions remove baseline
+entries. The first commit containing both aggregate files is the rollout
+boundary; later changes must keep the policy canonical.
+
 ## Commands
 
 Run the same gate used by local CI and GitHub Actions:
@@ -150,6 +165,7 @@ To inspect a debt-reducing candidate:
 ```sh
 make architecture-snapshot
 diff -u tool/architecture_baseline.json /tmp/aonw-architecture-baseline.json
+diff -u tool/architecture_aggregate_baseline.json /tmp/aonw-architecture-aggregate-baseline.json
 ```
 
 Review every changed key and exact value before replacing the committed

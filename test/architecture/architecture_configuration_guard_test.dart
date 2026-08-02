@@ -220,6 +220,8 @@ void main() {
         recipes: [
           '@dart run tool/check_architecture.dart check --ratchet-ref '
               '"\$(ARCHITECTURE_RATCHET_REF)"',
+          '@dart run tool/check_architecture_aggregates.dart check '
+              '--ratchet-ref "\$(ARCHITECTURE_RATCHET_REF)"',
         ],
       ),
     );
@@ -232,6 +234,10 @@ void main() {
               '"\$(ARCHITECTURE_SNAPSHOT_PATH)"',
           '@echo "Wrote architecture baseline candidate to '
               '\$(ARCHITECTURE_SNAPSHOT_PATH)"',
+          '@dart run tool/check_architecture_aggregates.dart snapshot > '
+              '"\$(ARCHITECTURE_AGGREGATE_SNAPSHOT_PATH)"',
+          '@echo "Wrote architecture aggregate baseline candidate to '
+              '\$(ARCHITECTURE_AGGREGATE_SNAPSHOT_PATH)"',
         ],
       ),
     );
@@ -260,6 +266,10 @@ void main() {
     expect(
       _singleVariable(makefile, 'ARCHITECTURE_SNAPSHOT_PATH'),
       '/tmp/aonw-architecture-baseline.json',
+    );
+    expect(
+      _singleVariable(makefile, 'ARCHITECTURE_AGGREGATE_SNAPSHOT_PATH'),
+      '/tmp/aonw-architecture-aggregate-baseline.json',
     );
 
     final workflow =

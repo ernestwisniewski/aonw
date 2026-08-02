@@ -30,6 +30,7 @@ COVERAGE_RATCHET_REF ?= @{upstream}
 COVERAGE_SNAPSHOT_PATH ?= /tmp/aonw-coverage-baseline.json
 ARCHITECTURE_RATCHET_REF ?= @{upstream}
 ARCHITECTURE_SNAPSHOT_PATH ?= /tmp/aonw-architecture-baseline.json
+ARCHITECTURE_AGGREGATE_SNAPSHOT_PATH ?= /tmp/aonw-architecture-aggregate-baseline.json
 MUTATION_RATCHET_REF ?= @{upstream}
 MUTATION_SNAPSHOT_PATH ?= /tmp/aonw-mutation-baseline.json
 PERFORMANCE_REPORT_PATH ?= /tmp/aonw-performance-report.json
@@ -300,6 +301,7 @@ help:
 	@echo "  COVERAGE_SNAPSHOT_PATH=/tmp/... Candidate baseline output. Default: $(COVERAGE_SNAPSHOT_PATH)"
 	@echo "  ARCHITECTURE_RATCHET_REF=@{upstream} Trusted architecture baseline ref. Default: $(ARCHITECTURE_RATCHET_REF)"
 	@echo "  ARCHITECTURE_SNAPSHOT_PATH=/tmp/... Candidate architecture baseline output. Default: $(ARCHITECTURE_SNAPSHOT_PATH)"
+	@echo "  ARCHITECTURE_AGGREGATE_SNAPSHOT_PATH=/tmp/... Candidate library aggregate baseline. Default: $(ARCHITECTURE_AGGREGATE_SNAPSHOT_PATH)"
 	@echo "  MUTATION_RATCHET_REF=@{upstream} Trusted mutation survivor baseline ref. Default: $(MUTATION_RATCHET_REF)"
 	@echo "  MUTATION_SNAPSHOT_PATH=/tmp/... Candidate mutation baseline output. Default: $(MUTATION_SNAPSHOT_PATH)"
 	@echo "  PERFORMANCE_REPORT_PATH=/tmp/... Full benchmark report output. Default: $(PERFORMANCE_REPORT_PATH)"
@@ -483,10 +485,13 @@ architecture: architecture-check
 
 architecture-check: root-dependencies
 	@dart run tool/check_architecture.dart check --ratchet-ref "$(ARCHITECTURE_RATCHET_REF)"
+	@dart run tool/check_architecture_aggregates.dart check --ratchet-ref "$(ARCHITECTURE_RATCHET_REF)"
 
 architecture-snapshot: root-dependencies
 	@dart run tool/check_architecture.dart snapshot > "$(ARCHITECTURE_SNAPSHOT_PATH)"
 	@echo "Wrote architecture baseline candidate to $(ARCHITECTURE_SNAPSHOT_PATH)"
+	@dart run tool/check_architecture_aggregates.dart snapshot > "$(ARCHITECTURE_AGGREGATE_SNAPSHOT_PATH)"
+	@echo "Wrote architecture aggregate baseline candidate to $(ARCHITECTURE_AGGREGATE_SNAPSHOT_PATH)"
 
 mutation: mutation-check
 

@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "roles": {
+    "flame_rendering": {
+      "sourceLines": 2000,
+      "callableCount": 120,
+      "callableLines": 1600,
+      "cyclomaticComplexity": 450,
+      "cognitiveComplexity": 600
+    },
+    "production": {
+      "sourceLines": 1500,
+      "callableCount": 80,
+      "callableLines": 1000,
+      "cyclomaticComplexity": 250,
+      "cognitiveComplexity": 350
+    },
+    "test": {
+      "sourceLines": 2500,
+      "callableCount": 120,
+      "callableLines": 2200,
+      "cyclomaticComplexity": 550,
+      "cognitiveComplexity": 750
+    },
+    "tool": {
+      "sourceLines": 2000,
+      "callableCount": 100,
+      "callableLines": 1600,
+      "cyclomaticComplexity": 450,
+      "cognitiveComplexity": 600
+    }
+  }
+}
