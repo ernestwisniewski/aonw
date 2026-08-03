@@ -17,6 +17,7 @@ and online multiplayer infrastructure.
 | Destination | Link |
 | --- | --- |
 | Website | [aonw.net](https://aonw.net/) |
+| Architecture | [Interactive map](https://aonw.net/architecture) |
 | Devlog | [ernest.dev](https://ernest.dev) |
 | GitHub | [ernestwisniewski/aonw](https://github.com/ernestwisniewski/aonw) |
 | iOS | [App Store](https://apps.apple.com/pl/app/age-of-new-worlds/id6781790591) |

@@ -27,7 +27,7 @@ currently implemented workflow while that migration remains in progress.
 | Generated-code drift gate | `make generated-code-check` |
 | Backend/deploy config checks | `make serverpod-ops-check` |
 | Docker context secret guard | `make docker-context-check` |
-| Stage homepage and `/stats` | `make build-homepage` |
+| Stage homepage, `/architecture`, and `/stats` | `make build-homepage` |
 | Deploy static homepage | `make deploy-homepage ...` |
 | Deploy web demo | `make deploy-web ...` |
 | Full release flow | `make deploy-all ...` |
@@ -154,11 +154,13 @@ flutter build web --wasm --release \
   --dart-define=AONW_API_BASE_URL=https://api.aonw.net
 ```
 
-Stage the homepage, including the extensionless `/stats` dashboard:
+Stage the homepage, including the extensionless `/architecture` atlas and `/stats` dashboard:
 
 ```sh
 make build-homepage
 ```
+
+The architecture atlas is a self-contained interactive HTML document. Caddy serves it from the canonical `/architecture` route and redirects `/architecture/` and `/architecture/index.html` to that URL. `make health-architecture` verifies its stable page marker after deploy.
 
 The dashboard reads its aggregate, non-personal payload from the same-origin
 `GET /api/stats` route. Caddy serves `/stats` as HTML, redirects `/stats/` to
