@@ -43,6 +43,13 @@ Object mapServerpodMultiplayerFailure(Object error) {
   return error;
 }
 
+bool isRejectedServerpodRefreshError(Object error) {
+  final mapped = mapServerpodMultiplayerFailure(error);
+  return mapped is MultiplayerFailure &&
+      mapped.kind == MultiplayerFailureKind.authentication &&
+      mapped.code == 'refresh_rejected';
+}
+
 Never throwMappedServerpodMultiplayerFailure(
   Object error,
   StackTrace stackTrace,

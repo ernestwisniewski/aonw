@@ -47,6 +47,15 @@ final class AuthoritativePresentationScheduler {
     }
   }
 
+  /// Preserves a live transition when transport jitter misses its start slot.
+  Future<void> waitForOrStartLate(ProjectedGameEffectBatch batch) async {
+    try {
+      await waitFor(batch);
+    } on PresentationScheduleMiss {
+      // A late live presentation is safer than dropping its state transition.
+    }
+  }
+
   int get _nowMicrosUtc => _clock.nowUtc().microsecondsSinceEpoch;
 }
 

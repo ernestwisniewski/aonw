@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw/api/session/network_session_refresh_coordinator.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/game/application/ports/auth_token.dart';
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
 import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
 import 'package:aonw/game/application/ports/network_connection.dart';
 import 'package:aonw/game/application/ports/network_session.dart';
@@ -396,30 +397,29 @@ void main() {
       },
     );
 
-    test(
-      'rejected refresh is reported as unauthorized and clears credentials',
-      () async {
+    test('rejected refresh is reported as unauthorized', () async {
+      for (final error in <Object>[
+        sp_auth.RefreshTokenExpiredException(),
+        const MultiplayerFailure.authentication(code: 'refresh_rejected'),
+      ]) {
         final store = _MemorySessionStore(_storedSession());
         NetworkSession? current = _activeSession();
         final coordinator = _coordinator(
           store: store,
           currentSession: () => current,
           setSession: (session) => current = session,
-          refreshToken: ({required refreshToken}) async {
-            throw sp_auth.RefreshTokenExpiredException();
-          },
+          refreshToken: ({required refreshToken}) async => throw error,
         );
         final client = NetworkSessionAuthKeyProvider(coordinator);
         expect(await client.authHeaderValue, 'Bearer jwt-1');
-
         expect(
           await client.refreshAuthKey(),
           sp_auth.RefreshAuthKeyResult.failedUnauthorized,
         );
         expect(current, isNull);
         expect(store.stored, isNull);
-      },
-    );
+      }
+    });
 
     test(
       'logout fences an in-flight refresh from restoring the session',

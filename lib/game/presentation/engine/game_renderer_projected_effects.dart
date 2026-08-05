@@ -50,7 +50,7 @@ extension GameRendererProjectedEffects on GameRenderer {
         continue;
       }
       await _transitionHandler.enqueue(() async {
-        await scheduler.waitFor(transition.batch);
+        await scheduler.waitForOrStartLate(transition.batch);
         await _transitionHandler.applyNow(
           transition.state,
           projectedEffects,

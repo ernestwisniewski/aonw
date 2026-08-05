@@ -1,3 +1,4 @@
+import 'package:aonw/game/application/ports/clock.dart';
 import 'package:aonw/game/application/ports/live_multiplayer_events.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
@@ -82,6 +83,71 @@ void main() {
       expect(renderer.animatingUnitIdsListenable.value, isEmpty);
     },
   );
+
+  test('late authoritative movement starts instead of being dropped', () async {
+    final enemy = GameUnit.produced(
+      id: 'enemy',
+      ownerPlayerId: 'player_2',
+      type: GameUnitType.warrior,
+      col: 0,
+      row: 0,
+    );
+    final before = GameClientState(units: [enemy]);
+    final after = GameClientState(units: [enemy.copyWith(col: 1, row: 0)]);
+    const authoritativeStartMicrosUtc = 1000000;
+    final batch = DomainEventPresentationProjector.projectObservedBatch(
+      identity: const PresentationBatchIdentity(
+        sourceId: 'match_1',
+        eventOffset: 7,
+        authoritativeStartMicrosUtc: authoritativeStartMicrosUtc,
+      ),
+      interactionEffects: const [],
+      events: const [
+        UnitMovedEvent(
+          unitId: 'enemy',
+          fromCol: 0,
+          fromRow: 0,
+          toCol: 1,
+          toRow: 0,
+        ),
+      ],
+      visibleMovementExecutions: const [],
+      previousState: before,
+      state: after,
+    );
+    final renderer = GameRenderer(
+      mapData: _map(),
+      onCommand: (_) async {},
+      presentationClock: const _FixedClock(
+        authoritativeStartMicrosUtc + 1000000,
+      ),
+    );
+    addTearDown(renderer.disposeRenderer);
+
+    renderer
+      ..applyState(before)
+      ..onGameResize(Vector2(800, 600));
+    await renderer.onLoad();
+
+    final transition = renderer.applyProjectedTransition(after, batch);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(renderer.animatingUnitIdsListenable.value, contains(enemy.id));
+
+    renderer.update(0.7);
+    await transition.timeout(const Duration(seconds: 1));
+    expect(renderer.animatingUnitIdsListenable.value, isEmpty);
+    expect(renderer.unitMarkerPositionForTesting(enemy.id), isNotNull);
+  });
+}
+
+final class _FixedClock extends Clock {
+  const _FixedClock(this.microsUtc);
+
+  final int microsUtc;
+
+  @override
+  DateTime now() => DateTime.fromMicrosecondsSinceEpoch(microsUtc, isUtc: true);
 }
 
 LiveServerEvent _liveMovementEvent(UnitMovedEvent event) {

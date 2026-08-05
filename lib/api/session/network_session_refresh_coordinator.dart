@@ -1,3 +1,4 @@
+import 'package:aonw/api/session/serverpod_multiplayer_failure_mapper.dart';
 import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
 import 'package:aonw/game/application/ports/network_connection.dart';
@@ -20,9 +21,8 @@ typedef NetworkSessionRevoker =
 /// Owns refresh-token rotation for every multiplayer transport.
 ///
 /// Concurrent expiry checks and 401 recoveries share one refresh operation.
-/// Rotated credentials are persisted before publication whenever secure
-/// storage is available. A transient secure-storage failure keeps the rotated
-/// session usable in memory and is retried by the next token read; refresh
+/// Rotated credentials are persisted in secure storage before publication.
+/// A transient storage failure keeps them in memory until the next read;
 /// tokens are never downgraded to plain preferences.
 final class NetworkSessionRefreshCoordinator {
   static const tokenRefreshSkew = Duration(seconds: 30);
@@ -591,10 +591,10 @@ final class NetworkSessionRefreshCoordinator {
   }
 
   static bool isRejectedRefreshError(Object error) {
-    return error is sp_auth.RefreshTokenMalformedException ||
-        error is sp_auth.RefreshTokenNotFoundException ||
-        error is sp_auth.RefreshTokenExpiredException ||
-        error is sp_auth.RefreshTokenInvalidSecretException;
+    // The gateway normalizes generated Serverpod refresh errors before they
+    // reach this coordinator, while direct adapters may still pass their raw
+    // exceptions. Keep both representations on the same classification path.
+    return isRejectedServerpodRefreshError(error);
   }
 }
 
