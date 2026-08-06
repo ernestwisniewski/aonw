@@ -16,11 +16,20 @@ final class MatchStateAccess {
     String matchId, {
     bool lock = false,
   }) async {
+    final state = await requireStoredMatch(store, matchId, lock: lock);
+    requireCurrentProtocol(state);
+    return state;
+  }
+
+  Future<StoredMatchState> requireStoredMatch(
+    MultiplayerMatchStore store,
+    String matchId, {
+    bool lock = false,
+  }) async {
     final state = await store.findState(matchId, lock: lock);
     if (state == null) {
       throw multiplayerException('match_not_found', 'Match not found.');
     }
-    requireCurrentProtocol(state);
     return state;
   }
 
@@ -32,26 +41,5 @@ final class MatchStateAccess {
       'not_match_player',
       'User is not a participant in this match.',
     );
-  }
-
-  bool hasActiveHumanPlayer(
-    Iterable<WirePlayer> players, {
-    String? excludingUserIdentifier,
-  }) {
-    return players.any(
-      (player) =>
-          player.kind == WirePlayerKind.human &&
-          player.userId != excludingUserIdentifier &&
-          _isActiveConnectionState(player.connectionState),
-    );
-  }
-
-  bool _isActiveConnectionState(WirePlayerConnectionState state) {
-    return switch (state) {
-      WirePlayerConnectionState.connected ||
-      WirePlayerConnectionState.connecting ||
-      WirePlayerConnectionState.reconnecting => true,
-      WirePlayerConnectionState.offline => false,
-    };
   }
 }

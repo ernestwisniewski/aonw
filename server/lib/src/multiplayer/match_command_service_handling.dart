@@ -92,7 +92,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
       offset: nextOffset,
       timestamp: now,
     );
-    final updated = _stateAfterAcceptedReduction(
+    final updated = _stateAfterAcceptedPlayerReduction(
       state: state,
       reduction: reduction,
       snapshot: nextSnapshot,

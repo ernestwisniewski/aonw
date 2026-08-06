@@ -70,7 +70,7 @@ void _registerRealtimeMatchHubLifecycleScenarios() {
   );
 
   test(
-    'leaveMatch abandons a running match with no active players left',
+    'leaveMatch keeps a fully offline running match resumable until expiry',
     () async {
       final mapCatalog = _FakeMapCatalog(_testMap());
       final hub = RealtimeMatchHub(
@@ -124,11 +124,12 @@ void _registerRealtimeMatchHubLifecycleScenarios() {
       );
 
       final state = await store.findState(started.id);
-      expect(state!.match.state, 'abandoned');
+      expect(state!.match.state, 'running');
+      expect(state.snapshot.state['lastHumanActivityAt'], isNotNull);
+      const offline = WirePlayerConnectionState.offline;
+      expect(state.match.players[0].connectionState, offline);
+      expect(state.match.players[1].connectionState, offline);
       expect(state.match.autoStartAt, isNull);
-      expect(state.snapshot.state['phase'], 'abandoned');
-      expect(state.snapshot.state['reason'], 'player_left');
-      expect(state.snapshot.state['leftUserIdentifier'], 'guest-user');
     },
   );
 

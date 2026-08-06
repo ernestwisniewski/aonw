@@ -373,7 +373,7 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
   test('advanceTimedOutTurns rotates bounded running-match pages', () async {
     final hub = RealtimeMatchHub();
     final store = _MemoryMatchStore();
-    final createdAt = DateTime.utc(2026, 7, 11, 8);
+    final createdAt = DateTime.utc(2126, 7, 11, 8);
     const matchCount = multiplayerRunningMatchPageSize + 2;
     for (var index = 0; index < matchCount; index += 1) {
       final id = 'rotation-${index.toString().padLeft(3, '0')}';
@@ -422,7 +422,7 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
     () async {
       final hub = RealtimeMatchHub();
       final store = _MemoryMatchStore();
-      final createdAt = DateTime.utc(2026, 7, 11, 8);
+      final createdAt = DateTime.utc(2126, 7, 11, 8);
       for (var index = 0; index < multiplayerRunningMatchPageSize; index++) {
         final id = 'exact-page-${index.toString().padLeft(3, '0')}';
         store._states[id] = StoredMatchState(

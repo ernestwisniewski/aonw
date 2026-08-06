@@ -4,6 +4,7 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
 import 'package:aonw_server/src/multiplayer/invite_code_generator.dart';
+import 'package:aonw_server/src/multiplayer/match_activity_tracker.dart';
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
 import 'package:aonw_server/src/multiplayer/match_command_service.dart';
 import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
@@ -217,6 +218,7 @@ class RealtimeMatchHub {
     MatchConnectionRegistry? connectionRegistry,
     InviteCodeGenerator? inviteCodeGenerator,
     PlayerMatchViewProjector viewProjector = const PlayerMatchViewProjector(),
+    Duration matchInactivityTimeout = defaultMultiplayerMatchInactivityTimeout,
   }) : _connectionRegistry =
            connectionRegistry ??
            MatchConnectionRegistry(viewProjector: viewProjector),
@@ -247,6 +249,7 @@ class RealtimeMatchHub {
       stateAccess: _stateAccess,
       broadcaster: _broadcaster,
       nowUtc: _nowUtc,
+      matchInactivityTimeout: matchInactivityTimeout,
     );
   }
 

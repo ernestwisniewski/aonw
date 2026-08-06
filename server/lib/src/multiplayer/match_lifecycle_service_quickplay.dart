@@ -1,6 +1,32 @@
 part of 'match_lifecycle_service.dart';
 
 extension MatchLifecycleServiceQuickplay on MatchLifecycleService {
+  StoredMatchState _openQuickplayStateAfterParticipantLeft(
+    StoredMatchState state, {
+    required String userIdentifier,
+  }) {
+    final players = [
+      for (final player in state.match.players)
+        if (player.userId != userIdentifier) player,
+    ];
+    if (players.isEmpty) {
+      return _stateAccess.abandonedState(
+        state,
+        reason: MatchAbandonmentReason.ownerLeft,
+        endedAt: _nowUtc(),
+        userIdentifier: userIdentifier,
+      );
+    }
+    return state.copyWith(
+      match: state.match.copyWith(
+        ownerUserId: state.match.ownerUserId == userIdentifier
+            ? players.first.userId
+            : state.match.ownerUserId,
+        players: players,
+      ),
+    );
+  }
+
   Future<MatchMutationOutcome<bool>> abandonStaleQuickplayLobby({
     required MultiplayerMatchStore store,
     required StoredMatchState state,

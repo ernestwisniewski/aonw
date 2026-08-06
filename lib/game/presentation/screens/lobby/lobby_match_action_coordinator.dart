@@ -136,11 +136,15 @@ final class LobbyMatchActionCoordinator {
   }
 
   Future<void> cancelQuickplay({required WireMatch? activeMatch}) async {
-    stopLobbyUpdates();
+    await leaveActiveLobby(activeMatch: activeMatch);
+  }
+
+  Future<void> leaveActiveLobby({required WireMatch? activeMatch}) async {
     final session = await ensureSession();
     if (activeMatch != null && LobbyMatchStatusRules.isOpen(activeMatch)) {
       await leaveMatch(token: session.token, matchId: activeMatch.id);
     }
+    stopLobbyUpdates();
     clearMatch(session);
   }
 

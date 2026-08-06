@@ -215,9 +215,9 @@ void main() {
 
         expect(controller.mode, LobbyMultiplayerMode.publicMatch);
         expect(controller.activeMatch?.id, 'public_joined');
-        expect(client.joinedPublicMatchIds, ['public_listed']);
+        await controller.leaveLobby();
+        expect(client.matchActions, ['join', 'leave']);
 
-        controller.returnHome();
         await controller.openPublicLobby();
         await controller.createPublicMatch(name: 'Open table');
 
@@ -508,7 +508,7 @@ final class _FakeNetworkSessionClient extends NetworkSessionClient {
   final Object? signOutError;
   QuickplayMatchRequest? quickplayRequest;
   CreateMatchRequest? createdPublicRequest;
-  final joinedPublicMatchIds = <String>[];
+  final matchActions = <String>[];
   AuthToken? signedOutToken;
   String? signedOutRefreshToken;
 
@@ -563,7 +563,7 @@ final class _FakeNetworkSessionClient extends NetworkSessionClient {
     required String matchId,
     PlayerCountry? country,
   }) async {
-    joinedPublicMatchIds.add(matchId);
+    matchActions.add('join');
     return joinedPublicMatch ?? fail('unexpected public match join');
   }
 
@@ -604,7 +604,7 @@ final class _FakeNetworkSessionClient extends NetworkSessionClient {
     required AuthToken token,
     required String matchId,
   }) async {
-    fail('unexpected match leave');
+    matchActions.add('leave');
   }
 }
 

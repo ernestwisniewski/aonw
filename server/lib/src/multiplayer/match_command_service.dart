@@ -4,6 +4,7 @@ import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/generated/protocol.dart' hide GameEvent;
 import 'package:aonw_server/src/multiplayer/lossless_match_snapshot_codec.dart';
+import 'package:aonw_server/src/multiplayer/match_activity_tracker.dart';
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
 import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
 import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
@@ -23,6 +24,7 @@ part 'match_command_service_timeout.dart';
 const _runningMatchSnapshotCodec = RunningMatchSnapshotCodec();
 const _matchLifecycleStateAdapter = MatchLifecycleStateAdapter();
 const _matchLifecycleWireAdapter = MatchLifecycleWireAdapter();
+const _matchActivityTracker = MatchActivityTracker();
 
 final class MatchCommandService {
   MatchCommandService({
@@ -30,15 +32,18 @@ final class MatchCommandService {
     required MatchStateAccess stateAccess,
     required MatchBroadcaster broadcaster,
     required DateTime Function() nowUtc,
+    Duration matchInactivityTimeout = defaultMultiplayerMatchInactivityTimeout,
   }) : _commandReducer = commandReducer,
        _stateAccess = stateAccess,
        _broadcaster = broadcaster,
-       _nowUtc = nowUtc;
+       _nowUtc = nowUtc,
+       _matchInactivityTimeout = matchInactivityTimeout;
 
   final ServerCommandReducer _commandReducer;
   final MatchStateAccess _stateAccess;
   final MatchBroadcaster _broadcaster;
   final DateTime Function() _nowUtc;
+  final Duration _matchInactivityTimeout;
   RunningMatchCursor? _nextTimeoutSweepCursor;
 
   DecodedRunningMatchSnapshot _decodeRunningSnapshot(StoredMatchState state) {
@@ -58,9 +63,10 @@ final class MatchCommandService {
     required ServerCommandReduction reduction,
     required int offset,
   }) {
-    return _runningMatchSnapshotCodec
+    final encoded = _runningMatchSnapshotCodec
         .encodeCanonical(decoded, reduction.nextSnapshot!)
         .copyWith(offset: offset);
+    return _matchActivityTracker.preserveActivity(decoded.wire, encoded);
   }
 
   StoredMatchState _stateAfterAcceptedReduction({
@@ -99,6 +105,20 @@ final class MatchCommandService {
       throw StateError('Finish match lifecycle rejected: ${rejection.code}.');
     }
     return transition.state;
+  }
+
+  StoredMatchState _stateAfterAcceptedPlayerReduction({
+    required StoredMatchState state,
+    required ServerCommandReduction reduction,
+    required WireSnapshot snapshot,
+    required DateTime now,
+  }) {
+    return _stateAfterAcceptedReduction(
+      state: state,
+      reduction: reduction,
+      snapshot: _matchActivityTracker.recordSnapshot(snapshot, now),
+      now: now,
+    );
   }
 
   Future<void> handleClientMessage({

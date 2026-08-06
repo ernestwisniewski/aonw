@@ -30,9 +30,6 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
     final page = await store.listRunningStates(after: _nextTimeoutSweepCursor);
     _nextTimeoutSweepCursor = page.nextCursor;
     for (final state in page.states) {
-      if (state.snapshot.v != kProtocolVersion) {
-        continue;
-      }
       try {
         await advanceTimedOutTurn(store: store, matchId: state.match.id);
       } catch (error, stackTrace) {
@@ -55,7 +52,7 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
     required String matchId,
   }) async {
     final outcome = await store.transaction((txStore) async {
-      final state = await _stateAccess.requireMatch(
+      final state = await _stateAccess.requireStoredMatch(
         txStore,
         matchId,
         lock: true,
@@ -65,6 +62,9 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
       }
 
       final now = _nowUtc();
+      if (await _expireInactive(txStore, state, now) case final outcome?) {
+        return outcome;
+      }
       final decodedSnapshot = _decodeRunningSnapshot(state);
       final canonicalSnapshot = decodedSnapshot.canonical;
       final timeoutReduction = await _reduceTimedOutTurnIfNeeded(
@@ -72,11 +72,8 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
         snapshot: canonicalSnapshot,
         now: now,
       );
-      if (timeoutReduction == null) {
-        return const MatchMutationOutcome<bool>(false);
-      }
-      final reduction = timeoutReduction.reduction;
-      final actorPlayerId = timeoutReduction.actorPlayerId;
+      if (timeoutReduction == null) return const MatchMutationOutcome(false);
+      final (:reduction, :actorPlayerId) = timeoutReduction;
 
       final nextOffset = state.nextOffset();
       final nextSnapshot = _encodeReductionSnapshot(
@@ -124,6 +121,32 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
       );
     });
     outcome.notifications.deliver(_broadcaster);
+  }
+
+  Future<MatchMutationOutcome<bool>?> _expireInactive(
+    MultiplayerMatchStore store,
+    StoredMatchState state,
+    DateTime now,
+  ) async {
+    if (!_matchActivityTracker.hasExpired(
+      state,
+      nowUtc: now,
+      timeout: _matchInactivityTimeout,
+    )) {
+      return state.snapshot.v == kProtocolVersion
+          ? null
+          : const MatchMutationOutcome<bool>(false);
+    }
+    final abandoned = _stateAccess.abandonedState(
+      state,
+      reason: MatchAbandonmentReason.allPlayersInactive,
+      endedAt: now,
+    );
+    await store.saveState(abandoned);
+    return MatchMutationOutcome<bool>(
+      true,
+      notifications: MatchNotificationPlan.broadcastState(abandoned),
+    );
   }
 
   Future<({ServerCommandReduction reduction, String actorPlayerId})?>

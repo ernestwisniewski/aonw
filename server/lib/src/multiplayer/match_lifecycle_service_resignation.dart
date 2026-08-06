@@ -36,12 +36,15 @@ extension MatchLifecycleServiceResignation on MatchLifecycleService {
               )
             : matchPlayer,
     ];
-    final runningState = state.copyWith(
-      match: state.match.copyWith(players: players),
-      snapshot: _runningMatchSnapshotCodec.encodeCanonical(
-        decodedSnapshot,
-        nextSnapshot,
+    final runningState = _matchActivityTracker.record(
+      state.copyWith(
+        match: state.match.copyWith(players: players),
+        snapshot: _runningMatchSnapshotCodec.encodeCanonical(
+          decodedSnapshot,
+          nextSnapshot,
+        ),
       ),
+      endedAt,
     );
     return _stateAfterResignationTransition(
       runningState: runningState,

@@ -280,6 +280,7 @@ const _knownSnapshotStateFields = {
   // Stored lifecycle audit fields are deliberately omitted from output.
   'leftUserIdentifier',
   'resignedUserIdentifier',
+  'lastHumanActivityAt',
 };
 
 const _knownRuntimeStateFields = {

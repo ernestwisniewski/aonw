@@ -51,11 +51,11 @@ extension MatchmakingServiceTransactions on MatchmakingService {
           countryId: quickplayRequest.countryId,
           broadcast: false,
         );
-        notifications = notifications.followedBy(joined.notifications);
         final advanced = await _lifecycle.advanceQuickplayLobby(
           store: txStore,
           state: joined.value,
           snapshotFactory: snapshotFactory,
+          broadcastUnchanged: true,
         );
         return MatchMutationOutcome(
           advanced.value,
@@ -111,6 +111,7 @@ extension MatchmakingServiceTransactions on MatchmakingService {
         final advanced = await _lifecycle.advanceQuickplayLobby(
           store: txStore,
           state: joined.value,
+          broadcastUnchanged: true,
         );
         return MatchMutationOutcome(
           advanced.value,

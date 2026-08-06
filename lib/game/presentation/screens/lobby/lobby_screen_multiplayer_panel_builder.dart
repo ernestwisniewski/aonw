@@ -36,7 +36,7 @@ extension _LobbyScreenMultiplayerPanelBuilder on _LobbyScreenState {
         error: _connection.error,
         match: _connection.activeMatch,
         currentUserId: ref.watch(networkSessionProvider)?.userId,
-        onBack: ref.withMenuClick(_connection.returnHome),
+        onBack: ref.withMenuClickAsync(_connection.back),
       ),
       LobbyMultiplayerMode.privateHost ||
       LobbyMultiplayerMode.privateJoin => _PrivateMatchPanel(
@@ -50,7 +50,7 @@ extension _LobbyScreenMultiplayerPanelBuilder on _LobbyScreenState {
             _connection.activeMatch == null,
         onShare: ref.withMenuClickAsync(_shareInviteCode),
         onCopy: ref.withMenuClickAsync(_copyInviteCode),
-        onBack: ref.withMenuClick(_connection.returnHome),
+        onBack: ref.withMenuClickAsync(_connection.back),
       ),
     };
   }

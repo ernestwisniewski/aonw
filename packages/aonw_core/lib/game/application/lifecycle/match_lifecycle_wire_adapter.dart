@@ -112,6 +112,7 @@ final class MatchLifecycleWireAdapter {
       'all_players_resigned' => MatchAbandonmentReason.allPlayersResigned,
       'no_alive_players_after_resignation' =>
         MatchAbandonmentReason.noAlivePlayersAfterResignation,
+      'all_players_inactive' => MatchAbandonmentReason.allPlayersInactive,
       _ => throw FormatException('Unknown match abandonment reason: $value'),
     };
   }
@@ -126,6 +127,7 @@ final class MatchLifecycleWireAdapter {
       MatchAbandonmentReason.allPlayersResigned => 'all_players_resigned',
       MatchAbandonmentReason.noAlivePlayersAfterResignation =>
         'no_alive_players_after_resignation',
+      MatchAbandonmentReason.allPlayersInactive => 'all_players_inactive',
     };
   }
 }

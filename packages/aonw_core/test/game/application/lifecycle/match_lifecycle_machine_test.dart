@@ -91,6 +91,10 @@ void main() {
         ),
         'no_alive_players_after_resignation',
       );
+      expect(
+        adapter.decodeAbandonmentReason('all_players_inactive'),
+        MatchAbandonmentReason.allPlayersInactive,
+      );
     });
   });
 }

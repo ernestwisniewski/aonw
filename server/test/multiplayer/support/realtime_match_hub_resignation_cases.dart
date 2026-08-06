@@ -61,9 +61,8 @@ void _registerRealtimeMatchHubResignationCharacterizationTests() {
         seeded.snapshot
             .copyWith(
               save: expectedSave.toJson(),
-              state: CanonicalGameSnapshotCodec.encodeDomainState(
-                expectedState,
-              ),
+              state: CanonicalGameSnapshotCodec.encodeDomainState(expectedState)
+                ..['lastHumanActivityAt'] = fixture.endedAt.toIso8601String(),
             )
             .toJson(),
       );

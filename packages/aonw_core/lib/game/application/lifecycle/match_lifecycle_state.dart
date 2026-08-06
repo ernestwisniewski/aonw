@@ -66,6 +66,7 @@ enum MatchAbandonmentReason {
   protocolUpgrade,
   allPlayersResigned,
   noAlivePlayersAfterResignation,
+  allPlayersInactive,
 }
 
 final class AbandonedMatchLifecycleState extends MatchLifecycleState {

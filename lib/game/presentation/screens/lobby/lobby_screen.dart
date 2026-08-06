@@ -481,7 +481,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     }
 
     if (_connection.mode != LobbyMultiplayerMode.home) {
-      _connection.returnHome();
+      await _connection.back();
       return;
     }
 
@@ -571,7 +571,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         _connection.startPrivateMatch,
       ),
       onStartPublicMatch: ref.withMenuClickAsync(_connection.startPublicMatch),
-      onBackToMultiplayerHome: ref.withMenuClick(_connection.returnHome),
+      onBackToMultiplayerHome: ref.withMenuClickAsync(_connection.back),
     ).build();
   }
 

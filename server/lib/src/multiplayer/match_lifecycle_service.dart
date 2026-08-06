@@ -3,6 +3,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
+import 'package:aonw_server/src/multiplayer/match_activity_tracker.dart';
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
 import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
 import 'package:aonw_server/src/multiplayer/match_mutation_outcome.dart';
@@ -18,6 +19,7 @@ part 'match_lifecycle_service_resignation.dart';
 
 const _runningMatchSnapshotCodec = RunningMatchSnapshotCodec();
 const _matchLifecycleStateAdapter = MatchLifecycleStateAdapter();
+const _matchActivityTracker = MatchActivityTracker();
 
 final class MatchLifecycleService {
   const MatchLifecycleService({
@@ -211,9 +213,12 @@ final class MatchLifecycleService {
 
       final players = [...state.match.players];
       players[playerIndex] = player.copyWith(connectionState: connectionState);
-      final updated = state.copyWith(
+      var updated = state.copyWith(
         match: state.match.copyWith(players: players),
       );
+      if (lifecycle.isRunning) {
+        updated = _matchActivityTracker.record(updated, _nowUtc());
+      }
       await txStore.saveState(updated);
       return MatchMutationOutcome(
         updated,
@@ -236,18 +241,10 @@ final class MatchLifecycleService {
               )
             : player,
     ];
-    if (!_stateAccess.hasActiveHumanPlayer(
-      players,
-      excludingUserIdentifier: userIdentifier,
-    )) {
-      return _stateAccess.abandonedState(
-        state,
-        reason: MatchAbandonmentReason.playerLeft,
-        endedAt: _nowUtc(),
-        userIdentifier: userIdentifier,
-      );
-    }
-    return state.copyWith(match: state.match.copyWith(players: players));
+    return _matchActivityTracker.record(
+      state.copyWith(match: state.match.copyWith(players: players)),
+      _nowUtc(),
+    );
   }
 
   StoredMatchState _stateAfterParticipantLeft(
@@ -259,24 +256,40 @@ final class MatchLifecycleService {
         state,
         userIdentifier: userIdentifier,
       ),
-      OpenMatchLifecycleState()
-          when state.match.ownerUserId == userIdentifier =>
-        _stateAccess.abandonedState(
-          state,
-          reason: MatchAbandonmentReason.ownerLeft,
-          endedAt: _nowUtc(),
-          userIdentifier: userIdentifier,
-        ),
-      OpenMatchLifecycleState() => state.copyWith(
-        match: state.match.copyWith(
-          players: [
-            for (final player in state.match.players)
-              if (player.userId != userIdentifier) player,
-          ],
-        ),
+      OpenMatchLifecycleState() => _openStateAfterParticipantLeft(
+        state,
+        userIdentifier: userIdentifier,
       ),
       FinishedMatchLifecycleState() || AbandonedMatchLifecycleState() => state,
     };
+  }
+
+  StoredMatchState _openStateAfterParticipantLeft(
+    StoredMatchState state, {
+    required String userIdentifier,
+  }) {
+    if (state.match.quickplay) {
+      return _openQuickplayStateAfterParticipantLeft(
+        state,
+        userIdentifier: userIdentifier,
+      );
+    }
+    if (state.match.ownerUserId == userIdentifier) {
+      return _stateAccess.abandonedState(
+        state,
+        reason: MatchAbandonmentReason.ownerLeft,
+        endedAt: _nowUtc(),
+        userIdentifier: userIdentifier,
+      );
+    }
+    return state.copyWith(
+      match: state.match.copyWith(
+        players: [
+          for (final player in state.match.players)
+            if (player.userId != userIdentifier) player,
+        ],
+      ),
+    );
   }
 
   Future<MatchMutationOutcome<WireMatch>> _startOpenMatch({
@@ -323,7 +336,10 @@ final class MatchLifecycleService {
       match: runningMatch,
       snapshot: canonicalSnapshot,
     );
-    final updated = state.copyWith(match: runningMatch, snapshot: snapshot);
+    final updated = _matchActivityTracker.record(
+      state.copyWith(match: runningMatch, snapshot: snapshot),
+      now,
+    );
     await store.saveState(updated);
     return MatchMutationOutcome(
       updated.match,

@@ -11,6 +11,7 @@ import 'package:aonw/game/presentation/screens/lobby/lobby_match_action_coordina
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_navigation_coordinator.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_network_session_coordinator.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_public_match_refresh_coordinator.dart';
 import 'package:aonw_core/game/domain/map_validation.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
@@ -187,12 +188,14 @@ final class LobbyConnectionController extends ChangeNotifier {
   }
 
   Future<void> cancelQuickplayQueue() async {
+    var leftQueue = false;
     await _runNetworkAction(() async {
       await _matchActionCoordinator().cancelQuickplay(
         activeMatch: _activeMatch,
       );
+      leftQueue = true;
     });
-    if (!_canContinue()) return;
+    if (!leftQueue || !_canContinue()) return;
     _setMode(LobbyMultiplayerMode.home);
   }
 
@@ -263,7 +266,7 @@ final class LobbyConnectionController extends ChangeNotifier {
   }
 
   void stopLobbyUpdates() {
-    _autoStartCoordinator.cancel();
+    _stopLobbyUpdateCoordinators(this);
     unawaited(_liveMatchCoordinator.close());
   }
 
@@ -448,9 +451,7 @@ final class LobbyConnectionController extends ChangeNotifier {
     if (changed) _notifyStateChanged();
   }
 
-  void _setMode(LobbyMultiplayerMode mode) {
-    _setState(mode: mode);
-  }
+  void _setMode(LobbyMultiplayerMode mode) => _setState(mode: mode);
 
   void _setBusy(bool busy) {
     _setState(busy: busy);
@@ -474,7 +475,7 @@ final class LobbyConnectionController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
-    _autoStartCoordinator.cancel();
+    _stopLobbyUpdateCoordinators(this);
     unawaited(_liveMatchCoordinator.close());
     super.dispose();
   }

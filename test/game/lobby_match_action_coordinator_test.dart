@@ -61,6 +61,18 @@ void main() {
       expect(harness.clearedSessions, [harness.session]);
     });
 
+    test('leaves an open public lobby before stopping updates', () async {
+      final harness = _Harness();
+
+      await harness.coordinator.leaveActiveLobby(
+        activeMatch: _match(id: 'public_1'),
+      );
+
+      expect(harness.leftMatchIds, ['public_1']);
+      expect(harness.stoppedCount, 1);
+      expect(harness.clearedSessions, [harness.session]);
+    });
+
     test('public listing keeps only joinable stranger lobbies', () async {
       final joinable = _match(
         id: 'public_1',
