@@ -160,6 +160,7 @@ jobs:
       - name: Extract final ZIP
         run: |
           mkdir -p build/linux-runtime-smoke/bundle
+          chmod 0755 build/linux-runtime-smoke/runtime-smoke-tools/gst-launch-1.0
           unzip -q \
             build/linux-runtime-smoke/aonw-linux-steam.zip \
             -d build/linux-runtime-smoke/bundle
