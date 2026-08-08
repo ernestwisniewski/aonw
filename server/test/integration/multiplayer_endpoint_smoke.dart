@@ -113,14 +113,24 @@ void main() {
           CreateMatchRequest(
             name: 'Snapshot-independent listing',
             mapName: 'myranth',
-            maxPlayers: 2,
+            maxPlayers: 3,
             minPlayers: 2,
             private: false,
           ),
         );
+        await _connectParticipant(
+          endpoints,
+          session: owner.session,
+          matchId: created.id,
+        );
         final joined = await endpoints.multiplayer.joinMatch(
           guest.session,
           created.id,
+        );
+        await _connectParticipant(
+          endpoints,
+          session: guest.session,
+          matchId: joined.id,
         );
 
         final databaseSession = sessionBuilder.build();
@@ -241,10 +251,22 @@ WHERE "matchId" = @matchId
                 seatOrder: 0,
               ),
           ]);
+          final queryNow = baseTime.add(const Duration(minutes: 1));
+          await GameMatchPresenceLease.db.insert(session, [
+            for (var index = 0; index < rows.length; index += 1)
+              if (specs[index].state == 'open' && !specs[index].isPrivate)
+                GameMatchPresenceLease(
+                  matchId: rows[index].id!,
+                  userIdentifier: specs[index].user,
+                  connectionGeneration: 'relation-generation-$index',
+                  expiresAt: queryNow.add(const Duration(minutes: 1)),
+                  updatedAt: queryNow,
+                ),
+          ]);
 
           final visible = await ServerpodMultiplayerMatchStore(
             session,
-          ).listVisibleMatches(viewer);
+          ).listVisibleMatches(viewer, nowUtc: queryNow);
 
           expect(visible.map((match) => match.id), [
             'relation-running-viewer',
@@ -445,6 +467,11 @@ WHERE "matchId" = @matchId
         expect(created.players.map((player) => player.name), ['Owner Nick']);
         expect(created.state, 'open');
         final ownerPublicId = created.players.single.id;
+        await _connectParticipant(
+          endpoints,
+          session: owner.session,
+          matchId: created.id,
+        );
 
         final listed = await endpoints.multiplayer.listMatches(guest.session);
         expect(listed.map((match) => match.id), contains(created.id));
@@ -452,6 +479,11 @@ WHERE "matchId" = @matchId
         final joined = await endpoints.multiplayer.joinMatch(
           guest.session,
           created.id,
+        );
+        await _connectParticipant(
+          endpoints,
+          session: guest.session,
+          matchId: joined.id,
         );
         final guestPublicId = joined.players
             .singleWhere((player) => player.userId == guest.userIdentifier)
@@ -927,6 +959,11 @@ WHERE "matchId" = @matchId
           expect(waiting.state, 'open');
           expect(waiting.autoStartAt, isNull);
           expect(waiting.players.single.country, PlayerCountry.poland);
+          await _connectParticipant(
+            endpoints,
+            session: owner.session,
+            matchId: waiting.id,
+          );
 
           await endpoints.emailIdp.updateDisplayName(
             owner.session,
@@ -941,9 +978,19 @@ WHERE "matchId" = @matchId
           expect(requeued.players.single.name, 'Quick Owner Renamed');
           expect(requeued.players.single.country, PlayerCountry.china);
 
-          final countingDown = await endpoints.multiplayer.quickplay(
+          final guestJoining = await endpoints.multiplayer.quickplay(
             guest.session,
             _quickplayRequest(PlayerCountry.france),
+          );
+          expect(guestJoining.autoStartAt, isNull);
+          await _connectParticipant(
+            endpoints,
+            session: guest.session,
+            matchId: waiting.id,
+          );
+          final countingDown = await endpoints.multiplayer.loadMatch(
+            guest.session,
+            waiting.id,
           );
           expect(countingDown.id, waiting.id);
           expect(countingDown.state, 'open');
@@ -974,11 +1021,35 @@ WHERE "matchId" = @matchId
           expect(threePlayers.id, waiting.id);
           expect(threePlayers.state, 'open');
           expect(threePlayers.players, hasLength(3));
-          expect(threePlayers.autoStartAt, countingDown.autoStartAt);
+          expect(threePlayers.autoStartAt, isNull);
+          await _connectParticipant(
+            endpoints,
+            session: third.session,
+            matchId: waiting.id,
+          );
+          final resumedCountdown = await endpoints.multiplayer.loadMatch(
+            third.session,
+            waiting.id,
+          );
+          expect(resumedCountdown.autoStartAt, isNotNull);
+          expect(
+            resumedCountdown.autoStartAt!.isAfter(countingDown.autoStartAt!),
+            isTrue,
+          );
 
-          final started = await endpoints.multiplayer.quickplay(
+          final fourthJoining = await endpoints.multiplayer.quickplay(
             fourth.session,
             _quickplayRequest(PlayerCountry.japan),
+          );
+          expect(fourthJoining.state, 'open');
+          await _connectParticipant(
+            endpoints,
+            session: fourth.session,
+            matchId: waiting.id,
+          );
+          final started = await endpoints.multiplayer.loadMatch(
+            fourth.session,
+            waiting.id,
           );
           expect(started.id, waiting.id);
           expect(started.state, 'running');
@@ -1015,6 +1086,21 @@ final class _AccountSession {
 
   final TestSessionBuilder session;
   final String userIdentifier;
+}
+
+final class _EndpointMatchConnection {
+  _EndpointMatchConnection({required this.input, required this.subscription});
+
+  final StreamController<MultiplayerClientMessage> input;
+  final StreamSubscription<MultiplayerServerMessage> subscription;
+  var _closed = false;
+
+  Future<void> close() async {
+    if (_closed) return;
+    _closed = true;
+    await input.close();
+    await subscription.cancel();
+  }
 }
 
 Future<_AccountSession> _accountSession(
@@ -1074,8 +1160,64 @@ Future<WireMatch> _startTwoPlayerMatch(
       private: false,
     ),
   );
-  await endpoints.multiplayer.joinMatch(guestSession, created.id);
+  await _connectParticipant(
+    endpoints,
+    session: ownerSession,
+    matchId: created.id,
+  );
+  final joined = await endpoints.multiplayer.joinMatch(
+    guestSession,
+    created.id,
+  );
+  await _connectParticipant(
+    endpoints,
+    session: guestSession,
+    matchId: joined.id,
+  );
   return endpoints.multiplayer.startMatch(ownerSession, created.id);
+}
+
+Future<_EndpointMatchConnection> _connectParticipant(
+  TestEndpoints endpoints, {
+  required TestSessionBuilder session,
+  required String matchId,
+}) async {
+  final input = StreamController<MultiplayerClientMessage>();
+  final initialSnapshot = Completer<void>();
+  late final StreamSubscription<MultiplayerServerMessage> subscription;
+  subscription = endpoints.multiplayer
+      .connect(session, matchId, 0, input.stream)
+      .listen(
+        (message) {
+          if (message.snapshot != null && !initialSnapshot.isCompleted) {
+            initialSnapshot.complete();
+          }
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          if (!initialSnapshot.isCompleted) {
+            initialSnapshot.completeError(error, stackTrace);
+          }
+        },
+        onDone: () {
+          if (!initialSnapshot.isCompleted) {
+            initialSnapshot.completeError(
+              StateError('Match stream closed before its initial snapshot.'),
+            );
+          }
+        },
+      );
+  final connection = _EndpointMatchConnection(
+    input: input,
+    subscription: subscription,
+  );
+  addTearDown(connection.close);
+  try {
+    await initialSnapshot.future.timeout(_streamTimeout);
+    return connection;
+  } catch (_) {
+    await connection.close();
+    rethrow;
+  }
 }
 
 CreateMatchRequest _quickplayRequest(PlayerCountry country) {

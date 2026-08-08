@@ -3,6 +3,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
+import 'package:aonw_server/src/multiplayer/lobby_presence_policy.dart';
 import 'package:aonw_server/src/multiplayer/match_activity_tracker.dart';
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
 import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
@@ -15,6 +16,8 @@ import 'package:aonw_server/src/multiplayer/running_match_snapshot_codec.dart';
 import 'package:aonw_server/src/multiplayer/wire_player_domain_mapper.dart';
 
 part 'match_lifecycle_service_quickplay.dart';
+part 'match_lifecycle_service_presence.dart';
+part 'match_lifecycle_service_presence_expiry.dart';
 part 'match_lifecycle_service_resignation.dart';
 
 const _runningMatchSnapshotCodec = RunningMatchSnapshotCodec();
@@ -22,20 +25,28 @@ const _matchLifecycleStateAdapter = MatchLifecycleStateAdapter();
 const _matchActivityTracker = MatchActivityTracker();
 
 final class MatchLifecycleService {
-  const MatchLifecycleService({
+  MatchLifecycleService({
     required MatchStateAccess stateAccess,
     required MatchBroadcaster broadcaster,
     required QuickplayLobbyPolicy quickplayLobbyPolicy,
+    required LobbyPresencePolicy presencePolicy,
+    required PresenceGenerationGenerator presenceGenerationGenerator,
     required DateTime Function() nowUtc,
   }) : _stateAccess = stateAccess,
        _broadcaster = broadcaster,
        _quickplayLobbyPolicy = quickplayLobbyPolicy,
+       _presencePolicy = presencePolicy,
+       _presenceGenerationGenerator = presenceGenerationGenerator,
        _nowUtc = nowUtc;
 
   final MatchStateAccess _stateAccess;
   final MatchBroadcaster _broadcaster;
   final QuickplayLobbyPolicy _quickplayLobbyPolicy;
+  final LobbyPresencePolicy _presencePolicy;
+  final PresenceGenerationGenerator _presenceGenerationGenerator;
+  final LobbyRosterPolicy _rosterPolicy = const LobbyRosterPolicy();
   final DateTime Function() _nowUtc;
+  ExpiredPresenceLeaseCursor? _nextPresenceSweepCursor;
 
   Future<WireMatch> loadMatch({
     required MultiplayerMatchStore store,
@@ -58,7 +69,7 @@ final class MatchLifecycleService {
       );
     });
     outcome.notifications.deliver(_broadcaster);
-    return outcome.value;
+    return outcome.value.match;
   }
 
   Future<WireMatch> startMatch({
@@ -86,10 +97,10 @@ final class MatchLifecycleService {
           'Only open matches can be started.',
         );
       }
-      if (state.match.players.length < state.match.minPlayers) {
+      if (!_canStartLobby(state, nowUtc: _nowUtc())) {
         throw multiplayerException(
           'not_enough_players',
-          'Not enough players to start this match.',
+          'Every reserved human seat must be connected before the match starts.',
         );
       }
       return _startOpenMatch(
@@ -99,7 +110,7 @@ final class MatchLifecycleService {
       );
     });
     outcome.notifications.deliver(_broadcaster);
-    return outcome.value;
+    return outcome.value.match;
   }
 
   Future<WireMatch> resignMatch({
@@ -138,6 +149,14 @@ final class MatchLifecycleService {
         AbandonedMatchLifecycleState() => state,
       };
       await txStore.saveState(updated);
+      if (_matchLifecycleStateAdapter.lifecycleOf(updated).isTerminal) {
+        await txStore.deletePresenceLeases(matchId);
+      } else {
+        await txStore.deletePresenceLease(
+          matchId: matchId,
+          userIdentifier: userIdentifier,
+        );
+      }
       return MatchMutationOutcome(
         updated.match,
         notifications: MatchNotificationPlan.broadcastState(updated),
@@ -164,6 +183,14 @@ final class MatchLifecycleService {
         userIdentifier: userIdentifier,
       );
       await txStore.saveState(updated);
+      if (_matchLifecycleStateAdapter.lifecycleOf(updated).isTerminal) {
+        await txStore.deletePresenceLeases(matchId);
+      } else {
+        await txStore.deletePresenceLease(
+          matchId: matchId,
+          userIdentifier: userIdentifier,
+        );
+      }
       if (updated.match.quickplay &&
           _matchLifecycleStateAdapter.lifecycleOf(updated).isOpen) {
         final advanced = await advanceQuickplayLobby(
@@ -181,52 +208,9 @@ final class MatchLifecycleService {
     outcome.notifications.deliver(_broadcaster);
   }
 
-  Future<StoredMatchState> setParticipantConnectionState({
-    required MultiplayerMatchStore store,
-    required String matchId,
-    required String userIdentifier,
-    required WirePlayerConnectionState connectionState,
-  }) async {
-    final outcome = await store.transaction((txStore) async {
-      final state = await _stateAccess.requireMatch(
-        txStore,
-        matchId,
-        lock: true,
-      );
-      final lifecycle = _matchLifecycleStateAdapter.lifecycleOf(state);
-      if (!lifecycle.acceptsConnectionMutation) {
-        return MatchMutationOutcome(state);
-      }
-      final playerIndex = state.match.players.indexWhere(
-        (player) => player.userId == userIdentifier,
-      );
-      if (playerIndex == -1) {
-        throw multiplayerException(
-          'not_match_player',
-          'User is not a participant in this match.',
-        );
-      }
-      final player = state.match.players[playerIndex];
-      if (player.connectionState == connectionState) {
-        return MatchMutationOutcome(state);
-      }
-
-      final players = [...state.match.players];
-      players[playerIndex] = player.copyWith(connectionState: connectionState);
-      var updated = state.copyWith(
-        match: state.match.copyWith(players: players),
-      );
-      if (lifecycle.isRunning) {
-        updated = _matchActivityTracker.record(updated, _nowUtc());
-      }
-      await txStore.saveState(updated);
-      return MatchMutationOutcome(
-        updated,
-        notifications: MatchNotificationPlan.broadcastState(updated),
-      );
-    });
-    outcome.notifications.deliver(_broadcaster);
-    return outcome.value;
+  bool _canStartLobby(StoredMatchState state, {required DateTime nowUtc}) {
+    return _rosterPolicy.canStart(state.match) &&
+        _presencePolicy.allHumanMembersLiveConnected(state, nowUtc: nowUtc);
   }
 
   StoredMatchState _runningStateAfterParticipantLeft(
@@ -292,7 +276,7 @@ final class MatchLifecycleService {
     );
   }
 
-  Future<MatchMutationOutcome<WireMatch>> _startOpenMatch({
+  Future<MatchMutationOutcome<StoredMatchState>> _startOpenMatch({
     required MultiplayerMatchStore store,
     required StoredMatchState state,
     InitialMultiplayerSnapshotFactory snapshotFactory =
@@ -342,7 +326,7 @@ final class MatchLifecycleService {
     );
     await store.saveState(updated);
     return MatchMutationOutcome(
-      updated.match,
+      updated,
       notifications: MatchNotificationPlan.broadcastState(updated),
     );
   }

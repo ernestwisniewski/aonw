@@ -2,21 +2,22 @@ part of 'lobby_screen.dart';
 
 class _LobbyPlayerList extends StatelessWidget {
   const _LobbyPlayerList({
-    required this.players,
+    required this.match,
     required this.currentUserId,
     required this.minPlayers,
     required this.maxPlayers,
     super.key,
   });
 
-  final List<WirePlayer> players;
+  final WireMatch? match;
   final String? currentUserId;
   final int minPlayers;
   final int maxPlayers;
 
   @override
   Widget build(BuildContext context) {
-    final humans = players
+    final match = this.match;
+    final humans = (match?.players ?? const <WirePlayer>[])
         .where((player) => player.kind == WirePlayerKind.human)
         .toList(growable: false);
     final totalSlots = maxPlayers < humans.length ? humans.length : maxPlayers;
@@ -28,7 +29,10 @@ class _LobbyPlayerList extends StatelessWidget {
           _LobbyPlayerTile(
             player: humans[index],
             currentUserId: currentUserId,
-            host: index == 0,
+            host:
+                match != null &&
+                !match.quickplay &&
+                humans[index].userId == match.ownerUserId,
           ),
           if (index < totalSlots - 1) const SizedBox(height: 7),
         ],
@@ -126,9 +130,9 @@ class _LobbyPlayerTile extends StatelessWidget {
   }
 
   String _playerStatusLabel(AppLocalizations l10n, WirePlayer player) {
-    if (player.ready) return l10n.lobbyPlayerReady;
     return switch (player.connectionState) {
-      WirePlayerConnectionState.connected => l10n.lobbyPlayerConnected,
+      WirePlayerConnectionState.connected =>
+        player.ready ? l10n.lobbyPlayerReady : l10n.lobbyPlayerConnected,
       WirePlayerConnectionState.connecting => l10n.lobbyPlayerConnecting,
       WirePlayerConnectionState.reconnecting => l10n.lobbyPlayerReconnecting,
       WirePlayerConnectionState.offline => l10n.lobbyPlayerOffline,

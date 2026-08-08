@@ -10,17 +10,23 @@ final class MatchQueryService {
   const MatchQueryService({
     required MatchStateAccess stateAccess,
     required PlayerMatchViewProjector viewProjector,
+    required DateTime Function() nowUtc,
   }) : _stateAccess = stateAccess,
-       _viewProjector = viewProjector;
+       _viewProjector = viewProjector,
+       _nowUtc = nowUtc;
 
   final MatchStateAccess _stateAccess;
   final PlayerMatchViewProjector _viewProjector;
+  final DateTime Function() _nowUtc;
 
   Future<List<ProjectedWireMatch>> listMatches({
     required MultiplayerMatchStore store,
     required String userIdentifier,
   }) async {
-    final matches = await store.listVisibleMatches(userIdentifier);
+    final matches = await store.listVisibleMatches(
+      userIdentifier,
+      nowUtc: _nowUtc(),
+    );
     return _projectPlayerView(
       store: store,
       matchId: 'match-list',

@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
+import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_outline_painter.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
@@ -16,31 +17,38 @@ import 'package:flutter/material.dart';
 /// this layer owns its lifetime, reduced-motion behavior, and map rendering.
 final class ActionTargetHexFocusLayer extends PositionComponent
     with LayerAttachment {
-  ActionTargetHexFocusLayer({double hexRadius = MapConfig.defaultHexRadius})
-    : _hexRadius = hexRadius,
-      _geometry = HexTileGeometryLayout.build(
-        hexRadius: hexRadius,
-        liftOffset: 0,
-        tileHeight: 0,
-        neighborHeights: const [0, 0, 0],
-      ),
-      _outlinePainter = HexOutlinePainter(HudPalette.actionFocus),
-      super(
-        size: Vector2(
-          HexTileMetrics.width(hexRadius),
-          HexTileMetrics.height(hexRadius),
-        ),
-        anchor: Anchor.center,
-        priority: MapPriority.selectionOverlay + 1,
-      );
+  ActionTargetHexFocusLayer({
+    double hexRadius = MapConfig.defaultHexRadius,
+    Vector2? Function(String unitId)? unitPositionFor,
+  }) : _hexRadius = hexRadius,
+       _unitPositionFor = unitPositionFor ?? _missingUnitPosition,
+       _geometry = HexTileGeometryLayout.build(
+         hexRadius: hexRadius,
+         liftOffset: 0,
+         tileHeight: 0,
+         neighborHeights: const [0, 0, 0],
+       ),
+       _outlinePainter = HexOutlinePainter(HudPalette.goldLight),
+       super(
+         size: Vector2(
+           HexTileMetrics.width(hexRadius),
+           HexTileMetrics.height(hexRadius),
+         ),
+         anchor: Anchor.center,
+         priority: MapPriority.selectionOverlay + 1,
+       );
 
   static const double _blinkPeriod = 0.5;
   static const double _visibleFraction = 0.64;
 
   final double _hexRadius;
+  final Vector2? Function(String unitId) _unitPositionFor;
   final HexTileGeometrySnapshot _geometry;
   final HexOutlinePainter _outlinePainter;
 
+  String? _unitId;
+  Vector2? _unitWorldPositionOrigin;
+  late Vector2 _hexPositionOrigin;
   int? _col;
   int? _row;
   double _elapsed = 0;
@@ -54,13 +62,16 @@ final class ActionTargetHexFocusLayer extends PositionComponent
     required bool reduceMotion,
   }) {
     ensureAttachedTo(parent);
+    _unitId = effect.unitId;
     _col = effect.col;
     _row = effect.row;
-    position = HexGeometry.tilePosition(
+    _hexPositionOrigin = HexGeometry.tilePosition(
       col: effect.col,
       row: effect.row,
       hexRadius: _hexRadius,
     );
+    _unitWorldPositionOrigin = _trackedUnitWorldPosition();
+    position = _hexPositionOrigin.clone();
     _durationSeconds =
         effect.duration.inMicroseconds / Duration.microsecondsPerSecond;
     _elapsed = 0;
@@ -72,6 +83,7 @@ final class ActionTargetHexFocusLayer extends PositionComponent
   void update(double dt) {
     super.update(dt);
     if (!_active || dt <= 0) return;
+    _syncTrackedUnitPosition();
     if (_elapsed + dt + 1e-9 >= _durationSeconds) {
       _elapsed = _durationSeconds;
       _active = false;
@@ -101,10 +113,32 @@ final class ActionTargetHexFocusLayer extends PositionComponent
     return phase < _visibleFraction;
   }
 
+  void _syncTrackedUnitPosition() {
+    final current = _trackedUnitWorldPosition();
+    if (current == null) return;
+    final origin = _unitWorldPositionOrigin;
+    if (origin == null) {
+      _unitWorldPositionOrigin = current.clone();
+      return;
+    }
+    position = Vector2(
+      _hexPositionOrigin.x + current.x - origin.x,
+      _hexPositionOrigin.y + (current.y - origin.y) / HexGrid.perspectiveY,
+    );
+  }
+
+  Vector2? _trackedUnitWorldPosition() {
+    final unitId = _unitId;
+    return unitId == null ? null : _unitPositionFor(unitId);
+  }
+
+  static Vector2? _missingUnitPosition(String _) => null;
+
   bool get activeForTesting => _active;
   bool get visibleForTesting => _visible;
   int? get colForTesting => _col;
   int? get rowForTesting => _row;
+  String? get unitIdForTesting => _unitId;
   Color get colorForTesting => _outlinePainter.color;
   Rect get outlineBoundsForTesting => _geometry.topPath.getBounds();
   double get dashLengthForTesting => HexOutlinePainter.dashLength;

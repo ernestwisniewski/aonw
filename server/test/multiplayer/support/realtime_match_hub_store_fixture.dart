@@ -41,10 +41,22 @@ Future<_RunningMatchFixture> _startRunningMatch(
       private: false,
     ),
   );
+  await _connectTestParticipant(
+    hub: hub,
+    store: store,
+    userIdentifier: 'owner-user-$suffix',
+    matchId: openMatch.id,
+  );
   final joined = await hub.joinMatch(
     store: store,
     userIdentifier: 'guest-user-$suffix',
     matchId: openMatch.id,
+  );
+  await _connectTestParticipant(
+    hub: hub,
+    store: store,
+    userIdentifier: 'guest-user-$suffix',
+    matchId: joined.id,
   );
   final match = await hub.startMatch(
     store: store,
@@ -67,67 +79,138 @@ final class _RunningMatchFixture {
   final WireMatch match;
 }
 
-class _FindStateFailingMatchStore extends _MemoryMatchStore {
-  String? _failedMatchId;
-
-  void failFindStateFor(String matchId) {
-    _failedMatchId = matchId;
-  }
+abstract class _MemoryPresenceMatchStore implements MultiplayerMatchStore {
+  final Map<String, StoredMatchState> _states = {};
+  final Map<String, int> _presenceRowIds = {};
+  var _nextPresenceRowId = 1;
 
   @override
-  Future<StoredMatchState?> findState(
-    String matchId, {
-    bool lock = false,
+  Future<ExpiredPresenceLeasePage> listExpiredPresenceLeases({
+    required DateTime nowUtc,
+    ExpiredPresenceLeaseCursor? after,
   }) async {
-    if (_failedMatchId == matchId) {
-      _failedMatchId = null;
-      throw StateError('Injected findState failure for $matchId');
+    final cutoff = nowUtc.toUtc();
+    final candidates = <ExpiredPresenceLeaseCandidate>[];
+    for (final entry in _states.entries) {
+      for (final lease in entry.value.presenceLeases.values) {
+        if (!lease.isExpiredAt(cutoff)) continue;
+        final rowId = _presenceRowId(entry.key, lease.userIdentifier);
+        if (after != null) {
+          final expiresAtOrder = lease.expiresAt.compareTo(after.expiresAt);
+          if (expiresAtOrder < 0 ||
+              (expiresAtOrder == 0 && rowId <= after.rowId)) {
+            continue;
+          }
+        }
+        candidates.add(
+          ExpiredPresenceLeaseCandidate(
+            rowId: rowId,
+            matchId: entry.key,
+            lease: lease,
+          ),
+        );
+      }
     }
-    return super.findState(matchId, lock: lock);
-  }
-}
-
-class _CommitFailingMatchStore extends _MemoryMatchStore {
-  var _failNextCommit = false;
-
-  void failNextCommit() {
-    _failNextCommit = true;
+    candidates.sort((first, second) {
+      final expiresAtOrder = first.lease.expiresAt.compareTo(
+        second.lease.expiresAt,
+      );
+      if (expiresAtOrder != 0) return expiresAtOrder;
+      return first.rowId.compareTo(second.rowId);
+    });
+    final window = candidates
+        .take(multiplayerPresenceLeasePageSize + 1)
+        .toList();
+    final page = window.take(multiplayerPresenceLeasePageSize).toList();
+    final last = page.isEmpty ? null : page.last;
+    return ExpiredPresenceLeasePage(
+      candidates: page,
+      nextCursor:
+          window.length <= multiplayerPresenceLeasePageSize || last == null
+          ? null
+          : ExpiredPresenceLeaseCursor(
+              expiresAt: last.lease.expiresAt,
+              rowId: last.rowId,
+            ),
+    );
   }
 
   @override
-  Future<T> transaction<T>(
-    Future<T> Function(MultiplayerMatchStore store) action,
-  ) async {
-    final statesBefore = Map<String, StoredMatchState>.of(_states);
-    final eventsBefore = {
-      for (final entry in _events.entries) entry.key: [...entry.value],
-    };
-    final clientEventsBefore = Map<String, WireEvent>.of(
-      _eventsByClientMessageId,
+  Future<void> upsertPresenceLease({
+    required String matchId,
+    required StoredMatchPresenceLease lease,
+  }) async {
+    final state = _states[matchId];
+    if (state == null) throw StateError('Match not found: $matchId');
+    _presenceRowId(matchId, lease.userIdentifier);
+    _states[matchId] = state.copyWith(
+      presenceLeases: {...state.presenceLeases, lease.userIdentifier: lease},
     );
-    try {
-      final result = await action(this);
-      if (_failNextCommit) {
-        _failNextCommit = false;
-        throw StateError('Injected transaction commit failure');
-      }
-      return result;
-    } catch (_) {
-      _states
-        ..clear()
-        ..addAll(statesBefore);
-      _events
-        ..clear()
-        ..addAll(eventsBefore);
-      _eventsByClientMessageId
-        ..clear()
-        ..addAll(clientEventsBefore);
-      rethrow;
-    }
   }
+
+  @override
+  Future<bool> renewPresenceLease({
+    required String matchId,
+    required String userIdentifier,
+    required String connectionGeneration,
+    required DateTime expiresAt,
+    required DateTime updatedAt,
+  }) async {
+    final state = _states[matchId];
+    final lease = state?.presenceLeases[userIdentifier];
+    if (state == null ||
+        lease == null ||
+        lease.connectionGeneration != connectionGeneration) {
+      return false;
+    }
+    _states[matchId] = state.copyWith(
+      presenceLeases: {
+        ...state.presenceLeases,
+        userIdentifier: lease.copyWith(
+          expiresAt: expiresAt.toUtc(),
+          updatedAt: updatedAt.toUtc(),
+        ),
+      },
+    );
+    return true;
+  }
+
+  @override
+  Future<void> deletePresenceLease({
+    required String matchId,
+    required String userIdentifier,
+  }) async {
+    final state = _states[matchId];
+    if (state == null) throw StateError('Match not found: $matchId');
+    _states[matchId] = state.copyWith(
+      presenceLeases: {
+        for (final entry in state.presenceLeases.entries)
+          if (entry.key != userIdentifier) entry.key: entry.value,
+      },
+    );
+    _presenceRowIds.remove(_presenceKey(matchId, userIdentifier));
+  }
+
+  @override
+  Future<void> deletePresenceLeases(String matchId) async {
+    final state = _states[matchId];
+    if (state == null) throw StateError('Match not found: $matchId');
+    _states[matchId] = state.copyWith(presenceLeases: const {});
+    _presenceRowIds.removeWhere((key, _) => key.startsWith('$matchId\u0000'));
+  }
+
+  int _presenceRowId(String matchId, String userIdentifier) {
+    return _presenceRowIds.putIfAbsent(
+      _presenceKey(matchId, userIdentifier),
+      () => _nextPresenceRowId++,
+    );
+  }
+
+  String _presenceKey(String matchId, String userIdentifier) =>
+      '$matchId\u0000$userIdentifier';
 }
 
-class _MemoryMatchStore implements MultiplayerMatchStore {
+class _MemoryMatchStore extends _MemoryPresenceMatchStore {
   _MemoryMatchStore({
     this.operationalEvents = const NoopServerOperationalEventSink(),
   });
@@ -135,7 +218,6 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
   @override
   final ServerOperationalEventSink operationalEvents;
 
-  final Map<String, StoredMatchState> _states = {};
   final Map<String, List<WireEvent>> _events = {};
   final Map<String, WireEvent> _eventsByClientMessageId = {};
   final List<RunningMatchCursor?> runningCursors = [];
@@ -150,14 +232,14 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
 
   @override
   Future<StoredMatchState> createState(StoredMatchState state) async {
-    _states[state.match.id] = state;
+    _replaceState(state);
     _events[state.match.id] = [];
     return state;
   }
 
   @override
   Future<StoredMatchState> saveState(StoredMatchState state) async {
-    _states[state.match.id] = state;
+    _replaceState(state);
     return state;
   }
 
@@ -168,7 +250,7 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
     String? actorPlayerId,
     String? clientMessageId,
   }) async {
-    _states[state.match.id] = state;
+    _replaceState(state);
     _events.putIfAbsent(state.match.id, () => []).add(event);
     if (actorPlayerId != null && clientMessageId != null) {
       _eventsByClientMessageId[_clientMessageKey(
@@ -245,7 +327,10 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
   }
 
   @override
-  Future<List<WireMatch>> listVisibleMatches(String userIdentifier) async {
+  Future<List<WireMatch>> listVisibleMatches(
+    String userIdentifier, {
+    required DateTime nowUtc,
+  }) async {
     final participantMatches = [
       for (final state in _states.values)
         if (_isActiveMatch(state.match) &&
@@ -256,8 +341,7 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
     ]..sort(_compareTestMatchesNewestFirst);
     final publicLobbies = [
       for (final state in _states.values)
-        if (state.match.state == 'open' && state.match.inviteCode == null)
-          state.match,
+        if (_isDiscoverablePublicLobby(state, nowUtc: nowUtc)) state.match,
     ]..sort(_compareTestMatchesNewestFirst);
     final participantIds = {for (final match in participantMatches) match.id};
     final matchesById = <String, WireMatch>{};
@@ -321,5 +405,39 @@ class _MemoryMatchStore implements MultiplayerMatchStore {
         if (event.offset > afterOffset) event,
     ]..sort((first, second) => first.offset.compareTo(second.offset));
     return events.take(multiplayerEventPageSize).toList();
+  }
+
+  void _replaceState(StoredMatchState state) {
+    final matchId = state.match.id;
+    _presenceRowIds.removeWhere(
+      (key, _) =>
+          key.startsWith('$matchId\u0000') &&
+          !state.presenceLeases.containsKey(key.substring(matchId.length + 1)),
+    );
+    for (final userIdentifier in state.presenceLeases.keys) {
+      _presenceRowId(matchId, userIdentifier);
+    }
+    _states[matchId] = state;
+  }
+
+  bool _isDiscoverablePublicLobby(
+    StoredMatchState state, {
+    required DateTime nowUtc,
+  }) {
+    final match = state.match;
+    if (match.state != 'open' || match.inviteCode != null || match.quickplay) {
+      return false;
+    }
+    const rosterPolicy = LobbyRosterPolicy();
+    final owners = match.players.where(
+      (player) => player.userId == match.ownerUserId,
+    );
+    if (owners.length != 1 ||
+        !rosterPolicy.isConnectedHuman(owners.single) ||
+        rosterPolicy.humanMemberCount(match) >= match.maxPlayers) {
+      return false;
+    }
+    final ownerLease = state.presenceLeases[match.ownerUserId];
+    return ownerLease != null && !ownerLease.isExpiredAt(nowUtc);
   }
 }

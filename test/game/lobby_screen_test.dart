@@ -2,7 +2,9 @@ import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
+import 'package:aonw/game/application/ports/live_multiplayer_events.dart';
 import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
 import 'package:aonw/game/application/ports/network_session_store.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/presentation/providers.dart';
@@ -299,6 +301,153 @@ void main() {
     expect(client.quickplayRequest?.country, PlayerCountry.russia);
     expect(find.byKey(const Key('multiplayer.queuePanel')), findsOneWidget);
     expect(find.textContaining('Russia'), findsOneWidget);
+    expect(find.text('HOST'), findsNothing);
+  });
+
+  testWidgets('connection presence takes precedence over ready status', (
+    tester,
+  ) async {
+    final repository = _FakeGameRepository();
+    final client = _FakeNetworkSessionClient()
+      ..quickplayConnectionState = WirePlayerConnectionState.offline
+      ..quickplayReady = true;
+    final store = _FakeNetworkSessionStore(
+      const StoredNetworkSession(
+        userId: 'user_1',
+        refreshToken: 'refresh-token',
+        displayName: 'Alice',
+      ),
+    );
+    await _pumpLobby(
+      tester,
+      repository,
+      flow: NewGameFlow.multiplayer,
+      overrides: [
+        networkSessionClientProvider.overrideWithValue(client),
+        networkSessionStoreProvider.overrideWithValue(store),
+        liveMultiplayerEventsProvider.overrideWithValue(_NoopLiveEvents()),
+      ],
+    );
+
+    await tester.pumpAndSettle();
+    final quickplayAction = find.byKey(
+      const Key('multiplayer.quickplayAction'),
+    );
+    await tester.ensureVisible(quickplayAction);
+    await tester.pumpAndSettle();
+    await tester.tap(quickplayAction);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('offline'), findsOneWidget);
+    expect(find.textContaining('ready'), findsNothing);
+    expect(find.text('HOST'), findsNothing);
+  });
+
+  testWidgets('system back leaves quickplay through the lobby handler', (
+    tester,
+  ) async {
+    final repository = _FakeGameRepository();
+    final client = _FakeNetworkSessionClient();
+    final store = _FakeNetworkSessionStore(
+      const StoredNetworkSession(
+        userId: 'user_1',
+        refreshToken: 'refresh-token',
+        displayName: 'Alice',
+      ),
+    );
+    await _pumpLobby(
+      tester,
+      repository,
+      flow: NewGameFlow.multiplayer,
+      overrides: [
+        networkSessionClientProvider.overrideWithValue(client),
+        networkSessionStoreProvider.overrideWithValue(store),
+        liveMultiplayerEventsProvider.overrideWithValue(_NoopLiveEvents()),
+      ],
+    );
+
+    await tester.pumpAndSettle();
+    final quickplayAction = find.byKey(
+      const Key('multiplayer.quickplayAction'),
+    );
+    await tester.ensureVisible(quickplayAction);
+    await tester.pumpAndSettle();
+    await tester.tap(quickplayAction);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('multiplayer.queuePanel')), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(client.leftMatchIds, ['match_1']);
+    expect(find.byKey(const Key('multiplayer.queuePanel')), findsNothing);
+    expect(
+      find.byKey(const Key('multiplayer.quickplayAction')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('lobby live callbacks publish the shared transport status', (
+    tester,
+  ) async {
+    final repository = _FakeGameRepository();
+    final client = _FakeNetworkSessionClient();
+    final live = _NoopLiveEvents();
+    final store = _FakeNetworkSessionStore(
+      const StoredNetworkSession(
+        userId: 'user_1',
+        refreshToken: 'refresh-token',
+        displayName: 'Alice',
+      ),
+    );
+    await _pumpLobby(
+      tester,
+      repository,
+      flow: NewGameFlow.multiplayer,
+      overrides: [
+        networkSessionClientProvider.overrideWithValue(client),
+        networkSessionStoreProvider.overrideWithValue(store),
+        liveMultiplayerEventsProvider.overrideWithValue(live),
+      ],
+    );
+
+    await tester.pumpAndSettle();
+    final quickplayAction = find.byKey(
+      const Key('multiplayer.quickplayAction'),
+    );
+    await tester.ensureVisible(quickplayAction);
+    await tester.pumpAndSettle();
+    await tester.tap(quickplayAction);
+    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(LobbyScreen)),
+    );
+
+    expect(container.read(networkSessionProvider)?.matchId, 'match_1');
+    expect(
+      container.read(multiplayerConnectionStatusProvider)?.status,
+      NetworkConnectionStatus.connected,
+    );
+
+    live.emitReconnecting();
+    await tester.pumpAndSettle();
+    var status = container.read(multiplayerConnectionStatusProvider);
+    expect(status?.saveId, 'match_1');
+    expect(status?.status, NetworkConnectionStatus.reconnecting);
+    expect(status?.message, 'Live event stream reconnecting');
+    expect(container.read(networkSessionProvider)?.isConnected, isTrue);
+
+    live.emitDone();
+    await tester.pumpAndSettle();
+    status = container.read(multiplayerConnectionStatusProvider);
+    expect(status?.status, NetworkConnectionStatus.reconnecting);
+    expect(status?.message, 'Live event stream closed');
+
+    live.emitConnected();
+    await tester.pumpAndSettle();
+    status = container.read(multiplayerConnectionStatusProvider);
+    expect(status?.status, NetworkConnectionStatus.connected);
+    expect(status?.message, isNull);
   });
 
   testWidgets('browses and refreshes public multiplayer matches', (
@@ -443,6 +592,10 @@ class _FakeNetworkSessionClient extends NetworkSessionClient {
   QuickplayMatchRequest? quickplayRequest;
   List<WireMatch> publicMatches = const [];
   int listMatchesCalls = 0;
+  WirePlayerConnectionState quickplayConnectionState =
+      WirePlayerConnectionState.connected;
+  bool quickplayReady = false;
+  final leftMatchIds = <String>[];
 
   _FakeNetworkSessionClient()
     : super(serverpodHost: 'https://api.example.test');
@@ -476,7 +629,8 @@ class _FakeNetworkSessionClient extends NetworkSessionClient {
           colorValue: 0xFF2563EB,
           country: request.country ?? PlayerCountry.poland,
           kind: WirePlayerKind.human,
-          connectionState: WirePlayerConnectionState.connected,
+          connectionState: quickplayConnectionState,
+          ready: quickplayReady,
         ),
       ],
       maxPlayers: 4,
@@ -495,6 +649,65 @@ class _FakeNetworkSessionClient extends NetworkSessionClient {
   }) async {
     listMatchesCalls += 1;
     return publicMatches;
+  }
+
+  @override
+  Future<void> leaveMatch({
+    required AuthToken token,
+    required String matchId,
+  }) async {
+    leftMatchIds.add(matchId);
+  }
+}
+
+final class _NoopLiveEvents implements LiveMultiplayerEvents {
+  void Function()? _onConnected;
+  void Function()? _onReconnecting;
+  void Function()? _onDone;
+
+  @override
+  Future<LiveMultiplayerEventHandle> subscribe({
+    required String matchId,
+    required AuthToken token,
+    Future<AuthToken> Function()? tokenReader,
+    required int fromOffset,
+    int Function()? nextOffset,
+    required void Function(LiveServerEvent event) onEvent,
+    required void Function(CanonicalGameSnapshot snapshot) onSnapshotResync,
+    void Function(WireMatch match)? onMatch,
+    void Function()? onConnected,
+    void Function()? onReconnecting,
+    void Function(Object error, StackTrace stackTrace)? onError,
+    void Function()? onDone,
+  }) async {
+    _onConnected = onConnected;
+    _onReconnecting = onReconnecting;
+    _onDone = onDone;
+    onConnected?.call();
+    return const _NoopLiveEventHandle();
+  }
+
+  void emitConnected() => _onConnected?.call();
+
+  void emitReconnecting() => _onReconnecting?.call();
+
+  void emitDone() => _onDone?.call();
+}
+
+final class _NoopLiveEventHandle implements LiveMultiplayerEventHandle {
+  const _NoopLiveEventHandle();
+
+  @override
+  Future<void> close() async {}
+
+  @override
+  Future<WireCommandAck> sendCommand({
+    required int afterOffset,
+    required WireCommand wire,
+    required String clientMessageId,
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
+    throw UnsupportedError('Lobby stream does not send commands.');
   }
 }
 

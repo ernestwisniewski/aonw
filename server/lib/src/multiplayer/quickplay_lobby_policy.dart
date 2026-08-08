@@ -17,13 +17,9 @@ final class QuickplayLobbyDecision {
 }
 
 final class QuickplayLobbyPolicy {
-  const QuickplayLobbyPolicy({
-    this.countdown = const Duration(seconds: 30),
-    this.waitingForPlayersTimeout = const Duration(minutes: 1),
-  });
+  const QuickplayLobbyPolicy({this.countdown = const Duration(seconds: 30)});
 
   final Duration countdown;
-  final Duration waitingForPlayersTimeout;
 
   QuickplayLobbyDecision evaluate({
     required int humanPlayers,
@@ -49,20 +45,5 @@ final class QuickplayLobbyPolicy {
       return const QuickplayLobbyDecision.start();
     }
     return QuickplayLobbyDecision.waitForCountdown(existingDeadline);
-  }
-
-  bool isStaleWaitingForPlayers({
-    required int humanPlayers,
-    required int minPlayers,
-    required DateTime createdAt,
-    required DateTime nowUtc,
-    required DateTime? currentAutoStartAt,
-  }) {
-    if (humanPlayers >= minPlayers) return false;
-    if (currentAutoStartAt != null) return false;
-    return !createdAt
-        .toUtc()
-        .add(waitingForPlayersTimeout)
-        .isAfter(nowUtc.toUtc());
   }
 }

@@ -21,7 +21,19 @@ void _registerRealtimeMatchHubInitialSnapshotTests() {
         private: false,
       ),
     );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'owner-user',
+      matchId: match.id,
+    );
     await hub.joinMatch(
+      store: store,
+      userIdentifier: 'guest-user',
+      matchId: match.id,
+    );
+    await _connectTestParticipant(
+      hub: hub,
       store: store,
       userIdentifier: 'guest-user',
       matchId: match.id,

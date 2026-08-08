@@ -170,21 +170,76 @@ database is supposed to be authoritative.
 After deploying, test from two devices or two fresh app installs:
 
 1. Build with `--dart-define=AONW_API_BASE_URL=https://api.aonw.net`.
-2. Open multiplayer from the new-game flow.
-3. Create an account or sign in on both devices.
-4. Create a public match on device A.
-5. Refresh Public games on device B, verify that the match is listed, and join
+2. Confirm the client declares functional multiplayer revision 4 and the server
+   still exchanges wire-schema version 3 envelopes.
+3. Open multiplayer from the new-game flow.
+4. Create an account or sign in on both devices.
+5. Create a public match on device A.
+6. Refresh Public games on device B, verify that the match is listed, and join
    it without an invite code.
-6. Ready/start the match.
-7. Move a visible unit on one device and confirm the other device renders the
+7. Confirm both human members are `connected`, then ready/start the match. Start
+   must remain unavailable while any human roster member is connecting or
+   reconnecting.
+8. Move a visible unit on one device and confirm the other device renders the
    movement animation instead of jumping directly to the destination.
-8. Bring two civilizations into contact and confirm each player sees the
+9. Bring two civilizations into contact and confirm each player sees the
    first-contact popup once. Move out of visibility and back again; the popup
    must not return for the same civilization pair.
-9. End the turn and confirm the other device receives the live update without
-   restarting the app.
-10. Background one device or switch away from the browser tab, return, and
-   confirm the match state converges without manual refresh.
+10. End the turn and confirm the other device receives the live update without
+    restarting the app.
+11. Background one device or switch away from the browser tab, return, and
+    confirm the running match converges without removing that participant.
+
+## Open-Lobby Presence Checklist
+
+Run these cases against public and private hosted lobbies before release. Use
+server logs or a database inspection to distinguish a real heartbeat from a
+stale UI tile.
+
+1. Create or join a lobby and verify the member starts as `connecting`. Open the
+   authorized stream within the 20-second initial lease and verify the member
+   becomes `connected`.
+2. Keep the lobby open for at least 40 seconds. Verify 10-second heartbeats renew
+   the 30-second connected lease and do not continuously broadcast unchanged
+   lobby states.
+3. Disconnect a guest's last stream and reconnect within the 10-second grace
+   period. The member should move through `reconnecting`, keep the same seat and
+   country, and return to `connected`.
+4. Disconnect the guest again and do not reconnect before grace expires. The
+   guest must disappear from every roster, the seat must become joinable, and a
+   stale disconnect callback must not affect a later occupant.
+5. Disconnect the host and reconnect within grace. The hosted lobby must remain
+   open. Repeat without reconnecting: the match must become `abandoned`,
+   disappear from public discovery, reject new joins, and return every remaining
+   client to its previous lobby screen.
+6. Repeat host expiry in a private lobby. The guest returns to the private-join
+   form; the host returns home. A terminal update received twice must not cause
+   duplicate navigation or messages.
+7. Create or join a lobby but prevent its stream from opening. After the
+   20-second initial lease, verify the guest is removed or, for a hosted owner,
+   the lobby is abandoned without requiring a new list/join request.
+8. Sign out while in an open lobby. Verify best-effort leave is sent while the
+   token is valid, streams close, credentials are revoked and cleared, and the
+   other client observes the departure immediately. A failed leave must not
+   prevent sign-out; maintenance must still reconcile the lease.
+
+## Quickplay Presence Checklist
+
+1. Join with one client and keep it connected for longer than the old waiting
+   window. A live one-player queue must remain open while heartbeats renew its
+   lease; age alone must not abandon it.
+2. Join with a second client and confirm the 30-second countdown starts only
+   after both human members are connected.
+3. Disconnect one client's last stream. The countdown must be cancelled while
+   that member is reconnecting. Reconnect within grace and verify a new countdown
+   begins from the current active roster.
+4. Let the member expire. It must be removed, any technical ownership must be
+   transferred safely, and the remaining connected player may continue waiting.
+5. Let every quickplay member expire. The queue must become `abandoned` and must
+   not be returned by public discovery or selected by later matchmaking.
+6. Fill a queue while one roster member is not connected. Neither reaching
+   `maxPlayers` nor the countdown deadline may start the match until every human
+   member is connected.
 
 If the lobby works but live updates do not, check Caddy and server logs for
 Serverpod stream connection failures. Also verify Redis availability, because

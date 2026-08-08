@@ -79,7 +79,7 @@ final class LobbyLiveMatchCoordinator {
     required WireMatch match,
   }) async {
     await _closeCurrentHandle();
-    _streamMatchId = match.id;
+    if (!_isCurrent(match.id)) return;
     try {
       final handle = await subscribe(
         session: session,
@@ -120,6 +120,8 @@ final class LobbyLiveMatchCoordinator {
   }
 
   bool _isCurrent(String matchId) {
-    return canContinue() && activeMatch()?.id == matchId;
+    return canContinue() &&
+        _streamMatchId == matchId &&
+        activeMatch()?.id == matchId;
   }
 }

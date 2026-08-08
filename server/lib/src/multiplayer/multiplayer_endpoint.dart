@@ -4,6 +4,7 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
 import 'package:aonw_server/src/multiplayer/invite_code_generator.dart';
+import 'package:aonw_server/src/multiplayer/lobby_presence_policy.dart';
 import 'package:aonw_server/src/multiplayer/match_activity_tracker.dart';
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
 import 'package:aonw_server/src/multiplayer/match_command_service.dart';
@@ -219,17 +220,23 @@ class RealtimeMatchHub {
     InviteCodeGenerator? inviteCodeGenerator,
     PlayerMatchViewProjector viewProjector = const PlayerMatchViewProjector(),
     Duration matchInactivityTimeout = defaultMultiplayerMatchInactivityTimeout,
+    LobbyPresencePolicy presencePolicy = const LobbyPresencePolicy(),
+    PresenceGenerationGenerator presenceGenerationGenerator =
+        const UuidPresenceGenerationGenerator(),
   }) : _connectionRegistry =
            connectionRegistry ??
            MatchConnectionRegistry(viewProjector: viewProjector),
        _nowUtc = nowUtc ?? (() => DateTime.now().toUtc()),
        _stateAccess = const MatchStateAccess(),
+       _presencePolicy = presencePolicy,
        _viewProjector = connectionRegistry?.viewProjector ?? viewProjector {
     _broadcaster = MatchBroadcaster(_connectionRegistry);
     _lifecycle = MatchLifecycleService(
       stateAccess: _stateAccess,
       broadcaster: _broadcaster,
       quickplayLobbyPolicy: quickplayLobbyPolicy,
+      presencePolicy: _presencePolicy,
+      presenceGenerationGenerator: presenceGenerationGenerator,
       nowUtc: _nowUtc,
     );
     _matchmaking = MatchmakingService(
@@ -237,12 +244,15 @@ class RealtimeMatchHub {
       stateAccess: _stateAccess,
       broadcaster: _broadcaster,
       lifecycle: _lifecycle,
+      presencePolicy: _presencePolicy,
+      presenceGenerationGenerator: presenceGenerationGenerator,
       nowUtc: _nowUtc,
       inviteCodeGenerator: inviteCodeGenerator,
     );
     _queries = MatchQueryService(
       stateAccess: _stateAccess,
       viewProjector: _viewProjector,
+      nowUtc: _nowUtc,
     );
     _commands = MatchCommandService(
       commandReducer: commandReducer ?? ServerCommandReducer(),
@@ -256,6 +266,7 @@ class RealtimeMatchHub {
   final MatchConnectionRegistry _connectionRegistry;
   final DateTime Function() _nowUtc;
   final MatchStateAccess _stateAccess;
+  final LobbyPresencePolicy _presencePolicy;
   final PlayerMatchViewProjector _viewProjector;
   final MultiplayerInputValidator _inputValidator =
       const MultiplayerInputValidator();

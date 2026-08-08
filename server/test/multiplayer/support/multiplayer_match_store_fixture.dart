@@ -70,8 +70,10 @@ GameMatch matchStoreRow({
   DateTime? createdAt,
   List<GamePlayer>? players,
   List<GameSnapshot>? snapshots,
+  List<GameMatchPresenceLease>? presenceLeases,
   int maxPlayers = 4,
   String? inviteCode,
+  bool quickplay = true,
 }) => GameMatch(
   id: id,
   publicId: publicId,
@@ -83,11 +85,29 @@ GameMatch matchStoreRow({
   maxPlayers: maxPlayers,
   minPlayers: 2,
   private: inviteCode != null,
-  quickplay: true,
+  quickplay: quickplay,
   createdAt: createdAt ?? matchStoreFixtureCreatedAt,
   inviteCode: inviteCode,
   players: players,
   snapshots: snapshots,
+  presenceLeases: presenceLeases,
+);
+
+GameMatchPresenceLease matchStorePresenceLeaseRow({
+  int id = 31,
+  int matchId = 7,
+  String userIdentifier = 'user-1',
+  String connectionGeneration = 'generation-1',
+  DateTime? expiresAt,
+  DateTime? updatedAt,
+}) => GameMatchPresenceLease(
+  id: id,
+  matchId: matchId,
+  userIdentifier: userIdentifier,
+  connectionGeneration: connectionGeneration,
+  expiresAt:
+      expiresAt ?? matchStoreFixtureCreatedAt.add(const Duration(hours: 1)),
+  updatedAt: updatedAt ?? matchStoreFixtureCreatedAt,
 );
 
 WireSnapshot matchStoreSnapshot({int offset = 4, String matchId = 'match-1'}) =>

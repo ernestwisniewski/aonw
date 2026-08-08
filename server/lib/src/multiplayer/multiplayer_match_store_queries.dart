@@ -11,7 +11,10 @@ final class MultiplayerMatchQueryStore {
 
   final ServerpodMultiplayerMatchStore _store;
 
-  Future<List<WireMatch>> listVisibleMatches(String userIdentifier) async {
+  Future<List<WireMatch>> listVisibleMatches(
+    String userIdentifier, {
+    required DateTime nowUtc,
+  }) async {
     final participantRows = await GameMatch.db.find(
       _store.sessionForCapabilities,
       where: (table) =>
@@ -31,22 +34,41 @@ final class MultiplayerMatchQueryStore {
       where: (table) =>
           table.state.equals('open') &
           table.private.equals(false) &
+          table.quickplay.equals(false) &
           table.inviteCode.equals(null),
       orderByList: _newestMatchOrder,
       limit: multiplayerVisiblePublicLobbyLimit,
       transaction: _store.transactionForCapabilities,
       include: GameMatch.include(
         players: GamePlayer.includeList(orderBy: (table) => table.seatOrder),
+        presenceLeases: GameMatchPresenceLease.includeList(),
       ),
     );
 
     final participantIds = {for (final row in participantRows) row.publicId};
     final matchesById = <String, WireMatch>{};
-    for (final row in [...participantRows, ...publicRows]) {
+    for (final row in participantRows) {
       matchesById.putIfAbsent(
         row.publicId,
         () => wireMatchFromRow(row, row.players!),
       );
+    }
+    const rosterPolicy = LobbyRosterPolicy();
+    for (final row in publicRows) {
+      final match = wireMatchFromRow(row, row.players!);
+      final leasesByUser = {
+        for (final lease
+            in row.presenceLeases ?? const <GameMatchPresenceLease>[])
+          lease.userIdentifier: lease,
+      };
+      if (_isDiscoverablePublicLobby(
+        match,
+        leasesByUser: leasesByUser,
+        nowUtc: nowUtc,
+        rosterPolicy: rosterPolicy,
+      )) {
+        matchesById.putIfAbsent(row.publicId, () => match);
+      }
     }
     return matchesById.values.toList()..sort(
       (first, second) =>
@@ -170,6 +192,36 @@ List<Order> _newestMatchOrder(GameMatchTable table) => [
   Order(column: table.createdAt, orderDescending: true),
   Order(column: table.publicId, orderDescending: true),
 ];
+
+bool _isDiscoverablePublicLobby(
+  WireMatch match, {
+  required Map<String, GameMatchPresenceLease> leasesByUser,
+  required DateTime nowUtc,
+  required LobbyRosterPolicy rosterPolicy,
+}) {
+  if (rosterPolicy.humanMemberCount(match) >= match.maxPlayers) return false;
+  final owners = match.players.where(
+    (player) => player.userId == match.ownerUserId,
+  );
+  if (owners.length != 1 || !rosterPolicy.isConnectedHuman(owners.single)) {
+    return false;
+  }
+  return _allHumanLeasesLive(match, leasesByUser: leasesByUser, nowUtc: nowUtc);
+}
+
+bool _allHumanLeasesLive(
+  WireMatch match, {
+  required Map<String, GameMatchPresenceLease> leasesByUser,
+  required DateTime nowUtc,
+}) {
+  final deadline = nowUtc.toUtc();
+  return match.players
+      .where((player) => player.kind == WirePlayerKind.human)
+      .every(
+        (player) =>
+            leasesByUser[player.userId]?.expiresAt.isAfter(deadline) ?? false,
+      );
+}
 
 int _compareVisibleMatches(
   WireMatch first,

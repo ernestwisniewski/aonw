@@ -24,12 +24,30 @@ void _registerRealtimeMatchHubResignationScenarios() {
           private: false,
         ),
       );
+      await _connectTestParticipant(
+        hub: hub,
+        store: store,
+        userIdentifier: 'owner-user',
+        matchId: match.id,
+      );
       await hub.joinMatch(
         store: store,
         userIdentifier: 'guest-one',
         matchId: match.id,
       );
+      await _connectTestParticipant(
+        hub: hub,
+        store: store,
+        userIdentifier: 'guest-one',
+        matchId: match.id,
+      );
       await hub.joinMatch(
+        store: store,
+        userIdentifier: 'guest-two',
+        matchId: match.id,
+      );
+      await _connectTestParticipant(
+        hub: hub,
         store: store,
         userIdentifier: 'guest-two',
         matchId: match.id,
@@ -242,6 +260,12 @@ void _registerRealtimeMatchHubResignationScenarios() {
         minPlayers: 2,
         private: false,
       ),
+    );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'owner-user',
+      matchId: open.id,
     );
     await hub.joinMatch(
       store: store,

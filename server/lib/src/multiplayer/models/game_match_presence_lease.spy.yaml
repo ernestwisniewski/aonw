@@ -1,0 +1,15 @@
+class: GameMatchPresenceLease
+serverOnly: true
+table: aonw_match_presence_lease
+fields:
+  match: GameMatch?, relation(name=match_presence_leases, onDelete=Cascade)
+  userIdentifier: String
+  connectionGeneration: String
+  expiresAt: DateTime
+  updatedAt: DateTime
+indexes:
+  aonw_match_presence_user_idx:
+    fields: matchId, userIdentifier
+    unique: true
+  aonw_match_presence_expiry_idx:
+    fields: expiresAt

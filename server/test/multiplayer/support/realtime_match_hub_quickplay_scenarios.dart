@@ -17,13 +17,19 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
         countryId: PlayerCountry.japan.name,
       ),
     );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'owner-user',
+      matchId: waiting.id,
+    );
     expect(waiting.players.single.country, PlayerCountry.japan);
     expect(waiting.maxPlayers, 4);
     expect(waiting.minPlayers, 2);
     expect(waiting.quickplay, isTrue);
     expect(waiting.autoStartAt, isNull);
 
-    final joined = await hub.quickplay(
+    final joinedReservation = await hub.quickplay(
       store: store,
       userIdentifier: 'guest-user',
       request: CreateMatchRequest(
@@ -35,6 +41,13 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
         countryId: PlayerCountry.france.name,
       ),
     );
+    final guestConnection = await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'guest-user',
+      matchId: joinedReservation.id,
+    );
+    final joined = guestConnection.initialMessage.match!;
 
     expect(joined.maxPlayers, 4);
     expect(joined.minPlayers, 2);
@@ -69,6 +82,12 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
         private: false,
       ),
     );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'verdantia-owner',
+      matchId: verdantia.id,
+    );
     final myranth = await hub.quickplay(
       store: store,
       userIdentifier: 'myranth-owner',
@@ -79,6 +98,12 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
         minPlayers: 2,
         private: false,
       ),
+    );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'myranth-owner',
+      matchId: myranth.id,
     );
 
     expect(myranth.id, verdantia.id);
@@ -109,13 +134,19 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
         countryId: PlayerCountry.japan.name,
       ),
     );
+    final ownerConnection = await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'owner-user',
+      matchId: waiting.id,
+    );
 
     expect(waiting.state, 'open');
     expect(waiting.maxPlayers, 4);
     expect(waiting.minPlayers, 2);
     expect(waiting.autoStartAt, isNull);
 
-    final countingDown = await hub.quickplay(
+    final guestReservation = await hub.quickplay(
       store: store,
       userIdentifier: 'guest-user',
       request: CreateMatchRequest(
@@ -127,10 +158,39 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
         countryId: PlayerCountry.france.name,
       ),
     );
+    final guestConnection = await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'guest-user',
+      matchId: guestReservation.id,
+    );
+    final countingDown = guestConnection.initialMessage.match!;
 
     expect(countingDown.state, 'open');
     expect(countingDown.autoStartAt, DateTime.utc(2026, 6, 12, 9, 0, 30));
 
+    now = DateTime.utc(2026, 6, 12, 9, 0, 29);
+    Future<void> renewPresence(
+      _TestMatchConnection connection,
+      String clientMessageId,
+    ) async {
+      final response = connection.stream.firstWhere(
+        (message) => message.snapshot != null,
+      );
+      connection.input.add(
+        MultiplayerClientMessage(
+          clientMessageId: clientMessageId,
+          lastSeenOffset: 0,
+          requestSnapshot: true,
+        ),
+      );
+      await response.timeout(const Duration(seconds: 1));
+    }
+
+    await Future.wait([
+      renewPresence(ownerConnection, 'owner-countdown-heartbeat'),
+      renewPresence(guestConnection, 'guest-countdown-heartbeat'),
+    ]);
     now = DateTime.utc(2026, 6, 12, 9, 0, 31);
     final started = await hub.loadMatch(
       store: store,
@@ -171,9 +231,15 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
         countryId: PlayerCountry.poland.name,
       ),
     );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'owner-user',
+      matchId: first.id,
+    );
     expect(first.players.single.country, PlayerCountry.poland);
 
-    final updated = await hub.quickplay(
+    final updatedReservation = await hub.quickplay(
       store: store,
       userIdentifier: 'owner-user',
       displayName: 'Owner Renamed',
@@ -186,6 +252,13 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
         countryId: PlayerCountry.china.name,
       ),
     );
+    final updatedConnection = await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'owner-user',
+      matchId: updatedReservation.id,
+    );
+    final updated = updatedConnection.initialMessage.match!;
 
     expect(updated.id, first.id);
     expect(updated.players, hasLength(1));
@@ -240,8 +313,8 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
     );
     final store = _MemoryMatchStore();
 
-    Future<WireMatch> quickplay(String user, PlayerCountry country) {
-      return hub.quickplay(
+    Future<WireMatch> quickplay(String user, PlayerCountry country) async {
+      final reservation = await hub.quickplay(
         store: store,
         userIdentifier: user,
         request: CreateMatchRequest(
@@ -256,6 +329,13 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
           mapCatalog: mapCatalog,
         ),
       );
+      final connection = await _connectTestParticipant(
+        hub: hub,
+        store: store,
+        userIdentifier: user,
+        matchId: reservation.id,
+      );
+      return connection.initialMessage.match!;
     }
 
     await quickplay('owner-user', PlayerCountry.japan);
@@ -347,7 +427,7 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
   });
 
   test('quickplay caps stale candidate retirement per request', () async {
-    final now = DateTime.utc(2026, 7, 10, 12);
+    var now = DateTime.utc(2026, 7, 1);
     final hub = RealtimeMatchHub(nowUtc: () => now);
     final store = _MemoryMatchStore();
     final staleIds = <String>[];
@@ -375,6 +455,7 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
       staleIds.add(created.id);
     }
 
+    now = DateTime.utc(2026, 7, 10, 12);
     final matched = await hub.quickplay(
       store: store,
       userIdentifier: 'fresh-after-retirement-budget',

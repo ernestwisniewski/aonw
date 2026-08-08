@@ -105,80 +105,22 @@ class _RuntimeSmoke {
       token: _token(overflowAuth),
     );
 
-    final quickplayWaiting = await _quickplay(
+    final quickplayOwner = await _createQuickplayOwner(
       ownerClient,
-      PlayerCountry.russia,
+      '${ownerAuth.authUserId}',
     );
-    final quickplayOwner = quickplayWaiting.players.firstWhere(
-      (player) => player.userId == '${ownerAuth.authUserId}',
-      orElse: () => throw StateError(
-        'Quickplay match has no player for owner ${ownerAuth.authUserId}.',
-      ),
+    final quickplayPair = await _connectSecondQuickplayPlayer(
+      guestClient: guestClient,
+      conflictClient: conflictClient,
+      matchId: quickplayOwner.waiting.id,
     );
-    _expect(
-      quickplayWaiting.quickplay &&
-          quickplayWaiting.mapName ==
-              MapPlayerCapacityRules.fullMultiplayerMapName &&
-          quickplayWaiting.maxPlayers == 4 &&
-          quickplayWaiting.minPlayers == 2 &&
-          quickplayWaiting.state == 'open' &&
-          quickplayWaiting.autoStartAt == null,
-      'Expected server-owned open quickplay lobby with 4/2 seats.',
+    final quickplayCompleted = await _completeQuickplayLobby(
+      thirdClient: thirdClient,
+      fourthClient: fourthClient,
+      matchId: quickplayOwner.waiting.id,
+      previousCountdown: quickplayPair.countdown.autoStartAt!,
     );
-    _expect(
-      quickplayOwner.country == PlayerCountry.russia,
-      'Expected quickplay owner country Russia, got '
-      '${quickplayOwner.country.name}.',
-    );
-
-    final quickplayRequeued = await _quickplay(
-      ownerClient,
-      PlayerCountry.china,
-    );
-    _expect(
-      quickplayRequeued.id == quickplayWaiting.id &&
-          quickplayRequeued.players.single.country == PlayerCountry.china,
-      'Expected owner quickplay requeue to update country to China.',
-    );
-
-    final quickplayCountdown = await _quickplay(
-      guestClient,
-      PlayerCountry.france,
-      mapName: config.mapName == 'myranth' ? 'terenos' : 'myranth',
-    );
-    _expect(
-      quickplayCountdown.id == quickplayWaiting.id &&
-          quickplayCountdown.state == 'open' &&
-          quickplayCountdown.autoStartAt != null &&
-          quickplayCountdown.players.length == 2,
-      'Expected second quickplay player to start countdown.',
-    );
-
-    await _expectQuickplayCountryUnavailable(
-      conflictClient,
-      PlayerCountry.france,
-    );
-
-    final quickplayThree = await _quickplay(thirdClient, PlayerCountry.germany);
-    _expect(
-      quickplayThree.id == quickplayWaiting.id &&
-          quickplayThree.state == 'open' &&
-          quickplayThree.players.length == 3 &&
-          quickplayThree.autoStartAt == quickplayCountdown.autoStartAt,
-      'Expected third quickplay player to keep existing countdown.',
-    );
-
-    final quickplayStarted = await _quickplay(
-      fourthClient,
-      PlayerCountry.japan,
-    );
-    _expect(
-      quickplayStarted.id == quickplayWaiting.id &&
-          quickplayStarted.state == 'running' &&
-          quickplayStarted.players.length == 4 &&
-          quickplayStarted.autoStartAt == null,
-      'Expected fourth quickplay player to start the match immediately.',
-    );
+    final quickplayStarted = quickplayCompleted.started;
 
     final quickplayOverflow = await _quickplay(
       overflowClient,
@@ -190,6 +132,10 @@ class _RuntimeSmoke {
           quickplayOverflow.players.single.country == PlayerCountry.italy,
       'Expected overflow quickplay player to create a fresh lobby.',
     );
+    await quickplayCompleted.fourthPresence.close();
+    await quickplayCompleted.thirdPresence.close();
+    await quickplayPair.guestPresence.close();
+    await quickplayOwner.ownerPresence.close();
     await ownerClient.multiplayer
         .leaveMatch(quickplayStarted.id)
         .timeout(config.requestTimeout);
@@ -208,6 +154,7 @@ class _RuntimeSmoke {
           ),
         )
         .timeout(config.requestTimeout);
+    final hostedOwnerPresence = await _openPresence(ownerClient, created.id);
     final publicMatches = await guestClient.multiplayer.listMatches().timeout(
       config.requestTimeout,
     );
@@ -218,6 +165,7 @@ class _RuntimeSmoke {
     await guestClient.multiplayer
         .joinMatch(created.id)
         .timeout(config.requestTimeout);
+    final hostedGuestPresence = await _openPresence(guestClient, created.id);
     final started = await ownerClient.multiplayer
         .startMatch(created.id)
         .timeout(config.requestTimeout);
@@ -312,6 +260,8 @@ class _RuntimeSmoke {
         'Expected owner initial snapshot at offset 0, got '
         '${ownerInitialSnapshot?.offset}.',
       );
+      await hostedGuestPresence.close();
+      await hostedOwnerPresence.close();
 
       final initialSnapshot = snapshotCodec.fromWire(ownerInitialSnapshot!);
       targetPlayer = started.players.firstWhere(
@@ -797,6 +747,120 @@ class _RuntimeSmoke {
         .timeout(config.requestTimeout);
   }
 
+  Future<({WireMatch waiting, _OpenStream ownerPresence})>
+  _createQuickplayOwner(sp.Client ownerClient, String ownerUserId) async {
+    final waiting = await _quickplay(ownerClient, PlayerCountry.russia);
+    final owner = waiting.players.firstWhere(
+      (player) => player.userId == ownerUserId,
+      orElse: () => throw StateError(
+        'Quickplay match has no player for owner $ownerUserId.',
+      ),
+    );
+    _expect(
+      waiting.quickplay &&
+          waiting.mapName == MapPlayerCapacityRules.fullMultiplayerMapName &&
+          waiting.maxPlayers == 4 &&
+          waiting.minPlayers == 2 &&
+          waiting.state == 'open' &&
+          waiting.autoStartAt == null,
+      'Expected server-owned open quickplay lobby with 4/2 seats.',
+    );
+    _expect(
+      owner.country == PlayerCountry.russia,
+      'Expected quickplay owner country Russia, got ${owner.country.name}.',
+    );
+    final ownerPresence = await _openPresence(ownerClient, waiting.id);
+    final requeued = await _quickplay(ownerClient, PlayerCountry.china);
+    _expect(
+      requeued.id == waiting.id &&
+          requeued.players.single.country == PlayerCountry.china,
+      'Expected owner quickplay requeue to update country to China.',
+    );
+    return (waiting: waiting, ownerPresence: ownerPresence);
+  }
+
+  Future<({WireMatch countdown, _OpenStream guestPresence})>
+  _connectSecondQuickplayPlayer({
+    required sp.Client guestClient,
+    required sp.Client conflictClient,
+    required String matchId,
+  }) async {
+    final joining = await _quickplay(
+      guestClient,
+      PlayerCountry.france,
+      mapName: config.mapName == 'myranth' ? 'terenos' : 'myranth',
+    );
+    _expect(
+      joining.autoStartAt == null,
+      'A connecting quickplay guest must not start the countdown.',
+    );
+    final guestPresence = await _openPresence(guestClient, matchId);
+    final countdown = await guestClient.multiplayer
+        .loadMatch(matchId)
+        .timeout(config.requestTimeout);
+    _expect(
+      countdown.id == matchId &&
+          countdown.state == 'open' &&
+          countdown.autoStartAt != null &&
+          countdown.players.length == 2,
+      'Expected second quickplay player to start countdown.',
+    );
+    await _expectQuickplayCountryUnavailable(
+      conflictClient,
+      PlayerCountry.france,
+    );
+    return (countdown: countdown, guestPresence: guestPresence);
+  }
+
+  Future<
+    ({WireMatch started, _OpenStream thirdPresence, _OpenStream fourthPresence})
+  >
+  _completeQuickplayLobby({
+    required sp.Client thirdClient,
+    required sp.Client fourthClient,
+    required String matchId,
+    required DateTime previousCountdown,
+  }) async {
+    final thirdJoining = await _quickplay(thirdClient, PlayerCountry.germany);
+    _expect(
+      thirdJoining.id == matchId &&
+          thirdJoining.state == 'open' &&
+          thirdJoining.players.length == 3 &&
+          thirdJoining.autoStartAt == null,
+      'Expected a connecting third quickplay player to reset the countdown.',
+    );
+    final thirdPresence = await _openPresence(thirdClient, matchId);
+    final threePlayers = await thirdClient.multiplayer
+        .loadMatch(matchId)
+        .timeout(config.requestTimeout);
+    _expect(
+      threePlayers.autoStartAt != null &&
+          threePlayers.autoStartAt!.isAfter(previousCountdown),
+      'Expected connected third quickplay player to restart the countdown.',
+    );
+    final fourthJoining = await _quickplay(fourthClient, PlayerCountry.japan);
+    _expect(
+      fourthJoining.state == 'open',
+      'A connecting fourth quickplay player must not start the match.',
+    );
+    final fourthPresence = await _openPresence(fourthClient, matchId);
+    final started = await fourthClient.multiplayer
+        .loadMatch(matchId)
+        .timeout(config.requestTimeout);
+    _expect(
+      started.id == matchId &&
+          started.state == 'running' &&
+          started.players.length == 4 &&
+          started.autoStartAt == null,
+      'Expected fourth quickplay player to start the match immediately.',
+    );
+    return (
+      started: started,
+      thirdPresence: thirdPresence,
+      fourthPresence: fourthPresence,
+    );
+  }
+
   Future<void> _expectQuickplayCountryUnavailable(
     sp.Client client,
     PlayerCountry country,
@@ -855,6 +919,14 @@ class _RuntimeSmoke {
     } finally {
       await subscription.cancel();
     }
+  }
+
+  Future<_OpenStream> _openPresence(sp.Client client, String matchId) {
+    final input = StreamController<sp.MultiplayerClientMessage>();
+    return _openUntilInitialSnapshot(
+      client.multiplayer.connect(matchId, 0, input.stream),
+      input,
+    );
   }
 
   Future<_OpenStream> _openUntilInitialSnapshot(

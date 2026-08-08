@@ -18,16 +18,95 @@ void main() {
         id: 8,
         publicId: 'public',
         players: [matchStorePlayerRow(matchId: 8)],
+        presenceLeases: [matchStorePresenceLeaseRow(id: 32, matchId: 8)],
+        quickplay: false,
       );
       database
         ..queueFind<GameMatch>([participant])
         ..queueFind<GameMatch>([public, participant]);
       final store = ServerpodMultiplayerMatchStore(FakeSession(database));
 
-      final matches = await store.listVisibleMatches('user-1');
+      final matches = await store.listVisibleMatches(
+        'user-1',
+        nowUtc: matchStoreFixtureCreatedAt,
+      );
 
       expect(matches.map((match) => match.id), ['participant', 'public']);
       expect(database.callsFor('find'), hasLength(2));
+    });
+
+    test('excludes public lobbies whose owner lease has expired', () async {
+      final database = FakeMultiplayerDatabase();
+      final live = matchStoreRow(
+        id: 8,
+        publicId: 'live',
+        players: [matchStorePlayerRow(matchId: 8)],
+        presenceLeases: [matchStorePresenceLeaseRow(id: 32, matchId: 8)],
+        quickplay: false,
+      );
+      final expired = matchStoreRow(
+        id: 9,
+        publicId: 'expired',
+        players: [matchStorePlayerRow(id: 12, matchId: 9)],
+        presenceLeases: [
+          matchStorePresenceLeaseRow(
+            id: 33,
+            matchId: 9,
+            expiresAt: matchStoreFixtureCreatedAt,
+          ),
+        ],
+        quickplay: false,
+      );
+      database
+        ..queueFind<GameMatch>([])
+        ..queueFind<GameMatch>([live, expired]);
+      final store = ServerpodMultiplayerMatchStore(FakeSession(database));
+
+      final matches = await store.listVisibleMatches(
+        'viewer',
+        nowUtc: matchStoreFixtureCreatedAt,
+      );
+
+      expect(matches.map((match) => match.id), ['live']);
+    });
+
+    test('hides a public lobby until an expired guest is swept', () async {
+      final database = FakeMultiplayerDatabase();
+      final lobby = matchStoreRow(
+        id: 8,
+        publicId: 'stale-guest',
+        players: [
+          matchStorePlayerRow(matchId: 8),
+          matchStorePlayerRow(
+            id: 12,
+            matchId: 8,
+            publicPlayerId: 'player-2',
+            userIdentifier: 'user-2',
+            seatOrder: 1,
+          ),
+        ],
+        presenceLeases: [
+          matchStorePresenceLeaseRow(id: 32, matchId: 8),
+          matchStorePresenceLeaseRow(
+            id: 33,
+            matchId: 8,
+            userIdentifier: 'user-2',
+            expiresAt: matchStoreFixtureCreatedAt,
+          ),
+        ],
+        quickplay: false,
+      );
+      database
+        ..queueFind<GameMatch>([])
+        ..queueFind<GameMatch>([lobby]);
+      final store = ServerpodMultiplayerMatchStore(FakeSession(database));
+
+      final matches = await store.listVisibleMatches(
+        'viewer',
+        nowUtc: matchStoreFixtureCreatedAt,
+      );
+
+      expect(matches, isEmpty);
     });
 
     test('selects the first quickplay candidate with a free seat', () async {

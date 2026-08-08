@@ -162,7 +162,7 @@ class _PublicLobbyMatchTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final playerCount = LobbyMatchStatusRules.humanPlayerCount(match);
+    final playerCount = LobbyMatchStatusRules.connectedHumanCount(match);
     final mapName = MapSelection(
       name: match.mapName,
       source: MapSource.asset,
@@ -237,9 +237,9 @@ class _PublicMatchPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final match = this.match;
-    final humanPlayerCount = LobbyMatchStatusRules.humanPlayerCount(match);
+    final connectedPlayers = LobbyMatchStatusRules.connectedHumanCount(match);
     final minPlayers = LobbyMatchStatusRules.requiredHumanPlayers(match);
-    final waitingForPlayers = match != null && humanPlayerCount < minPlayers;
+    final waitingForPlayers = match != null && connectedPlayers < minPlayers;
     final isHost = LobbyMatchStatusRules.isOwner(match, currentUserId);
     final statusText = match == null
         ? l10n.multiplayerQueueConnectingSubtitle
@@ -281,7 +281,7 @@ class _PublicMatchPanel extends StatelessWidget {
               Text(match.name, style: GameUiTheme.cardTitle),
               const SizedBox(height: 14),
               _MultiplayerReadinessSummary(
-                players: humanPlayerCount,
+                players: connectedPlayers,
                 minPlayers: minPlayers,
                 maxPlayers: match.maxPlayers,
                 waiting: waitingForPlayers,
@@ -294,7 +294,7 @@ class _PublicMatchPanel extends StatelessWidget {
               const SizedBox(height: 10),
               _LobbyPlayerList(
                 key: const Key('multiplayer.publicPlayersList'),
-                players: match.players,
+                match: match,
                 currentUserId: currentUserId,
                 minPlayers: minPlayers,
                 maxPlayers: match.maxPlayers,

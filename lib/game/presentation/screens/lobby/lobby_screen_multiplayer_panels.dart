@@ -173,9 +173,9 @@ class _MultiplayerQueuePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final match = this.match;
-    final players = LobbyMatchStatusRules.humanPlayerCount(
+    final players = LobbyMatchStatusRules.connectedHumanCount(
       match,
-      whenMissing: 1,
+      whenMissing: 0,
     );
     final maxPlayers = LobbyMatchStatusRules.maximumPlayers(match);
     final minPlayers = LobbyMatchStatusRules.requiredHumanPlayers(match);
@@ -272,7 +272,7 @@ class _MultiplayerQueuePanel extends StatelessWidget {
             const SizedBox(height: 12),
             _LobbyPlayerList(
               key: const Key('multiplayer.queuePlayersList'),
-              players: match?.players ?? const [],
+              match: match,
               currentUserId: currentUserId,
               minPlayers: minPlayers,
               maxPlayers: maxPlayers,

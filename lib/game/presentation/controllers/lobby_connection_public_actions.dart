@@ -26,16 +26,18 @@ extension LobbyConnectionPublicActions on LobbyConnectionController {
   Future<void> refreshPublicMatches() async {
     if (_busy || _mode != LobbyMultiplayerMode.publicBrowse) return;
     await _runNetworkAction(() async {
+      final generation = ++_publicRefreshGeneration;
       try {
         final matches = await _matchActionCoordinator().listPublicMatches();
-        if (!_canContinue() || _mode != LobbyMultiplayerMode.publicBrowse) {
+        if (!_isCurrentPublicRefresh(generation)) {
           return;
         }
         _setPublicMatches(matches, loaded: true);
-      } finally {
-        if (_canContinue() && _mode == LobbyMultiplayerMode.publicBrowse) {
-          _setPublicMatches(_publicMatches, loaded: true);
+      } catch (_) {
+        if (_isCurrentPublicRefresh(generation)) {
+          _setPublicMatches(const [], loaded: true);
         }
+        rethrow;
       }
     });
   }
@@ -43,13 +45,14 @@ extension LobbyConnectionPublicActions on LobbyConnectionController {
   Future<void> createPublicMatch({required String name}) async {
     if (_busy) return;
     _publicRefreshCoordinator.stop();
+    _publicRefreshGeneration += 1;
     var enteredLobby = false;
     await _runNetworkAction(() async {
       await _matchActionCoordinator().createPublic(
         name: name,
         config: _matchActionConfig(),
       );
-      if (!_canContinue()) return;
+      if (!_canContinue() || _activeMatch == null) return;
       _setMode(LobbyMultiplayerMode.publicMatch);
       _setPublicMatches(const [], loaded: false);
       enteredLobby = true;
@@ -81,13 +84,14 @@ extension LobbyConnectionPublicActions on LobbyConnectionController {
   Future<void> joinPublicMatch({required String matchId}) async {
     if (_busy) return;
     _publicRefreshCoordinator.stop();
+    _publicRefreshGeneration += 1;
     var enteredLobby = false;
     await _runNetworkAction(() async {
       await _matchActionCoordinator().joinPublic(
         matchId: matchId,
         config: _matchActionConfig(),
       );
-      if (!_canContinue()) return;
+      if (!_canContinue() || _activeMatch == null) return;
       _setMode(LobbyMultiplayerMode.publicMatch);
       _setPublicMatches(const [], loaded: false);
       enteredLobby = true;
@@ -120,17 +124,34 @@ extension LobbyConnectionPublicActions on LobbyConnectionController {
   }
 
   Future<void> _refreshPublicMatchesInBackground() async {
+    final generation = ++_publicRefreshGeneration;
     try {
       final matches = await _matchActionCoordinator().listPublicMatches();
-      if (!_canContinue() || _mode != LobbyMultiplayerMode.publicBrowse) return;
+      if (!_isCurrentPublicRefresh(generation)) return;
       _setPublicMatches(matches, loaded: true);
     } catch (_) {
-      // Keep the last successful discovery result during transient outages.
+      if (_isCurrentPublicRefresh(generation)) {
+        _setPublicMatches(const [], loaded: true);
+      }
     }
+  }
+
+  Future<void> _restorePublicBrowseAfterUnavailable() async {
+    await _refreshPublicMatchesInBackground();
+    if (_canContinue() && _mode == LobbyMultiplayerMode.publicBrowse) {
+      _publicRefreshCoordinator.start();
+    }
+  }
+
+  bool _isCurrentPublicRefresh(int generation) {
+    return _canContinue() &&
+        _mode == LobbyMultiplayerMode.publicBrowse &&
+        generation == _publicRefreshGeneration;
   }
 }
 
 void _stopLobbyUpdateCoordinators(LobbyConnectionController controller) {
   controller._autoStartCoordinator.cancel();
   _lobbyPublicRefreshCoordinators[controller]?.stop();
+  controller._publicRefreshGeneration += 1;
 }

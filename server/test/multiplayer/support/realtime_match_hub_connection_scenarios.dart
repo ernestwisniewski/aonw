@@ -23,10 +23,22 @@ void _registerRealtimeMatchHubConnectionScenarios() {
           private: false,
         ),
       );
+      final setupOwner = await _connectTestParticipant(
+        hub: hub,
+        store: store,
+        userIdentifier: 'owner-user',
+        matchId: openMatch.id,
+      );
       final joined = await hub.joinMatch(
         store: store,
         userIdentifier: 'guest-user',
         matchId: openMatch.id,
+      );
+      final setupGuest = await _connectTestParticipant(
+        hub: hub,
+        store: store,
+        userIdentifier: 'guest-user',
+        matchId: joined.id,
       );
       final match = await hub.startMatch(
         store: store,
@@ -36,6 +48,8 @@ void _registerRealtimeMatchHubConnectionScenarios() {
           mapCatalog: mapCatalog,
         ),
       );
+      await setupOwner.close();
+      await setupGuest.close();
       final owner = match.players.first;
       final guest = match.players.last;
 
@@ -197,13 +211,27 @@ void _registerRealtimeMatchHubConnectionScenarios() {
                 state: stored,
                 participant: victim,
               ),
-          updateConnectionState:
+          participantConnected:
               ({
                 required MultiplayerMatchStore store,
                 required String matchId,
                 required String userIdentifier,
-                required WirePlayerConnectionState connectionState,
+                required String connectionGeneration,
               }) async => stored,
+          participantDisconnected:
+              ({
+                required MultiplayerMatchStore store,
+                required String matchId,
+                required String userIdentifier,
+                required String connectionGeneration,
+              }) async {},
+          renewPresence:
+              ({
+                required MultiplayerMatchStore store,
+                required String matchId,
+                required String userIdentifier,
+                required String connectionGeneration,
+              }) async {},
           handleClientMessage:
               ({
                 required MultiplayerMatchStore store,
@@ -319,10 +347,22 @@ void _registerRealtimeMatchHubConnectionScenarios() {
         private: false,
       ),
     );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'owner-user',
+      matchId: openMatch.id,
+    );
     final joined = await hub.joinMatch(
       store: store,
       userIdentifier: 'guest-user',
       matchId: openMatch.id,
+    );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'guest-user',
+      matchId: joined.id,
     );
     final match = await hub.startMatch(
       store: store,

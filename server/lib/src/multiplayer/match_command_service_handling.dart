@@ -98,7 +98,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
       snapshot: nextSnapshot,
       now: now,
     );
-    await store.appendEvent(
+    await store._appendEventAndFinalizePresence(
       updated,
       event,
       actorPlayerId: player.id,

@@ -10,7 +10,7 @@ const int kProtocolVersion = 3;
 /// Every player-visible or server-side multiplayer contract change increments
 /// this value, including compatible additive changes that do not alter the
 /// serialized wire-envelope schema.
-const int kCurrentMultiplayerVersion = 3;
+const int kCurrentMultiplayerVersion = 4;
 
 /// Version represented by clients released before the compatibility
 /// declaration was added to the app-status handshake.
@@ -21,7 +21,7 @@ const int kLegacyUndeclaredMultiplayerVersion = 1;
 /// Remove a revision when a change is incompatible. Clients on a removed or
 /// future revision receive the translated update notice before entering
 /// multiplayer.
-const Set<int> kCompatibleMultiplayerVersions = {3};
+const Set<int> kCompatibleMultiplayerVersions = {4};
 
 enum MultiplayerVersionCompatibility {
   current,

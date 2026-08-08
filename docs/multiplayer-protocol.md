@@ -43,6 +43,7 @@ rollout steps.
 | List/create/join/start/leave match | `NetworkSessionClient` | `multiplayer` endpoint methods | Request/response operations for lobby actions. |
 | Snapshot/event reads | `NetworkGameRepository`, `NetworkEventLog` | `multiplayer` endpoint methods | Used for recovery and command/domain-event history, not exact authoritative path replay. |
 | Live match updates | `LiveEventSubscription` | `multiplayer.connect` bidirectional stream | Stream payloads carry authoritative offsets. |
+| Lobby presence | `LiveEventSubscription` | Active `multiplayer.connect` stream | An authenticated heartbeat is sent every 10 seconds by using the existing nullable-command client message; renewing only the durable lease does not create a game event or lobby broadcast. |
 | Player commands | `LiveWireCommandDispatcher` | Active `LiveEventSubscriptionHandle.sendCommand` | Commands are sent as `MultiplayerClientMessage.command`; ACKs return as `MultiplayerServerMessage.ack`. `NetworkCommandTransport` is a startup fallback before the live stream is ready. |
 
 ## Command And Stream Flow
@@ -76,6 +77,82 @@ The runtime keeps these synchronization invariants:
   authoritative and precedes any newer projected event markers;
 - two clients converge to the same state after backgrounding, browser tab
   suspension, app restart, or stream reconnect.
+
+## Lobby Membership And Presence
+
+Lobby membership and transport presence are separate contracts. A human in
+`WireMatch.players` owns a reserved lobby seat; the player's
+`connectionState` reports whether that member is currently eligible to
+participate in lobby decisions. Reserved seats determine capacity, while only
+connected humans are active. A hosted or quickplay match may start only when it
+has at least `minPlayers` human members and every human member in the roster is
+`connected`. A connecting, reconnecting, or offline member therefore blocks
+start and is never counted as an active player.
+
+Presence follows these states and default deadlines:
+
+| State | Meaning | Durable deadline |
+| --- | --- | --- |
+| `connecting` | Create or join succeeded, but no authorized live stream has opened yet | Initial-connect lease expires after 20 seconds |
+| `connected` | At least one authorized live stream is active | Client heartbeat every 10 seconds renews a 30-second lease |
+| `reconnecting` | The last known stream closed and the member may return without losing the seat | Reconnect grace expires after 10 seconds |
+| `offline` | No current transport presence remains in a running match | No lobby-start eligibility; running-match membership and recovery rights remain |
+
+Closing one of several streams owned by the same user does not change presence.
+Closing the last stream changes the visible state to `reconnecting` and starts
+the grace deadline. Presence renewal and disconnect handling are generation
+checked so a delayed callback from an older stream cannot shorten a lease
+renewed by a newer connection. Deadlines are persisted in PostgreSQL; the
+process-local subscriber registry is an optimization, not the durable presence
+source of truth.
+
+An expired lease is handled according to the authoritative lifecycle:
+
+- in an open hosted lobby, an expired guest is removed from the roster and the
+  freed seat becomes joinable;
+- in an open hosted lobby, expiry of the host abandons the match with the
+  `ownerLeft` lifecycle reason;
+- in open quickplay, the expired member is removed, the technical owner is
+  transferred when necessary, and countdown/start policy is evaluated again;
+  an empty queue is abandoned, while a connected one-player queue is not
+  abandoned merely because it is old;
+- in a running match, the member becomes `offline` but remains a participant and
+  can recover the match later.
+
+Explicit leave is immediate and does not wait for lease expiry. Public discovery
+returns only open, non-quickplay hosted lobbies whose host has active presence
+and which the caller may join. Quickplay selection, hosted start, public
+discovery, and client presentation use the same roster-policy meanings rather
+than independently interpreting raw `players.length`.
+
+Presence expiry is reconciled by durable multiplayer maintenance, independently
+of new matchmaking requests. Each invocation reads a bounded page, locks and
+rechecks the match, lease generation, deadline, and lifecycle, then performs an
+idempotent mutation. State is persisted before any broadcast. A backlog
+is continued by the next reconciled ten-second invocation instead of making one
+invocation unbounded.
+
+Abandonment is a soft delete. An abandoned lobby immediately disappears from
+discovery, rejects joins, and broadcasts its terminal state, but its database
+record is retained according to [Data Retention](data-retention.md). A lobby
+client receiving that terminal state, discovering that its user is no longer in
+the roster, or receiving a terminal membership error stops lobby timers and the
+stream, clears the active match, and returns to the appropriate previous lobby
+screen: a public-lobby client returns to the refreshed public browser, a private
+guest returns to the private-join form, and a private host or quickplay client
+returns home. The transition is idempotent. Running-match disconnect and
+recovery do not use this lobby-return path.
+
+Lobby reconnect treats `not_match_player`, `match_not_found`,
+`match_abandoned`, `match_not_open`, and `unsupported_match_protocol` as
+terminal membership failures. It stops retrying and enters the same idempotent
+return path. Authentication refresh and transient connection failures retain
+their existing session/retry handling.
+
+The revision-4 database migration retires every pre-existing `open` lobby as
+`abandoned` with `protocol_upgrade`. Those rows predate durable leases, so
+carrying them forward as live rooms would be unverifiable. Running matches are
+not retired by this migration.
 
 ## Authoritative Movement Evidence
 
@@ -202,11 +279,11 @@ Functional multiplayer compatibility is versioned independently:
 
 | Contract | Current | Compatible | Meaning |
 | --- | ---: | --- | --- |
-| Multiplayer revision | 3 | 3 | Revision 3 adds the worker-automation command and persisted `autoWorking` posture. Revisions 1 and 2 cannot decode every new canonical command/state variant. |
+| Multiplayer revision | 4 | 4 | Revision 4 adds durable lobby presence, heartbeat, lease expiry, active-roster start/discovery, and terminal lobby return. Revisions 1-3 do not implement that contract and are not compatible. |
 | Wire envelope schema | 3 | 3 | Incremented only for incompatible serialized envelope changes. |
 
 The main-menu app-status request sends the app build plus multiplayer revision
-3. A revision in the compatible set can continue. A removed, invalid, or
+4. A revision in the compatible set can continue. A removed, invalid, or
 future revision receives `soon`, which renders the localized
 `mainMenuUpdateSoonTitle` and `mainMenuUpdateSoonBody` notice. Older clients
 that do not yet send a revision are treated specifically as revision 1 during
@@ -214,9 +291,10 @@ this bridge window.
 
 Version 3 introduced recipient-scoped snapshots and redacted event history.
 The server intentionally rejects incompatible matches, including records whose
-player identifiers embed account identifiers. The client uses the
-`multiplayer-v3` snapshot-cache namespace so snapshots from an incompatible
-functional revision cannot be loaded as an offline fallback.
+player identifiers embed account identifiers. Revision 4 retains wire schema 3
+and the existing `multiplayer-v3` snapshot-cache namespace because the
+serialized snapshot shape is unchanged; the functional compatibility handshake,
+not the cache namespace, prevents revisions 1-3 from entering multiplayer.
 
 Use this path for every multiplayer change:
 

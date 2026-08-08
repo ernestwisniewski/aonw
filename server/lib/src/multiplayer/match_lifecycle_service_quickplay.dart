@@ -35,12 +35,9 @@ extension MatchLifecycleServiceQuickplay on MatchLifecycleService {
     if (!_isOpenQuickplayState(state)) {
       return const MatchMutationOutcome(false);
     }
-    final stale = _quickplayLobbyPolicy.isStaleWaitingForPlayers(
-      humanPlayers: _stateAccess.humanPlayerCount(match),
-      minPlayers: match.minPlayers,
-      createdAt: match.createdAt,
-      nowUtc: _nowUtc(),
-      currentAutoStartAt: match.autoStartAt,
+    final now = _nowUtc();
+    final stale = !state.presenceLeases.values.any(
+      (lease) => !lease.isExpiredAt(now),
     );
     if (!stale) return const MatchMutationOutcome(false);
     final abandoned = _stateAccess.abandonedState(
@@ -49,81 +46,144 @@ extension MatchLifecycleServiceQuickplay on MatchLifecycleService {
       endedAt: _nowUtc(),
     );
     await store.saveState(abandoned);
+    await store.deletePresenceLeases(match.id);
     return MatchMutationOutcome(
       true,
       notifications: MatchNotificationPlan.broadcastState(abandoned),
     );
   }
 
-  Future<MatchMutationOutcome<WireMatch>> advanceQuickplayLobby({
+  Future<MatchMutationOutcome<StoredMatchState>> advanceQuickplayLobby({
     required MultiplayerMatchStore store,
     required StoredMatchState state,
     InitialMultiplayerSnapshotFactory snapshotFactory =
         const InitialMultiplayerSnapshotFactory(),
     bool broadcastUnchanged = false,
   }) async {
-    final match = state.match;
     if (!_isOpenQuickplayState(state)) {
-      return MatchMutationOutcome(
-        match,
-        notifications: broadcastUnchanged
-            ? MatchNotificationPlan.broadcastState(state)
-            : const MatchNotificationPlan.empty(),
-      );
+      return _unchangedQuickplayOutcome(state, broadcast: broadcastUnchanged);
     }
 
-    final decision = _quickplayLobbyPolicy.evaluate(
-      humanPlayers: _stateAccess.humanPlayerCount(match),
+    final decision = _evaluateQuickplayLobby(state);
+    return switch (decision.action) {
+      QuickplayLobbyAction.waitForPlayers => _waitForQuickplayPlayers(
+        store: store,
+        state: state,
+        broadcastUnchanged: broadcastUnchanged,
+      ),
+      QuickplayLobbyAction.waitForCountdown => _waitForQuickplayCountdown(
+        store: store,
+        state: state,
+        decision: decision,
+        broadcastUnchanged: broadcastUnchanged,
+      ),
+      QuickplayLobbyAction.start => _startQuickplayLobby(
+        store: store,
+        state: state,
+        snapshotFactory: snapshotFactory,
+        broadcastUnchanged: broadcastUnchanged,
+      ),
+    };
+  }
+
+  QuickplayLobbyDecision _evaluateQuickplayLobby(StoredMatchState state) {
+    final match = state.match;
+    final memberCount = _rosterPolicy.humanMemberCount(match);
+    final liveConnectedCount = match.players.where((player) {
+      return player.kind == WirePlayerKind.human &&
+          _presencePolicy.isLiveConnectedParticipant(
+            state,
+            player,
+            nowUtc: _nowUtc(),
+          );
+    }).length;
+    return _quickplayLobbyPolicy.evaluate(
+      humanPlayers: liveConnectedCount == memberCount ? liveConnectedCount : 0,
       minPlayers: match.minPlayers,
       maxPlayers: match.maxPlayers,
       nowUtc: _nowUtc(),
       currentAutoStartAt: match.autoStartAt,
     );
+  }
 
-    switch (decision.action) {
-      case QuickplayLobbyAction.waitForPlayers:
-        if (match.autoStartAt == null) {
-          return MatchMutationOutcome(
-            match,
-            notifications: broadcastUnchanged
-                ? MatchNotificationPlan.broadcastState(state)
-                : const MatchNotificationPlan.empty(),
-          );
-        }
-        final updated = state.copyWith(
-          match: match.copyWith(autoStartAt: null),
-        );
-        await store.saveState(updated);
-        return MatchMutationOutcome(
-          updated.match,
-          notifications: MatchNotificationPlan.broadcastState(updated),
-        );
-      case QuickplayLobbyAction.waitForCountdown:
-        final autoStartAt = decision.autoStartAt;
-        if (autoStartAt == null ||
-            _sameInstant(match.autoStartAt, autoStartAt)) {
-          return MatchMutationOutcome(
-            match,
-            notifications: broadcastUnchanged
-                ? MatchNotificationPlan.broadcastState(state)
-                : const MatchNotificationPlan.empty(),
-          );
-        }
-        final updated = state.copyWith(
-          match: match.copyWith(autoStartAt: autoStartAt),
-        );
-        await store.saveState(updated);
-        return MatchMutationOutcome(
-          updated.match,
-          notifications: MatchNotificationPlan.broadcastState(updated),
-        );
-      case QuickplayLobbyAction.start:
-        return _startOpenMatch(
-          store: store,
-          state: state,
-          snapshotFactory: snapshotFactory,
-        );
+  Future<MatchMutationOutcome<StoredMatchState>> _waitForQuickplayPlayers({
+    required MultiplayerMatchStore store,
+    required StoredMatchState state,
+    required bool broadcastUnchanged,
+  }) async {
+    if (state.match.autoStartAt == null) {
+      return _unchangedQuickplayOutcome(state, broadcast: broadcastUnchanged);
     }
+    return _persistQuickplayAutoStartAt(
+      store: store,
+      state: state,
+      autoStartAt: null,
+    );
+  }
+
+  Future<MatchMutationOutcome<StoredMatchState>> _waitForQuickplayCountdown({
+    required MultiplayerMatchStore store,
+    required StoredMatchState state,
+    required QuickplayLobbyDecision decision,
+    required bool broadcastUnchanged,
+  }) async {
+    final autoStartAt = decision.autoStartAt;
+    if (autoStartAt == null ||
+        _sameInstant(state.match.autoStartAt, autoStartAt)) {
+      return _unchangedQuickplayOutcome(state, broadcast: broadcastUnchanged);
+    }
+    return _persistQuickplayAutoStartAt(
+      store: store,
+      state: state,
+      autoStartAt: autoStartAt,
+    );
+  }
+
+  Future<MatchMutationOutcome<StoredMatchState>> _startQuickplayLobby({
+    required MultiplayerMatchStore store,
+    required StoredMatchState state,
+    required InitialMultiplayerSnapshotFactory snapshotFactory,
+    required bool broadcastUnchanged,
+  }) {
+    if (!_canStartLobby(state, nowUtc: _nowUtc())) {
+      return _waitForQuickplayPlayers(
+        store: store,
+        state: state,
+        broadcastUnchanged: broadcastUnchanged,
+      );
+    }
+    return _startOpenMatch(
+      store: store,
+      state: state,
+      snapshotFactory: snapshotFactory,
+    );
+  }
+
+  Future<MatchMutationOutcome<StoredMatchState>> _persistQuickplayAutoStartAt({
+    required MultiplayerMatchStore store,
+    required StoredMatchState state,
+    required DateTime? autoStartAt,
+  }) async {
+    final updated = state.copyWith(
+      match: state.match.copyWith(autoStartAt: autoStartAt),
+    );
+    await store.saveState(updated);
+    return MatchMutationOutcome(
+      updated,
+      notifications: MatchNotificationPlan.broadcastState(updated),
+    );
+  }
+
+  MatchMutationOutcome<StoredMatchState> _unchangedQuickplayOutcome(
+    StoredMatchState state, {
+    required bool broadcast,
+  }) {
+    return MatchMutationOutcome(
+      state,
+      notifications: broadcast
+          ? MatchNotificationPlan.broadcastState(state)
+          : const MatchNotificationPlan.empty(),
+    );
   }
 }
 

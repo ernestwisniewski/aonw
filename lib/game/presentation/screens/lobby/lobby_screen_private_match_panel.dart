@@ -27,9 +27,9 @@ class _PrivateMatchPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final match = this.match;
-    final humanPlayerCount = LobbyMatchStatusRules.humanPlayerCount(match);
+    final connectedPlayers = LobbyMatchStatusRules.connectedHumanCount(match);
     final minPlayers = LobbyMatchStatusRules.requiredHumanPlayers(match);
-    final waitingForPlayers = match != null && humanPlayerCount < minPlayers;
+    final waitingForPlayers = match != null && connectedPlayers < minPlayers;
     final isHost = LobbyMatchStatusRules.isOwner(match, currentUserId);
     final statusText = match == null
         ? null
@@ -124,7 +124,7 @@ class _PrivateMatchPanel extends StatelessWidget {
               const SizedBox(height: 16),
               _MultiplayerReadinessSummary(
                 key: const Key('multiplayer.privatePlayers'),
-                players: humanPlayerCount,
+                players: connectedPlayers,
                 minPlayers: minPlayers,
                 maxPlayers: match.maxPlayers,
                 waiting: waitingForPlayers,
@@ -139,7 +139,7 @@ class _PrivateMatchPanel extends StatelessWidget {
               ],
               _LobbyPlayerList(
                 key: const Key('multiplayer.privatePlayersList'),
-                players: match.players,
+                match: match,
                 currentUserId: currentUserId,
                 minPlayers: minPlayers,
                 maxPlayers: match.maxPlayers,

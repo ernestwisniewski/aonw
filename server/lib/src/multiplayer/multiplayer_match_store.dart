@@ -2,27 +2,99 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/multiplayer/game_match_row_mapper.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store_persistence.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store_presence.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store_queries.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store_snapshots.dart';
 import 'package:aonw_server/src/observability/server_operational_event_sink.dart';
 import 'package:serverpod/serverpod.dart';
 
 class StoredMatchState {
-  const StoredMatchState({required this.match, required this.snapshot});
+  StoredMatchState({
+    required this.match,
+    required this.snapshot,
+    Map<String, StoredMatchPresenceLease> presenceLeases = const {},
+  }) : presenceLeases = Map.unmodifiable(presenceLeases);
 
   final WireMatch match;
   final WireSnapshot snapshot;
+  final Map<String, StoredMatchPresenceLease> presenceLeases;
 
   int get offset => snapshot.offset;
 
   int nextOffset() => offset + 1;
 
-  StoredMatchState copyWith({WireMatch? match, WireSnapshot? snapshot}) {
+  StoredMatchState copyWith({
+    WireMatch? match,
+    WireSnapshot? snapshot,
+    Map<String, StoredMatchPresenceLease>? presenceLeases,
+  }) {
     return StoredMatchState(
       match: match ?? this.match,
       snapshot: snapshot ?? this.snapshot,
+      presenceLeases: presenceLeases ?? this.presenceLeases,
     );
   }
+}
+
+final class StoredMatchPresenceLease {
+  const StoredMatchPresenceLease({
+    required this.userIdentifier,
+    required this.connectionGeneration,
+    required this.expiresAt,
+    required this.updatedAt,
+  });
+
+  final String userIdentifier;
+  final String connectionGeneration;
+  final DateTime expiresAt;
+  final DateTime updatedAt;
+
+  bool isExpiredAt(DateTime nowUtc) => !expiresAt.isAfter(nowUtc.toUtc());
+
+  StoredMatchPresenceLease copyWith({
+    String? connectionGeneration,
+    DateTime? expiresAt,
+    DateTime? updatedAt,
+  }) {
+    return StoredMatchPresenceLease(
+      userIdentifier: userIdentifier,
+      connectionGeneration: connectionGeneration ?? this.connectionGeneration,
+      expiresAt: expiresAt ?? this.expiresAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+}
+
+final class ExpiredPresenceLeaseCursor {
+  const ExpiredPresenceLeaseCursor({
+    required this.expiresAt,
+    required this.rowId,
+  });
+
+  final DateTime expiresAt;
+  final int rowId;
+}
+
+final class ExpiredPresenceLeaseCandidate {
+  const ExpiredPresenceLeaseCandidate({
+    required this.rowId,
+    required this.matchId,
+    required this.lease,
+  });
+
+  final int rowId;
+  final String matchId;
+  final StoredMatchPresenceLease lease;
+}
+
+final class ExpiredPresenceLeasePage {
+  ExpiredPresenceLeasePage({
+    required Iterable<ExpiredPresenceLeaseCandidate> candidates,
+    required this.nextCursor,
+  }) : candidates = List.unmodifiable(candidates);
+
+  final List<ExpiredPresenceLeaseCandidate> candidates;
+  final ExpiredPresenceLeaseCursor? nextCursor;
 }
 
 final class RunningMatchCursor {
@@ -60,9 +132,17 @@ abstract interface class MultiplayerMatchStore {
   );
 
   /// Returns bounded participant and public-lobby sets, merged newest first.
-  Future<List<WireMatch>> listVisibleMatches(String userIdentifier);
+  Future<List<WireMatch>> listVisibleMatches(
+    String userIdentifier, {
+    required DateTime nowUtc,
+  });
 
   Future<RunningMatchStatePage> listRunningStates({RunningMatchCursor? after});
+
+  Future<ExpiredPresenceLeasePage> listExpiredPresenceLeases({
+    required DateTime nowUtc,
+    ExpiredPresenceLeaseCursor? after,
+  });
 
   Future<StoredMatchState?> findOpenQuickplayCandidate(
     CreateMatchRequest request,
@@ -78,6 +158,26 @@ abstract interface class MultiplayerMatchStore {
   Future<StoredMatchState> createState(StoredMatchState state);
 
   Future<StoredMatchState> saveState(StoredMatchState state);
+
+  Future<void> upsertPresenceLease({
+    required String matchId,
+    required StoredMatchPresenceLease lease,
+  });
+
+  Future<bool> renewPresenceLease({
+    required String matchId,
+    required String userIdentifier,
+    required String connectionGeneration,
+    required DateTime expiresAt,
+    required DateTime updatedAt,
+  });
+
+  Future<void> deletePresenceLease({
+    required String matchId,
+    required String userIdentifier,
+  });
+
+  Future<void> deletePresenceLeases(String matchId);
 
   Future<StoredMatchState> appendEvent(
     StoredMatchState state,
@@ -112,6 +212,7 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
        _transaction = transaction {
     _queries = MultiplayerMatchQueryStore(this);
     _persistence = MultiplayerMatchPersistenceStore(this);
+    _presence = MultiplayerMatchPresenceStore(this);
     _snapshots = MultiplayerMatchSnapshotStore(session, transaction);
   }
 
@@ -119,6 +220,7 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
   final Transaction? _transaction;
   late final MultiplayerMatchQueryStore _queries;
   late final MultiplayerMatchPersistenceStore _persistence;
+  late final MultiplayerMatchPresenceStore _presence;
   late final MultiplayerMatchSnapshotStore _snapshots;
 
   Session get sessionForCapabilities => _session;
@@ -146,13 +248,21 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
   }
 
   @override
-  Future<List<WireMatch>> listVisibleMatches(String userIdentifier) =>
-      _queries.listVisibleMatches(userIdentifier);
+  Future<List<WireMatch>> listVisibleMatches(
+    String userIdentifier, {
+    required DateTime nowUtc,
+  }) => _queries.listVisibleMatches(userIdentifier, nowUtc: nowUtc);
 
   @override
   Future<RunningMatchStatePage> listRunningStates({
     RunningMatchCursor? after,
   }) => _queries.listRunningStates(after: after);
+
+  @override
+  Future<ExpiredPresenceLeasePage> listExpiredPresenceLeases({
+    required DateTime nowUtc,
+    ExpiredPresenceLeaseCursor? after,
+  }) => _presence.listExpired(nowUtc: nowUtc, after: after);
 
   @override
   Future<StoredMatchState?> findOpenQuickplayCandidate(
@@ -185,6 +295,40 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
   @override
   Future<StoredMatchState> saveState(StoredMatchState state) =>
       _persistence.save(state);
+
+  @override
+  Future<void> upsertPresenceLease({
+    required String matchId,
+    required StoredMatchPresenceLease lease,
+  }) => _presence.upsert(matchId: matchId, lease: lease);
+
+  @override
+  Future<bool> renewPresenceLease({
+    required String matchId,
+    required String userIdentifier,
+    required String connectionGeneration,
+    required DateTime expiresAt,
+    required DateTime updatedAt,
+  }) => transaction((store) {
+    final txStore = store as ServerpodMultiplayerMatchStore;
+    return txStore._presence.renew(
+      matchId: matchId,
+      userIdentifier: userIdentifier,
+      connectionGeneration: connectionGeneration,
+      expiresAt: expiresAt,
+      updatedAt: updatedAt,
+    );
+  });
+
+  @override
+  Future<void> deletePresenceLease({
+    required String matchId,
+    required String userIdentifier,
+  }) => _presence.deleteOne(matchId: matchId, userIdentifier: userIdentifier);
+
+  @override
+  Future<void> deletePresenceLeases(String matchId) =>
+      _presence.deleteAll(matchId);
 
   @override
   Future<StoredMatchState> appendEvent(
@@ -260,12 +404,26 @@ class ServerpodMultiplayerMatchStore implements MultiplayerMatchStore {
       orderDescending: true,
       transaction: _transaction,
     );
+    final leases = await GameMatchPresenceLease.db.find(
+      _session,
+      where: (table) => table.matchId.equals(row.id!),
+      transaction: _transaction,
+    );
     if (snapshot == null) {
       throw StateError('Match snapshot not found.');
     }
     return StoredMatchState(
       match: wireMatchFromRow(row, players),
       snapshot: snapshot.snapshot,
+      presenceLeases: {
+        for (final lease in leases)
+          lease.userIdentifier: StoredMatchPresenceLease(
+            userIdentifier: lease.userIdentifier,
+            connectionGeneration: lease.connectionGeneration,
+            expiresAt: lease.expiresAt,
+            updatedAt: lease.updatedAt,
+          ),
+      },
     );
   }
 

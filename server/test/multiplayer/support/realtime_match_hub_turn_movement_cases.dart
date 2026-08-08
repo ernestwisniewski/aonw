@@ -279,15 +279,33 @@ Future<_TurnMovementFixture> _startTurnMovementFixture({
       private: false,
     ),
   );
+  await _connectTestParticipant(
+    hub: hub,
+    store: store,
+    userIdentifier: 'turn-movement-owner',
+    matchId: open.id,
+  );
   final withUnitB = await hub.joinMatch(
     store: store,
     userIdentifier: 'turn-movement-unit-b',
     matchId: open.id,
   );
+  await _connectTestParticipant(
+    hub: hub,
+    store: store,
+    userIdentifier: 'turn-movement-unit-b',
+    matchId: withUnitB.id,
+  );
   final full = await hub.joinMatch(
     store: store,
     userIdentifier: 'turn-movement-observer',
     matchId: withUnitB.id,
+  );
+  await _connectTestParticipant(
+    hub: hub,
+    store: store,
+    userIdentifier: 'turn-movement-observer',
+    matchId: full.id,
   );
   final match = await hub.startMatch(
     store: store,

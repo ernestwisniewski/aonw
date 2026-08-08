@@ -131,10 +131,22 @@ void _registerRealtimeMatchHubCommandApplicationScenarios() {
         private: false,
       ),
     );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'owner-user',
+      matchId: openMatch.id,
+    );
     final joined = await hub.joinMatch(
       store: store,
       userIdentifier: 'guest-user',
       matchId: openMatch.id,
+    );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'guest-user',
+      matchId: joined.id,
     );
     final match = await hub.startMatch(
       store: store,

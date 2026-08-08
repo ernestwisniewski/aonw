@@ -58,7 +58,7 @@ extension MatchmakingServiceTransactions on MatchmakingService {
           broadcastUnchanged: true,
         );
         return MatchMutationOutcome(
-          advanced.value,
+          advanced.value.match,
           notifications: notifications.followedBy(advanced.notifications),
         );
       }
@@ -76,7 +76,7 @@ extension MatchmakingServiceTransactions on MatchmakingService {
         snapshotFactory: snapshotFactory,
       );
       return MatchMutationOutcome(
-        advanced.value,
+        advanced.value.match,
         notifications: notifications.followedBy(advanced.notifications),
       );
     });
@@ -98,6 +98,7 @@ extension MatchmakingServiceTransactions on MatchmakingService {
         lock: true,
       );
       requirePublicOpenLobby(state);
+      _requireLiveHostedOwner(state);
       final joined = await _joinState(
         store: txStore,
         state: state,
@@ -114,7 +115,7 @@ extension MatchmakingServiceTransactions on MatchmakingService {
           broadcastUnchanged: true,
         );
         return MatchMutationOutcome(
-          advanced.value,
+          advanced.value.match,
           notifications: joined.notifications.followedBy(
             advanced.notifications,
           ),
@@ -144,6 +145,7 @@ extension MatchmakingServiceTransactions on MatchmakingService {
       }
       _stateAccess.requireCurrentProtocol(state);
       requireOpenLobby(state);
+      _requireLiveHostedOwner(state);
       final joined = await _joinState(
         store: txStore,
         state: state,

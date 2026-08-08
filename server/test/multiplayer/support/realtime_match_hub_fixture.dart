@@ -1,5 +1,51 @@
 part of '../realtime_match_hub_test.dart';
 
+final class _TestMatchConnection {
+  _TestMatchConnection({
+    required this.input,
+    required this.stream,
+    required this.initialMessage,
+  });
+
+  final StreamController<MultiplayerClientMessage> input;
+  final Stream<MultiplayerServerMessage> stream;
+  final MultiplayerServerMessage initialMessage;
+  var _closed = false;
+
+  Future<void> close() async {
+    if (_closed) return;
+    _closed = true;
+    await input.close();
+  }
+}
+
+Future<_TestMatchConnection> _connectTestParticipant({
+  required RealtimeMatchHub hub,
+  required MultiplayerMatchStore store,
+  required String userIdentifier,
+  required String matchId,
+  int afterOffset = 0,
+}) async {
+  final input = StreamController<MultiplayerClientMessage>();
+  final stream = hub
+      .connect(
+        store: store,
+        userIdentifier: userIdentifier,
+        matchId: matchId,
+        afterOffset: afterOffset,
+        input: input.stream,
+      )
+      .asBroadcastStream();
+  final initialMessage = await stream.first.timeout(const Duration(seconds: 1));
+  final connection = _TestMatchConnection(
+    input: input,
+    stream: stream,
+    initialMessage: initialMessage,
+  );
+  addTearDown(connection.close);
+  return connection;
+}
+
 extension _DomainStateTestJson on DomainState {
   Map<String, dynamic> toJson() =>
       CanonicalGameSnapshotCodec.encodeDomainState(this);
@@ -76,10 +122,22 @@ Future<WireMatch> _startRunningMatchInStore({
       private: false,
     ),
   );
+  await _connectTestParticipant(
+    hub: hub,
+    store: store,
+    userIdentifier: 'owner-user-$suffix',
+    matchId: openMatch.id,
+  );
   final joined = await hub.joinMatch(
     store: store,
     userIdentifier: 'guest-user-$suffix',
     matchId: openMatch.id,
+  );
+  await _connectTestParticipant(
+    hub: hub,
+    store: store,
+    userIdentifier: 'guest-user-$suffix',
+    matchId: joined.id,
   );
   return hub.startMatch(
     store: store,

@@ -270,6 +270,7 @@ void main() {
       final focus = result.uiEffects
           .whereType<ShowActionTargetFocusEffect>()
           .single;
+      expect(focus.unitId, commander.id);
       expect(focus.col, 2);
       expect(focus.row, 2);
       expect(focus.duration, const Duration(seconds: 2));
@@ -536,6 +537,7 @@ void main() {
         final focus = result.uiEffects
             .whereType<ShowActionTargetFocusEffect>()
             .single;
+        expect(focus.unitId, isNull);
         expect(focus.col, 2);
         expect(focus.row, 2);
         expect(focus.duration, const Duration(seconds: 2));
@@ -574,6 +576,7 @@ void main() {
       final focus = result.uiEffects
           .whereType<ShowActionTargetFocusEffect>()
           .single;
+      expect(focus.unitId, isNull);
       expect(focus.col, 3);
       expect(focus.row, 2);
     });
@@ -792,6 +795,7 @@ void main() {
       final focus = result.uiEffects
           .whereType<ShowActionTargetFocusEffect>()
           .single;
+      expect(focus.unitId, unit.id);
       expect(focus.col, 1);
       expect(focus.row, 1);
       expect(focus.duration, const Duration(seconds: 2));

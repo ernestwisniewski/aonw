@@ -114,6 +114,7 @@ void _registerGameCommandControllerScenarios() {
       final focus = renderer.handledEffects
           .whereType<ShowActionTargetFocusEffect>()
           .single;
+      expect(focus.unitId, commander.id);
       expect(focus.col, 2);
       expect(focus.row, 3);
     });

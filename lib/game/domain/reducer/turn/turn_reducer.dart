@@ -339,7 +339,11 @@ abstract final class TurnReducer {
 
     return GameStateTransition(
       state: newState,
-      uiEffects: _mapActionTargetEffects(col: unit.col, row: unit.row),
+      uiEffects: _mapActionTargetEffects(
+        col: unit.col,
+        row: unit.row,
+        unitId: unit.id,
+      ),
     );
   }
 
@@ -401,9 +405,10 @@ abstract final class TurnReducer {
   static List<RendererEffect> _mapActionTargetEffects({
     required int col,
     required int row,
+    String? unitId,
   }) => [
     JumpCameraEffect(col: col, row: row),
-    ShowActionTargetFocusEffect(col: col, row: row),
+    ShowActionTargetFocusEffect(unitId: unitId, col: col, row: row),
   ];
 
   static GameStateTransition _focusResearchAction(

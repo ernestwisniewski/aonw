@@ -17,6 +17,12 @@ void _registerRealtimeMatchHubLobbyErrorScenarios() {
           private: false,
         ),
       );
+      await _connectTestParticipant(
+        hub: hub,
+        store: store,
+        userIdentifier: 'owner-user',
+        matchId: match.id,
+      );
       await hub.joinMatch(
         store: store,
         userIdentifier: 'filler-user',
@@ -83,7 +89,19 @@ void _registerRealtimeMatchHubLobbyErrorScenarios() {
         private: false,
       ),
     );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'public-owner',
+      matchId: publicMatch.id,
+    );
     await hub.joinMatch(
+      store: store,
+      userIdentifier: 'public-guest',
+      matchId: publicMatch.id,
+    );
+    await _connectTestParticipant(
+      hub: hub,
       store: store,
       userIdentifier: 'public-guest',
       matchId: publicMatch.id,
@@ -117,6 +135,12 @@ void _registerRealtimeMatchHubLobbyErrorScenarios() {
         private: true,
       ),
     );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'private-owner',
+      matchId: privateMatch.id,
+    );
     await expectLater(
       hub.joinMatch(
         store: store,
@@ -129,6 +153,12 @@ void _registerRealtimeMatchHubLobbyErrorScenarios() {
       store: store,
       userIdentifier: 'private-guest',
       inviteCode: privateMatch.inviteCode!,
+    );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'private-guest',
+      matchId: privateMatch.id,
     );
     final runningPrivate = await hub.startMatch(
       store: store,

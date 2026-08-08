@@ -2,6 +2,8 @@ import 'package:aonw/api/session/network_session_client.dart';
 import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/api/transport/live_event_subscription.dart';
 import 'package:aonw/game/application/ports/auth_token.dart';
+import 'package:aonw/game/application/ports/live_multiplayer_events.dart';
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
 import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
 import 'package:aonw/game/application/ports/network_connection.dart';
 import 'package:aonw/game/application/ports/network_session.dart';
@@ -227,6 +229,186 @@ void main() {
         expect(client.createdPublicRequest?.minPlayers, 2);
       },
     );
+
+    test(
+      'terminal lobby state returns every multiplayer mode safely',
+      () async {
+        final scenarios = <_TerminalLobbyScenario>[
+          _TerminalLobbyScenario(
+            name: 'quickplay',
+            enter: (harness) => harness.controller.startQuickplayQueue(),
+            signal: _TerminalLobbySignal.membershipError,
+            expectedMode: LobbyMultiplayerMode.home,
+          ),
+          _TerminalLobbyScenario(
+            name: 'public match',
+            enter: (harness) async {
+              await harness.controller.openPublicLobby();
+              await harness.controller.joinPublicMatch(
+                matchId: 'public_joined',
+              );
+            },
+            signal: _TerminalLobbySignal.abandonedMatch,
+            expectedMode: LobbyMultiplayerMode.publicBrowse,
+          ),
+          _TerminalLobbyScenario(
+            name: 'private host',
+            enter: (harness) => harness.controller.createPrivateMatch(),
+            signal: _TerminalLobbySignal.abandonedMatch,
+            expectedMode: LobbyMultiplayerMode.home,
+          ),
+          _TerminalLobbyScenario(
+            name: 'private participant',
+            enter: (harness) async {
+              harness.controller.openJoinPrivateMatch();
+              await harness.controller.joinPrivateMatch(inviteCode: 'ABC123');
+            },
+            signal: _TerminalLobbySignal.missingUser,
+            expectedMode: LobbyMultiplayerMode.privateJoin,
+          ),
+        ];
+
+        for (final scenario in scenarios) {
+          final live = _ControlledLiveEvents();
+          final client = _FakeNetworkSessionClient(
+            quickplayMatch: _match(state: 'open'),
+            joinedPublicMatch: _match(
+              id: 'public_joined',
+              state: 'open',
+              quickplay: false,
+            ),
+            createdPrivateMatch: _match(
+              id: 'private_hosted',
+              state: 'open',
+              quickplay: false,
+            ),
+            joinedPrivateMatch: _match(
+              id: 'private_joined',
+              state: 'open',
+              quickplay: false,
+            ),
+          );
+          final harness = _ControllerHarness(client: client, liveEvents: live);
+          addTearDown(harness.controller.dispose);
+
+          await scenario.enter(harness);
+          await _flushMicrotasks();
+          final active = harness.controller.activeMatch;
+          expect(active, isNotNull, reason: scenario.name);
+
+          switch (scenario.signal) {
+            case _TerminalLobbySignal.membershipError:
+              live.emitError(
+                const MultiplayerFailure.multiplayer(code: 'match_not_found'),
+              );
+            case _TerminalLobbySignal.abandonedMatch:
+              live.emitMatch(
+                _match(
+                  id: active!.id,
+                  state: 'abandoned',
+                  quickplay: active.quickplay,
+                  ownerUserId: active.ownerUserId,
+                  players: active.players,
+                ),
+              );
+            case _TerminalLobbySignal.missingUser:
+              live.emitMatch(
+                _match(
+                  id: active!.id,
+                  state: 'open',
+                  quickplay: active.quickplay,
+                  ownerUserId: 'user_2',
+                  players: const [
+                    WirePlayer(
+                      id: 'player_2',
+                      userId: 'user_2',
+                      name: 'Bob',
+                      colorValue: 0xFFDC2626,
+                      kind: WirePlayerKind.human,
+                      connectionState: WirePlayerConnectionState.connected,
+                    ),
+                  ],
+                ),
+              );
+          }
+          await _flushMicrotasks();
+
+          expect(
+            harness.controller.mode,
+            scenario.expectedMode,
+            reason: scenario.name,
+          );
+          expect(harness.controller.activeMatch, isNull, reason: scenario.name);
+          expect(harness.session?.matchId, isNull, reason: scenario.name);
+          expect(harness.invalidatedMatchIds, [
+            active!.id,
+          ], reason: scenario.name);
+          expect(harness.unavailablePresentations, 1, reason: scenario.name);
+          expect(harness.presentedErrors, isEmpty, reason: scenario.name);
+
+          live.emitError(
+            const MultiplayerFailure.multiplayer(code: 'match_abandoned'),
+          );
+          await _flushMicrotasks();
+          expect(harness.unavailablePresentations, 1, reason: scenario.name);
+        }
+      },
+    );
+
+    test('failed public refresh removes the last clickable result', () async {
+      final listed = _match(
+        id: 'public_listed',
+        state: 'open',
+        quickplay: false,
+        ownerUserId: 'host_user',
+        players: const [
+          WirePlayer(
+            id: 'host_player',
+            userId: 'host_user',
+            name: 'Host',
+            colorValue: 0xFFDC2626,
+            kind: WirePlayerKind.human,
+            connectionState: WirePlayerConnectionState.connected,
+          ),
+        ],
+      );
+      final client = _FakeNetworkSessionClient(
+        quickplayMatch: _match(state: 'open'),
+        listedMatches: [listed],
+      );
+      final harness = _ControllerHarness(client: client);
+      addTearDown(harness.controller.dispose);
+
+      await harness.controller.openPublicLobby();
+      expect(harness.controller.publicMatches, [listed]);
+
+      client.listMatchesError = StateError('discovery unavailable');
+      await harness.controller.refreshPublicMatches();
+
+      expect(harness.controller.publicMatches, isEmpty);
+      expect(harness.controller.publicMatchesLoaded, isTrue);
+      expect(harness.presentedErrors.single, contains('discovery unavailable'));
+    });
+
+    test('sign out leaves an open lobby before revoking the session', () async {
+      final client = _FakeNetworkSessionClient(
+        quickplayMatch: _match(state: 'open'),
+        leaveError: StateError('leave could not be delivered'),
+      );
+      final live = _ControlledLiveEvents(
+        onClose: () => client.sessionActions.add('close'),
+      );
+      final harness = _ControllerHarness(client: client, liveEvents: live);
+      addTearDown(harness.controller.dispose);
+
+      await harness.controller.startQuickplayQueue();
+      await _flushMicrotasks();
+      final signedOut = await harness.controller.signOut();
+
+      expect(signedOut, isTrue);
+      expect(client.sessionActions, ['leave', 'close', 'signOut']);
+      expect(harness.session, isNull);
+    });
 
     test('token-only authentication detaches a previous account', () async {
       final client = _FakeNetworkSessionClient(
@@ -500,15 +682,84 @@ WireMatch _match({
   );
 }
 
+enum _TerminalLobbySignal { membershipError, abandonedMatch, missingUser }
+
+final class _TerminalLobbyScenario {
+  final String name;
+  final Future<void> Function(_ControllerHarness harness) enter;
+  final _TerminalLobbySignal signal;
+  final LobbyMultiplayerMode expectedMode;
+
+  const _TerminalLobbyScenario({
+    required this.name,
+    required this.enter,
+    required this.signal,
+    required this.expectedMode,
+  });
+}
+
+final class _ControllerHarness {
+  final _FakeNetworkSessionClient client;
+  final _MemoryNetworkSessionStore store;
+  final LiveMultiplayerEvents liveEvents;
+  final invalidatedMatchIds = <String>[];
+  final presentedErrors = <String>[];
+  late final LobbyConnectionController controller;
+  NetworkSession? session;
+  var unavailablePresentations = 0;
+
+  _ControllerHarness({required this.client, LiveMultiplayerEvents? liveEvents})
+    : store = _MemoryNetworkSessionStore(displayName: 'Alice'),
+      liveEvents = liveEvents ?? _emptyLiveEvents(),
+      session = NetworkSession(
+        userId: 'user_1',
+        token: AuthToken('token'),
+        refreshToken: 'refresh-token',
+        connectionState: const NetworkConnectionState(
+          status: NetworkConnectionStatus.connected,
+        ),
+      ) {
+    controller = LobbyConnectionController(
+      mapName: 'verdantia',
+      mapSource: MapSource.asset,
+      sessionClient: client,
+      sessionStore: store,
+      liveEvents: this.liveEvents,
+      now: () => DateTime.utc(2026, 6, 2, 12),
+      canContinue: () => true,
+      currentSession: () => session,
+      setSession: (value) => session = value,
+      authenticate: ({required initialDisplayName}) async => null,
+      displayName: () => 'Alice',
+      setPrimaryDisplayName: (_) {},
+      country: () => PlayerCountry.china,
+      validateMap: () async => _validValidation(),
+      mapNotReadyMessage: () => 'Map is not ready',
+      inviteCodeRequiredMessage: () => 'Invite code required',
+      errorTextFor: (error) => 'mapped $error',
+      presentError: presentedErrors.add,
+      publishMatch: (_) {},
+      invalidatePublishedMatch: invalidatedMatchIds.add,
+      presentLobbyUnavailable: () => unavailablePresentations += 1,
+      navigateTo: (_) {},
+    );
+  }
+}
+
 final class _FakeNetworkSessionClient extends NetworkSessionClient {
   final WireMatch quickplayMatch;
-  final List<WireMatch> listedMatches;
+  List<WireMatch> listedMatches;
   final WireMatch? createdPublicMatch;
   final WireMatch? joinedPublicMatch;
+  final WireMatch? createdPrivateMatch;
+  final WireMatch? joinedPrivateMatch;
   final Object? signOutError;
+  final Object? leaveError;
+  Object? listMatchesError;
   QuickplayMatchRequest? quickplayRequest;
   CreateMatchRequest? createdPublicRequest;
   final matchActions = <String>[];
+  final sessionActions = <String>[];
   AuthToken? signedOutToken;
   String? signedOutRefreshToken;
 
@@ -517,7 +768,10 @@ final class _FakeNetworkSessionClient extends NetworkSessionClient {
     this.listedMatches = const [],
     this.createdPublicMatch,
     this.joinedPublicMatch,
+    this.createdPrivateMatch,
+    this.joinedPrivateMatch,
     this.signOutError,
+    this.leaveError,
   }) : super(serverpodHost: 'http://localhost:8080');
 
   @override
@@ -525,6 +779,7 @@ final class _FakeNetworkSessionClient extends NetworkSessionClient {
     AuthToken? token,
     String? refreshToken,
   }) async {
+    sessionActions.add('signOut');
     signedOutToken = token;
     signedOutRefreshToken = refreshToken;
     final error = signOutError;
@@ -545,6 +800,8 @@ final class _FakeNetworkSessionClient extends NetworkSessionClient {
     required AuthToken token,
     String? status,
   }) async {
+    final error = listMatchesError;
+    if (error != null) throw error;
     return listedMatches;
   }
 
@@ -572,7 +829,7 @@ final class _FakeNetworkSessionClient extends NetworkSessionClient {
     required AuthToken token,
     required CreatePrivateMatchRequest request,
   }) async {
-    fail('unexpected private match create');
+    return createdPrivateMatch ?? fail('unexpected private match create');
   }
 
   @override
@@ -580,7 +837,7 @@ final class _FakeNetworkSessionClient extends NetworkSessionClient {
     required AuthToken token,
     required JoinPrivateMatchRequest request,
   }) async {
-    fail('unexpected private match join');
+    return joinedPrivateMatch ?? fail('unexpected private match join');
   }
 
   @override
@@ -605,6 +862,80 @@ final class _FakeNetworkSessionClient extends NetworkSessionClient {
     required String matchId,
   }) async {
     matchActions.add('leave');
+    sessionActions.add('leave');
+    final error = leaveError;
+    if (error != null) throw error;
+  }
+}
+
+final class _ControlledLiveEvents implements LiveMultiplayerEvents {
+  final void Function()? onClose;
+  void Function(WireMatch match)? _onMatch;
+  void Function(Object error, StackTrace stackTrace)? _onError;
+
+  _ControlledLiveEvents({this.onClose});
+
+  @override
+  Future<LiveMultiplayerEventHandle> subscribe({
+    required String matchId,
+    required AuthToken token,
+    Future<AuthToken> Function()? tokenReader,
+    required int fromOffset,
+    int Function()? nextOffset,
+    required void Function(LiveServerEvent event) onEvent,
+    required void Function(CanonicalGameSnapshot snapshot) onSnapshotResync,
+    void Function(WireMatch match)? onMatch,
+    void Function()? onConnected,
+    void Function()? onReconnecting,
+    void Function(Object error, StackTrace stackTrace)? onError,
+    void Function()? onDone,
+  }) async {
+    _onMatch = onMatch;
+    _onError = onError;
+    onConnected?.call();
+    return _ControlledLiveEventHandle(onClose);
+  }
+
+  void emitMatch(WireMatch match) {
+    final callback = _onMatch;
+    if (callback == null) fail('No active lobby subscription.');
+    callback(match);
+  }
+
+  void emitError(Object error) {
+    final callback = _onError;
+    if (callback == null) fail('No active lobby subscription.');
+    callback(error, StackTrace.empty);
+  }
+}
+
+final class _ControlledLiveEventHandle implements LiveMultiplayerEventHandle {
+  final void Function()? onClose;
+  var closed = false;
+
+  _ControlledLiveEventHandle(this.onClose);
+
+  @override
+  Future<void> close() async {
+    if (closed) return;
+    closed = true;
+    onClose?.call();
+  }
+
+  @override
+  Future<WireCommandAck> sendCommand({
+    required int afterOffset,
+    required WireCommand wire,
+    required String clientMessageId,
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
+    fail('Lobby subscriptions do not send commands.');
+  }
+}
+
+Future<void> _flushMicrotasks() async {
+  for (var i = 0; i < 5; i += 1) {
+    await Future<void>.delayed(Duration.zero);
   }
 }
 

@@ -58,7 +58,7 @@ typedef LobbyMatchLoader =
 typedef LobbyMatchLeaver =
     Future<void> Function({required AuthToken token, required String matchId});
 typedef LobbyMatchRememberer =
-    void Function({required NetworkSession session, required WireMatch match});
+    bool Function({required NetworkSession session, required WireMatch match});
 typedef LobbyMatchWatcher =
     void Function({required NetworkSession session, required WireMatch match});
 typedef LobbyMatchClearer = void Function(NetworkSession session);
@@ -130,7 +130,7 @@ final class LobbyMatchActionCoordinator {
         country: config.country,
       ),
     );
-    _rememberAndWatch(session: session, match: match);
+    if (!_rememberAndWatch(session: session, match: match)) return;
     if (!canContinue()) return;
     _enterOrSchedule(session: session, match: match);
   }
@@ -157,8 +157,9 @@ final class LobbyMatchActionCoordinator {
             LobbyMatchStatusRules.isOpen(match) &&
             !match.quickplay &&
             match.inviteCode == null &&
+            LobbyMatchStatusRules.hasConnectedOwner(match) &&
             match.players.every((player) => player.userId != session.userId) &&
-            LobbyMatchStatusRules.humanPlayerCount(match) < match.maxPlayers,
+            LobbyMatchStatusRules.humanMemberCount(match) < match.maxPlayers,
       ),
     );
   }
@@ -232,7 +233,7 @@ final class LobbyMatchActionCoordinator {
     if (match == null || !LobbyMatchStatusRules.isOpen(match)) return;
     final session = await ensureSession();
     final started = await startMatch(token: session.token, matchId: match.id);
-    rememberMatch(session: session, match: started);
+    if (!rememberMatch(session: session, match: started)) return;
     if (!canContinue()) return;
     if (LobbyMatchStatusRules.canEnter(started)) {
       stopLobbyUpdates();
@@ -244,7 +245,7 @@ final class LobbyMatchActionCoordinator {
     if (matchId == null) return;
     final session = await ensureSession();
     final match = await loadMatch(token: session.token, matchId: matchId);
-    rememberMatch(session: session, match: match);
+    if (!rememberMatch(session: session, match: match)) return;
     if (!canContinue()) return;
     _enterOrSchedule(session: session, match: match);
   }
@@ -254,12 +255,13 @@ final class LobbyMatchActionCoordinator {
     if (validation.errors.isNotEmpty) throw StateError(message);
   }
 
-  void _rememberAndWatch({
+  bool _rememberAndWatch({
     required NetworkSession session,
     required WireMatch match,
   }) {
-    rememberMatch(session: session, match: match);
+    if (!rememberMatch(session: session, match: match)) return false;
     watchMatch(session: session, match: match);
+    return true;
   }
 
   void _enterOrSchedule({

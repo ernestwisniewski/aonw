@@ -37,6 +37,28 @@ final class MultiplayerTurnTimeoutSweepCall
     );
 
     try {
+      final failures = await _hub.expireLobbyPresence(
+        store: ServerpodMultiplayerMatchStore(session),
+      );
+      for (final failure in failures) {
+        _logFailure(
+          session,
+          target: 'presence',
+          matchId: multiplayerTimeoutLogMatchId(failure.matchId),
+          kind: multiplayerTimeoutSweepErrorKind(failure.error),
+          stackTrace: failure.stackTrace,
+        );
+      }
+    } catch (error, stackTrace) {
+      _logFailure(
+        session,
+        target: 'presence_orchestration',
+        kind: multiplayerTimeoutSweepErrorKind(error),
+        stackTrace: stackTrace,
+      );
+    }
+
+    try {
       final failures = await _hub.advanceTimedOutTurns(
         store: ServerpodMultiplayerMatchStore(session),
       );

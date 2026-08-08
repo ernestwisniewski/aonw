@@ -37,6 +37,20 @@ void main() {
       expect(harness.scheduled, isEmpty);
     });
 
+    test('rejected authoritative roster stops downstream lobby work', () async {
+      final harness = _Harness(
+        quickplayMatch: _match(state: 'running'),
+        rememberAccepted: false,
+      );
+
+      await harness.coordinator.joinQuickplay(_config());
+
+      expect(harness.remembered, hasLength(1));
+      expect(harness.watched, isEmpty);
+      expect(harness.entered, isEmpty);
+      expect(harness.scheduled, isEmpty);
+    });
+
     test('validation errors stop quickplay before network calls', () async {
       final harness = _Harness(validation: _invalidValidation());
 
@@ -76,6 +90,7 @@ void main() {
     test('public listing keeps only joinable stranger lobbies', () async {
       final joinable = _match(
         id: 'public_1',
+        ownerUserId: 'host_public_id',
         players: const [
           WirePlayer(
             id: 'host_player',
@@ -95,6 +110,20 @@ void main() {
           _match(id: 'private', inviteCode: 'SECRET'),
           _match(id: 'participant'),
           _match(id: 'full', maxPlayers: 1, players: joinable.players),
+          _match(
+            id: 'offline_host',
+            ownerUserId: 'offline_host_id',
+            players: const [
+              WirePlayer(
+                id: 'offline_host_player',
+                userId: 'offline_host_id',
+                name: 'Offline host',
+                colorValue: 0xFFDC2626,
+                kind: WirePlayerKind.human,
+                connectionState: WirePlayerConnectionState.offline,
+              ),
+            ],
+          ),
         ],
       );
 
@@ -260,6 +289,7 @@ NetworkSession _session() {
 WireMatch _match({
   String id = 'match_1',
   String state = 'open',
+  String ownerUserId = 'user_1',
   bool quickplay = false,
   String? inviteCode,
   int maxPlayers = 4,
@@ -267,7 +297,7 @@ WireMatch _match({
 }) {
   return WireMatch(
     id: id,
-    ownerUserId: 'user_1',
+    ownerUserId: ownerUserId,
     name: 'Quickplay',
     mapName: 'verdantia',
     players:
@@ -311,6 +341,7 @@ final class _Harness {
   final WireMatch joinedPrivateMatch;
   final WireMatch startedMatch;
   final WireMatch loadedMatch;
+  final bool rememberAccepted;
 
   var validationCount = 0;
   var stoppedCount = 0;
@@ -341,6 +372,7 @@ final class _Harness {
     WireMatch? joinedPrivateMatch,
     WireMatch? startedMatch,
     WireMatch? loadedMatch,
+    this.rememberAccepted = true,
   }) : session = session ?? _session(),
        validation = validation ?? _validValidation(),
        quickplayMatch = quickplayMatch ?? _match(),
@@ -396,6 +428,7 @@ final class _Harness {
       },
       rememberMatch: ({required session, required match}) {
         remembered.add(_MatchEntry(session, match));
+        return rememberAccepted;
       },
       watchMatch: ({required session, required match}) {
         watched.add(_MatchEntry(session, match));

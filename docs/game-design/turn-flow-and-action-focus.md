@@ -31,12 +31,15 @@ through the full list of remaining tasks.
 
 When either focus command selects an object on the map, the camera first
 completes its smooth move and the object's complete map tile then receives a
-dashed green hex border for two seconds. Units and cities use the same cue;
+dashed gold hex border for two seconds. Units and cities use the same cue;
 research does not because it has no map coordinate. The border uses the shared
 full-hex selection geometry and dash pattern, and blinks independently of the
 normal gold selection cue and red attack targets. With reduced motion enabled
 it stays visible without blinking for the same two seconds. This is an
 ephemeral renderer effect: it is not saved or replicated as a domain event.
+For a unit target, the border tracks the unit marker's live world position, so
+it follows movement and combat animation instead of remaining on the source
+hex. City targets remain anchored to their fixed center hex.
 
 ## `Action` Button and End Turn
 

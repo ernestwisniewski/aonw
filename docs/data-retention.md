@@ -20,17 +20,50 @@ has a backlog after reaching that budget, the scheduler requests a follow-up
 after 1 minute instead of allowing one maintenance run to monopolize a server
 process.
 
+## Multiplayer Presence Cleanup Is Not Retention
+
+Multiplayer maintenance also reconciles expired lobby-presence leases in
+bounded pages. That work keeps the active roster and discovery projection true;
+it does not physically delete match history:
+
+- an expired guest is removed from an open hosted roster;
+- expiry of an open hosted owner changes the match to `abandoned`;
+- expired quickplay members are removed, and an empty queue becomes
+  `abandoned`;
+- an expired running-match member becomes `offline` without losing membership.
+
+An abandoned lobby is a soft delete from the active product surface. It is
+immediately excluded from discovery and matchmaking, rejects joins, and sends a
+terminal update to subscribed clients. Its match row, terminal snapshot, and
+event history remain persisted. Player rows removed as part of an authoritative
+roster mutation are a lifecycle state change, not an age-based retention purge.
+The durable, recurring maintenance schedule and its bounded paginated sweeps
+are lifecycle correctness mechanisms, not a retention deadline.
+
+Presence-lease rows are server-only operational records. They are removed when
+the corresponding lobby membership ends and cascade with the match; they are
+not retained as gameplay or audit history.
+
 The implementation sources of truth are:
 
 - `server/config/*.yaml` for Serverpod session-log limits;
 - `server/lib/src/auth/auth_maintenance_service.dart` for authentication
   retention cutoffs and batch bounds;
 - `server/lib/src/auth/auth_maintenance_future_call.dart` for scheduling and
-  backlog follow-ups.
+  backlog follow-ups;
+- `server/lib/src/multiplayer/models/game_match_presence_lease.spy.yaml` for the
+  server-only durable lobby-presence record;
+- `server/lib/src/multiplayer/multiplayer_match_store_presence.dart` for bounded
+  expiry pages and generation-checked targeted lease writes.
+- `server/lib/src/multiplayer/match_lifecycle_service_presence.dart` for the
+  lifecycle-specific expiry decisions and post-commit notifications;
+- `server/lib/src/multiplayer/multiplayer_turn_timeout_future_call.dart` for
+  the reconciled ten-second multiplayer maintenance schedule shared by turn
+  timeout and presence sweeps.
 
 ## Data Without Automatic Retention
 
-The following persisted data currently has no automatic age-based or
+The following persisted data currently has no automatic physical age-based or
 count-based deletion policy:
 
 - authentication accounts and account profiles;
@@ -38,10 +71,12 @@ count-based deletion policy:
 - multiplayer snapshots;
 - multiplayer event history.
 
-Finishing, abandoning, resigning from, or leaving a multiplayer match does not
-by itself establish a database retention deadline. Pagination and bounded
-queries limit how much data one request processes; they do not delete the
-underlying records.
+Finishing, abandoning, resigning from, leaving, or expiring presence from a
+multiplayer match does not by itself establish a database retention deadline.
+Removing an expired open-lobby member changes the active roster, and abandoning
+a room removes it from active discovery, but neither operation physically
+deletes the match aggregate. Pagination and bounded queries limit how much data
+one maintenance invocation processes; they do not delete terminal records.
 
 There is currently no user-facing account-deletion flow in this repository.
 Signing out revokes a session and clears local credentials; it must not be
@@ -50,9 +85,12 @@ described as deleting an account or profile.
 Introducing destructive retention for accounts, profiles, matches, snapshots,
 or events requires an explicit product and privacy decision. That decision
 must define at least the intended retention period, treatment of active and
-finished matches, recovery and support requirements, related-record cleanup,
-backup handling, and any player-facing controls or notices. Do not infer these
-rules from the operational cleanup policies above.
+finished or abandoned matches, recovery and support requirements,
+related-record cleanup, backup handling, and any player-facing controls or
+notices. A future terminal-match purge must preserve enough time for
+disconnected lobby clients to observe the authoritative terminal result and
+must delete related snapshots, events, and player rows transactionally. Do not
+infer such a period from presence-lease or maintenance timing.
 
 ## PostgreSQL Backups
 

@@ -4,6 +4,7 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/generated/protocol.dart';
 import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
 import 'package:aonw_server/src/multiplayer/invite_code_generator.dart';
+import 'package:aonw_server/src/multiplayer/lobby_presence_policy.dart';
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
 import 'package:aonw_server/src/multiplayer/match_lifecycle_service.dart';
 import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
@@ -29,25 +30,32 @@ final class MatchmakingService {
     required MatchStateAccess stateAccess,
     required MatchBroadcaster broadcaster,
     required MatchLifecycleService lifecycle,
+    required LobbyPresencePolicy presencePolicy,
     required DateTime Function() nowUtc,
     InviteCodeGenerator? inviteCodeGenerator,
+    PresenceGenerationGenerator presenceGenerationGenerator =
+        const UuidPresenceGenerationGenerator(),
     MatchRequestValidator requestValidator = const MatchRequestValidator(),
   }) : _seatAllocator = seatAllocator,
        _stateAccess = stateAccess,
        _broadcaster = broadcaster,
        _lifecycle = lifecycle,
+       _presencePolicy = presencePolicy,
        _nowUtc = nowUtc,
        _requestValidator = requestValidator,
        _inviteCodeGenerator =
-           inviteCodeGenerator ?? SecureInviteCodeGenerator();
+           inviteCodeGenerator ?? SecureInviteCodeGenerator(),
+       _presenceGenerationGenerator = presenceGenerationGenerator;
 
   final PlayerSeatAllocator _seatAllocator;
   final MatchStateAccess _stateAccess;
   final MatchBroadcaster _broadcaster;
   final MatchLifecycleService _lifecycle;
+  final LobbyPresencePolicy _presencePolicy;
   final DateTime Function() _nowUtc;
   final MatchRequestValidator _requestValidator;
   final InviteCodeGenerator _inviteCodeGenerator;
+  final PresenceGenerationGenerator _presenceGenerationGenerator;
 
   Future<WireMatch> _createMatch({
     required MultiplayerMatchStore store,
@@ -89,7 +97,18 @@ final class MatchmakingService {
       save: const {},
       state: {'phase': 'lobby', 'mapName': request.mapName},
     );
-    await store.createState(StoredMatchState(match: match, snapshot: snapshot));
+    final ownerLease = _presencePolicy.initialLease(
+      userIdentifier: userIdentifier,
+      connectionGeneration: _presenceGenerationGenerator.next(),
+      nowUtc: now,
+    );
+    await store.createState(
+      StoredMatchState(
+        match: match,
+        snapshot: snapshot,
+        presenceLeases: {userIdentifier: ownerLease},
+      ),
+    );
     return match;
   }
 
@@ -105,7 +124,7 @@ final class MatchmakingService {
       (player) => player.userId == userIdentifier,
     );
     if (existingIndex != -1) {
-      final updated = await _updateExistingPlayerSeat(
+      return _joinExistingPlayer(
         store: store,
         state: state,
         playerIndex: existingIndex,
@@ -113,8 +132,54 @@ final class MatchmakingService {
         countryId: countryId,
         broadcast: broadcast,
       );
-      return updated;
     }
+    return _joinNewPlayer(
+      store: store,
+      state: state,
+      userIdentifier: userIdentifier,
+      displayName: displayName,
+      countryId: countryId,
+      broadcast: broadcast,
+    );
+  }
+
+  Future<MatchMutationOutcome<StoredMatchState>> _joinExistingPlayer({
+    required MultiplayerMatchStore store,
+    required StoredMatchState state,
+    required int playerIndex,
+    required String? displayName,
+    required String? countryId,
+    required bool broadcast,
+  }) async {
+    final reserved = await _reserveExistingPlayer(
+      store: store,
+      state: state,
+      playerIndex: playerIndex,
+    );
+    final updated = await _updateExistingPlayerSeat(
+      store: store,
+      state: reserved,
+      playerIndex: playerIndex,
+      displayName: displayName,
+      countryId: countryId,
+      broadcast: false,
+    );
+    return MatchMutationOutcome(
+      updated.value,
+      notifications: broadcast
+          ? MatchNotificationPlan.broadcastState(updated.value)
+          : const MatchNotificationPlan.empty(),
+    );
+  }
+
+  Future<MatchMutationOutcome<StoredMatchState>> _joinNewPlayer({
+    required MultiplayerMatchStore store,
+    required StoredMatchState state,
+    required String userIdentifier,
+    required String? displayName,
+    required String? countryId,
+    required bool broadcast,
+  }) async {
     if (state.match.players.length >= state.match.maxPlayers) {
       throw multiplayerException('match_full', 'Match is full.');
     }
@@ -128,14 +193,56 @@ final class MatchmakingService {
     );
     final updated = state.copyWith(
       match: state.match.copyWith(players: [...state.match.players, player]),
+      presenceLeases: {
+        ...state.presenceLeases,
+        userIdentifier: _presencePolicy.initialLease(
+          userIdentifier: userIdentifier,
+          connectionGeneration: _presenceGenerationGenerator.next(),
+          nowUtc: _nowUtc(),
+        ),
+      },
     );
     await store.saveState(updated);
+    await store.upsertPresenceLease(
+      matchId: updated.match.id,
+      lease: updated.presenceLeases[userIdentifier]!,
+    );
     return MatchMutationOutcome(
       updated,
       notifications: broadcast
           ? MatchNotificationPlan.broadcastState(updated)
           : const MatchNotificationPlan.empty(),
     );
+  }
+
+  Future<StoredMatchState> _reserveExistingPlayer({
+    required MultiplayerMatchStore store,
+    required StoredMatchState state,
+    required int playerIndex,
+  }) async {
+    final player = state.match.players[playerIndex];
+    final currentLease = state.presenceLeases[player.userId];
+    if (player.connectionState == WirePlayerConnectionState.connected &&
+        currentLease != null &&
+        !currentLease.isExpiredAt(_nowUtc())) {
+      return state;
+    }
+    final lease = _presencePolicy.initialLease(
+      userIdentifier: player.userId,
+      connectionGeneration: _presenceGenerationGenerator.next(),
+      nowUtc: _nowUtc(),
+    );
+    final players = [...state.match.players];
+    players[playerIndex] = player.copyWith(
+      connectionState: WirePlayerConnectionState.connecting,
+    );
+    final reserved = state.copyWith(
+      match: state.match.copyWith(players: players),
+      presenceLeases: {...state.presenceLeases, player.userId: lease},
+    );
+    await store.saveState(reserved);
+    await store.upsertPresenceLease(matchId: state.match.id, lease: lease);
+    return reserved;
   }
 
   Future<MatchMutationOutcome<StoredMatchState>> _updateExistingPlayerSeat({
@@ -213,5 +320,16 @@ final class MatchmakingService {
     } on PlayerSeatAllocationFailure catch (error) {
       throw multiplayerException(error.code, error.message);
     }
+  }
+
+  void _requireLiveHostedOwner(StoredMatchState state) {
+    if (state.match.quickplay ||
+        _presencePolicy.hasLiveConnectedOwner(state, nowUtc: _nowUtc())) {
+      return;
+    }
+    throw multiplayerException(
+      'match_not_found',
+      'The lobby is no longer available.',
+    );
   }
 }

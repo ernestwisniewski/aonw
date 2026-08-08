@@ -13,9 +13,10 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 import '../../multiplayer/models/game_player.dart' as _i2;
-import '../../multiplayer/models/game_snapshot.dart' as _i3;
-import '../../multiplayer/models/game_event.dart' as _i4;
-import 'package:aonw_server/src/generated/protocol.dart' as _i5;
+import '../../multiplayer/models/game_match_presence_lease.dart' as _i3;
+import '../../multiplayer/models/game_snapshot.dart' as _i4;
+import '../../multiplayer/models/game_event.dart' as _i5;
+import 'package:aonw_server/src/generated/protocol.dart' as _i6;
 
 abstract class GameMatch
     implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
@@ -39,6 +40,7 @@ abstract class GameMatch
     this.autoStartAt,
     this.inviteCode,
     this.players,
+    this.presenceLeases,
     this.snapshots,
     this.events,
   });
@@ -63,8 +65,9 @@ abstract class GameMatch
     DateTime? autoStartAt,
     String? inviteCode,
     List<_i2.GamePlayer>? players,
-    List<_i3.GameSnapshot>? snapshots,
-    List<_i4.GameEvent>? events,
+    List<_i3.GameMatchPresenceLease>? presenceLeases,
+    List<_i4.GameSnapshot>? snapshots,
+    List<_i5.GameEvent>? events,
   }) = _GameMatchImpl;
 
   factory GameMatch.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -99,17 +102,22 @@ abstract class GameMatch
       inviteCode: jsonSerialization['inviteCode'] as String?,
       players: jsonSerialization['players'] == null
           ? null
-          : _i5.Protocol().deserialize<List<_i2.GamePlayer>>(
+          : _i6.Protocol().deserialize<List<_i2.GamePlayer>>(
               jsonSerialization['players'],
+            ),
+      presenceLeases: jsonSerialization['presenceLeases'] == null
+          ? null
+          : _i6.Protocol().deserialize<List<_i3.GameMatchPresenceLease>>(
+              jsonSerialization['presenceLeases'],
             ),
       snapshots: jsonSerialization['snapshots'] == null
           ? null
-          : _i5.Protocol().deserialize<List<_i3.GameSnapshot>>(
+          : _i6.Protocol().deserialize<List<_i4.GameSnapshot>>(
               jsonSerialization['snapshots'],
             ),
       events: jsonSerialization['events'] == null
           ? null
-          : _i5.Protocol().deserialize<List<_i4.GameEvent>>(
+          : _i6.Protocol().deserialize<List<_i5.GameEvent>>(
               jsonSerialization['events'],
             ),
     );
@@ -158,9 +166,11 @@ abstract class GameMatch
 
   List<_i2.GamePlayer>? players;
 
-  List<_i3.GameSnapshot>? snapshots;
+  List<_i3.GameMatchPresenceLease>? presenceLeases;
 
-  List<_i4.GameEvent>? events;
+  List<_i4.GameSnapshot>? snapshots;
+
+  List<_i5.GameEvent>? events;
 
   @override
   _i1.Table<int?> get table => t;
@@ -188,8 +198,9 @@ abstract class GameMatch
     DateTime? autoStartAt,
     String? inviteCode,
     List<_i2.GamePlayer>? players,
-    List<_i3.GameSnapshot>? snapshots,
-    List<_i4.GameEvent>? events,
+    List<_i3.GameMatchPresenceLease>? presenceLeases,
+    List<_i4.GameSnapshot>? snapshots,
+    List<_i5.GameEvent>? events,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -215,6 +226,10 @@ abstract class GameMatch
       if (inviteCode != null) 'inviteCode': inviteCode,
       if (players != null)
         'players': players?.toJson(valueToJson: (v) => v.toJson()),
+      if (presenceLeases != null)
+        'presenceLeases': presenceLeases?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
       if (snapshots != null)
         'snapshots': snapshots?.toJson(valueToJson: (v) => v.toJson()),
       if (events != null)
@@ -257,11 +272,13 @@ abstract class GameMatch
 
   static GameMatchInclude include({
     _i2.GamePlayerIncludeList? players,
-    _i3.GameSnapshotIncludeList? snapshots,
-    _i4.GameEventIncludeList? events,
+    _i3.GameMatchPresenceLeaseIncludeList? presenceLeases,
+    _i4.GameSnapshotIncludeList? snapshots,
+    _i5.GameEventIncludeList? events,
   }) {
     return GameMatchInclude._(
       players: players,
+      presenceLeases: presenceLeases,
       snapshots: snapshots,
       events: events,
     );
@@ -316,8 +333,9 @@ class _GameMatchImpl extends GameMatch {
     DateTime? autoStartAt,
     String? inviteCode,
     List<_i2.GamePlayer>? players,
-    List<_i3.GameSnapshot>? snapshots,
-    List<_i4.GameEvent>? events,
+    List<_i3.GameMatchPresenceLease>? presenceLeases,
+    List<_i4.GameSnapshot>? snapshots,
+    List<_i5.GameEvent>? events,
   }) : super._(
          id: id,
          publicId: publicId,
@@ -338,6 +356,7 @@ class _GameMatchImpl extends GameMatch {
          autoStartAt: autoStartAt,
          inviteCode: inviteCode,
          players: players,
+         presenceLeases: presenceLeases,
          snapshots: snapshots,
          events: events,
        );
@@ -366,6 +385,7 @@ class _GameMatchImpl extends GameMatch {
     Object? autoStartAt = _Undefined,
     Object? inviteCode = _Undefined,
     Object? players = _Undefined,
+    Object? presenceLeases = _Undefined,
     Object? snapshots = _Undefined,
     Object? events = _Undefined,
   }) {
@@ -395,10 +415,13 @@ class _GameMatchImpl extends GameMatch {
       players: players is List<_i2.GamePlayer>?
           ? players
           : this.players?.map((e0) => e0.copyWith()).toList(),
-      snapshots: snapshots is List<_i3.GameSnapshot>?
+      presenceLeases: presenceLeases is List<_i3.GameMatchPresenceLease>?
+          ? presenceLeases
+          : this.presenceLeases?.map((e0) => e0.copyWith()).toList(),
+      snapshots: snapshots is List<_i4.GameSnapshot>?
           ? snapshots
           : this.snapshots?.map((e0) => e0.copyWith()).toList(),
-      events: events is List<_i4.GameEvent>?
+      events: events is List<_i5.GameEvent>?
           ? events
           : this.events?.map((e0) => e0.copyWith()).toList(),
     );
@@ -614,13 +637,17 @@ class GameMatchTable extends _i1.Table<int?> {
 
   _i1.ManyRelation<_i2.GamePlayerTable>? _players;
 
-  _i3.GameSnapshotTable? ___snapshots;
+  _i3.GameMatchPresenceLeaseTable? ___presenceLeases;
 
-  _i1.ManyRelation<_i3.GameSnapshotTable>? _snapshots;
+  _i1.ManyRelation<_i3.GameMatchPresenceLeaseTable>? _presenceLeases;
 
-  _i4.GameEventTable? ___events;
+  _i4.GameSnapshotTable? ___snapshots;
 
-  _i1.ManyRelation<_i4.GameEventTable>? _events;
+  _i1.ManyRelation<_i4.GameSnapshotTable>? _snapshots;
+
+  _i5.GameEventTable? ___events;
+
+  _i1.ManyRelation<_i5.GameEventTable>? _events;
 
   _i2.GamePlayerTable get __players {
     if (___players != null) return ___players!;
@@ -635,28 +662,41 @@ class GameMatchTable extends _i1.Table<int?> {
     return ___players!;
   }
 
-  _i3.GameSnapshotTable get __snapshots {
+  _i3.GameMatchPresenceLeaseTable get __presenceLeases {
+    if (___presenceLeases != null) return ___presenceLeases!;
+    ___presenceLeases = _i1.createRelationTable(
+      relationFieldName: '__presenceLeases',
+      field: GameMatch.t.id,
+      foreignField: _i3.GameMatchPresenceLease.t.matchId,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.GameMatchPresenceLeaseTable(tableRelation: foreignTableRelation),
+    );
+    return ___presenceLeases!;
+  }
+
+  _i4.GameSnapshotTable get __snapshots {
     if (___snapshots != null) return ___snapshots!;
     ___snapshots = _i1.createRelationTable(
       relationFieldName: '__snapshots',
       field: GameMatch.t.id,
-      foreignField: _i3.GameSnapshot.t.matchId,
+      foreignField: _i4.GameSnapshot.t.matchId,
       tableRelation: tableRelation,
       createTable: (foreignTableRelation) =>
-          _i3.GameSnapshotTable(tableRelation: foreignTableRelation),
+          _i4.GameSnapshotTable(tableRelation: foreignTableRelation),
     );
     return ___snapshots!;
   }
 
-  _i4.GameEventTable get __events {
+  _i5.GameEventTable get __events {
     if (___events != null) return ___events!;
     ___events = _i1.createRelationTable(
       relationFieldName: '__events',
       field: GameMatch.t.id,
-      foreignField: _i4.GameEvent.t.matchId,
+      foreignField: _i5.GameEvent.t.matchId,
       tableRelation: tableRelation,
       createTable: (foreignTableRelation) =>
-          _i4.GameEventTable(tableRelation: foreignTableRelation),
+          _i5.GameEventTable(tableRelation: foreignTableRelation),
     );
     return ___events!;
   }
@@ -680,38 +720,57 @@ class GameMatchTable extends _i1.Table<int?> {
     return _players!;
   }
 
-  _i1.ManyRelation<_i3.GameSnapshotTable> get snapshots {
+  _i1.ManyRelation<_i3.GameMatchPresenceLeaseTable> get presenceLeases {
+    if (_presenceLeases != null) return _presenceLeases!;
+    var relationTable = _i1.createRelationTable(
+      relationFieldName: 'presenceLeases',
+      field: GameMatch.t.id,
+      foreignField: _i3.GameMatchPresenceLease.t.matchId,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i3.GameMatchPresenceLeaseTable(tableRelation: foreignTableRelation),
+    );
+    _presenceLeases = _i1.ManyRelation<_i3.GameMatchPresenceLeaseTable>(
+      tableWithRelations: relationTable,
+      table: _i3.GameMatchPresenceLeaseTable(
+        tableRelation: relationTable.tableRelation!.lastRelation,
+      ),
+    );
+    return _presenceLeases!;
+  }
+
+  _i1.ManyRelation<_i4.GameSnapshotTable> get snapshots {
     if (_snapshots != null) return _snapshots!;
     var relationTable = _i1.createRelationTable(
       relationFieldName: 'snapshots',
       field: GameMatch.t.id,
-      foreignField: _i3.GameSnapshot.t.matchId,
+      foreignField: _i4.GameSnapshot.t.matchId,
       tableRelation: tableRelation,
       createTable: (foreignTableRelation) =>
-          _i3.GameSnapshotTable(tableRelation: foreignTableRelation),
+          _i4.GameSnapshotTable(tableRelation: foreignTableRelation),
     );
-    _snapshots = _i1.ManyRelation<_i3.GameSnapshotTable>(
+    _snapshots = _i1.ManyRelation<_i4.GameSnapshotTable>(
       tableWithRelations: relationTable,
-      table: _i3.GameSnapshotTable(
+      table: _i4.GameSnapshotTable(
         tableRelation: relationTable.tableRelation!.lastRelation,
       ),
     );
     return _snapshots!;
   }
 
-  _i1.ManyRelation<_i4.GameEventTable> get events {
+  _i1.ManyRelation<_i5.GameEventTable> get events {
     if (_events != null) return _events!;
     var relationTable = _i1.createRelationTable(
       relationFieldName: 'events',
       field: GameMatch.t.id,
-      foreignField: _i4.GameEvent.t.matchId,
+      foreignField: _i5.GameEvent.t.matchId,
       tableRelation: tableRelation,
       createTable: (foreignTableRelation) =>
-          _i4.GameEventTable(tableRelation: foreignTableRelation),
+          _i5.GameEventTable(tableRelation: foreignTableRelation),
     );
-    _events = _i1.ManyRelation<_i4.GameEventTable>(
+    _events = _i1.ManyRelation<_i5.GameEventTable>(
       tableWithRelations: relationTable,
-      table: _i4.GameEventTable(
+      table: _i5.GameEventTable(
         tableRelation: relationTable.tableRelation!.lastRelation,
       ),
     );
@@ -745,6 +804,9 @@ class GameMatchTable extends _i1.Table<int?> {
     if (relationField == 'players') {
       return __players;
     }
+    if (relationField == 'presenceLeases') {
+      return __presenceLeases;
+    }
     if (relationField == 'snapshots') {
       return __snapshots;
     }
@@ -758,23 +820,28 @@ class GameMatchTable extends _i1.Table<int?> {
 class GameMatchInclude extends _i1.IncludeObject {
   GameMatchInclude._({
     _i2.GamePlayerIncludeList? players,
-    _i3.GameSnapshotIncludeList? snapshots,
-    _i4.GameEventIncludeList? events,
+    _i3.GameMatchPresenceLeaseIncludeList? presenceLeases,
+    _i4.GameSnapshotIncludeList? snapshots,
+    _i5.GameEventIncludeList? events,
   }) {
     _players = players;
+    _presenceLeases = presenceLeases;
     _snapshots = snapshots;
     _events = events;
   }
 
   _i2.GamePlayerIncludeList? _players;
 
-  _i3.GameSnapshotIncludeList? _snapshots;
+  _i3.GameMatchPresenceLeaseIncludeList? _presenceLeases;
 
-  _i4.GameEventIncludeList? _events;
+  _i4.GameSnapshotIncludeList? _snapshots;
+
+  _i5.GameEventIncludeList? _events;
 
   @override
   Map<String, _i1.Include?> get includes => {
     'players': _players,
+    'presenceLeases': _presenceLeases,
     'snapshots': _snapshots,
     'events': _events,
   };
@@ -1132,12 +1199,37 @@ class GameMatchAttachRepository {
     );
   }
 
+  /// Creates a relation between this [GameMatch] and the given [GameMatchPresenceLease]s
+  /// by setting each [GameMatchPresenceLease]'s foreign key `matchId` to refer to this [GameMatch].
+  Future<void> presenceLeases(
+    _i1.DatabaseSession session,
+    GameMatch gameMatch,
+    List<_i3.GameMatchPresenceLease> gameMatchPresenceLease, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (gameMatchPresenceLease.any((e) => e.id == null)) {
+      throw ArgumentError.notNull('gameMatchPresenceLease.id');
+    }
+    if (gameMatch.id == null) {
+      throw ArgumentError.notNull('gameMatch.id');
+    }
+
+    var $gameMatchPresenceLease = gameMatchPresenceLease
+        .map((e) => e.copyWith(matchId: gameMatch.id))
+        .toList();
+    await session.db.update<_i3.GameMatchPresenceLease>(
+      $gameMatchPresenceLease,
+      columns: [_i3.GameMatchPresenceLease.t.matchId],
+      transaction: transaction,
+    );
+  }
+
   /// Creates a relation between this [GameMatch] and the given [GameSnapshot]s
   /// by setting each [GameSnapshot]'s foreign key `matchId` to refer to this [GameMatch].
   Future<void> snapshots(
     _i1.DatabaseSession session,
     GameMatch gameMatch,
-    List<_i3.GameSnapshot> gameSnapshot, {
+    List<_i4.GameSnapshot> gameSnapshot, {
     _i1.Transaction? transaction,
   }) async {
     if (gameSnapshot.any((e) => e.id == null)) {
@@ -1150,9 +1242,9 @@ class GameMatchAttachRepository {
     var $gameSnapshot = gameSnapshot
         .map((e) => e.copyWith(matchId: gameMatch.id))
         .toList();
-    await session.db.update<_i3.GameSnapshot>(
+    await session.db.update<_i4.GameSnapshot>(
       $gameSnapshot,
-      columns: [_i3.GameSnapshot.t.matchId],
+      columns: [_i4.GameSnapshot.t.matchId],
       transaction: transaction,
     );
   }
@@ -1162,7 +1254,7 @@ class GameMatchAttachRepository {
   Future<void> events(
     _i1.DatabaseSession session,
     GameMatch gameMatch,
-    List<_i4.GameEvent> gameEvent, {
+    List<_i5.GameEvent> gameEvent, {
     _i1.Transaction? transaction,
   }) async {
     if (gameEvent.any((e) => e.id == null)) {
@@ -1175,9 +1267,9 @@ class GameMatchAttachRepository {
     var $gameEvent = gameEvent
         .map((e) => e.copyWith(matchId: gameMatch.id))
         .toList();
-    await session.db.update<_i4.GameEvent>(
+    await session.db.update<_i5.GameEvent>(
       $gameEvent,
-      columns: [_i4.GameEvent.t.matchId],
+      columns: [_i5.GameEvent.t.matchId],
       transaction: transaction,
     );
   }
@@ -1209,12 +1301,37 @@ class GameMatchAttachRowRepository {
     );
   }
 
+  /// Creates a relation between this [GameMatch] and the given [GameMatchPresenceLease]
+  /// by setting the [GameMatchPresenceLease]'s foreign key `matchId` to refer to this [GameMatch].
+  Future<void> presenceLeases(
+    _i1.DatabaseSession session,
+    GameMatch gameMatch,
+    _i3.GameMatchPresenceLease gameMatchPresenceLease, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (gameMatchPresenceLease.id == null) {
+      throw ArgumentError.notNull('gameMatchPresenceLease.id');
+    }
+    if (gameMatch.id == null) {
+      throw ArgumentError.notNull('gameMatch.id');
+    }
+
+    var $gameMatchPresenceLease = gameMatchPresenceLease.copyWith(
+      matchId: gameMatch.id,
+    );
+    await session.db.updateRow<_i3.GameMatchPresenceLease>(
+      $gameMatchPresenceLease,
+      columns: [_i3.GameMatchPresenceLease.t.matchId],
+      transaction: transaction,
+    );
+  }
+
   /// Creates a relation between this [GameMatch] and the given [GameSnapshot]
   /// by setting the [GameSnapshot]'s foreign key `matchId` to refer to this [GameMatch].
   Future<void> snapshots(
     _i1.DatabaseSession session,
     GameMatch gameMatch,
-    _i3.GameSnapshot gameSnapshot, {
+    _i4.GameSnapshot gameSnapshot, {
     _i1.Transaction? transaction,
   }) async {
     if (gameSnapshot.id == null) {
@@ -1225,9 +1342,9 @@ class GameMatchAttachRowRepository {
     }
 
     var $gameSnapshot = gameSnapshot.copyWith(matchId: gameMatch.id);
-    await session.db.updateRow<_i3.GameSnapshot>(
+    await session.db.updateRow<_i4.GameSnapshot>(
       $gameSnapshot,
-      columns: [_i3.GameSnapshot.t.matchId],
+      columns: [_i4.GameSnapshot.t.matchId],
       transaction: transaction,
     );
   }
@@ -1237,7 +1354,7 @@ class GameMatchAttachRowRepository {
   Future<void> events(
     _i1.DatabaseSession session,
     GameMatch gameMatch,
-    _i4.GameEvent gameEvent, {
+    _i5.GameEvent gameEvent, {
     _i1.Transaction? transaction,
   }) async {
     if (gameEvent.id == null) {
@@ -1248,9 +1365,9 @@ class GameMatchAttachRowRepository {
     }
 
     var $gameEvent = gameEvent.copyWith(matchId: gameMatch.id);
-    await session.db.updateRow<_i4.GameEvent>(
+    await session.db.updateRow<_i5.GameEvent>(
       $gameEvent,
-      columns: [_i4.GameEvent.t.matchId],
+      columns: [_i5.GameEvent.t.matchId],
       transaction: transaction,
     );
   }
@@ -1281,6 +1398,30 @@ class GameMatchDetachRepository {
     );
   }
 
+  /// Detaches the relation between this [GameMatch] and the given [GameMatchPresenceLease]
+  /// by setting the [GameMatchPresenceLease]'s foreign key `matchId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> presenceLeases(
+    _i1.DatabaseSession session,
+    List<_i3.GameMatchPresenceLease> gameMatchPresenceLease, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (gameMatchPresenceLease.any((e) => e.id == null)) {
+      throw ArgumentError.notNull('gameMatchPresenceLease.id');
+    }
+
+    var $gameMatchPresenceLease = gameMatchPresenceLease
+        .map((e) => e.copyWith(matchId: null))
+        .toList();
+    await session.db.update<_i3.GameMatchPresenceLease>(
+      $gameMatchPresenceLease,
+      columns: [_i3.GameMatchPresenceLease.t.matchId],
+      transaction: transaction,
+    );
+  }
+
   /// Detaches the relation between this [GameMatch] and the given [GameSnapshot]
   /// by setting the [GameSnapshot]'s foreign key `matchId` to `null`.
   ///
@@ -1288,7 +1429,7 @@ class GameMatchDetachRepository {
   /// the related record.
   Future<void> snapshots(
     _i1.DatabaseSession session,
-    List<_i3.GameSnapshot> gameSnapshot, {
+    List<_i4.GameSnapshot> gameSnapshot, {
     _i1.Transaction? transaction,
   }) async {
     if (gameSnapshot.any((e) => e.id == null)) {
@@ -1298,9 +1439,9 @@ class GameMatchDetachRepository {
     var $gameSnapshot = gameSnapshot
         .map((e) => e.copyWith(matchId: null))
         .toList();
-    await session.db.update<_i3.GameSnapshot>(
+    await session.db.update<_i4.GameSnapshot>(
       $gameSnapshot,
-      columns: [_i3.GameSnapshot.t.matchId],
+      columns: [_i4.GameSnapshot.t.matchId],
       transaction: transaction,
     );
   }
@@ -1331,6 +1472,30 @@ class GameMatchDetachRowRepository {
     );
   }
 
+  /// Detaches the relation between this [GameMatch] and the given [GameMatchPresenceLease]
+  /// by setting the [GameMatchPresenceLease]'s foreign key `matchId` to `null`.
+  ///
+  /// This removes the association between the two models without deleting
+  /// the related record.
+  Future<void> presenceLeases(
+    _i1.DatabaseSession session,
+    _i3.GameMatchPresenceLease gameMatchPresenceLease, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (gameMatchPresenceLease.id == null) {
+      throw ArgumentError.notNull('gameMatchPresenceLease.id');
+    }
+
+    var $gameMatchPresenceLease = gameMatchPresenceLease.copyWith(
+      matchId: null,
+    );
+    await session.db.updateRow<_i3.GameMatchPresenceLease>(
+      $gameMatchPresenceLease,
+      columns: [_i3.GameMatchPresenceLease.t.matchId],
+      transaction: transaction,
+    );
+  }
+
   /// Detaches the relation between this [GameMatch] and the given [GameSnapshot]
   /// by setting the [GameSnapshot]'s foreign key `matchId` to `null`.
   ///
@@ -1338,7 +1503,7 @@ class GameMatchDetachRowRepository {
   /// the related record.
   Future<void> snapshots(
     _i1.DatabaseSession session,
-    _i3.GameSnapshot gameSnapshot, {
+    _i4.GameSnapshot gameSnapshot, {
     _i1.Transaction? transaction,
   }) async {
     if (gameSnapshot.id == null) {
@@ -1346,9 +1511,9 @@ class GameMatchDetachRowRepository {
     }
 
     var $gameSnapshot = gameSnapshot.copyWith(matchId: null);
-    await session.db.updateRow<_i3.GameSnapshot>(
+    await session.db.updateRow<_i4.GameSnapshot>(
       $gameSnapshot,
-      columns: [_i3.GameSnapshot.t.matchId],
+      columns: [_i4.GameSnapshot.t.matchId],
       transaction: transaction,
     );
   }

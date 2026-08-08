@@ -70,38 +70,5 @@ void main() {
 
       expect(decision.action, QuickplayLobbyAction.start);
     });
-
-    test('expires one-player waiting lobbies after the join window', () {
-      expect(
-        policy.isStaleWaitingForPlayers(
-          humanPlayers: 1,
-          minPlayers: 2,
-          createdAt: now.subtract(const Duration(seconds: 59)),
-          nowUtc: now,
-          currentAutoStartAt: null,
-        ),
-        isFalse,
-      );
-      expect(
-        policy.isStaleWaitingForPlayers(
-          humanPlayers: 1,
-          minPlayers: 2,
-          createdAt: now.subtract(const Duration(minutes: 1)),
-          nowUtc: now,
-          currentAutoStartAt: null,
-        ),
-        isTrue,
-      );
-      expect(
-        policy.isStaleWaitingForPlayers(
-          humanPlayers: 2,
-          minPlayers: 2,
-          createdAt: now.subtract(const Duration(minutes: 2)),
-          nowUtc: now,
-          currentAutoStartAt: now.add(const Duration(seconds: 10)),
-        ),
-        isFalse,
-      );
-    });
   });
 }

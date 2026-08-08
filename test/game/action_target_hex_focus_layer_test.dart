@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/action_target_hex_focus_layer.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
+import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_outline_painter.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:aonw_core/map/domain/map_config.dart';
@@ -25,8 +26,7 @@ void main() {
       expect(layer.visibleForTesting, isTrue);
       expect(layer.colForTesting, 2);
       expect(layer.rowForTesting, 3);
-      expect(layer.colorForTesting, HudPalette.actionFocus);
-      expect(layer.colorForTesting, const Color(0xFF7EE787));
+      expect(layer.colorForTesting, HudPalette.goldLight);
       expect(layer.patternForTesting, HexOutlinePattern.dashed);
       expect(layer.dashLengthForTesting, 6);
       expect(layer.gapLengthForTesting, 4);
@@ -67,6 +67,61 @@ void main() {
       layer.update(0.01);
       expect(layer.activeForTesting, isFalse);
       expect(layer.visibleForTesting, isFalse);
+    });
+
+    test('tracks the live world position of a focused unit', () {
+      var unitPosition = Vector2(24, 36);
+      final layer =
+          ActionTargetHexFocusLayer(
+            unitPositionFor: (unitId) {
+              expect(unitId, 'unit_7');
+              return unitPosition.clone();
+            },
+          )..show(
+            parent: Component(),
+            effect: const ShowActionTargetFocusEffect(
+              unitId: 'unit_7',
+              col: 2,
+              row: 3,
+            ),
+            reduceMotion: false,
+          );
+
+      expect(layer.unitIdForTesting, 'unit_7');
+      final initialPosition = HexGeometry.tilePosition(
+        col: 2,
+        row: 3,
+        hexRadius: MapConfig.defaultHexRadius,
+      );
+      expect(layer.position, initialPosition);
+
+      unitPosition = Vector2(72, 84);
+      layer.update(0.1);
+
+      expect(
+        layer.position,
+        Vector2(
+          initialPosition.x + 48,
+          initialPosition.y + 48 / HexGrid.perspectiveY,
+        ),
+      );
+    });
+
+    test('keeps a city target anchored to its map hex', () {
+      final layer =
+          ActionTargetHexFocusLayer(
+            unitPositionFor: (_) => throw StateError('unexpected unit lookup'),
+          )..show(
+            parent: Component(),
+            effect: const ShowActionTargetFocusEffect(col: 2, row: 3),
+            reduceMotion: false,
+          );
+      final initialPosition = layer.position.clone();
+
+      layer.update(0.1);
+
+      expect(layer.unitIdForTesting, isNull);
+      expect(layer.position, initialPosition);
     });
 
     test('refocuses one cue and stays visible with reduced motion', () {

@@ -44,7 +44,7 @@ class PlayerSeatAllocator {
       colorValue: _playerColors[index % _playerColors.length],
       country: country,
       kind: WirePlayerKind.human,
-      connectionState: WirePlayerConnectionState.connected,
+      connectionState: WirePlayerConnectionState.connecting,
       ready: ready,
     );
   }

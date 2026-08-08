@@ -53,6 +53,9 @@ final class MultiplayerMatchPersistenceStore {
         rethrow;
       }
       await txStore.replacePlayersForCapabilities(row.id!, match.players);
+      for (final lease in state.presenceLeases.values) {
+        await txStore.upsertPresenceLease(matchId: match.id, lease: lease);
+      }
       await GameSnapshot.db.insertRow(
         txStore.sessionForCapabilities,
         GameSnapshot(

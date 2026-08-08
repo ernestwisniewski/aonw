@@ -11,6 +11,8 @@ import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
 
 import 'src/serverpod_critical_e2e_support.dart';
 
+part 'src/serverpod_critical_e2e_lobby.dart';
+
 Future<void> main(List<String> args) async {
   late final CriticalE2eConfig config;
   try {
@@ -85,37 +87,12 @@ final class _CriticalE2e {
 
       final ownerClient = _authenticatedClient(host, ownerLogin);
       final guestClient = _authenticatedClient(host, guestLogin);
-      final created = await _request(
-        ownerClient.multiplayer.createMatch(
-          sp.CreateMatchRequest(
-            name: 'Critical E2E $runId',
-            mapName: config.mapName,
-            maxPlayers: 2,
-            minPlayers: 2,
-            private: false,
-          ),
-        ),
+      final liveMatch = await _createAndStartLiveMatch(
+        ownerClient: ownerClient,
+        guestClient: guestClient,
+        runId: runId,
       );
-      _expect(
-        created.state == 'open' && created.players.length == 1,
-        'Expected a one-player open match after create.',
-      );
-      final joined = await _request(
-        guestClient.multiplayer.joinMatch(created.id),
-      );
-      _expect(
-        joined.state == 'open' && joined.players.length == 2,
-        'Expected the guest to join the open match.',
-      );
-      final started = await _request(
-        ownerClient.multiplayer.startMatch(created.id),
-      );
-      _expect(
-        started.state == 'running' &&
-            started.turn == 1 &&
-            started.players.length == 2,
-        'Expected a running two-player match at turn 1.',
-      );
+      final started = liveMatch.started;
 
       final ownerPlayer = started.players.singleWhere(
         (player) => player.userId == '${ownerLogin.authUserId}',
@@ -140,6 +117,8 @@ final class _CriticalE2e {
         offset: 0,
         context: 'owner command stream',
       );
+      await liveMatch.ownerLobbyStream.close();
+      await liveMatch.guestLobbyStream.close();
       final retry = _submitTurnMessage(
         matchId: started.id,
         playerId: ownerPlayer.id,

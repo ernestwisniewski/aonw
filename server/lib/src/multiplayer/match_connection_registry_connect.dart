@@ -12,11 +12,16 @@ extension MatchConnectionRegistryConnect on MatchConnectionRegistry {
     required void Function(StreamSubscription<MultiplayerClientMessage>)
     setInputSubscription,
     required void Function() registerConnection,
+    required void Function() activateConnectionGeneration,
+    required bool Function() disconnectRequested,
+    required String Function() currentConnectionGeneration,
     required void Function(MatchRecipient recipient) setRecipient,
     required MatchMessageTarget Function() requireCaller,
     required Future<void> Function({bool cancelInput}) disconnect,
     required MatchConnectionAuthorizer authorize,
-    required MatchConnectionStateUpdater updateConnectionState,
+    required MatchParticipantConnected participantConnected,
+    required MatchPresenceRenewer renewPresence,
+    required String connectionGeneration,
     required MatchClientMessageHandler handleClientMessage,
     required MatchServerMessageFactory createMessage,
   }) async {
@@ -41,21 +46,15 @@ extension MatchConnectionRegistryConnect on MatchConnectionRegistry {
           matchId: matchId,
           userIdentifier: userIdentifier,
         );
+        if (disconnectRequested()) return;
         var state = authorization.state;
         final player = authorization.participant;
-        final participantIsAuthorized =
-            player.userId == userIdentifier &&
-            state.match.players.any(
-              (candidate) =>
-                  candidate.id == player.id &&
-                  candidate.userId == userIdentifier,
-            );
-        if (!participantIsAuthorized) {
-          throw multiplayerException(
-            'authorization_mismatch',
-            'Authenticated player does not match the authorized participant.',
-          );
-        }
+        _requireAuthorizedParticipant(
+          state: state,
+          player: player,
+          userIdentifier: userIdentifier,
+        );
+        if (disconnectRequested()) return;
         final reconnect =
             afterOffset > 0 ||
             player.connectionState == WirePlayerConnectionState.offline ||
@@ -64,18 +63,19 @@ extension MatchConnectionRegistryConnect on MatchConnectionRegistry {
           MatchRecipient(userIdentifier: userIdentifier, playerId: player.id),
         );
         registerConnection();
-        if (player.connectionState != WirePlayerConnectionState.connected) {
-          state = await updateConnectionState(
-            store: store,
-            matchId: matchId,
-            userIdentifier: userIdentifier,
-            connectionState: WirePlayerConnectionState.connected,
-          );
-        }
+        state = await participantConnected(
+          store: store,
+          matchId: matchId,
+          userIdentifier: userIdentifier,
+          connectionGeneration: connectionGeneration,
+        );
+        activateConnectionGeneration();
+        if (disconnectRequested()) return;
         final backlogAfterOffset = afterOffset > state.offset
             ? afterOffset
             : state.offset;
         final backlog = await store.listEvents(matchId, backlogAfterOffset);
+        if (disconnectRequested()) return;
         setInputSubscription(
           input.listen(
             (message) {
@@ -89,12 +89,18 @@ extension MatchConnectionRegistryConnect on MatchConnectionRegistry {
               unawaited(
                 _enqueueMatch(
                       matchId,
-                      () => handleClientMessage(
+                      () => _handleAdmittedInput(
                         store: store,
                         matchId: matchId,
                         userIdentifier: userIdentifier,
                         message: message,
-                        caller: requireCaller(),
+                        disconnectRequested: disconnectRequested,
+                        currentConnectionGeneration:
+                            currentConnectionGeneration,
+                        renewPresence: renewPresence,
+                        rejectPresence: rejectInput,
+                        handleClientMessage: handleClientMessage,
+                        requireCaller: requireCaller,
                       ),
                     )
                     .catchError((Object error, StackTrace stackTrace) {
@@ -114,29 +120,119 @@ extension MatchConnectionRegistryConnect on MatchConnectionRegistry {
             },
           ),
         );
+        if (disconnectRequested()) return;
         _subscribe(matchId, requireCaller());
         store.operationalEvents.streamConnected(
           matchId: state.match.id,
           reconnect: reconnect,
         );
-        emit(
-          createMessage(
-            matchId: matchId,
-            offset: state.offset,
-            match: state.match,
-            snapshot: state.snapshot,
-          ),
+        _emitInitialConnectionState(
+          state: state,
+          backlog: backlog,
+          emit: emit,
+          createMessage: createMessage,
         );
-        for (final event in backlog) {
-          emit(
-            createMessage(matchId: matchId, offset: event.offset, event: event),
-          );
-        }
       });
     } catch (error, stackTrace) {
       await disconnect();
       controller.addError(error, stackTrace);
       await controller.close();
+    }
+  }
+
+  Future<void> _handleAdmittedInput({
+    required MultiplayerMatchStore store,
+    required String matchId,
+    required String userIdentifier,
+    required MultiplayerClientMessage message,
+    required bool Function() disconnectRequested,
+    required String Function() currentConnectionGeneration,
+    required MatchPresenceRenewer renewPresence,
+    required void Function(Object error, StackTrace stackTrace) rejectPresence,
+    required MatchClientMessageHandler handleClientMessage,
+    required MatchMessageTarget Function() requireCaller,
+  }) async {
+    if (disconnectRequested()) return;
+    final renewed = await _renewPresenceOrReject(
+      store: store,
+      matchId: matchId,
+      userIdentifier: userIdentifier,
+      connectionGeneration: currentConnectionGeneration(),
+      renewPresence: renewPresence,
+      rejectPresence: rejectPresence,
+    );
+    if (!renewed || disconnectRequested()) return;
+    await handleClientMessage(
+      store: store,
+      matchId: matchId,
+      userIdentifier: userIdentifier,
+      message: message,
+      caller: requireCaller(),
+    );
+  }
+
+  Future<bool> _renewPresenceOrReject({
+    required MultiplayerMatchStore store,
+    required String matchId,
+    required String userIdentifier,
+    required String connectionGeneration,
+    required MatchPresenceRenewer renewPresence,
+    required void Function(Object error, StackTrace stackTrace) rejectPresence,
+  }) async {
+    try {
+      await renewPresence(
+        store: store,
+        matchId: matchId,
+        userIdentifier: userIdentifier,
+        connectionGeneration: connectionGeneration,
+      );
+      return true;
+    } catch (error, stackTrace) {
+      rejectPresence(error, stackTrace);
+      return false;
+    }
+  }
+
+  void _requireAuthorizedParticipant({
+    required StoredMatchState state,
+    required WirePlayer player,
+    required String userIdentifier,
+  }) {
+    final authorized =
+        player.userId == userIdentifier &&
+        state.match.players.any(
+          (candidate) =>
+              candidate.id == player.id && candidate.userId == userIdentifier,
+        );
+    if (authorized) return;
+    throw multiplayerException(
+      'authorization_mismatch',
+      'Authenticated player does not match the authorized participant.',
+    );
+  }
+
+  void _emitInitialConnectionState({
+    required StoredMatchState state,
+    required List<WireEvent> backlog,
+    required MatchServerMessageSink emit,
+    required MatchServerMessageFactory createMessage,
+  }) {
+    emit(
+      createMessage(
+        matchId: state.match.id,
+        offset: state.offset,
+        match: state.match,
+        snapshot: state.snapshot,
+      ),
+    );
+    for (final event in backlog) {
+      emit(
+        createMessage(
+          matchId: state.match.id,
+          offset: event.offset,
+          event: event,
+        ),
+      );
     }
   }
 }

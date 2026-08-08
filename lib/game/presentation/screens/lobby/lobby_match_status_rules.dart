@@ -4,12 +4,16 @@ import 'package:aonw_core/protocol.dart';
 abstract final class LobbyMatchStatusRules {
   static const defaultMinimumHumanPlayers = 2;
   static const defaultMaximumPlayers = 4;
+  static const _roster = LobbyRosterPolicy();
 
-  static int humanPlayerCount(WireMatch? match, {int whenMissing = 0}) {
+  static int humanMemberCount(WireMatch? match, {int whenMissing = 0}) {
     if (match == null) return whenMissing;
-    return match.players
-        .where((player) => player.kind == WirePlayerKind.human)
-        .length;
+    return _roster.humanMemberCount(match);
+  }
+
+  static int connectedHumanCount(WireMatch? match, {int whenMissing = 0}) {
+    if (match == null) return whenMissing;
+    return _roster.connectedHumanCount(match);
   }
 
   static int requiredHumanPlayers(WireMatch? match) {
@@ -23,8 +27,20 @@ abstract final class LobbyMatchStatusRules {
     return match?.maxPlayers ?? defaultMaximumPlayers;
   }
 
-  static bool hasRequiredHumans(WireMatch match) {
-    return humanPlayerCount(match) >= requiredHumanPlayers(match);
+  static bool hasRequiredHumanMembers(WireMatch match) {
+    return humanMemberCount(match) >= requiredHumanPlayers(match);
+  }
+
+  static bool canStart(WireMatch match) {
+    return _roster.canStart(match);
+  }
+
+  static bool containsUser(WireMatch match, String userId) {
+    return _roster.containsUser(match, userId);
+  }
+
+  static bool hasConnectedOwner(WireMatch match) {
+    return _roster.hasConnectedOwner(match);
   }
 
   static bool canLoadOrRun(WireMatch match) {
@@ -48,7 +64,7 @@ abstract final class LobbyMatchStatusRules {
   }
 
   static bool canEnter(WireMatch match) {
-    return canLoadOrRun(match) && hasRequiredHumans(match);
+    return canLoadOrRun(match) && hasRequiredHumanMembers(match);
   }
 
   static bool isTerminal(WireMatch match) {
@@ -77,7 +93,7 @@ abstract final class LobbyMatchStatusRules {
       return false;
     }
     if (!isOwner(match, userId)) return false;
-    return hasRequiredHumans(match);
+    return canStart(match);
   }
 
   static ClientObservedMatchLifecycleState? _observedLifecycle(

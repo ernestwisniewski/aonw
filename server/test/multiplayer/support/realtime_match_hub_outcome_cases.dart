@@ -37,11 +37,6 @@ typedef _NaturalOutcomeClient = ({
   Stream<MultiplayerServerMessage> stream,
 });
 
-typedef _NaturalOutcomeCompletion = ({
-  StoredMatchState authoritative,
-  MultiplayerClientMessage finishingCommand,
-});
-
 void _registerRealtimeMatchHubOutcomeTests() {
   test(
     'broadcasts identical draw terminal metadata to caller and peer',
@@ -49,7 +44,7 @@ void _registerRealtimeMatchHubOutcomeTests() {
   );
 
   test(
-    'persists a natural outcome and rejects later multiplayer commands',
+    'persists a natural outcome and closes its stale presence stream',
     _verifyNaturalOutcomePersistence,
   );
 }
@@ -59,19 +54,13 @@ Future<void> _verifyNaturalOutcomePersistence() async {
   await _seedNaturalOutcome(fixture);
   final client = await _connectNaturalOutcomeClient(fixture);
   try {
-    final completion = await _finishNaturalOutcome(
+    final authoritative = await _finishNaturalOutcome(
       fixture: fixture,
       client: client,
     );
-    await _expectNaturalOutcomeDuplicate(
-      fixture: fixture,
+    await _expectNaturalOutcomeStreamClosed(
       client: client,
-      finishingCommand: completion.finishingCommand,
-    );
-    await _expectCommandAfterNaturalOutcomeRejected(
-      fixture: fixture,
-      client: client,
-      authoritativeOffset: completion.authoritative.offset,
+      authoritativeOffset: authoritative.offset,
     );
     await _expectNaturalOutcomeSurvivesLeave(fixture);
   } finally {
@@ -98,10 +87,22 @@ Future<_NaturalOutcomeFixture> _startNaturalOutcomeFixture() async {
       private: false,
     ),
   );
+  await _connectTestParticipant(
+    hub: hub,
+    store: store,
+    userIdentifier: 'owner-user',
+    matchId: open.id,
+  );
   final joined = await hub.joinMatch(
     store: store,
     userIdentifier: 'guest-user',
     matchId: open.id,
+  );
+  await _connectTestParticipant(
+    hub: hub,
+    store: store,
+    userIdentifier: 'guest-user',
+    matchId: joined.id,
   );
   final match = await hub.startMatch(
     store: store,
@@ -159,7 +160,7 @@ Future<_NaturalOutcomeClient> _connectNaturalOutcomeClient(
   return (input: input, stream: stream);
 }
 
-Future<_NaturalOutcomeCompletion> _finishNaturalOutcome({
+Future<StoredMatchState> _finishNaturalOutcome({
   required _NaturalOutcomeFixture fixture,
   required _NaturalOutcomeClient client,
 }) async {
@@ -178,7 +179,7 @@ Future<_NaturalOutcomeCompletion> _finishNaturalOutcome({
   expect(authoritative.match.outcomeCondition, 'conquest');
   expect(authoritative.match.winnerPlayerId, fixture.owner.id);
   expect(authoritative.snapshot.state['phase'], 'finished');
-  return (authoritative: authoritative, finishingCommand: finishingCommand);
+  return authoritative;
 }
 
 MultiplayerClientMessage _naturalOutcomeCommand(
@@ -198,49 +199,35 @@ MultiplayerClientMessage _naturalOutcomeCommand(
   );
 }
 
-Future<void> _expectNaturalOutcomeDuplicate({
-  required _NaturalOutcomeFixture fixture,
-  required _NaturalOutcomeClient client,
-  required MultiplayerClientMessage finishingCommand,
-}) async {
-  final duplicateAck = client.stream.firstWhere(
-    (message) => message.ack != null,
-  );
-  client.input.add(finishingCommand);
-  final duplicateMessage = await duplicateAck;
-
-  expect(duplicateMessage.ack!.accepted, isTrue);
-  expect(duplicateMessage.match?.state, 'finished');
-  expect(duplicateMessage.match?.outcomeCondition, 'conquest');
-  expect(duplicateMessage.match?.winnerPlayerId, fixture.owner.id);
-}
-
-Future<void> _expectCommandAfterNaturalOutcomeRejected({
-  required _NaturalOutcomeFixture fixture,
+Future<void> _expectNaturalOutcomeStreamClosed({
   required _NaturalOutcomeClient client,
   required int authoritativeOffset,
 }) async {
-  final rejectedAck = client.stream.firstWhere(
-    (message) => message.ack != null,
+  final error = Completer<Object>();
+  final done = Completer<void>();
+  final messages = <MultiplayerServerMessage>[];
+  final monitor = client.stream.listen(
+    messages.add,
+    onError: (Object value) {
+      if (!error.isCompleted) error.complete(value);
+    },
+    onDone: done.complete,
   );
   client.input.add(
     MultiplayerClientMessage(
-      clientMessageId: 'command-after-finish',
+      clientMessageId: 'heartbeat-after-finish',
       lastSeenOffset: authoritativeOffset,
-      requestSnapshot: false,
-      command: WireCommand(
-        matchId: fixture.match.id,
-        tick: 2,
-        turn: 1,
-        actorPlayerId: fixture.owner.id,
-        command: DomainCommandCodec.toJson(SubmitTurnCommand(fixture.owner.id)),
-      ),
+      requestSnapshot: true,
     ),
   );
-  final rejectedMessage = await rejectedAck;
 
-  expect(rejectedMessage.ack!.accepted, isFalse);
-  expect(rejectedMessage.ack!.reason, 'match_not_running');
+  expect(
+    await error.future.timeout(const Duration(seconds: 1)),
+    _multiplayerError('not_match_player'),
+  );
+  await done.future.timeout(const Duration(seconds: 1));
+  expect(messages, isEmpty);
+  await monitor.cancel();
 }
 
 Future<void> _expectNaturalOutcomeSurvivesLeave(

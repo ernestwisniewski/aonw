@@ -142,6 +142,21 @@ void main() {
       expect(transition.effects, isEmpty);
     });
 
+    test('replacing into a match publishes its initial transport state', () {
+      final session = _session(matchId: 'match_1');
+
+      final transition = reducer.reduce(
+        NetworkSessionTransportState(session: _session()),
+        ReplaceNetworkSessionAction(session),
+      );
+
+      final effect =
+          transition.effects.single as PublishNetworkTransportStatusEffect;
+      expect(effect.saveId, 'match_1');
+      expect(effect.status, NetworkConnectionStatus.connected);
+      expect(effect.changedAt, session.connectionState.changedAt);
+    });
+
     test('clears active match and emits cleanup effects', () {
       final session = _session(matchId: 'match_1');
       final transition = reducer.reduce(

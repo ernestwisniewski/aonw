@@ -20,7 +20,19 @@ void _registerRealtimeMatchHubQueryProjectionsScenarios() {
           private: false,
         ),
       );
+      await _connectTestParticipant(
+        hub: hub,
+        store: store,
+        userIdentifier: 'owner-user',
+        matchId: match.id,
+      );
       await hub.joinMatch(
+        store: store,
+        userIdentifier: 'guest-user',
+        matchId: match.id,
+      );
+      await _connectTestParticipant(
+        hub: hub,
         store: store,
         userIdentifier: 'guest-user',
         matchId: match.id,
@@ -273,6 +285,12 @@ void _registerRealtimeMatchHubQueryProjectionsScenarios() {
         private: false,
       ),
     );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'public-owner',
+      matchId: publicLobby.id,
+    );
     final privateLobby = await hub.createMatch(
       store: store,
       userIdentifier: 'private-owner',
@@ -295,7 +313,19 @@ void _registerRealtimeMatchHubQueryProjectionsScenarios() {
         private: false,
       ),
     );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'resume-owner',
+      matchId: runningOpen.id,
+    );
     await hub.joinMatch(
+      store: store,
+      userIdentifier: 'viewer-user',
+      matchId: runningOpen.id,
+    );
+    await _connectTestParticipant(
+      hub: hub,
       store: store,
       userIdentifier: 'viewer-user',
       matchId: runningOpen.id,
@@ -381,6 +411,12 @@ void _registerRealtimeMatchHubQueryProjectionsScenarios() {
             minPlayers: 2,
             private: false,
           ),
+        );
+        await _connectTestParticipant(
+          hub: hub,
+          store: store,
+          userIdentifier: viewerOwnsMatch ? viewer : 'public-owner-$index',
+          matchId: created.id,
         );
         var state = (await store.findState(created.id))!;
         state = state.copyWith(

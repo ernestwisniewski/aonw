@@ -3,9 +3,9 @@ import 'package:test/test.dart';
 
 void main() {
   test('reviewed multiplayer compatibility inventory is explicit', () {
-    expect(kCurrentMultiplayerVersion, 3);
+    expect(kCurrentMultiplayerVersion, 4);
     expect(kLegacyUndeclaredMultiplayerVersion, 1);
-    expect(kCompatibleMultiplayerVersions, {3});
+    expect(kCompatibleMultiplayerVersions, {4});
   });
 
   test('current multiplayer version is explicitly compatible', () {
@@ -31,7 +31,7 @@ void main() {
   });
 
   test('removed, malformed-equivalent, and future revisions fail closed', () {
-    for (final version in const [-1, 0, 1, 2, 4]) {
+    for (final version in const [-1, 0, 1, 2, 3, 5]) {
       expect(
         multiplayerVersionCompatibility(version),
         MultiplayerVersionCompatibility.unsupported,

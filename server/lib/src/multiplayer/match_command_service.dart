@@ -159,6 +159,25 @@ final class MatchCommandService {
   }
 }
 
+extension _MatchCommandStore on MultiplayerMatchStore {
+  Future<void> _appendEventAndFinalizePresence(
+    StoredMatchState state,
+    WireEvent event, {
+    required String actorPlayerId,
+    required String clientMessageId,
+  }) async {
+    await appendEvent(
+      state,
+      event,
+      actorPlayerId: actorPlayerId,
+      clientMessageId: clientMessageId,
+    );
+    if (_matchLifecycleStateAdapter.lifecycleOf(state).isTerminal) {
+      await deletePresenceLeases(state.match.id);
+    }
+  }
+}
+
 List<Map<String, dynamic>> _eventAudienceForStorage({
   required List<GameEvent> events,
   required Iterable<String> participantPlayerIds,

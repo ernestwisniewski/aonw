@@ -1,6 +1,9 @@
 /// Maximum number of running matches inspected by one timeout sweep.
 const multiplayerRunningMatchPageSize = 64;
 
+/// Maximum number of expired presence leases inspected by one sweep page.
+const multiplayerPresenceLeasePageSize = 64;
+
 /// Participant-owned active matches are queried independently so a busy public
 /// lobby list cannot hide private or resumable matches from the caller.
 const multiplayerVisibleParticipantMatchLimit = 64;

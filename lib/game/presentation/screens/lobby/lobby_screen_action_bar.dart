@@ -178,7 +178,7 @@ final class _LobbyActionBarBuilder {
   }
 
   bool _isWaitingForRequiredPlayers(WireMatch match) {
-    return LobbyMatchStatusRules.humanPlayerCount(match) <
+    return LobbyMatchStatusRules.connectedHumanCount(match) <
         LobbyMatchStatusRules.requiredHumanPlayers(match);
   }
 
@@ -191,7 +191,7 @@ final class _LobbyActionBarBuilder {
   String _playersSubtitle(WireMatch? match) {
     if (match == null) return l10n.multiplayerQueueConnectingSubtitle;
     return l10n.matchPlayersCount(
-      LobbyMatchStatusRules.humanPlayerCount(match),
+      LobbyMatchStatusRules.connectedHumanCount(match),
       match.maxPlayers,
     );
   }

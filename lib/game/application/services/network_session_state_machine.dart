@@ -147,6 +147,15 @@ final class NetworkSessionReducer {
     final effects = <NetworkSessionEffect>[
       if (current.transportSaveId != null)
         ClearNetworkTransportStatusEffect(current.transportSaveId!),
+      if (matchId != null &&
+          session != null &&
+          session.connectionState.changedAt != null)
+        PublishNetworkTransportStatusEffect(
+          saveId: matchId,
+          status: session.connectionState.status,
+          changedAt: session.connectionState.changedAt!,
+          message: session.connectionState.lastError,
+        ),
     ];
     return NetworkSessionTransition(
       state: NetworkSessionTransportState(

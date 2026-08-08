@@ -56,6 +56,7 @@ void main() {
       final focus = result.uiEffects
           .whereType<ShowActionTargetFocusEffect>()
           .single;
+      expect(focus.unitId, unit.id);
       expect(focus.col, 1);
       expect(focus.row, 1);
       expect(
@@ -107,6 +108,7 @@ void main() {
     final focus = result.uiEffects
         .whereType<ShowActionTargetFocusEffect>()
         .single;
+    expect(focus.unitId, isNull);
     expect(focus.col, city.center.col);
     expect(focus.row, city.center.row);
   });

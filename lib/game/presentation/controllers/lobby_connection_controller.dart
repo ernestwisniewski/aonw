@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aonw/game/application/ports/live_multiplayer_events.dart';
 import 'package:aonw/game/application/ports/multiplayer_failure.dart';
 import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
 import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/ports/network_session_store.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_auto_start_coordinator.dart';
@@ -20,6 +21,7 @@ import 'package:flutter/foundation.dart';
 
 part 'lobby_connection_public_actions.dart';
 part 'lobby_connection_session_actions.dart';
+part 'lobby_connection_match_state.dart';
 
 enum LobbyMultiplayerMode {
   home,
@@ -51,6 +53,14 @@ typedef LobbyConnectionMessageReader = String Function();
 typedef LobbyConnectionErrorText = String Function(Object error);
 typedef LobbyConnectionErrorPresenter = void Function(String message);
 typedef LobbyConnectionMatchPublisher = void Function(WireMatch match);
+typedef LobbyConnectionMatchInvalidator = void Function(String matchId);
+typedef LobbyConnectionUnavailablePresenter = void Function();
+typedef LobbyConnectionTransportStatusReporter =
+    void Function({
+      required String matchId,
+      required NetworkConnectionStatus status,
+      String? message,
+    });
 typedef LobbyConnectionRouter = void Function(String location);
 
 final class LobbyConnectionController extends ChangeNotifier {
@@ -76,6 +86,9 @@ final class LobbyConnectionController extends ChangeNotifier {
   final LobbyConnectionErrorText errorTextFor;
   final LobbyConnectionErrorPresenter presentError;
   final LobbyConnectionMatchPublisher publishMatch;
+  final LobbyConnectionMatchInvalidator? invalidatePublishedMatch;
+  final LobbyConnectionUnavailablePresenter? presentLobbyUnavailable;
+  final LobbyConnectionTransportStatusReporter? reportTransportStatus;
   final LobbyConnectionRouter navigateTo;
   final LobbyValidSessionEnsurer? ensureValidSession;
 
@@ -89,6 +102,8 @@ final class LobbyConnectionController extends ChangeNotifier {
   WireMatch? _activeMatch;
   List<WireMatch> _publicMatches = const [];
   bool _publicMatchesLoaded = false;
+  int _publicRefreshGeneration = 0;
+  final Set<String> _unavailableMatchIds = <String>{};
   bool _disposed = false;
 
   LobbyConnectionController({
@@ -114,6 +129,9 @@ final class LobbyConnectionController extends ChangeNotifier {
     required this.errorTextFor,
     required this.presentError,
     required this.publishMatch,
+    this.invalidatePublishedMatch,
+    this.presentLobbyUnavailable,
+    this.reportTransportStatus,
     required this.navigateTo,
     this.ensureValidSession,
   }) {
@@ -130,7 +148,7 @@ final class LobbyConnectionController extends ChangeNotifier {
       canContinue: _canContinue,
       subscribe: _subscribeLobbyMatch,
       applyMatchUpdate: _applyLobbyMatchUpdateNow,
-      showError: _showNetworkError,
+      showError: _handleLobbyStreamError,
       reportStreamError: _shouldReportLobbyStreamError,
       defer: (action) => unawaited(Future<void>(action)),
     );
@@ -168,8 +186,8 @@ final class LobbyConnectionController extends ChangeNotifier {
             _mode == LobbyMultiplayerMode.privateJoin);
   }
 
-  int humanPlayerCount({int whenMissing = 1}) {
-    return LobbyMatchStatusRules.humanPlayerCount(
+  int connectedHumanPlayerCount({int whenMissing = 0}) {
+    return LobbyMatchStatusRules.connectedHumanCount(
       _activeMatch,
       whenMissing: whenMissing,
     );
@@ -203,7 +221,7 @@ final class LobbyConnectionController extends ChangeNotifier {
     stopLobbyUpdates();
     await _runNetworkAction(() async {
       await _matchActionCoordinator().createPrivate(_matchActionConfig());
-      if (!_canContinue()) return;
+      if (!_canContinue() || _activeMatch == null) return;
       _setMode(LobbyMultiplayerMode.privateHost);
     });
   }
@@ -224,7 +242,7 @@ final class LobbyConnectionController extends ChangeNotifier {
         inviteCodeRequiredMessage: inviteCodeRequiredMessage(),
         config: _matchActionConfig(),
       );
-      if (!_canContinue()) return;
+      if (!_canContinue() || _activeMatch == null) return;
       _setMode(LobbyMultiplayerMode.privateJoin);
     });
   }
@@ -266,8 +284,12 @@ final class LobbyConnectionController extends ChangeNotifier {
   }
 
   void stopLobbyUpdates() {
+    unawaited(_stopLobbyUpdatesAndWait());
+  }
+
+  Future<void> _stopLobbyUpdatesAndWait() async {
     _stopLobbyUpdateCoordinators(this);
-    unawaited(_liveMatchCoordinator.close());
+    await _liveMatchCoordinator.close();
   }
 
   Future<void> _joinQuickplayQueue() async {
@@ -303,126 +325,6 @@ final class LobbyConnectionController extends ChangeNotifier {
     }
     final match = _activeMatch;
     return match == null || LobbyMatchStatusRules.canEnter(match);
-  }
-
-  LobbyMatchActionCoordinator _matchActionCoordinator() {
-    return LobbyMatchActionCoordinator(
-      ensureSession: _ensureNetworkSession,
-      validateMap: validateMap,
-      quickplay: sessionClient.quickplay,
-      listMatches: sessionClient.listMatches,
-      createMatch: sessionClient.createMatch,
-      joinMatch: sessionClient.joinMatch,
-      createPrivateMatch: sessionClient.createPrivateMatch,
-      joinPrivateMatch: sessionClient.joinPrivateMatch,
-      startMatch: sessionClient.startMatch,
-      loadMatch: sessionClient.loadMatch,
-      leaveMatch: sessionClient.leaveMatch,
-      rememberMatch: _rememberActiveMatch,
-      watchMatch: _liveMatchCoordinator.watch,
-      clearMatch: (session) {
-        _clearNetworkActiveMatch(session);
-        _setActiveMatch(null);
-      },
-      enterMatch: _enterMultiplayerMatch,
-      scheduleAutoStartRefresh: _scheduleAutoStartRefresh,
-      stopLobbyUpdates: stopLobbyUpdates,
-      canContinue: _canContinue,
-    );
-  }
-
-  LobbyMatchActionConfig _matchActionConfig() {
-    return LobbyMatchActionConfig(
-      mapName: mapName,
-      country: country(),
-      mapNotReadyMessage: mapNotReadyMessage(),
-    );
-  }
-
-  void _rememberActiveMatch({
-    required NetworkSession session,
-    required WireMatch match,
-  }) {
-    _setActiveMatch(match);
-    publishMatch(match);
-    _networkSessionCoordinator().applyActiveMatch(
-      session: session,
-      match: match,
-    );
-  }
-
-  void _clearNetworkActiveMatch(NetworkSession session) {
-    _networkSessionCoordinator().clearActiveMatch(session);
-  }
-
-  void _enterMultiplayerMatch({
-    required NetworkSession session,
-    required WireMatch match,
-  }) {
-    _matchNavigationCoordinator.enter(session: session, match: match);
-  }
-
-  LobbyNetworkSessionCoordinator _networkSessionCoordinator() {
-    return LobbyNetworkSessionCoordinator(
-      currentSession: currentSession,
-      setSession: _setNetworkSessionDeferred,
-      loadStoredSession: sessionStore.load,
-      saveStoredSession: sessionStore.save,
-      clearStoredSession: sessionStore.clear,
-      saveMatchId: sessionStore.saveMatchId,
-      refreshToken: sessionClient.refresh,
-      now: now,
-      ensureValidSession: ensureValidSession,
-      terminateSession: terminateSession,
-    );
-  }
-
-  void _setNetworkSessionDeferred(NetworkSession? session) {
-    unawaited(
-      Future<void>(() {
-        if (!_canContinue()) return;
-        setSession(session);
-      }),
-    );
-  }
-
-  Future<LobbyLiveMatchStreamHandle> _subscribeLobbyMatch({
-    required NetworkSession session,
-    required WireMatch match,
-    required void Function(WireMatch match) onMatch,
-    required void Function(Object error, StackTrace stackTrace) onError,
-  }) async {
-    final handle = await liveEvents.subscribe(
-      matchId: match.id,
-      token: session.token,
-      fromOffset: 0,
-      onEvent: (_) {},
-      onSnapshotResync: (_) {},
-      onMatch: onMatch,
-      onError: onError,
-    );
-    return LiveEventLobbyMatchStreamHandle(handle);
-  }
-
-  void _applyLobbyMatchUpdateNow({
-    required NetworkSession session,
-    required WireMatch match,
-  }) {
-    if (!_canContinue() || _activeMatch?.id != match.id) return;
-    if (!session.isConnected) return;
-    _rememberActiveMatch(session: session, match: match);
-    if (!_canContinue()) return;
-    _setError(null);
-    if (LobbyMatchStatusRules.canEnter(match)) {
-      stopLobbyUpdates();
-      _enterMultiplayerMatch(session: session, match: match);
-    } else {
-      _scheduleAutoStartRefresh(match);
-    }
-  }
-
-  void _scheduleAutoStartRefresh(WireMatch match) {
-    _autoStartCoordinator.schedule(match);
   }
 
   void _setState({

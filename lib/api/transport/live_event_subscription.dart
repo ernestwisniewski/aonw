@@ -6,6 +6,7 @@ import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/session/serverpod_multiplayer_failure_mapper.dart';
 import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw/game/application/ports/live_multiplayer_events.dart';
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
 import 'package:aonw/game/application/ports/network_session_authentication.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/protocol.dart';
@@ -13,6 +14,7 @@ import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter/foundation.dart';
 
 part 'live_event_subscription_echo_guard.dart';
+part 'live_event_subscription_connection.dart';
 
 const _defaultReconnectDelays = [
   Duration(seconds: 1),
@@ -31,6 +33,8 @@ typedef MultiplayerStreamConnector =
       required Stream<sp.MultiplayerClientMessage> input,
     });
 typedef MultiplayerAuthTokenReader = Future<AuthToken> Function();
+typedef LiveHeartbeatTimerFactory =
+    Timer Function(Duration interval, void Function(Timer timer) onTick);
 typedef ServerpodMultiplayerStreamConnection = ({
   Stream<sp.MultiplayerServerMessage> messages,
   void Function() close,
@@ -160,12 +164,16 @@ class LiveEventSubscription implements LiveMultiplayerEvents {
   final EventCodec eventCodec;
   final SnapshotCodec snapshotCodec;
   final MultiplayerStreamConnector _connect;
+  final Duration heartbeatInterval;
+  final LiveHeartbeatTimerFactory heartbeatTimerFactory;
 
   LiveEventSubscription({
     required String serverpodHost,
     MultiplayerStreamConnector? connector,
     this.eventCodec = const EventCodec(),
     this.snapshotCodec = const SnapshotCodec(),
+    this.heartbeatInterval = const Duration(seconds: 10),
+    this.heartbeatTimerFactory = Timer.periodic,
   }) : _connect =
            connector ??
            ServerpodMultiplayerStreamConnector(serverpodHost).connect;
@@ -203,6 +211,8 @@ class LiveEventSubscription implements LiveMultiplayerEvents {
       onError: onError,
       onDone: onDone,
       reconnectDelays: reconnectDelays,
+      heartbeatInterval: heartbeatInterval,
+      heartbeatTimerFactory: heartbeatTimerFactory,
     );
     await controller.start();
     return LiveEventSubscriptionHandle._(controller);
@@ -232,6 +242,8 @@ class _LiveEventSubscriptionController {
   final void Function(Object error, StackTrace stackTrace)? onError;
   final void Function()? onDone;
   final List<Duration> reconnectDelays;
+  final Duration heartbeatInterval;
+  final LiveHeartbeatTimerFactory heartbeatTimerFactory;
 
   StreamController<sp.MultiplayerClientMessage>? _input;
   StreamSubscription<sp.MultiplayerServerMessage>? _subscription;
@@ -239,6 +251,8 @@ class _LiveEventSubscriptionController {
   var _trackedNextOffset = 0;
   var _closed = false;
   var _reconnecting = false;
+  Timer? _heartbeatTimer;
+  var _heartbeatSequence = 0;
 
   _LiveEventSubscriptionController({
     required this.connect,
@@ -257,6 +271,8 @@ class _LiveEventSubscriptionController {
     required this.onError,
     required this.onDone,
     required this.reconnectDelays,
+    required this.heartbeatInterval,
+    required this.heartbeatTimerFactory,
   }) : _trackedNextOffset = fromOffset;
 
   Future<void> start() {
@@ -306,48 +322,6 @@ class _LiveEventSubscriptionController {
     );
   }
 
-  Future<void> _connectOnce() async {
-    final currentToken = await tokenReader?.call() ?? token;
-    final input = StreamController<sp.MultiplayerClientMessage>();
-    late final Stream<sp.MultiplayerServerMessage> messages;
-    try {
-      messages = connect(
-        matchId: matchId,
-        token: currentToken,
-        afterOffset: _afterOffsetForReconnect(),
-        input: input.stream,
-      );
-    } catch (_) {
-      await input.close();
-      rethrow;
-    }
-    if (_closed) {
-      await input.close();
-      return;
-    }
-    onConnected?.call();
-    _input = input;
-    _subscription = messages.listen(
-      (message) {
-        try {
-          _handleMessage(message);
-        } catch (error, stackTrace) {
-          _reportError(error, stackTrace);
-        }
-      },
-      onError: (Object error, StackTrace stackTrace) {
-        _reportError(error, stackTrace);
-        unawaited(_reconnect());
-      },
-      onDone: () {
-        if (_closed) return;
-        onDone?.call();
-        unawaited(_reconnect());
-      },
-      cancelOnError: false,
-    );
-  }
-
   void _handleMessage(sp.MultiplayerServerMessage message) {
     final ack = message.ack;
     if (ack != null) _completeNextAck(ack);
@@ -380,49 +354,6 @@ class _LiveEventSubscriptionController {
         ),
       );
     }
-  }
-
-  Future<void> _reconnect() async {
-    if (_closed || _reconnecting) return;
-    _reconnecting = true;
-    onReconnecting?.call();
-    await _disconnectCurrent();
-    var attempt = 0;
-    while (!_closed) {
-      final delay = _reconnectDelay(attempt);
-      if (delay > Duration.zero) {
-        await Future<void>.delayed(delay);
-      }
-      if (_closed) break;
-      try {
-        await _connectOnce();
-        _reconnecting = false;
-        return;
-      } catch (error, stackTrace) {
-        _reportError(error, stackTrace);
-        if (error is NetworkSessionAuthenticationException) {
-          _closed = true;
-          await _disconnectCurrent();
-          break;
-        }
-        attempt += 1;
-      }
-    }
-    _reconnecting = false;
-  }
-
-  Future<void> _disconnectCurrent() async {
-    final subscription = _subscription;
-    final input = _input;
-    _subscription = null;
-    _input = null;
-    _failPendingAcks(TimeoutException('Live event stream disconnected.'));
-    await subscription?.cancel();
-    await input?.close();
-  }
-
-  void _reportError(Object error, StackTrace stackTrace) {
-    onError?.call(mapServerpodMultiplayerFailure(error), stackTrace);
   }
 
   int _offsetForReconnect() {

@@ -19,6 +19,7 @@ fields:
   autoStartAt: DateTime?
   inviteCode: String?
   players: List<GamePlayer>?, relation(name=match_players)
+  presenceLeases: List<GameMatchPresenceLease>?, relation(name=match_presence_leases), scope=serverOnly
   snapshots: List<GameSnapshot>?, relation(name=match_snapshots)
   events: List<GameEvent>?, relation(name=match_events)
 indexes:

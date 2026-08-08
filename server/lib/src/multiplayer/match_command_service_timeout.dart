@@ -95,7 +95,7 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
         snapshot: nextSnapshot,
         now: now,
       );
-      await txStore.appendEvent(
+      await txStore._appendEventAndFinalizePresence(
         updated,
         event,
         actorPlayerId: actorPlayerId,
@@ -143,6 +143,7 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
       endedAt: now,
     );
     await store.saveState(abandoned);
+    await store.deletePresenceLeases(abandoned.match.id);
     return MatchMutationOutcome<bool>(
       true,
       notifications: MatchNotificationPlan.broadcastState(abandoned),

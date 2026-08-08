@@ -81,6 +81,14 @@ The bootstrap revision is multiplayer version 2. Undeclared clients represent
 legacy revision 1, and revisions 1 and 2 are compatible because this change
 adds only the optional status declaration. Wire envelopes remain at version 3.
 
+Revision 3 added worker automation, persisted `autoWorking` posture,
+recipient-scoped snapshots, and redacted event history. Revision 4 adds durable
+lobby presence, heartbeat and lease expiry, active-roster start/discovery, and
+terminal lobby return. Revision 4 keeps wire envelopes at version 3 because it
+uses the existing nullable-command stream message for heartbeat and keeps
+presence deadlines server-only. Revisions 1-3 are not functionally compatible
+with revision 4 and are excluded from the current compatibility inventory.
+
 ## Consequences
 
 Compatible additive releases can roll out without disconnecting existing
@@ -106,10 +114,11 @@ Rejected alternatives:
 ## Migration And Verification
 
 The app-status endpoint accepts an optional multiplayer revision. Current
-clients send revision 3. Undeclared clients still map deterministically to
-legacy revision 1, but revisions 1 and 2 are no longer compatible because they
-cannot decode every worker-automation command and persisted posture variant.
-They return `soon`, which is rendered by the localized main-menu update block.
+clients send revision 4. Undeclared clients still map deterministically to
+legacy revision 1. Revisions 1 and 2 cannot decode every worker-automation
+command and persisted posture variant; revision 3 does not send lobby
+heartbeats or implement lease-driven roster and terminal-return behavior. All
+three return `soon`, which is rendered by the localized main-menu update block.
 
 For every multiplayer change:
 

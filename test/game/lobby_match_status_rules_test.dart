@@ -11,9 +11,10 @@ void main() {
         players: [_human('player_1', 'user_1'), _ai('player_ai')],
       );
 
-      expect(LobbyMatchStatusRules.humanPlayerCount(null), 0);
-      expect(LobbyMatchStatusRules.humanPlayerCount(null, whenMissing: 1), 1);
-      expect(LobbyMatchStatusRules.humanPlayerCount(match), 1);
+      expect(LobbyMatchStatusRules.humanMemberCount(null), 0);
+      expect(LobbyMatchStatusRules.humanMemberCount(null, whenMissing: 1), 1);
+      expect(LobbyMatchStatusRules.humanMemberCount(match), 1);
+      expect(LobbyMatchStatusRules.connectedHumanCount(match), 1);
       expect(
         LobbyMatchStatusRules.requiredHumanPlayers(match),
         LobbyMatchStatusRules.defaultMinimumHumanPlayers,
@@ -22,6 +23,24 @@ void main() {
         LobbyMatchStatusRules.maximumPlayers(null),
         LobbyMatchStatusRules.defaultMaximumPlayers,
       );
+    });
+
+    test('separates retained membership from connected presence', () {
+      final match = _match(
+        players: [
+          _human('player_1', 'user_1'),
+          _human(
+            'player_2',
+            'user_2',
+            connectionState: WirePlayerConnectionState.offline,
+          ),
+        ],
+      );
+
+      expect(LobbyMatchStatusRules.humanMemberCount(match), 2);
+      expect(LobbyMatchStatusRules.connectedHumanCount(match), 1);
+      expect(LobbyMatchStatusRules.canStart(match), isFalse);
+      expect(LobbyMatchStatusRules.hasConnectedOwner(match), isTrue);
     });
 
     test('enters only running or loading matches with enough humans', () {
@@ -123,14 +142,19 @@ WireMatch _match({
   );
 }
 
-WirePlayer _human(String id, String userId) {
+WirePlayer _human(
+  String id,
+  String userId, {
+  WirePlayerConnectionState connectionState =
+      WirePlayerConnectionState.connected,
+}) {
   return WirePlayer(
     id: id,
     userId: userId,
     name: id,
     colorValue: 0xFF2563EB,
     kind: WirePlayerKind.human,
-    connectionState: WirePlayerConnectionState.connected,
+    connectionState: connectionState,
   );
 }
 

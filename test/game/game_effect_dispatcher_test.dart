@@ -185,10 +185,11 @@ void main() {
       );
 
       await dispatcher.handleEffect(
-        const ShowActionTargetFocusEffect(col: 4, row: 5),
+        const ShowActionTargetFocusEffect(unitId: 'unit_7', col: 4, row: 5),
       );
 
       expect(focusLayer.activeForTesting, isTrue);
+      expect(focusLayer.unitIdForTesting, 'unit_7');
       expect(focusLayer.colForTesting, 4);
       expect(focusLayer.rowForTesting, 5);
     });

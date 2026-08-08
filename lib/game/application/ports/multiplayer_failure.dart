@@ -28,6 +28,18 @@ final class MultiplayerFailure implements Exception {
 
   bool get isAuthentication => kind == MultiplayerFailureKind.authentication;
 
+  bool get terminatesLobbyMembership {
+    if (!isMultiplayer) return false;
+    return switch (code) {
+      'not_match_player' ||
+      'match_not_found' ||
+      'match_abandoned' ||
+      'match_not_open' ||
+      'unsupported_match_protocol' => true,
+      _ => false,
+    };
+  }
+
   @override
   String toString() {
     final detail = message == null || message!.isEmpty ? code : message;

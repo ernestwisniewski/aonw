@@ -11,6 +11,8 @@ const lifecycleServerAdapterPath =
     'server/lib/src/multiplayer/match_lifecycle_state_adapter.dart';
 const lifecycleServicePath =
     'server/lib/src/multiplayer/match_lifecycle_service.dart';
+const _lifecyclePresencePath =
+    'server/lib/src/multiplayer/match_lifecycle_service_presence.dart';
 const _commandServicePath =
     'server/lib/src/multiplayer/match_command_service.dart';
 const _commandHandlingPath =
@@ -74,6 +76,7 @@ Future<MatchLifecycleBoundaryAudit> auditMatchLifecycleBoundaries({
         entry.key,
     ...sourceOverrides.keys,
     lifecycleServicePath,
+    _lifecyclePresencePath,
     _commandServicePath,
     _commandHandlingPath,
     _commandTimeoutPath,
@@ -113,7 +116,6 @@ List<String> _mutationBoundaryViolations(
     'startMatch',
     'resignMatch',
     'leaveMatch',
-    'setParticipantConnectionState',
   };
   final violations = <String>[];
   for (final method in lifecycleMethods) {
@@ -125,6 +127,7 @@ List<String> _mutationBoundaryViolations(
       );
     }
   }
+  violations.addAll(_presenceMutationBoundaryViolations(calls));
   if (calls['$_commandServicePath::handleClientMessage']?['transaction'] != 1) {
     violations.add('handleClientMessage must own its command transaction.');
   }
@@ -142,6 +145,34 @@ List<String> _mutationBoundaryViolations(
   if (storeLockMembers['LockMode.forUpdate'] != 2 ||
       storeLockMembers['LockBehavior.wait'] != 2) {
     violations.add('Server store lock mapping changed: $storeLockMembers');
+  }
+  return violations;
+}
+
+List<String> _presenceMutationBoundaryViolations(
+  Map<String, Map<String, int>> calls,
+) {
+  final violations = <String>[];
+  final connected =
+      calls['$_lifecyclePresencePath::participantConnected'] ?? const {};
+  if (connected['transaction'] != 1 || connected['lockedRequireMatch'] != 1) {
+    violations.add(
+      'participantConnected must own one transaction and one locked match '
+      'read: $connected',
+    );
+  }
+  final disconnected =
+      calls['$_lifecyclePresencePath::participantDisconnected'] ?? const {};
+  final disconnectMutation =
+      calls['$_lifecyclePresencePath::_disconnectParticipant'] ?? const {};
+  if (disconnected['transaction'] != 1 ||
+      disconnected['disconnectParticipant'] != 1 ||
+      disconnectMutation['lockedRequireMatch'] != 1 ||
+      disconnectMutation.containsKey('transaction')) {
+    violations.add(
+      'participantDisconnected must own one transaction delegating to one '
+      'locked match read: outer=$disconnected inner=$disconnectMutation',
+    );
   }
   return violations;
 }
@@ -202,6 +233,10 @@ final class _LifecycleMutationVisitor extends RecursiveAstVisitor<void> {
     final methodName = _methodName;
     if (methodName != null && node.methodName.name == 'transaction') {
       _increment('$path::$methodName', 'transaction');
+    }
+    if (methodName != null &&
+        node.methodName.name == '_disconnectParticipant') {
+      _increment('$path::$methodName', 'disconnectParticipant');
     }
     if (methodName != null &&
         _lockedMatchReadMethods.contains(node.methodName.name) &&

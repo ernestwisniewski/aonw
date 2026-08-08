@@ -214,15 +214,17 @@ class ShowCombatHexAlertEffect extends RendererEffect {
 /// This is transient presentation state. It is never persisted or sent as a
 /// domain event.
 class ShowActionTargetFocusEffect extends RendererEffect {
+  final String? unitId;
   final int col;
   final int row;
   final Duration duration;
 
   const ShowActionTargetFocusEffect({
+    this.unitId,
     required this.col,
     required this.row,
     this.duration = const Duration(seconds: 2),
-  });
+  }) : assert(unitId == null || unitId != '');
 }
 
 class JumpCameraEffect extends RendererEffect {

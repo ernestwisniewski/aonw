@@ -17,7 +17,19 @@ Future<WireMatch> _startRunningFfaMatchInStore({
       private: false,
     ),
   );
+  await _connectTestParticipant(
+    hub: hub,
+    store: store,
+    userIdentifier: 'owner-user-$suffix',
+    matchId: openMatch.id,
+  );
   await hub.joinMatch(
+    store: store,
+    userIdentifier: 'guest-one-$suffix',
+    matchId: openMatch.id,
+  );
+  await _connectTestParticipant(
+    hub: hub,
     store: store,
     userIdentifier: 'guest-one-$suffix',
     matchId: openMatch.id,
@@ -26,6 +38,12 @@ Future<WireMatch> _startRunningFfaMatchInStore({
     store: store,
     userIdentifier: 'guest-two-$suffix',
     matchId: openMatch.id,
+  );
+  await _connectTestParticipant(
+    hub: hub,
+    store: store,
+    userIdentifier: 'guest-two-$suffix',
+    matchId: joined.id,
   );
   return hub.startMatch(
     store: store,

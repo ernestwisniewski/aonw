@@ -212,6 +212,12 @@ Future<WireMatch> _createJoinedRaceLobby(
       private: false,
     ),
   );
+  await _connectTestParticipant(
+    hub: hub,
+    store: store,
+    userIdentifier: 'owner-$suffix',
+    matchId: created.id,
+  );
   return hub.joinMatch(
     store: store,
     userIdentifier: 'guest-$suffix',

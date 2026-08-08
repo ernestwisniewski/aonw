@@ -194,6 +194,7 @@ Map<String, Object?> rendererEffectSnapshot(RendererEffect effect) {
     },
     ShowActionTargetFocusEffect() => {
       'type': 'actionTargetFocus',
+      'unitId': effect.unitId,
       'col': effect.col,
       'row': effect.row,
       'durationMicros': effect.duration.inMicroseconds,

@@ -20,10 +20,22 @@ void _registerRealtimeMatchHubCommandIdempotencyScenarios() {
           private: false,
         ),
       );
+      await _connectTestParticipant(
+        hub: hub,
+        store: store,
+        userIdentifier: 'owner-user',
+        matchId: openMatch.id,
+      );
       final joined = await hub.joinMatch(
         store: store,
         userIdentifier: 'guest-user',
         matchId: openMatch.id,
+      );
+      final setupGuest = await _connectTestParticipant(
+        hub: hub,
+        store: store,
+        userIdentifier: 'guest-user',
+        matchId: joined.id,
       );
       final match = await hub.startMatch(
         store: store,
@@ -33,6 +45,7 @@ void _registerRealtimeMatchHubCommandIdempotencyScenarios() {
           mapCatalog: mapCatalog,
         ),
       );
+      await setupGuest.close();
       final owner = match.players.first;
       final guest = match.players.last;
 
@@ -132,10 +145,22 @@ void _registerRealtimeMatchHubCommandIdempotencyScenarios() {
         private: false,
       ),
     );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'owner-user',
+      matchId: openMatch.id,
+    );
     final joined = await hub.joinMatch(
       store: store,
       userIdentifier: 'guest-user',
       matchId: openMatch.id,
+    );
+    await _connectTestParticipant(
+      hub: hub,
+      store: store,
+      userIdentifier: 'guest-user',
+      matchId: joined.id,
     );
     final match = await hub.startMatch(
       store: store,

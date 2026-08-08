@@ -165,6 +165,10 @@ extension RealtimeMatchHubApi on RealtimeMatchHub {
     required MultiplayerMatchStore store,
   }) => _commands.advanceTimedOutTurns(store: store);
 
+  Future<List<LobbyPresenceSweepFailure>> expireLobbyPresence({
+    required MultiplayerMatchStore store,
+  }) => _lifecycle.expireLobbyPresence(store: store);
+
   Stream<MultiplayerServerMessage> connect({
     required MultiplayerMatchStore store,
     required String userIdentifier,
@@ -179,7 +183,42 @@ extension RealtimeMatchHubApi on RealtimeMatchHub {
       afterOffset: _inputValidator.afterOffset(afterOffset),
       input: input,
       authorize: _commands.authorizeConnection,
-      updateConnectionState: _lifecycle.setParticipantConnectionState,
+      participantConnected:
+          ({
+            required store,
+            required matchId,
+            required userIdentifier,
+            required connectionGeneration,
+          }) => _lifecycle.participantConnected(
+            store: store,
+            matchId: matchId,
+            userIdentifier: userIdentifier,
+            connectionGeneration: connectionGeneration,
+          ),
+      participantDisconnected:
+          ({
+            required store,
+            required matchId,
+            required userIdentifier,
+            required connectionGeneration,
+          }) => _lifecycle.participantDisconnected(
+            store: store,
+            matchId: matchId,
+            userIdentifier: userIdentifier,
+            connectionGeneration: connectionGeneration,
+          ),
+      renewPresence:
+          ({
+            required store,
+            required matchId,
+            required userIdentifier,
+            required connectionGeneration,
+          }) => _lifecycle.renewParticipantPresence(
+            store: store,
+            matchId: matchId,
+            userIdentifier: userIdentifier,
+            connectionGeneration: connectionGeneration,
+          ),
       handleClientMessage: _commands.handleClientMessage,
       createMessage: _broadcaster.message,
     );

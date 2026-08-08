@@ -1,3 +1,4 @@
+export 'protocol/lobby_roster_policy.dart';
 export 'protocol/movement_execution_wire_mapper.dart';
 export 'protocol/multiplayer_limits.dart';
 export 'protocol/protocol_version.dart';

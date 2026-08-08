@@ -29,6 +29,7 @@ final class FakeMultiplayerDatabase implements Database {
   final Map<Type, ListQueue<TableRow<dynamic>?>> _findFirstResults = {};
   final Map<Type, ListQueue<TableRow<dynamic>>> _insertRowResults = {};
   final Map<Type, ListQueue<TableRow<dynamic>>> _updateRowResults = {};
+  final Map<Type, ListQueue<List<TableRow<dynamic>>>> _updateWhereResults = {};
   final ListQueue<Object> _insertRowErrors = ListQueue();
   final ListQueue<DatabaseResult> _unsafeQueryResults = ListQueue();
   final ListQueue<int> _unsafeExecuteResults = ListQueue();
@@ -53,6 +54,12 @@ final class FakeMultiplayerDatabase implements Database {
 
   void queueUpdateRow<T extends TableRow<dynamic>>(T row) {
     _updateRowResults.putIfAbsent(T, ListQueue.new).add(row);
+  }
+
+  void queueUpdateWhere<T extends TableRow<dynamic>>(List<T> rows) {
+    _updateWhereResults
+        .putIfAbsent(T, ListQueue.new)
+        .add(List<TableRow<dynamic>>.of(rows));
   }
 
   void queueUnsafeQuery(List<List<dynamic>> rows) {
@@ -170,6 +177,30 @@ final class FakeMultiplayerDatabase implements Database {
     );
     final queue = _updateRowResults[T];
     return queue == null || queue.isEmpty ? row : queue.removeFirst() as T;
+  }
+
+  @override
+  Future<List<T>> updateWhere<T extends TableRow<dynamic>>({
+    required List<ColumnValue<dynamic, dynamic>> columnValues,
+    required Expression<dynamic> where,
+    int? limit,
+    int? offset,
+    Column<dynamic>? orderBy,
+    List<Order>? orderByList,
+    bool orderDescending = false,
+    Transaction? transaction,
+  }) async {
+    calls.add(
+      FakeDatabaseCall(
+        operation: 'updateWhere',
+        rowType: T,
+        transaction: transaction,
+      ),
+    );
+    final queue = _updateWhereResults[T];
+    return queue == null || queue.isEmpty
+        ? <T>[]
+        : queue.removeFirst().cast<T>();
   }
 
   @override
