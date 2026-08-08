@@ -37,6 +37,7 @@ void main() {
           final movementExecutions = _movementExecutionsFor(event);
           final singlePlayer = projectCommandDispatchPresentation(
             identity: identity,
+            sequenceDirective: PresentationSequenceDirective.advance,
             interactionEffects: const [],
             events: [event],
             movementExecutions: movementExecutions,
@@ -64,6 +65,7 @@ void main() {
             presentationBatchSnapshot(
               projectCommandDispatchPresentation(
                 identity: identity,
+                sequenceDirective: PresentationSequenceDirective.advance,
                 interactionEffects: const [],
                 events: [event],
                 movementExecutions: movementExecutions,
@@ -114,6 +116,7 @@ void main() {
           );
           final singlePlayer = projectCommandDispatchPresentation(
             identity: identity,
+            sequenceDirective: PresentationSequenceDirective.advance,
             interactionEffects: const [],
             events: scenario.events,
             movementExecutions: const [],

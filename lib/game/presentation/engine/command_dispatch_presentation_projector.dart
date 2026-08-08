@@ -8,6 +8,7 @@ import 'package:aonw_core/game/domain/movement.dart';
 
 ProjectedGameEffectBatch projectCommandDispatchPresentation({
   required PresentationBatchIdentity identity,
+  required PresentationSequenceDirective sequenceDirective,
   required Iterable<RendererEffect> interactionEffects,
   required Iterable<GameEvent> events,
   required Iterable<MovementCommandExecution> movementExecutions,
@@ -18,6 +19,7 @@ ProjectedGameEffectBatch projectCommandDispatchPresentation({
 }) {
   return DomainEventPresentationProjector.projectObservedBatch(
     identity: identity,
+    sequenceDirective: sequenceDirective,
     interactionEffects: interactionEffects,
     events: events,
     visibleMovementExecutions: movementExecutions,

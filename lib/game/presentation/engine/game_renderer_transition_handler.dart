@@ -71,6 +71,7 @@ final class GameRendererTransitionHandler {
     GameClientState state,
     Iterable<RendererEffect> effects, {
     int? currentTurn,
+    bool suppressCameraFocus = false,
   }) async {
     _ensureActive();
     final pending = effects.toList(growable: false);
@@ -87,7 +88,8 @@ final class GameRendererTransitionHandler {
     try {
       _applyState(
         state,
-        suppressCameraFocus: _transitionControlsCamera(pending),
+        suppressCameraFocus:
+            suppressCameraFocus || _transitionControlsCamera(pending),
         currentTurn: currentTurn,
       );
       await _handleEffectsNow(pending, waitForQueuedPlayback: true);

@@ -4,6 +4,12 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 
 const presentationFrameBudget = Duration(microseconds: 16667);
 
+/// Declares how a projected batch participates in the authoritative stream.
+///
+/// Sequence membership is transport metadata. It must not be inferred from
+/// whether the recipient can see an animation for the transition.
+enum PresentationSequenceDirective { interactionOnly, advance, resync }
+
 /// Stable identity and authoritative clock of one presentation batch.
 final class PresentationBatchIdentity {
   const PresentationBatchIdentity({
@@ -102,27 +108,18 @@ final class ProjectedGameEffect {
       authoritativeStartMicrosUtc + endOffset.inMicroseconds;
 }
 
-/// Bounded exactly-once cursor and sequence buffer for one event stream.
+/// Bounded exactly-once effect cursor for one already ordered event stream.
 ///
-/// When [activateSource] receives [nextEventOffset], future offsets are held
-/// until every preceding batch arrives. Duplicate, replayed, and stale event
-/// identities are discarded without changing the canonical order.
+/// [ProjectedGameTransitionQueue] owns authoritative ordering. This cursor only
+/// deduplicates effects after a complete state-and-effect transition is ready.
 final class ProjectedGameEffectCursor {
   String? _activeSourceId;
-  int? _nextEventOffset;
-  final SplayTreeMap<int, ProjectedGameEffectBatch> _pending = SplayTreeMap();
+  int _highestEventOffset = -1;
   final Set<String> _interactionIds = {};
-  final Set<String> _idsAtLastOffset = {};
+  final Set<String> _idsAtHighestOffset = {};
 
   int get retainedIdentityCount =>
-      _idsAtLastOffset.length +
-      _interactionIds.length +
-      _pending.values.fold(
-        0,
-        (count, batch) => count + batch.domainEffects.length,
-      );
-
-  int get pendingSequenceCount => _pending.length;
+      _idsAtHighestOffset.length + _interactionIds.length;
 
   List<RendererEffect> consume(Iterable<ProjectedGameEffect> projected) {
     return _consumeProjected(projected).map((item) => item.effect).toList();
@@ -143,19 +140,23 @@ final class ProjectedGameEffectCursor {
     final acceptedInteractions = _consumeInteractions(
       batch.projectedInteractionEffects,
     );
-    if (!batch.hasAuthoritativeSequence) return acceptedInteractions;
-
-    _nextEventOffset ??= identity.eventOffset;
-    if (identity.eventOffset < _nextEventOffset!) {
-      return acceptedInteractions;
-    }
-    _pending.putIfAbsent(identity.eventOffset, () => batch);
-    return [...acceptedInteractions, ..._drainAuthoritative()];
+    return switch (batch.sequenceDirective) {
+      PresentationSequenceDirective.interactionOnly => acceptedInteractions,
+      PresentationSequenceDirective.resync => _consumeResync(
+        identity,
+        acceptedInteractions,
+      ),
+      PresentationSequenceDirective.advance => [
+        ...acceptedInteractions,
+        ..._consumeAuthoritative(identity, batch.domainEffects),
+      ],
+    };
   }
 
   void activateSource(String sourceId, {int? nextEventOffset}) {
     if (_activeSourceId == sourceId &&
-        (nextEventOffset == null || nextEventOffset == _nextEventOffset)) {
+        (nextEventOffset == null ||
+            nextEventOffset == _highestEventOffset + 1)) {
       return;
     }
     _activeSourceId = sourceId;
@@ -175,6 +176,9 @@ final class ProjectedGameEffectCursor {
     return consumeProjectedBatch(
       ProjectedGameEffectBatch(
         identity: identity,
+        sequenceDirective: items.any((item) => !item.isInteraction)
+            ? PresentationSequenceDirective.advance
+            : PresentationSequenceDirective.interactionOnly,
         projectedInteractionEffects: items.where((item) => item.isInteraction),
         domainEffects: items.where((item) => !item.isInteraction),
       ),
@@ -192,19 +196,31 @@ final class ProjectedGameEffectCursor {
     return accepted;
   }
 
-  List<ProjectedGameEffect> _drainAuthoritative() {
+  List<ProjectedGameEffect> _consumeAuthoritative(
+    PresentationBatchIdentity identity,
+    Iterable<ProjectedGameEffect> effects,
+  ) {
     final accepted = <ProjectedGameEffect>[];
-    while (_nextEventOffset != null) {
-      final batch = _pending.remove(_nextEventOffset);
-      if (batch == null) break;
-      _idsAtLastOffset.clear();
-      for (final item in batch.domainEffects) {
-        if (_idsAtLastOffset.add(item.animationId)) accepted.add(item);
-      }
+    if (identity.eventOffset < _highestEventOffset) return accepted;
+    if (identity.eventOffset > _highestEventOffset) {
+      _highestEventOffset = identity.eventOffset;
+      _idsAtHighestOffset.clear();
       _interactionIds.clear();
-      _nextEventOffset = _nextEventOffset! + 1;
+    }
+    for (final item in effects) {
+      if (_idsAtHighestOffset.add(item.animationId)) accepted.add(item);
     }
     return accepted;
+  }
+
+  List<ProjectedGameEffect> _consumeResync(
+    PresentationBatchIdentity identity,
+    List<ProjectedGameEffect> acceptedInteractions,
+  ) {
+    _highestEventOffset = identity.eventOffset;
+    _idsAtHighestOffset.clear();
+    _interactionIds.clear();
+    return acceptedInteractions;
   }
 
   PresentationBatchIdentity? _identityFrom(
@@ -222,10 +238,9 @@ final class ProjectedGameEffectCursor {
   }
 
   void _resetOffset({int? nextEventOffset}) {
-    _nextEventOffset = nextEventOffset;
-    _pending.clear();
+    _highestEventOffset = (nextEventOffset ?? 0) - 1;
     _interactionIds.clear();
-    _idsAtLastOffset.clear();
+    _idsAtHighestOffset.clear();
   }
 }
 
@@ -259,15 +274,25 @@ final class ProjectedGameTransitionQueue<T> {
     ProjectedGameTransition<T> transition,
   ) {
     final identity = transition.batch.identity;
-    if (identity == null) return [transition];
+    if (identity == null) {
+      return transition.batch.sequenceDirective ==
+              PresentationSequenceDirective.interactionOnly
+          ? [transition]
+          : const [];
+    }
     _activeSourceId ??= identity.sourceId;
     if (identity.sourceId != _activeSourceId) return const [];
-    if (!transition.batch.hasAuthoritativeSequence) return [transition];
-
-    _nextEventOffset ??= identity.eventOffset;
-    if (identity.eventOffset < _nextEventOffset!) return const [];
-    _pending.putIfAbsent(identity.eventOffset, () => transition);
-    return _drainAuthoritative();
+    return switch (transition.batch.sequenceDirective) {
+      PresentationSequenceDirective.interactionOnly => [transition],
+      PresentationSequenceDirective.resync => _acceptResync(
+        transition,
+        identity,
+      ),
+      PresentationSequenceDirective.advance => _enqueueAuthoritative(
+        transition,
+        identity,
+      ),
+    };
   }
 
   void activateSource(String sourceId, {int? nextEventOffset}) {
@@ -294,6 +319,25 @@ final class ProjectedGameTransitionQueue<T> {
     return accepted;
   }
 
+  List<ProjectedGameTransition<T>> _enqueueAuthoritative(
+    ProjectedGameTransition<T> transition,
+    PresentationBatchIdentity identity,
+  ) {
+    _nextEventOffset ??= identity.eventOffset;
+    if (identity.eventOffset < _nextEventOffset!) return const [];
+    _pending.putIfAbsent(identity.eventOffset, () => transition);
+    return _drainAuthoritative();
+  }
+
+  List<ProjectedGameTransition<T>> _acceptResync(
+    ProjectedGameTransition<T> transition,
+    PresentationBatchIdentity identity,
+  ) {
+    _pending.clear();
+    _nextEventOffset = identity.eventOffset + 1;
+    return [transition];
+  }
+
   void _resetOffset({int? nextEventOffset}) {
     _nextEventOffset = nextEventOffset;
     _pending.clear();
@@ -304,6 +348,7 @@ final class ProjectedGameTransitionQueue<T> {
 final class ProjectedGameEffectBatch {
   ProjectedGameEffectBatch({
     this.identity,
+    required this.sequenceDirective,
     Iterable<ProjectedGameEffect> projectedInteractionEffects = const [],
     Iterable<AnimationPlan> animationPlans = const [],
     Iterable<ProjectedGameEffect> domainEffects = const [],
@@ -314,12 +359,10 @@ final class ProjectedGameEffectBatch {
        domainEffects = List.unmodifiable(domainEffects);
 
   final PresentationBatchIdentity? identity;
+  final PresentationSequenceDirective sequenceDirective;
   final List<ProjectedGameEffect> projectedInteractionEffects;
   final List<AnimationPlan> animationPlans;
   final List<ProjectedGameEffect> domainEffects;
-
-  bool get hasAuthoritativeSequence =>
-      animationPlans.isNotEmpty || domainEffects.isNotEmpty;
 
   List<ProjectedGameEffect> get projectedEffects =>
       List.unmodifiable([...projectedInteractionEffects, ...domainEffects]);

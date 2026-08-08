@@ -17,13 +17,13 @@ typedef HiddenAiProjectedTransitionApplier =
 final class HiddenAiRendererPlaybackReport {
   final GameClientState rendererState;
   final List<RendererEffect> rendererEffects;
+  final bool applied;
 
   HiddenAiRendererPlaybackReport({
     required this.rendererState,
     required Iterable<RendererEffect> rendererEffects,
+    required this.applied,
   }) : rendererEffects = List.unmodifiable(rendererEffects);
-
-  bool get applied => rendererEffects.isNotEmpty;
 }
 
 final class HiddenAiRendererPlayback {
@@ -65,6 +65,9 @@ final class HiddenAiRendererPlayback {
             authoritativeTick: authoritativeTick,
             authoritativeStartMicrosUtc: authoritativeStartMicrosUtc,
           ),
+          sequenceDirective: eventOffset > 0
+              ? PresentationSequenceDirective.advance
+              : PresentationSequenceDirective.interactionOnly,
           interactionEffects: uiEffects.rendererEffects.where(
             (effect) =>
                 effect is JumpCameraEffect || effect is SmoothCameraEffect,
@@ -77,13 +80,18 @@ final class HiddenAiRendererPlayback {
           turn: turn,
         );
 
-    if (rendererEffects.effects.isNotEmpty) {
+    final shouldApply =
+        rendererEffects.effects.isNotEmpty ||
+        rendererEffects.sequenceDirective ==
+            PresentationSequenceDirective.advance;
+    if (shouldApply) {
       await applyProjectedTransition(rendererState, rendererEffects);
     }
 
     return HiddenAiRendererPlaybackReport(
       rendererState: rendererState,
       rendererEffects: rendererEffects.effects,
+      applied: shouldApply,
     );
   }
 

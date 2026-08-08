@@ -13,12 +13,14 @@ typedef DomainEventEffectProjection = ({
 abstract final class DomainEventAnimationScheduler {
   static ProjectedGameEffectBatch schedule({
     required PresentationBatchIdentity identity,
+    required PresentationSequenceDirective sequenceDirective,
     required Iterable<RendererEffect> interactionEffects,
     required Iterable<DomainEventEffectProjection> eventProjections,
   }) {
     final plans = _schedulePlans(identity, eventProjections);
     return ProjectedGameEffectBatch(
       identity: identity,
+      sequenceDirective: sequenceDirective,
       projectedInteractionEffects: _scheduleInteraction(
         identity,
         interactionEffects,

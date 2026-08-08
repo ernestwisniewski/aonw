@@ -230,7 +230,9 @@ class _GameRendererSessionHostState
       },
       onLoadingProgress: _reportRendererLoadProgress,
       l10n: widget.l10n,
-      presentationClock: ref.read(gameClockProvider),
+      presentationClock: session.gameMode == GameMode.multiplayer
+          ? ref.read(gameClockProvider)
+          : null,
       followUnitMovementCamera: gameplaySettings.followUnitMovementCamera,
       followEnemyUnitCamera: gameplaySettings.followEnemyUnitCamera,
       cinematicCameraEnabled: gameplaySettings.cinematicCameraEnabled,

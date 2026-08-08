@@ -5,6 +5,7 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/domain_event_presentation_projector.dart';
 import 'package:aonw/game/presentation/engine/game_renderer.dart';
 import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
@@ -139,6 +140,108 @@ void main() {
     expect(renderer.animatingUnitIdsListenable.value, isEmpty);
     expect(renderer.unitMarkerPositionForTesting(enemy.id), isNotNull);
   });
+
+  test(
+    'movement after an empty authoritative offset still interpolates',
+    () async {
+      final unit = GameUnit.produced(
+        id: 'unit_1',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.scout,
+        col: 0,
+        row: 0,
+      );
+      final state6 = GameClientState(units: [unit]);
+      final state7 = GameClientState(units: [unit.copyWith(col: 1)]);
+      final state8 = state7;
+      final state9 = GameClientState(units: [unit.copyWith(col: 2)]);
+      final renderer = GameRenderer(mapData: _map(), onCommand: (_) async {})
+        ..activateProjectedEffectSource('match_1', nextEventOffset: 7)
+        ..applyState(state6)
+        ..onGameResize(Vector2(800, 600));
+      addTearDown(renderer.disposeRenderer);
+      await renderer.onLoad();
+
+      final firstMove = renderer.applyProjectedTransition(
+        state7,
+        _movementBatch(
+          offset: 7,
+          previousState: state6,
+          state: state7,
+          fromCol: 0,
+          toCol: 1,
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      renderer.update(0.61);
+      await firstMove.timeout(const Duration(seconds: 1));
+
+      await renderer.applyProjectedTransition(
+        state8,
+        ProjectedGameEffectBatch(
+          identity: const PresentationBatchIdentity(
+            sourceId: 'match_1',
+            eventOffset: 8,
+          ),
+          sequenceDirective: PresentationSequenceDirective.advance,
+        ),
+      );
+
+      final secondMove = renderer.applyProjectedTransition(
+        state9,
+        _movementBatch(
+          offset: 9,
+          previousState: state8,
+          state: state9,
+          fromCol: 1,
+          toCol: 2,
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      final origin = UnitMarkerLayer.worldPositionFor(1, 0);
+      final destination = UnitMarkerLayer.worldPositionFor(2, 0);
+      expect(renderer.unitMarkerPositionForTesting(unit.id), origin);
+
+      renderer.update(0.3);
+      final midpoint = renderer.unitMarkerPositionForTesting(unit.id)!;
+      expect(midpoint, isNot(origin));
+      expect(midpoint, isNot(destination));
+      expect(midpoint.x, inExclusiveRange(origin.x, destination.x));
+
+      renderer.update(0.31);
+      await secondMove.timeout(const Duration(seconds: 1));
+      expect(renderer.unitMarkerPositionForTesting(unit.id), destination);
+    },
+  );
+}
+
+ProjectedGameEffectBatch _movementBatch({
+  required int offset,
+  required GameClientState previousState,
+  required GameClientState state,
+  required int fromCol,
+  required int toCol,
+}) {
+  return DomainEventPresentationProjector.projectObservedBatch(
+    identity: PresentationBatchIdentity(
+      sourceId: 'match_1',
+      eventOffset: offset,
+    ),
+    interactionEffects: const [],
+    events: [
+      UnitMovedEvent(
+        unitId: 'unit_1',
+        fromCol: fromCol,
+        fromRow: 0,
+        toCol: toCol,
+        toRow: 0,
+      ),
+    ],
+    visibleMovementExecutions: const [],
+    previousState: previousState,
+    state: state,
+  );
 }
 
 final class _FixedClock extends Clock {

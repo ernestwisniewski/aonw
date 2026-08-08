@@ -8,7 +8,12 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('projected batches cannot bypass the exactly-once cursor', () {
     const batchPath = 'lib/game/presentation/engine/projected_game_effect.dart';
-    final batchUnit = _unit(batchPath);
+    final batchSource = File(batchPath).readAsStringSync();
+    final batchUnit = parseString(
+      content: batchSource,
+      path: batchPath,
+      throwIfDiagnostics: false,
+    ).unit;
     final batch = batchUnit.declarations
         .whereType<ClassDeclaration>()
         .singleWhere(
@@ -25,10 +30,16 @@ void main() {
 
     expect(parameterNames, {
       'identity',
+      'sequenceDirective',
       'projectedInteractionEffects',
       'animationPlans',
       'domainEffects',
     });
+    expect(
+      RegExp(r'SplayTreeMap<int,').allMatches(batchSource),
+      hasLength(1),
+      reason: 'Only the complete transition queue may buffer sequence gaps.',
+    );
 
     for (final path in const [
       'lib/game/presentation/engine/game_renderer_projected_effects.dart',
@@ -53,6 +64,10 @@ void main() {
       'lib/game/presentation/screens/game/game_screen.dart',
     ).readAsStringSync();
     expect(productionHost, contains('presentationClock:'));
+    expect(
+      productionHost,
+      contains('session.gameMode == GameMode.multiplayer'),
+    );
   });
 
   test('production renderer hosts explicitly activate one source', () {

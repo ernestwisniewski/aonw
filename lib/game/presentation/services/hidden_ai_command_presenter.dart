@@ -56,12 +56,14 @@ final class HiddenAiCommandPresenter {
         movementExecutions: result.movementExecutions,
         turn: _eventTurnFor(result),
       );
-    } else if (result.movementExecutions.isNotEmpty) {
+    } else {
       await rendererPlayback.playCommandEffects(
         previousRendererState: previousRendererState,
         commandState: result.state,
         uiEffects: const [],
-        events: result.events.whereType<UnitMovedEvent>(),
+        events: result.movementExecutions.isEmpty
+            ? const []
+            : result.events.whereType<UnitMovedEvent>(),
         sourceId: sourceId,
         eventOffset: result.offset,
         authoritativeTick: result.authoritativeTick,

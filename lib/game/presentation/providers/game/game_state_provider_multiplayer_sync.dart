@@ -8,6 +8,7 @@ import 'package:aonw/game/application/services/multiplayer_interaction_reconcile
 import 'package:aonw/game/application/services/multiplayer_snapshot_cache_key.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
 import 'package:aonw/game/presentation/providers/audio/game_audio_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_state_effects.dart';
@@ -240,6 +241,9 @@ final class GameStateMultiplayerSync {
       events: presentedLiveEvents(presentation, liveEvent),
       movementExecutions: presentation.movementExecutions,
       identity: liveBatchIdentity(saveId, incomingOffset, liveEvent),
+      sequenceDirective: presentation.canPresentLiveTransition
+          ? PresentationSequenceDirective.advance
+          : PresentationSequenceDirective.resync,
       viewerPlayerId: viewerPlayerId,
       turn: snapshot.save.turn,
       renderer: _binding.ref.read(activeRendererViewModelProvider),

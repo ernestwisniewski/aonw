@@ -25,6 +25,7 @@ final class GameStateEffects {
     required List<GameEvent> events,
     required List<MovementCommandExecution> movementExecutions,
     required PresentationBatchIdentity identity,
+    required PresentationSequenceDirective sequenceDirective,
     required String? viewerPlayerId,
     required int turn,
     required RendererViewModel? renderer,
@@ -35,6 +36,7 @@ final class GameStateEffects {
     final transitionEffects =
         DomainEventPresentationProjector.projectObservedBatch(
           identity: identity,
+          sequenceDirective: sequenceDirective,
           interactionEffects: const [],
           previousState: previousState,
           state: nextState,

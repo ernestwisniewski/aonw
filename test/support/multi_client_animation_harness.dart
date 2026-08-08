@@ -29,13 +29,16 @@ final class MultiClientAnimationHarness {
   }) async {
     final client = _client(clientId);
     client.clock.advanceTo(arrivalMicrosUtc);
-    final accepted = client.cursor.consumeProjectedBatch(batch);
-    await client.renderer.applyProjectedTransition(
-      state ?? GameClientState(),
-      batch,
+    final transitionState = state ?? GameClientState();
+    final ready = client.queue.enqueue(
+      ProjectedGameTransition(state: transitionState, batch: batch),
     );
-    for (final animation in accepted) {
-      client.record(animation);
+    await client.renderer.applyProjectedTransition(transitionState, batch);
+    for (final transition in ready) {
+      final accepted = client.cursor.consumeProjectedBatch(transition.batch);
+      for (final animation in accepted) {
+        client.record(animation);
+      }
     }
     client.verifyRendererParity();
   }
@@ -75,6 +78,7 @@ final class MultiClientAnimationHarness {
 
 final class _HarnessClient {
   _HarnessClient({required String sourceId, required int nextEventOffset}) {
+    queue.activateSource(sourceId, nextEventOffset: nextEventOffset);
     cursor.activateSource(sourceId, nextEventOffset: nextEventOffset);
     renderer.activateProjectedEffectSource(
       sourceId,
@@ -82,6 +86,8 @@ final class _HarnessClient {
     );
   }
 
+  final ProjectedGameTransitionQueue<GameClientState> queue =
+      ProjectedGameTransitionQueue<GameClientState>();
   final ProjectedGameEffectCursor cursor = ProjectedGameEffectCursor();
   final _RecordingRenderer renderer = _RecordingRenderer();
   final _VirtualClock clock = _VirtualClock();

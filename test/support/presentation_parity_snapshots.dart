@@ -60,6 +60,7 @@ Map<String, Object?> interactionPresentationSnapshot(
 
 Map<String, Object?> presentationBatchSnapshot(ProjectedGameEffectBatch batch) {
   return {
+    'sequenceDirective': batch.sequenceDirective.name,
     'plans': batch.animationPlans
         .map(
           (plan) => {

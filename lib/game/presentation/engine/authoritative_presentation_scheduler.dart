@@ -32,8 +32,12 @@ final class AuthoritativePresentationScheduler {
 
   Future<void> waitFor(ProjectedGameEffectBatch batch) async {
     final identity = batch.identity;
-    if (identity == null || !batch.hasAuthoritativeSequence) return;
-    final targetMicros = identity.resolvedAuthoritativeStartMicrosUtc;
+    if (identity == null ||
+        batch.sequenceDirective != PresentationSequenceDirective.advance) {
+      return;
+    }
+    final targetMicros = identity.authoritativeStartMicrosUtc;
+    if (targetMicros == null) return;
     final remaining = targetMicros - _nowMicrosUtc;
     if (remaining > 0) {
       await _delay(Duration(microseconds: remaining));

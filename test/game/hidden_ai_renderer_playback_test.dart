@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
 import 'package:aonw/game/presentation/services/hidden_ai_renderer_playback.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/movement.dart';
@@ -131,6 +132,30 @@ void main() {
         expect(applied, isFalse);
       },
     );
+
+    test('applies an empty authoritative batch to close its offset', () async {
+      ProjectedGameEffectBatch? applied;
+      final state = GameClientState(activePlayerId: 'human');
+      final playback = HiddenAiRendererPlayback(
+        rendererStateReader: () => state,
+        localizationReader: () => null,
+        applyProjectedTransition: (_, batch) async => applied = batch,
+      );
+
+      final report = await playback.playCommandEffects(
+        previousRendererState: state,
+        commandState: state,
+        uiEffects: const [],
+        events: const [],
+        sourceId: 'save_1',
+        eventOffset: 7,
+      );
+
+      expect(report.applied, isTrue);
+      expect(report.rendererEffects, isEmpty);
+      expect(applied, isNotNull);
+      expect(applied!.sequenceDirective, PresentationSequenceDirective.advance);
+    });
   });
 }
 

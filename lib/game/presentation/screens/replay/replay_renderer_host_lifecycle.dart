@@ -128,7 +128,13 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
       state,
       previousState,
     )) {
-      renderer.applyStateWithoutCameraFocus(state);
+      await renderer.applyProjectedTransition(
+        state,
+        ProjectedGameEffectBatch(
+          identity: effectBatch.identity,
+          sequenceDirective: PresentationSequenceDirective.resync,
+        ),
+      );
       _lastAppliedStepIndex = targetIndex;
       _syncPerspectiveCamera(
         immediate: _consumePendingPerspectiveCameraFocus(),

@@ -32,6 +32,9 @@ ProjectedGameEffectBatch _commandProjection(
       authoritativeStartMicrosUtc: result.authoritativeStartMicrosUtc,
       interactionId: record.interactionId,
     ),
+    sequenceDirective: result.offset > 0
+        ? PresentationSequenceDirective.advance
+        : PresentationSequenceDirective.interactionOnly,
     interactionEffects: _allowedInteractionEffects(
       record.command,
       interactionEffects,

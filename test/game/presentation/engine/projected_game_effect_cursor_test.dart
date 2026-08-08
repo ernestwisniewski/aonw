@@ -40,51 +40,42 @@ void main() {
   );
 
   test('buffers out-of-order batches and drains canonical sequence once', () {
-    final cursor = ProjectedGameEffectCursor()
+    final queue = ProjectedGameTransitionQueue<int>()
       ..activateSource('match_1', nextEventOffset: 7);
-    final later = _batch(offset: 8);
-    final expected = _batch(offset: 7);
-
-    expect(cursor.consumeProjectedBatch(later), isEmpty);
-    expect(cursor.pendingSequenceCount, 1);
-    expect(
-      cursor
-          .consumeProjectedBatch(expected)
-          .map((effect) => effect.eventOffset),
-      [7, 8],
+    final later = ProjectedGameTransition(state: 8, batch: _batch(offset: 8));
+    final expected = ProjectedGameTransition(
+      state: 7,
+      batch: _batch(offset: 7),
     );
-    expect(cursor.consumeProjectedBatch(later), isEmpty);
-    expect(cursor.pendingSequenceCount, 0);
+
+    expect(queue.enqueue(later), isEmpty);
+    expect(queue.pendingSequenceCount, 1);
+    expect(queue.enqueue(expected).map((transition) => transition.state), [
+      7,
+      8,
+    ]);
+    expect(queue.enqueue(later), isEmpty);
+    expect(queue.pendingSequenceCount, 0);
   });
 
-  test('an intentional no-animation plan closes a sequence gap', () {
-    final cursor = ProjectedGameEffectCursor()
+  test('an empty authoritative batch closes a sequence gap', () {
+    final queue = ProjectedGameTransitionQueue<int>()
       ..activateSource('match_1', nextEventOffset: 7);
-    final later = _batch(offset: 8);
+    final later = ProjectedGameTransition(state: 8, batch: _batch(offset: 8));
     final noAnimation = ProjectedGameEffectBatch(
       identity: const PresentationBatchIdentity(
         sourceId: 'match_1',
         eventOffset: 7,
       ),
-      animationPlans: [
-        AnimationPlan(
-          eventId: 'match_1:7:0',
-          eventType: 'TurnEndedEvent',
-          policy: 'turn lifecycle is state-driven',
-          batchSequence: 7,
-          eventSequence: 0,
-          authoritativeTick: 7,
-          authoritativeStartMicrosUtc: 7000000,
-          startOffset: Duration.zero,
-          animations: const [],
-        ),
-      ],
+      sequenceDirective: PresentationSequenceDirective.advance,
     );
 
-    expect(cursor.consumeProjectedBatch(later), isEmpty);
+    expect(queue.enqueue(later), isEmpty);
     expect(
-      cursor.consumeProjectedBatch(noAnimation).map((item) => item.eventOffset),
-      [8],
+      queue
+          .enqueue(ProjectedGameTransition(state: 7, batch: noAnimation))
+          .map((transition) => transition.state),
+      [7, 8],
     );
   });
 
@@ -136,6 +127,7 @@ void main() {
           eventOffset: 8,
           interactionId: interactionId,
         ),
+        sequenceDirective: PresentationSequenceDirective.interactionOnly,
         interactionEffects: const [JumpCameraEffect(col: 1, row: 2)],
         events: const [],
         visibleMovementExecutions: const [],
@@ -161,6 +153,7 @@ void main() {
           eventOffset: 8,
           interactionId: interactionId,
         ),
+        sequenceDirective: PresentationSequenceDirective.interactionOnly,
         interactionEffects: const [JumpCameraEffect(col: 1, row: 2)],
         events: const [],
         visibleMovementExecutions: const [],
@@ -198,6 +191,64 @@ void main() {
         'player_8',
       ]);
       expect(renderer.applied, hasLength(2));
+    },
+  );
+
+  test(
+    'application boundary advances through an empty authoritative offset',
+    () async {
+      final renderer = _RecordingRendererViewModel()
+        ..activateProjectedEffectSource('match_1', nextEventOffset: 7);
+
+      await renderer.applyProjectedTransition(
+        GameClientState(activePlayerId: 'player_7'),
+        _batch(offset: 7),
+      );
+      await renderer.applyProjectedTransition(
+        GameClientState(activePlayerId: 'player_8'),
+        _emptyBatch(offset: 8),
+      );
+      await renderer.applyProjectedTransition(
+        GameClientState(activePlayerId: 'player_9'),
+        _batch(offset: 9),
+      );
+
+      expect(renderer.appliedStates.map((state) => state.activePlayerId), [
+        'player_7',
+        'player_8',
+        'player_9',
+      ]);
+      expect(renderer.applied, hasLength(2));
+    },
+  );
+
+  test(
+    'resync drops stale gaps and establishes the next live offset',
+    () async {
+      final renderer = _RecordingRendererViewModel()
+        ..activateProjectedEffectSource('match_1', nextEventOffset: 21);
+
+      await renderer.applyProjectedTransition(
+        GameClientState(activePlayerId: 'stale_23'),
+        _batch(offset: 23),
+      );
+      await renderer.applyProjectedTransition(
+        GameClientState(activePlayerId: 'snapshot_25'),
+        _emptyBatch(
+          offset: 25,
+          directive: PresentationSequenceDirective.resync,
+        ),
+      );
+      await renderer.applyProjectedTransition(
+        GameClientState(activePlayerId: 'live_26'),
+        _batch(offset: 26),
+      );
+
+      expect(renderer.appliedStates.map((state) => state.activePlayerId), [
+        'snapshot_25',
+        'live_26',
+      ]);
+      expect(renderer.applied, hasLength(1));
     },
   );
 
@@ -265,6 +316,11 @@ void main() {
     () async {
       ProjectedGameEffectBatch batch(String sourceId, int offset) {
         return ProjectedGameEffectBatch(
+          identity: PresentationBatchIdentity(
+            sourceId: sourceId,
+            eventOffset: offset,
+          ),
+          sequenceDirective: PresentationSequenceDirective.advance,
           domainEffects: [
             _effect(sourceId: sourceId, offset: offset, ordinal: 0),
           ],
@@ -295,6 +351,11 @@ void main() {
     'renderer recreation and replay seek have explicit lifecycles',
     () async {
       final batch = ProjectedGameEffectBatch(
+        identity: const PresentationBatchIdentity(
+          sourceId: 'match_1',
+          eventOffset: 8,
+        ),
+        sequenceDirective: PresentationSequenceDirective.advance,
         domainEffects: [_effect(offset: 8, ordinal: 0)],
       );
       final first = _RecordingRendererViewModel()
@@ -343,7 +404,22 @@ ProjectedGameEffectBatch _batch({required int offset}) {
       authoritativeTick: effect.authoritativeTick,
       authoritativeStartMicrosUtc: effect.authoritativeStartMicrosUtc,
     ),
+    sequenceDirective: PresentationSequenceDirective.advance,
     domainEffects: [effect],
+  );
+}
+
+ProjectedGameEffectBatch _emptyBatch({
+  required int offset,
+  PresentationSequenceDirective directive =
+      PresentationSequenceDirective.advance,
+}) {
+  return ProjectedGameEffectBatch(
+    identity: PresentationBatchIdentity(
+      sourceId: 'match_1',
+      eventOffset: offset,
+    ),
+    sequenceDirective: directive,
   );
 }
 

@@ -55,6 +55,28 @@ void main() {
           eventOffset: 1,
           authoritativeStartMicrosUtc: 1000000,
         ),
+        sequenceDirective: PresentationSequenceDirective.interactionOnly,
+      ),
+    );
+
+    expect(delayed, isFalse);
+  });
+
+  test('starts immediately when no authoritative timestamp exists', () async {
+    final clock = _VirtualClock(1000000);
+    var delayed = false;
+    final scheduler = AuthoritativePresentationScheduler(
+      clock: clock,
+      delay: (_) async => delayed = true,
+    );
+
+    await scheduler.waitFor(
+      ProjectedGameEffectBatch(
+        identity: const PresentationBatchIdentity(
+          sourceId: 'match_1',
+          eventOffset: 1,
+        ),
+        sequenceDirective: PresentationSequenceDirective.advance,
       ),
     );
 
@@ -69,6 +91,7 @@ ProjectedGameEffectBatch _batch({required int startMicrosUtc}) {
       eventOffset: 1,
       authoritativeStartMicrosUtc: startMicrosUtc,
     ),
+    sequenceDirective: PresentationSequenceDirective.advance,
     animationPlans: [
       AnimationPlan(
         eventId: 'match_1:1:0',

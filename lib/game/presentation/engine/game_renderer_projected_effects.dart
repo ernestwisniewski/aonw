@@ -40,21 +40,15 @@ extension GameRendererProjectedEffects on GameRenderer {
       final projectedEffects = _projectedEffectCursor.consumeBatch(
         transition.batch,
       );
-      final scheduler = _authoritativeScheduler;
-      if (scheduler == null) {
-        await applyTransition(
-          transition.state,
-          projectedEffects,
-          currentTurn: transition.currentTurn,
-        );
-        continue;
-      }
       await _transitionHandler.enqueue(() async {
-        await scheduler.waitForOrStartLate(transition.batch);
+        await _authoritativeScheduler?.waitForOrStartLate(transition.batch);
         await _transitionHandler.applyNow(
           transition.state,
           projectedEffects,
           currentTurn: transition.currentTurn,
+          suppressCameraFocus:
+              transition.batch.sequenceDirective ==
+              PresentationSequenceDirective.resync,
         );
       });
     }

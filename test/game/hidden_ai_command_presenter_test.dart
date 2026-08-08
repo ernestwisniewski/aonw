@@ -2,6 +2,7 @@ import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
 import 'package:aonw/game/presentation/services/hidden_ai_command_presenter.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
@@ -127,51 +128,60 @@ void main() {
       expect(applied.single.state.activePlayerCanAct, isTrue);
     });
 
-    test('does not apply renderer effects for terminal commands', () async {
-      var applied = false;
-      final presenter = HiddenAiCommandPresenter(
-        rendererStateReader: () => GameClientState(activePlayerId: 'human'),
-        localizationReader: () => null,
-        applyProjectedTransition: (state, batch) async {
-          applied = true;
-        },
-        dispatchTransition: (command, {required context}) async {
-          return DispatchCommandResult(
-            state: GameClientState(activePlayerId: 'ai_1'),
-            uiEffects: [
-              const ShowFloatingTextEffect(
-                text: 'done',
-                col: 0,
-                row: 0,
-                colorValue: 0xFFFFFFFF,
-              ),
-            ],
-            events: [
-              const UnitMovedEvent(
-                unitId: 'warrior_1',
-                fromCol: 1,
-                fromRow: 1,
-                toCol: 2,
-                toRow: 1,
-              ),
-            ],
-          );
-        },
-      );
+    test(
+      'closes a terminal command offset without presenting suppressed effects',
+      () async {
+        ProjectedGameEffectBatch? applied;
+        final presenter = HiddenAiCommandPresenter(
+          rendererStateReader: () => GameClientState(activePlayerId: 'human'),
+          localizationReader: () => null,
+          applyProjectedTransition: (state, batch) async {
+            applied = batch;
+          },
+          dispatchTransition: (command, {required context}) async {
+            return DispatchCommandResult(
+              state: GameClientState(activePlayerId: 'ai_1'),
+              uiEffects: [
+                const ShowFloatingTextEffect(
+                  text: 'done',
+                  col: 0,
+                  row: 0,
+                  colorValue: 0xFFFFFFFF,
+                ),
+              ],
+              events: [
+                const UnitMovedEvent(
+                  unitId: 'warrior_1',
+                  fromCol: 1,
+                  fromRow: 1,
+                  toCol: 2,
+                  toRow: 1,
+                ),
+              ],
+              offset: 7,
+            );
+          },
+        );
 
-      final result = await presenter.dispatchAndPresent(
-        currentState: GameClientState(
-          activePlayerId: 'ai_1',
-          activePlayerCanAct: true,
-        ),
-        command: const EndTurnCommand('ai_1'),
-        context: const GameCommandContext(actorPlayerId: 'ai_1'),
-      );
+        final result = await presenter.dispatchAndPresent(
+          currentState: GameClientState(
+            activePlayerId: 'ai_1',
+            activePlayerCanAct: true,
+          ),
+          command: const EndTurnCommand('ai_1'),
+          context: const GameCommandContext(actorPlayerId: 'ai_1'),
+        );
 
-      expect(applied, isFalse);
-      expect(result.state.activePlayerId, 'ai_1');
-      expect(result.state.activePlayerCanAct, isTrue);
-    });
+        expect(applied, isNotNull);
+        expect(applied!.effects, isEmpty);
+        expect(
+          applied!.sequenceDirective,
+          PresentationSequenceDirective.advance,
+        );
+        expect(result.state.activePlayerId, 'ai_1');
+        expect(result.state.activePlayerCanAct, isTrue);
+      },
+    );
 
     test(
       'presents canonical movement evidence from terminal commands',
