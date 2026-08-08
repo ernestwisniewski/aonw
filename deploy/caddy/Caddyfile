@@ -39,7 +39,7 @@
 	}
 
 	@homepageHtml {
-		path / /index.html /privacy-policy /privacy-policy/ /privacy-policy/index.html /stats /stats/ /stats/index.html
+		path / /index.html /privacy-policy /privacy-policy/ /privacy-policy/index.html /architecture /architecture/ /architecture/index.html /stats /stats/ /stats/index.html
 	}
 	header @homepageHtml {
 		Cache-Control "no-cache, must-revalidate"
@@ -55,6 +55,8 @@
 	}
 
 	redir /privacy-policy/ /privacy-policy 308
+	redir /architecture/ /architecture 308
+	redir /architecture/index.html /architecture 308
 	redir /stats/ /stats 308
 
 	@homepageStatsApi path /api/stats

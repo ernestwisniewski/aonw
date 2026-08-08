@@ -17,6 +17,7 @@ BRANCH ?=
 HEALTH_URL ?= https://api.aonw.net/readyz
 WEB_HEALTH_URL ?= https://demo.aonw.net/
 HOMEPAGE_HEALTH_URL ?= https://aonw.net/
+ARCHITECTURE_HEALTH_URL ?= https://aonw.net/architecture
 STATS_HEALTH_URL ?= https://aonw.net/stats
 STATS_API_HEALTH_URL ?= https://aonw.net/api/stats
 HEALTH_ATTEMPTS ?= 30
@@ -204,7 +205,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-stats prune status logs
+.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -286,6 +287,7 @@ help:
 	@echo "  make health        Check deployed Serverpod health endpoint"
 	@echo "  make health-web    Check deployed demo web frontend"
 	@echo "  make health-homepage Check deployed aonw.net homepage"
+	@echo "  make health-architecture Check deployed aonw.net architecture atlas"
 	@echo "  make health-stats  Check deployed aonw.net multiplayer statistics page"
 	@echo "  make status        Show Docker Compose service status"
 	@echo "  make logs          Follow server logs"
@@ -325,6 +327,7 @@ help:
 	@echo "  HEALTH_URL=https://.../readyz Default: $(HEALTH_URL)"
 	@echo "  WEB_HEALTH_URL=https://...    Default: $(WEB_HEALTH_URL)"
 	@echo "  HOMEPAGE_HEALTH_URL=https://... Default: $(HOMEPAGE_HEALTH_URL)"
+	@echo "  ARCHITECTURE_HEALTH_URL=https://... Default: $(ARCHITECTURE_HEALTH_URL)"
 	@echo "  STATS_HEALTH_URL=https://... Default: $(STATS_HEALTH_URL)"
 	@echo "  STATS_API_HEALTH_URL=https://... Default: $(STATS_API_HEALTH_URL)"
 	@echo "  WEB_API_BASE_URL=https://...  deploy-web only. Default: $(WEB_API_BASE_URL)"
@@ -755,6 +758,7 @@ build-homepage:
 	@command -v rg >/dev/null || { echo "rg is required for build-homepage."; exit 1; }
 	@test -f "$(HOMEPAGE_SOURCE_DIR)/index.html" || { echo "$(HOMEPAGE_SOURCE_DIR)/index.html not found"; exit 1; }
 	@test -f "$(HOMEPAGE_SOURCE_DIR)/privacy-policy/index.html" || { echo "$(HOMEPAGE_SOURCE_DIR)/privacy-policy/index.html not found"; exit 1; }
+	@test -f "$(HOMEPAGE_SOURCE_DIR)/architecture/index.html" || { echo "$(HOMEPAGE_SOURCE_DIR)/architecture/index.html not found"; exit 1; }
 	@test -f "$(HOMEPAGE_SOURCE_DIR)/stats/index.html" || { echo "$(HOMEPAGE_SOURCE_DIR)/stats/index.html not found"; exit 1; }
 	@test -f assets/logo.png || { echo "assets/logo.png not found"; exit 1; }
 	@test -f assets/aonw-mobile.png || { echo "assets/aonw-mobile.png not found"; exit 1; }
@@ -778,6 +782,7 @@ build-homepage:
 	@mkdir -p "$(HOMEPAGE_BUILD_DIR)/assets/main_menu" "$(HOMEPAGE_BUILD_DIR)/assets/fonts" "$(HOMEPAGE_BUILD_DIR)/assets/platform-icons"
 	@cp "$(HOMEPAGE_SOURCE_DIR)/index.html" "$(HOMEPAGE_BUILD_DIR)/index.html"
 	@cp "$(HOMEPAGE_SOURCE_DIR)/privacy-policy/index.html" "$(HOMEPAGE_BUILD_DIR)/privacy-policy"
+	@cp "$(HOMEPAGE_SOURCE_DIR)/architecture/index.html" "$(HOMEPAGE_BUILD_DIR)/architecture"
 	@cp "$(HOMEPAGE_SOURCE_DIR)/stats/index.html" "$(HOMEPAGE_BUILD_DIR)/stats"
 	@cp web/favicon.png "$(HOMEPAGE_BUILD_DIR)/favicon.png"
 	@cp web/icons/Icon-192.png "$(HOMEPAGE_BUILD_DIR)/apple-touch-icon.png"
@@ -789,6 +794,7 @@ build-homepage:
 	@cp assets/fonts/Lato-Bold.ttf "$(HOMEPAGE_BUILD_DIR)/assets/fonts/Lato-Bold.ttf"
 	@cp assets/main_menu/background.png "$(HOMEPAGE_BUILD_DIR)/assets/main_menu/background.png"
 	@cp assets/homepage/platform-icons/*.svg "$(HOMEPAGE_BUILD_DIR)/assets/platform-icons/"
+	@rg -F 'data-page="architecture"' "$(HOMEPAGE_BUILD_DIR)/architecture" >/dev/null || { echo "Architecture page marker missing from $(HOMEPAGE_BUILD_DIR)/architecture"; exit 1; }
 	@rg -F 'data-page="multiplayer-stats"' "$(HOMEPAGE_BUILD_DIR)/stats" >/dev/null || { echo "Stats page marker missing from $(HOMEPAGE_BUILD_DIR)/stats"; exit 1; }
 	@echo "Static homepage staged in $(HOMEPAGE_BUILD_DIR)/"
 
@@ -812,8 +818,9 @@ deploy-homepage-files:
 	  --exclude='download/***' \
 	  -e "ssh -i $(WEB_DEPLOY_SSH_KEY)" \
 	  "$(HOMEPAGE_BUILD_DIR)/" $(WEB_DEPLOY_USER)@$(WEB_DEPLOY_HOST):$(HOMEPAGE_DEPLOY_DEST)/
-	@echo "deploy-homepage finished. Checking homepage and statistics routes..."
+	@echo "deploy-homepage finished. Checking homepage, architecture, and statistics routes..."
 	@$(MAKE) --no-print-directory health-homepage
+	@$(MAKE) --no-print-directory health-architecture
 	@$(MAKE) --no-print-directory health-stats
 
 download-artifacts: itch-prepare download-package
@@ -1878,6 +1885,7 @@ deploy-all:
 	@$(MAKE) --no-print-directory health
 	@$(MAKE) --no-print-directory health-web
 	@$(MAKE) --no-print-directory health-homepage
+	@$(MAKE) --no-print-directory health-architecture
 	@$(MAKE) --no-print-directory health-stats
 	@$(MAKE) --no-print-directory health-downloads
 	@echo "deploy-all finished."
@@ -1968,6 +1976,13 @@ health-homepage:
 	@echo "Checking $(HOMEPAGE_HEALTH_URL)"
 	@curl -fsS --max-time 5 -o /dev/null -w "%{http_code}\n" "$(HOMEPAGE_HEALTH_URL)" \
 	  || { echo "Static homepage not reachable"; exit 1; }
+
+health-architecture:
+	@command -v rg >/dev/null || { echo "rg is required for health-architecture."; exit 1; }
+	@echo "Checking $(ARCHITECTURE_HEALTH_URL)"
+	@curl -fsS --max-time 5 "$(ARCHITECTURE_HEALTH_URL)" \
+	  | rg -F 'data-page="architecture"' >/dev/null \
+	  || { echo "Architecture atlas missing or invalid"; exit 1; }
 
 health-stats:
 	@command -v rg >/dev/null || { echo "rg is required for health-stats."; exit 1; }
