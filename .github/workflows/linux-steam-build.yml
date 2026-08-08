@@ -97,6 +97,7 @@ jobs:
           flutter pub get --enforce-lockfile
 
       - name: Build Linux release in Steam Runtime SDK
+        shell: bash
         env:
           BUILD_NAME: ${{ inputs.build_name }}
           BUILD_NUMBER: ${{ inputs.build_number }}
