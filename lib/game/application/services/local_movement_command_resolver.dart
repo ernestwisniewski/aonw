@@ -181,15 +181,17 @@ final class LocalMovementCommandResolver {
             )
           : currentState,
       events: const [],
-      uiEffects:
-          command is MoveUnitCommand &&
-              rejectionReason == 'unit_movement_capacity_insufficient'
-          ? const [
-              ShowHudFeedbackEffect(
-                reason: HudFeedbackReason.movementInsufficientUnitMovement,
-              ),
-            ]
-          : const [],
+      uiEffects: switch ((command, rejectionReason)) {
+        (MoveUnitCommand(), 'unit_movement_capacity_insufficient') => const [
+          ShowHudFeedbackEffect(
+            reason: HudFeedbackReason.movementInsufficientUnitMovement,
+          ),
+        ],
+        (AutomateWorkerCommand(), 'worker_automation_no_target') => const [
+          ShowWorkerAutomationNoTargetEffect(),
+        ],
+        _ => const [],
+      },
     );
   }
 

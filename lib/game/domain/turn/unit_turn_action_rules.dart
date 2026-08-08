@@ -8,7 +8,7 @@ abstract final class UnitTurnActionRules {
   static bool needsManualOrder(GameUnit unit, {required String playerId}) {
     if (unit.ownerPlayerId != playerId) return false;
     if (unit.isWorking) return false;
-    if (unit.isAutoExploring) return false;
+    if (unit.isAutoExploring || unit.isAutoWorking) return false;
     if (unit.movementPoints <= 0) return false;
     if (hasStandingOrders(unit)) return false;
     return true;

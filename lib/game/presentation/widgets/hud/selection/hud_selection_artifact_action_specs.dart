@@ -1,6 +1,6 @@
 part of 'hud_selection_actions.dart';
 
-_HudSelectionActionSpec? _artifactExcavationActionFor({
+HudSelectionActionSpec? _artifactExcavationActionFor({
   required GameUnit unit,
   required GameClientState? gameState,
   required String? lockedReason,
@@ -18,7 +18,7 @@ _HudSelectionActionSpec? _artifactExcavationActionFor({
       : unit.queuedPath != null
       ? l10n.selectionActionCancelCurrentMoveFirst
       : _turnActionBlockedReason(l10n, unit);
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: GameIcons.shovel,
     actionId: 'excavateArtifact',
     label: l10n.selectionActionExcavateArtifact,
@@ -35,7 +35,7 @@ _HudSelectionActionSpec? _artifactExcavationActionFor({
   );
 }
 
-_HudSelectionActionSpec? _storeArtifactActionFor({
+HudSelectionActionSpec? _storeArtifactActionFor({
   required GameUnit unit,
   required GameClientState? gameState,
   required String? lockedReason,
@@ -50,7 +50,7 @@ _HudSelectionActionSpec? _storeArtifactActionFor({
   final reason = city == null
       ? l10n.selectionActionStoreArtifactOwnCityRequired
       : l10n.selectionActionStoreArtifactCityOccupied;
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: GameIcons.artifact,
     actionId: 'storeArtifact',
     label: l10n.selectionActionStoreArtifact,

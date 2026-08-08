@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_service.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
+import 'package:aonw_core/game/domain/ruleset/game_ruleset.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_movement_context.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_movement_orchestrator.dart';
@@ -42,6 +43,7 @@ abstract final class DomainTurnMovementProcessor {
     required Iterable<String> playerIds,
     required MapTraversalView mapData,
     FogOfWarService fogOfWarService = const FogOfWarService(),
+    GameRuleset ruleset = GameRuleset.defaults,
   }) {
     final movement = TurnMovementOrchestrator.resetForPlayers(
       state: TurnMovementState(
@@ -50,12 +52,15 @@ abstract final class DomainTurnMovementProcessor {
         diplomacy: state.diplomacy,
         fogOfWar: state.fogOfWar,
         interaction: state.actions,
+        fieldImprovements: state.fieldImprovements,
+        research: state.research,
       ),
       context: TurnMovementContext(
         playerIds: playerIds,
         phaseKnownPlayerIds: _knownPlayerIds(state),
         mapData: mapData,
         fogOfWarService: fogOfWarService,
+        ruleset: ruleset,
       ),
     );
     if (!movement.changed) {

@@ -40,6 +40,17 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     unawaited(dispatch(command));
   }
 
+  void automateWorker(GameClientState? state) {
+    final command = HudSelectionCommands.automateSelectedWorker(state);
+    if (command == null) return;
+
+    _clearFeedback();
+    _applyPanelModes(
+      _ref.read(hudPanelControllerProvider).closeUnitActionPanels(),
+    );
+    unawaited(dispatch(command));
+  }
+
   void startAttackTargeting(GameClientState? state) {
     final command = HudSelectionCommands.startAttackTargeting(state);
     if (command == null) return;
@@ -201,6 +212,12 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
 
   void cancelWorkerJob(GameClientState? state) {
     final command = HudSelectionCommands.cancelWorkerJob(state);
+    if (command == null) return;
+    unawaited(dispatch(command));
+  }
+
+  void cancelAssignment(GameClientState? state) {
+    final command = HudSelectionCommands.cancelWorkerAssignment(state);
     if (command == null) return;
     unawaited(dispatch(command));
   }

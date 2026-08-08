@@ -6280,6 +6280,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get selectionActionAutoExplore => 'Erkunden';
 
   @override
+  String get selectionActionAutoWork => 'Auto-Arbeit';
+
+  @override
+  String get selectionActionCancelAutoWork => 'Auto-Arbeit abbrechen';
+
+  @override
+  String get selectionActionEndWorkerAssignment => 'Arbeit beenden';
+
+  @override
   String get selectionActionTradeRoute => 'Handelsroute';
 
   @override
@@ -6446,6 +6455,14 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get hudFeedbackAutoExploreNoTargetBody =>
       'Der Späher hat in diesem Zug keine Bewegung, die neue Felder aufdecken würde.';
+
+  @override
+  String get hudFeedbackWorkerAutomationNoTargetTitle =>
+      'Keine Arbeit verfügbar';
+
+  @override
+  String get hudFeedbackWorkerAutomationNoTargetBody =>
+      'Dieser Arbeiter kann weder ein verbesserbares Feld noch eine freie fertige Verbesserung erreichen.';
 
   @override
   String get hudFeedbackArtifactGuidanceTitle => 'Weltartefakt';

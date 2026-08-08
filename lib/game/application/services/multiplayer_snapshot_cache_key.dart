@@ -18,7 +18,7 @@ String multiplayerSnapshotCacheKey({
       'Expected a non-empty multiplayer match id',
     );
   }
-  return 'multiplayer-v2.${_cacheKeySegment(userId)}.'
+  return 'multiplayer-v3.${_cacheKeySegment(userId)}.'
       '${_cacheKeySegment(matchId)}';
 }
 

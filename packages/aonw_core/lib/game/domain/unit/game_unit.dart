@@ -11,7 +11,8 @@ import 'package:aonw_core/game/domain/unit/worker_job.dart';
 enum UnitPosture {
   active,
   fortified,
-  autoExploring;
+  autoExploring,
+  autoWorking;
 
   static UnitPosture fromJson(Object? value) {
     if (value is String && value.isNotEmpty) {
@@ -354,13 +355,13 @@ class GameUnit {
       excavatingArtifactId != null;
 
   bool get isReadyToAct =>
-      !isWorking && movementPoints > 0 && queuedPath == null;
+      !isWorking && !isAutoWorking && movementPoints > 0 && queuedPath == null;
 
   bool get isCarryingArtifact => carriedArtifactId != null;
 
   bool get isFortified => posture == UnitPosture.fortified;
-
   bool get isAutoExploring => posture == UnitPosture.autoExploring;
+  bool get isAutoWorking => posture == UnitPosture.autoWorking;
 
   int troopCount(TroopType type) {
     for (final troop in army) {

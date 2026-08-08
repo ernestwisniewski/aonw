@@ -1,6 +1,6 @@
 part of 'hud_selection_actions.dart';
 
-_HudSelectionActionSpec _merchantTradeRouteActionFor({
+HudSelectionActionSpec _merchantTradeRouteActionFor({
   required GameUnit unit,
   required GameClientState? gameState,
   required WorldMap mapData,
@@ -28,7 +28,7 @@ _HudSelectionActionSpec _merchantTradeRouteActionFor({
       destinations.isNotEmpty &&
       lockedReason == null;
 
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: GameIcons.commerce,
     actionId: 'tradeRoute',
     label: l10n.selectionActionTradeRoute,
@@ -57,7 +57,7 @@ _HudSelectionActionSpec _merchantTradeRouteActionFor({
   );
 }
 
-List<_HudSelectionActionSpec> _merchantTradeRouteCityActionsFor({
+List<HudSelectionActionSpec> _merchantTradeRouteCityActionsFor({
   required GameUnit unit,
   required GameClientState? gameState,
   required WorldMap mapData,
@@ -73,7 +73,7 @@ List<_HudSelectionActionSpec> _merchantTradeRouteCityActionsFor({
   );
   return [
     for (final city in destinations)
-      _HudSelectionActionSpec(
+      HudSelectionActionSpec(
         icon: GameIcons.commerce,
         actionId: 'tradeRoute:${city.id}',
         label: l10n.selectionActionTradeRouteToCity(
@@ -89,7 +89,7 @@ List<_HudSelectionActionSpec> _merchantTradeRouteCityActionsFor({
   ];
 }
 
-_HudSelectionActionSpec _merchantMoveToCityActionFor({
+HudSelectionActionSpec _merchantMoveToCityActionFor({
   required GameUnit unit,
   required GameClientState? gameState,
   required WorldMap mapData,
@@ -118,7 +118,7 @@ _HudSelectionActionSpec _merchantMoveToCityActionFor({
       destinations.isNotEmpty &&
       lockedReason == null;
 
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: GameIcons.city,
     actionId: 'merchantMoveToCity',
     label: l10n.selectionActionMerchantMoveToCity,
@@ -147,7 +147,7 @@ _HudSelectionActionSpec _merchantMoveToCityActionFor({
   );
 }
 
-List<_HudSelectionActionSpec> _merchantMoveToCityActionsFor({
+List<HudSelectionActionSpec> _merchantMoveToCityActionsFor({
   required GameUnit unit,
   required GameClientState? gameState,
   required WorldMap mapData,
@@ -163,7 +163,7 @@ List<_HudSelectionActionSpec> _merchantMoveToCityActionsFor({
   );
   return [
     for (final city in destinations)
-      _HudSelectionActionSpec(
+      HudSelectionActionSpec(
         icon: GameIcons.city,
         actionId: 'merchantMoveToCity:${city.id}',
         label: l10n.selectionActionMerchantMoveToCityTarget(

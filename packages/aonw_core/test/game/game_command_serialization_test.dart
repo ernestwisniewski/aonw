@@ -210,6 +210,7 @@ const _constantCommandFixtures = <({DomainCommand command, String type})>[
   (command: SkipUnitTurnCommand('scout_1'), type: 'SkipUnitTurn'),
   (command: FortifyUnitCommand('scout_1'), type: 'FortifyUnit'),
   (command: AutoExploreUnitCommand('scout_1'), type: 'AutoExploreUnit'),
+  (command: AutomateWorkerCommand('worker_1'), type: 'AutomateWorker'),
   (
     command: AssignMerchantTradeRouteCommand('merchant_1', 'city_2'),
     type: 'AssignMerchantTradeRoute',
@@ -371,6 +372,7 @@ const _expectedCommandTypes = {
   'SkipUnitTurn',
   'FortifyUnit',
   'AutoExploreUnit',
+  'AutomateWorker',
   'AssignMerchantTradeRoute',
   'MoveMerchantToCity',
   'StartArtifactExcavation',

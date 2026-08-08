@@ -10692,6 +10692,24 @@ abstract class AppLocalizations {
   /// **'Explore'**
   String get selectionActionAutoExplore;
 
+  /// No description provided for @selectionActionAutoWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto work'**
+  String get selectionActionAutoWork;
+
+  /// No description provided for @selectionActionCancelAutoWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel auto work'**
+  String get selectionActionCancelAutoWork;
+
+  /// No description provided for @selectionActionEndWorkerAssignment.
+  ///
+  /// In en, this message translates to:
+  /// **'End work'**
+  String get selectionActionEndWorkerAssignment;
+
   /// No description provided for @selectionActionTradeRoute.
   ///
   /// In en, this message translates to:
@@ -10967,6 +10985,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The scout has no move that would reveal new tiles this turn.'**
   String get hudFeedbackAutoExploreNoTargetBody;
+
+  /// No description provided for @hudFeedbackWorkerAutomationNoTargetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No available work'**
+  String get hudFeedbackWorkerAutomationNoTargetTitle;
+
+  /// No description provided for @hudFeedbackWorkerAutomationNoTargetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This worker cannot reach a tile to improve or an available improvement to work.'**
+  String get hudFeedbackWorkerAutomationNoTargetBody;
 
   /// No description provided for @hudFeedbackArtifactGuidanceTitle.
   ///

@@ -7,6 +7,28 @@ sealed class UnitDomainCommand extends DomainCommand {
   String get unitId;
 }
 
+/// A unit command whose value is fully identified by its type and [unitId].
+sealed class UnitIdDomainCommand extends UnitDomainCommand {
+  const UnitIdDomainCommand(this.unitId);
+
+  @override
+  final String unitId;
+
+  @override
+  bool operator ==(Object other) =>
+      other is UnitIdDomainCommand &&
+      other.runtimeType == runtimeType &&
+      other.unitId == unitId;
+
+  @override
+  int get hashCode => Object.hash(runtimeType, unitId);
+}
+
+/// A persistent unit mode whose target is selected by canonical rules.
+sealed class AutomatedUnitCommand extends UnitIdDomainCommand {
+  const AutomatedUnitCommand(super.unitId);
+}
+
 /// Player issued a move order for [unitId] toward ([targetCol], [targetRow]).
 final class MoveUnitCommand extends UnitDomainCommand {
   const MoveUnitCommand(this.unitId, this.targetCol, this.targetRow);
@@ -29,63 +51,23 @@ final class MoveUnitCommand extends UnitDomainCommand {
 }
 
 /// Cancels the current action state owned by [unitId].
-final class CancelUnitActionCommand extends UnitDomainCommand {
-  const CancelUnitActionCommand(this.unitId);
-
-  @override
-  final String unitId;
-
-  @override
-  bool operator ==(Object other) =>
-      other is CancelUnitActionCommand && other.unitId == unitId;
-
-  @override
-  int get hashCode => Object.hash(CancelUnitActionCommand, unitId);
+final class CancelUnitActionCommand extends UnitIdDomainCommand {
+  const CancelUnitActionCommand(super.unitId);
 }
 
 /// Puts [unitId] aside for the rest of the current turn.
-final class SkipUnitTurnCommand extends UnitDomainCommand {
-  const SkipUnitTurnCommand(this.unitId);
-
-  @override
-  final String unitId;
-
-  @override
-  bool operator ==(Object other) =>
-      other is SkipUnitTurnCommand && other.unitId == unitId;
-
-  @override
-  int get hashCode => Object.hash(SkipUnitTurnCommand, unitId);
+final class SkipUnitTurnCommand extends UnitIdDomainCommand {
+  const SkipUnitTurnCommand(super.unitId);
 }
 
 /// Puts [unitId] into healing posture and spends its movement until recovered.
-final class FortifyUnitCommand extends UnitDomainCommand {
-  const FortifyUnitCommand(this.unitId);
-
-  @override
-  final String unitId;
-
-  @override
-  bool operator ==(Object other) =>
-      other is FortifyUnitCommand && other.unitId == unitId;
-
-  @override
-  int get hashCode => Object.hash(FortifyUnitCommand, unitId);
+final class FortifyUnitCommand extends UnitIdDomainCommand {
+  const FortifyUnitCommand(super.unitId);
 }
 
 /// Starts automatic exploration for [unitId] until it is cancelled.
-final class AutoExploreUnitCommand extends UnitDomainCommand {
-  const AutoExploreUnitCommand(this.unitId);
-
-  @override
-  final String unitId;
-
-  @override
-  bool operator ==(Object other) =>
-      other is AutoExploreUnitCommand && other.unitId == unitId;
-
-  @override
-  int get hashCode => Object.hash(AutoExploreUnitCommand, unitId);
+final class AutoExploreUnitCommand extends AutomatedUnitCommand {
+  const AutoExploreUnitCommand(super.unitId);
 }
 
 /// Opens the city picker for assigning a merchant trade route.

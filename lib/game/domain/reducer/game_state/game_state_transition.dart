@@ -34,6 +34,10 @@ class ShowHudFeedbackEffect extends OverlayEffect {
   const ShowHudFeedbackEffect({this.reason, this.title = '', this.body = ''});
 }
 
+final class ShowWorkerAutomationNoTargetEffect extends ShowHudFeedbackEffect {
+  const ShowWorkerAutomationNoTargetEffect() : super();
+}
+
 class AnimateUnitMoveEffect extends RendererEffect {
   final String unitId;
   final int fromCol;

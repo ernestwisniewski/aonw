@@ -74,7 +74,7 @@ duplicate those values.
 | New `claim resource` objectives | Future work after checking whether the card is clear |
 | AI expansion scoring for resources | Requires separate scoring and telemetry |
 | Inventory/luxury happiness | No closed ruleset exists for this mechanic yet |
-| Automatic improvement selection | Worker actions remain manual through `Improve` |
+| Resource-specific automation weights | `Auto work` uses the shared general worker recommendation policy |
 
 ## Potential Next Steps
 

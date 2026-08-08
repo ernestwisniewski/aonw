@@ -120,6 +120,9 @@ abstract final class TurnUnitMovementAdvancer {
         routed.merchantTradeRoute != null) {
       return (unit: routed, changed: routed != unit, executions: executions);
     }
+    if (routed.isAutoWorking) {
+      return (unit: routed, changed: routed != unit, executions: executions);
+    }
     final queued = TurnQueuedPathAdvancer.advance(
       unit: routed,
       mapData: mapData,

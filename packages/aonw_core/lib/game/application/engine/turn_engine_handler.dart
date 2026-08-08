@@ -32,6 +32,9 @@ final class TurnEngineHandler {
       state: snapshot.domain,
       playerIds: orderedPlayerIds,
       mapData: context.mapView,
+      ruleset: context.ruleset.copyWith(
+        paceBalance: snapshot.domain.matchRules.paceBalance,
+      ),
     );
     final nextSnapshot = snapshot.copyWith(domain: movement.state);
     return GameEngineResult.accepted(

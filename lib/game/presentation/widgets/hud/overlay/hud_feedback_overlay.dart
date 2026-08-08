@@ -79,6 +79,8 @@ class _HudFeedbackOverlayState extends ConsumerState<HudFeedbackOverlay> {
     return switch (message.kind) {
       HudFeedbackKind.autoExploreNoTarget =>
         l10n.hudFeedbackAutoExploreNoTargetTitle,
+      HudFeedbackKind.workerAutomationNoTarget =>
+        l10n.hudFeedbackWorkerAutomationNoTargetTitle,
       HudFeedbackKind.artifactGuidance => l10n.hudFeedbackArtifactGuidanceTitle,
       HudFeedbackKind.actionBlocked => _actionBlockedTitle(l10n, message),
     };
@@ -89,6 +91,8 @@ class _HudFeedbackOverlayState extends ConsumerState<HudFeedbackOverlay> {
     return switch (message.kind) {
       HudFeedbackKind.autoExploreNoTarget =>
         l10n.hudFeedbackAutoExploreNoTargetBody,
+      HudFeedbackKind.workerAutomationNoTarget =>
+        l10n.hudFeedbackWorkerAutomationNoTargetBody,
       HudFeedbackKind.artifactGuidance => l10n.hudFeedbackArtifactGuidanceBody,
       HudFeedbackKind.actionBlocked => _actionBlockedBody(l10n, message),
     };

@@ -159,6 +159,7 @@ abstract final class CanonicalTurnPipeline {
         preserveNonParticipantPlayerStates:
             request.preserveNonParticipantPlayerStates,
         trackTimeoutStreaks: request.trackTimeoutStreaks,
+        ruleset: ruleset,
       ),
     );
     return CanonicalTurnPipelineResult(

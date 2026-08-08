@@ -3,6 +3,8 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/turn_eta.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models/worker_action_panel_view_model.dart';
+import 'package:aonw/game/presentation/widgets/hud/selection/hud_selection_action_spec.dart';
+import 'package:aonw/game/presentation/widgets/hud/selection/hud_selection_worker_action_specs.dart';
 import 'package:aonw/game/presentation/widgets/selection/selection.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -19,7 +21,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/widgets.dart';
 
 part 'hud_selection_action_rules.dart';
-part 'hud_selection_action_spec.dart';
+part 'hud_selection_action_group_renderer.dart';
 part 'hud_selection_artifact_action_specs.dart';
 part 'hud_selection_unit_action_groups.dart';
 part 'hud_selection_unit_action_specs.dart';
@@ -44,12 +46,14 @@ List<Widget> buildHudSelectionActionChips({
   required bool cityFoundingActive,
   required VoidCallback onMoveSelectedUnit,
   required VoidCallback onAutoExploreSelectedUnit,
+  required VoidCallback onAutomateSelectedWorker,
   required VoidCallback onStartAttackTargeting,
   required VoidCallback onCancelAttackTargeting,
   required VoidCallback onShowArmy,
   required VoidCallback onStartWorkerActionSelection,
   required VoidCallback onCancelWorkerActionSelection,
   required VoidCallback onCancelWorkerJob,
+  required VoidCallback onCancelWorkerAssignment,
   required VoidCallback onStartMerchantTradeRouteSelection,
   required VoidCallback onCancelMerchantTradeRouteSelection,
   required ValueChanged<String> onAssignMerchantTradeRoute,
@@ -88,6 +92,7 @@ List<Widget> buildHudSelectionActionChips({
       onCancelAttackTargeting: onCancelAttackTargeting,
       onCancelWorkerActionSelection: onCancelWorkerActionSelection,
       onCancelWorkerJob: onCancelWorkerJob,
+      onCancelWorkerAssignment: onCancelWorkerAssignment,
       mapData: mapData,
       onCancelMerchantTradeRouteSelection: onCancelMerchantTradeRouteSelection,
       onAssignMerchantTradeRoute: onAssignMerchantTradeRoute,
@@ -100,7 +105,6 @@ List<Widget> buildHudSelectionActionChips({
     if (activeModeActions != null) {
       return [for (final action in activeModeActions) action.toChip()];
     }
-
     return _widgetsFromActionGroups(
       _unitActionGroups(
         unit: unit,
@@ -115,6 +119,7 @@ List<Widget> buildHudSelectionActionChips({
         l10n: l10n,
         onMoveSelectedUnit: onMoveSelectedUnit,
         onAutoExploreSelectedUnit: onAutoExploreSelectedUnit,
+        onAutomateSelectedWorker: onAutomateSelectedWorker,
         onStartAttackTargeting: onStartAttackTargeting,
         onCancelAttackTargeting: onCancelAttackTargeting,
         onShowArmy: onShowArmy,
@@ -136,7 +141,6 @@ List<Widget> buildHudSelectionActionChips({
       ),
     );
   }
-
   final actions = <Widget>[];
   final lockedReason = actionsLocked ? l10n.selectionActionLockedReason : null;
   final city = selection?.city;
@@ -193,7 +197,6 @@ List<Widget> buildHudSelectionActionChips({
         ),
       );
     }
-
     actions.add(
       SelectionCommandChip(
         icon: GameIcons.production,
@@ -207,7 +210,6 @@ List<Widget> buildHudSelectionActionChips({
       ),
     );
   }
-
   return actions;
 }
 

@@ -44,7 +44,7 @@ LocalMovementEngineProjection projectLocalMovementEngineResult({
       unitId: unitId,
       mapView: mapView,
     ),
-    AutoExploreUnitCommand(:final unitId) => _projectAutoExplore(
+    AutomatedUnitCommand(:final unitId) => _projectAutoExplore(
       projected: projected,
       unitId: unitId,
       mapView: mapView,

@@ -5,6 +5,7 @@ const _rolePolicy = <String, _CommandRole>{
   'AssignWorkerToHexCommand': _CommandRole.domain,
   'AttackHexCommand': _CommandRole.domain,
   'AutoExploreUnitCommand': _CommandRole.domain,
+  'AutomateWorkerCommand': _CommandRole.domain,
   'CancelAttackTargetingCommand': _CommandRole.intent,
   'CancelCityExpansionSelectionCommand': _CommandRole.intent,
   'CancelCityFoundingCommand': _CommandRole.intent,

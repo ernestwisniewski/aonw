@@ -38,7 +38,7 @@ final class EconomySimulationCommandStats {
       case CancelUnitActionCommand() ||
           SkipUnitTurnCommand() ||
           FortifyUnitCommand() ||
-          AutoExploreUnitCommand() ||
+          AutomatedUnitCommand() ||
           RushProductionCommand() ||
           SelectTechnologyCommand() ||
           DetachTroopCommand() ||

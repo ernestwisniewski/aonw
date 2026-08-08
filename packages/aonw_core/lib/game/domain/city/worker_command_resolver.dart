@@ -178,6 +178,7 @@ abstract final class WorkerCommandResolver {
     final updatedWorker = worker
         .copyWith(movementPoints: 0)
         .copyWithQueuedPath(null)
+        .copyWithPosture(UnitPosture.active)
         .copyWithWorkerAssignment(WorkerAssignment(targetHex: targetHex));
     return _accept(
       units: units,
@@ -289,6 +290,7 @@ abstract final class WorkerCommandResolver {
     return worker
         .copyWith(movementPoints: 0)
         .copyWithQueuedPath(null)
+        .copyWithPosture(UnitPosture.active)
         .copyWithWorkerAssignment(null)
         .copyWithWorkerJob(
           WorkerJob(

@@ -569,7 +569,7 @@ class UnitMarkerLayer extends Component with LayerAttachment {
       marker
         ..workBadgeLabel = '+50%'
         ..compactWorkVisual = true
-        ..playWork(animate: false);
+        ..playWork();
       return;
     }
     marker

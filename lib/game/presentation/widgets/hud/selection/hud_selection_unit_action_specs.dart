@@ -1,6 +1,6 @@
 part of 'hud_selection_actions.dart';
 
-_HudSelectionActionSpec _moveActionFor({
+HudSelectionActionSpec _moveActionFor({
   required GameUnit unit,
   required GameClientState? gameState,
   required bool moveModeActive,
@@ -17,7 +17,7 @@ _HudSelectionActionSpec _moveActionFor({
   final cancelsQueuedPath =
       queuedPathActive && !moveModeActive && !movePreviewActive;
 
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: GameIcons.move,
     actionId: 'move',
     label: l10n.selectionActionMove,
@@ -57,7 +57,7 @@ int _queuedPathPaidCost(GameUnit unit, QueuedMovePath queuedPath) {
   return 0;
 }
 
-_HudSelectionActionSpec? _attackActionFor({
+HudSelectionActionSpec? _attackActionFor({
   required GameUnit unit,
   required GameClientState? gameState,
   required String? lockedReason,
@@ -77,7 +77,7 @@ _HudSelectionActionSpec? _attackActionFor({
       : _visibleEnemyUnitAttackTargetCount(unit, gameState);
   final available = attackTargetingActive || canAttack;
 
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: GameIcons.attack,
     actionId: 'attack',
     label: l10n.selectionActionAttack,
@@ -108,7 +108,7 @@ _HudSelectionActionSpec? _attackActionFor({
   );
 }
 
-_HudSelectionActionSpec _autoExploreActionFor({
+HudSelectionActionSpec _autoExploreActionFor({
   required GameUnit unit,
   required String? lockedReason,
   required AppLocalizations l10n,
@@ -119,7 +119,7 @@ _HudSelectionActionSpec _autoExploreActionFor({
   final available =
       active || (_canUseTurnAction(unit) && unit.queuedPath == null);
   final needsGuidance = !active && available && lockedReason == null;
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: GameIcons.visibility,
     actionId: 'autoExplore',
     label: l10n.selectionActionAutoExplore,
@@ -141,13 +141,13 @@ _HudSelectionActionSpec _autoExploreActionFor({
   );
 }
 
-_HudSelectionActionSpec _commanderArmyActionFor({
+HudSelectionActionSpec _commanderArmyActionFor({
   required bool armyDetailActive,
   required String? lockedReason,
   required AppLocalizations l10n,
   required VoidCallback onShowArmy,
 }) {
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: GameIcons.army,
     actionId: 'army',
     label: l10n.selectionActionArmy,
@@ -158,7 +158,7 @@ _HudSelectionActionSpec _commanderArmyActionFor({
   );
 }
 
-_HudSelectionActionSpec _cityFoundingActionFor({
+HudSelectionActionSpec _cityFoundingActionFor({
   required GameUnit unit,
   required GameClientState? gameState,
   required GameSelection? selection,
@@ -168,7 +168,7 @@ _HudSelectionActionSpec _cityFoundingActionFor({
   required VoidCallback onStartCityFounding,
 }) {
   final needsGuidance = canStartCityFounding && lockedReason == null;
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: GameIcons.foundCity,
     actionId: 'foundCity',
     label: l10n.selectionActionFoundCity,
@@ -190,7 +190,7 @@ _HudSelectionActionSpec _cityFoundingActionFor({
   );
 }
 
-_HudSelectionActionSpec _workerBuildActionFor({
+HudSelectionActionSpec _workerBuildActionFor({
   required GameUnit unit,
   required GameClientState? gameState,
   required WorkerActionPanelViewModel? workerAction,
@@ -211,7 +211,7 @@ _HudSelectionActionSpec _workerBuildActionFor({
       (workerAction?.canStartSelection ?? true);
   final needsGuidance = !active && canStart && lockedReason == null;
 
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: GameIcons.production,
     actionId: 'improve',
     label: l10n.selectionActionImprove,
@@ -239,7 +239,7 @@ _HudSelectionActionSpec _workerBuildActionFor({
   );
 }
 
-_HudSelectionActionSpec _skipTurnActionFor({
+HudSelectionActionSpec _skipTurnActionFor({
   required GameUnit unit,
   required GameClientState? gameState,
   required String? lockedReason,
@@ -253,7 +253,7 @@ _HudSelectionActionSpec _skipTurnActionFor({
   final available = active || _canUseTurnAction(unit);
   final needsGuidance =
       !active && available && unit.movementPoints == 1 && lockedReason == null;
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: GameIcons.skipTurn,
     actionId: 'skip',
     label: l10n.selectionActionSkip,
@@ -269,7 +269,7 @@ _HudSelectionActionSpec _skipTurnActionFor({
   );
 }
 
-_HudSelectionActionSpec _fortifyActionFor({
+HudSelectionActionSpec _fortifyActionFor({
   required GameUnit unit,
   required String? lockedReason,
   required AppLocalizations l10n,
@@ -279,7 +279,7 @@ _HudSelectionActionSpec _fortifyActionFor({
   final active = unit.isFortified;
   final healing = UnitFortificationRules.canHeal(unit);
   final available = active || _canUseTurnAction(unit);
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: healing ? GameIcons.heartPlus : GameIcons.defense,
     actionId: healing ? 'heal' : 'fortify',
     label: healing ? l10n.selectionActionHeal : l10n.selectionActionFortify,
@@ -294,7 +294,7 @@ _HudSelectionActionSpec _fortifyActionFor({
   );
 }
 
-_HudSelectionActionSpec? _fallbackCancelActionFor({
+HudSelectionActionSpec? _fallbackCancelActionFor({
   required GameUnit unit,
   required GameClientState? gameState,
   required String? lockedReason,

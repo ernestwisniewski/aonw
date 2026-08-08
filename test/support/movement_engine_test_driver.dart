@@ -192,6 +192,7 @@ String _commandOwner(CanonicalGameSnapshot snapshot, DomainCommand command) {
     MoveUnitCommand(:final unitId) ||
     CancelUnitActionCommand(:final unitId) ||
     AutoExploreUnitCommand(:final unitId) ||
+    AutomateWorkerCommand(:final unitId) ||
     AssignMerchantTradeRouteCommand(:final unitId) ||
     MoveMerchantToCityCommand(:final unitId) ||
     DetachTroopCommand(:final unitId) => unitId,

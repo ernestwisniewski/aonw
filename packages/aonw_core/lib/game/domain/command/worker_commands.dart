@@ -136,16 +136,11 @@ final class AssignWorkerToHexCommand extends UnitDomainCommand {
 }
 
 /// Player detaches the worker from its active tile assignment.
-final class CancelWorkerAssignmentCommand extends UnitDomainCommand {
-  const CancelWorkerAssignmentCommand(this.unitId);
+final class CancelWorkerAssignmentCommand extends UnitIdDomainCommand {
+  const CancelWorkerAssignmentCommand(super.unitId);
+}
 
-  @override
-  final String unitId;
-
-  @override
-  bool operator ==(Object other) =>
-      other is CancelWorkerAssignmentCommand && other.unitId == unitId;
-
-  @override
-  int get hashCode => Object.hash(CancelWorkerAssignmentCommand, unitId);
+/// Player delegates target selection, travel, and work to the worker.
+final class AutomateWorkerCommand extends AutomatedUnitCommand {
+  const AutomateWorkerCommand(super.unitId);
 }

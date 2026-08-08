@@ -6248,6 +6248,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get selectionActionAutoExplore => 'Eksploruj';
 
   @override
+  String get selectionActionAutoWork => 'Automatyczna praca';
+
+  @override
+  String get selectionActionCancelAutoWork => 'Anuluj automatyczną pracę';
+
+  @override
+  String get selectionActionEndWorkerAssignment => 'Zakończ pracę';
+
+  @override
   String get selectionActionTradeRoute => 'Trasa handlowa';
 
   @override
@@ -6412,6 +6421,13 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get hudFeedbackAutoExploreNoTargetBody =>
       'Scout nie ma ruchu, który odkryje nowe pola w tej turze.';
+
+  @override
+  String get hudFeedbackWorkerAutomationNoTargetTitle => 'Brak dostępnej pracy';
+
+  @override
+  String get hudFeedbackWorkerAutomationNoTargetBody =>
+      'Robotnik nie może dotrzeć ani do pola wymagającego ulepszenia, ani do wolnego gotowego ulepszenia.';
 
   @override
   String get hudFeedbackArtifactGuidanceTitle => 'Artefakt świata';

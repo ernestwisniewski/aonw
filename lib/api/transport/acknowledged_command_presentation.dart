@@ -57,3 +57,9 @@ CommandTransportResult acknowledgedCommandTransportResult({
     storedSnapshot: true,
   );
 }
+
+List<UiEffect> commandRejectionUiEffects(String? reason) {
+  return reason == 'worker_automation_no_target'
+      ? const [ShowWorkerAutomationNoTargetEffect()]
+      : const [];
+}

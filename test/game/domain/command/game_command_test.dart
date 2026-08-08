@@ -274,6 +274,7 @@ void main() {
         const SkipUnitTurnCommand('u'),
         const FortifyUnitCommand('u'),
         const AutoExploreUnitCommand('u'),
+        const AutomateWorkerCommand('u'),
         const StartMerchantTradeRouteSelectionCommand('u'),
         const CancelMerchantTradeRouteSelectionCommand('u'),
         const AssignMerchantTradeRouteCommand('u', 'c'),
@@ -371,9 +372,8 @@ void main() {
         const FocusNextPendingActionCommand('p'),
         const FocusTurnStartActionCommand('p'),
       ];
-
-      test('there are exactly 64 subtype instances', () {
-        expect(allSubtypes, hasLength(64));
+      test('there are exactly 65 subtype instances', () {
+        expect(allSubtypes, hasLength(65));
       });
 
       test('every subtype has exactly one boundary owner', () {

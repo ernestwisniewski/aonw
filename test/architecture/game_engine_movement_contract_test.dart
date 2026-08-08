@@ -11,6 +11,9 @@ const _engineHandlerPath =
     'movement_engine_handler.dart';
 const _gameEnginePath =
     'packages/aonw_core/lib/game/application/engine/game_engine.dart';
+const _turnWorkerAutomationPath =
+    'packages/aonw_core/lib/game/domain/turn/movement/'
+    'turn_worker_automation_advancer.dart';
 void main() {
   test('movement handler has exactly one game engine call-site', () {
     expect(
@@ -41,6 +44,18 @@ void main() {
         reason: '$typeName.$methodName must be composed only by GameEngine.',
       );
     }
+
+    expect(
+      instanceMemberReferenceCountsByPath(
+        sources,
+        'DomainWorkerAutomationCommandResolver',
+        'resolve',
+      ),
+      {_engineHandlerPath: 1, _turnWorkerAutomationPath: 1},
+      reason:
+          'Worker automation may start through GameEngine and continue only '
+          'through the canonical turn advancer.',
+    );
   });
 
   test('local server AI and replay cannot bypass movement engine', () {

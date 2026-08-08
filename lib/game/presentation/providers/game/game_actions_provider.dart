@@ -421,14 +421,7 @@ class GameCommandController extends _$GameCommandController {
     for (final effect in effects.whereType<ShowHudFeedbackEffect>()) {
       ref
           .read(hudFeedbackProvider.notifier)
-          .show(
-            HudFeedbackContent(
-              kind: HudFeedbackKind.actionBlocked,
-              reason: effect.reason,
-              title: effect.title,
-              body: effect.body,
-            ),
-          );
+          .show(HudFeedbackContent.fromEffect(effect));
       return;
     }
   }

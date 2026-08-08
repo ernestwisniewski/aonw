@@ -164,7 +164,8 @@ bool _matchesWorkerCommand(DomainCommand command) {
       command is ConfirmWorkerImprovementCommand ||
       command is CancelWorkerJobCommand ||
       command is AssignWorkerToHexCommand ||
-      command is CancelWorkerAssignmentCommand;
+      command is CancelWorkerAssignmentCommand ||
+      command is AutomateWorkerCommand;
 }
 
 bool _matchesTurnFinalizationCommand(DomainCommand command) {

@@ -67,7 +67,6 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
   late final HudGamepadFocusTargetRegistry _gamepadFocusRegistry;
   HudMinimizedPopupEntry? _restoredModeBannerEntry;
   bool _autoTurnHintRestored = false;
-
   @override
   void initState() {
     super.initState();
@@ -202,6 +201,7 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
       onMoveSelectedUnit: dispatcher.moveSelectedUnit,
       onAutoExploreSelectedUnit: () =>
           dispatcher.autoExploreSelectedUnit(gameState),
+      onAutomateSelectedWorker: () => dispatcher.automateWorker(gameState),
       onStartAttackTargeting: () => dispatcher.startAttackTargeting(gameState),
       onCancelAttackTargeting: () =>
           dispatcher.cancelAttackTargeting(gameState),
@@ -211,6 +211,7 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
       onCancelWorkerActionSelection: () =>
           dispatcher.cancelWorkerActionSelection(gameState),
       onCancelWorkerJob: () => dispatcher.cancelWorkerJob(gameState),
+      onCancelWorkerAssignment: () => dispatcher.cancelAssignment(gameState),
       onStartMerchantTradeRouteSelection: () =>
           dispatcher.startMerchantTradeRouteSelection(gameState),
       onCancelMerchantTradeRouteSelection: () =>
@@ -275,7 +276,6 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
         !frame.inspectingMap &&
         !frame.largePanelOpen &&
         _autoTurnHintRestored;
-
     return Stack(
       fit: StackFit.expand,
       children: [

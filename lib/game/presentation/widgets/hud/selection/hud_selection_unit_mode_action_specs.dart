@@ -1,6 +1,6 @@
 part of 'hud_selection_actions.dart';
 
-List<_HudSelectionActionSpec>? _activeUnitModeActionsFor({
+List<HudSelectionActionSpec>? _activeUnitModeActionsFor({
   required GameUnit unit,
   required GameClientState? gameState,
   required WorldMap mapData,
@@ -11,6 +11,7 @@ List<_HudSelectionActionSpec>? _activeUnitModeActionsFor({
   required VoidCallback onCancelAttackTargeting,
   required VoidCallback onCancelWorkerActionSelection,
   required VoidCallback onCancelWorkerJob,
+  required VoidCallback onCancelWorkerAssignment,
   required VoidCallback onCancelMerchantTradeRouteSelection,
   required ValueChanged<String> onAssignMerchantTradeRoute,
   required VoidCallback onCancelMerchantMoveToCitySelection,
@@ -141,6 +142,16 @@ List<_HudSelectionActionSpec>? _activeUnitModeActionsFor({
       ),
     ];
   }
+  final workerModeAction = activeWorkerModeActionSpec(
+    unit: unit,
+    workerAction: workerAction,
+    lockedReason: lockedReason,
+    l10n: l10n,
+    onCancelWorkerJob: onCancelWorkerJob,
+    onCancelWorkerAssignment: onCancelWorkerAssignment,
+    onCancelUnitAction: onCancelSelectedUnitAction,
+  );
+  if (workerModeAction != null) return [workerModeAction];
 
   if (unit.excavatingArtifactId != null) {
     return [
@@ -149,20 +160,6 @@ List<_HudSelectionActionSpec>? _activeUnitModeActionsFor({
         disabledReason: lockedReason,
         l10n: l10n,
         onTap: onCancelSelectedUnitAction,
-      ),
-    ];
-  }
-
-  final workerJobActive =
-      unit.type == GameUnitType.worker &&
-      (workerAction?.hasActiveJob ?? unit.workerJob != null);
-  if (workerJobActive) {
-    return [
-      _finishModeActionFor(
-        label: l10n.selectionActionCancelWorkerBuild,
-        disabledReason: lockedReason,
-        l10n: l10n,
-        onTap: onCancelWorkerJob,
       ),
     ];
   }
@@ -181,13 +178,13 @@ List<_HudSelectionActionSpec>? _activeUnitModeActionsFor({
   return null;
 }
 
-_HudSelectionActionSpec _confirmCityFoundingActionFor({
+HudSelectionActionSpec _confirmCityFoundingActionFor({
   required int selectedHexCount,
   required String? disabledReason,
   required AppLocalizations l10n,
   required VoidCallback onTap,
 }) {
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: GameIcons.flag,
     actionId: 'foundCity',
     label:
@@ -203,13 +200,13 @@ _HudSelectionActionSpec _confirmCityFoundingActionFor({
   );
 }
 
-_HudSelectionActionSpec _finishModeActionFor({
+HudSelectionActionSpec _finishModeActionFor({
   required String label,
   required String? disabledReason,
   required AppLocalizations l10n,
   required VoidCallback onTap,
 }) {
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: GameIcons.close,
     actionId: 'cancel',
     label: label,
@@ -223,14 +220,14 @@ _HudSelectionActionSpec _finishModeActionFor({
   );
 }
 
-_HudSelectionActionSpec _stopFortifyingActionFor({
+HudSelectionActionSpec _stopFortifyingActionFor({
   required GameUnit unit,
   required String? disabledReason,
   required AppLocalizations l10n,
   required VoidCallback onTap,
 }) {
   final healing = _unitIsHealing(unit);
-  return _HudSelectionActionSpec(
+  return HudSelectionActionSpec(
     icon: healing ? GameIcons.heartPlus : GameIcons.defense,
     actionId: healing ? 'stopHealing' : 'stopFortifying',
     label: healing

@@ -3,6 +3,7 @@ import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/turn/domain_turn_movement_processor.dart';
 import 'package:aonw_core/game/domain/turn/turn_victory_progress_resolver.dart';
@@ -21,6 +22,7 @@ final class CanonicalTurnSuffixRequest {
     required this.fogOfWarService,
     required this.preserveNonParticipantPlayerStates,
     required this.trackTimeoutStreaks,
+    this.ruleset = GameRuleset.defaults,
   }) : playerIds = List.unmodifiable(playerIds),
        skippedPlayerIds = List.unmodifiable(skippedPlayerIds),
        combatEvents = List.unmodifiable(combatEvents),
@@ -36,6 +38,7 @@ final class CanonicalTurnSuffixRequest {
   final FogOfWarService fogOfWarService;
   final bool preserveNonParticipantPlayerStates;
   final bool trackTimeoutStreaks;
+  final GameRuleset ruleset;
 }
 
 final class CanonicalTurnSuffixResult {
@@ -68,6 +71,7 @@ abstract final class CanonicalTurnSuffix {
       playerIds: request.playerIds,
       mapData: request.mapView,
       fogOfWarService: request.fogOfWarService,
+      ruleset: request.ruleset,
     );
     final diplomacy = _diplomacyAfterMovement(
       state: movement.state,

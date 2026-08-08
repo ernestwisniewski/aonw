@@ -6240,6 +6240,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectionActionAutoExplore => 'Explore';
 
   @override
+  String get selectionActionAutoWork => 'Auto work';
+
+  @override
+  String get selectionActionCancelAutoWork => 'Cancel auto work';
+
+  @override
+  String get selectionActionEndWorkerAssignment => 'End work';
+
+  @override
   String get selectionActionTradeRoute => 'Trade route';
 
   @override
@@ -6402,6 +6411,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get hudFeedbackAutoExploreNoTargetBody =>
       'The scout has no move that would reveal new tiles this turn.';
+
+  @override
+  String get hudFeedbackWorkerAutomationNoTargetTitle => 'No available work';
+
+  @override
+  String get hudFeedbackWorkerAutomationNoTargetBody =>
+      'This worker cannot reach a tile to improve or an available improvement to work.';
 
   @override
   String get hudFeedbackArtifactGuidanceTitle => 'World artifact';

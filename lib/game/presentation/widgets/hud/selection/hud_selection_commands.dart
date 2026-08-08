@@ -16,6 +16,12 @@ abstract final class HudSelectionCommands {
     return AutoExploreUnitCommand(unit.id);
   }
 
+  static DomainCommand? automateSelectedWorker(GameClientState? state) {
+    final unit = state?.selectedUnit;
+    if (unit == null || !unit.isWorker) return null;
+    return AutomateWorkerCommand(unit.id);
+  }
+
   static GameIntent? startCityWorkedHexSelection(GameClientState? state) {
     final cityId = state?.selection?.city?.id;
     if (cityId == null) return null;
@@ -68,6 +74,14 @@ abstract final class HudSelectionCommands {
     final unitId = state?.selectedUnit?.id;
     if (unitId == null) return null;
     return CancelWorkerJobCommand(unitId);
+  }
+
+  static DomainCommand? cancelWorkerAssignment(GameClientState? state) {
+    final unit = state?.selectedUnit;
+    if (unit == null || !unit.isWorker || unit.workerAssignment == null) {
+      return null;
+    }
+    return CancelWorkerAssignmentCommand(unit.id);
   }
 
   static DomainCommand? startArtifactExcavation(GameClientState? state) {

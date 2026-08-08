@@ -3484,6 +3484,9 @@
   "selectionActionMove": "Bewegen",
   "selectionActionAttack": "Angriff",
   "selectionActionAutoExplore": "Erkunden",
+  "selectionActionAutoWork": "Auto-Arbeit",
+  "selectionActionCancelAutoWork": "Auto-Arbeit abbrechen",
+  "selectionActionEndWorkerAssignment": "Arbeit beenden",
   "selectionActionTradeRoute": "Handelsroute",
   "selectionActionTradeRouteToCity": "Mit {cityName} handeln",
   "@selectionActionTradeRouteToCity": {
@@ -3551,6 +3554,8 @@
   "hudFeedbackNoTurnCostDetail": "Aktion hat den Zug nicht verbraucht",
   "hudFeedbackAutoExploreNoTargetTitle": "Keine Erkundungsroute",
   "hudFeedbackAutoExploreNoTargetBody": "Der Späher hat in diesem Zug keine Bewegung, die neue Felder aufdecken würde.",
+  "hudFeedbackWorkerAutomationNoTargetTitle": "Keine Arbeit verfügbar",
+  "hudFeedbackWorkerAutomationNoTargetBody": "Dieser Arbeiter kann weder ein verbesserbares Feld noch eine freie fertige Verbesserung erreichen.",
   "hudFeedbackArtifactGuidanceTitle": "Weltartefakt",
   "hudFeedbackArtifactGuidanceBody": "Bringe es in eine deiner Städte und platziere es in einem leeren Artefaktplatz.",
   "hudFeedbackActionBlockedTitle": "Aktion nicht verfügbar",

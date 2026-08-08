@@ -3484,6 +3484,9 @@
   "selectionActionMove": "Beweging",
   "selectionActionAttack": "Aanval",
   "selectionActionAutoExplore": "Ontdekken",
+  "selectionActionAutoWork": "Automatisch werken",
+  "selectionActionCancelAutoWork": "Automatisch werk annuleren",
+  "selectionActionEndWorkerAssignment": "Werk beëindigen",
   "selectionActionTradeRoute": "Handelsroute",
   "selectionActionTradeRouteToCity": "Handel met {cityName}",
   "@selectionActionTradeRouteToCity": {
@@ -3551,6 +3554,8 @@
   "hudFeedbackNoTurnCostDetail": "Actie heeft de beurt niet verbruikt",
   "hudFeedbackAutoExploreNoTargetTitle": "Geen verkenningsroute",
   "hudFeedbackAutoExploreNoTargetBody": "De verkenner heeft deze beurt geen zet die nieuwe tegels zou onthullen.",
+  "hudFeedbackWorkerAutomationNoTargetTitle": "Geen werk beschikbaar",
+  "hudFeedbackWorkerAutomationNoTargetBody": "Deze arbeider kan geen verbeterbaar veld of vrije voltooide verbetering bereiken.",
   "hudFeedbackArtifactGuidanceTitle": "Wereld artefact",
   "hudFeedbackArtifactGuidanceBody": "Lever het af in een van je steden en plaats het in een leeg artefactvak.",
   "hudFeedbackActionBlockedTitle": "Actie niet beschikbaar",

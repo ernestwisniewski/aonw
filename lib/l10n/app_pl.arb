@@ -3501,6 +3501,9 @@
   "selectionActionMove": "Przesuń",
   "selectionActionAttack": "Atak",
   "selectionActionAutoExplore": "Eksploruj",
+  "selectionActionAutoWork": "Automatyczna praca",
+  "selectionActionCancelAutoWork": "Anuluj automatyczną pracę",
+  "selectionActionEndWorkerAssignment": "Zakończ pracę",
   "selectionActionTradeRoute": "Trasa handlowa",
   "selectionActionTradeRouteToCity": "Handluj z {cityName}",
   "@selectionActionTradeRouteToCity": {
@@ -3568,6 +3571,8 @@
   "hudFeedbackNoTurnCostDetail": "Akcja nie zużyła tury",
   "hudFeedbackAutoExploreNoTargetTitle": "Brak trasy eksploracji",
   "hudFeedbackAutoExploreNoTargetBody": "Scout nie ma ruchu, który odkryje nowe pola w tej turze.",
+  "hudFeedbackWorkerAutomationNoTargetTitle": "Brak dostępnej pracy",
+  "hudFeedbackWorkerAutomationNoTargetBody": "Robotnik nie może dotrzeć ani do pola wymagającego ulepszenia, ani do wolnego gotowego ulepszenia.",
   "hudFeedbackArtifactGuidanceTitle": "Artefakt świata",
   "hudFeedbackArtifactGuidanceBody": "Dostarcz go do własnego miasta i złóż w pustym slocie artefaktu.",
   "hudFeedbackActionBlockedTitle": "Akcja niedostępna",

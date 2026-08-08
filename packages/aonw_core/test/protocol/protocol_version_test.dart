@@ -3,9 +3,9 @@ import 'package:test/test.dart';
 
 void main() {
   test('reviewed multiplayer compatibility inventory is explicit', () {
-    expect(kCurrentMultiplayerVersion, 2);
+    expect(kCurrentMultiplayerVersion, 3);
     expect(kLegacyUndeclaredMultiplayerVersion, 1);
-    expect(kCompatibleMultiplayerVersions, {1, 2});
+    expect(kCompatibleMultiplayerVersions, {3});
   });
 
   test('current multiplayer version is explicitly compatible', () {
@@ -19,19 +19,19 @@ void main() {
     );
   });
 
-  test('legacy undeclared clients use the reviewed compatible revision', () {
+  test('legacy undeclared clients are no longer compatible', () {
     expect(
       multiplayerVersionCompatibility(null),
-      MultiplayerVersionCompatibility.backwardCompatible,
+      MultiplayerVersionCompatibility.unsupported,
     );
     expect(
       multiplayerVersionCompatibility(kLegacyUndeclaredMultiplayerVersion),
-      MultiplayerVersionCompatibility.backwardCompatible,
+      MultiplayerVersionCompatibility.unsupported,
     );
   });
 
   test('removed, malformed-equivalent, and future revisions fail closed', () {
-    for (final version in const [-1, 0, 3]) {
+    for (final version in const [-1, 0, 1, 2, 4]) {
       expect(
         multiplayerVersionCompatibility(version),
         MultiplayerVersionCompatibility.unsupported,

@@ -17,7 +17,8 @@ abstract final class UnitManualMovementRules {
     return !unit.isWorking &&
         unit.type != GameUnitType.merchant &&
         unit.queuedPath == null &&
-        !unit.isAutoExploring;
+        !unit.isAutoExploring &&
+        !unit.isAutoWorking;
   }
 
   static int availableMovementPoints(GameUnit unit) {

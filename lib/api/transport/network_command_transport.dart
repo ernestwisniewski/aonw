@@ -238,7 +238,6 @@ class NetworkCommandTransport implements CommandTransport {
     GameCommandContext context = const GameCommandContext(),
     int staleTickRetries = 0,
   }) async {
-    final domainCommand = command;
     final actor = context.actorPlayerId ?? actorPlayerId;
     final retryable = _retryableCommand;
     final turn =
@@ -246,7 +245,7 @@ class NetworkCommandTransport implements CommandTransport {
             retryable.isSameCommand(
               saveId: saveId,
               actorPlayerId: actor,
-              command: domainCommand,
+              command: command,
             )
         ? retryable.turn
         : await _turnFor(saveId);
@@ -254,14 +253,13 @@ class NetworkCommandTransport implements CommandTransport {
       saveId: saveId,
       actorPlayerId: actor,
       turn: turn,
-      command: domainCommand,
+      command: command,
     );
-    final wire = outgoing.wire;
     final WireCommandAck ack;
     try {
       ack = await _sendWireCommand(
         saveId: saveId,
-        wire: wire,
+        wire: outgoing.wire,
         clientMessageId: outgoing.clientMessageId,
       );
     } on NetworkCommandConflictException catch (error) {
@@ -269,7 +267,7 @@ class NetworkCommandTransport implements CommandTransport {
       if (_isStaleTickError(error) &&
           nextTick != null &&
           staleTickRetries < 2) {
-        _clearRetryableCommand(wire);
+        _clearRetryableCommand(outgoing.wire);
         tickGenerator.ensureAtLeast(nextTick);
         final snapshot = await gameRepository.load(saveId);
         _remember(saveId, snapshot);
@@ -278,33 +276,33 @@ class NetworkCommandTransport implements CommandTransport {
           currentState: _stateFromSnapshot(
             snapshot: snapshot,
             currentState: currentState,
-            command: domainCommand,
+            command: command,
             interactionSource: currentState,
           ),
-          command: domainCommand,
+          command: command,
           context: context,
           staleTickRetries: staleTickRetries + 1,
         );
       }
       if (_isStaleCommandVersionError(error)) {
-        _clearRetryableCommand(wire);
+        _clearRetryableCommand(outgoing.wire);
         return _reloadAfterStaleCommand(
           saveId: saveId,
           currentState: currentState,
-          command: domainCommand,
+          command: command,
         );
       }
       rethrow;
     }
     final snapshot = snapshotCodec.fromWire(ack.snapshot);
     final effectiveOffset = _effectiveOffset(ack.offset, snapshot);
-    _clearRetryableCommand(wire);
+    _clearRetryableCommand(outgoing.wire);
     if (!ack.accepted) {
       if (_isStaleAckReason(ack.reason)) {
         return _snapshotRecoveryResult(
           saveId: saveId,
           currentState: currentState,
-          command: domainCommand,
+          command: command,
           snapshot: snapshot,
           offset: effectiveOffset,
         );
@@ -313,7 +311,7 @@ class NetworkCommandTransport implements CommandTransport {
       final nextState = _stateFromSnapshot(
         snapshot: snapshot,
         currentState: currentState,
-        command: domainCommand,
+        command: command,
         interactionSource: currentState,
       );
       final hasRejectionEvent = ack.events.any(
@@ -335,18 +333,19 @@ class NetworkCommandTransport implements CommandTransport {
         snapshot: snapshot,
         offset: effectiveOffset,
         events: rejectionEvents,
+        uiEffects: commandRejectionUiEffects(reason),
       );
     }
     _remember(saveId, snapshot, offset: effectiveOffset);
     final localTransition = localReducer.acceptedNetworkCommandTransition(
       currentState,
-      domainCommand,
+      command,
       context,
     );
     final nextState = _stateFromSnapshot(
       snapshot: snapshot,
       currentState: currentState,
-      command: domainCommand,
+      command: command,
       interactionSource: localTransition.state,
     );
     final presentation = projectAcknowledgedCommandPresentation(

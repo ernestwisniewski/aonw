@@ -212,7 +212,7 @@ final class AiTurnCommandExecutor {
       CancelWorkerJobCommand() => 'cancel worker ${command.unitId} job',
       SkipUnitTurnCommand() => 'skip unit ${command.unitId}',
       FortifyUnitCommand() => 'fortify/heal unit ${command.unitId}',
-      AutoExploreUnitCommand() => 'auto-explore unit ${command.unitId}',
+      AutomatedUnitCommand() => _describeAutomatedUnitCommand(command),
       AssignMerchantTradeRouteCommand() =>
         'assign merchant ${command.unitId} trade route to city '
             '${command.destinationCityId}',
@@ -264,4 +264,11 @@ final class AiTurnCommandExecutor {
       CancelUnitActionCommand() => 'cancel unit action for ${command.unitId}',
     };
   }
+}
+
+String _describeAutomatedUnitCommand(AutomatedUnitCommand command) {
+  return switch (command) {
+    AutoExploreUnitCommand() => 'auto-explore unit ${command.unitId}',
+    AutomateWorkerCommand() => 'automate worker ${command.unitId}',
+  };
 }

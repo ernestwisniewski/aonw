@@ -6277,6 +6277,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get selectionActionAutoExplore => 'Explorar';
 
   @override
+  String get selectionActionAutoWork => 'Trabajo automático';
+
+  @override
+  String get selectionActionCancelAutoWork => 'Cancelar trabajo automático';
+
+  @override
+  String get selectionActionEndWorkerAssignment => 'Terminar trabajo';
+
+  @override
   String get selectionActionTradeRoute => 'Ruta comercial';
 
   @override
@@ -6443,6 +6452,14 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get hudFeedbackAutoExploreNoTargetBody =>
       'El explorador no tiene ningún movimiento que revele nuevas casillas este turno.';
+
+  @override
+  String get hudFeedbackWorkerAutomationNoTargetTitle =>
+      'No hay trabajo disponible';
+
+  @override
+  String get hudFeedbackWorkerAutomationNoTargetBody =>
+      'Este trabajador no puede llegar a una casilla mejorable ni a una mejora terminada que esté libre.';
 
   @override
   String get hudFeedbackArtifactGuidanceTitle => 'Artefacto mundial';

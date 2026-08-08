@@ -88,6 +88,9 @@ Map<String, Object?> presentationBatchSnapshot(ProjectedGameEffectBatch batch) {
 
 Map<String, Object?> uiEffectSnapshot(UiEffect effect) {
   return switch (effect) {
+    ShowWorkerAutomationNoTargetEffect() => {
+      'type': 'workerAutomationNoTarget',
+    },
     ShowHudFeedbackEffect() => {
       'type': 'hudFeedback',
       'reason': effect.reason?.name,

@@ -3484,6 +3484,9 @@
   "selectionActionMove": "Déplacer",
   "selectionActionAttack": "Attaque",
   "selectionActionAutoExplore": "Explorer",
+  "selectionActionAutoWork": "Travail automatique",
+  "selectionActionCancelAutoWork": "Annuler le travail automatique",
+  "selectionActionEndWorkerAssignment": "Terminer le travail",
   "selectionActionTradeRoute": "Voie commerciale",
   "selectionActionTradeRouteToCity": "Échanges avec {cityName}",
   "@selectionActionTradeRouteToCity": {
@@ -3551,6 +3554,8 @@
   "hudFeedbackNoTurnCostDetail": "L'action n'a pas consommé le tour",
   "hudFeedbackAutoExploreNoTargetTitle": "Aucune route d'exploration",
   "hudFeedbackAutoExploreNoTargetBody": "Le scout n'a aucun mouvement qui révélerait de nouvelles tuiles ce tour.",
+  "hudFeedbackWorkerAutomationNoTargetTitle": "Aucun travail disponible",
+  "hudFeedbackWorkerAutomationNoTargetBody": "Cet ouvrier ne peut atteindre ni une case à améliorer ni un aménagement terminé disponible.",
   "hudFeedbackArtifactGuidanceTitle": "Artefact mondial",
   "hudFeedbackArtifactGuidanceBody": "Livrez-le à l'une de vos villes et placez-le dans une fente vide.",
   "hudFeedbackActionBlockedTitle": "Action non disponible",

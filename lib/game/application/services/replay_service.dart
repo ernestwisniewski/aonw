@@ -146,7 +146,7 @@ class ReplayStep {
       CancelUnitActionCommand(:final unitId) ||
       SkipUnitTurnCommand(:final unitId) ||
       FortifyUnitCommand(:final unitId) ||
-      AutoExploreUnitCommand(:final unitId) ||
+      AutomatedUnitCommand(:final unitId) ||
       AssignMerchantTradeRouteCommand(:final unitId) ||
       MoveMerchantToCityCommand(:final unitId) ||
       DetachTroopCommand(:final unitId) ||

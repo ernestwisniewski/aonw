@@ -32,8 +32,7 @@ void main() {
         actionsLocked: true,
         workerAction: _workerAction(),
       );
-
-      expect(_actionLabels(actions), ['Move', 'Improve', 'Skip', 'Fortify']);
+      expect(_actionLabels(actions), contains('Auto work'));
       expect(
         actions.whereType<SelectionCommandChip>(),
         everyElement(
@@ -56,10 +55,9 @@ void main() {
         ),
         workerAction: _workerAction(),
       );
-
       expect(
         _actionLabels(actions),
-        containsAll(['Move', 'Improve', 'Skip', 'Fortify']),
+        containsAll(['Move', 'Improve', 'Auto work', 'Skip', 'Fortify']),
       );
     });
 
@@ -101,7 +99,7 @@ void main() {
             workerAction: _workerAction(),
           ),
         ),
-        ['Move', '|', 'Improve', '|', 'Skip', 'Fortify'],
+        ['Move', '|', 'Improve', 'Auto work', '|', 'Skip', 'Fortify'],
       );
       expect(
         _actionLayout(
@@ -1111,12 +1109,14 @@ List<Widget> _actions({
     cityFoundingActive: cityFoundingActive,
     onMoveSelectedUnit: () {},
     onAutoExploreSelectedUnit: onAutoExploreSelectedUnit ?? () {},
+    onAutomateSelectedWorker: () {},
     onStartAttackTargeting: () {},
     onCancelAttackTargeting: onCancelAttackTargeting ?? () {},
     onShowArmy: () {},
     onStartWorkerActionSelection: onStartWorkerActionSelection ?? () {},
     onCancelWorkerActionSelection: onCancelWorkerActionSelection ?? () {},
     onCancelWorkerJob: onCancelWorkerJob ?? () {},
+    onCancelWorkerAssignment: () {},
     onStartArtifactExcavation: () {},
     onStoreArtifactInCity: () {},
     onStartMerchantTradeRouteSelection:

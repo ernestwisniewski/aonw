@@ -24,7 +24,7 @@ void main() {
       presentationGameIntents.map((intent) => '${intent.runtimeType}').toSet(),
       intents,
     );
-    expect(domainCommands, hasLength(37));
+    expect(domainCommands, hasLength(38));
     expect(intents, hasLength(27));
   });
 
@@ -88,5 +88,7 @@ bool _isAbstractCommandBase(String name) {
     'CityTargetDomainCommand',
     'DiplomaticCommand',
     'UnitDomainCommand',
+    'UnitIdDomainCommand',
+    'AutomatedUnitCommand',
   }.contains(name);
 }

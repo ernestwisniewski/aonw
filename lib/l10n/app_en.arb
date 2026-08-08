@@ -3520,6 +3520,9 @@
   "selectionActionMove": "Move",
   "selectionActionAttack": "Attack",
   "selectionActionAutoExplore": "Explore",
+  "selectionActionAutoWork": "Auto work",
+  "selectionActionCancelAutoWork": "Cancel auto work",
+  "selectionActionEndWorkerAssignment": "End work",
   "selectionActionTradeRoute": "Trade route",
   "selectionActionTradeRouteToCity": "Trade with {cityName}",
   "@selectionActionTradeRouteToCity": {
@@ -3587,6 +3590,8 @@
   "hudFeedbackNoTurnCostDetail": "Action did not consume the turn",
   "hudFeedbackAutoExploreNoTargetTitle": "No exploration route",
   "hudFeedbackAutoExploreNoTargetBody": "The scout has no move that would reveal new tiles this turn.",
+  "hudFeedbackWorkerAutomationNoTargetTitle": "No available work",
+  "hudFeedbackWorkerAutomationNoTargetBody": "This worker cannot reach a tile to improve or an available improvement to work.",
   "hudFeedbackArtifactGuidanceTitle": "World artifact",
   "hudFeedbackArtifactGuidanceBody": "Deliver it to one of your cities and place it in an empty artifact slot.",
   "hudFeedbackActionBlockedTitle": "Action unavailable",

@@ -1,9 +1,11 @@
+import 'package:aonw_core/game/domain/city/field_improvement.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
 import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
+import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 
 /// Persistence-neutral state used by the movement phase of a turn.
@@ -14,6 +16,8 @@ final class TurnMovementState {
     required this.diplomacy,
     required this.fogOfWar,
     required this.interaction,
+    this.fieldImprovements = const [],
+    this.research = ResearchState.empty,
   });
 
   final List<GameUnit> units;
@@ -21,6 +25,8 @@ final class TurnMovementState {
   final DiplomacyState diplomacy;
   final FogOfWarState fogOfWar;
   final DomainActionState interaction;
+  final List<FieldImprovement> fieldImprovements;
+  final ResearchState research;
 }
 
 /// Persistence-neutral output of the movement phase of a turn.

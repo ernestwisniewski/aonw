@@ -1,6 +1,6 @@
 part of 'hud_selection_actions.dart';
 
-List<List<_HudSelectionActionSpec>> _unitActionGroups({
+List<List<HudSelectionActionSpec>> _unitActionGroups({
   required GameUnit unit,
   required GameClientState? gameState,
   required GameSelection? selection,
@@ -13,6 +13,7 @@ List<List<_HudSelectionActionSpec>> _unitActionGroups({
   required AppLocalizations l10n,
   required VoidCallback onMoveSelectedUnit,
   required VoidCallback onAutoExploreSelectedUnit,
+  required VoidCallback onAutomateSelectedWorker,
   required VoidCallback onStartAttackTargeting,
   required VoidCallback onCancelAttackTargeting,
   required VoidCallback onShowArmy,
@@ -32,8 +33,8 @@ List<List<_HudSelectionActionSpec>> _unitActionGroups({
 }) {
   final lockedReason = actionsLocked ? l10n.selectionActionLockedReason : null;
   final movement = unit.type == GameUnitType.merchant
-      ? <_HudSelectionActionSpec>[]
-      : <_HudSelectionActionSpec>[
+      ? <HudSelectionActionSpec>[]
+      : <HudSelectionActionSpec>[
           _moveActionFor(
             unit: unit,
             gameState: gameState,
@@ -44,7 +45,7 @@ List<List<_HudSelectionActionSpec>> _unitActionGroups({
             onCancelSelectedUnitAction: onCancelSelectedUnitAction,
           ),
         ];
-  final specialGroups = <List<_HudSelectionActionSpec>>[];
+  final specialGroups = <List<HudSelectionActionSpec>>[];
   final attack = _attackActionFor(
     unit: unit,
     gameState: gameState,
@@ -65,7 +66,6 @@ List<List<_HudSelectionActionSpec>> _unitActionGroups({
       ),
     ]);
   }
-
   if (unit.type == GameUnitType.commander) {
     specialGroups.add([
       _commanderArmyActionFor(
@@ -101,6 +101,7 @@ List<List<_HudSelectionActionSpec>> _unitActionGroups({
         onCancelWorkerActionSelection: onCancelWorkerActionSelection,
         onCancelWorkerJob: onCancelWorkerJob,
       ),
+      workerAutoAction(unit, lockedReason, l10n, onAutomateSelectedWorker),
     ]);
   }
   if (unit.type == GameUnitType.merchant) {
@@ -131,7 +132,7 @@ List<List<_HudSelectionActionSpec>> _unitActionGroups({
         ),
     ]);
   }
-  final artifactActions = <_HudSelectionActionSpec>[
+  final artifactActions = <HudSelectionActionSpec>[
     ?_artifactExcavationActionFor(
       unit: unit,
       gameState: gameState,
@@ -148,8 +149,7 @@ List<List<_HudSelectionActionSpec>> _unitActionGroups({
     ),
   ];
   if (artifactActions.isNotEmpty) specialGroups.add(artifactActions);
-
-  final routine = <_HudSelectionActionSpec>[
+  final routine = <HudSelectionActionSpec>[
     _skipTurnActionFor(
       unit: unit,
       gameState: gameState,

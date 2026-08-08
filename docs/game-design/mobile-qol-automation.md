@@ -12,7 +12,7 @@ mobile micromanagement without taking turn control away from the player.
 | Legal commands | Automation ultimately produces normal movement effects and does not bypass pathfinding. |
 | Save state | Persistent unit modes are stored explicitly in `GameUnit.posture`. |
 | Current contracts | New actions use current domain commands and avoid compatibility branches. |
-| Readable no-op | If no meaningful legal action exists, the system issues no command and shows light local feedback. |
+| Readable no-op | If no meaningful legal action exists, canonical state stays unchanged and the HUD shows light local feedback. |
 
 ## Scout Auto-Explore
 
@@ -83,19 +83,26 @@ flowchart TD
 
 ## Worker Improvement
 
-Workers have one manual `Improve` path that opens a legal-improvement picker
-for the current tile. The automatic shortcut that chose the best improvement
-was removed from the menu so the player makes the choice explicitly.
+Workers expose two complementary actions. `Improve` keeps the manual picker for
+the current tile. `Auto work` plans a legal task across every controlled hex of
+the player's cities, moves through the canonical pathfinder, and starts the
+shared recommended improvement. If no buildable hex exists anywhere, it falls
+back to the nearest free completed improvement and creates a persistent worker
+assignment.
 
 | Element | Decision |
 | --- | --- |
 | Unit | `GameUnitType.worker` |
-| UI | `Improve` action opens improvement selection |
+| UI | `Improve` opens the picker; `Auto work` starts automation |
+| Start command | `AutomateWorkerCommand` |
+| Unit state while travelling | `UnitPosture.autoWorking` with a canonical queued path |
 | Legality | `WorkerImprovementRules.evaluate(...)` |
-| Ranking | `WorkerImprovementScoring.scoreFor(...)` |
+| Ranking | `WorkerImprovementRecommendation` backed by `WorkerImprovementScoring` |
 | Charges | `WorkerImprovementChargeRules.defaultWorkerCharges = 1` |
 | Result commands | `StartWorkerActionSelectionCommand`, `SelectWorkerImprovementCommand`, `ConfirmWorkerImprovementCommand` |
 | Work completion | After finishing an improvement, worker loses 1 charge; at 0 it disappears |
+| Assignment fallback | Existing improvement, free hex, city assignment capacity, +50% tile-yield bonus |
+| Cancellation | `Cancel auto work` uses `CancelUnitActionCommand`; `End work` uses `CancelWorkerAssignmentCommand` |
 
 ### Start Conditions
 
@@ -106,32 +113,47 @@ was removed from the menu so the player makes the choice explicitly.
 | Queued path | No active movement queue |
 | Unit work | `workerJob == null` and `workerAssignment == null` |
 | Posture | Unit is not fortified |
-| Tile legality | At least one legal improvement exists on the current hex |
+| Target legality | A reachable legal improvement or assignment exists in any owned city |
 | Technology | Required technologies are unlocked for the worker owner |
 
-### Scoring
+### Planning and Scoring
 
-The panel scores legal improvements on the current hex. Score comes from shared
-`WorkerImprovementScoring`, so the manual list and future AI systems use the
-same yield model.
+Manual and automatic paths call the same recommendation policy. Automation
+first considers every legal build candidate; an existing-improvement assignment
+is considered only when that set is empty. This preserves the player's intent
+that a worker with a charge should improve the empire before becoming a
+permanent specialist.
 
-| Order | Rule |
+| Priority | Rule |
 | --- | --- |
-| 1 | Show legal and blocked options |
-| 2 | Mark the best legal option as `recommended` |
-| 3 | Allow the player to manually choose another legal option |
+| 1 | Build candidates: lowest reachable path cost |
+| 2 | Higher shared recommendation score |
+| 3 | Fewer construction turns |
+| 4 | Stable city, coordinate, and improvement-type identity |
+
+For assignment fallback, path cost wins first, then the higher effective
+worker yield. Active jobs, assignments, and destinations reserved by another
+automated worker are excluded. At each turn start the worker replans from
+canonical state, so changed borders, occupancy, technology, or routes cannot
+leave it following a stale private plan.
 
 ```mermaid
 flowchart TD
-    A["Player selects a worker"] --> B["HUD shows Improve"]
-    B --> C["Manual improvement picker"]
-    C --> D["WorkerImprovementScoring marks recommended"]
-    D --> E["Player chooses an option"]
-    E --> F["Confirm creates workerJob"]
-    F --> G["Completion consumes workerBuildCharges"]
-    G --> H{"Charges remain?"}
-    H -- "yes" --> I["Worker stays without a job"]
-    H -- "no" --> J["Worker disappears"]
+    A["Player selects a worker"] --> B["HUD shows Improve and Auto work"]
+    B --> C["Dispatch AutomateWorkerCommand"]
+    C --> D{"Any reachable legal build target?"}
+    D -- "yes" --> E["Choose nearest recommended improvement"]
+    D -- "no" --> F{"Any reachable free completed improvement?"}
+    F -- "yes" --> G["Choose nearest assignment"]
+    F -- "no" --> H["Show No work available feedback"]
+    E --> I["Move using canonical path and replan each turn"]
+    G --> I
+    I --> J{"Reached target with an action available?"}
+    J -- "no" --> I
+    J -- "build" --> K["Create workerJob"]
+    J -- "assign" --> L["Create persistent workerAssignment"]
+    K --> M["Completion consumes workerBuildCharges"]
+    L --> N["Worker stays and contributes +50% tile yield"]
 ```
 
 ## City Founding
@@ -155,17 +177,17 @@ center, so the draft stays valid after every interaction.
 
 | Out of scope | Reason |
 | --- | --- |
-| Multi-turn autopilot | Would require saved state and cancellation rules |
 | Auto-explore for ships | Requires separate water and map rules |
-| Worker movement to the best hex | Would be a separate pathfinding planner with new cancellation rules |
 | Sentry mode | Different semantics: waiting and waking on threat |
 | Fog-rule changes | Auto-explore should use existing visibility, not change it |
+| Hidden worker route knowledge | Automation uses the same actor visibility and path constraints as manual movement |
 
 ## Worker Recommendation Contract
 
-Worker recommendations use core `WorkerImprovementScoring`, and scoring reads
-the base hex yield from `CityTileYieldRules`. Tuning worker-improvement weights
-therefore affects the manual recommendation in the `Improve` panel.
+Worker recommendations use core `WorkerImprovementRecommendation` and
+`WorkerImprovementScoring`, and scoring reads the base hex yield from
+`CityTileYieldRules`. Tuning worker-improvement weights therefore affects both
+the manual recommendation in the `Improve` panel and automated target choice.
 
 ## Fortify As Sentry
 
@@ -187,16 +209,16 @@ not a new domain mode.
 
 ## No-Op Feedback
 
-Auto-explore has local feedback when the planner finds no legal command.
-Worker `Improve` does not need a separate no-op toast because the manual panel
-shows legal and blocked options with reasons.
+Auto-explore and worker automation have local feedback when their planner finds
+no legal action. Manual worker `Improve` still relies on the picker to show
+legal and blocked options with reasons.
 
 | Element | Rule |
 | --- | --- |
 | Layer | Presentation/HUD only |
 | Save state | No change |
 | Event log | No entry |
-| Domain command | Not sent |
+| Domain command | Auto-explore is not sent; worker automation is rejected without a canonical state change |
 | Activity log | No entry |
 | Lifetime | Short HUD toast, auto-dismissed |
 
@@ -205,6 +227,7 @@ Messages:
 | Action | Title | Reason |
 | --- | --- | --- |
 | `Explore` | `No exploration route` | Scout has no movement that reveals new tiles this turn |
+| `Auto work` | `No work available` | No reachable build target or free completed improvement exists in an owned city |
 
 Successful auto-actions clear previous local feedback and continue through the
 standard command path.

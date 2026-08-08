@@ -3484,6 +3484,9 @@
   "selectionActionMove": "Mover",
   "selectionActionAttack": "Atacar",
   "selectionActionAutoExplore": "Explorar",
+  "selectionActionAutoWork": "Trabajo automático",
+  "selectionActionCancelAutoWork": "Cancelar trabajo automático",
+  "selectionActionEndWorkerAssignment": "Terminar trabajo",
   "selectionActionTradeRoute": "Ruta comercial",
   "selectionActionTradeRouteToCity": "Comerciar con {cityName}",
   "@selectionActionTradeRouteToCity": {
@@ -3551,6 +3554,8 @@
   "hudFeedbackNoTurnCostDetail": "La acción no consumió el turno",
   "hudFeedbackAutoExploreNoTargetTitle": "Sin ruta de exploración",
   "hudFeedbackAutoExploreNoTargetBody": "El explorador no tiene ningún movimiento que revele nuevas casillas este turno.",
+  "hudFeedbackWorkerAutomationNoTargetTitle": "No hay trabajo disponible",
+  "hudFeedbackWorkerAutomationNoTargetBody": "Este trabajador no puede llegar a una casilla mejorable ni a una mejora terminada que esté libre.",
   "hudFeedbackArtifactGuidanceTitle": "Artefacto mundial",
   "hudFeedbackArtifactGuidanceBody": "Entrégalo a una de tus ciudades y colócalo en un espacio de artefacto vacío.",
   "hudFeedbackActionBlockedTitle": "Acción no disponible",

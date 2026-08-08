@@ -1,4 +1,5 @@
 import 'package:aonw_core/game/domain/fog/fog_of_war_service.dart';
+import 'package:aonw_core/game/domain/ruleset/game_ruleset.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 /// Read-only dependencies and player scopes for one movement phase.
@@ -8,6 +9,7 @@ final class TurnMovementContext {
     required Iterable<String> phaseKnownPlayerIds,
     required this.mapData,
     this.fogOfWarService = const FogOfWarService(),
+    this.ruleset = GameRuleset.defaults,
   }) : playerIds = Set.unmodifiable(_nonEmptyIds(playerIds)),
        phaseKnownPlayerIds = Set.unmodifiable(phaseKnownPlayerIds);
 
@@ -18,6 +20,7 @@ final class TurnMovementContext {
   final Set<String> phaseKnownPlayerIds;
   final MapTraversalView mapData;
   final FogOfWarService fogOfWarService;
+  final GameRuleset ruleset;
 }
 
 Set<String> _nonEmptyIds(Iterable<String> source) => {

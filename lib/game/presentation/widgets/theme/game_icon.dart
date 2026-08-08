@@ -4,6 +4,17 @@ import 'package:flutter/material.dart';
 part 'game_icon_data.dart';
 part 'game_icon_renderer.dart';
 
+const gameAutoWorkIcon = GameIconData(
+  paths: [
+    'M4 18l6-6',
+    'M11 6l-3 3 4 4 3-3a2.6 2.6 0 0 0-4-4z',
+    'M15 5a6 6 0 0 1 5 6',
+    'M20 7v4h-4',
+    'M9 19a6 6 0 0 1-5-6',
+    'M4 17v-4h4',
+  ],
+);
+
 abstract final class GameIcons {
   static const city = GameIconData(
     paths: ['M4 21V10l8-6 8 6v11', 'M4 21h16', 'M10 21v-6h4v6'],

@@ -5,7 +5,9 @@ import 'package:analyzer/dart/ast/visitor.dart';
 const movementFamilyCommandTypes = {
   'MoveUnitCommand',
   'CancelUnitActionCommand',
+  'AutomatedUnitCommand',
   'AutoExploreUnitCommand',
+  'AutomateWorkerCommand',
   'AssignMerchantTradeRouteCommand',
   'MoveMerchantToCityCommand',
   'DetachTroopCommand',
@@ -15,7 +17,7 @@ const reviewedMovementFamilyPatternOccurrences = <String, Map<String, int>>{
   'lib/game/application/services/'
       'accepted_engine_command_interaction_source.dart': {
     'function:_movement::AssignMerchantTradeRouteCommand': 1,
-    'function:_movement::AutoExploreUnitCommand': 1,
+    'function:_movement::AutomatedUnitCommand': 1,
     'function:_movement::CancelUnitActionCommand': 1,
     'function:_movement::DetachTroopCommand': 1,
     'function:_movement::MoveMerchantToCityCommand': 1,
@@ -35,7 +37,7 @@ const reviewedMovementFamilyPatternOccurrences = <String, Map<String, int>>{
             'AssignMerchantTradeRouteCommand':
         1,
     'class:AiTurnCommandExecutor/method:describeCommand::'
-            'AutoExploreUnitCommand':
+            'AutomatedUnitCommand':
         1,
     'class:AiTurnCommandExecutor/method:describeCommand::'
             'CancelUnitActionCommand':
@@ -46,12 +48,20 @@ const reviewedMovementFamilyPatternOccurrences = <String, Map<String, int>>{
         1,
     'class:AiTurnCommandExecutor/method:describeCommand::MoveUnitCommand': 1,
     'class:AiTurnCommandExecutor/method:executePlan::MoveUnitCommand': 1,
+    'function:_describeAutomatedUnitCommand::AutoExploreUnitCommand': 1,
+    'function:_describeAutomatedUnitCommand::AutomateWorkerCommand': 1,
+  },
+  'lib/game/application/services/local_movement_command_resolver.dart': {
+    'class:LocalMovementCommandResolver/method:_unchanged::'
+            'AutomateWorkerCommand':
+        1,
+    'class:LocalMovementCommandResolver/method:_unchanged::MoveUnitCommand': 1,
   },
   'lib/game/application/services/local_movement_engine_projection.dart': {
     'function:projectLocalMovementEngineResult::'
             'AssignMerchantTradeRouteCommand':
         1,
-    'function:projectLocalMovementEngineResult::AutoExploreUnitCommand': 1,
+    'function:projectLocalMovementEngineResult::AutomatedUnitCommand': 1,
     'function:projectLocalMovementEngineResult::CancelUnitActionCommand': 1,
     'function:projectLocalMovementEngineResult::DetachTroopCommand': 1,
     'function:projectLocalMovementEngineResult::MoveMerchantToCityCommand': 1,
@@ -61,7 +71,7 @@ const reviewedMovementFamilyPatternOccurrences = <String, Map<String, int>>{
     'class:ReplayStep/method:_inferActorPlayerId::'
             'AssignMerchantTradeRouteCommand':
         1,
-    'class:ReplayStep/method:_inferActorPlayerId::AutoExploreUnitCommand': 1,
+    'class:ReplayStep/method:_inferActorPlayerId::AutomatedUnitCommand': 1,
     'class:ReplayStep/method:_inferActorPlayerId::CancelUnitActionCommand': 1,
     'class:ReplayStep/method:_inferActorPlayerId::DetachTroopCommand': 1,
     'class:ReplayStep/method:_inferActorPlayerId::MoveMerchantToCityCommand': 1,
@@ -164,7 +174,7 @@ const reviewedMovementFamilyPatternOccurrences = <String, Map<String, int>>{
             'AssignMerchantTradeRouteCommand':
         1,
     'class:EconomySimulationCommandStats/method:addApplied::'
-            'AutoExploreUnitCommand':
+            'AutomatedUnitCommand':
         1,
     'class:EconomySimulationCommandStats/method:addApplied::'
             'CancelUnitActionCommand':

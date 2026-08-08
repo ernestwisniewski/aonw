@@ -106,10 +106,10 @@ Rejected alternatives:
 ## Migration And Verification
 
 The app-status endpoint accepts an optional multiplayer revision. Current
-clients send revision 2; older clients omit it and are interpreted as reviewed
-legacy revision 1. Both are compatible today. Unsupported revisions and older
-application builds return `soon`, which is already rendered by the localized
-main-menu update block.
+clients send revision 3. Undeclared clients still map deterministically to
+legacy revision 1, but revisions 1 and 2 are no longer compatible because they
+cannot decode every worker-automation command and persisted posture variant.
+They return `soon`, which is rendered by the localized main-menu update block.
 
 For every multiplayer change:
 

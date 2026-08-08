@@ -6275,6 +6275,15 @@ class AppLocalizationsNl extends AppLocalizations {
   String get selectionActionAutoExplore => 'Ontdekken';
 
   @override
+  String get selectionActionAutoWork => 'Automatisch werken';
+
+  @override
+  String get selectionActionCancelAutoWork => 'Automatisch werk annuleren';
+
+  @override
+  String get selectionActionEndWorkerAssignment => 'Werk beëindigen';
+
+  @override
   String get selectionActionTradeRoute => 'Handelsroute';
 
   @override
@@ -6440,6 +6449,14 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get hudFeedbackAutoExploreNoTargetBody =>
       'De verkenner heeft deze beurt geen zet die nieuwe tegels zou onthullen.';
+
+  @override
+  String get hudFeedbackWorkerAutomationNoTargetTitle =>
+      'Geen werk beschikbaar';
+
+  @override
+  String get hudFeedbackWorkerAutomationNoTargetBody =>
+      'Deze arbeider kan geen verbeterbaar veld of vrije voltooide verbetering bereiken.';
 
   @override
   String get hudFeedbackArtifactGuidanceTitle => 'Wereld artefact';

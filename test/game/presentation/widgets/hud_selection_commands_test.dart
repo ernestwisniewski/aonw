@@ -67,6 +67,28 @@ void main() {
       );
     });
 
+    test('creates automation and assignment commands for selected worker', () {
+      final worker = _unit('worker_1').copyWithWorkerAssignment(
+        const WorkerAssignment(targetHex: CityHex(col: 1, row: 0)),
+      );
+      final state = _stateWithUnit(worker);
+
+      expect(
+        HudSelectionCommands.automateSelectedWorker(state),
+        const AutomateWorkerCommand('worker_1'),
+      );
+      expect(
+        HudSelectionCommands.cancelWorkerAssignment(state),
+        const CancelWorkerAssignmentCommand('worker_1'),
+      );
+      expect(
+        HudSelectionCommands.automateSelectedWorker(
+          _stateWithUnit(_unit('scout_1', type: GameUnitType.scout)),
+        ),
+        isNull,
+      );
+    });
+
     test('creates merchant targeting and destination commands', () {
       final state = _stateWithUnit(
         _unit('merchant_1', type: GameUnitType.merchant),

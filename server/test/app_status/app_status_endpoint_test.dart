@@ -4,19 +4,26 @@ import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('current and reviewed legacy multiplayer clients remain current', () {
-    for (final version in <int?>[
-      null,
-      kLegacyUndeclaredMultiplayerVersion,
-      kCurrentMultiplayerVersion,
-    ]) {
+  test('current multiplayer client remains current', () {
+    expect(
+      appVersionStatus(
+        buildNumber: 80,
+        latestBuildNumber: 80,
+        multiplayerVersion: kCurrentMultiplayerVersion,
+      ),
+      'current',
+    );
+  });
+
+  test('legacy multiplayer clients receive the update notice status', () {
+    for (final version in <int?>[null, 1, 2]) {
       expect(
         appVersionStatus(
           buildNumber: 80,
           latestBuildNumber: 80,
           multiplayerVersion: version,
         ),
-        'current',
+        'soon',
         reason: 'version $version',
       );
     }

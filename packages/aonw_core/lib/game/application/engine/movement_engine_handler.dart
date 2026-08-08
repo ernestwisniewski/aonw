@@ -7,7 +7,9 @@ import 'package:aonw_core/game/domain/movement/domain_auto_explore_command_resol
 import 'package:aonw_core/game/domain/movement/domain_merchant_routing_command_resolver.dart';
 import 'package:aonw_core/game/domain/movement/domain_move_unit_resolver.dart';
 import 'package:aonw_core/game/domain/movement/domain_unit_action_command_resolver.dart';
+import 'package:aonw_core/game/domain/movement/domain_worker_automation_command_resolver.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
+import 'package:aonw_core/game/domain/movement/worker_automation_command_phase.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/unit/domain_unit_detachment_resolver.dart';
@@ -17,6 +19,8 @@ final class MovementEngineHandler {
   const MovementEngineHandler({
     this.moveResolver = const DomainMoveUnitResolver(),
     this.autoExploreResolver = const DomainAutoExploreCommandResolver(),
+    this.workerAutomationResolver =
+        const DomainWorkerAutomationCommandResolver(),
     this.merchantResolver = const DomainMerchantRoutingCommandResolver(),
     this.unitActionResolver = const DomainUnitActionCommandResolver(),
     this.detachmentResolver = const DomainUnitDetachmentResolver(),
@@ -24,6 +28,7 @@ final class MovementEngineHandler {
 
   final DomainMoveUnitResolver moveResolver;
   final DomainAutoExploreCommandResolver autoExploreResolver;
+  final DomainWorkerAutomationCommandResolver workerAutomationResolver;
   final DomainMerchantRoutingCommandResolver merchantResolver;
   final DomainUnitActionCommandResolver unitActionResolver;
   final DomainUnitDetachmentResolver detachmentResolver;
@@ -37,6 +42,11 @@ final class MovementEngineHandler {
       final MoveUnitCommand value => _move(snapshot, value, context),
       final CancelUnitActionCommand value => _cancel(snapshot, value, context),
       final AutoExploreUnitCommand value => _autoExplore(
+        snapshot,
+        value,
+        context,
+      ),
+      final AutomateWorkerCommand value => _automateWorker(
         snapshot,
         value,
         context,
@@ -118,6 +128,33 @@ final class MovementEngineHandler {
       command: command,
       actorPlayerId: context.actorPlayerId,
       mapData: context.mapView,
+    );
+    if (!result.accepted) return _rejected(snapshot, result.reason);
+    return _accepted(
+      snapshot,
+      domain: result.state,
+      interaction: result.interaction,
+      events: result.events,
+      execution: result.execution,
+    );
+  }
+
+  GameEngineResult _automateWorker(
+    CanonicalGameSnapshot snapshot,
+    AutomateWorkerCommand command,
+    GameEngineContext context,
+  ) {
+    final result = workerAutomationResolver.resolve(
+      state: snapshot.domain,
+      interaction: snapshot.domain.actions,
+      command: command,
+      actorPlayerId: context.actorPlayerId,
+      mapData: context.mapView,
+      phase: WorkerAutomationCommandPhase.direct,
+      cityRuleset: context.ruleset.city,
+      technologyRuleset: context.ruleset.technology,
+      paceBalance: context.ruleset.paceBalance,
+      visibilityMode: context.movementVisibilityMode,
     );
     if (!result.accepted) return _rejected(snapshot, result.reason);
     return _accepted(

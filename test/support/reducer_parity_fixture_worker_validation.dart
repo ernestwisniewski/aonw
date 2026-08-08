@@ -2,16 +2,17 @@ part of 'reducer_parity_fixture.dart';
 
 const _workerParitySentinelId = 'worker_sentinel';
 
-String _workerAcceptanceMode(ReducerParityFixture fixture) {
-  return switch (fixture.command) {
-    SelectWorkerImprovementCommand() => 'select',
-    ConfirmWorkerImprovementCommand() => 'confirm',
-    CancelWorkerJobCommand() => 'cancel-job',
-    AssignWorkerToHexCommand() => 'assign',
-    CancelWorkerAssignmentCommand() => 'cancel-assignment',
-    _ => 'unexpected',
-  };
-}
+const _workerAcceptanceModes = <Type, String>{
+  SelectWorkerImprovementCommand: 'select',
+  ConfirmWorkerImprovementCommand: 'confirm',
+  CancelWorkerJobCommand: 'cancel-job',
+  AssignWorkerToHexCommand: 'assign',
+  CancelWorkerAssignmentCommand: 'cancel-assignment',
+  AutomateWorkerCommand: 'automate',
+};
+
+String _workerAcceptanceMode(ReducerParityFixture fixture) =>
+    _workerAcceptanceModes[fixture.command.runtimeType] ?? 'unexpected';
 
 String _workerInteractionMode(ReducerParityFixture fixture) {
   final runtime = fixture.state;
@@ -75,6 +76,7 @@ void _requireWorkerAcceptanceCoverage(
     'cancel-job',
     'assign',
     'cancel-assignment',
+    'automate',
   })) {
     throw StateError(
       '$family needs accepted fixtures for all authoritative worker commands.',
@@ -184,6 +186,11 @@ GameUnit _expectedWorkerAfterCommand(
           ),
     CancelWorkerAssignmentCommand() =>
       worker.copyWithWorkerAssignment(null).copyWithQueuedPath(null),
+    AutomateWorkerCommand() => _workerStartingReviewedJob(
+      fixture,
+      worker,
+      FieldImprovementType.farm,
+    ),
     _ => throw StateError('Unexpected worker command in ${fixture.id}.'),
   };
 }
@@ -250,16 +257,8 @@ DomainActionState _expectedWorkerActions(
   return actions;
 }
 
-String _workerCommandUnitId(DomainCommand command) {
-  return switch (command) {
-    SelectWorkerImprovementCommand(:final unitId) ||
-    ConfirmWorkerImprovementCommand(:final unitId) ||
-    CancelWorkerJobCommand(:final unitId) ||
-    AssignWorkerToHexCommand(:final unitId) ||
-    CancelWorkerAssignmentCommand(:final unitId) => unitId,
-    _ => '',
-  };
-}
+String _workerCommandUnitId(DomainCommand command) =>
+    command is UnitDomainCommand ? command.unitId : '';
 
 bool _sameWorkerUnitOrder(List<GameUnit> before, List<GameUnit> after) {
   if (before.length != after.length) return false;

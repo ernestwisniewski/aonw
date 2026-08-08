@@ -7,6 +7,13 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
+typedef _WorkerImprovementOptionCandidate = ({
+  FieldImprovementType type,
+  WorkerImprovementLegality actionLegality,
+  WorkerImprovementLegality displayLegality,
+  int score,
+});
+
 abstract final class WorkerImprovementOptionsViewModelFactory {
   static List<WorkerImprovementOptionViewModel> from({
     required GameUnit unit,
@@ -23,15 +30,7 @@ abstract final class WorkerImprovementOptionsViewModelFactory {
   }) {
     final tile = mapData.tileAt(unit.col, unit.row);
 
-    final raw =
-        <
-          ({
-            FieldImprovementType type,
-            WorkerImprovementLegality actionLegality,
-            WorkerImprovementLegality displayLegality,
-            int score,
-          })
-        >[];
+    final raw = <_WorkerImprovementOptionCandidate>[];
 
     for (final type in FieldImprovementType.values) {
       final tileLegality = WorkerImprovementRules.evaluate(
@@ -72,13 +71,7 @@ abstract final class WorkerImprovementOptionsViewModelFactory {
       ));
     }
 
-    final recommendedType =
-        raw.where((entry) => entry.actionLegality.allowed).toList()
-          ..sort((a, b) {
-            final score = b.score.compareTo(a.score);
-            if (score != 0) return score;
-            return a.type.index.compareTo(b.type.index);
-          });
+    final recommendedType = _recommendedTypeFor(raw);
 
     return [
       for (final entry in raw)
@@ -98,7 +91,7 @@ abstract final class WorkerImprovementOptionsViewModelFactory {
             type: entry.type,
             legality: entry.displayLegality,
             selectedImprovementType: selectedImprovementType,
-            recommendedType: recommendedType.firstOrNull?.type,
+            recommendedType: recommendedType,
           ),
           reason: _reasonFor(
             type: entry.type,
@@ -217,4 +210,13 @@ abstract final class WorkerImprovementOptionsViewModelFactory {
         WorkerImprovementOptionState.available => 2,
         WorkerImprovementOptionState.blocked => 3,
       };
+}
+
+FieldImprovementType? _recommendedTypeFor(
+  Iterable<_WorkerImprovementOptionCandidate> candidates,
+) {
+  return WorkerImprovementRecommendation.bestTypeForScores({
+    for (final candidate in candidates)
+      if (candidate.actionLegality.allowed) candidate.type: candidate.score,
+  });
 }

@@ -21,7 +21,7 @@
         "packages/aonw_core/lib/ai/combat_tactics.dart": 90,
         "packages/aonw_core/lib/ai/production_unit_scorer.dart": 81,
         "packages/aonw_core/lib/ai/telemetry/balance_runner.dart": 220,
-        "packages/aonw_core/lib/game/domain/command/game_command.dart": 202,
+        "packages/aonw_core/lib/game/domain/command/game_command.dart": 197,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state.dart": 132,
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart": 87
       },
@@ -34,7 +34,7 @@
         "packages/aonw_core/lib/ai/production_scorer.dart": 258,
         "packages/aonw_core/lib/ai/production_unit_scorer.dart": 296,
         "packages/aonw_core/lib/ai/telemetry/balance_runner.dart": 361,
-        "packages/aonw_core/lib/game/domain/command/game_command.dart": 323,
+        "packages/aonw_core/lib/game/domain/command/game_command.dart": 315,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state.dart": 352
       },
       "cognitiveComplexity": {}
@@ -75,7 +75,7 @@
         "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 2029,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 1621,
         "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 3440,
-        "lib/game/presentation/widgets/hud/selection/hud_selection_actions.dart": 1572
+        "lib/game/presentation/widgets/hud/selection/hud_selection_actions.dart": 1518
       },
       "callableCount": {
         "lib/developer/assets_editor_screen.dart": 139,
@@ -99,7 +99,7 @@
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 1371,
         "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 2849,
         "lib/game/presentation/widgets/hud/map/hud_map_inspection_menu.dart": 1026,
-        "lib/game/presentation/widgets/hud/selection/hud_selection_actions.dart": 1473
+        "lib/game/presentation/widgets/hud/selection/hud_selection_actions.dart": 1436
       },
       "cyclomaticComplexity": {
         "lib/developer/assets_editor_screen.dart": 257,
@@ -111,7 +111,7 @@
         "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 277,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 299,
         "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 699,
-        "lib/game/presentation/widgets/hud/selection/hud_selection_actions.dart": 267
+        "lib/game/presentation/widgets/hud/selection/hud_selection_actions.dart": 264
       },
       "cognitiveComplexity": {
         "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 447
@@ -122,7 +122,7 @@
         "test/game/game_hud_test.dart": 8046,
         "test/game/game_providers_test.dart": 2759,
         "test/game/game_renderer_keyboard_test.dart": 3583,
-        "test/support/reducer_parity_fixture.dart": 3253
+        "test/support/reducer_parity_fixture.dart": 3252
       },
       "callableCount": {
         "test/game/game_hud_test.dart": 309,
@@ -136,10 +136,10 @@
         "test/game/game_hud_test.dart": 7709,
         "test/game/game_providers_test.dart": 2573,
         "test/game/game_renderer_keyboard_test.dart": 3483,
-        "test/support/reducer_parity_fixture.dart": 2832
+        "test/support/reducer_parity_fixture.dart": 2822
       },
       "cyclomaticComplexity": {
-        "test/support/reducer_parity_fixture.dart": 784
+        "test/support/reducer_parity_fixture.dart": 774
       },
       "cognitiveComplexity": {}
     },

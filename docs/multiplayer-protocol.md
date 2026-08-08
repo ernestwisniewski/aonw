@@ -202,11 +202,11 @@ Functional multiplayer compatibility is versioned independently:
 
 | Contract | Current | Compatible | Meaning |
 | --- | ---: | --- | --- |
-| Multiplayer revision | 2 | 1, 2 | Incremented for every online behavior or contract change. Missing declarations map to reviewed legacy revision 1. |
+| Multiplayer revision | 3 | 3 | Revision 3 adds the worker-automation command and persisted `autoWorking` posture. Revisions 1 and 2 cannot decode every new canonical command/state variant. |
 | Wire envelope schema | 3 | 3 | Incremented only for incompatible serialized envelope changes. |
 
 The main-menu app-status request sends the app build plus multiplayer revision
-2. A revision in the compatible set can continue. A removed, invalid, or
+3. A revision in the compatible set can continue. A removed, invalid, or
 future revision receives `soon`, which renders the localized
 `mainMenuUpdateSoonTitle` and `mainMenuUpdateSoonBody` notice. Older clients
 that do not yet send a revision are treated specifically as revision 1 during
@@ -215,8 +215,8 @@ this bridge window.
 Version 3 introduced recipient-scoped snapshots and redacted event history.
 The server intentionally rejects incompatible matches, including records whose
 player identifiers embed account identifiers. The client uses the
-`multiplayer-v2` snapshot-cache namespace so pre-projection snapshots cannot
-be loaded as an offline fallback.
+`multiplayer-v3` snapshot-cache namespace so snapshots from an incompatible
+functional revision cannot be loaded as an offline fallback.
 
 Use this path for every multiplayer change:
 

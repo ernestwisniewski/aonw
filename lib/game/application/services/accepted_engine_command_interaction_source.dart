@@ -134,7 +134,7 @@ GameClientState _movement(GameClientState state, DomainCommand command) {
   return switch (command) {
     MoveUnitCommand() => state.copyWithInteraction(movePreview: null),
     CancelUnitActionCommand(:final unitId) ||
-    AutoExploreUnitCommand(:final unitId) => _clearOwnedInteraction(
+    AutomatedUnitCommand(:final unitId) => _clearOwnedInteraction(
       state,
       unitId,
       clearPending: true,

@@ -6,7 +6,12 @@ final hudFeedbackProvider =
       HudFeedbackNotifier.new,
     );
 
-enum HudFeedbackKind { autoExploreNoTarget, artifactGuidance, actionBlocked }
+enum HudFeedbackKind {
+  autoExploreNoTarget,
+  workerAutomationNoTarget,
+  artifactGuidance,
+  actionBlocked,
+}
 
 class HudFeedbackContent {
   final HudFeedbackKind kind;
@@ -20,6 +25,19 @@ class HudFeedbackContent {
     required this.title,
     required this.body,
   });
+
+  factory HudFeedbackContent.fromEffect(ShowHudFeedbackEffect effect) {
+    return switch (effect) {
+      ShowWorkerAutomationNoTargetEffect() =>
+        HudFeedbackMessages.workerAutomationNoTarget,
+      _ => HudFeedbackContent(
+        kind: HudFeedbackKind.actionBlocked,
+        reason: effect.reason,
+        title: effect.title,
+        body: effect.body,
+      ),
+    };
+  }
 }
 
 class HudFeedbackMessage {
@@ -41,6 +59,12 @@ class HudFeedbackMessage {
 abstract final class HudFeedbackMessages {
   static const autoExploreNoTarget = HudFeedbackContent(
     kind: HudFeedbackKind.autoExploreNoTarget,
+    title: '',
+    body: '',
+  );
+
+  static const workerAutomationNoTarget = HudFeedbackContent(
+    kind: HudFeedbackKind.workerAutomationNoTarget,
     title: '',
     body: '',
   );

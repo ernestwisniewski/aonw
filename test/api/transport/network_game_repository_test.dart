@@ -193,10 +193,10 @@ void main() {
       },
     );
 
-    test('never reads a snapshot from the pre-projection namespace', () async {
+    test('never reads a snapshot from an older multiplayer revision', () async {
       final cache = _MemorySnapshotStore();
       await cache.save(
-        'multiplayer-v1.dXNlcl8x.bWF0Y2hfMQ',
+        'multiplayer-v2.dXNlcl8x.bWF0Y2hfMQ',
         Snapshot(
           state: GameSnapshotFactory.create(
             save: _save(),
@@ -219,7 +219,7 @@ void main() {
       );
       expect(
         multiplayerSnapshotCacheKey(userId: 'user_1', matchId: 'match_1'),
-        startsWith('multiplayer-v2.'),
+        startsWith('multiplayer-v3.'),
       );
     });
 

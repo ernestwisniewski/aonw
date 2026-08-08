@@ -60,6 +60,7 @@ final class GameEngine {
       MoveUnitCommand() ||
       CancelUnitActionCommand() ||
       AutoExploreUnitCommand() ||
+      AutomateWorkerCommand() ||
       AssignMerchantTradeRouteCommand() ||
       MoveMerchantToCityCommand() ||
       DetachTroopCommand() => GameEngineCommandFamily.movement,

@@ -1,7 +1,10 @@
-part of 'hud_selection_actions.dart';
+import 'package:aonw/game/presentation/widgets/selection/selection.dart';
+import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:flutter/widgets.dart';
 
-class _HudSelectionActionSpec {
-  const _HudSelectionActionSpec({
+class HudSelectionActionSpec {
+  const HudSelectionActionSpec({
     required this.icon,
     required this.actionId,
     required this.label,
@@ -51,18 +54,4 @@ class _HudSelectionActionSpec {
       onTap: onTap,
     );
   }
-}
-
-List<Widget> _widgetsFromActionGroups(
-  List<List<_HudSelectionActionSpec>> groups,
-) {
-  final widgets = <Widget>[];
-  for (final group in groups) {
-    if (group.isEmpty) continue;
-    if (widgets.isNotEmpty) {
-      widgets.add(const SelectionActionGroupBreak());
-    }
-    widgets.addAll([for (final spec in group) spec.toChip()]);
-  }
-  return widgets;
 }

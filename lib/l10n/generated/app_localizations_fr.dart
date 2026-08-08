@@ -6289,6 +6289,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get selectionActionAutoExplore => 'Explorer';
 
   @override
+  String get selectionActionAutoWork => 'Travail automatique';
+
+  @override
+  String get selectionActionCancelAutoWork => 'Annuler le travail automatique';
+
+  @override
+  String get selectionActionEndWorkerAssignment => 'Terminer le travail';
+
+  @override
   String get selectionActionTradeRoute => 'Voie commerciale';
 
   @override
@@ -6455,6 +6464,14 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get hudFeedbackAutoExploreNoTargetBody =>
       'Le scout n\'a aucun mouvement qui révélerait de nouvelles tuiles ce tour.';
+
+  @override
+  String get hudFeedbackWorkerAutomationNoTargetTitle =>
+      'Aucun travail disponible';
+
+  @override
+  String get hudFeedbackWorkerAutomationNoTargetBody =>
+      'Cet ouvrier ne peut atteindre ni une case à améliorer ni un aménagement terminé disponible.';
 
   @override
   String get hudFeedbackArtifactGuidanceTitle => 'Artefact mondial';

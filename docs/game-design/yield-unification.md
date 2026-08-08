@@ -130,8 +130,8 @@ multiplier.
 ## Worker Improvement Scoring
 
 `WorkerImprovementScoring` moves the improvement-recommendation heuristic into
-core. The UI still shows `recommended` in the manual `Improve` panel, but no
-longer auto-selects the best improvement from the worker menu.
+core. `WorkerImprovementRecommendation` applies the same legality, scoring, and
+tie-break policy to the manual `Improve` panel and automated worker planning.
 
 | Parameter | Weight |
 | --- | ---: |
@@ -146,7 +146,13 @@ longer auto-selects the best improvement from the worker menu.
 This is still a heuristic, not hard economic balance. The important change is
 that its `baseYield` comes from `CityTileYieldRules.forTile`, which is the same
 model used by city economy. Changing these weights affects recommendations in
-the manual worker panel.
+the manual worker panel and the secondary ordering of equally near automatic
+build targets.
+
+When no legal improvement can be built anywhere in the player's cities,
+automation can assign the worker to a free completed improvement. The existing
+`CityYieldCalculator.workerAssignmentBonusFor(...)` adds 50% of that tile's
+yield while the worker remains assigned; this does not consume a build charge.
 
 ## Worker Improvement Charges
 
