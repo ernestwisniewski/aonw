@@ -100,6 +100,24 @@ void main() {
       }
     });
   });
+
+  test('preloads sound cues sequentially', () async {
+    var activeLoads = 0;
+    var maximumConcurrentLoads = 0;
+    final loaded = <GameSoundCue>[];
+    final cues = GameSoundCue.values.take(3).toList();
+
+    await preloadAudioCuesSequentially(cues, (cue) async {
+      activeLoads++;
+      maximumConcurrentLoads = math.max(maximumConcurrentLoads, activeLoads);
+      await Future<void>.delayed(Duration.zero);
+      loaded.add(cue);
+      activeLoads--;
+    });
+
+    expect(loaded, cues);
+    expect(maximumConcurrentLoads, 1);
+  });
 }
 
 class _ZeroRandom implements math.Random {

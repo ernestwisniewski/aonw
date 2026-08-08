@@ -17,29 +17,66 @@ permissions:
 
 env:
   AONW_RELEASE_API_BASE_URL: https://api.aonw.net
+  STEAMRT_SDK_IMAGE: registry.gitlab.steamos.cloud/steamrt/steamrt4/sdk@sha256:2c4c6520a268ef53255d511ae5988e35855b39a4b6c1e9865d56e5011c76ec3e
+  STEAMRT_PLATFORM_IMAGE: registry.gitlab.steamos.cloud/steamrt/steamrt4/platform@sha256:bd63a41c2007626ca954c4ffbd82417aae91e3a7cfe251fffd6e286ae85e3fd7
 
 jobs:
-  build-linux:
-    name: Build Linux release
+  runtime-contract:
+    name: Capture Steam Runtime contract
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Capture platform SONAME inventory
+        run: |
+          mkdir -p build/steamrt4-contract
+          docker pull "$STEAMRT_PLATFORM_IMAGE"
+          docker run --rm "$STEAMRT_PLATFORM_IMAGE" \
+            sh -c "ldconfig -p | awk '/x86-64/ && /=>/ { print \$1 }' | sort -u" \
+            > build/steamrt4-contract/platform-sonames.txt
+          test -s build/steamrt4-contract/platform-sonames.txt
+
+      - name: Upload runtime contract
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: steamrt4-contract-${{ github.run_id }}
+          path: build/steamrt4-contract/platform-sonames.txt
+          if-no-files-found: error
+          retention-days: 1
+
+  build-linux:
+    name: Build and package Linux release
+    needs: runtime-contract
+    runs-on: ubuntu-24.04
+    container:
+      image: registry.gitlab.steamos.cloud/steamrt/steamrt4/sdk@sha256:2c4c6520a268ef53255d511ae5988e35855b39a4b6c1e9865d56e5011c76ec3e
     timeout-minutes: 60
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Install Linux desktop dependencies
+      - name: Download runtime contract
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v8.0.1
+        with:
+          name: steamrt4-contract-${{ github.run_id }}
+          path: build/steamrt4-contract
+
+      - name: Install Linux build and runtime dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y --no-install-recommends \
             clang \
             cmake \
-            libgtk-3-dev \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-tools \
+            libglib2.0-bin \
             libgstreamer-plugins-base1.0-dev \
             libgstreamer1.0-dev \
-            libsecret-1-dev \
-            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
             liblzma-dev \
+            libsecret-1-dev \
             ninja-build \
             pkg-config \
             unzip \
@@ -57,10 +94,11 @@ jobs:
           flutter config --enable-linux-desktop
           flutter pub get --enforce-lockfile
 
-      - name: Build Linux release
+      - name: Build Linux release in Steam Runtime SDK
+        env:
+          BUILD_NAME: ${{ inputs.build_name }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
         run: |
-          echo "Building Linux release with AONW_API_BASE_URL=$AONW_RELEASE_API_BASE_URL"
-
           flutter_args=(
             build
             linux
@@ -69,32 +107,120 @@ jobs:
             "--dart-define=AONW_API_BASE_URL=$AONW_RELEASE_API_BASE_URL"
           )
 
-          if [ -n "${{ inputs.build_name }}" ]; then
-            flutter_args+=("--build-name=${{ inputs.build_name }}")
+          if [ -n "$BUILD_NAME" ]; then
+            flutter_args+=("--build-name=$BUILD_NAME")
           fi
-
-          if [ -n "${{ inputs.build_number }}" ]; then
-            flutter_args+=("--build-number=${{ inputs.build_number }}")
+          if [ -n "$BUILD_NUMBER" ]; then
+            flutter_args+=("--build-number=$BUILD_NUMBER")
           fi
 
           flutter "${flutter_args[@]}"
 
-      - name: Package Steam artifact
+      - name: Package self-contained Steam Runtime bundle
         run: |
-          release_path="build/linux/x64/release/bundle"
-          artifact_root="dist/steam-linux"
-          zip_path="dist/aonw-linux-steam.zip"
-
-          rm -rf dist
-          mkdir -p "$artifact_root"
-          cp -a "$release_path/." "$artifact_root/"
-          grep -R -a -F "$AONW_RELEASE_API_BASE_URL" "$artifact_root" >/dev/null
-          (cd "$artifact_root" && zip -qry "../aonw-linux-steam.zip" .)
-          unzip -tq "$zip_path"
+          tool/linux/package_steamrt4_bundle.sh \
+            build/linux/x64/release/bundle \
+            dist/steam-linux \
+            build/steamrt4-contract/platform-sonames.txt
+          grep -R -a -F "$AONW_RELEASE_API_BASE_URL" dist/steam-linux >/dev/null
+          mkdir -p dist/runtime-smoke-tools
+          cp /usr/bin/gst-launch-1.0 dist/runtime-smoke-tools/
+          (cd dist/steam-linux && zip -qry ../aonw-linux-steam.zip .)
+          unzip -tq dist/aonw-linux-steam.zip
 
       - name: Upload Linux Steam artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: aonw-linux-steam-${{ github.run_number }}
-          path: dist/aonw-linux-steam.zip
+          path: |
+            dist/aonw-linux-steam.zip
+            dist/runtime-smoke-tools/gst-launch-1.0
+          if-no-files-found: error
           retention-days: 30
+
+  runtime-smoke:
+    name: Verify final bundle in Steam Runtime
+    needs: build-linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v8.0.1
+        with:
+          name: aonw-linux-steam-${{ github.run_number }}
+          path: build/linux-runtime-smoke
+
+      - name: Extract final ZIP
+        run: |
+          mkdir -p build/linux-runtime-smoke/bundle
+          unzip -q \
+            build/linux-runtime-smoke/aonw-linux-steam.zip \
+            -d build/linux-runtime-smoke/bundle
+
+      - name: Verify dependency closure and audio decoding
+        run: |
+          docker pull "$STEAMRT_PLATFORM_IMAGE"
+          docker run --rm \
+            -v "$PWD:/source:ro" \
+            -v "$PWD/build/linux-runtime-smoke/bundle:/app:ro" \
+            "$STEAMRT_PLATFORM_IMAGE" \
+            bash /source/tool/linux/verify_steamrt4_bundle.sh /app
+
+          docker run --rm \
+            -v "$PWD/build/linux-runtime-smoke/bundle:/app:ro" \
+            -v "$PWD/build/linux-runtime-smoke/runtime-smoke-tools:/smoke:ro" \
+            -e LD_LIBRARY_PATH=/app/lib \
+            -e GST_PLUGIN_PATH_1_0=/app/lib/gstreamer-1.0 \
+            -e GST_PLUGIN_SYSTEM_PATH_1_0=/app/lib/gstreamer-1.0 \
+            -e GST_PLUGIN_SCANNER_1_0=/app/libexec/gstreamer-1.0/gst-plugin-scanner \
+            "$STEAMRT_PLATFORM_IMAGE" \
+            /smoke/gst-launch-1.0 -q \
+            filesrc location=/app/data/flutter_assets/assets/sounds/menu_click.wav \
+            ! decodebin ! fakesink
+
+          docker run --rm \
+            -v "$PWD/build/linux-runtime-smoke/bundle:/app:ro" \
+            -v "$PWD/build/linux-runtime-smoke/runtime-smoke-tools:/smoke:ro" \
+            -e LD_LIBRARY_PATH=/app/lib \
+            -e GST_PLUGIN_PATH_1_0=/app/lib/gstreamer-1.0 \
+            -e GST_PLUGIN_SYSTEM_PATH_1_0=/app/lib/gstreamer-1.0 \
+            -e GST_PLUGIN_SCANNER_1_0=/app/libexec/gstreamer-1.0/gst-plugin-scanner \
+            "$STEAMRT_PLATFORM_IMAGE" \
+            /smoke/gst-launch-1.0 -q \
+            filesrc location=/app/data/flutter_assets/assets/sounds/music/korona1.mp3 \
+            ! decodebin ! fakesink
+
+      - name: Launch without a gamepad device
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          Xvfb :99 -screen 0 1280x720x24 -nolisten tcp -ac &
+          xvfb_pid=$!
+          trap 'kill "$xvfb_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..50}; do
+            [ -S /tmp/.X11-unix/X99 ] && break
+            sleep 0.1
+          done
+          test -S /tmp/.X11-unix/X99
+
+          set +e
+          docker run --rm --network host \
+            -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
+            -v "$PWD/build/linux-runtime-smoke/bundle:/app:ro" \
+            -e DISPLAY=:99 \
+            -e GST_AUDIO_SINK=fakesink \
+            "$STEAMRT_PLATFORM_IMAGE" \
+            timeout --signal=TERM --kill-after=5s 20s /app/aonw \
+            >build/linux-runtime-smoke/launch.log 2>&1
+          status=$?
+          set -e
+
+          cat build/linux-runtime-smoke/launch.log
+          test "$status" -eq 124
+          ! grep -E \
+            'error while loading shared libraries|terminate called|std::runtime_error' \
+            build/linux-runtime-smoke/launch.log

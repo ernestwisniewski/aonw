@@ -148,17 +148,17 @@ void main() {
   });
 
   test('every non-vendor Dart workspace maps to one leaf policy', () {
-    const vendorManifests = {'third_party/sign_in_with_apple/pubspec.yaml'};
+    const vendorManifests = {
+      'third_party/gamepads_linux/pubspec.yaml',
+      'third_party/sign_in_with_apple/pubspec.yaml',
+      'tool/linux/desktop_webview_window_stub/pubspec.yaml',
+    };
     final manifests = _gitPaths(const ['pubspec.yaml', '**/pubspec.yaml']);
     final workspaceManifests = manifests.difference(vendorManifests);
     final mappedPolicies = workspaceManifests
         .map(_analysisOptionsForManifest)
         .toSet();
-
-    expect(
-      manifests.where((path) => path.startsWith('third_party/')).toSet(),
-      vendorManifests,
-    );
+    expect(manifests.difference(workspaceManifests), vendorManifests);
     expect(mappedPolicies, _leafProfiles.keys.toSet());
     expect(workspaceManifests, hasLength(_leafProfiles.length));
   });

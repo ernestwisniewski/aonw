@@ -26,7 +26,11 @@ void _registerProductionBoundaryTests() {
         'MovementCommandResolver',
         'resolve',
       ),
-      const {movementDomainAdapterPath: 1, movementAutoExploreKernelPath: 1},
+      const {
+        movementDomainAdapterPath: 1,
+        movementAutoExploreKernelPath: 1,
+        movementWorkerAutomationAdapterPath: 1,
+      },
       reason: 'Unexpected MovementCommandResolver.resolve call-sites.',
     );
     expect(

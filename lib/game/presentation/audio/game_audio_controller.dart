@@ -15,32 +15,50 @@ const bool _enableDarwinDebugAudio = bool.fromEnvironment(
   'AONW_ENABLE_DARWIN_DEBUG_AUDIO',
 );
 
+typedef GameAudioErrorReporter =
+    void Function(String operation, Object error, StackTrace stackTrace);
+
 class GameAudioController {
-  GameAudioController({AssetBundle? bundle, math.Random? musicRandom})
-    : _bundle = bundle ?? rootBundle {
+  GameAudioController({
+    AssetBundle? bundle,
+    math.Random? musicRandom,
+    GameAudioErrorReporter? errorReporter,
+  }) : _bundle = bundle ?? rootBundle,
+       _errorReporter = errorReporter ?? _reportGameAudioError {
     _musicLoop = _LoopingAssetFolderPlayer(
       bundle: _bundle,
       assetRoot: _musicAssetRoot,
       shufflePlaylist: true,
       random: musicRandom,
+      onError: _reportFailure,
     );
     _natureLoop = _LoopingAssetFolderPlayer(
       bundle: _bundle,
       assetRoot: _natureAssetRoot,
+      onError: _reportFailure,
     );
   }
 
   final AssetBundle _bundle;
+  final GameAudioErrorReporter _errorReporter;
   final Map<GameSoundCue, Future<AudioPool>> _poolFutures = {};
+  final Set<String> _reportedFailures = {};
   late final _LoopingAssetFolderPlayer _musicLoop;
   late final _LoopingAssetFolderPlayer _natureLoop;
+  Future<void> _configurationTail = Future<void>.value();
   GameAudioSettings _settings = const GameAudioSettings();
   AudioContext? _audioContext;
   bool _musicLoopActive = false;
   bool _natureLoopActive = false;
   bool _disposed = false;
 
-  Future<void> applySettings(GameAudioSettings settings) async {
+  Future<void> applySettings(GameAudioSettings settings) {
+    final operation = _configurationTail.then((_) => _applySettings(settings));
+    _configurationTail = operation;
+    return operation;
+  }
+
+  Future<void> _applySettings(GameAudioSettings settings) async {
     if (_disposed) return;
     final nextContext = _audioContextFor(settings);
     final contextChanged = _audioContext != nextContext;
@@ -51,7 +69,10 @@ class GameAudioController {
       if (_playbackAllowed) {
         try {
           await AudioPlayer.global.setAudioContext(nextContext);
-        } catch (_) {}
+          _reportedFailures.remove('configure audio backend');
+        } catch (error, stackTrace) {
+          _reportFailure('configure audio backend', error, stackTrace);
+        }
       }
     }
     await _syncMusicLoop();
@@ -59,14 +80,18 @@ class GameAudioController {
   }
 
   Future<void> play(GameSoundCue cue, {double volume = 1}) async {
+    await _configurationTail;
     if (_disposed || !_playbackAllowed || !_settings.soundsEnabled) return;
+    final operation = 'play sound ${cue.name}';
     try {
       final pool = await _poolFor(cue);
       if (_disposed || !_playbackAllowed || !_settings.soundsEnabled) return;
       await pool.start(
         volume: (volume * _settings.soundVolume).clamp(0, 1).toDouble(),
       );
-    } catch (_) {
+      _reportedFailures.remove(operation);
+    } catch (error, stackTrace) {
+      _reportFailure(operation, error, stackTrace);
       _discardPool(cue);
     }
   }
@@ -78,23 +103,25 @@ class GameAudioController {
   }
 
   Future<void> preloadAll() async {
+    await _configurationTail;
     if (_disposed || !_playbackAllowed) return;
-    await Future.wait([
-      for (final cue in GameSoundCue.values)
-        () async {
-          if (_disposed || !_playbackAllowed) return;
-          try {
-            await _poolFor(cue);
-          } catch (_) {
-            _discardPool(cue);
-          }
-        }(),
-    ]);
+    await preloadAudioCuesSequentially(GameSoundCue.values, (cue) async {
+      if (_disposed || !_playbackAllowed) return;
+      final operation = 'preload sound ${cue.name}';
+      try {
+        await _poolFor(cue);
+        _reportedFailures.remove(operation);
+      } catch (error, stackTrace) {
+        _reportFailure(operation, error, stackTrace);
+        _discardPool(cue);
+      }
+    });
   }
 
   Future<void> startMusicLoop() async {
     if (_disposed) return;
     _musicLoopActive = true;
+    await _configurationTail;
     await _syncMusicLoop();
   }
 
@@ -106,6 +133,7 @@ class GameAudioController {
   Future<void> startNatureLoop() async {
     if (_disposed) return;
     _natureLoopActive = true;
+    await _configurationTail;
     await _syncNatureLoop();
   }
 
@@ -117,21 +145,31 @@ class GameAudioController {
   Future<void> _syncMusicLoop() async {
     if (_disposed || !_musicLoopActive || !_playbackAllowed) return;
     final context = _audioContext ?? _audioContextFor(_settings);
-    await _musicLoop.update(
-      enabled: _settings.musicEnabled,
-      volume: _settings.musicVolume,
-      audioContext: context,
-    );
+    try {
+      await _musicLoop.update(
+        enabled: _settings.musicEnabled,
+        volume: _settings.musicVolume,
+        audioContext: context,
+      );
+      _reportedFailures.remove('play music');
+    } catch (error, stackTrace) {
+      _reportFailure('play music', error, stackTrace);
+    }
   }
 
   Future<void> _syncNatureLoop() async {
     if (_disposed || !_natureLoopActive || !_playbackAllowed) return;
     final context = _audioContext ?? _audioContextFor(_settings);
-    await _natureLoop.update(
-      enabled: _settings.natureEnabled,
-      volume: _settings.natureVolume,
-      audioContext: context,
-    );
+    try {
+      await _natureLoop.update(
+        enabled: _settings.natureEnabled,
+        volume: _settings.natureVolume,
+        audioContext: context,
+      );
+      _reportedFailures.remove('play nature ambience');
+    } catch (error, stackTrace) {
+      _reportFailure('play nature ambience', error, stackTrace);
+    }
   }
 
   Future<AudioPool> _poolFor(GameSoundCue cue) {
@@ -161,7 +199,9 @@ class GameAudioController {
     try {
       final pool = await poolFuture;
       await pool.dispose();
-    } catch (_) {}
+    } catch (error, stackTrace) {
+      _reportFailure('dispose audio pool', error, stackTrace);
+    }
   }
 
   bool get _playbackAllowed {
@@ -189,6 +229,7 @@ class GameAudioController {
 
   Future<void> dispose() async {
     _disposed = true;
+    await _configurationTail;
     await Future.wait([_musicLoop.dispose(), _natureLoop.dispose()]);
     final poolFutures = _poolFutures.values.toList();
     _poolFutures.clear();
@@ -196,9 +237,42 @@ class GameAudioController {
       try {
         final pool = await poolFuture;
         await pool.dispose();
-      } catch (_) {}
+      } catch (error, stackTrace) {
+        _reportFailure('dispose audio pool', error, stackTrace);
+      }
     }
   }
+
+  void _reportFailure(String operation, Object error, StackTrace stackTrace) {
+    if (_reportedFailures.add(operation)) {
+      _errorReporter(operation, error, stackTrace);
+    }
+  }
+}
+
+@visibleForTesting
+Future<void> preloadAudioCuesSequentially(
+  Iterable<GameSoundCue> cues,
+  Future<void> Function(GameSoundCue cue) preload,
+) async {
+  for (final cue in cues) {
+    await preload(cue);
+  }
+}
+
+void _reportGameAudioError(
+  String operation,
+  Object error,
+  StackTrace stackTrace,
+) {
+  FlutterError.reportError(
+    FlutterErrorDetails(
+      exception: error,
+      stack: stackTrace,
+      library: 'AONW audio',
+      context: ErrorDescription('while attempting to $operation'),
+    ),
+  );
 }
 
 @visibleForTesting
@@ -251,15 +325,18 @@ class _LoopingAssetFolderPlayer {
     required String assetRoot,
     bool shufflePlaylist = false,
     math.Random? random,
+    required GameAudioErrorReporter onError,
   }) : _bundle = bundle,
        _assetRoot = assetRoot,
        _shufflePlaylist = shufflePlaylist,
-       _random = random;
+       _random = random,
+       _onError = onError;
 
   final AssetBundle _bundle;
   final String _assetRoot;
   final bool _shufflePlaylist;
   final math.Random? _random;
+  final GameAudioErrorReporter _onError;
   AudioPlayer? _player;
   StreamSubscription<void>? _completionSub;
   Future<List<String>>? _assetPathsFuture;
@@ -293,7 +370,7 @@ class _LoopingAssetFolderPlayer {
     _completionSub ??= player.onPlayerComplete.listen((_) {
       if (!_running || _disposed) return;
       _index++;
-      unawaited(_playCurrent());
+      unawaited(_playCurrentSafely());
     });
     await _playCurrent();
   }
@@ -314,6 +391,15 @@ class _LoopingAssetFolderPlayer {
     final player = _ensurePlayer();
     await player.play(AssetSource(_assetSourcePath(paths[_index])));
     await player.setVolume(_volume);
+  }
+
+  Future<void> _playCurrentSafely() async {
+    try {
+      await _playCurrent();
+    } catch (error, stackTrace) {
+      _running = false;
+      _onError('continue audio playlist', error, stackTrace);
+    }
   }
 
   Future<List<String>> _assetPaths() {

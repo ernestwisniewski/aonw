@@ -20,6 +20,8 @@ const movementVisibilityModePath =
     '${movementLibraryPath}movement_command_visibility_mode.dart';
 const movementDomainAdapterPath =
     '${movementLibraryPath}domain_move_unit_resolver.dart';
+const movementWorkerAutomationAdapterPath =
+    '${movementLibraryPath}domain_worker_automation_command_resolver.dart';
 const movementLegacyVisibilityPath =
     'lib/game/domain/movement/unit_movement_visibility_rules.dart';
 const movementServerReducerPath =

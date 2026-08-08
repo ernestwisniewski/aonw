@@ -65,6 +65,16 @@ dependency_overrides:
   # This local patch keeps the 7.x Dart API and adds current SDK Swift cases.
   sign_in_with_apple:
     path: third_party/sign_in_with_apple
+  # Desktop authentication uses the system browser plus server-side polling.
+  # Keep flutter_web_auth_2's unused embedded-webview dependency out of native
+  # bundles so Linux does not link against WebKitGTK at process startup.
+  desktop_webview_window:
+    path: tool/linux/desktop_webview_window_stub
+  # The upstream Linux implementation terminates the process when /dev/input
+  # is unavailable and has unsafe hotplug ownership. Keep the patch local and
+  # reproducible until those fixes are available in a published release.
+  gamepads_linux:
+    path: third_party/gamepads_linux
 
 flutter:
   generate: true

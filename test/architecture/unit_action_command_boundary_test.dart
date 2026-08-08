@@ -11,6 +11,9 @@ const _kernelPath =
 const _autoExploreKernelPath =
     'packages/aonw_core/lib/game/domain/movement/'
     'auto_explore_command_resolver.dart';
+const _workerAutomationAdapterPath =
+    'packages/aonw_core/lib/game/domain/movement/'
+    'domain_worker_automation_command_resolver.dart';
 const _interactionRulesPath =
     'packages/aonw_core/lib/game/domain/state/'
     'domain_action_unit_rules.dart';
@@ -112,7 +115,11 @@ void main() {
         'DomainActionUnitRules',
         'clearOwnedByUnit',
       ),
-      {_kernelPath: 2, _autoExploreKernelPath: 2},
+      {
+        _kernelPath: 2,
+        _autoExploreKernelPath: 2,
+        _workerAutomationAdapterPath: 2,
+      },
       reason: 'Selective unit interaction cleanup must not be duplicated.',
     );
 
@@ -134,7 +141,11 @@ void main() {
       'package:aonw_core/game/domain/state/'
           'canonical_game_snapshot.dart',
     });
-    for (final path in const [_kernelPath, _autoExploreKernelPath]) {
+    for (final path in const [
+      _kernelPath,
+      _autoExploreKernelPath,
+      _workerAutomationAdapterPath,
+    ]) {
       expect(
         _importUris(sources[path]!, path),
         contains(_interactionRulesUri),

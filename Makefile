@@ -131,10 +131,14 @@ STEAM_WINDOWS_SOURCE ?= auto
 STEAM_WINDOWS_WORKFLOW ?= windows-steam-build.yml
 STEAM_WINDOWS_ARTIFACT_DIR ?= build/steam-windows-artifact
 STEAM_LINUX_RELEASE_DIR ?= build/linux/x64/release/bundle
+STEAM_LINUX_BUNDLE_DIR ?= build/steam-linux-bundle
 STEAM_LINUX_ZIP ?= $(STEAM_DIST_DIR)/aonw-linux-steam.zip
 STEAM_LINUX_SOURCE ?= auto
 STEAM_LINUX_WORKFLOW ?= linux-steam-build.yml
 STEAM_LINUX_ARTIFACT_DIR ?= build/steam-linux-artifact
+STEAMRT4_SDK_IMAGE ?= registry.gitlab.steamos.cloud/steamrt/steamrt4/sdk@sha256:2c4c6520a268ef53255d511ae5988e35855b39a4b6c1e9865d56e5011c76ec3e
+STEAMRT4_PLATFORM_IMAGE ?= registry.gitlab.steamos.cloud/steamrt/steamrt4/platform@sha256:bd63a41c2007626ca954c4ffbd82417aae91e3a7cfe251fffd6e286ae85e3fd7
+STEAMRT4_PLATFORM_SONAMES ?= build/steamrt4-contract/platform-sonames.txt
 STEAM_GITHUB_RUN_LOOKUP_ATTEMPTS ?= 30
 STEAM_GITHUB_RUN_LOOKUP_SLEEP ?= 5
 STEAM_DEPLOY_DIR ?= $(HOME)/Desktop/steam-deploy
@@ -205,7 +209,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats prune status logs
+.PHONY: help bootstrap toolchain-check dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -1365,20 +1369,37 @@ steam-package-windows:
 	@echo "Verified Steam Windows API: $(STEAM_API_BASE_URL)"
 	@echo "Steam Windows ZIP ready: $(STEAM_WINDOWS_ZIP)"
 
+steam-runtime-contract:
+	@command -v docker >/dev/null || { echo "docker is required for steam-runtime-contract."; exit 1; }
+	@mkdir -p "$(dir $(STEAMRT4_PLATFORM_SONAMES))"
+	@docker pull "$(STEAMRT4_PLATFORM_IMAGE)"
+	@docker run --rm "$(STEAMRT4_PLATFORM_IMAGE)" \
+		sh -c "ldconfig -p | awk '/x86-64/ && /=>/ { print \$$1 }' | sort -u" \
+		> "$(STEAMRT4_PLATFORM_SONAMES)"
+	@test -s "$(STEAMRT4_PLATFORM_SONAMES)"
+	@echo "Steam Runtime 4 contract ready: $(STEAMRT4_PLATFORM_SONAMES)"
+
 steam-linux:
 	@set -e; \
 	mode="$(STEAM_LINUX_SOURCE)"; \
 	if [ "$$mode" = "auto" ]; then \
 		case "$$(uname -s 2>/dev/null || echo unknown)" in \
-			Linux*) mode="local" ;; \
+			Linux*) \
+				if [ "$${AONW_STEAMRT4_SDK:-0}" = "1" ]; then \
+					mode="local"; \
+				elif command -v gh >/dev/null; then \
+					mode="github"; \
+				else \
+					echo "A local Steam Linux build must run inside the pinned Steam Runtime 4 SDK."; \
+					echo "Use STEAM_LINUX_SOURCE=github, or enter the SDK and set AONW_STEAMRT4_SDK=1."; \
+					exit 1; \
+				fi ;; \
 			*) \
 				if command -v gh >/dev/null; then \
 					mode="github"; \
-				elif [ -d "$(STEAM_LINUX_RELEASE_DIR)" ]; then \
-					mode="existing"; \
 				else \
 					echo "Cannot build Steam Linux ZIP on this host."; \
-					echo "Use STEAM_LINUX_SOURCE=github with gh installed, run this on Linux, or place a release in $(STEAM_LINUX_RELEASE_DIR)."; \
+					echo "Use STEAM_LINUX_SOURCE=github with gh installed."; \
 					exit 1; \
 				fi ;; \
 		esac; \
@@ -1392,13 +1413,15 @@ steam-linux:
 
 steam-linux-local:
 	@command -v flutter >/dev/null || { echo "flutter SDK is required for steam-linux-local."; exit 1; }
+	@test "$${AONW_STEAMRT4_SDK:-0}" = "1" || { echo "steam-linux-local must run inside the pinned Steam Runtime 4 SDK with AONW_STEAMRT4_SDK=1."; exit 1; }
+	@test -s "$(STEAMRT4_PLATFORM_SONAMES)" || { echo "Missing Steam Runtime contract: $(STEAMRT4_PLATFORM_SONAMES). Run make steam-runtime-contract on the Docker host first."; exit 1; }
 	@case "$$(uname -s 2>/dev/null || echo unknown)" in \
 		Linux*) ;; \
 		*) echo "steam-linux-local requires a Linux host."; exit 1 ;; \
 	esac
 	@echo "Building Linux Steam release with API=$(STEAM_API_BASE_URL)..."
 	@flutter config --enable-linux-desktop
-	@flutter pub get
+	@flutter pub get --enforce-lockfile
 	@flutter build linux --release --no-pub "--dart-define=AONW_API_BASE_URL=$(STEAM_API_BASE_URL)"
 	@$(MAKE) --no-print-directory steam-package-linux
 
@@ -1447,12 +1470,21 @@ steam-package-linux:
 	@command -v zip >/dev/null || { echo "zip is required for steam-package-linux."; exit 1; }
 	@command -v unzip >/dev/null || { echo "unzip is required for steam-package-linux."; exit 1; }
 	@command -v rg >/dev/null || { echo "rg is required for steam-package-linux."; exit 1; }
+	@test "$${AONW_STEAMRT4_SDK:-0}" = "1" || { echo "steam-package-linux must run inside the pinned Steam Runtime 4 SDK."; exit 1; }
+	@test -x tool/linux/package_steamrt4_bundle.sh || { echo "Missing Linux runtime packager."; exit 1; }
+	@test -s "$(STEAMRT4_PLATFORM_SONAMES)" || { echo "Missing Steam Runtime contract: $(STEAMRT4_PLATFORM_SONAMES)."; exit 1; }
 	@test -d "$(STEAM_LINUX_RELEASE_DIR)" || { echo "Expected Linux release directory not found: $(STEAM_LINUX_RELEASE_DIR)"; exit 1; }
 	@test -f "$(STEAM_LINUX_RELEASE_DIR)/aonw" || { echo "Expected Linux executable not found: $(STEAM_LINUX_RELEASE_DIR)/aonw"; exit 1; }
 	@mkdir -p "$(STEAM_DIST_DIR)"
+	@STEAMRT_SDK_IMAGE="$(STEAMRT4_SDK_IMAGE)" \
+		STEAMRT_PLATFORM_IMAGE="$(STEAMRT4_PLATFORM_IMAGE)" \
+		tool/linux/package_steamrt4_bundle.sh \
+		"$(STEAM_LINUX_RELEASE_DIR)" \
+		"$(STEAM_LINUX_BUNDLE_DIR)" \
+		"$(STEAMRT4_PLATFORM_SONAMES)"
 	@rm -f "$(STEAM_LINUX_ZIP)"
 	@zip_path="$$(pwd)/$(STEAM_LINUX_ZIP)"; \
-		cd "$(STEAM_LINUX_RELEASE_DIR)" && zip -qry "$$zip_path" .
+		cd "$(STEAM_LINUX_BUNDLE_DIR)" && zip -qry "$$zip_path" .
 	@unzip -tq "$(STEAM_LINUX_ZIP)" >/dev/null
 	@tmp_dir=$$(mktemp -d); \
 	trap 'rm -rf "$$tmp_dir"' EXIT; \

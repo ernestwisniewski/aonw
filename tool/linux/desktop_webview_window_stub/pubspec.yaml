@@ -1,0 +1,12 @@
+name: desktop_webview_window
+description: AONW compatibility shim for the unused embedded desktop webview.
+version: 0.3.0
+publish_to: none
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+  flutter: ">=3.24.0"
+
+dependencies:
+  flutter:
+    sdk: flutter

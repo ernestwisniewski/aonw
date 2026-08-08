@@ -114,8 +114,8 @@ const reviewedCityEconomyFamilyPatternSignatures =
       ),
       'lib/game/presentation/widgets/hud/selection/'
           'hud_selection_commands.dart': (
-        occurrences: 3,
-        digest: 4211285491768265953,
+        occurrences: 4,
+        digest: 3604702604226943717,
       ),
       'packages/aonw_core/lib/ai/mcts/mcts_baseline_command_merger.dart': (
         occurrences: 14,

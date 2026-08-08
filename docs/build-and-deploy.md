@@ -470,20 +470,18 @@ version commit.
 
 Linux:
 
-```sh
-sudo apt-get install -y \
-  clang cmake libgtk-3-dev libgstreamer-plugins-base1.0-dev \
-  libgstreamer1.0-dev libsecret-1-dev libwebkit2gtk-4.1-dev \
-  liblzma-dev ninja-build pkg-config unzip zip
+The distributable Linux build is created by
+`.github/workflows/linux-steam-build.yml`. It compiles inside the pinned Steam
+Linux Runtime 4 SDK, bundles the libraries and GStreamer plugins absent from
+the matching Platform image, and publishes `dist/aonw-linux-steam.zip`.
+Building on an arbitrary Ubuntu host is not a supported release path: a build
+can compile there and still fail at startup on SteamOS.
 
-flutter config --enable-linux-desktop
-flutter build linux --release \
-  --dart-define=AONW_API_BASE_URL=https://api.aonw.net
-```
-
-The release workflow `.github/workflows/linux-steam-build.yml` performs this on
-Ubuntu 24.04 and publishes `dist/aonw-linux-steam.zip` as a GitHub Actions
-artifact.
+The workflow tests the final ZIP—not the intermediate Flutter directory—in the
+pinned Steam Runtime Platform image. The gate checks the ELF dependency
+closure, WAV and MP3 decoding, and a 20-second graphical launch without
+`/dev/input`. See [Linux Steam runtime](linux-steam-runtime.md) for the runtime
+contract, local procedure, and Steam Deck acceptance matrix.
 
 Android release builds require local signing files that are not committed:
 
@@ -527,11 +525,13 @@ documentation for the Steam object model.
 
 Linux runtime notes:
 
-- OAuth web login depends on `desktop_webview_window` and the system WebKitGTK
-  runtime.
-- Saved login state depends on Secret Service through
-  `flutter_secure_storage_linux`.
-- Audio playback depends on GStreamer runtime plugins.
+- Desktop OAuth opens the system browser and polls the server-side flow. The
+  Linux executable intentionally does not link the unused embedded WebKitGTK
+  backend.
+- Saved login state uses Secret Service through `flutter_secure_storage_linux`;
+  its client libraries are included when absent from Steam Runtime.
+- Audio uses the GStreamer plugins shipped in the final ZIP and PulseAudio
+  compatibility exposed by SteamOS/PipeWire.
 
 ## Backups
 

@@ -17,6 +17,9 @@ const _productionHandlerPath =
 const _workerHandlerPath =
     'packages/aonw_core/lib/game/application/engine/'
     'worker_engine_handler.dart';
+const _workerAutomationAdapterPath =
+    'packages/aonw_core/lib/game/domain/movement/'
+    'domain_worker_automation_command_resolver.dart';
 const _artifactTradeHandlerPath =
     'packages/aonw_core/lib/game/application/engine/'
     'artifact_trade_engine_handler.dart';
@@ -161,11 +164,19 @@ void main() {
     };
     for (final entry in expected.entries) {
       final (type, method) = entry.key;
+      final isAutomatedWorkerOperation =
+          type == 'DomainWorkerCommandResolver' &&
+          (method == 'selectWorkerImprovement' ||
+              method == 'assignWorkerToHex');
       expect(
         instanceMemberReferenceCountsByPath(sources, type, method),
-        {entry.value: 1},
+        {
+          entry.value: 1,
+          if (isAutomatedWorkerOperation) _workerAutomationAdapterPath: 1,
+        },
         reason:
-            '$type.$method must remain private to its focused engine handler.',
+            '$type.$method must remain inside its reviewed orchestration '
+            'boundaries.',
       );
     }
   });

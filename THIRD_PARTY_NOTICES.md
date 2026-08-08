@@ -38,3 +38,15 @@ subject to their owners' trademark guidelines.
   its upstream MIT license. The local patch adds current Swift SDK authorization
   error cases while preserving the 7.x Dart API required by
   the pinned `serverpod_auth_idp_flutter` release.
+- `third_party/gamepads_linux/` vendors `gamepads_linux` 0.1.2 under its
+  upstream MIT license. The local patch makes missing Linux input devices a
+  supported state, synchronizes hotplug state, and delivers native events on
+  the GTK main context.
+- `tool/linux/desktop_webview_window_stub/` is an MIT-licensed compatibility
+  implementation used on desktop. AONW uses its external-browser OAuth flow,
+  so this package prevents the unused embedded WebKit backend from becoming a
+  process-startup dependency.
+
+Linux release artifacts also include a `licenses/` directory and
+`STEAM_RUNTIME_MANIFEST.txt` generated from the Debian packages copied into the
+self-contained Steam Runtime bundle.

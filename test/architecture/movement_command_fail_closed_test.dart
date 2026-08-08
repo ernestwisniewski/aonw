@@ -17,7 +17,11 @@ void main() {
         runtimeSources,
         'MovementCommandResolver',
       ),
-      const {movementDomainAdapterPath: 1, movementAutoExploreKernelPath: 1},
+      const {
+        movementDomainAdapterPath: 1,
+        movementAutoExploreKernelPath: 1,
+        movementWorkerAutomationAdapterPath: 1,
+      },
     );
     expect(
       movementConstructionReferenceCountsByPath(
@@ -35,12 +39,17 @@ void main() {
       for (final path in const {
         movementDomainAdapterPath,
         movementAutoExploreKernelPath,
+        movementWorkerAutomationAdapterPath,
       })
         path: sources[path]!,
     };
     expect(
       movementNamedMemberReferenceCountsByPath(reviewedCallSites, 'resolve'),
-      const {movementDomainAdapterPath: 1, movementAutoExploreKernelPath: 1},
+      const {
+        movementDomainAdapterPath: 1,
+        movementAutoExploreKernelPath: 1,
+        movementWorkerAutomationAdapterPath: 1,
+      },
       reason: 'Each reviewed boundary must contain only its kernel resolve.',
     );
   });

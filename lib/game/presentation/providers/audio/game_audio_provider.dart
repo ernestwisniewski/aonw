@@ -7,14 +7,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final gameAudioControllerProvider = Provider<GameAudioController>((ref) {
   final controller = GameAudioController();
-  unawaited(controller.applySettings(ref.read(gameAudioSettingsProvider)));
-  ref.listen(gameAudioSettingsProvider, (_, next) {
-    unawaited(controller.applySettings(next));
-  });
-  unawaited(controller.preloadAll());
-  ref.onDispose(() => unawaited(controller.dispose()));
+  unawaited(_initializeAudio(controller, ref.read(gameAudioSettingsProvider)));
+  ref
+    ..listen(gameAudioSettingsProvider, (_, next) {
+      unawaited(controller.applySettings(next));
+    })
+    ..onDispose(() => unawaited(controller.dispose()));
   return controller;
 });
+
+Future<void> _initializeAudio(
+  GameAudioController controller,
+  GameAudioSettings settings,
+) async {
+  await controller.applySettings(settings);
+  await controller.preloadAll();
+}
 
 extension GameAudioControllerRef on Ref {
   void playSound(GameSoundCue cue) {
