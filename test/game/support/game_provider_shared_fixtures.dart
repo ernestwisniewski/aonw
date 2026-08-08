@@ -273,6 +273,9 @@ ProviderContainer _liveMovementContainer({
         _makeSession(mapData: _makeLandMap(), gameMode: GameMode.multiplayer),
       ),
       activeGameRendererProvider.overrideWithValue(renderer),
+      activeRendererViewModelProvider.overrideWithValue(
+        TestRendererViewModel(renderer),
+      ),
       if (audioController != null)
         gameAudioControllerProvider.overrideWithValue(audioController),
       gameRepositoryProvider.overrideWithValue(gameRepository),
@@ -386,27 +389,4 @@ GameSession _makeSession({
   );
 }
 
-class _SpyGameRenderer extends GameRenderer {
-  _SpyGameRenderer({WorldMap? mapData})
-    : super(
-        mapData: mapData ?? _makeMap(),
-        initialViewMode: MapViewMode.tile,
-        onCommand: (_) async {},
-      );
-
-  final handledEffects = <RendererEffect>[];
-
-  @override
-  Future<void> applyTransition(
-    GameClientState state,
-    Iterable<RendererEffect> effects, {
-    int? currentTurn,
-  }) async {
-    handledEffects.addAll(effects);
-  }
-
-  @override
-  Future<void> handleEffects(Iterable<RendererEffect> effects) async {
-    handledEffects.addAll(effects);
-  }
-}
+typedef _SpyGameRenderer = TestGameRenderer;

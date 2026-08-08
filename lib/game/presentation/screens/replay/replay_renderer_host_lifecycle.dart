@@ -135,19 +135,9 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
           sequenceDirective: PresentationSequenceDirective.resync,
         ),
       );
-      _lastAppliedStepIndex = targetIndex;
-      _syncPerspectiveCamera(
-        immediate: _consumePendingPerspectiveCameraFocus(),
-      );
-      _announceTurnMarkerForTransition(
-        previousIndex: previousAppliedStepIndex,
-        targetIndex: targetIndex,
-        animated: animated,
-      );
-      return;
+    } else {
+      await renderer.applyProjectedTransition(state, effectBatch);
     }
-
-    await renderer.applyProjectedTransition(state, effectBatch);
     _lastAppliedStepIndex = targetIndex;
     _syncPerspectiveCamera(immediate: _consumePendingPerspectiveCameraFocus());
     _announceTurnMarkerForTransition(

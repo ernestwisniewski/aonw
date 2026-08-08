@@ -59,7 +59,7 @@ void _registerHudSelectionCityFoundingTests() {
     );
   });
 
-  test('replaces active city founding actions with cancel before ready', () {
+  test('shows disabled city founding progress next to cancel before ready', () {
     final settler = _settler();
     var started = false;
     var cancelled = false;
@@ -74,16 +74,18 @@ void _registerHudSelectionCityFoundingTests() {
       onCancelCityFounding: () => cancelled = true,
     );
 
-    final action = _action(actions, 'Cancel city founding');
+    final confirm = _action(actions, 'Found city (0/2)');
+    final cancel = _action(actions, 'Cancel');
 
-    expect(_actionLabels(actions), ['Cancel city founding']);
-    expect(action?.enabled, isTrue);
-    expect(action?.active, isTrue);
-    expect(action?.showLabel, isTrue);
-    expect(action?.dangerOutlined, isTrue);
-    expect(action?.mainExtent, SelectionCommandChip.expandedLabeledExtent);
+    expect(_actionLabels(actions), ['Found city (0/2)', 'Cancel']);
+    expect(confirm?.enabled, isFalse);
+    expect(confirm?.showLabel, isTrue);
+    expect(cancel?.enabled, isTrue);
+    expect(cancel?.active, isTrue);
+    expect(cancel?.showLabel, isTrue);
+    expect(cancel?.dangerOutlined, isTrue);
 
-    action?.onTap?.call();
+    cancel?.onTap?.call();
 
     expect(started, isFalse);
     expect(cancelled, isTrue);
@@ -117,22 +119,22 @@ void _registerHudSelectionCityFoundingTests() {
       onCancelCityFounding: () => cancelled = true,
     );
 
-    expect(_actionLabels(actions), ['Found city', 'Cancel']);
-    expect(_action(actions, 'Found city')?.enabled, isTrue);
-    expect(_action(actions, 'Found city')?.showLabel, isTrue);
+    expect(_actionLabels(actions), ['Found city (2/2)', 'Cancel']);
+    expect(_action(actions, 'Found city (2/2)')?.enabled, isTrue);
+    expect(_action(actions, 'Found city (2/2)')?.showLabel, isTrue);
     expect(_action(actions, 'Cancel')?.enabled, isTrue);
     expect(_action(actions, 'Cancel')?.showLabel, isTrue);
     expect(_action(actions, 'Cancel')?.dangerOutlined, isTrue);
     expect(
-      _action(actions, 'Found city')?.mainExtent,
-      SelectionCommandChip.labeledExtent,
+      _action(actions, 'Found city (2/2)')?.mainExtent,
+      SelectionCommandChip.expandedLabeledExtent,
     );
     expect(
       _action(actions, 'Cancel')?.mainExtent,
       SelectionCommandChip.labeledExtent,
     );
 
-    _action(actions, 'Found city')?.onTap?.call();
+    _action(actions, 'Found city (2/2)')?.onTap?.call();
     _action(actions, 'Cancel')?.onTap?.call();
 
     expect(confirmed, isTrue);

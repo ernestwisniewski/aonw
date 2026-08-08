@@ -3497,7 +3497,6 @@
   "selectionActionCancel": "Cancel",
   "selectionActionCancelAttack": "Cancel attack",
   "selectionActionCancelWorkerBuild": "Cancel improvement build",
-  "selectionActionCancelCityFounding": "Cancel city founding",
   "selectionActionCancelAutoExplore": "Cancel exploration",
   "selectionActionCancelArtifactExcavation": "Cancel artifact excavation",
   "selectionActionCancelTradeRouteSelection": "Cancel trade route selection",

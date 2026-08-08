@@ -6226,9 +6226,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get selectionActionCancelWorkerBuild => 'Verbesserung abbrechen';
 
   @override
-  String get selectionActionCancelCityFounding => 'Stadtgründung abbrechen';
-
-  @override
   String get selectionActionCancelAutoExplore => 'Erkundung abbrechen';
 
   @override

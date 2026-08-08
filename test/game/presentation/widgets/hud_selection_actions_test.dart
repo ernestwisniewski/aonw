@@ -500,14 +500,14 @@ void main() {
         onCancelSelectedUnitAction: () => cancelled = true,
       );
 
-      final finish = _action(actions, 'Cancel city founding');
+      final finish = _action(actions, 'Cancel');
 
-      expect(_actionLabels(actions), ['Cancel city founding']);
+      expect(_actionLabels(actions), ['Cancel']);
       expect(finish?.active, isTrue);
       expect(finish?.enabled, isTrue);
       expect(finish?.showLabel, isTrue);
       expect(finish?.dangerOutlined, isTrue);
-      expect(finish?.mainExtent, SelectionCommandChip.expandedLabeledExtent);
+      expect(finish?.mainExtent, SelectionCommandChip.labeledExtent);
 
       finish?.onTap?.call();
 

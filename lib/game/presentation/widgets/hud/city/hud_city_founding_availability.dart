@@ -11,9 +11,20 @@ abstract final class HudCityFoundingAvailability {
     final selected = state.selectedUnit;
     if (selected == null || !state.canControlUnit(selected)) return false;
     if (selected.isWorking) return false;
-    return CityFoundingRules.canStart(
+    if (!CityFoundingRules.canStart(
       unit: selected,
       centerTile: mapTiles.tileAt(selected.col, selected.row),
+      cities: state.cities,
+    )) {
+      return false;
+    }
+    return CityFoundingRules.canCompleteDraft(
+      draft: CityFoundingDraft(
+        unitId: selected.id,
+        ownerPlayerId: selected.ownerPlayerId,
+        center: CityHex(col: selected.col, row: selected.row),
+      ),
+      mapTiles: mapTiles,
       cities: state.cities,
     );
   }

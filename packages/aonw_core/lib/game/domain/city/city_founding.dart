@@ -5,6 +5,7 @@ import 'package:aonw_core/game/domain/city/city_territory_rules.dart';
 import 'package:aonw_core/game/domain/city/city_tile_yield_rules.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/hex_grid_topology.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 
@@ -101,6 +102,99 @@ abstract final class CityFoundingRules {
     return true;
   }
 
+  /// Returns statically legal hexes touching the connected draft territory.
+  static Set<CityHex> selectableControlledHexes({
+    required CityFoundingDraft draft,
+    required MapTileLookup mapTiles,
+    Iterable<GameCity> cities = const [],
+  }) {
+    if (draft.controlledHexes.length >=
+            CityFoundingDraft.requiredControlledHexes ||
+        !draft.hasConnectedTerritory) {
+      return const {};
+    }
+
+    final selected = draft.controlledHexes.toSet();
+    final candidates = <CityHex>{};
+    for (final territoryHex in draft.territoryHexes) {
+      for (final neighbor in HexGridTopology.neighbors(
+        col: territoryHex.col,
+        row: territoryHex.row,
+      )) {
+        final candidate = CityHex(col: neighbor.col, row: neighbor.row);
+        if (candidate == draft.center || selected.contains(candidate)) continue;
+        final tile = mapTiles.tileAt(candidate.col, candidate.row);
+        if (tile == null ||
+            !isControlledHexCandidate(
+              draft: draft,
+              tile: tile,
+              mapTiles: mapTiles,
+              cities: cities,
+            )) {
+          continue;
+        }
+        candidates.add(candidate);
+      }
+    }
+    return Set.unmodifiable(candidates);
+  }
+
+  /// Whether successive legal selections can complete the current draft.
+  static bool canCompleteDraft({
+    required CityFoundingDraft draft,
+    required MapTileLookup mapTiles,
+    Iterable<GameCity> cities = const [],
+  }) {
+    if (draft.controlledHexes.length >
+            CityFoundingDraft.requiredControlledHexes ||
+        !draft.hasConnectedTerritory) {
+      return false;
+    }
+    if (draft.hasRequiredControlledHexes) return draft.canConfirm;
+
+    for (final candidate in selectableControlledHexes(
+      draft: draft,
+      mapTiles: mapTiles,
+      cities: cities,
+    )) {
+      if (canCompleteDraft(
+        draft: draft.copyWith(
+          controlledHexes: [...draft.controlledHexes, candidate],
+        ),
+        mapTiles: mapTiles,
+        cities: cities,
+      )) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Toggles one hex while keeping only territory connected to the center.
+  static CityFoundingDraft toggleControlledHexSelection({
+    required CityFoundingDraft draft,
+    required CityHex target,
+    required MapTileLookup mapTiles,
+    Iterable<GameCity> cities = const [],
+  }) {
+    if (draft.controlledHexes.contains(target)) {
+      return draft.copyWith(
+        controlledHexes: _connectedControlledHexesAfterRemoving(
+          draft: draft,
+          target: target,
+        ),
+      );
+    }
+    if (!selectableControlledHexes(
+      draft: draft,
+      mapTiles: mapTiles,
+      cities: cities,
+    ).contains(target)) {
+      return draft;
+    }
+    return draft.copyWith(controlledHexes: [...draft.controlledHexes, target]);
+  }
+
   static CityFoundingFailure? confirmFailure(CityFoundingDraft draft) {
     if (!draft.canConfirm) return CityFoundingFailure.invalidControlledHexes;
     return null;
@@ -108,5 +202,34 @@ abstract final class CityFoundingRules {
 
   static bool canFoundCityWith(GameUnit unit) {
     return unit.type == GameUnitType.settler || unit.hasSettlers;
+  }
+
+  static List<CityHex> _connectedControlledHexesAfterRemoving({
+    required CityFoundingDraft draft,
+    required CityHex target,
+  }) {
+    final remaining = [
+      for (final hex in draft.controlledHexes)
+        if (hex != target) hex,
+    ];
+    final unvisited = remaining.toSet();
+    final connected = <CityHex>{};
+    final frontier = <CityHex>[draft.center];
+    while (frontier.isNotEmpty) {
+      final current = frontier.removeLast();
+      for (final neighbor in HexGridTopology.neighbors(
+        col: current.col,
+        row: current.row,
+      )) {
+        final hex = CityHex(col: neighbor.col, row: neighbor.row);
+        if (!unvisited.remove(hex)) continue;
+        connected.add(hex);
+        frontier.add(hex);
+      }
+    }
+    return [
+      for (final hex in remaining)
+        if (connected.contains(hex)) hex,
+    ];
   }
 }

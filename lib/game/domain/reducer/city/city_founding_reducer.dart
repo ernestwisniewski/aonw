@@ -9,7 +9,6 @@ abstract final class CityFoundingReducer {
     GameClientState state,
     MapTileLookup mapTiles, {
     GameCommandContext context = const GameCommandContext(),
-    CityRuleset cityRuleset = CityRulesets.standard,
   }) {
     final unit = state.selectedUnit;
     if (unit == null || !context.canControlUnit(state, unit)) return state;
@@ -25,21 +24,18 @@ abstract final class CityFoundingReducer {
     }
 
     final center = CityHex(col: unit.col, row: unit.row);
-    final candidates = CityInitialTerritorySelector.select(
-      center: center,
-      mapTiles: mapTiles,
-      cities: state.cities,
-      ruleset: cityRuleset,
-    );
-    if (candidates.length != CityFoundingDraft.requiredControlledHexes) {
-      return state;
-    }
-
     final draft = CityFoundingDraft(
       unitId: unit.id,
       ownerPlayerId: unit.ownerPlayerId,
       center: center,
     );
+    if (!CityFoundingRules.canCompleteDraft(
+      draft: draft,
+      mapTiles: mapTiles,
+      cities: state.cities,
+    )) {
+      return state;
+    }
 
     return state.copyWithInteraction(
       moveCommandActive: false,
@@ -61,39 +57,15 @@ abstract final class CityFoundingReducer {
     final draft = state.cityFoundingDraft;
     if (draft == null) return state;
 
-    final tile = mapTiles.tileAt(command.col, command.row);
-    if (tile == null) return state;
-
     final target = CityHex(col: command.col, row: command.row);
-    if (draft.controlledHexes.contains(target)) {
-      return state.copyWithInteraction(
-        cityFoundingDraft: draft.copyWith(
-          controlledHexes: [
-            for (final hex in draft.controlledHexes)
-              if (hex != target) hex,
-          ],
-        ),
-      );
-    }
-
-    if (draft.controlledHexes.length >=
-        CityFoundingDraft.requiredControlledHexes) {
-      return state;
-    }
-
-    if (!CityFoundingRules.isControlledHexCandidate(
+    final updatedDraft = CityFoundingRules.toggleControlledHexSelection(
       draft: draft,
-      tile: tile,
+      target: target,
       mapTiles: mapTiles,
       cities: state.cities,
-    )) {
-      return state;
-    }
-
-    return state.copyWithInteraction(
-      cityFoundingDraft: draft.copyWith(
-        controlledHexes: [...draft.controlledHexes, target],
-      ),
     );
+    if (identical(updatedDraft, draft)) return state;
+
+    return state.copyWithInteraction(cityFoundingDraft: updatedDraft);
   }
 }

@@ -72,6 +72,85 @@ void main() {
       expect(removed.cityFoundingDraft?.controlledHexes, isEmpty);
     });
 
+    test('only adds second-ring territory after a connected first choice', () {
+      final started = CityFoundingReducer.startCityFounding(state, mapData);
+      final disconnected = CityFoundingReducer.toggleControlledHex(
+        started,
+        const TileTappedCommand(5, 3),
+        mapData,
+      );
+      final first = CityFoundingReducer.toggleControlledHex(
+        started,
+        const TileTappedCommand(4, 3),
+        mapData,
+      );
+      final connected = CityFoundingReducer.toggleControlledHex(
+        first,
+        const TileTappedCommand(5, 3),
+        mapData,
+      );
+
+      expect(disconnected, same(started));
+      expect(connected.cityFoundingDraft?.controlledHexes, const [
+        CityHex(col: 4, row: 3),
+        CityHex(col: 5, row: 3),
+      ]);
+    });
+
+    test('removing a bridge also removes territory disconnected by it', () {
+      final started = CityFoundingReducer.startCityFounding(state, mapData);
+      final first = CityFoundingReducer.toggleControlledHex(
+        started,
+        const TileTappedCommand(4, 3),
+        mapData,
+      );
+      final second = CityFoundingReducer.toggleControlledHex(
+        first,
+        const TileTappedCommand(5, 3),
+        mapData,
+      );
+      final removedBridge = CityFoundingReducer.toggleControlledHex(
+        second,
+        const TileTappedCommand(4, 3),
+        mapData,
+      );
+
+      expect(removedBridge.cityFoundingDraft?.controlledHexes, isEmpty);
+    });
+
+    test('starts when the only valid territory is a two-step chain', () {
+      final chainMap = _chainMap(includeSecondControlledHex: true);
+      final chainSettler = GameUnit.produced(
+        id: 'chain_settler',
+        ownerPlayerId: 'player_1',
+        type: GameUnitType.settler,
+        col: 0,
+        row: 0,
+      );
+      final chainState = GameClientState(
+        units: [chainSettler],
+        activePlayerId: 'player_1',
+        interaction: InteractionState(
+          selection: GameSelection.unit(chainSettler),
+        ),
+      );
+
+      expect(
+        CityFoundingReducer.startCityFounding(
+          chainState,
+          chainMap,
+        ).cityFoundingDraft,
+        isNotNull,
+      );
+      expect(
+        CityFoundingReducer.startCityFounding(
+          chainState,
+          _chainMap(includeSecondControlledHex: false),
+        ),
+        same(chainState),
+      );
+    });
+
     test('cancel clears the draft and preserves unrelated state', () {
       final started = CityFoundingReducer.startCityFounding(state, mapData);
       final cancelled = CityFoundingReducer.cancelCityFounding(started);
@@ -96,5 +175,20 @@ WorldMap _map7x7() => WorldMap(
           resources: const [],
           height: 0,
         ),
+  ],
+);
+
+WorldMap _chainMap({required bool includeSecondControlledHex}) => WorldMap(
+  cols: 3,
+  rows: 1,
+  tiles: [
+    for (var col = 0; col < (includeSecondControlledHex ? 3 : 2); col++)
+      WorldTile(
+        col: col,
+        row: 0,
+        terrains: const [TerrainType.grassland],
+        resources: const [],
+        height: 0,
+      ),
   ],
 );

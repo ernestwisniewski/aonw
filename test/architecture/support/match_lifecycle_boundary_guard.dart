@@ -19,6 +19,7 @@ const _commandTimeoutPath =
     'server/lib/src/multiplayer/match_command_service_timeout.dart';
 const _serverStorePath =
     'server/lib/src/multiplayer/multiplayer_match_store.dart';
+const _lockedMatchReadMethods = {'requireMatch', 'requireStoredMatch'};
 
 const _lifecycleValues = {
   'open',
@@ -119,7 +120,7 @@ List<String> _mutationBoundaryViolations(
     final counts = calls['$lifecycleServicePath::$method'] ?? const {};
     if (counts['transaction'] != 1 || counts['lockedRequireMatch'] != 1) {
       violations.add(
-        '$method must own one transaction and one requireMatch(lock: true): '
+        '$method must own one transaction and one locked match read: '
         '$counts',
       );
     }
@@ -203,7 +204,7 @@ final class _LifecycleMutationVisitor extends RecursiveAstVisitor<void> {
       _increment('$path::$methodName', 'transaction');
     }
     if (methodName != null &&
-        node.methodName.name == 'requireMatch' &&
+        _lockedMatchReadMethods.contains(node.methodName.name) &&
         node.argumentList.arguments.whereType<NamedExpression>().any(
           (argument) =>
               argument.name.label.name == 'lock' &&

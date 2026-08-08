@@ -6222,9 +6222,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get selectionActionCancelWorkerBuild => 'Verbetering annuleren';
 
   @override
-  String get selectionActionCancelCityFounding => 'Stadsstichting annuleren';
-
-  @override
   String get selectionActionCancelAutoExplore => 'Verkenning annuleren';
 
   @override

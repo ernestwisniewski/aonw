@@ -3461,7 +3461,6 @@
   "selectionActionCancel": "Cancelar",
   "selectionActionCancelAttack": "Cancelar ataque",
   "selectionActionCancelWorkerBuild": "Cancelar mejora",
-  "selectionActionCancelCityFounding": "Cancelar fundación de ciudad",
   "selectionActionCancelAutoExplore": "Cancelar exploración",
   "selectionActionCancelArtifactExcavation": "Cancelar excavación de artefacto",
   "selectionActionCancelTradeRouteSelection": "Cancelar selección de ruta comercial",

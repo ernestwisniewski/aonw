@@ -72,6 +72,34 @@ void main() {
         isFalse,
       );
     });
+
+    test('rejects a valid center without enough connected territory', () {
+      final settler = _settler(ownerPlayerId: 'player_1');
+      final state = GameClientState(
+        activePlayerId: 'player_1',
+        units: [settler],
+        interaction: InteractionState(selection: GameSelection.unit(settler)),
+      );
+      final map = WorldMap(
+        cols: 2,
+        rows: 1,
+        tiles: [
+          for (var col = 0; col < 2; col++)
+            WorldTile(
+              col: col,
+              row: 0,
+              terrains: const [TerrainType.grassland],
+              resources: const [],
+              height: 0,
+            ),
+        ],
+      );
+
+      expect(
+        HudCityFoundingAvailability.canStart(state: state, mapTiles: map),
+        isFalse,
+      );
+    });
   });
 }
 

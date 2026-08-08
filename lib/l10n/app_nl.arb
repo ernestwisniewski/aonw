@@ -3461,7 +3461,6 @@
   "selectionActionCancel": "Annuleren",
   "selectionActionCancelAttack": "Aanval annuleren",
   "selectionActionCancelWorkerBuild": "Verbetering annuleren",
-  "selectionActionCancelCityFounding": "Stadsstichting annuleren",
   "selectionActionCancelAutoExplore": "Verkenning annuleren",
   "selectionActionCancelArtifactExcavation": "Artefactopgraving annuleren",
   "selectionActionCancelTradeRouteSelection": "Handelsrouteselectie annuleren",

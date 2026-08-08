@@ -33,6 +33,9 @@ void _registerAtomicEndTurnProviderCase() {
             _makeSession(mapData: _makeLandMap()),
           ),
           activeGameRendererProvider.overrideWithValue(renderer),
+          activeRendererViewModelProvider.overrideWithValue(
+            TestRendererViewModel(renderer),
+          ),
           gameRepositoryProvider.overrideWithValue(gameRepository),
           ..._transportOverrides(),
         ],

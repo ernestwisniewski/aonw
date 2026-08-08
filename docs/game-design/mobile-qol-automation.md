@@ -144,6 +144,13 @@ button used by exploration, worker jobs, and other active unit actions. That
 button sends standard `CancelUnitActionCommand`, which clears `cityFoundingJob`
 without adding a separate cancellation path.
 
+Draft mode exposes a dynamic connected selection frontier. Initially, only
+legal neighbors of the city center are selectable. Each selected hex extends
+that frontier with its legal neighbors, while non-adjacent hexes remain
+inactive. Once the two required controlled hexes are selected, the frontier is
+empty. Removing a bridge also removes any selected hex disconnected from the
+center, so the draft stays valid after every interaction.
+
 ## What This Stage Does Not Do
 
 | Out of scope | Reason |

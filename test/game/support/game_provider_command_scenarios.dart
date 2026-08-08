@@ -90,6 +90,9 @@ void _registerGameCommandControllerScenarios() {
             _makeSession(mapData: _makeLandMap()),
           ),
           activeGameRendererProvider.overrideWithValue(renderer),
+          activeRendererViewModelProvider.overrideWithValue(
+            TestRendererViewModel(renderer),
+          ),
           gameRepositoryProvider.overrideWithValue(gameRepository),
           ..._transportOverrides(),
         ],
@@ -131,6 +134,9 @@ void _registerGameCommandControllerScenarios() {
               _makeSession(mapData: _makeLandMap()),
             ),
             activeGameRendererProvider.overrideWithValue(renderer),
+            activeRendererViewModelProvider.overrideWithValue(
+              TestRendererViewModel(renderer),
+            ),
             gameRepositoryProvider.overrideWithValue(gameRepository),
             ..._transportOverrides(),
           ],
@@ -291,6 +297,9 @@ void _registerGameCommandControllerScenarios() {
               _makeSession(mapData: _makeLandMap()),
             ),
             activeGameRendererProvider.overrideWithValue(renderer),
+            activeRendererViewModelProvider.overrideWithValue(
+              TestRendererViewModel(renderer),
+            ),
             gameRepositoryProvider.overrideWithValue(gameRepository),
             ..._transportOverrides(),
           ],

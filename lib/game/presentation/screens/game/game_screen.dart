@@ -159,11 +159,9 @@ class _GameRendererSessionHostState
     }
   }
 
-  void _loadMapDisplayColors() {
-    unawaited(
-      ref.read(hexDisplayProvider.notifier).loadMapColors(widget.selection),
-    );
-  }
+  void _loadMapDisplayColors() => unawaited(
+    ref.read(hexDisplayProvider.notifier).loadMapColors(widget.selection),
+  );
 
   @override
   void dispose() {
@@ -245,9 +243,8 @@ class _GameRendererSessionHostState
     _syncMapZoomDebugValue(renderer);
   }
 
-  void _detachMapZoomDebugListener(GameRenderer renderer) {
-    renderer.zoomListenable.removeListener(_syncMapZoomDebugValue);
-  }
+  void _detachMapZoomDebugListener(GameRenderer renderer) =>
+      renderer.zoomListenable.removeListener(_syncMapZoomDebugValue);
 
   void _syncMapZoomDebugValue([GameRenderer? source]) {
     final renderer = source ?? _renderer;

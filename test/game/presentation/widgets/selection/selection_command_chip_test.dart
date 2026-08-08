@@ -10,7 +10,7 @@ void main() {
     test('uses a wider labeled extent for long action labels', () {
       expect(
         SelectionCommandChip.actionExtentFor(
-          label: 'Cancel city founding',
+          label: 'Cancel improvement build',
           showLabel: true,
         ),
         SelectionCommandChip.expandedLabeledExtent,

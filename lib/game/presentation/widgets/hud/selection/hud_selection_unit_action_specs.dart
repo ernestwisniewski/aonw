@@ -163,37 +163,30 @@ _HudSelectionActionSpec _cityFoundingActionFor({
   required GameClientState? gameState,
   required GameSelection? selection,
   required bool canStartCityFounding,
-  required bool cityFoundingActive,
   required String? lockedReason,
   required AppLocalizations l10n,
   required VoidCallback onStartCityFounding,
-  required VoidCallback onCancelCityFounding,
 }) {
-  final available = cityFoundingActive || canStartCityFounding;
-  final needsGuidance =
-      !cityFoundingActive && canStartCityFounding && lockedReason == null;
+  final needsGuidance = canStartCityFounding && lockedReason == null;
   return _HudSelectionActionSpec(
     icon: GameIcons.foundCity,
     actionId: 'foundCity',
     label: l10n.selectionActionFoundCity,
     color: GameUiTheme.success,
-    active: cityFoundingActive,
-    enabled: _enabled(available, lockedReason),
-    dangerOutlined: cityFoundingActive,
+    active: false,
+    enabled: _enabled(canStartCityFounding, lockedReason),
     prominent: needsGuidance,
     pulseBorder: needsGuidance,
     disabledReason: _disabledReason(
       lockedReason: lockedReason,
-      actionReason: cityFoundingActive
-          ? null
-          : _cityFoundingBlockedReason(
-              l10n: l10n,
-              unit: unit,
-              gameState: gameState,
-              selection: selection,
-            ),
+      actionReason: _cityFoundingBlockedReason(
+        l10n: l10n,
+        unit: unit,
+        gameState: gameState,
+        selection: selection,
+      ),
     ),
-    onTap: cityFoundingActive ? onCancelCityFounding : onStartCityFounding,
+    onTap: onStartCityFounding,
   );
 }
 

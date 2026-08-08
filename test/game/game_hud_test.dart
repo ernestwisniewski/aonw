@@ -49,6 +49,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../support/test_game_renderer.dart';
+
 part 'game_hud_auto_flow_regression_tests.dart';
 part 'game_hud_combat_camera_tests.dart';
 part 'game_hud_snapshot_fixture.dart';

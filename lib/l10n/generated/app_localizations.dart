@@ -10596,12 +10596,6 @@ abstract class AppLocalizations {
   /// **'Cancel improvement build'**
   String get selectionActionCancelWorkerBuild;
 
-  /// No description provided for @selectionActionCancelCityFounding.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel city founding'**
-  String get selectionActionCancelCityFounding;
-
   /// No description provided for @selectionActionCancelAutoExplore.
   ///
   /// In en, this message translates to:

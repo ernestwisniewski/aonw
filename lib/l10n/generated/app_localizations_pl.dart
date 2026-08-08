@@ -6194,9 +6194,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get selectionActionCancelWorkerBuild => 'Przerwij budowę ulepszenia';
 
   @override
-  String get selectionActionCancelCityFounding => 'Przerwij zakładanie miasta';
-
-  @override
   String get selectionActionCancelAutoExplore => 'Przerwij eksplorację';
 
   @override

@@ -111,27 +111,9 @@ class _RecordingGameLogger implements GameLogger {
   }
 }
 
-class _SpyGameRenderer extends GameRenderer {
-  _SpyGameRenderer({required super.mapData}) : super(onCommand: (_) async {});
-
-  final handledEffects = <RendererEffect>[];
-  final appliedStates = <GameClientState>[];
-
-  @override
-  Future<void> applyTransition(
-    GameClientState state,
-    Iterable<RendererEffect> effects, {
-    int? currentTurn,
-  }) async {
-    appliedStates.add(state);
-    applyState(state, currentTurn: currentTurn);
-    handledEffects.addAll(effects);
-  }
-
-  @override
-  Future<void> handleEffects(Iterable<RendererEffect> effects) async {
-    handledEffects.addAll(effects);
-  }
+final class _SpyGameRenderer extends TestGameRenderer {
+  _SpyGameRenderer({required super.mapData})
+    : super(applyStateOnTransition: true);
 }
 
 const _player = Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4);
@@ -253,6 +235,10 @@ Future<void> _pumpHud(
       overrides: [
         activeGameSessionProvider.overrideWithValue(activeSession),
         activeGameRendererProvider.overrideWithValue(activeRenderer),
+        if (activeRenderer case final _SpyGameRenderer renderer)
+          activeRendererViewModelProvider.overrideWithValue(
+            TestRendererViewModel(renderer),
+          ),
         gamePlayerControlSaveProvider.overrideWithValue(save),
         gameRepositoryProvider.overrideWithValue(repository),
         networkGameRepositoryProvider.overrideWithValue(repository),

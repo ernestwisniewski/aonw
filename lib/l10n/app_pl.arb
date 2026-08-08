@@ -3478,7 +3478,6 @@
   "selectionActionCancel": "Anuluj",
   "selectionActionCancelAttack": "Przerwij atak",
   "selectionActionCancelWorkerBuild": "Przerwij budowę ulepszenia",
-  "selectionActionCancelCityFounding": "Przerwij zakładanie miasta",
   "selectionActionCancelAutoExplore": "Przerwij eksplorację",
   "selectionActionCancelArtifactExcavation": "Przerwij wykopywanie artefaktu",
   "selectionActionCancelTradeRouteSelection": "Przerwij wybór trasy handlowej",

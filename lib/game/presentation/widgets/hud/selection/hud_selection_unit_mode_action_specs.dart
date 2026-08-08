@@ -98,22 +98,21 @@ List<_HudSelectionActionSpec>? _activeUnitModeActionsFor({
   }
 
   final draft = gameState?.cityFoundingDraft;
-  final ownsCityFounding =
-      cityFoundingActive &&
+  if (cityFoundingActive &&
       (draft == null || draft.unitId == unit.id) &&
-      _supportsCityFoundingAction(unit);
-  if (ownsCityFounding) {
+      _supportsCityFoundingAction(unit)) {
     return [
-      if (draft?.canConfirm == true)
-        _confirmCityFoundingActionFor(
-          disabledReason: lockedReason,
-          l10n: l10n,
-          onTap: onConfirmCityFounding,
-        ),
+      _confirmCityFoundingActionFor(
+        selectedHexCount: draft?.controlledHexes.length ?? 0,
+        disabledReason: draft?.canConfirm == true
+            ? lockedReason
+            : lockedReason ??
+                  l10n.selectionActionFoundCityInvalidControlledHexes,
+        l10n: l10n,
+        onTap: onConfirmCityFounding,
+      ),
       _finishModeActionFor(
-        label: draft?.canConfirm == true
-            ? l10n.selectionActionCancel
-            : l10n.selectionActionCancelCityFounding,
+        label: l10n.selectionActionCancel,
         disabledReason: lockedReason,
         l10n: l10n,
         onTap: onCancelCityFounding,
@@ -124,7 +123,7 @@ List<_HudSelectionActionSpec>? _activeUnitModeActionsFor({
   if (unit.cityFoundingJob != null) {
     return [
       _finishModeActionFor(
-        label: l10n.selectionActionCancelCityFounding,
+        label: l10n.selectionActionCancel,
         disabledReason: lockedReason,
         l10n: l10n,
         onTap: onCancelSelectedUnitAction,
@@ -183,6 +182,7 @@ List<_HudSelectionActionSpec>? _activeUnitModeActionsFor({
 }
 
 _HudSelectionActionSpec _confirmCityFoundingActionFor({
+  required int selectedHexCount,
   required String? disabledReason,
   required AppLocalizations l10n,
   required VoidCallback onTap,
@@ -190,7 +190,9 @@ _HudSelectionActionSpec _confirmCityFoundingActionFor({
   return _HudSelectionActionSpec(
     icon: GameIcons.flag,
     actionId: 'foundCity',
-    label: l10n.selectionActionFoundCity,
+    label:
+        '${l10n.selectionActionFoundCity} '
+        '($selectedHexCount/${CityFoundingDraft.requiredControlledHexes})',
     color: GameUiTheme.success,
     active: true,
     prominent: disabledReason == null,

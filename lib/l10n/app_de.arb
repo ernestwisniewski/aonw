@@ -3461,7 +3461,6 @@
   "selectionActionCancel": "Abbrechen",
   "selectionActionCancelAttack": "Angriff abbrechen",
   "selectionActionCancelWorkerBuild": "Verbesserung abbrechen",
-  "selectionActionCancelCityFounding": "Stadtgründung abbrechen",
   "selectionActionCancelAutoExplore": "Erkundung abbrechen",
   "selectionActionCancelArtifactExcavation": "Artefaktausgrabung abbrechen",
   "selectionActionCancelTradeRouteSelection": "Handelsroutenauswahl abbrechen",

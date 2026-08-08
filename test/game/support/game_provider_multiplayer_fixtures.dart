@@ -60,6 +60,9 @@ _LiveCommandFixture _createLiveCommandFixture() {
         _makeSession(mapData: _makeLandMap(), gameMode: GameMode.multiplayer),
       ),
       activeGameRendererProvider.overrideWithValue(renderer),
+      activeRendererViewModelProvider.overrideWithValue(
+        TestRendererViewModel(renderer),
+      ),
       gameRepositoryProvider.overrideWithValue(gameRepository),
       eventLogProvider.overrideWithValue(_FakeEventLog()),
       networkEventLogProvider.overrideWith(

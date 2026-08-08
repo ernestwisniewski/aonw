@@ -6235,10 +6235,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Annuler la construction d\'amélioration';
 
   @override
-  String get selectionActionCancelCityFounding =>
-      'Annuler la fondation de la ville';
-
-  @override
   String get selectionActionCancelAutoExplore => 'Annuler l\'exploration';
 
   @override

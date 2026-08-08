@@ -60,7 +60,6 @@ extension ReducerEnvironmentDispatch on ReducerEnvironment {
         state,
         mapData,
         context: context,
-        cityRuleset: cityRuleset,
       ),
     );
   }

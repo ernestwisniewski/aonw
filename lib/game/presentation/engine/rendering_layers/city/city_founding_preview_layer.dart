@@ -30,36 +30,36 @@ class CityFoundingPreviewLayer extends Component with LayerAttachment {
       return;
     }
 
-    final controlled = draft.controlledHexes.toSet();
-    final candidateHexes =
-        <_FoundingCandidateHex>[
-          for (final tile in mapData.tiles)
-            if (CityFoundingRules.isControlledHexCandidate(
-                  draft: draft,
-                  tile: tile,
-                  mapTiles: mapData,
-                  cities: cities,
-                ) &&
-                !controlled.contains(CityHex(col: tile.col, row: tile.row)) &&
-                (canShowHex?.call(CityHex(col: tile.col, row: tile.row)) ??
-                    true))
-              _FoundingCandidateHex(
-                hex: CityHex(col: tile.col, row: tile.row),
-                score: CityExpansionSelector.score(
-                  tile,
-                  ruleset: CityRulesets.standard,
-                ),
-              ),
-        ]..sort((a, b) {
-          final scoreCompare = b.score.compareTo(a.score);
-          if (scoreCompare != 0) return scoreCompare;
-          final colCompare = a.hex.col.compareTo(b.hex.col);
-          if (colCompare != 0) return colCompare;
-          return a.hex.row.compareTo(b.hex.row);
-        });
-    final recommendedCount =
+    final candidateHexes = <_FoundingCandidateHex>[];
+    for (final hex in CityFoundingRules.selectableControlledHexes(
+      draft: draft,
+      mapTiles: mapData,
+      cities: cities,
+    )) {
+      if (!(canShowHex?.call(hex) ?? true)) continue;
+      final tile = mapData.tileAt(hex.col, hex.row);
+      if (tile == null) continue;
+      candidateHexes.add(
+        _FoundingCandidateHex(
+          hex: hex,
+          score: CityExpansionSelector.score(
+            tile,
+            ruleset: CityRulesets.standard,
+          ),
+        ),
+      );
+    }
+    candidateHexes.sort((a, b) {
+      final scoreCompare = b.score.compareTo(a.score);
+      if (scoreCompare != 0) return scoreCompare;
+      final colCompare = a.hex.col.compareTo(b.hex.col);
+      if (colCompare != 0) return colCompare;
+      return a.hex.row.compareTo(b.hex.row);
+    });
+    final remainingHexCount =
         CityFoundingDraft.requiredControlledHexes -
         draft.controlledHexes.length;
+    final recommendedCount = remainingHexCount > 0 ? remainingHexCount : 0;
     final signature = _signatureFor(
       draft: draft,
       candidateHexes: candidateHexes,

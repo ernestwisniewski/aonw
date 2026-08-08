@@ -10,7 +10,6 @@ List<List<_HudSelectionActionSpec>> _unitActionGroups({
   required bool armyDetailActive,
   required WorkerActionPanelViewModel? workerAction,
   required bool canStartCityFounding,
-  required bool cityFoundingActive,
   required AppLocalizations l10n,
   required VoidCallback onMoveSelectedUnit,
   required VoidCallback onAutoExploreSelectedUnit,
@@ -27,7 +26,6 @@ List<List<_HudSelectionActionSpec>> _unitActionGroups({
   required VoidCallback onStartArtifactExcavation,
   required VoidCallback onStoreArtifactInCity,
   required VoidCallback onStartCityFounding,
-  required VoidCallback onCancelCityFounding,
   required VoidCallback onSkipSelectedUnitTurn,
   required VoidCallback onFortifySelectedUnit,
   required VoidCallback onCancelSelectedUnitAction,
@@ -85,11 +83,9 @@ List<List<_HudSelectionActionSpec>> _unitActionGroups({
         gameState: gameState,
         selection: selection,
         canStartCityFounding: canStartCityFounding,
-        cityFoundingActive: cityFoundingActive,
         lockedReason: lockedReason,
         l10n: l10n,
         onStartCityFounding: onStartCityFounding,
-        onCancelCityFounding: onCancelCityFounding,
       ),
     ]);
   }

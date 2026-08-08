@@ -63,7 +63,7 @@ const _allowedPresentationRuleReads = <String, List<String>>{
     'TurnReducer.pendingTurnActionTargets',
   ],
   'lib/game/presentation/widgets/hud/city/hud_city_founding_availability.dart':
-      ['CityFoundingRules.canStart'],
+      ['CityFoundingRules.canStart', 'CityFoundingRules.canCompleteDraft'],
   'lib/game/presentation/screens/game/game_primary_action_controller.dart': [
     'TurnReducer.pendingTurnActionCount',
     'TurnReducer.pendingTurnActionCount',
@@ -80,7 +80,7 @@ const _allowedPresentationRuleReads = <String, List<String>>{
     'CityFoundingRules.isCenterFarEnoughFromCities',
   ],
   'lib/game/presentation/engine/rendering_layers/city/city_founding_preview_layer.dart':
-      ['CityFoundingRules.isControlledHexCandidate'],
+      ['CityFoundingRules.selectableControlledHexes'],
   'lib/game/presentation/widgets/selection/view_models/selection_resource_value_card_factory.dart':
       ['WorkerImprovementRules.cityForImprovementHex'],
   'lib/game/presentation/engine/rendering_layers/city/city_management_overlay_layer.dart':

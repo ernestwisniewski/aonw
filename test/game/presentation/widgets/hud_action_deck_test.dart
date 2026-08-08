@@ -1090,9 +1090,7 @@ void main() {
     }
   });
 
-  testWidgets('city founding mode keeps bottom action cancellation visible', (
-    tester,
-  ) async {
+  testWidgets('city founding mode shows progress and cancel', (tester) async {
     await _pumpDeck(
       tester,
       selection: const SelectionViewModel(
@@ -1103,6 +1101,14 @@ void main() {
         items: [],
       ),
       selectionActions: [
+        SelectionCommandChip(
+          icon: GameIcons.flag,
+          actionId: 'foundCity',
+          label: 'Found city (0/2)',
+          showLabel: true,
+          enabled: false,
+          onTap: () {},
+        ),
         SelectionCommandChip(
           icon: GameIcons.close,
           actionId: 'cancel',
@@ -1120,22 +1126,16 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.byType(SelectionDetailSheet), findsNothing);
     expect(
-      find.byKey(const Key('selectionInfo.detail.description')),
-      findsNothing,
+      find.byKey(const Key('selectionInfo.action.foundCity')),
+      findsOneWidget,
     );
-    expect(find.byKey(const Key('hudActionDeck.line.actions')), findsOneWidget);
+    expect(find.text('Found city (0/2)'), findsOneWidget);
     expect(
       find.byKey(const Key('selectionInfo.action.cancel')),
       findsOneWidget,
     );
     expect(find.text('Cancel'), findsOneWidget);
-    expect(find.byKey(const Key('hudActionDeck.line.context')), findsNothing);
-    expect(find.text('Founding a city'), findsNothing);
-    expect(find.text('Select 2 city tiles'), findsNothing);
-    expect(find.text('Confirm city founding'), findsNothing);
-    expect(find.text('0/2'), findsNothing);
   });
 
   testWidgets('city founding confirm action stays in the bottom action line', (
@@ -1154,7 +1154,7 @@ void main() {
         SelectionCommandChip(
           icon: GameIcons.flag,
           actionId: 'foundCity',
-          label: 'Found city',
+          label: 'Found city (2/2)',
           showLabel: true,
           onTap: () {},
         ),
@@ -1185,7 +1185,7 @@ void main() {
       find.byKey(const Key('selectionInfo.action.foundCity')),
       findsOneWidget,
     );
-    expect(find.text('Found city'), findsOneWidget);
+    expect(find.text('Found city (2/2)'), findsOneWidget);
     expect(
       find.byKey(const Key('selectionInfo.action.cancel')),
       findsOneWidget,
