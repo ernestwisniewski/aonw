@@ -253,7 +253,8 @@ void _registerTurnStartActionFeedbackTests(WorldMap Function() mapData) {
     );
 
     expect(result.uiEffects[0], isA<JumpCameraEffect>());
-    expect(result.uiEffects[1], isA<ShowCityProductionBubbleEffect>());
+    expect(result.uiEffects[1], isA<ShowActionTargetFocusEffect>());
+    expect(result.uiEffects[2], isA<ShowCityProductionBubbleEffect>());
   });
 
   test(

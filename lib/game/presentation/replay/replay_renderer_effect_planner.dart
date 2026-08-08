@@ -87,7 +87,8 @@ abstract final class ReplayRendererEffectPlanner {
           }
         case AnimateUnitMoveEffect() ||
             PlayCombatAnimationEffect() ||
-            ShakeCameraEffect():
+            ShakeCameraEffect() ||
+            ShowActionTargetFocusEffect():
           break;
       }
     }

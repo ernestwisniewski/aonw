@@ -9,7 +9,7 @@ guessing before an attack without changing commands or the event log.
 | --- | --- |
 | Decision before click | The player sees the predicted result before confirming the attack. |
 | Combat consistency | Preview uses the same `CombatResolver`, modifiers, and retreat rules as the real attack. |
-| Lightweight HUD | Information appears in the attack-mode banner, with no modal and no map blocking. |
+| Deliberate confirmation | Information appears in the attack-mode banner and in the attack confirmation modal before the command is executed. |
 | No new state | Preview is not saved and creates no domain events. |
 | Readable result | The player sees HP before/after, Attack vs Defense, and outcome: survival, retreat, or death. |
 
@@ -59,6 +59,22 @@ Preview builds the same data needed by a real attack:
 Preview does not execute `AttackHexCommand`, spend movement, or change
 `GameState`.
 
+## Retreat and Encirclement
+
+Retreat is a tactical survival rule, not a replacement for lethal damage. A
+defending unit may retreat only when all of these conditions hold:
+
+- it survives the attack with more than 0 HP;
+- its remaining HP is below `retreatThresholdPercent` (25% by default);
+- it has mobility and can counterattack;
+- `CombatRetreatResolver` finds an adjacent, passable, unoccupied destination.
+
+The destination is chosen to increase distance from the attacker. Surrounding
+the defender and occupying or blocking its legal escape hexes therefore
+prevents retreat; this is the intended reward for tactical encirclement. A unit
+that has 1 HP before an attack and takes at least 1 damage is destroyed and can
+never convert that lethal hit into a retreat.
+
 ## HUD Data
 
 | Field | Meaning |
@@ -73,6 +89,8 @@ Example:
 | HUD | Meaning |
 | --- | --- |
 | `Outcome: defender survives` | Attack will not kill the target |
+| `Outcome: defender will retreat` | Defender survives below the retreat threshold and has a legal escape hex |
+| `Outcome: defender dies` | The hit is lethal; retreat is impossible |
 | `Target: HP 10->6/10, Attack 6 vs Defense 2 (-4)` | Defender survives with 6 HP |
 | `Retaliation: Attack 4 vs Defense 3 (-2), HP 10->8/10` | Attacker will take retaliation |
 | `Retaliation: none (defender out of range, distance 2, range 1)` | Defender cannot answer at the attack distance |
@@ -101,7 +119,6 @@ combat:
 | Out of scope | Reason |
 | --- | --- |
 | Full unit rebalance | Preview clarifies retreat and stat readability without rebuilding all unit stats. |
-| Confirm modal | Attacking stays fast; preview only informs. |
 | Damage numbers on the map | Separate combat-feel and animation stage. |
 | New RNG | Preview uses the current `CombatRng` so the result matches the reducer. |
 | Event-log preview | No events exist because no domain action has happened. |

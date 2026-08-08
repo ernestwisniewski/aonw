@@ -209,6 +209,22 @@ class ShowCombatHexAlertEffect extends RendererEffect {
   });
 }
 
+/// Briefly marks the full map hex of an action target.
+///
+/// This is transient presentation state. It is never persisted or sent as a
+/// domain event.
+class ShowActionTargetFocusEffect extends RendererEffect {
+  final int col;
+  final int row;
+  final Duration duration;
+
+  const ShowActionTargetFocusEffect({
+    required this.col,
+    required this.row,
+    this.duration = const Duration(seconds: 2),
+  });
+}
+
 class JumpCameraEffect extends RendererEffect {
   final int col;
   final int row;

@@ -126,6 +126,7 @@ final class GameRendererLifecycleHandler {
       particleEffectsLayer: components.particles,
       floatingTextLayer: components.floatingText,
       combatHexAlertLayer: components.combatAlerts,
+      actionTargetHexFocusLayer: components.actionTargetHexFocus,
       particleParent: host.world,
       alertParent: sceneBuilder.grid,
       onRendererStateChanged: syncAfterAction,

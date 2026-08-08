@@ -29,6 +29,15 @@ This split is intentional. Turn start should be predictable and always lead to
 the most important decision, while the manual button should let the player walk
 through the full list of remaining tasks.
 
+When either focus command selects an object on the map, the camera first
+completes its smooth move and the object's complete map tile then receives a
+dashed green hex border for two seconds. Units and cities use the same cue;
+research does not because it has no map coordinate. The border uses the shared
+full-hex selection geometry and dash pattern, and blinks independently of the
+normal gold selection cue and red attack targets. With reduced motion enabled
+it stays visible without blinking for the same two seconds. This is an
+ephemeral renderer effect: it is not saved or replicated as a domain event.
+
 ## `Action` Button and End Turn
 
 The bottom toolbar combines the end-turn CTA with the pending-decision list. If

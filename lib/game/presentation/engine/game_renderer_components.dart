@@ -10,6 +10,7 @@ import 'package:aonw/game/presentation/engine/rendering_layers/effects/era_tint_
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/floating_text_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/particle_effects_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_marker_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/map/action_target_hex_focus_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/hover_intent_marker.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_war_overlay_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/threat_overlay_layer.dart';
@@ -84,6 +85,7 @@ final class GameRendererComponents {
       unitPositionFor: unitMarkers.worldPositionForUnit,
     );
     combatAlerts = CombatHexAlertLayer();
+    actionTargetHexFocus = ActionTargetHexFocusLayer();
     threats = ThreatOverlayLayer();
     hoverIntent = HoverIntentMarkerLayer();
     actionPalette = ActionPaletteLayer(
@@ -114,6 +116,7 @@ final class GameRendererComponents {
   late final CloudDriftLayer cloudDrift;
   late final FloatingTextLayer floatingText;
   late final CombatHexAlertLayer combatAlerts;
+  late final ActionTargetHexFocusLayer actionTargetHexFocus;
   late final ThreatOverlayLayer threats;
   late final HoverIntentMarkerLayer hoverIntent;
   late final ActionPaletteLayer actionPalette;

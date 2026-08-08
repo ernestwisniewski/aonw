@@ -8,28 +8,36 @@ void main() {
     test('smooths turn-start command camera jumps', () {
       final effects = GameCameraEffectNormalizer.forCommand(
         command: const FocusTurnStartActionCommand('player_1'),
-        effects: const [JumpCameraEffect(col: 2, row: 3)],
+        effects: const [
+          JumpCameraEffect(col: 2, row: 3),
+          ShowActionTargetFocusEffect(col: 2, row: 3),
+        ],
       );
 
-      final camera = effects.single as SmoothCameraEffect;
+      final camera = effects.first as SmoothCameraEffect;
       expect(camera.col, 2);
       expect(camera.row, 3);
       expect(
         camera.duration,
         GameCameraEffectNormalizer.turnStartCameraTransitionDuration,
       );
+      expect(effects.last, isA<ShowActionTargetFocusEffect>());
     });
 
     test('smooths next-action command camera jumps', () {
       final effects = GameCameraEffectNormalizer.forCommand(
         command: const FocusNextPendingActionCommand('player_1'),
-        effects: const [JumpCameraEffect(col: 4, row: 5)],
+        effects: const [
+          JumpCameraEffect(col: 4, row: 5),
+          ShowActionTargetFocusEffect(col: 4, row: 5),
+        ],
       );
 
-      final camera = effects.single as SmoothCameraEffect;
+      final camera = effects.first as SmoothCameraEffect;
       expect(camera.col, 4);
       expect(camera.row, 5);
       expect(camera.duration, 0.48);
+      expect(effects.last, isA<ShowActionTargetFocusEffect>());
     });
 
     test('keeps non-focus command effects untouched', () {

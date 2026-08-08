@@ -111,6 +111,11 @@ void _registerGameCommandControllerScenarios() {
       expect(effect.col, 2);
       expect(effect.row, 3);
       expect(effect.duration, 0.85);
+      final focus = renderer.handledEffects
+          .whereType<ShowActionTargetFocusEffect>()
+          .single;
+      expect(focus.col, 2);
+      expect(focus.row, 3);
     });
 
     test(

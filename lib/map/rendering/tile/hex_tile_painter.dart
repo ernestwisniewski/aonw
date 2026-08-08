@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:aonw/map/rendering/hex_outline_painter.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
 import 'package:aonw/map/rendering/map_icon_badge.dart';
 import 'package:aonw/map/rendering/map_intent_marker.dart';
@@ -9,7 +10,6 @@ import 'package:aonw/map/rendering/tile/hex_tile_geometry_layout.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_overlay_geometry.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
-import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 class HexTilePainter {
@@ -45,8 +45,6 @@ class HexTilePainter {
     strokeWidth: 1.1,
   );
 
-  static const double _selectionDash = 6.0;
-  static const double _selectionGap = 4.0;
   static const double _intentMarkerPairGap = 4.0;
   static const double _heightBadgeParagraphWidth = 16.0;
   static const int _heightBadgeBackgroundAlpha = 238;
@@ -421,33 +419,9 @@ class HexTilePainter {
   }
 
   void _drawSelectionOutline(Canvas canvas, HexTileGeometrySnapshot geometry) {
-    final topCorners = geometry.topCorners;
-    for (int i = 0; i < topCorners.length; i++) {
-      _drawDashedLine(canvas, topCorners[i], topCorners[(i + 1) % 6]);
-    }
-  }
-
-  void _drawDashedLine(Canvas canvas, Vector2 from, Vector2 to) {
-    final dx = to.x - from.x;
-    final dy = to.y - from.y;
-    final len = math.sqrt(dx * dx + dy * dy);
-    final ux = dx / len;
-    final uy = dy / len;
-    double travelled = 0.0;
-    bool drawing = true;
-    while (travelled < len) {
-      final segLen = drawing ? _selectionDash : _selectionGap;
-      final end = math.min(travelled + segLen, len);
-      if (drawing) {
-        canvas.drawLine(
-          Offset(from.x + ux * travelled, from.y + uy * travelled),
-          Offset(from.x + ux * end, from.y + uy * end),
-          _paintSelectionDash,
-        );
-      }
-      travelled = end;
-      drawing = !drawing;
-    }
+    HexOutlinePainter.paintDashedPolygon(canvas, [
+      for (final corner in geometry.topCorners) Offset(corner.x, corner.y),
+    ], _paintSelectionDash);
   }
 
   void _drawPlanningMarkers({

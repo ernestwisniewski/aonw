@@ -34,6 +34,7 @@ abstract final class HudPalette {
   static const Color danger = Color(0xFFC0392B);
   static const Color dangerSubtle = Color(0xFF5A2425);
   static const Color info = Color(0xFF6FA8D6);
+  static const Color actionFocus = Color(0xFF7EE787);
 
   // Domain accents.
   static const Color scienceAccent = Color(0xFF9FC7B5);

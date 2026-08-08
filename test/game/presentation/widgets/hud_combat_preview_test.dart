@@ -136,6 +136,44 @@ void main() {
       );
     });
 
+    test('one-hit-point target previews destruction, never retreat', () {
+      final attacker = _unit(
+        id: 'attacker',
+        ownerPlayerId: 'p1',
+        name: 'Player warrior',
+        col: 0,
+        row: 0,
+      );
+      final defender = _unit(
+        id: 'defender',
+        ownerPlayerId: 'p2',
+        name: 'Enemy warrior',
+        col: 1,
+        row: 0,
+        hitPoints: 1,
+      );
+      final state = _state(
+        attacker: attacker,
+        enemies: [defender],
+        defenderCol: 1,
+        defenderRow: 0,
+      );
+
+      final preview = HudCombatPreviewFactory.from(
+        gameState: state,
+        mapData: _map(3, 3),
+        turn: 1,
+        combatRuleset: CombatRuleset.standard.copyWith(varianceRange: 0),
+      );
+
+      expect(preview, isNotNull);
+      expect(preview!.defenderHpBefore, 1);
+      expect(preview.defenderHpAfter, 0);
+      expect(preview.defenderKilled, isTrue);
+      expect(preview.defenderRetreated, isFalse);
+      expect(preview.outcomeLine(l10n), 'Outcome: defender dies');
+    });
+
     test('uses the same opponent-aware counter modifiers as combat', () {
       final ruleset = CombatRuleset(
         varianceRange: 0,
@@ -414,6 +452,7 @@ GameUnit _unit({
   required int col,
   required int row,
   GameUnitType type = GameUnitType.warrior,
+  int? hitPoints,
 }) {
   return GameUnit(
     id: id,
@@ -422,6 +461,7 @@ GameUnit _unit({
     name: name,
     col: col,
     row: row,
+    hitPoints: hitPoints,
   );
 }
 

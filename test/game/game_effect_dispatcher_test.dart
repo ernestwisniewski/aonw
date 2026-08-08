@@ -4,6 +4,7 @@ import 'package:aonw/game/presentation/engine/game_effect_dispatcher.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_hex_alert_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/floating_text_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/particle_effects_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/map/action_target_hex_focus_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/unit_animation_controller.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
@@ -161,6 +162,35 @@ void main() {
       await dispatcher.handleEffect(const JumpCameraEffect(col: 1, row: 0));
 
       expect(cameraController.lastJump, (col: 1, row: 0));
+    });
+
+    test('dispatches the transient map action-target focus', () async {
+      final cameraController = _FakeCameraController();
+      final animationController = _FakeUnitAnimationController();
+      final particleParent = Component();
+      final focusLayer = ActionTargetHexFocusLayer();
+      addTearDown(animationController.dispose);
+      final dispatcher = GameEffectDispatcher(
+        unitAnimationController: animationController,
+        cameraController: cameraController,
+        particleEffectsLayer: _FakeParticleEffectsLayer(),
+        floatingTextLayer: _FakeFloatingTextLayer(),
+        combatHexAlertLayer: CombatHexAlertLayer(),
+        actionTargetHexFocusLayer: focusLayer,
+        particleParent: particleParent,
+        alertParent: particleParent,
+        reduceMotion: () => false,
+        followUnitMovementCamera: () => false,
+        onRendererStateChanged: () {},
+      );
+
+      await dispatcher.handleEffect(
+        const ShowActionTargetFocusEffect(col: 4, row: 5),
+      );
+
+      expect(focusLayer.activeForTesting, isTrue);
+      expect(focusLayer.colForTesting, 4);
+      expect(focusLayer.rowForTesting, 5);
     });
 
     test(

@@ -5,6 +5,7 @@ import 'package:aonw/game/presentation/engine/game_camera_controller.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_hex_alert_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/floating_text_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/particle_effects_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/map/action_target_hex_focus_layer.dart';
 import 'package:aonw/game/presentation/engine/unit_animation_controller.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -18,6 +19,7 @@ class GameEffectDispatcher {
   final ParticleEffectsLayer _particleEffectsLayer;
   final FloatingTextLayer _floatingTextLayer;
   final CombatHexAlertLayer _combatHexAlertLayer;
+  final ActionTargetHexFocusLayer _actionTargetHexFocusLayer;
   final Component _particleParent;
   final Component _alertParent;
   final void Function() _onRendererStateChanged;
@@ -35,6 +37,7 @@ class GameEffectDispatcher {
     required ParticleEffectsLayer particleEffectsLayer,
     required FloatingTextLayer floatingTextLayer,
     required CombatHexAlertLayer combatHexAlertLayer,
+    ActionTargetHexFocusLayer? actionTargetHexFocusLayer,
     required Component particleParent,
     required Component alertParent,
     required void Function() onRendererStateChanged,
@@ -50,6 +53,8 @@ class GameEffectDispatcher {
        _particleEffectsLayer = particleEffectsLayer,
        _floatingTextLayer = floatingTextLayer,
        _combatHexAlertLayer = combatHexAlertLayer,
+       _actionTargetHexFocusLayer =
+           actionTargetHexFocusLayer ?? ActionTargetHexFocusLayer(),
        _particleParent = particleParent,
        _alertParent = alertParent,
        _onRendererStateChanged = onRendererStateChanged,
@@ -123,41 +128,50 @@ class GameEffectDispatcher {
           effect,
           retainAtDestination: retainMovementAtDestination,
         );
-      case PlayCombatAnimationEffect(
-        :final attackerUnitId,
-        :final defenderUnitId,
-        :final attackerFromCol,
-        :final attackerFromRow,
-        :final attackerToCol,
-        :final attackerToRow,
-        :final attackerKilled,
-        :final defenderKilled,
-        :final defenderRetaliated,
-      ):
-        _focusCombatCamera(
-          attackerUnitId: attackerUnitId,
-          defenderUnitId: defenderUnitId,
-          attackerFromCol: attackerFromCol,
-          attackerFromRow: attackerFromRow,
-          attackerToCol: attackerToCol,
-          attackerToRow: attackerToRow,
-        );
-        await _unitAnimationController.animateUnitCombat(
-          attackerUnitId: attackerUnitId,
-          defenderUnitId: defenderUnitId,
-          attackerKilled: attackerKilled,
-          defenderKilled: defenderKilled,
-          defenderRetaliated: defenderRetaliated,
-          onComplete: _onRendererStateChanged,
-        );
+      case PlayCombatAnimationEffect():
+        await _handleCombatAnimation(effect);
+      case SmoothCameraEffect():
+        await _handleSmoothCamera(effect);
+      case _:
+        _handleImmediateEffect(effect);
+    }
+  }
+
+  Future<void> _handleCombatAnimation(PlayCombatAnimationEffect effect) async {
+    _focusCombatCamera(
+      attackerUnitId: effect.attackerUnitId,
+      defenderUnitId: effect.defenderUnitId,
+      attackerFromCol: effect.attackerFromCol,
+      attackerFromRow: effect.attackerFromRow,
+      attackerToCol: effect.attackerToCol,
+      attackerToRow: effect.attackerToRow,
+    );
+    await _unitAnimationController.animateUnitCombat(
+      attackerUnitId: effect.attackerUnitId,
+      defenderUnitId: effect.defenderUnitId,
+      attackerKilled: effect.attackerKilled,
+      defenderKilled: effect.defenderKilled,
+      defenderRetaliated: effect.defenderRetaliated,
+      onComplete: _onRendererStateChanged,
+    );
+  }
+
+  Future<void> _handleSmoothCamera(SmoothCameraEffect effect) async {
+    if (!_canAutoFocusMapTarget(effect.col, effect.row)) return;
+    await _cameraController.smoothToTile(
+      effect.col,
+      effect.row,
+      duration: effect.duration,
+    );
+  }
+
+  void _handleImmediateEffect(RendererEffect effect) {
+    switch (effect) {
       case ShakeCameraEffect(:final intensity, :final duration):
         _cameraController.shake(intensity: intensity, duration: duration);
       case JumpCameraEffect(:final col, :final row):
         if (!_canAutoFocusMapTarget(col, row)) return;
         _cameraController.jumpToTile(col, row);
-      case SmoothCameraEffect(:final col, :final row, :final duration):
-        if (!_canAutoFocusMapTarget(col, row)) return;
-        await _cameraController.smoothToTile(col, row, duration: duration);
       case SpawnParticleBurstEffect():
         _particleEffectsLayer.spawnBurst(
           parent: _particleParent,
@@ -173,6 +187,14 @@ class GameEffectDispatcher {
           effect: effect,
           reduceMotion: _reduceMotion(),
         );
+      case ShowActionTargetFocusEffect():
+        _actionTargetHexFocusLayer.show(
+          parent: _alertParent,
+          effect: effect,
+          reduceMotion: _reduceMotion(),
+        );
+      case _:
+        throw StateError('Timed renderer effect reached immediate dispatch.');
     }
   }
 

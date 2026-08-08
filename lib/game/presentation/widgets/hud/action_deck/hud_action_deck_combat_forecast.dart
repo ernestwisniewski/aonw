@@ -32,6 +32,8 @@ class _CombatOutcomeForecast extends StatelessWidget {
         : GameUiTheme.goldLight;
     final defenderAccent = preview.defenderKilled
         ? GameUiTheme.danger
+        : preview.defenderRetreated
+        ? GameUiTheme.warning
         : GameUiTheme.success;
 
     return Container(
@@ -71,6 +73,8 @@ class _CombatOutcomeForecast extends StatelessWidget {
               ),
             ],
           ),
+          SizedBox(height: compact ? 8 : 10),
+          _CombatForecastOutcomeBanner(preview: preview, compact: compact),
           SizedBox(height: compact ? 8 : 10),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -125,6 +129,72 @@ class _CombatOutcomeForecast extends StatelessWidget {
                 ],
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CombatForecastOutcomeBanner extends StatelessWidget {
+  const _CombatForecastOutcomeBanner({
+    required this.preview,
+    required this.compact,
+  });
+
+  final HudCombatPreview preview;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final (accent, icon) = preview.defenderKilled
+        ? (GameUiTheme.success, GameIcons.checkCircle)
+        : preview.attackerKilled
+        ? (GameUiTheme.danger, GameIcons.error)
+        : preview.defenderRetreated
+        ? (GameUiTheme.warning, GameIcons.warning)
+        : (GameUiTheme.info, GameIcons.info);
+    return Container(
+      key: const Key('hudCombatConfirm.outcome'),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 10,
+        vertical: compact ? 7 : 8,
+      ),
+      decoration: BoxDecoration(
+        color: accent.withAlpha(22),
+        border: Border.all(color: accent.withAlpha(175)),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: GameIcon(icon, size: 16, color: accent),
+          ),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  preview.outcomeLine(l10n),
+                  style: GameUiTheme.bodySmall.copyWith(
+                    color: accent,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  preview.targetLine(l10n),
+                  style: GameUiTheme.bodySmall.copyWith(
+                    color: GameUiTheme.textSecondary,
+                    fontSize: compact ? 10 : 11,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

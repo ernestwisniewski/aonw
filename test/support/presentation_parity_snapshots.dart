@@ -192,6 +192,12 @@ Map<String, Object?> rendererEffectSnapshot(RendererEffect effect) {
       'unitId': effect.unitId,
       'cityId': effect.cityId,
     },
+    ShowActionTargetFocusEffect() => {
+      'type': 'actionTargetFocus',
+      'col': effect.col,
+      'row': effect.row,
+      'durationMicros': effect.duration.inMicroseconds,
+    },
     JumpCameraEffect() => {
       'type': 'jumpCamera',
       'col': effect.col,

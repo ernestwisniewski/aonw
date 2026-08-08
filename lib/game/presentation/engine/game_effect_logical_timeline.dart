@@ -19,6 +19,7 @@ abstract final class GameEffectLogicalTimeline {
       ShakeCameraEffect(:final duration) => _seconds(duration),
       ShowCombatHexAlertEffect(kind: CombatHexAlertKind.fortificationThreat) =>
         Duration.zero,
+      ShowActionTargetFocusEffect() => Duration.zero,
       SpawnParticleBurstEffect() || ShowCombatHexAlertEffect() => _transient,
     };
   }

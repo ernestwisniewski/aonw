@@ -9,6 +9,10 @@ Iterable<RendererEffect> _allowedInteractionEffects(
   for (final effect in effects) {
     if (effect is JumpCameraEffect || effect is SmoothCameraEffect) {
       yield effect;
+    } else if ((command is FocusNextPendingActionCommand ||
+            command is FocusTurnStartActionCommand) &&
+        effect is ShowActionTargetFocusEffect) {
+      yield effect;
     } else if (command is FocusTurnStartActionCommand &&
         effect is ShowCityProductionBubbleEffect) {
       yield effect;

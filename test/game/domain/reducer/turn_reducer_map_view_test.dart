@@ -53,6 +53,11 @@ void main() {
       expect(result.state.selection?.tile?.col, 1);
       expect(result.state.selection?.tile?.row, 1);
       expect(result.uiEffects.whereType<JumpCameraEffect>(), hasLength(1));
+      final focus = result.uiEffects
+          .whereType<ShowActionTargetFocusEffect>()
+          .single;
+      expect(focus.col, 1);
+      expect(focus.row, 1);
       expect(
         result.uiEffects.whereType<ShowCityProductionBubbleEffect>(),
         hasLength(1),
@@ -99,6 +104,11 @@ void main() {
     expect(result.state.selection?.cityTileYieldBreakdown, isNotNull);
     expect(result.state.selection?.cityEconomy, isNotNull);
     expect(result.uiEffects.whereType<JumpCameraEffect>(), hasLength(1));
+    final focus = result.uiEffects
+        .whereType<ShowActionTargetFocusEffect>()
+        .single;
+    expect(focus.col, city.center.col);
+    expect(focus.row, city.center.row);
   });
 }
 

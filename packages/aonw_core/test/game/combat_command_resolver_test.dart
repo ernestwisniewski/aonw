@@ -156,6 +156,38 @@ void main() {
       );
     });
 
+    test('one-hit-point defender is killed and cannot retreat', () {
+      final state = _state(
+        units: [
+          _unit('attacker', 'player_1', 0),
+          _unit('defender', 'player_2', 1, hitPoints: 1),
+        ],
+      );
+      final result = const CombatCommandResolver().resolve(
+        state: state,
+        command: const AttackHexCommand('attacker', 1, 0),
+        actorPlayerId: 'player_1',
+        turn: 7,
+        commandTick: 13,
+        mapTiles: _map(),
+        ruleset: GameRuleset.defaults.copyWith(
+          combat: CombatRuleset.standard.copyWith(varianceRange: 0),
+        ),
+      );
+
+      expect(result.accepted, isTrue);
+      final outcome = result.events
+          .whereType<CombatResolvedEvent>()
+          .single
+          .outcome;
+      expect(outcome.defenderHpAfter, 0);
+      expect(outcome.defenderKilled, isTrue);
+      expect(outcome.defenderRetreated, isFalse);
+      expect(result.units.byId('defender'), isNull);
+      expect(result.events.whereType<UnitRetreatedEvent>(), isEmpty);
+      expect(result.events.whereType<UnitKilledEvent>(), hasLength(1));
+    });
+
     test('attacker on enemy city center attacks the city, not itself', () {
       final state = _state(
         units: [_unit('attacker', 'player_1', 1)],
@@ -326,6 +358,7 @@ GameUnit _unit(
   String ownerPlayerId,
   int col, {
   GameUnitType type = GameUnitType.warrior,
+  int? hitPoints,
 }) {
   return GameUnit(
     id: id,
@@ -334,6 +367,7 @@ GameUnit _unit(
     name: type.defaultNameToken,
     col: col,
     row: 0,
+    hitPoints: hitPoints,
   );
 }
 
