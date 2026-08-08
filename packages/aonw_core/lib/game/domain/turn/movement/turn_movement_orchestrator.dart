@@ -1,6 +1,8 @@
 import 'package:aonw_core/game/domain/diplomacy/diplomatic_contact.dart';
 import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
+import 'package:aonw_core/game/domain/runtime/pending_player_action.dart';
+import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_auto_explore_advancer.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_movement_context.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_movement_state.dart';
@@ -16,6 +18,7 @@ abstract final class TurnMovementOrchestrator {
     final phases = _runPhases(state: state, context: context);
     final changed = _movementChanged(
       advanced: phases.advanced,
+      interactionChanged: phases.interactionChanged,
       diplomacyChanged: phases.diplomacyChanged,
       workerAutomationChanged: phases.workerAutomation.changed,
       autoExploreChanged: phases.autoExplore.changed,
@@ -39,6 +42,7 @@ abstract final class TurnMovementOrchestrator {
     required TurnMovementState state,
     required TurnMovementContext context,
   }) {
+    final interaction = _expireTurnSkip(state.interaction, context.playerIds);
     final advanced = TurnUnitMovementAdvancer.advance(
       units: state.units,
       cities: state.cities,
@@ -70,7 +74,7 @@ abstract final class TurnMovementOrchestrator {
       research: state.research,
       fogOfWar: fogOfWar,
       diplomacy: diplomacy,
-      interaction: state.interaction,
+      interaction: interaction,
       playerIds: context.playerIds,
       mapData: context.mapData,
       fogOfWarService: context.fogOfWarService,
@@ -85,11 +89,24 @@ abstract final class TurnMovementOrchestrator {
     );
     return _TurnMovementPhases(
       advanced: advanced,
+      interactionChanged: interaction != state.interaction,
       diplomacyChanged: !identical(diplomacy, state.diplomacy),
       workerAutomation: workerAutomation,
       autoExplore: autoExplore,
     );
   }
+}
+
+DomainActionState _expireTurnSkip(
+  DomainActionState interaction,
+  Set<String> playerIds,
+) {
+  final pending = interaction.pendingAction;
+  if (pending is! PendingUnitTurnSkip ||
+      !playerIds.contains(pending.ownerPlayerId)) {
+    return interaction;
+  }
+  return interaction.copyWith(pendingAction: null);
 }
 
 TurnAutoExploreAdvance _advanceAutoExplore({
@@ -113,12 +130,14 @@ TurnAutoExploreAdvance _advanceAutoExplore({
 final class _TurnMovementPhases {
   const _TurnMovementPhases({
     required this.advanced,
+    required this.interactionChanged,
     required this.diplomacyChanged,
     required this.workerAutomation,
     required this.autoExplore,
   });
 
   final TurnUnitMovementAdvance advanced;
+  final bool interactionChanged;
   final bool diplomacyChanged;
   final TurnWorkerAutomationAdvance workerAutomation;
   final TurnAutoExploreAdvance autoExplore;
@@ -153,12 +172,14 @@ TurnMovementResult _movementResult({
 
 bool _movementChanged({
   required TurnUnitMovementAdvance advanced,
+  required bool interactionChanged,
   required bool diplomacyChanged,
   required bool workerAutomationChanged,
   required bool autoExploreChanged,
 }) =>
     advanced.changed ||
     advanced.events.isNotEmpty ||
+    interactionChanged ||
     diplomacyChanged ||
     workerAutomationChanged ||
     autoExploreChanged;

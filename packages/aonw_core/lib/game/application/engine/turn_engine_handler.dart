@@ -223,7 +223,10 @@ final class TurnEngineHandler {
     final ordered = _orderedDistinct(orderedPlayerIds);
     if (ordered.isEmpty) return null;
     final start = ordered.indexOf(afterPlayerId);
-    for (var offset = 1; offset < ordered.length; offset += 1) {
+    // Include the current player after a round wrap. Before the wrap that
+    // player is finished, so this only matters when they are the sole active
+    // participant (for example after every opponent has been kicked).
+    for (var offset = 1; offset <= ordered.length; offset += 1) {
       final index = (start < 0 ? offset - 1 : start + offset) % ordered.length;
       final playerId = ordered[index];
       if (snapshot.domain.turnStatesByPlayerId[playerId] ==

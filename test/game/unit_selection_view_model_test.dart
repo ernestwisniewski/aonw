@@ -80,6 +80,26 @@ void main() {
       expect(detail.body, vm.description);
       expect(detail.items, isEmpty);
     });
+
+    test('shows the artifact carrier movement cap as fully replenished', () {
+      final unit = GameUnit(
+        id: 'carrier_1',
+        ownerPlayerId: 'p1',
+        type: GameUnitType.warrior,
+        name: 'Warrior',
+        col: 0,
+        row: 0,
+        carriedArtifactId: 'artifact_1',
+      );
+
+      final vm = SelectionViewModelFactory.from(
+        GameSelection.unit(unit),
+        l10n: AppLocalizationsEn(),
+      );
+
+      expect(unit.movementPoints, 2);
+      expect(vm.subtitle, 'Move 2/2 • HP 10/10');
+    });
   });
 }
 

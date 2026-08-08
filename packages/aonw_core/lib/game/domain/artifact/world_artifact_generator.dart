@@ -28,13 +28,15 @@ abstract final class WorldArtifactGenerator {
         _key(objective.hex.col, objective.hex.row),
     };
     final reachableTiles = _reachableTileKeys(mapData, starts);
+    final carrierReturnTiles = _carrierReturnTileKeys(mapData, starts);
     final passableTiles = [
       for (final tile in mapData.tiles)
         if (!_isBlocked(tile) &&
             !occupiedStarts.contains(_key(tile.col, tile.row)) &&
             !objectiveHexes.contains(_key(tile.col, tile.row)) &&
             (starts.isEmpty ||
-                reachableTiles.contains(_key(tile.col, tile.row))))
+                (reachableTiles.contains(_key(tile.col, tile.row)) &&
+                    _hasCarrierReturnPath(tile, carrierReturnTiles))))
           tile,
     ];
     if (passableTiles.isEmpty) return const [];
@@ -225,6 +227,48 @@ abstract final class WorldArtifactGenerator {
       }
     }
     return reachable;
+  }
+
+  /// Tiles connected to a starting position using the movement cap that
+  /// applies after an artifact is picked up.
+  static Set<String> _carrierReturnTileKeys(
+    WorldMap mapData,
+    Iterable<GameUnit> startingUnits,
+  ) {
+    final reachable = <String>{};
+    for (final unit in startingUnits) {
+      final carrierMovement = UnitMovementBalance.maxMovementPointsFor(
+        type: unit.type,
+        carriedArtifactId: 'generated-artifact',
+      );
+      final pathfinder = UnitMovementPathfinder(
+        mapData: mapData,
+        units: const [],
+        canEnterTile: (tile) {
+          final cost = UnitMovementCostRules.costToEnterTile(
+            tile,
+            unitType: unit.type,
+          );
+          return !cost.blocked && cost.value <= carrierMovement;
+        },
+      );
+      reachable.add(_key(unit.col, unit.row));
+      for (final coords in pathfinder.movementCostsFrom(unit: unit).keys) {
+        reachable.add(_key(coords.col, coords.row));
+      }
+    }
+    return reachable;
+  }
+
+  static bool _hasCarrierReturnPath(
+    WorldTile tile,
+    Set<String> carrierReturnTiles,
+  ) {
+    if (carrierReturnTiles.contains(_key(tile.col, tile.row))) return true;
+    return HexNeighbors.around(HexCoordinate(col: tile.col, row: tile.row)).any(
+      (neighbor) =>
+          carrierReturnTiles.contains(_key(neighbor.col, neighbor.row)),
+    );
   }
 
   static bool _canUnitEventuallyEnter(GameUnit unit, MapTileView tile) {

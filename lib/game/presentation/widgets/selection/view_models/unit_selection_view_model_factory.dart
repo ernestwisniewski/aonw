@@ -35,8 +35,9 @@ abstract final class UnitSelectionViewModelFactory {
     if (unit == null) return const SelectionViewModel.empty();
 
     final tile = selection.tile;
-    final maxMovementPoints = UnitMovementBalance.maxMovementPointsForType(
-      unit.type,
+    final maxMovementPoints = UnitMovementBalance.maxMovementPointsFor(
+      type: unit.type,
+      carriedArtifactId: unit.carriedArtifactId,
     );
     final combatStats = UnitCombatStats.derive(unit);
     final currentHp = UnitCombatHealth.currentHp(

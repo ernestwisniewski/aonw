@@ -172,6 +172,39 @@ void main() {
       expect(accepted.movementDelta.executions, hasLength(1));
     });
 
+    test('sole active player begins the next round with full movement', () {
+      final snapshot = _snapshot(
+        gameMode: GameMode.hotSeat,
+        participants: const [Player(id: _one, name: 'One', colorValue: 1)],
+        turnStatesByPlayerId: const {_one: PlayerTurnState.active},
+        units: [
+          GameUnit(
+            id: 'warrior_1',
+            ownerPlayerId: _one,
+            type: GameUnitType.warrior,
+            name: GameUnitType.warrior.defaultNameToken,
+            col: 0,
+            row: 0,
+            movementPoints: 2,
+          ),
+        ],
+      );
+
+      final accepted = _accepted(
+        _apply(
+          snapshot,
+          const EndTurnCommand(_one),
+          turnPlayerIds: const [_one],
+        ),
+      );
+
+      expect(accepted.snapshot.domain.turn, 8);
+      expect(accepted.snapshot.domain.turnStatesByPlayerId, {
+        _one: PlayerTurnState.active,
+      });
+      expect(accepted.snapshot.domain.units.single.movementPoints, 3);
+    });
+
     test('simultaneous finalization begins players exactly once', () {
       final snapshot = _snapshot(
         submittedPlayerIds: {_one},
@@ -210,6 +243,42 @@ void main() {
       expect(accepted.movementDelta.beforeUnits.single.col, 0);
       expect(accepted.movementDelta.afterUnits.single.col, 1);
       expect(accepted.movementDelta.executions, hasLength(1));
+    });
+
+    test('new turn expires a pending unit skip instead of restoring it', () {
+      final initial = _snapshot(
+        submittedPlayerIds: {_one},
+        units: [
+          GameUnit(
+            id: 'skipped_unit',
+            ownerPlayerId: _one,
+            type: GameUnitType.warrior,
+            name: GameUnitType.warrior.defaultNameToken,
+            col: 0,
+            row: 0,
+            movementPoints: 0,
+          ),
+        ],
+      );
+      final snapshot = initial.copyWith(
+        domain: initial.domain.copyWith(
+          actions: DomainActionState(
+            pendingAction: const PendingUnitTurnSkip(
+              ownerPlayerId: _one,
+              unitId: 'skipped_unit',
+              restoreMovementPoints: 2,
+            ),
+          ),
+        ),
+      );
+
+      final accepted = _accepted(
+        _apply(snapshot, const SubmitTurnCommand(_two), actorPlayerId: _two),
+      );
+
+      expect(accepted.snapshot.domain.turn, 8);
+      expect(accepted.snapshot.domain.units.single.movementPoints, 3);
+      expect(accepted.snapshot.domain.actions.pendingAction, isNull);
     });
 
     test('duplicate submit is an accepted identity no-op', () {
@@ -401,6 +470,7 @@ CanonicalGameSnapshot _snapshot({
     Player(id: _one, name: 'One', colorValue: 1),
     Player(id: _two, name: 'Two', colorValue: 2),
   ],
+  Map<String, PlayerTurnState>? turnStatesByPlayerId,
 }) {
   return CanonicalGameSnapshot.snapshot(
     domain:
@@ -411,10 +481,12 @@ CanonicalGameSnapshot _snapshot({
           units: units,
         )).copyWith(
           gameMode: gameMode,
-          turnStatesByPlayerId: const {
-            _one: PlayerTurnState.active,
-            _two: PlayerTurnState.active,
-          },
+          turnStatesByPlayerId:
+              turnStatesByPlayerId ??
+              const {
+                _one: PlayerTurnState.active,
+                _two: PlayerTurnState.active,
+              },
           submittedPlayerIds: submittedPlayerIds,
           turnStartedAt: DateTime.utc(2026, 7, 30, 11),
         ),

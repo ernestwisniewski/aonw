@@ -36,6 +36,10 @@ const _pathfinderDeclarations = {
   'UnitMovementPathfinder',
   '_PathNode',
   '_PathSearchResult',
+  '_RouteNode',
+  '_RouteScore',
+  '_RouteSearchResult',
+  '_RouteState',
 };
 
 const movementKernelForbiddenRootTypes = {

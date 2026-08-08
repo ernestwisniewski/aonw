@@ -1,3 +1,4 @@
+import 'package:aonw_core/game/domain/movement/unit_movement_balance.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_cost_rules.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
@@ -79,23 +80,16 @@ class UnitMovementPathfinder {
     }
 
     final targetKey = _coordKey(targetTile.col, targetTile.row);
-    final search = _search(unit: unit, stopAtKey: targetKey);
-    if (!search.parents.containsKey(targetKey)) return null;
-
-    final steps = _reconstructSteps(
-      targetKey: targetKey,
-      parents: search.parents,
-      enterCosts: search.enterCosts,
-      coords: search.coords,
-      cumulativeCosts: search.bestCosts,
-    );
+    final search = _searchBestRoute(unit: unit, targetKey: targetKey);
+    if (search == null) return null;
+    final steps = _reconstructRouteSteps(search);
     if (steps.length < 2) return null;
 
     return UnitMovementPlan(
       unitId: unit.id,
       targetCol: targetTile.col,
       targetRow: targetTile.row,
-      totalCost: search.bestCosts[targetKey] ?? 0,
+      totalCost: search.bestScores[search.targetState]!.totalCost,
       availableMovementPoints: unit.movementPoints,
       canSpendTurnEnteringFirstStep: _canSpendTurnEnteringFirstStep(unit),
       steps: steps,
@@ -118,7 +112,7 @@ class UnitMovementPathfinder {
       if (tile == null) continue;
       final candidate = plan(unit: unit, targetTile: tile);
       if (candidate == null) continue;
-      if (best == null || _compareApproachPlans(candidate, best) < 0) {
+      if (best == null || _compareApproachPlans(candidate, best, unit) < 0) {
         best = candidate;
       }
     }
@@ -144,7 +138,6 @@ class UnitMovementPathfinder {
 
   _PathSearchResult _search({
     required GameUnit unit,
-    String? stopAtKey,
     int? maxCost,
     bool canSpendTurnEnteringFirstStep = false,
   }) {
@@ -153,8 +146,6 @@ class UnitMovementPathfinder {
     ];
     final startKey = _coordKey(unit.col, unit.row);
     final bestCosts = <String, int>{startKey: 0};
-    final parents = <String, String?>{startKey: null};
-    final enterCosts = <String, int>{startKey: 0};
     final coords = <String, ({int col, int row})>{
       startKey: (col: unit.col, row: unit.row),
     };
@@ -162,7 +153,6 @@ class UnitMovementPathfinder {
       frontier.sort(_compareNodes);
       final current = frontier.removeAt(0);
       final currentKey = _coordKey(current.col, current.row);
-      if (currentKey == stopAtKey) break;
       if (current.cost != bestCosts[currentKey]) continue;
       if (maxCost != null && current.cost > maxCost) continue;
 
@@ -202,42 +192,147 @@ class UnitMovementPathfinder {
         if (knownCost != null && knownCost <= nextCost) continue;
 
         bestCosts[nextKey] = nextCost;
-        parents[nextKey] = currentKey;
-        enterCosts[nextKey] = enterCost.value;
         coords[nextKey] = next;
         frontier.add(_PathNode(col: next.col, row: next.row, cost: nextCost));
       }
     }
 
-    return _PathSearchResult(
-      bestCosts: bestCosts,
-      parents: parents,
-      enterCosts: enterCosts,
-      coords: coords,
-    );
+    return _PathSearchResult(bestCosts: bestCosts, coords: coords);
   }
 
-  List<UnitMovementStep> _reconstructSteps({
+  _RouteSearchResult? _searchBestRoute({
+    required GameUnit unit,
     required String targetKey,
-    required Map<String, String?> parents,
-    required Map<String, int> enterCosts,
-    required Map<String, ({int col, int row})> coords,
-    required Map<String, int> cumulativeCosts,
   }) {
-    final reversedKeys = <String>[];
-    String? cursor = targetKey;
-    while (cursor != null) {
-      reversedKeys.add(cursor);
-      cursor = parents[cursor];
-    }
+    final maxMovement = UnitMovementBalance.maxMovementPointsFor(
+      type: unit.type,
+      carriedArtifactId: unit.carriedArtifactId,
+    );
+    final start = _RouteState(
+      col: unit.col,
+      row: unit.row,
+      remaining: unit.movementPoints,
+      started: false,
+    );
+    const startScore = _RouteScore(turns: 0, totalCost: 0, stepCount: 0);
+    final frontier = <_RouteNode>[_RouteNode(state: start, score: startScore)];
+    final bestScores = <_RouteState, _RouteScore>{start: startScore};
+    final parents = <_RouteState, _RouteState?>{start: null};
+    final enterCosts = <_RouteState, int>{start: 0};
 
+    while (frontier.isNotEmpty) {
+      frontier.sort(_compareRouteNodes);
+      final current = frontier.removeAt(0);
+      final knownScore = bestScores[current.state];
+      if (knownScore == null ||
+          _compareRouteScores(current.score, knownScore) != 0) {
+        continue;
+      }
+      if (_coordKey(current.state.col, current.state.row) == targetKey) {
+        return _RouteSearchResult(
+          targetState: current.state,
+          bestScores: bestScores,
+          parents: parents,
+          enterCosts: enterCosts,
+        );
+      }
+
+      for (final next in HexGridTopology.neighbors(
+        col: current.state.col,
+        row: current.state.row,
+      )) {
+        if (!_isInBounds(next.col, next.row)) continue;
+        final blockingUnit = _indexedUnitAt(next.col, next.row);
+        if (blockingUnit != null &&
+            !canEnterOccupied(unit, blockingUnit, next.col, next.row)) {
+          continue;
+        }
+
+        final tile = tileAt(next.col, next.row);
+        if (tile == null) continue;
+        if (canEnterTile != null && !canEnterTile!(tile)) continue;
+        final enterCost = UnitMovementCostRules.costToEnterTile(
+          tile,
+          unitType: unit.type,
+        );
+        if (enterCost.blocked) continue;
+
+        final transition = _advanceRoute(
+          current: current,
+          enterCost: enterCost.value,
+          maxMovement: maxMovement,
+        );
+        final nextState = _RouteState(
+          col: next.col,
+          row: next.row,
+          remaining: transition.remaining,
+          started: true,
+        );
+        final nextScore = _RouteScore(
+          turns: transition.turns,
+          totalCost: current.score.totalCost + enterCost.value,
+          stepCount: current.score.stepCount + 1,
+        );
+        final previous = bestScores[nextState];
+        if (previous != null && _compareRouteScores(previous, nextScore) <= 0) {
+          continue;
+        }
+
+        bestScores[nextState] = nextScore;
+        parents[nextState] = current.state;
+        enterCosts[nextState] = enterCost.value;
+        frontier.add(_RouteNode(state: nextState, score: nextScore));
+      }
+    }
+    return null;
+  }
+
+  ({int turns, int remaining}) _advanceRoute({
+    required _RouteNode current,
+    required int enterCost,
+    required int maxMovement,
+  }) {
+    var turns = current.score.turns;
+    var remaining = current.state.remaining;
+    if (!current.state.started) {
+      turns = 1;
+      if (enterCost <= remaining) {
+        remaining -= enterCost;
+      } else if (remaining > 0) {
+        // The manual movement rules allow the first step to consume the
+        // remainder of a partially spent turn.
+        remaining = 0;
+      } else {
+        turns += 1;
+        remaining = _remainingAfterNewTurn(enterCost, maxMovement);
+      }
+    } else if (enterCost <= remaining) {
+      remaining -= enterCost;
+    } else {
+      turns += 1;
+      remaining = _remainingAfterNewTurn(enterCost, maxMovement);
+    }
+    return (turns: turns, remaining: remaining);
+  }
+
+  static int _remainingAfterNewTurn(int enterCost, int maxMovement) {
+    return enterCost >= maxMovement ? 0 : maxMovement - enterCost;
+  }
+
+  List<UnitMovementStep> _reconstructRouteSteps(_RouteSearchResult search) {
+    final reversed = <_RouteState>[];
+    _RouteState? cursor = search.targetState;
+    while (cursor != null) {
+      reversed.add(cursor);
+      cursor = search.parents[cursor];
+    }
     return [
-      for (final key in reversedKeys.reversed)
+      for (final state in reversed.reversed)
         UnitMovementStep(
-          col: coords[key]!.col,
-          row: coords[key]!.row,
-          enterCost: enterCosts[key] ?? 0,
-          cumulativeCost: cumulativeCosts[key] ?? 0,
+          col: state.col,
+          row: state.row,
+          enterCost: search.enterCosts[state] ?? 0,
+          cumulativeCost: search.bestScores[state]?.totalCost ?? 0,
         ),
     ];
   }
@@ -328,9 +423,41 @@ class UnitMovementPathfinder {
     return a.row.compareTo(b.row);
   }
 
-  int _compareApproachPlans(UnitMovementPlan a, UnitMovementPlan b) {
+  int _compareRouteNodes(_RouteNode a, _RouteNode b) {
+    final score = _compareRouteScores(a.score, b.score);
+    if (score != 0) return score;
+    final col = a.state.col.compareTo(b.state.col);
+    if (col != 0) return col;
+    final row = a.state.row.compareTo(b.state.row);
+    if (row != 0) return row;
+    return b.state.remaining.compareTo(a.state.remaining);
+  }
+
+  static int _compareRouteScores(_RouteScore a, _RouteScore b) {
+    final turns = a.turns.compareTo(b.turns);
+    if (turns != 0) return turns;
     final cost = a.totalCost.compareTo(b.totalCost);
     if (cost != 0) return cost;
+    return a.stepCount.compareTo(b.stepCount);
+  }
+
+  int _compareApproachPlans(
+    UnitMovementPlan a,
+    UnitMovementPlan b,
+    GameUnit unit,
+  ) {
+    final maxMovement = UnitMovementBalance.maxMovementPointsFor(
+      type: unit.type,
+      carriedArtifactId: unit.carriedArtifactId,
+    );
+    final turns = a
+        .estimatedTurns(maxMovement)
+        .compareTo(b.estimatedTurns(maxMovement));
+    if (turns != 0) return turns;
+    final cost = a.totalCost.compareTo(b.totalCost);
+    if (cost != 0) return cost;
+    final steps = a.steps.length.compareTo(b.steps.length);
+    if (steps != 0) return steps;
     final col = a.targetCol.compareTo(b.targetCol);
     if (col != 0) return col;
     return a.targetRow.compareTo(b.targetRow);
@@ -347,14 +474,65 @@ class _PathNode {
 
 class _PathSearchResult {
   final Map<String, int> bestCosts;
-  final Map<String, String?> parents;
-  final Map<String, int> enterCosts;
   final Map<String, ({int col, int row})> coords;
 
-  const _PathSearchResult({
-    required this.bestCosts,
+  const _PathSearchResult({required this.bestCosts, required this.coords});
+}
+
+final class _RouteState {
+  const _RouteState({
+    required this.col,
+    required this.row,
+    required this.remaining,
+    required this.started,
+  });
+
+  final int col;
+  final int row;
+  final int remaining;
+  final bool started;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _RouteState &&
+      other.col == col &&
+      other.row == row &&
+      other.remaining == remaining &&
+      other.started == started;
+
+  @override
+  int get hashCode => Object.hash(col, row, remaining, started);
+}
+
+final class _RouteScore {
+  const _RouteScore({
+    required this.turns,
+    required this.totalCost,
+    required this.stepCount,
+  });
+
+  final int turns;
+  final int totalCost;
+  final int stepCount;
+}
+
+final class _RouteNode {
+  const _RouteNode({required this.state, required this.score});
+
+  final _RouteState state;
+  final _RouteScore score;
+}
+
+final class _RouteSearchResult {
+  const _RouteSearchResult({
+    required this.targetState,
+    required this.bestScores,
     required this.parents,
     required this.enterCosts,
-    required this.coords,
   });
+
+  final _RouteState targetState;
+  final Map<_RouteState, _RouteScore> bestScores;
+  final Map<_RouteState, _RouteState?> parents;
+  final Map<_RouteState, int> enterCosts;
 }

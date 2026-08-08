@@ -146,6 +146,37 @@ void main() {
       expectMoveEvent(results.kernel.events, fromCol: 0, toCol: 1);
     });
 
+    test('artifact carrier spends its turn entering rough terrain', () {
+      final carrier = movementUnit(
+        type: GameUnitType.warrior,
+        movementPoints: 2,
+      ).copyWithCarriedArtifact('artifact_1');
+      final states = movementStates(mover: carrier);
+      final map = movementMap(
+        cols: 2,
+        terrainOverrides: const {
+          (col: 0, row: 0): [TerrainType.coast],
+          (col: 1, row: 0): [
+            TerrainType.grassland,
+            TerrainType.forest,
+            TerrainType.hills,
+          ],
+        },
+      );
+
+      final results = resolveMovement(
+        states,
+        const MoveUnitCommand(movementUnitId, 1, 0),
+        map,
+      );
+
+      expectAcceptedMovementParity(states, results);
+      final moved = results.kernel.units.first;
+      expect((moved.col, moved.row, moved.movementPoints), (1, 0, 0));
+      expect(results.kernel.execution?.steps.single.enterCost, 3);
+      expectMoveEvent(results.kernel.events, fromCol: 0, toCol: 1);
+    });
+
     test('fortified unit wakes and moves at every state boundary', () {
       final states = movementStates(
         mover: movementUnit(movementPoints: 0, posture: UnitPosture.fortified),

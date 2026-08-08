@@ -14,6 +14,10 @@ abstract final class UnitMovementFeasibility {
     );
     for (final step in plan.steps.skip(1)) {
       if (step.enterCost <= maxMovement) continue;
+      // Carrying an artifact lowers movement speed, but it must not turn
+      // otherwise passable rough terrain into a permanent wall. The movement
+      // plan spends the carrier's whole turn on such a step.
+      if (unit.isCarryingArtifact) continue;
       if (canEnterStepBeyondCapacity?.call(step) ?? false) continue;
       return step;
     }

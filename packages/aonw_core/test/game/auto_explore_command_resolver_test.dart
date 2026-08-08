@@ -173,10 +173,7 @@ void main() {
       const origin = HexCoordinate(col: 0, row: 0);
       final interaction = ownedAutoExploreInteraction();
       final state = autoExploreState(
-        scout: autoExploreScout(
-          movementPoints: 2,
-          carriedArtifactId: 'artifact',
-        ),
+        scout: autoExploreScout(movementPoints: 2),
         fogOfWar: autoExploreFog(visible: {origin}, discovered: {origin}),
         interaction: interaction,
       );
