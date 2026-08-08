@@ -119,6 +119,7 @@ in progress. Do not edit history to change a decision; add a superseding ADR.
 | [Map Display Preferences](game-design/map-display-preferences.md) | Player display toggles and map visualization options. |
 | [Map Validation](game-design/map-validation.md) | Bundled map validation rules and failure handling. |
 | [Mobile QoL Automation](game-design/mobile-qol-automation.md) | Mobile-first turn flow and automation quality-of-life behavior. |
+| [Movement and Route Preview](game-design/movement-and-route-preview.md) | Canonical movement costs, partially spent turns, queued paths, and route colors. |
 | [Objective Chain](game-design/objective-chain.md) | Objective progression, guidance, and player-facing prompts. |
 | [Pace Profiles](game-design/pace-profiles.md) | Pacing presets and expected game rhythm. |
 | [Per-System ETA](game-design/per-system-eta.md) | Turn ETA display behavior for research, production, and growth. |

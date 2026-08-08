@@ -138,6 +138,73 @@ void _registerRouteSemanticsTests() {
     expect(remainingPlan.estimatedTurns(3), 1);
   });
 
+  test('exhausted queued route marks every future step unreachable', () {
+    final parent = Component();
+    final fullPlan = _linearPlan(totalCost: 3, availableMovementPoints: 0);
+    final remainingPlan = fullPlan.remainingFromStepIndex(1);
+
+    UnitMovePreviewLayer().syncMany(
+      parent: parent,
+      previews: [
+        UnitMovePreviewLayerEntry(
+          id: 'exhausted-queued',
+          preview: remainingPlan,
+          displaySteps: fullPlan.steps,
+          travelledUpToIndex: 1,
+        ),
+      ],
+    );
+
+    expect(remainingPlan.canMoveNow, isFalse);
+    expect(_singlePreviewIn(parent).reachablePoints, [
+      isTrue,
+      isTrue,
+      isFalse,
+      isFalse,
+    ]);
+  });
+
+  test('unreachable destination marker keeps the danger color', () async {
+    const width = 128;
+    const height = 64;
+    const targetX = 96;
+    const targetY = 32;
+    final preview = UnitMovePreview(
+      points: [
+        Vector2(24, targetY.toDouble()),
+        Vector2(targetX.toDouble(), targetY.toDouble()),
+      ],
+      reachablePoints: const [true, false],
+    );
+    final recorder = ui.PictureRecorder();
+    final canvas = ui.Canvas(recorder);
+
+    preview.render(canvas);
+
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(width, height);
+    picture.dispose();
+    final bytes = await image.toByteData(
+      format: ui.ImageByteFormat.rawStraightRgba,
+    );
+    image.dispose();
+    const pixelOffset = ((targetY * width) + targetX) * 4;
+
+    expect(bytes, isNotNull);
+    expect(
+      bytes!.getUint8(pixelOffset),
+      closeTo((preview.unreachableColor.toARGB32() >> 16) & 0xFF, 3),
+    );
+    expect(
+      bytes.getUint8(pixelOffset + 1),
+      closeTo((preview.unreachableColor.toARGB32() >> 8) & 0xFF, 3),
+    );
+    expect(
+      bytes.getUint8(pixelOffset + 2),
+      closeTo(preview.unreachableColor.toARGB32() & 0xFF, 3),
+    );
+  });
+
   test('cost label uses the unit movement cap supplied by the domain', () {
     final parent = Component();
     final layer = UnitMovePreviewLayer(turnCostLabelBuilder: _turnCountLabel)

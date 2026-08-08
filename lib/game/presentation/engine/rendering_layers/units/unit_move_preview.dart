@@ -524,13 +524,13 @@ class UnitMovePreview extends Component {
       ..drawCircle(
         center,
         radius - 3.5,
-        HudPaint.fill(HudPalette.gold, alpha: MapAlpha.strong),
+        HudPaint.fill(color, alpha: MapAlpha.strong),
       )
       ..drawCircle(
         center,
         radius + 1.5,
         HudPaint.stroke(
-          HudPalette.gold,
+          color,
           alpha: MapAlpha.solid,
           strokeWidth: MapStroke.thin,
         ),

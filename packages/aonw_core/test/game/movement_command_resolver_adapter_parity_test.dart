@@ -120,6 +120,32 @@ void main() {
       expect(results.domain.state.fogOfWar, same(states.domain.fogOfWar));
     });
 
+    test('land unit with 2/3 movement returns from coast to forest', () {
+      final states = movementStates(
+        mover: movementUnit(type: GameUnitType.warrior, movementPoints: 2),
+      );
+      final map = movementMap(
+        cols: 2,
+        terrainOverrides: const {
+          (col: 0, row: 0): [TerrainType.coast],
+          (col: 1, row: 0): [TerrainType.forest],
+        },
+      );
+
+      final results = resolveMovement(
+        states,
+        const MoveUnitCommand(movementUnitId, 1, 0),
+        map,
+      );
+
+      expectAcceptedMovementParity(states, results);
+      final moved = results.kernel.units.first;
+      expect((moved.col, moved.row, moved.movementPoints), (1, 0, 0));
+      expect(moved.queuedPath, isNull);
+      expect(results.kernel.execution?.steps.single.enterCost, 2);
+      expectMoveEvent(results.kernel.events, fromCol: 0, toCol: 1);
+    });
+
     test('fortified unit wakes and moves at every state boundary', () {
       final states = movementStates(
         mover: movementUnit(movementPoints: 0, posture: UnitPosture.fortified),
