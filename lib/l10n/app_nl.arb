@@ -107,7 +107,7 @@
   "mainMenuLoadGame": "Spel laden",
   "mainMenuDeveloper": "Hulpmiddelen",
   "mainMenuSettings": "Instellingen",
-  "mainMenuSettingsSublabel": "Tekst en audio",
+  "mainMenuSettingsSublabel": "Grafische weergave, tekst en audio",
   "mainMenuExit": "Uitgang",
   "mainMenuAiSublabel": "AI",
   "mainMenuOnlineSublabel": "Netwerk",
@@ -964,7 +964,7 @@
     }
   },
   "optionsTitle": "Opties",
-  "optionsSubtitle": "Tekst, taal, audio en uitvoering",
+  "optionsSubtitle": "Grafische weergave, tekst, taal, audio en prestaties",
   "languageSectionTitle": "Taal",
   "languagePolish": "Pools",
   "languageEnglish": "Engels",
@@ -1007,6 +1007,8 @@
       }
     }
   },
+  "graphicsSectionTitle": "Grafische weergave",
+  "windowedModeLabel": "Venstermodus",
   "audioSectionTitle": "Audio",
   "gameSoundsLabel": "Spelgeluiden",
   "soundVolumeLabel": "Geluidsvolume",

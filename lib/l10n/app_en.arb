@@ -107,7 +107,7 @@
   "mainMenuLoadGame": "Load game",
   "mainMenuDeveloper": "Tools",
   "mainMenuSettings": "Settings",
-  "mainMenuSettingsSublabel": "Text and audio",
+  "mainMenuSettingsSublabel": "Graphics, text and audio",
   "mainMenuExit": "Exit",
   "mainMenuAiSublabel": "AI",
   "mainMenuOnlineSublabel": "Network",
@@ -964,7 +964,7 @@
     }
   },
   "optionsTitle": "Options",
-  "optionsSubtitle": "Text, language, audio, and performance",
+  "optionsSubtitle": "Graphics, text, language, audio, and performance",
   "languageSectionTitle": "Language",
   "languagePolish": "Polish",
   "languageEnglish": "English",
@@ -1007,6 +1007,8 @@
       }
     }
   },
+  "graphicsSectionTitle": "Graphics",
+  "windowedModeLabel": "Windowed mode",
   "audioSectionTitle": "Audio",
   "gameSoundsLabel": "Game sounds",
   "soundVolumeLabel": "Sound volume",

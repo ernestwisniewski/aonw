@@ -476,7 +476,7 @@
         "lib/map/rendering/tile/hex_tile_painter.dart": 788,
         "lib/menu/main_menu_screen.dart": 1006,
         "lib/menu/manual_screen.dart": 801,
-        "lib/menu/options_screen.dart": 1150
+        "lib/menu/options_screen.dart": 1071
       },
       "legacyFiles": {
         "lib/developer/assets_editor_frame_edit_panel.dart": 567,
@@ -524,7 +524,7 @@
         "lib/menu/main_menu_screen.dart": 1006,
         "lib/menu/manual_screen.dart": 801,
         "lib/menu/menu_route_shell.dart": 425,
-        "lib/menu/options_screen.dart": 1150,
+        "lib/menu/options_screen.dart": 1071,
         "lib/shared/widgets/game_ui/game_ui_options_panel.dart": 353
       },
       "declarations": {

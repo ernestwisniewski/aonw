@@ -8,6 +8,8 @@ import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/menu/menu_click_sound.dart';
 import 'package:aonw/menu/menu_gamepad_input.dart';
 import 'package:aonw/menu/menu_route_shell.dart';
+import 'package:aonw/menu/widgets/graphics_settings_section.dart';
+import 'package:aonw/menu/widgets/settings_controls.dart';
 import 'package:aonw/shared/providers/accessibility_settings_provider.dart';
 import 'package:aonw/shared/providers/ai_settings_provider.dart';
 import 'package:aonw/shared/providers/audio_settings_provider.dart';
@@ -63,6 +65,7 @@ class OptionsScreen extends ConsumerWidget {
                     SizedBox(height: 12),
                     _LanguageSection(),
                     SizedBox(height: 12),
+                    GraphicsSettingsSection(),
                     _AudioSection(),
                     SizedBox(height: 12),
                     _AiSection(),
@@ -77,51 +80,6 @@ class OptionsScreen extends ConsumerWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SettingsSection extends StatelessWidget {
-  const _SettingsSection({
-    required this.icon,
-    required this.title,
-    required this.child,
-  });
-
-  final IconData icon;
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: GameUiTheme.bg.withAlpha(232),
-      shape: RoundedRectangleBorder(
-        borderRadius: GameUiTheme.borderRadius,
-        side: BorderSide(color: GameUiTheme.gold.withAlpha(86)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 11, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 17, color: GameUiTheme.gold),
-                const SizedBox(width: 8),
-                Text(
-                  GameText.sectionLabel(title),
-                  style: GameUiTheme.sectionHeader.copyWith(
-                    color: GameUiTheme.goldLight,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            child,
-          ],
         ),
       ),
     );
@@ -174,7 +132,7 @@ class _MultiplayerProfileSectionState
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final signedIn = _signedIn || ref.watch(networkSessionProvider) != null;
-    return _SettingsSection(
+    return SettingsSection(
       icon: Icons.badge_outlined,
       title: l10n.multiplayerProfileTitle,
       child: Column(
@@ -338,7 +296,7 @@ class _TextScaleSection extends ConsumerWidget {
     final settings = ref.watch(accessibilitySettingsProvider);
     final controller = ref.read(accessibilitySettingsProvider.notifier);
 
-    return _SettingsSection(
+    return SettingsSection(
       icon: Icons.visibility_outlined,
       title: l10n.mainMenuTextSize,
       child: Column(
@@ -477,7 +435,7 @@ class _LanguageSection extends ConsumerWidget {
         settings.selectedLanguage ??
         GameLanguage.fromLocale(Localizations.localeOf(context)) ??
         GameLanguage.english;
-    return _SettingsSection(
+    return SettingsSection(
       icon: Icons.language_outlined,
       title: l10n.languageSectionTitle,
       child: Tooltip(
@@ -610,12 +568,12 @@ class _AudioSection extends ConsumerWidget {
     final l10n = context.l10n;
     final settings = ref.watch(gameAudioSettingsProvider);
     final controller = ref.read(gameAudioSettingsProvider.notifier);
-    return _SettingsSection(
+    return SettingsSection(
       icon: Icons.volume_up_outlined,
       title: l10n.audioSectionTitle,
       child: Column(
         children: [
-          _SettingsToggleRow(
+          SettingsToggleRow(
             icon: Icons.graphic_eq_rounded,
             label: l10n.gameSoundsLabel,
             value: settings.soundsEnabled,
@@ -629,7 +587,7 @@ class _AudioSection extends ConsumerWidget {
               onChanged: controller.setSoundVolume,
             ),
           const SizedBox(height: 8),
-          _SettingsToggleRow(
+          SettingsToggleRow(
             icon: Icons.music_note_outlined,
             label: l10n.gameMusicLabel,
             value: settings.musicEnabled,
@@ -643,7 +601,7 @@ class _AudioSection extends ConsumerWidget {
               onChanged: controller.setMusicVolume,
             ),
           const SizedBox(height: 8),
-          _SettingsToggleRow(
+          SettingsToggleRow(
             icon: Icons.forest_outlined,
             label: l10n.natureSoundsLabel,
             value: settings.natureEnabled,
@@ -670,10 +628,10 @@ class _AiSection extends ConsumerWidget {
     final l10n = context.l10n;
     final settings = ref.watch(aiSettingsProvider);
     final controller = ref.read(aiSettingsProvider.notifier);
-    return _SettingsSection(
+    return SettingsSection(
       icon: Icons.memory_outlined,
       title: l10n.aiSectionTitle,
-      child: _SettingsToggleRow(
+      child: SettingsToggleRow(
         key: const Key('options.aiBatterySaver'),
         icon: Icons.battery_saver_outlined,
         label: l10n.aiBatterySaverLabel,
@@ -692,13 +650,13 @@ class _GameplaySection extends ConsumerWidget {
     final l10n = context.l10n;
     final settings = ref.watch(gameplaySettingsProvider);
     final controller = ref.read(gameplaySettingsProvider.notifier);
-    return _SettingsSection(
+    return SettingsSection(
       icon: Icons.videocam_outlined,
       title: l10n.gameplaySectionTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _SettingsToggleRow(
+          SettingsToggleRow(
             key: const Key('options.followUnitMovementCamera'),
             icon: Icons.center_focus_strong_outlined,
             label: l10n.followUnitMovementCameraLabel,
@@ -708,7 +666,7 @@ class _GameplaySection extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
-          _SettingsToggleRow(
+          SettingsToggleRow(
             key: const Key('options.followEnemyUnitCamera'),
             icon: Icons.crisis_alert_outlined,
             label: l10n.followEnemyUnitCameraLabel,
@@ -718,7 +676,7 @@ class _GameplaySection extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
-          _SettingsToggleRow(
+          SettingsToggleRow(
             key: const Key('options.cinematicCamera'),
             icon: Icons.movie_filter_outlined,
             label: l10n.cinematicCameraLabel,
@@ -741,13 +699,13 @@ class _GamepadSection extends ConsumerWidget {
     final l10n = context.l10n;
     final settings = ref.watch(gameplaySettingsProvider);
     final controller = ref.read(gameplaySettingsProvider.notifier);
-    return _SettingsSection(
+    return SettingsSection(
       icon: Icons.sports_esports_outlined,
       title: l10n.manualGamepadTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _SettingsToggleRow(
+          SettingsToggleRow(
             key: const Key('options.gamepadEnabled'),
             icon: Icons.sports_esports_outlined,
             label: l10n.gamepadEnabledLabel,
@@ -776,7 +734,7 @@ class _GamepadSection extends ConsumerWidget {
                 controller.setGamepadCameraSensitivity,
               ),
             ),
-            _SettingsToggleRow(
+            SettingsToggleRow(
               key: const Key('options.gamepadInvertCameraY'),
               icon: Icons.swap_vert,
               label: l10n.gamepadInvertCameraYLabel,
@@ -991,13 +949,13 @@ class _PerformanceSection extends ConsumerWidget {
     final l10n = context.l10n;
     final settings = ref.watch(performanceSettingsProvider);
     final controller = ref.read(performanceSettingsProvider.notifier);
-    return _SettingsSection(
+    return SettingsSection(
       icon: Icons.speed_outlined,
       title: l10n.performanceSectionTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _SettingsToggleRow(
+          SettingsToggleRow(
             key: const Key('options.showFps'),
             icon: Icons.monitor_heart_outlined,
             label: l10n.showFpsLabel,
@@ -1005,7 +963,7 @@ class _PerformanceSection extends ConsumerWidget {
             onChanged: ref.withMenuClickValue(controller.setShowFps),
           ),
           const SizedBox(height: 8),
-          _SettingsToggleRow(
+          SettingsToggleRow(
             key: const Key('options.showMapZoom'),
             icon: Icons.zoom_in_map_outlined,
             label: l10n.showMapZoomLabel,
@@ -1013,43 +971,6 @@ class _PerformanceSection extends ConsumerWidget {
             onChanged: ref.withMenuClickValue(controller.setShowMapZoom),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SettingsToggleRow extends StatelessWidget {
-  const _SettingsToggleRow({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile.adaptive(
-      value: value,
-      onChanged: onChanged,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 2),
-      secondary: Icon(icon, color: GameUiTheme.gold, size: 20),
-      activeThumbColor: GameUiTheme.goldLight,
-      activeTrackColor: GameUiTheme.gold.withAlpha(90),
-      inactiveThumbColor: GameUiTheme.textSecondary,
-      inactiveTrackColor: GameUiTheme.surface.withAlpha(210),
-      title: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: GameUiTheme.bodyStrong.copyWith(
-          color: value ? GameUiTheme.goldLight : GameUiTheme.textPrimary,
-        ),
       ),
     );
   }

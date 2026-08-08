@@ -463,7 +463,7 @@ abstract class AppLocalizations {
   /// No description provided for @mainMenuSettingsSublabel.
   ///
   /// In en, this message translates to:
-  /// **'Text and audio'**
+  /// **'Graphics, text and audio'**
   String get mainMenuSettingsSublabel;
 
   /// No description provided for @mainMenuExit.
@@ -3397,7 +3397,7 @@ abstract class AppLocalizations {
   /// No description provided for @optionsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Text, language, audio, and performance'**
+  /// **'Graphics, text, language, audio, and performance'**
   String get optionsSubtitle;
 
   /// No description provided for @languageSectionTitle.
@@ -3483,6 +3483,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Language: {label}'**
   String languageTooltip(String label);
+
+  /// No description provided for @graphicsSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Graphics'**
+  String get graphicsSectionTitle;
+
+  /// No description provided for @windowedModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Windowed mode'**
+  String get windowedModeLabel;
 
   /// No description provided for @audioSectionTitle.
   ///

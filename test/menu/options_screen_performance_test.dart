@@ -7,10 +7,12 @@ import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/menu/options_screen.dart';
 import 'package:aonw/shared/performance/fps_counter_overlay.dart';
 import 'package:aonw/shared/providers/ai_settings_provider.dart';
+import 'package:aonw/shared/providers/display_settings_provider.dart';
 import 'package:aonw/shared/providers/gameplay_settings_provider.dart';
 import 'package:aonw/shared/providers/language_settings_provider.dart';
 import 'package:aonw/shared/providers/performance_settings_provider.dart';
 import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
+import 'package:aonw/shared/window/game_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -36,6 +38,58 @@ void main() {
     final container = ProviderScope.containerOf(context, listen: false);
 
     expect(container.read(performanceSettingsProvider).showFps, isTrue);
+  });
+
+  testWidgets('graphics section precedes audio and toggles windowed mode', (
+    tester,
+  ) async {
+    final window = _RecordingGameWindow();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [gameWindowProvider.overrideWithValue(window)],
+        child: const _LocalizedHarness(child: OptionsScreen()),
+      ),
+    );
+    await tester.pump();
+
+    await tester.ensureVisible(find.text('Windowed mode'));
+    await tester.pumpAndSettle();
+
+    final graphicsSection = find.text('GRAPHICS');
+    final audioSection = find.text('AUDIO');
+    expect(graphicsSection, findsOneWidget);
+    expect(audioSection, findsOneWidget);
+    expect(
+      tester.getTopLeft(graphicsSection).dy,
+      lessThan(tester.getTopLeft(audioSection).dy),
+    );
+
+    await tester.tap(find.text('Windowed mode'));
+    await tester.pumpAndSettle();
+
+    final context = tester.element(find.byType(OptionsScreen));
+    final container = ProviderScope.containerOf(context, listen: false);
+    expect(container.read(displaySettingsProvider).windowed, isTrue);
+    expect(window.appliedWindowModes, [true]);
+  });
+
+  testWidgets('graphics section is hidden on unsupported platforms', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          gameWindowProvider.overrideWithValue(
+            _RecordingGameWindow(supportsWindowModes: false),
+          ),
+        ],
+        child: const _LocalizedHarness(child: OptionsScreen()),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('GRAPHICS'), findsNothing);
+    expect(find.text('Windowed mode'), findsNothing);
   });
 
   testWidgets('options screen toggles the map zoom debug setting', (
@@ -381,6 +435,23 @@ class _FakeLogoutNetworkSessionClient extends NetworkSessionClient {
   }) async {
     signedOutToken = token;
     signedOutRefreshToken = refreshToken;
+  }
+}
+
+final class _RecordingGameWindow implements GameWindow {
+  _RecordingGameWindow({this.supportsWindowModes = true});
+
+  @override
+  final bool supportsWindowModes;
+
+  final List<bool> appliedWindowModes = [];
+
+  @override
+  Future<void> initialize({required bool windowed}) async {}
+
+  @override
+  Future<void> setWindowed(bool windowed) async {
+    appliedWindowModes.add(windowed);
   }
 }
 

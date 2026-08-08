@@ -107,7 +107,7 @@
   "mainMenuLoadGame": "Cargar partida",
   "mainMenuDeveloper": "Herramientas",
   "mainMenuSettings": "Ajustes",
-  "mainMenuSettingsSublabel": "Texto y audio",
+  "mainMenuSettingsSublabel": "Gráficos, texto y audio",
   "mainMenuExit": "Salir",
   "mainMenuAiSublabel": "IA",
   "mainMenuOnlineSublabel": "Red",
@@ -964,7 +964,7 @@
     }
   },
   "optionsTitle": "Opciones",
-  "optionsSubtitle": "Texto, idioma, audio y rendimiento",
+  "optionsSubtitle": "Gráficos, texto, idioma, audio y rendimiento",
   "languageSectionTitle": "Idioma",
   "languagePolish": "Polaco",
   "languageEnglish": "Inglés",
@@ -1007,6 +1007,8 @@
       }
     }
   },
+  "graphicsSectionTitle": "Gráficos",
+  "windowedModeLabel": "Modo ventana",
   "audioSectionTitle": "Audio",
   "gameSoundsLabel": "Sonidos del juego",
   "soundVolumeLabel": "Volumen de sonido",

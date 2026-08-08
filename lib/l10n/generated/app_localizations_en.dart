@@ -210,7 +210,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mainMenuSettings => 'Settings';
 
   @override
-  String get mainMenuSettingsSublabel => 'Text and audio';
+  String get mainMenuSettingsSublabel => 'Graphics, text and audio';
 
   @override
   String get mainMenuExit => 'Exit';
@@ -1896,7 +1896,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get optionsTitle => 'Options';
 
   @override
-  String get optionsSubtitle => 'Text, language, audio, and performance';
+  String get optionsSubtitle =>
+      'Graphics, text, language, audio, and performance';
 
   @override
   String get languageSectionTitle => 'Language';
@@ -1947,6 +1948,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String languageTooltip(String label) {
     return 'Language: $label';
   }
+
+  @override
+  String get graphicsSectionTitle => 'Graphics';
+
+  @override
+  String get windowedModeLabel => 'Windowed mode';
 
   @override
   String get audioSectionTitle => 'Audio';

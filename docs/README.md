@@ -115,6 +115,7 @@ in progress. Do not edit history to change a decision; add a superseding ADR.
 | [Combat Preview](game-design/combat-preview.md) | Attack forecast behavior and presentation. |
 | [Event Notifications and Popups](game-design/event-notifications-and-popups.md) | Notification behavior, popup layering, and activity feedback. |
 | [Gamepad Controls](game-design/gamepad-controls.md) | Controller input mapping and in-game manual contract. |
+| [Desktop Display Mode](game-design/desktop-display-mode.md) | Desktop full-screen startup, windowed preference, and resize contract. |
 | [Map Display Preferences](game-design/map-display-preferences.md) | Player display toggles and map visualization options. |
 | [Map Validation](game-design/map-validation.md) | Bundled map validation rules and failure handling. |
 | [Mobile QoL Automation](game-design/mobile-qol-automation.md) | Mobile-first turn flow and automation quality-of-life behavior. |

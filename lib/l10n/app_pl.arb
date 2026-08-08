@@ -107,7 +107,7 @@
   "mainMenuLoadGame": "Wczytaj grę",
   "mainMenuDeveloper": "Narzędzia",
   "mainMenuSettings": "Ustawienia",
-  "mainMenuSettingsSublabel": "Tekst i audio",
+  "mainMenuSettingsSublabel": "Grafika, tekst i audio",
   "mainMenuExit": "Wyjdź",
   "mainMenuAiSublabel": "AI",
   "mainMenuOnlineSublabel": "Sieć",
@@ -964,7 +964,7 @@
     }
   },
   "optionsTitle": "Opcje",
-  "optionsSubtitle": "Tekst, język, audio i wydajność",
+  "optionsSubtitle": "Grafika, tekst, język, audio i wydajność",
   "languageSectionTitle": "Język",
   "languagePolish": "Polski",
   "languageEnglish": "Angielski",
@@ -1007,6 +1007,8 @@
       }
     }
   },
+  "graphicsSectionTitle": "Grafika",
+  "windowedModeLabel": "Tryb okienkowy",
   "audioSectionTitle": "Audio",
   "gameSoundsLabel": "Dźwięki gry",
   "soundVolumeLabel": "Głośność dźwięków",
