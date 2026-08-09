@@ -67,22 +67,22 @@
       "layers": {
         "api": {
           "files": {
-            "hit": 22,
+            "hit": 21,
             "found": 23
           },
           "lines": {
-            "hit": 943,
-            "found": 1172
+            "hit": 1052,
+            "found": 1260
           }
         },
         "app": {
           "files": {
-            "hit": 3,
-            "found": 4
+            "hit": 4,
+            "found": 5
           },
           "lines": {
-            "hit": 81,
-            "found": 147
+            "hit": 88,
+            "found": 157
           }
         },
         "developer": {
@@ -117,22 +117,22 @@
         },
         "game_application": {
           "files": {
-            "hit": 63,
-            "found": 65
+            "hit": 75,
+            "found": 77
           },
           "lines": {
-            "hit": 2450,
-            "found": 2762
+            "hit": 2677,
+            "found": 3013
           }
         },
         "game_domain": {
           "files": {
-            "hit": 44,
-            "found": 44
+            "hit": 45,
+            "found": 45
           },
           "lines": {
-            "hit": 1896,
-            "found": 2093
+            "hit": 1891,
+            "found": 2092
           }
         },
         "game_infrastructure": {
@@ -141,48 +141,48 @@
             "found": 20
           },
           "lines": {
-            "hit": 533,
-            "found": 574
+            "hit": 539,
+            "found": 580
           }
         },
         "game_presentation_engine": {
           "files": {
-            "hit": 97,
-            "found": 99
+            "hit": 105,
+            "found": 106
           },
           "lines": {
-            "hit": 7586,
-            "found": 9691
+            "hit": 8195,
+            "found": 10274
           }
         },
         "game_presentation_screens": {
           "files": {
-            "hit": 54,
-            "found": 58
+            "hit": 68,
+            "found": 70
           },
           "lines": {
-            "hit": 3554,
-            "found": 4602
+            "hit": 3874,
+            "found": 4870
           }
         },
         "game_presentation_support": {
           "files": {
-            "hit": 89,
-            "found": 92
+            "hit": 95,
+            "found": 98
           },
           "lines": {
-            "hit": 4227,
-            "found": 5057
+            "hit": 4598,
+            "found": 5437
           }
         },
         "game_presentation_widgets": {
           "files": {
-            "hit": 306,
-            "found": 311
+            "hit": 308,
+            "found": 313
           },
           "lines": {
-            "hit": 19727,
-            "found": 22233
+            "hit": 19798,
+            "found": 22313
           }
         },
         "l10n": {
@@ -197,32 +197,32 @@
         },
         "map": {
           "files": {
-            "hit": 31,
-            "found": 31
+            "hit": 32,
+            "found": 32
           },
           "lines": {
-            "hit": 1983,
-            "found": 2344
+            "hit": 2002,
+            "found": 2367
           }
         },
         "menu": {
           "files": {
-            "hit": 10,
-            "found": 11
+            "hit": 13,
+            "found": 14
           },
           "lines": {
-            "hit": 1600,
-            "found": 1726
+            "hit": 1627,
+            "found": 1751
           }
         },
         "shared": {
           "files": {
-            "hit": 42,
-            "found": 42
+            "hit": 45,
+            "found": 46
           },
           "lines": {
-            "hit": 1490,
-            "found": 1784
+            "hit": 1536,
+            "found": 1844
           }
         }
       },
@@ -233,7 +233,8 @@
         "lib/game/presentation/audio/game_sound_cue.dart",
         "lib/game/presentation/engine/rendering_layers/assets/animation_frame_adjustment_external_loader_stub.dart",
         "lib/game/presentation/services/isolated_ai_plan_executor_compute.dart",
-        "lib/menu/app_exit_stub.dart"
+        "lib/menu/app_exit_stub.dart",
+        "lib/shared/window/platform_game_window_stub.dart"
       ]
     },
     "server": {
