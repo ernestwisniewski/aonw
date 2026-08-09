@@ -244,7 +244,7 @@ class _MultiplayerQueuePanel extends StatelessWidget {
                 style: GameUiTheme.bodySmall,
               )
             else
-              _QueueCountdownClock(
+              QueueCountdownClock(
                 key: const Key('multiplayer.queueCountdown'),
                 label: subtitle,
                 secondsRemaining: secondsRemaining,

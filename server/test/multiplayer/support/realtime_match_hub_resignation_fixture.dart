@@ -2,9 +2,9 @@ part of '../realtime_match_hub_test.dart';
 
 Future<WireMatch> _startRunningFfaMatchInStore({
   required RealtimeMatchHub hub,
-  required _MemoryMatchStore store,
+  required TestMatchStore store,
   required String suffix,
-  required _FakeMapCatalog mapCatalog,
+  required TestMapCatalog mapCatalog,
 }) async {
   final openMatch = await hub.createMatch(
     store: store,
@@ -54,7 +54,7 @@ Future<WireMatch> _startRunningFfaMatchInStore({
 }
 
 Future<void> _eliminatePlayersInStoredMatch({
-  required _MemoryMatchStore store,
+  required TestMatchStore store,
   required String matchId,
   required Set<String> playerIds,
 }) async {
@@ -84,7 +84,7 @@ Future<_ResignationFixture> _createResignationFixture(
   String suffix, {
   DateTime? endedAt,
 }) async {
-  final mapCatalog = _FakeMapCatalog(_testMap());
+  final mapCatalog = TestMapCatalog(testMap());
   final effectiveEndedAt = endedAt ?? DateTime.utc(2026, 7, 21, 12);
   final hub = RealtimeMatchHub(
     commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
@@ -134,7 +134,7 @@ final class _ResignationFixture {
   );
 }
 
-final class _ResignationMatchStore extends _MemoryMatchStore {
+final class _ResignationMatchStore extends TestMatchStore {
   int saveStateCalls = 0;
 
   @override

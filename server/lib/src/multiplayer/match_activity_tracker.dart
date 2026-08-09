@@ -1,7 +1,7 @@
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 
-const defaultMultiplayerMatchInactivityTimeout = Duration(days: 7);
+const defaultMultiplayerMatchInactivityTimeout = Duration(hours: 12);
 
 final class MatchActivityTracker {
   const MatchActivityTracker();

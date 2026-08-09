@@ -69,30 +69,31 @@ abstract final class ReplayRendererEffectPlanner {
       return true;
     }
     for (final effect in effects) {
-      switch (effect) {
-        case ShowFloatingTextEffect(:final col, :final row) ||
-            SpawnParticleBurstEffect(:final col, :final row) ||
-            ShowCityProductionBubbleEffect(:final col, :final row) ||
-            ShowCombatHexAlertEffect(:final col, :final row) ||
-            JumpCameraEffect(:final col, :final row) ||
-            SmoothCameraEffect(:final col, :final row):
-          if (_canSeeEffectAt(
-            col,
-            row,
+      final position = _positionOf(effect);
+      if (position != null &&
+          _canSeeEffectAt(
+            position.col,
+            position.row,
             state: state,
             previousState: previousState,
             perspectivePlayerId: perspectivePlayerId,
           )) {
-            return true;
-          }
-        case AnimateUnitMoveEffect() ||
-            PlayCombatAnimationEffect() ||
-            ShakeCameraEffect() ||
-            ShowActionTargetFocusEffect():
-          break;
+        return true;
       }
     }
     return false;
+  }
+
+  static ({int col, int row})? _positionOf(RendererEffect effect) {
+    return switch (effect) {
+      ShowFloatingTextEffect(:final col, :final row) ||
+      SpawnParticleBurstEffect(:final col, :final row) ||
+      ShowCityProductionBubbleEffect(:final col, :final row) ||
+      ShowCombatHexAlertEffect(:final col, :final row) ||
+      JumpCameraEffect(:final col, :final row) ||
+      SmoothCameraEffect(:final col, :final row) => (col: col, row: row),
+      _ => null,
+    };
   }
 
   static bool hasPerspectiveVisibleMovement({

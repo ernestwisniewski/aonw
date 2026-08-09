@@ -11,7 +11,7 @@ final class _TurnMovementFixture {
   });
 
   final RealtimeMatchHub hub;
-  final _MemoryMatchStore store;
+  final TestMatchStore store;
   final WireMatch match;
   final WirePlayer owner;
   final WirePlayer unitBPlayer;

@@ -10,6 +10,7 @@ import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
 import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
 import 'package:aonw_server/src/multiplayer/match_mutation_outcome.dart';
 import 'package:aonw_server/src/multiplayer/match_state_access.dart';
+import 'package:aonw_server/src/multiplayer/match_turn_presence_policy.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:aonw_server/src/multiplayer/player_match_event_audience.dart';
 import 'package:aonw_server/src/multiplayer/player_match_movement_audience.dart';
@@ -31,17 +32,20 @@ final class MatchCommandService {
     required ServerCommandReducer commandReducer,
     required MatchStateAccess stateAccess,
     required MatchBroadcaster broadcaster,
+    required MatchTurnPresencePolicy turnPresencePolicy,
     required DateTime Function() nowUtc,
     Duration matchInactivityTimeout = defaultMultiplayerMatchInactivityTimeout,
   }) : _commandReducer = commandReducer,
        _stateAccess = stateAccess,
        _broadcaster = broadcaster,
+       _turnPresencePolicy = turnPresencePolicy,
        _nowUtc = nowUtc,
        _matchInactivityTimeout = matchInactivityTimeout;
 
   final ServerCommandReducer _commandReducer;
   final MatchStateAccess _stateAccess;
   final MatchBroadcaster _broadcaster;
+  final MatchTurnPresencePolicy _turnPresencePolicy;
   final DateTime Function() _nowUtc;
   final Duration _matchInactivityTimeout;
   RunningMatchCursor? _nextTimeoutSweepCursor;

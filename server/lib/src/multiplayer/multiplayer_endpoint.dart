@@ -12,6 +12,7 @@ import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
 import 'package:aonw_server/src/multiplayer/match_lifecycle_service.dart';
 import 'package:aonw_server/src/multiplayer/match_query_service.dart';
 import 'package:aonw_server/src/multiplayer/match_state_access.dart';
+import 'package:aonw_server/src/multiplayer/match_turn_presence_policy.dart';
 import 'package:aonw_server/src/multiplayer/matchmaking_service.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_input_validator.dart';
@@ -231,11 +232,12 @@ class RealtimeMatchHub {
        _presencePolicy = presencePolicy,
        _viewProjector = connectionRegistry?.viewProjector ?? viewProjector {
     _broadcaster = MatchBroadcaster(_connectionRegistry);
+    final turnPresencePolicy = MatchTurnPresencePolicy(_presencePolicy);
     _lifecycle = MatchLifecycleService(
       stateAccess: _stateAccess,
       broadcaster: _broadcaster,
       quickplayLobbyPolicy: quickplayLobbyPolicy,
-      presencePolicy: _presencePolicy,
+      presencePolicies: (_presencePolicy, turnPresencePolicy),
       presenceGenerationGenerator: presenceGenerationGenerator,
       nowUtc: _nowUtc,
     );
@@ -258,6 +260,7 @@ class RealtimeMatchHub {
       commandReducer: commandReducer ?? ServerCommandReducer(),
       stateAccess: _stateAccess,
       broadcaster: _broadcaster,
+      turnPresencePolicy: turnPresencePolicy,
       nowUtc: _nowUtc,
       matchInactivityTimeout: matchInactivityTimeout,
     );

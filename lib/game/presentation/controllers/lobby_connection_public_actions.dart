@@ -1,41 +1,44 @@
-part of 'lobby_connection_controller.dart';
+import 'package:aonw/game/presentation/controllers/lobby_connection_controller.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_public_match_refresh_coordinator.dart';
+import 'package:aonw_core/protocol.dart';
 
 final Expando<LobbyPublicMatchRefreshCoordinator>
 _lobbyPublicRefreshCoordinators = Expando();
 
 extension LobbyConnectionPublicActions on LobbyConnectionController {
-  List<WireMatch> get publicMatches => _publicMatches;
+  List<WireMatch> get publicMatches => internalPublicMatches;
 
-  bool get publicMatchesLoaded => _publicMatchesLoaded;
+  bool get publicMatchesLoaded => internalPublicMatchesLoaded;
 
   Future<void> openPublicLobby() async {
-    if (_busy) return;
+    if (busy) return;
     stopLobbyUpdates();
-    _setState(
+    setStateInternal(
       error: null,
       activeMatch: null,
       mode: LobbyMultiplayerMode.publicBrowse,
     );
-    _setPublicMatches(const [], loaded: false);
+    setPublicMatchesInternal(const [], loaded: false);
     await refreshPublicMatches();
-    if (_canContinue() && _mode == LobbyMultiplayerMode.publicBrowse) {
+    if (canContinueInternal() && mode == LobbyMultiplayerMode.publicBrowse) {
       _publicRefreshCoordinator.start();
     }
   }
 
   Future<void> refreshPublicMatches() async {
-    if (_busy || _mode != LobbyMultiplayerMode.publicBrowse) return;
-    await _runNetworkAction(() async {
-      final generation = ++_publicRefreshGeneration;
+    if (busy || mode != LobbyMultiplayerMode.publicBrowse) return;
+    await runNetworkActionInternal(() async {
+      final generation = ++internalPublicRefreshGeneration;
       try {
-        final matches = await _matchActionCoordinator().listPublicMatches();
+        final matches = await matchActionCoordinatorInternal()
+            .listPublicMatches();
         if (!_isCurrentPublicRefresh(generation)) {
           return;
         }
-        _setPublicMatches(matches, loaded: true);
+        setPublicMatchesInternal(matches, loaded: true);
       } catch (_) {
         if (_isCurrentPublicRefresh(generation)) {
-          _setPublicMatches(const [], loaded: true);
+          setPublicMatchesInternal(const [], loaded: true);
         }
         rethrow;
       }
@@ -43,115 +46,124 @@ extension LobbyConnectionPublicActions on LobbyConnectionController {
   }
 
   Future<void> createPublicMatch({required String name}) async {
-    if (_busy) return;
+    if (busy) return;
     _publicRefreshCoordinator.stop();
-    _publicRefreshGeneration += 1;
+    internalPublicRefreshGeneration += 1;
     var enteredLobby = false;
-    await _runNetworkAction(() async {
-      await _matchActionCoordinator().createPublic(
+    await runNetworkActionInternal(() async {
+      await matchActionCoordinatorInternal().createPublic(
         name: name,
-        config: _matchActionConfig(),
+        config: matchActionConfigInternal(),
       );
-      if (!_canContinue() || _activeMatch == null) return;
-      _setMode(LobbyMultiplayerMode.publicMatch);
-      _setPublicMatches(const [], loaded: false);
+      if (!canContinueInternal() || activeMatch == null) return;
+      setModeInternal(LobbyMultiplayerMode.publicMatch);
+      setPublicMatchesInternal(const [], loaded: false);
       enteredLobby = true;
     });
-    if (_canContinue() &&
+    if (canContinueInternal() &&
         !enteredLobby &&
-        _mode == LobbyMultiplayerMode.publicBrowse) {
+        mode == LobbyMultiplayerMode.publicBrowse) {
       _publicRefreshCoordinator.start();
     }
   }
 
   Future<void> leaveLobby() async {
     var leftLobby = false;
-    await _runNetworkAction(() async {
-      await _matchActionCoordinator().leaveActiveLobby(
-        activeMatch: _activeMatch,
+    await runNetworkActionInternal(() async {
+      await matchActionCoordinatorInternal().leaveActiveLobby(
+        activeMatch: activeMatch,
       );
       leftLobby = true;
     });
-    if (!leftLobby || !_canContinue()) return;
-    _setState(error: null, activeMatch: null, mode: LobbyMultiplayerMode.home);
+    if (!leftLobby || !canContinueInternal()) return;
+    setStateInternal(
+      error: null,
+      activeMatch: null,
+      mode: LobbyMultiplayerMode.home,
+    );
   }
 
   Future<void> back() async {
-    if (_activeMatch == null) returnHome();
-    if (_activeMatch != null) await leaveLobby();
+    if (activeMatch == null) returnHome();
+    if (activeMatch != null) await leaveLobby();
   }
 
   Future<void> joinPublicMatch({required String matchId}) async {
-    if (_busy) return;
+    if (busy) return;
     _publicRefreshCoordinator.stop();
-    _publicRefreshGeneration += 1;
+    internalPublicRefreshGeneration += 1;
     var enteredLobby = false;
-    await _runNetworkAction(() async {
-      await _matchActionCoordinator().joinPublic(
+    await runNetworkActionInternal(() async {
+      await matchActionCoordinatorInternal().joinPublic(
         matchId: matchId,
-        config: _matchActionConfig(),
+        config: matchActionConfigInternal(),
       );
-      if (!_canContinue() || _activeMatch == null) return;
-      _setMode(LobbyMultiplayerMode.publicMatch);
-      _setPublicMatches(const [], loaded: false);
+      if (!canContinueInternal() || activeMatch == null) return;
+      setModeInternal(LobbyMultiplayerMode.publicMatch);
+      setPublicMatchesInternal(const [], loaded: false);
       enteredLobby = true;
     });
-    if (_canContinue() &&
+    if (canContinueInternal() &&
         !enteredLobby &&
-        _mode == LobbyMultiplayerMode.publicBrowse) {
+        mode == LobbyMultiplayerMode.publicBrowse) {
       _publicRefreshCoordinator.start();
     }
   }
 
-  void _setPublicMatches(List<WireMatch> matches, {required bool loaded}) {
-    if (identical(matches, _publicMatches) && loaded == _publicMatchesLoaded) {
+  void setPublicMatchesInternal(
+    List<WireMatch> matches, {
+    required bool loaded,
+  }) {
+    if (identical(matches, internalPublicMatches) &&
+        loaded == internalPublicMatchesLoaded) {
       return;
     }
-    _publicMatches = List.unmodifiable(matches);
-    _publicMatchesLoaded = loaded;
-    _notifyStateChanged();
+    internalPublicMatches = List.unmodifiable(matches);
+    internalPublicMatchesLoaded = loaded;
+    notifyStateChangedInternal();
   }
 
   LobbyPublicMatchRefreshCoordinator get _publicRefreshCoordinator {
     return _lobbyPublicRefreshCoordinators[this] ??=
         LobbyPublicMatchRefreshCoordinator(
           canRefresh: () =>
-              _canContinue() &&
-              !_busy &&
-              _mode == LobbyMultiplayerMode.publicBrowse,
+              canContinueInternal() &&
+              !busy &&
+              mode == LobbyMultiplayerMode.publicBrowse,
           refresh: _refreshPublicMatchesInBackground,
         );
   }
 
   Future<void> _refreshPublicMatchesInBackground() async {
-    final generation = ++_publicRefreshGeneration;
+    final generation = ++internalPublicRefreshGeneration;
     try {
-      final matches = await _matchActionCoordinator().listPublicMatches();
+      final matches = await matchActionCoordinatorInternal()
+          .listPublicMatches();
       if (!_isCurrentPublicRefresh(generation)) return;
-      _setPublicMatches(matches, loaded: true);
+      setPublicMatchesInternal(matches, loaded: true);
     } catch (_) {
       if (_isCurrentPublicRefresh(generation)) {
-        _setPublicMatches(const [], loaded: true);
+        setPublicMatchesInternal(const [], loaded: true);
       }
     }
   }
 
-  Future<void> _restorePublicBrowseAfterUnavailable() async {
+  Future<void> restorePublicBrowseAfterUnavailableInternal() async {
     await _refreshPublicMatchesInBackground();
-    if (_canContinue() && _mode == LobbyMultiplayerMode.publicBrowse) {
+    if (canContinueInternal() && mode == LobbyMultiplayerMode.publicBrowse) {
       _publicRefreshCoordinator.start();
     }
   }
 
   bool _isCurrentPublicRefresh(int generation) {
-    return _canContinue() &&
-        _mode == LobbyMultiplayerMode.publicBrowse &&
-        generation == _publicRefreshGeneration;
+    return canContinueInternal() &&
+        mode == LobbyMultiplayerMode.publicBrowse &&
+        generation == internalPublicRefreshGeneration;
   }
 }
 
-void _stopLobbyUpdateCoordinators(LobbyConnectionController controller) {
-  controller._autoStartCoordinator.cancel();
+void stopLobbyUpdateCoordinatorsInternal(LobbyConnectionController controller) {
+  controller.internalAutoStartCoordinator.cancel();
   _lobbyPublicRefreshCoordinators[controller]?.stop();
-  controller._publicRefreshGeneration += 1;
+  controller.internalPublicRefreshGeneration += 1;
 }

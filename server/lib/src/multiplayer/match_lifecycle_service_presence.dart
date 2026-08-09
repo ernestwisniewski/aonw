@@ -27,51 +27,16 @@ extension MatchLifecycleServicePresence on MatchLifecycleService {
         matchId,
         lock: true,
       );
-      final playerIndex = _participantIndex(state, userIdentifier);
-      final lifecycle = _matchLifecycleStateAdapter.lifecycleOf(state);
-      if (!lifecycle.acceptsConnectionMutation) {
-        return MatchMutationOutcome(state);
-      }
-
-      final now = _nowUtc();
-      final lease = _presencePolicy.connectedLease(
-        userIdentifier: userIdentifier,
+      final participant = _stateAccess.requireParticipant(
+        state,
+        userIdentifier,
+      );
+      return _connections.connect(
+        store: txStore,
+        state: state,
+        playerIndex: state.match.players.indexOf(participant),
         connectionGeneration: connectionGeneration,
-        nowUtc: now,
-      );
-      final players = [...state.match.players];
-      final player = players[playerIndex];
-      final visiblyChanged =
-          player.connectionState != WirePlayerConnectionState.connected;
-      players[playerIndex] = player.copyWith(
-        connectionState: WirePlayerConnectionState.connected,
-      );
-      var updated = state.copyWith(
-        match: state.match.copyWith(players: players),
-        presenceLeases: {...state.presenceLeases, userIdentifier: lease},
-      );
-      if (lifecycle.isRunning && visiblyChanged) {
-        updated = _matchActivityTracker.record(updated, now);
-      }
-      if (visiblyChanged) await txStore.saveState(updated);
-      await txStore.upsertPresenceLease(matchId: matchId, lease: lease);
-
-      if (_isOpenQuickplayState(updated)) {
-        final advanced = await advanceQuickplayLobby(
-          store: txStore,
-          state: updated,
-          broadcastUnchanged: visiblyChanged,
-        );
-        return MatchMutationOutcome(
-          advanced.value,
-          notifications: advanced.notifications,
-        );
-      }
-      return MatchMutationOutcome(
-        updated,
-        notifications: visiblyChanged
-            ? MatchNotificationPlan.broadcastState(updated)
-            : const MatchNotificationPlan.empty(),
+        advanceQuickplay: advanceQuickplayLobby,
       );
     });
     outcome.notifications.deliver(_broadcaster);

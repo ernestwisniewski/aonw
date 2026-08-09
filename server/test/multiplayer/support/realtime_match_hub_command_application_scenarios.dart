@@ -115,48 +115,12 @@ void _registerRealtimeMatchHubCommandApplicationScenarios() {
     await guestInput.close();
   });
   test('broadcasts accepted commands with one authoritative offset', () async {
-    final mapCatalog = _FakeMapCatalog(_testMap());
-    final hub = RealtimeMatchHub(
-      commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
-    );
-    final store = _MemoryMatchStore();
-    final openMatch = await hub.createMatch(
-      store: store,
-      userIdentifier: 'owner-user',
-      request: CreateMatchRequest(
-        name: 'Test match',
-        mapName: 'verdantia',
-        maxPlayers: 2,
-        minPlayers: 2,
-        private: false,
-      ),
-    );
-    await _connectTestParticipant(
-      hub: hub,
-      store: store,
-      userIdentifier: 'owner-user',
-      matchId: openMatch.id,
-    );
-    final joined = await hub.joinMatch(
-      store: store,
-      userIdentifier: 'guest-user',
-      matchId: openMatch.id,
-    );
-    await _connectTestParticipant(
-      hub: hub,
-      store: store,
-      userIdentifier: 'guest-user',
-      matchId: joined.id,
-    );
-    final match = await hub.startMatch(
-      store: store,
-      userIdentifier: 'owner-user',
-      matchId: joined.id,
-      snapshotFactory: InitialMultiplayerSnapshotFactory(
-        mapCatalog: mapCatalog,
-      ),
-    );
+    final fixture = await _startRunningMatch('accepted-command');
+    final hub = fixture.hub;
+    final store = fixture.store;
+    final match = fixture.match;
     final owner = match.players.first;
+    final guestUserIdentifier = fixture.guestUserIdentifier;
 
     final ownerInput = StreamController<MultiplayerClientMessage>();
     final guestInput = StreamController<MultiplayerClientMessage>();
@@ -172,7 +136,7 @@ void _registerRealtimeMatchHubCommandApplicationScenarios() {
     final guestStream = hub
         .connect(
           store: store,
-          userIdentifier: 'guest-user',
+          userIdentifier: guestUserIdentifier,
           matchId: match.id,
           afterOffset: 0,
           input: guestInput.stream,
@@ -231,7 +195,7 @@ void _registerRealtimeMatchHubCommandApplicationScenarios() {
     final reconnectStream = hub
         .connect(
           store: store,
-          userIdentifier: 'guest-user',
+          userIdentifier: guestUserIdentifier,
           matchId: match.id,
           afterOffset: 0,
           input: reconnectInput.stream,
@@ -252,12 +216,12 @@ void _registerRealtimeMatchHubCommandApplicationScenarios() {
     await reconnectInput.close();
   });
   test('emits no command messages when transaction commit fails', () async {
-    final mapCatalog = _FakeMapCatalog(_testMap());
+    final mapCatalog = TestMapCatalog(testMap());
     final hub = RealtimeMatchHub(
       commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
     );
     final store = _CommitFailingMatchStore();
-    final match = await _startRunningMatchInStore(
+    final match = await startRunningTestMatch(
       hub: hub,
       store: store,
       suffix: 'command-commit-failure',

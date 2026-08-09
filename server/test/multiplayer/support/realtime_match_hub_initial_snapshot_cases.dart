@@ -3,13 +3,13 @@ part of '../realtime_match_hub_test.dart';
 void _registerRealtimeMatchHubInitialSnapshotTests() {
   _registerRealtimeMatchHubLifecycleRaceTests();
   test('startMatch persists a full initial game snapshot', () async {
-    final mapCatalog = _FakeMapCatalog(_testMap());
+    final mapCatalog = TestMapCatalog(testMap());
     final startedAt = DateTime.utc(2026, 7, 28, 13, 14, 15);
     final hub = RealtimeMatchHub(
       nowUtc: () => startedAt,
       commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
     );
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
     final match = await hub.createMatch(
       store: store,
       userIdentifier: 'owner-user',

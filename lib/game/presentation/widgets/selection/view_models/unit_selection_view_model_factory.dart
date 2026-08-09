@@ -35,10 +35,7 @@ abstract final class UnitSelectionViewModelFactory {
     if (unit == null) return const SelectionViewModel.empty();
 
     final tile = selection.tile;
-    final maxMovementPoints = UnitMovementBalance.maxMovementPointsFor(
-      type: unit.type,
-      carriedArtifactId: unit.carriedArtifactId,
-    );
+    final maxMovementPoints = _maxMovementPoints(unit);
     final combatStats = UnitCombatStats.derive(unit);
     final currentHp = UnitCombatHealth.currentHp(
       unit,
@@ -129,6 +126,12 @@ abstract final class UnitSelectionViewModelFactory {
       ],
     );
   }
+
+  static int _maxMovementPoints(GameUnit unit) =>
+      UnitMovementBalance.maxMovementPointsFor(
+        type: unit.type,
+        carriedArtifactId: unit.carriedArtifactId,
+      );
 
   static WorkerActionPanelViewModel? _workerActionFor(
     GameUnit unit, {

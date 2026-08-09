@@ -1,9 +1,24 @@
-part of '../realtime_match_hub_test.dart';
+import 'dart:async';
 
-void _registerRealtimeMatchHubQuickplayScenarios() {
+import 'package:aonw_core/domain.dart';
+import 'package:aonw_core/protocol.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_endpoint.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store_limits.dart';
+import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
+import 'package:test/test.dart';
+
+import '../realtime_match_hub_test.dart';
+
+const _connectTestParticipant = connectTestParticipantForTest;
+const _multiplayerError = multiplayerErrorForTest;
+typedef _TestMatchConnection = TestMatchConnectionView;
+
+void registerRealtimeMatchHubQuickplayScenarios() {
   test('quickplay preserves requested civilizations', () async {
     final hub = RealtimeMatchHub();
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
 
     final waiting = await hub.quickplay(
       store: store,
@@ -69,7 +84,7 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
 
   test('quickplay uses one global queue regardless of requested map', () async {
     final hub = RealtimeMatchHub();
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
 
     final verdantia = await hub.quickplay(
       store: store,
@@ -114,13 +129,13 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
   });
 
   test('quickplay starts a 30 second countdown at two players', () async {
-    final mapCatalog = _FakeMapCatalog(_testMap());
+    final mapCatalog = TestMapCatalog(testMap());
     var now = DateTime.utc(2026, 6, 12, 9);
     final hub = RealtimeMatchHub(
       nowUtc: () => now,
       commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
     );
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
 
     final waiting = await hub.quickplay(
       store: store,
@@ -217,7 +232,7 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
   test('quickplay updates a returning player civilization selection', () async {
     final now = DateTime.utc(2026, 6, 12, 9);
     final hub = RealtimeMatchHub(nowUtc: () => now);
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
 
     final first = await hub.quickplay(
       store: store,
@@ -269,7 +284,7 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
   test('quickplay skips stale one-player simulator lobbies', () async {
     var now = DateTime.utc(2026, 6, 12, 9);
     final hub = RealtimeMatchHub(nowUtc: () => now);
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
 
     final stale = await hub.quickplay(
       store: store,
@@ -306,12 +321,12 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
   });
 
   test('quickplay starts immediately when the fourth player joins', () async {
-    final mapCatalog = _FakeMapCatalog(_testMap());
+    final mapCatalog = TestMapCatalog(testMap());
     final hub = RealtimeMatchHub(
       nowUtc: () => DateTime.utc(2026, 6, 12, 9),
       commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
     );
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
 
     Future<WireMatch> quickplay(String user, PlayerCountry country) async {
       final reservation = await hub.quickplay(
@@ -356,7 +371,7 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
   test('quickplay does not scan past the bounded candidate window', () async {
     final now = DateTime.utc(2026, 7, 10, 12);
     final hub = RealtimeMatchHub(nowUtc: () => now);
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
 
     Future<WireMatch> createCandidate(int index, {required bool full}) async {
       final created = await hub.createMatch(
@@ -429,7 +444,7 @@ void _registerRealtimeMatchHubQuickplayScenarios() {
   test('quickplay caps stale candidate retirement per request', () async {
     var now = DateTime.utc(2026, 7, 1);
     final hub = RealtimeMatchHub(nowUtc: () => now);
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
     final staleIds = <String>[];
     const staleCount = multiplayerQuickplayCandidateRetirementLimit + 2;
     for (var index = 0; index < staleCount; index += 1) {

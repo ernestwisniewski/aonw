@@ -6,13 +6,13 @@ void _registerRealtimeMatchHubResignationScenarios() {
   test(
     'resignMatch keeps a running FFA alive until one player remains',
     () async {
-      final mapCatalog = _FakeMapCatalog(_testMap());
+      final mapCatalog = TestMapCatalog(testMap());
       final endedAt = DateTime.utc(2026, 7, 12, 15);
       final hub = RealtimeMatchHub(
         commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
         nowUtc: () => endedAt,
       );
-      final store = _MemoryMatchStore();
+      final store = TestMatchStore();
       final match = await hub.createMatch(
         store: store,
         userIdentifier: 'owner-user',
@@ -126,13 +126,13 @@ void _registerRealtimeMatchHubResignationScenarios() {
   test(
     'resignMatch ignores eliminated FFA seats when choosing the winner',
     () async {
-      final mapCatalog = _FakeMapCatalog(_testMap());
+      final mapCatalog = TestMapCatalog(testMap());
       final endedAt = DateTime.utc(2026, 7, 12, 15, 30);
       final hub = RealtimeMatchHub(
         commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
         nowUtc: () => endedAt,
       );
-      final store = _MemoryMatchStore();
+      final store = TestMatchStore();
       const suffix = 'alive-contenders';
       final started = await _startRunningFfaMatchInStore(
         hub: hub,
@@ -173,13 +173,13 @@ void _registerRealtimeMatchHubResignationScenarios() {
   test(
     'resignMatch abandons an FFA when no living contender remains',
     () async {
-      final mapCatalog = _FakeMapCatalog(_testMap());
+      final mapCatalog = TestMapCatalog(testMap());
       final endedAt = DateTime.utc(2026, 7, 12, 15, 45);
       final hub = RealtimeMatchHub(
         commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
         nowUtc: () => endedAt,
       );
-      final store = _MemoryMatchStore();
+      final store = TestMatchStore();
       const suffix = 'no-alive-contenders';
       final started = await _startRunningFfaMatchInStore(
         hub: hub,
@@ -222,7 +222,7 @@ void _registerRealtimeMatchHubResignationScenarios() {
   test('resigning an open lobby abandons it without a game outcome', () async {
     final endedAt = DateTime.utc(2026, 7, 12, 16);
     final hub = RealtimeMatchHub(nowUtc: () => endedAt);
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
     final open = await hub.createMatch(
       store: store,
       userIdentifier: 'owner-user',
@@ -249,7 +249,7 @@ void _registerRealtimeMatchHubResignationScenarios() {
 
   test('only the owner can abandon an open lobby by resigning', () async {
     final hub = RealtimeMatchHub();
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
     final open = await hub.createMatch(
       store: store,
       userIdentifier: 'owner-user',

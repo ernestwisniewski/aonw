@@ -1,14 +1,34 @@
-part of 'hud_action_deck.dart';
+import 'dart:math' as math;
+
+import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/widgets/hud/combat/hud_combat_preview.dart';
+import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw/shared/theme/border_emphasis.dart';
+import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw/shared/theme/surface_elevation.dart';
+import 'package:flutter/material.dart';
+
+part 'hud_action_deck_combat_hp_ring.dart';
 
 const _combatForecastHeaderAlpha = 220;
 const _combatForecastDividerAlpha = 190;
+final _combatForecastDecoration = SurfaceElevation.flat.decoration(
+  accent: GameUiTheme.gold,
+  background: GameUiTheme.surface,
+  backgroundAlpha: 182,
+  border: BorderEmphasis.subtle,
+  radius: 8,
+  includeShadow: false,
+);
 
-class _CombatOutcomeForecast extends StatelessWidget {
-  const _CombatOutcomeForecast({
+class CombatOutcomeForecast extends StatelessWidget {
+  const CombatOutcomeForecast({
     required this.preview,
     required this.compact,
     required this.attackerName,
     required this.defenderName,
+    super.key,
   });
 
   final HudCombatPreview preview;
@@ -39,14 +59,7 @@ class _CombatOutcomeForecast extends StatelessWidget {
     return Container(
       key: const Key('hudCombatConfirm.forecast'),
       padding: EdgeInsets.fromLTRB(10, compact ? 9 : 10, 10, 10),
-      decoration: SurfaceElevation.flat.decoration(
-        accent: GameUiTheme.gold,
-        background: GameUiTheme.surface,
-        backgroundAlpha: 182,
-        border: BorderEmphasis.subtle,
-        radius: 8,
-        includeShadow: false,
-      ),
+      decoration: _combatForecastDecoration,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -161,10 +174,13 @@ class _CombatForecastOutcomeBanner extends StatelessWidget {
         horizontal: compact ? 8 : 10,
         vertical: compact ? 7 : 8,
       ),
-      decoration: BoxDecoration(
-        color: accent.withAlpha(22),
-        border: Border.all(color: accent.withAlpha(175)),
-        borderRadius: BorderRadius.circular(6),
+      decoration: SurfaceElevation.flat.decoration(
+        background: accent,
+        backgroundAlpha: 22,
+        borderColor: accent,
+        borderAlpha: 175,
+        radius: 6,
+        includeShadow: false,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -23,6 +23,8 @@ abstract interface class ServerOperationalEventSink {
 
   void streamDisconnected({required String matchId});
 
+  void matchAbandoned({required String matchId, required String reasonCode});
+
   void projectionFailed({
     required String matchId,
     required MultiplayerProjectionSurface surface,
@@ -90,6 +92,16 @@ final class ServerpodOperationalEventSink
   }
 
   @override
+  void matchAbandoned({required String matchId, required String reasonCode}) {
+    _emit(
+      'event=multiplayer_match_abandoned '
+      'match_id=${_safeIdentifier(matchId)} '
+      'reason=${_safeReason(reasonCode)}',
+      level: LogLevel.info,
+    );
+  }
+
+  @override
   void projectionFailed({
     required String matchId,
     required MultiplayerProjectionSurface surface,
@@ -146,6 +158,9 @@ final class NoopServerOperationalEventSink
 
   @override
   void streamDisconnected({required String matchId}) {}
+
+  @override
+  void matchAbandoned({required String matchId, required String reasonCode}) {}
 
   @override
   void projectionFailed({

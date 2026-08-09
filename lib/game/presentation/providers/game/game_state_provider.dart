@@ -76,4 +76,6 @@ class GameStateNotifier extends _$GameStateNotifier {
     GameIntent intent, {
     GameCommandContext context = const GameCommandContext(),
   }) => _commands.dispatchIntentTransition(intent, context: context);
+
+  Future<void> closeLiveEvents() => _multiplayerSync.closeLiveEvents();
 }

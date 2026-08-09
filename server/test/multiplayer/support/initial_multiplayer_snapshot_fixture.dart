@@ -115,7 +115,7 @@ WireSnapshot _currentInitialSnapshotOracle({
   );
   final save = GameSave(
     id: match.id,
-    name: match.name,
+    name: MultiplayerSaveName.fromMatchName(match.name),
     mapName: match.mapName,
     mapSource: MapSource.asset,
     turn: 1,

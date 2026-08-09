@@ -11,6 +11,7 @@ import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_prov
 import 'package:aonw/game/presentation/providers/hud/hud_gamepad_focus_controller_provider.dart';
 import 'package:aonw/game/presentation/providers/map/map_inspection_provider.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models/worker_action_panel_view_model.dart';
+import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_deck_combat_forecast.dart';
 import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_line.dart';
 import 'package:aonw/game/presentation/widgets/hud/combat/hud_combat_preview.dart';
 import 'package:aonw/game/presentation/widgets/hud/command/hud_command_line.dart';
@@ -57,8 +58,6 @@ part 'hud_action_deck_auto_flow_research.dart';
 part 'hud_action_deck_auto_flow_signature.dart';
 part 'hud_action_deck_combat_dialog.dart';
 part 'hud_action_deck_combat_explanation.dart';
-part 'hud_action_deck_combat_forecast.dart';
-part 'hud_action_deck_combat_hp_ring.dart';
 part 'hud_action_deck_combat_modal.dart';
 part 'hud_action_deck_commands.dart';
 part 'hud_action_deck_compact_widgets.dart';

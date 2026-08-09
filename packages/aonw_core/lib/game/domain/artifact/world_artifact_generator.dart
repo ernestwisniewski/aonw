@@ -20,25 +20,7 @@ abstract final class WorldArtifactGenerator {
     if (mapData.tiles.isEmpty) return const [];
 
     final starts = List<GameUnit>.of(startingUnits);
-    final occupiedStarts = {
-      for (final unit in starts) _key(unit.col, unit.row),
-    };
-    final objectiveHexes = {
-      for (final objective in mapData.objectives)
-        _key(objective.hex.col, objective.hex.row),
-    };
-    final reachableTiles = _reachableTileKeys(mapData, starts);
-    final carrierReturnTiles = _carrierReturnTileKeys(mapData, starts);
-    final passableTiles = [
-      for (final tile in mapData.tiles)
-        if (!_isBlocked(tile) &&
-            !occupiedStarts.contains(_key(tile.col, tile.row)) &&
-            !objectiveHexes.contains(_key(tile.col, tile.row)) &&
-            (starts.isEmpty ||
-                (reachableTiles.contains(_key(tile.col, tile.row)) &&
-                    _hasCarrierReturnPath(tile, carrierReturnTiles))))
-          tile,
-    ];
+    final passableTiles = _passableTiles(mapData, starts);
     if (passableTiles.isEmpty) return const [];
 
     final pool = passableTiles;
@@ -93,6 +75,52 @@ abstract final class WorldArtifactGenerator {
           row: selected[i].row,
         ),
     ];
+  }
+
+  static List<WorldTile> _passableTiles(
+    WorldMap mapData,
+    List<GameUnit> starts,
+  ) {
+    final occupiedStarts = {
+      for (final unit in starts) _key(unit.col, unit.row),
+    };
+    final objectiveHexes = {
+      for (final objective in mapData.objectives)
+        _key(objective.hex.col, objective.hex.row),
+    };
+    final reachableTiles = _reachableTileKeys(mapData, starts);
+    final carrierReturnTiles = _carrierReturnTileKeys(mapData, starts);
+    return [
+      for (final tile in mapData.tiles)
+        if (_canPlaceArtifact(
+          tile,
+          occupiedStarts: occupiedStarts,
+          objectiveHexes: objectiveHexes,
+          reachableTiles: reachableTiles,
+          carrierReturnTiles: carrierReturnTiles,
+          hasStartingUnits: starts.isNotEmpty,
+        ))
+          tile,
+    ];
+  }
+
+  static bool _canPlaceArtifact(
+    WorldTile tile, {
+    required Set<String> occupiedStarts,
+    required Set<String> objectiveHexes,
+    required Set<String> reachableTiles,
+    required Set<String> carrierReturnTiles,
+    required bool hasStartingUnits,
+  }) {
+    final key = _key(tile.col, tile.row);
+    if (_isBlocked(tile) ||
+        occupiedStarts.contains(key) ||
+        objectiveHexes.contains(key)) {
+      return false;
+    }
+    return !hasStartingUnits ||
+        reachableTiles.contains(key) &&
+            _hasCarrierReturnPath(tile, carrierReturnTiles);
   }
 
   static List<WorldTile> _candidatePool({

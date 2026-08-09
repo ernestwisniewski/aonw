@@ -121,19 +121,43 @@ List<String> _timeoutFlowViolations({
 }) {
   final advance = _singleMethod(timeout, 'advanceTimedOutTurn');
   if (advance == null) return const ['must declare advanceTimedOutTurn'];
+  final transaction =
+      _singleMethod(timeout, '_advanceTimedOutTurnInTransaction') ?? advance;
+  final persistence =
+      _singleMethod(timeout, '_persistTimedOutTurn') ?? transaction;
   final reduction = _singleMethod(timeout, '_reduceTimedOutTurnIfNeeded');
   return [
-    ..._timeoutAdvanceViolations(advance),
+    ..._timeoutAdvanceViolations(transaction, persistence),
     ..._timeoutIoHelperViolations(service),
     ..._timeoutReductionViolations(reduction),
   ];
 }
 
-List<String> _timeoutAdvanceViolations(MethodDeclaration method) {
-  final body = method.body.toSource();
-  final identifiers = _IdentifierCollector()..collect(method.body);
-  final decodeCount = _methodCalls(method.body, '_decodeRunningSnapshot');
-  final encodeCount = _methodCalls(method.body, '_encodeReductionSnapshot');
+List<String> _timeoutAdvanceViolations(
+  MethodDeclaration transaction,
+  MethodDeclaration persistence,
+) {
+  final body = transaction.body.toSource();
+  final identifiers = _IdentifierCollector()..collect(transaction.body);
+  final decodeCount = _methodCalls(transaction.body, '_decodeRunningSnapshot');
+  final encodeCount = _methodCalls(
+    persistence.body,
+    '_encodeReductionSnapshot',
+  );
+  final previousSnapshotIsForwarded = identical(transaction, persistence)
+      ? body.contains('previousSnapshot: canonicalSnapshot')
+      : _singleNamedArgument(
+                  transaction.body,
+                  methodName: '_persistTimedOutTurn',
+                  argumentName: 'previousSnapshot',
+                ) ==
+                'canonicalSnapshot' &&
+            _singleNamedArgument(
+                  persistence.body,
+                  methodName: '_acceptedTimeoutEventForStorage',
+                  argumentName: 'previousSnapshot',
+                ) ==
+                'previousSnapshot';
   return [
     if (decodeCount != 1 ||
         !body.contains(
@@ -144,7 +168,7 @@ List<String> _timeoutAdvanceViolations(MethodDeclaration method) {
         !body.contains('final canonicalSnapshot = decodedSnapshot.canonical;'))
       'advanceTimedOutTurn must read one memoized canonical snapshot',
     if (_singleNamedArgument(
-          method.body,
+          transaction.body,
           methodName: '_reduceTimedOutTurnIfNeeded',
           argumentName: 'snapshot',
         ) !=
@@ -152,7 +176,7 @@ List<String> _timeoutAdvanceViolations(MethodDeclaration method) {
       'timeout reduction helper must receive canonicalSnapshot',
     if (encodeCount != 1)
       'accepted timeout flow must encode its canonical result once',
-    if (!body.contains('previousSnapshot: canonicalSnapshot'))
+    if (!previousSnapshotIsForwarded)
       'timeout event audience must receive the same previous snapshot',
     if (identifiers.count('DecodedMatchSnapshot') != 0)
       'timeout flow must not use the retired decoded alias',

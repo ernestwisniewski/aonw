@@ -44,6 +44,11 @@ Presence-lease rows are server-only operational records. They are removed when
 the corresponding lobby membership ends and cascade with the match; they are
 not retained as gameplay or audit history.
 
+Running-match inactivity is a lifecycle deadline, not physical retention. A
+match is changed to `abandoned/all_players_inactive` after 12 hours without
+human activity. The terminal row, snapshot, and event history remain stored.
+Automated turn processing and AI work do not extend this deadline.
+
 The implementation sources of truth are:
 
 - `server/config/*.yaml` for Serverpod session-log limits;

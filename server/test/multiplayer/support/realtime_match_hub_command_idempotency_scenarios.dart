@@ -4,56 +4,22 @@ void _registerRealtimeMatchHubCommandIdempotencyScenarios() {
   test(
     'reconnects an offline client to the latest authoritative snapshot',
     () async {
-      final mapCatalog = _FakeMapCatalog(_testMap());
-      final hub = RealtimeMatchHub(
-        commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
+      final fixture = await _startRunningMatch(
+        'offline-reconnect',
+        disconnectGuestSetup: true,
       );
-      final store = _MemoryMatchStore();
-      final openMatch = await hub.createMatch(
-        store: store,
-        userIdentifier: 'owner-user',
-        request: CreateMatchRequest(
-          name: 'Reconnect smoke',
-          mapName: 'verdantia',
-          maxPlayers: 2,
-          minPlayers: 2,
-          private: false,
-        ),
-      );
-      await _connectTestParticipant(
-        hub: hub,
-        store: store,
-        userIdentifier: 'owner-user',
-        matchId: openMatch.id,
-      );
-      final joined = await hub.joinMatch(
-        store: store,
-        userIdentifier: 'guest-user',
-        matchId: openMatch.id,
-      );
-      final setupGuest = await _connectTestParticipant(
-        hub: hub,
-        store: store,
-        userIdentifier: 'guest-user',
-        matchId: joined.id,
-      );
-      final match = await hub.startMatch(
-        store: store,
-        userIdentifier: 'owner-user',
-        matchId: joined.id,
-        snapshotFactory: InitialMultiplayerSnapshotFactory(
-          mapCatalog: mapCatalog,
-        ),
-      );
-      await setupGuest.close();
+      final hub = fixture.hub;
+      final store = fixture.store;
+      final match = fixture.match;
       final owner = match.players.first;
       final guest = match.players.last;
+      final guestUserIdentifier = fixture.guestUserIdentifier;
 
       final guestInitialInput = StreamController<MultiplayerClientMessage>();
       final guestInitialStream = hub
           .connect(
             store: store,
-            userIdentifier: 'guest-user',
+            userIdentifier: guestUserIdentifier,
             matchId: match.id,
             afterOffset: 0,
             input: guestInitialInput.stream,
@@ -98,7 +64,7 @@ void _registerRealtimeMatchHubCommandIdempotencyScenarios() {
       final reconnectStream = hub
           .connect(
             store: store,
-            userIdentifier: 'guest-user',
+            userIdentifier: guestUserIdentifier,
             matchId: match.id,
             afterOffset: guestInitial.offset,
             input: reconnectInput.stream,
@@ -129,11 +95,11 @@ void _registerRealtimeMatchHubCommandIdempotencyScenarios() {
     },
   );
   test('acknowledges retried client messages without applying twice', () async {
-    final mapCatalog = _FakeMapCatalog(_testMap());
+    final mapCatalog = TestMapCatalog(testMap());
     final hub = RealtimeMatchHub(
       commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
     );
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
     final openMatch = await hub.createMatch(
       store: store,
       userIdentifier: 'owner-user',

@@ -8,7 +8,9 @@ import 'package:aonw_server/src/multiplayer/match_activity_tracker.dart';
 import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
 import 'package:aonw_server/src/multiplayer/match_lifecycle_state_adapter.dart';
 import 'package:aonw_server/src/multiplayer/match_mutation_outcome.dart';
+import 'package:aonw_server/src/multiplayer/match_participant_connection_coordinator.dart';
 import 'package:aonw_server/src/multiplayer/match_state_access.dart';
+import 'package:aonw_server/src/multiplayer/match_turn_presence_policy.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 import 'package:aonw_server/src/multiplayer/quickplay_lobby_policy.dart';
@@ -23,20 +25,26 @@ part 'match_lifecycle_service_resignation.dart';
 const _runningMatchSnapshotCodec = RunningMatchSnapshotCodec();
 const _matchLifecycleStateAdapter = MatchLifecycleStateAdapter();
 const _matchActivityTracker = MatchActivityTracker();
+typedef _Connections = MatchParticipantConnectionCoordinator;
 
 final class MatchLifecycleService {
   MatchLifecycleService({
     required MatchStateAccess stateAccess,
     required MatchBroadcaster broadcaster,
     required QuickplayLobbyPolicy quickplayLobbyPolicy,
-    required LobbyPresencePolicy presencePolicy,
+    required (LobbyPresencePolicy, MatchTurnPresencePolicy) presencePolicies,
     required PresenceGenerationGenerator presenceGenerationGenerator,
     required DateTime Function() nowUtc,
   }) : _stateAccess = stateAccess,
        _broadcaster = broadcaster,
        _quickplayLobbyPolicy = quickplayLobbyPolicy,
-       _presencePolicy = presencePolicy,
+       _presencePolicy = presencePolicies.$1,
        _presenceGenerationGenerator = presenceGenerationGenerator,
+       _connections = _Connections.bind((
+         presencePolicies.$1,
+         presencePolicies.$2,
+         nowUtc,
+       )),
        _nowUtc = nowUtc;
 
   final MatchStateAccess _stateAccess;
@@ -44,6 +52,7 @@ final class MatchLifecycleService {
   final QuickplayLobbyPolicy _quickplayLobbyPolicy;
   final LobbyPresencePolicy _presencePolicy;
   final PresenceGenerationGenerator _presenceGenerationGenerator;
+  final _Connections _connections;
   final LobbyRosterPolicy _rosterPolicy = const LobbyRosterPolicy();
   final DateTime Function() _nowUtc;
   ExpiredPresenceLeaseCursor? _nextPresenceSweepCursor;

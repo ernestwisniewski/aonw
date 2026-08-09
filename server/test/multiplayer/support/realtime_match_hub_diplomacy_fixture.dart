@@ -10,18 +10,18 @@ final class _DiplomacyMatchFixture {
   });
 
   final RealtimeMatchHub hub;
-  final _MemoryMatchStore store;
+  final TestMatchStore store;
   final WireMatch match;
   final WirePlayer owner;
   final WirePlayer guest;
 }
 
 Future<_DiplomacyMatchFixture> _createDiplomacyMatchFixture() async {
-  final mapCatalog = _FakeMapCatalog(_testMap());
+  final mapCatalog = TestMapCatalog(testMap());
   final hub = RealtimeMatchHub(
     commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
   );
-  final store = _MemoryMatchStore();
+  final store = TestMatchStore();
   final openMatch = await hub.createMatch(
     store: store,
     userIdentifier: 'owner-user',

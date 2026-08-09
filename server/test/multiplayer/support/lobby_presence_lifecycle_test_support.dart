@@ -94,6 +94,9 @@ final class _LobbyPresenceStore implements MultiplayerMatchStore {
   final _states = <String, StoredMatchState>{};
   final _events = <String, List<WireEvent>>{};
   final _presenceRowIds = <String, int>{};
+  final scriptedExpiredPresencePages = <ExpiredPresenceLeasePage>[];
+  final expiredPresenceCursorRequests = <ExpiredPresenceLeaseCursor?>[];
+  final transactionFailures = <Object>[];
   var _nextPresenceRowId = 1;
 
   @override
@@ -102,7 +105,12 @@ final class _LobbyPresenceStore implements MultiplayerMatchStore {
   @override
   Future<T> transaction<T>(
     Future<T> Function(MultiplayerMatchStore store) action,
-  ) => action(this);
+  ) async {
+    if (transactionFailures.isNotEmpty) {
+      throw transactionFailures.removeAt(0);
+    }
+    return action(this);
+  }
 
   @override
   Future<StoredMatchState> createState(StoredMatchState state) async {
@@ -165,6 +173,10 @@ final class _LobbyPresenceStore implements MultiplayerMatchStore {
     required DateTime nowUtc,
     ExpiredPresenceLeaseCursor? after,
   }) async {
+    expiredPresenceCursorRequests.add(after);
+    if (scriptedExpiredPresencePages.isNotEmpty) {
+      return scriptedExpiredPresencePages.removeAt(0);
+    }
     final candidates = <ExpiredPresenceLeaseCandidate>[];
     for (final entry in _states.entries) {
       for (final lease in entry.value.presenceLeases.values) {

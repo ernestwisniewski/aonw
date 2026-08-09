@@ -3,6 +3,7 @@ import 'package:aonw/developer/assets_editor_screen.dart';
 import 'package:aonw/editor/editor_map_picker_screen.dart';
 import 'package:aonw/editor/map_editor_screen.dart';
 import 'package:aonw/game/presentation/screens.dart';
+import 'package:aonw/game/presentation/screens/game/game_abandoned_match_boundary.dart';
 import 'package:aonw/game/presentation/screens/new_game/initial_player_country.dart';
 import 'package:aonw/menu/credits_screen.dart';
 import 'package:aonw/menu/main_menu_screen.dart';
@@ -68,9 +69,11 @@ GoRouter goRouter(Ref ref) {
           final name =
               state.uri.queryParameters['name'] ?? MapSelection.defaultMapName;
           final saveId = state.uri.queryParameters['saveId'] ?? '';
-          return GameScreen(
-            selection: MapSelection(name: name, source: source),
+          final selection = MapSelection(name: name, source: source);
+          return GameAbandonedMatchBoundary(
+            selection: selection,
             saveId: saveId,
+            child: GameScreen(selection: selection, saveId: saveId),
           );
         },
       ),

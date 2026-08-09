@@ -1,10 +1,13 @@
-part of 'lobby_screen.dart';
+import 'dart:math' as math;
 
-class _QueueCountdownClock extends StatelessWidget {
+import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:flutter/material.dart';
+
+class QueueCountdownClock extends StatelessWidget {
   final String label;
   final int? secondsRemaining;
 
-  const _QueueCountdownClock({
+  const QueueCountdownClock({
     required this.label,
     required this.secondsRemaining,
     super.key,

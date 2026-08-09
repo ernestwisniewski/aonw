@@ -71,7 +71,7 @@ final class InitialMultiplayerSnapshotFactory {
       metadata: GameSnapshotMetadata(
         id: matchId,
         schemaVersion: gameSaveCurrentSchemaVersion,
-        name: matchName,
+        name: MultiplayerSaveName.fromMatchName(matchName),
         world: WorldReference(name: mapName, source: MapSource.asset),
         savedAtUtc: startedAt,
         camera: GameSnapshotCamera.zero,

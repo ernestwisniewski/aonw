@@ -4,97 +4,14 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
   _registerRealtimeMatchHubTimeoutActorTests();
 
   test('advanceTimedOutTurns finalizes a stored partial turn', () async {
-    final mapCatalog = _FakeMapCatalog(_testMap());
-    var now = DateTime.utc(2026, 6, 30, 12);
-    final hub = RealtimeMatchHub(
-      commandReducer: ServerCommandReducer(
-        mapCatalog: mapCatalog,
-        turnTimeout: const Duration(seconds: 10),
-      ),
-      nowUtc: () => now,
-    );
-    final store = _MemoryMatchStore();
-    final match = await hub.createMatch(
-      store: store,
-      userIdentifier: 'owner-user',
-      request: CreateMatchRequest(
-        name: 'Timeout match',
-        mapName: 'verdantia',
-        maxPlayers: 2,
-        minPlayers: 2,
-        private: false,
-      ),
-    );
-    await _connectTestParticipant(
-      hub: hub,
-      store: store,
-      userIdentifier: 'owner-user',
-      matchId: match.id,
-    );
-    await hub.joinMatch(
-      store: store,
-      userIdentifier: 'guest-user',
-      matchId: match.id,
-    );
-    await _connectTestParticipant(
-      hub: hub,
-      store: store,
-      userIdentifier: 'guest-user',
-      matchId: match.id,
-    );
-    final started = await hub.startMatch(
-      store: store,
-      userIdentifier: 'owner-user',
-      matchId: match.id,
-      snapshotFactory: InitialMultiplayerSnapshotFactory(
-        mapCatalog: mapCatalog,
-      ),
-    );
-    final running = (await store.findState(started.id))!;
-    final ownerPlayerId = running.match.players
-        .firstWhere((player) => player.userId == 'owner-user')
-        .id;
-    final guestPlayerId = running.match.players
-        .firstWhere((player) => player.userId == 'guest-user')
-        .id;
-    final save = GameSave.fromJson(running.snapshot.save);
-    final persistentState = CanonicalGameSnapshotCodec.decodeDomainState(
-      running.snapshot.state,
-    );
-    await store.saveState(
-      running.copyWith(
-        snapshot: running.snapshot.copyWith(
-          save: save
-              .copyWith(
-                playerStates: {
-                  ...save.playerStates,
-                  ownerPlayerId: PlayerTurnState.finished,
-                },
-              )
-              .toJson(),
-          state: persistentState
-              .copyWith(
-                playerGold: {ownerPlayerId: 111, guestPlayerId: 999},
-                units: persistentState.units
-                    .where((unit) => unit.ownerPlayerId != guestPlayerId)
-                    .toList(),
-                cities: persistentState.cities
-                    .where((city) => city.ownerPlayerId != guestPlayerId)
-                    .toList(),
-                submittedPlayerIds: {ownerPlayerId},
-                turnStartedAt: now,
-              )
-              .toJson(),
-        ),
-      ),
-    );
+    final fixture = await _partialTurnTimeoutFixture();
 
     final input = StreamController<MultiplayerClientMessage>();
-    final stream = hub
+    final stream = fixture.hub
         .connect(
-          store: store,
+          store: fixture.store,
           userIdentifier: 'guest-user',
-          matchId: started.id,
+          matchId: fixture.started.id,
           afterOffset: 0,
           input: input.stream,
         )
@@ -102,22 +19,22 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
     await stream.first;
     final timeoutUpdate = stream.firstWhere((message) => message.event != null);
 
-    now = now.add(const Duration(seconds: 11));
-    await hub.advanceTimedOutTurns(store: store);
+    fixture.advanceClock();
+    await fixture.hub.advanceTimedOutTurns(store: fixture.store);
     final projectedUpdate = await timeoutUpdate;
 
-    final updated = (await store.findState(started.id))!;
+    final updated = (await fixture.store.findState(fixture.started.id))!;
     final updatedSave = GameSave.fromJson(updated.snapshot.save);
-    final events = await store.listEvents(started.id, 0);
+    final events = await fixture.store.listEvents(fixture.started.id, 0);
     expect(updatedSave.turn, 2);
     expect(updated.match.state, 'finished');
-    expect(updated.match.endedAt, now);
+    expect(updated.match.endedAt, fixture.now());
     expect(updated.match.outcomeCondition, 'conquest');
-    expect(updated.match.winnerPlayerId, ownerPlayerId);
+    expect(updated.match.winnerPlayerId, fixture.ownerPlayerId);
     expect(projectedUpdate.match?.state, 'finished');
     expect(events, hasLength(1));
-    expect(events.single.turn, running.match.turn);
-    expect(projectedUpdate.event?.turn, running.match.turn);
+    expect(events.single.turn, fixture.running.match.turn);
+    expect(projectedUpdate.event?.turn, fixture.running.match.turn);
     expect(
       events.single.events
           .map(GameEventSerializer.fromJson)
@@ -136,7 +53,7 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
       CanonicalGameSnapshotCodec.decodeDomainState(
         projectedUpdate.snapshot!.state,
       ).playerGold,
-      {guestPlayerId: 999},
+      {fixture.guestPlayerId: 999},
     );
 
     await input.close();
@@ -145,7 +62,7 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
   test(
     'advanceTimedOutTurns finalizes a stored turn with no submissions',
     () async {
-      final mapCatalog = _FakeMapCatalog(_testMap());
+      final mapCatalog = TestMapCatalog(testMap());
       var now = DateTime.utc(2026, 6, 30, 13);
       final hub = RealtimeMatchHub(
         commandReducer: ServerCommandReducer(
@@ -154,8 +71,8 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
         ),
         nowUtc: () => now,
       );
-      final store = _MemoryMatchStore();
-      final started = await _startRunningMatchInStore(
+      final store = TestMatchStore();
+      final started = await startRunningTestMatch(
         hub: hub,
         store: store,
         suffix: 'timeout-empty',
@@ -200,7 +117,7 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
   );
 
   test('emits no timeout event when transaction commit fails', () async {
-    final mapCatalog = _FakeMapCatalog(_testMap());
+    final mapCatalog = TestMapCatalog(testMap());
     var now = DateTime.utc(2026, 6, 30, 13, 30);
     final hub = RealtimeMatchHub(
       commandReducer: ServerCommandReducer(
@@ -210,7 +127,7 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
       nowUtc: () => now,
     );
     final store = _CommitFailingMatchStore();
-    final started = await _startRunningMatchInStore(
+    final started = await startRunningTestMatch(
       hub: hub,
       store: store,
       suffix: 'timeout-commit-failure',
@@ -271,7 +188,7 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
   });
 
   test('advanceTimedOutTurns continues after a match sweep failure', () async {
-    final mapCatalog = _FakeMapCatalog(_testMap());
+    final mapCatalog = TestMapCatalog(testMap());
     var now = DateTime.utc(2026, 6, 30, 14);
     final hub = RealtimeMatchHub(
       commandReducer: ServerCommandReducer(
@@ -281,13 +198,13 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
       nowUtc: () => now,
     );
     final store = _FindStateFailingMatchStore();
-    final failing = await _startRunningMatchInStore(
+    final failing = await startRunningTestMatch(
       hub: hub,
       store: store,
       suffix: 'timeout-failing',
       mapCatalog: mapCatalog,
     );
-    final healthy = await _startRunningMatchInStore(
+    final healthy = await startRunningTestMatch(
       hub: hub,
       store: store,
       suffix: 'timeout-healthy',
@@ -333,7 +250,7 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
   test(
     'advanceTimedOutTurns skips snapshots from older protocol versions',
     () async {
-      final mapCatalog = _FakeMapCatalog(_testMap());
+      final mapCatalog = TestMapCatalog(testMap());
       var now = DateTime.utc(2026, 6, 30, 15);
       final hub = RealtimeMatchHub(
         commandReducer: ServerCommandReducer(
@@ -342,14 +259,14 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
         ),
         nowUtc: () => now,
       );
-      final store = _MemoryMatchStore();
-      final stale = await _startRunningMatchInStore(
+      final store = TestMatchStore();
+      final stale = await startRunningTestMatch(
         hub: hub,
         store: store,
         suffix: 'timeout-stale-protocol',
         mapCatalog: mapCatalog,
       );
-      final healthy = await _startRunningMatchInStore(
+      final healthy = await startRunningTestMatch(
         hub: hub,
         store: store,
         suffix: 'timeout-current-protocol',
@@ -384,7 +301,7 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
 
   test('advanceTimedOutTurns rotates bounded running-match pages', () async {
     final hub = RealtimeMatchHub();
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
     final createdAt = DateTime.utc(2126, 7, 11, 8);
     const matchCount = multiplayerRunningMatchPageSize + 2;
     for (var index = 0; index < matchCount; index += 1) {
@@ -433,7 +350,7 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
     'advanceTimedOutTurns wraps without an empty exactly-full page',
     () async {
       final hub = RealtimeMatchHub();
-      final store = _MemoryMatchStore();
+      final store = TestMatchStore();
       final createdAt = DateTime.utc(2126, 7, 11, 8);
       for (var index = 0; index < multiplayerRunningMatchPageSize; index++) {
         final id = 'exact-page-${index.toString().padLeft(3, '0')}';

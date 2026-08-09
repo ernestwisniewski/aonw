@@ -3,7 +3,7 @@ part of '../realtime_match_hub_test.dart';
 void _registerRealtimeMatchHubQueryListingsScenarios() {
   test('retires incompatible matches and noncanonical player ids', () async {
     final hub = RealtimeMatchHub();
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
     final noncanonical = await hub.createMatch(
       store: store,
       userIdentifier: 'embedded-account-owner',

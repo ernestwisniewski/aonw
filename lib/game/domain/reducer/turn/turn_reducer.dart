@@ -15,8 +15,7 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
 part 'turn_reducer_action_category.dart';
-
-typedef _ClientState = GameClientState;
+part 'turn_reducer_map_action_effects.dart';
 
 abstract final class TurnReducer {
   static GameStateTransition submitTurn(
@@ -339,11 +338,7 @@ abstract final class TurnReducer {
 
     return GameStateTransition(
       state: newState,
-      uiEffects: _mapActionTargetEffects(
-        col: unit.col,
-        row: unit.row,
-        unitId: unit.id,
-      ),
+      uiEffects: _mapActionTargetEffects(unit.col, unit.row, unitId: unit.id),
     );
   }
 
@@ -395,21 +390,9 @@ abstract final class TurnReducer {
 
     return GameStateTransition(
       state: newState,
-      uiEffects: _mapActionTargetEffects(
-        col: city.center.col,
-        row: city.center.row,
-      ),
+      uiEffects: _mapActionTargetEffects(city.center.col, city.center.row),
     );
   }
-
-  static List<RendererEffect> _mapActionTargetEffects({
-    required int col,
-    required int row,
-    String? unitId,
-  }) => [
-    JumpCameraEffect(col: col, row: row),
-    ShowActionTargetFocusEffect(unitId: unitId, col: col, row: row),
-  ];
 
   static GameStateTransition _focusResearchAction(
     _ClientState state,

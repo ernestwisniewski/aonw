@@ -4,11 +4,11 @@ void _registerRealtimeMatchHubQueryProjectionsScenarios() {
   test(
     'loadMatch resumes a persisted running match for a participant',
     () async {
-      final mapCatalog = _FakeMapCatalog(_testMap());
+      final mapCatalog = TestMapCatalog(testMap());
       final hub = RealtimeMatchHub(
         commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
       );
-      final store = _MemoryMatchStore();
+      final store = TestMatchStore();
       final match = await hub.createMatch(
         store: store,
         userIdentifier: 'owner-user',
@@ -268,11 +268,11 @@ void _registerRealtimeMatchHubQueryProjectionsScenarios() {
     expect(logs.join(' '), isNot(contains('must-not-escape')));
   });
   test('listMatches returns public lobbies and own active matches', () async {
-    final mapCatalog = _FakeMapCatalog(_testMap());
+    final mapCatalog = TestMapCatalog(testMap());
     final hub = RealtimeMatchHub(
       commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
     );
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
 
     final publicLobby = await hub.createMatch(
       store: store,
@@ -376,7 +376,7 @@ void _registerRealtimeMatchHubQueryProjectionsScenarios() {
     'listMatches bounds public discovery without starving participant matches',
     () async {
       final hub = RealtimeMatchHub();
-      final store = _MemoryMatchStore();
+      final store = TestMatchStore();
       final baseTime = DateTime.utc(2026, 7, 10);
       const viewer = 'bounded-list-viewer';
 

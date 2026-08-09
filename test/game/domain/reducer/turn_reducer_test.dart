@@ -27,6 +27,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../support/turn_engine_test_driver.dart';
 
 part 'turn_reducer_start_action_feedback_tests.dart';
+part 'turn_reducer_action_target_focus_tests.dart';
 
 void main() {
   group('TurnReducer', () {
@@ -267,13 +268,7 @@ void main() {
       expect(result.state.moveCommandActive, isTrue);
       expect(result.uiEffects.whereType<JumpCameraEffect>().single.col, 2);
       expect(result.uiEffects.whereType<JumpCameraEffect>().single.row, 2);
-      final focus = result.uiEffects
-          .whereType<ShowActionTargetFocusEffect>()
-          .single;
-      expect(focus.unitId, commander.id);
-      expect(focus.col, 2);
-      expect(focus.row, 2);
-      expect(focus.duration, const Duration(seconds: 2));
+      _expectActionTargetFocus(result, unitId: commander.id, col: 2, row: 2);
     });
 
     test(
@@ -534,52 +529,11 @@ void main() {
 
         expect(result.state.selection?.city?.id, city.id);
         expect(result.uiEffects.whereType<JumpCameraEffect>().single.col, 2);
-        final focus = result.uiEffects
-            .whereType<ShowActionTargetFocusEffect>()
-            .single;
-        expect(focus.unitId, isNull);
-        expect(focus.col, 2);
-        expect(focus.row, 2);
-        expect(focus.duration, const Duration(seconds: 2));
+        _expectActionTargetFocus(result, col: 2, row: 2);
       },
     );
 
-    test('focusTurnStartAction marks a selected city hex', () {
-      const city = GameCity(
-        id: 'city_1',
-        ownerPlayerId: 'player_1',
-        name: 'City',
-        center: CityHex(col: 3, row: 2),
-        controlledHexes: [CityHex(col: 3, row: 2)],
-        population: 1,
-        productionQueue: null,
-      );
-      final state = GameClientState(
-        cities: const [city],
-        activePlayerId: 'player_1',
-        research: ResearchState(
-          players: {
-            'player_1': PlayerResearchState(
-              activeTechnologyId: TechnologyId.agriculture,
-            ),
-          },
-        ),
-      );
-
-      final result = TurnReducer.focusTurnStartAction(
-        state,
-        'player_1',
-        mapData,
-      );
-
-      expect(result.state.selection?.city?.id, city.id);
-      final focus = result.uiEffects
-          .whereType<ShowActionTargetFocusEffect>()
-          .single;
-      expect(focus.unitId, isNull);
-      expect(focus.col, 3);
-      expect(focus.row, 2);
-    });
+    _registerTurnReducerActionTargetFocusTests(() => mapData);
 
     test('focusNextPendingAction falls back to research selection', () {
       final city = GameCity(
@@ -750,55 +704,6 @@ void main() {
         const PendingResearchSelection(ownerPlayerId: 'player_1'),
       );
       expect(wrappedForward.state.selection?.unit?.id, unit.id);
-    });
-
-    test('focusTurnStartAction always starts from first ranked action', () {
-      final unit = GameUnit.produced(
-        id: 'warrior_1',
-        ownerPlayerId: 'player_1',
-        type: GameUnitType.warrior,
-        col: 1,
-        row: 1,
-      );
-      const city = GameCity(
-        id: 'city_1',
-        ownerPlayerId: 'player_1',
-        name: 'City',
-        center: CityHex(col: 2, row: 2),
-        controlledHexes: [CityHex(col: 2, row: 2)],
-        productionQueue: null,
-      );
-      final state = GameClientState(
-        units: [unit],
-        cities: [city],
-        activePlayerId: 'player_1',
-        interaction: InteractionState(
-          selection: GameSelection.city(
-            city,
-            cityYield: TileYield.zero,
-            playerColor: 0xFF4a7fc4,
-          ),
-        ),
-      );
-
-      final result = TurnReducer.focusTurnStartAction(
-        state,
-        'player_1',
-        mapData,
-      );
-
-      expect(result.state.selection?.unit?.id, unit.id);
-      expect(result.state.moveCommandActive, isTrue);
-      final jump = result.uiEffects.whereType<JumpCameraEffect>().single;
-      expect(jump.col, 1);
-      expect(jump.row, 1);
-      final focus = result.uiEffects
-          .whereType<ShowActionTargetFocusEffect>()
-          .single;
-      expect(focus.unitId, unit.id);
-      expect(focus.col, 1);
-      expect(focus.row, 1);
-      expect(focus.duration, const Duration(seconds: 2));
     });
 
     _registerTurnStartActionFeedbackTests(() => mapData);

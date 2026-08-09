@@ -53,7 +53,7 @@ void main() {
     });
     expect(canonical.domain.turnStartedAt, _initialSnapshotStartedAt);
     expect(canonical.metadata.id, _initialSnapshotMatch.id);
-    expect(canonical.metadata.name, _initialSnapshotMatch.name);
+    expect(canonical.metadata.name, 'multi ${_initialSnapshotMatch.name}');
     expect(canonical.metadata.world.name, _initialSnapshotMatch.mapName);
     expect(canonical.metadata.world.source, MapSource.asset);
     expect(canonical.metadata.savedAtUtc, _initialSnapshotStartedAt);

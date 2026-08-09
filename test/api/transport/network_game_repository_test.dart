@@ -62,7 +62,7 @@ void main() {
       final indexes = await repository.list();
 
       expect(indexes.single.id, 'match_1');
-      expect(indexes.single.name, 'Sunday duel');
+      expect(indexes.single.name, 'multi Sunday duel');
       expect(indexes.single.mapName, 'verdantia');
       expect(indexes.single.turn, 3);
       expect(indexes.single.savedAt, DateTime.utc(2026, 4, 26, 11));
@@ -120,6 +120,7 @@ void main() {
 
       expect(backend.loadedSnapshotId, 'match_1');
       expect(loaded.save.id, 'match_1');
+      expect(loaded.save.name, 'multi Sunday duel');
       expect(loaded.eventLogOffset, 12);
       expect(loaded.playerColors, {'player_1': 0xFF2563EB});
       expect(
@@ -157,6 +158,7 @@ void main() {
       final snapshot = await repository.load('match_1');
 
       expect(snapshot.save.id, 'match_1');
+      expect(snapshot.save.name, 'multi Sunday duel');
       expect(snapshot.eventLogOffset, 8);
       expect(snapshot.playerColors, {'player_1': 0xFF2563EB});
     });

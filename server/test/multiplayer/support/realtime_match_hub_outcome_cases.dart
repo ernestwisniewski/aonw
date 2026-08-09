@@ -26,7 +26,7 @@ typedef _TerminalMatchMetadata = ({
 typedef _NaturalOutcomeFixture = ({
   DateTime endedAt,
   RealtimeMatchHub hub,
-  _MemoryMatchStore store,
+  TestMatchStore store,
   WireMatch match,
   WirePlayer owner,
   WirePlayer guest,
@@ -70,12 +70,12 @@ Future<void> _verifyNaturalOutcomePersistence() async {
 
 Future<_NaturalOutcomeFixture> _startNaturalOutcomeFixture() async {
   final endedAt = DateTime.utc(2026, 7, 12, 17);
-  final mapCatalog = _FakeMapCatalog(_testMap());
+  final mapCatalog = TestMapCatalog(testMap());
   final hub = RealtimeMatchHub(
     commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
     nowUtc: () => endedAt,
   );
-  final store = _MemoryMatchStore();
+  final store = TestMatchStore();
   final open = await hub.createMatch(
     store: store,
     userIdentifier: 'owner-user',

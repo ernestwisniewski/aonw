@@ -1,10 +1,13 @@
-part of 'lobby_screen.dart';
+import 'package:aonw/l10n/l10n.dart';
+import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:flutter/material.dart';
 
-class _MultiplayerActionSummary extends StatelessWidget {
-  const _MultiplayerActionSummary({
+class MultiplayerActionSummary extends StatelessWidget {
+  const MultiplayerActionSummary({
     required this.icon,
     required this.title,
     required this.subtitle,
+    super.key,
   });
 
   final IconData icon;

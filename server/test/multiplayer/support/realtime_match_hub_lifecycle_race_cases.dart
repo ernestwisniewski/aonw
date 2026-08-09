@@ -5,7 +5,7 @@ void _registerRealtimeMatchHubLifecycleRaceTests() {
     test(
       'abandon commits before a queued start can inspect the lobby',
       () async {
-        final mapCatalog = _FakeMapCatalog(_testMap());
+        final mapCatalog = TestMapCatalog(testMap());
         final hub = RealtimeMatchHub(
           commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
         );
@@ -50,7 +50,7 @@ void _registerRealtimeMatchHubLifecycleRaceTests() {
     test(
       'terminal resignation commits before a queued reconnect mutation',
       () async {
-        final mapCatalog = _FakeMapCatalog(_testMap());
+        final mapCatalog = TestMapCatalog(testMap());
         final now = DateTime.utc(2026, 7, 30, 15);
         final hub = RealtimeMatchHub(
           commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
@@ -127,7 +127,7 @@ void _registerRealtimeMatchHubLifecycleRaceTests() {
     test(
       'first terminal resignation cannot be overwritten by a queued resign',
       () async {
-        final mapCatalog = _FakeMapCatalog(_testMap());
+        final mapCatalog = TestMapCatalog(testMap());
         final now = DateTime.utc(2026, 7, 30, 16);
         final hub = RealtimeMatchHub(
           commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
@@ -198,7 +198,7 @@ void _registerRealtimeMatchHubLifecycleRaceTests() {
 
 Future<WireMatch> _createJoinedRaceLobby(
   RealtimeMatchHub hub,
-  _MemoryMatchStore store, {
+  TestMatchStore store, {
   required String suffix,
 }) async {
   final created = await hub.createMatch(
@@ -246,7 +246,7 @@ void _expectConsistentTerminalLifecycle(StoredMatchState state) {
   }
 }
 
-final class _LockAwareMemoryMatchStore extends _MemoryMatchStore {
+final class _LockAwareMemoryMatchStore extends TestMatchStore {
   Future<void> _transactionTail = Future<void>.value();
   Completer<void>? _heldTransaction;
   Completer<void>? _releaseTransaction;

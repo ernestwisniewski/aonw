@@ -9,9 +9,12 @@ import 'package:aonw_server/src/multiplayer/multiplayer_match_store_limits.dart'
 import 'package:aonw_server/src/observability/server_operational_event_sink.dart';
 import 'package:test/test.dart';
 
+part 'lobby_presence_expiry_edge_cases.dart';
 part 'support/lobby_presence_lifecycle_test_support.dart';
 
 void main() {
+  _registerLobbyPresenceExpiryEdgeCases();
+
   test('broadcasts a public-lobby departure immediately', () async {
     final hub = RealtimeMatchHub();
     final store = _LobbyPresenceStore();

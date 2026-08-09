@@ -1,57 +1,40 @@
-part of '../realtime_match_hub_test.dart';
+import 'dart:async';
 
-void _registerRealtimeMatchHubConnectionScenarios() {
+import 'package:aonw_core/domain.dart';
+import 'package:aonw_core/protocol.dart';
+import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/initial_multiplayer_snapshot_factory.dart';
+import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
+import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_endpoint.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
+import 'package:test/test.dart';
+
+import '../realtime_match_hub_test.dart';
+
+const _startRunningMatch = startRunningMatchFixtureForTest;
+const _recordingOperationalEvents = recordingOperationalEventsForTest;
+const _multiplayerError = multiplayerErrorForTest;
+const _makeMovementVisibleToGuest = makeMovementVisibleToGuestForTest;
+const _expectGuestObservedMovement = expectGuestObservedMovementForTest;
+
+void registerRealtimeMatchHubConnectionScenarios() {
   test(
     'keeps a running match resumable when stream clients disconnect',
     () async {
-      final mapCatalog = _FakeMapCatalog(_testMap());
-      final hub = RealtimeMatchHub(
-        commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
-      );
       final logs = <String>[];
-      final store = _MemoryMatchStore(
+      final fixture = await _startRunningMatch(
+        'resumable-disconnect',
         operationalEvents: _recordingOperationalEvents(logs),
+        disconnectOwnerSetup: true,
+        disconnectGuestSetup: true,
       );
-      final openMatch = await hub.createMatch(
-        store: store,
-        userIdentifier: 'owner-user',
-        request: CreateMatchRequest(
-          name: 'Presence match',
-          mapName: 'verdantia',
-          maxPlayers: 2,
-          minPlayers: 2,
-          private: false,
-        ),
-      );
-      final setupOwner = await _connectTestParticipant(
-        hub: hub,
-        store: store,
-        userIdentifier: 'owner-user',
-        matchId: openMatch.id,
-      );
-      final joined = await hub.joinMatch(
-        store: store,
-        userIdentifier: 'guest-user',
-        matchId: openMatch.id,
-      );
-      final setupGuest = await _connectTestParticipant(
-        hub: hub,
-        store: store,
-        userIdentifier: 'guest-user',
-        matchId: joined.id,
-      );
-      final match = await hub.startMatch(
-        store: store,
-        userIdentifier: 'owner-user',
-        matchId: joined.id,
-        snapshotFactory: InitialMultiplayerSnapshotFactory(
-          mapCatalog: mapCatalog,
-        ),
-      );
-      await setupOwner.close();
-      await setupGuest.close();
+      final hub = fixture.hub;
+      final store = fixture.store;
+      final match = fixture.match;
       final owner = match.players.first;
       final guest = match.players.last;
+      final guestUserIdentifier = fixture.guestUserIdentifier;
 
       final ownerInput = StreamController<MultiplayerClientMessage>();
       final ownerInitial = Completer<void>();
@@ -96,7 +79,7 @@ void _registerRealtimeMatchHubConnectionScenarios() {
         final subscription = hub
             .connect(
               store: store,
-              userIdentifier: 'guest-user',
+              userIdentifier: guestUserIdentifier,
               matchId: match.id,
               afterOffset: 0,
               input: input.stream,
@@ -169,15 +152,15 @@ void _registerRealtimeMatchHubConnectionScenarios() {
         logs,
         contains('event=multiplayer_stream_disconnected match_id=${match.id}'),
       );
-      expect(logs.join(' '), isNot(contains('guest-user')));
-      expect(logs.join(' '), isNot(contains('owner-user')));
+      expect(logs.join(' '), isNot(contains(guestUserIdentifier)));
+      expect(logs.join(' '), isNot(contains(owner.userId)));
 
       final resumed = await hub.loadMatch(
         store: store,
-        userIdentifier: 'guest-user',
+        userIdentifier: guestUserIdentifier,
         matchId: match.id,
         snapshotFactory: InitialMultiplayerSnapshotFactory(
-          mapCatalog: mapCatalog,
+          mapCatalog: TestMapCatalog(testMap()),
         ),
       );
       expect(resumed.state, 'running');
@@ -273,9 +256,9 @@ void _registerRealtimeMatchHubConnectionScenarios() {
     await fixture.store.saveState(
       stored.copyWith(
         snapshot: stored.snapshot.copyWith(
-          state: canonicalState
-              .copyWith(playerGold: {owner.id: 111, guest.id: 999})
-              .toJson(),
+          state: CanonicalGameSnapshotCodec.encodeDomainState(
+            canonicalState.copyWith(playerGold: {owner.id: 111, guest.id: 999}),
+          ),
         ),
       ),
     );
@@ -331,47 +314,10 @@ void _registerRealtimeMatchHubConnectionScenarios() {
   });
 
   test('moves units through the authoritative server reducer', () async {
-    final mapCatalog = _FakeMapCatalog(_testMap());
-    final hub = RealtimeMatchHub(
-      commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
-    );
-    final store = _MemoryMatchStore();
-    final openMatch = await hub.createMatch(
-      store: store,
-      userIdentifier: 'owner-user',
-      request: CreateMatchRequest(
-        name: 'Test match',
-        mapName: 'myranth',
-        maxPlayers: 2,
-        minPlayers: 2,
-        private: false,
-      ),
-    );
-    await _connectTestParticipant(
-      hub: hub,
-      store: store,
-      userIdentifier: 'owner-user',
-      matchId: openMatch.id,
-    );
-    final joined = await hub.joinMatch(
-      store: store,
-      userIdentifier: 'guest-user',
-      matchId: openMatch.id,
-    );
-    await _connectTestParticipant(
-      hub: hub,
-      store: store,
-      userIdentifier: 'guest-user',
-      matchId: joined.id,
-    );
-    final match = await hub.startMatch(
-      store: store,
-      userIdentifier: 'owner-user',
-      matchId: joined.id,
-      snapshotFactory: InitialMultiplayerSnapshotFactory(
-        mapCatalog: mapCatalog,
-      ),
-    );
+    final fixture = await _startRunningMatch('authoritative-movement');
+    final hub = fixture.hub;
+    final store = fixture.store;
+    final match = fixture.match;
     final owner = match.players.first;
     final guest = match.players.last;
     final stored = (await store.findState(match.id))!;
@@ -403,7 +349,7 @@ void _registerRealtimeMatchHubConnectionScenarios() {
     final guestStream = hub
         .connect(
           store: store,
-          userIdentifier: 'guest-user',
+          userIdentifier: fixture.guestUserIdentifier,
           matchId: match.id,
           afterOffset: 0,
           input: guestInput.stream,

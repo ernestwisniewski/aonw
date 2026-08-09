@@ -8,6 +8,9 @@ TypeMatcher<MultiplayerException> _multiplayerError(String code) {
   );
 }
 
+TypeMatcher<MultiplayerException> multiplayerErrorForTest(String code) =>
+    _multiplayerError(code);
+
 ServerpodOperationalEventSink _recordingOperationalEvents(
   List<String> messages,
 ) {
@@ -20,19 +23,27 @@ ServerpodOperationalEventSink _recordingOperationalEvents(
   });
 }
 
+ServerpodOperationalEventSink recordingOperationalEventsForTest(
+  List<String> messages,
+) => _recordingOperationalEvents(messages);
+
 Future<_RunningMatchFixture> _startRunningMatch(
   String suffix, {
   ServerOperationalEventSink operationalEvents =
       const NoopServerOperationalEventSink(),
+  bool disconnectOwnerSetup = false,
+  bool disconnectGuestSetup = false,
 }) async {
-  final mapCatalog = _FakeMapCatalog(_testMap());
+  final ownerUserIdentifier = 'owner-user-$suffix';
+  final guestUserIdentifier = 'guest-user-$suffix';
+  final mapCatalog = TestMapCatalog(testMap());
   final hub = RealtimeMatchHub(
     commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
   );
-  final store = _MemoryMatchStore(operationalEvents: operationalEvents);
+  final store = TestMatchStore(operationalEvents: operationalEvents);
   final openMatch = await hub.createMatch(
     store: store,
-    userIdentifier: 'owner-user-$suffix',
+    userIdentifier: ownerUserIdentifier,
     request: CreateMatchRequest(
       name: 'Retry burst $suffix',
       mapName: 'verdantia',
@@ -41,30 +52,68 @@ Future<_RunningMatchFixture> _startRunningMatch(
       private: false,
     ),
   );
-  await _connectTestParticipant(
+  final ownerSetup = await _connectTestParticipant(
     hub: hub,
     store: store,
-    userIdentifier: 'owner-user-$suffix',
+    userIdentifier: ownerUserIdentifier,
     matchId: openMatch.id,
   );
   final joined = await hub.joinMatch(
     store: store,
-    userIdentifier: 'guest-user-$suffix',
+    userIdentifier: guestUserIdentifier,
     matchId: openMatch.id,
   );
-  await _connectTestParticipant(
+  final guestSetup = await _connectTestParticipant(
     hub: hub,
     store: store,
-    userIdentifier: 'guest-user-$suffix',
+    userIdentifier: guestUserIdentifier,
     matchId: joined.id,
   );
   final match = await hub.startMatch(
     store: store,
-    userIdentifier: 'owner-user-$suffix',
+    userIdentifier: ownerUserIdentifier,
     matchId: joined.id,
     snapshotFactory: InitialMultiplayerSnapshotFactory(mapCatalog: mapCatalog),
   );
-  return _RunningMatchFixture(hub: hub, store: store, match: match);
+  if (disconnectOwnerSetup) await ownerSetup.close();
+  if (disconnectGuestSetup) await guestSetup.close();
+  return _RunningMatchFixture(
+    hub: hub,
+    store: store,
+    match: match,
+    ownerUserIdentifier: ownerUserIdentifier,
+    guestUserIdentifier: guestUserIdentifier,
+  );
+}
+
+typedef RunningMatchFixtureView = ({
+  RealtimeMatchHub hub,
+  TestMatchStore store,
+  WireMatch match,
+  String ownerUserIdentifier,
+  String guestUserIdentifier,
+});
+
+Future<RunningMatchFixtureView> startRunningMatchFixtureForTest(
+  String suffix, {
+  ServerOperationalEventSink operationalEvents =
+      const NoopServerOperationalEventSink(),
+  bool disconnectOwnerSetup = false,
+  bool disconnectGuestSetup = false,
+}) async {
+  final fixture = await _startRunningMatch(
+    suffix,
+    operationalEvents: operationalEvents,
+    disconnectOwnerSetup: disconnectOwnerSetup,
+    disconnectGuestSetup: disconnectGuestSetup,
+  );
+  return (
+    hub: fixture.hub,
+    store: fixture.store,
+    match: fixture.match,
+    ownerUserIdentifier: fixture.ownerUserIdentifier,
+    guestUserIdentifier: fixture.guestUserIdentifier,
+  );
 }
 
 final class _RunningMatchFixture {
@@ -72,11 +121,15 @@ final class _RunningMatchFixture {
     required this.hub,
     required this.store,
     required this.match,
+    required this.ownerUserIdentifier,
+    required this.guestUserIdentifier,
   });
 
   final RealtimeMatchHub hub;
-  final _MemoryMatchStore store;
+  final TestMatchStore store;
   final WireMatch match;
+  final String ownerUserIdentifier;
+  final String guestUserIdentifier;
 }
 
 abstract class _MemoryPresenceMatchStore implements MultiplayerMatchStore {
@@ -210,8 +263,8 @@ abstract class _MemoryPresenceMatchStore implements MultiplayerMatchStore {
       '$matchId\u0000$userIdentifier';
 }
 
-class _MemoryMatchStore extends _MemoryPresenceMatchStore {
-  _MemoryMatchStore({
+class TestMatchStore extends _MemoryPresenceMatchStore {
+  TestMatchStore({
     this.operationalEvents = const NoopServerOperationalEventSink(),
   });
 

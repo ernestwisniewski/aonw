@@ -1,4 +1,4 @@
-part of 'hud_action_deck.dart';
+part of 'hud_action_deck_combat_forecast.dart';
 
 const _combatHpRoleAlpha = 230;
 const _combatHpLossAlpha = 230;

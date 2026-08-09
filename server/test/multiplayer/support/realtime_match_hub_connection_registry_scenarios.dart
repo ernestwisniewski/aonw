@@ -1,6 +1,19 @@
-part of '../realtime_match_hub_test.dart';
+import 'dart:async';
 
-void _registerRealtimeMatchHubConnectionRegistryScenarios() {
+import 'package:aonw_server/src/generated/protocol.dart';
+import 'package:aonw_server/src/multiplayer/match_broadcaster.dart';
+import 'package:aonw_server/src/multiplayer/match_connection_registry.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
+import 'package:aonw_server/src/observability/server_operational_event_sink.dart';
+import 'package:test/test.dart';
+
+import '../realtime_match_hub_test.dart';
+
+const _startRunningMatch = startRunningMatchFixtureForTest;
+const _multiplayerError = multiplayerErrorForTest;
+
+void registerRealtimeMatchHubConnectionRegistryScenarios() {
   test(
     'does not apply a late disconnect after a newer connection registers',
     () async {

@@ -7,7 +7,9 @@ void main() {
       final worker = _worker(col: 1, movementPoints: 2);
       final state = _state(
         units: [worker],
-        cities: [_city(centerCol: 0, controlledCols: const [1])],
+        cities: [
+          _city(centerCol: 0, controlledCols: const [1]),
+        ],
       );
 
       final result = _resolve(state);
@@ -33,7 +35,9 @@ void main() {
       final worker = _worker(col: 4, movementPoints: 1);
       final state = _state(
         units: [worker],
-        cities: [_city(centerCol: 0, controlledCols: const [1])],
+        cities: [
+          _city(centerCol: 0, controlledCols: const [1]),
+        ],
       );
 
       final result = _resolve(state);
@@ -51,7 +55,9 @@ void main() {
       final worker = _worker(col: 3, movementPoints: 1);
       final state = _state(
         units: [worker],
-        cities: [_city(centerCol: 4, controlledCols: const [0, 2])],
+        cities: [
+          _city(centerCol: 4, controlledCols: const [0, 2]),
+        ],
         improvements: const [
           FieldImprovement(
             hex: CityHex(col: 2, row: 0),
@@ -74,7 +80,9 @@ void main() {
       final worker = _worker(col: 1, movementPoints: 2);
       final state = _state(
         units: [worker],
-        cities: [_city(centerCol: 0, controlledCols: const [1])],
+        cities: [
+          _city(centerCol: 0, controlledCols: const [1]),
+        ],
         improvements: const [
           FieldImprovement(
             hex: CityHex(col: 1, row: 0),
@@ -116,12 +124,15 @@ void main() {
           UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
         ],
       );
-      final worker = _worker(col: 2, movementPoints: 2)
-          .copyWithPosture(UnitPosture.autoWorking)
-          .copyWithQueuedPath(queued);
+      final worker = _worker(
+        col: 2,
+        movementPoints: 2,
+      ).copyWithPosture(UnitPosture.autoWorking).copyWithQueuedPath(queued);
       final state = _state(
         units: [worker],
-        cities: [_city(centerCol: 0, controlledCols: const [1])],
+        cities: [
+          _city(centerCol: 0, controlledCols: const [1]),
+        ],
       );
 
       final result = _resolve(
@@ -152,7 +163,9 @@ void main() {
       final second = _worker(id: 'worker_2', col: 4, movementPoints: 1);
       final state = _state(
         units: [first, second],
-        cities: [_city(centerCol: 0, controlledCols: const [1, 2])],
+        cities: [
+          _city(centerCol: 0, controlledCols: const [1, 2]),
+        ],
       );
 
       final result = _resolve(state, unitId: second.id);
@@ -162,51 +175,56 @@ void main() {
     });
   });
 
-  test('turn movement continues automatic travel and starts work on arrival', () {
-    final initialPath = QueuedMovePath(
-      targetCol: 1,
-      targetRow: 0,
-      steps: const [
-        UnitMovementStep(col: 4, row: 0, enterCost: 0, cumulativeCost: 0),
-        UnitMovementStep(col: 3, row: 0, enterCost: 1, cumulativeCost: 1),
-        UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
-        UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 3),
-      ],
-    );
-    final worker = _worker(col: 4, movementPoints: 0)
-        .copyWithPosture(UnitPosture.autoWorking)
-        .copyWithQueuedPath(initialPath);
-    final state = _state(
-      units: [worker],
-      cities: [_city(centerCol: 0, controlledCols: const [1])],
-    );
+  test(
+    'turn movement continues automatic travel and starts work on arrival',
+    () {
+      final initialPath = QueuedMovePath(
+        targetCol: 1,
+        targetRow: 0,
+        steps: const [
+          UnitMovementStep(col: 4, row: 0, enterCost: 0, cumulativeCost: 0),
+          UnitMovementStep(col: 3, row: 0, enterCost: 1, cumulativeCost: 1),
+          UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
+          UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 3),
+        ],
+      );
+      final worker = _worker(col: 4, movementPoints: 0)
+          .copyWithPosture(UnitPosture.autoWorking)
+          .copyWithQueuedPath(initialPath);
+      final state = _state(
+        units: [worker],
+        cities: [
+          _city(centerCol: 0, controlledCols: const [1]),
+        ],
+      );
 
-    final first = DomainTurnMovementProcessor.resetForPlayers(
-      state: state,
-      playerIds: const ['player_1'],
-      mapData: _map(),
-    );
-    final travelling = first.state.units.single;
+      final first = DomainTurnMovementProcessor.resetForPlayers(
+        state: state,
+        playerIds: const ['player_1'],
+        mapData: _map(),
+      );
+      final travelling = first.state.units.single;
 
-    expect(first.executions, hasLength(1));
-    expect(travelling.col, 1);
-    expect(travelling.posture, UnitPosture.autoWorking);
-    expect(travelling.queuedPath, isNull);
-    expect(travelling.movementPoints, 0);
-    expect(travelling.workerJob, isNull);
+      expect(first.executions, hasLength(1));
+      expect(travelling.col, 1);
+      expect(travelling.posture, UnitPosture.autoWorking);
+      expect(travelling.queuedPath, isNull);
+      expect(travelling.movementPoints, 0);
+      expect(travelling.workerJob, isNull);
 
-    final second = DomainTurnMovementProcessor.resetForPlayers(
-      state: first.state,
-      playerIds: const ['player_1'],
-      mapData: _map(),
-    );
-    final working = second.state.units.single;
+      final second = DomainTurnMovementProcessor.resetForPlayers(
+        state: first.state,
+        playerIds: const ['player_1'],
+        mapData: _map(),
+      );
+      final working = second.state.units.single;
 
-    expect(working.col, 1);
-    expect(working.workerJob, isNotNull);
-    expect(working.posture, UnitPosture.active);
-    expect(working.queuedPath, isNull);
-  });
+      expect(working.col, 1);
+      expect(working.workerJob, isNotNull);
+      expect(working.posture, UnitPosture.active);
+      expect(working.queuedPath, isNull);
+    },
+  );
 }
 
 DomainWorkerAutomationCommandResult _resolve(
@@ -262,10 +280,7 @@ GameUnit _worker({
   );
 }
 
-GameCity _city({
-  required int centerCol,
-  required List<int> controlledCols,
-}) {
+GameCity _city({required int centerCol, required List<int> controlledCols}) {
   return GameCity.snapshot(
     id: 'city_1',
     ownerPlayerId: 'player_1',

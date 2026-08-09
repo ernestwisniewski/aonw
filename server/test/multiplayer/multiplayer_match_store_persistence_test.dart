@@ -165,13 +165,18 @@ void main() {
       final database = FakeMultiplayerDatabase()
         ..queueFindFirst<GameMatch>(matchStoreRow())
         ..queueFind<GamePlayer>([matchStorePlayerRow()])
-        ..queueFindFirst<GameSnapshot>(matchStoreSnapshotRow());
+        ..queueFindFirst<GameSnapshot>(matchStoreSnapshotRow())
+        ..queueFind<GameMatchPresenceLease>([matchStorePresenceLeaseRow()]);
       final store = ServerpodMultiplayerMatchStore(FakeSession(database));
 
       final state = await store.findState('match-1');
 
       expect(state?.match.players.single.id, 'player-1');
       expect(state?.snapshot.offset, 4);
+      expect(
+        state?.presenceLeases['user-1']?.connectionGeneration,
+        'generation-1',
+      );
     });
 
     test('returns null when a private match does not exist', () async {

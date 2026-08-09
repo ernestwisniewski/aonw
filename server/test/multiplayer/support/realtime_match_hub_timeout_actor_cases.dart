@@ -228,15 +228,15 @@ void _registerRealtimeMatchHubTimeoutActorTests() {
 }
 
 Future<_TimeoutActorFixture> _createTimeoutActorFixture(String suffix) async {
-  final mapCatalog = _FakeMapCatalog(_testMap());
+  final mapCatalog = TestMapCatalog(testMap());
   final reducer = _CapturingTimeoutActorReducer(
     mapCatalog: mapCatalog,
     turnTimeout: const Duration(seconds: 10),
   );
   final now = DateTime.utc(2026, 7, 21, 12);
   final hub = RealtimeMatchHub(commandReducer: reducer, nowUtc: () => now);
-  final store = _MemoryMatchStore();
-  final started = await _startRunningMatchInStore(
+  final store = TestMatchStore();
+  final started = await startRunningTestMatch(
     hub: hub,
     store: store,
     suffix: 'timeout-actor-$suffix',
@@ -286,7 +286,7 @@ final class _TimeoutActorFixture {
   });
 
   final RealtimeMatchHub hub;
-  final _MemoryMatchStore store;
+  final TestMatchStore store;
   final _CapturingTimeoutActorReducer reducer;
   final StoredMatchState stored;
   final GameSave save;

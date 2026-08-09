@@ -1,23 +1,70 @@
 part of '../realtime_match_hub_test.dart';
 
-final class _TestMatchConnection {
+abstract interface class TestMatchConnectionView {
+  StreamController<MultiplayerClientMessage> get input;
+  Stream<MultiplayerServerMessage> get stream;
+  MultiplayerServerMessage get initialMessage;
+  Future<void> close();
+}
+
+final class _TestMatchConnection implements TestMatchConnectionView {
   _TestMatchConnection({
     required this.input,
     required this.stream,
     required this.initialMessage,
   });
 
+  @override
   final StreamController<MultiplayerClientMessage> input;
+  @override
   final Stream<MultiplayerServerMessage> stream;
+  @override
   final MultiplayerServerMessage initialMessage;
   var _closed = false;
 
+  @override
   Future<void> close() async {
     if (_closed) return;
     _closed = true;
     await input.close();
   }
 }
+
+Future<TestMatchConnectionView> connectTestParticipantForTest({
+  required RealtimeMatchHub hub,
+  required MultiplayerMatchStore store,
+  required String userIdentifier,
+  required String matchId,
+  int afterOffset = 0,
+}) {
+  return _connectTestParticipant(
+    hub: hub,
+    store: store,
+    userIdentifier: userIdentifier,
+    matchId: matchId,
+    afterOffset: afterOffset,
+  );
+}
+
+Future<WorldTile> makeMovementVisibleToGuestForTest({
+  required TestMatchStore store,
+  required StoredMatchState stored,
+  required DomainState state,
+  required GameUnit ownerUnit,
+  required String guestId,
+}) => _makeMovementVisibleToGuest(
+  store: store,
+  stored: stored,
+  state: state,
+  ownerUnit: ownerUnit,
+  guestId: guestId,
+);
+
+void expectGuestObservedMovementForTest(
+  MultiplayerServerMessage message,
+  GameUnit ownerUnit,
+  WorldTile target,
+) => _expectGuestObservedMovement(message, ownerUnit, target);
 
 Future<_TestMatchConnection> _connectTestParticipant({
   required RealtimeMatchHub hub,
@@ -51,7 +98,7 @@ extension _DomainStateTestJson on DomainState {
       CanonicalGameSnapshotCodec.encodeDomainState(this);
 }
 
-final class _CreateConflictOnceMatchStore extends _MemoryMatchStore {
+final class _CreateConflictOnceMatchStore extends TestMatchStore {
   var _conflictPending = true;
 
   @override
@@ -94,8 +141,8 @@ int _compareTestMatchesNewestFirst(WireMatch first, WireMatch second) {
   return second.id.compareTo(first.id);
 }
 
-class _FakeMapCatalog implements MultiplayerMapCatalog {
-  const _FakeMapCatalog(this.mapData);
+class TestMapCatalog implements MultiplayerMapCatalog {
+  const TestMapCatalog(this.mapData);
 
   final WorldMap mapData;
 
@@ -103,13 +150,13 @@ class _FakeMapCatalog implements MultiplayerMapCatalog {
   Future<WorldMap> loadAssetMap(String mapName) async => mapData;
 }
 
-WorldMap _testMap() => _realtimeMatchHubFixtureMap();
+WorldMap testMap() => _realtimeMatchHubFixtureMap();
 
-Future<WireMatch> _startRunningMatchInStore({
+Future<WireMatch> startRunningTestMatch({
   required RealtimeMatchHub hub,
-  required _MemoryMatchStore store,
+  required TestMatchStore store,
   required String suffix,
-  required _FakeMapCatalog mapCatalog,
+  required TestMapCatalog mapCatalog,
 }) async {
   final openMatch = await hub.createMatch(
     store: store,

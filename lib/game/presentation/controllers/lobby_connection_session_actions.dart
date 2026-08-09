@@ -1,11 +1,17 @@
-part of 'lobby_connection_controller.dart';
+import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
+import 'package:aonw/game/application/ports/network_session_store.dart';
+import 'package:aonw/game/presentation/controllers/lobby_connection_controller.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_network_session_coordinator.dart';
+import 'package:aonw_core/protocol.dart';
 
 extension LobbyConnectionSessionActions on LobbyConnectionController {
   Future<bool> signOut() async {
     final session = currentSession();
-    final activeMatch = _activeMatch;
+    final activeMatch = this.activeMatch;
     await _leaveOpenLobbyBeforeSignOut(session: session, match: activeMatch);
-    await _stopLobbyUpdatesAndWait();
+    await stopLobbyUpdatesAndWaitInternal();
     final signOutError = await _revokeAndTerminateSession(session);
     setSession(null);
     return _completeSignOut(activeMatch: activeMatch, error: signOutError);
@@ -65,14 +71,18 @@ extension LobbyConnectionSessionActions on LobbyConnectionController {
     required WireMatch? activeMatch,
     required Object? error,
   }) {
-    if (!_canContinue()) return error == null;
+    if (!canContinueInternal()) return error == null;
     if (activeMatch != null) {
       invalidatePublishedMatch?.call(activeMatch.id);
     }
-    _setState(error: null, activeMatch: null, mode: LobbyMultiplayerMode.home);
-    _setPublicMatches(const [], loaded: false);
+    setStateInternal(
+      error: null,
+      activeMatch: null,
+      mode: LobbyMultiplayerMode.home,
+    );
+    setPublicMatchesInternal(const [], loaded: false);
     if (error != null) {
-      _showNetworkError(error);
+      showNetworkErrorInternal(error);
       return false;
     }
     return true;
@@ -95,15 +105,15 @@ extension LobbyConnectionSessionActions on LobbyConnectionController {
     }
   }
 
-  Future<NetworkSession> _ensureNetworkSession() async {
+  Future<NetworkSession> ensureNetworkSessionInternal() async {
     final storedDisplayName = await sessionStore.loadDisplayName();
     try {
-      return await _networkSessionCoordinator().ensureSession(
+      return await networkSessionCoordinatorInternal().ensureSession(
         displayName: storedDisplayName,
       );
     } on NetworkSignInRequiredException {
       final auth = await authenticate(initialDisplayName: displayName());
-      if (auth == null) throw const _LobbyNetworkAuthCancelledException();
+      if (auth == null) throw const LobbyNetworkAuthCancelledException();
       final session = auth.toSession(changedAt: now());
       final activate = activateAuthenticatedSession;
       if (activate != null) {

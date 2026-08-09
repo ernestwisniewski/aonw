@@ -121,7 +121,7 @@ class NetworkGameRepository implements GameRepository {
   GameSaveIndex _indexFromMatch(WireMatch match) {
     return GameSaveIndex(
       id: match.id,
-      name: match.name,
+      name: MultiplayerSaveName.fromMatchName(match.name),
       mapName: match.mapName,
       mapSource: MapSource.asset,
       turn: match.turn,
@@ -134,7 +134,9 @@ class NetworkGameRepository implements GameRepository {
   Future<Snapshot?> _loadNetworkSnapshot(String saveId) async {
     try {
       final wire = await _backend().loadSnapshot(saveId);
-      final state = snapshotCodec.fromWire(wire);
+      final state = _withCanonicalMultiplayerSaveName(
+        snapshotCodec.fromWire(wire),
+      );
       final snapshot = Snapshot(state: state, createdAt: state.save.savedAt);
       await _saveCachedSnapshot(saveId, snapshot);
       return snapshot;
@@ -144,9 +146,23 @@ class NetworkGameRepository implements GameRepository {
       }
       if (!_canReadCachedSnapshot(error)) rethrow;
       final cached = await snapshotCache?.latest(_cacheKey(saveId));
-      if (cached != null) return cached;
+      if (cached != null) return _withCanonicalMultiplayerSnapshotName(cached);
       rethrow;
     }
+  }
+
+  CanonicalGameSnapshot _withCanonicalMultiplayerSaveName(
+    CanonicalGameSnapshot state,
+  ) {
+    final name = MultiplayerSaveName.fromMatchName(state.metadata.name);
+    if (name == state.metadata.name) return state;
+    return state.copyWith(metadata: state.metadata.copyWith(name: name));
+  }
+
+  Snapshot _withCanonicalMultiplayerSnapshotName(Snapshot snapshot) {
+    final state = _withCanonicalMultiplayerSaveName(snapshot.state);
+    if (identical(state, snapshot.state)) return snapshot;
+    return Snapshot(state: state, createdAt: snapshot.createdAt);
   }
 
   Future<void> _saveCachedSnapshot(String saveId, Snapshot snapshot) async {

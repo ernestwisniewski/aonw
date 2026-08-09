@@ -3,14 +3,14 @@ part of '../realtime_match_hub_test.dart';
 const _turnMovementClientMessageId = 'turn-movement-final-submit';
 
 Future<WorldTile> _makeMovementVisibleToGuest({
-  required _MemoryMatchStore store,
+  required TestMatchStore store,
   required StoredMatchState stored,
   required DomainState state,
   required GameUnit ownerUnit,
   required String guestId,
 }) async {
   final occupied = {for (final unit in state.units) '${unit.col}:${unit.row}'};
-  final target = _testMap().tiles.firstWhere(
+  final target = testMap().tiles.firstWhere(
     (tile) =>
         !occupied.contains('${tile.col}:${tile.row}') &&
         (tile.col - ownerUnit.col).abs() <= 1 &&
@@ -18,7 +18,7 @@ Future<WorldTile> _makeMovementVisibleToGuest({
         (tile.col != ownerUnit.col || tile.row != ownerUnit.row),
   );
   final plan = UnitMovementPathfinder(
-    mapData: _testMap(),
+    mapData: testMap(),
     units: state.units,
   ).plan(unit: ownerUnit, targetTile: target);
   if (plan == null) {
@@ -262,12 +262,12 @@ Future<_TurnMovementFixture> _startTurnMovementFixture({
   Duration? turnTimeout,
   bool observerSeesOwnerPathBefore = false,
 }) async {
-  final mapCatalog = _FakeMapCatalog(_turnMovementMap());
+  final mapCatalog = TestMapCatalog(_turnMovementMap());
   final commandReducer = turnTimeout == null
       ? ServerCommandReducer(mapCatalog: mapCatalog)
       : ServerCommandReducer(mapCatalog: mapCatalog, turnTimeout: turnTimeout);
   final hub = RealtimeMatchHub(commandReducer: commandReducer);
-  final store = _MemoryMatchStore();
+  final store = TestMatchStore();
   final open = await hub.createMatch(
     store: store,
     userIdentifier: 'turn-movement-owner',

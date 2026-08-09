@@ -43,7 +43,9 @@ void main() {
     expect(
       tracker.hasExpired(
         state,
-        nowUtc: activityAt.add(const Duration(days: 7, seconds: -1)),
+        nowUtc: activityAt.add(
+          const Duration(hours: 11, minutes: 59, seconds: 59),
+        ),
         timeout: defaultMultiplayerMatchInactivityTimeout,
       ),
       isFalse,

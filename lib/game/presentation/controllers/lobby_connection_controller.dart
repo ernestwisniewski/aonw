@@ -6,21 +6,23 @@ import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
 import 'package:aonw/game/application/ports/network_connection.dart';
 import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/ports/network_session_store.dart';
+import 'package:aonw/game/presentation/controllers/lobby_connection_public_actions.dart';
+import 'package:aonw/game/presentation/controllers/lobby_connection_session_actions.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_auto_start_coordinator.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_live_match_coordinator.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_action_coordinator.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_navigation_coordinator.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_network_session_coordinator.dart';
-import 'package:aonw/game/presentation/screens/lobby/lobby_public_match_refresh_coordinator.dart';
 import 'package:aonw_core/game/domain/map_validation.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:flutter/foundation.dart';
 
-part 'lobby_connection_public_actions.dart';
-part 'lobby_connection_session_actions.dart';
+export 'lobby_connection_public_actions.dart';
+export 'lobby_connection_session_actions.dart';
+
 part 'lobby_connection_match_state.dart';
 
 enum LobbyMultiplayerMode {
@@ -92,7 +94,7 @@ final class LobbyConnectionController extends ChangeNotifier {
   final LobbyConnectionRouter navigateTo;
   final LobbyValidSessionEnsurer? ensureValidSession;
 
-  late final LobbyAutoStartCoordinator _autoStartCoordinator;
+  late final LobbyAutoStartCoordinator internalAutoStartCoordinator;
   late final LobbyLiveMatchCoordinator _liveMatchCoordinator;
   late final LobbyMatchNavigationCoordinator _matchNavigationCoordinator;
 
@@ -100,9 +102,9 @@ final class LobbyConnectionController extends ChangeNotifier {
   bool _busy = false;
   String? _error;
   WireMatch? _activeMatch;
-  List<WireMatch> _publicMatches = const [];
-  bool _publicMatchesLoaded = false;
-  int _publicRefreshGeneration = 0;
+  List<WireMatch> internalPublicMatches = const [];
+  bool internalPublicMatchesLoaded = false;
+  int internalPublicRefreshGeneration = 0;
   final Set<String> _unavailableMatchIds = <String>{};
   bool _disposed = false;
 
@@ -135,17 +137,17 @@ final class LobbyConnectionController extends ChangeNotifier {
     required this.navigateTo,
     this.ensureValidSession,
   }) {
-    _autoStartCoordinator = LobbyAutoStartCoordinator(
+    internalAutoStartCoordinator = LobbyAutoStartCoordinator(
       now: now,
       isQuickplayMode: () => _mode == LobbyMultiplayerMode.quickplay,
       activeMatch: () => _activeMatch,
-      canContinue: _canContinue,
+      canContinue: canContinueInternal,
       refreshActiveMatch: () => unawaited(refreshActiveMatch()),
-      notifyCountdownChanged: _notifyStateChanged,
+      notifyCountdownChanged: notifyStateChangedInternal,
     );
     _liveMatchCoordinator = LobbyLiveMatchCoordinator(
       activeMatch: () => _activeMatch,
-      canContinue: _canContinue,
+      canContinue: canContinueInternal,
       subscribe: _subscribeLobbyMatch,
       applyMatchUpdate: _applyLobbyMatchUpdateNow,
       showError: _handleLobbyStreamError,
@@ -154,9 +156,9 @@ final class LobbyConnectionController extends ChangeNotifier {
     );
     _matchNavigationCoordinator = LobbyMatchNavigationCoordinator(
       activeMatch: () => _activeMatch,
-      canContinue: _canContinue,
+      canContinue: canContinueInternal,
       sessionForMatch: ({required session, required match}) {
-        return _networkSessionCoordinator().sessionForMatch(
+        return networkSessionCoordinatorInternal().sessionForMatch(
           session: session,
           match: match,
         );
@@ -196,7 +198,7 @@ final class LobbyConnectionController extends ChangeNotifier {
   Future<void> startQuickplayQueue() async {
     if (_busy) return;
     stopLobbyUpdates();
-    _setMode(LobbyMultiplayerMode.quickplay);
+    setModeInternal(LobbyMultiplayerMode.quickplay);
     await _joinQuickplayQueue();
   }
 
@@ -207,28 +209,30 @@ final class LobbyConnectionController extends ChangeNotifier {
 
   Future<void> cancelQuickplayQueue() async {
     var leftQueue = false;
-    await _runNetworkAction(() async {
-      await _matchActionCoordinator().cancelQuickplay(
+    await runNetworkActionInternal(() async {
+      await matchActionCoordinatorInternal().cancelQuickplay(
         activeMatch: _activeMatch,
       );
       leftQueue = true;
     });
-    if (!leftQueue || !_canContinue()) return;
-    _setMode(LobbyMultiplayerMode.home);
+    if (!leftQueue || !canContinueInternal()) return;
+    setModeInternal(LobbyMultiplayerMode.home);
   }
 
   Future<void> createPrivateMatch() async {
     stopLobbyUpdates();
-    await _runNetworkAction(() async {
-      await _matchActionCoordinator().createPrivate(_matchActionConfig());
-      if (!_canContinue() || _activeMatch == null) return;
-      _setMode(LobbyMultiplayerMode.privateHost);
+    await runNetworkActionInternal(() async {
+      await matchActionCoordinatorInternal().createPrivate(
+        matchActionConfigInternal(),
+      );
+      if (!canContinueInternal() || _activeMatch == null) return;
+      setModeInternal(LobbyMultiplayerMode.privateHost);
     });
   }
 
   void openJoinPrivateMatch() {
     stopLobbyUpdates();
-    _setState(
+    setStateInternal(
       error: null,
       activeMatch: null,
       mode: LobbyMultiplayerMode.privateJoin,
@@ -236,28 +240,28 @@ final class LobbyConnectionController extends ChangeNotifier {
   }
 
   Future<void> joinPrivateMatch({required String inviteCode}) async {
-    await _runNetworkAction(() async {
-      await _matchActionCoordinator().joinPrivate(
+    await runNetworkActionInternal(() async {
+      await matchActionCoordinatorInternal().joinPrivate(
         inviteCode: inviteCode,
         inviteCodeRequiredMessage: inviteCodeRequiredMessage(),
-        config: _matchActionConfig(),
+        config: matchActionConfigInternal(),
       );
-      if (!_canContinue() || _activeMatch == null) return;
-      _setMode(LobbyMultiplayerMode.privateJoin);
+      if (!canContinueInternal() || _activeMatch == null) return;
+      setModeInternal(LobbyMultiplayerMode.privateJoin);
     });
   }
 
   Future<void> startPrivateMatch() async {
-    await _runNetworkAction(() async {
-      await _matchActionCoordinator().startHostedMatch(
+    await runNetworkActionInternal(() async {
+      await matchActionCoordinatorInternal().startHostedMatch(
         activeMatch: _activeMatch,
       );
     });
   }
 
   Future<void> startPublicMatch() async {
-    await _runNetworkAction(() async {
-      await _matchActionCoordinator().startHostedMatch(
+    await runNetworkActionInternal(() async {
+      await matchActionCoordinatorInternal().startHostedMatch(
         activeMatch: _activeMatch,
       );
     });
@@ -268,51 +272,59 @@ final class LobbyConnectionController extends ChangeNotifier {
     final matchId = _activeMatch?.id;
     if (matchId == null) return;
     try {
-      await _matchActionCoordinator().refreshActiveMatch(matchId: matchId);
-      if (!_canContinue()) return;
+      await matchActionCoordinatorInternal().refreshActiveMatch(
+        matchId: matchId,
+      );
+      if (!canContinueInternal()) return;
       _setError(null);
     } catch (error) {
-      if (!_canContinue()) return;
-      _showNetworkError(error);
+      if (!canContinueInternal()) return;
+      showNetworkErrorInternal(error);
     }
   }
 
   void returnHome() {
     stopLobbyUpdates();
-    _setState(error: null, activeMatch: null, mode: LobbyMultiplayerMode.home);
-    _setPublicMatches(const [], loaded: false);
+    setStateInternal(
+      error: null,
+      activeMatch: null,
+      mode: LobbyMultiplayerMode.home,
+    );
+    setPublicMatchesInternal(const [], loaded: false);
   }
 
   void stopLobbyUpdates() {
-    unawaited(_stopLobbyUpdatesAndWait());
+    unawaited(stopLobbyUpdatesAndWaitInternal());
   }
 
-  Future<void> _stopLobbyUpdatesAndWait() async {
-    _stopLobbyUpdateCoordinators(this);
+  Future<void> stopLobbyUpdatesAndWaitInternal() async {
+    stopLobbyUpdateCoordinatorsInternal(this);
     await _liveMatchCoordinator.close();
   }
 
   Future<void> _joinQuickplayQueue() async {
-    await _runNetworkAction(() async {
-      await _matchActionCoordinator().joinQuickplay(_matchActionConfig());
+    await runNetworkActionInternal(() async {
+      await matchActionCoordinatorInternal().joinQuickplay(
+        matchActionConfigInternal(),
+      );
     });
   }
 
-  Future<void> _runNetworkAction(Future<void> Function() action) async {
+  Future<void> runNetworkActionInternal(Future<void> Function() action) async {
     if (_busy) return;
-    _setState(busy: true, error: null);
+    setStateInternal(busy: true, error: null);
     try {
       await action();
     } catch (error) {
-      if (error is _LobbyNetworkAuthCancelledException) return;
-      if (!_canContinue()) return;
-      _showNetworkError(error);
+      if (error is LobbyNetworkAuthCancelledException) return;
+      if (!canContinueInternal()) return;
+      showNetworkErrorInternal(error);
     } finally {
-      if (_canContinue()) _setBusy(false);
+      if (canContinueInternal()) _setBusy(false);
     }
   }
 
-  void _showNetworkError(Object error) {
+  void showNetworkErrorInternal(Object error) {
     final message = errorTextFor(error);
     _setError(message);
     presentError(message);
@@ -327,7 +339,7 @@ final class LobbyConnectionController extends ChangeNotifier {
     return match == null || LobbyMatchStatusRules.canEnter(match);
   }
 
-  void _setState({
+  void setStateInternal({
     LobbyMultiplayerMode? mode,
     bool? busy,
     Object? error = _unchanged,
@@ -350,41 +362,42 @@ final class LobbyConnectionController extends ChangeNotifier {
       _activeMatch = activeMatch as WireMatch?;
       changed = true;
     }
-    if (changed) _notifyStateChanged();
+    if (changed) notifyStateChangedInternal();
   }
 
-  void _setMode(LobbyMultiplayerMode mode) => _setState(mode: mode);
+  void setModeInternal(LobbyMultiplayerMode mode) =>
+      setStateInternal(mode: mode);
 
   void _setBusy(bool busy) {
-    _setState(busy: busy);
+    setStateInternal(busy: busy);
   }
 
   void _setError(String? error) {
-    _setState(error: error);
+    setStateInternal(error: error);
   }
 
   void _setActiveMatch(WireMatch? match) {
-    _setState(activeMatch: match);
+    setStateInternal(activeMatch: match);
   }
 
-  void _notifyStateChanged() {
-    if (!_canContinue()) return;
+  void notifyStateChangedInternal() {
+    if (!canContinueInternal()) return;
     notifyListeners();
   }
 
-  bool _canContinue() => !_disposed && canContinue();
+  bool canContinueInternal() => !_disposed && canContinue();
 
   @override
   void dispose() {
     _disposed = true;
-    _stopLobbyUpdateCoordinators(this);
+    stopLobbyUpdateCoordinatorsInternal(this);
     unawaited(_liveMatchCoordinator.close());
     super.dispose();
   }
 }
 
-final class _LobbyNetworkAuthCancelledException implements Exception {
-  const _LobbyNetworkAuthCancelledException();
+final class LobbyNetworkAuthCancelledException implements Exception {
+  const LobbyNetworkAuthCancelledException();
 }
 
 const Object _unchanged = Object();

@@ -47,7 +47,7 @@ class _CombatConfirmationDialog extends StatelessWidget {
             children: [
               Text(l10n.combatPreviewConfirmBody, style: GameUiTheme.bodySmall),
               const SizedBox(height: 12),
-              _CombatOutcomeForecast(
+              CombatOutcomeForecast(
                 preview: preview,
                 compact: compact,
                 attackerName: attackerName,

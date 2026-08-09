@@ -1,6 +1,12 @@
-part of '../game_providers_test.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
+import 'package:aonw/game/application/ports/network_session.dart' as api;
+import 'package:aonw/game/infrastructure/persistence/json_game_repository.dart';
+import 'package:aonw/game/presentation/providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-void _registerGameRepositoryProviderScenarios() {
+void registerGameRepositoryProviderScenarios() {
   group('gameRepositoryProvider', () {
     test('uses JSON repository by default', () {
       final container = ProviderContainer();

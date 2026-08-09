@@ -4,11 +4,11 @@ void _registerRealtimeMatchHubLifecycleScenarios() {
   test(
     'leaveMatch keeps a running match resumable while another player is active',
     () async {
-      final mapCatalog = _FakeMapCatalog(_testMap());
+      final mapCatalog = TestMapCatalog(testMap());
       final hub = RealtimeMatchHub(
         commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
       );
-      final store = _MemoryMatchStore();
+      final store = TestMatchStore();
       final match = await hub.createMatch(
         store: store,
         userIdentifier: 'owner-user',
@@ -84,11 +84,11 @@ void _registerRealtimeMatchHubLifecycleScenarios() {
   test(
     'leaveMatch keeps a fully offline running match resumable until expiry',
     () async {
-      final mapCatalog = _FakeMapCatalog(_testMap());
+      final mapCatalog = TestMapCatalog(testMap());
       final hub = RealtimeMatchHub(
         commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
       );
-      final store = _MemoryMatchStore();
+      final store = TestMatchStore();
       final match = await hub.createMatch(
         store: store,
         userIdentifier: 'owner-user',

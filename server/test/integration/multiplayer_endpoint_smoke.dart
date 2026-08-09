@@ -14,12 +14,17 @@ import 'package:test/test.dart';
 import 'test_tools/serverpod_test_tools.dart';
 
 part 'support/multiplayer_endpoint_movement_smoke_cases.dart';
+part 'support/multiplayer_endpoint_quickplay_smoke_cases.dart';
 
 void main() {
   withServerpod(
     'MultiplayerEndpoint',
     (sessionBuilder, endpoints) {
       _registerMultiplayerEndpointMovementSmokeTests(sessionBuilder, endpoints);
+      _registerMultiplayerEndpointQuickplaySmokeTests(
+        sessionBuilder,
+        endpoints,
+      );
 
       test('rejects unauthenticated Serverpod calls', () async {
         await expectLater(
@@ -118,20 +123,12 @@ void main() {
             private: false,
           ),
         );
-        await _connectParticipant(
-          endpoints,
-          session: owner.session,
-          matchId: created.id,
-        );
+        await _connectParticipant(endpoints, owner.session, created.id);
         final joined = await endpoints.multiplayer.joinMatch(
           guest.session,
           created.id,
         );
-        await _connectParticipant(
-          endpoints,
-          session: guest.session,
-          matchId: joined.id,
-        );
+        await _connectParticipant(endpoints, guest.session, joined.id);
 
         final databaseSession = sessionBuilder.build();
         final persistedMatch = await GameMatch.db.findFirstRow(
@@ -460,18 +457,9 @@ WHERE "matchId" = @matchId
           owner.session,
           request,
         );
-        expect(created.ownerUserId, owner.userIdentifier);
-        expect(created.players.map((player) => player.userId), [
-          owner.userIdentifier,
-        ]);
-        expect(created.players.map((player) => player.name), ['Owner Nick']);
-        expect(created.state, 'open');
+        _expectCreatedEndpointMatch(created, owner);
         final ownerPublicId = created.players.single.id;
-        await _connectParticipant(
-          endpoints,
-          session: owner.session,
-          matchId: created.id,
-        );
+        await _connectParticipant(endpoints, owner.session, created.id);
 
         final listed = await endpoints.multiplayer.listMatches(guest.session);
         expect(listed.map((match) => match.id), contains(created.id));
@@ -480,11 +468,7 @@ WHERE "matchId" = @matchId
           guest.session,
           created.id,
         );
-        await _connectParticipant(
-          endpoints,
-          session: guest.session,
-          matchId: joined.id,
-        );
+        await _connectParticipant(endpoints, guest.session, joined.id);
         final guestPublicId = joined.players
             .singleWhere((player) => player.userId == guest.userIdentifier)
             .id;
@@ -908,170 +892,6 @@ WHERE "matchId" = @matchId
           isNot(equals(firstUnitPositions)),
         );
       });
-
-      test(
-        'quickplay enforces seats, countdown, country conflicts, and capacity',
-        () async {
-          final owner = await _accountSession(
-            sessionBuilder,
-            endpoints,
-            email: 'quick-owner@example.test',
-            displayName: 'Quick Owner',
-          );
-          final guest = await _accountSession(
-            sessionBuilder,
-            endpoints,
-            email: 'quick-guest@example.test',
-            displayName: 'Quick Guest',
-          );
-          final conflict = await _accountSession(
-            sessionBuilder,
-            endpoints,
-            email: 'quick-conflict@example.test',
-            displayName: 'Quick Conflict',
-          );
-          final third = await _accountSession(
-            sessionBuilder,
-            endpoints,
-            email: 'quick-third@example.test',
-            displayName: 'Quick Third',
-          );
-          final fourth = await _accountSession(
-            sessionBuilder,
-            endpoints,
-            email: 'quick-fourth@example.test',
-            displayName: 'Quick Fourth',
-          );
-          final overflow = await _accountSession(
-            sessionBuilder,
-            endpoints,
-            email: 'quick-overflow@example.test',
-            displayName: 'Quick Overflow',
-          );
-
-          final waiting = await endpoints.multiplayer.quickplay(
-            owner.session,
-            _quickplayRequest(PlayerCountry.poland),
-          );
-          expect(waiting.quickplay, isTrue);
-          expect(waiting.maxPlayers, 4);
-          expect(waiting.minPlayers, 2);
-          expect(waiting.state, 'open');
-          expect(waiting.autoStartAt, isNull);
-          expect(waiting.players.single.country, PlayerCountry.poland);
-          await _connectParticipant(
-            endpoints,
-            session: owner.session,
-            matchId: waiting.id,
-          );
-
-          await endpoints.emailIdp.updateDisplayName(
-            owner.session,
-            displayName: 'Quick Owner Renamed',
-          );
-          final requeued = await endpoints.multiplayer.quickplay(
-            owner.session,
-            _quickplayRequest(PlayerCountry.china),
-          );
-          expect(requeued.id, waiting.id);
-          expect(requeued.players, hasLength(1));
-          expect(requeued.players.single.name, 'Quick Owner Renamed');
-          expect(requeued.players.single.country, PlayerCountry.china);
-
-          final guestJoining = await endpoints.multiplayer.quickplay(
-            guest.session,
-            _quickplayRequest(PlayerCountry.france),
-          );
-          expect(guestJoining.autoStartAt, isNull);
-          await _connectParticipant(
-            endpoints,
-            session: guest.session,
-            matchId: waiting.id,
-          );
-          final countingDown = await endpoints.multiplayer.loadMatch(
-            guest.session,
-            waiting.id,
-          );
-          expect(countingDown.id, waiting.id);
-          expect(countingDown.state, 'open');
-          expect(countingDown.autoStartAt, isNotNull);
-          expect(countingDown.players.map((player) => player.country), [
-            PlayerCountry.china,
-            PlayerCountry.france,
-          ]);
-
-          await expectLater(
-            endpoints.multiplayer.quickplay(
-              conflict.session,
-              _quickplayRequest(PlayerCountry.france),
-            ),
-            throwsA(
-              isA<MultiplayerException>().having(
-                (error) => error.code,
-                'code',
-                'country_unavailable',
-              ),
-            ),
-          );
-
-          final threePlayers = await endpoints.multiplayer.quickplay(
-            third.session,
-            _quickplayRequest(PlayerCountry.germany),
-          );
-          expect(threePlayers.id, waiting.id);
-          expect(threePlayers.state, 'open');
-          expect(threePlayers.players, hasLength(3));
-          expect(threePlayers.autoStartAt, isNull);
-          await _connectParticipant(
-            endpoints,
-            session: third.session,
-            matchId: waiting.id,
-          );
-          final resumedCountdown = await endpoints.multiplayer.loadMatch(
-            third.session,
-            waiting.id,
-          );
-          expect(resumedCountdown.autoStartAt, isNotNull);
-          expect(
-            resumedCountdown.autoStartAt!.isAfter(countingDown.autoStartAt!),
-            isTrue,
-          );
-
-          final fourthJoining = await endpoints.multiplayer.quickplay(
-            fourth.session,
-            _quickplayRequest(PlayerCountry.japan),
-          );
-          expect(fourthJoining.state, 'open');
-          await _connectParticipant(
-            endpoints,
-            session: fourth.session,
-            matchId: waiting.id,
-          );
-          final started = await endpoints.multiplayer.loadMatch(
-            fourth.session,
-            waiting.id,
-          );
-          expect(started.id, waiting.id);
-          expect(started.state, 'running');
-          expect(started.turn, 1);
-          expect(started.autoStartAt, isNull);
-          expect(started.players, hasLength(4));
-          expect(started.players.map((player) => player.country), [
-            PlayerCountry.china,
-            PlayerCountry.france,
-            PlayerCountry.germany,
-            PlayerCountry.japan,
-          ]);
-
-          final nextLobby = await endpoints.multiplayer.quickplay(
-            overflow.session,
-            _quickplayRequest(PlayerCountry.italy),
-          );
-          expect(nextLobby.id, isNot(started.id));
-          expect(nextLobby.state, 'open');
-          expect(nextLobby.players.single.country, PlayerCountry.italy);
-        },
-      );
     },
     rollbackDatabase: RollbackDatabase.afterEach,
     testServerOutputMode: TestServerOutputMode.normal,
@@ -1160,28 +980,20 @@ Future<WireMatch> _startTwoPlayerMatch(
       private: false,
     ),
   );
-  await _connectParticipant(
-    endpoints,
-    session: ownerSession,
-    matchId: created.id,
-  );
+  await _connectParticipant(endpoints, ownerSession, created.id);
   final joined = await endpoints.multiplayer.joinMatch(
     guestSession,
     created.id,
   );
-  await _connectParticipant(
-    endpoints,
-    session: guestSession,
-    matchId: joined.id,
-  );
+  await _connectParticipant(endpoints, guestSession, joined.id);
   return endpoints.multiplayer.startMatch(ownerSession, created.id);
 }
 
 Future<_EndpointMatchConnection> _connectParticipant(
-  TestEndpoints endpoints, {
-  required TestSessionBuilder session,
-  required String matchId,
-}) async {
+  TestEndpoints endpoints,
+  TestSessionBuilder session,
+  String matchId,
+) async {
   final input = StreamController<MultiplayerClientMessage>();
   final initialSnapshot = Completer<void>();
   late final StreamSubscription<MultiplayerServerMessage> subscription;

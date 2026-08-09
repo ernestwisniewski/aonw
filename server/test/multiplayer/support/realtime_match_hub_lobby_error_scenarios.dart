@@ -5,7 +5,7 @@ void _registerRealtimeMatchHubLobbyErrorScenarios() {
     'throws typed multiplayer exceptions for rejected lobby actions',
     () async {
       final hub = RealtimeMatchHub();
-      final store = _MemoryMatchStore();
+      final store = TestMatchStore();
       final match = await hub.createMatch(
         store: store,
         userIdentifier: 'owner-user',
@@ -73,11 +73,11 @@ void _registerRealtimeMatchHubLobbyErrorScenarios() {
   );
 
   test('rejects joins for private and non-open matches', () async {
-    final mapCatalog = _FakeMapCatalog(_testMap());
+    final mapCatalog = TestMapCatalog(testMap());
     final hub = RealtimeMatchHub(
       commandReducer: ServerCommandReducer(mapCatalog: mapCatalog),
     );
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
     final publicMatch = await hub.createMatch(
       store: store,
       userIdentifier: 'public-owner',
@@ -188,7 +188,7 @@ void _registerRealtimeMatchHubLobbyErrorScenarios() {
       secondCode,
     ]);
     final hub = RealtimeMatchHub(inviteCodeGenerator: inviteCodeGenerator);
-    final store = _MemoryMatchStore();
+    final store = TestMatchStore();
     final request = CreateMatchRequest(
       name: 'Private lobby',
       mapName: 'verdantia',
@@ -245,7 +245,7 @@ void _registerRealtimeMatchHubLobbyErrorScenarios() {
       const inviteCode = 'ABCDEFGHJKLMN';
       final inviteCodeGenerator = _SequenceInviteCodeGenerator([inviteCode]);
       final hub = RealtimeMatchHub(inviteCodeGenerator: inviteCodeGenerator);
-      final store = _MemoryMatchStore();
+      final store = TestMatchStore();
       final request = CreateMatchRequest(
         name: 'Private lobby',
         mapName: 'verdantia',

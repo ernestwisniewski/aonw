@@ -71,7 +71,7 @@ final class _LobbyActionBarBuilder {
 
   Widget _quickplayActionBar() {
     return MenuActionBar(
-      summary: _MultiplayerActionSummary(
+      summary: MultiplayerActionSummary(
         icon: Icons.groups_2_outlined,
         title: _queueActionTitle(),
         subtitle: _playersSubtitle(activeMatch),
@@ -89,7 +89,7 @@ final class _LobbyActionBarBuilder {
 
   Widget _privateJoinActionBar() {
     return MenuActionBar(
-      summary: _MultiplayerActionSummary(
+      summary: MultiplayerActionSummary(
         icon: Icons.key_outlined,
         title: l10n.multiplayerJoinPrivateTitle,
         subtitle: l10n.multiplayerJoinCodeHelp,
@@ -107,7 +107,7 @@ final class _LobbyActionBarBuilder {
   Widget _privateMatchActionBar() {
     final isHost = LobbyMatchStatusRules.isOwner(activeMatch, currentUserId);
     return MenuActionBar(
-      summary: _MultiplayerActionSummary(
+      summary: MultiplayerActionSummary(
         icon: isHost
             ? Icons.admin_panel_settings_outlined
             : Icons.group_outlined,
@@ -127,7 +127,7 @@ final class _LobbyActionBarBuilder {
   Widget _publicMatchActionBar() {
     final isHost = LobbyMatchStatusRules.isOwner(activeMatch, currentUserId);
     return MenuActionBar(
-      summary: _MultiplayerActionSummary(
+      summary: MultiplayerActionSummary(
         icon: isHost
             ? Icons.admin_panel_settings_outlined
             : Icons.public_outlined,

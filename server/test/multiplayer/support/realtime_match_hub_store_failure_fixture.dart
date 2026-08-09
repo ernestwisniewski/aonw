@@ -1,6 +1,6 @@
 part of '../realtime_match_hub_test.dart';
 
-class _FindStateFailingMatchStore extends _MemoryMatchStore {
+class _FindStateFailingMatchStore extends TestMatchStore {
   String? _failedMatchId;
 
   void failFindStateFor(String matchId) {
@@ -20,7 +20,7 @@ class _FindStateFailingMatchStore extends _MemoryMatchStore {
   }
 }
 
-class _CommitFailingMatchStore extends _MemoryMatchStore {
+class _CommitFailingMatchStore extends TestMatchStore {
   var _failNextCommit = false;
 
   void failNextCommit() {

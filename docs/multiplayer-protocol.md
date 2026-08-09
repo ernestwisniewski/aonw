@@ -68,6 +68,9 @@ The runtime keeps these synchronization invariants:
 - clients apply snapshots and events in monotonic offset order; the live
   movement path additionally requires the next adjacent event and its matching
   attached snapshot;
+- multiplayer save metadata and save-list indexes use the canonical
+  `multi <match name>` form; lobby and match names remain unchanged, and the
+  shared naming policy prevents duplicate prefixes;
 - the live local-echo guard suppresses a recently sent command event by
   `(matchId, actorPlayerId, tick)`, independently of offset ordering;
 - ACKs are correlated to pending live commands in send order; the transient
@@ -153,6 +156,29 @@ The revision-4 database migration retires every pre-existing `open` lobby as
 `abandoned` with `protocol_upgrade`. Those rows predate durable leases, so
 carrying them forward as live rooms would be unverifiable. Running matches are
 not retired by this migration.
+
+## Running-Match Turn And Inactivity Deadlines
+
+The turn timeout and whole-match inactivity timeout are separate policies:
+
+- while at least one human participant is durably online (`connected` with a
+  live presence lease), the normal turn timeout can submit missing players and
+  finalize the turn;
+- while every human participant is offline, the turn clock is paused and no
+  timeout reduction, economy, research, movement, or turn event is produced;
+- the first human connection after that global pause restarts `turnStartedAt`
+  in the same locked transaction, giving the resumed match a full turn limit;
+- independently, 12 hours without human activity changes the match to
+  `abandoned/all_players_inactive` on the next maintenance sweep. Starting a
+  match, an accepted human command, or a connection-state transition records
+  activity; automatic turn processing and AI do not;
+- abandonment is terminal and has `endedAt`, no winner, and no normal outcome.
+
+Maintenance checks whole-match inactivity before the offline turn pause. This
+ordering prevents an offline match from pausing forever after its 12-hour
+deadline. Existing terminal-state persistence, lease cleanup, and broadcast
+remain the only abandonment path; there is no parallel cleanup status or direct
+SQL mutation.
 
 ## Authoritative Movement Evidence
 
