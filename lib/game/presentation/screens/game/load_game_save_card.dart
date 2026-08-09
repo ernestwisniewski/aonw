@@ -25,6 +25,9 @@ class _SaveCard extends StatelessWidget {
   final VoidCallback? onReplay;
   final VoidCallback onDelete;
 
+  String get _displayName =>
+      save.gameMode.isMultiplayer ? '[online] ${save.name}' : save.name;
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -51,9 +54,7 @@ class _SaveCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              save.gameMode.isMultiplayer
-                                  ? '[online] ${save.name}'
-                                  : save.name,
+                              _displayName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GameUiTheme.cardTitle,
