@@ -93,6 +93,7 @@ abstract final class CanonicalGameSnapshotCodec {
           y: save.camera.y,
           zoom: save.camera.zoom,
         ),
+        origin: save.origin,
       ),
       eventLogOffset: data.eventLogOffset,
     );
@@ -119,6 +120,7 @@ abstract final class CanonicalGameSnapshotCodec {
         matchRules: domain.matchRules,
         players: domain.participants,
         gameMode: domain.gameMode,
+        origin: metadata.origin,
       ).toJson(),
       state: encodeDomainState(domain),
       eventLogOffset: snapshot.eventLogOffset,

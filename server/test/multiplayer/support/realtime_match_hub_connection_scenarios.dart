@@ -292,6 +292,7 @@ void registerRealtimeMatchHubConnectionScenarios() {
     final ack = (await acknowledgement).ack!;
 
     expect(ack.accepted, isFalse);
+    expect(ack.clientMessageId, 'forged-actor-command');
     expect(ack.events, isEmpty);
     expect(ack.movementExecutions.isEmpty, isTrue);
     expect(

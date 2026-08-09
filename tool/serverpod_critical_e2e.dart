@@ -145,7 +145,7 @@ final class _CriticalE2e {
       await guestBefore.close();
 
       final ownerEventsAfterRetry = await _request(
-        ownerClient.multiplayer.listEvents(started.id, 0),
+        ownerClient.multiplayer.listCurrentEvents(started.id, 0),
       );
       _expect(
         ownerEventsAfterRetry.length == 1 &&
@@ -153,7 +153,7 @@ final class _CriticalE2e {
         'The idempotent retry must persist exactly one event at offset 1.',
       );
       final snapshotAfterRetry = await _request(
-        ownerClient.multiplayer.loadSnapshot(started.id),
+        ownerClient.multiplayer.loadCurrentSnapshot(started.id),
       );
       final turnAfterOwnerSubmit = GameSave.fromJson(
         snapshotAfterRetry.save,
@@ -204,13 +204,13 @@ final class _CriticalE2e {
       await guestReconnect.close();
 
       final persistedEvents = await _request(
-        ownerClient.multiplayer.listEvents(started.id, 0),
+        ownerClient.multiplayer.listCurrentEvents(started.id, 0),
       );
       final persistedSnapshot = await _request(
-        ownerClient.multiplayer.loadSnapshot(started.id),
+        ownerClient.multiplayer.loadCurrentSnapshot(started.id),
       );
       final reloadedMatch = await _request(
-        ownerClient.multiplayer.loadMatch(started.id),
+        ownerClient.multiplayer.loadCurrentMatch(started.id),
       );
       _expect(
         persistedEvents.length == 2 &&

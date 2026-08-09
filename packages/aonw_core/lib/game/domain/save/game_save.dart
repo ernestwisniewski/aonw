@@ -1,5 +1,6 @@
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save/game_save_origin.dart';
 import 'package:aonw_core/game/domain/state/game_mode.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -51,10 +52,13 @@ abstract class GameSave with _$GameSave {
     MatchRules matchRules,
     @Default([]) List<Player> players,
     @Default(GameMode.hotSeat) GameMode gameMode,
+    @JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson)
+    @Default(GameSaveOrigin.local)
+    GameSaveOrigin origin,
   }) = _GameSave;
 
   factory GameSave.fromJson(Map<String, dynamic> json) =>
-      _$GameSaveFromJson(json);
+      _$GameSaveFromJson(_withLegacyOrigin(json));
 
   GameSave withPlayerFinished(String playerId) {
     if (!playerStates.containsKey(playerId)) return this;
@@ -90,13 +94,21 @@ abstract class GameSaveIndex with _$GameSaveIndex {
     @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
     required DateTime savedAt,
     @Default(GameMode.hotSeat) GameMode gameMode,
+    @JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson)
+    @Default(GameSaveOrigin.local)
+    GameSaveOrigin origin,
     @Default(false) bool replayAvailable,
     @Default(false) bool corrupted,
     String? corruptionMessage,
   }) = _GameSaveIndex;
 
   factory GameSaveIndex.fromJson(Map<String, dynamic> json) =>
-      _$GameSaveIndexFromJson(json);
+      _$GameSaveIndexFromJson(_withLegacyOrigin(json));
+}
+
+Map<String, dynamic> _withLegacyOrigin(Map<String, dynamic> json) {
+  if (json['origin'] != null) return json;
+  return {...json, 'origin': GameSaveOrigin.legacy.name};
 }
 
 DateTime _dateTimeFromJson(String value) => DateTime.parse(value);

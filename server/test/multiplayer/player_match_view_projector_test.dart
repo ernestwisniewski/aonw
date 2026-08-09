@@ -123,6 +123,7 @@ void main() {
     final ack = projector.ackFor(
       WireCommandAck(
         matchId: snapshot.matchId,
+        clientMessageId: 'command-1',
         accepted: true,
         offset: 7,
         tick: ownEvent.tick,
@@ -146,12 +147,14 @@ void main() {
     );
     expect(projectedOther.actorPlayerId, 'player-guest');
     expect(ack.tick, ownEvent.tick);
+    expect(ack.clientMessageId, 'command-1');
     expect(ack.timestamp, ownEvent.timestamp);
     expect(projectedOther.tick, isNull);
     expect(projectedOther.turn, 5);
     expect(projectedOther.command, isNull);
     expect(projectedOther.events, hasLength(2));
     expect(ack.events, hasLength(2));
+    expect(GameSave.fromJson(ack.snapshot.save).origin, GameSaveOrigin.network);
     expect(
       CanonicalGameSnapshotCodec.decodeDomainState(
         ack.snapshot.state,
@@ -212,6 +215,7 @@ void main() {
 void _expectPublicSave(GameSave save) {
   expect(save.camera, CameraState.zero);
   expect(save.players.last.ai?.seed, 0);
+  expect(save.origin, GameSaveOrigin.network);
 }
 
 void _expectOwnerRuleProjection(DomainState state) {

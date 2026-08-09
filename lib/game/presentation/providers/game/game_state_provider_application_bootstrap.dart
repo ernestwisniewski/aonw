@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/services/game_intent_resolver.dart';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/application/services/live_wire_command_dispatcher.dart';
@@ -8,6 +9,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/presentation/providers/game/game_state_provider_multiplayer_sync.dart';
 import 'package:aonw/game/presentation/providers/game/game_state_runtime.dart';
+import 'package:aonw/game/presentation/providers/multiplayer/multiplayer_compatibility_provider.dart';
 import 'package:aonw/game/presentation/providers/ruleset/ruleset_providers.dart';
 import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:aonw/game/presentation/providers/session/session_providers.dart';
@@ -34,10 +36,11 @@ final class GameStateApplicationBootstrap {
     await _multiplayerSync.closeLiveEvents();
     if (!_binding.isMounted()) return GameClientState();
     _runtime.saveId = saveId;
-    final session = _binding.ref.watch(activeGameSessionProvider);
-    if (session == null || saveId.isEmpty) {
-      _runtime.dispatchCommand = null;
-      return GameClientState();
+    final compatibility = await _compatibleSession(saveId);
+    if (compatibility == null) return _failClosedState();
+    final session = compatibility.session;
+    if (!_networkSessionRemainsCompatible(compatibility, saveId)) {
+      return _failClosedState();
     }
     final reducer = _createReducer(session);
     _runtime.reducer = reducer;
@@ -53,6 +56,7 @@ final class GameStateApplicationBootstrap {
       session.gameMode,
       saveId: saveId,
       commandDispatcher: liveCommandDispatcher,
+      requiresNetworkTransport: compatibility.networkBacked,
     );
     final bootstrap = BootstrapGameStateUseCase(
       repository: gameRepositoryForSave(_binding.ref, saveId),
@@ -85,6 +89,45 @@ final class GameStateApplicationBootstrap {
       _multiplayerSync.startLiveEvents(saveId, gameMode: session.gameMode),
     );
     return synchronized;
+  }
+
+  Future<({GameSession session, bool networkBacked})?> _compatibleSession(
+    String saveId,
+  ) async {
+    final session = _binding.ref.watch(activeGameSessionProvider);
+    if (session == null || saveId.isEmpty) return null;
+    final decision = await _binding.ref.read(
+      multiplayerSaveAccessDecisionProvider(saveId).future,
+    );
+    if (!_binding.isMounted()) return null;
+    if (decision.state == MultiplayerAccessState.allowed) {
+      return (session: session, networkBacked: decision.networkBacked);
+    }
+    _resetRuntime();
+    return null;
+  }
+
+  void _resetRuntime() {
+    _runtime
+      ..eventLogOffset = 0
+      ..dispatchCommand = null
+      ..reducer = null;
+  }
+
+  bool _networkSessionRemainsCompatible(
+    ({GameSession session, bool networkBacked}) compatibility,
+    String saveId,
+  ) {
+    return !compatibility.networkBacked ||
+        canUseNetworkMatchTransport(
+          session: _binding.ref.read(networkSessionProvider),
+          saveId: saveId,
+        );
+  }
+
+  GameClientState _failClosedState() {
+    _resetRuntime();
+    return GameClientState();
   }
 
   GameStateReducer _createReducer(GameSession session) {

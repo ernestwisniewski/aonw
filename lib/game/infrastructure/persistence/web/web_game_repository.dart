@@ -141,6 +141,7 @@ class WebGameRepository implements GameRepository {
       turn: save.turn,
       savedAt: save.savedAt,
       gameMode: save.gameMode,
+      origin: save.origin,
       replayAvailable: true,
     );
     await _savesIndex.record(save.id).put(database.database, index.toJson());

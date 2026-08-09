@@ -53,6 +53,19 @@ void main() {
   });
 
   group('WireCommandAck movement executions contract', () {
+    test('requires a non-empty client message correlation id', () {
+      for (final clientMessageId in <String?>[null, '']) {
+        expect(
+          () => WireCommandAck.fromJson({
+            ..._wireCommandAckJson(),
+            'clientMessageId': clientMessageId,
+            'movementExecutions': <Object>[],
+          }),
+          throwsArgumentError,
+        );
+      }
+    });
+
     test('rejects a missing key', () {
       expect(
         () => WireCommandAck.fromJson(_wireCommandAckJson()),
@@ -164,7 +177,7 @@ List<Map<String, dynamic>> _movementExecutionJson() {
 
 Map<String, dynamic> _wireEventJson() {
   return {
-    'v': 3,
+    'v': kSnapshotEventVersion,
     'matchId': 'match_1',
     'offset': 9,
     'timestamp': '2026-04-27T12:01:00.000Z',
@@ -180,12 +193,13 @@ Map<String, dynamic> _wireEventJson() {
 
 Map<String, dynamic> _wireCommandAckJson() {
   return {
-    'v': 3,
+    'v': kProtocolVersion,
     'matchId': 'match_1',
+    'clientMessageId': 'command_1',
     'accepted': true,
     'offset': 9,
     'snapshot': {
-      'v': 3,
+      'v': kSnapshotEventVersion,
       'matchId': 'match_1',
       'offset': 9,
       'save': {'id': 'match_1'},

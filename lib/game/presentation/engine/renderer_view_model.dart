@@ -54,11 +54,13 @@ final class GameRendererViewModel implements RendererViewModel {
     GameClientState state,
     ProjectedGameEffectBatch batch, {
     int? currentTurn,
+    PresentationStartCallback? onPresentationStart,
   }) {
     return _renderer.applyProjectedTransition(
       state,
       batch,
       currentTurn: currentTurn,
+      onPresentationStart: onPresentationStart,
     );
   }
 
@@ -86,12 +88,14 @@ extension ProjectedRendererViewModel on RendererViewModel {
     GameClientState state,
     ProjectedGameEffectBatch batch, {
     int? currentTurn,
+    PresentationStartCallback? onPresentationStart,
   }) async {
     if (this case final GameRendererViewModel production) {
       return production.applyAuthoritativeProjection(
         state,
         batch,
         currentTurn: currentTurn,
+        onPresentationStart: onPresentationStart,
       );
     }
     final ready = _projectedTransitionQueue.enqueue(
@@ -99,10 +103,12 @@ extension ProjectedRendererViewModel on RendererViewModel {
         state: state,
         batch: batch,
         currentTurn: currentTurn,
+        onPresentationStart: onPresentationStart,
       ),
     );
     for (final transition in ready) {
       final effects = _projectedEffectCursor.consumeBatch(transition.batch);
+      transition.onPresentationStart?.call();
       await applyTransition(
         transition.state,
         effects,

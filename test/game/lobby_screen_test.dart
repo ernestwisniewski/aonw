@@ -3,6 +3,7 @@ import 'package:aonw/api/session/network_session_store.dart';
 import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/live_multiplayer_events.dart';
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
 import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
 import 'package:aonw/game/application/ports/network_connection.dart';
 import 'package:aonw/game/application/ports/network_session_store.dart';
@@ -22,6 +23,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'lobby_screen_test_support.dart';
 part 'lobby_screen_multiplayer_presence_cases.dart';
+part 'lobby_screen_public_multiplayer_scenarios.dart';
 
 class _FakeGameRepository implements GameRepository {
   GameMode? createdMode;
@@ -264,86 +266,7 @@ void main() {
   });
 
   _registerLobbyScreenMultiplayerPresenceCases();
-
-  testWidgets('browses and refreshes public multiplayer matches', (
-    tester,
-  ) async {
-    final repository = _FakeGameRepository();
-    final client = _FakeNetworkSessionClient()
-      ..publicMatches = [
-        WireMatch(
-          id: 'public_match_1',
-          ownerUserId: 'owner_user',
-          name: 'Open table',
-          mapName: 'verdantia',
-          players: const [
-            WirePlayer(
-              id: 'owner_player',
-              userId: 'owner_user',
-              name: 'Host',
-              colorValue: 0xFFDC2626,
-              country: PlayerCountry.france,
-              kind: WirePlayerKind.human,
-              connectionState: WirePlayerConnectionState.connected,
-            ),
-          ],
-          maxPlayers: 4,
-          minPlayers: 2,
-          quickplay: false,
-          turn: 0,
-          state: 'open',
-          createdAt: DateTime.utc(2026, 7, 11, 12),
-        ),
-      ];
-    final store = _FakeNetworkSessionStore(
-      const StoredNetworkSession(
-        userId: 'user_1',
-        refreshToken: 'refresh-token',
-        displayName: 'Alice',
-      ),
-    );
-    await _pumpLobby(
-      tester,
-      repository,
-      flow: NewGameFlow.multiplayer,
-      overrides: [
-        networkSessionClientProvider.overrideWithValue(client),
-        networkSessionStoreProvider.overrideWithValue(store),
-      ],
-    );
-
-    await tester.pumpAndSettle();
-    final browseAction = find.byKey(
-      const Key('multiplayer.browsePublicAction'),
-    );
-    await tester.ensureVisible(browseAction);
-    await tester.pumpAndSettle();
-    await tester.tap(browseAction);
-    await tester.pumpAndSettle();
-
-    expect(
-      find.byKey(const Key('multiplayer.publicBrowserPanel')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const Key('multiplayer.publicMatch.public_match_1')),
-      findsOneWidget,
-    );
-    expect(find.text('Open table'), findsOneWidget);
-    expect(client.listMatchesCalls, 1);
-
-    client.publicMatches = const [];
-    final refreshAction = find.byKey(
-      const Key('multiplayer.publicRefreshAction'),
-    );
-    await tester.ensureVisible(refreshAction);
-    await tester.pumpAndSettle();
-    await tester.tap(refreshAction);
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('multiplayer.publicEmpty')), findsOneWidget);
-    expect(client.listMatchesCalls, 2);
-  });
+  _registerLobbyScreenPublicMultiplayerScenarios();
 
   testWidgets(
     'starts single player as local multiplayer with three AI opponents',
@@ -407,6 +330,7 @@ class _FakeNetworkSessionClient extends NetworkSessionClient {
   QuickplayMatchRequest? quickplayRequest;
   List<WireMatch> publicMatches = const [];
   int listMatchesCalls = 0;
+  Object? listMatchesError;
   WirePlayerConnectionState quickplayConnectionState =
       WirePlayerConnectionState.connected;
   bool quickplayReady = false;
@@ -435,7 +359,7 @@ class _FakeNetworkSessionClient extends NetworkSessionClient {
       id: 'match_1',
       ownerUserId: 'user_1',
       name: 'Quickplay',
-      mapName: request.mapName,
+      mapName: MapPlayerCapacityRules.quickplayLobbyMapName,
       players: [
         WirePlayer(
           id: 'player_1',
@@ -458,11 +382,10 @@ class _FakeNetworkSessionClient extends NetworkSessionClient {
   }
 
   @override
-  Future<List<WireMatch>> listMatches({
-    required AuthToken token,
-    String? status,
-  }) async {
+  Future<List<WireMatch>> listMatches({required AuthToken token}) async {
     listMatchesCalls += 1;
+    final error = listMatchesError;
+    if (error != null) throw error;
     return publicMatches;
   }
 

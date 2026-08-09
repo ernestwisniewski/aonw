@@ -40,27 +40,42 @@ class ServerpodMultiplayerBackendClient implements MultiplayerBackendClient {
 
   @override
   Future<List<WireMatch>> listMatches() {
-    return _activeClient.multiplayer.listMatches();
+    return _activeClient.multiplayer.listMatches(
+      multiplayerVersion: kCurrentMultiplayerVersion,
+    );
   }
 
   @override
   Future<WireMatch> createMatch(sp.CreateMatchRequest request) {
-    return _activeClient.multiplayer.createMatch(request);
+    return _activeClient.multiplayer.createMatch(
+      request,
+      multiplayerVersion: kCurrentMultiplayerVersion,
+    );
   }
 
   @override
   Future<WireSnapshot> loadSnapshot(String matchId) {
-    return _activeClient.multiplayer.loadSnapshot(matchId);
+    return _activeClient.multiplayer.loadSnapshot(
+      matchId,
+      multiplayerVersion: kCurrentMultiplayerVersion,
+    );
   }
 
   @override
   Future<List<WireEvent>> listEvents(String matchId, int afterOffset) {
-    return _activeClient.multiplayer.listEvents(matchId, afterOffset);
+    return _activeClient.multiplayer.listEvents(
+      matchId,
+      afterOffset,
+      multiplayerVersion: kCurrentMultiplayerVersion,
+    );
   }
 
   @override
   Future<void> leaveMatch(String matchId) {
-    return _activeClient.multiplayer.leaveMatch(matchId);
+    return _activeClient.multiplayer.leaveMatch(
+      matchId,
+      multiplayerVersion: kCurrentMultiplayerVersion,
+    );
   }
 
   @override

@@ -7,6 +7,7 @@ import 'package:aonw/game/infrastructure/persistence/web/web_database.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_game_repository.dart';
 import 'package:aonw/game/infrastructure/persistence/web/web_snapshot_store.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sembast/sembast_memory.dart';
@@ -52,6 +53,8 @@ void main() {
       expect(saves.single.id, id);
       expect(saves.single.name, 'Test save');
       expect(saves.single.mapName, 'verdantia');
+      expect(saves.single.origin, GameSaveOrigin.local);
+      expect((await repository.load(id)).save.origin, GameSaveOrigin.local);
     });
 
     test('save updates snapshot and reflects in list()', () async {

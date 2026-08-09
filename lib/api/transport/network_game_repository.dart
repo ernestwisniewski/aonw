@@ -126,6 +126,8 @@ class NetworkGameRepository implements GameRepository {
       mapSource: MapSource.asset,
       turn: match.turn,
       savedAt: match.createdAt,
+      gameMode: GameMode.multiplayer,
+      origin: GameSaveOrigin.network,
     );
   }
 
@@ -134,9 +136,7 @@ class NetworkGameRepository implements GameRepository {
   Future<Snapshot?> _loadNetworkSnapshot(String saveId) async {
     try {
       final wire = await _backend().loadSnapshot(saveId);
-      final state = _withCanonicalMultiplayerSaveName(
-        snapshotCodec.fromWire(wire),
-      );
+      final state = _normalizeNetworkSnapshot(snapshotCodec.fromWire(wire));
       final snapshot = Snapshot(state: state, createdAt: state.save.savedAt);
       await _saveCachedSnapshot(saveId, snapshot);
       return snapshot;
@@ -146,21 +146,27 @@ class NetworkGameRepository implements GameRepository {
       }
       if (!_canReadCachedSnapshot(error)) rethrow;
       final cached = await snapshotCache?.latest(_cacheKey(saveId));
-      if (cached != null) return _withCanonicalMultiplayerSnapshotName(cached);
+      if (cached != null) return _normalizeCachedNetworkSnapshot(cached);
       rethrow;
     }
   }
 
-  CanonicalGameSnapshot _withCanonicalMultiplayerSaveName(
-    CanonicalGameSnapshot state,
-  ) {
+  CanonicalGameSnapshot _normalizeNetworkSnapshot(CanonicalGameSnapshot state) {
     final name = MultiplayerSaveName.fromMatchName(state.metadata.name);
-    if (name == state.metadata.name) return state;
-    return state.copyWith(metadata: state.metadata.copyWith(name: name));
+    if (name == state.metadata.name &&
+        state.metadata.origin == GameSaveOrigin.network) {
+      return state;
+    }
+    return state.copyWith(
+      metadata: state.metadata.copyWith(
+        name: name,
+        origin: GameSaveOrigin.network,
+      ),
+    );
   }
 
-  Snapshot _withCanonicalMultiplayerSnapshotName(Snapshot snapshot) {
-    final state = _withCanonicalMultiplayerSaveName(snapshot.state);
+  Snapshot _normalizeCachedNetworkSnapshot(Snapshot snapshot) {
+    final state = _normalizeNetworkSnapshot(snapshot.state);
     if (identical(state, snapshot.state)) return snapshot;
     return Snapshot(state: state, createdAt: snapshot.createdAt);
   }

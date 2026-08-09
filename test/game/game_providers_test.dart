@@ -30,8 +30,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/test_game_renderer.dart';
+import 'support/game_provider_movement_fixtures.dart';
 
-part 'support/game_provider_movement_fixtures.dart';
 part 'support/game_provider_renderer_fixtures.dart';
 part 'support/game_provider_turn_lifecycle_cases.dart';
 part 'support/game_provider_shared_fixtures.dart';

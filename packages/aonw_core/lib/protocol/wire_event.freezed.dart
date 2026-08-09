@@ -215,7 +215,7 @@ return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPl
 
 
 class _WireEvent extends WireEvent {
-  const _WireEvent({this.v = kProtocolVersion, required this.matchId, required this.offset, required this.timestamp, this.actorPlayerId, this.tick, this.turn, final  Map<String, dynamic>? command, final  List<Map<String, dynamic>> events = const <Map<String, dynamic>>[], required this.movementExecutions}): _command = command,_events = events,super._();
+  const _WireEvent({this.v = kSnapshotEventVersion, required this.matchId, required this.offset, required this.timestamp, this.actorPlayerId, this.tick, this.turn, final  Map<String, dynamic>? command, final  List<Map<String, dynamic>> events = const <Map<String, dynamic>>[], required this.movementExecutions}): _command = command,_events = events,super._();
   
 
 @override@JsonKey() final  int v;

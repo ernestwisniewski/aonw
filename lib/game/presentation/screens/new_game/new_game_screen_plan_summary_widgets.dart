@@ -113,7 +113,7 @@ class _FlowSummaryStrip extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                _flowDescription(l10n, flow),
+                flow.description(l10n),
                 style: GameUiTheme.bodyStrong.copyWith(
                   color: GameUiTheme.goldLight,
                   height: 1.25,
@@ -242,7 +242,7 @@ class _ModeChoiceCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          _flowDescription(l10n, flow),
+                          flow.description(l10n),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: GameUiTheme.cardMeta.copyWith(

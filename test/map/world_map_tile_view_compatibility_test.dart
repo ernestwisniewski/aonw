@@ -8,7 +8,7 @@ import '../support/reducer_parity_fixture.dart';
 void main() {
   group('WorldMap tile-view compatibility', () {
     test('freezes every bundled map and its objectives', () {
-      const expectedMapNames = {'myranth', 'terenos', 'verdantia'};
+      const expectedMapNames = {'dravonia', 'myranth', 'terenos', 'verdantia'};
       final discoveredMapNames = _bundledMapNames();
       expect(discoveredMapNames, expectedMapNames);
 

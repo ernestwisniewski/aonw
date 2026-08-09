@@ -49,6 +49,7 @@ GameSave _initialSave({
   matchRules: request.matchRules,
   players: request.players,
   gameMode: request.gameMode,
+  origin: GameSaveOrigin.local,
 );
 
 ({
@@ -103,6 +104,7 @@ CanonicalGameSnapshot _initialSnapshot(GameSave save, DomainState domain) {
       name: save.name,
       world: WorldReference(name: save.mapName, source: save.mapSource),
       savedAtUtc: save.savedAt,
+      origin: save.origin,
       camera: GameSnapshotCamera(
         x: save.camera.x,
         y: save.camera.y,

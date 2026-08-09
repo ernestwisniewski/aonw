@@ -15,23 +15,18 @@ import 'test_tools/serverpod_test_tools.dart';
 
 part 'support/multiplayer_endpoint_movement_smoke_cases.dart';
 part 'support/multiplayer_endpoint_quickplay_smoke_cases.dart';
+part 'support/multiplayer_endpoint_version_smoke_cases.dart';
 
 void main() {
   withServerpod(
     'MultiplayerEndpoint',
     (sessionBuilder, endpoints) {
+      _registerMultiplayerEndpointVersionSmokeTests(sessionBuilder, endpoints);
       _registerMultiplayerEndpointMovementSmokeTests(sessionBuilder, endpoints);
       _registerMultiplayerEndpointQuickplaySmokeTests(
         sessionBuilder,
         endpoints,
       );
-
-      test('rejects unauthenticated Serverpod calls', () async {
-        await expectLater(
-          endpoints.multiplayer.listMatches(sessionBuilder),
-          throwsA(isA<ServerpodUnauthenticatedException>()),
-        );
-      });
 
       test('rejects duplicate multiplayer nicknames', () async {
         _ensureAuthServices();
@@ -113,7 +108,7 @@ void main() {
           email: 'listing-viewer@example.test',
           displayName: 'Listing Viewer',
         );
-        final created = await endpoints.multiplayer.createMatch(
+        final created = await endpoints.createCurrentMatch(
           owner.session,
           CreateMatchRequest(
             name: 'Snapshot-independent listing',
@@ -124,7 +119,7 @@ void main() {
           ),
         );
         await _connectParticipant(endpoints, owner.session, created.id);
-        final joined = await endpoints.multiplayer.joinMatch(
+        final joined = await endpoints.joinCurrentMatch(
           guest.session,
           created.id,
         );
@@ -147,7 +142,7 @@ WHERE "matchId" = @matchId
 ''', parameters: QueryParameters.named({'matchId': persistedMatch!.id!}));
         expect(affectedRows, 1);
 
-        final listed = await endpoints.multiplayer.listMatches(viewer.session);
+        final listed = await endpoints.listCurrentMatches(viewer.session);
         final listedMatch = listed.singleWhere(
           (match) => match.id == joined.id,
         );
@@ -427,99 +422,17 @@ WHERE "matchId" = @matchId
       );
 
       test('creates, joins, starts, and loads a persisted match', () async {
-        final owner = await _accountSession(
+        final scenario = await _createStartedEndpointMatchScenario(
           sessionBuilder,
           endpoints,
-          email: 'owner-user@example.test',
-          displayName: 'Owner Nick',
         );
-        final guest = await _accountSession(
-          sessionBuilder,
-          endpoints,
-          email: 'guest-user@example.test',
-          displayName: 'Guest Nick',
-        );
-        final stranger = await _accountSession(
-          sessionBuilder,
-          endpoints,
-          email: 'stranger-user@example.test',
-          displayName: 'Stranger Nick',
-        );
-        final request = CreateMatchRequest(
-          name: 'Endpoint smoke',
-          mapName: 'myranth',
-          maxPlayers: 2,
-          minPlayers: 2,
-          private: false,
-        );
+        final owner = scenario.owner;
+        final guest = scenario.guest;
+        final created = scenario.created;
+        final started = scenario.started;
+        final guestPublicId = scenario.guestPublicId;
 
-        final created = await endpoints.multiplayer.createMatch(
-          owner.session,
-          request,
-        );
-        _expectCreatedEndpointMatch(created, owner);
-        final ownerPublicId = created.players.single.id;
-        await _connectParticipant(endpoints, owner.session, created.id);
-
-        final listed = await endpoints.multiplayer.listMatches(guest.session);
-        expect(listed.map((match) => match.id), contains(created.id));
-
-        final joined = await endpoints.multiplayer.joinMatch(
-          guest.session,
-          created.id,
-        );
-        await _connectParticipant(endpoints, guest.session, joined.id);
-        final guestPublicId = joined.players
-            .singleWhere((player) => player.userId == guest.userIdentifier)
-            .id;
-        expect(joined.players.map((player) => player.userId), [
-          ownerPublicId,
-          guest.userIdentifier,
-        ]);
-        expect(joined.ownerUserId, ownerPublicId);
-        expect(joined.players.map((player) => player.name), [
-          'Owner Nick',
-          'Guest Nick',
-        ]);
-
-        final started = await endpoints.multiplayer.startMatch(
-          owner.session,
-          created.id,
-        );
-        expect(started.state, 'running');
-        expect(started.turn, 1);
-        expect(started.players.map((player) => player.userId), [
-          owner.userIdentifier,
-          guestPublicId,
-        ]);
-
-        final loaded = await endpoints.multiplayer.loadMatch(
-          guest.session,
-          created.id,
-        );
-        expect(loaded.state, 'running');
-        expect(loaded.players.map((player) => player.userId), [
-          ownerPublicId,
-          guest.userIdentifier,
-        ]);
-        expect(loaded.ownerUserId, ownerPublicId);
-
-        final guestRunningMatches = await endpoints.multiplayer.listMatches(
-          guest.session,
-        );
-        final strangerRunningMatches = await endpoints.multiplayer.listMatches(
-          stranger.session,
-        );
-        expect(
-          guestRunningMatches.map((match) => match.id),
-          contains(created.id),
-        );
-        expect(
-          strangerRunningMatches.map((match) => match.id),
-          isNot(contains(created.id)),
-        );
-
-        final snapshot = await endpoints.multiplayer.loadSnapshot(
+        final snapshot = await endpoints.loadCurrentSnapshot(
           owner.session,
           created.id,
         );
@@ -542,7 +455,7 @@ WHERE "matchId" = @matchId
         expect(initialSnapshotRows, hasLength(1));
         final snapshotRowId = initialSnapshotRows.single.id;
 
-        final events = await endpoints.multiplayer.listEvents(
+        final events = await endpoints.listCurrentEvents(
           owner.session,
           created.id,
           0,
@@ -556,8 +469,8 @@ WHERE "matchId" = @matchId
         final initialMessage = Completer<MultiplayerServerMessage>();
         final ackMessages = <MultiplayerServerMessage>[];
         final ackMessagesSeen = Completer<List<MultiplayerServerMessage>>();
-        final subscription = endpoints.multiplayer
-            .connect(owner.session, created.id, 0, input.stream)
+        final subscription = endpoints
+            .connectCurrent(owner.session, created.id, 0, input.stream)
             .listen(
               (message) {
                 if (message.snapshot != null && !initialMessage.isCompleted) {
@@ -605,7 +518,7 @@ WHERE "matchId" = @matchId
         expect(acks.map((message) => message.ack?.accepted), [true, true]);
         expect(acks.map((message) => message.ack?.offset).toSet(), {1});
 
-        final persistedEvents = await endpoints.multiplayer.listEvents(
+        final persistedEvents = await endpoints.listCurrentEvents(
           owner.session,
           created.id,
           0,
@@ -671,7 +584,7 @@ WHERE "matchId" = @matchId
         expect(guestAck.accepted, isTrue);
         expect(GameSave.fromJson(guestAck.snapshot.save).turn, 2);
 
-        final reloadedAfterTurn = await endpoints.multiplayer.loadMatch(
+        final reloadedAfterTurn = await endpoints.loadCurrentMatch(
           owner.session,
           created.id,
         );
@@ -704,7 +617,7 @@ WHERE "matchId" = @matchId
 
           final guestBeforeInput = StreamController<MultiplayerClientMessage>();
           final guestBeforeMessages = await _connectUntilInitialSnapshot(
-            endpoints.multiplayer.connect(
+            endpoints.connectCurrent(
               guest.session,
               started.id,
               0,
@@ -720,8 +633,8 @@ WHERE "matchId" = @matchId
           final ownerInput = StreamController<MultiplayerClientMessage>();
           final ownerInitialMessage = Completer<MultiplayerServerMessage>();
           final ownerAckMessage = Completer<MultiplayerServerMessage>();
-          final ownerSubscription = endpoints.multiplayer
-              .connect(owner.session, started.id, 0, ownerInput.stream)
+          final ownerSubscription = endpoints
+              .connectCurrent(owner.session, started.id, 0, ownerInput.stream)
               .listen(
                 (message) {
                   if (message.snapshot != null &&
@@ -776,7 +689,7 @@ WHERE "matchId" = @matchId
           final guestReconnectInput =
               StreamController<MultiplayerClientMessage>();
           final guestReconnectMessages = await _connectUntilInitialSnapshot(
-            endpoints.multiplayer.connect(
+            endpoints.connectCurrent(
               guest.session,
               started.id,
               0,
@@ -797,7 +710,7 @@ WHERE "matchId" = @matchId
             isEmpty,
           );
 
-          final persistedEvents = await endpoints.multiplayer.listEvents(
+          final persistedEvents = await endpoints.listCurrentEvents(
             guest.session,
             started.id,
             0,
@@ -831,7 +744,7 @@ WHERE "matchId" = @matchId
         final mapData = await const FileMultiplayerMapCatalog().loadAssetMap(
           'myranth',
         );
-        final initialSnapshot = await endpoints.multiplayer.loadSnapshot(
+        final initialSnapshot = await endpoints.loadCurrentSnapshot(
           owner.session,
           started.id,
         );
@@ -970,7 +883,7 @@ Future<WireMatch> _startTwoPlayerMatch(
   required TestSessionBuilder ownerSession,
   required TestSessionBuilder guestSession,
 }) async {
-  final created = await endpoints.multiplayer.createMatch(
+  final created = await endpoints.createCurrentMatch(
     ownerSession,
     CreateMatchRequest(
       name: 'Reconnect smoke',
@@ -981,12 +894,9 @@ Future<WireMatch> _startTwoPlayerMatch(
     ),
   );
   await _connectParticipant(endpoints, ownerSession, created.id);
-  final joined = await endpoints.multiplayer.joinMatch(
-    guestSession,
-    created.id,
-  );
+  final joined = await endpoints.joinCurrentMatch(guestSession, created.id);
   await _connectParticipant(endpoints, guestSession, joined.id);
-  return endpoints.multiplayer.startMatch(ownerSession, created.id);
+  return endpoints.startCurrentMatch(ownerSession, created.id);
 }
 
 Future<_EndpointMatchConnection> _connectParticipant(
@@ -997,8 +907,8 @@ Future<_EndpointMatchConnection> _connectParticipant(
   final input = StreamController<MultiplayerClientMessage>();
   final initialSnapshot = Completer<void>();
   late final StreamSubscription<MultiplayerServerMessage> subscription;
-  subscription = endpoints.multiplayer
-      .connect(session, matchId, 0, input.stream)
+  subscription = endpoints
+      .connectCurrent(session, matchId, 0, input.stream)
       .listen(
         (message) {
           if (message.snapshot != null && !initialSnapshot.isCompleted) {
@@ -1096,8 +1006,8 @@ Future<WireCommandAck> _sendClientCommand(
   final initialSnapshot = Completer<void>();
   final ackMessage = Completer<WireCommandAck>();
   late final StreamSubscription<MultiplayerServerMessage> subscription;
-  subscription = endpoints.multiplayer
-      .connect(session, matchId, afterOffset, input.stream)
+  subscription = endpoints
+      .connectCurrent(session, matchId, afterOffset, input.stream)
       .listen(
         (serverMessage) {
           if (serverMessage.snapshot != null && !initialSnapshot.isCompleted) {
@@ -1141,8 +1051,8 @@ Future<WireCommandAck> _connectAndDispatchMove({
   final input = StreamController<MultiplayerClientMessage>();
   final initial = Completer<MultiplayerServerMessage>();
   final ackMessage = Completer<MultiplayerServerMessage>();
-  final subscription = endpoints.multiplayer
-      .connect(session, matchId, afterOffset, input.stream)
+  final subscription = endpoints
+      .connectCurrent(session, matchId, afterOffset, input.stream)
       .listen(
         (message) {
           if (message.snapshot != null && !initial.isCompleted) {

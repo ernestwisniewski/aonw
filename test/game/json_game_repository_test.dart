@@ -13,6 +13,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
@@ -74,6 +75,8 @@ void main() {
       expect(saveId, 'save_1');
       expect(snapshot.save.matchRules, MatchRules.standard);
       expect(snapshot.save.savedAt, _fixedNow);
+      expect(snapshot.save.origin, GameSaveOrigin.local);
+      expect((await repository.list()).single.origin, GameSaveOrigin.local);
       expect(await File('${tempDir.path}/$saveId/game.json').exists(), isFalse);
       expect(
         await File('${tempDir.path}/$saveId/units.json').exists(),

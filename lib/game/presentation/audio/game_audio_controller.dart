@@ -13,6 +13,7 @@ const String _musicAssetRoot = 'assets/sounds/music/';
 const String _natureAssetRoot = 'assets/sounds/nature/';
 const bool _enableDarwinDebugAudio = bool.fromEnvironment(
   'AONW_ENABLE_DARWIN_DEBUG_AUDIO',
+  defaultValue: true,
 );
 
 typedef GameAudioErrorReporter =

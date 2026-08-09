@@ -87,6 +87,7 @@ void main() {
         'match_not_found',
         'match_abandoned',
         'match_not_open',
+        'unsupported_multiplayer_version',
         'unsupported_match_protocol',
       ];
       for (final code in terminalCodes) {

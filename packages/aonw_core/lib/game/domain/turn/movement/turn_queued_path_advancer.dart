@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
 import 'package:aonw_core/game/domain/movement/merchant_trade_route_rules.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
 import 'package:aonw_core/game/domain/movement/movement_hidden_obstacle_rules.dart';
+import 'package:aonw_core/game/domain/movement/unit_movement_feasibility.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_visibility_rules.dart';
@@ -70,6 +71,12 @@ abstract final class TurnQueuedPathAdvancer {
           ),
     ).plan(unit: unit, targetTile: targetTile);
     if (plan == null) {
+      return TurnQueuedPathAdvance(unit: unit.copyWithQueuedPath(null));
+    }
+    if (!UnitMovementFeasibility.canEventuallyTraverse(
+      unit: unit,
+      plan: plan,
+    )) {
       return TurnQueuedPathAdvance(unit: unit.copyWithQueuedPath(null));
     }
     if (MovementHiddenObstacleRules.reachablePathHitsHiddenBlocker(

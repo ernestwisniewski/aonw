@@ -5,6 +5,7 @@ final class _UnitMovementRouteSearch {
     required this.pathfinder,
     required this.unit,
     required this.targetKey,
+    required this.canEnterStepBeyondCapacity,
   }) : maxMovement = UnitMovementBalance.maxMovementPointsFor(
          type: unit.type,
          carriedArtifactId: unit.carriedArtifactId,
@@ -25,6 +26,7 @@ final class _UnitMovementRouteSearch {
   final UnitMovementPathfinder pathfinder;
   final GameUnit unit;
   final String targetKey;
+  final UnitMovementCapacityException? canEnterStepBeyondCapacity;
   final int maxMovement;
   final frontier = <_RouteNode>[];
   final bestScores = <_RouteState, _RouteScore>{};
@@ -68,7 +70,12 @@ final class _UnitMovementRouteSearch {
   );
 
   void _visit(_RouteNode current, ({int col, int row}) next) {
-    final enterCost = _enterCost(next);
+    final enterCost = pathfinder._enterCostFor(
+      unit: unit,
+      next: next,
+      currentCost: current.score.totalCost,
+      canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
+    );
     if (enterCost == null) return;
     final transition = _advanceRoute(current, enterCost);
     final nextState = _RouteState(
@@ -92,43 +99,17 @@ final class _UnitMovementRouteSearch {
     frontier.add(_RouteNode(state: nextState, score: nextScore));
   }
 
-  int? _enterCost(({int col, int row}) next) {
-    if (!pathfinder._isInBounds(next.col, next.row)) return null;
-    final blockingUnit = pathfinder._indexedUnitAt(next.col, next.row);
-    if (blockingUnit != null &&
-        !pathfinder.canEnterOccupied(unit, blockingUnit, next.col, next.row)) {
-      return null;
-    }
-    final tile = pathfinder.tileAt(next.col, next.row);
-    if (tile == null) return null;
-    if (pathfinder.canEnterTile case final canEnter?) {
-      if (!canEnter(tile)) return null;
-    }
-    final cost = UnitMovementCostRules.costToEnterTile(
-      tile,
-      unitType: unit.type,
-    );
-    return cost.blocked ? null : cost.value;
-  }
-
   ({int turns, int remaining}) _advanceRoute(
     _RouteNode current,
     int enterCost,
   ) {
     var turns = current.score.turns;
     var remaining = current.state.remaining;
-    if (!current.state.started) {
-      turns = 1;
-      if (enterCost <= remaining) {
-        remaining -= enterCost;
-      } else if (remaining > 0) {
-        remaining = 0;
-      } else {
-        turns += 1;
-        remaining = _remainingAfterNewTurn(enterCost, maxMovement);
-      }
-    } else if (enterCost <= remaining) {
+    if (!current.state.started) turns = 1;
+    if (enterCost <= remaining) {
       remaining -= enterCost;
+    } else if (remaining > 0) {
+      remaining = 0;
     } else {
       turns += 1;
       remaining = _remainingAfterNewTurn(enterCost, maxMovement);

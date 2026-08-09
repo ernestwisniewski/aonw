@@ -295,7 +295,6 @@ final class MatchLifecycleService {
     final playerCount = _stateAccess.humanPlayerCount(state.match);
     final mapName = state.match.quickplay
         ? MapPlayerCapacityRules.multiplayerStartMapName(
-            requestedMapName: state.match.mapName,
             playerCount: playerCount,
             seed: StartingPositionSeed.fromParts([
               state.match.id,

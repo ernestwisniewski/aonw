@@ -93,9 +93,9 @@ class _SinglePlayerSettingsPanel extends StatelessWidget {
     required this.onAiDifficultyChanged,
   });
 
-  final _SinglePlayerGameLengthPreset gameLengthPreset;
+  final SinglePlayerGameLengthPreset gameLengthPreset;
   final AiDifficulty aiDifficulty;
-  final ValueChanged<_SinglePlayerGameLengthPreset> onGameLengthChanged;
+  final ValueChanged<SinglePlayerGameLengthPreset> onGameLengthChanged;
   final ValueChanged<AiDifficulty> onAiDifficultyChanged;
 
   @override
@@ -121,13 +121,13 @@ class _SinglePlayerSettingsPanel extends StatelessWidget {
               builder: (context, constraints) {
                 final wide = constraints.maxWidth >= 520;
                 final lengthDropdown =
-                    _SettingsDropdown<_SinglePlayerGameLengthPreset>(
+                    _SettingsDropdown<SinglePlayerGameLengthPreset>(
                       key: const Key('newGame.gameLengthSelector'),
                       value: gameLengthPreset,
                       hintText: l10n.newGameGameLengthLabel,
                       iconFor: (value) => value.icon,
                       labelFor: (value) => value.label(l10n),
-                      values: _SinglePlayerGameLengthPreset.values,
+                      values: SinglePlayerGameLengthPreset.values,
                       onChanged: onGameLengthChanged,
                     );
                 final difficultyDropdown = _SettingsDropdown<AiDifficulty>(

@@ -55,6 +55,29 @@ void main() {
       expect(ranking?.priority, CandidatePriority.fallback);
       expect(ranking?.score, -975);
     });
+
+    test('ranks a pressure-target city assault as a war action', () {
+      final plan = _plan();
+      final ranking = rankTacticalAttack(
+        const AttackHexCommand('tank_1', 1, 0),
+        _view(
+          units: [_unit('tank_1', type: GameUnitType.tank)],
+          cities: const [
+            GameCity(
+              id: 'enemy_city',
+              ownerPlayerId: 'enemy_a',
+              name: 'Enemy City',
+              center: CityHex(col: 1, row: 0),
+            ),
+          ],
+          pressureTargetPlayerIds: const ['enemy_a'],
+        ),
+        _context(strategicPlan: plan),
+      );
+
+      expect(ranking.priority, CandidatePriority.war);
+      expect(ranking.score, greaterThan(680));
+    });
   });
 }
 
@@ -75,22 +98,28 @@ StrategicPlan _plan({List<WarGoal> warGoals = const []}) {
   );
 }
 
-AiContext _context() {
+AiContext _context({StrategicPlan? strategicPlan}) {
   return AiContext(
     ruleset: GameRuleset.defaults,
     mapData: _mapData(),
     turn: 1,
     rng: AiRng.fromTurn(turn: 1, playerId: 'player_1', baseSeed: 7),
+    strategicPlan: strategicPlan,
   );
 }
 
-GameView _view({List<GameUnit> units = const []}) {
+GameView _view({
+  List<GameUnit> units = const [],
+  List<GameCity> cities = const [],
+  List<String> pressureTargetPlayerIds = const [],
+}) {
   return GameView.fromDomainState(
-    DomainState.snapshot(units: units),
+    DomainState.snapshot(units: units, cities: cities),
     forPlayerId: 'player_1',
     turn: 1,
     mapData: _mapData(),
     ruleset: GameRuleset.defaults,
+    pressureTargetPlayerIds: pressureTargetPlayerIds,
     ignoreFogOfWar: true,
     ignoreDynamicFogOfWar: true,
   );
@@ -101,12 +130,13 @@ GameUnit _unit(
   String ownerPlayerId = 'player_1',
   int col = 0,
   int row = 0,
+  GameUnitType type = GameUnitType.warrior,
 }) {
   return GameUnit(
     id: id,
     ownerPlayerId: ownerPlayerId,
-    type: GameUnitType.warrior,
-    name: GameUnitType.warrior.defaultNameToken,
+    type: type,
+    name: type.defaultNameToken,
     col: col,
     row: row,
   );

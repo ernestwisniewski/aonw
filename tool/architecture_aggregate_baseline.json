@@ -69,8 +69,8 @@
       "sourceLines": {
         "lib/developer/assets_editor_screen.dart": 1917,
         "lib/game/presentation/engine/game_renderer.dart": 2042,
-        "lib/game/presentation/screens/lobby/lobby_screen.dart": 3532,
-        "lib/game/presentation/screens/new_game/new_game_screen.dart": 2045,
+        "lib/game/presentation/screens/lobby/lobby_screen.dart": 3518,
+        "lib/game/presentation/screens/new_game/new_game_screen.dart": 1654,
         "lib/game/presentation/widgets/activity_log/activity_log_dialog.dart": 1529,
         "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 2029,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 1621,
@@ -79,10 +79,10 @@
       },
       "callableCount": {
         "lib/developer/assets_editor_screen.dart": 139,
-        "lib/game/presentation/engine/game_renderer.dart": 256,
+        "lib/game/presentation/engine/game_renderer.dart": 255,
         "lib/game/presentation/screens/game/game_screen.dart": 84,
-        "lib/game/presentation/screens/lobby/lobby_screen.dart": 211,
-        "lib/game/presentation/screens/new_game/new_game_screen.dart": 117,
+        "lib/game/presentation/screens/lobby/lobby_screen.dart": 210,
+        "lib/game/presentation/screens/new_game/new_game_screen.dart": 105,
         "lib/game/presentation/screens/replay/replay_screen.dart": 122,
         "lib/game/presentation/widgets/activity_log/activity_log_dialog.dart": 101,
         "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 130,
@@ -91,8 +91,8 @@
       },
       "callableLines": {
         "lib/developer/assets_editor_screen.dart": 1594,
-        "lib/game/presentation/screens/lobby/lobby_screen.dart": 2946,
-        "lib/game/presentation/screens/new_game/new_game_screen.dart": 1763,
+        "lib/game/presentation/screens/lobby/lobby_screen.dart": 2930,
+        "lib/game/presentation/screens/new_game/new_game_screen.dart": 1408,
         "lib/game/presentation/screens/replay/replay_screen.dart": 1228,
         "lib/game/presentation/widgets/activity_log/activity_log_dialog.dart": 1266,
         "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 1711,
@@ -105,8 +105,7 @@
         "lib/developer/assets_editor_screen.dart": 257,
         "lib/game/presentation/engine/game_renderer.dart": 546,
         "lib/game/presentation/formatters/game_display_names.dart": 397,
-        "lib/game/presentation/screens/lobby/lobby_screen.dart": 489,
-        "lib/game/presentation/screens/new_game/new_game_screen.dart": 284,
+        "lib/game/presentation/screens/lobby/lobby_screen.dart": 474,
         "lib/game/presentation/widgets/activity_log/activity_log_dialog.dart": 277,
         "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 277,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 299,
@@ -120,13 +119,13 @@
     "root_test": {
       "sourceLines": {
         "test/game/game_hud_test.dart": 8046,
-        "test/game/game_providers_test.dart": 2723,
-        "test/game/game_renderer_keyboard_test.dart": 3583,
+        "test/game/game_providers_test.dart": 2709,
+        "test/game/game_renderer_keyboard_test.dart": 3582,
         "test/support/reducer_parity_fixture.dart": 3252
       },
       "callableCount": {
         "test/game/game_hud_test.dart": 309,
-        "test/game/game_providers_test.dart": 159,
+        "test/game/game_providers_test.dart": 157,
         "test/game/game_renderer_keyboard_test.dart": 201,
         "test/game/lobby_connection_controller_test.dart": 123,
         "test/support/reducer_parity_fixture.dart": 173,
@@ -134,8 +133,8 @@
       },
       "callableLines": {
         "test/game/game_hud_test.dart": 7709,
-        "test/game/game_providers_test.dart": 2541,
-        "test/game/game_renderer_keyboard_test.dart": 3483,
+        "test/game/game_providers_test.dart": 2530,
+        "test/game/game_renderer_keyboard_test.dart": 3482,
         "test/support/reducer_parity_fixture.dart": 2822
       },
       "cyclomaticComplexity": {
@@ -177,7 +176,7 @@
     },
     "server_test": {
       "sourceLines": {
-        "server/test/multiplayer/realtime_match_hub_test.dart": 6040
+        "server/test/multiplayer/realtime_match_hub_test.dart": 6039
       },
       "callableCount": {
         "server/test/multiplayer/realtime_match_hub_test.dart": 356

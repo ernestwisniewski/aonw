@@ -12,6 +12,10 @@ void main() {
       'packages/aonw_core/lib/protocol/protocol_version.dart',
     ).readAsStringSync();
     final wireVersion = _intConstant(protocol, 'kProtocolVersion');
+    final snapshotEventVersion = _intConstant(
+      protocol,
+      'kSnapshotEventVersion',
+    );
     final multiplayerRevision = _intConstant(
       protocol,
       'kCurrentMultiplayerVersion',
@@ -19,10 +23,26 @@ void main() {
 
     expect(
       atlas,
-      contains('WIRE v$wireVersion · MULTIPLAYER REV $multiplayerRevision'),
+      contains(
+        'WIRE v$wireVersion/v$snapshotEventVersion · '
+        'MULTIPLAYER REV $multiplayerRevision',
+      ),
     );
+    expect(
+      atlas,
+      contains('Strict v$wireVersion/v$snapshotEventVersion codecs'),
+    );
+    expect(atlas, contains('ACK correlation map'));
+    expect(atlas, contains('ACK correlation by clientMessageId'));
+    expect(atlas, contains('correlates ACKs by clientMessageId'));
     expect(atlas, contains('durable presence leases'));
     expect(atlas, contains('heartbeat renewal'));
+    expect(atlas, isNot(contains('ACK queue')));
+    expect(atlas, isNot(contains('send order')));
+    expect(
+      atlas,
+      contains('snapshot/event schema v$snapshotEventVersion preserves N-1'),
+    );
   });
 
   test('atlas retains accessible animated flow diagrams', () {

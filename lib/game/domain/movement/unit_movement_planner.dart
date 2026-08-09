@@ -17,11 +17,16 @@ class UnitMovementPlanner {
   UnitMovementPlan? planMove({
     required GameUnit unit,
     required MapTileView targetTile,
+    UnitMovementCapacityException? canEnterStepBeyondCapacity,
   }) {
     return UnitMovementPathfinder(
       mapData: mapData,
       units: units,
       canEnterTile: canEnterTile,
-    ).plan(unit: unit, targetTile: targetTile);
+    ).plan(
+      unit: unit,
+      targetTile: targetTile,
+      canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
+    );
   }
 }

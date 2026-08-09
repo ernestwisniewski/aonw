@@ -2,7 +2,7 @@ name: aonw
 description: "4X strategic hex game"
 publish_to: 'none'
 
-version: 1.1.10+81
+version: 1.1.11+82
 
 environment:
   sdk: ^3.11.4
@@ -84,6 +84,7 @@ flutter:
     - assets/maps/verdantia/
     - assets/maps/myranth/
     - assets/maps/terenos/
+    - assets/maps/dravonia/
     - assets/icons/
     - assets/sounds/
     - assets/sounds/music/

@@ -4,6 +4,10 @@ import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 
 const presentationFrameBudget = Duration(microseconds: 16667);
 
+/// Presentation-only work that must start in the same authoritative slot as
+/// the state transition and its first renderer effect.
+typedef PresentationStartCallback = void Function();
+
 /// Declares how a projected batch participates in the authoritative stream.
 ///
 /// Sequence membership is transport metadata. It must not be inferred from
@@ -250,11 +254,13 @@ final class ProjectedGameTransition<T> {
     required this.state,
     required this.batch,
     this.currentTurn,
+    this.onPresentationStart,
   });
 
   final T state;
   final ProjectedGameEffectBatch batch;
   final int? currentTurn;
+  final PresentationStartCallback? onPresentationStart;
 }
 
 /// Orders complete renderer transitions before either state or effects apply.

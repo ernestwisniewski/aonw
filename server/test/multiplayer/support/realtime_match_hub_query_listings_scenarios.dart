@@ -43,7 +43,7 @@ void _registerRealtimeMatchHubQueryListingsScenarios() {
     await store.saveState(
       staleState.copyWith(
         match: staleState.match.copyWith(v: kProtocolVersion - 1),
-        snapshot: staleState.snapshot.copyWith(v: kProtocolVersion - 1),
+        snapshot: staleState.snapshot.copyWith(v: kSnapshotEventVersion - 1),
       ),
     );
 

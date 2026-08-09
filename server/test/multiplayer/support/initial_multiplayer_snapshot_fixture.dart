@@ -128,6 +128,7 @@ WireSnapshot _currentInitialSnapshotOracle({
     matchRules: MatchRules.standard,
     players: _initialSnapshotPlayers,
     gameMode: GameMode.multiplayer,
+    origin: GameSaveOrigin.network,
   );
   final state = DomainState.snapshot(
     playerColors: {

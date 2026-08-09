@@ -386,16 +386,16 @@ class TestMatchStore extends _MemoryPresenceMatchStore {
   }) async {
     final participantMatches = [
       for (final state in _states.values)
-        if (_isActiveMatch(state.match) &&
+        if (isActiveTestMatch(state.match) &&
             state.match.players.any(
               (player) => player.userId == userIdentifier,
             ))
           state.match,
-    ]..sort(_compareTestMatchesNewestFirst);
+    ]..sort(compareTestMatchesNewestFirst);
     final publicLobbies = [
       for (final state in _states.values)
         if (_isDiscoverablePublicLobby(state, nowUtc: nowUtc)) state.match,
-    ]..sort(_compareTestMatchesNewestFirst);
+    ]..sort(compareTestMatchesNewestFirst);
     final participantIds = {for (final match in participantMatches) match.id};
     final matchesById = <String, WireMatch>{};
     for (final match in [
@@ -427,7 +427,7 @@ class TestMatchStore extends _MemoryPresenceMatchStore {
         [
           for (final state in _states.values)
             if (state.match.state == 'running' &&
-                _isAfterRunningCursor(state.match, after))
+                isAfterRunningTestCursor(state.match, after))
               state,
         ]..sort((first, second) {
           final createdAtOrder = first.match.createdAt.compareTo(

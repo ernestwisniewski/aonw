@@ -1,6 +1,6 @@
 part of 'load_game_screen.dart';
 
-class _SaveCard extends StatelessWidget {
+class _SaveCard extends ConsumerWidget {
   const _SaveCard({
     required this.save,
     required this.relativeDate,
@@ -11,7 +11,7 @@ class _SaveCard extends StatelessWidget {
     required this.onResume,
     required this.onReplay,
     required this.onDelete,
-    this.corruptedBody,
+    this.unavailableBody,
   });
 
   final GameSaveIndex save;
@@ -20,21 +20,47 @@ class _SaveCard extends StatelessWidget {
   final String resumeLabel;
   final String replayLabel;
   final String deleteLabel;
-  final String? corruptedBody;
+  final String? unavailableBody;
   final VoidCallback? onResume;
   final VoidCallback? onReplay;
   final VoidCallback onDelete;
 
-  String get _displayName =>
-      save.gameMode.isMultiplayer ? '[online] ${save.name}' : save.name;
+  String _displayName(WidgetRef ref) {
+    final networkBacked = networkBackedSaveOrFalse(
+      ref.watch(networkBackedSaveProvider(save.id)),
+    );
+    return networkBacked ? '[online] ${save.name}' : save.name;
+  }
+
+  bool _canRetry(WidgetRef ref) {
+    if (save.corrupted) return false;
+    return multiplayerSaveAccessOrFailClosed(
+          ref.watch(multiplayerSaveAccessStateProvider(save.id)),
+        ) ==
+        MultiplayerAccessState.unavailable;
+  }
+
+  VoidCallback? _resumeAction(WidgetRef ref) {
+    return _canRetry(ref)
+        ? ref.withMenuClick(
+            ref.read(multiplayerSaveCompatibilityRetryProvider(save.id)),
+          )
+        : onResume;
+  }
+
+  String _resumeText(BuildContext context, WidgetRef ref) {
+    return _canRetry(ref)
+        ? AppLocalizations.of(context).retryAction
+        : resumeLabel;
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Material(
       color: GameUiTheme.card,
       borderRadius: GameUiTheme.borderRadius,
       child: InkWell(
-        onTap: onResume,
+        onTap: _resumeAction(ref),
         borderRadius: GameUiTheme.borderRadius,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
@@ -54,7 +80,7 @@ class _SaveCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _displayName,
+                              _displayName(ref),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GameUiTheme.cardTitle,
@@ -68,10 +94,10 @@ class _SaveCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: GameUiTheme.cardMeta,
                             ),
-                            if (corruptedBody != null) ...[
+                            if (unavailableBody != null) ...[
                               const SizedBox(height: 6),
                               Text(
-                                corruptedBody!,
+                                unavailableBody!,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: GameUiTheme.bodySmall.copyWith(
@@ -93,14 +119,14 @@ class _SaveCard extends StatelessWidget {
                     alignment: WrapAlignment.end,
                     children: [
                       OutlinedButton.icon(
-                        onPressed: onResume,
+                        onPressed: _resumeAction(ref),
                         icon: Icon(
                           save.corrupted
                               ? Icons.block_rounded
                               : Icons.play_arrow_rounded,
                           size: 16,
                         ),
-                        label: Text(resumeLabel),
+                        label: Text(_resumeText(context, ref)),
                         style: GameUiTheme.outlinedButtonStyle(
                           foreground: GameUiTheme.goldLight,
                           padding: EdgeInsets.symmetric(

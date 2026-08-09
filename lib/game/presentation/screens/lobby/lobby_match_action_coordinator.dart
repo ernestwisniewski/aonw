@@ -20,10 +20,7 @@ typedef LobbyQuickplayRequester =
       required QuickplayMatchRequest request,
     });
 typedef LobbyPublicMatchLister =
-    Future<List<WireMatch>> Function({
-      required AuthToken token,
-      String? status,
-    });
+    Future<List<WireMatch>> Function({required AuthToken token});
 typedef LobbyPublicMatchCreator =
     Future<WireMatch> Function({
       required AuthToken token,
@@ -120,15 +117,11 @@ final class LobbyMatchActionCoordinator {
     required this.canContinue,
   });
 
-  Future<void> joinQuickplay(LobbyMatchActionConfig config) async {
-    await _validateMapOrThrow(config.mapNotReadyMessage);
+  Future<void> joinQuickplay({required PlayerCountry country}) async {
     final session = await ensureSession();
     final match = await quickplay(
       token: session.token,
-      request: QuickplayMatchRequest(
-        mapName: config.mapName,
-        country: config.country,
-      ),
+      request: QuickplayMatchRequest(country: country),
     );
     if (!_rememberAndWatch(session: session, match: match)) return;
     if (!canContinue()) return;

@@ -158,7 +158,7 @@ extension _LobbyScreenStateActions on _LobbyScreenState {
     ).textFor(error);
   }
 
-  Future<MapValidationResult> _validateQuickplayMap() async {
+  Future<MapValidationResult> _validateSelectedMultiplayerMap() async {
     final selection = MapSelection(
       name: widget.mapName,
       source: widget.mapSource,

@@ -5,6 +5,7 @@ import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
 import 'package:aonw/game/presentation/screens/new_game/new_game_screen.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/providers/map_providers.dart';
+import 'package:aonw/menu/main_menu_update_notice.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
@@ -19,6 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 part 'new_game_screen_map_fixture.dart';
+part 'new_game_screen_multiplayer_scenarios.dart';
 
 class _FakeGameRepository implements GameRepository {
   NewGameRequest? createdRequest;
@@ -56,6 +58,8 @@ class _FakeGameRepository implements GameRepository {
 }
 
 void main() {
+  _registerNewGameScreenMultiplayerScenarios();
+
   testWidgets('singleplayer starts directly with three AI opponents', (
     tester,
   ) async {
@@ -331,121 +335,6 @@ void main() {
     await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('main-menu')), findsOneWidget);
-  });
-
-  testWidgets('multiplayer direct route opens lobby with a random map', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    final repository = _FakeGameRepository();
-    final visitedLobbyUris = <Uri>[];
-    const selection = MapSelection(name: 'verdantia', source: MapSource.asset);
-    final router = GoRouter(
-      initialLocation: '/new-game',
-      routes: [
-        GoRoute(
-          path: '/new-game',
-          builder: (context, state) => const NewGameScreen(
-            flow: NewGameFlow.multiplayer,
-            startAtMap: true,
-          ),
-        ),
-        GoRoute(
-          path: '/lobby',
-          builder: (context, state) {
-            visitedLobbyUris.add(state.uri);
-            return const SizedBox(key: Key('lobby-screen'));
-          },
-        ),
-      ],
-    );
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          gameRepositoryProvider.overrideWithValue(repository),
-          availableMapsProvider.overrideWithValue(const AsyncData([selection])),
-          activeMapProvider(selection).overrideWithValue(AsyncData(_map())),
-        ],
-        child: MaterialApp.router(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          routerConfig: router,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(repository.createdRequest, isNull);
-    expect(find.byKey(const Key('lobby-screen')), findsOneWidget);
-    expect(visitedLobbyUris.single.queryParameters['mode'], 'multiplayer');
-    expect(visitedLobbyUris.single.queryParameters['name'], 'verdantia');
-    expect(visitedLobbyUris.single.queryParameters['source'], 'asset');
-    expect(
-      PlayerCountry.values.map((country) => country.name),
-      contains(visitedLobbyUris.single.queryParameters['country']),
-    );
-  });
-
-  testWidgets('multiplayer continue skips map choice and opens lobby', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    final repository = _FakeGameRepository();
-    final visitedLobbyUris = <Uri>[];
-    const selection = MapSelection(name: 'verdantia', source: MapSource.asset);
-    final router = GoRouter(
-      initialLocation: '/new-game',
-      routes: [
-        GoRoute(
-          path: '/new-game',
-          builder: (context, state) =>
-              const NewGameScreen(flow: NewGameFlow.multiplayer),
-        ),
-        GoRoute(
-          path: '/lobby',
-          builder: (context, state) {
-            visitedLobbyUris.add(state.uri);
-            return const SizedBox(key: Key('lobby-screen'));
-          },
-        ),
-      ],
-    );
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          gameRepositoryProvider.overrideWithValue(repository),
-          availableMapsProvider.overrideWithValue(const AsyncData([selection])),
-          activeMapProvider(selection).overrideWithValue(AsyncData(_map())),
-        ],
-        child: MaterialApp.router(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          routerConfig: router,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('GO TO LOBBY'), findsOneWidget);
-    expect(find.text('Choose the world'), findsNothing);
-
-    await tester.tap(find.byKey(const Key('newGame.multiplayerLobbyAction')));
-    await tester.pumpAndSettle();
-
-    expect(repository.createdRequest, isNull);
-    expect(find.byKey(const Key('lobby-screen')), findsOneWidget);
-    expect(visitedLobbyUris.single.queryParameters['mode'], 'multiplayer');
-    expect(visitedLobbyUris.single.queryParameters['name'], 'verdantia');
-    expect(
-      PlayerCountry.values.map((country) => country.name),
-      contains(visitedLobbyUris.single.queryParameters['country']),
-    );
   });
 
   testWidgets('singleplayer length and difficulty labels are localized', (

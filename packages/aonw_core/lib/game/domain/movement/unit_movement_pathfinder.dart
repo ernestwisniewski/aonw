@@ -1,5 +1,6 @@
 import 'package:aonw_core/game/domain/movement/unit_movement_balance.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_cost_rules.dart';
+import 'package:aonw_core/game/domain/movement/unit_movement_feasibility.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/map/domain/hex_grid_topology.dart';
@@ -66,6 +67,7 @@ class UnitMovementPathfinder {
   UnitMovementPlan? plan({
     required GameUnit unit,
     required MapTileView targetTile,
+    UnitMovementCapacityException? canEnterStepBeyondCapacity,
   }) {
     if (!_isInBounds(targetTile.col, targetTile.row)) return null;
     if (unit.occupies(targetTile.col, targetTile.row)) return null;
@@ -86,6 +88,7 @@ class UnitMovementPathfinder {
       pathfinder: this,
       unit: unit,
       targetKey: targetKey,
+      canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
     ).search();
     if (search == null) return null;
     final steps = search.steps;
@@ -97,7 +100,6 @@ class UnitMovementPathfinder {
       targetRow: targetTile.row,
       totalCost: search.totalCost,
       availableMovementPoints: unit.movementPoints,
-      canSpendTurnEnteringFirstStep: _canSpendTurnEnteringFirstStep(unit),
       steps: steps,
     );
   }
@@ -105,6 +107,7 @@ class UnitMovementPathfinder {
   UnitMovementPlan? planTowardBlockedTarget({
     required GameUnit unit,
     required MapTileView targetTile,
+    UnitMovementCapacityException? canEnterStepBeyondCapacity,
   }) {
     final blocker = _indexedUnitAt(targetTile.col, targetTile.row);
     if (blocker == null || blocker.id == unit.id) return null;
@@ -116,7 +119,11 @@ class UnitMovementPathfinder {
     )) {
       final tile = tileAt(neighbor.col, neighbor.row);
       if (tile == null) continue;
-      final candidate = plan(unit: unit, targetTile: tile);
+      final candidate = plan(
+        unit: unit,
+        targetTile: tile,
+        canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
+      );
       if (candidate == null) continue;
       if (best == null ||
           _compareUnitApproachPlans(candidate, best, unit) < 0) {
@@ -126,15 +133,15 @@ class UnitMovementPathfinder {
     return best;
   }
 
+  /// Returns bounded movement costs, including the single terrain-passable
+  /// step that can exhaust a positive remainder. Its cost may exceed
+  /// [maxCost], but that terminal boundary is never expanded. Per-turn
+  /// capacity and the artifact-carrier exception remain authoritative.
   Map<({int col, int row}), int> movementCostsFrom({
     required GameUnit unit,
     int? maxCost,
   }) {
-    final search = _search(
-      unit: unit,
-      maxCost: maxCost,
-      canSpendTurnEnteringFirstStep: _canSpendTurnEnteringFirstStep(unit),
-    );
+    final search = _search(unit: unit, maxCost: maxCost);
     return {
       for (final entry in search.bestCosts.entries)
         if (search.coords[entry.key] case final coords?)
@@ -143,11 +150,7 @@ class UnitMovementPathfinder {
     };
   }
 
-  _PathSearchResult _search({
-    required GameUnit unit,
-    int? maxCost,
-    bool canSpendTurnEnteringFirstStep = false,
-  }) {
+  _PathSearchResult _search({required GameUnit unit, int? maxCost}) {
     final frontier = <_PathNode>[
       _PathNode(col: unit.col, row: unit.row, cost: 0),
     ];
@@ -167,32 +170,17 @@ class UnitMovementPathfinder {
         col: current.col,
         row: current.row,
       )) {
-        if (!_isInBounds(next.col, next.row)) continue;
         final nextKey = _coordKey(next.col, next.row);
-        final blockingUnit = _indexedUnitAt(next.col, next.row);
-        if (blockingUnit != null &&
-            !canEnterOccupied(unit, blockingUnit, next.col, next.row)) {
-          continue;
-        }
-
-        final tile = tileAt(next.col, next.row);
-        if (tile == null) continue;
-        if (canEnterTile != null && !canEnterTile!(tile)) continue;
-        final enterCost = UnitMovementCostRules.costToEnterTile(
-          tile,
-          unitType: unit.type,
+        final enterCost = _enterCostFor(
+          unit: unit,
+          next: next,
+          currentCost: current.cost,
+          canEnterStepBeyondCapacity: null,
         );
-        if (enterCost.blocked) continue;
+        if (enterCost == null) continue;
 
-        final nextCost = current.cost + enterCost.value;
-        if (maxCost != null &&
-            nextCost > maxCost &&
-            !(canSpendTurnEnteringFirstStep &&
-                _isFirstStepFromStart(
-                  currentKey: currentKey,
-                  startKey: startKey,
-                  maxCost: maxCost,
-                ))) {
+        final nextCost = current.cost + enterCost;
+        if (maxCost != null && nextCost > maxCost && current.cost >= maxCost) {
           continue;
         }
         final knownCost = bestCosts[nextKey];
@@ -205,6 +193,42 @@ class UnitMovementPathfinder {
     }
 
     return _PathSearchResult(bestCosts: bestCosts, coords: coords);
+  }
+
+  int? _enterCostFor({
+    required GameUnit unit,
+    required ({int col, int row}) next,
+    required int currentCost,
+    required UnitMovementCapacityException? canEnterStepBeyondCapacity,
+  }) {
+    if (!_isInBounds(next.col, next.row)) return null;
+    final blockingUnit = _indexedUnitAt(next.col, next.row);
+    if (blockingUnit != null &&
+        !canEnterOccupied(unit, blockingUnit, next.col, next.row)) {
+      return null;
+    }
+    final tile = tileAt(next.col, next.row);
+    if (tile == null) return null;
+    if (canEnterTile != null && !canEnterTile!(tile)) return null;
+    final movementCost = UnitMovementCostRules.costToEnterTile(
+      tile,
+      unitType: unit.type,
+    );
+    if (movementCost.blocked) return null;
+    final enterCost = movementCost.value;
+    final step = UnitMovementStep(
+      col: next.col,
+      row: next.row,
+      enterCost: enterCost,
+      cumulativeCost: currentCost + enterCost,
+    );
+    return UnitMovementFeasibility.canTraverseStep(
+          unit: unit,
+          step: step,
+          canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
+        )
+        ? enterCost
+        : null;
   }
 
   GameUnit? _indexedUnitAt(int col, int row) {
@@ -271,18 +295,6 @@ class UnitMovementPathfinder {
       byKey.putIfAbsent(_coordKey(unit.col, unit.row), () => unit);
     }
     return byKey;
-  }
-
-  static bool _isFirstStepFromStart({
-    required String currentKey,
-    required String startKey,
-    required int maxCost,
-  }) {
-    return currentKey == startKey && maxCost > 0;
-  }
-
-  static bool _canSpendTurnEnteringFirstStep(GameUnit unit) {
-    return unit.movementPoints > 0;
   }
 
   int _compareNodes(_PathNode a, _PathNode b) {

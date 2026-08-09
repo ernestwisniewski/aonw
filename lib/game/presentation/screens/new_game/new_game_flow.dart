@@ -48,6 +48,12 @@ extension NewGameFlowX on NewGameFlow {
     NewGameFlow.hotSeat => l10n.gameModeHotSeatSummaryLabel,
   };
 
+  String description(AppLocalizations l10n) => switch (this) {
+    NewGameFlow.singlePlayer => l10n.newGameModeSinglePlayerDescription,
+    NewGameFlow.multiplayer => l10n.newGameModeMultiplayerDescription,
+    NewGameFlow.hotSeat => l10n.newGameModeHotSeatDescription,
+  };
+
   String mapHeaderTitle(AppLocalizations l10n) => switch (this) {
     NewGameFlow.singlePlayer => l10n.gameModeSinglePlayerMapTitle,
     NewGameFlow.multiplayer => l10n.gameModeMultiplayerMapTitle,

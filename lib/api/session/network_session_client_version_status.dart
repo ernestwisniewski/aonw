@@ -17,12 +17,10 @@ Future<String> loadNetworkSessionVersionStatus(
         );
       } on sp.ServerpodClientException catch (error) {
         if (error.statusCode != 400) rethrow;
-        return serverpodClient.callServerEndpoint<String>(
-          'appStatus',
-          'versionStatus',
-          {'platform': platform, 'buildNumber': buildNumber},
-          authenticated: false,
-        );
+        // A server that does not understand the multiplayer declaration cannot
+        // prove compatibility with this client. Keep entry fail-closed instead
+        // of retrying the legacy build-only status shape.
+        return 'soon';
       }
     },
   );

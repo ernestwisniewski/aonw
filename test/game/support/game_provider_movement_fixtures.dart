@@ -1,6 +1,7 @@
-part of '../game_providers_test.dart';
+import 'package:aonw_core/protocol.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> _waitFor(bool Function() condition) async {
+Future<void> waitForGameProviderCondition(bool Function() condition) async {
   for (var i = 0; i < 50; i++) {
     if (condition()) return;
     await Future<void>.delayed(const Duration(milliseconds: 10));
@@ -8,7 +9,7 @@ Future<void> _waitFor(bool Function() condition) async {
   fail('Condition was not met in time.');
 }
 
-WireMovementExecutionList _singleStepMove(String unitId) {
+WireMovementExecutionList singleStepMovement(String unitId) {
   return WireMovementExecutionList([
     WireMovementExecution(
       unitId: unitId,

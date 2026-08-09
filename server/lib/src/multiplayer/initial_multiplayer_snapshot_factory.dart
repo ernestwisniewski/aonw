@@ -18,9 +18,8 @@ final class InitialMultiplayerSnapshotFactory {
   }) async {
     final players = List<Player>.unmodifiable(participants);
     final mapData = await _mapCatalog.loadAssetMap(mapName);
-    final worldMap = mapData.mapName == null
-        ? mapData.copyWith(mapName: mapName)
-        : mapData;
+    final resolvedMapName = mapData.mapName ?? mapName;
+    final worldMap = mapData.copyWith(mapName: resolvedMapName);
     final startPositionSeed = StartingPositionSeed.fromParts([
       startedAt,
       matchId,
@@ -75,6 +74,7 @@ final class InitialMultiplayerSnapshotFactory {
         world: WorldReference(name: mapName, source: MapSource.asset),
         savedAtUtc: startedAt,
         camera: GameSnapshotCamera.zero,
+        origin: GameSaveOrigin.network,
       ),
     );
   }

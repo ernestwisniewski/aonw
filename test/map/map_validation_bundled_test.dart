@@ -6,7 +6,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('bundled map validation', () {
-    const expectedMaxPlayers = {'verdantia': 4, 'myranth': 3, 'terenos': 3};
+    const expectedMaxPlayers = {
+      'verdantia': 4,
+      'myranth': 3,
+      'terenos': 3,
+      'dravonia': 4,
+    };
 
     for (final entry in expectedMaxPlayers.entries) {
       final mapName = entry.key;
@@ -55,6 +60,7 @@ void main() {
         'terenos': 17,
         'myranth': 22,
         'verdantia': 25,
+        'dravonia': 28,
       };
 
       for (final entry in expectedUnitSupplyCaps.entries) {
@@ -95,6 +101,14 @@ void main() {
               ResourceType.aluminium: 1,
               ResourceType.uranium: 1,
             },
+            'dravonia': {
+              ResourceType.horses: 4,
+              ResourceType.iron: 4,
+              ResourceType.coal: 2,
+              ResourceType.oil: 2,
+              ResourceType.aluminium: 4,
+              ResourceType.uranium: 1,
+            },
           };
 
       for (final entry in expectedStrategicResourceMinimums.entries) {
@@ -110,6 +124,25 @@ void main() {
           );
         }
       }
+    });
+
+    test(
+      'dravonia balances resource access across four start regions',
+      () async {
+        final mapData = await _loadBundledMap('dravonia');
+        final result = MapValidator.validate(mapData: mapData, playerCount: 4);
+
+        expect(result.errors, isEmpty);
+        expect(result.startSites, hasLength(4));
+        _expectDravoniaStartSites(result.startSites);
+        _expectDravoniaResourceAccess(mapData, result.startSites);
+        _expectDravoniaShortGameWarnings(mapData);
+      },
+    );
+
+    test('dravonia passable land and objectives form one component', () async {
+      final mapData = await _loadBundledMap('dravonia');
+      _expectConnectedPassableLand(mapData);
     });
 
     test('bundled maps define valid map objectives', () async {
@@ -201,4 +234,186 @@ Map<ResourceType, int> _resourceCounts(WorldMap mapData) {
     }
   }
   return counts;
+}
+
+const _dravoniaMaxStrategicDistance = <ResourceType, int>{
+  ResourceType.horses: 3,
+  ResourceType.iron: 3,
+  ResourceType.aluminium: 9,
+  ResourceType.oil: 14,
+  ResourceType.coal: 12,
+  ResourceType.uranium: 14,
+};
+
+void _expectDravoniaStartSites(List<MapStartSiteReport> startSites) {
+  expect(startSites.map(_startSiteSnapshot).toList(), const [
+    (
+      warriorCol: 10,
+      warriorRow: 7,
+      settlerCol: 10,
+      settlerRow: 6,
+      passableRing: 7,
+      foodRing: 1,
+      controlled: 18,
+    ),
+    (
+      warriorCol: 30,
+      warriorRow: 22,
+      settlerCol: 30,
+      settlerRow: 21,
+      passableRing: 7,
+      foodRing: 1,
+      controlled: 18,
+    ),
+    (
+      warriorCol: 30,
+      warriorRow: 7,
+      settlerCol: 30,
+      settlerRow: 6,
+      passableRing: 7,
+      foodRing: 1,
+      controlled: 18,
+    ),
+    (
+      warriorCol: 10,
+      warriorRow: 22,
+      settlerCol: 10,
+      settlerRow: 21,
+      passableRing: 7,
+      foodRing: 1,
+      controlled: 18,
+    ),
+  ]);
+}
+
+({
+  int warriorCol,
+  int warriorRow,
+  int settlerCol,
+  int settlerRow,
+  int passableRing,
+  int foodRing,
+  int controlled,
+})
+_startSiteSnapshot(MapStartSiteReport site) => (
+  warriorCol: site.warrior.col,
+  warriorRow: site.warrior.row,
+  settlerCol: site.settler.col,
+  settlerRow: site.settler.row,
+  passableRing: site.passableTilesInFirstRing,
+  foodRing: site.foodResourcesInFirstRing,
+  controlled: site.controlledCandidates,
+);
+
+void _expectDravoniaResourceAccess(
+  WorldMap mapData,
+  List<MapStartSiteReport> startSites,
+) {
+  for (final site in startSites) {
+    _expectDravoniaStartResourceAccess(mapData, site);
+  }
+}
+
+void _expectDravoniaStartResourceAccess(
+  WorldMap mapData,
+  MapStartSiteReport site,
+) {
+  for (final entry in _dravoniaMaxStrategicDistance.entries) {
+    expect(
+      _nearestResourceDistance(mapData, site.settler, entry.key),
+      lessThanOrEqualTo(entry.value),
+      reason: 'dravonia start ${site.playerIndex + 1} ${entry.key.name} access',
+    );
+  }
+  expect(
+    _nearbyLuxuryCount(mapData, site.settler),
+    greaterThanOrEqualTo(2),
+    reason: 'dravonia start ${site.playerIndex + 1} luxury variety',
+  );
+}
+
+int? _nearestResourceDistance(
+  WorldMap mapData,
+  HexCoordinate origin,
+  ResourceType resource,
+) {
+  int? nearest;
+  for (final tile in mapData.tiles) {
+    if (!tile.resources.contains(resource)) continue;
+    final distance = HexDistance.between(
+      origin,
+      HexCoordinate(col: tile.col, row: tile.row),
+    );
+    if (nearest == null || distance < nearest) nearest = distance;
+  }
+  return nearest;
+}
+
+int _nearbyLuxuryCount(WorldMap mapData, HexCoordinate origin) {
+  var count = 0;
+  for (final tile in mapData.tiles) {
+    final distance = HexDistance.between(
+      origin,
+      HexCoordinate(col: tile.col, row: tile.row),
+    );
+    if (distance > 6) continue;
+    count += tile.resources
+        .where(StabilitySourceCatalog.luxuryResources.contains)
+        .length;
+  }
+  return count;
+}
+
+void _expectDravoniaShortGameWarnings(WorldMap mapData) {
+  final shortGame = MapValidator.validate(
+    mapData: mapData,
+    playerCount: 4,
+    gameLength: GameLengthConfig.standard60,
+  );
+  expect(
+    shortGame.warnings.map((issue) => issue.code),
+    containsAll(['short_game_slow_first_contact', 'short_game_large_map']),
+  );
+}
+
+void _expectConnectedPassableLand(WorldMap mapData) {
+  final passable = {
+    for (final tile in mapData.tiles)
+      if (UnitMovementCostRules.costToEnterTile(tile).passable)
+        HexCoordinate(col: tile.col, row: tile.row),
+  };
+  final frontier = <HexCoordinate>[passable.first];
+  final reachable = <HexCoordinate>{passable.first};
+  for (var index = 0; index < frontier.length; index++) {
+    _visitPassableNeighbors(
+      mapData: mapData,
+      origin: frontier[index],
+      passable: passable,
+      reachable: reachable,
+      frontier: frontier,
+    );
+  }
+
+  expect(reachable, passable);
+  expect(
+    mapData.objectives.map(
+      (objective) =>
+          HexCoordinate(col: objective.hex.col, row: objective.hex.row),
+    ),
+    everyElement(isIn(reachable)),
+  );
+}
+
+void _visitPassableNeighbors({
+  required WorldMap mapData,
+  required HexCoordinate origin,
+  required Set<HexCoordinate> passable,
+  required Set<HexCoordinate> reachable,
+  required List<HexCoordinate> frontier,
+}) {
+  for (final neighbor in HexNeighbors.existingAround(origin, mapData)) {
+    if (passable.contains(neighbor) && reachable.add(neighbor)) {
+      frontier.add(neighbor);
+    }
+  }
 }

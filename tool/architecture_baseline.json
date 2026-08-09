@@ -123,8 +123,6 @@
         "packages/aonw_core/lib/game/domain/event/game_event_domain_descriptor.dart::class:GameEventDomainDescriptor/constructor:forEvent": 196,
         "packages/aonw_core/lib/game/domain/fog/fog_reveal_calculator.dart::class:FogRevealCalculator/method:_visibleFromSource": 61,
         "packages/aonw_core/lib/game/domain/map_validation.dart::class:MapValidator/method:validate": 86,
-        "packages/aonw_core/lib/game/domain/movement/merchant_trade_route_rules.dart::class:MerchantTradeRouteRules/method:advanceUnit": 96,
-        "packages/aonw_core/lib/game/domain/movement/unit_movement_pathfinder.dart::class:UnitMovementPathfinder/method:_search": 63,
         "packages/aonw_core/lib/game/domain/objective/game_objective.dart::class:GameObjectiveTracker/method:activeStrategicObjectivesForPlayer": 72,
         "packages/aonw_core/lib/game/domain/technology/research_turn_processor.dart::class:ResearchTurnProcessor/method:advanceForPlayer": 86,
         "packages/aonw_core/lib/game/domain/technology/science_yield_calculator.dart::class:ScienceYieldCalculator/method:_totalForPlayer": 86,
@@ -284,12 +282,11 @@
         "packages/aonw_core/lib/game/domain/fog/fog_reveal_calculator.dart::class:FogRevealCalculator/method:_visibleFromSource": 13,
         "packages/aonw_core/lib/game/domain/map_validation.dart::class:MapValidator/method:_isFoodResource": 11,
         "packages/aonw_core/lib/game/domain/map_validation.dart::class:MapValidator/method:_isLuxuryResource": 15,
-        "packages/aonw_core/lib/game/domain/movement/merchant_trade_route_rules.dart::class:MerchantTradeRouteRules/method:advanceUnit": 18,
         "packages/aonw_core/lib/game/domain/movement/scout_auto_explore_planner.dart::class:ScoutAutoExplorePlanner/method:_reservedExplorationHexes": 11,
         "packages/aonw_core/lib/game/domain/movement/unit_movement_balance.dart::class:UnitMovementBalance/method:maxMovementPointsForType": 18,
         "packages/aonw_core/lib/game/domain/movement/unit_movement_cost_rules.dart::class:UnitMovementCostRules/method:_baseCost": 16,
         "packages/aonw_core/lib/game/domain/movement/unit_movement_cost_rules.dart::class:UnitMovementCostRules/method:_navalCost": 16,
-        "packages/aonw_core/lib/game/domain/movement/unit_movement_pathfinder.dart::class:UnitMovementPathfinder/method:_search": 19,
+        "packages/aonw_core/lib/game/domain/movement/unit_movement_pathfinder.dart::class:UnitMovementPathfinder/method:_search": 12,
         "packages/aonw_core/lib/game/domain/objective/game_objective.dart::class:GameObjectiveTracker/method:_currentValueFor": 24,
         "packages/aonw_core/lib/game/domain/objective/game_objective.dart::class:GameObjectiveTracker/method:_scorePressureObjectiveForPlayer": 11,
         "packages/aonw_core/lib/game/domain/runtime/pending_player_action.dart::class:PendingPlayerAction/getter:jsonType": 11,
@@ -382,9 +379,8 @@
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector/method:_technologyModifiers": 26,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomatic_contact.dart::class:DiplomaticContact/method:contactKeys": 27,
         "packages/aonw_core/lib/game/domain/fog/fog_reveal_calculator.dart::class:FogRevealCalculator/method:_visibleFromSource": 26,
-        "packages/aonw_core/lib/game/domain/movement/merchant_trade_route_rules.dart::class:MerchantTradeRouteRules/method:advanceUnit": 22,
         "packages/aonw_core/lib/game/domain/movement/scout_auto_explore_planner.dart::class:ScoutAutoExplorePlanner/method:_reservedExplorationHexes": 21,
-        "packages/aonw_core/lib/game/domain/movement/unit_movement_pathfinder.dart::class:UnitMovementPathfinder/method:_search": 35,
+        "packages/aonw_core/lib/game/domain/movement/unit_movement_pathfinder.dart::class:UnitMovementPathfinder/method:_search": 20,
         "packages/aonw_core/lib/game/domain/technology/science_yield_calculator.dart::class:ScienceYieldCalculator/method:_totalForPlayer": 24,
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryAnalyzer/method:_findingsFor": 19,
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryPlayerReport/operator:==": 20,
@@ -434,7 +430,7 @@
     "root_lib": {
       "files": {
         "lib/api/session/network_session_refresh_coordinator.dart": 661,
-        "lib/api/transport/network_command_transport.dart": 595,
+        "lib/api/transport/network_command_transport.dart": 570,
         "lib/developer/assets_editor_frame_edit_panel.dart": 567,
         "lib/developer/assets_editor_preview_widgets.dart": 580,
         "lib/editor/map_editor_screen.dart": 510,
@@ -455,7 +451,6 @@
         "lib/game/presentation/formatters/game_event_notification_message.dart": 884,
         "lib/game/presentation/input/gamepad/gamepad_input_router.dart": 556,
         "lib/game/presentation/screens/game/game_screen.dart": 809,
-        "lib/game/presentation/screens/new_game/new_game_screen.dart": 508,
         "lib/game/presentation/widgets/activity_log/turn_timeline_popup.dart": 675,
         "lib/game/presentation/widgets/bottom_toolbar/end_turn_button_content.dart": 612,
         "lib/game/presentation/widgets/city/city_yield_breakdown_panel.dart": 731,
@@ -473,7 +468,7 @@
         "lib/game/presentation/widgets/visual/game_insight_widgets.dart": 550,
         "lib/map/rendering/map_image_layer.dart": 525,
         "lib/map/rendering/tile/hex_tile_painter.dart": 762,
-        "lib/menu/main_menu_screen.dart": 1006,
+        "lib/menu/main_menu_screen.dart": 962,
         "lib/menu/manual_screen.dart": 801,
         "lib/menu/options_screen.dart": 1071
       },
@@ -486,7 +481,6 @@
         "lib/editor/widgets/editor_toolbar_sections.dart": 490,
         "lib/game/presentation/input/gamepad/gamepad_input_router.dart": 556,
         "lib/game/presentation/screens/game/game_screen.dart": 809,
-        "lib/game/presentation/screens/new_game/new_game_screen.dart": 508,
         "lib/game/presentation/widgets/activity_log/turn_timeline_popup.dart": 675,
         "lib/game/presentation/widgets/bottom_toolbar/end_turn_button.dart": 411,
         "lib/game/presentation/widgets/bottom_toolbar/end_turn_button_content.dart": 612,
@@ -519,7 +513,7 @@
         "lib/game/presentation/widgets/technology/technology_tree_dialog.dart": 468,
         "lib/game/presentation/widgets/visual/game_insight_widgets.dart": 550,
         "lib/map/widgets/dice_roll_test_overlay.dart": 491,
-        "lib/menu/main_menu_screen.dart": 1006,
+        "lib/menu/main_menu_screen.dart": 962,
         "lib/menu/manual_screen.dart": 801,
         "lib/menu/menu_route_shell.dart": 425,
         "lib/menu/options_screen.dart": 1071,
@@ -546,8 +540,6 @@
         "lib/game/presentation/engine/rendering_layers/units/unit_move_preview.dart::class:UnitMovePreview": 759,
         "lib/game/presentation/formatters/diplomacy_history_presenter.dart::class:DiplomacyHistoryPresenter": 380,
         "lib/game/presentation/formatters/game_display_names.dart::class:GameDisplayNames": 586,
-        "lib/game/presentation/providers/game/game_actions_provider.dart::class:GameCommandController": 391,
-        "lib/game/presentation/screens/new_game/new_game_screen.dart::class:_NewGameScreenState": 395,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart::class:_DiplomaticMessagePopupOverlayState": 542,
         "lib/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart::class:HudGamepadFocusController": 486,
         "lib/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart::class:HudVictoryStatusSummary": 382,
@@ -618,10 +610,7 @@
         "lib/game/presentation/screens/lobby/lobby_screen_queue_countdown.dart::class:_QueueCountdownClockPainter/method:paint": 80,
         "lib/game/presentation/screens/lobby/multiplayer_account_dialog_auth_methods.dart::class:_EmailAccountForm/method:build": 69,
         "lib/game/presentation/screens/new_game/new_game_review_card.dart::class:_ReviewCard/method:build": 100,
-        "lib/game/presentation/screens/new_game/new_game_screen.dart::class:_NewGameScreenState/method:_buildActionBar": 69,
-        "lib/game/presentation/screens/new_game/new_game_screen.dart::class:_NewGameScreenState/method:_buildContent": 98,
         "lib/game/presentation/screens/new_game/new_game_screen_layout_widgets.dart::class:_NewGameStepChip/method:build/closure:MenuGamepadAction#1": 70,
-        "lib/game/presentation/screens/new_game/new_game_screen_plan_step.dart::class:_PlanStep/method:build/closure:LayoutBuilder#1": 100,
         "lib/game/presentation/screens/new_game/new_game_screen_plan_summary_widgets.dart::class:_GamePremisePanel/method:build": 79,
         "lib/game/presentation/screens/new_game/new_game_screen_plan_summary_widgets.dart::class:_ModeChoiceCard/method:build/closure:MenuGamepadAction#1": 148,
         "lib/game/presentation/screens/new_game/new_game_screen_review_step.dart::class:_NewGameMapValidationNotice/method:build": 70,
@@ -773,7 +762,7 @@
         "lib/menu/credits_screen.dart::class:CreditsScreen/method:build": 76,
         "lib/menu/main_menu_screen.dart::class:_BottomLinks/method:build": 71,
         "lib/menu/main_menu_screen.dart::class:_MenuButtonState/method:build/closure:MenuGamepadAction#1": 120,
-        "lib/menu/main_menu_screen.dart::class:_MenuPanelState/method:build": 114,
+        "lib/menu/main_menu_screen.dart::class:_MenuPanelState/method:build": 64,
         "lib/menu/main_menu_screen.dart::class:_WhatsNewPanel/method:build": 62,
         "lib/menu/manual_screen.dart::function:_desktopGroups": 90,
         "lib/menu/manual_screen.dart::function:_gamepadGroups": 90,
@@ -891,7 +880,6 @@
         "lib/game/presentation/providers/hud/hud_minimized_popups_provider.dart::class:HudMinimizedPopupEntry/method:fromJson": 13,
         "lib/game/presentation/providers/player/player_control_provider.dart::class:GamePlayerControlController/method:_endTurn": 11,
         "lib/game/presentation/screens/game/load_game_screen.dart::class:LoadGameScreen/method:_buildSaves": 12,
-        "lib/game/presentation/screens/lobby/lobby_network_error_messages.dart::class:_LobbyNetworkErrorMessages/method:_mappedMultiplayerExceptionText": 14,
         "lib/game/presentation/screens/lobby/lobby_network_session_coordinator.dart::class:LobbyNetworkSessionCoordinator/method:ensureSession": 12,
         "lib/game/presentation/screens/lobby/lobby_screen_game_setup_widgets.dart::class:_MapValidationNotice/method:_issueText": 15,
         "lib/game/presentation/screens/lobby/lobby_screen_game_setup_widgets.dart::class:_MapValidationNotice/method:build": 15,
@@ -900,8 +888,6 @@
         "lib/game/presentation/screens/lobby/lobby_screen_multiplayer_panels.dart::class:_MultiplayerQueuePanel/method:build": 12,
         "lib/game/presentation/screens/lobby/lobby_screen_private_match_panel.dart::class:_PrivateMatchPanel/method:build": 14,
         "lib/game/presentation/screens/lobby/lobby_screen_public_lobby_panel.dart::class:_PublicLobbyBrowserPanel/method:build": 11,
-        "lib/game/presentation/screens/new_game/new_game_screen.dart::class:_NewGameScreenState/method:_buildActionBar": 13,
-        "lib/game/presentation/screens/new_game/new_game_screen.dart::class:_NewGameScreenState/method:_buildContent": 19,
         "lib/game/presentation/screens/new_game/new_game_screen_plan_summary_widgets.dart::class:_ModeChoiceCard/method:build/closure:MenuGamepadAction#1": 19,
         "lib/game/presentation/screens/new_game/new_game_screen_review_step.dart::class:_NewGameMapValidationNotice/method:_issueText": 15,
         "lib/game/presentation/screens/new_game/new_game_screen_review_step.dart::class:_NewGameMapValidationNotice/method:build": 15,
@@ -1034,7 +1020,6 @@
         "lib/game/presentation/screens/game/load_game_screen.dart::class:LoadGameScreen/method:_buildSaves": 25,
         "lib/game/presentation/screens/lobby/lobby_screen_game_setup_widgets.dart::class:_MapValidationNotice/method:build": 19,
         "lib/game/presentation/screens/lobby/lobby_screen_private_match_panel.dart::class:_PrivateMatchPanel/method:build": 22,
-        "lib/game/presentation/screens/new_game/new_game_screen.dart::class:_NewGameScreenState/method:_buildActionBar": 17,
         "lib/game/presentation/screens/new_game/new_game_screen_plan_summary_widgets.dart::class:_ModeChoiceCard/method:build/closure:MenuGamepadAction#1": 21,
         "lib/game/presentation/screens/new_game/new_game_screen_review_step.dart::class:_NewGameMapValidationNotice/method:build": 19,
         "lib/game/presentation/widgets/activity_log/activity_log_dialog.dart::class:_ActivityLogPanelState/method:build": 28,
@@ -1092,7 +1077,6 @@
         "test/architecture/lint_configuration_guard_test.dart": 715,
         "test/editor/editor_grid_test.dart": 592,
         "test/game/ai_turn_runner_test.dart": 645,
-        "test/game/artifact/world_artifact_mechanics_test.dart": 543,
         "test/game/city/city_turn_processor_production_test.dart": 615,
         "test/game/city_marker_test.dart": 683,
         "test/game/city_production_dialog_test.dart": 652,
@@ -1108,8 +1092,6 @@
         "test/game/game_screen_test.dart": 1422,
         "test/game/hover_intent_marker_test.dart": 923,
         "test/game/infrastructure/transport/local_command_transport_test.dart": 555,
-        "test/game/lobby_connection_controller_test.dart": 632,
-        "test/game/lobby_screen_test.dart": 525,
         "test/game/presentation/widgets/activity_log_panel_test.dart": 571,
         "test/game/presentation/widgets/bottom_toolbar/end_turn_button_test.dart": 552,
         "test/game/presentation/widgets/city_production_dialog_view_model_test.dart": 627,
@@ -1125,7 +1107,7 @@
         "test/game/selection_info/selection_info_test.dart": 564,
         "test/game/technology_tree_dialog_test.dart": 1121,
         "test/game/unit_marker_layer_test.dart": 1291,
-        "test/game/unit_move_preview_layer_test.dart": 547,
+        "test/game/unit_move_preview_layer_test.dart": 545,
         "test/menu/main_menu_screen_test.dart": 644
       },
       "legacyFiles": {},
@@ -1159,19 +1141,19 @@
     },
     "root_tool": {
       "files": {
-        "tool/check_coverage.dart": 1655,
+        "tool/check_coverage.dart": 1650,
         "tool/run_save_ai_benchmark/execution_models.dart": 736,
         "tool/run_save_ai_benchmark/multi_turn_replay_report.dart": 719,
         "tool/run_save_ai_benchmark/report_models.dart": 505,
-        "tool/serverpod_multiplayer_smoke.dart": 1068
+        "tool/serverpod_multiplayer_smoke.dart": 1054
       },
       "legacyFiles": {},
       "declarations": {
-        "tool/check_coverage.dart::class:_CoverageGate": 560,
+        "tool/check_coverage.dart::class:_CoverageGate": 555,
         "tool/run_save_ai_benchmark/multi_turn_replay_report.dart::class:_MultiTurnReplayReport": 717,
         "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport": 414,
         "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite": 372,
-        "tool/serverpod_multiplayer_smoke.dart::class:_RuntimeSmoke": 911
+        "tool/serverpod_multiplayer_smoke.dart::class:_RuntimeSmoke": 897
       },
       "callableLines": {
         "tool/analyze_human_trace.dart::function:_markdownReport": 120,
@@ -1190,7 +1172,7 @@
         "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite/method:_runDiplomacyTargetingGuard": 186,
         "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite/method:_runFortifiedWakeUpGuard": 165,
         "tool/serverpod_critical_e2e.dart::class:_CriticalE2e/method:run": 219,
-        "tool/serverpod_multiplayer_smoke.dart::class:_RuntimeSmoke/method:run": 594
+        "tool/serverpod_multiplayer_smoke.dart::class:_RuntimeSmoke/method:run": 581
       },
       "nesting": {
         "tool/allocate_loopback_port_triplet.dart::function:allocateLoopbackPortTriplet": 5,
@@ -1278,13 +1260,13 @@
     },
     "server_test": {
       "files": {
-        "server/test/integration/multiplayer_endpoint_smoke.dart": 1239
+        "server/test/integration/multiplayer_endpoint_smoke.dart": 1149
       },
       "legacyFiles": {},
       "declarations": {},
       "callableLines": {
         "server/test/architecture/server_operability_config_test.dart::function:main/closure:group[Server_operability_configuration]#1/closure:test[Compose_profiles_select_immutable_Serverpod_run_modes]#1": 140,
-        "server/test/integration/multiplayer_endpoint_smoke.dart::function:main/closure:withServerpod[MultiplayerEndpoint]#1/closure:test[creates__joins__starts__and_loads_a_persisted_match]#1": 218
+        "server/test/integration/multiplayer_endpoint_smoke.dart::function:main/closure:withServerpod[MultiplayerEndpoint]#1/closure:test[creates__joins__starts__and_loads_a_persisted_match]#1": 144
       },
       "nesting": {},
       "cyclomaticComplexity": {},

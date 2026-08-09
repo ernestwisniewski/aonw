@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:aonw/api/session/external_auth_browser.dart';
 import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/api/session/serverpod_multiplayer_failure_mapper.dart';
@@ -33,15 +35,24 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests
   final String serverpodHost;
   final ServerpodAuthKeyProviderFactory? authKeyProviderFactory;
   final NetworkSessionServerpodClientFactory _clientFactory;
+  final ExternalAuthBrowserFactory _externalAuthBrowserFactory;
+  final Duration _externalAuthPollInterval;
   sp.Client? _anonymousClient;
   sp.Client? _authenticatedClient;
+  _ExternalAuthOperation? _externalAuthOperation;
+  var _externalAuthGeneration = 0;
   var _closed = false;
 
   NetworkSessionClient({
     required this.serverpodHost,
     this.authKeyProviderFactory,
     NetworkSessionServerpodClientFactory? clientFactory,
-  }) : _clientFactory = clientFactory ?? createServerpodClient;
+    ExternalAuthBrowserFactory? externalAuthBrowserFactory,
+    Duration externalAuthPollInterval = const Duration(seconds: 1),
+  }) : _clientFactory = clientFactory ?? createServerpodClient,
+       _externalAuthBrowserFactory =
+           externalAuthBrowserFactory ?? prepareExternalAuthBrowser,
+       _externalAuthPollInterval = externalAuthPollInterval;
 
   @override
   bool get isClosed => _closed;
@@ -153,41 +164,23 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests
   }
 
   @override
-  Future<NetworkAuthResult> loginWithSteam() async {
-    final browser = prepareExternalAuthBrowser();
-    final client = _activeAnonymousClient;
-    var navigated = false;
-    try {
-      final start = await _mapRequest(client.steamAuth.start);
-      final opened = await browser.navigate(Uri.parse(start.authUrl));
-      if (!opened) {
-        throw StateError('Could not open Steam sign-in.');
-      }
-      navigated = true;
-
-      while (DateTime.now().toUtc().isBefore(start.expiresAt.toUtc())) {
-        await Future<void>.delayed(const Duration(seconds: 1));
-        final poll = await _mapRequest(
-          () => client.steamAuth.poll(requestId: start.requestId),
+  Future<NetworkAuthResult> loginWithSteam() {
+    return _loginWithExternalBrowser(
+      signInName: 'Steam',
+      pendingStatuses: const {'pending'},
+      start: (client) async {
+        final start = await client.steamAuth.start();
+        return (
+          requestId: start.requestId,
+          authUrl: start.authUrl,
+          expiresAt: start.expiresAt,
         );
-        final auth = poll.auth;
-        if (auth != null) {
-          final result = await completeNativeSocialAuth(authSuccess: auth);
-          browser.close();
-          return result;
-        }
-        if (poll.status != 'pending') {
-          throw StateError(
-            'Steam sign-in failed: ${poll.error ?? poll.status}',
-          );
-        }
-      }
-
-      throw StateError('Steam sign-in expired.');
-    } catch (_) {
-      if (!navigated) browser.close();
-      rethrow;
-    }
+      },
+      poll: (client, requestId) async {
+        final poll = await client.steamAuth.poll(requestId: requestId);
+        return (status: poll.status, auth: poll.auth, error: poll.error);
+      },
+    );
   }
 
   @override
@@ -197,42 +190,22 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests
     if (provider != 'apple' && provider != 'google') {
       throw ArgumentError.value(provider, 'provider', 'Unsupported provider');
     }
-    final browser = prepareExternalAuthBrowser();
-    final client = _activeAnonymousClient;
-    var navigated = false;
-    try {
-      final start = await _mapRequest(
-        () => client.externalAuth.start(provider: provider),
-      );
-      final opened = await browser.navigate(Uri.parse(start.authUrl));
-      if (!opened) {
-        throw StateError('Could not open $provider sign-in.');
-      }
-      navigated = true;
-
-      while (DateTime.now().toUtc().isBefore(start.expiresAt.toUtc())) {
-        await Future<void>.delayed(const Duration(seconds: 1));
-        final poll = await _mapRequest(
-          () => client.externalAuth.poll(requestId: start.requestId),
+    return _loginWithExternalBrowser(
+      signInName: provider,
+      pendingStatuses: const {'pending', 'processing'},
+      start: (client) async {
+        final start = await client.externalAuth.start(provider: provider);
+        return (
+          requestId: start.requestId,
+          authUrl: start.authUrl,
+          expiresAt: start.expiresAt,
         );
-        final auth = poll.auth;
-        if (auth != null) {
-          final result = await completeNativeSocialAuth(authSuccess: auth);
-          browser.close();
-          return result;
-        }
-        if (poll.status != 'pending' && poll.status != 'processing') {
-          throw StateError(
-            '$provider sign-in failed: ${poll.error ?? poll.status}',
-          );
-        }
-      }
-
-      throw StateError('$provider sign-in expired.');
-    } catch (_) {
-      if (!navigated) browser.close();
-      rethrow;
-    }
+      },
+      poll: (client, requestId) async {
+        final poll = await client.externalAuth.poll(requestId: requestId);
+        return (status: poll.status, auth: poll.auth, error: poll.error);
+      },
+    );
   }
 
   @override
@@ -250,18 +223,23 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests
   }
 
   @override
-  Future<List<WireMatch>> listMatches({
-    required AuthToken token,
-    String? status,
-  }) {
-    return _withToken(token, (client) => client.multiplayer.listMatches());
+  Future<List<WireMatch>> listMatches({required AuthToken token}) {
+    return _withToken(
+      token,
+      (client) => client.multiplayer.listMatches(
+        multiplayerVersion: kCurrentMultiplayerVersion,
+      ),
+    );
   }
 
   @override
   Future<void> leaveMatch({required AuthToken token, required String matchId}) {
     return _withToken(
       token,
-      (client) => client.multiplayer.leaveMatch(matchId),
+      (client) => client.multiplayer.leaveMatch(
+        matchId,
+        multiplayerVersion: kCurrentMultiplayerVersion,
+      ),
     );
   }
 
@@ -272,7 +250,10 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests
   }) {
     return _withToken(
       token,
-      (client) => client.multiplayer.startMatch(matchId),
+      (client) => client.multiplayer.startMatch(
+        matchId,
+        multiplayerVersion: kCurrentMultiplayerVersion,
+      ),
     );
   }
 
@@ -283,7 +264,10 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests
   }) {
     return _withToken(
       token,
-      (client) => client.multiplayer.markMapLoaded(matchId),
+      (client) => client.multiplayer.markMapLoaded(
+        matchId,
+        multiplayerVersion: kCurrentMultiplayerVersion,
+      ),
     );
   }
 
@@ -294,7 +278,10 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests
   }) {
     return _withToken(
       token,
-      (client) => client.multiplayer.resignMatch(matchId),
+      (client) => client.multiplayer.resignMatch(
+        matchId,
+        multiplayerVersion: kCurrentMultiplayerVersion,
+      ),
     );
   }
 
@@ -303,7 +290,13 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests
     required AuthToken token,
     required String matchId,
   }) {
-    return _withToken(token, (client) => client.multiplayer.loadMatch(matchId));
+    return _withToken(
+      token,
+      (client) => client.multiplayer.loadMatch(
+        matchId,
+        multiplayerVersion: kCurrentMultiplayerVersion,
+      ),
+    );
   }
 
   @override
@@ -325,6 +318,9 @@ class NetworkSessionClient extends _NetworkSessionLobbyRequests
   void close() {
     if (_closed) return;
     _closed = true;
+    _externalAuthGeneration += 1;
+    _externalAuthOperation?.cancel();
+    _externalAuthOperation = null;
     _anonymousClient?.close();
     _anonymousClient = null;
     _authenticatedClient?.close();

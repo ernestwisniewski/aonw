@@ -86,6 +86,10 @@ const _requiredMovementCharacterization = <String, _MovementRequirement>{
     accepted: true,
     reason: null,
   ),
+  'movement-characterization-rough-prefix-exhausted-accepted': (
+    accepted: true,
+    reason: null,
+  ),
   'movement-characterization-zero-movement-queued-accepted': (
     accepted: true,
     reason: null,

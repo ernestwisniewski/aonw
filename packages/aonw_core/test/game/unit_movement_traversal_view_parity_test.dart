@@ -298,7 +298,7 @@ String? _planSnapshot(UnitMovementPlan? plan) {
       .join('>');
   return '${plan.unitId}|${plan.targetCol},${plan.targetRow}'
       '|${plan.totalCost}/${plan.availableMovementPoints}'
-      '|${plan.canMoveNow}/${plan.canSpendTurnEnteringFirstStep}|$steps';
+      '|${plan.canMoveNow}|$steps';
 }
 
 List<String> _costSnapshot(Map<({int col, int row}), int> costs) {

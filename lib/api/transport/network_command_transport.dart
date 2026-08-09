@@ -19,6 +19,8 @@ import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 
+part 'network_command_transport_exceptions.dart';
+
 class ClientTickGenerator {
   int _nextTick;
 
@@ -32,34 +34,6 @@ class ClientTickGenerator {
 
   void ensureAtLeast(int nextTick) {
     if (nextTick > _nextTick) _nextTick = nextTick;
-  }
-}
-
-class NetworkCommandRejectedException implements Exception {
-  final int offset;
-  final String? reason;
-
-  const NetworkCommandRejectedException({
-    required this.offset,
-    required this.reason,
-  });
-
-  @override
-  String toString() {
-    return 'NetworkCommandRejectedException(offset: $offset, reason: $reason)';
-  }
-}
-
-class NetworkCommandConflictException implements Exception {
-  final String code;
-  final int? nextTick;
-
-  const NetworkCommandConflictException({required this.code, this.nextTick});
-
-  @override
-  String toString() {
-    final suffix = nextTick == null ? '' : ', nextTick=$nextTick';
-    return 'NetworkCommandConflictException(code: $code$suffix)';
   }
 }
 
@@ -106,6 +80,7 @@ class ServerpodWireCommandDispatcher implements WireCommandDispatcher {
         saveId,
         afterOffset,
         input.stream,
+        multiplayerVersion: kCurrentMultiplayerVersion,
       );
       subscription = output.listen(
         (message) {

@@ -128,7 +128,7 @@ abstract final class _MovePreviewReducer {
     required FogVisibilityQuery visibility,
   }) {
     final planningUnit = UnitManualMovementRules.prepareForCommand(selected);
-    return UnitMovementPlanner(
+    final planner = UnitMovementPlanner(
       mapData: mapView,
       units: UnitMovementVisibilityRules.planningUnitsForActor(
         units: state.units,
@@ -149,7 +149,24 @@ abstract final class _MovePreviewReducer {
             tile: tile,
             visibility: visibility,
           ),
-    ).planMove(unit: planningUnit, targetTile: targetTile);
+    );
+    bool canEnterStepBeyondCapacity(UnitMovementStep step) =>
+        MovementReducer._canCarryArtifactIntoTargetCity(
+          state: state,
+          unit: planningUnit,
+          targetTile: targetTile,
+          step: step,
+        );
+    return planner.planMove(
+          unit: planningUnit,
+          targetTile: targetTile,
+          canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
+        ) ??
+        planner.planMove(
+          unit: planningUnit,
+          targetTile: targetTile,
+          canEnterStepBeyondCapacity: (_) => true,
+        );
   }
 
   static GameStateTransition confirmPreview(

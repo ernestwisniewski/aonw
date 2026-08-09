@@ -103,6 +103,7 @@ void _registerEngineFamilyRoutingTests() {
       final dispatcher = _ScriptedCommandDispatcher(
         (sentCommand) => WireCommandAck(
           matchId: sentCommand.saveId,
+          clientMessageId: sentCommand.clientMessageId,
           accepted: true,
           offset: 1,
           snapshot: snapshotCodec.toWire(
@@ -183,6 +184,7 @@ void _registerEngineFamilyRoutingTests() {
     final dispatcher = _ScriptedCommandDispatcher(
       (sentCommand) => WireCommandAck(
         matchId: sentCommand.saveId,
+        clientMessageId: sentCommand.clientMessageId,
         accepted: true,
         offset: 1,
         snapshot: snapshotCodec.toWire(
@@ -252,6 +254,7 @@ void _registerEngineFamilyRoutingTests() {
     final dispatcher = _ScriptedCommandDispatcher(
       (sentCommand) => WireCommandAck(
         matchId: sentCommand.saveId,
+        clientMessageId: sentCommand.clientMessageId,
         accepted: true,
         offset: 1,
         snapshot: snapshotCodec.toWire(
@@ -401,6 +404,7 @@ class _FakeCommandServer implements WireCommandDispatcher {
     );
     return lastAck = WireCommandAck(
       matchId: wire.matchId,
+      clientMessageId: clientMessageId,
       accepted: true,
       offset: offset,
       tick: wire.tick,

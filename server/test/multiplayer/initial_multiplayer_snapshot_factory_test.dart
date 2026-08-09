@@ -58,6 +58,7 @@ void main() {
     expect(canonical.metadata.world.source, MapSource.asset);
     expect(canonical.metadata.savedAtUtc, _initialSnapshotStartedAt);
     expect(canonical.metadata.camera, GameSnapshotCamera.zero);
+    expect(canonical.metadata.origin, GameSaveOrigin.network);
     expect(canonical.domain.actions, DomainActionState.empty);
     expect(canonical.eventLogOffset, 0);
     expect(decoded.canonical, canonical);

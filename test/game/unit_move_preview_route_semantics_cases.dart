@@ -1,5 +1,15 @@
 part of 'unit_move_preview_layer_test.dart';
 
+const _confirmationEtaSteps = [
+  UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+  UnitMovementStep(col: 1, row: 0, enterCost: 3, cumulativeCost: 3),
+  UnitMovementStep(col: 2, row: 0, enterCost: 3, cumulativeCost: 6),
+  UnitMovementStep(col: 3, row: 0, enterCost: 2, cumulativeCost: 8),
+];
+
+UnitMovementPlan _confirmationEtaPlan() =>
+    _plan(targetCol: 3, totalCost: 8, steps: _confirmationEtaSteps);
+
 UnitMovementPlan _linearPlan({
   required int totalCost,
   required int availableMovementPoints,
@@ -67,10 +77,11 @@ bool _verifyGeneratedReachability(math.Random random, int scenario) {
     row: 0,
     movementPoints: movementPoints,
   );
-  final plan = UnitMovementPlanner(
-    mapData: map,
-    units: [unit],
-  ).planMove(unit: unit, targetTile: map.tileAt(targetCol, 0)!);
+  final plan = UnitMovementPlanner(mapData: map, units: [unit]).planMove(
+    unit: unit,
+    targetTile: map.tileAt(targetCol, 0)!,
+    canEnterStepBeyondCapacity: (_) => true,
+  );
   expect(plan, isNotNull, reason: 'generated scenario $scenario');
   final resolvedPlan = plan!;
   final parent = Component();
@@ -102,7 +113,6 @@ void _registerRouteSemanticsTests() {
     final plan = _plan(
       totalCost: 3,
       availableMovementPoints: 2,
-      canSpendTurnEnteringFirstStep: true,
       steps: const [
         UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
         UnitMovementStep(col: 1, row: 0, enterCost: 3, cumulativeCost: 3),

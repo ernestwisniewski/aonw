@@ -99,6 +99,7 @@ class JsonGameRepository implements GameRepository {
             turn: save.turn,
             savedAt: save.savedAt,
             gameMode: save.gameMode,
+            origin: save.origin,
             replayAvailable: replayAvailable,
           ),
         );

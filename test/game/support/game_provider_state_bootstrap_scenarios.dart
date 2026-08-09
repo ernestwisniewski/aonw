@@ -182,7 +182,7 @@ void _registerGameStateNotifierBootstrapScenarios() {
           ..add(message)
           ..add(message);
 
-        await _waitFor(() {
+        await waitForGameProviderCondition(() {
           final state = container.read(gameStateProvider(save.id)).value;
           return state?.units.single.col == 2;
         });
@@ -264,7 +264,7 @@ void _registerGameStateNotifierBootstrapScenarios() {
           ),
         );
 
-        await _waitFor(() {
+        await waitForGameProviderCondition(() {
           final state = container.read(gameStateProvider(save.id)).value;
           return state?.units.single.col == 2;
         });
@@ -378,7 +378,7 @@ void _registerGameStateNotifierBootstrapScenarios() {
         ),
       );
 
-      await _waitFor(() {
+      await waitForGameProviderCondition(() {
         final state = container.read(gameStateProvider(save.id)).value;
         return state?.unitById('defender')?.col == 2;
       });

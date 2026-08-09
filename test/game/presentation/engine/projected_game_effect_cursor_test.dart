@@ -195,6 +195,36 @@ void main() {
   );
 
   test(
+    'presentation start callbacks stay attached to out-of-order transitions',
+    () async {
+      final renderer = _RecordingRendererViewModel()
+        ..activateProjectedEffectSource('match_1', nextEventOffset: 7);
+      final starts = <String>[];
+
+      await renderer.applyProjectedTransition(
+        GameClientState(activePlayerId: 'player_8'),
+        _batch(offset: 8),
+        onPresentationStart: () =>
+            starts.add('audio_8_before_${renderer.appliedStates.length}'),
+      );
+      expect(starts, isEmpty);
+
+      await renderer.applyProjectedTransition(
+        GameClientState(activePlayerId: 'player_7'),
+        _batch(offset: 7),
+        onPresentationStart: () =>
+            starts.add('audio_7_before_${renderer.appliedStates.length}'),
+      );
+
+      expect(starts, const ['audio_7_before_0', 'audio_8_before_1']);
+      expect(renderer.appliedStates.map((state) => state.activePlayerId), [
+        'player_7',
+        'player_8',
+      ]);
+    },
+  );
+
+  test(
     'application boundary advances through an empty authoritative offset',
     () async {
       final renderer = _RecordingRendererViewModel()

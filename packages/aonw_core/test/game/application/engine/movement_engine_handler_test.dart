@@ -2,6 +2,8 @@ import 'package:aonw_core/application.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
 
+part 'support/movement_engine_handler_automated_unit_cases.dart';
+
 const _playerId = 'player_1';
 const _otherPlayerId = 'player_2';
 
@@ -152,27 +154,7 @@ void main() {
       );
     });
 
-    test('auto explore updates scout posture through the same engine', () {
-      final snapshot = _snapshot(
-        units: [
-          _unit(id: 'scout', type: GameUnitType.scout, movementPoints: 3),
-        ],
-        fogOfWar: _fog(visibleCols: 1),
-      );
-
-      final result = _apply(
-        snapshot,
-        const AutoExploreUnitCommand('scout'),
-        mapView: _map(cols: 4),
-      );
-
-      final accepted = _expectAccepted(result);
-      final scout = accepted.snapshot.domain.units.single;
-      expect(scout.posture, UnitPosture.autoExploring);
-      expect(scourCoordinate(scout), isNot((0, 0)));
-      expect(accepted.events, hasLength(1));
-      expect(accepted.movementDelta.executions, hasLength(1));
-    });
+    _registerMovementEngineHandlerAutomatedUnitCases();
 
     test('merchant assignment uses canonical cities and map view', () {
       final snapshot = _snapshot(
@@ -323,6 +305,7 @@ void _expectRejected(
 CanonicalGameSnapshot _snapshot({
   List<GameUnit> units = const [],
   List<GameCity> cities = const [],
+  ResearchState research = ResearchState.empty,
   FogOfWarState fogOfWar = FogOfWarState.empty,
   DomainActionState interaction = DomainActionState.empty,
 }) {
@@ -348,6 +331,7 @@ CanonicalGameSnapshot _snapshot({
               playerGold: const {_playerId: 17, _otherPlayerId: 11},
               units: units,
               cities: cities,
+              research: research,
               fogOfWar: fogOfWar,
             )).copyWith(
               gameMode: GameMode.multiplayer,

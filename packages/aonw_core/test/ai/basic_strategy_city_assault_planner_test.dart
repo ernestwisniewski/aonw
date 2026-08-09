@@ -105,6 +105,37 @@ void main() {
 
       expect(commands.whereType<AttackHexCommand>(), isEmpty);
     });
+
+    test('breaks equal assault scores by stable unit id', () {
+      final mapData = _map(cols: 3, rows: 1);
+      final view = _view(
+        mapData: mapData,
+        units: [_tank('tank_b', 2, 0), _tank('tank_a', 0, 0)],
+        cities: const [_goalCity],
+      );
+      final context = _context(
+        view,
+        warGoals: [
+          WarGoal(
+            targetPlayerId: 'player_2',
+            kind: WarGoalKind.captureCity,
+            targetCity: _goalCity.center,
+            targetHex: _goalCity.center.toCoordinate(),
+            turnsBudget: 4,
+            assignedUnitIds: const ['tank_a', 'tank_b'],
+            priority: 10,
+          ),
+        ],
+      );
+
+      final commands = const BasicStrategyCityAssaultPlanner().plan(
+        view,
+        context,
+        <String>{},
+      );
+
+      expect(commands, [const AttackHexCommand('tank_a', 1, 0)]);
+    });
   });
 }
 

@@ -1,13 +1,15 @@
-import 'package:aonw_core/protocol/protocol_version.dart';
-
 abstract final class WireJson {
-  static int readVersion(Map<String, dynamic> json, String type) {
+  static int readVersion(
+    Map<String, dynamic> json,
+    String type, {
+    required int expectedVersion,
+  }) {
     final version = requiredInt(json, type, 'v');
-    if (version != kProtocolVersion) {
+    if (version != expectedVersion) {
       throw ArgumentError.value(
         version,
         '$type.v',
-        'Unsupported protocol version; expected $kProtocolVersion',
+        'Unsupported protocol version; expected $expectedVersion',
       );
     }
     return version;

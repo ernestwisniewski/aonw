@@ -22,7 +22,6 @@ UnitMovementPlan _plan({
   int targetRow = 0,
   int totalCost = 1,
   int availableMovementPoints = 5,
-  bool canSpendTurnEnteringFirstStep = false,
   List<UnitMovementStep>? steps,
 }) => UnitMovementPlan(
   unitId: 'commander_player_1',
@@ -30,7 +29,6 @@ UnitMovementPlan _plan({
   targetRow: targetRow,
   totalCost: totalCost,
   availableMovementPoints: availableMovementPoints,
-  canSpendTurnEnteringFirstStep: canSpendTurnEnteringFirstStep,
   steps:
       steps ??
       [
@@ -258,7 +256,7 @@ void main() {
       final parent = Component();
       UnitMovePreviewLayer(turnCostLabelBuilder: _turnCountLabel).sync(
         parent: parent,
-        preview: _plan(totalCost: 6),
+        preview: _confirmationEtaPlan(),
         unitType: GameUnitType.warrior,
         showConfirmationHint: true,
       );

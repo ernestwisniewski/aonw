@@ -135,7 +135,6 @@ LocalCommandResolution _resolveAcceptedPreviewMove({
     targetRow: 0,
     totalCost: expectedCost,
     availableMovementPoints: movementPoints,
-    canSpendTurnEnteringFirstStep: true,
     steps: [
       const UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
       UnitMovementStep(

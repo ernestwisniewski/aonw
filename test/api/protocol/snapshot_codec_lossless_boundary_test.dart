@@ -93,7 +93,7 @@ final DateTime _savedAt = DateTime.utc(2026, 7, 21, 12, 34, 56);
 
 Map<String, dynamic> _expectedWireJson() {
   return {
-    'v': kProtocolVersion,
+    'v': kSnapshotEventVersion,
     'matchId': 'match_lossless',
     'offset': 73,
     'save': _save().toJson(),

@@ -1,5 +1,46 @@
 part of 'serverpod_multiplayer_smoke.dart';
 
+extension _CurrentMultiplayerEndpoint on sp.EndpointMultiplayer {
+  Future<List<WireMatch>> listCurrentMatches() =>
+      listMatches(multiplayerVersion: kCurrentMultiplayerVersion);
+
+  Future<WireMatch> createCurrentMatch(sp.CreateMatchRequest request) =>
+      createMatch(request, multiplayerVersion: kCurrentMultiplayerVersion);
+
+  Future<WireMatch> quickplayCurrent(sp.CreateMatchRequest request) =>
+      quickplay(request, multiplayerVersion: kCurrentMultiplayerVersion);
+
+  Future<WireMatch> joinCurrentMatch(String matchId) =>
+      joinMatch(matchId, multiplayerVersion: kCurrentMultiplayerVersion);
+
+  Future<WireMatch> loadCurrentMatch(String matchId) =>
+      loadMatch(matchId, multiplayerVersion: kCurrentMultiplayerVersion);
+
+  Future<WireMatch> startCurrentMatch(String matchId) =>
+      startMatch(matchId, multiplayerVersion: kCurrentMultiplayerVersion);
+
+  Future<void> leaveCurrentMatch(String matchId) =>
+      leaveMatch(matchId, multiplayerVersion: kCurrentMultiplayerVersion);
+
+  Future<List<WireEvent>> listCurrentEvents(String matchId, int afterOffset) =>
+      listEvents(
+        matchId,
+        afterOffset,
+        multiplayerVersion: kCurrentMultiplayerVersion,
+      );
+
+  Stream<sp.MultiplayerServerMessage> connectCurrent(
+    String matchId,
+    int afterOffset,
+    Stream<sp.MultiplayerClientMessage> input,
+  ) => connect(
+    matchId,
+    afterOffset,
+    input,
+    multiplayerVersion: kCurrentMultiplayerVersion,
+  );
+}
+
 extension _RuntimeSmokeQuickplayPresence on _RuntimeSmoke {
   Future<({WireMatch waiting, _OpenStream ownerPresence})>
   _createQuickplayOwner(sp.Client ownerClient, String ownerUserId) async {
@@ -12,7 +53,7 @@ extension _RuntimeSmokeQuickplayPresence on _RuntimeSmoke {
     );
     _RuntimeSmoke._expect(
       waiting.quickplay &&
-          waiting.mapName == MapPlayerCapacityRules.fullMultiplayerMapName &&
+          waiting.mapName == MapPlayerCapacityRules.quickplayLobbyMapName &&
           waiting.maxPlayers == 4 &&
           waiting.minPlayers == 2 &&
           waiting.state == 'open' &&
@@ -50,7 +91,7 @@ extension _RuntimeSmokeQuickplayPresence on _RuntimeSmoke {
     );
     final guestPresence = await _openPresence(guestClient, matchId);
     final countdown = await guestClient.multiplayer
-        .loadMatch(matchId)
+        .loadCurrentMatch(matchId)
         .timeout(config.requestTimeout);
     _RuntimeSmoke._expect(
       countdown.id == matchId &&
@@ -85,7 +126,7 @@ extension _RuntimeSmokeQuickplayPresence on _RuntimeSmoke {
     );
     final thirdPresence = await _openPresence(thirdClient, matchId);
     final threePlayers = await thirdClient.multiplayer
-        .loadMatch(matchId)
+        .loadCurrentMatch(matchId)
         .timeout(config.requestTimeout);
     _RuntimeSmoke._expect(
       threePlayers.autoStartAt != null &&
@@ -99,7 +140,7 @@ extension _RuntimeSmokeQuickplayPresence on _RuntimeSmoke {
     );
     final fourthPresence = await _openPresence(fourthClient, matchId);
     final started = await fourthClient.multiplayer
-        .loadMatch(matchId)
+        .loadCurrentMatch(matchId)
         .timeout(config.requestTimeout);
     _RuntimeSmoke._expect(
       started.id == matchId &&
@@ -115,10 +156,51 @@ extension _RuntimeSmokeQuickplayPresence on _RuntimeSmoke {
     );
   }
 
+  Future<
+    ({WireMatch started, _OpenStream ownerPresence, _OpenStream guestPresence})
+  >
+  _createAndStartHostedMatch({
+    required sp.Client ownerClient,
+    required sp.Client guestClient,
+    required int seed,
+  }) async {
+    final created = await ownerClient.multiplayer
+        .createCurrentMatch(
+          sp.CreateMatchRequest(
+            name: 'Runtime smoke $seed',
+            mapName: config.mapName,
+            maxPlayers: 2,
+            minPlayers: 2,
+            private: false,
+          ),
+        )
+        .timeout(config.requestTimeout);
+    final ownerPresence = await _openPresence(ownerClient, created.id);
+    final publicMatches = await guestClient.multiplayer
+        .listCurrentMatches()
+        .timeout(config.requestTimeout);
+    _RuntimeSmoke._expect(
+      publicMatches.any((match) => match.id == created.id),
+      'Expected newly created public match ${created.id} in lobby discovery.',
+    );
+    await guestClient.multiplayer
+        .joinCurrentMatch(created.id)
+        .timeout(config.requestTimeout);
+    final guestPresence = await _openPresence(guestClient, created.id);
+    final started = await ownerClient.multiplayer
+        .startCurrentMatch(created.id)
+        .timeout(config.requestTimeout);
+    return (
+      started: started,
+      ownerPresence: ownerPresence,
+      guestPresence: guestPresence,
+    );
+  }
+
   Future<_OpenStream> _openPresence(sp.Client client, String matchId) {
     final input = StreamController<sp.MultiplayerClientMessage>();
     return _openUntilInitialSnapshot(
-      client.multiplayer.connect(matchId, 0, input.stream),
+      client.multiplayer.connectCurrent(matchId, 0, input.stream),
       input,
     );
   }

@@ -152,10 +152,10 @@ class LoadGameScreen extends ConsumerWidget {
                     ? l10n.replayUnavailableAction
                     : l10n.replayAction,
                 deleteLabel: l10n.deleteAction,
-                corruptedBody: save.corrupted
+                unavailableBody: save.corrupted
                     ? l10n.loadGameCorruptedBody
-                    : null,
-                onResume: save.corrupted
+                    : _blockedBody(ref, save, l10n),
+                onResume: !_canResume(ref, save)
                     ? null
                     : ref.withMenuClick(
                         () => context.go(
@@ -175,6 +175,30 @@ class LoadGameScreen extends ConsumerWidget {
               ),
             ),
       ],
+    );
+  }
+
+  bool _canResume(WidgetRef ref, GameSaveIndex save) {
+    return !save.corrupted &&
+        _saveAccess(ref, save) == MultiplayerAccessState.allowed;
+  }
+
+  String? _blockedBody(
+    WidgetRef ref,
+    GameSaveIndex save,
+    AppLocalizations l10n,
+  ) {
+    return switch (_saveAccess(ref, save)) {
+      MultiplayerAccessState.pending => l10n.multiplayerResumeLoading,
+      MultiplayerAccessState.updateRequired => l10n.mainMenuUpdateSoonBody,
+      MultiplayerAccessState.unavailable => l10n.multiplayerResumeFailed,
+      MultiplayerAccessState.allowed => null,
+    };
+  }
+
+  MultiplayerAccessState _saveAccess(WidgetRef ref, GameSaveIndex save) {
+    return multiplayerSaveAccessOrFailClosed(
+      ref.watch(multiplayerSaveAccessStateProvider(save.id)),
     );
   }
 }

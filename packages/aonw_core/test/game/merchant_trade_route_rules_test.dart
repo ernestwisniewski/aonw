@@ -200,6 +200,101 @@ void main() {
       expect(result.unit.row, 0);
       expect(result.unit.merchantTradeRoute, isNotNull);
     });
+
+    test('exhausts its positive remainder on the next costly route step', () {
+      final merchant = _merchant(col: 0, row: 0).copyWithMerchantTradeRoute(
+        MerchantTradeRoute(
+          originCityId: 'origin',
+          destinationCityId: 'target',
+          steps: const [
+            UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+            UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
+            UnitMovementStep(col: 2, row: 0, enterCost: 2, cumulativeCost: 4),
+            UnitMovementStep(col: 3, row: 0, enterCost: 1, cumulativeCost: 5),
+          ],
+        ),
+      );
+      final cities = [_city(id: 'origin', col: 0), _city(id: 'target', col: 3)];
+
+      final result = MerchantTradeRouteRules.advanceUnit(
+        unit: merchant,
+        units: [merchant],
+        cities: cities,
+        mapData: _roughLineMap(),
+      );
+
+      expect(result.movedSteps.map((step) => step.col), [1, 2]);
+      expect((result.unit.col, result.unit.movementPoints), (2, 0));
+      expect(result.unit.merchantTradeRoute, isNotNull);
+    });
+
+    test('rejects and invalidates routes beyond per-turn capacity', () {
+      final cities = [_city(id: 'origin', col: 0), _city(id: 'target', col: 2)];
+      final merchant = _merchant(col: 0, row: 0);
+      final map = _overCapacityLineMap();
+
+      final planned = MerchantTradeRouteRules.planRoute(
+        merchant: merchant,
+        originCity: cities.first,
+        destinationCity: cities.last,
+        mapData: map,
+        units: [merchant],
+        cities: cities,
+      );
+      final persisted = merchant.copyWithMerchantTradeRoute(
+        MerchantTradeRoute(
+          originCityId: 'origin',
+          destinationCityId: 'target',
+          steps: const [
+            UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+            UnitMovementStep(col: 1, row: 0, enterCost: 4, cumulativeCost: 4),
+            UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 5),
+          ],
+        ),
+      );
+
+      final advanced = MerchantTradeRouteRules.advanceUnit(
+        unit: persisted,
+        units: [persisted],
+        cities: cities,
+        mapData: map,
+      );
+
+      expect(planned, isNull);
+      expect(advanced.routeInvalidated, isTrue);
+      expect(advanced.movedSteps, isEmpty);
+      expect((advanced.unit.col, advanced.unit.row), (0, 0));
+      expect(advanced.unit.merchantTradeRoute, isNull);
+    });
+
+    test('preserves the artifact-carrier rough-terrain exception', () {
+      final cities = [_city(id: 'origin', col: 0), _city(id: 'target', col: 2)];
+      final merchant = _merchant(
+        col: 0,
+        row: 0,
+      ).copyWith(movementPoints: 2).copyWithCarriedArtifact('artifact_1');
+      final map = _overCapacityLineMap();
+      final route = MerchantTradeRouteRules.planRoute(
+        merchant: merchant,
+        originCity: cities.first,
+        destinationCity: cities.last,
+        mapData: map,
+        units: [merchant],
+        cities: cities,
+      );
+
+      final advanced = MerchantTradeRouteRules.advanceUnit(
+        unit: merchant.copyWithMerchantTradeRoute(route),
+        units: [merchant],
+        cities: cities,
+        mapData: map,
+      );
+
+      expect(route, isNotNull);
+      expect(advanced.routeInvalidated, isFalse);
+      expect(advanced.movedSteps.map((step) => step.col), [1]);
+      expect((advanced.unit.col, advanced.unit.movementPoints), (1, 0));
+    });
   });
 }
 
@@ -305,6 +400,49 @@ WorldMap _mixedLineMap() {
         resources: [],
         height: 2,
       ),
+    ],
+  );
+}
+
+WorldMap _roughLineMap() {
+  return WorldMap(
+    cols: 4,
+    rows: 1,
+    tiles: [
+      for (var col = 0; col < 4; col++)
+        WorldTile(
+          col: col,
+          row: 0,
+          terrains: col == 1 || col == 2
+              ? const [TerrainType.plains, TerrainType.forest]
+              : const [TerrainType.plains],
+          resources: const [],
+          height: 0,
+        ),
+    ],
+  );
+}
+
+WorldMap _overCapacityLineMap() {
+  return WorldMap(
+    cols: 3,
+    rows: 1,
+    tiles: [
+      for (var col = 0; col < 3; col++)
+        WorldTile(
+          col: col,
+          row: 0,
+          terrains: col == 1
+              ? const [
+                  TerrainType.grassland,
+                  TerrainType.forest,
+                  TerrainType.jungle,
+                  TerrainType.hills,
+                ]
+              : const [TerrainType.plains],
+          resources: const [],
+          height: 0,
+        ),
     ],
   );
 }

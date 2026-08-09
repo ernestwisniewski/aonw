@@ -169,7 +169,7 @@ void main() {
       expect(moved.posture, UnitPosture.autoExploring);
     });
 
-    test('downstream rejection rolls back every primed slice', () {
+    test('capacity-only terrain is not selected as an exploration target', () {
       const origin = HexCoordinate(col: 0, row: 0);
       final interaction = ownedAutoExploreInteraction();
       final state = autoExploreState(
@@ -187,7 +187,7 @@ void main() {
       final result = resolveAutoExplore(state, map);
 
       expect(result.accepted, isFalse);
-      expect(result.reason, 'unit_movement_capacity_insufficient');
+      expect(result.reason, 'auto_explore_no_target');
       expect(result.units, same(state.movement.units));
       expect(result.fogOfWar, same(state.movement.fogOfWar));
       expect(result.diplomacy, same(state.movement.diplomacy));

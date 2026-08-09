@@ -77,18 +77,7 @@ extension LobbyConnectionMatchStateInternal on LobbyConnectionController {
   }
 
   LobbyNetworkSessionCoordinator networkSessionCoordinatorInternal() {
-    return LobbyNetworkSessionCoordinator(
-      currentSession: currentSession,
-      setSession: _setNetworkSessionDeferred,
-      loadStoredSession: sessionStore.load,
-      saveStoredSession: sessionStore.save,
-      clearStoredSession: sessionStore.clear,
-      saveMatchId: sessionStore.saveMatchId,
-      refreshToken: sessionClient.refresh,
-      now: now,
-      ensureValidSession: ensureValidSession,
-      terminateSession: terminateSession,
-    );
+    return _networkSessionCoordinator;
   }
 
   void _setNetworkSessionDeferred(NetworkSession? session) {

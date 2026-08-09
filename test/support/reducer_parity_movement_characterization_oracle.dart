@@ -48,6 +48,32 @@ DomainState _movementExpectedState(String fixtureId, DomainState input) {
             )
             .copyWithQueuedPath(_movementPathToFour),
       ),
+    'movement-characterization-rough-prefix-exhausted-accepted' =>
+      _movementStateWithUnit(
+        input,
+        _inputMovementUnit(input)
+            .copyWith(
+              col: 2,
+              row: 0,
+              movementPoints: 0,
+              posture: UnitPosture.active,
+            )
+            .copyWithQueuedPath(_movementRoughPathToThree),
+      ).copyWith(
+        fogOfWar: _movementFog(
+          discovered: {
+            const HexCoordinate(col: 0, row: 0),
+            const HexCoordinate(col: 1, row: 0),
+            const HexCoordinate(col: 2, row: 0),
+            const HexCoordinate(col: 3, row: 0),
+          },
+          visible: {
+            const HexCoordinate(col: 1, row: 0),
+            const HexCoordinate(col: 2, row: 0),
+            const HexCoordinate(col: 3, row: 0),
+          },
+        ),
+      ),
     'movement-characterization-zero-movement-queued-accepted' =>
       _movementStateWithUnit(
         input,
@@ -77,6 +103,15 @@ List<GameEvent> _movementExpectedEvents(String fixtureId) {
       ),
     ],
     'movement-characterization-partial-queued-accepted' => const [
+      UnitMovedEvent(
+        unitId: _movementUnitId,
+        fromCol: 0,
+        fromRow: 0,
+        toCol: 2,
+        toRow: 0,
+      ),
+    ],
+    'movement-characterization-rough-prefix-exhausted-accepted' => const [
       UnitMovedEvent(
         unitId: _movementUnitId,
         fromCol: 0,
@@ -160,5 +195,16 @@ final _movementPathToFour = QueuedMovePath(
     UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
     UnitMovementStep(col: 3, row: 0, enterCost: 1, cumulativeCost: 3),
     UnitMovementStep(col: 4, row: 0, enterCost: 1, cumulativeCost: 4),
+  ],
+);
+
+final _movementRoughPathToThree = QueuedMovePath(
+  targetCol: 3,
+  targetRow: 0,
+  steps: const [
+    UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+    UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
+    UnitMovementStep(col: 2, row: 0, enterCost: 2, cumulativeCost: 4),
+    UnitMovementStep(col: 3, row: 0, enterCost: 1, cumulativeCost: 5),
   ],
 );

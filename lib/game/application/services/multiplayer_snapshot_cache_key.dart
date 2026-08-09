@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:aonw_core/protocol.dart';
+
 String multiplayerSnapshotCacheKey({
   required String userId,
   required String matchId,
@@ -18,7 +20,8 @@ String multiplayerSnapshotCacheKey({
       'Expected a non-empty multiplayer match id',
     );
   }
-  return 'multiplayer-v3.${_cacheKeySegment(userId)}.'
+  return 'multiplayer-v$kSnapshotEventVersion.'
+      '${_cacheKeySegment(userId)}.'
       '${_cacheKeySegment(matchId)}';
 }
 

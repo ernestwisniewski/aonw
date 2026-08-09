@@ -14,7 +14,7 @@ extension _CriticalE2eLobby on _CriticalE2e {
     required int runId,
   }) async {
     final created = await _request(
-      ownerClient.multiplayer.createMatch(
+      ownerClient.multiplayer.createCurrentMatch(
         sp.CreateMatchRequest(
           name: 'Critical E2E $runId',
           mapName: config.mapName,
@@ -36,7 +36,7 @@ extension _CriticalE2eLobby on _CriticalE2e {
       context: 'owner lobby presence',
     );
     final joined = await _request(
-      guestClient.multiplayer.joinMatch(created.id),
+      guestClient.multiplayer.joinCurrentMatch(created.id),
     );
     _expect(
       joined.state == 'open' && joined.players.length == 2,
@@ -50,7 +50,7 @@ extension _CriticalE2eLobby on _CriticalE2e {
       context: 'guest lobby presence',
     );
     final started = await _request(
-      ownerClient.multiplayer.startMatch(created.id),
+      ownerClient.multiplayer.startCurrentMatch(created.id),
     );
     _expect(
       started.state == 'running' &&

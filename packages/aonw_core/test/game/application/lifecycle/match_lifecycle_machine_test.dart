@@ -92,6 +92,12 @@ void main() {
         'no_alive_players_after_resignation',
       );
       expect(
+        adapter.encodeAbandonmentReason(
+          MatchAbandonmentReason.allPlayersInactive,
+        ),
+        'all_players_inactive',
+      );
+      expect(
         adapter.decodeAbandonmentReason('all_players_inactive'),
         MatchAbandonmentReason.allPlayersInactive,
       );

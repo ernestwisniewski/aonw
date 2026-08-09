@@ -126,6 +126,90 @@ void main() {
     },
   );
 
+  test(
+    'late timed-out ACK does not complete a newer pending command',
+    () async {
+      final connector = _FakeConnector();
+      final live = LiveEventSubscription(
+        serverpodHost: 'https://api.example.test',
+        connector: connector.connect,
+      );
+      const wire = WireCommand(
+        matchId: 'match_1',
+        tick: 11,
+        turn: 3,
+        actorPlayerId: 'player_1',
+        command: {'type': 'SubmitTurn', 'playerId': 'player_1'},
+      );
+      final handle = await live.subscribe(
+        matchId: 'match_1',
+        token: AuthToken('jwt-token'),
+        fromOffset: 7,
+        onEvent: (_) {},
+        onSnapshotResync: (_) {},
+      );
+      final connection = connector.connections.single;
+      final commandA = handle.sendCommand(
+        afterOffset: 8,
+        wire: wire,
+        clientMessageId: 'command-a',
+        timeout: Duration.zero,
+      );
+      final commandATimedOut = expectLater(
+        commandA,
+        throwsA(isA<TimeoutException>()),
+      );
+      await _waitFor(() => connection.clientMessages.length == 1);
+      await commandATimedOut;
+
+      final commandB = handle.sendCommand(
+        afterOffset: 8,
+        wire: wire,
+        clientMessageId: 'command-b',
+        timeout: const Duration(seconds: 1),
+      );
+      var commandBCompleted = false;
+      unawaited(commandB.then((_) => commandBCompleted = true));
+      await _waitFor(() => connection.clientMessages.length == 2);
+      expect(
+        () => handle.sendCommand(
+          afterOffset: 8,
+          wire: wire,
+          clientMessageId: 'command-b',
+        ),
+        throwsA(isA<StateError>()),
+      );
+
+      connection.add(
+        _message(
+          offset: 9,
+          ack: _ack(
+            clientMessageId: 'command-a',
+            offset: 9,
+            movementExecutions: WireMovementExecutionList(const []),
+          ),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(commandBCompleted, isFalse);
+
+      connection.add(
+        _message(
+          offset: 10,
+          ack: _ack(
+            clientMessageId: 'command-b',
+            offset: 10,
+            movementExecutions: WireMovementExecutionList(const []),
+          ),
+        ),
+      );
+      final acknowledgment = await commandB;
+      expect(acknowledgment.clientMessageId, 'command-b');
+      expect(acknowledgment.offset, 10);
+      await handle.close();
+    },
+  );
+
   test('maps live wire movement to one owned domain list', () async {
     final connector = _FakeConnector();
     final received = Completer<LiveServerEvent>();
@@ -213,15 +297,23 @@ WireMovementExecution _wireExecution(
   );
 }
 
-WireCommandAck _ack({required WireMovementExecutionList movementExecutions}) {
+WireCommandAck _ack({
+  String clientMessageId = 'command-session-1',
+  int offset = 9,
+  required WireMovementExecutionList movementExecutions,
+}) {
   const snapshotCodec = SnapshotCodec();
   return WireCommandAck(
     matchId: 'match_1',
+    clientMessageId: clientMessageId,
     accepted: true,
-    offset: 9,
+    offset: offset,
     snapshot: snapshotCodec.toWire(
       matchId: 'match_1',
-      snapshot: GameSnapshotFactory.create(save: _save(), eventLogOffset: 9),
+      snapshot: GameSnapshotFactory.create(
+        save: _save(),
+        eventLogOffset: offset,
+      ),
     ),
     movementExecutions: movementExecutions,
   );

@@ -341,6 +341,124 @@ void main() {
       contains(r'$(MAKE) --no-print-directory macos-distribution-preflight'),
     );
   });
+
+  test('Steam dispatches are bound to a clean commit and unique run', () {
+    for (final target in const [
+      (
+        platform: 'Linux',
+        target: 'steam-linux-github',
+        nextTarget: 'steam-package-linux',
+        workflow: '.github/workflows/linux-steam-build.yml',
+      ),
+      (
+        platform: 'Windows',
+        target: 'steam-windows-github',
+        nextTarget: 'steam-package-windows',
+        workflow: '.github/workflows/windows-steam-build.yml',
+      ),
+    ]) {
+      final dispatch = _targetBody(
+        makefile,
+        target: target.target,
+        nextTarget: target.nextTarget,
+      );
+      final workflow = File(target.workflow).readAsStringSync();
+
+      expect(
+        dispatch,
+        contains('git status --porcelain --untracked-files=normal'),
+        reason: target.platform,
+      );
+      expect(
+        dispatch,
+        contains(r'test -z "$$worktree_status"'),
+        reason: target.platform,
+      );
+      expect(
+        dispatch.indexOf(r'test -z "$$worktree_status"'),
+        lessThan(dispatch.indexOf('git fetch origin')),
+        reason: target.platform,
+      );
+      expect(
+        dispatch,
+        contains(r'-f source_sha="$$local_sha"'),
+        reason: target.platform,
+      );
+      expect(
+        dispatch,
+        contains(r'-f dispatch_token="$$dispatch_token"'),
+        reason: target.platform,
+      );
+      expect(
+        dispatch,
+        contains('databaseId,displayTitle,headSha'),
+        reason: target.platform,
+      );
+      expect(
+        dispatch,
+        contains(r'contains(\"[$$dispatch_token]\")'),
+        reason: target.platform,
+      );
+      expect(workflow, contains('run-name: >-'), reason: target.platform);
+      expect(
+        workflow,
+        contains(r'[${{ inputs.dispatch_token }}]'),
+        reason: target.platform,
+      );
+      expect(
+        workflow,
+        contains('Verify requested source identity'),
+        reason: target.platform,
+      );
+      expect(
+        workflow.indexOf('Verify requested source identity'),
+        lessThan(workflow.indexOf('Set up Flutter')),
+        reason: target.platform,
+      );
+      expect(
+        workflow,
+        contains(r'test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'),
+        reason: target.platform,
+      );
+      expect(
+        workflow,
+        contains(r'test "$committed_version" = "$BUILD_NAME+$BUILD_NUMBER"'),
+        reason: target.platform,
+      );
+    }
+  });
+
+  test('local Linux packaging uses the workflow API scanner', () {
+    final packaging = _targetBody(
+      makefile,
+      target: 'steam-package-linux',
+      nextTarget: 'steam-prepare-from-dist',
+    );
+    final workflow = File(
+      '.github/workflows/linux-steam-build.yml',
+    ).readAsStringSync();
+
+    expect(packaging, contains('command -v grep'));
+    expect(packaging, isNot(contains('command -v rg')));
+    expect(
+      packaging,
+      contains(r'grep -R -a -F "$(STEAM_API_BASE_URL)" "$$tmp_dir"'),
+    );
+    expect(
+      workflow,
+      contains(r'grep -R -a -F "$AONW_RELEASE_API_BASE_URL" dist/steam-linux'),
+    );
+  });
+
+  test('release preflight rejects untracked release inputs', () {
+    final preflight = _targetBody(
+      makefile,
+      target: 'preflight-release',
+      nextTarget: 'serverpod-version',
+    );
+
+    expect(preflight, contains('--untracked-files=normal'));
+  });
 }
 
 String _deployAllBody(String makefile) => _targetBody(

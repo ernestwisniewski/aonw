@@ -10,10 +10,13 @@ import 'package:aonw/game/presentation/controllers/lobby_connection_controller.d
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_multiplayer_access_gate.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_network_failure_text.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_network_session_coordinator.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_player_setup_controller.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_screen_multiplayer_action_summary.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_screen_queue_countdown.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_session_effect_error_reporter.dart';
 import 'package:aonw/game/presentation/screens/lobby/multiplayer_account_dialog.dart';
 import 'package:aonw/game/presentation/screens/new_game/initial_player_country.dart';
 import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
@@ -110,7 +113,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _buildLobbyScreen(context);
+    return LobbyMultiplayerAccessGate(widget.flow, _buildLobbyScreen);
   }
 
   void _refreshState() => setState(() {});

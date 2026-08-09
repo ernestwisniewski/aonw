@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw/game/application/ports/multiplayer_failure.dart';
 import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
@@ -201,6 +203,50 @@ void main() {
       expect(savedMatchIds, const ['match_1', null]);
     });
 
+    test('serializes overlapping active-match persistence effects', () async {
+      final firstWriteStarted = Completer<void>();
+      final releaseFirstWrite = Completer<void>();
+      final savedMatchIds = <String?>[];
+      final coordinator = _coordinator(
+        saveMatchId: (matchId) async {
+          savedMatchIds.add(matchId);
+          if (matchId == null) return;
+          firstWriteStarted.complete();
+          await releaseFirstWrite.future;
+        },
+      );
+      final session = _session(userId: 'user_1');
+
+      coordinator.applyActiveMatch(session: session, match: _match());
+      await firstWriteStarted.future;
+      coordinator.applyActiveMatch(
+        session: session,
+        match: _match(state: 'finished'),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(savedMatchIds, const ['match_1']);
+
+      releaseFirstWrite.complete();
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(savedMatchIds, const ['match_1', null]);
+    });
+
+    test('reports active-match persistence failures', () async {
+      final reportedError = Completer<Object>();
+      _coordinator(
+        saveMatchId: (_) async => throw StateError('storage unavailable'),
+        onEffectError: (error, _) => reportedError.complete(error),
+      ).applyActiveMatch(
+        session: _session(userId: 'user_1'),
+        match: _match(),
+      );
+
+      expect(await reportedError.future, isA<StateError>());
+    });
+
     test('match updates preserve credentials refreshed after stream start', () {
       final streamedSession = _session(userId: 'user_1');
       final refreshedSession = streamedSession.copyWith(
@@ -229,6 +275,7 @@ LobbyNetworkSessionCoordinator _coordinator({
   LobbyStoredSessionClearer? clearStoredSession,
   LobbyMatchIdSaver? saveMatchId,
   LobbySessionTokenRefresher? refreshToken,
+  LobbySessionEffectErrorReporter? onEffectError,
 }) {
   return LobbyNetworkSessionCoordinator(
     currentSession: currentSession ?? () => null,
@@ -243,6 +290,11 @@ LobbyNetworkSessionCoordinator _coordinator({
           fail('unexpected refresh token request');
         },
     now: () => DateTime.utc(2026, 6, 2, 12),
+    onEffectError:
+        onEffectError ??
+        (error, stackTrace) {
+          fail('unexpected session effect error: $error\n$stackTrace');
+        },
   );
 }
 

@@ -305,110 +305,158 @@ class EndpointMultiplayer extends _i1.EndpointRef {
   @override
   String get name => 'multiplayer';
 
-  _i2.Future<List<_i9.WireMatch>> listMatches() =>
-      caller.callServerEndpoint<List<_i9.WireMatch>>(
-        'multiplayer',
-        'listMatches',
-        {},
-      );
+  _i2.Future<List<_i9.WireMatch>> listMatches({
+    required int? multiplayerVersion,
+  }) => caller.callServerEndpoint<List<_i9.WireMatch>>(
+    'multiplayer',
+    'listMatches',
+    {'multiplayerVersion': multiplayerVersion},
+  );
 
-  _i2.Future<_i9.WireMatch> createMatch(_i10.CreateMatchRequest request) =>
-      caller.callServerEndpoint<_i9.WireMatch>(
-        'multiplayer',
-        'createMatch',
-        {'request': request},
-      );
+  _i2.Future<_i9.WireMatch> createMatch(
+    _i10.CreateMatchRequest request, {
+    required int? multiplayerVersion,
+  }) => caller.callServerEndpoint<_i9.WireMatch>(
+    'multiplayer',
+    'createMatch',
+    {
+      'request': request,
+      'multiplayerVersion': multiplayerVersion,
+    },
+  );
 
-  _i2.Future<_i9.WireMatch> quickplay(_i10.CreateMatchRequest request) =>
-      caller.callServerEndpoint<_i9.WireMatch>(
-        'multiplayer',
-        'quickplay',
-        {'request': request},
-      );
+  _i2.Future<_i9.WireMatch> quickplay(
+    _i10.CreateMatchRequest request, {
+    required int? multiplayerVersion,
+  }) => caller.callServerEndpoint<_i9.WireMatch>(
+    'multiplayer',
+    'quickplay',
+    {
+      'request': request,
+      'multiplayerVersion': multiplayerVersion,
+    },
+  );
 
   _i2.Future<_i9.WireMatch> joinMatch(
-    String matchId, [
+    String matchId, {
     String? countryId,
-  ]) => caller.callServerEndpoint<_i9.WireMatch>(
+    required int? multiplayerVersion,
+  }) => caller.callServerEndpoint<_i9.WireMatch>(
     'multiplayer',
     'joinMatch',
     {
       'matchId': matchId,
       'countryId': countryId,
+      'multiplayerVersion': multiplayerVersion,
     },
   );
 
   _i2.Future<_i9.WireMatch> joinPrivateMatch(
-    String inviteCode, [
+    String inviteCode, {
     String? countryId,
-  ]) => caller.callServerEndpoint<_i9.WireMatch>(
+    required int? multiplayerVersion,
+  }) => caller.callServerEndpoint<_i9.WireMatch>(
     'multiplayer',
     'joinPrivateMatch',
     {
       'inviteCode': inviteCode,
       'countryId': countryId,
+      'multiplayerVersion': multiplayerVersion,
     },
   );
 
-  _i2.Future<_i9.WireMatch> loadMatch(String matchId) =>
-      caller.callServerEndpoint<_i9.WireMatch>(
-        'multiplayer',
-        'loadMatch',
-        {'matchId': matchId},
-      );
+  _i2.Future<_i9.WireMatch> loadMatch(
+    String matchId, {
+    required int? multiplayerVersion,
+  }) => caller.callServerEndpoint<_i9.WireMatch>(
+    'multiplayer',
+    'loadMatch',
+    {
+      'matchId': matchId,
+      'multiplayerVersion': multiplayerVersion,
+    },
+  );
 
-  _i2.Future<_i11.WireSnapshot> loadSnapshot(String matchId) =>
-      caller.callServerEndpoint<_i11.WireSnapshot>(
-        'multiplayer',
-        'loadSnapshot',
-        {'matchId': matchId},
-      );
+  _i2.Future<_i11.WireSnapshot> loadSnapshot(
+    String matchId, {
+    required int? multiplayerVersion,
+  }) => caller.callServerEndpoint<_i11.WireSnapshot>(
+    'multiplayer',
+    'loadSnapshot',
+    {
+      'matchId': matchId,
+      'multiplayerVersion': multiplayerVersion,
+    },
+  );
 
   _i2.Future<List<_i12.WireEvent>> listEvents(
     String matchId,
-    int afterOffset,
-  ) => caller.callServerEndpoint<List<_i12.WireEvent>>(
+    int afterOffset, {
+    required int? multiplayerVersion,
+  }) => caller.callServerEndpoint<List<_i12.WireEvent>>(
     'multiplayer',
     'listEvents',
     {
       'matchId': matchId,
       'afterOffset': afterOffset,
+      'multiplayerVersion': multiplayerVersion,
     },
   );
 
-  _i2.Future<_i9.WireMatch> startMatch(String matchId) =>
-      caller.callServerEndpoint<_i9.WireMatch>(
-        'multiplayer',
-        'startMatch',
-        {'matchId': matchId},
-      );
+  _i2.Future<_i9.WireMatch> startMatch(
+    String matchId, {
+    required int? multiplayerVersion,
+  }) => caller.callServerEndpoint<_i9.WireMatch>(
+    'multiplayer',
+    'startMatch',
+    {
+      'matchId': matchId,
+      'multiplayerVersion': multiplayerVersion,
+    },
+  );
 
-  _i2.Future<_i9.WireMatch> markMapLoaded(String matchId) =>
-      caller.callServerEndpoint<_i9.WireMatch>(
-        'multiplayer',
-        'markMapLoaded',
-        {'matchId': matchId},
-      );
+  _i2.Future<_i9.WireMatch> markMapLoaded(
+    String matchId, {
+    required int? multiplayerVersion,
+  }) => caller.callServerEndpoint<_i9.WireMatch>(
+    'multiplayer',
+    'markMapLoaded',
+    {
+      'matchId': matchId,
+      'multiplayerVersion': multiplayerVersion,
+    },
+  );
 
-  _i2.Future<_i9.WireMatch> resignMatch(String matchId) =>
-      caller.callServerEndpoint<_i9.WireMatch>(
-        'multiplayer',
-        'resignMatch',
-        {'matchId': matchId},
-      );
+  _i2.Future<_i9.WireMatch> resignMatch(
+    String matchId, {
+    required int? multiplayerVersion,
+  }) => caller.callServerEndpoint<_i9.WireMatch>(
+    'multiplayer',
+    'resignMatch',
+    {
+      'matchId': matchId,
+      'multiplayerVersion': multiplayerVersion,
+    },
+  );
 
-  _i2.Future<void> leaveMatch(String matchId) =>
-      caller.callServerEndpoint<void>(
-        'multiplayer',
-        'leaveMatch',
-        {'matchId': matchId},
-      );
+  _i2.Future<void> leaveMatch(
+    String matchId, {
+    required int? multiplayerVersion,
+  }) => caller.callServerEndpoint<void>(
+    'multiplayer',
+    'leaveMatch',
+    {
+      'matchId': matchId,
+      'multiplayerVersion': multiplayerVersion,
+    },
+  );
 
   _i2.Stream<_i13.MultiplayerServerMessage> connect(
     String matchId,
     int afterOffset,
-    _i2.Stream<_i14.MultiplayerClientMessage> input,
-  ) =>
+    _i2.Stream<_i14.MultiplayerClientMessage> input, {
+    required int? multiplayerVersion,
+  }) =>
       caller.callStreamingServerEndpoint<
         _i2.Stream<_i13.MultiplayerServerMessage>,
         _i13.MultiplayerServerMessage
@@ -418,6 +466,7 @@ class EndpointMultiplayer extends _i1.EndpointRef {
         {
           'matchId': matchId,
           'afterOffset': afterOffset,
+          'multiplayerVersion': multiplayerVersion,
         },
         {'input': input},
       );

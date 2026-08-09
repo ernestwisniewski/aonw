@@ -49,45 +49,145 @@ void main() {
       expect(commands, isEmpty);
       expect(usedUnitIds, {'worker_1'});
     });
-  });
-}
 
-GameView _view() {
-  return GameView(
-    forPlayerId: 'player_1',
-    turn: 3,
-    ownUnits: [
-      GameUnit.produced(
+    test('assigns an idle worker to its completed improvement', () {
+      final mapData = WorldMap(
+        cols: 1,
+        rows: 2,
+        tiles: [_tile(0, 0), _tile(0, 1)],
+      );
+      final worker = GameUnit.produced(
         id: 'worker_1',
         ownerPlayerId: 'player_1',
         type: GameUnitType.worker,
         col: 0,
         row: 1,
-      ),
-    ],
-    ownCities: const [
-      GameCity(
-        id: 'city_1',
-        ownerPlayerId: 'player_1',
-        name: 'Capital',
-        center: CityHex(col: 0, row: 0),
-        controlledHexes: [CityHex(col: 0, row: 1), CityHex(col: 1, row: 0)],
-      ),
-    ],
+      ).copyWithWorkerBuildCharges(0);
+      final view = _view(
+        mapData: mapData,
+        units: [worker],
+        cities: const [
+          GameCity(
+            id: 'city_1',
+            ownerPlayerId: 'player_1',
+            name: 'Capital',
+            center: CityHex(col: 0, row: 0),
+            controlledHexes: [CityHex(col: 0, row: 1)],
+          ),
+        ],
+        improvements: const [
+          FieldImprovement(
+            hex: CityHex(col: 0, row: 1),
+            type: FieldImprovementType.farm,
+            builtByCityId: 'city_1',
+          ),
+        ],
+      );
+
+      final commands = const BasicStrategyWorkerPlanner().plan(
+        view,
+        _context(view),
+        <String>{},
+        <HexCoordinate>{},
+      );
+
+      expect(commands, [const AssignWorkerToHexCommand('worker_1')]);
+    });
+
+    test('chooses the higher-scoring legal improvement deterministically', () {
+      final mapData = WorldMap(
+        cols: 1,
+        rows: 2,
+        tiles: [
+          _tile(0, 0),
+          _tile(0, 1, terrains: const [TerrainType.plains, TerrainType.river]),
+        ],
+      );
+      final view = _view(
+        mapData: mapData,
+        units: [
+          GameUnit.produced(
+            id: 'worker_1',
+            ownerPlayerId: 'player_1',
+            type: GameUnitType.worker,
+            col: 0,
+            row: 1,
+          ),
+        ],
+        cities: const [
+          GameCity(
+            id: 'city_1',
+            ownerPlayerId: 'player_1',
+            name: 'Capital',
+            center: CityHex(col: 0, row: 0),
+            controlledHexes: [CityHex(col: 0, row: 1)],
+          ),
+        ],
+      );
+
+      final commands = const BasicStrategyWorkerPlanner().plan(
+        view,
+        _context(view),
+        <String>{},
+        <HexCoordinate>{},
+      );
+
+      expect(commands, [
+        const SelectWorkerImprovementCommand(
+          'worker_1',
+          FieldImprovementType.riverFarm,
+        ),
+      ]);
+    });
+  });
+}
+
+GameView _view({
+  WorldMap? mapData,
+  List<GameUnit>? units,
+  List<GameCity>? cities,
+  List<FieldImprovement> improvements = const [],
+}) {
+  final effectiveMapData = mapData ?? _mapData;
+  return GameView(
+    forPlayerId: 'player_1',
+    turn: 3,
+    ownUnits:
+        units ??
+        [
+          GameUnit.produced(
+            id: 'worker_1',
+            ownerPlayerId: 'player_1',
+            type: GameUnitType.worker,
+            col: 0,
+            row: 1,
+          ),
+        ],
+    ownCities:
+        cities ??
+        const [
+          GameCity(
+            id: 'city_1',
+            ownerPlayerId: 'player_1',
+            name: 'Capital',
+            center: CityHex(col: 0, row: 0),
+            controlledHexes: [CityHex(col: 0, row: 1), CityHex(col: 1, row: 0)],
+          ),
+        ],
     ownResearch: PlayerResearchState(
       unlockedTechnologyIds: {
         TechnologyId.agriculture,
         TechnologyId.animalHusbandry,
       },
     ),
-    ownImprovements: const [],
+    ownImprovements: improvements,
     visibleEnemyUnits: const [],
     rememberedEnemyCities: const [],
     visibility: const FogVisibilityQuery(
       playerId: '',
       state: FogOfWarState.empty,
     ),
-    mapData: _mapData,
+    mapData: effectiveMapData,
     ruleset: _ruleset,
   );
 }
@@ -169,3 +269,17 @@ final _mapData = WorldMap(
   ],
 );
 const _ruleset = GameRuleset.defaults;
+
+WorldTile _tile(
+  int col,
+  int row, {
+  List<TerrainType> terrains = const [TerrainType.plains],
+}) {
+  return WorldTile(
+    col: col,
+    row: row,
+    terrains: terrains,
+    resources: const [],
+    height: 0,
+  );
+}

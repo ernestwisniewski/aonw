@@ -99,7 +99,12 @@ class ServerpodMultiplayerStreamConnector {
     );
     try {
       return (
-        messages: client.multiplayer.connect(matchId, afterOffset, input),
+        messages: client.multiplayer.connect(
+          matchId,
+          afterOffset,
+          input,
+          multiplayerVersion: kCurrentMultiplayerVersion,
+        ),
         close: client.close,
       );
     } catch (_) {
@@ -247,7 +252,7 @@ class _LiveEventSubscriptionController {
 
   StreamController<sp.MultiplayerClientMessage>? _input;
   StreamSubscription<sp.MultiplayerServerMessage>? _subscription;
-  final Queue<Completer<WireCommandAck>> _pendingAcks = Queue();
+  final Map<String, Completer<WireCommandAck>> _pendingAcks = {};
   var _trackedNextOffset = 0;
   var _closed = false;
   var _reconnecting = false;
@@ -297,7 +302,12 @@ class _LiveEventSubscriptionController {
     }
 
     final ack = Completer<WireCommandAck>();
-    _pendingAcks.add(ack);
+    if (_pendingAcks.containsKey(clientMessageId)) {
+      throw StateError(
+        'A command with clientMessageId $clientMessageId is already pending.',
+      );
+    }
+    _pendingAcks[clientMessageId] = ack;
     try {
       _localCommandEchoGuard.remember(wire);
       input.add(
@@ -309,14 +319,14 @@ class _LiveEventSubscriptionController {
         ),
       );
     } catch (error, stackTrace) {
-      _pendingAcks.remove(ack);
+      _pendingAcks.remove(clientMessageId);
       ack.completeError(error, stackTrace);
     }
 
     return ack.future.timeout(
       timeout,
       onTimeout: () {
-        _pendingAcks.remove(ack);
+        _pendingAcks.remove(clientMessageId);
         throw TimeoutException('Serverpod command ACK timed out.');
       },
     );
@@ -324,7 +334,7 @@ class _LiveEventSubscriptionController {
 
   void _handleMessage(sp.MultiplayerServerMessage message) {
     final ack = message.ack;
-    if (ack != null) _completeNextAck(ack);
+    if (ack != null) _completeAck(ack);
 
     final match = message.match;
     if (match != null) {
@@ -378,15 +388,16 @@ class _LiveEventSubscriptionController {
     return reconnectDelays.last;
   }
 
-  void _completeNextAck(WireCommandAck ack) {
-    if (_pendingAcks.isEmpty) return;
-    final pending = _pendingAcks.removeFirst();
+  void _completeAck(WireCommandAck ack) {
+    final pending = _pendingAcks.remove(ack.clientMessageId);
+    if (pending == null) return;
     if (!pending.isCompleted) pending.complete(ack);
   }
 
   void _failPendingAcks(Object error, [StackTrace? stackTrace]) {
-    while (_pendingAcks.isNotEmpty) {
-      final pending = _pendingAcks.removeFirst();
+    final pendingAcks = _pendingAcks.values.toList(growable: false);
+    _pendingAcks.clear();
+    for (final pending in pendingAcks) {
       if (!pending.isCompleted) {
         pending.completeError(error, stackTrace);
       }

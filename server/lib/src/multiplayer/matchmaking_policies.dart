@@ -8,7 +8,7 @@ import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
 CreateMatchRequest quickplayMatchRequest(CreateMatchRequest request) {
   return request.copyWith(
     name: 'Quickplay',
-    mapName: MapPlayerCapacityRules.fullMultiplayerMapName,
+    mapName: MapPlayerCapacityRules.quickplayLobbyMapName,
     maxPlayers: 4,
     minPlayers: 2,
     private: false,

@@ -3,6 +3,7 @@ part of 'new_game_screen.dart';
 class _PlanStep extends StatelessWidget {
   const _PlanStep({
     required this.flow,
+    required this.multiplayerAccessAllowed,
     required this.playerCountry,
     required this.gameLengthPreset,
     required this.aiDifficulty,
@@ -14,12 +15,13 @@ class _PlanStep extends StatelessWidget {
   });
 
   final NewGameFlow flow;
+  final bool multiplayerAccessAllowed;
   final PlayerCountry playerCountry;
-  final _SinglePlayerGameLengthPreset gameLengthPreset;
+  final SinglePlayerGameLengthPreset gameLengthPreset;
   final AiDifficulty aiDifficulty;
   final ValueChanged<NewGameFlow> onFlowChanged;
   final ValueChanged<PlayerCountry> onPlayerCountryChanged;
-  final ValueChanged<_SinglePlayerGameLengthPreset> onGameLengthChanged;
+  final ValueChanged<SinglePlayerGameLengthPreset> onGameLengthChanged;
   final ValueChanged<AiDifficulty> onAiDifficultyChanged;
 
   @override
@@ -28,109 +30,164 @@ class _PlanStep extends StatelessWidget {
     return MenuRouteSection(
       icon: Icons.auto_awesome,
       title: l10n.newGamePlanTitle,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final wide = constraints.maxWidth >= 760;
-          final twoColumn = constraints.maxWidth >= 900;
-          final modeCards = [
-            for (final value in NewGameFlowX.choiceOrder)
-              _ModeChoiceCard(
-                key: Key('newGame.mode.${value.queryValue}'),
-                flow: value,
-                selected: flow == value,
-                enabled: value.enabled,
-                disabledReason: value.disabledReason(l10n),
-                onTap: value.enabled ? () => onFlowChanged(value) : null,
-              ),
-          ];
-          final countryPanel = _SinglePlayerCountryPanel(
-            key: const Key('newGame.countryPanel'),
-            country: playerCountry,
-            onChanged: onPlayerCountryChanged,
-          );
-          final settingsPanel = _SinglePlayerSettingsPanel(
-            key: const Key('newGame.singlePlayerSettingsPanel'),
-            gameLengthPreset: gameLengthPreset,
-            aiDifficulty: aiDifficulty,
-            onGameLengthChanged: onGameLengthChanged,
-            onAiDifficultyChanged: onAiDifficultyChanged,
-          );
-          final victoryPanel = _VictoryTypesPanel(
-            key: const Key('newGame.victoryPanel'),
-            rules: VictoryRules.forGameLength(gameLengthPreset.config),
-          );
-          final premisePanel = _GamePremisePanel(
-            key: const Key('newGame.premisePanel'),
-            flow: flow,
-            compact: twoColumn,
-          );
+      child: LayoutBuilder(builder: _buildLayout),
+    );
+  }
 
-          if (twoColumn) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _ModeChoiceBlock(wide: wide, cards: modeCards),
-                const SizedBox(height: 12),
-                if (flow == NewGameFlow.singlePlayer)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 6,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            countryPanel,
-                            const SizedBox(height: 12),
-                            settingsPanel,
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 5,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            victoryPanel,
-                            const SizedBox(height: 12),
-                            premisePanel,
-                          ],
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(child: victoryPanel),
-                      const SizedBox(width: 12),
-                      Expanded(child: premisePanel),
-                    ],
-                  ),
-              ],
-            );
-          }
+  Widget _buildLayout(BuildContext context, BoxConstraints constraints) {
+    final twoColumn = constraints.maxWidth >= 900;
+    final modeChoice = _ModeChoiceBlock(
+      wide: constraints.maxWidth >= 760,
+      cards: _modeCards(context.l10n),
+    );
+    final countryPanel = _SinglePlayerCountryPanel(
+      key: const Key('newGame.countryPanel'),
+      country: playerCountry,
+      onChanged: onPlayerCountryChanged,
+    );
+    final settingsPanel = _SinglePlayerSettingsPanel(
+      key: const Key('newGame.singlePlayerSettingsPanel'),
+      gameLengthPreset: gameLengthPreset,
+      aiDifficulty: aiDifficulty,
+      onGameLengthChanged: onGameLengthChanged,
+      onAiDifficultyChanged: onAiDifficultyChanged,
+    );
+    final victoryPanel = _VictoryTypesPanel(
+      key: const Key('newGame.victoryPanel'),
+      rules: VictoryRules.forGameLength(gameLengthPreset.config),
+    );
+    final premisePanel = _GamePremisePanel(
+      key: const Key('newGame.premisePanel'),
+      flow: flow,
+      compact: twoColumn,
+    );
+    if (twoColumn) {
+      return _buildTwoColumnLayout(
+        modeChoice: modeChoice,
+        countryPanel: countryPanel,
+        settingsPanel: settingsPanel,
+        victoryPanel: victoryPanel,
+        premisePanel: premisePanel,
+      );
+    }
+    return _buildStackedLayout(
+      modeChoice: modeChoice,
+      countryPanel: countryPanel,
+      settingsPanel: settingsPanel,
+      victoryPanel: victoryPanel,
+      premisePanel: premisePanel,
+    );
+  }
 
-          return Column(
+  List<Widget> _modeCards(AppLocalizations l10n) => [
+    for (final value in NewGameFlowX.choiceOrder) _modeCard(value, l10n),
+  ];
+
+  Widget _modeCard(NewGameFlow value, AppLocalizations l10n) {
+    final enabled = _isFlowEnabled(value);
+    return _ModeChoiceCard(
+      key: Key('newGame.mode.${value.queryValue}'),
+      flow: value,
+      selected: flow == value,
+      enabled: enabled,
+      disabledReason: _disabledReason(value, l10n),
+      onTap: enabled ? () => onFlowChanged(value) : null,
+    );
+  }
+
+  bool _isFlowEnabled(NewGameFlow value) =>
+      value.enabled &&
+      (value != NewGameFlow.multiplayer || multiplayerAccessAllowed);
+
+  String? _disabledReason(NewGameFlow value, AppLocalizations l10n) {
+    if (value == NewGameFlow.multiplayer && !multiplayerAccessAllowed) {
+      return l10n.mainMenuUpdateSoonBody;
+    }
+    return value.disabledReason(l10n);
+  }
+
+  Widget _buildTwoColumnLayout({
+    required Widget modeChoice,
+    required Widget countryPanel,
+    required Widget settingsPanel,
+    required Widget victoryPanel,
+    required Widget premisePanel,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        modeChoice,
+        const SizedBox(height: 12),
+        _buildTwoColumnPanels(
+          countryPanel: countryPanel,
+          settingsPanel: settingsPanel,
+          victoryPanel: victoryPanel,
+          premisePanel: premisePanel,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTwoColumnPanels({
+    required Widget countryPanel,
+    required Widget settingsPanel,
+    required Widget victoryPanel,
+    required Widget premisePanel,
+  }) {
+    if (flow != NewGameFlow.singlePlayer) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: victoryPanel),
+          const SizedBox(width: 12),
+          Expanded(child: premisePanel),
+        ],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 6,
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _ModeChoiceBlock(wide: wide, cards: modeCards),
-              const SizedBox(height: 12),
-              if (flow == NewGameFlow.singlePlayer) ...[
-                countryPanel,
-                const SizedBox(height: 12),
-                settingsPanel,
-                const SizedBox(height: 12),
-              ],
-              victoryPanel,
-              const SizedBox(height: 12),
-              premisePanel,
-            ],
-          );
-        },
-      ),
+            children: [countryPanel, const SizedBox(height: 12), settingsPanel],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 5,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [victoryPanel, const SizedBox(height: 12), premisePanel],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStackedLayout({
+    required Widget modeChoice,
+    required Widget countryPanel,
+    required Widget settingsPanel,
+    required Widget victoryPanel,
+    required Widget premisePanel,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        modeChoice,
+        const SizedBox(height: 12),
+        if (flow == NewGameFlow.singlePlayer) ...[
+          countryPanel,
+          const SizedBox(height: 12),
+          settingsPanel,
+          const SizedBox(height: 12),
+        ],
+        victoryPanel,
+        const SizedBox(height: 12),
+        premisePanel,
+      ],
     );
   }
 }

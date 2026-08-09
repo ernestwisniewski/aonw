@@ -22,6 +22,7 @@ abstract class _NetworkSessionLobbyRequests {
           private: false,
           countryId: request.country?.name,
         ),
+        multiplayerVersion: kCurrentMultiplayerVersion,
       ),
     );
   }
@@ -35,12 +36,13 @@ abstract class _NetworkSessionLobbyRequests {
       (client) => client.multiplayer.quickplay(
         sp.CreateMatchRequest(
           name: 'Quickplay',
-          mapName: request.mapName,
+          mapName: MapPlayerCapacityRules.quickplayLobbyMapName,
           maxPlayers: 4,
           minPlayers: 2,
           private: false,
           countryId: request.country?.name,
         ),
+        multiplayerVersion: kCurrentMultiplayerVersion,
       ),
     );
   }
@@ -62,6 +64,7 @@ abstract class _NetworkSessionLobbyRequests {
           private: true,
           countryId: request.country?.name,
         ),
+        multiplayerVersion: kCurrentMultiplayerVersion,
       ),
     );
   }
@@ -74,7 +77,8 @@ abstract class _NetworkSessionLobbyRequests {
       token,
       (client) => client.multiplayer.joinPrivateMatch(
         request.inviteCode,
-        request.country?.name,
+        countryId: request.country?.name,
+        multiplayerVersion: kCurrentMultiplayerVersion,
       ),
     );
   }
@@ -86,7 +90,11 @@ abstract class _NetworkSessionLobbyRequests {
   }) {
     return _withToken(
       token,
-      (client) => client.multiplayer.joinMatch(matchId, country?.name),
+      (client) => client.multiplayer.joinMatch(
+        matchId,
+        countryId: country?.name,
+        multiplayerVersion: kCurrentMultiplayerVersion,
+      ),
     );
   }
 }

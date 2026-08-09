@@ -1,4 +1,44 @@
-part of 'new_game_screen.dart';
+import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
+import 'package:aonw/game/presentation/screens/new_game/new_game_review_card.dart';
+import 'package:aonw/game/presentation/screens/new_game/new_game_setup_options.dart';
+import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw/l10n/l10n.dart';
+import 'package:aonw/menu/menu_route_shell.dart';
+import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw/shared/widgets/game_ui/game_ui_screen_header.dart';
+import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/game/domain/map_validation.dart';
+import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
+import 'package:flutter/material.dart';
+
+Widget buildNewGameReviewStep({
+  Key? key,
+  required NewGameFlow flow,
+  required MapSelection? map,
+  required PlayerCountry playerCountry,
+  required SinglePlayerGameLengthPreset gameLengthPreset,
+  required AiDifficulty aiDifficulty,
+  required bool mapPickedManually,
+  required int singlePlayerPlayerCount,
+  required MapValidationResult? mapValidation,
+  required bool mapValidationLoading,
+  required Object? mapValidationError,
+}) {
+  return _ReviewStep(
+    key: key,
+    flow: flow,
+    map: map,
+    playerCountry: playerCountry,
+    gameLengthPreset: gameLengthPreset,
+    aiDifficulty: aiDifficulty,
+    mapPickedManually: mapPickedManually,
+    singlePlayerPlayerCount: singlePlayerPlayerCount,
+    mapValidation: mapValidation,
+    mapValidationLoading: mapValidationLoading,
+    mapValidationError: mapValidationError,
+  );
+}
 
 class _ReviewStep extends StatelessWidget {
   const _ReviewStep({
@@ -18,7 +58,7 @@ class _ReviewStep extends StatelessWidget {
   final NewGameFlow flow;
   final MapSelection? map;
   final PlayerCountry playerCountry;
-  final _SinglePlayerGameLengthPreset gameLengthPreset;
+  final SinglePlayerGameLengthPreset gameLengthPreset;
   final AiDifficulty aiDifficulty;
   final bool mapPickedManually;
   final int singlePlayerPlayerCount;
@@ -43,7 +83,7 @@ class _ReviewStep extends StatelessWidget {
               message: l10n.newGameReviewMissingMap,
             )
           else
-            _ReviewCard(
+            buildNewGameReviewCard(
               flow: flow,
               map: map,
               playerCountry: playerCountry,

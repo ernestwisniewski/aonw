@@ -23,6 +23,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+part 'main_menu_panel_items.dart';
+
 final _feedbackUrl = Uri.parse('https://www.reddit.com/r/aonw/');
 
 class MainMenuScreen extends StatelessWidget {
@@ -126,6 +128,10 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
   bool _resumeLoading = false;
   String? _resumeMatchId;
 
+  void _toggleDeveloperTools() {
+    setState(() => _developerOpen = !_developerOpen);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -136,6 +142,11 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
     final stored = await ref.read(networkSessionStoreProvider).load();
     if (!mounted) return;
     setState(() => _resumeMatchId = stored?.matchId);
+  }
+
+  Future<void> _resumeMultiplayerMatchIfAllowed() async {
+    if (!ref.read(mainMenuMultiplayerAccessAllowedProvider)) return;
+    await _resumeMultiplayerMatch();
   }
 
   Future<void> _resumeMultiplayerMatch() async {
@@ -231,67 +242,12 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    const defaultNewGameFlow = NewGameFlow.singlePlayer;
-    final items = [
-      if (_resumeMatchId != null)
-        _MenuItem(
-          icon: Icons.play_circle_outline,
-          label: GameText.menuLabel(l10n.multiplayerResumeAction),
-          semanticLabel: l10n.multiplayerResumeAction,
-          primary: true,
-          sublabel: _resumeLoading
-              ? GameText.menuLabel(l10n.multiplayerResumeLoading)
-              : GameText.menuLabel(l10n.multiplayerResumeSublabel),
-          onPressed: _resumeLoading
-              ? () {}
-              : ref.withMenuClickAsync(_resumeMultiplayerMatch),
-        ),
-      _MenuItem(
-        icon: Icons.add_circle_outline_rounded,
-        label: GameText.menuLabel(l10n.newGameAction),
-        semanticLabel: l10n.newGameAction,
-        sublabel: GameText.menuLabel(l10n.newGameIntroTitle),
-        primary: _resumeMatchId == null,
-        onPressed: ref.withMenuClick(
-          () => context.go('/new-game?mode=${defaultNewGameFlow.queryValue}'),
-        ),
+    final items = _menuItems(
+      context,
+      multiplayerAccessAllowed: ref.watch(
+        mainMenuMultiplayerAccessAllowedProvider,
       ),
-      _MenuItem(
-        icon: Icons.folder_open_outlined,
-        label: GameText.menuLabel(l10n.mainMenuLoadGame),
-        semanticLabel: l10n.mainMenuLoadGame,
-        onPressed: ref.withMenuClick(() => context.go('/load-game')),
-      ),
-      _MenuItem(
-        icon: Icons.settings_outlined,
-        label: GameText.menuLabel(l10n.mainMenuSettings),
-        semanticLabel: l10n.mainMenuSettings,
-        sublabel: GameText.menuLabel(l10n.mainMenuSettingsSublabel),
-        onPressed: ref.withMenuClick(() => context.go('/options')),
-      ),
-      // Developer tools (map editor, asset editor) call into dart:io heavy
-      // services and are not usable on the web build. Hide the entry rather
-      // than ship a crashy button.
-      if (!kIsWeb)
-        _MenuItem(
-          icon: Icons.developer_mode_outlined,
-          label: GameText.menuLabel(l10n.mainMenuDeveloper),
-          semanticLabel: l10n.mainMenuDeveloper,
-          active: _developerOpen,
-          sublabel: GameText.menuLabel(l10n.mainMenuToolsSublabel),
-          panelKind: _MenuPanelKind.developer,
-          onPressed: ref.withMenuClick(
-            () => setState(() => _developerOpen = !_developerOpen),
-          ),
-        ),
-      _MenuItem(
-        icon: Icons.logout,
-        label: GameText.menuLabel(l10n.mainMenuExit),
-        semanticLabel: l10n.mainMenuExit,
-        onPressed: ref.withMenuClickAsync(widget.onExit ?? exitApplication),
-      ),
-    ];
+    );
 
     return DecoratedBox(
       decoration: BoxDecoration(

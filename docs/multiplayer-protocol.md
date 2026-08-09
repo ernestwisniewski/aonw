@@ -73,9 +73,11 @@ The runtime keeps these synchronization invariants:
   shared naming policy prevents duplicate prefixes;
 - the live local-echo guard suppresses a recently sent command event by
   `(matchId, actorPlayerId, tick)`, independently of offset ordering;
-- ACKs are correlated to pending live commands in send order; the transient
-  fallback stream has one pending command and accepts its sole ACK. ACK offsets
-  update authoritative state and recovery position, but are not ACK identity;
+- every command ACK repeats its `clientMessageId`; live commands are correlated
+  by that identifier, so a late ACK for a timed-out command cannot complete a
+  newer command. Unknown or late ACKs are ignored. The transient fallback
+  stream has one pending command and accepts its sole ACK. ACK offsets update
+  authoritative state and recovery position, but are not ACK identity;
 - reconnect uses the last seen offset, but the latest projected snapshot is
   authoritative and precedes any newer projected event markers;
 - two clients converge to the same state after backgrounding, browser tab
@@ -182,7 +184,7 @@ SQL mutation.
 
 ## Authoritative Movement Evidence
 
-Every protocol-v3 `WireEvent` and `WireCommandAck` carries a non-null
+Every schema-v3 `WireEvent` and schema-v4 `WireCommandAck` carries a non-null
 `movementExecutions` list. Each execution contains the unit, exact origin,
 ordered travel steps, per-step entry cost, and cumulative cost. A regular
 `MoveUnitCommand` supplies its exact single execution. Simultaneous-turn
@@ -200,7 +202,7 @@ The field has two valid wire values:
 | Non-empty list | Recipient-safe authoritative movement; one execution for a regular direct move or the complete projected chain for simultaneous finalization | Validate the complete per-unit chain, then present the exact ordered executions |
 
 The key is required. A missing key, JSON `null`, or malformed non-list payload
-is an invalid protocol-v3 envelope and is rejected. There is no live
+is an invalid event or ACK envelope and is rejected. There is no live
 snapshot-delta fallback or dual interpretation for older producers.
 
 ### Recipient Projection
@@ -271,17 +273,18 @@ of an omitted, `null`, or malformed field.
 ### Timing Boundary
 
 Authorized recipients receive the same route, costs, and relative order for
-the executions visible to them. Protocol v3 does not provide a shared animation
-start tick, cross-client clock, or skew budget. Camera pre-roll, reduced-motion
-settings, runtime load, and recipient filtering can therefore change local
-start time and duration. Exact cross-client timing belongs to the separate
-versioned `AnimationPlan` and virtual-clock work in Etap 4; hidden-route length
-must not become observable through that future schedule.
+the executions visible to them. Protocol v4 still does not provide a shared
+animation start tick, cross-client clock, or skew budget. Camera pre-roll,
+reduced-motion settings, runtime load, and recipient filtering can therefore
+change local start time and duration. Exact cross-client timing belongs to the
+separate versioned `AnimationPlan` and virtual-clock work in Etap 4;
+hidden-route length must not become observable through that future schedule.
 
-Quickplay uses one global public queue. A player's requested map is a lobby
-preference for newly created queues; once they join an existing queue, the
-existing lobby's map preference and the final player count determine the start
-map through `MapPlayerCapacityRules.multiplayerStartMapName`.
+Quickplay uses one global public queue and its application request carries no
+map preference. The Serverpod gateway supplies a canonical lobby placeholder;
+the server then selects the start map from official maps that fit the final
+player count, using the stable seed through
+`MapPlayerCapacityRules.multiplayerStartMapName`.
 
 Network multiplayer currently uses the server-owned `MatchRules.standard` and
 the display name stored in the authenticated account profile, while matchmaking
@@ -295,39 +298,55 @@ timeout handling treats AI seats as non-blocking.
 
 ## Protocol Versioning
 
-Every authoritative top-level wire envelope carries `v: 3` and is validated by
-`kProtocolVersion`; nested command/event bodies inherit the envelope version.
-Persisted snapshots/events from earlier wire versions must have an explicit
-reader/migration or be retired before replaying them with the current client
-and server.
+Every authoritative top-level wire envelope carries a strict family version.
+`WireCommand`, `WireCommandAck`, and `WireMatch` use
+`kProtocolVersion == 4`. `WireSnapshot` and `WireEvent` use the independent
+`kSnapshotEventVersion == 3` in storage and in standalone or nested
+transport. Nested envelopes validate themselves, so a valid ACK v4 contains a
+snapshot v3. There is no implicit promotion between the families.
 
 Functional multiplayer compatibility is versioned independently:
 
 | Contract | Current | Compatible | Meaning |
 | --- | ---: | --- | --- |
-| Multiplayer revision | 4 | 4 | Revision 4 adds durable lobby presence, heartbeat, lease expiry, active-roster start/discovery, and terminal lobby return. Revisions 1-3 do not implement that contract and are not compatible. |
-| Wire envelope schema | 3 | 3 | Incremented only for incompatible serialized envelope changes. |
+| Multiplayer revision | 5 | 5 | Revision 5 correlates every command ACK by `clientMessageId`. Revisions 1-4 do not implement that contract and are not compatible. |
+| Command / ACK / match schema | 4 | 4 | Schema 4 requires `clientMessageId` in every `WireCommandAck`. |
+| Snapshot / event schema | 3 | 3 | Durable payload shapes remain unchanged and strict in storage and transport. |
 
 The main-menu app-status request sends the app build plus multiplayer revision
-4. A revision in the compatible set can continue. A removed, invalid, or
+5. A revision in the compatible set can continue. A removed, invalid, or
 future revision receives `soon`, which renders the localized
 `mainMenuUpdateSoonTitle` and `mainMenuUpdateSoonBody` notice. Older clients
 that do not yet send a revision are treated specifically as revision 1 during
-this bridge window.
+this bridge window. Release clients keep multiplayer entry and resume actions
+closed while compatibility is unresolved and block them when the server returns
+`soon`.
+
+The server independently enforces the same functional revision on every
+authenticated multiplayer endpoint, including the streaming `connect`
+boundary. The generated current client must pass `multiplayerVersion` at
+compile time; missing declarations still deserialize as `null` so legacy wire
+requests receive the explicit `unsupported_multiplayer_version` failure before
+they can read or mutate lobby state.
 
 Version 3 introduced recipient-scoped snapshots and redacted event history.
 The server intentionally rejects incompatible matches, including records whose
-player identifiers embed account identifiers. Revision 4 retains wire schema 3
-and the existing `multiplayer-v3` snapshot-cache namespace because the
-serialized snapshot shape is unchanged; the functional compatibility handshake,
-not the cache namespace, prevents revisions 1-3 from entering multiplayer.
+player identifiers embed account identifiers. Revision 4 added durable lobby
+presence while retaining snapshot/event schema 3. Revision 5 moves only
+commands, ACKs, and match envelopes to schema 4 and requires ACK correlation
+IDs. Persisted snapshots, persisted events, replay transport, nested ACK
+snapshots, and the `multiplayer-v3` snapshot-cache namespace remain schema 3.
+No data migration is needed. Keeping the unchanged durable family at v3 avoids
+a forward-only rewrite and preserves expand/contract deployment plus N-1
+rollback, while malformed or unknown versions still fail their strict reader.
 
 Use this path for every multiplayer change:
 
 1. Increment `kCurrentMultiplayerVersion` for every functional change.
 2. Keep each older revision only when old/new fixtures prove it compatible.
-3. If wire JSON is incompatible, also bump `kProtocolVersion` and provide
-   explicit bounded readers/writers or retire incompatible persisted matches.
+3. If wire JSON is incompatible, bump only its envelope-family version. A
+   durable snapshot/event bump additionally requires a rollback-safe
+   expand/contract plan or deliberate retirement of incompatible matches.
 4. Regenerate Serverpod server/client output for endpoint or model changes.
 5. Deploy status negotiation before removing an older revision from the
    compatible set, so store propagation yields the translated update notice.

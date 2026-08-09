@@ -245,6 +245,7 @@ List<ReducerParityFixture> _movementAcceptanceCases(
       ),
       command: const MoveUnitCommand(_movementUnitId, 4, 0),
     ),
+    _roughPrefixMovementAcceptanceCase(template),
     _movementFixture(
       template,
       id: 'movement-characterization-zero-movement-queued-accepted',
@@ -345,4 +346,28 @@ List<ReducerParityFixture> _movementAcceptanceCases(
       command: const MoveUnitCommand(_movementUnitId, 1, 0),
     ),
   ];
+}
+
+ReducerParityFixture _roughPrefixMovementAcceptanceCase(
+  ReducerParityFixture template,
+) {
+  return _movementFixture(
+    template,
+    id: 'movement-characterization-rough-prefix-exhausted-accepted',
+    tickOffset: 227,
+    mapData: _movementMap(
+      template,
+      cols: 4,
+      terrainOverrides: const {
+        (col: 1, row: 0): [TerrainType.plains, TerrainType.forest],
+        (col: 2, row: 0): [TerrainType.plains, TerrainType.forest],
+      },
+    ),
+    state: _movementState(
+      template.state,
+      mapCols: 4,
+      units: [_movementUnit(type: GameUnitType.warrior, movementPoints: 3)],
+    ),
+    command: const MoveUnitCommand(_movementUnitId, 3, 0),
+  );
 }

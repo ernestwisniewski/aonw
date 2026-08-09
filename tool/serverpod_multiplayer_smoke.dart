@@ -139,45 +139,31 @@ class _RuntimeSmoke {
     await quickplayPair.guestPresence.close();
     await quickplayOwner.ownerPresence.close();
     await ownerClient.multiplayer
-        .leaveMatch(quickplayStarted.id)
+        .leaveCurrentMatch(quickplayStarted.id)
         .timeout(config.requestTimeout);
     await overflowClient.multiplayer
-        .leaveMatch(quickplayOverflow.id)
+        .leaveCurrentMatch(quickplayOverflow.id)
         .timeout(config.requestTimeout);
 
-    final created = await ownerClient.multiplayer
-        .createMatch(
-          sp.CreateMatchRequest(
-            name: 'Runtime smoke $seed',
-            mapName: config.mapName,
-            maxPlayers: 2,
-            minPlayers: 2,
-            private: false,
-          ),
-        )
-        .timeout(config.requestTimeout);
-    final hostedOwnerPresence = await _openPresence(ownerClient, created.id);
-    final publicMatches = await guestClient.multiplayer.listMatches().timeout(
-      config.requestTimeout,
+    final hostedMatch = await _createAndStartHostedMatch(
+      ownerClient: ownerClient,
+      guestClient: guestClient,
+      seed: seed,
     );
-    _expect(
-      publicMatches.any((match) => match.id == created.id),
-      'Expected newly created public match ${created.id} in lobby discovery.',
-    );
-    await guestClient.multiplayer
-        .joinMatch(created.id)
-        .timeout(config.requestTimeout);
-    final hostedGuestPresence = await _openPresence(guestClient, created.id);
-    final started = await ownerClient.multiplayer
-        .startMatch(created.id)
-        .timeout(config.requestTimeout);
+    final started = hostedMatch.started;
+    final hostedOwnerPresence = hostedMatch.ownerPresence;
+    final hostedGuestPresence = hostedMatch.guestPresence;
 
     const eventCodec = EventCodec();
     const snapshotCodec = SnapshotCodec();
     final guestLiveBroadcastSeen = Completer<sp.MultiplayerServerMessage>();
     final guestBeforeInput = StreamController<sp.MultiplayerClientMessage>();
     final guestBefore = await _openUntilInitialSnapshot(
-      guestClient.multiplayer.connect(started.id, 0, guestBeforeInput.stream),
+      guestClient.multiplayer.connectCurrent(
+        started.id,
+        0,
+        guestBeforeInput.stream,
+      ),
       guestBeforeInput,
       onMessage: (message) {
         if (message.event != null && !guestLiveBroadcastSeen.isCompleted) {
@@ -206,7 +192,7 @@ class _RuntimeSmoke {
     final diplomacyAckSeen = Completer<sp.MultiplayerServerMessage>();
     final ackMessagesSeen = Completer<List<sp.MultiplayerServerMessage>>();
     final ownerSubscription = ownerClient.multiplayer
-        .connect(started.id, 0, ownerInput.stream)
+        .connectCurrent(started.id, 0, ownerInput.stream)
         .listen(
           (message) {
             if (message.snapshot != null && !ownerInitialMessage.isCompleted) {
@@ -565,7 +551,7 @@ class _RuntimeSmoke {
 
     final guestReconnectInput = StreamController<sp.MultiplayerClientMessage>();
     final guestReconnectMessages = await _connectUntilInitialSnapshot(
-      guestClient.multiplayer.connect(
+      guestClient.multiplayer.connectCurrent(
         started.id,
         guestBeforeSnapshot!.offset,
         guestReconnectInput.stream,
@@ -626,7 +612,7 @@ class _RuntimeSmoke {
     }
 
     final events = await guestClient.multiplayer
-        .listEvents(started.id, 0)
+        .listCurrentEvents(started.id, 0)
         .timeout(config.requestTimeout);
     final expectedEventCount = ack.offset;
     _expect(
@@ -665,7 +651,7 @@ class _RuntimeSmoke {
 
     final guestActiveInput = StreamController<sp.MultiplayerClientMessage>();
     final guestActive = await _openUntilInitialSnapshot(
-      guestClient.multiplayer.connect(
+      guestClient.multiplayer.connectCurrent(
         started.id,
         ack.offset,
         guestActiveInput.stream,
@@ -674,10 +660,10 @@ class _RuntimeSmoke {
     );
     try {
       await ownerClient.multiplayer
-          .leaveMatch(started.id)
+          .leaveCurrentMatch(started.id)
           .timeout(config.requestTimeout);
       final resumedAfterLeave = await ownerClient.multiplayer
-          .loadMatch(started.id)
+          .loadCurrentMatch(started.id)
           .timeout(config.requestTimeout);
       _expect(
         resumedAfterLeave.state == 'running' &&
@@ -736,7 +722,7 @@ class _RuntimeSmoke {
     String? mapName,
   }) {
     return client.multiplayer
-        .quickplay(
+        .quickplayCurrent(
           sp.CreateMatchRequest(
             name: 'Runtime quickplay smoke',
             mapName: mapName ?? config.mapName,

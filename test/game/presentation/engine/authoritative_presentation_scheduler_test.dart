@@ -82,6 +82,45 @@ void main() {
 
     expect(delayed, isFalse);
   });
+
+  test('starts audio and rendering from the same authoritative slot', () async {
+    final clock = _VirtualClock(900000);
+    final scheduler = AuthoritativePresentationScheduler(
+      clock: clock,
+      delay: clock.advance,
+    );
+    final starts = <(String, int)>[];
+
+    await scheduler.presentAtAuthoritativeStart(
+      _batch(startMicrosUtc: 1000000),
+      () async {
+        starts
+          ..add(('audio', clock.nowUtc().microsecondsSinceEpoch))
+          ..add(('renderer', clock.nowUtc().microsecondsSinceEpoch));
+      },
+    );
+
+    expect(starts, const [('audio', 1000000), ('renderer', 1000000)]);
+  });
+
+  test('starts a late complete presentation immediately', () async {
+    final nowMicros = 1000001 + presentationFrameBudget.inMicroseconds;
+    final clock = _VirtualClock(nowMicros);
+    var delayed = false;
+    var startedAt = 0;
+    final scheduler = AuthoritativePresentationScheduler(
+      clock: clock,
+      delay: (_) async => delayed = true,
+    );
+
+    await scheduler.presentAtAuthoritativeStart(
+      _batch(startMicrosUtc: 1000000),
+      () async => startedAt = clock.nowUtc().microsecondsSinceEpoch,
+    );
+
+    expect(delayed, isFalse);
+    expect(startedAt, nowMicros);
+  });
 }
 
 ProjectedGameEffectBatch _batch({required int startMicrosUtc}) {

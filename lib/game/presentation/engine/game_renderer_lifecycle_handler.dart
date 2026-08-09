@@ -78,10 +78,18 @@ final class GameRendererLifecycleHandler {
   late final GameCameraController cameraController;
   late final GameEffectDispatcher effectDispatcher;
   late final GameRenderingCoordinator renderingCoordinator;
+  final Completer<void> _initialPresentationBarrier = Completer<void>();
+  Future<void> _initialEffectFlush = Future<void>.value();
+  bool _initialEffectFlushComplete = true;
   bool isReady = false;
   bool isDisposed = false;
 
   bool get hasReferenceImage => sceneBuilder.hasReferenceImage;
+  Future<void> get initialPresentationReady =>
+      _initialPresentationBarrier.future;
+
+  Future<void>? get pendingInitialEffectFlush =>
+      _initialEffectFlushComplete ? null : _initialEffectFlush;
 
   void update(double dt) {
     if (isReady && !isDisposed) cameraController.update(dt);
@@ -168,7 +176,11 @@ final class GameRendererLifecycleHandler {
     syncMarkerDensityForZoom(force: true);
     syncAfterAction();
     onLoadingProgress?.call(0.92);
-    unawaited(flushQueuedEffectBatches());
+    _initialEffectFlushComplete = false;
+    _initialEffectFlush = flushQueuedEffectBatches().whenComplete(
+      () => _initialEffectFlushComplete = true,
+    );
+    unawaited(_releaseInitialPresentationBarrier());
     onLoadingProgress?.call(0.98);
     if (!isDisposed) readyNotifier.value = true;
     onLoadingProgress?.call(1);
@@ -192,12 +204,22 @@ final class GameRendererLifecycleHandler {
     }
   }
 
+  Future<void> _releaseInitialPresentationBarrier() async {
+    await _initialEffectFlush;
+    if (!_initialPresentationBarrier.isCompleted) {
+      _initialPresentationBarrier.complete();
+    }
+  }
+
   void disposeRenderer() {
     if (isDisposed) return;
     isDisposed = true;
     final error = StateError(
       'GameRenderer disposed before queued effects completed',
     );
+    if (!_initialPresentationBarrier.isCompleted) {
+      _initialPresentationBarrier.complete();
+    }
     queuedEffects.cancelAll(error, StackTrace.current);
     if (isReady) cameraController.cancelPendingMotion();
     readyNotifier.dispose();

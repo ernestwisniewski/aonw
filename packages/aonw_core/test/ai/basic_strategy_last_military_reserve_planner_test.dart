@@ -96,6 +96,30 @@ void main() {
         );
       },
     );
+
+    test('breaks equal defender distances by stable unit id', () {
+      final mapData = _map(cols: 5, rows: 1);
+      const centralCity = GameCity(
+        id: 'central',
+        ownerPlayerId: 'player_1',
+        name: 'Central',
+        center: CityHex(col: 2, row: 0),
+      );
+      final view = _view(
+        mapData: mapData,
+        units: [_warrior(col: 0, row: 0), _warrior2(col: 4, row: 0)],
+        cities: const [centralCity],
+      );
+
+      final commands = const BasicStrategyLastMilitaryReservePlanner().plan(
+        view,
+        _context(view),
+        <String>{},
+        <HexCoordinate>{},
+      );
+
+      expect(commands.whereType<MoveUnitCommand>().single.unitId, 'warrior_1');
+    });
   });
 }
 

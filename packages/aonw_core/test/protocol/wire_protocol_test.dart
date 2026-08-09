@@ -7,6 +7,7 @@ void main() {
     test('round-trips command ack with snapshot and events', () {
       final ack = WireCommandAck(
         matchId: 'match_1',
+        clientMessageId: 'command_1',
         accepted: false,
         offset: 3,
         tick: 17,
@@ -25,7 +26,9 @@ void main() {
       final restored = WireCommandAck.fromJson(ack.toJson());
 
       expect(restored.v, kProtocolVersion);
+      expect(restored.snapshot.v, kSnapshotEventVersion);
       expect(restored.matchId, 'match_1');
+      expect(restored.clientMessageId, 'command_1');
       expect(restored.accepted, isFalse);
       expect(restored.tick, 17);
       expect(restored.timestamp, DateTime.utc(2026, 8, 2, 12));
@@ -163,6 +166,107 @@ void main() {
       );
       expect(WireEvent.fromJson(event.toJson()).turn, 7);
       expect(event.toJson()['turn'], 7);
+    });
+
+    test('decodes a strict v4 ACK with its nested strict v3 snapshot', () {
+      final ack = WireCommandAck(
+        matchId: 'match_1',
+        clientMessageId: 'command_1',
+        accepted: true,
+        offset: 3,
+        snapshot: const WireSnapshot(
+          matchId: 'match_1',
+          offset: 3,
+          save: {'id': 'match_1'},
+          state: <String, dynamic>{},
+        ),
+        movementExecutions: WireMovementExecutionList(const []),
+      );
+
+      final json = ack.toJson();
+      final restored = WireCommandAck.fromJson(json);
+
+      expect(json['v'], kProtocolVersion);
+      expect(
+        (json['snapshot']! as Map<String, dynamic>)['v'],
+        kSnapshotEventVersion,
+      );
+      expect(restored.v, kProtocolVersion);
+      expect(restored.snapshot.v, kSnapshotEventVersion);
+    });
+
+    test('snapshot and event standalone envelopes are strict v3', () {
+      const snapshot = WireSnapshot(
+        matchId: 'match_1',
+        offset: 3,
+        save: {'id': 'match_1'},
+        state: <String, dynamic>{},
+      );
+      final event = WireEvent(
+        matchId: 'match_1',
+        offset: 3,
+        timestamp: DateTime.utc(2026, 8, 9),
+        movementExecutions: WireMovementExecutionList(const []),
+      );
+
+      expect(WireSnapshot.fromJson(snapshot.toJson()).v, 3);
+      expect(WireEvent.fromJson(event.toJson()).v, 3);
+      expect(
+        () => WireSnapshot.fromJson({...snapshot.toJson(), 'v': 4}),
+        throwsArgumentError,
+      );
+      expect(
+        () => WireEvent.fromJson({...event.toJson(), 'v': 4}),
+        throwsArgumentError,
+      );
+    });
+
+    test('command, ACK, and match envelopes are strict v4', () {
+      const command = WireCommand(
+        matchId: 'match_1',
+        tick: 3,
+        actorPlayerId: 'player_1',
+        command: {'type': 'EndTurn'},
+      );
+      final ack = WireCommandAck(
+        matchId: 'match_1',
+        clientMessageId: 'command_1',
+        accepted: true,
+        offset: 3,
+        snapshot: const WireSnapshot(
+          matchId: 'match_1',
+          offset: 3,
+          save: {'id': 'match_1'},
+          state: <String, dynamic>{},
+        ),
+        movementExecutions: WireMovementExecutionList(const []),
+      );
+      final match = WireMatch(
+        id: 'match_1',
+        ownerUserId: 'user_1',
+        name: 'Duel',
+        mapName: 'verdantia',
+        players: const [],
+        turn: 1,
+        state: 'open',
+        createdAt: DateTime.utc(2026, 8, 9),
+      );
+
+      expect(WireCommand.fromJson(command.toJson()).v, 4);
+      expect(WireCommandAck.fromJson(ack.toJson()).v, 4);
+      expect(WireMatch.fromJson(match.toJson()).v, 4);
+      expect(
+        () => WireCommand.fromJson({...command.toJson(), 'v': 3}),
+        throwsArgumentError,
+      );
+      expect(
+        () => WireCommandAck.fromJson({...ack.toJson(), 'v': 3}),
+        throwsArgumentError,
+      );
+      expect(
+        () => WireMatch.fromJson({...match.toJson(), 'v': 3}),
+        throwsArgumentError,
+      );
     });
 
     test('round-trips AI player metadata without exposing seed', () {

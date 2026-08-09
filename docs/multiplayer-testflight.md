@@ -170,24 +170,32 @@ database is supposed to be authoritative.
 After deploying, test from two devices or two fresh app installs:
 
 1. Build with `--dart-define=AONW_API_BASE_URL=https://api.aonw.net`.
-2. Confirm the client declares functional multiplayer revision 4 and the server
-   still exchanges wire-schema version 3 envelopes.
-3. Open multiplayer from the new-game flow.
-4. Create an account or sign in on both devices.
-5. Create a public match on device A.
-6. Refresh Public games on device B, verify that the match is listed, and join
+2. Confirm the client declares functional multiplayer revision 5. Commands,
+   ACKs, and matches must be strict schema 4; snapshots and events must remain
+   strict schema 3, including the snapshot nested inside each correlated ACK.
+3. Verify a revision-4 or undeclared client cannot open/resume multiplayer and
+   receives the localized update-required message; verify the server returns
+   `unsupported_multiplayer_version` for a direct lobby or stream request.
+4. Resume a running match created before deployment and verify its unchanged
+   schema-3 snapshot and event history load without replay loss. Exercise an
+   N-1 server rollback against the same rows; no wire-v4 data migration should
+   be present or required.
+5. Open multiplayer from the new-game flow.
+6. Create an account or sign in on both devices.
+7. Create a public match on device A.
+8. Refresh Public games on device B, verify that the match is listed, and join
    it without an invite code.
-7. Confirm both human members are `connected`, then ready/start the match. Start
+9. Confirm both human members are `connected`, then ready/start the match. Start
    must remain unavailable while any human roster member is connecting or
    reconnecting.
-8. Move a visible unit on one device and confirm the other device renders the
+10. Move a visible unit on one device and confirm the other device renders the
    movement animation instead of jumping directly to the destination.
-9. Bring two civilizations into contact and confirm each player sees the
+11. Bring two civilizations into contact and confirm each player sees the
    first-contact popup once. Move out of visibility and back again; the popup
    must not return for the same civilization pair.
-10. End the turn and confirm the other device receives the live update without
+12. End the turn and confirm the other device receives the live update without
     restarting the app.
-11. Background one device or switch away from the browser tab, return, and
+13. Background one device or switch away from the browser tab, return, and
     confirm the running match converges without removing that participant.
 
 ## Open-Lobby Presence Checklist

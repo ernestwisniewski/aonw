@@ -21,7 +21,7 @@ void _registerGameStateNotifierDispatchScenarios() {
         final pendingResult = container
             .read(gameCommandControllerProvider.notifier)
             .dispatchTransition(MoveUnitCommand(commander.id, 1, 0));
-        await _waitFor(
+        await waitForGameProviderCondition(
           () =>
               fakeStream.clientMessages.isNotEmpty ||
               fixture.fallbackCommands.value > 0,
@@ -51,6 +51,7 @@ void _registerGameStateNotifierDispatchScenarios() {
             offset: 4,
             ack: WireCommandAck(
               matchId: wire.matchId,
+              clientMessageId: sent.clientMessageId,
               accepted: true,
               offset: 4,
               snapshot: snapshotCodec.toWire(
@@ -99,9 +100,12 @@ void _registerGameStateNotifierDispatchScenarios() {
         final pendingResult = container
             .read(gameCommandControllerProvider.notifier)
             .dispatchTransition(MoveUnitCommand(commander.id, 1, 0));
-        await _waitFor(() => fakeStream.clientMessages.isNotEmpty);
+        await waitForGameProviderCondition(
+          () => fakeStream.clientMessages.isNotEmpty,
+        );
 
-        final wire = fakeStream.clientMessages.single.command!;
+        final sent = fakeStream.clientMessages.single;
+        final wire = sent.command!;
         final moved = commander.copyWith(col: 1, row: 0, movementPoints: 2);
         final serverState = GameClientState(
           units: [moved],
@@ -156,6 +160,7 @@ void _registerGameStateNotifierDispatchScenarios() {
             offset: 4,
             ack: WireCommandAck(
               matchId: wire.matchId,
+              clientMessageId: sent.clientMessageId,
               accepted: true,
               offset: 4,
               snapshot: snapshotCodec.toWire(
@@ -171,7 +176,7 @@ void _registerGameStateNotifierDispatchScenarios() {
                   toRow: 0,
                 ),
               ]),
-              movementExecutions: _singleStepMove('commander_player_1'),
+              movementExecutions: singleStepMovement('commander_player_1'),
             ),
           ),
         );

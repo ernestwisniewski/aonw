@@ -48,7 +48,11 @@ class WireMatch {
       'WireMatch.players',
     );
     return WireMatch(
-      v: WireJson.readVersion(json, 'WireMatch'),
+      v: WireJson.readVersion(
+        json,
+        'WireMatch',
+        expectedVersion: kProtocolVersion,
+      ),
       id: WireJson.requiredString(json, 'WireMatch', 'id'),
       ownerUserId: WireJson.requiredString(json, 'WireMatch', 'ownerUserId'),
       name: WireJson.requiredString(json, 'WireMatch', 'name'),

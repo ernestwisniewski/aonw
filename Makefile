@@ -1318,21 +1318,24 @@ steam-windows-github:
 	@set -e; \
 	branch=$$(git branch --show-current); \
 	local_sha=$$(git rev-parse HEAD); \
+	worktree_status=$$(git status --porcelain --untracked-files=normal); \
 	build_name=$$(sed -n 's/^version:[[:space:]]*\([^+]*\)+.*/\1/p' "$(PUBSPEC)" | head -n 1); \
 	build_number=$$(sed -n 's/^version:.*+\([0-9][0-9]*\).*$$/\1/p' "$(PUBSPEC)" | head -n 1); \
 	test -n "$$branch" || { echo "Could not detect current git branch."; exit 1; }; \
+	test -z "$$worktree_status" || { echo "Working tree must be clean before dispatching a Windows Steam build:"; printf '%s\n' "$$worktree_status"; exit 1; }; \
 	test -n "$$build_name" || { echo "Could not parse version name from $(PUBSPEC)."; exit 1; }; \
 	test -n "$$build_number" || { echo "Could not parse build number from $(PUBSPEC)."; exit 1; }; \
 	git fetch origin "$$branch" >/dev/null; \
 	remote_sha=$$(git rev-parse "origin/$$branch"); \
 	test "$$local_sha" = "$$remote_sha" || { echo "Local HEAD is not pushed to origin/$$branch. Push first, then run make steam again."; exit 1; }; \
+	dispatch_token="$${local_sha}-$$(date -u +%Y%m%dT%H%M%SZ)-$$$$"; \
 	echo "Dispatching $(STEAM_WINDOWS_WORKFLOW) on $$branch for $$build_name+$$build_number..."; \
-	gh workflow run "$(STEAM_WINDOWS_WORKFLOW)" --ref "$$branch" -f build_name="$$build_name" -f build_number="$$build_number"; \
+	gh workflow run "$(STEAM_WINDOWS_WORKFLOW)" --ref "$$branch" -f build_name="$$build_name" -f build_number="$$build_number" -f source_sha="$$local_sha" -f dispatch_token="$$dispatch_token"; \
 	echo "Waiting for GitHub Actions run to appear..."; \
 	run_id=""; \
 	i=1; \
 	while [ "$$i" -le "$(STEAM_GITHUB_RUN_LOOKUP_ATTEMPTS)" ]; do \
-		run_id=$$(gh run list --workflow "$(STEAM_WINDOWS_WORKFLOW)" --branch "$$branch" --event workflow_dispatch --json databaseId,headSha --limit 20 --jq ".[] | select(.headSha == \"$$local_sha\") | .databaseId" | head -n 1); \
+		run_id=$$(gh run list --workflow "$(STEAM_WINDOWS_WORKFLOW)" --branch "$$branch" --event workflow_dispatch --json databaseId,displayTitle,headSha --limit 20 --jq ".[] | select(.headSha == \"$$local_sha\" and (.displayTitle | contains(\"[$$dispatch_token]\"))) | .databaseId" | head -n 1); \
 		if [ -n "$$run_id" ]; then break; fi; \
 		sleep "$(STEAM_GITHUB_RUN_LOOKUP_SLEEP)"; \
 		i=$$((i + 1)); \
@@ -1430,21 +1433,24 @@ steam-linux-github:
 	@set -e; \
 	branch=$$(git branch --show-current); \
 	local_sha=$$(git rev-parse HEAD); \
+	worktree_status=$$(git status --porcelain --untracked-files=normal); \
 	build_name=$$(sed -n 's/^version:[[:space:]]*\([^+]*\)+.*/\1/p' "$(PUBSPEC)" | head -n 1); \
 	build_number=$$(sed -n 's/^version:.*+\([0-9][0-9]*\).*$$/\1/p' "$(PUBSPEC)" | head -n 1); \
 	test -n "$$branch" || { echo "Could not detect current git branch."; exit 1; }; \
+	test -z "$$worktree_status" || { echo "Working tree must be clean before dispatching a Linux Steam build:"; printf '%s\n' "$$worktree_status"; exit 1; }; \
 	test -n "$$build_name" || { echo "Could not parse version name from $(PUBSPEC)."; exit 1; }; \
 	test -n "$$build_number" || { echo "Could not parse build number from $(PUBSPEC)."; exit 1; }; \
 	git fetch origin "$$branch" >/dev/null; \
 	remote_sha=$$(git rev-parse "origin/$$branch"); \
 	test "$$local_sha" = "$$remote_sha" || { echo "Local HEAD is not pushed to origin/$$branch. Push first, then run make steam-linux again."; exit 1; }; \
+	dispatch_token="$${local_sha}-$$(date -u +%Y%m%dT%H%M%SZ)-$$$$"; \
 	echo "Dispatching $(STEAM_LINUX_WORKFLOW) on $$branch for $$build_name+$$build_number..."; \
-	gh workflow run "$(STEAM_LINUX_WORKFLOW)" --ref "$$branch" -f build_name="$$build_name" -f build_number="$$build_number"; \
+	gh workflow run "$(STEAM_LINUX_WORKFLOW)" --ref "$$branch" -f build_name="$$build_name" -f build_number="$$build_number" -f source_sha="$$local_sha" -f dispatch_token="$$dispatch_token"; \
 	echo "Waiting for GitHub Actions run to appear..."; \
 	run_id=""; \
 	i=1; \
 	while [ "$$i" -le "$(STEAM_GITHUB_RUN_LOOKUP_ATTEMPTS)" ]; do \
-		run_id=$$(gh run list --workflow "$(STEAM_LINUX_WORKFLOW)" --branch "$$branch" --event workflow_dispatch --json databaseId,headSha --limit 20 --jq ".[] | select(.headSha == \"$$local_sha\") | .databaseId" | head -n 1); \
+		run_id=$$(gh run list --workflow "$(STEAM_LINUX_WORKFLOW)" --branch "$$branch" --event workflow_dispatch --json databaseId,displayTitle,headSha --limit 20 --jq ".[] | select(.headSha == \"$$local_sha\" and (.displayTitle | contains(\"[$$dispatch_token]\"))) | .databaseId" | head -n 1); \
 		if [ -n "$$run_id" ]; then break; fi; \
 		sleep "$(STEAM_GITHUB_RUN_LOOKUP_SLEEP)"; \
 		i=$$((i + 1)); \
@@ -1469,7 +1475,7 @@ steam-linux-github:
 steam-package-linux:
 	@command -v zip >/dev/null || { echo "zip is required for steam-package-linux."; exit 1; }
 	@command -v unzip >/dev/null || { echo "unzip is required for steam-package-linux."; exit 1; }
-	@command -v rg >/dev/null || { echo "rg is required for steam-package-linux."; exit 1; }
+	@command -v grep >/dev/null || { echo "grep is required for steam-package-linux."; exit 1; }
 	@test "$${AONW_STEAMRT4_SDK:-0}" = "1" || { echo "steam-package-linux must run inside the pinned Steam Runtime 4 SDK."; exit 1; }
 	@test -x tool/linux/package_steamrt4_bundle.sh || { echo "Missing Linux runtime packager."; exit 1; }
 	@test -s "$(STEAMRT4_PLATFORM_SONAMES)" || { echo "Missing Steam Runtime contract: $(STEAMRT4_PLATFORM_SONAMES)."; exit 1; }
@@ -1489,7 +1495,7 @@ steam-package-linux:
 	@tmp_dir=$$(mktemp -d); \
 	trap 'rm -rf "$$tmp_dir"' EXIT; \
 	unzip -q "$(STEAM_LINUX_ZIP)" -d "$$tmp_dir"; \
-	rg -a -F "$(STEAM_API_BASE_URL)" "$$tmp_dir" >/dev/null
+	grep -R -a -F "$(STEAM_API_BASE_URL)" "$$tmp_dir" >/dev/null
 	@echo "Verified Steam Linux API: $(STEAM_API_BASE_URL)"
 	@echo "Steam Linux ZIP ready: $(STEAM_LINUX_ZIP)"
 
@@ -1926,9 +1932,9 @@ preflight-release:
 	@command -v git >/dev/null || { echo "git is required."; exit 1; }
 	@branch=$$(git branch --show-current); \
 	test "$$branch" = "main" || { echo "deploy-all must run from main, current branch is '$$branch'."; exit 1; }
-	@if [ -n "$$(git status --porcelain --untracked-files=no)" ]; then \
-		echo "Tracked local changes detected. Commit/stash them before deploy-all:"; \
-		git status --short --untracked-files=no; \
+	@if [ -n "$$(git status --porcelain --untracked-files=normal)" ]; then \
+		echo "Local changes detected. Commit/stash them before deploy-all:"; \
+		git status --short --untracked-files=normal; \
 		exit 1; \
 	fi
 

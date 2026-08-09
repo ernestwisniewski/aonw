@@ -7,6 +7,7 @@ void main() {
       expect(MapPlayerCapacityRules.maxPlayersForMapName('verdantia'), 4);
       expect(MapPlayerCapacityRules.maxPlayersForMapName('myranth'), 3);
       expect(MapPlayerCapacityRules.maxPlayersForMapName('terenos'), 3);
+      expect(MapPlayerCapacityRules.maxPlayersForMapName('dravonia'), 4);
     });
 
     test('normalizes names and validates player-count helpers', () {
@@ -96,36 +97,63 @@ void main() {
       );
     });
 
-    test('uses Verdantia for full multiplayer starts', () {
-      final mapName = MapPlayerCapacityRules.multiplayerStartMapName(
-        requestedMapName: 'terenos',
-        playerCount: 4,
-        seed: 0,
-      );
+    test('selects every eligible four-player map deterministically', () {
+      final selections = [
+        for (final seed in [0, 1, 2, -1])
+          MapPlayerCapacityRules.multiplayerStartMapName(
+            playerCount: 4,
+            seed: seed,
+          ),
+      ];
 
-      expect(mapName, 'verdantia');
+      expect(selections, ['verdantia', 'dravonia', 'verdantia', 'dravonia']);
     });
 
-    test('randomizes every eligible bundled map for smaller starts', () {
-      final twoPlayerMaps = {
-        for (var seed = 0; seed < 3; seed++)
+    test('preserves deterministic selection for two and three players', () {
+      final twoPlayerMaps = [
+        for (var seed = 0; seed < 4; seed++)
           MapPlayerCapacityRules.multiplayerStartMapName(
-            requestedMapName: 'custom_map',
             playerCount: 2,
             seed: seed,
           ),
-      };
-      final threePlayerMaps = {
-        for (var seed = 0; seed < 3; seed++)
+      ];
+      final threePlayerMaps = [
+        for (var seed = 0; seed < 4; seed++)
           MapPlayerCapacityRules.multiplayerStartMapName(
-            requestedMapName: 'myranth',
             playerCount: 3,
             seed: seed,
           ),
-      };
+      ];
 
-      expect(twoPlayerMaps, {'verdantia', 'myranth', 'terenos'});
-      expect(threePlayerMaps, {'verdantia', 'myranth', 'terenos'});
+      const expected = ['verdantia', 'myranth', 'terenos', 'dravonia'];
+      expect(twoPlayerMaps, expected);
+      expect(threePlayerMaps, expected);
+    });
+
+    test('rejects a player count below the quickplay minimum', () {
+      expect(
+        () => MapPlayerCapacityRules.multiplayerStartMapName(
+          playerCount: MapPlayerCapacityRules.minPlayers - 1,
+          seed: 0,
+        ),
+        throwsRangeError,
+      );
+    });
+
+    test('fails closed when no official map has enough capacity', () {
+      expect(
+        () => MapPlayerCapacityRules.multiplayerStartMapName(
+          playerCount: MapPlayerCapacityRules.absoluteMaxPlayers + 1,
+          seed: 0,
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('No official multiplayer map supports 5 players'),
+          ),
+        ),
+      );
     });
   });
 }

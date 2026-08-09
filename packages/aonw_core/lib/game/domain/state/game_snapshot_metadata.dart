@@ -1,3 +1,4 @@
+import 'package:aonw_core/game/domain/save/game_save_origin.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
 
 /// Camera position stored alongside a game snapshot.
@@ -70,6 +71,7 @@ final class GameSnapshotMetadata {
     required WorldReference world,
     required DateTime savedAtUtc,
     required GameSnapshotCamera camera,
+    GameSaveOrigin origin = GameSaveOrigin.local,
   }) {
     return GameSnapshotMetadata._(
       id: id,
@@ -78,6 +80,7 @@ final class GameSnapshotMetadata {
       world: WorldReference(name: world.name, source: world.source),
       savedAtUtc: savedAtUtc.toUtc(),
       camera: GameSnapshotCamera(x: camera.x, y: camera.y, zoom: camera.zoom),
+      origin: origin,
     );
   }
 
@@ -88,6 +91,7 @@ final class GameSnapshotMetadata {
     required this.world,
     required this.savedAtUtc,
     required this.camera,
+    required this.origin,
   });
 
   final String id;
@@ -96,6 +100,7 @@ final class GameSnapshotMetadata {
   final WorldReference world;
   final DateTime savedAtUtc;
   final GameSnapshotCamera camera;
+  final GameSaveOrigin origin;
 
   GameSnapshotMetadata copyWith({
     String? id,
@@ -104,6 +109,7 @@ final class GameSnapshotMetadata {
     WorldReference? world,
     DateTime? savedAtUtc,
     GameSnapshotCamera? camera,
+    GameSaveOrigin? origin,
   }) {
     return GameSnapshotMetadata(
       id: id ?? this.id,
@@ -112,6 +118,7 @@ final class GameSnapshotMetadata {
       world: world ?? this.world,
       savedAtUtc: savedAtUtc ?? this.savedAtUtc,
       camera: camera ?? this.camera,
+      origin: origin ?? this.origin,
     );
   }
 
@@ -124,16 +131,17 @@ final class GameSnapshotMetadata {
           name == other.name &&
           world == other.world &&
           savedAtUtc == other.savedAtUtc &&
-          camera == other.camera;
+          camera == other.camera &&
+          origin == other.origin;
 
   @override
   int get hashCode =>
-      Object.hash(id, schemaVersion, name, world, savedAtUtc, camera);
+      Object.hash(id, schemaVersion, name, world, savedAtUtc, camera, origin);
 
   @override
   String toString() {
     return 'GameSnapshotMetadata(id: $id, schemaVersion: $schemaVersion, '
         'name: $name, world: $world, savedAtUtc: $savedAtUtc, '
-        'camera: $camera)';
+        'camera: $camera, origin: $origin)';
   }
 }

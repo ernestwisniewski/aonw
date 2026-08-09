@@ -45,6 +45,9 @@ _GameSave _$GameSaveFromJson(Map<String, dynamic> json) => _GameSave(
   gameMode:
       $enumDecodeNullable(_$GameModeEnumMap, json['gameMode']) ??
       GameMode.hotSeat,
+  origin: json['origin'] == null
+      ? GameSaveOrigin.local
+      : gameSaveOriginFromJson(json['origin']),
 );
 
 Map<String, dynamic> _$GameSaveToJson(_GameSave instance) => <String, dynamic>{
@@ -62,6 +65,7 @@ Map<String, dynamic> _$GameSaveToJson(_GameSave instance) => <String, dynamic>{
   'ruleset': instance.matchRules.toJson(),
   'players': instance.players.map((e) => e.toJson()).toList(),
   'gameMode': _$GameModeEnumMap[instance.gameMode]!,
+  'origin': gameSaveOriginToJson(instance.origin),
 };
 
 const _$MapSourceEnumMap = {MapSource.asset: 'asset', MapSource.saved: 'saved'};
@@ -93,6 +97,9 @@ _GameSaveIndex _$GameSaveIndexFromJson(Map<String, dynamic> json) =>
       gameMode:
           $enumDecodeNullable(_$GameModeEnumMap, json['gameMode']) ??
           GameMode.hotSeat,
+      origin: json['origin'] == null
+          ? GameSaveOrigin.local
+          : gameSaveOriginFromJson(json['origin']),
       replayAvailable: json['replayAvailable'] as bool? ?? false,
       corrupted: json['corrupted'] as bool? ?? false,
       corruptionMessage: json['corruptionMessage'] as String?,
@@ -107,6 +114,7 @@ Map<String, dynamic> _$GameSaveIndexToJson(_GameSaveIndex instance) =>
       'turn': instance.turn,
       'savedAt': _dateTimeToJson(instance.savedAt),
       'gameMode': _$GameModeEnumMap[instance.gameMode]!,
+      'origin': gameSaveOriginToJson(instance.origin),
       'replayAvailable': instance.replayAvailable,
       'corrupted': instance.corrupted,
       'corruptionMessage': instance.corruptionMessage,

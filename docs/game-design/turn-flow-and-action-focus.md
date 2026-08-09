@@ -155,7 +155,7 @@ The presentation contract is:
 | --- | --- |
 | Non-empty authoritative executions | Validate complete per-unit chains against the previous and next snapshots, then play them in the supplied global order |
 | Explicit authoritative `[]` | Treat the lack of visible movement as intentional, apply state without movement animation, and never infer movement from the snapshot delta |
-| Missing key, JSON `null`, or malformed evidence | Reject the invalid protocol-v3 envelope |
+| Missing key, JSON `null`, or malformed evidence | Reject the invalid strict event-v3 or ACK-v4 envelope |
 | Snapshot recovery, offset gap, stale event, or mismatched attached snapshot | Apply authoritative state without movement animation and never infer movement from the snapshot delta |
 | `UnitMovedEvent` beside authoritative executions | Keep it for activity/notification semantics and suppress its duplicate renderer move |
 
@@ -186,10 +186,11 @@ renderer replay source; durable exact animation replay is a separate
 event-plan contract.
 
 This contract guarantees route and order, not shared wall-clock animation
-timing. Protocol v3 has no authoritative start tick or cross-client clock, and
-camera pre-roll, reduced-motion settings, runtime load, or recipient filtering
-can change local timing. Exact same-moment playback for every client remains
-the separate Etap 4 versioned `AnimationPlan` and virtual-clock milestone.
+timing. Protocol v4 still has no authoritative start tick or cross-client
+clock, and camera pre-roll, reduced-motion settings, runtime load, or recipient
+filtering can change local timing. Exact same-moment playback for every client
+remains the separate Etap 4 versioned `AnimationPlan` and virtual-clock
+milestone.
 
 ## Fallback
 

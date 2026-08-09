@@ -277,6 +277,7 @@ WireCommandAck _acceptedAck({
   const snapshotCodec = SnapshotCodec();
   return WireCommandAck(
     matchId: 'save_1',
+    clientMessageId: 'command_1',
     accepted: true,
     offset: 1,
     tick: 7,
@@ -353,7 +354,7 @@ class _CommitThenDropDispatcher implements WireCommandDispatcher {
       commits += 1;
       throw TimeoutException('ACK was lost after commit');
     }
-    return ack;
+    return ack.copyWith(clientMessageId: clientMessageId);
   }
 }
 

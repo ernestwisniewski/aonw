@@ -1,4 +1,7 @@
 name: Windows Steam Build
+run-name: >-
+  Windows Steam Build ${{ inputs.build_name }}+${{ inputs.build_number }}
+  [${{ inputs.dispatch_token }}]
 
 on:
   workflow_dispatch:
@@ -9,6 +12,14 @@ on:
         type: string
       build_number:
         description: Optional Flutter build number override, for example 57
+        required: false
+        type: string
+      source_sha:
+        description: Commit SHA expected by the release dispatcher
+        required: false
+        type: string
+      dispatch_token:
+        description: Unique token used to identify this workflow run
         required: false
         type: string
 
@@ -27,6 +38,24 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Verify requested source identity
+        shell: bash
+        env:
+          BUILD_NAME: ${{ inputs.build_name }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          if [[ -n "$SOURCE_SHA" ]]; then
+            test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          fi
+
+          if [[ -n "$BUILD_NAME" || -n "$BUILD_NUMBER" ]]; then
+            test -n "$BUILD_NAME"
+            test -n "$BUILD_NUMBER"
+            committed_version=$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | head -n 1)
+            test "$committed_version" = "$BUILD_NAME+$BUILD_NUMBER"
+          fi
 
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2

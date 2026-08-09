@@ -484,13 +484,22 @@ class Endpoints extends _i1.EndpointDispatch {
       methodConnectors: {
         'listMatches': _i1.MethodConnector(
           name: 'listMatches',
-          params: {},
+          params: {
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
+          },
           call:
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async => (endpoints['multiplayer'] as _i11.MultiplayerEndpoint)
-                  .listMatches(session),
+                  .listMatches(
+                    session,
+                    multiplayerVersion: params['multiplayerVersion'],
+                  ),
         ),
         'createMatch': _i1.MethodConnector(
           name: 'createMatch',
@@ -499,6 +508,11 @@ class Endpoints extends _i1.EndpointDispatch {
               name: 'request',
               type: _i1.getType<_i12.CreateMatchRequest>(),
               nullable: false,
+            ),
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
             ),
           },
           call:
@@ -509,6 +523,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   .createMatch(
                     session,
                     params['request'],
+                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
         'quickplay': _i1.MethodConnector(
@@ -519,6 +534,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<_i12.CreateMatchRequest>(),
               nullable: false,
             ),
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -528,6 +548,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   .quickplay(
                     session,
                     params['request'],
+                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
         'joinMatch': _i1.MethodConnector(
@@ -543,6 +564,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String?>(),
               nullable: true,
             ),
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -552,7 +578,8 @@ class Endpoints extends _i1.EndpointDispatch {
                   .joinMatch(
                     session,
                     params['matchId'],
-                    params['countryId'],
+                    countryId: params['countryId'],
+                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
         'joinPrivateMatch': _i1.MethodConnector(
@@ -568,6 +595,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String?>(),
               nullable: true,
             ),
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -577,7 +609,8 @@ class Endpoints extends _i1.EndpointDispatch {
                   .joinPrivateMatch(
                     session,
                     params['inviteCode'],
-                    params['countryId'],
+                    countryId: params['countryId'],
+                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
         'loadMatch': _i1.MethodConnector(
@@ -588,6 +621,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String>(),
               nullable: false,
             ),
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -597,6 +635,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   .loadMatch(
                     session,
                     params['matchId'],
+                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
         'loadSnapshot': _i1.MethodConnector(
@@ -607,6 +646,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String>(),
               nullable: false,
             ),
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -616,6 +660,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   .loadSnapshot(
                     session,
                     params['matchId'],
+                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
         'listEvents': _i1.MethodConnector(
@@ -631,6 +676,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<int>(),
               nullable: false,
             ),
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -641,6 +691,7 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     params['matchId'],
                     params['afterOffset'],
+                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
         'startMatch': _i1.MethodConnector(
@@ -651,6 +702,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String>(),
               nullable: false,
             ),
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -660,6 +716,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   .startMatch(
                     session,
                     params['matchId'],
+                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
         'markMapLoaded': _i1.MethodConnector(
@@ -670,6 +727,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String>(),
               nullable: false,
             ),
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -679,6 +741,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   .markMapLoaded(
                     session,
                     params['matchId'],
+                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
         'resignMatch': _i1.MethodConnector(
@@ -689,6 +752,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String>(),
               nullable: false,
             ),
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -698,6 +766,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   .resignMatch(
                     session,
                     params['matchId'],
+                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
         'leaveMatch': _i1.MethodConnector(
@@ -708,6 +777,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String>(),
               nullable: false,
             ),
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -717,6 +791,7 @@ class Endpoints extends _i1.EndpointDispatch {
                   .leaveMatch(
                     session,
                     params['matchId'],
+                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
         'connect': _i1.MethodStreamConnector(
@@ -731,6 +806,11 @@ class Endpoints extends _i1.EndpointDispatch {
               name: 'afterOffset',
               type: _i1.getType<int>(),
               nullable: false,
+            ),
+            'multiplayerVersion': _i1.ParameterDescription(
+              name: 'multiplayerVersion',
+              type: _i1.getType<int?>(),
+              nullable: true,
             ),
           },
           streamParams: {
@@ -753,6 +833,7 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['afterOffset'],
                     streamParams['input']!
                         .cast<_i13.MultiplayerClientMessage>(),
+                    multiplayerVersion: params['multiplayerVersion'],
                   ),
         ),
       },

@@ -1,9 +1,11 @@
 import 'package:aonw_core/game/domain/diplomacy/city_entry_policy.dart';
 import 'package:aonw_core/game/domain/fog/fog_visibility_query.dart';
+import 'package:aonw_core/game/domain/movement/movement_command_guard.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_path_constraints.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_state.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_visibility_mode.dart';
 import 'package:aonw_core/game/domain/movement/movement_hidden_obstacle_rules.dart';
+import 'package:aonw_core/game/domain/movement/unit_movement_feasibility.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_visibility_rules.dart';
@@ -35,6 +37,7 @@ final class MovementPlanRejected extends MovementPlanResolution {
 }
 
 typedef _MovementPlanCandidate = ({
+  bool capacityBlocked,
   bool hiddenTargetReachedNow,
   Set<String> knownUnitIds,
   UnitMovementPlan? knownStatePlan,
@@ -137,37 +140,32 @@ abstract final class MovementCommandPlanner {
       units: knownUnits,
       canEnterTile: canEnterTile,
     );
+    final canEnterStepBeyondCapacity = _capacityExceptionFor(
+      state: state,
+      unit: unit,
+      targetTile: targetTile,
+    );
     final directPlan = _planWithBlockedTargetApproach(
       pathfinder: pathfinder,
       unit: unit,
       targetTile: targetTile,
       targetBlocker: targetBlocker,
       visibility: visibility,
+      canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
     );
-    if (!hiddenTargetBlocker || directPlan?.canMoveNow != true) {
-      return (
-        hiddenTargetReachedNow: false,
-        knownUnitIds: knownUnitIds,
-        knownStatePlan: directPlan,
-        plan: directPlan,
-        targetBlocker: targetBlocker,
-      );
-    }
-    final approach = _planTowardHiddenBlockedTarget(
-      pathfinder: UnitMovementPathfinder(
-        mapData: mapData,
-        units: [...knownUnits, targetBlocker],
-        canEnterTile: canEnterTile,
-      ),
+    return _knownStateCandidate(
+      hiddenTargetBlocker: hiddenTargetBlocker,
+      knownUnitIds: knownUnitIds,
+      knownUnits: knownUnits,
+      pathfinder: pathfinder,
+      directPlan: directPlan,
+      targetBlocker: targetBlocker,
+      mapData: mapData,
+      canEnterTile: canEnterTile,
+      visibility: visibility,
       unit: unit,
       targetTile: targetTile,
-    );
-    return (
-      hiddenTargetReachedNow: true,
-      knownUnitIds: knownUnitIds,
-      knownStatePlan: directPlan,
-      plan: approach,
-      targetBlocker: targetBlocker,
+      canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
     );
   }
 
@@ -183,6 +181,7 @@ abstract final class MovementCommandPlanner {
         return MovementPlanAcceptedNoOp(candidate.knownStatePlan!);
       }
       return _failedPlanResolution(
+        capacityBlocked: candidate.capacityBlocked,
         unit: unit,
         targetBlocker: candidate.targetBlocker,
         targetBlockerKnown:
@@ -203,14 +202,107 @@ abstract final class MovementCommandPlanner {
     return MovementPlanReady(plan, candidate.knownStatePlan!);
   }
 
+  static bool _capacityBlocksOnlyKnownRoute({
+    required UnitMovementPlan? feasiblePlan,
+    required UnitMovementPathfinder pathfinder,
+    required GameUnit unit,
+    required MapTileView targetTile,
+    required GameUnit? targetBlocker,
+    required FogVisibilityQuery visibility,
+    required UnitMovementCapacityException canEnterStepBeyondCapacity,
+  }) {
+    if (feasiblePlan != null) return false;
+    final diagnosticPlan = _planWithBlockedTargetApproach(
+      pathfinder: pathfinder,
+      unit: unit,
+      targetTile: targetTile,
+      targetBlocker: targetBlocker,
+      visibility: visibility,
+      canEnterStepBeyondCapacity: (_) => true,
+    );
+    return diagnosticPlan != null &&
+        !UnitMovementFeasibility.canEventuallyTraverse(
+          unit: unit,
+          plan: diagnosticPlan,
+          canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
+        );
+  }
+
+  static UnitMovementCapacityException _capacityExceptionFor({
+    required MovementCommandState state,
+    required GameUnit unit,
+    required MapTileView targetTile,
+  }) =>
+      (step) => MovementCommandGuard.canCarryArtifactIntoTargetCity(
+        state: state,
+        unit: unit,
+        targetTile: targetTile,
+        step: step,
+      );
+
+  static _MovementPlanCandidate _knownStateCandidate({
+    required bool hiddenTargetBlocker,
+    required Set<String> knownUnitIds,
+    required List<GameUnit> knownUnits,
+    required UnitMovementPathfinder pathfinder,
+    required UnitMovementPlan? directPlan,
+    required GameUnit? targetBlocker,
+    required MapTraversalView mapData,
+    required bool Function(MapTileView) canEnterTile,
+    required FogVisibilityQuery visibility,
+    required GameUnit unit,
+    required MapTileView targetTile,
+    required UnitMovementCapacityException canEnterStepBeyondCapacity,
+  }) {
+    if (!hiddenTargetBlocker || directPlan?.canMoveNow != true) {
+      final capacityBlocked = _capacityBlocksOnlyKnownRoute(
+        feasiblePlan: directPlan,
+        pathfinder: pathfinder,
+        unit: unit,
+        targetTile: targetTile,
+        targetBlocker: targetBlocker,
+        visibility: visibility,
+        canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
+      );
+      return (
+        capacityBlocked: capacityBlocked,
+        hiddenTargetReachedNow: false,
+        knownUnitIds: knownUnitIds,
+        knownStatePlan: directPlan,
+        plan: directPlan,
+        targetBlocker: targetBlocker,
+      );
+    }
+    final approach = _planTowardHiddenBlockedTarget(
+      pathfinder: UnitMovementPathfinder(
+        mapData: mapData,
+        units: [...knownUnits, targetBlocker!],
+        canEnterTile: canEnterTile,
+      ),
+      unit: unit,
+      targetTile: targetTile,
+      canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
+    );
+    return (
+      capacityBlocked: false,
+      hiddenTargetReachedNow: true,
+      knownUnitIds: knownUnitIds,
+      knownStatePlan: directPlan,
+      plan: approach,
+      targetBlocker: targetBlocker,
+    );
+  }
+
   static UnitMovementPlan? _planTowardHiddenBlockedTarget({
     required UnitMovementPathfinder pathfinder,
     required GameUnit unit,
     required MapTileView targetTile,
+    required UnitMovementCapacityException canEnterStepBeyondCapacity,
   }) {
     return pathfinder.planTowardBlockedTarget(
       unit: unit,
       targetTile: targetTile,
+      canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
     );
   }
 
@@ -220,8 +312,13 @@ abstract final class MovementCommandPlanner {
     required MapTileView targetTile,
     required GameUnit? targetBlocker,
     required FogVisibilityQuery visibility,
+    required UnitMovementCapacityException canEnterStepBeyondCapacity,
   }) {
-    final direct = pathfinder.plan(unit: unit, targetTile: targetTile);
+    final direct = pathfinder.plan(
+      unit: unit,
+      targetTile: targetTile,
+      canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
+    );
     if (direct != null ||
         targetBlocker == null ||
         targetBlocker.id == unit.id) {
@@ -230,6 +327,7 @@ abstract final class MovementCommandPlanner {
     final approach = pathfinder.planTowardBlockedTarget(
       unit: unit,
       targetTile: targetTile,
+      canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
     );
     if (approach == null) return null;
     final shouldApproach =
@@ -240,10 +338,14 @@ abstract final class MovementCommandPlanner {
   }
 
   static MovementPlanResolution _failedPlanResolution({
+    required bool capacityBlocked,
     required GameUnit unit,
     required GameUnit? targetBlocker,
     required bool targetBlockerKnown,
   }) {
+    if (capacityBlocked) {
+      return const MovementPlanRejected('unit_movement_capacity_insufficient');
+    }
     if (targetBlocker != null && targetBlocker.id != unit.id) {
       return targetBlockerKnown
           ? const MovementPlanRejected('move_target_occupied')

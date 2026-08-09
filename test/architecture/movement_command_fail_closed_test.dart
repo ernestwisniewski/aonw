@@ -296,7 +296,7 @@ final class HiddenTileSource {
           forbiddenTypes: const {},
         ),
         contains(
-          '$pathfinder must declare only the reviewed pathfinder classes',
+          '$pathfinder must declare exactly the reviewed movement declarations',
         ),
       );
     },

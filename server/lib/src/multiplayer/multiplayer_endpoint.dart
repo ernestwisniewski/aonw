@@ -17,6 +17,7 @@ import 'package:aonw_server/src/multiplayer/matchmaking_service.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_errors.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_input_validator.dart';
 import 'package:aonw_server/src/multiplayer/multiplayer_match_store.dart';
+import 'package:aonw_server/src/multiplayer/multiplayer_version_guard.dart';
 import 'package:aonw_server/src/multiplayer/player_match_view_projector.dart';
 import 'package:aonw_server/src/multiplayer/player_seat_allocator.dart';
 import 'package:aonw_server/src/multiplayer/quickplay_lobby_policy.dart';
@@ -29,7 +30,11 @@ class MultiplayerEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
 
-  Future<List<WireMatch>> listMatches(Session session) async {
+  Future<List<WireMatch>> listMatches(
+    Session session, {
+    required int? multiplayerVersion,
+  }) async {
+    requireCompatibleMultiplayerClient(multiplayerVersion);
     final user = _requireUser(session);
     return multiplayerHub.listMatches(
       store: _store(session),
@@ -39,8 +44,10 @@ class MultiplayerEndpoint extends Endpoint {
 
   Future<WireMatch> createMatch(
     Session session,
-    CreateMatchRequest request,
-  ) async {
+    CreateMatchRequest request, {
+    required int? multiplayerVersion,
+  }) async {
+    requireCompatibleMultiplayerClient(multiplayerVersion);
     final user = await _requirePlayerIdentity(session);
     return multiplayerHub.createMatch(
       store: _store(session),
@@ -52,8 +59,10 @@ class MultiplayerEndpoint extends Endpoint {
 
   Future<WireMatch> quickplay(
     Session session,
-    CreateMatchRequest request,
-  ) async {
+    CreateMatchRequest request, {
+    required int? multiplayerVersion,
+  }) async {
+    requireCompatibleMultiplayerClient(multiplayerVersion);
     final user = await _requirePlayerIdentity(session);
     return multiplayerHub.quickplay(
       store: _store(session),
@@ -65,9 +74,11 @@ class MultiplayerEndpoint extends Endpoint {
 
   Future<WireMatch> joinMatch(
     Session session,
-    String matchId, [
+    String matchId, {
     String? countryId,
-  ]) async {
+    required int? multiplayerVersion,
+  }) async {
+    requireCompatibleMultiplayerClient(multiplayerVersion);
     final user = await _requirePlayerIdentity(session);
     return multiplayerHub.joinMatch(
       store: _store(session),
@@ -80,9 +91,11 @@ class MultiplayerEndpoint extends Endpoint {
 
   Future<WireMatch> joinPrivateMatch(
     Session session,
-    String inviteCode, [
+    String inviteCode, {
     String? countryId,
-  ]) async {
+    required int? multiplayerVersion,
+  }) async {
+    requireCompatibleMultiplayerClient(multiplayerVersion);
     final user = await _requirePlayerIdentity(session);
     return multiplayerHub.joinPrivateMatch(
       store: _store(session),
@@ -93,7 +106,12 @@ class MultiplayerEndpoint extends Endpoint {
     );
   }
 
-  Future<WireMatch> loadMatch(Session session, String matchId) async {
+  Future<WireMatch> loadMatch(
+    Session session,
+    String matchId, {
+    required int? multiplayerVersion,
+  }) async {
+    requireCompatibleMultiplayerClient(multiplayerVersion);
     final user = _requireUser(session);
     return multiplayerHub.loadMatch(
       store: _store(session),
@@ -102,7 +120,12 @@ class MultiplayerEndpoint extends Endpoint {
     );
   }
 
-  Future<WireSnapshot> loadSnapshot(Session session, String matchId) async {
+  Future<WireSnapshot> loadSnapshot(
+    Session session,
+    String matchId, {
+    required int? multiplayerVersion,
+  }) async {
+    requireCompatibleMultiplayerClient(multiplayerVersion);
     final user = _requireUser(session);
     return multiplayerHub.loadSnapshot(
       store: _store(session),
@@ -114,8 +137,10 @@ class MultiplayerEndpoint extends Endpoint {
   Future<List<WireEvent>> listEvents(
     Session session,
     String matchId,
-    int afterOffset,
-  ) async {
+    int afterOffset, {
+    required int? multiplayerVersion,
+  }) async {
+    requireCompatibleMultiplayerClient(multiplayerVersion);
     final user = _requireUser(session);
     return multiplayerHub.listEvents(
       store: _store(session),
@@ -125,7 +150,12 @@ class MultiplayerEndpoint extends Endpoint {
     );
   }
 
-  Future<WireMatch> startMatch(Session session, String matchId) async {
+  Future<WireMatch> startMatch(
+    Session session,
+    String matchId, {
+    required int? multiplayerVersion,
+  }) async {
+    requireCompatibleMultiplayerClient(multiplayerVersion);
     final user = _requireUser(session);
     return multiplayerHub.startMatch(
       store: _store(session),
@@ -134,7 +164,12 @@ class MultiplayerEndpoint extends Endpoint {
     );
   }
 
-  Future<WireMatch> markMapLoaded(Session session, String matchId) async {
+  Future<WireMatch> markMapLoaded(
+    Session session,
+    String matchId, {
+    required int? multiplayerVersion,
+  }) async {
+    requireCompatibleMultiplayerClient(multiplayerVersion);
     final user = _requireUser(session);
     return multiplayerHub.loadMatch(
       store: _store(session),
@@ -143,7 +178,12 @@ class MultiplayerEndpoint extends Endpoint {
     );
   }
 
-  Future<WireMatch> resignMatch(Session session, String matchId) async {
+  Future<WireMatch> resignMatch(
+    Session session,
+    String matchId, {
+    required int? multiplayerVersion,
+  }) async {
+    requireCompatibleMultiplayerClient(multiplayerVersion);
     final user = _requireUser(session);
     return multiplayerHub.resignMatch(
       store: _store(session),
@@ -152,7 +192,12 @@ class MultiplayerEndpoint extends Endpoint {
     );
   }
 
-  Future<void> leaveMatch(Session session, String matchId) async {
+  Future<void> leaveMatch(
+    Session session,
+    String matchId, {
+    required int? multiplayerVersion,
+  }) async {
+    requireCompatibleMultiplayerClient(multiplayerVersion);
     final user = _requireUser(session);
     await multiplayerHub.leaveMatch(
       store: _store(session),
@@ -165,8 +210,10 @@ class MultiplayerEndpoint extends Endpoint {
     Session session,
     String matchId,
     int afterOffset,
-    Stream<MultiplayerClientMessage> input,
-  ) {
+    Stream<MultiplayerClientMessage> input, {
+    required int? multiplayerVersion,
+  }) {
+    requireCompatibleMultiplayerClient(multiplayerVersion);
     final user = _requireUser(session);
     return multiplayerHub.connect(
       store: _store(session),

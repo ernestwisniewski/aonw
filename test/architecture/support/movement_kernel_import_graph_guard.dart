@@ -28,18 +28,30 @@ const movementKernelImportGraphPaths = {
   '${movementLibraryPath}unit_movement_feasibility.dart',
   '${movementLibraryPath}unit_movement_pathfinder.dart',
   '${movementLibraryPath}unit_movement_plan.dart',
+  '${movementLibraryPath}unit_movement_route_search.dart',
 };
 
 const _pathfinderPath = '${movementLibraryPath}unit_movement_pathfinder.dart';
+const _routeSearchPath =
+    '${movementLibraryPath}unit_movement_route_search.dart';
 const _mapTileSourceUri = 'package:aonw_core/map/domain/map_tile_source.dart';
 const _pathfinderDeclarations = {
   'UnitMovementPathfinder',
   '_PathNode',
   '_PathSearchResult',
+};
+const _routeSearchDeclarations = {
+  '_UnitMovementRouteSearch',
   '_RouteNode',
   '_RouteScore',
   '_RouteSearchResult',
   '_RouteState',
+};
+const _routeSearchFunctions = {
+  '_remainingAfterNewTurn',
+  '_compareRouteNodes',
+  '_compareRouteScores',
+  '_compareUnitApproachPlans',
 };
 
 const movementKernelForbiddenRootTypes = {
@@ -163,7 +175,22 @@ List<String> _sourceViolations(
   final violations = <String>[];
   final types = namedTypeReferencesInSource(entry.value, path: entry.key);
   if (entry.key == _pathfinderPath) {
-    violations.addAll(_pathfinderDeclarationViolations(entry.value));
+    violations.addAll(
+      _reviewedDeclarationViolations(
+        entry.value,
+        path: _pathfinderPath,
+        expectedClasses: _pathfinderDeclarations,
+      ),
+    );
+  } else if (entry.key == _routeSearchPath) {
+    violations.addAll(
+      _reviewedDeclarationViolations(
+        entry.value,
+        path: _routeSearchPath,
+        expectedClasses: _routeSearchDeclarations,
+        expectedFunctions: _routeSearchFunctions,
+      ),
+    );
   }
   for (final type in types.intersection(forbiddenTypes)) {
     violations.add('${entry.key} references forbidden $type');
@@ -187,18 +214,31 @@ List<String> _sourceViolations(
   return violations;
 }
 
-List<String> _pathfinderDeclarationViolations(String source) {
-  final unit = parseString(content: source, path: _pathfinderPath).unit;
+List<String> _reviewedDeclarationViolations(
+  String source, {
+  required String path,
+  required Set<String> expectedClasses,
+  Set<String> expectedFunctions = const {},
+}) {
+  final unit = parseString(content: source, path: path).unit;
   final classes = unit.declarations.whereType<ClassDeclaration>().toList();
-  final names = {
+  final classNames = {
     for (final declaration in classes) declaration.namePart.typeName.lexeme,
   };
+  final functions = unit.declarations.whereType<FunctionDeclaration>().toList();
+  final functionNames = {
+    for (final declaration in functions) declaration.name.lexeme,
+  };
   return [
-    if (unit.declarations.length != _pathfinderDeclarations.length ||
-        classes.length != _pathfinderDeclarations.length ||
-        names.length != _pathfinderDeclarations.length ||
-        !names.containsAll(_pathfinderDeclarations))
-      '$_pathfinderPath must declare only the reviewed pathfinder classes',
+    if (unit.declarations.length !=
+            expectedClasses.length + expectedFunctions.length ||
+        classes.length != expectedClasses.length ||
+        classNames.length != expectedClasses.length ||
+        !classNames.containsAll(expectedClasses) ||
+        functions.length != expectedFunctions.length ||
+        functionNames.length != expectedFunctions.length ||
+        !functionNames.containsAll(expectedFunctions))
+      '$path must declare exactly the reviewed movement declarations',
   ];
 }
 

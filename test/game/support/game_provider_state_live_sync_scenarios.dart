@@ -52,7 +52,7 @@ void _registerGameStateNotifierLiveSyncScenarios() {
           ),
         );
 
-        await _waitFor(() {
+        await waitForGameProviderCondition(() {
           final state = container.read(gameStateProvider(save.id)).value;
           return state?.units.single.col == 1;
         });
@@ -145,7 +145,7 @@ void _registerGameStateNotifierLiveSyncScenarios() {
         ),
       );
 
-      await _waitFor(() {
+      await waitForGameProviderCondition(() {
         return container.read(gameSaveProvider(save.id)).value?.turn == 2;
       });
     });
@@ -200,7 +200,7 @@ void _registerGameStateNotifierLiveSyncScenarios() {
 
         await fakeStream.close();
 
-        await _waitFor(() {
+        await waitForGameProviderCondition(() {
           return container.read(multiplayerConnectionStatusProvider)?.status ==
               NetworkConnectionStatus.reconnecting;
         });

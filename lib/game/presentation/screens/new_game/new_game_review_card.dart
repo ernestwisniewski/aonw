@@ -1,4 +1,34 @@
-part of 'new_game_screen.dart';
+import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
+import 'package:aonw/game/presentation/screens/new_game/new_game_setup_options.dart';
+import 'package:aonw/game/presentation/screens/new_game/new_game_single_player_setup.dart';
+import 'package:aonw/l10n/l10n.dart';
+import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw/shared/widgets/game_ui/game_ui_epic_header.dart';
+import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/map/domain/map_selection.dart';
+import 'package:flutter/material.dart';
+
+Widget buildNewGameReviewCard({
+  required NewGameFlow flow,
+  required MapSelection map,
+  required PlayerCountry playerCountry,
+  required SinglePlayerGameLengthPreset gameLengthPreset,
+  required AiDifficulty aiDifficulty,
+  required bool mapPickedManually,
+  required int singlePlayerPlayerCount,
+}) {
+  return _ReviewCard(
+    flow: flow,
+    map: map,
+    playerCountry: playerCountry,
+    gameLengthPreset: gameLengthPreset,
+    aiDifficulty: aiDifficulty,
+    mapPickedManually: mapPickedManually,
+    singlePlayerPlayerCount: singlePlayerPlayerCount,
+  );
+}
 
 class _ReviewCard extends StatelessWidget {
   const _ReviewCard({
@@ -14,7 +44,7 @@ class _ReviewCard extends StatelessWidget {
   final NewGameFlow flow;
   final MapSelection map;
   final PlayerCountry playerCountry;
-  final _SinglePlayerGameLengthPreset gameLengthPreset;
+  final SinglePlayerGameLengthPreset gameLengthPreset;
   final AiDifficulty aiDifficulty;
   final bool mapPickedManually;
   final int singlePlayerPlayerCount;
@@ -173,12 +203,4 @@ class _ReviewRow extends StatelessWidget {
       ),
     );
   }
-}
-
-String _flowDescription(AppLocalizations l10n, NewGameFlow flow) {
-  return switch (flow) {
-    NewGameFlow.singlePlayer => l10n.newGameModeSinglePlayerDescription,
-    NewGameFlow.multiplayer => l10n.newGameModeMultiplayerDescription,
-    NewGameFlow.hotSeat => l10n.newGameModeHotSeatDescription,
-  };
 }

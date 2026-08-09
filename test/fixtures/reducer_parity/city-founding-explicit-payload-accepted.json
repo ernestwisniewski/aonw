@@ -159,7 +159,7 @@
       ]
     },
     "match": {
-      "v": 3,
+      "v": 4,
       "id": "reducer-parity-match",
       "ownerUserId": "user_1",
       "name": "Reducer parity",
@@ -247,7 +247,8 @@
           "kind": "human"
         }
       ],
-      "gameMode": "multiplayer"
+      "gameMode": "multiplayer",
+      "origin": "network"
     },
     "state": {
       "playerColors": {
@@ -423,7 +424,8 @@
           "kind": "human"
         }
       ],
-      "gameMode": "multiplayer"
+      "gameMode": "multiplayer",
+      "origin": "network"
     },
     "state": {
       "playerColors": {

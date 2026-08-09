@@ -429,7 +429,9 @@ void _registerGamePlayerControlScenarios() {
         )..syncWithSave(save);
 
         final pendingEndTurn = controller.endTurn(save);
-        await _waitFor(() => fakeStream.clientMessages.isNotEmpty);
+        await waitForGameProviderCondition(
+          () => fakeStream.clientMessages.isNotEmpty,
+        );
 
         final wire = fakeStream.clientMessages.single.command!;
         expect(wire.command['type'], 'SubmitTurn');
@@ -441,6 +443,7 @@ void _registerGamePlayerControlScenarios() {
             offset: 1,
             ack: WireCommandAck(
               matchId: save.id,
+              clientMessageId: fakeStream.clientMessages.single.clientMessageId,
               accepted: true,
               offset: 1,
               snapshot: snapshotCodec.toWire(

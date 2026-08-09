@@ -27,16 +27,26 @@ increase that profile beyond 3 unless another rough feature is present.
 
 ## Partially Spent Turns
 
-A unit with at least one movement point may enter its first adjacent tile even
-when that tile costs more than its remaining balance, provided the entry cost
-does not exceed the unit's per-turn movement capacity. The entry consumes all
-remaining movement and ends movement for that turn. This prevents a unit with
-a partially spent turn from becoming trapped next to legal rough terrain.
+A movement command first pays every complete step along the selected route.
+When the unit still has movement but the next legal step costs more than the
+remaining balance, it enters exactly that step and exhausts the balance to 0.
+The current-turn prefix ends there and never expands to another step. The entry
+cost must still be traversable under the unit's per-turn capacity rules; the
+existing artifact-carrier exception remains unchanged.
 
-Consequently, an ordinary land unit showing `2/3` movement can move from coast
-to an adjacent ordinary forest: the forest costs 2, the unit arrives with 0,
-and no path remains queued. At 0 movement points, no untravelled step is
-reachable until the next turn.
+This rule applies to an adjacent target and to a distant queued route alike.
+For example, a `3/3` warrior following two consecutive forest steps with costs
+`2 + 2` reaches the second forest and ends at `0/3`; it does not stop after the
+first forest with one unused point. If the selected target lies farther away,
+the remaining suffix stays queued. At 0 movement points, no untravelled step
+is reachable until the next turn.
+
+`estimatedTurns`, bounded `movementCostsFrom(maxCost)` searches, direct moves,
+queued moves, and merchant route advancement use the same terminal-step rule.
+The bounded search includes the one exhausting boundary step but never its
+successors. `movementCostsFrom` is a terrain-cost frontier; authoritative
+command and queued-route feasibility still reject a non-carrier step beyond
+the unit's per-turn capacity before any state change.
 
 ## Route Presentation
 

@@ -162,8 +162,6 @@ final class BasicStrategyArtifactLogisticsPlanner {
       if (!UnitMovementFeasibility.canEventuallyTraverse(
         unit: unit,
         plan: plan,
-        canEnterStepBeyondCapacity: (step) =>
-            _canCarryArtifactIntoCity(unit: unit, city: city, step: step),
       )) {
         continue;
       }
@@ -300,16 +298,6 @@ final class BasicStrategyArtifactLogisticsPlanner {
   }
 
   String _key(int col, int row) => '$col:$row';
-
-  bool _canCarryArtifactIntoCity({
-    required GameUnit unit,
-    required GameCity city,
-    required UnitMovementStep step,
-  }) {
-    return unit.carriedArtifactId != null &&
-        city.ownerPlayerId == unit.ownerPlayerId &&
-        city.occupiesCenter(step.col, step.row);
-  }
 }
 
 final class _PlannedArtifactMove {

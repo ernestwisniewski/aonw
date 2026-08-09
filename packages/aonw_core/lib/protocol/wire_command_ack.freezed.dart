@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$WireCommandAck {
 
- int get v; String get matchId; bool get accepted; int get offset; int? get tick; DateTime? get timestamp; WireSnapshot get snapshot; List<Map<String, dynamic>> get events; String? get reason; WireMovementExecutionList get movementExecutions;
+ int get v; String get matchId; String get clientMessageId; bool get accepted; int get offset; int? get tick; DateTime? get timestamp; WireSnapshot get snapshot; List<Map<String, dynamic>> get events; String? get reason; WireMovementExecutionList get movementExecutions;
 /// Create a copy of WireCommandAck
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $WireCommandAckCopyWith<WireCommandAck> get copyWith => _$WireCommandAckCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WireCommandAck&&(identical(other.v, v) || other.v == v)&&(identical(other.matchId, matchId) || other.matchId == matchId)&&(identical(other.accepted, accepted) || other.accepted == accepted)&&(identical(other.offset, offset) || other.offset == offset)&&(identical(other.tick, tick) || other.tick == tick)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot)&&const DeepCollectionEquality().equals(other.events, events)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.movementExecutions, movementExecutions) || other.movementExecutions == movementExecutions));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WireCommandAck&&(identical(other.v, v) || other.v == v)&&(identical(other.matchId, matchId) || other.matchId == matchId)&&(identical(other.clientMessageId, clientMessageId) || other.clientMessageId == clientMessageId)&&(identical(other.accepted, accepted) || other.accepted == accepted)&&(identical(other.offset, offset) || other.offset == offset)&&(identical(other.tick, tick) || other.tick == tick)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot)&&const DeepCollectionEquality().equals(other.events, events)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.movementExecutions, movementExecutions) || other.movementExecutions == movementExecutions));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,v,matchId,accepted,offset,tick,timestamp,snapshot,const DeepCollectionEquality().hash(events),reason,movementExecutions);
+int get hashCode => Object.hash(runtimeType,v,matchId,clientMessageId,accepted,offset,tick,timestamp,snapshot,const DeepCollectionEquality().hash(events),reason,movementExecutions);
 
 @override
 String toString() {
-  return 'WireCommandAck(v: $v, matchId: $matchId, accepted: $accepted, offset: $offset, tick: $tick, timestamp: $timestamp, snapshot: $snapshot, events: $events, reason: $reason, movementExecutions: $movementExecutions)';
+  return 'WireCommandAck(v: $v, matchId: $matchId, clientMessageId: $clientMessageId, accepted: $accepted, offset: $offset, tick: $tick, timestamp: $timestamp, snapshot: $snapshot, events: $events, reason: $reason, movementExecutions: $movementExecutions)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $WireCommandAckCopyWith<$Res>  {
   factory $WireCommandAckCopyWith(WireCommandAck value, $Res Function(WireCommandAck) _then) = _$WireCommandAckCopyWithImpl;
 @useResult
 $Res call({
- int v, String matchId, bool accepted, int offset, int? tick, DateTime? timestamp, WireSnapshot snapshot, List<Map<String, dynamic>> events, String? reason, WireMovementExecutionList movementExecutions
+ int v, String matchId, String clientMessageId, bool accepted, int offset, int? tick, DateTime? timestamp, WireSnapshot snapshot, List<Map<String, dynamic>> events, String? reason, WireMovementExecutionList movementExecutions
 });
 
 
@@ -62,10 +62,11 @@ class _$WireCommandAckCopyWithImpl<$Res>
 
 /// Create a copy of WireCommandAck
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? v = null,Object? matchId = null,Object? accepted = null,Object? offset = null,Object? tick = freezed,Object? timestamp = freezed,Object? snapshot = null,Object? events = null,Object? reason = freezed,Object? movementExecutions = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? v = null,Object? matchId = null,Object? clientMessageId = null,Object? accepted = null,Object? offset = null,Object? tick = freezed,Object? timestamp = freezed,Object? snapshot = null,Object? events = null,Object? reason = freezed,Object? movementExecutions = null,}) {
   return _then(_self.copyWith(
 v: null == v ? _self.v : v // ignore: cast_nullable_to_non_nullable
 as int,matchId: null == matchId ? _self.matchId : matchId // ignore: cast_nullable_to_non_nullable
+as String,clientMessageId: null == clientMessageId ? _self.clientMessageId : clientMessageId // ignore: cast_nullable_to_non_nullable
 as String,accepted: null == accepted ? _self.accepted : accepted // ignore: cast_nullable_to_non_nullable
 as bool,offset: null == offset ? _self.offset : offset // ignore: cast_nullable_to_non_nullable
 as int,tick: freezed == tick ? _self.tick : tick // ignore: cast_nullable_to_non_nullable
@@ -159,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int v,  String matchId,  bool accepted,  int offset,  int? tick,  DateTime? timestamp,  WireSnapshot snapshot,  List<Map<String, dynamic>> events,  String? reason,  WireMovementExecutionList movementExecutions)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int v,  String matchId,  String clientMessageId,  bool accepted,  int offset,  int? tick,  DateTime? timestamp,  WireSnapshot snapshot,  List<Map<String, dynamic>> events,  String? reason,  WireMovementExecutionList movementExecutions)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WireCommandAck() when $default != null:
-return $default(_that.v,_that.matchId,_that.accepted,_that.offset,_that.tick,_that.timestamp,_that.snapshot,_that.events,_that.reason,_that.movementExecutions);case _:
+return $default(_that.v,_that.matchId,_that.clientMessageId,_that.accepted,_that.offset,_that.tick,_that.timestamp,_that.snapshot,_that.events,_that.reason,_that.movementExecutions);case _:
   return orElse();
 
 }
@@ -180,10 +181,10 @@ return $default(_that.v,_that.matchId,_that.accepted,_that.offset,_that.tick,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int v,  String matchId,  bool accepted,  int offset,  int? tick,  DateTime? timestamp,  WireSnapshot snapshot,  List<Map<String, dynamic>> events,  String? reason,  WireMovementExecutionList movementExecutions)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int v,  String matchId,  String clientMessageId,  bool accepted,  int offset,  int? tick,  DateTime? timestamp,  WireSnapshot snapshot,  List<Map<String, dynamic>> events,  String? reason,  WireMovementExecutionList movementExecutions)  $default,) {final _that = this;
 switch (_that) {
 case _WireCommandAck():
-return $default(_that.v,_that.matchId,_that.accepted,_that.offset,_that.tick,_that.timestamp,_that.snapshot,_that.events,_that.reason,_that.movementExecutions);case _:
+return $default(_that.v,_that.matchId,_that.clientMessageId,_that.accepted,_that.offset,_that.tick,_that.timestamp,_that.snapshot,_that.events,_that.reason,_that.movementExecutions);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -200,10 +201,10 @@ return $default(_that.v,_that.matchId,_that.accepted,_that.offset,_that.tick,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int v,  String matchId,  bool accepted,  int offset,  int? tick,  DateTime? timestamp,  WireSnapshot snapshot,  List<Map<String, dynamic>> events,  String? reason,  WireMovementExecutionList movementExecutions)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int v,  String matchId,  String clientMessageId,  bool accepted,  int offset,  int? tick,  DateTime? timestamp,  WireSnapshot snapshot,  List<Map<String, dynamic>> events,  String? reason,  WireMovementExecutionList movementExecutions)?  $default,) {final _that = this;
 switch (_that) {
 case _WireCommandAck() when $default != null:
-return $default(_that.v,_that.matchId,_that.accepted,_that.offset,_that.tick,_that.timestamp,_that.snapshot,_that.events,_that.reason,_that.movementExecutions);case _:
+return $default(_that.v,_that.matchId,_that.clientMessageId,_that.accepted,_that.offset,_that.tick,_that.timestamp,_that.snapshot,_that.events,_that.reason,_that.movementExecutions);case _:
   return null;
 
 }
@@ -215,11 +216,12 @@ return $default(_that.v,_that.matchId,_that.accepted,_that.offset,_that.tick,_th
 
 
 class _WireCommandAck extends WireCommandAck {
-  const _WireCommandAck({this.v = kProtocolVersion, required this.matchId, required this.accepted, required this.offset, this.tick, this.timestamp, required this.snapshot, final  List<Map<String, dynamic>> events = const <Map<String, dynamic>>[], this.reason, required this.movementExecutions}): _events = events,super._();
+  const _WireCommandAck({this.v = kProtocolVersion, required this.matchId, required this.clientMessageId, required this.accepted, required this.offset, this.tick, this.timestamp, required this.snapshot, final  List<Map<String, dynamic>> events = const <Map<String, dynamic>>[], this.reason, required this.movementExecutions}): _events = events,super._();
   
 
 @override@JsonKey() final  int v;
 @override final  String matchId;
+@override final  String clientMessageId;
 @override final  bool accepted;
 @override final  int offset;
 @override final  int? tick;
@@ -245,16 +247,16 @@ _$WireCommandAckCopyWith<_WireCommandAck> get copyWith => __$WireCommandAckCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WireCommandAck&&(identical(other.v, v) || other.v == v)&&(identical(other.matchId, matchId) || other.matchId == matchId)&&(identical(other.accepted, accepted) || other.accepted == accepted)&&(identical(other.offset, offset) || other.offset == offset)&&(identical(other.tick, tick) || other.tick == tick)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot)&&const DeepCollectionEquality().equals(other._events, _events)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.movementExecutions, movementExecutions) || other.movementExecutions == movementExecutions));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WireCommandAck&&(identical(other.v, v) || other.v == v)&&(identical(other.matchId, matchId) || other.matchId == matchId)&&(identical(other.clientMessageId, clientMessageId) || other.clientMessageId == clientMessageId)&&(identical(other.accepted, accepted) || other.accepted == accepted)&&(identical(other.offset, offset) || other.offset == offset)&&(identical(other.tick, tick) || other.tick == tick)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.snapshot, snapshot) || other.snapshot == snapshot)&&const DeepCollectionEquality().equals(other._events, _events)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.movementExecutions, movementExecutions) || other.movementExecutions == movementExecutions));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,v,matchId,accepted,offset,tick,timestamp,snapshot,const DeepCollectionEquality().hash(_events),reason,movementExecutions);
+int get hashCode => Object.hash(runtimeType,v,matchId,clientMessageId,accepted,offset,tick,timestamp,snapshot,const DeepCollectionEquality().hash(_events),reason,movementExecutions);
 
 @override
 String toString() {
-  return 'WireCommandAck(v: $v, matchId: $matchId, accepted: $accepted, offset: $offset, tick: $tick, timestamp: $timestamp, snapshot: $snapshot, events: $events, reason: $reason, movementExecutions: $movementExecutions)';
+  return 'WireCommandAck(v: $v, matchId: $matchId, clientMessageId: $clientMessageId, accepted: $accepted, offset: $offset, tick: $tick, timestamp: $timestamp, snapshot: $snapshot, events: $events, reason: $reason, movementExecutions: $movementExecutions)';
 }
 
 
@@ -265,7 +267,7 @@ abstract mixin class _$WireCommandAckCopyWith<$Res> implements $WireCommandAckCo
   factory _$WireCommandAckCopyWith(_WireCommandAck value, $Res Function(_WireCommandAck) _then) = __$WireCommandAckCopyWithImpl;
 @override @useResult
 $Res call({
- int v, String matchId, bool accepted, int offset, int? tick, DateTime? timestamp, WireSnapshot snapshot, List<Map<String, dynamic>> events, String? reason, WireMovementExecutionList movementExecutions
+ int v, String matchId, String clientMessageId, bool accepted, int offset, int? tick, DateTime? timestamp, WireSnapshot snapshot, List<Map<String, dynamic>> events, String? reason, WireMovementExecutionList movementExecutions
 });
 
 
@@ -282,10 +284,11 @@ class __$WireCommandAckCopyWithImpl<$Res>
 
 /// Create a copy of WireCommandAck
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? v = null,Object? matchId = null,Object? accepted = null,Object? offset = null,Object? tick = freezed,Object? timestamp = freezed,Object? snapshot = null,Object? events = null,Object? reason = freezed,Object? movementExecutions = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? v = null,Object? matchId = null,Object? clientMessageId = null,Object? accepted = null,Object? offset = null,Object? tick = freezed,Object? timestamp = freezed,Object? snapshot = null,Object? events = null,Object? reason = freezed,Object? movementExecutions = null,}) {
   return _then(_WireCommandAck(
 v: null == v ? _self.v : v // ignore: cast_nullable_to_non_nullable
 as int,matchId: null == matchId ? _self.matchId : matchId // ignore: cast_nullable_to_non_nullable
+as String,clientMessageId: null == clientMessageId ? _self.clientMessageId : clientMessageId // ignore: cast_nullable_to_non_nullable
 as String,accepted: null == accepted ? _self.accepted : accepted // ignore: cast_nullable_to_non_nullable
 as bool,offset: null == offset ? _self.offset : offset // ignore: cast_nullable_to_non_nullable
 as int,tick: freezed == tick ? _self.tick : tick // ignore: cast_nullable_to_non_nullable

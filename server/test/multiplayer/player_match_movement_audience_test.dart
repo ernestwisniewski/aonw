@@ -300,6 +300,7 @@ void main() {
       );
       final emptyAck = WireCommandAck(
         matchId: 'match-1',
+        clientMessageId: 'command-1',
         accepted: true,
         offset: 1,
         snapshot: snapshot,

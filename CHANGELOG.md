@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+## 1.1.11 - 2026-08-09
+
+- Added Dravonia, a new four-player map with balanced starting regions,
+  strategic resources, luxuries, and contested objectives.
+- Added connected city founding, automatic worker planning, and persistent
+  desktop fullscreen preferences.
+- Improved multiplayer lobby presence, reconnect, abandonment, and stale
+  session cleanup across client and server lifecycle boundaries.
+- Kept authoritative multiplayer audio, renderer state, and visual effects on
+  one ordered presentation timeline, including renderer startup and late data.
+- Correlated command acknowledgements by client message ID and versioned the
+  incompatible wire contract so delayed responses cannot complete newer work.
+- Hardened Steam, Google, and Apple browser authentication cleanup and
+  cancellation when polling fails, expires, or the network client closes.
+- Restored sound effects and music for debug iOS and macOS launches, including
+  simulator and Android Studio run configurations.
+- Fixed distant unit routes in single-player and multiplayer so the first
+  legal boundary step exhausts any remaining movement instead of leaving an
+  unusable point behind.
+- Added a server-enforced multiplayer compatibility boundary so unsupported
+  clients cannot enter a lobby or match during a rolling release, while
+  compatible running-match history remains readable and preserved without
+  rewriting durable events or snapshots.
+- Stabilized Linux Steam packaging and headless runtime checks, and expanded
+  domain, protocol, architecture, and release-gate coverage.
+
 ## 1.1.10 - 2026-08-02
 
 - Unified Steam, Google, Apple, and email sign-in across web, iOS, Android,

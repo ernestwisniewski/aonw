@@ -16,11 +16,11 @@ extension MatchCommandServiceHandling on MatchCommandService {
         store: store,
         state: state,
         caller: caller,
+        clientMessageId: message.clientMessageId,
         reasonCode: 'actor_mismatch',
         reason: 'Command actor does not match the authenticated player.',
       );
     }
-
     final duplicate = await store.findEventByClientMessageId(
       state.match.id,
       actorPlayerId: player.id,
@@ -32,6 +32,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
           store: store,
           state: state,
           caller: caller,
+          clientMessageId: message.clientMessageId,
           reasonCode: 'client_message_id_conflict',
           reason: 'client_message_id_conflict',
         );
@@ -42,21 +43,20 @@ extension MatchCommandServiceHandling on MatchCommandService {
           matchId: state.match.id,
           offset: duplicate.offset,
           match: _matchUpdateUnlessRunning(state),
-          ack: _acceptedCommandAck(state, duplicate),
+          ack: _acceptedCommandAck(state, duplicate, message.clientMessageId),
         ),
       );
     }
-
     if (!_matchLifecycleStateAdapter.lifecycleOf(state).isRunning) {
       return _rejectedCommandOutcome(
         store: store,
         state: state,
         caller: caller,
+        clientMessageId: message.clientMessageId,
         reasonCode: 'match_not_running',
         reason: 'match_not_running',
       );
     }
-
     final now = _nowUtc();
     final decodedSnapshot = _decodeRunningSnapshot(state);
     final previousSnapshot = decodedSnapshot.canonical;
@@ -72,11 +72,11 @@ extension MatchCommandServiceHandling on MatchCommandService {
         store: store,
         state: state,
         caller: caller,
+        clientMessageId: message.clientMessageId,
         reasonCode: reduction.reason ?? 'command_rejected',
         reason: reduction.reason ?? 'Command rejected.',
       );
     }
-
     final nextOffset = state.nextOffset();
     final nextSnapshot = _encodeReductionSnapshot(
       decoded: decodedSnapshot,
@@ -120,7 +120,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
         matchId: state.match.id,
         offset: event.offset,
         match: updated.match.state == state.match.state ? null : updated.match,
-        ack: _acceptedCommandAck(updated, event),
+        ack: _acceptedCommandAck(updated, event, message.clientMessageId),
       ),
       recipient: caller,
     );
@@ -139,6 +139,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
     required MultiplayerMatchStore store,
     required StoredMatchState state,
     required MatchMessageTarget caller,
+    required String clientMessageId,
     required String reasonCode,
     required String reason,
   }) {
@@ -153,6 +154,7 @@ extension MatchCommandServiceHandling on MatchCommandService {
         offset: state.offset,
         ack: WireCommandAck(
           matchId: state.match.id,
+          clientMessageId: clientMessageId,
           accepted: false,
           offset: state.offset,
           snapshot: state.snapshot,
@@ -200,9 +202,14 @@ extension MatchCommandServiceHandling on MatchCommandService {
   }
 }
 
-WireCommandAck _acceptedCommandAck(StoredMatchState state, WireEvent event) {
+WireCommandAck _acceptedCommandAck(
+  StoredMatchState state,
+  WireEvent event,
+  String clientMessageId,
+) {
   return WireCommandAck(
     matchId: state.match.id,
+    clientMessageId: clientMessageId,
     accepted: true,
     offset: event.offset,
     tick: event.tick,

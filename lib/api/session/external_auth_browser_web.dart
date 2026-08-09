@@ -1,10 +1,12 @@
+import 'package:aonw/api/session/external_auth_browser_contract.dart';
 import 'package:web/web.dart' as web;
 
-final class ExternalAuthBrowserHandoff {
+final class ExternalAuthBrowserHandoff implements ExternalAuthBrowser {
   ExternalAuthBrowserHandoff(this._window);
 
   web.Window? _window;
 
+  @override
   Future<bool> navigate(Uri uri) async {
     final window = _window;
     if (window == null || window.closed) return false;
@@ -17,6 +19,7 @@ final class ExternalAuthBrowserHandoff {
     }
   }
 
+  @override
   void close() {
     final window = _window;
     _window = null;
@@ -29,7 +32,7 @@ final class ExternalAuthBrowserHandoff {
   }
 }
 
-ExternalAuthBrowserHandoff prepareExternalAuthBrowser() {
+ExternalAuthBrowser prepareExternalAuthBrowser() {
   final name = 'aonw_auth_${DateTime.now().microsecondsSinceEpoch}';
   final window = web.window.open('about:blank', name, 'popup');
   if (window != null) {

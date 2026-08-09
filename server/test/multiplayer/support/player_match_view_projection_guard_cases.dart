@@ -238,6 +238,7 @@ void _registerPlayerMatchProjectionGuardTests({
   );
   WireCommandAck ackFor(WireSnapshot snapshot) => WireCommandAck(
     matchId: snapshot.matchId,
+    clientMessageId: 'command-1',
     accepted: true,
     offset: snapshot.offset,
     snapshot: snapshot,

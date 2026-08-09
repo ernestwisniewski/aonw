@@ -131,7 +131,7 @@ Future<void> _expectOwnerMovementHistory(
   TestSessionBuilder sessionBuilder,
   TestEndpoints endpoints,
 ) async {
-  final history = await endpoints.multiplayer.listEvents(
+  final history = await endpoints.listCurrentEvents(
     _authenticatedSession(sessionBuilder, _movementOwnerUserId),
     _movementMatchId,
     0,
@@ -157,7 +157,7 @@ Future<void> _expectHiddenMovementHistory(
   TestSessionBuilder sessionBuilder,
   TestEndpoints endpoints,
 ) async {
-  final history = await endpoints.multiplayer.listEvents(
+  final history = await endpoints.listCurrentEvents(
     _authenticatedSession(sessionBuilder, _movementHiddenUserId),
     _movementMatchId,
     0,

@@ -302,7 +302,9 @@ void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
     expect(find.text('MULTIPLAYER'), findsNothing);
   });
   testWidgets('multiplayer options expose resign action', (tester) async {
-    final save = _save.copyWith(gameMode: GameMode.multiplayer);
+    final save = _save.copyWith(
+      gameMode: GameMode.multiplayer,
+    );
     await _pumpHud(
       tester,
       repository: _FakeGameRepository(),
@@ -312,12 +314,9 @@ void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
         playerId: 'player_1',
         token: AuthToken('jwt-token'),
         matchId: 'save',
-        connectionState: const NetworkConnectionState(
-          status: NetworkConnectionStatus.connected,
-        ),
+        connectionState: _connectedNetworkState,
       ),
     );
-
     await tester.tap(find.byKey(const Key('gameOptions.optionsButton')));
     await tester.pump();
 

@@ -69,10 +69,9 @@ class CreateMatchRequest {
 }
 
 class QuickplayMatchRequest {
-  final String mapName;
   final PlayerCountry? country;
 
-  const QuickplayMatchRequest({required this.mapName, this.country});
+  const QuickplayMatchRequest({this.country});
 }
 
 class CreatePrivateMatchRequest {
@@ -131,10 +130,7 @@ abstract interface class MultiplayerSessionGateway {
     required int multiplayerVersion,
   });
 
-  Future<List<WireMatch>> listMatches({
-    required AuthToken token,
-    String? status,
-  });
+  Future<List<WireMatch>> listMatches({required AuthToken token});
 
   Future<WireMatch> createMatch({
     required AuthToken token,

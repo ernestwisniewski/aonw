@@ -13,6 +13,7 @@ abstract class WireCommandAck with _$WireCommandAck {
   const factory WireCommandAck({
     @Default(kProtocolVersion) int v,
     required String matchId,
+    required String clientMessageId,
     required bool accepted,
     required int offset,
     int? tick,
@@ -42,8 +43,17 @@ abstract class WireCommandAck with _$WireCommandAck {
       ),
     };
     return WireCommandAck(
-      v: WireJson.readVersion(json, 'WireCommandAck'),
+      v: WireJson.readVersion(
+        json,
+        'WireCommandAck',
+        expectedVersion: kProtocolVersion,
+      ),
       matchId: WireJson.requiredString(json, 'WireCommandAck', 'matchId'),
+      clientMessageId: WireJson.requiredString(
+        json,
+        'WireCommandAck',
+        'clientMessageId',
+      ),
       accepted: accepted,
       offset: WireJson.requiredInt(json, 'WireCommandAck', 'offset'),
       tick: WireJson.optionalInt(json, 'WireCommandAck', 'tick'),
@@ -68,6 +78,7 @@ abstract class WireCommandAck with _$WireCommandAck {
   Map<String, dynamic> toJson() => {
     'v': v,
     'matchId': matchId,
+    'clientMessageId': clientMessageId,
     'accepted': accepted,
     'offset': offset,
     if (tick != null) 'tick': tick,

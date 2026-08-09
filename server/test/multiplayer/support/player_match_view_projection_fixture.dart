@@ -36,6 +36,7 @@ final _playerMatchViewSave = GameSave(
     ),
   ],
   gameMode: GameMode.multiplayer,
+  origin: GameSaveOrigin.network,
 );
 
 final _playerMatchViewOwnerFog = PlayerFogOfWar(

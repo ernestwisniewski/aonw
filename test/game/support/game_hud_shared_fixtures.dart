@@ -118,6 +118,7 @@ final class _SpyGameRenderer extends TestGameRenderer {
 
 const _player = Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4);
 const _player2 = Player(id: 'player_2', name: 'Bob', colorValue: 0xFFc45050);
+const _connectedNetworkState = NetworkConnectionState(status: .connected);
 const _aiPlayer = Player(
   id: 'player_1',
   name: 'AI Random',
@@ -130,7 +131,6 @@ const _aiPlayer = Player(
     seed: 99,
   ),
 );
-
 final _save = GameSave(
   id: 'save',
   name: 'Game',

@@ -189,6 +189,7 @@ void _registerGameHudResourcesMultiplayerMultiplayerControlsScenarios() {
         playerId: 'player_2',
         token: AuthToken('token'),
         matchId: save.id,
+        connectionState: _connectedNetworkState,
       ),
     );
     await tester.pump();

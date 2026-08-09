@@ -8,9 +8,8 @@ final Expando<AuthoritativePresentationScheduler>
 _gameRendererPresentationSchedulers = Expando();
 
 extension GameRendererProjectedEffects on GameRenderer {
-  ProjectedGameEffectCursor get _projectedEffectCursor {
-    return _gameRendererProjectionCursors[this] ??= ProjectedGameEffectCursor();
-  }
+  ProjectedGameEffectCursor get _projectedEffectCursor =>
+      _gameRendererProjectionCursors[this] ??= ProjectedGameEffectCursor();
 
   ProjectedGameTransitionQueue<GameClientState> get _projectedTransitionQueue {
     return _gameRendererTransitionQueues[this] ??=
@@ -28,29 +27,28 @@ extension GameRendererProjectedEffects on GameRenderer {
     GameClientState state,
     ProjectedGameEffectBatch batch, {
     int? currentTurn,
+    PresentationStartCallback? onPresentationStart,
   }) async {
     final ready = _projectedTransitionQueue.enqueue(
       ProjectedGameTransition(
         state: state,
         batch: batch,
         currentTurn: currentTurn,
+        onPresentationStart: onPresentationStart,
       ),
     );
     for (final transition in ready) {
       final projectedEffects = _projectedEffectCursor.consumeBatch(
         transition.batch,
       );
-      await _transitionHandler.enqueue(() async {
-        await _authoritativeScheduler?.waitForOrStartLate(transition.batch);
-        await _transitionHandler.applyNow(
-          transition.state,
-          projectedEffects,
-          currentTurn: transition.currentTurn,
-          suppressCameraFocus:
-              transition.batch.sequenceDirective ==
-              PresentationSequenceDirective.resync,
-        );
-      });
+      await ProjectedTransitionPresenter.present(
+        transitionHandler: _transitionHandler,
+        transition: transition,
+        effects: projectedEffects,
+        presentationReady: _lifecycleHandler.initialPresentationReady,
+        ensureActive: _ensureRendererActive,
+        scheduler: _authoritativeScheduler,
+      );
     }
   }
 

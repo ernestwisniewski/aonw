@@ -399,6 +399,7 @@ void main() {
         final dispatcher = _ScriptedCommandDispatcher((sentCommand) {
           return WireCommandAck(
             matchId: sentCommand.saveId,
+            clientMessageId: sentCommand.clientMessageId,
             accepted: false,
             offset: 7,
             snapshot: snapshotCodec.toWire(
@@ -417,7 +418,6 @@ void main() {
           localReducer: GameStateReducer(mapData: _map()),
           gameRepository: _SnapshotRepository(authoritativeSnapshot),
         );
-
         final result = await transport.dispatch(
           saveId: 'save_1',
           currentState: currentState,
@@ -514,6 +514,7 @@ void main() {
         );
         return WireCommandAck(
           matchId: 'save_1',
+          clientMessageId: sentCommand.clientMessageId,
           accepted: true,
           offset: 8,
           snapshot: snapshotCodec.toWire(matchId: 'save_1', snapshot: snapshot),
@@ -528,7 +529,6 @@ void main() {
         localReducer: GameStateReducer(mapData: _map()),
         gameRepository: repository,
       );
-
       final result = await transport.dispatchAcrossBoundary(
         saveId: 'save_1',
         currentState: currentState,
@@ -569,6 +569,7 @@ void main() {
         final dispatcher = _ScriptedCommandDispatcher((sentCommand) {
           return WireCommandAck(
             matchId: 'save_1',
+            clientMessageId: sentCommand.clientMessageId,
             accepted: false,
             offset: 12,
             snapshot: snapshotCodec.toWire(
@@ -587,7 +588,6 @@ void main() {
           localReducer: GameStateReducer(mapData: _map()),
           gameRepository: _SnapshotRepository(authoritativeSnapshot),
         );
-
         final result = await transport.dispatch(
           saveId: 'save_1',
           currentState: currentState,

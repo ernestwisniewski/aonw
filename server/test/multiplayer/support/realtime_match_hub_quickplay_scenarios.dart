@@ -123,7 +123,7 @@ void registerRealtimeMatchHubQuickplayScenarios() {
 
     expect(myranth.id, verdantia.id);
     expect(verdantia.mapName, 'verdantia');
-    expect(myranth.mapName, MapPlayerCapacityRules.fullMultiplayerMapName);
+    expect(myranth.mapName, MapPlayerCapacityRules.quickplayLobbyMapName);
     expect(verdantia.players, hasLength(1));
     expect(myranth.players, hasLength(2));
   });
@@ -360,11 +360,11 @@ void registerRealtimeMatchHubQuickplayScenarios() {
 
     final state = await store.findState(started.id);
     expect(started.state, 'running');
-    expect(started.mapName, MapPlayerCapacityRules.fullMultiplayerMapName);
+    expect(started.mapName, isIn(const ['verdantia', 'dravonia']));
     expect(started.players, hasLength(4));
     expect(started.autoStartAt, isNull);
     final save = GameSave.fromJson(state!.snapshot.save);
-    expect(save.mapName, MapPlayerCapacityRules.fullMultiplayerMapName);
+    expect(save.mapName, started.mapName);
     expect(save.players, hasLength(4));
   });
 

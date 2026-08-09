@@ -6,10 +6,11 @@
 
 ## Context
 
-Multiplayer evolves on two different schedules. A serialized command, event,
-snapshot, ACK, or match envelope changes only when its wire shape changes.
-Player-visible rules, projection, ordering, retry behavior, or server policy
-can change without changing that JSON shape. Treating both as one exact-match
+Multiplayer evolves on three different schedules. Transient command, ACK, and
+match envelopes change with the active peer protocol. Durable snapshot and
+event envelopes change only with an explicit storage rollout. Player-visible
+rules, projection, ordering, retry behavior, or server policy can change
+without changing either JSON shape. Treating all three as one exact-match
 number either blocks safe rolling releases or makes compatibility implicit.
 
 The first deployed envelopes use wire version 3. Clients released before a
@@ -28,19 +29,24 @@ flowchart LR
   Registry["Current revision + compatible revisions"] --> Status
   Status -->|compatible| Multiplayer["Lobby and live multiplayer"]
   Status -->|unsupported| Notice["Localized update notice"]
-  Wire["Wire envelope v"] --> Decoder["Strict wire codec"]
+  Transient["Command / ACK / match v"] --> Decoder["Strict transient codec"]
+  Durable["Snapshot / event v"] --> Storage["Strict durable codec"]
   Decoder --> Multiplayer
+  Storage --> Multiplayer
 ```
 
-Two explicit versions are maintained:
+Three explicit versions are maintained:
 
 - `kCurrentMultiplayerVersion` is the functional multiplayer contract. Every
   change to online rules, ordering, projection, retry, matchmaking, transport,
   or compatibility behavior increments it, even when the wire JSON is
   unchanged.
-- `kProtocolVersion` is the serialized top-level envelope schema. It increments
-  only when the wire shape or meaning can no longer be represented by the
-  existing schema.
+- `kProtocolVersion` is the transient command, ACK, and match envelope schema.
+  It increments when one of those peer-facing shapes or meanings becomes
+  incompatible.
+- `kSnapshotEventVersion` is the durable snapshot and event envelope
+  schema used by storage and by standalone or nested transport. It increments
+  only with an explicit expand/contract and rollback plan for stored payloads.
 
 The binding invariants are:
 
@@ -60,8 +66,10 @@ The binding invariants are:
   `mainMenuUpdateSoonTitle` and `mainMenuUpdateSoonBody`; transport errors are
   not used as the user-facing compatibility signal.
 - Every authoritative command, event, snapshot, ACK, and match envelope carries
-  `v`. Wire decoders accept only explicitly supported wire schemas and fail
-  closed for missing, malformed, future, or retired schemas.
+  `v`. Each decoder receives the expected version for that envelope family and
+  fails closed for missing, malformed, future, or retired schemas. Nested
+  envelopes validate their own family version; an ACK v4 therefore contains a
+  snapshot v3.
 - A functional revision does not make incompatible wire schemas readable.
   Supporting an older wire schema requires an explicit bounded reader/upcaster
   and, when responses differ, an explicit encoder selected for that peer.
@@ -89,6 +97,14 @@ uses the existing nullable-command stream message for heartbeat and keeps
 presence deadlines server-only. Revisions 1-3 are not functionally compatible
 with revision 4 and are excluded from the current compatibility inventory.
 
+Revision 5 adds mandatory `clientMessageId` correlation to every command ACK.
+It uses command/ACK/match schema 4 because older ACK producers cannot provide
+the correlation key safely. Revisions 1-4 are excluded from the compatibility
+inventory. Snapshot and event shapes did not change, so their durable schema
+remains strict v3 and no database rewrite is performed. This separation keeps
+running matches and replay history readable by both rollout directions and
+preserves an N-1 rollback path.
+
 ## Consequences
 
 Compatible additive releases can roll out without disconnecting existing
@@ -114,11 +130,17 @@ Rejected alternatives:
 ## Migration And Verification
 
 The app-status endpoint accepts an optional multiplayer revision. Current
-clients send revision 4. Undeclared clients still map deterministically to
+clients send revision 5. Undeclared clients still map deterministically to
 legacy revision 1. Revisions 1 and 2 cannot decode every worker-automation
 command and persisted posture variant; revision 3 does not send lobby
-heartbeats or implement lease-driven roster and terminal-return behavior. All
-three return `soon`, which is rendered by the localized main-menu update block.
+heartbeats or implement lease-driven roster and terminal-return behavior;
+revision 4 cannot correlate command ACKs after a timeout. All older revisions
+return `soon`, which is rendered by the localized main-menu update block.
+Release clients fail closed while this check is pending and do not open or
+resume multiplayer when it reports `soon`. Every authenticated multiplayer
+endpoint and the streaming connection also require the declared revision and
+reject missing, removed, or future revisions with
+`unsupported_multiplayer_version`; the UI notice is not the security boundary.
 
 For every multiplayer change:
 
@@ -127,7 +149,8 @@ For every multiplayer change:
    supported revision;
 3. retain only proven compatible revisions in
    `kCompatibleMultiplayerVersions`;
-4. bump `kProtocolVersion` as well when a wire envelope is incompatible;
+4. bump the version only for the incompatible envelope family: transient
+   `kProtocolVersion`, durable `kSnapshotEventVersion`, or both;
 5. add old/new status, codec, retry, reconnect, recipient-projection, and
    rollout fixtures appropriate to the changed surface;
 6. regenerate Serverpod output when an endpoint or generated model changed;
@@ -137,8 +160,13 @@ For an incompatible rollout, deploy the status-aware server before requiring
 the new client. The old revision is removed from the compatible set only when
 the newer client is becoming available. During the store propagation window,
 old clients receive the translated update notice. Persisted matches are kept
-only when their wire schema and domain semantics can be migrated explicitly;
-otherwise they are retired deliberately rather than decoded heuristically.
+only when their wire schema and domain semantics remain supported or can be
+migrated through a rollback-safe expand/contract plan; otherwise they are
+retired deliberately rather than decoded heuristically. Revision 5 deliberately
+does not migrate snapshot or event rows: both stay strict v3 in storage and
+transport, while only commands, ACKs, and matches move to strict v4. A mixed
+ACK-v4/snapshot-v3 payload is the intended contract, not a compatibility
+fallback.
 
 Contract tests cover current, undeclared legacy, removed, and future functional
 revisions. Codec tests cover supported and unsupported wire versions. Generated

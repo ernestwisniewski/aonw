@@ -18,68 +18,23 @@ class _NewGameLoading extends StatelessWidget {
   }
 }
 
-class _NewGameActionSummary extends StatelessWidget {
-  const _NewGameActionSummary({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: GameUiTheme.gold),
-        const SizedBox(width: 9),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                GameText.actionLabel(title),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GameUiTheme.bodyStrong.copyWith(
-                  color: GameUiTheme.goldLight,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GameUiTheme.cardMeta,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _NewGameStepRail extends StatelessWidget {
   const _NewGameStepRail({required this.step, required this.onStepSelected});
 
-  final _NewGameStep step;
-  final ValueChanged<_NewGameStep> onStepSelected;
+  final NewGameStep step;
+  final ValueChanged<NewGameStep> onStepSelected;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final steps = [
       (
-        step: _NewGameStep.plan,
+        step: NewGameStep.plan,
         icon: Icons.auto_awesome,
         label: l10n.newGameStepPlan,
       ),
       (
-        step: _NewGameStep.review,
+        step: NewGameStep.review,
         icon: Icons.flag_outlined,
         label: l10n.newGameStepReview,
       ),

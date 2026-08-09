@@ -26,9 +26,7 @@ final class _LobbyNetworkErrorMessages {
   }
 
   String _multiplayerExceptionText(MultiplayerFailure error) {
-    final mapped = _mappedMultiplayerExceptionText(error);
-    if (mapped != null) return mapped;
-    return _nonEmptyMessageOrFallback(error.message);
+    return lobbyMultiplayerFailureText(error, l10n);
   }
 
   String _authExceptionText(MultiplayerFailure error) {
@@ -38,24 +36,6 @@ final class _LobbyNetworkErrorMessages {
   String _nonEmptyMessageOrFallback(String? message) {
     if (message != null && message.isNotEmpty) return message;
     return l10n.multiplayerQueueGenericError;
-  }
-
-  String? _mappedMultiplayerExceptionText(MultiplayerFailure error) {
-    return switch (error.code) {
-      'auth_required' => l10n.multiplayerSignInRequired,
-      'match_not_found' ||
-      'private_match_not_found' ||
-      'match_not_open' ||
-      'match_finished' ||
-      'match_abandoned' => l10n.multiplayerMatchUnavailable,
-      'not_match_player' ||
-      'wrong_actor' ||
-      'not_match_owner' => l10n.multiplayerMatchAccessDenied,
-      'match_full' => l10n.multiplayerMatchFull,
-      'country_unavailable' => l10n.multiplayerCountryUnavailable,
-      'not_enough_players' => l10n.multiplayerMatchNotReady,
-      _ => null,
-    };
   }
 
   bool _isConnectionError(Object error) {

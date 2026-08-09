@@ -249,6 +249,7 @@ const _knownGameSaveFields = {
   'ruleset',
   'players',
   'gameMode',
+  'origin',
 };
 
 const _knownGameSavePlayerFields = {

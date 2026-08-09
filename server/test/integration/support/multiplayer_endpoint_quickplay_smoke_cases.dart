@@ -24,7 +24,7 @@ Future<void> _verifyQuickplayLifecycle(
   TestEndpoints endpoints,
 ) async {
   final accounts = await _quickplayAccounts(sessionBuilder, endpoints);
-  final waiting = await endpoints.multiplayer.quickplay(
+  final waiting = await endpoints.quickplayCurrent(
     accounts.owner.session,
     _quickplayRequest(PlayerCountry.poland),
   );
@@ -40,7 +40,7 @@ Future<void> _verifyQuickplayLifecycle(
     accounts.owner.session,
     displayName: 'Quick Owner Renamed',
   );
-  final requeued = await endpoints.multiplayer.quickplay(
+  final requeued = await endpoints.quickplayCurrent(
     accounts.owner.session,
     _quickplayRequest(PlayerCountry.china),
   );
@@ -74,7 +74,7 @@ Future<void> _verifyQuickplayLifecycle(
     PlayerCountry.japan,
   ]);
 
-  final nextLobby = await endpoints.multiplayer.quickplay(
+  final nextLobby = await endpoints.quickplayCurrent(
     accounts.overflow.session,
     _quickplayRequest(PlayerCountry.italy),
   );
@@ -88,16 +88,13 @@ Future<WireMatch> _connectQuickplayGuest(
   String matchId,
   _AccountSession guest,
 ) async {
-  final joining = await endpoints.multiplayer.quickplay(
+  final joining = await endpoints.quickplayCurrent(
     guest.session,
     _quickplayRequest(PlayerCountry.france),
   );
   expect(joining.autoStartAt, isNull);
   await _connectParticipant(endpoints, guest.session, matchId);
-  final countdown = await endpoints.multiplayer.loadMatch(
-    guest.session,
-    matchId,
-  );
+  final countdown = await endpoints.loadCurrentMatch(guest.session, matchId);
   expect(countdown.id, matchId);
   expect(countdown.state, 'open');
   expect(countdown.autoStartAt, isNotNull);
@@ -113,7 +110,7 @@ Future<void> _expectQuickplayCountryConflict(
   _AccountSession conflict,
 ) async {
   await expectLater(
-    endpoints.multiplayer.quickplay(
+    endpoints.quickplayCurrent(
       conflict.session,
       _quickplayRequest(PlayerCountry.france),
     ),
@@ -133,7 +130,7 @@ Future<WireMatch> _connectThirdQuickplayPlayer(
   _AccountSession third,
   DateTime previousCountdown,
 ) async {
-  final joining = await endpoints.multiplayer.quickplay(
+  final joining = await endpoints.quickplayCurrent(
     third.session,
     _quickplayRequest(PlayerCountry.germany),
   );
@@ -142,7 +139,7 @@ Future<WireMatch> _connectThirdQuickplayPlayer(
   expect(joining.players, hasLength(3));
   expect(joining.autoStartAt, isNull);
   await _connectParticipant(endpoints, third.session, matchId);
-  final resumed = await endpoints.multiplayer.loadMatch(third.session, matchId);
+  final resumed = await endpoints.loadCurrentMatch(third.session, matchId);
   expect(resumed.autoStartAt, isNotNull);
   expect(resumed.autoStartAt!.isAfter(previousCountdown), isTrue);
   return resumed;
@@ -153,16 +150,13 @@ Future<WireMatch> _connectFourthQuickplayPlayer(
   String matchId,
   _AccountSession fourth,
 ) async {
-  final joining = await endpoints.multiplayer.quickplay(
+  final joining = await endpoints.quickplayCurrent(
     fourth.session,
     _quickplayRequest(PlayerCountry.japan),
   );
   expect(joining.state, 'open');
   await _connectParticipant(endpoints, fourth.session, matchId);
-  final started = await endpoints.multiplayer.loadMatch(
-    fourth.session,
-    matchId,
-  );
+  final started = await endpoints.loadCurrentMatch(fourth.session, matchId);
   expect(started.id, matchId);
   expect(started.state, 'running');
   expect(started.turn, 1);

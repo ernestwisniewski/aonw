@@ -9,6 +9,8 @@ import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
+import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue_mapper.dart';
 import 'package:aonw/game/presentation/engine/command_dispatch_presentation_projector.dart';
 import 'package:aonw/game/presentation/engine/game_camera_effect_normalizer.dart';
@@ -260,40 +262,22 @@ class GameCommandController extends _$GameCommandController {
     final currentTurn = _turnFor(result);
     final renderer = ref.read(activeRendererViewModelProvider);
     if (renderer != null) {
-      final commandRendererEffects = GameCameraEffectNormalizer.forCommand(
-        command: command,
-        effects: result.uiEffects.rendererEffects,
-      );
-      final visibleCommandRendererEffects =
-          await _dedupeTurnStartProductionBubbles(
-            command: command,
-            saveId: session.saveId,
-            effects: commandRendererEffects,
-          );
-      final rendererEffects = _commandProjection(
+      await _presentRendererRecord(
         record,
         sourceId: session.saveId,
-        interactionEffects: visibleCommandRendererEffects,
-        l10n: renderer.l10n,
-        turn: eventTurn,
-      );
-      _playCommandAndTransitionSounds(
-        command: command,
-        previousState: previousState,
-        result: result,
-        rendererEffects: rendererEffects.effects,
-      );
-      await renderer.applyProjectedTransition(
-        result.state,
-        rendererEffects,
+        eventTurn: eventTurn,
         currentTurn: currentTurn,
+        renderer: renderer,
       );
     } else {
-      _playCommandAndTransitionSounds(
-        command: command,
-        previousState: previousState,
-        result: result,
-        rendererEffects: const [],
+      _playSoundCues(
+        ref.read(gameAudioControllerProvider),
+        _commandAndTransitionSoundCues(
+          command: command,
+          previousState: previousState,
+          result: result,
+          rendererEffects: const [],
+        ),
       );
     }
     ref
@@ -319,11 +303,14 @@ class GameCommandController extends _$GameCommandController {
     ref
         .read(activeRendererViewModelProvider)
         ?.applyStateWithoutCameraFocus(record.result.state);
-    _playCommandAndTransitionSounds(
-      command: command,
-      previousState: record.previousState,
-      result: record.result,
-      rendererEffects: const [],
+    _playSoundCues(
+      ref.read(gameAudioControllerProvider),
+      _commandAndTransitionSoundCues(
+        command: command,
+        previousState: record.previousState,
+        result: record.result,
+        rendererEffects: const [],
+      ),
     );
     ref
         .read(gameEventNotificationsProvider.notifier)
@@ -335,36 +322,6 @@ class GameCommandController extends _$GameCommandController {
         );
     _showHudFeedbackEffects(record.result.uiEffects);
     return record.result;
-  }
-
-  void _playCommandAndTransitionSounds({
-    required Object command,
-    required GameClientState? previousState,
-    required DispatchCommandResult result,
-    required Iterable<RendererEffect> rendererEffects,
-  }) {
-    if (!ref.mounted) return;
-    final cues = [
-      ...GameSoundCueMapper.forCommand(
-        command: command,
-        previousState: previousState,
-        state: result.state,
-        events: result.events,
-        uiEffects: result.uiEffects,
-      ),
-      ...GameSoundCueMapper.forRendererEffects(
-        effects: rendererEffects,
-        state: result.state,
-        previousState: previousState,
-      ),
-      ...GameSoundCueMapper.forEvents(
-        events: result.events,
-        state: result.state,
-        previousState: previousState,
-      ),
-    ];
-    if (cues.isEmpty) return;
-    ref.read(gameAudioControllerProvider).playAll(cues);
   }
 
   Future<List<RendererEffect>> _dedupeTurnStartProductionBubbles({

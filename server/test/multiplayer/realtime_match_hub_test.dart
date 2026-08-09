@@ -17,6 +17,8 @@ import 'package:aonw_server/src/multiplayer/server_command_reducer.dart';
 import 'package:aonw_server/src/observability/server_operational_event_sink.dart';
 import 'package:test/test.dart';
 
+import 'support/realtime_match_hub_query_helpers.dart';
+
 part 'support/realtime_match_hub_fixture.dart';
 part 'support/realtime_match_hub_initial_snapshot_cases.dart';
 part 'support/realtime_match_hub_lifecycle_race_cases.dart';

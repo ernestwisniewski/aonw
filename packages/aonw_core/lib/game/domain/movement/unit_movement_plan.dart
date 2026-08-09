@@ -38,7 +38,6 @@ class UnitMovementPlan {
   final int availableMovementPoints;
   final int remainingAfterMove;
   final bool canMoveNow;
-  final bool canSpendTurnEnteringFirstStep;
   final List<UnitMovementStep> steps;
 
   UnitMovementPlan({
@@ -47,17 +46,12 @@ class UnitMovementPlan {
     required this.targetRow,
     required this.totalCost,
     required this.availableMovementPoints,
-    this.canSpendTurnEnteringFirstStep = false,
     required List<UnitMovementStep> steps,
   }) : remainingAfterMove = _remainingAfterCost(
          availableMovementPoints,
          totalCost,
        ),
-       canMoveNow = _canReachTarget(
-         availableMovementPoints,
-         steps,
-         canSpendTurnEnteringFirstStep,
-       ),
+       canMoveNow = _canReachTarget(availableMovementPoints, steps),
        steps = List.unmodifiable(steps);
 
   List<({int col, int row})> get path {
@@ -90,9 +84,7 @@ class UnitMovementPlan {
 
   bool canReachStepThisTurn(UnitMovementStep step) {
     if (step.cumulativeCost <= availableMovementPoints) return true;
-    return canSpendTurnEnteringFirstStep &&
-        _isFirstTravelStep(step) &&
-        availableMovementPoints > 0;
+    return step.cumulativeCost - step.enterCost < availableMovementPoints;
   }
 
   int remainingMovementPointsAfterStep(UnitMovementStep step) {
@@ -130,7 +122,6 @@ class UnitMovementPlan {
       targetRow: targetRow,
       totalCost: cumulativeCost,
       availableMovementPoints: availableMovementPoints,
-      canSpendTurnEnteringFirstStep: canSpendTurnEnteringFirstStep,
       steps: remainingSteps,
     );
   }
@@ -144,14 +135,10 @@ class UnitMovementPlan {
         : 1;
     var turns = 1;
     var remainingMovement = availableMovementPoints;
-    var isFirstTravelStep = true;
-
     for (final step in steps.skip(1)) {
       if (step.enterCost <= remainingMovement) {
         remainingMovement -= step.enterCost;
-      } else if (isFirstTravelStep &&
-          canSpendTurnEnteringFirstStep &&
-          remainingMovement > 0) {
+      } else if (remainingMovement > 0) {
         remainingMovement = 0;
       } else {
         turns += 1;
@@ -159,27 +146,19 @@ class UnitMovementPlan {
             ? 0
             : fullTurnMovement - step.enterCost;
       }
-      isFirstTravelStep = false;
     }
 
     return turns;
   }
 
-  bool _isFirstTravelStep(UnitMovementStep step) {
-    return steps.length > 1 && step == steps[1];
-  }
-
   static bool _canReachTarget(
     int availableMovementPoints,
     List<UnitMovementStep> steps,
-    bool canSpendTurnEnteringFirstStep,
   ) {
     if (steps.isEmpty) return false;
     final target = steps.last;
     if (target.cumulativeCost <= availableMovementPoints) return true;
-    return canSpendTurnEnteringFirstStep &&
-        steps.length == 2 &&
-        availableMovementPoints > 0;
+    return target.cumulativeCost - target.enterCost < availableMovementPoints;
   }
 
   static int _remainingAfterCost(int availableMovementPoints, int cost) {

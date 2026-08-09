@@ -330,14 +330,9 @@ final class _CoverageGate {
         '$scopeName: unsupported handwritten coverage exclusion: $path',
       );
     }
-    const expected = """import 'package:aonw/app/app.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-void main() {
-  runApp(const ProviderScope(child: HexApp()));
-}
-""";
+    final expected = File(
+      _resolvePath(options.repository, 'tool/coverage_gate/main.dart.txt'),
+    ).readAsStringSync().replaceAll('\r\n', '\n');
     final contents = File(
       _resolvePath(options.repository, path),
     ).readAsStringSync().replaceAll('\r\n', '\n');

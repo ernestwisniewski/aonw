@@ -68,6 +68,12 @@ void main() {
       () => validator.validate(_request(mapName: 'myranth', maxPlayers: 4)),
       throwsA(_error('invalid_player_count')),
     );
+
+    final dravonia = validator.validate(
+      _request(mapName: 'dravonia', minPlayers: 4, maxPlayers: 4),
+    );
+    expect(dravonia.mapName, 'dravonia');
+    expect(dravonia.maxPlayers, 4);
   });
 
   test('allows quickplay to expand onto a larger start map', () {

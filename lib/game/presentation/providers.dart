@@ -11,6 +11,7 @@ export 'providers/hud/hud_map_focus_controller_provider.dart';
 export 'providers/hud/hud_minimized_popups_provider.dart';
 export 'providers/hud/technology_discovery_popup_settings_provider.dart';
 export 'providers/map/map_inspection_provider.dart';
+export 'providers/multiplayer/multiplayer_compatibility_provider.dart';
 export 'providers/multiplayer/multiplayer_connection_status_provider.dart';
 export 'providers/multiplayer/multiplayer_status_sheet_provider.dart';
 export 'providers/player/handoff_provider.dart';

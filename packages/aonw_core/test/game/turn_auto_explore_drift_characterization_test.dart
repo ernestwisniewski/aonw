@@ -54,46 +54,44 @@ void main() {
       expect(war.executions, isEmpty);
     });
 
-    test(
-      'rejects terrain beyond per-turn movement capacity like the resolver',
-      () {
-        final scout = _autoExploringScout(movementPoints: 2);
-        final map = _map(
-          cols: 2,
-          terrainOverrides: const {
-            1: [TerrainType.snow, TerrainType.forest, TerrainType.hills],
-          },
-        );
-        final target = map.tileAt(1, 0)!;
-        final targetCost = UnitMovementCostRules.costToEnterTile(
-          target,
-          unitType: scout.type,
-        );
-        final capacity = UnitMovementBalance.maxMovementPointsFor(
-          type: scout.type,
-          carriedArtifactId: scout.carriedArtifactId,
-        );
-        expect(targetCost.value, greaterThan(capacity));
+    test('finishes when only terrain beyond per-turn capacity remains', () {
+      final scout = _autoExploringScout(movementPoints: 2);
+      final map = _map(
+        cols: 2,
+        terrainOverrides: const {
+          1: [TerrainType.snow, TerrainType.forest, TerrainType.hills],
+        },
+      );
+      final target = map.tileAt(1, 0)!;
+      final targetCost = UnitMovementCostRules.costToEnterTile(
+        target,
+        unitType: scout.type,
+      );
+      final capacity = UnitMovementBalance.maxMovementPointsFor(
+        type: scout.type,
+        carriedArtifactId: scout.carriedArtifactId,
+      );
+      expect(targetCost.value, greaterThan(capacity));
 
-        final pair = _runTurnAndKernel(
-          units: [scout],
-          fogOfWar: _originOnlyFog(),
-          mapData: map,
-        );
-        expect(pair.turn.changed, isFalse);
-        expect(pair.turn.units, pair.kernelInput.units);
-        expect(pair.turn.fogOfWar, same(pair.kernelInput.fogOfWar));
-        expect(pair.turn.diplomacy, same(pair.kernelInput.diplomacy));
-        expect(pair.turn.interaction, same(DomainActionState.empty));
-        expect(pair.turn.events, isEmpty);
-        expect(pair.turn.executions, isEmpty);
-        expect(pair.kernel.accepted, isFalse);
-        expect(pair.kernel.reason, 'unit_movement_capacity_insufficient');
-        expect(pair.kernel.state, same(pair.kernelInput));
-        expect(pair.kernel.events, isEmpty);
-        expect(pair.kernel.execution, isNull);
-      },
-    );
+      final pair = _runTurnAndKernel(
+        units: [scout],
+        fogOfWar: _originOnlyFog(),
+        mapData: map,
+      );
+      expect(pair.turn.changed, isTrue);
+      expect(pair.turn.units.single.posture, UnitPosture.active);
+      expect(pair.turn.units.single.movementPoints, 2);
+      expect(pair.turn.fogOfWar, same(pair.kernelInput.fogOfWar));
+      expect(pair.turn.diplomacy, same(pair.kernelInput.diplomacy));
+      expect(pair.turn.interaction, same(DomainActionState.empty));
+      expect(pair.turn.events, isEmpty);
+      expect(pair.turn.executions, isEmpty);
+      expect(pair.kernel.accepted, isTrue);
+      expect(pair.kernel.reason, isNull);
+      expect(pair.kernel.state.units, pair.turn.units);
+      expect(pair.kernel.events, isEmpty);
+      expect(pair.kernel.execution, isNull);
+    });
 
     test('hidden full-state blocker changes the chosen destination', () {
       final scout = _autoExploringScout(movementPoints: 2);

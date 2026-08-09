@@ -125,22 +125,6 @@ final class _SequenceInviteCodeGenerator implements InviteCodeGenerator {
   }
 }
 
-bool _isActiveMatch(WireMatch match) =>
-    match.state == 'open' || match.state == 'running';
-
-bool _isAfterRunningCursor(WireMatch match, RunningMatchCursor? cursor) {
-  if (cursor == null) return true;
-  final createdAtOrder = match.createdAt.compareTo(cursor.createdAt);
-  return createdAtOrder > 0 ||
-      (createdAtOrder == 0 && match.id.compareTo(cursor.publicId) > 0);
-}
-
-int _compareTestMatchesNewestFirst(WireMatch first, WireMatch second) {
-  final createdAtOrder = second.createdAt.compareTo(first.createdAt);
-  if (createdAtOrder != 0) return createdAtOrder;
-  return second.id.compareTo(first.id);
-}
-
 class TestMapCatalog implements MultiplayerMapCatalog {
   const TestMapCatalog(this.mapData);
 

@@ -50,14 +50,14 @@ void main() {
   });
 
   group('isAudioPlaybackAllowedForPlatform', () {
-    test('disables Darwin audio in debug builds', () {
+    test('enables Darwin audio in debug builds by default', () {
       expect(
         isAudioPlaybackAllowedForPlatform(
           debugMode: true,
           isWeb: false,
           targetPlatform: TargetPlatform.iOS,
         ),
-        isFalse,
+        isTrue,
       );
       expect(
         isAudioPlaybackAllowedForPlatform(
@@ -65,7 +65,7 @@ void main() {
           isWeb: false,
           targetPlatform: TargetPlatform.macOS,
         ),
-        isFalse,
+        isTrue,
       );
     });
 

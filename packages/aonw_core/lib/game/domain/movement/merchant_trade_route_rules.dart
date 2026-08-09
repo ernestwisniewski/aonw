@@ -1,6 +1,8 @@
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
+import 'package:aonw_core/game/domain/movement/unit_movement_balance.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_cost_rules.dart';
+import 'package:aonw_core/game/domain/movement/unit_movement_feasibility.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -19,6 +21,20 @@ class MerchantTradeRouteAdvanceResult {
 
   bool get moved => movedSteps.isNotEmpty;
 }
+
+enum _MerchantRouteStepDisposition { ready, blocked, invalid }
+
+typedef _MerchantRouteStepDecision = ({
+  _MerchantRouteStepDisposition disposition,
+  int enterCost,
+});
+
+typedef _MerchantRouteProgress = ({
+  bool invalidated,
+  int index,
+  int remainingMovement,
+  List<UnitMovementStep> movedSteps,
+});
 
 abstract final class MerchantTradeRouteRules {
   static GameCity? originCityFor({
@@ -99,7 +115,13 @@ abstract final class MerchantTradeRouteRules {
             cities: cities,
           ),
     ).plan(unit: merchant, targetTile: targetTile);
-    if (plan == null) return null;
+    if (plan == null ||
+        !UnitMovementFeasibility.canEventuallyTraverse(
+          unit: merchant,
+          plan: plan,
+        )) {
+      return null;
+    }
 
     return MerchantTradeRoute(
       originCityId: originCity.id,
@@ -127,7 +149,7 @@ abstract final class MerchantTradeRouteRules {
     );
     if (targetTile == null) return null;
 
-    return UnitMovementPathfinder(
+    final plan = UnitMovementPathfinder(
       mapData: mapData,
       units: units,
       canEnterOccupiedTile:
@@ -143,6 +165,14 @@ abstract final class MerchantTradeRouteRules {
             cities: cities,
           ),
     ).plan(unit: merchant, targetTile: targetTile);
+    if (plan == null ||
+        !UnitMovementFeasibility.canEventuallyTraverse(
+          unit: merchant,
+          plan: plan,
+        )) {
+      return null;
+    }
+    return plan;
   }
 
   static MerchantTradeRouteAdvanceResult advanceUnit({
@@ -155,91 +185,32 @@ abstract final class MerchantTradeRouteRules {
     if (route == null) {
       return MerchantTradeRouteAdvanceResult(unit: unit);
     }
-    if (unit.type != GameUnitType.merchant ||
-        unit.isWorking ||
-        unit.isFortified ||
-        route.steps.length < 2 ||
-        cities.byId(route.originCityId) == null ||
-        cities.byId(route.destinationCityId) == null) {
-      return MerchantTradeRouteAdvanceResult(
-        unit: unit.copyWithMerchantTradeRoute(null),
-        routeInvalidated: true,
-      );
+    if (!_canAdvanceRoute(unit: unit, route: route, cities: cities)) {
+      return _invalidatedRoute(unit);
     }
 
     final startIndex = route.steps.indexWhere(
       (step) => step.col == unit.col && step.row == unit.row,
     );
-    if (startIndex < 0) {
-      return MerchantTradeRouteAdvanceResult(
-        unit: unit.copyWithMerchantTradeRoute(null),
-        routeInvalidated: true,
-      );
-    }
+    if (startIndex < 0) return _invalidatedRoute(unit);
 
-    var index = startIndex;
-    var remainingMovement = unit.movementPoints;
-    final movedSteps = <UnitMovementStep>[];
-
-    while (index < route.steps.length - 1) {
-      final next = route.steps[index + 1];
-      final tile = mapData.tileAt(next.col, next.row);
-      if (tile == null) {
-        return MerchantTradeRouteAdvanceResult(
-          unit: unit.copyWithMerchantTradeRoute(null),
-          routeInvalidated: true,
-        );
-      }
-      final cost = UnitMovementCostRules.costToEnterTile(
-        tile,
-        unitType: unit.type,
-      );
-      if (cost.blocked) {
-        return MerchantTradeRouteAdvanceResult(
-          unit: unit.copyWithMerchantTradeRoute(null),
-          routeInvalidated: true,
-        );
-      }
-
-      final blocker = _blockingUnitAt(units, unit.id, next.col, next.row);
-      if (blocker != null &&
-          !canShareOccupiedCityTile(
-            movingUnit: unit,
-            col: next.col,
-            row: next.row,
-            cities: cities,
-          )) {
-        break;
-      }
-
-      final enterCost = next.enterCost > 0 ? next.enterCost : cost.value;
-      if (enterCost > remainingMovement) break;
-
-      remainingMovement -= enterCost;
-      index++;
-      movedSteps.add(next);
-    }
-
-    if (movedSteps.isEmpty) {
+    final progress = _advanceRouteSteps(
+      unit: unit,
+      route: route,
+      startIndex: startIndex,
+      units: units,
+      cities: cities,
+      mapData: mapData,
+    );
+    if (progress.invalidated) return _invalidatedRoute(unit);
+    if (progress.movedSteps.isEmpty) {
       return MerchantTradeRouteAdvanceResult(unit: unit);
     }
-
-    final destination = route.steps[index];
-    var updated = unit.copyWith(
-      col: destination.col,
-      row: destination.row,
-      movementPoints: remainingMovement,
-    );
-
-    if (index == route.steps.length - 1) {
-      updated = updated.copyWithMerchantTradeRoute(
-        _reversedRoute(route, mapData: mapData, unitType: unit.type),
-      );
-    }
-
-    return MerchantTradeRouteAdvanceResult(
-      unit: updated,
-      movedSteps: List.unmodifiable(movedSteps),
+    return _completedRouteAdvance(
+      unit: unit,
+      route: route,
+      progress: progress,
+      mapData: mapData,
     );
   }
 
@@ -304,4 +275,146 @@ abstract final class MerchantTradeRouteRules {
     }
     return null;
   }
+}
+
+bool _canAdvanceRoute({
+  required GameUnit unit,
+  required MerchantTradeRoute route,
+  required List<GameCity> cities,
+}) {
+  return unit.type == GameUnitType.merchant &&
+      !unit.isWorking &&
+      !unit.isFortified &&
+      route.steps.length >= 2 &&
+      cities.byId(route.originCityId) != null &&
+      cities.byId(route.destinationCityId) != null;
+}
+
+_MerchantRouteProgress _advanceRouteSteps({
+  required GameUnit unit,
+  required MerchantTradeRoute route,
+  required int startIndex,
+  required List<GameUnit> units,
+  required List<GameCity> cities,
+  required MapTileLookup mapData,
+}) {
+  var index = startIndex;
+  var remainingMovement = unit.movementPoints;
+  final movedSteps = <UnitMovementStep>[];
+
+  while (index < route.steps.length - 1) {
+    final next = route.steps[index + 1];
+    final decision = _routeStepDecision(
+      unit: unit,
+      next: next,
+      units: units,
+      cities: cities,
+      mapData: mapData,
+    );
+    if (decision.disposition == _MerchantRouteStepDisposition.invalid) {
+      return (
+        invalidated: true,
+        index: startIndex,
+        remainingMovement: unit.movementPoints,
+        movedSteps: const [],
+      );
+    }
+    if (decision.disposition == _MerchantRouteStepDisposition.blocked ||
+        remainingMovement <= 0) {
+      break;
+    }
+
+    remainingMovement = _spendMovement(remainingMovement, decision.enterCost);
+    index++;
+    movedSteps.add(next);
+    if (remainingMovement == 0) break;
+  }
+
+  return (
+    invalidated: false,
+    index: index,
+    remainingMovement: remainingMovement,
+    movedSteps: movedSteps,
+  );
+}
+
+_MerchantRouteStepDecision _routeStepDecision({
+  required GameUnit unit,
+  required UnitMovementStep next,
+  required List<GameUnit> units,
+  required List<GameCity> cities,
+  required MapTileLookup mapData,
+}) {
+  final tile = mapData.tileAt(next.col, next.row);
+  if (tile == null) {
+    return (disposition: _MerchantRouteStepDisposition.invalid, enterCost: 0);
+  }
+  final cost = UnitMovementCostRules.costToEnterTile(tile, unitType: unit.type);
+  if (cost.blocked) {
+    return (disposition: _MerchantRouteStepDisposition.invalid, enterCost: 0);
+  }
+  final blocker = MerchantTradeRouteRules._blockingUnitAt(
+    units,
+    unit.id,
+    next.col,
+    next.row,
+  );
+  if (blocker != null &&
+      !MerchantTradeRouteRules.canShareOccupiedCityTile(
+        movingUnit: unit,
+        col: next.col,
+        row: next.row,
+        cities: cities,
+      )) {
+    return (disposition: _MerchantRouteStepDisposition.blocked, enterCost: 0);
+  }
+  final enterCost = next.enterCost > 0 ? next.enterCost : cost.value;
+  final maxMovement = UnitMovementBalance.maxMovementPointsFor(
+    type: unit.type,
+    carriedArtifactId: unit.carriedArtifactId,
+  );
+  final disposition = enterCost > maxMovement && !unit.isCarryingArtifact
+      ? _MerchantRouteStepDisposition.invalid
+      : _MerchantRouteStepDisposition.ready;
+  return (disposition: disposition, enterCost: enterCost);
+}
+
+int _spendMovement(int remainingMovement, int enterCost) {
+  return enterCost >= remainingMovement ? 0 : remainingMovement - enterCost;
+}
+
+MerchantTradeRouteAdvanceResult _completedRouteAdvance({
+  required GameUnit unit,
+  required MerchantTradeRoute route,
+  required _MerchantRouteProgress progress,
+  required MapTileLookup mapData,
+}) {
+  final destination = route.steps[progress.index];
+  var updated = unit.copyWith(
+    col: destination.col,
+    row: destination.row,
+    movementPoints: progress.remainingMovement,
+  );
+
+  if (progress.index == route.steps.length - 1) {
+    updated = updated.copyWithMerchantTradeRoute(
+      MerchantTradeRouteRules._reversedRoute(
+        route,
+        mapData: mapData,
+        unitType: unit.type,
+      ),
+    );
+  }
+
+  return MerchantTradeRouteAdvanceResult(
+    unit: updated,
+    movedSteps: List.unmodifiable(progress.movedSteps),
+  );
+}
+
+MerchantTradeRouteAdvanceResult _invalidatedRoute(GameUnit unit) {
+  return MerchantTradeRouteAdvanceResult(
+    unit: unit.copyWithMerchantTradeRoute(null),
+    routeInvalidated: true,
+  );
 }

@@ -4,12 +4,57 @@ import 'package:aonw/api/transport/network_game_repository.dart';
 import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw/game/application/ports/network_connection.dart';
 import 'package:aonw/game/application/ports/network_session.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/presentation/providers/multiplayer/multiplayer_connection_status_provider.dart';
 import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
+import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('active multiplayer transport requires a non-blank player id', () {
+    for (final playerId in <String?>[null, '', '  ']) {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      container
+          .read(networkSessionStateProvider.notifier)
+          .set(
+            NetworkSession(
+              userId: 'user_1',
+              playerId: playerId,
+              token: AuthToken('jwt-1'),
+              matchId: 'match_1',
+              connectionState: const NetworkConnectionState(
+                status: NetworkConnectionStatus.connected,
+              ),
+            ),
+          );
+      final dispatchProvider = Provider(
+        (ref) => buildDispatchCommandUseCase(
+          ref,
+          GameStateReducer(mapData: _map()),
+          GameMode.multiplayer,
+          saveId: 'match_1',
+        ),
+      );
+
+      expect(
+        () => container.read(dispatchProvider),
+        throwsA(
+          predicate<Object>(
+            (error) => error.toString().contains(
+              'Network-backed save requires a connected matching session '
+              'with an assigned playerId.',
+            ),
+            'rejects playerId=$playerId',
+          ),
+        ),
+      );
+    }
+  });
+
   test('JWT rotation does not recreate active transport repositories', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -129,3 +174,17 @@ void main() {
     },
   );
 }
+
+WorldMap _map() => WorldMap(
+  cols: 1,
+  rows: 1,
+  tiles: [
+    WorldTile(
+      col: 0,
+      row: 0,
+      terrains: [TerrainType.plains],
+      resources: [],
+      height: 0,
+    ),
+  ],
+);

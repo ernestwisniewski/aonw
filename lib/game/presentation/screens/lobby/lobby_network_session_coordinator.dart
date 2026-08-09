@@ -23,6 +23,8 @@ typedef LobbySessionTokenRefresher =
     });
 typedef LobbySessionClockReader = DateTime Function();
 typedef LobbyValidSessionEnsurer = Future<NetworkSession> Function();
+typedef LobbySessionEffectErrorReporter =
+    void Function(Object error, StackTrace stackTrace);
 
 final class LobbyNetworkSessionCoordinator {
   static const tokenRefreshSkew = Duration(seconds: 30);
@@ -38,8 +40,9 @@ final class LobbyNetworkSessionCoordinator {
   final LobbySessionClockReader now;
   final LobbyValidSessionEnsurer? ensureValidSession;
   final LobbyStoredSessionClearer? terminateSession;
+  final NetworkSessionEffectRunner _effectRunner;
 
-  const LobbyNetworkSessionCoordinator({
+  LobbyNetworkSessionCoordinator({
     required this.currentSession,
     required this.setSession,
     required this.loadStoredSession,
@@ -48,9 +51,15 @@ final class LobbyNetworkSessionCoordinator {
     required this.saveMatchId,
     required this.refreshToken,
     required this.now,
+    required LobbySessionEffectErrorReporter onEffectError,
     this.ensureValidSession,
     this.terminateSession,
-  });
+  }) : _effectRunner = NetworkSessionEffectRunner(
+         persistMatchId: saveMatchId,
+         publishTransportStatus: (_) {},
+         clearTransportStatus: (_) {},
+         onError: onEffectError,
+       );
 
   Future<NetworkSession> ensureSession({required String displayName}) async {
     final current = currentSession();
@@ -162,13 +171,6 @@ final class LobbyNetworkSessionCoordinator {
     final latest = currentSession();
     return latest?.userId == session.userId ? latest! : session;
   }
-
-  NetworkSessionEffectRunner get _effectRunner => NetworkSessionEffectRunner(
-    persistMatchId: saveMatchId,
-    publishTransportStatus: (_) {},
-    clearTransportStatus: (_) {},
-    onError: (_, _) {},
-  );
 
   bool _canReuseCurrentSession({
     required NetworkSession? current,

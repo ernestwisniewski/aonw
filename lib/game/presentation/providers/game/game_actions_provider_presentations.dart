@@ -20,6 +20,91 @@ Iterable<RendererEffect> _allowedInteractionEffects(
   }
 }
 
+extension GameCommandControllerProjectedPresentation on GameCommandController {
+  Future<void> _presentRendererRecord(
+    _CommandDispatchRecord record, {
+    required String sourceId,
+    required int? eventTurn,
+    required int? currentTurn,
+    required RendererViewModel renderer,
+  }) async {
+    final result = record.result;
+    final commandRendererEffects = GameCameraEffectNormalizer.forCommand(
+      command: record.command,
+      effects: result.uiEffects.rendererEffects,
+    );
+    final visibleCommandRendererEffects =
+        await _dedupeTurnStartProductionBubbles(
+          command: record.command,
+          saveId: sourceId,
+          effects: commandRendererEffects,
+        );
+    final rendererEffects = _commandProjection(
+      record,
+      sourceId: sourceId,
+      interactionEffects: visibleCommandRendererEffects,
+      l10n: renderer.l10n,
+      turn: eventTurn,
+    );
+    final soundCues = _commandAndTransitionSoundCues(
+      command: record.command,
+      previousState: record.previousState,
+      result: result,
+      rendererEffects: rendererEffects.effects,
+    );
+    final audioController = _providerRef.read(gameAudioControllerProvider);
+    await renderer.applyProjectedTransition(
+      result.state,
+      rendererEffects,
+      currentTurn: currentTurn,
+      onPresentationStart: _presentationSoundStart(audioController, soundCues),
+    );
+  }
+}
+
+List<GameSoundCue> _commandAndTransitionSoundCues({
+  required Object command,
+  required GameClientState? previousState,
+  required DispatchCommandResult result,
+  required Iterable<RendererEffect> rendererEffects,
+}) {
+  return [
+    ...GameSoundCueMapper.forCommand(
+      command: command,
+      previousState: previousState,
+      state: result.state,
+      events: result.events,
+      uiEffects: result.uiEffects,
+    ),
+    ...GameSoundCueMapper.forRendererEffects(
+      effects: rendererEffects,
+      state: result.state,
+      previousState: previousState,
+    ),
+    ...GameSoundCueMapper.forEvents(
+      events: result.events,
+      state: result.state,
+      previousState: previousState,
+    ),
+  ];
+}
+
+PresentationStartCallback? _presentationSoundStart(
+  GameAudioController audioController,
+  List<GameSoundCue> cues,
+) {
+  if (cues.isEmpty) return null;
+  return () => audioController.playAll(cues);
+}
+
+void _playSoundCues(
+  GameAudioController audioController,
+  List<GameSoundCue> cues,
+) {
+  if (cues.isEmpty) return;
+  audioController.playAll(cues);
+}
+
 ProjectedGameEffectBatch _commandProjection(
   _CommandDispatchRecord record, {
   required String sourceId,

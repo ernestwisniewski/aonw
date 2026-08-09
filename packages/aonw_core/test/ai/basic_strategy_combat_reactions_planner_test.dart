@@ -102,6 +102,54 @@ void main() {
         greaterThan(1),
       );
     });
+
+    test('breaks otherwise equal combat targets by stable unit id', () {
+      final mapData = _map(cols: 4, rows: 4);
+      final view = _view(
+        mapData: mapData,
+        units: [
+          _unit(
+            id: 'attacker',
+            ownerPlayerId: 'player_1',
+            type: GameUnitType.cavalry,
+            col: 1,
+            row: 1,
+          ),
+          _unit(
+            id: 'reserve',
+            ownerPlayerId: 'player_1',
+            type: GameUnitType.warrior,
+            col: 0,
+            row: 0,
+          ),
+          _unit(
+            id: 'enemy_b',
+            ownerPlayerId: 'player_2',
+            type: GameUnitType.warrior,
+            col: 1,
+            row: 2,
+            hitPoints: 1,
+          ),
+          _unit(
+            id: 'enemy_a',
+            ownerPlayerId: 'player_2',
+            type: GameUnitType.warrior,
+            col: 2,
+            row: 1,
+            hitPoints: 1,
+          ),
+        ],
+      );
+
+      final commands = const BasicStrategyCombatReactionsPlanner().plan(
+        view,
+        _context(view),
+        <String>{},
+        <HexCoordinate>{},
+      );
+
+      expect(commands.first, const AttackHexCommand('attacker', 2, 1));
+    });
   });
 }
 

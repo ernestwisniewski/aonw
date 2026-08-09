@@ -76,7 +76,6 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
         targetRow: 0,
         totalCost: 4,
         availableMovementPoints: 1,
-        canSpendTurnEnteringFirstStep: true,
         steps: _artifactCarrierPreviewSteps,
       );
       final game = GameRenderer(

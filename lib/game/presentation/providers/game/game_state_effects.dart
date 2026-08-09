@@ -57,13 +57,17 @@ final class GameStateEffects {
         previousState: previousState,
       ),
     ];
-    if (cues.isNotEmpty) audioController.playAll(cues);
     if (renderer != null) {
       await renderer.applyProjectedTransition(
         nextState,
         transitionEffects,
         currentTurn: turn,
+        onPresentationStart: cues.isEmpty
+            ? null
+            : () => audioController.playAll(cues),
       );
+    } else if (cues.isNotEmpty) {
+      audioController.playAll(cues);
     }
     if (!_binding.isMounted()) return;
     notifications.addAll(

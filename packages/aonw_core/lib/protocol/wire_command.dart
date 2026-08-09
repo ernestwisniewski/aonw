@@ -19,7 +19,11 @@ abstract class WireCommand with _$WireCommand {
 
   factory WireCommand.fromJson(Map<String, dynamic> json) {
     return WireCommand(
-      v: WireJson.readVersion(json, 'WireCommand'),
+      v: WireJson.readVersion(
+        json,
+        'WireCommand',
+        expectedVersion: kProtocolVersion,
+      ),
       matchId: WireJson.requiredString(json, 'WireCommand', 'matchId'),
       tick: WireJson.requiredInt(json, 'WireCommand', 'tick'),
       turn: WireJson.optionalInt(json, 'WireCommand', 'turn'),

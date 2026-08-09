@@ -354,22 +354,34 @@ DispatchCommandUseCase buildDispatchCommandUseCase(
   GameMode gameMode, {
   required String saveId,
   WireCommandDispatcher? commandDispatcher,
+  bool requiresNetworkTransport = false,
 }) {
   ref.watch(networkSessionProvider.select(_transportSessionScope));
   final session = ref.read(networkSessionProvider);
-  final repository = gameRepositoryForSave(ref, saveId);
-  if (gameMode == GameMode.multiplayer &&
-      session != null &&
-      session.isConnected &&
-      session.matchId == saveId) {
+  final activeNetworkTransport =
+      gameMode == GameMode.multiplayer &&
+      canUseNetworkMatchTransport(session: session, saveId: saveId);
+  final targetsNetworkMatch =
+      requiresNetworkTransport ||
+      (gameMode == GameMode.multiplayer && session?.matchId == saveId);
+  if (targetsNetworkMatch && !activeNetworkTransport) {
+    throw StateError(
+      'Network-backed save requires a connected matching session '
+      'with an assigned playerId.',
+    );
+  }
+  if (activeNetworkTransport) {
+    final activeSession = session!;
+    final playerId = activeSession.playerId!;
+    final repository = gameRepositoryForSave(ref, saveId);
     return DispatchCommandUseCase(
       commandTransport: NetworkCommandTransport(
         serverpodHost: ref.watch(apiConfigProvider).baseUrl.toString(),
-        token: session.token,
+        token: activeSession.token,
         tokenReader: ref
             .read(networkSessionRefreshCoordinatorProvider)
             .currentToken,
-        actorPlayerId: session.playerId ?? session.userId,
+        actorPlayerId: playerId,
         commandDispatcher:
             commandDispatcher ?? ref.watch(wireCommandDispatcherProvider),
         tickGenerator: ClientTickGenerator(),
@@ -379,6 +391,7 @@ DispatchCommandUseCase buildDispatchCommandUseCase(
     );
   }
 
+  final repository = gameRepositoryForSave(ref, saveId);
   return DispatchCommandUseCase(
     commandTransport: LocalCommandTransport(
       reducer: reducer,

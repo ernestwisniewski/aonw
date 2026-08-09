@@ -10,7 +10,7 @@ abstract class WireEvent with _$WireEvent {
   const WireEvent._();
 
   const factory WireEvent({
-    @Default(kProtocolVersion) int v,
+    @Default(kSnapshotEventVersion) int v,
     required String matchId,
     required int offset,
     required DateTime timestamp,
@@ -25,7 +25,11 @@ abstract class WireEvent with _$WireEvent {
   factory WireEvent.fromJson(Map<String, dynamic> json) {
     final rawEvents = WireJson.requiredList(json['events'], 'WireEvent.events');
     return WireEvent(
-      v: WireJson.readVersion(json, 'WireEvent'),
+      v: WireJson.readVersion(
+        json,
+        'WireEvent',
+        expectedVersion: kSnapshotEventVersion,
+      ),
       matchId: WireJson.requiredString(json, 'WireEvent', 'matchId'),
       offset: WireJson.requiredInt(json, 'WireEvent', 'offset'),
       timestamp: WireJson.requiredDateTimeUtc(json, 'WireEvent', 'timestamp'),

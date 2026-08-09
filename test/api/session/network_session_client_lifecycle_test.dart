@@ -3,6 +3,7 @@ import 'package:aonw/api/session/serverpod_auth_client.dart';
 import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/map/domain/map_player_capacity.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter_test/flutter_test.dart';
@@ -65,37 +66,30 @@ void main() {
     },
   );
 
-  test(
-    'falls back to the legacy app-status shape during server rollout',
-    () async {
-      final created = <_TrackingServerpodClient>[];
-      final client = NetworkSessionClient(
-        serverpodHost: 'http://localhost:8080',
-        clientFactory: _trackingFactory(
-          created,
-          rejectVersionedAppStatus: true,
-        ),
-      );
-      addTearDown(client.close);
+  test('fails closed when the server lacks versioned app status', () async {
+    final created = <_TrackingServerpodClient>[];
+    final client = NetworkSessionClient(
+      serverpodHost: 'http://localhost:8080',
+      clientFactory: _trackingFactory(created, rejectVersionedAppStatus: true),
+    );
+    addTearDown(client.close);
 
-      expect(
-        await client.versionStatus(
-          platform: 'windows',
-          buildNumber: 80,
-          multiplayerVersion: kCurrentMultiplayerVersion,
-        ),
-        'supported',
-      );
-      expect(created.single.appStatusRequests, [
-        {
-          'platform': 'windows',
-          'buildNumber': 80,
-          'multiplayerVersion': kCurrentMultiplayerVersion,
-        },
-        {'platform': 'windows', 'buildNumber': 80},
-      ]);
-    },
-  );
+    expect(
+      await client.versionStatus(
+        platform: 'windows',
+        buildNumber: 80,
+        multiplayerVersion: kCurrentMultiplayerVersion,
+      ),
+      'soon',
+    );
+    expect(created.single.appStatusRequests, [
+      {
+        'platform': 'windows',
+        'buildNumber': 80,
+        'multiplayerVersion': kCurrentMultiplayerVersion,
+      },
+    ]);
+  });
 
   test('closes explicit-token fallback client after every request', () async {
     final created = <_TrackingServerpodClient>[];
@@ -137,10 +131,7 @@ void main() {
     );
     await client.quickplay(
       token: token,
-      request: const QuickplayMatchRequest(
-        mapName: 'myranth',
-        country: PlayerCountry.japan,
-      ),
+      request: const QuickplayMatchRequest(country: PlayerCountry.japan),
     );
     await client.createPrivateMatch(
       token: token,
@@ -173,6 +164,10 @@ void main() {
     expect(calls[0].request.name, 'Public table');
     expect(calls[0].request.private, isFalse);
     expect(calls[1].request.name, 'Quickplay');
+    expect(
+      calls[1].request.mapName,
+      MapPlayerCapacityRules.quickplayLobbyMapName,
+    );
     expect(calls[1].request.private, isFalse);
     expect(calls[2].request.name, 'Private match');
     expect(calls[2].request.private, isTrue);
@@ -181,6 +176,10 @@ void main() {
       'japan',
       'poland',
     ]);
+    expect(
+      calls.map((call) => call.multiplayerVersion),
+      everyElement(kCurrentMultiplayerVersion),
+    );
     for (final call in calls) {
       expect(call.request.toJson().keys.toSet(), {
         '__className__',
@@ -197,8 +196,16 @@ void main() {
       for (final serverpodClient in created) ...serverpodClient.joinRequests,
     ];
     expect(joins.map((call) => call.method), ['joinMatch', 'joinPrivateMatch']);
-    expect(joins[0].args, {'matchId': 'public_match', 'countryId': 'italy'});
-    expect(joins[1].args, {'inviteCode': 'ABC123', 'countryId': 'ukraine'});
+    expect(joins[0].args, {
+      'matchId': 'public_match',
+      'countryId': 'italy',
+      'multiplayerVersion': kCurrentMultiplayerVersion,
+    });
+    expect(joins[1].args, {
+      'inviteCode': 'ABC123',
+      'countryId': 'ukraine',
+      'multiplayerVersion': kCurrentMultiplayerVersion,
+    });
   });
 }
 
@@ -232,7 +239,14 @@ final class _TrackingServerpodClient extends sp.Client {
   final bool rejectVersionedAppStatus;
 
   var closeCalls = 0;
-  final matchRequests = <({String method, sp.CreateMatchRequest request})>[];
+  final matchRequests =
+      <
+        ({
+          String method,
+          sp.CreateMatchRequest request,
+          int? multiplayerVersion,
+        })
+      >[];
   final joinRequests = <({String method, Map<String, dynamic> args})>[];
   final appStatusRequests = <Map<String, dynamic>>[];
 
@@ -259,7 +273,11 @@ final class _TrackingServerpodClient extends sp.Client {
     if (endpoint == 'multiplayer' &&
         (method == 'createMatch' || method == 'quickplay')) {
       final request = args['request']! as sp.CreateMatchRequest;
-      matchRequests.add((method: method, request: request));
+      matchRequests.add((
+        method: method,
+        request: request,
+        multiplayerVersion: args['multiplayerVersion'] as int?,
+      ));
       return WireMatch(
             id: 'match_${matchRequests.length}',
             ownerUserId: 'user_1',

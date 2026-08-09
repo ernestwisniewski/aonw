@@ -46,4 +46,15 @@ class NetworkSession {
   }
 }
 
+bool canUseNetworkMatchTransport({
+  required NetworkSession? session,
+  required String saveId,
+}) {
+  return saveId.isNotEmpty &&
+      session != null &&
+      session.isConnected &&
+      session.matchId == saveId &&
+      session.playerId?.trim().isNotEmpty == true;
+}
+
 const Object _undefined = Object();

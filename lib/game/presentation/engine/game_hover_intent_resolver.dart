@@ -151,7 +151,15 @@ final class GameHoverIntentResolver {
     }
 
     final pathfinder = _pathfinderFor(unit);
-    final plan = pathfinder.plan(unit: unit, targetTile: tile);
+    final plan = pathfinder.plan(
+      unit: unit,
+      targetTile: tile,
+      canEnterStepBeyondCapacity: (step) => _canCarryArtifactIntoTargetCity(
+        unit: unit,
+        targetTile: tile,
+        step: step,
+      ),
+    );
     if (plan == null) return true;
     return !UnitMovementFeasibility.canEventuallyTraverse(
       unit: unit,

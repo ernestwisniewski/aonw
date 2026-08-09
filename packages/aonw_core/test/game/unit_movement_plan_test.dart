@@ -16,7 +16,7 @@ void main() {
       expect(plan.estimatedTurns(3), 2);
     });
 
-    test('does not spend current movement across an unaffordable step', () {
+    test('spends a positive remainder on the next costly route step', () {
       final plan = _plan(
         availableMovementPoints: 2,
         steps: const [
@@ -27,13 +27,34 @@ void main() {
         ],
       );
 
-      expect(plan.estimatedTurns(3), 3);
+      expect(plan.canMoveNow, isFalse);
+      expect(plan.furthestReachableStep?.coord, (col: 2, row: 0));
+      expect(
+        plan.remainingMovementPointsAfterStep(plan.furthestReachableStep!),
+        0,
+      );
+      expect(plan.estimatedTurns(3), 2);
+    });
+
+    test('can finish on the first costly step beyond the exact budget', () {
+      final plan = _plan(
+        availableMovementPoints: 3,
+        steps: const [
+          UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+          UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
+          UnitMovementStep(col: 2, row: 0, enterCost: 2, cumulativeCost: 4),
+        ],
+      );
+
+      expect(plan.canMoveNow, isTrue);
+      expect(plan.reachableSteps.map((step) => step.col), [0, 1, 2]);
+      expect(plan.remainingAfterMove, 0);
+      expect(plan.estimatedTurns(3), 1);
     });
 
     test('counts a costly first step as the current turn when allowed', () {
       final plan = _plan(
         availableMovementPoints: 2,
-        canSpendTurnEnteringFirstStep: true,
         steps: const [
           UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
           UnitMovementStep(col: 1, row: 0, enterCost: 4, cumulativeCost: 4),
@@ -47,7 +68,6 @@ void main() {
     test('rebases a persisted route at its current step', () {
       final plan = _plan(
         availableMovementPoints: 3,
-        canSpendTurnEnteringFirstStep: true,
         steps: const [
           UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
           UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
@@ -78,7 +98,6 @@ void main() {
 UnitMovementPlan _plan({
   required int availableMovementPoints,
   required List<UnitMovementStep> steps,
-  bool canSpendTurnEnteringFirstStep = false,
 }) {
   final target = steps.last;
   return UnitMovementPlan(
@@ -87,7 +106,6 @@ UnitMovementPlan _plan({
     targetRow: target.row,
     totalCost: target.cumulativeCost,
     availableMovementPoints: availableMovementPoints,
-    canSpendTurnEnteringFirstStep: canSpendTurnEnteringFirstStep,
     steps: steps,
   );
 }

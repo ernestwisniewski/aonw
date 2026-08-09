@@ -23,6 +23,7 @@ import 'package:flutter/foundation.dart';
 export 'lobby_connection_public_actions.dart';
 export 'lobby_connection_session_actions.dart';
 
+part 'lobby_connection_composition.dart';
 part 'lobby_connection_match_state.dart';
 
 enum LobbyMultiplayerMode {
@@ -54,6 +55,8 @@ typedef LobbyConnectionMapValidator = Future<MapValidationResult> Function();
 typedef LobbyConnectionMessageReader = String Function();
 typedef LobbyConnectionErrorText = String Function(Object error);
 typedef LobbyConnectionErrorPresenter = void Function(String message);
+typedef LobbyConnectionErrorReporter =
+    void Function(Object error, StackTrace stackTrace);
 typedef LobbyConnectionMatchPublisher = void Function(WireMatch match);
 typedef LobbyConnectionMatchInvalidator = void Function(String matchId);
 typedef LobbyConnectionUnavailablePresenter = void Function();
@@ -87,6 +90,7 @@ final class LobbyConnectionController extends ChangeNotifier {
   final LobbyConnectionMessageReader inviteCodeRequiredMessage;
   final LobbyConnectionErrorText errorTextFor;
   final LobbyConnectionErrorPresenter presentError;
+  final LobbyConnectionErrorReporter reportSessionEffectError;
   final LobbyConnectionMatchPublisher publishMatch;
   final LobbyConnectionMatchInvalidator? invalidatePublishedMatch;
   final LobbyConnectionUnavailablePresenter? presentLobbyUnavailable;
@@ -97,6 +101,7 @@ final class LobbyConnectionController extends ChangeNotifier {
   late final LobbyAutoStartCoordinator internalAutoStartCoordinator;
   late final LobbyLiveMatchCoordinator _liveMatchCoordinator;
   late final LobbyMatchNavigationCoordinator _matchNavigationCoordinator;
+  late final LobbyNetworkSessionCoordinator _networkSessionCoordinator;
 
   LobbyMultiplayerMode _mode = LobbyMultiplayerMode.home;
   bool _busy = false;
@@ -130,6 +135,7 @@ final class LobbyConnectionController extends ChangeNotifier {
     required this.inviteCodeRequiredMessage,
     required this.errorTextFor,
     required this.presentError,
+    this.reportSessionEffectError = _reportUnhandledSessionEffectError,
     required this.publishMatch,
     this.invalidatePublishedMatch,
     this.presentLobbyUnavailable,
@@ -137,38 +143,10 @@ final class LobbyConnectionController extends ChangeNotifier {
     required this.navigateTo,
     this.ensureValidSession,
   }) {
-    internalAutoStartCoordinator = LobbyAutoStartCoordinator(
-      now: now,
-      isQuickplayMode: () => _mode == LobbyMultiplayerMode.quickplay,
-      activeMatch: () => _activeMatch,
-      canContinue: canContinueInternal,
-      refreshActiveMatch: () => unawaited(refreshActiveMatch()),
-      notifyCountdownChanged: notifyStateChangedInternal,
-    );
-    _liveMatchCoordinator = LobbyLiveMatchCoordinator(
-      activeMatch: () => _activeMatch,
-      canContinue: canContinueInternal,
-      subscribe: _subscribeLobbyMatch,
-      applyMatchUpdate: _applyLobbyMatchUpdateNow,
-      showError: _handleLobbyStreamError,
-      reportStreamError: _shouldReportLobbyStreamError,
-      defer: (action) => unawaited(Future<void>(action)),
-    );
-    _matchNavigationCoordinator = LobbyMatchNavigationCoordinator(
-      activeMatch: () => _activeMatch,
-      canContinue: canContinueInternal,
-      sessionForMatch: ({required session, required match}) {
-        return networkSessionCoordinatorInternal().sessionForMatch(
-          session: session,
-          match: match,
-        );
-      },
-      setSession: setSession,
-      navigateTo: navigateTo,
-      stopLobbyUpdates: stopLobbyUpdates,
-      defer: (action) => unawaited(Future<void>(action)),
-      mapSource: mapSource,
-    );
+    _networkSessionCoordinator = _buildNetworkSessionCoordinator();
+    internalAutoStartCoordinator = _buildAutoStartCoordinator();
+    _liveMatchCoordinator = _buildLiveMatchCoordinator();
+    _matchNavigationCoordinator = _buildMatchNavigationCoordinator();
   }
 
   LobbyMultiplayerMode get mode => _mode;
@@ -304,9 +282,7 @@ final class LobbyConnectionController extends ChangeNotifier {
 
   Future<void> _joinQuickplayQueue() async {
     await runNetworkActionInternal(() async {
-      await matchActionCoordinatorInternal().joinQuickplay(
-        matchActionConfigInternal(),
-      );
+      await matchActionCoordinatorInternal().joinQuickplay(country: country());
     });
   }
 
@@ -401,3 +377,14 @@ final class LobbyNetworkAuthCancelledException implements Exception {
 }
 
 const Object _unchanged = Object();
+
+void _reportUnhandledSessionEffectError(Object error, StackTrace stackTrace) {
+  FlutterError.reportError(
+    FlutterErrorDetails(
+      exception: error,
+      stack: stackTrace,
+      library: 'multiplayer session',
+      context: ErrorDescription('while persisting the active match'),
+    ),
+  );
+}

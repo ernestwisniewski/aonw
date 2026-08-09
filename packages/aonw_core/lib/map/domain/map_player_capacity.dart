@@ -15,12 +15,16 @@ class MapPlayerCapacity {
 abstract final class MapPlayerCapacityRules {
   static const int minPlayers = 2;
   static const int absoluteMaxPlayers = 4;
-  static const String fullMultiplayerMapName = 'verdantia';
+
+  /// Canonical placeholder while every player shares one quickplay queue.
+  /// The actual start map is selected only after the player count is known.
+  static const String quickplayLobbyMapName = 'verdantia';
 
   static const official = <MapPlayerCapacity>[
     MapPlayerCapacity(mapName: 'verdantia', maxPlayers: 4),
     MapPlayerCapacity(mapName: 'myranth', maxPlayers: 3),
     MapPlayerCapacity(mapName: 'terenos', maxPlayers: 3),
+    MapPlayerCapacity(mapName: 'dravonia', maxPlayers: 4),
   ];
 
   static int maxPlayersForWorldMap(WorldMap mapData) {
@@ -76,18 +80,23 @@ abstract final class MapPlayerCapacityRules {
         playerCount <= maxPlayersForMapName(mapName);
   }
 
+  /// Selects a quickplay start map using the stable official order and seed.
   static String multiplayerStartMapName({
-    required String requestedMapName,
     required int playerCount,
     required int seed,
   }) {
-    if (playerCount >= absoluteMaxPlayers) return fullMultiplayerMapName;
-
+    if (playerCount < minPlayers) {
+      throw RangeError.range(playerCount, minPlayers, null, 'playerCount');
+    }
     final candidates = [
       for (final profile in official)
         if (profile.maxPlayers >= playerCount) profile.mapName,
     ];
-    if (candidates.isEmpty) return requestedMapName;
+    if (candidates.isEmpty) {
+      throw StateError(
+        'No official multiplayer map supports $playerCount players.',
+      );
+    }
 
     final index = seed.abs() % candidates.length;
     return candidates[index];

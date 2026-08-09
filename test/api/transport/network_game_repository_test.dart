@@ -66,6 +66,8 @@ void main() {
       expect(indexes.single.mapName, 'verdantia');
       expect(indexes.single.turn, 3);
       expect(indexes.single.savedAt, DateTime.utc(2026, 4, 26, 11));
+      expect(indexes.single.gameMode, GameMode.multiplayer);
+      expect(indexes.single.origin, GameSaveOrigin.network);
     });
 
     test('uses requested player count for mixed human and AI seats', () async {
@@ -111,8 +113,10 @@ void main() {
         playerColors: const {'player_1': 0xFF2563EB},
         eventLogOffset: 12,
       );
+      final wire = codec.toWire(matchId: 'match_1', snapshot: snapshot);
+      final legacySave = Map<String, dynamic>.from(wire.save)..remove('origin');
       final backend = _FakeMultiplayerBackend(
-        snapshot: codec.toWire(matchId: 'match_1', snapshot: snapshot),
+        snapshot: wire.copyWith(save: legacySave),
       );
       final repository = _repository(backend, snapshotCache: cache);
 
@@ -121,6 +125,7 @@ void main() {
       expect(backend.loadedSnapshotId, 'match_1');
       expect(loaded.save.id, 'match_1');
       expect(loaded.save.name, 'multi Sunday duel');
+      expect(loaded.save.origin, GameSaveOrigin.network);
       expect(loaded.eventLogOffset, 12);
       expect(loaded.playerColors, {'player_1': 0xFF2563EB});
       expect(
@@ -130,8 +135,9 @@ void main() {
               matchId: 'match_1',
             )]
             ?.state
-            .eventLogOffset,
-        12,
+            .save
+            .origin,
+        GameSaveOrigin.network,
       );
     });
 
@@ -141,7 +147,7 @@ void main() {
         multiplayerSnapshotCacheKey(userId: 'user_1', matchId: 'match_1'),
         Snapshot(
           state: GameSnapshotFactory.create(
-            save: _save(),
+            save: _save(origin: GameSaveOrigin.legacy),
             playerColors: const {'player_1': 0xFF2563EB},
             eventLogOffset: 8,
           ),
@@ -159,6 +165,7 @@ void main() {
 
       expect(snapshot.save.id, 'match_1');
       expect(snapshot.save.name, 'multi Sunday duel');
+      expect(snapshot.save.origin, GameSaveOrigin.network);
       expect(snapshot.eventLogOffset, 8);
       expect(snapshot.playerColors, {'player_1': 0xFF2563EB});
     });
@@ -221,7 +228,7 @@ void main() {
       );
       expect(
         multiplayerSnapshotCacheKey(userId: 'user_1', matchId: 'match_1'),
-        startsWith('multiplayer-v3.'),
+        startsWith('multiplayer-v$kSnapshotEventVersion.'),
       );
     });
 
@@ -350,7 +357,7 @@ WireMatch _match({required String id, int turn = 1}) {
   );
 }
 
-GameSave _save() {
+GameSave _save({GameSaveOrigin origin = GameSaveOrigin.local}) {
   return GameSave(
     id: 'match_1',
     name: 'Sunday duel',
@@ -364,5 +371,6 @@ GameSave _save() {
       Player(id: 'player_1', name: 'Alice', colorValue: 0xFF2563EB),
     ],
     gameMode: GameMode.multiplayer,
+    origin: origin,
   );
 }

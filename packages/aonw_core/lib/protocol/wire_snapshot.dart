@@ -9,7 +9,7 @@ class WireSnapshot {
   final Map<String, dynamic> state;
 
   const WireSnapshot({
-    this.v = kProtocolVersion,
+    this.v = kSnapshotEventVersion,
     required this.matchId,
     required this.offset,
     required this.save,
@@ -18,7 +18,11 @@ class WireSnapshot {
 
   factory WireSnapshot.fromJson(Map<String, dynamic> json) {
     return WireSnapshot(
-      v: WireJson.readVersion(json, 'WireSnapshot'),
+      v: WireJson.readVersion(
+        json,
+        'WireSnapshot',
+        expectedVersion: kSnapshotEventVersion,
+      ),
       matchId: WireJson.requiredString(json, 'WireSnapshot', 'matchId'),
       offset: WireJson.requiredInt(json, 'WireSnapshot', 'offset'),
       save: WireJson.requiredMap(json['save'], 'WireSnapshot.save'),

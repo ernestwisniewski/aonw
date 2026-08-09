@@ -1,7 +1,43 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
+
+extension CriticalMultiplayerEndpoint on sp.EndpointMultiplayer {
+  Future<WireMatch> createCurrentMatch(sp.CreateMatchRequest request) =>
+      createMatch(request, multiplayerVersion: kCurrentMultiplayerVersion);
+
+  Future<WireMatch> joinCurrentMatch(String matchId) =>
+      joinMatch(matchId, multiplayerVersion: kCurrentMultiplayerVersion);
+
+  Future<WireMatch> startCurrentMatch(String matchId) =>
+      startMatch(matchId, multiplayerVersion: kCurrentMultiplayerVersion);
+
+  Future<List<WireEvent>> listCurrentEvents(String matchId, int afterOffset) =>
+      listEvents(
+        matchId,
+        afterOffset,
+        multiplayerVersion: kCurrentMultiplayerVersion,
+      );
+
+  Future<WireSnapshot> loadCurrentSnapshot(String matchId) =>
+      loadSnapshot(matchId, multiplayerVersion: kCurrentMultiplayerVersion);
+
+  Future<WireMatch> loadCurrentMatch(String matchId) =>
+      loadMatch(matchId, multiplayerVersion: kCurrentMultiplayerVersion);
+
+  Stream<sp.MultiplayerServerMessage> connectCurrent(
+    String matchId,
+    int afterOffset,
+    Stream<sp.MultiplayerClientMessage> input,
+  ) => connect(
+    matchId,
+    afterOffset,
+    input,
+    multiplayerVersion: kCurrentMultiplayerVersion,
+  );
+}
 
 final class CriticalMatchStream {
   CriticalMatchStream._({
@@ -25,7 +61,7 @@ final class CriticalMatchStream {
   }) async {
     final input = StreamController<sp.MultiplayerClientMessage>();
     final output = StreamIterator(
-      client.multiplayer.connect(matchId, afterOffset, input.stream),
+      client.multiplayer.connectCurrent(matchId, afterOffset, input.stream),
     );
     final connection = CriticalMatchStream._(
       input: input,

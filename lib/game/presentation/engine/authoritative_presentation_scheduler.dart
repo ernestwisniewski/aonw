@@ -60,6 +60,15 @@ final class AuthoritativePresentationScheduler {
     }
   }
 
+  /// Starts all presentation work from one authoritative clock boundary.
+  Future<void> presentAtAuthoritativeStart(
+    ProjectedGameEffectBatch batch,
+    Future<void> Function() present,
+  ) async {
+    await waitForOrStartLate(batch);
+    await present();
+  }
+
   int get _nowMicrosUtc => _clock.nowUtc().microsecondsSinceEpoch;
 }
 

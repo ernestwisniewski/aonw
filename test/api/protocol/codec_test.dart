@@ -93,7 +93,7 @@ void main() {
           .eventsFromWire(WireEvent.fromJson(wire.toJson()))
           .single;
 
-      expect(wire.v, kProtocolVersion);
+      expect(wire.v, kSnapshotEventVersion);
       expect(wire.offset, 9);
       expect(WireEvent.fromJson(wire.toJson()).turn, 3);
       expect(codec.commandFromWire(WireEvent.fromJson(wire.toJson())), command);
@@ -306,7 +306,7 @@ void main() {
         final wire = codec.toWire(matchId: 'match_1', snapshot: snapshot);
         final restored = codec.fromWire(WireSnapshot.fromJson(wire.toJson()));
 
-        expect(wire.v, kProtocolVersion);
+        expect(wire.v, kSnapshotEventVersion);
         expect(wire.offset, 12);
         expect(wire.state['playerGold'], {'player_1': 11});
         expect(wire.state['playerWarWeariness'], {'player_1': 4});
@@ -419,6 +419,7 @@ void main() {
       );
       final ack = WireCommandAck(
         matchId: 'match_1',
+        clientMessageId: 'command_1',
         accepted: false,
         offset: 1,
         snapshot: snapshot,

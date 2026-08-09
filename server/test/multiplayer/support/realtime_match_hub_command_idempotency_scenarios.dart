@@ -58,6 +58,7 @@ void _registerRealtimeMatchHubCommandIdempotencyScenarios() {
 
       final ackMessage = await ownerAck;
       expect(ackMessage.ack?.accepted, isTrue);
+      expect(ackMessage.ack?.clientMessageId, 'owner-submit-1');
 
       final authoritative = await store.findState(match.id);
       final reconnectInput = StreamController<MultiplayerClientMessage>();
@@ -186,6 +187,10 @@ void _registerRealtimeMatchHubCommandIdempotencyScenarios() {
     final ackMessages = await acks;
 
     expect(ackMessages.map((message) => message.ack?.accepted), [true, true]);
+    expect(
+      ackMessages.map((message) => message.ack?.clientMessageId),
+      everyElement(retryMessage.clientMessageId),
+    );
     expect(ackMessages.map((message) => message.ack?.offset).toSet(), {1});
     for (final message in ackMessages) {
       expect(message.ack!.events, isEmpty);
@@ -254,6 +259,10 @@ void _registerRealtimeMatchHubCommandIdempotencyScenarios() {
     final ackMessages = await acks;
 
     expect(ackMessages.map((message) => message.ack?.accepted), [true, false]);
+    expect(
+      ackMessages.map((message) => message.ack?.clientMessageId),
+      everyElement(clientMessageId),
+    );
     expect(ackMessages.map((message) => message.ack?.offset), [1, 1]);
     expect(ackMessages.last.ack?.reason, 'client_message_id_conflict');
     expect(ackMessages.last.ack?.movementExecutions.isEmpty, isTrue);
@@ -304,6 +313,10 @@ void _registerRealtimeMatchHubCommandIdempotencyScenarios() {
       expect(
         ackMessages.map((message) => message.ack?.accepted),
         everyElement(isTrue),
+      );
+      expect(
+        ackMessages.map((message) => message.ack?.clientMessageId),
+        everyElement(retryMessage.clientMessageId),
       );
       expect(ackMessages.map((message) => message.ack?.offset).toSet(), {1});
       expect(

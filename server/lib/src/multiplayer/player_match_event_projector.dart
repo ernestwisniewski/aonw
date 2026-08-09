@@ -50,6 +50,7 @@ final class PlayerMatchEventProjector {
       WireCommandAck(
         v: canonical.v,
         matchId: canonical.matchId,
+        clientMessageId: canonical.clientMessageId,
         accepted: canonical.accepted,
         offset: canonical.offset,
         tick: canonical.tick,

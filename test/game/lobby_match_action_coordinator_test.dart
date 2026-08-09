@@ -15,10 +15,9 @@ void main() {
       () async {
         final harness = _Harness(quickplayMatch: _match(state: 'open'));
 
-        await harness.coordinator.joinQuickplay(_config());
+        await harness.coordinator.joinQuickplay(country: PlayerCountry.china);
 
-        expect(harness.validationCount, 1);
-        expect(harness.quickplayRequest?.mapName, 'verdantia');
+        expect(harness.validationCount, 0);
         expect(harness.quickplayRequest?.country, PlayerCountry.china);
         expect(harness.remembered.map((entry) => entry.match.id), ['match_1']);
         expect(harness.watched.map((entry) => entry.match.id), ['match_1']);
@@ -30,7 +29,7 @@ void main() {
     test('quickplay enters a runnable match with enough humans', () async {
       final harness = _Harness(quickplayMatch: _match(state: 'running'));
 
-      await harness.coordinator.joinQuickplay(_config());
+      await harness.coordinator.joinQuickplay(country: PlayerCountry.china);
 
       expect(harness.stoppedCount, 1);
       expect(harness.entered.single.match.state, 'running');
@@ -43,7 +42,7 @@ void main() {
         rememberAccepted: false,
       );
 
-      await harness.coordinator.joinQuickplay(_config());
+      await harness.coordinator.joinQuickplay(country: PlayerCountry.china);
 
       expect(harness.remembered, hasLength(1));
       expect(harness.watched, isEmpty);
@@ -51,16 +50,14 @@ void main() {
       expect(harness.scheduled, isEmpty);
     });
 
-    test('validation errors stop quickplay before network calls', () async {
+    test('quickplay does not validate the locally selected map', () async {
       final harness = _Harness(validation: _invalidValidation());
 
-      await expectLater(
-        harness.coordinator.joinQuickplay(_config()),
-        throwsStateError,
-      );
+      await harness.coordinator.joinQuickplay(country: PlayerCountry.china);
 
-      expect(harness.quickplayRequest, isNull);
-      expect(harness.remembered, isEmpty);
+      expect(harness.validationCount, 0);
+      expect(harness.quickplayRequest?.country, PlayerCountry.china);
+      expect(harness.remembered, hasLength(1));
     });
 
     test('cancel leaves open quickplay and clears active match', () async {
@@ -152,6 +149,7 @@ void main() {
       expect(harness.createdPublicRequest?.mapName, 'verdantia');
       expect(harness.createdPublicRequest?.minPlayers, 2);
       expect(harness.createdPublicRequest?.maxPlayers, 4);
+      expect(harness.validationCount, 1);
       expect(harness.joinedPublicMatchIds, ['public_joined']);
       expect(harness.joinedPublicCountry, PlayerCountry.china);
       expect(harness.remembered.map((entry) => entry.match.id), [
@@ -181,6 +179,7 @@ void main() {
       expect(harness.createdPrivateRequest?.country, PlayerCountry.china);
       expect(harness.joinPrivateRequest?.inviteCode, 'ABC123');
       expect(harness.joinPrivateRequest?.country, PlayerCountry.china);
+      expect(harness.validationCount, 1);
       expect(harness.remembered.map((entry) => entry.match.id), [
         'private_1',
         'private_2',

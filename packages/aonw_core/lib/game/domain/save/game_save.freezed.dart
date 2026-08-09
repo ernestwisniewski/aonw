@@ -284,7 +284,7 @@ as double,
 /// @nodoc
 mixin _$GameSave {
 
- String get id; int get schemaVersion; String get name; String get mapName;@JsonKey(unknownEnumValue: MapSource.asset) MapSource get mapSource; int get turn; Map<String, PlayerTurnState> get playerStates;@JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) DateTime get savedAt; CameraState get camera;@JsonKey(name: 'ruleset') MatchRules get matchRules; List<Player> get players; GameMode get gameMode;
+ String get id; int get schemaVersion; String get name; String get mapName;@JsonKey(unknownEnumValue: MapSource.asset) MapSource get mapSource; int get turn; Map<String, PlayerTurnState> get playerStates;@JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) DateTime get savedAt; CameraState get camera;@JsonKey(name: 'ruleset') MatchRules get matchRules; List<Player> get players; GameMode get gameMode;@JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson) GameSaveOrigin get origin;
 /// Create a copy of GameSave
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -297,16 +297,16 @@ $GameSaveCopyWith<GameSave> get copyWith => _$GameSaveCopyWithImpl<GameSave>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GameSave&&(identical(other.id, id) || other.id == id)&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.name, name) || other.name == name)&&(identical(other.mapName, mapName) || other.mapName == mapName)&&(identical(other.mapSource, mapSource) || other.mapSource == mapSource)&&(identical(other.turn, turn) || other.turn == turn)&&const DeepCollectionEquality().equals(other.playerStates, playerStates)&&(identical(other.savedAt, savedAt) || other.savedAt == savedAt)&&(identical(other.camera, camera) || other.camera == camera)&&(identical(other.matchRules, matchRules) || other.matchRules == matchRules)&&const DeepCollectionEquality().equals(other.players, players)&&(identical(other.gameMode, gameMode) || other.gameMode == gameMode));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GameSave&&(identical(other.id, id) || other.id == id)&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.name, name) || other.name == name)&&(identical(other.mapName, mapName) || other.mapName == mapName)&&(identical(other.mapSource, mapSource) || other.mapSource == mapSource)&&(identical(other.turn, turn) || other.turn == turn)&&const DeepCollectionEquality().equals(other.playerStates, playerStates)&&(identical(other.savedAt, savedAt) || other.savedAt == savedAt)&&(identical(other.camera, camera) || other.camera == camera)&&(identical(other.matchRules, matchRules) || other.matchRules == matchRules)&&const DeepCollectionEquality().equals(other.players, players)&&(identical(other.gameMode, gameMode) || other.gameMode == gameMode)&&(identical(other.origin, origin) || other.origin == origin));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,schemaVersion,name,mapName,mapSource,turn,const DeepCollectionEquality().hash(playerStates),savedAt,camera,matchRules,const DeepCollectionEquality().hash(players),gameMode);
+int get hashCode => Object.hash(runtimeType,id,schemaVersion,name,mapName,mapSource,turn,const DeepCollectionEquality().hash(playerStates),savedAt,camera,matchRules,const DeepCollectionEquality().hash(players),gameMode,origin);
 
 @override
 String toString() {
-  return 'GameSave(id: $id, schemaVersion: $schemaVersion, name: $name, mapName: $mapName, mapSource: $mapSource, turn: $turn, playerStates: $playerStates, savedAt: $savedAt, camera: $camera, matchRules: $matchRules, players: $players, gameMode: $gameMode)';
+  return 'GameSave(id: $id, schemaVersion: $schemaVersion, name: $name, mapName: $mapName, mapSource: $mapSource, turn: $turn, playerStates: $playerStates, savedAt: $savedAt, camera: $camera, matchRules: $matchRules, players: $players, gameMode: $gameMode, origin: $origin)';
 }
 
 
@@ -317,7 +317,7 @@ abstract mixin class $GameSaveCopyWith<$Res>  {
   factory $GameSaveCopyWith(GameSave value, $Res Function(GameSave) _then) = _$GameSaveCopyWithImpl;
 @useResult
 $Res call({
- String id, int schemaVersion, String name, String mapName,@JsonKey(unknownEnumValue: MapSource.asset) MapSource mapSource, int turn, Map<String, PlayerTurnState> playerStates,@JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) DateTime savedAt, CameraState camera,@JsonKey(name: 'ruleset') MatchRules matchRules, List<Player> players, GameMode gameMode
+ String id, int schemaVersion, String name, String mapName,@JsonKey(unknownEnumValue: MapSource.asset) MapSource mapSource, int turn, Map<String, PlayerTurnState> playerStates,@JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) DateTime savedAt, CameraState camera,@JsonKey(name: 'ruleset') MatchRules matchRules, List<Player> players, GameMode gameMode,@JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson) GameSaveOrigin origin
 });
 
 
@@ -334,7 +334,7 @@ class _$GameSaveCopyWithImpl<$Res>
 
 /// Create a copy of GameSave
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? schemaVersion = null,Object? name = null,Object? mapName = null,Object? mapSource = null,Object? turn = null,Object? playerStates = null,Object? savedAt = null,Object? camera = null,Object? matchRules = null,Object? players = null,Object? gameMode = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? schemaVersion = null,Object? name = null,Object? mapName = null,Object? mapSource = null,Object? turn = null,Object? playerStates = null,Object? savedAt = null,Object? camera = null,Object? matchRules = null,Object? players = null,Object? gameMode = null,Object? origin = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,schemaVersion: null == schemaVersion ? _self.schemaVersion : schemaVersion // ignore: cast_nullable_to_non_nullable
@@ -348,7 +348,8 @@ as DateTime,camera: null == camera ? _self.camera : camera // ignore: cast_nulla
 as CameraState,matchRules: null == matchRules ? _self.matchRules : matchRules // ignore: cast_nullable_to_non_nullable
 as MatchRules,players: null == players ? _self.players : players // ignore: cast_nullable_to_non_nullable
 as List<Player>,gameMode: null == gameMode ? _self.gameMode : gameMode // ignore: cast_nullable_to_non_nullable
-as GameMode,
+as GameMode,origin: null == origin ? _self.origin : origin // ignore: cast_nullable_to_non_nullable
+as GameSaveOrigin,
   ));
 }
 /// Create a copy of GameSave
@@ -442,10 +443,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int schemaVersion,  String name,  String mapName, @JsonKey(unknownEnumValue: MapSource.asset)  MapSource mapSource,  int turn,  Map<String, PlayerTurnState> playerStates, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)  DateTime savedAt,  CameraState camera, @JsonKey(name: 'ruleset')  MatchRules matchRules,  List<Player> players,  GameMode gameMode)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int schemaVersion,  String name,  String mapName, @JsonKey(unknownEnumValue: MapSource.asset)  MapSource mapSource,  int turn,  Map<String, PlayerTurnState> playerStates, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)  DateTime savedAt,  CameraState camera, @JsonKey(name: 'ruleset')  MatchRules matchRules,  List<Player> players,  GameMode gameMode, @JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson)  GameSaveOrigin origin)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GameSave() when $default != null:
-return $default(_that.id,_that.schemaVersion,_that.name,_that.mapName,_that.mapSource,_that.turn,_that.playerStates,_that.savedAt,_that.camera,_that.matchRules,_that.players,_that.gameMode);case _:
+return $default(_that.id,_that.schemaVersion,_that.name,_that.mapName,_that.mapSource,_that.turn,_that.playerStates,_that.savedAt,_that.camera,_that.matchRules,_that.players,_that.gameMode,_that.origin);case _:
   return orElse();
 
 }
@@ -463,10 +464,10 @@ return $default(_that.id,_that.schemaVersion,_that.name,_that.mapName,_that.mapS
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int schemaVersion,  String name,  String mapName, @JsonKey(unknownEnumValue: MapSource.asset)  MapSource mapSource,  int turn,  Map<String, PlayerTurnState> playerStates, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)  DateTime savedAt,  CameraState camera, @JsonKey(name: 'ruleset')  MatchRules matchRules,  List<Player> players,  GameMode gameMode)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int schemaVersion,  String name,  String mapName, @JsonKey(unknownEnumValue: MapSource.asset)  MapSource mapSource,  int turn,  Map<String, PlayerTurnState> playerStates, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)  DateTime savedAt,  CameraState camera, @JsonKey(name: 'ruleset')  MatchRules matchRules,  List<Player> players,  GameMode gameMode, @JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson)  GameSaveOrigin origin)  $default,) {final _that = this;
 switch (_that) {
 case _GameSave():
-return $default(_that.id,_that.schemaVersion,_that.name,_that.mapName,_that.mapSource,_that.turn,_that.playerStates,_that.savedAt,_that.camera,_that.matchRules,_that.players,_that.gameMode);case _:
+return $default(_that.id,_that.schemaVersion,_that.name,_that.mapName,_that.mapSource,_that.turn,_that.playerStates,_that.savedAt,_that.camera,_that.matchRules,_that.players,_that.gameMode,_that.origin);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -483,10 +484,10 @@ return $default(_that.id,_that.schemaVersion,_that.name,_that.mapName,_that.mapS
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int schemaVersion,  String name,  String mapName, @JsonKey(unknownEnumValue: MapSource.asset)  MapSource mapSource,  int turn,  Map<String, PlayerTurnState> playerStates, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)  DateTime savedAt,  CameraState camera, @JsonKey(name: 'ruleset')  MatchRules matchRules,  List<Player> players,  GameMode gameMode)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int schemaVersion,  String name,  String mapName, @JsonKey(unknownEnumValue: MapSource.asset)  MapSource mapSource,  int turn,  Map<String, PlayerTurnState> playerStates, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)  DateTime savedAt,  CameraState camera, @JsonKey(name: 'ruleset')  MatchRules matchRules,  List<Player> players,  GameMode gameMode, @JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson)  GameSaveOrigin origin)?  $default,) {final _that = this;
 switch (_that) {
 case _GameSave() when $default != null:
-return $default(_that.id,_that.schemaVersion,_that.name,_that.mapName,_that.mapSource,_that.turn,_that.playerStates,_that.savedAt,_that.camera,_that.matchRules,_that.players,_that.gameMode);case _:
+return $default(_that.id,_that.schemaVersion,_that.name,_that.mapName,_that.mapSource,_that.turn,_that.playerStates,_that.savedAt,_that.camera,_that.matchRules,_that.players,_that.gameMode,_that.origin);case _:
   return null;
 
 }
@@ -498,7 +499,7 @@ return $default(_that.id,_that.schemaVersion,_that.name,_that.mapName,_that.mapS
 
 @JsonSerializable(explicitToJson: true)
 class _GameSave extends GameSave {
-  const _GameSave({required this.id, this.schemaVersion = gameSaveCurrentSchemaVersion, required this.name, required this.mapName, @JsonKey(unknownEnumValue: MapSource.asset) this.mapSource = MapSource.asset, required this.turn, required final  Map<String, PlayerTurnState> playerStates, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) required this.savedAt, required this.camera, @JsonKey(name: 'ruleset') this.matchRules = MatchRules.standard, final  List<Player> players = const [], this.gameMode = GameMode.hotSeat}): _playerStates = playerStates,_players = players,super._();
+  const _GameSave({required this.id, this.schemaVersion = gameSaveCurrentSchemaVersion, required this.name, required this.mapName, @JsonKey(unknownEnumValue: MapSource.asset) this.mapSource = MapSource.asset, required this.turn, required final  Map<String, PlayerTurnState> playerStates, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) required this.savedAt, required this.camera, @JsonKey(name: 'ruleset') this.matchRules = MatchRules.standard, final  List<Player> players = const [], this.gameMode = GameMode.hotSeat, @JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson) this.origin = GameSaveOrigin.local}): _playerStates = playerStates,_players = players,super._();
   factory _GameSave.fromJson(Map<String, dynamic> json) => _$GameSaveFromJson(json);
 
 @override final  String id;
@@ -525,6 +526,7 @@ class _GameSave extends GameSave {
 }
 
 @override@JsonKey() final  GameMode gameMode;
+@override@JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson) final  GameSaveOrigin origin;
 
 /// Create a copy of GameSave
 /// with the given fields replaced by the non-null parameter values.
@@ -539,16 +541,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GameSave&&(identical(other.id, id) || other.id == id)&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.name, name) || other.name == name)&&(identical(other.mapName, mapName) || other.mapName == mapName)&&(identical(other.mapSource, mapSource) || other.mapSource == mapSource)&&(identical(other.turn, turn) || other.turn == turn)&&const DeepCollectionEquality().equals(other._playerStates, _playerStates)&&(identical(other.savedAt, savedAt) || other.savedAt == savedAt)&&(identical(other.camera, camera) || other.camera == camera)&&(identical(other.matchRules, matchRules) || other.matchRules == matchRules)&&const DeepCollectionEquality().equals(other._players, _players)&&(identical(other.gameMode, gameMode) || other.gameMode == gameMode));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GameSave&&(identical(other.id, id) || other.id == id)&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.name, name) || other.name == name)&&(identical(other.mapName, mapName) || other.mapName == mapName)&&(identical(other.mapSource, mapSource) || other.mapSource == mapSource)&&(identical(other.turn, turn) || other.turn == turn)&&const DeepCollectionEquality().equals(other._playerStates, _playerStates)&&(identical(other.savedAt, savedAt) || other.savedAt == savedAt)&&(identical(other.camera, camera) || other.camera == camera)&&(identical(other.matchRules, matchRules) || other.matchRules == matchRules)&&const DeepCollectionEquality().equals(other._players, _players)&&(identical(other.gameMode, gameMode) || other.gameMode == gameMode)&&(identical(other.origin, origin) || other.origin == origin));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,schemaVersion,name,mapName,mapSource,turn,const DeepCollectionEquality().hash(_playerStates),savedAt,camera,matchRules,const DeepCollectionEquality().hash(_players),gameMode);
+int get hashCode => Object.hash(runtimeType,id,schemaVersion,name,mapName,mapSource,turn,const DeepCollectionEquality().hash(_playerStates),savedAt,camera,matchRules,const DeepCollectionEquality().hash(_players),gameMode,origin);
 
 @override
 String toString() {
-  return 'GameSave(id: $id, schemaVersion: $schemaVersion, name: $name, mapName: $mapName, mapSource: $mapSource, turn: $turn, playerStates: $playerStates, savedAt: $savedAt, camera: $camera, matchRules: $matchRules, players: $players, gameMode: $gameMode)';
+  return 'GameSave(id: $id, schemaVersion: $schemaVersion, name: $name, mapName: $mapName, mapSource: $mapSource, turn: $turn, playerStates: $playerStates, savedAt: $savedAt, camera: $camera, matchRules: $matchRules, players: $players, gameMode: $gameMode, origin: $origin)';
 }
 
 
@@ -559,7 +561,7 @@ abstract mixin class _$GameSaveCopyWith<$Res> implements $GameSaveCopyWith<$Res>
   factory _$GameSaveCopyWith(_GameSave value, $Res Function(_GameSave) _then) = __$GameSaveCopyWithImpl;
 @override @useResult
 $Res call({
- String id, int schemaVersion, String name, String mapName,@JsonKey(unknownEnumValue: MapSource.asset) MapSource mapSource, int turn, Map<String, PlayerTurnState> playerStates,@JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) DateTime savedAt, CameraState camera,@JsonKey(name: 'ruleset') MatchRules matchRules, List<Player> players, GameMode gameMode
+ String id, int schemaVersion, String name, String mapName,@JsonKey(unknownEnumValue: MapSource.asset) MapSource mapSource, int turn, Map<String, PlayerTurnState> playerStates,@JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) DateTime savedAt, CameraState camera,@JsonKey(name: 'ruleset') MatchRules matchRules, List<Player> players, GameMode gameMode,@JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson) GameSaveOrigin origin
 });
 
 
@@ -576,7 +578,7 @@ class __$GameSaveCopyWithImpl<$Res>
 
 /// Create a copy of GameSave
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? schemaVersion = null,Object? name = null,Object? mapName = null,Object? mapSource = null,Object? turn = null,Object? playerStates = null,Object? savedAt = null,Object? camera = null,Object? matchRules = null,Object? players = null,Object? gameMode = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? schemaVersion = null,Object? name = null,Object? mapName = null,Object? mapSource = null,Object? turn = null,Object? playerStates = null,Object? savedAt = null,Object? camera = null,Object? matchRules = null,Object? players = null,Object? gameMode = null,Object? origin = null,}) {
   return _then(_GameSave(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,schemaVersion: null == schemaVersion ? _self.schemaVersion : schemaVersion // ignore: cast_nullable_to_non_nullable
@@ -590,7 +592,8 @@ as DateTime,camera: null == camera ? _self.camera : camera // ignore: cast_nulla
 as CameraState,matchRules: null == matchRules ? _self.matchRules : matchRules // ignore: cast_nullable_to_non_nullable
 as MatchRules,players: null == players ? _self._players : players // ignore: cast_nullable_to_non_nullable
 as List<Player>,gameMode: null == gameMode ? _self.gameMode : gameMode // ignore: cast_nullable_to_non_nullable
-as GameMode,
+as GameMode,origin: null == origin ? _self.origin : origin // ignore: cast_nullable_to_non_nullable
+as GameSaveOrigin,
   ));
 }
 
@@ -610,7 +613,7 @@ $CameraStateCopyWith<$Res> get camera {
 /// @nodoc
 mixin _$GameSaveIndex {
 
- String get id; String get name; String get mapName;@JsonKey(unknownEnumValue: MapSource.asset) MapSource get mapSource; int get turn;@JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) DateTime get savedAt; GameMode get gameMode; bool get replayAvailable; bool get corrupted; String? get corruptionMessage;
+ String get id; String get name; String get mapName;@JsonKey(unknownEnumValue: MapSource.asset) MapSource get mapSource; int get turn;@JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) DateTime get savedAt; GameMode get gameMode;@JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson) GameSaveOrigin get origin; bool get replayAvailable; bool get corrupted; String? get corruptionMessage;
 /// Create a copy of GameSaveIndex
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -623,16 +626,16 @@ $GameSaveIndexCopyWith<GameSaveIndex> get copyWith => _$GameSaveIndexCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GameSaveIndex&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.mapName, mapName) || other.mapName == mapName)&&(identical(other.mapSource, mapSource) || other.mapSource == mapSource)&&(identical(other.turn, turn) || other.turn == turn)&&(identical(other.savedAt, savedAt) || other.savedAt == savedAt)&&(identical(other.gameMode, gameMode) || other.gameMode == gameMode)&&(identical(other.replayAvailable, replayAvailable) || other.replayAvailable == replayAvailable)&&(identical(other.corrupted, corrupted) || other.corrupted == corrupted)&&(identical(other.corruptionMessage, corruptionMessage) || other.corruptionMessage == corruptionMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GameSaveIndex&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.mapName, mapName) || other.mapName == mapName)&&(identical(other.mapSource, mapSource) || other.mapSource == mapSource)&&(identical(other.turn, turn) || other.turn == turn)&&(identical(other.savedAt, savedAt) || other.savedAt == savedAt)&&(identical(other.gameMode, gameMode) || other.gameMode == gameMode)&&(identical(other.origin, origin) || other.origin == origin)&&(identical(other.replayAvailable, replayAvailable) || other.replayAvailable == replayAvailable)&&(identical(other.corrupted, corrupted) || other.corrupted == corrupted)&&(identical(other.corruptionMessage, corruptionMessage) || other.corruptionMessage == corruptionMessage));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,mapName,mapSource,turn,savedAt,gameMode,replayAvailable,corrupted,corruptionMessage);
+int get hashCode => Object.hash(runtimeType,id,name,mapName,mapSource,turn,savedAt,gameMode,origin,replayAvailable,corrupted,corruptionMessage);
 
 @override
 String toString() {
-  return 'GameSaveIndex(id: $id, name: $name, mapName: $mapName, mapSource: $mapSource, turn: $turn, savedAt: $savedAt, gameMode: $gameMode, replayAvailable: $replayAvailable, corrupted: $corrupted, corruptionMessage: $corruptionMessage)';
+  return 'GameSaveIndex(id: $id, name: $name, mapName: $mapName, mapSource: $mapSource, turn: $turn, savedAt: $savedAt, gameMode: $gameMode, origin: $origin, replayAvailable: $replayAvailable, corrupted: $corrupted, corruptionMessage: $corruptionMessage)';
 }
 
 
@@ -643,7 +646,7 @@ abstract mixin class $GameSaveIndexCopyWith<$Res>  {
   factory $GameSaveIndexCopyWith(GameSaveIndex value, $Res Function(GameSaveIndex) _then) = _$GameSaveIndexCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String mapName,@JsonKey(unknownEnumValue: MapSource.asset) MapSource mapSource, int turn,@JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) DateTime savedAt, GameMode gameMode, bool replayAvailable, bool corrupted, String? corruptionMessage
+ String id, String name, String mapName,@JsonKey(unknownEnumValue: MapSource.asset) MapSource mapSource, int turn,@JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) DateTime savedAt, GameMode gameMode,@JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson) GameSaveOrigin origin, bool replayAvailable, bool corrupted, String? corruptionMessage
 });
 
 
@@ -660,7 +663,7 @@ class _$GameSaveIndexCopyWithImpl<$Res>
 
 /// Create a copy of GameSaveIndex
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? mapName = null,Object? mapSource = null,Object? turn = null,Object? savedAt = null,Object? gameMode = null,Object? replayAvailable = null,Object? corrupted = null,Object? corruptionMessage = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? mapName = null,Object? mapSource = null,Object? turn = null,Object? savedAt = null,Object? gameMode = null,Object? origin = null,Object? replayAvailable = null,Object? corrupted = null,Object? corruptionMessage = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -669,7 +672,8 @@ as String,mapSource: null == mapSource ? _self.mapSource : mapSource // ignore: 
 as MapSource,turn: null == turn ? _self.turn : turn // ignore: cast_nullable_to_non_nullable
 as int,savedAt: null == savedAt ? _self.savedAt : savedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,gameMode: null == gameMode ? _self.gameMode : gameMode // ignore: cast_nullable_to_non_nullable
-as GameMode,replayAvailable: null == replayAvailable ? _self.replayAvailable : replayAvailable // ignore: cast_nullable_to_non_nullable
+as GameMode,origin: null == origin ? _self.origin : origin // ignore: cast_nullable_to_non_nullable
+as GameSaveOrigin,replayAvailable: null == replayAvailable ? _self.replayAvailable : replayAvailable // ignore: cast_nullable_to_non_nullable
 as bool,corrupted: null == corrupted ? _self.corrupted : corrupted // ignore: cast_nullable_to_non_nullable
 as bool,corruptionMessage: freezed == corruptionMessage ? _self.corruptionMessage : corruptionMessage // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -757,10 +761,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String mapName, @JsonKey(unknownEnumValue: MapSource.asset)  MapSource mapSource,  int turn, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)  DateTime savedAt,  GameMode gameMode,  bool replayAvailable,  bool corrupted,  String? corruptionMessage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String mapName, @JsonKey(unknownEnumValue: MapSource.asset)  MapSource mapSource,  int turn, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)  DateTime savedAt,  GameMode gameMode, @JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson)  GameSaveOrigin origin,  bool replayAvailable,  bool corrupted,  String? corruptionMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GameSaveIndex() when $default != null:
-return $default(_that.id,_that.name,_that.mapName,_that.mapSource,_that.turn,_that.savedAt,_that.gameMode,_that.replayAvailable,_that.corrupted,_that.corruptionMessage);case _:
+return $default(_that.id,_that.name,_that.mapName,_that.mapSource,_that.turn,_that.savedAt,_that.gameMode,_that.origin,_that.replayAvailable,_that.corrupted,_that.corruptionMessage);case _:
   return orElse();
 
 }
@@ -778,10 +782,10 @@ return $default(_that.id,_that.name,_that.mapName,_that.mapSource,_that.turn,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String mapName, @JsonKey(unknownEnumValue: MapSource.asset)  MapSource mapSource,  int turn, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)  DateTime savedAt,  GameMode gameMode,  bool replayAvailable,  bool corrupted,  String? corruptionMessage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String mapName, @JsonKey(unknownEnumValue: MapSource.asset)  MapSource mapSource,  int turn, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)  DateTime savedAt,  GameMode gameMode, @JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson)  GameSaveOrigin origin,  bool replayAvailable,  bool corrupted,  String? corruptionMessage)  $default,) {final _that = this;
 switch (_that) {
 case _GameSaveIndex():
-return $default(_that.id,_that.name,_that.mapName,_that.mapSource,_that.turn,_that.savedAt,_that.gameMode,_that.replayAvailable,_that.corrupted,_that.corruptionMessage);case _:
+return $default(_that.id,_that.name,_that.mapName,_that.mapSource,_that.turn,_that.savedAt,_that.gameMode,_that.origin,_that.replayAvailable,_that.corrupted,_that.corruptionMessage);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -798,10 +802,10 @@ return $default(_that.id,_that.name,_that.mapName,_that.mapSource,_that.turn,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String mapName, @JsonKey(unknownEnumValue: MapSource.asset)  MapSource mapSource,  int turn, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)  DateTime savedAt,  GameMode gameMode,  bool replayAvailable,  bool corrupted,  String? corruptionMessage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String mapName, @JsonKey(unknownEnumValue: MapSource.asset)  MapSource mapSource,  int turn, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)  DateTime savedAt,  GameMode gameMode, @JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson)  GameSaveOrigin origin,  bool replayAvailable,  bool corrupted,  String? corruptionMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _GameSaveIndex() when $default != null:
-return $default(_that.id,_that.name,_that.mapName,_that.mapSource,_that.turn,_that.savedAt,_that.gameMode,_that.replayAvailable,_that.corrupted,_that.corruptionMessage);case _:
+return $default(_that.id,_that.name,_that.mapName,_that.mapSource,_that.turn,_that.savedAt,_that.gameMode,_that.origin,_that.replayAvailable,_that.corrupted,_that.corruptionMessage);case _:
   return null;
 
 }
@@ -813,7 +817,7 @@ return $default(_that.id,_that.name,_that.mapName,_that.mapSource,_that.turn,_th
 @JsonSerializable()
 
 class _GameSaveIndex extends GameSaveIndex {
-  const _GameSaveIndex({required this.id, required this.name, required this.mapName, @JsonKey(unknownEnumValue: MapSource.asset) this.mapSource = MapSource.asset, required this.turn, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) required this.savedAt, this.gameMode = GameMode.hotSeat, this.replayAvailable = false, this.corrupted = false, this.corruptionMessage}): super._();
+  const _GameSaveIndex({required this.id, required this.name, required this.mapName, @JsonKey(unknownEnumValue: MapSource.asset) this.mapSource = MapSource.asset, required this.turn, @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) required this.savedAt, this.gameMode = GameMode.hotSeat, @JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson) this.origin = GameSaveOrigin.local, this.replayAvailable = false, this.corrupted = false, this.corruptionMessage}): super._();
   factory _GameSaveIndex.fromJson(Map<String, dynamic> json) => _$GameSaveIndexFromJson(json);
 
 @override final  String id;
@@ -823,6 +827,7 @@ class _GameSaveIndex extends GameSaveIndex {
 @override final  int turn;
 @override@JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) final  DateTime savedAt;
 @override@JsonKey() final  GameMode gameMode;
+@override@JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson) final  GameSaveOrigin origin;
 @override@JsonKey() final  bool replayAvailable;
 @override@JsonKey() final  bool corrupted;
 @override final  String? corruptionMessage;
@@ -840,16 +845,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GameSaveIndex&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.mapName, mapName) || other.mapName == mapName)&&(identical(other.mapSource, mapSource) || other.mapSource == mapSource)&&(identical(other.turn, turn) || other.turn == turn)&&(identical(other.savedAt, savedAt) || other.savedAt == savedAt)&&(identical(other.gameMode, gameMode) || other.gameMode == gameMode)&&(identical(other.replayAvailable, replayAvailable) || other.replayAvailable == replayAvailable)&&(identical(other.corrupted, corrupted) || other.corrupted == corrupted)&&(identical(other.corruptionMessage, corruptionMessage) || other.corruptionMessage == corruptionMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GameSaveIndex&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.mapName, mapName) || other.mapName == mapName)&&(identical(other.mapSource, mapSource) || other.mapSource == mapSource)&&(identical(other.turn, turn) || other.turn == turn)&&(identical(other.savedAt, savedAt) || other.savedAt == savedAt)&&(identical(other.gameMode, gameMode) || other.gameMode == gameMode)&&(identical(other.origin, origin) || other.origin == origin)&&(identical(other.replayAvailable, replayAvailable) || other.replayAvailable == replayAvailable)&&(identical(other.corrupted, corrupted) || other.corrupted == corrupted)&&(identical(other.corruptionMessage, corruptionMessage) || other.corruptionMessage == corruptionMessage));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,mapName,mapSource,turn,savedAt,gameMode,replayAvailable,corrupted,corruptionMessage);
+int get hashCode => Object.hash(runtimeType,id,name,mapName,mapSource,turn,savedAt,gameMode,origin,replayAvailable,corrupted,corruptionMessage);
 
 @override
 String toString() {
-  return 'GameSaveIndex(id: $id, name: $name, mapName: $mapName, mapSource: $mapSource, turn: $turn, savedAt: $savedAt, gameMode: $gameMode, replayAvailable: $replayAvailable, corrupted: $corrupted, corruptionMessage: $corruptionMessage)';
+  return 'GameSaveIndex(id: $id, name: $name, mapName: $mapName, mapSource: $mapSource, turn: $turn, savedAt: $savedAt, gameMode: $gameMode, origin: $origin, replayAvailable: $replayAvailable, corrupted: $corrupted, corruptionMessage: $corruptionMessage)';
 }
 
 
@@ -860,7 +865,7 @@ abstract mixin class _$GameSaveIndexCopyWith<$Res> implements $GameSaveIndexCopy
   factory _$GameSaveIndexCopyWith(_GameSaveIndex value, $Res Function(_GameSaveIndex) _then) = __$GameSaveIndexCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String mapName,@JsonKey(unknownEnumValue: MapSource.asset) MapSource mapSource, int turn,@JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) DateTime savedAt, GameMode gameMode, bool replayAvailable, bool corrupted, String? corruptionMessage
+ String id, String name, String mapName,@JsonKey(unknownEnumValue: MapSource.asset) MapSource mapSource, int turn,@JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson) DateTime savedAt, GameMode gameMode,@JsonKey(fromJson: gameSaveOriginFromJson, toJson: gameSaveOriginToJson) GameSaveOrigin origin, bool replayAvailable, bool corrupted, String? corruptionMessage
 });
 
 
@@ -877,7 +882,7 @@ class __$GameSaveIndexCopyWithImpl<$Res>
 
 /// Create a copy of GameSaveIndex
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? mapName = null,Object? mapSource = null,Object? turn = null,Object? savedAt = null,Object? gameMode = null,Object? replayAvailable = null,Object? corrupted = null,Object? corruptionMessage = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? mapName = null,Object? mapSource = null,Object? turn = null,Object? savedAt = null,Object? gameMode = null,Object? origin = null,Object? replayAvailable = null,Object? corrupted = null,Object? corruptionMessage = freezed,}) {
   return _then(_GameSaveIndex(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -886,7 +891,8 @@ as String,mapSource: null == mapSource ? _self.mapSource : mapSource // ignore: 
 as MapSource,turn: null == turn ? _self.turn : turn // ignore: cast_nullable_to_non_nullable
 as int,savedAt: null == savedAt ? _self.savedAt : savedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,gameMode: null == gameMode ? _self.gameMode : gameMode // ignore: cast_nullable_to_non_nullable
-as GameMode,replayAvailable: null == replayAvailable ? _self.replayAvailable : replayAvailable // ignore: cast_nullable_to_non_nullable
+as GameMode,origin: null == origin ? _self.origin : origin // ignore: cast_nullable_to_non_nullable
+as GameSaveOrigin,replayAvailable: null == replayAvailable ? _self.replayAvailable : replayAvailable // ignore: cast_nullable_to_non_nullable
 as bool,corrupted: null == corrupted ? _self.corrupted : corrupted // ignore: cast_nullable_to_non_nullable
 as bool,corruptionMessage: freezed == corruptionMessage ? _self.corruptionMessage : corruptionMessage // ignore: cast_nullable_to_non_nullable
 as String?,

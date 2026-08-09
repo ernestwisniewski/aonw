@@ -226,12 +226,12 @@ void main() {
       expect(sent.requestSnapshot, isFalse);
       expect(sent.command, wire);
       expect(sent.clientMessageId, 'command-session-1');
-
       connection.add(
         _message(
           offset: 9,
           ack: WireCommandAck(
             matchId: 'match_1',
+            clientMessageId: 'command-session-1',
             accepted: true,
             offset: 9,
             snapshot: snapshotCodec.toWire(

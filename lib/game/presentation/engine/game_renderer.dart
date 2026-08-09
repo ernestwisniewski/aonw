@@ -19,6 +19,7 @@ import 'package:aonw/game/presentation/engine/game_renderer_state_sync_handler.d
 import 'package:aonw/game/presentation/engine/game_renderer_transition_handler.dart';
 import 'package:aonw/game/presentation/engine/game_scene_builder.dart';
 import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
+import 'package:aonw/game/presentation/engine/projected_transition_presenter.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_component.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_option.dart';
@@ -250,21 +251,18 @@ class GameRenderer extends HexWorld
   bool get moveCameraForUnitMovement =>
       _cameraSettings.moveCameraForUnitMovement;
 
-  set moveCameraForUnitMovement(bool value) {
-    _cameraSettings.moveCameraForUnitMovement = value;
-  }
+  set moveCameraForUnitMovement(bool value) =>
+      _cameraSettings.moveCameraForUnitMovement = value;
 
   bool get followUnitMovementCamera => _cameraSettings.followUnitMovementCamera;
 
-  set followUnitMovementCamera(bool value) {
-    _cameraSettings.followUnitMovementCamera = value;
-  }
+  set followUnitMovementCamera(bool value) =>
+      _cameraSettings.followUnitMovementCamera = value;
 
   bool get followEnemyUnitCamera => _cameraSettings.followEnemyUnitCamera;
 
-  set followEnemyUnitCamera(bool value) {
-    _cameraSettings.followEnemyUnitCamera = value;
-  }
+  set followEnemyUnitCamera(bool value) =>
+      _cameraSettings.followEnemyUnitCamera = value;
 
   bool get cinematicCameraEnabled => _cameraSettings.cinematicCameraEnabled;
 
@@ -293,9 +291,8 @@ class GameRenderer extends HexWorld
     );
   }
 
-  Future<void> handleEffects(Iterable<RendererEffect> effects) {
-    return _transitionHandler.enqueue(() => _handleEffectsNow(effects));
-  }
+  Future<void> handleEffects(Iterable<RendererEffect> effects) =>
+      _transitionHandler.enqueue(() => _handleEffectsNow(effects));
 
   Future<void> handleEffect(RendererEffect effect) => handleEffects([effect]);
 
@@ -314,6 +311,11 @@ class GameRenderer extends HexWorld
         batch.done.ignore();
       }
       return;
+    }
+    final initialEffectFlush = _lifecycleHandler.pendingInitialEffectFlush;
+    if (initialEffectFlush != null) {
+      await initialEffectFlush;
+      _ensureRendererActive();
     }
     await _effectDispatcher.handleEffects(
       pending,

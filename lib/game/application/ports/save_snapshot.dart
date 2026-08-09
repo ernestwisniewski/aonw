@@ -268,6 +268,7 @@ GameSnapshotMetadata _metadataFromSave(GameSave save) => GameSnapshotMetadata(
   name: save.name,
   world: WorldReference(name: save.mapName, source: save.mapSource),
   savedAtUtc: save.savedAt,
+  origin: save.origin,
   camera: GameSnapshotCamera(
     x: save.camera.x,
     y: save.camera.y,

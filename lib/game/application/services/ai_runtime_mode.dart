@@ -32,7 +32,6 @@ bool isLocalSinglePlayerAiRuntimeForParticipants({
   required Iterable<Player> participants,
   required NetworkSession? networkSession,
 }) {
-  if (gameMode != GameMode.multiplayer) return false;
   if (!shouldRunLocalAiForMode(
     gameMode: gameMode,
     saveId: saveId,
@@ -40,6 +39,18 @@ bool isLocalSinglePlayerAiRuntimeForParticipants({
   )) {
     return false;
   }
+
+  return hasLocalSinglePlayerParticipants(
+    gameMode: gameMode,
+    participants: participants,
+  );
+}
+
+bool hasLocalSinglePlayerParticipants({
+  required GameMode gameMode,
+  required Iterable<Player> participants,
+}) {
+  if (gameMode != GameMode.multiplayer) return false;
 
   var humanCount = 0;
   var aiCount = 0;

@@ -46,7 +46,6 @@ abstract final class UnitMovePreviewEntryBuilder {
       targetRow: queued.targetRow,
       totalCost: queued.steps.last.cumulativeCost,
       availableMovementPoints: unit.movementPoints,
-      canSpendTurnEnteringFirstStep: unit.movementPoints > 0,
       steps: queued.steps,
     ).remainingFromStepIndex(travelled);
     return _entry(

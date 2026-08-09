@@ -42,6 +42,7 @@ void main() {
       offset: 4,
       ack: WireCommandAck(
         matchId: 'match_1',
+        clientMessageId: 'command_1',
         accepted: true,
         offset: 4,
         snapshot: const WireSnapshot(
@@ -58,6 +59,7 @@ void main() {
     final movements = restored.ack!.movementExecutions;
 
     expect(restored.serverMessageId, 'message_2');
+    expect(restored.ack!.clientMessageId, 'command_1');
     expect(movements.values.single.steps.last.cumulativeCost, 2);
     expect(movements, _movementExecutions());
     expect(
