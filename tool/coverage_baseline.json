@@ -9,18 +9,18 @@
             "found": 192
           },
           "lines": {
-            "hit": 11804,
-            "found": 12676
+            "hit": 11814,
+            "found": 12670
           }
         },
         "domain": {
           "files": {
-            "hit": 374,
-            "found": 386
+            "hit": 384,
+            "found": 395
           },
           "lines": {
-            "hit": 13180,
-            "found": 15485
+            "hit": 13864,
+            "found": 16075
           }
         },
         "map": {
@@ -29,18 +29,18 @@
             "found": 7
           },
           "lines": {
-            "hit": 160,
-            "found": 169
+            "hit": 163,
+            "found": 172
           }
         },
         "protocol": {
           "files": {
-            "hit": 10,
-            "found": 11
+            "hit": 12,
+            "found": 12
           },
           "lines": {
-            "hit": 368,
-            "found": 430
+            "hit": 419,
+            "found": 460
           }
         },
         "util": {
@@ -260,12 +260,12 @@
         },
         "multiplayer": {
           "files": {
-            "hit": 67,
-            "found": 67
+            "hit": 68,
+            "found": 68
           },
           "lines": {
-            "hit": 3101,
-            "found": 3325
+            "hit": 3146,
+            "found": 3348
           }
         },
         "observability": {
