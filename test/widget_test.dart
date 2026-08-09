@@ -289,13 +289,13 @@ void main() {
     expect(find.text('Unavailable in the alpha release.'), findsNothing);
   });
 
-  testWidgets('main menu shows TestFlight alpha version metadata', (
+  testWidgets('main menu shows stable version metadata', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const ProviderScope(child: HexApp()));
     await tester.pump();
 
-    expect(find.text('ALPHA v0.1.0+1'), findsOneWidget);
+    expect(find.text('STABLE v0.1.0+1'), findsOneWidget);
   });
 
   testWidgets('main menu groups developer tools under Developer', (

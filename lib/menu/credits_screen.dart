@@ -28,7 +28,7 @@ class CreditsScreen extends ConsumerWidget {
     final releaseInfo = ref.watch(appReleaseInfoProvider);
     final versionLabel = releaseInfo.maybeWhen(
       data: (info) => info.displayLabel,
-      orElse: () => AppReleaseChannel.alpha.label,
+      orElse: () => AppReleaseChannel.stable.label,
     );
     void close() => context.go('/');
     return MenuGamepadInputBinding(

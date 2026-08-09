@@ -864,7 +864,7 @@ class _VersionTag extends ConsumerWidget {
     final releaseInfo = ref.watch(appReleaseInfoProvider);
     final label = releaseInfo.maybeWhen(
       data: (info) => info.displayLabel,
-      orElse: () => AppReleaseChannel.alpha.label,
+      orElse: () => AppReleaseChannel.stable.label,
     );
     return Text(
       label,

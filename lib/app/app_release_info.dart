@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 enum AppReleaseChannel {
-  alpha('ALPHA');
+  stable('STABLE');
 
   const AppReleaseChannel(this.label);
 
@@ -15,7 +15,7 @@ class AppReleaseInfo {
   const AppReleaseInfo({
     required this.version,
     required this.buildNumber,
-    this.channel = AppReleaseChannel.alpha,
+    this.channel = AppReleaseChannel.stable,
   });
 
   final String version;
