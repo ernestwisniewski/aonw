@@ -118,7 +118,7 @@
     },
     "root_test": {
       "sourceLines": {
-        "test/game/game_hud_test.dart": 8046,
+        "test/game/game_hud_test.dart": 8044,
         "test/game/game_providers_test.dart": 2709,
         "test/game/game_renderer_keyboard_test.dart": 3582,
         "test/support/reducer_parity_fixture.dart": 3252
@@ -132,7 +132,7 @@
         "test/support/reducer_parity_fixture_guard_test.dart": 138
       },
       "callableLines": {
-        "test/game/game_hud_test.dart": 7709,
+        "test/game/game_hud_test.dart": 7707,
         "test/game/game_providers_test.dart": 2530,
         "test/game/game_renderer_keyboard_test.dart": 3482,
         "test/support/reducer_parity_fixture.dart": 2822
