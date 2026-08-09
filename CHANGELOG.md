@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 1.1.11 - 2026-08-09
+## 1.1.12 - 2026-08-09
 
 - Added Dravonia, a new four-player map with balanced starting regions,
   strategic resources, luxuries, and contested objectives.
