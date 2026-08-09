@@ -22,8 +22,8 @@ final class GameMultiplayerCompatibilityBoundary extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final access = multiplayerSaveAccessOrFailClosed(
-      ref.watch(multiplayerSaveAccessStateProvider(saveId)),
+    final access = multiplayerSaveRouteAccessOrFailClosed(
+      ref.watch(multiplayerSaveAccessDecisionProvider(saveId)),
     );
     return _guardedChild(access);
   }

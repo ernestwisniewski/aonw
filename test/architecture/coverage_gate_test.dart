@@ -489,6 +489,7 @@ final class _CoverageFixture {
     );
     final fixture = _CoverageFixture._(directory)
       .._initializeRepository()
+      ..writeSource('tool/coverage_gate/main.dart.txt', canonicalCoverageMain)
       ..writePrimarySource();
     if (manualMainContents != null) {
       fixture.writeSource('lib/main.dart', manualMainContents);
@@ -521,6 +522,7 @@ final class _CoverageFixture {
         'add',
         'tool/coverage_policy.json',
         'tool/coverage_baseline.json',
+        'tool/coverage_gate/main.dart.txt',
       ])
       .._git(const ['commit', '--quiet', '-m', 'Add coverage policy'])
       ..captureBaselineRef();
@@ -606,9 +608,7 @@ end_of_record
   }
 
   void writeRawLcov(String contents) {
-    final report = File('${directory.path}/coverage/root.lcov.info');
-    report.parent.createSync(recursive: true);
-    report.writeAsStringSync(contents.trimLeft());
+    writeSource('coverage/root.lcov.info', contents.trimLeft());
   }
 
   void commitCurrentBaselineAndSources(String message) {

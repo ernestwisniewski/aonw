@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:aonw/game/application/ports/auth_token.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/network_connection.dart';
@@ -91,7 +93,7 @@ void main() {
   );
 
   testWidgets(
-    'update and unavailable do not block local multi-named single-player save',
+    'local save stays mounted during refresh despite multiplayer status',
     (tester) async {
       for (final access in [
         MultiplayerAccessState.updateRequired,
@@ -119,6 +121,25 @@ void main() {
         expect(repository.loadCount, 1, reason: '$access local read');
         expect(find.byKey(_childKey), findsOneWidget, reason: '$access route');
         expect(NewGameFlow.singlePlayer.gameMode, GameMode.multiplayer);
+
+        final reloadGate = Completer<void>();
+        repository.pauseNextLoadUntil(reloadGate.future);
+        container.invalidate(gameSaveSnapshotProvider(_saveId));
+        await tester.pump();
+
+        expect(
+          find.byKey(_childKey),
+          findsOneWidget,
+          reason: '$access refresh',
+        );
+
+        reloadGate.complete();
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(_childKey),
+          findsOneWidget,
+          reason: '$access reloaded',
+        );
       }
     },
   );
@@ -227,6 +248,9 @@ final class _RecordingGameRepository implements GameRepository {
 
   final GameSave gameSave;
   int loadCount = 0;
+  Future<void>? _nextLoadGate;
+
+  void pauseNextLoadUntil(Future<void> gate) => _nextLoadGate = gate;
 
   @override
   String defaultSaveName(String mapDisplayName, DateTime now) => mapDisplayName;
@@ -243,6 +267,9 @@ final class _RecordingGameRepository implements GameRepository {
   @override
   Future<CanonicalGameSnapshot> load(String saveId) async {
     loadCount++;
+    final gate = _nextLoadGate;
+    _nextLoadGate = null;
+    if (gate != null) await gate;
     return GameSnapshotFactory.create(save: gameSave);
   }
 

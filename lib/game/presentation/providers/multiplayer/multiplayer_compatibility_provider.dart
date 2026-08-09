@@ -157,6 +157,20 @@ MultiplayerAccessState multiplayerSaveAccessOrFailClosed(
   };
 }
 
+MultiplayerAccessState multiplayerSaveRouteAccessOrFailClosed(
+  AsyncValue<MultiplayerSaveAccessDecision> decision,
+) {
+  if (decision.isLoading && !decision.hasError && decision.hasValue) {
+    final previous = decision.requireValue;
+    if (!previous.networkBacked) return previous.state;
+  }
+  return switch (decision) {
+    AsyncData(:final value) => value.state,
+    AsyncLoading() => MultiplayerAccessState.pending,
+    AsyncError() => MultiplayerAccessState.unavailable,
+  };
+}
+
 bool networkBackedSaveOrFalse(AsyncValue<bool> origin) {
   return switch (origin) {
     AsyncData(:final value) => value,

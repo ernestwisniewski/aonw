@@ -428,6 +428,20 @@ void main() {
     }
   });
 
+  test('Linux Steam container trusts its checkout before Git inspection', () {
+    final workflow = File(
+      '.github/workflows/linux-steam-build.yml',
+    ).readAsStringSync();
+    const trustWorkspace =
+        r'git config --global --add safe.directory "$GITHUB_WORKSPACE"';
+
+    expect(workflow, contains(trustWorkspace));
+    expect(
+      workflow.indexOf(trustWorkspace),
+      lessThan(workflow.indexOf('Verify requested source identity')),
+    );
+  });
+
   test('local Linux packaging uses the workflow API scanner', () {
     final packaging = _targetBody(
       makefile,

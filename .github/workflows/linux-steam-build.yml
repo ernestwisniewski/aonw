@@ -66,6 +66,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
+      - name: Trust checkout workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Verify requested source identity
         shell: bash
         env:

@@ -1,8 +1,5 @@
-const canonicalCoverageMain = """import 'package:aonw/app/app.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io';
 
-void main() {
-  runApp(const ProviderScope(child: HexApp()));
-}
-""";
+final canonicalCoverageMain = File(
+  'tool/coverage_gate/main.dart.txt',
+).readAsStringSync();
