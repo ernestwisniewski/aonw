@@ -22,11 +22,11 @@ economy, and movement reset.
 
 | Parameter | Source | Meaning |
 | --- | --- | --- |
-| Valid domination tiles | `MapData.tiles` with passable movement cost | Percent denominator; ocean, lake, and mountain do not count |
+| Valid domination tiles | `MapTileCatalog.tileViews` (normally canonical `WorldMap`) with passable movement cost | Percent denominator; ocean, lake, and mountain do not count |
 | Controlled tiles | Unique `GameCity.territoryHexes` owned by the player | City center + controlled city hexes on valid tiles |
 | Control percent | `controlledTiles / validTiles * 100` | Current percent of map controlled by the player |
 | Required percent | `VictoryRules.dominationControlPercent` | Threshold required to start/keep the streak |
-| Hold turns | `GameRuntimeState.dominationHoldTurnsByPlayerId` | Consecutive full turns where the player was at or above threshold |
+| Hold turns | `DomainState.dominationHoldTurnsByPlayerId` | Consecutive full turns where the player was at or above threshold |
 | Required hold | `VictoryRules.dominationHoldTurns` | Turns required to hold the threshold, based on pace profile |
 
 The streak grows only when a player ends a full turn at or above the threshold.

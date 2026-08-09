@@ -12,7 +12,8 @@ Serverpod multiplayer client.
 - `NetworkGameRepository` maps match list/create/load/delete calls onto
   Serverpod endpoints, including snapshot reads for bootstrap and reconnect.
 - `LiveEventSubscription` owns the active Serverpod two-way match stream for
-  events, match updates, snapshot resync, and command ACKs.
+  events, match updates, snapshot resync, command ACKs, and authenticated
+  heartbeat renewal of the server-owned presence lease.
 - `LiveEventSubscription` implements the application-owned
   `LiveMultiplayerEvents` port. The application-owned
   `LiveWireCommandDispatcher` routes commands through its active handle, with

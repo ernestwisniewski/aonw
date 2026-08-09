@@ -42,7 +42,10 @@ A city can start a wonder only when all gates pass:
 
 Normal completion resolves in the core turn pipeline after city production and
 before research processing. Rush completion uses the same claim/refund semantics
-from the app reducer and `PersistentCityProductionResolver`.
+through `DomainCityProductionResolver` and
+`RushProductionCommandResolver`; both turn processing and rush completion
+delegate the final race, refund, and effect resolution to
+`WonderCompletionResolver`.
 
 If multiple players complete the same wonder in the same turn, the first player
 in the established processing order wins. After a claim, every losing queue for

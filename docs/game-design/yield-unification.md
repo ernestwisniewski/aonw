@@ -230,5 +230,5 @@ never combine a fresh tile breakdown with cached economy.
 | Risk | Signal | Possible response |
 | --- | --- | --- |
 | Hex assessment feels less "rich" | Many hexes have lower gold/defense preview than old `TileYieldRules` | Add a separate strategic assessment score instead of pretending it is city yield |
-| AI likes certain starts more or less | Basic strategy site-yield evaluation shifts | Tune `CitySiteScorer`, do not return to a second yield table |
+| AI likes certain starts more or less | Basic strategy site-yield evaluation shifts | Tune `AiCitySiteScorer`, do not return to a second yield table |
 | Worker recommends too much food | Food weight 1000 dominates | Change weights in `WorkerImprovementScoreBalance` |

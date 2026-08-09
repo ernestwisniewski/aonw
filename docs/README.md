@@ -21,12 +21,14 @@ behavior unless they explicitly call out historical context or future work.
 
 | Area | Responsibility |
 | --- | --- |
-| `packages/aonw_core/` | Shared Dart-only game rules, protocol models, and AI planning. |
-| `lib/game/domain/` | Client-side domain aggregates, save-state reducers, commands, events, and value objects. |
+| `packages/aonw_core/` | Authoritative Dart-only game rules, canonical state and snapshots, protocol models, and AI planning. |
+| `packages/aonw_server_client/` | Generated, app-independent Serverpod client surface; depends only on the shared core. |
+| `lib/game/domain/` | Client session and interaction composition plus transitional compatibility reducers; canonical game rules live in `aonw_core`. |
 | `lib/game/application/` | Use cases and ports around persistence, logging, clocks, ids, and transport. |
 | `lib/game/infrastructure/` | Persistence, migrations, local transport, and system adapters. |
 | `lib/game/presentation/` | Riverpod providers, Flutter UI, Flame rendering, view models, and user-facing formatting. |
-| `lib/map/` | Map data, loading, topology, terrain rendering, and editor-facing map support. |
+| `lib/api/` | Authentication, API facades, session handling, and live transport adapters around the generated client. |
+| `lib/map/` | Client map loading/integration, terrain rendering, and editor-facing support; the canonical world model lives in `aonw_core`. |
 | `server/lib/` | Serverpod endpoints, Auth Core adapters, multiplayer services, ORM persistence, and realtime streams. |
 
 ```mermaid
@@ -39,22 +41,34 @@ flowchart LR
   Presentation["lib/game/presentation"]
   Map["lib/map"]
   Api["lib/api"]
+  Client["packages/aonw_server_client"]
 
   Server --> Core
+  Client --> Core
+  Api --> Client
+  Api --> Core
+  Api --> Application
+  Api --> Domain
+  Presentation -. "composition root only" .-> Api
   Presentation --> Application
   Presentation --> Domain
   Presentation --> Map
+  Presentation -. "composition root only" .-> Infrastructure
+  Application --> Core
   Application --> Domain
+  Infrastructure --> Core
   Infrastructure --> Application
   Infrastructure --> Domain
   Domain --> Core
-  Domain --> Map
-  Api --> Core
 ```
 
 Architecture boundaries are enforced by
-`test/architecture/layer_boundaries_test.dart`. When a cross-layer dependency is
-intentional, update this document and the architecture test in the same change.
+`test/architecture/layer_boundaries_test.dart`. Presentation may bind concrete
+infrastructure repositories and API adapters only in
+`lib/game/presentation/providers/session/repository_providers.dart`; other
+presentation code depends on application ports. When a cross-layer dependency
+is intentional, update this document and the architecture test in the same
+change.
 
 ## Architecture Decisions
 

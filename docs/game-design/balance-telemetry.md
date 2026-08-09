@@ -25,7 +25,7 @@ Telemetry works on a sequence of `BalanceTelemetryTurnSample`.
 | Field | Meaning |
 | --- | --- |
 | `turn` | Snapshot turn number |
-| `state` | `PersistentGameState` after that turn or simulation step |
+| `state` | Canonical `DomainState` after that turn or simulation step |
 | `events` | Optional domain events from that turn |
 | `meaningfulCommandsByPlayerId` | Count of player commands that were real decisions, excluding submit/end turn alone |
 | `objectiveActionByPlayerId` | Optional objective-aware `Action` sample: active `GameObjectiveAdvice` and the manual decision type routing would lead to |
@@ -272,7 +272,8 @@ Optionally pass another directory:
 dart run tool/economy_simulation.dart --out ../../build/reports/custom-ai-telemetry
 ```
 
-The generator has smoke test `test/ai/economy_simulation_tool_test.dart`. The
+The generator has smoke test
+`packages/aonw_core/test/ai/economy_simulation_tool_test.dart`. The
 test runs the CLI into a temporary directory and checks that the report still
 contains presets `standard60`, `normal90`, `long120`, `Final pace` / `End
 targets`, the `Score Chaser Objective Action` section, the `Score Comeback

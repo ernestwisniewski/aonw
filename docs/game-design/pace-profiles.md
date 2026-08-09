@@ -12,10 +12,10 @@ Main code sources:
 | Pace model | `packages/aonw_core/lib/game/domain/match_rules/pace_balance.dart` |
 | Match rules | `packages/aonw_core/lib/game/domain/match_rules/*` |
 | Research | `research_cost_calculator.dart`, `research_turn_processor.dart`, `research_overflow_rules.dart` |
-| Production | `city_production_queue.dart`, `city_turn_processor.dart`, `persistent_city_production_resolver.dart` |
+| Production | `city_production_queue.dart`, `city_turn_processor.dart`, `domain_city_production_resolver.dart`, `rush_production_command_resolver.dart` |
 | Growth | `city_growth_rules.dart`, `city_economy_breakdown.dart` |
 | Objectives | `objective/game_objective.dart` |
-| Turn flow | `persistent_turn_economy_processor.dart`, local transport, server finalizer |
+| Turn flow | `canonical_turn_pipeline.dart`, `domain_turn_economy_processor.dart`, local and server engine adapters |
 | UI/ETA | technology panel, city production panel, city yield breakdown |
 | Domination warnings | `domination_progress_calculator.dart`, `hud_victory_status_summary.dart` |
 
@@ -161,11 +161,11 @@ when no active hold exists.
 
 | Layer | Status |
 | --- | --- |
-| Local single-command reducers | `GameCommandContext.paceBalance` from the save |
-| Local simultaneous-turn finalizer | `save.matchRules.paceBalance` |
-| Server turn finalizer | `save.ruleset -> MatchRules.paceBalance` |
-| Server city/research commands | Pace from the match's saved ruleset |
-| Core AI planning/simulation | `GameRuleset.paceBalance` |
+| Canonical player commands | `GameEngineContext.ruleset.paceBalance`, derived by the local or server adapter from `snapshot.domain.matchRules.paceBalance` |
+| Canonical turn finalization | `CanonicalTurnPipeline` derives pace from `snapshot.domain.matchRules.paceBalance` |
+| Legacy client reducer compatibility | `GameCommandContext.paceBalance` is derived from the loaded save while migration remains in progress |
+| Server commands and finalization | `ServerCommandReducer` derives pace from the canonical snapshot's `DomainState.matchRules` |
+| Core AI planning/simulation | `GameRuleset.paceBalance`, seeded from the active match rules |
 | Cost and ETA UI | Research panel, city production panel, city yield breakdown |
 | Objective tracker/HUD | Flexible guidance targets scaled through `PaceBalance.objectiveTarget(...)` |
 | Victory HUD | Domination thresholds and warning cadence depend on pace/hold window |
