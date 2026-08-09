@@ -52,6 +52,30 @@ void main() {
     expect(find.text('REPLAY'), findsOneWidget);
   });
 
+  testWidgets('prefixes multiplayer save names with online marker', (
+    tester,
+  ) async {
+    await _pumpLoadGameScreen(
+      tester,
+      _FakeGameRepository(
+        saves: [
+          GameSaveIndex(
+            id: 'online_save',
+            name: 'Ranked match',
+            mapName: 'verdantia',
+            mapSource: MapSource.asset,
+            turn: 5,
+            savedAt: DateTime(2026, 4, 25, 9),
+            gameMode: GameMode.multiplayer,
+          ),
+        ],
+      ),
+    );
+
+    expect(find.text('[online] Ranked match'), findsOneWidget);
+    expect(find.text('Ranked match'), findsNothing);
+  });
+
   testWidgets('opens replay route for playable saves', (tester) async {
     await _pumpLoadGameScreen(
       tester,

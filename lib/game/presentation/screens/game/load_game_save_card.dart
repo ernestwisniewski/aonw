@@ -51,7 +51,9 @@ class _SaveCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              save.name,
+                              save.gameMode.isMultiplayer
+                                  ? '[online] ${save.name}'
+                                  : save.name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GameUiTheme.cardTitle,
