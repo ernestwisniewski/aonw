@@ -19,11 +19,9 @@ import 'package:flutter/services.dart';
 
 part 'end_turn_button_content.dart';
 part 'end_turn_button_action_menu.dart';
+part 'end_turn_button_action_thumbnail.dart';
 part 'end_turn_button_painter.dart';
 part 'end_turn_button_visuals.dart';
-
-/// Visual state fingerprint shared by rendering and haptics.
-enum _EndTurnButtonMode { waiting, ready, action }
 
 class EndTurnButton extends StatefulWidget {
   static const double actionSegmentWidthCompact = 42;

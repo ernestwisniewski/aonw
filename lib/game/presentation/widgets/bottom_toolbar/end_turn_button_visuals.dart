@@ -1,5 +1,8 @@
 part of 'end_turn_button.dart';
 
+/// Visual state fingerprint shared by rendering and haptics.
+enum _EndTurnButtonMode { waiting, ready, action }
+
 /// Resolved colors / labels for one mode. Centralises the per-state knobs that
 /// were previously sprinkled through [EndTurnButton.build].
 class _EndTurnVisuals {
