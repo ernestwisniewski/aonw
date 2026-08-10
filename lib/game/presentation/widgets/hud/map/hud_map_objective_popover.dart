@@ -88,7 +88,7 @@ class _ObjectiveInspectionPopover extends StatelessWidget {
                     children: [
                       _ObjectiveHeader(progress: progress, onClose: onClose),
                       const SizedBox(height: 10),
-                      _MapObjectiveInspectionSection(progress: progress),
+                      HudMapObjectiveInspectionSection(progress: progress),
                     ],
                   ),
                 ),

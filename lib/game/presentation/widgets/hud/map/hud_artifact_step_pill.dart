@@ -1,7 +1,14 @@
-part of 'hud_map_inspection_menu.dart';
+import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw/shared/theme/surface_elevation.dart';
+import 'package:flutter/material.dart';
 
-class _ArtifactStepPill extends StatelessWidget {
-  const _ArtifactStepPill({required this.icon, required this.label});
+class HudArtifactStepPill extends StatelessWidget {
+  const HudArtifactStepPill({
+    required this.icon,
+    required this.label,
+    super.key,
+  });
 
   final GameIconData icon;
   final String label;

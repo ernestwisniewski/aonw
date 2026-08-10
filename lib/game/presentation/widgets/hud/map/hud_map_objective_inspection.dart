@@ -1,7 +1,14 @@
-part of 'hud_map_inspection_menu.dart';
+import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/widgets/hud/map/hud_map_inspection_components.dart';
+import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw/shared/theme/surface_elevation.dart';
+import 'package:aonw_core/game/domain/objective.dart';
+import 'package:flutter/material.dart';
 
-class _MapObjectiveInspectionSection extends StatelessWidget {
-  const _MapObjectiveInspectionSection({required this.progress});
+class HudMapObjectiveInspectionSection extends StatelessWidget {
+  const HudMapObjectiveInspectionSection({required this.progress, super.key});
 
   final MapObjectiveProgress progress;
 
@@ -11,7 +18,7 @@ class _MapObjectiveInspectionSection extends StatelessWidget {
     final definition = progress.definition;
     return Padding(
       padding: const EdgeInsets.only(top: 8),
-      child: _Section(
+      child: HudMapInspectionSection(
         icon: GameIcons.victory,
         title: l10n.mapInspectionObjectiveTitle,
         child: Column(

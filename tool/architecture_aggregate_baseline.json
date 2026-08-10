@@ -95,7 +95,6 @@
         "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 1711,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 1371,
         "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 2468,
-        "lib/game/presentation/widgets/hud/map/hud_map_inspection_menu.dart": 1026,
         "lib/game/presentation/widgets/hud/selection/hud_selection_actions.dart": 1436
       },
       "cyclomaticComplexity": {
