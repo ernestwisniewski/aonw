@@ -454,7 +454,6 @@
         "lib/game/presentation/input/gamepad/gamepad_input_router.dart": 556,
         "lib/game/presentation/screens/game/game_screen.dart": 809,
         "lib/game/presentation/widgets/bottom_toolbar/end_turn_button.dart": 409,
-        "lib/game/presentation/widgets/city/city_production_dialog_view_model.dart": 368,
         "lib/game/presentation/widgets/hud/game_hud.dart": 397,
         "lib/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart": 604,
         "lib/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart": 395,

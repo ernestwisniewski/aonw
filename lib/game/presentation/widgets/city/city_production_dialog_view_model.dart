@@ -17,6 +17,7 @@ import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 part 'city_production_dialog_view_model_helpers.dart';
+part 'city_production_dialog_view_model_queries.dart';
 
 class CityProductionDialogViewModel {
   const CityProductionDialogViewModel({
@@ -42,50 +43,6 @@ class CityProductionDialogViewModel {
   final List<CityProductionItem> units;
   final List<CityProductionItem> projects;
   final List<CitySpecializationItem> specializations;
-  bool get hasItems =>
-      buildings.isNotEmpty ||
-      futureBuildings.isNotEmpty ||
-      wonders.isNotEmpty ||
-      units.isNotEmpty ||
-      projects.isNotEmpty ||
-      specializations.isNotEmpty;
-
-  CityProductionItem? get activeItem {
-    for (final item in [
-      ...buildings,
-      ...futureBuildings,
-      ...wonders,
-      ...units,
-      ...projects,
-    ]) {
-      if (item.active) return item;
-    }
-    return null;
-  }
-
-  CityProductionItem? itemForBuilding(CityBuildingType? buildingType) {
-    if (buildingType == null) return null;
-    for (final item in [...buildings, ...futureBuildings]) {
-      if (item.buildingType == buildingType) return item;
-    }
-    return null;
-  }
-
-  CityProductionItem? itemForUnit(GameUnitType? unitType) {
-    if (unitType == null) return null;
-    for (final item in units) {
-      if (item.unitType == unitType) return item;
-    }
-    return null;
-  }
-
-  CityProductionItem? itemForWonder(WonderType? wonderType) {
-    if (wonderType == null) return null;
-    for (final item in wonders) {
-      if (item.wonderType == wonderType) return item;
-    }
-    return null;
-  }
 
   static CityProductionDialogViewModel from(
     GameCity city, {
