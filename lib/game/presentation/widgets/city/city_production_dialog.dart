@@ -29,6 +29,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 part 'city_production_panel_details.dart';
+part 'city_production_panel_view.dart';
 
 class CityProductionDialog extends StatelessWidget {
   final GameCity city;
@@ -202,13 +203,35 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final viewData = _viewDataFor(context);
+
+    return GamepadPanelInputListener(
+      input: widget.gamepadInputListenable,
+      onNavigate: (direction) =>
+          _moveSelection(viewData.gamepadChoices, direction),
+      onConfirm: () => _confirmSelected(viewData.gamepadChoices),
+      onDetails: () => _showSelectedDetails(viewData.gamepadChoices),
+      onCancel: _handleGamepadCancel,
+      onInputActive: _showGamepadSelection,
+      child: _CityProductionPanelView(
+        panel: widget,
+        data: viewData,
+        actions: (
+          onBuildingSortModeChanged: _setBuildingSortMode,
+          onBuildingDetails: _showBuildingDetails,
+          onUnitDetails: _showUnitDetails,
+          onWonderDetails: _showWonderDetails,
+          onCloseBuildingDetails: _closeBuildingDetails,
+          onCloseUnitDetails: _closeUnitDetails,
+          onCloseWonderDetails: _closeWonderDetails,
+        ),
+      ),
+    );
+  }
+
+  _CityProductionPanelViewData _viewDataFor(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final compact = MediaQuery.sizeOf(context).width < 480;
     final viewModel = _viewModelFor(l10n);
-    final detailsBuildingItem = viewModel.itemForBuilding(_detailsBuildingType);
-    final detailsUnitItem = viewModel.itemForUnit(_detailsUnitType);
-    final detailsWonderItem = viewModel.itemForWonder(_detailsWonderType);
-    final activeItem = viewModel.activeItem;
     final gamepadChoices = CityProductionGamepadNavigation.choicesFor(
       viewModel: viewModel,
       buildingSortMode: _buildingSortMode,
@@ -221,153 +244,21 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
       onStartProject: widget.onStartProject,
       onSetSpecialization: widget.onSetSpecialization,
     );
-    final selectedItemKey = CityProductionGamepadNavigation.selectedKeyFor(
-      gamepadChoices,
-      _selectedItemKey,
-    );
-
-    return GamepadPanelInputListener(
-      input: widget.gamepadInputListenable,
-      onNavigate: (direction) => _moveSelection(gamepadChoices, direction),
-      onConfirm: () => _confirmSelected(gamepadChoices),
-      onDetails: () => _showSelectedDetails(gamepadChoices),
-      onCancel: _handleGamepadCancel,
-      onInputActive: _showGamepadSelection,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 760,
-          maxHeight:
-              widget.maxHeight ?? MediaQuery.sizeOf(context).height * 0.82,
-        ),
-        child: GameModalScaffold(
-          surfaceKey: const Key('cityProductionPanel.surface'),
-          size: GameModalSize.wide,
-          showCornerDiamonds: false,
-          contentPadding: EdgeInsets.zero,
-          centerInAvailableSpace: false,
-          scrollable: false,
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CityProductionHeader(
-                cityName: viewModel.cityName,
-                title: l10n.productionTitle,
-                productionPerTurnLabel: l10n.productionPerTurn(
-                  viewModel.productionPerTurn,
-                ),
-                playerGold: widget.playerGold,
-                closeTooltip: l10n.closeAction,
-                onClose: widget.onClose,
-                compact: compact,
-              ),
-              if (activeItem != null)
-                CityActiveProductionBanner(
-                  title: activeItem.title,
-                  continuous: activeItem.continuous,
-                  turnsRemaining: activeItem.turnsRemaining,
-                  eta: activeItem.effectiveEta,
-                  totalCost: activeItem.totalCost,
-                  investedProduction: activeItem.investedProduction,
-                  progress: activeItem.progress,
-                  metaLabels: activeItem.metaLabels,
-                  canBeRushed: activeItem.canBeRushed,
-                  rushGoldCost: activeItem.rushGoldCost,
-                  playerGold: widget.playerGold,
-                  onRushProduction: widget.onRushProduction,
-                ),
-              Flexible(
-                child: viewModel.hasItems
-                    ? Stack(
-                        children: [
-                          Positioned.fill(
-                            child: CityProductionList(
-                              buildings: viewModel.buildings,
-                              futureBuildings: viewModel.futureBuildings,
-                              wonders: viewModel.wonders,
-                              units: viewModel.units,
-                              projects: viewModel.projects,
-                              specializations: viewModel.specializations,
-                              buildingSortMode: _buildingSortMode,
-                              onBuildingSortModeChanged: _setBuildingSortMode,
-                              selectedItemKey: _gamepadSelectionVisible
-                                  ? selectedItemKey
-                                  : null,
-                              onBuildingDetails: _showBuildingDetails,
-                              onUnitDetails: _showUnitDetails,
-                              onWonderDetails: _showWonderDetails,
-                              onBuild: widget.onBuild,
-                              onBuildWonder: widget.onBuildWonder,
-                              onProduceUnit: widget.onProduceUnit,
-                              onStartProject: widget.onStartProject,
-                              onSetSpecialization: widget.onSetSpecialization,
-                              compact: compact,
-                            ),
-                          ),
-                          if (detailsBuildingItem != null)
-                            Positioned.fill(
-                              child: CityProductionBuildingDetailsLayer(
-                                item: detailsBuildingItem,
-                                l10n: l10n,
-                                definition: widget.cityRuleset
-                                    .buildingDefinitionFor(
-                                      detailsBuildingItem.buildingType!,
-                                    ),
-                                unlockingTechnology:
-                                    TechnologyUnlockQuery.unlockingTechnologyForBuilding(
-                                      buildingType:
-                                          detailsBuildingItem.buildingType!,
-                                      ruleset: widget.technologyRuleset,
-                                    ),
-                                currentCityYield: viewModel.currentCityYield,
-                                currentCityScience:
-                                    viewModel.currentCityScience,
-                                compact: compact,
-                                onClose: _closeBuildingDetails,
-                              ),
-                            ),
-                          if (detailsUnitItem != null)
-                            Positioned.fill(
-                              child: CityProductionUnitDetailsLayer(
-                                item: detailsUnitItem,
-                                l10n: l10n,
-                                definition: widget.cityRuleset
-                                    .unitDefinitionFor(
-                                      detailsUnitItem.unitType!,
-                                    ),
-                                unlockingTechnology:
-                                    TechnologyUnlockQuery.unlockingTechnologyForUnit(
-                                      unitType: detailsUnitItem.unitType!,
-                                      ruleset: widget.technologyRuleset,
-                                    ),
-                                compact: compact,
-                                onClose: _closeUnitDetails,
-                              ),
-                            ),
-                          if (detailsWonderItem != null)
-                            Positioned.fill(
-                              child: CityProductionWonderDetailsLayer(
-                                item: detailsWonderItem,
-                                l10n: l10n,
-                                definition: widget.wonderRuleset.definitionFor(
-                                  detailsWonderItem.wonderType!,
-                                ),
-                                unlockingTechnology:
-                                    TechnologyUnlockQuery.unlockingTechnologyForWonder(
-                                      wonderType: detailsWonderItem.wonderType!,
-                                      ruleset: widget.technologyRuleset,
-                                    ),
-                                compact: compact,
-                                onClose: _closeWonderDetails,
-                              ),
-                            ),
-                        ],
-                      )
-                    : const CityEmptyProductionState(),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return (
+      l10n: l10n,
+      compact: MediaQuery.sizeOf(context).width < 480,
+      viewModel: viewModel,
+      buildingSortMode: _buildingSortMode,
+      selectedItemKey: _gamepadSelectionVisible
+          ? CityProductionGamepadNavigation.selectedKeyFor(
+              gamepadChoices,
+              _selectedItemKey,
+            )
+          : null,
+      gamepadChoices: gamepadChoices,
+      detailsBuildingItem: viewModel.itemForBuilding(_detailsBuildingType),
+      detailsUnitItem: viewModel.itemForUnit(_detailsUnitType),
+      detailsWonderItem: viewModel.itemForWonder(_detailsWonderType),
     );
   }
 
