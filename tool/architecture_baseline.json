@@ -403,7 +403,6 @@
       "legacyFiles": {
         "lib/developer/assets_editor_screen.dart": 362,
         "lib/game/presentation/screens/game/game_screen.dart": 454,
-        "lib/game/presentation/widgets/hud/game_hud.dart": 397,
         "lib/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart": 445,
         "lib/game/presentation/widgets/hud/overlay/game_hud_overlay_host.dart": 364,
         "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart": 588,
