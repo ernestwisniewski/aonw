@@ -3,69 +3,9 @@ import 'package:aonw/game/presentation/input/gamepad/gamepad_list_cursor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+part 'hud_gamepad_focus_models.dart';
 part 'hud_gamepad_focus_spatial_navigation.dart';
-
-enum HudGamepadFocusSection {
-  menu,
-  globalActions,
-  topResources,
-  rightPlayers,
-  selectionActions,
-}
-
-abstract final class HudGamepadFocusTargetIds {
-  static const menuReturn = 'menu.return';
-  static const playerStatusSheet = 'players.statusSheet';
-  static const bottomCommand = 'bottom.command';
-  static const resourceGold = 'resource.gold';
-  static const resourceScience = 'resource.science';
-  static const resourceStability = 'resource.stability';
-  static const resourceResources = 'resource.resources';
-  static const resourceTurn = 'resource.turn';
-  static const resourceVictory = 'resource.victory';
-
-  static String globalAction(String actionId) => 'global.$actionId';
-
-  static String playerAvatar(String playerId) => 'players.$playerId';
-
-  static String selectionAction(String actionId) => 'selection.$actionId';
-}
-
-final class HudGamepadFocusTarget {
-  const HudGamepadFocusTarget({
-    required this.section,
-    required this.id,
-    required this.label,
-    required this.onActivate,
-    this.enabled = true,
-    this.activationKey,
-  });
-
-  final HudGamepadFocusSection section;
-  final String id;
-  final String label;
-  final VoidCallback onActivate;
-  final bool enabled;
-  final Object? activationKey;
-}
-
-final class HudGamepadFocusState {
-  const HudGamepadFocusState({
-    required this.active,
-    required this.section,
-    required this.targetId,
-  });
-
-  static const inactive = HudGamepadFocusState(
-    active: false,
-    section: HudGamepadFocusSection.menu,
-    targetId: null,
-  );
-
-  final bool active;
-  final HudGamepadFocusSection section;
-  final String? targetId;
-}
+part 'hud_gamepad_focus_target_registry.dart';
 
 class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
   static const _sectionOrder = [
@@ -390,56 +330,5 @@ class HudGamepadFocusController extends Notifier<HudGamepadFocusState> {
       return;
     }
     _activateFirst(targets, preferredSection: state.section);
-  }
-}
-
-class HudGamepadFocusTargetRegistry
-    extends Notifier<Map<String, List<HudGamepadFocusTarget>>> {
-  @override
-  Map<String, List<HudGamepadFocusTarget>> build() => const {};
-
-  static List<HudGamepadFocusTarget> flatten(
-    Map<String, List<HudGamepadFocusTarget>> sources,
-  ) {
-    return [
-      for (final targets in sources.values)
-        for (final target in targets) target,
-    ];
-  }
-
-  void setSource(String sourceId, List<HudGamepadFocusTarget> targets) {
-    final existing = state[sourceId] ?? const <HudGamepadFocusTarget>[];
-    if (_sameTargets(existing, targets)) return;
-    final next = {...state};
-    if (targets.isEmpty) {
-      next.remove(sourceId);
-    } else {
-      next[sourceId] = List.unmodifiable(targets);
-    }
-    state = Map.unmodifiable(next);
-  }
-
-  void clearSource(String sourceId) {
-    if (!state.containsKey(sourceId)) return;
-    state = Map.unmodifiable({...state}..remove(sourceId));
-  }
-
-  bool _sameTargets(
-    List<HudGamepadFocusTarget> left,
-    List<HudGamepadFocusTarget> right,
-  ) {
-    if (left.length != right.length) return false;
-    for (var i = 0; i < left.length; i += 1) {
-      final leftTarget = left[i];
-      final rightTarget = right[i];
-      if (leftTarget.section != rightTarget.section ||
-          leftTarget.id != rightTarget.id ||
-          leftTarget.label != rightTarget.label ||
-          leftTarget.enabled != rightTarget.enabled ||
-          leftTarget.activationKey != rightTarget.activationKey) {
-        return false;
-      }
-    }
-    return true;
   }
 }
