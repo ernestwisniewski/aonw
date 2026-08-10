@@ -59,6 +59,7 @@ part 'run_save_ai_benchmark/multi_turn_replay_report.dart';
 part 'run_save_ai_benchmark/multi_turn_replay_report_aggregates.dart';
 part 'run_save_ai_benchmark/multi_turn_replay_report_timing.dart';
 part 'run_save_ai_benchmark/report_models.dart';
+part 'run_save_ai_benchmark/runtime_report_model.dart';
 part 'run_save_ai_benchmark/runtime_smoke.dart';
 part 'run_save_ai_benchmark/synthetic_suite.dart';
 

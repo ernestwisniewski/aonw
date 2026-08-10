@@ -965,12 +965,11 @@
     },
     "root_tool": {
       "files": {
-        "tool/run_save_ai_benchmark/report_models.dart": 505,
         "tool/serverpod_multiplayer_smoke.dart": 1054
       },
       "legacyFiles": {},
       "declarations": {
-        "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport": 414,
+        "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport": 411,
         "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite": 372,
         "tool/serverpod_multiplayer_smoke.dart::class:_RuntimeSmoke": 897
       },
