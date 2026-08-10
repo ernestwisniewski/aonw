@@ -26,167 +26,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 part 'multiplayer_avatars_rail_gamepad.dart';
+part 'multiplayer_avatars_rail_overlay.dart';
 part 'multiplayer_avatars_sheet.dart';
-
-class MultiplayerAvatarsRailOverlay extends ConsumerStatefulWidget {
-  static const double rightOffset = 12;
-  static const double compactRightOffset = 8;
-
-  final GameSave gameSave;
-  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
-
-  const MultiplayerAvatarsRailOverlay({
-    required this.gameSave,
-    this.gamepadInputListenable,
-    super.key,
-  });
-
-  @override
-  ConsumerState<MultiplayerAvatarsRailOverlay> createState() =>
-      _MultiplayerAvatarsRailOverlayState();
-}
-
-class _MultiplayerAvatarsRailOverlayState
-    extends ConsumerState<MultiplayerAvatarsRailOverlay> {
-  final GlobalKey _requestedStatusSheetKey = GlobalKey();
-
-  @override
-  void didUpdateWidget(covariant MultiplayerAvatarsRailOverlay oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    final save = widget.gameSave;
-    if (save.id != oldWidget.gameSave.id ||
-        save.gameMode != GameMode.multiplayer ||
-        save.turn > oldWidget.gameSave.turn) {
-      _dismissRequestedStatusSheet();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final gameSave = widget.gameSave;
-    if (gameSave.gameMode != GameMode.multiplayer || gameSave.players.isEmpty) {
-      _syncGamepadFocusTargets(const []);
-      return const SizedBox.shrink();
-    }
-
-    final l10n = AppLocalizations.of(context);
-    final playerControl = PlayerControlCoordinator.normalize(
-      current: ref.watch(gamePlayerControlControllerProvider),
-      save: gameSave,
-    );
-    final gameState = ref.watch(gameStateProvider(gameSave.id)).value;
-    ref.watch(_mapDataProvider(gameSave));
-    final diplomacy = gameState?.diplomacy ?? DiplomacyState.empty;
-    ref.listen<MultiplayerStatusSheetRequest?>(
-      multiplayerStatusSheetRequestProvider,
-      (previous, next) {
-        if (next == null || next.save.id != gameSave.id) return;
-        ref
-            .read(multiplayerStatusSheetRequestProvider.notifier)
-            .consume(next.id);
-        final sheetGameState =
-            ref.read(gameStateProvider(next.save.id)).value ?? gameState;
-        final sheetDiplomacy = sheetGameState?.diplomacy ?? diplomacy;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted || !context.mounted || _requestIsStale(next)) return;
-          unawaited(
-            _showRequestedPlayersSheet(
-              next: next,
-              gameSave: gameSave,
-              gameState: sheetGameState,
-              diplomacy: sheetDiplomacy,
-              activePlayerId: playerControl.activePlayerId,
-            ),
-          );
-        });
-      },
-    );
-    final safePadding = MediaQuery.paddingOf(context);
-    final size = MediaQuery.sizeOf(context);
-    final focusedTargetId = ref.watch(
-      hudGamepadFocusControllerProvider.select(
-        (state) => state.active ? state.targetId : null,
-      ),
-    );
-    _syncGamepadFocusTargets(
-      _playerGamepadFocusTargets(
-        l10n: l10n,
-        gameSave: gameSave,
-        gameState: gameState,
-        activePlayerId: playerControl.activePlayerId,
-      ),
-    );
-    final compact = MultiplayerAvatarsRailMetrics.useCompactLayout(
-      width: size.width,
-      height: size.height,
-    );
-
-    return Positioned(
-      top: safePadding.top + _topOffset(compact),
-      right: safePadding.right + _rightOffset(compact),
-      child: MultiplayerAvatarsRail(
-        gameSave: gameSave,
-        activePlayerId: playerControl.activePlayerId,
-        diplomacy: diplomacy,
-        gameState: gameState,
-        gamepadFocusedTargetId: focusedTargetId,
-        gamepadInputListenable: widget.gamepadInputListenable,
-        onGamepadSheetOpenChanged: (captured) => _setPopupInputCaptured(
-          captured,
-          sourceId: 'multiplayerAvatarsRail.fullListSheet',
-        ),
-        onAvatarTapped: (playerId) => _handleAvatarTapped(
-          context,
-          gameSave: gameSave,
-          gameState: gameState,
-          activePlayerId: playerControl.activePlayerId,
-          playerId: playerId,
-        ),
-      ),
-    );
-  }
-
-  static ActiveMapProvider _mapDataProvider(GameSave save) => activeMapProvider(
-    MapSelection(name: save.mapName, source: save.mapSource),
-  );
-
-  static double _topOffset(bool compact) => compact
-      ? HudSideMenuMetrics.compactTopOffset
-      : HudSideMenuMetrics.topOffset;
-
-  static double _rightOffset(bool compact) => compact
-      ? MultiplayerAvatarsRailOverlay.compactRightOffset
-      : MultiplayerAvatarsRailOverlay.rightOffset;
-
-  bool _requestIsStale(MultiplayerStatusSheetRequest request) =>
-      widget.gameSave.id != request.save.id ||
-      widget.gameSave.gameMode != GameMode.multiplayer ||
-      widget.gameSave.turn > request.save.turn;
-
-  void _dismissRequestedStatusSheet() {
-    final sheetContext = _requestedStatusSheetKey.currentContext;
-    if (sheetContext == null || !sheetContext.mounted) return;
-    unawaited(Navigator.of(sheetContext).maybePop());
-  }
-}
 
 class MultiplayerAvatarsRail extends StatelessWidget {
   static const double itemWidth = MultiplayerAvatarsRailMetrics.itemWidth;
   static const double itemHeight = MultiplayerAvatarsRailMetrics.itemHeight;
   static const double compactItemSize =
       MultiplayerAvatarsRailMetrics.compactItemSize;
-
-  final GameSave gameSave;
-  final String activePlayerId;
-  final ValueChanged<String> onAvatarTapped;
-  final Map<String, String> timerLabels;
-  final Set<String> timedOutPlayerIds;
-  final DiplomacyState diplomacy;
-  final GameClientState? gameState;
-  final String? gamepadFocusedTargetId;
-  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
-  final ValueChanged<bool>? onGamepadSheetOpenChanged;
 
   const MultiplayerAvatarsRail({
     required this.gameSave,
@@ -202,12 +49,22 @@ class MultiplayerAvatarsRail extends StatelessWidget {
     super.key,
   });
 
+  final GameSave gameSave;
+  final String activePlayerId;
+  final ValueChanged<String> onAvatarTapped;
+  final Map<String, String> timerLabels;
+  final Set<String> timedOutPlayerIds;
+  final DiplomacyState diplomacy;
+  final GameClientState? gameState;
+  final String? gamepadFocusedTargetId;
+  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
+  final ValueChanged<bool>? onGamepadSheetOpenChanged;
+
   @override
   Widget build(BuildContext context) {
     if (gameSave.gameMode != GameMode.multiplayer || gameSave.players.isEmpty) {
       return const SizedBox.shrink();
     }
-
     final size = MediaQuery.sizeOf(context);
     final compact = MultiplayerAvatarsRailMetrics.useCompactLayout(
       width: size.width,
@@ -222,7 +79,6 @@ class MultiplayerAvatarsRail extends StatelessWidget {
       timerLabels: timerLabels,
       timedOutPlayerIds: timedOutPlayerIds,
     );
-
     if (compact) {
       return CompactMultiplayerAvatarsRail(
         tiles: tiles,
@@ -231,7 +87,6 @@ class MultiplayerAvatarsRail extends StatelessWidget {
         onOpenFullList: () => unawaited(_showFullListSheet(context, tiles)),
       );
     }
-
     return ExpandedMultiplayerAvatarsRail(
       key: const Key('multiplayerAvatarsRail'),
       tiles: tiles,
@@ -241,14 +96,12 @@ class MultiplayerAvatarsRail extends StatelessWidget {
     );
   }
 
-  MultiplayerAvatarStatus statusFor(Player player) {
-    return statusForPlayer(
-      player: player,
-      gameSave: gameSave,
-      activePlayerId: activePlayerId,
-      timedOutPlayerIds: timedOutPlayerIds,
-    );
-  }
+  MultiplayerAvatarStatus statusFor(Player player) => statusForPlayer(
+    player: player,
+    gameSave: gameSave,
+    activePlayerId: activePlayerId,
+    timedOutPlayerIds: timedOutPlayerIds,
+  );
 
   static MultiplayerAvatarStatus statusForPlayer({
     required Player player,
