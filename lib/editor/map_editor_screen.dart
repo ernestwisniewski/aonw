@@ -24,6 +24,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+part 'map_editor_screen_lifecycle.dart';
+part 'map_editor_screen_persistence_support.dart';
+
 class MapEditorScreen extends ConsumerStatefulWidget {
   final MapSelection? selection;
 
@@ -55,141 +58,7 @@ class _MapEditorScreenState extends ConsumerState<MapEditorScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _initializeEditor());
   }
 
-  Future<void> _initializeEditor() async {
-    setState(() {
-      _isInitializing = true;
-      _loadError = null;
-    });
-
-    try {
-      if (widget.selection case final selection?) {
-        final mapRepository = ref.read(mapRepositoryProvider);
-        final sourceMap = await mapRepository.loadMap(selection);
-        final imagePath = await mapRepository.resolveImagePath(selection);
-        if (!mounted) return;
-
-        final draft = MapDraft.fromWorldMap(sourceMap);
-        ref.read(editorMapProvider.notifier).load(draft);
-        setState(() {
-          _activeImagePath = imagePath;
-          _pendingImageSourcePath = null;
-          _pendingImageSliceMode = false;
-          _hasGraphicMode = imagePath != null;
-          _viewMode = imagePath != null
-              ? MapViewMode.graphic
-              : MapViewMode.tile;
-          _defaultZoom = draft.defaultZoom;
-        });
-      } else {
-        final created = await _promptForNewMap();
-        if (!mounted || !created) return;
-      }
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _loadError = error);
-    } finally {
-      if (mounted) {
-        setState(() => _isInitializing = false);
-      }
-    }
-  }
-
-  Future<bool> _promptForNewMap() async {
-    final config = await showNewMapDialog(context);
-    if (!mounted) return false;
-    if (config == null) {
-      context.go('/editor');
-      return false;
-    }
-
-    ref
-        .read(editorMapProvider.notifier)
-        .create(config.cols, config.rows, config.defaultTerrain);
-    setState(() {
-      _activeImagePath = null;
-      _pendingImageSourcePath = null;
-      _pendingImageSliceMode = false;
-      _viewMode = MapViewMode.tile;
-      _hasGraphicMode = false;
-    });
-    return true;
-  }
-
-  void _ensureGame(
-    MapDraft? draft,
-    EditorState editorState,
-    HexDisplaySettings displaySettings,
-  ) {
-    if (draft == null) return;
-    if (!identical(_activeDraft, draft)) {
-      _activeDraft = draft;
-      _game = EditorWorld(
-        draft: draft,
-        editorState: editorState,
-        imagePath: _activeImagePath,
-        initialViewMode: _viewMode,
-        onTileSelected: _onTileSelected,
-        onDefaultZoomChanged: (zoom) => setState(() => _defaultZoom = zoom),
-        displaySettings: displaySettings,
-      );
-    }
-    _game?.editorState = editorState;
-    _game?.viewMode = _viewMode;
-    _game?.displaySettings = displaySettings;
-  }
-
-  /// Called by EditorGrid when a tile is tapped.
-  /// Syncs the toolbar to the tile's current terrain/resource/height.
-  void _onTileSelected(int col, int row) {
-    final draft = ref.read(editorMapProvider);
-    if (draft == null) return;
-    final tile = draft.tileAt(col, row);
-    final editorState = ref.read(editorStateProvider);
-    _syncingFromTile = true;
-    ref
-        .read(editorStateProvider.notifier)
-        .syncToTile(
-          terrains: tile?.terrains ?? editorState.selectedTerrains.toList(),
-          resources: tile?.resources ?? const [],
-          objectiveType: _objectiveTypeAt(draft, col, row),
-          height: tile?.height ?? 0,
-        );
-    _syncingFromTile = false;
-    // Do NOT repaint here — tapping only selects, does not modify the tile.
-    // repaintSelected() is called only when the user changes the toolbar.
-  }
-
-  MapObjectiveType? _objectiveTypeAt(MapDraft draft, int col, int row) {
-    for (final objective in draft.objectives) {
-      if (objective.hex.col == col && objective.hex.row == row) {
-        return objective.type;
-      }
-    }
-    return null;
-  }
-
-  void _withGame(void Function(EditorWorld game) action) {
-    final game = _game;
-    if (game == null) return;
-    game.editorState = ref.read(editorStateProvider);
-    action(game);
-  }
-
-  void _setViewMode(MapViewMode value) {
-    if (value == MapViewMode.graphic && !_hasGraphicMode) return;
-    setState(() {
-      _viewMode = value;
-    });
-    _game?.viewMode = value;
-  }
-
-  void _resizeMap(void Function(EditorWorld game) action) {
-    _withGame((game) {
-      action(game);
-      game.resizeImageLayer(game.draft.cols, game.draft.rows);
-    });
-    setState(() {});
-  }
+  void _updateState(VoidCallback update) => setState(update);
 
   Future<void> _handleExport() async {
     final draft = ref.read(editorMapProvider);
@@ -336,35 +205,6 @@ class _MapEditorScreenState extends ConsumerState<MapEditorScreen> {
     if (resolvedImagePath != null) {
       await _game?.loadImageOverlay(resolvedImagePath);
     }
-  }
-
-  Future<String> _saveMapImage({
-    required String sourcePath,
-    required String mapName,
-    required MapDraft draft,
-    required bool sliceImage,
-  }) {
-    if (sliceImage) {
-      return MapSaver.saveImageSlices(
-        sourcePath: sourcePath,
-        mapName: mapName,
-        cols: draft.cols,
-        rows: draft.rows,
-        config: MapConfig.defaultConfig,
-      );
-    }
-    return MapSaver.saveImageCopy(sourcePath: sourcePath, mapName: mapName);
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  bool _isSlicedImagePath(String? path) {
-    if (path == null) return false;
-    return RegExp(r'(^|[\\/])1x1\.png$').hasMatch(path);
   }
 
   @override
