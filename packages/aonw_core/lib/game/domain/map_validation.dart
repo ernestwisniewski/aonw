@@ -3,123 +3,12 @@ import 'dart:math' as math;
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/map_validation/map_resource_analyzer.dart';
+import 'package:aonw_core/game/domain/map_validation/map_start_site_analyzer.dart';
+import 'package:aonw_core/game/domain/map_validation/map_validation_model.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
-import 'package:aonw_core/game/domain/movement.dart';
-import 'package:aonw_core/game/domain/player.dart';
-import 'package:aonw_core/game/domain/terrain.dart';
-import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/terrain_type.dart';
 
-enum MapValidationSeverity { error, warning }
-
-class MapValidationIssue {
-  final MapValidationSeverity severity;
-  final String code;
-  final String message;
-  final HexCoordinate? coordinate;
-
-  const MapValidationIssue({
-    required this.severity,
-    required this.code,
-    required this.message,
-    this.coordinate,
-  });
-
-  bool get isError => severity == MapValidationSeverity.error;
-
-  bool get isWarning => severity == MapValidationSeverity.warning;
-}
-
-class MapResourceSummary {
-  final int resourceTiles;
-  final int foodResources;
-  final int luxuryResources;
-  final int strategicResources;
-
-  const MapResourceSummary({
-    required this.resourceTiles,
-    required this.foodResources,
-    required this.luxuryResources,
-    required this.strategicResources,
-  });
-}
-
-class MapStartSiteReport {
-  final int playerIndex;
-  final HexCoordinate warrior;
-  final HexCoordinate settler;
-  final int passableTilesInFirstRing;
-  final int foodResourcesInFirstRing;
-  final int controlledCandidates;
-
-  const MapStartSiteReport({
-    required this.playerIndex,
-    required this.warrior,
-    required this.settler,
-    required this.passableTilesInFirstRing,
-    required this.foodResourcesInFirstRing,
-    required this.controlledCandidates,
-  });
-}
-
-class MapValidationResult {
-  final String mapName;
-  final int playerCount;
-  final int totalTiles;
-  final int passableTiles;
-  final MapResourceSummary resources;
-  final List<MapStartSiteReport> startSites;
-  final List<MapValidationIssue> issues;
-
-  MapValidationResult({
-    required this.mapName,
-    required this.playerCount,
-    required this.totalTiles,
-    required this.passableTiles,
-    required this.resources,
-    required Iterable<MapStartSiteReport> startSites,
-    required Iterable<MapValidationIssue> issues,
-  }) : startSites = List.unmodifiable(startSites),
-       issues = List.unmodifiable(issues);
-
-  bool get isValid => errors.isEmpty;
-
-  List<MapValidationIssue> get errors =>
-      issues.where((issue) => issue.isError).toList(growable: false);
-
-  List<MapValidationIssue> get warnings =>
-      issues.where((issue) => issue.isWarning).toList(growable: false);
-}
-
-class MapValidationRules {
-  final int minPlayerCount;
-  final int maxPlayerCount;
-  final double minPassableTileRatio;
-  final int minPassableTilesInFirstRing;
-  final int minFoodResourcesInFirstRing;
-  final int minControlledCandidates;
-  final int minStartDistance;
-  final int maxShortGameStartDistance;
-  final int maxShortGameTilesPerPlayer;
-  final int minFoodResourcesPerPlayer;
-  final int minStrategicResources;
-  final int minLuxuryResources;
-
-  const MapValidationRules({
-    this.minPlayerCount = 2,
-    this.maxPlayerCount = 4,
-    this.minPassableTileRatio = 0.45,
-    this.minPassableTilesInFirstRing = 4,
-    this.minFoodResourcesInFirstRing = 1,
-    this.minControlledCandidates = CityFoundingDraft.requiredControlledHexes,
-    this.minStartDistance = 6,
-    this.maxShortGameStartDistance = 14,
-    this.maxShortGameTilesPerPlayer = 180,
-    this.minFoodResourcesPerPlayer = 2,
-    this.minStrategicResources = 2,
-    this.minLuxuryResources = 2,
-  });
-}
+export 'map_validation/map_validation_model.dart';
 
 abstract final class MapValidator {
   static const MapValidationRules defaultRules = MapValidationRules();
@@ -133,8 +22,8 @@ abstract final class MapValidator {
     final issues = <MapValidationIssue>[];
     final mapName = mapData.mapName ?? 'unnamed';
     final totalTiles = mapData.tiles.length;
-    final passableTiles = mapData.tiles.where(_isPassable).length;
-    final resources = _resourceSummary(mapData);
+    final passableTiles = MapResourceAnalyzer.passableTileCount(mapData);
+    final resources = MapResourceAnalyzer.summary(mapData);
 
     if (playerCount < rules.minPlayerCount ||
         playerCount > rules.maxPlayerCount) {
@@ -177,7 +66,7 @@ abstract final class MapValidator {
       rules: rules,
     );
 
-    final startSites = _startSites(
+    final startSites = MapStartSiteAnalyzer.reportsFor(
       mapName: mapName,
       mapData: mapData,
       playerCount: playerCount,
@@ -369,218 +258,7 @@ abstract final class MapValidator {
     }
   }
 
-  static List<MapStartSiteReport> _startSites({
-    required String mapName,
-    required WorldMap mapData,
-    required int playerCount,
-    required List<MapValidationIssue> issues,
-  }) {
-    if (playerCount <= 0) return const [];
-    final players = [for (var i = 0; i < playerCount; i++) Player.forIndex(i)];
-    final units = StartingUnits.unitsForPlayers(players, mapData: mapData);
-    final reports = <MapStartSiteReport>[];
-    for (var i = 0; i < playerCount; i++) {
-      final playerId = players[i].id;
-      final warrior = _unitFor(
-        units,
-        ownerPlayerId: playerId,
-        type: GameUnitType.warrior,
-      );
-      final settler = _unitFor(
-        units,
-        ownerPlayerId: playerId,
-        type: GameUnitType.settler,
-      );
-      if (warrior == null || settler == null) {
-        _addMissingStartingUnitIssues(
-          mapName: mapName,
-          playerIndex: i,
-          playerId: playerId,
-          warrior: warrior,
-          settler: settler,
-          issues: issues,
-        );
-        continue;
-      }
-      reports.add(
-        _startSiteReport(
-          playerIndex: i,
-          mapData: mapData,
-          warrior: warrior,
-          settler: settler,
-        ),
-      );
-    }
-    return reports;
-  }
-
-  static void _addMissingStartingUnitIssues({
-    required String mapName,
-    required int playerIndex,
-    required String playerId,
-    required GameUnit? warrior,
-    required GameUnit? settler,
-    required List<MapValidationIssue> issues,
-  }) {
-    if (warrior == null) {
-      issues.add(
-        MapValidationIssue(
-          severity: MapValidationSeverity.error,
-          code: 'starting_unit_missing',
-          message:
-              '$mapName player ${playerIndex + 1} is missing a warrior starting unit ($playerId).',
-        ),
-      );
-    }
-    if (settler == null) {
-      issues.add(
-        MapValidationIssue(
-          severity: MapValidationSeverity.error,
-          code: 'starting_unit_missing',
-          message:
-              '$mapName player ${playerIndex + 1} is missing a settler starting unit ($playerId).',
-        ),
-      );
-    }
-  }
-
-  static MapStartSiteReport _startSiteReport({
-    required int playerIndex,
-    required WorldMap mapData,
-    required GameUnit warrior,
-    required GameUnit settler,
-  }) {
-    final settlerCoordinate = HexCoordinate(col: settler.col, row: settler.row);
-    final firstRing = [
-      ?mapData.tileAt(settler.col, settler.row),
-      for (final neighbor in HexNeighbors.existingAround(
-        settlerCoordinate,
-        mapData,
-      ))
-        ?mapData.tileAt(neighbor.col, neighbor.row),
-    ];
-    final draft = CityFoundingDraft(
-      unitId: settler.id,
-      ownerPlayerId: settler.ownerPlayerId,
-      center: CityHex(col: settler.col, row: settler.row),
-    );
-    var controlledCandidates = 0;
-    for (final tile in mapData.tiles) {
-      final distance = HexDistance.between(
-        settlerCoordinate,
-        HexCoordinate(col: tile.col, row: tile.row),
-      );
-      if (distance > CityFoundingDraft.maxRadius) continue;
-      if (CityFoundingRules.isControlledHexCandidate(
-        draft: draft,
-        tile: tile,
-        mapTiles: mapData,
-      )) {
-        controlledCandidates++;
-      }
-    }
-
-    return MapStartSiteReport(
-      playerIndex: playerIndex,
-      warrior: HexCoordinate(col: warrior.col, row: warrior.row),
-      settler: settlerCoordinate,
-      passableTilesInFirstRing: firstRing.where(_isPassable).length,
-      foodResourcesInFirstRing: firstRing
-          .expand((tile) => tile.resources)
-          .where(_isFoodResource)
-          .length,
-      controlledCandidates: controlledCandidates,
-    );
-  }
-
-  static GameUnit? _unitFor(
-    Iterable<GameUnit> units, {
-    required String ownerPlayerId,
-    required GameUnitType type,
-  }) {
-    for (final unit in units) {
-      if (unit.ownerPlayerId == ownerPlayerId && unit.type == type) {
-        return unit;
-      }
-    }
-    return null;
-  }
-
-  static MapResourceSummary _resourceSummary(WorldMap mapData) {
-    var resourceTiles = 0;
-    var foodResources = 0;
-    var luxuryResources = 0;
-    var strategicResources = 0;
-    for (final tile in mapData.tiles) {
-      if (tile.resources.isNotEmpty) resourceTiles++;
-      for (final resource in tile.resources) {
-        if (_isFoodResource(resource)) foodResources++;
-        if (_isLuxuryResource(resource)) luxuryResources++;
-        if (_isStrategicResource(resource)) strategicResources++;
-      }
-    }
-    return MapResourceSummary(
-      resourceTiles: resourceTiles,
-      foodResources: foodResources,
-      luxuryResources: luxuryResources,
-      strategicResources: strategicResources,
-    );
-  }
-
-  static bool _isPassable(WorldTile tile) {
-    return !UnitMovementCostRules.costToEnter(
-      TileTerrainProfileRules.fromTile(tile),
-    ).blocked;
-  }
-
   static bool _isShortGame(GameLengthConfig gameLength) {
     return gameLength.paceProfile == PaceProfile.standard60;
-  }
-
-  static bool _isFoodResource(ResourceType resource) {
-    return switch (resource) {
-      ResourceType.wheat ||
-      ResourceType.fish ||
-      ResourceType.deer ||
-      ResourceType.sheep ||
-      ResourceType.rice ||
-      ResourceType.cow ||
-      ResourceType.apple ||
-      ResourceType.banana ||
-      ResourceType.citrus => true,
-      _ => false,
-    };
-  }
-
-  static bool _isLuxuryResource(ResourceType resource) {
-    return switch (resource) {
-      ResourceType.gold ||
-      ResourceType.silver ||
-      ResourceType.gems ||
-      ResourceType.silk ||
-      ResourceType.spices ||
-      ResourceType.cotton ||
-      ResourceType.grapes ||
-      ResourceType.ivory ||
-      ResourceType.pearls ||
-      ResourceType.coffee ||
-      ResourceType.cocoa ||
-      ResourceType.tobacco ||
-      ResourceType.sugar => true,
-      _ => false,
-    };
-  }
-
-  static bool _isStrategicResource(ResourceType resource) {
-    return switch (resource) {
-      ResourceType.iron ||
-      ResourceType.coal ||
-      ResourceType.oil ||
-      ResourceType.aluminium ||
-      ResourceType.uranium ||
-      ResourceType.horses ||
-      ResourceType.marble => true,
-      _ => false,
-    };
   }
 }

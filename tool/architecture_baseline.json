@@ -23,8 +23,7 @@
       "files": {
         "packages/aonw_core/lib/ai/telemetry/balance_runner.dart": 978,
         "packages/aonw_core/lib/game/domain/city/city_turn_processor.dart": 504,
-        "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state_model.dart": 503,
-        "packages/aonw_core/lib/game/domain/map_validation.dart": 586
+        "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state_model.dart": 503
       },
       "legacyFiles": {},
       "declarations": {
@@ -40,7 +39,6 @@
         "packages/aonw_core/lib/game/domain/city/city_turn_processor.dart::class:CityTurnProcessor": 457,
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector": 365,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state_model.dart::class:DiplomacyState": 501,
-        "packages/aonw_core/lib/game/domain/map_validation.dart::class:MapValidator": 463,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit": 469
       },
       "callableLines": {
@@ -267,8 +265,6 @@
         "packages/aonw_core/lib/game/domain/event/event_serialization.dart::class:GameEventSerializer/method:toJson": 37,
         "packages/aonw_core/lib/game/domain/event/game_event_domain_descriptor.dart::class:GameEventDomainDescriptor/constructor:forEvent": 42,
         "packages/aonw_core/lib/game/domain/fog/fog_reveal_calculator.dart::class:FogRevealCalculator/method:_visibleFromSource": 13,
-        "packages/aonw_core/lib/game/domain/map_validation.dart::class:MapValidator/method:_isFoodResource": 11,
-        "packages/aonw_core/lib/game/domain/map_validation.dart::class:MapValidator/method:_isLuxuryResource": 15,
         "packages/aonw_core/lib/game/domain/movement/scout_auto_explore_planner.dart::class:ScoutAutoExplorePlanner/method:_reservedExplorationHexes": 11,
         "packages/aonw_core/lib/game/domain/movement/unit_movement_balance.dart::class:UnitMovementBalance/method:maxMovementPointsForType": 18,
         "packages/aonw_core/lib/game/domain/movement/unit_movement_cost_rules.dart::class:UnitMovementCostRules/method:_baseCost": 16,
