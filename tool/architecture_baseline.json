@@ -396,14 +396,13 @@
       "files": {
         "lib/api/session/network_session_refresh_coordinator.dart": 661,
         "lib/game/presentation/formatters/game_display_names.dart": 598,
-        "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart": 588,
         "lib/game/presentation/widgets/options/game_options_overlay.dart": 752,
         "lib/menu/main_menu_screen.dart": 962
       },
       "legacyFiles": {
         "lib/developer/assets_editor_screen.dart": 362,
         "lib/game/presentation/screens/game/game_screen.dart": 454,
-        "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart": 588,
+        "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart": 439,
         "lib/game/presentation/widgets/options/game_options_overlay.dart": 752,
         "lib/menu/main_menu_screen.dart": 962
       },
@@ -411,7 +410,7 @@
         "lib/api/session/network_session_refresh_coordinator.dart::class:NetworkSessionRefreshCoordinator": 573,
         "lib/game/presentation/formatters/diplomacy_history_presenter.dart::class:DiplomacyHistoryPresenter": 380,
         "lib/game/presentation/formatters/game_display_names.dart::class:GameDisplayNames": 586,
-        "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart::class:HudOverlayFrame": 541,
+        "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart::class:HudOverlayFrame": 392,
         "lib/game/presentation/widgets/options/game_options_overlay.dart::class:_GameOptionsOverlayState": 470
       },
       "callableLines": {
