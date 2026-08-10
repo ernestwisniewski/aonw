@@ -9,6 +9,8 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as auth_core;
 
+part 'steam_auth_persistence.dart';
+
 enum _SteamCallbackCommit { completed, alreadyCompleted, expired, rejected }
 
 const _invalidSteamSignatureResult = (
@@ -256,134 +258,6 @@ class SteamAuthService {
     };
   }
 
-  Future<_SteamCallbackCommit> _commitVerifiedCallback(
-    Session session, {
-    required String requestId,
-    required String steamId,
-  }) async {
-    for (var attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        return await session.db.transaction((transaction) async {
-          final lockedRequest = await SteamAuthRequest.db.findFirstRow(
-            session,
-            where: (table) => table.requestId.equals(requestId),
-            transaction: transaction,
-            lockMode: LockMode.forUpdate,
-            lockBehavior: LockBehavior.wait,
-          );
-          if (lockedRequest == null) return _SteamCallbackCommit.rejected;
-          if (lockedRequest.status == _statusCompleted ||
-              lockedRequest.status == _statusConsumed) {
-            return _SteamCallbackCommit.alreadyCompleted;
-          }
-          if (lockedRequest.status != _statusPending) {
-            return _SteamCallbackCommit.rejected;
-          }
-          final now = DateTime.now().toUtc();
-          if (lockedRequest.expiresAt.isBefore(now)) {
-            await SteamAuthRequest.db.updateRow(
-              session,
-              lockedRequest.copyWith(status: _statusExpired),
-              transaction: transaction,
-            );
-            return _SteamCallbackCommit.expired;
-          }
-
-          final authUserId = await _upsertSteamAccount(
-            session,
-            steamId: steamId,
-            transaction: transaction,
-          );
-          await SteamAuthRequest.db.updateRow(
-            session,
-            lockedRequest.copyWith(
-              status: _statusCompleted,
-              authUserId: authUserId,
-              steamId: steamId,
-              completedAt: now,
-            ),
-            transaction: transaction,
-          );
-          return _SteamCallbackCommit.completed;
-        });
-      } on DatabaseQueryException catch (error) {
-        final steamAccountRace =
-            error.code == '23505' &&
-            error.constraintName == 'aonw_steam_account_steam_id_idx';
-        if (!steamAccountRace) rethrow;
-      }
-    }
-    return _SteamCallbackCommit.rejected;
-  }
-
-  Future<void> _failRequest(
-    Session session,
-    String requestId,
-    String error,
-  ) async {
-    await session.db.transaction((transaction) async {
-      final request = await SteamAuthRequest.db.findFirstRow(
-        session,
-        where: (table) => table.requestId.equals(requestId),
-        transaction: transaction,
-        lockMode: LockMode.forUpdate,
-        lockBehavior: LockBehavior.wait,
-      );
-      if (request == null || request.status != _statusPending) return;
-      await SteamAuthRequest.db.updateRow(
-        session,
-        request.copyWith(status: _statusFailed, error: error),
-        transaction: transaction,
-      );
-    });
-  }
-
-  Future<UuidValue> _upsertSteamAccount(
-    Session session, {
-    required String steamId,
-    required Transaction transaction,
-  }) async {
-    final now = DateTime.now().toUtc();
-    final existing = await SteamAccount.db.findFirstRow(
-      session,
-      where: (table) => table.steamId.equals(steamId),
-      transaction: transaction,
-      lockMode: LockMode.forUpdate,
-      lockBehavior: LockBehavior.wait,
-    );
-    if (existing != null) {
-      await SteamAccount.db.updateRow(
-        session,
-        existing.copyWith(lastSeenAt: now),
-        transaction: transaction,
-      );
-      return existing.authUserId;
-    }
-
-    final authUser = await auth_core.AuthServices.instance.authUsers.create(
-      session,
-      transaction: transaction,
-    );
-    final profileName = _profileName(steamId);
-    await auth_core.AuthServices.instance.userProfiles.createUserProfile(
-      session,
-      authUser.id,
-      auth_core.UserProfileData(userName: profileName, fullName: profileName),
-      transaction: transaction,
-    );
-    await SteamAccount.db.insertRow(
-      session,
-      SteamAccount(
-        steamId: steamId,
-        authUserId: authUser.id,
-        createdAt: now,
-        lastSeenAt: now,
-      ),
-      transaction: transaction,
-    );
-    return authUser.id;
-  }
-
   String? _extractSteamId(String? claimedId) {
     if (claimedId == null) return null;
     return _steamClaimedIdPattern.firstMatch(claimedId)?.group(1);
@@ -394,13 +268,6 @@ class SteamAuthService {
     final actual = Uri.tryParse(returnTo);
     final expected = _publicWebUri(callbackPath, {'requestId': requestId});
     return actual != null && actual.toString() == expected.toString();
-  }
-
-  String _profileName(String steamId) {
-    final suffix = steamId.length > 4
-        ? steamId.substring(steamId.length - 4)
-        : steamId;
-    return 'Steam $suffix';
   }
 
   Uri _publicWebUri(String path, Map<String, String> queryParameters) {

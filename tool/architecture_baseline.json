@@ -1044,9 +1044,7 @@
     "server_lib": {
       "files": {},
       "legacyFiles": {},
-      "declarations": {
-        "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService": 423
-      },
+      "declarations": {},
       "callableLines": {
         "server/lib/src/auth/steam_auth_service.dart::class:SteamAuthService/method:handleCallback": 116,
         "server/lib/src/multiplayer/initial_multiplayer_snapshot_factory.dart::class:InitialMultiplayerSnapshotFactory/method:create": 68,
