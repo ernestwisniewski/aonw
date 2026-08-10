@@ -410,7 +410,6 @@
         "lib/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart": 604,
         "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart": 588,
         "lib/game/presentation/widgets/options/game_options_overlay.dart": 752,
-        "lib/map/rendering/map_image_layer.dart": 525,
         "lib/map/rendering/tile/hex_tile_painter.dart": 762,
         "lib/menu/main_menu_screen.dart": 962
       },
@@ -446,7 +445,6 @@
         "lib/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart::class:HudVictoryStatusSummary": 382,
         "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart::class:HudOverlayFrame": 541,
         "lib/game/presentation/widgets/options/game_options_overlay.dart::class:_GameOptionsOverlayState": 470,
-        "lib/map/rendering/map_image_layer.dart::class:MapImageLayer": 479,
         "lib/map/rendering/tile/hex_tile_painter.dart::class:HexTilePainter": 676
       },
       "callableLines": {

@@ -10,6 +10,10 @@ import 'package:flame/components.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 
+part 'map_image_layer_atlas.dart';
+part 'map_image_layer_color_sampling.dart';
+part 'map_image_layer_geometry.dart';
+
 /// Renders a reference image (or a set of per-tile slices) as a background
 /// layer under the hex grid.
 ///
@@ -27,9 +31,6 @@ class MapImageLayer extends PositionComponent {
   static final Paint _imagePaint = Paint()
     ..filterQuality = FilterQuality.medium
     ..isAntiAlias = true;
-  static const double _sliceAtlasPreferredScale = 2.0;
-  static const int _sliceAtlasMaxPixels = 16000000;
-
   final MapConfig config;
   int _cols;
   int _rows;
@@ -208,49 +209,6 @@ class MapImageLayer extends PositionComponent {
     canvas.drawImageRect(img, src, dst, _imagePaint);
   }
 
-  void _renderSlices(Canvas canvas) {
-    if (preferFastRendering && _renderSliceAtlas(canvas)) {
-      return;
-    }
-    for (final entry in _slices.entries) {
-      final slice = entry.value;
-      canvas
-        ..save()
-        ..clipPath(slice.clipPath)
-        ..drawImageRect(slice.image, slice.src, slice.dst, _imagePaint)
-        ..restore();
-    }
-  }
-
-  bool _renderSliceAtlas(Canvas canvas) {
-    final atlas = _sliceAtlas;
-    final src = _sliceAtlasSrc;
-    final dst = _sliceAtlasDst;
-    final clipPath = _sliceAtlasClipPath;
-    if (atlas == null || src == null || dst == null || clipPath == null) {
-      return false;
-    }
-    canvas
-      ..save()
-      ..clipPath(clipPath)
-      ..drawImageRect(atlas, src, dst, _imagePaint)
-      ..restore();
-    return true;
-  }
-
-  void _updateSize() {
-    final r = config.hexRadius;
-    final maxX = r + (_cols - 1) * 1.5 * r + r;
-    final lastColIsOdd = (_cols - 1).isOdd;
-    final maxY =
-        (math.sqrt(3) / 2 * r) +
-        (_rows - 1) * math.sqrt(3) * r +
-        (lastColIsOdd ? math.sqrt(3) / 2 * r : 0) +
-        (math.sqrt(3) / 2 * r);
-    size = Vector2(maxX, maxY);
-    _updateSingleDst();
-  }
-
   /// Detects whether [imagePath] is a slice marker (`…/1x1.jpg`) and loads
   /// accordingly — sliced or single-image.
   ///
@@ -285,241 +243,8 @@ class MapImageLayer extends PositionComponent {
     }
   }
 
-  void _updateSingleDst() {
-    if (_image == null) return;
-    _singleDst = Rect.fromLTWH(0, 0, size.x, size.y);
-  }
-
   void _disposeSingleImage() {
     _image?.dispose();
     _image = null;
   }
-
-  void _disposeSliceImages() {
-    for (final slice in _slices.values) {
-      slice.image.dispose();
-    }
-    _slices.clear();
-  }
-
-  void _disposeSliceAtlas() {
-    _sliceAtlas?.dispose();
-    _sliceAtlas = null;
-    _sliceAtlasSrc = null;
-    _sliceAtlasDst = null;
-    _sliceAtlasClipPath = null;
-  }
-
-  Future<void> _buildSliceAtlas() async {
-    _disposeSliceAtlas();
-    if (_slices.isEmpty || size.x <= 0 || size.y <= 0) return;
-
-    _sliceAtlasClipPath = _combinedSliceClipPath();
-    final scale = _sliceAtlasScale();
-    final width = math.max(1, (size.x * scale).ceil());
-    final height = math.max(1, (size.y * scale).ceil());
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder)..scale(scale);
-    for (final slice in _slices.values) {
-      canvas
-        ..save()
-        ..clipPath(slice.clipPath)
-        ..drawImageRect(slice.image, slice.src, slice.dst, _imagePaint)
-        ..restore();
-    }
-    final picture = recorder.endRecording();
-    try {
-      _sliceAtlas = await picture.toImage(width, height);
-      _sliceAtlasSrc = Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble());
-      _sliceAtlasDst = Rect.fromLTWH(0, 0, size.x, size.y);
-    } finally {
-      picture.dispose();
-    }
-  }
-
-  Path _combinedSliceClipPath() {
-    final path = Path();
-    for (final slice in _slices.values) {
-      path.addPath(slice.clipPath, Offset.zero);
-    }
-    return path;
-  }
-
-  double _sliceAtlasScale() {
-    final pixelsAtPreferredScale =
-        size.x * size.y * _sliceAtlasPreferredScale * _sliceAtlasPreferredScale;
-    if (pixelsAtPreferredScale <= _sliceAtlasMaxPixels) {
-      return _sliceAtlasPreferredScale;
-    }
-    final scale = math.sqrt(_sliceAtlasMaxPixels / (size.x * size.y));
-    return scale.clamp(1.0, _sliceAtlasPreferredScale).toDouble();
-  }
-
-  Future<void> _cacheSingleTileAverageColors() async {
-    final image = _image;
-    final src = _singleSrc;
-    final dst = _singleDst;
-    if (image == null || src == null || dst == null) return;
-    final pixels = await _readPixels(image);
-    if (pixels == null) return;
-
-    for (int col = 0; col < _cols; col++) {
-      for (int row = 0; row < _rows; row++) {
-        final sampleRect = _singleImageSourceRectFor(_sliceDst(col, row));
-        final color = _averageHexColorFromPixels(pixels, sampleRect);
-        if (color != null) {
-          _tileAverageColors[(col, row)] = color;
-        }
-      }
-    }
-  }
-
-  Rect _singleImageSourceRectFor(Rect tileDst) {
-    final src = _singleSrc!;
-    final dst = _singleDst!;
-    final scaleX = src.width / dst.width;
-    final scaleY = src.height / dst.height;
-    return Rect.fromLTRB(
-      src.left + (tileDst.left - dst.left) * scaleX,
-      src.top + (tileDst.top - dst.top) * scaleY,
-      src.left + (tileDst.right - dst.left) * scaleX,
-      src.top + (tileDst.bottom - dst.top) * scaleY,
-    );
-  }
-
-  Rect _sliceDst(int col, int row) {
-    final r = config.hexRadius;
-    final sqrt3 = math.sqrt(3);
-    final tileH = sqrt3 * r;
-    final cx = r + col * 1.5 * r;
-    final cy =
-        (sqrt3 / 2 * r) + row * sqrt3 * r + (col.isOdd ? sqrt3 / 2 * r : 0);
-    return Rect.fromLTWH(cx - r, cy - tileH / 2, 2 * r, tileH);
-  }
-
-  Path _sliceClipPath(int col, int row) {
-    return HexGeometry.tileOverlayPath(
-      col: col,
-      row: row,
-      hexRadius: config.hexRadius,
-    );
-  }
-
-  static Rect _imageRect(ui.Image image) =>
-      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
-
-  static const int _averageColorTargetSamples = 48;
-  static const int _averageColorMinAlpha = 16;
-  static bool _pixelReadDisabled = false;
-
-  static Future<Color?> _averageHexColor(
-    ui.Image image,
-    Rect sourceRect,
-  ) async {
-    final pixels = await _readPixels(image);
-    if (pixels == null) return null;
-    return _averageHexColorFromPixels(pixels, sourceRect);
-  }
-
-  static Future<_ImagePixels?> _readPixels(ui.Image image) async {
-    if (_pixelReadDisabled) return null;
-    try {
-      final byteData = await image.toByteData(
-        format: ui.ImageByteFormat.rawRgba,
-      );
-      if (byteData == null) return null;
-      return _ImagePixels(
-        width: image.width,
-        height: image.height,
-        bytes: byteData.buffer.asUint8List(),
-      );
-    } catch (_) {
-      _pixelReadDisabled = true;
-      return null;
-    }
-  }
-
-  static Color? _averageHexColorFromPixels(
-    _ImagePixels pixels,
-    Rect sourceRect,
-  ) {
-    if (sourceRect.width <= 0 || sourceRect.height <= 0) return null;
-    final left = sourceRect.left.floor().clamp(0, pixels.width - 1).toInt();
-    final top = sourceRect.top.floor().clamp(0, pixels.height - 1).toInt();
-    final right = sourceRect.right.ceil().clamp(left + 1, pixels.width).toInt();
-    final bottom = sourceRect.bottom
-        .ceil()
-        .clamp(top + 1, pixels.height)
-        .toInt();
-    final sampleWidth = right - left;
-    final sampleHeight = bottom - top;
-    final stride = math.max(
-      1,
-      math.min(sampleWidth, sampleHeight) ~/ _averageColorTargetSamples,
-    );
-
-    var red = 0;
-    var green = 0;
-    var blue = 0;
-    var weightTotal = 0;
-    for (var y = top; y < bottom; y += stride) {
-      final v = ((y + 0.5 - sourceRect.top) / sourceRect.height).clamp(
-        0.0,
-        1.0,
-      );
-      for (var x = left; x < right; x += stride) {
-        final u = ((x + 0.5 - sourceRect.left) / sourceRect.width).clamp(
-          0.0,
-          1.0,
-        );
-        if (!_unitHexContains(u, v)) continue;
-        final offset = (y * pixels.width + x) * 4;
-        final alpha = pixels.bytes[offset + 3];
-        if (alpha <= _averageColorMinAlpha) continue;
-        red += pixels.bytes[offset] * alpha;
-        green += pixels.bytes[offset + 1] * alpha;
-        blue += pixels.bytes[offset + 2] * alpha;
-        weightTotal += alpha;
-      }
-    }
-    if (weightTotal == 0) return null;
-    return Color.fromARGB(
-      255,
-      (red / weightTotal).round(),
-      (green / weightTotal).round(),
-      (blue / weightTotal).round(),
-    );
-  }
-
-  static bool _unitHexContains(double u, double v) {
-    final left = v <= 0.5 ? 0.25 - 0.5 * v : 0.5 * v - 0.25;
-    final right = v <= 0.5 ? 0.75 + 0.5 * v : 1.25 - 0.5 * v;
-    return u >= left && u <= right;
-  }
-}
-
-class _ImagePixels {
-  final int width;
-  final int height;
-  final Uint8List bytes;
-
-  const _ImagePixels({
-    required this.width,
-    required this.height,
-    required this.bytes,
-  });
-}
-
-class _SliceImage {
-  final ui.Image image;
-  final Rect src;
-  final Rect dst;
-  final Path clipPath;
-
-  const _SliceImage({
-    required this.image,
-    required this.src,
-    required this.dst,
-    required this.clipPath,
-  });
 }
