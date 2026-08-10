@@ -3,6 +3,10 @@ part of 'hud_action_deck.dart';
 extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
   bool _canAutoAdvance(GameClientState? state, {bool force = false}) {
     if (state == null) return false;
+    if (state.activePlayerId != widget.activePlayerId ||
+        !state.activePlayerCanAct) {
+      return false;
+    }
 
     final context = _HudAutoAdvanceContext(
       activePlayerCanAct: widget.activePlayerCanAct,

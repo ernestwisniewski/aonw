@@ -211,6 +211,18 @@ extension _HudActionDeckCommands on _HudActionDeckState {
         );
   }
 
+  Future<void> _runNextAutoAction() {
+    // Automatic completion must not cycle from a stale turn-start selection.
+    // Focusing the first remaining action is idempotent when the explicit
+    // turn-start presenter is running at the same time.
+    return ref
+        .read(hudCommandDispatcherProvider)
+        .focusTurnStartMapTarget(
+          activePlayerId: widget.activePlayerId,
+          state: _currentGameState(),
+        );
+  }
+
   Future<void> _runEndTurn() {
     return ref
         .read(hudCommandDispatcherProvider)

@@ -129,7 +129,7 @@ class GamePlayerControlController extends _$GamePlayerControlController {
             .presentHandoffPresentation(presentation);
         if (!ref.mounted) return result.updatedSave;
       }
-      _setAndSync(result.nextControl);
+      await _setAndSyncAndWait(result.nextControl);
     }
 
     return result.updatedSave;
@@ -168,7 +168,7 @@ class GamePlayerControlController extends _$GamePlayerControlController {
     }
     if (!ref.mounted || result == null) return;
 
-    _setAndSync(result.nextControl);
+    await _setAndSyncAndWait(result.nextControl);
   }
 
   void _invalidateSave(String saveId) {
@@ -180,29 +180,34 @@ class GamePlayerControlController extends _$GamePlayerControlController {
     if (state != next) {
       state = next;
     }
-    _syncGameState(next);
+    unawaited(_syncGameState(next));
   }
 
-  void _syncGameState(PlayerControlState next) {
+  Future<void> _setAndSyncAndWait(PlayerControlState next) async {
+    if (state != next) {
+      state = next;
+    }
+    await _syncGameState(next);
+  }
+
+  Future<void> _syncGameState(PlayerControlState next) async {
     final logger = ref.read(gameLoggerProvider);
-    unawaited(
-      ref
+    try {
+      await ref
           .read(
             gameStateProvider(
               ref.read(activeGameSessionProvider)?.saveId ?? '',
             ).notifier,
           )
-          .syncActivePlayer(playerId: next.activePlayerId, canAct: next.canAct)
-          .catchError((Object error, StackTrace stackTrace) {
-            logger.warn(
-              'GamePlayerControlController',
-              'game state sync failed',
-              error,
-              stackTrace,
-            );
-            return;
-          }),
-    );
+          .syncActivePlayer(playerId: next.activePlayerId, canAct: next.canAct);
+    } catch (error, stackTrace) {
+      logger.warn(
+        'GamePlayerControlController',
+        'game state sync failed',
+        error,
+        stackTrace,
+      );
+    }
   }
 
   Future<List<UiEffect>> _dispatchAndHandle(DomainCommand command) {

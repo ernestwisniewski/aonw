@@ -166,5 +166,113 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
     expect(smoothEffects, isNotEmpty);
     expect(smoothEffects.last.col, city.center.col);
     expect(smoothEffects.last.row, city.center.row);
+    await _pumpUntil(
+      tester,
+      () => find.byType(TechnologyTreePanel).evaluate().isNotEmpty,
+      frames: 8,
+    );
+    expect(find.byType(TechnologyTreePanel), findsOneWidget);
+
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(TechnologyTreePanel), findsOneWidget);
+      expect(
+        container.read(gameStateProvider('save')).value?.pendingAction,
+        isA<PendingResearchSelection>(),
+      );
+    }
+  });
+
+  testWidgets('AI handback keeps city production open for a calm decision', (
+    tester,
+  ) async {
+    final aiPlayer = _player2.copyWith(
+      name: 'AI Bob',
+      kind: PlayerKind.ai,
+      ai: const AiPlayer(
+        strategyId: AiStrategyId.random,
+        difficulty: AiDifficulty.normal,
+        persona: AiPersona.balanced,
+        seed: 42,
+      ),
+    );
+    final save = _save.copyWith(
+      gameMode: GameMode.multiplayer,
+      players: [_player, aiPlayer],
+      playerStates: const {
+        'player_1': PlayerTurnState.finished,
+        'player_2': PlayerTurnState.active,
+      },
+    );
+    final aiCommander = GameUnit.startingCommander(
+      ownerPlayerId: 'player_2',
+      col: 2,
+      row: 2,
+    ).copyWith(movementPoints: 0);
+    const city = GameCity(
+      id: 'city_1',
+      ownerPlayerId: 'player_1',
+      name: 'City',
+      center: CityHex(col: 0, row: 0),
+      controlledHexes: [CityHex(col: 0, row: 0)],
+    );
+    final repository = _FakeGameRepository(
+      snapshot: GameSnapshotFactory.fromClientState(
+        save: save,
+        state: GameClientState(
+          units: [aiCommander],
+          cities: const [city],
+          activePlayerId: 'player_1',
+          activePlayerCanAct: false,
+          submittedPlayerIds: const {'player_1'},
+        ),
+      ),
+    );
+
+    await _pumpHud(
+      tester,
+      repository: repository,
+      gameSave: save,
+      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      renderer: _SpyGameRenderer(mapData: _makeMap()),
+      aiAutopilotEnabled: true,
+    );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(GameHud)),
+      listen: false,
+    );
+    await container.read(gameStateProvider('save').future);
+    await tester.pump();
+
+    await _pumpUntil(
+      tester,
+      () =>
+          repository.snapshot.save.turn > save.turn &&
+          find.byType(CityProductionPanel).evaluate().isNotEmpty,
+    );
+
+    expect(find.byType(CityProductionPanel), findsOneWidget);
+    expect(
+      container.read(gameStateProvider('save')).value?.selection?.city?.id,
+      city.id,
+    );
+    expect(
+      container
+          .read(gameStateProvider('save'))
+          .value
+          ?.cities
+          .single
+          .productionQueue,
+      isNull,
+    );
+
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(CityProductionPanel), findsOneWidget);
+      expect(
+        container.read(gameStateProvider('save')).value?.selection?.city?.id,
+        city.id,
+      );
+    }
   });
 }

@@ -36,6 +36,12 @@ class HudCommandDispatcher {
 
   final Ref _ref;
 
+  GameClientState? _currentGameState() {
+    final saveId = _ref.read(activeGameSessionProvider)?.saveId;
+    if (saveId == null || saveId.isEmpty) return null;
+    return _ref.read(gameStateProvider(saveId)).value;
+  }
+
   Future<void> dispatch(DomainCommand command) async {
     _ref.read(mapInspectionControllerProvider.notifier).clear();
     await _ref.read(gameCommandControllerProvider.notifier).dispatch(command);

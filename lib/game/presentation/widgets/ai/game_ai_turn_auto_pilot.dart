@@ -224,8 +224,13 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
       },
       focusTurnStartMapTarget: (playerId) {
         return ref
-            .read(gameCommandControllerProvider.notifier)
-            .focusTurnStartMapTarget(playerId);
+            .read(hudCommandDispatcherProvider)
+            .focusTurnStartMapTarget(
+              activePlayerId: playerId,
+              state: ref
+                  .read(gameStateProvider(widget.gameSave?.id ?? ''))
+                  .value,
+            );
       },
       canContinue: () => mounted,
       clearHandoff: ref.read(gameHandoffProvider.notifier).clear,
