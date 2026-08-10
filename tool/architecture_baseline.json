@@ -468,8 +468,7 @@
         "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart": 588,
         "lib/game/presentation/widgets/options/game_options_overlay.dart": 752,
         "lib/map/widgets/dice_roll_test_overlay.dart": 491,
-        "lib/menu/main_menu_screen.dart": 962,
-        "lib/menu/menu_route_shell.dart": 425
+        "lib/menu/main_menu_screen.dart": 962
       },
       "declarations": {
         "lib/api/session/network_session_refresh_coordinator.dart::class:NetworkSessionRefreshCoordinator": 573,
@@ -854,7 +853,6 @@
         "lib/map/rendering/tile/hex_tile_painter.dart::class:HexTilePainter/method:render": 22,
         "lib/menu/main_menu_screen.dart::class:_MenuButtonState/method:build/closure:MenuGamepadAction#1": 23,
         "lib/menu/main_menu_screen.dart::class:_MenuPanelState/method:_resumeMultiplayerMatch": 13,
-        "lib/menu/menu_route_shell.dart::class:_MenuActionButtons/method:build": 12,
         "lib/shared/widgets/game_ui/epic_button.dart::class:_EpicButtonState/method:_foreground": 11,
         "lib/shared/widgets/game_ui/epic_button.dart::class:_EpicButtonState/method:build": 12,
         "lib/shared/widgets/viewport_gesture_layer.dart::class:ViewportGestureLayer/method:build": 17
@@ -923,7 +921,6 @@
         "lib/map/rendering/hex_geometry.dart::class:HexGeometry/method:tileAt": 19,
         "lib/map/rendering/tile/hex_tile_painter.dart::class:HexTilePainter/method:render": 21,
         "lib/menu/main_menu_screen.dart::class:_MenuButtonState/method:build/closure:MenuGamepadAction#1": 28,
-        "lib/menu/menu_route_shell.dart::class:_MenuActionButtons/method:build": 16,
         "lib/shared/assets/sprite_atlas_frame_bounds.dart::class:SpriteAtlasFrameBoundsCache/method:_contentRectForFrame": 20,
         "lib/shared/widgets/viewport_gesture_layer.dart::class:ViewportGestureLayer/method:build": 22
       }
