@@ -124,7 +124,7 @@ void _registerDetailModalCoordinationTests() {
 
     Future<void> pump() => _pumpDeck(
       tester,
-      gameState: GameClientState(),
+      gameState: GameClientState(activePlayerId: 'player_1'),
       remainingActionCount: 1,
       selection: _detailTestSelection,
       openSelectionDetailChipId: openChipId,
@@ -143,7 +143,7 @@ void _registerDetailModalCoordinationTests() {
     expect(commands, isEmpty);
 
     await tester.pumpAndSettle();
-    expect(commands.whereType<FocusNextPendingActionCommand>(), hasLength(1));
+    expect(commands.whereType<FocusTurnStartActionCommand>(), hasLength(1));
   });
 
   testWidgets('detail modal reopens the latest request after closing', (
@@ -358,4 +358,13 @@ final class _RecordingHudCommandDispatcher extends HudCommandDispatcher {
   @override
   Future<void> dispatchIntent(GameIntent command) async =>
       commands.add(command);
+
+  @override
+  Future<void> focusTurnStartMapTarget({
+    required String activePlayerId,
+    GameClientState? state,
+    bool moveCamera = true,
+  }) async {
+    commands.add(FocusTurnStartActionCommand(activePlayerId));
+  }
 }

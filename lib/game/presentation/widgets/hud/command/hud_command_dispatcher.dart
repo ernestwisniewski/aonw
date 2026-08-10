@@ -54,6 +54,32 @@ class HudCommandDispatcher {
         .dispatchIntent(intent);
   }
 
+  Future<void> focusTurnStartMapTarget({
+    required String activePlayerId,
+    GameClientState? state,
+    bool moveCamera = true,
+  }) async {
+    if (activePlayerId.isEmpty) return;
+
+    _ref.read(mapInspectionControllerProvider.notifier).clear();
+
+    final focused = await _ref
+        .read(gameCommandControllerProvider.notifier)
+        .focusTurnStartMapTarget(activePlayerId, moveCamera: moveCamera);
+    if (!_ref.mounted) return;
+
+    final focusedState = _currentGameState() ?? state;
+    _applyPanelModesForTurnFocus(
+      state: focusedState,
+      activePlayerId: activePlayerId,
+    );
+    if (focused || !moveCamera) return;
+
+    await _ref
+        .read(gameCommandControllerProvider.notifier)
+        .jumpToPlayerStart(activePlayerId);
+  }
+
   void _applyPanelModes(HudPanelModes modes, {bool playSound = true}) {
     final current = _ref.read(hudPanelControllerProvider);
     final cue = _panelTransitionCue(current, modes);

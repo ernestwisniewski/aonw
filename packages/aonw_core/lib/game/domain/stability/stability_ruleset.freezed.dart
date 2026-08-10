@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'stability_ruleset.dart';
@@ -9,6 +9,7 @@ part of 'stability_ruleset.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -63,7 +64,7 @@ class _$StabilityRulesetCopyWithImpl<$Res>
 /// Create a copy of StabilityRuleset
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? baseOrder = null,Object? costPerCity = null,Object? populationCostThreshold = null,Object? costPerPopulationOverThreshold = null,Object? conqueredCityCost = null,Object? reachRadius = null,Object? frontierCostPerHexBeyondReach = null,Object? disconnectedCityCost = null,Object? warWearinessCap = null,Object? warWearinessAttackFreePerTurn = null,Object? warWearinessPerCityLost = null,Object? warWearinessPeaceDecay = null,Object? warWearinessTreatyDecay = null,Object? contentThreshold = null,Object? unrestThreshold = null,Object? relativeStandingOffset = null,Object? hegemonyK = null,Object? hegemonyTaxPointsPerCost = null,Object? stabilityPerOrderBuilding = null,Object? stabilityPerOrderTechnology = null,Object? stabilityPerLuxuryResource = null,Object? stabilityPerStoredArtifact = null,}) {
-  return _then(_self.copyWith(
+  return _then(StabilityRuleset(
 baseOrder: null == baseOrder ? _self.baseOrder : baseOrder // ignore: cast_nullable_to_non_nullable
 as int,costPerCity: null == costPerCity ? _self.costPerCity : costPerCity // ignore: cast_nullable_to_non_nullable
 as int,populationCostThreshold: null == populationCostThreshold ? _self.populationCostThreshold : populationCostThreshold // ignore: cast_nullable_to_non_nullable

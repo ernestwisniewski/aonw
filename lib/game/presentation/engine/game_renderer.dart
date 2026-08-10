@@ -82,7 +82,7 @@ part 'game_renderer_types.dart';
 class GameRenderer extends HexWorld
     with
         KeyboardEvents,
-        LongPressDetector,
+        LongPressCallbacks,
         HexInputBehavior,
         GameRendererInputAdapter,
         GameRendererLifecycleAdapter {

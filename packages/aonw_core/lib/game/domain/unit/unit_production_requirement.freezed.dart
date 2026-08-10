@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'unit_production_requirement.dart';
@@ -9,17 +9,13 @@ part of 'unit_production_requirement.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UnitProductionRequirement {
 
  Set<ResourceType> get resources;
-/// Create a copy of UnitProductionRequirement
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$UnitProductionRequirementCopyWith<UnitProductionRequirement> get copyWith => _$UnitProductionRequirementCopyWithImpl<UnitProductionRequirement>(this as UnitProductionRequirement, _$identity);
 
 
 
@@ -40,36 +36,7 @@ String toString() {
 
 }
 
-/// @nodoc
-abstract mixin class $UnitProductionRequirementCopyWith<$Res>  {
-  factory $UnitProductionRequirementCopyWith(UnitProductionRequirement value, $Res Function(UnitProductionRequirement) _then) = _$UnitProductionRequirementCopyWithImpl;
-@useResult
-$Res call({
- Set<ResourceType> resources
-});
 
-
-
-
-}
-/// @nodoc
-class _$UnitProductionRequirementCopyWithImpl<$Res>
-    implements $UnitProductionRequirementCopyWith<$Res> {
-  _$UnitProductionRequirementCopyWithImpl(this._self, this._then);
-
-  final UnitProductionRequirement _self;
-  final $Res Function(UnitProductionRequirement) _then;
-
-/// Create a copy of UnitProductionRequirement
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? resources = null,}) {
-  return _then(_self.copyWith(
-resources: null == resources ? _self.resources : resources // ignore: cast_nullable_to_non_nullable
-as Set<ResourceType>,
-  ));
-}
-
-}
 
 
 /// Adds pattern-matching-related methods to [UnitProductionRequirement].
@@ -200,7 +167,7 @@ return resource(_that.resources);case _:
 
 
 class UnitResourceRequirement extends UnitProductionRequirement {
-  const UnitResourceRequirement(final  Set<ResourceType> resources): _resources = resources,super._();
+  const UnitResourceRequirement( Set<ResourceType> resources): _resources = resources,super._();
   
 
  final  Set<ResourceType> _resources;
@@ -211,11 +178,6 @@ class UnitResourceRequirement extends UnitProductionRequirement {
 }
 
 
-/// Create a copy of UnitProductionRequirement
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$UnitResourceRequirementCopyWith<UnitResourceRequirement> get copyWith => _$UnitResourceRequirementCopyWithImpl<UnitResourceRequirement>(this, _$identity);
 
 
 
@@ -236,36 +198,7 @@ String toString() {
 
 }
 
-/// @nodoc
-abstract mixin class $UnitResourceRequirementCopyWith<$Res> implements $UnitProductionRequirementCopyWith<$Res> {
-  factory $UnitResourceRequirementCopyWith(UnitResourceRequirement value, $Res Function(UnitResourceRequirement) _then) = _$UnitResourceRequirementCopyWithImpl;
-@override @useResult
-$Res call({
- Set<ResourceType> resources
-});
 
 
-
-
-}
-/// @nodoc
-class _$UnitResourceRequirementCopyWithImpl<$Res>
-    implements $UnitResourceRequirementCopyWith<$Res> {
-  _$UnitResourceRequirementCopyWithImpl(this._self, this._then);
-
-  final UnitResourceRequirement _self;
-  final $Res Function(UnitResourceRequirement) _then;
-
-/// Create a copy of UnitProductionRequirement
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? resources = null,}) {
-  return _then(UnitResourceRequirement(
-null == resources ? _self._resources : resources // ignore: cast_nullable_to_non_nullable
-as Set<ResourceType>,
-  ));
-}
-
-
-}
 
 // dart format on

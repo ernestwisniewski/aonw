@@ -74,7 +74,7 @@
         "lib/game/presentation/widgets/activity_log/activity_log_dialog.dart": 1529,
         "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 2029,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 1621,
-        "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 2994,
+        "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 3010,
         "lib/game/presentation/widgets/hud/selection/hud_selection_actions.dart": 1518
       },
       "callableCount": {
@@ -87,7 +87,7 @@
         "lib/game/presentation/widgets/activity_log/activity_log_dialog.dart": 101,
         "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 130,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 135,
-        "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 229
+        "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 230
       },
       "callableLines": {
         "lib/developer/assets_editor_screen.dart": 1594,
@@ -97,7 +97,7 @@
         "lib/game/presentation/widgets/activity_log/activity_log_dialog.dart": 1266,
         "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 1711,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 1371,
-        "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 2470,
+        "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 2485,
         "lib/game/presentation/widgets/hud/map/hud_map_inspection_menu.dart": 1026,
         "lib/game/presentation/widgets/hud/selection/hud_selection_actions.dart": 1436
       },
@@ -109,22 +109,22 @@
         "lib/game/presentation/widgets/activity_log/activity_log_dialog.dart": 277,
         "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 277,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 299,
-        "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 661,
+        "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 664,
         "lib/game/presentation/widgets/hud/selection/hud_selection_actions.dart": 264
       },
       "cognitiveComplexity": {
-        "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 421
+        "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 423
       }
     },
     "root_test": {
       "sourceLines": {
-        "test/game/game_hud_test.dart": 8044,
+        "test/game/game_hud_test.dart": 8155,
         "test/game/game_providers_test.dart": 2709,
         "test/game/game_renderer_keyboard_test.dart": 3582,
         "test/support/reducer_parity_fixture.dart": 3252
       },
       "callableCount": {
-        "test/game/game_hud_test.dart": 309,
+        "test/game/game_hud_test.dart": 312,
         "test/game/game_providers_test.dart": 157,
         "test/game/game_renderer_keyboard_test.dart": 201,
         "test/game/lobby_connection_controller_test.dart": 123,
@@ -132,7 +132,7 @@
         "test/support/reducer_parity_fixture_guard_test.dart": 138
       },
       "callableLines": {
-        "test/game/game_hud_test.dart": 7707,
+        "test/game/game_hud_test.dart": 7818,
         "test/game/game_providers_test.dart": 2530,
         "test/game/game_renderer_keyboard_test.dart": 3482,
         "test/support/reducer_parity_fixture.dart": 2822

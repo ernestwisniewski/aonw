@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'wire_event.dart';
@@ -9,6 +9,7 @@ part of 'wire_event.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -63,7 +64,7 @@ class _$WireEventCopyWithImpl<$Res>
 /// Create a copy of WireEvent
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? v = null,Object? matchId = null,Object? offset = null,Object? timestamp = null,Object? actorPlayerId = freezed,Object? tick = freezed,Object? turn = freezed,Object? command = freezed,Object? events = null,Object? movementExecutions = null,}) {
-  return _then(_self.copyWith(
+  return _then(WireEvent(
 v: null == v ? _self.v : v // ignore: cast_nullable_to_non_nullable
 as int,matchId: null == matchId ? _self.matchId : matchId // ignore: cast_nullable_to_non_nullable
 as String,offset: null == offset ? _self.offset : offset // ignore: cast_nullable_to_non_nullable
@@ -215,7 +216,7 @@ return $default(_that.v,_that.matchId,_that.offset,_that.timestamp,_that.actorPl
 
 
 class _WireEvent extends WireEvent {
-  const _WireEvent({this.v = kSnapshotEventVersion, required this.matchId, required this.offset, required this.timestamp, this.actorPlayerId, this.tick, this.turn, final  Map<String, dynamic>? command, final  List<Map<String, dynamic>> events = const <Map<String, dynamic>>[], required this.movementExecutions}): _command = command,_events = events,super._();
+  const _WireEvent({this.v = kSnapshotEventVersion, required this.matchId, required this.offset, required this.timestamp, this.actorPlayerId, this.tick, this.turn,  Map<String, dynamic>? command,  List<Map<String, dynamic>> events = const <Map<String, dynamic>>[], required this.movementExecutions}): _command = command,_events = events,super._();
   
 
 @override@JsonKey() final  int v;

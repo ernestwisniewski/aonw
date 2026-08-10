@@ -40,32 +40,6 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
     }
   }
 
-  Future<void> focusTurnStartMapTarget({
-    required String activePlayerId,
-    GameClientState? state,
-    bool moveCamera = true,
-  }) async {
-    if (activePlayerId.isEmpty) return;
-
-    _ref.read(mapInspectionControllerProvider.notifier).clear();
-
-    final focused = await _ref
-        .read(gameCommandControllerProvider.notifier)
-        .focusTurnStartMapTarget(activePlayerId, moveCamera: moveCamera);
-    if (!_ref.mounted) return;
-
-    final focusedState = _currentGameState() ?? state;
-    _applyPanelModesForTurnFocus(
-      state: focusedState,
-      activePlayerId: activePlayerId,
-    );
-    if (focused || !moveCamera) return;
-
-    await _ref
-        .read(gameCommandControllerProvider.notifier)
-        .jumpToPlayerStart(activePlayerId);
-  }
-
   void _closePrimaryPanelsBeforeOpening(HudNextActionPanel nextPanel) {
     final modes = _ref.read(hudPanelControllerProvider);
     _applyPanelModes(modes.closePrimaryPanelsPreserving(nextPanel));
