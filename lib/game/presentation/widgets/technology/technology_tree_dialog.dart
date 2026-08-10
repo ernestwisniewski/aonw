@@ -38,6 +38,7 @@ export 'package:aonw/game/presentation/widgets/technology/technology_tree_canvas
 part 'technology_tree_mode_bar.dart';
 part 'technology_tree_panel_details.dart';
 part 'technology_tree_panel_gamepad_selection.dart';
+part 'technology_tree_panel_view.dart';
 
 enum TechnologyTreeViewMode { recommendations, tree }
 
@@ -155,19 +156,61 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final size = MediaQuery.sizeOf(context);
-    final compact = size.width < 620;
+    final presentation = _presentationFor(context);
+
+    return GamepadPanelInputListener(
+      input: widget.gamepadInputListenable,
+      onNavigate: presentation.hasDetailsLayer
+          ? null
+          : (direction) => _moveSelection(
+              presentation.gamepadCards,
+              direction,
+              showTree: presentation.showTree,
+              compact: presentation.compact,
+            ),
+      onConfirm: presentation.hasDetailsLayer
+          ? null
+          : () => _confirmSelected(presentation.gamepadCards),
+      onDetails: presentation.hasDetailsLayer
+          ? null
+          : () => _showSelectedDetails(presentation.gamepadCards),
+      onMode: presentation.hasDetailsLayer
+          ? null
+          : () => _toggleTechnologyView(
+              presentation.showTree,
+              presentation.gamepadCards,
+            ),
+      onCancel: _handleGamepadCancel,
+      onInputActive: _showGamepadSelection,
+      child: _TechnologyTreePanelSurface(
+        presentation: presentation,
+        viewModel: widget.viewModel,
+        cityRuleset: widget.cityRuleset,
+        technologyRuleset: widget.technologyRuleset,
+        maxHeight: widget.maxHeight,
+        pathAnimation: _pathAnimationController,
+        verticalController: _verticalController,
+        horizontalController: _horizontalController,
+        onClose: widget.onClose,
+        onShowTree: _showFullTree,
+        onShowRecommendations: _showRecommendations,
+        onTechnologySelected: _onTechnologyNodeTapped,
+        onTechnologyDetails: _showTechnologyDetails,
+        onBuildingDetails: _showBuildingDetails,
+        onUnitDetails: _showUnitDetails,
+        onWonderDetails: _showWonderDetails,
+        onResearch: _researchTechnology,
+        onCloseDetails: _closeDetailsLayer,
+        onCloseTechnologyDetails: _closeTechnologyDetails,
+      ),
+    );
+  }
+
+  _TechnologyTreePanelPresentation _presentationFor(BuildContext context) {
     final cards = widget.viewModel.technologies;
     final showTree =
         ref.watch(technologyTreeViewModeProvider) ==
         TechnologyTreeViewMode.tree;
-    final detailsCard = _technologyCardFor(cards, _detailsTechnologyId);
-    final hasDetailsLayer =
-        detailsCard != null ||
-        _detailsBuildingType != null ||
-        _detailsUnitType != null ||
-        _detailsWonderType != null;
     final gamepadCards = TechnologyTreeGamepadNavigation.cardsFor(
       viewModel: widget.viewModel,
       showTree: showTree,
@@ -177,249 +220,20 @@ class _TechnologyTreePanelState extends ConsumerState<TechnologyTreePanel>
           gamepadCards,
           _selectedTechnologyId,
         );
-    final visibleSelectedTechnologyId = _visibleSelectedTechnologyId(
-      selectedTechnologyId,
-    );
-
-    return GamepadPanelInputListener(
-      input: widget.gamepadInputListenable,
-      onNavigate: hasDetailsLayer
-          ? null
-          : (direction) => _moveSelection(
-              gamepadCards,
-              direction,
-              showTree: showTree,
-              compact: compact,
-            ),
-      onConfirm: hasDetailsLayer ? null : () => _confirmSelected(gamepadCards),
-      onDetails: hasDetailsLayer
-          ? null
-          : () => _showSelectedDetails(gamepadCards),
-      onMode: hasDetailsLayer
-          ? null
-          : () => _toggleTechnologyView(showTree, gamepadCards),
-      onCancel: _handleGamepadCancel,
-      onInputActive: _showGamepadSelection,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: 980, maxHeight: widget.maxHeight),
-        child: GameModalScaffold(
-          surfaceKey: const Key('technologyTreePanel.surface'),
-          size: GameModalSize.wide,
-          showCornerDiamonds: false,
-          contentPadding: EdgeInsets.zero,
-          centerInAvailableSpace: false,
-          scrollable: false,
-          content: Column(
-            children: [
-              TechnologyTreeHeader(
-                sciencePerTurn: widget.viewModel.sciencePerTurn,
-                l10n: l10n,
-                compact: compact,
-                onClose: widget.onClose,
-              ),
-              if (widget.viewModel.activeTechnology != null)
-                TechnologyActiveResearchBanner(
-                  card: widget.viewModel.activeTechnology!,
-                  l10n: l10n,
-                  compact: compact,
-                ),
-              _TechnologyTreeModeBar(
-                mode: showTree
-                    ? TechnologyTreeViewMode.tree
-                    : TechnologyTreeViewMode.recommendations,
-                compact: compact,
-                technologyCount: cards.length,
-                onShowTree: _showFullTree,
-                onShowRecommendations: _showRecommendations,
-              ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: showTree
-                          ? TechnologyTreeBoard(
-                              cards: cards,
-                              selectedTechnologyId: visibleSelectedTechnologyId,
-                              hasDetailsLayer: hasDetailsLayer,
-                              compact: compact,
-                              pathAnimation: _pathAnimationController,
-                              verticalController: _verticalController,
-                              horizontalController: _horizontalController,
-                              l10n: l10n,
-                              onTechnologySelected: _onTechnologyNodeTapped,
-                              onTechnologyDetails: _showTechnologyDetails,
-                              onBuildingDetails: _showBuildingDetails,
-                              onUnitDetails: _showUnitDetails,
-                              onWonderDetails: _showWonderDetails,
-                              onResearch: _researchTechnology,
-                            )
-                          : TechnologyRecommendationsView(
-                              viewModel: widget.viewModel,
-                              l10n: l10n,
-                              compact: compact,
-                              selectedTechnologyId: visibleSelectedTechnologyId,
-                              onResearch: _researchTechnology,
-                              onTechnologyDetails: _showTechnologyDetails,
-                            ),
-                    ),
-                    if (_detailsBuildingType != null)
-                      Positioned.fill(
-                        child: TechnologyInlineCityBuildingDetailsLayer(
-                          buildingType: _detailsBuildingType!,
-                          l10n: l10n,
-                          cityRuleset: widget.cityRuleset,
-                          technologyRuleset: widget.technologyRuleset,
-                          compact: compact,
-                          onClose: _closeDetailsLayer,
-                        ),
-                      ),
-                    if (_detailsUnitType != null)
-                      Positioned.fill(
-                        child: TechnologyInlineUnitDetailsLayer(
-                          unitType: _detailsUnitType!,
-                          l10n: l10n,
-                          cityRuleset: widget.cityRuleset,
-                          technologyRuleset: widget.technologyRuleset,
-                          compact: compact,
-                          onClose: _closeDetailsLayer,
-                        ),
-                      ),
-                    if (_detailsWonderType != null)
-                      Positioned.fill(
-                        child: TechnologyInlineWonderDetailsLayer(
-                          wonderType: _detailsWonderType!,
-                          l10n: l10n,
-                          technologyRuleset: widget.technologyRuleset,
-                          compact: compact,
-                          onClose: _closeDetailsLayer,
-                        ),
-                      ),
-                    if (detailsCard != null)
-                      Positioned.fill(
-                        child: TechnologyInlineTechnologyDetailsLayer(
-                          card: detailsCard,
-                          l10n: l10n,
-                          cityRuleset: widget.cityRuleset,
-                          technologyRuleset: widget.technologyRuleset,
-                          compact: compact,
-                          onClose: _closeTechnologyDetails,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+    return _TechnologyTreePanelPresentation(
+      l10n: AppLocalizations.of(context),
+      compact: MediaQuery.sizeOf(context).width < 620,
+      cards: cards,
+      showTree: showTree,
+      detailsCard: _technologyCardFor(cards, _detailsTechnologyId),
+      detailsBuildingType: _detailsBuildingType,
+      detailsUnitType: _detailsUnitType,
+      detailsWonderType: _detailsWonderType,
+      gamepadCards: gamepadCards,
+      visibleSelectedTechnologyId: _visibleSelectedTechnologyId(
+        selectedTechnologyId,
       ),
     );
-  }
-
-  void _moveSelection(
-    List<TechnologyCardViewModel> cards,
-    GamepadMapDirection direction, {
-    required bool showTree,
-    required bool compact,
-  }) {
-    final nextCard = TechnologyTreeGamepadNavigation.nextCard(
-      cards: cards,
-      selectedTechnologyId: _selectedTechnologyId,
-      direction: direction,
-      useTreeGeometry: showTree,
-    );
-    if (nextCard == null) return;
-    _setSelectedTechnology(nextCard, showTree: showTree, compact: compact);
-  }
-
-  void _setSelectedTechnology(
-    TechnologyCardViewModel card, {
-    required bool showTree,
-    required bool compact,
-  }) {
-    setState(() {
-      _selectedTechnologyId = card.id;
-      _detailsTechnologyId = null;
-      _detailsBuildingType = null;
-      _detailsUnitType = null;
-      _detailsWonderType = null;
-    });
-    if (showTree) {
-      TechnologyTreeGamepadNavigation.revealTreeCard(
-        isMounted: () => mounted,
-        cards: widget.viewModel.technologies,
-        card: card,
-        compact: compact,
-        verticalController: _verticalController,
-        horizontalController: _horizontalController,
-      );
-    }
-  }
-
-  void _confirmSelected(List<TechnologyCardViewModel> cards) {
-    final selected = TechnologyTreeGamepadNavigation.selectedCard(
-      cards,
-      _selectedTechnologyId,
-    );
-    if (selected == null) return;
-    if (selected.canSelect) {
-      _researchTechnology(selected.id);
-      return;
-    }
-    if (selected.state == TechnologyCardState.locked) {
-      setState(() => _selectedTechnologyId = selected.id);
-    }
-  }
-
-  void _showSelectedDetails(List<TechnologyCardViewModel> cards) {
-    final selected = TechnologyTreeGamepadNavigation.selectedCard(
-      cards,
-      _selectedTechnologyId,
-    );
-    if (selected == null) return;
-    _showTechnologyDetails(selected);
-  }
-
-  void _toggleTechnologyView(
-    bool showTree,
-    List<TechnologyCardViewModel> cards,
-  ) {
-    if (showTree) {
-      _showRecommendations();
-      return;
-    }
-    final selected = TechnologyTreeGamepadNavigation.selectedCard(
-      cards,
-      _selectedTechnologyId,
-    );
-    ref.read(technologyTreeViewModeProvider.notifier).showTree();
-    setState(() {
-      if (selected != null) _selectedTechnologyId = selected.id;
-      _detailsTechnologyId = null;
-      _detailsBuildingType = null;
-      _detailsUnitType = null;
-      _detailsWonderType = null;
-    });
-  }
-
-  void _handleGamepadCancel() {
-    if (_closeAnyDetails()) return;
-    widget.onClose();
-  }
-
-  bool _closeAnyDetails() {
-    if (_detailsTechnologyId == null &&
-        _detailsBuildingType == null &&
-        _detailsUnitType == null &&
-        _detailsWonderType == null) {
-      return false;
-    }
-    setState(() {
-      _detailsTechnologyId = null;
-      _detailsBuildingType = null;
-      _detailsUnitType = null;
-      _detailsWonderType = null;
-    });
-    return true;
   }
 
   void _researchTechnology(TechnologyId technologyId) {
