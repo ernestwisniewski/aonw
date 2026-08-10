@@ -49,6 +49,8 @@ part 'run_save_ai_benchmark/cli_argument_helpers.dart';
 part 'run_save_ai_benchmark/cli_helpers.dart';
 part 'run_save_ai_benchmark/engine_command_dispatcher.dart';
 part 'run_save_ai_benchmark/execution_models.dart';
+part 'run_save_ai_benchmark/execution_player_result.dart';
+part 'run_save_ai_benchmark/execution_run_models.dart';
 part 'run_save_ai_benchmark/multi_turn_replay.dart';
 part 'run_save_ai_benchmark/multi_turn_replay_cycle_models.dart';
 part 'run_save_ai_benchmark/multi_turn_replay_execution_models.dart';
