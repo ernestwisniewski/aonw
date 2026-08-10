@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/game_event_notification_message.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers/game/game_activity_history_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
+import 'package:aonw/game/presentation/widgets/activity_log/activity_log_filter_model.dart';
+import 'package:aonw/game/presentation/widgets/activity_log/turn_timeline_chart.dart';
 import 'package:aonw/game/presentation/widgets/hud/notifications/game_event_notification_thumbnail.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_empty_state.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
@@ -19,11 +20,12 @@ import 'package:aonw/shared/theme/surface_shape.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_epic_header.dart';
-import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+export 'package:aonw/game/presentation/widgets/activity_log/activity_log_filter_model.dart';
 
 part 'activity_log_entries.dart';
 part 'activity_log_filter.dart';
