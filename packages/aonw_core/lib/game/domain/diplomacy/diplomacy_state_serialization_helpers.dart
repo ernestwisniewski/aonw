@@ -72,15 +72,13 @@ bool _isContactKey(String key) {
   return parts.length == 2 && parts[0].isNotEmpty && parts[1].isNotEmpty;
 }
 
-int _statusSeverity(DiplomaticRelationStatus status) {
-  return switch (status) {
-    DiplomaticRelationStatus.friendly => 0,
-    DiplomaticRelationStatus.neutral => 0,
-    DiplomaticRelationStatus.truce => 0,
-    DiplomaticRelationStatus.hostile => 1,
-    DiplomaticRelationStatus.war => 2,
-  };
-}
+const _statusSeverity = <DiplomaticRelationStatus, int>{
+  DiplomaticRelationStatus.friendly: 0,
+  DiplomaticRelationStatus.neutral: 0,
+  DiplomaticRelationStatus.truce: 0,
+  DiplomaticRelationStatus.hostile: 1,
+  DiplomaticRelationStatus.war: 2,
+};
 
 int _compareScoreEntries(DiplomaticScoreEntry a, DiplomaticScoreEntry b) {
   final key = a.key.compareTo(b.key);
