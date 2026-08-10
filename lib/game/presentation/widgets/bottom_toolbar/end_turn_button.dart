@@ -18,11 +18,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 part 'end_turn_button_content.dart';
+part 'end_turn_button_action_menu.dart';
 part 'end_turn_button_painter.dart';
 part 'end_turn_button_visuals.dart';
 
-/// One-shot fingerprint of the visual state. Drives both the visuals (icon,
-/// label, colors) and the haptics decision in [didUpdateWidget].
+/// Visual state fingerprint shared by rendering and haptics.
 enum _EndTurnButtonMode { waiting, ready, action }
 
 class EndTurnButton extends StatefulWidget {
