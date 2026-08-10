@@ -9,6 +9,9 @@ import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/theme/surface_shape.dart';
 import 'package:flutter/material.dart';
 
+part 'selection_command_chip_style.dart';
+part 'selection_command_chip_surface.dart';
+
 class SelectionCommandChip extends StatefulWidget {
   static const double extent = 48;
   static const double labeledExtent = 136;
@@ -17,21 +20,6 @@ class SelectionCommandChip extends StatefulWidget {
   static const double iconExtent = GameIconSize.large;
   static const double _labeledHorizontalPadding = 24;
   static const double _labeledIconGap = 8;
-
-  final GameIconData icon;
-  final String actionId;
-  final String label;
-  final Color color;
-  final bool active;
-  final bool enabled;
-  final bool prominent;
-  final bool pulseBorder;
-  final bool showLabel;
-  final bool dangerOutlined;
-  final double disabledOpacity;
-  final String? disabledReason;
-  final String? badgeLabel;
-  final VoidCallback? onTap;
 
   const SelectionCommandChip({
     required this.icon,
@@ -50,6 +38,21 @@ class SelectionCommandChip extends StatefulWidget {
     this.badgeLabel,
     super.key,
   }) : actionId = actionId ?? label;
+
+  final GameIconData icon;
+  final String actionId;
+  final String label;
+  final Color color;
+  final bool active;
+  final bool enabled;
+  final bool prominent;
+  final bool pulseBorder;
+  final bool showLabel;
+  final bool dangerOutlined;
+  final double disabledOpacity;
+  final String? disabledReason;
+  final String? badgeLabel;
+  final VoidCallback? onTap;
 
   double get mainExtent => actionExtentFor(label: label, showLabel: showLabel);
 
@@ -103,9 +106,7 @@ class _SelectionCommandChipState extends State<SelectionCommandChip>
       }
       return;
     }
-    if (_pulseController.isAnimating) {
-      _pulseController.stop();
-    }
+    if (_pulseController.isAnimating) _pulseController.stop();
     _pulseController.value = 0;
   }
 
@@ -113,49 +114,9 @@ class _SelectionCommandChipState extends State<SelectionCommandChip>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final canTap = widget.enabled && widget.onTap != null;
-    final dangerFill = Color.lerp(
-      GameUiTheme.danger,
-      GameUiTheme.copper,
-      0.18,
-    )!;
-    final dangerBorder = Color.lerp(
-      GameUiTheme.dangerSubtle,
-      GameUiTheme.copperDeep,
-      0.22,
-    )!;
-    final accent = widget.dangerOutlined
-        ? dangerFill
-        : widget.active
-        ? GameUiTheme.gold
-        : widget.color;
-    final foreground = widget.dangerOutlined
-        ? Colors.black
-        : widget.active
-        ? GameUiTheme.bg
-        : Color.lerp(accent, Colors.white, 0.22)!;
-    final highlighted = widget.active || widget.prominent || widget.pulseBorder;
-    final surface = widget.dangerOutlined
-        ? SurfaceElevation.raised
-        : widget.active
-        ? SurfaceElevation.modal
-        : widget.prominent || widget.pulseBorder
-        ? SurfaceElevation.raised
-        : SurfaceElevation.flat;
-    final background = widget.dangerOutlined
-        ? dangerFill
-        : (widget.prominent || widget.pulseBorder) && !widget.active
-        ? Color.lerp(GameUiTheme.surface, accent, 0.18)!
-        : widget.active
-        ? accent
-        : null;
-
-    final tooltipMessage = canTap || widget.disabledReason == null
-        ? widget.label
-        : '${widget.label}: ${widget.disabledReason}';
-    final chipWidth = widget.mainExtent;
-
+    final style = _SelectionCommandChipStyle.resolve(widget);
     return Tooltip(
-      message: tooltipMessage,
+      message: _tooltipMessage(canTap),
       triggerMode: TooltipTriggerMode.manual,
       child: Semantics(
         button: true,
@@ -166,183 +127,41 @@ class _SelectionCommandChipState extends State<SelectionCommandChip>
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: canTap ? widget.onTap : null,
-          onLongPress: () => showHudLongPressInfoSheet(
-            context: context,
-            icon: widget.icon,
-            title: widget.label,
-            body: _descriptionFor(
-              l10n: l10n,
-              label: widget.label,
-              enabled: widget.enabled,
-              prominent: widget.prominent || widget.pulseBorder,
-              active: widget.active,
-              disabledReason: widget.disabledReason,
-            ),
-            accent: accent,
-            actionLabel: canTap ? l10n.commonExecuteAction : null,
-            onAction: canTap ? widget.onTap : null,
-          ),
-          child: AnimatedOpacity(
-            opacity: canTap ? 1 : widget.disabledOpacity,
-            duration: GameMotion.snap,
-            child: AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                final pulse = _shouldPulse
-                    ? Curves.easeInOut.transform(_pulseController.value)
-                    : 0.0;
-                final borderWidth = widget.dangerOutlined
-                    ? widget.active
-                          ? 1.8 + pulse * 0.3
-                          : 1.6 + pulse * 0.3
-                    : widget.active
-                    ? 2.0 + pulse * 0.5
-                    : widget.pulseBorder
-                    ? 1.7 + pulse * 1.0
-                    : widget.prominent
-                    ? 1.7
-                    : 1.2;
-                final glowAlpha = widget.dangerOutlined
-                    ? 48 + (pulse * 28).round()
-                    : widget.active
-                    ? 90 + (pulse * 44).round()
-                    : widget.pulseBorder
-                    ? 78 + (pulse * 60).round()
-                    : 78;
-                final pulseBackground = widget.dangerOutlined
-                    ? Color.lerp(dangerFill, dangerBorder, pulse * 0.14)!
-                    : widget.pulseBorder && !widget.active
-                    ? Color.lerp(
-                        GameUiTheme.surface,
-                        accent,
-                        0.18 + pulse * 0.08,
-                      )!
-                    : background;
-
-                return AnimatedContainer(
-                  key: Key('selectionInfo.action.${widget.actionId}'),
-                  duration: GameMotion.snap,
-                  curve: GameMotion.enter,
-                  width: chipWidth,
-                  height: SelectionCommandChip.extent,
-                  decoration: surface.decoration(
-                    accent: accent,
-                    background: pulseBackground,
-                    backgroundAlpha: widget.dangerOutlined ? 245 : null,
-                    borderColor: widget.dangerOutlined ? dangerBorder : null,
-                    border: highlighted
-                        ? BorderEmphasis.active
-                        : BorderEmphasis.strong,
-                    borderAlpha: widget.dangerOutlined ? 255 : null,
-                    borderWidth: borderWidth,
-                    glowColor: highlighted && canTap && !widget.dangerOutlined
-                        ? accent
-                        : null,
-                    glowAlpha: glowAlpha,
-                    includeShadow: true,
-                    shape: SurfaceShape.chip,
-                  ),
-                  child: child,
-                );
-              },
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned.fill(
-                    child: widget.showLabel
-                        ? Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal:
-                                  SelectionCommandChip
-                                      ._labeledHorizontalPadding /
-                                  2,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _commandIcon(
-                                  size: GameIconSize.regular,
-                                  foreground: foreground,
-                                ),
-                                const SizedBox(
-                                  width: SelectionCommandChip._labeledIconGap,
-                                ),
-                                Flexible(
-                                  child: Text(
-                                    _labelText,
-                                    maxLines: 1,
-                                    softWrap: false,
-                                    overflow: TextOverflow.visible,
-                                    style: _labelStyle(foreground),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Center(
-                            child: _commandIcon(
-                              size: SelectionCommandChip.iconExtent,
-                              foreground: foreground,
-                            ),
-                          ),
-                  ),
-                  if (widget.badgeLabel case final badge?)
-                    Positioned(
-                      top: -5,
-                      right: -5,
-                      child: _SelectionCommandChipBadge(
-                        label: badge,
-                        color: accent,
-                      ),
-                    ),
-                ],
-              ),
-            ),
+          onLongPress: () => _showInfo(l10n, style.accent, canTap),
+          child: _SelectionCommandChipSurface(
+            widget: widget,
+            style: style,
+            canTap: canTap,
+            shouldPulse: _shouldPulse,
+            pulseAnimation: _pulseController,
           ),
         ),
       ),
     );
   }
 
-  TextStyle _labelStyle(Color foreground) {
-    return GameUiTheme.actionLabel.copyWith(color: foreground);
+  String _tooltipMessage(bool canTap) {
+    if (canTap || widget.disabledReason == null) return widget.label;
+    return '${widget.label}: ${widget.disabledReason}';
   }
 
-  String get _labelText => widget.label;
-
-  Widget _commandIcon({required double size, required Color foreground}) {
-    return GameIcon(widget.icon, size: size, color: foreground);
-  }
-}
-
-class _SelectionCommandChipBadge extends StatelessWidget {
-  const _SelectionCommandChipBadge({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: SurfaceElevation.modal.decoration(
-        background: color,
-        borderColor: GameUiTheme.bg,
-        border: BorderEmphasis.active,
-        shape: SurfaceShape.pill,
-        includeShadow: true,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: GameUiTheme.bg,
-            fontSize: 10,
-            fontWeight: FontWeight.w900,
-            fontFeatures: GameUiTheme.tabularFigures,
-          ),
+  void _showInfo(AppLocalizations l10n, Color accent, bool canTap) {
+    unawaited(
+      showHudLongPressInfoSheet(
+        context: context,
+        icon: widget.icon,
+        title: widget.label,
+        body: _descriptionFor(
+          l10n: l10n,
+          label: widget.label,
+          enabled: widget.enabled,
+          prominent: widget.prominent || widget.pulseBorder,
+          active: widget.active,
+          disabledReason: widget.disabledReason,
         ),
+        accent: accent,
+        actionLabel: canTap ? l10n.commonExecuteAction : null,
+        onAction: canTap ? widget.onTap : null,
       ),
     );
   }
@@ -361,11 +180,7 @@ String _descriptionFor({
         ? l10n.selectionCommandUnavailableDescription(label)
         : disabledReason;
   }
-  if (active) {
-    return l10n.selectionCommandActiveDescription(label);
-  }
-  if (prominent) {
-    return l10n.selectionCommandProminentDescription(label);
-  }
+  if (active) return l10n.selectionCommandActiveDescription(label);
+  if (prominent) return l10n.selectionCommandProminentDescription(label);
   return l10n.selectionCommandDefaultDescription(label);
 }

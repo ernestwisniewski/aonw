@@ -477,7 +477,6 @@
         "lib/game/presentation/widgets/multiplayer/multiplayer_avatars_rail.dart": 376,
         "lib/game/presentation/widgets/multiplayer/multiplayer_status_sheet.dart": 444,
         "lib/game/presentation/widgets/options/game_options_overlay.dart": 752,
-        "lib/game/presentation/widgets/selection/selection_command_chip.dart": 371,
         "lib/map/widgets/dice_roll_test_overlay.dart": 491,
         "lib/menu/main_menu_screen.dart": 962,
         "lib/menu/menu_route_shell.dart": 425,
@@ -661,7 +660,6 @@
         "lib/game/presentation/widgets/selection/density.dart::class:SelectionDensitySpec/method:of": 64,
         "lib/game/presentation/widgets/selection/selection_action_bar.dart::class:SelectionActionBar/method:build/closure:LayoutBuilder#1": 63,
         "lib/game/presentation/widgets/selection/selection_action_chip.dart::class:SelectionActionChip/method:build": 63,
-        "lib/game/presentation/widgets/selection/selection_command_chip.dart::class:_SelectionCommandChipState/method:build": 121,
         "lib/game/presentation/widgets/selection/selection_improvement_list.dart::class:_ImprovementCard/method:build": 64,
         "lib/game/presentation/widgets/selection/view_models/city_selection_view_model_factory.dart::class:CitySelectionViewModelFactory/method:from": 167,
         "lib/game/presentation/widgets/selection/view_models/field_improvement_selection_view_model_factory.dart::class:FieldImprovementSelectionViewModelFactory/method:from": 75,
@@ -704,8 +702,7 @@
         "lib/game/presentation/widgets/activity_log/activity_log_dialog.dart::class:_ActivityLogPanelState/method:build": 4,
         "lib/game/presentation/widgets/city/city_production_dialog_view_model.dart::class:CityProductionDialogViewModel/method:from": 4,
         "lib/game/presentation/widgets/city/city_production_list.dart::class:CityProductionList/method:build": 4,
-        "lib/game/presentation/widgets/hud/global_hud_actions.dart::class:GlobalHudActionRail/method:build": 4,
-        "lib/game/presentation/widgets/selection/selection_command_chip.dart::class:_SelectionCommandChipState/method:build/closure:AnimatedBuilder#1": 4
+        "lib/game/presentation/widgets/hud/global_hud_actions.dart::class:GlobalHudActionRail/method:build": 4
       },
       "cyclomaticComplexity": {
         "lib/api/session/network_session_refresh_coordinator.dart::class:NetworkSessionRefreshCoordinator/method:_performRefresh": 17,
@@ -857,8 +854,6 @@
         "lib/game/presentation/widgets/options/game_options_overlay.dart::class:_GameOptionsOverlayState/method:build/closure:LayoutBuilder#1": 17,
         "lib/game/presentation/widgets/resources/resource_breakdown_popup.dart::class:ResourceBreakdownPopup/method:build": 16,
         "lib/game/presentation/widgets/selection/selection_action_bar.dart::class:SelectionActionBar/method:build/closure:LayoutBuilder#1": 11,
-        "lib/game/presentation/widgets/selection/selection_command_chip.dart::class:_SelectionCommandChipState/method:build": 24,
-        "lib/game/presentation/widgets/selection/selection_command_chip.dart::class:_SelectionCommandChipState/method:build/closure:AnimatedBuilder#1": 20,
         "lib/game/presentation/widgets/selection/view_models/city_selection_view_model_factory.dart::class:CitySelectionViewModelFactory/method:_technologyProfileIndexFor": 55,
         "lib/game/presentation/widgets/selection/view_models/city_selection_view_model_factory.dart::class:CitySelectionViewModelFactory/method:from": 15,
         "lib/game/presentation/widgets/selection/view_models/field_improvement_selection_view_model_factory.dart::class:FieldImprovementSelectionViewModelFactory/method:_eraColumnForImprovement": 12,
@@ -938,8 +933,6 @@
         "lib/game/presentation/widgets/options/game_options_layout.dart::class:GameOptionsOverlayLayout/constructor:resolve": 22,
         "lib/game/presentation/widgets/options/game_options_overlay.dart::class:_GameOptionsOverlayState/method:build": 21,
         "lib/game/presentation/widgets/options/game_options_overlay.dart::class:_GameOptionsOverlayState/method:build/closure:LayoutBuilder#1": 18,
-        "lib/game/presentation/widgets/selection/selection_command_chip.dart::class:_SelectionCommandChipState/method:build": 31,
-        "lib/game/presentation/widgets/selection/selection_command_chip.dart::class:_SelectionCommandChipState/method:build/closure:AnimatedBuilder#1": 30,
         "lib/game/presentation/widgets/selection/view_models/city_selection_view_model_factory.dart::class:CitySelectionViewModelFactory/method:_technologyProfileIndexFor": 51,
         "lib/game/presentation/widgets/selection/view_models/selection_detail_view_model_factory.dart::class:SelectionDetailViewModelFactory/method:detailFor": 21,
         "lib/game/presentation/widgets/selection_info/contents/description_detail_content.dart::class:DescriptionDetailContent/method:build": 37,
