@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'unit_spec.dart';
@@ -9,6 +9,7 @@ part of 'unit_spec.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -63,7 +64,7 @@ class _$UnitSpecCopyWithImpl<$Res>
 /// Create a copy of UnitSpec
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? type = null,Object? productionCost = null,Object? requirements = null,Object? baseStats = null,Object? capabilities = null,Object? upkeep = null,Object? supplyCost = null,Object? scoreValue = null,}) {
-  return _then(_self.copyWith(
+  return _then(UnitSpec(
 type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as GameUnitType,productionCost: null == productionCost ? _self.productionCost : productionCost // ignore: cast_nullable_to_non_nullable
 as int,requirements: null == requirements ? _self.requirements : requirements // ignore: cast_nullable_to_non_nullable
@@ -222,7 +223,7 @@ return $default(_that.type,_that.productionCost,_that.requirements,_that.baseSta
 
 
 class _UnitSpec extends UnitSpec {
-  const _UnitSpec({required this.type, required this.productionCost, final  List<UnitProductionRequirement> requirements = const [], required this.baseStats, required this.capabilities, required this.upkeep, required this.supplyCost, required this.scoreValue}): _requirements = requirements,super._();
+  const _UnitSpec({required this.type, required this.productionCost,  List<UnitProductionRequirement> requirements = const [], required this.baseStats, required this.capabilities, required this.upkeep, required this.supplyCost, required this.scoreValue}): _requirements = requirements,super._();
   
 
 @override final  GameUnitType type;

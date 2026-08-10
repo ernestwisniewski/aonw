@@ -2,8 +2,7 @@ part of 'hud_action_deck.dart';
 
 extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
   bool _canAutoAdvance(GameClientState? state, {bool force = false}) {
-    if (state == null) return false;
-
+    if (!isTurn(state, widget.activePlayerId)) return false;
     final context = _HudAutoAdvanceContext(
       activePlayerCanAct: widget.activePlayerCanAct,
       activePlayerUsesAutoTurnFlow: _activePlayerUsesAutoTurnFlow(),
@@ -22,7 +21,7 @@ extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
       force: force,
       manualAutoTargetPaused: _pausedManualAutoTargetKey != null,
       inspectingResolvedCityWithPendingActions:
-          _isInspectingResolvedCityWithPendingActions(state),
+          _isInspectingResolvedCityWithPendingActions(state!),
       resolvedCityCompletionCanAdvance: _resolvedCityCompletionCanAdvance(
         state,
       ),
@@ -30,7 +29,6 @@ extension _HudActionDeckAutoFlowPredicates on _HudActionDeckState {
       waitsForManualDecision: _waitsForManualDecision(state),
       autoTurnFlowCanStart: _autoTurnFlowCanStartFrom(state),
     );
-
     return const _HudAutoAdvancePolicy().canAdvance(context);
   }
 

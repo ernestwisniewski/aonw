@@ -84,7 +84,8 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
       tester,
       () =>
           container.read(gameStateProvider('save')).value?.activePlayerId ==
-          'player_2',
+              'player_2' &&
+          find.text('BOB').evaluate().isEmpty,
       frames: 8,
     );
 
@@ -288,7 +289,9 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
       await _pumpUntil(tester, () {
         final state = container.read(gameStateProvider('save')).value;
         final control = container.read(gamePlayerControlControllerProvider);
-        return (state?.activePlayerCanAct ?? false) && control.canAct;
+        return (state?.activePlayerCanAct ?? false) &&
+            control.canAct &&
+            find.text('ALICE').evaluate().isEmpty;
       }, frames: 8);
 
       chainedControl = container.read(gamePlayerControlControllerProvider);

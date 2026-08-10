@@ -48,12 +48,18 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
     if (activePlayerId.isEmpty) return;
 
     _ref.read(mapInspectionControllerProvider.notifier).clear();
-    _applyPanelModesForTurnFocus(state: state, activePlayerId: activePlayerId);
 
     final focused = await _ref
         .read(gameCommandControllerProvider.notifier)
         .focusTurnStartMapTarget(activePlayerId, moveCamera: moveCamera);
-    if (!_ref.mounted || focused || !moveCamera) return;
+    if (!_ref.mounted) return;
+
+    final focusedState = _currentGameState() ?? state;
+    _applyPanelModesForTurnFocus(
+      state: focusedState,
+      activePlayerId: activePlayerId,
+    );
+    if (focused || !moveCamera) return;
 
     await _ref
         .read(gameCommandControllerProvider.notifier)
@@ -74,7 +80,12 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
       state: state,
       activePlayerId: activePlayerId,
     );
-    _applyPanelModes(modes.closePrimaryPanelsPreserving(nextPanel));
+    final settledModes = switch (nextPanel) {
+      HudNextActionPanel.cityProduction => modes.openCityBuildings(),
+      HudNextActionPanel.technology => modes.openTechnology(),
+      HudNextActionPanel.none => modes.closePrimaryPanels(),
+    };
+    _applyPanelModes(settledModes, playSound: false);
   }
 
   Future<void> endTurn({

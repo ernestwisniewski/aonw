@@ -13,6 +13,7 @@ import 'package:aonw/game/presentation/providers/map/map_inspection_provider.dar
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models/worker_action_panel_view_model.dart';
 import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_deck_combat_forecast.dart';
 import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_line.dart';
+import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_auto_action_focus.dart';
 import 'package:aonw/game/presentation/widgets/hud/combat/hud_combat_preview.dart';
 import 'package:aonw/game/presentation/widgets/hud/command/hud_command_line.dart';
 import 'package:aonw/game/presentation/widgets/hud/command/hud_command_line_view_model.dart';
@@ -66,7 +67,8 @@ part 'hud_action_deck_gamepad_focus.dart';
 part 'hud_action_deck_layout.dart';
 part 'hud_action_deck_modals.dart';
 
-class HudActionDeck extends ConsumerStatefulWidget {
+class HudActionDeck extends ConsumerStatefulWidget
+    implements HudAutoFocusTarget {
   const HudActionDeck({
     required this.animatingUnitIdsListenable,
     required this.gameSave,
@@ -98,7 +100,6 @@ class HudActionDeck extends ConsumerStatefulWidget {
     required this.onCloseSelectionDetail,
     super.key,
   });
-
   static const double actionLineHeight = SelectionActionBar.actionChipHeight;
   static const double commandLineHeight =
       HudActionDeckMetrics.commandLineHeight;
@@ -114,6 +115,7 @@ class HudActionDeck extends ConsumerStatefulWidget {
   static const double expandedBottomPadding = 188;
   final ValueListenable<Set<String>> animatingUnitIdsListenable;
   final GameSave gameSave;
+  @override
   final String activePlayerId;
   final bool activePlayerCanAct;
   final GameClientState? gameState;

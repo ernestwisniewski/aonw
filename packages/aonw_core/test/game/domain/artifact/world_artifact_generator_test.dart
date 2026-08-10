@@ -51,6 +51,16 @@ void main() {
       expect(second.map(_locationKey), orderedEquals(first.map(_locationKey)));
     });
 
+    test('uses the column as the final deterministic tie-breaker', () {
+      final artifacts = WorldArtifactGenerator.generate(
+        mapData: WorldMap(cols: 5, rows: 1, tiles: [_tile(2, 0), _tile(0, 0)]),
+        startingUnits: const [],
+        seed: 8,
+      );
+
+      expect(_locationKey(artifacts.first), '0:0');
+    });
+
     test('ignores passable tiles unreachable from the starting unit', () {
       final mapData = WorldMap(
         cols: 7,

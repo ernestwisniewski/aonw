@@ -1,4 +1,5 @@
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/providers/game/game_actions_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/end_turn_button.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models/worker_action_panel_view_model.dart';
@@ -20,6 +21,7 @@ import 'package:aonw_core/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/recording_turn_start_game_command_controller.dart';
 
 part 'hud_action_deck_modal_coordination_cases.dart';
 part 'hud_action_deck_city_expansion_cases.dart';
@@ -59,7 +61,6 @@ void main() {
       lessThanOrEqualTo(1),
     );
   });
-
   testWidgets('HudActionDeck disables action mode while a unit is animating', (
     tester,
   ) async {
@@ -83,7 +84,6 @@ void main() {
     expect(find.text('Next step: Warrior'), findsNothing);
     expect(find.text('WAITING'), findsOneWidget);
   });
-
   testWidgets('HudActionDeck pulses action border after an action disappears', (
     tester,
   ) async {

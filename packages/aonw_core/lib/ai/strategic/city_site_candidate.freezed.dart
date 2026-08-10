@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'city_site_candidate.dart';
@@ -9,6 +9,7 @@ part of 'city_site_candidate.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -63,11 +64,11 @@ class _$CitySiteCandidateCopyWithImpl<$Res>
 /// Create a copy of CitySiteCandidate
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? center = null,Object? controlledHexes = null,Object? projectedTerritory = null,Object? score = null,Object? baseScore = null,Object? futureYieldScore = null,Object? overlapPenalty = null,Object? nearestFounderDistance = null,}) {
-  return _then(_self.copyWith(
+  return _then(CitySiteCandidate(
 center: null == center ? _self.center : center // ignore: cast_nullable_to_non_nullable
-as CityHex,controlledHexes: null == controlledHexes ? _self.controlledHexes : controlledHexes // ignore: cast_nullable_to_non_nullable
-as List<CityHex>,projectedTerritory: null == projectedTerritory ? _self.projectedTerritory : projectedTerritory // ignore: cast_nullable_to_non_nullable
-as List<CityHex>,score: null == score ? _self.score : score // ignore: cast_nullable_to_non_nullable
+as CityHex,controlledHexes: null == controlledHexes ? _self.controlledHexes! : controlledHexes // ignore: cast_nullable_to_non_nullable
+as Iterable<CityHex>,projectedTerritory: null == projectedTerritory ? _self.projectedTerritory! : projectedTerritory // ignore: cast_nullable_to_non_nullable
+as Iterable<CityHex>,score: null == score ? _self.score : score // ignore: cast_nullable_to_non_nullable
 as double,baseScore: null == baseScore ? _self.baseScore : baseScore // ignore: cast_nullable_to_non_nullable
 as double,futureYieldScore: null == futureYieldScore ? _self.futureYieldScore : futureYieldScore // ignore: cast_nullable_to_non_nullable
 as double,overlapPenalty: null == overlapPenalty ? _self.overlapPenalty : overlapPenalty // ignore: cast_nullable_to_non_nullable
@@ -84,7 +85,7 @@ as int,
 
 
 class _CitySiteCandidate extends CitySiteCandidate {
-  const _CitySiteCandidate({required this.center, required final  List<CityHex> controlledHexes, required final  List<CityHex> projectedTerritory, required this.score, required this.baseScore, required this.futureYieldScore, required this.overlapPenalty, required this.nearestFounderDistance}): _controlledHexes = controlledHexes,_projectedTerritory = projectedTerritory,super._();
+  const _CitySiteCandidate({required this.center, required  List<CityHex> controlledHexes, required  List<CityHex> projectedTerritory, required this.score, required this.baseScore, required this.futureYieldScore, required this.overlapPenalty, required this.nearestFounderDistance}): _controlledHexes = controlledHexes,_projectedTerritory = projectedTerritory,super._();
   
 
 @override final  CityHex center;

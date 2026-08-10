@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'wire_command_ack.dart';
@@ -9,6 +9,7 @@ part of 'wire_command_ack.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -63,7 +64,7 @@ class _$WireCommandAckCopyWithImpl<$Res>
 /// Create a copy of WireCommandAck
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? v = null,Object? matchId = null,Object? clientMessageId = null,Object? accepted = null,Object? offset = null,Object? tick = freezed,Object? timestamp = freezed,Object? snapshot = null,Object? events = null,Object? reason = freezed,Object? movementExecutions = null,}) {
-  return _then(_self.copyWith(
+  return _then(WireCommandAck(
 v: null == v ? _self.v : v // ignore: cast_nullable_to_non_nullable
 as int,matchId: null == matchId ? _self.matchId : matchId // ignore: cast_nullable_to_non_nullable
 as String,clientMessageId: null == clientMessageId ? _self.clientMessageId : clientMessageId // ignore: cast_nullable_to_non_nullable
@@ -216,7 +217,7 @@ return $default(_that.v,_that.matchId,_that.clientMessageId,_that.accepted,_that
 
 
 class _WireCommandAck extends WireCommandAck {
-  const _WireCommandAck({this.v = kProtocolVersion, required this.matchId, required this.clientMessageId, required this.accepted, required this.offset, this.tick, this.timestamp, required this.snapshot, final  List<Map<String, dynamic>> events = const <Map<String, dynamic>>[], this.reason, required this.movementExecutions}): _events = events,super._();
+  const _WireCommandAck({this.v = kProtocolVersion, required this.matchId, required this.clientMessageId, required this.accepted, required this.offset, this.tick, this.timestamp, required this.snapshot,  List<Map<String, dynamic>> events = const <Map<String, dynamic>>[], this.reason, required this.movementExecutions}): _events = events,super._();
   
 
 @override@JsonKey() final  int v;

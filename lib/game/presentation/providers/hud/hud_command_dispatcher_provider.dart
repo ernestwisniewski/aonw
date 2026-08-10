@@ -1,8 +1,10 @@
 import 'package:aonw/game/presentation/providers/game/game_actions_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
+import 'package:aonw/game/presentation/providers/game/game_state_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_feedback_provider.dart';
 import 'package:aonw/game/presentation/providers/map/map_inspection_provider.dart';
 import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
+import 'package:aonw/game/presentation/providers/session/session_providers.dart';
 import 'package:aonw/game/presentation/widgets/hud/command/hud_command_dispatcher.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdown_controller.dart';
@@ -13,7 +15,9 @@ export 'package:aonw/game/presentation/widgets/hud/command/hud_command_dispatche
 final hudCommandDispatcherProvider = Provider<HudCommandDispatcher>(
   HudCommandDispatcher.new,
   dependencies: [
+    activeGameSessionProvider,
     gameCommandControllerProvider,
+    gameStateProvider,
     gamePlayerControlSaveProvider,
     gamePlayerControlControllerProvider,
     gameActivityLogProvider,

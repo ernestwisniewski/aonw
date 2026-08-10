@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'wire_command.dart';
@@ -9,6 +9,7 @@ part of 'wire_command.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -63,7 +64,7 @@ class _$WireCommandCopyWithImpl<$Res>
 /// Create a copy of WireCommand
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? v = null,Object? matchId = null,Object? tick = null,Object? turn = freezed,Object? actorPlayerId = null,Object? command = null,}) {
-  return _then(_self.copyWith(
+  return _then(WireCommand(
 v: null == v ? _self.v : v // ignore: cast_nullable_to_non_nullable
 as int,matchId: null == matchId ? _self.matchId : matchId // ignore: cast_nullable_to_non_nullable
 as String,tick: null == tick ? _self.tick : tick // ignore: cast_nullable_to_non_nullable
@@ -211,7 +212,7 @@ return $default(_that.v,_that.matchId,_that.tick,_that.turn,_that.actorPlayerId,
 
 
 class _WireCommand extends WireCommand {
-  const _WireCommand({this.v = kProtocolVersion, required this.matchId, required this.tick, this.turn, required this.actorPlayerId, required final  Map<String, dynamic> command}): _command = command,super._();
+  const _WireCommand({this.v = kProtocolVersion, required this.matchId, required this.tick, this.turn, required this.actorPlayerId, required  Map<String, dynamic> command}): _command = command,super._();
   
 
 @override@JsonKey() final  int v;

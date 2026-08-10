@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 1.1.13 - 2026-08-10
+
+- Stabilized turn-start action prompts and the handoff from automated players
+  back to the human player so the HUD focuses the next required action once.
+- Updated Flutter and Dart dependencies, including Flame, audio, sharing,
+  image-picking, package metadata, code generation, and serialization tooling.
+- Refreshed pinned GitHub Actions and Steam build workflows while preserving
+  exact source identity checks for Windows and Linux release artifacts.
+- Refreshed the pinned Dart builder and Debian runtime images used by the
+  production server.
+- Reconciled architecture and coverage ratchets with the reviewed dependency
+  and presentation changes without lowering quality thresholds.
+
 ## 1.1.12 - 2026-08-09
 
 - Added Dravonia, a new four-player map with balanced starting regions,

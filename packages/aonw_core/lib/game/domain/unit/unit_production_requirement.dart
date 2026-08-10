@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'unit_production_requirement.freezed.dart';
 
-@freezed
+@Freezed(copyWith: false)
 sealed class UnitProductionRequirement with _$UnitProductionRequirement {
   const UnitProductionRequirement._();
 

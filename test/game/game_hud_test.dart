@@ -9,13 +9,11 @@ import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
-import 'package:aonw/game/application/ports/snapshot_store.dart';
 import 'package:aonw/game/application/services/game_handoff.dart';
 import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/screens/new_game/new_game_flow.dart';
@@ -38,18 +36,15 @@ import 'package:aonw/game/presentation/widgets/options/game_options_overlay.dart
 import 'package:aonw/game/presentation/widgets/selection/selection.dart';
 import 'package:aonw/game/presentation/widgets/selection_info/selection_detail_sheet.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_dialog.dart';
-import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/protocol.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../support/test_game_renderer.dart';
+import 'support/game_hud_external_fixtures.dart';
 
 part 'game_hud_auto_flow_regression_tests.dart';
 part 'game_hud_combat_camera_tests.dart';

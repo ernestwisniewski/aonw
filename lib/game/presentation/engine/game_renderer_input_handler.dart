@@ -169,32 +169,34 @@ final class GameRendererInputHandler {
 
 /// Thin Flame adapter; all mutable inspection policy lives in the handler.
 mixin GameRendererInputAdapter
-    on HexWorld, HexInputBehavior, LongPressDetector {
+    on HexWorld, HexInputBehavior, LongPressCallbacks {
   GameRendererInputHandler get inputHandler;
   bool get rendererInputReady;
   void clearRendererHoverIntent();
   void syncRendererHoverAt(Vector2 position);
 
   @override
-  void onLongPressStart(LongPressStartInfo info) {
-    handleViewportLongPressStart(info.eventPosition.widget);
+  void onLongPressStart(LongPressStartEvent event) {
+    super.onLongPressStart(event);
+    handleViewportLongPressStart(event.canvasPosition);
   }
 
   @override
-  void onLongPressMoveUpdate(LongPressMoveUpdateInfo info) {
-    handleViewportLongPressMoveUpdate(info.eventPosition.widget);
+  void onLongPressMoveUpdate(LongPressMoveUpdateEvent event) {
+    handleViewportLongPressMoveUpdate(event.canvasEndPosition);
   }
 
   @override
-  void onLongPressUp() => handleViewportLongPressUp();
-
-  @override
-  void onLongPressEnd(LongPressEndInfo info) {
-    handleViewportLongPressEnd(info.eventPosition.widget);
+  void onLongPressEnd(LongPressEndEvent event) {
+    handleViewportLongPressEnd(event.canvasPosition);
+    super.onLongPressEnd(event);
   }
 
   @override
-  void onLongPressCancel() => handleViewportLongPressCancel();
+  void onLongPressCancel(LongPressCancelEvent event) {
+    handleViewportLongPressCancel();
+    super.onLongPressCancel(event);
+  }
 
   @override
   void handleViewportLongPressStart(Vector2 position) {

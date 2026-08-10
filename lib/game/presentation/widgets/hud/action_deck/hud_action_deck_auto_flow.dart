@@ -79,7 +79,7 @@ extension _HudActionDeckAutoFlow on _HudActionDeckState {
     if (!isEndingTurn) {
       _autoTurnFlowAdvancedThisTurn = true;
     }
-    final flow = isEndingTurn ? _runEndTurn() : _runNextAction();
+    final flow = isEndingTurn ? _runEndTurn() : ref.auto(widget, currentState);
     unawaited(
       flow.whenComplete(() {
         _autoTurnFlowInFlight = false;

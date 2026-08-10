@@ -182,6 +182,28 @@ void main() {
         expect(result.queuedPath, isNull);
       });
 
+      test('clears path when target tile is outside the map', () {
+        final map = _simpleMap();
+        final path = QueuedMovePath(
+          targetCol: map.cols,
+          targetRow: 0,
+          steps: const [
+            UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+          ],
+        );
+        final commander = GameUnit.startingCommander(
+          ownerPlayerId: 'p1',
+        ).copyWithQueuedPath(path);
+
+        final result = UnitMovementTurnRules.validateQueuedPath(
+          unit: commander,
+          mapData: map,
+          allUnits: [commander],
+        );
+
+        expect(result.queuedPath, isNull);
+      });
+
       test('returns unit unchanged when queuedPath is null', () {
         final map = _simpleMap();
         final commander = GameUnit.startingCommander(ownerPlayerId: 'p1');

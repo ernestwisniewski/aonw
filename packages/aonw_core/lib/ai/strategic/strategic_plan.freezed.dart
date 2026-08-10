@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'strategic_plan.dart';
@@ -9,6 +9,7 @@ part of 'strategic_plan.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -63,7 +64,7 @@ class _$StrategicPlanCopyWithImpl<$Res>
 /// Create a copy of StrategicPlan
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? computedAtTurn = null,Object? mode = null,Object? expectations = null,Object? economyHealth = null,Object? rivalRanking = null,Object? techPath = null,Object? citySiteRanking = null,Object? settlerAssignments = null,Object? workerAssignments = null,Object? frontierClearingAssignments = null,Object? warGoals = null,Object? defenses = null,}) {
-  return _then(_self.copyWith(
+  return _then(StrategicPlan(
 computedAtTurn: null == computedAtTurn ? _self.computedAtTurn : computedAtTurn // ignore: cast_nullable_to_non_nullable
 as int,mode: null == mode ? _self.mode : mode // ignore: cast_nullable_to_non_nullable
 as StrategicMode,expectations: null == expectations ? _self.expectations : expectations // ignore: cast_nullable_to_non_nullable
@@ -217,7 +218,7 @@ return $default(_that.computedAtTurn,_that.mode,_that.expectations,_that.economy
 
 
 class _StrategicPlan extends StrategicPlan {
-  const _StrategicPlan({required this.computedAtTurn, required this.mode, required this.expectations, this.economyHealth = EconomyHealth.stable, final  List<PlayerThreatScore> rivalRanking = const [], final  List<TechnologyId> techPath = const [], final  List<CityHex> citySiteRanking = const [], final  Map<String, CityHex> settlerAssignments = const {}, final  Map<String, StrategicWorkerAssignment> workerAssignments = const {}, final  Map<String, StrategicFrontierClearingAssignment> frontierClearingAssignments = const {}, final  List<WarGoal> warGoals = const [], final  Map<String, StrategicDefenseAssignment> defenses = const {}}): _rivalRanking = rivalRanking,_techPath = techPath,_citySiteRanking = citySiteRanking,_settlerAssignments = settlerAssignments,_workerAssignments = workerAssignments,_frontierClearingAssignments = frontierClearingAssignments,_warGoals = warGoals,_defenses = defenses,super._();
+  const _StrategicPlan({required this.computedAtTurn, required this.mode, required this.expectations, this.economyHealth = EconomyHealth.stable,  List<PlayerThreatScore> rivalRanking = const [],  List<TechnologyId> techPath = const [],  List<CityHex> citySiteRanking = const [],  Map<String, CityHex> settlerAssignments = const {},  Map<String, StrategicWorkerAssignment> workerAssignments = const {},  Map<String, StrategicFrontierClearingAssignment> frontierClearingAssignments = const {},  List<WarGoal> warGoals = const [],  Map<String, StrategicDefenseAssignment> defenses = const {}}): _rivalRanking = rivalRanking,_techPath = techPath,_citySiteRanking = citySiteRanking,_settlerAssignments = settlerAssignments,_workerAssignments = workerAssignments,_frontierClearingAssignments = frontierClearingAssignments,_warGoals = warGoals,_defenses = defenses,super._();
   
 
 @override final  int computedAtTurn;
