@@ -965,7 +965,6 @@
     },
     "root_tool": {
       "files": {
-        "tool/check_coverage.dart": 1650,
         "tool/run_save_ai_benchmark/execution_models.dart": 736,
         "tool/run_save_ai_benchmark/multi_turn_replay_report.dart": 719,
         "tool/run_save_ai_benchmark/report_models.dart": 505,
@@ -973,7 +972,6 @@
       },
       "legacyFiles": {},
       "declarations": {
-        "tool/check_coverage.dart::class:_CoverageGate": 555,
         "tool/run_save_ai_benchmark/multi_turn_replay_report.dart::class:_MultiTurnReplayReport": 717,
         "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport": 414,
         "tool/run_save_ai_benchmark/synthetic_suite.dart::class:_SyntheticBenchmarkSuite": 372,
