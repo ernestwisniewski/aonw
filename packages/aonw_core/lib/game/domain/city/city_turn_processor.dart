@@ -1,7 +1,5 @@
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city/city_economy_breakdown.dart';
-import 'package:aonw_core/game/domain/city/city_expansion_selector.dart';
-import 'package:aonw_core/game/domain/city/city_hex.dart';
 import 'package:aonw_core/game/domain/city/city_production_queue.dart';
 import 'package:aonw_core/game/domain/city/city_production_target.dart';
 import 'package:aonw_core/game/domain/city/city_project_rules.dart';
@@ -10,7 +8,9 @@ import 'package:aonw_core/game/domain/city/city_ruleset.dart';
 import 'package:aonw_core/game/domain/city/city_rulesets.dart';
 import 'package:aonw_core/game/domain/city/city_specialization.dart';
 import 'package:aonw_core/game/domain/city/city_technology_effect_rules.dart';
+import 'package:aonw_core/game/domain/city/city_turn_growth_rules.dart';
 import 'package:aonw_core/game/domain/city/city_turn_result.dart';
+import 'package:aonw_core/game/domain/city/city_turn_science.dart';
 import 'package:aonw_core/game/domain/city/city_unit_production_rules.dart';
 import 'package:aonw_core/game/domain/city/city_yield_calculator.dart';
 import 'package:aonw_core/game/domain/city/field_improvement.dart';
@@ -145,7 +145,7 @@ abstract final class CityTurnProcessor {
     final goldGained = economy.netYield.gold < 0 ? 0 : economy.netYield.gold;
     var projectGoldGained = 0;
     var projectScienceGained = ScienceYieldBreakdown.empty;
-    final artifactScienceGained = _artifactScienceFor(city, artifacts);
+    final artifactScienceGained = CityTurnScience.artifactFor(city, artifacts);
 
     var nextCity = city.copyWith(storedFood: economy.storedFoodAfterTurn);
 
@@ -158,9 +158,9 @@ abstract final class CityTurnProcessor {
       grew = true;
       events.add(CityTurnEvent(type: CityTurnEventType.grew, cityId: city.id));
     }
-    nextCity = _applyPopulationTier(nextCity, ruleset);
+    nextCity = CityTurnGrowthRules.applyPopulationTier(nextCity, ruleset);
     if (grew) {
-      final expanded = _expandTerritoryAfterGrowth(
+      final expanded = CityTurnGrowthRules.expandTerritoryAfterGrowth(
         city: nextCity,
         cities: cities,
         mapData: mapData,
@@ -293,7 +293,7 @@ abstract final class CityTurnProcessor {
       units: List.unmodifiable(units),
       events: List.unmodifiable(events),
       goldGained: goldGained + projectGoldGained,
-      scienceGained: _combineScience(
+      scienceGained: CityTurnScience.combine(
         projectScienceGained,
         artifactScienceGained,
       ),
@@ -385,103 +385,6 @@ abstract final class CityTurnProcessor {
       }
     }
     return nextCity.copyWith(productionQueue: advanced);
-  }
-
-  static ScienceYieldBreakdown _artifactScienceFor(
-    GameCity city,
-    Iterable<WorldArtifact> artifacts,
-  ) {
-    final amount = WorldArtifactBonuses.cityScienceFor(
-      cityId: city.id,
-      artifacts: artifacts,
-    );
-    if (amount <= 0) return ScienceYieldBreakdown.empty;
-    return ScienceYieldBreakdown(
-      total: amount,
-      byCityId: {city.id: amount},
-      sources: [
-        ScienceYieldSource(
-          cityId: city.id,
-          amount: amount,
-          label: ScienceYieldSourceLabels.worldArtifact,
-        ),
-      ],
-    );
-  }
-
-  static ScienceYieldBreakdown _combineScience(
-    ScienceYieldBreakdown left,
-    ScienceYieldBreakdown right,
-  ) {
-    if (left.total <= 0) return right;
-    if (right.total <= 0) return left;
-    final byCityId = <String, int>{...left.byCityId};
-    for (final entry in right.byCityId.entries) {
-      byCityId[entry.key] = (byCityId[entry.key] ?? 0) + entry.value;
-    }
-    return ScienceYieldBreakdown(
-      total: left.total + right.total,
-      byCityId: Map.unmodifiable(byCityId),
-      sources: List.unmodifiable([...left.sources, ...right.sources]),
-    );
-  }
-
-  static ({GameCity city, CityHex? hex}) _expandTerritoryAfterGrowth({
-    required GameCity city,
-    required List<GameCity> cities,
-    required MapTileLookup mapData,
-    required CityRuleset ruleset,
-    required TechnologyEffectSummary technologyEffects,
-  }) {
-    final citiesWithCurrentCity = _replaceCity(cities, city);
-    final hex = CityExpansionSelector.preferredOrBestHex(
-      city: city,
-      mapTiles: mapData,
-      cities: citiesWithCurrentCity,
-      allowCoast: true,
-      allowOcean: true,
-      ruleset: ruleset,
-      technologyEffects: technologyEffects,
-    );
-    if (hex == null) return (city: city, hex: null);
-    return (
-      city: city.copyWith(
-        controlledHexes: [...city.controlledHexes, hex],
-        preferredExpansionHex: null,
-      ),
-      hex: hex,
-    );
-  }
-
-  static List<GameCity> _replaceCity(List<GameCity> cities, GameCity city) {
-    return [
-      for (final existing in cities)
-        if (existing.id == city.id) city else existing,
-    ];
-  }
-
-  static GameCity _applyPopulationTier(GameCity city, CityRuleset ruleset) {
-    final progression = ruleset.progression;
-    var maxHexes = city.maxHexes;
-    var territoryRadius = city.territoryRadius;
-
-    if (city.population >= 10) {
-      if (maxHexes < progression.lateGameMaxHexes) {
-        maxHexes = progression.lateGameMaxHexes;
-      }
-      if (territoryRadius < progression.expandedTerritoryRadius) {
-        territoryRadius = progression.expandedTerritoryRadius;
-      }
-    } else if (city.population >= 6) {
-      if (maxHexes < progression.midGameMaxHexes) {
-        maxHexes = progression.midGameMaxHexes;
-      }
-    }
-
-    if (maxHexes == city.maxHexes && territoryRadius == city.territoryRadius) {
-      return city;
-    }
-    return city.copyWith(maxHexes: maxHexes, territoryRadius: territoryRadius);
   }
 }
 

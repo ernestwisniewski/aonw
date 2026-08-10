@@ -22,7 +22,6 @@
     "core_lib": {
       "files": {
         "packages/aonw_core/lib/ai/telemetry/balance_runner.dart": 978,
-        "packages/aonw_core/lib/game/domain/city/city_turn_processor.dart": 504,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state_model.dart": 503
       },
       "legacyFiles": {},
@@ -36,7 +35,7 @@
         "packages/aonw_core/lib/ai/strategies/basic_strategy_founding_planner.dart::class:BasicStrategyFoundingPlanner": 391,
         "packages/aonw_core/lib/ai/strategies/basic_strategy_worker_planner.dart::class:BasicStrategyWorkerPlanner": 410,
         "packages/aonw_core/lib/ai/telemetry/balance_runner.dart::class:BalanceBatchReport": 759,
-        "packages/aonw_core/lib/game/domain/city/city_turn_processor.dart::class:CityTurnProcessor": 457,
+        "packages/aonw_core/lib/game/domain/city/city_turn_processor.dart::class:CityTurnProcessor": 360,
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector": 365,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state_model.dart::class:DiplomacyState": 501,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit": 469
