@@ -17,6 +17,8 @@ import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 
 part 'unit_marker_layer_animation_lifecycle.dart';
+part 'unit_marker_layer_placement.dart';
+part 'unit_marker_layer_sync.dart';
 part 'unit_marker_layer_testing.dart';
 
 enum _CityUnitMarkerPlacement { none, primary, companion }
@@ -253,156 +255,6 @@ class UnitMarkerLayer extends Component with LayerAttachment {
     }
   }
 
-  void _upsertMarker(
-    Component parent,
-    GameUnit unit,
-    String? selectedUnitId,
-    String? pendingActionUnitId,
-    String? skippedTurnUnitId,
-    Set<String> attackTargetUnitIds,
-    Map<String, _CityUnitMarkerPlacement> cityPlacements,
-    Map<String, int> artifactExcavationTurnsByUnitId,
-  ) {
-    final cityPlacement =
-        cityPlacements[unit.id] ?? _CityUnitMarkerPlacement.none;
-    final onCity = cityPlacement != _CityUnitMarkerPlacement.none;
-    final healthFraction = MarkerHealthFraction.forUnit(unit);
-    final position = _unitWorldPosition(unit, cityPlacement: cityPlacement);
-    final selected = unit.id == selectedUnitId;
-    final pendingActionTarget = unit.id == pendingActionUnitId;
-    final attackTarget = attackTargetUnitIds.contains(unit.id);
-    final skippedTurn = unit.id == skippedTurnUnitId;
-    final exhausted = _isExhausted(unit);
-
-    final existing = _markers[unit.id];
-    if (existing == null) {
-      final created = UnitMarker(
-        position: position,
-        colorValue: colorForPlayer(unit.ownerPlayerId),
-        unitType: unit.type,
-        onTap: () => onUnitTapped?.call(unit.id),
-        selected: selected,
-        pendingActionTarget: pendingActionTarget,
-        attackTarget: attackTarget,
-        healthFraction: healthFraction,
-        onCity: onCity,
-        fortified: unit.isFortified,
-        skippedTurn: skippedTurn,
-        exhausted: exhausted,
-        carryingArtifact: unit.isCarryingArtifact,
-        showPeripheralDetails: _showPeripheralDetails,
-        showOwnerColor: _showOwnerColor,
-        showHealthBar: _showHealthBar,
-        showTypeBadge: _showTypeBadge,
-        showStateBadge: _showStateBadge,
-        markerWorldScale: _markerWorldScale,
-        spriteScale: _spriteScale,
-        tacticalViewEmphasis: _tacticalViewEmphasis,
-        animateIdle: _animateIdle,
-        reduceMotion: _reduceMotion,
-      );
-      _applyPriority(created, unit);
-      _syncWorkState(created, unit, artifactExcavationTurnsByUnitId[unit.id]);
-      _markers[unit.id] = created;
-      unawaited(Future<void>.value(parent.add(created)));
-    } else {
-      existing
-        ..position = position
-        ..unitType = unit.type
-        ..selected = selected
-        ..pendingActionTarget = pendingActionTarget
-        ..attackTarget = attackTarget
-        ..healthFraction = healthFraction
-        ..onCity = onCity
-        ..fortified = unit.isFortified
-        ..skippedTurn = skippedTurn
-        ..exhausted = exhausted
-        ..carryingArtifact = unit.isCarryingArtifact
-        ..markerWorldScale = _markerWorldScale
-        ..spriteScale = _spriteScale
-        ..tacticalViewEmphasis = _tacticalViewEmphasis
-        ..animateIdle = _animateIdle
-        ..reduceMotion = _reduceMotion;
-      _applyDetailVisibility(existing);
-      _applyPriority(existing, unit);
-      _syncWorkState(existing, unit, artifactExcavationTurnsByUnitId[unit.id]);
-    }
-  }
-
-  void _syncMarkerWithoutMoving(
-    Component parent,
-    GameUnit unit,
-    String? selectedUnitId,
-    String? pendingActionUnitId,
-    String? skippedTurnUnitId,
-    Set<String> attackTargetUnitIds,
-    Map<String, _CityUnitMarkerPlacement> cityPlacements,
-    Map<String, int> artifactExcavationTurnsByUnitId,
-  ) {
-    final cityPlacement =
-        cityPlacements[unit.id] ?? _CityUnitMarkerPlacement.none;
-    final onCity = cityPlacement != _CityUnitMarkerPlacement.none;
-    final healthFraction = MarkerHealthFraction.forUnit(unit);
-    final selected = unit.id == selectedUnitId;
-    final pendingActionTarget = unit.id == pendingActionUnitId;
-    final attackTarget = attackTargetUnitIds.contains(unit.id);
-    final skippedTurn = unit.id == skippedTurnUnitId;
-    final exhausted = _isExhausted(unit);
-    final existing = _markers[unit.id];
-    if (existing != null) {
-      existing
-        ..unitType = unit.type
-        ..selected = selected
-        ..pendingActionTarget = pendingActionTarget
-        ..attackTarget = attackTarget
-        ..healthFraction = healthFraction
-        ..onCity = onCity
-        ..fortified = unit.isFortified
-        ..skippedTurn = skippedTurn
-        ..exhausted = exhausted
-        ..carryingArtifact = unit.isCarryingArtifact
-        ..markerWorldScale = _markerWorldScale
-        ..spriteScale = _spriteScale
-        ..tacticalViewEmphasis = _tacticalViewEmphasis
-        ..animateIdle = _animateIdle
-        ..reduceMotion = _reduceMotion;
-      _applyDetailVisibility(existing);
-      _applyPriority(existing, unit);
-      _syncWorkState(existing, unit, artifactExcavationTurnsByUnitId[unit.id]);
-      return;
-    }
-
-    final created = UnitMarker(
-      position: _unitWorldPosition(unit, cityPlacement: cityPlacement),
-      colorValue: colorForPlayer(unit.ownerPlayerId),
-      unitType: unit.type,
-      onTap: () => onUnitTapped?.call(unit.id),
-      selected: selected,
-      pendingActionTarget: pendingActionTarget,
-      attackTarget: attackTarget,
-      healthFraction: healthFraction,
-      onCity: onCity,
-      fortified: unit.isFortified,
-      skippedTurn: skippedTurn,
-      exhausted: exhausted,
-      carryingArtifact: unit.isCarryingArtifact,
-      showPeripheralDetails: _showPeripheralDetails,
-      showOwnerColor: _showOwnerColor,
-      showHealthBar: _showHealthBar,
-      showTypeBadge: _showTypeBadge,
-      showStateBadge: _showStateBadge,
-      markerWorldScale: _markerWorldScale,
-      spriteScale: _spriteScale,
-      tacticalViewEmphasis: _tacticalViewEmphasis,
-      animateIdle: _animateIdle,
-      reduceMotion: _reduceMotion,
-    );
-    _applyPriority(created, unit);
-    _syncWorkState(created, unit, artifactExcavationTurnsByUnitId[unit.id]);
-    _markers[unit.id] = created;
-    unawaited(Future<void>.value(parent.add(created)));
-  }
-
   @override
   void onRemove() {
     _releaseAllAnimationLifecycleState();
@@ -492,92 +344,6 @@ class UnitMarkerLayer extends Component with LayerAttachment {
     return position + (cityCompanionSide ? Vector2(-26, 26) : Vector2(26, 26));
   }
 
-  Vector2 _unitWorldPosition(
-    GameUnit unit, {
-    required _CityUnitMarkerPlacement cityPlacement,
-  }) {
-    return worldPositionFor(
-      unit.col,
-      unit.row,
-      onCity: cityPlacement != _CityUnitMarkerPlacement.none,
-      cityCompanionSide: cityPlacement == _CityUnitMarkerPlacement.companion,
-    );
-  }
-
-  Map<String, _CityUnitMarkerPlacement> _cityUnitPlacements(
-    List<GameUnit> units,
-    Set<({int col, int row})> cityTiles,
-  ) {
-    if (cityTiles.isEmpty) return const {};
-    final unitsByCityTile = <({int col, int row}), List<GameUnit>>{};
-    for (final unit in units) {
-      final tile = (col: unit.col, row: unit.row);
-      if (!cityTiles.contains(tile)) continue;
-      (unitsByCityTile[tile] ??= []).add(unit);
-    }
-    if (unitsByCityTile.isEmpty) return const {};
-
-    final placements = <String, _CityUnitMarkerPlacement>{};
-    for (final cityUnits in unitsByCityTile.values) {
-      final hasCompanionMerchant =
-          cityUnits.length > 1 &&
-          cityUnits.any((unit) => unit.type == GameUnitType.merchant);
-      for (final unit in cityUnits) {
-        placements[unit.id] =
-            hasCompanionMerchant && unit.type == GameUnitType.merchant
-            ? _CityUnitMarkerPlacement.companion
-            : _CityUnitMarkerPlacement.primary;
-      }
-    }
-    return placements;
-  }
-
-  void _applyPriority(UnitMarker marker, GameUnit unit) {
-    final priority = _priorityFor(unit);
-    if (marker.priority != priority) {
-      marker.priority = priority;
-    }
-  }
-
-  void _syncWorkState(
-    UnitMarker marker,
-    GameUnit unit,
-    int? artifactExcavationTurns,
-  ) {
-    if (unit.workerJob case final job?) {
-      marker
-        ..workBadgeLabel = '${job.remainingTurns}t'
-        ..compactWorkVisual = true
-        ..playWork();
-      return;
-    }
-    if (unit.cityFoundingJob case final job?) {
-      marker
-        ..workBadgeLabel = '${job.remainingTurns}t'
-        ..compactWorkVisual = true
-        ..playWork();
-      return;
-    }
-    if (unit.excavatingArtifactId != null) {
-      marker
-        ..workBadgeLabel = '${artifactExcavationTurns ?? 1}t'
-        ..compactWorkVisual = true
-        ..playWork();
-      return;
-    }
-    if (unit.workerAssignment != null) {
-      marker
-        ..workBadgeLabel = '+50%'
-        ..compactWorkVisual = true
-        ..playWork();
-      return;
-    }
-    marker
-      ..workBadgeLabel = null
-      ..compactWorkVisual = false
-      ..playIdle();
-  }
-
   static String? pendingActionUnitId(PendingPlayerAction? pendingAction) {
     return switch (pendingAction) {
       PendingWorkerActionSelection(:final unitId) => unitId,
@@ -589,12 +355,4 @@ class UnitMarkerLayer extends Component with LayerAttachment {
       _ => null,
     };
   }
-
-  int _priorityFor(GameUnit unit) => MapPriority.perTileUnit(
-    mapRows: mapData.rows,
-    col: unit.col,
-    row: unit.row,
-  );
-
-  bool _isExhausted(GameUnit unit) => unit.movementPoints <= 0;
 }
