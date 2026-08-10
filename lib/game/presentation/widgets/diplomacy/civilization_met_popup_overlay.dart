@@ -23,6 +23,8 @@ import 'package:aonw_core/game/domain/save.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+part 'civilization_met_dialog.dart';
+
 enum _CivilizationMetDialogResult { dismissed, disablePopup }
 
 class CivilizationMetPopupOverlay extends ConsumerStatefulWidget {
@@ -225,130 +227,6 @@ class _CivilizationMetPopupModel {
   }
 }
 
-class _CivilizationMetDialog extends StatefulWidget {
-  final _CivilizationMetPopupModel model;
-  final GamepadInputRouter? gamepadRouter;
-
-  const _CivilizationMetDialog({
-    required this.model,
-    required this.gamepadRouter,
-  });
-
-  @override
-  State<_CivilizationMetDialog> createState() => _CivilizationMetDialogState();
-}
-
-class _CivilizationMetDialogState extends State<_CivilizationMetDialog> {
-  bool _doNotShowAgain = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return GamepadInputRouteBinding(
-      router: widget.gamepadRouter,
-      route: GamepadInputRoute(
-        priority: GamepadInputRoutePriority.modal,
-        onConfirm: _dismiss,
-        onCancel: _dismiss,
-      ),
-      child: GameModalScaffold(
-        surfaceKey: const Key('civilizationMetDialog.surface'),
-        size: GameModalSize.regular,
-        contentPadding: EdgeInsets.zero,
-        scrollable: false,
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _CivilizationMetHeader(model: widget.model),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
-                child: Text(
-                  l10n.civilizationMetPopupBody(widget.model.civilizationName),
-                  style: GameUiTheme.body.copyWith(
-                    color: GameUiTheme.textPrimary,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-              _CivilizationMetFooter(
-                doNotShowAgain: _doNotShowAgain,
-                onToggleDoNotShowAgain: (value) =>
-                    setState(() => _doNotShowAgain = value),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _dismiss() {
-    Navigator.of(context).pop(
-      _doNotShowAgain
-          ? _CivilizationMetDialogResult.disablePopup
-          : _CivilizationMetDialogResult.dismissed,
-    );
-  }
-}
-
-class _CivilizationMetHeader extends StatelessWidget {
-  final _CivilizationMetPopupModel model;
-
-  const _CivilizationMetHeader({required this.model});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _CivilizationMetThumbnail(color: model.color),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  l10n.civilizationMetPopupEyebrow,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GameUiTheme.toolbarLabel.copyWith(
-                    color: GameUiTheme.gold,
-                    fontSize: 10,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                GameUiEpicHeader(
-                  label: model.civilizationName,
-                  alignment: Alignment.centerLeft,
-                  accent: model.color,
-                  compact: false,
-                  textKey: const Key('civilizationMetDialog.title'),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${model.leaderName} - ${model.playerName}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GameUiTheme.cardMeta.copyWith(
-                    color: GameUiTheme.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _CivilizationMetThumbnail extends StatelessWidget {
   final Color color;
 
@@ -383,86 +261,6 @@ class _CivilizationMetThumbnail extends StatelessWidget {
               GameIcon(GameIcons.flag, size: 46, color: color),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CivilizationMetFooter extends StatelessWidget {
-  final bool doNotShowAgain;
-  final ValueChanged<bool> onToggleDoNotShowAgain;
-
-  const _CivilizationMetFooter({
-    required this.doNotShowAgain,
-    required this.onToggleDoNotShowAgain,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return DecoratedBox(
-      decoration: SurfaceElevation.flat.bandDecoration(
-        background: GameUiTheme.surface,
-        backgroundAlpha: 170,
-        borderColor: GameUiTheme.copper,
-        border: BorderEmphasis.regular,
-        topBorder: true,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-        child: Wrap(
-          spacing: 10,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          alignment: WrapAlignment.spaceBetween,
-          children: [
-            InkWell(
-              borderRadius: GameUiTheme.borderRadius,
-              onTap: () => onToggleDoNotShowAgain(!doNotShowAgain),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Checkbox(
-                      key: const Key(
-                        'civilizationMetDialog.doNotShowAgain.checkbox',
-                      ),
-                      value: doNotShowAgain,
-                      onChanged: (value) =>
-                          onToggleDoNotShowAgain(value ?? false),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    const SizedBox(width: 2),
-                    Text(
-                      l10n.commonDoNotShowAgain,
-                      style: GameUiTheme.bodySmall.copyWith(
-                        color: GameUiTheme.textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(
-                doNotShowAgain
-                    ? _CivilizationMetDialogResult.disablePopup
-                    : _CivilizationMetDialogResult.dismissed,
-              ),
-              style: FilledButton.styleFrom(
-                backgroundColor: GameUiTheme.gold,
-                foregroundColor: GameUiTheme.bg,
-                textStyle: GameUiTheme.actionLabel,
-                shape: RoundedRectangleBorder(
-                  borderRadius: GameUiTheme.borderRadius,
-                ),
-              ),
-              child: Text(l10n.civilizationMetPopupOk),
-            ),
-          ],
         ),
       ),
     );
