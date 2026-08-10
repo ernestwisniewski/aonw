@@ -27,7 +27,6 @@
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state_model.dart": 503,
         "packages/aonw_core/lib/game/domain/map_validation.dart": 586,
         "packages/aonw_core/lib/game/domain/objective/game_objective.dart": 694,
-        "packages/aonw_core/lib/game/domain/technology/technology_catalog.dart": 746,
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart": 705
       },
       "legacyFiles": {},
@@ -47,7 +46,6 @@
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state_model.dart::class:DiplomacyState": 501,
         "packages/aonw_core/lib/game/domain/map_validation.dart::class:MapValidator": 463,
         "packages/aonw_core/lib/game/domain/objective/game_objective.dart::class:GameObjectiveTracker": 564,
-        "packages/aonw_core/lib/game/domain/technology/technology_catalog.dart::class:TechnologyCatalog": 734,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit": 469
       },
       "callableLines": {
