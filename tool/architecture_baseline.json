@@ -24,7 +24,6 @@
       "legacyFiles": {},
       "declarations": {
         "packages/aonw_core/lib/ai/mcts/mcts_command_reconciliation_rules.dart::class:MctsCommandReconciliationRules": 372,
-        "packages/aonw_core/lib/ai/strategic/city_site_planner.dart::class:CitySitePlanner": 424,
         "packages/aonw_core/lib/ai/strategies/basic_strategy_combat_reactions_planner.dart::class:BasicStrategyCombatReactionsPlanner": 402,
         "packages/aonw_core/lib/ai/strategies/basic_strategy_founding_move_planner.dart::class:BasicStrategyFoundingMovePlanner": 375,
         "packages/aonw_core/lib/ai/strategies/basic_strategy_founding_planner.dart::class:BasicStrategyFoundingPlanner": 391,

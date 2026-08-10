@@ -11,6 +11,9 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
+part 'city_site_candidate_generation.dart';
+part 'city_site_candidate_ranking.dart';
+
 class CitySitePlan {
   final List<CitySiteCandidate> candidates;
   final Map<String, CityHex> settlerAssignments;
@@ -73,100 +76,6 @@ class CitySitePlanner {
         context: context,
       ),
     );
-  }
-
-  List<CitySiteCandidate> _rawCandidates({
-    required GameView view,
-    required AiContext context,
-    required AiEmpireAssessment assessment,
-    required List<GameUnit> founders,
-    required List<GameCity> knownCities,
-    required Set<CityHex> reservedHexes,
-  }) {
-    final candidates = <CitySiteCandidate>[];
-    for (final tile in view.mapData.tileViews) {
-      if (!useStrategicMapKnowledge && !view.visibility.canInspectTile(tile)) {
-        continue;
-      }
-      final center = CityHex(col: tile.col, row: tile.row);
-      if (reservedHexes.contains(center)) continue;
-
-      final founder = _nearestFounder(founders, center);
-      if (founder == null) continue;
-      final site = siteScorer.scoreSite(
-        founder: founder,
-        center: center,
-        view: view,
-        context: context,
-        assessment: assessment,
-        knownCities: knownCities,
-        reservedHexes: reservedHexes,
-        requireKnownExclusionZone: false,
-        useStrategicMapKnowledge: useStrategicMapKnowledge,
-      );
-      if (site == null) continue;
-
-      final projectedTerritory = _projectedTerritory(
-        site: site,
-        view: view,
-        context: context,
-        knownCities: knownCities,
-      );
-      final futureYieldScore = _futureYieldScore(
-        site: site,
-        projectedTerritory: projectedTerritory,
-        view: view,
-        context: context,
-      );
-      candidates.add(
-        CitySiteCandidate(
-          center: site.center,
-          controlledHexes: site.controlledHexes,
-          projectedTerritory: projectedTerritory,
-          score: site.score + futureYieldScore,
-          baseScore: site.score,
-          futureYieldScore: futureYieldScore,
-          overlapPenalty: 0,
-          nearestFounderDistance: site.distanceFromFounder,
-        ),
-      );
-    }
-
-    candidates.sort(_compareCandidates);
-    return candidates;
-  }
-
-  List<CitySiteCandidate> _greedyRanking(
-    List<CitySiteCandidate> raw, {
-    required int maxCandidates,
-    required AiContext context,
-  }) {
-    final selected = <CitySiteCandidate>[];
-    final remaining = [...raw];
-
-    while (remaining.isNotEmpty && selected.length < maxCandidates) {
-      CitySiteCandidate? best;
-      var bestIndex = -1;
-      for (var i = 0; i < remaining.length; i++) {
-        final candidate = remaining[i];
-        final penalty = _overlapPenalty(candidate, selected, context);
-        if (penalty.isInfinite) continue;
-        final adjusted = candidate.copyWith(
-          score: candidate.baseScore + candidate.futureYieldScore - penalty,
-          overlapPenalty: penalty,
-        );
-        if (best == null || _compareCandidates(adjusted, best) < 0) {
-          best = adjusted;
-          bestIndex = i;
-        }
-      }
-      if (best == null || bestIndex < 0) break;
-      selected.add(best);
-      remaining.removeAt(bestIndex);
-    }
-
-    selected.sort(_compareCandidates);
-    return selected;
   }
 
   Map<String, CityHex> _assignSettlers({
@@ -243,64 +152,6 @@ class CitySitePlanner {
     return assignments;
   }
 
-  List<CityHex> _projectedTerritory({
-    required AiCitySiteScore site,
-    required GameView view,
-    required AiContext context,
-    required List<GameCity> knownCities,
-  }) {
-    final territory = <CityHex>{site.center, ...site.controlledHexes};
-    final targetHexes = _projectedMaxHexes(view, context);
-    if (territory.length >= targetHexes) {
-      return _sortedHexes(territory);
-    }
-
-    var projectedCity = GameCity.snapshot(
-      id: 'projected_${site.center.col}_${site.center.row}',
-      ownerPlayerId: view.forPlayerId,
-      name: 'Projected',
-      center: site.center,
-      controlledHexes: site.controlledHexes,
-    );
-    final cities = [...knownCities, projectedCity];
-
-    while (territory.length < targetHexes) {
-      final candidates =
-          CityExpansionSelector.candidatesFor(
-            city: projectedCity,
-            mapTiles: view.mapData,
-            cities: cities,
-            ruleset: view.ruleset.city,
-          ).where((candidate) {
-            final tile = view.mapData.tileAt(
-              candidate.hex.col,
-              candidate.hex.row,
-            );
-            return tile != null &&
-                (useStrategicMapKnowledge ||
-                    view.visibility.canInspectTile(tile));
-          }).toList();
-      if (candidates.isEmpty) break;
-      candidates.sort((a, b) {
-        final score = b.score.compareTo(a.score);
-        if (score != 0) return score;
-        final distance = a.distance.compareTo(b.distance);
-        if (distance != 0) return distance;
-        final col = a.hex.col.compareTo(b.hex.col);
-        if (col != 0) return col;
-        return a.hex.row.compareTo(b.hex.row);
-      });
-      final next = candidates.first.hex;
-      if (!territory.add(next)) break;
-      projectedCity = projectedCity.copyWith(
-        controlledHexes: [...projectedCity.controlledHexes, next],
-      );
-      cities[cities.length - 1] = projectedCity;
-    }
-
-    return _sortedHexes(territory);
-  }
-
   int _projectedMaxHexes(GameView view, AiContext context) {
     var projected = GameCity.defaultStartMaxHexes;
     final techPath =
@@ -326,67 +177,6 @@ class CitySitePlanner {
           CityProgressionCatalog.lateGameMaxHexes,
         )
         .toInt();
-  }
-
-  double _futureYieldScore({
-    required AiCitySiteScore site,
-    required List<CityHex> projectedTerritory,
-    required GameView view,
-    required AiContext context,
-  }) {
-    final initial = {site.center, ...site.controlledHexes};
-    final visibleResourceTypes = ResourceVisibilityRules.visibleResourceTypes(
-      playerId: view.forPlayerId,
-      research: ResearchState(players: {view.forPlayerId: view.ownResearch}),
-    );
-    var score = 0.0;
-    for (final hex in projectedTerritory) {
-      if (initial.contains(hex)) continue;
-      final tile = view.mapData.tileAt(hex.col, hex.row);
-      if (tile == null) continue;
-      final yield = CityTileYieldRules.forTile(
-        tile,
-        ruleset: view.ruleset.city,
-      );
-      score +=
-          yield.food * 0.35 / context.ruleset.paceBalance.growthCostMultiplier +
-          yield.production * 0.45 +
-          yield.gold * 0.18 * context.effectiveWeights.economy +
-          _visibleResourceCount(tile, visibleResourceTypes) * 0.5;
-    }
-    return score;
-  }
-
-  double _overlapPenalty(
-    CitySiteCandidate candidate,
-    List<CitySiteCandidate> selected,
-    AiContext context,
-  ) {
-    var penalty = 0.0;
-    final candidateTerritory = candidate.projectedTerritory.toSet();
-    final expansionDistance = context.civProfile.expansionDistance;
-    final preferredDistance = (4.0 * expansionDistance).clamp(3.0, 7.0);
-
-    for (final selectedCandidate in selected) {
-      final selectedTerritory = selectedCandidate.projectedTerritory.toSet();
-      final overlap = candidateTerritory.intersection(selectedTerritory).length;
-      penalty += overlap * 2.2 * expansionDistance;
-
-      final distance = HexDistance.between(
-        HexCoordinate(col: candidate.center.col, row: candidate.center.row),
-        HexCoordinate(
-          col: selectedCandidate.center.col,
-          row: selectedCandidate.center.row,
-        ),
-      );
-      if (distance < preferredDistance) {
-        penalty += (preferredDistance - distance) * 3.0 * expansionDistance;
-      }
-      if (distance < CityFoundingRules.minimumCenterDistance) {
-        return double.infinity;
-      }
-    }
-    return penalty;
   }
 
   List<GameUnit> _founders(GameView view) {
@@ -427,28 +217,6 @@ class CitySitePlanner {
       for (final city in cities) city.center,
       for (final city in cities) ...city.controlledHexes,
     };
-  }
-
-  List<CityHex> _sortedHexes(Iterable<CityHex> hexes) {
-    final sorted = [...hexes]
-      ..sort((a, b) {
-        final col = a.col.compareTo(b.col);
-        if (col != 0) return col;
-        return a.row.compareTo(b.row);
-      });
-    return sorted;
-  }
-
-  int _compareCandidates(CitySiteCandidate a, CitySiteCandidate b) {
-    final score = b.score.compareTo(a.score);
-    if (score != 0) return score;
-    final distance = a.nearestFounderDistance.compareTo(
-      b.nearestFounderDistance,
-    );
-    if (distance != 0) return distance;
-    final col = a.center.col.compareTo(b.center.col);
-    if (col != 0) return col;
-    return a.center.row.compareTo(b.center.row);
   }
 }
 
