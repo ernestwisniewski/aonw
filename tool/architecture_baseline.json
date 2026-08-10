@@ -389,9 +389,7 @@
       "cognitiveComplexity": {}
     },
     "core_tool": {
-      "files": {
-        "packages/aonw_core/tool/balance_pass.dart": 1246
-      },
+      "files": {},
       "legacyFiles": {},
       "declarations": {},
       "callableLines": {
