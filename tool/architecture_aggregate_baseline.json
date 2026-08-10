@@ -67,7 +67,7 @@
     },
     "root_lib": {
       "sourceLines": {
-        "lib/developer/assets_editor_screen.dart": 1917,
+        "lib/developer/assets_editor_screen.dart": 1915,
         "lib/game/presentation/engine/game_renderer.dart": 2042,
         "lib/game/presentation/screens/lobby/lobby_screen.dart": 3518,
         "lib/game/presentation/screens/new_game/new_game_screen.dart": 1654,
@@ -88,7 +88,7 @@
         "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 229
       },
       "callableLines": {
-        "lib/developer/assets_editor_screen.dart": 1594,
+        "lib/developer/assets_editor_screen.dart": 1590,
         "lib/game/presentation/screens/lobby/lobby_screen.dart": 2930,
         "lib/game/presentation/screens/new_game/new_game_screen.dart": 1408,
         "lib/game/presentation/screens/replay/replay_screen.dart": 1228,

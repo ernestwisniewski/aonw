@@ -18,6 +18,7 @@ import 'package:go_router/go_router.dart';
 
 part 'assets_editor_toolbar.dart';
 part 'assets_editor_preview_widgets.dart';
+part 'assets_editor_frame_canvas.dart';
 part 'assets_editor_frame_strip.dart';
 part 'assets_editor_frame_edit_panel.dart';
 part 'assets_editor_models.dart';
@@ -300,11 +301,9 @@ class _AssetsEditorScreenState extends State<AssetsEditorScreen>
       ..sort((a, b) => _filterOrder(a.id).compareTo(_filterOrder(b.id)));
   }
 
-  List<_AssetPreviewModel> _filteredPreviews() {
-    final filter = _filterId;
-    if (filter == null) return _previews;
-    return _previews.where((preview) => preview.filterId == filter).toList();
-  }
+  List<_AssetPreviewModel> _filteredPreviews() => _filterId == null
+      ? _previews
+      : _previews.where((it) => it.filterId == _filterId).toList();
 
   void _setPaused(bool paused) {
     setState(() => _paused = paused);

@@ -427,7 +427,6 @@
         "lib/api/session/network_session_refresh_coordinator.dart": 661,
         "lib/api/transport/network_command_transport.dart": 570,
         "lib/developer/assets_editor_frame_edit_panel.dart": 567,
-        "lib/developer/assets_editor_preview_widgets.dart": 580,
         "lib/editor/map_editor_screen.dart": 510,
         "lib/game/domain/reducer/turn/turn_reducer.dart": 708,
         "lib/game/presentation/engine/recommended_city_site_planner.dart": 560,
@@ -452,8 +451,7 @@
       },
       "legacyFiles": {
         "lib/developer/assets_editor_frame_edit_panel.dart": 567,
-        "lib/developer/assets_editor_preview_widgets.dart": 580,
-        "lib/developer/assets_editor_screen.dart": 439,
+        "lib/developer/assets_editor_screen.dart": 438,
         "lib/editor/map_editor_screen.dart": 510,
         "lib/game/presentation/input/gamepad/gamepad_input_router.dart": 556,
         "lib/game/presentation/screens/game/game_screen.dart": 809,
@@ -470,7 +468,7 @@
       "declarations": {
         "lib/api/session/network_session_refresh_coordinator.dart::class:NetworkSessionRefreshCoordinator": 573,
         "lib/api/transport/network_command_transport.dart::class:NetworkCommandTransport": 391,
-        "lib/developer/assets_editor_screen.dart::class:_AssetsEditorScreenState": 408,
+        "lib/developer/assets_editor_screen.dart::class:_AssetsEditorScreenState": 406,
         "lib/editor/map_editor_screen.dart::class:_MapEditorScreenState": 475,
         "lib/game/domain/reducer/interaction/selection_reducer.dart::class:SelectionReducer": 399,
         "lib/game/domain/reducer/turn/turn_reducer.dart::class:TurnReducer": 614,
