@@ -86,7 +86,7 @@
         "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 229
       },
       "callableLines": {
-        "lib/developer/assets_editor_screen.dart": 1586,
+        "lib/developer/assets_editor_screen.dart": 1584,
         "lib/game/presentation/screens/lobby/lobby_screen.dart": 2930,
         "lib/game/presentation/screens/new_game/new_game_screen.dart": 1408,
         "lib/game/presentation/screens/replay/replay_screen.dart": 1228,

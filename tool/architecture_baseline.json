@@ -403,7 +403,7 @@
         "lib/menu/main_menu_screen.dart": 962
       },
       "legacyFiles": {
-        "lib/developer/assets_editor_screen.dart": 438,
+        "lib/developer/assets_editor_screen.dart": 362,
         "lib/game/presentation/screens/game/game_screen.dart": 809,
         "lib/game/presentation/widgets/bottom_toolbar/end_turn_button.dart": 409,
         "lib/game/presentation/widgets/hud/game_hud.dart": 397,
@@ -415,7 +415,6 @@
       },
       "declarations": {
         "lib/api/session/network_session_refresh_coordinator.dart::class:NetworkSessionRefreshCoordinator": 573,
-        "lib/developer/assets_editor_screen.dart::class:_AssetsEditorScreenState": 406,
         "lib/game/presentation/formatters/diplomacy_history_presenter.dart::class:DiplomacyHistoryPresenter": 380,
         "lib/game/presentation/formatters/game_display_names.dart::class:GameDisplayNames": 586,
         "lib/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart::class:HudGamepadFocusController": 486,

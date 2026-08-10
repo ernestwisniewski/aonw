@@ -47,6 +47,82 @@ class _AssetFilter {
   final String label;
 }
 
+extension _AssetsEditorAdjustmentQueries on _AssetsEditorScreenState {
+  List<_AssetFilter> _availableFilters() {
+    final filters = <String, _AssetFilter>{};
+    for (final preview in _previews) {
+      filters.putIfAbsent(
+        preview.filterId,
+        () => _AssetFilter(preview.filterId, preview.filterLabel),
+      );
+    }
+    return filters.values.toList()
+      ..sort((a, b) => _filterOrder(a.id).compareTo(_filterOrder(b.id)));
+  }
+
+  List<_AssetPreviewModel> _filteredPreviews() => _filterId == null
+      ? _previews
+      : _previews.where((it) => it.filterId == _filterId).toList();
+
+  int _animatedFrameFor(
+    _AssetPreviewModel model,
+    double elapsedSeconds, {
+    required double frameDuration,
+  }) =>
+      (elapsedSeconds / frameDuration).floor() % math.max(model.frameCount, 1);
+
+  String _frameAdjustmentKey(_AssetPreviewModel model, int frameIndex) =>
+      AnimationFrameAdjustmentCatalog.frameKey(
+        assetPath: model.assetPath,
+        animationId: model.animationId,
+        frameIndex: frameIndex,
+      );
+
+  double _animationFrameDurationFor(_AssetPreviewModel model) {
+    final key = _animationTimingKey(model);
+    final override = _animationFrameDurations[key];
+    if (override != null && override.isFinite && override > 0) {
+      return override;
+    }
+    return model.frameDuration;
+  }
+
+  void _setAnimationFrameDuration(
+    _AssetPreviewModel model,
+    double frameDuration,
+  ) {
+    final key = _animationTimingKey(model);
+    if (_sameDuration(frameDuration, model.frameDuration)) {
+      _animationFrameDurations.remove(key);
+    } else {
+      _animationFrameDurations[key] = frameDuration;
+    }
+  }
+
+  String _animationTimingKey(_AssetPreviewModel model) =>
+      AnimationFrameAdjustmentCatalog.animationKey(
+        assetPath: model.assetPath,
+        animationId: model.animationId,
+      );
+
+  Map<String, double> _savedAnimationFrameDurations() {
+    final durations = <String, double>{
+      for (final entry in _animationFrameDurations.entries)
+        if (entry.value.isFinite && entry.value > 0) entry.key: entry.value,
+    };
+    for (final model in _previews) {
+      if (!model.supportsAnimationTiming) continue;
+      final duration = _animationFrameDurationFor(model);
+      if (!_sameDuration(duration, model.frameDuration)) {
+        durations[_animationTimingKey(model)] = duration;
+      } else {
+        durations.remove(_animationTimingKey(model));
+      }
+    }
+    return Map.unmodifiable(durations);
+  }
+}
+
 abstract final class _SpriteImageCache {
   static final Map<String, Future<ui.Image>> _images = {};
 
