@@ -38,6 +38,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 part 'game_options_overlay_contract.dart';
 part 'game_options_overlay_side_menu.dart';
+part 'game_options_overlay_state_transitions.dart';
 part 'game_options_overlay_visuals.dart';
 
 class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
@@ -45,57 +46,6 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
   bool _optionsOpen = false;
   bool _helpOpen = false;
   bool _menuCollapsed = false;
-
-  bool get _overlayPanelActive =>
-      !_menuCollapsed && (_optionsOpen || _helpOpen);
-
-  void _toggleOptions(String activePlayerId, GameClientState? gameState) {
-    final opening = !_optionsOpen;
-    if (opening) {
-      _closeHudSidePanels(activePlayerId: activePlayerId, gameState: gameState);
-    }
-    setState(() {
-      _optionsOpen = opening;
-      if (_optionsOpen) _helpOpen = false;
-    });
-    _publishOverlayPanelActive();
-  }
-
-  void _toggleHelpPanel(String activePlayerId, GameClientState? gameState) {
-    final opening = !_helpOpen;
-    if (opening) {
-      _closeHudSidePanels(activePlayerId: activePlayerId, gameState: gameState);
-    }
-    setState(() {
-      _helpOpen = opening;
-      if (_helpOpen) _optionsOpen = false;
-    });
-    _publishOverlayPanelActive();
-  }
-
-  void _closeOptions() {
-    if (!_optionsOpen && !_helpOpen) return;
-    setState(() {
-      _optionsOpen = false;
-      _helpOpen = false;
-    });
-    _publishOverlayPanelActive();
-  }
-
-  void _collapseMenu(String activePlayerId, GameClientState? gameState) {
-    _closeHudSidePanels(activePlayerId: activePlayerId, gameState: gameState);
-    setState(() {
-      _menuCollapsed = true;
-      _optionsOpen = false;
-      _helpOpen = false;
-    });
-    _publishOverlayPanelActive();
-  }
-
-  void _expandMenu() {
-    setState(() => _menuCollapsed = false);
-    _publishOverlayPanelActive();
-  }
 
   @override
   void initState() {
@@ -105,7 +55,8 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
     );
   }
 
-  void _publishOverlayPanelActive() {
+  void _updateOverlayState(VoidCallback update) {
+    setState(update);
     widget.onOverlayPanelActiveChanged?.call(_overlayPanelActive);
   }
 
@@ -282,8 +233,7 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
     if (_helpOpen && helpEntries.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || !_helpOpen) return;
-        setState(() => _helpOpen = false);
-        _publishOverlayPanelActive();
+        _updateOverlayState(() => _helpOpen = false);
       });
     }
     return LayoutBuilder(
@@ -499,14 +449,5 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
         );
       },
     );
-  }
-
-  void _activateHelpEntry(HudMinimizedPopupEntry entry) {
-    setState(() => _helpOpen = false);
-    _publishOverlayPanelActive();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ref.read(hudMinimizedPopupsProvider.notifier).requestRestoreEntry(entry);
-    });
   }
 }
