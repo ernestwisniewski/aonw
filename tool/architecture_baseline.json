@@ -439,7 +439,6 @@
         "lib/game/presentation/engine/rendering_layers/units/unit_marker_renderer.dart": 585,
         "lib/game/presentation/engine/rendering_layers/units/unit_move_preview.dart": 775,
         "lib/game/presentation/formatters/game_display_names.dart": 598,
-        "lib/game/presentation/input/gamepad/gamepad_input_router.dart": 556,
         "lib/game/presentation/screens/game/game_screen.dart": 809,
         "lib/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart": 604,
         "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart": 588,
@@ -451,7 +450,6 @@
       "legacyFiles": {
         "lib/developer/assets_editor_screen.dart": 438,
         "lib/editor/map_editor_screen.dart": 510,
-        "lib/game/presentation/input/gamepad/gamepad_input_router.dart": 556,
         "lib/game/presentation/screens/game/game_screen.dart": 809,
         "lib/game/presentation/widgets/bottom_toolbar/end_turn_button.dart": 409,
         "lib/game/presentation/widgets/hud/game_hud.dart": 397,
