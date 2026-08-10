@@ -20,9 +20,7 @@
       "cognitiveComplexity": {}
     },
     "core_lib": {
-      "files": {
-        "packages/aonw_core/lib/ai/telemetry/balance_runner.dart": 978
-      },
+      "files": {},
       "legacyFiles": {},
       "declarations": {
         "packages/aonw_core/lib/ai/civilization/civilization_profiles.dart::class:CivilizationProfiles": 394,
@@ -33,7 +31,6 @@
         "packages/aonw_core/lib/ai/strategies/basic_strategy_founding_move_planner.dart::class:BasicStrategyFoundingMovePlanner": 375,
         "packages/aonw_core/lib/ai/strategies/basic_strategy_founding_planner.dart::class:BasicStrategyFoundingPlanner": 391,
         "packages/aonw_core/lib/ai/strategies/basic_strategy_worker_planner.dart::class:BasicStrategyWorkerPlanner": 410,
-        "packages/aonw_core/lib/ai/telemetry/balance_runner.dart::class:BalanceBatchReport": 759,
         "packages/aonw_core/lib/game/domain/city/city_turn_processor.dart::class:CityTurnProcessor": 360,
         "packages/aonw_core/lib/game/domain/combat/combat_modifier_collector.dart::class:CombatModifierCollector": 365,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit": 469
