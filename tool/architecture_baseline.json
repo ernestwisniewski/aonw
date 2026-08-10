@@ -464,7 +464,6 @@
         "lib/game/presentation/widgets/city/city_production_dialog_view_model.dart": 368,
         "lib/game/presentation/widgets/hud/game_hud.dart": 397,
         "lib/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart": 604,
-        "lib/game/presentation/widgets/hud/mode_banner/hud_mode_banner.dart": 351,
         "lib/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart": 395,
         "lib/game/presentation/widgets/hud/overlay/game_hud_overlay_host.dart": 364,
         "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart": 588,
