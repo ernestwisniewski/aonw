@@ -464,8 +464,7 @@
         "lib/map/rendering/map_image_layer.dart": 525,
         "lib/map/rendering/tile/hex_tile_painter.dart": 762,
         "lib/menu/main_menu_screen.dart": 962,
-        "lib/menu/manual_screen.dart": 801,
-        "lib/menu/options_screen.dart": 1071
+        "lib/menu/manual_screen.dart": 801
       },
       "legacyFiles": {
         "lib/developer/assets_editor_frame_edit_panel.dart": 567,
@@ -511,7 +510,6 @@
         "lib/menu/main_menu_screen.dart": 962,
         "lib/menu/manual_screen.dart": 801,
         "lib/menu/menu_route_shell.dart": 425,
-        "lib/menu/options_screen.dart": 1071,
         "lib/shared/widgets/game_ui/game_ui_options_panel.dart": 353
       },
       "declarations": {
@@ -762,9 +760,6 @@
         "lib/menu/manual_screen.dart::function:_desktopGroups": 90,
         "lib/menu/manual_screen.dart::function:_gamepadGroups": 90,
         "lib/menu/manual_screen.dart::function:_mobileGroups": 80,
-        "lib/menu/options_screen.dart::class:_GamepadSection/method:build": 96,
-        "lib/menu/options_screen.dart::class:_MultiplayerProfileSectionState/method:build": 63,
-        "lib/menu/options_screen.dart::class:_VolumeSlider/method:build": 63,
         "lib/shared/widgets/game_ui/epic_button.dart::class:_EpicButtonState/method:build": 63,
         "lib/shared/widgets/game_ui/game_color_picker.dart::class:_ColorPickerDialogState/method:build": 81,
         "lib/shared/widgets/game_ui/game_toast.dart::class:_GameToastContent/method:build": 77,
@@ -976,8 +971,6 @@
         "lib/menu/main_menu_screen.dart::class:_MenuButtonState/method:build/closure:MenuGamepadAction#1": 23,
         "lib/menu/main_menu_screen.dart::class:_MenuPanelState/method:_resumeMultiplayerMatch": 13,
         "lib/menu/menu_route_shell.dart::class:_MenuActionButtons/method:build": 12,
-        "lib/menu/options_screen.dart::function:_gamepadButtonActionLabel": 16,
-        "lib/menu/options_screen.dart::function:_gamepadButtonLabel": 19,
         "lib/shared/widgets/game_ui/epic_button.dart::class:_EpicButtonState/method:_foreground": 11,
         "lib/shared/widgets/game_ui/epic_button.dart::class:_EpicButtonState/method:build": 12,
         "lib/shared/widgets/viewport_gesture_layer.dart::class:ViewportGestureLayer/method:build": 17
