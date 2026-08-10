@@ -54,7 +54,7 @@ ShowCombatHexAlertEffect? _fortificationTargetAlert({
       detectedEnemy.row != target.row) {
     return null;
   }
-  if (!GameEventRendererEffectMapper._canRenderTransientAt(
+  if (!_canRenderTransientAt(
     detectionState,
     target.col,
     target.row,

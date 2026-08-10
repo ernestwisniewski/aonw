@@ -433,7 +433,6 @@
         "lib/api/transport/network_command_transport.dart::class:NetworkCommandTransport": 391,
         "lib/developer/assets_editor_screen.dart::class:_AssetsEditorScreenState": 406,
         "lib/editor/map_editor_screen.dart::class:_MapEditorScreenState": 475,
-        "lib/game/presentation/engine/game_event_renderer_effect_mapper.dart::class:GameEventRendererEffectMapper": 370,
         "lib/game/presentation/engine/game_rendering_coordinator.dart::class:GameRenderingCoordinator": 446,
         "lib/game/presentation/engine/rendering_layers/action_palette/action_palette_component.dart::class:ActionPaletteComponent": 633,
         "lib/game/presentation/engine/rendering_layers/city/city_management_overlay_layer.dart::class:CityManagementOverlayLayer": 478,
