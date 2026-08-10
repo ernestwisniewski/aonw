@@ -455,7 +455,6 @@
         "lib/developer/assets_editor_preview_widgets.dart": 580,
         "lib/developer/assets_editor_screen.dart": 439,
         "lib/editor/map_editor_screen.dart": 510,
-        "lib/editor/widgets/editor_toolbar_sections.dart": 490,
         "lib/game/presentation/input/gamepad/gamepad_input_router.dart": 556,
         "lib/game/presentation/screens/game/game_screen.dart": 809,
         "lib/game/presentation/widgets/bottom_toolbar/end_turn_button.dart": 409,
