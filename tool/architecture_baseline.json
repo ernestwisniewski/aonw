@@ -426,7 +426,6 @@
       "files": {
         "lib/api/session/network_session_refresh_coordinator.dart": 661,
         "lib/api/transport/network_command_transport.dart": 570,
-        "lib/developer/assets_editor_frame_edit_panel.dart": 567,
         "lib/editor/map_editor_screen.dart": 510,
         "lib/game/domain/reducer/turn/turn_reducer.dart": 708,
         "lib/game/presentation/engine/recommended_city_site_planner.dart": 560,
@@ -450,7 +449,6 @@
         "lib/menu/main_menu_screen.dart": 962
       },
       "legacyFiles": {
-        "lib/developer/assets_editor_frame_edit_panel.dart": 567,
         "lib/developer/assets_editor_screen.dart": 438,
         "lib/editor/map_editor_screen.dart": 510,
         "lib/game/presentation/input/gamepad/gamepad_input_router.dart": 556,

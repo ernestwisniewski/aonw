@@ -275,20 +275,18 @@ class _EditLabel extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 42,
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: GameUiTheme.toolbarLabel.copyWith(
-          color: GameUiTheme.textTertiary,
-          fontSize: 8,
-        ),
+  Widget build(BuildContext context) => SizedBox(
+    width: 42,
+    child: Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: GameUiTheme.toolbarLabel.copyWith(
+        color: GameUiTheme.textTertiary,
+        fontSize: 8,
       ),
-    );
-  }
+    ),
+  );
 }
 
 class _TinyIconButton extends StatelessWidget {
@@ -332,236 +330,21 @@ class _CropButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 30,
-      height: 24,
-      child: OutlinedButton(
-        onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: GameUiTheme.goldLight,
-          minimumSize: Size.zero,
-          side: BorderSide(color: GameUiTheme.gold.withAlpha(76)),
-          padding: EdgeInsets.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          textStyle: GameUiTheme.toolbarLabel.copyWith(fontSize: 8),
-          shape: RoundedRectangleBorder(borderRadius: GameUiTheme.borderRadius),
-        ),
-        child: Text(label),
+  Widget build(BuildContext context) => SizedBox(
+    width: 30,
+    height: 24,
+    child: OutlinedButton(
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: GameUiTheme.goldLight,
+        minimumSize: Size.zero,
+        side: BorderSide(color: GameUiTheme.gold.withAlpha(76)),
+        padding: EdgeInsets.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: GameUiTheme.toolbarLabel.copyWith(fontSize: 8),
+        shape: RoundedRectangleBorder(borderRadius: GameUiTheme.borderRadius),
       ),
-    );
-  }
-}
-
-class _ModeButton extends StatelessWidget {
-  const _ModeButton({
-    required this.active,
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.enabled = true,
-  });
-
-  final bool active;
-  final bool enabled;
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final foreground = active ? GameUiTheme.goldLight : GameUiTheme.textPrimary;
-    return TextButton.icon(
-      onPressed: enabled ? onTap : null,
-      icon: Icon(icon, size: 16),
-      label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-      style: TextButton.styleFrom(
-        minimumSize: const Size(0, 34),
-        foregroundColor: foreground,
-        disabledForegroundColor: GameUiTheme.textTertiary,
-        backgroundColor: active
-            ? GameUiTheme.gold.withAlpha(36)
-            : GameUiTheme.surface.withAlpha(190),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        textStyle: GameUiTheme.actionLabel.copyWith(fontSize: 10),
-        shape: RoundedRectangleBorder(
-          borderRadius: GameUiTheme.borderRadius,
-          side: BorderSide(
-            color: active ? GameUiTheme.gold : GameUiTheme.gold.withAlpha(74),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionFilterButton extends StatelessWidget {
-  const _ActionFilterButton({
-    required this.label,
-    required this.onTap,
-    required this.selected,
-  });
-
-  final String label;
-  final VoidCallback onTap;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          constraints: const BoxConstraints(minWidth: 56, minHeight: 32),
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected
-                ? GameUiTheme.gold.withAlpha(38)
-                : GameUiTheme.surface.withAlpha(190),
-            borderRadius: GameUiTheme.borderRadius,
-            border: Border.all(
-              color: selected
-                  ? GameUiTheme.gold
-                  : GameUiTheme.gold.withAlpha(74),
-            ),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GameUiTheme.actionLabel.copyWith(
-              color: selected ? GameUiTheme.goldLight : GameUiTheme.textPrimary,
-              fontSize: 10,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _IconToggle extends StatelessWidget {
-  const _IconToggle({
-    required this.active,
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final bool active;
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: label,
-      child: IconButton(
-        isSelected: active,
-        onPressed: onTap,
-        style: IconButton.styleFrom(
-          backgroundColor: active
-              ? GameUiTheme.gold.withAlpha(36)
-              : GameUiTheme.surface.withAlpha(190),
-          foregroundColor: active ? GameUiTheme.goldLight : GameUiTheme.gold,
-          side: BorderSide(
-            color: active ? GameUiTheme.gold : GameUiTheme.gold.withAlpha(74),
-          ),
-          shape: RoundedRectangleBorder(borderRadius: GameUiTheme.borderRadius),
-        ),
-        icon: Icon(icon, size: 19),
-      ),
-    );
-  }
-}
-
-class _ActionPill extends StatelessWidget {
-  const _ActionPill({required this.color, required this.label});
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color.withAlpha(42),
-        borderRadius: GameUiTheme.borderRadius,
-        border: Border.all(color: color.withAlpha(160)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-        child: Text(
-          label,
-          style: GameUiTheme.toolbarLabel.copyWith(
-            color: GameUiTheme.textPrimary,
-            fontSize: 9,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MetaPill extends StatelessWidget {
-  const _MetaPill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: GameUiTheme.surface.withAlpha(172),
-          borderRadius: GameUiTheme.borderRadius,
-          border: Border.all(color: GameUiTheme.gold.withAlpha(42)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-          child: Text(
-            label,
-            maxLines: 1,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: GameUiTheme.cardMeta.copyWith(fontSize: 10),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CountPill extends StatelessWidget {
-  const _CountPill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: GameUiTheme.gold.withAlpha(28),
-        borderRadius: GameUiTheme.borderRadius,
-        border: Border.all(color: GameUiTheme.gold.withAlpha(116)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        child: Text(
-          label,
-          style: GameUiTheme.toolbarLabel.copyWith(
-            color: GameUiTheme.goldLight,
-            fontSize: 10,
-          ),
-        ),
-      ),
-    );
-  }
+      child: Text(label),
+    ),
+  );
 }
