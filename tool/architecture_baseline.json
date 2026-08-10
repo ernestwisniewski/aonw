@@ -431,7 +431,6 @@
         "lib/developer/assets_editor_screen.dart::class:_AssetsEditorScreenState": 406,
         "lib/editor/map_editor_screen.dart::class:_MapEditorScreenState": 475,
         "lib/game/presentation/engine/rendering_layers/action_palette/action_palette_component.dart::class:ActionPaletteComponent": 633,
-        "lib/game/presentation/engine/rendering_layers/city/city_management_overlay_layer.dart::class:CityManagementOverlayLayer": 478,
         "lib/game/presentation/engine/rendering_layers/city/city_marker.dart::class:CityMarker": 694,
         "lib/game/presentation/engine/rendering_layers/city/city_territory_overlay.dart::class:CityTerritoryOverlay": 462,
         "lib/game/presentation/engine/rendering_layers/effects/cloud_drift_layer.dart::class:CloudDriftLayer": 462,
