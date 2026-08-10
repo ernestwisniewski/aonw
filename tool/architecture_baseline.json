@@ -471,7 +471,6 @@
         "lib/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart": 395,
         "lib/game/presentation/widgets/hud/overlay/game_hud_overlay_host.dart": 364,
         "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart": 588,
-        "lib/game/presentation/widgets/hud/turn/turn_action_hint.dart": 362,
         "lib/game/presentation/widgets/options/game_options_overlay.dart": 752,
         "lib/map/widgets/dice_roll_test_overlay.dart": 491,
         "lib/menu/main_menu_screen.dart": 962,
