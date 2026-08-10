@@ -26,104 +26,8 @@ import 'package:url_launcher/url_launcher.dart';
 part 'main_menu_developer_tools.dart';
 part 'main_menu_item_widgets.dart';
 part 'main_menu_panel_items.dart';
-
-final _feedbackUrl = Uri.parse('https://www.reddit.com/r/aonw/');
-
-class MainMenuScreen extends StatelessWidget {
-  const MainMenuScreen({super.key, this.onExit, this.gamepadInputListenable});
-
-  final Future<void> Function()? onExit;
-  final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
-
-  @override
-  Widget build(BuildContext context) {
-    return MenuGamepadInputBinding(
-      input: gamepadInputListenable,
-      child: Scaffold(
-        backgroundColor: GameUiTheme.bg,
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            const _MenuBackground(),
-            SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 700;
-                  final panelWidth = compact
-                      ? constraints.maxWidth
-                      : constraints.maxWidth.clamp(340.0, 390.0).toDouble();
-                  return Align(
-                    alignment: Alignment.centerLeft,
-                    child: SizedBox(
-                      width: panelWidth,
-                      child: _MenuPanel(
-                        showBottomLinks: compact,
-                        onExit: onExit,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const Positioned(
-              top: 12,
-              right: 16,
-              child: SafeArea(child: _VersionTag()),
-            ),
-            const Positioned(
-              right: 18,
-              bottom: 18,
-              child: SafeArea(child: _RightInfoColumn()),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MenuBackground extends StatelessWidget {
-  const _MenuBackground();
-
-  @override
-  Widget build(BuildContext context) {
-    return MenuAnimatedBackground(
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [
-                  GameUiTheme.bg,
-                  Color(0xA80A0E14),
-                  Color(0x1F0A0E14),
-                  Color(0x000A0E14),
-                ],
-                stops: [0, 0.28, 0.48, 1],
-              ),
-            ),
-          ),
-          DecoratedBox(
-            decoration: BoxDecoration(color: GameUiTheme.bg.withAlpha(34)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MenuPanel extends ConsumerStatefulWidget {
-  final bool showBottomLinks;
-  final Future<void> Function()? onExit;
-
-  const _MenuPanel({required this.showBottomLinks, this.onExit});
-
-  @override
-  ConsumerState<_MenuPanel> createState() => _MenuPanelState();
-}
+part 'main_menu_shell.dart';
+part 'main_menu_status_widgets.dart';
 
 class _MenuPanelState extends ConsumerState<_MenuPanel> {
   bool _developerOpen = false;
@@ -144,11 +48,6 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
     final stored = await ref.read(networkSessionStoreProvider).load();
     if (!mounted) return;
     setState(() => _resumeMatchId = stored?.matchId);
-  }
-
-  Future<void> _resumeMultiplayerMatchIfAllowed() async {
-    if (!ref.read(mainMenuMultiplayerAccessAllowedProvider)) return;
-    await _resumeMultiplayerMatch();
   }
 
   Future<void> _resumeMultiplayerMatch() async {
@@ -228,18 +127,6 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
       message: context.l10n.multiplayerResumeFailed,
       tone: GameToastTone.error,
     );
-  }
-
-  bool _isAuthoritativeMissingResumeMatch(Object error) {
-    if (error is! MultiplayerFailure || !error.isMultiplayer) return false;
-    return error.code == 'match_not_found' || error.code == 'not_match_player';
-  }
-
-  String? _playerIdForUser(WireMatch match, String userId) {
-    for (final player in match.players) {
-      if (player.userId == userId) return player.id;
-    }
-    return null;
   }
 
   @override
@@ -534,56 +421,6 @@ class _BottomLinks extends ConsumerWidget {
   }
 }
 
-class _BottomLink {
-  const _BottomLink(this.icon, this.label, this.onPressed);
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-}
-
-Future<void> _openFeedbackUrl() async {
-  await launchUrl(_feedbackUrl, mode: LaunchMode.externalApplication);
-}
-
-class _VersionTag extends ConsumerWidget {
-  const _VersionTag();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final releaseInfo = ref.watch(appReleaseInfoProvider);
-    final label = releaseInfo.maybeWhen(
-      data: (info) => info.displayLabel,
-      orElse: () => AppReleaseChannel.stable.label,
-    );
-    return Text(
-      label,
-      style: GameUiTheme.bodySmall.copyWith(
-        color: GameUiTheme.goldLight.withAlpha(120),
-        fontSize: 11,
-      ),
-    );
-  }
-}
-
-class _RightInfoColumn extends StatelessWidget {
-  const _RightInfoColumn();
-
-  @override
-  Widget build(BuildContext context) {
-    if (MediaQuery.sizeOf(context).width < 700) {
-      return const SizedBox.shrink();
-    }
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 250),
-      child: const Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [_WhatsNewPanel(), SizedBox(height: 10), _BottomLinks()],
-      ),
-    );
-  }
-}
-
 class _WhatsNewPanel extends ConsumerWidget {
   const _WhatsNewPanel();
 
@@ -649,48 +486,4 @@ class _WhatsNewPanel extends ConsumerWidget {
       ),
     );
   }
-}
-
-class _UpdateNoticeBlock extends StatelessWidget {
-  const _UpdateNoticeBlock({required this.notice});
-
-  final MainMenuUpdateNotice notice;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    const color = GameUiTheme.goldLight;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Icon(Icons.system_update_alt_rounded, color: color, size: 18),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                GameText.sectionLabel(notice.title(l10n)),
-                style: GameUiTheme.sectionHeader.copyWith(color: color),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                notice.body(l10n),
-                style: GameUiTheme.body.copyWith(
-                  color: GameUiTheme.goldLight,
-                  fontSize: 11.5,
-                  height: 1.38,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-MainMenuUpdateNotice? _updateNoticeFor(WidgetRef ref) {
-  final notice = ref.watch(mainMenuUpdateNoticeProvider);
-  return notice is AsyncData<MainMenuUpdateNotice?> ? notice.value : null;
 }

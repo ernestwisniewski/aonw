@@ -1,6 +1,23 @@
 part of 'main_menu_screen.dart';
 
 extension _MenuPanelItems on _MenuPanelState {
+  Future<void> _resumeMultiplayerMatchIfAllowed() async {
+    if (!ref.read(mainMenuMultiplayerAccessAllowedProvider)) return;
+    await _resumeMultiplayerMatch();
+  }
+
+  bool _isAuthoritativeMissingResumeMatch(Object error) {
+    if (error is! MultiplayerFailure || !error.isMultiplayer) return false;
+    return error.code == 'match_not_found' || error.code == 'not_match_player';
+  }
+
+  String? _playerIdForUser(WireMatch match, String userId) {
+    for (final player in match.players) {
+      if (player.userId == userId) return player.id;
+    }
+    return null;
+  }
+
   List<_MenuItem> _menuItems(
     BuildContext context, {
     required bool multiplayerAccessAllowed,
