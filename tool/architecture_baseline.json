@@ -411,7 +411,6 @@
         "lib/game/presentation/widgets/bottom_toolbar/end_turn_button.dart": 409,
         "lib/game/presentation/widgets/hud/game_hud.dart": 397,
         "lib/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart": 604,
-        "lib/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart": 395,
         "lib/game/presentation/widgets/hud/overlay/game_hud_overlay_host.dart": 364,
         "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart": 588,
         "lib/game/presentation/widgets/options/game_options_overlay.dart": 752,
@@ -424,7 +423,6 @@
         "lib/game/presentation/formatters/diplomacy_history_presenter.dart::class:DiplomacyHistoryPresenter": 380,
         "lib/game/presentation/formatters/game_display_names.dart::class:GameDisplayNames": 586,
         "lib/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart::class:HudGamepadFocusController": 486,
-        "lib/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart::class:HudVictoryStatusSummary": 382,
         "lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart::class:HudOverlayFrame": 541,
         "lib/game/presentation/widgets/options/game_options_overlay.dart::class:_GameOptionsOverlayState": 470
       },
