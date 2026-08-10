@@ -463,7 +463,6 @@
         "lib/game/presentation/widgets/bottom_toolbar/end_turn_button.dart": 411,
         "lib/game/presentation/widgets/bottom_toolbar/end_turn_button_content.dart": 363,
         "lib/game/presentation/widgets/city/city_production_dialog_view_model.dart": 368,
-        "lib/game/presentation/widgets/city/city_yield_breakdown_view_model.dart": 438,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 593,
         "lib/game/presentation/widgets/hud/game_hud.dart": 397,
         "lib/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart": 604,
