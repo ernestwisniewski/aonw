@@ -469,8 +469,7 @@
         "lib/game/presentation/widgets/options/game_options_overlay.dart": 752,
         "lib/map/widgets/dice_roll_test_overlay.dart": 491,
         "lib/menu/main_menu_screen.dart": 962,
-        "lib/menu/menu_route_shell.dart": 425,
-        "lib/shared/widgets/game_ui/game_ui_options_panel.dart": 353
+        "lib/menu/menu_route_shell.dart": 425
       },
       "declarations": {
         "lib/api/session/network_session_refresh_coordinator.dart::class:NetworkSessionRefreshCoordinator": 573,
@@ -677,8 +676,7 @@
         "lib/menu/main_menu_screen.dart::class:_WhatsNewPanel/method:build": 62,
         "lib/shared/widgets/game_ui/epic_button.dart::class:_EpicButtonState/method:build": 63,
         "lib/shared/widgets/game_ui/game_color_picker.dart::class:_ColorPickerDialogState/method:build": 81,
-        "lib/shared/widgets/game_ui/game_toast.dart::class:_GameToastContent/method:build": 77,
-        "lib/shared/widgets/game_ui/game_ui_options_panel.dart::class:GameUiSideMenuButton/method:build": 98
+        "lib/shared/widgets/game_ui/game_toast.dart::class:_GameToastContent/method:build": 77
       },
       "nesting": {
         "lib/game/application/use_cases/bootstrap_game_state_use_case.dart::class:BootstrapGameStateUseCase/method:executeWithResult": 4,
