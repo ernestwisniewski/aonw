@@ -83,6 +83,87 @@ void main() {
       expect(commands, isEmpty);
     });
 
+    test('asks a hostile contacted rival to avoid escalation', () {
+      final view = _view(
+        diplomacy: DiplomacyState.empty
+            .addContact('ai', 'rival')
+            .adjustRelationScore(
+              'ai',
+              'rival',
+              -30,
+              turn: 8,
+              reason: DiplomaticScoreChangeReason.manual,
+            ),
+      );
+
+      final commands = const DiplomacyAiPolicy().commandsFor(view, _context());
+
+      expect(commands, [
+        const SendDiplomaticMessageCommand(
+          playerId: 'ai',
+          targetPlayerId: 'rival',
+          topic: DiplomaticMessageTopic.avoidEscalation,
+        ),
+      ]);
+    });
+
+    test('praises peaceful relations before proposing friendship', () {
+      final view = _view(
+        diplomacy: DiplomacyState.empty
+            .addContact('ai', 'rival')
+            .adjustRelationScore(
+              'ai',
+              'rival',
+              40,
+              turn: 8,
+              reason: DiplomaticScoreChangeReason.manual,
+            ),
+      );
+
+      final commands = const DiplomacyAiPolicy().commandsFor(view, _context());
+
+      expect(commands, [
+        const SendDiplomaticMessageCommand(
+          playerId: 'ai',
+          targetPlayerId: 'rival',
+          topic: DiplomaticMessageTopic.peacefulPraise,
+        ),
+      ]);
+    });
+
+    test('proposes friendship after recent peaceful praise', () {
+      final diplomacy = DiplomacyState.empty
+          .addContact('ai', 'rival')
+          .adjustRelationScore(
+            'ai',
+            'rival',
+            50,
+            turn: 8,
+            reason: DiplomaticScoreChangeReason.manual,
+          )
+          .addMessage(
+            DiplomaticMessage.create(
+              id: 'peaceful_praise',
+              fromPlayerId: 'ai',
+              toPlayerId: 'rival',
+              topic: DiplomaticMessageTopic.peacefulPraise,
+              createdTurn: 11,
+              expiresOnTurn: 16,
+            ),
+          );
+      final view = _view(diplomacy: diplomacy);
+
+      final commands = const DiplomacyAiPolicy().commandsFor(view, _context());
+
+      expect(commands, [
+        const SendDiplomaticProposalCommand(
+          playerId: 'ai',
+          targetPlayerId: 'rival',
+          kind: DiplomaticProposalKind.friendship,
+        ),
+      ]);
+    });
+
     test('backs common enemy messages when the war target is shared', () {
       final diplomacy = DiplomacyState.empty
           .addContact('ai', 'rival')

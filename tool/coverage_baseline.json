@@ -5,22 +5,22 @@
       "layers": {
         "ai": {
           "files": {
-            "hit": 189,
-            "found": 192
+            "hit": 201,
+            "found": 204
           },
           "lines": {
-            "hit": 11814,
+            "hit": 11839,
             "found": 12670
           }
         },
         "domain": {
           "files": {
-            "hit": 384,
-            "found": 395
+            "hit": 403,
+            "found": 414
           },
           "lines": {
-            "hit": 13864,
-            "found": 16075
+            "hit": 13933,
+            "found": 16138
           }
         },
         "map": {

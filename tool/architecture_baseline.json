@@ -374,7 +374,7 @@
       "callableLines": {
         "packages/aonw_core/test/ai/telemetry/balance_runner_test.dart::function:main/closure:group[BalanceRunner]#1/closure:test[runs_a_deterministic_batch_and_aggregates_per-player_metrics]#1": 185,
         "packages/aonw_core/test/game/balance_telemetry_test.dart::function:main/closure:group[BalanceTelemetryAnalyzer]#1/closure:test[exposes_tuning_target_windows_per_pace_profile]#1": 132,
-        "packages/aonw_core/test/game/game_event_serialization_test.dart::function:main/closure:group[GameEventSerializer]#1/closure:test[round-trips_representative_gameplay_events]#1": 183
+        "packages/aonw_core/test/game/game_event_serialization_test.dart::function:main/closure:group[GameEventSerializer]#1/closure:test[round-trips_representative_gameplay_events]#1": 163
       },
       "nesting": {},
       "cyclomaticComplexity": {},

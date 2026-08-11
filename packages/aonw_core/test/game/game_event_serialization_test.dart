@@ -37,27 +37,7 @@ void main() {
           toCol: 2,
           toRow: 1,
         ),
-        CombatResolvedEvent(
-          attackerUnitId: 'attacker',
-          defenderUnitId: 'defender',
-          outcome: _sampleOutcome(),
-        ),
-        const CityAttackedEvent(
-          attackerUnitId: 'attacker',
-          attackerOwnerPlayerId: 'player_1',
-          cityId: 'city_2',
-          cityOwnerPlayerId: 'player_2',
-        ),
-        const UnitKilledEvent(
-          unitId: 'defender',
-          ownerPlayerId: 'player_2',
-          attackerUnitId: 'attacker',
-        ),
-        const CityDestroyedEvent(
-          cityId: 'city_2',
-          previousOwnerPlayerId: 'player_2',
-          attackerOwnerPlayerId: 'player_1',
-        ),
+        ..._representativeCombatEvents(),
         const TechnologyResearchedEvent(
           playerId: 'player_1',
           technologyId: TechnologyId.mining,
@@ -294,6 +274,49 @@ void main() {
     });
   });
 }
+
+List<GameEvent> _representativeCombatEvents() => [
+  const UnitAttackedEvent(
+    attackerUnitId: 'attacker',
+    attackerOwnerPlayerId: 'player_1',
+    defenderUnitId: 'defender',
+    defenderOwnerPlayerId: 'player_2',
+  ),
+  const UnitRetreatedEvent(
+    unitId: 'defender',
+    ownerPlayerId: 'player_2',
+    fromCol: 2,
+    fromRow: 1,
+    toCol: 3,
+    toRow: 1,
+  ),
+  CombatResolvedEvent(
+    attackerUnitId: 'attacker',
+    defenderUnitId: 'defender',
+    outcome: _sampleOutcome(),
+  ),
+  const CityAttackedEvent(
+    attackerUnitId: 'attacker',
+    attackerOwnerPlayerId: 'player_1',
+    cityId: 'city_2',
+    cityOwnerPlayerId: 'player_2',
+  ),
+  const CityCapturedEvent(
+    cityId: 'city_2',
+    previousOwnerPlayerId: 'player_2',
+    newOwnerPlayerId: 'player_1',
+  ),
+  const UnitKilledEvent(
+    unitId: 'defender',
+    ownerPlayerId: 'player_2',
+    attackerUnitId: 'attacker',
+  ),
+  const CityDestroyedEvent(
+    cityId: 'city_2',
+    previousOwnerPlayerId: 'player_2',
+    attackerOwnerPlayerId: 'player_1',
+  ),
+];
 
 CombatOutcome _sampleOutcome() {
   return CombatOutcome(
