@@ -4,6 +4,7 @@ import 'package:aonw/game/application/ports/multiplayer_failure.dart';
 import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
 import 'package:aonw/game/application/ports/native_social_auth.dart';
 import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
+import 'package:aonw/game/presentation/screens/lobby/multiplayer_account_completion.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
@@ -27,6 +28,7 @@ class _MultiplayerAccountDialog extends ConsumerStatefulWidget {
     required this.externalAuth,
     required this.steamAuth,
     required this.initialDisplayName,
+    required this.onAuthenticated,
   });
 
   final MultiplayerAccountAction login;
@@ -36,6 +38,7 @@ class _MultiplayerAccountDialog extends ConsumerStatefulWidget {
   final MultiplayerExternalAuthAction? externalAuth;
   final MultiplayerSteamAuthAction? steamAuth;
   final String initialDisplayName;
+  final MultiplayerAuthenticatedResult onAuthenticated;
 
   @override
   _MultiplayerAccountDialogState createState() =>
@@ -188,7 +191,7 @@ class _MultiplayerAccountDialogState
               displayName: displayName,
             );
       if (!mounted) return;
-      Navigator.of(context).pop(result);
+      finishMultiplayerAccountAuth(context, widget.onAuthenticated, result);
     } catch (error) {
       if (!mounted) return;
       setState(() => _error = _accountErrorText(l10n, error));
@@ -219,7 +222,7 @@ class _MultiplayerAccountDialogState
     try {
       final result = await completeSocialAuth(authSuccess: auth);
       if (!mounted) return;
-      Navigator.of(context).pop(result);
+      finishMultiplayerAccountAuth(context, widget.onAuthenticated, result);
     } catch (error, stackTrace) {
       _logWarning('Social auth completion error.', error, stackTrace);
       if (!mounted) return;
@@ -245,7 +248,7 @@ class _MultiplayerAccountDialogState
     try {
       final result = await steamAuth();
       if (!mounted) return;
-      Navigator.of(context).pop(result);
+      finishMultiplayerAccountAuth(context, widget.onAuthenticated, result);
     } catch (error, stackTrace) {
       _logWarning('Steam sign-in error.', error, stackTrace);
       if (!mounted) return;
@@ -276,7 +279,7 @@ class _MultiplayerAccountDialogState
     try {
       final result = await externalAuth(provider: provider);
       if (!mounted) return;
-      Navigator.of(context).pop(result);
+      finishMultiplayerAccountAuth(context, widget.onAuthenticated, result);
     } catch (error, stackTrace) {
       _logWarning('$provider sign-in error.', error, stackTrace);
       if (!mounted) return;

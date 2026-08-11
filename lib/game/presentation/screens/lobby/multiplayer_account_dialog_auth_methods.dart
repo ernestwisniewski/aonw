@@ -341,32 +341,32 @@ String _appleRedirectUri() {
 }
 
 bool get _supportsNativeGoogleSignIn {
-  return kIsWeb ||
-      defaultTargetPlatform == TargetPlatform.android ||
-      defaultTargetPlatform == TargetPlatform.iOS ||
-      defaultTargetPlatform == TargetPlatform.macOS;
+  return !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS);
 }
 
 bool get _supportsNativeAppleSignIn {
-  return kIsWeb ||
-      defaultTargetPlatform == TargetPlatform.android ||
-      defaultTargetPlatform == TargetPlatform.iOS;
+  return !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
 }
 
 bool get _supportsNativeSocialSignIn =>
     _supportsNativeGoogleSignIn || _supportsNativeAppleSignIn;
 
 bool get _usesExternalAppleSignIn {
-  return !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.macOS ||
-          defaultTargetPlatform == TargetPlatform.windows ||
-          defaultTargetPlatform == TargetPlatform.linux);
+  return kIsWeb ||
+      defaultTargetPlatform == TargetPlatform.macOS ||
+      defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.linux;
 }
 
 bool get _usesExternalGoogleSignIn {
-  return !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.windows ||
-          defaultTargetPlatform == TargetPlatform.linux);
+  return kIsWeb ||
+      defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.linux;
 }
 
 bool get _supportsSteamSignIn {

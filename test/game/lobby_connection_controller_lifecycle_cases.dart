@@ -110,6 +110,50 @@ void registerLobbyConnectionControllerLifecycleCases() {
     expect(client.sessionActions, ['leave', 'close', 'signOut']);
     expect(harness.session, isNull);
   });
+
+  test(
+    'cancelled authentication does not enter a phantom quickplay queue',
+    () async {
+      final client = _FakeNetworkSessionClient(
+        quickplayMatch: _match(state: 'open'),
+      );
+      final store = _MemoryNetworkSessionStore(displayName: 'Alice');
+      NetworkSession? currentSession;
+      final presentedErrors = <String>[];
+      final controller = LobbyConnectionController(
+        mapName: 'verdantia',
+        mapSource: MapSource.asset,
+        sessionClient: client,
+        sessionStore: store,
+        sessionEffectRunner: lobbyControllerSessionEffectRunner(store),
+        liveEvents: _emptyLiveEvents(),
+        now: () => DateTime.utc(2026, 6, 2, 12),
+        canContinue: () => true,
+        currentSession: () => currentSession,
+        setSession: (session) => currentSession = session,
+        authenticate: ({required initialDisplayName}) async => null,
+        displayName: () => 'Alice',
+        setPrimaryDisplayName: (_) {},
+        country: () => PlayerCountry.china,
+        validateMap: () async => _validValidation(),
+        mapNotReadyMessage: () => 'Map is not ready',
+        inviteCodeRequiredMessage: () => 'Invite code required',
+        errorTextFor: (error) => 'mapped $error',
+        presentError: presentedErrors.add,
+        publishMatch: (_) {},
+        navigateTo: (_) {},
+      );
+      addTearDown(controller.dispose);
+
+      await controller.startQuickplayQueue();
+
+      expect(controller.mode, LobbyMultiplayerMode.home);
+      expect(controller.activeMatch, isNull);
+      expect(controller.busy, isFalse);
+      expect(client.quickplayRequest, isNull);
+      expect(presentedErrors, isEmpty);
+    },
+  );
 }
 
 Future<void> _runTerminalLobbyScenario(_TerminalLobbyScenario scenario) async {
@@ -227,6 +271,7 @@ final class _ControllerHarness {
       mapSource: MapSource.asset,
       sessionClient: client,
       sessionStore: store,
+      sessionEffectRunner: lobbyControllerSessionEffectRunner(store),
       liveEvents: this.liveEvents,
       now: () => DateTime.utc(2026, 6, 2, 12),
       canContinue: () => true,

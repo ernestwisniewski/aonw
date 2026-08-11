@@ -1,33 +1,53 @@
-part of 'lobby_connection_controller.dart';
+import 'dart:async';
+
+import 'package:aonw/game/application/ports/multiplayer_failure.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
+import 'package:aonw/game/application/ports/network_session.dart';
+import 'package:aonw/game/presentation/controllers/lobby_connection_controller.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_live_match_coordinator.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_match_action_coordinator.dart';
+import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
+import 'package:aonw_core/protocol.dart';
 
 extension LobbyConnectionMatchStateInternal on LobbyConnectionController {
   LobbyMatchActionCoordinator matchActionCoordinatorInternal() {
     return LobbyMatchActionCoordinator(
-      ensureSession: ensureNetworkSessionInternal,
-      validateMap: validateMap,
-      quickplay: sessionClient.quickplay,
-      listMatches: sessionClient.listMatches,
-      createMatch: sessionClient.createMatch,
-      joinMatch: sessionClient.joinMatch,
-      createPrivateMatch: sessionClient.createPrivateMatch,
-      joinPrivateMatch: sessionClient.joinPrivateMatch,
-      startMatch: sessionClient.startMatch,
-      loadMatch: sessionClient.loadMatch,
-      leaveMatch: sessionClient.leaveMatch,
+      ensureSession: () => ensureNetworkSessionInternal(),
+      validateMap: () => validateMap(),
+      quickplay: ({required token, required request}) =>
+          sessionClient.quickplay(token: token, request: request),
+      listMatches: ({required token}) =>
+          sessionClient.listMatches(token: token),
+      createMatch: ({required token, required request}) =>
+          sessionClient.createMatch(token: token, request: request),
+      joinMatch: ({required token, required matchId, country}) => sessionClient
+          .joinMatch(token: token, matchId: matchId, country: country),
+      createPrivateMatch: ({required token, required request}) =>
+          sessionClient.createPrivateMatch(token: token, request: request),
+      joinPrivateMatch: ({required token, required request}) =>
+          sessionClient.joinPrivateMatch(token: token, request: request),
+      startMatch: ({required token, required matchId}) =>
+          sessionClient.startMatch(token: token, matchId: matchId),
+      loadMatch: ({required token, required matchId}) =>
+          sessionClient.loadMatch(token: token, matchId: matchId),
+      leaveMatch: ({required token, required matchId}) =>
+          sessionClient.leaveMatch(token: token, matchId: matchId),
       rememberMatch: ({required session, required match}) {
         return _acceptLobbyMatchUpdate(session: session, match: match);
       },
-      watchMatch: _liveMatchCoordinator.watch,
+      watchMatch: ({required session, required match}) =>
+          liveMatchCoordinatorInternal().watch(session: session, match: match),
       clearMatch: (session) {
-        final matchId = _activeMatch?.id;
+        final matchId = activeMatch?.id;
         _clearNetworkActiveMatch(session);
-        _setActiveMatch(null);
+        setActiveMatchInternal(null);
         if (matchId != null) invalidatePublishedMatch?.call(matchId);
       },
-      enterMatch: _enterMultiplayerMatch,
-      scheduleAutoStartRefresh: _scheduleAutoStartRefresh,
-      stopLobbyUpdates: stopLobbyUpdates,
-      canContinue: canContinueInternal,
+      enterMatch: ({required session, required match}) =>
+          _enterMultiplayerMatch(session: session, match: match),
+      scheduleAutoStartRefresh: (match) => _scheduleAutoStartRefresh(match),
+      stopLobbyUpdates: () => stopLobbyUpdates(),
+      canContinue: () => canContinueInternal(),
     );
   }
 
@@ -43,7 +63,7 @@ extension LobbyConnectionMatchStateInternal on LobbyConnectionController {
     required NetworkSession session,
     required WireMatch match,
   }) {
-    if (_unavailableMatchIds.contains(match.id)) return false;
+    if (unavailableMatchIdsInternal.contains(match.id)) return false;
     if (LobbyMatchStatusRules.isTerminal(match) ||
         !LobbyMatchStatusRules.containsUser(match, session.userId)) {
       _handleLobbyUnavailable(session: session, matchId: match.id);
@@ -57,7 +77,7 @@ extension LobbyConnectionMatchStateInternal on LobbyConnectionController {
     required NetworkSession session,
     required WireMatch match,
   }) {
-    _setActiveMatch(match);
+    setActiveMatchInternal(match);
     publishMatch(match);
     networkSessionCoordinatorInternal().applyActiveMatch(
       session: session,
@@ -73,14 +93,10 @@ extension LobbyConnectionMatchStateInternal on LobbyConnectionController {
     required NetworkSession session,
     required WireMatch match,
   }) {
-    _matchNavigationCoordinator.enter(session: session, match: match);
+    matchNavigationCoordinatorInternal().enter(session: session, match: match);
   }
 
-  LobbyNetworkSessionCoordinator networkSessionCoordinatorInternal() {
-    return _networkSessionCoordinator;
-  }
-
-  void _setNetworkSessionDeferred(NetworkSession? session) {
+  void setNetworkSessionDeferredInternal(NetworkSession? session) {
     unawaited(
       Future<void>(() {
         if (!canContinueInternal()) return;
@@ -89,7 +105,7 @@ extension LobbyConnectionMatchStateInternal on LobbyConnectionController {
     );
   }
 
-  Future<LobbyLiveMatchStreamHandle> _subscribeLobbyMatch({
+  Future<LobbyLiveMatchStreamHandle> subscribeLobbyMatchInternal({
     required NetworkSession session,
     required WireMatch match,
     required void Function(WireMatch match) onMatch,
@@ -129,26 +145,26 @@ extension LobbyConnectionMatchStateInternal on LobbyConnectionController {
     required NetworkConnectionStatus status,
     String? message,
   }) {
-    if (!canContinueInternal() || _activeMatch?.id != matchId) return;
+    if (!canContinueInternal() || activeMatch?.id != matchId) return;
     final reporter = reportTransportStatus;
     if (reporter == null) return;
     unawaited(
       Future<void>(() {
-        if (!canContinueInternal() || _activeMatch?.id != matchId) return;
+        if (!canContinueInternal() || activeMatch?.id != matchId) return;
         reporter(matchId: matchId, status: status, message: message);
       }),
     );
   }
 
-  void _applyLobbyMatchUpdateNow({
+  void applyLobbyMatchUpdateNowInternal({
     required NetworkSession session,
     required WireMatch match,
   }) {
-    if (!canContinueInternal() || _activeMatch?.id != match.id) return;
+    if (!canContinueInternal() || activeMatch?.id != match.id) return;
     if (!session.isConnected) return;
     if (!_acceptLobbyMatchUpdate(session: session, match: match)) return;
     if (!canContinueInternal()) return;
-    _setError(null);
+    setErrorInternal(null);
     if (LobbyMatchStatusRules.canEnter(match)) {
       stopLobbyUpdates();
       _enterMultiplayerMatch(session: session, match: match);
@@ -161,9 +177,9 @@ extension LobbyConnectionMatchStateInternal on LobbyConnectionController {
     internalAutoStartCoordinator.schedule(match);
   }
 
-  void _handleLobbyStreamError(Object error) {
+  void handleLobbyStreamErrorInternal(Object error) {
     if (error is MultiplayerFailure && error.terminatesLobbyMembership) {
-      final matchId = _activeMatch?.id;
+      final matchId = activeMatch?.id;
       if (matchId != null) {
         _handleLobbyUnavailable(session: currentSession(), matchId: matchId);
       }
@@ -177,11 +193,11 @@ extension LobbyConnectionMatchStateInternal on LobbyConnectionController {
     required String matchId,
   }) {
     if (!canContinueInternal()) return;
-    final activeMatch = _activeMatch;
+    final activeMatch = this.activeMatch;
     if (activeMatch != null && activeMatch.id != matchId) return;
-    if (!_unavailableMatchIds.add(matchId)) return;
+    if (!unavailableMatchIdsInternal.add(matchId)) return;
 
-    final previousMode = _mode;
+    final previousMode = mode;
     stopLobbyUpdates();
     if (session != null) _clearNetworkActiveMatch(session);
     invalidatePublishedMatch?.call(matchId);

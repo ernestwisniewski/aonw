@@ -78,6 +78,8 @@ final class LobbyControllerTestClient extends NetworkSessionClient {
   List<WireMatch> listedMatches;
   final WireMatch? createdPublicMatch;
   final WireMatch? joinedPublicMatch;
+  final WireMatch? startedMatch;
+  final WireMatch? loadedMatch;
   final WireMatch? createdPrivateMatch;
   final WireMatch? joinedPrivateMatch;
   final Object? signOutError;
@@ -95,6 +97,8 @@ final class LobbyControllerTestClient extends NetworkSessionClient {
     this.listedMatches = const [],
     this.createdPublicMatch,
     this.joinedPublicMatch,
+    this.startedMatch,
+    this.loadedMatch,
     this.createdPrivateMatch,
     this.joinedPrivateMatch,
     this.signOutError,
@@ -169,7 +173,8 @@ final class LobbyControllerTestClient extends NetworkSessionClient {
     required AuthToken token,
     required String matchId,
   }) async {
-    fail('unexpected match start');
+    matchActions.add('start');
+    return startedMatch ?? fail('unexpected match start');
   }
 
   @override
@@ -177,7 +182,8 @@ final class LobbyControllerTestClient extends NetworkSessionClient {
     required AuthToken token,
     required String matchId,
   }) async {
-    fail('unexpected match load');
+    matchActions.add('load');
+    return loadedMatch ?? fail('unexpected match load');
   }
 
   @override

@@ -6,6 +6,7 @@ import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
 import 'package:aonw/game/application/ports/network_connection.dart';
 import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/ports/network_session_store.dart';
+import 'package:aonw/game/application/services/network_session_state_machine.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_network_session_coordinator.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -283,18 +284,22 @@ LobbyNetworkSessionCoordinator _coordinator({
     loadStoredSession: loadStoredSession ?? () async => null,
     saveStoredSession: saveStoredSession ?? (_) async {},
     clearStoredSession: clearStoredSession ?? () async {},
-    saveMatchId: saveMatchId ?? (_) async {},
+    effectRunner: NetworkSessionEffectRunner(
+      persistMatchId: saveMatchId ?? (_) async {},
+      publishTransportStatus: (_) {},
+      clearTransportStatus: (_) {},
+      onError:
+          onEffectError ??
+          (error, stackTrace) {
+            fail('unexpected session effect error: $error\n$stackTrace');
+          },
+    ),
     refreshToken:
         refreshToken ??
         ({required refreshToken}) async {
           fail('unexpected refresh token request');
         },
     now: () => DateTime.utc(2026, 6, 2, 12),
-    onEffectError:
-        onEffectError ??
-        (error, stackTrace) {
-          fail('unexpected session effect error: $error\n$stackTrace');
-        },
   );
 }
 

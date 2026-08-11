@@ -35,7 +35,6 @@ final class LobbyNetworkSessionCoordinator {
   final LobbyStoredSessionLoader loadStoredSession;
   final LobbyStoredSessionSaver saveStoredSession;
   final LobbyStoredSessionClearer clearStoredSession;
-  final LobbyMatchIdSaver saveMatchId;
   final LobbySessionTokenRefresher refreshToken;
   final LobbySessionClockReader now;
   final LobbyValidSessionEnsurer? ensureValidSession;
@@ -48,18 +47,12 @@ final class LobbyNetworkSessionCoordinator {
     required this.loadStoredSession,
     required this.saveStoredSession,
     required this.clearStoredSession,
-    required this.saveMatchId,
     required this.refreshToken,
     required this.now,
-    required LobbySessionEffectErrorReporter onEffectError,
+    required NetworkSessionEffectRunner effectRunner,
     this.ensureValidSession,
     this.terminateSession,
-  }) : _effectRunner = NetworkSessionEffectRunner(
-         persistMatchId: saveMatchId,
-         publishTransportStatus: (_) {},
-         clearTransportStatus: (_) {},
-         onError: onEffectError,
-       );
+  }) : _effectRunner = effectRunner;
 
   Future<NetworkSession> ensureSession({required String displayName}) async {
     final current = currentSession();

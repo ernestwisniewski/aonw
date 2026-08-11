@@ -11,6 +11,7 @@ import 'package:aonw_core/protocol.dart';
 import 'package:aonw_server_client/aonw_server_client.dart' as sp;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/lobby_authenticated_session_activator_test_adapter.dart';
 import 'support/lobby_connection_controller_test_store.dart';
 
 part 'support/lobby_connection_controller_test_fixtures.dart';
@@ -19,7 +20,7 @@ void main() {
   group('LobbyConnectionController', () {
     test('quickplay publishes an authenticated stored session', () async {
       final client = _FakeNetworkSessionClient(
-        quickplayMatch: _match(state: 'open'),
+        quickplayMatch: _match(state: 'running'),
       );
       final store = _MemoryNetworkSessionStore(displayName: 'Stored Alice');
       NetworkSession? currentSession;
@@ -34,11 +35,25 @@ void main() {
         mapSource: MapSource.asset,
         sessionClient: client,
         sessionStore: store,
+        sessionEffectRunner: lobbyControllerSessionEffectRunner(store),
         liveEvents: _emptyLiveEvents(),
         now: () => DateTime.utc(2026, 6, 2, 12),
         canContinue: () => true,
         currentSession: () => currentSession,
         setSession: (session) => currentSession = session,
+        activateAuthenticatedSession: LobbyControllerTestSessionActivator(({
+          required session,
+          required displayName,
+        }) async {
+          currentSession = session;
+          await store.save(
+            StoredNetworkSession(
+              userId: session.userId,
+              refreshToken: session.refreshToken!,
+              displayName: displayName,
+            ),
+          );
+        }),
         authenticate: ({required initialDisplayName}) async {
           authCount += 1;
           expect(initialDisplayName, 'Lobby Alice');
@@ -84,7 +99,7 @@ void main() {
       expect(primaryDisplayNames, ['Authenticated Alice']);
       expect(published.map((match) => match.id), ['match_1']);
       expect(presentedErrors, isEmpty);
-      expect(routes, isEmpty);
+      expect(routes, ['/game?saveId=match_1&name=verdantia&source=asset']);
     });
 
     test(
@@ -105,6 +120,7 @@ void main() {
           mapSource: MapSource.asset,
           sessionClient: client,
           sessionStore: store,
+          sessionEffectRunner: lobbyControllerSessionEffectRunner(store),
           liveEvents: _emptyLiveEvents(),
           now: () => DateTime.utc(2026, 6, 2, 12),
           canContinue: () => true,
@@ -177,8 +193,15 @@ void main() {
           listedMatches: [listed],
           joinedPublicMatch: joined,
           createdPublicMatch: created,
+          loadedMatch: created,
+          startedMatch: _match(
+            id: created.id,
+            state: 'running',
+            quickplay: false,
+          ),
         );
         final store = _MemoryNetworkSessionStore(displayName: 'Alice');
+        final routes = <String>[];
         NetworkSession? currentSession = NetworkSession(
           userId: 'user_1',
           token: AuthToken('token'),
@@ -191,6 +214,7 @@ void main() {
           mapSource: MapSource.asset,
           sessionClient: client,
           sessionStore: store,
+          sessionEffectRunner: lobbyControllerSessionEffectRunner(store),
           liveEvents: _emptyLiveEvents(),
           now: () => DateTime.utc(2026, 6, 2, 12),
           canContinue: () => true,
@@ -206,7 +230,7 @@ void main() {
           errorTextFor: (error) => 'mapped $error',
           presentError: (_) {},
           publishMatch: (_) {},
-          navigateTo: (_) {},
+          navigateTo: routes.add,
         );
         addTearDown(controller.dispose);
 
@@ -232,6 +256,15 @@ void main() {
         expect(controller.activeMatch?.id, 'public_created');
         expect(client.createdPublicRequest?.name, 'Open table');
         expect(client.createdPublicRequest?.minPlayers, 2);
+
+        await controller.refreshActiveMatch();
+        await controller.startPublicMatch();
+        await Future<void>.delayed(Duration.zero);
+
+        expect(client.matchActions, ['join', 'leave', 'load', 'start']);
+        expect(routes, [
+          '/game?saveId=public_created&name=verdantia&source=asset',
+        ]);
       },
     );
 
@@ -252,6 +285,7 @@ void main() {
         mapSource: MapSource.asset,
         sessionClient: client,
         sessionStore: store,
+        sessionEffectRunner: lobbyControllerSessionEffectRunner(store),
         liveEvents: _emptyLiveEvents(),
         now: () => DateTime.utc(2026, 6, 2, 12),
         canContinue: () => true,
@@ -310,6 +344,7 @@ void main() {
         mapSource: MapSource.asset,
         sessionClient: client,
         sessionStore: store,
+        sessionEffectRunner: lobbyControllerSessionEffectRunner(store),
         liveEvents: _emptyLiveEvents(),
         now: () => DateTime.utc(2026, 6, 2, 12),
         canContinue: () => true,
@@ -357,6 +392,7 @@ void main() {
         mapSource: MapSource.asset,
         sessionClient: client,
         sessionStore: store,
+        sessionEffectRunner: lobbyControllerSessionEffectRunner(store),
         liveEvents: _emptyLiveEvents(),
         now: () => DateTime.utc(2026, 6, 2, 12),
         canContinue: () => true,
@@ -404,6 +440,7 @@ void main() {
         mapSource: MapSource.asset,
         sessionClient: client,
         sessionStore: store,
+        sessionEffectRunner: lobbyControllerSessionEffectRunner(store),
         liveEvents: _emptyLiveEvents(),
         now: () => DateTime.utc(2026, 6, 2, 12),
         canContinue: () => true,

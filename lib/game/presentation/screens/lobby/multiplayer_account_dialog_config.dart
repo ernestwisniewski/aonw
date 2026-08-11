@@ -9,8 +9,9 @@ Future<NetworkAuthResult?> showMultiplayerAccountDialog({
   MultiplayerExternalAuthAction? externalAuth,
   MultiplayerSteamAuthAction? steamAuth,
   String initialDisplayName = '',
-}) {
-  return showGameModal<NetworkAuthResult>(
+}) async {
+  NetworkAuthResult? authenticatedResult;
+  await showGameModal<void>(
     context: context,
     size: GameModalSize.regular,
     requestFocus: true,
@@ -22,8 +23,10 @@ Future<NetworkAuthResult?> showMultiplayerAccountDialog({
       externalAuth: externalAuth,
       steamAuth: steamAuth,
       initialDisplayName: initialDisplayName,
+      onAuthenticated: (result) => authenticatedResult = result,
     ),
   );
+  return authenticatedResult;
 }
 
 typedef MultiplayerAccountAction =
@@ -43,6 +46,7 @@ typedef MultiplayerCompleteSocialAuthAction =
 typedef MultiplayerExternalAuthAction =
     Future<NetworkAuthResult> Function({required String provider});
 typedef MultiplayerSteamAuthAction = Future<NetworkAuthResult> Function();
+typedef MultiplayerAuthenticatedResult = void Function(NetworkAuthResult);
 
 const _defaultGoogleWebClientId =
     '421226196002-m0f4ncq3o59uc0vvpj0lniuq99os9bbg.apps.googleusercontent.com';

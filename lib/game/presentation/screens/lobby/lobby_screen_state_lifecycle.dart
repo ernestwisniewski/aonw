@@ -37,12 +37,15 @@ extension _LobbyScreenStateLifecycle on _LobbyScreenState {
       mapSource: widget.mapSource,
       sessionClient: ref.read(networkSessionClientProvider),
       sessionStore: ref.read(networkSessionStoreProvider),
+      sessionEffectRunner: ref.read(networkSessionEffectRunnerProvider),
       liveEvents: ref.read(liveMultiplayerEventsProvider),
       now: _nowUtc,
       canContinue: _isMounted,
       currentSession: _currentNetworkSession,
       ensureValidSession: _ensureValidNetworkSession,
-      activateAuthenticatedSession: _activateAuthenticatedNetworkSession,
+      activateAuthenticatedSession: ref.read(
+        lobbyAuthenticatedSessionActivatorProvider,
+      ),
       terminateSession: _terminateNetworkSession,
       signOutSession: _signOutNetworkSession,
       setSession: _setNetworkSession,
@@ -70,26 +73,12 @@ extension _LobbyScreenStateLifecycle on _LobbyScreenState {
 
   bool _isMounted() => mounted;
 
-  NetworkSession? _currentNetworkSession() {
-    return ref.read(networkSessionProvider);
-  }
+  NetworkSession? _currentNetworkSession() => ref.read(networkSessionProvider);
 
   Future<NetworkSession> _ensureValidNetworkSession() {
     return ref
         .read(networkSessionRefreshCoordinatorProvider)
         .ensureValidSession();
-  }
-
-  Future<void> _activateAuthenticatedNetworkSession({
-    required NetworkSession session,
-    required String displayName,
-  }) {
-    return ref
-        .read(networkSessionRefreshCoordinatorProvider)
-        .activateAuthenticatedSession(
-          session: session,
-          displayName: displayName,
-        );
   }
 
   Future<void> _terminateNetworkSession() {

@@ -226,8 +226,8 @@ const reviewedCityEconomyFamilyPatternSignatures =
       ),
       'packages/aonw_core/lib/ai/simulation/'
           'economy_simulation_command_stats.dart': (
-        occurrences: 20,
-        digest: 8550293528218054525,
+        occurrences: 8,
+        digest: -4467375270413013659,
       ),
       'packages/aonw_core/lib/ai/strategies/'
           'basic_strategy_artifact_logistics_planner.dart': (
@@ -265,13 +265,18 @@ const reviewedCityEconomyFamilyPatternSignatures =
       ),
       'packages/aonw_core/lib/ai/strategies/'
           'basic_strategy_worker_planner.dart': (
-        occurrences: 4,
-        digest: 6695705971934485808,
+        occurrences: 1,
+        digest: -2487386371724910298,
       ),
       'packages/aonw_core/lib/ai/strategies/'
           'basic_strategy_worker_improvements.dart': (
         occurrences: 1,
         digest: -8263532876333406356,
+      ),
+      'packages/aonw_core/lib/ai/strategies/'
+          'basic_strategy_worker_targets.dart': (
+        occurrences: 2,
+        digest: 1265934141348888483,
       ),
     };
 

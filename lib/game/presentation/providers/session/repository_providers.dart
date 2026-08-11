@@ -33,6 +33,7 @@ import 'package:aonw/game/infrastructure/persistence/platform_persistence_adapte
 import 'package:aonw/game/infrastructure/system/system_clock.dart';
 import 'package:aonw/game/infrastructure/system/timestamp_id_generator.dart';
 import 'package:aonw/game/infrastructure/transport/local_command_transport.dart';
+import 'package:aonw/game/presentation/controllers/lobby_connection_controller.dart';
 import 'package:aonw/game/presentation/providers/multiplayer/multiplayer_connection_status_provider.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:flutter/foundation.dart';
@@ -233,6 +234,31 @@ final networkSessionRefreshCoordinatorProvider =
       );
     });
 
+final lobbyAuthenticatedSessionActivatorProvider =
+    fr.Provider<LobbyAuthenticatedSessionActivator>((ref) {
+      return _LobbyRefreshCoordinatorSessionActivator(
+        ref.read(networkSessionRefreshCoordinatorProvider),
+      );
+    });
+
+final class _LobbyRefreshCoordinatorSessionActivator
+    implements LobbyAuthenticatedSessionActivator {
+  const _LobbyRefreshCoordinatorSessionActivator(this._coordinator);
+
+  final NetworkSessionRefreshCoordinator _coordinator;
+
+  @override
+  Future<void> activate({
+    required NetworkSession session,
+    required String displayName,
+  }) {
+    return _coordinator.activateAuthenticatedSession(
+      session: session,
+      displayName: displayName,
+    );
+  }
+}
+
 final networkSessionReducerProvider = fr.Provider<NetworkSessionReducer>(
   (ref) => const NetworkSessionReducer(),
 );
@@ -245,7 +271,7 @@ final networkSessionEffectRunnerProvider =
       );
       final logger = ref.watch(gameLoggerProvider);
       return NetworkSessionEffectRunner(
-        persistMatchId: store.saveMatchId,
+        persistMatchId: (matchId) => store.saveMatchId(matchId),
         publishTransportStatus: (effect) {
           statusNotifier.setStatus(
             MultiplayerConnectionStatusSnapshot(

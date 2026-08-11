@@ -6,11 +6,12 @@ import 'package:aonw/game/application/ports/multiplayer_session_gateway.dart';
 import 'package:aonw/game/application/ports/network_connection.dart';
 import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/ports/network_session_store.dart';
+import 'package:aonw/game/application/services/network_session_state_machine.dart';
+import 'package:aonw/game/presentation/controllers/lobby_connection_composition.dart';
+import 'package:aonw/game/presentation/controllers/lobby_connection_match_state.dart';
 import 'package:aonw/game/presentation/controllers/lobby_connection_public_actions.dart';
-import 'package:aonw/game/presentation/controllers/lobby_connection_session_actions.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_auto_start_coordinator.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_live_match_coordinator.dart';
-import 'package:aonw/game/presentation/screens/lobby/lobby_match_action_coordinator.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_navigation_coordinator.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_network_session_coordinator.dart';
@@ -22,9 +23,6 @@ import 'package:flutter/foundation.dart';
 
 export 'lobby_connection_public_actions.dart';
 export 'lobby_connection_session_actions.dart';
-
-part 'lobby_connection_composition.dart';
-part 'lobby_connection_match_state.dart';
 
 enum LobbyMultiplayerMode {
   home,
@@ -41,11 +39,14 @@ typedef LobbyConnectionSessionReader = NetworkSession? Function();
 typedef LobbyConnectionSessionSetter = void Function(NetworkSession? session);
 typedef LobbyConnectionSessionTerminator = Future<void> Function();
 typedef LobbyConnectionSessionSignOut = Future<void> Function();
-typedef LobbyAuthenticatedSessionActivator =
-    Future<void> Function({
-      required NetworkSession session,
-      required String displayName,
-    });
+
+abstract interface class LobbyAuthenticatedSessionActivator {
+  Future<void> activate({
+    required NetworkSession session,
+    required String displayName,
+  });
+}
+
 typedef LobbyConnectionAuthenticator =
     Future<NetworkAuthResult?> Function({required String initialDisplayName});
 typedef LobbyConnectionDisplayNameReader = String Function();
@@ -97,6 +98,7 @@ final class LobbyConnectionController extends ChangeNotifier {
   final LobbyConnectionTransportStatusReporter? reportTransportStatus;
   final LobbyConnectionRouter navigateTo;
   final LobbyValidSessionEnsurer? ensureValidSession;
+  final NetworkSessionEffectRunner sessionEffectRunner;
 
   late final LobbyAutoStartCoordinator internalAutoStartCoordinator;
   late final LobbyLiveMatchCoordinator _liveMatchCoordinator;
@@ -142,11 +144,12 @@ final class LobbyConnectionController extends ChangeNotifier {
     this.reportTransportStatus,
     required this.navigateTo,
     this.ensureValidSession,
+    required this.sessionEffectRunner,
   }) {
-    _networkSessionCoordinator = _buildNetworkSessionCoordinator();
-    internalAutoStartCoordinator = _buildAutoStartCoordinator();
-    _liveMatchCoordinator = _buildLiveMatchCoordinator();
-    _matchNavigationCoordinator = _buildMatchNavigationCoordinator();
+    _networkSessionCoordinator = buildNetworkSessionCoordinatorInternal();
+    internalAutoStartCoordinator = buildAutoStartCoordinatorInternal();
+    _liveMatchCoordinator = buildLiveMatchCoordinatorInternal();
+    _matchNavigationCoordinator = buildMatchNavigationCoordinatorInternal();
   }
 
   LobbyMultiplayerMode get mode => _mode;
@@ -176,8 +179,9 @@ final class LobbyConnectionController extends ChangeNotifier {
   Future<void> startQuickplayQueue() async {
     if (_busy) return;
     stopLobbyUpdates();
-    setModeInternal(LobbyMultiplayerMode.quickplay);
     await _joinQuickplayQueue();
+    if (!canContinueInternal() || _activeMatch == null) return;
+    setModeInternal(LobbyMultiplayerMode.quickplay);
   }
 
   Future<void> retryQuickplayQueue() async {
@@ -254,7 +258,7 @@ final class LobbyConnectionController extends ChangeNotifier {
         matchId: matchId,
       );
       if (!canContinueInternal()) return;
-      _setError(null);
+      setErrorInternal(null);
     } catch (error) {
       if (!canContinueInternal()) return;
       showNetworkErrorInternal(error);
@@ -302,11 +306,11 @@ final class LobbyConnectionController extends ChangeNotifier {
 
   void showNetworkErrorInternal(Object error) {
     final message = errorTextFor(error);
-    _setError(message);
+    setErrorInternal(message);
     presentError(message);
   }
 
-  bool _shouldReportLobbyStreamError(Object error) {
+  bool shouldReportLobbyStreamErrorInternal(Object error) {
     if (error is MultiplayerFailure &&
         error.kind == MultiplayerFailureKind.multiplayer) {
       return true;
@@ -348,20 +352,37 @@ final class LobbyConnectionController extends ChangeNotifier {
     setStateInternal(busy: busy);
   }
 
-  void _setError(String? error) {
+  void setErrorInternal(String? error) {
     setStateInternal(error: error);
   }
 
-  void _setActiveMatch(WireMatch? match) {
+  void setActiveMatchInternal(WireMatch? match) {
     setStateInternal(activeMatch: match);
   }
+
+  LobbyLiveMatchCoordinator liveMatchCoordinatorInternal() =>
+      _liveMatchCoordinator;
+
+  LobbyMatchNavigationCoordinator matchNavigationCoordinatorInternal() =>
+      _matchNavigationCoordinator;
+
+  LobbyNetworkSessionCoordinator networkSessionCoordinatorInternal() =>
+      _networkSessionCoordinator;
+
+  Set<String> get unavailableMatchIdsInternal => _unavailableMatchIds;
 
   void notifyStateChangedInternal() {
     if (!canContinueInternal()) return;
     notifyListeners();
   }
 
-  bool canContinueInternal() => !_disposed && canContinue();
+  bool canContinueInternal() {
+    if (_disposed) return false;
+    // The controller is disposed synchronously with its owning web State.
+    // Avoid invoking a State-capturing continuation after an async suspension:
+    // Dart2Wasm currently lowers that invocation to an `unreachable` trap.
+    return kIsWeb || canContinue();
+  }
 
   @override
   void dispose() {

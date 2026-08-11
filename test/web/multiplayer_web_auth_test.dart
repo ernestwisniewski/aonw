@@ -32,6 +32,35 @@ void main() {
 
     expect(find.byKey(const Key('multiplayer.account.steam')), findsOneWidget);
   }, skip: !kIsWeb);
+
+  testWidgets('uses brokered Google and Apple sign-in on web', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showMultiplayerAccountDialog(
+              context: context,
+              login: _login,
+              createAccount: _createAccount,
+              externalAuth: _externalLogin,
+              steamAuth: _steamLogin,
+              initialDisplayName: 'Web player',
+            ),
+            child: const Text('Open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('multiplayer.account.google')), findsOneWidget);
+    expect(find.byKey(const Key('multiplayer.account.apple')), findsOneWidget);
+    expect(find.byKey(const Key('multiplayer.account.steam')), findsOneWidget);
+  }, skip: !kIsWeb);
 }
 
 Future<NetworkAuthResult> _login({
@@ -46,6 +75,9 @@ Future<NetworkAuthResult> _createAccount({
 }) async => _result;
 
 Future<NetworkAuthResult> _steamLogin() async => _result;
+
+Future<NetworkAuthResult> _externalLogin({required String provider}) async =>
+    _result;
 
 final _result = NetworkAuthResult(
   userId: 'web-user',

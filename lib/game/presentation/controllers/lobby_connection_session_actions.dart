@@ -117,7 +117,10 @@ extension LobbyConnectionSessionActions on LobbyConnectionController {
       final session = auth.toSession(changedAt: now());
       final activate = activateAuthenticatedSession;
       if (activate != null) {
-        await activate(session: session, displayName: auth.displayName);
+        await activate.activate(
+          session: session,
+          displayName: auth.displayName,
+        );
       } else {
         setSession(session);
         await _persistFallbackAuthenticatedSession(auth);
