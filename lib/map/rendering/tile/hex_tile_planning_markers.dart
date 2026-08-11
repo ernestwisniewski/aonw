@@ -103,7 +103,7 @@ extension _HexTilePlanningMarkers on HexTilePainter {
     required bool showAttackTargetMarker,
   }) {
     if (showAttackTargetMarker) {
-      _drawAttackTargetMarker(canvas, geometry.topCenter.translate(0, 6));
+      canvas.drawPath(geometry.topPath, _paintAttackTargetMarker);
       return;
     }
     final hexRadius = _hexRadiusFor(geometry);
@@ -168,16 +168,6 @@ extension _HexTilePlanningMarkers on HexTilePainter {
       return (citySite: null, cityGrowth: topCenter);
     }
     return (citySite: null, cityGrowth: null);
-  }
-
-  void _drawAttackTargetMarker(Canvas canvas, Offset center) {
-    _drawIntentBadge(
-      canvas,
-      center,
-      color: _paintAttackTargetMarker.color,
-      glow: HudPalette.warning,
-      glyph: MapIntentGlyph.attack,
-    );
   }
 
   void _drawCitySiteMarker(

@@ -9,18 +9,18 @@
             "found": 204
           },
           "lines": {
-            "hit": 11839,
-            "found": 12670
+            "hit": 11843,
+            "found": 12653
           }
         },
         "domain": {
           "files": {
-            "hit": 403,
-            "found": 414
+            "hit": 412,
+            "found": 422
           },
           "lines": {
-            "hit": 13933,
-            "found": 16138
+            "hit": 14262,
+            "found": 16511
           }
         },
         "map": {
@@ -45,12 +45,12 @@
         },
         "util": {
           "files": {
-            "hit": 2,
-            "found": 2
+            "hit": 3,
+            "found": 3
           },
           "lines": {
-            "hit": 102,
-            "found": 125
+            "hit": 128,
+            "found": 151
           }
         }
       },
@@ -58,7 +58,6 @@
         "packages/aonw_core/lib/ai/ai_strategy_id.dart",
         "packages/aonw_core/lib/ai/strategic/strategic_mode.dart",
         "packages/aonw_core/lib/game/domain/combat/city_conquest_action.dart",
-        "packages/aonw_core/lib/game/domain/diplomacy/diplomatic_score_reason.dart",
         "packages/aonw_core/lib/game/domain/movement/unit_movement_result.dart",
         "packages/aonw_core/lib/game/domain/stability/stability_band.dart"
       ]
@@ -265,8 +264,8 @@
             "found": 68
           },
           "lines": {
-            "hit": 3146,
-            "found": 3348
+            "hit": 3154,
+            "found": 3356
           }
         },
         "observability": {

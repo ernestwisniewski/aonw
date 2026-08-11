@@ -95,11 +95,7 @@ class GameRenderingCoordinator {
       strategicView: strategicView,
     );
     _syncCityManagement(state, dimmed: _shouldDimCityManagementOverlay(state));
-    _syncThreatOverlay(
-      state,
-      enabled: _shouldShowThreatOverlay(state),
-      dimmed: _shouldDimThreatOverlay(state),
-    );
+    threatOverlay.clear();
     _syncEraTint(state);
     _syncFogOfWar(state);
     _syncUnitMarkers(state, parent);

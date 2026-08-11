@@ -61,10 +61,10 @@ void _registerRendererPlanningWorkerHintsScenarios() {
       await game.onLoad();
 
       expect(game.tileMarkersForTesting(1, 0).canAttackTarget, isTrue);
-      expect(game.tileMarkersForTesting(3, 0).canAttackTarget, isFalse);
-      expect(game.threatOverlayHexesForTesting, isNotEmpty);
-      expect(game.isUnitMarkerAttackTargetForTesting(defender.id), isTrue);
-      expect(game.unitMarkerHasAttackTargetTintForTesting(defender.id), isTrue);
+      expect(game.tileMarkersForTesting(3, 0).hasAny, isFalse);
+      expect(game.threatOverlayHexesForTesting, isEmpty);
+      expect(game.isUnitMarkerAttackTargetForTesting(defender.id), isFalse);
+      expect(game.unitMarkerHasAttackTargetTintForTesting('enemy_1'), isFalse);
       expect(game.isUnitMarkerAttackTargetForTesting(distantEnemy.id), isFalse);
 
       game.applyState(

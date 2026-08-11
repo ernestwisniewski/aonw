@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/game_camera_controller.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_attack_trajectory_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_hex_alert_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/floating_text_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/particle_effects_layer.dart';
@@ -19,6 +20,7 @@ class GameEffectDispatcher {
   final ParticleEffectsLayer _particleEffectsLayer;
   final FloatingTextLayer _floatingTextLayer;
   final CombatHexAlertLayer _combatHexAlertLayer;
+  final CombatAttackTrajectoryLayer _combatAttackTrajectoryLayer;
   final ActionTargetHexFocusLayer _actionTargetHexFocusLayer;
   final Component _particleParent;
   final Component _alertParent;
@@ -37,6 +39,7 @@ class GameEffectDispatcher {
     required ParticleEffectsLayer particleEffectsLayer,
     required FloatingTextLayer floatingTextLayer,
     required CombatHexAlertLayer combatHexAlertLayer,
+    CombatAttackTrajectoryLayer? combatAttackTrajectoryLayer,
     ActionTargetHexFocusLayer? actionTargetHexFocusLayer,
     required Component particleParent,
     required Component alertParent,
@@ -55,6 +58,8 @@ class GameEffectDispatcher {
        _particleEffectsLayer = particleEffectsLayer,
        _floatingTextLayer = floatingTextLayer,
        _combatHexAlertLayer = combatHexAlertLayer,
+       _combatAttackTrajectoryLayer =
+           combatAttackTrajectoryLayer ?? CombatAttackTrajectoryLayer(),
        _actionTargetHexFocusLayer =
            actionTargetHexFocusLayer ?? ActionTargetHexFocusLayer(),
        _particleParent = particleParent,
@@ -146,6 +151,7 @@ class GameEffectDispatcher {
   }
 
   Future<void> _handleCombatAnimation(PlayCombatAnimationEffect effect) async {
+    _showCombatAttackTrajectory(effect);
     _focusCombatCamera(
       attackerUnitId: effect.attackerUnitId,
       defenderUnitId: effect.defenderUnitId,
@@ -190,11 +196,7 @@ class GameEffectDispatcher {
       case ShowCityProductionBubbleEffect():
         _spawnFloatingText(_cityProductionBubbleText(effect));
       case ShowCombatHexAlertEffect():
-        _combatHexAlertLayer.show(
-          parent: _alertParent,
-          effect: effect,
-          reduceMotion: _reduceMotion(),
-        );
+        _showCombatHexAlert(effect);
       case ShowActionTargetFocusEffect():
         _actionTargetHexFocusLayer.show(
           parent: _alertParent,
@@ -355,5 +357,40 @@ class GameEffectDispatcher {
   String _turnsLabel(int turns, AppLocalizations l10n) {
     if (turns == 1) return l10n.cityProductionTurnOne;
     return l10n.cityProductionTurns(turns);
+  }
+}
+
+extension on GameEffectDispatcher {
+  void _showCombatHexAlert(ShowCombatHexAlertEffect effect) {
+    _combatHexAlertLayer.show(
+      parent: _alertParent,
+      effect: effect,
+      reduceMotion: _reduceMotion(),
+    );
+    if (effect.kind != CombatHexAlertKind.attacked) return;
+    final targetId = effect.unitId ?? effect.cityId;
+    if (targetId != null) {
+      _combatAttackTrajectoryLayer.bindTargetAlert(targetId);
+    }
+  }
+
+  void _showCombatAttackTrajectory(PlayCombatAnimationEffect effect) {
+    final fromCol = effect.attackerFromCol;
+    final fromRow = effect.attackerFromRow;
+    final toCol = effect.attackerToCol;
+    final toRow = effect.attackerToRow;
+    if (fromCol == null || fromRow == null || toCol == null || toRow == null) {
+      return;
+    }
+    _combatAttackTrajectoryLayer.show(
+      parent: _alertParent,
+      attackerUnitId: effect.attackerUnitId,
+      targetId: effect.defenderUnitId,
+      fromCol: fromCol,
+      fromRow: fromRow,
+      toCol: toCol,
+      toRow: toRow,
+      reduceMotion: _reduceMotion(),
+    );
   }
 }

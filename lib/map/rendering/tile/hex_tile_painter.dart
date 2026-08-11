@@ -112,9 +112,11 @@ class HexTilePainter {
       alpha: MapAlpha.strong,
       strokeWidth: MapStroke.hairline,
     );
-    _paintAttackTargetMarker = HudPaint.fill(
+    _paintAttackTargetMarker = HudPaint.stroke(
       HudPalette.danger,
       alpha: _attackMarkerAlpha,
+      strokeWidth: 1.5,
+      strokeJoin: StrokeJoin.round,
     );
     _paintMovementBlockerOverlay = HudPaint.fill(
       HudPalette.danger,

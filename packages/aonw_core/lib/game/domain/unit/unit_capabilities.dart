@@ -18,7 +18,7 @@ class UnitCapabilities {
            movementDomain ??
            (naval ? UnitMovementDomain.naval : UnitMovementDomain.land);
 
-  bool get naval => movementDomain == UnitMovementDomain.naval;
+  bool get naval => movementDomain.isNaval;
 
   @override
   bool operator ==(Object other) {

@@ -5,6 +5,7 @@ import 'package:aonw/game/presentation/engine/rendering_layers/city/city_managem
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_territory_overlay_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/cloud_drift_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_attack_trajectory_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_hex_alert_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/era_tint_overlay_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/floating_text_layer.dart';
@@ -89,6 +90,10 @@ final class GameRendererComponents {
     combatAlerts = CombatHexAlertLayer(
       unitPositionFor: unitMarkers.worldPositionForUnit,
     );
+    combatTrajectories = CombatAttackTrajectoryLayer(
+      unitPositionFor: unitMarkers.worldPositionForUnit,
+      cityPositionFor: cities.worldPositionForCity,
+    );
     actionTargetHexFocus = ActionTargetHexFocusLayer(
       unitPositionFor: unitMarkers.worldPositionForUnit,
     );
@@ -123,6 +128,7 @@ final class GameRendererComponents {
   late final CloudDriftLayer cloudDrift;
   late final FloatingTextLayer floatingText;
   late final CombatHexAlertLayer combatAlerts;
+  late final CombatAttackTrajectoryLayer combatTrajectories;
   late final ActionTargetHexFocusLayer actionTargetHexFocus;
   late final ThreatOverlayLayer threats;
   late final HoverIntentMarkerLayer hoverIntent;

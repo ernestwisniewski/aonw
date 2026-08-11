@@ -1,23 +1,6 @@
 part of 'game_rendering_coordinator.dart';
 
 extension _GameRenderingCoordinatorUnitSync on GameRenderingCoordinator {
-  void _syncThreatOverlay(
-    GameClientState state, {
-    required bool enabled,
-    required bool dimmed,
-  }) {
-    if (!enabled) {
-      threatOverlay.clear();
-      return;
-    }
-    threatOverlay.sync(
-      parent: grid,
-      state: state,
-      mapData: grid.mapData,
-      dimmed: dimmed,
-    );
-  }
-
   void _syncUnitMarkers(GameClientState state, Component world) {
     final cityTiles = {
       for (final city in state.citiesKnownToActivePlayer)
@@ -28,7 +11,7 @@ extension _GameRenderingCoordinatorUnitSync on GameRenderingCoordinator {
       units: state.unitsVisibleToActivePlayer,
       selectedUnitId: state.selectedUnitId,
       pendingAction: state.pendingAction,
-      attackTargetUnitIds: _attackTargetUnitIds(state),
+      attackTargetUnitIds: const {},
       cityTiles: cityTiles,
       artifactExcavationTurnsByUnitId: _artifactExcavationTurnsByUnitId(state),
     );
@@ -43,24 +26,15 @@ extension _GameRenderingCoordinatorUnitSync on GameRenderingCoordinator {
     };
   }
 
-  Set<String> _attackTargetUnitIds(GameClientState state) {
-    final attacker = _planningMarkers.selectedAttackTargetingUnit(state);
-    if (attacker == null) return const {};
-
-    return {
-      for (final unit in state.unitsVisibleToActivePlayer)
-        if (unit.ownerPlayerId != attacker.ownerPlayerId)
-          if (grid.mapData.tileAt(unit.col, unit.row) case final tile?)
-            if (_planningMarkers.canAttackTargetTile(state, attacker, tile))
-              unit.id,
-    };
-  }
-
   void _syncMovePreview(
     GameClientState state,
     Component parent, {
     required bool dimmed,
   }) {
+    if (state.interactionMode == GameInteractionMode.attackTargeting) {
+      movePreview.clear();
+      return;
+    }
     final entries = <UnitMovePreviewLayerEntry>[];
     for (final unit in state.units) {
       final entry = UnitMovePreviewEntryBuilder.queuedPath(
@@ -102,13 +76,5 @@ extension _GameRenderingCoordinatorUnitSync on GameRenderingCoordinator {
   bool _canShowPathForUnit(GameClientState state, String unitId) {
     final unit = state.unitById(unitId);
     return unit != null && state.canControlUnit(unit);
-  }
-
-  bool _shouldShowThreatOverlay(GameClientState state) {
-    return state.interactionMode == GameInteractionMode.attackTargeting;
-  }
-
-  bool _shouldDimThreatOverlay(GameClientState state) {
-    return state.interactionMode != GameInteractionMode.attackTargeting;
   }
 }

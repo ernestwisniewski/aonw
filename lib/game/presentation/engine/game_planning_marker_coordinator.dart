@@ -5,6 +5,7 @@ import 'package:aonw/map/rendering/hex_tile_markers.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -21,9 +22,20 @@ class GamePlanningMarkerCoordinator {
   final RecommendedCitySitePlanner _recommendedCitySitePlanner;
 
   void sync(GameClientState state) {
+    if (state.pendingAction is PendingAttackTargeting) {
+      final attacker = selectedAttackTargetingUnit(state);
+      final targetCoordinates = attacker == null
+          ? const <(int, int)>{}
+          : _attackTargetCoordinates(state, attacker);
+      grid.setTileMarkers({
+        for (final coordinate in targetCoordinates)
+          coordinate: const HexTileMarkers(canAttackTarget: true),
+      });
+      return;
+    }
+
     final markersByCoordinate = <(int, int), HexTileMarkers>{};
     final visibility = state.activePlayerVisibility;
-    final attackTargetingUnit = selectedAttackTargetingUnit(state);
     final selectedWorker = _selectedControllableWorker(state);
     final workerPlanning = selectedWorker == null
         ? null
@@ -46,21 +58,6 @@ class GamePlanningMarkerCoordinator {
       if (visibility.isEnabled && !visibility.canInspectTile(tile)) continue;
 
       final canGrowCity = _canUseAsCityGrowthTile(tile, controlledCityHexes);
-      if (attackTargetingUnit != null) {
-        final canAttackTarget = canAttackTargetTile(
-          state,
-          attackTargetingUnit,
-          tile,
-        );
-        if (canAttackTarget || canGrowCity) {
-          markersByCoordinate[(tile.col, tile.row)] = HexTileMarkers(
-            canAttackTarget: canAttackTarget,
-            canGrowCity: canGrowCity,
-          );
-        }
-        continue;
-      }
-
       final markers = _regularMarkersFor(
         tile: tile,
         state: state,
@@ -140,26 +137,12 @@ class GamePlanningMarkerCoordinator {
     return null;
   }
 
-  bool canAttackTargetTile(
+  Set<(int, int)> _attackTargetCoordinates(
     GameClientState state,
     GameUnit attacker,
-    WorldTile tile,
   ) {
-    final defender = state.unitAt(tile.col, tile.row);
-    if (defender == null ||
-        defender.id == attacker.id ||
-        defender.ownerPlayerId == attacker.ownerPlayerId) {
-      return false;
-    }
-
-    final visibility = state.activePlayerVisibility;
-    if (visibility.isEnabled &&
-        !visibility.canSeeDynamicAt(tile.col, tile.row)) {
-      return false;
-    }
-
     final attackerTile = grid.mapData.tileAt(attacker.col, attacker.row);
-    if (attackerTile == null) return false;
+    if (attackerTile == null) return const {};
 
     final attackerStats = UnitCombatStats.derive(attacker).applyAll(
       CombatModifierCollector.forAttacker(
@@ -169,14 +152,90 @@ class GamePlanningMarkerCoordinator {
         technologyRuleset: TechnologyRulesets.standard,
       ),
     );
-    if (attackerStats.attack <= 0) return false;
+    if (attackerStats.attack <= 0) return const {};
 
-    final distance = HexDistance.between(
-      HexCoordinate(col: attacker.col, row: attacker.row),
-      HexCoordinate(col: tile.col, row: tile.row),
-    );
-    return distance <= attackerStats.range;
+    final targets = <(int, int)>{};
+    for (final defender in state.unitsVisibleToActivePlayer) {
+      if (!_canMarkUnitTarget(state, attacker, defender, attackerStats)) {
+        continue;
+      }
+      targets.add((defender.col, defender.row));
+    }
+
+    final occupiedHexes = {
+      for (final unit in state.units)
+        if (unit.id != attacker.id) (unit.col, unit.row),
+    };
+    for (final city in state.citiesKnownToActivePlayer) {
+      final coordinate = (city.center.col, city.center.row);
+      if (!_canMarkCityTarget(
+        state,
+        attacker,
+        city,
+        attackerStats,
+        occupiedHexes,
+      )) {
+        continue;
+      }
+      targets.add(coordinate);
+    }
+    return targets;
   }
+
+  bool _canMarkUnitTarget(
+    GameClientState state,
+    GameUnit attacker,
+    GameUnit defender,
+    CombatStats attackerStats,
+  ) =>
+      defender.id != attacker.id &&
+      _canAttackOwner(state, attacker, defender.ownerPlayerId) &&
+      state.activePlayerVisibility.canSeeDynamicAt(
+        defender.col,
+        defender.row,
+      ) &&
+      _inAttackRange(attacker, defender.col, defender.row, attackerStats);
+
+  bool _canMarkCityTarget(
+    GameClientState state,
+    GameUnit attacker,
+    GameCity city,
+    CombatStats attackerStats,
+    Set<(int, int)> occupiedHexes,
+  ) =>
+      !occupiedHexes.contains((city.center.col, city.center.row)) &&
+      _canAttackOwner(state, attacker, city.ownerPlayerId) &&
+      state.activePlayerVisibility.canSeeDynamicAt(
+        city.center.col,
+        city.center.row,
+      ) &&
+      _inAttackRange(attacker, city.center.col, city.center.row, attackerStats);
+
+  bool _canAttackOwner(
+    GameClientState state,
+    GameUnit attacker,
+    String targetOwnerPlayerId,
+  ) {
+    if (targetOwnerPlayerId == attacker.ownerPlayerId) return false;
+    final relation = state.diplomacy.statusBetween(
+      attacker.ownerPlayerId,
+      targetOwnerPlayerId,
+    );
+    return relation != DiplomaticRelationStatus.friendly &&
+        relation != DiplomaticRelationStatus.truce;
+  }
+
+  bool _inAttackRange(
+    GameUnit attacker,
+    int col,
+    int row,
+    CombatStats attackerStats,
+  ) =>
+      CombatDistance.fromUnitToCoordinate(
+        attacker,
+        HexCoordinate(col: col, row: row),
+      ) <=
+      attackerStats.range;
 
   GameUnit? _selectedControllableWorker(GameClientState state) {
     final unit = state.selectedUnit;

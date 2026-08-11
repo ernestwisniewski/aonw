@@ -143,6 +143,7 @@ abstract final class GameRendererRuntimeFactory {
       cameraController: () => lifecycle.cameraController,
       renderingCoordinator: () => lifecycle.renderingCoordinator,
       combatHexAlertLayer: () => components.combatAlerts,
+      combatAttackTrajectoryLayer: () => components.combatTrajectories,
       cityProductionParticleLayer: () => components.cityProductionParticles,
       cloudDriftLayer: () => components.cloudDrift,
       cityMarkerLayer: () => components.cities,

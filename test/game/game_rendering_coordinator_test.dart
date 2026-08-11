@@ -968,7 +968,7 @@ void main() {
       ]);
     });
 
-    test('syncs threat overlay while attack targeting is active', () {
+    test('keeps threat overlay cleared while attack targeting is active', () {
       final map = _map();
       final threatOverlay = _RecordingThreatOverlayLayer();
       final warrior = GameUnit.startingWarrior(ownerPlayerId: 'player_1');
@@ -994,9 +994,9 @@ void main() {
         viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
-      expect(threatOverlay.lastState, same(state));
-      expect(threatOverlay.lastMapData, same(map));
-      expect(threatOverlay.lastDimmed, isFalse);
+      expect(threatOverlay.clearCount, 1);
+      expect(threatOverlay.lastState, isNull);
+      expect(threatOverlay.lastMapData, isNull);
     });
 
     test('keeps threat overlay hidden until attack action is selected', () {
@@ -1124,7 +1124,7 @@ void main() {
       },
     );
 
-    test('dims move preview while attack targeting owns the decision', () {
+    test('clears move preview while attack targeting owns the decision', () {
       final map = _map();
       final movePreview = _RecordingMovePreviewLayer();
       final threatOverlay = _RecordingThreatOverlayLayer();
@@ -1161,8 +1161,8 @@ void main() {
         viewModelNotifier: ValueNotifier(RenderState.empty),
       );
 
-      expect(movePreview.lastDimmed, isTrue);
-      expect(threatOverlay.lastDimmed, isFalse);
+      expect(movePreview.lastPreviews, isEmpty);
+      expect(threatOverlay.clearCount, 1);
     });
   });
 }

@@ -8,6 +8,7 @@ import 'package:aonw/game/presentation/engine/rendering_layers/artifacts/artifac
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_territory_overlay_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/cloud_drift_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_attack_trajectory_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_hex_alert_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/floating_text_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/particle_effects_layer.dart';
@@ -39,6 +40,7 @@ final class GameRendererLayerSynchronizer {
     required this.cameraController,
     required this.renderingCoordinator,
     required this.combatHexAlertLayer,
+    required this.combatAttackTrajectoryLayer,
     required this.cityProductionParticleLayer,
     required this.cloudDriftLayer,
     required this.cityMarkerLayer,
@@ -73,6 +75,7 @@ final class GameRendererLayerSynchronizer {
   final GameCameraController Function() cameraController;
   final GameRenderingCoordinator Function() renderingCoordinator;
   final CombatHexAlertLayer Function() combatHexAlertLayer;
+  final CombatAttackTrajectoryLayer Function() combatAttackTrajectoryLayer;
   final CityProductionParticleLayer Function() cityProductionParticleLayer;
   final CloudDriftLayer Function() cloudDriftLayer;
   final CityMarkerLayer Function() cityMarkerLayer;
@@ -113,6 +116,10 @@ final class GameRendererLayerSynchronizer {
       state: state(),
       currentTurn: currentTurn(),
       reduceMotion: reduceMotion(),
+    );
+    combatAttackTrajectoryLayer().syncTargetAlerts(
+      hasTargetAlert: (targetId) =>
+          hasCombatAttackedTargetAlert(combatHexAlertLayer(), targetId),
     );
     _syncCityProductionParticles();
     _syncCloudDriftLayer();
