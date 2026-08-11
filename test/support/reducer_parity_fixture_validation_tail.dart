@@ -18,7 +18,7 @@ void _requireAcceptedParityResourceTrade(
   DomainState state,
   List<GameEvent> events,
 ) {
-  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save))) {
+  if (!jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save))) {
     ReducerParityCorpus._fail(
       fixture,
       'must preserve save metadata for resource trade',

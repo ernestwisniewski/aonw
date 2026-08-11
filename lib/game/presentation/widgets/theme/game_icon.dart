@@ -15,6 +15,17 @@ const gameAutoWorkIcon = GameIconData(
   ],
 );
 
+const gameRoadIcon = GameIconData(
+  paths: [
+    'M4 21C7 16 8 10 9 3',
+    'M20 21C17 16 16 10 15 3',
+    'M12 20v-3',
+    'M12 14v-3',
+    'M12 8V5',
+  ],
+  strokeWidth: 1.8,
+);
+
 abstract final class GameIcons {
   static const city = GameIconData(
     paths: ['M4 21V10l8-6 8 6v11', 'M4 21h16', 'M10 21v-6h4v6'],
@@ -322,6 +333,8 @@ abstract final class GameIcons {
   static const route = GameIconData(
     paths: ['M5 18c4-8 10-4 14-12', 'M6 18h-3v3', 'M18 6h3V3'],
   );
+
+  static const road = gameRoadIcon;
 
   static const leaf = GameIconData(
     paths: ['M5 19C5 10 11 4 20 4c0 9-6 15-15 15z', 'M5 19c4-4 8-7 13-10'],

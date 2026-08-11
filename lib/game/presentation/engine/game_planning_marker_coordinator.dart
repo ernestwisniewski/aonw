@@ -61,52 +61,68 @@ class GamePlanningMarkerCoordinator {
         continue;
       }
 
-      final canFoundCity = _canUseAsCityCenter(
-        tile,
-        state.cities,
-        controlledCityHexes,
-      );
-      final workerAvailability = workerPlanning == null
-          ? WorkerImprovementTileAvailability.unavailable
-          : workerPlanning.availabilityFor(tile);
-      final canImproveNow =
-          workerAvailability == WorkerImprovementTileAvailability.availableNow;
-      final canImproveAfterTechnology =
-          workerAvailability ==
-          WorkerImprovementTileAvailability.technologyLocked;
-      final workerOccupiesTile =
-          selectedWorker?.occupies(tile.col, tile.row) ?? false;
-      final workerBuildAvailable = workerOccupiesTile && canImproveNow;
-      final workerBuildBlocked =
-          workerOccupiesTile && !workerBuildAvailable && selectedWorker != null;
-      final workerImprovementCandidate =
-          selectedWorker != null && !workerOccupiesTile && canImproveNow;
-      if (!canFoundCity &&
-          !canGrowCity &&
-          !canImproveNow &&
-          !canImproveAfterTechnology &&
-          !workerBuildAvailable &&
-          !workerBuildBlocked) {
-        continue;
-      }
-
-      markersByCoordinate[(tile.col, tile.row)] = HexTileMarkers(
-        canFoundCity: canFoundCity,
-        forceShowCitySite: forceCitySiteMarkers && canFoundCity,
-        recommendedCitySite:
-            forceCitySiteMarkers &&
-            canFoundCity &&
-            recommendedCitySites.contains((tile.col, tile.row)),
+      final markers = _regularMarkersFor(
+        tile: tile,
+        state: state,
+        controlledCityHexes: controlledCityHexes,
         canGrowCity: canGrowCity,
-        canImproveNow: canImproveNow,
-        canImproveAfterTechnology: canImproveAfterTechnology,
-        workerImprovementCandidate: workerImprovementCandidate,
-        workerBuildAvailable: workerBuildAvailable,
-        workerBuildBlocked: workerBuildBlocked,
+        forceCitySiteMarkers: forceCitySiteMarkers,
+        recommendedCitySites: recommendedCitySites,
+        workerPlanning: workerPlanning,
+        selectedWorker: selectedWorker,
       );
+      if (markers != null) {
+        markersByCoordinate[(tile.col, tile.row)] = markers;
+      }
     }
 
     grid.setTileMarkers(markersByCoordinate);
+  }
+
+  HexTileMarkers? _regularMarkersFor({
+    required WorldTile tile,
+    required GameClientState state,
+    required Set<(int, int)> controlledCityHexes,
+    required bool canGrowCity,
+    required bool forceCitySiteMarkers,
+    required Set<(int, int)> recommendedCitySites,
+    required _WorkerPlanningIndex? workerPlanning,
+    required GameUnit? selectedWorker,
+  }) {
+    final canFoundCity = _canUseAsCityCenter(
+      tile,
+      state.cities,
+      controlledCityHexes,
+    );
+    final workerAvailability =
+        workerPlanning?.availabilityFor(tile) ??
+        WorkerImprovementTileAvailability.unavailable;
+    final canImproveNow =
+        workerAvailability == WorkerImprovementTileAvailability.availableNow;
+    final canImproveAfterTechnology =
+        workerAvailability ==
+        WorkerImprovementTileAvailability.technologyLocked;
+    final workerOccupiesTile =
+        selectedWorker?.occupies(tile.col, tile.row) ?? false;
+    final workerBuildAvailable = workerOccupiesTile && canImproveNow;
+    final workerBuildBlocked =
+        workerOccupiesTile && !workerBuildAvailable && selectedWorker != null;
+    final markers = HexTileMarkers(
+      canFoundCity: canFoundCity,
+      forceShowCitySite: forceCitySiteMarkers && canFoundCity,
+      recommendedCitySite:
+          forceCitySiteMarkers &&
+          canFoundCity &&
+          recommendedCitySites.contains((tile.col, tile.row)),
+      canGrowCity: canGrowCity,
+      canImproveNow: canImproveNow,
+      canImproveAfterTechnology: canImproveAfterTechnology,
+      workerImprovementCandidate:
+          selectedWorker != null && !workerOccupiesTile && canImproveNow,
+      workerBuildAvailable: workerBuildAvailable,
+      workerBuildBlocked: workerBuildBlocked,
+    );
+    return markers.hasAny ? markers : null;
   }
 
   GameUnit? selectedAttackTargetingUnit(GameClientState state) {

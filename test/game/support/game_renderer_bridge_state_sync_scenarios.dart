@@ -2,7 +2,7 @@ part of '../game_renderer_keyboard_test.dart';
 
 void _registerRendererStateSyncScenarios() {
   test('applyState publishes renderer state to visual test accessors', () {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
     final preview = UnitMovementPlan(
       unitId: commander.id,
@@ -21,7 +21,7 @@ void _registerRendererStateSyncScenarios() {
           units: [commander],
           activePlayerId: 'player_1',
           interaction: InteractionState(
-            selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+            selection: GameSelection.unit(commander, tile: kbTile(map, 0, 0)),
             moveCommandActive: true,
             movePreview: preview,
           ),
@@ -36,7 +36,7 @@ void _registerRendererStateSyncScenarios() {
   });
 
   test('tile view marks city territory overlay as strategic', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     const city = GameCity(
       id: 'city_1',
       ownerPlayerId: 'player_1',
@@ -64,7 +64,7 @@ void _registerRendererStateSyncScenarios() {
   });
 
   test('strengthens city territory overlay when zooming out', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     const city = GameCity(
       id: 'city_1',
       ownerPlayerId: 'player_1',
@@ -90,7 +90,7 @@ void _registerRendererStateSyncScenarios() {
   });
 
   test('publishes zoom changes for the performance debug overlay', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
     addTearDown(game.disposeRenderer);
 
@@ -103,7 +103,7 @@ void _registerRendererStateSyncScenarios() {
   });
 
   test('skips marker density sync for tiny same-bucket zoom deltas', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
     addTearDown(game.disposeRenderer);
 
@@ -126,7 +126,7 @@ void _registerRendererStateSyncScenarios() {
   });
 
   test('keeps gameplay markers visible while panning the camera', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     const city = GameCity(
       id: 'city_1',
       ownerPlayerId: 'player_1',
@@ -172,7 +172,7 @@ void _registerRendererStateSyncScenarios() {
   });
 
   test('queues renderer effects until the Flame world is ready', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final game = GameRenderer(
       mapData: map,
       startCameraOffMap: true,

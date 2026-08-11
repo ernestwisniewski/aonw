@@ -57,7 +57,7 @@ void _requireAcceptedParityUnitAction(
   DomainState state,
   List<GameEvent> events,
 ) {
-  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||
+  if (!jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||
       events.isNotEmpty) {
     ReducerParityCorpus._fail(
       fixture,

@@ -2,7 +2,7 @@ part of '../game_renderer_keyboard_test.dart';
 
 void _registerRendererInteractionTapPriorityScenarios() {
   test('applyState is ignored after renderer disposal', () {
-    final game = GameRenderer(mapData: _minimalMap(), onCommand: (_) async {});
+    final game = GameRenderer(mapData: kbMinimalMap(), onCommand: (_) async {});
 
     expect(
       () => game
@@ -12,20 +12,20 @@ void _registerRendererInteractionTapPriorityScenarios() {
     );
   });
   test('tile tap dispatches a TileTappedCommand in renderer mode', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final commands = <GameIntent>[];
     await GameRenderer(
       mapData: map,
       onCommand: (command) async {
         commands.add(command);
       },
-    ).handleTileTappedForTesting(_tile(map, 1, 2));
+    ).handleTileTappedForTesting(kbTile(map, 1, 2));
     await Future<void>.delayed(Duration.zero);
 
     expect(commands, [const TileTappedCommand(1, 2)]);
   });
   test('artifact marker tap cycles artifact, hex, artifact', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final reducer = GameStateReducer(mapData: map);
     final commands = <GameIntent>[];
     final inspectedArtifacts = <WorldArtifact>[];
@@ -72,7 +72,7 @@ void _registerRendererInteractionTapPriorityScenarios() {
     expect(commands, [const TileTappedCommand(1, 1)]);
   });
   test('second tap on artifact hex opens artifact popup', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final reducer = GameStateReducer(mapData: map);
     final commands = <GameIntent>[];
     final inspectedArtifacts = <WorldArtifact>[];
@@ -104,7 +104,7 @@ void _registerRendererInteractionTapPriorityScenarios() {
     addTearDown(game.disposeRenderer);
     game.applyState(state);
 
-    await game.handleTileTappedForTesting(_tile(map, 1, 1));
+    await game.handleTileTappedForTesting(kbTile(map, 1, 1));
     await Future<void>.delayed(Duration.zero);
 
     expect(commands, [const TileTappedCommand(1, 1)]);
@@ -113,13 +113,13 @@ void _registerRendererInteractionTapPriorityScenarios() {
     expect(state.selection?.tile?.row, 1);
     expect(inspectedArtifacts, isEmpty);
 
-    await game.handleTileTappedForTesting(_tile(map, 1, 1));
+    await game.handleTileTappedForTesting(kbTile(map, 1, 1));
 
     expect(commands, [const TileTappedCommand(1, 1)]);
     expect(inspectedArtifacts, [artifact]);
   });
   test('second tap on selected hex opens hex description popup', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final reducer = GameStateReducer(mapData: map);
     final commands = <GameIntent>[];
     final inspectedTiles = <WorldTile>[];
@@ -143,7 +143,7 @@ void _registerRendererInteractionTapPriorityScenarios() {
     addTearDown(game.disposeRenderer);
     game.applyState(state);
 
-    await game.handleTileTappedForTesting(_tile(map, 1, 1));
+    await game.handleTileTappedForTesting(kbTile(map, 1, 1));
     await Future<void>.delayed(Duration.zero);
 
     expect(commands, [const TileTappedCommand(1, 1)]);
@@ -152,7 +152,7 @@ void _registerRendererInteractionTapPriorityScenarios() {
     expect(state.selection?.tile?.row, 1);
     expect(inspectedTiles, isEmpty);
 
-    await game.handleTileTappedForTesting(_tile(map, 1, 1));
+    await game.handleTileTappedForTesting(kbTile(map, 1, 1));
 
     expect(commands, [const TileTappedCommand(1, 1)]);
     expect(inspectedTiles.map((tile) => '${tile.col}:${tile.row}'), ['1:1']);
@@ -172,7 +172,7 @@ void _registerRendererInteractionTapPriorityScenarios() {
       ArtifactMarkerTapTarget.hex,
     );
 
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final reducer = GameStateReducer(mapData: map);
     final commands = <GameIntent>[];
     final inspectedArtifacts = <WorldArtifact>[];
@@ -195,7 +195,7 @@ void _registerRendererInteractionTapPriorityScenarios() {
       artifacts: [artifact],
       fogOfWar: _fog(visible: {const HexCoordinate(col: 1, row: 1)}),
       interaction: InteractionState(
-        selection: GameSelection.unit(unit, tile: _tile(map, 1, 1)),
+        selection: GameSelection.unit(unit, tile: kbTile(map, 1, 1)),
       ),
     );
     late final GameRenderer game;
@@ -235,7 +235,7 @@ void _registerRendererInteractionTapPriorityScenarios() {
     expect(state.selection?.unit?.id, unit.id);
   });
   test('map objective marker tap cycles objective popup and hex', () async {
-    final map = _mapWithObjective();
+    final map = kbObjectiveMap();
     final reducer = GameStateReducer(mapData: map);
     final commands = <GameIntent>[];
     final inspectedObjectives = <MapObjectiveProgress>[];
@@ -287,7 +287,7 @@ void _registerRendererInteractionTapPriorityScenarios() {
     ]);
   });
   test('occupied objective hex tap cycles unit, objective, hex', () async {
-    final map = _mapWithObjective();
+    final map = kbObjectiveMap();
     final reducer = GameStateReducer(mapData: map);
     final commands = <GameIntent>[];
     final inspectedObjectives = <MapObjectiveProgress>[];
@@ -309,7 +309,7 @@ void _registerRendererInteractionTapPriorityScenarios() {
       activePlayerId: 'player_1',
       units: [unit],
       interaction: InteractionState(
-        selection: GameSelection.unit(unit, tile: _tile(map, 1, 1)),
+        selection: GameSelection.unit(unit, tile: kbTile(map, 1, 1)),
       ),
     );
     late final GameRenderer game;

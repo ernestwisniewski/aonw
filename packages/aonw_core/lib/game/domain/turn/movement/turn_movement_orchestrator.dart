@@ -1,5 +1,6 @@
 import 'package:aonw_core/game/domain/diplomacy/diplomatic_contact.dart';
 import 'package:aonw_core/game/domain/event/game_event.dart';
+import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
 import 'package:aonw_core/game/domain/runtime/pending_player_action.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
@@ -52,17 +53,11 @@ abstract final class TurnMovementOrchestrator {
       mapData: context.mapData,
       transportNetwork: state.transportNetwork,
     );
-    final fogOfWar =
-        (advanced.executions.isNotEmpty ||
-            (!context.fogRecomputedBeforePhase && advanced.changed))
-        ? context.fogOfWarService.recompute(
-            current: state.fogOfWar,
-            mapData: context.mapData,
-            playerIds: context.phaseKnownPlayerIds,
-            units: advanced.units,
-            cities: state.cities,
-          )
-        : state.fogOfWar;
+    final fogOfWar = _fogAfterUnitMovement(
+      state: state,
+      context: context,
+      advanced: advanced,
+    );
     final diplomacy = DiplomaticContact.mergeDiscoveredContacts(
       diplomacy: state.diplomacy,
       fogOfWar: fogOfWar,
@@ -99,6 +94,24 @@ abstract final class TurnMovementOrchestrator {
       autoExplore: autoExplore,
     );
   }
+}
+
+FogOfWarState _fogAfterUnitMovement({
+  required TurnMovementState state,
+  required TurnMovementContext context,
+  required TurnUnitMovementAdvance advanced,
+}) {
+  if (advanced.executions.isEmpty &&
+      (context.fogRecomputedBeforePhase || !advanced.changed)) {
+    return state.fogOfWar;
+  }
+  return context.fogOfWarService.recompute(
+    current: state.fogOfWar,
+    mapData: context.mapData,
+    playerIds: context.phaseKnownPlayerIds,
+    units: advanced.units,
+    cities: state.cities,
+  );
 }
 
 DomainActionState _expireTurnSkip(

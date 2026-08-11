@@ -36,7 +36,7 @@ final class DomainEventAnimationPolicy {
       'movement animation requires authoritative movement evidence',
     ),
     FortifiedUnitThreatenedEvent: .effects(
-      'camera focus and visible-enemy threat markers',
+      'visible-enemy threat markers without idle camera focus',
     ),
     UnitGainedExperienceEvent: .none(
       'persistent unit state renders experience',

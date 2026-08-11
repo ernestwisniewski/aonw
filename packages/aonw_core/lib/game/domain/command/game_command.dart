@@ -6,6 +6,7 @@ import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/util/collection_equality.dart';
 
 part 'selection_commands.dart';
 part 'research_commands.dart';

@@ -362,21 +362,10 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
                       onAutoTurnFlowChanged: ref
                           .read(hudAutoTurnFlowProvider.notifier)
                           .setEnabled,
-                      followUnitMovementCameraEnabled:
-                          gameplaySettings.followUnitMovementCamera,
-                      onFollowUnitMovementCameraChanged: ref
-                          .read(gameplaySettingsProvider.notifier)
-                          .setFollowUnitMovementCamera,
-                      followEnemyUnitCameraEnabled:
-                          gameplaySettings.followEnemyUnitCamera,
-                      onFollowEnemyUnitCameraChanged: ref
-                          .read(gameplaySettingsProvider.notifier)
-                          .setFollowEnemyUnitCamera,
-                      cinematicCameraEnabled:
-                          gameplaySettings.cinematicCameraEnabled,
-                      onCinematicCameraChanged: ref
-                          .read(gameplaySettingsProvider.notifier)
-                          .setCinematicCameraEnabled,
+                      camera: GameOptionsCameraBindings(
+                        settings: gameplaySettings,
+                        controller: ref.read(gameplaySettingsProvider.notifier),
+                      ),
                       onHexBorderColorChanged: widget.onHexBorderColorChanged,
                       onWallTintColorChanged: widget.onWallTintColorChanged,
                       onResetHexBorderColor: widget.onResetHexBorderColor,

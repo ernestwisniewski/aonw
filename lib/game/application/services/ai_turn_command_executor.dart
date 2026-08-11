@@ -178,6 +178,8 @@ final class AiTurnCommandExecutor {
   }
 
   static String describeCommand(DomainCommand command) {
+    final workerDescription = _describeWorkerCommand(command);
+    if (workerDescription != null) return workerDescription;
     return switch (command) {
       MoveUnitCommand() =>
         'move unit ${command.unitId} to '
@@ -201,16 +203,6 @@ final class AiTurnCommandExecutor {
       SetCitySpecializationCommand() =>
         'set city ${command.cityId} specialization to '
             '${command.specialization.name}',
-      SelectWorkerImprovementCommand() =>
-        'select ${command.improvementType.name} improvement for worker '
-            '${command.unitId}',
-      ConfirmWorkerImprovementCommand() =>
-        'confirm worker improvement for ${command.unitId}',
-      AssignWorkerToHexCommand() => 'assign worker ${command.unitId} to hex',
-      BuildRoadCommand() => 'build road with worker ${command.unitId}',
-      CancelWorkerAssignmentCommand() =>
-        'cancel worker ${command.unitId} assignment',
-      CancelWorkerJobCommand() => 'cancel worker ${command.unitId} job',
       SkipUnitTurnCommand() => 'skip unit ${command.unitId}',
       FortifyUnitCommand() => 'fortify/heal unit ${command.unitId}',
       AutomatedUnitCommand() => _describeAutomatedUnitCommand(command),
@@ -263,8 +255,25 @@ final class AiTurnCommandExecutor {
             'for ${command.requestedResource.name} from '
             '${command.targetPlayerId}',
       CancelUnitActionCommand() => 'cancel unit action for ${command.unitId}',
+      _ => throw StateError('Unhandled AI command: ${command.runtimeType}'),
     };
   }
+}
+
+String? _describeWorkerCommand(DomainCommand command) {
+  return switch (command) {
+    SelectWorkerImprovementCommand() =>
+      'select ${command.improvementType.name} improvement for worker '
+          '${command.unitId}',
+    ConfirmWorkerImprovementCommand() =>
+      'confirm worker improvement for ${command.unitId}',
+    AssignWorkerToHexCommand() => 'assign worker ${command.unitId} to hex',
+    BuildRoadCommand() => 'build road with worker ${command.unitId}',
+    CancelWorkerAssignmentCommand() =>
+      'cancel worker ${command.unitId} assignment',
+    CancelWorkerJobCommand() => 'cancel worker ${command.unitId} job',
+    _ => null,
+  };
 }
 
 String _describeAutomatedUnitCommand(AutomatedUnitCommand command) {

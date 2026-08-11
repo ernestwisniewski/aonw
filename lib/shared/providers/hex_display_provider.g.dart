@@ -42,7 +42,7 @@ final class HexDisplayNotifierProvider
 }
 
 String _$hexDisplayNotifierHash() =>
-    r'7760ff262d39b246251fe7bc79dd74c4b0a5387d';
+    r'5ea02c0df222a64aee683586aa1d0190ed199413';
 
 abstract class _$HexDisplayNotifier extends $Notifier<HexDisplaySettings> {
   HexDisplaySettings build();

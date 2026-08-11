@@ -7,6 +7,42 @@ extension GameRendererCameraRendering on GameRenderer {
   static const double _fastRenderHoldSeconds = 0.12;
   static const double _markerDensityZoomEpsilon = 0.025;
 
+  bool get moveCameraForUnitMovement =>
+      _cameraSettings.moveCameraForUnitMovement;
+
+  set moveCameraForUnitMovement(bool value) =>
+      _cameraSettings.moveCameraForUnitMovement = value;
+
+  bool get followUnitMovementCamera =>
+      _cameraSettings.followOwnUnitMovementCamera;
+
+  set followUnitMovementCamera(bool value) =>
+      _cameraSettings.followOwnUnitMovementCamera = value;
+
+  bool get followEnemyUnitCamera =>
+      _cameraSettings.focusEnemyUnitMovementCamera;
+
+  set followEnemyUnitCamera(bool value) =>
+      _cameraSettings.focusEnemyUnitMovementCamera = value;
+
+  bool get cinematicCameraEnabled => _cameraSettings.cinematicCameraEnabled;
+
+  set cinematicCameraEnabled(bool value) => applyMovementCameraSettings((
+    focusOwnUnitMovementCamera: _cameraSettings.focusOwnUnitMovementCamera,
+    followOwnUnitMovementCamera: _cameraSettings.followOwnUnitMovementCamera,
+    focusEnemyUnitMovementCamera: _cameraSettings.focusEnemyUnitMovementCamera,
+    followEnemyUnitMovementCamera:
+        _cameraSettings.followEnemyUnitMovementCamera,
+    cinematicCameraEnabled: value,
+  ));
+
+  void applyMovementCameraSettings(GameRendererMovementCameraSettings value) {
+    final projectionChanged = _cameraSettings.applyMovement(value);
+    if (!projectionChanged) return;
+    _lastSyncedHoverHex = null;
+    _refreshHoverIntent();
+  }
+
   void _syncFastCameraRendering(double dt) {
     if (!_isReady || _isDisposed) return;
 

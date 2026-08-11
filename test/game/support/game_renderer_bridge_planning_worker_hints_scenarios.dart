@@ -4,7 +4,7 @@ void _registerRendererPlanningWorkerHintsScenarios() {
   test(
     'syncs attack target markers while attack targeting is active',
     () async {
-      final map = _map(4, 1);
+      final map = kbMap(4, 1);
       final attacker = GameUnit(
         id: 'warrior_1',
         ownerPlayerId: 'player_1',
@@ -273,7 +273,7 @@ void _registerRendererPlanningWorkerHintsScenarios() {
   test(
     'tap movement animates and then allows the selected unit tile to cycle',
     () async {
-      final map = _map(3, 3);
+      final map = kbMap(3, 3);
       final reducer = GameStateReducer(mapData: map);
       final commander = GameUnit.startingCommander(
         ownerPlayerId: 'player_1',
@@ -299,15 +299,15 @@ void _registerRendererPlanningWorkerHintsScenarios() {
       await game.onLoad();
       await Future<void>.delayed(Duration.zero);
       game.update(0);
-      await game.handleTileTappedForTesting(_tile(map, 0, 0));
+      await game.handleTileTappedForTesting(kbTile(map, 0, 0));
       expect(state.selection?.type, GameSelectionType.unit);
       expect(state.moveCommandActive, isTrue);
 
-      await game.handleTileTappedForTesting(_tile(map, 1, 0));
+      await game.handleTileTappedForTesting(kbTile(map, 1, 0));
       expect(state.movePreview?.targetCol, 1);
       expect(state.movePreview?.targetRow, 0);
 
-      final moveFuture = game.handleTileTappedForTesting(_tile(map, 1, 0));
+      final moveFuture = game.handleTileTappedForTesting(kbTile(map, 1, 0));
       await Future<void>.delayed(Duration.zero);
       game.update(0.32);
       await Future<void>.delayed(Duration.zero);
@@ -324,11 +324,11 @@ void _registerRendererPlanningWorkerHintsScenarios() {
       expect(state.units.single.col, 1);
       expect(state.moveCommandActive, isTrue);
 
-      await game.handleTileTappedForTesting(_tile(map, 1, 0));
+      await game.handleTileTappedForTesting(kbTile(map, 1, 0));
       expect(state.selection?.type, GameSelectionType.tile);
       expect(state.moveCommandActive, isFalse);
 
-      await game.handleTileTappedForTesting(_tile(map, 1, 0));
+      await game.handleTileTappedForTesting(kbTile(map, 1, 0));
       expect(state.selection?.type, GameSelectionType.unit);
     },
   );

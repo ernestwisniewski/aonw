@@ -16,13 +16,7 @@ abstract final class _MovementTurnResetProcessor {
             : unit,
     ];
 
-    var mpChanged = false;
-    for (var i = 0; i < resetUnits.length; i++) {
-      if (resetUnits[i].movementPoints != currentUnits[i].movementPoints) {
-        mpChanged = true;
-        break;
-      }
-    }
+    final mpChanged = _movementPointsChanged(currentUnits, resetUnits);
 
     final finalUnits = <GameUnit>[];
     final animationEffects = <AnimateUnitMoveEffect>[];
@@ -332,6 +326,18 @@ abstract final class _MovementTurnResetProcessor {
       moveCommandActive: deactivateMoveCommand ? false : null,
     );
   }
+}
+
+bool _movementPointsChanged(
+  List<GameUnit> currentUnits,
+  List<GameUnit> resetUnits,
+) {
+  for (var i = 0; i < resetUnits.length; i++) {
+    if (resetUnits[i].movementPoints != currentUnits[i].movementPoints) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool _clearTurnSkip(

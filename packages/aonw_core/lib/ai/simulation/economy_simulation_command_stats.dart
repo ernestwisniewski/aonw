@@ -1,5 +1,11 @@
 import 'package:aonw_core/game/domain/command.dart';
 
+const _workerJobCommandTypes = <Type>{
+  SelectWorkerImprovementCommand,
+  AssignWorkerToHexCommand,
+  BuildRoadCommand,
+};
+
 final class EconomySimulationCommandStats {
   var meaningful = 0;
   var foundCity = 0;
@@ -14,6 +20,10 @@ final class EconomySimulationCommandStats {
 
   void addApplied(DomainCommand command) {
     meaningful += 1;
+    if (_workerJobCommandTypes.contains(command.runtimeType)) {
+      workerJob += 1;
+      return;
+    }
     switch (command) {
       case FoundCityCommand():
         foundCity += 1;
@@ -27,43 +37,13 @@ final class EconomySimulationCommandStats {
         startWonder += 1;
       case SetCitySpecializationCommand():
         break;
-      case SelectWorkerImprovementCommand() ||
-          AssignWorkerToHexCommand() ||
-          BuildRoadCommand():
-        workerJob += 1;
       case MoveUnitCommand():
         move += 1;
       case MoveMerchantToCityCommand():
         move += 1;
       case AttackHexCommand():
         attack += 1;
-      case CancelUnitActionCommand() ||
-          SkipUnitTurnCommand() ||
-          FortifyUnitCommand() ||
-          AutomatedUnitCommand() ||
-          RushProductionCommand() ||
-          SelectTechnologyCommand() ||
-          DetachTroopCommand() ||
-          AssignMerchantTradeRouteCommand() ||
-          SendDiplomaticProposalCommand() ||
-          RespondDiplomaticProposalCommand() ||
-          SendDiplomaticMessageCommand() ||
-          RespondDiplomaticMessageCommand() ||
-          DeclareWarCommand() ||
-          SendGoldGiftCommand() ||
-          EndTurnCommand() ||
-          SubmitTurnCommand() ||
-          StartArtifactExcavationCommand() ||
-          StoreArtifactInCityCommand() ||
-          TradeArtifactCommand() ||
-          OpenResourceTradeCommand() ||
-          OpenResourceExchangeCommand() ||
-          ToggleWorkedHexCommand() ||
-          SelectCityExpansionHexCommand() ||
-          ConfirmWorkerImprovementCommand() ||
-          CancelWorkerJobCommand() ||
-          CancelWorkerAssignmentCommand() ||
-          SelectWorkerImprovementCommand():
+      case _:
         break;
     }
   }

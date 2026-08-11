@@ -55,11 +55,11 @@ void _requireAcceptedParityCityFounding(
     founderIndex,
     draft,
   );
-  if (!_jsonDeepEquals(
+  if (!jsonDeepEquals(
         fixture.expectedState,
         CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
       ) ||
-      !_jsonDeepEquals(
+      !jsonDeepEquals(
         CanonicalGameSnapshotCodec.encodeDomainState(state),
         CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
       )) {
@@ -74,7 +74,7 @@ void _requireCityFoundingEnvelope(
   ReducerParityFixture fixture,
   List<GameEvent> events,
 ) {
-  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||
+  if (!jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||
       events.isNotEmpty) {
     ReducerParityCorpus._fail(
       fixture,

@@ -18,55 +18,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 part 'hud_selection_city_founding_tests.dart';
+part 'hud_selection_worker_road_tests.dart';
 
 void main() {
   group('buildHudSelectionActionChips', () {
-    test('keeps unit actions visible but disabled while locked', () {
-      final worker = _worker();
-
-      final actions = _actions(
-        gameState: GameClientState(
-          units: [worker],
-          interaction: InteractionState(selection: GameSelection.unit(worker)),
-        ),
-        actionsLocked: true,
-        workerAction: _workerAction(),
-      );
-      expect(_actionLabels(actions), contains('Auto work'));
-      expect(
-        actions.whereType<SelectionCommandChip>(),
-        everyElement(
-          isA<SelectionCommandChip>().having(
-            (action) => action.enabled,
-            'enabled',
-            isFalse,
-          ),
-        ),
-      );
-    });
-
-    test('builds worker unit actions', () {
-      final worker = _worker();
-
-      final actions = _actions(
-        gameState: GameClientState(
-          units: [worker],
-          interaction: InteractionState(selection: GameSelection.unit(worker)),
-        ),
-        workerAction: _workerAction(),
-      );
-      expect(
-        _actionLabels(actions),
-        containsAll([
-          'Move',
-          'Improve',
-          'Build road',
-          'Auto work',
-          'Skip',
-          'Fortify',
-        ]),
-      );
-    });
+    _registerHudSelectionWorkerRoadTests();
 
     test('uses artifact icon for the unit store artifact action', () {
       final unit = _warrior().copyWithCarriedArtifact('artifact_1');

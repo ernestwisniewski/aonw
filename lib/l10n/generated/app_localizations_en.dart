@@ -1983,14 +1983,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiBatterySaverLabel => 'AI battery saver';
 
   @override
-  String get gameplaySectionTitle => 'Gameplay';
+  String get mapDisplaySectionTitle => 'Map display';
 
   @override
-  String get followUnitMovementCameraLabel =>
-      'Follow unit movement with camera';
+  String get cameraSectionTitle => 'Camera';
 
   @override
-  String get followEnemyUnitCameraLabel => 'Follow enemy units with camera';
+  String get automationSectionTitle => 'Automation';
+
+  @override
+  String get defaultMapViewModeLabel => 'Default map view mode';
+
+  @override
+  String get focusOwnUnitMovementCameraLabel =>
+      'Focus camera on my unit movement';
+
+  @override
+  String get followOwnUnitMovementCameraLabel =>
+      'Track my unit movement with camera';
+
+  @override
+  String get focusEnemyUnitMovementCameraLabel =>
+      'Focus camera on enemy unit movement';
+
+  @override
+  String get followEnemyUnitMovementCameraLabel =>
+      'Track enemy unit movement with camera';
 
   @override
   String get cinematicCameraLabel => 'Cinematic camera';

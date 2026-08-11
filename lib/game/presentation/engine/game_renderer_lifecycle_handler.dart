@@ -30,9 +30,9 @@ final class GameRendererLifecycleHandler {
     required this.displaySettings,
     required this.reduceMotion,
     required this.moveCameraForUnitMovement,
-    required this.moveCameraForUnitMovementForUnit,
+    required this.focusCameraForUnitMovementForUnit,
+    required this.followCameraForUnitMovementForUnit,
     required this.onUnitMovementCameraComplete,
-    required this.followUnitMovementCamera,
     required this.canAutoFocusMapTarget,
     required this.onTileTapped,
     required this.syncAfterAction,
@@ -59,9 +59,9 @@ final class GameRendererLifecycleHandler {
   final HexDisplaySettings Function() displaySettings;
   final bool Function() reduceMotion;
   final bool Function() moveCameraForUnitMovement;
-  final bool Function(String unitId) moveCameraForUnitMovementForUnit;
+  final bool Function(String unitId) focusCameraForUnitMovementForUnit;
+  final bool Function(String unitId) followCameraForUnitMovementForUnit;
   final Future<void> Function(String unitId) onUnitMovementCameraComplete;
-  final bool Function() followUnitMovementCamera;
   final bool Function(int col, int row) canAutoFocusMapTarget;
   final Future<void> Function(WorldTile tile) onTileTapped;
   final void Function({bool suppressCameraFocus}) syncAfterAction;
@@ -140,9 +140,9 @@ final class GameRendererLifecycleHandler {
       onRendererStateChanged: syncAfterAction,
       reduceMotion: reduceMotion,
       moveCameraForUnitMovement: moveCameraForUnitMovement,
-      moveCameraForUnitMovementForUnit: moveCameraForUnitMovementForUnit,
+      focusCameraForUnitMovementForUnit: focusCameraForUnitMovementForUnit,
+      followCameraForUnitMovementForUnit: followCameraForUnitMovementForUnit,
       onUnitMovementCameraComplete: onUnitMovementCameraComplete,
-      followUnitMovementCamera: followUnitMovementCamera,
       canAutoFocusMapTarget: canAutoFocusMapTarget,
       l10n: l10n,
     );

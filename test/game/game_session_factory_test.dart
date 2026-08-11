@@ -40,5 +40,16 @@ void main() {
       expect(session.initialCamera?.zoom, 3);
       expect(session.gameMode, GameMode.multiplayer);
     });
+
+    test('applies the preferred map view when the map supports it', () {
+      final session = const GameSessionFactory().create(
+        mapData: _map(),
+        saveId: 'save_1',
+        imagePath: '/tmp/map.png',
+        preferredViewMode: MapViewMode.tile,
+      );
+
+      expect(session.viewMode, MapViewMode.tile);
+    });
   });
 }

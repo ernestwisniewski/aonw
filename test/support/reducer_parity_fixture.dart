@@ -6,12 +6,13 @@ import 'package:aonw_core/protocol.dart';
 
 import 'reducer_parity_accepted_semantics.dart';
 import 'reducer_parity_contract.dart';
+import 'reducer_parity_fixture_infrastructure_validation.dart';
+import 'reducer_parity_json.dart';
 import 'reducer_parity_production_semantics.dart';
 import 'reducer_parity_rush_semantics.dart';
 
 part 'reducer_parity_fixture_city_expansion_validation.dart';
 part 'reducer_parity_fixture_city_founding_validation.dart';
-part 'reducer_parity_fixture_infrastructure_validation.dart';
 part 'reducer_parity_fixture_production_validation.dart';
 part 'reducer_parity_fixture_rush_acceptance_validation.dart';
 part 'reducer_parity_fixture_rush_validation.dart';
@@ -180,7 +181,7 @@ abstract final class ReducerParityCorpus {
     _requireCanonicalDomainStateJson(id, state, stateJson);
     final commandJson = _asMap(input['command'], '$id.command');
     final command = DomainCommandCodec.fromJson(commandJson);
-    if (!_jsonDeepEquals(DomainCommandCodec.toJson(command), commandJson)) {
+    if (!jsonDeepEquals(DomainCommandCodec.toJson(command), commandJson)) {
       throw FormatException('$id.command is not in canonical serialized form.');
     }
 
@@ -289,8 +290,8 @@ abstract final class ReducerParityCorpus {
       fixture.state,
     );
     if (!fixture.expectedAccepted) {
-      if (!_jsonDeepEquals(fixture.expectedSave, inputSave) ||
-          !_jsonDeepEquals(fixture.expectedState, inputState) ||
+      if (!jsonDeepEquals(fixture.expectedSave, inputSave) ||
+          !jsonDeepEquals(fixture.expectedState, inputState) ||
           fixture.expectedEvents.isNotEmpty ||
           fixture.expectedReason == null) {
         _fail(fixture, 'rejected result must preserve canonical input');
@@ -299,8 +300,8 @@ abstract final class ReducerParityCorpus {
     }
 
     final changed =
-        !_jsonDeepEquals(fixture.expectedSave, inputSave) ||
-        !_jsonDeepEquals(fixture.expectedState, inputState) ||
+        !jsonDeepEquals(fixture.expectedSave, inputSave) ||
+        !jsonDeepEquals(fixture.expectedState, inputState) ||
         fixture.expectedEvents.isNotEmpty;
     if (_acceptedFixtureLacksRequiredChange(fixture, changed)) {
       _fail(fixture, 'accepted fixture must have an observable domain change');
@@ -378,29 +379,9 @@ void _requireCanonicalJson(
   Object? canonical,
   Object? input,
 ) {
-  if (!_jsonDeepEquals(canonical, input)) {
+  if (!jsonDeepEquals(canonical, input)) {
     throw FormatException('$id.$field is not in canonical serialized form.');
   }
-}
-
-bool _jsonDeepEquals(Object? left, Object? right) {
-  if (identical(left, right)) return true;
-  if (left is Map<Object?, Object?> && right is Map<Object?, Object?>) {
-    if (left.length != right.length || !left.keys.every(right.containsKey)) {
-      return false;
-    }
-    return left.entries.every(
-      (entry) => _jsonDeepEquals(entry.value, right[entry.key]),
-    );
-  }
-  if (left is List<Object?> && right is List<Object?>) {
-    if (left.length != right.length) return false;
-    for (var index = 0; index < left.length; index++) {
-      if (!_jsonDeepEquals(left[index], right[index])) return false;
-    }
-    return true;
-  }
-  return left == right;
 }
 
 Object? _reverseJsonMapEntries(Object? value) {

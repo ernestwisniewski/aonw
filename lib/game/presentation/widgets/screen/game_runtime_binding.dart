@@ -15,8 +15,10 @@ class GameRuntimeBinding extends ConsumerStatefulWidget {
   final GameRenderer renderer;
   final HexDisplaySettings displaySettings;
   final bool reduceMotion;
-  final bool followUnitMovementCamera;
-  final bool followEnemyUnitCamera;
+  final bool focusOwnUnitMovementCamera;
+  final bool followOwnUnitMovementCamera;
+  final bool focusEnemyUnitMovementCamera;
+  final bool followEnemyUnitMovementCamera;
   final bool cinematicCameraEnabled;
   final Widget child;
 
@@ -25,8 +27,10 @@ class GameRuntimeBinding extends ConsumerStatefulWidget {
     required this.renderer,
     required this.displaySettings,
     this.reduceMotion = false,
-    this.followUnitMovementCamera = false,
-    this.followEnemyUnitCamera = false,
+    this.focusOwnUnitMovementCamera = true,
+    this.followOwnUnitMovementCamera = false,
+    this.focusEnemyUnitMovementCamera = false,
+    this.followEnemyUnitMovementCamera = false,
     this.cinematicCameraEnabled = false,
     required this.child,
     super.key,
@@ -52,8 +56,14 @@ class _GameRuntimeBindingState extends ConsumerState<GameRuntimeBinding> {
         oldWidget.renderer != widget.renderer ||
         oldWidget.displaySettings != widget.displaySettings ||
         oldWidget.reduceMotion != widget.reduceMotion ||
-        oldWidget.followUnitMovementCamera != widget.followUnitMovementCamera ||
-        oldWidget.followEnemyUnitCamera != widget.followEnemyUnitCamera ||
+        oldWidget.focusOwnUnitMovementCamera !=
+            widget.focusOwnUnitMovementCamera ||
+        oldWidget.followOwnUnitMovementCamera !=
+            widget.followOwnUnitMovementCamera ||
+        oldWidget.focusEnemyUnitMovementCamera !=
+            widget.focusEnemyUnitMovementCamera ||
+        oldWidget.followEnemyUnitMovementCamera !=
+            widget.followEnemyUnitMovementCamera ||
         oldWidget.cinematicCameraEnabled != widget.cinematicCameraEnabled) {
       _syncRenderer();
     }
@@ -64,9 +74,13 @@ class _GameRuntimeBindingState extends ConsumerState<GameRuntimeBinding> {
       ..viewMode = widget.session.viewMode
       ..displaySettings = widget.displaySettings
       ..reduceMotion = widget.reduceMotion
-      ..followUnitMovementCamera = widget.followUnitMovementCamera
-      ..followEnemyUnitCamera = widget.followEnemyUnitCamera
-      ..cinematicCameraEnabled = widget.cinematicCameraEnabled;
+      ..applyMovementCameraSettings((
+        focusOwnUnitMovementCamera: widget.focusOwnUnitMovementCamera,
+        followOwnUnitMovementCamera: widget.followOwnUnitMovementCamera,
+        focusEnemyUnitMovementCamera: widget.focusEnemyUnitMovementCamera,
+        followEnemyUnitMovementCamera: widget.followEnemyUnitMovementCamera,
+        cinematicCameraEnabled: widget.cinematicCameraEnabled,
+      ));
     _applyCurrentStateIfReady();
   }
 

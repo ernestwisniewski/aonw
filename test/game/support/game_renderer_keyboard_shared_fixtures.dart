@@ -1,6 +1,9 @@
-part of '../game_renderer_keyboard_test.dart';
+import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/objective.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 
-WorldMap _minimalMap() => WorldMap(
+WorldMap kbMinimalMap() => WorldMap(
   cols: 2,
   rows: 2,
   tiles: [
@@ -16,7 +19,7 @@ WorldMap _minimalMap() => WorldMap(
   ],
 );
 
-WorldMap _map(int cols, int rows) => WorldMap(
+WorldMap kbMap(int cols, int rows) => WorldMap(
   cols: cols,
   rows: rows,
   tiles: [
@@ -32,7 +35,7 @@ WorldMap _map(int cols, int rows) => WorldMap(
   ],
 );
 
-WorldMap _mapWithObjective() => WorldMap(
+WorldMap kbObjectiveMap() => WorldMap(
   cols: 3,
   rows: 3,
   objectives: const [
@@ -56,5 +59,5 @@ WorldMap _mapWithObjective() => WorldMap(
   ],
 );
 
-WorldTile _tile(WorldMap map, int col, int row) =>
+WorldTile kbTile(WorldMap map, int col, int row) =>
     map.tiles.firstWhere((tile) => tile.col == col && tile.row == row);

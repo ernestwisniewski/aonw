@@ -2,7 +2,7 @@ part of '../game_renderer_keyboard_test.dart';
 
 void _registerRendererInteractionObjectiveCityScenarios() {
   test('occupied hex tap cycles unit, hex, terrain popup, and unit', () async {
-    final map = _mapWithObjective();
+    final map = kbObjectiveMap();
     final reducer = GameStateReducer(mapData: map);
     final commands = <GameIntent>[];
     final inspectedArtifacts = <WorldArtifact>[];
@@ -49,14 +49,14 @@ void _registerRendererInteractionObjectiveCityScenarios() {
     addTearDown(game.disposeRenderer);
     game.applyState(state);
 
-    await game.handleTileTappedForTesting(_tile(map, 1, 1));
+    await game.handleTileTappedForTesting(kbTile(map, 1, 1));
     await Future<void>.delayed(Duration.zero);
 
     expect(commands, [const TileTappedCommand(1, 1)]);
     expect(state.selection?.type, GameSelectionType.unit);
     expect(state.selection?.unit?.id, 'scout_1');
 
-    await game.handleTileTappedForTesting(_tile(map, 1, 1));
+    await game.handleTileTappedForTesting(kbTile(map, 1, 1));
     await Future<void>.delayed(Duration.zero);
 
     expect(commands, [
@@ -70,7 +70,7 @@ void _registerRendererInteractionObjectiveCityScenarios() {
     expect(inspectedObjectives, isEmpty);
     expect(inspectedTiles, isEmpty);
 
-    await game.handleTileTappedForTesting(_tile(map, 1, 1));
+    await game.handleTileTappedForTesting(kbTile(map, 1, 1));
 
     expect(inspectedTiles.map((tile) => '${tile.col}:${tile.row}'), ['1:1']);
     expect(inspectedArtifacts, isEmpty);
@@ -80,7 +80,7 @@ void _registerRendererInteractionObjectiveCityScenarios() {
       const SelectTileCommand(1, 1),
     ]);
 
-    await game.handleTileTappedForTesting(_tile(map, 1, 1));
+    await game.handleTileTappedForTesting(kbTile(map, 1, 1));
     await Future<void>.delayed(Duration.zero);
 
     expect(commands, [
@@ -92,7 +92,7 @@ void _registerRendererInteractionObjectiveCityScenarios() {
     expect(state.selection?.unit?.id, 'scout_1');
   });
   test('hex tap cycles artifact, objective, then hex popup', () async {
-    final map = _mapWithObjective();
+    final map = kbObjectiveMap();
     final reducer = GameStateReducer(mapData: map);
     final commands = <GameIntent>[];
     final inspectedArtifacts = <WorldArtifact>[];
@@ -130,32 +130,32 @@ void _registerRendererInteractionObjectiveCityScenarios() {
     addTearDown(game.disposeRenderer);
     game.applyState(state);
 
-    await game.handleTileTappedForTesting(_tile(map, 1, 1));
+    await game.handleTileTappedForTesting(kbTile(map, 1, 1));
     await Future<void>.delayed(Duration.zero);
 
     expect(commands, [const TileTappedCommand(1, 1)]);
     expect(state.selection?.type, GameSelectionType.tile);
 
-    await game.handleTileTappedForTesting(_tile(map, 1, 1));
+    await game.handleTileTappedForTesting(kbTile(map, 1, 1));
 
     expect(inspectedArtifacts, [artifact]);
     expect(inspectedObjectives, isEmpty);
     expect(inspectedTiles, isEmpty);
 
-    await game.handleTileTappedForTesting(_tile(map, 1, 1));
+    await game.handleTileTappedForTesting(kbTile(map, 1, 1));
 
     expect(inspectedObjectives.map((objective) => objective.definition.id), [
       'pass_1',
     ]);
     expect(inspectedTiles, isEmpty);
 
-    await game.handleTileTappedForTesting(_tile(map, 1, 1));
+    await game.handleTileTappedForTesting(kbTile(map, 1, 1));
 
     expect(inspectedTiles.map((tile) => '${tile.col}:${tile.row}'), ['1:1']);
     expect(commands, [const TileTappedCommand(1, 1)]);
   });
   test('city hex tap opens objective after selecting the city', () async {
-    final map = _mapWithObjective();
+    final map = kbObjectiveMap();
     final reducer = GameStateReducer(mapData: map);
     final commands = <GameIntent>[];
     final inspectedObjectives = <MapObjectiveProgress>[];
@@ -205,7 +205,7 @@ void _registerRendererInteractionObjectiveCityScenarios() {
   test(
     'city hex with unit cycles city, unit, terrain popup, hex, and city',
     () async {
-      final map = _map(3, 3);
+      final map = kbMap(3, 3);
       final reducer = GameStateReducer(mapData: map);
       final commands = <GameIntent>[];
       final inspectedTiles = <WorldTile>[];
@@ -244,14 +244,14 @@ void _registerRendererInteractionObjectiveCityScenarios() {
       addTearDown(game.disposeRenderer);
       game.applyState(state);
 
-      await game.handleTileTappedForTesting(_tile(map, 1, 1));
+      await game.handleTileTappedForTesting(kbTile(map, 1, 1));
       await Future<void>.delayed(Duration.zero);
 
       expect(commands, [const TileTappedCommand(1, 1)]);
       expect(state.selection?.type, GameSelectionType.city);
       expect(state.selection?.city?.id, city.id);
 
-      await game.handleTileTappedForTesting(_tile(map, 1, 1));
+      await game.handleTileTappedForTesting(kbTile(map, 1, 1));
       await Future<void>.delayed(Duration.zero);
 
       expect(commands, [
@@ -261,7 +261,7 @@ void _registerRendererInteractionObjectiveCityScenarios() {
       expect(state.selection?.type, GameSelectionType.unit);
       expect(state.selection?.unit?.id, unit.id);
 
-      await game.handleTileTappedForTesting(_tile(map, 1, 1));
+      await game.handleTileTappedForTesting(kbTile(map, 1, 1));
 
       expect(inspectedTiles.map((tile) => '${tile.col}:${tile.row}'), ['1:1']);
       expect(commands, [
@@ -270,7 +270,7 @@ void _registerRendererInteractionObjectiveCityScenarios() {
       ]);
       expect(state.selection?.type, GameSelectionType.unit);
 
-      await game.handleTileTappedForTesting(_tile(map, 1, 1));
+      await game.handleTileTappedForTesting(kbTile(map, 1, 1));
       await Future<void>.delayed(Duration.zero);
 
       expect(commands, [
@@ -282,7 +282,7 @@ void _registerRendererInteractionObjectiveCityScenarios() {
       expect(state.selection?.tile?.col, 1);
       expect(state.selection?.tile?.row, 1);
 
-      await game.handleTileTappedForTesting(_tile(map, 1, 1));
+      await game.handleTileTappedForTesting(kbTile(map, 1, 1));
       await Future<void>.delayed(Duration.zero);
 
       expect(commands, [
@@ -296,7 +296,7 @@ void _registerRendererInteractionObjectiveCityScenarios() {
     },
   );
   test('tile tap during city expansion stays a renderer intent', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final commands = <GameIntent>[];
     final game =
         GameRenderer(
@@ -316,7 +316,7 @@ void _registerRendererInteractionObjectiveCityScenarios() {
         );
     addTearDown(game.disposeRenderer);
 
-    await game.handleTileTappedForTesting(_tile(map, 1, 2));
+    await game.handleTileTappedForTesting(kbTile(map, 1, 2));
     await Future<void>.delayed(Duration.zero);
 
     expect(commands, [const TileTappedCommand(1, 2)]);

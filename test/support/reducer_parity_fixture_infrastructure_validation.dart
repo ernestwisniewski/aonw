@@ -1,32 +1,32 @@
-part of 'reducer_parity_fixture.dart';
+import 'package:aonw_core/domain.dart';
 
-void _requireAcceptedParityInfrastructure(
-  ReducerParityFixture fixture,
-  DomainState state,
-  List<GameEvent> events,
-) {
-  final command = fixture.command as BuildRoadCommand;
-  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||
-      events.isNotEmpty) {
-    ReducerParityCorpus._fail(
-      fixture,
-      'must preserve save metadata without emitting events',
-    );
+import 'reducer_parity_json.dart';
+
+String? validateAcceptedRoadInfrastructure({
+  required BuildRoadCommand command,
+  required GameSave save,
+  required DomainState before,
+  required DomainState after,
+  required List<GameEvent> events,
+  required Map<String, dynamic> expectedSave,
+  required Map<String, dynamic> actualSave,
+  required Map<String, dynamic> expectedState,
+}) {
+  if (!jsonDeepEquals(expectedSave, actualSave) || events.isNotEmpty) {
+    return 'must preserve save metadata without emitting events';
   }
 
-  final workerIndex = fixture.state.units.indexWhere(
+  final workerIndex = before.units.indexWhere(
     (unit) => unit.id == command.unitId,
   );
   if (workerIndex < 0 ||
-      fixture.state.units.where((unit) => unit.id == command.unitId).length !=
-          1) {
-    ReducerParityCorpus._fail(fixture, 'must target one existing worker');
+      before.units.where((unit) => unit.id == command.unitId).length != 1) {
+    return 'must target one existing worker';
   }
-  _requireWorkerSentinel(fixture, command.unitId);
 
-  final worker = fixture.state.units[workerIndex];
+  final worker = before.units[workerIndex];
   final totalTurns = RoadConstructionRules.buildTurns(
-    fixture.save.matchRules.paceBalance,
+    save.matchRules.paceBalance,
   );
   final expectedWorker = worker
       .copyWith(movementPoints: 0)
@@ -40,27 +40,22 @@ void _requireAcceptedParityInfrastructure(
           totalTurns: totalTurns,
         ),
       );
-  final expectedState = fixture.state.copyWith(
+  final derivedState = before.copyWith(
     units: [
-      for (var index = 0; index < fixture.state.units.length; index++)
-        if (index == workerIndex)
-          expectedWorker
-        else
-          fixture.state.units[index],
+      for (var index = 0; index < before.units.length; index++)
+        if (index == workerIndex) expectedWorker else before.units[index],
     ],
   );
 
-  if (!_jsonDeepEquals(
-        fixture.expectedState,
-        CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
+  if (!jsonDeepEquals(
+        expectedState,
+        CanonicalGameSnapshotCodec.encodeDomainState(derivedState),
       ) ||
-      !_jsonDeepEquals(
-        CanonicalGameSnapshotCodec.encodeDomainState(state),
-        CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
+      !jsonDeepEquals(
+        CanonicalGameSnapshotCodec.encodeDomainState(after),
+        CanonicalGameSnapshotCodec.encodeDomainState(derivedState),
       )) {
-    ReducerParityCorpus._fail(
-      fixture,
-      'must start only the independently derived road-construction job',
-    );
+    return 'must start only the independently derived road-construction job';
   }
+  return null;
 }

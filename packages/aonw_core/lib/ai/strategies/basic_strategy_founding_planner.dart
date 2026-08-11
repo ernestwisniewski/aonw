@@ -5,7 +5,6 @@ import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/ai/strategies/basic_strategy_founding_move_planner.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 part 'basic_strategy_founding_rules.dart';
@@ -33,11 +32,7 @@ final class BasicStrategyFoundingPlanner {
       for (final city in knownCities) city.center,
       for (final city in knownCities) ...city.controlledHexes,
     };
-    final pathfinder = UnitMovementPathfinder(
-      mapData: view.mapData,
-      units: view.movementBlockingUnits,
-      costResolver: view.traversalCostResolver,
-    );
+    final pathfinder = view.movementPathfinder();
     final occupied = <String>{
       for (final unit in view.ownUnits) _key(unit.col, unit.row),
       for (final unit in view.visibleEnemyUnits) _key(unit.col, unit.row),

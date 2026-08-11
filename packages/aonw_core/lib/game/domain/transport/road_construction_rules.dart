@@ -40,25 +40,9 @@ abstract final class RoadConstructionRules {
     required MapTileLookup mapTiles,
     bool requireReadyWorker = true,
   }) {
-    if (!unit.isWorker) {
-      return const RoadConstructionLegality.blocked(
-        RoadConstructionBlocker.notWorker,
-      );
-    }
-    if (requireReadyWorker && unit.isWorking) {
-      return const RoadConstructionLegality.blocked(
-        RoadConstructionBlocker.workerBusy,
-      );
-    }
-    if (requireReadyWorker && unit.movementPoints <= 0) {
-      return const RoadConstructionLegality.blocked(
-        RoadConstructionBlocker.noMovementPoints,
-      );
-    }
-    if (requireReadyWorker && unit.queuedPath != null) {
-      return const RoadConstructionLegality.blocked(
-        RoadConstructionBlocker.queuedPathActive,
-      );
+    final workerBlocker = _workerBlocker(unit, requireReadyWorker);
+    if (workerBlocker != null) {
+      return RoadConstructionLegality.blocked(workerBlocker);
     }
     final tile = mapTiles.tileAt(unit.col, unit.row);
     if (tile == null) {
@@ -67,29 +51,51 @@ abstract final class RoadConstructionRules {
       );
     }
     final hex = HexCoord(col: unit.col, row: unit.row);
-    if (network.byHex.containsKey(hex)) {
-      return const RoadConstructionLegality.blocked(
-        RoadConstructionBlocker.existingRoad,
-      );
+    final locationBlocker = _locationBlocker(unit, hex, cities, network);
+    if (locationBlocker != null) {
+      return RoadConstructionLegality.blocked(locationBlocker);
     }
-    for (final city in cities) {
-      if (city.center.col == unit.col && city.center.row == unit.row) {
-        return const RoadConstructionLegality.blocked(
-          RoadConstructionBlocker.cityCenter,
-        );
-      }
-      if (city.ownerPlayerId != unit.ownerPlayerId &&
-          city.controlsHex(CityHex(col: hex.col, row: hex.row))) {
-        return const RoadConstructionLegality.blocked(
-          RoadConstructionBlocker.enemyTerritory,
-        );
-      }
-    }
-    if (UnitMovementCostRules.costToEnterTile(tile, unitType: unit.type).blocked) {
+    if (UnitMovementCostRules.costToEnterTile(
+      tile,
+      unitType: unit.type,
+    ).blocked) {
       return const RoadConstructionLegality.blocked(
         RoadConstructionBlocker.impassableTerrain,
       );
     }
     return const RoadConstructionLegality.allowed();
   }
+}
+
+RoadConstructionBlocker? _workerBlocker(
+  GameUnit unit,
+  bool requireReadyWorker,
+) {
+  if (!unit.isWorker) return RoadConstructionBlocker.notWorker;
+  if (!requireReadyWorker) return null;
+  if (unit.isWorking) return RoadConstructionBlocker.workerBusy;
+  if (unit.movementPoints <= 0) return RoadConstructionBlocker.noMovementPoints;
+  if (unit.queuedPath != null) return RoadConstructionBlocker.queuedPathActive;
+  return null;
+}
+
+RoadConstructionBlocker? _locationBlocker(
+  GameUnit unit,
+  HexCoord hex,
+  Iterable<GameCity> cities,
+  TransportNetworkState network,
+) {
+  if (network.byHex.containsKey(hex)) {
+    return RoadConstructionBlocker.existingRoad;
+  }
+  for (final city in cities) {
+    if (city.center.col == unit.col && city.center.row == unit.row) {
+      return RoadConstructionBlocker.cityCenter;
+    }
+    if (city.ownerPlayerId != unit.ownerPlayerId &&
+        city.controlsHex(CityHex(col: hex.col, row: hex.row))) {
+      return RoadConstructionBlocker.enemyTerritory;
+    }
+  }
+  return null;
 }

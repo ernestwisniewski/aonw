@@ -4,6 +4,7 @@ import 'package:aonw/game/application/services/game_session_factory.dart';
 import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/providers/session/repository_providers.dart';
 import 'package:aonw/map/providers/map_providers.dart';
+import 'package:aonw/shared/providers/gameplay_settings_provider.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
@@ -27,12 +28,17 @@ class GameSessionNotifier extends _$GameSessionNotifier {
     // without recreating the active Flame session.
     final initialCamera = await ref.read(savedCameraProvider(saveId).future);
     final save = await ref.read(gameSaveProvider(saveId).future);
+    await ref.read(gameplaySettingsProvider.notifier).ensureLoaded();
+    final preferredViewMode = ref
+        .read(gameplaySettingsProvider)
+        .preferredMapViewMode;
     return sessionFactory.create(
       mapData: mapData,
       imagePath: imagePath,
       saveId: saveId,
       initialCamera: initialCamera,
       gameMode: save?.gameMode ?? GameMode.hotSeat,
+      preferredViewMode: preferredViewMode,
     );
   }
 

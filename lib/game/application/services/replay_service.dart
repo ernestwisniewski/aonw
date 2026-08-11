@@ -142,36 +142,15 @@ class ReplayStep {
       TradeArtifactCommand(:final playerId) ||
       OpenResourceTradeCommand(:final playerId) ||
       OpenResourceExchangeCommand(:final playerId) => playerId,
-      MoveUnitCommand(:final unitId) ||
-      CancelUnitActionCommand(:final unitId) ||
-      SkipUnitTurnCommand(:final unitId) ||
-      FortifyUnitCommand(:final unitId) ||
-      AutomatedUnitCommand(:final unitId) ||
-      AssignMerchantTradeRouteCommand(:final unitId) ||
-      MoveMerchantToCityCommand(:final unitId) ||
-      DetachTroopCommand(:final unitId) ||
-      FoundCityCommand(founderId: final unitId) ||
-      SelectWorkerImprovementCommand(:final unitId) ||
-      BuildRoadCommand(:final unitId) ||
-      ConfirmWorkerImprovementCommand(:final unitId) ||
-      CancelWorkerJobCommand(:final unitId) ||
-      AssignWorkerToHexCommand(:final unitId) ||
-      CancelWorkerAssignmentCommand(:final unitId) ||
-      AttackHexCommand(attackerUnitId: final unitId) ||
-      StartArtifactExcavationCommand(:final unitId) ||
-      StoreArtifactInCityCommand(
-        :final unitId,
+      UnitDomainCommand(:final unitId) ||
+      AttackHexCommand(
+        attackerUnitId: final unitId,
       ) => _unitOwner(unitId, state: state, previousState: previousState),
-      StartBuildingCommand(:final cityId) ||
-      StartUnitProductionCommand(:final cityId) ||
-      StartCityProjectCommand(:final cityId) ||
-      StartWonderCommand(:final cityId) ||
-      SetCitySpecializationCommand(:final cityId) ||
-      RushProductionCommand(:final cityId) ||
-      ToggleWorkedHexCommand(:final cityId) ||
-      SelectCityExpansionHexCommand(
-        :final cityId,
-      ) => _cityOwner(cityId, state: state, previousState: previousState),
+      CityTargetDomainCommand(:final cityId) => _cityOwner(
+        cityId,
+        state: state,
+        previousState: previousState,
+      ),
     };
   }
 

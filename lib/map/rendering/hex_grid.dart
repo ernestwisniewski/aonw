@@ -118,30 +118,16 @@ class HexGrid<T extends MapTileSource<WorldTile>> extends PositionComponent
       );
       return;
     }
-
-    nestedContexts?.add(locationContext);
-    final coords = HexGeometry.tileAt(
-      point: locationContext,
-      hexRadius: config.hexRadius,
-      cols: mapData.cols,
-      rows: mapData.rows,
+    yield* _componentsAtGridLocation(
+      grid: this,
+      mapData: mapData,
+      config: config,
+      tilesByCoordinate: _tilesByCoordinate,
+      locationContext: locationContext,
+      nestedContexts: nestedContexts,
+      transformContext: transformContext,
+      checkContains: checkContains,
     );
-    final tile = coords == null
-        ? null
-        : _tilesByCoordinate[(coords.col, coords.row)];
-    if (tile != null) {
-      final childContext = transformContext(tile, locationContext);
-      if (childContext != null) {
-        yield* tile.componentsAtLocation(
-          childContext,
-          nestedContexts,
-          transformContext,
-          checkContains,
-        );
-      }
-    }
-    if (checkContains(this, locationContext)) yield this;
-    nestedContexts?.removeLast();
   }
 
   set viewMode(MapViewMode value) {
@@ -160,42 +146,6 @@ class HexGrid<T extends MapTileSource<WorldTile>> extends PositionComponent
   Future<void> onLoad() async {
     await super.onLoad();
     rebuild();
-  }
-
-  /// Builds a height lookup map from WorldMap: (col, row) → height.
-  Map<(int, int), int> buildHeightMap() {
-    return {for (final t in mapData.tiles) (t.col, t.row): t.height};
-  }
-
-  /// Returns neighborHeights for a tile at (col, row):
-  /// [bottom-right neighbor height, bottom neighbor height, bottom-left neighbor height].
-  /// null if the neighbor does not exist in the map.
-  List<int?> neighborHeights(int col, int row, Map<(int, int), int> heightMap) {
-    final isOdd = col.isOdd;
-    final bottomRight = isOdd ? (col + 1, row + 1) : (col + 1, row);
-    final bottom = (col, row + 1);
-    final bottomLeft = isOdd ? (col - 1, row + 1) : (col - 1, row);
-    return [heightMap[bottomRight], heightMap[bottom], heightMap[bottomLeft]];
-  }
-
-  List<int?> outlineNeighborHeights(
-    int col,
-    int row,
-    Map<(int, int), int> heightMap,
-  ) {
-    final neighbors = HexGridTopology.neighbors(col: col, row: row);
-    final edgeNeighbors = [
-      neighbors[1],
-      neighbors[2],
-      neighbors[3],
-      neighbors[4],
-      neighbors[5],
-      neighbors[0],
-    ];
-    return [
-      for (final neighbor in edgeNeighbors)
-        heightMap[(neighbor.col, neighbor.row)],
-    ];
   }
 
   HexTile buildTileComponent({
@@ -397,4 +347,78 @@ class HexGrid<T extends MapTileSource<WorldTile>> extends PositionComponent
   }
 }
 
+extension HexGridTileBuilding<T extends MapTileSource<WorldTile>>
+    on HexGrid<T> {
+  /// Builds a height lookup map from WorldMap: (col, row) → height.
+  Map<(int, int), int> buildHeightMap() {
+    return {for (final t in mapData.tiles) (t.col, t.row): t.height};
+  }
+
+  /// Returns neighbor heights in bottom-right, bottom, bottom-left order.
+  List<int?> neighborHeights(int col, int row, Map<(int, int), int> heightMap) {
+    final isOdd = col.isOdd;
+    final bottomRight = isOdd ? (col + 1, row + 1) : (col + 1, row);
+    final bottom = (col, row + 1);
+    final bottomLeft = isOdd ? (col - 1, row + 1) : (col - 1, row);
+    return [heightMap[bottomRight], heightMap[bottom], heightMap[bottomLeft]];
+  }
+
+  List<int?> outlineNeighborHeights(
+    int col,
+    int row,
+    Map<(int, int), int> heightMap,
+  ) {
+    final neighbors = HexGridTopology.neighbors(col: col, row: row);
+    final edgeNeighbors = [
+      neighbors[1],
+      neighbors[2],
+      neighbors[3],
+      neighbors[4],
+      neighbors[5],
+      neighbors[0],
+    ];
+    return [
+      for (final neighbor in edgeNeighbors)
+        heightMap[(neighbor.col, neighbor.row)],
+    ];
+  }
+}
+
 typedef WorldMapGrid = HexGrid<WorldMap>;
+
+Iterable<Component> _componentsAtGridLocation<L>({
+  required PositionComponent grid,
+  required MapTileSource<WorldTile> mapData,
+  required MapConfig config,
+  required Map<(int, int), HexTile> tilesByCoordinate,
+  required L locationContext,
+  required List<L>? nestedContexts,
+  required L? Function(CoordinateTransform transform, L context)
+  transformContext,
+  required bool Function(Component component, L context) checkContains,
+}) sync* {
+  final point = locationContext as Vector2;
+  nestedContexts?.add(locationContext);
+  final coords = HexGeometry.tileAt(
+    point: point,
+    hexRadius: config.hexRadius,
+    cols: mapData.cols,
+    rows: mapData.rows,
+  );
+  final tile = coords == null
+      ? null
+      : tilesByCoordinate[(coords.col, coords.row)];
+  if (tile != null) {
+    final childContext = transformContext(tile, locationContext);
+    if (childContext != null) {
+      yield* tile.componentsAtLocation(
+        childContext,
+        nestedContexts,
+        transformContext,
+        checkContains,
+      );
+    }
+  }
+  if (checkContains(grid, locationContext)) yield grid;
+  nestedContexts?.removeLast();
+}

@@ -14,6 +14,7 @@ import 'package:aonw_core/game/domain/transport.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 part 'game_view_projection_helpers.dart';
 
@@ -146,6 +147,19 @@ class GameView {
 
   late final UnitTraversalCostResolver traversalCostResolver =
       InfrastructureAwareTraversalCostResolver(transportNetwork);
+
+  UnitMovementPathfinder movementPathfinder({
+    MapTraversalView? mapData,
+    Iterable<GameUnit>? units,
+    bool Function(MapTileView tile)? canEnterTile,
+  }) {
+    return UnitMovementPathfinder(
+      mapData: mapData ?? this.mapData,
+      units: units ?? movementBlockingUnits,
+      costResolver: traversalCostResolver,
+      canEnterTile: canEnterTile,
+    );
+  }
 
   late final List<GameCity> citiesWithEmptyProduction = List.unmodifiable([
     for (final city in ownCities)

@@ -64,6 +64,13 @@ void main() {
       ]);
     });
 
+    test('road icon has perspective edges and dashed lane markings', () {
+      expect(GameIcons.road.paths, hasLength(5));
+      for (final pathData in GameIcons.road.paths) {
+        expect(GameIconPathParser.parse(pathData).computeMetrics(), isNotEmpty);
+      }
+    });
+
     testWidgets('paints all shared icons without parser exceptions', (
       tester,
     ) async {
@@ -85,13 +92,14 @@ void main() {
               GameIcon(GameIcons.chevronUp, size: 24, color: Colors.white),
               GameIcon(GameIcons.population, size: 24, color: Colors.white),
               GameIcon(GameIcons.water, size: 24, color: Colors.white),
+              GameIcon(GameIcons.road, size: 24, color: Colors.white),
             ],
           ),
         ),
       );
 
       expect(tester.takeException(), isNull);
-      expect(find.byType(GameIcon), findsNWidgets(14));
+      expect(find.byType(GameIcon), findsNWidgets(15));
     });
   });
 }

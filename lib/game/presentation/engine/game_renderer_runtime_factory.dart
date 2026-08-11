@@ -68,9 +68,9 @@ final class GameRendererRuntimeBindings {
     required this.onCancelWorkerActionSelection,
     required this.onConfirmMovePreview,
     required this.moveCameraForUnitMovement,
-    required this.moveCameraForUnitMovementForUnit,
+    required this.focusCameraForUnitMovementForUnit,
+    required this.followCameraForUnitMovementForUnit,
     required this.onUnitMovementCameraComplete,
-    required this.followUnitMovementCamera,
     required this.canAutoFocusMapTarget,
     required this.onTileTapped,
     required this.syncFastCameraRendering,
@@ -113,9 +113,9 @@ final class GameRendererRuntimeBindings {
   final void Function(String unitId) onCancelWorkerActionSelection;
   final void Function(int col, int row) onConfirmMovePreview;
   final bool Function() moveCameraForUnitMovement;
-  final bool Function(String unitId) moveCameraForUnitMovementForUnit;
+  final bool Function(String unitId) focusCameraForUnitMovementForUnit;
+  final bool Function(String unitId) followCameraForUnitMovementForUnit;
   final Future<void> Function(String unitId) onUnitMovementCameraComplete;
-  final bool Function() followUnitMovementCamera;
   final bool Function(int col, int row) canAutoFocusMapTarget;
   final Future<void> Function(WorldTile tile) onTileTapped;
   final void Function(double dt) syncFastCameraRendering;
@@ -211,10 +211,11 @@ abstract final class GameRendererRuntimeFactory {
       displaySettings: () => stateSync.displaySettings,
       reduceMotion: () => stateSync.reduceMotion,
       moveCameraForUnitMovement: bindings.moveCameraForUnitMovement,
-      moveCameraForUnitMovementForUnit:
-          bindings.moveCameraForUnitMovementForUnit,
+      focusCameraForUnitMovementForUnit:
+          bindings.focusCameraForUnitMovementForUnit,
+      followCameraForUnitMovementForUnit:
+          bindings.followCameraForUnitMovementForUnit,
       onUnitMovementCameraComplete: bindings.onUnitMovementCameraComplete,
-      followUnitMovementCamera: bindings.followUnitMovementCamera,
       canAutoFocusMapTarget: bindings.canAutoFocusMapTarget,
       onTileTapped: bindings.onTileTapped,
       syncAfterAction: stateSync.syncAfterAction,

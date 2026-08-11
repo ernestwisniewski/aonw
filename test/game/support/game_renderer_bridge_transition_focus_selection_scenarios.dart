@@ -4,7 +4,7 @@ void _registerRendererTransitionFocusSelectionScenarios() {
   test(
     'keeps the initial active player centered when the viewport arrives late',
     () async {
-      final map = _map(3, 3);
+      final map = kbMap(3, 3);
       final commander = GameUnit.startingCommander(
         ownerPlayerId: 'player_1',
         col: 1,
@@ -38,7 +38,7 @@ void _registerRendererTransitionFocusSelectionScenarios() {
   test(
     'applies new-game initial focus after restoring the zero camera',
     () async {
-      final map = _map(3, 3);
+      final map = kbMap(3, 3);
       final commander = GameUnit.startingCommander(
         ownerPlayerId: 'player_1',
         col: 1,
@@ -68,7 +68,7 @@ void _registerRendererTransitionFocusSelectionScenarios() {
   test(
     'switches selection from a later unit to an earlier unit without key conflicts',
     () async {
-      final map = _map(3, 3);
+      final map = kbMap(3, 3);
       final commander = GameUnit.startingCommander(
         ownerPlayerId: 'player_1',
         col: 0,
@@ -91,7 +91,7 @@ void _registerRendererTransitionFocusSelectionScenarios() {
             activePlayerId: 'player_1',
             units: [commander, settler],
             interaction: InteractionState(
-              selection: GameSelection.unit(settler, tile: _tile(map, 1, 0)),
+              selection: GameSelection.unit(settler, tile: kbTile(map, 1, 0)),
             ),
           ),
         )
@@ -104,7 +104,7 @@ void _registerRendererTransitionFocusSelectionScenarios() {
             activePlayerId: 'player_1',
             units: [commander, settler],
             interaction: InteractionState(
-              selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+              selection: GameSelection.unit(commander, tile: kbTile(map, 0, 0)),
             ),
           ),
         );
@@ -115,7 +115,7 @@ void _registerRendererTransitionFocusSelectionScenarios() {
   test(
     'smoothly focuses newly selected unit at marker center for current zoom',
     () async {
-      final map = _map(3, 3);
+      final map = kbMap(3, 3);
       final commander = GameUnit.startingCommander(
         ownerPlayerId: 'player_1',
         col: 1,
@@ -138,7 +138,7 @@ void _registerRendererTransitionFocusSelectionScenarios() {
         GameClientState(
           units: [commander],
           interaction: InteractionState(
-            selection: GameSelection.unit(commander, tile: _tile(map, 1, 1)),
+            selection: GameSelection.unit(commander, tile: kbTile(map, 1, 1)),
           ),
         ),
       );
@@ -156,7 +156,7 @@ void _registerRendererTransitionFocusSelectionScenarios() {
     },
   );
   test('can update selection without moving the camera', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final commander = GameUnit.startingCommander(
       ownerPlayerId: 'player_1',
       col: 1,
@@ -178,7 +178,7 @@ void _registerRendererTransitionFocusSelectionScenarios() {
       GameClientState(
         units: [commander],
         interaction: InteractionState(
-          selection: GameSelection.unit(commander, tile: _tile(map, 1, 1)),
+          selection: GameSelection.unit(commander, tile: kbTile(map, 1, 1)),
         ),
       ),
     );

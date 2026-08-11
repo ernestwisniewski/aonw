@@ -12,10 +12,11 @@ class GameSessionFactory {
     String? imagePath,
     CameraState? initialCamera,
     GameMode gameMode = GameMode.hotSeat,
+    MapViewMode preferredViewMode = MapViewMode.graphic,
   }) {
     return GameSession(
       mapData: mapData,
-      viewMode: MapViewMode.graphic,
+      viewMode: preferredViewMode,
       gameMode: gameMode,
       imagePath: imagePath,
       saveId: saveId,

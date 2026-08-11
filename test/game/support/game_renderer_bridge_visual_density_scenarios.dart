@@ -4,7 +4,7 @@ void _registerRendererVisualDensityScenarios() {
   test(
     'smoothly focuses newly selected city at city marker center for current zoom',
     () async {
-      final map = _map(3, 3);
+      final map = kbMap(3, 3);
       const city = GameCity(
         id: 'city_1',
         ownerPlayerId: 'player_1',
@@ -56,7 +56,7 @@ void _registerRendererVisualDensityScenarios() {
   );
 
   test('keeps persistent city labels visible when zoomed far out', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     const city = GameCity(
       id: 'city_1',
       ownerPlayerId: 'player_1',
@@ -99,7 +99,7 @@ void _registerRendererVisualDensityScenarios() {
   });
 
   test('hides peripheral unit marker details when zoomed far out', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final warrior = GameUnit(
       id: 'unit_1',
       ownerPlayerId: 'player_1',
@@ -144,7 +144,7 @@ void _registerRendererVisualDensityScenarios() {
   });
 
   test('keeps city labels visible below very far zoom', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     const city = GameCity(
       id: 'city_1',
       ownerPlayerId: 'player_1',
@@ -186,7 +186,7 @@ void _registerRendererVisualDensityScenarios() {
   });
 
   test('recomputes marker density when viewport class changes', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final warrior = GameUnit(
       id: 'unit_1',
       ownerPlayerId: 'player_1',
@@ -221,7 +221,7 @@ void _registerRendererVisualDensityScenarios() {
   });
 
   test('adds production particles only for active player cities', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final playerCity = GameCity(
       id: 'city_1',
       ownerPlayerId: 'player_1',

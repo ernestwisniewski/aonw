@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('fortification threat renderer effects', () {
-    test('shows blue threat borders while focusing the fortifier', () {
+    test('shows blue threat borders without moving the camera', () {
       final fortifier = _fortifier();
       final state = GameClientState(
         activePlayerId: 'player_1',
@@ -38,9 +38,7 @@ void main() {
         (5, 4, CombatHexAlertKind.fortificationThreat),
         (4, 5, CombatHexAlertKind.fortificationThreat),
       ]);
-      final camera = effects.last as SmoothCameraEffect;
-      expect((camera.col, camera.row), (3, 4));
-      expect(camera.duration, 0.85);
+      expect(effects.whereType<SmoothCameraEffect>(), isEmpty);
     });
 
     test('keeps the marker attached to the detected unit', () {
@@ -72,7 +70,8 @@ void main() {
       final alert = effects.first as ShowCombatHexAlertEffect;
       expect(alert.unitId, enemy.id);
       expect((alert.col, alert.row), (5, 4));
-      expect(effects.last, isA<SmoothCameraEffect>());
+      expect(effects, hasLength(1));
+      expect(effects.whereType<SmoothCameraEffect>(), isEmpty);
     });
 
     test('fails closed without a viewer identity', () {

@@ -1991,15 +1991,32 @@ class AppLocalizationsNl extends AppLocalizations {
   String get aiBatterySaverLabel => 'AI-batterijbesparing';
 
   @override
-  String get gameplaySectionTitle => 'Gameplay';
+  String get mapDisplaySectionTitle => 'Kaartweergave';
 
   @override
-  String get followUnitMovementCameraLabel =>
-      'Volg eenheidsbeweging met de camera';
+  String get cameraSectionTitle => 'Camera';
 
   @override
-  String get followEnemyUnitCameraLabel =>
-      'Volg vijandelijke eenheden met de camera';
+  String get automationSectionTitle => 'Automatisering';
+
+  @override
+  String get defaultMapViewModeLabel => 'Standaard kaartweergave';
+
+  @override
+  String get focusOwnUnitMovementCameraLabel =>
+      'Camera op de beweging van mijn eenheid richten';
+
+  @override
+  String get followOwnUnitMovementCameraLabel =>
+      'Beweging van mijn eenheid met de camera volgen';
+
+  @override
+  String get focusEnemyUnitMovementCameraLabel =>
+      'Camera op de beweging van een vijandelijke eenheid richten';
+
+  @override
+  String get followEnemyUnitMovementCameraLabel =>
+      'Beweging van een vijandelijke eenheid met de camera volgen';
 
   @override
   String get cinematicCameraLabel => 'Filmische camera';

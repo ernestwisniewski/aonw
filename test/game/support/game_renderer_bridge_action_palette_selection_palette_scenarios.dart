@@ -4,7 +4,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
   test(
     'tapping the active unit marker dispatches a tile tap without direct focus',
     () async {
-      final map = _map(3, 3);
+      final map = kbMap(3, 3);
       final commands = <GameIntent>[];
       final commander = GameUnit.startingCommander(
         ownerPlayerId: 'player_1',
@@ -22,7 +22,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
           GameClientState(
             units: [commander],
             interaction: InteractionState(
-              selection: GameSelection.unit(commander, tile: _tile(map, 1, 1)),
+              selection: GameSelection.unit(commander, tile: kbTile(map, 1, 1)),
             ),
           ),
         )
@@ -47,7 +47,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
   test(
     'tapping an enemy marker during attack targeting selects the target',
     () async {
-      final map = _map(3, 1);
+      final map = kbMap(3, 1);
       final commands = <GameIntent>[];
       final attacker = GameUnit(
         id: 'attacker_1',
@@ -88,7 +88,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
               },
             ),
             interaction: InteractionState(
-              selection: GameSelection.unit(attacker, tile: _tile(map, 0, 0)),
+              selection: GameSelection.unit(attacker, tile: kbTile(map, 0, 0)),
               pendingAction: const PendingAttackTargeting(
                 ownerPlayerId: 'player_1',
                 attackerUnitId: 'attacker_1',
@@ -115,7 +115,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
   test(
     'tapping a unit marker during move targeting dispatches a tile tap',
     () async {
-      final map = _map(3, 2);
+      final map = kbMap(3, 2);
       final commands = <GameIntent>[];
       final commander = GameUnit.produced(
         id: 'commander_1',
@@ -155,7 +155,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
               },
             ),
             interaction: InteractionState(
-              selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+              selection: GameSelection.unit(commander, tile: kbTile(map, 0, 0)),
               moveCommandActive: true,
             ),
           ),
@@ -177,7 +177,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
   test(
     'tapping a unit marker during city founding dispatches a tile tap',
     () async {
-      final map = _map(3, 2);
+      final map = kbMap(3, 2);
       final commands = <GameIntent>[];
       final settler = GameUnit.produced(
         id: 'settler_1',
@@ -217,7 +217,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
               },
             ),
             interaction: InteractionState(
-              selection: GameSelection.unit(settler, tile: _tile(map, 0, 0)),
+              selection: GameSelection.unit(settler, tile: kbTile(map, 0, 0)),
               cityFoundingDraft: CityFoundingDraft(
                 unitId: 'settler_1',
                 ownerPlayerId: 'player_1',
@@ -243,7 +243,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
   test(
     'tapping a city marker during move targeting dispatches a tile tap',
     () async {
-      final map = _map(3, 3);
+      final map = kbMap(3, 3);
       final commands = <GameIntent>[];
       const city = GameCity(
         id: 'city_1',
@@ -283,7 +283,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
               },
             ),
             interaction: InteractionState(
-              selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+              selection: GameSelection.unit(commander, tile: kbTile(map, 0, 0)),
               moveCommandActive: true,
             ),
           ),
@@ -300,7 +300,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
   test(
     'tapping a city marker during worker action selection dispatches a tile tap',
     () async {
-      final map = _map(3, 3);
+      final map = kbMap(3, 3);
       final commands = <GameIntent>[];
       const city = GameCity(
         id: 'city_1',
@@ -340,7 +340,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
               },
             ),
             interaction: InteractionState(
-              selection: GameSelection.unit(worker, tile: _tile(map, 0, 0)),
+              selection: GameSelection.unit(worker, tile: kbTile(map, 0, 0)),
               pendingAction: const PendingWorkerActionSelection(
                 ownerPlayerId: 'player_1',
                 unitId: 'worker_1',
@@ -358,7 +358,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
     },
   );
   test('shows worker action palette during worker action selection', () async {
-    final map = _map(3, 2);
+    final map = kbMap(3, 2);
     final worker = GameUnit.produced(
       id: 'worker_1',
       ownerPlayerId: 'player_1',
@@ -402,7 +402,7 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
           activePlayerCanAct: true,
           units: [worker],
           interaction: InteractionState(
-            selection: GameSelection.unit(worker, tile: _tile(map, 1, 0)),
+            selection: GameSelection.unit(worker, tile: kbTile(map, 1, 0)),
             pendingAction: const PendingWorkerActionSelection(
               ownerPlayerId: 'player_1',
               unitId: 'worker_1',

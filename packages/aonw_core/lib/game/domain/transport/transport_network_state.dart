@@ -39,8 +39,7 @@ final class TransportNetworkState {
   bool get isNotEmpty => byHex.isNotEmpty;
   Iterable<TransportSegment> get segments => byHex.values;
 
-  TransportSegment? at(int col, int row) =>
-      byHex[HexCoord(col: col, row: row)];
+  TransportSegment? at(int col, int row) => byHex[HexCoord(col: col, row: row)];
 
   bool hasOperationalRoadAt(int col, int row) {
     final segment = at(col, row);

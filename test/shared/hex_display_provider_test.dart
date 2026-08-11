@@ -53,6 +53,32 @@ void main() {
     expect(settings.wallTintColor, const Color(0xFF405060));
   });
 
+  test('loads and persists standard map visibility preferences', () async {
+    SharedPreferences.setMockInitialValues({
+      HexDisplayPreferenceKeys.showHeightBadge: true,
+      HexDisplayPreferenceKeys.showTerrain: true,
+      HexDisplayPreferenceKeys.showResources: false,
+      HexDisplayPreferenceKeys.showCitySites: true,
+      HexDisplayPreferenceKeys.showCityGrowth: true,
+    });
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(hexDisplayDefaultsBootstrapProvider.future);
+
+    final settings = container.read(hexDisplayProvider);
+    expect(settings.showHeightBadge, isTrue);
+    expect(settings.showTerrain, isTrue);
+    expect(settings.showResources, isFalse);
+    expect(settings.showCitySites, isTrue);
+    expect(settings.showCityGrowth, isTrue);
+
+    container.read(hexDisplayProvider.notifier).toggleTerrain();
+    await Future<void>.delayed(Duration.zero);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool(HexDisplayPreferenceKeys.showTerrain), isFalse);
+  });
+
   test('loads map colors over standard defaults', () async {
     const selection = MapSelection(name: 'duel_map', source: MapSource.asset);
     SharedPreferences.setMockInitialValues({

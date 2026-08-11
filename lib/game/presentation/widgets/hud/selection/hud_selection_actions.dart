@@ -17,7 +17,6 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
-import 'package:aonw_core/game/domain/transport.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/widgets.dart';
 
@@ -78,12 +77,9 @@ List<Widget> buildHudSelectionActionChips({
 }) {
   final selection = gameState?.selection;
   final unit = gameState?.selectedUnit ?? selection?.unit;
-  final ownedUnitSelected =
-      selection?.type == GameSelectionType.unit &&
-      unit != null &&
-      unit.ownerPlayerId == activePlayerId;
+  final ownedUnitSelected = _ownsSelectedUnit(selection, unit, activePlayerId);
 
-  if (ownedUnitSelected) {
+  if (ownedUnitSelected && unit != null) {
     final activeModeActions = _activeUnitModeActionsFor(
       unit: unit,
       gameState: gameState,
@@ -217,6 +213,15 @@ List<Widget> buildHudSelectionActionChips({
 }
 
 const _cityActionColor = GameUiTheme.gold;
+
+bool _ownsSelectedUnit(
+  GameSelection? selection,
+  GameUnit? unit,
+  String activePlayerId,
+) =>
+    selection?.type == GameSelectionType.unit &&
+    unit != null &&
+    unit.ownerPlayerId == activePlayerId;
 
 ({bool active, VoidCallback onTap})? _cityExpansionActionFor({
   required GameCity city,

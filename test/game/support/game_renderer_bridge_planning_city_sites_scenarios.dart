@@ -4,7 +4,7 @@ void _registerRendererPlanningCitySitesScenarios() {
   test(
     'tapping the active city icon recenters even without selection change',
     () async {
-      final map = _map(3, 3);
+      final map = kbMap(3, 3);
       final commands = <GameIntent>[];
       const city = GameCity(
         id: 'city_1',
@@ -56,7 +56,7 @@ void _registerRendererPlanningCitySitesScenarios() {
     },
   );
   test('quick double tapping a city opens its description detail', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final commands = <GameIntent>[];
     final descriptionRequests = <String>[];
     const city = GameCity(
@@ -88,7 +88,7 @@ void _registerRendererPlanningCitySitesScenarios() {
   test(
     'combat animation retains killed defender marker until completion',
     () async {
-      final map = _map(2, 1);
+      final map = kbMap(2, 1);
       final attacker = GameUnit(
         id: 'attacker',
         ownerPlayerId: 'player_1',
@@ -201,7 +201,7 @@ void _registerRendererPlanningCitySitesScenarios() {
     expect(territoryCandidate.canGrowCity, isTrue);
   });
   test('selected settler forces city-site markers visible', () async {
-    final map = _map(3, 2);
+    final map = kbMap(3, 2);
     final settler = GameUnit.startingCommander(
       ownerPlayerId: 'player_1',
       col: 0,
@@ -294,7 +294,7 @@ void _registerRendererPlanningCitySitesScenarios() {
           fogOfWar: fogOfWar,
           units: [settler],
           interaction: InteractionState(
-            selection: GameSelection.unit(settler, tile: _tile(map, 2, 0)),
+            selection: GameSelection.unit(settler, tile: kbTile(map, 2, 0)),
           ),
         ),
       )
@@ -380,7 +380,7 @@ void _registerRendererPlanningCitySitesScenarios() {
             units: [settler],
             cities: [ownCity, enemyCity],
             interaction: InteractionState(
-              selection: GameSelection.unit(settler, tile: _tile(map, 3, 1)),
+              selection: GameSelection.unit(settler, tile: kbTile(map, 3, 1)),
             ),
           ),
         )

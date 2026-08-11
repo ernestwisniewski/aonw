@@ -215,32 +215,92 @@ class HexTilePainter {
       );
     }
 
-    final showWorkerAvailabilityHint =
-        !showWorkerBuildAvailableBorder && !showWorkerBuildBlockedBorder;
-    if (showCitySiteMarker ||
-        showCityGrowthMarker ||
-        (showWorkerAvailabilityHint && showWorkerImprovementNowMarker) ||
-        (showWorkerAvailabilityHint && showWorkerImprovementTechMarker) ||
-        showAttackTargetMarker) {
-      final hasMapInfo =
-          showIcon &&
-          ((showTerrain && terrainIconPaths.isNotEmpty) ||
-              (showResources && resourceIconPaths.isNotEmpty));
-      _drawPlanningMarkers(
-        canvas: canvas,
-        geometry: geometry,
-        avoidMapInfo: hasMapInfo,
-        showCitySiteMarker: showCitySiteMarker,
-        showRecommendedCitySiteMarker: showRecommendedCitySiteMarker,
-        showCityGrowthMarker: showCityGrowthMarker,
-        showWorkerImprovementNowMarker:
-            showWorkerAvailabilityHint && showWorkerImprovementNowMarker,
-        showWorkerImprovementTechMarker:
-            showWorkerAvailabilityHint && showWorkerImprovementTechMarker,
-        showWorkerImprovementCandidateMarker:
-            showWorkerImprovementCandidateMarker,
-        showAttackTargetMarker: showAttackTargetMarker,
-      );
-    }
+    _drawVisiblePlanningMarkers(
+      canvas: canvas,
+      geometry: geometry,
+      showIcon: showIcon,
+      showTerrain: showTerrain,
+      showResources: showResources,
+      terrainIconPaths: terrainIconPaths,
+      resourceIconPaths: resourceIconPaths,
+      visibility: (
+        citySite: showCitySiteMarker,
+        recommendedCitySite: showRecommendedCitySiteMarker,
+        cityGrowth: showCityGrowthMarker,
+        workerNow: showWorkerImprovementNowMarker,
+        workerTechnology: showWorkerImprovementTechMarker,
+        workerCandidate: showWorkerImprovementCandidateMarker,
+        workerAvailabilityHint:
+            !showWorkerBuildAvailableBorder && !showWorkerBuildBlockedBorder,
+        attackTarget: showAttackTargetMarker,
+      ),
+    );
+  }
+
+  void _drawVisiblePlanningMarkers({
+    required Canvas canvas,
+    required HexTileGeometrySnapshot geometry,
+    required bool showIcon,
+    required bool showTerrain,
+    required bool showResources,
+    required List<String> terrainIconPaths,
+    required List<String> resourceIconPaths,
+    required _PlanningMarkerVisibility visibility,
+  }) {
+    if (!_hasPlanningMarkers(visibility)) return;
+    final hasMapInfo = _hasMapInfo(
+      showIcon,
+      showTerrain,
+      showResources,
+      terrainIconPaths,
+      resourceIconPaths,
+    );
+    _drawPlanningMarkers(
+      canvas: canvas,
+      geometry: geometry,
+      avoidMapInfo: hasMapInfo,
+      showCitySiteMarker: visibility.citySite,
+      showRecommendedCitySiteMarker: visibility.recommendedCitySite,
+      showCityGrowthMarker: visibility.cityGrowth,
+      showWorkerImprovementNowMarker: _showWorkerNow(visibility),
+      showWorkerImprovementTechMarker: _showWorkerTechnology(visibility),
+      showWorkerImprovementCandidateMarker: visibility.workerCandidate,
+      showAttackTargetMarker: visibility.attackTarget,
+    );
   }
 }
+
+typedef _PlanningMarkerVisibility = ({
+  bool citySite,
+  bool recommendedCitySite,
+  bool cityGrowth,
+  bool workerNow,
+  bool workerTechnology,
+  bool workerCandidate,
+  bool workerAvailabilityHint,
+  bool attackTarget,
+});
+
+bool _hasPlanningMarkers(_PlanningMarkerVisibility visibility) =>
+    visibility.citySite ||
+    visibility.cityGrowth ||
+    _showWorkerNow(visibility) ||
+    _showWorkerTechnology(visibility) ||
+    visibility.attackTarget;
+
+bool _hasMapInfo(
+  bool showIcon,
+  bool showTerrain,
+  bool showResources,
+  List<String> terrainIconPaths,
+  List<String> resourceIconPaths,
+) =>
+    showIcon &&
+    ((showTerrain && terrainIconPaths.isNotEmpty) ||
+        (showResources && resourceIconPaths.isNotEmpty));
+
+bool _showWorkerNow(_PlanningMarkerVisibility visibility) =>
+    visibility.workerAvailabilityHint && visibility.workerNow;
+
+bool _showWorkerTechnology(_PlanningMarkerVisibility visibility) =>
+    visibility.workerAvailabilityHint && visibility.workerTechnology;

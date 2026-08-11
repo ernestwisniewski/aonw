@@ -94,7 +94,7 @@ final class _ReducerParityCorpusSummary {
     );
     switch (fixture.family) {
       case 'artifacts':
-        artifactAcceptanceModes.add(_artifactAcceptanceMode(fixture.command));
+        artifactAcceptanceModes.add(artifactAcceptanceMode(fixture.command));
       case 'unit-actions':
         unitActionAcceptanceModes.add(_unitActionAcceptanceMode(fixture));
       case 'turn-finalization':
@@ -105,7 +105,7 @@ final class _ReducerParityCorpusSummary {
         );
       case 'resource-trade':
         resourceTradeAcceptanceModes.add(
-          _resourceTradeAcceptanceMode(fixture.command),
+          resourceTradeAcceptanceMode(fixture.command),
         );
       case 'city-worked-hex':
         final command = fixture.command as ToggleWorkedHexCommand;
@@ -125,23 +125,6 @@ final class _ReducerParityCorpusSummary {
         workerInteractionModes.add(_workerInteractionMode(fixture));
     }
   }
-}
-
-String _artifactAcceptanceMode(DomainCommand command) {
-  return switch (command) {
-    StartArtifactExcavationCommand() => 'excavation',
-    StoreArtifactInCityCommand() => 'store',
-    TradeArtifactCommand() => 'trade',
-    _ => 'unexpected',
-  };
-}
-
-String _resourceTradeAcceptanceMode(DomainCommand command) {
-  return switch (command) {
-    OpenResourceTradeCommand() => 'gold',
-    OpenResourceExchangeCommand() => 'exchange',
-    _ => 'unexpected',
-  };
 }
 
 void _requireExactReducerParityFamilies(Set<String> actualFamilies) {
@@ -299,10 +282,33 @@ void _validateReducerParityAcceptedCommand(
       _requireAcceptedParityCityWorkedHex(fixture, state, events);
     case 'city-founding':
       _requireAcceptedParityCityFounding(fixture, state, events);
+    default:
+      _validateReducerParityAcceptedCommandContinuation(fixture, state, events);
+  }
+}
+
+void _validateReducerParityAcceptedCommandContinuation(
+  ReducerParityFixture fixture,
+  DomainState state,
+  List<GameEvent> events,
+) {
+  switch (fixture.family) {
     case 'detachment':
       _requireAcceptedParityDetachment(fixture, state, events);
     case 'infrastructure':
-      _requireAcceptedParityInfrastructure(fixture, state, events);
+      final command = fixture.command as BuildRoadCommand;
+      _requireWorkerSentinel(fixture, command.unitId);
+      final failure = validateAcceptedRoadInfrastructure(
+        command: command,
+        save: fixture.save,
+        before: fixture.state,
+        after: state,
+        events: events,
+        expectedSave: fixture.expectedSave,
+        actualSave: reducerParitySave(fixture.save),
+        expectedState: fixture.expectedState,
+      );
+      if (failure != null) ReducerParityCorpus._fail(fixture, failure);
     case 'research':
       _requireAcceptedParityResearch(fixture, state, events);
     case 'resource-trade':
@@ -326,7 +332,7 @@ void _requireAcceptedParityArtifact(
   DomainState state,
   List<GameEvent> events,
 ) {
-  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save))) {
+  if (!jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save))) {
     ReducerParityCorpus._fail(fixture, 'must preserve save metadata');
   }
   final failure = validateAcceptedArtifactCommand(
@@ -355,7 +361,7 @@ void _requireAcceptedParityCityWorkedHex(
       'must update an existing city without emitting events',
     );
   }
-  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save))) {
+  if (!jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save))) {
     ReducerParityCorpus._fail(
       fixture,
       'must preserve save metadata for worked-hex selection',
@@ -373,7 +379,7 @@ void _requireAcceptedParityCityWorkedHex(
   final expectedCities = [...fixture.state.cities]
     ..[beforeIndex] = beforeCity.copyWith(workedHexes: expectedWorkedHexes);
   final expectedState = fixture.state.copyWith(cities: expectedCities);
-  if (!_jsonDeepEquals(
+  if (!jsonDeepEquals(
     CanonicalGameSnapshotCodec.encodeDomainState(state),
     CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
   )) {
@@ -422,7 +428,7 @@ void _requireAcceptedParityResearch(
       'must start with the matching pending research selection',
     );
   }
-  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||
+  if (!jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||
       events.isNotEmpty) {
     ReducerParityCorpus._fail(
       fixture,
@@ -453,7 +459,7 @@ void _requireAcceptedParityResearch(
       ),
     )['lifecycle'],
   };
-  if (!_jsonDeepEquals(fixture.expectedState, expectedReviewedState)) {
+  if (!jsonDeepEquals(fixture.expectedState, expectedReviewedState)) {
     ReducerParityCorpus._fail(
       fixture,
       'must only update research and clear its matching pending action',

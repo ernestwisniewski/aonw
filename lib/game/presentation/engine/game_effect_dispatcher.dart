@@ -25,9 +25,9 @@ class GameEffectDispatcher {
   final void Function() _onRendererStateChanged;
   final bool Function() _reduceMotion;
   final bool Function() _moveCameraForUnitMovement;
-  final bool Function(String unitId) _moveCameraForUnitMovementForUnit;
+  final bool Function(String unitId) _focusCameraForUnitMovementForUnit;
+  final bool Function(String unitId) _followCameraForUnitMovementForUnit;
   final Future<void> Function(String unitId) _onUnitMovementCameraComplete;
-  final bool Function() _followUnitMovementCamera;
   final bool Function(int col, int row) _canAutoFocusMapTarget;
   final AppLocalizations? _l10n;
 
@@ -44,8 +44,10 @@ class GameEffectDispatcher {
     required bool Function() reduceMotion,
     bool Function()? moveCameraForUnitMovement,
     bool Function(String unitId)? moveCameraForUnitMovementForUnit,
+    bool Function(String unitId)? focusCameraForUnitMovementForUnit,
+    bool Function(String unitId)? followCameraForUnitMovementForUnit,
     Future<void> Function(String unitId)? onUnitMovementCameraComplete,
-    required bool Function() followUnitMovementCamera,
+    bool Function()? followUnitMovementCamera,
     bool Function(int col, int row)? canAutoFocusMapTarget,
     AppLocalizations? l10n,
   }) : _unitAnimationController = unitAnimationController,
@@ -60,11 +62,17 @@ class GameEffectDispatcher {
        _onRendererStateChanged = onRendererStateChanged,
        _reduceMotion = reduceMotion,
        _moveCameraForUnitMovement = moveCameraForUnitMovement ?? (() => true),
-       _moveCameraForUnitMovementForUnit =
-           moveCameraForUnitMovementForUnit ?? ((_) => true),
+       _focusCameraForUnitMovementForUnit =
+           focusCameraForUnitMovementForUnit ??
+           moveCameraForUnitMovementForUnit ??
+           ((_) => true),
+       _followCameraForUnitMovementForUnit =
+           followCameraForUnitMovementForUnit ??
+           ((unitId) =>
+               (moveCameraForUnitMovementForUnit?.call(unitId) ?? true) &&
+               (followUnitMovementCamera?.call() ?? false)),
        _onUnitMovementCameraComplete =
            onUnitMovementCameraComplete ?? ((_) async {}),
-       _followUnitMovementCamera = followUnitMovementCamera,
        _canAutoFocusMapTarget = canAutoFocusMapTarget ?? ((_, _) => true),
        _l10n = l10n;
 
@@ -247,17 +255,22 @@ class GameEffectDispatcher {
         _unitAnimationController.unitWorldPosition(unitId) != null;
     var followingMovement = false;
     var movedCamera = false;
-    if (unitVisible &&
-        _moveCameraForUnitMovement() &&
-        _moveCameraForUnitMovementForUnit(unitId)) {
-      await _cameraController.smoothToTile(
-        effect.fromCol,
-        effect.fromRow,
-        duration: 0.28,
-        curve: Curves.easeOutCubic,
-      );
+    final controlsCamera = unitVisible && _moveCameraForUnitMovement();
+    final focusMovement =
+        controlsCamera && _focusCameraForUnitMovementForUnit(unitId);
+    final followMovement =
+        controlsCamera && _followCameraForUnitMovementForUnit(unitId);
+    if (focusMovement || followMovement) {
       movedCamera = true;
-      if (_followUnitMovementCamera()) {
+      if (focusMovement) {
+        await _cameraController.smoothToTile(
+          effect.fromCol,
+          effect.fromRow,
+          duration: 0.28,
+          curve: Curves.easeOutCubic,
+        );
+      }
+      if (followMovement) {
         followingMovement = true;
         _cameraController.followWorldPoint(
           () => _unitAnimationController.unitWorldPosition(unitId),

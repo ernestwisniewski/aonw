@@ -3,7 +3,6 @@ import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/hex.dart';
-import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
@@ -23,10 +22,7 @@ final class MctsFoundingCandidateCollector {
   }
 
   Iterable<DomainCommand> foundingCommandsFor(GameView view) {
-    final founders = [
-      for (final unit in view.ownUnits)
-        if (_isReadyFounder(unit)) unit,
-    ]..sort((a, b) => a.id.compareTo(b.id));
+    final founders = _readyFounders(view);
     if (founders.isEmpty) return const [];
 
     final cities = _knownCities(view);
@@ -105,19 +101,12 @@ final class MctsFoundingCandidateCollector {
   Iterable<DomainCommand> spacingMovementCommandsFor(GameView view) {
     if (view.ownCities.length < 2) return const [];
 
-    final founders = [
-      for (final unit in view.ownUnits)
-        if (_isReadyFounder(unit)) unit,
-    ]..sort((a, b) => a.id.compareTo(b.id));
+    final founders = _readyFounders(view);
     if (founders.isEmpty) return const [];
 
     final commands = <DomainCommand>[];
     final knownUnits = view.movementBlockingUnits;
-    final pathfinder = UnitMovementPathfinder(
-      mapData: view.mapData,
-      units: knownUnits,
-      costResolver: view.traversalCostResolver,
-    );
+    final pathfinder = view.movementPathfinder(units: knownUnits);
     for (final founder in founders) {
       final currentDistance = _nearestOwnCityDistance(
         view,
@@ -179,6 +168,13 @@ final class MctsFoundingCandidateCollector {
   static bool _isReadyFounder(GameUnit unit) {
     return unit.isReadyToAct && CityFoundingRules.canFoundCityWith(unit);
   }
+}
+
+List<GameUnit> _readyFounders(GameView view) {
+  return [
+    for (final unit in view.ownUnits)
+      if (MctsFoundingCandidateCollector._isReadyFounder(unit)) unit,
+  ]..sort((a, b) => a.id.compareTo(b.id));
 }
 
 List<GameCity> _knownCities(GameView view) {

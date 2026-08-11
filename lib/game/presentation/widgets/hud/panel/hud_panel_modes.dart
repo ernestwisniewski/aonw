@@ -86,6 +86,9 @@ abstract class HudPanelModes with _$HudPanelModes {
 
   HudPanelModes closeUnitActionPanels() =>
       copyWith(technology: false, objectives: false);
+
+  bool get blocksRendererInput =>
+      cityBuildings || technology || empire || activityLog;
 }
 
 HudPanelModes normalizeHudPanelModes({

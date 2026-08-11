@@ -268,10 +268,7 @@ class _GameRendererSessionHostState
     final rendererGamepadInputEnabled =
         !hudGamepadFocusActive &&
         !hudGamepadPopupInputCaptured &&
-        !hudPanelModes.cityBuildings &&
-        !hudPanelModes.technology &&
-        !hudPanelModes.empire &&
-        !hudPanelModes.activityLog;
+        !hudPanelModes.blocksRendererInput;
     return ProviderScope(
       overrides: [
         activeGameSessionProvider.overrideWithValue(session),
@@ -293,9 +290,14 @@ class _GameRendererSessionHostState
               displaySettings: widget.displaySettings,
               reduceMotion:
                   MediaQuery.maybeOf(context)?.disableAnimations ?? false,
-              followUnitMovementCamera:
-                  gameplaySettings.followUnitMovementCamera,
-              followEnemyUnitCamera: gameplaySettings.followEnemyUnitCamera,
+              focusOwnUnitMovementCamera:
+                  gameplaySettings.focusOwnUnitMovementCamera,
+              followOwnUnitMovementCamera:
+                  gameplaySettings.followOwnUnitMovementCamera,
+              focusEnemyUnitMovementCamera:
+                  gameplaySettings.focusEnemyUnitMovementCamera,
+              followEnemyUnitMovementCamera:
+                  gameplaySettings.followEnemyUnitMovementCamera,
               cinematicCameraEnabled: gameplaySettings.cinematicCameraEnabled,
               child: ProviderScope(
                 overrides: [

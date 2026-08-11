@@ -86,10 +86,7 @@ class CitySitePlanner {
   }) {
     if (candidates.isEmpty) return const {};
 
-    final pathfinder = UnitMovementPathfinder(
-      mapData: view.mapData,
-      units: view.movementBlockingUnits,
-      costResolver: view.traversalCostResolver,
+    final pathfinder = view.movementPathfinder(
       canEnterTile: useStrategicMapKnowledge || view.ownCities.length >= 2
           ? null
           : (tile) => view.visibility.canSeeDynamicAt(tile.col, tile.row),

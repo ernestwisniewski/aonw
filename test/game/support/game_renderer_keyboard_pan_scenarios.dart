@@ -5,7 +5,7 @@ void _registerKeyboardPanScenarios() {
     late GameRenderer game;
 
     setUp(() {
-      game = GameRenderer(mapData: _minimalMap(), onCommand: (_) async {});
+      game = GameRenderer(mapData: kbMinimalMap(), onCommand: (_) async {});
     });
 
     test('keyboardPanDelta is zero when no keys pressed', () {

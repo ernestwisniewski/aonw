@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
+import 'package:aonw/shared/providers/gameplay_settings_provider.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -64,18 +65,26 @@ class HudResearchAutoPromptController extends Notifier<Set<String>> {
 
 class HudAutoTurnFlowController extends Notifier<bool> {
   @override
-  bool build() => false;
+  bool build() => ref.watch(
+    gameplaySettingsProvider.select((settings) => settings.autoTurnFlowEnabled),
+  );
 
   void setEnabled(bool enabled) {
-    state = enabled;
+    ref.read(gameplaySettingsProvider.notifier).setAutoTurnFlowEnabled(enabled);
   }
 }
 
 class HudAutoActionFlowController extends Notifier<bool> {
   @override
-  bool build() => true;
+  bool build() => ref.watch(
+    gameplaySettingsProvider.select(
+      (settings) => settings.autoActionFlowEnabled,
+    ),
+  );
 
   void setEnabled(bool enabled) {
-    state = enabled;
+    ref
+        .read(gameplaySettingsProvider.notifier)
+        .setAutoActionFlowEnabled(enabled);
   }
 }

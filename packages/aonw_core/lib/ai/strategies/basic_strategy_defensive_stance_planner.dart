@@ -7,7 +7,6 @@ import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/hex.dart';
-import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 final class BasicStrategyDefensiveStancePlanner {
@@ -41,10 +40,8 @@ final class BasicStrategyDefensiveStancePlanner {
       for (final unit in view.visibleEnemyUnits) _key(unit.col, unit.row),
       for (final hex in reservedHexes) _key(hex.col, hex.row),
     };
-    final pathfinder = UnitMovementPathfinder(
+    final pathfinder = view.movementPathfinder(
       mapData: context.mapData,
-      units: view.movementBlockingUnits,
-      costResolver: view.traversalCostResolver,
       canEnterTile: (tile) =>
           view.visibility.canSeeDynamicAt(tile.col, tile.row) &&
           !occupied.contains(_key(tile.col, tile.row)),

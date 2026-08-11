@@ -137,6 +137,7 @@ class _GameRendererPlaySurface extends ConsumerWidget {
 
   void _setViewMode(WidgetRef ref, MapViewMode value) {
     if (value == MapViewMode.graphic && session.imagePath == null) return;
+    ref.read(gameplaySettingsProvider.notifier).setPreferredMapViewMode(value);
     ref
         .read(gameSessionProvider(selection, session.saveId).notifier)
         .setViewMode(value);

@@ -34,131 +34,158 @@ abstract final class WorkerTurnProcessor {
     TransportNetworkState transportNetwork = TransportNetworkState.empty,
     required MapTileLookup mapData,
   }) {
-    final updatedCities = List<GameCity>.of(cities);
-    final updatedUnits = List<GameUnit>.of(units);
-    var updatedImprovements = List<FieldImprovement>.of(fieldImprovements);
-    var updatedTransport = transportNetwork;
-    var changed = false;
-
-    for (var i = 0; i < updatedUnits.length; i++) {
-      final unit = updatedUnits[i];
+    final batch = _WorkerTurnBatch(
+      cities: cities,
+      units: units,
+      fieldImprovements: fieldImprovements,
+      transportNetwork: transportNetwork,
+    );
+    for (var i = 0; i < batch.units.length; i++) {
+      final unit = batch.units[i];
       if (unit.ownerPlayerId != playerId) continue;
-
       final job = unit.workerJob;
       if (job == null) continue;
-
-      changed = true;
-
-      final tile = mapData.tileAt(job.targetHex.col, job.targetHex.row);
-      final hasExistingImprovement = updatedImprovements.any(
-        (improvement) => improvement.hex == job.targetHex,
-      );
-      final jobTargetInvalid = switch (job.kind) {
-        WorkerJobKind.fieldImprovement => hasExistingImprovement,
-        WorkerJobKind.roadConstruction =>
-          updatedTransport.at(job.targetHex.col, job.targetHex.row) != null,
-      };
-      if (!unit.occupies(job.targetHex.col, job.targetHex.row) ||
-          tile == null ||
-          jobTargetInvalid) {
-        updatedUnits[i] = unit.copyWithWorkerJob(null).copyWithQueuedPath(null);
+      batch.changed = true;
+      if (batch.jobTargetInvalid(unit, job, mapData)) {
+        batch.clearOrders(i);
         continue;
       }
-
       if (job.remainingTurns > 1) {
-        updatedUnits[i] = unit.copyWithWorkerJob(
+        batch.units[i] = unit.copyWithWorkerJob(
           job.copyWith(remainingTurns: job.remainingTurns - 1),
         );
         continue;
       }
-
       switch (job.kind) {
         case WorkerJobKind.fieldImprovement:
-          final city = WorkerImprovementRules.cityForImprovementHex(
-            playerId: unit.ownerPlayerId,
-            hex: job.targetHex,
-            cities: updatedCities,
-          );
-          if (city == null) {
-            updatedUnits[i] = unit
-                .copyWithWorkerJob(null)
-                .copyWithQueuedPath(null);
-            continue;
-          }
-          updatedImprovements = [
-            ...updatedImprovements,
-            FieldImprovement(
-              hex: job.targetHex,
-              type: job.improvementType!,
-              builtByCityId: city.id,
-            ),
-          ];
-          final remainingCharges =
-              WorkerImprovementChargeRules.remainingAfterImprovement(
-                unit.workerBuildCharges,
-              );
-          if (remainingCharges <= 0) {
-            updatedUnits.removeAt(i);
-            i -= 1;
-          } else {
-            updatedUnits[i] = unit
-                .copyWithWorkerJob(null)
-                .copyWithQueuedPath(null)
-                .copyWithWorkerBuildCharges(remainingCharges);
-          }
+          if (batch.completeFieldImprovement(i, unit, job)) i -= 1;
         case WorkerJobKind.roadConstruction:
-          final legality = RoadConstructionRules.evaluate(
-            unit: unit,
-            cities: updatedCities,
-            network: updatedTransport,
-            mapTiles: mapData,
-            requireReadyWorker: false,
-          );
-          if (!legality.allowed) {
-            updatedUnits[i] = unit
-                .copyWithWorkerJob(null)
-                .copyWithQueuedPath(null);
-            continue;
-          }
-          final cityId = _ownedCityIdAt(
-            playerId: unit.ownerPlayerId,
-            hex: job.targetHex,
-            cities: updatedCities,
-          );
-          updatedTransport = updatedTransport.put(
-            TransportSegment(
-              hex: HexCoord(col: job.targetHex.col, row: job.targetHex.row),
-              builtByPlayerId: unit.ownerPlayerId,
-              builtByCityId: cityId,
-            ),
-          );
-          updatedUnits[i] = unit
-              .copyWithWorkerJob(null)
-              .copyWithQueuedPath(null);
+          batch.completeRoad(i, unit, job, mapData);
       }
     }
+    return batch.result();
+  }
+}
 
-    return WorkerTurnBatchResult(
-      cities: List<GameCity>.unmodifiable(updatedCities),
-      units: List<GameUnit>.unmodifiable(updatedUnits),
-      fieldImprovements: List<FieldImprovement>.unmodifiable(
-        updatedImprovements,
+final class _WorkerTurnBatch {
+  _WorkerTurnBatch({
+    required List<GameCity> cities,
+    required List<GameUnit> units,
+    required List<FieldImprovement> fieldImprovements,
+    required this.transportNetwork,
+  }) : cities = List.of(cities),
+       units = List.of(units),
+       fieldImprovements = List.of(fieldImprovements);
+
+  final List<GameCity> cities;
+  final List<GameUnit> units;
+  final List<FieldImprovement> fieldImprovements;
+  TransportNetworkState transportNetwork;
+  bool changed = false;
+
+  bool jobTargetInvalid(GameUnit unit, WorkerJob job, MapTileLookup mapData) {
+    if (!unit.occupies(job.targetHex.col, job.targetHex.row) ||
+        mapData.tileAt(job.targetHex.col, job.targetHex.row) == null) {
+      return true;
+    }
+    return switch (job.kind) {
+      WorkerJobKind.fieldImprovement => fieldImprovements.any(
+        (improvement) => improvement.hex == job.targetHex,
       ),
-      transportNetwork: updatedTransport,
+      WorkerJobKind.roadConstruction =>
+        transportNetwork.at(job.targetHex.col, job.targetHex.row) != null,
+    };
+  }
+
+  void clearOrders(int index) {
+    units[index] = units[index]
+        .copyWithWorkerJob(null)
+        .copyWithQueuedPath(null);
+  }
+
+  bool completeFieldImprovement(int index, GameUnit unit, WorkerJob job) {
+    final city = WorkerImprovementRules.cityForImprovementHex(
+      playerId: unit.ownerPlayerId,
+      hex: job.targetHex,
+      cities: cities,
+    );
+    if (city == null) {
+      clearOrders(index);
+      return false;
+    }
+    fieldImprovements.add(
+      FieldImprovement(
+        hex: job.targetHex,
+        type: job.improvementType!,
+        builtByCityId: city.id,
+      ),
+    );
+    final remainingCharges =
+        WorkerImprovementChargeRules.remainingAfterImprovement(
+          unit.workerBuildCharges,
+        );
+    if (remainingCharges <= 0) {
+      units.removeAt(index);
+      return true;
+    }
+    units[index] = unit
+        .copyWithWorkerJob(null)
+        .copyWithQueuedPath(null)
+        .copyWithWorkerBuildCharges(remainingCharges);
+    return false;
+  }
+
+  void completeRoad(
+    int index,
+    GameUnit unit,
+    WorkerJob job,
+    MapTileLookup mapData,
+  ) {
+    final legality = RoadConstructionRules.evaluate(
+      unit: unit,
+      cities: cities,
+      network: transportNetwork,
+      mapTiles: mapData,
+      requireReadyWorker: false,
+    );
+    if (!legality.allowed) {
+      clearOrders(index);
+      return;
+    }
+    transportNetwork = transportNetwork.put(
+      TransportSegment(
+        hex: HexCoord(col: job.targetHex.col, row: job.targetHex.row),
+        builtByPlayerId: unit.ownerPlayerId,
+        builtByCityId: _ownedCityIdAt(
+          playerId: unit.ownerPlayerId,
+          hex: job.targetHex,
+          cities: cities,
+        ),
+      ),
+    );
+    clearOrders(index);
+  }
+
+  WorkerTurnBatchResult result() {
+    return WorkerTurnBatchResult(
+      cities: List.unmodifiable(cities),
+      units: List.unmodifiable(units),
+      fieldImprovements: List.unmodifiable(fieldImprovements),
+      transportNetwork: transportNetwork,
       changed: changed,
     );
   }
+}
 
-  static String? _ownedCityIdAt({
-    required String playerId,
-    required CityHex hex,
-    required Iterable<GameCity> cities,
-  }) {
-    for (final city in cities) {
-      if (city.ownerPlayerId == playerId && city.controlsHex(hex)) {
-        return city.id;
-      }
+String? _ownedCityIdAt({
+  required String playerId,
+  required CityHex hex,
+  required Iterable<GameCity> cities,
+}) {
+  for (final city in cities) {
+    if (city.ownerPlayerId == playerId && city.controlsHex(hex)) {
+      return city.id;
     }
-    return null;
   }
+  return null;
 }

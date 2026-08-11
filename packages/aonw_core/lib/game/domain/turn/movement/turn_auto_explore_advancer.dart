@@ -69,55 +69,32 @@ abstract final class TurnAutoExploreAdvancer {
     required FogOfWarService fogOfWarService,
     TransportNetworkState transportNetwork = TransportNetworkState.empty,
   }) {
-    var currentUnits = units;
-    var currentFog = fogOfWar;
-    var currentDiplomacy = diplomacy;
-    var currentInteraction = interaction;
-    var changed = false;
-    final events = <GameEvent>[];
-    final executions = <MovementCommandExecution>[];
-
-    for (var index = 0; index < currentUnits.length; index++) {
-      final unit = currentUnits[index];
+    final progress = _TurnAutoExploreProgress(
+      units: units,
+      fogOfWar: fogOfWar,
+      diplomacy: diplomacy,
+      interaction: interaction,
+    );
+    for (var index = 0; index < progress.units.length; index++) {
+      final unit = progress.units[index];
       if (!_canAdvance(unit, playerIds)) continue;
       final result = _resolveContinuation(
         unit: unit,
         state: _continuationState(
-          units: currentUnits,
+          units: progress.units,
           cities: cities,
-          fogOfWar: currentFog,
-          diplomacy: currentDiplomacy,
+          fogOfWar: progress.fogOfWar,
+          diplomacy: progress.diplomacy,
           playerIds: phaseKnownPlayerIds,
-          interaction: currentInteraction,
+          interaction: progress.interaction,
           transportNetwork: transportNetwork,
         ),
         mapData: mapData,
         fogOfWarService: fogOfWarService,
       );
-      if (!result.accepted) continue;
-
-      changed =
-          changed ||
-          !identical(result.units, currentUnits) ||
-          !identical(result.fogOfWar, currentFog) ||
-          !identical(result.diplomacy, currentDiplomacy) ||
-          !identical(result.interaction, currentInteraction);
-      currentUnits = result.units;
-      currentFog = result.fogOfWar;
-      currentDiplomacy = result.diplomacy;
-      currentInteraction = result.interaction;
-      events.addAll(result.events);
-      if (result.execution case final execution?) executions.add(execution);
+      if (result.accepted) progress.apply(result);
     }
-    return TurnAutoExploreAdvance(
-      units: currentUnits,
-      fogOfWar: currentFog,
-      diplomacy: currentDiplomacy,
-      interaction: currentInteraction,
-      changed: changed,
-      events: events,
-      executions: executions,
-    );
+    return progress.result();
   }
 
   static AutoExploreCommandState _continuationState({
@@ -166,4 +143,46 @@ abstract final class TurnAutoExploreAdvancer {
         !unit.isWorking &&
         !unit.isFortified;
   }
+}
+
+final class _TurnAutoExploreProgress {
+  _TurnAutoExploreProgress({
+    required this.units,
+    required this.fogOfWar,
+    required this.diplomacy,
+    required this.interaction,
+  });
+
+  List<GameUnit> units;
+  FogOfWarState fogOfWar;
+  DiplomacyState diplomacy;
+  DomainActionState interaction;
+  bool changed = false;
+  final events = <GameEvent>[];
+  final executions = <MovementCommandExecution>[];
+
+  void apply(AutoExploreCommandResult result) {
+    changed =
+        changed ||
+        !identical(result.units, units) ||
+        !identical(result.fogOfWar, fogOfWar) ||
+        !identical(result.diplomacy, diplomacy) ||
+        !identical(result.interaction, interaction);
+    units = result.units;
+    fogOfWar = result.fogOfWar;
+    diplomacy = result.diplomacy;
+    interaction = result.interaction;
+    events.addAll(result.events);
+    if (result.execution case final execution?) executions.add(execution);
+  }
+
+  TurnAutoExploreAdvance result() => TurnAutoExploreAdvance(
+    units: units,
+    fogOfWar: fogOfWar,
+    diplomacy: diplomacy,
+    interaction: interaction,
+    changed: changed,
+    events: events,
+    executions: executions,
+  );
 }

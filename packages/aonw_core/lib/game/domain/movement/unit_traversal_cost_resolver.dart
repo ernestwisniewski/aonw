@@ -7,11 +7,9 @@ import 'package:aonw_core/game/domain/unit/unit_movement_domain.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 abstract interface class UnitTraversalCostResolver {
-  MovementCost costToEnter({
-    required GameUnit unit,
-    required MapTileView tile,
-  });
+  MovementCost costToEnter({required GameUnit unit, required MapTileView tile});
 }
+
 final class TerrainTraversalCostResolver implements UnitTraversalCostResolver {
   const TerrainTraversalCostResolver();
 

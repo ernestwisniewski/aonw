@@ -2,7 +2,7 @@ part of '../game_renderer_keyboard_test.dart';
 
 void _registerRendererActionPaletteTargetConfirmationScenarios() {
   test('move preview pill confirms the selected target', () async {
-    final map = _map(3, 2);
+    final map = kbMap(3, 2);
     final commands = <GameIntent>[];
     final commander = GameUnit.produced(
       id: 'commander_1',
@@ -35,7 +35,7 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
           activePlayerCanAct: true,
           units: [commander],
           interaction: InteractionState(
-            selection: GameSelection.unit(commander, tile: _tile(map, 0, 0)),
+            selection: GameSelection.unit(commander, tile: kbTile(map, 0, 0)),
             movePreview: preview,
             moveCommandActive: true,
           ),
@@ -61,7 +61,7 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
   test(
     'move preview pill includes current progress and artifact movement cap',
     () async {
-      final map = _map(4, 2);
+      final map = kbMap(4, 2);
       final commands = <GameIntent>[];
       final warrior = GameUnit.produced(
         id: 'warrior_1',
@@ -91,7 +91,7 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
             activePlayerCanAct: true,
             units: [warrior],
             interaction: InteractionState(
-              selection: GameSelection.tile(_tile(map, 1, 0)),
+              selection: GameSelection.tile(kbTile(map, 1, 0)),
               movePreview: preview,
               moveCommandActive: true,
             ),
@@ -116,7 +116,7 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
   test(
     'city founding waits for selected hexes before showing confirmation',
     () async {
-      final map = _map(3, 3);
+      final map = kbMap(3, 3);
       final settler = GameUnit.produced(
         id: 'settler_1',
         ownerPlayerId: 'player_1',
@@ -139,7 +139,7 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
             activePlayerCanAct: true,
             units: [settler],
             interaction: InteractionState(
-              selection: GameSelection.unit(settler, tile: _tile(map, 1, 1)),
+              selection: GameSelection.unit(settler, tile: kbTile(map, 1, 1)),
               cityFoundingDraft: draft,
             ),
           ),
@@ -153,7 +153,7 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
   test(
     'city founding does not use the map action palette for confirmation',
     () async {
-      final map = _map(3, 3);
+      final map = kbMap(3, 3);
       final settler = GameUnit.produced(
         id: 'settler_1',
         ownerPlayerId: 'player_1',
@@ -180,7 +180,7 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
             activePlayerCanAct: true,
             units: [settler],
             interaction: InteractionState(
-              selection: GameSelection.unit(settler, tile: _tile(map, 1, 1)),
+              selection: GameSelection.unit(settler, tile: kbTile(map, 1, 1)),
               cityFoundingDraft: draft,
             ),
           ),
@@ -194,7 +194,7 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
     },
   );
   test('worker action palette dispatches preview and confirm', () async {
-    final map = _map(3, 2);
+    final map = kbMap(3, 2);
     final commands = <GameIntent>[];
     final worker = GameUnit.produced(
       id: 'worker_1',
@@ -238,7 +238,7 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
           activePlayerCanAct: true,
           units: [worker],
           interaction: InteractionState(
-            selection: GameSelection.unit(worker, tile: _tile(map, 1, 0)),
+            selection: GameSelection.unit(worker, tile: kbTile(map, 1, 0)),
             pendingAction: PendingWorkerActionSelection(
               ownerPlayerId: 'player_1',
               unitId: 'worker_1',
@@ -270,7 +270,7 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
     expect(commands.last, const ConfirmWorkerImprovementIntent('worker_1'));
   });
   test('worker action palette keeps blocked options local', () async {
-    final map = _map(3, 2);
+    final map = kbMap(3, 2);
     final commands = <GameIntent>[];
     final worker = GameUnit.produced(
       id: 'worker_1',
@@ -311,7 +311,7 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
           activePlayerCanAct: true,
           units: [worker],
           interaction: InteractionState(
-            selection: GameSelection.unit(worker, tile: _tile(map, 1, 0)),
+            selection: GameSelection.unit(worker, tile: kbTile(map, 1, 0)),
             pendingAction: const PendingWorkerActionSelection(
               ownerPlayerId: 'player_1',
               unitId: 'worker_1',

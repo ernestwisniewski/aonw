@@ -90,6 +90,11 @@ class HexDisplaySettings {
 }
 
 abstract final class HexDisplayPreferenceKeys {
+  static const showHeightBadge = 'hex_display.default.show_height_badge';
+  static const showTerrain = 'hex_display.default.show_terrain';
+  static const showResources = 'hex_display.default.show_resources';
+  static const showCitySites = 'hex_display.default.show_city_sites';
+  static const showCityGrowth = 'hex_display.default.show_city_growth';
   static const defaultHexBorderColor = 'hex_display.default.hex_border_color';
   static const defaultWallTintColor = 'hex_display.default.wall_tint_color';
 
@@ -119,24 +124,62 @@ final hexDisplayMapBootstrapProvider = FutureProvider.autoDispose
 @riverpod
 class HexDisplayNotifier extends _$HexDisplayNotifier {
   final Map<String, int> _pendingColorSaves = {};
+  final Map<String, bool> _pendingBoolSaves = {};
 
   @override
   HexDisplaySettings build() => const HexDisplaySettings();
 
-  void toggleHeightBadge() =>
-      state = state.copyWith(showHeightBadge: !state.showHeightBadge);
+  void toggleHeightBadge() => _setBool(
+    key: HexDisplayPreferenceKeys.showHeightBadge,
+    value: !state.showHeightBadge,
+    apply: (value) => state = state.copyWith(showHeightBadge: value),
+  );
 
-  void toggleTerrain() =>
-      state = state.copyWith(showTerrain: !state.showTerrain);
+  void toggleTerrain() => _setBool(
+    key: HexDisplayPreferenceKeys.showTerrain,
+    value: !state.showTerrain,
+    apply: (value) => state = state.copyWith(showTerrain: value),
+  );
 
-  void toggleResources() =>
-      state = state.copyWith(showResources: !state.showResources);
+  void toggleResources() => _setBool(
+    key: HexDisplayPreferenceKeys.showResources,
+    value: !state.showResources,
+    apply: (value) => state = state.copyWith(showResources: value),
+  );
 
-  void toggleCitySites() =>
-      state = state.copyWith(showCitySites: !state.showCitySites);
+  void toggleCitySites() => _setBool(
+    key: HexDisplayPreferenceKeys.showCitySites,
+    value: !state.showCitySites,
+    apply: (value) => state = state.copyWith(showCitySites: value),
+  );
 
-  void toggleCityGrowth() =>
-      state = state.copyWith(showCityGrowth: !state.showCityGrowth);
+  void toggleCityGrowth() => _setBool(
+    key: HexDisplayPreferenceKeys.showCityGrowth,
+    value: !state.showCityGrowth,
+    apply: (value) => state = state.copyWith(showCityGrowth: value),
+  );
+
+  void setHexBordersVisible(bool visible) {
+    setHexBorderColor(
+      visible
+          ? const Color(0xFF000000)
+          : HexDisplaySettings.defaultHexBorderColor,
+    );
+  }
+
+  void setHeightWallsVisible(bool visible) {
+    setWallTintColor(
+      visible
+          ? _withAlpha(
+              _nonTransparentBase(
+                state.wallTintColor,
+                fallback: MapPalette.defaultWallTint,
+              ),
+              255,
+            )
+          : HexDisplaySettings.defaultWallTintColor,
+    );
+  }
 
   void setHexBorderColor(Color color) {
     state = state.copyWith(hexBorderColor: color);
@@ -158,6 +201,31 @@ class HexDisplayNotifier extends _$HexDisplayNotifier {
       final prefs = await SharedPreferences.getInstance();
       if (!ref.mounted) return;
       state = state.copyWith(
+        showHeightBadge: _storedBool(
+          prefs,
+          HexDisplayPreferenceKeys.showHeightBadge,
+          state.showHeightBadge,
+        ),
+        showTerrain: _storedBool(
+          prefs,
+          HexDisplayPreferenceKeys.showTerrain,
+          state.showTerrain,
+        ),
+        showResources: _storedBool(
+          prefs,
+          HexDisplayPreferenceKeys.showResources,
+          state.showResources,
+        ),
+        showCitySites: _storedBool(
+          prefs,
+          HexDisplayPreferenceKeys.showCitySites,
+          state.showCitySites,
+        ),
+        showCityGrowth: _storedBool(
+          prefs,
+          HexDisplayPreferenceKeys.showCityGrowth,
+          state.showCityGrowth,
+        ),
         hexBorderColor: _standardHexBorderColor(prefs),
         wallTintColor: _standardWallTintColor(prefs),
       );
@@ -283,6 +351,32 @@ class HexDisplayNotifier extends _$HexDisplayNotifier {
     } on Object {
       return;
     }
+  }
+
+  void _setBool({
+    required String key,
+    required bool value,
+    required ValueChanged<bool> apply,
+  }) {
+    _pendingBoolSaves[key] = value;
+    apply(value);
+    unawaited(_saveBool(key, value));
+  }
+
+  Future<void> _saveBool(String key, bool value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(key, value);
+      if (_pendingBoolSaves[key] == value) {
+        _pendingBoolSaves.remove(key);
+      }
+    } on Object {
+      return;
+    }
+  }
+
+  bool _storedBool(SharedPreferences prefs, String key, bool fallback) {
+    return _pendingBoolSaves[key] ?? prefs.getBool(key) ?? fallback;
   }
 
   Color _storedColor(int? value, Color fallback) {

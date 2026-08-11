@@ -36,6 +36,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 part 'game_rendering_coordinator_queued_path_cases.dart';
+part 'game_rendering_coordinator_threat_stub.dart';
 
 WorldMap _map() => WorldMap(
   cols: 4,
@@ -1436,18 +1437,6 @@ class _NoopFogOfWarOverlayLayer extends FogOfWarOverlayLayer {
     required Component parent,
     required WorldMap mapData,
     required FogVisibilityQuery visibility,
-  }) {}
-}
-
-class _NoopThreatOverlayLayer extends ThreatOverlayLayer {
-  @override
-  void sync({
-    required Component parent,
-    required GameClientState state,
-    required WorldMap mapData,
-    CombatRuleset combatRuleset = CombatRuleset.standard,
-    TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
-    bool dimmed = false,
   }) {}
 }
 

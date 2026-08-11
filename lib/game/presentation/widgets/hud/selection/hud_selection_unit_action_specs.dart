@@ -141,12 +141,12 @@ HudSelectionActionSpec _autoExploreActionFor({
   );
 }
 
-HudSelectionActionSpec _commanderArmyActionFor({
-  required bool armyDetailActive,
-  required String? lockedReason,
-  required AppLocalizations l10n,
-  required VoidCallback onShowArmy,
-}) {
+HudSelectionActionSpec _armyAction(
+  bool armyDetailActive,
+  String? lockedReason,
+  AppLocalizations l10n,
+  VoidCallback onShowArmy,
+) {
   return HudSelectionActionSpec(
     icon: GameIcons.army,
     actionId: 'army',
@@ -188,113 +188,6 @@ HudSelectionActionSpec _cityFoundingActionFor({
     ),
     onTap: onStartCityFounding,
   );
-}
-
-HudSelectionActionSpec _workerBuildActionFor({
-  required GameUnit unit,
-  required GameClientState? gameState,
-  required WorkerActionPanelViewModel? workerAction,
-  required String? lockedReason,
-  required AppLocalizations l10n,
-  required VoidCallback onStartWorkerActionSelection,
-  required VoidCallback onCancelWorkerActionSelection,
-  required VoidCallback onCancelWorkerJob,
-}) {
-  final pending = gameState?.pendingAction;
-  final selectionActive =
-      pending is PendingWorkerActionSelection && pending.unitId == unit.id;
-  final jobActive = workerAction?.hasActiveJob ?? unit.workerJob != null;
-  final active = selectionActive || jobActive;
-  final canStart =
-      _canUseTurnAction(unit) &&
-      unit.queuedPath == null &&
-      (workerAction?.canStartSelection ?? true);
-  final needsGuidance = !active && canStart && lockedReason == null;
-
-  return HudSelectionActionSpec(
-    icon: GameIcons.production,
-    actionId: 'improve',
-    label: l10n.selectionActionImprove,
-    color: GameUiTheme.success,
-    active: active,
-    enabled: _enabled(active || canStart, lockedReason),
-    dangerOutlined: active,
-    prominent: needsGuidance,
-    pulseBorder: needsGuidance,
-    disabledReason: _disabledReason(
-      lockedReason: lockedReason,
-      actionReason: active
-          ? null
-          : unit.queuedPath != null
-          ? l10n.selectionActionCancelCurrentMoveFirst
-          : _turnActionBlockedReason(l10n, unit) ??
-                workerAction?.buildBlockedReason ??
-                l10n.selectionActionNoBuildAvailable,
-    ),
-    onTap: jobActive
-        ? onCancelWorkerJob
-        : selectionActive
-        ? onCancelWorkerActionSelection
-        : onStartWorkerActionSelection,
-  );
-}
-
-HudSelectionActionSpec _workerRoadActionFor({
-  required GameUnit unit,
-  required GameClientState? gameState,
-  required WorldMap mapData,
-  required String? lockedReason,
-  required AppLocalizations l10n,
-  required VoidCallback onBuildRoad,
-}) {
-  final legality = gameState == null
-      ? const RoadConstructionLegality.blocked(
-          RoadConstructionBlocker.missingTile,
-        )
-      : RoadConstructionRules.evaluate(
-          unit: unit,
-          cities: gameState.cities,
-          network: gameState.transportNetwork,
-          mapTiles: mapData,
-        );
-  final available = legality.allowed;
-  return HudSelectionActionSpec(
-    icon: GameIcons.route,
-    actionId: 'buildRoad',
-    label: l10n.selectionActionBuildRoad,
-    color: GameUiTheme.gold,
-    active: false,
-    enabled: _enabled(available, lockedReason),
-    disabledReason: _disabledReason(
-      lockedReason: lockedReason,
-      actionReason: available
-          ? null
-          : _roadConstructionBlockedReason(l10n, legality.blocker),
-    ),
-    onTap: onBuildRoad,
-  );
-}
-
-String _roadConstructionBlockedReason(
-  AppLocalizations l10n,
-  RoadConstructionBlocker? blocker,
-) {
-  return switch (blocker) {
-    RoadConstructionBlocker.workerBusy => l10n.selectionActionUnitWorking,
-    RoadConstructionBlocker.noMovementPoints => l10n.selectionActionNoMovement,
-    RoadConstructionBlocker.queuedPathActive =>
-      l10n.selectionActionCancelCurrentMoveFirst,
-    RoadConstructionBlocker.existingRoad =>
-      l10n.selectionActionRoadAlreadyBuilt,
-    RoadConstructionBlocker.enemyTerritory =>
-      l10n.selectionActionRoadEnemyTerritory,
-    RoadConstructionBlocker.impassableTerrain =>
-      l10n.selectionActionRoadInvalidTerrain,
-    RoadConstructionBlocker.cityCenter => l10n.selectionActionRoadCityCenter,
-    RoadConstructionBlocker.notWorker ||
-    RoadConstructionBlocker.missingTile ||
-    null => l10n.selectionActionRoadUnavailable,
-  };
 }
 
 HudSelectionActionSpec _skipTurnActionFor({

@@ -1,6 +1,5 @@
 part of 'game_command.dart';
 
-/// Shared presentation boundary for the worker improvement picker.
 abstract interface class WorkerInteractionCommand {}
 
 /// Player begins worker action selection for [unitId].
@@ -140,7 +139,6 @@ final class CancelWorkerAssignmentCommand extends UnitIdDomainCommand {
   const CancelWorkerAssignmentCommand(super.unitId);
 }
 
-/// Begins road construction on the worker's current hex.
 final class BuildRoadCommand extends UnitIdDomainCommand {
   const BuildRoadCommand(super.unitId);
 }

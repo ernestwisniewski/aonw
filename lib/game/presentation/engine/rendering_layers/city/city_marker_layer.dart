@@ -183,7 +183,7 @@ class CityMarkerLayer extends Component with LayerAttachment {
           _markers.containsKey(city.id)) {
         continue;
       }
-      final position = _cityWorldPosition(city);
+      final position = worldPositionFor(city.center.col, city.center.row);
       final selected = city.id == selectedCityId;
       final healthFraction = healthFractions[city.id] ?? 1.0;
       final isCapital = capitalCityIds.contains(city.id);
@@ -235,10 +235,6 @@ class CityMarkerLayer extends Component with LayerAttachment {
     _markers.clear();
     _retainedAnimationCityIds.clear();
     super.onRemove();
-  }
-
-  Vector2 _cityWorldPosition(GameCity city) {
-    return worldPositionFor(city.center.col, city.center.row);
   }
 
   Set<String> _capitalCityIds(List<GameCity> cities) {

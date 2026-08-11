@@ -3550,23 +3550,53 @@ abstract class AppLocalizations {
   /// **'AI battery saver'**
   String get aiBatterySaverLabel;
 
-  /// No description provided for @gameplaySectionTitle.
+  /// No description provided for @mapDisplaySectionTitle.
   ///
   /// In en, this message translates to:
-  /// **'Gameplay'**
-  String get gameplaySectionTitle;
+  /// **'Map display'**
+  String get mapDisplaySectionTitle;
 
-  /// No description provided for @followUnitMovementCameraLabel.
+  /// No description provided for @cameraSectionTitle.
   ///
   /// In en, this message translates to:
-  /// **'Follow unit movement with camera'**
-  String get followUnitMovementCameraLabel;
+  /// **'Camera'**
+  String get cameraSectionTitle;
 
-  /// No description provided for @followEnemyUnitCameraLabel.
+  /// No description provided for @automationSectionTitle.
   ///
   /// In en, this message translates to:
-  /// **'Follow enemy units with camera'**
-  String get followEnemyUnitCameraLabel;
+  /// **'Automation'**
+  String get automationSectionTitle;
+
+  /// No description provided for @defaultMapViewModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Default map view mode'**
+  String get defaultMapViewModeLabel;
+
+  /// No description provided for @focusOwnUnitMovementCameraLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus camera on my unit movement'**
+  String get focusOwnUnitMovementCameraLabel;
+
+  /// No description provided for @followOwnUnitMovementCameraLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Track my unit movement with camera'**
+  String get followOwnUnitMovementCameraLabel;
+
+  /// No description provided for @focusEnemyUnitMovementCameraLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus camera on enemy unit movement'**
+  String get focusEnemyUnitMovementCameraLabel;
+
+  /// No description provided for @followEnemyUnitMovementCameraLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Track enemy unit movement with camera'**
+  String get followEnemyUnitMovementCameraLabel;
 
   /// No description provided for @cinematicCameraLabel.
   ///

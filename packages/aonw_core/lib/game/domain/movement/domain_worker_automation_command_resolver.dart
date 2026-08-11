@@ -122,6 +122,7 @@ final class DomainWorkerAutomationCommandResolver {
   }) {
     if (worker.occupies(target.hex.col, target.hex.row)) {
       return _startWork(
+        workerResolver: workerResolver,
         state: state,
         interaction: interaction,
         workerId: worker.id,
@@ -310,6 +311,7 @@ final class DomainWorkerAutomationCommandResolver {
     final movedWorker = moved.units[movedIndex];
     if (_canStartWork(movedWorker, target)) {
       final started = _startWork(
+        workerResolver: workerResolver,
         state: movedState,
         interaction: interaction,
         workerId: workerId,
@@ -345,51 +347,52 @@ final class DomainWorkerAutomationCommandResolver {
       execution: moved.execution,
     );
   }
+}
 
-  DomainWorkerAutomationCommandResult _startWork({
-    required DomainState state,
-    required DomainActionState interaction,
-    required String workerId,
-    required WorkerAutomationTarget target,
-    required String actorPlayerId,
-    required MapTileLookup mapData,
-    required CityRuleset cityRuleset,
-    required TechnologyRuleset technologyRuleset,
-    required PaceBalance paceBalance,
-  }) {
-    final result = switch (target) {
-      WorkerAutomationBuildTarget(:final improvementType) =>
-        workerResolver.selectWorkerImprovement(
-          state: state,
-          interaction: interaction,
-          command: SelectWorkerImprovementCommand(workerId, improvementType),
-          actorPlayerId: actorPlayerId,
-          mapTiles: mapData,
-          cityRuleset: cityRuleset,
-          technologyRuleset: technologyRuleset,
-          paceBalance: paceBalance,
-        ),
-      WorkerAutomationAssignmentTarget() => workerResolver.assignWorkerToHex(
+DomainWorkerAutomationCommandResult _startWork({
+  required DomainWorkerCommandResolver workerResolver,
+  required DomainState state,
+  required DomainActionState interaction,
+  required String workerId,
+  required WorkerAutomationTarget target,
+  required String actorPlayerId,
+  required MapTileLookup mapData,
+  required CityRuleset cityRuleset,
+  required TechnologyRuleset technologyRuleset,
+  required PaceBalance paceBalance,
+}) {
+  final result = switch (target) {
+    WorkerAutomationBuildTarget(:final improvementType) =>
+      workerResolver.selectWorkerImprovement(
         state: state,
         interaction: interaction,
-        command: AssignWorkerToHexCommand(workerId),
+        command: SelectWorkerImprovementCommand(workerId, improvementType),
         actorPlayerId: actorPlayerId,
         mapTiles: mapData,
+        cityRuleset: cityRuleset,
+        technologyRuleset: technologyRuleset,
+        paceBalance: paceBalance,
       ),
-    };
-    if (!result.accepted) {
-      return _reject(
-        state,
-        interaction,
-        result.reason ?? 'worker_automation_target_invalid',
-      );
-    }
-    return DomainWorkerAutomationCommandResult(
-      accepted: true,
-      state: result.state,
-      interaction: result.interaction,
+    WorkerAutomationAssignmentTarget() => workerResolver.assignWorkerToHex(
+      state: state,
+      interaction: interaction,
+      command: AssignWorkerToHexCommand(workerId),
+      actorPlayerId: actorPlayerId,
+      mapTiles: mapData,
+    ),
+  };
+  if (!result.accepted) {
+    return _reject(
+      state,
+      interaction,
+      result.reason ?? 'worker_automation_target_invalid',
     );
   }
+  return DomainWorkerAutomationCommandResult(
+    accepted: true,
+    state: result.state,
+    interaction: result.interaction,
+  );
 }
 
 bool _canStartWork(GameUnit worker, WorkerAutomationTarget target) {

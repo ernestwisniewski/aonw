@@ -18,6 +18,7 @@ import 'package:flutter/animation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 part 'game_effect_dispatcher_combat_camera_tests.dart';
+part 'game_effect_dispatcher_follow_only_tests.dart';
 part 'game_effect_dispatcher_map_focus_tests.dart';
 
 WorldMap _map() => WorldMap(
@@ -34,11 +35,6 @@ WorldMap _map() => WorldMap(
       ),
   ],
 );
-
-class _FakeUnitMarkerLayer extends UnitMarkerLayer {
-  _FakeUnitMarkerLayer()
-    : super(mapData: _map(), colorForPlayer: (_) => 0xFF0000FF);
-}
 
 class _FakeUnitAnimationController extends UnitAnimationController {
   String? unitId;
@@ -141,6 +137,7 @@ class _FakeFloatingTextLayer extends FloatingTextLayer {
 void main() {
   group('GameEffectDispatcher', () {
     _registerGameEffectDispatcherMapFocusTests();
+    _registerGameEffectDispatcherFollowOnlyTests();
 
     test(
       'skips camera focus effects rejected by map visibility policy',

@@ -18,6 +18,7 @@ final class DomainTransportCommandResult {
   final DomainState state;
   final String? reason;
 }
+
 /// Canonical-state adapter for transport infrastructure commands.
 final class DomainTransportCommandResolver {
   const DomainTransportCommandResolver();
@@ -44,10 +45,7 @@ final class DomainTransportCommandResolver {
       mapTiles: mapTiles,
     );
     if (!legality.allowed) {
-      return _rejected(
-        state,
-        'road_construction_${legality.blocker!.name}',
-      );
+      return _rejected(state, 'road_construction_${legality.blocker!.name}');
     }
     final totalTurns = RoadConstructionRules.buildTurns(paceBalance);
     final updated = worker

@@ -1,5 +1,6 @@
 import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/menu/menu_click_sound.dart';
+import 'package:aonw/menu/options_camera_map_controls.dart';
 import 'package:aonw/menu/options_value_slider.dart';
 import 'package:aonw/menu/widgets/settings_controls.dart';
 import 'package:aonw/shared/providers/ai_settings_provider.dart';
@@ -90,8 +91,34 @@ class OptionsAiSection extends ConsumerWidget {
   }
 }
 
-class OptionsGameplaySection extends ConsumerWidget {
-  const OptionsGameplaySection({super.key});
+class OptionsMapDisplaySection extends ConsumerWidget {
+  const OptionsMapDisplaySection({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SettingsSection(
+      icon: Icons.map_outlined,
+      title: context.l10n.mapDisplaySectionTitle,
+      child: const OptionsMapDisplayControls(),
+    );
+  }
+}
+
+class OptionsCameraSection extends ConsumerWidget {
+  const OptionsCameraSection({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SettingsSection(
+      icon: Icons.videocam_outlined,
+      title: context.l10n.cameraSectionTitle,
+      child: const OptionsCameraControls(),
+    );
+  }
+}
+
+class OptionsAutomationSection extends ConsumerWidget {
+  const OptionsAutomationSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -99,38 +126,28 @@ class OptionsGameplaySection extends ConsumerWidget {
     final settings = ref.watch(gameplaySettingsProvider);
     final controller = ref.read(gameplaySettingsProvider.notifier);
     return SettingsSection(
-      icon: Icons.videocam_outlined,
-      title: l10n.gameplaySectionTitle,
+      icon: Icons.auto_awesome_outlined,
+      title: l10n.automationSectionTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SettingsToggleRow(
-            key: const Key('options.followUnitMovementCamera'),
-            icon: Icons.center_focus_strong_outlined,
-            label: l10n.followUnitMovementCameraLabel,
-            value: settings.followUnitMovementCamera,
+            key: const Key('options.autoActionFlow'),
+            icon: Icons.playlist_add_check_outlined,
+            label: l10n.gameOptionAutoActionFlow,
+            value: settings.autoActionFlowEnabled,
             onChanged: ref.withMenuClickValue(
-              controller.setFollowUnitMovementCamera,
+              controller.setAutoActionFlowEnabled,
             ),
           ),
           const SizedBox(height: 8),
           SettingsToggleRow(
-            key: const Key('options.followEnemyUnitCamera'),
-            icon: Icons.crisis_alert_outlined,
-            label: l10n.followEnemyUnitCameraLabel,
-            value: settings.followEnemyUnitCamera,
+            key: const Key('options.autoTurnFlow'),
+            icon: Icons.skip_next_outlined,
+            label: l10n.gameOptionAutoTurnFlow,
+            value: settings.autoTurnFlowEnabled,
             onChanged: ref.withMenuClickValue(
-              controller.setFollowEnemyUnitCamera,
-            ),
-          ),
-          const SizedBox(height: 8),
-          SettingsToggleRow(
-            key: const Key('options.cinematicCamera'),
-            icon: Icons.movie_filter_outlined,
-            label: l10n.cinematicCameraLabel,
-            value: settings.cinematicCameraEnabled,
-            onChanged: ref.withMenuClickValue(
-              controller.setCinematicCameraEnabled,
+              controller.setAutoTurnFlowEnabled,
             ),
           ),
         ],

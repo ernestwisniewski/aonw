@@ -69,12 +69,7 @@ List<List<HudSelectionActionSpec>> _unitActionGroups({
   }
   if (unit.type == GameUnitType.commander) {
     specialGroups.add([
-      _commanderArmyActionFor(
-        armyDetailActive: armyDetailActive,
-        lockedReason: lockedReason,
-        l10n: l10n,
-        onShowArmy: onShowArmy,
-      ),
+      _armyAction(armyDetailActive, lockedReason, l10n, onShowArmy),
     ]);
   }
   if (_supportsCityFoundingAction(unit)) {
@@ -91,27 +86,21 @@ List<List<HudSelectionActionSpec>> _unitActionGroups({
     ]);
   }
   if (unit.type == GameUnitType.worker) {
-    specialGroups.add([
-      _workerBuildActionFor(
+    specialGroups.add(
+      workerActionGroup(
         unit: unit,
         gameState: gameState,
+        mapData: mapData,
         workerAction: workerAction,
         lockedReason: lockedReason,
         l10n: l10n,
         onStartWorkerActionSelection: onStartWorkerActionSelection,
         onCancelWorkerActionSelection: onCancelWorkerActionSelection,
         onCancelWorkerJob: onCancelWorkerJob,
-      ),
-      _workerRoadActionFor(
-        unit: unit,
-        gameState: gameState,
-        mapData: mapData,
-        lockedReason: lockedReason,
-        l10n: l10n,
         onBuildRoad: onBuildRoad,
+        onAutomateSelectedWorker: onAutomateSelectedWorker,
       ),
-      workerAutoAction(unit, lockedReason, l10n, onAutomateSelectedWorker),
-    ]);
+    );
   }
   if (unit.type == GameUnitType.merchant) {
     specialGroups.add([

@@ -4,6 +4,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provider.dart';
 import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
+import 'package:aonw/game/presentation/widgets/options/game_options_layout.dart';
 import 'package:aonw/game/presentation/widgets/options/game_options_overlay.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/providers/gameplay_settings_provider.dart';
@@ -19,6 +20,8 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+part 'game_options_overlay_camera_layout_tests.dart';
 
 const _player = Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4);
 
@@ -146,6 +149,7 @@ void _expectRectInside(Size size, Rect rect) {
 }
 
 void main() {
+  _registerGameOptionsCameraLayoutTests();
   testWidgets('left menu orders icon actions and can collapse', (tester) async {
     await _pumpOptionsOverlay(
       tester,
@@ -264,8 +268,11 @@ void main() {
     await tester.tap(find.byKey(const Key('gameOptions.optionsButton')));
     await tester.pump();
 
-    expect(find.text('GROWTH MIAST'), findsNothing);
+    expect(find.text('MAP DISPLAY'), findsOneWidget);
+    expect(find.text('CAMERA'), findsOneWidget);
+    expect(find.text('AUTOMATION'), findsOneWidget);
     expect(find.text('HEIGHT'), findsOneWidget);
+    expect(find.text('CITY GROWTH'), findsOneWidget);
     expect(find.text('DICE TEST'), findsOneWidget);
     expect(find.text('AUTO ACTION COMPLETION'), findsOneWidget);
     expect(find.text('AUTO TURN COMPLETION'), findsOneWidget);
@@ -273,32 +280,30 @@ void main() {
     expect(find.text('SHOW HEXES'), findsOneWidget);
     expect(find.text('SHOW HEIGHT'), findsOneWidget);
     expect(
-      tester.getTopLeft(find.text('HEIGHT')).dy,
-      lessThan(tester.getTopLeft(find.text('DICE TEST')).dy),
+      tester.getTopLeft(find.text('MAP DISPLAY')).dy,
+      lessThan(tester.getTopLeft(find.text('CAMERA')).dy),
     );
     expect(
-      tester.getTopLeft(find.text('DICE TEST')).dy,
-      lessThan(tester.getTopLeft(find.text('AUTO ACTION COMPLETION')).dy),
+      tester.getTopLeft(find.text('CAMERA')).dy,
+      lessThan(tester.getTopLeft(find.text('AUTOMATION')).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('TILES')).dy,
+      lessThan(tester.getTopLeft(find.text('HEIGHT')).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('HEIGHT')).dy,
+      lessThan(tester.getTopLeft(find.text('DICE TEST')).dy),
     );
     expect(
       tester.getTopLeft(find.text('AUTO ACTION COMPLETION')).dy,
       lessThan(tester.getTopLeft(find.text('AUTO TURN COMPLETION')).dy),
     );
     expect(
-      tester.getTopLeft(find.text('AUTO TURN COMPLETION')).dy,
-      lessThan(tester.getTopLeft(find.text('TILES')).dy),
-    );
-    expect(
       tester
-          .getTopLeft(find.byKey(const Key('gameOptions.autoTurnSeparator')))
+          .getTopLeft(find.byKey(const Key('gameOptions.cameraSeparator')))
           .dy,
-      greaterThan(tester.getTopLeft(find.text('AUTO TURN COMPLETION')).dy),
-    );
-    expect(
-      tester
-          .getTopLeft(find.byKey(const Key('gameOptions.autoTurnSeparator')))
-          .dy,
-      lessThan(tester.getTopLeft(find.text('TILES')).dy),
+      lessThan(tester.getTopLeft(find.text('AUTOMATION')).dy),
     );
     final heightRow = find.ancestor(
       of: find.text('HEIGHT'),
@@ -340,6 +345,8 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(showHeightWalls, isTrue);
 
+    await tester.ensureVisible(find.text('DICE TEST'));
+    await tester.pump();
     await tester.tap(find.text('DICE TEST'));
     await tester.pump();
 
@@ -380,6 +387,10 @@ void main() {
       findsNothing,
     );
 
+    await tester.ensureVisible(
+      find.byKey(const Key('gameOptions.autoActionFlowRow')),
+    );
+    await tester.pump();
     await tester.tap(find.byKey(const Key('gameOptions.autoActionFlowRow')));
     await tester.pump();
 
@@ -392,6 +403,10 @@ void main() {
       findsNothing,
     );
 
+    await tester.ensureVisible(
+      find.byKey(const Key('gameOptions.autoTurnFlowRow')),
+    );
+    await tester.pump();
     await tester.tap(find.byKey(const Key('gameOptions.autoTurnFlowRow')));
     await tester.pump();
 
@@ -419,6 +434,10 @@ void main() {
       findsOneWidget,
     );
 
+    await tester.ensureVisible(
+      find.byKey(const Key('gameOptions.cinematicCameraRow')),
+    );
+    await tester.pump();
     await tester.tap(find.byKey(const Key('gameOptions.cinematicCameraRow')));
     await tester.pump();
 
@@ -432,39 +451,6 @@ void main() {
     );
     expect(
       find.byKey(const Key('gameOptions.cinematicCameraIcon.on')),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('enemy unit camera option toggles gameplay setting', (
-    tester,
-  ) async {
-    await _pumpOptionsOverlay(tester);
-
-    await tester.tap(find.byKey(const Key('gameOptions.optionsButton')));
-    await tester.pump();
-
-    expect(find.text('FOLLOW ENEMY UNITS WITH CAMERA'), findsOneWidget);
-    expect(
-      find.byKey(const Key('gameOptions.followEnemyUnitCameraIcon.off')),
-      findsOneWidget,
-    );
-
-    await tester.tap(
-      find.byKey(const Key('gameOptions.followEnemyUnitCameraRow')),
-    );
-    await tester.pump();
-
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(GameOptionsOverlay)),
-      listen: false,
-    );
-    expect(
-      container.read(gameplaySettingsProvider).followEnemyUnitCamera,
-      isTrue,
-    );
-    expect(
-      find.byKey(const Key('gameOptions.followEnemyUnitCameraIcon.on')),
       findsOneWidget,
     );
   });

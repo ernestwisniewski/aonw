@@ -329,15 +329,11 @@ void main() {
 
     expect(batch.domainEffects.map((item) => item.startOffset), const [
       Duration.zero,
-      Duration.zero,
     ]);
     final firstDelivery = cursor.consume(batch.projectedEffects);
     final reconnectDelivery = cursor.consume(batch.projectedEffects);
 
-    expect(firstDelivery, [
-      isA<ShowCombatHexAlertEffect>(),
-      isA<SmoothCameraEffect>(),
-    ]);
+    expect(firstDelivery, [isA<ShowCombatHexAlertEffect>()]);
     expect(reconnectDelivery, isEmpty);
   });
 

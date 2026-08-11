@@ -21,19 +21,11 @@ final class FoundCityCommand extends UnitDomainCommand {
   bool operator ==(Object other) =>
       other is FoundCityCommand &&
       other.founderId == founderId &&
-      _sameControlledHexes(other.controlledHexes, controlledHexes);
+      listEquals(other.controlledHexes, controlledHexes);
 
   @override
   int get hashCode =>
       Object.hash(FoundCityCommand, founderId, Object.hashAll(controlledHexes));
-
-  static bool _sameControlledHexes(List<CityHex> left, List<CityHex> right) {
-    if (left.length != right.length) return false;
-    for (var i = 0; i < left.length; i++) {
-      if (left[i] != right[i]) return false;
-    }
-    return true;
-  }
 }
 
 /// Player starts building [buildingType] in city [cityId].

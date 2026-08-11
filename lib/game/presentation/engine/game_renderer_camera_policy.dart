@@ -1,10 +1,25 @@
-part of 'game_renderer.dart';
+import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/presentation/engine/game_renderer_camera_settings.dart';
+import 'package:aonw_core/game/domain/unit.dart';
 
-extension _GameRendererCameraPolicy on GameRenderer {
-  bool _transitionControlsCamera(Iterable<RendererEffect> effects) {
+final class GameRendererCameraPolicy {
+  const GameRendererCameraPolicy({
+    required this.settings,
+    required this.state,
+    required this.isDisposed,
+    required this.focusActiveSelection,
+  });
+
+  final GameRendererCameraSettings settings;
+  final GameClientState Function() state;
+  final bool Function() isDisposed;
+  final void Function() focusActiveSelection;
+
+  bool transitionControlsCamera(Iterable<RendererEffect> effects) {
     for (final effect in effects) {
       if (effect is AnimateUnitMoveEffect) {
-        if (_moveCameraForUnitMovementEffect(effect.unitId)) return true;
+        if (_unitMovementControlsCamera(effect.unitId)) return true;
         continue;
       }
       if (effect is PlayCombatAnimationEffect ||
@@ -16,22 +31,39 @@ extension _GameRendererCameraPolicy on GameRenderer {
     return false;
   }
 
-  bool _moveCameraForUnitMovementEffect(String unitId) {
-    if (!moveCameraForUnitMovement) return false;
-    final unit = _renderState.unitById(unitId);
-    if (unit == null) return false;
-    if (!_isEnemyUnit(unit)) return true;
-    return followEnemyUnitCamera;
+  bool _unitMovementControlsCamera(String unitId) {
+    if (!settings.moveCameraForUnitMovement) return false;
+    return focusCameraForUnit(unitId) || followCameraForUnit(unitId);
   }
 
-  Future<void> _restoreCameraAfterUnitMovementEffect(String unitId) async {
-    if (_isDisposed || !followEnemyUnitCamera) return;
-    final unit = _renderState.unitById(unitId);
+  bool focusCameraForUnit(String unitId) {
+    final unit = state().unitById(unitId);
+    if (unit == null) return false;
+    return _isEnemyUnit(unit)
+        ? settings.focusEnemyUnitMovementCamera
+        : settings.focusOwnUnitMovementCamera;
+  }
+
+  bool followCameraForUnit(String unitId) {
+    final unit = state().unitById(unitId);
+    if (unit == null) return false;
+    return _isEnemyUnit(unit)
+        ? settings.followEnemyUnitMovementCamera
+        : settings.followOwnUnitMovementCamera;
+  }
+
+  Future<void> restoreAfterUnitMovement(String unitId) async {
+    if (isDisposed()) return;
+    final unit = state().unitById(unitId);
     if (unit == null || !_isEnemyUnit(unit)) return;
-    _focusSelection(_renderState.selection);
+    if (!settings.focusEnemyUnitMovementCamera &&
+        !settings.followEnemyUnitMovementCamera) {
+      return;
+    }
+    focusActiveSelection();
   }
 
   bool _isEnemyUnit(GameUnit unit) {
-    return unit.ownerPlayerId != _renderState.activePlayerId;
+    return unit.ownerPlayerId != state().activePlayerId;
   }
 }

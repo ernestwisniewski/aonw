@@ -9,19 +9,24 @@ import 'package:aonw/shared/performance/fps_counter_overlay.dart';
 import 'package:aonw/shared/providers/ai_settings_provider.dart';
 import 'package:aonw/shared/providers/display_settings_provider.dart';
 import 'package:aonw/shared/providers/gameplay_settings_provider.dart';
+import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw/shared/providers/language_settings_provider.dart';
 import 'package:aonw/shared/providers/performance_settings_provider.dart';
 import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
 import 'package:aonw/shared/window/game_window.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+part 'options_screen_camera_map_test.dart';
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
+  registerOptionsScreenCameraMapTests();
 
   testWidgets('options screen toggles the FPS counter setting', (tester) async {
     await tester.pumpWidget(
@@ -130,70 +135,6 @@ void main() {
     expect(container.read(aiSettingsProvider).batterySaver, isTrue);
   });
 
-  testWidgets('options screen toggles unit movement camera follow', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      const ProviderScope(child: _LocalizedHarness(child: OptionsScreen())),
-    );
-    await tester.pump();
-
-    await tester.ensureVisible(find.text('Follow unit movement with camera'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Follow unit movement with camera'));
-    await tester.pump();
-
-    final context = tester.element(find.byType(OptionsScreen));
-    final container = ProviderScope.containerOf(context, listen: false);
-
-    expect(
-      container.read(gameplaySettingsProvider).followUnitMovementCamera,
-      isTrue,
-    );
-  });
-
-  testWidgets('options screen toggles cinematic camera', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(child: _LocalizedHarness(child: OptionsScreen())),
-    );
-    await tester.pump();
-
-    await tester.ensureVisible(find.text('Cinematic camera'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Cinematic camera'));
-    await tester.pump();
-
-    final context = tester.element(find.byType(OptionsScreen));
-    final container = ProviderScope.containerOf(context, listen: false);
-
-    expect(
-      container.read(gameplaySettingsProvider).cinematicCameraEnabled,
-      isTrue,
-    );
-  });
-
-  testWidgets('options screen toggles enemy unit camera follow', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      const ProviderScope(child: _LocalizedHarness(child: OptionsScreen())),
-    );
-    await tester.pump();
-
-    await tester.ensureVisible(find.text('Follow enemy units with camera'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Follow enemy units with camera'));
-    await tester.pump();
-
-    final context = tester.element(find.byType(OptionsScreen));
-    final container = ProviderScope.containerOf(context, listen: false);
-
-    expect(
-      container.read(gameplaySettingsProvider).followEnemyUnitCamera,
-      isTrue,
-    );
-  });
-
   testWidgets('options screen toggles gamepad input', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(child: _LocalizedHarness(child: OptionsScreen())),
@@ -219,11 +160,15 @@ void main() {
     );
     await tester.pump();
 
-    final gameplaySection = find.text('GAMEPLAY');
+    final mapSection = find.text('MAP DISPLAY');
+    final cameraSection = find.text('CAMERA');
+    final automationSection = find.text('AUTOMATION');
     final performanceSection = find.text('PERFORMANCE');
     final gamepadSection = find.text('GAMEPAD CONTROLS');
 
-    expect(gameplaySection, findsOneWidget);
+    expect(mapSection, findsOneWidget);
+    expect(cameraSection, findsOneWidget);
+    expect(automationSection, findsOneWidget);
     expect(performanceSection, findsOneWidget);
     expect(gamepadSection, findsOneWidget);
     expect(

@@ -75,8 +75,7 @@ class SettingsToggleRow extends StatelessWidget {
       inactiveTrackColor: GameUiTheme.surface.withAlpha(210),
       title: Text(
         label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+        maxLines: 2,
         style: GameUiTheme.bodyStrong.copyWith(
           color: value ? GameUiTheme.goldLight : GameUiTheme.textPrimary,
         ),

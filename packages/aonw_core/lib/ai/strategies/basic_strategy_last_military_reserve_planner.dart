@@ -5,7 +5,6 @@ import 'package:aonw_core/ai/strategies/basic_strategy_defense_movement.dart';
 import 'package:aonw_core/ai/strategies/basic_strategy_garrison_rules.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/hex.dart';
-import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 final class BasicStrategyLastMilitaryReservePlanner {
@@ -36,10 +35,8 @@ final class BasicStrategyLastMilitaryReservePlanner {
       for (final enemy in view.visibleEnemyUnits) _key(enemy.col, enemy.row),
       for (final hex in localReservedHexes) _key(hex.col, hex.row),
     };
-    final pathfinder = UnitMovementPathfinder(
+    final pathfinder = view.movementPathfinder(
       mapData: context.mapData,
-      units: view.movementBlockingUnits,
-      costResolver: view.traversalCostResolver,
       canEnterTile: (tile) =>
           view.visibility.canSeeDynamicAt(tile.col, tile.row) &&
           !occupied.contains(_key(tile.col, tile.row)),

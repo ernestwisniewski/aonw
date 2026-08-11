@@ -1,5 +1,6 @@
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/shared/providers/gameplay_settings_provider.dart';
+import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gamepads/gamepads.dart';
@@ -10,14 +11,15 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  test('keeps unit movement camera follow disabled by default', () {
+  test('uses backward-compatible camera movement defaults', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    expect(
-      container.read(gameplaySettingsProvider).followUnitMovementCamera,
-      isFalse,
-    );
+    final settings = container.read(gameplaySettingsProvider);
+    expect(settings.focusOwnUnitMovementCamera, isTrue);
+    expect(settings.followOwnUnitMovementCamera, isFalse);
+    expect(settings.focusEnemyUnitMovementCamera, isFalse);
+    expect(settings.followEnemyUnitMovementCamera, isFalse);
   });
 
   test('keeps cinematic camera disabled by default', () {
@@ -26,16 +28,6 @@ void main() {
 
     expect(
       container.read(gameplaySettingsProvider).cinematicCameraEnabled,
-      isFalse,
-    );
-  });
-
-  test('keeps enemy unit camera follow disabled by default', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    expect(
-      container.read(gameplaySettingsProvider).followEnemyUnitCamera,
       isFalse,
     );
   });
@@ -52,21 +44,28 @@ void main() {
     expect(gamepad.invertCameraY, isFalse);
   });
 
-  test('persists unit movement camera follow preference', () async {
+  test('persists the four independent camera movement preferences', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    container
-        .read(gameplaySettingsProvider.notifier)
-        .setFollowUnitMovementCamera(true);
+    container.read(gameplaySettingsProvider.notifier)
+      ..setFocusOwnUnitMovementCamera(false)
+      ..setFollowOwnUnitMovementCamera(true)
+      ..setFocusEnemyUnitMovementCamera(true)
+      ..setFollowEnemyUnitMovementCamera(true);
 
-    expect(
-      container.read(gameplaySettingsProvider).followUnitMovementCamera,
-      isTrue,
-    );
+    final settings = container.read(gameplaySettingsProvider);
+    expect(settings.focusOwnUnitMovementCamera, isFalse);
+    expect(settings.followOwnUnitMovementCamera, isTrue);
+    expect(settings.focusEnemyUnitMovementCamera, isTrue);
+    expect(settings.followEnemyUnitMovementCamera, isTrue);
 
+    await Future<void>.delayed(Duration.zero);
     final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('gameplay.focus_own_unit_movement_camera'), isFalse);
     expect(prefs.getBool('gameplay.follow_unit_movement_camera'), isTrue);
+    expect(prefs.getBool('gameplay.follow_enemy_unit_camera'), isTrue);
+    expect(prefs.getBool('gameplay.follow_enemy_unit_movement_camera'), isTrue);
   });
 
   test('persists cinematic camera preference', () async {
@@ -86,22 +85,66 @@ void main() {
     expect(prefs.getBool('gameplay.cinematic_camera_enabled'), isTrue);
   });
 
-  test('persists enemy unit camera follow preference', () async {
+  test(
+    'migrates the legacy camera settings without changing behavior',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'gameplay.follow_unit_movement_camera': true,
+        'gameplay.follow_enemy_unit_camera': true,
+      });
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await container.read(gameplaySettingsProvider.notifier).ensureLoaded();
+
+      final settings = container.read(gameplaySettingsProvider);
+      expect(settings.focusOwnUnitMovementCamera, isTrue);
+      expect(settings.followOwnUnitMovementCamera, isTrue);
+      expect(settings.focusEnemyUnitMovementCamera, isTrue);
+      expect(settings.followEnemyUnitMovementCamera, isTrue);
+    },
+  );
+
+  test('persists automation and preferred map view settings', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    container
-        .read(gameplaySettingsProvider.notifier)
-        .setFollowEnemyUnitCamera(true);
+    container.read(gameplaySettingsProvider.notifier)
+      ..setAutoActionFlowEnabled(false)
+      ..setAutoTurnFlowEnabled(true)
+      ..setPreferredMapViewMode(MapViewMode.tile);
 
-    expect(
-      container.read(gameplaySettingsProvider).followEnemyUnitCamera,
-      isTrue,
-    );
+    final settings = container.read(gameplaySettingsProvider);
+    expect(settings.autoActionFlowEnabled, isFalse);
+    expect(settings.autoTurnFlowEnabled, isTrue);
+    expect(settings.preferredMapViewMode, MapViewMode.tile);
 
+    await Future<void>.delayed(Duration.zero);
     final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getBool('gameplay.follow_enemy_unit_camera'), isTrue);
+    expect(prefs.getBool('gameplay.auto_action_flow_enabled'), isFalse);
+    expect(prefs.getBool('gameplay.auto_turn_flow_enabled'), isTrue);
+    expect(prefs.getString('gameplay.preferred_map_view_mode'), 'tile');
   });
+
+  test(
+    'loads automation and preferred map view before session creation',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'gameplay.auto_action_flow_enabled': false,
+        'gameplay.auto_turn_flow_enabled': true,
+        'gameplay.preferred_map_view_mode': 'tile',
+      });
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await container.read(gameplaySettingsProvider.notifier).ensureLoaded();
+
+      final settings = container.read(gameplaySettingsProvider);
+      expect(settings.autoActionFlowEnabled, isFalse);
+      expect(settings.autoTurnFlowEnabled, isTrue);
+      expect(settings.preferredMapViewMode, MapViewMode.tile);
+    },
+  );
 
   test('persists gamepad preferences', () async {
     final container = ProviderContainer();

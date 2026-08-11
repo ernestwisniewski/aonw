@@ -17,7 +17,7 @@ void _requireAcceptedParityCityExpansion(
       'must update an existing city, preserve a runtime sentinel, and emit no events',
     );
   }
-  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save))) {
+  if (!jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save))) {
     ReducerParityCorpus._fail(
       fixture,
       'must preserve save metadata for city expansion selection',
@@ -30,7 +30,7 @@ void _requireAcceptedParityCityExpansion(
       preferredExpansionHex: CityHex(col: command.col, row: command.row),
     );
   final expectedState = fixture.state.copyWith(cities: expectedCities);
-  if (!_jsonDeepEquals(
+  if (!jsonDeepEquals(
     CanonicalGameSnapshotCodec.encodeDomainState(state),
     CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
   )) {

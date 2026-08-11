@@ -97,7 +97,7 @@ void _requireAcceptedParityWorker(
   DomainState state,
   List<GameEvent> events,
 ) {
-  if (!_jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||
+  if (!jsonDeepEquals(fixture.expectedSave, reducerParitySave(fixture.save)) ||
       events.isNotEmpty) {
     ReducerParityCorpus._fail(
       fixture,
@@ -131,11 +131,11 @@ void _requireAcceptedParityWorker(
       _sameWorkerUnitOrder(fixture.state.units, state.units) &&
       _unrelatedWorkerUnitsPreserved(fixture.state, state, unitId);
   if (!exactUnits ||
-      !_jsonDeepEquals(
+      !jsonDeepEquals(
         fixture.expectedState,
         CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
       ) ||
-      !_jsonDeepEquals(
+      !jsonDeepEquals(
         CanonicalGameSnapshotCodec.encodeDomainState(state),
         CanonicalGameSnapshotCodec.encodeDomainState(expectedState),
       )) {

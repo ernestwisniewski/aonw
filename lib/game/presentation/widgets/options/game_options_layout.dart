@@ -3,6 +3,9 @@ import 'dart:math' as math;
 import 'package:aonw/game/presentation/widgets/hud/layout/hud_side_menu_metrics.dart';
 import 'package:flutter/material.dart';
 
+const _wideActionDeckMaxWidth = 840.0;
+const _expandedActionDeckReserve = 188.0;
+
 class GameOptionsOverlayLayout {
   const GameOptionsOverlayLayout({
     required this.buttonLeft,
@@ -87,27 +90,17 @@ class GameOptionsOverlayLayout {
     final panelWidth = math.min(targetPanelWidth, maxPanelWidth);
     final sidePanelWidth = math.min(targetSidePanelWidth, maxPanelWidth);
 
-    final bottomReserve = portraitPhone
-        ? 174.0
-        : landscapePhone
-        ? 92.0
-        : 24.0;
-    final heightCap = hasResignAction
-        ? 420.0
-        : landscapePhone
-        ? 280.0
-        : 360.0;
-    final availablePanelHeight =
-        size.height - safePadding.bottom - panelTop - bottomReserve;
-    final panelMaxHeight = math.max(
-      112.0,
-      math.min(heightCap, availablePanelHeight),
-    );
-    final availableHelpPanelHeight =
-        size.height - safePadding.bottom - helpPanelTop - bottomReserve;
-    final helpPanelMaxHeight = math.max(
-      96.0,
-      math.min(260.0, availableHelpPanelHeight),
+    final panelHeights = _panelHeights(
+      size: size,
+      safePadding: safePadding,
+      safeWidth: safeWidth,
+      panelLeft: panelLeft,
+      panelWidth: panelWidth,
+      panelTop: panelTop,
+      helpPanelTop: helpPanelTop,
+      portraitPhone: portraitPhone,
+      landscapePhone: landscapePhone,
+      hasResignAction: hasResignAction,
     );
     final closedContentTop = buttonTop;
     final closedContentBottomReserve = landscapePhone ? 92.0 : 18.0;
@@ -128,13 +121,50 @@ class GameOptionsOverlayLayout {
       panelTop: panelTop,
       panelWidth: panelWidth,
       sidePanelWidth: sidePanelWidth,
-      panelMaxHeight: panelMaxHeight,
+      panelMaxHeight: panelHeights.panel,
       helpPanelTop: helpPanelTop,
-      helpPanelMaxHeight: helpPanelMaxHeight,
+      helpPanelMaxHeight: panelHeights.help,
       closedContentTop: closedContentTop,
       closedContentRight: safeRight,
       closedContentMaxWidth: math.max(48.0, safeWidth * 0.4),
       closedContentMaxHeight: closedContentMaxHeight,
     );
   }
+}
+
+({double panel, double help}) _panelHeights({
+  required Size size,
+  required EdgeInsets safePadding,
+  required double safeWidth,
+  required double panelLeft,
+  required double panelWidth,
+  required double panelTop,
+  required double helpPanelTop,
+  required bool portraitPhone,
+  required bool landscapePhone,
+  required bool hasResignAction,
+}) {
+  // Reserve the action deck only while it overlaps the options panel.
+  final actionDeckWidth = math.min(_wideActionDeckMaxWidth, safeWidth);
+  final actionDeckLeft = safePadding.left + (safeWidth - actionDeckWidth) / 2;
+  final panelOverlapsActionDeck = panelLeft + panelWidth > actionDeckLeft;
+  final bottomReserve = landscapePhone
+      ? 92.0
+      : panelOverlapsActionDeck
+      ? _expandedActionDeckReserve
+      : 24.0;
+  final baseHeightCap = landscapePhone
+      ? 420.0
+      : portraitPhone
+      ? 560.0
+      : 720.0;
+  final heightCap = baseHeightCap + (hasResignAction ? 56.0 : 0.0);
+  final availablePanelHeight =
+      size.height - safePadding.bottom - panelTop - bottomReserve;
+  final availableHelpPanelHeight =
+      size.height - safePadding.bottom - helpPanelTop - bottomReserve;
+  return (
+    panel: math.max(112.0, math.min(heightCap, availablePanelHeight)),
+    help: math.max(96.0, math.min(260.0, availableHelpPanelHeight)),
+  );
 }

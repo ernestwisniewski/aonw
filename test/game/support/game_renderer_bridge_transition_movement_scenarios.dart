@@ -2,7 +2,7 @@ part of '../game_renderer_keyboard_test.dart';
 
 void _registerRendererTransitionMovementScenarios() {
   test('camera effects ignore remembered fog targets', () async {
-    final map = _map(4, 1);
+    final map = kbMap(4, 1);
     final game = GameRenderer(mapData: map, onCommand: (_) async {})
       ..applyState(
         GameClientState(
@@ -24,7 +24,7 @@ void _registerRendererTransitionMovementScenarios() {
     _expectVectorClose(_visibleCenter(game), before);
   });
   test('smooth camera effect animates toward the target tile', () async {
-    final map = _map(4, 4);
+    final map = kbMap(4, 4);
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
     addTearDown(game.disposeRenderer);
 
@@ -56,7 +56,7 @@ void _registerRendererTransitionMovementScenarios() {
   test(
     'combat animation focuses the retained killed attacker marker',
     () async {
-      final map = _map(4, 4);
+      final map = kbMap(4, 4);
       final attacker = GameUnit.produced(
         id: 'attacker_1',
         ownerPlayerId: 'player_1',
@@ -87,7 +87,7 @@ void _registerRendererTransitionMovementScenarios() {
         GameClientState(
           units: [defender],
           interaction: InteractionState(
-            selection: GameSelection.unit(defender, tile: _tile(map, 2, 1)),
+            selection: GameSelection.unit(defender, tile: kbTile(map, 2, 1)),
           ),
         ),
         const [
@@ -110,7 +110,7 @@ void _registerRendererTransitionMovementScenarios() {
     },
   );
   test('unit move effect centers camera on start without tracking', () async {
-    final map = _map(4, 1);
+    final map = kbMap(4, 1);
     final unit = GameUnit.produced(
       id: 'warrior_1',
       ownerPlayerId: 'player_1',
@@ -160,7 +160,7 @@ void _registerRendererTransitionMovementScenarios() {
     _expectVectorClose(_visibleCenter(game), cameraCenterAfterFocus);
   });
   test('serializes overlapping unit move transitions', () async {
-    final map = _map(4, 1);
+    final map = kbMap(4, 1);
     final unit = GameUnit.produced(
       id: 'warrior_1',
       ownerPlayerId: 'player_1',
@@ -246,7 +246,7 @@ void _registerRendererTransitionMovementScenarios() {
     );
   });
   test('hidden unit move effect does not move the camera', () async {
-    final map = _map(5, 1);
+    final map = kbMap(5, 1);
     final hiddenEnemy = GameUnit.produced(
       id: 'enemy_1',
       ownerPlayerId: 'player_2',
@@ -280,7 +280,7 @@ void _registerRendererTransitionMovementScenarios() {
     _expectVectorClose(_visibleCenter(game), before);
   });
   test('animates visible enemy movement before it leaves vision', () async {
-    final map = _map(3, 1);
+    final map = kbMap(3, 1);
     final enemy = GameUnit.produced(
       id: 'enemy_1',
       ownerPlayerId: 'player_2',
@@ -336,7 +336,7 @@ void _registerRendererTransitionMovementScenarios() {
     expect(game.unitMarkerPositionForTesting(enemy.id), isNull);
   });
   test('focuses the active player when the first state is applied', () async {
-    final map = _map(3, 3);
+    final map = kbMap(3, 3);
     final commander = GameUnit.startingCommander(
       ownerPlayerId: 'player_1',
       col: 1,
@@ -360,7 +360,7 @@ void _registerRendererTransitionMovementScenarios() {
     expect(game.camera.viewfinder.position.y, isNot(0));
   });
   test('can hand camera follow to a selected replay perspective', () async {
-    final map = _map(5, 5);
+    final map = kbMap(5, 5);
     final playerOneUnit = GameUnit.startingCommander(
       ownerPlayerId: 'player_1',
       col: 0,

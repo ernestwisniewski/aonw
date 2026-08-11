@@ -10,6 +10,7 @@ import 'package:aonw/game/presentation/engine/city_description_tap_tracker.dart'
 import 'package:aonw/game/presentation/engine/game_camera_controller.dart';
 import 'package:aonw/game/presentation/engine/game_effect_dispatcher.dart';
 import 'package:aonw/game/presentation/engine/game_render_view_model.dart';
+import 'package:aonw/game/presentation/engine/game_renderer_camera_policy.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_camera_settings.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_components.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_input_handler.dart';
@@ -67,7 +68,6 @@ import 'package:flutter/material.dart' show Offset;
 
 part 'game_renderer_artifact_taps.dart';
 part 'game_renderer_camera_focus.dart';
-part 'game_renderer_camera_policy.dart';
 part 'game_renderer_camera_rendering.dart';
 part 'game_renderer_gamepad_input.dart';
 part 'game_renderer_projected_effects.dart';
@@ -109,6 +109,7 @@ class GameRenderer extends HexWorld
   final Clock? presentationClock;
 
   final GameRendererCameraSettings _cameraSettings;
+  late final GameRendererCameraPolicy _cameraPolicy;
 
   final GameSceneBuilder _sceneBuilder = GameSceneBuilder();
 
@@ -137,7 +138,7 @@ class GameRenderer extends HexWorld
         ensureActive: _ensureRendererActive,
         renderState: () => _renderState,
         isDisposed: () => _isDisposed,
-        transitionControlsCamera: _transitionControlsCamera,
+        transitionControlsCamera: _cameraPolicy.transitionControlsCamera,
         applyState: _applyState,
         handleEffectsNow: _handleEffectsNow,
         unitMarkers: () => _unitMarkerLayer,
@@ -181,16 +182,33 @@ class GameRenderer extends HexWorld
     bool moveCameraForUnitMovement = true,
     bool followUnitMovementCamera = false,
     bool followEnemyUnitCamera = false,
+    bool? focusOwnUnitMovementCamera,
+    bool? followOwnUnitMovementCamera,
+    bool? focusEnemyUnitMovementCamera,
+    bool? followEnemyUnitMovementCamera,
     bool cinematicCameraEnabled = false,
   }) : _cameraSettings = GameRendererCameraSettings(
          moveCameraForUnitMovement: moveCameraForUnitMovement,
-         followUnitMovementCamera: followUnitMovementCamera,
-         followEnemyUnitCamera: followEnemyUnitCamera,
+         focusOwnUnitMovementCamera:
+             focusOwnUnitMovementCamera ?? moveCameraForUnitMovement,
+         followOwnUnitMovementCamera:
+             followOwnUnitMovementCamera ?? followUnitMovementCamera,
+         focusEnemyUnitMovementCamera:
+             focusEnemyUnitMovementCamera ?? followEnemyUnitCamera,
+         followEnemyUnitMovementCamera:
+             followEnemyUnitMovementCamera ??
+             (followUnitMovementCamera && followEnemyUnitCamera),
          cinematicCameraEnabled: cinematicCameraEnabled,
        ),
        _initialCameraFocusReadyNotifier = ValueNotifier(
          !focusActivePlayerOnFirstState,
        ) {
+    _cameraPolicy = GameRendererCameraPolicy(
+      settings: _cameraSettings,
+      state: () => _renderState,
+      isDisposed: () => _isDisposed,
+      focusActiveSelection: () => _focusSelection(_renderState.selection),
+    );
     _initializeRuntime(
       initialViewMode: initialViewMode,
       displaySettings: displaySettings ?? const HexDisplaySettings(),
@@ -245,31 +263,6 @@ class GameRenderer extends HexWorld
     if (!_isReady || _isDisposed) return;
     _applyDeferredInitialFocusIfReady();
     _syncMarkerDensityForZoom(force: true);
-  }
-
-  bool get moveCameraForUnitMovement =>
-      _cameraSettings.moveCameraForUnitMovement;
-
-  set moveCameraForUnitMovement(bool value) =>
-      _cameraSettings.moveCameraForUnitMovement = value;
-
-  bool get followUnitMovementCamera => _cameraSettings.followUnitMovementCamera;
-
-  set followUnitMovementCamera(bool value) =>
-      _cameraSettings.followUnitMovementCamera = value;
-
-  bool get followEnemyUnitCamera => _cameraSettings.followEnemyUnitCamera;
-
-  set followEnemyUnitCamera(bool value) =>
-      _cameraSettings.followEnemyUnitCamera = value;
-
-  bool get cinematicCameraEnabled => _cameraSettings.cinematicCameraEnabled;
-
-  set cinematicCameraEnabled(bool value) {
-    if (_cameraSettings.cinematicCameraEnabled == value) return;
-    _cameraSettings.cinematicCameraEnabled = value;
-    _lastSyncedHoverHex = null;
-    _refreshHoverIntent();
   }
 
   @override
@@ -462,9 +455,9 @@ extension _GameRendererRuntimeInitialization on GameRenderer {
         onCancelWorkerActionSelection: _handleCancelWorkerActionSelection,
         onConfirmMovePreview: _handleConfirmMovePreview,
         moveCameraForUnitMovement: () => moveCameraForUnitMovement,
-        moveCameraForUnitMovementForUnit: _moveCameraForUnitMovementEffect,
-        onUnitMovementCameraComplete: _restoreCameraAfterUnitMovementEffect,
-        followUnitMovementCamera: () => followUnitMovementCamera,
+        focusCameraForUnitMovementForUnit: _cameraPolicy.focusCameraForUnit,
+        followCameraForUnitMovementForUnit: _cameraPolicy.followCameraForUnit,
+        onUnitMovementCameraComplete: _cameraPolicy.restoreAfterUnitMovement,
         canAutoFocusMapTarget: _canAutoFocusMapTarget,
         onTileTapped: _handleTileTapped,
         syncFastCameraRendering: _syncFastCameraRendering,

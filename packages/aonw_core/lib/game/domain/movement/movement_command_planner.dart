@@ -395,11 +395,11 @@ abstract final class MovementCommandPlanner {
   static bool _targetIsHidden(FogVisibilityQuery visibility, int col, int row) {
     return visibility.isEnabled && !visibility.canSeeDynamicAt(col, row);
   }
+}
 
-  static GameUnit? _unitAt(List<GameUnit> units, int col, int row) {
-    for (final unit in units) {
-      if (unit.occupies(col, row)) return unit;
-    }
-    return null;
+GameUnit? _unitAt(List<GameUnit> units, int col, int row) {
+  for (final unit in units) {
+    if (unit.occupies(col, row)) return unit;
   }
+  return null;
 }

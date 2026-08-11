@@ -48,8 +48,12 @@ extension _GameScreenRendererLifecycle on _GameRendererSessionHostState {
       presentationClock: session.gameMode == GameMode.multiplayer
           ? ref.read(gameClockProvider)
           : null,
-      followUnitMovementCamera: gameplaySettings.followUnitMovementCamera,
-      followEnemyUnitCamera: gameplaySettings.followEnemyUnitCamera,
+      focusOwnUnitMovementCamera: gameplaySettings.focusOwnUnitMovementCamera,
+      followOwnUnitMovementCamera: gameplaySettings.followOwnUnitMovementCamera,
+      focusEnemyUnitMovementCamera:
+          gameplaySettings.focusEnemyUnitMovementCamera,
+      followEnemyUnitMovementCamera:
+          gameplaySettings.followEnemyUnitMovementCamera,
       cinematicCameraEnabled: gameplaySettings.cinematicCameraEnabled,
     )..activateProjectedEffectSource(session.saveId);
     return renderer;

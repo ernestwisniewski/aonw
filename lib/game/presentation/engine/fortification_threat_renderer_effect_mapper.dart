@@ -25,14 +25,7 @@ List<RendererEffect> fortificationThreatRendererEffects(
       ),
   ];
   if (alerts.isEmpty) return const [];
-  return [
-    ...alerts,
-    SmoothCameraEffect(
-      col: fortifier.col,
-      row: fortifier.row,
-      duration: GameCameraEffectNormalizer.turnStartCameraTransitionDuration,
-    ),
-  ];
+  return [...alerts];
 }
 
 bool _isCurrentFortifier(GameUnit unit, String ownerPlayerId) =>
