@@ -165,17 +165,24 @@ void _registerRendererPlanningWorkerHintsScenarios() {
       isFalse,
     );
     expect(game.tileMarkersForTesting(2, 0).canImproveNow, isTrue);
-    expect(game.tileMarkersForTesting(2, 0).workerBuildAvailable, isTrue);
+    expect(game.tileMarkersForTesting(2, 0).workerBuildAvailable, isFalse);
     expect(game.tileMarkersForTesting(2, 0).workerBuildBlocked, isFalse);
     expect(game.tileMarkersForTesting(2, 0).workerImprovementCandidate, isTrue);
     expect(game.tileMarkersForTesting(0, 1).canImproveAfterTechnology, isTrue);
-    expect(game.tileMarkersForTesting(0, 1).workerBuildBlocked, isTrue);
+    expect(game.tileMarkersForTesting(0, 1).workerBuildBlocked, isFalse);
     expect(
       game.tileMarkersForTesting(0, 1).workerImprovementCandidate,
       isFalse,
     );
     expect(game.tileMarkersForTesting(1, 1).workerBuildAvailable, isFalse);
     expect(game.tileMarkersForTesting(1, 1).workerBuildBlocked, isFalse);
+    final fullWorkerBuildMarkers = [
+      for (final tile in map.tiles)
+        if (game.tileMarkersForTesting(tile.col, tile.row) case final marker
+            when marker.workerBuildAvailable || marker.workerBuildBlocked)
+          (tile.col, tile.row),
+    ];
+    expect(fullWorkerBuildMarkers, [(1, 0)]);
     expect(
       _overlayKindFor(game, const CityHex(col: 1, row: 0)),
       CityManagementOverlayHexKind.workerImprovementExisting,
@@ -258,7 +265,10 @@ void _registerRendererPlanningWorkerHintsScenarios() {
 
     expect(game.tileMarkersForTesting(2, 0).workerBuildAvailable, isTrue);
     expect(game.tileMarkersForTesting(2, 0).workerBuildBlocked, isFalse);
-    expect(game.tileMarkersForTesting(2, 0).workerImprovementCandidate, isTrue);
+    expect(
+      game.tileMarkersForTesting(2, 0).workerImprovementCandidate,
+      isFalse,
+    );
   });
   test(
     'tap movement animates and then allows the selected unit tile to cycle',

@@ -16,6 +16,21 @@ void main() {
       'captures the exact post-economy movement boundary',
       _characterizesMovementDelta,
     );
+    test('reuses the economy fog snapshot when no unit moves', () {
+      final counters = FogOfWarRecomputeCounters();
+
+      CanonicalTurnPipeline.simultaneousFinalize(
+        CanonicalTurnPipelineRequest.simultaneousFinalize(
+          snapshot: _canonicalInput(),
+          playerIds: const ['p1', 'p2'],
+          savedAt: _finalizedAt,
+          mapView: _mapData(),
+          fogOfWarService: FogOfWarService(counters: counters),
+        ),
+      );
+
+      expect(counters.fullRecomputeCount, 1);
+    });
   });
 }
 

@@ -5,6 +5,21 @@ import 'auto_explore_command_resolver_test_support.dart';
 
 void main() {
   group('AutoExploreCommandResolver', () {
+    test('stops after the preferred candidate reaches the vision bound', () {
+      final calculator = _CountingFogRevealCalculator();
+      final scout = autoExploreScout(col: 4, row: 4);
+      final target = ScoutAutoExplorePlanner(revealCalculator: calculator)
+          .targetFor(
+            unit: scout,
+            mapData: autoExploreMap(cols: 10, rows: 10),
+            units: [scout],
+            fogOfWar: FogOfWarState.empty,
+          );
+
+      expect(target, isNotNull);
+      expect(calculator.calls, 1);
+    });
+
     test('direct no-target rejection preserves every input identity', () {
       const origin = HexCoordinate(col: 0, row: 0);
       final interaction = ownedAutoExploreInteraction();
@@ -304,6 +319,19 @@ void main() {
       );
     });
   });
+}
+
+final class _CountingFogRevealCalculator extends FogRevealCalculator {
+  int calls = 0;
+
+  @override
+  Set<HexCoordinate> visibleHexesFor({
+    required MapTileLookup mapData,
+    required Iterable<FogRevealSource> sources,
+  }) {
+    calls++;
+    return super.visibleHexesFor(mapData: mapData, sources: sources);
+  }
 }
 
 void _registerDynamicObstacleMatrix() {

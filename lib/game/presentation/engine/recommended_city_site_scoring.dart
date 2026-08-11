@@ -6,6 +6,7 @@ extension _RecommendedCitySiteScoring on RecommendedCitySitePlanner {
     required GameClientState state,
     required GameUnit founder,
     required WorldMap mapData,
+    required Set<ResourceType> visibleResourceTypes,
   }) {
     final center = CityHex(col: tile.col, row: tile.row);
     final founderDistance = HexDistance.between(
@@ -30,11 +31,6 @@ extension _RecommendedCitySiteScoring on RecommendedCitySitePlanner {
         if (mapData.tileAt(hex.col, hex.row) case final tile?)
           if (!visibility.isEnabled || visibility.canInspectTile(tile)) tile,
     ];
-    final visibleResourceTypes = ResourceVisibilityRules.visibleResourceTypes(
-      playerId: state.activePlayerId,
-      research: state.research,
-    );
-
     return _weightedCitySiteYield(tile) * 1.15 +
         _weightedCitySiteYieldTotal(initialTiles) * 0.8 +
         _weightedCitySiteYieldTotal(ringTiles.take(4)) * 0.38 +

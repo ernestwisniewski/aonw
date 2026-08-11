@@ -5,6 +5,7 @@ import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
 import 'package:aonw_core/game/domain/movement/merchant_trade_route_rules.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_balance.dart';
+import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/transport/transport_network_state.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_queued_path_advancer.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
@@ -60,26 +61,26 @@ abstract final class TurnUnitMovementAdvancer {
         playerIds.contains(unit.ownerPlayerId) ? _resetForNewTurn(unit) : unit,
     ];
     var changed = _unitsChanged(units, resetUnits);
-    final finalUnits = <GameUnit>[];
+    final finalUnits = List<GameUnit>.of(resetUnits);
+    final tileIndex = UnitMovementTileIndex(mapData);
     final executions = <MovementCommandExecution>[];
-    for (var index = 0; index < resetUnits.length; index++) {
-      final unit = resetUnits[index];
+    for (var index = 0; index < finalUnits.length; index++) {
+      final unit = finalUnits[index];
       if (!playerIds.contains(unit.ownerPlayerId)) {
-        finalUnits.add(unit);
         continue;
       }
-      final currentAllUnits = [...finalUnits, ...resetUnits.sublist(index)];
       final advanced = _advanceUnit(
         unit: unit,
-        allUnits: currentAllUnits,
+        allUnits: finalUnits,
         cities: cities,
         diplomacy: diplomacy,
         fogOfWar: fogOfWar,
         mapData: mapData,
         transportNetwork: transportNetwork,
+        tileIndex: tileIndex,
       );
       if (advanced.changed) changed = true;
-      finalUnits.add(advanced.unit);
+      finalUnits[index] = advanced.unit;
       executions.addAll(advanced.executions);
     }
     return TurnUnitMovementAdvance(
@@ -103,6 +104,7 @@ abstract final class TurnUnitMovementAdvancer {
     required FogOfWarState fogOfWar,
     required MapTraversalView mapData,
     required TransportNetworkState transportNetwork,
+    required UnitMovementTileIndex tileIndex,
   }) {
     final routeAdvance = MerchantTradeRouteRules.advanceUnit(
       unit: unit,
@@ -136,6 +138,7 @@ abstract final class TurnUnitMovementAdvancer {
       diplomacy: diplomacy,
       fogOfWar: fogOfWar,
       transportNetwork: transportNetwork,
+      tileIndex: tileIndex,
     );
     if (queued.execution case final execution?) executions.add(execution);
     return (

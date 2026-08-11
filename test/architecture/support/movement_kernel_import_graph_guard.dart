@@ -38,6 +38,7 @@ const _routeSearchPath =
 const _mapTileSourceUri = 'package:aonw_core/map/domain/map_tile_source.dart';
 const _pathfinderDeclarations = {
   'UnitMovementPathfinder',
+  'UnitMovementTileIndex',
   '_PathNode',
   '_PathSearchResult',
 };
@@ -115,6 +116,7 @@ const _leafDependencyUris = {
   'package:aonw_core/map/domain/map_read_view.dart',
   'package:aonw_core/map/domain/map_tile_view.dart',
   'package:aonw_core/map/domain/terrain_type.dart',
+  'package:aonw_core/util/min_binary_heap.dart',
 };
 
 Map<String, String> movementKernelImportGraph(

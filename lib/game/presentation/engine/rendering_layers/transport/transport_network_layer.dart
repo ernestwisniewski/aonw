@@ -13,6 +13,27 @@ import 'package:flame/components.dart';
 class TransportNetworkLayer extends PositionComponent with LayerAttachment {
   List<TransportSegment> _segments = const [];
   Set<(int, int)> _cityCenters = const {};
+  Path _roadPath = Path();
+  Path _markingPath = Path();
+  int _geometryBuildCount = 0;
+  final Paint _edgePaint = Paint()
+    ..color = HudPalette.roadEdge
+    ..strokeWidth = 9
+    ..strokeCap = StrokeCap.round
+    ..style = PaintingStyle.stroke
+    ..isAntiAlias = true;
+  final Paint _asphaltPaint = Paint()
+    ..color = HudPalette.roadAsphalt
+    ..strokeWidth = 7
+    ..strokeCap = StrokeCap.round
+    ..style = PaintingStyle.stroke
+    ..isAntiAlias = true;
+  final Paint _markingPaint = Paint()
+    ..color = HudPalette.roadMarking
+    ..strokeWidth = 1.5
+    ..strokeCap = StrokeCap.round
+    ..style = PaintingStyle.stroke
+    ..isAntiAlias = true;
 
   TransportNetworkLayer() {
     priority = MapPriority.transport;
@@ -24,40 +45,38 @@ class TransportNetworkLayer extends PositionComponent with LayerAttachment {
     required Iterable<CityHex> cityCenters,
   }) {
     ensureAttachedTo(parent);
-    _segments = List.unmodifiable(segments);
-    _cityCenters = Set.unmodifiable(
+    final nextSegments = List<TransportSegment>.unmodifiable(segments);
+    final nextCityCenters = Set<(int, int)>.unmodifiable(
       cityCenters.map((center) => (center.col, center.row)),
     );
+    if (_sameSegments(_segments, nextSegments) &&
+        _sameCoordinates(_cityCenters, nextCityCenters)) {
+      return;
+    }
+    _segments = nextSegments;
+    _cityCenters = nextCityCenters;
+    _rebuildGeometry();
   }
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
     if (_segments.isEmpty) return;
+    canvas
+      ..drawPath(_roadPath, _edgePaint)
+      ..drawPath(_roadPath, _asphaltPaint)
+      ..drawPath(_markingPath, _markingPaint);
+  }
 
+  void _rebuildGeometry() {
+    _geometryBuildCount++;
+    final roadPath = Path();
+    final markingPath = Path();
     final operational = {
       for (final segment in _segments)
         if (segment.kind == TransportSegmentKind.road && segment.isOperational)
           (segment.hex.col, segment.hex.row),
     };
-    final edgePaint = Paint()
-      ..color = HudPalette.roadEdge
-      ..strokeWidth = 9
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke
-      ..isAntiAlias = true;
-    final asphaltPaint = Paint()
-      ..color = HudPalette.roadAsphalt
-      ..strokeWidth = 7
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke
-      ..isAntiAlias = true;
-    final markingPaint = Paint()
-      ..color = HudPalette.roadMarking
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke
-      ..isAntiAlias = true;
 
     for (final coordinate in operational) {
       final center = _center(coordinate.$1, coordinate.$2);
@@ -73,50 +92,31 @@ class TransportNetworkLayer extends PositionComponent with LayerAttachment {
         connected = true;
         if (connectsRoad && !_drawsEdge(coordinate, target)) continue;
         final neighborCenter = _center(target.$1, target.$2);
-        _drawRoadSegment(
-          canvas,
-          center,
-          neighborCenter,
-          edgePaint: edgePaint,
-          asphaltPaint: asphaltPaint,
-          markingPaint: markingPaint,
-        );
+        _addRoadSegment(roadPath, markingPath, center, neighborCenter);
       }
       if (!connected) {
         final start = Offset(center.dx - 8, center.dy);
         final end = Offset(center.dx + 8, center.dy);
-        _drawRoadSegment(
-          canvas,
-          start,
-          end,
-          edgePaint: edgePaint,
-          asphaltPaint: asphaltPaint,
-          markingPaint: markingPaint,
-        );
+        _addRoadSegment(roadPath, markingPath, start, end);
       }
     }
+    _roadPath = roadPath;
+    _markingPath = markingPath;
   }
 
-  static void _drawRoadSegment(
-    Canvas canvas,
-    Offset start,
-    Offset end, {
-    required Paint edgePaint,
-    required Paint asphaltPaint,
-    required Paint markingPaint,
-  }) {
-    canvas
-      ..drawLine(start, end, edgePaint)
-      ..drawLine(start, end, asphaltPaint);
-    _drawDashedLine(canvas, start, end, markingPaint);
-  }
-
-  static void _drawDashedLine(
-    Canvas canvas,
+  static void _addRoadSegment(
+    Path roadPath,
+    Path markingPath,
     Offset start,
     Offset end,
-    Paint paint,
   ) {
+    roadPath
+      ..moveTo(start.dx, start.dy)
+      ..lineTo(end.dx, end.dy);
+    _addDashedLine(markingPath, start, end);
+  }
+
+  static void _addDashedLine(Path path, Offset start, Offset end) {
     const dashLength = 6.0;
     const gapLength = 5.0;
     final delta = end - start;
@@ -127,13 +127,27 @@ class TransportNetworkLayer extends PositionComponent with LayerAttachment {
       final finish = offset + dashLength < length
           ? offset + dashLength
           : length;
-      canvas.drawLine(
-        start + direction * offset,
-        start + direction * finish,
-        paint,
-      );
+      final dashStart = start + direction * offset;
+      final dashEnd = start + direction * finish;
+      path
+        ..moveTo(dashStart.dx, dashStart.dy)
+        ..lineTo(dashEnd.dx, dashEnd.dy);
     }
   }
+
+  static bool _sameSegments(
+    List<TransportSegment> a,
+    List<TransportSegment> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (var index = 0; index < a.length; index++) {
+      if (a[index] != b[index]) return false;
+    }
+    return true;
+  }
+
+  static bool _sameCoordinates(Set<(int, int)> a, Set<(int, int)> b) =>
+      a.length == b.length && a.containsAll(b);
 
   static Offset _center(int col, int row) {
     final center = HexGeometry.topFaceCenter(
@@ -151,6 +165,8 @@ class TransportNetworkLayer extends PositionComponent with LayerAttachment {
   }
 
   int get segmentCountForTesting => _segments.length;
+
+  int get geometryBuildCountForTesting => _geometryBuildCount;
 
   int get cityConnectionCountForTesting {
     final operational = {

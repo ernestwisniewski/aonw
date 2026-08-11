@@ -2,6 +2,17 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 abstract final class GameIconPathParser {
+  static final Map<String, Path> _pathCache = {};
+
+  /// Returns a shared immutable-by-convention path for catalog icons. Callers
+  /// must not mutate the returned path.
+  static Path parseCached(String d) =>
+      _pathCache.putIfAbsent(d, () => parse(d));
+
+  static int get cachedPathCountForTesting => _pathCache.length;
+
+  static void clearCacheForTesting() => _pathCache.clear();
+
   static Path parse(String d) {
     final path = Path();
     final tokens = tokenize(d);

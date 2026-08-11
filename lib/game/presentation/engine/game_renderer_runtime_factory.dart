@@ -55,6 +55,7 @@ final class GameRendererRuntimeBindings {
     required this.inspectionActive,
     required this.tileDataAtWidgetPosition,
     required this.markerDensityForZoomSync,
+    required this.fastCameraRendering,
     required this.focusInitialActivePlayer,
     required this.focusActiveSelection,
     required this.primeSelectionFocus,
@@ -98,6 +99,7 @@ final class GameRendererRuntimeBindings {
   final bool Function() inspectionActive;
   final WorldTile? Function(Vector2 position) tileDataAtWidgetPosition;
   final MarkerDensity? Function({required bool force}) markerDensityForZoomSync;
+  final bool Function() fastCameraRendering;
   final void Function() focusInitialActivePlayer;
   final void Function() focusActiveSelection;
   final void Function() primeSelectionFocus;
@@ -151,6 +153,7 @@ abstract final class GameRendererRuntimeFactory {
       movePreviewLayer: () => components.movePreview,
       floatingTextLayer: () => components.floatingText,
       markerDensityForZoomSync: bindings.markerDensityForZoomSync,
+      fastCameraRendering: bindings.fastCameraRendering,
       state: () => stateSync.state,
       currentTurn: () => stateSync.currentTurn,
       viewMode: () => stateSync.viewMode,

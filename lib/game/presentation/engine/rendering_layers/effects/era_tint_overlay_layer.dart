@@ -23,7 +23,9 @@ class EraTintOverlay extends PositionComponent with HasPaint<String> {
   TechnologyEra _era;
   final double hexRadius;
   Rect _bounds = Rect.zero;
-  List<Path> _tilePaths = const [];
+  Path _combinedTilePath = Path();
+  int _tilePathCount = 0;
+  Shader? _gradientShader;
 
   EraTintOverlay({
     required WorldMap mapData,
@@ -43,7 +45,7 @@ class EraTintOverlay extends PositionComponent with HasPaint<String> {
 
   Rect get boundsForTesting => _bounds;
 
-  int get tilePathCountForTesting => _tilePaths.length;
+  int get tilePathCountForTesting => _tilePathCount;
 
   void syncState({required WorldMap mapData, required TechnologyEra era}) {
     if (!identical(_mapData, mapData)) {
@@ -52,19 +54,47 @@ class EraTintOverlay extends PositionComponent with HasPaint<String> {
     }
     if (_era == era) return;
     _era = era;
+    _rebuildShader();
     _applyEraTint();
   }
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    if (_tilePaths.isEmpty || _bounds.isEmpty) return;
+    if (_tilePathCount == 0 || _bounds.isEmpty) return;
 
     final tintColor = colorForEra(_era);
     final alpha = _alphaOf(tintColor);
     if (alpha <= 0) return;
 
-    paint.shader = LinearGradient(
+    paint.shader = _gradientShader;
+    canvas.drawPath(_combinedTilePath, paint);
+    paint.shader = null;
+  }
+
+  void _rebuildGeometry() {
+    _bounds = mapBoundsFor(_mapData, hexRadius: hexRadius);
+    final combinedPath = Path();
+    for (final tile in _mapData.tiles) {
+      combinedPath.addPath(
+        _hexPath(col: tile.col, row: tile.row, hexRadius: hexRadius),
+        Offset.zero,
+      );
+    }
+    _combinedTilePath = combinedPath;
+    _tilePathCount = _mapData.tiles.length;
+    size = Vector2(_bounds.width, _bounds.height);
+    _rebuildShader();
+  }
+
+  void _rebuildShader() {
+    final tintColor = colorForEra(_era);
+    final alpha = _alphaOf(tintColor);
+    if (alpha <= 0 || _bounds.isEmpty) {
+      _gradientShader = null;
+      return;
+    }
+    _gradientShader = LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
@@ -74,20 +104,6 @@ class EraTintOverlay extends PositionComponent with HasPaint<String> {
       ],
       stops: const [0.0, 0.55, 1.0],
     ).createShader(_bounds);
-
-    for (final path in _tilePaths) {
-      canvas.drawPath(path, paint);
-    }
-    paint.shader = null;
-  }
-
-  void _rebuildGeometry() {
-    _bounds = mapBoundsFor(_mapData, hexRadius: hexRadius);
-    _tilePaths = [
-      for (final tile in _mapData.tiles)
-        _hexPath(col: tile.col, row: tile.row, hexRadius: hexRadius),
-    ];
-    size = Vector2(_bounds.width, _bounds.height);
   }
 
   void _applyEraTint({bool animate = true}) {

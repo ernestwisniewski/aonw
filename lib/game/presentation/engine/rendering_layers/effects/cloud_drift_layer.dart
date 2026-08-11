@@ -32,6 +32,9 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
   WorldMap? _mapData;
   Path? _discoveredClipPath;
   Rect _mapBounds = Rect.zero;
+  FogOfWarState? _lastVisibilityState;
+  String? _lastVisibilityPlayerId;
+  bool fastRendering = false;
 
   final Paint _hazePaint = Paint()
     ..isAntiAlias = true
@@ -92,18 +95,29 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
     if (!visibility.isEnabled) {
       _clearClouds();
       _discoveredClipPath = null;
+      _lastVisibilityState = null;
+      _lastVisibilityPlayerId = null;
       removeFromParent();
       return;
     }
 
     ensureAttachedTo(parent);
-    if (!identical(_mapData, mapData)) {
+    final mapChanged = !identical(_mapData, mapData);
+    if (mapChanged) {
       _mapData = mapData;
       _mapBounds = _mapBoundsFor(mapData);
       size = Vector2(_mapBounds.width, _mapBounds.height);
       position = Vector2.zero();
       priority = _priorityFor(mapData);
     }
+    if (!mapChanged &&
+        _lastVisibilityPlayerId == visibility.playerId &&
+        (identical(_lastVisibilityState, visibility.state) ||
+            _lastVisibilityState == visibility.state)) {
+      return;
+    }
+    _lastVisibilityState = visibility.state;
+    _lastVisibilityPlayerId = visibility.playerId;
     final discoveredClip = _buildDiscoveredClip(
       mapData: mapData,
       visibility: visibility,
@@ -144,7 +158,7 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    if (_reduceMotion || _clouds.isEmpty) return;
+    if (_reduceMotion || fastRendering || _clouds.isEmpty) return;
     final clipPath = _discoveredClipPath;
     if (clipPath == null) return;
 

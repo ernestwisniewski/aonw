@@ -110,6 +110,42 @@ void main() {
       );
       expect(FogOfWarOverlay.shaderMaskIntensityFor(FogVisibility.hidden), 1);
     });
+
+    test('coalesces visibility changes and skips equivalent masks', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final overlay = _singleVisibleTileOverlay();
+      await overlay.onLoad();
+      final initialBuilds = overlay.visibilityMaskBuildCountForTesting;
+
+      expect(
+        overlay.updateVisibility({
+          const HexCoordinate(col: 0, row: 0): FogVisibility.visible,
+        }),
+        isFalse,
+      );
+      expect(overlay.visibilityMaskBuildCountForTesting, initialBuilds);
+
+      expect(
+        overlay.updateVisibility({
+          const HexCoordinate(col: 0, row: 0): FogVisibility.hidden,
+        }),
+        isTrue,
+      );
+      expect(
+        overlay.updateVisibility({
+          const HexCoordinate(col: 0, row: 0): FogVisibility.discovered,
+        }),
+        isTrue,
+      );
+      expect(overlay.visibilityMaskDirtyForTesting, isTrue);
+      expect(overlay.visibilityMaskBuildCountForTesting, initialBuilds);
+
+      final rendered = await _renderOverlay(overlay);
+      rendered.image.dispose();
+
+      expect(overlay.visibilityMaskDirtyForTesting, isFalse);
+      expect(overlay.visibilityMaskBuildCountForTesting, initialBuilds + 1);
+    });
   });
 
   group('FogOfWarOverlayLayer', () {

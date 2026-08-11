@@ -2,6 +2,7 @@ import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:flutter/material.dart';
 
 abstract final class SpriteShadow {
+  static final Map<({int color, double blurSigma}), Paint> _paintCache = {};
   static const int _unitAlpha = 80;
   static const int _improvementAlpha = 90;
   static const int _cityAlpha = 102;
@@ -155,11 +156,14 @@ abstract final class SpriteShadow {
     required Color color,
     required double blurSigma,
   }) {
-    canvas.drawOval(
-      rect,
-      HudPaint.fill(color)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, blurSigma),
+    final key = (color: color.toARGB32(), blurSigma: blurSigma);
+    final paint = _paintCache.putIfAbsent(
+      key,
+      () =>
+          HudPaint.fill(color)
+            ..maskFilter = MaskFilter.blur(BlurStyle.normal, blurSigma),
     );
+    canvas.drawOval(rect, paint);
   }
 
   static Color _scaleAlpha(Color color, double factor) {

@@ -44,6 +44,7 @@ abstract final class DomainTurnMovementProcessor {
     required MapTraversalView mapData,
     FogOfWarService fogOfWarService = const FogOfWarService(),
     GameRuleset ruleset = GameRuleset.defaults,
+    bool fogRecomputedBeforePhase = false,
   }) {
     final movement = TurnMovementOrchestrator.resetForPlayers(
       state: TurnMovementState(
@@ -62,6 +63,7 @@ abstract final class DomainTurnMovementProcessor {
         mapData: mapData,
         fogOfWarService: fogOfWarService,
         ruleset: ruleset,
+        fogRecomputedBeforePhase: fogRecomputedBeforePhase,
       ),
     );
     if (!movement.changed) {

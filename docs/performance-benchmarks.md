@@ -19,17 +19,18 @@ where the workload permits it.
 | Movement command | 100, 1,000, and 10,000 tiles | resolve the same authoritative move through the neutral kernel, canonical domain adapter, and public `GameEngine`; record boundary parity, executed steps, fog recomputation, diplomatic contact, tile lookups, and output digest |
 | Combat command | 100, 1,000, and 10,000 entities | resolve the same deterministic combat through the neutral kernel, canonical domain adapter, and public `GameEngine` while unrelated entities grow; record boundary parity, events, outcomes, fog work, contact, tile lookups, and output digests |
 | Fog reveal | 100, 1,000, and 10,000 tiles | reveal from one fixed source and range through `MapTileLookup`; record visible hexes and tile lookups, which must remain constant as the surrounding map grows |
-| Auto-explore | 100, 1,000, and 10,000 tiles | plan a scout destination across a fully reachable `WorldMap`; record every evaluated destination and unique tile coordinate read so the intentional full-map growth remains visible |
+| Auto-explore | 100, 1,000, and 10,000 tiles | index the reachable `WorldMap`, evaluate destinations in deterministic priority order, and stop at the proven vision-score upper bound; record candidate evaluations and unique tile coordinates read |
 | Turn finalization | 100, 1,000, and 10,000 entities | submit the final player turn through `GameEngine`, execute the canonical turn pipeline, and record preserved entities, offsets, ordered events, movement evidence, and output digest |
 | Persistence | 100, 1,000, and 10,000 records | run `JsonEventLog.latestOffset`, `readSince`, and `append`, then exercise snapshot codec round trips at the same scales |
 | Replay | 100, 1,000, and 10,000 events | replay a deterministic four-command mix through the real reducer and record yielded commands, offsets, steps, and the resulting state digest |
 | MCTS iteration search | 100, 1,000, and 10,000 iterations | run the isolated search with an exact iteration budget; record work structure and selected-command fingerprints |
 | Strategy-aware MCTS | 100, 1,000, and 10,000 iterations | run the production `MctsStrategy` planning path with the same exact iteration contract and deterministic strategic context |
-| Renderer | 100, 600, and 1,000 tiles | paint a deterministic `HexGrid` headlessly after warm-up and record the rendered work shape and scenario digest |
+| Renderer | 100, 600, and 1,000 tiles | paint a deterministic `HexGrid` through a fixed 1,024 × 640 viewport after warm-up and record the visible work shape and scenario digest |
 
 MCTS iteration budgets are exact: the search must complete the requested number
 of iterations and must not stop because a runner happened to be slower. The
-headless renderer workload measures repeatable `HexGrid.renderTree` work; it is
+headless renderer workload measures repeatable, viewport-clipped
+`HexGrid.renderTree` work; it is
 not a substitute for Flutter `FrameTiming` collected from a real device.
 Canonical workloads perform warm-up before collecting 21 timing samples, so a
 p95 summary is not merely the slowest value from a three- or nine-sample run.
@@ -68,14 +69,15 @@ vision range, so its visible set and lookup count are bounded by the range, not
 the complete map. `turn.finalization` covers the full canonical turn boundary
 and must preserve entity count and event offset while producing deterministic
 ordered events and movement evidence.
-`map.auto-explore` has a different contract. It deliberately evaluates every
-reachable destination, so `candidateEvaluations` grows from `scale - 1` and
-`uniqueTileHits` grows with the map. The stable
-`growthModel: full-reachable-map` marker documents that proportional scan and
-prevents it from being mistaken for the fixed-distance movement budget. Its
-timed path executes the complete neutral auto-explore command resolver; a
-separate instrumented planner pass retains the stable candidate and lookup
-counters without mixing them with movement, fog, and diplomacy reads.
+`map.auto-explore` indexes the reachable map, so `uniqueTileHits` still grows
+with map size. Exact fog evaluation is ordered by deterministic tie breakers
+and stops when a candidate reaches the proven vision-score upper bound. The
+stable `growthModel: reachable-index-vision-bound-exit` marker and
+`candidateEvaluations` counter distinguish that bounded exact evaluation from
+the underlying reachability scan. Its timed path executes the complete neutral
+auto-explore command resolver; a separate instrumented planner pass retains the
+stable candidate and lookup counters without mixing them with movement, fog,
+and diplomacy reads.
 
 The report, baseline, and policy are schema-versioned canonical JSON documents:
 

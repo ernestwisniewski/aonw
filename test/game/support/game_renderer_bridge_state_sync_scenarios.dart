@@ -125,24 +125,50 @@ void _registerRendererStateSyncScenarios() {
     expect(game.markerDensitySyncCountForTesting, initialSyncCount + 1);
   });
 
-  test('uses fast image rendering while panning the camera', () async {
+  test('keeps gameplay markers visible while panning the camera', () async {
     final map = _map(3, 3);
+    const city = GameCity(
+      id: 'city_1',
+      ownerPlayerId: 'player_1',
+      name: 'Capital',
+      center: CityHex(col: 1, row: 1),
+    );
+    final unit = GameUnit(
+      id: 'unit_1',
+      ownerPlayerId: 'player_1',
+      type: GameUnitType.warrior,
+      name: GameUnitType.warrior.defaultNameToken,
+      col: 2,
+      row: 1,
+    );
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
     addTearDown(game.disposeRenderer);
 
-    game.onGameResize(Vector2(800, 600));
+    game
+      ..applyState(GameClientState(cities: [city], units: [unit]))
+      ..onGameResize(Vector2(800, 600));
     await game.onLoad();
 
     expect(game.imageLayerPrefersFastRenderingForTesting, isFalse);
+    expect(game.cityMarkerPaintsLabelForTesting(city.id), isTrue);
+    expect(game.unitMarkerShowsHealthBarForTesting(unit.id), isTrue);
+    expect(game.unitMarkerShowsTypeBadgeForTesting(unit.id), isTrue);
+    expect(game.unitMarkerAnimateIdleForTesting(unit.id), isTrue);
 
     game.panByScreenDelta(Vector2(24, 0));
     expect(game.imageLayerPrefersFastRenderingForTesting, isTrue);
+    expect(game.cityMarkerPaintsLabelForTesting(city.id), isTrue);
+    expect(game.unitMarkerShowsHealthBarForTesting(unit.id), isTrue);
+    expect(game.unitMarkerShowsTypeBadgeForTesting(unit.id), isTrue);
+    expect(game.unitMarkerAnimateIdleForTesting(unit.id), isFalse);
 
     game
       ..update(0)
       ..update(0.13);
 
     expect(game.imageLayerPrefersFastRenderingForTesting, isFalse);
+    expect(game.cityMarkerPaintsLabelForTesting(city.id), isTrue);
+    expect(game.unitMarkerAnimateIdleForTesting(unit.id), isTrue);
   });
 
   test('queues renderer effects until the Flame world is ready', () async {

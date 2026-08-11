@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 @immutable
 class WorldProjection {
   static const disabled = WorldProjection(strength: 0);
+  static const int _matrixCacheLimit = 8;
+  static final Map<({double strength, double width, double height}), _Matrices>
+  _matrixCache = {};
 
   final double strength;
 
@@ -18,11 +21,31 @@ class WorldProjection {
       return Matrix4.identity();
     }
 
+    return _matricesFor(size).forward;
+  }
+
+  Matrix4 inverseMatrixForSize(Vector2 size) {
+    final width = size.x;
+    final height = size.y;
+    if (!isEnabled || width <= 0 || height <= 0) {
+      return Matrix4.identity();
+    }
+    return _matricesFor(size).inverse;
+  }
+
+  _Matrices _matricesFor(Vector2 size) {
     final clampedStrength = strength.clamp(0.0, 0.3).toDouble();
+    final key = (strength: clampedStrength, width: size.x, height: size.y);
+    final cached = _matrixCache[key];
+    if (cached != null) return cached;
+    if (_matrixCache.length >= _matrixCacheLimit) _matrixCache.clear();
+
+    final width = size.x;
+    final height = size.y;
     final centerX = width / 2;
     final bottomY = height;
 
-    return Matrix4(
+    final forward = Matrix4(
       1,
       0,
       0,
@@ -40,10 +63,12 @@ class WorldProjection {
       0,
       1 + clampedStrength,
     );
-  }
-
-  Matrix4 inverseMatrixForSize(Vector2 size) {
-    return Matrix4.inverted(matrixForSize(size));
+    final matrices = _Matrices(
+      forward: forward,
+      inverse: Matrix4.inverted(forward),
+    );
+    _matrixCache[key] = matrices;
+    return matrices;
   }
 
   Vector2 projectPoint(Vector2 point, Vector2 size) {
@@ -58,4 +83,11 @@ class WorldProjection {
     final projected = matrix.perspectiveTransform(Vector3(point.x, point.y, 0));
     return Vector2(projected.x, projected.y);
   }
+}
+
+class _Matrices {
+  const _Matrices({required this.forward, required this.inverse});
+
+  final Matrix4 forward;
+  final Matrix4 inverse;
 }

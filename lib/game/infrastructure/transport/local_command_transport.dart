@@ -12,6 +12,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/infrastructure/system/system_clock.dart';
+import 'package:aonw/game/infrastructure/transport/local_command_resolution_executor.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/state.dart';
 
@@ -62,13 +63,16 @@ class LocalCommandTransport implements CommandTransport {
         fromMovePreviewConfirmation && command is MoveUnitCommand
         ? LocalMovementPresentationOrigin.previewConfirmation
         : LocalMovementPresentationOrigin.direct;
-    final resolved = resolver.resolve(
+    final resolved = await executeLocalCommandResolution(
+      resolver: resolver,
       baseSnapshot: baseSnapshot,
       currentState: currentState,
       command: command,
       savedAt: timestamp,
       context: context,
       movementPresentationOrigin: movementPresentationOrigin,
+      useBackgroundWorker:
+          command is EndTurnCommand || command is SubmitTurnCommand,
     );
 
     return _persistResolution(

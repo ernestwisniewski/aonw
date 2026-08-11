@@ -204,19 +204,22 @@ void main() {
       expect(blockedColor.r, greaterThan(blockedColor.g));
     });
 
-    test('draws worker improvement candidate marker inside the hex', () async {
+    test('draws a lightweight worker improvement highlight', () async {
+      final plain = await _renderTile(outlineOnlyTopFace: true);
       final rendered = await _renderTile(
         outlineOnlyTopFace: true,
         showWorkerImprovementCandidateMarker: true,
       );
 
       final borderSample = rendered.workerImprovementCandidateBorderSample();
-      final iconSample = rendered.workerImprovementCandidateIconSample();
       final color = rendered.colorAt(borderSample);
+      final center = rendered.geometry.topCenter;
+      final centerColor = rendered.colorAt(center);
+      final plainCenterColor = plain.colorAt(plain.geometry.topCenter);
 
       expect(rendered.alphaAt(borderSample), greaterThan(120));
-      expect(rendered.alphaAt(iconSample), greaterThan(120));
       expect(color.g, greaterThan(color.r));
+      expect(centerColor, isNot(plainCenterColor));
     });
 
     test('city planning markers center alone and split as a pair', () async {
@@ -491,9 +494,5 @@ class _RenderedTile {
       center.dx + (corner.x - center.dx) * 0.68,
       center.dy + (corner.y - center.dy) * 0.68,
     );
-  }
-
-  Offset workerImprovementCandidateIconSample() {
-    return geometry.topCenter.translate(0, 1);
   }
 }

@@ -7,6 +7,7 @@ import 'package:aonw_core/map/domain/hex_grid_topology.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_source.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
+import 'package:aonw_core/util/min_binary_heap.dart';
 
 part 'unit_movement_route_search.dart';
 
@@ -22,9 +23,7 @@ class UnitMovementPathfinder {
     required int row,
   })?
   canEnterOccupiedTile;
-  final Map<String, MapTileView> _tilesByKey;
-  final bool _hasCompleteTileIndex;
-  final Set<String> _missingTileKeys = {};
+  final UnitMovementTileIndex _tileIndex;
   final Map<String, GameUnit> _unitsByKey;
   final Map<String, Set<({int col, int row})>> _reachableMemo = {};
 
@@ -34,9 +33,10 @@ class UnitMovementPathfinder {
     this.costResolver = const TerrainTraversalCostResolver(),
     this.canEnterTile,
     this.canEnterOccupiedTile,
+    UnitMovementTileIndex? tileIndex,
   }) : units = List.unmodifiable(units),
-       _tilesByKey = _initialTileIndex(mapData),
-       _hasCompleteTileIndex = mapData is MapTileSource<MapTileView>,
+       assert(tileIndex == null || identical(tileIndex.mapData, mapData)),
+       _tileIndex = tileIndex ?? UnitMovementTileIndex(mapData),
        _unitsByKey = _indexUnits(units);
 
   /// Returns whether [unit] can plan a move ending on [col]/[row] using the
@@ -153,17 +153,15 @@ class UnitMovementPathfinder {
   }
 
   _PathSearchResult _search({required GameUnit unit, int? maxCost}) {
-    final frontier = <_PathNode>[
-      _PathNode(col: unit.col, row: unit.row, cost: 0),
-    ];
+    final frontier = MinBinaryHeap<_PathNode>(_compareNodes)
+      ..add(_PathNode(col: unit.col, row: unit.row, cost: 0));
     final startKey = _coordKey(unit.col, unit.row);
     final bestCosts = <String, int>{startKey: 0};
     final coords = <String, ({int col, int row})>{
       startKey: (col: unit.col, row: unit.row),
     };
     while (frontier.isNotEmpty) {
-      frontier.sort(_compareNodes);
-      final current = frontier.removeAt(0);
+      final current = frontier.removeFirst();
       final currentKey = _coordKey(current.col, current.row);
       if (current.cost != bestCosts[currentKey]) continue;
       if (maxCost != null && current.cost > maxCost) continue;
@@ -239,17 +237,7 @@ class UnitMovementPathfinder {
   /// Complete sources keep an eager O(1) index. Narrow traversal views cache
   /// only borrowed tile references reached by the search.
   MapTileView? tileAt(int col, int row) {
-    final key = _coordKey(col, row);
-    final indexed = _tilesByKey[key];
-    if (indexed != null) return indexed;
-    if (_hasCompleteTileIndex || _missingTileKeys.contains(key)) return null;
-
-    final tile = mapData.tileAt(col, row);
-    if (tile == null) {
-      _missingTileKeys.add(key);
-      return null;
-    }
-    return _tilesByKey[key] = tile;
+    return _tileIndex.tileAt(col, row);
   }
 
   bool canEnterOccupied(
@@ -274,20 +262,6 @@ class UnitMovementPathfinder {
 
   static String _coordKey(int col, int row) => '$col:$row';
 
-  static Map<String, MapTileView> _indexTiles(Iterable<MapTileView> tiles) {
-    final byKey = <String, MapTileView>{};
-    for (final tile in tiles) {
-      byKey.putIfAbsent(_coordKey(tile.col, tile.row), () => tile);
-    }
-    return byKey;
-  }
-
-  static Map<String, MapTileView> _initialTileIndex(MapTraversalView mapData) {
-    return mapData is MapTileSource<MapTileView>
-        ? _indexTiles(mapData.tiles)
-        : <String, MapTileView>{};
-  }
-
   static Map<String, GameUnit> _indexUnits(Iterable<GameUnit> units) {
     final byKey = <String, GameUnit>{};
     for (final unit in units) {
@@ -302,6 +276,46 @@ class UnitMovementPathfinder {
     final col = a.col.compareTo(b.col);
     if (col != 0) return col;
     return a.row.compareTo(b.row);
+  }
+}
+
+/// Request-scoped tile index that can be shared by multiple pathfinders using
+/// the same immutable traversal view.
+final class UnitMovementTileIndex {
+  UnitMovementTileIndex(this.mapData)
+    : _hasCompleteTileIndex = mapData is MapTileSource<MapTileView>,
+      _tilesByKey = mapData is MapTileSource<MapTileView>
+          ? _indexTiles(mapData.tiles)
+          : <String, MapTileView>{};
+
+  final MapTraversalView mapData;
+  final Map<String, MapTileView> _tilesByKey;
+  final bool _hasCompleteTileIndex;
+  final Set<String> _missingTileKeys = {};
+
+  MapTileView? tileAt(int col, int row) {
+    final key = UnitMovementPathfinder._coordKey(col, row);
+    final indexed = _tilesByKey[key];
+    if (indexed != null) return indexed;
+    if (_hasCompleteTileIndex || _missingTileKeys.contains(key)) return null;
+
+    final tile = mapData.tileAt(col, row);
+    if (tile == null) {
+      _missingTileKeys.add(key);
+      return null;
+    }
+    return _tilesByKey[key] = tile;
+  }
+
+  static Map<String, MapTileView> _indexTiles(Iterable<MapTileView> tiles) {
+    final byKey = <String, MapTileView>{};
+    for (final tile in tiles) {
+      byKey.putIfAbsent(
+        UnitMovementPathfinder._coordKey(tile.col, tile.row),
+        () => tile,
+      );
+    }
+    return byKey;
   }
 }
 

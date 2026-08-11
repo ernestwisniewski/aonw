@@ -43,6 +43,8 @@ extension GameRendererCameraRendering on GameRenderer {
     _cameraFastRendering = value;
     if (_isReady && !_isDisposed) {
       _sceneBuilder.imageLayer.preferFastRendering = value;
+      _components.cloudDrift.fastRendering = value;
+      _syncMarkerDensityForZoom(force: true);
     }
   }
 

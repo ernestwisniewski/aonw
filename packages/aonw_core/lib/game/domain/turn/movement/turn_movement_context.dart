@@ -10,6 +10,7 @@ final class TurnMovementContext {
     required this.mapData,
     this.fogOfWarService = const FogOfWarService(),
     this.ruleset = GameRuleset.defaults,
+    this.fogRecomputedBeforePhase = false,
   }) : playerIds = Set.unmodifiable(_nonEmptyIds(playerIds)),
        phaseKnownPlayerIds = Set.unmodifiable(phaseKnownPlayerIds);
 
@@ -21,6 +22,11 @@ final class TurnMovementContext {
   final MapTraversalView mapData;
   final FogOfWarService fogOfWarService;
   final GameRuleset ruleset;
+
+  /// The economy phase immediately preceding canonical movement already
+  /// rebuilt visibility for the same units and cities. Standalone movement
+  /// callers keep the conservative legacy refresh by leaving this false.
+  final bool fogRecomputedBeforePhase;
 }
 
 Set<String> _nonEmptyIds(Iterable<String> source) => {

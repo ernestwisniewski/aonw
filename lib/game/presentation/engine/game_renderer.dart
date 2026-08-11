@@ -82,7 +82,6 @@ part 'game_renderer_types.dart';
 class GameRenderer extends HexWorld
     with
         KeyboardEvents,
-        LongPressCallbacks,
         HexInputBehavior,
         GameRendererInputAdapter,
         GameRendererLifecycleAdapter {
@@ -450,6 +449,7 @@ extension _GameRendererRuntimeInitialization on GameRenderer {
         inspectionActive: () => inputHandler.isActive,
         tileDataAtWidgetPosition: tileDataAtWidgetPosition,
         markerDensityForZoomSync: _markerDensityForZoomSync,
+        fastCameraRendering: () => _cameraFastRendering,
         focusInitialActivePlayer: _focusInitialActivePlayer,
         focusActiveSelection: _focusActiveSelection,
         primeSelectionFocus: _primeSelectionFocus,

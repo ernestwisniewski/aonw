@@ -29,6 +29,20 @@ class FieldImprovementMarkerLayer extends Component with LayerAttachment {
     final visibleImprovements = improvements.toList(growable: false);
     final citiesList = cities.toList(growable: false);
     final cityById = {for (final city in citiesList) city.id: city};
+    final ownerByControlledHex = <CityHex, String>{};
+    for (final city in citiesList) {
+      for (final hex in city.controlledHexes) {
+        ownerByControlledHex.putIfAbsent(hex, () => city.ownerPlayerId);
+      }
+    }
+    final eraColumnByPlayerId = <String, int>{
+      for (final playerId
+          in citiesList.map((city) => city.ownerPlayerId).toSet())
+        playerId: _eraColumnForResearch(
+          research.forPlayer(playerId),
+          technologyRuleset,
+        ),
+    };
     final improvementKeys = {
       for (final improvement in visibleImprovements) _keyFor(improvement),
     };
@@ -47,10 +61,9 @@ class FieldImprovementMarkerLayer extends Component with LayerAttachment {
       );
       final eraColumn = _eraColumnForImprovement(
         improvement,
-        cities: citiesList,
         cityById: cityById,
-        research: research,
-        technologyRuleset: technologyRuleset,
+        ownerByControlledHex: ownerByControlledHex,
+        eraColumnByPlayerId: eraColumnByPlayerId,
       );
       final marker = _markers[key];
       final selected = selectedHex == improvement.hex;
@@ -98,37 +111,30 @@ class FieldImprovementMarkerLayer extends Component with LayerAttachment {
 
   int _eraColumnForImprovement(
     FieldImprovement improvement, {
-    required List<GameCity> cities,
     required Map<String, GameCity> cityById,
-    required ResearchState research,
-    required TechnologyRuleset technologyRuleset,
+    required Map<CityHex, String> ownerByControlledHex,
+    required Map<String, int> eraColumnByPlayerId,
   }) {
     final ownerPlayerId = _ownerPlayerIdFor(
       improvement,
-      cities: cities,
       cityById: cityById,
+      ownerByControlledHex: ownerByControlledHex,
     );
     if (ownerPlayerId == null) return 0;
-    return _eraColumnForResearch(
-      research.forPlayer(ownerPlayerId),
-      technologyRuleset,
-    );
+    return eraColumnByPlayerId[ownerPlayerId] ?? 0;
   }
 
   String? _ownerPlayerIdFor(
     FieldImprovement improvement, {
-    required List<GameCity> cities,
     required Map<String, GameCity> cityById,
+    required Map<CityHex, String> ownerByControlledHex,
   }) {
     final builtByCityId = improvement.builtByCityId;
     if (builtByCityId != null) {
       final builder = cityById[builtByCityId];
       if (builder != null) return builder.ownerPlayerId;
     }
-    for (final city in cities) {
-      if (city.controlsHex(improvement.hex)) return city.ownerPlayerId;
-    }
-    return null;
+    return ownerByControlledHex[improvement.hex];
   }
 
   int _eraColumnForResearch(

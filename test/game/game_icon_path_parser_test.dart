@@ -4,6 +4,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('GameIconPathParser', () {
+    setUp(GameIconPathParser.clearCacheForTesting);
+
+    test('reuses parsed catalog paths after warm-up', () {
+      final data = GameIcons.checkCircle.paths.first;
+
+      final first = GameIconPathParser.parseCached(data);
+      final second = GameIconPathParser.parseCached(data);
+
+      expect(second, same(first));
+      expect(GameIconPathParser.cachedPathCountForTesting, 1);
+    });
+
     test('tokenizes compact negative numbers', () {
       expect(GameIconPathParser.tokenize('M10-5L2.5-3.25'), [
         'M',

@@ -28,7 +28,9 @@ final class _UnitMovementRouteSearch {
   final String targetKey;
   final UnitMovementCapacityException? canEnterStepBeyondCapacity;
   final int maxMovement;
-  final frontier = <_RouteNode>[];
+  late final MinBinaryHeap<_RouteNode> frontier = MinBinaryHeap<_RouteNode>(
+    _compareRouteNodes,
+  );
   final bestScores = <_RouteState, _RouteScore>{};
   final parents = <_RouteState, _RouteState?>{};
   final enterCosts = <_RouteState, int>{};
@@ -49,8 +51,7 @@ final class _UnitMovementRouteSearch {
   }
 
   _RouteNode? _takeCurrent() {
-    frontier.sort(_compareRouteNodes);
-    final current = frontier.removeAt(0);
+    final current = frontier.removeFirst();
     final knownScore = bestScores[current.state];
     if (knownScore == null ||
         _compareRouteScores(current.score, knownScore) != 0) {

@@ -5,6 +5,19 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('WorldProjection', () {
     const projection = WorldProjection(strength: 0.16);
+
+    test('reuses matrices for an unchanged viewport', () {
+      final size = Vector2(1200, 800);
+
+      expect(
+        projection.matrixForSize(size),
+        same(projection.matrixForSize(size)),
+      );
+      expect(
+        projection.inverseMatrixForSize(size),
+        same(projection.inverseMatrixForSize(size)),
+      );
+    });
     final size = Vector2(1280, 720);
 
     test('round-trips projected points through inverse mapping', () {

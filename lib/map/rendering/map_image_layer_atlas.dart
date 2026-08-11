@@ -5,7 +5,7 @@ const int _sliceAtlasMaxPixels = 16000000;
 
 extension _MapImageLayerAtlas on MapImageLayer {
   void _renderSlices(Canvas canvas) {
-    if (preferFastRendering && _renderSliceAtlas(canvas)) {
+    if (_renderSliceAtlas(canvas)) {
       return;
     }
     for (final entry in _slices.entries) {

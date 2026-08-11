@@ -91,8 +91,19 @@ class ScoutAutoExplorePlanner {
     required PlayerFogOfWar playerFog,
   }) {
     final origin = HexCoordinate(col: unit.col, row: unit.row);
+    final movements = pathfinder.movementCostsFrom(unit: unit).entries.toList()
+      ..sort((a, b) => _compareMovementPreference(a, b, origin));
+    final maximumVisibleHexes = _maximumVisibleHexes(
+      movements: movements,
+      pathfinder: pathfinder,
+    );
+    final maximumScore =
+        maximumVisibleHexes *
+            (ScoutAutoExploreBalance.newlyDiscoveredHexScore +
+                ScoutAutoExploreBalance.visibleHexScore) +
+        ScoutAutoExploreBalance.undiscoveredTargetScore;
     _AutoExploreCandidate? best;
-    for (final movement in pathfinder.movementCostsFrom(unit: unit).entries) {
+    for (final movement in movements) {
       final candidate = _candidateFor(
         unit: unit,
         mapData: mapData,
@@ -105,9 +116,55 @@ class ScoutAutoExplorePlanner {
       if (candidate != null &&
           (best == null || candidate.compareTo(best) > 0)) {
         best = candidate;
+        // No candidate can reveal more than the complete hex disk for the
+        // highest observer range reachable on this map. Since [movements] is
+        // ordered by the remaining tie breakers, the first candidate that
+        // reaches that upper bound is the deterministic winner.
+        if (candidate.score == maximumScore) return candidate;
       }
     }
     return best;
+  }
+
+  int _compareMovementPreference(
+    MapEntry<({int col, int row}), int> a,
+    MapEntry<({int col, int row}), int> b,
+    HexCoordinate origin,
+  ) {
+    final movementOrder = a.value.compareTo(b.value);
+    if (movementOrder != 0) return movementOrder;
+    final aHex = HexCoordinate(col: a.key.col, row: a.key.row);
+    final bHex = HexCoordinate(col: b.key.col, row: b.key.row);
+    final distanceOrder = HexDistance.between(
+      origin,
+      aHex,
+    ).compareTo(HexDistance.between(origin, bHex));
+    if (distanceOrder != 0) return distanceOrder;
+    final colOrder = a.key.col.compareTo(b.key.col);
+    if (colOrder != 0) return colOrder;
+    return a.key.row.compareTo(b.key.row);
+  }
+
+  int _maximumVisibleHexes({
+    required Iterable<MapEntry<({int col, int row}), int>> movements,
+    required UnitMovementPathfinder pathfinder,
+  }) {
+    var maximumRange = 1;
+    for (final movement in movements) {
+      final height = pathfinder
+          .tileAt(movement.key.col, movement.key.row)
+          ?.height;
+      if (height == null) continue;
+      final bonus = (height ~/ 2) * FogBalance.elevationBonusPerLevel;
+      final range = (FogBalance.unitVisionRange + bonus).clamp(
+        0,
+        FogBalance.maxVisionRange,
+      );
+      if (range > maximumRange) maximumRange = range;
+    }
+    // A complete axial hex disk contains 1 + 3r(r + 1) coordinates. Direct
+    // neighbours are always visible, hence the minimum effective radius 1.
+    return 1 + 3 * maximumRange * (maximumRange + 1);
   }
 
   _AutoExploreCandidate? _candidateFor({

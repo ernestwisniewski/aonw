@@ -25,7 +25,14 @@ class GamePlanningMarkerCoordinator {
     final visibility = state.activePlayerVisibility;
     final attackTargetingUnit = selectedAttackTargetingUnit(state);
     final selectedWorker = _selectedControllableWorker(state);
+    final workerPlanning = selectedWorker == null
+        ? null
+        : _WorkerPlanningIndex.fromState(state, selectedWorker);
     final selectedCityFounder = _selectedControllableCityFounder(state);
+    final controlledCityHexes = {
+      for (final city in state.cities)
+        for (final hex in city.territoryHexes) (hex.col, hex.row),
+    };
     final forceCitySiteMarkers = selectedCityFounder != null;
     final recommendedCitySites = selectedCityFounder == null
         ? const <(int, int)>{}
@@ -38,7 +45,7 @@ class GamePlanningMarkerCoordinator {
     for (final tile in grid.mapData.tiles) {
       if (visibility.isEnabled && !visibility.canInspectTile(tile)) continue;
 
-      final canGrowCity = _canUseAsCityGrowthTile(tile, state.cities);
+      final canGrowCity = _canUseAsCityGrowthTile(tile, controlledCityHexes);
       if (attackTargetingUnit != null) {
         final canAttackTarget = canAttackTargetTile(
           state,
@@ -54,34 +61,26 @@ class GamePlanningMarkerCoordinator {
         continue;
       }
 
-      final canFoundCity = _canUseAsCityCenter(tile, state.cities);
-      final workerHex = CityHex(col: tile.col, row: tile.row);
-      final workerAvailability = selectedWorker == null
+      final canFoundCity = _canUseAsCityCenter(
+        tile,
+        state.cities,
+        controlledCityHexes,
+      );
+      final workerAvailability = workerPlanning == null
           ? WorkerImprovementTileAvailability.unavailable
-          : WorkerImprovementRules.availabilityForTile(
-              unit: selectedWorker,
-              targetHex: workerHex,
-              cities: state.cities,
-              fieldImprovements: state.fieldImprovements,
-              mapTiles: grid.mapData,
-              research: state.research,
-            );
+          : workerPlanning.availabilityFor(tile);
       final canImproveNow =
           workerAvailability == WorkerImprovementTileAvailability.availableNow;
       final canImproveAfterTechnology =
           workerAvailability ==
           WorkerImprovementTileAvailability.technologyLocked;
-      final workerBuildAvailable = selectedWorker != null && canImproveNow;
+      final workerOccupiesTile =
+          selectedWorker?.occupies(tile.col, tile.row) ?? false;
+      final workerBuildAvailable = workerOccupiesTile && canImproveNow;
       final workerBuildBlocked =
-          selectedWorker != null &&
-          !workerBuildAvailable &&
-          _shouldShowWorkerBuildBlockedMarker(
-            state: state,
-            worker: selectedWorker,
-            hex: workerHex,
-            tile: tile,
-            availability: workerAvailability,
-          );
+          workerOccupiesTile && !workerBuildAvailable && selectedWorker != null;
+      final workerImprovementCandidate =
+          selectedWorker != null && !workerOccupiesTile && canImproveNow;
       if (!canFoundCity &&
           !canGrowCity &&
           !canImproveNow &&
@@ -101,7 +100,7 @@ class GamePlanningMarkerCoordinator {
         canGrowCity: canGrowCity,
         canImproveNow: canImproveNow,
         canImproveAfterTechnology: canImproveAfterTechnology,
-        workerImprovementCandidate: canImproveNow,
+        workerImprovementCandidate: workerImprovementCandidate,
         workerBuildAvailable: workerBuildAvailable,
         workerBuildBlocked: workerBuildBlocked,
       );
@@ -163,25 +162,6 @@ class GamePlanningMarkerCoordinator {
     return distance <= attackerStats.range;
   }
 
-  bool _shouldShowWorkerBuildBlockedMarker({
-    required GameClientState state,
-    required GameUnit worker,
-    required CityHex hex,
-    required WorldTile tile,
-    required WorkerImprovementTileAvailability availability,
-  }) {
-    if (worker.occupies(tile.col, tile.row)) return true;
-    if (availability == WorkerImprovementTileAvailability.technologyLocked) {
-      return true;
-    }
-    return WorkerImprovementRules.cityForImprovementHex(
-          playerId: worker.ownerPlayerId,
-          hex: hex,
-          cities: state.cities,
-        ) !=
-        null;
-  }
-
   GameUnit? _selectedControllableWorker(GameClientState state) {
     final unit = state.selectedUnit;
     if (unit == null ||
@@ -200,23 +180,104 @@ class GamePlanningMarkerCoordinator {
     return null;
   }
 
-  bool _canUseAsCityCenter(WorldTile tile, Iterable<GameCity> cities) {
+  bool _canUseAsCityCenter(
+    WorldTile tile,
+    Iterable<GameCity> cities,
+    Set<(int, int)> controlledCityHexes,
+  ) {
     if (!CitySiteRules.canFoundCityOn(tile)) return false;
     final hex = CityHex(col: tile.col, row: tile.row);
-    return !_isControlledByAnyCity(hex, cities) &&
+    return !controlledCityHexes.contains((tile.col, tile.row)) &&
         CityFoundingRules.isCenterFarEnoughFromCities(hex, cities);
   }
 
-  bool _canUseAsCityGrowthTile(WorldTile tile, Iterable<GameCity> cities) {
+  bool _canUseAsCityGrowthTile(
+    WorldTile tile,
+    Set<(int, int)> controlledCityHexes,
+  ) {
     if (!CityTileYieldRules.canCityControlTile(tile)) return false;
-    final hex = CityHex(col: tile.col, row: tile.row);
-    return !_isControlledByAnyCity(hex, cities);
+    return !controlledCityHexes.contains((tile.col, tile.row));
+  }
+}
+
+/// Selection-time lookup data for worker planning markers.
+///
+/// The canonical rule checks cities and improvements for every improvement
+/// type. Building these coordinate sets once avoids multiplying those scans by
+/// every tile on a late-game map while preserving the same availability rule.
+final class _WorkerPlanningIndex {
+  const _WorkerPlanningIndex({
+    required this.cityCenters,
+    required this.ownedImprovementHexes,
+    required this.improvedHexes,
+    required this.unlockedTypes,
+  });
+
+  factory _WorkerPlanningIndex.fromState(
+    GameClientState state,
+    GameUnit worker,
+  ) {
+    final cityCenters = <(int, int)>{};
+    final ownedImprovementHexes = <(int, int)>{};
+    for (final city in state.cities) {
+      cityCenters.add((city.center.col, city.center.row));
+      if (city.ownerPlayerId != worker.ownerPlayerId) continue;
+      for (final hex in city.controlledHexes) {
+        if (hex != city.center) {
+          ownedImprovementHexes.add((hex.col, hex.row));
+        }
+      }
+    }
+    return _WorkerPlanningIndex(
+      cityCenters: cityCenters,
+      ownedImprovementHexes: ownedImprovementHexes,
+      improvedHexes: {
+        for (final improvement in state.fieldImprovements)
+          (improvement.hex.col, improvement.hex.row),
+      },
+      unlockedTypes: {
+        for (final type in FieldImprovementType.values)
+          if (TechnologyUnlockQuery.hasFieldImprovementUnlocked(
+            playerId: worker.ownerPlayerId,
+            improvementType: type,
+            research: state.research,
+            ruleset: TechnologyRulesets.standard,
+          ))
+            type,
+      },
+    );
   }
 
-  bool _isControlledByAnyCity(CityHex hex, Iterable<GameCity> cities) {
-    for (final city in cities) {
-      if (city.controlsHex(hex)) return true;
+  final Set<(int, int)> cityCenters;
+  final Set<(int, int)> ownedImprovementHexes;
+  final Set<(int, int)> improvedHexes;
+  final Set<FieldImprovementType> unlockedTypes;
+
+  WorkerImprovementTileAvailability availabilityFor(WorldTile tile) {
+    final coordinate = (tile.col, tile.row);
+    if (cityCenters.contains(coordinate) ||
+        improvedHexes.contains(coordinate) ||
+        !ownedImprovementHexes.contains(coordinate)) {
+      return WorkerImprovementTileAvailability.unavailable;
     }
-    return false;
+
+    var technologyLocked = false;
+    for (final type in FieldImprovementType.values) {
+      if (FieldImprovementRules.requirementFailureFor(
+            type,
+            tile,
+            ruleset: CityRulesets.standard,
+          ) !=
+          null) {
+        continue;
+      }
+      if (unlockedTypes.contains(type)) {
+        return WorkerImprovementTileAvailability.availableNow;
+      }
+      technologyLocked = true;
+    }
+    return technologyLocked
+        ? WorkerImprovementTileAvailability.technologyLocked
+        : WorkerImprovementTileAvailability.unavailable;
   }
 }

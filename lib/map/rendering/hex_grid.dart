@@ -4,6 +4,7 @@ import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_selection_overlay.dart';
 import 'package:aonw/map/rendering/hex_tile.dart';
 import 'package:aonw/map/rendering/hex_tile_markers.dart';
+import 'package:aonw/map/rendering/viewport_culling.dart';
 import 'package:aonw/shared/performance/dev_performance.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw_core/domain/world_map.dart';
@@ -20,7 +21,8 @@ typedef HexTileMarkerBuilder = HexTileMarkers Function(WorldTile tileData);
 /// Grid of [HexTile]s laid out from a read-only [MapTileSource].
 ///
 /// Applies Y-scale for isometric perspective.
-class HexGrid<T extends MapTileSource<WorldTile>> extends PositionComponent {
+class HexGrid<T extends MapTileSource<WorldTile>> extends PositionComponent
+    with ViewportCullingParent {
   final T mapData;
   final MapConfig config;
   MapViewMode _viewMode;
@@ -98,6 +100,50 @@ class HexGrid<T extends MapTileSource<WorldTile>> extends PositionComponent {
     return mapData.tileAt(coords.col, coords.row);
   }
 
+  /// Hex tiles are spatially indexed, so pointer dispatch should not recurse
+  /// through every tile component before finding the one under the cursor.
+  @override
+  Iterable<Component> componentsAtLocation<L>(
+    L locationContext,
+    List<L>? nestedContexts,
+    L? Function(CoordinateTransform transform, L context) transformContext,
+    bool Function(Component component, L context) checkContains,
+  ) sync* {
+    if (locationContext is! Vector2) {
+      yield* super.componentsAtLocation(
+        locationContext,
+        nestedContexts,
+        transformContext,
+        checkContains,
+      );
+      return;
+    }
+
+    nestedContexts?.add(locationContext);
+    final coords = HexGeometry.tileAt(
+      point: locationContext,
+      hexRadius: config.hexRadius,
+      cols: mapData.cols,
+      rows: mapData.rows,
+    );
+    final tile = coords == null
+        ? null
+        : _tilesByCoordinate[(coords.col, coords.row)];
+    if (tile != null) {
+      final childContext = transformContext(tile, locationContext);
+      if (childContext != null) {
+        yield* tile.componentsAtLocation(
+          childContext,
+          nestedContexts,
+          transformContext,
+          checkContains,
+        );
+      }
+    }
+    if (checkContains(this, locationContext)) yield this;
+    nestedContexts?.removeLast();
+  }
+
   set viewMode(MapViewMode value) {
     if (_viewMode == value) return;
     _viewMode = value;
@@ -167,7 +213,7 @@ class HexGrid<T extends MapTileSource<WorldTile>> extends PositionComponent {
       neighborHeights: neighborHeights,
       outlineNeighborHeights: outlineNeighborHeights,
       outlineOnlyTopFace: viewMode.usesOutlineHexes,
-      showIcon: true,
+      showIcon: viewMode.showsIcons,
       showTerrain: displaySettings.showTerrain,
       showResources: displaySettings.showResources,
       showCitySites: displaySettings.showCitySites,
@@ -285,6 +331,7 @@ class HexGrid<T extends MapTileSource<WorldTile>> extends PositionComponent {
     for (final tile in children.query<HexTile>()) {
       tile.applyPresentationSettings(
         outlineOnlyTopFace: viewMode.usesOutlineHexes,
+        showIcon: viewMode.showsIcons,
         showTerrain: displaySettings.showTerrain,
         showResources: displaySettings.showResources,
         showCitySites: displaySettings.showCitySites,

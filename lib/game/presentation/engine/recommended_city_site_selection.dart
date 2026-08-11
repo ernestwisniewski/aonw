@@ -7,11 +7,19 @@ extension _RecommendedCitySiteSelection on RecommendedCitySitePlanner {
     required WorldMap mapData,
   }) {
     final visibility = state.activePlayerVisibility;
+    final controlledCityHexes = {
+      for (final city in state.cities)
+        for (final hex in city.territoryHexes) (hex.col, hex.row),
+    };
+    final visibleResourceTypes = ResourceVisibilityRules.visibleResourceTypes(
+      playerId: state.activePlayerId,
+      research: state.research,
+    );
     final candidates =
         <_RecommendedCitySite>[
           for (final tile in mapData.tiles)
             if ((!visibility.isEnabled || visibility.canInspectTile(tile)) &&
-                _canUseAsCityCenter(tile, state.cities))
+                _canUseAsCityCenter(tile, state.cities, controlledCityHexes))
               _RecommendedCitySite(
                 col: tile.col,
                 row: tile.row,
@@ -20,6 +28,7 @@ extension _RecommendedCitySiteSelection on RecommendedCitySitePlanner {
                   state: state,
                   founder: founder,
                   mapData: mapData,
+                  visibleResourceTypes: visibleResourceTypes,
                 ),
               ),
         ]..sort((a, b) {
@@ -61,18 +70,15 @@ extension _RecommendedCitySiteSelection on RecommendedCitySitePlanner {
     );
   }
 
-  bool _canUseAsCityCenter(WorldTile tile, Iterable<GameCity> cities) {
+  bool _canUseAsCityCenter(
+    WorldTile tile,
+    Iterable<GameCity> cities,
+    Set<(int, int)> controlledCityHexes,
+  ) {
     if (!CitySiteRules.canFoundCityOn(tile)) return false;
     final hex = CityHex(col: tile.col, row: tile.row);
-    return !_isControlledByAnyCity(hex, cities) &&
+    return !controlledCityHexes.contains((tile.col, tile.row)) &&
         CityFoundingRules.isCenterFarEnoughFromCities(hex, cities);
-  }
-
-  bool _isControlledByAnyCity(CityHex hex, Iterable<GameCity> cities) {
-    for (final city in cities) {
-      if (city.controlsHex(hex)) return true;
-    }
-    return false;
   }
 }
 

@@ -49,7 +49,7 @@ abstract final class GameIconRenderer {
       ..translate(topLeft.dx, topLeft.dy)
       ..scale(scale, scale);
     for (final pathData in icon.paths) {
-      canvas.drawPath(GameIconPathParser.parse(pathData), paint);
+      canvas.drawPath(GameIconPathParser.parseCached(pathData), paint);
     }
     canvas.restore();
   }

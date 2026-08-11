@@ -16,6 +16,7 @@ import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview_layer.dart';
 import 'package:aonw/game/presentation/widgets/theme/player_color_theme.dart';
 import 'package:aonw/map/rendering/map_objective_marker_layer.dart';
+import 'package:aonw/map/rendering/viewport_culling.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
@@ -48,6 +49,7 @@ final class GameRendererLayerSynchronizer {
     required this.movePreviewLayer,
     required this.floatingTextLayer,
     required this.markerDensityForZoomSync,
+    required this.fastCameraRendering,
     required this.state,
     required this.currentTurn,
     required this.viewMode,
@@ -81,6 +83,7 @@ final class GameRendererLayerSynchronizer {
   final UnitMovePreviewLayer Function() movePreviewLayer;
   final FloatingTextLayer Function() floatingTextLayer;
   final MarkerDensity? Function({required bool force}) markerDensityForZoomSync;
+  final bool Function() fastCameraRendering;
   final GameClientState Function() state;
   final int? Function() currentTurn;
   final MapViewMode Function() viewMode;
@@ -101,6 +104,10 @@ final class GameRendererLayerSynchronizer {
       showCityLabels: shouldShowCityLabels,
       strategicView: viewMode() == MapViewMode.tile,
     );
+    final worldRoot = world();
+    if (worldRoot is ViewportCullingWorld) {
+      worldRoot.invalidateSpatialHitTestIndex();
+    }
     combatHexAlertLayer().syncState(
       parent: sceneBuilder.grid,
       state: state(),
@@ -159,6 +166,7 @@ final class GameRendererLayerSynchronizer {
   void syncMarkerDensityForZoom({bool force = false}) {
     final density = markerDensityForZoomSync(force: force);
     if (density == null) return;
+    final fastRendering = fastCameraRendering();
     cityMarkerLayer()
       ..markerWorldScale = density.markerWorldScale
       ..setLabelVisibility(density.showCityLabels)
@@ -177,7 +185,7 @@ final class GameRendererLayerSynchronizer {
     unitMarkerLayer()
       ..spriteScale = density.unitSpriteScale
       ..tacticalViewEmphasis = density.unitTacticalEmphasis
-      ..animateIdle = density.animateUnitIdle;
+      ..animateIdle = !fastRendering && density.animateUnitIdle;
     movePreviewLayer().showCostLabel = density.showCostLabel;
     floatingTextLayer().visible = density.showFloatingText;
     cityProductionParticleLayer().visible = shouldShowProductionParticles;
@@ -185,6 +193,7 @@ final class GameRendererLayerSynchronizer {
   }
 
   bool get shouldShowProductionParticles =>
+      !fastCameraRendering() &&
       currentMarkerDensity.showProductionParticles &&
       !_mapDecisionModeSuppressesProductionParticles;
 

@@ -2,9 +2,9 @@ part of 'map_workload.dart';
 
 /// Plans automatic exploration across the complete reachable map.
 ///
-/// Candidate evaluations intentionally grow with tile count. The workload
-/// makes that linear scan explicit while separately tracking unique tile
-/// coordinates read through the bounded WorldMap traversal view.
+/// Reachability indexing still covers the map, while exact fog evaluation may
+/// stop at the first tie-break-preferred destination that reaches the proven
+/// vision-score upper bound.
 PerformanceCaseResult runAutoExploreWorkload({
   Iterable<int> scales = mapLookupScales,
   int timingSamples = 21,
@@ -47,7 +47,7 @@ _ScaleResult _runAutoExploreScale(int scale, int timingSamples) {
         'rows': fixture.worldMap.rows,
       },
       'indexedTiles': fixture.worldMap.indexedTileCount,
-      'growthModel': 'full-reachable-map',
+      'growthModel': 'reachable-index-vision-bound-exit',
       'candidateEvaluations': counted.candidateEvaluations,
       ...counted.traversal.toJson(),
       'outputDigest': stableDigest(counted.output.normalized),

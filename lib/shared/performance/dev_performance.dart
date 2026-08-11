@@ -62,11 +62,11 @@ class DevFrameStats {
     _elapsed += dt;
     _frameSamplesMs.add(dt * 1000);
     _updateSamplesMs.add(duration.inMicroseconds / 1000);
+    if (_elapsed < reportEverySeconds) return;
+
     if (sampleComponentCount != null) {
       _lastComponentCount = sampleComponentCount();
     }
-
-    if (_elapsed < reportEverySeconds) return;
 
     final frames = _frameSamplesMs.length;
     final fps = frames / _elapsed;

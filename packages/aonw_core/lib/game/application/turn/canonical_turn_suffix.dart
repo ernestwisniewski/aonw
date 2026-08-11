@@ -72,6 +72,7 @@ abstract final class CanonicalTurnSuffix {
       mapData: request.mapView,
       fogOfWarService: request.fogOfWarService,
       ruleset: request.ruleset,
+      fogRecomputedBeforePhase: true,
     );
     final diplomacy = _diplomacyAfterMovement(
       state: movement.state,

@@ -55,26 +55,19 @@ extension _HexTilePlanningMarkers on HexTilePainter {
     HexTileGeometrySnapshot geometry,
   ) {
     final path = _innerTopPath(geometry, scale: 0.68);
-    final center = geometry.topCenter.translate(0, 1);
     canvas
-      ..drawPath(path, _paintWorkerImprovementCandidateGlow)
-      ..drawPath(path, _paintWorkerImprovementCandidateBorder)
-      ..drawCircle(center, 8.5, _paintWorkerImprovementCandidateIconBg)
-      ..drawCircle(
-        center,
-        8.5,
-        HudPaint.stroke(
-          HudPalette.goldLight,
-          alpha: MapAlpha.strong,
-          strokeWidth: MapStroke.hairline,
-        ),
-      );
-    MapIntentMarker.paintGlyph(
-      canvas,
-      center,
-      MapIntentGlyph.improve,
-      scale: 1.12,
-    );
+      ..drawPath(path, _paintWorkerImprovementCandidateFill)
+      ..drawPath(path, _paintWorkerImprovementCandidateBorder);
+  }
+
+  void _drawWorkerTechnologyCandidateMarker(
+    Canvas canvas,
+    HexTileGeometrySnapshot geometry,
+  ) {
+    final path = _innerTopPath(geometry, scale: 0.61);
+    canvas
+      ..drawPath(path, _paintWorkerImprovementTechFill)
+      ..drawPath(path, _paintWorkerImprovementTechBorder);
   }
 
   Path _innerTopPath(
@@ -141,11 +134,7 @@ extension _HexTilePlanningMarkers on HexTilePainter {
       );
     }
     if (showWorkerImprovementTechMarker) {
-      _drawWorkerImprovementMarker(
-        canvas,
-        geometry.topCenter.translate(9, 13),
-        _paintWorkerImprovementTechMarker,
-      );
+      _drawWorkerTechnologyCandidateMarker(canvas, geometry);
     }
   }
 
@@ -196,13 +185,25 @@ extension _HexTilePlanningMarkers on HexTilePainter {
     Offset center, {
     required bool recommended,
   }) {
+    if (!recommended) {
+      canvas
+        ..drawCircle(center, 6.5, _paintCitySiteCompactFill)
+        ..drawCircle(center, 6.5, _paintCitySiteCompactBorder);
+      MapIntentMarker.paintGlyph(
+        canvas,
+        center,
+        MapIntentGlyph.city,
+        scale: 0.72,
+      );
+      return;
+    }
     _drawIntentBadge(
       canvas,
       center,
-      color: recommended ? HudPalette.successLight : _paintCitySiteMarker.color,
-      glow: recommended ? HudPalette.success : HudPalette.gold,
-      backgroundColor: recommended ? HudPalette.success : null,
-      borderColor: recommended ? HudPalette.successLight : null,
+      color: HudPalette.successLight,
+      glow: HudPalette.success,
+      backgroundColor: HudPalette.success,
+      borderColor: HudPalette.successLight,
       glyph: MapIntentGlyph.city,
     );
   }

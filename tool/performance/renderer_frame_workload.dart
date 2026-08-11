@@ -14,6 +14,7 @@ import 'measurement.dart';
 
 const rendererFrameWorkloadScales = [100, 600, 1000];
 const rendererAssetMode = 'fallback-no-assets';
+const rendererReferenceViewport = ui.Rect.fromLTWH(0, 0, 1024, 640);
 
 const _defaultWarmupFrames = 3;
 const _defaultSampleFrames = 21;
@@ -86,6 +87,10 @@ Map<String, Object?> _stableMetrics(
   'assetMode': rendererAssetMode,
   'referenceProfileBudget': rendererReferenceProfileBudget,
   'dimensions': {'cols': fixture.map.cols, 'rows': fixture.map.rows},
+  'viewport': {
+    'width': rendererReferenceViewport.width,
+    'height': rendererReferenceViewport.height,
+  },
   'warmupFrames': warmupFrames,
   'sampleFrames': sampleFrames,
   'paintedTilesPerFrame': _uniformPaintCount(paintedTilesByFrame),
@@ -129,6 +134,7 @@ Measured<int> _measurePaintFrame(_RendererFixture fixture) {
 
 int _paintInto(_RendererFixture fixture, ui.Canvas canvas) {
   final paintsBefore = fixture.paintCollector.paintCalls;
+  canvas.clipRect(rendererReferenceViewport);
   fixture.grid.renderTree(canvas);
   return fixture.paintCollector.paintCalls - paintsBefore;
 }
@@ -290,11 +296,15 @@ WorldTile _syntheticTile({
 }
 
 String _scenarioDigest(WorldMap map) => stableDigest({
-  'renderer': 'HexGrid.renderTree.headless',
+  'renderer': 'HexGrid.renderTree.clipped-viewport',
   'assetMode': rendererAssetMode,
   'dimensions': {'cols': map.cols, 'rows': map.rows},
   'hexRadius': MapConfig.defaultConfig.hexRadius,
   'perspectiveY': HexGrid.perspectiveY,
+  'viewport': {
+    'width': rendererReferenceViewport.width,
+    'height': rendererReferenceViewport.height,
+  },
   'display': {
     'showHeightBadge': _displaySettings.showHeightBadge,
     'showTerrain': _displaySettings.showTerrain,

@@ -26,7 +26,20 @@ void main() {
 
       expect(layer.segmentCountForTesting, 1);
       expect(layer.cityConnectionCountForTesting, 1);
+      expect(layer.geometryBuildCountForTesting, 1);
       expect(parent.children.whereType<TransportNetworkLayer>(), hasLength(1));
+
+      layer.sync(
+        parent: parent,
+        segments: const [
+          TransportSegment(
+            hex: HexCoord(col: 1, row: 0),
+            builtByPlayerId: 'player_1',
+          ),
+        ],
+        cityCenters: const [CityHex(col: 0, row: 0)],
+      );
+      expect(layer.geometryBuildCountForTesting, 1);
 
       final recorder = PictureRecorder();
       layer.render(Canvas(recorder));

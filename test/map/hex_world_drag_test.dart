@@ -90,7 +90,7 @@ void main() {
 
       game.update(0);
 
-      expect(game.camera.viewfinder.position.x, -7);
+      expect(game.camera.viewfinder.position.x, -10);
 
       game.handleViewportPointerUp(1);
       expect(game.isDragging, isFalse);
@@ -117,6 +117,15 @@ void main() {
         expect(game.hasQueuedViewportCameraInput, isFalse);
       },
     );
+
+    test('opposing pointer jitter does not cross the drag threshold', () {
+      game
+        ..processDragStart()
+        ..processDragUpdate(Vector2(6, 0))
+        ..processDragUpdate(Vector2(-6, 0));
+
+      expect(game.isDragging, isFalse);
+    });
 
     test('viewport two-finger pinch zooms camera', () {
       game.camera.viewfinder.zoom = 1;

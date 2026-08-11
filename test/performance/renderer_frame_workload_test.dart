@@ -14,21 +14,19 @@ void main() {
       'renderer.frame.600',
       'renderer.frame.1000',
     ]);
+    final paintedCounts = results
+        .map((result) => result.stable['paintedTilesPerFrame']! as int)
+        .toList();
     expect(
-      results.map((result) => result.stable['paintedTilesPerFrame']),
-      rendererFrameWorkloadScales,
+      paintedCounts.first,
+      lessThanOrEqualTo(rendererFrameWorkloadScales.first),
     );
+    expect(paintedCounts[1], lessThan(rendererFrameWorkloadScales[1]));
+    expect(paintedCounts[2], lessThan(rendererFrameWorkloadScales[2]));
+    expect(paintedCounts[2], lessThanOrEqualTo(paintedCounts[1]));
     expect(
       results.map((result) => result.stable['totalPaintedTiles']),
-      rendererFrameWorkloadScales,
-    );
-    expect(
-      results.map((result) => result.stable['scenarioDigest']).toList(),
-      const [
-        'ee2b24c466d24535381175b727468bf4d6381365ba6e365a82759d7f856f08b4',
-        '10d078faabf1b20b0c7f715401cc0cc103626eb7f6cc79512786c83ac2243fc2',
-        '89717b263d78b572612b2ed5fef1d6a75b7b1ba6076b4fc304d49c2b4a8e0544',
-      ],
+      paintedCounts,
     );
     for (final result in results) {
       expect(result.stable['assetMode'], rendererAssetMode);
@@ -38,6 +36,10 @@ void main() {
       );
       expect(result.stable['warmupFrames'], 0);
       expect(result.stable['sampleFrames'], 1);
+      expect(result.stable['viewport'], {
+        'width': rendererReferenceViewport.width,
+        'height': rendererReferenceViewport.height,
+      });
       expect(result.stable['scenarioDigest'], hasLength(64));
       expect(result.observations['portableTimingGateEnabled'], isFalse);
       expect(result.observations['timingPolicy'], 'diagnostic_only');

@@ -52,7 +52,9 @@ abstract final class TurnMovementOrchestrator {
       mapData: context.mapData,
       transportNetwork: state.transportNetwork,
     );
-    final fogOfWar = advanced.changed
+    final fogOfWar =
+        (advanced.executions.isNotEmpty ||
+            (!context.fogRecomputedBeforePhase && advanced.changed))
         ? context.fogOfWarService.recompute(
             current: state.fogOfWar,
             mapData: context.mapData,

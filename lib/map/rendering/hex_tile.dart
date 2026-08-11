@@ -32,7 +32,7 @@ class HexTile extends PositionComponent with TapCallbacks {
 
   final VoidCallback onTapped;
   bool outlineOnlyTopFace;
-  final bool showIcon;
+  bool showIcon;
   bool showTerrain;
   bool showResources;
   bool showCitySites;
@@ -129,6 +129,7 @@ class HexTile extends PositionComponent with TapCallbacks {
 
   void applyPresentationSettings({
     required bool outlineOnlyTopFace,
+    required bool showIcon,
     required bool showTerrain,
     required bool showResources,
     required bool showCitySites,
@@ -139,6 +140,7 @@ class HexTile extends PositionComponent with TapCallbacks {
     required Color wallTintColor,
   }) {
     if (this.outlineOnlyTopFace == outlineOnlyTopFace &&
+        this.showIcon == showIcon &&
         this.showTerrain == showTerrain &&
         this.showResources == showResources &&
         this.showCitySites == showCitySites &&
@@ -151,6 +153,7 @@ class HexTile extends PositionComponent with TapCallbacks {
     }
 
     this.outlineOnlyTopFace = outlineOnlyTopFace;
+    this.showIcon = showIcon;
     this.showTerrain = showTerrain;
     this.showResources = showResources;
     this.showCitySites = showCitySites;

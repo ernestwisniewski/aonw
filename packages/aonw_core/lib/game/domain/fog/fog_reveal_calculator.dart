@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/fog/fog_visibility_rules.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/terrain.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/util/min_binary_heap.dart';
 
 class FogRevealCalculator {
   const FogRevealCalculator();
@@ -29,11 +30,11 @@ class FogRevealCalculator {
 
     final visible = <HexCoordinate>{source.origin};
     final bestCosts = <HexCoordinate, int>{source.origin: 0};
-    final frontier = <_SightNode>[_SightNode(hex: source.origin, cost: 0)];
+    final frontier = MinBinaryHeap<_SightNode>(_compareNodes)
+      ..add(_SightNode(hex: source.origin, cost: 0));
 
     while (frontier.isNotEmpty) {
-      frontier.sort(_compareNodes);
-      final current = frontier.removeAt(0);
+      final current = frontier.removeFirst();
       if (current.cost != bestCosts[current.hex]) continue;
 
       final isOrigin = current.hex == source.origin;

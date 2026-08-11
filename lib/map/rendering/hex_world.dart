@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:aonw/map/rendering/map_palette.dart';
+import 'package:aonw/map/rendering/viewport_culling.dart';
 import 'package:aonw/map/rendering/world_projection.dart';
 import 'package:aonw/shared/input/camera_controller.dart';
 import 'package:aonw/shared/performance/dev_performance.dart';
@@ -17,7 +18,8 @@ abstract class HexWorld extends FlameGame
     with ScrollDetector, CameraController {
   static const double _dragThreshold = 8.0;
 
-  double _dragTravel = 0.0;
+  final Vector2 _dragDisplacement = Vector2.zero();
+  final Vector2 _pendingDragDelta = Vector2.zero();
   bool _isDragging = false;
   DevFrameStats? _devFrameStats;
   final Map<int, Vector2> _viewportPointers = {};
@@ -28,6 +30,8 @@ abstract class HexWorld extends FlameGame
   Vector2? _panZoomStartWorldFocus;
   final Vector2 _panZoomAccumulatedPanDelta = Vector2.zero();
   _QueuedViewportCameraState? _queuedViewportCameraState;
+
+  HexWorld() : super(world: ViewportCullingWorld());
 
   bool get isDragging => _isDragging;
 
@@ -55,21 +59,31 @@ abstract class HexWorld extends FlameGame
 
   @override
   void update(double dt) {
+    flushPendingViewportPointerMoves();
     _flushQueuedViewportCameraInput();
     final stats = DevPerformance.isEnabled ? _frameStats() : null;
     if (stats == null) {
       super.update(dt);
+      _refreshSpatialHitTestIndex();
       return;
     }
 
     final stopwatch = Stopwatch()..start();
     super.update(dt);
+    _refreshSpatialHitTestIndex();
     stopwatch.stop();
     stats.recordUpdate(
       dt,
       stopwatch.elapsed,
       sampleComponentCount: () => _countComponents(world),
     );
+  }
+
+  void _refreshSpatialHitTestIndex() {
+    final worldRoot = world;
+    if (worldRoot is ViewportCullingWorld) {
+      worldRoot.refreshSpatialHitTestIndexIfNeeded();
+    }
   }
 
   @override
@@ -107,9 +121,14 @@ abstract class HexWorld extends FlameGame
 
   @visibleForTesting
   void processDragStart() {
-    _dragTravel = 0.0;
+    _dragDisplacement.setZero();
+    _pendingDragDelta.setZero();
     _isDragging = false;
   }
+
+  /// Hook for adapters that coalesce high-frequency platform pointer events.
+  @protected
+  void flushPendingViewportPointerMoves() {}
 
   Future<void> _addDevFpsHud() async {
     if (!DevPerformance.isEnabled) return;
@@ -133,15 +152,16 @@ abstract class HexWorld extends FlameGame
 
   @visibleForTesting
   void processDragUpdate(Vector2 delta) {
-    _dragTravel += delta.length;
-    if (_dragTravel >= _dragThreshold) {
+    _dragDisplacement.add(delta);
+    if (_dragDisplacement.length2 >= _dragThreshold * _dragThreshold) {
       _isDragging = true;
     }
   }
 
   @visibleForTesting
   void processDragEnd() {
-    _dragTravel = 0.0;
+    _dragDisplacement.setZero();
+    _pendingDragDelta.setZero();
     _isDragging = false;
   }
 
@@ -184,10 +204,19 @@ abstract class HexWorld extends FlameGame
     }
 
     final delta = position - previous;
+    final wasDragging = _isDragging;
     processDragUpdate(delta);
-    if (_isDragging) {
-      _queuePanByScreenDelta(delta);
+    if (!_isDragging) {
+      _pendingDragDelta.add(delta);
+      return;
     }
+    if (wasDragging) {
+      _queuePanByScreenDelta(delta);
+      return;
+    }
+    _pendingDragDelta.add(delta);
+    _queuePanByScreenDelta(_pendingDragDelta);
+    _pendingDragDelta.setZero();
   }
 
   void handleViewportPointerUp(int pointerId) {

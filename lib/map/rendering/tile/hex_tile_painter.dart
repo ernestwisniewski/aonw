@@ -25,13 +25,14 @@ class HexTilePainter {
   late final _WallPaints _wallPaints;
   late final Paint _paintIconDot;
   late final Paint _paintSelectionDash;
-  late final Paint _paintCitySiteMarker;
+  late final Paint _paintCitySiteCompactFill;
+  late final Paint _paintCitySiteCompactBorder;
   late final Paint _paintCityGrowthMarker;
   late final Paint _paintWorkerImprovementNowMarker;
-  late final Paint _paintWorkerImprovementTechMarker;
-  late final Paint _paintWorkerImprovementCandidateGlow;
+  late final Paint _paintWorkerImprovementCandidateFill;
   late final Paint _paintWorkerImprovementCandidateBorder;
-  late final Paint _paintWorkerImprovementCandidateIconBg;
+  late final Paint _paintWorkerImprovementTechFill;
+  late final Paint _paintWorkerImprovementTechBorder;
   late final Paint _paintAttackTargetMarker;
   late final Paint _paintMovementBlockerOverlay;
   late final Paint _paintMovementBlockerOutline;
@@ -53,7 +54,6 @@ class HexTilePainter {
   static const double _heightBadgeParagraphWidth = 16.0;
   static const int _heightBadgeBackgroundAlpha = 238;
   static const int _heightBadgeBorderAlpha = 230;
-  static const int _citySiteMarkerAlpha = 238;
   static const int _planningMarkerAlpha = 214;
   static const int _attackMarkerAlpha = 222;
   static const int _movementBlockerAlpha = 86;
@@ -77,39 +77,40 @@ class HexTilePainter {
     );
     _wallPaints = _WallPaints.fromTint(wallTintColor);
     _paintIconDot = HudPaint.fill(HudPalette.goldLight, alpha: MapAlpha.strong);
-    _paintCitySiteMarker = HudPaint.fill(
+    _paintCitySiteCompactFill = HudPaint.fill(
+      HudPalette.surface,
+      alpha: MapAlpha.strong,
+    );
+    _paintCitySiteCompactBorder = HudPaint.stroke(
       HudPalette.goldLight,
-      alpha: _citySiteMarkerAlpha,
+      alpha: MapAlpha.opaque,
+      strokeWidth: MapStroke.thin,
     );
     _paintCityGrowthMarker = HudPaint.fill(HudPalette.successLight);
     _paintWorkerImprovementNowMarker = HudPaint.fill(
       HudPalette.success,
       alpha: _planningMarkerAlpha,
     );
-    _paintWorkerImprovementTechMarker = HudPaint.fill(
-      HudPalette.gold,
-      alpha: _planningMarkerAlpha,
+    _paintWorkerImprovementCandidateFill = HudPaint.fill(
+      HudPalette.success,
+      alpha: MapAlpha.whisper,
     );
-    _paintWorkerImprovementCandidateGlow =
-        HudPaint.stroke(
-            HudPalette.success,
-            alpha: MapAlpha.regular,
-            strokeWidth: MapStroke.glow,
-          )
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0)
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round;
     _paintWorkerImprovementCandidateBorder =
         HudPaint.stroke(
             HudPalette.successLight,
-            alpha: MapAlpha.opaque,
+            alpha: MapAlpha.strong,
             strokeWidth: MapStroke.thin,
           )
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round;
-    _paintWorkerImprovementCandidateIconBg = HudPaint.fill(
-      HudPalette.bg,
+    _paintWorkerImprovementTechFill = HudPaint.fill(
+      HudPalette.gold,
+      alpha: MapAlpha.whisper,
+    );
+    _paintWorkerImprovementTechBorder = HudPaint.stroke(
+      HudPalette.goldLight,
       alpha: MapAlpha.strong,
+      strokeWidth: MapStroke.hairline,
     );
     _paintAttackTargetMarker = HudPaint.fill(
       HudPalette.danger,
@@ -214,10 +215,12 @@ class HexTilePainter {
       );
     }
 
+    final showWorkerAvailabilityHint =
+        !showWorkerBuildAvailableBorder && !showWorkerBuildBlockedBorder;
     if (showCitySiteMarker ||
         showCityGrowthMarker ||
-        showWorkerImprovementNowMarker ||
-        showWorkerImprovementTechMarker ||
+        (showWorkerAvailabilityHint && showWorkerImprovementNowMarker) ||
+        (showWorkerAvailabilityHint && showWorkerImprovementTechMarker) ||
         showAttackTargetMarker) {
       final hasMapInfo =
           showIcon &&
@@ -230,8 +233,10 @@ class HexTilePainter {
         showCitySiteMarker: showCitySiteMarker,
         showRecommendedCitySiteMarker: showRecommendedCitySiteMarker,
         showCityGrowthMarker: showCityGrowthMarker,
-        showWorkerImprovementNowMarker: showWorkerImprovementNowMarker,
-        showWorkerImprovementTechMarker: showWorkerImprovementTechMarker,
+        showWorkerImprovementNowMarker:
+            showWorkerAvailabilityHint && showWorkerImprovementNowMarker,
+        showWorkerImprovementTechMarker:
+            showWorkerAvailabilityHint && showWorkerImprovementTechMarker,
         showWorkerImprovementCandidateMarker:
             showWorkerImprovementCandidateMarker,
         showAttackTargetMarker: showAttackTargetMarker,

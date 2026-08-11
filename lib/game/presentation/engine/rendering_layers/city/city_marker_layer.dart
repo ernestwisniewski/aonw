@@ -162,6 +162,15 @@ class CityMarkerLayer extends Component with LayerAttachment {
     final knownCities = cities.toList(growable: false);
     final capitalCityIds = _capitalCityIds(knownCities);
     final cityIds = knownCities.map((city) => city.id).toSet();
+    final technologyProfilesByPlayerId = <String, CitySpriteTechnologyProfile>{
+      for (final playerId
+          in knownCities.map((city) => city.ownerPlayerId).toSet())
+        playerId: _technologyProfileForPlayer(
+          playerId,
+          research: research,
+          technologyRuleset: technologyRuleset,
+        ),
+    };
     for (final entry in _markers.entries.toList()) {
       if (cityIds.contains(entry.key)) continue;
       if (_retainedAnimationCityIds.contains(entry.key)) continue;
@@ -180,11 +189,9 @@ class CityMarkerLayer extends Component with LayerAttachment {
       final isCapital = capitalCityIds.contains(city.id);
       final hasStoredArtifact = citiesWithStoredArtifacts.contains(city.id);
       final visualLevel = _visualLevelFor(city);
-      final technologyProfile = _technologyProfileFor(
-        city,
-        research: research,
-        technologyRuleset: technologyRuleset,
-      );
+      final technologyProfile =
+          technologyProfilesByPlayerId[city.ownerPlayerId] ??
+          CitySpriteTechnologyProfile.growthCivic;
       final visualState = CityMarkerVisualState(
         worldPosition: Offset(position.x, position.y),
         colorValue: colorForPlayer(city.ownerPlayerId),
@@ -272,15 +279,15 @@ class CityMarkerLayer extends Component with LayerAttachment {
     return 0;
   }
 
-  CitySpriteTechnologyProfile _technologyProfileFor(
-    GameCity city, {
+  CitySpriteTechnologyProfile _technologyProfileForPlayer(
+    String playerId, {
     required ResearchState research,
     required TechnologyRuleset technologyRuleset,
   }) {
     final scores = {
       for (final profile in CitySpriteTechnologyProfile.values) profile: 0,
     };
-    final playerResearch = research.forPlayer(city.ownerPlayerId);
+    final playerResearch = research.forPlayer(playerId);
     for (final technologyId in playerResearch.unlockedTechnologyIds) {
       final profile = _profileForTechnology(technologyId);
       final technology = technologyRuleset.technologies[technologyId];

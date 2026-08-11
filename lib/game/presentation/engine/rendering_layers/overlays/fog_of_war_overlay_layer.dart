@@ -10,6 +10,9 @@ import 'package:flame/components.dart';
 
 class FogOfWarOverlayLayer extends Component with LayerAttachment {
   FogOfWarOverlay? _component;
+  WorldMap? _lastMapData;
+  FogOfWarState? _lastVisibilityState;
+  String? _lastVisibilityPlayerId;
 
   FogOfWarOverlayLayer() {
     priority = MapPriority.fog;
@@ -26,14 +29,23 @@ class FogOfWarOverlayLayer extends Component with LayerAttachment {
       return;
     }
 
+    final existing = _component;
+    if (existing != null &&
+        identical(_lastMapData, mapData) &&
+        _lastVisibilityPlayerId == visibility.playerId &&
+        (identical(_lastVisibilityState, visibility.state) ||
+            _lastVisibilityState == visibility.state)) {
+      return;
+    }
+
     final visibilityByHex = {
       for (final tile in mapData.tiles)
         HexCoordinate.fromTile(tile): visibility.visibilityForTile(tile),
     };
 
-    final existing = _component;
     if (existing != null && identical(existing.mapData, mapData)) {
       existing.updateVisibility(visibilityByHex);
+      _rememberVisibility(mapData, visibility);
       return;
     }
 
@@ -43,12 +55,22 @@ class FogOfWarOverlayLayer extends Component with LayerAttachment {
       visibilityByHex: visibilityByHex,
     );
     _component = component;
+    _rememberVisibility(mapData, visibility);
     unawaited(Future<void>.value(add(component)));
+  }
+
+  void _rememberVisibility(WorldMap mapData, FogVisibilityQuery visibility) {
+    _lastMapData = mapData;
+    _lastVisibilityState = visibility.state;
+    _lastVisibilityPlayerId = visibility.playerId;
   }
 
   void clear() {
     _component?.removeFromParent();
     _component = null;
+    _lastMapData = null;
+    _lastVisibilityState = null;
+    _lastVisibilityPlayerId = null;
   }
 
   @override

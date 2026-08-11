@@ -9,7 +9,6 @@ import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:flame/components.dart';
-import 'package:flame/events.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Offset;
 
@@ -168,38 +167,18 @@ final class GameRendererInputHandler {
 }
 
 /// Thin Flame adapter; all mutable inspection policy lives in the handler.
-mixin GameRendererInputAdapter
-    on HexWorld, HexInputBehavior, LongPressCallbacks {
+mixin GameRendererInputAdapter on HexWorld, HexInputBehavior {
+  final Map<int, Vector2> _pendingViewportPointerMoves = {};
+  int _viewportPointerMoveFlushCount = 0;
+
   GameRendererInputHandler get inputHandler;
   bool get rendererInputReady;
   void clearRendererHoverIntent();
   void syncRendererHoverAt(Vector2 position);
 
   @override
-  void onLongPressStart(LongPressStartEvent event) {
-    super.onLongPressStart(event);
-    handleViewportLongPressStart(event.canvasPosition);
-  }
-
-  @override
-  void onLongPressMoveUpdate(LongPressMoveUpdateEvent event) {
-    handleViewportLongPressMoveUpdate(event.canvasEndPosition);
-  }
-
-  @override
-  void onLongPressEnd(LongPressEndEvent event) {
-    handleViewportLongPressEnd(event.canvasPosition);
-    super.onLongPressEnd(event);
-  }
-
-  @override
-  void onLongPressCancel(LongPressCancelEvent event) {
-    handleViewportLongPressCancel();
-    super.onLongPressCancel(event);
-  }
-
-  @override
   void handleViewportLongPressStart(Vector2 position) {
+    _pendingViewportPointerMoves.clear();
     inputHandler.start(
       position,
       isReady: rendererInputReady,
@@ -235,6 +214,7 @@ mixin GameRendererInputAdapter
 
   @override
   void handleViewportPointerDown(int pointerId, Vector2 position) {
+    _pendingViewportPointerMoves.remove(pointerId);
     final hadActiveInspection = inputHandler.isActive;
     if (hadActiveInspection) inputHandler.cancel();
     inputHandler.suppressTapsUntilNextPointerDown = hadActiveInspection;
@@ -251,19 +231,52 @@ mixin GameRendererInputAdapter
       inputHandler.update(position, tileAtPosition: tileDataAtWidgetPosition);
       return;
     }
+    final pending = _pendingViewportPointerMoves[pointerId];
+    if (pending == null) {
+      _pendingViewportPointerMoves[pointerId] = position.clone();
+    } else {
+      pending.setFrom(position);
+    }
+  }
+
+  @override
+  void flushPendingViewportPointerMoves() {
+    if (_pendingViewportPointerMoves.isEmpty) return;
+    final pending = _pendingViewportPointerMoves.entries.toList(
+      growable: false,
+    );
+    _pendingViewportPointerMoves.clear();
+    _viewportPointerMoveFlushCount++;
+    for (final entry in pending) {
+      _processViewportPointerMove(entry.key, entry.value);
+    }
+  }
+
+  void _processViewportPointerMove(int pointerId, Vector2 position) {
+    final wasDragging = isDragging;
     super.handleViewportPointerMove(
       pointerId,
       worldInputPointForWidget(position),
     );
     if (isDragging || hasMultipleViewportPointers) {
-      clearRendererHoverIntent();
+      if (!wasDragging || hasMultipleViewportPointers) {
+        clearRendererHoverIntent();
+      }
       return;
     }
     syncRendererHoverAt(position);
   }
 
+  void _flushPendingViewportPointerMove(int pointerId) {
+    final position = _pendingViewportPointerMoves.remove(pointerId);
+    if (position == null) return;
+    _viewportPointerMoveFlushCount++;
+    _processViewportPointerMove(pointerId, position);
+  }
+
   @override
   void handleViewportPointerUp(int pointerId) {
+    _flushPendingViewportPointerMove(pointerId);
     inputHandler.confirm();
     super.handleViewportPointerUp(pointerId);
     clearRendererHoverIntent();
@@ -271,6 +284,7 @@ mixin GameRendererInputAdapter
 
   @override
   void handleViewportPointerCancel(int pointerId) {
+    _pendingViewportPointerMoves.remove(pointerId);
     inputHandler.cancel();
     super.handleViewportPointerCancel(pointerId);
     clearRendererHoverIntent();
@@ -324,6 +338,14 @@ mixin GameRendererInputAdapter
   @visibleForTesting
   WorldTile? tileDataAtWidgetPositionForTesting(Vector2 widgetPosition) =>
       tileDataAtWidgetPosition(widgetPosition);
+
+  @visibleForTesting
+  int get pendingViewportPointerMoveCountForTesting =>
+      _pendingViewportPointerMoves.length;
+
+  @visibleForTesting
+  int get viewportPointerMoveFlushCountForTesting =>
+      _viewportPointerMoveFlushCount;
 
   Offset inspectionAnchorForTile(WorldTile tile, {Vector2? fallback}) {
     if (!rendererInputReady) {

@@ -19,6 +19,8 @@ class FogOfWarOverlay extends PositionComponent {
   double _time = 0;
   ui.FragmentProgram? _shaderProgram;
   ui.Image? _visibilityMask;
+  bool _visibilityMaskDirty = true;
+  int _visibilityMaskBuildCount = 0;
   Rect _mapBounds = Rect.zero;
   Rect _shaderBounds = Rect.zero;
   List<Path> _tilePaths = const [];
@@ -56,7 +58,7 @@ class FogOfWarOverlay extends PositionComponent {
   Future<void> onLoad() async {
     await super.onLoad();
     await _loadShaderProgram();
-    _rebuildVisibilityMask();
+    _ensureVisibilityMask();
   }
 
   @override
@@ -72,14 +74,17 @@ class FogOfWarOverlay extends PositionComponent {
     super.onRemove();
   }
 
-  void updateVisibility(Map<HexCoordinate, FogVisibility> next) {
+  bool updateVisibility(Map<HexCoordinate, FogVisibility> next) {
+    if (_visibilityMapsEqual(visibilityByHex, next)) return false;
     visibilityByHex = next;
-    _rebuildVisibilityMask();
+    _visibilityMaskDirty = true;
+    return true;
   }
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
+    _ensureVisibilityMask();
     if (_renderShaderFog(canvas)) return;
 
     _renderFallbackFog(canvas);
@@ -178,6 +183,7 @@ class FogOfWarOverlay extends PositionComponent {
     if (bounds.isEmpty) {
       _visibilityMask?.dispose();
       _visibilityMask = null;
+      _visibilityMaskDirty = false;
       return;
     }
 
@@ -213,10 +219,35 @@ class FogOfWarOverlay extends PositionComponent {
       final nextMask = picture.toImageSync(width, height);
       _visibilityMask?.dispose();
       _visibilityMask = nextMask;
+      _visibilityMaskDirty = false;
+      _visibilityMaskBuildCount++;
     } finally {
       picture.dispose();
     }
   }
+
+  void _ensureVisibilityMask() {
+    if (!_visibilityMaskDirty || _shaderProgram == null) return;
+    _rebuildVisibilityMask();
+  }
+
+  bool _visibilityMapsEqual(
+    Map<HexCoordinate, FogVisibility> first,
+    Map<HexCoordinate, FogVisibility> second,
+  ) {
+    if (identical(first, second)) return true;
+    if (first.length != second.length) return false;
+    for (final entry in first.entries) {
+      if (second[entry.key] != entry.value) return false;
+    }
+    return true;
+  }
+
+  @visibleForTesting
+  bool get visibilityMaskDirtyForTesting => _visibilityMaskDirty;
+
+  @visibleForTesting
+  int get visibilityMaskBuildCountForTesting => _visibilityMaskBuildCount;
 
   void _rebuildStaticGeometry() {
     _mapBounds = _mapBoundsForTiles();

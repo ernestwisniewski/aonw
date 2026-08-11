@@ -30,6 +30,7 @@ abstract final class TurnQueuedPathAdvancer {
     required DiplomacyState diplomacy,
     required FogOfWarState fogOfWar,
     TransportNetworkState transportNetwork = TransportNetworkState.empty,
+    UnitMovementTileIndex? tileIndex,
   }) {
     final path = unit.queuedPath;
     if (path == null) return TurnQueuedPathAdvance(unit: unit);
@@ -61,6 +62,7 @@ abstract final class TurnQueuedPathAdvancer {
         visibility: visibility,
       ),
       costResolver: InfrastructureAwareTraversalCostResolver(transportNetwork),
+      tileIndex: tileIndex,
       canEnterOccupiedTile:
           ({
             required movingUnit,

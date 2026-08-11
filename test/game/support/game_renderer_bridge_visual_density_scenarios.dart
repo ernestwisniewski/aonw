@@ -279,6 +279,12 @@ void _registerRendererVisualDensityScenarios() {
 
     game.setZoom(0.56);
 
+    expect(game.cityProductionParticleEmitterCountForTesting, 0);
+
+    game
+      ..update(0)
+      ..update(0.13);
+
     expect(game.cityProductionParticleEmitterCountForTesting, 1);
 
     game.applyState(
