@@ -22,18 +22,18 @@
         "packages/aonw_core/lib/ai/production_unit_scorer.dart": 81,
         "packages/aonw_core/lib/ai/telemetry/balance_runner.dart": 220,
         "packages/aonw_core/lib/game/domain/command/game_command.dart": 197,
-        "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state.dart": 132
+        "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state.dart": 115
       },
       "callableLines": {
         "packages/aonw_core/lib/ai/telemetry/balance_runner.dart": 1216,
-        "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state.dart": 1182
+        "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state.dart": 1047
       },
       "cyclomaticComplexity": {
         "packages/aonw_core/lib/ai/production_scorer.dart": 258,
         "packages/aonw_core/lib/ai/production_unit_scorer.dart": 296,
         "packages/aonw_core/lib/ai/telemetry/balance_runner.dart": 361,
         "packages/aonw_core/lib/game/domain/command/game_command.dart": 315,
-        "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state.dart": 345
+        "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state.dart": 274
       },
       "cognitiveComplexity": {}
     },

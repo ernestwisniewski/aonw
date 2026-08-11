@@ -1,5 +1,3 @@
-part of 'diplomacy_state.dart';
-
 abstract final class DiplomaticGoldGiftRules {
   static const int minimumAmount = 5;
   static const int cooldownTurns = 5;

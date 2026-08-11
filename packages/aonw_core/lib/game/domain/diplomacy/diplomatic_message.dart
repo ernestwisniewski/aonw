@@ -1,4 +1,8 @@
-part of 'diplomacy_state.dart';
+import 'package:aonw_core/game/domain/diplomacy/diplomacy_primitives.dart';
+import 'package:aonw_core/util/wire_json.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'diplomatic_message.freezed.dart';
 
 @freezed
 abstract class DiplomaticMessage with _$DiplomaticMessage {
@@ -41,40 +45,44 @@ abstract class DiplomaticMessage with _$DiplomaticMessage {
 
   factory DiplomaticMessage.fromJson(Map<String, dynamic> json) {
     return DiplomaticMessage(
-      id: _requiredString(json, 'id'),
-      fromPlayerId: _requiredString(json, 'fromPlayerId'),
-      toPlayerId: _requiredString(json, 'toPlayerId'),
-      topic: _enumValue(
+      id: requiredStringValue(json['id'], 'id'),
+      fromPlayerId: requiredStringValue(json['fromPlayerId'], 'fromPlayerId'),
+      toPlayerId: requiredStringValue(json['toPlayerId'], 'toPlayerId'),
+      topic: enumByName(
         json['topic'],
         DiplomaticMessageTopic.values,
         'DiplomaticMessage.topic',
       ),
-      category: _enumValue(
+      category: enumByName(
         json['category'],
         DiplomaticMessageCategory.values,
         'DiplomaticMessage.category',
       ),
-      createdTurn: _requiredNonNegativeInt(json['createdTurn'], 'createdTurn'),
-      expiresOnTurn: _requiredNonNegativeInt(
+      createdTurn: requiredNonNegativeIntValue(
+        json['createdTurn'],
+        'createdTurn',
+      ),
+      expiresOnTurn: requiredNonNegativeIntValue(
         json['expiresOnTurn'],
         'expiresOnTurn',
       ),
-      response: _optionalEnumValue(
+      response: optionalEnumByName(
         json['response'],
         DiplomaticMessageResponse.values,
         'DiplomaticMessage.response',
       ),
-      respondedTurn: _optionalNonNegativeInt(
+      respondedTurn: optionalNonNegativeIntValue(
         json['respondedTurn'],
         'respondedTurn',
       ),
       relationScoreDelta:
-          _optionalInt(json['relationScoreDelta'], 'relationScoreDelta') ?? 0,
-      relationScoreAfter: _optionalInt(
+          optionalIntValue(json['relationScoreDelta'], 'relationScoreDelta') ??
+          0,
+      relationScoreAfter: optionalIntValue(
         json['relationScoreAfter'],
         'relationScoreAfter',
       ),
-      promiseDueTurn: _optionalNonNegativeInt(
+      promiseDueTurn: optionalNonNegativeIntValue(
         json['promiseDueTurn'],
         'promiseDueTurn',
       ),

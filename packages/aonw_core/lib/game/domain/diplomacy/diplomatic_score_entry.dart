@@ -1,4 +1,6 @@
-part of 'diplomacy_state.dart';
+import 'package:aonw_core/game/domain/diplomacy/diplomacy_pair.dart';
+import 'package:aonw_core/game/domain/diplomacy/diplomacy_primitives.dart';
+import 'package:aonw_core/util/wire_json.dart';
 
 final class DiplomaticScoreEntry {
   const DiplomaticScoreEntry({
@@ -20,7 +22,7 @@ final class DiplomaticScoreEntry {
     required DiplomaticScoreChangeReason reason,
     String? sourceId,
   }) {
-    final pair = DiplomacyState.normalizedPair(playerAId, playerBId);
+    final pair = normalizedDiplomacyPair(playerAId, playerBId);
     return DiplomaticScoreEntry(
       playerAId: pair.$1,
       playerBId: pair.$2,
@@ -34,17 +36,17 @@ final class DiplomaticScoreEntry {
 
   factory DiplomaticScoreEntry.fromJson(Map<String, dynamic> json) {
     return DiplomaticScoreEntry.between(
-      playerAId: _requiredString(json, 'playerAId'),
-      playerBId: _requiredString(json, 'playerBId'),
-      turn: _requiredNonNegativeInt(json['turn'], 'turn'),
-      delta: _optionalInt(json['delta'], 'delta') ?? 0,
-      scoreAfter: _optionalInt(json['scoreAfter'], 'scoreAfter') ?? 0,
-      reason: _enumValue(
+      playerAId: requiredStringValue(json['playerAId'], 'playerAId'),
+      playerBId: requiredStringValue(json['playerBId'], 'playerBId'),
+      turn: requiredNonNegativeIntValue(json['turn'], 'turn'),
+      delta: optionalIntValue(json['delta'], 'delta') ?? 0,
+      scoreAfter: optionalIntValue(json['scoreAfter'], 'scoreAfter') ?? 0,
+      reason: enumByName(
         json['reason'],
         DiplomaticScoreChangeReason.values,
         'DiplomaticScoreEntry.reason',
       ),
-      sourceId: _optionalString(json, 'sourceId'),
+      sourceId: optionalStringValue(json['sourceId'], 'sourceId'),
     );
   }
 
@@ -56,7 +58,7 @@ final class DiplomaticScoreEntry {
   final DiplomaticScoreChangeReason reason;
   final String? sourceId;
 
-  String get key => DiplomacyState.relationKey(playerAId, playerBId);
+  String get key => diplomacyRelationKey(playerAId, playerBId);
 
   Map<String, dynamic> toJson() => {
     'playerAId': playerAId,

@@ -132,35 +132,3 @@ final class _DiplomacyStateJsonParser {
     };
   }
 }
-
-String _requiredString(Map<String, dynamic> json, String field) {
-  return requiredStringValue(json[field], field);
-}
-
-String? _optionalString(Map<String, dynamic> json, String field) {
-  return optionalStringValue(json[field], field);
-}
-
-int _requiredNonNegativeInt(Object? value, String field) {
-  return requiredNonNegativeIntValue(value, field);
-}
-
-int? _optionalNonNegativeInt(Object? value, String field) {
-  return optionalNonNegativeIntValue(value, field);
-}
-
-int? _optionalInt(Object? value, String field) {
-  return optionalIntValue(value, field);
-}
-
-T _enumValue<T extends Enum>(Object? value, Iterable<T> values, String field) {
-  return enumByName(value, values, field);
-}
-
-T? _optionalEnumValue<T extends Enum>(
-  Object? value,
-  Iterable<T> values,
-  String field,
-) {
-  return optionalEnumByName(value, values, field);
-}

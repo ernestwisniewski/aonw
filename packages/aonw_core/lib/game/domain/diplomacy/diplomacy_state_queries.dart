@@ -1,35 +1,47 @@
 part of 'diplomacy_state.dart';
 
-const _stateRelationKey = DiplomacyState.relationKey;
-DiplomacyState _stateOf(Object value) => value as DiplomacyState;
-
-mixin _DiplomacyStateQueries {
-  bool hasContact(String playerAId, String playerBId) {
-    final key = _stateRelationKey(playerAId, playerBId);
-    return key.isNotEmpty && _stateOf(this).contactKeys.contains(key);
-  }
-
-  DiplomaticRelation relationBetween(String playerAId, String playerBId) {
-    final key = _stateRelationKey(playerAId, playerBId);
-    return _stateOf(this).relations[key] ??
-        DiplomaticRelation.between(playerAId: playerAId, playerBId: playerBId);
-  }
-
-  DiplomaticRelationStatus statusBetween(String playerAId, String playerBId) =>
-      playerAId.isEmpty || playerBId.isEmpty || playerAId == playerBId
-      ? DiplomaticRelationStatus.neutral
-      : relationBetween(playerAId, playerBId).status;
-
-  int relationScoreBetween(String playerAId, String playerBId) =>
-      playerAId.isEmpty || playerBId.isEmpty || playerAId == playerBId
-      ? 0
-      : relationBetween(playerAId, playerBId).relationScore;
-
-  DiplomaticRelationStatus scoreStatusBetween(
+abstract final class _DiplomacyStateQueryOperations {
+  static bool hasContact(
+    DiplomacyState state,
     String playerAId,
     String playerBId,
   ) {
-    final score = relationScoreBetween(playerAId, playerBId);
+    final key = DiplomacyState.relationKey(playerAId, playerBId);
+    return key.isNotEmpty && state.contactKeys.contains(key);
+  }
+
+  static DiplomaticRelation relationBetween(
+    DiplomacyState state,
+    String playerAId,
+    String playerBId,
+  ) {
+    final key = DiplomacyState.relationKey(playerAId, playerBId);
+    return state.relations[key] ??
+        DiplomaticRelation.between(playerAId: playerAId, playerBId: playerBId);
+  }
+
+  static DiplomaticRelationStatus statusBetween(
+    DiplomacyState state,
+    String playerAId,
+    String playerBId,
+  ) => playerAId.isEmpty || playerBId.isEmpty || playerAId == playerBId
+      ? DiplomaticRelationStatus.neutral
+      : relationBetween(state, playerAId, playerBId).status;
+
+  static int relationScoreBetween(
+    DiplomacyState state,
+    String playerAId,
+    String playerBId,
+  ) => playerAId.isEmpty || playerBId.isEmpty || playerAId == playerBId
+      ? 0
+      : relationBetween(state, playerAId, playerBId).relationScore;
+
+  static DiplomaticRelationStatus scoreStatusBetween(
+    DiplomacyState state,
+    String playerAId,
+    String playerBId,
+  ) {
+    final score = relationScoreBetween(state, playerAId, playerBId);
     return score >= DiplomacyState.friendlyScoreThreshold
         ? DiplomaticRelationStatus.friendly
         : score <= DiplomacyState.hostileScoreThreshold
@@ -37,62 +49,86 @@ mixin _DiplomacyStateQueries {
         : DiplomaticRelationStatus.neutral;
   }
 
-  List<DiplomaticProposal> proposalsFor(String playerId) {
+  static List<DiplomaticProposal> proposalsFor(
+    DiplomacyState state,
+    String playerId,
+  ) {
     final proposals = [
-      for (final proposal in _stateOf(this).pendingProposals.values)
+      for (final proposal in state.pendingProposals.values)
         if (proposal.involves(playerId)) proposal,
     ]..sort((a, b) => a.createdTurn.compareTo(b.createdTurn));
     return List.unmodifiable(proposals);
   }
 
-  List<DiplomaticMessage> messagesFor(String playerId) {
+  static List<DiplomaticMessage> messagesFor(
+    DiplomacyState state,
+    String playerId,
+  ) {
     final result = [
-      for (final message in _stateOf(this).messages.values)
+      for (final message in state.messages.values)
         if (message.involves(playerId)) message,
     ]..sort((a, b) => b.createdTurn.compareTo(a.createdTurn));
     return List.unmodifiable(result);
   }
 
-  List<DiplomaticMessage> messagesBetween(String playerAId, String playerBId) {
+  static List<DiplomaticMessage> messagesBetween(
+    DiplomacyState state,
+    String playerAId,
+    String playerBId,
+  ) {
+    final relationKey = DiplomacyState.relationKey(playerAId, playerBId);
     final result = [
-      for (final message in _stateOf(this).messages.values)
-        if (_stateRelationKey(message.fromPlayerId, message.toPlayerId) ==
-            _stateRelationKey(playerAId, playerBId))
+      for (final message in state.messages.values)
+        if (DiplomacyState.relationKey(
+              message.fromPlayerId,
+              message.toPlayerId,
+            ) ==
+            relationKey)
           message,
     ]..sort((a, b) => b.createdTurn.compareTo(a.createdTurn));
     return List.unmodifiable(result);
   }
 
-  List<DiplomaticScoreEntry> scoreEntriesBetween(
+  static List<DiplomaticScoreEntry> scoreEntriesBetween(
+    DiplomacyState state,
     String playerAId,
     String playerBId,
   ) {
-    return _stateOf(this).scoreHistory[_stateRelationKey(
+    return state.scoreHistory[DiplomacyState.relationKey(
           playerAId,
           playerBId,
         )] ??
         const [];
   }
 
-  List<DiplomaticProposal> expiredProposals(int turn) {
+  static List<DiplomaticProposal> expiredProposals(
+    DiplomacyState state,
+    int turn,
+  ) {
     final expired = [
-      for (final proposal in _stateOf(this).pendingProposals.values)
+      for (final proposal in state.pendingProposals.values)
         if (proposal.isExpired(turn)) proposal,
     ]..sort((a, b) => a.id.compareTo(b.id));
     return List.unmodifiable(expired);
   }
 
-  List<DiplomaticMessage> expiredMessages(int turn) {
+  static List<DiplomaticMessage> expiredMessages(
+    DiplomacyState state,
+    int turn,
+  ) {
     final expired = [
-      for (final message in _stateOf(this).messages.values)
+      for (final message in state.messages.values)
         if (message.isExpired(turn)) message,
     ]..sort((a, b) => a.id.compareTo(b.id));
     return List.unmodifiable(expired);
   }
 
-  List<DiplomaticRelation> expiredTruces(int turn) {
+  static List<DiplomaticRelation> expiredTruces(
+    DiplomacyState state,
+    int turn,
+  ) {
     final expired = [
-      for (final relation in _stateOf(this).relations.values)
+      for (final relation in state.relations.values)
         if (relation.status == DiplomaticRelationStatus.truce &&
             relation.statusExpiresOnTurn != null &&
             turn >= relation.statusExpiresOnTurn!)
@@ -101,9 +137,9 @@ mixin _DiplomacyStateQueries {
     return List.unmodifiable(expired);
   }
 
-  List<DiplomaticMessage> promisesDue(int turn) {
+  static List<DiplomaticMessage> promisesDue(DiplomacyState state, int turn) {
     final due = [
-      for (final message in _stateOf(this).messages.values)
+      for (final message in state.messages.values)
         if (message.hasActivePromise &&
             message.promiseDueTurn != null &&
             turn >= message.promiseDueTurn!)

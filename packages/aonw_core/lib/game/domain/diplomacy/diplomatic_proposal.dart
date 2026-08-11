@@ -1,4 +1,5 @@
-part of 'diplomacy_state.dart';
+import 'package:aonw_core/game/domain/diplomacy/diplomacy_primitives.dart';
+import 'package:aonw_core/util/wire_json.dart';
 
 final class DiplomaticProposal {
   const DiplomaticProposal({
@@ -13,21 +14,24 @@ final class DiplomaticProposal {
 
   factory DiplomaticProposal.fromJson(Map<String, dynamic> json) {
     return DiplomaticProposal(
-      id: _requiredString(json, 'id'),
-      fromPlayerId: _requiredString(json, 'fromPlayerId'),
-      toPlayerId: _requiredString(json, 'toPlayerId'),
-      kind: _enumValue(
+      id: requiredStringValue(json['id'], 'id'),
+      fromPlayerId: requiredStringValue(json['fromPlayerId'], 'fromPlayerId'),
+      toPlayerId: requiredStringValue(json['toPlayerId'], 'toPlayerId'),
+      kind: enumByName(
         json['kind'],
         DiplomaticProposalKind.values,
         'DiplomaticProposal.kind',
       ),
-      createdTurn: _requiredNonNegativeInt(json['createdTurn'], 'createdTurn'),
-      expiresOnTurn: _requiredNonNegativeInt(
+      createdTurn: requiredNonNegativeIntValue(
+        json['createdTurn'],
+        'createdTurn',
+      ),
+      expiresOnTurn: requiredNonNegativeIntValue(
         json['expiresOnTurn'],
         'expiresOnTurn',
       ),
       goldPayment:
-          _optionalNonNegativeInt(json['goldPayment'], 'goldPayment') ?? 0,
+          optionalNonNegativeIntValue(json['goldPayment'], 'goldPayment') ?? 0,
     );
   }
 

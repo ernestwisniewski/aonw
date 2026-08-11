@@ -14,11 +14,15 @@ const diplomacyKernelImportGraphPaths = {
   '${diplomacyKernelLibraryPath}diplomacy_contact_pairs.dart',
   '${diplomacyKernelLibraryPath}diplomacy_json_helpers.dart',
   '${diplomacyKernelLibraryPath}diplomacy_message_command_handler.dart',
+  '${diplomacyKernelLibraryPath}diplomacy_pair.dart',
+  '${diplomacyKernelLibraryPath}diplomacy_primitives.dart',
   '${diplomacyKernelLibraryPath}diplomacy_proposal_command_handler.dart',
   '${diplomacyKernelLibraryPath}diplomacy_proposal_response_command_handler.dart',
   '${diplomacyKernelLibraryPath}diplomacy_state.dart',
   '${diplomacyKernelLibraryPath}diplomacy_state_immutability.dart',
   '${diplomacyKernelLibraryPath}diplomacy_state_model.dart',
+  '${diplomacyKernelLibraryPath}diplomacy_state_mutations.dart',
+  '${diplomacyKernelLibraryPath}diplomacy_state_queries.dart',
   '${diplomacyKernelLibraryPath}diplomacy_state_serialization_helpers.dart',
   '${diplomacyKernelLibraryPath}diplomacy_war_and_gift_command_handler.dart',
   '${diplomacyKernelLibraryPath}diplomatic_action_guard.dart',
@@ -31,7 +35,6 @@ const diplomacyKernelImportGraphPaths = {
   '${diplomacyKernelLibraryPath}diplomatic_relation.dart',
   '${diplomacyKernelLibraryPath}diplomatic_score_adjustment.dart',
   '${diplomacyKernelLibraryPath}diplomatic_score_entry.dart',
-  '${diplomacyKernelLibraryPath}diplomatic_score_reason.dart',
   '${diplomacyKernelLibraryPath}diplomatic_shared_war.dart',
   '${diplomacyKernelLibraryPath}diplomatic_warmonger_reputation.dart',
   '${diplomacyKernelLibraryPath}gold_amount.dart',
@@ -79,7 +82,8 @@ const _leafDependencyUris = {
   'package:aonw_core/util/collection_equality.dart',
   'package:aonw_core/util/wire_json.dart',
   'package:freezed_annotation/freezed_annotation.dart',
-  'diplomacy_state.freezed.dart',
+  'diplomatic_message.freezed.dart',
+  'diplomatic_relation.freezed.dart',
 };
 
 Map<String, String> diplomacyKernelImportGraph(

@@ -1,4 +1,9 @@
-part of 'diplomacy_state.dart';
+import 'package:aonw_core/game/domain/diplomacy/diplomacy_pair.dart';
+import 'package:aonw_core/game/domain/diplomacy/diplomacy_primitives.dart';
+import 'package:aonw_core/util/wire_json.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'diplomatic_relation.freezed.dart';
 
 @freezed
 abstract class DiplomaticRelation with _$DiplomaticRelation {
@@ -23,7 +28,7 @@ abstract class DiplomaticRelation with _$DiplomaticRelation {
     int? lastChangedTurn,
     DiplomaticRelationChangeReason? lastChangeReason,
   }) {
-    final pair = DiplomacyState.normalizedPair(playerAId, playerBId);
+    final pair = normalizedDiplomacyPair(playerAId, playerBId);
     return DiplomaticRelation(
       playerAId: pair.$1,
       playerBId: pair.$2,
@@ -51,7 +56,7 @@ abstract class DiplomaticRelation with _$DiplomaticRelation {
     );
   }
 
-  String get key => DiplomacyState.relationKey(playerAId, playerBId);
+  String get key => diplomacyRelationKey(playerAId, playerBId);
 
   bool get isTruceExpired =>
       status == DiplomaticRelationStatus.truce && statusExpiresOnTurn != null;
