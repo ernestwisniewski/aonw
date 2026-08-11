@@ -48,6 +48,7 @@ final class DomainMoveUnitResolver {
         fogOfWar: state.fogOfWar,
         diplomacy: state.diplomacy,
         playerIds: _playerIds(state),
+        transportNetwork: state.transportNetwork,
       ),
       command: command,
       actorPlayerId: actorPlayerId,

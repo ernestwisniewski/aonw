@@ -301,6 +301,8 @@ void _validateReducerParityAcceptedCommand(
       _requireAcceptedParityCityFounding(fixture, state, events);
     case 'detachment':
       _requireAcceptedParityDetachment(fixture, state, events);
+    case 'infrastructure':
+      _requireAcceptedParityInfrastructure(fixture, state, events);
     case 'research':
       _requireAcceptedParityResearch(fixture, state, events);
     case 'resource-trade':

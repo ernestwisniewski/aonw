@@ -10758,6 +10758,48 @@ abstract class AppLocalizations {
   /// **'Improve'**
   String get selectionActionImprove;
 
+  /// No description provided for @selectionActionBuildRoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Build road'**
+  String get selectionActionBuildRoad;
+
+  /// No description provided for @selectionActionRoadAlreadyBuilt.
+  ///
+  /// In en, this message translates to:
+  /// **'There is already a road on this tile.'**
+  String get selectionActionRoadAlreadyBuilt;
+
+  /// No description provided for @selectionActionRoadEnemyTerritory.
+  ///
+  /// In en, this message translates to:
+  /// **'Roads cannot be built in foreign territory.'**
+  String get selectionActionRoadEnemyTerritory;
+
+  /// No description provided for @selectionActionRoadInvalidTerrain.
+  ///
+  /// In en, this message translates to:
+  /// **'A road cannot be built on this terrain.'**
+  String get selectionActionRoadInvalidTerrain;
+
+  /// No description provided for @selectionActionRoadCityCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Roads are implicit in city centers.'**
+  String get selectionActionRoadCityCenter;
+
+  /// No description provided for @selectionActionRoadUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'A road cannot be built here.'**
+  String get selectionActionRoadUnavailable;
+
+  /// No description provided for @transportRoadName.
+  ///
+  /// In en, this message translates to:
+  /// **'Road'**
+  String get transportRoadName;
+
   /// No description provided for @selectionActionSkip.
   ///
   /// In en, this message translates to:

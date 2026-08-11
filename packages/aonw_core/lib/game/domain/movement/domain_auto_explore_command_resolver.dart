@@ -50,6 +50,7 @@ final class DomainAutoExploreCommandResolver {
           fogOfWar: state.fogOfWar,
           diplomacy: state.diplomacy,
           playerIds: state.participants.map((player) => player.id),
+          transportNetwork: state.transportNetwork,
         ),
         interaction: interaction,
       ),

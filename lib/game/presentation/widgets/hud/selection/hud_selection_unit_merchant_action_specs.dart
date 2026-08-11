@@ -203,6 +203,7 @@ List<GameCity> _merchantReachableDestinations({
             mapData: mapData,
             units: gameState.units,
             cities: gameState.cities,
+            transportNetwork: gameState.transportNetwork,
           ) !=
           null)
         city,
@@ -233,6 +234,7 @@ List<GameCity> _merchantReachableMoveToCityDestinations({
             mapData: mapData,
             units: gameState.units,
             cities: gameState.cities,
+            transportNetwork: gameState.transportNetwork,
           ) !=
           null)
         city,

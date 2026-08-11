@@ -116,6 +116,7 @@ final class MctsFoundingCandidateCollector {
     final pathfinder = UnitMovementPathfinder(
       mapData: view.mapData,
       units: knownUnits,
+      costResolver: view.traversalCostResolver,
     );
     for (final founder in founders) {
       final currentDistance = _nearestOwnCityDistance(

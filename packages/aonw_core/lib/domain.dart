@@ -29,6 +29,7 @@ export 'game/domain/telemetry.dart';
 export 'game/domain/terrain.dart';
 export 'game/domain/tile_yield.dart';
 export 'game/domain/trade.dart';
+export 'game/domain/transport.dart';
 export 'game/domain/turn.dart';
 export 'game/domain/unit.dart';
 export 'game/domain/wonder.dart';

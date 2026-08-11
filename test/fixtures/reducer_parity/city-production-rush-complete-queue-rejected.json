@@ -336,6 +336,7 @@
           "builtByCityId": "city_1"
         }
       ],
+      "transportNetwork": [],
       "fogOfWar": [],
       "research": {
         "players": {
@@ -594,6 +595,7 @@
           "builtByCityId": "city_1"
         }
       ],
+      "transportNetwork": [],
       "fogOfWar": [],
       "research": {
         "players": {

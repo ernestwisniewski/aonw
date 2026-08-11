@@ -7,6 +7,7 @@ final presentationDomainCommands = <DomainCommand>[
   const FortifyUnitCommand('scout_1'),
   const AutoExploreUnitCommand('scout_1'),
   const AutomateWorkerCommand('worker_1'),
+  const BuildRoadCommand('worker_1'),
   const AssignMerchantTradeRouteCommand('merchant_1', 'city_2'),
   const MoveMerchantToCityCommand('merchant_1', 'city_2'),
   const StartArtifactExcavationCommand('scout_1'),

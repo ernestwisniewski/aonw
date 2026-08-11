@@ -11,6 +11,7 @@ final class MctsMovementCandidateCollector {
     final pathfinder = UnitMovementPathfinder(
       mapData: view.mapData,
       units: view.movementBlockingUnits,
+      costResolver: view.traversalCostResolver,
     );
 
     for (final unit in units) {

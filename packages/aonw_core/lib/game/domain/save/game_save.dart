@@ -10,7 +10,7 @@ export 'package:aonw_core/game/domain/state/game_mode.dart';
 part 'game_save.freezed.dart';
 part 'game_save.g.dart';
 
-const gameSaveCurrentSchemaVersion = 3;
+const gameSaveCurrentSchemaVersion = 4;
 
 @freezed
 abstract class CameraState with _$CameraState {

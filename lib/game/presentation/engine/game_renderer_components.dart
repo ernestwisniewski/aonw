@@ -14,6 +14,7 @@ import 'package:aonw/game/presentation/engine/rendering_layers/map/action_target
 import 'package:aonw/game/presentation/engine/rendering_layers/map/hover_intent_marker.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_war_overlay_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/threat_overlay_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/transport/transport_network_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview_layer.dart';
 import 'package:aonw/game/presentation/engine/unit_animation_controller.dart';
@@ -60,6 +61,7 @@ final class GameRendererComponents {
       confirmationLabel: l10n?.selectionActionConfirm,
     );
     fieldImprovements = FieldImprovementMarkerLayer();
+    transportNetwork = TransportNetworkLayer();
     artifacts = ArtifactMarkerLayer(onArtifactTapped: onArtifactTapped);
     mapObjectives = MapObjectiveMarkerLayer(
       colorForPlayer: colorForPlayer,
@@ -107,6 +109,7 @@ final class GameRendererComponents {
   late final UnitMarkerLayer unitMarkers;
   late final UnitMovePreviewLayer movePreview;
   late final FieldImprovementMarkerLayer fieldImprovements;
+  late final TransportNetworkLayer transportNetwork;
   late final ArtifactMarkerLayer artifacts;
   late final MapObjectiveMarkerLayer mapObjectives;
   late final CityMarkerLayer cities;

@@ -40,6 +40,7 @@ final class MctsCommandReconciliationRules {
     final pathfinder = UnitMovementPathfinder(
       mapData: view.mapData,
       units: knownUnits,
+      costResolver: view.traversalCostResolver,
     );
     var plan = pathfinder.plan(unit: unit, targetTile: targetTile);
     if (plan == null && targetBlocker != null && targetBlocker.id != unit.id) {

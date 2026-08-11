@@ -153,6 +153,7 @@ abstract final class BasicStrategyCommandAnalysis {
     final pathfinder = UnitMovementPathfinder(
       mapData: view.mapData,
       units: view.movementBlockingUnits,
+      costResolver: view.traversalCostResolver,
     );
     final plan = pathfinder.plan(unit: unit, targetTile: targetTile);
     if (plan == null) return reserved;

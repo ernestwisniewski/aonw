@@ -12,6 +12,9 @@ void main() {
       expect(HudPalette.goldLight, const Color(0xFFF0DCAE));
       expect(HudPalette.copper, const Color(0xFFB47A4E));
       expect(HudPalette.copperDeep, const Color(0xFF7A4A28));
+      expect(HudPalette.roadEdge, const Color(0xFF000000));
+      expect(HudPalette.roadAsphalt, const Color(0xFF24262A));
+      expect(HudPalette.roadMarking, const Color(0xFFFFFFFF));
       expect(HudPalette.success, const Color(0xFF6CC07A));
       expect(HudPalette.successLight, const Color(0xFFC9F4B9));
       expect(HudPalette.warning, const Color(0xFFF0C36A));

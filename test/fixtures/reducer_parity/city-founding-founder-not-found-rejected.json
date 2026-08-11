@@ -180,6 +180,7 @@
       "cities": [],
       "artifacts": [],
       "fieldImprovements": [],
+      "transportNetwork": [],
       "fogOfWar": [],
       "research": {
         "players": {}
@@ -303,6 +304,7 @@
       "cities": [],
       "artifacts": [],
       "fieldImprovements": [],
+      "transportNetwork": [],
       "fogOfWar": [],
       "research": {
         "players": {}

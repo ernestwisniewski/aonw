@@ -89,6 +89,7 @@ class CitySitePlanner {
     final pathfinder = UnitMovementPathfinder(
       mapData: view.mapData,
       units: view.movementBlockingUnits,
+      costResolver: view.traversalCostResolver,
       canEnterTile: useStrategicMapKnowledge || view.ownCities.length >= 2
           ? null
           : (tile) => view.visibility.canSeeDynamicAt(tile.col, tile.row),

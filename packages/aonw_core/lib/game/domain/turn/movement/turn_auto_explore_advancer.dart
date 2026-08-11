@@ -11,6 +11,7 @@ import 'package:aonw_core/game/domain/movement/auto_explore_command_state.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_state.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
+import 'package:aonw_core/game/domain/transport/transport_network_state.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
@@ -66,6 +67,7 @@ abstract final class TurnAutoExploreAdvancer {
     required Set<String> phaseKnownPlayerIds,
     required MapTraversalView mapData,
     required FogOfWarService fogOfWarService,
+    TransportNetworkState transportNetwork = TransportNetworkState.empty,
   }) {
     var currentUnits = units;
     var currentFog = fogOfWar;
@@ -87,6 +89,7 @@ abstract final class TurnAutoExploreAdvancer {
           diplomacy: currentDiplomacy,
           playerIds: phaseKnownPlayerIds,
           interaction: currentInteraction,
+          transportNetwork: transportNetwork,
         ),
         mapData: mapData,
         fogOfWarService: fogOfWarService,
@@ -124,6 +127,7 @@ abstract final class TurnAutoExploreAdvancer {
     required DiplomacyState diplomacy,
     required Set<String> playerIds,
     required DomainActionState interaction,
+    required TransportNetworkState transportNetwork,
   }) {
     return AutoExploreCommandState(
       movement: MovementCommandState(
@@ -132,6 +136,7 @@ abstract final class TurnAutoExploreAdvancer {
         fogOfWar: fogOfWar,
         diplomacy: diplomacy,
         playerIds: playerIds,
+        transportNetwork: transportNetwork,
       ),
       interaction: interaction,
     );

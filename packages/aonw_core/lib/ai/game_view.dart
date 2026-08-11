@@ -4,11 +4,13 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
+import 'package:aonw_core/game/domain/transport.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
@@ -79,6 +81,7 @@ class GameView {
   final MapReadView mapData;
   final GameRuleset ruleset;
   final WonderRegistry wonderRegistry;
+  final TransportNetworkState transportNetwork;
   final CanonicalGameSnapshot? engineSnapshot;
 
   GameView({
@@ -109,6 +112,7 @@ class GameView {
     required this.mapData,
     required this.ruleset,
     this.wonderRegistry = WonderRegistry.empty,
+    this.transportNetwork = TransportNetworkState.empty,
     this.engineSnapshot,
   }) : ownUnits = List.unmodifiable(ownUnits),
        ownCities = List.unmodifiable(ownCities),
@@ -139,6 +143,9 @@ class GameView {
           TechnologyAvailability.available)
         technologyId,
   ]);
+
+  late final UnitTraversalCostResolver traversalCostResolver =
+      InfrastructureAwareTraversalCostResolver(transportNetwork);
 
   late final List<GameCity> citiesWithEmptyProduction = List.unmodifiable([
     for (final city in ownCities)
@@ -232,6 +239,7 @@ class GameView {
     playerStabilityNet: state.playerStabilityNet,
     research: state.research,
     fieldImprovements: state.fieldImprovements,
+    transportNetwork: state.transportNetwork,
     fogOfWar: state.fogOfWar,
     resourceTradeAgreements: state.resourceTradeAgreements,
     mapObjectiveHoldStatesByObjectiveId:
@@ -262,6 +270,7 @@ class GameView {
     required Map<String, int> playerStabilityNet,
     required ResearchState research,
     required List<FieldImprovement> fieldImprovements,
+    required TransportNetworkState transportNetwork,
     required FogOfWarState fogOfWar,
     required List<ResourceTradeAgreement> resourceTradeAgreements,
     required Map<String, MapObjectiveHoldState>
@@ -291,6 +300,7 @@ class GameView {
       playerStabilityNet: playerStabilityNet,
       research: research,
       fieldImprovements: fieldImprovements,
+      transportNetwork: transportNetwork,
       fogOfWar: fogOfWar,
       resourceTradeAgreements: resourceTradeAgreements,
       mapObjectiveHoldStatesByObjectiveId: mapObjectiveHoldStatesByObjectiveId,
@@ -323,6 +333,7 @@ final class _GameViewProjection {
     required this.playerStabilityNet,
     required this.research,
     required this.fieldImprovements,
+    required this.transportNetwork,
     required this.fogOfWar,
     required this.resourceTradeAgreements,
     required this.mapObjectiveHoldStatesByObjectiveId,
@@ -351,6 +362,7 @@ final class _GameViewProjection {
   final Map<String, int> playerStabilityNet;
   final ResearchState research;
   final List<FieldImprovement> fieldImprovements;
+  final TransportNetworkState transportNetwork;
   final FogOfWarState fogOfWar;
   final List<ResourceTradeAgreement> resourceTradeAgreements;
   final Map<String, MapObjectiveHoldState> mapObjectiveHoldStatesByObjectiveId;
@@ -403,6 +415,7 @@ GameView _buildGameView(_GameViewProjection source) {
     research: source.research,
     ownResearch: source.research.forPlayer(source.forPlayerId),
     ownImprovements: _ownImprovements(source, ownCities, ownCityIds),
+    transportNetwork: source.transportNetwork,
     resourceTradeAgreements: source.resourceTradeAgreements,
     mapObjectiveHoldStatesByObjectiveId:
         source.mapObjectiveHoldStatesByObjectiveId,

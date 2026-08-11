@@ -271,6 +271,7 @@ const _knownSnapshotStateFields = {
   'cities',
   'artifacts',
   'fieldImprovements',
+  'transportNetwork',
   'fogOfWar',
   'research',
   'lifecycle',

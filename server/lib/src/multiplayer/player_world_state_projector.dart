@@ -40,10 +40,31 @@ final class PlayerWorldStateProjector {
         visibility: visibility,
         ownCityIds: ownCityIds,
       ),
+      'transportNetwork': _transportNetworkFor(
+        domain,
+        playerId: playerId,
+        visibility: visibility,
+        ownCityIds: ownCityIds,
+      ),
       'fogOfWar': fogOfWar.toJson(),
       'research': research.toJson(),
     };
   }
+}
+
+List<Map<String, dynamic>> _transportNetworkFor(
+  DomainState state, {
+  required String playerId,
+  required FogVisibilityQuery visibility,
+  required Set<String> ownCityIds,
+}) {
+  return [
+    for (final segment in state.transportNetwork.segments)
+      if (segment.builtByPlayerId == playerId ||
+          ownCityIds.contains(segment.builtByCityId) ||
+          visibility.canRememberStaticAt(segment.hex.col, segment.hex.row))
+        segment.toJson(),
+  ];
 }
 
 Set<String> _ownCityIds(DomainState state, String playerId) => {

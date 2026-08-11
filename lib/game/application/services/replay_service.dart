@@ -152,6 +152,7 @@ class ReplayStep {
       DetachTroopCommand(:final unitId) ||
       FoundCityCommand(founderId: final unitId) ||
       SelectWorkerImprovementCommand(:final unitId) ||
+      BuildRoadCommand(:final unitId) ||
       ConfirmWorkerImprovementCommand(:final unitId) ||
       CancelWorkerJobCommand(:final unitId) ||
       AssignWorkerToHexCommand(:final unitId) ||

@@ -2,6 +2,7 @@ abstract final class MapPriority {
   static const int terrain = 0;
   static const int territory = 100;
   static const int eraTint = 200;
+  static const int transport = 250;
   static const int fog = 300;
   static const int sprite = 1000;
   static const int contextOverlay = 4000;

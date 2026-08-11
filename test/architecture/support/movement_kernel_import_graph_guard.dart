@@ -29,6 +29,7 @@ const movementKernelImportGraphPaths = {
   '${movementLibraryPath}unit_movement_pathfinder.dart',
   '${movementLibraryPath}unit_movement_plan.dart',
   '${movementLibraryPath}unit_movement_route_search.dart',
+  '${movementLibraryPath}unit_traversal_cost_resolver.dart',
 };
 
 const _pathfinderPath = '${movementLibraryPath}unit_movement_pathfinder.dart';
@@ -105,8 +106,11 @@ const _leafDependencyUris = {
   'package:aonw_core/game/domain/hex/hex_distance.dart',
   'package:aonw_core/game/domain/terrain/tile_terrain_profile.dart',
   'package:aonw_core/game/domain/terrain/tile_terrain_profile_rules.dart',
+  'package:aonw_core/game/domain/transport/transport_network_index.dart',
+  'package:aonw_core/game/domain/transport/transport_network_state.dart',
   'package:aonw_core/game/domain/unit/game_unit.dart',
   'package:aonw_core/game/domain/unit/game_unit_type.dart',
+  'package:aonw_core/game/domain/unit/unit_movement_domain.dart',
   'package:aonw_core/map/domain/hex_grid_topology.dart',
   'package:aonw_core/map/domain/map_read_view.dart',
   'package:aonw_core/map/domain/map_tile_view.dart',

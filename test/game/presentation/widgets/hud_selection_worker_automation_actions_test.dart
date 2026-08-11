@@ -83,6 +83,7 @@ List<Widget> _actions(
     onMoveSelectedUnit: _noop,
     onAutoExploreSelectedUnit: _noop,
     onAutomateSelectedWorker: onAutomateWorker ?? _noop,
+    onBuildRoad: _noop,
     onStartAttackTargeting: _noop,
     onCancelAttackTargeting: _noop,
     onShowArmy: _noop,

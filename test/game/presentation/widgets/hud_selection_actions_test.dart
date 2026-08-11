@@ -57,7 +57,14 @@ void main() {
       );
       expect(
         _actionLabels(actions),
-        containsAll(['Move', 'Improve', 'Auto work', 'Skip', 'Fortify']),
+        containsAll([
+          'Move',
+          'Improve',
+          'Build road',
+          'Auto work',
+          'Skip',
+          'Fortify',
+        ]),
       );
     });
 
@@ -99,7 +106,16 @@ void main() {
             workerAction: _workerAction(),
           ),
         ),
-        ['Move', '|', 'Improve', 'Auto work', '|', 'Skip', 'Fortify'],
+        [
+          'Move',
+          '|',
+          'Improve',
+          'Build road',
+          'Auto work',
+          '|',
+          'Skip',
+          'Fortify',
+        ],
       );
       expect(
         _actionLayout(
@@ -1110,6 +1126,7 @@ List<Widget> _actions({
     onMoveSelectedUnit: () {},
     onAutoExploreSelectedUnit: onAutoExploreSelectedUnit ?? () {},
     onAutomateSelectedWorker: () {},
+    onBuildRoad: () {},
     onStartAttackTargeting: () {},
     onCancelAttackTargeting: onCancelAttackTargeting ?? () {},
     onShowArmy: () {},

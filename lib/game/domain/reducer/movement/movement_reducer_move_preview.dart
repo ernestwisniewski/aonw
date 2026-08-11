@@ -149,6 +149,9 @@ abstract final class _MovePreviewReducer {
             tile: tile,
             visibility: visibility,
           ),
+      costResolver: InfrastructureAwareTraversalCostResolver(
+        state.transportNetwork,
+      ),
     );
     bool canEnterStepBeyondCapacity(UnitMovementStep step) =>
         MovementReducer._canCarryArtifactIntoTargetCity(

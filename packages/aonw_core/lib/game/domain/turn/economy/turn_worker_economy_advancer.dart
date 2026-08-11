@@ -17,6 +17,7 @@ abstract final class TurnWorkerEconomyAdvancer {
       units: state.units,
       cities: state.cities,
       fieldImprovements: state.fieldImprovements,
+      transportNetwork: state.transportNetwork,
       mapData: context.mapData.mapTiles,
     );
     final nextCities = List<GameCity>.unmodifiable(result.cities);
@@ -29,6 +30,7 @@ abstract final class TurnWorkerEconomyAdvancer {
         cities: nextCities,
         units: nextUnits,
         fieldImprovements: nextImprovements,
+        transportNetwork: result.transportNetwork,
       ),
       events: [
         ...TurnEconomyEventFactory.completedWorkerJobs(

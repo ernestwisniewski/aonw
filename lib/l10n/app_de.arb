@@ -3516,6 +3516,13 @@
     }
   },
   "selectionActionImprove": "Verbessern",
+  "selectionActionBuildRoad": "Straße bauen",
+  "selectionActionRoadAlreadyBuilt": "Auf diesem Feld gibt es bereits eine Straße.",
+  "selectionActionRoadEnemyTerritory": "Straßen können nicht in fremdem Gebiet gebaut werden.",
+  "selectionActionRoadInvalidTerrain": "Auf diesem Gelände kann keine Straße gebaut werden.",
+  "selectionActionRoadCityCenter": "Straßen in Stadtzentren sind implizit.",
+  "selectionActionRoadUnavailable": "Hier kann keine Straße gebaut werden.",
+  "transportRoadName": "Straße",
   "selectionActionSkip": "Überspringen",
   "selectionActionFortify": "Befestigen",
   "selectionActionHeal": "Heilen",

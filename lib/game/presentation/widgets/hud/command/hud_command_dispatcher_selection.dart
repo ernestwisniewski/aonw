@@ -51,6 +51,17 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
     unawaited(dispatch(command));
   }
 
+  void buildRoad(GameClientState? state) {
+    final command = HudSelectionCommands.buildRoad(state);
+    if (command == null) return;
+
+    _clearFeedback();
+    _applyPanelModes(
+      _ref.read(hudPanelControllerProvider).closeUnitActionPanels(),
+    );
+    unawaited(dispatch(command));
+  }
+
   void startAttackTargeting(GameClientState? state) {
     final command = HudSelectionCommands.startAttackTargeting(state);
     if (command == null) return;

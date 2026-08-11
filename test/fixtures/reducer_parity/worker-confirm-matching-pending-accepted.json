@@ -258,6 +258,7 @@
       ],
       "artifacts": [],
       "fieldImprovements": [],
+      "transportNetwork": [],
       "fogOfWar": [],
       "research": {
         "players": {
@@ -374,6 +375,7 @@
           "movementPoints": 0,
           "army": [],
           "workerJob": {
+            "kind": "fieldImprovement",
             "targetHex": {
               "col": 1,
               "row": 0
@@ -422,6 +424,7 @@
       ],
       "artifacts": [],
       "fieldImprovements": [],
+      "transportNetwork": [],
       "fogOfWar": [],
       "research": {
         "players": {

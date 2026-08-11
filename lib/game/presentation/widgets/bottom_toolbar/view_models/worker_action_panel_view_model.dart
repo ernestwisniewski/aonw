@@ -55,10 +55,12 @@ abstract final class WorkerActionPanelViewModelFactory {
           ? null
           : WorkerJobProgressViewModel(
               improvementType: unit.workerJob!.improvementType,
-              improvementName: GameDisplayNames.fieldImprovement(
-                l10n,
-                unit.workerJob!.improvementType,
-              ),
+              improvementName: unit.workerJob!.buildsRoad
+                  ? l10n.transportRoadName
+                  : GameDisplayNames.fieldImprovement(
+                      l10n,
+                      unit.workerJob!.improvementType!,
+                    ),
               targetHex: unit.workerJob!.targetHex,
               remainingTurns: unit.workerJob!.remainingTurns,
               totalTurns: unit.workerJob!.totalTurns,

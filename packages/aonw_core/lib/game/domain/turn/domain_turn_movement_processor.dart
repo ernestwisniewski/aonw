@@ -54,6 +54,7 @@ abstract final class DomainTurnMovementProcessor {
         interaction: state.actions,
         fieldImprovements: state.fieldImprovements,
         research: state.research,
+        transportNetwork: state.transportNetwork,
       ),
       context: TurnMovementContext(
         playerIds: playerIds,

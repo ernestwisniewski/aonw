@@ -18,6 +18,7 @@ abstract final class AiDomainStateFingerprint {
       Object.hashAll(state.cities),
       Object.hashAll(state.artifacts),
       Object.hashAll(state.fieldImprovements),
+      state.transportNetwork,
       state.fogOfWar,
       state.research,
       state.wonderRegistry,

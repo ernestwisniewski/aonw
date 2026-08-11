@@ -41,6 +41,9 @@ abstract final class HudPalette {
   static const Color sectionLabel = Color(0xFF8C6926);
   static const Color tradeRoute = Color(0xFFB7C0C6);
   static const Color tradeRouteGlow = Color(0xFF6D7780);
+  static const Color roadEdge = Color(0xFF000000);
+  static const Color roadAsphalt = Color(0xFF24262A);
+  static const Color roadMarking = Color(0xFFFFFFFF);
 
   // Text.
   static const Color textPrimary = Color(0xFFF0EDE6);

@@ -13,6 +13,7 @@ import 'package:aonw/game/presentation/engine/rendering_layers/effects/era_tint_
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_war_overlay_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/threat_overlay_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/transport/transport_network_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/marker_health_fraction.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview_layer.dart';
@@ -35,6 +36,7 @@ class GameRenderingCoordinator {
   final UnitMarkerLayer unitMarkers;
   final UnitMovePreviewLayer movePreview;
   final FieldImprovementMarkerLayer fieldImprovementMarkers;
+  final TransportNetworkLayer transportNetwork;
   final ArtifactMarkerLayer artifactMarkers;
   final MapObjectiveMarkerLayer mapObjectiveMarkers;
   final CityMarkerLayer cityMarkers;
@@ -52,6 +54,7 @@ class GameRenderingCoordinator {
     required this.unitMarkers,
     required this.movePreview,
     required this.fieldImprovementMarkers,
+    required this.transportNetwork,
     required this.artifactMarkers,
     required this.mapObjectiveMarkers,
     required this.cityMarkers,
@@ -82,6 +85,7 @@ class GameRenderingCoordinator {
     _syncGridSelection(grid, viewModel);
     _planningMarkers.sync(state);
     _syncFieldImprovementMarkers(state, parent);
+    _syncTransportNetwork(state);
     _syncArtifactMarkers(state, parent);
     _syncMapObjectiveMarkers(state, parent);
     _syncCityMarkers(

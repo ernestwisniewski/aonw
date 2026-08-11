@@ -84,6 +84,7 @@ final class MctsOpponentViewIndex {
       research: state.research,
       ownResearch: state.research.forPlayer(opponentId),
       ownImprovements: _improvementsByOwner[opponentId] ?? const [],
+      transportNetwork: state.transportNetwork,
       artifacts: _artifactsByOwner[opponentId] ?? const [],
       diplomacy: state.diplomacy,
       visibleEnemyUnits: _indexedValuesExceptOwner(_unitsByOwner, opponentId),

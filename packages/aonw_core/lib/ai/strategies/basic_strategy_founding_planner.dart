@@ -36,6 +36,7 @@ final class BasicStrategyFoundingPlanner {
     final pathfinder = UnitMovementPathfinder(
       mapData: view.mapData,
       units: view.movementBlockingUnits,
+      costResolver: view.traversalCostResolver,
     );
     final occupied = <String>{
       for (final unit in view.ownUnits) _key(unit.col, unit.row),

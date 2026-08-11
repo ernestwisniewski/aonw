@@ -14,6 +14,7 @@ List<List<HudSelectionActionSpec>> _unitActionGroups({
   required VoidCallback onMoveSelectedUnit,
   required VoidCallback onAutoExploreSelectedUnit,
   required VoidCallback onAutomateSelectedWorker,
+  required VoidCallback onBuildRoad,
   required VoidCallback onStartAttackTargeting,
   required VoidCallback onCancelAttackTargeting,
   required VoidCallback onShowArmy,
@@ -100,6 +101,14 @@ List<List<HudSelectionActionSpec>> _unitActionGroups({
         onStartWorkerActionSelection: onStartWorkerActionSelection,
         onCancelWorkerActionSelection: onCancelWorkerActionSelection,
         onCancelWorkerJob: onCancelWorkerJob,
+      ),
+      _workerRoadActionFor(
+        unit: unit,
+        gameState: gameState,
+        mapData: mapData,
+        lockedReason: lockedReason,
+        l10n: l10n,
+        onBuildRoad: onBuildRoad,
       ),
       workerAutoAction(unit, lockedReason, l10n, onAutomateSelectedWorker),
     ]);

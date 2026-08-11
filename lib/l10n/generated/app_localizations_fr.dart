@@ -6328,6 +6328,32 @@ class AppLocalizationsFr extends AppLocalizations {
   String get selectionActionImprove => 'Améliorer';
 
   @override
+  String get selectionActionBuildRoad => 'Construire une route';
+
+  @override
+  String get selectionActionRoadAlreadyBuilt =>
+      'Cette case possède déjà une route.';
+
+  @override
+  String get selectionActionRoadEnemyTerritory =>
+      'Les routes ne peuvent pas être construites en territoire étranger.';
+
+  @override
+  String get selectionActionRoadInvalidTerrain =>
+      'Une route ne peut pas être construite sur ce terrain.';
+
+  @override
+  String get selectionActionRoadCityCenter =>
+      'Les routes sont implicites dans les centres-villes.';
+
+  @override
+  String get selectionActionRoadUnavailable =>
+      'Une route ne peut pas être construite ici.';
+
+  @override
+  String get transportRoadName => 'Route';
+
+  @override
   String get selectionActionSkip => 'Sauter';
 
   @override

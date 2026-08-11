@@ -13,6 +13,7 @@ import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/state/game_snapshot_metadata.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
+import 'package:aonw_core/game/domain/transport.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 
@@ -141,6 +142,7 @@ abstract final class CanonicalGameSnapshotCodec {
     'fieldImprovements': [
       for (final improvement in domain.fieldImprovements) improvement.toJson(),
     ],
+    'transportNetwork': domain.transportNetwork.toJson(),
     'fogOfWar': domain.fogOfWar.toJson(),
     'research': domain.research.toJson(),
     'lifecycle': _encodeLifecycle(domain: domain),
@@ -179,6 +181,7 @@ DomainState _domainFromDecoded(
   cities: decoded.cities,
   artifacts: decoded.artifacts,
   fieldImprovements: decoded.fieldImprovements,
+  transportNetwork: decoded.transportNetwork,
   fogOfWar: decoded.fogOfWar,
   research: decoded.research,
   wonderRegistry: decoded.wonderRegistry,
@@ -203,6 +206,7 @@ final class _DecodedState {
     required this.cities,
     required this.artifacts,
     required this.fieldImprovements,
+    required this.transportNetwork,
     required this.fogOfWar,
     required this.research,
     required this.wonderRegistry,
@@ -230,6 +234,7 @@ final class _DecodedState {
   final List<GameCity> cities;
   final List<WorldArtifact> artifacts;
   final List<FieldImprovement> fieldImprovements;
+  final TransportNetworkState transportNetwork;
   final FogOfWarState fogOfWar;
   final ResearchState research;
   final WonderRegistry wonderRegistry;
@@ -263,6 +268,7 @@ _DecodedState _decodeState(Map<String, dynamic> state) {
       state['fieldImprovements'],
       FieldImprovement.fromJson,
     ),
+    transportNetwork: TransportNetworkState.fromJson(state['transportNetwork']),
     fogOfWar: _decodeFogOfWar(state['fogOfWar']),
     research: _decodeResearch(state['research']),
     wonderRegistry: WonderRegistry.fromJson(state['wonderRegistry']),
@@ -365,6 +371,8 @@ Set<String> _statePlayerIds(_DecodedState state) {
     for (final unit in state.units) unit.ownerPlayerId,
     for (final city in state.cities) city.ownerPlayerId,
     for (final city in state.cities) ?city.foundingOwnerPlayerId,
+    for (final segment in state.transportNetwork.segments)
+      segment.builtByPlayerId,
     for (final relation in state.diplomacy.relations.values) ...[
       relation.playerAId,
       relation.playerBId,

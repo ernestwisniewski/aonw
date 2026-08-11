@@ -106,6 +106,7 @@ bool _canApplyMoveCandidate(
   final pathfinder = UnitMovementPathfinder(
     mapData: view.mapData,
     units: knownUnits,
+    costResolver: view.traversalCostResolver,
   );
   final plan = pathfinder.plan(unit: unit, targetTile: targetTile);
   return plan != null &&

@@ -239,6 +239,64 @@ HudSelectionActionSpec _workerBuildActionFor({
   );
 }
 
+HudSelectionActionSpec _workerRoadActionFor({
+  required GameUnit unit,
+  required GameClientState? gameState,
+  required WorldMap mapData,
+  required String? lockedReason,
+  required AppLocalizations l10n,
+  required VoidCallback onBuildRoad,
+}) {
+  final legality = gameState == null
+      ? const RoadConstructionLegality.blocked(
+          RoadConstructionBlocker.missingTile,
+        )
+      : RoadConstructionRules.evaluate(
+          unit: unit,
+          cities: gameState.cities,
+          network: gameState.transportNetwork,
+          mapTiles: mapData,
+        );
+  final available = legality.allowed;
+  return HudSelectionActionSpec(
+    icon: GameIcons.route,
+    actionId: 'buildRoad',
+    label: l10n.selectionActionBuildRoad,
+    color: GameUiTheme.gold,
+    active: false,
+    enabled: _enabled(available, lockedReason),
+    disabledReason: _disabledReason(
+      lockedReason: lockedReason,
+      actionReason: available
+          ? null
+          : _roadConstructionBlockedReason(l10n, legality.blocker),
+    ),
+    onTap: onBuildRoad,
+  );
+}
+
+String _roadConstructionBlockedReason(
+  AppLocalizations l10n,
+  RoadConstructionBlocker? blocker,
+) {
+  return switch (blocker) {
+    RoadConstructionBlocker.workerBusy => l10n.selectionActionUnitWorking,
+    RoadConstructionBlocker.noMovementPoints => l10n.selectionActionNoMovement,
+    RoadConstructionBlocker.queuedPathActive =>
+      l10n.selectionActionCancelCurrentMoveFirst,
+    RoadConstructionBlocker.existingRoad =>
+      l10n.selectionActionRoadAlreadyBuilt,
+    RoadConstructionBlocker.enemyTerritory =>
+      l10n.selectionActionRoadEnemyTerritory,
+    RoadConstructionBlocker.impassableTerrain =>
+      l10n.selectionActionRoadInvalidTerrain,
+    RoadConstructionBlocker.cityCenter => l10n.selectionActionRoadCityCenter,
+    RoadConstructionBlocker.notWorker ||
+    RoadConstructionBlocker.missingTile ||
+    null => l10n.selectionActionRoadUnavailable,
+  };
+}
+
 HudSelectionActionSpec _skipTurnActionFor({
   required GameUnit unit,
   required GameClientState? gameState,

@@ -3,6 +3,7 @@ part of '../game_command_contract_test.dart';
 const _rolePolicy = <String, _CommandRole>{
   'AssignMerchantTradeRouteCommand': _CommandRole.domain,
   'AssignWorkerToHexCommand': _CommandRole.domain,
+  'BuildRoadCommand': _CommandRole.domain,
   'AttackHexCommand': _CommandRole.domain,
   'AutoExploreUnitCommand': _CommandRole.domain,
   'AutomateWorkerCommand': _CommandRole.domain,

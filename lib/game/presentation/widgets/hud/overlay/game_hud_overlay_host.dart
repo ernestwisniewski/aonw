@@ -178,6 +178,7 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
       onAutoExploreSelectedUnit: () =>
           dispatcher.autoExploreSelectedUnit(gameState),
       onAutomateSelectedWorker: () => dispatcher.automateWorker(gameState),
+      onBuildRoad: () => dispatcher.buildRoad(gameState),
       onStartAttackTargeting: () => dispatcher.startAttackTargeting(gameState),
       onCancelAttackTargeting: () =>
           dispatcher.cancelAttackTargeting(gameState),

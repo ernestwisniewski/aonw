@@ -194,6 +194,7 @@ Map<String, dynamic>? _encodeWorkerCommand(DomainCommand command) {
       'type': 'CancelWorkerAssignment',
       'unitId': unitId,
     },
+    BuildRoadCommand(:final unitId) => {'type': 'BuildRoad', 'unitId': unitId},
     AutomateWorkerCommand(:final unitId) => {
       'type': 'AutomateWorker',
       'unitId': unitId,

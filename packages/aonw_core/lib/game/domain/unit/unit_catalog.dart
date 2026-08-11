@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/domain/combat/combat_stats.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 import 'package:aonw_core/game/domain/unit/unit_capabilities.dart';
+import 'package:aonw_core/game/domain/unit/unit_movement_domain.dart';
 import 'package:aonw_core/game/domain/unit/unit_production_requirement.dart';
 import 'package:aonw_core/game/domain/unit/unit_spec.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
@@ -8,7 +9,7 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 abstract final class UnitCatalog {
   static const _landMilitary = UnitCapabilities(
     producibleByCities: true,
-    naval: false,
+    movementDomain: UnitMovementDomain.land,
     gainsExperience: true,
     military: true,
     recon: false,
@@ -16,7 +17,7 @@ abstract final class UnitCatalog {
 
   static const _navalMilitary = UnitCapabilities(
     producibleByCities: true,
-    naval: true,
+    movementDomain: UnitMovementDomain.naval,
     gainsExperience: true,
     military: true,
     recon: false,
@@ -24,7 +25,7 @@ abstract final class UnitCatalog {
 
   static const _civilian = UnitCapabilities(
     producibleByCities: true,
-    naval: false,
+    movementDomain: UnitMovementDomain.land,
     gainsExperience: false,
     military: false,
     recon: false,
@@ -32,7 +33,7 @@ abstract final class UnitCatalog {
 
   static const _landRecon = UnitCapabilities(
     producibleByCities: true,
-    naval: false,
+    movementDomain: UnitMovementDomain.land,
     gainsExperience: true,
     military: true,
     recon: true,
@@ -40,7 +41,7 @@ abstract final class UnitCatalog {
 
   static const _navalRecon = UnitCapabilities(
     producibleByCities: true,
-    naval: true,
+    movementDomain: UnitMovementDomain.naval,
     gainsExperience: true,
     military: true,
     recon: true,
@@ -318,7 +319,13 @@ abstract final class UnitCatalog {
         range: 3,
         mobility: 5,
       ),
-      capabilities: _landRecon,
+      capabilities: UnitCapabilities(
+        producibleByCities: true,
+        movementDomain: UnitMovementDomain.air,
+        gainsExperience: true,
+        military: true,
+        recon: true,
+      ),
       upkeep: 2,
       supplyCost: 2,
       scoreValue: 36,

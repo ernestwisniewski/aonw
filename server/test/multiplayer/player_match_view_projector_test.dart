@@ -255,6 +255,10 @@ void _expectOwnerRuleProjection(DomainState state) {
   expect(visibleEnemyCity.controlledHexes, [const CityHex(col: 2, row: 3)]);
   expect(state.fieldImprovements, hasLength(2));
   expect(state.fieldImprovements.last.builtByCityId, isNull);
+  expect(
+    state.transportNetwork.segments.map((segment) => segment.hex).toSet(),
+    {const HexCoord(col: 7, row: 7), const HexCoord(col: 4, row: 4)},
+  );
   expect(state.artifacts.map((artifact) => artifact.id), [
     'visible-artifact',
     'own-carried-artifact',
@@ -296,6 +300,10 @@ void _expectOwnerRuntimeProjection(DomainState state) {
 
 void _expectGuestProjection(DomainState state) {
   final runtime = state;
+  expect(
+    runtime.transportNetwork.segments.map((segment) => segment.hex).toSet(),
+    {const HexCoord(col: 4, row: 4), const HexCoord(col: 6, row: 6)},
+  );
   expect(runtime.actions.cityFoundingDraft?.ownerPlayerId, 'player-guest');
   expect(runtime.actions.pendingAction, isA<PendingResearchSelection>());
   expect(runtime.timeoutStreaksByPlayerId, {'player-guest': 9});

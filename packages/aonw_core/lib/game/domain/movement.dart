@@ -29,4 +29,5 @@ export 'movement/unit_movement_pathfinder.dart';
 export 'movement/unit_movement_plan.dart';
 export 'movement/unit_movement_result.dart';
 export 'movement/unit_movement_visibility_rules.dart';
+export 'movement/unit_traversal_cost_resolver.dart';
 export 'movement/worker_automation_command_phase.dart';

@@ -11,6 +11,7 @@ import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
+import 'package:aonw_core/game/domain/transport.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/util/collection_equality.dart';
@@ -29,6 +30,7 @@ abstract final class GameSnapshotFactory {
     List<GameCity> cities = const [],
     List<WorldArtifact> artifacts = const [],
     List<FieldImprovement> fieldImprovements = const [],
+    TransportNetworkState transportNetwork = TransportNetworkState.empty,
     FogOfWarState fogOfWar = FogOfWarState.empty,
     ResearchState research = ResearchState.empty,
     WonderRegistry wonderRegistry = WonderRegistry.empty,
@@ -74,6 +76,7 @@ abstract final class GameSnapshotFactory {
         cities: cities,
         artifacts: artifacts,
         fieldImprovements: fieldImprovements,
+        transportNetwork: transportNetwork,
         fogOfWar: fogOfWar,
         research: research,
         wonderRegistry: wonderRegistry,
@@ -143,6 +146,7 @@ extension CanonicalGameSnapshotApplication on CanonicalGameSnapshot {
   List<GameCity> get cities => domain.cities;
   List<WorldArtifact> get artifacts => domain.artifacts;
   List<FieldImprovement> get fieldImprovements => domain.fieldImprovements;
+  TransportNetworkState get transportNetwork => domain.transportNetwork;
   FogOfWarState get fogOfWar => domain.fogOfWar;
   ResearchState get research => domain.research;
   WonderRegistry get wonderRegistry => domain.wonderRegistry;

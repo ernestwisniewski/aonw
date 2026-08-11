@@ -8,6 +8,7 @@ import 'package:aonw_core/game/application/engine/movement_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/production_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/research_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/system_command.dart';
+import 'package:aonw_core/game/application/engine/transport_infrastructure_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/turn_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/unit_action_engine_handler.dart';
 import 'package:aonw_core/game/application/engine/worker_engine_handler.dart';
@@ -21,6 +22,7 @@ enum GameEngineCommandFamily {
   city,
   production,
   worker,
+  infrastructure,
   artifactTrade,
   research,
   diplomacy,
@@ -41,6 +43,7 @@ final class GameEngine {
         _cityFamily(command) ??
         _productionFamily(command) ??
         _workerFamily(command) ??
+        _infrastructureFamily(command) ??
         _artifactTradeFamily(command) ??
         _researchFamily(command) ??
         _diplomacyFamily(command) ??
@@ -114,6 +117,13 @@ final class GameEngine {
       TradeArtifactCommand() ||
       OpenResourceTradeCommand() ||
       OpenResourceExchangeCommand() => GameEngineCommandFamily.artifactTrade,
+      _ => null,
+    };
+  }
+
+  static GameEngineCommandFamily? _infrastructureFamily(DomainCommand command) {
+    return switch (command) {
+      BuildRoadCommand() => GameEngineCommandFamily.infrastructure,
       _ => null,
     };
   }
@@ -210,6 +220,12 @@ final class GameEngine {
         command: command,
         context: context,
       ),
+      GameEngineCommandFamily.infrastructure =>
+        const TransportInfrastructureEngineHandler().apply(
+          snapshot: snapshot,
+          command: command,
+          context: context,
+        ),
       _ => _applyStrategicFamily(
         family: family,
         snapshot: snapshot,

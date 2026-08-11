@@ -190,6 +190,7 @@ DomainCommand? _decodeWorkerCombatCommand(
     'CancelWorkerAssignment' => CancelWorkerAssignmentCommand(
       requiredStringField(json, type, 'unitId'),
     ),
+    'BuildRoad' => BuildRoadCommand(requiredStringField(json, type, 'unitId')),
     'AutomateWorker' => AutomateWorkerCommand(
       requiredStringField(json, type, 'unitId'),
     ),

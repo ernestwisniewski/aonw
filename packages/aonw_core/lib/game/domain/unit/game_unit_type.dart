@@ -1,4 +1,5 @@
 import 'package:aonw_core/game/domain/unit/unit_catalog.dart';
+import 'package:aonw_core/game/domain/unit/unit_movement_domain.dart';
 
 enum GameUnitType {
   commander,
@@ -28,6 +29,9 @@ enum GameUnitType {
       UnitCatalog.specFor(this).capabilities.producibleByCities;
 
   bool get isNaval => UnitCatalog.specFor(this).capabilities.naval;
+
+  UnitMovementDomain get movementDomain =>
+      UnitCatalog.specFor(this).capabilities.movementDomain;
 
   static GameUnitType fromName(String name) {
     return values.byName(name);

@@ -31,6 +31,7 @@ class RandomStrategy implements AiStrategy {
     final pathfinder = UnitMovementPathfinder(
       mapData: context.mapData,
       units: knownUnits,
+      costResolver: view.traversalCostResolver,
       canEnterTile: (tile) =>
           view.visibility.canSeeDynamicAt(tile.col, tile.row),
     );

@@ -237,6 +237,7 @@
             ]
           },
           "workerJob": {
+            "kind": "fieldImprovement",
             "targetHex": {
               "col": 1,
               "row": 0
@@ -296,6 +297,7 @@
       ],
       "artifacts": [],
       "fieldImprovements": [],
+      "transportNetwork": [],
       "fogOfWar": [],
       "research": {
         "players": {
@@ -480,6 +482,7 @@
       ],
       "artifacts": [],
       "fieldImprovements": [],
+      "transportNetwork": [],
       "fogOfWar": [],
       "research": {
         "players": {

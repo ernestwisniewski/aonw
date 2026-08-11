@@ -14,6 +14,7 @@ Runbooks describe procedures; ADRs describe constraints and ownership.
 | [0003](0003-command-boundaries.md) | Command boundaries | Accepted | Implemented |
 | [0004](0004-versioned-multiplayer-protocol.md) | Versioned multiplayer protocol | Accepted | Implemented |
 | [0005](0005-immutable-deployment.md) | Immutable deployment promotion | Accepted | In progress |
+| [0006](0006-transport-infrastructure.md) | Transport infrastructure ownership and traversal | Accepted | Implemented |
 
 ## Status And Lifecycle
 

@@ -193,6 +193,7 @@
       "cities": [],
       "artifacts": [],
       "fieldImprovements": [],
+      "transportNetwork": [],
       "fogOfWar": [
         {
           "playerId": "player_1",
@@ -352,6 +353,7 @@
       "cities": [],
       "artifacts": [],
       "fieldImprovements": [],
+      "transportNetwork": [],
       "fogOfWar": [
         {
           "playerId": "player_1",

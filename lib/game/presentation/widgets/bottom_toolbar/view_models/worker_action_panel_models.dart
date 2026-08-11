@@ -4,7 +4,7 @@ import 'package:aonw_core/game/domain/tile_yield.dart';
 enum WorkerImprovementOptionState { selected, recommended, available, blocked }
 
 class WorkerJobProgressViewModel {
-  final FieldImprovementType improvementType;
+  final FieldImprovementType? improvementType;
   final String improvementName;
   final CityHex targetHex;
   final int remainingTurns;

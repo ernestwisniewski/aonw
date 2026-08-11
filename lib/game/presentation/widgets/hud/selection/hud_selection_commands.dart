@@ -22,6 +22,12 @@ abstract final class HudSelectionCommands {
     return AutomateWorkerCommand(unit.id);
   }
 
+  static DomainCommand? buildRoad(GameClientState? state) {
+    final unit = state?.selectedUnit;
+    if (unit == null || !unit.isWorker) return null;
+    return BuildRoadCommand(unit.id);
+  }
+
   static GameIntent? startCityWorkedHexSelection(GameClientState? state) {
     final cityId = state?.selection?.city?.id;
     if (cityId == null) return null;

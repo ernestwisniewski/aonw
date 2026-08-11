@@ -1,10 +1,11 @@
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_balance.dart';
-import 'package:aonw_core/game/domain/movement/unit_movement_cost_rules.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_feasibility.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
+import 'package:aonw_core/game/domain/movement/unit_traversal_cost_resolver.dart';
+import 'package:aonw_core/game/domain/transport/transport_network_state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -84,6 +85,7 @@ abstract final class MerchantTradeRouteRules {
     required MapTraversalView mapData,
     required Iterable<GameUnit> units,
     required Iterable<GameCity> cities,
+    TransportNetworkState transportNetwork = TransportNetworkState.empty,
   }) {
     if (merchant.type != GameUnitType.merchant) return null;
     if (originCity.ownerPlayerId != merchant.ownerPlayerId ||
@@ -102,6 +104,7 @@ abstract final class MerchantTradeRouteRules {
     final plan = UnitMovementPathfinder(
       mapData: mapData,
       units: units,
+      costResolver: InfrastructureAwareTraversalCostResolver(transportNetwork),
       canEnterOccupiedTile:
           ({
             required movingUnit,
@@ -136,6 +139,7 @@ abstract final class MerchantTradeRouteRules {
     required MapTraversalView mapData,
     required Iterable<GameUnit> units,
     required Iterable<GameCity> cities,
+    TransportNetworkState transportNetwork = TransportNetworkState.empty,
   }) {
     if (merchant.type != GameUnitType.merchant ||
         destinationCity.ownerPlayerId != merchant.ownerPlayerId ||
@@ -152,6 +156,7 @@ abstract final class MerchantTradeRouteRules {
     final plan = UnitMovementPathfinder(
       mapData: mapData,
       units: units,
+      costResolver: InfrastructureAwareTraversalCostResolver(transportNetwork),
       canEnterOccupiedTile:
           ({
             required movingUnit,
@@ -180,6 +185,7 @@ abstract final class MerchantTradeRouteRules {
     required List<GameUnit> units,
     required List<GameCity> cities,
     required MapTileLookup mapData,
+    TransportNetworkState transportNetwork = TransportNetworkState.empty,
   }) {
     final route = unit.merchantTradeRoute;
     if (route == null) {
@@ -201,6 +207,7 @@ abstract final class MerchantTradeRouteRules {
       units: units,
       cities: cities,
       mapData: mapData,
+      transportNetwork: transportNetwork,
     );
     if (progress.invalidated) return _invalidatedRoute(unit);
     if (progress.movedSteps.isEmpty) {
@@ -211,6 +218,7 @@ abstract final class MerchantTradeRouteRules {
       route: route,
       progress: progress,
       mapData: mapData,
+      transportNetwork: transportNetwork,
     );
   }
 
@@ -228,7 +236,8 @@ abstract final class MerchantTradeRouteRules {
   static MerchantTradeRoute? _reversedRoute(
     MerchantTradeRoute route, {
     required MapTileLookup mapData,
-    required GameUnitType unitType,
+    required GameUnit unit,
+    required TransportNetworkState transportNetwork,
   }) {
     final reversed = route.steps.reversed.toList(growable: false);
     final rebuilt = <UnitMovementStep>[];
@@ -239,10 +248,9 @@ abstract final class MerchantTradeRouteRules {
       if (i > 0) {
         final tile = mapData.tileAt(step.col, step.row);
         if (tile == null) return null;
-        final cost = UnitMovementCostRules.costToEnterTile(
-          tile,
-          unitType: unitType,
-        );
+        final cost = InfrastructureAwareTraversalCostResolver(
+          transportNetwork,
+        ).costToEnter(unit: unit, tile: tile);
         if (cost.blocked) return null;
         enterCost = cost.value;
         cumulativeCost += enterCost;
@@ -297,6 +305,7 @@ _MerchantRouteProgress _advanceRouteSteps({
   required List<GameUnit> units,
   required List<GameCity> cities,
   required MapTileLookup mapData,
+  required TransportNetworkState transportNetwork,
 }) {
   var index = startIndex;
   var remainingMovement = unit.movementPoints;
@@ -310,6 +319,7 @@ _MerchantRouteProgress _advanceRouteSteps({
       units: units,
       cities: cities,
       mapData: mapData,
+      transportNetwork: transportNetwork,
     );
     if (decision.disposition == _MerchantRouteStepDisposition.invalid) {
       return (
@@ -344,12 +354,15 @@ _MerchantRouteStepDecision _routeStepDecision({
   required List<GameUnit> units,
   required List<GameCity> cities,
   required MapTileLookup mapData,
+  required TransportNetworkState transportNetwork,
 }) {
   final tile = mapData.tileAt(next.col, next.row);
   if (tile == null) {
     return (disposition: _MerchantRouteStepDisposition.invalid, enterCost: 0);
   }
-  final cost = UnitMovementCostRules.costToEnterTile(tile, unitType: unit.type);
+  final cost = InfrastructureAwareTraversalCostResolver(
+    transportNetwork,
+  ).costToEnter(unit: unit, tile: tile);
   if (cost.blocked) {
     return (disposition: _MerchantRouteStepDisposition.invalid, enterCost: 0);
   }
@@ -368,7 +381,7 @@ _MerchantRouteStepDecision _routeStepDecision({
       )) {
     return (disposition: _MerchantRouteStepDisposition.blocked, enterCost: 0);
   }
-  final enterCost = next.enterCost > 0 ? next.enterCost : cost.value;
+  final enterCost = cost.value;
   final maxMovement = UnitMovementBalance.maxMovementPointsFor(
     type: unit.type,
     carriedArtifactId: unit.carriedArtifactId,
@@ -388,6 +401,7 @@ MerchantTradeRouteAdvanceResult _completedRouteAdvance({
   required MerchantTradeRoute route,
   required _MerchantRouteProgress progress,
   required MapTileLookup mapData,
+  required TransportNetworkState transportNetwork,
 }) {
   final destination = route.steps[progress.index];
   var updated = unit.copyWith(
@@ -401,7 +415,8 @@ MerchantTradeRouteAdvanceResult _completedRouteAdvance({
       MerchantTradeRouteRules._reversedRoute(
         route,
         mapData: mapData,
-        unitType: unit.type,
+        unit: unit,
+        transportNetwork: transportNetwork,
       ),
     );
   }

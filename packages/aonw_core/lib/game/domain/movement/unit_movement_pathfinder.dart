@@ -1,7 +1,7 @@
 import 'package:aonw_core/game/domain/movement/unit_movement_balance.dart';
-import 'package:aonw_core/game/domain/movement/unit_movement_cost_rules.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_feasibility.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
+import 'package:aonw_core/game/domain/movement/unit_traversal_cost_resolver.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/map/domain/hex_grid_topology.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
@@ -13,6 +13,7 @@ part 'unit_movement_route_search.dart';
 class UnitMovementPathfinder {
   final MapTraversalView mapData;
   final List<GameUnit> units;
+  final UnitTraversalCostResolver costResolver;
   final bool Function(MapTileView tile)? canEnterTile;
   final bool Function({
     required GameUnit movingUnit,
@@ -30,6 +31,7 @@ class UnitMovementPathfinder {
   UnitMovementPathfinder({
     required this.mapData,
     required Iterable<GameUnit> units,
+    this.costResolver = const TerrainTraversalCostResolver(),
     this.canEnterTile,
     this.canEnterOccupiedTile,
   }) : units = List.unmodifiable(units),
@@ -210,10 +212,7 @@ class UnitMovementPathfinder {
     final tile = tileAt(next.col, next.row);
     if (tile == null) return null;
     if (canEnterTile != null && !canEnterTile!(tile)) return null;
-    final movementCost = UnitMovementCostRules.costToEnterTile(
-      tile,
-      unitType: unit.type,
-    );
+    final movementCost = costResolver.costToEnter(unit: unit, tile: tile);
     if (movementCost.blocked) return null;
     final enterCost = movementCost.value;
     final step = UnitMovementStep(

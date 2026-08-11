@@ -11,6 +11,7 @@ import 'package:aonw_core/game/domain/movement/movement_command_visibility_mode.
 import 'package:aonw_core/game/domain/movement/movement_hidden_obstacle_rules.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_visibility_rules.dart';
+import 'package:aonw_core/game/domain/movement/unit_traversal_cost_resolver.dart';
 import 'package:aonw_core/game/domain/movement/worker_automation_command_phase.dart';
 import 'package:aonw_core/game/domain/state/domain_action_unit_rules.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
@@ -197,6 +198,9 @@ final class DomainWorkerAutomationCommandResolver {
         mapData: mapData,
         units: knownUnits,
         canEnterTile: canEnterTile,
+        costResolver: InfrastructureAwareTraversalCostResolver(
+          state.transportNetwork,
+        ),
       ),
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
@@ -273,6 +277,7 @@ final class DomainWorkerAutomationCommandResolver {
         fogOfWar: state.fogOfWar,
         diplomacy: state.diplomacy,
         playerIds: playerIds,
+        transportNetwork: state.transportNetwork,
       ),
       command: MoveUnitCommand(worker.id, target.hex.col, target.hex.row),
       actorPlayerId: actorPlayerId,

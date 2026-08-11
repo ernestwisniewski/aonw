@@ -10,7 +10,9 @@ RendererEffect? _workerCompletedJobEffect(
   if (previousState == null) return null;
   final job = previousState.unitById(unitId)?.workerJob;
   if (job == null) return null;
-  final yieldLabel = _yieldLabelFor(job.improvementType, l10n: l10n);
+  final yieldLabel = job.buildsRoad
+      ? (l10n == null ? null : '+${l10n.transportRoadName}')
+      : _yieldLabelFor(job.improvementType!, l10n: l10n);
   if (yieldLabel == null && l10n == null) return null;
   if (!_canRenderTransientAt(
     state,
@@ -22,7 +24,7 @@ RendererEffect? _workerCompletedJobEffect(
   }
   final label =
       yieldLabel ??
-      '+${GameDisplayNames.fieldImprovement(l10n!, job.improvementType)}';
+      '+${GameDisplayNames.fieldImprovement(l10n!, job.improvementType!)}';
   return ShowFloatingTextEffect(
     text: label,
     col: job.targetHex.col,

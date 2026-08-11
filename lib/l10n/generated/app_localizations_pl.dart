@@ -6287,6 +6287,30 @@ class AppLocalizationsPl extends AppLocalizations {
   String get selectionActionImprove => 'Ulepsz';
 
   @override
+  String get selectionActionBuildRoad => 'Buduj drogę';
+
+  @override
+  String get selectionActionRoadAlreadyBuilt => 'Na tym polu jest już droga.';
+
+  @override
+  String get selectionActionRoadEnemyTerritory =>
+      'Nie można budować dróg na obcym terytorium.';
+
+  @override
+  String get selectionActionRoadInvalidTerrain =>
+      'Na tym terenie nie można zbudować drogi.';
+
+  @override
+  String get selectionActionRoadCityCenter =>
+      'Połączenia drogowe w centrum miasta są domyślne.';
+
+  @override
+  String get selectionActionRoadUnavailable => 'Nie można tu zbudować drogi.';
+
+  @override
+  String get transportRoadName => 'Droga';
+
+  @override
   String get selectionActionSkip => 'Pomiń';
 
   @override

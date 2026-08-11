@@ -9,6 +9,8 @@ import 'package:aonw_core/game/domain/movement/unit_movement_feasibility.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_visibility_rules.dart';
+import 'package:aonw_core/game/domain/movement/unit_traversal_cost_resolver.dart';
+import 'package:aonw_core/game/domain/transport/transport_network_state.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
@@ -139,6 +141,9 @@ abstract final class MovementCommandPlanner {
       mapData: mapData,
       units: knownUnits,
       canEnterTile: canEnterTile,
+      costResolver: InfrastructureAwareTraversalCostResolver(
+        state.transportNetwork,
+      ),
     );
     final canEnterStepBeyondCapacity = _capacityExceptionFor(
       state: state,
@@ -166,6 +171,7 @@ abstract final class MovementCommandPlanner {
       unit: unit,
       targetTile: targetTile,
       canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
+      transportNetwork: state.transportNetwork,
     );
   }
 
@@ -253,6 +259,7 @@ abstract final class MovementCommandPlanner {
     required GameUnit unit,
     required MapTileView targetTile,
     required UnitMovementCapacityException canEnterStepBeyondCapacity,
+    required TransportNetworkState transportNetwork,
   }) {
     if (!hiddenTargetBlocker || directPlan?.canMoveNow != true) {
       final capacityBlocked = _capacityBlocksOnlyKnownRoute(
@@ -278,6 +285,9 @@ abstract final class MovementCommandPlanner {
         mapData: mapData,
         units: [...knownUnits, targetBlocker!],
         canEnterTile: canEnterTile,
+        costResolver: InfrastructureAwareTraversalCostResolver(
+          transportNetwork,
+        ),
       ),
       unit: unit,
       targetTile: targetTile,

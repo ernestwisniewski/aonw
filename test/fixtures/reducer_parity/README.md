@@ -35,7 +35,8 @@ orders must produce the same committed oracle on every run.
 Version 1 covers movement, scout auto-exploration, merchant routing, instant
 combat, self-contained city-founding commands, city building, unit,
 specialization, and map-dependent wonder production, research,
-worker improvements, manual city worked-hex add/remove selection,
+worker improvements, road construction, manual city worked-hex add/remove
+selection,
 gold/resource exchange trades, waiting turn
 submissions, and simultaneous turn finalization.
 The `StartBuilding` slice is fail-closed over an exact fixture set: adversarial

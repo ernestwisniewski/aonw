@@ -43,6 +43,7 @@ abstract final class MerchantTradeRouteReducer {
                 mapData: mapView,
                 units: state.units,
                 cities: state.cities,
+                transportNetwork: state.transportNetwork,
               ) !=
               null,
         );
@@ -104,6 +105,7 @@ abstract final class MerchantTradeRouteReducer {
                 mapData: mapView,
                 units: state.units,
                 cities: state.cities,
+                transportNetwork: state.transportNetwork,
               ) !=
               null,
         );

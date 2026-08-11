@@ -3516,6 +3516,13 @@
     }
   },
   "selectionActionImprove": "Mejorar",
+  "selectionActionBuildRoad": "Construir carretera",
+  "selectionActionRoadAlreadyBuilt": "Ya hay una carretera en esta casilla.",
+  "selectionActionRoadEnemyTerritory": "No se pueden construir carreteras en territorio extranjero.",
+  "selectionActionRoadInvalidTerrain": "No se puede construir una carretera en este terreno.",
+  "selectionActionRoadCityCenter": "Las carreteras están implícitas en los centros urbanos.",
+  "selectionActionRoadUnavailable": "No se puede construir una carretera aquí.",
+  "transportRoadName": "Carretera",
   "selectionActionSkip": "Omitir",
   "selectionActionFortify": "Fortificar",
   "selectionActionHeal": "Curar",

@@ -50,6 +50,7 @@ abstract final class TurnMovementOrchestrator {
       fogOfWar: state.fogOfWar,
       playerIds: context.playerIds,
       mapData: context.mapData,
+      transportNetwork: state.transportNetwork,
     );
     final fogOfWar = advanced.changed
         ? context.fogOfWarService.recompute(
@@ -81,6 +82,7 @@ abstract final class TurnMovementOrchestrator {
       cityRuleset: context.ruleset.city,
       technologyRuleset: context.ruleset.technology,
       paceBalance: context.ruleset.paceBalance,
+      transportNetwork: state.transportNetwork,
     );
     final autoExplore = _advanceAutoExplore(
       state: state,
@@ -124,6 +126,7 @@ TurnAutoExploreAdvance _advanceAutoExplore({
     phaseKnownPlayerIds: context.phaseKnownPlayerIds,
     mapData: context.mapData,
     fogOfWarService: context.fogOfWarService,
+    transportNetwork: state.transportNetwork,
   );
 }
 
@@ -159,6 +162,7 @@ TurnMovementResult _movementResult({
       diplomacy: autoExplore.diplomacy,
       fogOfWar: autoExplore.fogOfWar,
       interaction: autoExplore.interaction,
+      transportNetwork: state.transportNetwork,
     ),
     changed: true,
     events: _withMissingMovementEvents([

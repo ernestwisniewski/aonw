@@ -12,6 +12,7 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/transport.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -58,6 +59,19 @@ void main() {
       }
     });
 
+    test('migrates schema 3 snapshots with an empty transport network', () {
+      final json = _mutableSnapshotJson(
+        GameSnapshotFactory.create(save: _save()),
+      );
+      (json['save'] as Map<String, dynamic>)['schemaVersion'] = 3;
+      json.remove('transportNetwork');
+
+      final restored = SaveSnapshotCodec.fromJson(json);
+
+      expect(restored.save.schemaVersion, gameSaveCurrentSchemaVersion);
+      expect(restored.domain.transportNetwork, TransportNetworkState.empty);
+    });
+
     test('round-trips persistent snapshot slices', () {
       final unit = GameUnit.startingCommander(ownerPlayerId: 'p1');
       const city = GameCity(
@@ -73,6 +87,15 @@ void main() {
         playerStabilityNet: const {'p1': -2},
         units: [unit],
         cities: [city],
+        transportNetwork: TransportNetworkState(
+          segments: const [
+            TransportSegment(
+              hex: HexCoord(col: 1, row: 3),
+              builtByPlayerId: 'p1',
+              builtByCityId: 'city_1',
+            ),
+          ],
+        ),
 
         pendingAction: const PendingCityWorkedHexSelection(
           ownerPlayerId: 'p1',
@@ -106,6 +129,7 @@ void main() {
       expect(restored.playerStabilityNet, {'p1': -2});
       expect(restored.units.single.id, unit.id);
       expect(restored.cities.single.id, city.id);
+      expect(restored.domain.transportNetwork.hasOperationalRoadAt(1, 3), true);
       expect(
         restored.domain.actions.pendingAction,
         isA<PendingCityWorkedHexSelection>(),

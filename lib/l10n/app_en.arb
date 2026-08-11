@@ -3552,6 +3552,13 @@
     }
   },
   "selectionActionImprove": "Improve",
+  "selectionActionBuildRoad": "Build road",
+  "selectionActionRoadAlreadyBuilt": "There is already a road on this tile.",
+  "selectionActionRoadEnemyTerritory": "Roads cannot be built in foreign territory.",
+  "selectionActionRoadInvalidTerrain": "A road cannot be built on this terrain.",
+  "selectionActionRoadCityCenter": "Roads are implicit in city centers.",
+  "selectionActionRoadUnavailable": "A road cannot be built here.",
+  "transportRoadName": "Road",
   "selectionActionSkip": "Skip",
   "selectionActionFortify": "Fortify",
   "selectionActionHeal": "Heal",

@@ -1,23 +1,30 @@
+import 'package:aonw_core/game/domain/unit/unit_movement_domain.dart';
+
 class UnitCapabilities {
   final bool producibleByCities;
-  final bool naval;
+  final UnitMovementDomain movementDomain;
   final bool gainsExperience;
   final bool military;
   final bool recon;
 
   const UnitCapabilities({
     required this.producibleByCities,
-    required this.naval,
+    UnitMovementDomain? movementDomain,
+    bool naval = false,
     required this.gainsExperience,
     required this.military,
     required this.recon,
-  });
+  }) : movementDomain =
+           movementDomain ??
+           (naval ? UnitMovementDomain.naval : UnitMovementDomain.land);
+
+  bool get naval => movementDomain == UnitMovementDomain.naval;
 
   @override
   bool operator ==(Object other) {
     return other is UnitCapabilities &&
         other.producibleByCities == producibleByCities &&
-        other.naval == naval &&
+        other.movementDomain == movementDomain &&
         other.gainsExperience == gainsExperience &&
         other.military == military &&
         other.recon == recon;
@@ -27,7 +34,7 @@ class UnitCapabilities {
   int get hashCode {
     return Object.hash(
       producibleByCities,
-      naval,
+      movementDomain,
       gainsExperience,
       military,
       recon,

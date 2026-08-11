@@ -5,6 +5,7 @@ import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
 import 'package:aonw_core/game/domain/movement/merchant_trade_route_rules.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_balance.dart';
+import 'package:aonw_core/game/domain/transport/transport_network_state.dart';
 import 'package:aonw_core/game/domain/turn/movement/turn_queued_path_advancer.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
@@ -47,6 +48,7 @@ abstract final class TurnUnitMovementAdvancer {
     required FogOfWarState fogOfWar,
     required Set<String> playerIds,
     required MapTraversalView mapData,
+    TransportNetworkState transportNetwork = TransportNetworkState.empty,
   }) {
     final alerts = _fortificationAlerts(
       units: units,
@@ -74,6 +76,7 @@ abstract final class TurnUnitMovementAdvancer {
         diplomacy: diplomacy,
         fogOfWar: fogOfWar,
         mapData: mapData,
+        transportNetwork: transportNetwork,
       );
       if (advanced.changed) changed = true;
       finalUnits.add(advanced.unit);
@@ -99,12 +102,14 @@ abstract final class TurnUnitMovementAdvancer {
     required DiplomacyState diplomacy,
     required FogOfWarState fogOfWar,
     required MapTraversalView mapData,
+    required TransportNetworkState transportNetwork,
   }) {
     final routeAdvance = MerchantTradeRouteRules.advanceUnit(
       unit: unit,
       units: allUnits,
       cities: cities,
       mapData: mapData,
+      transportNetwork: transportNetwork,
     );
     final routed = routeAdvance.unit;
     final executions = <MovementCommandExecution>[
@@ -130,6 +135,7 @@ abstract final class TurnUnitMovementAdvancer {
       cities: cities,
       diplomacy: diplomacy,
       fogOfWar: fogOfWar,
+      transportNetwork: transportNetwork,
     );
     if (queued.execution case final execution?) executions.add(execution);
     return (

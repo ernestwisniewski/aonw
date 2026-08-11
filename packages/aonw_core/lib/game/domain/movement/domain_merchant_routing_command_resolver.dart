@@ -33,6 +33,7 @@ final class DomainMerchantRoutingCommandResolver {
         command: command,
         actorPlayerId: actorPlayerId,
         mapData: mapData,
+        transportNetwork: state.transportNetwork,
       ),
     );
   }
@@ -51,6 +52,7 @@ final class DomainMerchantRoutingCommandResolver {
         command: command,
         actorPlayerId: actorPlayerId,
         mapData: mapData,
+        transportNetwork: state.transportNetwork,
       ),
     );
   }

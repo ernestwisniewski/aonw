@@ -6314,6 +6314,32 @@ class AppLocalizationsNl extends AppLocalizations {
   String get selectionActionImprove => 'Verbeteren';
 
   @override
+  String get selectionActionBuildRoad => 'Weg bouwen';
+
+  @override
+  String get selectionActionRoadAlreadyBuilt =>
+      'Er ligt al een weg op deze tegel.';
+
+  @override
+  String get selectionActionRoadEnemyTerritory =>
+      'Wegen kunnen niet in vreemd gebied worden gebouwd.';
+
+  @override
+  String get selectionActionRoadInvalidTerrain =>
+      'Op dit terrein kan geen weg worden gebouwd.';
+
+  @override
+  String get selectionActionRoadCityCenter =>
+      'Wegen in stadscentra zijn impliciet.';
+
+  @override
+  String get selectionActionRoadUnavailable =>
+      'Hier kan geen weg worden gebouwd.';
+
+  @override
+  String get transportRoadName => 'Weg';
+
+  @override
   String get selectionActionSkip => 'Overslaan';
 
   @override

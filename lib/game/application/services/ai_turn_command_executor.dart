@@ -207,6 +207,7 @@ final class AiTurnCommandExecutor {
       ConfirmWorkerImprovementCommand() =>
         'confirm worker improvement for ${command.unitId}',
       AssignWorkerToHexCommand() => 'assign worker ${command.unitId} to hex',
+      BuildRoadCommand() => 'build road with worker ${command.unitId}',
       CancelWorkerAssignmentCommand() =>
         'cancel worker ${command.unitId} assignment',
       CancelWorkerJobCommand() => 'cancel worker ${command.unitId} job',

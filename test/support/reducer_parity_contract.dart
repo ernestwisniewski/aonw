@@ -11,6 +11,7 @@ const reducerParityRequiredFamilies = <String>{
   'city-production',
   'city-worked-hex',
   'detachment',
+  'infrastructure',
   'research',
   'resource-trade',
   'unit-actions',
@@ -62,6 +63,7 @@ const reducerParityRequiredRejectionReasons = <String, Set<String>>{
     'detachment_destination_unavailable',
     'detachment_source_out_of_bounds',
   },
+  'infrastructure': {'worker_not_controlled', 'road_construction_existingRoad'},
   'research': {'technology_player_not_controlled', 'technology_not_available'},
   'resource-trade': {
     'resource_trade_player_not_controlled',
@@ -85,6 +87,7 @@ final _reducerParityCommandMatchers = <String, _ReducerParityCommandMatcher>{
   'city-production': _matchesCityProductionCommand,
   'city-worked-hex': _matchesCityWorkedHexCommand,
   'detachment': _matchesDetachmentCommand,
+  'infrastructure': _matchesInfrastructureCommand,
   'research': _matchesResearchCommand,
   'resource-trade': _matchesResourceTradeCommand,
   'unit-actions': _matchesUnitActionCommand,
@@ -142,6 +145,10 @@ bool _matchesCityWorkedHexCommand(DomainCommand command) {
 
 bool _matchesDetachmentCommand(DomainCommand command) {
   return command is DetachTroopCommand;
+}
+
+bool _matchesInfrastructureCommand(DomainCommand command) {
+  return command is BuildRoadCommand;
 }
 
 bool _matchesResearchCommand(DomainCommand command) {

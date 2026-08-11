@@ -359,6 +359,7 @@
           "builtByCityId": "city_sentinel"
         }
       ],
+      "transportNetwork": [],
       "fogOfWar": [],
       "research": {
         "players": {
@@ -641,6 +642,7 @@
           "builtByCityId": "city_sentinel"
         }
       ],
+      "transportNetwork": [],
       "fogOfWar": [],
       "research": {
         "players": {

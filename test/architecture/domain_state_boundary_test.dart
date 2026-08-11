@@ -53,6 +53,7 @@ void main() {
         'cities': 'List<GameCity>',
         'artifacts': 'List<WorldArtifact>',
         'fieldImprovements': 'List<FieldImprovement>',
+        'transportNetwork': 'TransportNetworkState',
         'fogOfWar': 'FogOfWarState',
         'research': 'ResearchState',
         'wonderRegistry': 'WonderRegistry',

@@ -140,6 +140,11 @@ final class CancelWorkerAssignmentCommand extends UnitIdDomainCommand {
   const CancelWorkerAssignmentCommand(super.unitId);
 }
 
+/// Begins road construction on the worker's current hex.
+final class BuildRoadCommand extends UnitIdDomainCommand {
+  const BuildRoadCommand(super.unitId);
+}
+
 /// Player delegates target selection, travel, and work to the worker.
 final class AutomateWorkerCommand extends AutomatedUnitCommand {
   const AutomateWorkerCommand(super.unitId);

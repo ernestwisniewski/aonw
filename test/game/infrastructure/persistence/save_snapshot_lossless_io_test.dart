@@ -89,6 +89,7 @@ Map<String, dynamic> _expectedPersistenceJson() {
     'cities': <dynamic>[],
     'artifacts': <dynamic>[],
     'fieldImprovements': <dynamic>[],
+    'transportNetwork': <dynamic>[],
     'fogOfWar': <dynamic>[],
     'research': {'players': <String, dynamic>{}},
     'lifecycle': {

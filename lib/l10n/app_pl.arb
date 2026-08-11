@@ -3533,6 +3533,13 @@
     }
   },
   "selectionActionImprove": "Ulepsz",
+  "selectionActionBuildRoad": "Buduj drogę",
+  "selectionActionRoadAlreadyBuilt": "Na tym polu jest już droga.",
+  "selectionActionRoadEnemyTerritory": "Nie można budować dróg na obcym terytorium.",
+  "selectionActionRoadInvalidTerrain": "Na tym terenie nie można zbudować drogi.",
+  "selectionActionRoadCityCenter": "Połączenia drogowe w centrum miasta są domyślne.",
+  "selectionActionRoadUnavailable": "Nie można tu zbudować drogi.",
+  "transportRoadName": "Droga",
   "selectionActionSkip": "Pomiń",
   "selectionActionFortify": "Fortyfikuj",
   "selectionActionHeal": "Lecz",

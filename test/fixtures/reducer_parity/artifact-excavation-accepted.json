@@ -206,6 +206,7 @@
         }
       ],
       "fieldImprovements": [],
+      "transportNetwork": [],
       "fogOfWar": [],
       "research": {
         "players": {}
@@ -327,6 +328,7 @@
         }
       ],
       "fieldImprovements": [],
+      "transportNetwork": [],
       "fogOfWar": [],
       "research": {
         "players": {}

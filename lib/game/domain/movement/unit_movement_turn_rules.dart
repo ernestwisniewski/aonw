@@ -2,6 +2,7 @@ import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/movement.dart';
+import 'package:aonw_core/game/domain/transport.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -34,6 +35,7 @@ abstract final class UnitMovementTurnRules {
     Iterable<GameCity> cities = const [],
     DiplomacyState diplomacy = DiplomacyState.empty,
     FogOfWarState fogOfWar = FogOfWarState.empty,
+    TransportNetworkState transportNetwork = TransportNetworkState.empty,
   }) {
     final path = unit.queuedPath;
     if (path == null) return unit;
@@ -61,6 +63,7 @@ abstract final class UnitMovementTurnRules {
         tile: tile,
         visibility: visibility,
       ),
+      costResolver: InfrastructureAwareTraversalCostResolver(transportNetwork),
       canEnterOccupiedTile:
           ({
             required movingUnit,

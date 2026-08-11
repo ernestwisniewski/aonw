@@ -7,6 +7,7 @@ import 'package:aonw_core/game/domain/objective/map_objective.dart';
 import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/game/domain/technology/science_yield.dart';
 import 'package:aonw_core/game/domain/trade/resource_trade_agreement.dart';
+import 'package:aonw_core/game/domain/transport/transport_network_state.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_registry.dart';
 
@@ -20,6 +21,7 @@ final class TurnEconomyState {
     required this.cities,
     required this.artifacts,
     required this.fieldImprovements,
+    this.transportNetwork = TransportNetworkState.empty,
     required this.fogOfWar,
     required this.research,
     required this.wonderRegistry,
@@ -35,6 +37,7 @@ final class TurnEconomyState {
   final List<GameCity> cities;
   final List<WorldArtifact> artifacts;
   final List<FieldImprovement> fieldImprovements;
+  final TransportNetworkState transportNetwork;
   final FogOfWarState fogOfWar;
   final ResearchState research;
   final WonderRegistry wonderRegistry;
@@ -50,6 +53,7 @@ final class TurnEconomyState {
     List<GameCity>? cities,
     List<WorldArtifact>? artifacts,
     List<FieldImprovement>? fieldImprovements,
+    TransportNetworkState? transportNetwork,
     FogOfWarState? fogOfWar,
     ResearchState? research,
     WonderRegistry? wonderRegistry,
@@ -65,6 +69,7 @@ final class TurnEconomyState {
       cities: cities ?? this.cities,
       artifacts: artifacts ?? this.artifacts,
       fieldImprovements: fieldImprovements ?? this.fieldImprovements,
+      transportNetwork: transportNetwork ?? this.transportNetwork,
       fogOfWar: fogOfWar ?? this.fogOfWar,
       research: research ?? this.research,
       wonderRegistry: wonderRegistry ?? this.wonderRegistry,

@@ -13,6 +13,7 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
+import 'package:aonw_core/game/domain/transport.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 
@@ -123,6 +124,7 @@ final class GameClientState {
     List<GameCity> cities = const [],
     List<WorldArtifact> artifacts = const [],
     List<FieldImprovement> fieldImprovements = const [],
+    TransportNetworkState transportNetwork = TransportNetworkState.empty,
     FogOfWarState fogOfWar = FogOfWarState.empty,
     ResearchState research = ResearchState.empty,
     WonderRegistry wonderRegistry = WonderRegistry.empty,
@@ -167,6 +169,7 @@ final class GameClientState {
           cities: cities,
           artifacts: artifacts,
           fieldImprovements: fieldImprovements,
+          transportNetwork: transportNetwork,
           fogOfWar: fogOfWar,
           research: research,
           wonderRegistry: wonderRegistry,
@@ -207,6 +210,7 @@ final class GameClientState {
   List<GameCity> get cities => domain.cities;
   List<WorldArtifact> get artifacts => domain.artifacts;
   List<FieldImprovement> get fieldImprovements => domain.fieldImprovements;
+  TransportNetworkState get transportNetwork => domain.transportNetwork;
   FogOfWarState get fogOfWar => domain.fogOfWar;
   ResearchState get research => domain.research;
   WonderRegistry get wonderRegistry => domain.wonderRegistry;
@@ -252,6 +256,7 @@ final class GameClientState {
     List<GameCity>? cities,
     List<WorldArtifact>? artifacts,
     List<FieldImprovement>? fieldImprovements,
+    TransportNetworkState? transportNetwork,
     FogOfWarState? fogOfWar,
     ResearchState? research,
     WonderRegistry? wonderRegistry,
@@ -279,6 +284,7 @@ final class GameClientState {
       cities: cities,
       artifacts: artifacts,
       fieldImprovements: fieldImprovements,
+      transportNetwork: transportNetwork,
       fogOfWar: fogOfWar,
       research: research,
       wonderRegistry: wonderRegistry,

@@ -11,6 +11,7 @@ extension _BasicStrategyCombatRetreatPlanner
     final pathfinder = UnitMovementPathfinder(
       mapData: context.mapData,
       units: view.movementBlockingUnits,
+      costResolver: view.traversalCostResolver,
       canEnterTile: (tile) =>
           view.visibility.canSeeDynamicAt(tile.col, tile.row) &&
           !occupied.contains(_key(tile.col, tile.row)),

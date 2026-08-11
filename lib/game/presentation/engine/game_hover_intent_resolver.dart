@@ -221,6 +221,9 @@ final class GameHoverIntentResolver {
             tile: tile,
             visibility: visibility,
           ),
+      costResolver: InfrastructureAwareTraversalCostResolver(
+        state.transportNetwork,
+      ),
     );
     _movementPathfinder = pathfinder;
     _movementPathfinderUnitId = unit.id;

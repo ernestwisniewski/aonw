@@ -44,6 +44,7 @@ abstract final class _MovementTurnResetProcessor {
         units: currentAllUnits,
         cities: state.cities,
         mapData: mapView,
+        transportNetwork: state.transportNetwork,
       );
       if (routed.routeInvalidated) pathsInvalidated = true;
       if (routed.unit.type == GameUnitType.merchant &&
@@ -69,6 +70,7 @@ abstract final class _MovementTurnResetProcessor {
         cities: state.cities,
         diplomacy: state.diplomacy,
         fogOfWar: state.fogOfWar,
+        transportNetwork: state.transportNetwork,
       );
       if (validated.queuedPath == null) {
         if (unit.queuedPath != null) pathsInvalidated = true;
@@ -250,6 +252,9 @@ abstract final class _MovementTurnResetProcessor {
         unit: unit,
         tile: tile,
         visibility: visibility,
+      ),
+      costResolver: InfrastructureAwareTraversalCostResolver(
+        state.transportNetwork,
       ),
       canEnterOccupiedTile:
           ({

@@ -6316,6 +6316,32 @@ class AppLocalizationsEs extends AppLocalizations {
   String get selectionActionImprove => 'Mejorar';
 
   @override
+  String get selectionActionBuildRoad => 'Construir carretera';
+
+  @override
+  String get selectionActionRoadAlreadyBuilt =>
+      'Ya hay una carretera en esta casilla.';
+
+  @override
+  String get selectionActionRoadEnemyTerritory =>
+      'No se pueden construir carreteras en territorio extranjero.';
+
+  @override
+  String get selectionActionRoadInvalidTerrain =>
+      'No se puede construir una carretera en este terreno.';
+
+  @override
+  String get selectionActionRoadCityCenter =>
+      'Las carreteras están implícitas en los centros urbanos.';
+
+  @override
+  String get selectionActionRoadUnavailable =>
+      'No se puede construir una carretera aquí.';
+
+  @override
+  String get transportRoadName => 'Carretera';
+
+  @override
   String get selectionActionSkip => 'Omitir';
 
   @override

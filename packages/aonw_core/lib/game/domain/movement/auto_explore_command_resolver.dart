@@ -203,6 +203,7 @@ final class AutoExploreCommandResolver {
       fogOfWar: state.fogOfWar,
       diplomacy: state.diplomacy,
       playerIds: state.playerIds,
+      transportNetwork: state.transportNetwork,
     );
   }
 

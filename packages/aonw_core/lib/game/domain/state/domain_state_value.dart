@@ -39,7 +39,8 @@ bool _sameDomainEntities(DomainState left, DomainState right) {
   return listEquals(left.units, right.units) &&
       listEquals(left.cities, right.cities) &&
       listEquals(left.artifacts, right.artifacts) &&
-      listEquals(left.fieldImprovements, right.fieldImprovements);
+      listEquals(left.fieldImprovements, right.fieldImprovements) &&
+      left.transportNetwork == right.transportNetwork;
 }
 
 bool _sameDomainSystems(DomainState left, DomainState right) {
@@ -101,6 +102,7 @@ int _domainEntityHash(DomainState state) => Object.hash(
   Object.hashAll(state.cities),
   Object.hashAll(state.artifacts),
   Object.hashAll(state.fieldImprovements),
+  state.transportNetwork,
 );
 
 int _domainSystemsHash(DomainState state) => Object.hash(

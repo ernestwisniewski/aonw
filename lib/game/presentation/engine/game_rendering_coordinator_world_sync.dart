@@ -1,6 +1,20 @@
 part of 'game_rendering_coordinator.dart';
 
 extension _GameRenderingCoordinatorWorldSync on GameRenderingCoordinator {
+  void _syncTransportNetwork(GameClientState state) {
+    final visibility = state.activePlayerVisibility;
+    transportNetwork.sync(
+      parent: grid,
+      segments: state.transportNetwork.segments.where(
+        (segment) =>
+            segment.builtByPlayerId == state.activePlayerId ||
+            !visibility.isEnabled ||
+            visibility.canRememberStaticAt(segment.hex.col, segment.hex.row),
+      ),
+      cityCenters: state.citiesKnownToActivePlayer.map((city) => city.center),
+    );
+  }
+
   void _syncArtifactMarkers(GameClientState state, Component world) {
     final visibility = state.activePlayerVisibility;
     final occupiedHexes = {

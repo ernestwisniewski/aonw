@@ -152,6 +152,7 @@ final class GameRendererLifecycleHandler {
       unitMarkers: components.unitMarkers,
       movePreview: components.movePreview,
       fieldImprovementMarkers: components.fieldImprovements,
+      transportNetwork: components.transportNetwork,
       artifactMarkers: components.artifacts,
       mapObjectiveMarkers: components.mapObjectives,
       cityMarkers: components.cities,

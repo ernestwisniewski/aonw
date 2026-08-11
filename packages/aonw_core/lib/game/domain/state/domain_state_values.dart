@@ -41,6 +41,7 @@ final class _DomainStateContent {
     required this.cities,
     required this.artifacts,
     required this.fieldImprovements,
+    required this.transportNetwork,
     required this.fogOfWar,
     required this.research,
     required this.wonderRegistry,
@@ -59,6 +60,7 @@ final class _DomainStateContent {
   final List<GameCity> cities;
   final List<WorldArtifact> artifacts;
   final List<FieldImprovement> fieldImprovements;
+  final TransportNetworkState transportNetwork;
   final FogOfWarState fogOfWar;
   final ResearchState research;
   final WonderRegistry wonderRegistry;

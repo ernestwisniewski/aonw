@@ -7,6 +7,7 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/transport.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -65,6 +66,7 @@ abstract final class TurnWorkerAutomationAdvancer {
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required PaceBalance paceBalance,
+    required TransportNetworkState transportNetwork,
   }) {
     final progress = _TurnWorkerAutomationProgress(
       units: units,
@@ -85,6 +87,7 @@ abstract final class TurnWorkerAutomationAdvancer {
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
         paceBalance: paceBalance,
+        transportNetwork: transportNetwork,
       );
       if (result != null) progress.absorb(result);
     }
@@ -103,6 +106,7 @@ abstract final class TurnWorkerAutomationAdvancer {
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required PaceBalance paceBalance,
+    required TransportNetworkState transportNetwork,
   }) {
     final unit = _unitById(progress.units, unitId);
     if (unit == null || !_canAdvance(unit, playerIds)) return null;
@@ -114,6 +118,7 @@ abstract final class TurnWorkerAutomationAdvancer {
       fogOfWar: progress.fogOfWar,
       diplomacy: progress.diplomacy,
       actions: progress.interaction,
+      transportNetwork: transportNetwork,
     );
     final DomainWorkerAutomationCommandResolver resolver =
         DomainWorkerAutomationCommandResolver(fogOfWarService: fogOfWarService);

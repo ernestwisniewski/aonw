@@ -113,7 +113,7 @@ void main() {
           jsonDecode(await snapshotFile.readAsString()) as Map<String, dynamic>;
       ((raw['state'] as Map<String, dynamic>)['save']
               as Map<String, dynamic>)['schemaVersion'] =
-          4;
+          gameSaveCurrentSchemaVersion + 1;
       await snapshotFile.writeAsString(jsonEncode(raw));
 
       final saves = await repository.list();

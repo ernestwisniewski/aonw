@@ -3516,6 +3516,13 @@
     }
   },
   "selectionActionImprove": "Améliorer",
+  "selectionActionBuildRoad": "Construire une route",
+  "selectionActionRoadAlreadyBuilt": "Cette case possède déjà une route.",
+  "selectionActionRoadEnemyTerritory": "Les routes ne peuvent pas être construites en territoire étranger.",
+  "selectionActionRoadInvalidTerrain": "Une route ne peut pas être construite sur ce terrain.",
+  "selectionActionRoadCityCenter": "Les routes sont implicites dans les centres-villes.",
+  "selectionActionRoadUnavailable": "Une route ne peut pas être construite ici.",
+  "transportRoadName": "Route",
   "selectionActionSkip": "Sauter",
   "selectionActionFortify": "Fortifier",
   "selectionActionHeal": "Guérison",

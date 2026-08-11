@@ -45,6 +45,7 @@ const _stateFields = {
   'fogOfWar': 'FogOfWarState',
   'diplomacy': 'DiplomacyState',
   'playerIds': 'Iterable<String>',
+  'transportNetwork': 'TransportNetworkState',
 };
 
 const _resultFields = {
@@ -134,6 +135,11 @@ List<String> movementStateShapeViolations(String? source) =>
           _ParameterShape('fogOfWar', 'FogOfWarState', required: true),
           _ParameterShape('diplomacy', 'DiplomacyState', required: true),
           _ParameterShape('playerIds', 'Iterable<String>', required: true),
+          _ParameterShape(
+            'transportNetwork',
+            'TransportNetworkState',
+            defaultValue: 'TransportNetworkState.empty',
+          ),
         ],
       },
       expectedPublicMethods: const {},

@@ -7,11 +7,13 @@ class UnitMovementPlanner {
   final MapTraversalView mapData;
   final List<GameUnit> units;
   final bool Function(MapTileView tile)? canEnterTile;
+  final UnitTraversalCostResolver costResolver;
 
   UnitMovementPlanner({
     required this.mapData,
     required Iterable<GameUnit> units,
     this.canEnterTile,
+    this.costResolver = const TerrainTraversalCostResolver(),
   }) : units = List.unmodifiable(units);
 
   UnitMovementPlan? planMove({
@@ -23,6 +25,7 @@ class UnitMovementPlanner {
       mapData: mapData,
       units: units,
       canEnterTile: canEnterTile,
+      costResolver: costResolver,
     ).plan(
       unit: unit,
       targetTile: targetTile,

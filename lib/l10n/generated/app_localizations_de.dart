@@ -6319,6 +6319,32 @@ class AppLocalizationsDe extends AppLocalizations {
   String get selectionActionImprove => 'Verbessern';
 
   @override
+  String get selectionActionBuildRoad => 'Straße bauen';
+
+  @override
+  String get selectionActionRoadAlreadyBuilt =>
+      'Auf diesem Feld gibt es bereits eine Straße.';
+
+  @override
+  String get selectionActionRoadEnemyTerritory =>
+      'Straßen können nicht in fremdem Gebiet gebaut werden.';
+
+  @override
+  String get selectionActionRoadInvalidTerrain =>
+      'Auf diesem Gelände kann keine Straße gebaut werden.';
+
+  @override
+  String get selectionActionRoadCityCenter =>
+      'Straßen in Stadtzentren sind implizit.';
+
+  @override
+  String get selectionActionRoadUnavailable =>
+      'Hier kann keine Straße gebaut werden.';
+
+  @override
+  String get transportRoadName => 'Straße';
+
+  @override
   String get selectionActionSkip => 'Überspringen';
 
   @override

@@ -27,7 +27,9 @@ final class EconomySimulationCommandStats {
         startWonder += 1;
       case SetCitySpecializationCommand():
         break;
-      case SelectWorkerImprovementCommand() || AssignWorkerToHexCommand():
+      case SelectWorkerImprovementCommand() ||
+          AssignWorkerToHexCommand() ||
+          BuildRoadCommand():
         workerJob += 1;
       case MoveUnitCommand():
         move += 1;

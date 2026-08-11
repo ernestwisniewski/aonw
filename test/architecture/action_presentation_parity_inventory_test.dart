@@ -24,7 +24,7 @@ void main() {
       presentationGameIntents.map((intent) => '${intent.runtimeType}').toSet(),
       intents,
     );
-    expect(domainCommands, hasLength(38));
+    expect(domainCommands, hasLength(39));
     expect(intents, hasLength(27));
   });
 

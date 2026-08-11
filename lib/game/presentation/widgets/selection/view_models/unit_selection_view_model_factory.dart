@@ -218,7 +218,9 @@ abstract final class UnitSelectionViewModelFactory {
     required String Function(FieldImprovementType type) improvementName,
   }) {
     final job = unit.workerJob!;
-    final name = improvementName(job.improvementType);
+    final name = job.buildsRoad
+        ? l10n.transportRoadName
+        : improvementName(job.improvementType!);
     return l10n.unitSelectionWorkerJobTurns(name, job.remainingTurns);
   }
 }

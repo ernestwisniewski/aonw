@@ -6279,6 +6279,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectionActionImprove => 'Improve';
 
   @override
+  String get selectionActionBuildRoad => 'Build road';
+
+  @override
+  String get selectionActionRoadAlreadyBuilt =>
+      'There is already a road on this tile.';
+
+  @override
+  String get selectionActionRoadEnemyTerritory =>
+      'Roads cannot be built in foreign territory.';
+
+  @override
+  String get selectionActionRoadInvalidTerrain =>
+      'A road cannot be built on this terrain.';
+
+  @override
+  String get selectionActionRoadCityCenter =>
+      'Roads are implicit in city centers.';
+
+  @override
+  String get selectionActionRoadUnavailable => 'A road cannot be built here.';
+
+  @override
+  String get transportRoadName => 'Road';
+
+  @override
   String get selectionActionSkip => 'Skip';
 
   @override

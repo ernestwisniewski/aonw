@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/movement/merchant_trade_route_rules.dart';
 import 'package:aonw_core/game/domain/movement/queued_move_path.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
+import 'package:aonw_core/game/domain/transport/transport_network_state.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
@@ -36,6 +37,7 @@ abstract final class MerchantRoutingCommandResolver {
     required AssignMerchantTradeRouteCommand command,
     required String actorPlayerId,
     required MapTraversalView mapData,
+    TransportNetworkState transportNetwork = TransportNetworkState.empty,
   }) {
     final controlled = _controlledMerchant(
       units,
@@ -71,6 +73,7 @@ abstract final class MerchantRoutingCommandResolver {
       mapData: mapData,
       units: units,
       cities: cities,
+      transportNetwork: transportNetwork,
     );
     if (route == null) return _reject(units, 'merchant_route_not_found');
 
@@ -89,6 +92,7 @@ abstract final class MerchantRoutingCommandResolver {
     required MoveMerchantToCityCommand command,
     required String actorPlayerId,
     required MapTraversalView mapData,
+    TransportNetworkState transportNetwork = TransportNetworkState.empty,
   }) {
     final controlled = _controlledMerchant(
       units,
@@ -117,6 +121,7 @@ abstract final class MerchantRoutingCommandResolver {
       mapData: mapData,
       units: units,
       cities: cities,
+      transportNetwork: transportNetwork,
     );
     if (plan == null) return _reject(units, 'merchant_city_path_not_found');
 

@@ -3516,6 +3516,13 @@
     }
   },
   "selectionActionImprove": "Verbeteren",
+  "selectionActionBuildRoad": "Weg bouwen",
+  "selectionActionRoadAlreadyBuilt": "Er ligt al een weg op deze tegel.",
+  "selectionActionRoadEnemyTerritory": "Wegen kunnen niet in vreemd gebied worden gebouwd.",
+  "selectionActionRoadInvalidTerrain": "Op dit terrein kan geen weg worden gebouwd.",
+  "selectionActionRoadCityCenter": "Wegen in stadscentra zijn impliciet.",
+  "selectionActionRoadUnavailable": "Hier kan geen weg worden gebouwd.",
+  "transportRoadName": "Weg",
   "selectionActionSkip": "Overslaan",
   "selectionActionFortify": "Versterken",
   "selectionActionHeal": "Genezen",

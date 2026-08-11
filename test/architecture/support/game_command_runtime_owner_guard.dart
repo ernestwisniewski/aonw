@@ -24,6 +24,7 @@ const focusedGameEngineHandlers = <String>{
   'ProductionEngineHandler',
   'ResearchEngineHandler',
   'TurnEngineHandler',
+  'TransportInfrastructureEngineHandler',
   'UnitActionEngineHandler',
   'WorkerEngineHandler',
 };

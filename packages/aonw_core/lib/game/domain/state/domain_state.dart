@@ -10,6 +10,7 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state/game_mode.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
+import 'package:aonw_core/game/domain/transport.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/util/collection_equality.dart';
@@ -95,6 +96,7 @@ final class DomainState {
     List<GameCity> cities = const [],
     List<WorldArtifact> artifacts = const [],
     List<FieldImprovement> fieldImprovements = const [],
+    TransportNetworkState transportNetwork = TransportNetworkState.empty,
     FogOfWarState fogOfWar = FogOfWarState.empty,
     ResearchState research = ResearchState.empty,
     WonderRegistry wonderRegistry = WonderRegistry.empty,
@@ -140,6 +142,7 @@ final class DomainState {
         cities: _immutableDomainCities(cities),
         artifacts: _immutableDomainList(artifacts),
         fieldImprovements: _immutableDomainList(fieldImprovements),
+        transportNetwork: transportNetwork,
         fogOfWar: fogOfWar,
         research: research,
         wonderRegistry: wonderRegistry,
@@ -182,6 +185,7 @@ final class DomainState {
        cities = content.cities,
        artifacts = content.artifacts,
        fieldImprovements = content.fieldImprovements,
+       transportNetwork = content.transportNetwork,
        fogOfWar = content.fogOfWar,
        research = content.research,
        wonderRegistry = content.wonderRegistry,
@@ -221,6 +225,7 @@ final class DomainState {
   final List<GameCity> cities;
   final List<WorldArtifact> artifacts;
   final List<FieldImprovement> fieldImprovements;
+  final TransportNetworkState transportNetwork;
   final FogOfWarState fogOfWar;
   final ResearchState research;
   final WonderRegistry wonderRegistry;
@@ -263,6 +268,7 @@ final class DomainState {
     for (final unit in units) unit.ownerPlayerId,
     for (final city in cities) city.ownerPlayerId,
     for (final city in cities) ?city.foundingOwnerPlayerId,
+    for (final segment in transportNetwork.segments) segment.builtByPlayerId,
     for (final relation in diplomacy.relations.values) ...[
       relation.playerAId,
       relation.playerBId,
@@ -288,6 +294,7 @@ final class DomainState {
     List<GameCity>? cities,
     List<WorldArtifact>? artifacts,
     List<FieldImprovement>? fieldImprovements,
+    TransportNetworkState? transportNetwork,
     FogOfWarState? fogOfWar,
     ResearchState? research,
     WonderRegistry? wonderRegistry,
@@ -316,6 +323,7 @@ final class DomainState {
     cities: cities,
     artifacts: artifacts,
     fieldImprovements: fieldImprovements,
+    transportNetwork: transportNetwork,
     fogOfWar: fogOfWar,
     research: research,
     wonderRegistry: wonderRegistry,

@@ -171,6 +171,25 @@ final _playerMatchViewState = DomainState.snapshot(
       builtByCityId: 'hidden-enemy-city',
     ),
   ],
+  transportNetwork: TransportNetworkState(
+    segments: const [
+      TransportSegment(
+        hex: HexCoord(col: 7, row: 7),
+        builtByPlayerId: 'player-owner',
+        builtByCityId: 'own-city',
+      ),
+      TransportSegment(
+        hex: HexCoord(col: 4, row: 4),
+        builtByPlayerId: 'player-guest',
+        builtByCityId: 'visible-enemy-city',
+      ),
+      TransportSegment(
+        hex: HexCoord(col: 6, row: 6),
+        builtByPlayerId: 'player-guest',
+        builtByCityId: 'hidden-enemy-city',
+      ),
+    ],
+  ),
   fogOfWar: FogOfWarState(
     players: {
       'player-owner': _playerMatchViewOwnerFog,

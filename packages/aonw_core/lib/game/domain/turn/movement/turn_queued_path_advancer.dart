@@ -8,6 +8,8 @@ import 'package:aonw_core/game/domain/movement/unit_movement_feasibility.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_visibility_rules.dart';
+import 'package:aonw_core/game/domain/movement/unit_traversal_cost_resolver.dart';
+import 'package:aonw_core/game/domain/transport/transport_network_state.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
@@ -27,6 +29,7 @@ abstract final class TurnQueuedPathAdvancer {
     required List<GameCity> cities,
     required DiplomacyState diplomacy,
     required FogOfWarState fogOfWar,
+    TransportNetworkState transportNetwork = TransportNetworkState.empty,
   }) {
     final path = unit.queuedPath;
     if (path == null) return TurnQueuedPathAdvance(unit: unit);
@@ -57,6 +60,7 @@ abstract final class TurnQueuedPathAdvancer {
         tile: tile,
         visibility: visibility,
       ),
+      costResolver: InfrastructureAwareTraversalCostResolver(transportNetwork),
       canEnterOccupiedTile:
           ({
             required movingUnit,

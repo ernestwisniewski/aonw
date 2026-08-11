@@ -17,6 +17,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/transport.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/widgets.dart';
 
@@ -47,6 +48,7 @@ List<Widget> buildHudSelectionActionChips({
   required VoidCallback onMoveSelectedUnit,
   required VoidCallback onAutoExploreSelectedUnit,
   required VoidCallback onAutomateSelectedWorker,
+  required VoidCallback onBuildRoad,
   required VoidCallback onStartAttackTargeting,
   required VoidCallback onCancelAttackTargeting,
   required VoidCallback onShowArmy,
@@ -120,6 +122,7 @@ List<Widget> buildHudSelectionActionChips({
         onMoveSelectedUnit: onMoveSelectedUnit,
         onAutoExploreSelectedUnit: onAutoExploreSelectedUnit,
         onAutomateSelectedWorker: onAutomateSelectedWorker,
+        onBuildRoad: onBuildRoad,
         onStartAttackTargeting: onStartAttackTargeting,
         onCancelAttackTargeting: onCancelAttackTargeting,
         onShowArmy: onShowArmy,

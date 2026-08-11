@@ -12,6 +12,7 @@ import 'package:aonw/game/presentation/engine/rendering_layers/effects/era_tint_
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_war_overlay_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/threat_overlay_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/transport/transport_network_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview_layer.dart';
@@ -81,6 +82,7 @@ GameRenderingCoordinator _coordinator({
     movePreview: movePreview,
     fieldImprovementMarkers:
         fieldImprovementMarkers ?? _NoopFieldImprovementMarkerLayer(),
+    transportNetwork: TransportNetworkLayer(),
     artifactMarkers: artifactMarkers ?? _NoopArtifactMarkerLayer(),
     mapObjectiveMarkers: mapObjectiveMarkers ?? _NoopMapObjectiveMarkerLayer(),
     cityMarkers: cityMarkers ?? _NoopCityMarkerLayer(),
