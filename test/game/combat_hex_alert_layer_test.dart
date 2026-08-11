@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_hex_alert_layer.dart';
+import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flame/components.dart';
@@ -205,6 +206,66 @@ void main() {
       );
 
       expect(layer.hasAlertForTesting('attacker:unit_1'), isFalse);
+    });
+
+    test('moves attacker and attacked cues with their live unit markers', () {
+      final unitPositions = <String, Vector2>{
+        'attacker': Vector2(100, 200),
+        'defender': Vector2(300, 400),
+      };
+      final layer = CombatHexAlertLayer(
+        unitPositionFor: (unitId) => unitPositions[unitId]?.clone(),
+      );
+      final parent = Component();
+
+      layer
+        ..show(
+          parent: parent,
+          effect: const ShowCombatHexAlertEffect(
+            id: 'attacker:attacker',
+            unitId: 'attacker',
+            ownerPlayerId: 'player_1',
+            col: 2,
+            row: 3,
+            kind: CombatHexAlertKind.attacker,
+          ),
+        )
+        ..show(
+          parent: parent,
+          effect: const ShowCombatHexAlertEffect(
+            id: 'defender:defender',
+            unitId: 'defender',
+            ownerPlayerId: 'player_2',
+            col: 4,
+            row: 5,
+            kind: CombatHexAlertKind.attacked,
+          ),
+        );
+
+      unitPositions
+        ..['attacker'] = Vector2(115, 200 + 10 * HexGrid.perspectiveY)
+        ..['defender'] = Vector2(270, 400 + 20 * HexGrid.perspectiveY);
+      layer.update(0.1);
+
+      final attackerOffset = layer.alertGridOffsetForTesting(
+        'attacker:attacker',
+      );
+      final defenderOffset = layer.alertGridOffsetForTesting(
+        'defender:defender',
+      );
+      expect(attackerOffset.x, closeTo(15, 0.001));
+      expect(attackerOffset.y, closeTo(10, 0.001));
+      expect(defenderOffset.x, closeTo(-30, 0.001));
+      expect(defenderOffset.y, closeTo(20, 0.001));
+
+      unitPositions.remove('defender');
+      layer.update(0.1);
+
+      final removedDefenderOffset = layer.alertGridOffsetForTesting(
+        'defender:defender',
+      );
+      expect(removedDefenderOffset.x, closeTo(-30, 0.001));
+      expect(removedDefenderOffset.y, closeTo(20, 0.001));
     });
 
     test('keeps a fortification marker attached to the detected enemy', () {

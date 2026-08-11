@@ -31,7 +31,7 @@ extension CityMarkerTestView on CityMarker {
 
   bool get paintsCityTokenForTesting => true;
 
-  double get labelMaxWidthForTesting => _labelMaxWidth;
+  double get labelMaxWidthForTesting => CityMarker._labelMaxWidth;
 
   double get labelOwnerDotRadiusForTesting => 0;
 
@@ -39,7 +39,8 @@ extension CityMarkerTestView on CityMarker {
 
   bool get paintsCapitalStarForTesting => _shouldPaintLabel && _isCapital;
 
-  double get labelCapitalStarRadiusForTesting => _labelCapitalStarRadius;
+  double get labelCapitalStarRadiusForTesting =>
+      CityMarker._labelCapitalStarRadius;
 
   bool get usesTypeIconBadgeForTesting => false;
 
@@ -75,7 +76,7 @@ extension CityMarkerTestView on CityMarker {
 
   Rect get cityHealthBarRectForTesting {
     if (!paintsCityHealthBarForTesting) return Rect.zero;
-    final center = Offset(_width / 2, _height / 2);
+    final center = Offset(CityMarker._width / 2, CityMarker._height / 2);
     final spriteBounds = _spriteBoundsFor(center);
     return MarkerHealthBar.healthRect(
       center: center,
@@ -92,17 +93,17 @@ extension CityMarkerTestView on CityMarker {
   Vector2 get markerSizeForTesting => size.clone();
 
   Rect get spriteBoundsForTesting =>
-      _spriteBoundsFor(Offset(_width / 2, _height / 2));
+      _spriteBoundsFor(Offset(CityMarker._width / 2, CityMarker._height / 2));
 
   Path get spriteClipPathForTesting =>
       BoardAssetCapPainter.clipPathFor(spriteBoundsForTesting);
 
-  BoardAssetCapStyle get boardCapStyleForTesting => _capStyle;
+  BoardAssetCapStyle get boardCapStyleForTesting => CityMarker._capStyle;
 
-  double get sourceInsetForTesting => _sourceInset;
+  double get sourceInsetForTesting => CityMarker._sourceInset;
 
   double get statusTopForTesting {
-    final center = Offset(_width / 2, _height / 2);
+    final center = Offset(CityMarker._width / 2, CityMarker._height / 2);
     return _statusTopFor(_spriteBoundsFor(center));
   }
 }

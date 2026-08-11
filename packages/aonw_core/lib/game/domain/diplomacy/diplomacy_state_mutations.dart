@@ -196,8 +196,9 @@ mixin _DiplomacyStateMutations {
 
   DiplomacyState addContact(String playerAId, String playerBId) {
     final key = _stateRelationKey(playerAId, playerBId);
-    if (key.isEmpty || _stateOf(this).contactKeys.contains(key))
+    if (key.isEmpty || _stateOf(this).contactKeys.contains(key)) {
       return _stateOf(this);
+    }
     return addContactKeys([key]);
   }
 
@@ -238,8 +239,9 @@ mixin _DiplomacyStateMutations {
   }
 
   DiplomacyState removeProposal(String proposalId) {
-    if (!_stateOf(this).pendingProposals.containsKey(proposalId))
+    if (!_stateOf(this).pendingProposals.containsKey(proposalId)) {
       return _stateOf(this);
+    }
     final next = Map<String, DiplomaticProposal>.from(
       _stateOf(this).pendingProposals,
     )..remove(proposalId);

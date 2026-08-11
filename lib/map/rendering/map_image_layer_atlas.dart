@@ -13,7 +13,12 @@ extension _MapImageLayerAtlas on MapImageLayer {
       canvas
         ..save()
         ..clipPath(slice.clipPath)
-        ..drawImageRect(slice.image, slice.src, slice.dst, _imagePaint)
+        ..drawImageRect(
+          slice.image,
+          slice.src,
+          slice.dst,
+          MapImageLayer._imagePaint,
+        )
         ..restore();
     }
   }
@@ -29,7 +34,7 @@ extension _MapImageLayerAtlas on MapImageLayer {
     canvas
       ..save()
       ..clipPath(clipPath)
-      ..drawImageRect(atlas, src, dst, _imagePaint)
+      ..drawImageRect(atlas, src, dst, MapImageLayer._imagePaint)
       ..restore();
     return true;
   }
@@ -63,7 +68,12 @@ extension _MapImageLayerAtlas on MapImageLayer {
       canvas
         ..save()
         ..clipPath(slice.clipPath)
-        ..drawImageRect(slice.image, slice.src, slice.dst, _imagePaint)
+        ..drawImageRect(
+          slice.image,
+          slice.src,
+          slice.dst,
+          MapImageLayer._imagePaint,
+        )
         ..restore();
     }
     final picture = recorder.endRecording();

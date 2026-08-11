@@ -1,6 +1,6 @@
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/map/unit_anchored_hex_motion_tracker.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
-import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_outline_painter.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
@@ -21,7 +21,9 @@ final class ActionTargetHexFocusLayer extends PositionComponent
     double hexRadius = MapConfig.defaultHexRadius,
     Vector2? Function(String unitId)? unitPositionFor,
   }) : _hexRadius = hexRadius,
-       _unitPositionFor = unitPositionFor ?? _missingUnitPosition,
+       _motionTracker = UnitAnchoredHexMotionTracker(
+         unitPositionFor: unitPositionFor ?? _missingUnitPosition,
+       ),
        _geometry = HexTileGeometryLayout.build(
          hexRadius: hexRadius,
          liftOffset: 0,
@@ -42,12 +44,11 @@ final class ActionTargetHexFocusLayer extends PositionComponent
   static const double _visibleFraction = 0.64;
 
   final double _hexRadius;
-  final Vector2? Function(String unitId) _unitPositionFor;
+  final UnitAnchoredHexMotionTracker _motionTracker;
   final HexTileGeometrySnapshot _geometry;
   final HexOutlinePainter _outlinePainter;
 
   String? _unitId;
-  Vector2? _unitWorldPositionOrigin;
   late Vector2 _hexPositionOrigin;
   int? _col;
   int? _row;
@@ -70,7 +71,7 @@ final class ActionTargetHexFocusLayer extends PositionComponent
       row: effect.row,
       hexRadius: _hexRadius,
     );
-    _unitWorldPositionOrigin = _trackedUnitWorldPosition();
+    _motionTracker.anchorTo(effect.unitId);
     position = _hexPositionOrigin.clone();
     _durationSeconds =
         effect.duration.inMicroseconds / Duration.microsecondsPerSecond;
@@ -114,22 +115,7 @@ final class ActionTargetHexFocusLayer extends PositionComponent
   }
 
   void _syncTrackedUnitPosition() {
-    final current = _trackedUnitWorldPosition();
-    if (current == null) return;
-    final origin = _unitWorldPositionOrigin;
-    if (origin == null) {
-      _unitWorldPositionOrigin = current.clone();
-      return;
-    }
-    position = Vector2(
-      _hexPositionOrigin.x + current.x - origin.x,
-      _hexPositionOrigin.y + (current.y - origin.y) / HexGrid.perspectiveY,
-    );
-  }
-
-  Vector2? _trackedUnitWorldPosition() {
-    final unitId = _unitId;
-    return unitId == null ? null : _unitPositionFor(unitId);
+    position = _hexPositionOrigin + _motionTracker.currentGridOffset();
   }
 
   static Vector2? _missingUnitPosition(String _) => null;

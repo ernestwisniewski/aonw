@@ -26,7 +26,7 @@
       },
       "callableLines": {
         "packages/aonw_core/lib/ai/telemetry/balance_runner.dart": 1216,
-        "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state.dart": 1183
+        "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state.dart": 1182
       },
       "cyclomaticComplexity": {
         "packages/aonw_core/lib/ai/production_scorer.dart": 258,

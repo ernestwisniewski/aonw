@@ -84,7 +84,9 @@ final class GameRendererComponents {
       reduceMotion: reduceMotion,
       unitPositionFor: unitMarkers.worldPositionForUnit,
     );
-    combatAlerts = CombatHexAlertLayer();
+    combatAlerts = CombatHexAlertLayer(
+      unitPositionFor: unitMarkers.worldPositionForUnit,
+    );
     actionTargetHexFocus = ActionTargetHexFocusLayer(
       unitPositionFor: unitMarkers.worldPositionForUnit,
     );

@@ -33,17 +33,18 @@ extension _RecommendedCitySiteSelection on RecommendedCitySitePlanner {
     if (candidates.isEmpty) return const <(int, int)>{};
 
     final maxCount = _recommendedCitySiteCountFor(candidates.length);
-    final guaranteedCount = _minimumRecommendedCitySiteCount.clamp(
-      0,
-      candidates.length,
-    );
+    final guaranteedCount = RecommendedCitySitePlanner
+        ._minimumRecommendedCitySiteCount
+        .clamp(0, candidates.length);
     final bestScore = candidates.first.score;
     final recommended = <(int, int)>{};
     for (var index = 0; index < candidates.length; index++) {
       final candidate = candidates[index];
       if (index >= maxCount) break;
       if (index >= guaranteedCount &&
-          candidate.score < bestScore - _recommendedCitySiteScoreWindow) {
+          candidate.score <
+              bestScore -
+                  RecommendedCitySitePlanner._recommendedCitySiteScoreWindow) {
         break;
       }
       recommended.add((candidate.col, candidate.row));
@@ -55,8 +56,8 @@ extension _RecommendedCitySiteSelection on RecommendedCitySitePlanner {
   int _recommendedCitySiteCountFor(int candidateCount) {
     final scaledCount = (candidateCount / 5).ceil() + 3;
     return scaledCount.clamp(
-      _minimumRecommendedCitySiteCount,
-      _maximumRecommendedCitySiteCount,
+      RecommendedCitySitePlanner._minimumRecommendedCitySiteCount,
+      RecommendedCitySitePlanner._maximumRecommendedCitySiteCount,
     );
   }
 

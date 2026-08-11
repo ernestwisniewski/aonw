@@ -23,8 +23,10 @@ class SteamAuthService {
   SteamAuthService({
     SteamOpenIdVerification? openIdVerifier,
     AuthRequestLimiter? rateLimiter,
+    Uri? publicWebBaseUri,
   }) : _openIdVerifier = openIdVerifier ?? SteamOpenIdVerifier(),
-       _rateLimiter = rateLimiter ?? DatabaseAuthRateLimiter();
+       _rateLimiter = rateLimiter ?? DatabaseAuthRateLimiter(),
+       _publicWebBaseUri = publicWebBaseUri;
 
   static const authMethod = 'steam';
   static const callbackPath = '/auth/steam/callback';
@@ -43,6 +45,7 @@ class SteamAuthService {
 
   final SteamOpenIdVerification _openIdVerifier;
   final AuthRequestLimiter _rateLimiter;
+  final Uri? _publicWebBaseUri;
 
   Future<SteamAuthStart> start(Session session) async {
     await _rateLimiter.enforce(session, action: AuthRateLimitAction.steamStart);
@@ -271,6 +274,14 @@ class SteamAuthService {
   }
 
   Uri _publicWebUri(String path, Map<String, String> queryParameters) {
+    final configuredBase = _publicWebBaseUri;
+    if (configuredBase != null) {
+      return configuredBase.replace(
+        path: path,
+        queryParameters: queryParameters,
+        fragment: null,
+      );
+    }
     final config =
         Serverpod.instance.config.webServer ??
         Serverpod.instance.config.apiServer;
@@ -286,6 +297,16 @@ class SteamAuthService {
   }
 
   String _publicWebOrigin() {
+    final configuredBase = _publicWebBaseUri;
+    if (configuredBase != null) {
+      return Uri(
+        scheme: configuredBase.scheme,
+        userInfo: configuredBase.userInfo,
+        host: configuredBase.host,
+        port: configuredBase.hasPort ? configuredBase.port : null,
+        path: '/',
+      ).toString();
+    }
     final config =
         Serverpod.instance.config.webServer ??
         Serverpod.instance.config.apiServer;

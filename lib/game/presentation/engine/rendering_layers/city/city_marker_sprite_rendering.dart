@@ -2,7 +2,7 @@ part of 'city_marker.dart';
 
 extension _CityMarkerSpriteRendering on CityMarker {
   bool _paintCitySprite(Canvas canvas, Offset center) {
-    final image = HexIconCache.imageFor(_citySpritePath);
+    final image = HexIconCache.imageFor(CityMarker._citySpritePath);
     if (image == null) {
       _paintFallbackIcon(canvas, center);
       return false;
@@ -38,15 +38,18 @@ extension _CityMarkerSpriteRendering on CityMarker {
   void _paintStoredArtifactBadge(Canvas canvas, {required Rect spriteBounds}) {
     if (!_hasStoredArtifact) return;
     final center = Offset(
-      spriteBounds.left - _artifactBadgeRadius - 2,
-      spriteBounds.top + _artifactBadgeRadius + 4,
+      spriteBounds.left - CityMarker._artifactBadgeRadius - 2,
+      spriteBounds.top + CityMarker._artifactBadgeRadius + 4,
     );
-    final outer = Rect.fromCircle(center: center, radius: _artifactBadgeRadius);
+    final outer = Rect.fromCircle(
+      center: center,
+      radius: CityMarker._artifactBadgeRadius,
+    );
     final inner = outer.deflate(1.5);
     canvas
       ..drawCircle(
         center.translate(0, 1.2),
-        _artifactBadgeRadius + 1.6,
+        CityMarker._artifactBadgeRadius + 1.6,
         HudPaint.shadow(alpha: MapAlpha.regular),
       )
       ..drawOval(outer, HudPaint.fill(HudPalette.bg, alpha: MapAlpha.solid))
@@ -76,7 +79,7 @@ extension _CityMarkerSpriteRendering on CityMarker {
     );
     BoardAssetCapPainter.paint(
       canvas: canvas,
-      style: _capStyle,
+      style: CityMarker._capStyle,
       image: image,
       sourceRect: baseSourceRect,
       topRect: destination,

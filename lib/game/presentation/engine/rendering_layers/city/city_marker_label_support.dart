@@ -1,7 +1,8 @@
 part of 'city_marker.dart';
 
 extension _CityMarkerLabelSupport on CityMarker {
-  Rect _spriteBoundsFor(Offset center) => _capStyle.topRectFor(center);
+  Rect _spriteBoundsFor(Offset center) =>
+      CityMarker._capStyle.topRectFor(center);
 
   bool get _shouldPaintLabel => _showLabel || _selected;
 
@@ -17,9 +18,12 @@ extension _CityMarkerLabelSupport on CityMarker {
   }) {
     return Rect.fromLTWH(
       center.dx - width / 2,
-      statusTop - _labelHeight - _labelTopGap - _cityLabelHealthBarOffset,
+      statusTop -
+          CityMarker._labelHeight -
+          CityMarker._labelTopGap -
+          _cityLabelHealthBarOffset,
       width,
-      _labelHeight,
+      CityMarker._labelHeight,
     );
   }
 
@@ -29,8 +33,8 @@ extension _CityMarkerLabelSupport on CityMarker {
   void _paintCapitalStar(Canvas canvas, Offset center) {
     final path = _starPath(
       center: center,
-      outerRadius: _labelCapitalStarRadius,
-      innerRadius: _labelCapitalStarRadius * 0.47,
+      outerRadius: CityMarker._labelCapitalStarRadius,
+      innerRadius: CityMarker._labelCapitalStarRadius * 0.47,
     );
     canvas
       ..drawPath(path, HudPaint.fill(HudPalette.goldLight))
@@ -67,9 +71,10 @@ extension _CityMarkerLabelSupport on CityMarker {
     return path..close();
   }
 
-  int get _spriteRow => visualLevel.clamp(0, _frameRows - 1).toInt();
+  int get _spriteRow => visualLevel.clamp(0, CityMarker._frameRows - 1).toInt();
 
-  int get _spriteColumn => technologyProfile.index.clamp(0, _frameColumns - 1);
+  int get _spriteColumn =>
+      technologyProfile.index.clamp(0, CityMarker._frameColumns - 1);
 
   double _statusTopFor(Rect spriteBounds) => spriteBounds.top;
 
@@ -82,18 +87,19 @@ extension _CityMarkerLabelSupport on CityMarker {
 
   Rect get _labelHitRectForTesting {
     if (!_shouldPaintLabel) return Rect.zero;
-    final center = Offset(_width / 2, _height / 2);
+    final center = Offset(CityMarker._width / 2, CityMarker._height / 2);
     final spriteBounds = _spriteBoundsFor(center);
     return _labelRectFor(
       center: center,
       statusTop: _statusTopFor(spriteBounds),
-      width: _labelMaxWidth,
+      width: CityMarker._labelMaxWidth,
     ).inflate(4);
   }
 
   double get _labelPulse {
     if (!_selected || _reduceMotion) return 0;
-    final radians = (_labelPulseElapsed / _labelPulsePeriod) * math.pi * 2;
+    final radians =
+        (_labelPulseElapsed / CityMarker._labelPulsePeriod) * math.pi * 2;
     return (0.5 + math.sin(radians) * 0.5).clamp(0.0, 1.0).toDouble();
   }
 

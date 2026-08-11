@@ -70,12 +70,12 @@ void main() {
     });
 
     test('tracks the live world position of a focused unit', () {
-      var unitPosition = Vector2(24, 36);
+      Vector2? unitPosition = Vector2(24, 36);
       final layer =
           ActionTargetHexFocusLayer(
             unitPositionFor: (unitId) {
               expect(unitId, 'unit_7');
-              return unitPosition.clone();
+              return unitPosition?.clone();
             },
           )..show(
             parent: Component(),
@@ -105,6 +105,12 @@ void main() {
           initialPosition.y + 48 / HexGrid.perspectiveY,
         ),
       );
+
+      final lastTrackedPosition = layer.position.clone();
+      unitPosition = null;
+      layer.update(0.1);
+
+      expect(layer.position, lastTrackedPosition);
     });
 
     test('keeps a city target anchored to its map hex', () {

@@ -15,29 +15,26 @@ mixin _DiplomacyStateQueries {
         DiplomaticRelation.between(playerAId: playerAId, playerBId: playerBId);
   }
 
-  DiplomaticRelationStatus statusBetween(String playerAId, String playerBId) {
-    return playerAId.isEmpty || playerBId.isEmpty || playerAId == playerBId
-        ? DiplomaticRelationStatus.neutral
-        : relationBetween(playerAId, playerBId).status;
-  }
+  DiplomaticRelationStatus statusBetween(String playerAId, String playerBId) =>
+      playerAId.isEmpty || playerBId.isEmpty || playerAId == playerBId
+      ? DiplomaticRelationStatus.neutral
+      : relationBetween(playerAId, playerBId).status;
 
-  int relationScoreBetween(String playerAId, String playerBId) {
-    return playerAId.isEmpty || playerBId.isEmpty || playerAId == playerBId
-        ? 0
-        : relationBetween(playerAId, playerBId).relationScore;
-  }
+  int relationScoreBetween(String playerAId, String playerBId) =>
+      playerAId.isEmpty || playerBId.isEmpty || playerAId == playerBId
+      ? 0
+      : relationBetween(playerAId, playerBId).relationScore;
 
   DiplomaticRelationStatus scoreStatusBetween(
     String playerAId,
     String playerBId,
   ) {
     final score = relationScoreBetween(playerAId, playerBId);
-    if (score >= DiplomacyState.friendlyScoreThreshold) {
-      return DiplomaticRelationStatus.friendly;
-    }
-    if (score <= DiplomacyState.hostileScoreThreshold)
-      return DiplomaticRelationStatus.hostile;
-    return DiplomaticRelationStatus.neutral;
+    return score >= DiplomacyState.friendlyScoreThreshold
+        ? DiplomaticRelationStatus.friendly
+        : score <= DiplomacyState.hostileScoreThreshold
+        ? DiplomaticRelationStatus.hostile
+        : DiplomaticRelationStatus.neutral;
   }
 
   List<DiplomaticProposal> proposalsFor(String playerId) {

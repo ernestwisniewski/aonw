@@ -31,6 +31,7 @@ final class FakeMultiplayerDatabase implements Database {
   final Map<Type, ListQueue<TableRow<dynamic>>> _updateRowResults = {};
   final Map<Type, ListQueue<List<TableRow<dynamic>>>> _updateWhereResults = {};
   final ListQueue<Object> _insertRowErrors = ListQueue();
+  final ListQueue<Object> _transactionErrors = ListQueue();
   final ListQueue<DatabaseResult> _unsafeQueryResults = ListQueue();
   final ListQueue<int> _unsafeExecuteResults = ListQueue();
 
@@ -51,6 +52,8 @@ final class FakeMultiplayerDatabase implements Database {
   }
 
   void queueInsertRowError(Object error) => _insertRowErrors.add(error);
+
+  void queueTransactionError(Object error) => _transactionErrors.add(error);
 
   void queueUpdateRow<T extends TableRow<dynamic>>(T row) {
     _updateRowResults.putIfAbsent(T, ListQueue.new).add(row);
@@ -264,6 +267,9 @@ final class FakeMultiplayerDatabase implements Database {
     TransactionSettings? settings,
   }) {
     calls.add(const FakeDatabaseCall(operation: 'transaction'));
+    if (_transactionErrors.isNotEmpty) {
+      throw _transactionErrors.removeFirst();
+    }
     return transactionFunction(const FakeTransaction());
   }
 
@@ -279,6 +285,14 @@ final class FakeSession implements Session {
 
   @override
   Database get db => database;
+
+  @override
+  void log(
+    String message, {
+    LogLevel? level,
+    dynamic exception,
+    StackTrace? stackTrace,
+  }) {}
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>
@@ -314,8 +328,24 @@ final class FakeTransaction implements Transaction {
   const FakeTransaction();
 
   @override
+  Future<Savepoint> createSavepoint() async => const _FakeSavepoint();
+
+  @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnsupportedError('Unexpected transaction call: $invocation');
+}
+
+final class _FakeSavepoint implements Savepoint {
+  const _FakeSavepoint();
+
+  @override
+  String get id => 'fake-savepoint';
+
+  @override
+  Future<void> release() async {}
+
+  @override
+  Future<void> rollback() async {}
 }
 
 final class FakeDatabaseQueryException extends DatabaseQueryException {

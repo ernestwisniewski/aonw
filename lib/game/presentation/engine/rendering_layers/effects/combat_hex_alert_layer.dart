@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/map/unit_anchored_hex_motion_tracker.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
@@ -16,6 +17,11 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 class CombatHexAlertLayer extends Component with LayerAttachment {
+  CombatHexAlertLayer({
+    UnitWorldPositionResolver unitPositionFor = _missingUnitPosition,
+  }) : _unitPositionFor = unitPositionFor;
+
+  final UnitWorldPositionResolver _unitPositionFor;
   final Map<String, CombatHexAlertOverlay> _overlays = {};
 
   void show({
@@ -54,6 +60,7 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
       expiresAfter: effect.expiresAfter,
       reduceMotion: reduceMotion,
       ownerSubmittedAtAttack: effect.ownerSubmittedAtAttack,
+      unitPositionFor: _unitPositionFor,
     )..priority = _priorityFor(effect.col, effect.row, effect.kind);
     _overlays[effect.id] = created;
     unawaited(Future<void>.value(owner.add(created)));
@@ -129,9 +136,11 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
   void update(double dt) {
     super.update(dt);
     for (final entry in _overlays.entries.toList()) {
-      entry.value.advanceLifetime(dt);
-      if (!entry.value.hasTimedOut) continue;
-      entry.value.removeFromParent();
+      final overlay = entry.value
+        ..syncTrackedUnitPosition()
+        ..advanceLifetime(dt);
+      if (!overlay.hasTimedOut) continue;
+      overlay.removeFromParent();
       _overlays.remove(entry.key);
     }
   }
@@ -150,6 +159,10 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
 
   double alertPulseForTesting(String id) =>
       (_overlays[id] ?? _overlays['city:$id'])?.pulseForTesting ?? 0;
+
+  Vector2 alertGridOffsetForTesting(String id) =>
+      (_overlays[id] ?? _overlays['city:$id'])?.gridOffsetForTesting ??
+      Vector2.zero();
 
   int alertCountForTesting() => _overlays.length;
 
@@ -191,6 +204,8 @@ class CombatHexAlertLayer extends Component with LayerAttachment {
     if (overlay.kind == CombatHexAlertKind.fortificationThreat) return unit;
     return unit.ownerPlayerId == overlay.ownerPlayerId ? unit : null;
   }
+
+  static Vector2? _missingUnitPosition(String _) => null;
 }
 
 class CombatHexAlertOverlay extends Component {
@@ -205,6 +220,9 @@ class CombatHexAlertOverlay extends Component {
   bool reduceMotion;
   bool _lastOwnerSubmitted;
   int _submissionsRemaining;
+  final UnitAnchoredHexMotionTracker _motionTracker;
+  late CityHex _visualAnchorHex;
+  Vector2 _gridOffset = Vector2.zero();
 
   double _elapsed = 0;
 
@@ -219,8 +237,14 @@ class CombatHexAlertOverlay extends Component {
     this.expiresAfter,
     this.reduceMotion = false,
     bool ownerSubmittedAtAttack = false,
+    required UnitWorldPositionResolver unitPositionFor,
   }) : _lastOwnerSubmitted = ownerSubmittedAtAttack,
-       _submissionsRemaining = ownerSubmittedAtAttack ? 1 : 2;
+       _submissionsRemaining = ownerSubmittedAtAttack ? 1 : 2,
+       _motionTracker = UnitAnchoredHexMotionTracker(
+         unitPositionFor: unitPositionFor,
+       ) {
+    _resetVisualAnchor(hex: hex, unitId: unitId);
+  }
 
   void refresh({
     required String ownerPlayerId,
@@ -243,6 +267,7 @@ class CombatHexAlertOverlay extends Component {
     this.reduceMotion = reduceMotion;
     _lastOwnerSubmitted = ownerSubmittedAtAttack;
     _submissionsRemaining = ownerSubmittedAtAttack ? 1 : 2;
+    _resetVisualAnchor(hex: hex, unitId: unitId);
     restartPulse();
   }
 
@@ -273,19 +298,25 @@ class CombatHexAlertOverlay extends Component {
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    final path = _hexPath(hex);
+    canvas
+      ..save()
+      ..translate(_gridOffset.x, _gridOffset.y);
+    final path = _hexPath(_visualAnchorHex);
     final pulse = pulseForTesting;
 
     if (kind == CombatHexAlertKind.attacker) {
       _renderAttackerGlow(canvas, path, pulse);
+      canvas.restore();
       return;
     }
     if (kind == CombatHexAlertKind.fortificationThreat) {
       _renderFortificationThreatBorder(canvas, path, pulse);
+      canvas.restore();
       return;
     }
 
     _renderAttackedBorder(canvas, path, pulse);
+    canvas.restore();
   }
 
   void _renderFortificationThreatBorder(
@@ -366,8 +397,8 @@ class CombatHexAlertOverlay extends Component {
     final glowAlpha = reduceMotion
         ? MapAlpha.faint
         : (MapAlpha.whisper + pulse * 28).round();
-    final innerPath = _hexPath(hex, radiusScale: 0.68);
-    final bloomPath = _hexPath(hex, radiusScale: 0.78);
+    final innerPath = _hexPath(_visualAnchorHex, radiusScale: 0.68);
+    final bloomPath = _hexPath(_visualAnchorHex, radiusScale: 0.78);
     final bounds = boundaryPath.getBounds();
 
     canvas
@@ -422,6 +453,18 @@ class CombatHexAlertOverlay extends Component {
   }
 
   static const double _pulsePeriod = 0.92;
+
+  Vector2 get gridOffsetForTesting => _gridOffset.clone();
+
+  void syncTrackedUnitPosition() {
+    _gridOffset = _motionTracker.currentGridOffset();
+  }
+
+  void _resetVisualAnchor({required CityHex hex, required String? unitId}) {
+    _visualAnchorHex = hex;
+    _gridOffset = Vector2.zero();
+    _motionTracker.anchorTo(unitId);
+  }
 
   Path _hexPath(CityHex hex, {double radiusScale = 0.98}) {
     final corners = HexGeometry.topFaceCornerOffsets(

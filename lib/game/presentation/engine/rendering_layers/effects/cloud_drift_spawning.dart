@@ -2,7 +2,7 @@ part of 'cloud_drift_layer.dart';
 
 extension _CloudDriftSpawning on CloudDriftLayer {
   void _spawnCloudlet() {
-    if (_clouds.length >= _maxActiveClouds) return;
+    if (_clouds.length >= CloudDriftLayer._maxActiveClouds) return;
     if (_discoveredClipPath == null || _mapBounds.isEmpty) return;
 
     const hexRadius = MapConfig.defaultHexRadius;
@@ -78,11 +78,13 @@ extension _CloudDriftSpawning on CloudDriftLayer {
     required double cloudWidth,
     required double cloudHeight,
   }) {
-    if (_clouds.length >= _maxActiveClouds) return;
+    if (_clouds.length >= CloudDriftLayer._maxActiveClouds) return;
     final groupRoll = _random.nextDouble();
-    if (groupRoll >= _cloudGroupChance) return;
+    if (groupRoll >= CloudDriftLayer._cloudGroupChance) return;
 
-    final companionCount = groupRoll < _cloudClusterChance ? 2 : 1;
+    final companionCount = groupRoll < CloudDriftLayer._cloudClusterChance
+        ? 2
+        : 1;
     final travel = end - start;
     final travelLength = travel.length;
     final direction = travelLength <= 0
@@ -91,7 +93,7 @@ extension _CloudDriftSpawning on CloudDriftLayer {
     final normal = Vector2(-direction.y, direction.x);
 
     for (var i = 0; i < companionCount; i++) {
-      if (_clouds.length >= _maxActiveClouds) return;
+      if (_clouds.length >= CloudDriftLayer._maxActiveClouds) return;
       final side = i.isEven ? 1.0 : -1.0;
       final along =
           cloudWidth *

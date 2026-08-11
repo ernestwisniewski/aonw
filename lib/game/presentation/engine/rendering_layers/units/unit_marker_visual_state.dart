@@ -28,14 +28,16 @@ extension _UnitMarkerVisualState on UnitMarker {
       return;
     }
     if (_reduceMotion) {
-      final focusScale = _pendingActionTarget ? _staticPendingActionScale : 1.0;
+      final focusScale = _pendingActionTarget
+          ? UnitMarker._staticPendingActionScale
+          : 1.0;
       scale = Vector2.all(_markerWorldScale * focusScale);
       return;
     }
 
-    final phase = _focusPulseElapsed / _focusPulseDuration;
+    final phase = _focusPulseElapsed / UnitMarker._focusPulseDuration;
     final eased = Curves.easeInOut.transform(math.sin(phase * math.pi).abs());
-    final focusScale = 1 + (_focusedScale - 1) * eased;
+    final focusScale = 1 + (UnitMarker._focusedScale - 1) * eased;
     scale = Vector2.all(_markerWorldScale * focusScale);
   }
 
