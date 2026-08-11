@@ -131,7 +131,7 @@ void main() {
       expect(second.observations, isNot(first.observations));
     });
 
-    test('makes the full-map auto-explore growth explicit', () {
+    test('bounds auto-explore candidate evaluation at every scale', () {
       final result = runAutoExploreWorkload(timingSamples: 1);
       final sizes = result.stable['sizes']! as Map<String, Object?>;
       final observationSizes =
@@ -149,8 +149,8 @@ void main() {
         final uniqueLookupCoordinates =
             stable['uniqueTileLookupCoordinates']! as int;
         expect(stable['indexedTiles'], scale);
-        expect(stable['growthModel'], 'full-reachable-map');
-        expect(stable['candidateEvaluations'], scale - 1);
+        expect(stable['growthModel'], 'reachable-index-vision-bound-exit');
+        expect(stable['candidateEvaluations'], 1);
         expect(stable['uniqueTileHits'], scale);
         expect(uniqueLookupCoordinates, greaterThanOrEqualTo(scale));
         expect(lookupCalls, greaterThan(previousLookupCalls));

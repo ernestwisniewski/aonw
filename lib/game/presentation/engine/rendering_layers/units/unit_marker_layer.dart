@@ -198,6 +198,9 @@ class UnitMarkerLayer extends Component with LayerAttachment {
   Vector2? worldPositionForUnit(String unitId) =>
       _markers[unitId]?.position.clone();
 
+  Vector2? hexAnchorWorldPositionForUnit(String unitId) =>
+      _markers[unitId]?.hexAnchorWorldPosition;
+
   void sync({
     required Component parent,
     required Iterable<GameUnit> units,

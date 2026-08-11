@@ -60,6 +60,7 @@ void main() {
       final host = File(suite.host);
       final source = host.readAsStringSync();
       final partUris = _partUris(host);
+      final fixtureUris = {...partUris, ..._importUris(host)};
       final scenarios = partUris
           .where((uri) => uri.endsWith('_scenarios.dart'))
           .toList();
@@ -71,7 +72,7 @@ void main() {
         scenarios,
         hasLength(greaterThanOrEqualTo(suite.minimumScenarioParts)),
       );
-      expect(partUris, containsAll(suite.fixtureParts));
+      expect(fixtureUris, containsAll(suite.fixtureParts));
 
       for (final uri in scenarios) {
         final scenario = File.fromUri(host.uri.resolve(uri));
@@ -110,6 +111,17 @@ List<String> _partUris(File host) {
   return [
     for (final directive in unit.directives.whereType<PartDirective>())
       directive.uri.stringValue!,
+  ];
+}
+
+List<String> _importUris(File host) {
+  final unit = parseString(
+    content: host.readAsStringSync(),
+    path: host.path,
+  ).unit;
+  return [
+    for (final directive in unit.directives.whereType<ImportDirective>())
+      ?directive.uri.stringValue,
   ];
 }
 

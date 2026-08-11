@@ -107,6 +107,8 @@ const _allowedSwitchEventPaths = {
   'lib/game/presentation/formatters/diplomacy_history_presenter.dart',
   'lib/game/presentation/formatters/game_event_notification_city_messages.dart',
   'lib/game/presentation/formatters/game_event_notification_combat_messages.dart',
+  'lib/game/presentation/formatters/'
+      'game_event_notification_diplomacy_messages.dart',
   'lib/game/presentation/formatters/game_event_notification_message.dart',
 };
 

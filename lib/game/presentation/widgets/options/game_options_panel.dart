@@ -13,6 +13,8 @@ import 'package:aonw/shared/widgets/game_ui/game_ui_options_panel.dart';
 import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flutter/material.dart';
 
+export 'package:aonw/shared/theme/surface_elevation.dart';
+
 class GameOptionsPanel extends StatelessWidget {
   const GameOptionsPanel({
     required this.width,
@@ -98,7 +100,7 @@ class GameOptionsCameraBindings {
 
 List<Widget> _mapControlRows(GameOptionsPanel panel, AppLocalizations l10n) => [
   _OptionsGroupHeader(
-    icon: Icons.map_outlined,
+    icon: GameIcons.layers,
     label: l10n.mapDisplaySectionTitle,
   ),
   const SizedBox(height: 8),
@@ -173,10 +175,7 @@ List<Widget> _ownUnitCameraRows(
   const SizedBox(height: 8),
   const _OptionsSeparator(),
   const SizedBox(height: 8),
-  _OptionsGroupHeader(
-    icon: Icons.videocam_outlined,
-    label: l10n.cameraSectionTitle,
-  ),
+  _OptionsGroupHeader(icon: GameIcons.focus, label: l10n.cameraSectionTitle),
   const SizedBox(height: 8),
   _MapToggleOptionRow(
     rowKey: const Key('gameOptions.focusOwnUnitMovementCameraRow'),
@@ -257,7 +256,7 @@ List<Widget> _automationRows(GameOptionsPanel panel, AppLocalizations l10n) => [
   const _OptionsSeparator(key: Key('gameOptions.cameraSeparator')),
   const SizedBox(height: 8),
   _OptionsGroupHeader(
-    icon: Icons.auto_awesome_outlined,
+    icon: gameAutoWorkIcon,
     label: l10n.automationSectionTitle,
   ),
   const SizedBox(height: 8),
@@ -316,14 +315,14 @@ List<Widget> _resignRows(GameOptionsPanel panel, AppLocalizations l10n) => [
 class _OptionsGroupHeader extends StatelessWidget {
   const _OptionsGroupHeader({required this.icon, required this.label});
 
-  final IconData icon;
+  final GameIconData icon;
   final String label;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: GameUiTheme.gold),
+        GameIcon(icon, size: GameIconSize.small, color: GameUiTheme.gold),
         const SizedBox(width: 7),
         Expanded(
           child: Text(

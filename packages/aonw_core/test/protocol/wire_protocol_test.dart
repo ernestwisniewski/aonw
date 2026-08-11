@@ -168,7 +168,7 @@ void main() {
       expect(event.toJson()['turn'], 7);
     });
 
-    test('decodes a strict v4 ACK with its nested strict v3 snapshot', () {
+    test('decodes a strict v4 ACK with its nested current snapshot', () {
       final ack = WireCommandAck(
         matchId: 'match_1',
         clientMessageId: 'command_1',
@@ -195,7 +195,7 @@ void main() {
       expect(restored.snapshot.v, kSnapshotEventVersion);
     });
 
-    test('snapshot and event standalone envelopes are strict v3', () {
+    test('snapshot and event readers accept v3 and v4 during expansion', () {
       const snapshot = WireSnapshot(
         matchId: 'match_1',
         offset: 3,
@@ -209,16 +209,52 @@ void main() {
         movementExecutions: WireMovementExecutionList(const []),
       );
 
-      expect(WireSnapshot.fromJson(snapshot.toJson()).v, 3);
-      expect(WireEvent.fromJson(event.toJson()).v, 3);
+      expect(WireSnapshot.fromJson(snapshot.toJson()).v, 4);
+      expect(WireEvent.fromJson(event.toJson()).v, 4);
       expect(
-        () => WireSnapshot.fromJson({...snapshot.toJson(), 'v': 4}),
+        WireSnapshot.fromJson({
+          ...snapshot.toJson(),
+          'v': kLegacySnapshotEventVersion,
+        }).v,
+        kLegacySnapshotEventVersion,
+      );
+      expect(
+        WireEvent.fromJson({
+          ...event.toJson(),
+          'v': kLegacySnapshotEventVersion,
+        }).v,
+        kLegacySnapshotEventVersion,
+      );
+      expect(
+        () => WireSnapshot.fromJson({...snapshot.toJson(), 'v': 2}),
         throwsArgumentError,
       );
       expect(
-        () => WireEvent.fromJson({...event.toJson(), 'v': 4}),
+        () => WireEvent.fromJson({...event.toJson(), 'v': 5}),
         throwsArgumentError,
       );
+    });
+
+    test('current ACK reads a legacy v3 nested snapshot', () {
+      final ack = WireCommandAck(
+        matchId: 'match_1',
+        clientMessageId: 'command_legacy_snapshot',
+        accepted: true,
+        offset: 3,
+        snapshot: const WireSnapshot(
+          v: kLegacySnapshotEventVersion,
+          matchId: 'match_1',
+          offset: 3,
+          save: {'id': 'match_1'},
+          state: <String, dynamic>{},
+        ),
+        movementExecutions: WireMovementExecutionList(const []),
+      );
+
+      final restored = WireCommandAck.fromJson(ack.toJson());
+
+      expect(restored.v, kProtocolVersion);
+      expect(restored.snapshot.v, kLegacySnapshotEventVersion);
     });
 
     test('command, ACK, and match envelopes are strict v4', () {

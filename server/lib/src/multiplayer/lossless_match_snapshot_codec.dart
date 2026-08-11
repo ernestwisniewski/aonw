@@ -3,7 +3,7 @@ import 'package:aonw_core/protocol.dart';
 
 const _losslessMatchSnapshotCodec = LosslessMatchSnapshotCodec();
 
-/// A decoded view of one current-version authoritative running snapshot.
+/// A decoded view of one readable authoritative running snapshot.
 final class DecodedRunningMatchSnapshot {
   DecodedRunningMatchSnapshot._({required this.wire});
 
@@ -17,7 +17,7 @@ final class DecodedRunningMatchSnapshot {
       .canonical(this);
 }
 
-/// Maps the current wire snapshot to and from the canonical domain envelope.
+/// Maps a readable wire snapshot to and from the canonical domain envelope.
 final class LosslessMatchSnapshotCodec {
   const LosslessMatchSnapshotCodec();
 

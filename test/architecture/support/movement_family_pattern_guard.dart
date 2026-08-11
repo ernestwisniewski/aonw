@@ -23,14 +23,11 @@ const reviewedMovementFamilyPatternOccurrences = <String, Map<String, int>>{
     'function:_movement::MoveMerchantToCityCommand': 1,
     'function:_movement::MoveUnitCommand': 1,
   },
-  'lib/game/analysis/human_trace_analyzer.dart': {
-    'class:HumanTraceAnalyzer/method:_isRepeatedAiCandidate::MoveUnitCommand':
-        1,
+  'lib/game/analysis/human_trace_analysis.dart': {
+    'function:_isRepeatedAiCandidate::MoveUnitCommand': 1,
   },
-  'lib/game/analysis/human_trace_benchmark.dart': {
-    'class:HumanTraceSimulationBenchmark/method:_repeatSummaryFor::'
-            'MoveUnitCommand':
-        1,
+  'lib/game/analysis/human_trace_simulation_benchmark.dart': {
+    'function:_repeatSummaryFor::MoveUnitCommand': 1,
   },
   'lib/game/application/services/ai_turn_command_executor.dart': {
     'class:AiTurnCommandExecutor/method:describeCommand::'
@@ -66,16 +63,6 @@ const reviewedMovementFamilyPatternOccurrences = <String, Map<String, int>>{
     'function:projectLocalMovementEngineResult::DetachTroopCommand': 1,
     'function:projectLocalMovementEngineResult::MoveMerchantToCityCommand': 1,
     'function:projectLocalMovementEngineResult::MoveUnitCommand': 1,
-  },
-  'lib/game/application/services/replay_service.dart': {
-    'class:ReplayStep/method:_inferActorPlayerId::'
-            'AssignMerchantTradeRouteCommand':
-        1,
-    'class:ReplayStep/method:_inferActorPlayerId::AutomatedUnitCommand': 1,
-    'class:ReplayStep/method:_inferActorPlayerId::CancelUnitActionCommand': 1,
-    'class:ReplayStep/method:_inferActorPlayerId::DetachTroopCommand': 1,
-    'class:ReplayStep/method:_inferActorPlayerId::MoveMerchantToCityCommand': 1,
-    'class:ReplayStep/method:_inferActorPlayerId::MoveUnitCommand': 1,
   },
   'lib/game/presentation/audio/game_sound_cue_mapper.dart': {
     'class:GameSoundCueMapper/method:forCommand::MoveUnitCommand': 1,
@@ -170,18 +157,6 @@ const reviewedMovementFamilyPatternOccurrences = <String, Map<String, int>>{
   },
   'packages/aonw_core/lib/ai/simulation/'
       'economy_simulation_command_stats.dart': {
-    'class:EconomySimulationCommandStats/method:addApplied::'
-            'AssignMerchantTradeRouteCommand':
-        1,
-    'class:EconomySimulationCommandStats/method:addApplied::'
-            'AutomatedUnitCommand':
-        1,
-    'class:EconomySimulationCommandStats/method:addApplied::'
-            'CancelUnitActionCommand':
-        1,
-    'class:EconomySimulationCommandStats/method:addApplied::'
-            'DetachTroopCommand':
-        1,
     'class:EconomySimulationCommandStats/method:addApplied::'
             'MoveMerchantToCityCommand':
         1,

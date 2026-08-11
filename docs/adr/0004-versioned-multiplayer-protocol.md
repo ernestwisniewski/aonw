@@ -66,10 +66,10 @@ The binding invariants are:
   `mainMenuUpdateSoonTitle` and `mainMenuUpdateSoonBody`; transport errors are
   not used as the user-facing compatibility signal.
 - Every authoritative command, event, snapshot, ACK, and match envelope carries
-  `v`. Each decoder receives the expected version for that envelope family and
-  fails closed for missing, malformed, future, or retired schemas. Nested
-  envelopes validate their own family version; an ACK v4 therefore contains a
-  snapshot v3.
+  `v`. Each decoder receives the reviewed version or bounded readable set for
+  that envelope family and fails closed for missing, malformed, future, or
+  retired schemas. Nested envelopes validate their own family version; during
+  the v3-to-v4 durable expansion an ACK v4 may contain snapshot v3 or v4.
 - A functional revision does not make incompatible wire schemas readable.
   Supporting an older wire schema requires an explicit bounded reader/upcaster
   and, when responses differ, an explicit encoder selected for that peer.
@@ -105,6 +105,23 @@ remains strict v3 and no database rewrite is performed. This separation keeps
 running matches and replay history readable by both rollout directions and
 preserves an N-1 rollback path.
 
+Revision 6 adds authoritative road construction, persisted transport networks,
+and infrastructure-aware movement rules. Revision 5 cannot represent an active
+road job and would calculate different movement outcomes, so only revision 6 is
+functionally compatible. Snapshot/event schema 4 is the write schema for the
+new durable state. Revision 6 readers accept the bounded set `{3, 4}`: v3 means
+no transport network and is migrated to v4 with save schema 4 on the next
+authoritative state write. New events and new matches are written as v4.
+
+The deploy is an expand-and-forward rollout. Before deploy, take and retain a
+database backup. Deploy the revision-6 server before distributing or enabling
+revision-6 clients; revision-5 clients are rejected at status and endpoint
+boundaries. After the first v4 write, an N-1 server rollback is intentionally
+fail-closed rather than availability-preserving: the v5 server rejects v4 and
+must not be used to mutate those matches. Recover with a forward fix, or restore
+the predeploy backup before starting the v5 server. Never downcast a v4 match:
+doing so would erase roads or reinterpret an active road job.
+
 ## Consequences
 
 Compatible additive releases can roll out without disconnecting existing
@@ -130,11 +147,12 @@ Rejected alternatives:
 ## Migration And Verification
 
 The app-status endpoint accepts an optional multiplayer revision. Current
-clients send revision 5. Undeclared clients still map deterministically to
+clients send revision 6. Undeclared clients still map deterministically to
 legacy revision 1. Revisions 1 and 2 cannot decode every worker-automation
 command and persisted posture variant; revision 3 does not send lobby
 heartbeats or implement lease-driven roster and terminal-return behavior;
-revision 4 cannot correlate command ACKs after a timeout. All older revisions
+revision 4 cannot correlate command ACKs after a timeout; revision 5 cannot
+represent road jobs or infrastructure-aware movement. All older revisions
 return `soon`, which is rendered by the localized main-menu update block.
 Release clients fail closed while this check is pending and do not open or
 resume multiplayer when it reports `soon`. Every authenticated multiplayer
@@ -162,11 +180,11 @@ the newer client is becoming available. During the store propagation window,
 old clients receive the translated update notice. Persisted matches are kept
 only when their wire schema and domain semantics remain supported or can be
 migrated through a rollback-safe expand/contract plan; otherwise they are
-retired deliberately rather than decoded heuristically. Revision 5 deliberately
-does not migrate snapshot or event rows: both stay strict v3 in storage and
-transport, while only commands, ACKs, and matches move to strict v4. A mixed
-ACK-v4/snapshot-v3 payload is the intended contract, not a compatibility
-fallback.
+retired deliberately rather than decoded heuristically. Revision 6 reads v3
+snapshot/event rows and writes v4 on new events, new matches, and the next
+authoritative mutation of an existing v3 match. A mixed ACK-v4/snapshot-v3
+payload is valid only while such a legacy match remains read-only; after its
+first accepted transition the nested snapshot is v4.
 
 Contract tests cover current, undeclared legacy, removed, and future functional
 revisions. Codec tests cover supported and unsupported wire versions. Generated

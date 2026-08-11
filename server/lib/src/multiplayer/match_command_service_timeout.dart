@@ -171,7 +171,7 @@ extension MatchCommandServiceTimeouts on MatchCommandService {
       nowUtc: now,
       timeout: _matchInactivityTimeout,
     )) {
-      return state.snapshot.v == kSnapshotEventVersion
+      return isReadableSnapshotEventVersion(state.snapshot.v)
           ? null
           : const MatchMutationOutcome(_MatchTimeoutAction.unchanged);
     }

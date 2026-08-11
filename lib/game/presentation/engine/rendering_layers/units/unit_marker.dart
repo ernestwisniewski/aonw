@@ -30,6 +30,7 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
   bool _attackTarget;
   double _healthFraction;
   bool onCity;
+  final Vector2 _hexAnchorOffset;
   String? workBadgeLabel;
   bool fortified;
   bool skippedTurn;
@@ -79,6 +80,7 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
     bool attackTarget = false,
     double healthFraction = 1.0,
     this.onCity = false,
+    Vector2? hexAnchorOffset,
     this.fortified = false,
     this.skippedTurn = false,
     this.exhausted = false,
@@ -103,6 +105,7 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
        _pendingActionTarget = pendingActionTarget,
        _attackTarget = attackTarget,
        _healthFraction = healthFraction.clamp(0.0, 1.0).toDouble(),
+       _hexAnchorOffset = hexAnchorOffset?.clone() ?? Vector2.zero(),
        _markerWorldScale = _normalizeMarkerWorldScale(markerWorldScale),
        _spriteScale = _normalizeSpriteScale(spriteScale),
        _tacticalViewEmphasis = _normalizeTacticalViewEmphasis(
@@ -123,6 +126,18 @@ class UnitMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
   }
 
   double get healthFraction => _healthFraction;
+
+  /// Position of the unit's logical hex, excluding presentation-only city
+  /// stacking offsets applied to the sprite.
+  Vector2 get hexAnchorWorldPosition => position - _hexAnchorOffset;
+
+  void setHexAnchorOffset(Vector2 value) {
+    _hexAnchorOffset.setFrom(value);
+  }
+
+  void clearHexAnchorOffset() {
+    _hexAnchorOffset.setValues(0, 0);
+  }
 
   set healthFraction(double value) {
     final next = value.clamp(0.0, 1.0).toDouble();

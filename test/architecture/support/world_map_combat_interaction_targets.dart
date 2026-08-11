@@ -45,10 +45,10 @@ const _interactionTargets = [
   _Target(
     path:
         'lib/game/presentation/widgets/hud/overlay/'
-        'hud_overlay_frame.dart',
+        'hud_overlay_frame_helpers.dart',
     owner: 'HudOverlayFrame',
     boundaries: [
-      _Boundary.method(
+      _Boundary.function(
         '_cityFoundingBlockedReason',
         parameter: 'mapTiles',
         type: 'MapTileLookup',

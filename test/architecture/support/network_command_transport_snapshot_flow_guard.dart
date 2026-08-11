@@ -2,6 +2,7 @@ part of '../network_command_transport_snapshot_boundary_test.dart';
 
 List<String> _networkResultFlowViolations(
   CompilationUnit unit,
+  CompilationUnit snapshotUnit,
   CompilationUnit acknowledgedPresentation,
 ) {
   final transport = _classNamed(unit, 'NetworkCommandTransport');
@@ -11,9 +12,12 @@ List<String> _networkResultFlowViolations(
 
   final violations = <String>[];
   final dispatch = _methodNamed(transport, '_dispatch');
-  final reload = _methodNamed(transport, '_reloadAfterStaleCommand');
-  final recovery = _methodNamed(transport, '_snapshotRecoveryResult');
-  final allResults = _resultCreations(transport);
+  final reload = _methodNamedAnywhere(snapshotUnit, '_reloadAfterStaleCommand');
+  final recovery = _methodNamedAnywhere(
+    snapshotUnit,
+    '_snapshotRecoveryResult',
+  );
+  final allResults = _resultCreations(snapshotUnit);
   final acknowledgedResults = _resultCreations(acknowledgedPresentation);
 
   if (allResults.length != 2 || acknowledgedResults.length != 1) {

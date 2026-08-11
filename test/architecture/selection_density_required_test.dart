@@ -33,6 +33,8 @@ const _densityExemptFiles = {
   'selection.dart',
   'selection_action_bar.dart',
   'selection_command_chip.dart',
+  'selection_command_chip_style.dart',
+  'selection_command_chip_surface.dart',
   'selection_empty_message.dart',
   'view_models.dart',
 };

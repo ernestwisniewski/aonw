@@ -25,10 +25,10 @@ abstract class WireEvent with _$WireEvent {
   factory WireEvent.fromJson(Map<String, dynamic> json) {
     final rawEvents = WireJson.requiredList(json['events'], 'WireEvent.events');
     return WireEvent(
-      v: WireJson.readVersion(
+      v: WireJson.readSupportedVersion(
         json,
         'WireEvent',
-        expectedVersion: kSnapshotEventVersion,
+        supportedVersions: kReadableSnapshotEventVersions,
       ),
       matchId: WireJson.requiredString(json, 'WireEvent', 'matchId'),
       offset: WireJson.requiredInt(json, 'WireEvent', 'offset'),

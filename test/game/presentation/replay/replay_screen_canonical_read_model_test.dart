@@ -18,8 +18,11 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   testWidgets('replay UI reads canonical metadata, roster, and event steps', (
     tester,
   ) async {

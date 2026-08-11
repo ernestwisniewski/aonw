@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_hex_alert_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -210,8 +211,8 @@ void main() {
 
     test('moves attacker and attacked cues with their live unit markers', () {
       final unitPositions = <String, Vector2>{
-        'attacker': Vector2(100, 200),
-        'defender': Vector2(300, 400),
+        'attacker': UnitMarkerLayer.worldPositionFor(2, 3),
+        'defender': UnitMarkerLayer.worldPositionFor(4, 5),
       };
       final layer = CombatHexAlertLayer(
         unitPositionFor: (unitId) => unitPositions[unitId]?.clone(),
@@ -243,8 +244,11 @@ void main() {
         );
 
       unitPositions
-        ..['attacker'] = Vector2(115, 200 + 10 * HexGrid.perspectiveY)
-        ..['defender'] = Vector2(270, 400 + 20 * HexGrid.perspectiveY);
+        ..['attacker'] =
+            unitPositions['attacker']! + Vector2(15, 10 * HexGrid.perspectiveY)
+        ..['defender'] =
+            unitPositions['defender']! +
+            Vector2(-30, 20 * HexGrid.perspectiveY);
       layer.update(0.1);
 
       final attackerOffset = layer.alertGridOffsetForTesting(

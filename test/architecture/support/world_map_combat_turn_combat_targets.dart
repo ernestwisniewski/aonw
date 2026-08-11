@@ -16,21 +16,6 @@ const _turnCombatTargets = [
         type: 'MapTileLookup',
       ),
       _Boundary.method(
-        '_turnStartProductionEffects',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-      _Boundary.method(
-        '_turnsRemainingForQueue',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-      _Boundary.method(
-        '_productionPerTurnForQueue',
-        parameter: 'mapTiles',
-        type: 'MapTileLookup',
-      ),
-      _Boundary.method(
         'pendingTurnActionCount',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
@@ -45,22 +30,57 @@ const _turnCombatTargets = [
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
-      _Boundary.method(
+    ],
+  ),
+  _Target(
+    path:
+        'lib/game/domain/reducer/turn/'
+        'turn_reducer_production_feedback.dart',
+    owner: 'TurnReducer',
+    boundaries: [
+      _Boundary.function(
+        '_turnStartProductionEffects',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.function(
+        '_turnsRemainingForQueue',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+      _Boundary.function(
+        '_productionPerTurnForQueue',
+        parameter: 'mapTiles',
+        type: 'MapTileLookup',
+      ),
+    ],
+  ),
+  _Target(
+    path: 'lib/game/domain/reducer/turn/turn_reducer_navigation.dart',
+    owner: 'TurnReducer',
+    boundaries: [
+      _Boundary.function(
         '_focusUnitAction',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
-      _Boundary.method(
+      _Boundary.function(
         '_focusPendingTurnAction',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
-      _Boundary.method(
+      _Boundary.function(
         '_focusCityProductionAction',
         parameter: 'mapTiles',
         type: 'MapTileLookup',
       ),
-      _Boundary.method(
+    ],
+  ),
+  _Target(
+    path: 'lib/game/domain/reducer/turn/turn_reducer_pending_actions.dart',
+    owner: 'TurnReducer',
+    boundaries: [
+      _Boundary.function(
         '_pendingTurnActions',
         parameter: 'mapTiles',
         type: 'MapTileLookup',

@@ -61,7 +61,7 @@ void main() {
     }
 
     final productionHost = File(
-      'lib/game/presentation/screens/game/game_screen.dart',
+      'lib/game/presentation/screens/game/game_screen_renderer_lifecycle.dart',
     ).readAsStringSync();
     expect(productionHost, contains('presentationClock:'));
     expect(
@@ -72,7 +72,7 @@ void main() {
 
   test('production renderer hosts explicitly activate one source', () {
     for (final path in const [
-      'lib/game/presentation/screens/game/game_screen.dart',
+      'lib/game/presentation/screens/game/game_screen_renderer_lifecycle.dart',
       'lib/game/presentation/screens/replay/replay_renderer_host_lifecycle.dart',
     ]) {
       final visitor = _InvocationVisitor();

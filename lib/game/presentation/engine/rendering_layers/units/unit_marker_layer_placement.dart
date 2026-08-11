@@ -13,6 +13,14 @@ extension _UnitMarkerLayerPlacement on UnitMarkerLayer {
     );
   }
 
+  Vector2 _unitHexAnchorOffset(_CityUnitMarkerPlacement cityPlacement) {
+    return switch (cityPlacement) {
+      _CityUnitMarkerPlacement.none => Vector2.zero(),
+      _CityUnitMarkerPlacement.primary => Vector2(26, 26),
+      _CityUnitMarkerPlacement.companion => Vector2(-26, 26),
+    };
+  }
+
   Map<String, _CityUnitMarkerPlacement> _cityUnitPlacements(
     List<GameUnit> units,
     Set<({int col, int row})> cityTiles,

@@ -18,10 +18,10 @@ class WireSnapshot {
 
   factory WireSnapshot.fromJson(Map<String, dynamic> json) {
     return WireSnapshot(
-      v: WireJson.readVersion(
+      v: WireJson.readSupportedVersion(
         json,
         'WireSnapshot',
-        expectedVersion: kSnapshotEventVersion,
+        supportedVersions: kReadableSnapshotEventVersions,
       ),
       matchId: WireJson.requiredString(json, 'WireSnapshot', 'matchId'),
       offset: WireJson.requiredInt(json, 'WireSnapshot', 'offset'),

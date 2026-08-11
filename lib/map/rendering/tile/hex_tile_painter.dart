@@ -34,6 +34,7 @@ class HexTilePainter {
   late final Paint _paintWorkerImprovementTechFill;
   late final Paint _paintWorkerImprovementTechBorder;
   late final Paint _paintAttackTargetMarker;
+  late final Paint _paintAttackTargetHatch;
   late final Paint _paintMovementBlockerOverlay;
   late final Paint _paintMovementBlockerOutline;
   late final ui.Paragraph _heightParagraph;
@@ -55,7 +56,8 @@ class HexTilePainter {
   static const int _heightBadgeBackgroundAlpha = 238;
   static const int _heightBadgeBorderAlpha = 230;
   static const int _planningMarkerAlpha = 214;
-  static const int _attackMarkerAlpha = 222;
+  static const int _attackTargetFillAlpha = MapAlpha.soft;
+  static const double _attackTargetHatchSpacing = 9.0;
   static const int _movementBlockerAlpha = 86;
   static const int _movementBlockerOutlineAlpha = 210;
   static const int _shadowAlpha = 153;
@@ -112,11 +114,14 @@ class HexTilePainter {
       alpha: MapAlpha.strong,
       strokeWidth: MapStroke.hairline,
     );
-    _paintAttackTargetMarker = HudPaint.stroke(
+    _paintAttackTargetMarker = HudPaint.fill(
       HudPalette.danger,
-      alpha: _attackMarkerAlpha,
-      strokeWidth: 1.5,
-      strokeJoin: StrokeJoin.round,
+      alpha: _attackTargetFillAlpha,
+    );
+    _paintAttackTargetHatch = HudPaint.stroke(
+      HudPalette.dangerSubtle,
+      alpha: MapAlpha.regular,
+      strokeWidth: MapStroke.hairline,
     );
     _paintMovementBlockerOverlay = HudPaint.fill(
       HudPalette.danger,

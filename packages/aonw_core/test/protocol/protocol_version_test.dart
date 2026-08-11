@@ -4,10 +4,12 @@ import 'package:test/test.dart';
 void main() {
   test('reviewed multiplayer compatibility inventory is explicit', () {
     expect(kProtocolVersion, 4);
-    expect(kSnapshotEventVersion, 3);
-    expect(kCurrentMultiplayerVersion, 5);
+    expect(kSnapshotEventVersion, 4);
+    expect(kLegacySnapshotEventVersion, 3);
+    expect(kReadableSnapshotEventVersions, {3, 4});
+    expect(kCurrentMultiplayerVersion, 6);
     expect(kLegacyUndeclaredMultiplayerVersion, 1);
-    expect(kCompatibleMultiplayerVersions, {5});
+    expect(kCompatibleMultiplayerVersions, {6});
   });
 
   test('current multiplayer version is explicitly compatible', () {
@@ -33,7 +35,7 @@ void main() {
   });
 
   test('removed, malformed-equivalent, and future revisions fail closed', () {
-    for (final version in const [-1, 0, 1, 2, 3, 4, 6]) {
+    for (final version in const [-1, 0, 1, 2, 3, 4, 5, 7]) {
       expect(
         multiplayerVersionCompatibility(version),
         MultiplayerVersionCompatibility.unsupported,
@@ -41,5 +43,12 @@ void main() {
       );
       expect(isCompatibleMultiplayerVersion(version), isFalse);
     }
+  });
+
+  test('durable readers accept only the reviewed v3 to v4 expand window', () {
+    expect(isReadableSnapshotEventVersion(3), isTrue);
+    expect(isReadableSnapshotEventVersion(4), isTrue);
+    expect(isReadableSnapshotEventVersion(2), isFalse);
+    expect(isReadableSnapshotEventVersion(5), isFalse);
   });
 }

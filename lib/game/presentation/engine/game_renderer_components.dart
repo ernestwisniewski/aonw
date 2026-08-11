@@ -88,14 +88,14 @@ final class GameRendererComponents {
       unitPositionFor: unitMarkers.worldPositionForUnit,
     );
     combatAlerts = CombatHexAlertLayer(
-      unitPositionFor: unitMarkers.worldPositionForUnit,
+      unitPositionFor: unitMarkers.hexAnchorWorldPositionForUnit,
     );
     combatTrajectories = CombatAttackTrajectoryLayer(
       unitPositionFor: unitMarkers.worldPositionForUnit,
       cityPositionFor: cities.worldPositionForCity,
     );
     actionTargetHexFocus = ActionTargetHexFocusLayer(
-      unitPositionFor: unitMarkers.worldPositionForUnit,
+      unitPositionFor: unitMarkers.hexAnchorWorldPositionForUnit,
     );
     threats = ThreatOverlayLayer();
     hoverIntent = HoverIntentMarkerLayer();

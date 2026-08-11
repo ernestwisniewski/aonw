@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/unit_anchored_hex_motion_tracker.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_outline_painter.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
@@ -71,7 +72,12 @@ final class ActionTargetHexFocusLayer extends PositionComponent
       row: effect.row,
       hexRadius: _hexRadius,
     );
-    _motionTracker.anchorTo(effect.unitId);
+    _motionTracker.anchorTo(
+      effect.unitId,
+      expectedWorldPosition: effect.unitId == null
+          ? null
+          : UnitMarkerLayer.worldPositionFor(effect.col, effect.row),
+    );
     position = _hexPositionOrigin.clone();
     _durationSeconds =
         effect.duration.inMicroseconds / Duration.microsecondsPerSecond;

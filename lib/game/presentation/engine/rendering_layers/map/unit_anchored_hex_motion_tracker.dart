@@ -19,12 +19,16 @@ final class UnitAnchoredHexMotionTracker {
 
   String? _unitId;
   Vector2? _unitPositionOrigin;
+  Vector2? _expectedWorldPosition;
+  Vector2 _originGridOffset = Vector2.zero();
   Vector2 _gridOffset = Vector2.zero();
 
-  void anchorTo(String? unitId) {
+  void anchorTo(String? unitId, {Vector2? expectedWorldPosition}) {
     _unitId = unitId;
+    _expectedWorldPosition = expectedWorldPosition?.clone();
     _unitPositionOrigin = _trackedUnitPosition();
-    _gridOffset = Vector2.zero();
+    _originGridOffset = _initialGridOffset();
+    _gridOffset = _originGridOffset.clone();
   }
 
   Vector2 currentGridOffset() {
@@ -34,14 +38,26 @@ final class UnitAnchoredHexMotionTracker {
     final origin = _unitPositionOrigin;
     if (origin == null) {
       _unitPositionOrigin = current.clone();
+      _originGridOffset = _initialGridOffset();
+      _gridOffset = _originGridOffset.clone();
       return _gridOffset.clone();
     }
 
     _gridOffset = Vector2(
-      current.x - origin.x,
-      (current.y - origin.y) / HexGrid.perspectiveY,
+      _originGridOffset.x + current.x - origin.x,
+      _originGridOffset.y + (current.y - origin.y) / HexGrid.perspectiveY,
     );
     return _gridOffset.clone();
+  }
+
+  Vector2 _initialGridOffset() {
+    final current = _unitPositionOrigin;
+    final expected = _expectedWorldPosition;
+    if (current == null || expected == null) return Vector2.zero();
+    return Vector2(
+      current.x - expected.x,
+      (current.y - expected.y) / HexGrid.perspectiveY,
+    );
   }
 
   Vector2? _trackedUnitPosition() {

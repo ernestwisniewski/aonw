@@ -10,7 +10,7 @@ const LosslessMatchSnapshotCodec _losslessMatchSnapshotCodec =
 const PlayerMatchWireSchemaGuard _playerMatchWireSchemaGuard =
     PlayerMatchWireSchemaGuard();
 
-/// Decodes and encodes only current-version running snapshots.
+/// Decodes readable running snapshots and writes the current durable version.
 final class RunningMatchSnapshotCodec {
   const RunningMatchSnapshotCodec();
 
@@ -146,8 +146,21 @@ final class RunningMatchSnapshotCodec {
     _requireUnchangedEventLogOffset(previous, next);
     _requireRepresentableRunningTurnStart(next);
 
-    final encoded = _losslessMatchSnapshotCodec.encodeCanonical(next);
+    final migrateLegacySave =
+        source.wire.v == kLegacySnapshotEventVersion &&
+        next.metadata.schemaVersion != gameSaveCurrentSchemaVersion;
+    final writable = !migrateLegacySave
+        ? next
+        : next.copyWith(
+            metadata: next.metadata.copyWith(
+              schemaVersion: gameSaveCurrentSchemaVersion,
+            ),
+          );
+    final encoded = _losslessMatchSnapshotCodec.encodeCanonical(writable);
     return source.wire.copyWith(
+      v: isReadableSnapshotEventVersion(source.wire.v)
+          ? kSnapshotEventVersion
+          : source.wire.v,
       save: _jsonEquals(encoded.save, source.wire.save)
           ? source.wire.save
           : encoded.save,

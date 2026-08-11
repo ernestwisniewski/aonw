@@ -161,7 +161,7 @@ void main() {
       expect(visible.alphaAt(badgeCenter), greaterThan(100));
     });
 
-    test('attack marker takes priority over other planning markers', () async {
+    test('attack target uses a red fill with darker hatching', () async {
       final rendered = await _renderTile(
         outlineOnlyTopFace: true,
         showCitySiteMarker: true,
@@ -170,9 +170,11 @@ void main() {
         showWorkerImprovementTechMarker: true,
         showAttackTargetMarker: true,
       );
-
       final topCenter = rendered.geometry.topCenter;
-      expect(rendered.alphaAt(topCenter.translate(0, 6)), greaterThan(100));
+      final fillColor = rendered.colorAt(topCenter);
+      expect(rendered.alphaAt(topCenter), inInclusiveRange(85, 100));
+      expect(rendered.maxAlphaAround(topCenter), greaterThan(100));
+      expect(fillColor.r, greaterThan(fillColor.g));
     });
 
     test('draws movement blocker overlay over the top face', () async {

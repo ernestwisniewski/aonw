@@ -59,6 +59,7 @@ void main() {
         recipes: [
           '@flutter test --no-pub '
               'test/game/local_game_persistence_flow_test.dart',
+          '@\$(MAKE) --no-print-directory native-local-game-smoke',
         ],
       ),
     );
@@ -318,6 +319,7 @@ void main() {
         prerequisites: [],
         recipes: [
           '@\$(MAKE) --no-print-directory ci',
+          '@\$(MAKE) --no-print-directory native-local-game-smoke',
           '@\$(MAKE) --no-print-directory serverpod-config-check',
           '@tool/run_postgres_smoke.sh',
         ],

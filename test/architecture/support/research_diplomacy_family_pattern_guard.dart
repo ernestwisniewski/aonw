@@ -38,9 +38,9 @@ const _canonicalResearchDiplomacyExecutorMembers = {
 
 const reviewedResearchDiplomacyFamilyPatternSignatures =
     <String, ResearchDiplomacyPatternSignature>{
-      'lib/game/analysis/human_trace_analyzer.dart': (
+      'lib/game/analysis/human_trace_analysis.dart': (
         occurrences: 2,
-        digest: -5211487038479735376,
+        digest: -688480779725267505,
       ),
       'lib/game/application/services/'
           'accepted_engine_command_interaction_source.dart': (
@@ -80,18 +80,26 @@ const reviewedResearchDiplomacyFamilyPatternSignatures =
         digest: -2420503857590387296,
       ),
       'lib/game/presentation/widgets/diplomacy/'
-          'diplomatic_message_popup_overlay.dart': (
+          'diplomatic_popup_presentation.dart': (
         occurrences: 2,
-        digest: 3152255909214739737,
+        digest: -5026820036386730781,
       ),
       'lib/game/presentation/widgets/hud/command/'
           'hud_command_dispatcher_city_research.dart': (
         occurrences: 1,
         digest: -8112916657560051160,
       ),
+      'packages/aonw_core/lib/ai/diplomacy_ai_initiative.dart': (
+        occurrences: 6,
+        digest: 4315045777510882053,
+      ),
       'packages/aonw_core/lib/ai/diplomacy_ai_policy.dart': (
-        occurrences: 10,
-        digest: 4718186142947267618,
+        occurrences: 2,
+        digest: 7779553504994028694,
+      ),
+      'packages/aonw_core/lib/ai/diplomacy_ai_responses.dart': (
+        occurrences: 2,
+        digest: 3177976813000832965,
       ),
       'packages/aonw_core/lib/ai/mcts/mcts_action_generator.dart': (
         occurrences: 1,
@@ -114,11 +122,6 @@ const reviewedResearchDiplomacyFamilyPatternSignatures =
           'strategy_aware_economy_worker_ranker.dart': (
         occurrences: 1,
         digest: 866428937794019586,
-      ),
-      'packages/aonw_core/lib/ai/simulation/'
-          'economy_simulation_command_stats.dart': (
-        occurrences: 7,
-        digest: -5762404600290910601,
       ),
       'packages/aonw_core/lib/ai/strategies/'
           'basic_strategy_research_planner.dart': (

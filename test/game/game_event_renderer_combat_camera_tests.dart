@@ -34,6 +34,7 @@ void _registerCityCombatCameraEffectTests() {
             defenderHpAfter: 1,
             attackerKilled: false,
             defenderKilled: false,
+            defenderRetreated: true,
             steps: [AttackStep(damage: 2), RetaliationStep(damage: 1)],
           ),
         ),
@@ -77,6 +78,11 @@ void _registerCityCombatCameraEffectTests() {
     expect(alerts[1].turn, 31);
     expect(alerts[1].col, 6);
     expect(alerts[1].row, 7);
+
+    final retreat = effects.whereType<AnimateUnitMoveEffect>().single;
+    expect((retreat.fromCol, retreat.fromRow), (4, 5));
+    expect((retreat.steps.single.col, retreat.steps.single.row), (6, 7));
+    expect(effects.indexOf(alerts[1]), lessThan(effects.indexOf(retreat)));
 
     final damageTexts = effects.whereType<ShowFloatingTextEffect>().toList();
     final defenderDamage = damageTexts[0];

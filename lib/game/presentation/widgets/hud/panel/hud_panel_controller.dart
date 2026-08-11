@@ -70,6 +70,7 @@ class HudAutoTurnFlowController extends Notifier<bool> {
   );
 
   void setEnabled(bool enabled) {
+    state = enabled;
     ref.read(gameplaySettingsProvider.notifier).setAutoTurnFlowEnabled(enabled);
   }
 }
@@ -83,6 +84,7 @@ class HudAutoActionFlowController extends Notifier<bool> {
   );
 
   void setEnabled(bool enabled) {
+    state = enabled;
     ref
         .read(gameplaySettingsProvider.notifier)
         .setAutoActionFlowEnabled(enabled);

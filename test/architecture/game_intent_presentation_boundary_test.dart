@@ -51,6 +51,8 @@ const _allowedPresentationRuleReads = <String, List<String>>{
   'lib/game/presentation/widgets/hud/overlay/hud_overlay_frame.dart': [
     'TurnReducer.pendingTurnActionCount',
     'TurnReducer.currentPendingTurnActionIndex',
+  ],
+  'lib/game/presentation/widgets/hud/overlay/hud_overlay_frame_helpers.dart': [
     'CityFoundingRules.startFailure',
   ],
   'lib/game/presentation/widgets/hud/selection/hud_selection_action_rules.dart':
@@ -71,19 +73,19 @@ const _allowedPresentationRuleReads = <String, List<String>>{
   'lib/game/presentation/widgets/bottom_toolbar/view_models/worker_improvement_options_view_model_factory.dart':
       ['WorkerImprovementRules.evaluate', 'WorkerImprovementRules.evaluate'],
   'lib/game/presentation/engine/game_planning_marker_coordinator.dart': [
-    'WorkerImprovementRules.availabilityForTile',
-    'WorkerImprovementRules.cityForImprovementHex',
     'CityFoundingRules.isCenterFarEnoughFromCities',
   ],
-  'lib/game/presentation/engine/recommended_city_site_planner.dart': [
+  'lib/game/presentation/engine/recommended_city_site_expansion.dart': [
     'CityFoundingRules.isControlledHexCandidate',
+  ],
+  'lib/game/presentation/engine/recommended_city_site_selection.dart': [
     'CityFoundingRules.isCenterFarEnoughFromCities',
   ],
   'lib/game/presentation/engine/rendering_layers/city/city_founding_preview_layer.dart':
       ['CityFoundingRules.selectableControlledHexes'],
-  'lib/game/presentation/widgets/selection/view_models/selection_resource_value_card_factory.dart':
+  'lib/game/presentation/widgets/selection/view_models/selection_resource_improvement_assessment.dart':
       ['WorkerImprovementRules.cityForImprovementHex'],
-  'lib/game/presentation/engine/rendering_layers/city/city_management_overlay_layer.dart':
+  'lib/game/presentation/engine/rendering_layers/city/city_management_worker_overlay.dart':
       ['WorkerImprovementRules.evaluate'],
   'lib/game/presentation/widgets/selection/view_models/tile_selection_view_model_factory.dart':
       ['WorkerImprovementRules.cityForImprovementHex'],

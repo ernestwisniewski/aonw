@@ -475,7 +475,7 @@ void main() {
           createdAt: now,
         ),
         snapshot: WireSnapshot(
-          v: kSnapshotEventVersion - 1,
+          v: kLegacySnapshotEventVersion - 1,
           matchId: 'inactive-match',
           offset: 0,
           save: const {},

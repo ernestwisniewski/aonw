@@ -15,6 +15,8 @@ const _commandTransportPath =
     'lib/game/application/ports/command_transport.dart';
 const _networkTransportPath =
     'lib/api/transport/network_command_transport.dart';
+const _networkTransportSnapshotPath =
+    'lib/api/transport/network_command_transport_snapshot.dart';
 const _acknowledgedPresentationPath =
     'lib/api/transport/acknowledged_command_presentation.dart';
 
@@ -38,6 +40,7 @@ void main() {
       expect(
         _networkResultFlowViolations(
           _unitAt(_networkTransportPath),
+          _unitAt(_networkTransportSnapshotPath),
           _unitAt(_acknowledgedPresentationPath),
         ),
         isEmpty,

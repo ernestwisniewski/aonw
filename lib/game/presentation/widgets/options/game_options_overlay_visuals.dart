@@ -181,7 +181,10 @@ class _GameOptionsSideMenuSeparator extends StatelessWidget {
         child: Container(
           width: 22,
           height: 1,
-          color: GameUiTheme.gold.withAlpha(92),
+          color: SurfaceElevation.flat.strokeColor(
+            color: GameUiTheme.gold,
+            alpha: 92,
+          ),
         ),
       ),
     );

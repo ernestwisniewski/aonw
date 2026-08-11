@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/unit_anchored_hex_motion_tracker.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/layer_attachment.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
@@ -463,7 +464,12 @@ class CombatHexAlertOverlay extends Component {
   void _resetVisualAnchor({required CityHex hex, required String? unitId}) {
     _visualAnchorHex = hex;
     _gridOffset = Vector2.zero();
-    _motionTracker.anchorTo(unitId);
+    _motionTracker.anchorTo(
+      unitId,
+      expectedWorldPosition: unitId == null
+          ? null
+          : UnitMarkerLayer.worldPositionFor(hex.col, hex.row),
+    );
   }
 
   Path _hexPath(CityHex hex, {double radiusScale = 0.98}) {

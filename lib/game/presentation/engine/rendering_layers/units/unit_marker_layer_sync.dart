@@ -16,6 +16,7 @@ extension _UnitMarkerLayerSync on UnitMarkerLayer {
     final onCity = cityPlacement != _CityUnitMarkerPlacement.none;
     final healthFraction = MarkerHealthFraction.forUnit(unit);
     final position = _unitWorldPosition(unit, cityPlacement: cityPlacement);
+    final hexAnchorOffset = _unitHexAnchorOffset(cityPlacement);
     final selected = unit.id == selectedUnitId;
     final pendingActionTarget = unit.id == pendingActionUnitId;
     final attackTarget = attackTargetUnitIds.contains(unit.id);
@@ -34,6 +35,7 @@ extension _UnitMarkerLayerSync on UnitMarkerLayer {
         attackTarget: attackTarget,
         healthFraction: healthFraction,
         onCity: onCity,
+        hexAnchorOffset: hexAnchorOffset,
         fortified: unit.isFortified,
         skippedTurn: skippedTurn,
         exhausted: exhausted,
@@ -56,6 +58,7 @@ extension _UnitMarkerLayerSync on UnitMarkerLayer {
     } else {
       existing
         ..position = position
+        ..setHexAnchorOffset(hexAnchorOffset)
         ..unitType = unit.type
         ..selected = selected
         ..pendingActionTarget = pendingActionTarget
@@ -130,6 +133,7 @@ extension _UnitMarkerLayerSync on UnitMarkerLayer {
       attackTarget: attackTarget,
       healthFraction: healthFraction,
       onCity: onCity,
+      hexAnchorOffset: _unitHexAnchorOffset(cityPlacement),
       fortified: unit.isFortified,
       skippedTurn: skippedTurn,
       exhausted: exhausted,

@@ -20,7 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-part 'options_screen_camera_map_test.dart';
+part 'options_screen_camera_map_scenarios.dart';
 
 void main() {
   setUp(() {

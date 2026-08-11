@@ -70,6 +70,7 @@ void main() {
     expect(encodedAfterCanonicalReads.state['wonderRegistry'], {
       'greatLibrary': 'player_1',
     });
+    expect(encodedAfterCanonicalReads.state['transportNetwork'], isEmpty);
     expect(
       (encodedAfterCanonicalReads.state['lifecycle']! as Map)['turnStartedAt'],
       _savedAt.toIso8601String(),
@@ -107,6 +108,7 @@ Map<String, dynamic> _expectedWireJson() {
       'cities': <dynamic>[],
       'artifacts': <dynamic>[],
       'fieldImprovements': <dynamic>[],
+      'transportNetwork': <dynamic>[],
       'fogOfWar': <dynamic>[],
       'research': {'players': <String, dynamic>{}},
       'wonderRegistry': {'greatLibrary': 'player_1'},

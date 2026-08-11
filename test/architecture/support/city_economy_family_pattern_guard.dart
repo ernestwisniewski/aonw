@@ -58,13 +58,13 @@ const _canonicalCityEconomyExecutorMembers = {
 
 const reviewedCityEconomyFamilyPatternSignatures =
     <String, CityEconomyPatternSignature>{
-      'lib/game/analysis/human_trace_analyzer.dart': (
+      'lib/game/analysis/human_trace_analysis.dart': (
         occurrences: 10,
-        digest: -6490144808525609761,
+        digest: 3342544035721037497,
       ),
-      'lib/game/analysis/human_trace_benchmark.dart': (
+      'lib/game/analysis/human_trace_simulation_benchmark.dart': (
         occurrences: 1,
-        digest: 6973065674861887521,
+        digest: 6393420268511367199,
       ),
       'lib/game/application/services/'
           'accepted_engine_command_interaction_source.dart': (
@@ -73,7 +73,7 @@ const reviewedCityEconomyFamilyPatternSignatures =
       ),
       'lib/game/application/services/ai_turn_command_executor.dart': (
         occurrences: 19,
-        digest: 1602138930146431912,
+        digest: 1894401398996350786,
       ),
       'lib/game/application/services/authoritative_command_policy.dart': (
         occurrences: 3,
@@ -90,8 +90,8 @@ const reviewedCityEconomyFamilyPatternSignatures =
         digest: -4199011773204335367,
       ),
       'lib/game/application/services/replay_service.dart': (
-        occurrences: 19,
-        digest: -8963395515821012448,
+        occurrences: 3,
+        digest: 3746349945722383860,
       ),
       'lib/game/presentation/audio/game_sound_cue_mapper.dart': (
         occurrences: 3,
@@ -267,6 +267,11 @@ const reviewedCityEconomyFamilyPatternSignatures =
           'basic_strategy_worker_planner.dart': (
         occurrences: 4,
         digest: 6695705971934485808,
+      ),
+      'packages/aonw_core/lib/ai/strategies/'
+          'basic_strategy_worker_improvements.dart': (
+        occurrences: 1,
+        digest: -8263532876333406356,
       ),
     };
 

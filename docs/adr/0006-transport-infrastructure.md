@@ -19,6 +19,14 @@ authoritative command resolver.
 
 ## Decision
 
+```mermaid
+flowchart LR
+  Domain["Domain road state"] --> Traversal["Bounded traversal view"]
+  Domain --> Projection["Visibility projection"]
+  Traversal --> Movement["Movement cost and pathfinding"]
+  Projection --> Client["Client rendering"]
+```
+
 Transport is an independent domain aggregate owned by `DomainState`.
 `TransportNetworkState` contains immutable, deterministically serialized
 `TransportSegment` values keyed by hex. A segment records its kind, condition,

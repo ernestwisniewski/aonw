@@ -19,7 +19,7 @@
             "found": 422
           },
           "lines": {
-            "hit": 14262,
+            "hit": 14300,
             "found": 16511
           }
         },
@@ -39,8 +39,8 @@
             "found": 12
           },
           "lines": {
-            "hit": 419,
-            "found": 460
+            "hit": 428,
+            "found": 469
           }
         },
         "util": {
@@ -180,8 +180,8 @@
             "found": 314
           },
           "lines": {
-            "hit": 19815,
-            "found": 22331
+            "hit": 19817,
+            "found": 22333
           }
         },
         "l10n": {
@@ -264,8 +264,8 @@
             "found": 68
           },
           "lines": {
-            "hit": 3154,
-            "found": 3356
+            "hit": 3160,
+            "found": 3362
           }
         },
         "observability": {

@@ -14,6 +14,12 @@ MethodDeclaration? _methodNamed(ClassDeclaration owner, String name) {
       .singleOrNull;
 }
 
+MethodDeclaration? _methodNamedAnywhere(AstNode node, String name) {
+  final collector = _MethodDeclarationCollector(name);
+  node.accept(collector);
+  return collector.nodes.singleOrNull;
+}
+
 FormalParameter _normalizedParameter(FormalParameter parameter) {
   return parameter is DefaultFormalParameter ? parameter.parameter : parameter;
 }
@@ -69,5 +75,18 @@ final class _MethodInvocationCollector extends RecursiveAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name == name) nodes.add(node);
     super.visitMethodInvocation(node);
+  }
+}
+
+final class _MethodDeclarationCollector extends RecursiveAstVisitor<void> {
+  _MethodDeclarationCollector(this.name);
+
+  final String name;
+  final List<MethodDeclaration> nodes = [];
+
+  @override
+  void visitMethodDeclaration(MethodDeclaration node) {
+    if (node.name.lexeme == name) nodes.add(node);
+    super.visitMethodDeclaration(node);
   }
 }

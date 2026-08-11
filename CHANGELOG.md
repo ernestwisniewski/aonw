@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 1.1.14 - 2026-08-11
+
+- Added road construction and a persistent transport network that changes
+  movement costs consistently in local games, multiplayer, saves, and replays.
+- Improved combat targeting with clearer attackable-hex fills, animated attack
+  trajectories, and unit-bound attacker, defender, and fortification markers.
+- Fixed combat retreat markers so red and blue hex cues follow the unit from
+  its rendered origin and settle exactly on the retreat destination.
+- Improved late-game turn processing, map rendering, marker synchronization,
+  and combat presentation performance on larger matches.
+- Split large gameplay, renderer, HUD, editor, AI, reporting, and protocol
+  components into focused modules with enforced architecture budgets.
+- Versioned the road-aware multiplayer contract and durable snapshots, added
+  compatibility fixtures, and documented coordinated rollout and rollback.
+- Added a native single-player release smoke covering end turn, save, and a
+  fresh reload, and expanded protocol, renderer, coverage, and mutation gates.
+
 ## 1.1.13 - 2026-08-10
 
 - Stabilized turn-start action prompts and the handoff from automated players

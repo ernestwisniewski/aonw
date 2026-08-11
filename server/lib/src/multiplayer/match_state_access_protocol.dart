@@ -14,7 +14,7 @@ extension MatchStateAccessProtocol on MatchStateAccess {
 
   bool supportsCurrentProtocol(StoredMatchState state) {
     return supportsCurrentMatch(state.match) &&
-        state.snapshot.v == kSnapshotEventVersion;
+        isReadableSnapshotEventVersion(state.snapshot.v);
   }
 
   void requireCurrentProtocol(StoredMatchState state) {

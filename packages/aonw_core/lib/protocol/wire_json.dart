@@ -15,6 +15,23 @@ abstract final class WireJson {
     return version;
   }
 
+  static int readSupportedVersion(
+    Map<String, dynamic> json,
+    String type, {
+    required Set<int> supportedVersions,
+  }) {
+    final version = requiredInt(json, type, 'v');
+    if (!supportedVersions.contains(version)) {
+      final ordered = supportedVersions.toList()..sort();
+      throw ArgumentError.value(
+        version,
+        '$type.v',
+        'Unsupported protocol version; expected one of $ordered',
+      );
+    }
+    return version;
+  }
+
   static String requiredString(
     Map<String, dynamic> json,
     String type,

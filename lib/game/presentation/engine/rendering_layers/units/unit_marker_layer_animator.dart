@@ -65,6 +65,7 @@ class UnitMarkerLayerAnimator {
     if (marker == null) return;
     marker
       ..onCity = false
+      ..clearHexAnchorOffset()
       ..position = _worldPositionFor(col, row);
   }
 
@@ -124,6 +125,7 @@ class UnitMarkerLayerAnimator {
     if (_reduceMotion) {
       marker
         ..onCity = false
+        ..clearHexAnchorOffset()
         ..position = _worldPositionFor(steps.last.col, steps.last.row)
         ..playIdle();
       _completeMoveState(unitId, retainAtDestination: retainAtDestination);
@@ -134,7 +136,9 @@ class UnitMarkerLayerAnimator {
     final token = Object();
     _moveTokens[unitId] = token;
     _movingUnitIds.add(unitId);
-    marker.onCity = false;
+    marker
+      ..onCity = false
+      ..clearHexAnchorOffset();
     if (fromCol != null && fromRow != null) {
       marker.position = _worldPositionFor(fromCol, fromRow);
     }

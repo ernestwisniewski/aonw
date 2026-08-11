@@ -54,17 +54,32 @@ List<String> _violations(
   Set<String> mapBoundaryTypeNames = _mapBoundaryRootTypeNames,
 }) {
   final unit = parseString(content: source, path: target.path).unit;
-  final owner = unit.declarations.whereType<ClassDeclaration>().where(
-    (declaration) => declaration.namePart.typeName.lexeme == target.owner,
-  );
   final violations = <String>[];
-  if (owner.length != 1) {
-    return ['${target.owner} must declare exactly one class'];
+  final memberBoundaries = target.boundaries
+      .where((boundary) => boundary.kind != _BoundaryKind.function)
+      .toList();
+  if (memberBoundaries.isNotEmpty) {
+    final owner = unit.declarations.whereType<ClassDeclaration>().where(
+      (declaration) => declaration.namePart.typeName.lexeme == target.owner,
+    );
+    if (owner.length != 1) {
+      return ['${target.owner} must declare exactly one class'];
+    }
+    for (final boundary in memberBoundaries) {
+      _checkBoundary(
+        owner.single,
+        boundary,
+        violations,
+        mapDataTypeNames: mapDataTypeNames,
+        mapBoundaryTypeNames: mapBoundaryTypeNames,
+      );
+    }
   }
-
-  for (final boundary in target.boundaries) {
-    _checkBoundary(
-      owner.single,
+  for (final boundary in target.boundaries.where(
+    (boundary) => boundary.kind == _BoundaryKind.function,
+  )) {
+    _checkFunctionBoundary(
+      unit,
       boundary,
       violations,
       mapDataTypeNames: mapDataTypeNames,
@@ -82,6 +97,59 @@ List<String> _violations(
     violations.add('must not import map_definition.dart');
   }
   return violations;
+}
+
+void _checkFunctionBoundary(
+  CompilationUnit unit,
+  _Boundary boundary,
+  List<String> violations, {
+  required Set<String> mapDataTypeNames,
+  required Set<String> mapBoundaryTypeNames,
+}) {
+  final functions = unit.declarations.whereType<FunctionDeclaration>().where(
+    (declaration) => declaration.name.lexeme == boundary.name,
+  );
+  if (functions.length != 1) {
+    violations.add('${boundary.name} must declare exactly one function');
+    return;
+  }
+  final parameters = functions.single.functionExpression.parameters;
+  if (parameters == null) {
+    violations.add('${boundary.name} must declare a parameter list');
+    return;
+  }
+  final parameter = _parameterFor(parameters, boundary.parameter);
+  if (parameter == null) {
+    violations.add(
+      '${boundary.name} must declare a ${boundary.parameter} parameter',
+    );
+  } else {
+    _checkBoundaryType(
+      label: '${boundary.name}.${boundary.parameter}',
+      type: _functionParameterType(parameter),
+      expectedType: boundary.type,
+      nullable: boundary.nullable,
+      violations: violations,
+    );
+  }
+  for (final parameter in parameters.parameters) {
+    final normalized = _unwrap(parameter);
+    final parameterName = normalized.name?.lexeme ?? '<unnamed>';
+    final parameterType = _functionParameterType(normalized);
+    if (_containsAnyNamedType(parameterType, mapDataTypeNames)) {
+      violations.add(
+        '${boundary.name} must not expose WorldMap through parameter '
+        '$parameterName',
+      );
+    }
+    if (parameterName != boundary.parameter &&
+        _containsAnyNamedType(parameterType, mapBoundaryTypeNames)) {
+      violations.add(
+        '${boundary.name} must not expose an additional map dependency '
+        'through parameter $parameterName',
+      );
+    }
+  }
 }
 
 void _checkBoundary(
@@ -229,6 +297,14 @@ TypeAnnotation? _parameterType(
   };
 }
 
+TypeAnnotation? _functionParameterType(FormalParameter parameter) {
+  final normalized = _unwrap(parameter);
+  return switch (normalized) {
+    SimpleFormalParameter(:final type) => type,
+    _ => null,
+  };
+}
+
 VariableDeclaration? _fieldFor(ClassDeclaration owner, String name) {
   for (final member in owner.body.members.whereType<FieldDeclaration>()) {
     for (final field in member.fields.variables) {
@@ -288,7 +364,8 @@ final class _NamedTypeCollector extends RecursiveAstVisitor<void> {
 
 enum _BoundaryKind {
   method('method'),
-  constructor('constructor');
+  constructor('constructor'),
+  function('function');
 
   const _BoundaryKind(this.label);
 
@@ -311,6 +388,14 @@ final class _Boundary {
     this.requireField = true,
   }) : kind = _BoundaryKind.constructor,
        nullable = false;
+
+  const _Boundary.function(
+    this.name, {
+    required this.parameter,
+    required this.type,
+  }) : kind = _BoundaryKind.function,
+       nullable = false,
+       requireField = false;
 
   final _BoundaryKind kind;
   final String name;

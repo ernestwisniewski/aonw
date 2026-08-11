@@ -184,7 +184,7 @@ SQL mutation.
 
 ## Authoritative Movement Evidence
 
-Every schema-v3 `WireEvent` and schema-v4 `WireCommandAck` carries a non-null
+Every readable schema-v3/v4 `WireEvent` and schema-v4 `WireCommandAck` carries a non-null
 `movementExecutions` list. Each execution contains the unit, exact origin,
 ordered travel steps, per-step entry cost, and cumulative cost. A regular
 `MoveUnitCommand` supplies its exact single execution. Simultaneous-turn
@@ -301,20 +301,21 @@ timeout handling treats AI seats as non-blocking.
 Every authoritative top-level wire envelope carries a strict family version.
 `WireCommand`, `WireCommandAck`, and `WireMatch` use
 `kProtocolVersion == 4`. `WireSnapshot` and `WireEvent` use the independent
-`kSnapshotEventVersion == 3` in storage and in standalone or nested
-transport. Nested envelopes validate themselves, so a valid ACK v4 contains a
-snapshot v3. There is no implicit promotion between the families.
+`kSnapshotEventVersion == 4` write schema in storage and in standalone or
+nested transport. Revision-6 readers also accept legacy durable v3. Nested
+envelopes validate themselves, so an ACK v4 contains snapshot v3 or v4 during
+the bounded expansion. There is no implicit promotion between the families.
 
 Functional multiplayer compatibility is versioned independently:
 
 | Contract | Current | Compatible | Meaning |
 | --- | ---: | --- | --- |
-| Multiplayer revision | 5 | 5 | Revision 5 correlates every command ACK by `clientMessageId`. Revisions 1-4 do not implement that contract and are not compatible. |
+| Multiplayer revision | 6 | 6 | Revision 6 adds road construction, transport-network state, and infrastructure-aware movement. Revision 5 cannot represent or simulate that contract. |
 | Command / ACK / match schema | 4 | 4 | Schema 4 requires `clientMessageId` in every `WireCommandAck`. |
-| Snapshot / event schema | 3 | 3 | Durable payload shapes remain unchanged and strict in storage and transport. |
+| Snapshot / event schema | 4 | 3, 4 readable; 4 writable | Schema 4 owns road jobs and transport-network state. Legacy v3 decodes with an empty network and is migrated on the next authoritative write. |
 
 The main-menu app-status request sends the app build plus multiplayer revision
-5. A revision in the compatible set can continue. A removed, invalid, or
+6. A revision in the compatible set can continue. A removed, invalid, or
 future revision receives `soon`, which renders the localized
 `mainMenuUpdateSoonTitle` and `mainMenuUpdateSoonBody` notice. Older clients
 that do not yet send a revision are treated specifically as revision 1 during
@@ -336,9 +337,17 @@ presence while retaining snapshot/event schema 3. Revision 5 moves only
 commands, ACKs, and match envelopes to schema 4 and requires ACK correlation
 IDs. Persisted snapshots, persisted events, replay transport, nested ACK
 snapshots, and the `multiplayer-v3` snapshot-cache namespace remain schema 3.
-No data migration is needed. Keeping the unchanged durable family at v3 avoids
-a forward-only rewrite and preserves expand/contract deployment plus N-1
-rollback, while malformed or unknown versions still fail their strict reader.
+Revision 6 moves snapshots and events to schema 4 for road construction and
+transport-network state. Readers accept v3 and v4; writers emit v4, and a v3
+running match migrates with save schema 4 on its next accepted state change.
+Malformed, pre-v3, and future versions fail closed.
+
+Before deploying revision 6, retain a database backup. Deploy the v6 server
+before exposing v6 clients; all v5 clients are blocked by compatibility guards.
+Once any v4 row is written, do not roll the server back to v5 against that
+database. Use a forward fix, or restore the predeploy backup first. The old
+server rejects v4, which prevents silent loss of roads; no v4-to-v3 downcaster
+exists because it could erase a transport network or reinterpret a road job.
 
 Use this path for every multiplayer change:
 

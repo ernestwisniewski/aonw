@@ -90,6 +90,39 @@ extension _HexTilePlanningMarkers on HexTilePainter {
     return path..close();
   }
 
+  void _drawAttackTargetMarker(
+    Canvas canvas,
+    HexTileGeometrySnapshot geometry,
+  ) {
+    final path = geometry.topPath;
+    final bounds = path.getBounds();
+    final center = geometry.topCenter;
+    final diagonalReach = bounds.width + bounds.height;
+    canvas
+      ..drawPath(path, _paintAttackTargetMarker)
+      ..save()
+      ..clipPath(path);
+    for (
+      var shift = 0.0;
+      shift <= bounds.width;
+      shift += HexTilePainter._attackTargetHatchSpacing
+    ) {
+      canvas.drawLine(
+        center.translate(shift - diagonalReach, bounds.height),
+        center.translate(shift + diagonalReach, -bounds.height),
+        _paintAttackTargetHatch,
+      );
+      if (shift > 0) {
+        canvas.drawLine(
+          center.translate(-shift - diagonalReach, bounds.height),
+          center.translate(-shift + diagonalReach, -bounds.height),
+          _paintAttackTargetHatch,
+        );
+      }
+    }
+    canvas.restore();
+  }
+
   void _drawPlanningMarkers({
     required Canvas canvas,
     required HexTileGeometrySnapshot geometry,
@@ -103,7 +136,7 @@ extension _HexTilePlanningMarkers on HexTilePainter {
     required bool showAttackTargetMarker,
   }) {
     if (showAttackTargetMarker) {
-      canvas.drawPath(geometry.topPath, _paintAttackTargetMarker);
+      _drawAttackTargetMarker(canvas, geometry);
       return;
     }
     final hexRadius = _hexRadiusFor(geometry);
