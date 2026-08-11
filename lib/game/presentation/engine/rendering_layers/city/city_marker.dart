@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asset_cap.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker_visual_state.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_sprite_catalog.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/marker_health_bar.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
@@ -15,26 +16,13 @@ import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 
 part 'city_marker_label_support.dart';
-part 'city_marker_mutable_state.dart';
 part 'city_marker_sprite_rendering.dart';
 part 'city_marker_test_view.dart';
+part 'city_marker_visual_state_support.dart';
 
 class CityMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
-  int _colorValue;
+  CityMarkerVisualState _visualState;
   VoidCallback? onTap;
-  bool _selected;
-  String _name;
-  int _population;
-  bool _showLabel;
-  bool _showHealthBar;
-  bool _isCapital;
-  int visualLevel;
-  CitySpriteTechnologyProfile technologyProfile;
-  double _healthFraction;
-  bool _hasStoredArtifact;
-  bool _reduceMotion;
-  Vector2 _restingPosition;
-  double _markerWorldScale;
   // Reused across frames; rebuilt only when the label's source data changes.
   // TextPainter.layout() is the dominant CPU cost in render() for cities.
   TextPainter? _cachedPopulationPainter;
@@ -61,44 +49,69 @@ class CityMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
   static const double _artifactBadgeRadius = 7.0;
   double _labelPulseElapsed = 0;
 
-  CityMarker({
+  factory CityMarker({
     required Vector2 position,
     required int colorValue,
-    this.onTap,
+    VoidCallback? onTap,
     String name = '',
     int population = 1,
     bool showLabel = true,
     bool showHealthBar = true,
     bool isCapital = false,
     bool selected = false,
-    this.visualLevel = 0,
-    this.technologyProfile = CitySpriteTechnologyProfile.growthCivic,
+    int visualLevel = 0,
+    CitySpriteTechnologyProfile technologyProfile =
+        CitySpriteTechnologyProfile.growthCivic,
     double healthFraction = 1.0,
     bool hasStoredArtifact = false,
     double markerWorldScale = 1.0,
     bool reduceMotion = false,
-  }) : _colorValue = colorValue,
-       _name = name,
-       _population = math.max(1, population),
-       _showLabel = showLabel,
-       _showHealthBar = showHealthBar,
-       _isCapital = isCapital,
-       _selected = selected,
-       _healthFraction = healthFraction.clamp(0.0, 1.0).toDouble(),
-       _hasStoredArtifact = hasStoredArtifact,
-       _reduceMotion = reduceMotion,
-       _restingPosition = position.clone(),
-       _markerWorldScale = _normalizeMarkerWorldScale(markerWorldScale),
+  }) {
+    return CityMarker.withVisualState(
+      visualState: CityMarkerVisualState(
+        worldPosition: Offset(position.x, position.y),
+        colorValue: colorValue,
+        name: name,
+        population: population,
+        showLabel: showLabel,
+        showHealthBar: showHealthBar,
+        isCapital: isCapital,
+        selected: selected,
+        visualLevel: visualLevel,
+        technologyProfile: technologyProfile,
+        healthFraction: healthFraction,
+        hasStoredArtifact: hasStoredArtifact,
+        markerWorldScale: markerWorldScale,
+        reduceMotion: reduceMotion,
+      ),
+      onTap: onTap,
+    );
+  }
+
+  CityMarker.withVisualState({
+    required CityMarkerVisualState visualState,
+    this.onTap,
+  }) : _visualState = visualState,
        super(
-         position: position,
+         position: Vector2(
+           visualState.worldPosition.dx,
+           visualState.worldPosition.dy,
+         ),
          size: Vector2(_width, _height),
          anchor: Anchor.center,
          priority: 18,
        ) {
     paint.filterQuality = FilterQuality.medium;
-    scale = Vector2.all(_markerWorldScale);
+    scale = Vector2.all(_visualState.markerWorldScale);
     _syncSelectionEffects();
   }
+
+  CityMarkerVisualState get visualState => _visualState;
+
+  void applyVisualState(CityMarkerVisualState value) =>
+      _applyVisualState(value);
+
+  CityMarkerDebugSnapshot get debugSnapshot => _debugSnapshot;
 
   @override
   Future<void> onLoad() async {
@@ -127,18 +140,19 @@ class CityMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
   @override
   bool containsLocalPoint(Vector2 point) {
     final offset = Offset(point.x, point.y);
+    final center = Offset(_width / 2, _height / 2);
     if (BoardAssetCapPainter.clipPathFor(
-      spriteBoundsForTesting,
+      _spriteBoundsFor(center),
     ).contains(offset)) {
       return true;
     }
-    return _labelHitRectForTesting.contains(offset);
+    return _labelHitRect.contains(offset);
   }
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    final playerColor = Color(_colorValue);
+    final playerColor = Color(_visualState.colorValue);
     final center = Offset(_width / 2, _height / 2);
 
     final spriteBounds = _spriteBoundsFor(center);

@@ -28,7 +28,7 @@ extension _CityMarkerLabelSupport on CityMarker {
   }
 
   double get _cityLabelHealthBarOffset =>
-      paintsCityHealthBarForTesting ? MarkerHealthBar.verticalFootprint : 0;
+      _paintsCityHealthBar ? MarkerHealthBar.verticalFootprint : 0;
 
   void _paintCapitalStar(Canvas canvas, Offset center) {
     final path = _starPath(
@@ -71,10 +71,11 @@ extension _CityMarkerLabelSupport on CityMarker {
     return path..close();
   }
 
-  int get _spriteRow => visualLevel.clamp(0, CityMarker._frameRows - 1).toInt();
+  int get _spriteRow =>
+      _visualLevel.clamp(0, CityMarker._frameRows - 1).toInt();
 
   int get _spriteColumn =>
-      technologyProfile.index.clamp(0, CityMarker._frameColumns - 1);
+      _technologyProfile.index.clamp(0, CityMarker._frameColumns - 1);
 
   double _statusTopFor(Rect spriteBounds) => spriteBounds.top;
 
@@ -82,10 +83,10 @@ extension _CityMarkerLabelSupport on CityMarker {
     paint.colorFilter = null;
   }
 
-  bool _samePosition(Vector2 a, Vector2 b) =>
-      (a.x - b.x).abs() < 0.0001 && (a.y - b.y).abs() < 0.0001;
+  bool get _paintsCityHealthBar =>
+      _showHealthBar || _selected || _healthFraction < 0.995;
 
-  Rect get _labelHitRectForTesting {
+  Rect get _labelHitRect {
     if (!_shouldPaintLabel) return Rect.zero;
     final center = Offset(CityMarker._width / 2, CityMarker._height / 2);
     final spriteBounds = _spriteBoundsFor(center);
@@ -110,6 +111,3 @@ extension _CityMarkerLabelSupport on CityMarker {
 
 double _healthBarWidthFor(Rect spriteBounds) =>
     math.max(34.0, math.min(62.0, spriteBounds.width * 0.68));
-
-double _normalizeMarkerWorldScale(double value) =>
-    value.isFinite ? value.clamp(1.0, 3.0).toDouble() : 1.0;

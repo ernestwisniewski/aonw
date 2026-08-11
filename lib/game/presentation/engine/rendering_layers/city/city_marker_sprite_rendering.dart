@@ -25,7 +25,7 @@ extension _CityMarkerSpriteRendering on CityMarker {
     required double statusTop,
     required Rect spriteBounds,
   }) {
-    if (!paintsCityHealthBarForTesting) return;
+    if (!_paintsCityHealthBar) return;
     MarkerHealthBar.paint(
       canvas,
       center: center,

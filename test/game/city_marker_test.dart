@@ -39,10 +39,10 @@ void main() {
       final picture = recorder.endRecording();
       addTearDown(picture.dispose);
       expect(picture.approximateBytesUsed, greaterThan(0));
-      expect(marker.paintsCityHealthBarForTesting, isTrue);
-      expect(marker.paintsCapitalStarForTesting, isTrue);
-      expect(marker.paintsSelectedCityLabelBorderForTesting, isTrue);
-      expect(marker.paintsStoredArtifactBadgeForTesting, isTrue);
+      expect(marker.debugSnapshot.paintsCityHealthBar, isTrue);
+      expect(marker.debugSnapshot.paintsCapitalStar, isTrue);
+      expect(marker.debugSnapshot.paintsSelectedCityLabelBorder, isTrue);
+      expect(marker.debugSnapshot.paintsStoredArtifactBadge, isTrue);
     });
 
     test('uses the city sprite without a duplicated type icon badge', () async {
@@ -54,18 +54,18 @@ void main() {
         colorValue: 0xFF0000FF,
       );
 
-      expect(marker.markerSizeForTesting.x, capStyle.componentSize.width);
+      expect(marker.debugSnapshot.markerSize.x, capStyle.componentSize.width);
       expect(
-        marker.markerSizeForTesting.y,
+        marker.debugSnapshot.markerSize.y,
         closeTo(capStyle.componentSize.height, 0.0001),
       );
       expect(marker.anchor, Anchor.center);
-      expect(marker.sourceInsetForTesting, 0);
-      expect(marker.boardCapStyleForTesting, capStyle);
-      expect(marker.usesTypeIconBadgeForTesting, isFalse);
-      expect(marker.typeIconRectForTesting, Rect.zero);
-      expect(marker.paintsCityHealthBarForTesting, isTrue);
-      expect(marker.paintsCityOwnerIndicatorForTesting, isFalse);
+      expect(marker.debugSnapshot.sourceInset, 0);
+      expect(marker.debugSnapshot.boardCapStyle, capStyle);
+      expect(marker.debugSnapshot.usesTypeIconBadge, isFalse);
+      expect(marker.debugSnapshot.typeIconRect, Rect.zero);
+      expect(marker.debugSnapshot.paintsCityHealthBar, isTrue);
+      expect(marker.debugSnapshot.paintsCityOwnerIndicator, isFalse);
     });
 
     test('paints a unit-style health bar above the city sprite', () {
@@ -76,15 +76,18 @@ void main() {
         name: 'Aurelian',
       );
 
-      final healthRect = marker.cityHealthBarRectForTesting;
-      final labelRect = marker.cityLabelHitRectForTesting;
+      final healthRect = marker.debugSnapshot.cityHealthBarRect;
+      final labelRect = marker.debugSnapshot.cityLabelHitRect;
 
-      expect(marker.healthFractionForTesting, 0.5);
-      expect(marker.showHealthBarForTesting, isTrue);
-      expect(marker.paintsCityHealthBarForTesting, isTrue);
+      expect(marker.debugSnapshot.healthFraction, 0.5);
+      expect(marker.debugSnapshot.showHealthBar, isTrue);
+      expect(marker.debugSnapshot.paintsCityHealthBar, isTrue);
       expect(healthRect, isNot(Rect.zero));
       expect(healthRect.width, greaterThan(30));
-      expect(healthRect.bottom, lessThanOrEqualTo(marker.statusTopForTesting));
+      expect(
+        healthRect.bottom,
+        lessThanOrEqualTo(marker.debugSnapshot.statusTop),
+      );
       expect(labelRect.bottom, lessThanOrEqualTo(healthRect.top));
     });
 
@@ -97,20 +100,19 @@ void main() {
           showHealthBar: false,
         );
 
-        expect(marker.showHealthBarForTesting, isFalse);
-        expect(marker.paintsCityHealthBarForTesting, isFalse);
-
-        marker.healthFraction = 0.75;
-
-        expect(marker.paintsCityHealthBarForTesting, isTrue);
-
-        marker.healthFraction = 1;
-
-        expect(marker.paintsCityHealthBarForTesting, isFalse);
-
-        marker.selected = true;
-
-        expect(marker.paintsCityHealthBarForTesting, isTrue);
+        expect(marker.debugSnapshot.showHealthBar, isFalse);
+        expect(marker.debugSnapshot.paintsCityHealthBar, isFalse);
+        marker.applyVisualState(
+          marker.visualState.copyWith(healthFraction: 0.75),
+        );
+        expect(marker.visualState.healthFraction, 0.75);
+        expect(marker.debugSnapshot.paintsCityHealthBar, isTrue);
+        marker.applyVisualState(marker.visualState.copyWith(healthFraction: 1));
+        expect(marker.visualState.healthFraction, 1);
+        expect(marker.debugSnapshot.paintsCityHealthBar, isFalse);
+        marker.applyVisualState(marker.visualState.copyWith(selected: true));
+        expect(marker.visualState.selected, isTrue);
+        expect(marker.debugSnapshot.paintsCityHealthBar, isTrue);
       },
     );
 
@@ -121,48 +123,44 @@ void main() {
         selected: true,
       );
 
-      expect(marker.hasSelectionTintForTesting, isFalse);
-      expect(marker.hasSelectionRingForTesting, isFalse);
-      expect(marker.selectionRingStrokeWidthForTesting, 0);
-      expect(marker.selectionRingRectForTesting, Rect.zero);
-
-      marker.selected = false;
-
-      expect(marker.hasSelectionTintForTesting, isFalse);
-      expect(marker.hasSelectionRingForTesting, isFalse);
+      expect(marker.debugSnapshot.hasSelectionTint, isFalse);
+      expect(marker.debugSnapshot.hasSelectionRing, isFalse);
+      expect(marker.debugSnapshot.selectionRingStrokeWidth, 0);
+      expect(marker.debugSnapshot.selectionRingRect, Rect.zero);
+      marker.applyVisualState(marker.visualState.copyWith(selected: false));
+      expect(marker.debugSnapshot.hasSelectionTint, isFalse);
+      expect(marker.debugSnapshot.hasSelectionRing, isFalse);
     });
 
     test('styles city sprites as large 3d board caps', () {
       final marker = CityMarker(position: Vector2.zero(), colorValue: 0);
       const capStyle = BoardAssetCapStyles.city;
 
-      expect(marker.boardCapStyleForTesting.topSize, capStyle.topSize);
-      expect(marker.boardCapStyleForTesting.sideDepth, greaterThan(0));
-      expect(marker.boardCapStyleForTesting.rimWidth, greaterThan(0));
+      expect(marker.debugSnapshot.boardCapStyle.topSize, capStyle.topSize);
+      expect(marker.debugSnapshot.boardCapStyle.sideDepth, greaterThan(0));
+      expect(marker.debugSnapshot.boardCapStyle.rimWidth, greaterThan(0));
     });
 
     test('lightens the city board cap rim while selected', () {
       final marker = CityMarker(position: Vector2.zero(), colorValue: 0);
       const capStyle = BoardAssetCapStyles.city;
 
-      expect(marker.rimColorForTesting, capStyle.rimColor);
-      expect(marker.rimShadowColorForTesting, capStyle.rimShadowColor);
-
-      marker.selected = true;
-
+      expect(marker.debugSnapshot.rimColor, capStyle.rimColor);
+      expect(marker.debugSnapshot.rimShadowColor, capStyle.rimShadowColor);
+      marker.applyVisualState(marker.visualState.copyWith(selected: true));
       expect(
-        marker.rimColorForTesting.computeLuminance(),
+        marker.debugSnapshot.rimColor.computeLuminance(),
         greaterThan(capStyle.rimColor.computeLuminance()),
       );
       expect(
-        marker.rimShadowColorForTesting.computeLuminance(),
+        marker.debugSnapshot.rimShadowColor.computeLuminance(),
         greaterThan(capStyle.rimShadowColor.computeLuminance()),
       );
     });
 
     test('fits the city board cap on the projected map hex', () {
       final marker = CityMarker(position: Vector2.zero(), colorValue: 0);
-      final spriteBounds = marker.spriteBoundsForTesting;
+      final spriteBounds = marker.debugSnapshot.spriteBounds;
       const capStyle = BoardAssetCapStyles.city;
 
       expect(spriteBounds.width, capStyle.topSize.width);
@@ -170,11 +168,11 @@ void main() {
       expect(
         spriteBounds.center.dy,
         closeTo(
-          marker.markerSizeForTesting.y / 2 - capStyle.sideDepth / 2,
+          marker.debugSnapshot.markerSize.y / 2 - capStyle.sideDepth / 2,
           0.0001,
         ),
       );
-      final clipPath = marker.spriteClipPathForTesting;
+      final clipPath = marker.debugSnapshot.spriteClipPath;
       final clipBounds = clipPath.getBounds();
       expect(clipBounds.left, closeTo(spriteBounds.left, 0.0001));
       expect(clipBounds.top, closeTo(spriteBounds.top, 0.0001));
@@ -197,25 +195,27 @@ void main() {
         colorValue: 0xFF0000FF,
       );
 
-      expect(marker.hasAmbientFloatForTesting, isFalse);
-      expect(marker.restingPositionForTesting.x, 12);
-      expect(marker.restingPositionForTesting.y, 34);
+      expect(marker.debugSnapshot.hasAmbientFloat, isFalse);
+      expect(marker.debugSnapshot.restingPosition.x, 12);
+      expect(marker.debugSnapshot.restingPosition.y, 34);
 
-      marker.reduceMotion = true;
+      marker.applyVisualState(marker.visualState.copyWith(reduceMotion: true));
 
-      expect(marker.hasAmbientFloatForTesting, isFalse);
+      expect(marker.debugSnapshot.hasAmbientFloat, isFalse);
       expect(marker.position.x, 12);
       expect(marker.position.y, 34);
 
-      marker.reduceMotion = false;
+      marker.applyVisualState(marker.visualState.copyWith(reduceMotion: false));
 
-      expect(marker.hasAmbientFloatForTesting, isFalse);
-      marker.setWorldPosition(Vector2(18, 42));
+      expect(marker.debugSnapshot.hasAmbientFloat, isFalse);
+      marker.applyVisualState(
+        marker.visualState.copyWith(worldPosition: const Offset(18, 42)),
+      );
 
       expect(marker.position.x, 18);
       expect(marker.position.y, 42);
-      expect(marker.restingPositionForTesting.x, 18);
-      expect(marker.restingPositionForTesting.y, 42);
+      expect(marker.debugSnapshot.restingPosition.x, 18);
+      expect(marker.debugSnapshot.restingPosition.y, 42);
     });
 
     test('keeps city caps below units in the same row', () {
@@ -292,9 +292,9 @@ void main() {
         name: 'Aurelian',
       );
       await marker.onLoad();
-      final labelRect = marker.cityLabelHitRectForTesting;
+      final labelRect = marker.debugSnapshot.cityLabelHitRect;
 
-      expect(marker.typeIconRectForTesting, Rect.zero);
+      expect(marker.debugSnapshot.typeIconRect, Rect.zero);
       expect(labelRect.top, lessThan(0));
       expect(
         marker.containsLocalPoint(
@@ -311,17 +311,17 @@ void main() {
         selected: true,
       );
       await marker.onLoad();
-      final initialPulse = marker.cityLabelPulseForTesting;
+      final initialPulse = marker.debugSnapshot.cityLabelPulse;
 
       marker.update(0.3);
 
-      expect(marker.cityLabelPulseForTesting, isNot(initialPulse));
-      expect(marker.paintsSelectedCityLabelBorderForTesting, isTrue);
+      expect(marker.debugSnapshot.cityLabelPulse, isNot(initialPulse));
+      expect(marker.debugSnapshot.paintsSelectedCityLabelBorder, isTrue);
 
-      marker.selected = false;
+      marker.applyVisualState(marker.visualState.copyWith(selected: false));
 
-      expect(marker.cityLabelPulseForTesting, 0);
-      expect(marker.paintsSelectedCityLabelBorderForTesting, isFalse);
+      expect(marker.debugSnapshot.cityLabelPulse, 0);
+      expect(marker.debugSnapshot.paintsSelectedCityLabelBorder, isFalse);
     });
 
     test('keeps selected city cues static with reduce motion', () {
@@ -331,24 +331,24 @@ void main() {
         selected: true,
         reduceMotion: true,
       );
-      final frame = marker.frameIndexForTesting;
+      final frame = marker.debugSnapshot.frameIndex;
 
-      expect(marker.cityLabelPulseForTesting, 0);
-      expect(marker.paintsSelectedCityLabelBorderForTesting, isTrue);
-      expect(marker.hasSelectionTintForTesting, isFalse);
-      expect(marker.hasSelectionRingForTesting, isFalse);
-      expect(marker.hasAmbientFloatForTesting, isFalse);
+      expect(marker.debugSnapshot.cityLabelPulse, 0);
+      expect(marker.debugSnapshot.paintsSelectedCityLabelBorder, isTrue);
+      expect(marker.debugSnapshot.hasSelectionTint, isFalse);
+      expect(marker.debugSnapshot.hasSelectionRing, isFalse);
+      expect(marker.debugSnapshot.hasAmbientFloat, isFalse);
 
       marker.update(1.2);
 
-      expect(marker.cityLabelPulseForTesting, 0);
-      expect(marker.frameIndexForTesting, frame);
+      expect(marker.debugSnapshot.cityLabelPulse, 0);
+      expect(marker.debugSnapshot.frameIndex, frame);
 
-      marker.reduceMotion = false;
+      marker.applyVisualState(marker.visualState.copyWith(reduceMotion: false));
 
-      expect(marker.hasSelectionTintForTesting, isFalse);
-      expect(marker.hasSelectionRingForTesting, isFalse);
-      expect(marker.hasAmbientFloatForTesting, isFalse);
+      expect(marker.debugSnapshot.hasSelectionTint, isFalse);
+      expect(marker.debugSnapshot.hasSelectionRing, isFalse);
+      expect(marker.debugSnapshot.hasAmbientFloat, isFalse);
     });
 
     test('propagates reduce motion to existing city markers', () {
@@ -384,10 +384,10 @@ void main() {
       );
       await marker.onLoad();
       final originalPosition = marker.position.clone();
-      final rawSpriteTop = marker.spriteBoundsForTesting.top;
+      final rawSpriteTop = marker.debugSnapshot.spriteBounds.top;
 
       expect(
-        marker.frameIndexForTesting,
+        marker.debugSnapshot.frameIndex,
         CitySpriteTechnologyProfile.industryModern.index,
       );
 
@@ -395,10 +395,10 @@ void main() {
 
       expect(marker.position, originalPosition);
       expect(
-        marker.frameIndexForTesting,
+        marker.debugSnapshot.frameIndex,
         CitySpriteTechnologyProfile.industryModern.index,
       );
-      expect(marker.statusTopForTesting, closeTo(rawSpriteTop, 0.0001));
+      expect(marker.debugSnapshot.statusTop, closeTo(rawSpriteTop, 0.0001));
     });
 
     test('does not use asset editor offsets for city atlas variants', () async {
@@ -409,12 +409,12 @@ void main() {
       );
       await marker.onLoad();
 
-      final spriteTop = marker.spriteBoundsForTesting.top;
+      final spriteTop = marker.debugSnapshot.spriteBounds.top;
       marker.update(1.01);
 
-      expect(marker.statusTopForTesting, closeTo(spriteTop, 0.0001));
+      expect(marker.debugSnapshot.statusTop, closeTo(spriteTop, 0.0001));
       expect(
-        marker.frameIndexForTesting,
+        marker.debugSnapshot.frameIndex,
         CitySpriteTechnologyProfile.militaryFortified.index,
       );
     });
@@ -599,13 +599,13 @@ void main() {
         name: 'Aurelian',
       );
 
-      expect(marker.labelOwnerDotRadiusForTesting, 0);
-      expect(marker.labelOwnerDotGapForTesting, 0);
-      expect(marker.paintsCityLabelOwnerDotForTesting, isFalse);
+      expect(marker.debugSnapshot.labelOwnerDotRadius, 0);
+      expect(marker.debugSnapshot.labelOwnerDotGap, 0);
+      expect(marker.debugSnapshot.paintsCityLabelOwnerDot, isFalse);
 
-      marker.showLabel = false;
+      marker.applyVisualState(marker.visualState.copyWith(showLabel: false));
 
-      expect(marker.paintsCityLabelOwnerDotForTesting, isFalse);
+      expect(marker.debugSnapshot.paintsCityLabelOwnerDot, isFalse);
     });
 
     test('propagates city health bar density to existing markers', () {

@@ -1,109 +1,117 @@
 part of 'city_marker.dart';
 
-extension CityMarkerTestView on CityMarker {
-  double get healthFractionForTesting => _healthFraction;
+final class CityMarkerDebugSnapshot {
+  final double healthFraction;
+  final int visualLevel;
+  final CitySpriteTechnologyProfile technologyProfile;
+  final String cityName;
+  final int population;
+  final bool isCapital;
+  final bool labelEnabled;
+  final bool paintsCityLabel;
+  final bool paintsCityLabelOwnerDot;
+  final bool showHealthBar;
+  final bool paintsCityHealthBar;
+  final bool paintsStoredArtifactBadge;
+  final bool paintsCityOwnerIndicator;
+  final bool paintsCityToken;
+  final double labelMaxWidth;
+  final double labelOwnerDotRadius;
+  final double labelOwnerDotGap;
+  final bool paintsCapitalStar;
+  final double labelCapitalStarRadius;
+  final bool usesTypeIconBadge;
+  final bool hasSelectionTint;
+  final bool hasSelectionRing;
+  final Rect selectionRingRect;
+  final double selectionRingStrokeWidth;
+  final Color rimColor;
+  final Color rimShadowColor;
+  final int colorValue;
+  final bool hasAmbientFloat;
+  final Vector2 restingPosition;
+  final bool reduceMotion;
+  final double markerWorldScale;
+  final int frameIndex;
+  final Rect typeIconRect;
+  final double typeIconPulse;
+  final Rect cityLabelHitRect;
+  final Rect cityHealthBarRect;
+  final double cityLabelPulse;
+  final bool paintsSelectedCityLabelBorder;
+  final Vector2 markerSize;
+  final Rect spriteBounds;
+  final Path spriteClipPath;
+  final BoardAssetCapStyle boardCapStyle;
+  final double sourceInset;
+  final double statusTop;
 
-  int get visualLevelForTesting => visualLevel;
+  CityMarkerDebugSnapshot._(CityMarker marker)
+    : healthFraction = marker._healthFraction,
+      visualLevel = marker._visualLevel,
+      technologyProfile = marker._technologyProfile,
+      cityName = marker._name,
+      population = marker._population,
+      isCapital = marker._isCapital,
+      labelEnabled = marker._showLabel,
+      paintsCityLabel = marker._shouldPaintLabel,
+      paintsCityLabelOwnerDot = false,
+      showHealthBar = marker._showHealthBar,
+      paintsCityHealthBar = marker._paintsCityHealthBar,
+      paintsStoredArtifactBadge = marker._hasStoredArtifact,
+      paintsCityOwnerIndicator = false,
+      paintsCityToken = true,
+      labelMaxWidth = CityMarker._labelMaxWidth,
+      labelOwnerDotRadius = 0,
+      labelOwnerDotGap = 0,
+      paintsCapitalStar = marker._shouldPaintLabel && marker._isCapital,
+      labelCapitalStarRadius = CityMarker._labelCapitalStarRadius,
+      usesTypeIconBadge = false,
+      hasSelectionTint = false,
+      hasSelectionRing = false,
+      selectionRingRect = Rect.zero,
+      selectionRingStrokeWidth = 0,
+      rimColor = marker.effectiveRimColor,
+      rimShadowColor = marker.effectiveRimShadowColor,
+      colorValue = marker._visualState.colorValue,
+      hasAmbientFloat = false,
+      restingPosition = Vector2(
+        marker._visualState.worldPosition.dx,
+        marker._visualState.worldPosition.dy,
+      ),
+      reduceMotion = marker._reduceMotion,
+      markerWorldScale = marker._markerWorldScale,
+      frameIndex = marker._spriteColumn,
+      typeIconRect = marker._typeIconRect,
+      typeIconPulse = marker._typeIconPulse,
+      cityLabelHitRect = marker._labelHitRect,
+      cityHealthBarRect = _healthBarRect(marker),
+      cityLabelPulse = marker._labelPulse,
+      paintsSelectedCityLabelBorder =
+          marker._selected && marker._shouldPaintLabel,
+      markerSize = marker.size.clone(),
+      spriteBounds = _spriteBounds(marker),
+      spriteClipPath = BoardAssetCapPainter.clipPathFor(_spriteBounds(marker)),
+      boardCapStyle = CityMarker._capStyle,
+      sourceInset = CityMarker._sourceInset,
+      statusTop = marker._statusTopFor(_spriteBounds(marker));
 
-  CitySpriteTechnologyProfile get technologyProfileForTesting =>
-      technologyProfile;
+  static Rect _spriteBounds(CityMarker marker) => marker._spriteBoundsFor(
+    Offset(CityMarker._width / 2, CityMarker._height / 2),
+  );
 
-  String get cityNameForTesting => _name;
-
-  int get populationForTesting => _population;
-
-  bool get isCapitalForTesting => _isCapital;
-
-  bool get labelEnabledForTesting => _showLabel;
-
-  bool get paintsCityLabelForTesting => _shouldPaintLabel;
-
-  bool get paintsCityLabelOwnerDotForTesting => false;
-
-  bool get showHealthBarForTesting => _showHealthBar;
-
-  bool get paintsCityHealthBarForTesting =>
-      _showHealthBar || _selected || _healthFraction < 0.995;
-
-  bool get paintsStoredArtifactBadgeForTesting => _hasStoredArtifact;
-
-  bool get paintsCityOwnerIndicatorForTesting => false;
-
-  bool get paintsCityTokenForTesting => true;
-
-  double get labelMaxWidthForTesting => CityMarker._labelMaxWidth;
-
-  double get labelOwnerDotRadiusForTesting => 0;
-
-  double get labelOwnerDotGapForTesting => 0;
-
-  bool get paintsCapitalStarForTesting => _shouldPaintLabel && _isCapital;
-
-  double get labelCapitalStarRadiusForTesting =>
-      CityMarker._labelCapitalStarRadius;
-
-  bool get usesTypeIconBadgeForTesting => false;
-
-  bool get hasSelectionTintForTesting => false;
-
-  bool get hasSelectionRingForTesting => false;
-
-  Rect get selectionRingRectForTesting => Rect.zero;
-
-  double get selectionRingStrokeWidthForTesting => 0;
-
-  Color get rimColorForTesting => effectiveRimColor;
-
-  Color get rimShadowColorForTesting => effectiveRimShadowColor;
-
-  int get colorValueForTesting => _colorValue;
-
-  bool get hasAmbientFloatForTesting => false;
-
-  Vector2 get restingPositionForTesting => _restingPosition.clone();
-
-  bool get reduceMotionForTesting => _reduceMotion;
-
-  double get markerWorldScaleForTesting => _markerWorldScale;
-
-  int get frameIndexForTesting => _spriteColumn;
-
-  Rect get typeIconRectForTesting => _typeIconRect;
-
-  double get typeIconPulseForTesting => _typeIconPulse;
-
-  Rect get cityLabelHitRectForTesting => _labelHitRectForTesting;
-
-  Rect get cityHealthBarRectForTesting {
-    if (!paintsCityHealthBarForTesting) return Rect.zero;
+  static Rect _healthBarRect(CityMarker marker) {
+    if (!marker._paintsCityHealthBar) return Rect.zero;
     final center = Offset(CityMarker._width / 2, CityMarker._height / 2);
-    final spriteBounds = _spriteBoundsFor(center);
+    final spriteBounds = marker._spriteBoundsFor(center);
     return MarkerHealthBar.healthRect(
       center: center,
-      top: _statusTopFor(spriteBounds),
+      top: marker._statusTopFor(spriteBounds),
       width: _healthBarWidthFor(spriteBounds),
     );
   }
+}
 
-  double get cityLabelPulseForTesting => _labelPulse;
-
-  bool get paintsSelectedCityLabelBorderForTesting =>
-      _selected && _shouldPaintLabel;
-
-  Vector2 get markerSizeForTesting => size.clone();
-
-  Rect get spriteBoundsForTesting =>
-      _spriteBoundsFor(Offset(CityMarker._width / 2, CityMarker._height / 2));
-
-  Path get spriteClipPathForTesting =>
-      BoardAssetCapPainter.clipPathFor(spriteBoundsForTesting);
-
-  BoardAssetCapStyle get boardCapStyleForTesting => CityMarker._capStyle;
-
-  double get sourceInsetForTesting => CityMarker._sourceInset;
-
-  double get statusTopForTesting {
-    final center = Offset(CityMarker._width / 2, CityMarker._height / 2);
-    return _statusTopFor(_spriteBoundsFor(center));
-  }
+extension _CityMarkerDebugView on CityMarker {
+  CityMarkerDebugSnapshot get _debugSnapshot => CityMarkerDebugSnapshot._(this);
 }

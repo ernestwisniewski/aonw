@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker_visual_state.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_sprite_catalog.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
@@ -35,7 +37,9 @@ class CityMarkerLayer extends Component with LayerAttachment {
     if (_showHealthBar == value) return;
     _showHealthBar = value;
     for (final marker in _markers.values) {
-      marker.showHealthBar = value;
+      marker.applyVisualState(
+        marker.visualState.copyWith(showHealthBar: value),
+      );
     }
   }
 
@@ -46,7 +50,9 @@ class CityMarkerLayer extends Component with LayerAttachment {
     if (_markerWorldScale == next) return;
     _markerWorldScale = next;
     for (final marker in _markers.values) {
-      marker.markerWorldScale = next;
+      marker.applyVisualState(
+        marker.visualState.copyWith(markerWorldScale: next),
+      );
     }
   }
 
@@ -54,73 +60,76 @@ class CityMarkerLayer extends Component with LayerAttachment {
     if (_reduceMotion == value) return;
     _reduceMotion = value;
     for (final marker in _markers.values) {
-      marker.reduceMotion = value;
+      marker.applyVisualState(marker.visualState.copyWith(reduceMotion: value));
     }
   }
 
   double? markerHealthFractionForTesting(String cityId) =>
-      _markers[cityId]?.healthFractionForTesting;
+      _markers[cityId]?.visualState.healthFraction;
 
   int? markerVisualLevelForTesting(String cityId) =>
-      _markers[cityId]?.visualLevelForTesting;
+      _markers[cityId]?.visualState.visualLevel;
 
   CitySpriteTechnologyProfile? markerTechnologyProfileForTesting(
     String cityId,
-  ) => _markers[cityId]?.technologyProfileForTesting;
+  ) => _markers[cityId]?.visualState.technologyProfile;
 
   Vector2? markerPositionForTesting(String cityId) =>
       _markers[cityId]?.position.clone();
 
   Vector2? markerRestingPositionForTesting(String cityId) =>
-      _markers[cityId]?.restingPositionForTesting;
+      switch (_markers[cityId]?.visualState.worldPosition) {
+        final position? => Vector2(position.dx, position.dy),
+        null => null,
+      };
 
   String? markerCityNameForTesting(String cityId) =>
-      _markers[cityId]?.cityNameForTesting;
+      _markers[cityId]?.visualState.name;
 
   int? markerPopulationForTesting(String cityId) =>
-      _markers[cityId]?.populationForTesting;
+      _markers[cityId]?.visualState.population;
 
   bool markerIsCapitalForTesting(String cityId) =>
-      _markers[cityId]?.isCapitalForTesting ?? false;
+      _markers[cityId]?.visualState.isCapital ?? false;
 
   bool? markerLabelEnabledForTesting(String cityId) =>
-      _markers[cityId]?.labelEnabledForTesting;
+      _markers[cityId]?.visualState.showLabel;
 
   bool? markerPaintsLabelForTesting(String cityId) =>
-      _markers[cityId]?.paintsCityLabelForTesting;
+      _markers[cityId]?.debugSnapshot.paintsCityLabel;
 
   bool? markerPaintsLabelOwnerDotForTesting(String cityId) =>
-      _markers[cityId]?.paintsCityLabelOwnerDotForTesting;
+      _markers[cityId]?.debugSnapshot.paintsCityLabelOwnerDot;
 
   bool markerShowHealthBarForTesting(String cityId) =>
-      _markers[cityId]?.showHealthBarForTesting ?? false;
+      _markers[cityId]?.visualState.showHealthBar ?? false;
 
   bool markerPaintsHealthBarForTesting(String cityId) =>
-      _markers[cityId]?.paintsCityHealthBarForTesting ?? false;
+      _markers[cityId]?.debugSnapshot.paintsCityHealthBar ?? false;
 
   bool markerPaintsCapitalStarForTesting(String cityId) =>
-      _markers[cityId]?.paintsCapitalStarForTesting ?? false;
+      _markers[cityId]?.debugSnapshot.paintsCapitalStar ?? false;
 
   bool markerPaintsSelectedLabelBorderForTesting(String cityId) =>
-      _markers[cityId]?.paintsSelectedCityLabelBorderForTesting ?? false;
+      _markers[cityId]?.debugSnapshot.paintsSelectedCityLabelBorder ?? false;
 
   bool markerPaintsStoredArtifactBadgeForTesting(String cityId) =>
-      _markers[cityId]?.paintsStoredArtifactBadgeForTesting ?? false;
+      _markers[cityId]?.debugSnapshot.paintsStoredArtifactBadge ?? false;
 
   double markerCityLabelPulseForTesting(String cityId) =>
-      _markers[cityId]?.cityLabelPulseForTesting ?? 0;
+      _markers[cityId]?.debugSnapshot.cityLabelPulse ?? 0;
 
   bool markerReduceMotionForTesting(String cityId) =>
-      _markers[cityId]?.reduceMotionForTesting ?? false;
+      _markers[cityId]?.visualState.reduceMotion ?? false;
 
   double? markerWorldScaleForTesting(String cityId) =>
-      _markers[cityId]?.markerWorldScaleForTesting;
+      _markers[cityId]?.visualState.markerWorldScale;
 
   int? markerColorValueForTesting(String cityId) =>
-      _markers[cityId]?.colorValueForTesting;
+      _markers[cityId]?.visualState.colorValue;
 
   bool markerHasAmbientFloatForTesting(String cityId) =>
-      _markers[cityId]?.hasAmbientFloatForTesting ?? false;
+      _markers[cityId]?.debugSnapshot.hasAmbientFloat ?? false;
 
   int? markerPriorityForTesting(String cityId) => _markers[cityId]?.priority;
 
@@ -134,7 +143,7 @@ class CityMarkerLayer extends Component with LayerAttachment {
 
   void setLabelVisibility(bool visible) {
     for (final marker in _markers.values) {
-      marker.showLabel = visible;
+      marker.applyVisualState(marker.visualState.copyWith(showLabel: visible));
     }
   }
 
@@ -176,46 +185,36 @@ class CityMarkerLayer extends Component with LayerAttachment {
         research: research,
         technologyRuleset: technologyRuleset,
       );
+      final visualState = CityMarkerVisualState(
+        worldPosition: Offset(position.x, position.y),
+        colorValue: colorForPlayer(city.ownerPlayerId),
+        name: city.name,
+        population: city.population,
+        showLabel: showLabels,
+        showHealthBar: _showHealthBar,
+        isCapital: isCapital,
+        selected: selected,
+        hasStoredArtifact: hasStoredArtifact,
+        visualLevel: visualLevel,
+        technologyProfile: technologyProfile,
+        healthFraction: healthFraction,
+        markerWorldScale: _markerWorldScale,
+        reduceMotion: _reduceMotion,
+      );
       final marker = _markers[city.id];
       if (marker == null) {
-        final created = CityMarker(
-          position: position,
-          colorValue: colorForPlayer(city.ownerPlayerId),
+        final created = CityMarker.withVisualState(
+          visualState: visualState,
           onTap: () => onCityTapped?.call(city),
-          name: city.name,
-          population: city.population,
-          showLabel: showLabels,
-          showHealthBar: _showHealthBar,
-          isCapital: isCapital,
-          selected: selected,
-          hasStoredArtifact: hasStoredArtifact,
-          visualLevel: visualLevel,
-          technologyProfile: technologyProfile,
-          healthFraction: healthFraction,
-          markerWorldScale: _markerWorldScale,
-          reduceMotion: _reduceMotion,
         )..priority = _priorityFor(city);
         _markers[city.id] = created;
         unawaited(Future<void>.value(owner.add(created)));
       } else {
         marker
-          ..setWorldPosition(position)
-          ..colorValue = colorForPlayer(city.ownerPlayerId)
+          ..applyVisualState(visualState)
           ..onTap = () {
             onCityTapped?.call(city);
           }
-          ..name = city.name
-          ..population = city.population
-          ..showLabel = showLabels
-          ..showHealthBar = _showHealthBar
-          ..isCapital = isCapital
-          ..selected = selected
-          ..hasStoredArtifact = hasStoredArtifact
-          ..visualLevel = visualLevel
-          ..technologyProfile = technologyProfile
-          ..healthFraction = healthFraction
-          ..markerWorldScale = _markerWorldScale
-          ..reduceMotion = _reduceMotion
           ..priority = _priorityFor(city);
       }
     }
