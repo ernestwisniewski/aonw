@@ -58,8 +58,8 @@ ShowCombatHexAlertEffect? _fortificationTargetAlert({
   return ShowCombatHexAlertEffect(
     id: 'fortification:${event.unitId}:${target.unitId}',
     ownerPlayerId: event.ownerPlayerId,
-    col: currentEnemy.col,
-    row: currentEnemy.row,
+    col: target.col,
+    row: target.row,
     kind: CombatHexAlertKind.fortificationThreat,
     unitId: currentEnemy.id,
     expiresAfter: GameCameraEffectNormalizer.turnStartCameraTransitionDuration,
