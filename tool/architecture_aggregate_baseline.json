@@ -32,7 +32,7 @@
         "packages/aonw_core/lib/ai/production_scorer.dart": 258,
         "packages/aonw_core/lib/ai/production_unit_scorer.dart": 296,
         "packages/aonw_core/lib/ai/telemetry/balance_runner.dart": 361,
-        "packages/aonw_core/lib/game/domain/command/game_command.dart": 312,
+        "packages/aonw_core/lib/game/domain/command/game_command.dart": 311,
         "packages/aonw_core/lib/game/domain/diplomacy/diplomacy_state.dart": 274
       },
       "cognitiveComplexity": {}

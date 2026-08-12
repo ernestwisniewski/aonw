@@ -3,6 +3,9 @@ part of 'city_production_dialog_view_model.dart';
 typedef _ProductionUnitContext = ({
   GameCity city,
   List<GameCity> playerCities,
+  List<GameUnit> units,
+  List<WorldArtifact> artifacts,
+  List<FieldImprovement> fieldImprovements,
   GameUnitType? activeUnitType,
   CityRuleset cityRuleset,
   TechnologyRuleset technologyRuleset,
@@ -10,6 +13,7 @@ typedef _ProductionUnitContext = ({
   WorldMap? mapData,
   Iterable<ResourceTradeAgreement> resourceTradeAgreements,
   StrategicResourceAccounts strategicResources,
+  StrategicResourceEconomyProfile strategicResourceEconomy,
   bool stockpilesEnabled,
   int effectiveProduction,
   TechnologyEffectSummary technologyEffects,
@@ -20,13 +24,15 @@ typedef _ProductionUnitContext = ({
   AppLocalizations l10n,
 });
 
-typedef _ProductionUnitAvailability = ({
+typedef _ProductionUnitItemFacts = ({
+  GameUnitType type,
+  _ProductionUnitContext context,
+  UnitProductionAvailability availability,
   bool active,
-  Set<ResourceType> missingPresenceResources,
-  UnitStrategicResourceAvailability? strategic,
-  bool strategicBlocked,
-  bool resourceBlocked,
-  bool coastalBlocked,
+  int supplyCost,
+  int cost,
+  int productionPerTurn,
+  int invested,
 });
 
 String? _strategicFreeSummary({
@@ -49,6 +55,9 @@ String? _strategicFreeSummary({
 List<CityProductionItem> _productionUnitItems({
   required GameCity city,
   required List<GameCity> playerCities,
+  required List<GameUnit> units,
+  required List<WorldArtifact> artifacts,
+  required List<FieldImprovement> fieldImprovements,
   required GameUnitType? activeUnitType,
   required CityRuleset cityRuleset,
   required TechnologyRuleset technologyRuleset,
@@ -56,6 +65,7 @@ List<CityProductionItem> _productionUnitItems({
   required WorldMap? mapData,
   required Iterable<ResourceTradeAgreement> resourceTradeAgreements,
   required StrategicResourceAccounts strategicResources,
+  required StrategicResourceEconomyProfile strategicResourceEconomy,
   required bool stockpilesEnabled,
   required int effectiveProduction,
   required TechnologyEffectSummary technologyEffects,
@@ -68,6 +78,9 @@ List<CityProductionItem> _productionUnitItems({
   final context = (
     city: city,
     playerCities: playerCities,
+    units: units,
+    artifacts: artifacts,
+    fieldImprovements: fieldImprovements,
     activeUnitType: activeUnitType,
     cityRuleset: cityRuleset,
     technologyRuleset: technologyRuleset,
@@ -75,6 +88,7 @@ List<CityProductionItem> _productionUnitItems({
     mapData: mapData,
     resourceTradeAgreements: resourceTradeAgreements,
     strategicResources: strategicResources,
+    strategicResourceEconomy: strategicResourceEconomy,
     stockpilesEnabled: stockpilesEnabled,
     effectiveProduction: effectiveProduction,
     technologyEffects: technologyEffects,
@@ -109,11 +123,8 @@ CityProductionItem _productionUnitItem(
   _ProductionUnitContext context,
 ) {
   final availability = _unitAvailability(type, context);
+  final active = context.activeUnitType == type;
   final supplyCost = CityUnitSupplyRules.supplyCostForType(type);
-  final supplyBlocked =
-      !availability.active &&
-      context.unitSupply != null &&
-      context.unitSupply!.used + supplyCost > context.unitSupply!.capacity;
   final cost = CityProductionRules.unitProductionCost(
     type,
     ruleset: context.cityRuleset,
@@ -127,87 +138,80 @@ CityProductionItem _productionUnitItem(
     target: UnitProductionTarget(type),
     specialization: context.city.specialization,
   );
-  final invested = availability.active
+  final invested = active
       ? context.city.productionQueue!.investedProduction
       : 0;
-  return _buildProductionUnitItem(
+  return _buildProductionUnitItem((
     type: type,
     context: context,
     availability: availability,
+    active: active,
     supplyCost: supplyCost,
-    supplyBlocked: supplyBlocked,
     cost: cost,
     productionPerTurn: productionPerTurn,
     invested: invested,
-  );
+  ));
 }
 
-CityProductionItem _buildProductionUnitItem({
-  required GameUnitType type,
-  required _ProductionUnitContext context,
-  required _ProductionUnitAvailability availability,
-  required int supplyCost,
-  required bool supplyBlocked,
-  required int cost,
-  required int productionPerTurn,
-  required int invested,
-}) => CityProductionItem.unit(
-  l10n: context.l10n,
-  type: type,
-  title: GameDisplayNames.unitType(context.l10n, type),
-  active: availability.active,
-  investedProduction: invested,
-  totalCost: cost,
-  productionPerTurn: productionPerTurn,
-  turnsRemaining: CityProductionRules.estimatedTurnsRemaining(
-    productionCost: cost,
-    investedProduction: invested,
-    productionPerTurn: productionPerTurn,
-  ),
-  currentTurn: context.currentTurn,
-  locked:
-      supplyBlocked ||
-      availability.coastalBlocked ||
-      availability.resourceBlocked,
-  requirementLabel: _unitRequirementLabel(
-    availability,
-    supplyBlocked: supplyBlocked,
-    unitSupply: context.unitSupply,
-    l10n: context.l10n,
-  ),
-  metaLabels: _unitMetaLabels(
-    type: type,
-    supplyCost: supplyCost,
-    unitSupply: context.unitSupply,
-    unitUpkeep: context.unitUpkeep,
-    l10n: context.l10n,
-  ),
-  strategicResourceLabel: _strategicResourceLabel(
-    l10n: context.l10n,
-    active: availability.active,
-    city: context.city,
-    availability: availability.strategic,
-  ),
-  strategicResourceShortage: availability.strategicBlocked,
-);
+CityProductionItem _buildProductionUnitItem(_ProductionUnitItemFacts facts) =>
+    CityProductionItem.unit(
+      l10n: facts.context.l10n,
+      type: facts.type,
+      title: GameDisplayNames.unitType(facts.context.l10n, facts.type),
+      active: facts.active,
+      investedProduction: facts.invested,
+      totalCost: facts.cost,
+      productionPerTurn: facts.productionPerTurn,
+      turnsRemaining: CityProductionRules.estimatedTurnsRemaining(
+        productionCost: facts.cost,
+        investedProduction: facts.invested,
+        productionPerTurn: facts.productionPerTurn,
+      ),
+      currentTurn: facts.context.currentTurn,
+      locked: !facts.active && !facts.availability.isAvailable,
+      requirementLabel: _unitRequirementLabels(
+        facts.availability,
+        unitSupply: facts.context.unitSupply,
+        l10n: facts.context.l10n,
+      ).firstOrNull,
+      unitAvailability: facts.availability,
+      unitRequirementLabels: _unitRequirementLabels(
+        facts.availability,
+        unitSupply: facts.context.unitSupply,
+        l10n: facts.context.l10n,
+      ),
+      metaLabels: _unitMetaLabels(
+        type: facts.type,
+        supplyCost: facts.supplyCost,
+        unitSupply: facts.context.unitSupply,
+        unitUpkeep: facts.context.unitUpkeep,
+        l10n: facts.context.l10n,
+      ),
+      strategicResourceLabel: _strategicResourceLabel(
+        l10n: facts.context.l10n,
+        active: facts.active,
+        city: facts.context.city,
+        availability: facts.availability.strategic,
+      ),
+      strategicResourceShortage: facts.availability.blockers.any(
+        (blocker) => blocker is UnitStrategicResourceBlocker,
+      ),
+      spawnBlocked:
+          facts.active &&
+          facts.invested >= facts.cost &&
+          facts.context.mapData != null &&
+          !CityUnitProductionRules.canSpawnProducedUnit(
+            city: facts.context.city,
+            unitType: facts.type,
+            units: facts.context.units,
+            mapTiles: facts.context.mapData!,
+          ),
+    );
 
-_ProductionUnitAvailability _unitAvailability(
+UnitProductionAvailability _unitAvailability(
   GameUnitType type,
   _ProductionUnitContext context,
 ) {
-  final active = context.activeUnitType == type;
-  final missing = context.mapData == null
-      ? const <ResourceType>{}
-      : UnitProductionRequirementRules.missingResourceChoices(
-          playerId: context.city.ownerPlayerId,
-          unitType: type,
-          cities: context.playerCities,
-          mapTiles: context.mapData!,
-          ruleset: context.cityRuleset,
-          research: context.research,
-          resourceTradeAgreements: context.resourceTradeAgreements,
-          ignoreStockpileCosts: context.stockpilesEnabled,
-        );
   final strategic = context.stockpilesEnabled
       ? UnitStrategicResourceAvailability.forUnit(
           playerId: context.city.ownerPlayerId,
@@ -217,52 +221,59 @@ _ProductionUnitAvailability _unitAvailability(
           replacingCity: context.city,
         )
       : null;
-  final strategicBlocked =
-      !active && strategic != null && !strategic.isAvailable;
-  final coastalBlocked =
-      !active &&
-      context.mapData != null &&
-      !CityUnitProductionRules.canProduceInCity(
-        city: context.city,
-        unitType: type,
-        mapTiles: context.mapData!,
-      );
-  return (
-    active: active,
-    missingPresenceResources: missing,
-    strategic: strategic,
-    strategicBlocked: strategicBlocked,
-    resourceBlocked: !active && (missing.isNotEmpty || strategicBlocked),
-    coastalBlocked: coastalBlocked,
-  );
+  final mapData = context.mapData;
+  if (mapData == null) {
+    return UnitProductionAvailability(
+      blockers: [
+        if (strategic != null && !strategic.isAvailable)
+          UnitStrategicResourceBlocker(strategic),
+      ],
+      strategic: strategic,
+    );
+  }
+  return UnitProductionAvailability.evaluate((
+    playerId: context.city.ownerPlayerId,
+    city: context.city,
+    unitType: type,
+    cities: context.playerCities,
+    units: context.units,
+    artifacts: context.artifacts,
+    fieldImprovements: context.fieldImprovements,
+    research: context.research,
+    resourceTradeAgreements: context.resourceTradeAgreements,
+    mapView: mapData,
+    cityRuleset: context.cityRuleset,
+    technologyRuleset: context.technologyRuleset,
+    strategicResources: context.strategicResources,
+    strategicResourceEconomy: context.strategicResourceEconomy,
+    preferredResourceOptionIndex: null,
+  ));
 }
 
-String? _unitRequirementLabel(
-  _ProductionUnitAvailability availability, {
-  required bool supplyBlocked,
+List<String> _unitRequirementLabels(
+  UnitProductionAvailability availability, {
   required CityUnitSupplyBreakdown? unitSupply,
   required AppLocalizations l10n,
-}) {
-  if (availability.coastalBlocked) return l10n.requirementCoastalAccess;
-  if (availability.strategicBlocked) {
-    return _strategicShortageLabel(l10n, availability.strategic!);
-  }
-  if (availability.resourceBlocked) {
-    return l10n.requirementResourcesName(
-      ResourceRequirementDisplayNames.alternatives(
-        l10n,
-        availability.missingPresenceResources,
-      ),
-    );
-  }
-  if (supplyBlocked) {
-    return l10n.cityProductionUnitSupplyLimit(
-      unitSupply!.used,
-      unitSupply.capacity,
-    );
-  }
-  return null;
-}
+}) => [
+  for (final blocker in availability.blockers)
+    switch (blocker) {
+      UnitTechnologyBlocker() => l10n.requirementTechnology,
+      UnitPresenceResourceBlocker(:final resources) =>
+        l10n.requirementResourcesName(
+          ResourceRequirementDisplayNames.alternatives(l10n, resources),
+        ),
+      UnitStrategicResourceBlocker(:final availability) =>
+        _strategicShortageLabel(l10n, availability),
+      UnitCoastBlocker() => l10n.requirementCoastalAccess,
+      UnitSupplyBlocker() =>
+        unitSupply == null
+            ? l10n.cityProductionNoProduction
+            : l10n.cityProductionUnitSupplyLimit(
+                unitSupply.used,
+                unitSupply.capacity,
+              ),
+    },
+];
 
 String? _strategicResourceLabel({
   required AppLocalizations l10n,

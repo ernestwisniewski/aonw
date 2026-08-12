@@ -8,6 +8,7 @@ import 'package:aonw_core/ai/production_unit_scorer.dart';
 import 'package:aonw_core/ai/production_yield_weights.dart';
 import 'package:aonw_core/ai/strategic/strategic_mode.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
@@ -34,6 +35,7 @@ class AiProductionScorer {
     required AiContext context,
     required AiEmpireAssessment assessment,
     required AiProductionPlanState planState,
+    StrategicResourceStockpile? strategicStockpile,
   }) {
     final cache = AiProductionScoringCache(view: view, context: context);
     AiProductionRecommendation? best;
@@ -45,6 +47,7 @@ class AiProductionScorer {
         assessment: assessment,
         planState: planState,
         cache: cache,
+        strategicStockpile: strategicStockpile ?? view.ownStrategicResources,
       ),
       ..._buildingCandidates(
         city: city,
@@ -86,6 +89,7 @@ class AiProductionScorer {
     required AiEmpireAssessment assessment,
     required AiProductionPlanState planState,
     required AiProductionScoringCache cache,
+    required StrategicResourceStockpile strategicStockpile,
   }) sync* {
     for (final unitType in GameUnitType.values) {
       if (!_canProduceUnit(
@@ -94,6 +98,7 @@ class AiProductionScorer {
         unitType: unitType,
         reservedSupply: planState.reservedUnitSupply,
         cache: cache,
+        strategicStockpile: strategicStockpile,
       )) {
         continue;
       }

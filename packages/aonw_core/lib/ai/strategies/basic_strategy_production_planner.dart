@@ -5,6 +5,9 @@ import 'package:aonw_core/ai/production_scorer.dart';
 import 'package:aonw_core/ai/unit_roles.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/resource.dart';
+import 'package:aonw_core/game/domain/unit.dart';
 
 final class BasicStrategyProductionPlanner {
   const BasicStrategyProductionPlanner({
@@ -30,24 +33,61 @@ final class BasicStrategyProductionPlanner {
     final cities = [...view.citiesWithReassignableProduction]
       ..sort((a, b) => a.id.compareTo(b.id));
     final commands = <DomainCommand>[];
+    var strategicStockpile = view.ownStrategicResources;
 
     for (final city in cities) {
+      final stockpileAfterRefund = strategicStockpile.credit(
+        city.productionQueue?.resourceAllocation ??
+            StrategicResourceBundle.empty,
+      );
       final recommendation = scorer.recommend(
         city: city,
         view: view,
         context: context,
         assessment: assessment,
         planState: planState,
+        strategicStockpile: stockpileAfterRefund,
       );
+      if (city.productionQueue?.target == recommendation.target) continue;
+      final allocation = _allocationForRecommendation(
+        view: view,
+        target: recommendation.target,
+        stockpileAfterRefund: stockpileAfterRefund,
+      );
+      if (allocation == null) continue;
+      commands.add(_commandFor(city.id, recommendation.target));
       planState = planState.afterReplacing(
         city.productionQueue?.target,
         recommendation.target,
       );
-      if (city.productionQueue?.target == recommendation.target) continue;
-      commands.add(_commandFor(city.id, recommendation.target));
+      strategicStockpile = stockpileAfterRefund.debit(allocation);
     }
 
     return List.unmodifiable(commands);
+  }
+
+  StrategicResourceBundle? _allocationForRecommendation({
+    required GameView view,
+    required CityProductionTarget target,
+    required StrategicResourceStockpile stockpileAfterRefund,
+  }) {
+    if (view.strategicResourceEconomy !=
+            StrategicResourceEconomyProfile.stockpileV1 ||
+        target is! UnitProductionTarget) {
+      return StrategicResourceBundle.empty;
+    }
+    final availability = UnitStrategicResourceAvailability.forUnit(
+      playerId: view.forPlayerId,
+      unitType: target.unitType,
+      definition: view.ruleset.city.unitDefinitionFor(target.unitType),
+      accounts: StrategicResourceAccounts(
+        byPlayerId: {view.forPlayerId: stockpileAfterRefund},
+      ),
+    );
+    if (availability.hasCost && availability.selectedAllocation.isEmpty) {
+      return null;
+    }
+    return availability.selectedAllocation;
   }
 
   DomainCommand _commandFor(String cityId, CityProductionTarget target) {

@@ -372,6 +372,7 @@ void main() {
               resource: ResourceType.oil,
               goldPerTurn: 2,
               remainingTurns: 4,
+              amountPerTurn: 2,
             ),
             ResourceTradeAgreement(
               id: 'export_oil',
@@ -397,11 +398,16 @@ void main() {
       expect(oil.allocated, 2);
       expect(oil.storedTotal, 3);
       expect(oil.domesticProduction, 1);
-      expect(oil.imports, 1);
+      expect(oil.imports, 2);
       expect(oil.exports, 1);
-      expect(oil.netPerTurn, 1);
+      expect(oil.netPerTurn, 2);
       expect(oil.shortage, isTrue);
       expect(summary.strategicResources.allocations.single.city, city);
+      final source = summary.strategicResources.sources.single;
+      expect(source.city, city);
+      expect(source.hex, const CityHex(col: 0, row: 0));
+      expect(source.improvement, FieldImprovementType.oilWell);
+      expect(source.amountPerTurn, 1);
     });
   });
 }

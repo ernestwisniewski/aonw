@@ -95,11 +95,17 @@ Map<String, dynamic>? _encodeCityProductionCommand(DomainCommand command) {
       'cityId': cityId,
       'buildingType': buildingType.name,
     },
-    StartUnitProductionCommand(:final cityId, :final unitType) => {
-      'type': 'StartUnitProduction',
-      'cityId': cityId,
-      'unitType': unitType.name,
-    },
+    StartUnitProductionCommand(
+      :final cityId,
+      :final unitType,
+      :final resourceOptionIndex,
+    ) =>
+      {
+        'type': 'StartUnitProduction',
+        'cityId': cityId,
+        'unitType': unitType.name,
+        'resourceOptionIndex': ?resourceOptionIndex,
+      },
     StartCityProjectCommand(:final cityId, :final projectType) => {
       'type': 'StartCityProject',
       'cityId': cityId,

@@ -89,6 +89,7 @@ DomainCommand? _decodeCityProductionCommand(
     'StartUnitProduction' => StartUnitProductionCommand(
       requiredStringField(json, type, 'cityId'),
       requiredEnumField(json, type, 'unitType', GameUnitType.values),
+      resourceOptionIndex: optionalIntField(json, type, 'resourceOptionIndex'),
     ),
     'StartCityProject' => StartCityProjectCommand(
       requiredStringField(json, type, 'cityId'),

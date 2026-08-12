@@ -75,11 +75,13 @@ class _BreakdownRowModel {
   final String value;
   final bool positive;
   final bool negative;
+  final VoidCallback? onTap;
 
   const _BreakdownRowModel({
     required this.label,
     required this.value,
     this.positive = false,
     this.negative = false,
+    this.onTap,
   });
 }

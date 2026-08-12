@@ -135,12 +135,24 @@ class HudOverlayPanels extends ConsumerWidget {
         maxHeight: maxHeight,
         onBuild: (buildingType) =>
             unawaited(dispatcher.startCityBuilding(city.id, buildingType)),
+        onBuildRequested: (buildingType) =>
+            dispatcher.startCityBuilding(city.id, buildingType),
         onProduceUnit: (unitType) =>
             unawaited(dispatcher.startCityUnitProduction(city.id, unitType)),
+        onProduceUnitRequested: (unitType, resourceOptionIndex) =>
+            dispatcher.startCityUnitProduction(
+              city.id,
+              unitType,
+              resourceOptionIndex: resourceOptionIndex,
+            ),
         onStartProject: (projectType) =>
             unawaited(dispatcher.startCityProject(city.id, projectType)),
+        onStartProjectRequested: (projectType) =>
+            dispatcher.startCityProject(city.id, projectType),
         onBuildWonder: (wonderType) =>
             unawaited(dispatcher.startCityWonder(city.id, wonderType)),
+        onBuildWonderRequested: (wonderType) =>
+            dispatcher.startCityWonder(city.id, wonderType),
         onSetSpecialization: (specialization) => unawaited(
           dispatcher.setCitySpecialization(city.id, specialization),
         ),

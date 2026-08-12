@@ -27,6 +27,20 @@ List<FieldImprovement> _ownImprovements(
     if (_isOwnImprovement(improvement, ownCities, ownCityIds)) improvement,
 ];
 
+List<FieldImprovement> _knownImprovements(
+  _GameViewProjection source,
+  List<GameCity> ownCities,
+  Set<String> ownCityIds,
+) => [
+  for (final improvement in source.fieldImprovements)
+    if (_isOwnImprovement(improvement, ownCities, ownCityIds) ||
+        source.visibility.canRememberStaticAt(
+          improvement.hex.col,
+          improvement.hex.row,
+        ))
+      improvement,
+];
+
 List<GameUnit> _visibleEnemyUnits(_GameViewProjection source) => [
   for (final unit in source.units)
     if (unit.ownerPlayerId != source.forPlayerId &&

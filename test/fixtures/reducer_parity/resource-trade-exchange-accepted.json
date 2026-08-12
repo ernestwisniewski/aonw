@@ -107,7 +107,8 @@
           "culturalRequiredArtifacts": 6,
           "culturalHoldTurns": 5
         },
-        "balance": {}
+        "balance": {},
+        "strategicResourceEconomy": "legacyPresenceV0"
       },
       "players": [
         {
@@ -255,7 +256,8 @@
           "culturalRequiredArtifacts": 6,
           "culturalHoldTurns": 5
         },
-        "balance": {}
+        "balance": {},
+        "strategicResourceEconomy": "legacyPresenceV0"
       },
       "players": [
         {
@@ -361,14 +363,16 @@
             "exporterPlayerId": "player_1",
             "importerPlayerId": "player_2",
             "resource": "iron",
-            "remainingTurns": 6
+            "remainingTurns": 6,
+            "exchangeGroupId": "resource_exchange_player_1_player_2_iron_horses_0"
           },
           {
             "id": "resource_exchange_player_1_player_2_iron_horses_0_requested",
             "exporterPlayerId": "player_2",
             "importerPlayerId": "player_1",
             "resource": "horses",
-            "remainingTurns": 6
+            "remainingTurns": 6,
+            "exchangeGroupId": "resource_exchange_player_1_player_2_iron_horses_0"
           }
         ]
       }

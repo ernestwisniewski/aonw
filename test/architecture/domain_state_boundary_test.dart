@@ -49,6 +49,7 @@ void main() {
         'playerGold': 'Map<String, int>',
         'playerWarWeariness': 'Map<String, int>',
         'playerStabilityNet': 'Map<String, int>',
+        'strategicResources': 'StrategicResourceAccounts',
         'units': 'List<GameUnit>',
         'cities': 'List<GameCity>',
         'artifacts': 'List<WorldArtifact>',

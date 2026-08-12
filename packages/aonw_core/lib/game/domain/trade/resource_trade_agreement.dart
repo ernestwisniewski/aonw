@@ -8,7 +8,9 @@ final class ResourceTradeAgreement {
     required this.resource,
     required this.goldPerTurn,
     required this.remainingTurns,
-  });
+    this.amountPerTurn = 1,
+    this.exchangeGroupId,
+  }) : assert(amountPerTurn > 0);
 
   factory ResourceTradeAgreement.fromJson(Map<String, dynamic> json) {
     return ResourceTradeAgreement(
@@ -18,6 +20,10 @@ final class ResourceTradeAgreement {
       resource: ResourceType.values.byName(_stringField(json, 'resource')),
       goldPerTurn: _nonNegativeIntField(json, 'goldPerTurn'),
       remainingTurns: _positiveIntField(json, 'remainingTurns'),
+      amountPerTurn: json.containsKey('amountPerTurn')
+          ? _positiveIntField(json, 'amountPerTurn')
+          : 1,
+      exchangeGroupId: _optionalStringField(json, 'exchangeGroupId'),
     );
   }
 
@@ -27,6 +33,8 @@ final class ResourceTradeAgreement {
   final ResourceType resource;
   final int goldPerTurn;
   final int remainingTurns;
+  final int amountPerTurn;
+  final String? exchangeGroupId;
 
   bool get isActive => remainingTurns > 0;
 
@@ -40,6 +48,8 @@ final class ResourceTradeAgreement {
       resource: resource,
       goldPerTurn: goldPerTurn,
       remainingTurns: remainingTurns ?? this.remainingTurns,
+      amountPerTurn: amountPerTurn,
+      exchangeGroupId: exchangeGroupId,
     );
   }
 
@@ -50,6 +60,8 @@ final class ResourceTradeAgreement {
     'resource': resource.name,
     if (goldPerTurn != 0) 'goldPerTurn': goldPerTurn,
     'remainingTurns': remainingTurns,
+    if (amountPerTurn != 1) 'amountPerTurn': amountPerTurn,
+    if (exchangeGroupId != null) 'exchangeGroupId': exchangeGroupId,
   };
 
   @override
@@ -60,7 +72,9 @@ final class ResourceTradeAgreement {
       other.importerPlayerId == importerPlayerId &&
       other.resource == resource &&
       other.goldPerTurn == goldPerTurn &&
-      other.remainingTurns == remainingTurns;
+      other.remainingTurns == remainingTurns &&
+      other.amountPerTurn == amountPerTurn &&
+      other.exchangeGroupId == exchangeGroupId;
 
   @override
   int get hashCode => Object.hash(
@@ -71,7 +85,20 @@ final class ResourceTradeAgreement {
     resource,
     goldPerTurn,
     remainingTurns,
+    amountPerTurn,
+    exchangeGroupId,
   );
+
+  static String? _optionalStringField(Map<String, dynamic> json, String field) {
+    final value = json[field];
+    if (value == null) return null;
+    if (value is String && value.isNotEmpty) return value;
+    throw ArgumentError.value(
+      value,
+      'ResourceTradeAgreement.$field',
+      'Expected a non-empty String or null',
+    );
+  }
 
   static String _stringField(Map<String, dynamic> json, String field) {
     final value = json[field];

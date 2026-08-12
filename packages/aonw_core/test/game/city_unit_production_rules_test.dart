@@ -28,6 +28,15 @@ void main() {
       );
 
       expect(warrior, isNull);
+      expect(
+        CityUnitProductionRules.canSpawnProducedUnit(
+          city: city,
+          unitType: GameUnitType.warrior,
+          units: [garrison],
+          mapTiles: mapData,
+        ),
+        isFalse,
+      );
       expect(merchant?.type, GameUnitType.merchant);
       expect(merchant?.col, city.center.col);
       expect(merchant?.row, city.center.row);

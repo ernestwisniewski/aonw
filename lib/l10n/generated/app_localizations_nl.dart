@@ -7817,6 +7817,47 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get cityProductionResourceOptionTitle =>
+      'Strategische grondstoffen kiezen';
+
+  @override
+  String get cityProductionChangeTitle => 'Productie wijzigen?';
+
+  @override
+  String get cityProductionChangeWarning =>
+      'Het huidige productiedoel wordt vervangen. De geïnvesteerde productie blijft voor dat doel bewaard.';
+
+  @override
+  String cityProductionChangeRelease(String resources) {
+    return 'Geeft vrij: $resources';
+  }
+
+  @override
+  String cityProductionChangeAllocate(String resources) {
+    return 'Wijst toe: $resources';
+  }
+
+  @override
+  String cityProductionChangeFreeAfter(String resources) {
+    return 'Daarna vrij: $resources';
+  }
+
+  @override
+  String get cityProductionChangeAction => 'Productie wijzigen';
+
+  @override
+  String get cityProductionSpawnBlockedStatus => 'Gereed — geen vrij vak';
+
+  @override
+  String get cityProductionSpawnBlockedDescription =>
+      'De productie is voltooid. Verplaats een eenheid uit de buurt van de stad om een geldig inzetvak vrij te maken.';
+
+  @override
+  String cityProductionRushMissingGold(int amount) {
+    return 'Nog $amount goud nodig';
+  }
+
+  @override
   String get cityBuildingSortRecommended => 'Aanbevolen';
 
   @override

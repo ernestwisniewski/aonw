@@ -48,20 +48,30 @@ final class StartBuildingCommand extends CityTargetDomainCommand {
 
 /// Player starts producing [unitType] in city [cityId].
 final class StartUnitProductionCommand extends CityTargetDomainCommand {
-  const StartUnitProductionCommand(this.cityId, this.unitType);
+  const StartUnitProductionCommand(
+    this.cityId,
+    this.unitType, {
+    this.resourceOptionIndex,
+  });
 
   @override
   final String cityId;
   final GameUnitType unitType;
+  final int? resourceOptionIndex;
 
   @override
   bool operator ==(Object other) =>
       other is StartUnitProductionCommand &&
-      other.cityId == cityId &&
-      other.unitType == unitType;
+      (other.cityId, other.unitType, other.resourceOptionIndex) ==
+          (cityId, unitType, resourceOptionIndex);
 
   @override
-  int get hashCode => Object.hash(StartUnitProductionCommand, cityId, unitType);
+  int get hashCode => Object.hash(
+    StartUnitProductionCommand,
+    cityId,
+    unitType,
+    resourceOptionIndex,
+  );
 }
 
 /// Player starts a continuous [projectType] in city [cityId].

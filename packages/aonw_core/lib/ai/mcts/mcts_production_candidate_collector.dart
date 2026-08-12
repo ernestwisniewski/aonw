@@ -1,6 +1,7 @@
 import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -37,49 +38,25 @@ final class MctsProductionCandidateCollector {
     required GameUnitType unitType,
   }) {
     final research = _researchFor(view);
-    final technologyUnlocked = TechnologyUnlockQuery.hasUnitUnlocked(
+    return UnitProductionAvailability.evaluate((
       playerId: view.forPlayerId,
-      unitType: unitType,
-      research: research,
-      ruleset: view.ruleset.technology,
-    );
-    final requirementsMet = UnitProductionRequirementRules.meetsRequirements(
-      playerId: view.forPlayerId,
-      unitType: unitType,
-      cities: view.ownCities,
-      mapTiles: view.mapData,
-      ruleset: view.ruleset.city,
-      research: research,
-      resourceTradeAgreements: view.resourceTradeAgreements,
-    );
-    if (!CityProductionRules.canProduceUnit(
-      unitType,
-      ruleset: view.ruleset.city,
-      technologyUnlocked: technologyUnlocked,
-      requirementsMet: requirementsMet,
-    )) {
-      return false;
-    }
-    if (!CityUnitProductionRules.canProduceInCity(
       city: city,
-      unitType: unitType,
-      mapTiles: view.mapData,
-    )) {
-      return false;
-    }
-    return CityUnitSupplyRules.canQueueUnit(
-      playerId: view.forPlayerId,
       unitType: unitType,
       cities: view.ownCities,
       units: view.ownUnits,
       artifacts: view.artifacts,
       fieldImprovements: view.ownImprovements,
+      research: research,
+      resourceTradeAgreements: view.resourceTradeAgreements,
       mapView: view.mapData,
       cityRuleset: view.ruleset.city,
-      research: research,
       technologyRuleset: view.ruleset.technology,
-      replacingCityId: city.id,
-    );
+      strategicResources: StrategicResourceAccounts(
+        byPlayerId: {view.forPlayerId: view.ownStrategicResources},
+      ),
+      strategicResourceEconomy: view.strategicResourceEconomy,
+      preferredResourceOptionIndex: null,
+    )).isAvailable;
   }
 
   bool _canBuild(

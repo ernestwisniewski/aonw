@@ -74,6 +74,7 @@ List<ResourceTradeAgreement> _expectedResourceExchangeAgreements(
       resource: command.requestedResource,
       goldPerTurn: 0,
       remainingTurns: command.durationTurns,
+      exchangeGroupId: baseId,
     ),
     ResourceTradeAgreement(
       id: '${baseId}_offered',
@@ -82,6 +83,7 @@ List<ResourceTradeAgreement> _expectedResourceExchangeAgreements(
       resource: command.offeredResource,
       goldPerTurn: 0,
       remainingTurns: command.durationTurns,
+      exchangeGroupId: baseId,
     ),
   ];
 }

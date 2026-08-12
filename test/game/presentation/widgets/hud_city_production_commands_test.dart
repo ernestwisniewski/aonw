@@ -23,6 +23,18 @@ void main() {
         const StartUnitProductionCommand('city_1', GameUnitType.warrior),
       );
       expect(
+        HudCityProductionCommands.startUnitProduction(
+          'city_1',
+          GameUnitType.reconPlane,
+          resourceOptionIndex: 1,
+        ),
+        const StartUnitProductionCommand(
+          'city_1',
+          GameUnitType.reconPlane,
+          resourceOptionIndex: 1,
+        ),
+      );
+      expect(
         HudCityProductionCommands.startProject(
           'city_1',
           CityProjectType.wealth,

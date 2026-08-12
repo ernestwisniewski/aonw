@@ -110,5 +110,43 @@ void main() {
           .onPressed,
       isNull,
     );
+    expect(find.text('Missing 6 gold'), findsOneWidget);
+  });
+
+  testWidgets('CityActiveProductionBanner explains blocked deployment', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        locale: Locale('en'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: CityActiveProductionBanner(
+            title: 'Tank',
+            continuous: false,
+            turnsRemaining: 0,
+            totalCost: 84,
+            investedProduction: 84,
+            progress: 1,
+            metaLabels: ['Supply: 3'],
+            strategicResourceLabel: 'Allocated: 2 oil',
+            spawnBlocked: true,
+            canBeRushed: false,
+            rushGoldCost: 0,
+            playerGold: 0,
+            onRushProduction: null,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Ready — no free tile'), findsOneWidget);
+    expect(find.text('Supply: 3'), findsOneWidget);
+    expect(find.text('Allocated: 2 oil'), findsOneWidget);
+    expect(
+      find.byKey(const Key('cityProduction.spawnBlocked')),
+      findsOneWidget,
+    );
   });
 }

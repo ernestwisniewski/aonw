@@ -38,7 +38,7 @@ the technology is already unlocked.
 | --- | --- | --- |
 | Bonus | Food and early-growth resources, for example wheat, fish, deer, sheep, rice, fruit | Faster city growth, stronger starts, and more workable tiles |
 | Luxury | Gold, silver, gems, silk, spices, cotton, grapes, ivory, pearls, coffee, cocoa, tobacco, sugar | Economy, gold, and expansion reasons after the right improvement |
-| Strategic | Iron, coal, oil, aluminium, uranium, horses, marble | Secures production, military, and late technologies before rivals do |
+| Strategic | Iron, coal, oil, aluminium, uranium, and horses | Secures production, military, and late technologies before rivals do; oil and aluminium also feed the global stockpile economy |
 
 ## Balance Contract
 
@@ -73,7 +73,7 @@ duplicate those values.
 | Resource-yield changes | The card explains the current balance; it does not tune the economy |
 | New `claim resource` objectives | Future work after checking whether the card is clear |
 | AI expansion scoring for resources | Requires separate scoring and telemetry |
-| Inventory/luxury happiness | No closed ruleset exists for this mechanic yet |
+| Luxury happiness | No closed stability ruleset exists for this mechanic yet |
 | Resource-specific automation weights | `Auto work` uses the shared general worker recommendation policy |
 
 ## Potential Next Steps
@@ -82,5 +82,5 @@ duplicate those values.
 | --- | --- |
 | Objective tie-in | After discovering a valuable resource, the `Objectives` panel can suggest claiming it inside borders |
 | City role suggestion | The card can say whether the area looks like a growth, production, or trade city |
-| Resource scarcity goals | Strategic/luxury resources can become mid-game goals if the map has enough resource density |
+| Resource scarcity goals | Extend oil/aluminium shortage signals into explicit map objectives after telemetry validates the economy |
 | Telemetry | Measure whether players click or claim resources after seeing the card |

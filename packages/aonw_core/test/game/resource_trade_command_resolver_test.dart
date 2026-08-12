@@ -132,6 +132,86 @@ void main() {
       expect(result.reason, 'resource_trade_export_unavailable');
     });
 
+    test('stockpiled exports require extraction capacity per turn', () {
+      const exporter = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_2',
+        name: 'Oil City',
+        center: CityHex(col: 1, row: 1),
+      );
+      final research = _researchWith('player_2', TechnologyId.combustion);
+      const command = OpenResourceTradeCommand(
+        playerId: 'player_1',
+        targetPlayerId: 'player_2',
+        resource: ResourceType.oil,
+        goldPerTurn: 2,
+        durationTurns: 5,
+      );
+
+      final withoutWell = ResourceTradeCommandResolver.openGoldForResourceTrade(
+        playerGold: const {'player_1': 8},
+        cities: const [exporter],
+        research: research,
+        diplomacy: DiplomacyState.empty,
+        resourceTradeAgreements: const [],
+        command: command,
+        actorPlayerId: 'player_1',
+        mapTiles: _resourceMap(ResourceType.oil),
+        strategicResourceEconomy: StrategicResourceEconomyProfile.stockpileV1,
+      );
+      expect(withoutWell.accepted, isFalse);
+      expect(withoutWell.reason, 'resource_trade_export_unavailable');
+
+      final withWell = ResourceTradeCommandResolver.openGoldForResourceTrade(
+        playerGold: const {'player_1': 8},
+        cities: const [exporter],
+        research: research,
+        diplomacy: DiplomacyState.empty,
+        resourceTradeAgreements: const [],
+        command: command,
+        actorPlayerId: 'player_1',
+        mapTiles: _resourceMap(ResourceType.oil),
+        fieldImprovements: const [
+          FieldImprovement(
+            hex: CityHex(col: 1, row: 1),
+            type: FieldImprovementType.oilWell,
+            builtByCityId: 'city_1',
+          ),
+        ],
+        strategicResourceEconomy: StrategicResourceEconomyProfile.stockpileV1,
+      );
+      expect(withWell.accepted, isTrue);
+
+      final fullyCommitted =
+          ResourceTradeCommandResolver.openGoldForResourceTrade(
+            playerGold: const {'player_1': 8, 'player_3': 8},
+            cities: const [exporter],
+            research: research,
+            diplomacy: DiplomacyState.empty,
+            resourceTradeAgreements: withWell.resourceTradeAgreements,
+            command: const OpenResourceTradeCommand(
+              playerId: 'player_3',
+              targetPlayerId: 'player_2',
+              resource: ResourceType.oil,
+              goldPerTurn: 2,
+              durationTurns: 5,
+            ),
+            actorPlayerId: 'player_3',
+            mapTiles: _resourceMap(ResourceType.oil),
+            fieldImprovements: const [
+              FieldImprovement(
+                hex: CityHex(col: 1, row: 1),
+                type: FieldImprovementType.oilWell,
+                builtByCityId: 'city_1',
+              ),
+            ],
+            strategicResourceEconomy:
+                StrategicResourceEconomyProfile.stockpileV1,
+          );
+      expect(fullyCommitted.accepted, isFalse);
+      expect(fullyCommitted.reason, 'resource_trade_export_unavailable');
+    });
+
     test('actor rejection wins over every trade-rule rejection', () {
       final state = DomainState.snapshot(
         playerGold: const {'player_1': 8},
@@ -215,6 +295,7 @@ void main() {
             resource: ResourceType.horses,
             goldPerTurn: 0,
             remainingTurns: 6,
+            exchangeGroupId: 'exchange_1',
           ),
           const ResourceTradeAgreement(
             id: 'exchange_1_offered',
@@ -223,6 +304,7 @@ void main() {
             resource: ResourceType.iron,
             goldPerTurn: 0,
             remainingTurns: 6,
+            exchangeGroupId: 'exchange_1',
           ),
         ]);
       },

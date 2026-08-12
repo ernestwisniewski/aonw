@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
@@ -67,6 +68,9 @@ class GameView {
   final ResearchState research;
   final PlayerResearchState ownResearch;
   final List<FieldImprovement> ownImprovements;
+  final List<FieldImprovement> knownImprovements;
+  final StrategicResourceStockpile ownStrategicResources;
+  final StrategicResourceEconomyProfile strategicResourceEconomy;
   final List<ResourceTradeAgreement> resourceTradeAgreements;
   final Map<String, MapObjectiveHoldState> mapObjectiveHoldStatesByObjectiveId;
   final DiplomacyState diplomacy;
@@ -97,6 +101,10 @@ class GameView {
     this.research = ResearchState.empty,
     required this.ownResearch,
     required Iterable<FieldImprovement> ownImprovements,
+    Iterable<FieldImprovement>? knownImprovements,
+    this.ownStrategicResources = StrategicResourceStockpile.empty,
+    this.strategicResourceEconomy =
+        StrategicResourceEconomyProfile.legacyPresenceV0,
     Iterable<ResourceTradeAgreement> resourceTradeAgreements = const [],
     Map<String, MapObjectiveHoldState> mapObjectiveHoldStatesByObjectiveId =
         const {},
@@ -119,6 +127,9 @@ class GameView {
        ownCities = List.unmodifiable(ownCities),
        artifacts = List.unmodifiable(artifacts),
        ownImprovements = List.unmodifiable(ownImprovements),
+       knownImprovements = List.unmodifiable(
+         knownImprovements ?? ownImprovements,
+       ),
        resourceTradeAgreements = List.unmodifiable(resourceTradeAgreements),
        mapObjectiveHoldStatesByObjectiveId = Map.unmodifiable(
          mapObjectiveHoldStatesByObjectiveId,
@@ -239,7 +250,43 @@ class GameView {
     Iterable<String> forcedVisibleEnemyUnitIds = const [],
     bool ignoreFogOfWar = false,
     bool ignoreDynamicFogOfWar = false,
-  }) => GameView._fromStateValues(
+  }) => _buildGameView(
+    _GameViewProjection.fromDomainState(
+      state,
+      forPlayerId: forPlayerId,
+      turn: turn,
+      mapData: mapData,
+      ruleset: ruleset,
+      engineSnapshot: engineSnapshot,
+      recentHostilePlayerIds: recentHostilePlayerIds,
+      activeHostilePlayerIds: activeHostilePlayerIds,
+      pressureTargetPlayerIds: pressureTargetPlayerIds,
+      defaultNeutralPlayerIds: defaultNeutralPlayerIds,
+      pendingCityAttackThreats: pendingCityAttackThreats,
+      forcedVisibleEnemyUnitIds: forcedVisibleEnemyUnitIds,
+      ignoreFogOfWar: ignoreFogOfWar,
+      ignoreDynamicFogOfWar: ignoreDynamicFogOfWar,
+    ),
+  );
+}
+
+final class _GameViewProjection {
+  factory _GameViewProjection.fromDomainState(
+    DomainState state, {
+    required String forPlayerId,
+    required int turn,
+    required MapReadView mapData,
+    required GameRuleset ruleset,
+    required CanonicalGameSnapshot? engineSnapshot,
+    Iterable<String> recentHostilePlayerIds = const [],
+    Iterable<String> activeHostilePlayerIds = const [],
+    Iterable<String> pressureTargetPlayerIds = const [],
+    Iterable<String> defaultNeutralPlayerIds = const [],
+    Iterable<PendingCityAttackThreat> pendingCityAttackThreats = const [],
+    Iterable<String> forcedVisibleEnemyUnitIds = const [],
+    bool ignoreFogOfWar = false,
+    bool ignoreDynamicFogOfWar = false,
+  }) => _GameViewProjection(
     forPlayerId: forPlayerId,
     turn: turn,
     mapData: mapData,
@@ -253,6 +300,8 @@ class GameView {
     playerStabilityNet: state.playerStabilityNet,
     research: state.research,
     fieldImprovements: state.fieldImprovements,
+    strategicResources: state.strategicResources,
+    strategicResourceEconomy: state.matchRules.strategicResourceEconomy,
     transportNetwork: state.transportNetwork,
     fogOfWar: state.fogOfWar,
     resourceTradeAgreements: state.resourceTradeAgreements,
@@ -270,69 +319,6 @@ class GameView {
     ignoreDynamicFogOfWar: ignoreDynamicFogOfWar,
   );
 
-  factory GameView._fromStateValues({
-    required String forPlayerId,
-    required int turn,
-    required MapReadView mapData,
-    required GameRuleset ruleset,
-    required CanonicalGameSnapshot? engineSnapshot,
-    required List<GameUnit> units,
-    required List<GameCity> cities,
-    required List<WorldArtifact> artifacts,
-    required Map<String, int> playerGold,
-    required Map<String, int> playerWarWeariness,
-    required Map<String, int> playerStabilityNet,
-    required ResearchState research,
-    required List<FieldImprovement> fieldImprovements,
-    required TransportNetworkState transportNetwork,
-    required FogOfWarState fogOfWar,
-    required List<ResourceTradeAgreement> resourceTradeAgreements,
-    required Map<String, MapObjectiveHoldState>
-    mapObjectiveHoldStatesByObjectiveId,
-    required DiplomacyState diplomacy,
-    required WonderRegistry wonderRegistry,
-    required Iterable<String> recentHostilePlayerIds,
-    required Iterable<String> activeHostilePlayerIds,
-    required Iterable<String> pressureTargetPlayerIds,
-    required Iterable<String> defaultNeutralPlayerIds,
-    required Iterable<PendingCityAttackThreat> pendingCityAttackThreats,
-    required Iterable<String> forcedVisibleEnemyUnitIds,
-    required bool ignoreFogOfWar,
-    required bool ignoreDynamicFogOfWar,
-  }) => _buildGameView(
-    _GameViewProjection(
-      forPlayerId: forPlayerId,
-      turn: turn,
-      mapData: mapData,
-      ruleset: ruleset,
-      engineSnapshot: engineSnapshot,
-      units: units,
-      cities: cities,
-      artifacts: artifacts,
-      playerGold: playerGold,
-      playerWarWeariness: playerWarWeariness,
-      playerStabilityNet: playerStabilityNet,
-      research: research,
-      fieldImprovements: fieldImprovements,
-      transportNetwork: transportNetwork,
-      fogOfWar: fogOfWar,
-      resourceTradeAgreements: resourceTradeAgreements,
-      mapObjectiveHoldStatesByObjectiveId: mapObjectiveHoldStatesByObjectiveId,
-      diplomacy: diplomacy,
-      wonderRegistry: wonderRegistry,
-      recentHostilePlayerIds: recentHostilePlayerIds,
-      activeHostilePlayerIds: activeHostilePlayerIds,
-      pressureTargetPlayerIds: pressureTargetPlayerIds,
-      defaultNeutralPlayerIds: defaultNeutralPlayerIds,
-      pendingCityAttackThreats: pendingCityAttackThreats,
-      forcedVisibleEnemyUnitIds: forcedVisibleEnemyUnitIds,
-      ignoreFogOfWar: ignoreFogOfWar,
-      ignoreDynamicFogOfWar: ignoreDynamicFogOfWar,
-    ),
-  );
-}
-
-final class _GameViewProjection {
   _GameViewProjection({
     required this.forPlayerId,
     required this.turn,
@@ -347,6 +333,8 @@ final class _GameViewProjection {
     required this.playerStabilityNet,
     required this.research,
     required this.fieldImprovements,
+    required this.strategicResources,
+    required this.strategicResourceEconomy,
     required this.transportNetwork,
     required this.fogOfWar,
     required this.resourceTradeAgreements,
@@ -376,6 +364,8 @@ final class _GameViewProjection {
   final Map<String, int> playerStabilityNet;
   final ResearchState research;
   final List<FieldImprovement> fieldImprovements;
+  final StrategicResourceAccounts strategicResources;
+  final StrategicResourceEconomyProfile strategicResourceEconomy;
   final TransportNetworkState transportNetwork;
   final FogOfWarState fogOfWar;
   final List<ResourceTradeAgreement> resourceTradeAgreements;
@@ -429,6 +419,11 @@ GameView _buildGameView(_GameViewProjection source) {
     research: source.research,
     ownResearch: source.research.forPlayer(source.forPlayerId),
     ownImprovements: _ownImprovements(source, ownCities, ownCityIds),
+    knownImprovements: _knownImprovements(source, ownCities, ownCityIds),
+    ownStrategicResources: source.strategicResources.forPlayer(
+      source.forPlayerId,
+    ),
+    strategicResourceEconomy: source.strategicResourceEconomy,
     transportNetwork: source.transportNetwork,
     resourceTradeAgreements: source.resourceTradeAgreements,
     mapObjectiveHoldStatesByObjectiveId:

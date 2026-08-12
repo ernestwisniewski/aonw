@@ -7767,6 +7767,46 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get cityProductionResourceOptionTitle => 'Choose strategic resources';
+
+  @override
+  String get cityProductionChangeTitle => 'Change production?';
+
+  @override
+  String get cityProductionChangeWarning =>
+      'The current production target will be replaced. Invested production will be preserved for that target.';
+
+  @override
+  String cityProductionChangeRelease(String resources) {
+    return 'Releases: $resources';
+  }
+
+  @override
+  String cityProductionChangeAllocate(String resources) {
+    return 'Allocates: $resources';
+  }
+
+  @override
+  String cityProductionChangeFreeAfter(String resources) {
+    return 'Free after change: $resources';
+  }
+
+  @override
+  String get cityProductionChangeAction => 'Change production';
+
+  @override
+  String get cityProductionSpawnBlockedStatus => 'Ready — no free tile';
+
+  @override
+  String get cityProductionSpawnBlockedDescription =>
+      'Production is complete. Move a unit away from the city to create a valid deployment tile.';
+
+  @override
+  String cityProductionRushMissingGold(int amount) {
+    return 'Missing $amount gold';
+  }
+
+  @override
   String get cityBuildingSortRecommended => 'Recommended';
 
   @override

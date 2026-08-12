@@ -6,38 +6,30 @@ bool _canProduceUnit(
   required GameUnitType unitType,
   required int reservedSupply,
   required AiProductionScoringCache cache,
+  required StrategicResourceStockpile strategicStockpile,
 }) {
   final research = cache.research;
-  final technologyUnlocked = TechnologyUnlockQuery.hasUnitUnlocked(
+  final availability = UnitProductionAvailability.evaluate((
     playerId: view.forPlayerId,
-    unitType: unitType,
-    research: research,
-    ruleset: view.ruleset.technology,
-  );
-  final requirementsMet = UnitProductionRequirementRules.meetsRequirements(
-    playerId: view.forPlayerId,
-    unitType: unitType,
-    cities: view.ownCities,
-    mapTiles: view.mapData,
-    ruleset: view.ruleset.city,
-    research: research,
-    resourceTradeAgreements: view.resourceTradeAgreements,
-  );
-  if (!CityProductionRules.canProduceUnit(
-    unitType,
-    ruleset: view.ruleset.city,
-    technologyUnlocked: technologyUnlocked,
-    requirementsMet: requirementsMet,
-  )) {
-    return false;
-  }
-  if (!CityUnitProductionRules.canProduceInCity(
     city: city,
     unitType: unitType,
-    mapTiles: view.mapData,
-  )) {
-    return false;
-  }
+    cities: view.ownCities,
+    units: view.ownUnits,
+    artifacts: view.artifacts,
+    fieldImprovements: view.ownImprovements,
+    research: research,
+    resourceTradeAgreements: view.resourceTradeAgreements,
+    mapView: view.mapData,
+    cityRuleset: view.ruleset.city,
+    technologyRuleset: view.ruleset.technology,
+    strategicResources: StrategicResourceAccounts(
+      byPlayerId: {view.forPlayerId: strategicStockpile},
+    ),
+    strategicResourceEconomy: view.strategicResourceEconomy,
+    preferredResourceOptionIndex: null,
+  ));
+  if (!availability.isAvailable) return false;
+  if (reservedSupply == 0) return true;
   return CityUnitSupplyRules.canQueueUnit(
     playerId: view.forPlayerId,
     unitType: unitType,

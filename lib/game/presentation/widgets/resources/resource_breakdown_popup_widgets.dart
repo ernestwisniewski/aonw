@@ -48,14 +48,38 @@ class _BreakdownRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final content = _BreakdownRowContent(row: row, maxMagnitude: maxMagnitude);
+    final onTap = row.onTap;
+    if (onTap == null) return content;
+    return Semantics(
+      button: true,
+      label: '${row.label}, ${row.value}',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(GameUiTheme.radiusCard),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: content,
+        ),
+      ),
+    );
+  }
+}
+
+class _BreakdownRowContent extends StatelessWidget {
+  const _BreakdownRowContent({required this.row, required this.maxMagnitude});
+
+  final _BreakdownRowModel row;
+  final int maxMagnitude;
+
+  @override
+  Widget build(BuildContext context) {
     final valueColor = row.negative
         ? GameUiTheme.danger
         : row.positive
         ? GameUiTheme.goldLight
         : GameUiTheme.textPrimary;
     final magnitude = _rowMagnitude(row);
-    final showBar = magnitude != null && maxMagnitude > 0;
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -85,7 +109,7 @@ class _BreakdownRow extends StatelessWidget {
             ),
           ],
         ),
-        if (showBar) ...[
+        if (magnitude != null && maxMagnitude > 0) ...[
           const SizedBox(height: 4),
           _BreakdownMagnitudeBar(
             factor: magnitude / maxMagnitude,

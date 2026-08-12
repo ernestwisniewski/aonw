@@ -7,9 +7,17 @@ extension HudCommandDispatcherCityResearch on HudCommandDispatcher {
     );
   }
 
-  Future<void> startCityUnitProduction(String cityId, GameUnitType unitType) {
+  Future<void> startCityUnitProduction(
+    String cityId,
+    GameUnitType unitType, {
+    int? resourceOptionIndex,
+  }) {
     return _closeCityProductionAndDispatch(
-      HudCityProductionCommands.startUnitProduction(cityId, unitType),
+      HudCityProductionCommands.startUnitProduction(
+        cityId,
+        unitType,
+        resourceOptionIndex: resourceOptionIndex,
+      ),
     );
   }
 

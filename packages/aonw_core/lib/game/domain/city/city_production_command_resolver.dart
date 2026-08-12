@@ -4,19 +4,19 @@ import 'package:aonw_core/game/domain/city/city_production_queue.dart';
 import 'package:aonw_core/game/domain/city/city_production_target.dart';
 import 'package:aonw_core/game/domain/city/city_ruleset.dart';
 import 'package:aonw_core/game/domain/city/city_specialization.dart';
-import 'package:aonw_core/game/domain/city/city_unit_production_rules.dart';
-import 'package:aonw_core/game/domain/city/city_unit_supply_rules.dart';
 import 'package:aonw_core/game/domain/city/field_improvement.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
+import 'package:aonw_core/game/domain/match_rules/strategic_resource_economy_profile.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/game/domain/technology/technology_id.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_unlock_query.dart';
 import 'package:aonw_core/game/domain/trade/resource_trade_agreement.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
-import 'package:aonw_core/game/domain/unit/unit_production_requirement_rules.dart';
+import 'package:aonw_core/game/domain/unit/unit_production_availability.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_availability_policy.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_registry.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
@@ -27,18 +27,22 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 /// Rejections preserve [cities] identity. A changed collection is owned by the
 /// result and cannot be mutated.
 final class CityProductionCommandResult {
-  const CityProductionCommandResult._accepted({required this.cities})
-    : accepted = true,
-      reason = null;
+  const CityProductionCommandResult._accepted({
+    required this.cities,
+    this.resourceAllocation = StrategicResourceBundle.empty,
+  }) : accepted = true,
+       reason = null;
 
   const CityProductionCommandResult._rejected({
     required this.cities,
     required this.reason,
-  }) : accepted = false;
+  }) : accepted = false,
+       resourceAllocation = StrategicResourceBundle.empty;
 
   final bool accepted;
   final String? reason;
   final List<GameCity> cities;
+  final StrategicResourceBundle resourceAllocation;
 }
 
 /// Applies authoritative city-production rules without a state container.
@@ -117,45 +121,34 @@ abstract final class CityProductionCommandResolver {
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required PaceBalance paceBalance,
-    bool stockpileRequirementsUsePresence = true,
+    StrategicResourceAccounts strategicResources =
+        StrategicResourceAccounts.empty,
+    StrategicResourceEconomyProfile strategicResourceEconomy =
+        StrategicResourceEconomyProfile.legacyPresenceV0,
   }) {
     return _StartUnitProductionResolver(
       cities: cities,
-      research: research,
       command: command,
       actorPlayerId: actorPlayerId,
       cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
       paceBalance: paceBalance,
-      resourceRequirementsAreMet: (city) =>
-          UnitProductionRequirementRules.meetsRequirements(
-            playerId: city.ownerPlayerId,
-            unitType: command.unitType,
-            cities: cities,
-            mapTiles: mapView.mapTiles,
-            ruleset: cityRuleset,
-            research: research,
-            resourceTradeAgreements: resourceTradeAgreements,
-            ignoreStockpileCosts: !stockpileRequirementsUsePresence,
-          ),
-      coastRequirementIsMet: (city) => CityUnitProductionRules.canProduceInCity(
-        city: city,
-        unitType: command.unitType,
-        mapTiles: mapView.mapTiles,
-      ),
-      supplyIsAvailable: (city) => CityUnitSupplyRules.canQueueUnit(
+      availabilityForCity: (city) => UnitProductionAvailability.evaluate((
         playerId: city.ownerPlayerId,
+        city: city,
         unitType: command.unitType,
         cities: cities,
         units: units,
         artifacts: artifacts,
         fieldImprovements: fieldImprovements,
+        research: research,
+        resourceTradeAgreements: resourceTradeAgreements,
         mapView: mapView,
         cityRuleset: cityRuleset,
-        research: research,
         technologyRuleset: technologyRuleset,
-        replacingCityId: city.id,
-      ),
+        strategicResources: strategicResources,
+        strategicResourceEconomy: strategicResourceEconomy,
+        preferredResourceOptionIndex: command.resourceOptionIndex,
+      )),
     ).resolve();
   }
 
@@ -332,27 +325,19 @@ abstract final class CityProductionCommandResolver {
 final class _StartUnitProductionResolver {
   const _StartUnitProductionResolver({
     required this.cities,
-    required this.research,
     required this.command,
     required this.actorPlayerId,
     required this.cityRuleset,
-    required this.technologyRuleset,
     required this.paceBalance,
-    required this.resourceRequirementsAreMet,
-    required this.coastRequirementIsMet,
-    required this.supplyIsAvailable,
+    required this.availabilityForCity,
   });
 
   final List<GameCity> cities;
-  final ResearchState research;
   final StartUnitProductionCommand command;
   final String actorPlayerId;
   final CityRuleset cityRuleset;
-  final TechnologyRuleset technologyRuleset;
   final PaceBalance paceBalance;
-  final bool Function(GameCity city) resourceRequirementsAreMet;
-  final bool Function(GameCity city) coastRequirementIsMet;
-  final bool Function(GameCity city) supplyIsAvailable;
+  final UnitProductionAvailability Function(GameCity city) availabilityForCity;
 
   CityProductionCommandResult resolve() {
     final cityIndex = _cityIndexById(command.cityId);
@@ -362,10 +347,23 @@ final class _StartUnitProductionResolver {
     if (city.ownerPlayerId != actorPlayerId) {
       return _reject('city_not_controlled');
     }
-    final rejectionReason = _availabilityRejectionReason(city);
-    if (rejectionReason != null) return _reject(rejectionReason);
+    final availability = availabilityForCity(city);
+    if (availability.strategic?.preferredOptionValid == false) {
+      return _reject('unit_production_invalid_resource_option');
+    }
+    if (!availability.isAvailable) {
+      return _reject(availability.rejectionCode!);
+    }
 
     final target = UnitProductionTarget(command.unitType);
+    final activeQueue = city.productionQueue;
+    if (activeQueue?.target == target &&
+        activeQueue!.resourceAllocation == availability.selectedAllocation) {
+      return CityProductionCommandResult._accepted(
+        cities: cities,
+        resourceAllocation: activeQueue.resourceAllocation,
+      );
+    }
     final updatedCity = CityProductionCommandResolver._queueProduction(
       city,
       target,
@@ -380,34 +378,7 @@ final class _StartUnitProductionResolver {
         for (var index = 0; index < cities.length; index++)
           if (index == cityIndex) updatedCity else cities[index],
       ]),
-    );
-  }
-
-  String? _availabilityRejectionReason(GameCity city) {
-    if (!_technologyIsAvailable(city)) {
-      return 'unit_production_not_available';
-    }
-    if (!resourceRequirementsAreMet(city)) {
-      return 'unit_production_requires_resource';
-    }
-    if (!coastRequirementIsMet(city)) {
-      return 'unit_production_requires_coast';
-    }
-    if (!supplyIsAvailable(city)) return 'unit_supply_limit_reached';
-    return null;
-  }
-
-  bool _technologyIsAvailable(GameCity city) {
-    final technologyUnlocked = TechnologyUnlockQuery.hasUnitUnlocked(
-      playerId: city.ownerPlayerId,
-      unitType: command.unitType,
-      research: research,
-      ruleset: technologyRuleset,
-    );
-    return CityProductionRules.canProduceUnit(
-      command.unitType,
-      ruleset: cityRuleset,
-      technologyUnlocked: technologyUnlocked,
+      resourceAllocation: availability.selectedAllocation,
     );
   }
 

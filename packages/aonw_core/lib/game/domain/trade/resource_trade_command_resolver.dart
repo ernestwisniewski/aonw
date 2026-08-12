@@ -1,8 +1,10 @@
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade/resource_trade_agreement.dart';
+import 'package:aonw_core/game/domain/trade/resource_trade_export_availability.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
@@ -34,6 +36,9 @@ abstract final class ResourceTradeCommandResolver {
     required OpenResourceTradeCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
+    Iterable<FieldImprovement> fieldImprovements = const [],
+    StrategicResourceEconomyProfile strategicResourceEconomy =
+        StrategicResourceEconomyProfile.legacyPresenceV0,
   }) {
     final requestReason = _goldRequestRejectionReason(command, actorPlayerId);
     if (requestReason != null) {
@@ -48,13 +53,15 @@ abstract final class ResourceTradeCommandResolver {
     if (permissionReason != null) {
       return _reject(resourceTradeAgreements, permissionReason);
     }
-    if (_availableExports(
+    if (ResourceTradeExportAvailability.available(
           cities: cities,
           research: research,
-          resourceTradeAgreements: resourceTradeAgreements,
+          agreements: resourceTradeAgreements,
           exporterPlayerId: command.targetPlayerId,
           resource: command.resource,
           mapTiles: mapTiles,
+          fieldImprovements: fieldImprovements,
+          strategicResourceEconomy: strategicResourceEconomy,
         ) <=
         0) {
       return _reject(
@@ -79,6 +86,9 @@ abstract final class ResourceTradeCommandResolver {
     required OpenResourceExchangeCommand command,
     required String actorPlayerId,
     required MapTileLookup mapTiles,
+    Iterable<FieldImprovement> fieldImprovements = const [],
+    StrategicResourceEconomyProfile strategicResourceEconomy =
+        StrategicResourceEconomyProfile.legacyPresenceV0,
   }) {
     final requestReason = _exchangeRequestRejectionReason(
       command,
@@ -101,6 +111,8 @@ abstract final class ResourceTradeCommandResolver {
       resourceTradeAgreements: resourceTradeAgreements,
       command: command,
       mapTiles: mapTiles,
+      fieldImprovements: fieldImprovements,
+      strategicResourceEconomy: strategicResourceEconomy,
     );
     if (availabilityReason != null) {
       return _reject(resourceTradeAgreements, availabilityReason);
@@ -208,25 +220,31 @@ abstract final class ResourceTradeCommandResolver {
     required List<ResourceTradeAgreement> resourceTradeAgreements,
     required OpenResourceExchangeCommand command,
     required MapTileLookup mapTiles,
+    required Iterable<FieldImprovement> fieldImprovements,
+    required StrategicResourceEconomyProfile strategicResourceEconomy,
   }) {
-    if (_availableExports(
+    if (ResourceTradeExportAvailability.available(
           cities: cities,
           research: research,
-          resourceTradeAgreements: resourceTradeAgreements,
+          agreements: resourceTradeAgreements,
           exporterPlayerId: command.playerId,
           resource: command.offeredResource,
           mapTiles: mapTiles,
+          fieldImprovements: fieldImprovements,
+          strategicResourceEconomy: strategicResourceEconomy,
         ) <=
         0) {
       return 'resource_trade_offer_unavailable';
     }
-    if (_availableExports(
+    if (ResourceTradeExportAvailability.available(
           cities: cities,
           research: research,
-          resourceTradeAgreements: resourceTradeAgreements,
+          agreements: resourceTradeAgreements,
           exporterPlayerId: command.targetPlayerId,
           resource: command.requestedResource,
           mapTiles: mapTiles,
+          fieldImprovements: fieldImprovements,
+          strategicResourceEconomy: strategicResourceEconomy,
         ) <=
         0) {
       return 'resource_trade_request_unavailable';
@@ -277,6 +295,7 @@ abstract final class ResourceTradeCommandResolver {
         resource: command.requestedResource,
         goldPerTurn: 0,
         remainingTurns: command.durationTurns,
+        exchangeGroupId: baseId,
       ),
       ResourceTradeAgreement(
         id: '${baseId}_offered',
@@ -285,6 +304,7 @@ abstract final class ResourceTradeCommandResolver {
         resource: command.offeredResource,
         goldPerTurn: 0,
         remainingTurns: command.durationTurns,
+        exchangeGroupId: baseId,
       ),
     ]);
   }
@@ -323,44 +343,6 @@ abstract final class ResourceTradeCommandResolver {
       }
     }
     return false;
-  }
-
-  static int _activeExportCount(
-    Iterable<ResourceTradeAgreement> agreements, {
-    required String exporterPlayerId,
-    required ResourceType resource,
-  }) {
-    var count = 0;
-    for (final agreement in agreements) {
-      if (agreement.exporterPlayerId == exporterPlayerId &&
-          agreement.resource == resource &&
-          agreement.isActive) {
-        count += 1;
-      }
-    }
-    return count;
-  }
-
-  static int _availableExports({
-    required List<GameCity> cities,
-    required ResearchState research,
-    required List<ResourceTradeAgreement> resourceTradeAgreements,
-    required String exporterPlayerId,
-    required ResourceType resource,
-    required MapTileLookup mapTiles,
-  }) {
-    final inventory = CityResourceInventoryRules.forPlayer(
-      playerId: exporterPlayerId,
-      cities: cities,
-      mapTiles: mapTiles,
-      research: research,
-    );
-    return inventory.countFor(resource) -
-        _activeExportCount(
-          resourceTradeAgreements,
-          exporterPlayerId: exporterPlayerId,
-          resource: resource,
-        );
   }
 }
 

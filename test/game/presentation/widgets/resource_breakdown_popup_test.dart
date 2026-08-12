@@ -1,3 +1,4 @@
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_strategic_resource_summary.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
@@ -210,6 +211,61 @@ void main() {
     expect(find.text(l10n.unitTank), findsOneWidget);
     expect(find.text('? ${l10n.resourceOil}'), findsAtLeastNWidgets(1));
   });
+
+  testWidgets('ResourceBreakdownPopup explains strategic flow and sources', (
+    tester,
+  ) async {
+    GameCity? selectedCity;
+    const strategic = HudStrategicResourceSummary(
+      enabled: true,
+      rows: [
+        HudStrategicResourceRow(
+          resource: ResourceType.oil,
+          available: 1,
+          allocated: 2,
+          domesticProduction: 1,
+          imports: 2,
+          exports: 1,
+          sourceCount: 1,
+          shortage: true,
+        ),
+      ],
+      allocations: [
+        HudStrategicResourceAllocation(
+          city: city,
+          bundle: StrategicResourceBundle.oilTwo,
+        ),
+      ],
+      sources: [
+        HudStrategicResourceSource(
+          city: city,
+          hex: CityHex(col: 1, row: 1),
+          resource: ResourceType.oil,
+          improvement: FieldImprovementType.oilWell,
+          amountPerTurn: 1,
+        ),
+      ],
+    );
+
+    await _pumpPopup(
+      tester,
+      type: ResourceBreakdownType.resources,
+      strategicResources: strategic,
+      onStrategicCityPressed: (value) => selectedCity = value,
+    );
+
+    expect(find.text('Strategic stockpiles'), findsOneWidget);
+    expect(find.text('oil · Stored'), findsOneWidget);
+    expect(find.text('oil · Domestic production'), findsOneWidget);
+    expect(find.text('oil · Oil Well · Krakow (1, 1)'), findsOneWidget);
+    expect(find.text('2 oil'), findsOneWidget);
+
+    final source = find.text('oil · Oil Well · Krakow (1, 1)');
+    await tester.ensureVisible(source);
+    await tester.tap(source);
+
+    expect(selectedCity, city);
+  });
 }
 
 Future<void> _pumpPopup(
@@ -247,6 +303,9 @@ Future<void> _pumpPopup(
   int stabilityStandingAdjustment = 0,
   CityResourceInventory resources = CityResourceInventory.empty,
   EmpireResourceNetwork resourceNetwork = EmpireResourceNetwork.empty,
+  HudStrategicResourceSummary strategicResources =
+      HudStrategicResourceSummary.empty,
+  ValueChanged<GameCity>? onStrategicCityPressed,
   String? activeTechnologyName,
   int? activeTechnologyTurnsRemaining,
   int? activeTechnologyCompletionTurn,
@@ -266,6 +325,7 @@ Future<void> _pumpPopup(
             stabilityStandingAdjustment: stabilityStandingAdjustment,
             resources: resources,
             resourceNetwork: resourceNetwork,
+            strategicResources: strategicResources,
             cities: const [
               GameCity(
                 id: 'city_1',
@@ -279,6 +339,7 @@ Future<void> _pumpPopup(
             activeTechnologyCompletionTurn: activeTechnologyCompletionTurn,
             l10n: AppLocalizationsEn(),
             onClose: onClose ?? () {},
+            onStrategicCityPressed: onStrategicCityPressed,
           ),
         ),
       ),

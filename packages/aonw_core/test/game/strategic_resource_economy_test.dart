@@ -1,6 +1,4 @@
 import 'package:aonw_core/domain.dart';
-import 'package:aonw_core/game/domain/turn/economy/turn_economy_state.dart';
-import 'package:aonw_core/game/domain/turn/economy/turn_resource_trade_economy_advancer.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -30,6 +28,10 @@ void main() {
       expect(projection.output, StrategicResourceBundle.oilOne);
       expect(projection.sources, hasLength(1));
       expect(projection.sources.single.cityId, 'city_1');
+      expect(
+        projection.sources.single.improvement,
+        FieldImprovementType.oilWell,
+      );
       expect(projection.sources.single.amountPerTurn, 1);
     });
 
@@ -126,72 +128,89 @@ void main() {
       );
     });
 
-    test('moves one stockpiled unit through an active trade agreement', () {
-      final state = _economyState(
-        playerGold: const {'exporter': 0, 'importer': 5},
+    test('honors an explicit resource option and rejects an invalid index', () {
+      final state = DomainState.snapshot(
+        matchRules: MatchRules.standard,
+        cities: const [_city],
+        research: _research({TechnologyId.flight}),
         strategicResources: StrategicResourceAccounts(
           byPlayerId: {
-            'exporter': StrategicResourceStockpile(
-              onHand: StrategicResourceBundle.oilOne,
+            'p1': StrategicResourceStockpile(
+              onHand: StrategicResourceBundle({
+                ResourceType.oil: 1,
+                ResourceType.aluminium: 1,
+              }),
             ),
           },
         ),
-        agreements: const [
-          ResourceTradeAgreement(
-            id: 'oil_trade',
-            exporterPlayerId: 'exporter',
-            importerPlayerId: 'importer',
-            resource: ResourceType.oil,
-            goldPerTurn: 2,
-            remainingTurns: 2,
-          ),
-        ],
       );
+      const resolver = DomainCityProductionResolver();
 
-      final delivered = TurnResourceTradeEconomyAdvancer.advance(
+      final selected = resolver.startUnitProduction(
         state: state,
-        playerIds: const ['importer'],
+        command: const StartUnitProductionCommand(
+          'city_1',
+          GameUnitType.reconPlane,
+          resourceOptionIndex: 0,
+        ),
+        actorPlayerId: 'p1',
+        mapView: _resourceMap(null),
       );
 
-      expect(delivered.playerGold, {'exporter': 2, 'importer': 3});
+      expect(selected.accepted, isTrue);
       expect(
-        delivered.strategicResources
-            .forPlayer('exporter')
-            .amountFor(ResourceType.oil),
-        0,
+        selected.state.cities.single.productionQueue!.resourceAllocation,
+        StrategicResourceBundle.aluminiumOne,
       );
       expect(
-        delivered.strategicResources
-            .forPlayer('importer')
+        selected.state.strategicResources
+            .forPlayer('p1')
             .amountFor(ResourceType.oil),
         1,
       );
-      expect(delivered.resourceTradeAgreements.single.remainingTurns, 1);
+
+      final invalid = resolver.startUnitProduction(
+        state: state,
+        command: const StartUnitProductionCommand(
+          'city_1',
+          GameUnitType.reconPlane,
+          resourceOptionIndex: 9,
+        ),
+        actorPlayerId: 'p1',
+        mapView: _resourceMap(null),
+      );
+      expect(invalid.accepted, isFalse);
+      expect(invalid.reason, 'unit_production_invalid_resource_option');
+      expect(invalid.state, same(state));
     });
 
-    test('failed stockpile delivery does not charge the importer', () {
-      final state = _economyState(
-        playerGold: const {'exporter': 0, 'importer': 5},
-        agreements: const [
-          ResourceTradeAgreement(
-            id: 'oil_trade',
-            exporterPlayerId: 'exporter',
-            importerPlayerId: 'importer',
-            resource: ResourceType.oil,
-            goldPerTurn: 2,
-            remainingTurns: 1,
-          ),
-        ],
+    test('selecting the active allocation again is an identity no-op', () {
+      final queue = CityProductionQueue.unit(
+        unitType: GameUnitType.tank,
+        investedProduction: 12,
+        resourceAllocation: StrategicResourceBundle.oilTwo,
+      );
+      final city = _city.copyWith(productionQueue: queue);
+      final state = DomainState.snapshot(
+        matchRules: MatchRules.standard,
+        cities: [city],
+        research: _research({
+          TechnologyId.combustion,
+          TechnologyId.massProduction,
+        }),
       );
 
-      final failed = TurnResourceTradeEconomyAdvancer.advance(
+      final result = const DomainCityProductionResolver().startUnitProduction(
         state: state,
-        playerIds: const ['importer'],
+        command: const StartUnitProductionCommand('city_1', GameUnitType.tank),
+        actorPlayerId: 'p1',
+        mapView: _resourceMap(null),
       );
 
-      expect(failed.playerGold, state.playerGold);
-      expect(failed.strategicResources, state.strategicResources);
-      expect(failed.resourceTradeAgreements, isEmpty);
+      expect(result.accepted, isTrue);
+      expect(result.state, same(state));
+      expect(result.state.cities.single.productionQueue, same(queue));
+      expect(result.state.strategicResources, same(state.strategicResources));
     });
 
     test('canonical state round-trips accounts and queue allocations', () {
@@ -256,26 +275,4 @@ WorldMap _resourceMap(ResourceType? resource) => WorldMap(
           height: 0,
         ),
   ],
-);
-
-TurnEconomyState _economyState({
-  required Map<String, int> playerGold,
-  StrategicResourceAccounts strategicResources =
-      StrategicResourceAccounts.empty,
-  List<ResourceTradeAgreement> agreements = const [],
-}) => TurnEconomyState(
-  playerGold: playerGold,
-  playerWarWeariness: const {},
-  playerStabilityNet: const {},
-  strategicResources: strategicResources,
-  units: const [],
-  cities: const [],
-  artifacts: const [],
-  fieldImprovements: const [],
-  fogOfWar: FogOfWarState.empty,
-  research: ResearchState.empty,
-  wonderRegistry: WonderRegistry.empty,
-  diplomacy: DiplomacyState.empty,
-  resourceTradeAgreements: agreements,
-  mapObjectiveHoldStatesByObjectiveId: const {},
 );

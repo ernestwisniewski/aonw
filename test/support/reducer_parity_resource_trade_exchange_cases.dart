@@ -29,6 +29,7 @@ List<ReducerParityFixture> _resourceExchangeParityCases(
       resource: ResourceType.horses,
       goldPerTurn: 0,
       remainingTurns: 6,
+      exchangeGroupId: 'resource_exchange_player_1_player_2_iron_horses_1',
     ),
     ResourceTradeAgreement(
       id: 'resource_exchange_player_1_player_2_iron_horses_1_offered',
@@ -37,6 +38,7 @@ List<ReducerParityFixture> _resourceExchangeParityCases(
       resource: ResourceType.iron,
       goldPerTurn: 0,
       remainingTurns: 6,
+      exchangeGroupId: 'resource_exchange_player_1_player_2_iron_horses_1',
     ),
   ]);
   return [

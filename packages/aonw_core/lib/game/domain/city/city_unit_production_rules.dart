@@ -18,6 +18,44 @@ abstract final class CityUnitProductionRules {
       return null;
     }
 
+    final spawnHex = _spawnHexFor(
+      city: city,
+      unitType: unitType,
+      units: units,
+      mapTiles: mapTiles,
+    );
+    if (spawnHex == null) return null;
+
+    return GameUnit.produced(
+      id: _nextProducedUnitId(city, unitType, units),
+      ownerPlayerId: city.ownerPlayerId,
+      type: unitType,
+      col: spawnHex.col,
+      row: spawnHex.row,
+    );
+  }
+
+  static bool canSpawnProducedUnit({
+    required GameCity city,
+    required GameUnitType unitType,
+    required Iterable<GameUnit> units,
+    required MapTileLookup mapTiles,
+  }) =>
+      canProduceInCity(city: city, unitType: unitType, mapTiles: mapTiles) &&
+      _spawnHexFor(
+            city: city,
+            unitType: unitType,
+            units: units,
+            mapTiles: mapTiles,
+          ) !=
+          null;
+
+  static CityHex? _spawnHexFor({
+    required GameCity city,
+    required GameUnitType unitType,
+    required Iterable<GameUnit> units,
+    required MapTileLookup mapTiles,
+  }) {
     for (final candidate in _spawnCandidates(city, mapTiles)) {
       final occupied = units.any(
         (unit) => unit.occupies(candidate.col, candidate.row),
@@ -28,15 +66,8 @@ abstract final class CityUnitProductionRules {
 
       if (!_canSpawnUnitOnCandidate(unitType, candidate, mapTiles)) continue;
 
-      return GameUnit.produced(
-        id: _nextProducedUnitId(city, unitType, units),
-        ownerPlayerId: city.ownerPlayerId,
-        type: unitType,
-        col: candidate.col,
-        row: candidate.row,
-      );
+      return candidate;
     }
-
     return null;
   }
 
@@ -131,7 +162,7 @@ abstract final class CityUnitProductionRules {
   static String _nextProducedUnitId(
     GameCity city,
     GameUnitType unitType,
-    List<GameUnit> units,
+    Iterable<GameUnit> units,
   ) {
     final prefix = '${city.id}_${unitType.name}';
     var index = 1;

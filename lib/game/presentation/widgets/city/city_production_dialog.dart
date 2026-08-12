@@ -5,6 +5,7 @@ import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_active_production_banner.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/city/city_empty_production_state.dart';
+import 'package:aonw/game/presentation/widgets/city/city_production_change_modals.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_details_panels.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_dialog_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_gamepad_navigation.dart';
@@ -31,6 +32,7 @@ import 'package:flutter/material.dart';
 
 part 'city_production_panel_details.dart';
 part 'city_production_panel_view.dart';
+part 'city_production_request_flow.dart';
 
 class CityProductionDialog extends StatelessWidget {
   final GameCity city;
@@ -52,9 +54,13 @@ class CityProductionDialog extends StatelessWidget {
   final PaceBalance paceBalance;
   final int playerGold;
   final ValueChanged<CityBuildingType> onBuild;
+  final Future<void> Function(CityBuildingType)? onBuildRequested;
   final ValueChanged<WonderType>? onBuildWonder;
+  final Future<void> Function(WonderType)? onBuildWonderRequested;
   final ValueChanged<GameUnitType> onProduceUnit;
+  final Future<void> Function(GameUnitType, int?)? onProduceUnitRequested;
   final ValueChanged<CityProjectType>? onStartProject;
+  final Future<void> Function(CityProjectType)? onStartProjectRequested;
   final ValueChanged<CitySpecializationType>? onSetSpecialization;
   final VoidCallback? onRushProduction;
   final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
@@ -80,9 +86,13 @@ class CityProductionDialog extends StatelessWidget {
     this.paceBalance = PaceBalance.unlimited,
     this.playerGold = 0,
     required this.onBuild,
+    this.onBuildRequested,
     this.onBuildWonder,
+    this.onBuildWonderRequested,
     required this.onProduceUnit,
+    this.onProduceUnitRequested,
     this.onStartProject,
+    this.onStartProjectRequested,
     this.onSetSpecialization,
     this.onRushProduction,
     this.gamepadInputListenable,
@@ -114,9 +124,13 @@ class CityProductionDialog extends StatelessWidget {
       playerGold: playerGold,
       maxHeight: size.height * 0.82,
       onBuild: onBuild,
+      onBuildRequested: onBuildRequested,
       onBuildWonder: onBuildWonder,
+      onBuildWonderRequested: onBuildWonderRequested,
       onProduceUnit: onProduceUnit,
+      onProduceUnitRequested: onProduceUnitRequested,
       onStartProject: onStartProject,
+      onStartProjectRequested: onStartProjectRequested,
       onSetSpecialization: onSetSpecialization,
       onRushProduction: onRushProduction,
       gamepadInputListenable: gamepadInputListenable,
@@ -146,9 +160,13 @@ class CityProductionPanel extends StatefulWidget {
   final int playerGold;
   final double? maxHeight;
   final ValueChanged<CityBuildingType> onBuild;
+  final Future<void> Function(CityBuildingType)? onBuildRequested;
   final ValueChanged<WonderType>? onBuildWonder;
+  final Future<void> Function(WonderType)? onBuildWonderRequested;
   final ValueChanged<GameUnitType> onProduceUnit;
+  final Future<void> Function(GameUnitType, int?)? onProduceUnitRequested;
   final ValueChanged<CityProjectType>? onStartProject;
+  final Future<void> Function(CityProjectType)? onStartProjectRequested;
   final ValueChanged<CitySpecializationType>? onSetSpecialization;
   final VoidCallback? onRushProduction;
   final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
@@ -176,9 +194,13 @@ class CityProductionPanel extends StatefulWidget {
     this.playerGold = 0,
     this.maxHeight,
     required this.onBuild,
+    this.onBuildRequested,
     this.onBuildWonder,
+    this.onBuildWonderRequested,
     required this.onProduceUnit,
+    this.onProduceUnitRequested,
     this.onStartProject,
+    this.onStartProjectRequested,
     this.onSetSpecialization,
     this.onRushProduction,
     this.gamepadInputListenable,
@@ -190,17 +212,14 @@ class CityProductionPanel extends StatefulWidget {
   State<CityProductionPanel> createState() => _CityProductionPanelState();
 }
 
-class _CityProductionPanelState extends State<CityProductionPanel> {
+class _CityProductionPanelState extends State<CityProductionPanel>
+    with _CityProductionRequestFlow {
   CityBuildingType? _detailsBuildingType;
   GameUnitType? _detailsUnitType;
   WonderType? _detailsWonderType;
   String? _selectedItemKey;
-  bool _gamepadSelectionVisible = false;
-  CityBuildingSortMode _buildingSortMode = CityBuildingSortMode.recommended;
 
-  void _setDetailsState(void Function() update) {
-    setState(update);
-  }
+  void _setDetailsState(void Function() update) => setState(update);
 
   @override
   void didUpdateWidget(covariant CityProductionPanel oldWidget) {
@@ -237,6 +256,10 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
           onCloseBuildingDetails: _closeBuildingDetails,
           onCloseUnitDetails: _closeUnitDetails,
           onCloseWonderDetails: _closeWonderDetails,
+          onBuild: _requestBuilding,
+          onBuildWonder: _requestWonder,
+          onProduceUnit: _requestUnit,
+          onStartProject: _requestProject,
         ),
       ),
     );
@@ -248,13 +271,13 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
     final gamepadChoices = CityProductionGamepadNavigation.choicesFor(
       viewModel: viewModel,
       buildingSortMode: _buildingSortMode,
-      onBuild: widget.onBuild,
-      onBuildWonder: widget.onBuildWonder,
-      onProduceUnit: widget.onProduceUnit,
+      onBuild: _requestBuilding,
+      onBuildWonder: widget.onBuildWonder == null ? null : _requestWonder,
+      onProduceUnit: _requestUnit,
       onBuildingDetails: _showBuildingDetails,
       onUnitDetails: _showUnitDetails,
       onWonderDetails: _showWonderDetails,
-      onStartProject: widget.onStartProject,
+      onStartProject: widget.onStartProject == null ? null : _requestProject,
       onSetSpecialization: widget.onSetSpecialization,
     );
     return (
@@ -269,19 +292,11 @@ class _CityProductionPanelState extends State<CityProductionPanel> {
             )
           : null,
       gamepadChoices: gamepadChoices,
+      productionSelectionPending: _productionSelectionPending,
       detailsBuildingItem: viewModel.itemForBuilding(_detailsBuildingType),
       detailsUnitItem: viewModel.itemForUnit(_detailsUnitType),
       detailsWonderItem: viewModel.itemForWonder(_detailsWonderType),
     );
-  }
-
-  void _setBuildingSortMode(CityBuildingSortMode mode) {
-    setState(() => _buildingSortMode = mode);
-  }
-
-  void _showGamepadSelection() {
-    if (_gamepadSelectionVisible) return;
-    setState(() => _gamepadSelectionVisible = true);
   }
 
   void _moveSelection(

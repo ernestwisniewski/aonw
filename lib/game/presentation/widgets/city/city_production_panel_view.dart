@@ -7,6 +7,7 @@ typedef _CityProductionPanelViewData = ({
   CityBuildingSortMode buildingSortMode,
   String? selectedItemKey,
   List<CityProductionGamepadChoice> gamepadChoices,
+  bool productionSelectionPending,
   CityProductionItem? detailsBuildingItem,
   CityProductionItem? detailsUnitItem,
   CityProductionItem? detailsWonderItem,
@@ -20,6 +21,10 @@ typedef _CityProductionPanelActions = ({
   VoidCallback onCloseBuildingDetails,
   VoidCallback onCloseUnitDetails,
   VoidCallback onCloseWonderDetails,
+  ValueChanged<CityBuildingType> onBuild,
+  ValueChanged<WonderType> onBuildWonder,
+  ValueChanged<GameUnitType> onProduceUnit,
+  ValueChanged<CityProjectType> onStartProject,
 });
 
 class _CityProductionPanelView extends StatelessWidget {
@@ -57,14 +62,21 @@ class _CityProductionPanelView extends StatelessWidget {
                 playerGold: panel.playerGold,
                 onRushProduction: panel.onRushProduction,
               ),
+            if (data.productionSelectionPending)
+              const LinearProgressIndicator(
+                key: Key('cityProductionPanel.pending'),
+              ),
             Flexible(
-              child: data.viewModel.hasItems
-                  ? _CityProductionChoicesView(
-                      panel: panel,
-                      data: data,
-                      actions: actions,
-                    )
-                  : const CityEmptyProductionState(),
+              child: AbsorbPointer(
+                absorbing: data.productionSelectionPending,
+                child: data.viewModel.hasItems
+                    ? _CityProductionChoicesView(
+                        panel: panel,
+                        data: data,
+                        actions: actions,
+                      )
+                    : const CityEmptyProductionState(),
+              ),
             ),
           ],
         ),
@@ -120,6 +132,7 @@ class _CityProductionActiveItem extends StatelessWidget {
       progress: item.progress,
       metaLabels: item.metaLabels,
       strategicResourceLabel: item.strategicResourceLabel,
+      spawnBlocked: item.spawnBlocked,
       canBeRushed: item.canBeRushed,
       rushGoldCost: item.rushGoldCost,
       playerGold: playerGold,
@@ -169,10 +182,12 @@ class _CityProductionChoicesView extends StatelessWidget {
       onBuildingDetails: actions.onBuildingDetails,
       onUnitDetails: actions.onUnitDetails,
       onWonderDetails: actions.onWonderDetails,
-      onBuild: panel.onBuild,
-      onBuildWonder: panel.onBuildWonder,
-      onProduceUnit: panel.onProduceUnit,
-      onStartProject: panel.onStartProject,
+      onBuild: actions.onBuild,
+      onBuildWonder: panel.onBuildWonder == null ? null : actions.onBuildWonder,
+      onProduceUnit: actions.onProduceUnit,
+      onStartProject: panel.onStartProject == null
+          ? null
+          : actions.onStartProject,
       onSetSpecialization: panel.onSetSpecialization,
       compact: data.compact,
     );

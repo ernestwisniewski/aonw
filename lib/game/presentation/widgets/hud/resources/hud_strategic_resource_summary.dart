@@ -42,6 +42,22 @@ final class HudStrategicResourceAllocation {
   final StrategicResourceBundle bundle;
 }
 
+final class HudStrategicResourceSource {
+  const HudStrategicResourceSource({
+    required this.city,
+    required this.hex,
+    required this.resource,
+    required this.improvement,
+    required this.amountPerTurn,
+  });
+
+  final GameCity city;
+  final CityHex hex;
+  final ResourceType resource;
+  final FieldImprovementType improvement;
+  final int amountPerTurn;
+}
+
 /// One player-scoped read model shared by the top strip and resource popup.
 ///
 /// It derives presentation values only; extraction, allocation, and transfer
@@ -51,17 +67,20 @@ final class HudStrategicResourceSummary {
     required this.enabled,
     required this.rows,
     required this.allocations,
+    required this.sources,
   });
 
   static const empty = HudStrategicResourceSummary(
     enabled: false,
     rows: [],
     allocations: [],
+    sources: [],
   );
 
   final bool enabled;
   final List<HudStrategicResourceRow> rows;
   final List<HudStrategicResourceAllocation> allocations;
+  final List<HudStrategicResourceSource> sources;
 
   int get availableTypeCount => rows.where((row) => row.available > 0).length;
 
@@ -107,6 +126,20 @@ final class HudStrategicResourceSummary {
         missingResources: missingResources,
       ),
       allocations: List.unmodifiable(allocations),
+      sources: List.unmodifiable(
+        production.sources.map((source) {
+          final city = state.cities.firstWhere(
+            (candidate) => candidate.id == source.cityId,
+          );
+          return HudStrategicResourceSource(
+            city: city,
+            hex: source.hex,
+            resource: source.resource,
+            improvement: source.improvement,
+            amountPerTurn: source.amountPerTurn,
+          );
+        }),
+      ),
     );
   }
 }
@@ -201,11 +234,13 @@ int _tradeCount(
   String playerId,
   ResourceType resource, {
   required bool imports,
-}) => state.resourceTradeAgreements.where((agreement) {
-  final participantId = imports
-      ? agreement.importerPlayerId
-      : agreement.exporterPlayerId;
-  return agreement.isActive &&
-      participantId == playerId &&
-      agreement.resource == resource;
-}).length;
+}) => state.resourceTradeAgreements
+    .where((agreement) {
+      final participantId = imports
+          ? agreement.importerPlayerId
+          : agreement.exporterPlayerId;
+      return agreement.isActive &&
+          participantId == playerId &&
+          agreement.resource == resource;
+    })
+    .fold(0, (sum, agreement) => sum + agreement.amountPerTurn);

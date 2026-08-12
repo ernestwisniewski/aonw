@@ -37,6 +37,7 @@ class TopResourceOverlay extends StatelessWidget {
     required this.onResourcesPressed,
     required this.onVictoryPressed,
     required this.onCloseBreakdown,
+    this.onStrategicCityPressed,
     this.victoryStatus,
     this.playerName,
     this.playerColor,
@@ -74,6 +75,7 @@ class TopResourceOverlay extends StatelessWidget {
   final VoidCallback onResourcesPressed;
   final VoidCallback onVictoryPressed;
   final VoidCallback onCloseBreakdown;
+  final ValueChanged<GameCity>? onStrategicCityPressed;
   final HudVictoryStatusSummary? victoryStatus;
   final String? playerName;
   final Color? playerColor;
@@ -271,6 +273,7 @@ class TopResourceOverlay extends StatelessWidget {
       activeTechnologyCompletionTurn: activeTechnologyCompletionTurn,
       l10n: l10n,
       onClose: onCloseBreakdown,
+      onStrategicCityPressed: onStrategicCityPressed,
       maxWidth: maxWidth,
       maxHeight: maxHeight,
       showDragHandle: showDragHandle,

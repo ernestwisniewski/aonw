@@ -10,12 +10,14 @@ final class StrategicResourceProductionSource {
     required this.cityId,
     required this.hex,
     required this.resource,
+    required this.improvement,
     required this.amountPerTurn,
   });
 
   final String cityId;
   final CityHex hex;
   final ResourceType resource;
+  final FieldImprovementType improvement;
   final int amountPerTurn;
 }
 
@@ -121,6 +123,7 @@ List<StrategicResourceProductionSource> _sourcesAtHex({
           cityId: city.id,
           hex: hex,
           resource: resource,
+          improvement: improvement.type,
           amountPerTurn: ruleset.extractionFor(resource)!.amountPerTurn,
         ),
   ];

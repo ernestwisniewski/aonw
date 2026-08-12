@@ -55,29 +55,6 @@ extension _CityProductionPanelDetails on _CityProductionPanelState {
     );
   }
 
-  CityProductionDialogViewModel _viewModelFor(AppLocalizations l10n) {
-    return CityProductionDialogViewModel.from(
-      widget.city,
-      l10n: l10n,
-      cityRuleset: widget.cityRuleset,
-      research: widget.research,
-      technologyRuleset: widget.technologyRuleset,
-      wonderRegistry: widget.wonderRegistry,
-      wonderRuleset: widget.wonderRuleset,
-      mapData: widget.mapData,
-      cities: widget.cities,
-      units: widget.units,
-      artifacts: widget.artifacts,
-      fieldImprovements: widget.fieldImprovements,
-      resourceTradeAgreements: widget.resourceTradeAgreements,
-      strategicResources: widget.strategicResources,
-      strategicResourceEconomy: widget.strategicResourceEconomy,
-      productionPerTurn: widget.productionPerTurn,
-      currentTurn: widget.currentTurn,
-      paceBalance: widget.paceBalance,
-    );
-  }
-
   String _buildingStateLabel(AppLocalizations l10n, CityProductionItem item) {
     return switch (item.buildingState) {
       CityBuildingCardState.built => l10n.cityProductionBuiltLabel,

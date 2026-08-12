@@ -13,8 +13,6 @@ import 'package:aonw_core/game/domain/stability/stability_ruleset.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
-import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
-import 'package:aonw_core/game/domain/unit/unit_production_requirement.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -67,19 +65,6 @@ final class DomainCityProductionResolver {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
-    final transition = _unitResourceTransition(
-      state: state,
-      cityId: command.cityId,
-      unitType: command.unitType,
-      cityRuleset: cityRuleset,
-    );
-    if (!transition.available) {
-      return DomainCityProductionResult(
-        accepted: false,
-        state: state,
-        reason: 'unit_production_missing_strategic_resource',
-      );
-    }
     final result = CityProductionCommandResolver.startUnitProduction(
       cities: state.cities,
       units: state.units,
@@ -93,16 +78,14 @@ final class DomainCityProductionResolver {
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       paceBalance: paceBalance,
-      stockpileRequirementsUsePresence:
-          state.matchRules.strategicResourceEconomy ==
-          StrategicResourceEconomyProfile.legacyPresenceV0,
+      strategicResources: state.strategicResources,
+      strategicResourceEconomy: state.matchRules.strategicResourceEconomy,
     );
     return _fromTargetCommandResult(
       state,
       result,
       cityId: command.cityId,
-      strategicResources: transition.accountsAfterDebit,
-      allocation: transition.allocation,
+      allocation: result.resourceAllocation,
     );
   }
 
@@ -223,11 +206,17 @@ final class DomainCityProductionResolver {
     final stockpilesEnabled =
         state.matchRules.strategicResourceEconomy ==
         StrategicResourceEconomyProfile.stockpileV1;
-    final accounts =
+    var accounts =
         strategicResources ??
         (stockpilesEnabled
             ? _accountsAfterRefund(state, cityId)
             : state.strategicResources);
+    final sourceCity = state.cities
+        .where((candidate) => candidate.id == cityId)
+        .firstOrNull;
+    if (stockpilesEnabled && sourceCity != null && !allocation.isEmpty) {
+      accounts = accounts.debit(sourceCity.ownerPlayerId, allocation);
+    }
     final cities = [
       for (final city in result.cities)
         if (city.id == cityId && city.productionQueue != null)
@@ -279,73 +268,6 @@ final class DomainCityProductionResolver {
       events: result.events,
     );
   }
-}
-
-typedef _UnitResourceTransition = ({
-  bool available,
-  StrategicResourceBundle allocation,
-  StrategicResourceAccounts accountsAfterDebit,
-});
-
-_UnitResourceTransition _unitResourceTransition({
-  required DomainState state,
-  required String cityId,
-  required GameUnitType unitType,
-  required CityRuleset cityRuleset,
-}) {
-  if (state.matchRules.strategicResourceEconomy !=
-      StrategicResourceEconomyProfile.stockpileV1) {
-    return (
-      available: true,
-      allocation: StrategicResourceBundle.empty,
-      accountsAfterDebit: state.strategicResources,
-    );
-  }
-  final city = state.cities
-      .where((candidate) => candidate.id == cityId)
-      .firstOrNull;
-  if (city == null) {
-    return (
-      available: true,
-      allocation: StrategicResourceBundle.empty,
-      accountsAfterDebit: state.strategicResources,
-    );
-  }
-  var accounts = _accountsAfterRefund(state, cityId);
-  var allocation = StrategicResourceBundle.empty;
-  for (final requirement
-      in cityRuleset.unitDefinitionFor(unitType).requirements) {
-    if (requirement case UnitStockpileCostRequirement(:final options)) {
-      final selected = _selectAffordableOption(
-        options,
-        accounts.forPlayer(city.ownerPlayerId),
-      );
-      if (selected == null) {
-        return (
-          available: false,
-          allocation: StrategicResourceBundle.empty,
-          accountsAfterDebit: state.strategicResources,
-        );
-      }
-      allocation = allocation.plus(selected);
-      accounts = accounts.debit(city.ownerPlayerId, selected);
-    }
-  }
-  return (
-    available: true,
-    allocation: allocation,
-    accountsAfterDebit: accounts,
-  );
-}
-
-StrategicResourceBundle? _selectAffordableOption(
-  Iterable<StrategicResourceBundle> options,
-  StrategicResourceStockpile stockpile,
-) {
-  for (final option in options) {
-    if (stockpile.covers(option)) return option;
-  }
-  return null;
 }
 
 StrategicResourceAccounts _accountsAfterRefund(

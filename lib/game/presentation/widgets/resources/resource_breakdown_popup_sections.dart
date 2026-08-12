@@ -294,6 +294,7 @@ List<_BreakdownSectionModel> _strategicResourceSections(
   return [
     _strategicStockpileSection(popup),
     _strategicFlowSection(popup),
+    _strategicSourceSection(popup),
     _strategicAllocationSection(popup),
   ];
 }
@@ -323,6 +324,24 @@ _BreakdownSectionModel _strategicStockpileSection(
         value: '${row.allocated}',
       ),
     ],
+  ],
+);
+
+_BreakdownSectionModel _strategicSourceSection(
+  ResourceBreakdownPopup popup,
+) => _BreakdownSectionModel(
+  title: popup.l10n.resourceBreakdownSourcesSection,
+  rows: [
+    for (final source in popup.strategicResources.sources)
+      _BreakdownRowModel(
+        label:
+            '${GameDisplayNames.resource(popup.l10n, source.resource)} · ${GameDisplayNames.fieldImprovement(popup.l10n, source.improvement)} · ${GameDisplayNames.city(popup.l10n, source.city)} (${source.hex.col}, ${source.hex.row})',
+        value: _signed(source.amountPerTurn),
+        positive: source.amountPerTurn > 0,
+        onTap: popup.onStrategicCityPressed == null
+            ? null
+            : () => popup.onStrategicCityPressed!(source.city),
+      ),
   ],
 );
 
@@ -377,6 +396,9 @@ _BreakdownSectionModel _strategicAllocationSection(
             _BreakdownRowModel(
               label: _strategicAllocationLabel(allocation, popup),
               value: _strategicBundleLabel(allocation.bundle, popup),
+              onTap: popup.onStrategicCityPressed == null
+                  ? null
+                  : () => popup.onStrategicCityPressed!(allocation.city),
             ),
         ],
 );

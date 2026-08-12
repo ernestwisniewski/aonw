@@ -13094,6 +13094,66 @@ abstract class AppLocalizations {
   /// **'Available: {resources}'**
   String cityProductionStrategicFree(String resources);
 
+  /// No description provided for @cityProductionResourceOptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose strategic resources'**
+  String get cityProductionResourceOptionTitle;
+
+  /// No description provided for @cityProductionChangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change production?'**
+  String get cityProductionChangeTitle;
+
+  /// No description provided for @cityProductionChangeWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The current production target will be replaced. Invested production will be preserved for that target.'**
+  String get cityProductionChangeWarning;
+
+  /// No description provided for @cityProductionChangeRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'Releases: {resources}'**
+  String cityProductionChangeRelease(String resources);
+
+  /// No description provided for @cityProductionChangeAllocate.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocates: {resources}'**
+  String cityProductionChangeAllocate(String resources);
+
+  /// No description provided for @cityProductionChangeFreeAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Free after change: {resources}'**
+  String cityProductionChangeFreeAfter(String resources);
+
+  /// No description provided for @cityProductionChangeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Change production'**
+  String get cityProductionChangeAction;
+
+  /// No description provided for @cityProductionSpawnBlockedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready — no free tile'**
+  String get cityProductionSpawnBlockedStatus;
+
+  /// No description provided for @cityProductionSpawnBlockedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Production is complete. Move a unit away from the city to create a valid deployment tile.'**
+  String get cityProductionSpawnBlockedDescription;
+
+  /// No description provided for @cityProductionRushMissingGold.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing {amount} gold'**
+  String cityProductionRushMissingGold(int amount);
+
   /// No description provided for @cityBuildingSortRecommended.
   ///
   /// In en, this message translates to:

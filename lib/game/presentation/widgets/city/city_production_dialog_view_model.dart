@@ -15,7 +15,6 @@ import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
-import 'package:aonw_core/map/domain/terrain_type.dart';
 
 part 'city_production_dialog_view_model_helpers.dart';
 part 'city_production_dialog_view_model_queries.dart';
@@ -187,6 +186,9 @@ class CityProductionDialogViewModel {
     final unitItems = _productionUnitItems(
       city: city,
       playerCities: playerCities,
+      units: units,
+      artifacts: artifacts,
+      fieldImprovements: fieldImprovements,
       activeUnitType: activeUnitType,
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
@@ -194,6 +196,7 @@ class CityProductionDialogViewModel {
       mapData: mapData,
       resourceTradeAgreements: resourceTradeAgreements,
       strategicResources: strategicResources,
+      strategicResourceEconomy: strategicResourceEconomy,
       stockpilesEnabled: stockpilesEnabled,
       effectiveProduction: effectiveProduction,
       technologyEffects: technologyEffects,

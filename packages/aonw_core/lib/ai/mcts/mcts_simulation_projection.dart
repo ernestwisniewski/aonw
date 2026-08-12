@@ -2,6 +2,7 @@ import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -53,6 +54,9 @@ final class MctsSimulationProjection {
       mapObjectiveHoldStatesByObjectiveId:
           view.mapObjectiveHoldStatesByObjectiveId,
       resourceTradeAgreements: view.resourceTradeAgreements,
+      strategicResources:
+          canonicalDomain?.strategicResources ??
+          _ownStrategicResourceAccounts(view),
       wonderRegistry: view.wonderRegistry,
     );
   }
@@ -77,6 +81,15 @@ final class MctsSimulationProjection {
       ignoreFogOfWar: !previousView.visibility.isEnabled,
     );
   }
+}
+
+StrategicResourceAccounts _ownStrategicResourceAccounts(GameView view) {
+  if (view.ownStrategicResources.onHand.isEmpty) {
+    return StrategicResourceAccounts.empty;
+  }
+  return StrategicResourceAccounts(
+    byPlayerId: {view.forPlayerId: view.ownStrategicResources},
+  );
 }
 
 Map<String, int> _withPlayerValue(

@@ -32,6 +32,9 @@ class CityProductionItem {
     this.eta = const TurnEta.blocked(),
     this.strategicResourceLabel,
     this.strategicResourceShortage = false,
+    this.unitAvailability,
+    this.unitRequirementLabels = const [],
+    this.spawnBlocked = false,
   });
 
   final CityBuildingType? buildingType;
@@ -56,10 +59,16 @@ class CityProductionItem {
   final bool continuous;
   final String? strategicResourceLabel;
   final bool strategicResourceShortage;
+  final UnitProductionAvailability? unitAvailability;
+  final List<String> unitRequirementLabels;
+  final bool spawnBlocked;
 
   List<String> get unitRequirementLines => [
     ?strategicResourceLabel,
-    if (locked && requirementLabel != null) requirementLabel!,
+    if (locked)
+      ...(unitRequirementLabels.isEmpty
+          ? [?requirementLabel]
+          : unitRequirementLabels),
   ];
 
   factory CityProductionItem.building(
@@ -113,6 +122,9 @@ class CityProductionItem {
     List<String> metaLabels = const [],
     String? strategicResourceLabel,
     bool strategicResourceShortage = false,
+    UnitProductionAvailability? unitAvailability,
+    List<String> unitRequirementLabels = const [],
+    bool spawnBlocked = false,
   }) {
     return CityProductionItem(
       buildingType: null,
@@ -143,6 +155,9 @@ class CityProductionItem {
       metaLabels: metaLabels,
       strategicResourceLabel: strategicResourceLabel,
       strategicResourceShortage: strategicResourceShortage,
+      unitAvailability: unitAvailability,
+      unitRequirementLabels: List.unmodifiable(unitRequirementLabels),
+      spawnBlocked: spawnBlocked,
     );
   }
 

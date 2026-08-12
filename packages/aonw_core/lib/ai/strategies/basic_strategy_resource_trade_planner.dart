@@ -2,6 +2,8 @@ import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
@@ -85,17 +87,34 @@ final class BasicStrategyResourceTradePlanner {
         continue;
       }
 
-      missing.addAll(
-        UnitProductionRequirementRules.missingResourceChoices(
+      final presenceMissing =
+          UnitProductionRequirementRules.missingResourceChoices(
+            playerId: view.forPlayerId,
+            unitType: unitType,
+            cities: view.ownCities,
+            mapTiles: view.mapData,
+            ruleset: view.ruleset.city,
+            research: view.research,
+            resourceTradeAgreements: view.resourceTradeAgreements,
+            ignoreStockpileCosts:
+                view.strategicResourceEconomy ==
+                StrategicResourceEconomyProfile.stockpileV1,
+          );
+      missing.addAll(presenceMissing);
+      if (view.strategicResourceEconomy ==
+          StrategicResourceEconomyProfile.stockpileV1) {
+        final availability = UnitStrategicResourceAvailability.forUnit(
           playerId: view.forPlayerId,
           unitType: unitType,
-          cities: view.ownCities,
-          mapTiles: view.mapData,
-          ruleset: view.ruleset.city,
-          research: view.research,
-          resourceTradeAgreements: view.resourceTradeAgreements,
-        ),
-      );
+          definition: view.ruleset.city.unitDefinitionFor(unitType),
+          accounts: StrategicResourceAccounts(
+            byPlayerId: {view.forPlayerId: view.ownStrategicResources},
+          ),
+        );
+        if (!availability.isAvailable) {
+          missing.addAll(availability.missing.amounts.keys);
+        }
+      }
     }
 
     return [
@@ -200,6 +219,24 @@ final class BasicStrategyResourceTradePlanner {
     required Iterable<GameCity> cities,
     required ResourceType resource,
   }) {
+    if (view.strategicResourceEconomy ==
+            StrategicResourceEconomyProfile.stockpileV1 &&
+        ResourceCatalog.isStockpiled(resource)) {
+      final production = StrategicResourceProductionRules.forPlayer(
+        playerId: playerId,
+        cities: cities,
+        fieldImprovements: view.knownImprovements,
+        mapTiles: view.mapData,
+        research: view.research,
+      );
+      return production.output.amountFor(resource) -
+          _activeExportCount(view, playerId, resource) -
+          _strategicReserveFor(
+            view: view,
+            playerId: playerId,
+            resource: resource,
+          );
+    }
     final inventory = CityResourceInventoryRules.forPlayer(
       playerId: playerId,
       cities: cities,
@@ -232,20 +269,26 @@ final class BasicStrategyResourceTradePlanner {
       }
       final definition = view.ruleset.city.unitDefinitionFor(unitType);
       for (final requirement in definition.requirements) {
-        if (_requirementUsesResource(requirement, resource)) return 1;
+        final reserve = _requirementReserve(requirement, resource);
+        if (reserve > 0) return reserve;
       }
     }
     return 0;
   }
 
-  bool _requirementUsesResource(
+  int _requirementReserve(
     UnitProductionRequirement requirement,
     ResourceType resource,
   ) => switch (requirement) {
-    UnitResourceRequirement(:final resources) => resources.contains(resource),
-    UnitStockpileCostRequirement(:final options) => options.any(
-      (option) => option.amountFor(resource) > 0,
-    ),
+    UnitResourceRequirement(:final resources) =>
+      resources.contains(resource) ? 1 : 0,
+    UnitStockpileCostRequirement(:final options) =>
+      options.any((option) => option.amountFor(resource) > 0)
+          ? options
+                .map((option) => option.amountFor(resource))
+                .where((amount) => amount > 0)
+                .reduce((left, right) => left < right ? left : right)
+          : 0,
   };
 
   bool _hasActiveImport(GameView view, ResourceType resource) {
@@ -277,7 +320,7 @@ final class BasicStrategyResourceTradePlanner {
       if (agreement.exporterPlayerId == exporterPlayerId &&
           agreement.resource == resource &&
           agreement.isActive) {
-        count += 1;
+        count += agreement.amountPerTurn;
       }
     }
     return count;

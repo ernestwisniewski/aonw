@@ -7821,6 +7821,47 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get cityProductionResourceOptionTitle =>
+      'Elegir recursos estratégicos';
+
+  @override
+  String get cityProductionChangeTitle => '¿Cambiar la producción?';
+
+  @override
+  String get cityProductionChangeWarning =>
+      'El objetivo de producción actual será reemplazado. La producción invertida se conservará para ese objetivo.';
+
+  @override
+  String cityProductionChangeRelease(String resources) {
+    return 'Libera: $resources';
+  }
+
+  @override
+  String cityProductionChangeAllocate(String resources) {
+    return 'Asigna: $resources';
+  }
+
+  @override
+  String cityProductionChangeFreeAfter(String resources) {
+    return 'Libre tras el cambio: $resources';
+  }
+
+  @override
+  String get cityProductionChangeAction => 'Cambiar producción';
+
+  @override
+  String get cityProductionSpawnBlockedStatus => 'Listo — sin casilla libre';
+
+  @override
+  String get cityProductionSpawnBlockedDescription =>
+      'La producción ha terminado. Aleja una unidad de la ciudad para liberar una casilla de despliegue válida.';
+
+  @override
+  String cityProductionRushMissingGold(int amount) {
+    return 'Faltan $amount de oro';
+  }
+
+  @override
   String get cityBuildingSortRecommended => 'Recomendado';
 
   @override

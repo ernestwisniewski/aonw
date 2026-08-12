@@ -8,9 +8,11 @@ import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
+import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -103,12 +105,44 @@ void main() {
         expect(commands, isEmpty);
       },
     );
+
+    test('does not allocate the same strategic stockpile twice', () {
+      final scorer = _ScriptedProductionScorer({
+        'city_a': const UnitProductionTarget(GameUnitType.tank),
+        'city_b': const UnitProductionTarget(GameUnitType.tank),
+      });
+      final view = _view(
+        cities: [_city('city_a'), _city('city_b', col: 1)],
+        strategicResources: StrategicResourceStockpile(
+          onHand: StrategicResourceBundle.oilTwo,
+        ),
+        strategicResourceEconomy: StrategicResourceEconomyProfile.stockpileV1,
+      );
+
+      final commands = BasicStrategyProductionPlanner(
+        scorer: scorer,
+      ).plan(view, _context(view), _assessment, hasPlannedResearch: false);
+
+      expect(commands, const [
+        StartUnitProductionCommand('city_a', GameUnitType.tank),
+      ]);
+      expect(
+        scorer.strategicStockpiles.map(
+          (stockpile) => stockpile.amountFor(ResourceType.oil),
+        ),
+        [2, 0],
+      );
+    });
   });
 }
 
 GameView _view({
   required List<GameCity> cities,
   List<GameUnit> units = const [],
+  StrategicResourceStockpile strategicResources =
+      StrategicResourceStockpile.empty,
+  StrategicResourceEconomyProfile strategicResourceEconomy =
+      StrategicResourceEconomyProfile.legacyPresenceV0,
 }) {
   return GameView(
     forPlayerId: 'player_1',
@@ -117,6 +151,8 @@ GameView _view({
     ownCities: cities,
     ownResearch: PlayerResearchState.empty,
     ownImprovements: const [],
+    ownStrategicResources: strategicResources,
+    strategicResourceEconomy: strategicResourceEconomy,
     visibleEnemyUnits: const [],
     rememberedEnemyCities: const [],
     visibility: const FogVisibilityQuery(
@@ -157,6 +193,7 @@ final class _ScriptedProductionScorer extends AiProductionScorer {
   final Map<String, CityProductionTarget> targetsByCityId;
   final cityIds = <String>[];
   final planStates = <AiProductionPlanState>[];
+  final strategicStockpiles = <StrategicResourceStockpile>[];
 
   @override
   AiProductionRecommendation recommend({
@@ -165,9 +202,13 @@ final class _ScriptedProductionScorer extends AiProductionScorer {
     required AiContext context,
     required AiEmpireAssessment assessment,
     required AiProductionPlanState planState,
+    StrategicResourceStockpile? strategicStockpile,
   }) {
     cityIds.add(city.id);
     planStates.add(planState);
+    strategicStockpiles.add(
+      strategicStockpile ?? StrategicResourceStockpile.empty,
+    );
     final target = targetsByCityId[city.id];
     if (target == null) {
       throw StateError('Missing scripted production target for ${city.id}');

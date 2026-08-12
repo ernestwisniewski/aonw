@@ -139,6 +139,7 @@ in progress. Do not edit history to change a decision; add a superseding ADR.
 | [Per-System ETA](game-design/per-system-eta.md) | Turn ETA display behavior for research, production, and growth. |
 | [Resource Value Cards](game-design/resource-value-cards.md) | Resource presentation and valuation cards. |
 | [Scoring and Outcomes](game-design/scoring-and-outcomes.md) | Scoring, victory, and end-state behavior. |
+| [Strategic Resource Economy](game-design/strategic-resource-economy.md) | Strategic production, stockpiles, allocation, trade, UI, and AI behavior. |
 | [Turn Flow and Action Focus](game-design/turn-flow-and-action-focus.md) | Turn progression, action focus, and next-action behavior. |
 | [World Wonders](game-design/world-wonders.md) | Wonder production, race resolution, effects, UI, AI, and serialization. |
 | [Yield Unification](game-design/yield-unification.md) | Yield model consolidation across city, tile, and resource systems. |

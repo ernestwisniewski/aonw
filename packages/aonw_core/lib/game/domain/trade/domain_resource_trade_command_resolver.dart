@@ -36,6 +36,8 @@ final class DomainResourceTradeCommandResolver {
         command: command,
         actorPlayerId: actorPlayerId,
         mapTiles: mapTiles,
+        fieldImprovements: state.fieldImprovements,
+        strategicResourceEconomy: state.matchRules.strategicResourceEconomy,
       ),
     );
   }
@@ -56,6 +58,8 @@ final class DomainResourceTradeCommandResolver {
         command: command,
         actorPlayerId: actorPlayerId,
         mapTiles: mapTiles,
+        fieldImprovements: state.fieldImprovements,
+        strategicResourceEconomy: state.matchRules.strategicResourceEconomy,
       ),
     );
   }

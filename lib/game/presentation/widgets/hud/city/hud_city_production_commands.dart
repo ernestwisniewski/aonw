@@ -13,9 +13,14 @@ abstract final class HudCityProductionCommands {
 
   static DomainCommand startUnitProduction(
     String cityId,
-    GameUnitType unitType,
-  ) {
-    return StartUnitProductionCommand(cityId, unitType);
+    GameUnitType unitType, {
+    int? resourceOptionIndex,
+  }) {
+    return StartUnitProductionCommand(
+      cityId,
+      unitType,
+      resourceOptionIndex: resourceOptionIndex,
+    );
   }
 
   static DomainCommand startProject(

@@ -44,6 +44,7 @@ class ResourceBreakdownPopup extends StatelessWidget {
   final int? activeTechnologyCompletionTurn;
   final AppLocalizations l10n;
   final VoidCallback onClose;
+  final ValueChanged<GameCity>? onStrategicCityPressed;
   final double maxWidth;
   final double maxHeight;
   final bool showDragHandle;
@@ -63,6 +64,7 @@ class ResourceBreakdownPopup extends StatelessWidget {
     required this.activeTechnologyTurnsRemaining,
     required this.l10n,
     required this.onClose,
+    this.onStrategicCityPressed,
     this.maxWidth = 330,
     this.maxHeight = 380,
     this.showDragHandle = false,

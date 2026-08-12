@@ -9,6 +9,7 @@ import 'package:aonw_core/ai/mcts/mcts_evaluation_queries.dart';
 import 'package:aonw_core/ai/mcts/mcts_simulated_state.dart';
 import 'package:aonw_core/ai/mcts/mcts_stability_scores.dart';
 import 'package:aonw_core/ai/mcts/mcts_state_score_estimator.dart';
+import 'package:aonw_core/ai/mcts/mcts_strategic_resource_scores.dart';
 import 'package:aonw_core/ai/mcts/mcts_strategic_state_scorer.dart';
 import 'package:aonw_core/ai/strategic/war_goal.dart';
 import 'package:aonw_core/game/domain/command.dart';
@@ -44,13 +45,19 @@ class StateHeuristicEvaluator implements MctsEvaluator {
         : (0.08 + scoreRace.urgency * 0.17).clamp(0.0, 0.25).toDouble();
     const commandWeight = 0.22;
     const stabilityWeight = 0.12;
+    const strategicResourceWeight = 0.03;
     final strategicWeight =
-        1.0 - commandWeight - scoreRaceWeight - stabilityWeight;
+        1.0 -
+        commandWeight -
+        scoreRaceWeight -
+        stabilityWeight -
+        strategicResourceWeight;
     final score =
         strategicScore * strategicWeight +
         commandScore * commandWeight +
         _scoreRaceScore(state, scoreRace) * scoreRaceWeight +
-        MctsStabilityScores.stateScore(state, context) * stabilityWeight;
+        MctsStabilityScores.stateScore(state, context) * stabilityWeight +
+        MctsStrategicResourceScores.stateScore(state) * strategicResourceWeight;
     return score.clamp(-1.0, 1.0).toDouble();
   }
 

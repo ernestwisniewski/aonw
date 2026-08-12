@@ -186,7 +186,8 @@
           "culturalRequiredArtifacts": 6,
           "culturalHoldTurns": 5
         },
-        "balance": {}
+        "balance": {},
+        "strategicResourceEconomy": "legacyPresenceV0"
       },
       "players": [
         {
@@ -441,7 +442,8 @@
           "culturalRequiredArtifacts": 6,
           "culturalHoldTurns": 5
         },
-        "balance": {}
+        "balance": {},
+        "strategicResourceEconomy": "legacyPresenceV0"
       },
       "players": [
         {
