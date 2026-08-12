@@ -101,47 +101,16 @@ class _HudFeedbackOverlayState extends ConsumerState<HudFeedbackOverlay> {
   String _actionBlockedTitle(
     AppLocalizations l10n,
     HudFeedbackMessage message,
-  ) {
-    return switch (message.reason) {
-      HudFeedbackReason.attackProtectedByTreaty =>
-        l10n.hudFeedbackAttackProtectedByTreatyTitle,
-      HudFeedbackReason.movementCityOccupied =>
-        l10n.hudFeedbackMovementCityOccupiedTitle,
-      HudFeedbackReason.movementEnemyOccupied =>
-        l10n.hudFeedbackMovementEnemyOccupiedTitle,
-      HudFeedbackReason.movementForeignCity =>
-        l10n.hudFeedbackMovementForeignCityTitle,
-      HudFeedbackReason.movementHiddenRouteTooFar =>
-        l10n.hudFeedbackMovementHiddenRouteTooFarTitle,
-      HudFeedbackReason.movementBlockedTerrain =>
-        l10n.hudFeedbackMovementBlockedTerrainTitle,
-      HudFeedbackReason.movementInsufficientUnitMovement =>
-        l10n.hudFeedbackMovementInsufficientUnitMovementTitle,
-      HudFeedbackReason.movementNoRoute => l10n.hudFeedbackMovementNoRouteTitle,
-      null => l10n.hudFeedbackActionBlockedTitle,
-    };
-  }
+  ) => message.reason == HudFeedbackReason.productionStrategicResourceShortage
+      ? l10n.hudFeedbackProductionStrategicResourceShortageTitle
+      : _legacyActionBlockedTitle(l10n, message.reason);
 
-  String _actionBlockedBody(AppLocalizations l10n, HudFeedbackMessage message) {
-    return switch (message.reason) {
-      HudFeedbackReason.attackProtectedByTreaty =>
-        l10n.hudFeedbackAttackProtectedByTreatyBody,
-      HudFeedbackReason.movementCityOccupied =>
-        l10n.hudFeedbackMovementCityOccupiedBody,
-      HudFeedbackReason.movementEnemyOccupied =>
-        l10n.hudFeedbackMovementEnemyOccupiedBody,
-      HudFeedbackReason.movementForeignCity =>
-        l10n.hudFeedbackMovementForeignCityBody,
-      HudFeedbackReason.movementHiddenRouteTooFar =>
-        l10n.hudFeedbackMovementHiddenRouteTooFarBody,
-      HudFeedbackReason.movementBlockedTerrain =>
-        l10n.hudFeedbackMovementBlockedTerrainBody,
-      HudFeedbackReason.movementInsufficientUnitMovement =>
-        l10n.hudFeedbackMovementInsufficientUnitMovementBody,
-      HudFeedbackReason.movementNoRoute => l10n.hudFeedbackMovementNoRouteBody,
-      null => l10n.hudFeedbackActionBlockedBody,
-    };
-  }
+  String _actionBlockedBody(
+    AppLocalizations l10n,
+    HudFeedbackMessage message,
+  ) => message.reason == HudFeedbackReason.productionStrategicResourceShortage
+      ? l10n.hudFeedbackProductionStrategicResourceShortageBody
+      : _legacyActionBlockedBody(l10n, message.reason);
 
   void _scheduleDismissal(HudFeedbackMessage message) {
     if (_dismissingId != null) {
@@ -171,3 +140,47 @@ class _HudFeedbackOverlayState extends ConsumerState<HudFeedbackOverlay> {
     _dismissingId = null;
   }
 }
+
+String _legacyActionBlockedTitle(
+  AppLocalizations l10n,
+  HudFeedbackReason? reason,
+) => switch (reason) {
+  HudFeedbackReason.attackProtectedByTreaty =>
+    l10n.hudFeedbackAttackProtectedByTreatyTitle,
+  HudFeedbackReason.movementCityOccupied =>
+    l10n.hudFeedbackMovementCityOccupiedTitle,
+  HudFeedbackReason.movementEnemyOccupied =>
+    l10n.hudFeedbackMovementEnemyOccupiedTitle,
+  HudFeedbackReason.movementForeignCity =>
+    l10n.hudFeedbackMovementForeignCityTitle,
+  HudFeedbackReason.movementHiddenRouteTooFar =>
+    l10n.hudFeedbackMovementHiddenRouteTooFarTitle,
+  HudFeedbackReason.movementBlockedTerrain =>
+    l10n.hudFeedbackMovementBlockedTerrainTitle,
+  HudFeedbackReason.movementInsufficientUnitMovement =>
+    l10n.hudFeedbackMovementInsufficientUnitMovementTitle,
+  HudFeedbackReason.movementNoRoute => l10n.hudFeedbackMovementNoRouteTitle,
+  _ => l10n.hudFeedbackActionBlockedTitle,
+};
+
+String _legacyActionBlockedBody(
+  AppLocalizations l10n,
+  HudFeedbackReason? reason,
+) => switch (reason) {
+  HudFeedbackReason.attackProtectedByTreaty =>
+    l10n.hudFeedbackAttackProtectedByTreatyBody,
+  HudFeedbackReason.movementCityOccupied =>
+    l10n.hudFeedbackMovementCityOccupiedBody,
+  HudFeedbackReason.movementEnemyOccupied =>
+    l10n.hudFeedbackMovementEnemyOccupiedBody,
+  HudFeedbackReason.movementForeignCity =>
+    l10n.hudFeedbackMovementForeignCityBody,
+  HudFeedbackReason.movementHiddenRouteTooFar =>
+    l10n.hudFeedbackMovementHiddenRouteTooFarBody,
+  HudFeedbackReason.movementBlockedTerrain =>
+    l10n.hudFeedbackMovementBlockedTerrainBody,
+  HudFeedbackReason.movementInsufficientUnitMovement =>
+    l10n.hudFeedbackMovementInsufficientUnitMovementBody,
+  HudFeedbackReason.movementNoRoute => l10n.hudFeedbackMovementNoRouteBody,
+  _ => l10n.hudFeedbackActionBlockedBody,
+};

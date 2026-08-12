@@ -124,6 +124,9 @@ class HudOverlayPanels extends ConsumerWidget {
         artifacts: state.artifacts,
         fieldImprovements: state.fieldImprovements,
         resourceTradeAgreements: state.resourceTradeAgreements,
+        strategicResources: state.strategicResources,
+        strategicResourceEconomy:
+            state.domain.matchRules.strategicResourceEconomy,
         productionPerTurn: cityProductionPerTurn,
         currentTurn: gameSave.turn,
         paceBalance: gameSave.matchRules.paceBalance,

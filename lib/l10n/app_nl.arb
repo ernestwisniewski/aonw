@@ -2948,6 +2948,14 @@
       }
     }
   },
+  "topResourceStrategicResourcesTooltip": "Strategische grondstoffen: {availableTypes}/{totalTypes} beschikbaar • {shortageTypes} tekorten",
+  "@topResourceStrategicResourcesTooltip": {
+    "placeholders": {
+      "availableTypes": {"type": "int"},
+      "totalTypes": {"type": "int"},
+      "shortageTypes": {"type": "int"}
+    }
+  },
   "topResourceGoldTooltip": "Goud: {gold} • inkomen +{goldIncome} • onderhoud -{unitUpkeep} • netto {net} / beurt",
   "@topResourceGoldTooltip": {
     "placeholders": {
@@ -3017,6 +3025,14 @@
   "resourceBreakdownResourceTypes": "Resourcetypen",
   "resourceBreakdownTypesSection": "Soorten",
   "resourceBreakdownSourcesSection": "Bronnen",
+  "resourceBreakdownStrategicStockpiles": "Strategische voorraden",
+  "resourceBreakdownStored": "Voorraad",
+  "resourceBreakdownAllocated": "Toegewezen",
+  "resourceBreakdownDomesticProduction": "Binnenlandse productie",
+  "resourceBreakdownImports": "Invoer",
+  "resourceBreakdownExports": "Uitvoer",
+  "resourceBreakdownAllocations": "Productietoewijzingen",
+  "resourceBreakdownNoAllocations": "Er zijn geen strategische grondstoffen toegewezen.",
   "technologyRecommendationsTitle": "Aanbevolen onderzoek",
   "technologyShowTreeAction": "Boom laten zien",
   "technologyShowTreeCountAction": "Boom weergeven ({count})",
@@ -3572,6 +3588,8 @@
   "hudFeedbackArtifactGuidanceBody": "Lever het af in een van je steden en plaats het in een leeg artefactvak.",
   "hudFeedbackActionBlockedTitle": "Actie niet beschikbaar",
   "hudFeedbackActionBlockedBody": "Deze actie is momenteel geblokkeerd. Kies een andere tegel of een ander commando.",
+  "hudFeedbackProductionStrategicResourceShortageTitle": "Tekort aan strategische grondstoffen",
+  "hudFeedbackProductionStrategicResourceShortageBody": "De voorraad veranderde voordat de opdracht werd aanvaard. Controleer de beschikbare grondstoffen en kies de productie opnieuw.",
   "hudFeedbackAttackProtectedByTreatyTitle": "Verdrag blokkeert aanval",
   "hudFeedbackAttackProtectedByTreatyBody": "Je kunt geen eenheid aanvallen van een beschaving waarmee je een alliantie of wapenstilstand hebt. Verander eerst de diplomatieke relaties.",
   "hudFeedbackMovementCityOccupiedTitle": "Stad bezet",
@@ -4528,6 +4546,16 @@
       }
     }
   },
+  "cityProductionStrategicCost": "Kosten: {resources}",
+  "@cityProductionStrategicCost": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicAllocated": "Toegewezen: {resources}",
+  "@cityProductionStrategicAllocated": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicMissing": "Onvoldoende voorraad: {resources}",
+  "@cityProductionStrategicMissing": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicAvailable": "{available}/{required} {resource}",
+  "@cityProductionStrategicAvailable": {"placeholders": {"available": {"type": "int"}, "required": {"type": "int"}, "resource": {"type": "String"}}},
+  "cityProductionStrategicFree": "Beschikbaar: {resources}",
+  "@cityProductionStrategicFree": {"placeholders": {"resources": {"type": "String"}}},
   "cityBuildingSortRecommended": "Aanbevolen",
   "cityBuildingReplaceProgressWarning": "Als u een ander gebouw kiest, wordt {building} vervangen. De vooruitgang zal behouden blijven.",
   "@cityBuildingReplaceProgressWarning": {

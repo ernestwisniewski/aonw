@@ -1,5 +1,6 @@
 import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_service.dart';
+import 'package:aonw_core/game/domain/match_rules/strategic_resource_economy_profile.dart';
 import 'package:aonw_core/game/domain/objective/map_objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/ruleset/game_ruleset.dart';
@@ -44,6 +45,9 @@ abstract final class DomainTurnEconomyProcessor {
       countryForPlayer: (playerId) =>
           state.playerCountries[playerId] ?? PlayerCountry.poland,
       turn: state.turn,
+      strategicResourceStockpilesEnabled:
+          state.matchRules.strategicResourceEconomy ==
+          StrategicResourceEconomyProfile.stockpileV1,
     );
     _validateAdvancingPlayers(state, context.playerIds);
     final result = TurnEconomyOrchestrator.advanceForPlayers(
@@ -78,6 +82,7 @@ TurnEconomyState _toEconomyState(DomainState state) {
     playerGold: state.playerGold,
     playerWarWeariness: state.playerWarWeariness,
     playerStabilityNet: state.playerStabilityNet,
+    strategicResources: state.strategicResources,
     units: state.units,
     cities: state.cities,
     artifacts: state.artifacts,
@@ -94,23 +99,27 @@ TurnEconomyState _toEconomyState(DomainState state) {
 }
 
 DomainState _toDomainState(DomainState source, TurnEconomyState economy) {
-  return source.copyWith(
-    playerGold: economy.playerGold,
-    playerWarWeariness: economy.playerWarWeariness,
-    playerStabilityNet: economy.playerStabilityNet,
-    units: economy.units,
-    cities: economy.cities,
-    artifacts: economy.artifacts,
-    fieldImprovements: economy.fieldImprovements,
-    transportNetwork: economy.transportNetwork,
-    fogOfWar: economy.fogOfWar,
-    research: economy.research,
-    wonderRegistry: economy.wonderRegistry,
-    diplomacy: economy.diplomacy,
-    resourceTradeAgreements: economy.resourceTradeAgreements,
-    mapObjectiveHoldStatesByObjectiveId:
-        economy.mapObjectiveHoldStatesByObjectiveId,
-  );
+  return source
+      .withStrategicProductionState(
+        strategicResources: economy.strategicResources,
+        cities: economy.cities,
+      )
+      .copyWith(
+        playerGold: economy.playerGold,
+        playerWarWeariness: economy.playerWarWeariness,
+        playerStabilityNet: economy.playerStabilityNet,
+        units: economy.units,
+        artifacts: economy.artifacts,
+        fieldImprovements: economy.fieldImprovements,
+        transportNetwork: economy.transportNetwork,
+        fogOfWar: economy.fogOfWar,
+        research: economy.research,
+        wonderRegistry: economy.wonderRegistry,
+        diplomacy: economy.diplomacy,
+        resourceTradeAgreements: economy.resourceTradeAgreements,
+        mapObjectiveHoldStatesByObjectiveId:
+            economy.mapObjectiveHoldStatesByObjectiveId,
+      );
 }
 
 Set<String> _baseKnownPlayerIds(DomainState state) {

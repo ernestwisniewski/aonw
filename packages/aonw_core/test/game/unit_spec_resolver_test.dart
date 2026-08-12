@@ -130,6 +130,15 @@ void _expectRequirements(
         UnitResourceRequirement(resources: final expectedResources),
       ):
         expect(actualResources, expectedResources, reason: reason);
+      case (
+        UnitStockpileCostRequirement(options: final actualOptions),
+        UnitStockpileCostRequirement(options: final expectedOptions),
+      ):
+        expect(actualOptions, expectedOptions, reason: reason);
+      default:
+        fail(
+          'Requirement kinds differ at index $i: ${actual[i]} vs ${expected[i]}',
+        );
     }
   }
 }

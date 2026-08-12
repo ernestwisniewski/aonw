@@ -121,13 +121,14 @@ DomainState _domainAlignedWithSave(DomainState state, GameSave save) {
       mapEquals(state.turnStatesByPlayerId, save.playerStates)) {
     return state;
   }
-  return state.copyWith(
-    turn: save.turn,
-    matchRules: save.matchRules,
-    participants: save.players,
-    gameMode: save.gameMode,
-    turnStatesByPlayerId: save.playerStates,
-  );
+  return state
+      .withMatchRules(save.matchRules)
+      .copyWith(
+        turn: save.turn,
+        participants: save.players,
+        gameMode: save.gameMode,
+        turnStatesByPlayerId: save.playerStates,
+      );
 }
 
 /// Client-side operations on the one canonical persistence envelope.
@@ -159,13 +160,14 @@ extension CanonicalGameSnapshotApplication on CanonicalGameSnapshot {
     GameClientState state, {
     int? eventLogOffset,
   }) => copyWith(
-    domain: state.domain.copyWith(
-      turn: domain.turn,
-      matchRules: domain.matchRules,
-      participants: domain.participants,
-      gameMode: domain.gameMode,
-      turnStatesByPlayerId: domain.turnStatesByPlayerId,
-    ),
+    domain: state.domain
+        .withMatchRules(domain.matchRules)
+        .copyWith(
+          turn: domain.turn,
+          participants: domain.participants,
+          gameMode: domain.gameMode,
+          turnStatesByPlayerId: domain.turnStatesByPlayerId,
+        ),
     eventLogOffset: eventLogOffset,
   );
 
@@ -255,13 +257,14 @@ CanonicalGameSnapshot _withGameSave(
   GameSave save,
 ) {
   return snapshot.copyWith(
-    domain: snapshot.domain.copyWith(
-      turn: save.turn,
-      matchRules: save.matchRules,
-      participants: save.players,
-      gameMode: save.gameMode,
-      turnStatesByPlayerId: save.playerStates,
-    ),
+    domain: snapshot.domain
+        .withMatchRules(save.matchRules)
+        .copyWith(
+          turn: save.turn,
+          participants: save.players,
+          gameMode: save.gameMode,
+          turnStatesByPlayerId: save.playerStates,
+        ),
     metadata: _metadataFromSave(save),
   );
 }

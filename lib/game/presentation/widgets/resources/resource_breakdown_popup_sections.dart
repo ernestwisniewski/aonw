@@ -199,9 +199,8 @@ String _scienceSourceLabel({
 
 List<_BreakdownSectionModel> _resourceSections(ResourceBreakdownPopup popup) {
   final cityById = {for (final city in popup.cities) city.id: city};
-  final resources = popup.resources;
   final network = popup.resourceNetwork;
-  final resourceRows = resources.countsByType.isEmpty
+  final resourceRows = popup.resources.countsByType.isEmpty
       ? [
           _BreakdownRowModel(
             label: popup.l10n.resourceBreakdownNoControlledResources,
@@ -209,7 +208,7 @@ List<_BreakdownSectionModel> _resourceSections(ResourceBreakdownPopup popup) {
           ),
         ]
       : [
-          for (final entry in resources.countsByType.entries)
+          for (final entry in popup.resources.countsByType.entries)
             _BreakdownRowModel(
               label: GameDisplayNames.resource(popup.l10n, entry.key),
               value: 'x${entry.value}',
@@ -224,7 +223,7 @@ List<_BreakdownSectionModel> _resourceSections(ResourceBreakdownPopup popup) {
       ),
     );
   }
-  final sourceRows = resources.sources.isEmpty
+  final sourceRows = popup.resources.sources.isEmpty
       ? [
           _BreakdownRowModel(
             label: popup.l10n.resourceBreakdownGrowCitiesWithFood,
@@ -232,7 +231,7 @@ List<_BreakdownSectionModel> _resourceSections(ResourceBreakdownPopup popup) {
           ),
         ]
       : [
-          for (final source in resources.sources)
+          for (final source in popup.resources.sources)
             _BreakdownRowModel(
               label: _resourceSourceLabel(source, cityById, popup),
               value: GameDisplayNames.resource(popup.l10n, source.resource),
@@ -258,18 +257,19 @@ List<_BreakdownSectionModel> _resourceSections(ResourceBreakdownPopup popup) {
   ];
 
   return [
+    ..._strategicResourceSections(popup),
     _BreakdownSectionModel(
       title: popup.l10n.commonSummary,
       rows: [
         _BreakdownRowModel(
           label: popup.l10n.resourceBreakdownControlledDeposits,
-          value: '${resources.totalCount}',
-          positive: resources.totalCount > 0,
+          value: '${popup.resources.totalCount}',
+          positive: popup.resources.totalCount > 0,
         ),
         _BreakdownRowModel(
           label: popup.l10n.resourceBreakdownResourceTypes,
-          value: '${resources.distinctTypeCount}',
-          positive: resources.distinctTypeCount > 0,
+          value: '${popup.resources.distinctTypeCount}',
+          positive: popup.resources.distinctTypeCount > 0,
         ),
       ],
     ),
@@ -284,6 +284,129 @@ List<_BreakdownSectionModel> _resourceSections(ResourceBreakdownPopup popup) {
     if (gateRows.isNotEmpty)
       _BreakdownSectionModel(title: popup.l10n.unitsSection, rows: gateRows),
   ];
+}
+
+List<_BreakdownSectionModel> _strategicResourceSections(
+  ResourceBreakdownPopup popup,
+) {
+  final strategic = popup.strategicResources;
+  if (!strategic.enabled) return const [];
+  return [
+    _strategicStockpileSection(popup),
+    _strategicFlowSection(popup),
+    _strategicAllocationSection(popup),
+  ];
+}
+
+_BreakdownSectionModel _strategicStockpileSection(
+  ResourceBreakdownPopup popup,
+) => _BreakdownSectionModel(
+  title: popup.l10n.resourceBreakdownStrategicStockpiles,
+  rows: [
+    for (final row in popup.strategicResources.rows) ...[
+      _BreakdownRowModel(
+        label:
+            '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownStored}',
+        value: '${row.storedTotal}',
+        negative: row.shortage,
+      ),
+      _BreakdownRowModel(
+        label:
+            '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.commonAvailable}',
+        value: '${row.available}',
+        positive: row.available > 0,
+        negative: row.shortage,
+      ),
+      _BreakdownRowModel(
+        label:
+            '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownAllocated}',
+        value: '${row.allocated}',
+      ),
+    ],
+  ],
+);
+
+_BreakdownSectionModel _strategicFlowSection(
+  ResourceBreakdownPopup popup,
+) => _BreakdownSectionModel(
+  title: popup.l10n.resourceBreakdownNetPerTurn,
+  rows: [
+    for (final row in popup.strategicResources.rows) ...[
+      _BreakdownRowModel(
+        label:
+            '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownDomesticProduction}',
+        value: _signed(row.domesticProduction),
+        positive: row.domesticProduction > 0,
+      ),
+      _BreakdownRowModel(
+        label:
+            '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownImports}',
+        value: _signed(row.imports),
+        positive: row.imports > 0,
+      ),
+      _BreakdownRowModel(
+        label:
+            '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownExports}',
+        value: row.exports == 0 ? '0' : '-${row.exports}',
+        negative: row.exports > 0,
+      ),
+      _BreakdownRowModel(
+        label:
+            '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownNetPerTurn}',
+        value: _signed(row.netPerTurn),
+        positive: row.netPerTurn > 0,
+        negative: row.netPerTurn < 0,
+      ),
+    ],
+  ],
+);
+
+_BreakdownSectionModel _strategicAllocationSection(
+  ResourceBreakdownPopup popup,
+) => _BreakdownSectionModel(
+  title: popup.l10n.resourceBreakdownAllocations,
+  rows: popup.strategicResources.allocations.isEmpty
+      ? [
+          _BreakdownRowModel(
+            label: popup.l10n.resourceBreakdownNoAllocations,
+            value: '',
+          ),
+        ]
+      : [
+          for (final allocation in popup.strategicResources.allocations)
+            _BreakdownRowModel(
+              label: _strategicAllocationLabel(allocation, popup),
+              value: _strategicBundleLabel(allocation.bundle, popup),
+            ),
+        ],
+);
+
+String _strategicAllocationLabel(
+  HudStrategicResourceAllocation allocation,
+  ResourceBreakdownPopup popup,
+) {
+  final target = allocation.city.productionQueue?.target;
+  final targetLabel = switch (target) {
+    UnitProductionTarget(:final unitType) => GameDisplayNames.unitType(
+      popup.l10n,
+      unitType,
+    ),
+    _ => '',
+  };
+  final cityLabel = GameDisplayNames.city(popup.l10n, allocation.city);
+  return targetLabel.isEmpty ? cityLabel : '$targetLabel · $cityLabel';
+}
+
+String _strategicBundleLabel(
+  StrategicResourceBundle bundle,
+  ResourceBreakdownPopup popup,
+) {
+  return bundle.amounts.entries
+      .map(
+        (entry) =>
+            '${entry.value} ${GameDisplayNames.resource(popup.l10n, entry.key)}',
+      )
+      .join(' · ');
 }
 
 String _resourceGateValue(

@@ -1,3 +1,4 @@
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 import 'package:aonw_core/game/domain/unit/unit_production_definition.dart';
 import 'package:aonw_core/game/domain/unit/unit_production_requirement.dart';
@@ -74,7 +75,7 @@ abstract final class UnitProductionCatalog {
       type: GameUnitType.tank,
       productionCost: 84,
       requirements: [
-        UnitResourceRequirement({ResourceType.oil}),
+        UnitStockpileCostRequirement([StrategicResourceBundle.oilTwo]),
       ],
     ),
     GameUnitType.scoutShip: UnitProductionDefinition(
@@ -92,7 +93,10 @@ abstract final class UnitProductionCatalog {
       type: GameUnitType.reconPlane,
       productionCost: 62,
       requirements: [
-        UnitResourceRequirement({ResourceType.aluminium, ResourceType.oil}),
+        UnitStockpileCostRequirement([
+          StrategicResourceBundle.aluminiumOne,
+          StrategicResourceBundle.oilOne,
+        ]),
       ],
     ),
   };

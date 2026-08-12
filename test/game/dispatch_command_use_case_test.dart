@@ -8,6 +8,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/save.dart';
+import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -31,9 +32,32 @@ void main() {
       expect(result.state.activePlayerId, 'player_1');
       expect(result.uiEffects.single, isA<JumpCameraEffect>());
       expect(result.events.single, isA<TurnEndedEvent>());
+      expect(result.accepted, isTrue);
       expect(transport.saveId, 'save_1');
       expect(transport.command, isA<EndTurnCommand>());
       expect(transport.context.actorPlayerId, 'player_1');
+    });
+
+    test('preserves typed command rejection metadata', () async {
+      final useCase = DispatchCommandUseCase(
+        commandTransport: _FakeCommandTransport(
+          state: GameClientState(),
+          accepted: false,
+          rejectionReason: 'unit_production_missing_strategic_resource',
+        ),
+      );
+
+      final result = await useCase.execute(
+        saveId: 'save_1',
+        currentState: GameClientState(),
+        command: const StartUnitProductionCommand('city_1', GameUnitType.tank),
+      );
+
+      expect(result.accepted, isFalse);
+      expect(
+        result.rejectionReason,
+        'unit_production_missing_strategic_resource',
+      );
     });
   });
 }
@@ -42,6 +66,8 @@ class _FakeCommandTransport implements CommandTransport {
   final GameClientState state;
   final List<UiEffect> uiEffects;
   final List<GameEvent> events;
+  final bool accepted;
+  final String? rejectionReason;
 
   late String saveId;
   late DomainCommand command;
@@ -51,6 +77,8 @@ class _FakeCommandTransport implements CommandTransport {
     required this.state,
     this.uiEffects = const [],
     this.events = const [],
+    this.accepted = true,
+    this.rejectionReason,
   });
 
   @override
@@ -71,6 +99,8 @@ class _FakeCommandTransport implements CommandTransport {
       events: events,
       snapshot: GameSnapshotFactory.create(save: _save()),
       offset: 1,
+      accepted: accepted,
+      rejectionReason: rejectionReason,
     );
   }
 }

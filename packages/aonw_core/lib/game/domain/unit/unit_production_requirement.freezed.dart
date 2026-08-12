@@ -15,22 +15,22 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UnitProductionRequirement {
 
- Set<ResourceType> get resources;
+
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UnitProductionRequirement&&const DeepCollectionEquality().equals(other.resources, resources));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UnitProductionRequirement);
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(resources));
+int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'UnitProductionRequirement(resources: $resources)';
+  return 'UnitProductionRequirement()';
 }
 
 
@@ -53,11 +53,12 @@ extension UnitProductionRequirementPatterns on UnitProductionRequirement {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( UnitResourceRequirement value)?  resource,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( UnitResourceRequirement value)?  resource,TResult Function( UnitStockpileCostRequirement value)?  stockpileCost,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case UnitResourceRequirement() when resource != null:
-return resource(_that);case _:
+return resource(_that);case UnitStockpileCostRequirement() when stockpileCost != null:
+return stockpileCost(_that);case _:
   return orElse();
 
 }
@@ -75,11 +76,12 @@ return resource(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( UnitResourceRequirement value)  resource,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( UnitResourceRequirement value)  resource,required TResult Function( UnitStockpileCostRequirement value)  stockpileCost,}){
 final _that = this;
 switch (_that) {
 case UnitResourceRequirement():
-return resource(_that);}
+return resource(_that);case UnitStockpileCostRequirement():
+return stockpileCost(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -93,11 +95,12 @@ return resource(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( UnitResourceRequirement value)?  resource,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( UnitResourceRequirement value)?  resource,TResult? Function( UnitStockpileCostRequirement value)?  stockpileCost,}){
 final _that = this;
 switch (_that) {
 case UnitResourceRequirement() when resource != null:
-return resource(_that);case _:
+return resource(_that);case UnitStockpileCostRequirement() when stockpileCost != null:
+return stockpileCost(_that);case _:
   return null;
 
 }
@@ -114,10 +117,11 @@ return resource(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( Set<ResourceType> resources)?  resource,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( Set<ResourceType> resources)?  resource,TResult Function( List<StrategicResourceBundle> options)?  stockpileCost,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case UnitResourceRequirement() when resource != null:
-return resource(_that.resources);case _:
+return resource(_that.resources);case UnitStockpileCostRequirement() when stockpileCost != null:
+return stockpileCost(_that.options);case _:
   return orElse();
 
 }
@@ -135,10 +139,11 @@ return resource(_that.resources);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( Set<ResourceType> resources)  resource,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( Set<ResourceType> resources)  resource,required TResult Function( List<StrategicResourceBundle> options)  stockpileCost,}) {final _that = this;
 switch (_that) {
 case UnitResourceRequirement():
-return resource(_that.resources);}
+return resource(_that.resources);case UnitStockpileCostRequirement():
+return stockpileCost(_that.options);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -152,10 +157,11 @@ return resource(_that.resources);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( Set<ResourceType> resources)?  resource,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( Set<ResourceType> resources)?  resource,TResult? Function( List<StrategicResourceBundle> options)?  stockpileCost,}) {final _that = this;
 switch (_that) {
 case UnitResourceRequirement() when resource != null:
-return resource(_that.resources);case _:
+return resource(_that.resources);case UnitStockpileCostRequirement() when stockpileCost != null:
+return stockpileCost(_that.options);case _:
   return null;
 
 }
@@ -171,7 +177,7 @@ class UnitResourceRequirement extends UnitProductionRequirement {
   
 
  final  Set<ResourceType> _resources;
-@override Set<ResourceType> get resources {
+ Set<ResourceType> get resources {
   if (_resources is EqualUnmodifiableSetView) return _resources;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableSetView(_resources);
@@ -193,6 +199,44 @@ int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(
 @override
 String toString() {
   return 'UnitProductionRequirement.resource(resources: $resources)';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class UnitStockpileCostRequirement extends UnitProductionRequirement {
+  const UnitStockpileCostRequirement( List<StrategicResourceBundle> options): _options = options,super._();
+  
+
+ final  List<StrategicResourceBundle> _options;
+ List<StrategicResourceBundle> get options {
+  if (_options is EqualUnmodifiableListView) return _options;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_options);
+}
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UnitStockpileCostRequirement&&const DeepCollectionEquality().equals(other._options, _options));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_options));
+
+@override
+String toString() {
+  return 'UnitProductionRequirement.stockpileCost(options: $options)';
 }
 
 

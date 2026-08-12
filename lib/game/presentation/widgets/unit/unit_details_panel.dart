@@ -30,6 +30,7 @@ class UnitDetailsPanel extends StatelessWidget {
   final double maxWidth;
   final double? maxHeight;
   final VoidCallback onClose;
+  final List<String> additionalRequirementLines;
 
   const UnitDetailsPanel({
     required this.unitType,
@@ -44,6 +45,7 @@ class UnitDetailsPanel extends StatelessWidget {
     this.maxWidth = 560,
     this.maxHeight,
     required this.onClose,
+    this.additionalRequirementLines = const [],
     super.key,
   });
 
@@ -162,12 +164,15 @@ class UnitDetailsPanel extends StatelessWidget {
 
   List<String> _requirementLines(AppLocalizations l10n) {
     if (unlockingTechnology == null) {
-      return [l10n.buildingDetailsNoRequirements];
+      return additionalRequirementLines.isEmpty
+          ? [l10n.buildingDetailsNoRequirements]
+          : additionalRequirementLines;
     }
     return [
       l10n.unitDetailsRequirementTechnology(
         GameDisplayNames.technology(l10n, unlockingTechnology!.id),
       ),
+      ...additionalRequirementLines,
     ];
   }
 }

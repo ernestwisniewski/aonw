@@ -5182,6 +5182,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String topResourceStrategicResourcesTooltip(
+    int availableTypes,
+    int totalTypes,
+    int shortageTypes,
+  ) {
+    return 'Strategic resources: $availableTypes/$totalTypes available • $shortageTypes shortages';
+  }
+
+  @override
   String topResourceGoldTooltip(
     int gold,
     int goldIncome,
@@ -5271,6 +5280,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resourceBreakdownSourcesSection => 'Sources';
+
+  @override
+  String get resourceBreakdownStrategicStockpiles => 'Strategic stockpiles';
+
+  @override
+  String get resourceBreakdownStored => 'Stored';
+
+  @override
+  String get resourceBreakdownAllocated => 'Allocated';
+
+  @override
+  String get resourceBreakdownDomesticProduction => 'Domestic production';
+
+  @override
+  String get resourceBreakdownImports => 'Imports';
+
+  @override
+  String get resourceBreakdownExports => 'Exports';
+
+  @override
+  String get resourceBreakdownAllocations => 'Production allocations';
+
+  @override
+  String get resourceBreakdownNoAllocations =>
+      'No strategic resources are allocated.';
 
   @override
   String get technologyRecommendationsTitle => 'Recommended research';
@@ -6475,6 +6509,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get hudFeedbackActionBlockedBody =>
       'This action is blocked right now. Choose another tile or another command.';
+
+  @override
+  String get hudFeedbackProductionStrategicResourceShortageTitle =>
+      'Strategic resource shortage';
+
+  @override
+  String get hudFeedbackProductionStrategicResourceShortageBody =>
+      'The stockpile changed before the order was accepted. Review the available resources and choose production again.';
 
   @override
   String get hudFeedbackAttackProtectedByTreatyTitle => 'Treaty blocks attack';
@@ -7693,6 +7735,35 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String cityProductionPaceShort(int production) {
     return '$production prod./turn';
+  }
+
+  @override
+  String cityProductionStrategicCost(String resources) {
+    return 'Cost: $resources';
+  }
+
+  @override
+  String cityProductionStrategicAllocated(String resources) {
+    return 'Allocated: $resources';
+  }
+
+  @override
+  String cityProductionStrategicMissing(String resources) {
+    return 'Insufficient stock: $resources';
+  }
+
+  @override
+  String cityProductionStrategicAvailable(
+    int available,
+    int required,
+    String resource,
+  ) {
+    return '$available/$required $resource';
+  }
+
+  @override
+  String cityProductionStrategicFree(String resources) {
+    return 'Available: $resources';
   }
 
   @override

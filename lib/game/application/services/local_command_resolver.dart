@@ -27,6 +27,8 @@ class LocalCommandResolution {
   final List<CombatAnimationFact> combatAnimations;
   final List<MovementCommandExecution> movementExecutions;
   final GameCommandContext context;
+  final bool accepted;
+  final String? rejectionReason;
 
   const LocalCommandResolution({
     required this.snapshot,
@@ -36,6 +38,8 @@ class LocalCommandResolution {
     required this.context,
     this.combatAnimations = const [],
     this.movementExecutions = const [],
+    this.accepted = true,
+    this.rejectionReason,
   });
 }
 
@@ -373,6 +377,8 @@ extension _LocalCommandResolverImplementation on LocalCommandResolver {
       events: resolution.events,
       uiEffects: const [],
       context: context,
+      accepted: resolution.accepted,
+      rejectionReason: resolution.rejectionReason,
     );
   }
 

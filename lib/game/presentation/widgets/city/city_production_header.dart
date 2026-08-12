@@ -16,6 +16,7 @@ class CityProductionHeader extends StatelessWidget {
     required this.closeTooltip,
     required this.onClose,
     this.compact = false,
+    this.strategicResourceSummaryLabel,
     super.key,
   });
 
@@ -26,6 +27,7 @@ class CityProductionHeader extends StatelessWidget {
   final String closeTooltip;
   final VoidCallback onClose;
   final bool compact;
+  final String? strategicResourceSummaryLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +35,7 @@ class CityProductionHeader extends StatelessWidget {
     final iconSize = compact ? 32.0 : 38.0;
 
     return Container(
-      padding: compact
-          ? const EdgeInsets.fromLTRB(12, 10, 8, 9)
-          : const EdgeInsets.fromLTRB(16, 14, 10, 12),
+      padding: _padding,
       decoration: SurfaceElevation.raised.bandDecoration(
         gradient: LinearGradient(
           colors: [
@@ -96,6 +96,7 @@ class CityProductionHeader extends StatelessWidget {
                     color: GameUiTheme.textMuted,
                   ),
                 ),
+                ..._strategicResourceSummary(),
               ],
             ),
           ),
@@ -112,6 +113,27 @@ class CityProductionHeader extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  EdgeInsets get _padding => compact
+      ? const EdgeInsets.fromLTRB(12, 10, 8, 9)
+      : const EdgeInsets.fromLTRB(16, 14, 10, 12);
+
+  List<Widget> _strategicResourceSummary() {
+    final label = strategicResourceSummaryLabel;
+    if (label == null) return const [];
+    return [
+      SizedBox(height: compact ? 2 : 3),
+      Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: GameUiTheme.bodySmall.copyWith(
+          color: GameUiTheme.goldLight,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ];
   }
 }
 

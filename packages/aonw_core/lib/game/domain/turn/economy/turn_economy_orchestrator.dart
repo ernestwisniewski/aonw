@@ -23,6 +23,8 @@ abstract final class TurnEconomyOrchestrator {
     final traded = TurnResourceTradeEconomyAdvancer.advance(
       state: objectives.state,
       playerIds: context.playerIds,
+      strategicResourceStockpilesEnabled:
+          context.strategicResourceStockpilesEnabled,
     );
     final economyEvents = [...players.events, ...objectives.events];
     final stability = TurnStabilityEconomyAdvancer.advance(

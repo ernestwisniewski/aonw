@@ -1,14 +1,20 @@
 import 'package:aonw_core/game/domain/city/city_production_command_resolver.dart';
+import 'package:aonw_core/game/domain/city/city_production_queue.dart';
 import 'package:aonw_core/game/domain/city/city_ruleset.dart';
 import 'package:aonw_core/game/domain/city/city_rulesets.dart';
+import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/city/rush_production_command_resolver.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
+import 'package:aonw_core/game/domain/match_rules/strategic_resource_economy_profile.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/stability/stability_ruleset.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
 import 'package:aonw_core/game/domain/technology/technology_rulesets.dart';
+import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
+import 'package:aonw_core/game/domain/unit/unit_production_requirement.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 
@@ -49,7 +55,7 @@ final class DomainCityProductionResolver {
       technologyRuleset: technologyRuleset,
       paceBalance: paceBalance,
     );
-    return _fromCommandResult(state, result);
+    return _fromTargetCommandResult(state, result, cityId: command.cityId);
   }
 
   DomainCityProductionResult startUnitProduction({
@@ -61,6 +67,19 @@ final class DomainCityProductionResolver {
     TechnologyRuleset technologyRuleset = TechnologyRulesets.standard,
     PaceBalance paceBalance = PaceBalance.unlimited,
   }) {
+    final transition = _unitResourceTransition(
+      state: state,
+      cityId: command.cityId,
+      unitType: command.unitType,
+      cityRuleset: cityRuleset,
+    );
+    if (!transition.available) {
+      return DomainCityProductionResult(
+        accepted: false,
+        state: state,
+        reason: 'unit_production_missing_strategic_resource',
+      );
+    }
     final result = CityProductionCommandResolver.startUnitProduction(
       cities: state.cities,
       units: state.units,
@@ -74,8 +93,17 @@ final class DomainCityProductionResolver {
       cityRuleset: cityRuleset,
       technologyRuleset: technologyRuleset,
       paceBalance: paceBalance,
+      stockpileRequirementsUsePresence:
+          state.matchRules.strategicResourceEconomy ==
+          StrategicResourceEconomyProfile.legacyPresenceV0,
     );
-    return _fromCommandResult(state, result);
+    return _fromTargetCommandResult(
+      state,
+      result,
+      cityId: command.cityId,
+      strategicResources: transition.accountsAfterDebit,
+      allocation: transition.allocation,
+    );
   }
 
   DomainCityProductionResult startCityProject({
@@ -92,7 +120,7 @@ final class DomainCityProductionResolver {
       cityRuleset: cityRuleset,
       paceBalance: paceBalance,
     );
-    return _fromCommandResult(state, result);
+    return _fromTargetCommandResult(state, result, cityId: command.cityId);
   }
 
   DomainCityProductionResult startWonder({
@@ -113,7 +141,7 @@ final class DomainCityProductionResolver {
       wonderRuleset: wonderRuleset,
       paceBalance: paceBalance,
     );
-    return _fromCommandResult(state, result);
+    return _fromTargetCommandResult(state, result, cityId: command.cityId);
   }
 
   DomainCityProductionResult setCitySpecialization({
@@ -181,6 +209,47 @@ final class DomainCityProductionResolver {
     );
   }
 
+  DomainCityProductionResult _fromTargetCommandResult(
+    DomainState state,
+    CityProductionCommandResult result, {
+    required String cityId,
+    StrategicResourceAccounts? strategicResources,
+    StrategicResourceBundle allocation = StrategicResourceBundle.empty,
+  }) {
+    if (!result.accepted) return _fromCommandResult(state, result);
+    if (identical(result.cities, state.cities)) {
+      return DomainCityProductionResult(accepted: true, state: state);
+    }
+    final stockpilesEnabled =
+        state.matchRules.strategicResourceEconomy ==
+        StrategicResourceEconomyProfile.stockpileV1;
+    final accounts =
+        strategicResources ??
+        (stockpilesEnabled
+            ? _accountsAfterRefund(state, cityId)
+            : state.strategicResources);
+    final cities = [
+      for (final city in result.cities)
+        if (city.id == cityId && city.productionQueue != null)
+          city.copyWith(
+            productionQueue: CityProductionQueue.target(
+              target: city.productionQueue!.target,
+              investedProduction: city.productionQueue!.investedProduction,
+              resourceAllocation: allocation,
+            ),
+          )
+        else
+          city,
+    ];
+    return DomainCityProductionResult(
+      accepted: true,
+      state: state.withStrategicProductionState(
+        cities: List.unmodifiable(cities),
+        strategicResources: accounts,
+      ),
+    );
+  }
+
   DomainCityProductionResult _fromRushResult(
     DomainState state,
     RushProductionCommandResult result,
@@ -210,4 +279,85 @@ final class DomainCityProductionResolver {
       events: result.events,
     );
   }
+}
+
+typedef _UnitResourceTransition = ({
+  bool available,
+  StrategicResourceBundle allocation,
+  StrategicResourceAccounts accountsAfterDebit,
+});
+
+_UnitResourceTransition _unitResourceTransition({
+  required DomainState state,
+  required String cityId,
+  required GameUnitType unitType,
+  required CityRuleset cityRuleset,
+}) {
+  if (state.matchRules.strategicResourceEconomy !=
+      StrategicResourceEconomyProfile.stockpileV1) {
+    return (
+      available: true,
+      allocation: StrategicResourceBundle.empty,
+      accountsAfterDebit: state.strategicResources,
+    );
+  }
+  final city = state.cities
+      .where((candidate) => candidate.id == cityId)
+      .firstOrNull;
+  if (city == null) {
+    return (
+      available: true,
+      allocation: StrategicResourceBundle.empty,
+      accountsAfterDebit: state.strategicResources,
+    );
+  }
+  var accounts = _accountsAfterRefund(state, cityId);
+  var allocation = StrategicResourceBundle.empty;
+  for (final requirement
+      in cityRuleset.unitDefinitionFor(unitType).requirements) {
+    if (requirement case UnitStockpileCostRequirement(:final options)) {
+      final selected = _selectAffordableOption(
+        options,
+        accounts.forPlayer(city.ownerPlayerId),
+      );
+      if (selected == null) {
+        return (
+          available: false,
+          allocation: StrategicResourceBundle.empty,
+          accountsAfterDebit: state.strategicResources,
+        );
+      }
+      allocation = allocation.plus(selected);
+      accounts = accounts.debit(city.ownerPlayerId, selected);
+    }
+  }
+  return (
+    available: true,
+    allocation: allocation,
+    accountsAfterDebit: accounts,
+  );
+}
+
+StrategicResourceBundle? _selectAffordableOption(
+  Iterable<StrategicResourceBundle> options,
+  StrategicResourceStockpile stockpile,
+) {
+  for (final option in options) {
+    if (stockpile.covers(option)) return option;
+  }
+  return null;
+}
+
+StrategicResourceAccounts _accountsAfterRefund(
+  DomainState state,
+  String cityId,
+) {
+  final city = state.cities
+      .where((candidate) => candidate.id == cityId)
+      .firstOrNull;
+  final allocation = city?.productionQueue?.resourceAllocation;
+  if (city == null || allocation == null || allocation.isEmpty) {
+    return state.strategicResources;
+  }
+  return state.strategicResources.credit(city.ownerPlayerId, allocation);
 }

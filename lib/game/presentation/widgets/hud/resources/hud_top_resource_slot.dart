@@ -82,6 +82,7 @@ class HudTopResourceSlot extends ConsumerWidget {
         stabilityDetails: resourceSummary.stabilityDetails,
         resourceInventory: resourceSummary.resourceInventory,
         resourceNetwork: resourceSummary.resourceNetwork,
+        strategicResources: resourceSummary.strategicResources,
         openBreakdown: openBreakdown,
         resourceBreakdowns: resourceSummary.resourceBreakdowns,
         cities: gameState?.cities ?? const [],

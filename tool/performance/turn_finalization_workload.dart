@@ -83,13 +83,14 @@ void _validateInputs(List<int> entityCounts, int timingSamples) {
 _BoundaryResult _executeBoundaryRoundTrip(_TurnFinalizationFixture fixture) {
   final save = fixture.save;
   final canonicalInput = CanonicalGameSnapshot.snapshot(
-    domain: fixture.state.copyWith(
-      turn: save.turn,
-      matchRules: save.matchRules,
-      participants: save.players,
-      gameMode: save.gameMode,
-      turnStatesByPlayerId: save.playerStates,
-    ),
+    domain: fixture.state
+        .withMatchRules(save.matchRules)
+        .copyWith(
+          turn: save.turn,
+          participants: save.players,
+          gameMode: save.gameMode,
+          turnStatesByPlayerId: save.playerStates,
+        ),
     metadata: GameSnapshotMetadata(
       id: save.id,
       schemaVersion: save.schemaVersion,

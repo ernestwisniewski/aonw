@@ -2948,6 +2948,14 @@
       }
     }
   },
+  "topResourceStrategicResourcesTooltip": "Ressources stratégiques : {availableTypes}/{totalTypes} disponibles • {shortageTypes} pénuries",
+  "@topResourceStrategicResourcesTooltip": {
+    "placeholders": {
+      "availableTypes": {"type": "int"},
+      "totalTypes": {"type": "int"},
+      "shortageTypes": {"type": "int"}
+    }
+  },
   "topResourceGoldTooltip": "Or: {gold} • revenu +{goldIncome} • entretien -{unitUpkeep} • net {net} / tour",
   "@topResourceGoldTooltip": {
     "placeholders": {
@@ -3017,6 +3025,14 @@
   "resourceBreakdownResourceTypes": "Types de ressources",
   "resourceBreakdownTypesSection": "Types",
   "resourceBreakdownSourcesSection": "Sources",
+  "resourceBreakdownStrategicStockpiles": "Stocks stratégiques",
+  "resourceBreakdownStored": "Stock",
+  "resourceBreakdownAllocated": "Alloué",
+  "resourceBreakdownDomesticProduction": "Production nationale",
+  "resourceBreakdownImports": "Importations",
+  "resourceBreakdownExports": "Exportations",
+  "resourceBreakdownAllocations": "Allocations de production",
+  "resourceBreakdownNoAllocations": "Aucune ressource stratégique n’est allouée.",
   "technologyRecommendationsTitle": "Recherche recommandée",
   "technologyShowTreeAction": "Afficher l'arbre",
   "technologyShowTreeCountAction": "Afficher l'arbre ({count})",
@@ -3572,6 +3588,8 @@
   "hudFeedbackArtifactGuidanceBody": "Livrez-le à l'une de vos villes et placez-le dans une fente vide.",
   "hudFeedbackActionBlockedTitle": "Action non disponible",
   "hudFeedbackActionBlockedBody": "Cette action est bloquée en ce moment. Choisissez une autre tuile ou une autre commande.",
+  "hudFeedbackProductionStrategicResourceShortageTitle": "Pénurie de ressource stratégique",
+  "hudFeedbackProductionStrategicResourceShortageBody": "Le stock a changé avant l’acceptation de l’ordre. Vérifiez les ressources disponibles et choisissez à nouveau la production.",
   "hudFeedbackAttackProtectedByTreatyTitle": "Le traité bloque l'attaque",
   "hudFeedbackAttackProtectedByTreatyBody": "Vous ne pouvez pas attaquer une unité d'une civilisation qui a une alliance ou une trêve avec vous. Changer d'abord les relations diplomatiques.",
   "hudFeedbackMovementCityOccupiedTitle": "Ville occupée",
@@ -4528,6 +4546,16 @@
       }
     }
   },
+  "cityProductionStrategicCost": "Coût : {resources}",
+  "@cityProductionStrategicCost": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicAllocated": "Alloué : {resources}",
+  "@cityProductionStrategicAllocated": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicMissing": "Stock insuffisant : {resources}",
+  "@cityProductionStrategicMissing": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicAvailable": "{available}/{required} {resource}",
+  "@cityProductionStrategicAvailable": {"placeholders": {"available": {"type": "int"}, "required": {"type": "int"}, "resource": {"type": "String"}}},
+  "cityProductionStrategicFree": "Disponible : {resources}",
+  "@cityProductionStrategicFree": {"placeholders": {"resources": {"type": "String"}}},
   "cityBuildingSortRecommended": "Recommandation",
   "cityBuildingReplaceProgressWarning": "Choisir un autre bâtiment remplacera {building}. Les progrès seront préservés.",
   "@cityBuildingReplaceProgressWarning": {

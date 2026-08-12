@@ -14,6 +14,7 @@ class CityActiveProductionBanner extends StatelessWidget {
     required this.investedProduction,
     required this.progress,
     required this.metaLabels,
+    this.strategicResourceLabel,
     required this.canBeRushed,
     required this.rushGoldCost,
     required this.playerGold,
@@ -30,6 +31,7 @@ class CityActiveProductionBanner extends StatelessWidget {
   final int investedProduction;
   final double progress;
   final List<String> metaLabels;
+  final String? strategicResourceLabel;
   final bool canBeRushed;
   final int rushGoldCost;
   final int playerGold;
@@ -38,8 +40,7 @@ class CityActiveProductionBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final canRushNow =
-        canBeRushed && playerGold >= rushGoldCost && onRushProduction != null;
+    final canRushNow = _canRushNow;
 
     return Container(
       width: double.infinity,
@@ -105,6 +106,7 @@ class CityActiveProductionBanner extends StatelessWidget {
                 ),
               ),
             ),
+            ..._strategicResourceAllocation(),
           ],
           if (canBeRushed) ...[
             const SizedBox(height: 10),
@@ -158,6 +160,9 @@ class CityActiveProductionBanner extends StatelessWidget {
     );
   }
 
+  bool get _canRushNow =>
+      canBeRushed && playerGold >= rushGoldCost && onRushProduction != null;
+
   String _statusLabel(AppLocalizations l10n) {
     if (continuous) return l10n.cityProductionContinuous;
     if (turnsRemaining == null) {
@@ -170,5 +175,20 @@ class CityActiveProductionBanner extends StatelessWidget {
             blockedLabel: eta.blockedLabel,
           );
     return displayEta.compactLabel(l10n);
+  }
+
+  List<Widget> _strategicResourceAllocation() {
+    final label = strategicResourceLabel;
+    if (label == null) return const [];
+    return [
+      const SizedBox(height: 7),
+      Text(
+        label,
+        style: GameUiTheme.bodySmall.copyWith(
+          color: GameUiTheme.goldLight,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    ];
   }
 }

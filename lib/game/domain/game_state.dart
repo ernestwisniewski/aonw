@@ -9,6 +9,7 @@ import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -120,6 +121,8 @@ final class GameClientState {
     Map<String, int> playerGold = const {},
     Map<String, int> playerWarWeariness = const {},
     Map<String, int> playerStabilityNet = const {},
+    StrategicResourceAccounts strategicResources =
+        StrategicResourceAccounts.empty,
     List<GameUnit> units = const [],
     List<GameCity> cities = const [],
     List<WorldArtifact> artifacts = const [],
@@ -165,6 +168,7 @@ final class GameClientState {
           playerGold: playerGold,
           playerWarWeariness: playerWarWeariness,
           playerStabilityNet: playerStabilityNet,
+          strategicResources: strategicResources,
           units: units,
           cities: cities,
           artifacts: artifacts,
@@ -206,6 +210,7 @@ final class GameClientState {
   Map<String, int> get playerGold => domain.playerGold;
   Map<String, int> get playerWarWeariness => domain.playerWarWeariness;
   Map<String, int> get playerStabilityNet => domain.playerStabilityNet;
+  StrategicResourceAccounts get strategicResources => domain.strategicResources;
   List<GameUnit> get units => domain.units;
   List<GameCity> get cities => domain.cities;
   List<WorldArtifact> get artifacts => domain.artifacts;
@@ -252,6 +257,7 @@ final class GameClientState {
     Map<String, int>? playerGold,
     Map<String, int>? playerWarWeariness,
     Map<String, int>? playerStabilityNet,
+    StrategicResourceAccounts? strategicResources,
     List<GameUnit>? units,
     List<GameCity>? cities,
     List<WorldArtifact>? artifacts,
@@ -276,12 +282,18 @@ final class GameClientState {
     InteractionState? interaction,
   }) => (() {
     final source = domain ?? this.domain;
-    var updatedDomain = source.copyWith(
+    var updatedDomain = strategicResources == null
+        ? source
+        : source.withStrategicProductionState(
+            strategicResources: strategicResources,
+            cities: cities ?? source.cities,
+          );
+    updatedDomain = updatedDomain.copyWith(
       playerGold: playerGold,
       playerWarWeariness: playerWarWeariness,
       playerStabilityNet: playerStabilityNet,
       units: units,
-      cities: cities,
+      cities: strategicResources == null ? cities : null,
       artifacts: artifacts,
       fieldImprovements: fieldImprovements,
       transportNetwork: transportNetwork,

@@ -9,6 +9,7 @@ import 'package:aonw/game/application/services/game_activity_event_projector.dar
 import 'package:aonw/game/application/services/local_command_resolver.dart';
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/domain/game_state_transition.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/infrastructure/system/system_clock.dart';
@@ -122,7 +123,15 @@ class LocalCommandTransport implements CommandTransport {
 
     return CommandTransportResult(
       state: resolved.state,
-      uiEffects: resolved.uiEffects,
+      uiEffects: [
+        ...resolved.uiEffects,
+        if (!resolved.accepted &&
+            resolved.rejectionReason ==
+                'unit_production_missing_strategic_resource')
+          const ShowHudFeedbackEffect(
+            reason: HudFeedbackReason.productionStrategicResourceShortage,
+          ),
+      ],
       events: resolved.events,
       combatAnimations: resolved.combatAnimations,
       movementExecutions: resolved.movementExecutions,
@@ -133,6 +142,8 @@ class LocalCommandTransport implements CommandTransport {
           : resolved.context.commandTick,
       authoritativeStartMicrosUtc: clock.nowUtc().microsecondsSinceEpoch,
       storedSnapshot: storedSnapshot,
+      accepted: resolved.accepted,
+      rejectionReason: resolved.rejectionReason,
     );
   }
 

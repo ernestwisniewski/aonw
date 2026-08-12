@@ -57,6 +57,7 @@ void main() {
             investedProduction: 18,
             progress: 0.45,
             metaLabels: const [],
+            strategicResourceLabel: 'Allocated: 2 oil',
             canBeRushed: true,
             rushGoldCost: 10,
             playerGold: 12,
@@ -67,6 +68,7 @@ void main() {
     );
 
     expect(find.text('2 turns • T9'), findsOneWidget);
+    expect(find.text('Allocated: 2 oil'), findsOneWidget);
     expect(
       tester
           .widget<TextButton>(find.widgetWithText(TextButton, 'Rush -10'))

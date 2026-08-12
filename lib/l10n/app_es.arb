@@ -2948,6 +2948,14 @@
       }
     }
   },
+  "topResourceStrategicResourcesTooltip": "Recursos estratégicos: {availableTypes}/{totalTypes} disponibles • {shortageTypes} carencias",
+  "@topResourceStrategicResourcesTooltip": {
+    "placeholders": {
+      "availableTypes": {"type": "int"},
+      "totalTypes": {"type": "int"},
+      "shortageTypes": {"type": "int"}
+    }
+  },
   "topResourceGoldTooltip": "Oro: {gold} • ingresos +{goldIncome} • mantenimiento -{unitUpkeep} • neto {net} / turno",
   "@topResourceGoldTooltip": {
     "placeholders": {
@@ -3017,6 +3025,14 @@
   "resourceBreakdownResourceTypes": "Tipos de recurso",
   "resourceBreakdownTypesSection": "Tipos",
   "resourceBreakdownSourcesSection": "Fuentes",
+  "resourceBreakdownStrategicStockpiles": "Reservas estratégicas",
+  "resourceBreakdownStored": "Reserva",
+  "resourceBreakdownAllocated": "Asignado",
+  "resourceBreakdownDomesticProduction": "Producción nacional",
+  "resourceBreakdownImports": "Importaciones",
+  "resourceBreakdownExports": "Exportaciones",
+  "resourceBreakdownAllocations": "Asignaciones de producción",
+  "resourceBreakdownNoAllocations": "No hay recursos estratégicos asignados.",
   "technologyRecommendationsTitle": "Investigación recomendada",
   "technologyShowTreeAction": "Mostrar árbol",
   "technologyShowTreeCountAction": "Mostrar árbol ({count})",
@@ -3572,6 +3588,8 @@
   "hudFeedbackArtifactGuidanceBody": "Entrégalo a una de tus ciudades y colócalo en un espacio de artefacto vacío.",
   "hudFeedbackActionBlockedTitle": "Acción no disponible",
   "hudFeedbackActionBlockedBody": "Esta acción está bloqueada ahora mismo. Elige otra casilla u otra orden.",
+  "hudFeedbackProductionStrategicResourceShortageTitle": "Escasez de recursos estratégicos",
+  "hudFeedbackProductionStrategicResourceShortageBody": "La reserva cambió antes de aceptar la orden. Revisa los recursos disponibles y vuelve a elegir la producción.",
   "hudFeedbackAttackProtectedByTreatyTitle": "Un tratado bloquea el ataque",
   "hudFeedbackAttackProtectedByTreatyBody": "No puedes atacar una unidad de una civilización con la que tienes una alianza o una tregua. Cambia primero las relaciones diplomáticas.",
   "hudFeedbackMovementCityOccupiedTitle": "Ciudad ocupada",
@@ -4528,6 +4546,16 @@
       }
     }
   },
+  "cityProductionStrategicCost": "Coste: {resources}",
+  "@cityProductionStrategicCost": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicAllocated": "Asignado: {resources}",
+  "@cityProductionStrategicAllocated": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicMissing": "Reserva insuficiente: {resources}",
+  "@cityProductionStrategicMissing": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicAvailable": "{available}/{required} {resource}",
+  "@cityProductionStrategicAvailable": {"placeholders": {"available": {"type": "int"}, "required": {"type": "int"}, "resource": {"type": "String"}}},
+  "cityProductionStrategicFree": "Disponible: {resources}",
+  "@cityProductionStrategicFree": {"placeholders": {"resources": {"type": "String"}}},
   "cityBuildingSortRecommended": "Recomendado",
   "cityBuildingReplaceProgressWarning": "Elegir otro edificio reemplazará {building}. El progreso se conservará.",
   "@cityBuildingReplaceProgressWarning": {

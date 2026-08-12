@@ -55,11 +55,21 @@ CommandTransportResult acknowledgedCommandTransportResult({
     movementExecutions: movementExecutions,
     combatAnimations: combatAnimations,
     storedSnapshot: true,
+    accepted: acknowledgment.accepted,
+    rejectionReason: acknowledgment.reason,
   );
 }
 
 List<UiEffect> commandRejectionUiEffects(String? reason) {
-  return reason == 'worker_automation_no_target'
-      ? const [ShowWorkerAutomationNoTargetEffect()]
-      : const [];
+  return switch (reason) {
+    'worker_automation_no_target' => const [
+      ShowWorkerAutomationNoTargetEffect(),
+    ],
+    'unit_production_missing_strategic_resource' => const [
+      ShowHudFeedbackEffect(
+        reason: HudFeedbackReason.productionStrategicResourceShortage,
+      ),
+    ],
+    _ => const [],
+  };
 }

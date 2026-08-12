@@ -9,17 +9,23 @@ const int kProtocolVersion = 4;
 ///
 /// Keep this stable while the persisted shapes remain decodable. Bump it only
 /// with an explicit expand/contract and rollback plan for stored payloads.
-const int kSnapshotEventVersion = 4;
+const int kSnapshotEventVersion = 5;
 
-/// Previous durable schema accepted during the v3 -> v4 expand phase.
+/// Previous durable schema accepted during the v4 -> v5 expand phase.
 ///
-/// Revision 3 does not contain authoritative road infrastructure. Current
-/// readers treat missing transport state as empty and migrate the envelope to
-/// revision 4 on the next authoritative write.
-const int kLegacySnapshotEventVersion = 3;
+/// Revision 4 does not contain strategic-resource stockpiles. Current readers
+/// treat missing accounts as empty and migrate the envelope to revision 5 on
+/// the next authoritative write.
+const int kLegacySnapshotEventVersion = 4;
+
+/// Oldest durable schema retained through the current expand window.
+///
+/// Revision 3 also lacks authoritative road infrastructure.
+const int kOldestSnapshotEventVersion = 3;
 
 /// Durable schemas that current clients and servers can decode safely.
 const Set<int> kReadableSnapshotEventVersions = {
+  kOldestSnapshotEventVersion,
   kLegacySnapshotEventVersion,
   kSnapshotEventVersion,
 };
@@ -32,7 +38,7 @@ bool isReadableSnapshotEventVersion(int version) =>
 /// Every player-visible or server-side multiplayer contract change increments
 /// this value, including compatible additive changes that do not alter the
 /// serialized wire-envelope schema.
-const int kCurrentMultiplayerVersion = 6;
+const int kCurrentMultiplayerVersion = 7;
 
 /// Version represented by clients released before the compatibility
 /// declaration was added to the app-status handshake.
@@ -43,7 +49,7 @@ const int kLegacyUndeclaredMultiplayerVersion = 1;
 /// Remove a revision when a change is incompatible. Clients on a removed or
 /// future revision receive the translated update notice before entering
 /// multiplayer.
-const Set<int> kCompatibleMultiplayerVersions = {6};
+const Set<int> kCompatibleMultiplayerVersions = {7};
 
 enum MultiplayerVersionCompatibility {
   current,

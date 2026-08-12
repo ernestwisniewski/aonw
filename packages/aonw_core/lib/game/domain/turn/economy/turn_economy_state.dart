@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
 import 'package:aonw_core/game/domain/event/game_event.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
 import 'package:aonw_core/game/domain/objective/map_objective.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/game/domain/technology/science_yield.dart';
 import 'package:aonw_core/game/domain/trade/resource_trade_agreement.dart';
@@ -17,6 +18,7 @@ final class TurnEconomyState {
     required this.playerGold,
     required this.playerWarWeariness,
     required this.playerStabilityNet,
+    this.strategicResources = StrategicResourceAccounts.empty,
     required this.units,
     required this.cities,
     required this.artifacts,
@@ -33,6 +35,7 @@ final class TurnEconomyState {
   final Map<String, int> playerGold;
   final Map<String, int> playerWarWeariness;
   final Map<String, int> playerStabilityNet;
+  final StrategicResourceAccounts strategicResources;
   final List<GameUnit> units;
   final List<GameCity> cities;
   final List<WorldArtifact> artifacts;
@@ -49,6 +52,7 @@ final class TurnEconomyState {
     Map<String, int>? playerGold,
     Map<String, int>? playerWarWeariness,
     Map<String, int>? playerStabilityNet,
+    StrategicResourceAccounts? strategicResources,
     List<GameUnit>? units,
     List<GameCity>? cities,
     List<WorldArtifact>? artifacts,
@@ -65,6 +69,7 @@ final class TurnEconomyState {
       playerGold: playerGold ?? this.playerGold,
       playerWarWeariness: playerWarWeariness ?? this.playerWarWeariness,
       playerStabilityNet: playerStabilityNet ?? this.playerStabilityNet,
+      strategicResources: strategicResources ?? this.strategicResources,
       units: units ?? this.units,
       cities: cities ?? this.cities,
       artifacts: artifacts ?? this.artifacts,

@@ -2,6 +2,7 @@ import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdowns.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_stability_details.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_strategic_resource_summary.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/game/presentation/widgets/resources/victory_status_popup.dart';
@@ -43,6 +44,7 @@ class TopResourceOverlay extends StatelessWidget {
     this.onTurnPressed,
     this.activeTechnologyCompletionTurn,
     this.resourceNetwork = EmpireResourceNetwork.empty,
+    this.strategicResources = HudStrategicResourceSummary.empty,
     this.gamepadFocusedTargetId,
     this.gamepadInputListenable,
     super.key,
@@ -58,6 +60,7 @@ class TopResourceOverlay extends StatelessWidget {
   final HudStabilityDetails stabilityDetails;
   final CityResourceInventory resourceInventory;
   final EmpireResourceNetwork resourceNetwork;
+  final HudStrategicResourceSummary strategicResources;
   final TopResourcePopupType? openBreakdown;
   final HudResourceBreakdowns resourceBreakdowns;
   final List<GameCity> cities;
@@ -105,6 +108,11 @@ class TopResourceOverlay extends StatelessWidget {
                   stabilityBand: stabilityBand,
                   resourceTotal: resourceInventory.totalCount,
                   resourceTypes: resourceInventory.distinctTypeCount,
+                  strategicResourcesEnabled: strategicResources.enabled,
+                  strategicAvailableTypes:
+                      strategicResources.availableTypeCount,
+                  strategicTrackedTypes: strategicResources.rows.length,
+                  strategicShortageTypes: strategicResources.shortageTypeCount,
                   openBreakdown: openBreakdown,
                   victoryStatus: victoryStatus,
                   playerName: playerName,
@@ -157,7 +165,10 @@ class TopResourceOverlay extends StatelessWidget {
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () {},
-                  child: _breakdownPopup(),
+                  child: _breakdownPopup(
+                    maxWidth: _resourcePopupOpen ? 430 : 330,
+                    maxHeight: _resourcePopupOpen ? 560 : 380,
+                  ),
                 ),
               ),
             ),
@@ -253,6 +264,7 @@ class TopResourceOverlay extends StatelessWidget {
           : 0,
       resources: resourceInventory,
       resourceNetwork: resourceNetwork,
+      strategicResources: strategicResources,
       cities: cities,
       activeTechnologyName: activeTechnologyName,
       activeTechnologyTurnsRemaining: activeTechnologyTurnsRemaining,
@@ -272,6 +284,9 @@ class TopResourceOverlay extends StatelessWidget {
         ? popup.name
         : popup.resourceType!.name;
   }
+
+  bool get _resourcePopupOpen =>
+      openBreakdown == TopResourcePopupType.resources;
 }
 
 const _emptyStabilityBreakdown = StabilityBreakdown(

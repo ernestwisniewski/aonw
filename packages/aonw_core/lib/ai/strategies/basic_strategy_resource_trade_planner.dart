@@ -232,14 +232,21 @@ final class BasicStrategyResourceTradePlanner {
       }
       final definition = view.ruleset.city.unitDefinitionFor(unitType);
       for (final requirement in definition.requirements) {
-        switch (requirement) {
-          case UnitResourceRequirement(:final resources):
-            if (resources.contains(resource)) return 1;
-        }
+        if (_requirementUsesResource(requirement, resource)) return 1;
       }
     }
     return 0;
   }
+
+  bool _requirementUsesResource(
+    UnitProductionRequirement requirement,
+    ResourceType resource,
+  ) => switch (requirement) {
+    UnitResourceRequirement(:final resources) => resources.contains(resource),
+    UnitStockpileCostRequirement(:final options) => options.any(
+      (option) => option.amountFor(resource) > 0,
+    ),
+  };
 
   bool _hasActiveImport(GameView view, ResourceType resource) {
     return _hasActiveImportFor(view, view.forPlayerId, resource);

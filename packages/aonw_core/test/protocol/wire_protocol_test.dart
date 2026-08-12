@@ -195,45 +195,58 @@ void main() {
       expect(restored.snapshot.v, kSnapshotEventVersion);
     });
 
-    test('snapshot and event readers accept v3 and v4 during expansion', () {
-      const snapshot = WireSnapshot(
-        matchId: 'match_1',
-        offset: 3,
-        save: {'id': 'match_1'},
-        state: <String, dynamic>{},
-      );
-      final event = WireEvent(
-        matchId: 'match_1',
-        offset: 3,
-        timestamp: DateTime.utc(2026, 8, 9),
-        movementExecutions: WireMovementExecutionList(const []),
-      );
+    test(
+      'snapshot and event readers accept v3 through v5 during expansion',
+      () {
+        const snapshot = WireSnapshot(
+          matchId: 'match_1',
+          offset: 3,
+          save: {'id': 'match_1'},
+          state: <String, dynamic>{},
+        );
+        final event = WireEvent(
+          matchId: 'match_1',
+          offset: 3,
+          timestamp: DateTime.utc(2026, 8, 9),
+          movementExecutions: WireMovementExecutionList(const []),
+        );
 
-      expect(WireSnapshot.fromJson(snapshot.toJson()).v, 4);
-      expect(WireEvent.fromJson(event.toJson()).v, 4);
-      expect(
-        WireSnapshot.fromJson({
-          ...snapshot.toJson(),
-          'v': kLegacySnapshotEventVersion,
-        }).v,
-        kLegacySnapshotEventVersion,
-      );
-      expect(
-        WireEvent.fromJson({
-          ...event.toJson(),
-          'v': kLegacySnapshotEventVersion,
-        }).v,
-        kLegacySnapshotEventVersion,
-      );
-      expect(
-        () => WireSnapshot.fromJson({...snapshot.toJson(), 'v': 2}),
-        throwsArgumentError,
-      );
-      expect(
-        () => WireEvent.fromJson({...event.toJson(), 'v': 5}),
-        throwsArgumentError,
-      );
-    });
+        expect(
+          WireSnapshot.fromJson(snapshot.toJson()).v,
+          kSnapshotEventVersion,
+        );
+        expect(WireEvent.fromJson(event.toJson()).v, kSnapshotEventVersion);
+        expect(
+          WireSnapshot.fromJson({
+            ...snapshot.toJson(),
+            'v': kLegacySnapshotEventVersion,
+          }).v,
+          kLegacySnapshotEventVersion,
+        );
+        expect(
+          WireEvent.fromJson({
+            ...event.toJson(),
+            'v': kLegacySnapshotEventVersion,
+          }).v,
+          kLegacySnapshotEventVersion,
+        );
+        expect(
+          WireSnapshot.fromJson({
+            ...snapshot.toJson(),
+            'v': kOldestSnapshotEventVersion,
+          }).v,
+          kOldestSnapshotEventVersion,
+        );
+        expect(
+          () => WireSnapshot.fromJson({...snapshot.toJson(), 'v': 2}),
+          throwsArgumentError,
+        );
+        expect(
+          () => WireEvent.fromJson({...event.toJson(), 'v': 6}),
+          throwsArgumentError,
+        );
+      },
+    );
 
     test('current ACK reads a legacy v3 nested snapshot', () {
       final ack = WireCommandAck(

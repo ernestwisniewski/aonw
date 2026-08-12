@@ -147,7 +147,8 @@ final class RunningMatchSnapshotCodec {
     _requireRepresentableRunningTurnStart(next);
 
     final migrateLegacySave =
-        source.wire.v == kLegacySnapshotEventVersion &&
+        source.wire.v != kSnapshotEventVersion &&
+        isReadableSnapshotEventVersion(source.wire.v) &&
         next.metadata.schemaVersion != gameSaveCurrentSchemaVersion;
     final writable = !migrateLegacySave
         ? next

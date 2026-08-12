@@ -4,6 +4,7 @@ import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/stability_band_presentation.dart';
 import 'package:aonw/game/presentation/formatters/turn_eta.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_strategic_resource_summary.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -13,6 +14,7 @@ import 'package:aonw/shared/theme/surface_shape.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_epic_header.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -35,6 +37,7 @@ class ResourceBreakdownPopup extends StatelessWidget {
   final int stabilityStandingAdjustment;
   final CityResourceInventory resources;
   final EmpireResourceNetwork resourceNetwork;
+  final HudStrategicResourceSummary strategicResources;
   final List<GameCity> cities;
   final String? activeTechnologyName;
   final int? activeTechnologyTurnsRemaining;
@@ -65,6 +68,7 @@ class ResourceBreakdownPopup extends StatelessWidget {
     this.showDragHandle = false,
     this.activeTechnologyCompletionTurn,
     this.resourceNetwork = EmpireResourceNetwork.empty,
+    this.strategicResources = HudStrategicResourceSummary.empty,
     this.gamepadInputListenable,
     super.key,
   });

@@ -117,6 +117,7 @@ abstract final class CityProductionCommandResolver {
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
     required PaceBalance paceBalance,
+    bool stockpileRequirementsUsePresence = true,
   }) {
     return _StartUnitProductionResolver(
       cities: cities,
@@ -135,6 +136,7 @@ abstract final class CityProductionCommandResolver {
             ruleset: cityRuleset,
             research: research,
             resourceTradeAgreements: resourceTradeAgreements,
+            ignoreStockpileCosts: !stockpileRequirementsUsePresence,
           ),
       coastRequirementIsMet: (city) => CityUnitProductionRules.canProduceInCity(
         city: city,

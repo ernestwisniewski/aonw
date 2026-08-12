@@ -27,6 +27,7 @@ final class PlayerWorldStateProjector {
       'playerGold': _ownIntEntry(domain.playerGold, playerId),
       'playerWarWeariness': _ownIntEntry(domain.playerWarWeariness, playerId),
       'playerStabilityNet': _ownIntEntry(domain.playerStabilityNet, playerId),
+      'strategicResources': _ownStrategicResources(domain, playerId),
       'units': [for (final unit in units) unit.toJson()],
       'cities': [for (final city in cities) city.toJson()],
       'artifacts': _artifactsFor(
@@ -50,6 +51,15 @@ final class PlayerWorldStateProjector {
       'research': research.toJson(),
     };
   }
+}
+
+Map<String, dynamic> _ownStrategicResources(
+  DomainState domain,
+  String playerId,
+) {
+  final stockpile = domain.strategicResources.byPlayerId[playerId];
+  if (stockpile == null) return const {};
+  return StrategicResourceAccounts(byPlayerId: {playerId: stockpile}).toJson();
 }
 
 List<Map<String, dynamic>> _transportNetworkFor(

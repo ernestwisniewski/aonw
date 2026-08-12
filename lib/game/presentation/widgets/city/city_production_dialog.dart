@@ -21,6 +21,7 @@ import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -44,6 +45,8 @@ class CityProductionDialog extends StatelessWidget {
   final List<WorldArtifact> artifacts;
   final List<FieldImprovement> fieldImprovements;
   final Iterable<ResourceTradeAgreement> resourceTradeAgreements;
+  final StrategicResourceAccounts strategicResources;
+  final StrategicResourceEconomyProfile strategicResourceEconomy;
   final int productionPerTurn;
   final int? currentTurn;
   final PaceBalance paceBalance;
@@ -69,6 +72,9 @@ class CityProductionDialog extends StatelessWidget {
     this.artifacts = const [],
     this.fieldImprovements = const [],
     this.resourceTradeAgreements = const [],
+    this.strategicResources = StrategicResourceAccounts.empty,
+    this.strategicResourceEconomy =
+        StrategicResourceEconomyProfile.legacyPresenceV0,
     required this.productionPerTurn,
     this.currentTurn,
     this.paceBalance = PaceBalance.unlimited,
@@ -100,6 +106,8 @@ class CityProductionDialog extends StatelessWidget {
       artifacts: artifacts,
       fieldImprovements: fieldImprovements,
       resourceTradeAgreements: resourceTradeAgreements,
+      strategicResources: strategicResources,
+      strategicResourceEconomy: strategicResourceEconomy,
       productionPerTurn: productionPerTurn,
       currentTurn: currentTurn,
       paceBalance: paceBalance,
@@ -130,6 +138,8 @@ class CityProductionPanel extends StatefulWidget {
   final List<WorldArtifact> artifacts;
   final List<FieldImprovement> fieldImprovements;
   final Iterable<ResourceTradeAgreement> resourceTradeAgreements;
+  final StrategicResourceAccounts strategicResources;
+  final StrategicResourceEconomyProfile strategicResourceEconomy;
   final int productionPerTurn;
   final int? currentTurn;
   final PaceBalance paceBalance;
@@ -157,6 +167,9 @@ class CityProductionPanel extends StatefulWidget {
     this.artifacts = const [],
     this.fieldImprovements = const [],
     this.resourceTradeAgreements = const [],
+    this.strategicResources = StrategicResourceAccounts.empty,
+    this.strategicResourceEconomy =
+        StrategicResourceEconomyProfile.legacyPresenceV0,
     required this.productionPerTurn,
     this.currentTurn,
     this.paceBalance = PaceBalance.unlimited,

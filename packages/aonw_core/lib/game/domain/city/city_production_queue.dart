@@ -5,6 +5,7 @@ import 'package:aonw_core/game/domain/city/city_project_type.dart';
 import 'package:aonw_core/game/domain/city/city_ruleset.dart';
 import 'package:aonw_core/game/domain/city/city_rulesets.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_ruleset.dart';
 import 'package:aonw_core/game/domain/wonder/wonder_type.dart';
@@ -12,30 +13,36 @@ import 'package:aonw_core/game/domain/wonder/wonder_type.dart';
 class CityProductionQueue {
   final CityProductionTarget target;
   final int investedProduction;
+  final StrategicResourceBundle resourceAllocation;
 
   CityProductionQueue.building({
     required CityBuildingType buildingType,
     required this.investedProduction,
+    this.resourceAllocation = StrategicResourceBundle.empty,
   }) : target = BuildingProductionTarget(buildingType);
 
   CityProductionQueue.unit({
     required GameUnitType unitType,
     required this.investedProduction,
+    this.resourceAllocation = StrategicResourceBundle.empty,
   }) : target = UnitProductionTarget(unitType);
 
   CityProductionQueue.project({
     required CityProjectType projectType,
     this.investedProduction = 0,
+    this.resourceAllocation = StrategicResourceBundle.empty,
   }) : target = ProjectProductionTarget(projectType);
 
   CityProductionQueue.wonder({
     required WonderType wonderType,
     required this.investedProduction,
+    this.resourceAllocation = StrategicResourceBundle.empty,
   }) : target = WonderProductionTarget(wonderType);
 
   const CityProductionQueue.target({
     required this.target,
     required this.investedProduction,
+    this.resourceAllocation = StrategicResourceBundle.empty,
   });
 
   CityProjectType? get projectType {
@@ -82,6 +89,7 @@ class CityProductionQueue {
     return CityProductionQueue.target(
       target: target,
       investedProduction: investedProduction + production,
+      resourceAllocation: resourceAllocation,
     );
   }
 
@@ -91,21 +99,28 @@ class CityProductionQueue {
           json['target'] as Map<String, dynamic>,
         ),
         investedProduction: (json['investedProduction'] as num).toInt(),
+        resourceAllocation: StrategicResourceBundle.fromJson(
+          json['resourceAllocation'],
+        ),
       );
 
   Map<String, dynamic> toJson() => {
     'target': target.toJson(),
     'investedProduction': investedProduction,
+    if (!resourceAllocation.isEmpty)
+      'resourceAllocation': resourceAllocation.toJson(),
   };
 
   @override
   bool operator ==(Object other) =>
       other is CityProductionQueue &&
       other.target == target &&
-      other.investedProduction == investedProduction;
+      other.investedProduction == investedProduction &&
+      other.resourceAllocation == resourceAllocation;
 
   @override
-  int get hashCode => Object.hash(target, investedProduction);
+  int get hashCode =>
+      Object.hash(target, investedProduction, resourceAllocation);
 }
 
 abstract final class CityProductionRules {

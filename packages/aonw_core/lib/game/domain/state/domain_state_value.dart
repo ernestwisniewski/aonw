@@ -32,7 +32,8 @@ bool _sameDomainTurnLifecycle(DomainState left, DomainState right) {
 bool _sameDomainEconomy(DomainState left, DomainState right) {
   return mapEquals(left.playerGold, right.playerGold) &&
       mapEquals(left.playerWarWeariness, right.playerWarWeariness) &&
-      mapEquals(left.playerStabilityNet, right.playerStabilityNet);
+      mapEquals(left.playerStabilityNet, right.playerStabilityNet) &&
+      left.strategicResources == right.strategicResources;
 }
 
 bool _sameDomainEntities(DomainState left, DomainState right) {
@@ -95,6 +96,7 @@ int _domainEconomyHash(DomainState state) => Object.hash(
   mapHash(state.playerGold),
   mapHash(state.playerWarWeariness),
   mapHash(state.playerStabilityNet),
+  state.strategicResources,
 );
 
 int _domainEntityHash(DomainState state) => Object.hash(

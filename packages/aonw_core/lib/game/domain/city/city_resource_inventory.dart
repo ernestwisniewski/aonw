@@ -316,32 +316,51 @@ abstract final class EmpireResourceNetworkRules {
 
     for (final entry in entries) {
       for (final requirement in entry.value.requirements) {
-        switch (requirement) {
-          case UnitResourceRequirement(:final resources):
-            gates.add(
-              EmpireResourceUnitGate(
-                unitType: entry.key,
-                resourceChoices: Set.unmodifiable(resources),
-                visibleControlledResources: Set.unmodifiable(
-                  resources.where(
-                    (resource) =>
-                        visibleInventory.controls(resource) ||
-                        (importedCountsByType[resource] ?? 0) > 0,
-                  ),
-                ),
-                hiddenControlledResources: Set.unmodifiable(
-                  resources.where(
-                    (resource) => (hiddenCountsByType[resource] ?? 0) > 0,
-                  ),
-                ),
-              ),
-            );
-        }
+        final resources = _resourcesForRequirement(requirement);
+        gates.add(
+          _unitGateFor(
+            unitType: entry.key,
+            resources: resources,
+            visibleInventory: visibleInventory,
+            importedCountsByType: importedCountsByType,
+            hiddenCountsByType: hiddenCountsByType,
+          ),
+        );
       }
     }
 
     return List.unmodifiable(gates);
   }
+
+  static Set<ResourceType> _resourcesForRequirement(
+    UnitProductionRequirement requirement,
+  ) => switch (requirement) {
+    UnitResourceRequirement(:final resources) => resources,
+    UnitStockpileCostRequirement(:final options) => {
+      for (final option in options) ...option.amounts.keys,
+    },
+  };
+
+  static EmpireResourceUnitGate _unitGateFor({
+    required GameUnitType unitType,
+    required Set<ResourceType> resources,
+    required CityResourceInventory visibleInventory,
+    required Map<ResourceType, int> importedCountsByType,
+    required Map<ResourceType, int> hiddenCountsByType,
+  }) => EmpireResourceUnitGate(
+    unitType: unitType,
+    resourceChoices: Set.unmodifiable(resources),
+    visibleControlledResources: Set.unmodifiable(
+      resources.where(
+        (resource) =>
+            visibleInventory.controls(resource) ||
+            (importedCountsByType[resource] ?? 0) > 0,
+      ),
+    ),
+    hiddenControlledResources: Set.unmodifiable(
+      resources.where((resource) => (hiddenCountsByType[resource] ?? 0) > 0),
+    ),
+  );
 
   static Map<ResourceType, int> _importedCountsFor({
     required String playerId,

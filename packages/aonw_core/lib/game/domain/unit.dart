@@ -18,6 +18,7 @@ export 'unit/unit_production_requirement.dart';
 export 'unit/unit_production_requirement_rules.dart';
 export 'unit/unit_spec.dart';
 export 'unit/unit_spec_resolver.dart';
+export 'unit/unit_strategic_resource_availability.dart';
 export 'unit/unit_upkeep_rules.dart';
 export 'unit/unit_veterancy.dart';
 export 'unit/worker_assignment.dart';

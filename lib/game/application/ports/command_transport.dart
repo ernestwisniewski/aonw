@@ -25,6 +25,8 @@ class CommandTransportResult {
   final int authoritativeTick;
   final int authoritativeStartMicrosUtc;
   final bool storedSnapshot;
+  final bool accepted;
+  final String? rejectionReason;
 
   const CommandTransportResult({
     required this.state,
@@ -37,6 +39,8 @@ class CommandTransportResult {
     this.combatAnimations = const [],
     this.movementExecutions = const [],
     this.storedSnapshot = false,
+    this.accepted = true,
+    this.rejectionReason,
   }) : authoritativeTick = authoritativeTick ?? offset,
        authoritativeStartMicrosUtc =
            authoritativeStartMicrosUtc ??

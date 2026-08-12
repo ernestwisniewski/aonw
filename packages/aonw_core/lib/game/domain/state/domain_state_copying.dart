@@ -1,35 +1,68 @@
 part of 'domain_state.dart';
 
-typedef _DomainStateChanges = ({
-  int? turn,
-  MatchRules? matchRules,
-  List<Player>? participants,
-  GameMode? gameMode,
-  Map<String, PlayerTurnState>? turnStatesByPlayerId,
-  Set<String>? submittedPlayerIds,
-  Map<String, int>? timeoutStreaksByPlayerId,
-  Set<String>? afkPlayerIds,
-  Set<String>? kickedPlayerIds,
-  Object? turnStartedAt,
-  DomainActionState? actions,
-  Map<String, int>? playerGold,
-  Map<String, int>? playerWarWeariness,
-  Map<String, int>? playerStabilityNet,
-  List<GameUnit>? units,
-  List<GameCity>? cities,
-  List<WorldArtifact>? artifacts,
-  List<FieldImprovement>? fieldImprovements,
-  TransportNetworkState? transportNetwork,
-  FogOfWarState? fogOfWar,
-  ResearchState? research,
-  WonderRegistry? wonderRegistry,
-  List<IntendedAttack>? intendedAttacks,
-  DiplomacyState? diplomacy,
-  List<ResourceTradeAgreement>? resourceTradeAgreements,
-  Map<String, int>? dominationHoldTurnsByPlayerId,
-  Map<String, int>? culturalVictoryHoldTurnsByPlayerId,
-  Map<String, MapObjectiveHoldState>? mapObjectiveHoldStatesByObjectiveId,
-});
+final class _DomainStateChanges {
+  const _DomainStateChanges({
+    this.turn,
+    this.matchRules,
+    this.participants,
+    this.gameMode,
+    this.turnStatesByPlayerId,
+    this.submittedPlayerIds,
+    this.timeoutStreaksByPlayerId,
+    this.afkPlayerIds,
+    this.kickedPlayerIds,
+    this.turnStartedAt = _unsetDomainValue,
+    this.actions,
+    this.playerGold,
+    this.playerWarWeariness,
+    this.playerStabilityNet,
+    this.strategicResources,
+    this.units,
+    this.cities,
+    this.artifacts,
+    this.fieldImprovements,
+    this.transportNetwork,
+    this.fogOfWar,
+    this.research,
+    this.wonderRegistry,
+    this.intendedAttacks,
+    this.diplomacy,
+    this.resourceTradeAgreements,
+    this.dominationHoldTurnsByPlayerId,
+    this.culturalVictoryHoldTurnsByPlayerId,
+    this.mapObjectiveHoldStatesByObjectiveId,
+  });
+
+  final int? turn;
+  final MatchRules? matchRules;
+  final List<Player>? participants;
+  final GameMode? gameMode;
+  final Map<String, PlayerTurnState>? turnStatesByPlayerId;
+  final Set<String>? submittedPlayerIds;
+  final Map<String, int>? timeoutStreaksByPlayerId;
+  final Set<String>? afkPlayerIds;
+  final Set<String>? kickedPlayerIds;
+  final Object? turnStartedAt;
+  final DomainActionState? actions;
+  final Map<String, int>? playerGold;
+  final Map<String, int>? playerWarWeariness;
+  final Map<String, int>? playerStabilityNet;
+  final StrategicResourceAccounts? strategicResources;
+  final List<GameUnit>? units;
+  final List<GameCity>? cities;
+  final List<WorldArtifact>? artifacts;
+  final List<FieldImprovement>? fieldImprovements;
+  final TransportNetworkState? transportNetwork;
+  final FogOfWarState? fogOfWar;
+  final ResearchState? research;
+  final WonderRegistry? wonderRegistry;
+  final List<IntendedAttack>? intendedAttacks;
+  final DiplomacyState? diplomacy;
+  final List<ResourceTradeAgreement>? resourceTradeAgreements;
+  final Map<String, int>? dominationHoldTurnsByPlayerId;
+  final Map<String, int>? culturalVictoryHoldTurnsByPlayerId;
+  final Map<String, MapObjectiveHoldState>? mapObjectiveHoldStatesByObjectiveId;
+}
 
 DomainState _copyDomainState(DomainState source, _DomainStateChanges changes) {
   final replacementParticipants = changes.participants;
@@ -102,6 +135,7 @@ _DomainStateContent _copiedDomainContent(
       changes.playerStabilityNet,
       source.playerStabilityNet,
     ),
+    strategicResources: changes.strategicResources ?? source.strategicResources,
     units: _domainListCopy(changes.units, source.units),
     cities: _domainCityListCopy(changes.cities, source.cities),
     artifacts: _domainListCopy(changes.artifacts, source.artifacts),

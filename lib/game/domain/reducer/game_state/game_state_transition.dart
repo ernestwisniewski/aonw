@@ -24,6 +24,7 @@ enum HudFeedbackReason {
   movementBlockedTerrain,
   movementInsufficientUnitMovement,
   movementNoRoute,
+  productionStrategicResourceShortage,
 }
 
 class ShowHudFeedbackEffect extends OverlayEffect {

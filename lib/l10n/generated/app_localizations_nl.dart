@@ -5205,6 +5205,15 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String topResourceStrategicResourcesTooltip(
+    int availableTypes,
+    int totalTypes,
+    int shortageTypes,
+  ) {
+    return 'Strategische grondstoffen: $availableTypes/$totalTypes beschikbaar • $shortageTypes tekorten';
+  }
+
+  @override
   String topResourceGoldTooltip(
     int gold,
     int goldIncome,
@@ -5298,6 +5307,31 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get resourceBreakdownSourcesSection => 'Bronnen';
+
+  @override
+  String get resourceBreakdownStrategicStockpiles => 'Strategische voorraden';
+
+  @override
+  String get resourceBreakdownStored => 'Voorraad';
+
+  @override
+  String get resourceBreakdownAllocated => 'Toegewezen';
+
+  @override
+  String get resourceBreakdownDomesticProduction => 'Binnenlandse productie';
+
+  @override
+  String get resourceBreakdownImports => 'Invoer';
+
+  @override
+  String get resourceBreakdownExports => 'Uitvoer';
+
+  @override
+  String get resourceBreakdownAllocations => 'Productietoewijzingen';
+
+  @override
+  String get resourceBreakdownNoAllocations =>
+      'Er zijn geen strategische grondstoffen toegewezen.';
 
   @override
   String get technologyRecommendationsTitle => 'Aanbevolen onderzoek';
@@ -6514,6 +6548,14 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get hudFeedbackActionBlockedBody =>
       'Deze actie is momenteel geblokkeerd. Kies een andere tegel of een ander commando.';
+
+  @override
+  String get hudFeedbackProductionStrategicResourceShortageTitle =>
+      'Tekort aan strategische grondstoffen';
+
+  @override
+  String get hudFeedbackProductionStrategicResourceShortageBody =>
+      'De voorraad veranderde voordat de opdracht werd aanvaard. Controleer de beschikbare grondstoffen en kies de productie opnieuw.';
 
   @override
   String get hudFeedbackAttackProtectedByTreatyTitle =>
@@ -7743,6 +7785,35 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String cityProductionPaceShort(int production) {
     return '$production prod./beurt';
+  }
+
+  @override
+  String cityProductionStrategicCost(String resources) {
+    return 'Kosten: $resources';
+  }
+
+  @override
+  String cityProductionStrategicAllocated(String resources) {
+    return 'Toegewezen: $resources';
+  }
+
+  @override
+  String cityProductionStrategicMissing(String resources) {
+    return 'Onvoldoende voorraad: $resources';
+  }
+
+  @override
+  String cityProductionStrategicAvailable(
+    int available,
+    int required,
+    String resource,
+  ) {
+    return '$available/$required $resource';
+  }
+
+  @override
+  String cityProductionStrategicFree(String resources) {
+    return 'Beschikbaar: $resources';
   }
 
   @override

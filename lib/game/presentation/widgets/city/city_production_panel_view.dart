@@ -91,6 +91,8 @@ class _CityProductionPanelHeader extends StatelessWidget {
       closeTooltip: data.l10n.closeAction,
       onClose: panel.onClose,
       compact: data.compact,
+      strategicResourceSummaryLabel:
+          data.viewModel.strategicResourceSummaryLabel,
     );
   }
 }
@@ -117,6 +119,7 @@ class _CityProductionActiveItem extends StatelessWidget {
       investedProduction: item.investedProduction,
       progress: item.progress,
       metaLabels: item.metaLabels,
+      strategicResourceLabel: item.strategicResourceLabel,
       canBeRushed: item.canBeRushed,
       rushGoldCost: item.rushGoldCost,
       playerGold: playerGold,

@@ -2948,6 +2948,14 @@
       }
     }
   },
+  "topResourceStrategicResourcesTooltip": "Zasoby strategiczne: dostępne {availableTypes}/{totalTypes} • niedobory {shortageTypes}",
+  "@topResourceStrategicResourcesTooltip": {
+    "placeholders": {
+      "availableTypes": {"type": "int"},
+      "totalTypes": {"type": "int"},
+      "shortageTypes": {"type": "int"}
+    }
+  },
   "topResourceGoldTooltip": "Złoto: {gold} • dochód +{goldIncome} • utrzymanie -{unitUpkeep} • netto {net} / turę",
   "@topResourceGoldTooltip": {
     "placeholders": {
@@ -3017,6 +3025,14 @@
   "resourceBreakdownResourceTypes": "Typy zasobów",
   "resourceBreakdownTypesSection": "Typy",
   "resourceBreakdownSourcesSection": "Źródła",
+  "resourceBreakdownStrategicStockpiles": "Zapasy strategiczne",
+  "resourceBreakdownStored": "Zapas",
+  "resourceBreakdownAllocated": "Przydzielono",
+  "resourceBreakdownDomesticProduction": "Produkcja krajowa",
+  "resourceBreakdownImports": "Import",
+  "resourceBreakdownExports": "Eksport",
+  "resourceBreakdownAllocations": "Przydziały produkcji",
+  "resourceBreakdownNoAllocations": "Brak przydzielonych zasobów strategicznych.",
   "technologyRecommendationsTitle": "Rekomendowane badania",
   "technologyShowTreeAction": "Pokaż drzewo",
   "technologyShowTreeCountAction": "Pokaż drzewo ({count})",
@@ -3589,6 +3605,8 @@
   "hudFeedbackArtifactGuidanceBody": "Dostarcz go do własnego miasta i złóż w pustym slocie artefaktu.",
   "hudFeedbackActionBlockedTitle": "Akcja niedostępna",
   "hudFeedbackActionBlockedBody": "Ta akcja jest teraz zablokowana. Wybierz inne pole albo inną komendę.",
+  "hudFeedbackProductionStrategicResourceShortageTitle": "Niedobór zasobu strategicznego",
+  "hudFeedbackProductionStrategicResourceShortageBody": "Zapas zmienił się przed przyjęciem rozkazu. Sprawdź dostępne zasoby i ponownie wybierz produkcję.",
   "hudFeedbackAttackProtectedByTreatyTitle": "Traktat blokuje atak",
   "hudFeedbackAttackProtectedByTreatyBody": "Nie możesz zaatakować jednostki cywilizacji, z którą masz sojusz albo rozejm. Najpierw zmień relacje dyplomatyczne.",
   "hudFeedbackMovementCityOccupiedTitle": "Miasto zajęte",
@@ -4545,6 +4563,16 @@
       }
     }
   },
+  "cityProductionStrategicCost": "Koszt: {resources}",
+  "@cityProductionStrategicCost": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicAllocated": "Przydzielono: {resources}",
+  "@cityProductionStrategicAllocated": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicMissing": "Niewystarczający zapas: {resources}",
+  "@cityProductionStrategicMissing": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicAvailable": "{available}/{required} {resource}",
+  "@cityProductionStrategicAvailable": {"placeholders": {"available": {"type": "int"}, "required": {"type": "int"}, "resource": {"type": "String"}}},
+  "cityProductionStrategicFree": "Dostępne: {resources}",
+  "@cityProductionStrategicFree": {"placeholders": {"resources": {"type": "String"}}},
   "cityBuildingSortRecommended": "Polecane",
   "cityBuildingReplaceProgressWarning": "Wybór innego budynku zastąpi {building}. Postęp zostanie zachowany.",
   "@cityBuildingReplaceProgressWarning": {

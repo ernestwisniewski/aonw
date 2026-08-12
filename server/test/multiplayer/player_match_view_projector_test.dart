@@ -232,6 +232,13 @@ void _expectOwnerRuleProjection(DomainState state) {
   expect(state.playerGold, {'player-owner': 111});
   expect(state.playerWarWeariness, {'player-owner': 3});
   expect(state.playerStabilityNet, {'player-owner': 4});
+  expect(state.strategicResources.byPlayerId.keys, ['player-owner']);
+  expect(
+    state.strategicResources
+        .forPlayer('player-owner')
+        .amountFor(ResourceType.oil),
+    2,
+  );
   expect(state.fogOfWar.playerIds, ['player-owner']);
   expect(state.research.players.keys, ['player-owner']);
   expect(state.units.map((unit) => unit.id), [
@@ -300,6 +307,13 @@ void _expectOwnerRuntimeProjection(DomainState state) {
 
 void _expectGuestProjection(DomainState state) {
   final runtime = state;
+  expect(state.strategicResources.byPlayerId.keys, ['player-guest']);
+  expect(
+    state.strategicResources
+        .forPlayer('player-guest')
+        .amountFor(ResourceType.aluminium),
+    1,
+  );
   expect(
     runtime.transportNetwork.segments.map((segment) => segment.hex).toSet(),
     {const HexCoord(col: 4, row: 4), const HexCoord(col: 6, row: 6)},

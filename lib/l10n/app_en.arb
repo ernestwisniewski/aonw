@@ -2967,6 +2967,14 @@
       }
     }
   },
+  "topResourceStrategicResourcesTooltip": "Strategic resources: {availableTypes}/{totalTypes} available • {shortageTypes} shortages",
+  "@topResourceStrategicResourcesTooltip": {
+    "placeholders": {
+      "availableTypes": {"type": "int"},
+      "totalTypes": {"type": "int"},
+      "shortageTypes": {"type": "int"}
+    }
+  },
   "topResourceGoldTooltip": "Gold: {gold} • income +{goldIncome} • upkeep -{unitUpkeep} • net {net} / turn",
   "@topResourceGoldTooltip": {
     "placeholders": {
@@ -3036,6 +3044,14 @@
   "resourceBreakdownResourceTypes": "Resource types",
   "resourceBreakdownTypesSection": "Types",
   "resourceBreakdownSourcesSection": "Sources",
+  "resourceBreakdownStrategicStockpiles": "Strategic stockpiles",
+  "resourceBreakdownStored": "Stored",
+  "resourceBreakdownAllocated": "Allocated",
+  "resourceBreakdownDomesticProduction": "Domestic production",
+  "resourceBreakdownImports": "Imports",
+  "resourceBreakdownExports": "Exports",
+  "resourceBreakdownAllocations": "Production allocations",
+  "resourceBreakdownNoAllocations": "No strategic resources are allocated.",
   "technologyRecommendationsTitle": "Recommended research",
   "technologyShowTreeAction": "Show tree",
   "technologyShowTreeCountAction": "Show tree ({count})",
@@ -3608,6 +3624,8 @@
   "hudFeedbackArtifactGuidanceBody": "Deliver it to one of your cities and place it in an empty artifact slot.",
   "hudFeedbackActionBlockedTitle": "Action unavailable",
   "hudFeedbackActionBlockedBody": "This action is blocked right now. Choose another tile or another command.",
+  "hudFeedbackProductionStrategicResourceShortageTitle": "Strategic resource shortage",
+  "hudFeedbackProductionStrategicResourceShortageBody": "The stockpile changed before the order was accepted. Review the available resources and choose production again.",
   "hudFeedbackAttackProtectedByTreatyTitle": "Treaty blocks attack",
   "hudFeedbackAttackProtectedByTreatyBody": "You cannot attack a unit from a civilization that has an alliance or a truce with you. Change diplomatic relations first.",
   "hudFeedbackMovementCityOccupiedTitle": "City occupied",
@@ -4528,6 +4546,16 @@
       }
     }
   },
+  "cityProductionStrategicCost": "Cost: {resources}",
+  "@cityProductionStrategicCost": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicAllocated": "Allocated: {resources}",
+  "@cityProductionStrategicAllocated": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicMissing": "Insufficient stock: {resources}",
+  "@cityProductionStrategicMissing": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicAvailable": "{available}/{required} {resource}",
+  "@cityProductionStrategicAvailable": {"placeholders": {"available": {"type": "int"}, "required": {"type": "int"}, "resource": {"type": "String"}}},
+  "cityProductionStrategicFree": "Available: {resources}",
+  "@cityProductionStrategicFree": {"placeholders": {"resources": {"type": "String"}}},
   "cityBuildingSortRecommended": "Recommended",
   "cityBuildingReplaceProgressWarning": "Choosing another building will replace {building}. Progress will be preserved.",
   "@cityBuildingReplaceProgressWarning": {

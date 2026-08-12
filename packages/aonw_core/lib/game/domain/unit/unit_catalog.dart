@@ -1,4 +1,5 @@
 import 'package:aonw_core/game/domain/combat/combat_stats.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 import 'package:aonw_core/game/domain/unit/unit_capabilities.dart';
 import 'package:aonw_core/game/domain/unit/unit_movement_domain.dart';
@@ -6,47 +7,47 @@ import 'package:aonw_core/game/domain/unit/unit_production_requirement.dart';
 import 'package:aonw_core/game/domain/unit/unit_spec.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
+const _landMilitary = UnitCapabilities(
+  producibleByCities: true,
+  movementDomain: UnitMovementDomain.land,
+  gainsExperience: true,
+  military: true,
+  recon: false,
+);
+
+const _navalMilitary = UnitCapabilities(
+  producibleByCities: true,
+  movementDomain: UnitMovementDomain.naval,
+  gainsExperience: true,
+  military: true,
+  recon: false,
+);
+
+const _civilian = UnitCapabilities(
+  producibleByCities: true,
+  movementDomain: UnitMovementDomain.land,
+  gainsExperience: false,
+  military: false,
+  recon: false,
+);
+
+const _landRecon = UnitCapabilities(
+  producibleByCities: true,
+  movementDomain: UnitMovementDomain.land,
+  gainsExperience: true,
+  military: true,
+  recon: true,
+);
+
+const _navalRecon = UnitCapabilities(
+  producibleByCities: true,
+  movementDomain: UnitMovementDomain.naval,
+  gainsExperience: true,
+  military: true,
+  recon: true,
+);
+
 abstract final class UnitCatalog {
-  static const _landMilitary = UnitCapabilities(
-    producibleByCities: true,
-    movementDomain: UnitMovementDomain.land,
-    gainsExperience: true,
-    military: true,
-    recon: false,
-  );
-
-  static const _navalMilitary = UnitCapabilities(
-    producibleByCities: true,
-    movementDomain: UnitMovementDomain.naval,
-    gainsExperience: true,
-    military: true,
-    recon: false,
-  );
-
-  static const _civilian = UnitCapabilities(
-    producibleByCities: true,
-    movementDomain: UnitMovementDomain.land,
-    gainsExperience: false,
-    military: false,
-    recon: false,
-  );
-
-  static const _landRecon = UnitCapabilities(
-    producibleByCities: true,
-    movementDomain: UnitMovementDomain.land,
-    gainsExperience: true,
-    military: true,
-    recon: true,
-  );
-
-  static const _navalRecon = UnitCapabilities(
-    producibleByCities: true,
-    movementDomain: UnitMovementDomain.naval,
-    gainsExperience: true,
-    military: true,
-    recon: true,
-  );
-
   static const standard = <GameUnitType, UnitSpec>{
     GameUnitType.commander: UnitSpec(
       type: GameUnitType.commander,
@@ -259,7 +260,7 @@ abstract final class UnitCatalog {
       type: GameUnitType.tank,
       productionCost: 84,
       requirements: [
-        UnitResourceRequirement({ResourceType.oil}),
+        UnitStockpileCostRequirement([StrategicResourceBundle.oilTwo]),
       ],
       baseStats: CombatStats(
         attack: 13,
@@ -310,7 +311,10 @@ abstract final class UnitCatalog {
       type: GameUnitType.reconPlane,
       productionCost: 62,
       requirements: [
-        UnitResourceRequirement({ResourceType.aluminium, ResourceType.oil}),
+        UnitStockpileCostRequirement([
+          StrategicResourceBundle.aluminiumOne,
+          StrategicResourceBundle.oilOne,
+        ]),
       ],
       baseStats: CombatStats(
         attack: 1,

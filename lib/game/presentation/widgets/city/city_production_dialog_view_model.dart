@@ -9,6 +9,7 @@ import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/trade.dart';
@@ -18,6 +19,7 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 
 part 'city_production_dialog_view_model_helpers.dart';
 part 'city_production_dialog_view_model_queries.dart';
+part 'city_production_dialog_unit_items.dart';
 
 class CityProductionDialogViewModel {
   const CityProductionDialogViewModel({
@@ -31,6 +33,7 @@ class CityProductionDialogViewModel {
     required this.units,
     required this.projects,
     required this.specializations,
+    this.strategicResourceSummaryLabel,
   });
 
   final String cityName;
@@ -43,6 +46,7 @@ class CityProductionDialogViewModel {
   final List<CityProductionItem> units;
   final List<CityProductionItem> projects;
   final List<CitySpecializationItem> specializations;
+  final String? strategicResourceSummaryLabel;
 
   static CityProductionDialogViewModel from(
     GameCity city, {
@@ -58,6 +62,10 @@ class CityProductionDialogViewModel {
     List<WorldArtifact> artifacts = const [],
     required List<FieldImprovement> fieldImprovements,
     Iterable<ResourceTradeAgreement> resourceTradeAgreements = const [],
+    StrategicResourceAccounts strategicResources =
+        StrategicResourceAccounts.empty,
+    StrategicResourceEconomyProfile strategicResourceEconomy =
+        StrategicResourceEconomyProfile.legacyPresenceV0,
     required int productionPerTurn,
     int? currentTurn,
     PaceBalance paceBalance = PaceBalance.unlimited,
@@ -168,104 +176,33 @@ class CityProductionDialogViewModel {
       cities: playerCities,
       units: units,
     );
-    final unitItems = <CityProductionItem>[];
-    for (final type in cityRuleset.units.keys) {
-      final technologyUnlocked = TechnologyUnlockQuery.hasUnitUnlocked(
-        playerId: city.ownerPlayerId,
-        unitType: type,
-        research: research,
-        ruleset: technologyRuleset,
-      );
-      if (!CityProductionRules.canProduceUnit(
-        type,
-        ruleset: cityRuleset,
-        technologyUnlocked: technologyUnlocked,
-      )) {
-        continue;
-      }
-      final active = activeUnitType == type;
-      final missingResourceChoices = mapData == null
-          ? const <ResourceType>{}
-          : UnitProductionRequirementRules.missingResourceChoices(
-              playerId: city.ownerPlayerId,
-              unitType: type,
-              cities: playerCities,
-              mapTiles: mapData,
-              ruleset: cityRuleset,
-              research: research,
-              resourceTradeAgreements: resourceTradeAgreements,
-            );
-      final resourceBlocked = !active && missingResourceChoices.isNotEmpty;
-      final coastalBlocked =
-          !active &&
-          mapData != null &&
-          !CityUnitProductionRules.canProduceInCity(
-            city: city,
-            unitType: type,
-            mapTiles: mapData,
-          );
-      final cost = CityProductionRules.unitProductionCost(
-        type,
-        ruleset: cityRuleset,
-        paceBalance: paceBalance,
-      );
-      final unitProductionPerTurn =
-          CitySpecializationRules.productionPerTurnForTarget(
-            productionPerTurn: CityTechnologyEffectRules.unitProductionPerTurn(
-              effectiveProduction,
-              effects: technologyEffects,
-            ),
-            target: UnitProductionTarget(type),
-            specialization: city.specialization,
-          );
-      final supplyCost = CityUnitSupplyRules.supplyCostForType(type);
-      final supplyBlocked =
-          !active &&
-          unitSupply != null &&
-          unitSupply.used + supplyCost > unitSupply.capacity;
-      final requirementLabel = coastalBlocked
-          ? l10n.requirementCoastalAccess
-          : resourceBlocked
-          ? l10n.requirementResourcesName(
-              ResourceRequirementDisplayNames.alternatives(
-                l10n,
-                missingResourceChoices,
-              ),
-            )
-          : supplyBlocked
-          ? l10n.cityProductionUnitSupplyLimit(
-              unitSupply.used,
-              unitSupply.capacity,
-            )
-          : null;
-      final invested = active ? city.productionQueue!.investedProduction : 0;
-      unitItems.add(
-        CityProductionItem.unit(
-          l10n: l10n,
-          type: type,
-          title: GameDisplayNames.unitType(l10n, type),
-          active: active,
-          investedProduction: invested,
-          totalCost: cost,
-          productionPerTurn: unitProductionPerTurn,
-          turnsRemaining: CityProductionRules.estimatedTurnsRemaining(
-            productionCost: cost,
-            investedProduction: invested,
-            productionPerTurn: unitProductionPerTurn,
-          ),
-          currentTurn: currentTurn,
-          locked: supplyBlocked || coastalBlocked || resourceBlocked,
-          requirementLabel: requirementLabel,
-          metaLabels: _unitMetaLabels(
-            type: type,
-            supplyCost: supplyCost,
-            unitSupply: unitSupply,
-            unitUpkeep: unitUpkeep,
-            l10n: l10n,
-          ),
-        ),
-      );
-    }
+    final stockpilesEnabled =
+        strategicResourceEconomy == StrategicResourceEconomyProfile.stockpileV1;
+    final strategicResourceSummaryLabel = _strategicFreeSummary(
+      enabled: stockpilesEnabled,
+      playerId: city.ownerPlayerId,
+      accounts: strategicResources,
+      l10n: l10n,
+    );
+    final unitItems = _productionUnitItems(
+      city: city,
+      playerCities: playerCities,
+      activeUnitType: activeUnitType,
+      cityRuleset: cityRuleset,
+      technologyRuleset: technologyRuleset,
+      research: research,
+      mapData: mapData,
+      resourceTradeAgreements: resourceTradeAgreements,
+      strategicResources: strategicResources,
+      stockpilesEnabled: stockpilesEnabled,
+      effectiveProduction: effectiveProduction,
+      technologyEffects: technologyEffects,
+      unitSupply: unitSupply,
+      unitUpkeep: unitUpkeep,
+      currentTurn: currentTurn,
+      paceBalance: paceBalance,
+      l10n: l10n,
+    );
     final projects = CityProjectItemFactory.build(
       l10n: l10n,
       productionPerTurn: effectiveProduction,
@@ -320,6 +257,7 @@ class CityProductionDialogViewModel {
       units: unitItems,
       projects: projects,
       specializations: specializations,
+      strategicResourceSummaryLabel: strategicResourceSummaryLabel,
     );
   }
 }

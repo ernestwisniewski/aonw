@@ -19,6 +19,8 @@ class DispatchCommandResult {
   final int authoritativeTick;
   final int authoritativeStartMicrosUtc;
   final bool storedSnapshot;
+  final bool accepted;
+  final String? rejectionReason;
 
   DispatchCommandResult({
     required this.state,
@@ -31,6 +33,8 @@ class DispatchCommandResult {
     int? authoritativeTick,
     int? authoritativeStartMicrosUtc,
     this.storedSnapshot = false,
+    this.accepted = true,
+    this.rejectionReason,
   }) : authoritativeTick = authoritativeTick ?? offset,
        authoritativeStartMicrosUtc =
            authoritativeStartMicrosUtc ??
@@ -67,6 +71,8 @@ class DispatchCommandUseCase {
       authoritativeTick: result.authoritativeTick,
       authoritativeStartMicrosUtc: result.authoritativeStartMicrosUtc,
       storedSnapshot: result.storedSnapshot,
+      accepted: result.accepted,
+      rejectionReason: result.rejectionReason,
     );
   }
 }

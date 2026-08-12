@@ -70,6 +70,8 @@ extension _CityProductionPanelDetails on _CityProductionPanelState {
       artifacts: widget.artifacts,
       fieldImprovements: widget.fieldImprovements,
       resourceTradeAgreements: widget.resourceTradeAgreements,
+      strategicResources: widget.strategicResources,
+      strategicResourceEconomy: widget.strategicResourceEconomy,
       productionPerTurn: widget.productionPerTurn,
       currentTurn: widget.currentTurn,
       paceBalance: widget.paceBalance,
@@ -133,10 +135,13 @@ extension _CityProductionPanelDetails on _CityProductionPanelState {
           icon: item.icon ?? gameIconForUnitType(unitType),
           statusLabel: item.active
               ? l10n.productionInProgressLabel
+              : item.locked
+              ? l10n.productionButtonLocked
               : l10n.cityProductionAvailableUnitLabel,
           costLabel: l10n.cityProductionCostShort(definition.productionCost),
           progressLabel: _buildingProgressLabel(l10n, item),
           paceLabel: l10n.cityProductionPaceShort(item.productionPerTurn),
+          additionalRequirementLines: item.unitRequirementLines,
           maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.78,
           onClose: () => Navigator.of(dialogContext).maybePop(),
         ),

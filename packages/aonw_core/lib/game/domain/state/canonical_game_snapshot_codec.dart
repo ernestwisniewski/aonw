@@ -6,6 +6,7 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
@@ -136,6 +137,8 @@ abstract final class CanonicalGameSnapshotCodec {
     'playerGold': {...domain.playerGold},
     'playerWarWeariness': {...domain.playerWarWeariness},
     'playerStabilityNet': {...domain.playerStabilityNet},
+    if (domain.strategicResources.byPlayerId.isNotEmpty)
+      'strategicResources': domain.strategicResources.toJson(),
     'units': [for (final unit in domain.units) unit.toJson()],
     'cities': [for (final city in domain.cities) city.toJson()],
     'artifacts': [for (final artifact in domain.artifacts) artifact.toJson()],
@@ -177,6 +180,7 @@ DomainState _domainFromDecoded(
   playerGold: decoded.playerGold,
   playerWarWeariness: decoded.playerWarWeariness,
   playerStabilityNet: decoded.playerStabilityNet,
+  strategicResources: decoded.strategicResources,
   units: decoded.units,
   cities: decoded.cities,
   artifacts: decoded.artifacts,
@@ -202,6 +206,7 @@ final class _DecodedState {
     required this.playerGold,
     required this.playerWarWeariness,
     required this.playerStabilityNet,
+    required this.strategicResources,
     required this.units,
     required this.cities,
     required this.artifacts,
@@ -230,6 +235,7 @@ final class _DecodedState {
   final Map<String, int> playerGold;
   final Map<String, int> playerWarWeariness;
   final Map<String, int> playerStabilityNet;
+  final StrategicResourceAccounts strategicResources;
   final List<GameUnit> units;
   final List<GameCity> cities;
   final List<WorldArtifact> artifacts;
@@ -261,6 +267,9 @@ _DecodedState _decodeState(Map<String, dynamic> state) {
     playerGold: _intMap(state['playerGold']),
     playerWarWeariness: _intMap(state['playerWarWeariness']),
     playerStabilityNet: _intMap(state['playerStabilityNet']),
+    strategicResources: StrategicResourceAccounts.fromJson(
+      state['strategicResources'],
+    ),
     units: _decodeJsonList(state['units'], GameUnit.fromJson),
     cities: _decodeJsonList(state['cities'], GameCity.fromJson),
     artifacts: _decodeJsonList(state['artifacts'], WorldArtifact.fromJson),
@@ -359,6 +368,7 @@ Set<String> _statePlayerIds(_DecodedState state) {
     ...state.playerGold.keys,
     ...state.playerWarWeariness.keys,
     ...state.playerStabilityNet.keys,
+    ...state.strategicResources.byPlayerId.keys,
     ...state.fogOfWar.playerIds,
     ...state.research.players.keys,
     ...state.submittedPlayerIds,

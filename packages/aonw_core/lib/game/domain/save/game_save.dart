@@ -10,7 +10,7 @@ export 'package:aonw_core/game/domain/state/game_mode.dart';
 part 'game_save.freezed.dart';
 part 'game_save.g.dart';
 
-const gameSaveCurrentSchemaVersion = 4;
+const gameSaveCurrentSchemaVersion = 5;
 
 @freezed
 abstract class CameraState with _$CameraState {
@@ -58,7 +58,7 @@ abstract class GameSave with _$GameSave {
   }) = _GameSave;
 
   factory GameSave.fromJson(Map<String, dynamic> json) =>
-      _$GameSaveFromJson(_withLegacyOrigin(json));
+      _$GameSaveFromJson(_withLegacySaveDefaults(json));
 
   GameSave withPlayerFinished(String playerId) {
     if (!playerStates.containsKey(playerId)) return this;
@@ -109,6 +109,15 @@ abstract class GameSaveIndex with _$GameSaveIndex {
 Map<String, dynamic> _withLegacyOrigin(Map<String, dynamic> json) {
   if (json['origin'] != null) return json;
   return {...json, 'origin': GameSaveOrigin.legacy.name};
+}
+
+Map<String, dynamic> _withLegacySaveDefaults(Map<String, dynamic> json) {
+  final withOrigin = _withLegacyOrigin(json);
+  if (withOrigin['ruleset'] != null) return withOrigin;
+  final legacyRules = MatchRules.standard.copyWith(
+    strategicResourceEconomy: StrategicResourceEconomyProfile.legacyPresenceV0,
+  );
+  return {...withOrigin, 'ruleset': legacyRules.toJson()};
 }
 
 DateTime _dateTimeFromJson(String value) => DateTime.parse(value);

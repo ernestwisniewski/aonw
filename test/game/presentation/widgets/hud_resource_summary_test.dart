@@ -3,8 +3,11 @@ import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_econom
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_summary.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/trade.dart';
+import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -320,6 +323,86 @@ void main() {
       expect(summary.stabilityDetails.breakdown.baseOrder, 6);
       expect(summary.stabilityDetails.breakdown.cityCost, 0);
     });
+
+    test('reports strategic stock, allocation, and per-turn flow together', () {
+      final city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'Refinery City',
+        center: const CityHex(col: 0, row: 0),
+        population: 8,
+        productionQueue: CityProductionQueue.unit(
+          unitType: GameUnitType.tank,
+          investedProduction: 0,
+          resourceAllocation: StrategicResourceBundle.oilTwo,
+        ),
+      );
+      final summary = HudResourceSummary.fromGameState(
+        state: GameClientState(
+          cities: [city],
+          strategicResources: StrategicResourceAccounts(
+            byPlayerId: {
+              'player_1': StrategicResourceStockpile(
+                onHand: StrategicResourceBundle.oilOne,
+              ),
+            },
+          ),
+          research: ResearchState(
+            players: {
+              'player_1': PlayerResearchState(
+                unlockedTechnologyIds: {
+                  TechnologyId.combustion,
+                  TechnologyId.massProduction,
+                },
+              ),
+            },
+          ),
+          fieldImprovements: const [
+            FieldImprovement(
+              hex: CityHex(col: 0, row: 0),
+              type: FieldImprovementType.oilWell,
+              builtByCityId: 'city_1',
+            ),
+          ],
+          resourceTradeAgreements: const [
+            ResourceTradeAgreement(
+              id: 'import_oil',
+              exporterPlayerId: 'player_2',
+              importerPlayerId: 'player_1',
+              resource: ResourceType.oil,
+              goldPerTurn: 2,
+              remainingTurns: 4,
+            ),
+            ResourceTradeAgreement(
+              id: 'export_oil',
+              exporterPlayerId: 'player_1',
+              importerPlayerId: 'player_3',
+              resource: ResourceType.oil,
+              goldPerTurn: 2,
+              remainingTurns: 4,
+            ),
+          ],
+        ),
+        playerId: 'player_1',
+        mapData: _oilMap(),
+        cityRuleset: CityRulesets.standard,
+        technologyRuleset: TechnologyRulesets.standard,
+      );
+
+      final oil = summary.strategicResources.rows.singleWhere(
+        (row) => row.resource == ResourceType.oil,
+      );
+      expect(summary.strategicResources.enabled, isTrue);
+      expect(oil.available, 1);
+      expect(oil.allocated, 2);
+      expect(oil.storedTotal, 3);
+      expect(oil.domesticProduction, 1);
+      expect(oil.imports, 1);
+      expect(oil.exports, 1);
+      expect(oil.netPerTurn, 1);
+      expect(oil.shortage, isTrue);
+      expect(summary.strategicResources.allocations.single.city, city);
+    });
   });
 }
 
@@ -340,6 +423,20 @@ WorldMap _landMap() {
     ],
   );
 }
+
+WorldMap _oilMap() => WorldMap(
+  cols: 1,
+  rows: 1,
+  tiles: [
+    WorldTile(
+      col: 0,
+      row: 0,
+      terrains: const [TerrainType.plains],
+      resources: const [ResourceType.oil],
+      height: 0,
+    ),
+  ],
+);
 
 WorldMap _twoCityLandMap() {
   return WorldMap(

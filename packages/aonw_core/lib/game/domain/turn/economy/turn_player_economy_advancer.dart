@@ -8,6 +8,7 @@ import 'package:aonw_core/game/domain/turn/economy/turn_economy_context.dart';
 import 'package:aonw_core/game/domain/turn/economy/turn_economy_science.dart';
 import 'package:aonw_core/game/domain/turn/economy/turn_economy_state.dart';
 import 'package:aonw_core/game/domain/turn/economy/turn_research_economy_advancer.dart';
+import 'package:aonw_core/game/domain/turn/economy/turn_strategic_resource_production_advancer.dart';
 import 'package:aonw_core/game/domain/turn/economy/turn_worker_economy_advancer.dart';
 
 abstract final class TurnPlayerEconomyAdvancer {
@@ -16,8 +17,13 @@ abstract final class TurnPlayerEconomyAdvancer {
     required String playerId,
     required TurnEconomyContext context,
   }) {
-    final city = TurnCityEconomyAdvancer.advance(
+    final resources = TurnStrategicResourceProductionAdvancer.advance(
       state: state,
+      playerId: playerId,
+      context: context,
+    );
+    final city = TurnCityEconomyAdvancer.advance(
+      state: resources,
       playerId: playerId,
       context: context,
     );

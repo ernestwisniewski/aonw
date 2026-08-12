@@ -65,6 +65,16 @@ final _playerMatchViewState = DomainState.snapshot(
   playerGold: const {'player-owner': 111, 'player-guest': 999999},
   playerWarWeariness: const {'player-owner': 3, 'player-guest': 77},
   playerStabilityNet: const {'player-owner': 4, 'player-guest': -99},
+  strategicResources: StrategicResourceAccounts(
+    byPlayerId: {
+      'player-owner': StrategicResourceStockpile(
+        onHand: StrategicResourceBundle.oilTwo,
+      ),
+      'player-guest': StrategicResourceStockpile(
+        onHand: StrategicResourceBundle.aluminiumOne,
+      ),
+    },
+  ),
   units: [
     GameUnit(
       id: 'own-unit',

@@ -2948,6 +2948,14 @@
       }
     }
   },
+  "topResourceStrategicResourcesTooltip": "Strategische Ressourcen: {availableTypes}/{totalTypes} verfügbar • {shortageTypes} Engpässe",
+  "@topResourceStrategicResourcesTooltip": {
+    "placeholders": {
+      "availableTypes": {"type": "int"},
+      "totalTypes": {"type": "int"},
+      "shortageTypes": {"type": "int"}
+    }
+  },
   "topResourceGoldTooltip": "Gold: {gold} • Einkommen +{goldIncome} • Unterhalt -{unitUpkeep} • Netto {net} / Zug",
   "@topResourceGoldTooltip": {
     "placeholders": {
@@ -3017,6 +3025,14 @@
   "resourceBreakdownResourceTypes": "Ressourcentypen",
   "resourceBreakdownTypesSection": "Typen",
   "resourceBreakdownSourcesSection": "Quellen",
+  "resourceBreakdownStrategicStockpiles": "Strategische Vorräte",
+  "resourceBreakdownStored": "Vorrat",
+  "resourceBreakdownAllocated": "Zugewiesen",
+  "resourceBreakdownDomesticProduction": "Inlandsproduktion",
+  "resourceBreakdownImports": "Importe",
+  "resourceBreakdownExports": "Exporte",
+  "resourceBreakdownAllocations": "Produktionszuweisungen",
+  "resourceBreakdownNoAllocations": "Keine strategischen Ressourcen sind zugewiesen.",
   "technologyRecommendationsTitle": "Empfohlene Forschung",
   "technologyShowTreeAction": "Baum anzeigen",
   "technologyShowTreeCountAction": "Baum anzeigen ({count})",
@@ -3572,6 +3588,8 @@
   "hudFeedbackArtifactGuidanceBody": "Bringe es in eine deiner Städte und platziere es in einem leeren Artefaktplatz.",
   "hudFeedbackActionBlockedTitle": "Aktion nicht verfügbar",
   "hudFeedbackActionBlockedBody": "Diese Aktion ist derzeit blockiert. Wähle ein anderes Feld oder einen anderen Befehl.",
+  "hudFeedbackProductionStrategicResourceShortageTitle": "Engpass bei strategischen Ressourcen",
+  "hudFeedbackProductionStrategicResourceShortageBody": "Der Vorrat hat sich vor der Annahme des Befehls geändert. Prüfe die verfügbaren Ressourcen und wähle die Produktion erneut.",
   "hudFeedbackAttackProtectedByTreatyTitle": "Vertrag blockiert Angriff",
   "hudFeedbackAttackProtectedByTreatyBody": "Du kannst keine Einheit einer Zivilisation angreifen, mit der du ein Bündnis oder einen Waffenstillstand hast. Ändere zuerst die diplomatischen Beziehungen.",
   "hudFeedbackMovementCityOccupiedTitle": "Stadt besetzt",
@@ -4528,6 +4546,16 @@
       }
     }
   },
+  "cityProductionStrategicCost": "Kosten: {resources}",
+  "@cityProductionStrategicCost": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicAllocated": "Zugewiesen: {resources}",
+  "@cityProductionStrategicAllocated": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicMissing": "Unzureichender Vorrat: {resources}",
+  "@cityProductionStrategicMissing": {"placeholders": {"resources": {"type": "String"}}},
+  "cityProductionStrategicAvailable": "{available}/{required} {resource}",
+  "@cityProductionStrategicAvailable": {"placeholders": {"available": {"type": "int"}, "required": {"type": "int"}, "resource": {"type": "String"}}},
+  "cityProductionStrategicFree": "Verfügbar: {resources}",
+  "@cityProductionStrategicFree": {"placeholders": {"resources": {"type": "String"}}},
   "cityBuildingSortRecommended": "Empfohlen",
   "cityBuildingReplaceProgressWarning": "Die Wahl eines anderen Gebäudes ersetzt {building}. Der Fortschritt bleibt erhalten.",
   "@cityBuildingReplaceProgressWarning": {

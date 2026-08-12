@@ -280,7 +280,7 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
         await store.saveState(
           running.copyWith(
             snapshot: running.snapshot.copyWith(
-              v: match.id == stale.id ? kLegacySnapshotEventVersion - 1 : null,
+              v: match.id == stale.id ? kOldestSnapshotEventVersion - 1 : null,
               state: persistentState
                   .copyWith(submittedPlayerIds: const {}, turnStartedAt: now)
                   .toJson(),
@@ -320,7 +320,7 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
           createdAt: createdAt,
         ),
         snapshot: WireSnapshot(
-          v: kLegacySnapshotEventVersion - 1,
+          v: kOldestSnapshotEventVersion - 1,
           matchId: id,
           offset: 0,
           save: const {},
@@ -368,7 +368,7 @@ void _registerRealtimeMatchHubTimeoutScenarios() {
             createdAt: createdAt,
           ),
           snapshot: WireSnapshot(
-            v: kLegacySnapshotEventVersion - 1,
+            v: kOldestSnapshotEventVersion - 1,
             matchId: id,
             offset: 0,
             save: const {},

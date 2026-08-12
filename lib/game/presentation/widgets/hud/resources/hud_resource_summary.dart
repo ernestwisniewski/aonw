@@ -2,6 +2,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdowns.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_economy_forecast.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_stability_details.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_strategic_resource_summary.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart'
     show GoldBreakdown;
 import 'package:aonw_core/domain/world_map.dart';
@@ -17,6 +18,7 @@ class HudResourceSummary {
   final int sciencePerTurn;
   final CityResourceInventory resourceInventory;
   final EmpireResourceNetwork resourceNetwork;
+  final HudStrategicResourceSummary strategicResources;
   final HudResourceBreakdowns resourceBreakdowns;
   final int stabilityNet;
   final StabilityBand stabilityBand;
@@ -30,6 +32,7 @@ class HudResourceSummary {
     required this.sciencePerTurn,
     required this.resourceInventory,
     required this.resourceNetwork,
+    required this.strategicResources,
     required this.resourceBreakdowns,
     required this.stabilityNet,
     required this.stabilityBand,
@@ -69,13 +72,12 @@ class HudResourceSummary {
       cache: economyForecastCache,
     );
 
-    final resourceNetwork = EmpireResourceNetworkRules.forPlayer(
+    final resources = _resourceProjections(
+      state: state,
       playerId: playerId,
-      cities: state.cities,
-      mapTiles: mapData,
-      research: state.research,
-      ruleset: cityRuleset,
-      resourceTradeAgreements: state.resourceTradeAgreements,
+      mapData: mapData,
+      cityRuleset: cityRuleset,
+      technologyRuleset: technologyRuleset,
     );
 
     return HudResourceSummary(
@@ -84,8 +86,9 @@ class HudResourceSummary {
       unitUpkeep: economyForecast.unitUpkeep,
       goldPerTurn: economyForecast.goldPerTurn,
       sciencePerTurn: economyForecast.sciencePerTurn,
-      resourceInventory: resourceNetwork.visibleInventory,
-      resourceNetwork: resourceNetwork,
+      resourceInventory: resources.network.visibleInventory,
+      resourceNetwork: resources.network,
+      strategicResources: resources.strategic,
       resourceBreakdowns: HudResourceBreakdowns(
         state: state,
         playerId: playerId,
@@ -117,6 +120,7 @@ class HudResourceSummary {
       sciencePerTurn: 0,
       resourceInventory: CityResourceInventory.empty,
       resourceNetwork: EmpireResourceNetwork.empty,
+      strategicResources: HudStrategicResourceSummary.empty,
       resourceBreakdowns: HudResourceBreakdowns.empty(),
       stabilityNet: 0,
       stabilityBand: StabilityBand.stable,
@@ -124,3 +128,28 @@ class HudResourceSummary {
     );
   }
 }
+
+({EmpireResourceNetwork network, HudStrategicResourceSummary strategic})
+_resourceProjections({
+  required GameClientState state,
+  required String playerId,
+  required WorldMap mapData,
+  required CityRuleset cityRuleset,
+  required TechnologyRuleset technologyRuleset,
+}) => (
+  network: EmpireResourceNetworkRules.forPlayer(
+    playerId: playerId,
+    cities: state.cities,
+    mapTiles: mapData,
+    research: state.research,
+    ruleset: cityRuleset,
+    resourceTradeAgreements: state.resourceTradeAgreements,
+  ),
+  strategic: HudStrategicResourceSummary.fromGameState(
+    state: state,
+    playerId: playerId,
+    mapData: mapData,
+    cityRuleset: cityRuleset,
+    technologyRuleset: technologyRuleset,
+  ),
+);

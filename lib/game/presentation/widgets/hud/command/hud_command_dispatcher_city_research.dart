@@ -53,7 +53,8 @@ extension HudCommandDispatcherCityResearch on HudCommandDispatcher {
   }
 
   Future<void> _closeCityProductionAndDispatch(DomainCommand command) {
-    closeCityProductionPanel(playSound: false);
-    return dispatch(command);
+    return dispatchTransition(command).then((result) {
+      if (result.accepted) closeCityProductionPanel(playSound: false);
+    });
   }
 }

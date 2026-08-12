@@ -116,6 +116,17 @@ void main() {
       expect(back.toJson()['ruleset'], save.matchRules.toJson());
     });
 
+    test('missing legacy ruleset keeps presence-based resource economy', () {
+      final json = _twoPlayerSave().toJson()..remove('ruleset');
+
+      final back = GameSave.fromJson(json);
+
+      expect(
+        back.matchRules.strategicResourceEconomy,
+        StrategicResourceEconomyProfile.legacyPresenceV0,
+      );
+    });
+
     test('falls back to bundled map source for unknown values', () {
       final json = _twoPlayerSave().toJson()..['mapSource'] = 'future_source';
       final back = GameSave.fromJson(json);

@@ -58,6 +58,10 @@ class TopResourceStrip extends StatelessWidget {
     this.turnNumber,
     this.onTurnPressed,
     this.gamepadFocusedTargetId,
+    this.strategicResourcesEnabled = false,
+    this.strategicAvailableTypes = 0,
+    this.strategicTrackedTypes = 0,
+    this.strategicShortageTypes = 0,
     super.key,
   });
 
@@ -70,6 +74,10 @@ class TopResourceStrip extends StatelessWidget {
   final StabilityBand stabilityBand;
   final int resourceTotal;
   final int resourceTypes;
+  final bool strategicResourcesEnabled;
+  final int strategicAvailableTypes;
+  final int strategicTrackedTypes;
+  final int strategicShortageTypes;
   final TopResourcePopupType? openBreakdown;
   final VoidCallback onGoldPressed;
   final VoidCallback onSciencePressed;
@@ -142,23 +150,7 @@ class TopResourceStrip extends StatelessWidget {
         ),
       ),
       const SizedBox(width: 6),
-      _focusablePill(
-        HudGamepadFocusTargetIds.resourceResources,
-        TopResourcePill(
-          key: const Key('gameHud.resource.resources'),
-          icon: GameIcons.resources,
-          title: l10n.commonResources,
-          value: '$resourceTotal',
-          color: GameUiTheme.resourcesAccent,
-          compact: compact,
-          tooltip: l10n.topResourceResourcesTooltip(
-            resourceTotal,
-            resourceTypes,
-          ),
-          active: openBreakdown == TopResourcePopupType.resources,
-          onTap: onResourcesPressed,
-        ),
-      ),
+      _resourcePill(l10n, compact),
       if (turnNumber != null) ...[
         const SizedBox(width: 6),
         _focusablePill(
@@ -232,6 +224,34 @@ class TopResourceStrip extends StatelessWidget {
     }
     if (!_projectedBankruptcy) return base;
     return l10n.topResourceGoldTooltipBankruptcy(base);
+  }
+
+  Widget _resourcePill(AppLocalizations l10n, bool compact) {
+    final value = strategicResourcesEnabled
+        ? '$strategicAvailableTypes/$strategicTrackedTypes'
+        : '$resourceTotal';
+    final tooltip = strategicResourcesEnabled
+        ? l10n.topResourceStrategicResourcesTooltip(
+            strategicAvailableTypes,
+            strategicTrackedTypes,
+            strategicShortageTypes,
+          )
+        : l10n.topResourceResourcesTooltip(resourceTotal, resourceTypes);
+    return _focusablePill(
+      HudGamepadFocusTargetIds.resourceResources,
+      TopResourcePill(
+        key: const Key('gameHud.resource.resources'),
+        icon: GameIcons.resources,
+        title: l10n.commonResources,
+        value: value,
+        color: GameUiTheme.resourcesAccent,
+        compact: compact,
+        critical: strategicResourcesEnabled && strategicShortageTypes > 0,
+        tooltip: tooltip,
+        active: openBreakdown == TopResourcePopupType.resources,
+        onTap: onResourcesPressed,
+      ),
+    );
   }
 
   Widget _focusablePill(String targetId, Widget child) {

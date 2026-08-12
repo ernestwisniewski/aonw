@@ -16,11 +16,15 @@ final class LocalCityEconomyCommandResolution {
     required this.snapshot,
     required this.state,
     required this.events,
+    required this.accepted,
+    this.rejectionReason,
   });
 
   final CanonicalGameSnapshot snapshot;
   final GameClientState state;
   final List<GameEvent> events;
+  final bool accepted;
+  final String? rejectionReason;
 }
 
 final class LocalCityEconomyCommandResolver {
@@ -41,26 +45,29 @@ final class LocalCityEconomyCommandResolver {
   }) {
     if (!context.canAct ||
         (!context.hasActor && !currentState.activePlayerCanAct)) {
-      return _unchanged(baseSnapshot, currentState, savedAt);
+      return _unchanged(
+        baseSnapshot,
+        currentState,
+        savedAt,
+        rejectionReason: 'command_cannot_act',
+      );
     }
-    final result = const GameEngine().apply(
-      snapshot: baseSnapshot.canonical,
+    final result = _applyEngine(
+      baseSnapshot: baseSnapshot,
+      currentState: currentState,
       command: command,
-      context: GameEngineContext(
-        actorPlayerId: _actorPlayerId(
-          snapshot: baseSnapshot,
-          state: currentState,
-          command: command,
-          context: context,
-        ),
-        mapView: mapView,
-        ruleset: ruleset,
-        commandTick: context.commandTick,
-      ),
+      context: context,
     );
-    if (result is GameEngineRejected ||
-        identical(result.snapshot, baseSnapshot.canonical)) {
-      return _unchanged(baseSnapshot, currentState, savedAt);
+    if (result is GameEngineRejected) {
+      return _unchanged(
+        baseSnapshot,
+        currentState,
+        savedAt,
+        rejectionReason: result.reason,
+      );
+    }
+    if (identical(result.snapshot, baseSnapshot.canonical)) {
+      return _unchanged(baseSnapshot, currentState, savedAt, accepted: true);
     }
     final accepted = result as GameEngineAccepted;
     return LocalCityEconomyCommandResolution(
@@ -82,14 +89,38 @@ final class LocalCityEconomyCommandResolver {
         paceBalance: context.paceBalance,
       ),
       events: accepted.events,
+      accepted: true,
     );
   }
+
+  GameEngineResult _applyEngine({
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
+    required DomainCommand command,
+    required GameCommandContext context,
+  }) => const GameEngine().apply(
+    snapshot: baseSnapshot.canonical,
+    command: command,
+    context: GameEngineContext(
+      actorPlayerId: _actorPlayerId(
+        snapshot: baseSnapshot,
+        state: currentState,
+        command: command,
+        context: context,
+      ),
+      mapView: mapView,
+      ruleset: ruleset,
+      commandTick: context.commandTick,
+    ),
+  );
 
   LocalCityEconomyCommandResolution _unchanged(
     CanonicalGameSnapshot snapshot,
     GameClientState state,
-    DateTime savedAt,
-  ) {
+    DateTime savedAt, {
+    bool accepted = false,
+    String? rejectionReason,
+  }) {
     return LocalCityEconomyCommandResolution(
       snapshot: snapshot.withEngineResult(
         resultSnapshot: snapshot.canonical,
@@ -97,6 +128,8 @@ final class LocalCityEconomyCommandResolver {
       ),
       state: state,
       events: const [],
+      accepted: accepted,
+      rejectionReason: rejectionReason,
     );
   }
 

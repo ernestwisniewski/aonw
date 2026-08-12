@@ -125,37 +125,45 @@ class SpecializationLeading extends StatelessWidget {
   }
 }
 
+enum ProductionMetaTone { neutral, accent, warning, danger }
+
 class ProductionMetaPill extends StatelessWidget {
   const ProductionMetaPill(
     this.label, {
     required this.compact,
     this.highlighted = false,
+    this.tone = ProductionMetaTone.neutral,
     super.key,
   });
 
   final String label;
   final bool compact;
   final bool highlighted;
+  final ProductionMetaTone tone;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveTone = highlighted ? ProductionMetaTone.accent : tone;
+    final color = _productionMetaToneColors[effectiveTone.index];
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 6 : 7,
         vertical: compact ? 2 : 3,
       ),
       decoration: SurfaceElevation.flat.decoration(
-        background: highlighted ? GameUiTheme.gold : Colors.white,
-        backgroundAlpha: highlighted ? 28 : 10,
-        borderColor: highlighted ? GameUiTheme.gold : Colors.white,
-        borderAlpha: highlighted ? 100 : 28,
+        background: color,
+        backgroundAlpha: effectiveTone == ProductionMetaTone.neutral ? 10 : 28,
+        borderColor: color,
+        borderAlpha: effectiveTone == ProductionMetaTone.neutral ? 28 : 100,
         borderRadius: BorderRadius.circular(4),
         includeShadow: false,
       ),
       child: Text(
         label,
         style: GameUiTheme.bodySmall.copyWith(
-          color: highlighted ? GameUiTheme.goldLight : GameUiTheme.textMuted,
+          color: effectiveTone == ProductionMetaTone.neutral
+              ? GameUiTheme.textMuted
+              : color,
           fontSize: compact ? 10 : null,
           fontWeight: FontWeight.w700,
         ),
@@ -163,3 +171,10 @@ class ProductionMetaPill extends StatelessWidget {
     );
   }
 }
+
+const _productionMetaToneColors = <Color>[
+  Colors.white,
+  GameUiTheme.gold,
+  GameUiTheme.warning,
+  GameUiTheme.danger,
+];

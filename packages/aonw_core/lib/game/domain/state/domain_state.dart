@@ -6,6 +6,7 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/state/game_mode.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -92,6 +93,8 @@ final class DomainState {
     Map<String, int> playerGold = const {},
     Map<String, int> playerWarWeariness = const {},
     Map<String, int> playerStabilityNet = const {},
+    StrategicResourceAccounts strategicResources =
+        StrategicResourceAccounts.empty,
     List<GameUnit> units = const [],
     List<GameCity> cities = const [],
     List<WorldArtifact> artifacts = const [],
@@ -138,6 +141,7 @@ final class DomainState {
         playerGold: _immutableDomainMap(playerGold),
         playerWarWeariness: _immutableDomainMap(playerWarWeariness),
         playerStabilityNet: _immutableDomainMap(playerStabilityNet),
+        strategicResources: strategicResources,
         units: _immutableDomainList(units),
         cities: _immutableDomainCities(cities),
         artifacts: _immutableDomainList(artifacts),
@@ -181,6 +185,7 @@ final class DomainState {
        playerGold = content.playerGold,
        playerWarWeariness = content.playerWarWeariness,
        playerStabilityNet = content.playerStabilityNet,
+       strategicResources = content.strategicResources,
        units = content.units,
        cities = content.cities,
        artifacts = content.artifacts,
@@ -221,6 +226,7 @@ final class DomainState {
   final Map<String, int> playerGold;
   final Map<String, int> playerWarWeariness;
   final Map<String, int> playerStabilityNet;
+  final StrategicResourceAccounts strategicResources;
   final List<GameUnit> units;
   final List<GameCity> cities;
   final List<WorldArtifact> artifacts;
@@ -260,6 +266,7 @@ final class DomainState {
     ...playerGold.keys,
     ...playerWarWeariness.keys,
     ...playerStabilityNet.keys,
+    ...strategicResources.byPlayerId.keys,
     ...fogOfWar.playerIds,
     ...research.players.keys,
     ...wonderRegistry.completedBy.values,
@@ -277,7 +284,6 @@ final class DomainState {
 
   DomainState copyWith({
     int? turn,
-    MatchRules? matchRules,
     List<Player>? participants,
     GameMode? gameMode,
     Map<String, PlayerTurnState>? turnStatesByPlayerId,
@@ -304,36 +310,49 @@ final class DomainState {
     Map<String, int>? dominationHoldTurnsByPlayerId,
     Map<String, int>? culturalVictoryHoldTurnsByPlayerId,
     Map<String, MapObjectiveHoldState>? mapObjectiveHoldStatesByObjectiveId,
-  }) => _copyDomainState(this, (
-    turn: turn,
-    matchRules: matchRules,
-    participants: participants,
-    gameMode: gameMode,
-    turnStatesByPlayerId: turnStatesByPlayerId,
-    submittedPlayerIds: submittedPlayerIds,
-    timeoutStreaksByPlayerId: timeoutStreaksByPlayerId,
-    afkPlayerIds: afkPlayerIds,
-    kickedPlayerIds: kickedPlayerIds,
-    turnStartedAt: turnStartedAt,
-    actions: actions,
-    playerGold: playerGold,
-    playerWarWeariness: playerWarWeariness,
-    playerStabilityNet: playerStabilityNet,
-    units: units,
-    cities: cities,
-    artifacts: artifacts,
-    fieldImprovements: fieldImprovements,
-    transportNetwork: transportNetwork,
-    fogOfWar: fogOfWar,
-    research: research,
-    wonderRegistry: wonderRegistry,
-    intendedAttacks: intendedAttacks,
-    diplomacy: diplomacy,
-    resourceTradeAgreements: resourceTradeAgreements,
-    dominationHoldTurnsByPlayerId: dominationHoldTurnsByPlayerId,
-    culturalVictoryHoldTurnsByPlayerId: culturalVictoryHoldTurnsByPlayerId,
-    mapObjectiveHoldStatesByObjectiveId: mapObjectiveHoldStatesByObjectiveId,
-  ));
+  }) => _copyDomainState(
+    this,
+    _DomainStateChanges(
+      turn: turn,
+      participants: participants,
+      gameMode: gameMode,
+      turnStatesByPlayerId: turnStatesByPlayerId,
+      submittedPlayerIds: submittedPlayerIds,
+      timeoutStreaksByPlayerId: timeoutStreaksByPlayerId,
+      afkPlayerIds: afkPlayerIds,
+      kickedPlayerIds: kickedPlayerIds,
+      turnStartedAt: turnStartedAt,
+      actions: actions,
+      playerGold: playerGold,
+      playerWarWeariness: playerWarWeariness,
+      playerStabilityNet: playerStabilityNet,
+      units: units,
+      cities: cities,
+      artifacts: artifacts,
+      fieldImprovements: fieldImprovements,
+      transportNetwork: transportNetwork,
+      fogOfWar: fogOfWar,
+      research: research,
+      wonderRegistry: wonderRegistry,
+      intendedAttacks: intendedAttacks,
+      diplomacy: diplomacy,
+      resourceTradeAgreements: resourceTradeAgreements,
+      dominationHoldTurnsByPlayerId: dominationHoldTurnsByPlayerId,
+      culturalVictoryHoldTurnsByPlayerId: culturalVictoryHoldTurnsByPlayerId,
+      mapObjectiveHoldStatesByObjectiveId: mapObjectiveHoldStatesByObjectiveId,
+    ),
+  );
+
+  DomainState withStrategicProductionState({
+    required StrategicResourceAccounts strategicResources,
+    required List<GameCity> cities,
+  }) => _copyDomainState(
+    this,
+    _DomainStateChanges(strategicResources: strategicResources, cities: cities),
+  );
+
+  DomainState withMatchRules(MatchRules matchRules) =>
+      _copyDomainState(this, _DomainStateChanges(matchRules: matchRules));
 
   @override
   bool operator ==(Object other) =>

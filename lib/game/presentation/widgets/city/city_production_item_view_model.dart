@@ -30,6 +30,8 @@ class CityProductionItem {
     this.metaLabels = const [],
     this.continuous = false,
     this.eta = const TurnEta.blocked(),
+    this.strategicResourceLabel,
+    this.strategicResourceShortage = false,
   });
 
   final CityBuildingType? buildingType;
@@ -52,6 +54,13 @@ class CityProductionItem {
   final CityProductionSortMetrics buildingSortMetrics;
   final List<String> metaLabels;
   final bool continuous;
+  final String? strategicResourceLabel;
+  final bool strategicResourceShortage;
+
+  List<String> get unitRequirementLines => [
+    ?strategicResourceLabel,
+    if (locked && requirementLabel != null) requirementLabel!,
+  ];
 
   factory CityProductionItem.building(
     CityBuildingCardViewModel viewModel, {
@@ -102,6 +111,8 @@ class CityProductionItem {
     bool locked = false,
     String? requirementLabel,
     List<String> metaLabels = const [],
+    String? strategicResourceLabel,
+    bool strategicResourceShortage = false,
   }) {
     return CityProductionItem(
       buildingType: null,
@@ -130,6 +141,8 @@ class CityProductionItem {
       requirementLabel: requirementLabel,
       buildingState: null,
       metaLabels: metaLabels,
+      strategicResourceLabel: strategicResourceLabel,
+      strategicResourceShortage: strategicResourceShortage,
     );
   }
 

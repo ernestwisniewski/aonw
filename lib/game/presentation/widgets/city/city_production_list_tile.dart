@@ -38,8 +38,6 @@ class ProductionListTile extends StatelessWidget {
         ? GameUiTheme.textMuted
         : GameUiTheme.textPrimary;
     final rowTap = onTap;
-    final eta = item.effectiveEta;
-
     return Padding(
       padding: EdgeInsets.only(bottom: compact ? 6 : 8),
       child: Material(
@@ -92,44 +90,7 @@ class ProductionListTile extends StatelessWidget {
                       Wrap(
                         spacing: compact ? 6 : 8,
                         runSpacing: 4,
-                        children: item.continuous
-                            ? [
-                                for (final label in item.metaLabels)
-                                  ProductionMetaPill(
-                                    label,
-                                    compact: compact,
-                                    highlighted: item.active,
-                                  ),
-                              ]
-                            : [
-                                ProductionMetaPill(
-                                  l10n.cityProductionCostShort(item.totalCost),
-                                  compact: compact,
-                                ),
-                                ProductionMetaPill(
-                                  eta.turnsLabel(l10n),
-                                  compact: compact,
-                                ),
-                                if (eta.completionTurnLabel(l10n) != null)
-                                  ProductionMetaPill(
-                                    eta.completionTurnLabel(l10n)!,
-                                    compact: compact,
-                                  ),
-                                for (final label in item.metaLabels)
-                                  ProductionMetaPill(label, compact: compact),
-                                if (item.active)
-                                  ProductionMetaPill(
-                                    '${item.investedProduction}/${item.totalCost}',
-                                    compact: compact,
-                                    highlighted: true,
-                                  ),
-                                if (item.locked &&
-                                    item.requirementLabel != null)
-                                  ProductionMetaPill(
-                                    item.requirementLabel!,
-                                    compact: compact,
-                                  ),
-                              ],
+                        children: _metaPills(l10n),
                       ),
                       if (item.active && !item.continuous) ...[
                         const SizedBox(height: 8),
@@ -211,6 +172,48 @@ class ProductionListTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<Widget> _metaPills(AppLocalizations l10n) {
+    if (item.continuous) {
+      return [
+        for (final label in item.metaLabels)
+          ProductionMetaPill(label, compact: compact, highlighted: item.active),
+      ];
+    }
+    final eta = item.effectiveEta;
+    final completionTurn = eta.completionTurnLabel(l10n);
+    return [
+      ProductionMetaPill(
+        l10n.cityProductionCostShort(item.totalCost),
+        compact: compact,
+      ),
+      ProductionMetaPill(eta.turnsLabel(l10n), compact: compact),
+      if (item.strategicResourceLabel case final label?)
+        ProductionMetaPill(
+          label,
+          compact: compact,
+          tone: item.strategicResourceShortage
+              ? ProductionMetaTone.danger
+              : ProductionMetaTone.accent,
+        ),
+      if (completionTurn != null)
+        ProductionMetaPill(completionTurn, compact: compact),
+      for (final label in item.metaLabels)
+        ProductionMetaPill(label, compact: compact),
+      if (item.active)
+        ProductionMetaPill(
+          '${item.investedProduction}/${item.totalCost}',
+          compact: compact,
+          highlighted: true,
+        ),
+      if (item.locked && item.requirementLabel != null)
+        ProductionMetaPill(
+          item.requirementLabel!,
+          compact: compact,
+          tone: ProductionMetaTone.danger,
+        ),
+    ];
   }
 }
 

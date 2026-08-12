@@ -28,16 +28,17 @@ abstract final class _EconomySimulationSetup {
     required MapReadView mapView,
   }) {
     return CanonicalGameSnapshot.snapshot(
-      domain: state.copyWith(
-        turn: 0,
-        matchRules: config.matchRules,
-        participants: [config.player, ...config.opponents],
-        gameMode: GameMode.hotSeat,
-        turnStatesByPlayerId: {
-          for (final player in [config.player, ...config.opponents])
-            player.id: PlayerTurnState.active,
-        },
-      ),
+      domain: state
+          .withMatchRules(config.matchRules)
+          .copyWith(
+            turn: 0,
+            participants: [config.player, ...config.opponents],
+            gameMode: GameMode.hotSeat,
+            turnStatesByPlayerId: {
+              for (final player in [config.player, ...config.opponents])
+                player.id: PlayerTurnState.active,
+            },
+          ),
       metadata: GameSnapshotMetadata(
         id: 'economy_simulation',
         schemaVersion: 3,

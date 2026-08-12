@@ -8879,6 +8879,16 @@ abstract class AppLocalizations {
   /// **'Resources: {resourceTotal} deposits • {resourceTypes} controlled types'**
   String topResourceResourcesTooltip(int resourceTotal, int resourceTypes);
 
+  /// No description provided for @topResourceStrategicResourcesTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategic resources: {availableTypes}/{totalTypes} available • {shortageTypes} shortages'**
+  String topResourceStrategicResourcesTooltip(
+    int availableTypes,
+    int totalTypes,
+    int shortageTypes,
+  );
+
   /// No description provided for @topResourceGoldTooltip.
   ///
   /// In en, this message translates to:
@@ -9033,6 +9043,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sources'**
   String get resourceBreakdownSourcesSection;
+
+  /// No description provided for @resourceBreakdownStrategicStockpiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategic stockpiles'**
+  String get resourceBreakdownStrategicStockpiles;
+
+  /// No description provided for @resourceBreakdownStored.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored'**
+  String get resourceBreakdownStored;
+
+  /// No description provided for @resourceBreakdownAllocated.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocated'**
+  String get resourceBreakdownAllocated;
+
+  /// No description provided for @resourceBreakdownDomesticProduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Domestic production'**
+  String get resourceBreakdownDomesticProduction;
+
+  /// No description provided for @resourceBreakdownImports.
+  ///
+  /// In en, this message translates to:
+  /// **'Imports'**
+  String get resourceBreakdownImports;
+
+  /// No description provided for @resourceBreakdownExports.
+  ///
+  /// In en, this message translates to:
+  /// **'Exports'**
+  String get resourceBreakdownExports;
+
+  /// No description provided for @resourceBreakdownAllocations.
+  ///
+  /// In en, this message translates to:
+  /// **'Production allocations'**
+  String get resourceBreakdownAllocations;
+
+  /// No description provided for @resourceBreakdownNoAllocations.
+  ///
+  /// In en, this message translates to:
+  /// **'No strategic resources are allocated.'**
+  String get resourceBreakdownNoAllocations;
 
   /// No description provided for @technologyRecommendationsTitle.
   ///
@@ -11094,6 +11152,18 @@ abstract class AppLocalizations {
   /// **'This action is blocked right now. Choose another tile or another command.'**
   String get hudFeedbackActionBlockedBody;
 
+  /// No description provided for @hudFeedbackProductionStrategicResourceShortageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategic resource shortage'**
+  String get hudFeedbackProductionStrategicResourceShortageTitle;
+
+  /// No description provided for @hudFeedbackProductionStrategicResourceShortageBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The stockpile changed before the order was accepted. Review the available resources and choose production again.'**
+  String get hudFeedbackProductionStrategicResourceShortageBody;
+
   /// No description provided for @hudFeedbackAttackProtectedByTreatyTitle.
   ///
   /// In en, this message translates to:
@@ -12989,6 +13059,40 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{production} prod./turn'**
   String cityProductionPaceShort(int production);
+
+  /// No description provided for @cityProductionStrategicCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost: {resources}'**
+  String cityProductionStrategicCost(String resources);
+
+  /// No description provided for @cityProductionStrategicAllocated.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocated: {resources}'**
+  String cityProductionStrategicAllocated(String resources);
+
+  /// No description provided for @cityProductionStrategicMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient stock: {resources}'**
+  String cityProductionStrategicMissing(String resources);
+
+  /// No description provided for @cityProductionStrategicAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{available}/{required} {resource}'**
+  String cityProductionStrategicAvailable(
+    int available,
+    int required,
+    String resource,
+  );
+
+  /// No description provided for @cityProductionStrategicFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Available: {resources}'**
+  String cityProductionStrategicFree(String resources);
 
   /// No description provided for @cityBuildingSortRecommended.
   ///

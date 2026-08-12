@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw/game/presentation/providers.dart';
@@ -43,8 +44,16 @@ class HudCommandDispatcher {
   }
 
   Future<void> dispatch(DomainCommand command) async {
+    await dispatchTransition(command);
+  }
+
+  Future<DispatchCommandResult> dispatchTransition(
+    DomainCommand command,
+  ) async {
     _ref.read(mapInspectionControllerProvider.notifier).clear();
-    await _ref.read(gameCommandControllerProvider.notifier).dispatch(command);
+    return _ref
+        .read(gameCommandControllerProvider.notifier)
+        .dispatchTransition(command);
   }
 
   Future<void> dispatchIntent(GameIntent intent) async {

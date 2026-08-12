@@ -269,10 +269,13 @@ class CityProductionUnitDetailsPanel extends StatelessWidget {
       icon: item.icon ?? gameIconForUnitType(item.unitType!),
       statusLabel: item.active
           ? l10n.productionInProgressLabel
+          : item.locked
+          ? l10n.productionButtonLocked
           : l10n.cityProductionAvailableUnitLabel,
       costLabel: l10n.cityProductionCostShort(definition.productionCost),
       progressLabel: '${item.investedProduction}/${item.totalCost}$turns',
       paceLabel: l10n.cityProductionPaceShort(item.productionPerTurn),
+      additionalRequirementLines: item.unitRequirementLines,
       maxWidth: maxWidth,
       maxHeight: maxHeight,
       onClose: onClose,
