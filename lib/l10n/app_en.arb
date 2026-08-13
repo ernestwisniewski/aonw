@@ -3172,7 +3172,7 @@
   "@empireUnitMovement": {
     "placeholders": {
       "movement": {
-        "type": "int"
+        "type": "num"
       }
     }
   },
@@ -3335,7 +3335,7 @@
   "@unitSelectionMovementSubtitle": {
     "placeholders": {
       "current": {
-        "type": "int"
+        "type": "num"
       },
       "max": {
         "type": "int"
@@ -3346,7 +3346,7 @@
   "@unitSelectionMovementHpSubtitle": {
     "placeholders": {
       "current": {
-        "type": "int"
+        "type": "num"
       },
       "max": {
         "type": "int"

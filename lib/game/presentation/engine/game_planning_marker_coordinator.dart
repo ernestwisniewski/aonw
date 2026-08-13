@@ -129,7 +129,7 @@ class GamePlanningMarkerCoordinator {
       if (unit.id != pending.attackerUnitId) continue;
       if (!state.canControlUnit(unit) ||
           unit.isWorking ||
-          unit.movementPoints <= 0) {
+          !unit.hasMovementRemaining) {
         return null;
       }
       return unit;

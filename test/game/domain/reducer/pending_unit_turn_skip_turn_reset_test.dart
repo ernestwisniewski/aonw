@@ -263,7 +263,7 @@ UnitMovementPlan _movePreview(String unitId) {
     targetCol: 1,
     targetRow: 0,
     totalCost: 1,
-    availableMovementPoints: 0,
+    availableMovementUnits: 0,
     steps: const [
       UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
       UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),

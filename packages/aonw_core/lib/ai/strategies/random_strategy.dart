@@ -41,7 +41,7 @@ class RandomStrategy implements AiStrategy {
     ]..sort((a, b) => a.id.compareTo(b.id));
 
     for (final unit in units) {
-      if (unit.movementPoints <= 0 ||
+      if (!unit.hasMovementRemaining ||
           unit.isWorking ||
           unit.queuedPath != null) {
         continue;
@@ -94,7 +94,7 @@ class RandomStrategy implements AiStrategy {
       }
 
       final plan = pathfinder.plan(unit: unit, targetTile: tile);
-      if (plan == null || plan.totalCost > unit.movementPoints) continue;
+      if (plan == null || plan.totalCost > unit.movementUnits) continue;
       candidates.add(tile);
     }
     candidates.sort((a, b) {

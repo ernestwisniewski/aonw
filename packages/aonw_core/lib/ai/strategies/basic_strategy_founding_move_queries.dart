@@ -105,7 +105,7 @@ extension _BasicStrategyFoundingMoveQueries
     required GameUnit unit,
     required UnitMovementPlan plan,
   }) {
-    return plan.totalCost <= unit.movementPoints &&
+    return plan.totalCost <= unit.movementUnits &&
         UnitMovementFeasibility.canEventuallyTraverse(unit: unit, plan: plan);
   }
 

@@ -20,7 +20,7 @@ void main() {
         targetCol: 2,
         targetRow: 3,
         totalCost: 2,
-        availableMovementPoints: 4,
+        availableMovementUnits: 4,
         steps: const [],
       );
       final cityFoundingDraft = CityFoundingDraft(
@@ -67,7 +67,7 @@ void main() {
         targetCol: 2,
         targetRow: 3,
         totalCost: 2,
-        availableMovementPoints: 4,
+        availableMovementUnits: 4,
         steps: const [],
       );
       final cityFoundingDraft = CityFoundingDraft(
@@ -201,7 +201,7 @@ void main() {
           targetCol: 3,
           targetRow: 4,
           totalCost: 2,
-          availableMovementPoints: 4,
+          availableMovementUnits: 4,
           steps: const [],
         );
         final updated = state.copyWithInteraction(movePreview: plan);
@@ -214,7 +214,7 @@ void main() {
           targetCol: 3,
           targetRow: 4,
           totalCost: 2,
-          availableMovementPoints: 4,
+          availableMovementUnits: 4,
           steps: const [],
         );
         final state = GameClientState().copyWithInteraction(movePreview: plan);

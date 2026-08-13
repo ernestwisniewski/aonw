@@ -27,7 +27,7 @@ bool isLegalMctsCommandCandidate(
 
 bool _canApplyAttackCandidate(AttackHexCommand command, GameView view) {
   final unit = view.ownUnits.byId(command.attackerUnitId);
-  if (unit == null || unit.isWorking || unit.movementPoints <= 0) {
+  if (unit == null || unit.isWorking || !unit.hasMovementRemaining) {
     return false;
   }
   final targetTile = view.mapData.tileAt(
@@ -73,7 +73,7 @@ bool _canApplyMoveCandidate(
   bool allowNonVisibleTarget = false,
 }) {
   final unit = view.ownUnits.byId(command.unitId);
-  if (unit == null || unit.isWorking || unit.movementPoints <= 0) {
+  if (unit == null || unit.isWorking || !unit.hasMovementRemaining) {
     return false;
   }
   if (unit.occupies(command.targetCol, command.targetRow)) {

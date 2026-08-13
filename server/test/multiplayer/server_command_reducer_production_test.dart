@@ -174,7 +174,7 @@ void main() {
             targetCol: 1,
             targetRow: 0,
             steps: const [
-              UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+              UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
             ],
           ),
         ),

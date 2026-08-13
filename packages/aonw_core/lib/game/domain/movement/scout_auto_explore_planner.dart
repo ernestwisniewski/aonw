@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_path_constraints.dart';
 import 'package:aonw_core/game/domain/movement/scout_auto_explore_target.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
+import 'package:aonw_core/game/domain/movement/unit_traversal_cost_resolver.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
@@ -27,6 +28,7 @@ class ScoutAutoExplorePlanner {
     required MapTraversalView mapData,
     required Iterable<GameUnit> units,
     required FogOfWarState fogOfWar,
+    required UnitTraversalCostResolver costResolver,
     bool Function(MapTileView tile)? canEnterTile,
   }) {
     return targetFor(
@@ -34,6 +36,7 @@ class ScoutAutoExplorePlanner {
       mapData: mapData,
       units: units,
       fogOfWar: fogOfWar,
+      costResolver: costResolver,
       canEnterTile: canEnterTile,
     )?.command;
   }
@@ -43,6 +46,7 @@ class ScoutAutoExplorePlanner {
     required MapTraversalView mapData,
     required Iterable<GameUnit> units,
     required FogOfWarState fogOfWar,
+    required UnitTraversalCostResolver costResolver,
     bool Function(MapTileView tile)? canEnterTile,
   }) {
     if (!_canAutoExplore(unit)) return null;
@@ -51,6 +55,7 @@ class ScoutAutoExplorePlanner {
     final pathfinder = UnitMovementPathfinder(
       mapData: mapData,
       units: units,
+      costResolver: costResolver,
       canEnterTile: _pathPolicyFor(
         reservedHexes: reservedHexes,
         canEnterTile: canEnterTile,
@@ -244,7 +249,7 @@ class ScoutAutoExplorePlanner {
 
   bool _canAutoExplore(GameUnit unit) {
     return unit.type == GameUnitType.scout &&
-        unit.movementPoints > 0 &&
+        unit.hasMovementRemaining &&
         unit.queuedPath == null &&
         !unit.isWorking &&
         !unit.isFortified;

@@ -72,13 +72,12 @@ List<Map<String, dynamic>> _transportNetworkFor(
   required FogVisibilityQuery visibility,
   required Set<String> ownCityIds,
 }) {
-  return [
-    for (final segment in state.transportNetwork.segments)
-      if (segment.builtByPlayerId == playerId ||
-          ownCityIds.contains(segment.builtByCityId) ||
-          visibility.canRememberStaticAt(segment.hex.col, segment.hex.row))
-        segment.toJson(),
-  ];
+  return TransportNetworkVisibilityRules.knownFor(
+    network: state.transportNetwork,
+    playerId: playerId,
+    ownCityIds: ownCityIds,
+    visibility: visibility,
+  ).toJson();
 }
 
 Set<String> _ownCityIds(DomainState state, String playerId) => {

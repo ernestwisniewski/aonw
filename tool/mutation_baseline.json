@@ -24,8 +24,8 @@
         "boolean_literal_flip": 0,
         "equality_negation": 2,
         "logical_connector": 0,
-        "logical_negation": 4,
-        "relational_boundary": 1,
+        "logical_negation": 5,
+        "relational_boundary": 0,
         "type_test_negation": 0,
         "wire_string_replacement": 0
       },

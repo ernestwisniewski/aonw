@@ -127,7 +127,7 @@ bool hasAvailableReconCitySiteScout(GameView view, StrategicPlan plan) {
   for (final unit in view.ownUnits) {
     if (!isReconUnit(unit) ||
         unit.isWorking ||
-        unit.movementPoints <= 0 ||
+        !unit.hasMovementRemaining ||
         unit.queuedPath != null) {
       continue;
     }

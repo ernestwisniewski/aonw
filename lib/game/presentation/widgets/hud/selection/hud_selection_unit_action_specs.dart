@@ -1,5 +1,7 @@
 part of 'hud_selection_actions.dart';
 
+const _oneMovementPoint = MovementPointScale.unitsPerPoint;
+
 HudSelectionActionSpec _moveActionFor({
   required GameUnit unit,
   required GameClientState? gameState,
@@ -33,13 +35,13 @@ HudSelectionActionSpec _moveActionFor({
 
 String? _queuedPathTurnsLabel(GameUnit unit, QueuedMovePath? queuedPath) {
   if (queuedPath == null || queuedPath.steps.isEmpty) return null;
-  final perTurn = UnitMovementBalance.maxMovementPointsFor(
+  final perTurn = UnitMovementBalance.maxMovementUnitsFor(
     type: unit.type,
     carriedArtifactId: unit.carriedArtifactId,
   );
   final paidCost = _queuedPathPaidCost(unit, queuedPath);
   final totalCost = queuedPath.steps.last.cumulativeCost;
-  final remaining = totalCost - paidCost - unit.movementPoints;
+  final remaining = totalCost - paidCost - unit.movementUnits;
   final turns = TurnEtaFormatter.turnsRemainingFromProgress(
     remaining: remaining,
     perTurn: perTurn,
@@ -202,8 +204,8 @@ HudSelectionActionSpec _skipTurnActionFor({
   final active =
       pendingAction is PendingUnitTurnSkip && pendingAction.unitId == unit.id;
   final available = active || _canUseTurnAction(unit);
-  final needsGuidance =
-      !active && available && unit.movementPoints == 1 && lockedReason == null;
+  final canGuide = available && unit.movementUnits <= _oneMovementPoint;
+  final needsGuidance = !active && canGuide && lockedReason == null;
   return HudSelectionActionSpec(
     icon: GameIcons.skipTurn,
     actionId: 'skip',

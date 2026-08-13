@@ -173,7 +173,7 @@ abstract final class _CombatTargetingPolicy {
   ) {
     return context.canControlUnit(state, attacker) &&
         !attacker.isWorking &&
-        attacker.movementPoints > 0;
+        attacker.hasMovementRemaining;
   }
 
   static bool pendingAllowsCommand({

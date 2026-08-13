@@ -54,7 +54,7 @@ void main() {
         .single;
 
     expect(previewed.state.movePreview?.targetCol, 2);
-    expect(previewed.state.movePreview?.totalCost, 2);
+    expect(previewed.state.movePreview?.totalCost, 4);
     expect(previewed.state.selection?.tile?.resources, const [
       ResourceType.wheat,
     ]);

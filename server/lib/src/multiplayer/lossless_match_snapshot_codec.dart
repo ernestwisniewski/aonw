@@ -26,10 +26,13 @@ final class LosslessMatchSnapshotCodec {
   }
 
   CanonicalGameSnapshot canonical(DecodedRunningMatchSnapshot snapshot) {
+    final state = snapshot.wire.v < kSnapshotEventVersion
+        ? MovementSnapshotMigration.fromWholePointCosts(snapshot.wire.state)
+        : snapshot.wire.state;
     return CanonicalGameSnapshotCodec.decode(
       CanonicalGameSnapshotData(
         save: snapshot.wire.save,
-        state: snapshot.wire.state,
+        state: state,
         eventLogOffset: snapshot.eventLogOffset,
       ),
     );

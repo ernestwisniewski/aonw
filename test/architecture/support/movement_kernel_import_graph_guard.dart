@@ -21,6 +21,7 @@ const movementKernelImportGraphPaths = {
   ...movementKernelRootPaths,
   '${movementLibraryPath}movement_cost.dart',
   '${movementLibraryPath}movement_hidden_obstacle_rules.dart',
+  '${movementLibraryPath}movement_point_scale.dart',
   '${movementLibraryPath}queued_move_path.dart',
   '${movementLibraryPath}unit_manual_movement_rules.dart',
   '${movementLibraryPath}unit_movement_balance.dart',
@@ -109,6 +110,8 @@ const _leafDependencyUris = {
   'package:aonw_core/game/domain/terrain/tile_terrain_profile_rules.dart',
   'package:aonw_core/game/domain/transport/transport_network_index.dart',
   'package:aonw_core/game/domain/transport/transport_network_state.dart',
+  'package:aonw_core/game/domain/transport/'
+      'transport_network_visibility_rules.dart',
   'package:aonw_core/game/domain/unit/game_unit.dart',
   'package:aonw_core/game/domain/unit/game_unit_type.dart',
   'package:aonw_core/game/domain/unit/unit_movement_domain.dart',

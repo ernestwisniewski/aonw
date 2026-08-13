@@ -103,7 +103,7 @@ void main() {
       targetCol: 1,
       targetRow: 0,
       totalCost: 4,
-      availableMovementPoints: unit.movementPoints,
+      availableMovementUnits: unit.movementPoints,
       steps: const [
         UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
         UnitMovementStep(col: 1, row: 0, enterCost: 4, cumulativeCost: 4),
@@ -165,7 +165,7 @@ void main() {
           targetCol: 1,
           targetRow: 0,
           totalCost: 1,
-          availableMovementPoints: unit.movementPoints,
+          availableMovementUnits: unit.movementPoints,
           steps: const [
             UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
             UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
@@ -376,7 +376,7 @@ void main() {
         targetCol: 1,
         targetRow: 0,
         totalCost: 1,
-        availableMovementPoints: 3,
+        availableMovementUnits: 3,
         steps: const [
           UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
           UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),

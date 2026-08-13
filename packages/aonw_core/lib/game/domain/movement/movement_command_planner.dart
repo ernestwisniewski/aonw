@@ -10,7 +10,6 @@ import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_visibility_rules.dart';
 import 'package:aonw_core/game/domain/movement/unit_traversal_cost_resolver.dart';
-import 'package:aonw_core/game/domain/transport/transport_network_state.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
@@ -141,9 +140,7 @@ abstract final class MovementCommandPlanner {
       mapData: mapData,
       units: knownUnits,
       canEnterTile: canEnterTile,
-      costResolver: InfrastructureAwareTraversalCostResolver(
-        state.transportNetwork,
-      ),
+      costResolver: _knownTraversalResolver(state, actorPlayerId, visibility),
     );
     final canEnterStepBeyondCapacity = _capacityExceptionFor(
       state: state,
@@ -171,7 +168,7 @@ abstract final class MovementCommandPlanner {
       unit: unit,
       targetTile: targetTile,
       canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
-      transportNetwork: state.transportNetwork,
+      state: state,
     );
   }
 
@@ -259,7 +256,7 @@ abstract final class MovementCommandPlanner {
     required GameUnit unit,
     required MapTileView targetTile,
     required UnitMovementCapacityException canEnterStepBeyondCapacity,
-    required TransportNetworkState transportNetwork,
+    required MovementCommandState state,
   }) {
     if (!hiddenTargetBlocker || directPlan?.canMoveNow != true) {
       final capacityBlocked = _capacityBlocksOnlyKnownRoute(
@@ -285,8 +282,10 @@ abstract final class MovementCommandPlanner {
         mapData: mapData,
         units: [...knownUnits, targetBlocker!],
         canEnterTile: canEnterTile,
-        costResolver: InfrastructureAwareTraversalCostResolver(
-          transportNetwork,
+        costResolver: _knownTraversalResolver(
+          state,
+          unit.ownerPlayerId,
+          visibility,
         ),
       ),
       unit: unit,
@@ -343,7 +342,7 @@ abstract final class MovementCommandPlanner {
     final shouldApproach =
         _targetIsHidden(visibility, targetTile.col, targetTile.row) ||
         targetBlocker.ownerPlayerId != unit.ownerPlayerId ||
-        approach.totalCost > unit.movementPoints;
+        approach.totalCost > unit.movementUnits;
     return shouldApproach ? approach : null;
   }
 
@@ -403,3 +402,14 @@ GameUnit? _unitAt(List<GameUnit> units, int col, int row) {
   }
   return null;
 }
+
+InfrastructureAwareTraversalCostResolver _knownTraversalResolver(
+  MovementCommandState state,
+  String actorPlayerId,
+  FogVisibilityQuery visibility,
+) => InfrastructureAwareTraversalCostResolver.forKnownState(
+  network: state.transportNetwork,
+  cities: state.cities,
+  actorPlayerId: actorPlayerId,
+  visibility: visibility,
+);

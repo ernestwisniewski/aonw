@@ -6,14 +6,14 @@ final class _UnitMovementRouteSearch {
     required this.unit,
     required this.targetKey,
     required this.canEnterStepBeyondCapacity,
-  }) : maxMovement = UnitMovementBalance.maxMovementPointsFor(
+  }) : maxMovement = UnitMovementBalance.maxMovementUnitsFor(
          type: unit.type,
          carriedArtifactId: unit.carriedArtifactId,
        ) {
     final start = _RouteState(
       col: unit.col,
       row: unit.row,
-      remaining: unit.movementPoints,
+      remaining: unit.movementUnits,
       started: false,
     );
     const score = _RouteScore(turns: 0, totalCost: 0, stepCount: 0);
@@ -73,6 +73,7 @@ final class _UnitMovementRouteSearch {
   void _visit(_RouteNode current, ({int col, int row}) next) {
     final enterCost = pathfinder._enterCostFor(
       unit: unit,
+      from: (col: current.state.col, row: current.state.row),
       next: next,
       currentCost: current.score.totalCost,
       canEnterStepBeyondCapacity: canEnterStepBeyondCapacity,
@@ -145,7 +146,7 @@ int _compareUnitApproachPlans(
   UnitMovementPlan b,
   GameUnit unit,
 ) {
-  final maxMovement = UnitMovementBalance.maxMovementPointsFor(
+  final maxMovement = UnitMovementBalance.maxMovementUnitsFor(
     type: unit.type,
     carriedArtifactId: unit.carriedArtifactId,
   );

@@ -126,6 +126,7 @@ _AutoExploreOutput _planAutoExplore(
     mapData: traversal,
     units: [fixture.unit],
     fogOfWar: FogOfWarState.empty,
+    costResolver: const TerrainTraversalCostResolver(),
   );
   if (command == null) {
     throw StateError('Auto-explore workload found no destination.');

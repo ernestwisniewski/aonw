@@ -118,7 +118,7 @@ abstract final class CombatReducer {
     if (attacker == null ||
         !context.canControlUnit(state, attacker) ||
         attacker.isWorking ||
-        attacker.movementPoints <= 0) {
+        !attacker.hasMovementRemaining) {
       return false;
     }
     final targetOwnerPlayerId =

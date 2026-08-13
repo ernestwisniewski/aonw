@@ -80,7 +80,7 @@ abstract final class WorkerImprovementRules {
         WorkerImprovementBlocker.workerBusy,
       );
     }
-    if (requireReadyWorker && unit.movementPoints <= 0) {
+    if (requireReadyWorker && !unit.hasMovementRemaining) {
       return const WorkerImprovementLegality.blocked(
         WorkerImprovementBlocker.noMovementPoints,
       );

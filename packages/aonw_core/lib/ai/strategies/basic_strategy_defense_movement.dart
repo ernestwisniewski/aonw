@@ -12,7 +12,9 @@ final class BasicStrategyDefenseMovement {
   const BasicStrategyDefenseMovement();
 
   bool canHold(GameUnit unit, CombatRuleset ruleset) {
-    if (unit.isWorking || unit.queuedPath != null || unit.movementPoints <= 0) {
+    if (unit.isWorking ||
+        unit.queuedPath != null ||
+        !unit.hasMovementRemaining) {
       return false;
     }
     if (!AiUnitRoles.isMilitaryUnit(unit)) return false;

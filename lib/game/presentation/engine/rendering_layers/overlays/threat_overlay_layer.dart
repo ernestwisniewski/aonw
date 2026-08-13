@@ -88,7 +88,7 @@ class ThreatOverlayLayer extends Component with LayerAttachment {
 
     for (final enemy in state.unitsVisibleToActivePlayer) {
       if (enemy.ownerPlayerId == selectedUnit.ownerPlayerId) continue;
-      if (enemy.isWorking || enemy.movementPoints <= 0) continue;
+      if (enemy.isWorking || !enemy.hasMovementRemaining) continue;
 
       final enemyTile = mapData.tileAt(enemy.col, enemy.row);
       if (enemyTile == null) continue;

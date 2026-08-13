@@ -126,7 +126,7 @@ final class BasicStrategyArtifactLogisticsPlanner {
     required Set<String> occupied,
     required UnitMovementPathfinder pathfinder,
   }) {
-    if (unit.movementPoints <= 0 || unit.isWorking) return null;
+    if (!unit.hasMovementRemaining || unit.isWorking) return null;
     final emptyCities = _emptyArtifactStorageCities(view);
     final targets =
         [
@@ -177,7 +177,7 @@ final class BasicStrategyArtifactLogisticsPlanner {
     GameView view,
     AiContext context,
   ) {
-    if (unit.movementPoints <= 0 || unit.isWorking || unit.isFortified) {
+    if (!unit.hasMovementRemaining || unit.isWorking || unit.isFortified) {
       return null;
     }
     final city = defenseMovement.preferredOwnCity(unit, view, context);

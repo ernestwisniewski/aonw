@@ -199,8 +199,11 @@ final class DomainWorkerAutomationCommandResolver {
         mapData: mapData,
         units: knownUnits,
         canEnterTile: canEnterTile,
-        costResolver: InfrastructureAwareTraversalCostResolver(
-          state.transportNetwork,
+        costResolver: InfrastructureAwareTraversalCostResolver.forKnownState(
+          network: state.transportNetwork,
+          cities: state.cities,
+          actorPlayerId: actorPlayerId,
+          visibility: visibility,
         ),
       ),
       cityRuleset: cityRuleset,
@@ -397,7 +400,7 @@ DomainWorkerAutomationCommandResult _startWork({
 
 bool _canStartWork(GameUnit worker, WorkerAutomationTarget target) {
   return worker.occupies(target.hex.col, target.hex.row) &&
-      worker.movementPoints > 0 &&
+      worker.hasMovementRemaining &&
       worker.queuedPath == null;
 }
 
@@ -427,7 +430,7 @@ String? _activityGuardReason(
   WorkerAutomationCommandPhase phase,
 ) {
   if (worker.isWorking || worker.isFortified) return 'worker_unavailable';
-  if (worker.movementPoints <= 0) return 'worker_no_movement_points';
+  if (!worker.hasMovementRemaining) return 'worker_no_movement_points';
   if (!phase.isContinuation && worker.queuedPath != null) {
     return 'worker_queued_path_active';
   }

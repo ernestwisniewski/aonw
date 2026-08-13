@@ -7,6 +7,7 @@ import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/save.dart';
@@ -70,6 +71,61 @@ void main() {
 
       expect(restored.save.schemaVersion, gameSaveCurrentSchemaVersion);
       expect(restored.domain.transportNetwork, TransportNetworkState.empty);
+    });
+
+    test('migrates schema 6 route and pending-action movement costs', () {
+      const routeSteps = [
+        UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+        UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+      ];
+      final unit = GameUnit(
+        id: 'merchant_1',
+        ownerPlayerId: 'p1',
+        type: GameUnitType.merchant,
+        name: GameUnitType.merchant.defaultNameToken,
+        col: 0,
+        row: 0,
+        queuedPath: QueuedMovePath(
+          targetCol: 1,
+          targetRow: 0,
+          steps: routeSteps,
+        ),
+        merchantTradeRoute: MerchantTradeRoute(
+          originCityId: 'origin',
+          destinationCityId: 'destination',
+          steps: routeSteps,
+        ),
+      );
+      final json = _mutableSnapshotJson(
+        GameSnapshotFactory.create(
+          save: _save(),
+          units: [unit],
+          pendingAction: const PendingUnitTurnSkip(
+            ownerPlayerId: 'p1',
+            unitId: 'merchant_1',
+            restoreMovementUnits: 6,
+          ),
+        ),
+      );
+      (json['save'] as Map<String, dynamic>)['schemaVersion'] = 6;
+      final lifecycle = json['lifecycle'] as Map<String, dynamic>;
+      (lifecycle['pendingAction'] as Map<String, dynamic>)
+        ..remove('restoreMovementUnits')
+        ..['restoreMovementPoints'] = 3;
+
+      final restored = SaveSnapshotCodec.fromJson(json);
+      final migrated = restored.units.single;
+
+      expect(restored.save.schemaVersion, gameSaveCurrentSchemaVersion);
+      expect(migrated.queuedPath!.steps.last.enterCost, 2);
+      expect(migrated.queuedPath!.steps.last.cumulativeCost, 2);
+      expect(migrated.merchantTradeRoute!.steps.last.enterCost, 2);
+      expect(migrated.merchantTradeRoute!.steps.last.cumulativeCost, 2);
+      expect(
+        (restored.domain.actions.pendingAction as PendingUnitTurnSkip)
+            .restoreMovementUnits,
+        6,
+      );
     });
 
     test('round-trips persistent snapshot slices', () {

@@ -131,7 +131,7 @@ final class BasicStrategyMapObjectivePlanner {
     if (usedUnitIds.contains(unit.id) ||
         unit.isWorking ||
         unit.queuedPath != null ||
-        unit.movementPoints <= 0 ||
+        !unit.hasMovementRemaining ||
         unit.isCarryingArtifact) {
       return false;
     }
@@ -153,7 +153,9 @@ final class BasicStrategyMapObjectivePlanner {
       HexCoord(col: unit.col, row: unit.row),
       objective.hex,
     );
-    return (reward * 100 - distance * 6 - plan.totalCost).toDouble();
+    return reward * 100 -
+        distance * 6 -
+        MovementPointScale.pointsFromUnits(plan.totalCost);
   }
 
   bool _isCompletedByPlayer(MapObjectiveDefinition objective, GameView view) {

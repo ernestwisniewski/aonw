@@ -41,6 +41,16 @@ List<FieldImprovement> _knownImprovements(
       improvement,
 ];
 
+TransportNetworkState _knownTransportNetwork(
+  _GameViewProjection source,
+  Set<String> ownCityIds,
+) => TransportNetworkVisibilityRules.knownFor(
+  network: source.transportNetwork,
+  playerId: source.forPlayerId,
+  ownCityIds: ownCityIds,
+  visibility: source.visibility,
+);
+
 List<GameUnit> _visibleEnemyUnits(_GameViewProjection source) => [
   for (final unit in source.units)
     if (unit.ownerPlayerId != source.forPlayerId &&

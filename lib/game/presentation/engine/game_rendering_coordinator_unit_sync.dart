@@ -59,7 +59,7 @@ extension _GameRenderingCoordinatorUnitSync on GameRenderingCoordinator {
             unitType: unit?.type,
             maxMovementPointsPerTurn: unit == null
                 ? null
-                : UnitMovePreviewEntryBuilder.maxMovementPoints(unit),
+                : UnitMovePreviewEntryBuilder.maxMovementUnits(unit),
             dimmed: dimmed,
             subdued: !selected,
             showCostLabel: false,

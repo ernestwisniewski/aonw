@@ -221,8 +221,11 @@ final class GameHoverIntentResolver {
             tile: tile,
             visibility: visibility,
           ),
-      costResolver: InfrastructureAwareTraversalCostResolver(
-        state.transportNetwork,
+      costResolver: InfrastructureAwareTraversalCostResolver.forKnownState(
+        network: state.transportNetwork,
+        cities: state.cities,
+        actorPlayerId: actorPlayerId,
+        visibility: visibility,
       ),
     );
     _movementPathfinder = pathfinder;

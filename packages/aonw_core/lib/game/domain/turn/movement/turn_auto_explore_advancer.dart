@@ -138,7 +138,7 @@ abstract final class TurnAutoExploreAdvancer {
     return playerIds.contains(unit.ownerPlayerId) &&
         unit.type == GameUnitType.scout &&
         unit.isAutoExploring &&
-        unit.movementPoints > 0 &&
+        unit.hasMovementRemaining &&
         unit.queuedPath == null &&
         !unit.isWorking &&
         !unit.isFortified;

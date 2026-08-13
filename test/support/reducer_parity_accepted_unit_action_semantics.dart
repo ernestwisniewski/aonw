@@ -38,17 +38,17 @@ String? _validateAcceptedUnitActionCancel(
   if (unit == null) return 'must cancel an existing unit action';
 
   final pendingSkip = before.actions.pendingAction;
-  final restoredMovementPoints =
+  final restoredMovementUnits =
       pendingSkip is PendingUnitTurnSkip && pendingSkip.unitId == unit.id
-      ? pendingSkip.restoreMovementPoints
+      ? pendingSkip.restoreMovementUnits
       : unit.isFortified
-      ? UnitMovementBalance.maxMovementPointsFor(
+      ? UnitMovementBalance.maxMovementUnitsFor(
           type: unit.type,
           carriedArtifactId: unit.carriedArtifactId,
         )
-      : unit.movementPoints;
+      : unit.movementUnits;
   final updated = unit
-      .copyWith(movementPoints: restoredMovementPoints)
+      .copyWith(movementUnits: restoredMovementUnits)
       .copyWithQueuedPath(null)
       .copyWithWorkerJob(null)
       .copyWithCityFoundingJob(null)

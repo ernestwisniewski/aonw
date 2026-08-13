@@ -28,7 +28,7 @@ pass, the current Dart paths remain authoritative and releasable.
 
 | Area | Responsibility |
 | --- | --- |
-| `packages/aonw_core/` | Authoritative Dart-only game rules, canonical state and snapshots, protocol models, and AI planning. |
+| `packages/aonw_core/` | Current authoritative Dart rules, canonical state, protocol models, and AI; a supported transitional implementation planned to be replaced by the Rust workspace in `engine/` after cutover gates pass. |
 | `packages/aonw_server_client/` | Generated, app-independent Serverpod client surface; depends only on the shared core. |
 | `lib/game/domain/` | Client session and interaction composition plus transitional compatibility reducers; canonical game rules live in `aonw_core`. |
 | `lib/game/application/` | Use cases and ports around persistence, logging, clocks, ids, and transport. |

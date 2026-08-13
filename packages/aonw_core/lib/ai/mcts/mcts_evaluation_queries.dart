@@ -26,7 +26,7 @@ bool mctsCanDiscoverCitySites(
   if (unit.isWorking || unit.queuedPath != null) {
     return false;
   }
-  if (requireMovement && unit.movementPoints <= 0) return false;
+  if (requireMovement && !unit.hasMovementRemaining) return false;
   if (unit.isWorker || unit.type == GameUnitType.settler || unit.hasSettlers) {
     return false;
   }
@@ -41,7 +41,7 @@ bool mctsHasAvailableReconCitySiteScout(GameView view, StrategicPlan? plan) {
   for (final unit in view.ownUnits) {
     if (!mctsIsReconUnit(unit) ||
         unit.isWorking ||
-        unit.movementPoints <= 0 ||
+        !unit.hasMovementRemaining ||
         unit.queuedPath != null) {
       continue;
     }

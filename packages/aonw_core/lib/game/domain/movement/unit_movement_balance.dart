@@ -1,3 +1,4 @@
+import 'package:aonw_core/game/domain/movement/movement_point_scale.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 
 abstract final class UnitMovementBalance {
@@ -40,4 +41,14 @@ abstract final class UnitMovementBalance {
       GameUnitType.reconPlane => airUnitMovementPointsPerTurn,
     };
   }
+
+  static int maxMovementUnitsFor({
+    required GameUnitType type,
+    String? carriedArtifactId,
+  }) => MovementPointScale.unitsFromWholePoints(
+    maxMovementPointsFor(type: type, carriedArtifactId: carriedArtifactId),
+  );
+
+  static int maxMovementUnitsForType(GameUnitType type) =>
+      MovementPointScale.unitsFromWholePoints(maxMovementPointsForType(type));
 }

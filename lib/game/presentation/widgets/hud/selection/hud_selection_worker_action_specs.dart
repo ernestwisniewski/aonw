@@ -111,7 +111,7 @@ bool _canStartWorkerBuild(
   GameUnit unit,
   WorkerActionPanelViewModel? workerAction,
 ) =>
-    unit.movementPoints > 0 &&
+    unit.hasMovementRemaining &&
     !unit.isWorking &&
     !unit.isFortified &&
     unit.queuedPath == null &&
@@ -178,7 +178,7 @@ String? _workerTurnBlockedReason(AppLocalizations l10n, GameUnit unit) {
         ? l10n.selectionActionUnitHealing
         : l10n.selectionActionUnitFortified;
   }
-  return unit.movementPoints <= 0 ? l10n.selectionActionNoMovement : null;
+  return !unit.hasMovementRemaining ? l10n.selectionActionNoMovement : null;
 }
 
 HudSelectionActionSpec? activeWorkerModeActionSpec({

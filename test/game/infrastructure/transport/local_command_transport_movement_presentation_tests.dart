@@ -80,7 +80,7 @@ void _registerMovementPresentationTransportTests() {
       targetCol: 0,
       targetRow: 0,
       totalCost: 0,
-      availableMovementPoints: 0,
+      availableMovementUnits: 0,
       steps: const [
         UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
       ],

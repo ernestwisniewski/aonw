@@ -102,7 +102,7 @@ final class _PreviewRequest {
     return attacker != null &&
         state.canControlUnit(attacker) &&
         !attacker.isWorking &&
-        attacker.movementPoints > 0;
+        attacker.hasMovementRemaining;
   }
 
   final GameClientState state;

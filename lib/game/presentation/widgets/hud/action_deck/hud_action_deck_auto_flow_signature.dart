@@ -52,7 +52,7 @@ final class _HudAutoFlowSignatureBuilder {
     return [
       for (final unit in units)
         if (unit.ownerPlayerId == activePlayerId && unitNeedsManualOrder(unit))
-          '${unit.id}:${unit.movementPoints}:${unit.queuedPath != null}',
+          '${unit.id}:${unit.movementUnits}:${unit.queuedPath != null}',
     ].join(',');
   }
 

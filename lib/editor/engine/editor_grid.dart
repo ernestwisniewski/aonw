@@ -81,7 +81,7 @@ class EditorGrid extends HexGrid<MapDraft> {
     );
     if (cost.blocked) return true;
     return cost.value >
-        UnitMovementBalance.maxMovementPointsForType(GameUnitType.warrior);
+        UnitMovementBalance.maxMovementUnitsForType(GameUnitType.warrior);
   }
 
   /// O(1) lookup from (col, row) to the live HexTile component.

@@ -113,7 +113,9 @@ class FrontierClearingPlanner {
     Set<String> reservedUnitIds,
   ) {
     if (reservedUnitIds.contains(unit.id)) return false;
-    if (unit.isWorking || unit.queuedPath != null || unit.movementPoints <= 0) {
+    if (unit.isWorking ||
+        unit.queuedPath != null ||
+        !unit.hasMovementRemaining) {
       return false;
     }
     if (!_isMilitaryUnit(unit, context)) return false;

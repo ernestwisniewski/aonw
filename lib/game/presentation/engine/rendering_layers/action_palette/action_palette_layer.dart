@@ -227,7 +227,7 @@ class ActionPaletteLayer extends Component with LayerAttachment {
 
   int _turnsForPreview(UnitMovementPlan preview, GameUnit unit) {
     return preview.estimatedTurns(
-      UnitMovementBalance.maxMovementPointsFor(
+      UnitMovementBalance.maxMovementUnitsFor(
         type: unit.type,
         carriedArtifactId: unit.carriedArtifactId,
       ),

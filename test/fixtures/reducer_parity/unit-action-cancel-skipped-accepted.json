@@ -188,7 +188,7 @@
           "type": "unitTurnSkip",
           "ownerPlayerId": "player_1",
           "unitId": "commander_1",
-          "restoreMovementPoints": 3
+          "restoreMovementUnits": 6
         },
         "turnStartedAt": "2026-01-02T01:02:03.000Z"
       }

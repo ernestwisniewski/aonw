@@ -216,7 +216,7 @@ void main() {
         .whereType<AnimateUnitMoveEffect>()
         .single;
     expect(_stepSnapshots(authoritativeAnimation.steps), const [
-      (col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+      (col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
     ]);
     final localEvent = local.events.single as UnitMovedEvent;
     expect(
@@ -236,8 +236,8 @@ void main() {
       (_autoExploreUnitId, 0, 0),
     );
     expect(_stepSnapshots(animation.steps), const [
-      (col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
-      (col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
+      (col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
+      (col: 2, row: 0, enterCost: 2, cumulativeCost: 4),
     ]);
     final event = authoritative.events.single as UnitMovedEvent;
     expect(
@@ -299,7 +299,7 @@ UnitMovementPlan _movePreview(String unitId) {
     targetCol: 1,
     targetRow: 0,
     totalCost: 1,
-    availableMovementPoints: 2,
+    availableMovementUnits: 2,
     steps: const [
       UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
       UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),

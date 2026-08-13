@@ -417,7 +417,7 @@ GameUnit _queuedTurnMovementTestUnit({
       targetRow: row,
       steps: [
         UnitMovementStep(col: 0, row: row, enterCost: 0, cumulativeCost: 0),
-        UnitMovementStep(col: 1, row: row, enterCost: 1, cumulativeCost: 1),
+        UnitMovementStep(col: 1, row: row, enterCost: 2, cumulativeCost: 2),
       ],
     ),
   );

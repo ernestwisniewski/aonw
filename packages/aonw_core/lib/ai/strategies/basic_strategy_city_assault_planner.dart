@@ -45,7 +45,7 @@ final class BasicStrategyCityAssaultPlanner {
     for (final unit in units) {
       if (usedUnitIds.contains(unit.id) ||
           unit.isWorking ||
-          unit.movementPoints <= 0 ||
+          !unit.hasMovementRemaining ||
           !AiUnitRoles.isMilitaryUnit(unit)) {
         continue;
       }

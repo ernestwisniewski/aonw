@@ -247,7 +247,7 @@ final class BasicStrategyMilitaryPressurePlanner {
         unit.queuedPath != null) {
       return false;
     }
-    if (unit.movementPoints <= 0) return false;
+    if (!unit.hasMovementRemaining) return false;
 
     final stats = UnitCombatStats.derive(unit, ruleset: ruleset);
     if (stats.attack <= 0) return false;
@@ -268,12 +268,12 @@ final class BasicStrategyMilitaryPressurePlanner {
 
     final movementCosts = pathfinder.movementCostsFrom(
       unit: unit,
-      maxCost: unit.movementPoints,
+      maxCost: unit.movementUnits,
     );
     for (final entry in movementCosts.entries) {
       final coords = entry.key;
       final movementCost = entry.value;
-      if (movementCost > unit.movementPoints) continue;
+      if (movementCost > unit.movementUnits) continue;
       if (occupied.contains(_key(coords.col, coords.row))) continue;
       if (_isRememberedTargetableEnemyCityCenter(
         view,
@@ -319,7 +319,7 @@ final class BasicStrategyMilitaryPressurePlanner {
     final candidate = candidates.first;
     final target = candidate.tile;
     final plan = pathfinder.plan(unit: unit, targetTile: target);
-    if (plan == null || plan.totalCost > unit.movementPoints) return null;
+    if (plan == null || plan.totalCost > unit.movementUnits) return null;
     return _PlannedPressureMove(
       command: MoveUnitCommand(unit.id, target.col, target.row),
       reservedHexes: plan.reservedHexes,

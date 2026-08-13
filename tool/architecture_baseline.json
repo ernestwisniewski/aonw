@@ -25,7 +25,7 @@
       "declarations": {
         "packages/aonw_core/lib/ai/mcts/mcts_command_reconciliation_rules.dart::class:MctsCommandReconciliationRules": 369,
         "packages/aonw_core/lib/game/domain/city/city_turn_processor.dart::class:CityTurnProcessor": 360,
-        "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit": 469
+        "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit": 417
       },
       "callableLines": {
         "packages/aonw_core/lib/ai/city_site_scorer.dart::class:AiCitySiteScorer/method:scoreSite": 76,
@@ -265,7 +265,6 @@
         "packages/aonw_core/lib/game/domain/telemetry/balance_telemetry.dart::class:BalanceTelemetryPlayerReport/operator:==": 21,
         "packages/aonw_core/lib/game/domain/terrain/tile_terrain_profile_rules.dart::class:TileTerrainProfileRules/method:_isBase": 15,
         "packages/aonw_core/lib/game/domain/terrain/tile_terrain_profile_rules.dart::class:TileTerrainProfileRules/method:_isFeature": 15,
-        "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit/method:toJson": 12,
         "packages/aonw_core/lib/game/domain/unit/game_unit.dart::class:GameUnit/operator:==": 20,
         "packages/aonw_core/lib/game/domain/wonder/wonder_availability_policy.dart::class:WonderAvailabilityPolicy/method:availabilityFor": 11,
         "packages/aonw_core/lib/game/domain/wonder/wonder_effect_resolver.dart::class:WonderEffectResolver/method:yieldForCity": 12,
@@ -850,7 +849,7 @@
         "test/game/presentation/widgets/game_options_overlay_test.dart": 890,
         "test/game/presentation/widgets/hud_action_deck_test.dart": 1112,
         "test/game/presentation/widgets/hud_mode_banner_test.dart": 741,
-        "test/game/presentation/widgets/hud_selection_actions_test.dart": 1283,
+        "test/game/presentation/widgets/hud_selection_actions_test.dart": 1282,
         "test/game/presentation/widgets/multiplayer_avatars_rail_test.dart": 533,
         "test/game/presentation/widgets/turn_action_hint_test.dart": 516,
         "test/game/run_ai_turn_use_case_test.dart": 805,

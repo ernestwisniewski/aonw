@@ -48,7 +48,7 @@ abstract final class WorkerActionPanelViewModelFactory {
       unitId: unit.id,
       unitName: GameDisplayNames.unitType(l10n, unit.type),
       currentHex: CityHex(col: unit.col, row: unit.row),
-      movementPoints: unit.movementPoints,
+      movementPoints: unit.movementUnits,
       selectionActive: selectionActive,
       selectedImprovementType: selectedImprovementType,
       activeJob: unit.workerJob == null

@@ -58,7 +58,7 @@ class EmpireOverviewViewModel {
         technologyRuleset: technologyRuleset,
         paceBalance: paceBalance,
       ),
-      readyUnitCount: units.where((unit) => unit.movementPoints > 0).length,
+      readyUnitCount: units.where((unit) => unit.hasMovementRemaining).length,
       totalPopulation: cities.fold<int>(
         0,
         (total, city) => total + city.population,
@@ -274,11 +274,11 @@ class EmpireUnitGroup {
   final List<GameUnit> units;
 
   int get readyUnitCount =>
-      units.where((unit) => unit.movementPoints > 0).length;
+      units.where((unit) => unit.hasMovementRemaining).length;
 }
 
 String empireUnitSubtitle(AppLocalizations l10n, GameUnit unit) {
-  final parts = <String>[l10n.empireUnitMovement(unit.movementPoints)];
+  final parts = <String>[l10n.empireUnitMovement(unit.exactMovementPoints)];
   if (unit.isFortified) {
     parts.add(
       UnitFortificationRules.canHeal(unit)

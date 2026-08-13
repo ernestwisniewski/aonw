@@ -5549,7 +5549,7 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String empireUnitMovement(int movement) {
+  String empireUnitMovement(num movement) {
     return 'Ruch $movement';
   }
 
@@ -5774,13 +5774,13 @@ class AppLocalizationsPl extends AppLocalizations {
   String get technologyDiscoveryEyebrow => 'Odkryto technologię';
 
   @override
-  String unitSelectionMovementSubtitle(int current, int max) {
+  String unitSelectionMovementSubtitle(num current, int max) {
     return 'Ruch $current/$max';
   }
 
   @override
   String unitSelectionMovementHpSubtitle(
-    int current,
+    num current,
     int max,
     int hp,
     int maxHp,

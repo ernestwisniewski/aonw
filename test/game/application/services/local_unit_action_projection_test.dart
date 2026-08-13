@@ -37,7 +37,7 @@ void main() {
       targetCol: 0,
       targetRow: 0,
       totalCost: 0,
-      availableMovementPoints: 3,
+      availableMovementUnits: 3,
       steps: const [],
     );
     final selection = GameSelection.unit(selectedUnit);
@@ -87,7 +87,7 @@ void main() {
       targetCol: 0,
       targetRow: 0,
       totalCost: 0,
-      availableMovementPoints: 3,
+      availableMovementUnits: 3,
       steps: const [],
     );
     final state = GameClientState(

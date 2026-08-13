@@ -9,21 +9,21 @@ const int kProtocolVersion = 4;
 ///
 /// Keep this stable while the persisted shapes remain decodable. Bump it only
 /// with an explicit expand/contract and rollback plan for stored payloads.
-const int kSnapshotEventVersion = 6;
+const int kSnapshotEventVersion = 7;
+
+/// Previous durable schema accepted during the v6 -> v7 expand phase.
+///
+/// Revision 6 stores movement costs in whole points. Current readers migrate
+/// those costs to deterministic half-point units.
+const int kPreviousSnapshotEventVersion = 6;
 
 /// Previous durable schema accepted during the v5 -> v6 expand phase.
 ///
-/// Revision 5 does not persist the deterministic initial resource
-/// distribution. Current readers treat it as empty and migrate the envelope
-/// on the next authoritative write.
-const int kPreviousSnapshotEventVersion = 5;
+/// Revision 5 does not persist deterministic initial resource distribution.
+const int kLegacySnapshotEventVersion = 5;
 
-/// Previous durable schema accepted during the v4 -> v5 expand phase.
-///
-/// Revision 4 does not contain strategic-resource stockpiles. Current readers
-/// treat missing accounts as empty and migrate the envelope to revision 5 on
-/// the next authoritative write.
-const int kLegacySnapshotEventVersion = 4;
+/// Revision 4 does not contain strategic-resource stockpiles.
+const int kOlderSnapshotEventVersion = 4;
 
 /// Oldest durable schema retained through the current expand window.
 ///
@@ -33,6 +33,7 @@ const int kOldestSnapshotEventVersion = 3;
 /// Durable schemas that current clients and servers can decode safely.
 const Set<int> kReadableSnapshotEventVersions = {
   kOldestSnapshotEventVersion,
+  kOlderSnapshotEventVersion,
   kLegacySnapshotEventVersion,
   kPreviousSnapshotEventVersion,
   kSnapshotEventVersion,
@@ -46,7 +47,7 @@ bool isReadableSnapshotEventVersion(int version) =>
 /// Every player-visible or server-side multiplayer contract change increments
 /// this value, including compatible additive changes that do not alter the
 /// serialized wire-envelope schema.
-const int kCurrentMultiplayerVersion = 8;
+const int kCurrentMultiplayerVersion = 9;
 
 /// Version represented by clients released before the compatibility
 /// declaration was added to the app-status handshake.
@@ -57,7 +58,7 @@ const int kLegacyUndeclaredMultiplayerVersion = 1;
 /// Remove a revision when a change is incompatible. Clients on a removed or
 /// future revision receive the translated update notice before entering
 /// multiplayer.
-const Set<int> kCompatibleMultiplayerVersions = {8};
+const Set<int> kCompatibleMultiplayerVersions = {9};
 
 enum MultiplayerVersionCompatibility {
   current,

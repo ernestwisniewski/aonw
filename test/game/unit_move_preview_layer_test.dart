@@ -21,14 +21,14 @@ UnitMovementPlan _plan({
   int targetCol = 1,
   int targetRow = 0,
   int totalCost = 1,
-  int availableMovementPoints = 5,
+  int availableMovementUnits = 5,
   List<UnitMovementStep>? steps,
 }) => UnitMovementPlan(
   unitId: 'commander_player_1',
   targetCol: targetCol,
   targetRow: targetRow,
   totalCost: totalCost,
-  availableMovementPoints: availableMovementPoints,
+  availableMovementUnits: availableMovementUnits,
   steps:
       steps ??
       [
@@ -306,7 +306,7 @@ void main() {
       final plan = _plan(
         targetCol: 6,
         totalCost: 6,
-        availableMovementPoints: 5,
+        availableMovementUnits: 5,
         steps: const [
           UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
           UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
@@ -439,17 +439,17 @@ void main() {
           previews: [
             UnitMovePreviewLayerEntry(
               id: 'one',
-              preview: _linearPlan(totalCost: 4, availableMovementPoints: 5),
+              preview: _linearPlan(totalCost: 8, availableMovementUnits: 10),
               unitType: GameUnitType.commander,
             ),
             UnitMovePreviewLayerEntry(
               id: 'two',
-              preview: _linearPlan(totalCost: 6, availableMovementPoints: 3),
+              preview: _linearPlan(totalCost: 12, availableMovementUnits: 6),
               unitType: GameUnitType.warrior,
             ),
             UnitMovePreviewLayerEntry(
               id: 'five',
-              preview: _linearPlan(totalCost: 15, availableMovementPoints: 3),
+              preview: _linearPlan(totalCost: 30, availableMovementUnits: 6),
               unitType: GameUnitType.warrior,
             ),
           ],
@@ -472,7 +472,7 @@ void main() {
             previews: [
               UnitMovePreviewLayerEntry(
                 id: 'active',
-                preview: _linearPlan(totalCost: 15, availableMovementPoints: 3),
+                preview: _linearPlan(totalCost: 30, availableMovementUnits: 6),
                 unitType: GameUnitType.warrior,
                 showConfirmationHint: true,
                 showTargetPulse: true,
@@ -494,7 +494,7 @@ void main() {
         previews: [
           UnitMovePreviewLayerEntry(
             id: 'active',
-            preview: _linearPlan(totalCost: 15, availableMovementPoints: 3),
+            preview: _linearPlan(totalCost: 30, availableMovementUnits: 6),
             unitType: GameUnitType.warrior,
           ),
         ],

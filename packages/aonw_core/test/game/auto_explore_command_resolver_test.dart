@@ -14,6 +14,7 @@ void main() {
             mapData: autoExploreMap(cols: 10, rows: 10),
             units: [scout],
             fogOfWar: FogOfWarState.empty,
+            costResolver: const TerrainTraversalCostResolver(),
           );
 
       expect(target, isNotNull);

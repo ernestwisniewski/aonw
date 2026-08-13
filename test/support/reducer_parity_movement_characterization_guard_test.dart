@@ -199,10 +199,10 @@ void _registerMovementOracleGuards(_FixtureProvider fixtureProvider) {
     expect(partialUnit.queuedPath?.targetCol, 4);
     expect(partialUnit.queuedPath?.steps.map((step) => step.cumulativeCost), [
       0,
-      1,
       2,
-      3,
       4,
+      6,
+      8,
     ]);
     expect(partial.expectedEvents.single['type'], 'UnitMoved');
 

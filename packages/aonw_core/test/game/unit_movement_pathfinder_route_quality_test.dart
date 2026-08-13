@@ -27,7 +27,7 @@ void main() {
       ).plan(unit: unit, targetTile: map.tileAt(1, 2)!);
 
       expect(plan, isNotNull);
-      expect(plan!.totalCost, 3);
+      expect(plan!.totalCost, 6);
       expect(plan.path, [(col: 1, row: 0), (col: 1, row: 1), (col: 1, row: 2)]);
     });
 
@@ -60,8 +60,8 @@ void main() {
       ).plan(unit: unit, targetTile: map.tileAt(0, 2)!);
 
       expect(plan, isNotNull);
-      expect(plan!.totalCost, 6);
-      expect(plan.estimatedTurns(3), 2);
+      expect(plan!.totalCost, 12);
+      expect(plan.estimatedTurns(6), 2);
       expect(plan.path, [
         (col: 2, row: 1),
         (col: 2, row: 2),
@@ -97,8 +97,8 @@ void main() {
       final costs = pathfinder.movementCostsFrom(unit: unit);
 
       expect(plan, isNotNull);
-      expect(plan!.totalCost, 6);
-      expect(plan.estimatedTurns(3), 2);
+      expect(plan!.totalCost, 12);
+      expect(plan.estimatedTurns(6), 2);
       expect(plan.path, const [
         (col: 0, row: 0),
         (col: 0, row: 1),
@@ -108,9 +108,9 @@ void main() {
         (col: 2, row: 1),
         (col: 2, row: 0),
       ]);
-      expect(plan.steps.skip(1).every((step) => step.enterCost <= 3), isTrue);
+      expect(plan.steps.skip(1).every((step) => step.enterCost <= 6), isTrue);
       expect(costs.containsKey((col: 1, row: 0)), isFalse);
-      expect(costs[(col: 2, row: 0)], 6);
+      expect(costs[(col: 2, row: 0)], 12);
     });
 
     test('bounded search includes exactly one movement-exhausting step', () {
@@ -129,7 +129,7 @@ void main() {
 
       final costs = pathfinder.movementCostsFrom(
         unit: unit,
-        maxCost: unit.movementPoints,
+        maxCost: unit.movementUnits,
       );
       final exhaustedCosts = pathfinder.movementCostsFrom(
         unit: unit.copyWith(movementPoints: 0),
@@ -137,12 +137,12 @@ void main() {
       );
       final plan = pathfinder.plan(unit: unit, targetTile: map.tileAt(3, 0)!);
 
-      expect(costs[(col: 1, row: 0)], 2);
-      expect(costs[(col: 2, row: 0)], 4);
+      expect(costs[(col: 1, row: 0)], 4);
+      expect(costs[(col: 2, row: 0)], 8);
       expect(costs.containsKey((col: 3, row: 0)), isFalse);
       expect(exhaustedCosts, isEmpty);
       expect(plan?.furthestReachableStep?.coord, (col: 2, row: 0));
-      expect(plan?.estimatedTurns(3), 2);
+      expect(plan?.estimatedTurns(6), 2);
     });
 
     test(
@@ -176,7 +176,7 @@ void main() {
           units: [unit],
         ).plan(unit: unit, targetTile: map.tileAt(4, 2)!);
 
-        expect(plan?.estimatedTurns(3), 3);
+        expect(plan?.estimatedTurns(6), 3);
         expect(plan?.path, const [
           (col: 1, row: 1),
           (col: 1, row: 0),

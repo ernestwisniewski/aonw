@@ -123,9 +123,9 @@ void main() {
         destinationCityId: 'target',
         steps: const [
           UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
-          UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
-          UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 3),
-          UnitMovementStep(col: 3, row: 0, enterCost: 2, cumulativeCost: 5),
+          UnitMovementStep(col: 1, row: 0, enterCost: 4, cumulativeCost: 4),
+          UnitMovementStep(col: 2, row: 0, enterCost: 2, cumulativeCost: 6),
+          UnitMovementStep(col: 3, row: 0, enterCost: 4, cumulativeCost: 10),
         ],
       );
       expect(legacyRoute, expectedRoute);
@@ -149,13 +149,13 @@ void main() {
 
       const expectedMoveSteps = [
         UnitMovementStep(col: 1, row: 0, enterCost: 0, cumulativeCost: 0),
-        UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 1),
-        UnitMovementStep(col: 3, row: 0, enterCost: 2, cumulativeCost: 3),
+        UnitMovementStep(col: 2, row: 0, enterCost: 2, cumulativeCost: 2),
+        UnitMovementStep(col: 3, row: 0, enterCost: 4, cumulativeCost: 6),
       ];
       expect(legacyMove?.steps, expectedMoveSteps);
       expect(canonicalMove?.steps, expectedMoveSteps);
-      expect(legacyMove?.totalCost, 3);
-      expect(canonicalMove?.totalCost, 3);
+      expect(legacyMove?.totalCost, 6);
+      expect(canonicalMove?.totalCost, 6);
       expect(legacyMove?.targetCol, 3);
       expect(canonicalMove?.targetCol, 3);
     });

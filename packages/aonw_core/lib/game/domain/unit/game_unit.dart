@@ -8,6 +8,8 @@ import 'package:aonw_core/game/domain/unit/worker_assignment.dart';
 import 'package:aonw_core/game/domain/unit/worker_improvement_charge_rules.dart';
 import 'package:aonw_core/game/domain/unit/worker_job.dart';
 
+part 'game_unit_json_codec.dart';
+
 enum UnitPosture {
   active,
   fortified,
@@ -31,7 +33,7 @@ class GameUnit {
   final String name;
   final int col;
   final int row;
-  final int movementPoints;
+  final int movementUnits;
   final List<ArmyTroop> army;
   final QueuedMovePath? queuedPath;
   final MerchantTradeRoute? merchantTradeRoute;
@@ -53,6 +55,7 @@ class GameUnit {
     required this.col,
     required this.row,
     int? movementPoints,
+    int? movementUnits,
     List<ArmyTroop> army = const [],
     this.queuedPath,
     this.merchantTradeRoute,
@@ -65,11 +68,15 @@ class GameUnit {
     this.posture = UnitPosture.active,
     this.carriedArtifactId,
     this.excavatingArtifactId,
-  }) : movementPoints =
-           movementPoints ??
-           UnitMovementBalance.maxMovementPointsFor(
-             type: type,
-             carriedArtifactId: carriedArtifactId,
+  }) : assert(movementPoints == null || movementUnits == null),
+       movementUnits =
+           movementUnits ??
+           MovementPointScale.unitsFromWholePoints(
+             movementPoints ??
+                 UnitMovementBalance.maxMovementPointsFor(
+                   type: type,
+                   carriedArtifactId: carriedArtifactId,
+                 ),
            ),
        workerBuildCharges = WorkerImprovementChargeRules.normalize(
          type: type,
@@ -122,78 +129,10 @@ class GameUnit {
     );
   }
 
-  factory GameUnit.fromJson(Map<String, dynamic> json) {
-    return GameUnit(
-      id: json['id'] as String,
-      ownerPlayerId: json['ownerPlayerId'] as String,
-      type: GameUnitType.values.byName(json['type'] as String),
-      name: json['name'] as String,
-      col: (json['col'] as num).toInt(),
-      row: (json['row'] as num).toInt(),
-      movementPoints: (json['movementPoints'] as num?)?.toInt(),
-      army:
-          (json['army'] as List<dynamic>?)
-              ?.map(
-                (value) => ArmyTroop.fromJson(value as Map<String, dynamic>),
-              )
-              .toList() ??
-          const [],
-      queuedPath: json['queuedPath'] == null
-          ? null
-          : QueuedMovePath.fromJson(json['queuedPath'] as Map<String, dynamic>),
-      merchantTradeRoute: json['merchantTradeRoute'] == null
-          ? null
-          : MerchantTradeRoute.fromJson(
-              json['merchantTradeRoute'] as Map<String, dynamic>,
-            ),
-      workerJob: json['workerJob'] == null
-          ? null
-          : WorkerJob.fromJson(json['workerJob'] as Map<String, dynamic>),
-      workerBuildCharges: (json['workerBuildCharges'] as num?)?.toInt(),
-      cityFoundingJob: json['cityFoundingJob'] == null
-          ? null
-          : CityFoundingJob.fromJson(
-              json['cityFoundingJob'] as Map<String, dynamic>,
-            ),
-      workerAssignment: json['workerAssignment'] == null
-          ? null
-          : WorkerAssignment.fromJson(
-              json['workerAssignment'] as Map<String, dynamic>,
-            ),
-      hitPoints: (json['hitPoints'] as num?)?.toInt(),
-      experiencePoints: (json['experiencePoints'] as num?)?.toInt() ?? 0,
-      posture: UnitPosture.fromJson(json['posture']),
-      carriedArtifactId: _optionalString(json['carriedArtifactId']),
-      excavatingArtifactId: _optionalString(json['excavatingArtifactId']),
-    );
-  }
+  factory GameUnit.fromJson(Map<String, dynamic> json) =>
+      _GameUnitJsonCodec.fromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'ownerPlayerId': ownerPlayerId,
-    'type': type.name,
-    'name': name,
-    'col': col,
-    'row': row,
-    'movementPoints': movementPoints,
-    'army': army.map((troop) => troop.toJson()).toList(),
-    if (queuedPath != null) 'queuedPath': queuedPath!.toJson(),
-    if (merchantTradeRoute != null)
-      'merchantTradeRoute': merchantTradeRoute!.toJson(),
-    if (workerJob != null) 'workerJob': workerJob!.toJson(),
-    if (workerBuildCharges !=
-        WorkerImprovementChargeRules.startingChargesFor(type))
-      'workerBuildCharges': workerBuildCharges,
-    if (cityFoundingJob != null) 'cityFoundingJob': cityFoundingJob!.toJson(),
-    if (workerAssignment != null)
-      'workerAssignment': workerAssignment!.toJson(),
-    if (hitPoints != null) 'hitPoints': hitPoints,
-    if (experiencePoints > 0) 'experiencePoints': experiencePoints,
-    if (posture != UnitPosture.active) 'posture': posture.name,
-    if (carriedArtifactId != null) 'carriedArtifactId': carriedArtifactId,
-    if (excavatingArtifactId != null)
-      'excavatingArtifactId': excavatingArtifactId,
-  };
+  Map<String, dynamic> toJson() => _GameUnitJsonCodec.toJson(this);
 
   GameUnit copyWith({
     String? id,
@@ -203,6 +142,7 @@ class GameUnit {
     int? col,
     int? row,
     int? movementPoints,
+    int? movementUnits,
     List<ArmyTroop>? army,
     QueuedMovePath? queuedPath,
     MerchantTradeRoute? merchantTradeRoute,
@@ -216,6 +156,7 @@ class GameUnit {
     Object? carriedArtifactId = _unset,
     Object? excavatingArtifactId = _unset,
   }) {
+    assert(movementPoints == null || movementUnits == null);
     return _copyWithNullable(
       id: id,
       ownerPlayerId: ownerPlayerId,
@@ -224,6 +165,7 @@ class GameUnit {
       col: col,
       row: row,
       movementPoints: movementPoints,
+      movementUnits: movementUnits,
       army: army,
       queuedPath: queuedPath ?? _unset,
       merchantTradeRoute: merchantTradeRoute ?? _unset,
@@ -247,6 +189,7 @@ class GameUnit {
     int? col,
     int? row,
     int? movementPoints,
+    int? movementUnits,
     List<ArmyTroop>? army,
     Object? queuedPath = _unset,
     Object? merchantTradeRoute = _unset,
@@ -267,7 +210,7 @@ class GameUnit {
       name: name ?? this.name,
       col: col ?? this.col,
       row: row ?? this.row,
-      movementPoints: movementPoints ?? this.movementPoints,
+      movementUnits: _movementUnitsForCopy(this, movementPoints, movementUnits),
       army: army ?? this.army,
       queuedPath: identical(queuedPath, _unset)
           ? this.queuedPath
@@ -314,6 +257,9 @@ class GameUnit {
   GameUnit copyWithWorkerBuildCharges(int charges) =>
       _copyWithNullable(workerBuildCharges: charges);
 
+  GameUnit copyWithMovementUnits(int units) =>
+      _copyWithNullable(movementUnits: units);
+
   /// Use this to set OR clear cityFoundingJob.
   GameUnit copyWithCityFoundingJob(CityFoundingJob? job) =>
       _copyWithNullable(cityFoundingJob: job);
@@ -340,6 +286,17 @@ class GameUnit {
 
   HexCoordinate get coordinate => HexCoordinate(col: col, row: row);
 
+  int get movementPoints =>
+      MovementPointScale.wholePointsFromUnits(movementUnits);
+
+  int get movementSubpoints =>
+      movementUnits.remainder(MovementPointScale.unitsPerPoint);
+
+  num get exactMovementPoints =>
+      MovementPointScale.displayPointsFromUnits(movementUnits);
+
+  bool get hasMovementRemaining => movementUnits > 0;
+
   bool get isWorker => type == GameUnitType.worker;
 
   bool get isMerchant => type == GameUnitType.merchant;
@@ -355,7 +312,10 @@ class GameUnit {
       excavatingArtifactId != null;
 
   bool get isReadyToAct =>
-      !isWorking && !isAutoWorking && movementPoints > 0 && queuedPath == null;
+      !isWorking &&
+      !isAutoWorking &&
+      hasMovementRemaining &&
+      queuedPath == null;
 
   bool get isCarryingArtifact => carriedArtifactId != null;
 
@@ -421,7 +381,7 @@ class GameUnit {
         other.name == name &&
         other.col == col &&
         other.row == row &&
-        other.movementPoints == movementPoints &&
+        other.movementUnits == movementUnits &&
         _sameArmy(other.army, army) &&
         other.queuedPath == queuedPath &&
         other.merchantTradeRoute == merchantTradeRoute &&
@@ -444,7 +404,7 @@ class GameUnit {
     name,
     col,
     row,
-    movementPoints,
+    movementUnits,
     Object.hashAll(army),
     queuedPath,
     merchantTradeRoute,
@@ -462,7 +422,7 @@ class GameUnit {
   @override
   String toString() {
     return 'GameUnit(id: $id, ownerPlayerId: $ownerPlayerId, type: $type, '
-        'name: $name, col: $col, row: $row, movementPoints: $movementPoints, '
+        'name: $name, col: $col, row: $row, movementUnits: $movementUnits, '
         'army: $army, queuedPath: $queuedPath, '
         'merchantTradeRoute: $merchantTradeRoute, workerJob: $workerJob, '
         'workerBuildCharges: $workerBuildCharges, '
@@ -473,16 +433,6 @@ class GameUnit {
         'excavatingArtifactId: $excavatingArtifactId)';
   }
 
-  static String? _optionalString(Object? value) {
-    if (value == null) return null;
-    if (value is String && value.isNotEmpty) return value;
-    throw ArgumentError.value(
-      value,
-      'GameUnit.artifactId',
-      'Expected a non-empty String or null',
-    );
-  }
-
   static bool _sameArmy(List<ArmyTroop> left, List<ArmyTroop> right) {
     if (left.length != right.length) return false;
     for (var i = 0; i < left.length; i++) {
@@ -490,4 +440,16 @@ class GameUnit {
     }
     return true;
   }
+}
+
+int _movementUnitsForCopy(
+  GameUnit unit,
+  int? movementPoints,
+  int? movementUnits,
+) {
+  assert(movementPoints == null || movementUnits == null);
+  if (movementPoints != null) {
+    return MovementPointScale.unitsFromWholePoints(movementPoints);
+  }
+  return movementUnits ?? unit.movementUnits;
 }

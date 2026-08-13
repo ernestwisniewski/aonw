@@ -31,7 +31,7 @@ abstract final class AutoExploreCommandGuard {
     if (unit.isWorking || unit.isFortified) {
       return _rejected('unit_busy');
     }
-    if (unit.movementPoints <= 0) return _rejected('unit_exhausted');
+    if (!unit.hasMovementRemaining) return _rejected('unit_exhausted');
     if (unit.queuedPath != null) return _rejected('unit_has_path');
     if (mapData.tileAt(unit.col, unit.row) == null) {
       return _rejected('unit_out_of_bounds');

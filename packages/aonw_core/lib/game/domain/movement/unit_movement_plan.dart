@@ -34,9 +34,11 @@ class UnitMovementPlan {
   final String unitId;
   final int targetCol;
   final int targetRow;
+
+  /// Total route cost in fixed-point movement units.
   final int totalCost;
-  final int availableMovementPoints;
-  final int remainingAfterMove;
+  final int availableMovementUnits;
+  final int remainingMovementUnitsAfterMove;
   final bool canMoveNow;
   final List<UnitMovementStep> steps;
 
@@ -45,14 +47,29 @@ class UnitMovementPlan {
     required this.targetCol,
     required this.targetRow,
     required this.totalCost,
-    required this.availableMovementPoints,
+    int? availableMovementUnits,
+    @Deprecated('Use availableMovementUnits') int? availableMovementPoints,
     required List<UnitMovementStep> steps,
-  }) : remainingAfterMove = _remainingAfterCost(
-         availableMovementPoints,
+  }) : assert(
+         (availableMovementUnits == null) != (availableMovementPoints == null),
+       ),
+       availableMovementUnits =
+           availableMovementUnits ?? availableMovementPoints!,
+       remainingMovementUnitsAfterMove = _remainingAfterCost(
+         availableMovementUnits ?? availableMovementPoints!,
          totalCost,
        ),
-       canMoveNow = _canReachTarget(availableMovementPoints, steps),
+       canMoveNow = _canReachTarget(
+         availableMovementUnits ?? availableMovementPoints!,
+         steps,
+       ),
        steps = List.unmodifiable(steps);
+
+  @Deprecated('Use availableMovementUnits')
+  int get availableMovementPoints => availableMovementUnits;
+
+  @Deprecated('Use remainingMovementUnitsAfterMove')
+  int get remainingAfterMove => remainingMovementUnitsAfterMove;
 
   List<({int col, int row})> get path {
     return [for (final step in steps) step.coord];
@@ -83,17 +100,21 @@ class UnitMovementPlan {
   }
 
   bool canReachStepThisTurn(UnitMovementStep step) {
-    if (step.cumulativeCost <= availableMovementPoints) return true;
-    return step.cumulativeCost - step.enterCost < availableMovementPoints;
+    if (step.cumulativeCost <= availableMovementUnits) return true;
+    return step.cumulativeCost - step.enterCost < availableMovementUnits;
   }
 
-  int remainingMovementPointsAfterStep(UnitMovementStep step) {
-    return _remainingAfterCost(availableMovementPoints, step.cumulativeCost);
+  int remainingMovementUnitsAfterStep(UnitMovementStep step) {
+    return _remainingAfterCost(availableMovementUnits, step.cumulativeCost);
   }
+
+  @Deprecated('Use remainingMovementUnitsAfterStep')
+  int remainingMovementPointsAfterStep(UnitMovementStep step) =>
+      remainingMovementUnitsAfterStep(step);
 
   /// Returns the untravelled suffix with costs rebased to the current step.
   ///
-  /// The current [availableMovementPoints] are preserved, so callers restoring
+  /// The current [availableMovementUnits] are preserved, so callers restoring
   /// persisted routes must build this plan with the unit's current balance.
   UnitMovementPlan remainingFromStepIndex(int stepIndex) {
     if (stepIndex < 0 || stepIndex >= steps.length) {
@@ -121,20 +142,20 @@ class UnitMovementPlan {
       targetCol: targetCol,
       targetRow: targetRow,
       totalCost: cumulativeCost,
-      availableMovementPoints: availableMovementPoints,
+      availableMovementUnits: availableMovementUnits,
       steps: remainingSteps,
     );
   }
 
   /// Estimates calendar turns, including the partially spent current turn.
-  int estimatedTurns(int maxMovementPointsPerTurn) {
+  int estimatedTurns(int maxMovementUnitsPerTurn) {
     if (totalCost <= 0) return 0;
 
-    final fullTurnMovement = maxMovementPointsPerTurn > 0
-        ? maxMovementPointsPerTurn
+    final fullTurnMovement = maxMovementUnitsPerTurn > 0
+        ? maxMovementUnitsPerTurn
         : 1;
     var turns = 1;
-    var remainingMovement = availableMovementPoints;
+    var remainingMovement = availableMovementUnits;
     for (final step in steps.skip(1)) {
       if (step.enterCost <= remainingMovement) {
         remainingMovement -= step.enterCost;

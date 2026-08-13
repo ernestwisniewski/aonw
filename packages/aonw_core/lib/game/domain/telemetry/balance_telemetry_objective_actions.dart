@@ -124,7 +124,7 @@ abstract final class BalanceTelemetryObjectiveActionDiagnostics {
     return unit.ownerPlayerId == playerId &&
         !unit.isWorking &&
         !unit.isAutoExploring &&
-        unit.movementPoints > 0 &&
+        unit.hasMovementRemaining &&
         unit.queuedPath == null;
   }
 

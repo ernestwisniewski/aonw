@@ -321,8 +321,8 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
     final movementPerTurn =
         entry.maxMovementPointsPerTurn ??
         (entry.unitType == null
-            ? math.max(1, preview.availableMovementPoints)
-            : UnitMovementBalance.maxMovementPointsForType(entry.unitType!));
+            ? math.max(1, preview.availableMovementUnits)
+            : UnitMovementBalance.maxMovementUnitsForType(entry.unitType!));
     return preview.estimatedTurns(movementPerTurn);
   }
 

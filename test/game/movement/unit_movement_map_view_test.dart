@@ -22,7 +22,7 @@ void main() {
       (col: 1, row: 0),
       (col: 2, row: 0),
     ]);
-    expect(plan.totalCost, 2);
+    expect(plan.totalCost, 4);
   });
 
   test('validates queued movement through the canonical traversal view', () {

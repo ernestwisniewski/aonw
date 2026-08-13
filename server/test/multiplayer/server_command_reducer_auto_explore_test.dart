@@ -120,7 +120,7 @@ void _expectMovementAndContact(
     execution.steps.map(
       (step) => (step.col, step.row, step.enterCost, step.cumulativeCost),
     ),
-    [(1, 0, 1, 1)],
+    [(1, 0, 2, 2)],
   );
   expect(
     after.domain.diplomacy.hasContact(_actorPlayerId, _opponentPlayerId),

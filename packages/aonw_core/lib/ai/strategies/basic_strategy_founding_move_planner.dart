@@ -38,7 +38,7 @@ final class BasicStrategyFoundingMovePlanner {
     required Set<String> occupied,
     required UnitMovementPathfinder pathfinder,
   }) {
-    if (unit.movementPoints <= 0) return null;
+    if (!unit.hasMovementRemaining) return null;
     if (AiCityFoundingSafety.unknownCenterExclusionTiles(
       view: view,
       center: center,
@@ -97,7 +97,7 @@ final class BasicStrategyFoundingMovePlanner {
     required GameView view,
     required UnitMovementPathfinder pathfinder,
   }) {
-    if (unit.movementPoints <= 0) return null;
+    if (!unit.hasMovementRemaining) return null;
     final targetTile = view.mapData.tileAt(site.center.col, site.center.row);
     if (targetTile == null) return null;
 
@@ -147,7 +147,7 @@ final class BasicStrategyFoundingMovePlanner {
     required Set<String> occupied,
     required UnitMovementPathfinder pathfinder,
   }) {
-    if (unit.movementPoints <= 0) return null;
+    if (!unit.hasMovementRemaining) return null;
     final currentThreat = _safetyPolicy.visibleEnemyMilitaryDistance(
       unit.hex,
       view,
@@ -184,7 +184,7 @@ final class BasicStrategyFoundingMovePlanner {
     required UnitMovementPathfinder pathfinder,
     bool forceMove = false,
   }) {
-    if (unit.movementPoints <= 0) return null;
+    if (!unit.hasMovementRemaining) return null;
     final citySiteDiscoveryFocus = _needsFounderLedCitySiteDiscovery(
       view: view,
       context: context,

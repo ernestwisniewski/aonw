@@ -9434,7 +9434,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Movement {movement}'**
-  String empireUnitMovement(int movement);
+  String empireUnitMovement(num movement);
 
   /// No description provided for @empireUnitBuilding.
   ///
@@ -9822,14 +9822,14 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Move {current}/{max}'**
-  String unitSelectionMovementSubtitle(int current, int max);
+  String unitSelectionMovementSubtitle(num current, int max);
 
   /// No description provided for @unitSelectionMovementHpSubtitle.
   ///
   /// In en, this message translates to:
   /// **'Move {current}/{max} • HP {hp}/{maxHp}'**
   String unitSelectionMovementHpSubtitle(
-    int current,
+    num current,
     int max,
     int hp,
     int maxHp,

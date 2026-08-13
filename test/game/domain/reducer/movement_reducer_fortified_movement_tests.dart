@@ -24,8 +24,8 @@ void _registerFortifiedMovementPreviewTest(WorldMap Function() currentMap) {
 
     expect(previewed.state.movePreview, isNotNull);
     expect(
-      previewed.state.movePreview?.availableMovementPoints,
-      UnitMovementBalance.maxMovementPointsForType(fortified.type),
+      previewed.state.movePreview?.availableMovementUnits,
+      UnitMovementBalance.maxMovementUnitsForType(fortified.type),
     );
     expect(previewed.state.units.single.posture, UnitPosture.fortified);
 

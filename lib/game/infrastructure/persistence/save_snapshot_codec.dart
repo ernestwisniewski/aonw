@@ -1,3 +1,4 @@
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/state.dart';
 
@@ -14,13 +15,13 @@ abstract final class SaveSnapshotCodec {
   static CanonicalGameSnapshot fromJson(Map<String, dynamic> json) {
     final rawSave = json['save'] as Map<String, dynamic>;
     final schemaVersion = rawSave['schemaVersion'];
-    if (!{gameSaveCurrentSchemaVersion, 5, 4, 3}.contains(schemaVersion)) {
+    if (!{gameSaveCurrentSchemaVersion, 6, 5, 4, 3}.contains(schemaVersion)) {
       throw StateError(
         'Unsupported save schema version: $schemaVersion '
         '(expected $gameSaveCurrentSchemaVersion)',
       );
     }
-    final state = <String, dynamic>{
+    var state = <String, dynamic>{
       for (final entry in json.entries)
         if (entry.key != 'save' && entry.key != 'eventLogOffset')
           entry.key: entry.value,
@@ -31,6 +32,7 @@ abstract final class SaveSnapshotCodec {
     if (schemaVersion == 3) {
       state.putIfAbsent('transportNetwork', () => <dynamic>[]);
     }
+    state = _movementStateForSchema(state, schemaVersion);
 
     try {
       return CanonicalGameSnapshotCodec.decode(
@@ -46,4 +48,14 @@ abstract final class SaveSnapshotCodec {
       throw FormatException('Invalid current save snapshot: $error');
     }
   }
+}
+
+Map<String, dynamic> _movementStateForSchema(
+  Map<String, dynamic> state,
+  Object? schemaVersion,
+) {
+  if (schemaVersion is int && schemaVersion < 7) {
+    return MovementSnapshotMigration.fromWholePointCosts(state);
+  }
+  return state;
 }

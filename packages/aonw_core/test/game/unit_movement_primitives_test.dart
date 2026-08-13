@@ -399,7 +399,7 @@ void main() {
 
       expect(
         UnitMovementCostRules.costToEnterTile(tile),
-        const MovementCost.passable(2),
+        const MovementCost.passable(4),
       );
     });
 

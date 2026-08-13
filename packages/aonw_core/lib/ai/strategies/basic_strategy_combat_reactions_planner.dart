@@ -64,7 +64,7 @@ final class BasicStrategyCombatReactionsPlanner {
     for (final unit in ownUnits) {
       if (usedUnitIds.contains(unit.id) ||
           unit.isWorking ||
-          unit.movementPoints <= 0) {
+          !unit.hasMovementRemaining) {
         continue;
       }
 

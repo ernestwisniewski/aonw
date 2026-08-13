@@ -153,7 +153,13 @@ class GameView {
   ]);
 
   late final UnitTraversalCostResolver traversalCostResolver =
-      InfrastructureAwareTraversalCostResolver(transportNetwork);
+      InfrastructureAwareTraversalCostResolver(
+        transportNetwork,
+        cityCenters: [
+          for (final city in [...ownCities, ...rememberedEnemyCities])
+            city.center.toCoordinate(),
+        ],
+      );
 
   UnitMovementPathfinder movementPathfinder({
     MapTraversalView? mapData,
@@ -416,7 +422,7 @@ GameView _buildGameView(_GameViewProjection source) {
     ownStrategicResources: source.strategicResources.forPlayer(
       source.forPlayerId,
     ),
-    transportNetwork: source.transportNetwork,
+    transportNetwork: _knownTransportNetwork(source, ownCityIds),
     resourceTradeAgreements: source.resourceTradeAgreements,
     mapObjectiveHoldStatesByObjectiveId:
         source.mapObjectiveHoldStatesByObjectiveId,

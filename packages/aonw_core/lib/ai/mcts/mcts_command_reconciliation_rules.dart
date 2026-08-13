@@ -48,7 +48,7 @@ final class MctsCommandReconciliationRules {
           targetBlocker.ownerPlayerId != unit.ownerPlayerId;
       if (approach != null &&
           (targetBlockedByOpponent ||
-              approach.totalCost > unit.movementPoints)) {
+              approach.totalCost > unit.movementUnits)) {
         plan = approach;
       }
     }
@@ -84,9 +84,9 @@ final class MctsCommandReconciliationRules {
     return {
       for (final entry
           in pathfinder
-              .movementCostsFrom(unit: unit, maxCost: unit.movementPoints)
+              .movementCostsFrom(unit: unit, maxCost: unit.movementUnits)
               .entries)
-        if (entry.value <= unit.movementPoints)
+        if (entry.value <= unit.movementUnits)
           if (HexDistance.between(
                 HexCoordinate(col: entry.key.col, row: entry.key.row),
                 target,
@@ -219,7 +219,7 @@ final class MctsCommandReconciliationRules {
     return previous.col == next.col &&
         previous.row == next.row &&
         previous.queuedPath == next.queuedPath &&
-        previous.movementPoints == next.movementPoints;
+        previous.movementUnits == next.movementUnits;
   }
 
   bool attackWouldBeNoOp(AttackHexCommand command, SimulatedState state) {

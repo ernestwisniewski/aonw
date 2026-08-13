@@ -29,7 +29,7 @@ final class MctsBaselineAttackCommandPolicy {
     final attacker = _rules.unitById(view.ownUnits, command.attackerUnitId);
     if (attacker == null ||
         attacker.isWorking ||
-        attacker.movementPoints <= 0) {
+        !attacker.hasMovementRemaining) {
       return false;
     }
     final defender = view.visibleEnemyUnits.unitAt(
@@ -74,7 +74,7 @@ final class MctsBaselineAttackCommandPolicy {
     final attacker = _rules.unitById(view.ownUnits, command.attackerUnitId);
     if (attacker == null ||
         attacker.isWorking ||
-        attacker.movementPoints <= 0 ||
+        !attacker.hasMovementRemaining ||
         !_rules.isAssignedWarGoalMilitaryUnit(attacker, context)) {
       return false;
     }
@@ -132,7 +132,7 @@ final class MctsBaselineAttackCommandPolicy {
     final attacker = _rules.unitById(view.ownUnits, command.attackerUnitId);
     if (attacker == null ||
         attacker.isWorking ||
-        attacker.movementPoints <= 0 ||
+        !attacker.hasMovementRemaining ||
         !_rules.canServeAsMilitaryUnit(attacker, context)) {
       return false;
     }

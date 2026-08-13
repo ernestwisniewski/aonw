@@ -39,6 +39,7 @@ void main() {
         mapData: fixture.map,
         units: fixture.state.units,
         fogOfWar: fixture.state.fogOfWar,
+        costResolver: const TerrainTraversalCostResolver(),
       );
 
       expect(target, isNotNull);
@@ -73,6 +74,7 @@ void main() {
         mapData: fixture.map,
         units: fixture.state.units,
         fogOfWar: fixture.state.fogOfWar,
+        costResolver: const TerrainTraversalCostResolver(),
       )!;
 
       final result = const MovementCommandResolver().resolve(

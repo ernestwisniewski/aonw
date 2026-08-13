@@ -116,7 +116,7 @@ final class BasicStrategyLastMilitaryReservePlanner {
       if (!garrisonRules.canServeAsDefender(unit, context.ruleset.combat)) {
         continue;
       }
-      if (usedUnitIds.contains(unit.id) || unit.movementPoints <= 0) {
+      if (usedUnitIds.contains(unit.id) || !unit.hasMovementRemaining) {
         count += 1;
       }
     }
@@ -134,7 +134,7 @@ final class BasicStrategyLastMilitaryReservePlanner {
       for (final unit in view.ownUnits)
         if (!usedUnitIds.contains(unit.id) &&
             !claimedUnitIds.contains(unit.id) &&
-            unit.movementPoints > 0 &&
+            unit.hasMovementRemaining &&
             garrisonRules.canServeAsDefender(unit, context.ruleset.combat) &&
             defenseMovement.isInArea(unit, need.city))
           unit,
@@ -156,7 +156,7 @@ final class BasicStrategyLastMilitaryReservePlanner {
       ))
         if (!usedUnitIds.contains(unit.id) &&
             !claimedUnitIds.contains(unit.id) &&
-            unit.movementPoints > 0 &&
+            unit.hasMovementRemaining &&
             garrisonRules.canServeAsDefender(unit, context.ruleset.combat))
           unit,
     ]..sort((a, b) {

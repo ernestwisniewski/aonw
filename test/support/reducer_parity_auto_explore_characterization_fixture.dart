@@ -194,8 +194,8 @@ QueuedMovePath _autoExploreQueuedPath({required int targetCol}) {
         UnitMovementStep(
           col: col,
           row: 0,
-          enterCost: col == 0 ? 0 : 1,
-          cumulativeCost: col,
+          enterCost: col == 0 ? 0 : 2,
+          cumulativeCost: col * 2,
         ),
     ],
   );

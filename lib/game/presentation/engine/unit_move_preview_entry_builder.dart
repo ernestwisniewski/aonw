@@ -20,7 +20,7 @@ abstract final class UnitMovePreviewEntryBuilder {
         targetCol: tradeRoute.targetCol,
         targetRow: tradeRoute.targetRow,
         totalCost: tradeRoute.steps.last.cumulativeCost,
-        availableMovementPoints: unit.movementPoints,
+        availableMovementUnits: unit.movementUnits,
         steps: tradeRoute.steps,
       ).remainingFromStepIndex(travelled);
       return _entry(
@@ -45,7 +45,7 @@ abstract final class UnitMovePreviewEntryBuilder {
       targetCol: queued.targetCol,
       targetRow: queued.targetRow,
       totalCost: queued.steps.last.cumulativeCost,
-      availableMovementPoints: unit.movementPoints,
+      availableMovementUnits: unit.movementUnits,
       steps: queued.steps,
     ).remainingFromStepIndex(travelled);
     return _entry(
@@ -60,8 +60,8 @@ abstract final class UnitMovePreviewEntryBuilder {
     );
   }
 
-  static int maxMovementPoints(GameUnit unit) {
-    return UnitMovementBalance.maxMovementPointsFor(
+  static int maxMovementUnits(GameUnit unit) {
+    return UnitMovementBalance.maxMovementUnitsFor(
       type: unit.type,
       carriedArtifactId: unit.carriedArtifactId,
     );
@@ -91,7 +91,7 @@ abstract final class UnitMovePreviewEntryBuilder {
       displaySteps: displaySteps,
       travelledUpToIndex: travelled,
       unitType: unit.type,
-      maxMovementPointsPerTurn: maxMovementPoints(unit),
+      maxMovementPointsPerTurn: maxMovementUnits(unit),
       routeKind: routeKind,
       dimmed: dimmed,
       subdued: !selected,

@@ -102,7 +102,7 @@ void main() {
         expect(stable['indexedTiles'], scale);
         expect(stable['targetDistance'], 3);
         expect(stable['pathSteps'], 4);
-        expect(stable['totalCost'], 3);
+        expect(stable['totalCost'], 6);
         expect(stable['uniqueTileLookupCoordinates'], stable['uniqueTileHits']);
         expect(stable['uniqueTileHits'], lessThan(100));
         expect(stable['outputDigest'], hasLength(64));

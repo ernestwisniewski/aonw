@@ -51,7 +51,7 @@ extension _BasicStrategyWorkerMovement on BasicStrategyWorkerPlanner {
   }) {
     final movementCosts = pathfinder.movementCostsFrom(
       unit: worker,
-      maxCost: worker.movementPoints,
+      maxCost: worker.movementUnits,
     );
     final candidates =
         view.mapData.tileViews
@@ -134,7 +134,7 @@ extension _BasicStrategyWorkerMovement on BasicStrategyWorkerPlanner {
     final currentDistance = HexDistance.between(current, target);
     final costs =
         movementCosts ??
-        pathfinder.movementCostsFrom(unit: unit, maxCost: unit.movementPoints);
+        pathfinder.movementCostsFrom(unit: unit, maxCost: unit.movementUnits);
     final candidates =
         costs.entries
             .map(

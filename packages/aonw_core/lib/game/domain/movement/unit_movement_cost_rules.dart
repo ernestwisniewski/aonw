@@ -1,4 +1,5 @@
 import 'package:aonw_core/game/domain/movement/movement_cost.dart';
+import 'package:aonw_core/game/domain/movement/movement_point_scale.dart';
 import 'package:aonw_core/game/domain/terrain/tile_terrain_profile.dart';
 import 'package:aonw_core/game/domain/terrain/tile_terrain_profile_rules.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
@@ -27,17 +28,19 @@ abstract final class UnitMovementCostRules {
     if (baseCost == null) return const MovementCost.blocked();
 
     var cost = baseCost;
-    if (_forestAddsCost(profile)) cost += 1;
-    if (profile.hasJungle) cost += 1;
-    if (profile.hasWetlands) cost += 1;
-    if (profile.hasHills) cost += 1;
+    if (_forestAddsCost(profile)) cost += MovementPointScale.unitsPerPoint;
+    if (profile.hasJungle) cost += MovementPointScale.unitsPerPoint;
+    if (profile.hasWetlands) cost += MovementPointScale.unitsPerPoint;
+    if (profile.hasHills) cost += MovementPointScale.unitsPerPoint;
 
     return MovementCost.passable(cost);
   }
 
   static MovementCost _navalCost(TileTerrainProfile profile) {
     return switch (profile.base) {
-      TerrainType.coast || TerrainType.ocean => const MovementCost.passable(1),
+      TerrainType.coast || TerrainType.ocean => const MovementCost.passable(
+        MovementPointScale.unitsPerPoint,
+      ),
       TerrainType.grassland ||
       TerrainType.plains ||
       TerrainType.desert ||
@@ -56,9 +59,13 @@ abstract final class UnitMovementCostRules {
 
   static int? _baseCost(TerrainType? terrain) {
     return switch (terrain) {
-      TerrainType.grassland || TerrainType.plains || TerrainType.coast => 1,
-      TerrainType.desert || TerrainType.tundra || TerrainType.wetlands => 2,
-      TerrainType.snow => 3,
+      TerrainType.grassland ||
+      TerrainType.plains ||
+      TerrainType.coast => MovementPointScale.unitsPerPoint,
+      TerrainType.desert ||
+      TerrainType.tundra ||
+      TerrainType.wetlands => 2 * MovementPointScale.unitsPerPoint,
+      TerrainType.snow => 3 * MovementPointScale.unitsPerPoint,
       // Ocean is open water — impassable for land units.
       TerrainType.ocean || TerrainType.lake => null,
       TerrainType.forest ||

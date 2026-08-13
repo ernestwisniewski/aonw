@@ -83,7 +83,7 @@ bool _carrierCanReturnToAnyStart({
       row: artifact.location.row!,
       carriedArtifactId: artifact.id,
     );
-    final maxMovement = UnitMovementBalance.maxMovementPointsFor(
+    final maxMovement = UnitMovementBalance.maxMovementUnitsFor(
       type: carrier.type,
       carriedArtifactId: carrier.carriedArtifactId,
     );

@@ -143,7 +143,7 @@ final class BasicStrategyExplorationPlanner {
 
     final movementCosts = pathfinder.movementCostsFrom(
       unit: unit,
-      maxCost: unit.movementPoints,
+      maxCost: unit.movementUnits,
     );
     for (final entry in movementCosts.entries) {
       final coords = entry.key;
@@ -187,7 +187,7 @@ final class BasicStrategyExplorationPlanner {
     if (candidates.isEmpty) return null;
     final candidate = candidates.first;
     final plan = pathfinder.plan(unit: unit, targetTile: candidate.tile);
-    if (plan == null || plan.totalCost > unit.movementPoints) return null;
+    if (plan == null || plan.totalCost > unit.movementUnits) return null;
     return _PlannedExplorationMove(
       command: MoveUnitCommand(unit.id, candidate.tile.col, candidate.tile.row),
       reservedHexes: plan.reservedHexes,

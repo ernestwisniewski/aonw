@@ -23,6 +23,7 @@ abstract final class _AutoExploreProcessor {
       phaseKnownPlayerIds: knownPlayerIds(state),
       mapData: mapView,
       fogOfWarService: fogOfWarService,
+      transportNetwork: state.transportNetwork,
     );
   }
 }

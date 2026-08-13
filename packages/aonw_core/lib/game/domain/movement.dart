@@ -17,6 +17,8 @@ export 'movement/movement_command_state.dart';
 export 'movement/movement_command_visibility_mode.dart';
 export 'movement/movement_cost.dart';
 export 'movement/movement_hidden_obstacle_rules.dart';
+export 'movement/movement_point_scale.dart';
+export 'movement/movement_snapshot_migration.dart';
 export 'movement/queued_move_path.dart';
 export 'movement/scout_auto_explore_planner.dart';
 export 'movement/scout_auto_explore_target.dart';

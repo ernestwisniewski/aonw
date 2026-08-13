@@ -265,7 +265,7 @@ abstract final class WorldArtifactGenerator {
   ) {
     final reachable = <String>{};
     for (final unit in startingUnits) {
-      final carrierMovement = UnitMovementBalance.maxMovementPointsFor(
+      final carrierMovement = UnitMovementBalance.maxMovementUnitsFor(
         type: unit.type,
         carriedArtifactId: 'generated-artifact',
       );
@@ -306,7 +306,7 @@ abstract final class WorldArtifactGenerator {
     );
     if (cost.blocked) return false;
     if (unit.isCarryingArtifact) return true;
-    final maxMovement = UnitMovementBalance.maxMovementPointsFor(
+    final maxMovement = UnitMovementBalance.maxMovementUnitsFor(
       type: unit.type,
       carriedArtifactId: unit.carriedArtifactId,
     );

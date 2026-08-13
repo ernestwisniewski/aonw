@@ -36,7 +36,7 @@ and online multiplayer infrastructure.
 | Area | Purpose |
 | --- | --- |
 | `lib/game/` | Flutter client gameplay, UI, Flame rendering, local persistence, and adapters. |
-| `packages/aonw_core/` | Dart-only rules, protocol models, AI planning, and shared game logic. |
+| `packages/aonw_core/` | Current production Dart rules, protocol models, and AI; planned to be replaced by the shared Rust engine in `engine/` after migration gates pass. |
 | `packages/aonw_server_client/` | Generated Serverpod client package used by the Flutter app. |
 | `server/` | Serverpod backend, auth adapters, multiplayer services, and persistence. |
 | `engine/` | Planned Rust workspace for the shared domain, deterministic engine, runtime, AI, contracts, and thin adapters. |

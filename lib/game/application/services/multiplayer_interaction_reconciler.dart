@@ -121,8 +121,8 @@ abstract final class MultiplayerInteractionReconciler {
         preview != null &&
         selectedUnit != null &&
         preview.unitId == selectedUnit.id &&
-        preview.availableMovementPoints ==
-            UnitManualMovementRules.availableMovementPoints(selectedUnit) &&
+        preview.availableMovementUnits ==
+            UnitManualMovementRules.availableMovementUnits(selectedUnit) &&
         canKeepSelectedUnitAction &&
         _canKeepMovePreview(selectedUnit) &&
         _selectedMovementStateStayedValid(
@@ -139,7 +139,7 @@ abstract final class MultiplayerInteractionReconciler {
       source != null &&
       source.col == authoritative.col &&
       source.row == authoritative.row &&
-      source.movementPoints == authoritative.movementPoints &&
+      source.movementUnits == authoritative.movementUnits &&
       source.queuedPath == authoritative.queuedPath &&
       source.posture == authoritative.posture;
 
@@ -161,8 +161,8 @@ abstract final class MultiplayerInteractionReconciler {
     final authoritativeUnit = authoritativeState.unitById(sourcePending.unitId);
     return sourceUnit != null &&
         authoritativeUnit != null &&
-        sourceUnit.movementPoints == 0 &&
-        authoritativeUnit.movementPoints > 0;
+        !sourceUnit.hasMovementRemaining &&
+        authoritativeUnit.hasMovementRemaining;
   }
 
   static bool _canStartMoveTargeting(GameUnit? unit) {
@@ -283,7 +283,7 @@ abstract final class MultiplayerInteractionReconciler {
     final unit = state.unitById(unitId);
     return unit != null &&
         unit.ownerPlayerId == ownerPlayerId &&
-        unit.movementPoints > 0 &&
+        unit.hasMovementRemaining &&
         !unit.isWorking;
   }
 

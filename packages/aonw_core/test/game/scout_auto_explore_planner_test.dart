@@ -24,6 +24,7 @@ void main() {
         mapData: map,
         units: [scout],
         fogOfWar: fog,
+        costResolver: const TerrainTraversalCostResolver(),
       );
 
       expect(command, isNotNull);
@@ -55,6 +56,7 @@ void main() {
         mapData: map,
         units: [scout],
         fogOfWar: fog,
+        costResolver: const TerrainTraversalCostResolver(),
       );
       expect(command, isNotNull);
       final plan = UnitMovementPathfinder(mapData: map, units: [scout]).plan(
@@ -106,6 +108,7 @@ void main() {
         mapData: map,
         units: [firstScout, secondScout],
         fogOfWar: fog,
+        costResolver: const TerrainTraversalCostResolver(),
       );
       final reservedHexes = {
         for (final step in reservedPath.steps.skip(2))
@@ -140,6 +143,7 @@ void main() {
         mapData: map,
         units: [warrior],
         fogOfWar: _fog(),
+        costResolver: const TerrainTraversalCostResolver(),
       );
 
       expect(command, isNull);
@@ -154,6 +158,7 @@ void main() {
         mapData: map,
         units: [scout],
         fogOfWar: _fog(),
+        costResolver: const TerrainTraversalCostResolver(),
       );
 
       expect(command, isNull);
@@ -198,6 +203,7 @@ void main() {
         mapData: map,
         units: [scout],
         fogOfWar: fog,
+        costResolver: const TerrainTraversalCostResolver(),
       );
 
       expect(command, isNull);
@@ -215,6 +221,7 @@ void main() {
         mapData: map,
         units: [scout],
         fogOfWar: _fog(discovered: fullyKnown, visible: fullyKnown),
+        costResolver: const TerrainTraversalCostResolver(),
       );
 
       expect(command, isNull);

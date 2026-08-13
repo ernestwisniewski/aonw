@@ -32,7 +32,7 @@ final class MovementCommandExecutor {
     final moved = unit.copyWith(
       col: destinationStep.col,
       row: destinationStep.row,
-      movementPoints: plan.remainingMovementPointsAfterStep(destinationStep),
+      movementUnits: plan.remainingMovementUnitsAfterStep(destinationStep),
       posture: UnitPosture.active,
     );
     return _applyMovedUnit(

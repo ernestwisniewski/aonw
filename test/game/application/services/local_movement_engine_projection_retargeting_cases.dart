@@ -32,8 +32,8 @@ void _registerLocalMovementRetargetingTests() {
   test('accepted identity preview confirmation clears stale targeting', () {
     const steps = [
       UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
-      UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
-      UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
+      UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
+      UnitMovementStep(col: 2, row: 0, enterCost: 2, cumulativeCost: 4),
     ];
     final unit = _unit(id: 'mover', movementPoints: 0).copyWithQueuedPath(
       QueuedMovePath(targetCol: 2, targetRow: 0, steps: steps),
@@ -48,8 +48,8 @@ void _registerLocalMovementRetargetingTests() {
           unitId: unit.id,
           targetCol: 2,
           targetRow: 0,
-          totalCost: 2,
-          availableMovementPoints: 0,
+          totalCost: 4,
+          availableMovementUnits: 0,
           steps: steps,
         ),
       ),
@@ -87,11 +87,11 @@ void _registerLocalMovementRetargetingTests() {
       unitId: unit.id,
       targetCol: 1,
       targetRow: 0,
-      totalCost: 1,
-      availableMovementPoints: unit.movementPoints,
+      totalCost: 2,
+      availableMovementUnits: unit.movementUnits,
       steps: const [
         UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
-        UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+        UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
       ],
     );
     final state = GameClientState(
@@ -133,15 +133,15 @@ LocalCommandResolution _resolveAcceptedPreviewMove({
     unitId: unit.id,
     targetCol: 1,
     targetRow: 0,
-    totalCost: expectedCost,
-    availableMovementPoints: movementPoints,
+    totalCost: MovementPointScale.unitsFromWholePoints(expectedCost),
+    availableMovementUnits: unit.movementUnits,
     steps: [
       const UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
       UnitMovementStep(
         col: 1,
         row: 0,
-        enterCost: expectedCost,
-        cumulativeCost: expectedCost,
+        enterCost: MovementPointScale.unitsFromWholePoints(expectedCost),
+        cumulativeCost: MovementPointScale.unitsFromWholePoints(expectedCost),
       ),
     ],
   );

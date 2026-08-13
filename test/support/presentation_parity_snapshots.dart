@@ -45,8 +45,8 @@ Map<String, Object?> interactionPresentationSnapshot(
             'targetCol': interaction.movePreview!.targetCol,
             'targetRow': interaction.movePreview!.targetRow,
             'totalCost': interaction.movePreview!.totalCost,
-            'availableMovementPoints':
-                interaction.movePreview!.availableMovementPoints,
+            'availableMovementUnits':
+                interaction.movePreview!.availableMovementUnits,
             'steps': [
               for (final step in interaction.movePreview!.steps)
                 [step.col, step.row, step.enterCost, step.cumulativeCost],

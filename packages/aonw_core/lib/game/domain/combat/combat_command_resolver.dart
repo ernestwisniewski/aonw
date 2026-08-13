@@ -137,7 +137,7 @@ final class CombatCommandResolver {
     if (attacker.isWorking) {
       return _CombatCheck.rejected(_reject(state, 'attacker_unavailable'));
     }
-    if (attacker.movementPoints <= 0) {
+    if (!attacker.hasMovementRemaining) {
       return _CombatCheck.rejected(_reject(state, 'attacker_exhausted'));
     }
     return _CombatCheck.accepted(attacker);

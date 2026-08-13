@@ -11,19 +11,19 @@ void main() {
         UnitMovementCostRules.costToEnter(
           const TileTerrainProfile(base: TerrainType.grassland),
         ),
-        const MovementCost.passable(1),
+        const MovementCost.passable(2),
       );
       expect(
         UnitMovementCostRules.costToEnter(
           const TileTerrainProfile(base: TerrainType.tundra),
         ),
-        const MovementCost.passable(2),
+        const MovementCost.passable(4),
       );
       expect(
         UnitMovementCostRules.costToEnter(
           const TileTerrainProfile(base: TerrainType.snow),
         ),
-        const MovementCost.passable(3),
+        const MovementCost.passable(6),
       );
     });
 
@@ -37,7 +37,7 @@ void main() {
 
       expect(
         UnitMovementCostRules.costToEnter(profile),
-        const MovementCost.passable(3),
+        const MovementCost.passable(6),
       );
     });
 
@@ -70,7 +70,7 @@ void main() {
         UnitMovementCostRules.costToEnter(
           const TileTerrainProfile(base: TerrainType.coast),
         ),
-        const MovementCost.passable(1),
+        const MovementCost.passable(2),
       );
     });
 
@@ -81,7 +81,7 @@ void main() {
       ]);
       expect(
         UnitMovementCostRules.costToEnter(profile),
-        const MovementCost.passable(2),
+        const MovementCost.passable(4),
       );
     });
 
@@ -94,7 +94,7 @@ void main() {
           ]),
           unitType: GameUnitType.warrior,
         ),
-        const MovementCost.passable(3),
+        const MovementCost.passable(6),
       );
       expect(
         UnitMovementCostRules.costToEnter(
@@ -105,7 +105,7 @@ void main() {
           ]),
           unitType: GameUnitType.warrior,
         ),
-        const MovementCost.passable(3),
+        const MovementCost.passable(6),
       );
       expect(
         UnitMovementCostRules.costToEnter(
@@ -116,7 +116,7 @@ void main() {
           ]),
           unitType: GameUnitType.warrior,
         ),
-        const MovementCost.passable(3),
+        const MovementCost.passable(6),
       );
     });
 
@@ -127,7 +127,7 @@ void main() {
 
       expect(
         UnitMovementCostRules.costToEnter(profile),
-        const MovementCost.passable(2),
+        const MovementCost.passable(4),
       );
     });
 
@@ -137,14 +137,14 @@ void main() {
           const TileTerrainProfile(base: TerrainType.coast),
           unitType: GameUnitType.scoutShip,
         ),
-        const MovementCost.passable(1),
+        const MovementCost.passable(2),
       );
       expect(
         UnitMovementCostRules.costToEnter(
           const TileTerrainProfile(base: TerrainType.ocean),
           unitType: GameUnitType.warship,
         ),
-        const MovementCost.passable(1),
+        const MovementCost.passable(2),
       );
       expect(
         UnitMovementCostRules.costToEnter(

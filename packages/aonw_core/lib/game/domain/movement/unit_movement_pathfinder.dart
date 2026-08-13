@@ -101,7 +101,7 @@ class UnitMovementPathfinder {
       targetCol: targetTile.col,
       targetRow: targetTile.row,
       totalCost: search.totalCost,
-      availableMovementPoints: unit.movementPoints,
+      availableMovementUnits: unit.movementUnits,
       steps: steps,
     );
   }
@@ -173,6 +173,7 @@ class UnitMovementPathfinder {
         final nextKey = _coordKey(next.col, next.row);
         final enterCost = _enterCostFor(
           unit: unit,
+          from: (col: current.col, row: current.row),
           next: next,
           currentCost: current.cost,
           canEnterStepBeyondCapacity: null,
@@ -197,6 +198,7 @@ class UnitMovementPathfinder {
 
   int? _enterCostFor({
     required GameUnit unit,
+    required ({int col, int row}) from,
     required ({int col, int row}) next,
     required int currentCost,
     required UnitMovementCapacityException? canEnterStepBeyondCapacity,
@@ -207,10 +209,15 @@ class UnitMovementPathfinder {
         !canEnterOccupied(unit, blockingUnit, next.col, next.row)) {
       return null;
     }
-    final tile = tileAt(next.col, next.row);
-    if (tile == null) return null;
-    if (canEnterTile != null && !canEnterTile!(tile)) return null;
-    final movementCost = costResolver.costToEnter(unit: unit, tile: tile);
+    final fromTile = tileAt(from.col, from.row);
+    final toTile = tileAt(next.col, next.row);
+    if (fromTile == null || toTile == null) return null;
+    if (canEnterTile != null && !canEnterTile!(toTile)) return null;
+    final movementCost = costResolver.costForStep(
+      unit: unit,
+      from: fromTile,
+      to: toTile,
+    );
     if (movementCost.blocked) return null;
     final enterCost = movementCost.value;
     final step = UnitMovementStep(

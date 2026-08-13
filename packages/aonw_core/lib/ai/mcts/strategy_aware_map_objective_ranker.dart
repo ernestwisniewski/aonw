@@ -86,7 +86,7 @@ CommandRanking? rankMapObjectiveCommand(
 }
 
 bool _canClaimMapObjective(GameUnit unit) {
-  if (unit.isWorking || unit.movementPoints <= 0) return false;
+  if (unit.isWorking || !unit.hasMovementRemaining) return false;
   if (unit.hasSettlers ||
       unit.type == GameUnitType.worker ||
       unit.type == GameUnitType.settler) {

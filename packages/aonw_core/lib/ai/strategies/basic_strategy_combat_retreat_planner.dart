@@ -30,7 +30,7 @@ extension _BasicStrategyCombatRetreatPlanner
       }
 
       final plan = pathfinder.plan(unit: unit, targetTile: tile);
-      if (plan == null || plan.totalCost > unit.movementPoints) continue;
+      if (plan == null || plan.totalCost > unit.movementUnits) continue;
       candidates.add(
         _RetreatCandidate(
           tile: tile,

@@ -233,9 +233,9 @@ Future<void> _preservesGlobalTurnMovementExecutionOrder() async {
     (1, 1),
   );
   expect(reduction.movementExecutions.map(_movementExecutionSnapshot), [
-    'unit_a:0,0->1,0;enter=1;total=1',
-    'unit_b:0,1->1,1;enter=1;total=1',
-    'unit_a:1,0->2,0;enter=1;total=1|3,0;enter=1;total=2',
+    'unit_a:0,0->1,0;enter=2;total=2',
+    'unit_b:0,1->1,1;enter=2;total=2',
+    'unit_a:1,0->2,0;enter=2;total=2|3,0;enter=2;total=4',
   ]);
   expect(() => reduction.movementExecutions.clear(), throwsUnsupportedError);
 }
@@ -296,7 +296,7 @@ GameUnit _queuedTurnMovementUnit({
       targetRow: row,
       steps: [
         UnitMovementStep(col: 0, row: row, enterCost: 0, cumulativeCost: 0),
-        UnitMovementStep(col: 1, row: row, enterCost: 1, cumulativeCost: 1),
+        UnitMovementStep(col: 1, row: row, enterCost: 2, cumulativeCost: 2),
       ],
     ),
   );

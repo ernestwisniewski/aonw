@@ -181,8 +181,8 @@ final _movementPathToTwo = QueuedMovePath(
   targetRow: 0,
   steps: const [
     UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
-    UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
-    UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
+    UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
+    UnitMovementStep(col: 2, row: 0, enterCost: 2, cumulativeCost: 4),
   ],
 );
 
@@ -191,10 +191,10 @@ final _movementPathToFour = QueuedMovePath(
   targetRow: 0,
   steps: const [
     UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
-    UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
-    UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
-    UnitMovementStep(col: 3, row: 0, enterCost: 1, cumulativeCost: 3),
-    UnitMovementStep(col: 4, row: 0, enterCost: 1, cumulativeCost: 4),
+    UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
+    UnitMovementStep(col: 2, row: 0, enterCost: 2, cumulativeCost: 4),
+    UnitMovementStep(col: 3, row: 0, enterCost: 2, cumulativeCost: 6),
+    UnitMovementStep(col: 4, row: 0, enterCost: 2, cumulativeCost: 8),
   ],
 );
 
@@ -203,8 +203,8 @@ final _movementRoughPathToThree = QueuedMovePath(
   targetRow: 0,
   steps: const [
     UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
-    UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
-    UnitMovementStep(col: 2, row: 0, enterCost: 2, cumulativeCost: 4),
-    UnitMovementStep(col: 3, row: 0, enterCost: 1, cumulativeCost: 5),
+    UnitMovementStep(col: 1, row: 0, enterCost: 4, cumulativeCost: 4),
+    UnitMovementStep(col: 2, row: 0, enterCost: 4, cumulativeCost: 8),
+    UnitMovementStep(col: 3, row: 0, enterCost: 2, cumulativeCost: 10),
   ],
 );

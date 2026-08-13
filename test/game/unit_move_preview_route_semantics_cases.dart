@@ -12,12 +12,12 @@ UnitMovementPlan _confirmationEtaPlan() =>
 
 UnitMovementPlan _linearPlan({
   required int totalCost,
-  required int availableMovementPoints,
+  required int availableMovementUnits,
 }) {
   return _plan(
     targetCol: totalCost,
     totalCost: totalCost,
-    availableMovementPoints: availableMovementPoints,
+    availableMovementUnits: availableMovementUnits,
     steps: [
       const UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
       for (var cost = 1; cost <= totalCost; cost++)
@@ -112,7 +112,7 @@ void _registerRouteSemanticsTests() {
     final parent = Component();
     final plan = _plan(
       totalCost: 3,
-      availableMovementPoints: 2,
+      availableMovementUnits: 2,
       steps: const [
         UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
         UnitMovementStep(col: 1, row: 0, enterCost: 3, cumulativeCost: 3),
@@ -127,7 +127,7 @@ void _registerRouteSemanticsTests() {
 
   test('keeps travelled history while coloring the rebased suffix', () {
     final parent = Component();
-    final fullPlan = _linearPlan(totalCost: 4, availableMovementPoints: 3);
+    final fullPlan = _linearPlan(totalCost: 4, availableMovementUnits: 3);
     final remainingPlan = fullPlan.remainingFromStepIndex(1);
 
     UnitMovePreviewLayer().syncMany(
@@ -150,7 +150,7 @@ void _registerRouteSemanticsTests() {
 
   test('exhausted queued route marks every future step unreachable', () {
     final parent = Component();
-    final fullPlan = _linearPlan(totalCost: 3, availableMovementPoints: 0);
+    final fullPlan = _linearPlan(totalCost: 3, availableMovementUnits: 0);
     final remainingPlan = fullPlan.remainingFromStepIndex(1);
 
     UnitMovePreviewLayer().syncMany(
@@ -223,7 +223,7 @@ void _registerRouteSemanticsTests() {
         previews: [
           UnitMovePreviewLayerEntry(
             id: 'artifact-carrier',
-            preview: _linearPlan(totalCost: 5, availableMovementPoints: 2),
+            preview: _linearPlan(totalCost: 5, availableMovementUnits: 2),
             unitType: GameUnitType.warrior,
             maxMovementPointsPerTurn:
                 UnitMovementBalance.artifactCarrierMovementPointsPerTurn,

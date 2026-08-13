@@ -9,7 +9,7 @@ abstract final class UnitTurnActionRules {
     if (unit.ownerPlayerId != playerId) return false;
     if (unit.isWorking) return false;
     if (unit.isAutoExploring || unit.isAutoWorking) return false;
-    if (unit.movementPoints <= 0) return false;
+    if (!unit.hasMovementRemaining) return false;
     if (hasStandingOrders(unit)) return false;
     return true;
   }

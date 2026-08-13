@@ -87,7 +87,7 @@ final class BasicStrategyGarrisonReservationPlanner {
     var count = 0;
     for (final unit in view.ownUnits) {
       if (usedUnitIds.contains(unit.id)) continue;
-      if (unit.movementPoints > 0) continue;
+      if (unit.hasMovementRemaining) continue;
       if (!garrisonRules.canServeAsDefender(unit, context.ruleset.combat)) {
         continue;
       }
@@ -114,7 +114,7 @@ final class BasicStrategyGarrisonReservationPlanner {
             if (!usedUnitIds.contains(unit.id) &&
                 !reservedUnitIds.contains(unit.id) &&
                 !excludedUnitIds.contains(unit.id) &&
-                unit.movementPoints > 0 &&
+                unit.hasMovementRemaining &&
                 garrisonRules.canServeAsDefender(
                   unit,
                   context.ruleset.combat,

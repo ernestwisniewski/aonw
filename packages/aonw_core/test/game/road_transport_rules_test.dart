@@ -52,26 +52,161 @@ void main() {
           ),
         ],
       );
-      final resolver = InfrastructureAwareTraversalCostResolver(network);
+      final resolver = InfrastructureAwareTraversalCostResolver(
+        network,
+        cityCenters: [_city.center.toCoordinate()],
+      );
+      final cityCenter = _map().tileAt(0, 0)!;
       final hill = _map().tileAt(1, 0)!;
       final mountain = _map().tileAt(2, 0)!;
 
       expect(
         resolver
-            .costToEnter(unit: _unit(GameUnitType.warrior), tile: hill)
+            .costForStep(
+              unit: _unit(GameUnitType.warrior),
+              from: cityCenter,
+              to: hill,
+            )
             .value,
         1,
       );
       expect(
         resolver
-            .costToEnter(unit: _unit(GameUnitType.reconPlane), tile: hill)
+            .costForStep(
+              unit: _unit(GameUnitType.reconPlane),
+              from: cityCenter,
+              to: hill,
+            )
             .value,
-        2,
+        4,
       );
       expect(
         resolver
-            .costToEnter(unit: _unit(GameUnitType.warrior), tile: mountain)
+            .costForStep(
+              unit: _unit(GameUnitType.warrior),
+              from: hill,
+              to: mountain,
+            )
             .blocked,
+        isTrue,
+      );
+    });
+
+    test('longer connected road is preferred between city centers', () {
+      final map = _cityRouteMap();
+      final cities = [
+        _cityAt(id: 'city_a', col: 0, row: 1),
+        _cityAt(id: 'city_b', col: 6, row: 1),
+      ];
+      final unit = _unit(GameUnitType.warrior).copyWith(col: 0, row: 1);
+      final network = TransportNetworkState(
+        segments: [
+          for (final hex in const [
+            HexCoord(col: 0, row: 2),
+            HexCoord(col: 0, row: 3),
+            HexCoord(col: 1, row: 3),
+            HexCoord(col: 2, row: 3),
+            HexCoord(col: 3, row: 3),
+            HexCoord(col: 4, row: 3),
+            HexCoord(col: 5, row: 3),
+            HexCoord(col: 6, row: 3),
+            HexCoord(col: 6, row: 2),
+          ])
+            TransportSegment(hex: hex, builtByPlayerId: 'player_1'),
+        ],
+      );
+
+      final withoutRoad = UnitMovementPathfinder(
+        mapData: map,
+        units: [unit],
+      ).plan(unit: unit, targetTile: map.tileAt(6, 1)!);
+      final withRoad = UnitMovementPathfinder(
+        mapData: map,
+        units: [unit],
+        costResolver: InfrastructureAwareTraversalCostResolver(
+          network,
+          cityCenters: [for (final city in cities) city.center.toCoordinate()],
+        ),
+      ).plan(unit: unit, targetTile: map.tileAt(6, 1)!);
+
+      expect(withoutRoad?.totalCost, 12);
+      expect(withoutRoad?.path.every((hex) => hex.row == 1), isTrue);
+      expect(withRoad?.totalCost, 10);
+      expect(withRoad?.path, const [
+        (col: 0, row: 1),
+        (col: 0, row: 2),
+        (col: 0, row: 3),
+        (col: 1, row: 3),
+        (col: 2, row: 3),
+        (col: 3, row: 3),
+        (col: 4, row: 3),
+        (col: 5, row: 3),
+        (col: 6, row: 3),
+        (col: 6, row: 2),
+        (col: 6, row: 1),
+      ]);
+    });
+
+    test('active merchant route replans onto a newly connected road', () {
+      final map = _cityRouteMap();
+      final cities = [
+        _cityAt(id: 'city_a', col: 0, row: 1),
+        _cityAt(id: 'city_b', col: 6, row: 1),
+      ];
+      final merchant = _unit(GameUnitType.merchant)
+          .copyWith(col: 0, row: 1)
+          .copyWithMerchantTradeRoute(
+            MerchantTradeRoute(
+              originCityId: 'city_a',
+              destinationCityId: 'city_b',
+              steps: [
+                for (var col = 0; col <= 6; col++)
+                  UnitMovementStep(
+                    col: col,
+                    row: 1,
+                    enterCost: col == 0 ? 0 : 2,
+                    cumulativeCost: col * 2,
+                  ),
+              ],
+            ),
+          );
+      final network = TransportNetworkState(
+        segments: [
+          for (final hex in const [
+            HexCoord(col: 0, row: 2),
+            HexCoord(col: 0, row: 3),
+            HexCoord(col: 1, row: 3),
+            HexCoord(col: 2, row: 3),
+            HexCoord(col: 3, row: 3),
+            HexCoord(col: 4, row: 3),
+            HexCoord(col: 5, row: 3),
+            HexCoord(col: 6, row: 3),
+            HexCoord(col: 6, row: 2),
+          ])
+            TransportSegment(hex: hex, builtByPlayerId: 'player_1'),
+        ],
+      );
+
+      final advanced = MerchantTradeRouteRules.advanceUnit(
+        unit: merchant,
+        units: [merchant],
+        cities: cities,
+        mapData: map,
+        transportNetwork: network,
+      );
+
+      expect(advanced.routeInvalidated, isFalse);
+      expect(advanced.movedSteps.map((step) => step.coord), const [
+        (col: 0, row: 2),
+        (col: 0, row: 3),
+        (col: 1, row: 3),
+        (col: 2, row: 3),
+        (col: 3, row: 3),
+        (col: 4, row: 3),
+      ]);
+      expect((advanced.unit.col, advanced.unit.row), (4, 3));
+      expect(
+        advanced.unit.merchantTradeRoute!.steps.any((step) => step.row == 3),
         isTrue,
       );
     });
@@ -96,6 +231,62 @@ void main() {
 
       expect(json.first['col'], 0);
       expect(TransportNetworkState.fromJson(json), state);
+    });
+
+    test('known network includes owned, city-owned, and discovered roads', () {
+      const ownRoad = TransportSegment(
+        hex: HexCoord(col: 0, row: 0),
+        builtByPlayerId: 'player_1',
+      );
+      const ownCityRoad = TransportSegment(
+        hex: HexCoord(col: 1, row: 0),
+        builtByPlayerId: 'player_2',
+        builtByCityId: 'city_1',
+      );
+      const discoveredRoad = TransportSegment(
+        hex: HexCoord(col: 2, row: 0),
+        builtByPlayerId: 'player_2',
+      );
+      const hiddenRoad = TransportSegment(
+        hex: HexCoord(col: 3, row: 0),
+        builtByPlayerId: 'player_2',
+      );
+      final network = TransportNetworkState(
+        segments: const [ownRoad, ownCityRoad, discoveredRoad, hiddenRoad],
+      );
+      final visibility = FogVisibilityQuery(
+        playerId: 'player_1',
+        state: FogOfWarState(
+          players: {
+            'player_1': PlayerFogOfWar(
+              playerId: 'player_1',
+              discoveredHexes: {const HexCoordinate(col: 2, row: 0)},
+            ),
+          },
+        ),
+      );
+
+      final known = TransportNetworkVisibilityRules.knownFor(
+        network: network,
+        playerId: 'player_1',
+        ownCityIds: const ['city_1'],
+        visibility: visibility,
+      );
+
+      expect(
+        known.segments,
+        containsAll(const [ownRoad, ownCityRoad, discoveredRoad]),
+      );
+      expect(known.segments, isNot(contains(hiddenRoad)));
+      expect(
+        TransportNetworkVisibilityRules.knownFor(
+          network: TransportNetworkState.empty,
+          playerId: 'player_1',
+          ownCityIds: const [],
+          visibility: visibility,
+        ),
+        same(TransportNetworkState.empty),
+      );
     });
 
     test('engine classifies road construction as infrastructure', () {
@@ -179,6 +370,14 @@ const _city = GameCity(
   controlledHexes: [CityHex(col: 1, row: 0)],
 );
 
+GameCity _cityAt({required String id, required int col, required int row}) =>
+    GameCity(
+      id: id,
+      ownerPlayerId: 'player_1',
+      name: id,
+      center: CityHex(col: col, row: row),
+    );
+
 GameUnit _unit(GameUnitType type, {int col = 0}) => GameUnit(
   id: 'unit_1',
   ownerPlayerId: 'player_1',
@@ -213,5 +412,26 @@ WorldMap _map() => WorldMap(
       resources: [],
       height: 0,
     ),
+  ],
+);
+
+WorldMap _cityRouteMap() => WorldMap(
+  cols: 7,
+  rows: 4,
+  tiles: [
+    for (var row = 0; row < 4; row++)
+      for (var col = 0; col < 7; col++)
+        WorldTile(
+          col: col,
+          row: row,
+          terrains: [
+            if (row == 1 || row == 3 || (row == 2 && (col == 0 || col == 6)))
+              TerrainType.plains
+            else
+              TerrainType.mountain,
+          ],
+          resources: const [],
+          height: 0,
+        ),
   ],
 );

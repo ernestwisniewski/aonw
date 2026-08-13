@@ -28,7 +28,7 @@ void main() {
             targetCol: 1,
             targetRow: 0,
             totalCost: 1,
-            availableMovementPoints: 3,
+            availableMovementUnits: 3,
             steps: [],
           ),
           cityFoundingDraft: CityFoundingDraft(

@@ -63,7 +63,7 @@ void main() {
       () {
         final skipped = _unit(movementPoints: 0);
         final ready = skipped.copyWith(movementPoints: 3);
-        final preview = _preview(availableMovementPoints: 2);
+        final preview = _preview(availableMovementUnits: 2);
         final pending = PendingUnitTurnSkip(
           ownerPlayerId: _playerId,
           unitId: skipped.id,
@@ -132,7 +132,7 @@ void main() {
 
     test('materializing a missing turn start does not advance the turn', () {
       final skipped = _unit(movementPoints: 0);
-      final preview = _preview(availableMovementPoints: 0);
+      final preview = _preview(availableMovementUnits: 0);
       final pending = PendingUnitTurnSkip(
         ownerPlayerId: _playerId,
         unitId: skipped.id,
@@ -347,16 +347,18 @@ GameUnit _unit({int movementPoints = 3}) {
   );
 }
 
-UnitMovementPlan _preview({int availableMovementPoints = 3}) {
+UnitMovementPlan _preview({int availableMovementUnits = 3}) {
   return UnitMovementPlan(
     unitId: 'unit_1',
     targetCol: 1,
     targetRow: 0,
-    totalCost: 1,
-    availableMovementPoints: availableMovementPoints,
+    totalCost: 2,
+    availableMovementUnits: MovementPointScale.unitsFromWholePoints(
+      availableMovementUnits,
+    ),
     steps: const [
       UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
-      UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+      UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
     ],
   );
 }

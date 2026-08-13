@@ -131,9 +131,14 @@ queue allocations.
 Revision 8 adds the complete seven-resource strategic economy/trade surface and
 a deterministic, persisted match-start resource distribution shared by local
 and multiplayer games. Snapshot/event schema 6 and save schema 6 persist the
-actual generated placements. Readers accept `{3, 4, 5, 6}`; writers emit v6.
-Only functional revision 8 is compatible because earlier clients neither apply
-the effective map nor present the same trade and production contract.
+actual generated placements.
+
+Revision 9 introduces deterministic half-point road movement and edge-aware
+city-road routing. Snapshot/event schema 7 and save schema 7 persist route
+costs as integer movement units. Readers accept `{3, 4, 5, 6, 7}` and migrate
+older whole-point costs; writers emit v7. Only functional revision 9 is
+compatible because earlier clients interpret movement balances and route costs
+using the old scale.
 
 ## Consequences
 
@@ -160,13 +165,14 @@ Rejected alternatives:
 ## Migration And Verification
 
 The app-status endpoint accepts an optional multiplayer revision. Current
-clients send revision 8. Undeclared clients still map deterministically to
+clients send revision 9. Undeclared clients still map deterministically to
 legacy revision 1. Revisions 1 and 2 cannot decode every worker-automation
 command and persisted posture variant; revision 3 does not send lobby
 heartbeats or implement lease-driven roster and terminal-return behavior;
 revision 4 cannot correlate command ACKs after a timeout; revision 5 cannot
 represent road jobs or infrastructure-aware movement; revisions 6 and 7 do
-not implement the current strategic economy and effective-map contract. All older revisions
+not implement the current strategic economy and effective-map contract;
+revision 8 does not implement fixed-point road movement. All older revisions
 return `soon`, which is rendered by the localized main-menu update block.
 Release clients fail closed while this check is pending and do not open or
 resume multiplayer when it reports `soon`. Every authenticated multiplayer
@@ -194,9 +200,9 @@ the newer client is becoming available. During the store propagation window,
 old clients receive the translated update notice. Persisted matches are kept
 only when their wire schema and domain semantics remain supported or can be
 migrated through a rollback-safe expand/contract plan; otherwise they are
-retired deliberately rather than decoded heuristically. Revision 8 reads v3-v6
-snapshot/event rows and writes v6 on new events, new matches, and the next
-authoritative mutation of an older match. Mixed ACK-v4/durable-v3-v5 payloads
+retired deliberately rather than decoded heuristically. Revision 9 reads v3-v7
+snapshot/event rows and writes v7 on new events, new matches, and the next
+authoritative mutation of an older match. Mixed ACK-v4/durable-v3-v6 payloads
 are valid only inside this bounded expansion.
 
 Contract tests cover current, undeclared legacy, removed, and future functional

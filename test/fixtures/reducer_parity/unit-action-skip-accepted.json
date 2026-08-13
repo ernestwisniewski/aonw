@@ -186,8 +186,8 @@
               {
                 "col": 2,
                 "row": 0,
-                "enterCost": 1,
-                "cumulativeCost": 1
+                "enterCost": 2,
+                "cumulativeCost": 2
               }
             ]
           }
@@ -315,7 +315,7 @@
           "type": "unitTurnSkip",
           "ownerPlayerId": "player_1",
           "unitId": "commander_1",
-          "restoreMovementPoints": 3
+          "restoreMovementUnits": 6
         },
         "turnStartedAt": "2026-01-02T01:02:03.000Z"
       }

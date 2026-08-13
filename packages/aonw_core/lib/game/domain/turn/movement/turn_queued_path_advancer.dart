@@ -1,6 +1,7 @@
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/diplomacy/diplomacy_state.dart';
 import 'package:aonw_core/game/domain/fog/fog_of_war_state.dart';
+import 'package:aonw_core/game/domain/fog/fog_visibility_query.dart';
 import 'package:aonw_core/game/domain/movement/merchant_trade_route_rules.dart';
 import 'package:aonw_core/game/domain/movement/movement_command_execution.dart';
 import 'package:aonw_core/game/domain/movement/movement_hidden_obstacle_rules.dart';
@@ -13,6 +14,7 @@ import 'package:aonw_core/game/domain/transport/transport_network_state.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 final class TurnQueuedPathAdvance {
   const TurnQueuedPathAdvance({required this.unit, this.execution});
@@ -46,36 +48,17 @@ abstract final class TurnQueuedPathAdvancer {
       fogOfWar: fogOfWar,
       actorPlayerId: unit.ownerPlayerId,
     );
-    final plan = UnitMovementPathfinder(
+    final plan = _planQueuedPath(
+      unit: unit,
+      targetTile: targetTile,
       mapData: mapData,
-      units: UnitMovementVisibilityRules.planningUnitsForActor(
-        units: allUnits,
-        movingUnit: unit,
-        actorPlayerId: unit.ownerPlayerId,
-        visibility: visibility,
-      ),
-      canEnterTile: (tile) => MovementHiddenObstacleRules.canPlanThroughCity(
-        cities: cities,
-        diplomacy: diplomacy,
-        unit: unit,
-        tile: tile,
-        visibility: visibility,
-      ),
-      costResolver: InfrastructureAwareTraversalCostResolver(transportNetwork),
+      allUnits: allUnits,
+      cities: cities,
+      diplomacy: diplomacy,
+      visibility: visibility,
+      transportNetwork: transportNetwork,
       tileIndex: tileIndex,
-      canEnterOccupiedTile:
-          ({
-            required movingUnit,
-            required blockingUnit,
-            required col,
-            required row,
-          }) => MerchantTradeRouteRules.canShareOccupiedCityTile(
-            movingUnit: movingUnit,
-            col: col,
-            row: row,
-            cities: cities,
-          ),
-    ).plan(unit: unit, targetTile: targetTile);
+    );
     if (plan == null) {
       return TurnQueuedPathAdvance(unit: unit.copyWithQueuedPath(null));
     }
@@ -119,7 +102,7 @@ abstract final class TurnQueuedPathAdvancer {
     final moved = unit.copyWith(
       col: destination.col,
       row: destination.row,
-      movementPoints: plan.remainingMovementPointsAfterStep(destination),
+      movementUnits: plan.remainingMovementUnitsAfterStep(destination),
     );
     final updated = reachable ? moved.copyWithQueuedPath(null) : moved;
     return TurnQueuedPathAdvance(
@@ -133,3 +116,56 @@ abstract final class TurnQueuedPathAdvancer {
     );
   }
 }
+
+UnitMovementPlan? _planQueuedPath({
+  required GameUnit unit,
+  required MapTileView targetTile,
+  required MapTraversalView mapData,
+  required List<GameUnit> allUnits,
+  required List<GameCity> cities,
+  required DiplomacyState diplomacy,
+  required FogVisibilityQuery visibility,
+  required TransportNetworkState transportNetwork,
+  required UnitMovementTileIndex? tileIndex,
+}) => UnitMovementPathfinder(
+  mapData: mapData,
+  units: UnitMovementVisibilityRules.planningUnitsForActor(
+    units: allUnits,
+    movingUnit: unit,
+    actorPlayerId: unit.ownerPlayerId,
+    visibility: visibility,
+  ),
+  canEnterTile: (tile) => MovementHiddenObstacleRules.canPlanThroughCity(
+    cities: cities,
+    diplomacy: diplomacy,
+    unit: unit,
+    tile: tile,
+    visibility: visibility,
+  ),
+  costResolver: _queuedCostResolver(transportNetwork, cities, unit, visibility),
+  tileIndex: tileIndex,
+  canEnterOccupiedTile:
+      ({
+        required movingUnit,
+        required blockingUnit,
+        required col,
+        required row,
+      }) => MerchantTradeRouteRules.canShareOccupiedCityTile(
+        movingUnit: movingUnit,
+        col: col,
+        row: row,
+        cities: cities,
+      ),
+).plan(unit: unit, targetTile: targetTile);
+
+InfrastructureAwareTraversalCostResolver _queuedCostResolver(
+  TransportNetworkState network,
+  Iterable<GameCity> cities,
+  GameUnit unit,
+  FogVisibilityQuery visibility,
+) => InfrastructureAwareTraversalCostResolver.forKnownState(
+  network: network,
+  cities: cities,
+  actorPlayerId: unit.ownerPlayerId,
+  visibility: visibility,
+);

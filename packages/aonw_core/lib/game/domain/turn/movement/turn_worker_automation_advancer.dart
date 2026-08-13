@@ -159,7 +159,7 @@ abstract final class TurnWorkerAutomationAdvancer {
         unit.isAutoWorking &&
         !unit.isWorking &&
         !unit.isFortified &&
-        unit.movementPoints > 0;
+        unit.hasMovementRemaining;
   }
 
   static GameUnit? _unitById(Iterable<GameUnit> units, String unitId) {

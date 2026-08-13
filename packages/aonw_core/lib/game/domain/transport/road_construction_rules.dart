@@ -74,7 +74,9 @@ RoadConstructionBlocker? _workerBlocker(
   if (!unit.isWorker) return RoadConstructionBlocker.notWorker;
   if (!requireReadyWorker) return null;
   if (unit.isWorking) return RoadConstructionBlocker.workerBusy;
-  if (unit.movementPoints <= 0) return RoadConstructionBlocker.noMovementPoints;
+  if (!unit.hasMovementRemaining) {
+    return RoadConstructionBlocker.noMovementPoints;
+  }
   if (unit.queuedPath != null) return RoadConstructionBlocker.queuedPathActive;
   return null;
 }

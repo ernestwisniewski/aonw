@@ -1,3 +1,5 @@
+import 'package:aonw_core/ai/mcts/mcts_command_reconciliation_rules.dart';
+import 'package:aonw_core/ai/mcts/mcts_evaluation_queries.dart';
 import 'package:aonw_core/ai/mcts/strategy_aware_ranking_queries.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:test/test.dart';
@@ -31,6 +33,55 @@ void main() {
       expect(isReconType(GameUnitType.scout), isTrue);
       expect(isReconType(GameUnitType.reconPlane), isTrue);
       expect(isReconType(GameUnitType.warrior), isFalse);
+    });
+
+    test('treats a movement subpoint as available for recon planning', () {
+      final stoppedScout = _unit(
+        'scout_1',
+        type: GameUnitType.scout,
+      ).copyWithMovementUnits(0);
+      final movingScout = stoppedScout.copyWithMovementUnits(1);
+      final plan = _plan();
+
+      expect(
+        hasAvailableReconCitySiteScout(_view(units: [stoppedScout]), plan),
+        isFalse,
+      );
+      expect(
+        hasAvailableReconCitySiteScout(_view(units: [movingScout]), plan),
+        isTrue,
+      );
+      expect(
+        mctsCanDiscoverCitySites(
+          stoppedScout,
+          view: _view(units: [stoppedScout]),
+          context: _context(),
+          requireMovement: true,
+        ),
+        isFalse,
+      );
+    });
+
+    test('detects a movement-unit-only simulated state change', () {
+      final beforeUnit = _unit('warrior_1').copyWithMovementUnits(1);
+      final afterUnit = beforeUnit.copyWithMovementUnits(0);
+      final before = SimulatedState.fromView(
+        _view(units: [beforeUnit]),
+        maxPlanningDepth: 1,
+      );
+      final after = SimulatedState.fromView(
+        _view(units: [afterUnit]),
+        maxPlanningDepth: 1,
+      );
+
+      expect(
+        const MctsCommandReconciliationRules().moveDidNotChangeUnit(
+          const MoveUnitCommand('warrior_1', 2, 1),
+          before: before,
+          after: after,
+        ),
+        isFalse,
+      );
     });
 
     test('extracts the acting unit id from unit-scoped commands', () {

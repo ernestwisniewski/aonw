@@ -4,7 +4,7 @@ abstract final class _CombatTacticsQueries {
   static GameUnit? activeOwnAttacker(GameView view, String unitId) {
     final unit = ownUnitById(view, unitId);
     if (unit == null) return null;
-    if (unit.isWorking || unit.movementPoints <= 0) return null;
+    if (unit.isWorking || !unit.hasMovementRemaining) return null;
     return unit;
   }
 

@@ -70,7 +70,7 @@ abstract final class WorkerAssignmentRules {
         WorkerAssignmentBlocker.workerBusy,
       );
     }
-    if (requireReadyWorker && unit.movementPoints <= 0) {
+    if (requireReadyWorker && !unit.hasMovementRemaining) {
       return const WorkerAssignmentLegality.blocked(
         WorkerAssignmentBlocker.noMovementPoints,
       );

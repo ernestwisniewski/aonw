@@ -44,7 +44,7 @@ final class MctsBaselineMovementCommandPolicy {
     required AiContext context,
     required Set<String> reservedMoveTargets,
   }) {
-    if (unit.isWorking || unit.movementPoints <= 0) return false;
+    if (unit.isWorking || !unit.hasMovementRemaining) return false;
     if (unit.occupies(command.targetCol, command.targetRow)) {
       return false;
     }

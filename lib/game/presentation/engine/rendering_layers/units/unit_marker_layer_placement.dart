@@ -101,5 +101,5 @@ extension _UnitMarkerLayerPlacement on UnitMarkerLayer {
     row: unit.row,
   );
 
-  bool _isExhausted(GameUnit unit) => unit.movementPoints <= 0;
+  bool _isExhausted(GameUnit unit) => !unit.hasMovementRemaining;
 }

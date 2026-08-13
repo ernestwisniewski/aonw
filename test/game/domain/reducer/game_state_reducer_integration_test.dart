@@ -689,7 +689,7 @@ void main() {
       expect(state.movePreview, isNotNull);
       expect(state.movePreview?.targetCol, 3);
       expect(state.movePreview?.targetRow, 0);
-      expect(state.movePreview?.totalCost, 3);
+      expect(state.movePreview?.totalCost, 6);
       expect(state.units.single.col, 0);
       expect(state.units.single.row, 0);
 
@@ -751,7 +751,7 @@ void main() {
 
         expect(state.movePreview?.targetCol, 6);
         expect(state.movePreview?.canMoveNow, isFalse);
-        expect(state.movePreview?.totalCost, 6);
+        expect(state.movePreview?.totalCost, 12);
 
         final confirmTransition = _dispatch(
           reducer,

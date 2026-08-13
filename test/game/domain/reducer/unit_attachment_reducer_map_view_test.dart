@@ -37,7 +37,7 @@ void main() {
       targetCol: 2,
       targetRow: 1,
       totalCost: 1,
-      availableMovementPoints: commander.movementPoints,
+      availableMovementUnits: commander.movementPoints,
       steps: const [
         UnitMovementStep(col: 2, row: 1, enterCost: 1, cumulativeCost: 1),
       ],

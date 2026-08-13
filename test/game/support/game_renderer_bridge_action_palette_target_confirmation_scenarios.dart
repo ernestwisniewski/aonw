@@ -16,7 +16,7 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
       targetCol: 1,
       targetRow: 0,
       totalCost: 1,
-      availableMovementPoints: 2,
+      availableMovementUnits: 2,
       steps: [
         const UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
         const UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
@@ -74,8 +74,8 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
         unitId: 'warrior_1',
         targetCol: 3,
         targetRow: 0,
-        totalCost: 4,
-        availableMovementPoints: 1,
+        totalCost: 8,
+        availableMovementUnits: 1,
         steps: _artifactCarrierPreviewSteps,
       );
       final game = GameRenderer(

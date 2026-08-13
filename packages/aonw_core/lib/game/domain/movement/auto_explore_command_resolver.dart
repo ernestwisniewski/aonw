@@ -12,6 +12,7 @@ import 'package:aonw_core/game/domain/movement/movement_hidden_obstacle_rules.da
 import 'package:aonw_core/game/domain/movement/scout_auto_explore_planner.dart';
 import 'package:aonw_core/game/domain/movement/scout_auto_explore_target.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_visibility_rules.dart';
+import 'package:aonw_core/game/domain/movement/unit_traversal_cost_resolver.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/state/domain_action_unit_rules.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
@@ -98,6 +99,12 @@ final class AutoExploreCommandResolver {
       mapData: mapData,
       units: knownUnits,
       fogOfWar: movement.fogOfWar,
+      costResolver: InfrastructureAwareTraversalCostResolver.forKnownState(
+        network: movement.transportNetwork,
+        cities: movement.cities,
+        actorPlayerId: actorPlayerId,
+        visibility: visibility,
+      ),
       canEnterTile: canEnterTile,
     );
   }

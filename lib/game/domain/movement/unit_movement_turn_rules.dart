@@ -63,7 +63,12 @@ abstract final class UnitMovementTurnRules {
         tile: tile,
         visibility: visibility,
       ),
-      costResolver: InfrastructureAwareTraversalCostResolver(transportNetwork),
+      costResolver: InfrastructureAwareTraversalCostResolver.forKnownState(
+        network: transportNetwork,
+        cities: cities,
+        actorPlayerId: unit.ownerPlayerId,
+        visibility: visibility,
+      ),
       canEnterOccupiedTile:
           ({
             required movingUnit,

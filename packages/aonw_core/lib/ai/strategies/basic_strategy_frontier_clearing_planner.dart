@@ -55,7 +55,7 @@ final class BasicStrategyFrontierClearingPlanner {
       if (unit == null ||
           unit.isWorking ||
           unit.queuedPath != null ||
-          unit.movementPoints <= 0) {
+          !unit.hasMovementRemaining) {
         continue;
       }
       final enemy = _visibleEnemyAt(view, assignment.targetHex);

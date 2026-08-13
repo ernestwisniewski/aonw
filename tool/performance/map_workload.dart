@@ -12,6 +12,7 @@ import 'package:aonw_core/game/domain/movement/movement_command_state.dart';
 import 'package:aonw_core/game/domain/movement/scout_auto_explore_planner.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
+import 'package:aonw_core/game/domain/movement/unit_traversal_cost_resolver.dart';
 import 'package:aonw_core/game/domain/state/canonical_game_snapshot.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';

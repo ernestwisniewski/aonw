@@ -6,7 +6,7 @@ import 'package:aonw_core/game/domain/unit/game_unit_type.dart';
 /// authoritative command execution.
 abstract final class UnitManualMovementRules {
   static bool canStartTargeting(GameUnit unit) {
-    return canRetainTargeting(unit) && availableMovementPoints(unit) > 0;
+    return canRetainTargeting(unit) && availableMovementUnits(unit) > 0;
   }
 
   /// Whether an existing targeting plan remains meaningful for this unit.
@@ -21,13 +21,13 @@ abstract final class UnitManualMovementRules {
         !unit.isAutoWorking;
   }
 
-  static int availableMovementPoints(GameUnit unit) {
+  static int availableMovementUnits(GameUnit unit) {
     return unit.isFortified
-        ? UnitMovementBalance.maxMovementPointsFor(
+        ? UnitMovementBalance.maxMovementUnitsFor(
             type: unit.type,
             carriedArtifactId: unit.carriedArtifactId,
           )
-        : unit.movementPoints;
+        : unit.movementUnits;
   }
 
   /// Wakes a fortified unit as part of an accepted manual move.
@@ -38,7 +38,7 @@ abstract final class UnitManualMovementRules {
     if (!unit.isFortified) return unit;
     return unit
         .copyWith(
-          movementPoints: availableMovementPoints(unit),
+          movementUnits: availableMovementUnits(unit),
           posture: UnitPosture.active,
         )
         .copyWithQueuedPath(null);

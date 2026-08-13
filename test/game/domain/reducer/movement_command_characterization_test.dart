@@ -42,9 +42,9 @@ void main() {
         expect(result.events.single, isA<UnitMovedEvent>());
         final event = result.events.single as UnitMovedEvent;
         expect(_stepSnapshots(animation.steps), const [
-          (col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
-          (col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
-          (col: 3, row: 0, enterCost: 1, cumulativeCost: 3),
+          (col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
+          (col: 2, row: 0, enterCost: 2, cumulativeCost: 4),
+          (col: 3, row: 0, enterCost: 2, cumulativeCost: 6),
         ]);
         expect(
           (animation.unitId, animation.fromCol, animation.fromRow),
@@ -88,15 +88,15 @@ void main() {
       expect(result.events.single, isA<UnitMovedEvent>());
       final event = result.events.single as UnitMovedEvent;
       expect(_stepSnapshots(animation.steps), const [
-        (col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
-        (col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
+        (col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
+        (col: 2, row: 0, enterCost: 2, cumulativeCost: 4),
       ]);
       expect(_stepSnapshots(moved.queuedPath!.steps), const [
         (col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
-        (col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
-        (col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
-        (col: 3, row: 0, enterCost: 1, cumulativeCost: 3),
-        (col: 4, row: 0, enterCost: 1, cumulativeCost: 4),
+        (col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
+        (col: 2, row: 0, enterCost: 2, cumulativeCost: 4),
+        (col: 3, row: 0, enterCost: 2, cumulativeCost: 6),
+        (col: 4, row: 0, enterCost: 2, cumulativeCost: 8),
       ]);
       expect((moved.col, moved.row, moved.movementPoints), (2, 0, 0));
       expect(
@@ -127,8 +127,8 @@ void main() {
         unitId: mover.id,
         targetCol: 3,
         targetRow: 0,
-        totalCost: 3,
-        availableMovementPoints: 0,
+        totalCost: 6,
+        availableMovementUnits: 0,
         steps: _lineSteps(3),
       );
       const pending = PendingResearchSelection(ownerPlayerId: 'player_1');
@@ -274,9 +274,9 @@ void main() {
         (mover.id, 0, 0),
       );
       expect(_stepSnapshots(animation.steps), const [
-        (col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
-        (col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
-        (col: 3, row: 0, enterCost: 1, cumulativeCost: 3),
+        (col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
+        (col: 2, row: 0, enterCost: 2, cumulativeCost: 4),
+        (col: 3, row: 0, enterCost: 2, cumulativeCost: 6),
       ]);
       expect(result.events, hasLength(1));
       expect(result.events.single, isA<UnitMovedEvent>());
@@ -341,8 +341,8 @@ List<UnitMovementStep> _lineSteps(int targetCol) => [
     UnitMovementStep(
       col: col,
       row: 0,
-      enterCost: col == 0 ? 0 : 1,
-      cumulativeCost: col,
+      enterCost: col == 0 ? 0 : 2,
+      cumulativeCost: col * 2,
     ),
 ];
 

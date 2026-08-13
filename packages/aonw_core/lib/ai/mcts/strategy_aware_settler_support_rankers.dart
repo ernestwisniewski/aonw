@@ -48,7 +48,9 @@ final class _CitySiteDiscoveryRanker {
     AiContext context,
     StrategicPlan plan,
   ) {
-    if (unit.isWorking || unit.movementPoints <= 0 || unit.queuedPath != null) {
+    if (unit.isWorking ||
+        !unit.hasMovementRemaining ||
+        unit.queuedPath != null) {
       return false;
     }
     if (unit.isWorker ||

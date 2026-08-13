@@ -24,7 +24,7 @@ void main() {
           targetRow: 0,
           steps: const [
             UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
-            UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+            UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
           ],
         ),
       );
@@ -65,14 +65,14 @@ void main() {
         ),
       );
       expect(effects.map(_effectSnapshot), [
-        'turn_auto_scout:0,0->1,0;steps=1,0:1/1',
-        'turn_auto_scout:1,0->3,0;steps=2,0:1/1|3,0:1/2',
+        'turn_auto_scout:0,0->1,0;steps=1,0:2/2',
+        'turn_auto_scout:1,0->3,0;steps=2,0:2/2|3,0:2/4',
       ]);
       expect(moved.queuedPath!.steps.map(_stepSnapshot), const [
         '1,0:0/0',
-        '2,0:1/1',
-        '3,0:1/2',
-        '4,0:1/3',
+        '2,0:2/2',
+        '3,0:2/4',
+        '4,0:2/6',
       ]);
       expect(result.events, hasLength(1));
       expect(
@@ -123,7 +123,7 @@ void main() {
             targetRow: 0,
             steps: const [
               UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
-              UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+              UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
             ],
           ),
         );
@@ -151,7 +151,7 @@ void main() {
           result.uiEffects.whereType<AnimateUnitMoveEffect>().map(
             _effectSnapshot,
           ),
-          ['turn_auto_scout:0,0->1,0;steps=1,0:1/1'],
+          ['turn_auto_scout:0,0->1,0;steps=1,0:2/2'],
         );
         expect(result.events, isEmpty);
         expect(result.state.diplomacy.contactKeys, {'player_1|player_2'});
@@ -195,8 +195,8 @@ void main() {
           _effectSnapshot,
         ),
         [
-          'first_scout:0,0->3,0;steps=1,0:1/1|2,0:1/2|3,0:1/3',
-          'second_scout:0,1->3,1;steps=1,0:1/1|2,1:1/2|3,1:1/3',
+          'first_scout:0,0->3,0;steps=1,0:2/2|2,0:2/4|3,0:2/6',
+          'second_scout:0,1->3,1;steps=1,0:2/2|2,1:2/4|3,1:2/6',
         ],
       );
       expect(

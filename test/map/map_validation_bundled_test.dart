@@ -197,14 +197,14 @@ void main() {
         final plan = pathfinder.plan(unit: warrior, targetTile: target!);
         final movementCosts = pathfinder.movementCostsFrom(
           unit: warrior,
-          maxCost: warrior.movementPoints,
+          maxCost: warrior.movementUnits,
         );
 
         expect(plan, isNotNull);
-        expect(plan!.totalCost, 3);
+        expect(plan!.totalCost, 6);
         expect(plan.canMoveNow, isTrue);
-        expect(plan.remainingMovementPointsAfterStep(plan.steps.last), 0);
-        expect(movementCosts[(col: 16, row: 3)], 3);
+        expect(plan.remainingMovementUnitsAfterStep(plan.steps.last), 0);
+        expect(movementCosts[(col: 16, row: 3)], 6);
       },
     );
 

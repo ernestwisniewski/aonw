@@ -220,7 +220,7 @@ void main() {
         targetCol: 2,
         targetRow: 3,
         totalCost: 1,
-        availableMovementPoints: 3,
+        availableMovementUnits: 3,
         steps: const [
           UnitMovementStep(col: 2, row: 3, enterCost: 1, cumulativeCost: 1),
         ],

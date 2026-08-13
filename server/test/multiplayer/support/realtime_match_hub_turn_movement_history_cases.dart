@@ -115,9 +115,9 @@ Future<void> _projectsStoredTurnMovementsWithoutReconnectReplay() async {
     _expectedOwnerTurnMovements(),
   );
   expect(_turnMovementSnapshots(unitBHistory.single.movementExecutions), [
-    'unit-a:0,0->1,0;enter=1;total=1;audience=public',
-    'unit-b:0,1->1,1;enter=1;total=1;audience=public',
-    'unit-a:1,0->2,0;enter=1;total=1|3,0;enter=1;total=2;audience=public',
+    'unit-a:0,0->1,0;enter=2;total=2;audience=public',
+    'unit-b:0,1->1,1;enter=2;total=2;audience=public',
+    'unit-a:1,0->2,0;enter=2;total=2|3,0;enter=2;total=4;audience=public',
   ]);
   expect(observerHistory.single.movementExecutions.isEmpty, isTrue);
   for (final history in [ownerHistory, unitBHistory, observerHistory]) {
@@ -219,14 +219,14 @@ Future<void> _failsClosedForStoredMovementWithoutAudience() async {
 }
 
 List<String> _expectedOwnerTurnMovements() => const [
-  'unit-a:0,0->1,0;enter=1;total=1;audience=public',
-  'unit-a:1,0->2,0;enter=1;total=1|3,0;enter=1;total=2;audience=public',
+  'unit-a:0,0->1,0;enter=2;total=2;audience=public',
+  'unit-a:1,0->2,0;enter=2;total=2|3,0;enter=2;total=4;audience=public',
 ];
 
 List<String> _expectedStoredTurnMovements(_TurnMovementFixture fixture) => [
-  'unit-a:0,0->1,0;enter=1;total=1;audience=${fixture.owner.id},${fixture.unitBPlayer.id}',
-  'unit-b:0,1->1,1;enter=1;total=1'
+  'unit-a:0,0->1,0;enter=2;total=2;audience=${fixture.owner.id},${fixture.unitBPlayer.id}',
+  'unit-b:0,1->1,1;enter=2;total=2'
       ';audience=${fixture.unitBPlayer.id}',
-  'unit-a:1,0->2,0;enter=1;total=1|3,0;enter=1;total=2'
+  'unit-a:1,0->2,0;enter=2;total=2|3,0;enter=2;total=4'
       ';audience=${fixture.owner.id},${fixture.unitBPlayer.id}',
 ];

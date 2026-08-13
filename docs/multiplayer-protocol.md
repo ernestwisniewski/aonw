@@ -301,8 +301,8 @@ timeout handling treats AI seats as non-blocking.
 Every authoritative top-level wire envelope carries a strict family version.
 `WireCommand`, `WireCommandAck`, and `WireMatch` use
 `kProtocolVersion == 4`. `WireSnapshot` and `WireEvent` use the independent
-`kSnapshotEventVersion == 6` write schema in storage and in standalone or
-nested transport. Revision-8 readers accept the bounded durable set v3-v6.
+`kSnapshotEventVersion == 7` write schema in storage and in standalone or
+nested transport. Revision-9 readers accept the bounded durable set v3-v7.
 Nested envelopes validate themselves, so an ACK v4 may contain any readable
 durable snapshot during the expansion. There is no implicit promotion between
 the families.
@@ -311,12 +311,12 @@ Functional multiplayer compatibility is versioned independently:
 
 | Contract | Current | Compatible | Meaning |
 | --- | ---: | --- | --- |
-| Multiplayer revision | 8 | 8 | Revision 8 adds strategic production/allocation, seven-resource trade and economy UI, and the persisted initial resource distribution used by local and multiplayer games. |
+| Multiplayer revision | 9 | 9 | Revision 9 adds deterministic half-point road movement, edge-aware city-road routing, and route-cost migration. |
 | Command / ACK / match schema | 4 | 4 | Schema 4 requires `clientMessageId` in every `WireCommandAck`. |
-| Snapshot / event schema | 6 | 3, 4, 5, 6 readable; 6 writable | Schema 5 adds stockpiles and allocations; schema 6 adds persisted initial resource placements. Older readable rows use safe empty defaults and migrate on the next authoritative write. |
+| Snapshot / event schema | 7 | 3, 4, 5, 6, 7 readable; 7 writable | Schema 7 stores route costs as fixed-point movement units. Older readable rows migrate whole-point route costs on decode and on the next authoritative write. |
 
 The main-menu app-status request sends the app build plus multiplayer revision
-8. A revision in the compatible set can continue. A removed, invalid, or
+9. A revision in the compatible set can continue. A removed, invalid, or
 future revision receives `soon`, which renders the localized
 `mainMenuUpdateSoonTitle` and `mainMenuUpdateSoonBody` notice. Older clients
 that do not yet send a revision are treated specifically as revision 1 during
@@ -341,16 +341,17 @@ snapshots, and the `multiplayer-v3` snapshot-cache namespace remain schema 3.
 Revision 6 moves snapshots and events to schema 4 for road construction and
 transport-network state. Revision 7 adds stockpiles and production allocations
 in schema 5. Revision 8 adds persisted initial resource placements in schema 6.
-Readers accept v3-v6; writers emit v6, and an older running match migrates with
-save schema 6 on its next accepted state change. Malformed, pre-v3, and future
-versions fail closed.
+Revision 9 moves snapshots and events to schema 7 and saves to schema 7 so road
+movement can use exact half-point costs without floating-point state. Readers
+accept v3-v7; writers emit v7, and an older running match migrates its route
+costs on decode and its next accepted state change. Malformed, pre-v3, and
+future versions fail closed.
 
-Before deploying revision 8, retain a database backup. Deploy the v8 server
-before exposing v8 clients; older clients are blocked by compatibility guards.
-Once any v6 row is written, do not roll the server back against that database.
+Before deploying revision 9, retain a database backup. Deploy the v9 server
+before exposing v9 clients; older clients are blocked by compatibility guards.
+Once any v7 row is written, do not roll the server back against that database.
 Use a forward fix, or restore the predeploy backup first. No downcaster exists
-because it could erase stock, allocations, or the match's effective resource
-map.
+because it could reinterpret fixed-point movement balances and route costs.
 
 Use this path for every multiplayer change:
 

@@ -10,7 +10,7 @@ abstract final class UnitMovementFeasibility {
     required UnitMovementStep step,
     UnitMovementCapacityException? canEnterStepBeyondCapacity,
   }) {
-    final maxMovement = UnitMovementBalance.maxMovementPointsFor(
+    final maxMovement = UnitMovementBalance.maxMovementUnitsFor(
       type: unit.type,
       carriedArtifactId: unit.carriedArtifactId,
     );

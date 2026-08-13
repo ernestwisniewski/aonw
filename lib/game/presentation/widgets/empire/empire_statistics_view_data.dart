@@ -190,7 +190,7 @@ List<EmpireChartDatum> _readinessData(
 ) {
   final ordered = _orderedUnitCount(viewModel.units);
   final ready = viewModel.units
-      .where((unit) => unit.movementPoints > 0 && !_hasOrders(unit))
+      .where((unit) => unit.hasMovementRemaining && !_hasOrders(unit))
       .length;
   final waiting = math.max(0, viewModel.units.length - ordered - ready);
   return [

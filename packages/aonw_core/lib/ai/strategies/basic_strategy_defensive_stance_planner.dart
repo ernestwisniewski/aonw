@@ -114,7 +114,7 @@ final class BasicStrategyDefensiveStancePlanner {
     final damaged = hp < stats.hp;
     return damaged ||
         unit.isFortified ||
-        unit.movementPoints <= 0 ||
+        !unit.hasMovementRemaining ||
         defense.threatLevel > 0 ||
         _visibleThreatNearCity(city, view);
   }
@@ -126,7 +126,7 @@ final class BasicStrategyDefensiveStancePlanner {
     required GameView view,
     required AiContext context,
   }) {
-    if (unit.isFortified || unit.movementPoints <= 0) return null;
+    if (unit.isFortified || !unit.hasMovementRemaining) return null;
     final damaged = UnitFortificationRules.canHeal(
       unit,
       ruleset: context.ruleset.combat,

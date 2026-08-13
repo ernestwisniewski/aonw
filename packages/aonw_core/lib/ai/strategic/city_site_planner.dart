@@ -95,7 +95,7 @@ class CitySitePlanner {
     final assignedCenters = <CityHex>{};
 
     for (final founder in founders) {
-      ({CitySiteCandidate candidate, int distance, double utility})? best;
+      ({CitySiteCandidate candidate, num distance, double utility})? best;
       for (final candidate in candidates) {
         if (assignedCenters.contains(candidate.center)) continue;
         final target = view.mapData.tileAt(
@@ -123,7 +123,7 @@ class CitySitePlanner {
             )) {
           continue;
         }
-        final pathDistance = path?.totalCost ?? directDistance;
+        final pathDistance = _pathDistanceInPoints(path, directDistance);
         final travelPenalty =
             pathDistance * 0.85 / context.civProfile.expansionDistance;
         final utility = candidate.score - travelPenalty;
@@ -217,6 +217,11 @@ class CitySitePlanner {
     };
   }
 }
+
+num _pathDistanceInPoints(UnitMovementPlan? path, int directDistance) =>
+    path == null
+    ? directDistance
+    : MovementPointScale.pointsFromUnits(path.totalCost);
 
 int _visibleResourceCount(
   MapTileView tile,

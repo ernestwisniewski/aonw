@@ -28,7 +28,7 @@ int _visibleEnemyUnitAttackTargetCount(
 }
 
 bool _canUseTurnAction(GameUnit unit) {
-  return unit.movementPoints > 0 && !unit.isWorking && !unit.isFortified;
+  return unit.hasMovementRemaining && !unit.isWorking && !unit.isFortified;
 }
 
 bool _enabled(bool available, String? lockedReason) {
@@ -50,7 +50,7 @@ bool _supportsCityFoundingAction(GameUnit unit) {
 String? _turnActionBlockedReason(AppLocalizations l10n, GameUnit unit) {
   if (unit.isWorking) return l10n.selectionActionUnitWorking;
   if (unit.isFortified) return _fortifiedUnitReason(l10n, unit);
-  if (unit.movementPoints <= 0) {
+  if (!unit.hasMovementRemaining) {
     return l10n.selectionActionNoMovement;
   }
   return null;

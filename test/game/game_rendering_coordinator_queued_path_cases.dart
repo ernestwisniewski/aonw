@@ -65,7 +65,7 @@ void _registerQueuedPathRenderingTests() {
     expect(movePreview.lastPreview?.estimatedTurns(3), 1);
     expect(movePreview.lastDisplaySteps, hasLength(4));
     expect(movePreview.lastTravelledUpToIndex, 1);
-    expect(movePreview.lastMaxMovementPointsPerTurn, 3);
+    expect(movePreview.lastMaxMovementPointsPerTurn, 6);
   });
 }
 

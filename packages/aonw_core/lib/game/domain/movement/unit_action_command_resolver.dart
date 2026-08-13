@@ -50,14 +50,14 @@ abstract final class UnitActionCommandResolver {
     final pendingTurnSkip = interaction.pendingAction is PendingUnitTurnSkip
         ? interaction.pendingAction as PendingUnitTurnSkip
         : null;
-    final restoreMovementPoints = pendingTurnSkip?.unitId == unit.id
-        ? pendingTurnSkip!.restoreMovementPoints
+    final restoreMovementUnits = pendingTurnSkip?.unitId == unit.id
+        ? pendingTurnSkip!.restoreMovementUnits
         : null;
-    final nextMovementPoints =
-        restoreMovementPoints ??
-        UnitManualMovementRules.availableMovementPoints(unit);
+    final nextMovementUnits =
+        restoreMovementUnits ??
+        UnitManualMovementRules.availableMovementUnits(unit);
     final updatedUnit = unit
-        .copyWith(movementPoints: nextMovementPoints)
+        .copyWithMovementUnits(nextMovementUnits)
         .copyWithQueuedPath(null)
         .copyWithWorkerJob(null)
         .copyWithCityFoundingJob(null)
@@ -96,7 +96,7 @@ abstract final class UnitActionCommandResolver {
       pendingAction: PendingUnitTurnSkip(
         ownerPlayerId: unit.ownerPlayerId,
         unitId: unit.id,
-        restoreMovementPoints: unit.movementPoints,
+        restoreMovementUnits: unit.movementUnits,
       ),
     );
 

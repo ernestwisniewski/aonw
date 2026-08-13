@@ -17,24 +17,28 @@ void main() {
         mapData: mapData,
         units: [scout],
         fogOfWar: fog,
+        costResolver: const TerrainTraversalCostResolver(),
       );
       final canonicalUnreserved = planner.commandFor(
         unit: scout,
         mapData: worldView,
         units: [scout],
         fogOfWar: fog,
+        costResolver: const TerrainTraversalCostResolver(),
       );
       final legacyReserved = planner.commandFor(
         unit: scout,
         mapData: mapData,
         units: [reservingScout, scout],
         fogOfWar: fog,
+        costResolver: const TerrainTraversalCostResolver(),
       );
       final canonicalReserved = planner.commandFor(
         unit: scout,
         mapData: worldView,
         units: [reservingScout, scout],
         fogOfWar: fog,
+        costResolver: const TerrainTraversalCostResolver(),
       );
 
       expect(_commandSnapshot(canonicalUnreserved), 'explorer:4,0');

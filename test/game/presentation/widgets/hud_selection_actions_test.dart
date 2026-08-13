@@ -525,7 +525,7 @@ void main() {
     });
 
     test('shows turns-remaining badge on Move when a queued path exists', () {
-      // A warrior's max MP is 3 (foot unit). With cumulativeCost = 4 the path
+      // A warrior's max MP is 3 (6 movement units). With a visible cost of 4
       // takes ceil(4/3) = 2 turns to finish from a fresh 0-MP state.
       final warrior = _warrior()
           .copyWithQueuedPath(
@@ -536,14 +536,14 @@ void main() {
                 UnitMovementStep(
                   col: 1,
                   row: 0,
-                  enterCost: 2,
-                  cumulativeCost: 2,
+                  enterCost: 4,
+                  cumulativeCost: 4,
                 ),
                 UnitMovementStep(
                   col: 2,
                   row: 0,
-                  enterCost: 2,
-                  cumulativeCost: 4,
+                  enterCost: 4,
+                  cumulativeCost: 8,
                 ),
               ],
             ),
@@ -564,9 +564,8 @@ void main() {
     test(
       'recomputes Move badge from the unit position after a partial move',
       () {
-        // Same path as the previous test (total cumulativeCost 4), but the
-        // unit has already advanced to (1,0), so 2 cost is already paid.
-        // Remaining cost = 2; ceil(2/3) = 1 turn.
+        // Same visible path cost as the previous test, but the unit has
+        // already advanced to (1,0). The remaining 2 MP fit in one turn.
         final warrior = _warrior()
             .copyWith(col: 1, row: 0, movementPoints: 0)
             .copyWithQueuedPath(
@@ -577,14 +576,14 @@ void main() {
                   UnitMovementStep(
                     col: 1,
                     row: 0,
-                    enterCost: 2,
-                    cumulativeCost: 2,
+                    enterCost: 4,
+                    cumulativeCost: 4,
                   ),
                   UnitMovementStep(
                     col: 2,
                     row: 0,
-                    enterCost: 2,
-                    cumulativeCost: 4,
+                    enterCost: 4,
+                    cumulativeCost: 8,
                   ),
                 ],
               ),
@@ -651,7 +650,7 @@ void main() {
             pendingAction: PendingUnitTurnSkip(
               ownerPlayerId: warrior.ownerPlayerId,
               unitId: warrior.id,
-              restoreMovementPoints: warrior.movementPoints,
+              restoreMovementUnits: warrior.movementUnits,
             ),
           ),
         ),
@@ -1260,8 +1259,8 @@ QueuedMovePath _queuedPath() {
     targetRow: 0,
     steps: const [
       UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
-      UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
-      UnitMovementStep(col: 2, row: 0, enterCost: 1, cumulativeCost: 2),
+      UnitMovementStep(col: 1, row: 0, enterCost: 2, cumulativeCost: 2),
+      UnitMovementStep(col: 2, row: 0, enterCost: 2, cumulativeCost: 4),
     ],
   );
 }

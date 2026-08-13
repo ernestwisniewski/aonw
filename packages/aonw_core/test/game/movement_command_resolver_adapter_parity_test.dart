@@ -144,7 +144,7 @@ void main() {
       final moved = results.kernel.units.first;
       expect((moved.col, moved.row, moved.movementPoints), (1, 0, 0));
       expect(moved.queuedPath, isNull);
-      expect(results.kernel.execution?.steps.single.enterCost, 2);
+      expect(results.kernel.execution?.steps.single.enterCost, 4);
       expectMoveEvent(results.kernel.events, fromCol: 0, toCol: 1);
     });
 
@@ -175,7 +175,7 @@ void main() {
       expectAcceptedMovementParity(states, results);
       final moved = results.kernel.units.first;
       expect((moved.col, moved.row, moved.movementPoints), (1, 0, 0));
-      expect(results.kernel.execution?.steps.single.enterCost, 3);
+      expect(results.kernel.execution?.steps.single.enterCost, 6);
       expectMoveEvent(results.kernel.events, fromCol: 0, toCol: 1);
     });
 

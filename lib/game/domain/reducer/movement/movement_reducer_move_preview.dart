@@ -149,8 +149,11 @@ abstract final class _MovePreviewReducer {
             tile: tile,
             visibility: visibility,
           ),
-      costResolver: InfrastructureAwareTraversalCostResolver(
-        state.transportNetwork,
+      costResolver: InfrastructureAwareTraversalCostResolver.forKnownState(
+        network: state.transportNetwork,
+        cities: state.cities,
+        actorPlayerId: actorPlayerId,
+        visibility: visibility,
       ),
     );
     bool canEnterStepBeyondCapacity(UnitMovementStep step) =>

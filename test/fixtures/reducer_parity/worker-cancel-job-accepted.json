@@ -231,8 +231,8 @@
               {
                 "col": 2,
                 "row": 0,
-                "enterCost": 1,
-                "cumulativeCost": 1
+                "enterCost": 2,
+                "cumulativeCost": 2
               }
             ]
           },

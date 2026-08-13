@@ -113,7 +113,7 @@ final class BasicStrategyWorkerPlanner {
   bool _cannotUseWorker(GameUnit worker, Set<String> usedUnitIds) {
     return usedUnitIds.contains(worker.id) ||
         worker.isWorking ||
-        worker.movementPoints <= 0 ||
+        !worker.hasMovementRemaining ||
         worker.queuedPath != null;
   }
 

@@ -174,7 +174,7 @@ abstract final class UnitSelectionViewModelFactory {
   }) {
     if (_isCombatUnit(unit)) {
       return l10n.unitSelectionMovementHpSubtitle(
-        unit.movementPoints,
+        unit.exactMovementPoints,
         maxMovementPoints,
         currentHp,
         maxHp,
@@ -182,7 +182,7 @@ abstract final class UnitSelectionViewModelFactory {
     }
 
     return l10n.unitSelectionMovementSubtitle(
-      unit.movementPoints,
+      unit.exactMovementPoints,
       maxMovementPoints,
     );
   }

@@ -108,7 +108,7 @@ abstract final class _MovementTurnResetProcessor {
       final moved = validated.copyWith(
         col: destinationStep.col,
         row: destinationStep.row,
-        movementPoints: plan.remainingMovementPointsAfterStep(destinationStep),
+        movementUnits: plan.remainingMovementUnitsAfterStep(destinationStep),
       );
 
       final movedWithPath = reachable
@@ -247,8 +247,11 @@ abstract final class _MovementTurnResetProcessor {
         tile: tile,
         visibility: visibility,
       ),
-      costResolver: InfrastructureAwareTraversalCostResolver(
-        state.transportNetwork,
+      costResolver: InfrastructureAwareTraversalCostResolver.forKnownState(
+        network: state.transportNetwork,
+        cities: state.cities,
+        actorPlayerId: unit.ownerPlayerId,
+        visibility: visibility,
       ),
       canEnterOccupiedTile:
           ({
@@ -333,7 +336,7 @@ bool _movementPointsChanged(
   List<GameUnit> resetUnits,
 ) {
   for (var i = 0; i < resetUnits.length; i++) {
-    if (resetUnits[i].movementPoints != currentUnits[i].movementPoints) {
+    if (resetUnits[i].movementUnits != currentUnits[i].movementUnits) {
       return true;
     }
   }

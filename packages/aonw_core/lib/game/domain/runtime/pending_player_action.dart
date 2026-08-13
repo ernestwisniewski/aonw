@@ -1,4 +1,5 @@
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/movement/movement_point_scale.dart';
 import 'package:aonw_core/util/collection_equality.dart';
 
 typedef _PendingPlayerActionParser =
@@ -109,12 +110,12 @@ sealed class PendingPlayerAction {
     'unitTurnSkip': (json, ownerPlayerId) => PendingUnitTurnSkip(
       ownerPlayerId: ownerPlayerId,
       unitId: _stringField(json, 'unitId'),
-      restoreMovementPoints: _intField(json, 'restoreMovementPoints'),
+      restoreMovementUnits: _restoreMovementUnits(json),
     ),
     'unitSleep': (json, ownerPlayerId) => PendingUnitTurnSkip(
       ownerPlayerId: ownerPlayerId,
       unitId: _stringField(json, 'unitId'),
-      restoreMovementPoints: _intField(json, 'restoreMovementPoints'),
+      restoreMovementUnits: _restoreMovementUnits(json),
     ),
     'attackTargeting': (json, ownerPlayerId) => PendingAttackTargeting(
       ownerPlayerId: ownerPlayerId,
@@ -140,6 +141,14 @@ sealed class PendingPlayerAction {
   static int? _optionalIntField(Map<String, dynamic> json, String field) {
     final value = json[field];
     return value is num ? value.toInt() : null;
+  }
+
+  static int _restoreMovementUnits(Map<String, dynamic> json) {
+    final units = json['restoreMovementUnits'];
+    if (units is num) return units.toInt();
+    return MovementPointScale.unitsFromWholePoints(
+      _intField(json, 'restoreMovementPoints'),
+    );
   }
 
   static FieldImprovementType? _fieldImprovementType(Object? value) {
@@ -292,13 +301,23 @@ final class PendingUnitTurnSkip extends PendingPlayerAction {
   const PendingUnitTurnSkip({
     required this.ownerPlayerId,
     required this.unitId,
-    required this.restoreMovementPoints,
-  });
+    int? restoreMovementPoints,
+    int? restoreMovementUnits,
+  }) : assert(
+         (restoreMovementPoints == null) != (restoreMovementUnits == null),
+       ),
+       restoreMovementUnits =
+           (restoreMovementUnits ?? 0) +
+           (restoreMovementPoints ?? 0) * MovementPointScale.unitsPerPoint;
 
   @override
   final String ownerPlayerId;
   final String unitId;
-  final int restoreMovementPoints;
+  final int restoreMovementUnits;
+
+  @Deprecated('Use restoreMovementUnits')
+  int get restoreMovementPoints =>
+      MovementPointScale.wholePointsFromUnits(restoreMovementUnits);
 
   @override
   GameInteractionMode get mode => GameInteractionMode.unitTurnSkip;
@@ -309,11 +328,11 @@ final class PendingUnitTurnSkip extends PendingPlayerAction {
   @override
   Map<String, dynamic> get jsonFields => {
     'unitId': unitId,
-    'restoreMovementPoints': restoreMovementPoints,
+    'restoreMovementUnits': restoreMovementUnits,
   };
 
   @override
-  List<Object?> get equalityFields => [unitId, restoreMovementPoints];
+  List<Object?> get equalityFields => [unitId, restoreMovementUnits];
 }
 
 final class PendingAttackTargeting extends PendingPlayerAction {

@@ -52,13 +52,13 @@ void main() {
       expect(_planSnapshot(canonicalPlan), isNotNull);
       expect(canonicalPlan?.targetCol, 5);
       expect(canonicalPlan?.targetRow, 2);
-      expect(canonicalPlan?.totalCost, 9);
+      expect(canonicalPlan?.totalCost, 18);
       expect(canonicalApproach?.targetCol, 3);
       expect(canonicalApproach?.targetRow, 1);
-      expect(canonicalApproach?.totalCost, 6);
+      expect(canonicalApproach?.totalCost, 12);
       expect(
         _costSnapshot(canonicalCosts),
-        containsAll(<String>['5,2:9', '3,1:6', '4,2:7']),
+        containsAll(<String>['5,2:18', '3,1:12', '4,2:14']),
       );
       expect(canonical.isReachable(unit: movingUnit, col: 5, row: 2), isTrue);
       expect(canonical.isReachable(unit: movingUnit, col: 2, row: 1), isFalse);

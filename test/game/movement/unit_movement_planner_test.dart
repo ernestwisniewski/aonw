@@ -44,8 +44,8 @@ void main() {
       expect(plan, isNotNull);
       expect(plan!.targetCol, 1);
       expect(plan.targetRow, 0);
-      expect(plan.totalCost, 1);
-      expect(plan.availableMovementPoints, 5);
+      expect(plan.totalCost, 2);
+      expect(plan.availableMovementUnits, 10);
       expect(plan.canMoveNow, isTrue);
       expect(plan.path, [(col: 0, row: 0), (col: 1, row: 0)]);
     });
@@ -79,11 +79,11 @@ void main() {
       ).planMove(unit: settler, targetTile: _tile(map, 1, 0));
 
       expect(workerPlan, isNotNull);
-      expect(workerPlan!.availableMovementPoints, 3);
-      expect(workerPlan.totalCost, 1);
+      expect(workerPlan!.availableMovementUnits, 6);
+      expect(workerPlan.totalCost, 2);
       expect(settlerPlan, isNotNull);
-      expect(settlerPlan!.availableMovementPoints, 3);
-      expect(settlerPlan.totalCost, 1);
+      expect(settlerPlan!.availableMovementUnits, 6);
+      expect(settlerPlan.totalCost, 2);
     });
 
     test('plans multi-hex movement with shortest path', () {
@@ -99,7 +99,7 @@ void main() {
       expect(plan, isNotNull);
       expect(plan!.targetCol, 2);
       expect(plan.targetRow, 0);
-      expect(plan.totalCost, 2);
+      expect(plan.totalCost, 4);
       expect(plan.path.first, (col: 0, row: 0));
       expect(plan.path.last, (col: 2, row: 0));
     });
@@ -121,9 +121,9 @@ void main() {
       );
 
       expect(plan, isNotNull);
-      expect(plan!.totalCost, 3);
-      expect(plan.steps[1].enterCost, 2);
-      expect(plan.steps[2].enterCost, 1);
+      expect(plan!.totalCost, 6);
+      expect(plan.steps[1].enterCost, 4);
+      expect(plan.steps[2].enterCost, 2);
     });
 
     test(
@@ -162,22 +162,20 @@ void main() {
         final movementCosts = UnitMovementPathfinder(
           mapData: map,
           units: [carrier],
-        ).movementCostsFrom(unit: carrier, maxCost: carrier.movementPoints);
+        ).movementCostsFrom(unit: carrier, maxCost: carrier.movementUnits);
 
         expect(carrier.movementPoints, 2);
         expect(adjacentPlan, isNotNull);
-        expect(adjacentPlan!.totalCost, 3);
+        expect(adjacentPlan!.totalCost, 6);
         expect(adjacentPlan.canMoveNow, isTrue);
         expect(
-          adjacentPlan.remainingMovementPointsAfterStep(
-            adjacentPlan.steps.last,
-          ),
+          adjacentPlan.remainingMovementUnitsAfterStep(adjacentPlan.steps.last),
           0,
         );
         expect(distantPlan, isNotNull);
         expect(distantPlan!.canMoveNow, isFalse);
         expect(distantPlan.furthestReachableStep?.coord, (col: 1, row: 0));
-        expect(movementCosts[(col: 1, row: 0)], 3);
+        expect(movementCosts[(col: 1, row: 0)], 6);
         expect(movementCosts.containsKey((col: 2, row: 0)), isFalse);
       },
     );
@@ -208,14 +206,14 @@ void main() {
       final movementCosts = UnitMovementPathfinder(
         mapData: map,
         units: [scout],
-      ).movementCostsFrom(unit: scout, maxCost: scout.movementPoints);
+      ).movementCostsFrom(unit: scout, maxCost: scout.movementUnits);
 
       expect(plan, isNotNull);
-      expect(plan!.totalCost, 3);
+      expect(plan!.totalCost, 6);
       expect(plan.canMoveNow, isTrue);
       expect(plan.furthestReachableStep?.coord, (col: 1, row: 0));
-      expect(plan.remainingMovementPointsAfterStep(plan.steps.last), 0);
-      expect(movementCosts[(col: 1, row: 0)], 3);
+      expect(plan.remainingMovementUnitsAfterStep(plan.steps.last), 0);
+      expect(movementCosts[(col: 1, row: 0)], 6);
     });
 
     test('plans naval movement through coast and ocean but not land', () {
@@ -252,9 +250,9 @@ void main() {
       );
 
       expect(oceanPlan, isNotNull);
-      expect(oceanPlan!.totalCost, 1);
+      expect(oceanPlan!.totalCost, 2);
       expect(coastPlan, isNotNull);
-      expect(coastPlan!.totalCost, 2);
+      expect(coastPlan!.totalCost, 4);
       expect(landPlan, isNull);
     });
 

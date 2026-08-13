@@ -68,6 +68,8 @@ const _autoExploreExpectedImports = <String, Set<String>>{
     'package:aonw_core/game/domain/movement/scout_auto_explore_target.dart',
     'package:aonw_core/game/domain/movement/'
         'unit_movement_visibility_rules.dart',
+    'package:aonw_core/game/domain/movement/'
+        'unit_traversal_cost_resolver.dart',
     'package:aonw_core/game/domain/state/canonical_game_snapshot.dart',
     'package:aonw_core/game/domain/state/'
         'domain_action_unit_rules.dart',
@@ -83,6 +85,8 @@ const _autoExploreExpectedImports = <String, Set<String>>{
         'movement_command_path_constraints.dart',
     'package:aonw_core/game/domain/movement/scout_auto_explore_target.dart',
     'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart',
+    'package:aonw_core/game/domain/movement/'
+        'unit_traversal_cost_resolver.dart',
     'package:aonw_core/game/domain/unit.dart',
     'package:aonw_core/map/domain/map_read_view.dart',
     'package:aonw_core/map/domain/map_tile_view.dart',
@@ -202,6 +206,10 @@ List<String> _autoExploreTargetArgumentViolations(
         'mapData': 'mapData',
         'units': 'knownUnits',
         'fogOfWar': 'movement.fogOfWar',
+        'costResolver':
+            'InfrastructureAwareTraversalCostResolver.forKnownState('
+            'network: movement.transportNetwork, cities: movement.cities, '
+            'actorPlayerId: actorPlayerId, visibility: visibility)',
         'canEnterTile': 'canEnterTile',
       }))
     'targetFor must receive only actor-known units and bounded inputs',

@@ -94,7 +94,7 @@ abstract final class UnitCommandValidator {
         UnitCommandValidationFailureReason.unsupportedUnitType,
       );
     }
-    if (unit.movementPoints <= 0) {
+    if (!unit.hasMovementRemaining) {
       return const InvalidUnit(UnitCommandValidationFailureReason.noMovement);
     }
     if (unit.queuedPath != null) {

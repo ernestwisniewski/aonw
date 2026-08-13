@@ -242,7 +242,7 @@ final class BasicStrategyFounderEscortPlanner {
           (founderDistance <= 2 ? 24.0 : 0.0) -
           stepDistance * 7.0 -
           founderDistance * 3.0 -
-          plan.totalCost * 0.4 -
+          MovementPointScale.pointsFromUnits(plan.totalCost) * 0.4 -
           (stepThreat == null ? 0.0 : (4 - stepThreat).clamp(0, 4) * 5.0) -
           defensePenalty;
       final candidate = _FounderEscortMoveCandidate(
