@@ -15,8 +15,8 @@ platform, shadow, canary, and rollback gates in the
 
 | Crate | Responsibility |
 | --- | --- |
-| `aonw_domain` | Validated identifiers, odd-q topology, fixed-point movement values, and the immutable movement-state projection. |
-| `aonw_content` | Strict versioned map documents, domain validation, normalization, lookup, and deterministic logical-content hashing. |
+| `aonw_domain` | `GameState`, complete unit entities, validated identifiers, odd-q topology, and fixed-point values. |
+| `aonw_content` | Strict maps, immutable rulesets and scenarios, catalogs, validation, and separate deterministic content hashes. |
 | `aonw_contracts` | Versioned, domain-independent boundary DTOs. It deliberately does not choose a wire codec yet. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
 | `aonw_engine` | Fog-safe movement planning, reachable-hex queries, and the revision-bound authoritative `MoveUnit` transition. |
@@ -97,6 +97,27 @@ actor-visible occupancy projection.
 
 ## Movement foundation
 
+`GameState` is the canonical aggregate skeleton for a simulation. It uses the
+nominal `StateRevision`, preserves unit contract order in contiguous storage,
+and maintains a private sorted ID index. Construction validates map bounds,
+duplicate IDs, and the occupancy policy selected by the ruleset.
+
+The complete `Unit` entity preserves identity, display name, HP, XP, army,
+queued and merchant routes, worker charges, posture, artifacts, and concrete
+worker/founding/assignment/excavation activity. Manual movement availability is
+derived from that activity; it is not a client-supplied canonical boolean.
+
+`RulesetDefinition` owns all 17 unit movement allowances, movement domains,
+capabilities, artifact allowance, and occupancy policy. `ScenarioDefinition`
+links exact map and ruleset hashes to validated starting placements and can
+bootstrap a revision-zero `GameState`. Map, ruleset, and scenario identities
+are separate SHA-256 hashes with golden vectors.
+
+The earlier `MovementState` remains a temporary compatibility projection for
+the current Godot adapter and three Rust parity fixtures. It is not a save
+format and will be removed after the full-state command/query boundary replaces
+it.
+
 The current unit projection carries all data needed by the first movement
 slice: stable type, owner, odd-q position, fixed-point movement balance,
 posture, availability, queued route, and carried artifact. Boundary mapping
@@ -122,7 +143,7 @@ enforces entity, route, and balance limits even for non-JSON DTO producers.
 ## Deliberately deferred
 
 - full canonical state/save codecs and the remaining movement inputs such as
-  roads, cities, diplomacy, complete fog state, and rulesets;
+  roads, cities, diplomacy, and complete fog state;
 - Flutter/native C ABI and production packaging beyond the Godot debug adapter;
 - local runtime, AI, recipient projection, and remote replica crates;
 - any integration that could change the active Flutter or Serverpod runtime.

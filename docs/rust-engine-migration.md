@@ -2,11 +2,12 @@
 
 - Status: Target architecture and living migration plan
 - Last updated: 2026-08-13
-- Implementation checkpoint: phase 2/3 foundation plus a narrow phase 4
-  movement slice exists under `engine/`: map validation, movement projection,
+- Implementation checkpoint: the movement oracle/baseline and canonical-state
+  foundation exist under `engine/`: strict maps, hash-addressed ruleset and
+  scenario content, complete unit entities, `GameState`, movement projection,
   route/reachable queries, `MoveUnit`, three v2 parity fixtures, and Godot
-  GDExtension smoke coverage. Production integration and complete movement
-  parity have not started
+  GDExtension smoke coverage. Full-state command integration and complete
+  movement parity have not started
 - Governing decision: [ADR 0008](adr/0008-rust-engine-ownership-and-strangler-migration.md)
 
 ## Purpose
@@ -179,14 +180,16 @@ aonw/
 ```
 
 The implemented foundation includes the Rust workspace, testkit, versioned
-logical map content, strict small logical-map fixtures, odd-q row-major
-topology, movement-oriented unit DTO mapping, fixed-point terrain costs,
-fog-safe route/reachable planning, an authoritative movement transition, and
-the Godot 3D map preview. Three reviewed movement fixtures use contract version
+logical map content, immutable standard ruleset, validated scenario bootstrap,
+the canonical `GameState` skeleton and complete `Unit` entity, strict small
+logical-map fixtures, odd-q row-major topology, movement-oriented compatibility
+DTO mapping, fixed-point terrain costs, fog-safe route/reachable planning, an
+authoritative movement transition, and the Godot 3D map preview. Three reviewed movement fixtures use contract version
 2 and execute through the Rust engine, including exact movement evidence. Rust
 accepts only this current fixture contract; the remaining version 1 fixtures
 are exercised only by the existing Dart harness until they are deliberately
-migrated. Cities, diplomacy, roads, complete fog state, full movement parity,
+migrated. The compatibility `MovementState` is explicitly not a save format.
+Cities, diplomacy, roads, complete fog state, full movement parity,
 Flutter FFI, and production runtime integration remain future work.
 `aonw_native_bridge` and top-level contract publication remain planned.
 Additional crates shown in the target layout below are created with their first

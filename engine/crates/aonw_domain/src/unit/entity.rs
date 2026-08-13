@@ -1,0 +1,417 @@
+use crate::{
+    ArtifactId, HexCoord, MovementUnit, MovementUnitBuildError, MovementUnits, PlayerId,
+    QueuedMovePath, UnitId, UnitKind, UnitPosture,
+};
+
+use super::{ArmyTroop, MerchantTradeRoute, TroopKind, UnitActivity, WorkerJob};
+
+const MAX_UNIT_NAME_BYTES: usize = 256;
+
+/// Failure raised while constructing a canonical unit.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum UnitBuildError {
+    /// The display name is blank.
+    EmptyName,
+    /// The display name exceeds the boundary limit.
+    NameTooLong,
+    /// A troop count is zero.
+    EmptyTroop(TroopKind),
+    /// More than one entry uses the same troop kind.
+    DuplicateTroop(TroopKind),
+    /// A queued path does not start at the unit position.
+    InvalidQueuedPath(MovementUnitBuildError),
+    /// A job has an invalid remaining/total duration.
+    InvalidJobDuration,
+    /// Explicit combat hit points must be positive.
+    ZeroHitPoints,
+}
+
+impl core::fmt::Display for UnitBuildError {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::EmptyName => formatter.write_str("unit name must not be blank"),
+            Self::NameTooLong => formatter.write_str("unit name exceeds 256 bytes"),
+            Self::EmptyTroop(kind) => write!(formatter, "troop {kind:?} has zero count"),
+            Self::DuplicateTroop(kind) => write!(formatter, "troop {kind:?} is duplicated"),
+            Self::InvalidQueuedPath(source) => write!(formatter, "invalid queued path: {source}"),
+            Self::InvalidJobDuration => formatter.write_str("unit job duration is invalid"),
+            Self::ZeroHitPoints => formatter.write_str("unit hit points must be positive"),
+        }
+    }
+}
+
+impl std::error::Error for UnitBuildError {}
+
+/// Complete canonical unit entity.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Unit {
+    id: UnitId,
+    owner_player_id: PlayerId,
+    kind: UnitKind,
+    name: Box<str>,
+    position: HexCoord,
+    movement_units: MovementUnits,
+    army: Box<[ArmyTroop]>,
+    queued_path: Option<QueuedMovePath>,
+    merchant_trade_route: Option<MerchantTradeRoute>,
+    activity: UnitActivity,
+    worker_build_charges: u32,
+    hit_points: Option<u32>,
+    experience_points: u32,
+    posture: UnitPosture,
+    carried_artifact_id: Option<ArtifactId>,
+}
+
+impl Unit {
+    /// Starts a validated builder with required identity and movement fields.
+    #[must_use]
+    pub fn builder(
+        id: UnitId,
+        owner_player_id: PlayerId,
+        kind: UnitKind,
+        name: impl Into<Box<str>>,
+        position: HexCoord,
+        movement_units: MovementUnits,
+    ) -> UnitBuilder {
+        UnitBuilder {
+            id,
+            owner_player_id,
+            kind,
+            name: name.into(),
+            position,
+            movement_units,
+            army: Vec::new(),
+            queued_path: None,
+            merchant_trade_route: None,
+            activity: UnitActivity::default(),
+            worker_build_charges: 0,
+            hit_points: None,
+            experience_points: 0,
+            posture: UnitPosture::Active,
+            carried_artifact_id: None,
+        }
+    }
+
+    /// Returns the identifier.
+    #[must_use]
+    pub const fn id(&self) -> &UnitId {
+        &self.id
+    }
+    /// Returns the owner.
+    #[must_use]
+    pub const fn owner_player_id(&self) -> &PlayerId {
+        &self.owner_player_id
+    }
+    /// Returns the canonical kind.
+    #[must_use]
+    pub const fn kind(&self) -> UnitKind {
+        self.kind
+    }
+    /// Returns the display name token or authored name.
+    #[must_use]
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    /// Returns the map position.
+    #[must_use]
+    pub const fn position(&self) -> HexCoord {
+        self.position
+    }
+    /// Returns current movement balance.
+    #[must_use]
+    pub const fn movement_units(&self) -> MovementUnits {
+        self.movement_units
+    }
+    /// Returns army troops in canonical order.
+    #[must_use]
+    pub const fn army(&self) -> &[ArmyTroop] {
+        &self.army
+    }
+    /// Returns the queued manual route.
+    #[must_use]
+    pub const fn queued_path(&self) -> Option<&QueuedMovePath> {
+        self.queued_path.as_ref()
+    }
+    /// Returns the assigned merchant route.
+    #[must_use]
+    pub const fn merchant_trade_route(&self) -> Option<&MerchantTradeRoute> {
+        self.merchant_trade_route.as_ref()
+    }
+    /// Returns concrete activity state.
+    #[must_use]
+    pub const fn activity(&self) -> &UnitActivity {
+        &self.activity
+    }
+    /// Returns remaining worker construction charges.
+    #[must_use]
+    pub const fn worker_build_charges(&self) -> u32 {
+        self.worker_build_charges
+    }
+    /// Returns explicit combat hit points when applicable.
+    #[must_use]
+    pub const fn hit_points(&self) -> Option<u32> {
+        self.hit_points
+    }
+    /// Returns accumulated experience.
+    #[must_use]
+    pub const fn experience_points(&self) -> u32 {
+        self.experience_points
+    }
+    /// Returns persistent posture.
+    #[must_use]
+    pub const fn posture(&self) -> UnitPosture {
+        self.posture
+    }
+    /// Returns the carried artifact.
+    #[must_use]
+    pub const fn carried_artifact_id(&self) -> Option<&ArtifactId> {
+        self.carried_artifact_id.as_ref()
+    }
+
+    /// Builds the temporary movement projection without losing canonical fields.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a retained path no longer starts at the unit position.
+    pub fn movement_projection(&self) -> Result<MovementUnit, MovementUnitBuildError> {
+        MovementUnit::new(
+            self.id.clone(),
+            self.owner_player_id.clone(),
+            self.kind,
+            self.position,
+            self.movement_units,
+        )
+        .with_posture(self.posture)
+        .with_movement_blocked(self.activity.blocks_manual_movement())
+        .try_with_queued_path(self.queued_path.clone())
+        .map(|unit| unit.with_carried_artifact(self.carried_artifact_id.clone()))
+    }
+}
+
+/// Builder for the complete unit entity.
+#[derive(Clone, Debug)]
+pub struct UnitBuilder {
+    id: UnitId,
+    owner_player_id: PlayerId,
+    kind: UnitKind,
+    name: Box<str>,
+    position: HexCoord,
+    movement_units: MovementUnits,
+    army: Vec<ArmyTroop>,
+    queued_path: Option<QueuedMovePath>,
+    merchant_trade_route: Option<MerchantTradeRoute>,
+    activity: UnitActivity,
+    worker_build_charges: u32,
+    hit_points: Option<u32>,
+    experience_points: u32,
+    posture: UnitPosture,
+    carried_artifact_id: Option<ArtifactId>,
+}
+
+impl UnitBuilder {
+    /// Sets army troops.
+    #[must_use]
+    pub fn with_army(mut self, army: impl IntoIterator<Item = ArmyTroop>) -> Self {
+        self.army = army.into_iter().collect();
+        self
+    }
+    /// Sets the queued manual route.
+    #[must_use]
+    pub fn with_queued_path(mut self, path: Option<QueuedMovePath>) -> Self {
+        self.queued_path = path;
+        self
+    }
+    /// Sets the merchant route.
+    #[must_use]
+    pub fn with_merchant_trade_route(mut self, route: Option<MerchantTradeRoute>) -> Self {
+        self.merchant_trade_route = route;
+        self
+    }
+    /// Sets concrete activity slots.
+    #[must_use]
+    pub fn with_activity(mut self, activity: UnitActivity) -> Self {
+        self.activity = activity;
+        self
+    }
+    /// Sets worker construction charges.
+    #[must_use]
+    pub const fn with_worker_build_charges(mut self, charges: u32) -> Self {
+        self.worker_build_charges = charges;
+        self
+    }
+    /// Sets optional combat hit points.
+    #[must_use]
+    pub const fn with_hit_points(mut self, hit_points: Option<u32>) -> Self {
+        self.hit_points = hit_points;
+        self
+    }
+    /// Sets accumulated experience.
+    #[must_use]
+    pub const fn with_experience_points(mut self, experience_points: u32) -> Self {
+        self.experience_points = experience_points;
+        self
+    }
+    /// Sets persistent posture.
+    #[must_use]
+    pub const fn with_posture(mut self, posture: UnitPosture) -> Self {
+        self.posture = posture;
+        self
+    }
+    /// Sets the carried artifact.
+    #[must_use]
+    pub fn with_carried_artifact(mut self, artifact_id: Option<ArtifactId>) -> Self {
+        self.carried_artifact_id = artifact_id;
+        self
+    }
+
+    /// Validates and constructs the unit.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`UnitBuildError`] when an entity invariant is violated.
+    pub fn build(self) -> Result<Unit, UnitBuildError> {
+        if self.name.trim().is_empty() {
+            return Err(UnitBuildError::EmptyName);
+        }
+        if self.name.len() > MAX_UNIT_NAME_BYTES {
+            return Err(UnitBuildError::NameTooLong);
+        }
+        let mut kinds = self
+            .army
+            .iter()
+            .map(|troop| troop.kind())
+            .collect::<Vec<_>>();
+        if let Some(troop) = self.army.iter().find(|troop| troop.count() == 0) {
+            return Err(UnitBuildError::EmptyTroop(troop.kind()));
+        }
+        kinds.sort_unstable();
+        if let Some(pair) = kinds.windows(2).find(|pair| pair[0] == pair[1]) {
+            return Err(UnitBuildError::DuplicateTroop(pair[0]));
+        }
+        validate_activity(&self.activity)?;
+        if self.hit_points == Some(0) {
+            return Err(UnitBuildError::ZeroHitPoints);
+        }
+        let unit = Unit {
+            id: self.id,
+            owner_player_id: self.owner_player_id,
+            kind: self.kind,
+            name: self.name,
+            position: self.position,
+            movement_units: self.movement_units,
+            army: self.army.into_boxed_slice(),
+            queued_path: self.queued_path,
+            merchant_trade_route: self.merchant_trade_route,
+            activity: self.activity,
+            worker_build_charges: self.worker_build_charges,
+            hit_points: self.hit_points,
+            experience_points: self.experience_points,
+            posture: self.posture,
+            carried_artifact_id: self.carried_artifact_id,
+        };
+        unit.movement_projection()
+            .map_err(UnitBuildError::InvalidQueuedPath)?;
+        Ok(unit)
+    }
+}
+
+fn validate_activity(activity: &UnitActivity) -> Result<(), UnitBuildError> {
+    let worker_duration = activity.worker_job().map(|job| match job {
+        WorkerJob::FieldImprovement {
+            remaining_turns,
+            total_turns,
+            ..
+        }
+        | WorkerJob::RoadConstruction {
+            remaining_turns,
+            total_turns,
+            ..
+        } => (*remaining_turns, *total_turns),
+    });
+    let founding_duration = activity
+        .city_founding_job()
+        .map(|job| (job.remaining_turns(), job.total_turns()));
+    if [worker_duration, founding_duration]
+        .into_iter()
+        .flatten()
+        .any(|(remaining, total)| total == 0 || remaining > total)
+    {
+        return Err(UnitBuildError::InvalidJobDuration);
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        ArmyTroop, ArtifactId, HexCoord, MovementUnits, PlayerId, TroopKind, Unit, UnitActivity,
+        UnitBuildError, UnitId, UnitKind, WorkerJob,
+    };
+
+    fn builder() -> super::UnitBuilder {
+        Unit::builder(
+            UnitId::new("unit-1").expect("unit id"),
+            PlayerId::new("player-1").expect("player id"),
+            UnitKind::Worker,
+            "unit.worker",
+            HexCoord::new(1, 2),
+            MovementUnits::new(6),
+        )
+    }
+
+    #[test]
+    fn full_unit_preserves_non_movement_fields_and_derives_availability() {
+        let activity = UnitActivity::new(
+            Some(WorkerJob::RoadConstruction {
+                target: HexCoord::new(2, 2),
+                remaining_turns: 1,
+                total_turns: 3,
+            }),
+            None,
+            Some(HexCoord::new(1, 2)),
+            Some(ArtifactId::new("ruins-1").expect("artifact id")),
+        );
+        let unit = builder()
+            .with_army([ArmyTroop::new(TroopKind::Settler, 2)])
+            .with_activity(activity.clone())
+            .with_worker_build_charges(4)
+            .with_hit_points(Some(7))
+            .with_experience_points(12)
+            .build()
+            .expect("unit");
+
+        assert_eq!(unit.activity(), &activity);
+        assert_eq!(unit.worker_build_charges(), 4);
+        assert_eq!(unit.hit_points(), Some(7));
+        assert_eq!(unit.experience_points(), 12);
+        assert!(
+            unit.movement_projection()
+                .expect("projection")
+                .is_movement_blocked()
+        );
+    }
+
+    #[test]
+    fn unit_rejects_invalid_army_and_job_duration() {
+        assert_eq!(
+            builder()
+                .with_army([ArmyTroop::new(TroopKind::Warrior, 0)])
+                .build(),
+            Err(UnitBuildError::EmptyTroop(TroopKind::Warrior))
+        );
+        let invalid = UnitActivity::new(
+            Some(WorkerJob::RoadConstruction {
+                target: HexCoord::new(0, 0),
+                remaining_turns: 4,
+                total_turns: 3,
+            }),
+            None,
+            None,
+            None,
+        );
+        assert_eq!(
+            builder().with_activity(invalid).build(),
+            Err(UnitBuildError::InvalidJobDuration)
+        );
+    }
+}

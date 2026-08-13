@@ -14,6 +14,8 @@ mod document;
 mod error;
 mod model;
 mod raw;
+mod ruleset;
+mod scenario;
 mod validation;
 
 pub use catalog::{GridLayout, MapObjectiveType, ResourceType, TerrainType};
@@ -21,6 +23,10 @@ pub use content_hash::ContentHash;
 pub use document::MapDocument;
 pub use error::MapLoadError;
 pub use model::{MapDefinition, MapObjective, TileDefinition};
+pub use ruleset::{RulesetDefinition, UnitCapabilities, UnitDefinition, UnitMovementDomainValue};
+pub use scenario::{
+    ScenarioBootstrapError, ScenarioDefinition, ScenarioUnitDefinition, ScenarioValidationError,
+};
 pub use validation::MapValidationError;
 
 /// Map document version emitted by the canonical serializer.

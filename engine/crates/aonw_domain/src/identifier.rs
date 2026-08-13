@@ -116,6 +116,34 @@ impl fmt::Display for ArtifactId {
     }
 }
 
+/// Opaque city identifier.
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CityId(Box<str>);
+
+impl CityId {
+    /// Validates and constructs a city identifier.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`IdentifierError`] when the value is empty or exceeds the
+    /// boundary length limit.
+    pub fn new(value: impl Into<Box<str>>) -> Result<Self, IdentifierError> {
+        validate(value.into()).map(Self)
+    }
+
+    /// Returns the stable textual representation.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl fmt::Display for CityId {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(self.as_str())
+    }
+}
+
 fn validate(value: Box<str>) -> Result<Box<str>, IdentifierError> {
     if value.trim().is_empty() {
         return Err(IdentifierError::Empty);
