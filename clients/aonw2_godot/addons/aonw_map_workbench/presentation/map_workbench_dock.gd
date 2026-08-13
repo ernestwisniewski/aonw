@@ -182,16 +182,32 @@ func _set_reference_visible(value: bool) -> void:
 	var surface := _current_surface()
 	if surface == null:
 		return
-	surface.set_reference_visible(value)
-	_mark_scene_changed()
+	if surface.render_settings.reference_visible == value:
+		return
+	_commit_surface_change(
+		"Toggle reference texture",
+		surface,
+		&"set_reference_visible",
+		value,
+		surface.render_settings.reference_visible,
+		UndoRedo.MERGE_DISABLE,
+	)
 
 func _set_reference_opacity(value: float) -> void:
 	_update_opacity_labels()
 	var surface := _current_surface()
 	if surface == null:
 		return
-	surface.set_reference_opacity(value)
-	_mark_scene_changed()
+	if is_equal_approx(surface.render_settings.reference_opacity, value):
+		return
+	_commit_surface_change(
+		"Change reference opacity",
+		surface,
+		&"set_reference_opacity",
+		value,
+		surface.render_settings.reference_opacity,
+		UndoRedo.MERGE_ENDS,
+	)
 
 func _queue_geometry_update(_value: float) -> void:
 	_geometry_update_timer.start()
@@ -208,30 +224,51 @@ func _apply_geometry_settings() -> void:
 	var next_height := float(_height_step.value)
 	var next_grid_width := float(_grid_width.value)
 	if (
-		is_equal_approx(surface.height_step, next_height)
-		and is_equal_approx(surface.grid_width, next_grid_width)
+		is_equal_approx(surface.render_settings.height_step, next_height)
+		and is_equal_approx(surface.render_settings.grid_width, next_grid_width)
 	):
 		return
 	var undo_redo := EditorInterface.get_editor_undo_redo()
 	undo_redo.create_action("Change map geometry", UndoRedo.MERGE_DISABLE, surface)
 	undo_redo.add_do_method(surface, "set_geometry", next_height, next_grid_width)
-	undo_redo.add_undo_method(surface, "set_geometry", surface.height_step, surface.grid_width)
+	undo_redo.add_undo_method(
+		surface,
+		"set_geometry",
+		surface.render_settings.height_step,
+		surface.render_settings.grid_width,
+	)
 	undo_redo.commit_action()
 
 func _set_grid_visible(value: bool) -> void:
 	var surface := _current_surface()
 	if surface == null:
 		return
-	surface.set_grid_visible(value)
-	_mark_scene_changed()
+	if surface.render_settings.grid_visible == value:
+		return
+	_commit_surface_change(
+		"Toggle hex outlines",
+		surface,
+		&"set_grid_visible",
+		value,
+		surface.render_settings.grid_visible,
+		UndoRedo.MERGE_DISABLE,
+	)
 
 func _set_grid_opacity(value: float) -> void:
 	_update_opacity_labels()
 	var surface := _current_surface()
 	if surface == null:
 		return
-	surface.set_grid_opacity(value)
-	_mark_scene_changed()
+	if is_equal_approx(surface.render_settings.grid_opacity, value):
+		return
+	_commit_surface_change(
+		"Change outline opacity",
+		surface,
+		&"set_grid_opacity",
+		value,
+		surface.render_settings.grid_opacity,
+		UndoRedo.MERGE_ENDS,
+	)
 
 func _save_current_scene() -> void:
 	var surface := _current_surface()
@@ -248,6 +285,14 @@ func _save_current_scene() -> void:
 		_status.text = "Error: %s" % persist_result["message"]
 		return
 	var error := EditorInterface.save_scene()
+	if error == OK:
+		var publish_result := _scene_repository.publish_surface_geometry(surface)
+		if not publish_result["ok"]:
+			_status.text = (
+				"Scene saved, but the map manifest could not be published: %s"
+				% publish_result["message"]
+			)
+			return
 	_status.text = (
 		"Scene and geometry saved."
 		if error == OK
@@ -269,19 +314,30 @@ func _current_surface() -> AonwMapSurface:
 		return null
 	return scene_root.find_child("AonwMap3D", true, false) as AonwMapSurface
 
-func _mark_scene_changed() -> void:
-	EditorInterface.mark_scene_as_unsaved()
+func _commit_surface_change(
+	action_name: String,
+	surface: AonwMapSurface,
+	method: StringName,
+	value: Variant,
+	previous_value: Variant,
+	merge_mode: UndoRedo.MergeMode,
+) -> void:
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action(action_name, merge_mode, surface)
+	undo_redo.add_do_method(surface, method, value)
+	undo_redo.add_undo_method(surface, method, previous_value)
+	undo_redo.commit_action()
 
 func sync_from_edited_scene() -> void:
 	var surface := _current_surface()
 	if surface == null:
 		return
-	_reference_toggle.set_pressed_no_signal(surface.reference_visible)
-	_reference_opacity.set_value_no_signal(surface.reference_opacity)
-	_height_step.set_value_no_signal(surface.height_step)
-	_grid_toggle.set_pressed_no_signal(surface.grid_visible)
-	_grid_opacity.set_value_no_signal(surface.grid_opacity)
-	_grid_width.set_value_no_signal(surface.grid_width)
+	_reference_toggle.set_pressed_no_signal(surface.render_settings.reference_visible)
+	_reference_opacity.set_value_no_signal(surface.render_settings.reference_opacity)
+	_height_step.set_value_no_signal(surface.render_settings.height_step)
+	_grid_toggle.set_pressed_no_signal(surface.render_settings.grid_visible)
+	_grid_opacity.set_value_no_signal(surface.render_settings.grid_opacity)
+	_grid_width.set_value_no_signal(surface.render_settings.grid_width)
 	_update_opacity_labels()
 
 func _restore_surface_editing_context(surface: AonwMapSurface) -> Dictionary:
@@ -296,18 +352,8 @@ func _restore_surface_editing_context(surface: AonwMapSurface) -> Dictionary:
 	var map_result: Dictionary = _map_reader.load_map(source)
 	if not map_result["ok"]:
 		return map_result
-	var asset_directory := GodotMapSceneRepository.ASSET_ROOT.path_join(surface.source_map_id)
-	var terrain_texture := ResourceLoader.load(
-		asset_directory.path_join("terrain_texture.res"),
-		"Texture2D",
-	) as Texture2D
-	var reference_texture := ResourceLoader.load(
-		asset_directory.path_join("reference_texture.res"),
-		"Texture2D",
-	) as Texture2D
-	if terrain_texture == null or reference_texture == null:
-		return {"ok": false, "message": "generated map textures are missing"}
-	surface.present(map_result["document"], terrain_texture, reference_texture)
+	if not surface.restore_editing_context(map_result["document"]):
+		return {"ok": false, "message": "persisted map textures are missing"}
 	return {"ok": true}
 
 func _set_busy(busy: bool) -> void:

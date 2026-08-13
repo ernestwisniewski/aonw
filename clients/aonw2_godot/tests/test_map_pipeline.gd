@@ -12,6 +12,7 @@ const MapAssetCatalog := preload("res://infrastructure/map/map_asset_catalog.gd"
 const GodotMapSceneRepository := preload("res://infrastructure/map/godot_map_scene_repository.gd")
 const TileAtlasRepository := preload("res://infrastructure/map/tile_atlas_repository.gd")
 const NativeEngineBridge := preload("res://infrastructure/engine/native_engine_bridge.gd")
+const RenderSettings := preload("res://presentation/map/map_render_settings.gd")
 
 var _failures: Array[String] = []
 
@@ -65,8 +66,7 @@ func _test_canonical_map_with_reference_art() -> void:
 		document,
 		terrain_texture,
 		reference_texture,
-		1.0,
-		0.16,
+		RenderSettings.new(),
 	)
 	var terrain: ArrayMesh = meshes["terrain_mesh"]
 	var reference: ArrayMesh = meshes["reference_mesh"]
@@ -118,14 +118,12 @@ func _test_generated_godot_scene() -> void:
 		return
 	_check(ResourceLoader.exists(scene_path), "generated Godot scene exists")
 	_check(
-		ResourceLoader.exists(scene_repository.generated_scene_path_for("aonw2_starter")),
+		ResourceLoader.exists(result["generated_scene_path"]),
 		"generated surface scene exists independently",
 	)
 	_check(result["authored_scene_created"], "authored scene is created on first generation")
 	_check(
-		FileAccess.file_exists(
-			"res://.godot/map_generation_test/assets/aonw2_starter/reference_texture.res"
-		),
+		FileAccess.file_exists(result["reference_texture_path"]),
 		"generated scene owns a persisted reference texture",
 	)
 	_check(
@@ -149,15 +147,18 @@ func _test_generated_godot_scene() -> void:
 			"generated scene points at its bundled map snapshot",
 		)
 		_check(
-			is_equal_approx(instance.reference_opacity, 0.45),
+			is_equal_approx(instance.render_settings.reference_opacity, 0.45),
 			"reference opacity is persisted",
 		)
-		_check(instance.grid_visible, "hex grid visibility is persisted")
+		_check(instance.render_settings.grid_visible, "hex grid visibility is persisted")
 		_check(
-			is_equal_approx(instance.grid_opacity, 0.35),
+			is_equal_approx(instance.render_settings.grid_opacity, 0.35),
 			"hex grid opacity is persisted",
 		)
-		_check(is_equal_approx(instance.grid_width, 0.06), "hex grid width is persisted")
+		_check(
+			is_equal_approx(instance.render_settings.grid_width, 0.06),
+			"hex grid width is persisted",
+		)
 		instance.set_grid_visible(false)
 		_check(not instance.get_node("HexGrid").visible, "hex grid updates in the editor scene")
 		instance.set_grid_visible(true)
@@ -182,11 +183,64 @@ func _test_generated_godot_scene() -> void:
 			var edited_bounds := instance.terrain_mesh().get_aabb()
 			var persisted := scene_repository.persist_surface_geometry(instance)
 			_check(persisted["ok"], "edited geometry resources are persisted")
+			_check(
+				instance.render_settings.resource_path.get_base_dir().get_file()
+				== persisted["generation_id"],
+				"render settings and meshes share one immutable generation",
+			)
+			for mesh in [
+				instance.terrain_mesh(),
+				instance.reference_mesh(),
+				instance.grid_mesh(),
+			]:
+				_check(
+					mesh.resource_path.get_base_dir().get_file()
+					== persisted["generation_id"],
+					"persisted meshes share one immutable generation",
+				)
+			var before_publish := ResourceLoader.load(
+				scene_path,
+				"PackedScene",
+				ResourceLoader.CACHE_MODE_REPLACE_DEEP,
+			) as PackedScene
+			var before_publish_root := before_publish.instantiate()
+			var before_publish_surface := before_publish_root.find_child(
+				"AonwMap3D", true, false
+			) as AonwMapSurface
+			_check(
+				is_equal_approx(before_publish_surface.render_settings.height_step, 0.2),
+				"staging a generation does not mutate the published scene",
+			)
+			before_publish_root.free()
+			var staged_manifest_file := FileAccess.open(
+				"res://.godot/map_generation_test/assets/aonw2_starter/manifest.json",
+				FileAccess.READ,
+			)
+			var staged_manifest: Dictionary = JSON.parse_string(
+				staged_manifest_file.get_as_text()
+			)
+			_check(
+				staged_manifest["activeGeneration"] != persisted["generation_id"],
+				"staging does not publish the generation before the scene is saved",
+			)
 			var edited_scene := PackedScene.new()
 			_check(
 				edited_scene.pack(authored_root) == OK
 				and ResourceSaver.save(edited_scene, scene_path) == OK,
 				"edited render settings are saved with the authored scene",
+			)
+			_check(
+				scene_repository.publish_surface_geometry(instance)["ok"],
+				"saved geometry generation is published in the manifest",
+			)
+			var manifest_file := FileAccess.open(
+				"res://.godot/map_generation_test/assets/aonw2_starter/manifest.json",
+				FileAccess.READ,
+			)
+			var manifest: Dictionary = JSON.parse_string(manifest_file.get_as_text())
+			_check(
+				manifest["activeGeneration"] == persisted["generation_id"],
+				"manifest publishes the saved geometry generation",
 			)
 			var reloaded_scene := ResourceLoader.load(
 				scene_path,
@@ -199,11 +253,21 @@ func _test_generated_godot_scene() -> void:
 			) as AonwMapSurface
 			var reloaded_bounds := reloaded_surface.terrain_mesh().get_aabb()
 			_check(
-				is_equal_approx(reloaded_surface.height_step, 0.42)
-				and is_equal_approx(reloaded_surface.grid_width, 0.08)
-				and reloaded_bounds.position.is_equal_approx(edited_bounds.position)
-				and reloaded_bounds.size.is_equal_approx(edited_bounds.size),
-				"edit-save-reload keeps render settings and matching geometry",
+				is_equal_approx(reloaded_surface.render_settings.height_step, 0.42),
+				"edit-save-reload keeps the height step",
+			)
+			_check(
+				is_equal_approx(reloaded_surface.render_settings.grid_width, 0.08),
+				"edit-save-reload keeps the grid width",
+			)
+			_check(
+				reloaded_bounds.position.is_equal_approx(edited_bounds.position),
+				"edit-save-reload keeps the terrain bounds position",
+			)
+			_check(
+				reloaded_bounds.size.is_equal_approx(edited_bounds.size),
+				"edit-save-reload keeps the terrain bounds size: %s != %s"
+				% [reloaded_bounds.size, edited_bounds.size],
 			)
 			reloaded_root.free()
 		var manual_child := Node3D.new()
@@ -243,7 +307,8 @@ func _test_generated_godot_scene() -> void:
 		"regeneration preserves manual authored children",
 	)
 	_check(
-		refreshed_surface != null and is_equal_approx(refreshed_surface.height_step, 0.3),
+		refreshed_surface != null
+		and is_equal_approx(refreshed_surface.render_settings.height_step, 0.3),
 		"authored scene resolves the refreshed generated surface",
 	)
 	_check(

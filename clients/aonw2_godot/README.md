@@ -26,16 +26,19 @@ Choose a map and select **Generate / update 3D**. The Workbench writes:
 
 ```text
 clients/aonw2_godot/
-├── scenes/maps/<map_id>.tscn                 # authored scene
-├── scenes/generated/maps/<map_id>_surface.tscn
+├── scenes/maps/<map_id>.tscn                 # stable authored scene
+├── scenes/generated/maps/<map_id>/
+│   └── generation-NNNNNN_surface.tscn
 └── assets/generated_maps/<map_id>/
-    ├── map.json
     ├── manifest.json
-    ├── terrain_texture.res
-    ├── reference_texture.res
-    ├── terrain_mesh.res
-    ├── reference_mesh.res
-    └── grid_mesh.res
+    └── generations/generation-NNNNNN/
+        ├── map.json                          # full generations
+        ├── render_settings.tres
+        ├── terrain_texture.res               # full generations
+        ├── reference_texture.res             # full generations
+        ├── terrain_mesh.res
+        ├── reference_mesh.res
+        └── grid_mesh.res
 ```
 
 The authored scene contains the generated surface plus models and other nodes
@@ -56,12 +59,15 @@ the geometry width so the grid remains readable over detailed artwork.
 
 `Hex height` controls how logical tile heights shape the mesh. Geometry changes
 are debounced, participate in editor undo/redo, and are persisted by **Save
-current scene**. Generated textures and meshes are Godot resources, so
+current scene**. The Workbench writes settings and meshes to a new immutable
+generation, saves the authored scene, and only then publishes that generation
+in the manifest. A failed save therefore cannot leave a scene referring to a
+partially overwritten mesh set. Generated textures and meshes are Godot resources, so
 reopening the scene does not load the original JPG slices again. The reference
 atlas preserves native tile dimensions up to the preview cap rather than
 upsampling smaller artwork. Regenerate the scene after changing the source map
 or its tile artwork. The manifest records the source identity, content hash,
-source tile size, and render settings.
+source tile size, active generation, and render settings.
 
 ## Runtime preview
 

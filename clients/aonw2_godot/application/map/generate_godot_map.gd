@@ -3,6 +3,7 @@ class_name AonwGenerateGodotMap
 extends RefCounted
 
 const MapSurface := preload("res://presentation/map/map_surface.gd")
+const RenderSettings := preload("res://presentation/map/map_render_settings.gd")
 
 var _open_map: AonwOpenMap
 var _scene_repository: AonwGodotMapSceneRepository
@@ -21,13 +22,7 @@ func execute(source: AonwMapSource, settings: Dictionary) -> Dictionary:
 
 	var surface := MapSurface.new()
 	surface.name = "AonwMap3D"
-	surface.hex_radius = float(settings.get("hex_radius", 1.0))
-	surface.height_step = float(settings.get("height_step", 0.16))
-	surface.reference_visible = bool(settings.get("reference_visible", true))
-	surface.reference_opacity = float(settings.get("reference_opacity", 1.0))
-	surface.grid_visible = bool(settings.get("grid_visible", true))
-	surface.grid_opacity = float(settings.get("grid_opacity", 0.72))
-	surface.grid_width = float(settings.get("grid_width", 0.04))
+	surface.apply_render_settings(RenderSettings.from_dictionary(settings))
 	surface.configure_source(source)
 	surface.present(
 		opened["document"],

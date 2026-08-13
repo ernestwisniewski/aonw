@@ -63,8 +63,8 @@ func _open_source(source: AonwMapSource) -> void:
 	_current_document = result["document"]
 	_interaction.present(
 		_current_document,
-		_surface.hex_radius,
-		_surface.height_step,
+		_surface.render_settings.hex_radius,
+		_surface.render_settings.height_step,
 	)
 	_surface.present(
 		_current_document,

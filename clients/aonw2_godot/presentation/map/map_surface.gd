@@ -3,41 +3,17 @@ class_name AonwMapSurface
 extends Node3D
 
 const MeshBuilder := preload("res://presentation/map/map_surface_mesh_builder.gd")
+const RenderSettings := preload("res://presentation/map/map_render_settings.gd")
 
 signal map_presented(world_size: Vector2, maximum_height: float)
 
 @export var source_map_id := ""
 @export var source_map_path := ""
 @export var source_visual_directory := ""
-@export_range(0.25, 4.0, 0.05) var hex_radius := 1.0
-@export_range(0.0, 1.0, 0.01) var height_step := 0.16:
-	set(value):
-		height_step = value
-		if not _batching_geometry:
-			_rebuild()
-@export var reference_visible := true:
-	set(value):
-		reference_visible = value
-		if _reference != null:
-			_reference.visible = value
-@export_range(0.0, 1.0, 0.01) var reference_opacity := 1.0:
-	set(value):
-		reference_opacity = value
-		_update_material_opacity(_reference, value)
-@export var grid_visible := true:
-	set(value):
-		grid_visible = value
-		if _grid != null:
-			_grid.visible = value
-@export_range(0.0, 1.0, 0.01) var grid_opacity := 0.72:
-	set(value):
-		grid_opacity = value
-		_update_material_opacity(_grid, value)
-@export_range(0.01, 0.12, 0.005) var grid_width := 0.04:
-	set(value):
-		grid_width = value
-		if not _batching_geometry:
-			_rebuild()
+@export var render_settings: Resource = RenderSettings.new()
+@export var terrain_mesh_resource: ArrayMesh
+@export var reference_mesh_resource: ArrayMesh
+@export var grid_mesh_resource: ArrayMesh
 
 var _builder := MeshBuilder.new()
 var _document: AonwMapDocument
@@ -46,13 +22,15 @@ var _reference_texture: Texture2D
 var _terrain: MeshInstance3D
 var _reference: MeshInstance3D
 var _grid: MeshInstance3D
-var _batching_geometry := false
+var _ignore_settings_changed := false
+var _connected_settings: Resource
 
 func _ready() -> void:
+	_connect_settings()
 	_ensure_layers()
 	_apply_visibility()
-	_update_material_opacity(_reference, reference_opacity)
-	_update_material_opacity(_grid, grid_opacity)
+	_update_material_opacity(_reference, render_settings.reference_opacity)
+	_update_material_opacity(_grid, render_settings.grid_opacity)
 
 func present(
 	document: AonwMapDocument,
@@ -69,33 +47,44 @@ func configure_source(source: AonwMapSource) -> void:
 	source_map_path = source.map_path
 	source_visual_directory = source.visual_directory
 
+func apply_render_settings(value: Resource) -> void:
+	_disconnect_settings()
+	render_settings = value.snapshot() if value != null else RenderSettings.new()
+	_connect_settings()
+	_rebuild()
+	_apply_visibility()
+
 func set_reference_visible(value: bool) -> void:
 	_ensure_layers()
-	reference_visible = value
+	_update_setting(func() -> void: render_settings.reference_visible = value)
+	_reference.visible = render_settings.reference_visible
 
 func set_reference_opacity(value: float) -> void:
 	_ensure_layers()
-	reference_opacity = clampf(value, 0.0, 1.0)
+	_update_setting(func() -> void: render_settings.reference_opacity = value)
+	_update_material_opacity(_reference, render_settings.reference_opacity)
 
 func set_grid_visible(value: bool) -> void:
 	_ensure_layers()
-	grid_visible = value
+	_update_setting(func() -> void: render_settings.grid_visible = value)
+	_grid.visible = render_settings.grid_visible
 
 func set_grid_opacity(value: float) -> void:
 	_ensure_layers()
-	grid_opacity = clampf(value, 0.0, 1.0)
+	_update_setting(func() -> void: render_settings.grid_opacity = value)
+	_update_material_opacity(_grid, render_settings.grid_opacity)
 
 func set_grid_width(value: float) -> void:
-	set_geometry(height_step, value)
+	set_geometry(render_settings.height_step, value)
 
 func set_height_step(value: float) -> void:
-	set_geometry(value, grid_width)
+	set_geometry(value, render_settings.grid_width)
 
 func set_geometry(value_height_step: float, value_grid_width: float) -> void:
-	_batching_geometry = true
-	height_step = clampf(value_height_step, 0.0, 1.0)
-	grid_width = clampf(value_grid_width, 0.01, 0.12)
-	_batching_geometry = false
+	_ignore_settings_changed = true
+	render_settings.height_step = value_height_step
+	render_settings.grid_width = value_grid_width
+	_ignore_settings_changed = false
 	_rebuild()
 
 func has_editing_context() -> bool:
@@ -103,28 +92,42 @@ func has_editing_context() -> bool:
 
 func terrain_mesh() -> ArrayMesh:
 	_ensure_layers()
-	return _terrain.mesh
+	return terrain_mesh_resource
 
 func reference_mesh() -> ArrayMesh:
 	_ensure_layers()
-	return _reference.mesh
+	return reference_mesh_resource
 
 func grid_mesh() -> ArrayMesh:
 	_ensure_layers()
-	return _grid.mesh
+	return grid_mesh_resource
 
 func replace_persisted_resources(
 	terrain: ArrayMesh,
 	reference: ArrayMesh,
 	grid: ArrayMesh,
+	settings: Resource = null,
 ) -> void:
 	_ensure_layers()
 	_reference.material_override = null
 	_grid.material_override = null
-	_terrain.mesh = terrain
-	_reference.mesh = reference
-	_grid.mesh = grid
+	_set_mesh_resources(terrain, reference, grid)
+	if settings != null:
+		_disconnect_settings()
+		render_settings = settings
+		_connect_settings()
 	_apply_visibility()
+
+func restore_editing_context(document: AonwMapDocument) -> bool:
+	_ensure_layers()
+	var terrain_texture := _mesh_texture(terrain_mesh_resource)
+	var reference_texture := _mesh_texture(reference_mesh_resource)
+	if terrain_texture == null or reference_texture == null:
+		return false
+	_document = document
+	_terrain_texture = terrain_texture
+	_reference_texture = reference_texture
+	return true
 
 func _rebuild() -> void:
 	if _document == null or _terrain_texture == null or _reference_texture == null:
@@ -134,17 +137,15 @@ func _rebuild() -> void:
 		_document,
 		_terrain_texture,
 		_reference_texture,
-		hex_radius,
-		height_step,
-		reference_opacity,
-		grid_opacity,
-		grid_width,
+		render_settings,
 	)
 	_reference.material_override = null
 	_grid.material_override = null
-	_terrain.mesh = result["terrain_mesh"]
-	_reference.mesh = result["reference_mesh"]
-	_grid.mesh = result["grid_mesh"]
+	_set_mesh_resources(
+		result["terrain_mesh"],
+		result["reference_mesh"],
+		result["grid_mesh"],
+	)
 	_apply_visibility()
 	map_presented.emit(result["world_size"], result["maximum_height"])
 
@@ -167,6 +168,23 @@ func _ensure_layers() -> void:
 		_grid = MeshInstance3D.new()
 		_grid.name = "HexGrid"
 		add_child(_grid)
+	if terrain_mesh_resource == null:
+		terrain_mesh_resource = _terrain.mesh
+	if reference_mesh_resource == null:
+		reference_mesh_resource = _reference.mesh
+	if grid_mesh_resource == null:
+		grid_mesh_resource = _grid.mesh
+	_terrain.mesh = terrain_mesh_resource
+	_reference.mesh = reference_mesh_resource
+	_grid.mesh = grid_mesh_resource
+
+func _set_mesh_resources(terrain: ArrayMesh, reference: ArrayMesh, grid: ArrayMesh) -> void:
+	terrain_mesh_resource = terrain
+	reference_mesh_resource = reference
+	grid_mesh_resource = grid
+	_terrain.mesh = terrain_mesh_resource
+	_reference.mesh = reference_mesh_resource
+	_grid.mesh = grid_mesh_resource
 
 func assign_layer_owners(scene_owner: Node) -> void:
 	_ensure_layers()
@@ -176,9 +194,44 @@ func assign_layer_owners(scene_owner: Node) -> void:
 
 func _apply_visibility() -> void:
 	if _reference != null:
-		_reference.visible = reference_visible
+		_reference.visible = render_settings.reference_visible
 	if _grid != null:
-		_grid.visible = grid_visible
+		_grid.visible = render_settings.grid_visible
+
+func _connect_settings() -> void:
+	if render_settings == null:
+		render_settings = RenderSettings.new()
+	if _connected_settings == render_settings:
+		return
+	_disconnect_settings()
+	_connected_settings = render_settings
+	if not _connected_settings.changed.is_connected(_on_settings_changed):
+		_connected_settings.changed.connect(_on_settings_changed)
+
+func _disconnect_settings() -> void:
+	if (
+		_connected_settings != null
+		and _connected_settings.changed.is_connected(_on_settings_changed)
+	):
+		_connected_settings.changed.disconnect(_on_settings_changed)
+	_connected_settings = null
+
+func _update_setting(change: Callable) -> void:
+	_ignore_settings_changed = true
+	change.call()
+	_ignore_settings_changed = false
+
+func _on_settings_changed() -> void:
+	if _ignore_settings_changed:
+		return
+	_rebuild()
+	_apply_visibility()
+
+func _mesh_texture(mesh: Mesh) -> Texture2D:
+	if mesh == null or mesh.get_surface_count() == 0:
+		return null
+	var material := mesh.surface_get_material(0) as StandardMaterial3D
+	return material.albedo_texture if material != null else null
 
 func _update_material_opacity(layer: MeshInstance3D, value: float) -> void:
 	if layer == null or layer.mesh == null or layer.mesh.get_surface_count() == 0:

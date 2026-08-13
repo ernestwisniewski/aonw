@@ -12,13 +12,13 @@ func build(
 	document: AonwMapDocument,
 	terrain_texture: Texture2D,
 	reference_texture: Texture2D,
-	radius: float,
-	height_step: float,
-	reference_opacity: float = 1.0,
-	grid_opacity: float = 0.72,
-	grid_width: float = 0.04,
+	settings: Resource,
 ) -> Dictionary:
-	var surface_projection := HexMapProjection.new(document, radius, height_step)
+	var surface_projection := HexMapProjection.new(
+		document,
+		settings.hex_radius,
+		settings.height_step,
+	)
 	var geometry: AonwHexGridGeometry = surface_projection.geometry()
 	var projection := MapTextureProjection.new(geometry)
 	var vertices := PackedVector3Array()
@@ -59,18 +59,18 @@ func build(
 			uvs,
 			indices,
 			reference_texture,
-			reference_opacity,
+			settings.reference_opacity,
 		),
 		"grid_mesh": _grid_mesh(
 			document,
 			geometry,
 			corner_indices,
 			vertices,
-			grid_width,
-			grid_opacity,
+			settings.grid_width,
+			settings.grid_opacity,
 		),
 		"world_size": geometry.bounds().size,
-		"maximum_height": float(AonwMapDocument.MAX_HEIGHT) * height_step,
+		"maximum_height": float(AonwMapDocument.MAX_HEIGHT) * settings.height_step,
 	}
 
 func _textured_mesh(
