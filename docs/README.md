@@ -79,21 +79,23 @@ change.
 
 ### Accepted Successor Architecture
 
-The first Rust code is added directly under `engine/`. Flutter remains at the
-repository root during migration; Godot AoNW2 is added separately under
-`clients/aonw2_godot/`.
+When Rust implementation resumes, its first code will be added directly under
+`engine/`; that directory has intentionally not been created yet. Flutter
+remains at the repository root during migration; Godot AoNW2 will be added
+separately under `clients/aonw2_godot/`.
 
 ```mermaid
 flowchart TB
   subgraph Clients["Presentation clients"]
-    Flutter["Flutter / Flame AoNW1<br/>2D presentation client"]
-    Godot["Godot AoNW2<br/>3D presentation client"]
+    Flutter["Flutter / Flame AoNW1<br/>root → clients/aonw_flutter"]
+    Godot["Godot AoNW2<br/>clients/aonw2_godot"]
   end
 
   subgraph ClientPorts["Client application ports"]
-    FlutterLocal["Flutter LocalSessionPort"]
+    FlutterDispatch["Flutter CommandTransport"]
+    FlutterLocal["LocalCommandTransport<br/>+ LocalEnginePort"]
     GodotLocal["Godot AonwLocalSession<br/>GDExtension"]
-    FlutterRemote["Flutter RemoteMatchPort"]
+    FlutterRemote["NetworkCommandTransport"]
     GodotRemote["Godot AonwRemoteReplica"]
   end
 
@@ -118,12 +120,14 @@ flowchart TB
     Server --> Database
   end
 
-  Flutter --> FlutterLocal
-  Flutter --> FlutterRemote
+  Flutter --> FlutterDispatch
+  FlutterDispatch --> FlutterLocal
+  FlutterDispatch --> FlutterRemote
   Godot --> GodotLocal
   Godot --> GodotRemote
 
-  FlutterLocal --> Runtime
+  FlutterLocal -->|"initial LocalEnginePort"| Rules
+  FlutterLocal -. "phase 6 local-session handoff" .-> Runtime
   GodotLocal --> Runtime
   FlutterRemote --> Server
   GodotRemote --> Server
@@ -134,11 +138,13 @@ flowchart TB
   Projection -->|"recipient-safe state / events"| Server
 ```
 
-Both clients are presentation adapters. Local play reaches the same Rust rules
-through client-specific local-session adapters, while multiplayer reaches them
-through Serverpod. Serverpod owns authentication, ordering, transactions,
-persistence, and delivery; Rust owns gameplay legality and deterministic state
-transitions. Only recipient-safe projections return to remote clients.
+Both clients are presentation adapters. Flutter preserves its existing
+`CommandTransport` choice between local and network execution; Rust is selected
+behind `LocalCommandTransport` through `LocalEnginePort`. Godot uses its native
+local-session and remote-replica adapters. Serverpod owns authentication,
+ordering, transactions, persistence, and delivery; Rust owns gameplay legality
+and deterministic state transitions. Only recipient-safe projections return to
+remote clients.
 
 The Rust engine becomes the single rules implementation only after parity,
 save compatibility, platform, shadow, canary, and rollback gates pass. The Dart

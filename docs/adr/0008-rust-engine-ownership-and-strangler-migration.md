@@ -32,14 +32,16 @@ around the existing deterministic engine contract.
 flowchart LR
   Oracle["Reviewed fixtures and versioned contracts"] --> Dart["Dart aonw_core"]
   Oracle --> Rust["engine/: Rust GameEngine"]
-  Flutter["Flutter AoNW1"] --> Local["LocalSessionPort"]
+  Flutter["Flutter AoNW1"] --> Dispatch["CommandTransport"]
+  Dispatch --> Local["LocalCommandTransport + LocalEnginePort"]
+  Dispatch --> Network["NetworkCommandTransport"]
   Local --> Dart
   Local --> Rust
   Godot["Godot AoNW2"] --> GodotLocal["AonwLocalSession"]
   GodotLocal --> Rust
-  Flutter --> Remote["RemoteMatchPort"]
-  Godot --> Remote
-  Remote --> Serverpod["Serverpod multiplayer host"]
+  Godot --> Remote["AonwRemoteReplica"]
+  Network --> Serverpod["Serverpod multiplayer host"]
+  Remote --> Serverpod
   Serverpod --> Dart
   Serverpod --> Rust
 ```
@@ -51,7 +53,8 @@ The binding invariants are:
   presentation client.
 - The existing Flutter project remains at the repository root and remains a
   complete buildable and releasable product throughout migration. Moving it to
-  a final `clients/flutter/` path is deferred until after Dart Core retirement.
+  a final `clients/aonw_flutter/` path is deferred until after Dart Core
+  retirement.
 - The Godot presentation client is introduced separately under
   `clients/aonw2_godot/`. Game rules are not implemented in GDScript or Godot
   scenes.
@@ -103,6 +106,12 @@ The binding invariants are:
   read every supported input and the rollback Dart path can read its output.
 - Cutover and rollback apply only to new sessions or matches unless an explicit
   versioned migration proves otherwise. Existing work keeps its pinned engine.
+
+At adoption time, the Flutter network adapter is a documented transitional
+exception to nominal canonical/recipient type separation: Serverpod projects a
+recipient-safe payload, while the shared Dart repository and codec decode it
+through `CanonicalGameSnapshot`. The remote-replica migration must remove that
+compatibility envelope before this target invariant is considered implemented.
 
 This ADR supersedes the physical ownership decisions in ADR 0001 and ADR 0002.
 Their language-neutral state, canonical/recipient separation, immutability,

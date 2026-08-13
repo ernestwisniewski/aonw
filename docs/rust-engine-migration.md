@@ -31,7 +31,7 @@ The intended result is:
 ## Non-Negotiable Migration Rules
 
 1. The existing Flutter project remains at the repository root during the
-   migration. Moving it to `clients/flutter/` is a final mechanical cleanup,
+   migration. Moving it to `clients/aonw_flutter/` is a final mechanical cleanup,
    not an early architectural step.
 2. `packages/aonw_core` remains the production implementation and compatibility
    reference until an explicit target-by-target cutover.
@@ -54,21 +54,33 @@ The root Flutter application and Serverpod both depend on it. The migration
 inserts stable ports around that existing engine before replacing its
 implementation.
 
-Local authority and a recipient-scoped remote replica are separate seams. A
-remote client never receives or reconstructs canonical `DomainState`.
+In the target architecture, local authority and a recipient-scoped remote
+replica are separate seams. A remote client never receives or reconstructs
+canonical `DomainState`.
+
+The current Flutter network path is a known transitional exception to the
+nominal type boundary. Serverpod already projects recipient-scoped wire state
+in `PlayerMatchSnapshotProjector`, but `NetworkGameRepository` and
+`SnapshotCodec` decode that safe payload through `CanonicalGameSnapshot` to
+satisfy the shared `GameRepository` interface. This compatibility envelope
+does not make Flutter authoritative, but it must be replaced by a dedicated
+recipient snapshot/replica contract before the remote-replica cutover gate can
+pass.
 
 ```mermaid
 flowchart LR
   Flutter["Flutter / Flame AoNW1"]
   Godot["Godot AoNW2"]
 
-  Flutter --> FlutterLocal["LocalSessionPort"]
+  Flutter --> FlutterDispatch["CommandTransport"]
+  FlutterDispatch --> FlutterLocal["LocalCommandTransport<br/>+ LocalEnginePort"]
+  FlutterDispatch --> FlutterRemote["NetworkCommandTransport"]
   Godot --> GodotLocal["AonwLocalSession"]
-  FlutterLocal --> Local["Rust local runtime"]
+  FlutterLocal -->|"initial engine seam"| Engine
+  FlutterLocal -. "phase 6 session handoff" .-> Local["Rust local runtime"]
   GodotLocal --> Local
   Local --> Engine["engine/: Rust GameEngine"]
 
-  Flutter --> FlutterRemote["RemoteMatchPort"]
   Godot --> GodotRemote["AonwRemoteReplica"]
   FlutterRemote --> Server["Serverpod multiplayer host"]
   GodotRemote --> Server
@@ -85,6 +97,20 @@ and transaction-budget gates in phase 2 pass. A remote engine sidecar is not
 part of the initial design; it would add a network failure boundary inside the
 match transaction and requires separate evidence for crash isolation or scaling
 benefits.
+
+## Verified Current Migration Baseline
+
+The migration seams below were checked against the current implementation. They
+are the baseline to preserve, not claims that a Rust backend already exists:
+
+| Area | Current implementation | Migration implication |
+| --- | --- | --- |
+| Flutter dispatch | The composition root selects `LocalCommandTransport` or `NetworkCommandTransport` behind `CommandTransport` for a complete dispatch path. | Keep this top-level boundary; add Rust below the local transport. |
+| Local orchestration | `LocalCommandTransport` owns repository load/save, event-log append, snapshot cadence, clock use, and local resolution. | Introduce a narrow deterministic `LocalEnginePort` first; move full local-session ownership only in phase 6. |
+| Dart engine | `GameEngine.apply` accepts `CanonicalGameSnapshot`, dispatches 11 command families, and returns a snapshot envelope plus movement and combat presentation facts. | Phase 1 must isolate `DomainState -> DomainTransition` and move presentation projection outside the engine before parity porting. |
+| Network ACK handling | `NetworkCommandTransport` rebuilds authoritative client state from the server snapshot; its local reducer path only cleans up ephemeral interaction state after an accepted ACK. | Do not treat this presentation reconciliation as a second authoritative engine. |
+| Server transaction | `MatchCommandService` persists inside the transaction and delivers its notification plan after commit. | Preserve transaction ownership; a durable outbox remains a separate future change. |
+| Recipient projection | `PlayerMatchSnapshotProjector` filters state for one participant before transport, while the Flutter codec still uses the canonical compatibility envelope described above. | Preserve server-side redaction and replace the client envelope with nominal recipient types before remote-replica cutover. |
 
 ## Repository Layout During Migration
 
@@ -156,8 +182,9 @@ versioned `content/` root only after their ownership and packaging contract is
 implemented; client-specific graphics and audio remain with their clients.
 
 After Dart Core retirement, the repository may be reorganized mechanically
-into `clients/flutter/`, `clients/aonw2_godot/`, `services/gateway_serverpod/`,
-and `engine/`. That move must not be mixed with behavioral migration.
+into `clients/aonw_flutter/`, `clients/aonw2_godot/`,
+`services/gateway_serverpod/`, and `engine/`. That move must not be mixed with
+behavioral migration.
 
 ## Repository Layout After Dart Retirement
 
@@ -168,7 +195,7 @@ history; it is not renamed during the cleanup.
 ```text
 aonw/
 ├── clients/
-│   ├── flutter/
+│   ├── aonw_flutter/
 │   │   ├── lib/
 │   │   │   ├── application/
 │   │   │   ├── presentation/
@@ -269,7 +296,7 @@ The directory split follows domain responsibility rather than framework:
 | Online Play | Lobby, membership, ordering, idempotency, persistence, offsets, post-commit delivery and reconnect | `server/` |
 | Recipient Projection | Pure fog/audience redaction from canonical state and evidence to recipient-safe state and events | `engine/crates/aonw_recipient_projection` |
 | Client Replica | Recipient snapshots, ACK/offset state, gap recovery and reconnect state machine | `engine/crates/aonw_remote_replica` |
-| Client presentation boundary | Input, camera, selection, view state, animation, rendering, and accessibility | root Flutter and `clients/aonw2_godot/` |
+| Client presentation boundary | Input, camera, selection, view state, animation, rendering, and accessibility | root Flutter during migration, then `clients/aonw_flutter/`; `clients/aonw2_godot/` |
 
 These are code and ownership boundaries, not a requirement to create a
 microservice for every context.
@@ -456,24 +483,39 @@ Flutter AoNW1 remains a complete production client throughout the migration:
   rollback lane remains supported;
 - no long-lived migration branch replaces small reviewed changes and flags.
 
-Local authority and remote multiplayer keep distinct application ports:
+Flutter retains its existing dispatch boundary. Rust is selected behind the
+local transport rather than through a competing top-level local/remote
+abstraction:
 
 ```text
-LocalSessionPort
-  DartLocalSession
-  RustNativeLocalSession
-  RustWasmLocalSession
-  DifferentialEngineDecorator
-
-RemoteMatchPort
-  ServerpodRemoteMatch
-    RecipientReplica
+CommandTransport
+  LocalCommandTransport
+    LocalEnginePort
+      DartLocalEngine
+      RustNativeLocalEngine
+      RustWasmLocalEngine
+      DifferentialEngineDecorator
+  NetworkCommandTransport
+    WireCommandDispatcher
+    recipient-scoped snapshot and presentation synchronization
 ```
 
-The differential decorator is an internal comparison mechanism around a local
-or server engine call, not a presentation-selectable remote backend. Existing
-`CommandTransport` and `MatchGateway` abstractions continue to own the choice
-between local command execution and network delivery.
+The current composition root already chooses `LocalCommandTransport` or
+`NetworkCommandTransport` for the whole command dispatch. `LocalEnginePort` is
+the new narrow seam introduced beneath the local transport so persistence,
+event-log, and snapshot orchestration remain stable while Dart and Rust are
+compared. The differential decorator is internal, not a
+presentation-selectable remote backend.
+
+This is deliberately staged. Initially `LocalCommandTransport` keeps its
+current persistence, event-log, snapshot, and clock orchestration and delegates
+only deterministic rule execution through `LocalEnginePort`. Phase 6 may move
+complete local-session/save/replay ownership behind `aonw_local_runtime` and a
+stateful native adapter, but that broader handoff is a later migration with its
+own compatibility tests; it is not implied by the first engine seam.
+
+Godot has equivalent client-native entry points: `AonwLocalSession` for the
+local Rust runtime and `AonwRemoteReplica` for recipient-scoped Serverpod state.
 
 Direct imports from Flutter presentation into rules modules are reduced by a
 ratchet per migrated slice. Presentation consumes versioned read models,

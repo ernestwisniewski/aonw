@@ -1,6 +1,39 @@
 # Changelog
 
-## Unreleased
+## 1.1.15 - 2026-08-13
+
+- Added a complete strategic-resource economy with revealed deposits,
+  extraction improvements, per-player stockpiles, production costs, refunds,
+  and resource-aware unit availability.
+- Added deterministic strategic-resource placement around player starts for
+  new local and multiplayer matches while avoiding occupied map features and
+  keeping deposits on terrain where workers can reach them.
+- Added strategic-resource summaries, breakdowns, value cards, production
+  choices, and diplomacy flows for gold-for-resource and resource-for-resource
+  agreements across all supported languages.
+- Kept initial resource distribution, stockpiles, production reservations, and
+  trade agreements authoritative and consistent across saves, replays,
+  multiplayer projections, reconnects, turn timeouts, and server reduction.
+- Improved AI planning and simulation so computer players evaluate strategic
+  deposits, extraction, stockpiles, production requirements, and resource
+  trades without using hidden opponent information.
+- Improved movement precision and road-aware routing, including deterministic
+  fixed-point movement migration and merchant routes that replan when the
+  transport network changes and prefer genuinely cheaper connected roads.
+- Added a persistent Show animations option to the main menu and in-game
+  options. It is enabled by default and can disable unit movement, idle, and
+  camera-transition animations.
+- Reduced repeated strategic-resource projection work in the HUD to improve
+  frame stability in developed matches with many cities and units.
+- Hardened resource generation and trade agreement identifiers against
+  unreachable deposits, map-object collisions, and cross-agreement ID or
+  exchange-group collisions.
+- Versioned and tested the expanded multiplayer, save, replay, and reducer
+  contracts, including resource seeding, resource trades, reconnect behavior,
+  movement migration, and recipient-safe state projection.
+- Documented the accepted incremental migration from the current Dart engine
+  to a shared Rust rules engine and separate Flutter AoNW1 and Godot AoNW2
+  presentation clients, including parity, cutover, and rollback gates.
 
 ## 1.1.14 - 2026-08-11
 

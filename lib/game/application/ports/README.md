@@ -18,17 +18,24 @@ and the concrete adapter separately when they compose the runtime.
 ## Planned Local Engine Seam
 
 The [Rust Engine Migration Plan](../../../../docs/rust-engine-migration.md)
-introduces an application-owned `LocalSessionPort` for complete local engine
-implementations. During migration the composition root will select a Dart, Rust
-native, or Rust WASM local session; an internal differential decorator may run
-a shadow comparison. This seam must not route individual command families to
-different primary engines inside one live session, and its DTOs must not expose
-Rust FFI handles or Dart domain implementation types to presentation.
+introduces an application-owned `LocalEnginePort` beneath the existing
+`LocalCommandTransport`. During migration the local transport will select a
+Dart, Rust native, or Rust WASM engine; an internal differential decorator may
+run a shadow comparison. This seam must not route individual command families
+to different primary engines inside one live session, and its DTOs must not
+expose Rust FFI handles or Dart domain implementation types to presentation.
 
-Remote multiplayer remains on the existing `CommandTransport` and
-`MultiplayerSessionGateway`/future `RemoteMatchPort` boundary. A recipient
-replica is not a local engine backend and must not depend on canonical
+The existing composition root continues to choose `LocalCommandTransport` or
+`NetworkCommandTransport`. Remote multiplayer remains on `CommandTransport`,
+`WireCommandDispatcher`, and `MultiplayerSessionGateway`; it does not become an
+engine backend. The target recipient replica must not depend on canonical
 `DomainState`.
+
+Today Serverpod already sends a recipient-scoped projection, but
+`NetworkGameRepository` and `SnapshotCodec` still decode it through the shared
+`CanonicalGameSnapshot` compatibility envelope. Removing that nominal-type
+exception belongs to the remote-replica migration; it is not a reason to put
+authoritative rules in the Flutter network adapter.
 
 This is a target boundary, not a claim that the Rust backend is currently
 implemented. Add the concrete port and adapters together with their first

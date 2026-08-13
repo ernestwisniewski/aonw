@@ -4,10 +4,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Made with Flutter](https://img.shields.io/badge/Made%20with-Flutter-02569B.svg)](https://flutter.dev)
 
-Age of New Worlds is an open-source hex-based 4X strategy game built with
-Flutter, Flame, Dart, Serverpod, Rust, and Godot. It includes a playable
-cross-platform client, a shared rules package, and a server-backed multiplayer
-foundation.
+Age of New Worlds is an open-source hex-based 4X strategy game currently built
+with Flutter, Flame, Dart, and Serverpod. It includes a playable cross-platform
+client, a shared rules package, and a server-backed multiplayer foundation;
+Rust and Godot belong to the accepted successor architecture described below.
 
 The authoritative Dart rules are being prepared for an incremental migration
 to a shared Rust engine under `engine/`. The existing Flutter/Flame game remains
@@ -41,12 +41,14 @@ and online multiplayer infrastructure.
 | `packages/aonw_server_client/` | Generated Serverpod client package used by the Flutter app. |
 | `server/` | Serverpod backend, auth adapters, multiplayer services, and persistence. |
 | `engine/` | Planned Rust workspace for the shared domain, deterministic engine, runtime, AI, contracts, and thin adapters. |
+| `clients/aonw_flutter/` | Final location planned for the Flutter/Flame AoNW1 presentation client after Dart Core retirement; Flutter remains at the repository root during migration. |
 | `clients/aonw2_godot/` | Planned Godot 3D presentation client; it consumes the Rust engine and does not own gameplay rules. |
 | `docs/` | Architecture, gameplay, operations, release, and publishing documentation. |
 
-`engine/` and `clients/aonw2_godot/` are target paths and are introduced
-incrementally. The Flutter project, platform directories, and release tooling
-stay at the repository root until the Dart engine has been safely retired.
+`engine/`, `clients/aonw_flutter/`, and `clients/aonw2_godot/` are target paths.
+The Flutter project, platform directories, and release tooling stay at the
+repository root until the Dart engine has been safely retired; its final move
+is a separate mechanical cleanup.
 
 ## Quick Start
 
