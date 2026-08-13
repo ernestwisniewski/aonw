@@ -240,6 +240,9 @@ void _registerMovementIndependenceGuards(_FixtureProvider fixtureProvider) {
     final support = '${Directory.current.path}/test/support';
     final sources = [
       File('$support/reducer_parity_movement_characterization_cases.dart'),
+      File(
+        '$support/reducer_parity_movement_characterization_acceptance_cases.dart',
+      ),
       File('$support/reducer_parity_movement_characterization_fixture.dart'),
       File('$support/reducer_parity_movement_characterization_oracle.dart'),
     ];

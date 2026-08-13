@@ -3,6 +3,7 @@ import 'package:aonw_core/domain.dart';
 import 'reducer_parity_fixture.dart';
 
 part 'reducer_parity_movement_characterization_cases.dart';
+part 'reducer_parity_movement_characterization_acceptance_cases.dart';
 part 'reducer_parity_movement_characterization_fixture.dart';
 part 'reducer_parity_movement_characterization_oracle.dart';
 
