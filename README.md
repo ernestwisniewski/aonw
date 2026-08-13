@@ -43,7 +43,7 @@ and online multiplayer infrastructure.
 | `engine/` | Rust workspace for the shared domain, versioned content, contracts, validated mapping, testkit, and deterministic engine boundary; it is not production-integrated yet. |
 | `content/` | Versioned logical maps and their schemas, shared by Rust and presentation clients. |
 | `clients/aonw_flutter/` | Final location planned for the Flutter/Flame AoNW1 presentation client after Dart Core retirement; Flutter remains at the repository root during migration. |
-| `clients/aonw2_godot/` | Godot 3D presentation client, currently containing the first shared-map preview; it does not own gameplay rules. |
+| `clients/aonw2_godot/` | Godot 3D presentation client with a textured continuous map surface and optional hex overlay; it does not own gameplay rules. |
 | `docs/` | Architecture, gameplay, operations, release, and publishing documentation. |
 
 `engine/` contains the pure Rust foundation and validated map content boundary.

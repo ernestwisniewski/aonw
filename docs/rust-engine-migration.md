@@ -154,10 +154,14 @@ aonw/
 │   ├── aonw_flutter/
 │   │   └── README.md               # target boundary; active app stays at root
 │   └── aonw2_godot/
+│       ├── application/
+│       ├── domain/
+│       ├── infrastructure/
+│       ├── presentation/
 │       ├── project.godot
 │       ├── scenes/
-│       ├── scripts/
-│       └── README.md               # first shared-map 3D preview
+│       ├── tests/
+│       └── README.md               # textured shared-map 3D preview
 │
 ├── content/
 │   ├── maps/                       # versioned shared logical maps
@@ -204,8 +208,11 @@ aonw/
 │   │   ├── assets/
 │   │   └── android/ ios/ macos/ linux/ windows/ web/
 │   └── aonw2_godot/
+│       ├── application/
+│       ├── domain/
+│       ├── infrastructure/
+│       ├── presentation/
 │       ├── scenes/
-│       ├── scripts/
 │       ├── addons/aonw_native/
 │       ├── shaders/
 │       ├── assets/

@@ -1,26 +1,112 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://scripts/map/hex_map_preview.gd" id="1_preview"]
+[ext_resource type="Script" path="res://presentation/map/map_preview_screen.gd" id="1_screen"]
+[ext_resource type="Script" path="res://presentation/map/map_surface.gd" id="2_surface"]
+[ext_resource type="Script" path="res://presentation/camera/orbit_camera_rig.gd" id="3_camera"]
 
 [sub_resource type="Environment" id="Environment_preview"]
 background_mode = 1
-background_color = Color(0.035, 0.045, 0.065, 1)
+background_color = Color(0.026, 0.034, 0.048, 1)
 ambient_light_source = 3
-ambient_light_color = Color(0.7, 0.78, 0.9, 1)
-ambient_light_energy = 0.7
+ambient_light_color = Color(0.68, 0.75, 0.88, 1)
+ambient_light_energy = 0.65
+tonemap_mode = 2
+
+[sub_resource type="StyleBoxFlat" id="Style_toolbar"]
+bg_color = Color(0.035, 0.047, 0.066, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.18, 0.24, 0.32, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="MapPreview" type="Node3D"]
-script = ExtResource("1_preview")
+script = ExtResource("1_screen")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_preview")
 
-[node name="Sun" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-55, -35, 0)
-light_energy = 1.2
-shadow_enabled = true
+[node name="MapSurface" type="Node3D" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_surface")
 
-[node name="Camera" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.766044, 0.642788, 0, -0.642788, 0.766044, 0, 11, 13)
+[node name="Terrain" type="MeshInstance3D" parent="MapSurface"]
+unique_name_in_owner = true
+
+[node name="Grid" type="MeshInstance3D" parent="MapSurface"]
+unique_name_in_owner = true
+
+[node name="OrbitCameraRig" type="Node3D" parent="."]
+unique_name_in_owner = true
+script = ExtResource("3_camera")
+
+[node name="Yaw" type="Node3D" parent="OrbitCameraRig"]
+unique_name_in_owner = true
+
+[node name="Pitch" type="Node3D" parent="OrbitCameraRig/Yaw"]
+unique_name_in_owner = true
+
+[node name="Camera" type="Camera3D" parent="OrbitCameraRig/Yaw/Pitch"]
+unique_name_in_owner = true
 current = true
 fov = 48.0
+near = 0.05
+far = 300.0
+
+[node name="Interface" type="CanvasLayer" parent="."]
+
+[node name="Toolbar" type="PanelContainer" parent="Interface"]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 608.0
+offset_bottom = 64.0
+theme_override_styles/panel = SubResource("Style_toolbar")
+
+[node name="Margin" type="MarginContainer" parent="Interface/Toolbar"]
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 7
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 7
+
+[node name="Actions" type="HBoxContainer" parent="Interface/Toolbar/Margin"]
+theme_override_constants/separation = 16
+
+[node name="OpenMap" type="Button" parent="Interface/Toolbar/Margin/Actions"]
+text = "Otwórz mapę…"
+
+[node name="GridToggle" type="CheckButton" parent="Interface/Toolbar/Margin/Actions"]
+unique_name_in_owner = true
+button_pressed = true
+text = "Siatka heksów (G)"
+
+[node name="Separator" type="VSeparator" parent="Interface/Toolbar/Margin/Actions"]
+
+[node name="Status" type="Label" parent="Interface/Toolbar/Margin/Actions"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Wczytywanie mapy…"
+vertical_alignment = 1
+
+[node name="Help" type="Label" parent="Interface"]
+offset_left = 16.0
+offset_top = 678.0
+offset_right = 720.0
+offset_bottom = 706.0
+text = "PPM: obrót · ŚPM: przesunięcie · kółko: zoom · strzałki: przesunięcie"
+
+[node name="OpenMapDialog" type="FileDialog" parent="Interface"]
+unique_name_in_owner = true
+title = "Otwórz map.json"
+initial_position = 2
+size = Vector2i(900, 620)
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.json ; AoNW map JSON")
+use_native_dialog = true
+
+[connection signal="pressed" from="Interface/Toolbar/Margin/Actions/OpenMap" to="." method="_on_open_pressed"]
+[connection signal="toggled" from="Interface/Toolbar/Margin/Actions/GridToggle" to="." method="_on_grid_toggled"]
