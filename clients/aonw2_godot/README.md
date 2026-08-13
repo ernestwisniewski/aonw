@@ -101,10 +101,15 @@ contain no movement legality rules.
 - `domain/map/` owns the immutable renderer read model and odd-q geometry;
 - `application/map/` orchestrates loading and Godot scene generation;
 - `infrastructure/map/` discovers files, decodes JSON, assembles textures, and
-  persists Godot resources;
+  persists Godot resources; authored scenes, manifests, and atomic file writes
+  are separate stores coordinated by the scene repository;
 - `infrastructure/engine/` adapts JSON at the GDExtension boundary;
 - `presentation/` owns meshes, camera, runtime UI, and editor controls;
 - `addons/aonw_map_workbench/` is the editor composition root.
+
+The Workbench dock separates its control view from editor orchestration. This
+keeps widget construction independent from generation, undo/redo, and scene
+persistence behavior.
 
 `engine/crates/aonw_content` remains the authoritative logical validator and
 hash owner. A generated Godot scene is a presentation artifact and never a

@@ -1,0 +1,177 @@
+use aonw_engine::MovementSearchWorkspace;
+
+use crate::command_dispatch::{RuntimeUnitActionKind, dispatch_move, dispatch_unit_action};
+use crate::player_view::PlayerViewSnapshot;
+use crate::query_cache::{QueryCache, QueryCacheStats};
+use crate::query_dispatch::dispatch_query;
+use crate::{CommandResult, MoveUnitRequest, RuntimeQuery, RuntimeQueryResult, UnitActionRequest};
+
+use super::{
+    OpenSession, OpenSessionError, RuntimeCapabilities, RuntimeError, Session, SessionStamp,
+};
+
+/// Mutable owner of at most one local game session.
+#[derive(Clone, Debug, Default)]
+pub struct LocalRuntime {
+    session: Option<Session>,
+    workspace: MovementSearchWorkspace,
+    query_cache: QueryCache,
+}
+
+impl LocalRuntime {
+    /// Returns supported operations and versions.
+    #[must_use]
+    pub const fn capabilities() -> RuntimeCapabilities {
+        RuntimeCapabilities::CURRENT
+    }
+
+    /// Transactionally opens a new session.
+    ///
+    /// A failed reopen preserves the previous valid session.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when map, ruleset, scenario, or state identities differ.
+    pub fn open(&mut self, request: OpenSession) -> Result<SessionStamp, OpenSessionError> {
+        let candidate = Session::try_open(request)?;
+        let stamp = candidate.stamp();
+        self.session = Some(candidate);
+        self.query_cache.clear();
+        Ok(stamp)
+    }
+
+    pub(crate) fn session_ref(&self) -> Result<&Session, RuntimeError> {
+        self.session.as_ref().ok_or(RuntimeError::SessionNotOpen)
+    }
+
+    /// Closes the current session. Repeated calls are harmless.
+    pub fn close(&mut self) {
+        self.session = None;
+        self.query_cache.clear();
+    }
+
+    /// Returns a full recipient-safe view.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`RuntimeError::SessionNotOpen`] when closed.
+    pub fn snapshot(&self) -> Result<PlayerViewSnapshot, RuntimeError> {
+        let session = self.session.as_ref().ok_or(RuntimeError::SessionNotOpen)?;
+        Ok(PlayerViewSnapshot::new(
+            session.stamp(),
+            session.state(),
+            session.actor(),
+        ))
+    }
+
+    /// Executes a versioned read-only query.
+    ///
+    /// # Errors
+    ///
+    /// Returns a stable query rejection or session error.
+    pub fn query(&mut self, request: &RuntimeQuery) -> Result<RuntimeQueryResult, RuntimeError> {
+        let stamp = self
+            .session
+            .as_ref()
+            .ok_or(RuntimeError::SessionNotOpen)?
+            .stamp();
+        if let Some(result) = self.query_cache.get(stamp, request) {
+            return Ok(result);
+        }
+        let session = self.session.as_ref().ok_or(RuntimeError::SessionNotOpen)?;
+        let result = dispatch_query(session, request.clone(), &mut self.workspace)?;
+        self.query_cache.insert(stamp, request, &result);
+        Ok(result)
+    }
+
+    /// Executes independent queries while reusing runtime caches and buffers.
+    pub fn query_batch(
+        &mut self,
+        requests: &[RuntimeQuery],
+    ) -> Vec<Result<RuntimeQueryResult, RuntimeError>> {
+        requests.iter().map(|request| self.query(request)).collect()
+    }
+
+    /// Returns diagnostic query-cache counters.
+    #[must_use]
+    pub const fn query_cache_stats(&self) -> QueryCacheStats {
+        self.query_cache.stats()
+    }
+
+    /// Dispatches one revision-bound manual movement command.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error. Domain rejections are
+    /// successful typed results with a rejection code.
+    pub fn dispatch(&mut self, command: &MoveUnitRequest) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_move(session, command)
+        };
+        self.complete_dispatch(result)
+    }
+
+    /// Clears cancellable orders owned by one controlled unit.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn cancel_unit_action(
+        &mut self,
+        command: &UnitActionRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        self.dispatch_unit_action(command, RuntimeUnitActionKind::Cancel)
+    }
+
+    /// Consumes one controlled unit's movement for the current turn.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn skip_unit_turn(
+        &mut self,
+        command: &UnitActionRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        self.dispatch_unit_action(command, RuntimeUnitActionKind::Skip)
+    }
+
+    /// Fortifies one idle controlled unit.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn fortify_unit(
+        &mut self,
+        command: &UnitActionRequest,
+    ) -> Result<CommandResult, RuntimeError> {
+        self.dispatch_unit_action(command, RuntimeUnitActionKind::Fortify)
+    }
+
+    fn dispatch_unit_action(
+        &mut self,
+        command: &UnitActionRequest,
+        kind: RuntimeUnitActionKind,
+    ) -> Result<CommandResult, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_unit_action(session, command, kind)
+        };
+        self.complete_dispatch(result)
+    }
+
+    fn complete_dispatch(
+        &mut self,
+        result: Result<CommandResult, RuntimeError>,
+    ) -> Result<CommandResult, RuntimeError> {
+        if self
+            .session
+            .as_ref()
+            .is_some_and(|session| !session.is_valid())
+        {
+            self.session = None;
+        }
+        self.query_cache.clear();
+        result
+    }
+}

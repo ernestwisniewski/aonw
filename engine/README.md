@@ -30,6 +30,12 @@ depends on contracts and domain, and the engine depends on domain plus validated
 content. The testkit remains independent of every concrete engine backend.
 Recipient state has no conversion into canonical domain state.
 
+Large responsibilities are organized as modules instead of monolithic crate
+roots: scenarios separate model, codec, bootstrap, canonicalization, and tests;
+state mapping separates aggregate, unit, world, value, and error conversion;
+local runtime sessions separate lifecycle, state, capabilities, and execution;
+the Godot adapter separates request parsing, response mapping, and bindings.
+
 ## Quality gates
 
 Run the complete standalone Rust gate from the repository root:

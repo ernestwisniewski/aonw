@@ -1,5 +1,5 @@
 @tool
-extends VBoxContainer
+extends "res://addons/aonw_map_workbench/presentation/map_workbench_view.gd"
 
 const MapAssetCatalog := preload("res://infrastructure/map/map_asset_catalog.gd")
 const JsonMapRepository := preload("res://infrastructure/map/json_map_repository.gd")
@@ -16,101 +16,14 @@ var _generator := GenerateGodotMap.new(
 )
 var _scene_repository := GodotMapSceneRepository.new()
 var _sources: Array[AonwMapSource] = []
-var _map_picker := OptionButton.new()
-var _generate_button := Button.new()
-var _open_button := Button.new()
-var _status := Label.new()
-var _reference_toggle := CheckButton.new()
-var _reference_opacity := HSlider.new()
-var _reference_opacity_value := Label.new()
-var _height_step := HSlider.new()
-var _grid_toggle := CheckButton.new()
-var _grid_opacity := HSlider.new()
-var _grid_opacity_value := Label.new()
-var _grid_width := HSlider.new()
-var _geometry_update_timer := Timer.new()
 
 func _ready() -> void:
-	name = "AoNW Map"
-	custom_minimum_size = Vector2(280.0, 0.0)
 	_build_interface()
+	_connect_interface()
 	_refresh_sources()
 
-func _build_interface() -> void:
-	var title := Label.new()
-	title.text = "AoNW Map Workbench"
-	title.add_theme_font_size_override("font_size", 17)
-	add_child(title)
-
-	var description := Label.new()
-	description.text = "AoNW map → standalone Godot 3D scene"
-	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	add_child(description)
-	add_child(HSeparator.new())
-
-	add_child(_section_label("Source map"))
-	add_child(_map_picker)
-	var source_actions := HBoxContainer.new()
-	var refresh_button := Button.new()
-	refresh_button.text = "Refresh"
-	_generate_button.text = "Generate / update 3D"
-	_generate_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	source_actions.add_child(refresh_button)
-	source_actions.add_child(_generate_button)
-	add_child(source_actions)
-
-	_open_button.text = "Open saved scene"
-	add_child(_open_button)
-	add_child(HSeparator.new())
-
-	add_child(_section_label("Terrain"))
-	_height_step.min_value = 0.0
-	_height_step.max_value = 1.0
-	_height_step.step = 0.01
-	_height_step.value = 0.16
-	add_child(_control_with_label("Hex height", _height_step))
-
-	add_child(_section_label("Original texture"))
-	_reference_toggle.text = "Show reference texture"
-	_reference_toggle.button_pressed = true
-	add_child(_reference_toggle)
-	_reference_opacity.min_value = 0.0
-	_reference_opacity.max_value = 1.0
-	_reference_opacity.step = 0.01
-	_reference_opacity.value = 1.0
-	_reference_opacity.tooltip_text = "0%: hidden, 100%: fully opaque"
-	add_child(_opacity_control("Texture opacity", _reference_opacity, _reference_opacity_value))
-
-	add_child(_section_label("Hex grid"))
-	_grid_toggle.text = "Show hex outlines"
-	_grid_toggle.button_pressed = true
-	add_child(_grid_toggle)
-	_grid_opacity.min_value = 0.0
-	_grid_opacity.max_value = 1.0
-	_grid_opacity.step = 0.01
-	_grid_opacity.value = 0.72
-	_grid_opacity.tooltip_text = "0%: hidden, 100%: fully opaque"
-	add_child(_opacity_control("Outline opacity", _grid_opacity, _grid_opacity_value))
-	_grid_width.min_value = 0.01
-	_grid_width.max_value = 0.12
-	_grid_width.step = 0.005
-	_grid_width.value = 0.04
-	_grid_width.tooltip_text = "Width of the geometric hex outlines"
-	add_child(_control_with_label("Outline width", _grid_width))
-	_geometry_update_timer.one_shot = true
-	_geometry_update_timer.wait_time = 0.15
-	add_child(_geometry_update_timer)
-	_update_opacity_labels()
-
-	var save_button := Button.new()
-	save_button.text = "Save current scene"
-	add_child(save_button)
-	add_child(HSeparator.new())
-	_status.text = "Select a map from assets."
-	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	add_child(_status)
-
-	refresh_button.pressed.connect(_refresh_sources)
+func _connect_interface() -> void:
+	_refresh_button.pressed.connect(_refresh_sources)
 	_generate_button.pressed.connect(_generate_selected_map)
 	_open_button.pressed.connect(_open_selected_scene)
 	_reference_toggle.toggled.connect(_set_reference_visible)
@@ -120,7 +33,7 @@ func _build_interface() -> void:
 	_grid_opacity.value_changed.connect(_set_grid_opacity)
 	_grid_width.value_changed.connect(_queue_geometry_update)
 	_geometry_update_timer.timeout.connect(_apply_geometry_settings)
-	save_button.pressed.connect(_save_current_scene)
+	_save_button.pressed.connect(_save_current_scene)
 
 func _refresh_sources() -> void:
 	_sources = _catalog.discover()
@@ -368,35 +281,3 @@ func _success_message(source: AonwMapSource, result: Dictionary) -> String:
 	if not result["invalid_tiles"].is_empty():
 		message += " Invalid textures: %d." % result["invalid_tiles"].size()
 	return message
-
-func _section_label(text: String) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_size_override("font_size", 14)
-	return label
-
-func _control_with_label(text: String, control: Control) -> VBoxContainer:
-	var container := VBoxContainer.new()
-	var label := Label.new()
-	label.text = text
-	container.add_child(label)
-	container.add_child(control)
-	return container
-
-func _opacity_control(text: String, slider: HSlider, value_label: Label) -> VBoxContainer:
-	var container := VBoxContainer.new()
-	var header := HBoxContainer.new()
-	var label := Label.new()
-	label.text = text
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	value_label.custom_minimum_size.x = 48.0
-	header.add_child(label)
-	header.add_child(value_label)
-	container.add_child(header)
-	container.add_child(slider)
-	return container
-
-func _update_opacity_labels() -> void:
-	_reference_opacity_value.text = "%d%%" % roundi(_reference_opacity.value * 100.0)
-	_grid_opacity_value.text = "%d%%" % roundi(_grid_opacity.value * 100.0)

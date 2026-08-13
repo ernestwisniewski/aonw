@@ -2,15 +2,20 @@
 class_name AonwGodotMapSceneRepository
 extends RefCounted
 
+const AuthoredMapSceneStore := preload("res://infrastructure/map/authored_map_scene_store.gd")
+const GeneratedMapManifestStore := preload(
+	"res://infrastructure/map/generated_map_manifest_store.gd"
+)
 const SCENE_ROOT := "res://scenes/maps"
 const GENERATED_SCENE_ROOT := "res://scenes/generated/maps"
 const ASSET_ROOT := "res://assets/generated_maps"
 const GENERATION_PREFIX := "generation-"
-const GENERATED_LAYER_NAMES := [&"BaseTerrain", &"ReferenceTexture", &"HexGrid"]
 
 var _scene_root: String
 var _generated_scene_root: String
 var _asset_root: String
+var _authored_scenes := AuthoredMapSceneStore.new()
+var _manifests := GeneratedMapManifestStore.new()
 
 func _init(
 	scene_root: String = SCENE_ROOT,
@@ -143,16 +148,16 @@ func save(
 	var scene_path := scene_path_for(source.map_id)
 	var authored_scene_created := false
 	if not FileAccess.file_exists(scene_path):
-		error = _create_authored_scene(scene_path, source.map_id, generated_scene_path)
+		error = _authored_scenes.create(scene_path, source.map_id, generated_scene_path)
 		if error != OK:
 			return _failure("cannot create authored Godot map scene: %s" % error_string(error))
 		authored_scene_created = true
 	else:
-		error = _refresh_authored_surface(scene_path, generated_scene_path)
+		error = _authored_scenes.refresh(scene_path, generated_scene_path)
 		if error != OK:
 			return _failure("cannot refresh authored Godot map scene: %s" % error_string(error))
 
-	var manifest_error := _write_manifest(
+	var manifest_error := _manifests.write(
 		output_directory.path_join("manifest.json"),
 		source,
 		document,
@@ -233,132 +238,13 @@ func publish_surface_geometry(surface: AonwMapSurface) -> Dictionary:
 	if surface.source_map_id.is_empty():
 		return _failure("map surface has no source id")
 	var output_directory := _asset_root.path_join(surface.source_map_id)
-	var manifest_error := _update_manifest_render_settings(
+	var manifest_error := _manifests.update_render_settings(
 		output_directory.path_join("manifest.json"),
 		surface,
 	)
 	if manifest_error != OK:
 		return _failure("cannot update map manifest: %s" % error_string(manifest_error))
 	return {"ok": true}
-
-func _create_authored_scene(path: String, map_id: String, generated_scene_path: String) -> Error:
-	var generated_scene := ResourceLoader.load(
-		generated_scene_path,
-		"PackedScene",
-		ResourceLoader.CACHE_MODE_REPLACE,
-	) as PackedScene
-	if generated_scene == null:
-		return ERR_CANT_OPEN
-	var surface := generated_scene.instantiate(
-		PackedScene.GEN_EDIT_STATE_INSTANCE
-	) as AonwMapSurface
-	if surface == null:
-		return ERR_CANT_CREATE
-	var root := Node3D.new()
-	root.name = map_id
-	root.add_child(surface)
-	surface.owner = root
-	var packed := PackedScene.new()
-	var error := packed.pack(root)
-	if error == OK:
-		error = _save_packed_scene_atomically(packed, path)
-	root.free()
-	return error
-
-func _refresh_authored_surface(path: String, generated_scene_path: String) -> Error:
-	var authored_scene := ResourceLoader.load(
-		path,
-		"PackedScene",
-		ResourceLoader.CACHE_MODE_REPLACE_DEEP,
-	) as PackedScene
-	var generated_scene := ResourceLoader.load(
-		generated_scene_path,
-		"PackedScene",
-		ResourceLoader.CACHE_MODE_REPLACE_DEEP,
-	) as PackedScene
-	if authored_scene == null or generated_scene == null:
-		return ERR_CANT_OPEN
-	var root := authored_scene.instantiate(PackedScene.GEN_EDIT_STATE_MAIN)
-	var previous_surface := root.get_node_or_null("AonwMap3D")
-	if previous_surface == null:
-		root.free()
-		return ERR_DOES_NOT_EXIST
-	var surface_index := previous_surface.get_index()
-	var authored_children: Array[Node] = []
-	for child in previous_surface.get_children():
-		if child.name in GENERATED_LAYER_NAMES:
-			continue
-		previous_surface.remove_child(child)
-		child.owner = null
-		authored_children.append(child)
-	root.remove_child(previous_surface)
-	previous_surface.free()
-	var surface := generated_scene.instantiate(
-		PackedScene.GEN_EDIT_STATE_INSTANCE
-	) as AonwMapSurface
-	if surface == null:
-		root.free()
-		return ERR_CANT_CREATE
-	root.add_child(surface)
-	root.move_child(surface, surface_index)
-	surface.owner = root
-	for child in authored_children:
-		surface.add_child(child)
-		child.owner = root
-	var packed := PackedScene.new()
-	var error := packed.pack(root)
-	if error == OK:
-		error = _save_packed_scene_atomically(packed, path)
-	root.free()
-	return error
-
-func _write_manifest(
-	path: String,
-	source: AonwMapSource,
-	document: AonwMapDocument,
-	surface: AonwMapSurface,
-	content_hash: String,
-	source_tile_size: Vector2i,
-	scene_path: String,
-	generated_scene_path: String,
-	generation_id: String,
-	missing_tiles: Array,
-	invalid_tiles: Array,
-	resized_tiles: Array,
-) -> Error:
-	var absolute_source := AonwJsonMapRepository.resolve_path(source.map_path)
-	var manifest := {
-		"formatVersion": 1,
-		"mapId": document.map_id(),
-		"cols": document.cols(),
-		"rows": document.rows(),
-		"mapSchemaVersion": 1,
-		"sourcePath": source.map_path,
-		"sourceSha256": FileAccess.get_sha256(absolute_source),
-		"contentHash": content_hash,
-		"sourceTileSize": {"width": source_tile_size.x, "height": source_tile_size.y},
-		"scenePath": scene_path,
-		"generatedScenePath": generated_scene_path,
-		"activeGeneration": generation_id,
-		"renderSettings": surface.render_settings.to_dictionary(),
-		"missingTextureCount": missing_tiles.size(),
-		"invalidTextureCount": invalid_tiles.size(),
-		"resizedTextureCount": resized_tiles.size(),
-	}
-	return _write_text_atomically(path, JSON.stringify(manifest, "  ", false) + "\n")
-
-func _update_manifest_render_settings(path: String, surface: AonwMapSurface) -> Error:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return FileAccess.get_open_error()
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	if not parsed is Dictionary:
-		return ERR_PARSE_ERROR
-	parsed["renderSettings"] = surface.render_settings.to_dictionary()
-	var settings_path := surface.render_settings.resource_path
-	if not settings_path.is_empty():
-		parsed["activeGeneration"] = settings_path.get_base_dir().get_file()
-	return _write_text_atomically(path, JSON.stringify(parsed, "  ", false) + "\n")
 
 func _copy_source(source_path: String, target_path: String) -> Error:
 	var absolute_source := AonwJsonMapRepository.resolve_path(source_path)
@@ -407,47 +293,6 @@ func _mesh_paths(generation_directory: String) -> Dictionary:
 		"reference": generation_directory.path_join("reference_mesh.res"),
 		"grid": generation_directory.path_join("grid_mesh.res"),
 	}
-
-func _save_packed_scene_atomically(scene: PackedScene, path: String) -> Error:
-	var pending_path := _pending_path(path)
-	var error := ResourceSaver.save(scene, pending_path)
-	if error != OK:
-		return error
-	return _replace_file(pending_path, path)
-
-func _write_text_atomically(path: String, content: String) -> Error:
-	var pending_path := _pending_path(path)
-	var file := FileAccess.open(pending_path, FileAccess.WRITE)
-	if file == null:
-		return FileAccess.get_open_error()
-	file.store_string(content)
-	file = null
-	return _replace_file(pending_path, path)
-
-func _replace_file(pending_path: String, target_path: String) -> Error:
-	var pending_absolute := ProjectSettings.globalize_path(pending_path)
-	var target_absolute := ProjectSettings.globalize_path(target_path)
-	var error := DirAccess.rename_absolute(pending_absolute, target_absolute)
-	if error == OK:
-		return OK
-	if not FileAccess.file_exists(target_path):
-		return error
-	var backup_path := "%s.backup" % target_path
-	var backup_absolute := ProjectSettings.globalize_path(backup_path)
-	if FileAccess.file_exists(backup_path):
-		DirAccess.remove_absolute(backup_absolute)
-	error = DirAccess.rename_absolute(target_absolute, backup_absolute)
-	if error != OK:
-		return error
-	error = DirAccess.rename_absolute(pending_absolute, target_absolute)
-	if error != OK:
-		DirAccess.rename_absolute(backup_absolute, target_absolute)
-		return error
-	DirAccess.remove_absolute(backup_absolute)
-	return OK
-
-func _pending_path(path: String) -> String:
-	return "%s.pending.%s" % [path.get_basename(), path.get_extension()]
 
 func _save_resource(resource: Resource, path: String) -> Error:
 	return ResourceSaver.save(resource, path, ResourceSaver.FLAG_COMPRESS)
