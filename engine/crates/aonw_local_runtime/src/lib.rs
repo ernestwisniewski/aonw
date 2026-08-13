@@ -12,7 +12,7 @@ mod query_cache;
 mod query_dispatch;
 mod session;
 
-pub use command_dispatch::{MoveUnitResultV1, MoveUnitV1, PlayerViewPatchV1};
+pub use command_dispatch::{CommandResultV1, MoveUnitV1, PlayerViewPatchV1, UnitActionV1};
 pub use persistence::{PersistenceError, ReplayVerificationV1, RngStateV1};
 pub use player_view::{PlayerUnitViewV1, PlayerViewSnapshotV1};
 pub use query_cache::QueryCacheStats;

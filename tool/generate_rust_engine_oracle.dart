@@ -10,6 +10,12 @@ const _reviewedFixtureIds = {
   'movement-adjacent-accepted',
   'movement-out-of-bounds-rejected',
   'movement-wrong-actor-rejected',
+  'unit-action-cancel-orders-accepted',
+  'unit-action-cancel-skipped-accepted',
+  'unit-action-fortify-busy-rejected',
+  'unit-action-fortify-unrelated-pending-accepted',
+  'unit-action-skip-accepted',
+  'unit-action-wrong-actor-rejected',
 };
 
 void main() {
@@ -17,7 +23,7 @@ void main() {
   final corpus = MovementReducerParityCharacterization.extend(
     ReducerParityCorpus.load(root),
   );
-  final movement =
+  final fixtures =
       corpus
           .where((fixture) {
             return _reviewedFixtureIds.contains(fixture.id) ||
@@ -26,16 +32,16 @@ void main() {
           .toList(growable: false)
         ..sort((left, right) => left.id.compareTo(right.id));
 
-  if (movement.length != 38) {
+  if (fixtures.length != 44) {
     throw StateError(
-      'Expected 38 current movement fixtures, got ${movement.length}.',
+      'Expected 44 current Rust fixtures, got ${fixtures.length}.',
     );
   }
 
   final output = Directory('${root.path}/test/fixtures/reducer_parity_v2')
     ..createSync(recursive: true);
   const encoder = JsonEncoder.withIndent('  ');
-  for (final fixture in movement) {
+  for (final fixture in fixtures) {
     final path = '${output.path}/${fixture.id}.json';
     File(path).writeAsStringSync('${encoder.convert(_encode(fixture))}\n');
   }

@@ -7,16 +7,16 @@ use aonw_engine::{
     MovementSearchWorkspace, MovementVisibility, StateDigest,
 };
 
-use crate::command_dispatch::dispatch_move;
+use crate::command_dispatch::{RuntimeUnitActionKind, dispatch_move, dispatch_unit_action};
 use crate::persistence::{ReplayRecorder, RngStateV1};
 use crate::player_view::PlayerViewSnapshotV1;
 use crate::prepared_world::PreparedWorld;
 use crate::query_cache::{QueryCache, QueryCacheStats};
 use crate::query_dispatch::dispatch_query;
-use crate::{MoveUnitResultV1, MoveUnitV1, QueryRequestV1, QueryResultV1};
+use crate::{CommandResultV1, MoveUnitV1, QueryRequestV1, QueryResultV1, UnitActionV1};
 
 /// Current local session contract version.
-pub const LOCAL_SESSION_CONTRACT_VERSION: u16 = 1;
+pub const LOCAL_SESSION_CONTRACT_VERSION: u16 = 2;
 
 /// Runtime capabilities independent of session state.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -34,6 +34,7 @@ impl RuntimeCapabilities {
     const MOVE_UNIT: u8 = 1 << 2;
     const SAVE_GAME: u8 = 1 << 3;
     const REPLAY_VERIFICATION: u8 = 1 << 4;
+    const UNIT_ACTIONS: u8 = 1 << 5;
 
     /// Returns whether route planning is available.
     #[must_use]
@@ -63,6 +64,12 @@ impl RuntimeCapabilities {
     #[must_use]
     pub const fn replay_verification(self) -> bool {
         self.features & Self::REPLAY_VERIFICATION != 0
+    }
+
+    /// Returns whether cancel, skip, and fortify commands are available.
+    #[must_use]
+    pub const fn unit_actions(self) -> bool {
+        self.features & Self::UNIT_ACTIONS != 0
     }
 }
 
@@ -352,7 +359,8 @@ impl LocalRuntime {
                 | RuntimeCapabilities::REACHABLE
                 | RuntimeCapabilities::MOVE_UNIT
                 | RuntimeCapabilities::SAVE_GAME
-                | RuntimeCapabilities::REPLAY_VERIFICATION,
+                | RuntimeCapabilities::REPLAY_VERIFICATION
+                | RuntimeCapabilities::UNIT_ACTIONS,
         }
     }
 
@@ -435,11 +443,66 @@ impl LocalRuntime {
     ///
     /// Returns an internal transition or session error. Domain rejections are
     /// successful typed results with a rejection code.
-    pub fn dispatch(&mut self, command: &MoveUnitV1) -> Result<MoveUnitResultV1, RuntimeError> {
+    pub fn dispatch(&mut self, command: &MoveUnitV1) -> Result<CommandResultV1, RuntimeError> {
         let result = {
             let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
             dispatch_move(session, command)
         };
+        self.complete_dispatch(result)
+    }
+
+    /// Clears cancellable orders owned by one controlled unit.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn cancel_unit_action(
+        &mut self,
+        command: &UnitActionV1,
+    ) -> Result<CommandResultV1, RuntimeError> {
+        self.dispatch_unit_action(command, RuntimeUnitActionKind::Cancel)
+    }
+
+    /// Consumes one controlled unit's movement for the current turn.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn skip_unit_turn(
+        &mut self,
+        command: &UnitActionV1,
+    ) -> Result<CommandResultV1, RuntimeError> {
+        self.dispatch_unit_action(command, RuntimeUnitActionKind::Skip)
+    }
+
+    /// Fortifies one idle controlled unit.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal transition or session error.
+    pub fn fortify_unit(
+        &mut self,
+        command: &UnitActionV1,
+    ) -> Result<CommandResultV1, RuntimeError> {
+        self.dispatch_unit_action(command, RuntimeUnitActionKind::Fortify)
+    }
+
+    fn dispatch_unit_action(
+        &mut self,
+        command: &UnitActionV1,
+        kind: RuntimeUnitActionKind,
+    ) -> Result<CommandResultV1, RuntimeError> {
+        let result = {
+            let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
+            dispatch_unit_action(session, command, kind)
+        };
+        self.complete_dispatch(result)
+    }
+
+    fn complete_dispatch(
+        &mut self,
+        result: Result<CommandResultV1, RuntimeError>,
+    ) -> Result<CommandResultV1, RuntimeError> {
         if self
             .session
             .as_ref()

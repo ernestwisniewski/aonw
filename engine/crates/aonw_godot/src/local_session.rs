@@ -1,9 +1,10 @@
 use aonw_content::{MapDocument, RulesetDefinition, ScenarioDefinition};
-use aonw_domain::{HexCoord, PlayerId, UnitId, UnitKind};
+use aonw_domain::{HexCoord, PlayerId, UnitId, UnitKind, UnitPosture};
 use aonw_engine::{DomainEvent, ExecutionEvidence};
 use aonw_local_runtime::{
-    LocalRuntime, MoveUnitResultV1, MoveUnitV1, OpenSessionV1, PlayerUnitViewV1, PlayerViewPatchV1,
+    CommandResultV1, LocalRuntime, MoveUnitV1, OpenSessionV1, PlayerUnitViewV1, PlayerViewPatchV1,
     QueryRequestV1, QueryResultV1, ReachableRequestV1, RoutePlanRequestV1, SessionStampV1,
+    UnitActionV1,
 };
 use godot::classes::{IRefCounted, RefCounted};
 use godot::prelude::*;
@@ -42,6 +43,7 @@ impl AonwLocalSession {
             "moveUnit": capabilities.move_unit(),
             "saveGame": capabilities.save_game(),
             "replayVerification": capabilities.replay_verification(),
+            "unitActions": capabilities.unit_actions(),
         }))
     }
 
@@ -224,7 +226,52 @@ impl AonwLocalSession {
             Err((code, message)) => return failure_json(code, message),
         };
         match self.runtime.dispatch(&request) {
-            Ok(result) => success_json(&move_result_json(&result)),
+            Ok(result) => success_json(&command_result_json(&result)),
+            Err(error) => failure_json(error.code(), error),
+        }
+    }
+
+    #[func]
+    fn cancel_unit_action_json(&mut self, unit_id: GString, expected_revision: i64) -> GString {
+        self.dispatch_unit_action(&unit_id, expected_revision, UnitActionMethod::Cancel)
+    }
+
+    #[func]
+    fn skip_unit_turn_json(&mut self, unit_id: GString, expected_revision: i64) -> GString {
+        self.dispatch_unit_action(&unit_id, expected_revision, UnitActionMethod::Skip)
+    }
+
+    #[func]
+    fn fortify_unit_json(&mut self, unit_id: GString, expected_revision: i64) -> GString {
+        self.dispatch_unit_action(&unit_id, expected_revision, UnitActionMethod::Fortify)
+    }
+}
+
+#[derive(Clone, Copy)]
+enum UnitActionMethod {
+    Cancel,
+    Skip,
+    Fortify,
+}
+
+impl AonwLocalSession {
+    fn dispatch_unit_action(
+        &mut self,
+        unit_id: &GString,
+        expected_revision: i64,
+        method: UnitActionMethod,
+    ) -> GString {
+        let request = match unit_action_request(&unit_id.to_string(), expected_revision) {
+            Ok(request) => request,
+            Err((code, message)) => return failure_json(code, message),
+        };
+        let result = match method {
+            UnitActionMethod::Cancel => self.runtime.cancel_unit_action(&request),
+            UnitActionMethod::Skip => self.runtime.skip_unit_turn(&request),
+            UnitActionMethod::Fortify => self.runtime.fortify_unit(&request),
+        };
+        match result {
+            Ok(result) => success_json(&command_result_json(&result)),
             Err(error) => failure_json(error.code(), error),
         }
     }
@@ -287,6 +334,16 @@ fn move_request(
     })
 }
 
+fn unit_action_request(
+    unit_id: &str,
+    expected_revision: i64,
+) -> Result<UnitActionV1, (&'static str, String)> {
+    Ok(UnitActionV1 {
+        expected_revision: decode_revision(expected_revision)?,
+        unit_id: decode_unit_id(unit_id)?,
+    })
+}
+
 fn decode_revision(value: i64) -> Result<u64, (&'static str, String)> {
     u64::try_from(value).map_err(|error| ("invalid_revision", error.to_string()))
 }
@@ -329,10 +386,11 @@ fn unit_json(unit: &PlayerUnitViewV1) -> Value {
         "col": unit.col(),
         "row": unit.row(),
         "movementUnits": unit.movement_units(),
+        "posture": unit_posture_name(unit.posture()),
     })
 }
 
-fn move_result_json(result: &MoveUnitResultV1) -> Value {
+fn command_result_json(result: &CommandResultV1) -> Value {
     with_stamp(
         result.stamp,
         json!({
@@ -404,6 +462,15 @@ const fn unit_kind_name(kind: UnitKind) -> &'static str {
         UnitKind::ScoutShip => "scoutShip",
         UnitKind::Warship => "warship",
         UnitKind::ReconPlane => "reconPlane",
+    }
+}
+
+const fn unit_posture_name(posture: UnitPosture) -> &'static str {
+    match posture {
+        UnitPosture::Active => "active",
+        UnitPosture::Fortified => "fortified",
+        UnitPosture::AutoExploring => "autoExploring",
+        UnitPosture::AutoWorking => "autoWorking",
     }
 }
 

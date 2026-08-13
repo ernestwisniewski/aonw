@@ -25,6 +25,7 @@ fn contract() -> GameStateDto {
             col: 1,
             row: 1,
             movement_units: 4,
+            skipped_movement_restore_units: None,
             army: vec![ArmyTroopDto {
                 kind: TroopKindDto::Settler,
                 count: 2,
@@ -119,6 +120,20 @@ fn json_round_trip_remains_strict_and_domain_validated() {
             .visibility(unit.owner_player_id(), HexCoord::new(1, 1)),
         FogVisibility::Visible
     );
+}
+
+#[test]
+fn current_turn_skip_round_trip_preserves_restore_balance() {
+    let mut source = contract();
+    let unit = &mut source.units[0];
+    unit.movement_units = 0;
+    unit.skipped_movement_restore_units = Some(4);
+    unit.queued_path = None;
+    unit.activity = UnitActivityDto::default();
+    unit.posture = UnitPostureDto::Active;
+
+    let state = decode_game_state(source.clone()).expect("decode skipped unit");
+    assert_eq!(encode_game_state(&state), source);
 }
 
 #[test]

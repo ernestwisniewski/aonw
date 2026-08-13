@@ -1,7 +1,10 @@
 use std::collections::BTreeMap;
 
+use aonw_contracts::ReplayCommandDto;
 use aonw_domain::{HexCoord, UnitId};
-use aonw_engine::{DomainCommand, DomainEvent, ExecutionEvidence, GameEngine, MoveUnitCommand};
+use aonw_engine::{
+    DomainCommand, DomainEvent, ExecutionEvidence, GameEngine, MoveUnitCommand, UnitActionCommand,
+};
 
 use crate::persistence::{replay_context, replay_entry};
 use crate::player_view::{PlayerUnitViewV1, visible_units};
@@ -19,6 +22,22 @@ pub struct MoveUnitV1 {
     pub target: HexCoord,
 }
 
+/// Current revision-bound map-independent unit action.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UnitActionV1 {
+    /// Expected canonical revision.
+    pub expected_revision: u64,
+    /// Unit receiving the action.
+    pub unit_id: UnitId,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum RuntimeUnitActionKind {
+    Cancel,
+    Skip,
+    Fortify,
+}
+
 /// Recipient-safe view delta produced by one dispatch.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PlayerViewPatchV1 {
@@ -32,9 +51,9 @@ pub struct PlayerViewPatchV1 {
     pub removed_unit_ids: Box<[UnitId]>,
 }
 
-/// Complete local result of one manual movement dispatch.
+/// Complete local result of one authoritative command dispatch.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MoveUnitResultV1 {
+pub struct CommandResultV1 {
     /// Version and authoritative identity metadata.
     pub stamp: SessionStampV1,
     /// Stable rejection code, absent when accepted.
@@ -47,7 +66,7 @@ pub struct MoveUnitResultV1 {
     pub view_patch: PlayerViewPatchV1,
 }
 
-impl MoveUnitResultV1 {
+impl CommandResultV1 {
     /// Returns whether the command was accepted.
     #[must_use]
     pub const fn is_accepted(&self) -> bool {
@@ -58,22 +77,70 @@ impl MoveUnitResultV1 {
 pub(crate) fn dispatch_move(
     session: &mut Session,
     command: &MoveUnitV1,
-) -> Result<MoveUnitResultV1, RuntimeError> {
-    session.prepare_replay_segment();
-    let before_context = replay_context(session);
-    let before_revision = session.state().revision().get();
-    let before_view = visible_units(session.state(), session.actor());
-    let state = session.take_state();
-    let transition = GameEngine::apply_owned(
-        state,
-        session.context(),
+) -> Result<CommandResultV1, RuntimeError> {
+    let replay_command = ReplayCommandDto::MoveUnit {
+        expected_revision: command.expected_revision,
+        unit_id: command.unit_id.as_str().to_owned(),
+        target: aonw_contracts::CoordinateDto {
+            col: command.target.col(),
+            row: command.target.row(),
+        },
+    };
+    dispatch_domain(
+        session,
         DomainCommand::MoveUnit(MoveUnitCommand::new(
             command.expected_revision,
             &command.unit_id,
             command.target,
         )),
+        replay_command,
     )
-    .map_err(RuntimeError::Engine)?;
+}
+
+pub(crate) fn dispatch_unit_action(
+    session: &mut Session,
+    command: &UnitActionV1,
+    kind: RuntimeUnitActionKind,
+) -> Result<CommandResultV1, RuntimeError> {
+    let engine_command = UnitActionCommand::new(command.expected_revision, &command.unit_id);
+    let (domain_command, replay_command) = match kind {
+        RuntimeUnitActionKind::Cancel => (
+            DomainCommand::CancelUnitAction(engine_command),
+            ReplayCommandDto::CancelUnitAction {
+                expected_revision: command.expected_revision,
+                unit_id: command.unit_id.as_str().to_owned(),
+            },
+        ),
+        RuntimeUnitActionKind::Skip => (
+            DomainCommand::SkipUnitTurn(engine_command),
+            ReplayCommandDto::SkipUnitTurn {
+                expected_revision: command.expected_revision,
+                unit_id: command.unit_id.as_str().to_owned(),
+            },
+        ),
+        RuntimeUnitActionKind::Fortify => (
+            DomainCommand::FortifyUnit(engine_command),
+            ReplayCommandDto::FortifyUnit {
+                expected_revision: command.expected_revision,
+                unit_id: command.unit_id.as_str().to_owned(),
+            },
+        ),
+    };
+    dispatch_domain(session, domain_command, replay_command)
+}
+
+fn dispatch_domain(
+    session: &mut Session,
+    command: DomainCommand<'_>,
+    replay_command: ReplayCommandDto,
+) -> Result<CommandResultV1, RuntimeError> {
+    session.prepare_replay_segment();
+    let before_context = replay_context(session);
+    let before_revision = session.state().revision().get();
+    let before_view = visible_units(session.state(), session.actor());
+    let state = session.take_state();
+    let transition =
+        GameEngine::apply_owned(state, session.context(), command).map_err(RuntimeError::Engine)?;
     let parts = transition.into_parts();
     let rejection = parts.rejection.map(aonw_engine::DomainRejection::code);
     let events = parts.events;
@@ -87,14 +154,14 @@ pub(crate) fn dispatch_move(
         before_view,
         after_view,
     );
-    let result = MoveUnitResultV1 {
+    let result = CommandResultV1 {
         stamp: session.stamp(),
         rejection,
         events,
         evidence,
         view_patch,
     };
-    let replay = replay_entry(session, command, before_context, &result);
+    let replay = replay_entry(session, replay_command, before_context, &result);
     session.push_replay(replay);
     Ok(result)
 }

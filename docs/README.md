@@ -86,9 +86,10 @@ local runtime, and a Godot GDExtension consuming player snapshots and patches.
 The runtime also owns compiled movement topology, tile-indexed occupancy and
 visibility, reusable search storage, revision-scoped query caching, and an
 owned-state apply path measured by the Rust benchmark target.
-Strict current-version save/restore and deterministic replay verification are
-available through the local runtime and Godot adapter. They are not connected
-to Flutter, Serverpod, or production storage.
+Strict current-version save/restore, deterministic replay verification, and
+revision-bound cancel/skip/fortify unit actions are available through the local
+runtime and Godot adapter. They are not connected to Flutter, Serverpod, or
+production storage.
 Flutter remains at the repository root during migration; AoNW2 already lives
 under `clients/aonw2_godot/`.
 
@@ -108,7 +109,7 @@ flowchart TB
   end
 
   subgraph RustEngine["engine/ — shared Rust engine"]
-    Runtime["aonw_local_runtime<br/>local session; save / replay planned"]
+    Runtime["aonw_local_runtime<br/>local session / commands / save / replay"]
     Rules["aonw_domain + aonw_engine<br/>authoritative state / apply / query"]
     Content["aonw_content<br/>maps / rulesets / catalogs"]
     AI["aonw_ai"]

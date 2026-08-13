@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use aonw_testkit::FixtureLoader;
 
-const CURRENT_FIXTURE_COUNT: usize = 38;
+const CURRENT_FIXTURE_COUNT: usize = 44;
 
 fn repository_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -33,6 +33,6 @@ fn current_reducer_parity_fixtures_load_in_rust() {
     assert!(
         fixtures
             .iter()
-            .all(|fixture| fixture.family() == "movement")
+            .all(|fixture| matches!(fixture.family(), "movement" | "unit-actions"))
     );
 }

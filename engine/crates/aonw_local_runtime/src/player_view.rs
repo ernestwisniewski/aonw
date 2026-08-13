@@ -1,4 +1,4 @@
-use aonw_domain::{FogVisibility, GameState, PlayerId, Unit, UnitId, UnitKind};
+use aonw_domain::{FogVisibility, GameState, PlayerId, Unit, UnitId, UnitKind, UnitPosture};
 
 use crate::SessionStampV1;
 
@@ -12,6 +12,7 @@ pub struct PlayerUnitViewV1 {
     col: i32,
     row: i32,
     movement_units: u32,
+    posture: UnitPosture,
 }
 
 impl PlayerUnitViewV1 {
@@ -24,6 +25,7 @@ impl PlayerUnitViewV1 {
             col: unit.position().col(),
             row: unit.position().row(),
             movement_units: unit.movement_units().get(),
+            posture: unit.posture(),
         }
     }
 
@@ -61,6 +63,11 @@ impl PlayerUnitViewV1 {
     #[must_use]
     pub const fn movement_units(&self) -> u32 {
         self.movement_units
+    }
+    /// Returns the persistent unit posture.
+    #[must_use]
+    pub const fn posture(&self) -> UnitPosture {
+        self.posture
     }
 }
 

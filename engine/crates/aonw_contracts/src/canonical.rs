@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::{MovementStepDto, QueuedMovePathDto, UnitKindDto, UnitPostureDto};
 
 /// Current canonical game-state contract version.
-pub const CURRENT_GAME_STATE_VERSION: u16 = 1;
+pub const CURRENT_GAME_STATE_VERSION: u16 = 2;
 
 #[allow(missing_docs)]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -41,6 +41,7 @@ pub struct UnitDto {
     pub col: i32,
     pub row: i32,
     pub movement_units: u32,
+    pub skipped_movement_restore_units: Option<u32>,
     pub army: Vec<ArmyTroopDto>,
     pub queued_path: Option<QueuedMovePathDto>,
     pub merchant_trade_route: Option<MerchantTradeRouteDto>,

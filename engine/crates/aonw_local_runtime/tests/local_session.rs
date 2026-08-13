@@ -12,7 +12,7 @@ use aonw_domain::{
 use aonw_local_runtime::{
     LOCAL_SESSION_CONTRACT_VERSION, LocalRuntime, MoveUnitV1, OpenSessionError, OpenSessionV1,
     PersistenceError, QueryRequestV1, QueryResultV1, ReachableRequestV1, ReplayVerificationV1,
-    RngStateV1, RoutePlanRequestV1, RuntimeError,
+    RngStateV1, RoutePlanRequestV1, RuntimeError, UnitActionV1,
 };
 
 fn map(id: &str, cols: u16, rows: u16) -> MapDefinition {
@@ -111,6 +111,49 @@ fn local_session_supports_snapshot_queries_and_dispatch() {
     assert_eq!(moved.view_patch.from_revision, 0);
     assert_eq!(moved.view_patch.to_revision, 1);
     assert_eq!(moved.view_patch.upserted_units[0].col(), 1);
+}
+
+#[test]
+fn unit_actions_update_canonical_state_and_are_replayable() {
+    let mut runtime = LocalRuntime::default();
+    runtime.open(request()).expect("open");
+    let unit_id = UnitId::new("unit-1").expect("unit id");
+
+    let skipped = runtime
+        .skip_unit_turn(&UnitActionV1 {
+            expected_revision: 0,
+            unit_id: unit_id.clone(),
+        })
+        .expect("skip");
+    assert!(skipped.is_accepted());
+    assert_eq!(skipped.view_patch.upserted_units[0].movement_units(), 0);
+
+    let cancelled = runtime
+        .cancel_unit_action(&UnitActionV1 {
+            expected_revision: 1,
+            unit_id: unit_id.clone(),
+        })
+        .expect("cancel");
+    assert!(cancelled.is_accepted());
+    assert!(cancelled.view_patch.upserted_units[0].movement_units() > 0);
+
+    let fortified = runtime
+        .fortify_unit(&UnitActionV1 {
+            expected_revision: 2,
+            unit_id,
+        })
+        .expect("fortify");
+    assert!(fortified.is_accepted());
+    assert_eq!(
+        fortified.view_patch.upserted_units[0].posture(),
+        aonw_domain::UnitPosture::Fortified
+    );
+
+    let replay = runtime.export_replay_json().expect("replay");
+    let (map, ruleset) = content();
+    let verification = LocalRuntime::verify_replay_json(map, ruleset, &replay).expect("verify");
+    assert_eq!(verification.entry_count, 3);
+    assert_eq!(verification.final_stamp.revision, StateRevision::new(3));
 }
 
 #[test]

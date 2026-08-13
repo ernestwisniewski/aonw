@@ -4,10 +4,11 @@ use aonw_domain::{
 };
 
 use crate::movement::{merge_discovered_contacts, recompute_after_move};
+use crate::unit_action::{UnitActionKind, apply_unit_action};
 use crate::{
     EngineContext, GameEngine, MoveUnitCommand, ReachableMovement, ReachableMovementQuery,
     StateDigest, TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError,
-    UnitMovedEvent, UnitMovementExecution,
+    UnitActionCommand, UnitMovedEvent, UnitMovementExecution,
 };
 
 /// Authoritative simulation command family.
@@ -15,6 +16,12 @@ use crate::{
 pub enum DomainCommand<'command> {
     /// Revision-bound manual unit movement.
     MoveUnit(MoveUnitCommand<'command>),
+    /// Clears every cancellable order owned by one unit.
+    CancelUnitAction(UnitActionCommand<'command>),
+    /// Consumes one unit's remaining movement for the current turn.
+    SkipUnitTurn(UnitActionCommand<'command>),
+    /// Places one idle unit in persistent fortification.
+    FortifyUnit(UnitActionCommand<'command>),
 }
 
 /// Read-only game query family.
@@ -259,17 +266,42 @@ impl GameEngine {
             .ruleset()
             .content_hash()
             .map_err(|error| CanonicalEngineError::ContentHash(error.to_string().into()))?;
-        let projection = state
-            .movement_projection()
-            .map_err(CanonicalEngineError::Projection)?;
         let map = context.map();
-        let (unit_id, movement) = match command {
-            DomainCommand::MoveUnit(command) => (
-                command.unit_id().clone(),
-                GameEngine::apply_move_unit(&projection, context.with_world(&state), command),
+        match command {
+            DomainCommand::MoveUnit(command) => {
+                let projection = state
+                    .movement_projection()
+                    .map_err(CanonicalEngineError::Projection)?;
+                let unit_id = command.unit_id().clone();
+                let movement =
+                    GameEngine::apply_move_unit(&projection, context.with_world(&state), command);
+                apply_move(state, &unit_id, map, movement, map_hash, ruleset_hash)
+            }
+            DomainCommand::CancelUnitAction(command) => apply_canonical_unit_action(
+                state,
+                context,
+                command,
+                UnitActionKind::Cancel,
+                map_hash,
+                ruleset_hash,
             ),
-        };
-        apply_move(state, &unit_id, map, movement, map_hash, ruleset_hash)
+            DomainCommand::SkipUnitTurn(command) => apply_canonical_unit_action(
+                state,
+                context,
+                command,
+                UnitActionKind::Skip,
+                map_hash,
+                ruleset_hash,
+            ),
+            DomainCommand::FortifyUnit(command) => apply_canonical_unit_action(
+                state,
+                context,
+                command,
+                UnitActionKind::Fortify,
+                map_hash,
+                ruleset_hash,
+            ),
+        }
     }
 
     /// Computes canonical state identity.
@@ -277,6 +309,39 @@ impl GameEngine {
     pub fn state_digest(state: &GameState) -> StateDigest {
         crate::state_digest::digest_state(state)
     }
+}
+
+fn apply_canonical_unit_action(
+    state: GameState,
+    context: EngineContext<'_>,
+    command: UnitActionCommand<'_>,
+    kind: UnitActionKind,
+    map_hash: ContentHash,
+    ruleset_hash: ContentHash,
+) -> Result<DomainTransition, CanonicalEngineError> {
+    let update = match apply_unit_action(&state, context, command, kind) {
+        Ok(update) => update,
+        Err(rejection) => {
+            return Ok(rejected_transition(
+                state,
+                rejection.code(),
+                map_hash,
+                ruleset_hash,
+            ));
+        }
+    };
+    let next_state = state
+        .into_replacing_unit(update.revision, update.unit)
+        .map_err(CanonicalEngineError::State)?;
+    Ok(DomainTransition {
+        digest: crate::state_digest::digest_state(&next_state),
+        state: next_state,
+        rejection: None,
+        events: Box::new([]),
+        evidence: None,
+        map_hash,
+        ruleset_hash,
+    })
 }
 
 fn apply_move(

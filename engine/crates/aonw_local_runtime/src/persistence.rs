@@ -11,7 +11,9 @@ use aonw_engine::{DomainEvent, ENGINE_BEHAVIOR_VERSION, ExecutionEvidence, GameE
 pub use crate::persistence_error::PersistenceError;
 use crate::persistence_validation::{validate_replay_header, validate_save_header};
 use crate::session::Session;
-use crate::{LocalRuntime, MoveUnitResultV1, MoveUnitV1, OpenSessionV1, SessionStampV1};
+use crate::{
+    CommandResultV1, LocalRuntime, MoveUnitV1, OpenSessionV1, SessionStampV1, UnitActionV1,
+};
 
 /// Deterministic random-stream position owned by a local session.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -230,10 +232,13 @@ impl LocalRuntime {
             if entry.context != replay_context(session) {
                 return Err(PersistenceError::ReplayContextMismatch { entry: entry_index });
             }
-            let command = decode_command(&entry.command)?;
-            let result = runtime
-                .dispatch(&command)
-                .map_err(PersistenceError::Runtime)?;
+            let result = match decode_command(&entry.command)? {
+                ReplayRuntimeCommand::Move(command) => runtime.dispatch(&command),
+                ReplayRuntimeCommand::Cancel(command) => runtime.cancel_unit_action(&command),
+                ReplayRuntimeCommand::Skip(command) => runtime.skip_unit_turn(&command),
+                ReplayRuntimeCommand::Fortify(command) => runtime.fortify_unit(&command),
+            }
+            .map_err(PersistenceError::Runtime)?;
             let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
             if entry.result != replay_result(&result, session) {
                 return Err(PersistenceError::ReplayResultMismatch { entry: entry_index });
@@ -250,18 +255,14 @@ impl LocalRuntime {
 
 pub(crate) fn replay_entry(
     session: &Session,
-    command: &MoveUnitV1,
+    command: ReplayCommandDto,
     before: ReplayContextDto,
-    result: &MoveUnitResultV1,
+    result: &CommandResultV1,
 ) -> ReplayEntryDto {
     ReplayEntryDto {
         index: u64::try_from(session.replay().entries.len()).unwrap_or(u64::MAX),
         context: before,
-        command: ReplayCommandDto::MoveUnit {
-            expected_revision: command.expected_revision,
-            unit_id: command.unit_id.as_str().to_owned(),
-            target: coordinate(command.target),
-        },
+        command,
         result: replay_result(result, session),
     }
 }
@@ -279,7 +280,7 @@ pub(crate) fn replay_context(session: &Session) -> ReplayContextDto {
     }
 }
 
-fn replay_result(result: &MoveUnitResultV1, session: &Session) -> ReplayResultDto {
+fn replay_result(result: &CommandResultV1, session: &Session) -> ReplayResultDto {
     ReplayResultDto {
         accepted: result.is_accepted(),
         rejection: result.rejection.map(str::to_owned),
@@ -328,16 +329,45 @@ const fn coordinate(value: aonw_domain::HexCoord) -> CoordinateDto {
     }
 }
 
-fn decode_command(command: &ReplayCommandDto) -> Result<MoveUnitV1, PersistenceError> {
+enum ReplayRuntimeCommand {
+    Move(MoveUnitV1),
+    Cancel(UnitActionV1),
+    Skip(UnitActionV1),
+    Fortify(UnitActionV1),
+}
+
+fn decode_command(command: &ReplayCommandDto) -> Result<ReplayRuntimeCommand, PersistenceError> {
     match command {
         ReplayCommandDto::MoveUnit {
             expected_revision,
             unit_id,
             target,
-        } => Ok(MoveUnitV1 {
+        } => Ok(ReplayRuntimeCommand::Move(MoveUnitV1 {
             expected_revision: *expected_revision,
             unit_id: UnitId::new(unit_id.clone()).map_err(PersistenceError::InvalidUnit)?,
             target: aonw_domain::HexCoord::new(target.col, target.row),
-        }),
+        })),
+        ReplayCommandDto::CancelUnitAction {
+            expected_revision,
+            unit_id,
+        } => decode_unit_action(*expected_revision, unit_id).map(ReplayRuntimeCommand::Cancel),
+        ReplayCommandDto::SkipUnitTurn {
+            expected_revision,
+            unit_id,
+        } => decode_unit_action(*expected_revision, unit_id).map(ReplayRuntimeCommand::Skip),
+        ReplayCommandDto::FortifyUnit {
+            expected_revision,
+            unit_id,
+        } => decode_unit_action(*expected_revision, unit_id).map(ReplayRuntimeCommand::Fortify),
     }
+}
+
+fn decode_unit_action(
+    expected_revision: u64,
+    unit_id: &str,
+) -> Result<UnitActionV1, PersistenceError> {
+    Ok(UnitActionV1 {
+        expected_revision,
+        unit_id: UnitId::new(unit_id.to_owned()).map_err(PersistenceError::InvalidUnit)?,
+    })
 }

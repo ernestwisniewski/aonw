@@ -83,6 +83,21 @@ func move_unit(
 		expected_revision,
 	))
 
+func cancel_unit_action(unit_id: String, expected_revision: int) -> Dictionary:
+	if _session == null:
+		return _unavailable()
+	return _decode(_session.cancel_unit_action_json(unit_id, expected_revision))
+
+func skip_unit_turn(unit_id: String, expected_revision: int) -> Dictionary:
+	if _session == null:
+		return _unavailable()
+	return _decode(_session.skip_unit_turn_json(unit_id, expected_revision))
+
+func fortify_unit(unit_id: String, expected_revision: int) -> Dictionary:
+	if _session == null:
+		return _unavailable()
+	return _decode(_session.fortify_unit_json(unit_id, expected_revision))
+
 func _decode(response: String) -> Dictionary:
 	var value: Variant = JSON.parse_string(response)
 	if value is Dictionary:

@@ -126,6 +126,10 @@ state and exact content identities; replay verification re-executes every
 recorded command in Rust. Godot owns file dialogs and `FileAccess`, while the
 runtime owns validation and deterministic semantics.
 
+The native session also exposes revision-bound `cancel_unit_action_json`,
+`skip_unit_turn_json`, and `fortify_unit_json`. Returned player patches include
+movement balance and posture; GDScript does not reproduce these state rules.
+
 Build the native adapter before opening or running Godot:
 
 ```sh

@@ -17,9 +17,9 @@ platform, shadow, canary, and rollback gates in the
 | --- | --- |
 | `aonw_domain` | `GameState`, complete unit entities, validated identifiers, odd-q topology, and fixed-point values. |
 | `aonw_content` | Strict maps, immutable rulesets and scenarios, catalogs, validation, and separate deterministic content hashes. |
-| `aonw_contracts` | Versioned boundary DTOs and a strict bounded canonical-state JSON codec. |
+| `aonw_contracts` | Versioned boundary DTOs and strict bounded state, save, and replay codecs. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
-| `aonw_engine` | Fog-safe movement planning, reachable-hex queries, and the revision-bound authoritative `MoveUnit` transition. |
+| `aonw_engine` | Authoritative movement queries/transitions and revision-bound cancel, skip, and fortify unit actions. |
 | `aonw_local_runtime` | Transactional local-session lifecycle, player snapshots, query/command dispatch, and recipient-safe patches. |
 | `aonw_godot` | Thin GDExtension translating Godot calls into the framework-neutral local runtime. |
 | `aonw_testkit` | Bounded fixture/corpus loader, duplicate-key rejection, structural state/event/execution diff, and engine-neutral runner for the shared reducer-parity corpus. |
@@ -62,18 +62,18 @@ deterministic lookup. Boundary mappings validate all external input before
 domain construction. Release builds retain integer overflow checks.
 
 Reducer fixture version 2 requires ordered authoritative `movementExecutions`.
-The current static corpus contains 38 movement fixtures: three original cases
-and the complete 35-case Dart characterization. Every fixture executes through
-canonical `GameEngine::apply` and compares the complete Dart state envelope,
-rejection, ordered events, and exact movement evidence. `aonw_testkit` accepts
-only the current fixture contract. Rust and Godot boundaries use strict,
-versioned codecs.
+The current static corpus contains 44 fixtures: 38 movement cases and six
+cancel/skip/fortify cases. Every fixture executes through canonical
+`GameEngine::apply` and compares the complete Dart state envelope, rejection,
+ordered events, and exact movement evidence. `aonw_testkit` accepts only the
+current fixture contract. Rust and Godot boundaries use strict, versioned
+codecs.
 
 The characterization covers terrain bases and features, roads, partial and
 queued movement, occupancy and hidden information, cities, fog, diplomatic
 contact, posture, artifact capacity, rejection precedence, and exact movement
 evidence. Both Dart reducers and Rust execute the same reviewed outcomes. Run
-`make rust-movement-oracle` only to regenerate review candidates; generation
+`make rust-engine-oracle` only to regenerate review candidates; generation
 never blesses a changed oracle.
 
 ## Map content contract
@@ -91,8 +91,10 @@ smaller positive grids constructed inside deterministic engine test adapters,
 such as the existing 3×3 movement oracle. Map bounds expose canonical odd-q
 neighbors and row-major indices without allocation.
 
-The actor is command/query context, not persisted state. `GameStateDto` is the
-strict current contract for all movement-authoritative state. `MovementStateDto`
+The actor is command/query context, not persisted state. `GameStateDto` version
+2 is the strict current contract for all implemented authoritative state. It
+persists a reversible current-turn unit skip without moving that rule into UI.
+`MovementStateDto`
 remains a temporary adapter projection and is not a save format.
 `EngineContext` supplies actor, permission, validated map, and immutable
 ruleset; canonical fog and occupancy are derived from `GameState`.
@@ -132,12 +134,18 @@ rather than disclosing the blocker. Accepted movement returns a new revision,
 recomputed fog and diplomatic contacts, an ordered `UnitMovedEvent`, exact
 authoritative execution evidence, state digest, map hash, and ruleset hash.
 
+`CancelUnitAction`, `SkipUnitTurn`, and `FortifyUnit` use the same full-state
+boundary and rejection semantics. Skip records its restorable movement inside
+the canonical unit entity; cancel clears unit-owned queued/activity/merchant
+orders and wakes the unit; fortify accepts only an idle controlled unit. These
+actions emit no synthetic movement events or evidence.
+
 `aonw_local_runtime::LocalRuntime` owns one validated local session. Opening is
 transactional, closing is idempotent, and every snapshot, query, and dispatch
 response carries contract and behavior versions, revision, state digest, map
 hash, and ruleset hash. It exposes full recipient-safe snapshots, reachable and
-route queries, revision-bound movement, ordered events, exact execution
-evidence, and view patches.
+route queries, revision-bound commands, ordered events, exact execution
+evidence, and view patches including unit posture.
 
 The runtime prepares `CompiledMovementMap` once per map/ruleset, keeps
 tile-indexed visibility, builds occupancy as a compact bitset, reuses reachable

@@ -432,7 +432,36 @@ func _test_native_engine_boundary() -> void:
 		and moved["value"]["accepted"]
 		and moved["value"]["revision"] == 1
 		and moved["value"]["evidence"]["steps"][-1]["row"] == 2,
-		"native session applies a revision-bound move",
+			"native session applies a revision-bound move",
+		)
+	var skipped: Dictionary = JSON.parse_string(
+		session.skip_unit_turn_json("preview-commander", 1),
+	)
+	_check(
+		skipped["ok"]
+		and skipped["value"]["accepted"]
+		and skipped["value"]["revision"] == 2
+		and skipped["value"]["viewPatch"]["upsertedUnits"][0]["movementUnits"] == 0,
+		"native session skips a unit turn",
+	)
+	var cancelled: Dictionary = JSON.parse_string(
+		session.cancel_unit_action_json("preview-commander", 2),
+	)
+	_check(
+		cancelled["ok"]
+		and cancelled["value"]["accepted"]
+		and cancelled["value"]["revision"] == 3,
+		"native session cancels a unit action",
+	)
+	var fortified: Dictionary = JSON.parse_string(
+		session.fortify_unit_json("preview-commander", 3),
+	)
+	_check(
+		fortified["ok"]
+		and fortified["value"]["accepted"]
+		and fortified["value"]["revision"] == 4
+		and fortified["value"]["viewPatch"]["upsertedUnits"][0]["posture"] == "fortified",
+		"native session fortifies an idle unit",
 	)
 	var saved: Dictionary = JSON.parse_string(session.save_game_json())
 	_check(
@@ -449,7 +478,7 @@ func _test_native_engine_boundary() -> void:
 		replay["value"]["document"],
 	))
 	_check(
-		verified["ok"] and verified["value"]["entryCount"] == 1,
+		verified["ok"] and verified["value"]["entryCount"] == 4,
 		"native session verifies replay results in Rust",
 	)
 	session.close()
@@ -458,7 +487,7 @@ func _test_native_engine_boundary() -> void:
 		saved["value"]["document"],
 	))
 	_check(
-		restored["ok"] and restored["value"]["revision"] == 1,
+		restored["ok"] and restored["value"]["revision"] == 4,
 		"native session restores a canonical save",
 	)
 

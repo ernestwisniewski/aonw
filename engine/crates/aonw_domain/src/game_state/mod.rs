@@ -502,4 +502,34 @@ impl GameState {
             self.transport_network,
         )
     }
+
+    /// Consumes the aggregate and replaces one unit without changing world slices.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the unit is absent or the next aggregate is invalid.
+    pub fn into_replacing_unit(
+        self,
+        revision: StateRevision,
+        unit: Unit,
+    ) -> Result<Self, GameStateBuildError> {
+        let index = self
+            .unit_indices_by_id
+            .binary_search_by(|index| self.units[*index].id().cmp(unit.id()))
+            .map(|source_index| self.unit_indices_by_id[source_index])
+            .map_err(|_| GameStateBuildError::UnitNotFound(unit.id().clone()))?;
+        let mut units = self.units.into_vec();
+        units[index] = unit;
+        Self::try_new_with_world(
+            revision,
+            self.turn,
+            self.bounds,
+            self.occupancy_policy,
+            units,
+            self.cities.into_vec(),
+            self.fog_of_war,
+            self.diplomacy,
+            self.transport_network,
+        )
+    }
 }

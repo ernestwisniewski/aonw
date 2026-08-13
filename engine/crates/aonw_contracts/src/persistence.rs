@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 use crate::{CoordinateDto, GameStateDto, MovementStepDto};
 
 /// Current canonical save contract version.
-pub const CURRENT_SAVE_GAME_VERSION: u16 = 1;
+pub const CURRENT_SAVE_GAME_VERSION: u16 = 2;
 /// Current deterministic replay contract version.
-pub const CURRENT_REPLAY_LOG_VERSION: u16 = 1;
+pub const CURRENT_REPLAY_LOG_VERSION: u16 = 2;
 /// Maximum accepted encoded save document.
 pub const MAX_SAVE_GAME_JSON_BYTES: usize = 16 * 1024 * 1024;
 /// Maximum accepted encoded replay document.
@@ -70,6 +70,27 @@ pub enum ReplayCommandDto {
         unit_id: String,
         /// Requested movement target.
         target: CoordinateDto,
+    },
+    /// Clears all cancellable orders owned by one unit.
+    CancelUnitAction {
+        /// Expected canonical revision.
+        expected_revision: u64,
+        /// Opaque canonical unit identifier.
+        unit_id: String,
+    },
+    /// Consumes one unit's movement for the current turn.
+    SkipUnitTurn {
+        /// Expected canonical revision.
+        expected_revision: u64,
+        /// Opaque canonical unit identifier.
+        unit_id: String,
+    },
+    /// Fortifies one idle unit.
+    FortifyUnit {
+        /// Expected canonical revision.
+        expected_revision: u64,
+        /// Opaque canonical unit identifier.
+        unit_id: String,
     },
 }
 
@@ -322,16 +343,16 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{MAX_SAVE_GAME_JSON_BYTES, ReplayLogDto, SaveGameDto};
+    use super::{MAX_SAVE_GAME_JSON_BYTES, ReplayCommandDto, ReplayLogDto, SaveGameDto};
 
     #[test]
     fn strict_save_codec_rejects_unknown_duplicate_and_oversized_input() {
-        let base = r#"{"schemaVersion":1,"behaviorVersion":1,"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","rngState":{"seed":0,"stream":0,"counter":0},"eventOffset":0,"stateDigest":"d","state":{"schemaVersion":1,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]}}"#;
+        let base = r#"{"schemaVersion":2,"behaviorVersion":2,"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","rngState":{"seed":0,"stream":0,"counter":0},"eventOffset":0,"stateDigest":"d","state":{"schemaVersion":2,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]}}"#;
         let unknown = base.replacen("\"state\":", "\"extra\":true,\"state\":", 1);
         assert!(SaveGameDto::from_json(&unknown).is_err());
         let duplicate = base.replacen(
-            "\"schemaVersion\":1,",
-            "\"schemaVersion\":1,\"schemaVersion\":1,",
+            "\"schemaVersion\":2,",
+            "\"schemaVersion\":2,\"schemaVersion\":2,",
             1,
         );
         assert!(SaveGameDto::from_json(&duplicate).is_err());
@@ -340,15 +361,25 @@ mod tests {
 
     #[test]
     fn strict_replay_codec_rejects_unknown_and_duplicate_fields() {
-        let base = r#"{"schemaVersion":1,"behaviorVersion":1,"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","initialRngState":{"seed":0,"stream":0,"counter":0},"initialEventOffset":0,"initialStateDigest":"d","initialState":{"schemaVersion":1,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]},"entries":[]}"#;
+        let base = r#"{"schemaVersion":2,"behaviorVersion":2,"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","initialRngState":{"seed":0,"stream":0,"counter":0},"initialEventOffset":0,"initialStateDigest":"d","initialState":{"schemaVersion":2,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]},"entries":[]}"#;
         assert!(ReplayLogDto::from_json(base).is_ok());
         let unknown = base.replacen("\"entries\":", "\"extra\":true,\"entries\":", 1);
         assert!(ReplayLogDto::from_json(&unknown).is_err());
         let duplicate = base.replacen(
-            "\"schemaVersion\":1,",
-            "\"schemaVersion\":1,\"schemaVersion\":1,",
+            "\"schemaVersion\":2,",
+            "\"schemaVersion\":2,\"schemaVersion\":2,",
             1,
         );
         assert!(ReplayLogDto::from_json(&duplicate).is_err());
+    }
+
+    #[test]
+    fn every_current_unit_action_command_has_a_strict_wire_shape() {
+        for kind in ["cancelUnitAction", "skipUnitTurn", "fortifyUnit"] {
+            let json = format!(r#"{{"type":"{kind}","expectedRevision":7,"unitId":"unit-1"}}"#);
+            assert!(serde_json::from_str::<ReplayCommandDto>(&json).is_ok());
+            let unknown = json.replacen('}', ",\"unknown\":true}", 1);
+            assert!(serde_json::from_str::<ReplayCommandDto>(&unknown).is_err());
+        }
     }
 }

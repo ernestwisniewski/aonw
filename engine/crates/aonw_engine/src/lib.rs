@@ -9,6 +9,7 @@
 mod canonical_engine;
 mod movement;
 mod state_digest;
+mod unit_action;
 
 use aonw_content::{MapDefinition, RulesetDefinition};
 use aonw_domain::{FogVisibility, GameState, HexCoord, MovementState, MovementUnit, PlayerId};
@@ -25,11 +26,12 @@ pub use movement::{
     UnitMovedEvent, UnitMovementExecution, maximum_movement_units, terrain_entry_cost,
 };
 pub use state_digest::StateDigest;
+pub use unit_action::{UnitActionCommand, UnitActionError};
 
 /// Engine behavior version implemented by this workspace.
 ///
 /// This axis is independent of save, wire, and native ABI versions.
-pub const ENGINE_BEHAVIOR_VERSION: u16 = 1;
+pub const ENGINE_BEHAVIOR_VERSION: u16 = 2;
 
 /// Stateless deterministic engine facade.
 #[derive(Clone, Copy, Debug, Default)]

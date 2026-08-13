@@ -1,15 +1,15 @@
 # Rust Engine Migration Plan
 
 - Status: Target architecture and living migration plan
-- Last updated: 2026-08-13
+- Last updated: 2026-08-14
 - Implementation checkpoint: the movement foundation and first authoritative
   Rust slice exist under `engine/`: strict maps, hash-addressed ruleset and
   scenario content, complete unit entities, movement-authoritative `GameState`,
   strict state contracts, canonical query/apply transitions, fog, diplomacy,
-  cities, roads, stable state digests, and all 38 current movement v2 fixtures.
+  cities, roads, stable state digests, and all 44 current command v2 fixtures.
   The local runtime, Godot session cutover, measured movement optimizations,
-  and canonical current-version save/replay are implemented; the next stage is
-  unit actions and turn-driven movement
+  canonical current-version save/replay, and the first unit actions are
+  implemented; the next stage is turn-driven queued movement
 - Governing decision: [ADR 0008](adr/0008-rust-engine-ownership-and-strangler-migration.md)
 
 ## Purpose
@@ -131,7 +131,7 @@ aonw/
 ├── test/
 │   └── fixtures/
 │       ├── reducer_parity/         # existing Dart migration corpus
-│       └── reducer_parity_v2/      # current Rust/Dart movement oracle
+│       └── reducer_parity_v2/      # current Rust/Dart command oracle
 ├── assets/
 ├── android/ ios/ macos/ linux/ windows/ web/
 ├── pubspec.yaml
@@ -189,13 +189,13 @@ logical map content, immutable standard ruleset, validated scenario bootstrap,
 the canonical `GameState` skeleton and complete `Unit` entity, strict small
 logical-map fixtures, odd-q row-major topology, movement-oriented compatibility
 DTO mapping, fixed-point terrain costs, fog-safe route/reachable planning, an
-authoritative movement transition, and the Godot 3D map preview. The 38 current
-movement fixtures use contract version 2 and execute through canonical
+authoritative movement transition, and the Godot 3D map preview. The 44 current
+movement and unit-action fixtures use contract version 2 and execute through canonical
 `GameEngine::apply`, including full envelope preservation, fog, diplomacy,
 roads, cities, rejection precedence, and exact movement evidence. Rust accepts
 only this current fixture contract. The compatibility `MovementState` is
 explicitly not a save format. `aonw_local_runtime` now owns transactional
-open/close, recipient snapshots, route/reachable queries, movement dispatch,
+open/close, recipient snapshots, route/reachable queries, movement and unit-action dispatch,
 stable identity stamps, and player-view patches. Flutter FFI and production
 runtime integration remain future work.
 
@@ -217,6 +217,15 @@ revision, rejection, and resulting digest. Verification re-executes every entry
 through the engine; recording rolls to a new bounded checkpoint after 512
 commands. Historical readers and upcasters are still deferred until a second
 schema exists.
+
+The first post-movement command family is implemented in the same bounded
+context: revision-bound cancel, skip, and fortify transitions run through
+`GameEngine`, `aonw_local_runtime`, replay verification, and Godot. Canonical
+state contract version 2 persists the movement balance retained by a current-
+turn skip, so cancellation does not depend on presentation interaction state.
+Unit-action results use the shared command result and recipient patch rather
+than a movement-specific runtime envelope. Turn advancement, artifact-location
+restoration, and non-unit interaction state remain subsequent slices.
 `aonw_native_bridge` and top-level contract publication remain planned.
 Additional crates shown in the target layout below are created with their first
 behavior and tests rather than as empty packages. `aonw_godot` is a narrow
