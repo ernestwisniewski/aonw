@@ -14,15 +14,17 @@ platform, shadow, canary, and rollback gates in the
 | Crate | Responsibility |
 | --- | --- |
 | `aonw_domain` | Validated identifiers, coordinates, units, and deterministic world state. |
+| `aonw_content` | Versioned map decoding, validation, normalization, lookup, and deterministic content hashing. |
 | `aonw_contracts` | Versioned, domain-independent boundary DTOs. It deliberately does not choose a wire codec yet. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
 | `aonw_engine` | Pure borrowed state inspection and engine/version surface; authoritative command transitions follow reviewed parity fixtures. |
 | `aonw_testkit` | Bounded loader, structural JSON diff, and engine-neutral runner for the shared reducer-parity corpus. |
 
 The split enforces an inward dependency direction: contracts and domain do not
-depend on one another, mapping depends on both, and the engine depends only on
-the domain. The testkit remains independent of every concrete engine backend.
-Recipient state has no conversion into canonical domain state.
+depend on one another, content depends only on domain coordinates, mapping
+depends on contracts and domain, and the engine depends only on domain. The
+testkit remains independent of every concrete engine backend. Recipient state
+has no conversion into canonical domain state.
 
 ## Quality gates
 

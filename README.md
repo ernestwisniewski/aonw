@@ -40,16 +40,17 @@ and online multiplayer infrastructure.
 | `packages/aonw_core/` | Current production Dart rules, protocol models, and AI; planned to be replaced by the shared Rust engine in `engine/` after migration gates pass. |
 | `packages/aonw_server_client/` | Generated Serverpod client package used by the Flutter app. |
 | `server/` | Serverpod backend, auth adapters, multiplayer services, and persistence. |
-| `engine/` | Initial Rust workspace for the shared domain, contracts, validated mapping, and deterministic engine boundary; it is not production-integrated yet. |
+| `engine/` | Rust workspace for the shared domain, versioned content, contracts, validated mapping, testkit, and deterministic engine boundary; it is not production-integrated yet. |
+| `content/` | Versioned logical maps and their schemas, shared by Rust and presentation clients. |
 | `clients/aonw_flutter/` | Final location planned for the Flutter/Flame AoNW1 presentation client after Dart Core retirement; Flutter remains at the repository root during migration. |
-| `clients/aonw2_godot/` | Planned Godot 3D presentation client; it consumes the Rust engine and does not own gameplay rules. |
+| `clients/aonw2_godot/` | Godot 3D presentation client, currently containing the first shared-map preview; it does not own gameplay rules. |
 | `docs/` | Architecture, gameplay, operations, release, and publishing documentation. |
 
-`engine/` now contains the first pure Rust foundation. The client directories
-currently contain architectural README files only. The active Flutter project,
-platform directories, and release tooling stay at the repository root until
-the Dart engine has been safely retired; its final move is a separate
-mechanical cleanup.
+`engine/` contains the pure Rust foundation and validated map content boundary.
+The Godot client contains an executable 3D map preview; the Flutter client
+remains at the repository root. Platform directories and release tooling stay
+there until the Dart engine has been safely retired; its final move is a
+separate mechanical cleanup.
 
 ## Quick Start
 

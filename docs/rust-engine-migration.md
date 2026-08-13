@@ -144,6 +144,7 @@ aonw/
 │   ├── rustfmt.toml
 │   └── crates/
 │       ├── aonw_domain/
+│       ├── aonw_content/
 │       ├── aonw_engine/
 │       ├── aonw_contracts/
 │       ├── aonw_contract_mapping/
@@ -153,12 +154,14 @@ aonw/
 │   ├── aonw_flutter/
 │   │   └── README.md               # target boundary; active app stays at root
 │   └── aonw2_godot/
-│       └── README.md               # expands with first executable Godot slice
+│       ├── project.godot
+│       ├── scenes/
+│       ├── scripts/
+│       └── README.md               # first shared-map 3D preview
 │
-├── contracts/
-│   ├── manifest/
-│   ├── schemas/
-│   └── generated/
+├── content/
+│   ├── maps/                       # versioned shared logical maps
+│   └── schemas/
 │
 ├── docs/
 ├── deploy/
@@ -166,16 +169,17 @@ aonw/
 └── Makefile
 ```
 
-The `engine/` and `clients/` portion above is the implemented phase 2/3
-foundation; `aonw_native_bridge` and top-level contract publication remain
-planned. Additional crates shown in the target layout below are created with
-their first behavior and tests rather than as empty packages. In particular, no
-FFI, GDExtension, local runtime, AI, or recipient-replica crate exists yet.
+The implemented phase 2/3 foundation includes the Rust workspace, testkit,
+versioned logical map content, and the first Godot 3D map preview.
+`aonw_native_bridge` and top-level contract publication remain planned.
+Additional crates shown in the target layout below are created with their first
+behavior and tests rather than as empty packages. No FFI, GDExtension, local
+runtime, AI, or recipient-replica crate exists yet.
 
 The parity fixtures are not copied into `engine/`. Both implementations read
-the same committed corpus. Shared logical maps and catalogs may move to a
-versioned `content/` root only after their ownership and packaging contract is
-implemented; client-specific graphics and audio remain with their clients.
+the same committed corpus. New shared maps use the versioned `content/` root;
+existing Flutter maps remain under `assets/maps/` and load through an explicit
+Rust legacy adapter. Client-specific graphics and audio remain with clients.
 
 After Dart Core retirement, the repository may be reorganized mechanically
 into `clients/aonw_flutter/`, `clients/aonw2_godot/`,

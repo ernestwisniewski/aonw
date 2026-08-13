@@ -1,21 +1,25 @@
 # AoNW2 Godot Client
 
-This directory reserves the Godot 3D AoNW2 presentation client. A Godot project
-and native extension are deliberately not scaffolded in the initial pure-Rust
-foundation change.
+This directory contains the first executable AoNW2 presentation slice for
+Godot 4.3 or newer. It loads the shared versioned map from
+`content/maps/aonw2_starter/map.json` and renders a flat-top odd-q hex grid with
+terrain colors and elevation.
 
-The client will own:
+Open `project.godot` in Godot and run `scenes/map_preview.tscn`. The preview
+reads the shared source file directly from the repository and reloads it after
+file changes. Hex instances are grouped by primary terrain and elevation and
+rendered with `MultiMesh`.
 
-- Godot scenes, GDScript presentation, input mapping, camera, rendering, UI,
-  animation, audio, shaders, localization, and client assets;
-- a thin `aonw_godot` GDExtension adapter for local sessions;
-- a recipient-scoped remote replica for Serverpod multiplayer.
+The GDScript loader validates only the presentation-facing map shape needed by
+this slice. `engine/crates/aonw_content` remains the canonical validator and
+content-hash owner. Gameplay rules do not belong in this client.
 
-It must not implement or approximate authoritative game rules in scenes,
-GDScript, shaders, or network reconciliation. Local play will call the shared
-Rust runtime; remote play will consume recipient-safe state and evidence only.
+Current scope:
 
-The future structure is documented in the
-[Rust migration plan](../../docs/rust-engine-migration.md). Add `project.godot`,
-`scenes/`, `scripts/`, `addons/aonw_native/`, `shaders/`, `assets/`, and `tests/`
-only with their first executable vertical slice.
+- shared map loading and validation;
+- odd-q coordinate projection;
+- placeholder 3D terrain and elevation preview;
+- automatic editor reload when the JSON changes.
+
+Map painting controls, native Rust integration, selection, and gameplay
+queries follow in separate slices.

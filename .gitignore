@@ -22,6 +22,7 @@ migrate_working_dir/
 backups/
 .claude/
 .codex/
+**/.godot/
 
 # Local environment files
 .env
