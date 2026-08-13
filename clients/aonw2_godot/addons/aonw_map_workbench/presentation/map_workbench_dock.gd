@@ -9,6 +9,7 @@ const GenerateGodotMap := preload("res://application/map/generate_godot_map.gd")
 const GodotMapSceneRepository := preload("res://infrastructure/map/godot_map_scene_repository.gd")
 
 var _catalog := MapAssetCatalog.new()
+var _map_reader := JsonMapRepository.new()
 var _generator := GenerateGodotMap.new(
 	OpenMap.new(JsonMapRepository.new(), TileAtlasRepository.new()),
 	GodotMapSceneRepository.new(),
@@ -97,6 +98,7 @@ func _build_interface() -> void:
 	_open_button.pressed.connect(_open_selected_scene)
 	_reference_toggle.toggled.connect(_set_reference_visible)
 	_reference_opacity.value_changed.connect(_set_reference_opacity)
+	_height_step.value_changed.connect(_set_height_step)
 	_grid_toggle.toggled.connect(_set_grid_visible)
 	_grid_opacity.value_changed.connect(_set_grid_opacity)
 	save_button.pressed.connect(_save_current_scene)
@@ -164,6 +166,18 @@ func _set_reference_opacity(value: float) -> void:
 	surface.set_reference_opacity(value)
 	_mark_scene_changed()
 
+func _set_height_step(value: float) -> void:
+	var surface := _current_surface()
+	if surface == null:
+		return
+	if not surface.has_editing_context():
+		var context_result := _restore_surface_editing_context(surface)
+		if not context_result["ok"]:
+			_status.text = "Błąd: %s" % context_result["message"]
+			return
+	surface.set_height_step(value)
+	_mark_scene_changed()
+
 func _set_grid_visible(value: bool) -> void:
 	var surface := _current_surface()
 	if surface == null:
@@ -199,6 +213,38 @@ func _current_surface() -> AonwMapSurface:
 
 func _mark_scene_changed() -> void:
 	EditorInterface.mark_scene_as_unsaved()
+
+func _restore_surface_editing_context(surface: AonwMapSurface) -> Dictionary:
+	if surface.source_map_id.is_empty() or surface.source_map_path.is_empty():
+		return {"ok": false, "message": "scena nie zawiera źródła mapy"}
+	var format := (
+		AonwMapSource.Format.LEGACY
+		if surface.source_is_legacy
+		else AonwMapSource.Format.VERSIONED
+	)
+	var source := AonwMapSource.new(
+		surface.source_map_id,
+		surface.source_map_path,
+		"",
+		format,
+		"generated",
+	)
+	var map_result: Dictionary = _map_reader.load_map(source)
+	if not map_result["ok"]:
+		return map_result
+	var asset_directory := GodotMapSceneRepository.ASSET_ROOT.path_join(surface.source_map_id)
+	var terrain_texture := ResourceLoader.load(
+		asset_directory.path_join("terrain_texture.res"),
+		"Texture2D",
+	) as Texture2D
+	var reference_texture := ResourceLoader.load(
+		asset_directory.path_join("reference_texture.res"),
+		"Texture2D",
+	) as Texture2D
+	if terrain_texture == null or reference_texture == null:
+		return {"ok": false, "message": "brak wygenerowanych tekstur mapy"}
+	surface.present(map_result["document"], terrain_texture, reference_texture)
+	return {"ok": true}
 
 func _set_busy(busy: bool) -> void:
 	_generate_button.disabled = busy

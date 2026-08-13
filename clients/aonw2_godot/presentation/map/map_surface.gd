@@ -79,6 +79,9 @@ func set_grid_opacity(value: float) -> void:
 func set_height_step(value: float) -> void:
 	height_step = clampf(value, 0.0, 1.0)
 
+func has_editing_context() -> bool:
+	return _document != null and _terrain_texture != null and _reference_texture != null
+
 func terrain_mesh() -> ArrayMesh:
 	_ensure_layers()
 	return _terrain.mesh
@@ -97,6 +100,8 @@ func replace_persisted_resources(
 	grid: ArrayMesh,
 ) -> void:
 	_ensure_layers()
+	_reference.material_override = null
+	_grid.material_override = null
 	_terrain.mesh = terrain
 	_reference.mesh = reference
 	_grid.mesh = grid
@@ -115,6 +120,8 @@ func _rebuild() -> void:
 		reference_opacity,
 		grid_opacity,
 	)
+	_reference.material_override = null
+	_grid.material_override = null
 	_terrain.mesh = result["terrain_mesh"]
 	_reference.mesh = result["reference_mesh"]
 	_grid.mesh = result["grid_mesh"]
@@ -156,7 +163,13 @@ func _apply_visibility() -> void:
 func _update_material_opacity(layer: MeshInstance3D, value: float) -> void:
 	if layer == null or layer.mesh == null or layer.mesh.get_surface_count() == 0:
 		return
-	var material := layer.mesh.surface_get_material(0) as StandardMaterial3D
+	var material := layer.material_override as StandardMaterial3D
+	if material == null:
+		var mesh_material := layer.mesh.surface_get_material(0) as StandardMaterial3D
+		if mesh_material != null:
+			material = mesh_material.duplicate() as StandardMaterial3D
+			material.resource_local_to_scene = true
+			layer.material_override = material
 	if material == null:
 		return
 	var color := material.albedo_color

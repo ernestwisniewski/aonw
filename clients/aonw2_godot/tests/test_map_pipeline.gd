@@ -6,10 +6,12 @@ const OpenMap := preload("res://application/map/open_map.gd")
 const MapDocument := preload("res://domain/map/map_document.gd")
 const MeshBuilder := preload("res://presentation/map/map_surface_mesh_builder.gd")
 const HexGridGeometry := preload("res://domain/map/hex_grid_geometry.gd")
+const HexMapProjection := preload("res://presentation/map/hex_map_projection.gd")
 const JsonMapRepository := preload("res://infrastructure/map/json_map_repository.gd")
 const MapAssetCatalog := preload("res://infrastructure/map/map_asset_catalog.gd")
 const GodotMapSceneRepository := preload("res://infrastructure/map/godot_map_scene_repository.gd")
 const TileAtlasRepository := preload("res://infrastructure/map/tile_atlas_repository.gd")
+const NativeEngineBridge := preload("res://infrastructure/engine/native_engine_bridge.gd")
 
 var _failures: Array[String] = []
 
@@ -18,7 +20,9 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_test_geometry()
+	_test_map_projection()
 	_test_strict_document_boundary()
+	_test_native_engine_boundary()
 	_test_catalog()
 	_test_legacy_map()
 	_test_generated_godot_scene()
@@ -87,7 +91,11 @@ func _test_generated_godot_scene() -> void:
 	var scene_repository := GodotMapSceneRepository.new(
 		"res://.godot/map_generation_test/scenes",
 		"res://.godot/map_generation_test/assets",
+		"res://.godot/map_generation_test/generated",
 	)
+	var scene_path := scene_repository.scene_path_for("aonw2_starter")
+	if FileAccess.file_exists(scene_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(scene_path))
 	var generator := GenerateGodotMap.new(_open_map(), scene_repository)
 	var result := generator.execute(source, {
 		"height_step": 0.2,
@@ -97,8 +105,12 @@ func _test_generated_godot_scene() -> void:
 	_check(result["ok"], "starter map is saved as a self-contained Godot scene")
 	if not result["ok"]:
 		return
-	var scene_path := scene_repository.scene_path_for("aonw2_starter")
 	_check(ResourceLoader.exists(scene_path), "generated Godot scene exists")
+	_check(
+		ResourceLoader.exists(scene_repository.generated_scene_path_for("aonw2_starter")),
+		"generated surface scene exists independently",
+	)
+	_check(result["authored_scene_created"], "authored scene is created on first generation")
 	_check(
 		FileAccess.file_exists(
 			"res://.godot/map_generation_test/assets/aonw2_starter/reference_texture.res"
@@ -115,8 +127,9 @@ func _test_generated_godot_scene() -> void:
 	_check(packed != null, "generated Godot scene loads")
 	if packed == null:
 		return
-	var instance := packed.instantiate() as AonwMapSurface
-	_check(instance != null, "generated scene owns an Aonw map surface")
+	var authored_root := packed.instantiate() as Node3D
+	var instance := authored_root.find_child("AonwMap3D", true, false) as AonwMapSurface
+	_check(instance != null, "authored scene owns an Aonw map surface")
 	if instance != null:
 		_check(
 			instance.source_map_path.begins_with(
@@ -131,7 +144,52 @@ func _test_generated_godot_scene() -> void:
 		_check(instance.terrain_mesh() != null, "generated scene retains terrain mesh")
 		_check(instance.reference_mesh() != null, "generated scene retains reference texture mesh")
 		_check(instance.grid_mesh() != null, "generated scene retains grid mesh")
-		instance.free()
+		var manual_child := Node3D.new()
+		manual_child.name = "ManualModel"
+		authored_root.add_child(manual_child)
+		manual_child.owner = authored_root
+		var surface_child := Node3D.new()
+		surface_child.name = "SurfaceModel"
+		instance.add_child(surface_child)
+		surface_child.owner = authored_root
+		var authored_with_manual_child := PackedScene.new()
+		_check(
+			authored_with_manual_child.pack(authored_root) == OK
+			and ResourceSaver.save(authored_with_manual_child, scene_path) == OK,
+			"authored scene accepts manual children",
+		)
+	authored_root.free()
+
+	var regenerated := generator.execute(source, {"height_step": 0.3})
+	_check(regenerated["ok"], "generated surface can be refreshed")
+	if not regenerated["ok"]:
+		return
+	_check(not regenerated["authored_scene_created"], "regeneration preserves authored scene")
+	var preserved_scene := ResourceLoader.load(
+		scene_path,
+		"PackedScene",
+		ResourceLoader.CACHE_MODE_REPLACE_DEEP,
+	) as PackedScene
+	var preserved_root := preserved_scene.instantiate()
+	var refreshed_surface := preserved_root.find_child(
+		"AonwMap3D",
+		true,
+		false,
+	) as AonwMapSurface
+	_check(
+		preserved_root.find_child("ManualModel", true, false) != null,
+		"regeneration preserves manual authored children",
+	)
+	_check(
+		refreshed_surface != null and is_equal_approx(refreshed_surface.height_step, 0.3),
+		"authored scene resolves the refreshed generated surface",
+	)
+	_check(
+		refreshed_surface != null
+		and refreshed_surface.find_child("SurfaceModel", true, false) != null,
+		"regeneration preserves authored children attached to the surface",
+	)
+	preserved_root.free()
 
 func _test_strict_document_boundary() -> void:
 	var raw := {
@@ -147,6 +205,68 @@ func _test_strict_document_boundary() -> void:
 	_check(not strict_result["ok"], "strict documents require defaultZoom")
 	var legacy_result := MapDocument.create_legacy(raw)
 	_check(not legacy_result["ok"], "legacy mode rejects versioned-only fields")
+
+func _test_native_engine_boundary() -> void:
+	var bridge := NativeEngineBridge.new()
+	_check(bridge.is_available(), "Rust GDExtension is loaded")
+	if not bridge.is_available():
+		return
+	var file := FileAccess.open(
+		"res://assets/maps/aonw2_starter/map.json",
+		FileAccess.READ,
+	)
+	_check(file != null, "native boundary fixture map opens")
+	if file == null:
+		return
+	var map_json := file.get_as_text()
+	var validation := bridge.validate_map_json(map_json, false)
+	_check(validation["ok"] and validation["native"], "Rust validates the strict map")
+	_check(
+		validation.get("value", {}).get("contentHash", "").length() == 64,
+		"Rust returns the logical content hash",
+	)
+
+	var session: Object = ClassDB.instantiate("AonwLocalSession")
+	_check(session != null, "native local session is registered")
+	if session == null:
+		return
+	var state_json := JSON.stringify({
+		"schemaVersion": 1,
+		"revision": 7,
+		"turn": 2,
+		"units": [{
+			"id": "ship-1",
+			"ownerPlayerId": "player-1",
+			"kind": "scoutShip",
+			"col": 0,
+			"row": 0,
+			"movementUnits": 4,
+			"posture": "active",
+			"movementBlocked": false,
+			"queuedPath": null,
+			"carriedArtifactId": null,
+		}],
+	})
+	var opened: Dictionary = JSON.parse_string(session.open(
+		map_json,
+		false,
+		state_json,
+		"player-1",
+		"",
+	))
+	_check(opened["ok"], "native local movement session opens")
+	var reachable: Dictionary = JSON.parse_string(session.reachable_json("ship-1", 7))
+	_check(
+		reachable["ok"] and not reachable["value"]["tiles"].is_empty(),
+		"native session returns reachable hexes",
+	)
+	var moved: Dictionary = JSON.parse_string(session.move_unit_json("ship-1", 1, 0, 7))
+	_check(
+		moved["ok"]
+		and moved["value"]["revision"] == 8
+		and moved["value"]["event"]["toCol"] == 1,
+		"native session applies a revision-bound move",
+	)
 
 func _test_catalog() -> void:
 	var sources := MapAssetCatalog.new().discover()
@@ -176,6 +296,35 @@ func _test_geometry() -> void:
 					map_bounds.has_point(geometry.corner_position(coordinate, corner)),
 					"map bounds contain every corner",
 				)
+
+func _test_map_projection() -> void:
+	var result := _open_map().execute(MapSource.new(
+		"aonw2_starter",
+		"res://assets/maps/aonw2_starter/map.json",
+		"res://assets/maps/aonw2_starter",
+		AonwMapSource.Format.VERSIONED,
+		"Godot",
+	))
+	_check(result["ok"], "projection fixture map opens")
+	if not result["ok"]:
+		return
+	var document: AonwMapDocument = result["document"]
+	var projection := HexMapProjection.new(document, 1.0, 0.16)
+	for coordinate in [Vector2i(0, 0), Vector2i(2, 3), Vector2i(4, 4)]:
+		var center: Vector3 = projection.hex_center(coordinate)
+		_check(
+			projection.local_to_hex(center) == coordinate,
+			"render projection preserves hex centers",
+		)
+		var picked := projection.ray_to_hex(
+			center + Vector3(0.0, 10.0, 0.0),
+			Vector3.DOWN,
+		)
+		_check(picked == coordinate, "vertical ray selects the expected hex")
+	_check(
+		projection.ray_to_hex(Vector3.ZERO, Vector3.RIGHT) == HexMapProjection.INVALID_HEX,
+		"parallel ray does not select a hex",
+	)
 
 func _open_map() -> AonwOpenMap:
 	return OpenMap.new(JsonMapRepository.new(), TileAtlasRepository.new())

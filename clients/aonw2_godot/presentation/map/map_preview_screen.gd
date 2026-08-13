@@ -4,9 +4,12 @@ const OpenMap := preload("res://application/map/open_map.gd")
 const JsonMapRepository := preload("res://infrastructure/map/json_map_repository.gd")
 const TileAtlasRepository := preload("res://infrastructure/map/tile_atlas_repository.gd")
 const MapSource := preload("res://application/map/map_source.gd")
+const NativeLocalSession := preload("res://infrastructure/engine/native_local_session.gd")
 const DEFAULT_MAP := "res://assets/maps/aonw2_starter/map.json"
 
 @onready var _surface: AonwMapSurface = %MapSurface
+@onready var _interaction: AonwMapInteractionController = %MapInteraction
+@onready var _unit_layer: Node3D = %UnitLayer
 @onready var _camera_rig: AonwOrbitCameraRig = %OrbitCameraRig
 @onready var _open_dialog: FileDialog = %OpenMapDialog
 @onready var _grid_toggle: CheckButton = %GridToggle
@@ -14,10 +17,15 @@ const DEFAULT_MAP := "res://assets/maps/aonw2_starter/map.json"
 @onready var _status: Label = %Status
 
 var _open_map := OpenMap.new(JsonMapRepository.new(), TileAtlasRepository.new())
+var _native_session := NativeLocalSession.new()
 var _current_document: AonwMapDocument
+var _movement_revision := 0
+var _selected_unit_id := ""
+var _reachable_hexes: Dictionary = {}
 
 func _ready() -> void:
 	_surface.map_presented.connect(_on_map_presented)
+	_interaction.hex_selected.connect(_on_hex_selected)
 	_open_dialog.file_selected.connect(_open)
 	_open_source(AonwMapSource.new(
 		"aonw2_starter",
@@ -61,6 +69,11 @@ func _open_source(source: AonwMapSource) -> void:
 		return
 
 	_current_document = result["document"]
+	_interaction.present(
+		_current_document,
+		_surface.hex_radius,
+		_surface.height_step,
+	)
 	_surface.present(
 		_current_document,
 		result["terrain_texture"],
@@ -77,6 +90,126 @@ func _open_source(source: AonwMapSource) -> void:
 	var invalid: Array = result["invalid_tiles"]
 	if not invalid.is_empty():
 		_status.text += " · uszkodzone tekstury: %d" % invalid.size()
+	_setup_movement_sandbox(source)
 
 func _on_map_presented(world_size: Vector2, maximum_height: float) -> void:
 	_camera_rig.frame_map(world_size, _current_document.default_zoom(), maximum_height)
+
+func _on_hex_selected(coordinate: Vector2i) -> void:
+	var unit_id: String = _unit_layer.unit_at(coordinate)
+	if not unit_id.is_empty():
+		_select_unit(unit_id, coordinate)
+		return
+	if not _selected_unit_id.is_empty() and _reachable_hexes.has(coordinate):
+		_move_selected_unit(coordinate)
+		return
+	_clear_movement_selection()
+	_status.text = "%s · heks %d,%d" % [_current_document.map_name(), coordinate.x, coordinate.y]
+
+func _setup_movement_sandbox(source: AonwMapSource) -> void:
+	_selected_unit_id = ""
+	_reachable_hexes.clear()
+	var unit := _sandbox_unit()
+	if unit.is_empty():
+		_unit_layer.present(_interaction.projection(), [])
+		return
+	var file := FileAccess.open(
+		AonwJsonMapRepository.resolve_path(source.map_path),
+		FileAccess.READ,
+	)
+	if file == null:
+		_status.text += " · brak stanu testowego Rust"
+		return
+	var state := {
+		"schemaVersion": 1,
+		"revision": 0,
+		"turn": 1,
+		"units": [unit],
+	}
+	var opened := _native_session.open(
+		file.get_as_text(),
+		source.is_legacy(),
+		state,
+		"preview-player",
+	)
+	if not opened["ok"]:
+		_status.text += " · Rust: %s" % opened["message"]
+		_unit_layer.present(_interaction.projection(), [])
+		return
+	_movement_revision = int(opened["value"]["revision"])
+	_unit_layer.present(_interaction.projection(), [unit])
+
+func _sandbox_unit() -> Dictionary:
+	for tile in _current_document.tiles():
+		var terrains: Array = tile["terrains"]
+		if terrains.any(func(terrain: String) -> bool:
+			return terrain in ["ocean", "coast", "lake", "mountain"]
+		):
+			continue
+		if terrains.any(func(terrain: String) -> bool:
+			return terrain in [
+				"plains", "grassland", "desert", "tundra", "snow",
+				"hills", "wetlands", "jungle", "forest",
+			]
+		):
+			return {
+				"id": "preview-unit",
+				"ownerPlayerId": "preview-player",
+				"kind": "commander",
+				"col": tile["col"],
+				"row": tile["row"],
+				"movementUnits": 10,
+				"posture": "active",
+				"movementBlocked": false,
+				"queuedPath": null,
+				"carriedArtifactId": null,
+			}
+	return {}
+
+func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
+	var reachable := _native_session.reachable(unit_id, _movement_revision)
+	if not reachable["ok"]:
+		_status.text = "Rust: %s" % reachable["message"]
+		return
+	_selected_unit_id = unit_id
+	_reachable_hexes.clear()
+	var coordinates: Array[Vector2i] = []
+	for tile: Dictionary in reachable["value"]["tiles"]:
+		var target := Vector2i(int(tile["col"]), int(tile["row"]))
+		_reachable_hexes[target] = true
+		coordinates.append(target)
+	_interaction.set_reachable_hexes(coordinates)
+	_status.text = "%s · jednostka %s · dostępne heksy: %d" % [
+		_current_document.map_name(), unit_id, coordinates.size(),
+	]
+	if _interaction.selected_hex() != coordinate:
+		push_error("movement selection is inconsistent with the picked hex")
+
+func _move_selected_unit(target: Vector2i) -> void:
+	var moved := _native_session.move_unit(
+		_selected_unit_id,
+		target,
+		_movement_revision,
+	)
+	if not moved["ok"]:
+		_status.text = "Rust: %s" % moved["message"]
+		return
+	var value: Dictionary = moved["value"]
+	_movement_revision = int(value["revision"])
+	if value["event"] != null:
+		var event: Dictionary = value["event"]
+		_unit_layer.move_unit(
+			_selected_unit_id,
+			Vector2i(int(event["toCol"]), int(event["toRow"])),
+		)
+	var selected := _selected_unit_id
+	_clear_movement_selection()
+	_status.text = "%s · ruch %s → %d,%d" % [
+		_current_document.map_name(), selected, target.x, target.y,
+	]
+
+func _clear_movement_selection() -> void:
+	_selected_unit_id = ""
+	_reachable_hexes.clear()
+	_interaction.set_reachable_hexes([])
+	_interaction.clear_selection()

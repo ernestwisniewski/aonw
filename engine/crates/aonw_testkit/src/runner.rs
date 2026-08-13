@@ -232,7 +232,7 @@ mod tests {
             .parse(source.as_bytes())
             .expect("valid fixture");
         let actual =
-            MovementExecution::try_new("unit_1", 0, 0, vec![MovementStep::new(2, 0, 1, 1)])
+            MovementExecution::try_new("unit_1", 0, 0, vec![MovementStep::new(0, 1, 1, 1)])
                 .expect("valid execution");
         let executor = StaticExecutor {
             output: FixtureOutput::accept(

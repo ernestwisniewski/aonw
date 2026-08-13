@@ -7,25 +7,28 @@
 
 #![forbid(unsafe_code)]
 
-/// The only state contract version accepted by the initial mapping crate.
-pub const CURRENT_STATE_CONTRACT_VERSION: u16 = 2;
+/// The only movement projection version accepted by the mapping crate.
+pub const CURRENT_MOVEMENT_STATE_VERSION: u16 = 1;
 
-/// Versioned canonical-state transfer object.
+/// Versioned movement-state projection for command and query boundaries.
+///
+/// This DTO deliberately excludes canonical fields unrelated to movement.
+/// Adapters must preserve those fields when applying an engine transition.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct WorldStateDto {
-    /// State schema version, independent of engine behavior version.
+pub struct MovementStateDto {
+    /// Projection schema version, independent of engine behavior version.
     pub schema_version: u16,
     /// Monotonic canonical state revision.
     pub revision: u64,
     /// Current game turn.
     pub turn: u32,
-    /// Canonical units in contract-preserved order.
-    pub units: Vec<UnitDto>,
+    /// Movement-oriented unit views in contract-preserved order.
+    pub units: Vec<MovementUnitDto>,
 }
 
-/// Unit transfer object for canonical state exchange.
+/// Unit transfer object carrying only values required by movement rules.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct UnitDto {
+pub struct MovementUnitDto {
     /// Opaque unit identifier.
     pub id: String,
     /// Opaque owner-player identifier.
@@ -40,8 +43,8 @@ pub struct UnitDto {
     pub movement_units: u32,
     /// Persistent unit behavior.
     pub posture: UnitPostureDto,
-    /// Whether a domain job prevents manual movement.
-    pub working: bool,
+    /// Derived availability flag; this is not persisted canonical job state.
+    pub movement_blocked: bool,
     /// Persisted route awaiting execution.
     pub queued_path: Option<QueuedMovePathDto>,
     /// Opaque carried-artifact identifier.

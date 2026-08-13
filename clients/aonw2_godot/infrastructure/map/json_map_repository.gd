@@ -3,6 +3,9 @@ extends AonwMapDocumentReader
 
 const MapDocument := preload("res://domain/map/map_document.gd")
 const MapSource := preload("res://application/map/map_source.gd")
+const NativeEngineBridge := preload("res://infrastructure/engine/native_engine_bridge.gd")
+
+var _native_engine := NativeEngineBridge.new()
 
 func load_map(source: AonwMapSource) -> Dictionary:
 	var absolute_path := resolve_path(source.map_path)
@@ -10,8 +13,13 @@ func load_map(source: AonwMapSource) -> Dictionary:
 	if file == null:
 		return _failure("cannot open %s" % absolute_path)
 
+	var source_json := file.get_as_text()
+	var native_result := _native_engine.validate_map_json(source_json, source.is_legacy())
+	if not native_result["ok"]:
+		return _failure("Rust: %s" % native_result["message"])
+
 	var parser := JSON.new()
-	var parse_error := parser.parse(file.get_as_text())
+	var parse_error := parser.parse(source_json)
 	if parse_error != OK:
 		return _failure(
 			"invalid JSON at line %d: %s" % [

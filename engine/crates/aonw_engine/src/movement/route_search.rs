@@ -2,9 +2,11 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
 use aonw_content::MapDefinition;
-use aonw_domain::{HexCoord, HexTileIndex, MovementStep, MovementUnits, Unit, WorldState};
+use aonw_domain::{
+    HexCoord, HexTileIndex, MovementState, MovementStep, MovementUnit, MovementUnits,
+};
 
-use super::{MovementCost, maximum_movement_units, terrain_entry_cost};
+use super::{MovementCost, MovementPlanningView, maximum_movement_units, terrain_entry_cost};
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 struct RouteScore {
@@ -56,11 +58,12 @@ impl PartialOrd for FrontierNode {
 }
 
 pub(super) fn find_route(
-    state: &WorldState,
+    state: &MovementState,
     map: &MapDefinition,
-    unit: &Unit,
+    unit: &MovementUnit,
     target: HexCoord,
     available_movement: MovementUnits,
+    planning_view: MovementPlanningView<'_>,
 ) -> Option<Vec<MovementStep>> {
     let start_index = map.tile_index(unit.position())?.get();
     let target_index = map.tile_index(target)?.get();
@@ -68,7 +71,7 @@ pub(super) fn find_route(
         maximum_movement_units(unit.kind(), unit.carried_artifact_id().is_some());
     let mut occupied = vec![false; map.bounds().tile_count()];
     for candidate in state.units() {
-        if candidate.id() == unit.id() {
+        if candidate.id() == unit.id() || !planning_view.observes_occupancy(unit, candidate) {
             continue;
         }
         if let Some(index) = map.tile_index(candidate.position()) {

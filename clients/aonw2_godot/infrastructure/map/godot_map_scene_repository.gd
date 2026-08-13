@@ -3,20 +3,28 @@ class_name AonwGodotMapSceneRepository
 extends RefCounted
 
 const SCENE_ROOT := "res://scenes/maps"
+const GENERATED_SCENE_ROOT := "res://scenes/generated/maps"
 const ASSET_ROOT := "res://assets/generated_maps"
+const GENERATED_LAYER_NAMES := [&"BaseTerrain", &"ReferenceTexture", &"HexGrid"]
 
 var _scene_root: String
+var _generated_scene_root: String
 var _asset_root: String
 
 func _init(
 	scene_root: String = SCENE_ROOT,
 	asset_root: String = ASSET_ROOT,
+	generated_scene_root: String = GENERATED_SCENE_ROOT,
 ) -> void:
 	_scene_root = scene_root
 	_asset_root = asset_root
+	_generated_scene_root = generated_scene_root
 
 func scene_path_for(map_id: String) -> String:
 	return _scene_root.path_join("%s.tscn" % map_id)
+
+func generated_scene_path_for(map_id: String) -> String:
+	return _generated_scene_root.path_join("%s_surface.tscn" % map_id)
 
 func save(
 	source: AonwMapSource,
@@ -38,6 +46,11 @@ func save(
 	)
 	if directory_error != OK:
 		return _failure("cannot create %s" % _scene_root)
+	directory_error = DirAccess.make_dir_recursive_absolute(
+		ProjectSettings.globalize_path(_generated_scene_root)
+	)
+	if directory_error != OK:
+		return _failure("cannot create %s" % _generated_scene_root)
 
 	var terrain_texture_path := output_directory.path_join("terrain_texture.res")
 	var reference_texture_path := output_directory.path_join("reference_texture.res")
@@ -94,14 +107,26 @@ func save(
 	surface.source_map_path = snapshot_path
 	surface.source_visual_directory = ""
 
-	var scene_path := scene_path_for(source.map_id)
+	var generated_scene_path := generated_scene_path_for(source.map_id)
 	var packed_scene := PackedScene.new()
 	error = packed_scene.pack(surface)
 	if error != OK:
-		return _failure("cannot pack Godot map scene: %s" % error_string(error))
-	error = ResourceSaver.save(packed_scene, scene_path)
+		return _failure("cannot pack generated Godot map surface: %s" % error_string(error))
+	error = ResourceSaver.save(packed_scene, generated_scene_path)
 	if error != OK:
-		return _failure("cannot save Godot map scene: %s" % error_string(error))
+		return _failure("cannot save generated Godot map surface: %s" % error_string(error))
+
+	var scene_path := scene_path_for(source.map_id)
+	var authored_scene_created := false
+	if not FileAccess.file_exists(scene_path):
+		error = _create_authored_scene(scene_path, source.map_id, generated_scene_path)
+		if error != OK:
+			return _failure("cannot create authored Godot map scene: %s" % error_string(error))
+		authored_scene_created = true
+	else:
+		error = _refresh_authored_surface(scene_path, generated_scene_path)
+		if error != OK:
+			return _failure("cannot refresh authored Godot map scene: %s" % error_string(error))
 
 	var manifest_error := _write_manifest(
 		output_directory.path_join("manifest.json"),
@@ -118,11 +143,84 @@ func save(
 	return {
 		"ok": true,
 		"scene_path": scene_path,
+		"generated_scene_path": generated_scene_path,
+		"authored_scene_created": authored_scene_created,
 		"output_directory": output_directory,
 		"missing_tiles": missing_tiles,
 		"invalid_tiles": invalid_tiles,
 		"resized_tiles": resized_tiles,
 	}
+
+func _create_authored_scene(path: String, map_id: String, generated_scene_path: String) -> Error:
+	var generated_scene := ResourceLoader.load(
+		generated_scene_path,
+		"PackedScene",
+		ResourceLoader.CACHE_MODE_REPLACE,
+	) as PackedScene
+	if generated_scene == null:
+		return ERR_CANT_OPEN
+	var surface := generated_scene.instantiate(
+		PackedScene.GEN_EDIT_STATE_INSTANCE
+	) as AonwMapSurface
+	if surface == null:
+		return ERR_CANT_CREATE
+	var root := Node3D.new()
+	root.name = map_id
+	root.add_child(surface)
+	surface.owner = root
+	var packed := PackedScene.new()
+	var error := packed.pack(root)
+	if error == OK:
+		error = ResourceSaver.save(packed, path)
+	root.free()
+	return error
+
+func _refresh_authored_surface(path: String, generated_scene_path: String) -> Error:
+	var authored_scene := ResourceLoader.load(
+		path,
+		"PackedScene",
+		ResourceLoader.CACHE_MODE_REPLACE_DEEP,
+	) as PackedScene
+	var generated_scene := ResourceLoader.load(
+		generated_scene_path,
+		"PackedScene",
+		ResourceLoader.CACHE_MODE_REPLACE_DEEP,
+	) as PackedScene
+	if authored_scene == null or generated_scene == null:
+		return ERR_CANT_OPEN
+	var root := authored_scene.instantiate(PackedScene.GEN_EDIT_STATE_MAIN)
+	var previous_surface := root.get_node_or_null("AonwMap3D")
+	if previous_surface == null:
+		root.free()
+		return ERR_DOES_NOT_EXIST
+	var surface_index := previous_surface.get_index()
+	var authored_children: Array[Node] = []
+	for child in previous_surface.get_children():
+		if child.name in GENERATED_LAYER_NAMES:
+			continue
+		previous_surface.remove_child(child)
+		child.owner = null
+		authored_children.append(child)
+	root.remove_child(previous_surface)
+	previous_surface.free()
+	var surface := generated_scene.instantiate(
+		PackedScene.GEN_EDIT_STATE_INSTANCE
+	) as AonwMapSurface
+	if surface == null:
+		root.free()
+		return ERR_CANT_CREATE
+	root.add_child(surface)
+	root.move_child(surface, surface_index)
+	surface.owner = root
+	for child in authored_children:
+		surface.add_child(child)
+		child.owner = root
+	var packed := PackedScene.new()
+	var error := packed.pack(root)
+	if error == OK:
+		error = ResourceSaver.save(packed, path)
+	root.free()
+	return error
 
 func _write_manifest(
 	path: String,

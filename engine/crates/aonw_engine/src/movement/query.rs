@@ -1,7 +1,8 @@
 use aonw_content::MapDefinition;
-use aonw_domain::{HexCoord, MovementStep, MovementUnits, Unit, UnitId, UnitPosture, WorldState};
+use aonw_domain::{HexCoord, MovementState, MovementStep, MovementUnit, MovementUnits, UnitId};
 
 use super::maximum_movement_units;
+use super::reachable::movement_available_for_query;
 use super::route_search::find_route;
 use crate::EngineContext;
 
@@ -31,6 +32,7 @@ pub struct TerrainMovementPlan {
     revision: u64,
     unit_id: UnitId,
     target: HexCoord,
+    destination: HexCoord,
     total_cost: MovementUnits,
     available_movement: MovementUnits,
     remaining_movement: MovementUnits,
@@ -55,6 +57,14 @@ impl TerrainMovementPlan {
     #[must_use]
     pub const fn target(&self) -> HexCoord {
         self.target
+    }
+
+    /// Returns the final route coordinate.
+    ///
+    /// This differs from `target` when planning an approach to an occupied hex.
+    #[must_use]
+    pub const fn destination(&self) -> HexCoord {
+        self.destination
     }
 
     /// Returns the complete multi-turn route cost.
@@ -98,23 +108,35 @@ impl TerrainMovementPlan {
 #[allow(missing_docs)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum TerrainMovementQueryError {
-    StaleRevision {
-        expected: u64,
-        actual: u64,
-    },
+    StaleRevision { expected: u64, actual: u64 },
     UnitNotFound,
     UnitNotControlled,
     UnitUnavailable,
     UnitUsesTradeRoutes,
     UnitOutOfBounds,
-    InvalidMovementBalance {
-        actual: MovementUnits,
-        maximum: MovementUnits,
-    },
     TargetOutOfBounds,
     TargetIsCurrentTile,
     TargetOccupied,
     PathNotFound,
+}
+
+impl TerrainMovementQueryError {
+    /// Returns the stable language-neutral rejection code.
+    #[must_use]
+    pub const fn code(&self) -> &'static str {
+        match self {
+            Self::StaleRevision { .. } => "stale_revision",
+            Self::UnitNotFound => "unit_not_found",
+            Self::UnitNotControlled => "unit_not_controlled",
+            Self::UnitUnavailable => "unit_unavailable",
+            Self::UnitUsesTradeRoutes => "unit_uses_trade_routes",
+            Self::UnitOutOfBounds => "unit_out_of_bounds",
+            Self::TargetOutOfBounds => "move_target_out_of_bounds",
+            Self::TargetIsCurrentTile => "move_target_is_current_tile",
+            Self::TargetOccupied => "move_target_occupied",
+            Self::PathNotFound => "move_path_not_found",
+        }
+    }
 }
 
 impl core::fmt::Display for TerrainMovementQueryError {
@@ -131,12 +153,6 @@ impl core::fmt::Display for TerrainMovementQueryError {
             Self::UnitUnavailable => formatter.write_str("unit is unavailable for manual movement"),
             Self::UnitUsesTradeRoutes => formatter.write_str("unit uses trade routes"),
             Self::UnitOutOfBounds => formatter.write_str("unit is outside map bounds"),
-            Self::InvalidMovementBalance { actual, maximum } => write!(
-                formatter,
-                "unit movement balance {} exceeds maximum {}",
-                actual.get(),
-                maximum.get()
-            ),
             Self::TargetOutOfBounds => formatter.write_str("target is outside map bounds"),
             Self::TargetIsCurrentTile => formatter.write_str("target is the current tile"),
             Self::TargetOccupied => formatter.write_str("target is occupied"),
@@ -148,21 +164,46 @@ impl core::fmt::Display for TerrainMovementQueryError {
 impl std::error::Error for TerrainMovementQueryError {}
 
 pub(crate) fn plan_terrain_route(
-    state: &WorldState,
+    state: &MovementState,
     context: EngineContext<'_>,
     query: TerrainMovementQuery<'_>,
 ) -> Result<TerrainMovementPlan, TerrainMovementQueryError> {
     validate_revision(state, query.expected_revision)?;
     let unit = validate_unit(state, context, query.unit_id)?;
-    validate_target(state, context.map(), unit, query.target)?;
+    validate_target(context.map(), unit, query.target)?;
 
-    let available_movement = if unit.posture() == UnitPosture::Fortified {
-        maximum_movement_units(unit.kind(), unit.carried_artifact_id().is_some())
+    let available_movement = movement_available_for_query(unit);
+    let known_blocker = known_target_blocker(state, unit, query.target, context.planning_view());
+    let steps = if let Some(blocker) = known_blocker {
+        let approach = find_approach_route(
+            state,
+            context.map(),
+            unit,
+            query.target,
+            available_movement,
+            context.planning_view(),
+        )
+        .ok_or(TerrainMovementQueryError::TargetOccupied)?;
+        let approach_cost = approach
+            .last()
+            .map_or(MovementUnits::ZERO, |step| step.cumulative_cost());
+        if blocker.owner_player_id() == unit.owner_player_id()
+            && approach_cost <= available_movement
+        {
+            return Err(TerrainMovementQueryError::TargetOccupied);
+        }
+        approach
     } else {
-        unit.movement_units()
+        find_route(
+            state,
+            context.map(),
+            unit,
+            query.target,
+            available_movement,
+            context.planning_view(),
+        )
+        .ok_or(TerrainMovementQueryError::PathNotFound)?
     };
-    let steps = find_route(state, context.map(), unit, query.target, available_movement)
-        .ok_or(TerrainMovementQueryError::PathNotFound)?;
     let total_cost = steps
         .last()
         .map_or(MovementUnits::ZERO, |step| step.cumulative_cost());
@@ -179,6 +220,9 @@ pub(crate) fn plan_terrain_route(
         revision: state.revision(),
         unit_id: unit.id().clone(),
         target: query.target,
+        destination: steps
+            .last()
+            .map_or(unit.position(), |step| step.coordinate()),
         total_cost,
         available_movement,
         remaining_movement,
@@ -187,8 +231,8 @@ pub(crate) fn plan_terrain_route(
     })
 }
 
-fn validate_revision(
-    state: &WorldState,
+pub(super) fn validate_revision(
+    state: &MovementState,
     expected_revision: u64,
 ) -> Result<(), TerrainMovementQueryError> {
     if state.revision() == expected_revision {
@@ -200,18 +244,18 @@ fn validate_revision(
     })
 }
 
-fn validate_unit<'state>(
-    state: &'state WorldState,
+pub(super) fn validate_unit<'state>(
+    state: &'state MovementState,
     context: EngineContext<'_>,
     unit_id: &UnitId,
-) -> Result<&'state Unit, TerrainMovementQueryError> {
+) -> Result<&'state MovementUnit, TerrainMovementQueryError> {
     let unit = state
         .unit(unit_id)
         .ok_or(TerrainMovementQueryError::UnitNotFound)?;
-    if unit.owner_player_id() != context.actor_player_id() {
+    if !context.can_act() || unit.owner_player_id() != context.actor_player_id() {
         return Err(TerrainMovementQueryError::UnitNotControlled);
     }
-    if unit.is_working() {
+    if unit.is_movement_blocked() {
         return Err(TerrainMovementQueryError::UnitUnavailable);
     }
     if unit.kind().uses_trade_routes() {
@@ -220,20 +264,12 @@ fn validate_unit<'state>(
     if context.map().tile_at(unit.position()).is_none() {
         return Err(TerrainMovementQueryError::UnitOutOfBounds);
     }
-    let maximum = maximum_movement_units(unit.kind(), unit.carried_artifact_id().is_some());
-    if unit.posture() != UnitPosture::Fortified && unit.movement_units() > maximum {
-        return Err(TerrainMovementQueryError::InvalidMovementBalance {
-            actual: unit.movement_units(),
-            maximum,
-        });
-    }
     Ok(unit)
 }
 
 fn validate_target(
-    state: &WorldState,
     map: &MapDefinition,
-    unit: &Unit,
+    unit: &MovementUnit,
     target: HexCoord,
 ) -> Result<(), TerrainMovementQueryError> {
     if map.tile_at(target).is_none() {
@@ -242,14 +278,71 @@ fn validate_target(
     if target == unit.position() {
         return Err(TerrainMovementQueryError::TargetIsCurrentTile);
     }
-    if state
-        .units()
-        .iter()
-        .any(|candidate| candidate.id() != unit.id() && candidate.position() == target)
-    {
-        return Err(TerrainMovementQueryError::TargetOccupied);
-    }
     Ok(())
+}
+
+fn known_target_blocker<'state>(
+    state: &'state MovementState,
+    unit: &MovementUnit,
+    target: HexCoord,
+    planning_view: super::MovementPlanningView<'_>,
+) -> Option<&'state MovementUnit> {
+    state.units().iter().find(|candidate| {
+        candidate.id() != unit.id()
+            && candidate.position() == target
+            && planning_view.observes_occupancy(unit, candidate)
+    })
+}
+
+fn find_approach_route(
+    state: &MovementState,
+    map: &MapDefinition,
+    unit: &MovementUnit,
+    target: HexCoord,
+    available_movement: MovementUnits,
+    planning_view: super::MovementPlanningView<'_>,
+) -> Option<Vec<MovementStep>> {
+    map.neighbors(target)
+        .filter_map(|destination| {
+            let steps = find_route(
+                state,
+                map,
+                unit,
+                destination,
+                available_movement,
+                planning_view,
+            )?;
+            let total_cost = steps.last()?.cumulative_cost().get();
+            let turns = estimated_turns(&steps, available_movement, unit);
+            Some((turns, total_cost, steps.len(), destination, steps))
+        })
+        .min_by_key(|(turns, total_cost, step_count, destination, _)| {
+            (
+                *turns,
+                *total_cost,
+                *step_count,
+                destination.col(),
+                destination.row(),
+            )
+        })
+        .map(|(_, _, _, _, steps)| steps)
+}
+
+fn estimated_turns(steps: &[MovementStep], available: MovementUnits, unit: &MovementUnit) -> u32 {
+    let maximum = maximum_movement_units(unit.kind(), unit.carried_artifact_id().is_some());
+    let mut turns = u32::from(steps.len() > 1);
+    let mut remaining = available.get();
+    for step in steps.iter().skip(1) {
+        if step.enter_cost().get() <= remaining {
+            remaining -= step.enter_cost().get();
+        } else if remaining > 0 {
+            remaining = 0;
+        } else {
+            turns = turns.saturating_add(1);
+            remaining = maximum.get().saturating_sub(step.enter_cost().get());
+        }
+    }
+    turns
 }
 
 fn reachable_step_index(steps: &[MovementStep], available: MovementUnits) -> usize {

@@ -79,11 +79,12 @@ change.
 
 ### Accepted Successor Architecture
 
-Rust implementation starts directly under `engine/`. Its current foundation
-contains domain types, versioned state DTOs, validated contract mapping, and a
-pure engine query surface; it is not connected to production execution.
-Flutter remains at the repository root during migration. The two `clients/`
-directories currently contain README boundary markers only.
+Rust implementation starts directly under `engine/`. Its current narrow
+vertical slice contains validated map content, movement projection contracts,
+fog-safe route/reachable queries, `MoveUnit`, fixture parity, and a Godot
+GDExtension. It is not connected to Flutter, Serverpod, or production saves.
+Flutter remains at the repository root during migration; AoNW2 already lives
+under `clients/aonw2_godot/`.
 
 ```mermaid
 flowchart TB

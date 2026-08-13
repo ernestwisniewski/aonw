@@ -1,5 +1,5 @@
 {
-  "fixtureVersion": 1,
+  "fixtureVersion": 2,
   "id": "movement-out-of-bounds-rejected",
   "family": "movement",
   "input": {
@@ -339,6 +339,7 @@
       },
       "lifecycle": {}
     },
-    "events": []
+    "events": [],
+    "movementExecutions": []
   }
 }

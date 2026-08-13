@@ -22,7 +22,8 @@ Choose a map and select **Generuj / aktualizuj 3D**. The Workbench writes:
 
 ```text
 clients/aonw2_godot/
-├── scenes/maps/<map_id>.tscn
+├── scenes/maps/<map_id>.tscn                 # authored scene
+├── scenes/generated/maps/<map_id>_surface.tscn
 └── assets/generated_maps/<map_id>/
     ├── map.json
     ├── manifest.json
@@ -33,7 +34,10 @@ clients/aonw2_godot/
     └── grid_mesh.res
 ```
 
-Each generated scene contains three independent layers:
+The authored scene contains the generated surface plus models and other nodes
+added in Godot. Regeneration refreshes `AonwMap3D` while preserving authored
+sibling nodes and custom children attached to the surface. The generated
+surface contains three independent layers:
 
 - `BaseTerrain` is an elevated hex surface colored from logical terrain data;
 - `ReferenceTexture` projects the original stitched `NxM.jpg` artwork and has
@@ -61,10 +65,17 @@ terrain colors. The file picker treats a selected map as strict v1 unless
 
 Controls:
 
+- left mouse button: select a hex;
 - right mouse button: orbit;
 - middle mouse button or arrow keys: pan;
 - mouse wheel: zoom;
 - `G`: toggle the hex grid.
+
+Picking uses a shared hex projection and separate hover, selection, and
+reachable overlay layers. The preview seeds one developer unit: click it to
+query reachable hexes from Rust, then click a highlighted hex to execute and
+animate the authoritative `UnitMoved` event. These layers contain no movement
+legality rules.
 
 ## Boundaries
 
@@ -72,6 +83,7 @@ Controls:
 - `application/map/` orchestrates loading and Godot scene generation;
 - `infrastructure/map/` discovers files, decodes JSON, assembles textures, and
   persists Godot resources;
+- `infrastructure/engine/` adapts JSON at the GDExtension boundary;
 - `presentation/` owns meshes, camera, runtime UI, and editor controls;
 - `addons/aonw_map_workbench/` is the editor composition root.
 
@@ -80,10 +92,20 @@ hash owner. The Workbench distinguishes strict v1 content from the explicit
 legacy adapter. A generated Godot scene is a presentation artifact and never a
 second source of gameplay rules.
 
-The Rust engine now exposes a deterministic terrain-only route query, but the
-Godot client is not connected to it yet. The next native vertical slice will
-map picked hexes to revision-bound Rust queries and render returned route and
-reachable overlays. GDScript must not calculate movement legality or paths.
+The `aonw_godot` GDExtension is connected to map loading. Strict and explicit
+legacy maps are validated by `aonw_content` before the immutable Godot render
+view is created. `AonwNativeLocalSession` exposes reachable queries and
+revision-bound movement from Rust; unit/entity presentation can consume its
+results without calculating legality or paths in GDScript.
+
+Build the native adapter before opening or running Godot:
+
+```sh
+make rust-godot-build
+```
+
+`make godot-editor`, `make godot-run`, and `make godot-test` build it
+automatically.
 
 ## Verification
 
@@ -92,6 +114,7 @@ make godot-test
 make godot-check
 ```
 
-The test covers strict/legacy boundaries, asset discovery, immutable map views,
-hex-to-world round trips, texture assembly, mesh generation, and saving/loading
-a self-contained Godot scene. `GODOT_BIN` can override the editor executable.
+The test covers strict/legacy Rust validation, native reachable/move calls,
+asset discovery, immutable map views, projection/picking round trips, texture
+assembly, mesh generation, regeneration safety, and preserving authored nodes.
+`GODOT_BIN` can override the editor executable.

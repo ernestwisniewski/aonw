@@ -13,5 +13,9 @@ publish.workspace = true
 aonw_content = { path = "../aonw_content" }
 aonw_domain = { path = "../aonw_domain" }
 
+[dev-dependencies]
+aonw_testkit = { path = "../aonw_testkit" }
+serde_json.workspace = true
+
 [lints]
 workspace = true

@@ -1,8 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://presentation/map/map_preview_screen.gd" id="1_screen"]
 [ext_resource type="Script" path="res://presentation/map/map_surface.gd" id="2_surface"]
 [ext_resource type="Script" path="res://presentation/camera/orbit_camera_rig.gd" id="3_camera"]
+[ext_resource type="Script" path="res://presentation/map/map_overlay_layer.gd" id="4_overlay"]
+[ext_resource type="Script" path="res://presentation/map/map_interaction_controller.gd" id="5_interaction"]
+[ext_resource type="Script" path="res://presentation/map/unit_layer.gd" id="6_units"]
 
 [sub_resource type="Environment" id="Environment_preview"]
 background_mode = 1
@@ -43,6 +46,14 @@ unique_name_in_owner = true
 [node name="HexGrid" type="MeshInstance3D" parent="MapSurface"]
 unique_name_in_owner = true
 
+[node name="MapOverlay" type="Node3D" parent="MapSurface"]
+unique_name_in_owner = true
+script = ExtResource("4_overlay")
+
+[node name="UnitLayer" type="Node3D" parent="MapSurface"]
+unique_name_in_owner = true
+script = ExtResource("6_units")
+
 [node name="OrbitCameraRig" type="Node3D" parent="."]
 unique_name_in_owner = true
 script = ExtResource("3_camera")
@@ -59,6 +70,10 @@ current = true
 fov = 48.0
 near = 0.05
 far = 300.0
+
+[node name="MapInteraction" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("5_interaction")
 
 [node name="Interface" type="CanvasLayer" parent="."]
 
@@ -109,7 +124,7 @@ offset_right = -16.0
 offset_bottom = -14.0
 grow_horizontal = 2
 grow_vertical = 0
-text = "PPM: obrót · ŚPM: przesunięcie · kółko: zoom · strzałki: przesunięcie"
+text = "LPM: wybór heksa · PPM: obrót · ŚPM: przesunięcie · kółko: zoom · strzałki: przesunięcie"
 
 [node name="OpenMapDialog" type="FileDialog" parent="Interface"]
 unique_name_in_owner = true

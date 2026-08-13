@@ -9,12 +9,13 @@
 use core::fmt;
 
 use aonw_contracts::{
-    CURRENT_STATE_CONTRACT_VERSION, MovementStepDto, QueuedMovePathDto, UnitDto, UnitKindDto,
-    UnitPostureDto, WorldStateDto,
+    CURRENT_MOVEMENT_STATE_VERSION, MovementStateDto, MovementStepDto, MovementUnitDto,
+    QueuedMovePathDto, UnitKindDto, UnitPostureDto,
 };
 use aonw_domain::{
-    ArtifactId, HexCoord, IdentifierError, MovementPathError, MovementStep, MovementUnits,
-    PlayerId, QueuedMovePath, StateBuildError, Unit, UnitId, UnitKind, UnitPosture, WorldState,
+    ArtifactId, HexCoord, IdentifierError, MovementPathError, MovementState,
+    MovementStateBuildError, MovementStep, MovementUnit, MovementUnitBuildError, MovementUnits,
+    PlayerId, QueuedMovePath, UnitId, UnitKind, UnitPosture,
 };
 
 /// Failure raised while converting untrusted boundary data.
@@ -55,8 +56,15 @@ pub enum MappingError {
         /// Route validation failure.
         source: MovementPathError,
     },
-    /// The validated values still violate a canonical state invariant.
-    InvalidState(StateBuildError),
+    /// A unit projection violates an invariant spanning multiple fields.
+    InvalidMovementUnit {
+        /// Unit array index carrying the invalid projection.
+        index: usize,
+        /// Projection validation failure.
+        source: MovementUnitBuildError,
+    },
+    /// The validated values still violate a movement-state invariant.
+    InvalidMovementState(MovementStateBuildError),
 }
 
 impl fmt::Display for MappingError {
@@ -87,7 +95,15 @@ impl fmt::Display for MappingError {
                     "invalid queued path for unit at index {index}: {source}"
                 )
             }
-            Self::InvalidState(source) => write!(formatter, "invalid canonical state: {source}"),
+            Self::InvalidMovementUnit { index, source } => {
+                write!(
+                    formatter,
+                    "invalid movement unit at index {index}: {source}"
+                )
+            }
+            Self::InvalidMovementState(source) => {
+                write!(formatter, "invalid movement state: {source}")
+            }
         }
     }
 }
@@ -99,23 +115,24 @@ impl std::error::Error for MappingError {
             | Self::InvalidUnitOwnerId { source, .. }
             | Self::InvalidCarriedArtifactId { source, .. } => Some(source),
             Self::InvalidQueuedMovePath { source, .. } => Some(source),
-            Self::InvalidState(source) => Some(source),
+            Self::InvalidMovementUnit { source, .. } => Some(source),
+            Self::InvalidMovementState(source) => Some(source),
             Self::UnsupportedStateContractVersion { .. } => None,
         }
     }
 }
 
-/// Validates and decodes a canonical state DTO.
+/// Validates and decodes a movement-state DTO.
 ///
 /// # Errors
 ///
 /// Returns [`MappingError`] for unsupported versions, invalid identifiers, or
-/// violated canonical-state invariants.
-pub fn decode_world_state(dto: WorldStateDto) -> Result<WorldState, MappingError> {
-    if dto.schema_version != CURRENT_STATE_CONTRACT_VERSION {
+/// violated movement-projection invariants.
+pub fn decode_movement_state(dto: MovementStateDto) -> Result<MovementState, MappingError> {
+    if dto.schema_version != CURRENT_MOVEMENT_STATE_VERSION {
         return Err(MappingError::UnsupportedStateContractVersion {
             found: dto.schema_version,
-            supported: CURRENT_STATE_CONTRACT_VERSION,
+            supported: CURRENT_MOVEMENT_STATE_VERSION,
         });
     }
 
@@ -126,22 +143,23 @@ pub fn decode_world_state(dto: WorldStateDto) -> Result<WorldState, MappingError
         .map(|(index, unit)| decode_unit(index, unit))
         .collect::<Result<Vec<_>, _>>()?;
 
-    WorldState::try_new(dto.revision, dto.turn, units).map_err(MappingError::InvalidState)
+    MovementState::try_new(dto.revision, dto.turn, units)
+        .map_err(MappingError::InvalidMovementState)
 }
 
-/// Encodes canonical state while preserving contract entity order.
+/// Encodes a movement state while preserving contract entity order.
 #[must_use]
-pub fn encode_world_state(state: &WorldState) -> WorldStateDto {
-    WorldStateDto {
-        schema_version: CURRENT_STATE_CONTRACT_VERSION,
+pub fn encode_movement_state(state: &MovementState) -> MovementStateDto {
+    MovementStateDto {
+        schema_version: CURRENT_MOVEMENT_STATE_VERSION,
         revision: state.revision(),
         turn: state.turn(),
         units: state.units().iter().map(encode_unit).collect(),
     }
 }
 
-fn decode_unit(index: usize, dto: UnitDto) -> Result<Unit, MappingError> {
-    let UnitDto {
+fn decode_unit(index: usize, dto: MovementUnitDto) -> Result<MovementUnit, MappingError> {
+    let MovementUnitDto {
         id,
         owner_player_id,
         kind,
@@ -149,7 +167,7 @@ fn decode_unit(index: usize, dto: UnitDto) -> Result<Unit, MappingError> {
         row,
         movement_units,
         posture,
-        working,
+        movement_blocked,
         queued_path,
         carried_artifact_id,
     } = dto;
@@ -165,7 +183,7 @@ fn decode_unit(index: usize, dto: UnitDto) -> Result<Unit, MappingError> {
         .transpose()
         .map_err(|source| MappingError::InvalidQueuedMovePath { index, source })?;
 
-    Ok(Unit::new(
+    MovementUnit::new(
         id,
         owner_player_id,
         decode_unit_kind(kind),
@@ -173,13 +191,14 @@ fn decode_unit(index: usize, dto: UnitDto) -> Result<Unit, MappingError> {
         MovementUnits::new(movement_units),
     )
     .with_posture(decode_unit_posture(posture))
-    .with_working(working)
-    .with_queued_path(queued_path)
-    .with_carried_artifact(carried_artifact_id))
+    .with_movement_blocked(movement_blocked)
+    .try_with_queued_path(queued_path)
+    .map_err(|source| MappingError::InvalidMovementUnit { index, source })
+    .map(|unit| unit.with_carried_artifact(carried_artifact_id))
 }
 
-fn encode_unit(unit: &Unit) -> UnitDto {
-    UnitDto {
+fn encode_unit(unit: &MovementUnit) -> MovementUnitDto {
+    MovementUnitDto {
         id: unit.id().as_str().to_owned(),
         owner_player_id: unit.owner_player_id().as_str().to_owned(),
         kind: encode_unit_kind(unit.kind()),
@@ -187,7 +206,7 @@ fn encode_unit(unit: &Unit) -> UnitDto {
         row: unit.position().row(),
         movement_units: unit.movement_units().get(),
         posture: encode_unit_posture(unit.posture()),
-        working: unit.is_working(),
+        movement_blocked: unit.is_movement_blocked(),
         queued_path: unit.queued_path().map(encode_queued_path),
         carried_artifact_id: unit
             .carried_artifact_id()
@@ -293,14 +312,17 @@ fn encode_queued_path(path: &QueuedMovePath) -> QueuedMovePathDto {
 #[cfg(test)]
 mod tests {
     use aonw_contracts::{
-        CURRENT_STATE_CONTRACT_VERSION, MovementStepDto, QueuedMovePathDto, UnitDto, UnitKindDto,
-        UnitPostureDto, WorldStateDto,
+        CURRENT_MOVEMENT_STATE_VERSION, MovementStateDto, MovementStepDto, MovementUnitDto,
+        QueuedMovePathDto, UnitKindDto, UnitPostureDto,
     };
-    use aonw_domain::{IdentifierError, MovementPathError, StateBuildError, UnitId};
+    use aonw_domain::{
+        HexCoord, IdentifierError, MovementPathError, MovementStateBuildError,
+        MovementUnitBuildError, UnitId,
+    };
 
     use super::{
-        MappingError, decode_unit_kind, decode_unit_posture, decode_world_state, encode_unit_kind,
-        encode_unit_posture, encode_world_state,
+        MappingError, decode_movement_state, decode_unit_kind, decode_unit_posture,
+        encode_movement_state, encode_unit_kind, encode_unit_posture,
     };
 
     const ALL_UNIT_KINDS: [UnitKindDto; 17] = [
@@ -330,13 +352,13 @@ mod tests {
         UnitPostureDto::AutoWorking,
     ];
 
-    fn state_dto() -> WorldStateDto {
-        WorldStateDto {
-            schema_version: CURRENT_STATE_CONTRACT_VERSION,
+    fn state_dto() -> MovementStateDto {
+        MovementStateDto {
+            schema_version: CURRENT_MOVEMENT_STATE_VERSION,
             revision: 41,
             turn: 8,
             units: vec![
-                UnitDto {
+                MovementUnitDto {
                     id: "unit-z".to_owned(),
                     owner_player_id: "player-1".to_owned(),
                     kind: UnitKindDto::Worker,
@@ -344,7 +366,7 @@ mod tests {
                     row: 1,
                     movement_units: 5,
                     posture: UnitPostureDto::AutoWorking,
-                    working: true,
+                    movement_blocked: true,
                     queued_path: Some(QueuedMovePathDto {
                         target_col: 3,
                         target_row: 1,
@@ -365,7 +387,7 @@ mod tests {
                     }),
                     carried_artifact_id: Some("artifact-7".to_owned()),
                 },
-                UnitDto {
+                MovementUnitDto {
                     id: "unit-a".to_owned(),
                     owner_player_id: "player-2".to_owned(),
                     kind: UnitKindDto::Warship,
@@ -373,7 +395,7 @@ mod tests {
                     row: 0,
                     movement_units: 0,
                     posture: UnitPostureDto::Fortified,
-                    working: false,
+                    movement_blocked: false,
                     queued_path: None,
                     carried_artifact_id: None,
                 },
@@ -384,8 +406,8 @@ mod tests {
     #[test]
     fn state_round_trip_preserves_contract_order() {
         let source = state_dto();
-        let decoded = decode_world_state(source.clone()).expect("valid contract state");
-        let encoded = encode_world_state(&decoded);
+        let decoded = decode_movement_state(source.clone()).expect("valid movement state");
+        let encoded = encode_movement_state(&decoded);
 
         let unit_ids = encoded
             .units
@@ -394,7 +416,7 @@ mod tests {
             .collect::<Vec<_>>();
         assert_eq!(unit_ids, ["unit-z", "unit-a"]);
         assert_eq!(encoded, source);
-        assert_eq!(decode_world_state(encoded), Ok(decoded));
+        assert_eq!(decode_movement_state(encoded), Ok(decoded));
     }
 
     #[test]
@@ -414,13 +436,13 @@ mod tests {
     #[test]
     fn unknown_contract_version_fails_closed() {
         let mut dto = state_dto();
-        dto.schema_version = CURRENT_STATE_CONTRACT_VERSION + 1;
+        dto.schema_version = CURRENT_MOVEMENT_STATE_VERSION + 1;
 
         assert_eq!(
-            decode_world_state(dto),
+            decode_movement_state(dto),
             Err(MappingError::UnsupportedStateContractVersion {
-                found: CURRENT_STATE_CONTRACT_VERSION + 1,
-                supported: CURRENT_STATE_CONTRACT_VERSION,
+                found: CURRENT_MOVEMENT_STATE_VERSION + 1,
+                supported: CURRENT_MOVEMENT_STATE_VERSION,
             })
         );
     }
@@ -433,9 +455,9 @@ mod tests {
         let duplicate = UnitId::new(duplicate_value).expect("valid duplicate id");
 
         assert_eq!(
-            decode_world_state(dto),
-            Err(MappingError::InvalidState(
-                StateBuildError::DuplicateUnitId(duplicate)
+            decode_movement_state(dto),
+            Err(MappingError::InvalidMovementState(
+                MovementStateBuildError::DuplicateUnitId(duplicate)
             ))
         );
     }
@@ -446,7 +468,7 @@ mod tests {
         dto.units[1].id = "  ".to_owned();
 
         assert_eq!(
-            decode_world_state(dto),
+            decode_movement_state(dto),
             Err(MappingError::InvalidUnitId {
                 index: 1,
                 source: IdentifierError::Empty,
@@ -460,7 +482,7 @@ mod tests {
         dto.units[1].owner_player_id = String::new();
 
         assert_eq!(
-            decode_world_state(dto),
+            decode_movement_state(dto),
             Err(MappingError::InvalidUnitOwnerId {
                 index: 1,
                 source: IdentifierError::Empty,
@@ -474,7 +496,7 @@ mod tests {
         dto.units[1].carried_artifact_id = Some("\t".to_owned());
 
         assert_eq!(
-            decode_world_state(dto),
+            decode_movement_state(dto),
             Err(MappingError::InvalidCarriedArtifactId {
                 index: 1,
                 source: IdentifierError::Empty,
@@ -505,10 +527,44 @@ mod tests {
         });
 
         assert_eq!(
-            decode_world_state(dto),
+            decode_movement_state(dto),
             Err(MappingError::InvalidQueuedMovePath {
                 index: 1,
                 source: MovementPathError::NonAdjacentStep { step_index: 1 },
+            })
+        );
+    }
+
+    #[test]
+    fn queued_path_origin_must_match_unit_position() {
+        let mut dto = state_dto();
+        dto.units[1].queued_path = Some(QueuedMovePathDto {
+            target_col: 2,
+            target_row: 0,
+            steps: vec![
+                MovementStepDto {
+                    col: 1,
+                    row: 0,
+                    enter_cost_units: 0,
+                    cumulative_cost_units: 0,
+                },
+                MovementStepDto {
+                    col: 2,
+                    row: 0,
+                    enter_cost_units: 2,
+                    cumulative_cost_units: 2,
+                },
+            ],
+        });
+
+        assert_eq!(
+            decode_movement_state(dto),
+            Err(MappingError::InvalidMovementUnit {
+                index: 1,
+                source: MovementUnitBuildError::QueuedPathOriginMismatch {
+                    expected: HexCoord::new(0, 0),
+                    actual: HexCoord::new(1, 0),
+                },
             })
         );
     }

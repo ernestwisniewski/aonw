@@ -1,5 +1,5 @@
 {
-  "fixtureVersion": 1,
+  "fixtureVersion": 2,
   "id": "movement-adjacent-accepted",
   "family": "movement",
   "input": {
@@ -427,6 +427,21 @@
         "fromRow": 0,
         "toCol": 1,
         "toRow": 0
+      }
+    ],
+    "movementExecutions": [
+      {
+        "unitId": "commander_player_1",
+        "fromCol": 0,
+        "fromRow": 0,
+        "steps": [
+          {
+            "col": 1,
+            "row": 0,
+            "enterCost": 2,
+            "cumulativeCost": 2
+          }
+        ]
       }
     ]
   }

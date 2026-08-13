@@ -9,10 +9,12 @@
 mod movement;
 
 use aonw_content::MapDefinition;
-use aonw_domain::{PlayerId, WorldState};
+use aonw_domain::{MovementState, PlayerId};
 
 pub use movement::{
-    MovementCost, TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError,
+    MoveUnitCommand, MoveUnitError, MovementCost, MovementPlanningView, MovementTransition,
+    ReachableMovement, ReachableMovementQuery, ReachableMovementTile, TerrainMovementPlan,
+    TerrainMovementQuery, TerrainMovementQueryError, UnitMovedEvent, UnitMovementExecution,
     maximum_movement_units, terrain_entry_cost,
 };
 
@@ -35,10 +37,10 @@ impl GameEngine {
         }
     }
 
-    /// Inspects canonical state without allocation or mutation.
+    /// Inspects the movement projection without allocation or mutation.
     #[must_use]
-    pub const fn summarize_state(state: &WorldState) -> StateSummary {
-        StateSummary {
+    pub const fn summarize_movement_state(state: &MovementState) -> MovementStateSummary {
+        MovementStateSummary {
             revision: state.revision(),
             turn: state.turn(),
             unit_count: state.units().len(),
@@ -55,11 +57,42 @@ impl GameEngine {
     /// Returns [`TerrainMovementQueryError`] when the revision, unit, target,
     /// occupancy, or terrain does not admit a route.
     pub fn plan_terrain_route(
-        state: &WorldState,
+        state: &MovementState,
         context: EngineContext<'_>,
         query: TerrainMovementQuery<'_>,
     ) -> Result<TerrainMovementPlan, TerrainMovementQueryError> {
         movement::plan_terrain_route(state, context, query)
+    }
+
+    /// Returns every actor-visible hex reachable during the current turn.
+    ///
+    /// The engine performs one bounded search and returns stable row-major
+    /// output suitable for selection overlays.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TerrainMovementQueryError`] when the revision or unit does not
+    /// admit a movement query.
+    pub fn reachable_movement(
+        state: &MovementState,
+        context: EngineContext<'_>,
+        query: ReachableMovementQuery<'_>,
+    ) -> Result<ReachableMovement, TerrainMovementQueryError> {
+        movement::find_reachable_tiles(state, context, query)
+    }
+
+    /// Applies one revision-bound authoritative manual movement command.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MoveUnitError`] when validation, planning, or projection update
+    /// fails. Rejected commands do not mutate the borrowed input state.
+    pub fn apply_move_unit(
+        state: &MovementState,
+        context: EngineContext<'_>,
+        command: MoveUnitCommand<'_>,
+    ) -> Result<MovementTransition, MoveUnitError> {
+        movement::apply_move_unit(state, context, command)
     }
 }
 
@@ -72,14 +105,14 @@ pub struct EngineVersion {
     pub behavior_version: u16,
 }
 
-/// Canonical state summary for health checks and early adapters.
+/// Movement-projection summary for health checks and early adapters.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct StateSummary {
-    /// Canonical revision.
+pub struct MovementStateSummary {
+    /// Projection revision.
     pub revision: u64,
     /// Current turn.
     pub turn: u32,
-    /// Number of canonical units.
+    /// Number of projected units.
     pub unit_count: usize,
 }
 
@@ -88,16 +121,31 @@ pub struct StateSummary {
 pub struct EngineContext<'context> {
     actor_player_id: &'context PlayerId,
     map: &'context MapDefinition,
+    planning_view: MovementPlanningView<'context>,
+    can_act: bool,
 }
 
 impl<'context> EngineContext<'context> {
     /// Constructs an explicit context without ambient actor or map state.
     #[must_use]
-    pub const fn new(actor_player_id: &'context PlayerId, map: &'context MapDefinition) -> Self {
+    pub const fn new(
+        actor_player_id: &'context PlayerId,
+        map: &'context MapDefinition,
+        planning_view: MovementPlanningView<'context>,
+    ) -> Self {
         Self {
             actor_player_id,
             map,
+            planning_view,
+            can_act: true,
         }
+    }
+
+    /// Replaces the application-level permission result for this operation.
+    #[must_use]
+    pub const fn with_action_permission(mut self, can_act: bool) -> Self {
+        self.can_act = can_act;
+        self
     }
 
     /// Returns the player issuing the command or query.
@@ -111,22 +159,36 @@ impl<'context> EngineContext<'context> {
     pub const fn map(self) -> &'context MapDefinition {
         self.map
     }
+
+    /// Returns actor-visible occupancy used by movement planning.
+    #[must_use]
+    pub const fn planning_view(self) -> MovementPlanningView<'context> {
+        self.planning_view
+    }
+
+    /// Returns whether the application boundary authorizes gameplay actions.
+    #[must_use]
+    pub const fn can_act(self) -> bool {
+        self.can_act
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
-    use aonw_domain::{HexCoord, MovementUnits, PlayerId, Unit, UnitId, UnitKind, WorldState};
+    use aonw_domain::{
+        HexCoord, MovementState, MovementUnit, MovementUnits, PlayerId, UnitId, UnitKind,
+    };
 
-    use super::{ENGINE_BEHAVIOR_VERSION, EngineContext, GameEngine};
+    use super::{ENGINE_BEHAVIOR_VERSION, EngineContext, GameEngine, MovementPlanningView};
 
     #[test]
-    fn engine_summary_reports_canonical_state() {
+    fn engine_summary_reports_movement_projection() {
         let player_id = PlayerId::new("player-1").expect("valid player id");
-        let state = WorldState::try_new(
+        let state = MovementState::try_new(
             12,
             4,
-            [Unit::new(
+            [MovementUnit::new(
                 UnitId::new("unit-1").expect("valid unit id"),
                 player_id,
                 UnitKind::Commander,
@@ -136,7 +198,7 @@ mod tests {
         )
         .expect("valid state");
 
-        let summary = GameEngine::summarize_state(&state);
+        let summary = GameEngine::summarize_movement_state(&state);
         assert_eq!(summary.revision, 12);
         assert_eq!(summary.turn, 4);
         assert_eq!(summary.unit_count, 1);
@@ -170,7 +232,7 @@ mod tests {
         )
         .expect("valid logical map");
 
-        let context = EngineContext::new(&actor, &map);
+        let context = EngineContext::new(&actor, &map, MovementPlanningView::fog_disabled());
 
         assert_eq!(context.actor_player_id(), &actor);
         assert_eq!(context.map().map_id(), "fixture");

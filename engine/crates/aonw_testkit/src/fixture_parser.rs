@@ -247,6 +247,9 @@ fn movement_execution_error(
     let field = match error {
         MovementExecutionError::BlankUnitId => format!("{execution_path}.unitId"),
         MovementExecutionError::EmptySteps => format!("{execution_path}.steps"),
+        MovementExecutionError::NonAdjacentStep { step_index } => {
+            format!("{execution_path}.steps[{step_index}]")
+        }
         MovementExecutionError::ZeroEnterCost { step_index } => {
             format!("{execution_path}.steps[{step_index}].enterCost")
         }

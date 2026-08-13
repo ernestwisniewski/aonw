@@ -2,9 +2,11 @@
 
 - Status: Target architecture and living migration plan
 - Last updated: 2026-08-13
-- Implementation checkpoint: phase 2/3 foundation plus the first phase 4 map,
-  unit, movement-contract, and terrain-query primitives exist under `engine/`;
-  production integration and complete movement parity have not started
+- Implementation checkpoint: phase 2/3 foundation plus a narrow phase 4
+  movement slice exists under `engine/`: map validation, movement projection,
+  route/reachable queries, `MoveUnit`, three v2 parity fixtures, and Godot
+  GDExtension smoke coverage. Production integration and complete movement
+  parity have not started
 - Governing decision: [ADR 0008](adr/0008-rust-engine-ownership-and-strangler-migration.md)
 
 ## Purpose
@@ -149,6 +151,7 @@ aonw/
 │       ├── aonw_engine/
 │       ├── aonw_contracts/
 │       ├── aonw_contract_mapping/
+│       ├── aonw_godot/
 │       └── aonw_testkit/
 │
 ├── clients/
@@ -178,15 +181,17 @@ aonw/
 The implemented foundation includes the Rust workspace, testkit, versioned
 logical map content, strict small logical-map fixtures, odd-q row-major
 topology, movement-oriented unit DTO mapping, fixed-point terrain costs,
-revision-bound terrain route planning, and the first Godot 3D map preview.
-Fixture contract version 2 can compare authoritative movement executions, but
-the committed legacy corpus remains version 1 and no Rust command executor is
-connected to it yet. Fog, cities, diplomacy, roads, movement transitions, FFI,
-and GDExtension integration remain future work.
+fog-safe route/reachable planning, an authoritative movement transition, and
+the Godot 3D map preview. Three reviewed movement fixtures use contract version
+2 and execute through the Rust engine, including exact movement evidence. The
+rest of the corpus remains readable version 1. Cities, diplomacy, roads,
+complete fog state, full movement parity, Flutter FFI, and production runtime
+integration remain future work.
 `aonw_native_bridge` and top-level contract publication remain planned.
 Additional crates shown in the target layout below are created with their first
-behavior and tests rather than as empty packages. No FFI, GDExtension, local
-runtime, AI, or recipient-replica crate exists yet.
+behavior and tests rather than as empty packages. `aonw_godot` is a narrow
+GDExtension adapter around the movement projection; no complete local runtime,
+AI, Flutter bridge, or recipient-replica crate exists yet.
 
 The parity fixtures are not copied into `engine/`. Both implementations read
 the same committed corpus. New shared maps use the versioned `content/` root;
@@ -212,9 +217,11 @@ transparent reference layer, and saves a scene under
 `clients/aonw2_godot/scenes/maps/` with its resources under
 `clients/aonw2_godot/assets/generated_maps/<map_id>/`. It uses only built-in
 Godot mesh and texture resources; Terrain3D and Tree3D are not dependencies.
-Generated scenes are presentation artifacts. Logical terrain, resources,
-elevation, objectives, and future movement rules remain owned by shared content
-and Rust.
+The authored scene references a replaceable generated surface, so regeneration
+updates terrain and textures while preserving sibling models. Runtime picking
+uses separate hover, selection, and reachable overlay layers. Generated scenes
+remain presentation artifacts. Logical terrain, resources, elevation,
+objectives, and movement rules remain owned by shared content and Rust.
 
 After Dart Core retirement, the repository may be reorganized mechanically
 into `clients/aonw_flutter/`, `clients/aonw2_godot/`,
@@ -690,9 +697,10 @@ It combines `make rust-format-check`, `make rust-clippy`, `make rust-test`, and
 `make rust-doc` using the pinned toolchain. These targets are not yet dependencies
 of the existing Dart/Flutter `make ci` target or GitHub Actions. CI integration,
 supported native targets, WASM when required, schema compatibility, full fixture
-parity, save round trips, FFI/GDExtension smoke tests, architecture ratchets,
-fuzzing, sanitizers or Miri, mutation testing, dependency policy, SBOM, and
-artifact checksums remain later migration gates.
+parity, save round trips, Flutter FFI, release GDExtension packaging,
+architecture ratchets, fuzzing, sanitizers or Miri, mutation testing, dependency
+policy, SBOM, and artifact checksums remain later migration gates. The current
+Godot 4.7 headless smoke covers the local development GDExtension only.
 
 ## Dart Core Retirement Gate
 

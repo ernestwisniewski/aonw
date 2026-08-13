@@ -20,6 +20,6 @@ pub use hex_grid::{HexGridBounds, HexTileIndex};
 pub use identifier::{ArtifactId, IdentifierError, PlayerId, UnitId};
 pub use movement_path::{MovementPathError, MovementStep, QueuedMovePath};
 pub use movement_units::MovementUnits;
-pub use state::{StateBuildError, Unit, WorldState};
+pub use state::{MovementState, MovementStateBuildError, MovementUnit, MovementUnitBuildError};
 pub use unit_kind::{UnitKind, UnitMovementDomain};
 pub use unit_posture::UnitPosture;

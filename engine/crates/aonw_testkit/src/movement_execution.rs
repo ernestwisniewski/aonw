@@ -82,7 +82,11 @@ impl MovementExecution {
         }
 
         let mut expected_cumulative_cost = 0_u32;
+        let mut previous_coordinate = (from_col, from_row);
         for (step_index, step) in steps.iter().enumerate() {
+            if !are_adjacent(previous_coordinate, (step.col, step.row)) {
+                return Err(MovementExecutionError::NonAdjacentStep { step_index });
+            }
             if step.enter_cost == 0 {
                 return Err(MovementExecutionError::ZeroEnterCost { step_index });
             }
@@ -96,6 +100,7 @@ impl MovementExecution {
                     actual: step.cumulative_cost,
                 });
             }
+            previous_coordinate = (step.col, step.row);
         }
 
         Ok(Self {
@@ -137,6 +142,9 @@ impl MovementExecution {
 pub enum MovementExecutionError {
     BlankUnitId,
     EmptySteps,
+    NonAdjacentStep {
+        step_index: usize,
+    },
     ZeroEnterCost {
         step_index: usize,
     },
@@ -155,6 +163,12 @@ impl fmt::Display for MovementExecutionError {
         match self {
             Self::BlankUnitId => formatter.write_str("unit id must not be blank"),
             Self::EmptySteps => formatter.write_str("execution must contain at least one step"),
+            Self::NonAdjacentStep { step_index } => {
+                write!(
+                    formatter,
+                    "step {step_index} is not adjacent to its predecessor"
+                )
+            }
             Self::ZeroEnterCost { step_index } => {
                 write!(
                     formatter,
@@ -177,6 +191,22 @@ impl fmt::Display for MovementExecutionError {
 }
 
 impl std::error::Error for MovementExecutionError {}
+
+fn are_adjacent(from: (u32, u32), to: (u32, u32)) -> bool {
+    const EVEN_COLUMN_OFFSETS: [(i64, i64); 6] =
+        [(1, -1), (1, 0), (0, 1), (-1, 0), (-1, -1), (0, -1)];
+    const ODD_COLUMN_OFFSETS: [(i64, i64); 6] = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (0, -1)];
+    let from = (i64::from(from.0), i64::from(from.1));
+    let to = (i64::from(to.0), i64::from(to.1));
+    let offsets = if from.0 & 1 == 0 {
+        EVEN_COLUMN_OFFSETS
+    } else {
+        ODD_COLUMN_OFFSETS
+    };
+    offsets
+        .into_iter()
+        .any(|offset| (from.0 + offset.0, from.1 + offset.1) == to)
+}
 
 #[cfg(test)]
 mod tests {
@@ -212,6 +242,18 @@ mod tests {
                 expected: 50,
                 actual: 60,
             }
+        );
+    }
+
+    #[test]
+    fn rejects_a_teleporting_execution() {
+        let error =
+            MovementExecution::try_new("unit_1", 0, 0, vec![MovementStep::new(2, 0, 50, 50)])
+                .expect_err("non-adjacent movement must fail");
+
+        assert_eq!(
+            error,
+            MovementExecutionError::NonAdjacentStep { step_index: 0 }
         );
     }
 }

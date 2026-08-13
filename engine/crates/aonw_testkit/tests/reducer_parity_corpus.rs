@@ -23,6 +23,13 @@ fn current_reducer_parity_corpus_loads_in_rust() {
         .expect("committed reducer-parity corpus must load");
 
     assert_eq!(corpus.len(), 120);
+    assert_eq!(
+        corpus
+            .iter()
+            .filter(|fixture| fixture.fixture_version() == 2)
+            .count(),
+        3
+    );
     let families = corpus.iter().map(Fixture::family).collect::<BTreeSet<_>>();
     assert_eq!(
         families,

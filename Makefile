@@ -215,7 +215,7 @@ AONW_RELEASE_CHANNEL ?= $(if $(ENV_RELEASE_CHANNEL),$(ENV_RELEASE_CHANNEL),ALPHA
 
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap toolchain-check rust-check rust-format-check rust-clippy rust-test rust-doc godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats prune status logs
+.PHONY: help bootstrap toolchain-check rust-check rust-format-check rust-clippy rust-test rust-doc rust-godot-build godot-native-config godot-check godot-editor-check godot-editor godot-run godot-test godot-map-sync dependencies root-dependencies core-dependencies client-dependencies server-dependencies profile-check local local-start local-up local-health local-seed local-multiplayer-smoke local-web local-down ci generated-code-check format-check analyze flutter-analyze core-analyze client-analyze server-analyze architecture architecture-check architecture-snapshot mutation mutation-check mutation-snapshot performance performance-check performance-report performance-snapshot performance-frame-check check flutter-test core-test client-test coverage coverage-directory coverage-reports coverage-check coverage-snapshot flutter-coverage-report core-coverage-report server-coverage-report flutter-coverage core-coverage server-coverage reducer-parity-test critical-e2e-test local-game-e2e-test native-local-game-smoke serverpod-critical-e2e-test release-check deploy deploy-all deploy-all-plan deploy-all-preflight deploy-clean build-web deploy-web deploy-web-files deploy-homepage deploy-homepage-files build-homepage download-artifacts download-package deploy-downloads deploy-download-files health-downloads archive-ios archive-ios-if-possible android-keystore android-preflight android-play-preflight android-build-aab android-build-apk android-build-itch android-release android-upload-aab android-upload-closed android-deploy android-deploy-closed multiplayer-platform-smoke steam deploy-steam macos-distribution-preflight steam-macos steam-windows steam-windows-local steam-windows-github steam-package-windows steam-runtime-contract steam-linux steam-linux-local steam-linux-github steam-package-linux steam-prepare-from-dist steam-upload steam-upload-command steam-release-from-dist itch deploy-itch itch-desktop itch-prepare itch-upload bump-version preflight-release preflight pull build server-test server-integration-test serverpod-runtime-smoke serverpod-seed-test-users compose-check docker-context-check infra-config-check serverpod-config-check serverpod-ops-check serverpod-version serverpod-cli-install serverpod-cli-ensure serverpod-cli-check check-migrations migrate up health health-web health-homepage health-architecture health-stats prune status logs
 
 help:
 	@echo "AONW deploy helpers"
@@ -229,6 +229,7 @@ help:
 	@echo "  make bootstrap    LOCAL: verify pinned Flutter/Dart, install all lockfiles, and ensure Serverpod CLI"
 	@echo "  make toolchain-check LOCAL: verify .fvmrc Flutter and its bundled Dart are active"
 	@echo "  make rust-check   LOCAL: format, lint, test, and document the Rust workspace"
+	@echo "  make rust-godot-build LOCAL: build the Rust GDExtension for Godot"
 	@echo "  make godot-editor LOCAL: open AoNW2 with the Map Workbench dock"
 	@echo "  make godot-run    LOCAL: run the AoNW2 map preview"
 	@echo "  make godot-check  LOCAL: run Godot map tests and an editor/plugin smoke test"
@@ -470,20 +471,28 @@ rust-test:
 rust-doc:
 	@cd "$(RUST_WORKSPACE)" && RUSTDOCFLAGS="-D warnings" $(RUST_CARGO) doc --workspace --no-deps
 
-godot-check: godot-test godot-editor-check
+rust-godot-build:
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build -p aonw_godot
 
-godot-editor-check:
+godot-native-config:
+	@mkdir -p "$(GODOT_PROJECT)/.godot"
+	@printf '%s\n' 'res://aonw_engine.gdextension' > "$(GODOT_PROJECT)/.godot/extension_list.cfg"
+
+godot-check: rust-godot-build godot-test godot-editor-check
+
+godot-editor-check: rust-godot-build godot-native-config
 	@$(GODOT_BIN) --headless --log-file "$(GODOT_TEST_LOG)" --editor --path "$(GODOT_PROJECT)" --quit
 
-godot-editor:
+godot-editor: rust-godot-build godot-native-config
 	@$(GODOT_BIN) --editor --path "$(GODOT_PROJECT)"
 
-godot-run:
+godot-run: rust-godot-build godot-native-config
 	@$(GODOT_BIN) --path "$(GODOT_PROJECT)"
 
-godot-test:
+godot-test: rust-godot-build godot-native-config
 	@$(GODOT_BIN) --headless --log-file "$(GODOT_TEST_LOG)" --path "$(GODOT_PROJECT)" --check-only --script res://tests/test_map_pipeline.gd
 	@$(GODOT_BIN) --headless --log-file "$(GODOT_TEST_LOG)" --path "$(GODOT_PROJECT)" --script res://tests/test_map_pipeline.gd
+	@$(GODOT_BIN) --headless --log-file "$(GODOT_TEST_LOG)" --path "$(GODOT_PROJECT)" --quit-after 5
 
 godot-map-sync:
 	@mkdir -p "$(GODOT_PROJECT)/assets/maps/aonw2_starter"
