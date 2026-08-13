@@ -70,8 +70,8 @@
             "found": 25
           },
           "lines": {
-            "hit": 1052,
-            "found": 1260
+            "hit": 1055,
+            "found": 1263
           }
         },
         "app": {
@@ -120,8 +120,8 @@
             "found": 77
           },
           "lines": {
-            "hit": 2664,
-            "found": 2995
+            "hit": 2674,
+            "found": 3005
           }
         },
         "game_domain": {
@@ -130,8 +130,8 @@
             "found": 50
           },
           "lines": {
-            "hit": 1903,
-            "found": 2103
+            "hit": 1913,
+            "found": 2113
           }
         },
         "game_infrastructure": {
@@ -140,8 +140,8 @@
             "found": 23
           },
           "lines": {
-            "hit": 550,
-            "found": 592
+            "hit": 560,
+            "found": 603
           }
         },
         "game_presentation_engine": {
@@ -150,8 +150,8 @@
             "found": 147
           },
           "lines": {
-            "hit": 8670,
-            "found": 10764
+            "hit": 8708,
+            "found": 10788
           }
         },
         "game_presentation_screens": {
@@ -160,7 +160,7 @@
             "found": 75
           },
           "lines": {
-            "hit": 3876,
+            "hit": 3877,
             "found": 4870
           }
         },
@@ -170,18 +170,18 @@
             "found": 104
           },
           "lines": {
-            "hit": 4634,
-            "found": 5484
+            "hit": 4667,
+            "found": 5486
           }
         },
         "game_presentation_widgets": {
           "files": {
-            "hit": 371,
-            "found": 377
+            "hit": 384,
+            "found": 390
           },
           "lines": {
-            "hit": 20405,
-            "found": 22898
+            "hit": 21685,
+            "found": 24230
           }
         },
         "l10n": {
@@ -210,18 +210,18 @@
             "found": 31
           },
           "lines": {
-            "hit": 1739,
-            "found": 1868
+            "hit": 1756,
+            "found": 1885
           }
         },
         "shared": {
           "files": {
-            "hit": 46,
-            "found": 47
+            "hit": 47,
+            "found": 48
           },
           "lines": {
-            "hit": 1637,
-            "found": 1939
+            "hit": 1668,
+            "found": 1970
           }
         }
       },

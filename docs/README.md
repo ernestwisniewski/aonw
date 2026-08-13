@@ -87,8 +87,8 @@ separately under `clients/aonw2_godot/`.
 ```mermaid
 flowchart TB
   subgraph Clients["Presentation clients"]
-    Flutter["Flutter / Flame AoNW1<br/>root → clients/aonw_flutter"]
-    Godot["Godot AoNW2<br/>clients/aonw2_godot"]
+    Flutter["Flutter / Flame AoNW1 → clients/aonw_flutter"]
+    Godot["Godot AoNW2 → clients/aonw2_godot"]
   end
 
   subgraph ClientPorts["Client application ports"]

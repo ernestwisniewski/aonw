@@ -62,6 +62,16 @@ void main() {
     });
   });
 
+  group('TerrainTheme.resourceIcon', () {
+    test('returns null or the catalog asset for a resource', () {
+      expect(TerrainTheme.resourceIcon(null), isNull);
+      expect(
+        TerrainTheme.resourceIcon(ResourceType.iron),
+        TerrainTheme.resourceIcons[ResourceType.iron],
+      );
+    });
+  });
+
   group('TerrainTheme.sideColor', () {
     test('right wall is darker than top face', () {
       final top = TerrainTheme.topColor(TerrainType.grassland, null);
