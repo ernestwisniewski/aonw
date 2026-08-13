@@ -8,21 +8,16 @@ use aonw_engine::{
 };
 
 use crate::command_dispatch::{RuntimeUnitActionKind, dispatch_move, dispatch_unit_action};
-use crate::persistence::{ReplayRecorder, RngStateV1};
-use crate::player_view::PlayerViewSnapshotV1;
+use crate::persistence::{ReplayRecorder, RngState};
+use crate::player_view::PlayerViewSnapshot;
 use crate::prepared_world::PreparedWorld;
 use crate::query_cache::{QueryCache, QueryCacheStats};
 use crate::query_dispatch::dispatch_query;
-use crate::{CommandResultV1, MoveUnitV1, QueryRequestV1, QueryResultV1, UnitActionV1};
-
-/// Current local session contract version.
-pub const LOCAL_SESSION_CONTRACT_VERSION: u16 = 2;
+use crate::{CommandResult, MoveUnitRequest, RuntimeQuery, RuntimeQueryResult, UnitActionRequest};
 
 /// Runtime capabilities independent of session state.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct RuntimeCapabilities {
-    /// Local session contract version.
-    pub contract_version: u16,
     /// Deterministic engine behavior version.
     pub behavior_version: u16,
     features: u8,
@@ -75,9 +70,7 @@ impl RuntimeCapabilities {
 
 /// Identity metadata carried by every session response.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct SessionStampV1 {
-    /// Local session contract version.
-    pub contract_version: u16,
+pub struct SessionStamp {
     /// Deterministic engine behavior version.
     pub behavior_version: u16,
     /// Canonical state revision.
@@ -92,16 +85,16 @@ pub struct SessionStampV1 {
 
 /// Fully validated input used to open one local session.
 #[derive(Clone, Debug)]
-pub struct OpenSessionV1 {
+pub struct OpenSession {
     map: MapDefinition,
     ruleset: RulesetDefinition,
     state: GameState,
     actor: PlayerId,
-    rng_state: RngStateV1,
+    rng_state: RngState,
     event_offset: u64,
 }
 
-impl OpenSessionV1 {
+impl OpenSession {
     /// Builds an open request from immutable scenario content.
     ///
     /// # Errors
@@ -121,7 +114,7 @@ impl OpenSessionV1 {
             ruleset,
             state,
             actor,
-            rng_state: RngStateV1::new(0, 0, 0),
+            rng_state: RngState::new(0, 0, 0),
             event_offset: 0,
         })
     }
@@ -139,14 +132,14 @@ impl OpenSessionV1 {
             ruleset,
             state,
             actor,
-            rng_state: RngStateV1::new(0, 0, 0),
+            rng_state: RngState::new(0, 0, 0),
             event_offset: 0,
         }
     }
 
     /// Restores deterministic runtime state owned outside the game aggregate.
     #[must_use]
-    pub const fn with_runtime_state(mut self, rng_state: RngStateV1, event_offset: u64) -> Self {
+    pub const fn with_runtime_state(mut self, rng_state: RngState, event_offset: u64) -> Self {
         self.rng_state = rng_state;
         self.event_offset = event_offset;
         self
@@ -227,13 +220,13 @@ pub(crate) struct Session {
     actor: PlayerId,
     state_digest: StateDigest,
     visibility: MovementVisibility,
-    rng_state: RngStateV1,
+    rng_state: RngState,
     event_offset: u64,
     replay: ReplayRecorder,
 }
 
 impl Session {
-    fn try_open(request: OpenSessionV1) -> Result<Self, OpenSessionError> {
+    fn try_open(request: OpenSession) -> Result<Self, OpenSessionError> {
         let world = PreparedWorld::try_new(request.map, request.ruleset, &request.state)?;
         let state_digest = GameEngine::state_digest(&request.state);
         let visibility =
@@ -272,7 +265,7 @@ impl Session {
         self.world.ruleset()
     }
 
-    pub(crate) const fn rng_state(&self) -> RngStateV1 {
+    pub(crate) const fn rng_state(&self) -> RngState {
         self.rng_state
     }
 
@@ -328,9 +321,8 @@ impl Session {
         self.state.is_some()
     }
 
-    pub(crate) fn stamp(&self) -> SessionStampV1 {
-        SessionStampV1 {
-            contract_version: LOCAL_SESSION_CONTRACT_VERSION,
+    pub(crate) fn stamp(&self) -> SessionStamp {
+        SessionStamp {
             behavior_version: ENGINE_BEHAVIOR_VERSION,
             revision: self.state().revision(),
             state_digest: self.state_digest,
@@ -353,7 +345,6 @@ impl LocalRuntime {
     #[must_use]
     pub const fn capabilities() -> RuntimeCapabilities {
         RuntimeCapabilities {
-            contract_version: LOCAL_SESSION_CONTRACT_VERSION,
             behavior_version: ENGINE_BEHAVIOR_VERSION,
             features: RuntimeCapabilities::ROUTE_PLAN
                 | RuntimeCapabilities::REACHABLE
@@ -371,7 +362,7 @@ impl LocalRuntime {
     /// # Errors
     ///
     /// Returns an error when map, ruleset, scenario, or state identities differ.
-    pub fn open(&mut self, request: OpenSessionV1) -> Result<SessionStampV1, OpenSessionError> {
+    pub fn open(&mut self, request: OpenSession) -> Result<SessionStamp, OpenSessionError> {
         let candidate = Session::try_open(request)?;
         let stamp = candidate.stamp();
         self.session = Some(candidate);
@@ -394,9 +385,9 @@ impl LocalRuntime {
     /// # Errors
     ///
     /// Returns [`RuntimeError::SessionNotOpen`] when closed.
-    pub fn snapshot(&self) -> Result<PlayerViewSnapshotV1, RuntimeError> {
+    pub fn snapshot(&self) -> Result<PlayerViewSnapshot, RuntimeError> {
         let session = self.session.as_ref().ok_or(RuntimeError::SessionNotOpen)?;
-        Ok(PlayerViewSnapshotV1::new(
+        Ok(PlayerViewSnapshot::new(
             session.stamp(),
             session.state(),
             session.actor(),
@@ -408,7 +399,7 @@ impl LocalRuntime {
     /// # Errors
     ///
     /// Returns a stable query rejection or session error.
-    pub fn query(&mut self, request: &QueryRequestV1) -> Result<QueryResultV1, RuntimeError> {
+    pub fn query(&mut self, request: &RuntimeQuery) -> Result<RuntimeQueryResult, RuntimeError> {
         let stamp = self
             .session
             .as_ref()
@@ -426,8 +417,8 @@ impl LocalRuntime {
     /// Executes independent queries while reusing runtime caches and buffers.
     pub fn query_batch(
         &mut self,
-        requests: &[QueryRequestV1],
-    ) -> Vec<Result<QueryResultV1, RuntimeError>> {
+        requests: &[RuntimeQuery],
+    ) -> Vec<Result<RuntimeQueryResult, RuntimeError>> {
         requests.iter().map(|request| self.query(request)).collect()
     }
 
@@ -443,7 +434,7 @@ impl LocalRuntime {
     ///
     /// Returns an internal transition or session error. Domain rejections are
     /// successful typed results with a rejection code.
-    pub fn dispatch(&mut self, command: &MoveUnitV1) -> Result<CommandResultV1, RuntimeError> {
+    pub fn dispatch(&mut self, command: &MoveUnitRequest) -> Result<CommandResult, RuntimeError> {
         let result = {
             let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
             dispatch_move(session, command)
@@ -458,8 +449,8 @@ impl LocalRuntime {
     /// Returns an internal transition or session error.
     pub fn cancel_unit_action(
         &mut self,
-        command: &UnitActionV1,
-    ) -> Result<CommandResultV1, RuntimeError> {
+        command: &UnitActionRequest,
+    ) -> Result<CommandResult, RuntimeError> {
         self.dispatch_unit_action(command, RuntimeUnitActionKind::Cancel)
     }
 
@@ -470,8 +461,8 @@ impl LocalRuntime {
     /// Returns an internal transition or session error.
     pub fn skip_unit_turn(
         &mut self,
-        command: &UnitActionV1,
-    ) -> Result<CommandResultV1, RuntimeError> {
+        command: &UnitActionRequest,
+    ) -> Result<CommandResult, RuntimeError> {
         self.dispatch_unit_action(command, RuntimeUnitActionKind::Skip)
     }
 
@@ -482,16 +473,16 @@ impl LocalRuntime {
     /// Returns an internal transition or session error.
     pub fn fortify_unit(
         &mut self,
-        command: &UnitActionV1,
-    ) -> Result<CommandResultV1, RuntimeError> {
+        command: &UnitActionRequest,
+    ) -> Result<CommandResult, RuntimeError> {
         self.dispatch_unit_action(command, RuntimeUnitActionKind::Fortify)
     }
 
     fn dispatch_unit_action(
         &mut self,
-        command: &UnitActionV1,
+        command: &UnitActionRequest,
         kind: RuntimeUnitActionKind,
-    ) -> Result<CommandResultV1, RuntimeError> {
+    ) -> Result<CommandResult, RuntimeError> {
         let result = {
             let session = self.session.as_mut().ok_or(RuntimeError::SessionNotOpen)?;
             dispatch_unit_action(session, command, kind)
@@ -501,8 +492,8 @@ impl LocalRuntime {
 
     fn complete_dispatch(
         &mut self,
-        result: Result<CommandResultV1, RuntimeError>,
-    ) -> Result<CommandResultV1, RuntimeError> {
+        result: Result<CommandResult, RuntimeError>,
+    ) -> Result<CommandResult, RuntimeError> {
         if self
             .session
             .as_ref()

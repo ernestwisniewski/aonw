@@ -7,13 +7,13 @@ use aonw_engine::{
 };
 
 use crate::persistence::{replay_context, replay_entry};
-use crate::player_view::{PlayerUnitViewV1, visible_units};
+use crate::player_view::{PlayerUnitView, visible_units};
 use crate::session::Session;
-use crate::{RuntimeError, SessionStampV1};
+use crate::{RuntimeError, SessionStamp};
 
 /// Current revision-bound manual-movement command.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MoveUnitV1 {
+pub struct MoveUnitRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
     /// Unit to move.
@@ -24,7 +24,7 @@ pub struct MoveUnitV1 {
 
 /// Current revision-bound map-independent unit action.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct UnitActionV1 {
+pub struct UnitActionRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
     /// Unit receiving the action.
@@ -40,22 +40,22 @@ pub(crate) enum RuntimeUnitActionKind {
 
 /// Recipient-safe view delta produced by one dispatch.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PlayerViewPatchV1 {
+pub struct PlayerViewPatch {
     /// Revision the patch applies to.
     pub from_revision: u64,
     /// Revision after the patch.
     pub to_revision: u64,
     /// New or changed visible units.
-    pub upserted_units: Box<[PlayerUnitViewV1]>,
+    pub upserted_units: Box<[PlayerUnitView]>,
     /// Units no longer visible.
     pub removed_unit_ids: Box<[UnitId]>,
 }
 
 /// Complete local result of one authoritative command dispatch.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CommandResultV1 {
+pub struct CommandResult {
     /// Version and authoritative identity metadata.
-    pub stamp: SessionStampV1,
+    pub stamp: SessionStamp,
     /// Stable rejection code, absent when accepted.
     pub rejection: Option<&'static str>,
     /// Ordered authoritative events.
@@ -63,10 +63,10 @@ pub struct CommandResultV1 {
     /// Exact execution evidence.
     pub evidence: Option<ExecutionEvidence>,
     /// Recipient-safe presentation delta.
-    pub view_patch: PlayerViewPatchV1,
+    pub view_patch: PlayerViewPatch,
 }
 
-impl CommandResultV1 {
+impl CommandResult {
     /// Returns whether the command was accepted.
     #[must_use]
     pub const fn is_accepted(&self) -> bool {
@@ -76,8 +76,8 @@ impl CommandResultV1 {
 
 pub(crate) fn dispatch_move(
     session: &mut Session,
-    command: &MoveUnitV1,
-) -> Result<CommandResultV1, RuntimeError> {
+    command: &MoveUnitRequest,
+) -> Result<CommandResult, RuntimeError> {
     let replay_command = ReplayCommandDto::MoveUnit {
         expected_revision: command.expected_revision,
         unit_id: command.unit_id.as_str().to_owned(),
@@ -99,9 +99,9 @@ pub(crate) fn dispatch_move(
 
 pub(crate) fn dispatch_unit_action(
     session: &mut Session,
-    command: &UnitActionV1,
+    command: &UnitActionRequest,
     kind: RuntimeUnitActionKind,
-) -> Result<CommandResultV1, RuntimeError> {
+) -> Result<CommandResult, RuntimeError> {
     let engine_command = UnitActionCommand::new(command.expected_revision, &command.unit_id);
     let (domain_command, replay_command) = match kind {
         RuntimeUnitActionKind::Cancel => (
@@ -133,7 +133,7 @@ fn dispatch_domain(
     session: &mut Session,
     command: DomainCommand<'_>,
     replay_command: ReplayCommandDto,
-) -> Result<CommandResultV1, RuntimeError> {
+) -> Result<CommandResult, RuntimeError> {
     session.prepare_replay_segment();
     let before_context = replay_context(session);
     let before_revision = session.state().revision().get();
@@ -154,7 +154,7 @@ fn dispatch_domain(
         before_view,
         after_view,
     );
-    let result = CommandResultV1 {
+    let result = CommandResult {
         stamp: session.stamp(),
         rejection,
         events,
@@ -169,9 +169,9 @@ fn dispatch_domain(
 fn diff_view(
     from_revision: u64,
     to_revision: u64,
-    before: Vec<PlayerUnitViewV1>,
-    after: Vec<PlayerUnitViewV1>,
-) -> PlayerViewPatchV1 {
+    before: Vec<PlayerUnitView>,
+    after: Vec<PlayerUnitView>,
+) -> PlayerViewPatch {
     let before = before
         .into_iter()
         .map(|unit| (unit.id().clone(), unit))
@@ -192,7 +192,7 @@ fn diff_view(
         .cloned()
         .collect::<Vec<_>>()
         .into_boxed_slice();
-    PlayerViewPatchV1 {
+    PlayerViewPatch {
         from_revision,
         to_revision,
         upserted_units,

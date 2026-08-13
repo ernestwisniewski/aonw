@@ -12,15 +12,14 @@ mod query_cache;
 mod query_dispatch;
 mod session;
 
-pub use command_dispatch::{CommandResultV1, MoveUnitV1, PlayerViewPatchV1, UnitActionV1};
-pub use persistence::{PersistenceError, ReplayVerificationV1, RngStateV1};
-pub use player_view::{PlayerUnitViewV1, PlayerViewSnapshotV1};
+pub use command_dispatch::{CommandResult, MoveUnitRequest, PlayerViewPatch, UnitActionRequest};
+pub use persistence::{PersistenceError, ReplayVerification, RngState};
+pub use player_view::{PlayerUnitView, PlayerViewSnapshot};
 pub use query_cache::QueryCacheStats;
 pub use query_dispatch::{
-    MovementStepViewV1, QueryRequestV1, QueryResultV1, ReachableRequestV1, ReachableResultV1,
-    ReachableTileViewV1, RoutePlanRequestV1, RoutePlanResultV1,
+    MovementStepView, ReachableRequest, ReachableResult, ReachableTileView, RoutePlanRequest,
+    RoutePlanResult, RuntimeQuery, RuntimeQueryResult,
 };
 pub use session::{
-    LOCAL_SESSION_CONTRACT_VERSION, LocalRuntime, OpenSessionError, OpenSessionV1,
-    RuntimeCapabilities, RuntimeError, SessionStampV1,
+    LocalRuntime, OpenSession, OpenSessionError, RuntimeCapabilities, RuntimeError, SessionStamp,
 };

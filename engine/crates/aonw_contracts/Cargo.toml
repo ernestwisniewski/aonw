@@ -1,6 +1,6 @@
 [package]
 name = "aonw_contracts"
-description = "Versioned boundary DTOs for the Age of New Worlds engine"
+description = "Strict client and persistence DTOs for the Age of New Worlds engine"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

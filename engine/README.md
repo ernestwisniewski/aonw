@@ -17,7 +17,7 @@ platform, shadow, canary, and rollback gates in the
 | --- | --- |
 | `aonw_domain` | `GameState`, complete unit entities, validated identifiers, odd-q topology, and fixed-point values. |
 | `aonw_content` | Strict maps, immutable rulesets and scenarios, catalogs, validation, and separate deterministic content hashes. |
-| `aonw_contracts` | Versioned boundary DTOs and strict bounded state, save, and replay codecs. |
+| `aonw_contracts` | Current-only shared client API plus strict bounded canonical state, save, and replay codecs. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
 | `aonw_engine` | Authoritative movement queries/transitions and revision-bound cancel, skip, and fortify unit actions. |
 | `aonw_local_runtime` | Transactional local-session lifecycle, player snapshots, query/command dispatch, and recipient-safe patches. |
@@ -66,7 +66,7 @@ The current static corpus contains 44 fixtures: 38 movement cases and six
 cancel/skip/fortify cases. Every fixture executes through canonical
 `GameEngine::apply` and compares the complete Dart state envelope, rejection,
 ordered events, and exact movement evidence. `aonw_testkit` accepts only the
-current fixture contract. Rust and Godot boundaries use strict, versioned
+current fixture contract. Rust and Godot boundaries use strict, current-only
 codecs.
 
 The characterization covers terrain bases and features, roads, partial and
@@ -94,8 +94,9 @@ neighbors and row-major indices without allocation.
 The actor is command/query context, not persisted state. `GameStateDto` version
 2 is the strict current contract for all implemented authoritative state. It
 persists a reversible current-turn unit skip without moving that rule into UI.
-`MovementStateDto`
-remains a temporary adapter projection and is not a save format.
+`MovementStateDto` remains a temporary adapter projection and is not a save
+format. It will be removed when movement algorithms borrow the canonical
+aggregate directly.
 `EngineContext` supplies actor, permission, validated map, and immutable
 ruleset; canonical fog and occupancy are derived from `GameState`.
 
@@ -142,10 +143,18 @@ actions emit no synthetic movement events or evidence.
 
 `aonw_local_runtime::LocalRuntime` owns one validated local session. Opening is
 transactional, closing is idempotent, and every snapshot, query, and dispatch
-response carries contract and behavior versions, revision, state digest, map
-hash, and ruleset hash. It exposes full recipient-safe snapshots, reachable and
-route queries, revision-bound commands, ordered events, exact execution
-evidence, and view patches including unit posture.
+response carries behavior version, revision, state digest, map hash, and ruleset
+hash. It exposes full recipient-safe snapshots, reachable and route queries,
+revision-bound commands, ordered events, exact execution evidence, and view
+patches including unit posture.
+
+`aonw_contracts::client` owns the single client protocol shared by Godot and the
+planned Flutter FFI adapter. `ClientRequestDto` contains tagged lifecycle,
+command, and query operations. `ClientResponseDto` contains only recipient-safe
+snapshots, patches, events, evidence, persistence documents, and stable errors;
+canonical `GameStateDto` never crosses this boundary. The protocol accepts only
+`CLIENT_API_VERSION` and has no historical readers or upcasters. Rust in-process
+runtime types deliberately have no version suffix.
 
 The runtime prepares `CompiledMovementMap` once per map/ruleset, keeps
 tile-indexed visibility, builds occupancy as a compact bitset, reuses reachable
@@ -186,7 +195,7 @@ not move persistence rules into GDScript.
 
 ## Deliberately deferred
 
-- historical save/replay upcasters and long-term compatibility manifests;
+- historical client/save/replay upcasters and long-term compatibility manifests;
 - Flutter/native C ABI and production packaging beyond the Godot debug adapter;
 - AI and remote replica crates;
 - any integration that could change the active Flutter or Serverpod runtime.

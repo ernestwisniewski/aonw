@@ -1,10 +1,10 @@
 use aonw_domain::{FogVisibility, GameState, PlayerId, Unit, UnitId, UnitKind, UnitPosture};
 
-use crate::SessionStampV1;
+use crate::SessionStamp;
 
 /// Recipient-safe unit view for local presentation.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PlayerUnitViewV1 {
+pub struct PlayerUnitView {
     id: UnitId,
     owner_player_id: PlayerId,
     kind: UnitKind,
@@ -15,7 +15,7 @@ pub struct PlayerUnitViewV1 {
     posture: UnitPosture,
 }
 
-impl PlayerUnitViewV1 {
+impl PlayerUnitView {
     pub(crate) fn from_unit(unit: &Unit) -> Self {
         Self {
             id: unit.id().clone(),
@@ -73,13 +73,13 @@ impl PlayerUnitViewV1 {
 
 /// Complete recipient-safe presentation snapshot.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PlayerViewSnapshotV1 {
-    stamp: SessionStampV1,
-    units: Box<[PlayerUnitViewV1]>,
+pub struct PlayerViewSnapshot {
+    stamp: SessionStamp,
+    units: Box<[PlayerUnitView]>,
 }
 
-impl PlayerViewSnapshotV1 {
-    pub(crate) fn new(stamp: SessionStampV1, state: &GameState, actor: &PlayerId) -> Self {
+impl PlayerViewSnapshot {
+    pub(crate) fn new(stamp: SessionStamp, state: &GameState, actor: &PlayerId) -> Self {
         Self {
             stamp,
             units: visible_units(state, actor).into_boxed_slice(),
@@ -88,17 +88,17 @@ impl PlayerViewSnapshotV1 {
 
     /// Returns version and authoritative identity metadata.
     #[must_use]
-    pub const fn stamp(&self) -> &SessionStampV1 {
+    pub const fn stamp(&self) -> &SessionStamp {
         &self.stamp
     }
     /// Returns all units visible to this local player.
     #[must_use]
-    pub const fn units(&self) -> &[PlayerUnitViewV1] {
+    pub const fn units(&self) -> &[PlayerUnitView] {
         &self.units
     }
 }
 
-pub(crate) fn visible_units(state: &GameState, actor: &PlayerId) -> Vec<PlayerUnitViewV1> {
+pub(crate) fn visible_units(state: &GameState, actor: &PlayerId) -> Vec<PlayerUnitView> {
     state
         .units()
         .iter()
@@ -106,6 +106,6 @@ pub(crate) fn visible_units(state: &GameState, actor: &PlayerId) -> Vec<PlayerUn
             unit.owner_player_id() == actor
                 || state.fog_of_war().visibility(actor, unit.position()) == FogVisibility::Visible
         })
-        .map(PlayerUnitViewV1::from_unit)
+        .map(PlayerUnitView::from_unit)
         .collect()
 }

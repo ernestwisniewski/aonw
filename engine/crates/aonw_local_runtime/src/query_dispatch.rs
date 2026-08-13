@@ -5,11 +5,11 @@ use aonw_engine::{
 };
 
 use crate::session::Session;
-use crate::{RuntimeError, SessionStampV1};
+use crate::{RuntimeError, SessionStamp};
 
 /// Current reachable-overlay request.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ReachableRequestV1 {
+pub struct ReachableRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
     /// Unit to inspect.
@@ -18,7 +18,7 @@ pub struct ReachableRequestV1 {
 
 /// Current route-preview request.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct RoutePlanRequestV1 {
+pub struct RoutePlanRequest {
     /// Expected canonical revision.
     pub expected_revision: u64,
     /// Unit to inspect.
@@ -29,16 +29,16 @@ pub struct RoutePlanRequestV1 {
 
 /// Versioned local query family.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum QueryRequestV1 {
+pub enum RuntimeQuery {
     /// Current-turn reachable overlay.
-    Reachable(ReachableRequestV1),
+    Reachable(ReachableRequest),
     /// Deterministic complete route preview.
-    RoutePlan(RoutePlanRequestV1),
+    RoutePlan(RoutePlanRequest),
 }
 
 /// One reachable tile.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ReachableTileViewV1 {
+pub struct ReachableTileView {
     /// Tile coordinate.
     pub coordinate: HexCoord,
     /// Fixed-point path cost.
@@ -49,20 +49,20 @@ pub struct ReachableTileViewV1 {
 
 /// Reachable-overlay response.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ReachableResultV1 {
+pub struct ReachableResult {
     /// Version and authoritative identity metadata.
-    pub stamp: SessionStampV1,
+    pub stamp: SessionStamp,
     /// Queried unit.
     pub unit_id: UnitId,
     /// Movement available at query time.
     pub available_movement: MovementUnits,
     /// Stable row-major reachable tiles.
-    pub tiles: Box<[ReachableTileViewV1]>,
+    pub tiles: Box<[ReachableTileView]>,
 }
 
 /// One route step including the zero-cost origin.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct MovementStepViewV1 {
+pub struct MovementStepView {
     /// Step coordinate.
     pub coordinate: HexCoord,
     /// Entry cost.
@@ -73,9 +73,9 @@ pub struct MovementStepViewV1 {
 
 /// Route-preview response.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct RoutePlanResultV1 {
+pub struct RoutePlanResult {
     /// Version and authoritative identity metadata.
-    pub stamp: SessionStampV1,
+    pub stamp: SessionStamp,
     /// Queried unit.
     pub unit_id: UnitId,
     /// Requested target.
@@ -89,25 +89,25 @@ pub struct RoutePlanResultV1 {
     /// Current-turn movement remaining after the executable prefix.
     pub remaining_movement: MovementUnits,
     /// Ordered route including the origin.
-    pub steps: Box<[MovementStepViewV1]>,
+    pub steps: Box<[MovementStepView]>,
 }
 
 /// Versioned local query response family.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum QueryResultV1 {
+pub enum RuntimeQueryResult {
     /// Reachable overlay.
-    Reachable(ReachableResultV1),
+    Reachable(ReachableResult),
     /// Route preview.
-    RoutePlan(RoutePlanResultV1),
+    RoutePlan(RoutePlanResult),
 }
 
 pub(crate) fn dispatch_query(
     session: &Session,
-    request: QueryRequestV1,
+    request: RuntimeQuery,
     workspace: &mut MovementSearchWorkspace,
-) -> Result<QueryResultV1, RuntimeError> {
+) -> Result<RuntimeQueryResult, RuntimeError> {
     match request {
-        QueryRequestV1::Reachable(request) => {
+        RuntimeQuery::Reachable(request) => {
             let result = GameEngine::query_with_workspace(
                 session.state(),
                 session.context(),
@@ -121,14 +121,14 @@ pub(crate) fn dispatch_query(
             let QueryResult::Reachable(result) = result else {
                 unreachable!("reachable query returns reachable response")
             };
-            Ok(QueryResultV1::Reachable(ReachableResultV1 {
+            Ok(RuntimeQueryResult::Reachable(ReachableResult {
                 stamp: session.stamp(),
                 unit_id: result.unit_id().clone(),
                 available_movement: result.available_movement(),
                 tiles: result
                     .tiles()
                     .iter()
-                    .map(|tile| ReachableTileViewV1 {
+                    .map(|tile| ReachableTileView {
                         coordinate: tile.coordinate(),
                         cost: tile.cost(),
                         exhausts_movement: tile.exhausts_movement(),
@@ -136,7 +136,7 @@ pub(crate) fn dispatch_query(
                     .collect(),
             }))
         }
-        QueryRequestV1::RoutePlan(request) => {
+        RuntimeQuery::RoutePlan(request) => {
             let result = GameEngine::query_with_workspace(
                 session.state(),
                 session.context(),
@@ -151,7 +151,7 @@ pub(crate) fn dispatch_query(
             let QueryResult::Route(result) = result else {
                 unreachable!("route query returns route response")
             };
-            Ok(QueryResultV1::RoutePlan(RoutePlanResultV1 {
+            Ok(RuntimeQueryResult::RoutePlan(RoutePlanResult {
                 stamp: session.stamp(),
                 unit_id: result.unit_id().clone(),
                 target: result.target(),
@@ -162,7 +162,7 @@ pub(crate) fn dispatch_query(
                 steps: result
                     .steps()
                     .iter()
-                    .map(|step| MovementStepViewV1 {
+                    .map(|step| MovementStepView {
                         coordinate: step.coordinate(),
                         enter_cost: step.enter_cost(),
                         cumulative_cost: step.cumulative_cost(),

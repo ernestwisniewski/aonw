@@ -2,7 +2,7 @@ use aonw_content::ContentHash;
 use aonw_domain::{HexCoord, UnitId};
 use aonw_engine::StateDigest;
 
-use crate::{QueryRequestV1, QueryResultV1, SessionStampV1};
+use crate::{RuntimeQuery, RuntimeQueryResult, SessionStamp};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum QueryKind {
@@ -22,14 +22,14 @@ struct QueryCacheKey {
 }
 
 impl QueryCacheKey {
-    fn new(stamp: SessionStampV1, request: &QueryRequestV1) -> Self {
+    fn new(stamp: SessionStamp, request: &RuntimeQuery) -> Self {
         let (expected_revision, unit_id, kind) = match request {
-            QueryRequestV1::Reachable(request) => (
+            RuntimeQuery::Reachable(request) => (
                 request.expected_revision,
                 request.unit_id.clone(),
                 QueryKind::Reachable,
             ),
-            QueryRequestV1::RoutePlan(request) => (
+            RuntimeQuery::RoutePlan(request) => (
                 request.expected_revision,
                 request.unit_id.clone(),
                 QueryKind::RoutePlan(request.target),
@@ -58,16 +58,16 @@ pub struct QueryCacheStats {
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct QueryCache {
-    entry: Option<(QueryCacheKey, QueryResultV1)>,
+    entry: Option<(QueryCacheKey, RuntimeQueryResult)>,
     stats: QueryCacheStats,
 }
 
 impl QueryCache {
     pub(crate) fn get(
         &mut self,
-        stamp: SessionStampV1,
-        request: &QueryRequestV1,
-    ) -> Option<QueryResultV1> {
+        stamp: SessionStamp,
+        request: &RuntimeQuery,
+    ) -> Option<RuntimeQueryResult> {
         let key = QueryCacheKey::new(stamp, request);
         if let Some((cached_key, result)) = &self.entry
             && cached_key == &key
@@ -81,9 +81,9 @@ impl QueryCache {
 
     pub(crate) fn insert(
         &mut self,
-        stamp: SessionStampV1,
-        request: &QueryRequestV1,
-        result: &QueryResultV1,
+        stamp: SessionStamp,
+        request: &RuntimeQuery,
+        result: &RuntimeQueryResult,
     ) {
         self.entry = Some((QueryCacheKey::new(stamp, request), result.clone()));
     }

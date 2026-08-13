@@ -8,6 +8,7 @@
 #![forbid(unsafe_code)]
 
 mod canonical;
+pub mod client;
 mod limits;
 mod persistence;
 

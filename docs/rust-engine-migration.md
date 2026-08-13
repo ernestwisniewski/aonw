@@ -439,6 +439,16 @@ documented with `SAFETY` comments, and tested independently.
 `aonw_testkit` is also engine-neutral; backend test adapters depend on both the
 testkit and the concrete engine they execute.
 
+Flutter and Godot share one current-only recipient client protocol owned by
+`aonw_contracts::client`. The protocol has one `CLIENT_API_VERSION`, strict
+tagged command/query/response envelopes, byte limits, and committed golden
+vectors. It does not expose canonical `GameStateDto`. Godot GDExtension and the
+planned Flutter C ABI are transport adapters for the same documents. Runtime
+types inside one Rust process are unversioned; map, scenario, save, replay, and
+client documents retain explicit schema versions because they cross process or
+persistence boundaries. No historical readers or upcasters are maintained
+before the first compatibility commitment.
+
 Domain fields are private and created through invariant-preserving
 constructors. Identifiers and units use newtypes rather than interchangeable
 primitives. Production paths handling external data do not use `unwrap` or

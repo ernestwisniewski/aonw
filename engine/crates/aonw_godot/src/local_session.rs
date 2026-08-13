@@ -2,9 +2,9 @@ use aonw_content::{MapDocument, RulesetDefinition, ScenarioDefinition};
 use aonw_domain::{HexCoord, PlayerId, UnitId, UnitKind, UnitPosture};
 use aonw_engine::{DomainEvent, ExecutionEvidence};
 use aonw_local_runtime::{
-    CommandResultV1, LocalRuntime, MoveUnitV1, OpenSessionV1, PlayerUnitViewV1, PlayerViewPatchV1,
-    QueryRequestV1, QueryResultV1, ReachableRequestV1, RoutePlanRequestV1, SessionStampV1,
-    UnitActionV1,
+    CommandResult, LocalRuntime, MoveUnitRequest, OpenSession, PlayerUnitView, PlayerViewPatch,
+    ReachableRequest, RoutePlanRequest, RuntimeQuery, RuntimeQueryResult, SessionStamp,
+    UnitActionRequest,
 };
 use godot::classes::{IRefCounted, RefCounted};
 use godot::prelude::*;
@@ -36,7 +36,6 @@ impl AonwLocalSession {
     fn capabilities_json(&self) -> GString {
         let capabilities = LocalRuntime::capabilities();
         success_json(&json!({
-            "contractVersion": capabilities.contract_version,
             "behaviorVersion": capabilities.behavior_version,
             "routePlan": capabilities.route_plan(),
             "reachable": capabilities.reachable(),
@@ -145,8 +144,8 @@ impl AonwLocalSession {
             Ok(request) => request,
             Err((code, message)) => return failure_json(code, message),
         };
-        match self.runtime.query(&QueryRequestV1::Reachable(request)) {
-            Ok(QueryResultV1::Reachable(result)) => success_json(&with_stamp(
+        match self.runtime.query(&RuntimeQuery::Reachable(request)) {
+            Ok(RuntimeQueryResult::Reachable(result)) => success_json(&with_stamp(
                 result.stamp,
                 json!({
                     "unitId": result.unit_id.as_str(),
@@ -159,7 +158,7 @@ impl AonwLocalSession {
                     })).collect::<Vec<_>>(),
                 }),
             )),
-            Ok(QueryResultV1::RoutePlan(_)) => {
+            Ok(RuntimeQueryResult::RoutePlan(_)) => {
                 failure_json("invalid_runtime_response", "reachable returned route plan")
             }
             Err(error) => failure_json(error.code(), error),
@@ -183,8 +182,8 @@ impl AonwLocalSession {
             Ok(request) => request,
             Err((code, message)) => return failure_json(code, message),
         };
-        match self.runtime.query(&QueryRequestV1::RoutePlan(request)) {
-            Ok(QueryResultV1::RoutePlan(result)) => success_json(&with_stamp(
+        match self.runtime.query(&RuntimeQuery::RoutePlan(request)) {
+            Ok(RuntimeQueryResult::RoutePlan(result)) => success_json(&with_stamp(
                 result.stamp,
                 json!({
                     "unitId": result.unit_id.as_str(),
@@ -201,7 +200,7 @@ impl AonwLocalSession {
                     })).collect::<Vec<_>>(),
                 }),
             )),
-            Ok(QueryResultV1::Reachable(_)) => {
+            Ok(RuntimeQueryResult::Reachable(_)) => {
                 failure_json("invalid_runtime_response", "route plan returned reachable")
             }
             Err(error) => failure_json(error.code(), error),
@@ -281,14 +280,14 @@ fn decode_open_request(
     map_json: &str,
     scenario_json: &str,
     actor_player_id: &str,
-) -> Result<OpenSessionV1, (&'static str, String)> {
+) -> Result<OpenSession, (&'static str, String)> {
     let map = decode_map(map_json)?;
     let ruleset = RulesetDefinition::standard().clone();
     let scenario = ScenarioDefinition::from_json(scenario_json.as_bytes(), &map, &ruleset)
         .map_err(|error| ("invalid_scenario", error.to_string()))?;
     let actor = PlayerId::new(actor_player_id)
         .map_err(|error| ("invalid_actor_player_id", error.to_string()))?;
-    OpenSessionV1::from_scenario(map, ruleset, &scenario, actor)
+    OpenSession::from_scenario(map, ruleset, &scenario, actor)
         .map_err(|error| ("invalid_session", error.to_string()))
 }
 
@@ -301,8 +300,8 @@ fn decode_map(map_json: &str) -> Result<aonw_content::MapDefinition, (&'static s
 fn reachable_request(
     unit_id: &str,
     expected_revision: i64,
-) -> Result<ReachableRequestV1, (&'static str, String)> {
-    Ok(ReachableRequestV1 {
+) -> Result<ReachableRequest, (&'static str, String)> {
+    Ok(ReachableRequest {
         expected_revision: decode_revision(expected_revision)?,
         unit_id: decode_unit_id(unit_id)?,
     })
@@ -313,8 +312,8 @@ fn route_request(
     target_col: i64,
     target_row: i64,
     expected_revision: i64,
-) -> Result<RoutePlanRequestV1, (&'static str, String)> {
-    Ok(RoutePlanRequestV1 {
+) -> Result<RoutePlanRequest, (&'static str, String)> {
+    Ok(RoutePlanRequest {
         expected_revision: decode_revision(expected_revision)?,
         unit_id: decode_unit_id(unit_id)?,
         target: decode_target(target_col, target_row)?,
@@ -326,8 +325,8 @@ fn move_request(
     target_col: i64,
     target_row: i64,
     expected_revision: i64,
-) -> Result<MoveUnitV1, (&'static str, String)> {
-    Ok(MoveUnitV1 {
+) -> Result<MoveUnitRequest, (&'static str, String)> {
+    Ok(MoveUnitRequest {
         expected_revision: decode_revision(expected_revision)?,
         unit_id: decode_unit_id(unit_id)?,
         target: decode_target(target_col, target_row)?,
@@ -337,8 +336,8 @@ fn move_request(
 fn unit_action_request(
     unit_id: &str,
     expected_revision: i64,
-) -> Result<UnitActionV1, (&'static str, String)> {
-    Ok(UnitActionV1 {
+) -> Result<UnitActionRequest, (&'static str, String)> {
+    Ok(UnitActionRequest {
         expected_revision: decode_revision(expected_revision)?,
         unit_id: decode_unit_id(unit_id)?,
     })
@@ -358,9 +357,8 @@ fn decode_target(col: i64, row: i64) -> Result<HexCoord, (&'static str, String)>
     Ok(HexCoord::new(col, row))
 }
 
-fn stamp_json(stamp: SessionStampV1) -> Value {
+fn stamp_json(stamp: SessionStamp) -> Value {
     json!({
-        "contractVersion": stamp.contract_version,
         "behaviorVersion": stamp.behavior_version,
         "revision": stamp.revision.get(),
         "stateDigest": stamp.state_digest.to_string(),
@@ -369,7 +367,7 @@ fn stamp_json(stamp: SessionStampV1) -> Value {
     })
 }
 
-fn with_stamp(stamp: SessionStampV1, value: Value) -> Value {
+fn with_stamp(stamp: SessionStamp, value: Value) -> Value {
     let mut result = stamp_json(stamp).as_object().cloned().unwrap_or_default();
     if let Value::Object(fields) = value {
         result.extend(fields);
@@ -377,7 +375,7 @@ fn with_stamp(stamp: SessionStampV1, value: Value) -> Value {
     Value::Object(result)
 }
 
-fn unit_json(unit: &PlayerUnitViewV1) -> Value {
+fn unit_json(unit: &PlayerUnitView) -> Value {
     json!({
         "id": unit.id().as_str(),
         "ownerPlayerId": unit.owner_player_id().as_str(),
@@ -390,7 +388,7 @@ fn unit_json(unit: &PlayerUnitViewV1) -> Value {
     })
 }
 
-fn command_result_json(result: &CommandResultV1) -> Value {
+fn command_result_json(result: &CommandResult) -> Value {
     with_stamp(
         result.stamp,
         json!({
@@ -430,7 +428,7 @@ fn evidence_json(evidence: &ExecutionEvidence) -> Value {
     }
 }
 
-fn patch_json(patch: &PlayerViewPatchV1) -> Value {
+fn patch_json(patch: &PlayerViewPatch) -> Value {
     json!({
         "fromRevision": patch.from_revision,
         "toRevision": patch.to_revision,

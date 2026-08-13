@@ -1,0 +1,319 @@
+use serde::{Deserialize, Serialize};
+
+use crate::{CoordinateDto, UnitKindDto, UnitPostureDto};
+
+/// One current client protocol response.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ClientResponseDto {
+    /// Client protocol version.
+    pub api_version: u16,
+    /// Successful result or stable failure.
+    pub outcome: ClientOutcomeDto,
+}
+
+/// Result envelope shared by Godot and Flutter adapters.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(
+    tag = "status",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+pub enum ClientOutcomeDto {
+    /// Operation completed successfully.
+    Success {
+        /// Operation-specific result.
+        response: Box<ClientResponseBodyDto>,
+    },
+    /// Operation failed without exposing canonical state.
+    Failure {
+        /// Stable machine code and diagnostic message.
+        error: ClientErrorDto,
+    },
+}
+
+/// Successful local client results.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(
+    tag = "type",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+pub enum ClientResponseBodyDto {
+    /// Supported engine behavior and client operations.
+    Capabilities {
+        /// Deterministic simulation behavior version.
+        behavior_version: u16,
+        /// Supported current protocol features.
+        features: Vec<ClientFeatureDto>,
+    },
+    /// A local session was opened.
+    SessionOpened {
+        /// Current authoritative identity.
+        stamp: ClientSessionStampDto,
+    },
+    /// The local session was closed.
+    SessionClosed,
+    /// Complete recipient-safe snapshot.
+    Snapshot {
+        /// Snapshot payload.
+        snapshot: PlayerViewSnapshotDto,
+    },
+    /// Query result.
+    Query {
+        /// Query-specific payload.
+        result: ClientQueryResultDto,
+    },
+    /// Authoritative command result.
+    Command {
+        /// Command-specific payload.
+        result: ClientCommandResultDto,
+    },
+    /// Current save document.
+    SaveExported {
+        /// Strict save JSON.
+        document: String,
+    },
+    /// A save was opened transactionally.
+    SaveOpened {
+        /// Current authoritative identity.
+        stamp: ClientSessionStampDto,
+    },
+    /// Current replay document.
+    ReplayExported {
+        /// Strict replay JSON.
+        document: String,
+    },
+    /// Replay verification completed.
+    ReplayVerified {
+        /// Verification summary.
+        verification: ClientReplayVerificationDto,
+    },
+}
+
+/// Stable client-visible feature identifiers.
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ClientFeatureDto {
+    /// Complete player snapshot.
+    Snapshot,
+    /// Reachable movement overlay.
+    Reachable,
+    /// Route planning.
+    RoutePlan,
+    /// Manual movement command.
+    MoveUnit,
+    /// Cancel, skip, and fortify commands.
+    UnitActions,
+    /// Save export and restore.
+    SaveGame,
+    /// Replay export and verification.
+    ReplayVerification,
+}
+
+/// Identity metadata returned with state-dependent results.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ClientSessionStampDto {
+    /// Deterministic simulation behavior version.
+    pub behavior_version: u16,
+    /// Current canonical revision.
+    pub revision: u64,
+    /// Digest of the complete canonical state.
+    pub state_digest: String,
+    /// Hash of immutable canonical map content.
+    pub map_hash: String,
+    /// Hash of immutable ruleset content.
+    pub ruleset_hash: String,
+}
+
+/// Complete recipient-safe player snapshot.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PlayerViewSnapshotDto {
+    /// Identity of the represented state.
+    pub stamp: ClientSessionStampDto,
+    /// Units currently visible to the recipient.
+    pub units: Vec<PlayerUnitViewDto>,
+}
+
+/// Recipient-safe unit read model.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PlayerUnitViewDto {
+    /// Unit identifier.
+    pub id: String,
+    /// Visible owning player.
+    pub owner_player_id: String,
+    /// Stable unit kind.
+    pub kind: UnitKindDto,
+    /// Authored display name.
+    pub name: String,
+    /// Current map coordinate.
+    pub coordinate: CoordinateDto,
+    /// Fixed-point movement balance.
+    pub movement_units: u32,
+    /// Persistent unit posture.
+    pub posture: UnitPostureDto,
+}
+
+/// Recipient-safe view update produced by one command.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PlayerViewPatchDto {
+    /// Revision to which the patch applies.
+    pub from_revision: u64,
+    /// Revision represented after the patch.
+    pub to_revision: u64,
+    /// New or changed visible units.
+    pub upserted_units: Vec<PlayerUnitViewDto>,
+    /// Units no longer visible.
+    pub removed_unit_ids: Vec<String>,
+}
+
+/// Result of one authoritative command.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ClientCommandResultDto {
+    /// Identity of the resulting canonical state.
+    pub stamp: ClientSessionStampDto,
+    /// Whether the command was accepted.
+    pub accepted: bool,
+    /// Stable rejection reason when rejected.
+    pub rejection: Option<String>,
+    /// Ordered presentation-safe domain events.
+    pub events: Vec<ClientEventDto>,
+    /// Exact execution evidence when produced.
+    pub evidence: Option<ClientEvidenceDto>,
+    /// Recipient-safe state delta.
+    pub view_patch: PlayerViewPatchDto,
+}
+
+/// Presentation-safe authoritative event.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(
+    tag = "type",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+pub enum ClientEventDto {
+    /// One visible unit changed map position.
+    UnitMoved {
+        /// Moved unit.
+        unit_id: String,
+        /// Previous coordinate.
+        from: CoordinateDto,
+        /// New coordinate.
+        to: CoordinateDto,
+    },
+}
+
+/// Exact client-visible execution evidence.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(
+    tag = "type",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+pub enum ClientEvidenceDto {
+    /// Exact executed movement prefix.
+    UnitMovement {
+        /// Moved unit.
+        unit_id: String,
+        /// Position before execution.
+        from: CoordinateDto,
+        /// Executed steps excluding the origin.
+        steps: Vec<MovementStepViewDto>,
+    },
+}
+
+/// One movement step exposed by a query or command result.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct MovementStepViewDto {
+    /// Step coordinate.
+    pub coordinate: CoordinateDto,
+    /// Fixed-point entry cost.
+    pub enter_cost_units: u32,
+    /// Fixed-point cumulative cost.
+    pub cumulative_cost_units: u32,
+}
+
+/// Recipient-safe query result.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(
+    tag = "type",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+pub enum ClientQueryResultDto {
+    /// Current-turn reachable overlay.
+    Reachable {
+        /// Identity of the queried state.
+        stamp: ClientSessionStampDto,
+        /// Queried unit.
+        unit_id: String,
+        /// Movement available at query time.
+        available_movement_units: u32,
+        /// Stable row-major reachable tiles.
+        tiles: Vec<ReachableTileViewDto>,
+    },
+    /// Deterministic route preview.
+    RoutePlan {
+        /// Identity of the queried state.
+        stamp: ClientSessionStampDto,
+        /// Queried unit.
+        unit_id: String,
+        /// Requested target.
+        target: CoordinateDto,
+        /// Planned destination.
+        destination: CoordinateDto,
+        /// Fixed-point total route cost.
+        total_cost_units: u32,
+        /// Movement available at query time.
+        available_movement_units: u32,
+        /// Movement remaining after the executable prefix.
+        remaining_movement_units: u32,
+        /// Ordered route including the origin.
+        steps: Vec<MovementStepViewDto>,
+    },
+}
+
+/// One current-turn reachable map tile.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReachableTileViewDto {
+    /// Tile coordinate.
+    pub coordinate: CoordinateDto,
+    /// Fixed-point route cost.
+    pub cost_units: u32,
+    /// Whether entry consumes remaining current-turn movement.
+    pub exhausts_movement: bool,
+}
+
+/// Replay verification summary returned to a client.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ClientReplayVerificationDto {
+    /// Number of verified commands.
+    pub entry_count: u64,
+    /// Final event offset.
+    pub final_event_offset: u64,
+    /// Final authoritative identity.
+    pub final_stamp: ClientSessionStampDto,
+}
+
+/// Stable client failure independent of transport details.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ClientErrorDto {
+    /// Stable machine-readable code.
+    pub code: String,
+    /// Human-readable diagnostic message.
+    pub message: String,
+}

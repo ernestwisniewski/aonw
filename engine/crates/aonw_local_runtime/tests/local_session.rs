@@ -10,9 +10,9 @@ use aonw_domain::{
     UnitOccupancyPolicy,
 };
 use aonw_local_runtime::{
-    LOCAL_SESSION_CONTRACT_VERSION, LocalRuntime, MoveUnitV1, OpenSessionError, OpenSessionV1,
-    PersistenceError, QueryRequestV1, QueryResultV1, ReachableRequestV1, ReplayVerificationV1,
-    RngStateV1, RoutePlanRequestV1, RuntimeError, UnitActionV1,
+    LocalRuntime, MoveUnitRequest, OpenSession, OpenSessionError, PersistenceError,
+    ReachableRequest, ReplayVerification, RngState, RoutePlanRequest, RuntimeError, RuntimeQuery,
+    RuntimeQueryResult, UnitActionRequest,
 };
 
 fn map(id: &str, cols: u16, rows: u16) -> MapDefinition {
@@ -32,7 +32,7 @@ fn map(id: &str, cols: u16, rows: u16) -> MapDefinition {
     MapDefinition::try_new(id, GridLayout::OddQFlatTop, cols, rows, tiles, Vec::new()).expect("map")
 }
 
-fn request() -> OpenSessionV1 {
+fn request() -> OpenSession {
     let (map, ruleset) = content();
     let scenario = ScenarioDefinition::try_new(
         "runtime-scenario",
@@ -47,7 +47,7 @@ fn request() -> OpenSessionV1 {
         )],
     )
     .expect("scenario");
-    OpenSessionV1::from_scenario(
+    OpenSession::from_scenario(
         map,
         ruleset,
         &scenario,
@@ -67,7 +67,6 @@ fn content() -> (MapDefinition, RulesetDefinition) {
 fn local_session_supports_snapshot_queries_and_dispatch() {
     let mut runtime = LocalRuntime::default();
     let opened = runtime.open(request()).expect("open");
-    assert_eq!(opened.contract_version, LOCAL_SESSION_CONTRACT_VERSION);
     assert_eq!(opened.revision, StateRevision::INITIAL);
 
     let snapshot = runtime.snapshot().expect("snapshot");
@@ -75,30 +74,30 @@ fn local_session_supports_snapshot_queries_and_dispatch() {
     assert_eq!(snapshot.units()[0].id().as_str(), "unit-1");
 
     let reachable = runtime
-        .query(&QueryRequestV1::Reachable(ReachableRequestV1 {
+        .query(&RuntimeQuery::Reachable(ReachableRequest {
             expected_revision: 0,
             unit_id: UnitId::new("unit-1").expect("unit id"),
         }))
         .expect("reachable");
-    let QueryResultV1::Reachable(reachable) = reachable else {
+    let RuntimeQueryResult::Reachable(reachable) = reachable else {
         panic!("reachable response")
     };
     assert!(!reachable.tiles.is_empty());
 
     let route = runtime
-        .query(&QueryRequestV1::RoutePlan(RoutePlanRequestV1 {
+        .query(&RuntimeQuery::RoutePlan(RoutePlanRequest {
             expected_revision: 0,
             unit_id: UnitId::new("unit-1").expect("unit id"),
             target: HexCoord::new(1, 0),
         }))
         .expect("route");
-    let QueryResultV1::RoutePlan(route) = route else {
+    let RuntimeQueryResult::RoutePlan(route) = route else {
         panic!("route response")
     };
     assert_eq!(route.destination, HexCoord::new(1, 0));
 
     let moved = runtime
-        .dispatch(&MoveUnitV1 {
+        .dispatch(&MoveUnitRequest {
             expected_revision: 0,
             unit_id: UnitId::new("unit-1").expect("unit id"),
             target: HexCoord::new(1, 0),
@@ -120,7 +119,7 @@ fn unit_actions_update_canonical_state_and_are_replayable() {
     let unit_id = UnitId::new("unit-1").expect("unit id");
 
     let skipped = runtime
-        .skip_unit_turn(&UnitActionV1 {
+        .skip_unit_turn(&UnitActionRequest {
             expected_revision: 0,
             unit_id: unit_id.clone(),
         })
@@ -129,7 +128,7 @@ fn unit_actions_update_canonical_state_and_are_replayable() {
     assert_eq!(skipped.view_patch.upserted_units[0].movement_units(), 0);
 
     let cancelled = runtime
-        .cancel_unit_action(&UnitActionV1 {
+        .cancel_unit_action(&UnitActionRequest {
             expected_revision: 1,
             unit_id: unit_id.clone(),
         })
@@ -138,7 +137,7 @@ fn unit_actions_update_canonical_state_and_are_replayable() {
     assert!(cancelled.view_patch.upserted_units[0].movement_units() > 0);
 
     let fortified = runtime
-        .fortify_unit(&UnitActionV1 {
+        .fortify_unit(&UnitActionRequest {
             expected_revision: 2,
             unit_id,
         })
@@ -168,7 +167,7 @@ fn failed_reopen_preserves_session_and_close_is_idempotent() {
         [],
     )
     .expect("state");
-    let invalid = OpenSessionV1::from_state(
+    let invalid = OpenSession::from_state(
         map("other-map", 3, 3),
         RulesetDefinition::standard().clone(),
         invalid_state,
@@ -189,11 +188,11 @@ fn failed_reopen_preserves_session_and_close_is_idempotent() {
 fn repeated_and_batch_queries_use_revision_scoped_cache() {
     let mut runtime = LocalRuntime::default();
     runtime.open(request()).expect("open");
-    let reachable = QueryRequestV1::Reachable(ReachableRequestV1 {
+    let reachable = RuntimeQuery::Reachable(ReachableRequest {
         expected_revision: 0,
         unit_id: UnitId::new("unit-1").expect("unit id"),
     });
-    let route = QueryRequestV1::RoutePlan(RoutePlanRequestV1 {
+    let route = RuntimeQuery::RoutePlan(RoutePlanRequest {
         expected_revision: 0,
         unit_id: UnitId::new("unit-1").expect("unit id"),
         target: HexCoord::new(1, 0),
@@ -201,7 +200,7 @@ fn repeated_and_batch_queries_use_revision_scoped_cache() {
 
     runtime.query(&reachable).expect("cold reachable");
     runtime.query(&reachable).expect("cached reachable");
-    let stale = QueryRequestV1::Reachable(ReachableRequestV1 {
+    let stale = RuntimeQuery::Reachable(ReachableRequest {
         expected_revision: 99,
         unit_id: UnitId::new("unit-1").expect("unit id"),
     });
@@ -212,7 +211,7 @@ fn repeated_and_batch_queries_use_revision_scoped_cache() {
     assert_eq!(runtime.query_cache_stats().misses, 3);
 
     runtime
-        .dispatch(&MoveUnitV1 {
+        .dispatch(&MoveUnitRequest {
             expected_revision: 0,
             unit_id: UnitId::new("unit-1").expect("unit id"),
             target: HexCoord::new(1, 0),
@@ -225,10 +224,10 @@ fn repeated_and_batch_queries_use_revision_scoped_cache() {
 fn save_round_trip_preserves_complete_state_and_runtime_checkpoint() {
     let mut runtime = LocalRuntime::default();
     runtime
-        .open(request().with_runtime_state(RngStateV1::new(41, 7, 3), 11))
+        .open(request().with_runtime_state(RngState::new(41, 7, 3), 11))
         .expect("open");
     runtime
-        .dispatch(&MoveUnitV1 {
+        .dispatch(&MoveUnitRequest {
             expected_revision: 0,
             unit_id: UnitId::new("unit-1").expect("unit id"),
             target: HexCoord::new(1, 0),
@@ -289,14 +288,14 @@ fn replay_verifies_accepted_and_rejected_commands_and_detects_drift() {
     let mut runtime = LocalRuntime::default();
     runtime.open(request()).expect("open");
     runtime
-        .dispatch(&MoveUnitV1 {
+        .dispatch(&MoveUnitRequest {
             expected_revision: 0,
             unit_id: UnitId::new("unit-1").expect("unit id"),
             target: HexCoord::new(1, 0),
         })
         .expect("accepted move");
     let rejected = runtime
-        .dispatch(&MoveUnitV1 {
+        .dispatch(&MoveUnitRequest {
             expected_revision: 0,
             unit_id: UnitId::new("unit-1").expect("unit id"),
             target: HexCoord::new(2, 0),
@@ -313,7 +312,7 @@ fn replay_verifies_accepted_and_rejected_commands_and_detects_drift() {
     let (map, ruleset) = content();
     assert_eq!(
         LocalRuntime::verify_replay_json(map, ruleset, &replay_json).expect("verify"),
-        ReplayVerificationV1 {
+        ReplayVerification {
             entry_count: 2,
             final_stamp: expected_stamp,
             final_event_offset: 1,

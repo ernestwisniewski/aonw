@@ -12,18 +12,18 @@ pub use crate::persistence_error::PersistenceError;
 use crate::persistence_validation::{validate_replay_header, validate_save_header};
 use crate::session::Session;
 use crate::{
-    CommandResultV1, LocalRuntime, MoveUnitV1, OpenSessionV1, SessionStampV1, UnitActionV1,
+    CommandResult, LocalRuntime, MoveUnitRequest, OpenSession, SessionStamp, UnitActionRequest,
 };
 
 /// Deterministic random-stream position owned by a local session.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub struct RngStateV1 {
+pub struct RngState {
     seed: u64,
     stream: u64,
     counter: u64,
 }
 
-impl RngStateV1 {
+impl RngState {
     /// Creates an explicit deterministic random-stream position.
     #[must_use]
     pub const fn new(seed: u64, stream: u64, counter: u64) -> Self {
@@ -61,7 +61,7 @@ impl RngStateV1 {
     }
 }
 
-impl From<RngStateDto> for RngStateV1 {
+impl From<RngStateDto> for RngState {
     fn from(value: RngStateDto) -> Self {
         Self::new(value.seed, value.stream, value.counter)
     }
@@ -69,11 +69,11 @@ impl From<RngStateDto> for RngStateV1 {
 
 /// Result of deterministic replay verification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ReplayVerificationV1 {
+pub struct ReplayVerification {
     /// Number of commands verified.
     pub entry_count: usize,
     /// Final authoritative session identity.
-    pub final_stamp: SessionStampV1,
+    pub final_stamp: SessionStamp,
     /// Final authoritative event offset.
     pub final_event_offset: u64,
 }
@@ -82,7 +82,7 @@ pub struct ReplayVerificationV1 {
 pub(crate) struct ReplayRecorder {
     initial_state: aonw_contracts::GameStateDto,
     initial_state_digest: String,
-    initial_rng_state: RngStateV1,
+    initial_rng_state: RngState,
     initial_event_offset: u64,
     entries: Vec<ReplayEntryDto>,
 }
@@ -91,7 +91,7 @@ impl ReplayRecorder {
     pub(crate) fn new(
         state: &aonw_domain::GameState,
         digest: aonw_engine::StateDigest,
-        rng_state: RngStateV1,
+        rng_state: RngState,
         event_offset: u64,
     ) -> Self {
         Self {
@@ -164,7 +164,7 @@ impl LocalRuntime {
         map: MapDefinition,
         ruleset: RulesetDefinition,
         input: &str,
-    ) -> Result<SessionStampV1, PersistenceError> {
+    ) -> Result<SessionStamp, PersistenceError> {
         let save = SaveGameDto::from_json(input).map_err(PersistenceError::Codec)?;
         validate_save_header(&save, &map, &ruleset)?;
         let state = decode_game_state(save.state).map_err(PersistenceError::State)?;
@@ -172,7 +172,7 @@ impl LocalRuntime {
             return Err(PersistenceError::StateDigestMismatch);
         }
         let actor = PlayerId::new(save.actor_player_id).map_err(PersistenceError::InvalidActor)?;
-        let request = OpenSessionV1::from_state(map, ruleset, state, actor)
+        let request = OpenSession::from_state(map, ruleset, state, actor)
             .with_runtime_state(save.rng_state.into(), save.event_offset);
         self.open(request).map_err(PersistenceError::Open)
     }
@@ -200,7 +200,7 @@ impl LocalRuntime {
         map: MapDefinition,
         ruleset: RulesetDefinition,
         input: &str,
-    ) -> Result<ReplayVerificationV1, PersistenceError> {
+    ) -> Result<ReplayVerification, PersistenceError> {
         let replay = ReplayLogDto::from_json(input).map_err(PersistenceError::Codec)?;
         validate_replay_header(&replay, &map, &ruleset)?;
         let state =
@@ -213,7 +213,7 @@ impl LocalRuntime {
         let mut runtime = Self::default();
         runtime
             .open(
-                OpenSessionV1::from_state(map, ruleset, state, actor).with_runtime_state(
+                OpenSession::from_state(map, ruleset, state, actor).with_runtime_state(
                     replay.initial_rng_state.into(),
                     replay.initial_event_offset,
                 ),
@@ -245,7 +245,7 @@ impl LocalRuntime {
             }
         }
         let session = runtime.session_ref().map_err(PersistenceError::Runtime)?;
-        Ok(ReplayVerificationV1 {
+        Ok(ReplayVerification {
             entry_count: replay.entries.len(),
             final_stamp: session.stamp(),
             final_event_offset: session.event_offset(),
@@ -257,7 +257,7 @@ pub(crate) fn replay_entry(
     session: &Session,
     command: ReplayCommandDto,
     before: ReplayContextDto,
-    result: &CommandResultV1,
+    result: &CommandResult,
 ) -> ReplayEntryDto {
     ReplayEntryDto {
         index: u64::try_from(session.replay().entries.len()).unwrap_or(u64::MAX),
@@ -280,7 +280,7 @@ pub(crate) fn replay_context(session: &Session) -> ReplayContextDto {
     }
 }
 
-fn replay_result(result: &CommandResultV1, session: &Session) -> ReplayResultDto {
+fn replay_result(result: &CommandResult, session: &Session) -> ReplayResultDto {
     ReplayResultDto {
         accepted: result.is_accepted(),
         rejection: result.rejection.map(str::to_owned),
@@ -330,10 +330,10 @@ const fn coordinate(value: aonw_domain::HexCoord) -> CoordinateDto {
 }
 
 enum ReplayRuntimeCommand {
-    Move(MoveUnitV1),
-    Cancel(UnitActionV1),
-    Skip(UnitActionV1),
-    Fortify(UnitActionV1),
+    Move(MoveUnitRequest),
+    Cancel(UnitActionRequest),
+    Skip(UnitActionRequest),
+    Fortify(UnitActionRequest),
 }
 
 fn decode_command(command: &ReplayCommandDto) -> Result<ReplayRuntimeCommand, PersistenceError> {
@@ -342,7 +342,7 @@ fn decode_command(command: &ReplayCommandDto) -> Result<ReplayRuntimeCommand, Pe
             expected_revision,
             unit_id,
             target,
-        } => Ok(ReplayRuntimeCommand::Move(MoveUnitV1 {
+        } => Ok(ReplayRuntimeCommand::Move(MoveUnitRequest {
             expected_revision: *expected_revision,
             unit_id: UnitId::new(unit_id.clone()).map_err(PersistenceError::InvalidUnit)?,
             target: aonw_domain::HexCoord::new(target.col, target.row),
@@ -365,8 +365,8 @@ fn decode_command(command: &ReplayCommandDto) -> Result<ReplayRuntimeCommand, Pe
 fn decode_unit_action(
     expected_revision: u64,
     unit_id: &str,
-) -> Result<UnitActionV1, PersistenceError> {
-    Ok(UnitActionV1 {
+) -> Result<UnitActionRequest, PersistenceError> {
+    Ok(UnitActionRequest {
         expected_revision,
         unit_id: UnitId::new(unit_id.to_owned()).map_err(PersistenceError::InvalidUnit)?,
     })
