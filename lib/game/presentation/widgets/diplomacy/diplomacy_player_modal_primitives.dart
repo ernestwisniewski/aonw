@@ -128,38 +128,6 @@ class _MessageRow extends StatelessWidget {
   }
 }
 
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: SurfaceElevation.flat.bandDecoration(
-        background: GameUiTheme.bg,
-        backgroundAlpha: 0,
-        borderColor: GameUiTheme.copper,
-        border: BorderEmphasis.regular,
-        topBorder: true,
-        boxShadow: const [],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: GameUiTheme.sectionHeader),
-            const SizedBox(height: 8),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _RelationDot extends StatelessWidget {
   const _RelationDot({required this.status});
 

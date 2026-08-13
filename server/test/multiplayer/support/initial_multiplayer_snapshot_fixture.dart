@@ -93,15 +93,22 @@ WireSnapshot _currentInitialSnapshotOracle({
     mapData: effectiveMap,
     startPositionSeed: startPositionSeed,
   );
+  final initialResourceDistribution =
+      InitialResourceDistributionGenerator.generate(
+        mapData: effectiveMap,
+        startingUnits: units,
+        seed: startPositionSeed,
+      );
+  final initializedMap = initialResourceDistribution.applyTo(effectiveMap);
   final artifacts = WorldArtifactGenerator.generate(
-    mapData: effectiveMap,
+    mapData: initializedMap,
     startingUnits: units,
     seed: startPositionSeed,
   );
   final playerIds = _initialSnapshotPlayers.map((player) => player.id);
   final fogOfWar = const FogOfWarService().recompute(
     current: FogOfWarState.empty,
-    mapData: effectiveMap,
+    mapData: initializedMap,
     playerIds: playerIds,
     units: units,
     cities: const [],
@@ -142,6 +149,7 @@ WireSnapshot _currentInitialSnapshotOracle({
     artifacts: artifacts,
     fogOfWar: fogOfWar,
     diplomacy: diplomacy,
+    initialResourceDistribution: initialResourceDistribution,
     turnStartedAt: startedAt,
   );
   return WireSnapshot(

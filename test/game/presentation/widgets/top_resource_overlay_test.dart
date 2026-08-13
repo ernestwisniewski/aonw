@@ -1,6 +1,7 @@
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdowns.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_stability_details.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_strategic_resource_summary.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_overlay.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
@@ -92,6 +93,42 @@ void main() {
     );
     expect(find.text('Stability'), findsOneWidget);
     expect(find.text('Base order'), findsOneWidget);
+  });
+
+  testWidgets('TopResourceOverlay opens the full strategic economy action', (
+    tester,
+  ) async {
+    var opens = 0;
+    await _pumpOverlay(
+      tester,
+      openBreakdown: TopResourcePopupType.resources,
+      strategicResources: const HudStrategicResourceSummary(
+        enabled: true,
+        rows: [
+          HudStrategicResourceRow(
+            resource: ResourceType.oil,
+            available: 1,
+            allocated: 0,
+            domesticProduction: 1,
+            imports: 0,
+            exports: 0,
+            sourceCount: 0,
+            shortage: false,
+          ),
+        ],
+        allocations: [],
+        sources: [],
+      ),
+      onOpenStrategicEconomy: () => opens++,
+    );
+
+    final action = find.byKey(
+      const Key('resourceBreakdown.openStrategicEconomy'),
+    );
+    expect(action.hitTestable(), findsOneWidget);
+    await tester.tap(action);
+
+    expect(opens, 1);
   });
 
   testWidgets(
@@ -205,6 +242,9 @@ Future<void> _pumpOverlay(
   VoidCallback? onResourcesPressed,
   VoidCallback? onVictoryPressed,
   VoidCallback? onCloseBreakdown,
+  VoidCallback? onOpenStrategicEconomy,
+  HudStrategicResourceSummary strategicResources =
+      HudStrategicResourceSummary.empty,
 }) async {
   if (size != null) {
     tester.view
@@ -254,6 +294,7 @@ Future<void> _pumpOverlay(
               countsByType: {ResourceType.iron: 2},
               sources: [],
             ),
+            strategicResources: strategicResources,
             openBreakdown: openBreakdown,
             victoryStatus: victoryStatus,
             playerName: playerName,
@@ -288,6 +329,7 @@ Future<void> _pumpOverlay(
             onResourcesPressed: onResourcesPressed ?? () {},
             onVictoryPressed: onVictoryPressed ?? () {},
             onCloseBreakdown: onCloseBreakdown ?? () {},
+            onOpenStrategicEconomy: onOpenStrategicEconomy,
           ),
         ),
       ),

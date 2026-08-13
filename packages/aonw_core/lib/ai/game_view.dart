@@ -4,7 +4,6 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
@@ -70,7 +69,6 @@ class GameView {
   final List<FieldImprovement> ownImprovements;
   final List<FieldImprovement> knownImprovements;
   final StrategicResourceStockpile ownStrategicResources;
-  final StrategicResourceEconomyProfile strategicResourceEconomy;
   final List<ResourceTradeAgreement> resourceTradeAgreements;
   final Map<String, MapObjectiveHoldState> mapObjectiveHoldStatesByObjectiveId;
   final DiplomacyState diplomacy;
@@ -103,8 +101,6 @@ class GameView {
     required Iterable<FieldImprovement> ownImprovements,
     Iterable<FieldImprovement>? knownImprovements,
     this.ownStrategicResources = StrategicResourceStockpile.empty,
-    this.strategicResourceEconomy =
-        StrategicResourceEconomyProfile.legacyPresenceV0,
     Iterable<ResourceTradeAgreement> resourceTradeAgreements = const [],
     Map<String, MapObjectiveHoldState> mapObjectiveHoldStatesByObjectiveId =
         const {},
@@ -301,7 +297,6 @@ final class _GameViewProjection {
     research: state.research,
     fieldImprovements: state.fieldImprovements,
     strategicResources: state.strategicResources,
-    strategicResourceEconomy: state.matchRules.strategicResourceEconomy,
     transportNetwork: state.transportNetwork,
     fogOfWar: state.fogOfWar,
     resourceTradeAgreements: state.resourceTradeAgreements,
@@ -334,7 +329,6 @@ final class _GameViewProjection {
     required this.research,
     required this.fieldImprovements,
     required this.strategicResources,
-    required this.strategicResourceEconomy,
     required this.transportNetwork,
     required this.fogOfWar,
     required this.resourceTradeAgreements,
@@ -365,7 +359,6 @@ final class _GameViewProjection {
   final ResearchState research;
   final List<FieldImprovement> fieldImprovements;
   final StrategicResourceAccounts strategicResources;
-  final StrategicResourceEconomyProfile strategicResourceEconomy;
   final TransportNetworkState transportNetwork;
   final FogOfWarState fogOfWar;
   final List<ResourceTradeAgreement> resourceTradeAgreements;
@@ -423,7 +416,6 @@ GameView _buildGameView(_GameViewProjection source) {
     ownStrategicResources: source.strategicResources.forPlayer(
       source.forPlayerId,
     ),
-    strategicResourceEconomy: source.strategicResourceEconomy,
     transportNetwork: source.transportNetwork,
     resourceTradeAgreements: source.resourceTradeAgreements,
     mapObjectiveHoldStatesByObjectiveId:

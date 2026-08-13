@@ -196,7 +196,7 @@ void main() {
     });
 
     test(
-      'snapshot and event readers accept v3 through v5 during expansion',
+      'snapshot and event readers accept v3 through v6 during expansion',
       () {
         const snapshot = WireSnapshot(
           matchId: 'match_1',
@@ -216,6 +216,13 @@ void main() {
           kSnapshotEventVersion,
         );
         expect(WireEvent.fromJson(event.toJson()).v, kSnapshotEventVersion);
+        expect(
+          WireSnapshot.fromJson({
+            ...snapshot.toJson(),
+            'v': kPreviousSnapshotEventVersion,
+          }).v,
+          kPreviousSnapshotEventVersion,
+        );
         expect(
           WireSnapshot.fromJson({
             ...snapshot.toJson(),
@@ -242,7 +249,7 @@ void main() {
           throwsArgumentError,
         );
         expect(
-          () => WireEvent.fromJson({...event.toJson(), 'v': 6}),
+          () => WireEvent.fromJson({...event.toJson(), 'v': 7}),
           throwsArgumentError,
         );
       },

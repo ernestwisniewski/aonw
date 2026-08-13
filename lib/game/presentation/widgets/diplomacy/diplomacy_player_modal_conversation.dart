@@ -28,7 +28,7 @@ class _ProposalsSection extends StatelessWidget {
               DiplomacyState.relationKey(activePlayerId, targetPlayerId),
         )
         .toList();
-    return _Section(
+    return DiplomacySection(
       title: l10n.diplomacyProposalsTitle,
       child: proposals.isEmpty
           ? Text(l10n.diplomacyNoHistory, style: GameUiTheme.bodySmall)
@@ -66,7 +66,7 @@ class _HistorySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final history = _historyItems().toList(growable: false)
       ..sort(_compareHistoryItems);
-    return _Section(
+    return DiplomacySection(
       title: l10n.diplomacyHistoryTitle,
       child: history.isEmpty
           ? Text(l10n.diplomacyNoHistory, style: GameUiTheme.bodySmall)
@@ -243,7 +243,7 @@ class _MessagesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final messages = diplomacy.messagesBetween(activePlayerId, targetPlayerId);
-    return _Section(
+    return DiplomacySection(
       title: l10n.diplomacyMessagesTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

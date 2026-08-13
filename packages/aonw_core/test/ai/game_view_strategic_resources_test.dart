@@ -27,10 +27,6 @@ void main() {
 
     expect(view.ownStrategicResources.onHand, StrategicResourceBundle.oilTwo);
     expect(view.ownStrategicResources.amountFor(ResourceType.aluminium), 0);
-    expect(
-      view.strategicResourceEconomy,
-      StrategicResourceEconomyProfile.stockpileV1,
-    );
   });
 }
 

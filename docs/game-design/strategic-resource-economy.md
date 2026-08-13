@@ -54,9 +54,9 @@ charged again at rush or completion.
 
 ## Trade Settlement
 
-Stockpiled resource agreements carry `amountPerTurn`. A missing value from
-legacy data means one. The exporter must have the quantity when settlement
-runs, the importer must have the gold, and the route policy must allow delivery.
+Stockpiled resource agreements carry `amountPerTurn`; an omitted value means
+one. The exporter must have the quantity when settlement runs, the importer
+must have the gold, and the route policy must allow delivery.
 Only then are stock and payment transferred.
 
 Two reciprocal legs created by barter share an exchange group. The entire
@@ -92,8 +92,8 @@ Basic and MCTS production planners share `UnitProductionAvailability` with the
 authoritative resolver and account for earlier city reservations in the same
 planning pass. Trade AI protects a stock reserve, values production surplus,
 and proposes real quantities. MCTS simulated states preserve stockpiles,
-allocations, agreements, improvements, and the economy profile; its heuristic
-uses a deliberately small reward for useful stock and positive flow.
+allocations, agreements, and improvements; its heuristic uses a deliberately
+small reward for useful stock and positive flow.
 
 ## Balance And Follow-up
 

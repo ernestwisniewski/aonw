@@ -2,27 +2,22 @@ import 'dart:collection';
 
 import 'package:aonw_core/game/domain/match_rules/game_length_config.dart';
 import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
-import 'package:aonw_core/game/domain/match_rules/strategic_resource_economy_profile.dart';
 import 'package:aonw_core/game/domain/match_rules/victory_rules.dart';
 
 final class MatchRules {
   final GameLengthConfig gameLength;
   final VictoryRules victory;
   final Map<String, dynamic> balance;
-  final StrategicResourceEconomyProfile strategicResourceEconomy;
 
   factory MatchRules({
     required GameLengthConfig gameLength,
     required VictoryRules victory,
     Map<String, dynamic> balance = const {},
-    StrategicResourceEconomyProfile strategicResourceEconomy =
-        StrategicResourceEconomyProfile.stockpileV1,
   }) {
     return MatchRules._owned(
       gameLength: gameLength,
       victory: victory,
       balance: _ownBalance(balance, fromJson: false),
-      strategicResourceEconomy: strategicResourceEconomy,
     );
   }
 
@@ -30,14 +25,12 @@ final class MatchRules {
     required this.gameLength,
     required this.victory,
     required this.balance,
-    required this.strategicResourceEconomy,
   });
 
   static const standard = MatchRules._owned(
     gameLength: GameLengthConfig.unlimited,
     victory: VictoryRules.standard,
     balance: {},
-    strategicResourceEconomy: StrategicResourceEconomyProfile.stockpileV1,
   );
 
   static MatchRules forGameLength(GameLengthConfig gameLength) {
@@ -59,9 +52,6 @@ final class MatchRules {
         final Map<Object?, Object?> value => _ownBalance(value, fromJson: true),
         _ => throw const FormatException('Expected object field "balance".'),
       },
-      strategicResourceEconomy: StrategicResourceEconomyProfile.fromJson(
-        json['strategicResourceEconomy'],
-      ),
     );
   }
 
@@ -70,7 +60,6 @@ final class MatchRules {
       'gameLength': gameLength.toJson(),
       'victory': victory.toJson(),
       'balance': _detachBalance(balance),
-      'strategicResourceEconomy': strategicResourceEconomy.name,
     };
   }
 
@@ -78,7 +67,6 @@ final class MatchRules {
     GameLengthConfig? gameLength,
     VictoryRules? victory,
     Map<String, dynamic>? balance,
-    StrategicResourceEconomyProfile? strategicResourceEconomy,
   }) {
     return MatchRules._owned(
       gameLength: gameLength ?? this.gameLength,
@@ -86,8 +74,6 @@ final class MatchRules {
       balance: balance == null
           ? this.balance
           : _ownBalance(balance, fromJson: false),
-      strategicResourceEconomy:
-          strategicResourceEconomy ?? this.strategicResourceEconomy,
     );
   }
 
@@ -96,22 +82,15 @@ final class MatchRules {
     return other is MatchRules &&
         other.gameLength == gameLength &&
         other.victory == victory &&
-        other.strategicResourceEconomy == strategicResourceEconomy &&
         _jsonMapEquals(other.balance, balance);
   }
 
   @override
-  int get hashCode => Object.hash(
-    gameLength,
-    victory,
-    strategicResourceEconomy,
-    _jsonValueHash(balance),
-  );
+  int get hashCode => Object.hash(gameLength, victory, _jsonValueHash(balance));
 
   @override
   String toString() {
     return 'MatchRules(gameLength: $gameLength, victory: $victory, '
-        'strategicResourceEconomy: $strategicResourceEconomy, '
         'balance: $balance)';
   }
 }

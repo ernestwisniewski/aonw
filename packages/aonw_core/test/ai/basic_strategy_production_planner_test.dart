@@ -8,7 +8,6 @@ import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/fog.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -116,7 +115,6 @@ void main() {
         strategicResources: StrategicResourceStockpile(
           onHand: StrategicResourceBundle.oilTwo,
         ),
-        strategicResourceEconomy: StrategicResourceEconomyProfile.stockpileV1,
       );
 
       final commands = BasicStrategyProductionPlanner(
@@ -141,8 +139,6 @@ GameView _view({
   List<GameUnit> units = const [],
   StrategicResourceStockpile strategicResources =
       StrategicResourceStockpile.empty,
-  StrategicResourceEconomyProfile strategicResourceEconomy =
-      StrategicResourceEconomyProfile.legacyPresenceV0,
 }) {
   return GameView(
     forPlayerId: 'player_1',
@@ -152,7 +148,6 @@ GameView _view({
     ownResearch: PlayerResearchState.empty,
     ownImprovements: const [],
     ownStrategicResources: strategicResources,
-    strategicResourceEconomy: strategicResourceEconomy,
     visibleEnemyUnits: const [],
     rememberedEnemyCities: const [],
     visibility: const FogVisibilityQuery(

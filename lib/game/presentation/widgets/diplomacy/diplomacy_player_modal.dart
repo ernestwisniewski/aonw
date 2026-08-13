@@ -1,14 +1,16 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/diplomacy_history_presenter.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
+import 'package:aonw/game/presentation/widgets/diplomacy/diplomacy_player_modal_resource_trade.dart';
+import 'package:aonw/game/presentation/widgets/diplomacy/diplomacy_section.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_avatar_models.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
-import 'package:aonw/shared/theme/border_emphasis.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
@@ -16,14 +18,11 @@ import 'package:aonw/shared/widgets/game_ui/game_modal.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
-import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/entity_lookup.dart';
 import 'package:aonw_core/game/domain/save.dart';
-import 'package:aonw_core/game/domain/trade.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -33,8 +32,6 @@ part 'diplomacy_player_modal_labels.dart';
 part 'diplomacy_player_modal_overview.dart';
 part 'diplomacy_player_modal_primitives.dart';
 part 'diplomacy_player_modal_relation_chart.dart';
-part 'diplomacy_player_modal_resource_offers.dart';
-part 'diplomacy_player_modal_resource_trade.dart';
 
 Future<void> showDiplomacyPlayerModal(
   BuildContext context, {
@@ -43,26 +40,35 @@ Future<void> showDiplomacyPlayerModal(
   required WorldMap mapData,
   required String activePlayerId,
   required String targetPlayerId,
-  required Future<void> Function(DomainCommand command) onCommand,
+  required Future<DispatchCommandResult> Function(DomainCommand command)
+  onCommand,
   ValueListenable<GamepadInputSnapshot>? gamepadInputListenable,
 }) {
   return showGameModal<void>(
     context: context,
     size: GameModalSize.wide,
-    builder: (dialogContext) => DiplomacyPlayerModal(
-      gameSave: gameSave,
-      gameState: gameState,
-      mapData: mapData,
-      activePlayerId: activePlayerId,
-      targetPlayerId: targetPlayerId,
-      gamepadInputListenable: gamepadInputListenable,
-      onCommand: (command) async {
-        await onCommand(command);
-        if (dialogContext.mounted) {
+    builder: (dialogContext) {
+      Future<bool> dispatchAndMaybeClose(DomainCommand command) async {
+        final result = await onCommand(command);
+        if (result.accepted && dialogContext.mounted) {
           unawaited(Navigator.of(dialogContext).maybePop());
         }
-      },
-    ),
+        return result.accepted;
+      }
+
+      return DiplomacyPlayerModal(
+        gameSave: gameSave,
+        gameState: gameState,
+        mapData: mapData,
+        activePlayerId: activePlayerId,
+        targetPlayerId: targetPlayerId,
+        gamepadInputListenable: gamepadInputListenable,
+        onCommand: (command) async {
+          await dispatchAndMaybeClose(command);
+        },
+        onResourceTradeCommand: dispatchAndMaybeClose,
+      );
+    },
   );
 }
 
@@ -74,6 +80,7 @@ class DiplomacyPlayerModal extends StatelessWidget {
     required this.activePlayerId,
     required this.targetPlayerId,
     required this.onCommand,
+    this.onResourceTradeCommand,
     this.gamepadInputListenable,
     super.key,
   });
@@ -84,6 +91,7 @@ class DiplomacyPlayerModal extends StatelessWidget {
   final String activePlayerId;
   final String targetPlayerId;
   final Future<void> Function(DomainCommand command) onCommand;
+  final Future<bool> Function(DomainCommand command)? onResourceTradeCommand;
   final ValueListenable<GamepadInputSnapshot>? gamepadInputListenable;
 
   @override
@@ -137,80 +145,79 @@ class DiplomacyPlayerModal extends StatelessWidget {
   List<Widget> _sections({
     required AppLocalizations l10n,
     required DiplomaticRelation relation,
-  }) {
-    return [
-      _OverviewSection(
-        relation: relation,
-        scoreEntries: gameState.diplomacy.scoreEntriesBetween(
-          activePlayerId,
-          targetPlayerId,
-        ),
-        l10n: l10n,
-        currentTurn: gameSave.turn,
+  }) => [
+    _OverviewSection(
+      relation: relation,
+      scoreEntries: gameState.diplomacy.scoreEntriesBetween(
+        activePlayerId,
+        targetPlayerId,
       ),
-      _StatsSection(
-        l10n: l10n,
-        gameState: gameState,
-        activePlayerId: activePlayerId,
-        targetPlayerId: targetPlayerId,
+      l10n: l10n,
+      currentTurn: gameSave.turn,
+    ),
+    _StatsSection(
+      l10n: l10n,
+      gameState: gameState,
+      activePlayerId: activePlayerId,
+      targetPlayerId: targetPlayerId,
+    ),
+    _ProposalsSection(
+      l10n: l10n,
+      diplomacy: gameState.diplomacy,
+      activePlayerId: activePlayerId,
+      targetPlayerId: targetPlayerId,
+      onCommand: onCommand,
+    ),
+    ResourceTradeSection(
+      l10n: l10n,
+      gameState: gameState,
+      mapData: mapData,
+      relation: relation,
+      activePlayerId: activePlayerId,
+      targetPlayerId: targetPlayerId,
+      onCommand: onCommand,
+      onResourceTradeCommand: onResourceTradeCommand,
+    ),
+    _HistorySection(
+      l10n: l10n,
+      entries: gameState.diplomacy.scoreEntriesBetween(
+        activePlayerId,
+        targetPlayerId,
       ),
-      _ProposalsSection(
-        l10n: l10n,
-        diplomacy: gameState.diplomacy,
-        activePlayerId: activePlayerId,
-        targetPlayerId: targetPlayerId,
-        onCommand: onCommand,
+      messages: gameState.diplomacy.messagesBetween(
+        activePlayerId,
+        targetPlayerId,
       ),
-      _ResourceTradeSection(
-        l10n: l10n,
-        gameState: gameState,
-        mapData: mapData,
-        relation: relation,
-        activePlayerId: activePlayerId,
-        targetPlayerId: targetPlayerId,
-        onCommand: onCommand,
-      ),
-      _HistorySection(
-        l10n: l10n,
-        entries: gameState.diplomacy.scoreEntriesBetween(
-          activePlayerId,
-          targetPlayerId,
-        ),
-        messages: gameState.diplomacy.messagesBetween(
-          activePlayerId,
-          targetPlayerId,
-        ),
-        proposals: gameState.diplomacy
-            .proposalsFor(activePlayerId)
-            .where(
-              (proposal) =>
-                  DiplomacyState.relationKey(
-                    proposal.fromPlayerId,
-                    proposal.toPlayerId,
-                  ) ==
-                  DiplomacyState.relationKey(activePlayerId, targetPlayerId),
-            )
-            .toList(growable: false),
-        playerNameFor: (playerId) => _playerName(l10n, playerId),
-      ),
-      _MessagesSection(
-        l10n: l10n,
-        diplomacy: gameState.diplomacy,
-        activePlayerId: activePlayerId,
-        targetPlayerId: targetPlayerId,
-        onCommand: onCommand,
-      ),
-      _ActionsSection(
-        l10n: l10n,
-        gameState: gameState,
-        relation: relation,
-        currentTurn: gameSave.turn,
-        activePlayerId: activePlayerId,
-        targetPlayerId: targetPlayerId,
-        onCommand: onCommand,
-      ),
-    ];
-  }
+      proposals: gameState.diplomacy
+          .proposalsFor(activePlayerId)
+          .where(
+            (proposal) =>
+                DiplomacyState.relationKey(
+                  proposal.fromPlayerId,
+                  proposal.toPlayerId,
+                ) ==
+                DiplomacyState.relationKey(activePlayerId, targetPlayerId),
+          )
+          .toList(growable: false),
+      playerNameFor: (playerId) => _playerName(l10n, playerId),
+    ),
+    _MessagesSection(
+      l10n: l10n,
+      diplomacy: gameState.diplomacy,
+      activePlayerId: activePlayerId,
+      targetPlayerId: targetPlayerId,
+      onCommand: onCommand,
+    ),
+    _ActionsSection(
+      l10n: l10n,
+      gameState: gameState,
+      relation: relation,
+      currentTurn: gameSave.turn,
+      activePlayerId: activePlayerId,
+      targetPlayerId: targetPlayerId,
+      onCommand: onCommand,
+    ),
+  ];
 
   Widget _wideLayout(List<Widget> children) {
     return Column(

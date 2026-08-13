@@ -123,6 +123,8 @@ final class GameClientState {
     Map<String, int> playerStabilityNet = const {},
     StrategicResourceAccounts strategicResources =
         StrategicResourceAccounts.empty,
+    InitialResourceDistribution initialResourceDistribution =
+        InitialResourceDistribution.empty,
     List<GameUnit> units = const [],
     List<GameCity> cities = const [],
     List<WorldArtifact> artifacts = const [],
@@ -169,6 +171,7 @@ final class GameClientState {
           playerWarWeariness: playerWarWeariness,
           playerStabilityNet: playerStabilityNet,
           strategicResources: strategicResources,
+          initialResourceDistribution: initialResourceDistribution,
           units: units,
           cities: cities,
           artifacts: artifacts,
@@ -211,6 +214,8 @@ final class GameClientState {
   Map<String, int> get playerWarWeariness => domain.playerWarWeariness;
   Map<String, int> get playerStabilityNet => domain.playerStabilityNet;
   StrategicResourceAccounts get strategicResources => domain.strategicResources;
+  InitialResourceDistribution get initialResourceDistribution =>
+      domain.initialResourceDistribution;
   List<GameUnit> get units => domain.units;
   List<GameCity> get cities => domain.cities;
   List<WorldArtifact> get artifacts => domain.artifacts;

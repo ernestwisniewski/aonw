@@ -75,6 +75,12 @@ final _playerMatchViewState = DomainState.snapshot(
       ),
     },
   ),
+  initialResourceDistribution: InitialResourceDistribution(
+    seed: 73,
+    placements: const [
+      InitialResourcePlacement(col: 3, row: 4, resource: ResourceType.marble),
+    ],
+  ),
   units: [
     GameUnit(
       id: 'own-unit',

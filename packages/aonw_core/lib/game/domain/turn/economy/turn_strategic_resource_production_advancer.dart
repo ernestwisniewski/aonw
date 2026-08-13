@@ -8,9 +8,7 @@ abstract final class TurnStrategicResourceProductionAdvancer {
     required String playerId,
     required TurnEconomyContext context,
   }) {
-    if (!context.strategicResourceStockpilesEnabled || playerId.isEmpty) {
-      return state;
-    }
+    if (playerId.isEmpty) return state;
     final production = StrategicResourceProductionRules.forPlayer(
       playerId: playerId,
       cities: state.cities,

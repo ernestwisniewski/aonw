@@ -8,7 +8,6 @@ import 'package:aonw_core/game/domain/city/field_improvement.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
-import 'package:aonw_core/game/domain/match_rules/strategic_resource_economy_profile.dart';
 import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/game/domain/technology/technology_id.dart';
@@ -123,8 +122,6 @@ abstract final class CityProductionCommandResolver {
     required PaceBalance paceBalance,
     StrategicResourceAccounts strategicResources =
         StrategicResourceAccounts.empty,
-    StrategicResourceEconomyProfile strategicResourceEconomy =
-        StrategicResourceEconomyProfile.legacyPresenceV0,
   }) {
     return _StartUnitProductionResolver(
       cities: cities,
@@ -146,7 +143,6 @@ abstract final class CityProductionCommandResolver {
         cityRuleset: cityRuleset,
         technologyRuleset: technologyRuleset,
         strategicResources: strategicResources,
-        strategicResourceEconomy: strategicResourceEconomy,
         preferredResourceOptionIndex: command.resourceOptionIndex,
       )),
     ).resolve();

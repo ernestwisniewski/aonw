@@ -302,15 +302,23 @@ List<_BreakdownSectionModel> _strategicResourceSections(
 _BreakdownSectionModel _strategicStockpileSection(
   ResourceBreakdownPopup popup,
 ) => _BreakdownSectionModel(
-  title: popup.l10n.resourceBreakdownStrategicStockpiles,
+  title: popup.l10n.diplomacyStrategicResourcesTitle,
   rows: [
     for (final row in popup.strategicResources.rows) ...[
-      _BreakdownRowModel(
-        label:
-            '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownStored}',
-        value: '${row.storedTotal}',
-        negative: row.shortage,
-      ),
+      if (row.stockpiled)
+        _BreakdownRowModel(
+          label:
+              '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownStored}',
+          value: '${row.storedTotal}',
+          negative: row.shortage,
+        )
+      else
+        _BreakdownRowModel(
+          label:
+              '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownControlledDeposits}',
+          value: '${row.controlledDeposits}',
+          positive: row.controlledDeposits > 0,
+        ),
       _BreakdownRowModel(
         label:
             '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.commonAvailable}',
@@ -318,32 +326,46 @@ _BreakdownSectionModel _strategicStockpileSection(
         positive: row.available > 0,
         negative: row.shortage,
       ),
-      _BreakdownRowModel(
-        label:
-            '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownAllocated}',
-        value: '${row.allocated}',
-      ),
+      if (row.stockpiled)
+        _BreakdownRowModel(
+          label:
+              '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownAllocated}',
+          value: '${row.allocated}',
+        ),
     ],
   ],
 );
 
-_BreakdownSectionModel _strategicSourceSection(
+_BreakdownSectionModel _strategicSourceSection(ResourceBreakdownPopup popup) =>
+    _BreakdownSectionModel(
+      title: popup.l10n.resourceBreakdownSourcesSection,
+      rows: [
+        for (final source in popup.strategicResources.sources)
+          _BreakdownRowModel(
+            label: _strategicSourceLabel(source, popup),
+            value: source.amountPerTurn == null
+                ? ''
+                : _signed(source.amountPerTurn!),
+            positive: (source.amountPerTurn ?? 0) > 0,
+            onTap: popup.onStrategicCityPressed == null
+                ? null
+                : () => popup.onStrategicCityPressed!(source.city),
+          ),
+      ],
+    );
+
+String _strategicSourceLabel(
+  HudStrategicResourceSource source,
   ResourceBreakdownPopup popup,
-) => _BreakdownSectionModel(
-  title: popup.l10n.resourceBreakdownSourcesSection,
-  rows: [
-    for (final source in popup.strategicResources.sources)
-      _BreakdownRowModel(
-        label:
-            '${GameDisplayNames.resource(popup.l10n, source.resource)} · ${GameDisplayNames.fieldImprovement(popup.l10n, source.improvement)} · ${GameDisplayNames.city(popup.l10n, source.city)} (${source.hex.col}, ${source.hex.row})',
-        value: _signed(source.amountPerTurn),
-        positive: source.amountPerTurn > 0,
-        onTap: popup.onStrategicCityPressed == null
-            ? null
-            : () => popup.onStrategicCityPressed!(source.city),
-      ),
-  ],
-);
+) {
+  final labels = <String>[
+    GameDisplayNames.resource(popup.l10n, source.resource),
+    if (source.improvement case final improvement?)
+      GameDisplayNames.fieldImprovement(popup.l10n, improvement),
+    '${GameDisplayNames.city(popup.l10n, source.city)} (${source.hex.col}, ${source.hex.row})',
+  ];
+  return labels.join(' · ');
+}
 
 _BreakdownSectionModel _strategicFlowSection(
   ResourceBreakdownPopup popup,
@@ -351,12 +373,13 @@ _BreakdownSectionModel _strategicFlowSection(
   title: popup.l10n.resourceBreakdownNetPerTurn,
   rows: [
     for (final row in popup.strategicResources.rows) ...[
-      _BreakdownRowModel(
-        label:
-            '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownDomesticProduction}',
-        value: _signed(row.domesticProduction),
-        positive: row.domesticProduction > 0,
-      ),
+      if (row.stockpiled)
+        _BreakdownRowModel(
+          label:
+              '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownDomesticProduction}',
+          value: _signed(row.domesticProduction),
+          positive: row.domesticProduction > 0,
+        ),
       _BreakdownRowModel(
         label:
             '${GameDisplayNames.resource(popup.l10n, row.resource)} · ${popup.l10n.resourceBreakdownImports}',

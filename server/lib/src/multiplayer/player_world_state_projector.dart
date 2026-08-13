@@ -27,7 +27,11 @@ final class PlayerWorldStateProjector {
       'playerGold': _ownIntEntry(domain.playerGold, playerId),
       'playerWarWeariness': _ownIntEntry(domain.playerWarWeariness, playerId),
       'playerStabilityNet': _ownIntEntry(domain.playerStabilityNet, playerId),
-      'strategicResources': _ownStrategicResources(domain, playerId),
+      if (domain.strategicResources.byPlayerId.containsKey(playerId))
+        'strategicResources': _ownStrategicResources(domain, playerId),
+      if (!domain.initialResourceDistribution.isEmpty)
+        'initialResourceDistribution': domain.initialResourceDistribution
+            .toJson(),
       'units': [for (final unit in units) unit.toJson()],
       'cities': [for (final city in cities) city.toJson()],
       'artifacts': _artifactsFor(

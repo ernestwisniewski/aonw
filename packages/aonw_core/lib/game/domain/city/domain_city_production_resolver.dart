@@ -7,7 +7,6 @@ import 'package:aonw_core/game/domain/city/rush_production_command_resolver.dart
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
-import 'package:aonw_core/game/domain/match_rules/strategic_resource_economy_profile.dart';
 import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/stability/stability_ruleset.dart';
 import 'package:aonw_core/game/domain/state/domain_state.dart';
@@ -79,7 +78,6 @@ final class DomainCityProductionResolver {
       technologyRuleset: technologyRuleset,
       paceBalance: paceBalance,
       strategicResources: state.strategicResources,
-      strategicResourceEconomy: state.matchRules.strategicResourceEconomy,
     );
     return _fromTargetCommandResult(
       state,
@@ -196,25 +194,17 @@ final class DomainCityProductionResolver {
     DomainState state,
     CityProductionCommandResult result, {
     required String cityId,
-    StrategicResourceAccounts? strategicResources,
     StrategicResourceBundle allocation = StrategicResourceBundle.empty,
   }) {
     if (!result.accepted) return _fromCommandResult(state, result);
     if (identical(result.cities, state.cities)) {
       return DomainCityProductionResult(accepted: true, state: state);
     }
-    final stockpilesEnabled =
-        state.matchRules.strategicResourceEconomy ==
-        StrategicResourceEconomyProfile.stockpileV1;
-    var accounts =
-        strategicResources ??
-        (stockpilesEnabled
-            ? _accountsAfterRefund(state, cityId)
-            : state.strategicResources);
+    var accounts = _accountsAfterRefund(state, cityId);
     final sourceCity = state.cities
         .where((candidate) => candidate.id == cityId)
         .firstOrNull;
-    if (stockpilesEnabled && sourceCity != null && !allocation.isEmpty) {
+    if (sourceCity != null && !allocation.isEmpty) {
       accounts = accounts.debit(sourceCity.ownerPlayerId, allocation);
     }
     final cities = [

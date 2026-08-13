@@ -1083,6 +1083,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get diplomacyStrategicResourcesTitle => 'Strategic resources';
 
   @override
+  String get diplomacyResourceTradeGoldMode => 'For gold';
+
+  @override
+  String get diplomacyResourceTradeExchangeMode => 'Resource swap';
+
+  @override
+  String get diplomacyResourceTradeReceiveLabel => 'You receive';
+
+  @override
+  String get diplomacyResourceTradeGiveLabel => 'You provide';
+
+  @override
+  String diplomacyResourceTradeGoldForecast(
+    String resourceName,
+    int goldPerTurn,
+    int durationTurns,
+  ) {
+    return 'Your flow: +1 $resourceName/turn · −$goldPerTurn gold/turn · $durationTurns turns';
+  }
+
+  @override
+  String diplomacyResourceTradeExchangeForecast(
+    String requestedResource,
+    String offeredResource,
+    int durationTurns,
+  ) {
+    return 'Your flow: +1 $requestedResource/turn · −1 $offeredResource/turn · $durationTurns turns';
+  }
+
+  @override
+  String get diplomacyResourceTradePrivateSupplyHint =>
+      'Only legal export offers are shown; the rival\'s stockpile remains private.';
+
+  @override
+  String diplomacyResourceTradeGoldUnavailable(int gold) {
+    return 'You need at least $gold gold to start this import.';
+  }
+
+  @override
+  String get diplomacyResourceTradeRequestFailed =>
+      'The agreement could not be created. Review the terms and try again.';
+
+  @override
+  String get diplomacyResourceTradeRequestRejected =>
+      'The offer changed and could not be accepted. Review the available terms and try again.';
+
+  @override
+  String get diplomacyResourceTradeActiveTitle => 'Active agreements';
+
+  @override
+  String diplomacyResourceTradeAgreementFlowLabel(
+    String direction,
+    int amount,
+    String resourceName,
+    String price,
+    int remainingTurns,
+  ) {
+    return '$direction: $amount $resourceName/turn · $price · $remainingTurns turns left';
+  }
+
+  @override
   String get diplomacyResourceTradeBlockedByWar =>
       'Resource trade is blocked by war.';
 
@@ -5307,6 +5368,69 @@ class AppLocalizationsEn extends AppLocalizations {
       'No strategic resources are allocated.';
 
   @override
+  String get resourceEconomyOpenAction => 'Full resource economy';
+
+  @override
+  String get resourceEconomyTitle => 'Strategic economy';
+
+  @override
+  String get resourceEconomyHealthySubtitle => 'Strategic supply is stable.';
+
+  @override
+  String resourceEconomyAttentionSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count issues require attention.',
+      one: '1 issue requires attention.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get resourceEconomyAlertsTitle => 'Economic alerts';
+
+  @override
+  String resourceEconomyNoFreeStockAlert(String resourceName) {
+    return 'No free $resourceName';
+  }
+
+  @override
+  String resourceEconomyInsufficientStockAlert(String resourceName) {
+    return 'Not enough free $resourceName';
+  }
+
+  @override
+  String get resourceEconomyNoFreeStockDetail =>
+      'New production that requires this resource is blocked.';
+
+  @override
+  String resourceEconomyTradeExpiringAlert(String resourceName, int turns) {
+    return '$resourceName agreement expires in $turns turns';
+  }
+
+  @override
+  String get resourceEconomyTradeExpiringDetail =>
+      'Review the agreement before the strategic flow changes.';
+
+  @override
+  String get resourceEconomyTradePartnersTitle => 'Trade partners';
+
+  @override
+  String get resourceEconomyNoTradePartners =>
+      'No known civilization is available for resource trade.';
+
+  @override
+  String get resourceEconomyOpenTradeAction => 'Open trade';
+
+  @override
+  String get resourceEconomyGoToCityAction => 'Go to city';
+
+  @override
+  String get resourceEconomyNoSources =>
+      'No active strategic resource sources.';
+
+  @override
   String get technologyRecommendationsTitle => 'Recommended research';
 
   @override
@@ -7304,6 +7428,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resourceDetailCurrentSection => 'Now';
+
+  @override
+  String get resourceDetailEmpireSupplySection => 'Empire supply';
+
+  @override
+  String resourceDetailStrategicFlowActive(int amount, String resource) {
+    return 'Active source: +$amount $resource/turn.';
+  }
+
+  @override
+  String resourceDetailStrategicFlowClaim(int amount, String resource) {
+    return 'Claim this field to unlock +$amount $resource/turn after improvement.';
+  }
+
+  @override
+  String resourceDetailStrategicFlowImprove(
+    String improvement,
+    int amount,
+    String resource,
+  ) {
+    return 'Build $improvement to add +$amount $resource/turn to the empire.';
+  }
 
   @override
   String get resourceDetailAfterImprovementSection => 'After improvement';

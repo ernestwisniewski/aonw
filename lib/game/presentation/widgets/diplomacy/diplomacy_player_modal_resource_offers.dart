@@ -1,4 +1,4 @@
-part of 'diplomacy_player_modal.dart';
+part of 'diplomacy_player_modal_resource_trade.dart';
 
 class _ResourceTradeOffer {
   const _ResourceTradeOffer({required this.resource});
@@ -28,16 +28,11 @@ List<_ResourceTradeOffer> _resourceTradeOffers({
     mapTiles: mapData,
     research: gameState.research,
   );
-  final targetInventory = CityResourceInventoryRules.forPlayer(
-    playerId: targetPlayerId,
-    cities: gameState.cities,
-    mapTiles: mapData,
-    research: gameState.research,
-  );
-
   final offers = <_ResourceTradeOffer>[];
   for (final resource in _strategicTradeResources) {
-    if (activeInventory.countFor(resource) > 0) continue;
+    if (_alreadyControlsPresenceResource(activeInventory, resource)) {
+      continue;
+    }
     if (_activeImportCount(
           gameState.resourceTradeAgreements,
           importerPlayerId: activePlayerId,
@@ -47,13 +42,15 @@ List<_ResourceTradeOffer> _resourceTradeOffers({
         0) {
       continue;
     }
-    final availableExports =
-        targetInventory.countFor(resource) -
-        _activeExportCount(
-          gameState.resourceTradeAgreements,
-          exporterPlayerId: targetPlayerId,
-          resource: resource,
-        );
+    final availableExports = ResourceTradeExportAvailability.available(
+      cities: gameState.cities,
+      research: gameState.research,
+      agreements: gameState.resourceTradeAgreements,
+      exporterPlayerId: targetPlayerId,
+      resource: resource,
+      mapTiles: mapData,
+      fieldImprovements: gameState.fieldImprovements,
+    );
     if (availableExports > 0) {
       offers.add(_ResourceTradeOffer(resource: resource));
     }
@@ -73,27 +70,26 @@ List<_ResourceExchangeOffer> _resourceExchangeOffers({
     mapTiles: mapData,
     research: gameState.research,
   );
-  final targetInventory = CityResourceInventoryRules.forPlayer(
-    playerId: targetPlayerId,
-    cities: gameState.cities,
-    mapTiles: mapData,
-    research: gameState.research,
-  );
-
   final offers = <_ResourceExchangeOffer>[];
   for (final offeredResource in _strategicTradeResources) {
-    final availableOffer =
-        activeInventory.countFor(offeredResource) -
-        _activeExportCount(
-          gameState.resourceTradeAgreements,
-          exporterPlayerId: activePlayerId,
-          resource: offeredResource,
-        );
+    final availableOffer = ResourceTradeExportAvailability.available(
+      cities: gameState.cities,
+      research: gameState.research,
+      agreements: gameState.resourceTradeAgreements,
+      exporterPlayerId: activePlayerId,
+      resource: offeredResource,
+      mapTiles: mapData,
+      fieldImprovements: gameState.fieldImprovements,
+    );
     if (availableOffer <= 0) continue;
-
     for (final requestedResource in _strategicTradeResources) {
       if (requestedResource == offeredResource) continue;
-      if (activeInventory.countFor(requestedResource) > 0) continue;
+      if (_alreadyControlsPresenceResource(
+        activeInventory,
+        requestedResource,
+      )) {
+        continue;
+      }
       if (_activeImportCount(
             gameState.resourceTradeAgreements,
             importerPlayerId: activePlayerId,
@@ -112,14 +108,15 @@ List<_ResourceExchangeOffer> _resourceExchangeOffers({
           0) {
         continue;
       }
-
-      final availableRequest =
-          targetInventory.countFor(requestedResource) -
-          _activeExportCount(
-            gameState.resourceTradeAgreements,
-            exporterPlayerId: targetPlayerId,
-            resource: requestedResource,
-          );
+      final availableRequest = ResourceTradeExportAvailability.available(
+        cities: gameState.cities,
+        research: gameState.research,
+        agreements: gameState.resourceTradeAgreements,
+        exporterPlayerId: targetPlayerId,
+        resource: requestedResource,
+        mapTiles: mapData,
+        fieldImprovements: gameState.fieldImprovements,
+      );
       if (availableRequest > 0) {
         offers.add(
           _ResourceExchangeOffer(
@@ -133,14 +130,13 @@ List<_ResourceExchangeOffer> _resourceExchangeOffers({
   return List.unmodifiable(offers);
 }
 
-const _strategicTradeResources = [
-  ResourceType.horses,
-  ResourceType.iron,
-  ResourceType.coal,
-  ResourceType.oil,
-  ResourceType.aluminium,
-  ResourceType.uranium,
-];
+Iterable<ResourceType> get _strategicTradeResources =>
+    ResourceCatalog.strategicResources;
+
+bool _alreadyControlsPresenceResource(
+  CityResourceInventory inventory,
+  ResourceType resource,
+) => !ResourceCatalog.isStockpiled(resource) && inventory.controls(resource);
 
 int _activeImportCount(
   Iterable<ResourceTradeAgreement> agreements, {
@@ -152,22 +148,6 @@ int _activeImportCount(
   for (final agreement in agreements) {
     if (agreement.isActive &&
         agreement.importerPlayerId == importerPlayerId &&
-        agreement.exporterPlayerId == exporterPlayerId &&
-        agreement.resource == resource) {
-      count += 1;
-    }
-  }
-  return count;
-}
-
-int _activeExportCount(
-  Iterable<ResourceTradeAgreement> agreements, {
-  required String exporterPlayerId,
-  required ResourceType resource,
-}) {
-  var count = 0;
-  for (final agreement in agreements) {
-    if (agreement.isActive &&
         agreement.exporterPlayerId == exporterPlayerId &&
         agreement.resource == resource) {
       count += 1;

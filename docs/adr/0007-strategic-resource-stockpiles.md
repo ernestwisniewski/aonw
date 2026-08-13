@@ -97,12 +97,25 @@ Continuous unit upkeep, shortage movement/regeneration penalties, luxury
 duplicate effects, and stockpiling iron, coal, uranium, or horses are not part
 of this decision. They require separate balance and player-feedback contracts.
 
+All seven strategic resources — iron, coal, oil, aluminium, uranium, horses,
+and marble — appear in the shared economy and trade UI. Oil and aluminium use
+quantitative stockpiles; the remaining resources use controlled/imported
+presence until a later balance decision migrates them to stockpiles.
+
+New matches persist a deterministic initial resource distribution. The shared
+generator adds one compatible bonus, luxury, and strategic placement per start
+where the map has legal capacity. It excludes authored resources, objectives,
+and starting-unit hexes. Persisting placements, rather than regenerating from
+the seed, keeps local saves, multiplayer, replay, and future balance revisions
+on the exact same effective map.
+
 ## Migration And Verification
 
-New matches use `stockpileV1`. Missing profile data is decoded as
-`legacyPresenceV0`, and missing accounts decode as empty, so existing saves and
-in-flight legacy queues are not retroactively charged. Command JSON carries an
-optional resource-option index and remains compatible when it is absent.
+The stockpile economy is the only strategic-resource model. Older saves remain
+readable: obsolete rule fields are ignored and missing accounts decode as
+empty. When an older queue does not contain an allocation, changing its target
+does not invent a refund. Command JSON carries an optional resource-option
+index and remains compatible when it is absent.
 
 Verification covers extraction ownership and technology visibility, turn
 ordering, save and projection round trips, atomic allocation and refund,

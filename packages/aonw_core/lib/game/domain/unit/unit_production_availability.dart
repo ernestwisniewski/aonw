@@ -5,7 +5,6 @@ import 'package:aonw_core/game/domain/city/city_unit_production_rules.dart';
 import 'package:aonw_core/game/domain/city/city_unit_supply_rules.dart';
 import 'package:aonw_core/game/domain/city/field_improvement.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
-import 'package:aonw_core/game/domain/match_rules/strategic_resource_economy_profile.dart';
 import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/game/domain/technology/technology_ruleset.dart';
@@ -77,7 +76,6 @@ typedef UnitProductionAvailabilityQuery = ({
   CityRuleset cityRuleset,
   TechnologyRuleset technologyRuleset,
   StrategicResourceAccounts strategicResources,
-  StrategicResourceEconomyProfile strategicResourceEconomy,
   int? preferredResourceOptionIndex,
 });
 
@@ -102,15 +100,9 @@ final class UnitProductionAvailability {
   static UnitProductionAvailability evaluate(
     UnitProductionAvailabilityQuery query,
   ) {
-    final stockpilesEnabled =
-        query.strategicResourceEconomy ==
-        StrategicResourceEconomyProfile.stockpileV1;
     final technologyAvailable = _technologyAvailable(query);
-    final missingPresence = _missingPresenceResources(
-      query,
-      stockpilesEnabled: stockpilesEnabled,
-    );
-    final strategic = _strategicAvailability(query, enabled: stockpilesEnabled);
+    final missingPresence = _missingPresenceResources(query);
+    final strategic = _strategicAvailability(query);
     final coastAvailable = CityUnitProductionRules.canProduceInCity(
       city: query.city,
       unitType: query.unitType,
@@ -122,8 +114,7 @@ final class UnitProductionAvailability {
         if (!technologyAvailable) const UnitTechnologyBlocker(),
         if (missingPresence.isNotEmpty)
           UnitPresenceResourceBlocker(Set.unmodifiable(missingPresence)),
-        if (strategic != null && !strategic.isAvailable)
-          UnitStrategicResourceBlocker(strategic),
+        if (!strategic.isAvailable) UnitStrategicResourceBlocker(strategic),
         if (!coastAvailable) const UnitCoastBlocker(),
         if (!supplyAvailable) const UnitSupplyBlocker(),
       ]),
@@ -145,9 +136,8 @@ bool _technologyAvailable(UnitProductionAvailabilityQuery query) =>
     );
 
 Set<ResourceType> _missingPresenceResources(
-  UnitProductionAvailabilityQuery query, {
-  required bool stockpilesEnabled,
-}) => UnitProductionRequirementRules.missingResourceChoices(
+  UnitProductionAvailabilityQuery query,
+) => UnitProductionRequirementRules.missingResourceChoices(
   playerId: query.playerId,
   unitType: query.unitType,
   cities: query.cities,
@@ -155,22 +145,18 @@ Set<ResourceType> _missingPresenceResources(
   ruleset: query.cityRuleset,
   research: query.research,
   resourceTradeAgreements: query.resourceTradeAgreements,
-  ignoreStockpileCosts: stockpilesEnabled,
 );
 
-UnitStrategicResourceAvailability? _strategicAvailability(
-  UnitProductionAvailabilityQuery query, {
-  required bool enabled,
-}) => enabled
-    ? UnitStrategicResourceAvailability.forUnit(
-        playerId: query.playerId,
-        unitType: query.unitType,
-        definition: query.cityRuleset.unitDefinitionFor(query.unitType),
-        accounts: query.strategicResources,
-        replacingCity: query.city,
-        preferredOptionIndex: query.preferredResourceOptionIndex,
-      )
-    : null;
+UnitStrategicResourceAvailability _strategicAvailability(
+  UnitProductionAvailabilityQuery query,
+) => UnitStrategicResourceAvailability.forUnit(
+  playerId: query.playerId,
+  unitType: query.unitType,
+  definition: query.cityRuleset.unitDefinitionFor(query.unitType),
+  accounts: query.strategicResources,
+  replacingCity: query.city,
+  preferredOptionIndex: query.preferredResourceOptionIndex,
+);
 
 bool _supplyAvailable(UnitProductionAvailabilityQuery query) =>
     CityUnitSupplyRules.canQueueUnit(

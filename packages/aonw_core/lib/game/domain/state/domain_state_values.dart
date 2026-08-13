@@ -38,6 +38,7 @@ final class _DomainStateContent {
     required this.playerWarWeariness,
     required this.playerStabilityNet,
     required this.strategicResources,
+    required this.initialResourceDistribution,
     required this.units,
     required this.cities,
     required this.artifacts,
@@ -58,6 +59,7 @@ final class _DomainStateContent {
   final Map<String, int> playerWarWeariness;
   final Map<String, int> playerStabilityNet;
   final StrategicResourceAccounts strategicResources;
+  final InitialResourceDistribution initialResourceDistribution;
   final List<GameUnit> units;
   final List<GameCity> cities;
   final List<WorldArtifact> artifacts;

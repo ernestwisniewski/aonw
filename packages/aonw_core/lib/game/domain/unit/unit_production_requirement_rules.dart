@@ -18,7 +18,6 @@ abstract final class UnitProductionRequirementRules {
     CityRuleset ruleset = CityRulesets.standard,
     ResearchState research = ResearchState.empty,
     Iterable<ResourceTradeAgreement> resourceTradeAgreements = const [],
-    bool ignoreStockpileCosts = false,
   }) {
     return missingResourceChoices(
       playerId: playerId,
@@ -28,7 +27,6 @@ abstract final class UnitProductionRequirementRules {
       ruleset: ruleset,
       research: research,
       resourceTradeAgreements: resourceTradeAgreements,
-      ignoreStockpileCosts: ignoreStockpileCosts,
     ).isEmpty;
   }
 
@@ -40,7 +38,6 @@ abstract final class UnitProductionRequirementRules {
     CityRuleset ruleset = CityRulesets.standard,
     ResearchState research = ResearchState.empty,
     Iterable<ResourceTradeAgreement> resourceTradeAgreements = const [],
-    bool ignoreStockpileCosts = false,
   }) {
     final network = EmpireResourceNetworkRules.forPlayer(
       playerId: playerId,
@@ -55,12 +52,8 @@ abstract final class UnitProductionRequirementRules {
       switch (requirement) {
         case UnitResourceRequirement(:final resources):
           if (!resources.any(network.controlsVisible)) return resources;
-        case UnitStockpileCostRequirement(:final options):
-          if (ignoreStockpileCosts) continue;
-          final resources = {
-            for (final option in options) ...option.amounts.keys,
-          };
-          if (!resources.any(network.controlsVisible)) return resources;
+        case UnitStockpileCostRequirement():
+          continue;
       }
     }
     return const {};

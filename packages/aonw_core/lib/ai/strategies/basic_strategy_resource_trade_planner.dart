@@ -2,7 +2,6 @@ import 'package:aonw_core/ai/game_view.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -96,24 +95,18 @@ final class BasicStrategyResourceTradePlanner {
             ruleset: view.ruleset.city,
             research: view.research,
             resourceTradeAgreements: view.resourceTradeAgreements,
-            ignoreStockpileCosts:
-                view.strategicResourceEconomy ==
-                StrategicResourceEconomyProfile.stockpileV1,
           );
       missing.addAll(presenceMissing);
-      if (view.strategicResourceEconomy ==
-          StrategicResourceEconomyProfile.stockpileV1) {
-        final availability = UnitStrategicResourceAvailability.forUnit(
-          playerId: view.forPlayerId,
-          unitType: unitType,
-          definition: view.ruleset.city.unitDefinitionFor(unitType),
-          accounts: StrategicResourceAccounts(
-            byPlayerId: {view.forPlayerId: view.ownStrategicResources},
-          ),
-        );
-        if (!availability.isAvailable) {
-          missing.addAll(availability.missing.amounts.keys);
-        }
+      final availability = UnitStrategicResourceAvailability.forUnit(
+        playerId: view.forPlayerId,
+        unitType: unitType,
+        definition: view.ruleset.city.unitDefinitionFor(unitType),
+        accounts: StrategicResourceAccounts(
+          byPlayerId: {view.forPlayerId: view.ownStrategicResources},
+        ),
+      );
+      if (!availability.isAvailable) {
+        missing.addAll(availability.missing.amounts.keys);
       }
     }
 
@@ -219,9 +212,7 @@ final class BasicStrategyResourceTradePlanner {
     required Iterable<GameCity> cities,
     required ResourceType resource,
   }) {
-    if (view.strategicResourceEconomy ==
-            StrategicResourceEconomyProfile.stockpileV1 &&
-        ResourceCatalog.isStockpiled(resource)) {
+    if (ResourceCatalog.isStockpiled(resource)) {
       final production = StrategicResourceProductionRules.forPlayer(
         playerId: playerId,
         cities: cities,

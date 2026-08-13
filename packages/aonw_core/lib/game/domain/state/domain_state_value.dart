@@ -33,7 +33,8 @@ bool _sameDomainEconomy(DomainState left, DomainState right) {
   return mapEquals(left.playerGold, right.playerGold) &&
       mapEquals(left.playerWarWeariness, right.playerWarWeariness) &&
       mapEquals(left.playerStabilityNet, right.playerStabilityNet) &&
-      left.strategicResources == right.strategicResources;
+      left.strategicResources == right.strategicResources &&
+      left.initialResourceDistribution == right.initialResourceDistribution;
 }
 
 bool _sameDomainEntities(DomainState left, DomainState right) {
@@ -97,6 +98,7 @@ int _domainEconomyHash(DomainState state) => Object.hash(
   mapHash(state.playerWarWeariness),
   mapHash(state.playerStabilityNet),
   state.strategicResources,
+  state.initialResourceDistribution,
 );
 
 int _domainEntityHash(DomainState state) => Object.hash(

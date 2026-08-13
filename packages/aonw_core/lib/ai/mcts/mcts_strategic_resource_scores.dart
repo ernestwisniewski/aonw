@@ -1,14 +1,9 @@
 import 'package:aonw_core/ai/mcts/mcts_simulated_state.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/resource.dart';
 
 abstract final class MctsStrategicResourceScores {
   static double stateScore(SimulatedState state) {
     final view = state.view;
-    if (view.strategicResourceEconomy !=
-        StrategicResourceEconomyProfile.stockpileV1) {
-      return 0;
-    }
     final production = StrategicResourceProductionRules.forPlayer(
       playerId: view.forPlayerId,
       cities: view.ownCities,

@@ -8,7 +8,6 @@ abstract final class TurnResourceTradeEconomyAdvancer {
   static TurnEconomyState advance({
     required TurnEconomyState state,
     required Iterable<String> playerIds,
-    bool strategicResourceStockpilesEnabled = true,
     ResourceTradeDeliveryPolicy deliveryPolicy =
         const DiplomacyResourceTradeDeliveryPolicy(),
   }) {
@@ -19,7 +18,6 @@ abstract final class TurnResourceTradeEconomyAdvancer {
     final advance = _ResourceTradeAdvance(
       state: state,
       activeImporterIds: activeImporterIds,
-      stockpilesEnabled: strategicResourceStockpilesEnabled,
       deliveryPolicy: deliveryPolicy,
     );
     for (final group in _orderedAgreementGroups(
@@ -50,14 +48,12 @@ final class _ResourceTradeAdvance {
   _ResourceTradeAdvance({
     required this.state,
     required this.activeImporterIds,
-    required this.stockpilesEnabled,
     required this.deliveryPolicy,
   }) : gold = Map.from(state.playerGold),
        strategicResources = state.strategicResources;
 
   final TurnEconomyState state;
   final Set<String> activeImporterIds;
-  final bool stockpilesEnabled;
   final ResourceTradeDeliveryPolicy deliveryPolicy;
   final Map<String, int> gold;
   final List<ResourceTradeAgreement> agreements = [];
@@ -135,8 +131,7 @@ final class _ResourceTradeAdvance {
   StrategicResourceBundle? _stockpileDelivery(
     ResourceTradeAgreement agreement,
   ) {
-    if (!stockpilesEnabled ||
-        !ResourceCatalog.isStockpiled(agreement.resource)) {
+    if (!ResourceCatalog.isStockpiled(agreement.resource)) {
       return null;
     }
     return StrategicResourceBundle({

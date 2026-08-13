@@ -11,6 +11,7 @@ import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:aonw/shared/theme/surface_shape.dart';
+import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_epic_header.dart';
 import 'package:aonw_core/game/domain/city.dart';
@@ -45,6 +46,7 @@ class ResourceBreakdownPopup extends StatelessWidget {
   final AppLocalizations l10n;
   final VoidCallback onClose;
   final ValueChanged<GameCity>? onStrategicCityPressed;
+  final VoidCallback? onOpenStrategicEconomy;
   final double maxWidth;
   final double maxHeight;
   final bool showDragHandle;
@@ -65,6 +67,7 @@ class ResourceBreakdownPopup extends StatelessWidget {
     required this.l10n,
     required this.onClose,
     this.onStrategicCityPressed,
+    this.onOpenStrategicEconomy,
     this.maxWidth = 330,
     this.maxHeight = 380,
     this.showDragHandle = false,
@@ -110,47 +113,20 @@ class ResourceBreakdownPopup extends StatelessWidget {
           input: gamepadInputListenable,
           onCancel: onClose,
           padding: const EdgeInsets.fromLTRB(12, 10, 10, 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (showDragHandle) ...[
-                Center(
-                  child: Container(
-                    width: 42,
-                    height: 4,
-                    decoration: ShapeDecoration(
-                      color: SurfaceElevation.flat.fill(
-                        background: GameUiTheme.copper,
-                        alpha: 120,
-                      ),
-                      shape: const StadiumBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-              ],
-              GameUiEpicHeader(
-                label: title,
-                accent: color,
-                alignment: Alignment.centerLeft,
-                leading: GameIcon(
-                  icon,
-                  size: GameIconSize.regular,
-                  color: color,
-                ),
-                trailing: _PopupIconButton(
-                  icon: GameIcons.close,
-                  tooltip: l10n.closeAction,
-                  onTap: onClose,
-                ),
-              ),
-              const SizedBox(height: 8),
-              for (var i = 0; i < sections.length; i++) ...[
-                if (i > 0) const SizedBox(height: 10),
-                _BreakdownSection(section: sections[i], accent: color),
-              ],
-            ],
+          child: _ResourceBreakdownContent(
+            title: title,
+            accent: color,
+            icon: icon,
+            closeTooltip: l10n.closeAction,
+            showDragHandle: showDragHandle,
+            showEconomyAction:
+                type == ResourceBreakdownType.resources &&
+                strategicResources.enabled &&
+                onOpenStrategicEconomy != null,
+            economyActionLabel: l10n.resourceEconomyOpenAction,
+            onClose: onClose,
+            onOpenEconomy: onOpenStrategicEconomy,
+            sections: sections,
           ),
         ),
       ),

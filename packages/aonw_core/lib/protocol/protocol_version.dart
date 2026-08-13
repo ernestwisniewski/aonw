@@ -9,7 +9,14 @@ const int kProtocolVersion = 4;
 ///
 /// Keep this stable while the persisted shapes remain decodable. Bump it only
 /// with an explicit expand/contract and rollback plan for stored payloads.
-const int kSnapshotEventVersion = 5;
+const int kSnapshotEventVersion = 6;
+
+/// Previous durable schema accepted during the v5 -> v6 expand phase.
+///
+/// Revision 5 does not persist the deterministic initial resource
+/// distribution. Current readers treat it as empty and migrate the envelope
+/// on the next authoritative write.
+const int kPreviousSnapshotEventVersion = 5;
 
 /// Previous durable schema accepted during the v4 -> v5 expand phase.
 ///
@@ -27,6 +34,7 @@ const int kOldestSnapshotEventVersion = 3;
 const Set<int> kReadableSnapshotEventVersions = {
   kOldestSnapshotEventVersion,
   kLegacySnapshotEventVersion,
+  kPreviousSnapshotEventVersion,
   kSnapshotEventVersion,
 };
 
@@ -38,7 +46,7 @@ bool isReadableSnapshotEventVersion(int version) =>
 /// Every player-visible or server-side multiplayer contract change increments
 /// this value, including compatible additive changes that do not alter the
 /// serialized wire-envelope schema.
-const int kCurrentMultiplayerVersion = 7;
+const int kCurrentMultiplayerVersion = 8;
 
 /// Version represented by clients released before the compatibility
 /// declaration was added to the app-status handshake.
@@ -49,7 +57,7 @@ const int kLegacyUndeclaredMultiplayerVersion = 1;
 /// Remove a revision when a change is incompatible. Clients on a removed or
 /// future revision receive the translated update notice before entering
 /// multiplayer.
-const Set<int> kCompatibleMultiplayerVersions = {7};
+const Set<int> kCompatibleMultiplayerVersions = {8};
 
 enum MultiplayerVersionCompatibility {
   current,

@@ -1,10 +1,32 @@
-part of 'diplomacy_player_modal.dart';
+import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/widgets/diplomacy/diplomacy_section.dart';
+import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw/shared/theme/border_emphasis.dart';
+import 'package:aonw/shared/theme/game_ui_theme.dart';
+import 'package:aonw/shared/theme/surface_elevation.dart';
+import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
+import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
+import 'package:aonw_core/game/domain/resource.dart';
+import 'package:aonw_core/game/domain/trade.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:flutter/material.dart';
+
+part 'diplomacy_player_modal_resource_offers.dart';
+part 'diplomacy_player_modal_resource_trade_editors.dart';
+part 'diplomacy_player_modal_resource_trade_widgets.dart';
 
 const int _resourceTradeGoldPerTurn = 2;
 const int _resourceTradeDurationTurns = 8;
 
-class _ResourceTradeSection extends StatelessWidget {
-  const _ResourceTradeSection({
+enum _ResourceTradeMode { gold, exchange }
+
+class ResourceTradeSection extends StatefulWidget {
+  const ResourceTradeSection({
     required this.l10n,
     required this.gameState,
     required this.mapData,
@@ -12,6 +34,8 @@ class _ResourceTradeSection extends StatelessWidget {
     required this.activePlayerId,
     required this.targetPlayerId,
     required this.onCommand,
+    this.onResourceTradeCommand,
+    super.key,
   });
 
   final AppLocalizations l10n;
@@ -21,195 +45,129 @@ class _ResourceTradeSection extends StatelessWidget {
   final String activePlayerId;
   final String targetPlayerId;
   final Future<void> Function(DomainCommand command) onCommand;
+  final Future<bool> Function(DomainCommand command)? onResourceTradeCommand;
+
+  @override
+  State<ResourceTradeSection> createState() => _ResourceTradeSectionState();
+}
+
+class _ResourceTradeSectionState extends State<ResourceTradeSection> {
+  _ResourceTradeMode _mode = _ResourceTradeMode.gold;
+  ResourceType? _importResource;
+  ResourceType? _offeredResource;
+  ResourceType? _requestedResource;
+  bool _submitting = false;
 
   @override
   Widget build(BuildContext context) {
     final offers = _resourceTradeOffers(
-      gameState: gameState,
-      mapData: mapData,
-      activePlayerId: activePlayerId,
-      targetPlayerId: targetPlayerId,
+      gameState: widget.gameState,
+      mapData: widget.mapData,
+      activePlayerId: widget.activePlayerId,
+      targetPlayerId: widget.targetPlayerId,
     );
-    final exchangeOffers = _resourceExchangeOffers(
-      gameState: gameState,
-      mapData: mapData,
-      activePlayerId: activePlayerId,
-      targetPlayerId: targetPlayerId,
+    final exchanges = _resourceExchangeOffers(
+      gameState: widget.gameState,
+      mapData: widget.mapData,
+      activePlayerId: widget.activePlayerId,
+      targetPlayerId: widget.targetPlayerId,
     );
-    final blockedByWar = relation.status == DiplomaticRelationStatus.war;
-    return _Section(
-      title: l10n.diplomacyStrategicResourcesTitle,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (offers.isEmpty && exchangeOffers.isEmpty)
-            Text(
-              blockedByWar
-                  ? l10n.diplomacyResourceTradeBlockedByWar
-                  : l10n.diplomacyResourceTradeNoAvailableResources,
-              style: GameUiTheme.bodySmall,
-            )
-          else if (offers.isNotEmpty) ...[
-            Text(
-              l10n.diplomacyResourceTradeImportOffer(
-                _resourceTradeGoldPerTurn,
-                _resourceTradeDurationTurns,
-              ),
-              style: GameUiTheme.bodySmall,
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final offer in offers)
-                  EpicButton.outlined(
-                    key: Key('diplomacy.resourceTrade.${offer.resource.name}'),
-                    label: l10n.diplomacyResourceTradeImportAction(
-                      GameDisplayNames.resource(l10n, offer.resource),
-                    ),
-                    iconBuilder: (color) =>
-                        GameIcon(GameIcons.route, size: 16, color: color),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 9,
-                    ),
-                    onPressed: blockedByWar
-                        ? null
-                        : () => unawaited(
-                            onCommand(
-                              OpenResourceTradeCommand(
-                                playerId: activePlayerId,
-                                targetPlayerId: targetPlayerId,
-                                resource: offer.resource,
-                                goldPerTurn: _resourceTradeGoldPerTurn,
-                                durationTurns: _resourceTradeDurationTurns,
-                              ),
-                            ),
-                          ),
-                  ),
-              ],
-            ),
-          ],
-          if (offers.isNotEmpty && exchangeOffers.isNotEmpty)
-            const SizedBox(height: 12),
-          if (exchangeOffers.isNotEmpty) ...[
-            Text(
-              l10n.diplomacyResourceTradeExchangeOffer(
-                _resourceTradeDurationTurns,
-              ),
-              style: GameUiTheme.bodySmall,
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final offer in exchangeOffers)
-                  EpicButton.outlined(
-                    key: Key(
-                      'diplomacy.resourceExchange.${offer.offeredResource.name}.${offer.requestedResource.name}',
-                    ),
-                    label: l10n.diplomacyResourceTradeExchangeAction(
-                      GameDisplayNames.resource(l10n, offer.offeredResource),
-                      GameDisplayNames.resource(l10n, offer.requestedResource),
-                    ),
-                    iconBuilder: (color) =>
-                        GameIcon(GameIcons.split, size: 16, color: color),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 9,
-                    ),
-                    onPressed: blockedByWar
-                        ? null
-                        : () => unawaited(
-                            onCommand(
-                              OpenResourceExchangeCommand(
-                                playerId: activePlayerId,
-                                targetPlayerId: targetPlayerId,
-                                offeredResource: offer.offeredResource,
-                                requestedResource: offer.requestedResource,
-                                durationTurns: _resourceTradeDurationTurns,
-                              ),
-                            ),
-                          ),
-                  ),
-              ],
-            ),
-          ],
-          const SizedBox(height: 10),
-          _ResourceTradeSummary(
-            l10n: l10n,
-            gameState: gameState,
-            activePlayerId: activePlayerId,
-            targetPlayerId: targetPlayerId,
-          ),
-        ],
+    final blockedByWar = widget.relation.status == DiplomaticRelationStatus.war;
+    final mode = _effectiveMode(offers, exchanges);
+    return DiplomacySection(
+      title: widget.l10n.diplomacyStrategicResourcesTitle,
+      child: _ResourceTradeBody(
+        l10n: widget.l10n,
+        blockedByWar: blockedByWar,
+        hasOffers: offers.isNotEmpty || exchanges.isNotEmpty,
+        showModePicker: offers.isNotEmpty && exchanges.isNotEmpty,
+        mode: mode,
+        onModeChanged: (value) => setState(() => _mode = value),
+        editor: mode == _ResourceTradeMode.gold
+            ? _goldEditor(offers, blockedByWar)
+            : _exchangeEditor(exchanges, blockedByWar),
+        summary: _ResourceTradeSummary(
+          l10n: widget.l10n,
+          gameState: widget.gameState,
+          activePlayerId: widget.activePlayerId,
+          targetPlayerId: widget.targetPlayerId,
+        ),
       ),
     );
   }
-}
 
-class _ResourceTradeSummary extends StatelessWidget {
-  const _ResourceTradeSummary({
-    required this.l10n,
-    required this.gameState,
-    required this.activePlayerId,
-    required this.targetPlayerId,
-  });
-
-  final AppLocalizations l10n;
-  final GameClientState gameState;
-  final String activePlayerId;
-  final String targetPlayerId;
-
-  @override
-  Widget build(BuildContext context) {
-    final agreements = [
-      for (final agreement in gameState.resourceTradeAgreements)
-        if (agreement.isActive &&
-            ((agreement.importerPlayerId == activePlayerId &&
-                    agreement.exporterPlayerId == targetPlayerId) ||
-                (agreement.importerPlayerId == targetPlayerId &&
-                    agreement.exporterPlayerId == activePlayerId)))
-          agreement,
-    ];
-    if (agreements.isEmpty) {
-      return Text(
-        l10n.diplomacyResourceTradeNoActiveAgreements,
-        style: GameUiTheme.bodySmall.copyWith(color: GameUiTheme.textTertiary),
-      );
+  _ResourceTradeMode _effectiveMode(
+    List<_ResourceTradeOffer> offers,
+    List<_ResourceExchangeOffer> exchanges,
+  ) {
+    if (_mode == _ResourceTradeMode.gold && offers.isNotEmpty) return _mode;
+    if (_mode == _ResourceTradeMode.exchange && exchanges.isNotEmpty) {
+      return _mode;
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final agreement in agreements)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 5),
-            child: Text(
-              _agreementLabel(agreement),
-              style: GameUiTheme.bodySmall.copyWith(
-                color: GameUiTheme.textSecondary,
-              ),
-            ),
-          ),
-      ],
-    );
+    return offers.isNotEmpty
+        ? _ResourceTradeMode.gold
+        : _ResourceTradeMode.exchange;
   }
 
-  String _agreementLabel(ResourceTradeAgreement agreement) {
-    final resourceName = GameDisplayNames.resource(l10n, agreement.resource);
-    final direction = agreement.importerPlayerId == activePlayerId
-        ? l10n.diplomacyResourceTradeImportDirection
-        : l10n.diplomacyResourceTradeExportDirection;
-    final price = agreement.goldPerTurn == 0
-        ? l10n.diplomacyResourceTradeBarterPrice
-        : l10n.diplomacyResourceTradeGoldPerTurnPrice(agreement.goldPerTurn);
-    return l10n.diplomacyResourceTradeAgreementLabel(
-      direction,
-      resourceName,
-      price,
-      agreement.remainingTurns,
-    );
+  Widget _goldEditor(List<_ResourceTradeOffer> offers, bool blockedByWar) =>
+      _GoldResourceTradeEditor(
+        l10n: widget.l10n,
+        gameState: widget.gameState,
+        activePlayerId: widget.activePlayerId,
+        targetPlayerId: widget.targetPlayerId,
+        offers: offers,
+        selectedResource: _importResource,
+        enabled: !_submitting && !blockedByWar,
+        onSelected: (resource) => setState(() => _importResource = resource),
+        onSubmit: _submit,
+      );
+
+  Widget _exchangeEditor(
+    List<_ResourceExchangeOffer> offers,
+    bool blockedByWar,
+  ) => _ExchangeResourceTradeEditor(
+    l10n: widget.l10n,
+    activePlayerId: widget.activePlayerId,
+    targetPlayerId: widget.targetPlayerId,
+    offers: offers,
+    selectedOfferedResource: _offeredResource,
+    selectedRequestedResource: _requestedResource,
+    enabled: !_submitting && !blockedByWar,
+    onOfferedSelected: (resource) => setState(() {
+      _offeredResource = resource;
+      _requestedResource = null;
+    }),
+    onRequestedSelected: (resource) =>
+        setState(() => _requestedResource = resource),
+    onSubmit: _submit,
+  );
+
+  Future<void> _submit(DomainCommand command) async {
+    if (_submitting) return;
+    setState(() => _submitting = true);
+    try {
+      final request = widget.onResourceTradeCommand;
+      var accepted = true;
+      if (request == null) {
+        await widget.onCommand(command);
+      } else {
+        accepted = await request(command);
+      }
+      if (!accepted && mounted) {
+        _showMessage(widget.l10n.diplomacyResourceTradeRequestRejected);
+      }
+    } catch (_) {
+      if (mounted) {
+        _showMessage(widget.l10n.diplomacyResourceTradeRequestFailed);
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

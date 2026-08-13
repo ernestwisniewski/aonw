@@ -170,12 +170,12 @@ database is supposed to be authoritative.
 After deploying, test from two devices or two fresh app installs:
 
 1. Build with `--dart-define=AONW_API_BASE_URL=https://api.aonw.net`.
-2. Confirm the client declares functional multiplayer revision 6. Commands,
-   ACKs, and matches must be strict schema 4; snapshots and events must remain
-   writable schema 4, including the snapshot nested inside each correlated
-   ACK; a pre-migration match may return readable schema 3 until its first
-   accepted state transition.
-3. Verify a revision-4 or undeclared client cannot open/resume multiplayer and
+2. Confirm the client declares functional multiplayer revision 8. Commands,
+   ACKs, and matches must be strict schema 4; snapshots and events must be
+   written as schema 6, including the snapshot nested inside each correlated
+   ACK. A pre-migration match may return readable schema 3, 4, or 5 until its
+   first accepted authoritative state transition.
+3. Verify a revision-7 or undeclared client cannot open/resume multiplayer and
    receives the localized update-required message; verify the server returns
    `unsupported_multiplayer_version` for a direct lobby or stream request.
 4. Resume a running match created before deployment and verify its unchanged

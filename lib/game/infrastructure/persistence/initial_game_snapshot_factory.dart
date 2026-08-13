@@ -3,6 +3,7 @@ import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -25,6 +26,7 @@ InitialGameSnapshot createInitialGameSnapshot({
     artifacts: entities.artifacts,
     fogOfWar: entities.fogOfWar,
     diplomacy: entities.diplomacy,
+    initialResourceDistribution: entities.initialResourceDistribution,
     gameMode: save.gameMode,
     turnStatesByPlayerId: save.playerStates,
   );
@@ -57,6 +59,7 @@ GameSave _initialSave({
   List<WorldArtifact> artifacts,
   FogOfWarState fogOfWar,
   DiplomacyState diplomacy,
+  InitialResourceDistribution initialResourceDistribution,
 })
 _initialEntities(NewGameRequest request, int startPositionSeed) {
   final units = StartingUnits.unitsForPlayers(
@@ -64,18 +67,28 @@ _initialEntities(NewGameRequest request, int startPositionSeed) {
     mapData: request.mapData,
     startPositionSeed: startPositionSeed,
   );
-  final artifacts = request.mapData == null
-      ? const <WorldArtifact>[]
-      : WorldArtifactGenerator.generate(
+  final initialResourceDistribution = request.mapData == null
+      ? InitialResourceDistribution.empty
+      : InitialResourceDistributionGenerator.generate(
           mapData: request.mapData!,
           startingUnits: units,
           seed: startPositionSeed,
         );
-  final fogOfWar = request.mapData == null
+  final effectiveMap = request.mapData == null
+      ? null
+      : initialResourceDistribution.applyTo(request.mapData!);
+  final artifacts = effectiveMap == null
+      ? const <WorldArtifact>[]
+      : WorldArtifactGenerator.generate(
+          mapData: effectiveMap,
+          startingUnits: units,
+          seed: startPositionSeed,
+        );
+  final fogOfWar = effectiveMap == null
       ? FogOfWarState.empty
       : const FogOfWarService().recompute(
           current: FogOfWarState.empty,
-          mapData: request.mapData!,
+          mapData: effectiveMap,
           playerIds: request.players.map((player) => player.id),
           units: units,
           cities: const [],
@@ -92,6 +105,7 @@ _initialEntities(NewGameRequest request, int startPositionSeed) {
     artifacts: artifacts,
     fogOfWar: fogOfWar,
     diplomacy: diplomacy,
+    initialResourceDistribution: initialResourceDistribution,
   );
 }
 

@@ -5,7 +5,6 @@ import 'package:aonw_core/ai/production_scorer.dart';
 import 'package:aonw_core/ai/unit_roles.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
@@ -71,9 +70,7 @@ final class BasicStrategyProductionPlanner {
     required CityProductionTarget target,
     required StrategicResourceStockpile stockpileAfterRefund,
   }) {
-    if (view.strategicResourceEconomy !=
-            StrategicResourceEconomyProfile.stockpileV1 ||
-        target is! UnitProductionTarget) {
+    if (target is! UnitProductionTarget) {
       return StrategicResourceBundle.empty;
     }
     final availability = UnitStrategicResourceAvailability.forUnit(

@@ -216,6 +216,7 @@ void main() {
     tester,
   ) async {
     GameCity? selectedCity;
+    var economyOpens = 0;
     const strategic = HudStrategicResourceSummary(
       enabled: true,
       rows: [
@@ -252,13 +253,22 @@ void main() {
       type: ResourceBreakdownType.resources,
       strategicResources: strategic,
       onStrategicCityPressed: (value) => selectedCity = value,
+      onOpenStrategicEconomy: () => economyOpens++,
     );
 
-    expect(find.text('Strategic stockpiles'), findsOneWidget);
+    expect(find.text('Strategic resources'), findsOneWidget);
     expect(find.text('oil · Stored'), findsOneWidget);
     expect(find.text('oil · Domestic production'), findsOneWidget);
     expect(find.text('oil · Oil Well · Krakow (1, 1)'), findsOneWidget);
     expect(find.text('2 oil'), findsOneWidget);
+
+    final economyAction = find.byKey(
+      const Key('resourceBreakdown.openStrategicEconomy'),
+    );
+    expect(economyAction.hitTestable(), findsOneWidget);
+    await tester.tap(economyAction);
+
+    expect(economyOpens, 1);
 
     final source = find.text('oil · Oil Well · Krakow (1, 1)');
     await tester.ensureVisible(source);
@@ -306,6 +316,7 @@ Future<void> _pumpPopup(
   HudStrategicResourceSummary strategicResources =
       HudStrategicResourceSummary.empty,
   ValueChanged<GameCity>? onStrategicCityPressed,
+  VoidCallback? onOpenStrategicEconomy,
   String? activeTechnologyName,
   int? activeTechnologyTurnsRemaining,
   int? activeTechnologyCompletionTurn,
@@ -340,6 +351,7 @@ Future<void> _pumpPopup(
             l10n: AppLocalizationsEn(),
             onClose: onClose ?? () {},
             onStrategicCityPressed: onStrategicCityPressed,
+            onOpenStrategicEconomy: onOpenStrategicEconomy,
           ),
         ),
       ),

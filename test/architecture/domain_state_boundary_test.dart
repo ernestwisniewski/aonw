@@ -50,6 +50,7 @@ void main() {
         'playerWarWeariness': 'Map<String, int>',
         'playerStabilityNet': 'Map<String, int>',
         'strategicResources': 'StrategicResourceAccounts',
+        'initialResourceDistribution': 'InitialResourceDistribution',
         'units': 'List<GameUnit>',
         'cities': 'List<GameCity>',
         'artifacts': 'List<WorldArtifact>',

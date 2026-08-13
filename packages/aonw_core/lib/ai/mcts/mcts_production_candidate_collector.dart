@@ -54,7 +54,6 @@ final class MctsProductionCandidateCollector {
       strategicResources: StrategicResourceAccounts(
         byPlayerId: {view.forPlayerId: view.ownStrategicResources},
       ),
-      strategicResourceEconomy: view.strategicResourceEconomy,
       preferredResourceOptionIndex: null,
     )).isAvailable;
   }

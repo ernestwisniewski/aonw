@@ -1086,6 +1086,67 @@ class AppLocalizationsNl extends AppLocalizations {
   String get diplomacyStrategicResourcesTitle => 'Strategische grondstoffen';
 
   @override
+  String get diplomacyResourceTradeGoldMode => 'Voor goud';
+
+  @override
+  String get diplomacyResourceTradeExchangeMode => 'Grondstoffenruil';
+
+  @override
+  String get diplomacyResourceTradeReceiveLabel => 'Je ontvangt';
+
+  @override
+  String get diplomacyResourceTradeGiveLabel => 'Je levert';
+
+  @override
+  String diplomacyResourceTradeGoldForecast(
+    String resourceName,
+    int goldPerTurn,
+    int durationTurns,
+  ) {
+    return 'Jouw stroom: +1 $resourceName/beurt · −$goldPerTurn goud/beurt · $durationTurns beurten';
+  }
+
+  @override
+  String diplomacyResourceTradeExchangeForecast(
+    String requestedResource,
+    String offeredResource,
+    int durationTurns,
+  ) {
+    return 'Jouw stroom: +1 $requestedResource/beurt · −1 $offeredResource/beurt · $durationTurns beurten';
+  }
+
+  @override
+  String get diplomacyResourceTradePrivateSupplyHint =>
+      'Alleen geldige exportaanbiedingen worden getoond; de voorraad van de rivaal blijft privé.';
+
+  @override
+  String diplomacyResourceTradeGoldUnavailable(int gold) {
+    return 'Je hebt minstens $gold goud nodig om deze import te starten.';
+  }
+
+  @override
+  String get diplomacyResourceTradeRequestFailed =>
+      'De overeenkomst kon niet worden gemaakt. Controleer de voorwaarden en probeer opnieuw.';
+
+  @override
+  String get diplomacyResourceTradeRequestRejected =>
+      'Het aanbod is gewijzigd en kon niet worden geaccepteerd. Controleer de beschikbare voorwaarden en probeer opnieuw.';
+
+  @override
+  String get diplomacyResourceTradeActiveTitle => 'Actieve overeenkomsten';
+
+  @override
+  String diplomacyResourceTradeAgreementFlowLabel(
+    String direction,
+    int amount,
+    String resourceName,
+    String price,
+    int remainingTurns,
+  ) {
+    return '$direction: $amount $resourceName/beurt · $price · nog $remainingTurns beurten';
+  }
+
+  @override
   String get diplomacyResourceTradeBlockedByWar =>
       'Grondstoffenhandel is geblokkeerd door oorlog.';
 
@@ -5334,6 +5395,70 @@ class AppLocalizationsNl extends AppLocalizations {
       'Er zijn geen strategische grondstoffen toegewezen.';
 
   @override
+  String get resourceEconomyOpenAction => 'Volledige grondstoffeneconomie';
+
+  @override
+  String get resourceEconomyTitle => 'Strategische economie';
+
+  @override
+  String get resourceEconomyHealthySubtitle =>
+      'De strategische aanvoer is stabiel.';
+
+  @override
+  String resourceEconomyAttentionSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count problemen vereisen aandacht.',
+      one: '1 probleem vereist aandacht.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get resourceEconomyAlertsTitle => 'Economische waarschuwingen';
+
+  @override
+  String resourceEconomyNoFreeStockAlert(String resourceName) {
+    return 'Geen vrije $resourceName';
+  }
+
+  @override
+  String resourceEconomyInsufficientStockAlert(String resourceName) {
+    return 'Niet genoeg vrije $resourceName';
+  }
+
+  @override
+  String get resourceEconomyNoFreeStockDetail =>
+      'Nieuwe productie die deze grondstof vereist, is geblokkeerd.';
+
+  @override
+  String resourceEconomyTradeExpiringAlert(String resourceName, int turns) {
+    return 'De overeenkomst voor $resourceName verloopt over $turns beurten';
+  }
+
+  @override
+  String get resourceEconomyTradeExpiringDetail =>
+      'Controleer de overeenkomst voordat de strategische stroom verandert.';
+
+  @override
+  String get resourceEconomyTradePartnersTitle => 'Handelspartners';
+
+  @override
+  String get resourceEconomyNoTradePartners =>
+      'Er is geen bekende beschaving beschikbaar voor grondstoffenhandel.';
+
+  @override
+  String get resourceEconomyOpenTradeAction => 'Handel openen';
+
+  @override
+  String get resourceEconomyGoToCityAction => 'Naar stad';
+
+  @override
+  String get resourceEconomyNoSources =>
+      'Geen actieve bronnen van strategische grondstoffen.';
+
+  @override
   String get technologyRecommendationsTitle => 'Aanbevolen onderzoek';
 
   @override
@@ -7352,6 +7477,28 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get resourceDetailCurrentSection => 'Nu';
+
+  @override
+  String get resourceDetailEmpireSupplySection => 'Bevoorrading van het rijk';
+
+  @override
+  String resourceDetailStrategicFlowActive(int amount, String resource) {
+    return 'Actieve bron: +$amount $resource/beurt.';
+  }
+
+  @override
+  String resourceDetailStrategicFlowClaim(int amount, String resource) {
+    return 'Claim dit veld om na verbetering +$amount $resource/beurt te krijgen.';
+  }
+
+  @override
+  String resourceDetailStrategicFlowImprove(
+    String improvement,
+    int amount,
+    String resource,
+  ) {
+    return 'Bouw $improvement om het rijk +$amount $resource/beurt te geven.';
+  }
 
   @override
   String get resourceDetailAfterImprovementSection => 'Na verbetering';

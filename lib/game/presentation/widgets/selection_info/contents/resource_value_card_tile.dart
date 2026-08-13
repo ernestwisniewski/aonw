@@ -52,9 +52,80 @@ class _ResourceValueCardBody extends StatelessWidget {
         _ResourceValueCardHeader(card: card, compact: compact),
         const SizedBox(height: 10),
         _ResourceCurrentValue(card: card, density: density, l10n: l10n),
+        if (card.strategicFlow case final flow?) ...[
+          const SizedBox(height: 10),
+          _StrategicResourceFlow(flow: flow, accent: card.accentColor),
+        ],
         const SizedBox(height: 10),
         _ResourceImprovementValue(card: card, density: density, l10n: l10n),
       ],
+    );
+  }
+}
+
+class _StrategicResourceFlow extends StatelessWidget {
+  const _StrategicResourceFlow({required this.flow, required this.accent});
+
+  final SelectionStrategicResourceFlow flow;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final statusColor = flow.active ? GameUiTheme.success : GameUiTheme.warning;
+    return Semantics(
+      label: '${l10n.resourceDetailEmpireSupplySection}. ${flow.description}',
+      child: DecoratedBox(
+        decoration: SurfaceElevation.flat.decoration(
+          background: statusColor,
+          backgroundAlpha: 20,
+          borderColor: statusColor,
+          border: BorderEmphasis.regular,
+          borderRadius: BorderRadius.circular(7),
+          includeShadow: false,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GameIcon(
+                flow.active ? GameIcons.resources : GameIcons.warning,
+                size: GameIconSize.small,
+                color: statusColor,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      GameText.uppercase(
+                        l10n.resourceDetailEmpireSupplySection,
+                      ),
+                      style: TextStyle(
+                        color: accent,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      flow.description,
+                      style: const TextStyle(
+                        color: GameHudTheme.textBright,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

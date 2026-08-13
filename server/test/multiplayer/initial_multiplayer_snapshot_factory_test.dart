@@ -60,6 +60,7 @@ void main() {
     expect(canonical.metadata.camera, GameSnapshotCamera.zero);
     expect(canonical.metadata.origin, GameSaveOrigin.network);
     expect(canonical.domain.actions, DomainActionState.empty);
+    expect(canonical.domain.initialResourceDistribution.placements, isNotEmpty);
     expect(canonical.eventLogOffset, 0);
     expect(decoded.canonical, canonical);
   });

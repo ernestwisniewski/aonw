@@ -1,4 +1,4 @@
-import 'package:aonw/game/domain/hex_assessment.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/material.dart';
 
@@ -6,30 +6,12 @@ enum SelectionResourceCategory { bonus, luxury, strategic }
 
 abstract final class SelectionResourceCategoryResolver {
   static SelectionResourceCategory forResource(ResourceType resource) {
-    if (HexResourceGroups.strategic.contains(resource)) {
-      return SelectionResourceCategory.strategic;
-    }
-    if (_luxuryResources.contains(resource)) {
-      return SelectionResourceCategory.luxury;
-    }
-    return SelectionResourceCategory.bonus;
+    return switch (ResourceCatalog.definitionFor(resource).category) {
+      ResourceCategory.bonus => SelectionResourceCategory.bonus,
+      ResourceCategory.luxury => SelectionResourceCategory.luxury,
+      ResourceCategory.strategic => SelectionResourceCategory.strategic,
+    };
   }
-
-  static const _luxuryResources = {
-    ResourceType.gold,
-    ResourceType.silver,
-    ResourceType.gems,
-    ResourceType.silk,
-    ResourceType.spices,
-    ResourceType.cotton,
-    ResourceType.grapes,
-    ResourceType.ivory,
-    ResourceType.pearls,
-    ResourceType.coffee,
-    ResourceType.cocoa,
-    ResourceType.tobacco,
-    ResourceType.sugar,
-  };
 }
 
 extension SelectionResourceCategoryStyle on SelectionResourceCategory {

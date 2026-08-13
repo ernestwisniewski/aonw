@@ -394,6 +394,10 @@ void main() {
         (row) => row.resource == ResourceType.oil,
       );
       expect(summary.strategicResources.enabled, isTrue);
+      expect(
+        summary.strategicResources.rows.map((row) => row.resource).toSet(),
+        ResourceCatalog.strategicResources.toSet(),
+      );
       expect(oil.available, 1);
       expect(oil.allocated, 2);
       expect(oil.storedTotal, 3);

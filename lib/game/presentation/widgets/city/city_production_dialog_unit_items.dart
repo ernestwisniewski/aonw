@@ -13,8 +13,6 @@ typedef _ProductionUnitContext = ({
   WorldMap? mapData,
   Iterable<ResourceTradeAgreement> resourceTradeAgreements,
   StrategicResourceAccounts strategicResources,
-  StrategicResourceEconomyProfile strategicResourceEconomy,
-  bool stockpilesEnabled,
   int effectiveProduction,
   TechnologyEffectSummary technologyEffects,
   CityUnitSupplyBreakdown? unitSupply,
@@ -36,12 +34,10 @@ typedef _ProductionUnitItemFacts = ({
 });
 
 String? _strategicFreeSummary({
-  required bool enabled,
   required String playerId,
   required StrategicResourceAccounts accounts,
   required AppLocalizations l10n,
 }) {
-  if (!enabled) return null;
   final stockpile = accounts.forPlayer(playerId);
   final resources = ResourceCatalog.stockpiledResources
       .map(
@@ -65,8 +61,6 @@ List<CityProductionItem> _productionUnitItems({
   required WorldMap? mapData,
   required Iterable<ResourceTradeAgreement> resourceTradeAgreements,
   required StrategicResourceAccounts strategicResources,
-  required StrategicResourceEconomyProfile strategicResourceEconomy,
-  required bool stockpilesEnabled,
   required int effectiveProduction,
   required TechnologyEffectSummary technologyEffects,
   required CityUnitSupplyBreakdown? unitSupply,
@@ -88,8 +82,6 @@ List<CityProductionItem> _productionUnitItems({
     mapData: mapData,
     resourceTradeAgreements: resourceTradeAgreements,
     strategicResources: strategicResources,
-    strategicResourceEconomy: strategicResourceEconomy,
-    stockpilesEnabled: stockpilesEnabled,
     effectiveProduction: effectiveProduction,
     technologyEffects: technologyEffects,
     unitSupply: unitSupply,
@@ -212,21 +204,18 @@ UnitProductionAvailability _unitAvailability(
   GameUnitType type,
   _ProductionUnitContext context,
 ) {
-  final strategic = context.stockpilesEnabled
-      ? UnitStrategicResourceAvailability.forUnit(
-          playerId: context.city.ownerPlayerId,
-          unitType: type,
-          definition: context.cityRuleset.unitDefinitionFor(type),
-          accounts: context.strategicResources,
-          replacingCity: context.city,
-        )
-      : null;
+  final strategic = UnitStrategicResourceAvailability.forUnit(
+    playerId: context.city.ownerPlayerId,
+    unitType: type,
+    definition: context.cityRuleset.unitDefinitionFor(type),
+    accounts: context.strategicResources,
+    replacingCity: context.city,
+  );
   final mapData = context.mapData;
   if (mapData == null) {
     return UnitProductionAvailability(
       blockers: [
-        if (strategic != null && !strategic.isAvailable)
-          UnitStrategicResourceBlocker(strategic),
+        if (!strategic.isAvailable) UnitStrategicResourceBlocker(strategic),
       ],
       strategic: strategic,
     );
@@ -245,7 +234,6 @@ UnitProductionAvailability _unitAvailability(
     cityRuleset: context.cityRuleset,
     technologyRuleset: context.technologyRuleset,
     strategicResources: context.strategicResources,
-    strategicResourceEconomy: context.strategicResourceEconomy,
     preferredResourceOptionIndex: null,
   ));
 }

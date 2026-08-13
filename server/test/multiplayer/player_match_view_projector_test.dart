@@ -239,6 +239,9 @@ void _expectOwnerRuleProjection(DomainState state) {
         .amountFor(ResourceType.oil),
     2,
   );
+  expect(state.initialResourceDistribution.placements, const [
+    InitialResourcePlacement(col: 3, row: 4, resource: ResourceType.marble),
+  ]);
   expect(state.fogOfWar.playerIds, ['player-owner']);
   expect(state.research.players.keys, ['player-owner']);
   expect(state.units.map((unit) => unit.id), [
@@ -314,6 +317,9 @@ void _expectGuestProjection(DomainState state) {
         .amountFor(ResourceType.aluminium),
     1,
   );
+  expect(state.initialResourceDistribution.placements, const [
+    InitialResourcePlacement(col: 3, row: 4, resource: ResourceType.marble),
+  ]);
   expect(
     runtime.transportNetwork.segments.map((segment) => segment.hex).toSet(),
     {const HexCoord(col: 4, row: 4), const HexCoord(col: 6, row: 6)},

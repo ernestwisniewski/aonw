@@ -9,7 +9,6 @@ import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -48,7 +47,6 @@ void main() {
         units: const [],
         fieldImprovements: const [],
         strategicResources: accounts,
-        strategicResourceEconomy: StrategicResourceEconomyProfile.stockpileV1,
         productionPerTurn: 4,
       );
     }
@@ -103,7 +101,6 @@ void main() {
       cities: [city],
       units: const [],
       fieldImprovements: const [],
-      strategicResourceEconomy: StrategicResourceEconomyProfile.stockpileV1,
       productionPerTurn: 4,
     );
 
@@ -214,8 +211,6 @@ void main() {
                   ),
                 },
               ),
-              strategicResourceEconomy:
-                  StrategicResourceEconomyProfile.stockpileV1,
               productionPerTurn: 4,
               onBuild: (_) {},
               onProduceUnit: (_) {},
@@ -295,8 +290,6 @@ void main() {
                 ),
               },
             ),
-            strategicResourceEconomy:
-                StrategicResourceEconomyProfile.stockpileV1,
             productionPerTurn: 4,
             onBuild: (_) {},
             onProduceUnit: (_) {},

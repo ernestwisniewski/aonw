@@ -31,7 +31,7 @@ class _OverviewSection extends StatelessWidget {
             ),
           ]
         : scoreEntries;
-    return _Section(
+    return DiplomacySection(
       title: l10n.diplomacyScoreLabel,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,7 +146,7 @@ class _StatsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Section(
+    return DiplomacySection(
       title: l10n.diplomacyStatsTitle,
       child: Column(
         children: [

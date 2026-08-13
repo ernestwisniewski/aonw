@@ -4,13 +4,14 @@ import 'package:test/test.dart';
 void main() {
   test('reviewed multiplayer compatibility inventory is explicit', () {
     expect(kProtocolVersion, 4);
-    expect(kSnapshotEventVersion, 5);
+    expect(kSnapshotEventVersion, 6);
+    expect(kPreviousSnapshotEventVersion, 5);
     expect(kLegacySnapshotEventVersion, 4);
     expect(kOldestSnapshotEventVersion, 3);
-    expect(kReadableSnapshotEventVersions, {3, 4, 5});
-    expect(kCurrentMultiplayerVersion, 7);
+    expect(kReadableSnapshotEventVersions, {3, 4, 5, 6});
+    expect(kCurrentMultiplayerVersion, 8);
     expect(kLegacyUndeclaredMultiplayerVersion, 1);
-    expect(kCompatibleMultiplayerVersions, {7});
+    expect(kCompatibleMultiplayerVersions, {8});
   });
 
   test('current multiplayer version is explicitly compatible', () {
@@ -36,7 +37,7 @@ void main() {
   });
 
   test('removed, malformed-equivalent, and future revisions fail closed', () {
-    for (final version in const [-1, 0, 1, 2, 3, 4, 5, 6, 8]) {
+    for (final version in const [-1, 0, 1, 2, 3, 4, 5, 6, 7, 9]) {
       expect(
         multiplayerVersionCompatibility(version),
         MultiplayerVersionCompatibility.unsupported,
@@ -46,11 +47,12 @@ void main() {
     }
   });
 
-  test('durable readers accept only the reviewed v3 to v5 expand window', () {
+  test('durable readers accept only the reviewed v3 to v6 expand window', () {
     expect(isReadableSnapshotEventVersion(3), isTrue);
     expect(isReadableSnapshotEventVersion(4), isTrue);
     expect(isReadableSnapshotEventVersion(2), isFalse);
     expect(isReadableSnapshotEventVersion(5), isTrue);
-    expect(isReadableSnapshotEventVersion(6), isFalse);
+    expect(isReadableSnapshotEventVersion(6), isTrue);
+    expect(isReadableSnapshotEventVersion(7), isFalse);
   });
 }

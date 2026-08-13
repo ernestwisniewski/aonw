@@ -1,5 +1,4 @@
 import 'package:aonw_core/game/domain/city.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade/resource_trade_agreement.dart';
@@ -15,16 +14,13 @@ abstract final class ResourceTradeExportAvailability {
     required ResourceType resource,
     required MapTileLookup mapTiles,
     required Iterable<FieldImprovement> fieldImprovements,
-    required StrategicResourceEconomyProfile strategicResourceEconomy,
   }) {
     final committed = _activeExportCount(
       agreements,
       exporterPlayerId: exporterPlayerId,
       resource: resource,
     );
-    if (strategicResourceEconomy ==
-            StrategicResourceEconomyProfile.stockpileV1 &&
-        ResourceCatalog.isStockpiled(resource)) {
+    if (ResourceCatalog.isStockpiled(resource)) {
       final production = StrategicResourceProductionRules.forPlayer(
         playerId: exporterPlayerId,
         cities: cities,

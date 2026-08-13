@@ -48,6 +48,60 @@ void main() {
       ]);
     });
 
+    test('allows marble trade as a strategic resource', () {
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_2',
+        name: 'Marble City',
+        center: CityHex(col: 1, row: 1),
+      );
+
+      final result = ResourceTradeCommandResolver.openGoldForResourceTrade(
+        playerGold: const {'player_1': 8},
+        cities: const [city],
+        research: _researchWith('player_2', TechnologyId.mining),
+        diplomacy: DiplomacyState.empty,
+        resourceTradeAgreements: const [],
+        command: const OpenResourceTradeCommand(
+          playerId: 'player_1',
+          targetPlayerId: 'player_2',
+          resource: ResourceType.marble,
+          goldPerTurn: 2,
+          durationTurns: 5,
+        ),
+        actorPlayerId: 'player_1',
+        mapTiles: _resourceMap(ResourceType.marble),
+      );
+
+      expect(result.accepted, isTrue);
+      expect(
+        result.resourceTradeAgreements.single.resource,
+        ResourceType.marble,
+      );
+    });
+
+    test('rejects non-strategic resources at the domain boundary', () {
+      final result = ResourceTradeCommandResolver.openGoldForResourceTrade(
+        playerGold: const {'player_1': 8},
+        cities: const [],
+        research: ResearchState.empty,
+        diplomacy: DiplomacyState.empty,
+        resourceTradeAgreements: const [],
+        command: const OpenResourceTradeCommand(
+          playerId: 'player_1',
+          targetPlayerId: 'player_2',
+          resource: ResourceType.wheat,
+          goldPerTurn: 1,
+          durationTurns: 5,
+        ),
+        actorPlayerId: 'player_1',
+        mapTiles: _resourceMap(ResourceType.wheat),
+      );
+
+      expect(result.accepted, isFalse);
+      expect(result.reason, 'invalid_resource_trade_resource');
+    });
+
     test('rejects trade when exporter does not reveal the resource', () {
       final state = DomainState.snapshot(
         playerGold: {'player_1': 8},
@@ -157,7 +211,6 @@ void main() {
         command: command,
         actorPlayerId: 'player_1',
         mapTiles: _resourceMap(ResourceType.oil),
-        strategicResourceEconomy: StrategicResourceEconomyProfile.stockpileV1,
       );
       expect(withoutWell.accepted, isFalse);
       expect(withoutWell.reason, 'resource_trade_export_unavailable');
@@ -178,7 +231,6 @@ void main() {
             builtByCityId: 'city_1',
           ),
         ],
-        strategicResourceEconomy: StrategicResourceEconomyProfile.stockpileV1,
       );
       expect(withWell.accepted, isTrue);
 
@@ -205,8 +257,6 @@ void main() {
                 builtByCityId: 'city_1',
               ),
             ],
-            strategicResourceEconomy:
-                StrategicResourceEconomyProfile.stockpileV1,
           );
       expect(fullyCommitted.accepted, isFalse);
       expect(fullyCommitted.reason, 'resource_trade_export_unavailable');

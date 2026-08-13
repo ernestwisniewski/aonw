@@ -25,7 +25,6 @@ bool _canProduceUnit(
     strategicResources: StrategicResourceAccounts(
       byPlayerId: {view.forPlayerId: strategicStockpile},
     ),
-    strategicResourceEconomy: view.strategicResourceEconomy,
     preferredResourceOptionIndex: null,
   ));
   if (!availability.isAvailable) return false;

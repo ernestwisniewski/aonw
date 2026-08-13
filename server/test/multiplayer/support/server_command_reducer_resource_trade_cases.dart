@@ -95,6 +95,7 @@ void _registerServerCommandReducerResourceTradeTests() {
             'importerPlayerId': 'player_1',
             'resource': ResourceType.horses.name,
             'remainingTurns': 6,
+            'exchangeGroupId': 'server_exchange_1',
           },
           {
             'id': 'server_exchange_1_offered',
@@ -102,10 +103,66 @@ void _registerServerCommandReducerResourceTradeTests() {
             'importerPlayerId': 'player_2',
             'resource': ResourceType.iron.name,
             'remainingTurns': 6,
+            'exchangeGroupId': 'server_exchange_1',
           },
         ],
       );
     });
+
+    test(
+      'uses the persisted initial distribution as authoritative map data',
+      () async {
+        final reducer = ServerCommandReducer(
+          mapCatalog: _FakeMapCatalog(_resourceTradeMap(withResources: false)),
+        );
+
+        final reduction = await const ServerCommandReducerTestDriver().reduce(
+          reducer: reducer,
+          match: _runningMatch(),
+          wireSnapshot: _snapshot(
+            DomainState.snapshot(
+              playerGold: const {'player_1': 8},
+              cities: _tradeCities(),
+              research: _researchWithMany({
+                'player_2': {TechnologyId.animalHusbandry},
+              }),
+              initialResourceDistribution: InitialResourceDistribution(
+                seed: 5,
+                placements: const [
+                  InitialResourcePlacement(
+                    col: 2,
+                    row: 2,
+                    resource: ResourceType.horses,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          wireCommand: _wireCommand(
+            const OpenResourceTradeCommand(
+              playerId: 'player_1',
+              targetPlayerId: 'player_2',
+              resource: ResourceType.horses,
+              goldPerTurn: 2,
+              durationTurns: 5,
+            ),
+          ),
+          actorPlayerId: 'player_1',
+          now: DateTime.utc(2026, 6, 30, 12),
+        );
+
+        expect(reduction.accepted, isTrue);
+        expect(
+          reduction
+              .nextSnapshot!
+              .domain
+              .resourceTradeAgreements
+              .single
+              .resource,
+          ResourceType.horses,
+        );
+      },
+    );
 
     test('rejects resource trade issued for another player', () async {
       final reducer = ServerCommandReducer(

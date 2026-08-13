@@ -1,7 +1,6 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
 import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -10,6 +9,8 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 final class HudStrategicResourceRow {
   const HudStrategicResourceRow({
     required this.resource,
+    this.stockpiled = true,
+    this.controlledDeposits = 0,
     required this.available,
     required this.allocated,
     required this.domesticProduction,
@@ -20,6 +21,8 @@ final class HudStrategicResourceRow {
   });
 
   final ResourceType resource;
+  final bool stockpiled;
+  final int controlledDeposits;
   final int available;
   final int allocated;
   final int domesticProduction;
@@ -47,15 +50,15 @@ final class HudStrategicResourceSource {
     required this.city,
     required this.hex,
     required this.resource,
-    required this.improvement,
-    required this.amountPerTurn,
+    this.improvement,
+    this.amountPerTurn,
   });
 
   final GameCity city;
   final CityHex hex;
   final ResourceType resource;
-  final FieldImprovementType improvement;
-  final int amountPerTurn;
+  final FieldImprovementType? improvement;
+  final int? amountPerTurn;
 }
 
 /// One player-scoped read model shared by the top strip and resource popup.
@@ -95,11 +98,7 @@ final class HudStrategicResourceSummary {
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
   }) {
-    if (playerId.isEmpty ||
-        state.domain.matchRules.strategicResourceEconomy !=
-            StrategicResourceEconomyProfile.stockpileV1) {
-      return empty;
-    }
+    if (playerId.isEmpty) return empty;
 
     final production = StrategicResourceProductionRules.forPlayer(
       playerId: playerId,
@@ -107,6 +106,14 @@ final class HudStrategicResourceSummary {
       fieldImprovements: state.fieldImprovements,
       mapTiles: mapData,
       research: state.research,
+    );
+    final network = EmpireResourceNetworkRules.forPlayer(
+      playerId: playerId,
+      cities: state.cities,
+      mapTiles: mapData,
+      research: state.research,
+      ruleset: cityRuleset,
+      resourceTradeAgreements: state.resourceTradeAgreements,
     );
     final allocations = _strategicAllocations(state.cities, playerId);
     final allocated = _allocatedBundle(allocations);
@@ -123,22 +130,16 @@ final class HudStrategicResourceSummary {
         playerId: playerId,
         allocated: allocated,
         production: production,
+        network: network,
         missingResources: missingResources,
       ),
       allocations: List.unmodifiable(allocations),
       sources: List.unmodifiable(
-        production.sources.map((source) {
-          final city = state.cities.firstWhere(
-            (candidate) => candidate.id == source.cityId,
-          );
-          return HudStrategicResourceSource(
-            city: city,
-            hex: source.hex,
-            resource: source.resource,
-            improvement: source.improvement,
-            amountPerTurn: source.amountPerTurn,
-          );
-        }),
+        _strategicSources(
+          state: state,
+          inventory: network.visibleInventory,
+          production: production,
+        ),
       ),
     );
   }
@@ -209,24 +210,72 @@ List<HudStrategicResourceRow> _strategicRows({
   required String playerId,
   required StrategicResourceBundle allocated,
   required StrategicResourceProductionProjection production,
+  required EmpireResourceNetwork network,
   required Set<ResourceType> missingResources,
 }) {
   final stockpile = state.strategicResources.forPlayer(playerId);
   return List.unmodifiable([
-    for (final resource in ResourceCatalog.stockpiledResources)
+    for (final resource in ResourceCatalog.strategicResources)
       HudStrategicResourceRow(
         resource: resource,
-        available: stockpile.amountFor(resource),
-        allocated: allocated.amountFor(resource),
+        stockpiled: ResourceCatalog.isStockpiled(resource),
+        controlledDeposits: network.visibleInventory.countFor(resource),
+        available: ResourceCatalog.isStockpiled(resource)
+            ? stockpile.amountFor(resource)
+            : network.visibleCountFor(resource),
+        allocated: ResourceCatalog.isStockpiled(resource)
+            ? allocated.amountFor(resource)
+            : 0,
         domesticProduction: production.output.amountFor(resource),
         imports: _tradeCount(state, playerId, resource, imports: true),
         exports: _tradeCount(state, playerId, resource, imports: false),
-        sourceCount: production.sources
-            .where((source) => source.resource == resource)
-            .length,
+        sourceCount: ResourceCatalog.isStockpiled(resource)
+            ? production.sources
+                  .where((source) => source.resource == resource)
+                  .length
+            : network.visibleInventory.countFor(resource),
         shortage: missingResources.contains(resource),
       ),
   ]);
+}
+
+List<HudStrategicResourceSource> _strategicSources({
+  required GameClientState state,
+  required CityResourceInventory inventory,
+  required StrategicResourceProductionProjection production,
+}) => [
+  for (final source in inventory.sources)
+    if (ResourceCatalog.isStrategic(source.resource))
+      HudStrategicResourceSource(
+        city: state.cities.firstWhere(
+          (candidate) => candidate.id == source.cityId,
+        ),
+        hex: source.hex,
+        resource: source.resource,
+        improvement: _improvementAt(state, source.hex)?.type,
+        amountPerTurn: _productionAt(production, source)?.amountPerTurn,
+      ),
+];
+
+FieldImprovement? _improvementAt(GameClientState state, CityHex hex) {
+  for (final improvement in state.fieldImprovements) {
+    if (improvement.hex == hex) return improvement;
+  }
+  return null;
+}
+
+StrategicResourceProductionSource? _productionAt(
+  StrategicResourceProductionProjection production,
+  CityResourceSource source,
+) {
+  for (final candidate in production.sources) {
+    if (candidate.cityId == source.cityId &&
+        candidate.hex == source.hex &&
+        candidate.resource == source.resource) {
+      return candidate;
+    }
+  }
+  return null;
 }
 
 int _tradeCount(

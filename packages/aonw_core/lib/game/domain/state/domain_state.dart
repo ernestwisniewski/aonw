@@ -95,6 +95,8 @@ final class DomainState {
     Map<String, int> playerStabilityNet = const {},
     StrategicResourceAccounts strategicResources =
         StrategicResourceAccounts.empty,
+    InitialResourceDistribution initialResourceDistribution =
+        InitialResourceDistribution.empty,
     List<GameUnit> units = const [],
     List<GameCity> cities = const [],
     List<WorldArtifact> artifacts = const [],
@@ -142,6 +144,7 @@ final class DomainState {
         playerWarWeariness: _immutableDomainMap(playerWarWeariness),
         playerStabilityNet: _immutableDomainMap(playerStabilityNet),
         strategicResources: strategicResources,
+        initialResourceDistribution: initialResourceDistribution,
         units: _immutableDomainList(units),
         cities: _immutableDomainCities(cities),
         artifacts: _immutableDomainList(artifacts),
@@ -186,6 +189,7 @@ final class DomainState {
        playerWarWeariness = content.playerWarWeariness,
        playerStabilityNet = content.playerStabilityNet,
        strategicResources = content.strategicResources,
+       initialResourceDistribution = content.initialResourceDistribution,
        units = content.units,
        cities = content.cities,
        artifacts = content.artifacts,
@@ -227,6 +231,7 @@ final class DomainState {
   final Map<String, int> playerWarWeariness;
   final Map<String, int> playerStabilityNet;
   final StrategicResourceAccounts strategicResources;
+  final InitialResourceDistribution initialResourceDistribution;
   final List<GameUnit> units;
   final List<GameCity> cities;
   final List<WorldArtifact> artifacts;

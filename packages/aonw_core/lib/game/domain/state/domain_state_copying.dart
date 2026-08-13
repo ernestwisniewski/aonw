@@ -136,6 +136,7 @@ _DomainStateContent _copiedDomainContent(
       source.playerStabilityNet,
     ),
     strategicResources: changes.strategicResources ?? source.strategicResources,
+    initialResourceDistribution: source.initialResourceDistribution,
     units: _domainListCopy(changes.units, source.units),
     cities: _domainCityListCopy(changes.cities, source.cities),
     artifacts: _domainListCopy(changes.artifacts, source.artifacts),

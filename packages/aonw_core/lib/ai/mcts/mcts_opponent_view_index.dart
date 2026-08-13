@@ -86,7 +86,6 @@ final class MctsOpponentViewIndex {
       ownImprovements: _improvementsByOwner[opponentId] ?? const [],
       knownImprovements: state.fieldImprovements,
       ownStrategicResources: state.strategicResources.forPlayer(opponentId),
-      strategicResourceEconomy: state.matchRules.strategicResourceEconomy,
       transportNetwork: state.transportNetwork,
       artifacts: _artifactsByOwner[opponentId] ?? const [],
       diplomacy: state.diplomacy,

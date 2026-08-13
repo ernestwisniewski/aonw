@@ -69,7 +69,7 @@
         "lib/game/presentation/engine/game_renderer.dart": 2037,
         "lib/game/presentation/screens/lobby/lobby_screen.dart": 3507,
         "lib/game/presentation/screens/new_game/new_game_screen.dart": 1654,
-        "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 2029,
+        "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 1612,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 1611,
         "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 2994
       },
@@ -80,7 +80,7 @@
         "lib/game/presentation/screens/lobby/lobby_screen.dart": 209,
         "lib/game/presentation/screens/new_game/new_game_screen.dart": 105,
         "lib/game/presentation/screens/replay/replay_screen.dart": 122,
-        "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 130,
+        "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 114,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 134,
         "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 229
       },
@@ -89,7 +89,7 @@
         "lib/game/presentation/screens/lobby/lobby_screen.dart": 2920,
         "lib/game/presentation/screens/new_game/new_game_screen.dart": 1408,
         "lib/game/presentation/screens/replay/replay_screen.dart": 1228,
-        "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 1711,
+        "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 1354,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 1358,
         "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 2468,
         "lib/game/presentation/widgets/hud/selection/hud_selection_actions.dart": 1395
@@ -99,7 +99,6 @@
         "lib/game/presentation/engine/game_renderer.dart": 534,
         "lib/game/presentation/formatters/game_display_names.dart": 397,
         "lib/game/presentation/screens/lobby/lobby_screen.dart": 473,
-        "lib/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart": 277,
         "lib/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart": 297,
         "lib/game/presentation/widgets/hud/action_deck/hud_action_deck.dart": 661,
         "lib/game/presentation/widgets/hud/selection/hud_selection_actions.dart": 254
@@ -111,13 +110,13 @@
     "root_test": {
       "sourceLines": {
         "test/game/game_hud_test.dart": 7992,
-        "test/game/game_providers_test.dart": 2709,
+        "test/game/game_providers_test.dart": 2699,
         "test/game/game_renderer_keyboard_test.dart": 3564,
         "test/support/reducer_parity_fixture.dart": 3242
       },
       "callableCount": {
         "test/game/game_hud_test.dart": 293,
-        "test/game/game_providers_test.dart": 157,
+        "test/game/game_providers_test.dart": 156,
         "test/game/game_renderer_keyboard_test.dart": 196,
         "test/game/lobby_connection_controller_test.dart": 123,
         "test/support/reducer_parity_fixture.dart": 170,
@@ -125,7 +124,7 @@
       },
       "callableLines": {
         "test/game/game_hud_test.dart": 7677,
-        "test/game/game_providers_test.dart": 2530,
+        "test/game/game_providers_test.dart": 2520,
         "test/game/game_renderer_keyboard_test.dart": 3469,
         "test/support/reducer_parity_fixture.dart": 2812
       },

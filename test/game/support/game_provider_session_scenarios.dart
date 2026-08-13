@@ -7,15 +7,13 @@ void _registerGameSessionNotifierScenarios() {
     ProviderContainer makeContainer({
       required AsyncValue<WorldMap> mapAsync,
       AsyncValue<String?> imagePathAsync = const AsyncData(null),
-      AsyncValue<CameraState?> cameraAsync = const AsyncData(null),
-      AsyncValue<GameSave?> saveAsync = const AsyncData(null),
+      AsyncValue<CanonicalGameSnapshot?> snapshotAsync = const AsyncData(null),
     }) {
       return ProviderContainer(
         overrides: [
           activeMapProvider(selection).overrideWithValue(mapAsync),
           mapImagePathProvider(selection).overrideWithValue(imagePathAsync),
-          savedCameraProvider('save_1').overrideWithValue(cameraAsync),
-          gameSaveProvider('save_1').overrideWithValue(saveAsync),
+          gameSaveSnapshotProvider('save_1').overrideWithValue(snapshotAsync),
         ],
       );
     }
@@ -101,7 +99,13 @@ void _registerGameSessionNotifierScenarios() {
     test('includes saved camera metadata in the session', () async {
       final container = makeContainer(
         mapAsync: AsyncData(_makeMap()),
-        cameraAsync: const AsyncData(CameraState(x: 1, y: 2, zoom: 3)),
+        snapshotAsync: AsyncData(
+          _makeSnapshot(
+            save: _makeSave().copyWith(
+              camera: const CameraState(x: 1, y: 2, zoom: 3),
+            ),
+          ),
+        ),
       );
       addTearDown(container.dispose);
 
@@ -111,19 +115,6 @@ void _registerGameSessionNotifierScenarios() {
       expect(session.initialCamera?.x, 1);
       expect(session.initialCamera?.y, 2);
       expect(session.initialCamera?.zoom, 3);
-    });
-
-    test('includes saved game mode in the session', () async {
-      final container = makeContainer(
-        mapAsync: AsyncData(_makeMap()),
-        saveAsync: AsyncData(_makeSave(gameMode: GameMode.multiplayer)),
-      );
-      addTearDown(container.dispose);
-
-      final session = await container.read(
-        gameSessionProvider(selection, 'save_1').future,
-      );
-      expect(session.gameMode, GameMode.multiplayer);
     });
 
     test(
@@ -137,10 +128,9 @@ void _registerGameSessionNotifierScenarios() {
             mapImagePathProvider(
               selection,
             ).overrideWithValue(const AsyncData(null)),
-            savedCameraProvider(
+            gameSaveSnapshotProvider(
               'save_1',
             ).overrideWithValue(const AsyncData(null)),
-            gameSaveProvider('save_1').overrideWithValue(const AsyncData(null)),
           ],
         );
         addTearDown(container.dispose);

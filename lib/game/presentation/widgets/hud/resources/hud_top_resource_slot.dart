@@ -2,15 +2,18 @@ import 'dart:async';
 
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
+import 'package:aonw/game/presentation/providers/game/game_actions_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_gamepad_focus_controller_provider.dart';
 import 'package:aonw/game/presentation/widgets/activity_log/activity_log_dialog.dart';
+import 'package:aonw/game/presentation/widgets/diplomacy/diplomacy_player_modal.dart';
 import 'package:aonw/game/presentation/widgets/hud/outcome/hud_victory_status_summary.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_activity_log_entries.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_active_technology_summary.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdown_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_summary.dart';
+import 'package:aonw/game/presentation/widgets/resources/strategic_resource_economy_dialog.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_overlay.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -58,6 +61,8 @@ class HudTopResourceSlot extends ConsumerWidget {
 
     final openBreakdown = ref.watch(hudResourceBreakdownControllerProvider);
     final dispatcher = ref.read(hudCommandDispatcherProvider);
+    final currentState = gameState;
+    final currentPlayerId = activePlayerId;
     final activityLogEntries = HudActivityLogEntries.visibleTo(
       entries: ref.watch(gameActivityLogProvider),
       activePlayerId: activePlayerId ?? '',
@@ -134,6 +139,47 @@ class HudTopResourceSlot extends ConsumerWidget {
             dispatcher.openCityProductionPanel(state: gameState);
           }());
         },
+        onOpenStrategicEconomy:
+            currentState == null ||
+                currentPlayerId == null ||
+                currentPlayerId.isEmpty ||
+                !resourceSummary.strategicResources.enabled
+            ? null
+            : () {
+                dispatcher.closeResourceBreakdown();
+                unawaited(
+                  showStrategicResourceEconomyDialog(
+                    context,
+                    summary: resourceSummary.strategicResources,
+                    gameState: currentState,
+                    gameSave: gameSave,
+                    activePlayerId: currentPlayerId,
+                    gamepadInputListenable: gamepadInputListenable,
+                    onCityPressed: (city) {
+                      unawaited(() async {
+                        await dispatcher.focusCityMapTarget(city.id);
+                        dispatcher.openCityProductionPanel(state: currentState);
+                      }());
+                    },
+                    onTradePartnerPressed: (targetPlayerId) {
+                      unawaited(
+                        showDiplomacyPlayerModal(
+                          context,
+                          gameSave: gameSave,
+                          gameState: currentState,
+                          mapData: mapData,
+                          activePlayerId: currentPlayerId,
+                          targetPlayerId: targetPlayerId,
+                          gamepadInputListenable: gamepadInputListenable,
+                          onCommand: ref
+                              .read(gameCommandControllerProvider.notifier)
+                              .dispatchTransition,
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
       ),
     );
   }

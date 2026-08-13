@@ -98,9 +98,9 @@ const reviewedCityEconomyFamilyPatternSignatures =
         digest: -6734356503835873574,
       ),
       'lib/game/presentation/widgets/diplomacy/'
-          'diplomacy_player_modal_resource_trade.dart': (
+          'diplomacy_player_modal_resource_trade_editors.dart': (
         occurrences: 2,
-        digest: 4006332364167670248,
+        digest: 307194062163945323,
       ),
       'lib/game/presentation/widgets/hud/city/'
           'hud_city_production_commands.dart': (

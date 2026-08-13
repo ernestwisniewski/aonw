@@ -25,6 +25,7 @@ class SelectionResourceValueCard {
   final List<String> futureLines;
   final String expansionReason;
   final Color accentColor;
+  final SelectionStrategicResourceFlow? strategicFlow;
 
   const SelectionResourceValueCard({
     required this.title,
@@ -39,5 +40,18 @@ class SelectionResourceValueCard {
     required this.futureLines,
     required this.expansionReason,
     required this.accentColor,
+    this.strategicFlow,
   });
+}
+
+class SelectionStrategicResourceFlow {
+  const SelectionStrategicResourceFlow({
+    required this.amountPerTurn,
+    required this.active,
+    required this.description,
+  });
+
+  final int amountPerTurn;
+  final bool active;
+  final String description;
 }

@@ -6,6 +6,7 @@ import 'package:aonw/game/presentation/widgets/selection/view_models/selection_r
 import 'package:aonw/game/presentation/widgets/selection/view_models/selection_yield_item.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
@@ -73,7 +74,65 @@ class SelectionResourceValueCardBuilder {
         improvementYield: improvement.improvementYield,
       ),
       accentColor: category.color,
+      strategicFlow: _strategicFlow(
+        resource: resource,
+        tile: tile,
+        improvement: improvement,
+      ),
     );
+  }
+
+  SelectionStrategicResourceFlow? _strategicFlow({
+    required ResourceType resource,
+    required MapTileView tile,
+    required SelectionResourceImprovementAssessment improvement,
+  }) {
+    final extraction = ResourceEconomyRuleset.standard.extractionFor(resource);
+    if (extraction == null) return null;
+
+    final hex = CityHex(col: tile.col, row: tile.row);
+    final controlled =
+        gameState?.cities.any(
+          (city) =>
+              city.ownerPlayerId == gameState!.activePlayerId &&
+              city.controlsTile(hex.col, hex.row),
+        ) ??
+        false;
+    final builtImprovement = _fieldImprovementAt(hex);
+    final active =
+        controlled &&
+        improvement.technologyUnlocked &&
+        builtImprovement?.type == extraction.improvement;
+    final resourceLabel = resourceName(resource);
+    final description = active
+        ? l10n.resourceDetailStrategicFlowActive(
+            extraction.amountPerTurn,
+            resourceLabel,
+          )
+        : !controlled
+        ? l10n.resourceDetailStrategicFlowClaim(
+            extraction.amountPerTurn,
+            resourceLabel,
+          )
+        : l10n.resourceDetailStrategicFlowImprove(
+            improvementName(extraction.improvement),
+            extraction.amountPerTurn,
+            resourceLabel,
+          );
+    return SelectionStrategicResourceFlow(
+      amountPerTurn: extraction.amountPerTurn,
+      active: active,
+      description: description,
+    );
+  }
+
+  FieldImprovement? _fieldImprovementAt(CityHex hex) {
+    final improvements = gameState?.fieldImprovements;
+    if (improvements == null) return null;
+    for (final improvement in improvements) {
+      if (improvement.hex == hex) return improvement;
+    }
+    return null;
   }
 
   List<String> _futureLines(

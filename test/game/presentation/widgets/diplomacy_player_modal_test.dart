@@ -24,7 +24,7 @@ void main() {
     DomainCommand? dispatched;
     await _pumpModal(
       tester,
-      gameState: _state(),
+      gameState: _state().copyWith(playerGold: const {'player_1': 10}),
       onCommand: (command) async => dispatched = command,
     );
 
@@ -80,8 +80,12 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Strategic resources'), findsOneWidget);
+    expect(find.text('For gold'), findsOneWidget);
+    expect(find.text('Resource swap'), findsOneWidget);
+    expect(find.text('You receive'), findsOneWidget);
+    expect(find.text('You provide'), findsOneWidget);
     expect(find.text('Import horses'), findsOneWidget);
-    expect(find.text('Trade iron for horses'), findsOneWidget);
+    expect(find.textContaining('Your flow: +1 horses/turn'), findsOneWidget);
     expect(
       tester
           .widget<EpicButton>(find.widgetWithText(EpicButton, 'Propose truce'))
@@ -89,6 +93,10 @@ void main() {
       isNull,
     );
 
+    await tester.tap(find.widgetWithText(EpicButton, 'Resource swap'));
+    await tester.pump();
+
+    expect(find.text('Trade iron for horses'), findsOneWidget);
     await tester.tap(find.widgetWithText(EpicButton, 'Trade iron for horses'));
     await tester.pump();
 
@@ -100,6 +108,8 @@ void main() {
     expect(exchange.requestedResource, ResourceType.horses);
     expect(exchange.durationTurns, 8);
 
+    await tester.tap(find.widgetWithText(EpicButton, 'For gold'));
+    await tester.pump();
     await tester.tap(find.widgetWithText(EpicButton, 'Import horses'));
     await tester.pump();
 
@@ -262,7 +272,9 @@ Future<void> _pumpModal(
   WidgetTester tester, {
   GameSave? gameSave,
   required GameClientState gameState,
+  WorldMap? mapData,
   required Future<void> Function(DomainCommand command) onCommand,
+  Future<bool> Function(DomainCommand command)? onResourceTradeCommand,
 }) {
   return tester.pumpWidget(
     MaterialApp(
@@ -273,10 +285,11 @@ Future<void> _pumpModal(
         body: DiplomacyPlayerModal(
           gameSave: gameSave ?? _save(),
           gameState: gameState,
-          mapData: _map(),
+          mapData: mapData ?? _map(),
           activePlayerId: 'player_1',
           targetPlayerId: 'player_2',
           onCommand: onCommand,
+          onResourceTradeCommand: onResourceTradeCommand,
         ),
       ),
     ),

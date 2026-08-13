@@ -268,6 +268,7 @@ const _knownSnapshotStateFields = {
   'playerWarWeariness',
   'playerStabilityNet',
   'strategicResources',
+  'initialResourceDistribution',
   'units',
   'cities',
   'artifacts',

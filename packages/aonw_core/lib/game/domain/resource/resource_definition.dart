@@ -160,7 +160,7 @@ abstract final class ResourceCatalog {
     ),
     ResourceType.marble: ResourceDefinition(
       type: ResourceType.marble,
-      category: ResourceCategory.bonus,
+      category: ResourceCategory.strategic,
       economyMode: ResourceEconomyMode.presenceGate,
     ),
   };
@@ -172,6 +172,12 @@ abstract final class ResourceCatalog {
   static bool isStrategic(ResourceType type) =>
       definitionFor(type).category == ResourceCategory.strategic;
 
+  static bool isLuxury(ResourceType type) =>
+      definitionFor(type).category == ResourceCategory.luxury;
+
+  static bool isBonus(ResourceType type) =>
+      definitionFor(type).category == ResourceCategory.bonus;
+
   static bool isStockpiled(ResourceType type) =>
       definitionFor(type).economyMode == ResourceEconomyMode.stockpiled;
 
@@ -180,6 +186,12 @@ abstract final class ResourceCatalog {
         (resource) =>
             definitionFor(resource).category == ResourceCategory.strategic,
       );
+
+  static Iterable<ResourceType> resourcesForCategory(
+    ResourceCategory category,
+  ) => ResourceType.values.where(
+    (resource) => definitionFor(resource).category == category,
+  );
 
   static Iterable<ResourceType> get stockpiledResources =>
       ResourceType.values.where(

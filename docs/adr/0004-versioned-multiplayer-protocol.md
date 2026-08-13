@@ -69,7 +69,8 @@ The binding invariants are:
   `v`. Each decoder receives the reviewed version or bounded readable set for
   that envelope family and fails closed for missing, malformed, future, or
   retired schemas. Nested envelopes validate their own family version; during
-  the v3-to-v4 durable expansion an ACK v4 may contain snapshot v3 or v4.
+  the current durable expansion an ACK v4 may contain any explicitly readable
+  snapshot schema from v3 through v6.
 - A functional revision does not make incompatible wire schemas readable.
   Supporting an older wire schema requires an explicit bounded reader/upcaster
   and, when responses differ, an explicit encoder selected for that peer.
@@ -122,6 +123,18 @@ must not be used to mutate those matches. Recover with a forward fix, or restore
 the predeploy backup before starting the v5 server. Never downcast a v4 match:
 doing so would erase roads or reinterpret an active road job.
 
+Revision 7 adds quantitative oil/aluminium stockpiles, production allocation,
+atomic resource trade settlement, and authoritative production rejection
+codes. Snapshot/event schema 5 and save schema 5 persist stockpile accounts and
+queue allocations.
+
+Revision 8 adds the complete seven-resource strategic economy/trade surface and
+a deterministic, persisted match-start resource distribution shared by local
+and multiplayer games. Snapshot/event schema 6 and save schema 6 persist the
+actual generated placements. Readers accept `{3, 4, 5, 6}`; writers emit v6.
+Only functional revision 8 is compatible because earlier clients neither apply
+the effective map nor present the same trade and production contract.
+
 ## Consequences
 
 Compatible additive releases can roll out without disconnecting existing
@@ -147,12 +160,13 @@ Rejected alternatives:
 ## Migration And Verification
 
 The app-status endpoint accepts an optional multiplayer revision. Current
-clients send revision 6. Undeclared clients still map deterministically to
+clients send revision 8. Undeclared clients still map deterministically to
 legacy revision 1. Revisions 1 and 2 cannot decode every worker-automation
 command and persisted posture variant; revision 3 does not send lobby
 heartbeats or implement lease-driven roster and terminal-return behavior;
 revision 4 cannot correlate command ACKs after a timeout; revision 5 cannot
-represent road jobs or infrastructure-aware movement. All older revisions
+represent road jobs or infrastructure-aware movement; revisions 6 and 7 do
+not implement the current strategic economy and effective-map contract. All older revisions
 return `soon`, which is rendered by the localized main-menu update block.
 Release clients fail closed while this check is pending and do not open or
 resume multiplayer when it reports `soon`. Every authenticated multiplayer
@@ -180,11 +194,10 @@ the newer client is becoming available. During the store propagation window,
 old clients receive the translated update notice. Persisted matches are kept
 only when their wire schema and domain semantics remain supported or can be
 migrated through a rollback-safe expand/contract plan; otherwise they are
-retired deliberately rather than decoded heuristically. Revision 6 reads v3
-snapshot/event rows and writes v4 on new events, new matches, and the next
-authoritative mutation of an existing v3 match. A mixed ACK-v4/snapshot-v3
-payload is valid only while such a legacy match remains read-only; after its
-first accepted transition the nested snapshot is v4.
+retired deliberately rather than decoded heuristically. Revision 8 reads v3-v6
+snapshot/event rows and writes v6 on new events, new matches, and the next
+authoritative mutation of an older match. Mixed ACK-v4/durable-v3-v5 payloads
+are valid only inside this bounded expansion.
 
 Contract tests cover current, undeclared legacy, removed, and future functional
 revisions. Codec tests cover supported and unsupported wire versions. Generated

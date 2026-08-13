@@ -377,7 +377,7 @@ GameUnit _combatUnit(
   );
 }
 
-WorldMap _resourceTradeMap() {
+WorldMap _resourceTradeMap({bool withResources = true}) {
   return WorldMap(
     cols: 3,
     rows: 3,
@@ -388,11 +388,13 @@ WorldMap _resourceTradeMap() {
             col: col,
             row: row,
             terrains: const [TerrainType.plains],
-            resources: switch ((col, row)) {
-              (0, 0) => const [ResourceType.iron],
-              (2, 2) => const [ResourceType.horses],
-              _ => const [],
-            },
+            resources: withResources
+                ? switch ((col, row)) {
+                    (0, 0) => const [ResourceType.iron],
+                    (2, 2) => const [ResourceType.horses],
+                    _ => const [],
+                  }
+                : const [],
             height: 0,
           ),
     ],

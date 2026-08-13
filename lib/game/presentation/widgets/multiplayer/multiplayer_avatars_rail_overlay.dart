@@ -46,7 +46,7 @@ class _MultiplayerAvatarsRailOverlayState
       save: gameSave,
     );
     final gameState = ref.watch(gameStateProvider(gameSave.id)).value;
-    ref.watch(_mapDataProvider(gameSave));
+    ref.watch(activeGameSessionProvider);
     final diplomacy = gameState?.diplomacy ?? DiplomacyState.empty;
     _listenForStatusSheetRequests(
       gameSave: gameSave,
@@ -129,10 +129,6 @@ class _MultiplayerAvatarsRailOverlayState
       },
     );
   }
-
-  static ActiveMapProvider _mapDataProvider(GameSave save) => activeMapProvider(
-    MapSelection(name: save.mapName, source: save.mapSource),
-  );
 
   static double _topOffset(bool compact) => compact
       ? HudSideMenuMetrics.compactTopOffset

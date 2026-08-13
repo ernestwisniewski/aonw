@@ -6,6 +6,7 @@ import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/player.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/game/domain/state.dart';
@@ -26,6 +27,8 @@ abstract final class GameSnapshotFactory {
     Map<String, int> playerGold = const {},
     Map<String, int> playerWarWeariness = const {},
     Map<String, int> playerStabilityNet = const {},
+    InitialResourceDistribution initialResourceDistribution =
+        InitialResourceDistribution.empty,
     List<GameUnit> units = const [],
     List<GameCity> cities = const [],
     List<WorldArtifact> artifacts = const [],
@@ -72,6 +75,7 @@ abstract final class GameSnapshotFactory {
         playerGold: playerGold,
         playerWarWeariness: playerWarWeariness,
         playerStabilityNet: playerStabilityNet,
+        initialResourceDistribution: initialResourceDistribution,
         units: units,
         cities: cities,
         artifacts: artifacts,

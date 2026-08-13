@@ -67,10 +67,9 @@ Future<void> _pumpReplay(WidgetTester tester, ReplayTimeline timeline) async {
         mapImagePathProvider(
           selection,
         ).overrideWithValue(const AsyncData(null)),
-        savedCameraProvider(
+        gameSaveSnapshotProvider(
           _save.id,
-        ).overrideWithValue(AsyncData(_save.camera)),
-        gameSaveProvider(_save.id).overrideWithValue(AsyncData(_save)),
+        ).overrideWithValue(AsyncData(GameSnapshotFactory.create(save: _save))),
         replayTimelineProvider(
           const ReplayTimelineRequest(selection: selection, saveId: 'save_1'),
         ).overrideWithValue(AsyncData(timeline)),

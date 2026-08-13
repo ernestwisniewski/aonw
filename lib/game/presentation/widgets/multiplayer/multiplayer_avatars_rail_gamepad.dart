@@ -17,9 +17,7 @@ extension _MultiplayerAvatarsRailOverlayGamepad
       );
       return;
     }
-    final mapData = ref
-        .read(_MultiplayerAvatarsRailOverlayState._mapDataProvider(gameSave))
-        .value;
+    final mapData = ref.read(activeGameSessionProvider)?.mapData;
     if (mapData == null) return;
     if (!MultiplayerAvatarsRail._hasDiplomaticContact(
       gameState: gameState,
@@ -59,7 +57,9 @@ extension _MultiplayerAvatarsRailOverlayGamepad
         activePlayerId: activePlayerId,
         targetPlayerId: targetPlayerId,
         gamepadInputListenable: widget.gamepadInputListenable,
-        onCommand: ref.read(gameCommandControllerProvider.notifier).dispatch,
+        onCommand: ref
+            .read(gameCommandControllerProvider.notifier)
+            .dispatchTransition,
       );
     } finally {
       _setPopupInputCaptured(

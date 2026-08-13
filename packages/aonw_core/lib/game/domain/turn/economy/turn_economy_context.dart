@@ -17,7 +17,6 @@ final class TurnEconomyContext {
     Iterable<MapObjectiveDefinition> mapObjectives = const [],
     Iterable<String> baseKnownPlayerIds = const [],
     this.turn,
-    this.strategicResourceStockpilesEnabled = true,
   }) : playerIds = List.unmodifiable(_orderedDistinctPlayerIds(playerIds)),
        priorEvents = List.unmodifiable(priorEvents),
        mapObjectives = List.unmodifiable(mapObjectives),
@@ -34,7 +33,6 @@ final class TurnEconomyContext {
   final Set<String> baseKnownPlayerIds;
   final PlayerCountry Function(String playerId) countryForPlayer;
   final int? turn;
-  final bool strategicResourceStockpilesEnabled;
 }
 
 List<String> _orderedDistinctPlayerIds(Iterable<String> playerIds) {

@@ -87,6 +87,78 @@ void main() {
       expect(card.expansionReason, contains('strategic resource'));
     });
 
+    test('uses the domain catalog as the single resource classification', () {
+      final tile = WorldTile(
+        col: 1,
+        row: 0,
+        terrains: [TerrainType.hills],
+        resources: [ResourceType.marble],
+        height: 1,
+      );
+
+      final model = HudSelectionInfoModelFactory.from(
+        selection: GameSelection.tile(tile),
+        gameState: GameClientState(activePlayerId: 'player_1'),
+        mapData: _mapData(tile),
+        cityRuleset: CityRulesets.standard,
+        technologyRuleset: TechnologyRulesets.standard,
+        l10n: l10n,
+      );
+
+      expect(model!.resourceValueCards.single.categoryLabel, 'Strategic');
+    });
+
+    test('shows active strategic extraction as empire supply per turn', () {
+      final tile = WorldTile(
+        col: 1,
+        row: 0,
+        terrains: [TerrainType.desert],
+        resources: [ResourceType.oil],
+        height: 0,
+      );
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'Krakow',
+        center: CityHex(col: 0, row: 0),
+        controlledHexes: [CityHex(col: 1, row: 0)],
+      );
+      final state = GameClientState(
+        activePlayerId: 'player_1',
+        cities: const [city],
+        research: ResearchState(
+          players: {
+            'player_1': PlayerResearchState(
+              unlockedTechnologyIds: {TechnologyId.combustion},
+            ),
+          },
+        ),
+        fieldImprovements: const [
+          FieldImprovement(
+            hex: CityHex(col: 1, row: 0),
+            type: FieldImprovementType.oilWell,
+            builtByCityId: 'city_1',
+          ),
+        ],
+      );
+
+      final model = HudSelectionInfoModelFactory.from(
+        selection: GameSelection.tile(tile),
+        gameState: state,
+        mapData: _mapData(tile),
+        cityRuleset: CityRulesets.standard,
+        technologyRuleset: TechnologyRulesets.standard,
+        l10n: l10n,
+      );
+
+      final card = model!.resourceValueCards.single;
+      expect(card.categoryLabel, 'Strategic');
+      expect(card.strategicFlow, isNotNull);
+      expect(card.strategicFlow!.active, isTrue);
+      expect(card.strategicFlow!.amountPerTurn, 1);
+      expect(card.strategicFlow!.description, 'Active source: +1 oil/turn.');
+    });
+
     testWidgets('render as sectioned cards in resources detail content', (
       tester,
     ) async {
@@ -139,6 +211,11 @@ void main() {
                       expansionReason:
                           'A good expansion target for city growth.',
                       accentColor: GameUiTheme.success,
+                      strategicFlow: SelectionStrategicResourceFlow(
+                        amountPerTurn: 1,
+                        active: true,
+                        description: 'Active source: +1 oil/turn.',
+                      ),
                     ),
                   ],
                 ),
@@ -151,6 +228,8 @@ void main() {
       expect(find.text('Wheat'), findsOneWidget);
       expect(find.text('BONUS'), findsOneWidget);
       expect(find.text('VALUE'), findsOneWidget);
+      expect(find.text('EMPIRE SUPPLY'), findsOneWidget);
+      expect(find.text('Active source: +1 oil/turn.'), findsOneWidget);
       expect(find.text('NOW'), findsNWidgets(2));
       expect(find.text('AFTER IMPROVEMENT'), findsNWidgets(2));
       expect(find.text('REQUIRES'), findsOneWidget);

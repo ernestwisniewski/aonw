@@ -139,6 +139,9 @@ abstract final class CanonicalGameSnapshotCodec {
     'playerStabilityNet': {...domain.playerStabilityNet},
     if (domain.strategicResources.byPlayerId.isNotEmpty)
       'strategicResources': domain.strategicResources.toJson(),
+    if (!domain.initialResourceDistribution.isEmpty)
+      'initialResourceDistribution': domain.initialResourceDistribution
+          .toJson(),
     'units': [for (final unit in domain.units) unit.toJson()],
     'cities': [for (final city in domain.cities) city.toJson()],
     'artifacts': [for (final artifact in domain.artifacts) artifact.toJson()],
@@ -181,6 +184,7 @@ DomainState _domainFromDecoded(
   playerWarWeariness: decoded.playerWarWeariness,
   playerStabilityNet: decoded.playerStabilityNet,
   strategicResources: decoded.strategicResources,
+  initialResourceDistribution: decoded.initialResourceDistribution,
   units: decoded.units,
   cities: decoded.cities,
   artifacts: decoded.artifacts,
@@ -207,6 +211,7 @@ final class _DecodedState {
     required this.playerWarWeariness,
     required this.playerStabilityNet,
     required this.strategicResources,
+    required this.initialResourceDistribution,
     required this.units,
     required this.cities,
     required this.artifacts,
@@ -236,6 +241,7 @@ final class _DecodedState {
   final Map<String, int> playerWarWeariness;
   final Map<String, int> playerStabilityNet;
   final StrategicResourceAccounts strategicResources;
+  final InitialResourceDistribution initialResourceDistribution;
   final List<GameUnit> units;
   final List<GameCity> cities;
   final List<WorldArtifact> artifacts;
@@ -269,6 +275,9 @@ _DecodedState _decodeState(Map<String, dynamic> state) {
     playerStabilityNet: _intMap(state['playerStabilityNet']),
     strategicResources: StrategicResourceAccounts.fromJson(
       state['strategicResources'],
+    ),
+    initialResourceDistribution: InitialResourceDistribution.fromJson(
+      state['initialResourceDistribution'],
     ),
     units: _decodeJsonList(state['units'], GameUnit.fromJson),
     cities: _decodeJsonList(state['cities'], GameCity.fromJson),

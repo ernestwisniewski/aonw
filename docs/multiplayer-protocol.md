@@ -301,21 +301,22 @@ timeout handling treats AI seats as non-blocking.
 Every authoritative top-level wire envelope carries a strict family version.
 `WireCommand`, `WireCommandAck`, and `WireMatch` use
 `kProtocolVersion == 4`. `WireSnapshot` and `WireEvent` use the independent
-`kSnapshotEventVersion == 4` write schema in storage and in standalone or
-nested transport. Revision-6 readers also accept legacy durable v3. Nested
-envelopes validate themselves, so an ACK v4 contains snapshot v3 or v4 during
-the bounded expansion. There is no implicit promotion between the families.
+`kSnapshotEventVersion == 6` write schema in storage and in standalone or
+nested transport. Revision-8 readers accept the bounded durable set v3-v6.
+Nested envelopes validate themselves, so an ACK v4 may contain any readable
+durable snapshot during the expansion. There is no implicit promotion between
+the families.
 
 Functional multiplayer compatibility is versioned independently:
 
 | Contract | Current | Compatible | Meaning |
 | --- | ---: | --- | --- |
-| Multiplayer revision | 6 | 6 | Revision 6 adds road construction, transport-network state, and infrastructure-aware movement. Revision 5 cannot represent or simulate that contract. |
+| Multiplayer revision | 8 | 8 | Revision 8 adds strategic production/allocation, seven-resource trade and economy UI, and the persisted initial resource distribution used by local and multiplayer games. |
 | Command / ACK / match schema | 4 | 4 | Schema 4 requires `clientMessageId` in every `WireCommandAck`. |
-| Snapshot / event schema | 4 | 3, 4 readable; 4 writable | Schema 4 owns road jobs and transport-network state. Legacy v3 decodes with an empty network and is migrated on the next authoritative write. |
+| Snapshot / event schema | 6 | 3, 4, 5, 6 readable; 6 writable | Schema 5 adds stockpiles and allocations; schema 6 adds persisted initial resource placements. Older readable rows use safe empty defaults and migrate on the next authoritative write. |
 
 The main-menu app-status request sends the app build plus multiplayer revision
-6. A revision in the compatible set can continue. A removed, invalid, or
+8. A revision in the compatible set can continue. A removed, invalid, or
 future revision receives `soon`, which renders the localized
 `mainMenuUpdateSoonTitle` and `mainMenuUpdateSoonBody` notice. Older clients
 that do not yet send a revision are treated specifically as revision 1 during
@@ -338,16 +339,18 @@ commands, ACKs, and match envelopes to schema 4 and requires ACK correlation
 IDs. Persisted snapshots, persisted events, replay transport, nested ACK
 snapshots, and the `multiplayer-v3` snapshot-cache namespace remain schema 3.
 Revision 6 moves snapshots and events to schema 4 for road construction and
-transport-network state. Readers accept v3 and v4; writers emit v4, and a v3
-running match migrates with save schema 4 on its next accepted state change.
-Malformed, pre-v3, and future versions fail closed.
+transport-network state. Revision 7 adds stockpiles and production allocations
+in schema 5. Revision 8 adds persisted initial resource placements in schema 6.
+Readers accept v3-v6; writers emit v6, and an older running match migrates with
+save schema 6 on its next accepted state change. Malformed, pre-v3, and future
+versions fail closed.
 
-Before deploying revision 6, retain a database backup. Deploy the v6 server
-before exposing v6 clients; all v5 clients are blocked by compatibility guards.
-Once any v4 row is written, do not roll the server back to v5 against that
-database. Use a forward fix, or restore the predeploy backup first. The old
-server rejects v4, which prevents silent loss of roads; no v4-to-v3 downcaster
-exists because it could erase a transport network or reinterpret a road job.
+Before deploying revision 8, retain a database backup. Deploy the v8 server
+before exposing v8 clients; older clients are blocked by compatibility guards.
+Once any v6 row is written, do not roll the server back against that database.
+Use a forward fix, or restore the predeploy backup first. No downcaster exists
+because it could erase stock, allocations, or the match's effective resource
+map.
 
 Use this path for every multiplayer change:
 

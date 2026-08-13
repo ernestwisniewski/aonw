@@ -14,12 +14,14 @@ class GameModalHeader {
     required this.title,
     this.subtitle,
     this.icon,
+    this.leading,
     this.onClose,
-  });
+  }) : assert(icon == null || leading == null);
 
   final String title;
   final String? subtitle;
   final IconData? icon;
+  final Widget? leading;
   final VoidCallback? onClose;
 }
 
@@ -161,9 +163,15 @@ class _GameModalHeaderView extends StatelessWidget {
                 label: header.title,
                 alignment: Alignment.centerLeft,
                 compact: false,
-                leading: header.icon == null
-                    ? null
-                    : Icon(header.icon, size: 18, color: GameUiTheme.goldLight),
+                leading:
+                    header.leading ??
+                    (header.icon == null
+                        ? null
+                        : Icon(
+                            header.icon,
+                            size: 18,
+                            color: GameUiTheme.goldLight,
+                          )),
               ),
               if (header.subtitle != null) ...[
                 const SizedBox(height: 2),

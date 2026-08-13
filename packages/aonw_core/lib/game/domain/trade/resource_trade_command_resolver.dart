@@ -1,7 +1,7 @@
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
-import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/trade/resource_trade_agreement.dart';
 import 'package:aonw_core/game/domain/trade/resource_trade_export_availability.dart';
@@ -37,8 +37,6 @@ abstract final class ResourceTradeCommandResolver {
     required String actorPlayerId,
     required MapTileLookup mapTiles,
     Iterable<FieldImprovement> fieldImprovements = const [],
-    StrategicResourceEconomyProfile strategicResourceEconomy =
-        StrategicResourceEconomyProfile.legacyPresenceV0,
   }) {
     final requestReason = _goldRequestRejectionReason(command, actorPlayerId);
     if (requestReason != null) {
@@ -61,7 +59,6 @@ abstract final class ResourceTradeCommandResolver {
           resource: command.resource,
           mapTiles: mapTiles,
           fieldImprovements: fieldImprovements,
-          strategicResourceEconomy: strategicResourceEconomy,
         ) <=
         0) {
       return _reject(
@@ -87,8 +84,6 @@ abstract final class ResourceTradeCommandResolver {
     required String actorPlayerId,
     required MapTileLookup mapTiles,
     Iterable<FieldImprovement> fieldImprovements = const [],
-    StrategicResourceEconomyProfile strategicResourceEconomy =
-        StrategicResourceEconomyProfile.legacyPresenceV0,
   }) {
     final requestReason = _exchangeRequestRejectionReason(
       command,
@@ -112,7 +107,6 @@ abstract final class ResourceTradeCommandResolver {
       command: command,
       mapTiles: mapTiles,
       fieldImprovements: fieldImprovements,
-      strategicResourceEconomy: strategicResourceEconomy,
     );
     if (availabilityReason != null) {
       return _reject(resourceTradeAgreements, availabilityReason);
@@ -137,6 +131,9 @@ abstract final class ResourceTradeCommandResolver {
     }
     if (command.playerId == command.targetPlayerId) {
       return 'invalid_resource_trade_target';
+    }
+    if (!ResourceCatalog.isStrategic(command.resource)) {
+      return 'invalid_resource_trade_resource';
     }
     if (command.goldPerTurn < 0 || command.durationTurns <= 0) {
       return 'invalid_resource_trade_terms';
@@ -180,6 +177,10 @@ abstract final class ResourceTradeCommandResolver {
     if (command.playerId == command.targetPlayerId) {
       return 'invalid_resource_trade_target';
     }
+    if (!ResourceCatalog.isStrategic(command.offeredResource) ||
+        !ResourceCatalog.isStrategic(command.requestedResource)) {
+      return 'invalid_resource_trade_resource';
+    }
     if (command.offeredResource == command.requestedResource ||
         command.durationTurns <= 0) {
       return 'invalid_resource_trade_terms';
@@ -221,7 +222,6 @@ abstract final class ResourceTradeCommandResolver {
     required OpenResourceExchangeCommand command,
     required MapTileLookup mapTiles,
     required Iterable<FieldImprovement> fieldImprovements,
-    required StrategicResourceEconomyProfile strategicResourceEconomy,
   }) {
     if (ResourceTradeExportAvailability.available(
           cities: cities,
@@ -231,7 +231,6 @@ abstract final class ResourceTradeCommandResolver {
           resource: command.offeredResource,
           mapTiles: mapTiles,
           fieldImprovements: fieldImprovements,
-          strategicResourceEconomy: strategicResourceEconomy,
         ) <=
         0) {
       return 'resource_trade_offer_unavailable';
@@ -244,7 +243,6 @@ abstract final class ResourceTradeCommandResolver {
           resource: command.requestedResource,
           mapTiles: mapTiles,
           fieldImprovements: fieldImprovements,
-          strategicResourceEconomy: strategicResourceEconomy,
         ) <=
         0) {
       return 'resource_trade_request_unavailable';

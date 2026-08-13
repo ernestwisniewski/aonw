@@ -48,7 +48,6 @@ class CityProductionDialog extends StatelessWidget {
   final List<FieldImprovement> fieldImprovements;
   final Iterable<ResourceTradeAgreement> resourceTradeAgreements;
   final StrategicResourceAccounts strategicResources;
-  final StrategicResourceEconomyProfile strategicResourceEconomy;
   final int productionPerTurn;
   final int? currentTurn;
   final PaceBalance paceBalance;
@@ -79,8 +78,6 @@ class CityProductionDialog extends StatelessWidget {
     this.fieldImprovements = const [],
     this.resourceTradeAgreements = const [],
     this.strategicResources = StrategicResourceAccounts.empty,
-    this.strategicResourceEconomy =
-        StrategicResourceEconomyProfile.legacyPresenceV0,
     required this.productionPerTurn,
     this.currentTurn,
     this.paceBalance = PaceBalance.unlimited,
@@ -117,7 +114,6 @@ class CityProductionDialog extends StatelessWidget {
       fieldImprovements: fieldImprovements,
       resourceTradeAgreements: resourceTradeAgreements,
       strategicResources: strategicResources,
-      strategicResourceEconomy: strategicResourceEconomy,
       productionPerTurn: productionPerTurn,
       currentTurn: currentTurn,
       paceBalance: paceBalance,
@@ -153,7 +149,6 @@ class CityProductionPanel extends StatefulWidget {
   final List<FieldImprovement> fieldImprovements;
   final Iterable<ResourceTradeAgreement> resourceTradeAgreements;
   final StrategicResourceAccounts strategicResources;
-  final StrategicResourceEconomyProfile strategicResourceEconomy;
   final int productionPerTurn;
   final int? currentTurn;
   final PaceBalance paceBalance;
@@ -186,8 +181,6 @@ class CityProductionPanel extends StatefulWidget {
     this.fieldImprovements = const [],
     this.resourceTradeAgreements = const [],
     this.strategicResources = StrategicResourceAccounts.empty,
-    this.strategicResourceEconomy =
-        StrategicResourceEconomyProfile.legacyPresenceV0,
     required this.productionPerTurn,
     this.currentTurn,
     this.paceBalance = PaceBalance.unlimited,

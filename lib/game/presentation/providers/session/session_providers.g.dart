@@ -51,7 +51,7 @@ final class GameSessionNotifierProvider
 }
 
 String _$gameSessionNotifierHash() =>
-    r'f10331ff3bf999d52b8045ff688531754bf7e62b';
+    r'34568c4b648247328e1e7694c236994a9a63ddf3';
 
 final class GameSessionNotifierFamily extends $Family
     with

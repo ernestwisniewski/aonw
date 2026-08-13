@@ -2038,6 +2038,92 @@ abstract class AppLocalizations {
   /// **'Strategic resources'**
   String get diplomacyStrategicResourcesTitle;
 
+  /// No description provided for @diplomacyResourceTradeGoldMode.
+  ///
+  /// In en, this message translates to:
+  /// **'For gold'**
+  String get diplomacyResourceTradeGoldMode;
+
+  /// No description provided for @diplomacyResourceTradeExchangeMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Resource swap'**
+  String get diplomacyResourceTradeExchangeMode;
+
+  /// No description provided for @diplomacyResourceTradeReceiveLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'You receive'**
+  String get diplomacyResourceTradeReceiveLabel;
+
+  /// No description provided for @diplomacyResourceTradeGiveLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'You provide'**
+  String get diplomacyResourceTradeGiveLabel;
+
+  /// No description provided for @diplomacyResourceTradeGoldForecast.
+  ///
+  /// In en, this message translates to:
+  /// **'Your flow: +1 {resourceName}/turn · −{goldPerTurn} gold/turn · {durationTurns} turns'**
+  String diplomacyResourceTradeGoldForecast(
+    String resourceName,
+    int goldPerTurn,
+    int durationTurns,
+  );
+
+  /// No description provided for @diplomacyResourceTradeExchangeForecast.
+  ///
+  /// In en, this message translates to:
+  /// **'Your flow: +1 {requestedResource}/turn · −1 {offeredResource}/turn · {durationTurns} turns'**
+  String diplomacyResourceTradeExchangeForecast(
+    String requestedResource,
+    String offeredResource,
+    int durationTurns,
+  );
+
+  /// No description provided for @diplomacyResourceTradePrivateSupplyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only legal export offers are shown; the rival\'s stockpile remains private.'**
+  String get diplomacyResourceTradePrivateSupplyHint;
+
+  /// No description provided for @diplomacyResourceTradeGoldUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'You need at least {gold} gold to start this import.'**
+  String diplomacyResourceTradeGoldUnavailable(int gold);
+
+  /// No description provided for @diplomacyResourceTradeRequestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The agreement could not be created. Review the terms and try again.'**
+  String get diplomacyResourceTradeRequestFailed;
+
+  /// No description provided for @diplomacyResourceTradeRequestRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'The offer changed and could not be accepted. Review the available terms and try again.'**
+  String get diplomacyResourceTradeRequestRejected;
+
+  /// No description provided for @diplomacyResourceTradeActiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Active agreements'**
+  String get diplomacyResourceTradeActiveTitle;
+
+  /// No description provided for @diplomacyResourceTradeAgreementFlowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{direction}: {amount} {resourceName}/turn · {price} · {remainingTurns} turns left'**
+  String diplomacyResourceTradeAgreementFlowLabel(
+    String direction,
+    int amount,
+    String resourceName,
+    String price,
+    int remainingTurns,
+  );
+
   /// No description provided for @diplomacyResourceTradeBlockedByWar.
   ///
   /// In en, this message translates to:
@@ -9092,6 +9178,96 @@ abstract class AppLocalizations {
   /// **'No strategic resources are allocated.'**
   String get resourceBreakdownNoAllocations;
 
+  /// No description provided for @resourceEconomyOpenAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Full resource economy'**
+  String get resourceEconomyOpenAction;
+
+  /// No description provided for @resourceEconomyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategic economy'**
+  String get resourceEconomyTitle;
+
+  /// No description provided for @resourceEconomyHealthySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategic supply is stable.'**
+  String get resourceEconomyHealthySubtitle;
+
+  /// No description provided for @resourceEconomyAttentionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 issue requires attention.} other{{count} issues require attention.}}'**
+  String resourceEconomyAttentionSubtitle(int count);
+
+  /// No description provided for @resourceEconomyAlertsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Economic alerts'**
+  String get resourceEconomyAlertsTitle;
+
+  /// No description provided for @resourceEconomyNoFreeStockAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'No free {resourceName}'**
+  String resourceEconomyNoFreeStockAlert(String resourceName);
+
+  /// No description provided for @resourceEconomyInsufficientStockAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough free {resourceName}'**
+  String resourceEconomyInsufficientStockAlert(String resourceName);
+
+  /// No description provided for @resourceEconomyNoFreeStockDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'New production that requires this resource is blocked.'**
+  String get resourceEconomyNoFreeStockDetail;
+
+  /// No description provided for @resourceEconomyTradeExpiringAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'{resourceName} agreement expires in {turns} turns'**
+  String resourceEconomyTradeExpiringAlert(String resourceName, int turns);
+
+  /// No description provided for @resourceEconomyTradeExpiringDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the agreement before the strategic flow changes.'**
+  String get resourceEconomyTradeExpiringDetail;
+
+  /// No description provided for @resourceEconomyTradePartnersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade partners'**
+  String get resourceEconomyTradePartnersTitle;
+
+  /// No description provided for @resourceEconomyNoTradePartners.
+  ///
+  /// In en, this message translates to:
+  /// **'No known civilization is available for resource trade.'**
+  String get resourceEconomyNoTradePartners;
+
+  /// No description provided for @resourceEconomyOpenTradeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open trade'**
+  String get resourceEconomyOpenTradeAction;
+
+  /// No description provided for @resourceEconomyGoToCityAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to city'**
+  String get resourceEconomyGoToCityAction;
+
+  /// No description provided for @resourceEconomyNoSources.
+  ///
+  /// In en, this message translates to:
+  /// **'No active strategic resource sources.'**
+  String get resourceEconomyNoSources;
+
   /// No description provided for @technologyRecommendationsTitle.
   ///
   /// In en, this message translates to:
@@ -12401,6 +12577,34 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Now'**
   String get resourceDetailCurrentSection;
+
+  /// No description provided for @resourceDetailEmpireSupplySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Empire supply'**
+  String get resourceDetailEmpireSupplySection;
+
+  /// No description provided for @resourceDetailStrategicFlowActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active source: +{amount} {resource}/turn.'**
+  String resourceDetailStrategicFlowActive(int amount, String resource);
+
+  /// No description provided for @resourceDetailStrategicFlowClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim this field to unlock +{amount} {resource}/turn after improvement.'**
+  String resourceDetailStrategicFlowClaim(int amount, String resource);
+
+  /// No description provided for @resourceDetailStrategicFlowImprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Build {improvement} to add +{amount} {resource}/turn to the empire.'**
+  String resourceDetailStrategicFlowImprove(
+    String improvement,
+    int amount,
+    String resource,
+  );
 
   /// No description provided for @resourceDetailAfterImprovementSection.
   ///

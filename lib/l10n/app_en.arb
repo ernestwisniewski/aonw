@@ -462,6 +462,44 @@
   "diplomacyResponseEvasive": "Evasive",
   "diplomacyResponseAggressive": "Aggressive",
   "diplomacyStrategicResourcesTitle": "Strategic resources",
+  "diplomacyResourceTradeGoldMode": "For gold",
+  "diplomacyResourceTradeExchangeMode": "Resource swap",
+  "diplomacyResourceTradeReceiveLabel": "You receive",
+  "diplomacyResourceTradeGiveLabel": "You provide",
+  "diplomacyResourceTradeGoldForecast": "Your flow: +1 {resourceName}/turn · −{goldPerTurn} gold/turn · {durationTurns} turns",
+  "@diplomacyResourceTradeGoldForecast": {
+    "placeholders": {
+      "resourceName": { "type": "String" },
+      "goldPerTurn": { "type": "int" },
+      "durationTurns": { "type": "int" }
+    }
+  },
+  "diplomacyResourceTradeExchangeForecast": "Your flow: +1 {requestedResource}/turn · −1 {offeredResource}/turn · {durationTurns} turns",
+  "@diplomacyResourceTradeExchangeForecast": {
+    "placeholders": {
+      "requestedResource": { "type": "String" },
+      "offeredResource": { "type": "String" },
+      "durationTurns": { "type": "int" }
+    }
+  },
+  "diplomacyResourceTradePrivateSupplyHint": "Only legal export offers are shown; the rival's stockpile remains private.",
+  "diplomacyResourceTradeGoldUnavailable": "You need at least {gold} gold to start this import.",
+  "@diplomacyResourceTradeGoldUnavailable": {
+    "placeholders": { "gold": { "type": "int" } }
+  },
+  "diplomacyResourceTradeRequestFailed": "The agreement could not be created. Review the terms and try again.",
+  "diplomacyResourceTradeRequestRejected": "The offer changed and could not be accepted. Review the available terms and try again.",
+  "diplomacyResourceTradeActiveTitle": "Active agreements",
+  "diplomacyResourceTradeAgreementFlowLabel": "{direction}: {amount} {resourceName}/turn · {price} · {remainingTurns} turns left",
+  "@diplomacyResourceTradeAgreementFlowLabel": {
+    "placeholders": {
+      "direction": { "type": "String" },
+      "amount": { "type": "int" },
+      "resourceName": { "type": "String" },
+      "price": { "type": "String" },
+      "remainingTurns": { "type": "int" }
+    }
+  },
   "diplomacyResourceTradeBlockedByWar": "Resource trade is blocked by war.",
   "diplomacyResourceTradeNoAvailableResources": "No spare strategic resources are available for trade.",
   "diplomacyResourceTradeImportOffer": "Import offer: {goldPerTurn} gold/turn for {durationTurns} turns.",
@@ -3052,6 +3090,36 @@
   "resourceBreakdownExports": "Exports",
   "resourceBreakdownAllocations": "Production allocations",
   "resourceBreakdownNoAllocations": "No strategic resources are allocated.",
+  "resourceEconomyOpenAction": "Full resource economy",
+  "resourceEconomyTitle": "Strategic economy",
+  "resourceEconomyHealthySubtitle": "Strategic supply is stable.",
+  "resourceEconomyAttentionSubtitle": "{count, plural, =1{1 issue requires attention.} other{{count} issues require attention.}}",
+  "@resourceEconomyAttentionSubtitle": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "resourceEconomyAlertsTitle": "Economic alerts",
+  "resourceEconomyNoFreeStockAlert": "No free {resourceName}",
+  "@resourceEconomyNoFreeStockAlert": {
+    "placeholders": {"resourceName": {"type": "String"}}
+  },
+  "resourceEconomyInsufficientStockAlert": "Not enough free {resourceName}",
+  "@resourceEconomyInsufficientStockAlert": {
+    "placeholders": {"resourceName": {"type": "String"}}
+  },
+  "resourceEconomyNoFreeStockDetail": "New production that requires this resource is blocked.",
+  "resourceEconomyTradeExpiringAlert": "{resourceName} agreement expires in {turns} turns",
+  "@resourceEconomyTradeExpiringAlert": {
+    "placeholders": {
+      "resourceName": {"type": "String"},
+      "turns": {"type": "int"}
+    }
+  },
+  "resourceEconomyTradeExpiringDetail": "Review the agreement before the strategic flow changes.",
+  "resourceEconomyTradePartnersTitle": "Trade partners",
+  "resourceEconomyNoTradePartners": "No known civilization is available for resource trade.",
+  "resourceEconomyOpenTradeAction": "Open trade",
+  "resourceEconomyGoToCityAction": "Go to city",
+  "resourceEconomyNoSources": "No active strategic resource sources.",
   "technologyRecommendationsTitle": "Recommended research",
   "technologyShowTreeAction": "Show tree",
   "technologyShowTreeCountAction": "Show tree ({count})",
@@ -4204,6 +4272,29 @@
   "resourceDetailNoResourcesOnTile": "No resources on this tile",
   "resourceDetailValueSection": "Value",
   "resourceDetailCurrentSection": "Now",
+  "resourceDetailEmpireSupplySection": "Empire supply",
+  "resourceDetailStrategicFlowActive": "Active source: +{amount} {resource}/turn.",
+  "@resourceDetailStrategicFlowActive": {
+    "placeholders": {
+      "amount": { "type": "int" },
+      "resource": { "type": "String" }
+    }
+  },
+  "resourceDetailStrategicFlowClaim": "Claim this field to unlock +{amount} {resource}/turn after improvement.",
+  "@resourceDetailStrategicFlowClaim": {
+    "placeholders": {
+      "amount": { "type": "int" },
+      "resource": { "type": "String" }
+    }
+  },
+  "resourceDetailStrategicFlowImprove": "Build {improvement} to add +{amount} {resource}/turn to the empire.",
+  "@resourceDetailStrategicFlowImprove": {
+    "placeholders": {
+      "improvement": { "type": "String" },
+      "amount": { "type": "int" },
+      "resource": { "type": "String" }
+    }
+  },
   "resourceDetailAfterImprovementSection": "After improvement",
   "resourceDetailYieldComparison": "Tile yields",
   "resourceDetailRequiresSection": "Requires",

@@ -1,5 +1,134 @@
 part of 'resource_breakdown_popup.dart';
 
+class _ResourceBreakdownContent extends StatelessWidget {
+  const _ResourceBreakdownContent({
+    required this.title,
+    required this.accent,
+    required this.icon,
+    required this.closeTooltip,
+    required this.showDragHandle,
+    required this.showEconomyAction,
+    required this.economyActionLabel,
+    required this.onClose,
+    required this.onOpenEconomy,
+    required this.sections,
+  });
+
+  final String title;
+  final Color accent;
+  final GameIconData icon;
+  final String closeTooltip;
+  final bool showDragHandle;
+  final bool showEconomyAction;
+  final String economyActionLabel;
+  final VoidCallback onClose;
+  final VoidCallback? onOpenEconomy;
+  final List<_BreakdownSectionModel> sections;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _ResourceBreakdownHeader(
+        title: title,
+        accent: accent,
+        icon: icon,
+        closeTooltip: closeTooltip,
+        showDragHandle: showDragHandle,
+        showEconomyAction: showEconomyAction,
+        economyActionLabel: economyActionLabel,
+        onClose: onClose,
+        onOpenEconomy: onOpenEconomy,
+      ),
+      for (var index = 0; index < sections.length; index++) ...[
+        if (index > 0) const SizedBox(height: 10),
+        _BreakdownSection(section: sections[index], accent: accent),
+      ],
+    ],
+  );
+}
+
+class _ResourceBreakdownHeader extends StatelessWidget {
+  const _ResourceBreakdownHeader({
+    required this.title,
+    required this.accent,
+    required this.icon,
+    required this.closeTooltip,
+    required this.showDragHandle,
+    required this.showEconomyAction,
+    required this.economyActionLabel,
+    required this.onClose,
+    required this.onOpenEconomy,
+  });
+
+  final String title;
+  final Color accent;
+  final GameIconData icon;
+  final String closeTooltip;
+  final bool showDragHandle;
+  final bool showEconomyAction;
+  final String economyActionLabel;
+  final VoidCallback onClose;
+  final VoidCallback? onOpenEconomy;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (showDragHandle) ...[
+        const _ResourceBreakdownDragHandle(),
+        const SizedBox(height: 10),
+      ],
+      GameUiEpicHeader(
+        label: title,
+        accent: accent,
+        alignment: Alignment.centerLeft,
+        leading: GameIcon(icon, size: GameIconSize.regular, color: accent),
+        trailing: _PopupIconButton(
+          icon: GameIcons.close,
+          tooltip: closeTooltip,
+          onTap: onClose,
+        ),
+      ),
+      const SizedBox(height: 8),
+      if (showEconomyAction) ...[
+        EpicButton.primary(
+          key: const Key('resourceBreakdown.openStrategicEconomy'),
+          label: economyActionLabel,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          iconBuilder: (foreground) => GameIcon(
+            GameIcons.resources,
+            size: GameIconSize.small,
+            color: foreground,
+          ),
+          onPressed: onOpenEconomy,
+        ),
+        const SizedBox(height: 10),
+      ],
+    ],
+  );
+}
+
+class _ResourceBreakdownDragHandle extends StatelessWidget {
+  const _ResourceBreakdownDragHandle();
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Container(
+      width: 42,
+      height: 4,
+      decoration: ShapeDecoration(
+        color: SurfaceElevation.flat.fill(
+          background: GameUiTheme.copper,
+          alpha: 120,
+        ),
+        shape: const StadiumBorder(),
+      ),
+    ),
+  );
+}
+
 class _BreakdownSection extends StatelessWidget {
   final _BreakdownSectionModel section;
   final Color accent;

@@ -21,7 +21,6 @@ mixin _CityProductionRequestFlow on State<CityProductionPanel> {
       fieldImprovements: widget.fieldImprovements,
       resourceTradeAgreements: widget.resourceTradeAgreements,
       strategicResources: widget.strategicResources,
-      strategicResourceEconomy: widget.strategicResourceEconomy,
       productionPerTurn: widget.productionPerTurn,
       currentTurn: widget.currentTurn,
       paceBalance: widget.paceBalance,

@@ -22,6 +22,16 @@ void main() {
       submittedPlayerIds: {'p1'},
       pendingAction: const PendingResearchSelection(ownerPlayerId: 'p1'),
       turnStartedAt: DateTime.utc(2026, 8, 1),
+      initialResourceDistribution: InitialResourceDistribution(
+        seed: 17,
+        placements: const [
+          InitialResourcePlacement(
+            col: 3,
+            row: 4,
+            resource: ResourceType.marble,
+          ),
+        ],
+      ),
     );
     final data = CanonicalGameSnapshotData(
       save: save.toJson(),
@@ -37,6 +47,10 @@ void main() {
     expect(decoded.domain.participants, save.players);
     expect(decoded.domain.playerGold, const {'p1': 17});
     expect(decoded.domain.actions.pendingAction, isNotNull);
+    expect(
+      decoded.domain.initialResourceDistribution,
+      state.initialResourceDistribution,
+    );
   });
 
   test('canonical encode/decode is lossless and owns JSON data', () {

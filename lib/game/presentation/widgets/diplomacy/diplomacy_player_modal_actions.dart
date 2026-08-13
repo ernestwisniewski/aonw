@@ -37,7 +37,7 @@ class _ActionsSection extends StatelessWidget {
       DiplomaticProposalKind.truce,
       goldPayment: truceGoldPayment,
     );
-    return _Section(
+    return DiplomacySection(
       title: l10n.diplomacyActionsTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

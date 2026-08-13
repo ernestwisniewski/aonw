@@ -281,7 +281,7 @@ void main() {
       expect(cavalryGate.visibleControlledResources, {ResourceType.horses});
     });
 
-    test('late armor requires revealed oil in the empire', () {
+    test('stockpile unit costs do not use presence-based requirements', () {
       const oilCity = GameCity(
         id: 'city_1',
         ownerPlayerId: 'player_1',
@@ -296,7 +296,7 @@ void main() {
           cities: const [oilCity],
           mapTiles: _map(),
         ),
-        isFalse,
+        isTrue,
       );
       expect(
         UnitProductionRequirementRules.meetsRequirements(
@@ -348,7 +348,7 @@ void main() {
       );
     });
 
-    test('recon plane accepts revealed aluminium or oil', () {
+    test('recon plane stockpile options are not presence requirements', () {
       const aluminiumCity = GameCity(
         id: 'city_1',
         ownerPlayerId: 'player_1',
@@ -389,7 +389,7 @@ void main() {
           cities: const [aluminiumCity],
           mapTiles: _map(),
         ),
-        {ResourceType.aluminium, ResourceType.oil},
+        isEmpty,
       );
     });
   });

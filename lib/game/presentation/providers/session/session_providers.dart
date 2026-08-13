@@ -20,14 +20,18 @@ class GameSessionNotifier extends _$GameSessionNotifier {
   @override
   Future<GameSession> build(MapSelection selection, String saveId) async {
     final sessionFactory = ref.watch(gameSessionFactoryProvider);
-    final mapData = await ref.watch(activeMapProvider(selection).future);
+    final baseMap = await ref.watch(activeMapProvider(selection).future);
+    final snapshot = await ref.read(gameSaveSnapshotProvider(saveId).future);
+    final mapData =
+        snapshot?.domain.initialResourceDistribution.applyTo(baseMap) ??
+        baseMap;
     final imagePath = await ref
         .watch(mapImagePathProvider(selection).future)
         .onError((_, _) => null);
     // One-shot reads: save/camera invalidation should refresh HUD metadata
     // without recreating the active Flame session.
-    final initialCamera = await ref.read(savedCameraProvider(saveId).future);
-    final save = await ref.read(gameSaveProvider(saveId).future);
+    final initialCamera = snapshot?.save.camera;
+    final save = snapshot?.save;
     await ref.read(gameplaySettingsProvider.notifier).ensureLoaded();
     final preferredViewMode = ref
         .read(gameplaySettingsProvider)

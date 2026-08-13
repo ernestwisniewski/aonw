@@ -14,7 +14,7 @@ abstract final class SaveSnapshotCodec {
   static CanonicalGameSnapshot fromJson(Map<String, dynamic> json) {
     final rawSave = json['save'] as Map<String, dynamic>;
     final schemaVersion = rawSave['schemaVersion'];
-    if (!{gameSaveCurrentSchemaVersion, 4, 3}.contains(schemaVersion)) {
+    if (!{gameSaveCurrentSchemaVersion, 5, 4, 3}.contains(schemaVersion)) {
       throw StateError(
         'Unsupported save schema version: $schemaVersion '
         '(expected $gameSaveCurrentSchemaVersion)',

@@ -85,11 +85,7 @@ class CityProductionHeader extends StatelessWidget {
                 ),
                 SizedBox(height: compact ? 1 : 2),
                 Text(
-                  l10n.cityProductionHeaderSubtitle(
-                    title,
-                    productionPerTurnLabel,
-                    playerGold,
-                  ),
+                  _subtitle(l10n),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GameUiTheme.bodySmall.copyWith(
@@ -119,9 +115,20 @@ class CityProductionHeader extends StatelessWidget {
       ? const EdgeInsets.fromLTRB(12, 10, 8, 9)
       : const EdgeInsets.fromLTRB(16, 14, 10, 12);
 
+  String _subtitle(AppLocalizations l10n) {
+    final economyLabel = l10n.cityProductionHeaderSubtitle(
+      title,
+      productionPerTurnLabel,
+      playerGold,
+    );
+    final resources = strategicResourceSummaryLabel;
+    if (!compact || resources == null) return economyLabel;
+    return '$economyLabel · $resources';
+  }
+
   List<Widget> _strategicResourceSummary() {
     final label = strategicResourceSummaryLabel;
-    if (label == null) return const [];
+    if (compact || label == null) return const [];
     return [
       SizedBox(height: compact ? 2 : 3),
       Text(

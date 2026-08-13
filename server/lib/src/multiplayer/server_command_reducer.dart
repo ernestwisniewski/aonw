@@ -58,6 +58,9 @@ class ServerCommandReducer {
 
     final command = _decodePlayerDomainCommand(wireCommand.command)!;
     final loadedMap = await _mapCache.load(snapshot.metadata.world.name);
+    final mapView = snapshot.domain.initialResourceDistribution.applyTo(
+      loadedMap.mapView,
+    );
     final application = _dispatcher.apply(
       snapshot: snapshot,
       match: match,
@@ -65,7 +68,7 @@ class ServerCommandReducer {
       commandTick: wireCommand.tick,
       actorPlayerId: actorPlayerId,
       now: now.toUtc(),
-      mapView: loadedMap.mapView,
+      mapView: mapView,
       ruleset: _ruleset(snapshot),
     );
     if (!application.accepted) {
@@ -76,7 +79,7 @@ class ServerCommandReducer {
       application: application.withSnapshot(
         _withSavedAt(application.snapshot, now.toUtc()),
       ),
-      mapView: loadedMap.mapView,
+      mapView: mapView,
     );
   }
 
@@ -96,11 +99,14 @@ class ServerCommandReducer {
 
     final nowUtc = now.toUtc();
     final loadedMap = await _mapCache.load(snapshot.metadata.world.name);
+    final mapView = snapshot.domain.initialResourceDistribution.applyTo(
+      loadedMap.mapView,
+    );
     final application = _dispatcher.finalizeTimedOutTurn(
       snapshot: snapshot,
       actorPlayerId: actorPlayerId,
       now: nowUtc,
-      mapView: loadedMap.mapView,
+      mapView: mapView,
       ruleset: _ruleset(snapshot),
     );
     return _outcomes.accepted(
@@ -108,7 +114,7 @@ class ServerCommandReducer {
       application: application.withSnapshot(
         _withSavedAt(application.snapshot, nowUtc),
       ),
-      mapView: loadedMap.mapView,
+      mapView: mapView,
     );
   }
 

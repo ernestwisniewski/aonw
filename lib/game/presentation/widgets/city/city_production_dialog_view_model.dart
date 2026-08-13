@@ -63,8 +63,6 @@ class CityProductionDialogViewModel {
     Iterable<ResourceTradeAgreement> resourceTradeAgreements = const [],
     StrategicResourceAccounts strategicResources =
         StrategicResourceAccounts.empty,
-    StrategicResourceEconomyProfile strategicResourceEconomy =
-        StrategicResourceEconomyProfile.legacyPresenceV0,
     required int productionPerTurn,
     int? currentTurn,
     PaceBalance paceBalance = PaceBalance.unlimited,
@@ -175,10 +173,7 @@ class CityProductionDialogViewModel {
       cities: playerCities,
       units: units,
     );
-    final stockpilesEnabled =
-        strategicResourceEconomy == StrategicResourceEconomyProfile.stockpileV1;
     final strategicResourceSummaryLabel = _strategicFreeSummary(
-      enabled: stockpilesEnabled,
       playerId: city.ownerPlayerId,
       accounts: strategicResources,
       l10n: l10n,
@@ -196,8 +191,6 @@ class CityProductionDialogViewModel {
       mapData: mapData,
       resourceTradeAgreements: resourceTradeAgreements,
       strategicResources: strategicResources,
-      strategicResourceEconomy: strategicResourceEconomy,
-      stockpilesEnabled: stockpilesEnabled,
       effectiveProduction: effectiveProduction,
       technologyEffects: technologyEffects,
       unitSupply: unitSupply,

@@ -37,8 +37,9 @@ void main() {
         mapImagePathProvider(
           selection,
         ).overrideWithValue(const AsyncData(null)),
-        savedCameraProvider('save_1').overrideWithValue(const AsyncData(null)),
-        gameSaveProvider('save_1').overrideWithValue(const AsyncData(null)),
+        gameSaveSnapshotProvider(
+          'save_1',
+        ).overrideWithValue(const AsyncData(null)),
         replayStoreProvider.overrideWithValue(const _MissingReplayStore()),
         eventLogProvider.overrideWithValue(const _EmptyEventLog()),
       ],
