@@ -251,3 +251,31 @@ fn domain_content_can_be_constructed_without_a_json_adapter() {
         .is_err()
     );
 }
+
+#[test]
+fn simulation_maps_allow_small_fixture_grids_but_authored_documents_do_not() {
+    let tiles = (0..3)
+        .flat_map(|row| {
+            (0..3).map(move |col| {
+                TileDefinition::try_new(
+                    HexCoord::new(col, row),
+                    vec![TerrainType::Plains],
+                    Vec::new(),
+                    0,
+                )
+                .expect("valid fixture tile")
+            })
+        })
+        .collect();
+    let map = MapDefinition::try_new(
+        "movement_fixture",
+        GridLayout::OddQFlatTop,
+        3,
+        3,
+        tiles,
+        Vec::new(),
+    )
+    .expect("logical simulation map");
+
+    assert!(MapDocument::try_new(map, 1.0).is_err());
+}

@@ -6,6 +6,7 @@
 
 #![forbid(unsafe_code)]
 
+use aonw_content::MapDefinition;
 use aonw_domain::{PlayerId, WorldState};
 
 /// Engine behavior version implemented by this workspace.
@@ -29,11 +30,10 @@ impl GameEngine {
 
     /// Inspects canonical state without allocation or mutation.
     #[must_use]
-    pub const fn summarize_state(state: &WorldState) -> StateSummary<'_> {
+    pub const fn summarize_state(state: &WorldState) -> StateSummary {
         StateSummary {
             revision: state.revision(),
             turn: state.turn(),
-            active_player_id: state.active_player_id(),
             unit_count: state.units().len(),
         }
     }
@@ -48,32 +48,60 @@ pub struct EngineVersion {
     pub behavior_version: u16,
 }
 
-/// Borrowed canonical state summary for health checks and early adapters.
+/// Canonical state summary for health checks and early adapters.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct StateSummary<'state> {
+pub struct StateSummary {
     /// Canonical revision.
     pub revision: u64,
     /// Current turn.
     pub turn: u32,
-    /// Active player without identifier cloning.
-    pub active_player_id: &'state PlayerId,
     /// Number of canonical units.
     pub unit_count: usize,
 }
 
+/// Immutable inputs that are authoritative for one command or query.
+#[derive(Clone, Copy, Debug)]
+pub struct EngineContext<'context> {
+    actor_player_id: &'context PlayerId,
+    map: &'context MapDefinition,
+}
+
+impl<'context> EngineContext<'context> {
+    /// Constructs an explicit context without ambient actor or map state.
+    #[must_use]
+    pub const fn new(actor_player_id: &'context PlayerId, map: &'context MapDefinition) -> Self {
+        Self {
+            actor_player_id,
+            map,
+        }
+    }
+
+    /// Returns the player issuing the command or query.
+    #[must_use]
+    pub const fn actor_player_id(self) -> &'context PlayerId {
+        self.actor_player_id
+    }
+
+    /// Returns the validated logical map used by the rules engine.
+    #[must_use]
+    pub const fn map(self) -> &'context MapDefinition {
+        self.map
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
     use aonw_domain::{HexCoord, PlayerId, Unit, UnitId, WorldState};
 
-    use super::{ENGINE_BEHAVIOR_VERSION, GameEngine};
+    use super::{ENGINE_BEHAVIOR_VERSION, EngineContext, GameEngine};
 
     #[test]
-    fn engine_summary_borrows_canonical_state() {
+    fn engine_summary_reports_canonical_state() {
         let player_id = PlayerId::new("player-1").expect("valid player id");
         let state = WorldState::try_new(
             12,
             4,
-            player_id.clone(),
             [Unit::new(
                 UnitId::new("unit-1").expect("valid unit id"),
                 player_id,
@@ -86,7 +114,6 @@ mod tests {
         let summary = GameEngine::summarize_state(&state);
         assert_eq!(summary.revision, 12);
         assert_eq!(summary.turn, 4);
-        assert_eq!(summary.active_player_id.as_str(), "player-1");
         assert_eq!(summary.unit_count, 1);
     }
 
@@ -96,5 +123,31 @@ mod tests {
 
         assert_eq!(version.crate_version, env!("CARGO_PKG_VERSION"));
         assert_eq!(version.behavior_version, ENGINE_BEHAVIOR_VERSION);
+    }
+
+    #[test]
+    fn engine_context_carries_actor_and_map_explicitly() {
+        let actor = PlayerId::new("player-1").expect("valid player id");
+        let tile = TileDefinition::try_new(
+            HexCoord::new(0, 0),
+            vec![TerrainType::Plains],
+            Vec::new(),
+            0,
+        )
+        .expect("valid tile");
+        let map = MapDefinition::try_new(
+            "fixture",
+            GridLayout::OddQFlatTop,
+            1,
+            1,
+            vec![tile],
+            Vec::new(),
+        )
+        .expect("valid logical map");
+
+        let context = EngineContext::new(&actor, &map);
+
+        assert_eq!(context.actor_player_id(), &actor);
+        assert_eq!(context.map().map_id(), "fixture");
     }
 }

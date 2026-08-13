@@ -1,10 +1,11 @@
 class_name AonwJsonMapRepository
-extends RefCounted
+extends AonwMapDocumentReader
 
 const MapDocument := preload("res://domain/map/map_document.gd")
+const MapSource := preload("res://application/map/map_source.gd")
 
-func load_map(source_path: String) -> Dictionary:
-	var absolute_path := resolve_path(source_path)
+func load_map(source: AonwMapSource) -> Dictionary:
+	var absolute_path := resolve_path(source.map_path)
 	var file := FileAccess.open(absolute_path, FileAccess.READ)
 	if file == null:
 		return _failure("cannot open %s" % absolute_path)
@@ -21,14 +22,19 @@ func load_map(source_path: String) -> Dictionary:
 	if not parser.data is Dictionary:
 		return _failure("map root must be an object")
 
-	var result := MapDocument.create(parser.data, true)
+	var result := (
+		MapDocument.create_legacy(parser.data)
+		if source.is_legacy()
+		else MapDocument.create_versioned(parser.data)
+	)
 	if not result["ok"]:
 		return result
 	return {
 		"ok": true,
 		"document": result["value"],
 		"source_path": absolute_path,
-		"source_directory": absolute_path.get_base_dir(),
+		"visual_directory": source.visual_directory,
+		"source": source,
 	}
 
 static func resolve_path(source_path: String) -> String:

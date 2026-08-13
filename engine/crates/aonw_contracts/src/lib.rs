@@ -8,7 +8,7 @@
 #![forbid(unsafe_code)]
 
 /// The only state contract version accepted by the initial mapping crate.
-pub const CURRENT_STATE_CONTRACT_VERSION: u16 = 1;
+pub const CURRENT_STATE_CONTRACT_VERSION: u16 = 2;
 
 /// Versioned canonical-state transfer object.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -19,8 +19,6 @@ pub struct WorldStateDto {
     pub revision: u64,
     /// Current game turn.
     pub turn: u32,
-    /// Opaque active-player identifier.
-    pub active_player_id: String,
     /// Canonical units. Input order is not semantically significant.
     pub units: Vec<UnitDto>,
 }

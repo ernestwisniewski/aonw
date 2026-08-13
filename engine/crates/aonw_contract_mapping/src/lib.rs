@@ -21,8 +21,6 @@ pub enum MappingError {
         /// Version accepted by this build.
         supported: u16,
     },
-    /// The active-player identifier is invalid.
-    InvalidActivePlayerId(IdentifierError),
     /// A unit identifier is invalid.
     InvalidUnitId {
         /// Unit array index carrying the invalid value.
@@ -48,9 +46,6 @@ impl fmt::Display for MappingError {
                 formatter,
                 "unsupported state contract version {found}; supported version is {supported}"
             ),
-            Self::InvalidActivePlayerId(source) => {
-                write!(formatter, "invalid active player id: {source}")
-            }
             Self::InvalidUnitId { index, source } => {
                 write!(formatter, "invalid unit id at index {index}: {source}")
             }
@@ -68,9 +63,9 @@ impl fmt::Display for MappingError {
 impl std::error::Error for MappingError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Self::InvalidActivePlayerId(source)
-            | Self::InvalidUnitId { source, .. }
-            | Self::InvalidUnitOwnerId { source, .. } => Some(source),
+            Self::InvalidUnitId { source, .. } | Self::InvalidUnitOwnerId { source, .. } => {
+                Some(source)
+            }
             Self::InvalidState(source) => Some(source),
             Self::UnsupportedStateContractVersion { .. } => None,
         }
@@ -91,8 +86,6 @@ pub fn decode_world_state(dto: WorldStateDto) -> Result<WorldState, MappingError
         });
     }
 
-    let active_player_id =
-        PlayerId::new(dto.active_player_id).map_err(MappingError::InvalidActivePlayerId)?;
     let units = dto
         .units
         .into_iter()
@@ -100,8 +93,7 @@ pub fn decode_world_state(dto: WorldStateDto) -> Result<WorldState, MappingError
         .map(|(index, unit)| decode_unit(index, unit))
         .collect::<Result<Vec<_>, _>>()?;
 
-    WorldState::try_new(dto.revision, dto.turn, active_player_id, units)
-        .map_err(MappingError::InvalidState)
+    WorldState::try_new(dto.revision, dto.turn, units).map_err(MappingError::InvalidState)
 }
 
 /// Encodes canonical state in deterministic unit-identifier order.
@@ -111,7 +103,6 @@ pub fn encode_world_state(state: &WorldState) -> WorldStateDto {
         schema_version: CURRENT_STATE_CONTRACT_VERSION,
         revision: state.revision(),
         turn: state.turn(),
-        active_player_id: state.active_player_id().as_str().to_owned(),
         units: state.units().iter().map(encode_unit).collect(),
     }
 }
@@ -150,7 +141,6 @@ mod tests {
             schema_version: CURRENT_STATE_CONTRACT_VERSION,
             revision: 41,
             turn: 8,
-            active_player_id: "player-1".to_owned(),
             units: vec![
                 UnitDto {
                     id: "unit-z".to_owned(),

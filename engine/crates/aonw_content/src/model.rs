@@ -3,9 +3,9 @@ use aonw_domain::HexCoord;
 use crate::catalog::{GridLayout, MapObjectiveType, ResourceType, TerrainType};
 use crate::validation::{MapValidationError, validate_content_id};
 
-const MIN_COLS: u16 = 5;
+const MIN_COLS: u16 = 1;
 const MAX_COLS: u16 = 40;
-const MIN_ROWS: u16 = 5;
+const MIN_ROWS: u16 = 1;
 const MAX_ROWS: u16 = 30;
 const MAX_HEIGHT: u8 = 5;
 const MAX_TILE_COUNT: usize = MAX_COLS as usize * MAX_ROWS as usize;

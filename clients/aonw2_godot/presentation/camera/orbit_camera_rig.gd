@@ -58,11 +58,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		forward.y = 0.0
 		global_position += forward.normalized() * event.relative.y * scale
 
-func frame_map(world_size: Vector2, zoom_hint: float = 1.0) -> void:
+func frame_map(world_size: Vector2, zoom_hint: float = 1.0, maximum_height: float = 0.0) -> void:
 	global_position = Vector3.ZERO
 	_minimum_distance = maxf(1.5, minf(world_size.x, world_size.y) * 0.25)
 	_maximum_distance = maxf(world_size.x, world_size.y) * 5.0
 	_distance = clampf(maxf(world_size.x, world_size.y) * 1.35 / zoom_hint, _minimum_distance, _maximum_distance)
+	_camera.far = maxf(300.0, _maximum_distance * 2.0 + maximum_height + 10.0)
 	_update_distance()
 
 func _zoom(amount: float) -> void:

@@ -12,5 +12,5 @@ first entry is primary terrain. Resource and objective order is normalized by
 input ordering.
 
 The existing maps under `assets/maps/` remain unchanged for Flutter AoNW1.
-`aonw_content::MapDefinition::from_legacy_json` is their explicit migration
+`aonw_content::MapDocument::from_legacy_json` is their explicit migration
 adapter. New shared maps must use the schema in `schemas/map-v1.schema.json`.

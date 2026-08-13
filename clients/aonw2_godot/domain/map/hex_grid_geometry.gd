@@ -24,6 +24,26 @@ func tile_center(coordinate: Vector2i) -> Vector2:
 	var lattice := Vector2i(3 * coordinate.x, 2 * coordinate.y + (coordinate.x & 1))
 	return lattice_to_world(lattice)
 
+func tile_at_point(point: Vector2) -> Vector2i:
+	var approximate_col := roundi(point.x / (1.5 * radius))
+	var approximate_row := roundi(
+		(point.y - float(approximate_col & 1) * SQRT_3 * radius * 0.5)
+		/ (SQRT_3 * radius)
+	)
+	var best := Vector2i(approximate_col, approximate_row)
+	var best_distance := point.distance_squared_to(tile_center(best))
+	for col_offset in range(-1, 2):
+		for row_offset in range(-1, 2):
+			var candidate := Vector2i(approximate_col + col_offset, approximate_row + row_offset)
+			var distance := point.distance_squared_to(tile_center(candidate))
+			if distance < best_distance:
+				best = candidate
+				best_distance = distance
+	return best
+
+func contains(coordinate: Vector2i) -> bool:
+	return coordinate.x >= 0 and coordinate.x < cols and coordinate.y >= 0 and coordinate.y < rows
+
 func corner_key(coordinate: Vector2i, corner: int) -> Vector2i:
 	var center := Vector2i(3 * coordinate.x, 2 * coordinate.y + (coordinate.x & 1))
 	return center + CORNER_OFFSETS[corner]
@@ -44,33 +64,3 @@ func bounds() -> Rect2:
 	var maximum_y := float(rows - 1) * SQRT_3 * radius + odd_column_shift + SQRT_3 * radius * 0.5
 	var maximum := Vector2(maximum_x, maximum_y)
 	return Rect2(minimum, maximum - minimum)
-
-func normalized_uv(point: Vector2) -> Vector2:
-	var map_bounds := bounds()
-	return (point - map_bounds.position) / map_bounds.size
-
-func target_atlas_size(tile_size: Vector2i = Vector2i(160, 120)) -> Vector2i:
-	var map_bounds := bounds()
-	return Vector2i(
-		roundi(map_bounds.size.x * float(tile_size.x) / (2.0 * radius)),
-		roundi(map_bounds.size.y * float(tile_size.y) / (SQRT_3 * radius)),
-	)
-
-func tile_slice_rect(
-	coordinate: Vector2i,
-	atlas_size: Vector2i,
-) -> Rect2i:
-	var map_bounds := bounds()
-	var center := tile_center(coordinate) - map_bounds.position
-	var scale := Vector2(atlas_size) / map_bounds.size
-	var top_left := Vector2(center.x - radius, center.y - SQRT_3 * radius * 0.5) * scale
-	var bottom_right := Vector2(center.x + radius, center.y + SQRT_3 * radius * 0.5) * scale
-	var clipped_top_left := top_left.clamp(Vector2.ZERO, Vector2(atlas_size))
-	var clipped_bottom_right := bottom_right.clamp(Vector2.ZERO, Vector2(atlas_size))
-	return Rect2i(
-		Vector2i(roundi(clipped_top_left.x), roundi(clipped_top_left.y)),
-		Vector2i(
-			roundi(clipped_bottom_right.x - clipped_top_left.x),
-			roundi(clipped_bottom_right.y - clipped_top_left.y),
-		),
-	)

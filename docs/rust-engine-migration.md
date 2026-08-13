@@ -155,6 +155,7 @@ aonw/
 │   │   └── README.md               # target boundary; active app stays at root
 │   └── aonw2_godot/
 │       ├── application/
+│       ├── addons/aonw_map_workbench/
 │       ├── domain/
 │       ├── infrastructure/
 │       ├── presentation/
@@ -192,6 +193,21 @@ hash. The public compact canonical bytes are exactly the bytes hashed by Rust;
 resource ordering uses a stable wire rank rather than enum declaration order.
 Versioned documents are strict and fail closed, while defaults are confined to
 the explicitly selected legacy adapter.
+
+The authored document schema retains a 5×5 minimum. The logical
+`MapDefinition` accepts smaller positive grids so compact engine fixtures do
+not need presentation-only padding.
+
+The Godot Map Workbench is a client-side authoring adapter. It discovers legacy
+maps from `assets/maps/` and strict maps from `content/maps/`, builds an
+elevated hex mesh, stitches the original tile artwork into an independently
+transparent reference layer, and saves a scene under
+`clients/aonw2_godot/scenes/maps/` with its resources under
+`clients/aonw2_godot/assets/generated_maps/<map_id>/`. It uses only built-in
+Godot mesh and texture resources; Terrain3D and Tree3D are not dependencies.
+Generated scenes are presentation artifacts. Logical terrain, resources,
+elevation, objectives, and future movement rules remain owned by shared content
+and Rust.
 
 After Dart Core retirement, the repository may be reorganized mechanically
 into `clients/aonw_flutter/`, `clients/aonw2_godot/`,

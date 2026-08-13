@@ -77,7 +77,6 @@ impl Unit {
 pub struct WorldState {
     revision: u64,
     turn: u32,
-    active_player_id: PlayerId,
     units: Box<[Unit]>,
 }
 
@@ -91,7 +90,6 @@ impl WorldState {
     pub fn try_new(
         revision: u64,
         turn: u32,
-        active_player_id: PlayerId,
         units: impl IntoIterator<Item = Unit>,
     ) -> Result<Self, StateBuildError> {
         let mut units = units.into_iter().collect::<Vec<_>>();
@@ -102,7 +100,6 @@ impl WorldState {
         Ok(Self {
             revision,
             turn,
-            active_player_id,
             units: units.into_boxed_slice(),
         })
     }
@@ -117,12 +114,6 @@ impl WorldState {
     #[must_use]
     pub const fn turn(&self) -> u32 {
         self.turn
-    }
-
-    /// Returns the active player.
-    #[must_use]
-    pub const fn active_player_id(&self) -> &PlayerId {
-        &self.active_player_id
     }
 
     /// Returns a unit by its opaque identifier.
@@ -158,13 +149,8 @@ mod tests {
 
     #[test]
     fn world_state_iteration_is_identifier_ordered() {
-        let state = WorldState::try_new(
-            7,
-            3,
-            PlayerId::new("player-1").expect("valid player id"),
-            [unit("unit-z"), unit("unit-a")],
-        )
-        .expect("valid state");
+        let state =
+            WorldState::try_new(7, 3, [unit("unit-z"), unit("unit-a")]).expect("valid state");
 
         let ids = state
             .units()
@@ -176,13 +162,8 @@ mod tests {
 
     #[test]
     fn world_state_looks_units_up_in_sorted_storage() {
-        let state = WorldState::try_new(
-            7,
-            3,
-            PlayerId::new("player-1").expect("valid player id"),
-            [unit("unit-z"), unit("unit-a"), unit("unit-m")],
-        )
-        .expect("valid state");
+        let state = WorldState::try_new(7, 3, [unit("unit-z"), unit("unit-a"), unit("unit-m")])
+            .expect("valid state");
         let requested = UnitId::new("unit-m").expect("valid unit id");
 
         assert_eq!(
@@ -194,12 +175,7 @@ mod tests {
     #[test]
     fn world_state_rejects_duplicate_units() {
         let duplicate_id = UnitId::new("unit-1").expect("valid unit id");
-        let result = WorldState::try_new(
-            0,
-            1,
-            PlayerId::new("player-1").expect("valid player id"),
-            [unit("unit-1"), unit("unit-1")],
-        );
+        let result = WorldState::try_new(0, 1, [unit("unit-1"), unit("unit-1")]);
 
         assert_eq!(result, Err(StateBuildError::DuplicateUnitId(duplicate_id)));
     }

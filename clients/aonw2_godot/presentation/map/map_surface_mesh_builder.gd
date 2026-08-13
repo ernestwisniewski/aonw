@@ -2,14 +2,21 @@ class_name AonwMapSurfaceMeshBuilder
 extends RefCounted
 
 const HexGridGeometry := preload("res://domain/map/hex_grid_geometry.gd")
+const MapTextureProjection := preload("res://application/map/map_texture_projection.gd")
+const REFERENCE_OFFSET := 0.012
+const GRID_OFFSET := 0.025
 
 func build(
 	document: AonwMapDocument,
-	map_texture: Texture2D,
+	terrain_texture: Texture2D,
+	reference_texture: Texture2D,
 	radius: float,
 	height_step: float,
+	reference_opacity: float = 1.0,
+	grid_opacity: float = 0.72,
 ) -> Dictionary:
 	var geometry := HexGridGeometry.new(document.cols(), document.rows(), radius)
+	var projection := MapTextureProjection.new(geometry)
 	var corner_heights := _corner_heights(document, geometry, height_step)
 	var vertices := PackedVector3Array()
 	var uvs := PackedVector2Array()
@@ -29,7 +36,7 @@ func build(
 			corner_heights[key],
 			world_position.y - map_center.y,
 		))
-		uvs.append(geometry.normalized_uv(world_position))
+		uvs.append(projection.normalized_uv(world_position))
 
 	for tile in document.tiles():
 		var coordinate := Vector2i(tile["col"], tile["row"])
@@ -40,18 +47,30 @@ func build(
 			float(tile["height"]) * height_step,
 			center.y - map_center.y,
 		))
-		uvs.append(geometry.normalized_uv(center))
+		uvs.append(projection.normalized_uv(center))
 		for corner in 6:
 			indices.append(center_index)
 			indices.append(corner_indices[geometry.corner_key(coordinate, (corner + 1) % 6)])
 			indices.append(corner_indices[geometry.corner_key(coordinate, corner)])
 
-	var terrain_mesh := _terrain_mesh(vertices, uvs, indices, map_texture)
-	var grid_mesh := _grid_mesh(document, geometry, corner_indices, vertices)
 	return {
-		"terrain_mesh": terrain_mesh,
-		"grid_mesh": grid_mesh,
+		"terrain_mesh": _textured_mesh(vertices, uvs, indices, terrain_texture, 1.0),
+		"reference_mesh": _textured_mesh(
+			_offset_vertices(vertices, REFERENCE_OFFSET),
+			uvs,
+			indices,
+			reference_texture,
+			reference_opacity,
+		),
+		"grid_mesh": _grid_mesh(
+			document,
+			geometry,
+			corner_indices,
+			vertices,
+			grid_opacity,
+		),
 		"world_size": geometry.bounds().size,
+		"maximum_height": float(AonwMapDocument.MAX_HEIGHT) * height_step,
 	}
 
 func _corner_heights(
@@ -71,11 +90,12 @@ func _corner_heights(
 		totals[key] = total.x / total.y
 	return totals
 
-func _terrain_mesh(
+func _textured_mesh(
 	vertices: PackedVector3Array,
 	uvs: PackedVector2Array,
 	indices: PackedInt32Array,
-	map_texture: Texture2D,
+	texture: Texture2D,
+	opacity: float,
 ) -> ArrayMesh:
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
@@ -88,7 +108,9 @@ func _terrain_mesh(
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	material.albedo_texture = map_texture
+	material.albedo_texture = texture
+	material.albedo_color = Color(1.0, 1.0, 1.0, opacity)
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 	mesh.surface_set_material(0, material)
 	return mesh
@@ -98,6 +120,7 @@ func _grid_mesh(
 	geometry: AonwHexGridGeometry,
 	corner_indices: Dictionary,
 	terrain_vertices: PackedVector3Array,
+	opacity: float,
 ) -> ArrayMesh:
 	var vertices := PackedVector3Array()
 	var edges := {}
@@ -112,8 +135,8 @@ func _grid_mesh(
 			edges[edge_key] = true
 			var first_vertex: Vector3 = terrain_vertices[corner_indices[first]]
 			var second_vertex: Vector3 = terrain_vertices[corner_indices[second]]
-			first_vertex.y += 0.025
-			second_vertex.y += 0.025
+			first_vertex.y += GRID_OFFSET
+			second_vertex.y += GRID_OFFSET
 			vertices.append(first_vertex)
 			vertices.append(second_vertex)
 
@@ -124,11 +147,20 @@ func _grid_mesh(
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_LINES, arrays)
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_color = Color(0.06, 0.08, 0.1, 0.72)
+	material.albedo_color = Color(0.06, 0.08, 0.1, opacity)
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mesh.surface_set_material(0, material)
 	return mesh
-func _edge_key(first: Vector2i, second: Vector2i) -> String:
+
+func _offset_vertices(vertices: PackedVector3Array, offset: float) -> PackedVector3Array:
+	var result := vertices.duplicate()
+	for index in result.size():
+		var vertex := result[index]
+		vertex.y += offset
+		result[index] = vertex
+	return result
+
+func _edge_key(first: Vector2i, second: Vector2i) -> Vector4i:
 	if first.y < second.y or (first.y == second.y and first.x < second.x):
-		return "%d:%d|%d:%d" % [first.x, first.y, second.x, second.y]
-	return "%d:%d|%d:%d" % [second.x, second.y, first.x, first.y]
+		return Vector4i(first.x, first.y, second.x, second.y)
+	return Vector4i(second.x, second.y, first.x, first.y)

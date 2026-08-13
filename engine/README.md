@@ -19,7 +19,7 @@ platform, shadow, canary, and rollback gates in the
 | `aonw_content` | Strict versioned map documents, an explicit legacy adapter, domain validation, normalization, lookup, and deterministic logical-content hashing. |
 | `aonw_contracts` | Versioned, domain-independent boundary DTOs. It deliberately does not choose a wire codec yet. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
-| `aonw_engine` | Pure borrowed state inspection and engine/version surface; authoritative command transitions follow reviewed parity fixtures. |
+| `aonw_engine` | Pure borrowed state inspection plus an explicit actor/map `EngineContext`; authoritative command transitions follow reviewed parity fixtures. |
 | `aonw_testkit` | Bounded fixture/corpus loader, duplicate-key rejection, structural JSON diff, and engine-neutral runner for the shared reducer-parity corpus. |
 
 The split enforces an inward dependency direction: contracts and domain do not
@@ -55,6 +55,14 @@ wire rank, so enum source order cannot change canonical bytes.
 
 Versioned documents fail closed on missing, unknown, duplicated, or invalid
 fields. Defaults exist only in the explicit legacy Flutter map adapter.
+Authored `MapDocument` values retain the schema's 5×5 minimum, while logical
+`MapDefinition` values accept smaller positive grids for deterministic engine
+fixtures such as the existing 3×3 movement oracle.
+
+The actor is command/query context, not canonical world state. `WorldStateDto`
+therefore carries revision, turn, and entities only; `EngineContext` supplies
+the actor and validated logical map explicitly at the rule boundary. This
+breaking correction is represented by state contract version 2.
 
 ## Deliberately deferred
 
