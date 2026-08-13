@@ -467,12 +467,28 @@ impl GameState {
         fog_of_war: FogOfWar,
         diplomacy: Diplomacy,
     ) -> Result<Self, GameStateBuildError> {
-        let mut units = self.units.to_vec();
+        self.clone()
+            .into_after_movement(revision, unit, fog_of_war, diplomacy)
+    }
+
+    /// Consumes the aggregate and reuses its entity storage for a movement update.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the updated slices violate aggregate invariants.
+    pub fn into_after_movement(
+        self,
+        revision: StateRevision,
+        unit: Unit,
+        fog_of_war: FogOfWar,
+        diplomacy: Diplomacy,
+    ) -> Result<Self, GameStateBuildError> {
         let index = self
             .unit_indices_by_id
             .binary_search_by(|index| self.units[*index].id().cmp(unit.id()))
             .map(|source_index| self.unit_indices_by_id[source_index])
             .map_err(|_| GameStateBuildError::UnitNotFound(unit.id().clone()))?;
+        let mut units = self.units.into_vec();
         units[index] = unit;
         Self::try_new_with_world(
             revision,
@@ -480,10 +496,10 @@ impl GameState {
             self.bounds,
             self.occupancy_policy,
             units,
-            self.cities.iter().cloned(),
+            self.cities.into_vec(),
             fog_of_war,
             diplomacy,
-            self.transport_network.clone(),
+            self.transport_network,
         )
     }
 }

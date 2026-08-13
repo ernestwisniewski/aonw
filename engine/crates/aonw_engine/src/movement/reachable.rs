@@ -1,15 +1,16 @@
 use std::cmp::Ordering;
-use std::collections::BinaryHeap;
 
 use aonw_content::MapDefinition;
 use aonw_domain::{
     HexCoord, HexTileIndex, MovementState, MovementUnit, MovementUnits, UnitId, UnitPosture,
 };
 
-use super::cost::movement_cost_for_edge;
+use super::compiled_map::neighbor_indices;
+use super::cost::movement_cost_for_index;
 use super::query::{validate_revision, validate_unit};
 use super::{
-    MovementCost, MovementSearchMetrics, TerrainMovementQueryError, maximum_movement_units,
+    MovementCost, MovementOccupancy, MovementSearchMetrics, MovementSearchWorkspace,
+    TerrainMovementQueryError, maximum_movement_units,
 };
 use crate::EngineContext;
 
@@ -102,7 +103,7 @@ impl ReachableMovement {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct FrontierNode {
+pub(crate) struct FrontierNode {
     cost: u32,
     index: usize,
     col: i32,
@@ -130,22 +131,35 @@ pub(crate) fn find_reachable_tiles(
     context: EngineContext<'_>,
     query: ReachableMovementQuery<'_>,
 ) -> Result<ReachableMovement, TerrainMovementQueryError> {
+    let mut workspace = MovementSearchWorkspace::default();
+    find_reachable_tiles_with_workspace(state, context, query, &mut workspace)
+}
+
+pub(crate) fn find_reachable_tiles_with_workspace(
+    state: &MovementState,
+    context: EngineContext<'_>,
+    query: ReachableMovementQuery<'_>,
+    workspace: &mut MovementSearchWorkspace,
+) -> Result<ReachableMovement, TerrainMovementQueryError> {
     validate_revision(state, query.expected_revision)?;
     let unit = validate_unit(state, context, query.unit_id)?;
     let available = movement_available_for_query(unit, context.ruleset());
-    let (costs, search_metrics) = reachable_costs(state, context.map(), unit, available, context);
+    let search_metrics = reachable_costs(state, context.map(), unit, available, context, workspace);
+    let costs = &workspace.reachable_costs[..context.map().bounds().tile_count()];
     let tiles = costs
-        .into_iter()
+        .iter()
         .enumerate()
         .filter_map(|(index, cost)| {
-            let cost = cost?;
+            if *cost == u32::MAX {
+                return None;
+            }
             if index == context.map().tile_index(unit.position())?.get() {
                 return None;
             }
             Some(ReachableMovementTile {
                 coordinate: context.map().coordinate_at(HexTileIndex::new(index))?,
-                cost,
-                exhausts_movement: cost > available,
+                cost: MovementUnits::new(*cost),
+                exhausts_movement: *cost > available.get(),
             })
         })
         .collect::<Vec<_>>()
@@ -176,29 +190,21 @@ fn reachable_costs(
     unit: &MovementUnit,
     available: MovementUnits,
     context: EngineContext<'_>,
-) -> (Vec<Option<MovementUnits>>, MovementSearchMetrics) {
+    workspace: &mut MovementSearchWorkspace,
+) -> MovementSearchMetrics {
+    let tile_count = map.bounds().tile_count();
+    workspace.prepare(tile_count);
     let Some(definition) = context.ruleset().unit(unit.kind()) else {
-        return (
-            vec![None; map.bounds().tile_count()],
-            MovementSearchMetrics::default(),
-        );
+        return MovementSearchMetrics::default();
     };
     let mut metrics = MovementSearchMetrics::default();
     let Some(start) = map.tile_index(unit.position()).map(HexTileIndex::get) else {
-        return (vec![None; map.bounds().tile_count()], metrics);
+        return metrics;
     };
-    let mut occupied = vec![false; map.bounds().tile_count()];
-    for candidate in state.units() {
-        if candidate.id() == unit.id() || !context.observes_occupancy(unit, candidate) {
-            continue;
-        }
-        if let Some(index) = map.tile_index(candidate.position()) {
-            occupied[index.get()] = true;
-        }
-    }
-    let mut costs = vec![None; map.bounds().tile_count()];
-    costs[start] = Some(MovementUnits::ZERO);
-    let mut frontier = BinaryHeap::new();
+    let occupied = MovementOccupancy::for_unit(state, map, unit, context);
+    let costs = &mut workspace.reachable_costs[..tile_count];
+    costs[start] = 0;
+    let frontier = &mut workspace.reachable_frontier;
     let start_coord = unit.position();
     frontier.push(FrontierNode {
         cost: 0,
@@ -215,7 +221,7 @@ fn reachable_costs(
 
     while let Some(current) = frontier.pop() {
         metrics.popped();
-        if costs[current.index].is_none_or(|known| known.get() != current.cost) {
+        if costs[current.index] != current.cost {
             continue;
         }
         if current.cost >= available.get() {
@@ -225,26 +231,27 @@ fn reachable_costs(
             continue;
         };
         metrics.expanded();
-        for next in map.neighbors(coordinate) {
+        let (neighbors, neighbor_count) =
+            neighbor_indices(map, context.compiled_movement_map(), current.index);
+        for &next_index in &neighbors[..neighbor_count] {
             metrics.examined_edge();
-            let Some(next_index) = map.tile_index(next).map(HexTileIndex::get) else {
+            let Some(next) = map.coordinate_at(HexTileIndex::new(next_index)) else {
                 continue;
             };
-            if occupied[next_index] {
+            if occupied.contains(next_index) {
                 continue;
             }
             if !context.can_plan_through_tile(unit, next) || context.city_block_is_known(unit, next)
             {
                 continue;
             }
-            let Some(tile) = map.tile_at(next) else {
-                continue;
-            };
-            let MovementCost::Passable(enter_cost) = movement_cost_for_edge(
+            let movement_domain = definition.capabilities().movement_domain.domain();
+            let MovementCost::Passable(enter_cost) = movement_cost_for_index(
                 coordinate,
                 next,
-                tile,
-                definition.capabilities().movement_domain.domain(),
+                next_index,
+                map,
+                movement_domain,
                 context,
             ) else {
                 continue;
@@ -255,11 +262,10 @@ fn reachable_costs(
             let Some(next_cost) = current.cost.checked_add(enter_cost.get()) else {
                 continue;
             };
-            if costs[next_index].is_some_and(|known| known.get() <= next_cost) {
+            if costs[next_index] <= next_cost {
                 continue;
             }
-            let movement_cost = MovementUnits::new(next_cost);
-            costs[next_index] = Some(movement_cost);
+            costs[next_index] = next_cost;
             frontier.push(FrontierNode {
                 cost: next_cost,
                 index: next_index,
@@ -269,5 +275,5 @@ fn reachable_costs(
             metrics.pushed();
         }
     }
-    (costs, metrics)
+    metrics
 }

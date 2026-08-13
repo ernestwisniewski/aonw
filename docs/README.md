@@ -83,6 +83,9 @@ Rust implementation starts directly under `engine/`. Its current vertical
 slice contains validated map/ruleset/scenario content, canonical state,
 fog-safe route/reachable queries, `MoveUnit`, fixture parity, a transactional
 local runtime, and a Godot GDExtension consuming player snapshots and patches.
+The runtime also owns compiled movement topology, tile-indexed occupancy and
+visibility, reusable search storage, revision-scoped query caching, and an
+owned-state apply path measured by the Rust benchmark target.
 It is not connected to Flutter, Serverpod, or production saves.
 Flutter remains at the repository root during migration; AoNW2 already lives
 under `clients/aonw2_godot/`.

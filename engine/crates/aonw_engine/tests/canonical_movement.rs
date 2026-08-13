@@ -150,6 +150,31 @@ fn canonical_rejection_preserves_revision_and_digest() {
 }
 
 #[test]
+fn owned_apply_matches_borrowed_apply_and_exposes_owned_parts() {
+    let map = map();
+    let actor = PlayerId::new("player-1").expect("actor");
+    let state = world(
+        vec![unit("unit-1", "player-1", HexCoord::new(0, 0))],
+        Vec::new(),
+        FogOfWar::default(),
+        TransportNetwork::default(),
+    );
+    let unit_id = UnitId::new("unit-1").expect("unit id");
+    let command =
+        || DomainCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(1, 0)));
+    let context = EngineContext::canonical(&actor, &map, RulesetDefinition::standard());
+    let borrowed = GameEngine::apply(&state, context, command()).expect("borrowed apply");
+    let owned = GameEngine::apply_owned(state, context, command())
+        .expect("owned apply")
+        .into_parts();
+
+    assert_eq!(owned.state, *borrowed.state());
+    assert_eq!(owned.digest, borrowed.digest());
+    assert_eq!(&*owned.events, borrowed.events());
+    assert_eq!(owned.evidence.as_ref(), borrowed.evidence());
+}
+
+#[test]
 fn canonical_query_uses_known_operational_roads() {
     let map = map();
     let actor = PlayerId::new("player-1").expect("actor");

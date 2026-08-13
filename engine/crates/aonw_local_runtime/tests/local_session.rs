@@ -67,7 +67,7 @@ fn local_session_supports_snapshot_queries_and_dispatch() {
     assert_eq!(snapshot.units()[0].id().as_str(), "unit-1");
 
     let reachable = runtime
-        .query(QueryRequestV1::Reachable(ReachableRequestV1 {
+        .query(&QueryRequestV1::Reachable(ReachableRequestV1 {
             expected_revision: 0,
             unit_id: UnitId::new("unit-1").expect("unit id"),
         }))
@@ -78,7 +78,7 @@ fn local_session_supports_snapshot_queries_and_dispatch() {
     assert!(!reachable.tiles.is_empty());
 
     let route = runtime
-        .query(QueryRequestV1::RoutePlan(RoutePlanRequestV1 {
+        .query(&QueryRequestV1::RoutePlan(RoutePlanRequestV1 {
             expected_revision: 0,
             unit_id: UnitId::new("unit-1").expect("unit id"),
             target: HexCoord::new(1, 0),
@@ -132,4 +132,40 @@ fn failed_reopen_preserves_session_and_close_is_idempotent() {
     runtime.close();
     runtime.close();
     assert_eq!(runtime.snapshot(), Err(RuntimeError::SessionNotOpen));
+}
+
+#[test]
+fn repeated_and_batch_queries_use_revision_scoped_cache() {
+    let mut runtime = LocalRuntime::default();
+    runtime.open(request()).expect("open");
+    let reachable = QueryRequestV1::Reachable(ReachableRequestV1 {
+        expected_revision: 0,
+        unit_id: UnitId::new("unit-1").expect("unit id"),
+    });
+    let route = QueryRequestV1::RoutePlan(RoutePlanRequestV1 {
+        expected_revision: 0,
+        unit_id: UnitId::new("unit-1").expect("unit id"),
+        target: HexCoord::new(1, 0),
+    });
+
+    runtime.query(&reachable).expect("cold reachable");
+    runtime.query(&reachable).expect("cached reachable");
+    let stale = QueryRequestV1::Reachable(ReachableRequestV1 {
+        expected_revision: 99,
+        unit_id: UnitId::new("unit-1").expect("unit id"),
+    });
+    assert!(runtime.query(&stale).is_err());
+    let results = runtime.query_batch(&[route.clone(), route]);
+    assert!(results.iter().all(Result::is_ok));
+    assert_eq!(runtime.query_cache_stats().hits, 2);
+    assert_eq!(runtime.query_cache_stats().misses, 3);
+
+    runtime
+        .dispatch(&MoveUnitV1 {
+            expected_revision: 0,
+            unit_id: UnitId::new("unit-1").expect("unit id"),
+            target: HexCoord::new(1, 0),
+        })
+        .expect("move");
+    assert!(runtime.query_cache_stats().hits >= 2);
 }

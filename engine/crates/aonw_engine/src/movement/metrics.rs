@@ -58,12 +58,4 @@ impl MovementSearchMetrics {
     pub(super) fn retained_record(&mut self) {
         self.route_records = self.route_records.saturating_add(1);
     }
-
-    pub(super) fn merge(&mut self, other: Self) {
-        self.frontier_pops = self.frontier_pops.saturating_add(other.frontier_pops);
-        self.expanded_tiles = self.expanded_tiles.saturating_add(other.expanded_tiles);
-        self.examined_edges = self.examined_edges.saturating_add(other.examined_edges);
-        self.heap_pushes = self.heap_pushes.saturating_add(other.heap_pushes);
-        self.route_records = self.route_records.saturating_add(other.route_records);
-    }
 }

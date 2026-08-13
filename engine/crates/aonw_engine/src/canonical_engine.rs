@@ -75,6 +75,25 @@ pub struct DomainTransition {
     ruleset_hash: ContentHash,
 }
 
+/// Owned components of one authoritative transition.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DomainTransitionParts {
+    /// Unchanged or next canonical state.
+    pub state: GameState,
+    /// Stable rejection code, absent when accepted.
+    pub rejection: Option<DomainRejection>,
+    /// Ordered authoritative events.
+    pub events: Box<[DomainEvent]>,
+    /// Exact presentation evidence.
+    pub evidence: Option<ExecutionEvidence>,
+    /// Canonical identity of `state`.
+    pub digest: StateDigest,
+    /// Exact logical map identity.
+    pub map_hash: ContentHash,
+    /// Exact immutable ruleset identity.
+    pub ruleset_hash: ContentHash,
+}
+
 impl DomainTransition {
     /// Returns whether the command was accepted.
     #[must_use]
@@ -121,6 +140,20 @@ impl DomainTransition {
     pub const fn ruleset_hash(&self) -> ContentHash {
         self.ruleset_hash
     }
+
+    /// Consumes the transition without cloning its canonical state.
+    #[must_use]
+    pub fn into_parts(self) -> DomainTransitionParts {
+        DomainTransitionParts {
+            state: self.state,
+            rejection: self.rejection,
+            events: self.events,
+            evidence: self.evidence,
+            digest: self.digest,
+            map_hash: self.map_hash,
+            ruleset_hash: self.ruleset_hash,
+        }
+    }
 }
 
 /// Failure indicating corrupt internal state rather than a rejected command.
@@ -160,6 +193,21 @@ impl GameEngine {
         context: EngineContext<'_>,
         query: GameQuery<'_>,
     ) -> Result<QueryResult, CanonicalQueryError> {
+        let mut workspace = crate::MovementSearchWorkspace::default();
+        Self::query_with_workspace(state, context, query, &mut workspace)
+    }
+
+    /// Executes a query while reusing caller-owned search storage.
+    ///
+    /// # Errors
+    ///
+    /// Returns a deterministic query rejection or an invalid-state error.
+    pub fn query_with_workspace(
+        state: &GameState,
+        context: EngineContext<'_>,
+        query: GameQuery<'_>,
+        workspace: &mut crate::MovementSearchWorkspace,
+    ) -> Result<QueryResult, CanonicalQueryError> {
         let projection = state
             .movement_projection()
             .map_err(CanonicalQueryError::Projection)?;
@@ -168,9 +216,11 @@ impl GameEngine {
             GameQuery::PlanRoute(query) => Self::plan_terrain_route(&projection, context, query)
                 .map(QueryResult::Route)
                 .map_err(CanonicalQueryError::Rejected),
-            GameQuery::Reachable(query) => Self::reachable_movement(&projection, context, query)
-                .map(QueryResult::Reachable)
-                .map_err(CanonicalQueryError::Rejected),
+            GameQuery::Reachable(query) => {
+                Self::reachable_movement_with_workspace(&projection, context, query, workspace)
+                    .map(QueryResult::Reachable)
+                    .map_err(CanonicalQueryError::Rejected)
+            }
         }
     }
 
@@ -187,6 +237,20 @@ impl GameEngine {
         context: EngineContext<'_>,
         command: DomainCommand<'_>,
     ) -> Result<DomainTransition, CanonicalEngineError> {
+        Self::apply_owned(state.clone(), context, command)
+    }
+
+    /// Applies a command while reusing owned canonical-state storage.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error only when canonical state or an engine-produced update
+    /// violates internal invariants.
+    pub fn apply_owned(
+        state: GameState,
+        context: EngineContext<'_>,
+        command: DomainCommand<'_>,
+    ) -> Result<DomainTransition, CanonicalEngineError> {
         let map_hash = context
             .map()
             .content_hash()
@@ -198,12 +262,14 @@ impl GameEngine {
         let projection = state
             .movement_projection()
             .map_err(CanonicalEngineError::Projection)?;
-        let context = context.with_world(state);
-        match command {
-            DomainCommand::MoveUnit(command) => {
-                apply_move(state, &projection, context, command, map_hash, ruleset_hash)
-            }
-        }
+        let map = context.map();
+        let (unit_id, movement) = match command {
+            DomainCommand::MoveUnit(command) => (
+                command.unit_id().clone(),
+                GameEngine::apply_move_unit(&projection, context.with_world(&state), command),
+            ),
+        };
+        apply_move(state, &unit_id, map, movement, map_hash, ruleset_hash)
     }
 
     /// Computes canonical state identity.
@@ -214,15 +280,14 @@ impl GameEngine {
 }
 
 fn apply_move(
-    state: &GameState,
-    projection: &aonw_domain::MovementState,
-    context: EngineContext<'_>,
-    command: MoveUnitCommand<'_>,
+    state: GameState,
+    unit_id: &aonw_domain::UnitId,
+    map: &aonw_content::MapDefinition,
+    movement: Result<crate::MovementTransition, crate::MoveUnitError>,
     map_hash: ContentHash,
     ruleset_hash: ContentHash,
 ) -> Result<DomainTransition, CanonicalEngineError> {
-    let unit_id = command.unit_id().clone();
-    let movement = match GameEngine::apply_move_unit(projection, context, command) {
+    let movement = match movement {
         Ok(value) => value,
         Err(rejection) => {
             return Ok(rejected_transition(
@@ -234,11 +299,11 @@ fn apply_move(
         }
     };
     let canonical_unit = state
-        .unit(&unit_id)
+        .unit(unit_id)
         .expect("projection unit originated in canonical state");
     let projected_unit = movement
         .state()
-        .unit(&unit_id)
+        .unit(unit_id)
         .expect("movement transition preserves unit identity");
     let updated_unit = canonical_unit
         .after_movement(
@@ -252,15 +317,26 @@ fn apply_move(
     let mut fog = state.fog_of_war().clone();
     let mut diplomacy = state.diplomacy().clone();
     if movement.event().is_some() {
-        let mut units = state.units().to_vec();
-        let index = units
+        let updated_index = state
+            .units()
             .iter()
-            .position(|unit| unit.id() == &unit_id)
+            .position(|unit| unit.id() == unit_id)
             .expect("canonical unit exists");
-        units[index] = updated_unit.clone();
+        let units = state
+            .units()
+            .iter()
+            .enumerate()
+            .map(|(index, unit)| {
+                if index == updated_index {
+                    &updated_unit
+                } else {
+                    unit
+                }
+            })
+            .collect::<Vec<_>>();
         fog = recompute_after_move(
             &fog,
-            context.map(),
+            map,
             updated_unit.owner_player_id(),
             &units,
             state.cities(),
@@ -268,7 +344,7 @@ fn apply_move(
         diplomacy = merge_discovered_contacts(&diplomacy, &fog, &units, state.cities());
     }
     let next_state = state
-        .after_movement(next_revision, updated_unit, fog, diplomacy)
+        .into_after_movement(next_revision, updated_unit, fog, diplomacy)
         .map_err(CanonicalEngineError::State)?;
     let events = movement
         .event()
@@ -324,19 +400,19 @@ impl core::fmt::Display for CanonicalQueryError {
 impl std::error::Error for CanonicalQueryError {}
 
 fn rejected_transition(
-    state: &GameState,
+    state: GameState,
     rejection_code: &'static str,
     map_hash: ContentHash,
     ruleset_hash: ContentHash,
 ) -> DomainTransition {
     DomainTransition {
-        state: state.clone(),
+        digest: crate::state_digest::digest_state(&state),
+        state,
         rejection: Some(DomainRejection {
             code: rejection_code,
         }),
         events: Box::new([]),
         evidence: None,
-        digest: crate::state_digest::digest_state(state),
         map_hash,
         ruleset_hash,
     }

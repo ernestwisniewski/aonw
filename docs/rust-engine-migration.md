@@ -7,8 +7,8 @@
   scenario content, complete unit entities, movement-authoritative `GameState`,
   strict state contracts, canonical query/apply transitions, fog, diplomacy,
   cities, roads, stable state digests, and all 38 current movement v2 fixtures.
-  The local runtime and Godot session cutover are implemented; the next stage
-  is measured state/query optimization without changing authoritative behavior
+  The local runtime, Godot session cutover, and measured movement optimizations
+  are implemented; the next stage is canonical save and replay
 - Governing decision: [ADR 0008](adr/0008-rust-engine-ownership-and-strangler-migration.md)
 
 ## Purpose
@@ -197,6 +197,15 @@ explicitly not a save format. `aonw_local_runtime` now owns transactional
 open/close, recipient snapshots, route/reachable queries, movement dispatch,
 stable identity stamps, and player-view patches. Save/replay, Flutter FFI, and
 production runtime integration remain future work.
+
+The optimized local path compiles map topology and terrain costs once, uses
+tile-indexed occupancy and visibility bitsets, reuses reachable-search storage,
+performs one multi-target search for occupied destinations, and caches queries
+against revision plus state/visibility and content hashes. Owned apply reuses
+canonical entity storage and `DomainTransition::into_parts` removes the second
+adapter clone. Raw/prepared and fresh/reused parity tests preserve the reviewed
+behavior. Benchmarks remain diagnostic and include a strict 1200-tile,
+512-unit native session boundary.
 `aonw_native_bridge` and top-level contract publication remain planned.
 Additional crates shown in the target layout below are created with their first
 behavior and tests rather than as empty packages. `aonw_godot` is a narrow

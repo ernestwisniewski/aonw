@@ -1,14 +1,12 @@
 use aonw_content::{ContentHash, MapDefinition, RulesetDefinition};
 use aonw_domain::GameState;
+use aonw_engine::CompiledMovementMap;
 
 use crate::OpenSessionError;
 
 #[derive(Clone, Debug)]
 pub(crate) struct PreparedWorld {
-    map: MapDefinition,
-    ruleset: RulesetDefinition,
-    map_hash: ContentHash,
-    ruleset_hash: ContentHash,
+    movement_map: CompiledMovementMap,
 }
 
 impl PreparedWorld {
@@ -23,33 +21,28 @@ impl PreparedWorld {
         if ruleset.occupancy_policy() != state.occupancy_policy() {
             return Err(OpenSessionError::OccupancyPolicyMismatch);
         }
-        let map_hash = map
-            .content_hash()
+        let movement_map = CompiledMovementMap::compile_owned(map, ruleset)
             .map_err(|error| OpenSessionError::ContentHash(error.to_string().into()))?;
-        let ruleset_hash = ruleset
-            .content_hash()
-            .map_err(|error| OpenSessionError::ContentHash(error.to_string().into()))?;
-        Ok(Self {
-            map,
-            ruleset,
-            map_hash,
-            ruleset_hash,
-        })
+        Ok(Self { movement_map })
     }
 
     pub(crate) const fn map(&self) -> &MapDefinition {
-        &self.map
+        self.movement_map.map()
     }
 
     pub(crate) const fn ruleset(&self) -> &RulesetDefinition {
-        &self.ruleset
+        self.movement_map.ruleset()
     }
 
     pub(crate) const fn map_hash(&self) -> ContentHash {
-        self.map_hash
+        self.movement_map.map_hash()
     }
 
     pub(crate) const fn ruleset_hash(&self) -> ContentHash {
-        self.ruleset_hash
+        self.movement_map.ruleset_hash()
+    }
+
+    pub(crate) const fn movement_map(&self) -> &CompiledMovementMap {
+        &self.movement_map
     }
 }

@@ -1,4 +1,4 @@
-use aonw_content::{TerrainType, TileDefinition};
+use aonw_content::{MapDefinition, TerrainType, TileDefinition};
 use aonw_domain::{HexCoord, MovementUnits, UnitMovementDomain};
 
 use super::terrain_profile::TerrainProfile;
@@ -60,6 +60,16 @@ pub(super) fn movement_cost_for_edge(
     context: EngineContext<'_>,
 ) -> MovementCost {
     let base = terrain_entry_cost(tile, domain);
+    movement_cost_for_base_edge(from, to, base, domain, context)
+}
+
+pub(super) fn movement_cost_for_base_edge(
+    from: HexCoord,
+    to: HexCoord,
+    base: MovementCost,
+    domain: UnitMovementDomain,
+    context: EngineContext<'_>,
+) -> MovementCost {
     if domain != UnitMovementDomain::Land || matches!(base, MovementCost::Blocked) {
         return base;
     }
@@ -72,6 +82,28 @@ pub(super) fn movement_cost_for_edge(
     } else {
         base
     }
+}
+
+pub(super) fn movement_cost_for_index(
+    from: HexCoord,
+    to: HexCoord,
+    to_index: usize,
+    map: &MapDefinition,
+    domain: UnitMovementDomain,
+    context: EngineContext<'_>,
+) -> MovementCost {
+    if let Some(compiled) = context.compiled_movement_map() {
+        return movement_cost_for_base_edge(
+            from,
+            to,
+            compiled.entry_cost(to_index, domain),
+            domain,
+            context,
+        );
+    }
+    map.tile_at(to).map_or(MovementCost::Blocked, |tile| {
+        movement_cost_for_edge(from, to, tile, domain, context)
+    })
 }
 
 const fn base_land_cost(base: Option<TerrainType>) -> Option<u32> {

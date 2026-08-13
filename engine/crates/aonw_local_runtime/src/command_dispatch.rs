@@ -60,8 +60,9 @@ pub(crate) fn dispatch_move(
 ) -> Result<MoveUnitResultV1, RuntimeError> {
     let before_revision = session.state().revision().get();
     let before_view = visible_units(session.state(), session.actor());
-    let transition = GameEngine::apply(
-        session.state(),
+    let state = session.take_state();
+    let transition = GameEngine::apply_owned(
+        state,
         session.context(),
         DomainCommand::MoveUnit(MoveUnitCommand::new(
             command.expected_revision,
@@ -70,14 +71,11 @@ pub(crate) fn dispatch_move(
         )),
     )
     .map_err(RuntimeError::Engine)?;
-    let rejection = transition
-        .rejection()
-        .map(aonw_engine::DomainRejection::code);
-    let events = transition.events().to_vec().into_boxed_slice();
-    let evidence = transition.evidence().cloned();
-    if transition.is_accepted() {
-        session.replace_state(transition.state().clone());
-    }
+    let parts = transition.into_parts();
+    let rejection = parts.rejection.map(aonw_engine::DomainRejection::code);
+    let events = parts.events;
+    let evidence = parts.evidence;
+    session.replace_state(parts.state, parts.digest);
     let after_view = visible_units(session.state(), session.actor());
     let view_patch = diff_view(
         before_revision,

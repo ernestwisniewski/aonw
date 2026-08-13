@@ -1,6 +1,7 @@
 use aonw_domain::{HexCoord, MovementUnits, UnitId};
 use aonw_engine::{
-    GameEngine, GameQuery, QueryResult, ReachableMovementQuery, TerrainMovementQuery,
+    GameEngine, GameQuery, MovementSearchWorkspace, QueryResult, ReachableMovementQuery,
+    TerrainMovementQuery,
 };
 
 use crate::session::Session;
@@ -103,16 +104,18 @@ pub enum QueryResultV1 {
 pub(crate) fn dispatch_query(
     session: &Session,
     request: QueryRequestV1,
+    workspace: &mut MovementSearchWorkspace,
 ) -> Result<QueryResultV1, RuntimeError> {
     match request {
         QueryRequestV1::Reachable(request) => {
-            let result = GameEngine::query(
+            let result = GameEngine::query_with_workspace(
                 session.state(),
                 session.context(),
                 GameQuery::Reachable(ReachableMovementQuery::new(
                     request.expected_revision,
                     &request.unit_id,
                 )),
+                workspace,
             )
             .map_err(RuntimeError::Query)?;
             let QueryResult::Reachable(result) = result else {
@@ -134,7 +137,7 @@ pub(crate) fn dispatch_query(
             }))
         }
         QueryRequestV1::RoutePlan(request) => {
-            let result = GameEngine::query(
+            let result = GameEngine::query_with_workspace(
                 session.state(),
                 session.context(),
                 GameQuery::PlanRoute(TerrainMovementQuery::new(
@@ -142,6 +145,7 @@ pub(crate) fn dispatch_query(
                     &request.unit_id,
                     request.target,
                 )),
+                workspace,
             )
             .map_err(RuntimeError::Query)?;
             let QueryResult::Route(result) = result else {

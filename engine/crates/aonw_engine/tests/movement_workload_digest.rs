@@ -1,12 +1,12 @@
 //! Stable output signatures for the reference movement workload.
 
-use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
+use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
 use aonw_domain::{
     HexCoord, MovementState, MovementUnit, MovementUnits, PlayerId, UnitId, UnitKind,
 };
 use aonw_engine::{
-    EngineContext, GameEngine, MoveUnitCommand, MovementPlanningView, ReachableMovementQuery,
-    TerrainMovementQuery,
+    CompiledMovementMap, EngineContext, GameEngine, MoveUnitCommand, MovementPlanningView,
+    MovementSearchWorkspace, ReachableMovementQuery, TerrainMovementQuery,
 };
 
 #[test]
@@ -104,6 +104,31 @@ fn reference_workload_outputs_are_deterministic() {
         ),
         (2, 1, 2, 2, 2),
     );
+}
+
+#[test]
+fn prepared_and_reused_searches_preserve_reference_results() {
+    let map = map();
+    let actor = PlayerId::new("player-1").expect("actor id");
+    let mover_id = UnitId::new("unit-0").expect("mover id");
+    let state = state(&actor);
+    let context = EngineContext::new(&actor, &map, MovementPlanningView::fog_disabled());
+    let compiled =
+        CompiledMovementMap::compile(&map, RulesetDefinition::standard()).expect("compiled map");
+    let prepared = context.with_compiled_movement_map(&compiled);
+    let query = ReachableMovementQuery::new(state.revision(), &mover_id);
+    let expected = GameEngine::reachable_movement(&state, context, query).expect("raw reachable");
+    let mut workspace = MovementSearchWorkspace::default();
+    let first =
+        GameEngine::reachable_movement_with_workspace(&state, prepared, query, &mut workspace)
+            .expect("prepared reachable");
+    let reused =
+        GameEngine::reachable_movement_with_workspace(&state, prepared, query, &mut workspace)
+            .expect("reused reachable");
+
+    assert_eq!(first, expected);
+    assert_eq!(reused, expected);
+    assert_eq!(compiled.bounds(), map.bounds());
 }
 
 fn map() -> MapDefinition {

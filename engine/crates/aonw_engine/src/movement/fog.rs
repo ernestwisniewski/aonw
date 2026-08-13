@@ -13,12 +13,13 @@ pub(crate) fn recompute_after_move(
     current: &FogOfWar,
     map: &MapDefinition,
     player_id: &PlayerId,
-    units: &[Unit],
+    units: &[&Unit],
     cities: &[City],
 ) -> FogOfWar {
     let mut visible = Vec::new();
     for unit in units
         .iter()
+        .copied()
         .filter(|unit| unit.owner_player_id() == player_id)
     {
         let observer_height = map
@@ -61,7 +62,7 @@ pub(crate) fn recompute_after_move(
 pub(crate) fn merge_discovered_contacts(
     diplomacy: &Diplomacy,
     fog: &FogOfWar,
-    units: &[Unit],
+    units: &[&Unit],
     cities: &[City],
 ) -> Diplomacy {
     let mut players = fog
@@ -88,6 +89,7 @@ pub(crate) fn merge_discovered_contacts(
         }
         for unit in units
             .iter()
+            .copied()
             .filter(|unit| unit.owner_player_id() != &player_id)
         {
             if fog.visibility(&player_id, unit.position()) == aonw_domain::FogVisibility::Visible
@@ -245,7 +247,7 @@ mod tests {
         )
         .build()
         .expect("unit");
-        let fog = super::recompute_after_move(&FogOfWar::default(), &map, &player, &[unit], &[]);
+        let fog = super::recompute_after_move(&FogOfWar::default(), &map, &player, &[&unit], &[]);
         assert!(fog.tracks(&player));
         assert!(
             !fog.player(&player)

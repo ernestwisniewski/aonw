@@ -15,13 +15,14 @@ use aonw_domain::{FogVisibility, GameState, HexCoord, MovementState, MovementUni
 
 pub use canonical_engine::{
     CanonicalEngineError, CanonicalQueryError, DomainCommand, DomainEvent, DomainRejection,
-    DomainTransition, ExecutionEvidence, GameQuery, QueryResult,
+    DomainTransition, DomainTransitionParts, ExecutionEvidence, GameQuery, QueryResult,
 };
 pub use movement::{
-    MoveUnitCommand, MoveUnitError, MovementCost, MovementPlanningView, MovementSearchMetrics,
-    MovementTransition, ReachableMovement, ReachableMovementQuery, ReachableMovementTile,
-    TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError, UnitMovedEvent,
-    UnitMovementExecution, maximum_movement_units, terrain_entry_cost,
+    CompiledMovementMap, CompiledMovementMapError, MoveUnitCommand, MoveUnitError, MovementCost,
+    MovementOccupancy, MovementPlanningView, MovementSearchMetrics, MovementSearchWorkspace,
+    MovementTransition, MovementVisibility, ReachableMovement, ReachableMovementQuery,
+    ReachableMovementTile, TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError,
+    UnitMovedEvent, UnitMovementExecution, maximum_movement_units, terrain_entry_cost,
 };
 pub use state_digest::StateDigest;
 
@@ -88,6 +89,21 @@ impl GameEngine {
         movement::find_reachable_tiles(state, context, query)
     }
 
+    /// Returns reachable hexes while reusing caller-owned search storage.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TerrainMovementQueryError`] when the revision or unit does not
+    /// admit a movement query.
+    pub fn reachable_movement_with_workspace(
+        state: &MovementState,
+        context: EngineContext<'_>,
+        query: ReachableMovementQuery<'_>,
+        workspace: &mut MovementSearchWorkspace,
+    ) -> Result<ReachableMovement, TerrainMovementQueryError> {
+        movement::find_reachable_tiles_with_workspace(state, context, query, workspace)
+    }
+
     /// Applies one revision-bound authoritative manual movement command.
     ///
     /// # Errors
@@ -132,6 +148,8 @@ pub struct EngineContext<'context> {
     planning_view: MovementPlanningView<'context>,
     can_act: bool,
     world: Option<&'context GameState>,
+    compiled_movement_map: Option<&'context CompiledMovementMap>,
+    movement_visibility: Option<&'context MovementVisibility>,
 }
 
 impl<'context> EngineContext<'context> {
@@ -150,6 +168,8 @@ impl<'context> EngineContext<'context> {
             planning_view: MovementPlanningView::fog_disabled(),
             can_act: true,
             world: None,
+            compiled_movement_map: None,
+            movement_visibility: None,
         }
     }
 
@@ -167,6 +187,8 @@ impl<'context> EngineContext<'context> {
             planning_view,
             can_act: true,
             world: None,
+            compiled_movement_map: None,
+            movement_visibility: None,
         }
     }
 
@@ -181,6 +203,28 @@ impl<'context> EngineContext<'context> {
     #[must_use]
     pub const fn with_action_permission(mut self, can_act: bool) -> Self {
         self.can_act = can_act;
+        self
+    }
+
+    /// Uses movement topology and terrain costs compiled for this map and ruleset.
+    #[must_use]
+    pub const fn with_compiled_movement_map(
+        mut self,
+        compiled: &'context CompiledMovementMap,
+    ) -> Self {
+        self.map = compiled.map();
+        self.ruleset = compiled.ruleset();
+        self.compiled_movement_map = Some(compiled);
+        self
+    }
+
+    /// Uses tile-indexed visibility prepared for the actor and state revision.
+    #[must_use]
+    pub const fn with_movement_visibility(
+        mut self,
+        visibility: &'context MovementVisibility,
+    ) -> Self {
+        self.movement_visibility = Some(visibility);
         self
     }
 
@@ -214,9 +258,24 @@ impl<'context> EngineContext<'context> {
         self.can_act
     }
 
-    const fn with_world(mut self, world: &'context GameState) -> Self {
-        self.world = Some(world);
-        self
+    pub(crate) const fn compiled_movement_map(self) -> Option<&'context CompiledMovementMap> {
+        self.compiled_movement_map
+    }
+
+    fn with_world<'world>(self, world: &'world GameState) -> EngineContext<'world>
+    where
+        'context: 'world,
+    {
+        EngineContext {
+            actor_player_id: self.actor_player_id,
+            map: self.map,
+            ruleset: self.ruleset,
+            planning_view: self.planning_view,
+            can_act: self.can_act,
+            world: Some(world),
+            compiled_movement_map: self.compiled_movement_map,
+            movement_visibility: self.movement_visibility,
+        }
     }
 
     pub(crate) fn observes_occupancy(
@@ -232,12 +291,7 @@ impl<'context> EngineContext<'context> {
                 self.planning_view
                     .observes_occupancy(moving_unit, candidate)
             },
-            |world| {
-                world
-                    .fog_of_war()
-                    .visibility(self.actor_player_id, candidate.position())
-                    == FogVisibility::Visible
-            },
+            |world| self.visibility(world, candidate.position()) == FogVisibility::Visible,
         )
     }
 
@@ -249,10 +303,7 @@ impl<'context> EngineContext<'context> {
         let Some(world) = self.world else {
             return true;
         };
-        let fog = world.fog_of_war();
-        if !fog.tracks(self.actor_player_id)
-            || fog.visibility(self.actor_player_id, coordinate) != FogVisibility::Hidden
-        {
+        if self.visibility(world, coordinate) != FogVisibility::Hidden {
             return true;
         }
         moving_unit.position().distance_to(coordinate) <= 3
@@ -272,13 +323,8 @@ impl<'context> EngineContext<'context> {
         if !self.city_blocks(moving_unit, coordinate) {
             return false;
         }
-        self.world.is_none_or(|world| {
-            !world.fog_of_war().tracks(self.actor_player_id)
-                || world
-                    .fog_of_war()
-                    .visibility(self.actor_player_id, coordinate)
-                    != FogVisibility::Hidden
-        })
+        self.world
+            .is_none_or(|world| self.visibility(world, coordinate) != FogVisibility::Hidden)
     }
 
     pub(crate) fn has_known_operational_road(self, coordinate: HexCoord) -> bool {
@@ -296,11 +342,7 @@ impl<'context> EngineContext<'context> {
                 .built_by_city_id()
                 .and_then(|city_id| world.city(city_id))
                 .is_some_and(|city| city.owner_player_id() == self.actor_player_id)
-            || !world.fog_of_war().tracks(self.actor_player_id)
-            || world
-                .fog_of_war()
-                .visibility(self.actor_player_id, coordinate)
-                != FogVisibility::Hidden
+            || self.visibility(world, coordinate) != FogVisibility::Hidden
     }
 
     pub(crate) fn is_known_city_center(self, coordinate: HexCoord) -> bool {
@@ -309,23 +351,33 @@ impl<'context> EngineContext<'context> {
         };
         world.city_at(coordinate).is_some_and(|city| {
             city.owner_player_id() == self.actor_player_id
-                || !world.fog_of_war().tracks(self.actor_player_id)
-                || world
+                || self.visibility(world, coordinate) != FogVisibility::Hidden
+        })
+    }
+
+    fn visibility(self, world: &GameState, coordinate: HexCoord) -> FogVisibility {
+        self.movement_visibility.map_or_else(
+            || {
+                world
                     .fog_of_war()
                     .visibility(self.actor_player_id, coordinate)
-                    != FogVisibility::Hidden
-        })
+            },
+            |visibility| visibility.at(self.map, coordinate),
+        )
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
+    use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
     use aonw_domain::{
         HexCoord, MovementState, MovementUnit, MovementUnits, PlayerId, UnitId, UnitKind,
     };
 
-    use super::{ENGINE_BEHAVIOR_VERSION, EngineContext, GameEngine, MovementPlanningView};
+    use super::{
+        CompiledMovementMap, ENGINE_BEHAVIOR_VERSION, EngineContext, GameEngine,
+        MovementPlanningView,
+    };
 
     #[test]
     fn engine_summary_reports_movement_projection() {
@@ -381,5 +433,40 @@ mod tests {
 
         assert_eq!(context.actor_player_id(), &actor);
         assert_eq!(context.map().map_id(), "fixture");
+    }
+
+    #[test]
+    fn compiled_context_uses_the_content_it_was_compiled_from() {
+        let actor = PlayerId::new("player-1").expect("valid player id");
+        let map = single_tile_map("source");
+        let other_map = single_tile_map("other");
+        let compiled =
+            CompiledMovementMap::compile(&map, RulesetDefinition::standard()).expect("compiled");
+
+        let context = EngineContext::new(&actor, &other_map, MovementPlanningView::fog_disabled())
+            .with_compiled_movement_map(&compiled);
+
+        assert_eq!(context.map().map_id(), "source");
+        assert_eq!(context.ruleset(), RulesetDefinition::standard());
+    }
+
+    fn single_tile_map(map_id: &str) -> MapDefinition {
+        MapDefinition::try_new(
+            map_id,
+            GridLayout::OddQFlatTop,
+            1,
+            1,
+            vec![
+                TileDefinition::try_new(
+                    HexCoord::new(0, 0),
+                    vec![TerrainType::Plains],
+                    Vec::new(),
+                    0,
+                )
+                .expect("valid tile"),
+            ],
+            Vec::new(),
+        )
+        .expect("valid logical map")
     }
 }

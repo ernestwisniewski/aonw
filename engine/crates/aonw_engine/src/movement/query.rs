@@ -1,9 +1,9 @@
-use aonw_content::{MapDefinition, RulesetDefinition};
+use aonw_content::MapDefinition;
 use aonw_domain::{HexCoord, MovementState, MovementStep, MovementUnit, MovementUnits, UnitId};
 
+use super::MovementSearchMetrics;
 use super::reachable::movement_available_for_query;
-use super::route_search::{find_route, find_route_ignoring_capacity};
-use super::{MovementSearchMetrics, maximum_movement_units};
+use super::route_search::{find_route, find_route_ignoring_capacity, find_route_to_any};
 use crate::EngineContext;
 
 /// Input for deterministic terrain-only movement planning.
@@ -351,55 +351,12 @@ fn find_approach_route(
     available_movement: MovementUnits,
     context: EngineContext<'_>,
 ) -> ApproachSearchResult {
-    let mut metrics = MovementSearchMetrics::default();
-    let mut best = None;
-    for destination in map.neighbors(target) {
-        let search = find_route(state, map, unit, destination, available_movement, context);
-        metrics.merge(search.metrics);
-        let Some(steps) = search.steps else {
-            continue;
-        };
-        let Some(total_cost) = steps.last().map(|step| step.cumulative_cost().get()) else {
-            continue;
-        };
-        let key = (
-            estimated_turns(&steps, available_movement, unit, context.ruleset()),
-            total_cost,
-            steps.len(),
-            destination.col(),
-            destination.row(),
-        );
-        if best.as_ref().is_none_or(|(best_key, _)| key < *best_key) {
-            best = Some((key, steps));
-        }
-    }
+    let destinations = map.neighbors(target).collect::<Vec<_>>();
+    let search = find_route_to_any(state, map, unit, &destinations, available_movement, context);
     ApproachSearchResult {
-        steps: best.map(|(_, steps)| steps),
-        metrics,
+        steps: search.steps,
+        metrics: search.metrics,
     }
-}
-
-fn estimated_turns(
-    steps: &[MovementStep],
-    available: MovementUnits,
-    unit: &MovementUnit,
-    ruleset: &RulesetDefinition,
-) -> u32 {
-    let maximum =
-        maximum_movement_units(ruleset, unit.kind(), unit.carried_artifact_id().is_some());
-    let mut turns = u32::from(steps.len() > 1);
-    let mut remaining = available.get();
-    for step in steps.iter().skip(1) {
-        if step.enter_cost().get() <= remaining {
-            remaining -= step.enter_cost().get();
-        } else if remaining > 0 {
-            remaining = 0;
-        } else {
-            turns = turns.saturating_add(1);
-            remaining = maximum.get().saturating_sub(step.enter_cost().get());
-        }
-    }
-    turns
 }
 
 fn reachable_step_index(steps: &[MovementStep], available: MovementUnits) -> usize {

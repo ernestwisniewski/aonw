@@ -48,10 +48,11 @@ Run the diagnostic release baseline separately:
 make rust-benchmark
 ```
 
-It reports map open/hash plus reachable, route, and apply workloads for 100,
-600, and 1200 tiles. Movement cases cover 1, 10, 64, and 512 units. The native
-boundary case opens a 1200-tile session with 512 units. Wall-clock values are
-diagnostic; stable result signatures and search-work counters are test gates.
+It reports map open/hash plus raw and prepared reachable/route, occupied-target
+approach, and apply workloads for 100, 600, and 1200 tiles. Movement cases cover
+1, 10, 64, and 512 units. The native boundary opens a strict 1200-tile scenario
+with 512 units. Wall-clock values are diagnostic; stable result signatures and
+search-work counters are test gates.
 
 The toolchain is pinned in `rust-toolchain.toml`. Production rules and all
 non-FFI crates forbid `unsafe`; the single required `unsafe impl` is confined to
@@ -137,6 +138,19 @@ response carries contract and behavior versions, revision, state digest, map
 hash, and ruleset hash. It exposes full recipient-safe snapshots, reachable and
 route queries, revision-bound movement, ordered events, exact execution
 evidence, and view patches.
+
+The runtime prepares `CompiledMovementMap` once per map/ruleset, keeps
+tile-indexed visibility, builds occupancy as a compact bitset, reuses reachable
+search buffers, and caches the last query by revision, unit, state/visibility
+digest, map hash, ruleset hash, and target. Occupied-target approach uses one
+multi-target search. Batch queries reuse the same cache and buffers.
+
+The hot dispatch path consumes owned `GameState`, reuses its entity allocation,
+and consumes `DomainTransition::into_parts`; it does not clone the complete
+state for a normal local apply. Borrowed `GameEngine::apply` remains available
+for compatibility and tests. Prepared and raw paths have deterministic parity
+tests. Rayon, ECS, SIMD, GPU pathfinding, custom allocators, and `unsafe` are not
+used because the measured 1200-tile workload does not justify them.
 
 `aonw_godot::AonwLocalSession` validates strict map and scenario documents,
 then delegates lifecycle and simulation to `aonw_local_runtime`. Godot obtains

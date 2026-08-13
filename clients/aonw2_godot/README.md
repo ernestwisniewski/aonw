@@ -116,7 +116,9 @@ created. `AonwNativeLocalSession` opens strict map and scenario content through
 `aonw_local_runtime`, obtains unit views from snapshots, exposes reachable and
 route queries, and applies recipient-safe patches after movement. Selection is
 presentation-only; canonical state, visibility, paths, costs, revisions, and
-events remain owned by Rust.
+events remain owned by Rust. The local runtime prepares topology and terrain
+costs once, reuses search storage, and caches revision-scoped queries; GDScript
+does not mirror these optimizations or rules.
 
 Build the native adapter before opening or running Godot:
 
