@@ -121,6 +121,21 @@ final class UnitProductionAvailability {
       strategic: strategic,
     );
   }
+
+  /// Fast boolean query for planners that do not render blocker details.
+  static bool canProduce(UnitProductionAvailabilityQuery query) {
+    if (!_technologyAvailable(query)) return false;
+    if (_missingPresenceResources(query).isNotEmpty) return false;
+    if (!_strategicAvailability(query).isAvailable) return false;
+    if (!CityUnitProductionRules.canProduceInCity(
+      city: query.city,
+      unitType: query.unitType,
+      mapTiles: query.mapView.mapTiles,
+    )) {
+      return false;
+    }
+    return _supplyAvailable(query);
+  }
 }
 
 bool _technologyAvailable(UnitProductionAvailabilityQuery query) =>

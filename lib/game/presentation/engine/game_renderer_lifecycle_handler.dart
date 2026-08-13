@@ -29,6 +29,7 @@ final class GameRendererLifecycleHandler {
     required this.viewMode,
     required this.displaySettings,
     required this.reduceMotion,
+    required this.cameraReduceMotion,
     required this.moveCameraForUnitMovement,
     required this.focusCameraForUnitMovementForUnit,
     required this.followCameraForUnitMovementForUnit,
@@ -58,6 +59,7 @@ final class GameRendererLifecycleHandler {
   final MapViewMode Function() viewMode;
   final HexDisplaySettings Function() displaySettings;
   final bool Function() reduceMotion;
+  final bool Function() cameraReduceMotion;
   final bool Function() moveCameraForUnitMovement;
   final bool Function(String unitId) focusCameraForUnitMovementForUnit;
   final bool Function(String unitId) followCameraForUnitMovementForUnit;
@@ -111,7 +113,7 @@ final class GameRendererLifecycleHandler {
     cameraController = GameCameraController(
       camera: host.camera,
       mapData: mapData,
-      reduceMotion: reduceMotion(),
+      reduceMotion: cameraReduceMotion(),
     );
     onLoadingProgress?.call(0.08);
     await sceneBuilder.build(

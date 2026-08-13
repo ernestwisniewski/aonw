@@ -3648,6 +3648,24 @@ abstract class AppLocalizations {
   /// **'Camera'**
   String get cameraSectionTitle;
 
+  /// No description provided for @animationSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Animations'**
+  String get animationSectionTitle;
+
+  /// No description provided for @showAnimationsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Show animations'**
+  String get showAnimationsLabel;
+
+  /// No description provided for @smoothCameraMovementLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Smooth camera movement'**
+  String get smoothCameraMovementLabel;
+
   /// No description provided for @automationSectionTitle.
   ///
   /// In en, this message translates to:

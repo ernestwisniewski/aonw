@@ -47,7 +47,7 @@ final class MctsSimulationProjection {
       units: units.toList(growable: false),
       cities: cities.toList(growable: false),
       artifacts: view.artifacts,
-      fieldImprovements: view.ownImprovements,
+      fieldImprovements: view.knownImprovements,
       fogOfWar: view.visibility.state,
       research: research,
       diplomacy: view.diplomacy,

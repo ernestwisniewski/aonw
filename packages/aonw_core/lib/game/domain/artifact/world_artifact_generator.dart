@@ -114,6 +114,7 @@ abstract final class WorldArtifactGenerator {
   }) {
     final key = _key(tile.col, tile.row);
     if (_isBlocked(tile) ||
+        tile.resources.isNotEmpty ||
         occupiedStarts.contains(key) ||
         objectiveHexes.contains(key)) {
       return false;

@@ -13,7 +13,7 @@ package `packages/aonw_core` and is used by a production Flutter client and the
 Serverpod backend.
 
 The project now needs a presentation-, framework-, and adapter-independent core
-that can power both the existing Flutter AONW1 client and a new Godot AONW2
+that can power both the existing Flutter AoNW1 client and a new Godot AoNW2
 client. Rust is the target implementation language for that core. The migration
 must preserve ongoing Flutter fixes and releases, supported saves and
 multiplayer behavior, deterministic replay, and a credible rollback path.
@@ -32,10 +32,10 @@ around the existing deterministic engine contract.
 flowchart LR
   Oracle["Reviewed fixtures and versioned contracts"] --> Dart["Dart aonw_core"]
   Oracle --> Rust["engine/: Rust GameEngine"]
-  Flutter["Flutter AONW1"] --> Local["LocalSessionPort"]
+  Flutter["Flutter AoNW1"] --> Local["LocalSessionPort"]
   Local --> Dart
   Local --> Rust
-  Godot["Godot AONW2"] --> GodotLocal["AonwLocalSession"]
+  Godot["Godot AoNW2"] --> GodotLocal["AonwLocalSession"]
   GodotLocal --> Rust
   Flutter --> Remote["RemoteMatchPort"]
   Godot --> Remote

@@ -38,7 +38,7 @@ final class MctsProductionCandidateCollector {
     required GameUnitType unitType,
   }) {
     final research = _researchFor(view);
-    return UnitProductionAvailability.evaluate((
+    return UnitProductionAvailability.canProduce((
       playerId: view.forPlayerId,
       city: city,
       unitType: unitType,
@@ -55,7 +55,7 @@ final class MctsProductionCandidateCollector {
         byPlayerId: {view.forPlayerId: view.ownStrategicResources},
       ),
       preferredResourceOptionIndex: null,
-    )).isAvailable;
+    ));
   }
 
   bool _canBuild(

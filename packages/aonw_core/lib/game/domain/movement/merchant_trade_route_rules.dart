@@ -5,9 +5,12 @@ import 'package:aonw_core/game/domain/movement/unit_movement_balance.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_feasibility.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_pathfinder.dart';
 import 'package:aonw_core/game/domain/movement/unit_movement_plan.dart';
+import 'package:aonw_core/game/domain/movement/unit_traversal_cost_resolver.dart';
 import 'package:aonw_core/game/domain/transport/transport_network_state.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
+
+part 'merchant_trade_route_advance.dart';
 
 class MerchantTradeRouteAdvanceResult {
   const MerchantTradeRouteAdvanceResult({
@@ -133,6 +136,7 @@ abstract final class MerchantTradeRouteRules {
       originCityId: originCity.id,
       destinationCityId: destinationCity.id,
       steps: plan.steps,
+      transportNetworkFingerprint: transportNetwork.routingFingerprint,
     );
   }
 
@@ -201,46 +205,37 @@ abstract final class MerchantTradeRouteRules {
       return _invalidatedRoute(unit);
     }
 
-    final route =
-        MerchantTradeRoutePlanner.replan(
-          unit: unit,
-          route: savedRoute,
-          units: units,
-          cities: cities,
-          mapData: mapData,
-          transportNetwork: transportNetwork,
-          canEnterOccupiedTile:
-              ({
-                required movingUnit,
-                required blockingUnit,
-                required col,
-                required row,
-              }) => canShareOccupiedCityTile(
-                movingUnit: movingUnit,
-                col: col,
-                row: row,
-                cities: cities,
-              ),
-        ) ??
-        savedRoute;
-
-    final startIndex = route.steps.indexWhere(
-      (step) => step.col == unit.col && step.row == unit.row,
-    );
-    if (startIndex < 0) return _invalidatedRoute(unit);
-
-    final progress = _advanceRouteSteps(
+    final routeStart = _routeStartFor(
       unit: unit,
-      route: route,
-      startIndex: startIndex,
+      savedRoute: savedRoute,
       units: units,
       cities: cities,
       mapData: mapData,
       transportNetwork: transportNetwork,
     );
+    if (routeStart == null) return _invalidatedRoute(unit);
+    final route = routeStart.route;
+    final traversalResolver = MerchantTradeRoutePlanner.traversalResolver(
+      transportNetwork,
+      cities,
+    );
+
+    final progress = _advanceRouteSteps(
+      unit: unit,
+      route: route,
+      startIndex: routeStart.index,
+      units: units,
+      cities: cities,
+      mapData: mapData,
+      traversalResolver: traversalResolver,
+    );
     if (progress.invalidated) return _invalidatedRoute(unit);
     if (progress.movedSteps.isEmpty) {
-      return MerchantTradeRouteAdvanceResult(unit: unit);
+      return MerchantTradeRouteAdvanceResult(
+        unit: route == savedRoute
+            ? unit
+            : unit.copyWithMerchantTradeRoute(route),
+      );
     }
     return _completedRouteAdvance(
       unit: unit,
@@ -248,6 +243,7 @@ abstract final class MerchantTradeRouteRules {
       progress: progress,
       cities: cities,
       mapData: mapData,
+      traversalResolver: traversalResolver,
       transportNetwork: transportNetwork,
     );
   }
@@ -268,6 +264,7 @@ abstract final class MerchantTradeRouteRules {
     required MapTileLookup mapData,
     required GameUnit unit,
     required List<GameCity> cities,
+    required UnitTraversalCostResolver traversalResolver,
     required TransportNetworkState transportNetwork,
   }) {
     final reversed = route.steps.reversed.toList(growable: false);
@@ -281,10 +278,11 @@ abstract final class MerchantTradeRouteRules {
         final from = mapData.tileAt(previous.col, previous.row);
         final to = mapData.tileAt(step.col, step.row);
         if (from == null || to == null) return null;
-        final cost = MerchantTradeRoutePlanner.traversalResolver(
-          transportNetwork,
-          cities,
-        ).costForStep(unit: unit, from: from, to: to);
+        final cost = traversalResolver.costForStep(
+          unit: unit,
+          from: from,
+          to: to,
+        );
         if (cost.blocked) return null;
         enterCost = cost.value;
         cumulativeCost += enterCost;
@@ -302,6 +300,7 @@ abstract final class MerchantTradeRouteRules {
       originCityId: route.destinationCityId,
       destinationCityId: route.originCityId,
       steps: rebuilt,
+      transportNetworkFingerprint: transportNetwork.routingFingerprint,
     );
   }
 
@@ -339,7 +338,7 @@ _MerchantRouteProgress _advanceRouteSteps({
   required List<GameUnit> units,
   required List<GameCity> cities,
   required MapTileLookup mapData,
-  required TransportNetworkState transportNetwork,
+  required UnitTraversalCostResolver traversalResolver,
 }) {
   var index = startIndex;
   var remainingMovement = unit.movementUnits;
@@ -354,7 +353,7 @@ _MerchantRouteProgress _advanceRouteSteps({
       units: units,
       cities: cities,
       mapData: mapData,
-      transportNetwork: transportNetwork,
+      traversalResolver: traversalResolver,
     );
     if (decision.disposition == _MerchantRouteStepDisposition.invalid) {
       return (
@@ -390,17 +389,14 @@ _MerchantRouteStepDecision _routeStepDecision({
   required List<GameUnit> units,
   required List<GameCity> cities,
   required MapTileLookup mapData,
-  required TransportNetworkState transportNetwork,
+  required UnitTraversalCostResolver traversalResolver,
 }) {
   final from = mapData.tileAt(current.col, current.row);
   final to = mapData.tileAt(next.col, next.row);
   if (from == null || to == null) {
     return (disposition: _MerchantRouteStepDisposition.invalid, enterCost: 0);
   }
-  final cost = MerchantTradeRoutePlanner.traversalResolver(
-    transportNetwork,
-    cities,
-  ).costForStep(unit: unit, from: from, to: to);
+  final cost = traversalResolver.costForStep(unit: unit, from: from, to: to);
   if (cost.blocked) {
     return (disposition: _MerchantRouteStepDisposition.invalid, enterCost: 0);
   }
@@ -440,6 +436,7 @@ MerchantTradeRouteAdvanceResult _completedRouteAdvance({
   required _MerchantRouteProgress progress,
   required List<GameCity> cities,
   required MapTileLookup mapData,
+  required UnitTraversalCostResolver traversalResolver,
   required TransportNetworkState transportNetwork,
 }) {
   final destination = route.steps[progress.index];
@@ -456,6 +453,7 @@ MerchantTradeRouteAdvanceResult _completedRouteAdvance({
         mapData: mapData,
         unit: unit,
         cities: cities,
+        traversalResolver: traversalResolver,
         transportNetwork: transportNetwork,
       ),
     );

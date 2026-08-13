@@ -2059,6 +2059,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cameraSectionTitle => 'Caméra';
 
   @override
+  String get animationSectionTitle => 'Animations';
+
+  @override
+  String get showAnimationsLabel => 'Afficher les animations';
+
+  @override
+  String get smoothCameraMovementLabel => 'Mouvement fluide de la caméra';
+
+  @override
   String get automationSectionTitle => 'Automatisation';
 
   @override

@@ -135,6 +135,35 @@ void main() {
     expect(container.read(aiSettingsProvider).batterySaver, isTrue);
   });
 
+  testWidgets('options screen toggles animation preferences', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(child: _LocalizedHarness(child: OptionsScreen())),
+    );
+    await tester.pump();
+
+    final toggle = find.byKey(const Key('options.showAnimations'));
+    await tester.ensureVisible(toggle);
+    await tester.pumpAndSettle();
+    await tester.tap(toggle);
+    await tester.pump();
+
+    final cameraToggle = find.byKey(
+      const Key('options.animateCameraTransitions'),
+    );
+    await tester.ensureVisible(cameraToggle);
+    await tester.pumpAndSettle();
+    await tester.tap(cameraToggle);
+    await tester.pump();
+
+    final context = tester.element(find.byType(OptionsScreen));
+    final container = ProviderScope.containerOf(context, listen: false);
+    expect(container.read(gameplaySettingsProvider).showAnimations, isFalse);
+    expect(
+      container.read(gameplaySettingsProvider).animateCameraTransitions,
+      isFalse,
+    );
+  });
+
   testWidgets('options screen toggles gamepad input', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(child: _LocalizedHarness(child: OptionsScreen())),

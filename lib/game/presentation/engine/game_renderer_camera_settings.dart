@@ -4,6 +4,8 @@ typedef GameRendererMovementCameraSettings = ({
   bool focusEnemyUnitMovementCamera,
   bool followEnemyUnitMovementCamera,
   bool cinematicCameraEnabled,
+  bool unitAnimationsEnabled,
+  bool cameraTransitionsEnabled,
 });
 
 final class GameRendererCameraSettings {
@@ -22,6 +24,11 @@ final class GameRendererCameraSettings {
   bool focusEnemyUnitMovementCamera;
   bool followEnemyUnitMovementCamera;
   bool cinematicCameraEnabled;
+  bool unitAnimationsEnabled = true;
+  bool cameraTransitionsEnabled = true;
+
+  bool get enemyFocusEnabled => focusEnemyUnitMovementCamera;
+  void setEnemyFocus(bool value) => focusEnemyUnitMovementCamera = value;
 
   bool applyMovement(GameRendererMovementCameraSettings value) {
     final projectionChanged =
@@ -31,6 +38,8 @@ final class GameRendererCameraSettings {
     focusEnemyUnitMovementCamera = value.focusEnemyUnitMovementCamera;
     followEnemyUnitMovementCamera = value.followEnemyUnitMovementCamera;
     cinematicCameraEnabled = value.cinematicCameraEnabled;
+    unitAnimationsEnabled = value.unitAnimationsEnabled;
+    cameraTransitionsEnabled = value.cameraTransitionsEnabled;
     return projectionChanged;
   }
 }

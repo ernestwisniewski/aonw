@@ -159,6 +159,8 @@ abstract final class GameRendererRuntimeFactory {
       currentTurn: () => stateSync.currentTurn,
       viewMode: () => stateSync.viewMode,
       reduceMotion: () => stateSync.reduceMotion,
+      unitAnimationsEnabled: () => stateSync.unitAnimationsEnabled,
+      cameraTransitionsEnabled: () => stateSync.cameraTransitionsEnabled,
       workerActionPaletteOptions: () => stateSync.workerActionPaletteOptions(),
       focusInitialActivePlayer: bindings.focusInitialActivePlayer,
       focusActiveSelection: bindings.focusActiveSelection,
@@ -211,6 +213,8 @@ abstract final class GameRendererRuntimeFactory {
       viewMode: () => stateSync.viewMode,
       displaySettings: () => stateSync.displaySettings,
       reduceMotion: () => stateSync.reduceMotion,
+      cameraReduceMotion: () =>
+          stateSync.reduceMotion || !stateSync.cameraTransitionsEnabled,
       moveCameraForUnitMovement: bindings.moveCameraForUnitMovement,
       focusCameraForUnitMovementForUnit:
           bindings.focusCameraForUnitMovementForUnit,

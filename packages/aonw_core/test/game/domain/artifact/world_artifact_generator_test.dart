@@ -214,6 +214,29 @@ void main() {
       expect(locations, isNot(contains('0:0')));
       expect(locations, isNot(contains('2:0')));
     });
+
+    test('reserves every resource hex', () {
+      final mapData = WorldMap(
+        cols: 6,
+        rows: 1,
+        tiles: [
+          for (var col = 0; col < 6; col++)
+            _tile(
+              col,
+              0,
+              resources: col == 3 ? const [ResourceType.iron] : const [],
+            ),
+        ],
+      );
+
+      final artifacts = WorldArtifactGenerator.generate(
+        mapData: mapData,
+        startingUnits: const [],
+        seed: 4,
+      );
+
+      expect(artifacts.map(_locationKey), isNot(contains('3:0')));
+    });
   });
 }
 

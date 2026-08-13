@@ -1,4 +1,4 @@
-# AONW patches to gamepads_linux 0.1.2
+# AoNW patches to gamepads_linux 0.1.2
 
 The package is vendored temporarily because the published Linux backend can
 terminate the application when `/dev/input` is not exposed and stores pointers

@@ -251,7 +251,7 @@ The desktop Apple and Google callbacks terminate at `api.aonw.net`; no custom
 URL scheme and no provider token are placed in the browser URL. The app
 receives a one-time Serverpod auth result by polling with a random request ID.
 
-For production AONW, the expected callback is:
+For production AoNW, the expected callback is:
 
 ```text
 https://api.aonw.net/auth/steam/callback

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/hex.dart';
+import 'package:aonw_core/game/domain/movement/unit_movement_cost_rules.dart';
 import 'package:aonw_core/game/domain/resource/initial_resource_distribution.dart';
 import 'package:aonw_core/game/domain/resource/resource_definition.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -138,8 +139,8 @@ abstract final class InitialResourceDistributionGenerator {
     WorldTile tile,
     ResourceCategory category,
   ) {
+    if (UnitMovementCostRules.costToEnterTile(tile).blocked) return const [];
     final terrains = tile.terrains.toSet();
-    if (terrains.contains(TerrainType.mountain)) return const [];
     final profile = _resourceProfile(terrains);
     return switch (category) {
       ResourceCategory.bonus => profile.bonus,

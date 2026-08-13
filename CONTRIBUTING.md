@@ -191,7 +191,7 @@ Review every generated diff, commit the expected output, and rerun
 Read the [Rust Engine Migration Plan](docs/rust-engine-migration.md) and
 [ADR 0008](docs/adr/0008-rust-engine-ownership-and-strangler-migration.md)
 before introducing or changing Rust engine code, a Flutter native bridge, or
-the Godot AONW2 client.
+the Godot AoNW2 client.
 
 The Rust Cargo workspace will be introduced directly at `engine/`; do not
 create a parallel temporary `rust/` root. Keep the existing Flutter project at

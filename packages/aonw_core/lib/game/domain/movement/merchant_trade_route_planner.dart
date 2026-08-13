@@ -50,6 +50,7 @@ abstract final class MerchantTradeRoutePlanner {
       originCityId: route.originCityId,
       destinationCityId: route.destinationCityId,
       steps: plan.steps,
+      transportNetworkFingerprint: transportNetwork.routingFingerprint,
     );
   }
 

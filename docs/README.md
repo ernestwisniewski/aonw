@@ -80,26 +80,65 @@ change.
 ### Accepted Successor Architecture
 
 The first Rust code is added directly under `engine/`. Flutter remains at the
-repository root during migration; Godot AONW2 is added separately under
+repository root during migration; Godot AoNW2 is added separately under
 `clients/aonw2_godot/`.
 
 ```mermaid
-flowchart LR
-  Flutter["Root Flutter / Flame AONW1"] --> FlutterLocal["LocalSessionPort"]
-  Godot["clients/aonw2_godot"] --> GodotLocal["AonwLocalSession"]
-  FlutterLocal --> Runtime["engine/: Rust local runtime"]
+flowchart TB
+  subgraph Clients["Presentation clients"]
+    Flutter["Flutter / Flame AoNW1<br/>2D presentation client"]
+    Godot["Godot AoNW2<br/>3D presentation client"]
+  end
+
+  subgraph ClientPorts["Client application ports"]
+    FlutterLocal["Flutter LocalSessionPort"]
+    GodotLocal["Godot AonwLocalSession<br/>GDExtension"]
+    FlutterRemote["Flutter RemoteMatchPort"]
+    GodotRemote["Godot AonwRemoteReplica"]
+  end
+
+  subgraph RustEngine["engine/ — shared Rust engine"]
+    Runtime["aonw_local_runtime<br/>save / replay / hotseat"]
+    Rules["aonw_domain + aonw_engine<br/>authoritative state / apply / query"]
+    Content["aonw_content<br/>maps / rulesets / catalogs"]
+    AI["aonw_ai"]
+    Projection["aonw_recipient_projection<br/>fog / audience redaction"]
+    Contracts["aonw_contracts<br/>versioned boundary DTOs"]
+
+    Runtime --> Rules
+    Content --> Rules
+    AI --> Rules
+    Runtime --> Contracts
+    Projection --> Contracts
+  end
+
+  subgraph Multiplayer["Online application and infrastructure"]
+    Server["Serverpod multiplayer host<br/>auth / lobby / ordering / transactions / reconnect"]
+    Database[("PostgreSQL<br/>matches / snapshots / events")]
+    Server --> Database
+  end
+
+  Flutter --> FlutterLocal
+  Flutter --> FlutterRemote
+  Godot --> GodotLocal
+  Godot --> GodotRemote
+
+  FlutterLocal --> Runtime
   GodotLocal --> Runtime
-  Runtime --> Rules["Rust domain + GameEngine"]
-  Flutter --> FlutterRemote["RemoteMatchPort"]
-  Godot --> GodotRemote["AonwRemoteReplica"]
-  FlutterRemote --> Server["server/: Serverpod multiplayer host"]
+  FlutterRemote --> Server
   GodotRemote --> Server
-  Server --> Rules
-  Server --> Projection["Rust recipient projection policy"]
-  Projection --> FlutterRemote
-  Projection --> GodotRemote
-  Server --> Database[("PostgreSQL")]
+
+  Server -->|"authoritative command"| Rules
+  Rules -->|"DomainTransition"| Server
+  Server -->|"canonical state + recipient"| Projection
+  Projection -->|"recipient-safe state / events"| Server
 ```
+
+Both clients are presentation adapters. Local play reaches the same Rust rules
+through client-specific local-session adapters, while multiplayer reaches them
+through Serverpod. Serverpod owns authentication, ordering, transactions,
+persistence, and delivery; Rust owns gameplay legality and deterministic state
+transitions. Only recipient-safe projections return to remote clients.
 
 The Rust engine becomes the single rules implementation only after parity,
 save compatibility, platform, shadow, canary, and rollback gates pass. The Dart

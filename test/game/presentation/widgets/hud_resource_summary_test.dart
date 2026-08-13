@@ -1,5 +1,6 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_economy_forecast.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_projection_cache.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_summary.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
@@ -157,6 +158,9 @@ void main() {
       'reuses strip economy forecast across interaction-only state changes',
       () {
         final forecastCache = HudResourceEconomyForecastCache();
+        final projectionCache = HudResourceProjectionCache.forOwner(
+          forecastCache,
+        );
         final city = GameCity(
           id: 'city_1',
           ownerPlayerId: 'player_1',
@@ -192,6 +196,7 @@ void main() {
         expect(first.goldPerTurn, 1);
         expect(second.goldPerTurn, first.goldPerTurn);
         expect(forecastCache.debugComputeCount, 1);
+        expect(projectionCache.debugComputeCount, 1);
       },
     );
 

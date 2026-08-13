@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdowns.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_economy_forecast.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_projection_cache.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_stability_details.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_strategic_resource_summary.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart'
@@ -77,7 +78,7 @@ class HudResourceSummary {
       playerId: playerId,
       mapData: mapData,
       cityRuleset: cityRuleset,
-      technologyRuleset: technologyRuleset,
+      context: (technology: technologyRuleset, cache: economyForecastCache),
     );
 
     return HudResourceSummary(
@@ -135,21 +136,35 @@ _resourceProjections({
   required String playerId,
   required WorldMap mapData,
   required CityRuleset cityRuleset,
-  required TechnologyRuleset technologyRuleset,
-}) => (
-  network: EmpireResourceNetworkRules.forPlayer(
-    playerId: playerId,
-    cities: state.cities,
-    mapTiles: mapData,
-    research: state.research,
-    ruleset: cityRuleset,
-    resourceTradeAgreements: state.resourceTradeAgreements,
-  ),
-  strategic: HudStrategicResourceSummary.fromGameState(
-    state: state,
-    playerId: playerId,
-    mapData: mapData,
-    cityRuleset: cityRuleset,
-    technologyRuleset: technologyRuleset,
-  ),
-);
+  required ({
+    TechnologyRuleset technology,
+    HudResourceEconomyForecastCache? cache,
+  })
+  context,
+}) {
+  final projections = context.cache == null
+      ? HudResourceProjectionCache.computeForPlayer(
+          state: state,
+          playerId: playerId,
+          mapData: mapData,
+          cityRuleset: cityRuleset,
+        )
+      : HudResourceProjectionCache.forOwner(context.cache!).forPlayer(
+          state: state,
+          playerId: playerId,
+          mapData: mapData,
+          cityRuleset: cityRuleset,
+        );
+  return (
+    network: projections.network,
+    strategic: HudStrategicResourceSummary.fromGameState(
+      state: state,
+      playerId: playerId,
+      mapData: mapData,
+      cityRuleset: cityRuleset,
+      technologyRuleset: context.technology,
+      resourceNetwork: projections.network,
+      strategicProduction: projections.production,
+    ),
+  );
+}

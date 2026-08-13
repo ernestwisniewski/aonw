@@ -70,7 +70,7 @@ abstract final class ResourceTradeCommandResolver {
     return ResourceTradeCommandResult._accepted(
       resourceTradeAgreements: List.unmodifiable([
         ...resourceTradeAgreements,
-        _goldAgreement(command, resourceTradeAgreements.length),
+        _goldAgreement(command, resourceTradeAgreements),
       ]),
     );
   }
@@ -161,6 +161,14 @@ abstract final class ResourceTradeCommandResolver {
     )) {
       return 'resource_trade_already_active';
     }
+    final agreementId = command.agreementId;
+    if (agreementId != null && !_isValidAgreementId(agreementId)) {
+      return 'invalid_resource_trade_agreement_id';
+    }
+    if (agreementId != null &&
+        !_agreementTokensAreAvailable(resourceTradeAgreements, {agreementId})) {
+      return 'resource_trade_agreement_id_conflict';
+    }
     return null;
   }
 
@@ -212,6 +220,17 @@ abstract final class ResourceTradeCommandResolver {
     )) {
       return 'resource_trade_already_active';
     }
+    final agreementId = command.agreementId;
+    if (agreementId != null && !_isValidAgreementId(agreementId)) {
+      return 'invalid_resource_trade_agreement_id';
+    }
+    if (agreementId != null &&
+        !_agreementTokensAreAvailable(
+          resourceTradeAgreements,
+          _exchangeTokens(agreementId),
+        )) {
+      return 'resource_trade_agreement_id_conflict';
+    }
     return null;
   }
 
@@ -252,17 +271,13 @@ abstract final class ResourceTradeCommandResolver {
 
   static ResourceTradeAgreement _goldAgreement(
     OpenResourceTradeCommand command,
-    int agreementCount,
+    List<ResourceTradeAgreement> resourceTradeAgreements,
   ) {
+    final id =
+        command.agreementId ??
+        _nextGoldAgreementId(command, resourceTradeAgreements);
     return ResourceTradeAgreement(
-      id:
-          command.agreementId ??
-          _agreementId(
-            importerPlayerId: command.playerId,
-            exporterPlayerId: command.targetPlayerId,
-            resource: command.resource,
-            count: agreementCount,
-          ),
+      id: id,
       exporterPlayerId: command.targetPlayerId,
       importerPlayerId: command.playerId,
       resource: command.resource,
@@ -277,13 +292,7 @@ abstract final class ResourceTradeCommandResolver {
   ) {
     final baseId =
         command.agreementId ??
-        _exchangeAgreementId(
-          playerId: command.playerId,
-          targetPlayerId: command.targetPlayerId,
-          offeredResource: command.offeredResource,
-          requestedResource: command.requestedResource,
-          count: resourceTradeAgreements.length,
-        );
+        _nextExchangeAgreementId(command, resourceTradeAgreements);
     return List.unmodifiable([
       ...resourceTradeAgreements,
       ResourceTradeAgreement(
@@ -342,6 +351,66 @@ abstract final class ResourceTradeCommandResolver {
     }
     return false;
   }
+}
+
+String _nextGoldAgreementId(
+  OpenResourceTradeCommand command,
+  List<ResourceTradeAgreement> agreements,
+) {
+  var count = agreements.length;
+  while (true) {
+    final id = _agreementId(
+      importerPlayerId: command.playerId,
+      exporterPlayerId: command.targetPlayerId,
+      resource: command.resource,
+      count: count,
+    );
+    if (_agreementTokensAreAvailable(agreements, {id})) return id;
+    count++;
+  }
+}
+
+String _nextExchangeAgreementId(
+  OpenResourceExchangeCommand command,
+  List<ResourceTradeAgreement> agreements,
+) {
+  var count = agreements.length;
+  while (true) {
+    final id = _exchangeAgreementId(
+      playerId: command.playerId,
+      targetPlayerId: command.targetPlayerId,
+      offeredResource: command.offeredResource,
+      requestedResource: command.requestedResource,
+      count: count,
+    );
+    if (_agreementTokensAreAvailable(agreements, _exchangeTokens(id))) {
+      return id;
+    }
+    count++;
+  }
+}
+
+final _agreementIdPattern = RegExp(r'^[A-Za-z0-9._-]{1,128}$');
+
+bool _isValidAgreementId(String id) => _agreementIdPattern.hasMatch(id);
+
+Set<String> _exchangeTokens(String baseId) => {
+  baseId,
+  '${baseId}_requested',
+  '${baseId}_offered',
+};
+
+bool _agreementTokensAreAvailable(
+  Iterable<ResourceTradeAgreement> agreements,
+  Set<String> proposedTokens,
+) {
+  for (final agreement in agreements) {
+    if (proposedTokens.contains(agreement.id) ||
+        proposedTokens.contains(agreement.exchangeGroupId)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 String _agreementId({

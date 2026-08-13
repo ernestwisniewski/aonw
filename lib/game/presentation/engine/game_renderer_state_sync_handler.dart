@@ -4,6 +4,7 @@ import 'package:aonw/game/presentation/engine/game_hover_intent_resolver.dart';
 import 'package:aonw/game/presentation/engine/game_render_view_model.dart';
 import 'package:aonw/game/presentation/engine/game_renderer.dart'
     show WorkerActionPaletteOptionsBuilder;
+import 'package:aonw/game/presentation/engine/game_renderer_camera_settings.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_layer_synchronizer.dart';
 import 'package:aonw/game/presentation/engine/game_scene_builder.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_option.dart';
@@ -60,6 +61,8 @@ final class GameRendererStateSyncHandler {
   MapViewMode _viewMode;
   HexDisplaySettings _displaySettings;
   bool _reduceMotion;
+  bool _unitAnimationsEnabled = true;
+  bool _cameraTransitionsEnabled = true;
   WorkerActionPaletteOptionsBuilder? _workerOptionsBuilder;
   int? _currentTurn;
   Vector2? lastHoverWidgetPosition;
@@ -73,6 +76,8 @@ final class GameRendererStateSyncHandler {
   MapViewMode get viewMode => _viewMode;
   HexDisplaySettings get displaySettings => _displaySettings;
   bool get reduceMotion => _reduceMotion;
+  bool get unitAnimationsEnabled => _unitAnimationsEnabled;
+  bool get cameraTransitionsEnabled => _cameraTransitionsEnabled;
   set viewMode(MapViewMode value) {
     if (_viewMode == value) return;
     _viewMode = value;
@@ -98,6 +103,23 @@ final class GameRendererStateSyncHandler {
     if (_reduceMotion == value) return;
     _reduceMotion = value;
     syncReduceMotion();
+  }
+
+  set unitAnimationsEnabled(bool value) {
+    if (_unitAnimationsEnabled == value) return;
+    _unitAnimationsEnabled = value;
+    layerSynchronizer.syncReduceMotion();
+  }
+
+  set cameraTransitionsEnabled(bool value) {
+    if (_cameraTransitionsEnabled == value) return;
+    _cameraTransitionsEnabled = value;
+    layerSynchronizer.syncReduceMotion();
+  }
+
+  void applyAnimationSettings(GameRendererMovementCameraSettings value) {
+    unitAnimationsEnabled = value.unitAnimationsEnabled;
+    cameraTransitionsEnabled = value.cameraTransitionsEnabled;
   }
 
   void applyState(

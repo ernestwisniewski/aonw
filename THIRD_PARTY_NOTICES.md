@@ -43,7 +43,7 @@ subject to their owners' trademark guidelines.
   supported state, synchronizes hotplug state, and delivers native events on
   the GTK main context.
 - `tool/linux/desktop_webview_window_stub/` is an MIT-licensed compatibility
-  implementation used on desktop. AONW uses its external-browser OAuth flow,
+  implementation used on desktop. AoNW uses its external-browser OAuth flow,
   so this package prevents the unused embedded WebKit backend from becoming a
   process-startup dependency.
 

@@ -117,6 +117,41 @@ class OptionsCameraSection extends ConsumerWidget {
   }
 }
 
+class OptionsAnimationSection extends ConsumerWidget {
+  const OptionsAnimationSection({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(gameplaySettingsProvider);
+    final controller = ref.read(gameplaySettingsProvider.notifier);
+    return SettingsSection(
+      icon: Icons.animation_outlined,
+      title: context.l10n.animationSectionTitle,
+      child: Column(
+        children: [
+          SettingsToggleRow(
+            key: const Key('options.showAnimations'),
+            icon: Icons.directions_run_outlined,
+            label: context.l10n.showAnimationsLabel,
+            value: settings.showAnimations,
+            onChanged: ref.withMenuClickValue(controller.setShowAnimations),
+          ),
+          const SizedBox(height: 8),
+          SettingsToggleRow(
+            key: const Key('options.animateCameraTransitions'),
+            icon: Icons.videocam_outlined,
+            label: context.l10n.smoothCameraMovementLabel,
+            value: settings.animateCameraTransitions,
+            onChanged: ref.withMenuClickValue(
+              controller.setAnimateCameraTransitions,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class OptionsAutomationSection extends ConsumerWidget {
   const OptionsAutomationSection({super.key});
 

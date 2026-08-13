@@ -81,6 +81,7 @@ class GameOptionsPanel extends StatelessWidget {
         ..._mapVisibilityRows(this, l10n),
         ..._ownUnitCameraRows(this, l10n),
         ..._enemyUnitCameraRows(this, l10n),
+        ..._animationRows(this, l10n),
         ..._automationRows(this, l10n),
         ..._resignRows(this, l10n),
       ],
@@ -276,6 +277,35 @@ List<Widget> _automationRows(GameOptionsPanel panel, AppLocalizations l10n) => [
     label: GameText.sectionLabel(l10n.gameOptionAutoTurnFlow),
     enabled: panel.autoTurnFlowEnabled,
     onToggle: () => panel.onAutoTurnFlowChanged(!panel.autoTurnFlowEnabled),
+  ),
+];
+
+List<Widget> _animationRows(GameOptionsPanel panel, AppLocalizations l10n) => [
+  const SizedBox(height: 8),
+  const _OptionsSeparator(),
+  const SizedBox(height: 8),
+  _OptionsGroupHeader(icon: GameIcons.focus, label: l10n.animationSectionTitle),
+  const SizedBox(height: 8),
+  _MapToggleOptionRow(
+    rowKey: const Key('gameOptions.showAnimationsRow'),
+    enabledIconKey: const Key('gameOptions.showAnimationsIcon.on'),
+    disabledIconKey: const Key('gameOptions.showAnimationsIcon.off'),
+    label: GameText.sectionLabel(l10n.showAnimationsLabel),
+    enabled: panel.camera.settings.showAnimations,
+    onToggle: () => panel.camera.controller.setShowAnimations(
+      !panel.camera.settings.showAnimations,
+    ),
+  ),
+  const SizedBox(height: 4),
+  _MapToggleOptionRow(
+    rowKey: const Key('gameOptions.animateCameraTransitionsRow'),
+    enabledIconKey: const Key('gameOptions.animateCameraTransitionsIcon.on'),
+    disabledIconKey: const Key('gameOptions.animateCameraTransitionsIcon.off'),
+    label: GameText.sectionLabel(l10n.smoothCameraMovementLabel),
+    enabled: panel.camera.settings.animateCameraTransitions,
+    onToggle: () => panel.camera.controller.setAnimateCameraTransitions(
+      !panel.camera.settings.animateCameraTransitions,
+    ),
   ),
 ];
 

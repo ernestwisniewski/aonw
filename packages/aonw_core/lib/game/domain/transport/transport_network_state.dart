@@ -26,14 +26,24 @@ final class TransportNetworkState {
       }
       byHex[segment.hex] = segment;
     }
-    return TransportNetworkState._(Map.unmodifiable(byHex));
+    final immutableByHex = Map<HexCoord, TransportSegment>.unmodifiable(byHex);
+    return TransportNetworkState._(
+      immutableByHex,
+      _routingFingerprint(immutableByHex.values),
+    );
   }
 
-  const TransportNetworkState._(this.byHex);
+  const TransportNetworkState._(this.byHex, this.routingFingerprint);
 
-  static const empty = TransportNetworkState._({});
+  static const empty = TransportNetworkState._({}, '');
 
   final Map<HexCoord, TransportSegment> byHex;
+
+  /// Compact, deterministic identity of the routing-relevant network state.
+  ///
+  /// It is computed once when the immutable aggregate is created, so checking
+  /// many persisted merchant routes does not repeatedly scan every road.
+  final String routingFingerprint;
 
   bool get isEmpty => byHex.isEmpty;
   bool get isNotEmpty => byHex.isNotEmpty;
@@ -87,11 +97,7 @@ final class TransportNetworkState {
   }
 
   List<Map<String, dynamic>> toJson() {
-    final ordered = segments.toList()
-      ..sort((left, right) {
-        final col = left.hex.col.compareTo(right.hex.col);
-        return col != 0 ? col : left.hex.row.compareTo(right.hex.row);
-      });
+    final ordered = _orderedSegments(segments);
     return [for (final segment in ordered) segment.toJson()];
   }
 
@@ -102,4 +108,39 @@ final class TransportNetworkState {
 
   @override
   int get hashCode => mapHash(byHex);
+}
+
+List<TransportSegment> _orderedSegments(Iterable<TransportSegment> segments) {
+  return segments.toList()..sort((left, right) {
+    final col = left.hex.col.compareTo(right.hex.col);
+    if (col != 0) return col;
+    return left.hex.row.compareTo(right.hex.row);
+  });
+}
+
+String _routingFingerprint(Iterable<TransportSegment> segments) {
+  final ordered = _orderedSegments(segments);
+  if (ordered.isEmpty) return '';
+
+  var first = 0x811C9DC5;
+  var second = 0x9E3779B9;
+  void add(String value) {
+    for (final codeUnit in value.codeUnits) {
+      first = ((first ^ codeUnit) * 0x01000193) & 0xFFFFFFFF;
+      second = ((second ^ codeUnit) * 0x85EBCA6B) & 0xFFFFFFFF;
+    }
+    first = ((first ^ 0xFF) * 0x01000193) & 0xFFFFFFFF;
+    second = ((second ^ 0xFF) * 0x85EBCA6B) & 0xFFFFFFFF;
+  }
+
+  for (final segment in ordered) {
+    add('${segment.hex.col}');
+    add('${segment.hex.row}');
+    add(segment.kind.name);
+    add(segment.condition.name);
+    add(segment.builtByPlayerId);
+    add(segment.builtByCityId ?? '');
+  }
+  return '${first.toRadixString(16).padLeft(8, '0')}'
+      '${second.toRadixString(16).padLeft(8, '0')}';
 }

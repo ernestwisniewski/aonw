@@ -33,6 +33,39 @@ void main() {
         FieldImprovementType.oilWell,
       );
       expect(projection.sources.single.amountPerTurn, 1);
+      expect(
+        StrategicResourceProductionRules.outputForPlayer(
+          playerId: 'p1',
+          cities: const [_city],
+          fieldImprovements: const [
+            FieldImprovement(
+              hex: CityHex(col: 1, row: 1),
+              type: FieldImprovementType.oilWell,
+              builtByCityId: 'city_1',
+            ),
+          ],
+          mapTiles: _resourceMap(ResourceType.oil),
+          research: _research({TechnologyId.combustion}),
+        ),
+        projection.output,
+      );
+    });
+
+    test('infers an improvement owner from controlled territory', () {
+      final output = StrategicResourceProductionRules.outputForPlayer(
+        playerId: 'p1',
+        cities: const [_city],
+        fieldImprovements: const [
+          FieldImprovement(
+            hex: CityHex(col: 1, row: 1),
+            type: FieldImprovementType.oilWell,
+          ),
+        ],
+        mapTiles: _resourceMap(ResourceType.oil),
+        research: _research({TechnologyId.combustion}),
+      );
+
+      expect(output, StrategicResourceBundle.oilOne);
     });
 
     test('does not extract a hidden or incorrectly improved resource', () {

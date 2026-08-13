@@ -209,6 +209,10 @@ void main() {
         advanced.unit.merchantTradeRoute!.steps.any((step) => step.row == 3),
         isTrue,
       );
+      expect(
+        advanced.unit.merchantTradeRoute!.transportNetworkFingerprint,
+        network.routingFingerprint,
+      );
     });
 
     test('network JSON is deterministic and round-trips', () {
@@ -228,9 +232,17 @@ void main() {
       );
 
       final json = state.toJson();
+      final sameSegmentsDifferentOrder = TransportNetworkState(
+        segments: state.segments.toList().reversed,
+      );
 
       expect(json.first['col'], 0);
       expect(TransportNetworkState.fromJson(json), state);
+      expect(
+        sameSegmentsDifferentOrder.routingFingerprint,
+        state.routingFingerprint,
+      );
+      expect(state.routingFingerprint, hasLength(16));
     });
 
     test('known network includes owned, city-owned, and discovered roads', () {

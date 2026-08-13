@@ -1,4 +1,4 @@
-# AONW Dart Core
+# AoNW Dart Core
 
 `aonw_core` is the current production implementation of Age of New Worlds game
 rules. It owns the authoritative domain state, deterministic engine, maps and
@@ -10,7 +10,7 @@ the Flutter client and Serverpod.
 This package is a transitional implementation. It is planned to be replaced by
 the shared Rust engine developed as a Cargo workspace under `engine/`. The Rust
 engine will become the single authoritative rules implementation used by local
-play, AI, replay, Serverpod, Flutter AONW1, and Godot AONW2.
+play, AI, replay, Serverpod, Flutter AoNW1, and Godot AoNW2.
 
 The replacement is incremental, not a big-bang rewrite. Until the documented
 parity, save compatibility, platform, server shadow/canary, and rollback gates

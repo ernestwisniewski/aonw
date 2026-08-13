@@ -23,6 +23,7 @@ void main() {
         merchantTradeRoute: MerchantTradeRoute(
           originCityId: 'city_1',
           destinationCityId: 'city_2',
+          transportNetworkFingerprint: '0123456789abcdef',
           steps: const [
             UnitMovementStep(col: 2, row: 2, enterCost: 1, cumulativeCost: 1),
           ],
@@ -54,8 +55,16 @@ void main() {
 
       expect(json['movementPoints'], 2);
       expect(json['movementSubpoints'], 1);
+      expect(
+        (json['merchantTradeRoute'] as Map)['transportNetworkFingerprint'],
+        '0123456789abcdef',
+      );
       expect(unit.exactMovementPoints, 2.5);
       expect(restored, unit);
+      expect(
+        restored.merchantTradeRoute.hashCode,
+        unit.merchantTradeRoute.hashCode,
+      );
       expect(unit.copyWithMovementUnits(1).exactMovementPoints, 0.5);
       expect(unit.copyWith(movementPoints: 3).movementUnits, 6);
     });

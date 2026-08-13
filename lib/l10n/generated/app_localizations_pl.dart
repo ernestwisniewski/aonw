@@ -2048,6 +2048,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get cameraSectionTitle => 'Kamera';
 
   @override
+  String get animationSectionTitle => 'Animacje';
+
+  @override
+  String get showAnimationsLabel => 'Pokazuj animacje';
+
+  @override
+  String get smoothCameraMovementLabel => 'Płynny ruch kamery';
+
+  @override
   String get automationSectionTitle => 'Automatyzacja';
 
   @override

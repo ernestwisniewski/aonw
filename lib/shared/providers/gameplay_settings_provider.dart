@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamepads/gamepads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+part 'gameplay_settings_animation.dart';
+
 const _legacyFollowUnitMovementCameraKey =
     'gameplay.follow_unit_movement_camera';
 const _legacyFollowEnemyUnitCameraKey = 'gameplay.follow_enemy_unit_camera';
@@ -16,6 +18,8 @@ const _followEnemyUnitMovementCameraKey =
 const _cinematicCameraEnabledKey = 'gameplay.cinematic_camera_enabled';
 const _autoActionFlowEnabledKey = 'gameplay.auto_action_flow_enabled';
 const _autoTurnFlowEnabledKey = 'gameplay.auto_turn_flow_enabled';
+const _showAnimationsKey = 'gameplay.show_animations';
+const _animateCameraTransitionsKey = 'gameplay.animate_camera_transitions';
 const _preferredMapViewModeKey = 'gameplay.preferred_map_view_mode';
 const _gamepadEnabledKey = 'gameplay.gamepad.enabled';
 const _gamepadDeadzoneKey = 'gameplay.gamepad.deadzone';
@@ -33,6 +37,8 @@ class GameplaySettings {
     this.cinematicCameraEnabled = false,
     this.autoActionFlowEnabled = true,
     this.autoTurnFlowEnabled = false,
+    this.showAnimations = true,
+    this.animateCameraTransitions = true,
     this.preferredMapViewMode = MapViewMode.graphic,
     this.gamepad = GamepadControlSettings.defaults,
   });
@@ -44,6 +50,8 @@ class GameplaySettings {
   final bool cinematicCameraEnabled;
   final bool autoActionFlowEnabled;
   final bool autoTurnFlowEnabled;
+  final bool showAnimations;
+  final bool animateCameraTransitions;
   final MapViewMode preferredMapViewMode;
   final GamepadControlSettings gamepad;
 
@@ -61,6 +69,8 @@ class GameplaySettings {
     bool? cinematicCameraEnabled,
     bool? autoActionFlowEnabled,
     bool? autoTurnFlowEnabled,
+    bool? showAnimations,
+    bool? animateCameraTransitions,
     MapViewMode? preferredMapViewMode,
     GamepadControlSettings? gamepad,
   }) {
@@ -78,6 +88,9 @@ class GameplaySettings {
       autoActionFlowEnabled:
           autoActionFlowEnabled ?? this.autoActionFlowEnabled,
       autoTurnFlowEnabled: autoTurnFlowEnabled ?? this.autoTurnFlowEnabled,
+      showAnimations: showAnimations ?? this.showAnimations,
+      animateCameraTransitions:
+          animateCameraTransitions ?? this.animateCameraTransitions,
       preferredMapViewMode: preferredMapViewMode ?? this.preferredMapViewMode,
       gamepad: gamepad ?? this.gamepad,
     );
@@ -97,6 +110,8 @@ class GameplaySettingsController extends Notifier<GameplaySettings> {
   bool? _pendingCinematicCameraEnabled;
   bool? _pendingAutoActionFlowEnabled;
   bool? _pendingAutoTurnFlowEnabled;
+  bool? _pendingShowAnimations;
+  bool? _pendingAnimateCameraTransitions;
   MapViewMode? _pendingPreferredMapViewMode;
   GamepadControlSettings? _pendingGamepad;
   int _gamepadSaveGeneration = 0;
@@ -225,6 +240,19 @@ class GameplaySettingsController extends Notifier<GameplaySettings> {
     );
   }
 
+  bool _updateAnimationState({bool? showAnimations, bool? cameraTransitions}) {
+    if ((showAnimations == null || showAnimations == state.showAnimations) &&
+        (cameraTransitions == null ||
+            cameraTransitions == state.animateCameraTransitions)) {
+      return false;
+    }
+    state = state.copyWith(
+      showAnimations: showAnimations,
+      animateCameraTransitions: cameraTransitions,
+    );
+    return true;
+  }
+
   void setPreferredMapViewMode(MapViewMode mode) {
     if (state.preferredMapViewMode == mode) return;
     _pendingPreferredMapViewMode = mode;
@@ -314,6 +342,14 @@ class GameplaySettingsController extends Notifier<GameplaySettings> {
             _pendingAutoTurnFlowEnabled ??
             prefs.getBool(_autoTurnFlowEnabledKey) ??
             state.autoTurnFlowEnabled,
+        showAnimations:
+            _pendingShowAnimations ??
+            prefs.getBool(_showAnimationsKey) ??
+            state.showAnimations,
+        animateCameraTransitions:
+            _pendingAnimateCameraTransitions ??
+            prefs.getBool(_animateCameraTransitionsKey) ??
+            state.animateCameraTransitions,
         preferredMapViewMode:
             _pendingPreferredMapViewMode ??
             _storedMapViewMode(prefs.getString(_preferredMapViewModeKey)) ??

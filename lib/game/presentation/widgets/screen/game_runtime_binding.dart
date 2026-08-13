@@ -2,6 +2,7 @@ import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/providers.dart';
+import 'package:aonw/shared/providers/gameplay_settings_provider.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -70,6 +71,7 @@ class _GameRuntimeBindingState extends ConsumerState<GameRuntimeBinding> {
   }
 
   void _syncRenderer() {
+    final gameplaySettings = ref.read(gameplaySettingsProvider);
     widget.renderer
       ..viewMode = widget.session.viewMode
       ..displaySettings = widget.displaySettings
@@ -80,6 +82,8 @@ class _GameRuntimeBindingState extends ConsumerState<GameRuntimeBinding> {
         focusEnemyUnitMovementCamera: widget.focusEnemyUnitMovementCamera,
         followEnemyUnitMovementCamera: widget.followEnemyUnitMovementCamera,
         cinematicCameraEnabled: widget.cinematicCameraEnabled,
+        unitAnimationsEnabled: gameplaySettings.showAnimations,
+        cameraTransitionsEnabled: gameplaySettings.animateCameraTransitions,
       ));
     _applyCurrentStateIfReady();
   }
@@ -97,7 +101,12 @@ class _GameRuntimeBindingState extends ConsumerState<GameRuntimeBinding> {
   Widget build(BuildContext context) {
     _keepCommandControllerAlive();
     _listenForBootstrapState();
+    _listenForAnimationSettings();
     return widget.child;
+  }
+
+  void _listenForAnimationSettings() {
+    ref.listen(gameplaySettingsProvider, (_, _) => _syncRenderer());
   }
 
   void _keepCommandControllerAlive() {

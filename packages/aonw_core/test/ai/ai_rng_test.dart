@@ -39,5 +39,13 @@ void main() {
       expect(draw.value, inInclusiveRange(0, 2));
       expect(draw.rng, isNot(rng));
     });
+
+    test('validates bounds and exposes stable diagnostics', () {
+      final rng = AiRng(42);
+
+      expect(() => rng.nextInt(0), throwsRangeError);
+      expect(rng.hashCode, rng.state);
+      expect(rng.toString(), 'AiRng(state: 42)');
+    });
   });
 }

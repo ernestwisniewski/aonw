@@ -97,24 +97,30 @@ final class HudStrategicResourceSummary {
     required WorldMap mapData,
     required CityRuleset cityRuleset,
     required TechnologyRuleset technologyRuleset,
+    EmpireResourceNetwork? resourceNetwork,
+    StrategicResourceProductionProjection? strategicProduction,
   }) {
     if (playerId.isEmpty) return empty;
 
-    final production = StrategicResourceProductionRules.forPlayer(
-      playerId: playerId,
-      cities: state.cities,
-      fieldImprovements: state.fieldImprovements,
-      mapTiles: mapData,
-      research: state.research,
-    );
-    final network = EmpireResourceNetworkRules.forPlayer(
-      playerId: playerId,
-      cities: state.cities,
-      mapTiles: mapData,
-      research: state.research,
-      ruleset: cityRuleset,
-      resourceTradeAgreements: state.resourceTradeAgreements,
-    );
+    final production =
+        strategicProduction ??
+        StrategicResourceProductionRules.forPlayer(
+          playerId: playerId,
+          cities: state.cities,
+          fieldImprovements: state.fieldImprovements,
+          mapTiles: mapData,
+          research: state.research,
+        );
+    final network =
+        resourceNetwork ??
+        EmpireResourceNetworkRules.forPlayer(
+          playerId: playerId,
+          cities: state.cities,
+          mapTiles: mapData,
+          research: state.research,
+          ruleset: cityRuleset,
+          resourceTradeAgreements: state.resourceTradeAgreements,
+        );
     final allocations = _strategicAllocations(state.cities, playerId);
     final allocated = _allocatedBundle(allocations);
     final missingResources = _missingUnlockedResources(
@@ -243,40 +249,40 @@ List<HudStrategicResourceSource> _strategicSources({
   required GameClientState state,
   required CityResourceInventory inventory,
   required StrategicResourceProductionProjection production,
-}) => [
-  for (final source in inventory.sources)
-    if (ResourceCatalog.isStrategic(source.resource))
-      HudStrategicResourceSource(
-        city: state.cities.firstWhere(
-          (candidate) => candidate.id == source.cityId,
+}) {
+  final cityById = {for (final city in state.cities) city.id: city};
+  final improvementByHex = {
+    for (final improvement in state.fieldImprovements)
+      _hexKey(improvement.hex): improvement,
+  };
+  final productionBySource = {
+    for (final source in production.sources)
+      _sourceKey(source.cityId, source.hex, source.resource): source,
+  };
+  return [
+    for (final source in inventory.sources)
+      if (ResourceCatalog.isStrategic(source.resource) &&
+          cityById.containsKey(source.cityId))
+        HudStrategicResourceSource(
+          city: cityById[source.cityId]!,
+          hex: source.hex,
+          resource: source.resource,
+          improvement: improvementByHex[_hexKey(source.hex)]?.type,
+          amountPerTurn:
+              productionBySource[_sourceKey(
+                    source.cityId,
+                    source.hex,
+                    source.resource,
+                  )]
+                  ?.amountPerTurn,
         ),
-        hex: source.hex,
-        resource: source.resource,
-        improvement: _improvementAt(state, source.hex)?.type,
-        amountPerTurn: _productionAt(production, source)?.amountPerTurn,
-      ),
-];
-
-FieldImprovement? _improvementAt(GameClientState state, CityHex hex) {
-  for (final improvement in state.fieldImprovements) {
-    if (improvement.hex == hex) return improvement;
-  }
-  return null;
+  ];
 }
 
-StrategicResourceProductionSource? _productionAt(
-  StrategicResourceProductionProjection production,
-  CityResourceSource source,
-) {
-  for (final candidate in production.sources) {
-    if (candidate.cityId == source.cityId &&
-        candidate.hex == source.hex &&
-        candidate.resource == source.resource) {
-      return candidate;
-    }
-  }
-  return null;
-}
+String _hexKey(CityHex hex) => '${hex.col}:${hex.row}';
+
+String _sourceKey(String cityId, CityHex hex, ResourceType resource) =>
+    '$cityId:${hex.col}:${hex.row}:${resource.name}';
 
 int _tradeCount(
   GameClientState state,

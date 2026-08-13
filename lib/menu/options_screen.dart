@@ -60,6 +60,8 @@ class OptionsScreen extends ConsumerWidget {
                     SizedBox(height: 12),
                     OptionsCameraSection(),
                     SizedBox(height: 12),
+                    OptionsAnimationSection(),
+                    SizedBox(height: 12),
                     OptionsAutomationSection(),
                     SizedBox(height: 12),
                     OptionsAudioSection(),

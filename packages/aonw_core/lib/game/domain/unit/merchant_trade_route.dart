@@ -4,11 +4,13 @@ class MerchantTradeRoute {
   final String originCityId;
   final String destinationCityId;
   final List<UnitMovementStep> steps;
+  final String transportNetworkFingerprint;
 
   MerchantTradeRoute({
     required this.originCityId,
     required this.destinationCityId,
     required List<UnitMovementStep> steps,
+    this.transportNetworkFingerprint = '',
   }) : steps = List.unmodifiable(steps);
 
   factory MerchantTradeRoute.fromJson(Map<String, dynamic> json) {
@@ -19,6 +21,8 @@ class MerchantTradeRoute {
         for (final step in json['steps'] as List<dynamic>)
           _stepFromJson(step as Map<String, dynamic>),
       ],
+      transportNetworkFingerprint:
+          json['transportNetworkFingerprint'] as String? ?? '',
     );
   }
 
@@ -38,6 +42,8 @@ class MerchantTradeRoute {
           'cumulativeCost': step.cumulativeCost,
         },
     ],
+    if (transportNetworkFingerprint.isNotEmpty)
+      'transportNetworkFingerprint': transportNetworkFingerprint,
   };
 
   static UnitMovementStep _stepFromJson(Map<String, dynamic> json) {
@@ -54,12 +60,17 @@ class MerchantTradeRoute {
     return other is MerchantTradeRoute &&
         other.originCityId == originCityId &&
         other.destinationCityId == destinationCityId &&
+        other.transportNetworkFingerprint == transportNetworkFingerprint &&
         _sameSteps(other.steps, steps);
   }
 
   @override
-  int get hashCode =>
-      Object.hash(originCityId, destinationCityId, Object.hashAll(steps));
+  int get hashCode => Object.hash(
+    originCityId,
+    destinationCityId,
+    transportNetworkFingerprint,
+    Object.hashAll(steps),
+  );
 
   @override
   String toString() {

@@ -19,11 +19,9 @@ extension GameRendererCameraRendering on GameRenderer {
   set followUnitMovementCamera(bool value) =>
       _cameraSettings.followOwnUnitMovementCamera = value;
 
-  bool get followEnemyUnitCamera =>
-      _cameraSettings.focusEnemyUnitMovementCamera;
+  bool get followEnemyUnitCamera => _cameraSettings.enemyFocusEnabled;
 
-  set followEnemyUnitCamera(bool value) =>
-      _cameraSettings.focusEnemyUnitMovementCamera = value;
+  set followEnemyUnitCamera(bool value) => _cameraSettings.setEnemyFocus(value);
 
   bool get cinematicCameraEnabled => _cameraSettings.cinematicCameraEnabled;
 
@@ -34,10 +32,13 @@ extension GameRendererCameraRendering on GameRenderer {
     followEnemyUnitMovementCamera:
         _cameraSettings.followEnemyUnitMovementCamera,
     cinematicCameraEnabled: value,
+    unitAnimationsEnabled: _cameraSettings.unitAnimationsEnabled,
+    cameraTransitionsEnabled: _cameraSettings.cameraTransitionsEnabled,
   ));
 
   void applyMovementCameraSettings(GameRendererMovementCameraSettings value) {
     final projectionChanged = _cameraSettings.applyMovement(value);
+    _stateSyncHandler.applyAnimationSettings(value);
     if (!projectionChanged) return;
     _lastSyncedHoverHex = null;
     _refreshHoverIntent();

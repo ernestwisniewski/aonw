@@ -2058,6 +2058,15 @@ class AppLocalizationsNl extends AppLocalizations {
   String get cameraSectionTitle => 'Camera';
 
   @override
+  String get animationSectionTitle => 'Animaties';
+
+  @override
+  String get showAnimationsLabel => 'Animaties tonen';
+
+  @override
+  String get smoothCameraMovementLabel => 'Vloeiende camerabeweging';
+
+  @override
   String get automationSectionTitle => 'Automatisering';
 
   @override

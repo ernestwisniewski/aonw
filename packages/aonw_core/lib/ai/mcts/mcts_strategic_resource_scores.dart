@@ -4,7 +4,7 @@ import 'package:aonw_core/game/domain/resource.dart';
 abstract final class MctsStrategicResourceScores {
   static double stateScore(SimulatedState state) {
     final view = state.view;
-    final production = StrategicResourceProductionRules.forPlayer(
+    final production = StrategicResourceProductionRules.outputForPlayer(
       playerId: view.forPlayerId,
       cities: view.ownCities,
       fieldImprovements: view.ownImprovements,
@@ -17,7 +17,7 @@ abstract final class MctsStrategicResourceScores {
     );
     final domestic = ResourceCatalog.stockpiledResources.fold<int>(
       0,
-      (sum, resource) => sum + production.output.amountFor(resource),
+      (sum, resource) => sum + production.amountFor(resource),
     );
     var imports = 0;
     var exports = 0;

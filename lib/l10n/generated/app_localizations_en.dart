@@ -2050,6 +2050,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cameraSectionTitle => 'Camera';
 
   @override
+  String get animationSectionTitle => 'Animations';
+
+  @override
+  String get showAnimationsLabel => 'Show animations';
+
+  @override
+  String get smoothCameraMovementLabel => 'Smooth camera movement';
+
+  @override
   String get automationSectionTitle => 'Automation';
 
   @override

@@ -40,6 +40,36 @@ final class StrategicResourceProductionProjection {
 }
 
 abstract final class StrategicResourceProductionRules {
+  /// Computes only the aggregate output without allocating or sorting sources.
+  ///
+  /// AI evaluation calls this for every simulated state, where the detailed
+  /// source list is unused.
+  static StrategicResourceBundle outputForPlayer({
+    required String playerId,
+    required Iterable<GameCity> cities,
+    required Iterable<FieldImprovement> fieldImprovements,
+    required MapTileLookup mapTiles,
+    required ResearchState research,
+    ResourceEconomyRuleset ruleset = ResourceEconomyRuleset.standard,
+  }) {
+    if (playerId.isEmpty) return StrategicResourceBundle.empty;
+    final ownCities = {
+      for (final city in cities)
+        if (city.ownerPlayerId == playerId) city.id: city,
+    };
+    if (ownCities.isEmpty) return StrategicResourceBundle.empty;
+    return StrategicResourceBundle(
+      _aggregateImprovementOutput(
+        ownCities: ownCities,
+        fieldImprovements: fieldImprovements,
+        mapTiles: mapTiles,
+        playerId: playerId,
+        research: research,
+        ruleset: ruleset,
+      ),
+    );
+  }
+
   static StrategicResourceProductionProjection forPlayer({
     required String playerId,
     required Iterable<GameCity> cities,
@@ -84,6 +114,71 @@ abstract final class StrategicResourceProductionRules {
       sources: List.unmodifiable(sources),
     );
   }
+}
+
+Map<ResourceType, int> _aggregateImprovementOutput({
+  required Map<String, GameCity> ownCities,
+  required Iterable<FieldImprovement> fieldImprovements,
+  required MapTileLookup mapTiles,
+  required String playerId,
+  required ResearchState research,
+  required ResourceEconomyRuleset ruleset,
+}) {
+  final amounts = <ResourceType, int>{};
+  final visitedHexes = <String>{};
+  for (final improvement in fieldImprovements) {
+    if (!visitedHexes.add(_hexKey(improvement.hex))) continue;
+    _addImprovementOutput(
+      amounts: amounts,
+      improvement: improvement,
+      ownCities: ownCities,
+      mapTiles: mapTiles,
+      playerId: playerId,
+      research: research,
+      ruleset: ruleset,
+    );
+  }
+  return amounts;
+}
+
+void _addImprovementOutput({
+  required Map<ResourceType, int> amounts,
+  required FieldImprovement improvement,
+  required Map<String, GameCity> ownCities,
+  required MapTileLookup mapTiles,
+  required String playerId,
+  required ResearchState research,
+  required ResourceEconomyRuleset ruleset,
+}) {
+  final city = _owningCityForImprovement(improvement, ownCities);
+  if (city == null || !city.controlsHex(improvement.hex)) return;
+  final tile = mapTiles.tileAt(improvement.hex.col, improvement.hex.row);
+  if (tile == null) return;
+  for (final resource in tile.resources) {
+    if (!_canExtract(
+      resource: resource,
+      improvement: improvement,
+      playerId: playerId,
+      research: research,
+      ruleset: ruleset,
+    )) {
+      continue;
+    }
+    final amount = ruleset.extractionFor(resource)!.amountPerTurn;
+    amounts[resource] = (amounts[resource] ?? 0) + amount;
+  }
+}
+
+GameCity? _owningCityForImprovement(
+  FieldImprovement improvement,
+  Map<String, GameCity> ownCities,
+) {
+  final builtByCityId = improvement.builtByCityId;
+  if (builtByCityId != null) return ownCities[builtByCityId];
+  for (final city in ownCities.values) {
+    if (city.controlsHex(improvement.hex)) return city;
+  }
+  return null;
 }
 
 List<GameCity> _orderedPlayerCities(

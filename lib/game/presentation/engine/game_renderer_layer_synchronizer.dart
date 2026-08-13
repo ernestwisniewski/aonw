@@ -56,6 +56,8 @@ final class GameRendererLayerSynchronizer {
     required this.currentTurn,
     required this.viewMode,
     required this.reduceMotion,
+    required this.unitAnimationsEnabled,
+    required this.cameraTransitionsEnabled,
     required this.workerActionPaletteOptions,
     required this.focusInitialActivePlayer,
     required this.focusActiveSelection,
@@ -91,6 +93,8 @@ final class GameRendererLayerSynchronizer {
   final int? Function() currentTurn;
   final MapViewMode Function() viewMode;
   final bool Function() reduceMotion;
+  final bool Function() unitAnimationsEnabled;
+  final bool Function() cameraTransitionsEnabled;
   final List<ActionPaletteOption> Function() workerActionPaletteOptions;
   final void Function() focusInitialActivePlayer;
   final void Function() focusActiveSelection;
@@ -220,12 +224,14 @@ final class GameRendererLayerSynchronizer {
 
   void syncReduceMotion() {
     final value = reduceMotion();
-    unitMarkerLayer().reduceMotion = value;
+    unitMarkerLayer().reduceMotion = value || !unitAnimationsEnabled();
     cityMarkerLayer().reduceMotion = value;
     cityProductionParticleLayer().reduceMotion = value;
     cloudDriftLayer().reduceMotion = value;
     floatingTextLayer().reduceMotion = value;
-    if (isReady()) cameraController().reduceMotion = value;
+    if (isReady()) {
+      cameraController().reduceMotion = value || !cameraTransitionsEnabled();
+    }
   }
 
   int colorForPlayer(String playerId) {

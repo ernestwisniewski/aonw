@@ -243,8 +243,7 @@ extension GameRendererTestingHooks on GameRenderer {
   bool get reduceMotionForTesting => _reduceMotion;
 
   @visibleForTesting
-  bool get cinematicCameraEnabledForTesting =>
-      _cameraSettings.cinematicCameraEnabled;
+  bool get cinematicCameraEnabledForTesting => cinematicCameraEnabled;
 
   @visibleForTesting
   bool unitMarkerReduceMotionForTesting(String unitId) =>

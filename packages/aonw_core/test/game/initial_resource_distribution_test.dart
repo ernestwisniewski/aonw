@@ -66,6 +66,54 @@ void main() {
       expect(occupied, isNot(contains('6:3')));
       expect(occupied.length, distribution.placements.length);
     });
+
+    test('never places generated resources on blocked water', () {
+      final mapData = WorldMap(
+        cols: 12,
+        rows: 2,
+        tiles: [
+          for (var row = 0; row < 2; row++)
+            for (var col = 0; col < 12; col++)
+              WorldTile(
+                col: col,
+                row: row,
+                terrains: switch (col % 4) {
+                  1 => const [TerrainType.ocean],
+                  2 => const [TerrainType.lake],
+                  3 => const [TerrainType.coast],
+                  _ => const [TerrainType.grassland],
+                },
+                resources: const [],
+                height: 0,
+              ),
+        ],
+      );
+      final starts = [
+        GameUnit.produced(
+          id: 'settler',
+          ownerPlayerId: 'player_1',
+          type: GameUnitType.settler,
+          col: 0,
+          row: 0,
+        ),
+      ];
+
+      for (var seed = 0; seed < 100; seed++) {
+        final distribution = InitialResourceDistributionGenerator.generate(
+          mapData: mapData,
+          startingUnits: starts,
+          seed: seed,
+        );
+        expect(distribution.placements, isNotEmpty);
+        for (final placement in distribution.placements) {
+          final terrains = mapData
+              .tileAt(placement.col, placement.row)!
+              .terrains;
+          expect(terrains, isNot(contains(TerrainType.ocean)));
+          expect(terrains, isNot(contains(TerrainType.lake)));
+        }
+      }
+    });
   });
 
   test('distribution JSON and map application are lossless', () {

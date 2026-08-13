@@ -152,7 +152,7 @@ void main() {
                 '${step.col},${step.row}:'
                 '${step.enterCost}/${step.cumulativeCost}',
           ),
-          const ['1,0:4/4', '2,0:2/6'],
+          const ['1,0:2/2', '2,0:1/3'],
         );
         expect(
           effects.single,
@@ -164,14 +164,14 @@ void main() {
                 UnitMovementStep(
                   col: 1,
                   row: 0,
-                  enterCost: 4,
-                  cumulativeCost: 4,
+                  enterCost: 2,
+                  cumulativeCost: 2,
                 ),
                 UnitMovementStep(
                   col: 2,
                   row: 0,
-                  enterCost: 2,
-                  cumulativeCost: 6,
+                  enterCost: 1,
+                  cumulativeCost: 3,
                 ),
               ]),
         );

@@ -32,6 +32,48 @@ void main() {
     );
   });
 
+  test('enables animation options by default and persists changes', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    expect(container.read(gameplaySettingsProvider).showAnimations, isTrue);
+    expect(
+      container.read(gameplaySettingsProvider).animateCameraTransitions,
+      isTrue,
+    );
+
+    container.read(gameplaySettingsProvider.notifier)
+      ..setShowAnimations(false)
+      ..setAnimateCameraTransitions(false);
+    expect(container.read(gameplaySettingsProvider).showAnimations, isFalse);
+    expect(
+      container.read(gameplaySettingsProvider).animateCameraTransitions,
+      isFalse,
+    );
+
+    await Future<void>.delayed(Duration.zero);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('gameplay.show_animations'), isFalse);
+    expect(prefs.getBool('gameplay.animate_camera_transitions'), isFalse);
+  });
+
+  test('loads the stored animation preferences', () async {
+    SharedPreferences.setMockInitialValues({
+      'gameplay.show_animations': false,
+      'gameplay.animate_camera_transitions': false,
+    });
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(gameplaySettingsProvider.notifier).ensureLoaded();
+
+    expect(container.read(gameplaySettingsProvider).showAnimations, isFalse);
+    expect(
+      container.read(gameplaySettingsProvider).animateCameraTransitions,
+      isFalse,
+    );
+  });
+
   test('keeps gamepad input enabled with default tuning', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);

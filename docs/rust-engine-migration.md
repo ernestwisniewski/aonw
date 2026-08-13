@@ -17,10 +17,10 @@ runtime adapters around it. It does not contain the Flutter or Godot clients.
 The intended result is:
 
 - one Rust implementation of authoritative rules for local play, AI, replay,
-  Serverpod matches, Flutter, and the Godot AONW2 client;
-- a Flutter AONW1 client that remains fixable, buildable, releasable, and fully
+  Serverpod matches, Flutter, and the Godot AoNW2 client;
+- a Flutter AoNW1 client that remains fixable, buildable, releasable, and fully
   functional during the complete migration;
-- a Godot AONW2 client that presents the same rules through a separate 3D user
+- a Godot AoNW2 client that presents the same rules through a separate 3D user
   experience;
 - Serverpod remaining responsible for authentication, lobby and match
   coordination, transaction ownership, persistence, offsets, post-commit
@@ -59,8 +59,8 @@ remote client never receives or reconstructs canonical `DomainState`.
 
 ```mermaid
 flowchart LR
-  Flutter["Flutter / Flame AONW1"]
-  Godot["Godot AONW2"]
+  Flutter["Flutter / Flame AoNW1"]
+  Godot["Godot AoNW2"]
 
   Flutter --> FlutterLocal["LocalSessionPort"]
   Godot --> GodotLocal["AonwLocalSession"]
@@ -93,7 +93,7 @@ New Rust and Godot work is added alongside them:
 
 ```text
 aonw/
-├── lib/                            # existing Flutter AONW1 client
+├── lib/                            # existing Flutter AoNW1 client
 ├── test/
 │   └── fixtures/
 │       └── reducer_parity/         # shared independent slice oracle
@@ -442,7 +442,7 @@ becomes production-default.
 
 ## Flutter Green Contract
 
-Flutter AONW1 remains a complete production client throughout the migration:
+Flutter AoNW1 remains a complete production client throughout the migration:
 
 - all currently supported Flutter platforms keep their build and release
   gates;
@@ -484,7 +484,7 @@ Flutter Web requires an explicit decision before Dart Core retirement: provide
 a Rust WASM backend for local play or classify web as remote-only. Native ABI
 support does not satisfy the web platform gate.
 
-## Godot AONW2 Contract
+## Godot AoNW2 Contract
 
 The Godot client is introduced under `clients/aonw2_godot/`. `AonwLocalSession`
 uses the shared local Rust runtime through the `aonw_godot` GDExtension adapter.
