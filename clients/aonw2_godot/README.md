@@ -90,10 +90,11 @@ Controls:
 - `G`: toggle the hex grid.
 
 Picking uses a shared hex projection and separate hover, selection, and
-reachable overlay layers. The preview seeds one developer unit: click it to
-query reachable hexes from Rust, then click a highlighted hex to execute and
-animate the authoritative `UnitMoved` event. These layers contain no movement
-legality rules.
+reachable overlay layers. When `assets/scenarios/<map_id>.json` exists, the
+preview opens it through the Rust local runtime and renders its player
+snapshot. Click a unit to query reachable hexes, then click a highlighted hex
+to execute the command and animate exact movement evidence. These layers
+contain no movement legality rules.
 
 ## Boundaries
 
@@ -111,14 +112,11 @@ second source of gameplay rules.
 
 The `aonw_godot` GDExtension is connected to map loading. Strict versioned maps
 are validated by `aonw_content` before the immutable Godot render view is
-created. `AonwNativeLocalSession` exposes reachable queries and
-revision-bound movement from Rust; unit/entity presentation can consume its
-results without calculating legality or paths in GDScript.
-
-The native adapter rejects oversized movement-state and visibility documents
-before JSON decoding, then applies the same unit, route, identifier, and balance
-limits as the framework-neutral Rust mapping boundary. These are safety limits,
-not gameplay balance configured by Godot.
+created. `AonwNativeLocalSession` opens strict map and scenario content through
+`aonw_local_runtime`, obtains unit views from snapshots, exposes reachable and
+route queries, and applies recipient-safe patches after movement. Selection is
+presentation-only; canonical state, visibility, paths, costs, revisions, and
+events remain owned by Rust.
 
 Build the native adapter before opening or running Godot:
 
@@ -137,7 +135,8 @@ make godot-test
 make godot-check
 ```
 
-The test covers strict Rust validation, native reachable/move calls,
+The test covers strict Rust validation, scenario bootstrap, native
+snapshot/reachable/route/move calls,
 asset discovery, immutable map views, projection/picking round trips, texture
 assembly, mesh generation, regeneration safety, and preserving authored nodes.
 `GODOT_BIN` can override the editor executable.

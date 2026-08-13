@@ -3,7 +3,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use aonw_content::{GridLayout, MapDocument};
+use aonw_content::{GridLayout, MapDocument, RulesetDefinition, ScenarioDefinition};
 
 fn repository_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -11,6 +11,26 @@ fn repository_root() -> PathBuf {
         .find(|path| path.join("engine/Cargo.toml").is_file() && path.join("content").is_dir())
         .expect("repository root must contain engine and content")
         .to_path_buf()
+}
+
+#[test]
+fn starter_scenario_bootstraps_against_canonical_content() {
+    let root = repository_root();
+    let map_source = fs::read(root.join("content/maps/aonw2_starter/map.json"))
+        .expect("starter map must be readable");
+    let document = MapDocument::from_json(&map_source).expect("starter map must validate");
+    let scenario_source = fs::read(root.join("content/scenarios/aonw2_starter/scenario.json"))
+        .expect("starter scenario must be readable");
+    let ruleset = RulesetDefinition::standard();
+    let scenario = ScenarioDefinition::from_json(&scenario_source, document.map(), ruleset)
+        .expect("starter scenario must validate");
+    let state = scenario
+        .bootstrap(document.map(), ruleset)
+        .expect("starter scenario must bootstrap");
+
+    assert_eq!(scenario.map_id(), document.map().map_id());
+    assert_eq!(scenario.ruleset_id(), ruleset.ruleset_id());
+    assert_eq!(state.units().len(), 1);
 }
 
 #[test]

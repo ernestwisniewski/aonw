@@ -312,6 +312,17 @@ impl CanonicalQueryError {
     }
 }
 
+impl core::fmt::Display for CanonicalQueryError {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::Projection(source) => source.fmt(formatter),
+            Self::Rejected(source) => source.fmt(formatter),
+        }
+    }
+}
+
+impl std::error::Error for CanonicalQueryError {}
+
 fn rejected_transition(
     state: &GameState,
     rejection_code: &'static str,

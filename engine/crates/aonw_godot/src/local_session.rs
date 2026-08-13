@@ -1,39 +1,20 @@
-use aonw_content::{MapDefinition, MapDocument};
-use aonw_contract_mapping::decode_movement_state;
-use aonw_contracts::{MAX_KNOWN_UNIT_ID_COUNT, MAX_KNOWN_UNIT_IDS_JSON_BYTES};
-use aonw_domain::{MovementState, PlayerId, UnitId};
-use aonw_engine::{
-    EngineContext, GameEngine, MoveUnitCommand, MovementPlanningView, MovementTransition,
-    ReachableMovementQuery,
+use aonw_content::{MapDocument, RulesetDefinition, ScenarioDefinition};
+use aonw_domain::{HexCoord, PlayerId, UnitId, UnitKind};
+use aonw_engine::{DomainEvent, ExecutionEvidence};
+use aonw_local_runtime::{
+    LocalRuntime, MoveUnitResultV1, MoveUnitV1, OpenSessionV1, PlayerUnitViewV1, PlayerViewPatchV1,
+    QueryRequestV1, QueryResultV1, ReachableRequestV1, RoutePlanRequestV1, SessionStampV1,
 };
 use godot::classes::{IRefCounted, RefCounted};
 use godot::prelude::*;
 use serde_json::{Value, json};
 
-use crate::wire::{MovementStateWire, failure_json, success_json};
-
-#[derive(Debug)]
-struct Session {
-    map: MapDefinition,
-    state: MovementState,
-    actor: PlayerId,
-    known_unit_ids: Option<Vec<UnitId>>,
-}
-
-impl Session {
-    fn context(&self) -> EngineContext<'_> {
-        let planning_view = self.known_unit_ids.as_deref().map_or_else(
-            MovementPlanningView::fog_disabled,
-            MovementPlanningView::known_units,
-        );
-        EngineContext::new(&self.actor, &self.map, planning_view)
-    }
-}
+use crate::wire::{failure_json, success_json};
 
 #[derive(GodotClass)]
 #[class(base=RefCounted)]
 struct AonwLocalSession {
-    session: Option<Session>,
+    runtime: LocalRuntime,
     base: Base<RefCounted>,
 }
 
@@ -41,70 +22,132 @@ struct AonwLocalSession {
 impl IRefCounted for AonwLocalSession {
     fn init(base: Base<RefCounted>) -> Self {
         Self {
-            session: None,
+            runtime: LocalRuntime::default(),
             base,
         }
     }
 }
 
 #[godot_api]
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::unused_self)]
 impl AonwLocalSession {
+    #[func]
+    fn capabilities_json(&self) -> GString {
+        let capabilities = LocalRuntime::capabilities();
+        success_json(&json!({
+            "contractVersion": capabilities.contract_version,
+            "behaviorVersion": capabilities.behavior_version,
+            "routePlan": capabilities.route_plan,
+            "reachable": capabilities.reachable,
+            "moveUnit": capabilities.move_unit,
+        }))
+    }
+
     #[func]
     fn open(
         &mut self,
         map_json: GString,
-        movement_state_json: GString,
+        scenario_json: GString,
         actor_player_id: GString,
-        visibility_mode: GString,
-        known_unit_ids_json: GString,
     ) -> GString {
-        self.session = None;
-        match decode_session(
+        let request = match decode_open_request(
             &map_json.to_string(),
-            &movement_state_json.to_string(),
+            &scenario_json.to_string(),
             &actor_player_id.to_string(),
-            &visibility_mode.to_string(),
-            &known_unit_ids_json.to_string(),
         ) {
-            Ok(session) => {
-                let revision = session.state.revision();
-                self.session = Some(session);
-                success_json(&json!({"revision": revision}))
-            }
-            Err((code, message)) => failure_json(code, message),
+            Ok(request) => request,
+            Err((code, message)) => return failure_json(code, message),
+        };
+        match self.runtime.open(request) {
+            Ok(stamp) => success_json(&stamp_json(stamp)),
+            Err(error) => failure_json("session_open_failed", error),
+        }
+    }
+
+    #[func]
+    fn close(&mut self) -> GString {
+        self.runtime.close();
+        success_json(&json!({"closed": true}))
+    }
+
+    #[func]
+    fn snapshot_json(&self) -> GString {
+        match self.runtime.snapshot() {
+            Ok(snapshot) => success_json(&with_stamp(
+                *snapshot.stamp(),
+                json!({
+                    "units": snapshot.units().iter().map(unit_json).collect::<Vec<_>>(),
+                }),
+            )),
+            Err(error) => failure_json(error.code(), error),
         }
     }
 
     #[func]
     fn reachable_json(&self, unit_id: GString, expected_revision: i64) -> GString {
-        let Some(session) = &self.session else {
-            return failure_json("session_not_open", "session is not open");
+        let request = match reachable_request(&unit_id.to_string(), expected_revision) {
+            Ok(request) => request,
+            Err((code, message)) => return failure_json(code, message),
         };
-        let expected_revision = match u64::try_from(expected_revision) {
-            Ok(value) => value,
-            Err(error) => return failure_json("invalid_revision", error),
-        };
-        let unit_id = match UnitId::new(unit_id.to_string()) {
-            Ok(value) => value,
-            Err(error) => return failure_json("invalid_unit_id", error),
-        };
-        match GameEngine::reachable_movement(
-            &session.state,
-            session.context(),
-            ReachableMovementQuery::new(expected_revision, &unit_id),
+        match self.runtime.query(QueryRequestV1::Reachable(request)) {
+            Ok(QueryResultV1::Reachable(result)) => success_json(&with_stamp(
+                result.stamp,
+                json!({
+                    "unitId": result.unit_id.as_str(),
+                    "availableMovementUnits": result.available_movement.get(),
+                    "tiles": result.tiles.iter().map(|tile| json!({
+                        "col": tile.coordinate.col(),
+                        "row": tile.coordinate.row(),
+                        "costUnits": tile.cost.get(),
+                        "exhaustsMovement": tile.exhausts_movement,
+                    })).collect::<Vec<_>>(),
+                }),
+            )),
+            Ok(QueryResultV1::RoutePlan(_)) => {
+                failure_json("invalid_runtime_response", "reachable returned route plan")
+            }
+            Err(error) => failure_json(error.code(), error),
+        }
+    }
+
+    #[func]
+    fn route_plan_json(
+        &self,
+        unit_id: GString,
+        target_col: i64,
+        target_row: i64,
+        expected_revision: i64,
+    ) -> GString {
+        let request = match route_request(
+            &unit_id.to_string(),
+            target_col,
+            target_row,
+            expected_revision,
         ) {
-            Ok(result) => success_json(&json!({
-                "revision": result.revision(),
-                "unitId": result.unit_id().as_str(),
-                "availableMovementUnits": result.available_movement().get(),
-                "tiles": result.tiles().iter().map(|tile| json!({
-                    "col": tile.coordinate().col(),
-                    "row": tile.coordinate().row(),
-                    "costUnits": tile.cost().get(),
-                    "exhaustsMovement": tile.exhausts_movement(),
-                })).collect::<Vec<_>>(),
-            })),
+            Ok(request) => request,
+            Err((code, message)) => return failure_json(code, message),
+        };
+        match self.runtime.query(QueryRequestV1::RoutePlan(request)) {
+            Ok(QueryResultV1::RoutePlan(result)) => success_json(&with_stamp(
+                result.stamp,
+                json!({
+                    "unitId": result.unit_id.as_str(),
+                    "target": coordinate_json(result.target),
+                    "destination": coordinate_json(result.destination),
+                    "totalCostUnits": result.total_cost.get(),
+                    "availableMovementUnits": result.available_movement.get(),
+                    "remainingMovementUnits": result.remaining_movement.get(),
+                    "steps": result.steps.iter().map(|step| json!({
+                        "col": step.coordinate.col(),
+                        "row": step.coordinate.row(),
+                        "enterCostUnits": step.enter_cost.get(),
+                        "cumulativeCostUnits": step.cumulative_cost.get(),
+                    })).collect::<Vec<_>>(),
+                }),
+            )),
+            Ok(QueryResultV1::Reachable(_)) => {
+                failure_json("invalid_runtime_response", "route plan returned reachable")
+            }
             Err(error) => failure_json(error.code(), error),
         }
     }
@@ -117,174 +160,205 @@ impl AonwLocalSession {
         target_row: i64,
         expected_revision: i64,
     ) -> GString {
-        let unit_id = match UnitId::new(unit_id.to_string()) {
-            Ok(value) => value,
-            Err(error) => return failure_json("invalid_unit_id", error),
+        let request = match move_request(
+            &unit_id.to_string(),
+            target_col,
+            target_row,
+            expected_revision,
+        ) {
+            Ok(request) => request,
+            Err((code, message)) => return failure_json(code, message),
         };
-        let target_col = match i32::try_from(target_col) {
-            Ok(value) => value,
-            Err(error) => return failure_json("invalid_target", error),
-        };
-        let target_row = match i32::try_from(target_row) {
-            Ok(value) => value,
-            Err(error) => return failure_json("invalid_target", error),
-        };
-        let expected_revision = match u64::try_from(expected_revision) {
-            Ok(value) => value,
-            Err(error) => return failure_json("invalid_revision", error),
-        };
-        let Some(session) = &self.session else {
-            return failure_json("session_not_open", "session is not open");
-        };
-        let transition = GameEngine::apply_move_unit(
-            &session.state,
-            session.context(),
-            MoveUnitCommand::new(
-                expected_revision,
-                &unit_id,
-                aonw_domain::HexCoord::new(target_col, target_row),
-            ),
-        );
-        match transition {
-            Ok(transition) => {
-                let response = transition_json(&transition);
-                self.session.as_mut().expect("checked session").state = transition.state().clone();
-                success_json(&response)
-            }
+        match self.runtime.dispatch(&request) {
+            Ok(result) => success_json(&move_result_json(&result)),
             Err(error) => failure_json(error.code(), error),
         }
     }
 }
 
-fn decode_session(
+fn decode_open_request(
     map_json: &str,
-    movement_state_json: &str,
+    scenario_json: &str,
     actor_player_id: &str,
-    visibility_mode: &str,
-    known_unit_ids_json: &str,
-) -> Result<Session, (&'static str, String)> {
-    let map = MapDocument::from_json(map_json.as_bytes())
-        .map(|document| document.map().clone())
+) -> Result<OpenSessionV1, (&'static str, String)> {
+    let document = MapDocument::from_json(map_json.as_bytes())
         .map_err(|error| ("invalid_map", error.to_string()))?;
-    let wire = MovementStateWire::parse(movement_state_json)
-        .map_err(|error| ("invalid_movement_state_json", error.to_string()))?;
-    let state = decode_movement_state(wire.into())
-        .map_err(|error| ("invalid_movement_state", error.to_string()))?;
+    let ruleset = RulesetDefinition::standard().clone();
+    let scenario =
+        ScenarioDefinition::from_json(scenario_json.as_bytes(), document.map(), &ruleset)
+            .map_err(|error| ("invalid_scenario", error.to_string()))?;
     let actor = PlayerId::new(actor_player_id)
         .map_err(|error| ("invalid_actor_player_id", error.to_string()))?;
-    let known_unit_ids = match visibility_mode {
-        "unrestricted" => {
-            if !known_unit_ids_json.trim().is_empty() {
-                return Err((
-                    "invalid_visibility",
-                    "unrestricted visibility must not provide known unit ids".to_owned(),
-                ));
-            }
-            None
-        }
-        "knownUnits" => Some(
-            decode_known_unit_ids(known_unit_ids_json)
-                .map_err(|message| ("invalid_known_unit_ids", message))?,
-        ),
-        _ => {
-            return Err((
-                "invalid_visibility",
-                "visibility mode must be unrestricted or knownUnits".to_owned(),
-            ));
-        }
-    };
-    Ok(Session {
-        map,
-        state,
-        actor,
-        known_unit_ids,
+    OpenSessionV1::from_scenario(document.map().clone(), ruleset, &scenario, actor)
+        .map_err(|error| ("invalid_session", error.to_string()))
+}
+
+fn reachable_request(
+    unit_id: &str,
+    expected_revision: i64,
+) -> Result<ReachableRequestV1, (&'static str, String)> {
+    Ok(ReachableRequestV1 {
+        expected_revision: decode_revision(expected_revision)?,
+        unit_id: decode_unit_id(unit_id)?,
     })
 }
 
-fn decode_known_unit_ids(input: &str) -> Result<Vec<UnitId>, String> {
-    if input.len() > MAX_KNOWN_UNIT_IDS_JSON_BYTES {
-        return Err(format!(
-            "known unit ids JSON has {} bytes; maximum is {MAX_KNOWN_UNIT_IDS_JSON_BYTES}",
-            input.len()
-        ));
-    }
-    let values = serde_json::from_str::<Vec<String>>(input).map_err(|error| error.to_string())?;
-    if values.len() > MAX_KNOWN_UNIT_ID_COUNT {
-        return Err(format!(
-            "known unit ids has {} entries; maximum is {MAX_KNOWN_UNIT_ID_COUNT}",
-            values.len()
-        ));
-    }
-    let identifiers = values
-        .into_iter()
-        .map(UnitId::new)
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|error| error.to_string())?;
-    let mut sorted = identifiers.iter().collect::<Vec<_>>();
-    sorted.sort_unstable();
-    if sorted.windows(2).any(|pair| pair[0] == pair[1]) {
-        return Err("known unit ids must be unique".to_owned());
-    }
-    Ok(identifiers)
+fn route_request(
+    unit_id: &str,
+    target_col: i64,
+    target_row: i64,
+    expected_revision: i64,
+) -> Result<RoutePlanRequestV1, (&'static str, String)> {
+    Ok(RoutePlanRequestV1 {
+        expected_revision: decode_revision(expected_revision)?,
+        unit_id: decode_unit_id(unit_id)?,
+        target: decode_target(target_col, target_row)?,
+    })
 }
 
-fn transition_json(transition: &MovementTransition) -> Value {
-    let event = transition.event().map(|event| {
+fn move_request(
+    unit_id: &str,
+    target_col: i64,
+    target_row: i64,
+    expected_revision: i64,
+) -> Result<MoveUnitV1, (&'static str, String)> {
+    Ok(MoveUnitV1 {
+        expected_revision: decode_revision(expected_revision)?,
+        unit_id: decode_unit_id(unit_id)?,
+        target: decode_target(target_col, target_row)?,
+    })
+}
+
+fn decode_revision(value: i64) -> Result<u64, (&'static str, String)> {
+    u64::try_from(value).map_err(|error| ("invalid_revision", error.to_string()))
+}
+
+fn decode_unit_id(value: &str) -> Result<UnitId, (&'static str, String)> {
+    UnitId::new(value).map_err(|error| ("invalid_unit_id", error.to_string()))
+}
+
+fn decode_target(col: i64, row: i64) -> Result<HexCoord, (&'static str, String)> {
+    let col = i32::try_from(col).map_err(|error| ("invalid_target", error.to_string()))?;
+    let row = i32::try_from(row).map_err(|error| ("invalid_target", error.to_string()))?;
+    Ok(HexCoord::new(col, row))
+}
+
+fn stamp_json(stamp: SessionStampV1) -> Value {
+    json!({
+        "contractVersion": stamp.contract_version,
+        "behaviorVersion": stamp.behavior_version,
+        "revision": stamp.revision.get(),
+        "stateDigest": stamp.state_digest.to_string(),
+        "mapHash": stamp.map_hash.to_string(),
+        "rulesetHash": stamp.ruleset_hash.to_string(),
+    })
+}
+
+fn with_stamp(stamp: SessionStampV1, value: Value) -> Value {
+    let mut result = stamp_json(stamp).as_object().cloned().unwrap_or_default();
+    if let Value::Object(fields) = value {
+        result.extend(fields);
+    }
+    Value::Object(result)
+}
+
+fn unit_json(unit: &PlayerUnitViewV1) -> Value {
+    json!({
+        "id": unit.id().as_str(),
+        "ownerPlayerId": unit.owner_player_id().as_str(),
+        "kind": unit_kind_name(unit.kind()),
+        "name": unit.name(),
+        "col": unit.col(),
+        "row": unit.row(),
+        "movementUnits": unit.movement_units(),
+    })
+}
+
+fn move_result_json(result: &MoveUnitResultV1) -> Value {
+    with_stamp(
+        result.stamp,
         json!({
-            "type": "UnitMoved",
+            "accepted": result.is_accepted(),
+            "rejection": result.rejection,
+            "events": result.events.iter().map(event_json).collect::<Vec<_>>(),
+            "evidence": result.evidence.as_ref().map(evidence_json),
+            "viewPatch": patch_json(&result.view_patch),
+        }),
+    )
+}
+
+fn event_json(event: &DomainEvent) -> Value {
+    match event {
+        DomainEvent::UnitMoved(event) => json!({
+            "type": "unitMoved",
             "unitId": event.unit_id().as_str(),
-            "fromCol": event.from().col(),
-            "fromRow": event.from().row(),
-            "toCol": event.to().col(),
-            "toRow": event.to().row(),
-        })
-    });
-    let execution = transition.execution().map(|execution| {
-        json!({
+            "from": coordinate_json(event.from()),
+            "to": coordinate_json(event.to()),
+        }),
+    }
+}
+
+fn evidence_json(evidence: &ExecutionEvidence) -> Value {
+    match evidence {
+        ExecutionEvidence::UnitMovement(execution) => json!({
+            "type": "unitMovement",
             "unitId": execution.unit_id().as_str(),
-            "fromCol": execution.from().col(),
-            "fromRow": execution.from().row(),
+            "from": coordinate_json(execution.from()),
             "steps": execution.steps().iter().map(|step| json!({
                 "col": step.coordinate().col(),
                 "row": step.coordinate().row(),
                 "enterCostUnits": step.enter_cost().get(),
                 "cumulativeCostUnits": step.cumulative_cost().get(),
             })).collect::<Vec<_>>(),
-        })
-    });
-    let moved_unit = transition
-        .event()
-        .and_then(|event| transition.state().unit(event.unit_id()));
+        }),
+    }
+}
+
+fn patch_json(patch: &PlayerViewPatchV1) -> Value {
     json!({
-        "revision": transition.state().revision(),
-        "noOp": transition.is_no_op(),
-        "event": event,
-        "execution": execution,
-        "unit": moved_unit.map(|unit| json!({
-            "id": unit.id().as_str(),
-            "col": unit.position().col(),
-            "row": unit.position().row(),
-            "movementUnits": unit.movement_units().get(),
-        })),
+        "fromRevision": patch.from_revision,
+        "toRevision": patch.to_revision,
+        "upsertedUnits": patch.upserted_units.iter().map(unit_json).collect::<Vec<_>>(),
+        "removedUnitIds": patch.removed_unit_ids.iter().map(UnitId::as_str).collect::<Vec<_>>(),
     })
+}
+
+fn coordinate_json(coordinate: HexCoord) -> Value {
+    json!({"col": coordinate.col(), "row": coordinate.row()})
+}
+
+const fn unit_kind_name(kind: UnitKind) -> &'static str {
+    match kind {
+        UnitKind::Commander => "commander",
+        UnitKind::Warrior => "warrior",
+        UnitKind::Archer => "archer",
+        UnitKind::Settler => "settler",
+        UnitKind::Worker => "worker",
+        UnitKind::Merchant => "merchant",
+        UnitKind::Scout => "scout",
+        UnitKind::Spearman => "spearman",
+        UnitKind::Cavalry => "cavalry",
+        UnitKind::Catapult => "catapult",
+        UnitKind::HeavyInfantry => "heavyInfantry",
+        UnitKind::FieldCannon => "fieldCannon",
+        UnitKind::Rifleman => "rifleman",
+        UnitKind::Tank => "tank",
+        UnitKind::ScoutShip => "scoutShip",
+        UnitKind::Warship => "warship",
+        UnitKind::ReconPlane => "reconPlane",
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::hint::black_box;
-    use std::time::Instant;
-
-    use aonw_contracts::{
-        CURRENT_MOVEMENT_STATE_VERSION, MAX_KNOWN_UNIT_ID_COUNT, MAX_KNOWN_UNIT_IDS_JSON_BYTES,
-    };
     use serde_json::json;
 
-    use super::{decode_known_unit_ids, decode_session};
+    use super::decode_open_request;
 
-    fn map_json(cols: u16, rows: u16) -> String {
-        let tiles = (0..rows)
+    fn map_json() -> String {
+        let tiles = (0..5)
             .flat_map(|row| {
-                (0..cols).map(move |col| {
+                (0..5).map(move |col| {
                     json!({
                         "col": col,
                         "row": row,
@@ -298,9 +372,9 @@ mod tests {
         json!({
             "schemaVersion": 1,
             "gridLayout": "oddQFlatTop",
-            "cols": cols,
-            "rows": rows,
-            "mapName": "session_test",
+            "cols": 5,
+            "rows": 5,
+            "mapName": "session-test",
             "defaultZoom": 1.0,
             "objectives": [],
             "tiles": tiles,
@@ -308,136 +382,31 @@ mod tests {
         .to_string()
     }
 
-    fn state_json(schema_version: u16) -> String {
+    fn scenario_json() -> String {
         json!({
-            "schemaVersion": schema_version,
-            "revision": 1,
-            "turn": 1,
-            "units": [{
+            "schemaVersion": 1,
+            "scenarioId": "session-test",
+            "mapId": "session-test",
+            "rulesetId": "aonw-standard",
+            "initialUnits": [{
                 "id": "unit-1",
                 "ownerPlayerId": "player-1",
-                "kind": "warrior",
+                "kind": "commander",
+                "name": "Commander",
                 "col": 0,
                 "row": 0,
-                "movementUnits": 4,
-                "posture": "active",
-                "movementBlocked": false,
-                "queuedPath": null,
-                "carriedArtifactId": null,
             }],
         })
         .to_string()
     }
 
-    fn state_json_with_units(unit_count: usize) -> String {
-        let units = (0..unit_count)
-            .map(|index| {
-                json!({
-                    "id": format!("unit-{index}"),
-                    "ownerPlayerId": "player-1",
-                    "kind": "warrior",
-                    "col": i32::try_from(index % 40).expect("column"),
-                    "row": i32::try_from(index / 40).expect("row"),
-                    "movementUnits": 6,
-                    "posture": "active",
-                    "movementBlocked": false,
-                    "queuedPath": null,
-                    "carriedArtifactId": null,
-                })
-            })
-            .collect::<Vec<_>>();
-        json!({
-            "schemaVersion": CURRENT_MOVEMENT_STATE_VERSION,
-            "revision": 1,
-            "turn": 1,
-            "units": units,
-        })
-        .to_string()
-    }
-
     #[test]
-    fn session_accepts_only_the_current_movement_contract() {
-        decode_session(
-            &map_json(5, 5),
-            &state_json(CURRENT_MOVEMENT_STATE_VERSION),
-            "player-1",
-            "unrestricted",
-            "",
-        )
-        .expect("current movement contract must open");
-
-        let error = decode_session(
-            &map_json(5, 5),
-            &state_json(CURRENT_MOVEMENT_STATE_VERSION + 1),
-            "player-1",
-            "unrestricted",
-            "",
-        )
-        .expect_err("future movement contract must fail closed");
-        assert_eq!(error.0, "invalid_movement_state");
-    }
-
-    #[test]
-    fn visibility_mode_is_explicit() {
-        decode_session(
-            &map_json(5, 5),
-            &state_json(CURRENT_MOVEMENT_STATE_VERSION),
-            "player-1",
-            "knownUnits",
-            "[]",
-        )
-        .expect("knownUnits may explicitly expose no units");
-
-        let error = decode_session(
-            &map_json(5, 5),
-            &state_json(CURRENT_MOVEMENT_STATE_VERSION),
-            "player-1",
-            "",
-            "",
-        )
-        .expect_err("missing visibility mode must fail closed");
-        assert_eq!(error.0, "invalid_visibility");
-    }
-
-    #[test]
-    fn known_unit_ids_are_bounded_and_unique() {
-        let too_many = serde_json::to_string(
-            &(0..=MAX_KNOWN_UNIT_ID_COUNT)
-                .map(|index| format!("unit-{index}"))
-                .collect::<Vec<_>>(),
-        )
-        .expect("known ids JSON");
-        assert!(decode_known_unit_ids(&too_many).is_err());
-        assert!(decode_known_unit_ids(r#"["unit-1","unit-1"]"#).is_err());
-
-        let oversized = " ".repeat(MAX_KNOWN_UNIT_IDS_JSON_BYTES + 1);
-        assert!(decode_known_unit_ids(&oversized).is_err());
-    }
-
-    #[test]
-    #[ignore = "diagnostic wall-clock benchmark"]
-    fn native_session_open_benchmark() {
-        const ITERATIONS: usize = 20;
-        let map = map_json(40, 30);
-        let state = state_json_with_units(512);
-        for _ in 0..3 {
-            black_box(
-                decode_session(&map, &state, "player-1", "unrestricted", "").expect("warm session"),
-            );
-        }
-
-        let mut samples = Vec::with_capacity(ITERATIONS);
-        for _ in 0..ITERATIONS {
-            let started = Instant::now();
-            let session = decode_session(&map, &state, "player-1", "unrestricted", "")
-                .expect("benchmark session");
-            assert_eq!(session.state.units().len(), 512);
-            black_box(session);
-            samples.push(started.elapsed().as_nanos());
-        }
-        samples.sort_unstable();
-        let median = samples[samples.len() / 2];
-        let p95 = samples[(samples.len() * 95 / 100).min(samples.len() - 1)];
-        println!("native_session_open,1200,512,{ITERATIONS},{median},{p95}");
+    fn adapter_open_contract_is_strict_and_current() {
+        decode_open_request(&map_json(), &scenario_json(), "player-1")
+            .expect("current contracts must open");
+        let future = scenario_json().replace("\"schemaVersion\":1", "\"schemaVersion\":2");
+        let error = decode_open_request(&map_json(), &future, "player-1")
+            .expect_err("future contract must fail closed");
+        assert_eq!(error.0, "invalid_scenario");
     }
 }

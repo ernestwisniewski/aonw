@@ -25,7 +25,8 @@ pub use error::MapLoadError;
 pub use model::{MapDefinition, MapObjective, TileDefinition};
 pub use ruleset::{RulesetDefinition, UnitCapabilities, UnitDefinition, UnitMovementDomainValue};
 pub use scenario::{
-    ScenarioBootstrapError, ScenarioDefinition, ScenarioUnitDefinition, ScenarioValidationError,
+    ScenarioBootstrapError, ScenarioDefinition, ScenarioLoadError, ScenarioUnitDefinition,
+    ScenarioValidationError,
 };
 pub use validation::MapValidationError;
 

@@ -79,10 +79,11 @@ change.
 
 ### Accepted Successor Architecture
 
-Rust implementation starts directly under `engine/`. Its current narrow
-vertical slice contains validated map content, movement projection contracts,
-fog-safe route/reachable queries, `MoveUnit`, fixture parity, and a Godot
-GDExtension. It is not connected to Flutter, Serverpod, or production saves.
+Rust implementation starts directly under `engine/`. Its current vertical
+slice contains validated map/ruleset/scenario content, canonical state,
+fog-safe route/reachable queries, `MoveUnit`, fixture parity, a transactional
+local runtime, and a Godot GDExtension consuming player snapshots and patches.
+It is not connected to Flutter, Serverpod, or production saves.
 Flutter remains at the repository root during migration; AoNW2 already lives
 under `clients/aonw2_godot/`.
 
@@ -102,7 +103,7 @@ flowchart TB
   end
 
   subgraph RustEngine["engine/ — shared Rust engine"]
-    Runtime["aonw_local_runtime<br/>save / replay / hotseat"]
+    Runtime["aonw_local_runtime<br/>local session; save / replay planned"]
     Rules["aonw_domain + aonw_engine<br/>authoritative state / apply / query"]
     Content["aonw_content<br/>maps / rulesets / catalogs"]
     AI["aonw_ai"]

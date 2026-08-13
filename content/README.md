@@ -16,3 +16,9 @@ Their versioned counterparts under `content/maps/` are the only logical maps
 consumed by Rust and Godot. Existing JPG slices remain reference artwork for
 Godot, but the unversioned JSON files are not part of the new runtime boundary.
 All shared maps must use the schema in `schemas/map-v1.schema.json`.
+
+`content/scenarios/` contains strict starting placements bound to one map ID
+and one immutable ruleset ID. Rust validates both content identities before it
+bootstraps revision-zero `GameState`. Scenario v1 uses
+`schemas/scenario-v1.schema.json`; `aonw2_starter` supplies the first Godot
+local session.

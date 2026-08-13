@@ -395,41 +395,43 @@ func _test_native_engine_boundary() -> void:
 	_check(session != null, "native local session is registered")
 	if session == null:
 		return
-	var state_json := JSON.stringify({
-		"schemaVersion": 1,
-		"revision": 7,
-		"turn": 2,
-		"units": [{
-			"id": "ship-1",
-			"ownerPlayerId": "player-1",
-			"kind": "scoutShip",
-			"col": 0,
-			"row": 0,
-			"movementUnits": 4,
-			"posture": "active",
-			"movementBlocked": false,
-			"queuedPath": null,
-			"carriedArtifactId": null,
-		}],
-	})
+	var scenario_file := FileAccess.open(
+		"res://assets/scenarios/aonw2_starter.json",
+		FileAccess.READ,
+	)
+	_check(scenario_file != null, "native boundary scenario opens")
+	if scenario_file == null:
+		return
 	var opened: Dictionary = JSON.parse_string(session.open(
 		map_json,
-		state_json,
-		"player-1",
-		"unrestricted",
-		"",
+		scenario_file.get_as_text(),
+		"preview-player",
 	))
-	_check(opened["ok"], "native local movement session opens")
-	var reachable: Dictionary = JSON.parse_string(session.reachable_json("ship-1", 7))
+	_check(opened["ok"], "native local scenario session opens")
+	var snapshot: Dictionary = JSON.parse_string(session.snapshot_json())
+	_check(
+		snapshot["ok"] and snapshot["value"]["units"].size() == 1,
+		"native snapshot owns the scenario unit view",
+	)
+	var reachable: Dictionary = JSON.parse_string(
+		session.reachable_json("preview-commander", 0),
+	)
 	_check(
 		reachable["ok"] and not reachable["value"]["tiles"].is_empty(),
 		"native session returns reachable hexes",
 	)
-	var moved: Dictionary = JSON.parse_string(session.move_unit_json("ship-1", 1, 0, 7))
+	var route: Dictionary = JSON.parse_string(
+		session.route_plan_json("preview-commander", 2, 2, 0),
+	)
+	_check(route["ok"] and route["value"]["steps"].size() > 1, "native route is planned")
+	var moved: Dictionary = JSON.parse_string(
+		session.move_unit_json("preview-commander", 2, 2, 0),
+	)
 	_check(
 		moved["ok"]
-		and moved["value"]["revision"] == 8
-		and moved["value"]["event"]["toCol"] == 1,
+		and moved["value"]["accepted"]
+		and moved["value"]["revision"] == 1
+		and moved["value"]["evidence"]["steps"][-1]["row"] == 2,
 		"native session applies a revision-bound move",
 	)
 

@@ -82,7 +82,7 @@ func _open_source(source: AonwMapSource) -> void:
 	var invalid: Array = result["invalid_tiles"]
 	if not invalid.is_empty():
 		_status.text += " · invalid textures: %d" % invalid.size()
-	_setup_movement_sandbox(source)
+	_setup_local_session(source)
 
 func _on_map_presented(world_size: Vector2, maximum_height: float) -> void:
 	_camera_rig.frame_map(world_size, _current_document.default_zoom(), maximum_height)
@@ -98,66 +98,45 @@ func _on_hex_selected(coordinate: Vector2i) -> void:
 	_clear_movement_selection()
 	_status.text = "%s · hex %d,%d" % [_current_document.map_name(), coordinate.x, coordinate.y]
 
-func _setup_movement_sandbox(source: AonwMapSource) -> void:
+func _setup_local_session(source: AonwMapSource) -> void:
 	_selected_unit_id = ""
 	_reachable_hexes.clear()
-	var unit := _sandbox_unit()
-	if unit.is_empty():
-		_unit_layer.present(_interaction.projection(), [])
-		return
-	var file := FileAccess.open(
+	_native_session.close()
+	var map_file := FileAccess.open(
 		AonwJsonMapRepository.resolve_path(source.map_path),
 		FileAccess.READ,
 	)
-	if file == null:
-		_status.text += " · Rust preview state unavailable"
+	if map_file == null:
+		_status.text += " · Rust map unavailable"
+		_unit_layer.present(_interaction.projection(), [])
 		return
-	var state := {
-		"schemaVersion": 1,
-		"revision": 0,
-		"turn": 1,
-		"units": [unit],
-	}
+	var scenario_path := "res://assets/scenarios/%s.json" % _current_document.map_name()
+	var scenario_file := FileAccess.open(scenario_path, FileAccess.READ)
+	if scenario_file == null:
+		_status.text += " · no local scenario"
+		_unit_layer.present(_interaction.projection(), [])
+		return
 	var opened := _native_session.open(
-		file.get_as_text(),
-		state,
+		map_file.get_as_text(),
+		scenario_file.get_as_text(),
 		"preview-player",
-		"unrestricted",
-		[],
 	)
 	if not opened["ok"]:
 		_status.text += " · Rust: %s" % opened["message"]
 		_unit_layer.present(_interaction.projection(), [])
 		return
-	_movement_revision = int(opened["value"]["revision"])
-	_unit_layer.present(_interaction.projection(), [unit])
+	_refresh_session_snapshot()
 
-func _sandbox_unit() -> Dictionary:
-	for tile in _current_document.tiles():
-		var terrains: Array = tile["terrains"]
-		if terrains.any(func(terrain: String) -> bool:
-			return terrain in ["ocean", "coast", "lake", "mountain"]
-		):
-			continue
-		if terrains.any(func(terrain: String) -> bool:
-			return terrain in [
-				"plains", "grassland", "desert", "tundra", "snow",
-				"hills", "wetlands", "jungle", "forest",
-			]
-		):
-			return {
-				"id": "preview-unit",
-				"ownerPlayerId": "preview-player",
-				"kind": "commander",
-				"col": tile["col"],
-				"row": tile["row"],
-				"movementUnits": 10,
-				"posture": "active",
-				"movementBlocked": false,
-				"queuedPath": null,
-				"carriedArtifactId": null,
-			}
-	return {}
+func _refresh_session_snapshot() -> bool:
+	var snapshot := _native_session.snapshot()
+	if not snapshot["ok"]:
+		_status.text += " · Rust: %s" % snapshot["message"]
+		_unit_layer.present(_interaction.projection(), [])
+		return false
+	var value: Dictionary = snapshot["value"]
+	_movement_revision = int(value["revision"])
+	_unit_layer.present(_interaction.projection(), value["units"])
+	return true
 
 func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 	var reachable := _native_session.reachable(unit_id, _movement_revision)
@@ -188,13 +167,16 @@ func _move_selected_unit(target: Vector2i) -> void:
 		_status.text = "Rust: %s" % moved["message"]
 		return
 	var value: Dictionary = moved["value"]
+	if not bool(value["accepted"]):
+		_status.text = "Rust: %s" % value["rejection"]
+		return
+	var previous_revision := _movement_revision
 	_movement_revision = int(value["revision"])
-	if value["event"] != null:
-		var event: Dictionary = value["event"]
-		_unit_layer.move_unit(
-			_selected_unit_id,
-			Vector2i(int(event["toCol"]), int(event["toRow"])),
-		)
+	var patch: Dictionary = value["viewPatch"]
+	if int(patch["fromRevision"]) != previous_revision:
+		_refresh_session_snapshot()
+	else:
+		_unit_layer.apply_transition(patch, value["evidence"])
 	var selected := _selected_unit_id
 	_clear_movement_selection()
 	_status.text = "%s · moved %s → %d,%d" % [

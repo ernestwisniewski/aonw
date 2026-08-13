@@ -20,7 +20,8 @@ platform, shadow, canary, and rollback gates in the
 | `aonw_contracts` | Versioned boundary DTOs and a strict bounded canonical-state JSON codec. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
 | `aonw_engine` | Fog-safe movement planning, reachable-hex queries, and the revision-bound authoritative `MoveUnit` transition. |
-| `aonw_godot` | Thin GDExtension exposing Rust map validation and an in-process movement session to Godot. |
+| `aonw_local_runtime` | Transactional local-session lifecycle, player snapshots, query/command dispatch, and recipient-safe patches. |
+| `aonw_godot` | Thin GDExtension translating Godot calls into the framework-neutral local runtime. |
 | `aonw_testkit` | Bounded fixture/corpus loader, duplicate-key rejection, structural state/event/execution diff, and engine-neutral runner for the shared reducer-parity corpus. |
 
 The split enforces an inward dependency direction: contracts and domain do not
@@ -113,9 +114,8 @@ links exact map and ruleset hashes to validated starting placements and can
 bootstrap a revision-zero `GameState`. Map, ruleset, and scenario identities
 are separate SHA-256 hashes with golden vectors.
 
-The earlier `MovementState` remains a temporary projection for the current
-Godot adapter. It is not a save format and will be removed when the local
-runtime replaces that adapter in the next stage.
+The earlier `MovementState` remains an internal compatibility projection used
+inside movement planning. Godot does not load it and it is not a save format.
 
 The current unit projection carries all data needed by the first movement
 slice: stable type, owner, odd-q position, fixed-point movement balance,
@@ -131,19 +131,21 @@ rather than disclosing the blocker. Accepted movement returns a new revision,
 recomputed fog and diplomatic contacts, an ordered `UnitMovedEvent`, exact
 authoritative execution evidence, state digest, map hash, and ruleset hash.
 
-`aonw_godot` validates strict versioned maps in Rust and exposes
-`AonwLocalSession` for movement projection load, reachable queries, and
-revision-bound moves. Build it with `make rust-godot-build`. This is a narrow
-vertical slice, not the complete save/local-runtime boundary.
+`aonw_local_runtime::LocalRuntime` owns one validated local session. Opening is
+transactional, closing is idempotent, and every snapshot, query, and dispatch
+response carries contract and behavior versions, revision, state digest, map
+hash, and ruleset hash. It exposes full recipient-safe snapshots, reachable and
+route queries, revision-bound movement, ordered events, exact execution
+evidence, and view patches.
 
-Native inputs are bounded before domain construction: movement-state JSON at
-8 MiB, known-unit JSON at 512 KiB, 4096 units, 4096 unique known identifiers,
-1200 queued-path steps, and 14 fixed-point current movement units. Mapping
-enforces entity, route, and balance limits even for non-JSON DTO producers.
+`aonw_godot::AonwLocalSession` validates strict map and scenario documents,
+then delegates lifecycle and simulation to `aonw_local_runtime`. Godot obtains
+units from the runtime snapshot and never constructs a synthetic canonical
+unit. Build it with `make rust-godot-build`.
 
 ## Deliberately deferred
 
 - canonical save/replay envelopes and state upcasters;
 - Flutter/native C ABI and production packaging beyond the Godot debug adapter;
-- local runtime, AI, recipient projection, and remote replica crates;
+- AI and remote replica crates;
 - any integration that could change the active Flutter or Serverpod runtime.

@@ -7,7 +7,8 @@
   scenario content, complete unit entities, movement-authoritative `GameState`,
   strict state contracts, canonical query/apply transitions, fog, diplomacy,
   cities, roads, stable state digests, and all 38 current movement v2 fixtures.
-  The next stage is the local runtime and Godot session cutover
+  The local runtime and Godot session cutover are implemented; the next stage
+  is measured state/query optimization without changing authoritative behavior
 - Governing decision: [ADR 0008](adr/0008-rust-engine-ownership-and-strangler-migration.md)
 
 ## Purpose
@@ -153,6 +154,7 @@ aonw/
 │       ├── aonw_engine/
 │       ├── aonw_contracts/
 │       ├── aonw_contract_mapping/
+│       ├── aonw_local_runtime/
 │       ├── aonw_godot/
 │       └── aonw_testkit/
 │
@@ -172,6 +174,7 @@ aonw/
 │
 ├── content/
 │   ├── maps/                       # versioned shared logical maps
+│   ├── scenarios/                  # map/ruleset-bound starting states
 │   └── schemas/
 │
 ├── docs/
@@ -190,13 +193,15 @@ movement fixtures use contract version 2 and execute through canonical
 `GameEngine::apply`, including full envelope preservation, fog, diplomacy,
 roads, cities, rejection precedence, and exact movement evidence. Rust accepts
 only this current fixture contract. The compatibility `MovementState` is
-explicitly not a save format. Local runtime ownership, save/replay, Flutter
-FFI, and production runtime integration remain future work.
+explicitly not a save format. `aonw_local_runtime` now owns transactional
+open/close, recipient snapshots, route/reachable queries, movement dispatch,
+stable identity stamps, and player-view patches. Save/replay, Flutter FFI, and
+production runtime integration remain future work.
 `aonw_native_bridge` and top-level contract publication remain planned.
 Additional crates shown in the target layout below are created with their first
 behavior and tests rather than as empty packages. `aonw_godot` is a narrow
-GDExtension adapter around the movement projection; no complete local runtime,
-AI, Flutter bridge, or recipient-replica crate exists yet.
+GDExtension adapter around `aonw_local_runtime`; no AI, Flutter bridge, or
+recipient-replica crate exists yet.
 
 The parity fixtures are not copied into `engine/`. Dart retains its migration
 corpus and generates reviewed candidates for the separate current-only v2

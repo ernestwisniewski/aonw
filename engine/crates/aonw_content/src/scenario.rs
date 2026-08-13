@@ -4,11 +4,96 @@ use aonw_domain::{
     GameState, GameStateBuildError, HexCoord, PlayerId, StateRevision, Unit, UnitBuildError,
     UnitId, UnitKind,
 };
+use serde::Deserialize;
 use serde::ser::{SerializeSeq, SerializeStruct};
 use serde::{Serialize, Serializer};
 use sha2::{Digest, Sha256};
 
 use crate::{ContentHash, MapDefinition, RulesetDefinition, validation::validate_content_id};
+
+const CURRENT_SCENARIO_SCHEMA_VERSION: u16 = 1;
+const MAX_SCENARIO_JSON_BYTES: usize = 1024 * 1024;
+const MAX_SCENARIO_UNITS: usize = 4096;
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct RawScenario {
+    schema_version: u16,
+    scenario_id: String,
+    map_id: String,
+    ruleset_id: String,
+    initial_units: Vec<RawScenarioUnit>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct RawScenarioUnit {
+    id: String,
+    owner_player_id: String,
+    kind: String,
+    name: String,
+    col: i32,
+    row: i32,
+}
+
+/// Failure raised while decoding current scenario content.
+#[derive(Debug)]
+pub enum ScenarioLoadError {
+    /// Input exceeds the allocation boundary.
+    TooLarge {
+        /// Actual byte count.
+        actual: usize,
+        /// Maximum accepted byte count.
+        maximum: usize,
+    },
+    /// JSON violates the strict scenario shape.
+    Json(serde_json::Error),
+    /// The schema version is not current.
+    UnsupportedVersion(u16),
+    /// The document references different immutable content.
+    ContentMismatch(&'static str),
+    /// The scenario exceeds its entity boundary.
+    TooManyUnits(usize),
+    /// One identifier or unit kind is invalid.
+    InvalidField {
+        /// Contract path.
+        path: Box<str>,
+        /// Validation message.
+        message: Box<str>,
+    },
+    /// Domain validation rejected the decoded scenario.
+    Validation(ScenarioValidationError),
+}
+
+impl core::fmt::Display for ScenarioLoadError {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::TooLarge { actual, maximum } => {
+                write!(
+                    formatter,
+                    "scenario has {actual} bytes; maximum is {maximum}"
+                )
+            }
+            Self::Json(source) => source.fmt(formatter),
+            Self::UnsupportedVersion(version) => {
+                write!(formatter, "unsupported scenario version {version}")
+            }
+            Self::ContentMismatch(kind) => {
+                write!(formatter, "scenario references a different {kind}")
+            }
+            Self::TooManyUnits(count) => {
+                write!(
+                    formatter,
+                    "scenario has {count} units; maximum is {MAX_SCENARIO_UNITS}"
+                )
+            }
+            Self::InvalidField { path, message } => write!(formatter, "{path}: {message}"),
+            Self::Validation(source) => source.fmt(formatter),
+        }
+    }
+}
+
+impl std::error::Error for ScenarioLoadError {}
 
 /// Failure raised while constructing immutable scenario content.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -138,6 +223,46 @@ pub struct ScenarioDefinition {
 }
 
 impl ScenarioDefinition {
+    /// Decodes a strict current scenario and binds it to supplied content.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for oversized, malformed, future, mismatched, or
+    /// domain-invalid content.
+    pub fn from_json(
+        input: &[u8],
+        map: &MapDefinition,
+        ruleset: &RulesetDefinition,
+    ) -> Result<Self, ScenarioLoadError> {
+        if input.len() > MAX_SCENARIO_JSON_BYTES {
+            return Err(ScenarioLoadError::TooLarge {
+                actual: input.len(),
+                maximum: MAX_SCENARIO_JSON_BYTES,
+            });
+        }
+        let raw: RawScenario = serde_json::from_slice(input).map_err(ScenarioLoadError::Json)?;
+        if raw.schema_version != CURRENT_SCENARIO_SCHEMA_VERSION {
+            return Err(ScenarioLoadError::UnsupportedVersion(raw.schema_version));
+        }
+        if raw.map_id != map.map_id() {
+            return Err(ScenarioLoadError::ContentMismatch("map"));
+        }
+        if raw.ruleset_id != ruleset.ruleset_id() {
+            return Err(ScenarioLoadError::ContentMismatch("ruleset"));
+        }
+        if raw.initial_units.len() > MAX_SCENARIO_UNITS {
+            return Err(ScenarioLoadError::TooManyUnits(raw.initial_units.len()));
+        }
+        let initial_units = raw
+            .initial_units
+            .into_iter()
+            .enumerate()
+            .map(|(index, unit)| decode_scenario_unit(index, unit))
+            .collect::<Result<Vec<_>, _>>()?;
+        Self::try_new(raw.scenario_id, map, ruleset, initial_units)
+            .map_err(ScenarioLoadError::Validation)
+    }
+
     /// Validates a scenario against its referenced map and ruleset.
     ///
     /// # Errors
@@ -218,6 +343,16 @@ impl ScenarioDefinition {
     pub fn scenario_id(&self) -> &str {
         &self.scenario_id
     }
+    /// Returns the referenced map identifier.
+    #[must_use]
+    pub fn map_id(&self) -> &str {
+        &self.map_id
+    }
+    /// Returns the referenced ruleset identifier.
+    #[must_use]
+    pub fn ruleset_id(&self) -> &str {
+        &self.ruleset_id
+    }
     /// Returns the referenced map hash.
     #[must_use]
     pub const fn map_hash(&self) -> ContentHash {
@@ -294,6 +429,56 @@ impl ScenarioDefinition {
             units,
         )
         .map_err(ScenarioBootstrapError::InvalidState)
+    }
+}
+
+fn decode_scenario_unit(
+    index: usize,
+    raw: RawScenarioUnit,
+) -> Result<ScenarioUnitDefinition, ScenarioLoadError> {
+    let path = format!("$.initialUnits[{index}]");
+    let id = UnitId::new(raw.id).map_err(|error| ScenarioLoadError::InvalidField {
+        path: format!("{path}.id").into(),
+        message: error.to_string().into(),
+    })?;
+    let owner =
+        PlayerId::new(raw.owner_player_id).map_err(|error| ScenarioLoadError::InvalidField {
+            path: format!("{path}.ownerPlayerId").into(),
+            message: error.to_string().into(),
+        })?;
+    let kind = parse_unit_kind(&raw.kind).ok_or_else(|| ScenarioLoadError::InvalidField {
+        path: format!("{path}.kind").into(),
+        message: format!("unknown unit kind: {}", raw.kind).into(),
+    })?;
+    Ok(ScenarioUnitDefinition::new(
+        id,
+        owner,
+        kind,
+        raw.name,
+        HexCoord::new(raw.col, raw.row),
+    ))
+}
+
+const fn parse_unit_kind(value: &str) -> Option<UnitKind> {
+    match value.as_bytes() {
+        b"commander" => Some(UnitKind::Commander),
+        b"warrior" => Some(UnitKind::Warrior),
+        b"archer" => Some(UnitKind::Archer),
+        b"settler" => Some(UnitKind::Settler),
+        b"worker" => Some(UnitKind::Worker),
+        b"merchant" => Some(UnitKind::Merchant),
+        b"scout" => Some(UnitKind::Scout),
+        b"spearman" => Some(UnitKind::Spearman),
+        b"cavalry" => Some(UnitKind::Cavalry),
+        b"catapult" => Some(UnitKind::Catapult),
+        b"heavyInfantry" => Some(UnitKind::HeavyInfantry),
+        b"fieldCannon" => Some(UnitKind::FieldCannon),
+        b"rifleman" => Some(UnitKind::Rifleman),
+        b"tank" => Some(UnitKind::Tank),
+        b"scoutShip" => Some(UnitKind::ScoutShip),
+        b"warship" => Some(UnitKind::Warship),
+        b"reconPlane" => Some(UnitKind::ReconPlane),
+        _ => None,
     }
 }
 
@@ -480,5 +665,42 @@ mod tests {
             )
             .is_err()
         );
+    }
+
+    #[test]
+    fn scenario_json_is_strict_and_bound_to_content() {
+        let map = map();
+        let ruleset = RulesetDefinition::standard();
+        let source = br#"{
+            "schemaVersion": 1,
+            "scenarioId": "json-scenario",
+            "mapId": "scenario-map",
+            "rulesetId": "aonw-standard",
+            "initialUnits": [{
+                "id": "unit-1",
+                "ownerPlayerId": "player-1",
+                "kind": "commander",
+                "name": "Commander",
+                "col": 0,
+                "row": 0
+            }]
+        }"#;
+        let scenario = ScenarioDefinition::from_json(source, &map, ruleset).expect("scenario");
+        assert_eq!(scenario.initial_units().len(), 1);
+
+        let unknown = String::from_utf8(source.to_vec())
+            .expect("utf8")
+            .replace("\"initialUnits\"", "\"unknown\": true, \"initialUnits\"");
+        assert!(ScenarioDefinition::from_json(unknown.as_bytes(), &map, ruleset).is_err());
+        let other_map = MapDefinition::try_new(
+            "other-map",
+            map.grid_layout(),
+            map.cols(),
+            map.rows(),
+            map.tiles().to_vec(),
+            Vec::new(),
+        )
+        .expect("other map");
+        assert!(ScenarioDefinition::from_json(source, &other_map, ruleset).is_err());
     }
 }
