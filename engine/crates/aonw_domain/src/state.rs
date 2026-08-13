@@ -134,9 +134,10 @@ impl WorldState {
             .map(|index| &self.units[index])
     }
 
-    /// Iterates units in stable identifier order without allocating.
-    pub fn units(&self) -> core::slice::Iter<'_, Unit> {
-        self.units.iter()
+    /// Returns units in stable identifier order.
+    #[must_use]
+    pub const fn units(&self) -> &[Unit] {
+        &self.units
     }
 }
 
@@ -167,6 +168,7 @@ mod tests {
 
         let ids = state
             .units()
+            .iter()
             .map(|value| value.id().as_str())
             .collect::<Vec<_>>();
         assert_eq!(ids, ["unit-a", "unit-z"]);

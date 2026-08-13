@@ -1,19 +1,25 @@
 //! Compatibility check against the repository's committed reducer corpus.
 
 use std::collections::BTreeSet;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use aonw_testkit::{Fixture, FixtureLoader};
 
+fn repository_root() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .ancestors()
+        .find(|path| {
+            path.join("engine/Cargo.toml").is_file()
+                && path.join("test/fixtures/reducer_parity").is_dir()
+        })
+        .expect("repository root must contain engine and reducer fixtures")
+        .to_path_buf()
+}
+
 #[test]
 fn current_reducer_parity_corpus_loads_in_rust() {
-    let repository_root = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .and_then(Path::parent)
-        .and_then(Path::parent)
-        .expect("testkit must remain under engine/crates");
     let corpus = FixtureLoader::default()
-        .load_corpus(repository_root.join("test/fixtures/reducer_parity"))
+        .load_corpus(repository_root().join("test/fixtures/reducer_parity"))
         .expect("committed reducer-parity corpus must load");
 
     assert_eq!(corpus.len(), 120);

@@ -37,3 +37,4 @@ module_name_repetitions = "allow"
 codegen-units = 1
 lto = "thin"
 opt-level = 3
+overflow-checks = true

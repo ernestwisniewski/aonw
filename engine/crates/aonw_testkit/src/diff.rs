@@ -1,6 +1,4 @@
-use std::collections::BTreeSet;
-
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 const MAX_DIFFERENCES: usize = 64;
 const MAX_RENDERED_VALUE_BYTES: usize = 256;
@@ -62,6 +60,60 @@ pub fn compare_json(expected: &Value, actual: &Value) -> Vec<JsonDifference> {
     output
 }
 
+#[derive(Clone, Copy)]
+pub(super) struct JsonOutcome<'a> {
+    accepted: bool,
+    reason: Option<&'a str>,
+    save: &'a Map<String, Value>,
+    state: &'a Map<String, Value>,
+    events: &'a [Map<String, Value>],
+}
+
+impl<'a> JsonOutcome<'a> {
+    pub(crate) const fn new(
+        accepted: bool,
+        reason: Option<&'a str>,
+        save: &'a Map<String, Value>,
+        state: &'a Map<String, Value>,
+        events: &'a [Map<String, Value>],
+    ) -> Self {
+        Self {
+            accepted,
+            reason,
+            save,
+            state,
+            events,
+        }
+    }
+}
+
+pub(super) fn compare_outcome(
+    expected: JsonOutcome<'_>,
+    actual: JsonOutcome<'_>,
+) -> Vec<JsonDifference> {
+    let mut output = Vec::new();
+    if expected.accepted != actual.accepted {
+        output.push(JsonDifference {
+            path: "$.accepted".into(),
+            kind: DifferenceKind::ValueMismatch,
+            expected: Some(expected.accepted.to_string().into()),
+            actual: Some(actual.accepted.to_string().into()),
+        });
+    }
+    if expected.reason != actual.reason {
+        output.push(JsonDifference {
+            path: "$.reason".into(),
+            kind: DifferenceKind::ValueMismatch,
+            expected: Some(render_optional_string(expected.reason)),
+            actual: Some(render_optional_string(actual.reason)),
+        });
+    }
+    collect_object_differences("$.save", expected.save, actual.save, &mut output);
+    collect_object_differences("$.state", expected.state, actual.state, &mut output);
+    collect_object_array_differences("$.events", expected.events, actual.events, &mut output);
+    output
+}
+
 fn collect_differences(
     path: &str,
     expected: &Value,
@@ -74,34 +126,7 @@ fn collect_differences(
 
     match (expected, actual) {
         (Value::Object(expected), Value::Object(actual)) => {
-            let keys = expected
-                .keys()
-                .chain(actual.keys())
-                .collect::<BTreeSet<_>>();
-            for key in keys {
-                if output.len() >= MAX_DIFFERENCES {
-                    break;
-                }
-                let child_path = object_path(path, key);
-                match (expected.get(key), actual.get(key)) {
-                    (Some(expected), Some(actual)) => {
-                        collect_differences(&child_path, expected, actual, output);
-                    }
-                    (Some(expected), None) => output.push(difference(
-                        child_path,
-                        DifferenceKind::Missing,
-                        Some(expected),
-                        None,
-                    )),
-                    (None, Some(actual)) => output.push(difference(
-                        child_path,
-                        DifferenceKind::Unexpected,
-                        None,
-                        Some(actual),
-                    )),
-                    (None, None) => unreachable!("key came from one of the maps"),
-                }
-            }
+            collect_object_differences(path, expected, actual, output);
         }
         (Value::Array(expected), Value::Array(actual)) => {
             let common_length = expected.len().min(actual.len());
@@ -148,6 +173,88 @@ fn collect_differences(
     }
 }
 
+fn collect_object_differences(
+    path: &str,
+    expected: &Map<String, Value>,
+    actual: &Map<String, Value>,
+    output: &mut Vec<JsonDifference>,
+) {
+    for (key, expected_value) in expected {
+        if output.len() >= MAX_DIFFERENCES {
+            break;
+        }
+        let child_path = object_path(path, key);
+        if let Some(actual_value) = actual.get(key) {
+            collect_differences(&child_path, expected_value, actual_value, output);
+        } else {
+            output.push(difference(
+                child_path,
+                DifferenceKind::Missing,
+                Some(expected_value),
+                None,
+            ));
+        }
+    }
+    for (key, actual_value) in actual {
+        if output.len() >= MAX_DIFFERENCES {
+            break;
+        }
+        if !expected.contains_key(key) {
+            output.push(difference(
+                object_path(path, key),
+                DifferenceKind::Unexpected,
+                None,
+                Some(actual_value),
+            ));
+        }
+    }
+}
+
+fn collect_object_array_differences(
+    path: &str,
+    expected: &[Map<String, Value>],
+    actual: &[Map<String, Value>],
+    output: &mut Vec<JsonDifference>,
+) {
+    if output.len() >= MAX_DIFFERENCES || expected == actual {
+        return;
+    }
+    let common_length = expected.len().min(actual.len());
+    for index in 0..common_length {
+        if output.len() >= MAX_DIFFERENCES {
+            break;
+        }
+        collect_object_differences(
+            &format!("{path}[{index}]"),
+            &expected[index],
+            &actual[index],
+            output,
+        );
+    }
+    for (index, item) in expected.iter().enumerate().skip(common_length) {
+        if output.len() >= MAX_DIFFERENCES {
+            break;
+        }
+        output.push(JsonDifference {
+            path: format!("{path}[{index}]").into_boxed_str(),
+            kind: DifferenceKind::Missing,
+            expected: Some(format!("object(len={})", item.len()).into_boxed_str()),
+            actual: None,
+        });
+    }
+    for (index, item) in actual.iter().enumerate().skip(common_length) {
+        if output.len() >= MAX_DIFFERENCES {
+            break;
+        }
+        output.push(JsonDifference {
+            path: format!("{path}[{index}]").into_boxed_str(),
+            kind: DifferenceKind::Unexpected,
+            expected: None,
+            actual: Some(format!("object(len={})", item.len()).into_boxed_str()),
+        });
+    }
+}
+
 fn difference(
     path: String,
     kind: DifferenceKind,
@@ -177,16 +284,29 @@ fn object_path(parent: &str, key: &str) -> String {
 }
 
 fn render_value(value: &Value) -> Box<str> {
-    let rendered = value.to_string();
-    if rendered.len() <= MAX_RENDERED_VALUE_BYTES {
-        return rendered.into_boxed_str();
+    match value {
+        Value::Array(values) => format!("array(len={})", values.len()).into_boxed_str(),
+        Value::Object(values) => format!("object(len={})", values.len()).into_boxed_str(),
+        Value::String(value) => render_string(value),
+        _ => value.to_string().into_boxed_str(),
     }
+}
 
+fn render_optional_string(value: Option<&str>) -> Box<str> {
+    value.map_or_else(|| "null".into(), render_string)
+}
+
+fn render_string(value: &str) -> Box<str> {
+    if value.len() <= MAX_RENDERED_VALUE_BYTES {
+        return serde_json::to_string(value)
+            .expect("string encoding is infallible")
+            .into_boxed_str();
+    }
     let mut boundary = MAX_RENDERED_VALUE_BYTES;
-    while !rendered.is_char_boundary(boundary) {
+    while !value.is_char_boundary(boundary) {
         boundary -= 1;
     }
-    format!("{}…", &rendered[..boundary]).into_boxed_str()
+    format!("{:?}…", &value[..boundary]).into_boxed_str()
 }
 
 #[cfg(test)]
@@ -220,10 +340,10 @@ mod tests {
         );
 
         assert_eq!(differences.len(), 2);
-        assert_eq!(differences[0].path(), "$.state.offset");
-        assert_eq!(differences[0].kind(), DifferenceKind::Unexpected);
-        assert_eq!(differences[1].path(), "$.state.turn");
-        assert_eq!(differences[1].kind(), DifferenceKind::Missing);
+        assert_eq!(differences[0].path(), "$.state.turn");
+        assert_eq!(differences[0].kind(), DifferenceKind::Missing);
+        assert_eq!(differences[1].path(), "$.state.offset");
+        assert_eq!(differences[1].kind(), DifferenceKind::Unexpected);
     }
 
     #[test]

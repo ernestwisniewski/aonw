@@ -1,6 +1,7 @@
 use serde_json::{Map, Value};
 
-use crate::{JsonDifference, compare_json};
+use crate::JsonDifference;
+use crate::diff::{JsonOutcome, compare_outcome};
 
 /// JSON object used at language-neutral fixture boundaries.
 pub type JsonObject = Map<String, Value>;
@@ -9,7 +10,7 @@ pub type JsonObject = Map<String, Value>;
 pub const SUPPORTED_FIXTURE_VERSION: u64 = 1;
 
 /// One independently reviewed reducer-parity fixture.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Fixture {
     pub(crate) id: Box<str>,
     pub(crate) family: Box<str>,
@@ -45,12 +46,12 @@ impl Fixture {
     /// Compares an implementation output with the committed oracle.
     #[must_use]
     pub fn differences(&self, actual: &FixtureOutput) -> Vec<JsonDifference> {
-        compare_json(&self.expected.to_json(), &actual.to_json())
+        compare_outcome(self.expected.as_json_outcome(), actual.as_json_outcome())
     }
 }
 
 /// Complete input retained as typed metadata plus opaque canonical JSON.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FixtureInput {
     pub(crate) now: Box<str>,
     pub(crate) actor_player_id: Box<str>,
@@ -120,7 +121,7 @@ impl FixtureInput {
 }
 
 /// Committed expected result for the current Dart reducer corpus.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ReducerExpectedOutcome {
     pub(crate) accepted: bool,
     pub(crate) reason: Option<Box<str>>,
@@ -172,8 +173,8 @@ impl ReducerExpectedOutcome {
         }
     }
 
-    pub(crate) fn to_json(&self) -> Value {
-        outcome_json(
+    fn as_json_outcome(&self) -> JsonOutcome<'_> {
+        JsonOutcome::new(
             self.accepted,
             self.reason.as_deref(),
             &self.save,
@@ -184,7 +185,7 @@ impl ReducerExpectedOutcome {
 }
 
 /// Output returned by a Dart, Rust, native, Godot, or shadow fixture adapter.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FixtureOutput {
     accepted: bool,
     reason: Option<Box<str>>,
@@ -194,18 +195,29 @@ pub struct FixtureOutput {
 }
 
 impl FixtureOutput {
-    /// Constructs a complete implementation output.
+    /// Constructs an accepted implementation output.
     #[must_use]
-    pub fn new(
-        accepted: bool,
-        reason: Option<impl Into<Box<str>>>,
+    pub const fn accept(save: JsonObject, state: JsonObject, events: Vec<JsonObject>) -> Self {
+        Self {
+            accepted: true,
+            reason: None,
+            save,
+            state,
+            events,
+        }
+    }
+
+    /// Constructs a rejected implementation output with a stable reason code.
+    #[must_use]
+    pub fn reject(
+        reason: impl Into<Box<str>>,
         save: JsonObject,
         state: JsonObject,
         events: Vec<JsonObject>,
     ) -> Self {
         Self {
-            accepted,
-            reason: reason.map(Into::into),
+            accepted: false,
+            reason: Some(reason.into()),
             save,
             state,
             events,
@@ -242,8 +254,8 @@ impl FixtureOutput {
         &self.events
     }
 
-    pub(crate) fn to_json(&self) -> Value {
-        outcome_json(
+    fn as_json_outcome(&self) -> JsonOutcome<'_> {
+        JsonOutcome::new(
             self.accepted,
             self.reason.as_deref(),
             &self.save,
@@ -251,26 +263,4 @@ impl FixtureOutput {
             &self.events,
         )
     }
-}
-
-fn outcome_json(
-    accepted: bool,
-    reason: Option<&str>,
-    save: &JsonObject,
-    state: &JsonObject,
-    events: &[JsonObject],
-) -> Value {
-    Value::Object(JsonObject::from_iter([
-        ("accepted".to_owned(), Value::Bool(accepted)),
-        (
-            "events".to_owned(),
-            Value::Array(events.iter().cloned().map(Value::Object).collect()),
-        ),
-        (
-            "reason".to_owned(),
-            reason.map_or(Value::Null, |value| Value::String(value.to_owned())),
-        ),
-        ("save".to_owned(), Value::Object(save.clone())),
-        ("state".to_owned(), Value::Object(state.clone())),
-    ]))
 }

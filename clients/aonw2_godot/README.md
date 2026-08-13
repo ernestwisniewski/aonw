@@ -25,9 +25,10 @@ The implementation follows an inward dependency direction:
 - `tests/` verifies map loading, atlas construction, shared hex vertices, and
   generated meshes.
 
-`engine/crates/aonw_content` remains the canonical content validator and hash
-owner. GDScript validates only the read model required to render a map. Game
-rules do not belong in the Godot client.
+`engine/crates/aonw_content` remains the logical content validator and hash
+owner. Godot reads `defaultZoom` as a presentation hint; Rust excludes it from
+the logical map hash. GDScript validates only the read model required to render
+a map. Game rules do not belong in the Godot client.
 
 Run the focused pipeline test from the repository root:
 

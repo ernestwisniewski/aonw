@@ -112,7 +112,7 @@ pub fn encode_world_state(state: &WorldState) -> WorldStateDto {
         revision: state.revision(),
         turn: state.turn(),
         active_player_id: state.active_player_id().as_str().to_owned(),
-        units: state.units().map(encode_unit).collect(),
+        units: state.units().iter().map(encode_unit).collect(),
     }
 }
 

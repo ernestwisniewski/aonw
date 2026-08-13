@@ -61,3 +61,12 @@ impl From<serde_json::Error> for MapLoadError {
         Self::Json(source)
     }
 }
+
+impl From<crate::validation::MapValidationError> for MapLoadError {
+    fn from(source: crate::validation::MapValidationError) -> Self {
+        Self::Invalid {
+            path: source.path,
+            message: source.message,
+        }
+    }
+}

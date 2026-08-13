@@ -185,6 +185,14 @@ the same committed corpus. New shared maps use the versioned `content/` root;
 existing Flutter maps remain under `assets/maps/` and load through an explicit
 Rust legacy adapter. Client-specific graphics and audio remain with clients.
 
+The map boundary separates the editable `MapDocument` from its validated
+logical `MapDefinition`. `defaultZoom` remains in the document as a client
+presentation hint and is excluded from logical canonical bytes and the content
+hash. The public compact canonical bytes are exactly the bytes hashed by Rust;
+resource ordering uses a stable wire rank rather than enum declaration order.
+Versioned documents are strict and fail closed, while defaults are confined to
+the explicitly selected legacy adapter.
+
 After Dart Core retirement, the repository may be reorganized mechanically
 into `clients/aonw_flutter/`, `clients/aonw2_godot/`,
 `services/gateway_serverpod/`, and `engine/`. That move must not be mixed with
@@ -649,22 +657,19 @@ unavailable -> shadow -> canary -> default -> fallback_retained -> retired
 
 ## Rust Quality Gates
 
-Once `engine/` exists, every affected change runs at least:
+The Rust workspace exposes a standalone local gate:
 
 ```sh
-cargo fmt --manifest-path engine/Cargo.toml --all -- --check
-cargo clippy --manifest-path engine/Cargo.toml --workspace --all-targets -- -D warnings
-cargo test --manifest-path engine/Cargo.toml --workspace
-cargo doc --manifest-path engine/Cargo.toml --workspace --no-deps
-cargo deny --manifest-path engine/Cargo.toml check
+make rust-check
 ```
 
-CI additionally checks dependency direction, forbidden unsafe use, supported
-native targets, WASM when required, schema compatibility, full fixture parity,
-save round trips, FFI/GDExtension smoke tests, and architecture ratchets.
-Nightly or release lanes add multi-command replay, fuzzing, sanitizers or Miri
-where applicable, mutation testing of critical rules, performance/memory
-budgets, dependency advisories, licenses, SBOM, and artifact checksums.
+It combines `make rust-format-check`, `make rust-clippy`, `make rust-test`, and
+`make rust-doc` using the pinned toolchain. These targets are not yet dependencies
+of the existing Dart/Flutter `make ci` target or GitHub Actions. CI integration,
+supported native targets, WASM when required, schema compatibility, full fixture
+parity, save round trips, FFI/GDExtension smoke tests, architecture ratchets,
+fuzzing, sanitizers or Miri, mutation testing, dependency policy, SBOM, and
+artifact checksums remain later migration gates.
 
 ## Dart Core Retirement Gate
 

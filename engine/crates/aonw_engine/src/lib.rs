@@ -20,7 +20,7 @@ pub struct GameEngine;
 impl GameEngine {
     /// Returns compile-time crate version metadata.
     #[must_use]
-    pub const fn version(self) -> EngineVersion {
+    pub const fn version() -> EngineVersion {
         EngineVersion {
             crate_version: env!("CARGO_PKG_VERSION"),
             behavior_version: ENGINE_BEHAVIOR_VERSION,
@@ -29,7 +29,7 @@ impl GameEngine {
 
     /// Inspects canonical state without allocation or mutation.
     #[must_use]
-    pub fn summarize(self, state: &WorldState) -> StateSummary<'_> {
+    pub const fn summarize_state(state: &WorldState) -> StateSummary<'_> {
         StateSummary {
             revision: state.revision(),
             turn: state.turn(),
@@ -83,7 +83,7 @@ mod tests {
         )
         .expect("valid state");
 
-        let summary = GameEngine.summarize(&state);
+        let summary = GameEngine::summarize_state(&state);
         assert_eq!(summary.revision, 12);
         assert_eq!(summary.turn, 4);
         assert_eq!(summary.active_player_id.as_str(), "player-1");
@@ -92,7 +92,7 @@ mod tests {
 
     #[test]
     fn engine_version_axes_are_explicit() {
-        let version = GameEngine.version();
+        let version = GameEngine::version();
 
         assert_eq!(version.crate_version, env!("CARGO_PKG_VERSION"));
         assert_eq!(version.behavior_version, ENGINE_BEHAVIOR_VERSION);

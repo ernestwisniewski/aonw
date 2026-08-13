@@ -1,0 +1,37 @@
+use crate::MapDefinition;
+use crate::validation::MapValidationError;
+
+#[allow(missing_docs)]
+#[derive(Clone, Debug, PartialEq)]
+pub struct MapDocument {
+    map: MapDefinition,
+    default_zoom: f64,
+}
+
+#[allow(missing_docs)]
+impl MapDocument {
+    /// Constructs an editable document around a validated logical map.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapValidationError`] when the camera zoom is not finite and positive.
+    pub fn try_new(map: MapDefinition, default_zoom: f64) -> Result<Self, MapValidationError> {
+        if !default_zoom.is_finite() || default_zoom <= 0.0 {
+            return Err(MapValidationError::new(
+                "$.defaultZoom",
+                "must be finite and positive",
+            ));
+        }
+        Ok(Self { map, default_zoom })
+    }
+
+    #[must_use]
+    pub const fn map(&self) -> &MapDefinition {
+        &self.map
+    }
+
+    #[must_use]
+    pub const fn default_zoom(&self) -> f64 {
+        self.default_zoom
+    }
+}

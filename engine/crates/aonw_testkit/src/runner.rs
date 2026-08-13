@@ -200,9 +200,7 @@ mod tests {
             .parse(FIXTURE.as_bytes())
             .expect("valid fixture");
         let executor = StaticExecutor {
-            output: FixtureOutput::new(
-                true,
-                None::<Box<str>>,
+            output: FixtureOutput::accept(
                 fixture.expected().save().clone(),
                 fixture.expected().state().clone(),
                 Vec::new(),

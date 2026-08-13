@@ -9,13 +9,17 @@
 
 mod diff;
 mod fixture;
+mod fixture_parser;
 mod loader;
+mod loader_error;
 mod runner;
+mod unique_json;
 
 pub use diff::{DifferenceKind, JsonDifference, compare_json};
 pub use fixture::{
     Fixture, FixtureInput, FixtureOutput, JsonObject, ReducerExpectedOutcome,
     SUPPORTED_FIXTURE_VERSION,
 };
-pub use loader::{FixtureLimits, FixtureLoadError, FixtureLoader};
+pub use loader::{FixtureLimits, FixtureLoader};
+pub use loader_error::FixtureLoadError;
 pub use runner::{FixtureExecutor, FixtureRunError, verify_corpus, verify_fixture};
