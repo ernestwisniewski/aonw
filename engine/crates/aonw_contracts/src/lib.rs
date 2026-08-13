@@ -30,50 +30,6 @@ pub use persistence::{
     ReplayResultDto, RngStateDto, SaveGameDto,
 };
 
-/// The only movement projection version accepted by the mapping crate.
-pub const CURRENT_MOVEMENT_STATE_VERSION: u16 = 1;
-
-/// Versioned movement-state projection for command and query boundaries.
-///
-/// This DTO deliberately excludes canonical fields unrelated to movement.
-/// Adapters must preserve those fields when applying an engine transition.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MovementStateDto {
-    /// Projection schema version, independent of engine behavior version.
-    pub schema_version: u16,
-    /// Monotonic canonical state revision.
-    pub revision: u64,
-    /// Current game turn.
-    pub turn: u32,
-    /// Movement-oriented unit views in contract-preserved order.
-    pub units: Vec<MovementUnitDto>,
-}
-
-/// Unit transfer object carrying only values required by movement rules.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MovementUnitDto {
-    /// Opaque unit identifier.
-    pub id: String,
-    /// Opaque owner-player identifier.
-    pub owner_player_id: String,
-    /// Stable canonical unit type.
-    pub kind: UnitKindDto,
-    /// Odd-q offset-grid column.
-    pub col: i32,
-    /// Odd-q offset-grid row.
-    pub row: i32,
-    /// Integer movement units remaining.
-    pub movement_units: u32,
-    /// Persistent unit behavior.
-    pub posture: UnitPostureDto,
-    /// Derived availability flag; this is not persisted canonical job state.
-    pub movement_blocked: bool,
-    /// Persisted route awaiting execution.
-    pub queued_path: Option<QueuedMovePathDto>,
-    /// Opaque carried-artifact identifier.
-    pub carried_artifact_id: Option<String>,
-}
-
 /// Stable unit type used at engine boundaries.
 #[allow(missing_docs)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]

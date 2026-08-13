@@ -5,11 +5,13 @@ use std::time::Instant;
 
 use aonw_content::{GridLayout, MapDefinition, MapDocument, TerrainType, TileDefinition};
 use aonw_domain::{
-    HexCoord, MovementState, MovementUnit, MovementUnits, PlayerId, UnitId, UnitKind,
+    GameState, HexCoord, HexGridBounds, MovementUnits, PlayerId, StateRevision, Unit, UnitId,
+    UnitKind, UnitOccupancyPolicy,
 };
 use aonw_engine::{
-    CompiledMovementMap, EngineContext, GameEngine, MoveUnitCommand, MovementPlanningView,
-    MovementSearchMetrics, MovementSearchWorkspace, ReachableMovementQuery, TerrainMovementQuery,
+    CanonicalQueryError, CompiledMovementMap, DomainCommand, EngineContext, GameEngine, GameQuery,
+    MoveUnitCommand, MovementSearchMetrics, MovementSearchWorkspace, QueryResult,
+    ReachableMovement, ReachableMovementQuery, TerrainMovementPlan, TerrainMovementQuery,
 };
 
 const ITERATIONS: usize = 20;
@@ -72,7 +74,8 @@ fn benchmark_movement(map: &MapDefinition, cols: u16, rows: u16, unit_count: usi
     let actor = PlayerId::new("player-1").expect("actor id");
     let mover_id = UnitId::new("unit-0").expect("mover id");
     let state = movement_state(cols, rows, unit_count, &actor);
-    let context = EngineContext::new(&actor, map, MovementPlanningView::fog_disabled());
+    let context =
+        EngineContext::canonical(&actor, map, aonw_content::RulesetDefinition::standard());
     let compiled = CompiledMovementMap::compile(map, aonw_content::RulesetDefinition::standard())
         .expect("compiled movement map");
     let prepared_context = context.with_compiled_movement_map(&compiled);
@@ -107,7 +110,7 @@ fn benchmark_movement(map: &MapDefinition, cols: u16, rows: u16, unit_count: usi
 }
 
 fn benchmark_reachable(
-    state: &MovementState,
+    state: &GameState,
     context: EngineContext<'_>,
     prepared_context: EngineContext<'_>,
     mover_id: &UnitId,
@@ -130,33 +133,33 @@ fn benchmark_reachable(
             })
     };
     report("reachable", cols, rows, units, metrics, || {
-        GameEngine::reachable_movement(
+        reachable(
             black_box(state),
             context,
-            ReachableMovementQuery::new(state.revision(), mover_id),
+            ReachableMovementQuery::new(state.revision().get(), mover_id),
         )
         .map_or_else(
-            |error| signature_bytes(error.code().as_bytes()),
+            |error| signature_bytes(error.to_string().as_bytes()),
             |result| signature(&result),
         )
     });
     let mut workspace = MovementSearchWorkspace::default();
     report("prepared_reachable", cols, rows, units, metrics, || {
-        GameEngine::reachable_movement_with_workspace(
+        reachable_with_workspace(
             black_box(state),
             prepared_context,
-            ReachableMovementQuery::new(state.revision(), mover_id),
+            ReachableMovementQuery::new(state.revision().get(), mover_id),
             &mut workspace,
         )
         .map_or_else(
-            |error| signature_bytes(error.code().as_bytes()),
+            |error| signature_bytes(error.to_string().as_bytes()),
             |result| signature(&result),
         )
     });
 }
 
 fn benchmark_routes(
-    state: &MovementState,
+    state: &GameState,
     context: EngineContext<'_>,
     prepared_context: EngineContext<'_>,
     mover_id: &UnitId,
@@ -167,10 +170,10 @@ fn benchmark_routes(
     let (cols, rows, units) = dimensions;
     for (name, selected_context) in [("route", context), ("prepared_route", prepared_context)] {
         report(name, cols, rows, units, metrics, || {
-            GameEngine::plan_terrain_route(
+            route(
                 black_box(state),
                 selected_context,
-                TerrainMovementQuery::new(state.revision(), mover_id, target),
+                TerrainMovementQuery::new(state.revision().get(), mover_id, target),
             )
             .map_or_else(
                 |error| signature_bytes(error.code().as_bytes()),
@@ -180,12 +183,12 @@ fn benchmark_routes(
     }
     let occupied_target = HexCoord::new(i32::from(cols) - 2, i32::from(rows) - 1);
     let occupied_state = occupied_target_state(state, occupied_target);
-    let query = || TerrainMovementQuery::new(occupied_state.revision(), mover_id, occupied_target);
-    let occupied_metrics =
-        GameEngine::plan_terrain_route(&occupied_state, prepared_context, query()).map_or_else(
-            |_| MovementSearchMetrics::default(),
-            |result| result.search_metrics(),
-        );
+    let query =
+        || TerrainMovementQuery::new(occupied_state.revision().get(), mover_id, occupied_target);
+    let occupied_metrics = route(&occupied_state, prepared_context, query()).map_or_else(
+        |_| MovementSearchMetrics::default(),
+        |result| result.search_metrics(),
+    );
     report(
         "occupied_approach",
         cols,
@@ -193,22 +196,21 @@ fn benchmark_routes(
         units + 1,
         occupied_metrics,
         || {
-            GameEngine::plan_terrain_route(black_box(&occupied_state), prepared_context, query())
-                .map_or_else(
-                    |error| signature_bytes(error.code().as_bytes()),
-                    |result| {
-                        mix(
-                            signed(result.destination().col()),
-                            signed(result.destination().row()),
-                        )
-                    },
-                )
+            route(black_box(&occupied_state), prepared_context, query()).map_or_else(
+                |error| signature_bytes(error.code().as_bytes()),
+                |result| {
+                    mix(
+                        signed(result.destination().col()),
+                        signed(result.destination().row()),
+                    )
+                },
+            )
         },
     );
 }
 
 fn benchmark_apply(
-    state: &MovementState,
+    state: &GameState,
     context: EngineContext<'_>,
     mover_id: &UnitId,
     dimensions: (u16, u16, usize),
@@ -216,18 +218,22 @@ fn benchmark_apply(
 ) {
     let (cols, rows, units) = dimensions;
     report("apply", cols, rows, units, metrics, || {
-        GameEngine::apply_move_unit(
+        GameEngine::apply(
             black_box(state),
             context,
-            MoveUnitCommand::new(state.revision(), mover_id, HexCoord::new(1, 0)),
+            DomainCommand::MoveUnit(MoveUnitCommand::new(
+                state.revision().get(),
+                mover_id,
+                HexCoord::new(1, 0),
+            )),
         )
         .map_or_else(
-            |error| signature_bytes(error.code().as_bytes()),
+            |error| signature_bytes(error.to_string().as_bytes()),
             |result| {
                 let next = result.state();
                 let moved = next.unit(mover_id).expect("moved unit");
                 mix(
-                    mix(next.revision(), signed(moved.position().col())),
+                    mix(next.revision().get(), signed(moved.position().col())),
                     u64::from(moved.movement_units().get()),
                 )
             },
@@ -251,7 +257,7 @@ fn route_signature(result: &aonw_engine::TerrainMovementPlan) -> u64 {
 }
 
 fn movement_metrics(
-    state: &MovementState,
+    state: &GameState,
     context: EngineContext<'_>,
     mover_id: &UnitId,
     target: HexCoord,
@@ -260,34 +266,69 @@ fn movement_metrics(
     MovementSearchMetrics,
     MovementSearchMetrics,
 ) {
-    let reachable = GameEngine::reachable_movement(
+    let reachable = reachable(
         state,
         context,
-        ReachableMovementQuery::new(state.revision(), mover_id),
+        ReachableMovementQuery::new(state.revision().get(), mover_id),
     )
     .map_or_else(
         |_| MovementSearchMetrics::default(),
         |result| result.search_metrics(),
     );
-    let route = GameEngine::plan_terrain_route(
+    let route_metrics = route(
         state,
         context,
-        TerrainMovementQuery::new(state.revision(), mover_id, target),
+        TerrainMovementQuery::new(state.revision().get(), mover_id, target),
     )
     .map_or_else(
         |_| MovementSearchMetrics::default(),
         |result| result.search_metrics(),
     );
-    let apply = GameEngine::apply_move_unit(
+    let apply_metrics = route(
         state,
         context,
-        MoveUnitCommand::new(state.revision(), mover_id, HexCoord::new(1, 0)),
+        TerrainMovementQuery::new(state.revision().get(), mover_id, HexCoord::new(1, 0)),
     )
     .map_or_else(
         |_| MovementSearchMetrics::default(),
         |result| result.search_metrics(),
     );
-    (reachable, route, apply)
+    (reachable, route_metrics, apply_metrics)
+}
+
+fn reachable(
+    state: &GameState,
+    context: EngineContext<'_>,
+    query: ReachableMovementQuery<'_>,
+) -> Result<ReachableMovement, CanonicalQueryError> {
+    match GameEngine::query(state, context, GameQuery::Reachable(query))? {
+        QueryResult::Reachable(result) => Ok(result),
+        QueryResult::Route(_) => unreachable!("reachable query returned route"),
+    }
+}
+
+fn reachable_with_workspace(
+    state: &GameState,
+    context: EngineContext<'_>,
+    query: ReachableMovementQuery<'_>,
+    workspace: &mut MovementSearchWorkspace,
+) -> Result<ReachableMovement, CanonicalQueryError> {
+    match GameEngine::query_with_workspace(state, context, GameQuery::Reachable(query), workspace)?
+    {
+        QueryResult::Reachable(result) => Ok(result),
+        QueryResult::Route(_) => unreachable!("reachable query returned route"),
+    }
+}
+
+fn route(
+    state: &GameState,
+    context: EngineContext<'_>,
+    query: TerrainMovementQuery<'_>,
+) -> Result<TerrainMovementPlan, CanonicalQueryError> {
+    match GameEngine::query(state, context, GameQuery::PlanRoute(query))? {
+        QueryResult::Route(result) => Ok(result),
+        QueryResult::Reachable(_) => unreachable!("route query returned reachable result"),
+    }
 }
 
 fn report(
@@ -347,41 +388,68 @@ fn map(cols: u16, rows: u16) -> MapDefinition {
     .expect("benchmark map")
 }
 
-fn movement_state(cols: u16, rows: u16, unit_count: usize, actor: &PlayerId) -> MovementState {
+fn movement_state(cols: u16, rows: u16, unit_count: usize, actor: &PlayerId) -> GameState {
     let mut units = Vec::with_capacity(unit_count);
-    units.push(MovementUnit::new(
-        UnitId::new("unit-0").expect("mover id"),
-        actor.clone(),
+    units.push(unit(
+        "unit-0",
+        actor,
         UnitKind::Commander,
         HexCoord::new(0, 0),
-        MovementUnits::new(10),
+        10,
     ));
     let positions = (1..rows).flat_map(|row| {
         (0..cols.saturating_sub(1)).map(move |col| HexCoord::new(i32::from(col), i32::from(row)))
     });
     for (index, position) in positions.take(unit_count.saturating_sub(1)).enumerate() {
-        units.push(MovementUnit::new(
-            UnitId::new(format!("unit-{}", index + 1)).expect("blocker id"),
-            actor.clone(),
+        units.push(unit(
+            &format!("unit-{}", index + 1),
+            actor,
             UnitKind::Warrior,
             position,
-            MovementUnits::new(6),
+            6,
         ));
     }
     assert_eq!(units.len(), unit_count, "benchmark unit count must fit map");
-    MovementState::try_new(1, 1, units).expect("benchmark state")
+    GameState::try_new(
+        StateRevision::new(1),
+        1,
+        HexGridBounds::new(cols, rows).expect("benchmark bounds"),
+        UnitOccupancyPolicy::Exclusive,
+        units,
+    )
+    .expect("benchmark state")
 }
 
-fn occupied_target_state(state: &MovementState, target: HexCoord) -> MovementState {
+fn occupied_target_state(state: &GameState, target: HexCoord) -> GameState {
     let mut units = state.units().to_vec();
-    units.push(MovementUnit::new(
-        UnitId::new("occupied-target").expect("blocker id"),
-        PlayerId::new("player-2").expect("blocker owner"),
+    units.push(unit(
+        "occupied-target",
+        &PlayerId::new("player-2").expect("blocker owner"),
         UnitKind::Warrior,
         target,
-        MovementUnits::new(6),
+        6,
     ));
-    MovementState::try_new(state.revision(), state.turn(), units).expect("occupied target state")
+    GameState::try_new(
+        state.revision(),
+        state.turn(),
+        state.bounds(),
+        state.occupancy_policy(),
+        units,
+    )
+    .expect("occupied target state")
+}
+
+fn unit(id: &str, owner: &PlayerId, kind: UnitKind, position: HexCoord, movement: u32) -> Unit {
+    Unit::builder(
+        UnitId::new(id).expect("unit id"),
+        owner.clone(),
+        kind,
+        format!("unit.{id}"),
+        position,
+        MovementUnits::new(movement),
+    )
+    .build()
+    .expect("unit")
 }
 
 fn signed(value: i32) -> u64 {

@@ -1,37 +1,7 @@
 use crate::{
-    City, CityId, Diplomacy, FogOfWar, HexCoord, HexGridBounds, MovementState,
-    MovementStateBuildError, MovementUnitBuildError, PlayerId, StateRevision, TransportNetwork,
-    Unit, UnitId,
+    City, CityId, Diplomacy, FogOfWar, HexCoord, HexGridBounds, PlayerId, StateRevision,
+    TransportNetwork, Unit, UnitId,
 };
-
-/// Failure raised while deriving the temporary movement projection.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum MovementProjectionError {
-    /// A canonical unit cannot form a valid movement view.
-    InvalidUnit {
-        /// Unit array index.
-        index: usize,
-        /// Violated projection invariant.
-        source: MovementUnitBuildError,
-    },
-    /// Projected units violate movement-state invariants.
-    InvalidState(MovementStateBuildError),
-}
-
-impl core::fmt::Display for MovementProjectionError {
-    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Self::InvalidUnit { index, source } => {
-                write!(formatter, "cannot project unit at index {index}: {source}")
-            }
-            Self::InvalidState(source) => {
-                write!(formatter, "invalid movement projection: {source}")
-            }
-        }
-    }
-}
-
-impl std::error::Error for MovementProjectionError {}
 
 /// Occupancy policy selected by the immutable ruleset.
 #[allow(missing_docs)]
@@ -434,25 +404,6 @@ impl GameState {
     #[must_use]
     pub fn city_at(&self, coordinate: HexCoord) -> Option<&City> {
         self.cities.iter().find(|city| city.center() == coordinate)
-    }
-
-    /// Derives the compatibility movement projection from canonical entities.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if canonical data cannot satisfy projection invariants.
-    pub fn movement_projection(&self) -> Result<MovementState, MovementProjectionError> {
-        let units = self
-            .units
-            .iter()
-            .enumerate()
-            .map(|(index, unit)| {
-                unit.movement_projection()
-                    .map_err(|source| MovementProjectionError::InvalidUnit { index, source })
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-        MovementState::try_new(self.revision.get(), self.turn, units)
-            .map_err(MovementProjectionError::InvalidState)
     }
 
     /// Rebuilds the aggregate after a movement transition.

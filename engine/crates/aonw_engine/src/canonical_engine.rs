@@ -1,7 +1,5 @@
 use aonw_content::ContentHash;
-use aonw_domain::{
-    GameState, GameStateBuildError, MovementProjectionError, StateRevision, UnitBuildError,
-};
+use aonw_domain::{GameState, GameStateBuildError, StateRevision};
 
 use crate::movement::{merge_discovered_contacts, recompute_after_move};
 use crate::unit_action::{UnitActionKind, apply_unit_action};
@@ -168,10 +166,6 @@ impl DomainTransition {
 pub enum CanonicalEngineError {
     /// A referenced content identity could not be computed.
     ContentHash(Box<str>),
-    /// Canonical entities cannot form the temporary movement view.
-    Projection(MovementProjectionError),
-    /// Applying the movement result violates a unit invariant.
-    Unit(UnitBuildError),
     /// Applying the result violates an aggregate invariant.
     State(GameStateBuildError),
 }
@@ -180,8 +174,6 @@ impl core::fmt::Display for CanonicalEngineError {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::ContentHash(source) => write!(formatter, "content hash failed: {source}"),
-            Self::Projection(source) => source.fmt(formatter),
-            Self::Unit(source) => source.fmt(formatter),
             Self::State(source) => source.fmt(formatter),
         }
     }
@@ -215,16 +207,13 @@ impl GameEngine {
         query: GameQuery<'_>,
         workspace: &mut crate::MovementSearchWorkspace,
     ) -> Result<QueryResult, CanonicalQueryError> {
-        let projection = state
-            .movement_projection()
-            .map_err(CanonicalQueryError::Projection)?;
         let context = context.with_world(state);
         match query {
-            GameQuery::PlanRoute(query) => Self::plan_terrain_route(&projection, context, query)
+            GameQuery::PlanRoute(query) => Self::plan_terrain_route(state, context, query)
                 .map(QueryResult::Route)
                 .map_err(CanonicalQueryError::Rejected),
             GameQuery::Reachable(query) => {
-                Self::reachable_movement_with_workspace(&projection, context, query, workspace)
+                Self::reachable_movement_with_workspace(state, context, query, workspace)
                     .map(QueryResult::Reachable)
                     .map_err(CanonicalQueryError::Rejected)
             }
@@ -269,13 +258,9 @@ impl GameEngine {
         let map = context.map();
         match command {
             DomainCommand::MoveUnit(command) => {
-                let projection = state
-                    .movement_projection()
-                    .map_err(CanonicalEngineError::Projection)?;
-                let unit_id = command.unit_id().clone();
                 let movement =
-                    GameEngine::apply_move_unit(&projection, context.with_world(&state), command);
-                apply_move(state, &unit_id, map, movement, map_hash, ruleset_hash)
+                    GameEngine::apply_move_unit(&state, context.with_world(&state), command);
+                apply_move(state, map, movement, map_hash, ruleset_hash)
             }
             DomainCommand::CancelUnitAction(command) => apply_canonical_unit_action(
                 state,
@@ -346,9 +331,8 @@ fn apply_canonical_unit_action(
 
 fn apply_move(
     state: GameState,
-    unit_id: &aonw_domain::UnitId,
     map: &aonw_content::MapDefinition,
-    movement: Result<crate::MovementTransition, crate::MoveUnitError>,
+    movement: Result<crate::movement::MovementTransition, crate::MoveUnitError>,
     map_hash: ContentHash,
     ruleset_hash: ContentHash,
 ) -> Result<DomainTransition, CanonicalEngineError> {
@@ -363,29 +347,16 @@ fn apply_move(
             ));
         }
     };
-    let canonical_unit = state
-        .unit(unit_id)
-        .expect("projection unit originated in canonical state");
-    let projected_unit = movement
-        .state()
-        .unit(unit_id)
-        .expect("movement transition preserves unit identity");
-    let updated_unit = canonical_unit
-        .after_movement(
-            projected_unit.position(),
-            projected_unit.movement_units(),
-            projected_unit.queued_path().cloned(),
-        )
-        .map_err(CanonicalEngineError::Unit)?;
-
-    let next_revision = StateRevision::new(movement.state().revision());
+    let updated_unit = movement.unit().clone();
+    let unit_id = updated_unit.id().clone();
+    let next_revision = movement.revision();
     let mut fog = state.fog_of_war().clone();
     let mut diplomacy = state.diplomacy().clone();
     if movement.event().is_some() {
         let updated_index = state
             .units()
             .iter()
-            .position(|unit| unit.id() == unit_id)
+            .position(|unit| unit.id() == &unit_id)
             .expect("canonical unit exists");
         let units = state
             .units()
@@ -436,8 +407,6 @@ fn apply_move(
 /// Failure from a canonical read-only query.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum CanonicalQueryError {
-    /// Canonical state cannot form its movement view.
-    Projection(MovementProjectionError),
     /// Query was rejected by deterministic rules.
     Rejected(TerrainMovementQueryError),
 }
@@ -447,7 +416,6 @@ impl CanonicalQueryError {
     #[must_use]
     pub const fn code(&self) -> &'static str {
         match self {
-            Self::Projection(_) => "canonical_movement_projection_invalid",
             Self::Rejected(rejection) => rejection.code(),
         }
     }
@@ -456,7 +424,6 @@ impl CanonicalQueryError {
 impl core::fmt::Display for CanonicalQueryError {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            Self::Projection(source) => source.fmt(formatter),
             Self::Rejected(source) => source.fmt(formatter),
         }
     }

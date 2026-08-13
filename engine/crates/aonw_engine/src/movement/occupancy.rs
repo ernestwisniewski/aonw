@@ -1,19 +1,19 @@
 use aonw_content::MapDefinition;
-use aonw_domain::{MovementState, MovementUnit};
+use aonw_domain::{GameState, Unit};
 
 use crate::EngineContext;
 
 /// Tile-indexed occupancy mask prepared for one moving unit and actor view.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MovementOccupancy {
+pub(crate) struct MovementOccupancy {
     words: Box<[u64]>,
 }
 
 impl MovementOccupancy {
     pub(crate) fn for_unit(
-        state: &MovementState,
+        state: &GameState,
         map: &MapDefinition,
-        unit: &MovementUnit,
+        unit: &Unit,
         context: EngineContext<'_>,
     ) -> Self {
         let mut words = vec![0_u64; map.bounds().tile_count().div_ceil(u64::BITS as usize)];

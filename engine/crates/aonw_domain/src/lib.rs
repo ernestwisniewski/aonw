@@ -16,7 +16,6 @@ mod identifier;
 mod movement_path;
 mod movement_units;
 mod shared;
-mod state;
 mod transport;
 mod unit;
 mod unit_kind;
@@ -25,16 +24,13 @@ mod unit_posture;
 pub use city::City;
 pub use diplomacy::{Diplomacy, PlayerPair};
 pub use fog::{FogOfWar, FogVisibility, PlayerFog};
-pub use game_state::{
-    GameState, GameStateBuildError, MovementProjectionError, UnitOccupancyPolicy,
-};
+pub use game_state::{GameState, GameStateBuildError, UnitOccupancyPolicy};
 pub use hex_coord::HexCoord;
 pub use hex_grid::{HexGridBounds, HexTileIndex};
 pub use identifier::{ArtifactId, CityId, IdentifierError, PlayerId, UnitId};
 pub use movement_path::{MovementPathError, MovementStep, QueuedMovePath};
 pub use movement_units::MovementUnits;
 pub use shared::StateRevision;
-pub use state::{MovementState, MovementStateBuildError, MovementUnit, MovementUnitBuildError};
 pub use transport::{TransportCondition, TransportNetwork, TransportSegment};
 pub use unit::{
     ArmyTroop, CityFoundingJob, FieldImprovementKind, MerchantTradeRoute, TroopKind, Unit,

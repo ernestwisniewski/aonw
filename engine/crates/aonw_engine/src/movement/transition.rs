@@ -1,9 +1,8 @@
 use aonw_domain::{
-    HexCoord, MovementPathError, MovementState, MovementStep, MovementUnitBuildError,
-    MovementUnits, QueuedMovePath, UnitId,
+    GameState, HexCoord, MovementPathError, MovementStep, MovementUnits, QueuedMovePath,
+    StateRevision, Unit, UnitBuildError, UnitId,
 };
 
-use super::MovementSearchMetrics;
 use super::{TerrainMovementQuery, TerrainMovementQueryError};
 use crate::{EngineContext, GameEngine};
 
@@ -89,43 +88,44 @@ impl UnitMovementExecution {
     }
 }
 
-/// Accepted movement result over the movement-state projection.
+/// Accepted movement result for one canonical unit.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MovementTransition {
-    state: MovementState,
+pub(crate) struct MovementTransition {
+    revision: StateRevision,
+    unit: Unit,
     event: Option<UnitMovedEvent>,
     execution: Option<UnitMovementExecution>,
-    search_metrics: MovementSearchMetrics,
 }
 
 impl MovementTransition {
-    /// Returns the next movement-state projection.
+    /// Returns the next canonical revision.
     #[must_use]
-    pub const fn state(&self) -> &MovementState {
-        &self.state
+    pub(crate) const fn revision(&self) -> StateRevision {
+        self.revision
+    }
+
+    /// Returns the updated canonical unit.
+    #[must_use]
+    pub(crate) const fn unit(&self) -> &Unit {
+        &self.unit
     }
 
     /// Returns the movement event when the unit changed position.
     #[must_use]
-    pub const fn event(&self) -> Option<&UnitMovedEvent> {
+    pub(crate) const fn event(&self) -> Option<&UnitMovedEvent> {
         self.event.as_ref()
     }
 
     /// Returns exact authoritative steps when the unit changed position.
     #[must_use]
-    pub const fn execution(&self) -> Option<&UnitMovementExecution> {
+    pub(crate) const fn execution(&self) -> Option<&UnitMovementExecution> {
         self.execution.as_ref()
-    }
-
-    /// Returns deterministic planning work counters.
-    #[must_use]
-    pub const fn search_metrics(&self) -> MovementSearchMetrics {
-        self.search_metrics
     }
 
     /// Returns whether hidden authoritative occupancy caused an accepted no-op.
     #[must_use]
-    pub const fn is_no_op(&self) -> bool {
+    #[cfg(test)]
+    pub(crate) const fn is_no_op(&self) -> bool {
         self.event.is_none() && self.execution.is_none()
     }
 }
@@ -139,10 +139,10 @@ pub enum MoveUnitError {
     RevisionOverflow,
     /// A queued path could not be rebased after partial movement.
     InvalidQueuedPath(MovementPathError),
-    /// The updated unit projection violates its own invariants.
-    InvalidMovementUnit(MovementUnitBuildError),
-    /// The validated unit disappeared while constructing the new projection.
-    ProjectionUpdateFailed,
+    /// The updated canonical unit violates its own invariants.
+    InvalidUnit(UnitBuildError),
+    /// The validated unit disappeared while constructing the update.
+    UnitUpdateFailed,
 }
 
 impl MoveUnitError {
@@ -153,8 +153,8 @@ impl MoveUnitError {
             Self::Query(error) => error.code(),
             Self::RevisionOverflow => "state_revision_overflow",
             Self::InvalidQueuedPath(_) => "invalid_queued_movement_path",
-            Self::InvalidMovementUnit(_) => "invalid_movement_unit",
-            Self::ProjectionUpdateFailed => "movement_projection_update_failed",
+            Self::InvalidUnit(_) => "invalid_unit",
+            Self::UnitUpdateFailed => "movement_unit_update_failed",
         }
     }
 }
@@ -165,10 +165,8 @@ impl core::fmt::Display for MoveUnitError {
             Self::Query(error) => error.fmt(formatter),
             Self::RevisionOverflow => formatter.write_str("state revision overflow"),
             Self::InvalidQueuedPath(error) => error.fmt(formatter),
-            Self::InvalidMovementUnit(error) => error.fmt(formatter),
-            Self::ProjectionUpdateFailed => {
-                formatter.write_str("movement projection update failed")
-            }
+            Self::InvalidUnit(error) => error.fmt(formatter),
+            Self::UnitUpdateFailed => formatter.write_str("movement unit update failed"),
         }
     }
 }
@@ -178,14 +176,14 @@ impl std::error::Error for MoveUnitError {
         match self {
             Self::Query(error) => Some(error),
             Self::InvalidQueuedPath(error) => Some(error),
-            Self::InvalidMovementUnit(error) => Some(error),
-            Self::RevisionOverflow | Self::ProjectionUpdateFailed => None,
+            Self::InvalidUnit(error) => Some(error),
+            Self::RevisionOverflow | Self::UnitUpdateFailed => None,
         }
     }
 }
 
 pub(crate) fn apply_move_unit(
-    state: &MovementState,
+    state: &GameState,
     context: EngineContext<'_>,
     command: MoveUnitCommand<'_>,
 ) -> Result<MovementTransition, MoveUnitError> {
@@ -197,11 +195,13 @@ pub(crate) fn apply_move_unit(
     .map_err(MoveUnitError::Query)?;
     let next_revision = state
         .revision()
+        .get()
         .checked_add(1)
+        .map(StateRevision::new)
         .ok_or(MoveUnitError::RevisionOverflow)?;
     let unit = state
         .unit(command.unit_id)
-        .ok_or(MoveUnitError::ProjectionUpdateFailed)?;
+        .ok_or(MoveUnitError::UnitUpdateFailed)?;
     let reachable_steps = plan.reachable_steps();
 
     if reachable_steps.iter().skip(1).any(|step| {
@@ -216,16 +216,22 @@ pub(crate) fn apply_move_unit(
             && !context.city_block_is_known(unit, step.coordinate())
     }) {
         return Ok(MovementTransition {
-            state: state.with_revision(next_revision),
+            revision: next_revision,
+            unit: unit
+                .after_movement(
+                    unit.position(),
+                    unit.movement_units(),
+                    unit.queued_path().cloned(),
+                )
+                .map_err(MoveUnitError::InvalidUnit)?,
             event: None,
             execution: None,
-            search_metrics: plan.search_metrics(),
         });
     }
 
     let destination_step = reachable_steps
         .last()
-        .ok_or(MoveUnitError::ProjectionUpdateFailed)?;
+        .ok_or(MoveUnitError::UnitUpdateFailed)?;
     let destination = destination_step.coordinate();
     let queued_path = if plan.target_reachable_this_turn() {
         None
@@ -237,19 +243,15 @@ pub(crate) fn apply_move_unit(
         )?)
     };
     let updated = unit
-        .clone()
-        .try_after_movement(destination, plan.remaining_movement(), queued_path)
-        .map_err(MoveUnitError::InvalidMovementUnit)?;
-    let next_state = state
-        .replacing_unit(next_revision, updated)
-        .ok_or(MoveUnitError::ProjectionUpdateFailed)?;
+        .after_movement(destination, plan.remaining_movement(), queued_path)
+        .map_err(MoveUnitError::InvalidUnit)?;
 
     if destination == unit.position() {
         return Ok(MovementTransition {
-            state: next_state,
+            revision: next_revision,
+            unit: updated,
             event: None,
             execution: None,
-            search_metrics: plan.search_metrics(),
         });
     }
     let executed_steps = reachable_steps
@@ -259,7 +261,8 @@ pub(crate) fn apply_move_unit(
         .collect::<Vec<_>>()
         .into_boxed_slice();
     Ok(MovementTransition {
-        state: next_state,
+        revision: next_revision,
+        unit: updated,
         event: Some(UnitMovedEvent {
             unit_id: unit.id().clone(),
             from: unit.position(),
@@ -270,7 +273,6 @@ pub(crate) fn apply_move_unit(
             from: unit.position(),
             steps: executed_steps,
         }),
-        search_metrics: plan.search_metrics(),
     })
 }
 
@@ -281,7 +283,7 @@ fn rebase_queued_path(
 ) -> Result<QueuedMovePath, MoveUnitError> {
     let remaining = steps
         .get(reached_index..)
-        .ok_or(MoveUnitError::ProjectionUpdateFailed)?;
+        .ok_or(MoveUnitError::UnitUpdateFailed)?;
     let mut cumulative = MovementUnits::ZERO;
     let rebased = remaining
         .iter()

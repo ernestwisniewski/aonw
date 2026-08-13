@@ -12,7 +12,7 @@ mod state_digest;
 mod unit_action;
 
 use aonw_content::{MapDefinition, RulesetDefinition};
-use aonw_domain::{FogVisibility, GameState, HexCoord, MovementState, MovementUnit, PlayerId};
+use aonw_domain::{FogVisibility, GameState, HexCoord, PlayerId, Unit};
 
 pub use canonical_engine::{
     CanonicalEngineError, CanonicalQueryError, DomainCommand, DomainEvent, DomainRejection,
@@ -20,10 +20,10 @@ pub use canonical_engine::{
 };
 pub use movement::{
     CompiledMovementMap, CompiledMovementMapError, MoveUnitCommand, MoveUnitError, MovementCost,
-    MovementOccupancy, MovementPlanningView, MovementSearchMetrics, MovementSearchWorkspace,
-    MovementTransition, MovementVisibility, ReachableMovement, ReachableMovementQuery,
-    ReachableMovementTile, TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError,
-    UnitMovedEvent, UnitMovementExecution, maximum_movement_units, terrain_entry_cost,
+    MovementPlanningView, MovementSearchMetrics, MovementSearchWorkspace, MovementVisibility,
+    ReachableMovement, ReachableMovementQuery, ReachableMovementTile, TerrainMovementPlan,
+    TerrainMovementQuery, TerrainMovementQueryError, UnitMovedEvent, UnitMovementExecution,
+    maximum_movement_units, terrain_entry_cost,
 };
 pub use state_digest::StateDigest;
 pub use unit_action::{UnitActionCommand, UnitActionError};
@@ -47,11 +47,11 @@ impl GameEngine {
         }
     }
 
-    /// Inspects the movement projection without allocation or mutation.
+    /// Inspects canonical state without allocation or mutation.
     #[must_use]
-    pub const fn summarize_movement_state(state: &MovementState) -> MovementStateSummary {
-        MovementStateSummary {
-            revision: state.revision(),
+    pub const fn summarize_state(state: &GameState) -> GameStateSummary {
+        GameStateSummary {
+            revision: state.revision().get(),
             turn: state.turn(),
             unit_count: state.units().len(),
         }
@@ -66,29 +66,12 @@ impl GameEngine {
     ///
     /// Returns [`TerrainMovementQueryError`] when the revision, unit, target,
     /// occupancy, or terrain does not admit a route.
-    pub fn plan_terrain_route(
-        state: &MovementState,
+    pub(crate) fn plan_terrain_route(
+        state: &GameState,
         context: EngineContext<'_>,
         query: TerrainMovementQuery<'_>,
     ) -> Result<TerrainMovementPlan, TerrainMovementQueryError> {
         movement::plan_terrain_route(state, context, query)
-    }
-
-    /// Returns every actor-visible hex reachable during the current turn.
-    ///
-    /// The engine performs one bounded search and returns stable row-major
-    /// output suitable for selection overlays.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`TerrainMovementQueryError`] when the revision or unit does not
-    /// admit a movement query.
-    pub fn reachable_movement(
-        state: &MovementState,
-        context: EngineContext<'_>,
-        query: ReachableMovementQuery<'_>,
-    ) -> Result<ReachableMovement, TerrainMovementQueryError> {
-        movement::find_reachable_tiles(state, context, query)
     }
 
     /// Returns reachable hexes while reusing caller-owned search storage.
@@ -97,8 +80,8 @@ impl GameEngine {
     ///
     /// Returns [`TerrainMovementQueryError`] when the revision or unit does not
     /// admit a movement query.
-    pub fn reachable_movement_with_workspace(
-        state: &MovementState,
+    pub(crate) fn reachable_movement_with_workspace(
+        state: &GameState,
         context: EngineContext<'_>,
         query: ReachableMovementQuery<'_>,
         workspace: &mut MovementSearchWorkspace,
@@ -112,11 +95,11 @@ impl GameEngine {
     ///
     /// Returns [`MoveUnitError`] when validation, planning, or projection update
     /// fails. Rejected commands do not mutate the borrowed input state.
-    pub fn apply_move_unit(
-        state: &MovementState,
+    pub(crate) fn apply_move_unit(
+        state: &GameState,
         context: EngineContext<'_>,
         command: MoveUnitCommand<'_>,
-    ) -> Result<MovementTransition, MoveUnitError> {
+    ) -> Result<movement::MovementTransition, MoveUnitError> {
         movement::apply_move_unit(state, context, command)
     }
 }
@@ -130,10 +113,10 @@ pub struct EngineVersion {
     pub behavior_version: u16,
 }
 
-/// Movement-projection summary for health checks and early adapters.
+/// Canonical-state summary for health checks and adapters.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct MovementStateSummary {
-    /// Projection revision.
+pub struct GameStateSummary {
+    /// State revision.
     pub revision: u64,
     /// Current turn.
     pub turn: u32,
@@ -280,11 +263,7 @@ impl<'context> EngineContext<'context> {
         }
     }
 
-    pub(crate) fn observes_occupancy(
-        self,
-        moving_unit: &MovementUnit,
-        candidate: &MovementUnit,
-    ) -> bool {
+    pub(crate) fn observes_occupancy(self, moving_unit: &Unit, candidate: &Unit) -> bool {
         if candidate.owner_player_id() == moving_unit.owner_player_id() {
             return true;
         }
@@ -297,11 +276,7 @@ impl<'context> EngineContext<'context> {
         )
     }
 
-    pub(crate) fn can_plan_through_tile(
-        self,
-        moving_unit: &MovementUnit,
-        coordinate: HexCoord,
-    ) -> bool {
+    pub(crate) fn can_plan_through_tile(self, moving_unit: &Unit, coordinate: HexCoord) -> bool {
         let Some(world) = self.world else {
             return true;
         };
@@ -311,17 +286,13 @@ impl<'context> EngineContext<'context> {
         moving_unit.position().distance_to(coordinate) <= 3
     }
 
-    pub(crate) fn city_blocks(self, moving_unit: &MovementUnit, coordinate: HexCoord) -> bool {
+    pub(crate) fn city_blocks(self, moving_unit: &Unit, coordinate: HexCoord) -> bool {
         self.world
             .and_then(|world| world.city_at(coordinate))
             .is_some_and(|city| city.owner_player_id() != moving_unit.owner_player_id())
     }
 
-    pub(crate) fn city_block_is_known(
-        self,
-        moving_unit: &MovementUnit,
-        coordinate: HexCoord,
-    ) -> bool {
+    pub(crate) fn city_block_is_known(self, moving_unit: &Unit, coordinate: HexCoord) -> bool {
         if !self.city_blocks(moving_unit, coordinate) {
             return false;
         }
@@ -373,7 +344,8 @@ impl<'context> EngineContext<'context> {
 mod tests {
     use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
     use aonw_domain::{
-        HexCoord, MovementState, MovementUnit, MovementUnits, PlayerId, UnitId, UnitKind,
+        GameState, HexCoord, HexGridBounds, MovementUnits, PlayerId, StateRevision, Unit, UnitId,
+        UnitKind, UnitOccupancyPolicy,
     };
 
     use super::{
@@ -382,22 +354,28 @@ mod tests {
     };
 
     #[test]
-    fn engine_summary_reports_movement_projection() {
+    fn engine_summary_reports_canonical_state() {
         let player_id = PlayerId::new("player-1").expect("valid player id");
-        let state = MovementState::try_new(
-            12,
+        let unit = Unit::builder(
+            UnitId::new("unit-1").expect("valid unit id"),
+            player_id,
+            UnitKind::Commander,
+            "unit.commander",
+            HexCoord::new(3, 2),
+            MovementUnits::new(10),
+        )
+        .build()
+        .expect("valid unit");
+        let state = GameState::try_new(
+            StateRevision::new(12),
             4,
-            [MovementUnit::new(
-                UnitId::new("unit-1").expect("valid unit id"),
-                player_id,
-                UnitKind::Commander,
-                HexCoord::new(3, -2),
-                MovementUnits::new(10),
-            )],
+            HexGridBounds::new(5, 5).expect("valid bounds"),
+            UnitOccupancyPolicy::Exclusive,
+            [unit],
         )
         .expect("valid state");
 
-        let summary = GameEngine::summarize_movement_state(&state);
+        let summary = GameEngine::summarize_state(&state);
         assert_eq!(summary.revision, 12);
         assert_eq!(summary.turn, 4);
         assert_eq!(summary.unit_count, 1);

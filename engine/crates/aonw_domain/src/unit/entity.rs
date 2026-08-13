@@ -1,6 +1,5 @@
 use crate::{
-    ArtifactId, HexCoord, MovementUnit, MovementUnitBuildError, MovementUnits, PlayerId,
-    QueuedMovePath, UnitId, UnitKind, UnitPosture,
+    ArtifactId, HexCoord, MovementUnits, PlayerId, QueuedMovePath, UnitId, UnitKind, UnitPosture,
 };
 
 use super::{ArmyTroop, MerchantTradeRoute, TroopKind, UnitActivity, WorkerJob};
@@ -19,7 +18,12 @@ pub enum UnitBuildError {
     /// More than one entry uses the same troop kind.
     DuplicateTroop(TroopKind),
     /// A queued path does not start at the unit position.
-    InvalidQueuedPath(MovementUnitBuildError),
+    QueuedPathOriginMismatch {
+        /// Current unit position.
+        expected: HexCoord,
+        /// Origin embedded in the queued path.
+        actual: HexCoord,
+    },
     /// A job has an invalid remaining/total duration.
     InvalidJobDuration,
     /// Explicit combat hit points must be positive.
@@ -35,7 +39,14 @@ impl core::fmt::Display for UnitBuildError {
             Self::NameTooLong => formatter.write_str("unit name exceeds 256 bytes"),
             Self::EmptyTroop(kind) => write!(formatter, "troop {kind:?} has zero count"),
             Self::DuplicateTroop(kind) => write!(formatter, "troop {kind:?} is duplicated"),
-            Self::InvalidQueuedPath(source) => write!(formatter, "invalid queued path: {source}"),
+            Self::QueuedPathOriginMismatch { expected, actual } => write!(
+                formatter,
+                "queued path origin ({}, {}) does not match unit position ({}, {})",
+                actual.col(),
+                actual.row(),
+                expected.col(),
+                expected.row()
+            ),
             Self::InvalidJobDuration => formatter.write_str("unit job duration is invalid"),
             Self::ZeroHitPoints => formatter.write_str("unit hit points must be positive"),
             Self::InvalidTurnSkipState => {
@@ -180,25 +191,6 @@ impl Unit {
         self.carried_artifact_id.as_ref()
     }
 
-    /// Builds the temporary movement projection without losing canonical fields.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if a retained path no longer starts at the unit position.
-    pub fn movement_projection(&self) -> Result<MovementUnit, MovementUnitBuildError> {
-        MovementUnit::new(
-            self.id.clone(),
-            self.owner_player_id.clone(),
-            self.kind,
-            self.position,
-            self.movement_units,
-        )
-        .with_posture(self.posture)
-        .with_movement_blocked(self.activity.blocks_manual_movement())
-        .try_with_queued_path(self.queued_path.clone())
-        .map(|unit| unit.with_carried_artifact(self.carried_artifact_id.clone()))
-    }
-
     /// Applies an authoritative movement result while preserving all unrelated fields.
     ///
     /// # Errors
@@ -216,9 +208,7 @@ impl Unit {
         updated.skipped_movement_restore = None;
         updated.queued_path = queued_path;
         updated.posture = UnitPosture::Active;
-        updated
-            .movement_projection()
-            .map_err(UnitBuildError::InvalidQueuedPath)?;
+        validate_queued_path_origin(updated.position, updated.queued_path.as_ref())?;
         Ok(updated)
     }
 
@@ -398,10 +388,29 @@ impl UnitBuilder {
             posture: self.posture,
             carried_artifact_id: self.carried_artifact_id,
         };
-        unit.movement_projection()
-            .map_err(UnitBuildError::InvalidQueuedPath)?;
+        validate_queued_path_origin(unit.position, unit.queued_path.as_ref())?;
         Ok(unit)
     }
+}
+
+fn validate_queued_path_origin(
+    position: HexCoord,
+    queued_path: Option<&QueuedMovePath>,
+) -> Result<(), UnitBuildError> {
+    let Some(path) = queued_path else {
+        return Ok(());
+    };
+    let actual = path
+        .steps()
+        .first()
+        .map_or(path.target(), |step| step.coordinate());
+    if actual == position {
+        return Ok(());
+    }
+    Err(UnitBuildError::QueuedPathOriginMismatch {
+        expected: position,
+        actual,
+    })
 }
 
 fn validate_activity(activity: &UnitActivity) -> Result<(), UnitBuildError> {
@@ -473,11 +482,7 @@ mod tests {
         assert_eq!(unit.worker_build_charges(), 4);
         assert_eq!(unit.hit_points(), Some(7));
         assert_eq!(unit.experience_points(), 12);
-        assert!(
-            unit.movement_projection()
-                .expect("projection")
-                .is_movement_blocked()
-        );
+        assert!(unit.activity().blocks_manual_movement());
     }
 
     #[test]

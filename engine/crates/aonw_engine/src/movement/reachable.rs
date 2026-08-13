@@ -1,9 +1,7 @@
 use std::cmp::Ordering;
 
 use aonw_content::MapDefinition;
-use aonw_domain::{
-    HexCoord, HexTileIndex, MovementState, MovementUnit, MovementUnits, UnitId, UnitPosture,
-};
+use aonw_domain::{GameState, HexCoord, HexTileIndex, MovementUnits, Unit, UnitId, UnitPosture};
 
 use super::compiled_map::neighbor_indices;
 use super::cost::movement_cost_for_index;
@@ -126,8 +124,9 @@ impl PartialOrd for FrontierNode {
     }
 }
 
+#[cfg(test)]
 pub(crate) fn find_reachable_tiles(
-    state: &MovementState,
+    state: &GameState,
     context: EngineContext<'_>,
     query: ReachableMovementQuery<'_>,
 ) -> Result<ReachableMovement, TerrainMovementQueryError> {
@@ -136,7 +135,7 @@ pub(crate) fn find_reachable_tiles(
 }
 
 pub(crate) fn find_reachable_tiles_with_workspace(
-    state: &MovementState,
+    state: &GameState,
     context: EngineContext<'_>,
     query: ReachableMovementQuery<'_>,
     workspace: &mut MovementSearchWorkspace,
@@ -165,7 +164,7 @@ pub(crate) fn find_reachable_tiles_with_workspace(
         .collect::<Vec<_>>()
         .into_boxed_slice();
     Ok(ReachableMovement {
-        revision: state.revision(),
+        revision: state.revision().get(),
         unit_id: unit.id().clone(),
         available_movement: available,
         tiles,
@@ -174,7 +173,7 @@ pub(crate) fn find_reachable_tiles_with_workspace(
 }
 
 pub(super) fn movement_available_for_query(
-    unit: &MovementUnit,
+    unit: &Unit,
     ruleset: &aonw_content::RulesetDefinition,
 ) -> MovementUnits {
     if unit.posture() == UnitPosture::Fortified {
@@ -185,9 +184,9 @@ pub(super) fn movement_available_for_query(
 }
 
 fn reachable_costs(
-    state: &MovementState,
+    state: &GameState,
     map: &MapDefinition,
-    unit: &MovementUnit,
+    unit: &Unit,
     available: MovementUnits,
     context: EngineContext<'_>,
     workspace: &mut MovementSearchWorkspace,

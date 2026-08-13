@@ -1,5 +1,5 @@
 use aonw_content::MapDefinition;
-use aonw_domain::{HexCoord, MovementState, MovementStep, MovementUnit, MovementUnits, UnitId};
+use aonw_domain::{GameState, HexCoord, MovementStep, MovementUnits, Unit, UnitId};
 
 use super::MovementSearchMetrics;
 use super::reachable::movement_available_for_query;
@@ -181,7 +181,7 @@ impl core::fmt::Display for TerrainMovementQueryError {
 impl std::error::Error for TerrainMovementQueryError {}
 
 pub(crate) fn plan_terrain_route(
-    state: &MovementState,
+    state: &GameState,
     context: EngineContext<'_>,
     query: TerrainMovementQuery<'_>,
 ) -> Result<TerrainMovementPlan, TerrainMovementQueryError> {
@@ -257,7 +257,7 @@ pub(crate) fn plan_terrain_route(
         .unwrap_or(MovementUnits::ZERO);
 
     Ok(TerrainMovementPlan {
-        revision: state.revision(),
+        revision: state.revision().get(),
         unit_id: unit.id().clone(),
         target: query.target,
         destination: steps
@@ -273,30 +273,30 @@ pub(crate) fn plan_terrain_route(
 }
 
 pub(super) fn validate_revision(
-    state: &MovementState,
+    state: &GameState,
     expected_revision: u64,
 ) -> Result<(), TerrainMovementQueryError> {
-    if state.revision() == expected_revision {
+    if state.revision().get() == expected_revision {
         return Ok(());
     }
     Err(TerrainMovementQueryError::StaleRevision {
         expected: expected_revision,
-        actual: state.revision(),
+        actual: state.revision().get(),
     })
 }
 
 pub(super) fn validate_unit<'state>(
-    state: &'state MovementState,
+    state: &'state GameState,
     context: EngineContext<'_>,
     unit_id: &UnitId,
-) -> Result<&'state MovementUnit, TerrainMovementQueryError> {
+) -> Result<&'state Unit, TerrainMovementQueryError> {
     let unit = state
         .unit(unit_id)
         .ok_or(TerrainMovementQueryError::UnitNotFound)?;
     if !context.can_act() || unit.owner_player_id() != context.actor_player_id() {
         return Err(TerrainMovementQueryError::UnitNotControlled);
     }
-    if unit.is_movement_blocked() {
+    if unit.activity().blocks_manual_movement() {
         return Err(TerrainMovementQueryError::UnitUnavailable);
     }
     let Some(definition) = context.ruleset().unit(unit.kind()) else {
@@ -313,7 +313,7 @@ pub(super) fn validate_unit<'state>(
 
 fn validate_target(
     map: &MapDefinition,
-    unit: &MovementUnit,
+    unit: &Unit,
     target: HexCoord,
 ) -> Result<(), TerrainMovementQueryError> {
     if map.tile_at(target).is_none() {
@@ -326,11 +326,11 @@ fn validate_target(
 }
 
 fn known_target_blocker<'state>(
-    state: &'state MovementState,
-    unit: &MovementUnit,
+    state: &'state GameState,
+    unit: &Unit,
     target: HexCoord,
     context: EngineContext<'_>,
-) -> Option<&'state MovementUnit> {
+) -> Option<&'state Unit> {
     state.units().iter().find(|candidate| {
         candidate.id() != unit.id()
             && candidate.position() == target
@@ -344,9 +344,9 @@ struct ApproachSearchResult {
 }
 
 fn find_approach_route(
-    state: &MovementState,
+    state: &GameState,
     map: &MapDefinition,
-    unit: &MovementUnit,
+    unit: &Unit,
     target: HexCoord,
     available_movement: MovementUnits,
     context: EngineContext<'_>,

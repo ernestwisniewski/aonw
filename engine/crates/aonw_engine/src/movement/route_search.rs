@@ -2,9 +2,7 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
 use aonw_content::MapDefinition;
-use aonw_domain::{
-    HexCoord, HexTileIndex, MovementState, MovementStep, MovementUnit, MovementUnits,
-};
+use aonw_domain::{GameState, HexCoord, HexTileIndex, MovementStep, MovementUnits, Unit};
 
 use super::compiled_map::neighbor_indices;
 use super::cost::{movement_cost_for_index, terrain_entry_cost};
@@ -77,9 +75,9 @@ struct PreparedRouteSearch {
 }
 
 pub(super) fn find_route(
-    state: &MovementState,
+    state: &GameState,
     map: &MapDefinition,
-    unit: &MovementUnit,
+    unit: &Unit,
     target: HexCoord,
     available_movement: MovementUnits,
     context: EngineContext<'_>,
@@ -96,9 +94,9 @@ pub(super) fn find_route(
 }
 
 pub(super) fn find_route_to_any(
-    state: &MovementState,
+    state: &GameState,
     map: &MapDefinition,
-    unit: &MovementUnit,
+    unit: &Unit,
     targets: &[HexCoord],
     available_movement: MovementUnits,
     context: EngineContext<'_>,
@@ -107,9 +105,9 @@ pub(super) fn find_route_to_any(
 }
 
 pub(super) fn find_route_ignoring_capacity(
-    state: &MovementState,
+    state: &GameState,
     map: &MapDefinition,
-    unit: &MovementUnit,
+    unit: &Unit,
     target: HexCoord,
     available_movement: MovementUnits,
     context: EngineContext<'_>,
@@ -142,9 +140,9 @@ pub(super) fn find_route_ignoring_capacity(
 }
 
 fn find_route_with_maximum(
-    state: &MovementState,
+    state: &GameState,
     map: &MapDefinition,
-    unit: &MovementUnit,
+    unit: &Unit,
     targets: &[HexCoord],
     available_movement: MovementUnits,
     context: EngineContext<'_>,
@@ -168,9 +166,9 @@ fn find_route_with_maximum(
 }
 
 fn prepare_route_search(
-    state: &MovementState,
+    state: &GameState,
     map: &MapDefinition,
-    unit: &MovementUnit,
+    unit: &Unit,
     targets: &[HexCoord],
     available_movement: MovementUnits,
     context: EngineContext<'_>,
@@ -233,7 +231,7 @@ fn prepare_route_search(
 fn run_route_search(
     mut search: PreparedRouteSearch,
     map: &MapDefinition,
-    unit: &MovementUnit,
+    unit: &Unit,
     context: EngineContext<'_>,
 ) -> RouteSearchResult {
     while let Some(current_node) = search.frontier.pop() {

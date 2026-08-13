@@ -1,6 +1,7 @@
 use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_domain::{
-    HexCoord, MovementState, MovementUnit, MovementUnits, PlayerId, UnitId, UnitKind, UnitPosture,
+    GameState, HexCoord, MovementUnits, PlayerId, StateRevision, Unit, UnitActivity, UnitId,
+    UnitKind, UnitOccupancyPolicy, UnitPosture,
 };
 
 use super::{
@@ -37,22 +38,45 @@ fn map(cols: u16, rows: u16, rough: &[HexCoord], blocked: &[HexCoord]) -> MapDef
     .expect("valid map")
 }
 
-fn unit(id: &str, owner: &PlayerId, position: HexCoord, movement: u32) -> MovementUnit {
-    MovementUnit::new(
+fn unit(id: &str, owner: &PlayerId, position: HexCoord, movement: u32) -> Unit {
+    unit_builder(id, owner, position, movement, UnitKind::Warrior)
+        .build()
+        .expect("valid unit")
+}
+
+fn unit_builder(
+    id: &str,
+    owner: &PlayerId,
+    position: HexCoord,
+    movement: u32,
+    kind: UnitKind,
+) -> aonw_domain::UnitBuilder {
+    Unit::builder(
         UnitId::new(id).expect("valid unit id"),
         owner.clone(),
-        UnitKind::Warrior,
+        kind,
+        format!("unit.{id}"),
         position,
         MovementUnits::new(movement),
     )
+}
+
+fn state(revision: u64, map: &MapDefinition, units: impl IntoIterator<Item = Unit>) -> GameState {
+    GameState::try_new(
+        StateRevision::new(revision),
+        1,
+        map.bounds(),
+        UnitOccupancyPolicy::Exclusive,
+        units,
+    )
+    .expect("valid state")
 }
 
 #[test]
 fn route_is_deterministic_when_equal_cost_paths_exist() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(3, 3, &[], &[]);
-    let state = MovementState::try_new(7, 1, [unit("unit-1", &actor, HexCoord::new(0, 1), 6)])
-        .expect("valid state");
+    let state = state(7, &map, [unit("unit-1", &actor, HexCoord::new(0, 1), 6)]);
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
     let context = EngineContext::new(&actor, &map, MovementPlanningView::fog_disabled());
 
@@ -88,8 +112,7 @@ fn route_is_deterministic_when_equal_cost_paths_exist() {
 fn route_reports_rough_cost_and_current_turn_prefix() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(4, 1, &[HexCoord::new(1, 0)], &[]);
-    let state = MovementState::try_new(3, 1, [unit("unit-1", &actor, HexCoord::new(0, 0), 3)])
-        .expect("valid state");
+    let state = state(3, &map, [unit("unit-1", &actor, HexCoord::new(0, 0), 3)]);
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
 
     let plan = plan_terrain_route(
@@ -111,7 +134,7 @@ fn query_rejects_blocked_occupied_and_out_of_bounds_targets() {
     let map = map(3, 1, &[], &[HexCoord::new(1, 0)]);
     let mover = unit("unit-1", &actor, HexCoord::new(0, 0), 6);
     let blocker = unit("unit-2", &actor, HexCoord::new(2, 0), 6);
-    let state = MovementState::try_new(5, 1, [mover, blocker]).expect("valid state");
+    let state = state(5, &map, [mover, blocker]);
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
     let context = EngineContext::new(&actor, &map, MovementPlanningView::fog_disabled());
 
@@ -145,8 +168,7 @@ fn query_rejects_blocked_occupied_and_out_of_bounds_targets() {
 fn stale_revision_fails_before_route_work() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(2, 1, &[], &[]);
-    let state = MovementState::try_new(9, 1, [unit("unit-1", &actor, HexCoord::new(0, 0), 6)])
-        .expect("valid state");
+    let state = state(9, &map, [unit("unit-1", &actor, HexCoord::new(0, 0), 6)]);
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
 
     assert_eq!(
@@ -169,8 +191,7 @@ fn command_guards_keep_current_rejection_precedence() {
     let map = map(2, 1, &[], &[]);
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
 
-    let foreign = MovementState::try_new(4, 1, [unit("unit-1", &other, HexCoord::new(0, 0), 6)])
-        .expect("valid state");
+    let foreign = state(4, &map, [unit("unit-1", &other, HexCoord::new(0, 0), 6)]);
     assert_eq!(
         plan_terrain_route(
             &foreign,
@@ -180,12 +201,16 @@ fn command_guards_keep_current_rejection_precedence() {
         Err(TerrainMovementQueryError::UnitNotControlled)
     );
 
-    let working = MovementState::try_new(
-        4,
-        1,
-        [unit("unit-1", &actor, HexCoord::new(0, 0), 6).with_movement_blocked(true)],
-    )
-    .expect("valid state");
+    let working_unit = unit_builder("unit-1", &actor, HexCoord::new(0, 0), 6, UnitKind::Warrior)
+        .with_activity(UnitActivity::new(
+            None,
+            None,
+            Some(HexCoord::new(0, 0)),
+            None,
+        ))
+        .build()
+        .expect("valid working unit");
+    let working = state(4, &map, [working_unit]);
     assert_eq!(
         plan_terrain_route(
             &working,
@@ -195,14 +220,10 @@ fn command_guards_keep_current_rejection_precedence() {
         Err(TerrainMovementQueryError::UnitUnavailable)
     );
 
-    let merchant = MovementUnit::new(
-        unit_id.clone(),
-        actor.clone(),
-        UnitKind::Merchant,
-        HexCoord::new(0, 0),
-        MovementUnits::new(6),
-    );
-    let merchant_state = MovementState::try_new(4, 1, [merchant]).expect("valid state");
+    let merchant = unit_builder("unit-1", &actor, HexCoord::new(0, 0), 6, UnitKind::Merchant)
+        .build()
+        .expect("valid merchant");
+    let merchant_state = state(4, &map, [merchant]);
     assert_eq!(
         plan_terrain_route(
             &merchant_state,
@@ -218,9 +239,11 @@ fn fortified_unit_uses_restored_capacity_for_preview() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(2, 1, &[], &[]);
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
-    let fortified =
-        unit("unit-1", &actor, HexCoord::new(0, 0), 0).with_posture(UnitPosture::Fortified);
-    let state = MovementState::try_new(2, 1, [fortified]).expect("valid state");
+    let fortified = unit_builder("unit-1", &actor, HexCoord::new(0, 0), 0, UnitKind::Warrior)
+        .with_posture(UnitPosture::Fortified)
+        .build()
+        .expect("valid fortified unit");
+    let state = state(2, &map, [fortified]);
 
     let plan = plan_terrain_route(
         &state,
@@ -238,8 +261,7 @@ fn route_search_handles_the_maximum_supported_map() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(40, 30, &[], &[]);
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
-    let state = MovementState::try_new(11, 1, [unit("unit-1", &actor, HexCoord::new(0, 0), 6)])
-        .expect("valid state");
+    let state = state(11, &map, [unit("unit-1", &actor, HexCoord::new(0, 0), 6)]);
 
     let plan = plan_terrain_route(
         &state,
@@ -263,12 +285,11 @@ fn imported_high_movement_balance_does_not_change_query_precedence() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(2, 1, &[], &[]);
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
-    let state = MovementState::try_new(
+    let state = state(
         12,
-        1,
+        &map,
         [unit("unit-1", &actor, HexCoord::new(0, 0), u32::MAX)],
-    )
-    .expect("structurally valid state");
+    );
 
     let plan = plan_terrain_route(
         &state,
@@ -287,7 +308,7 @@ fn fog_aware_planning_does_not_reveal_unknown_blockers() {
     let map = map(3, 3, &[], &[]);
     let mover = unit("unit-1", &actor, HexCoord::new(0, 1), 6);
     let hidden = unit("unit-hidden", &other, HexCoord::new(1, 0), 6);
-    let state = MovementState::try_new(3, 1, [mover, hidden]).expect("valid state");
+    let state = state(3, &map, [mover, hidden]);
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
     let no_known_units: Vec<UnitId> = Vec::new();
 
@@ -315,7 +336,14 @@ fn friendly_occupancy_is_known_even_when_visibility_ids_omit_it() {
     let map = map(3, 1, &[], &[]);
     let mover = unit("unit-1", &actor, HexCoord::new(0, 0), 6);
     let friendly = unit("unit-2", &actor, HexCoord::new(1, 0), 6);
-    let state = MovementState::try_new(3, 1, [mover, friendly]).expect("valid state");
+    let state = GameState::try_new(
+        StateRevision::new(3),
+        1,
+        map.bounds(),
+        UnitOccupancyPolicy::FriendlyStacking,
+        [mover, friendly],
+    )
+    .expect("valid state");
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
     let no_known_units: Vec<UnitId> = Vec::new();
 
@@ -340,7 +368,7 @@ fn occupied_target_uses_deterministic_approach_policy() {
     let map = map(3, 3, &[], &[]);
     let mover = unit("unit-1", &actor, HexCoord::new(0, 1), 6);
     let enemy = unit("unit-2", &other, HexCoord::new(2, 1), 6);
-    let state = MovementState::try_new(4, 1, [mover, enemy]).expect("valid state");
+    let state = state(4, &map, [mover, enemy]);
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
 
     let plan = plan_terrain_route(
@@ -358,12 +386,16 @@ fn occupied_target_uses_deterministic_approach_policy() {
 fn action_permission_preserves_not_controlled_precedence() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(2, 1, &[], &[]);
-    let state = MovementState::try_new(
-        4,
-        1,
-        [unit("unit-1", &actor, HexCoord::new(0, 0), 6).with_movement_blocked(true)],
-    )
-    .expect("valid state");
+    let blocked = unit_builder("unit-1", &actor, HexCoord::new(0, 0), 6, UnitKind::Warrior)
+        .with_activity(UnitActivity::new(
+            None,
+            None,
+            Some(HexCoord::new(0, 0)),
+            None,
+        ))
+        .build()
+        .expect("valid blocked unit");
+    let state = state(4, &map, [blocked]);
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
 
     assert_eq!(
@@ -381,8 +413,7 @@ fn action_permission_preserves_not_controlled_precedence() {
 fn reachable_query_performs_one_bounded_row_major_search() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(4, 1, &[HexCoord::new(1, 0), HexCoord::new(2, 0)], &[]);
-    let state = MovementState::try_new(6, 1, [unit("unit-1", &actor, HexCoord::new(0, 0), 3)])
-        .expect("valid state");
+    let state = state(6, &map, [unit("unit-1", &actor, HexCoord::new(0, 0), 3)]);
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
 
     let reachable = find_reachable_tiles(

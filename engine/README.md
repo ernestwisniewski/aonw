@@ -94,18 +94,16 @@ neighbors and row-major indices without allocation.
 The actor is command/query context, not persisted state. `GameStateDto` version
 2 is the strict current contract for all implemented authoritative state. It
 persists a reversible current-turn unit skip without moving that rule into UI.
-`MovementStateDto` remains a temporary adapter projection and is not a save
-format. It will be removed when movement algorithms borrow the canonical
-aggregate directly.
 `EngineContext` supplies actor, permission, validated map, and immutable
 ruleset; canonical fog and occupancy are derived from `GameState`.
 
 ## Movement foundation
 
 `GameState` is the canonical aggregate root for the implemented simulation
-slice. It uses the nominal `StateRevision`, preserves unit contract order in contiguous storage,
-and maintains a private sorted ID index. Construction validates map bounds,
-duplicate IDs, and the occupancy policy selected by the ruleset.
+slice. It uses the nominal `StateRevision`, preserves unit contract order in
+contiguous storage, and maintains a private sorted ID index. Construction
+validates map bounds, duplicate IDs, and the occupancy policy selected by the
+ruleset.
 
 The complete `Unit` entity preserves identity, display name, HP, XP, army,
 queued and merchant routes, worker charges, posture, artifacts, and concrete
@@ -118,13 +116,9 @@ links exact map and ruleset hashes to validated starting placements and can
 bootstrap a revision-zero `GameState`. Map, ruleset, and scenario identities
 are separate SHA-256 hashes with golden vectors.
 
-The earlier `MovementState` remains an internal compatibility projection used
-inside movement planning. Godot does not load it and it is not a save format.
-
-The current unit projection carries all data needed by the first movement
-slice: stable type, owner, odd-q position, fixed-point movement balance,
-posture, availability, queued route, and carried artifact. Boundary mapping
-round-trips these values and validates queued coordinates and cumulative costs.
+Movement planning borrows `GameState` and canonical `Unit` entities directly.
+There is no partial movement state contract or copied unit projection. The
+canonical state codec validates queued coordinates and cumulative costs.
 
 `GameEngine::query` and `apply` are the canonical full-state boundary.
 Route/reachable planning uses row-major map

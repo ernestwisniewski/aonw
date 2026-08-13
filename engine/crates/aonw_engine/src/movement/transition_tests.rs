@@ -1,6 +1,7 @@
 use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_domain::{
-    HexCoord, MovementState, MovementUnit, MovementUnits, PlayerId, UnitId, UnitKind, UnitPosture,
+    GameState, HexCoord, MovementUnits, PlayerId, StateRevision, Unit, UnitActivity, UnitId,
+    UnitKind, UnitOccupancyPolicy, UnitPosture,
 };
 
 use super::{MoveUnitCommand, TerrainMovementQueryError, apply_move_unit};
@@ -32,29 +33,37 @@ fn map(cols: u16, rows: u16, rough: &[HexCoord]) -> MapDefinition {
     .expect("valid map")
 }
 
-fn unit(
-    id: &str,
-    owner: &PlayerId,
-    kind: UnitKind,
-    position: HexCoord,
-    movement: u32,
-) -> MovementUnit {
-    MovementUnit::new(
+fn unit(id: &str, owner: &PlayerId, kind: UnitKind, position: HexCoord, movement: u32) -> Unit {
+    Unit::builder(
         UnitId::new(id).expect("valid unit id"),
         owner.clone(),
         kind,
+        format!("unit.{id}"),
         position,
         MovementUnits::new(movement),
     )
+    .build()
+    .expect("valid unit")
+}
+
+fn state(revision: u64, map: &MapDefinition, units: impl IntoIterator<Item = Unit>) -> GameState {
+    GameState::try_new(
+        StateRevision::new(revision),
+        1,
+        map.bounds(),
+        UnitOccupancyPolicy::Exclusive,
+        units,
+    )
+    .expect("valid state")
 }
 
 #[test]
 fn adjacent_move_returns_state_event_and_exact_execution() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(3, 1, &[]);
-    let state = MovementState::try_new(
+    let state = state(
         5,
-        1,
+        &map,
         [unit(
             "unit-1",
             &actor,
@@ -62,8 +71,7 @@ fn adjacent_move_returns_state_event_and_exact_execution() {
             HexCoord::new(0, 0),
             4,
         )],
-    )
-    .expect("valid state");
+    );
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
 
     let transition = apply_move_unit(
@@ -73,8 +81,8 @@ fn adjacent_move_returns_state_event_and_exact_execution() {
     )
     .expect("move accepted");
 
-    let moved = transition.state().unit(&unit_id).expect("moved unit");
-    assert_eq!(transition.state().revision(), 6);
+    let moved = transition.unit();
+    assert_eq!(transition.revision(), StateRevision::new(6));
     assert_eq!(moved.position(), HexCoord::new(1, 0));
     assert_eq!(moved.movement_units(), MovementUnits::new(2));
     assert_eq!(
@@ -94,9 +102,9 @@ fn adjacent_move_returns_state_event_and_exact_execution() {
 fn partial_move_rebases_the_queued_path_at_the_destination() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(4, 1, &[HexCoord::new(1, 0)]);
-    let state = MovementState::try_new(
+    let state = state(
         2,
-        1,
+        &map,
         [unit(
             "unit-1",
             &actor,
@@ -104,8 +112,7 @@ fn partial_move_rebases_the_queued_path_at_the_destination() {
             HexCoord::new(0, 0),
             3,
         )],
-    )
-    .expect("valid state");
+    );
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
 
     let transition = apply_move_unit(
@@ -114,7 +121,7 @@ fn partial_move_rebases_the_queued_path_at_the_destination() {
         MoveUnitCommand::new(2, &unit_id, HexCoord::new(3, 0)),
     )
     .expect("partial move accepted");
-    let moved = transition.state().unit(&unit_id).expect("moved unit");
+    let moved = transition.unit();
     let queued = moved.queued_path().expect("remaining path queued");
 
     assert_eq!(moved.position(), HexCoord::new(1, 0));
@@ -129,9 +136,9 @@ fn hidden_blocker_produces_an_accepted_no_op_without_disclosure() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let other = PlayerId::new("player-2").expect("valid player");
     let map = map(3, 1, &[]);
-    let state = MovementState::try_new(
+    let state = state(
         7,
-        1,
+        &map,
         [
             unit("unit-1", &actor, UnitKind::Warrior, HexCoord::new(0, 0), 6),
             unit(
@@ -142,8 +149,7 @@ fn hidden_blocker_produces_an_accepted_no_op_without_disclosure() {
                 6,
             ),
         ],
-    )
-    .expect("valid state");
+    );
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
     let known: Vec<UnitId> = Vec::new();
 
@@ -155,27 +161,32 @@ fn hidden_blocker_produces_an_accepted_no_op_without_disclosure() {
     .expect("hidden collision is accepted without disclosure");
 
     assert!(transition.is_no_op());
-    assert_eq!(transition.state().revision(), 8);
-    assert_eq!(
-        transition.state().unit(&unit_id).expect("unit").position(),
-        HexCoord::new(0, 0)
-    );
+    assert_eq!(transition.revision(), StateRevision::new(8));
+    assert_eq!(transition.unit().position(), HexCoord::new(0, 0));
 }
 
 #[test]
 fn rejection_does_not_change_the_borrowed_state() {
     let actor = PlayerId::new("player-1").expect("valid actor");
     let map = map(2, 1, &[]);
-    let state = MovementState::try_new(
-        9,
-        1,
-        [
-            unit("unit-1", &actor, UnitKind::Warrior, HexCoord::new(0, 0), 6)
-                .with_posture(UnitPosture::AutoWorking)
-                .with_movement_blocked(true),
-        ],
+    let blocked = Unit::builder(
+        UnitId::new("unit-1").expect("valid unit id"),
+        actor.clone(),
+        UnitKind::Warrior,
+        "unit.warrior",
+        HexCoord::new(0, 0),
+        MovementUnits::new(6),
     )
-    .expect("valid state");
+    .with_posture(UnitPosture::AutoWorking)
+    .with_activity(UnitActivity::new(
+        None,
+        None,
+        Some(HexCoord::new(0, 0)),
+        None,
+    ))
+    .build()
+    .expect("valid blocked unit");
+    let state = state(9, &map, [blocked]);
     let before = state.clone();
     let unit_id = UnitId::new("unit-1").expect("valid unit id");
 

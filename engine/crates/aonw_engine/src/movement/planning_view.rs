@@ -1,4 +1,4 @@
-use aonw_domain::{MovementUnit, UnitId};
+use aonw_domain::{Unit, UnitId};
 
 /// Actor-visible unit occupancy used by movement planning.
 ///
@@ -32,11 +32,7 @@ impl<'view> MovementPlanningView<'view> {
             .is_none_or(|known| known.iter().any(|candidate| candidate == unit_id))
     }
 
-    pub(crate) fn observes_occupancy(
-        self,
-        moving_unit: &MovementUnit,
-        candidate: &MovementUnit,
-    ) -> bool {
+    pub(crate) fn observes_occupancy(self, moving_unit: &Unit, candidate: &Unit) -> bool {
         candidate.owner_player_id() == moving_unit.owner_player_id() || self.knows(candidate.id())
     }
 }
