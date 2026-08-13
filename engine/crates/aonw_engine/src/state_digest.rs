@@ -1,6 +1,6 @@
 use aonw_domain::{
-    FieldImprovementKind, GameState, HexCoord, TransportCondition, TroopKind, Unit, UnitActivity,
-    UnitKind, UnitOccupancyPolicy, UnitPosture, WorkerJob,
+    FieldImprovementKind, GameState, HexCoord, MovementUnits, TransportCondition, TroopKind, Unit,
+    UnitActivity, UnitKind, UnitOccupancyPolicy, UnitPosture, WorkerJob,
 };
 use sha2::{Digest, Sha256};
 
@@ -27,7 +27,7 @@ impl core::fmt::Display for StateDigest {
 
 pub(crate) fn digest_state(state: &GameState) -> StateDigest {
     let mut writer = DigestWriter(Sha256::new());
-    writer.text("aonw-game-state-v1");
+    writer.text("aonw-game-state-v2");
     writer.u64(state.revision().get());
     writer.u32(state.turn());
     writer.u16(state.bounds().cols());
@@ -90,6 +90,7 @@ fn hash_unit(writer: &mut DigestWriter, unit: &Unit) {
     writer.text(unit.name());
     writer.coordinate(unit.position());
     writer.u32(unit.movement_units().get());
+    writer.optional_u32(unit.skipped_movement_restore().map(MovementUnits::get));
     writer.usize(unit.army().len());
     for troop in unit.army() {
         writer.u8(match troop.kind() {
@@ -345,7 +346,42 @@ mod tests {
         assert_eq!(digest_state(&left), digest_state(&right));
         assert_eq!(
             digest_state(&left).to_string(),
-            "fc8a270ef2777cc1020b64ae41d23795c48d5351a436135b0f19573528b6910b"
+            "d23fad065c66ce354727b8bd29c8a80b671f9e6c0956b9cf4887d70d9d39756c"
         );
+    }
+
+    #[test]
+    fn digest_includes_reversible_skip_balance() {
+        let bounds = HexGridBounds::new(3, 3).expect("bounds");
+        let base = unit("unit", HexCoord::new(1, 1));
+        let skipped = Unit::builder(
+            base.id().clone(),
+            base.owner_player_id().clone(),
+            base.kind(),
+            base.name(),
+            base.position(),
+            MovementUnits::ZERO,
+        )
+        .with_skipped_movement_restore(Some(MovementUnits::new(10)))
+        .build()
+        .expect("skipped unit");
+        let base_state = GameState::try_new(
+            StateRevision::new(1),
+            2,
+            bounds,
+            UnitOccupancyPolicy::Exclusive,
+            [base],
+        )
+        .expect("base state");
+        let skipped_state = GameState::try_new(
+            StateRevision::new(1),
+            2,
+            bounds,
+            UnitOccupancyPolicy::Exclusive,
+            [skipped],
+        )
+        .expect("skipped state");
+
+        assert_ne!(digest_state(&base_state), digest_state(&skipped_state));
     }
 }

@@ -5,6 +5,9 @@ RUST_CARGO ?= $(if $(wildcard $(HOME)/.cargo/bin/cargo),$(HOME)/.cargo/bin/cargo
 GODOT_PROJECT ?= clients/aonw2_godot
 GODOT_BIN ?= $(if $(wildcard /Applications/Godot.app/Contents/MacOS/Godot),/Applications/Godot.app/Contents/MacOS/Godot,godot)
 GODOT_TEST_LOG ?= /tmp/aonw-godot-test.log
+GODOT_CHECK_ONLY_LOG ?= /tmp/aonw-godot-check-only.log
+GODOT_RUNTIME_LOG ?= /tmp/aonw-godot-runtime.log
+GODOT_EDITOR_LOG ?= /tmp/aonw-godot-editor.log
 
 LOCAL_FLUTTER_BIN := $(CURDIR)/.fvm/flutter_sdk/bin
 ifneq ($(wildcard $(LOCAL_FLUTTER_BIN)/flutter),)
@@ -492,7 +495,8 @@ godot-native-config:
 godot-check: rust-godot-build godot-test godot-editor-check
 
 godot-editor-check: rust-godot-build godot-native-config
-	@$(GODOT_BIN) --headless --log-file "$(GODOT_TEST_LOG)" --editor --path "$(GODOT_PROJECT)" --quit
+	@$(GODOT_BIN) --headless --log-file "$(GODOT_EDITOR_LOG)" --editor --path "$(GODOT_PROJECT)" --quit
+	@tool/check_godot_log.sh "$(GODOT_EDITOR_LOG)"
 
 godot-editor: rust-godot-build godot-native-config
 	@$(GODOT_BIN) --editor --path "$(GODOT_PROJECT)"
@@ -501,9 +505,12 @@ godot-run: rust-godot-build godot-native-config
 	@$(GODOT_BIN) --path "$(GODOT_PROJECT)"
 
 godot-test: rust-godot-build godot-native-config
-	@$(GODOT_BIN) --headless --log-file "$(GODOT_TEST_LOG)" --path "$(GODOT_PROJECT)" --check-only --script res://tests/test_map_pipeline.gd
+	@$(GODOT_BIN) --headless --log-file "$(GODOT_CHECK_ONLY_LOG)" --path "$(GODOT_PROJECT)" --check-only --script res://tests/test_map_pipeline.gd
+	@tool/check_godot_log.sh "$(GODOT_CHECK_ONLY_LOG)"
 	@$(GODOT_BIN) --headless --log-file "$(GODOT_TEST_LOG)" --path "$(GODOT_PROJECT)" --script res://tests/test_map_pipeline.gd
-	@$(GODOT_BIN) --headless --log-file "$(GODOT_TEST_LOG)" --path "$(GODOT_PROJECT)" --quit-after 5
+	@tool/check_godot_log.sh "$(GODOT_TEST_LOG)" "map pipeline: OK"
+	@$(GODOT_BIN) --headless --log-file "$(GODOT_RUNTIME_LOG)" --path "$(GODOT_PROJECT)" --quit-after 5
+	@tool/check_godot_log.sh "$(GODOT_RUNTIME_LOG)"
 
 godot-map-sync:
 	@mkdir -p "$(GODOT_PROJECT)/assets/maps/aonw2_starter"

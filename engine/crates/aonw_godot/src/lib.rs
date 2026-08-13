@@ -4,9 +4,14 @@ mod bridge;
 mod local_session;
 mod wire;
 
-use godot::prelude::*;
+mod extension_entrypoint {
+    #![allow(unsafe_code)]
 
-struct AonwGodotExtension;
+    use godot::prelude::*;
 
-#[gdextension]
-unsafe impl ExtensionLibrary for AonwGodotExtension {}
+    struct AonwGodotExtension;
+
+    // SAFETY: Godot requires this marker implementation to register the extension entrypoint.
+    #[gdextension]
+    unsafe impl ExtensionLibrary for AonwGodotExtension {}
+}

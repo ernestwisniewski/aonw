@@ -28,3 +28,4 @@ module_name_repetitions = "allow"
 [lints.rust]
 missing_docs = "warn"
 unreachable_pub = "warn"
+unsafe_code = "deny"
