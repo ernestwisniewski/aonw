@@ -2,8 +2,9 @@
 
 - Status: Target architecture and living migration plan
 - Last updated: 2026-08-13
-- Implementation checkpoint: phase 2/3 foundation started under `engine/`;
-  production integration and rule-family parity have not started
+- Implementation checkpoint: phase 2/3 foundation plus the first phase 4 map,
+  unit, movement-contract, and terrain-query primitives exist under `engine/`;
+  production integration and complete movement parity have not started
 - Governing decision: [ADR 0008](adr/0008-rust-engine-ownership-and-strangler-migration.md)
 
 ## Purpose
@@ -174,8 +175,14 @@ aonw/
 └── Makefile
 ```
 
-The implemented phase 2/3 foundation includes the Rust workspace, testkit,
-versioned logical map content, and the first Godot 3D map preview.
+The implemented foundation includes the Rust workspace, testkit, versioned
+logical map content, strict small logical-map fixtures, odd-q row-major
+topology, movement-oriented unit DTO mapping, fixed-point terrain costs,
+revision-bound terrain route planning, and the first Godot 3D map preview.
+Fixture contract version 2 can compare authoritative movement executions, but
+the committed legacy corpus remains version 1 and no Rust command executor is
+connected to it yet. Fog, cities, diplomacy, roads, movement transitions, FFI,
+and GDExtension integration remain future work.
 `aonw_native_bridge` and top-level contract publication remain planned.
 Additional crates shown in the target layout below are created with their first
 behavior and tests rather than as empty packages. No FFI, GDExtension, local

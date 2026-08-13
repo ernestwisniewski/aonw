@@ -2,16 +2,24 @@ use serde_json::{Map, Value};
 
 use crate::JsonDifference;
 use crate::diff::{JsonOutcome, compare_outcome};
+use crate::movement_execution::MovementExecution;
 
 /// JSON object used at language-neutral fixture boundaries.
 pub type JsonObject = Map<String, Value>;
 
-/// Reducer-parity fixture version supported by this crate.
-pub const SUPPORTED_FIXTURE_VERSION: u64 = 1;
+/// Oldest reducer-parity fixture version accepted for migration.
+pub const MIN_SUPPORTED_FIXTURE_VERSION: u64 = 1;
+
+/// Current reducer-parity fixture version written by new fixtures.
+pub const CURRENT_FIXTURE_VERSION: u64 = 2;
+
+/// Current reducer-parity fixture version.
+pub const SUPPORTED_FIXTURE_VERSION: u64 = CURRENT_FIXTURE_VERSION;
 
 /// One independently reviewed reducer-parity fixture.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Fixture {
+    pub(crate) version: u64,
     pub(crate) id: Box<str>,
     pub(crate) family: Box<str>,
     pub(crate) input: FixtureInput,
@@ -19,6 +27,12 @@ pub struct Fixture {
 }
 
 impl Fixture {
+    /// Returns the parsed fixture contract version.
+    #[must_use]
+    pub const fn fixture_version(&self) -> u64 {
+        self.version
+    }
+
     /// Returns the kebab-case fixture identifier.
     #[must_use]
     pub fn id(&self) -> &str {
@@ -128,6 +142,7 @@ pub struct ReducerExpectedOutcome {
     pub(crate) save: JsonObject,
     pub(crate) state: JsonObject,
     pub(crate) events: Vec<JsonObject>,
+    pub(crate) movement_executions: Option<Box<[MovementExecution]>>,
 }
 
 impl ReducerExpectedOutcome {
@@ -161,6 +176,15 @@ impl ReducerExpectedOutcome {
         &self.events
     }
 
+    /// Returns authoritative movement evidence for fixture v2.
+    ///
+    /// Legacy v1 fixtures return `None`; this is distinct from the explicit
+    /// empty list required by v2.
+    #[must_use]
+    pub fn movement_executions(&self) -> Option<&[MovementExecution]> {
+        self.movement_executions.as_deref()
+    }
+
     /// Creates a standalone output value for adapter tests.
     #[must_use]
     pub fn to_output(&self) -> FixtureOutput {
@@ -170,6 +194,7 @@ impl ReducerExpectedOutcome {
             save: self.save.clone(),
             state: self.state.clone(),
             events: self.events.clone(),
+            movement_executions: self.movement_executions.clone().unwrap_or_default(),
         }
     }
 
@@ -180,6 +205,7 @@ impl ReducerExpectedOutcome {
             &self.save,
             &self.state,
             &self.events,
+            self.movement_executions.as_deref(),
         )
     }
 }
@@ -192,18 +218,25 @@ pub struct FixtureOutput {
     save: JsonObject,
     state: JsonObject,
     events: Vec<JsonObject>,
+    movement_executions: Box<[MovementExecution]>,
 }
 
 impl FixtureOutput {
     /// Constructs an accepted implementation output.
     #[must_use]
-    pub const fn accept(save: JsonObject, state: JsonObject, events: Vec<JsonObject>) -> Self {
+    pub fn accept(
+        save: JsonObject,
+        state: JsonObject,
+        events: Vec<JsonObject>,
+        movement_executions: impl Into<Box<[MovementExecution]>>,
+    ) -> Self {
         Self {
             accepted: true,
             reason: None,
             save,
             state,
             events,
+            movement_executions: movement_executions.into(),
         }
     }
 
@@ -214,6 +247,7 @@ impl FixtureOutput {
         save: JsonObject,
         state: JsonObject,
         events: Vec<JsonObject>,
+        movement_executions: impl Into<Box<[MovementExecution]>>,
     ) -> Self {
         Self {
             accepted: false,
@@ -221,6 +255,7 @@ impl FixtureOutput {
             save,
             state,
             events,
+            movement_executions: movement_executions.into(),
         }
     }
 
@@ -254,6 +289,12 @@ impl FixtureOutput {
         &self.events
     }
 
+    /// Returns ordered authoritative movement evidence produced by the adapter.
+    #[must_use]
+    pub fn movement_executions(&self) -> &[MovementExecution] {
+        &self.movement_executions
+    }
+
     fn as_json_outcome(&self) -> JsonOutcome<'_> {
         JsonOutcome::new(
             self.accepted,
@@ -261,6 +302,7 @@ impl FixtureOutput {
             &self.save,
             &self.state,
             &self.events,
+            Some(&self.movement_executions),
         )
     }
 }

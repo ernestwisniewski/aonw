@@ -6,8 +6,15 @@
 
 #![forbid(unsafe_code)]
 
+mod movement;
+
 use aonw_content::MapDefinition;
 use aonw_domain::{PlayerId, WorldState};
+
+pub use movement::{
+    MovementCost, TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError,
+    maximum_movement_units, terrain_entry_cost,
+};
 
 /// Engine behavior version implemented by this workspace.
 ///
@@ -36,6 +43,23 @@ impl GameEngine {
             turn: state.turn(),
             unit_count: state.units().len(),
         }
+    }
+
+    /// Plans a deterministic route using terrain and known unit occupancy.
+    ///
+    /// This query intentionally excludes fog, cities, diplomacy, and roads
+    /// until those authoritative state slices are ported.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TerrainMovementQueryError`] when the revision, unit, target,
+    /// occupancy, or terrain does not admit a route.
+    pub fn plan_terrain_route(
+        state: &WorldState,
+        context: EngineContext<'_>,
+        query: TerrainMovementQuery<'_>,
+    ) -> Result<TerrainMovementPlan, TerrainMovementQueryError> {
+        movement::plan_terrain_route(state, context, query)
     }
 }
 
@@ -92,7 +116,7 @@ impl<'context> EngineContext<'context> {
 #[cfg(test)]
 mod tests {
     use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
-    use aonw_domain::{HexCoord, PlayerId, Unit, UnitId, WorldState};
+    use aonw_domain::{HexCoord, MovementUnits, PlayerId, Unit, UnitId, UnitKind, WorldState};
 
     use super::{ENGINE_BEHAVIOR_VERSION, EngineContext, GameEngine};
 
@@ -105,8 +129,9 @@ mod tests {
             [Unit::new(
                 UnitId::new("unit-1").expect("valid unit id"),
                 player_id,
+                UnitKind::Commander,
                 HexCoord::new(3, -2),
-                100,
+                MovementUnits::new(10),
             )],
         )
         .expect("valid state");

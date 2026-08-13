@@ -21,7 +21,7 @@ outputs to their executors. The corpus does not claim coverage of offsets,
 database transactions, recipient projections, system/timeout commands, or
 other explicitly excluded boundaries.
 
-Each version 1 fixture contains:
+Each legacy version 1 fixture contains:
 
 - `id` and `family`, with accepted, actor-rejected, and semantic-rejected cases
   for player commands plus waiting, finalizing, and rejected turn submissions;
@@ -29,6 +29,33 @@ Each version 1 fixture contains:
   save, canonical persistent state, and command;
 - expected server acceptance/reason plus the complete canonical state, ordered
   domain events, and the complete save except for `savedAt`.
+
+Version 2 adds required `expected.movementExecutions`. The value is always an
+ordered JSON array: `[]` explicitly proves that the transition produced no
+authoritative movement evidence. Every non-empty item has this strict shape:
+
+```json
+{
+  "unitId": "unit_1",
+  "fromCol": 0,
+  "fromRow": 0,
+  "steps": [
+    {"col": 1, "row": 0, "enterCost": 100, "cumulativeCost": 100}
+  ]
+}
+```
+
+The origin is excluded from `steps`. Steps and executions retain global order;
+entry and cumulative costs use fixed-point movement units. Every execution is
+non-empty, every entry cost is positive, and cumulative costs must equal the
+checked running sum. Unknown keys, a missing field, JSON `null`, invalid
+integers, and inconsistent costs fail closed.
+
+The Rust loader keeps version 1 readable during the migration, representing its
+missing movement evidence as unknown rather than inventing `[]`. New or edited
+fixtures must use version 2. A reviewed migration of existing fixtures must
+obtain executions from the authoritative reducer result and must not infer a
+path from state deltas or `UnitMoved` events.
 
 The local test calls `LocalCommandResolver(GameStateReducer)`. The server test
 calls `ServerCommandReducer`. Both deserialize the same input and compare their

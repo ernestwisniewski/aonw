@@ -1,5 +1,7 @@
 use serde_json::{Map, Value};
 
+use crate::movement_execution::MovementExecution;
+
 const MAX_DIFFERENCES: usize = 64;
 const MAX_RENDERED_VALUE_BYTES: usize = 256;
 
@@ -67,6 +69,7 @@ pub(super) struct JsonOutcome<'a> {
     save: &'a Map<String, Value>,
     state: &'a Map<String, Value>,
     events: &'a [Map<String, Value>],
+    movement_executions: Option<&'a [MovementExecution]>,
 }
 
 impl<'a> JsonOutcome<'a> {
@@ -76,6 +79,7 @@ impl<'a> JsonOutcome<'a> {
         save: &'a Map<String, Value>,
         state: &'a Map<String, Value>,
         events: &'a [Map<String, Value>],
+        movement_executions: Option<&'a [MovementExecution]>,
     ) -> Self {
         Self {
             accepted,
@@ -83,6 +87,7 @@ impl<'a> JsonOutcome<'a> {
             save,
             state,
             events,
+            movement_executions,
         }
     }
 }
@@ -111,7 +116,162 @@ pub(super) fn compare_outcome(
     collect_object_differences("$.save", expected.save, actual.save, &mut output);
     collect_object_differences("$.state", expected.state, actual.state, &mut output);
     collect_object_array_differences("$.events", expected.events, actual.events, &mut output);
+    if let Some(expected_executions) = expected.movement_executions {
+        collect_movement_execution_differences(
+            expected_executions,
+            actual.movement_executions,
+            &mut output,
+        );
+    }
     output
+}
+
+fn collect_movement_execution_differences(
+    expected: &[MovementExecution],
+    actual: Option<&[MovementExecution]>,
+    output: &mut Vec<JsonDifference>,
+) {
+    let Some(actual) = actual else {
+        output.push(JsonDifference {
+            path: "$.movementExecutions".into(),
+            kind: DifferenceKind::Missing,
+            expected: Some(format!("array(len={})", expected.len()).into()),
+            actual: None,
+        });
+        return;
+    };
+    let common_length = expected.len().min(actual.len());
+    for index in 0..common_length {
+        if output.len() >= MAX_DIFFERENCES {
+            return;
+        }
+        compare_execution(index, &expected[index], &actual[index], output);
+    }
+    collect_typed_array_tail(
+        "$.movementExecutions",
+        expected.len(),
+        actual.len(),
+        common_length,
+        output,
+    );
+}
+
+fn compare_execution(
+    index: usize,
+    expected: &MovementExecution,
+    actual: &MovementExecution,
+    output: &mut Vec<JsonDifference>,
+) {
+    let path = format!("$.movementExecutions[{index}]");
+    compare_scalar(
+        format!("{path}.unitId"),
+        expected.unit_id(),
+        actual.unit_id(),
+        output,
+    );
+    compare_scalar(
+        format!("{path}.fromCol"),
+        &expected.from_col(),
+        &actual.from_col(),
+        output,
+    );
+    compare_scalar(
+        format!("{path}.fromRow"),
+        &expected.from_row(),
+        &actual.from_row(),
+        output,
+    );
+
+    let expected_steps = expected.steps();
+    let actual_steps = actual.steps();
+    let common_length = expected_steps.len().min(actual_steps.len());
+    for step_index in 0..common_length {
+        if output.len() >= MAX_DIFFERENCES {
+            return;
+        }
+        let step_path = format!("{path}.steps[{step_index}]");
+        let expected_step = expected_steps[step_index];
+        let actual_step = actual_steps[step_index];
+        compare_scalar(
+            format!("{step_path}.col"),
+            &expected_step.col(),
+            &actual_step.col(),
+            output,
+        );
+        compare_scalar(
+            format!("{step_path}.row"),
+            &expected_step.row(),
+            &actual_step.row(),
+            output,
+        );
+        compare_scalar(
+            format!("{step_path}.enterCost"),
+            &expected_step.enter_cost(),
+            &actual_step.enter_cost(),
+            output,
+        );
+        compare_scalar(
+            format!("{step_path}.cumulativeCost"),
+            &expected_step.cumulative_cost(),
+            &actual_step.cumulative_cost(),
+            output,
+        );
+    }
+    collect_typed_array_tail(
+        &format!("{path}.steps"),
+        expected_steps.len(),
+        actual_steps.len(),
+        common_length,
+        output,
+    );
+}
+
+fn compare_scalar<Value: ToString + PartialEq + ?Sized>(
+    path: String,
+    expected: &Value,
+    actual: &Value,
+    output: &mut Vec<JsonDifference>,
+) {
+    if output.len() >= MAX_DIFFERENCES || expected == actual {
+        return;
+    }
+    output.push(JsonDifference {
+        path: path.into_boxed_str(),
+        kind: DifferenceKind::ValueMismatch,
+        expected: Some(expected.to_string().into_boxed_str()),
+        actual: Some(actual.to_string().into_boxed_str()),
+    });
+}
+
+fn collect_typed_array_tail(
+    path: &str,
+    expected_length: usize,
+    actual_length: usize,
+    common_length: usize,
+    output: &mut Vec<JsonDifference>,
+) {
+    for index in common_length..expected_length {
+        if output.len() >= MAX_DIFFERENCES {
+            return;
+        }
+        output.push(JsonDifference {
+            path: format!("{path}[{index}]").into_boxed_str(),
+            kind: DifferenceKind::Missing,
+            expected: Some("object".into()),
+            actual: None,
+        });
+    }
+    for index in common_length..actual_length {
+        if output.len() >= MAX_DIFFERENCES {
+            return;
+        }
+        output.push(JsonDifference {
+            path: format!("{path}[{index}]").into_boxed_str(),
+            kind: DifferenceKind::Unexpected,
+            expected: None,
+            actual: Some("object".into()),
+        });
+    }
 }
 
 fn collect_differences(

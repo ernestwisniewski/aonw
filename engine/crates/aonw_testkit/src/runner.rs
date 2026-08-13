@@ -140,12 +140,12 @@ pub fn verify_corpus<Executor: FixtureExecutor>(
 mod tests {
     use std::convert::Infallible;
 
-    use crate::{FixtureInput, FixtureLoader, FixtureOutput};
+    use crate::{FixtureInput, FixtureLoader, FixtureOutput, MovementExecution, MovementStep};
 
     use super::{FixtureExecutor, FixtureRunError, verify_corpus, verify_fixture};
 
     const FIXTURE: &str = r#"{
-      "fixtureVersion": 1,
+      "fixtureVersion": 2,
       "id": "movement-accepted",
       "family": "movement",
       "input": {
@@ -160,7 +160,8 @@ mod tests {
         "reason": null,
         "save": {},
         "state": {"turn": 2},
-        "events": [{"type": "UnitMoved"}]
+        "events": [{"type": "UnitMoved"}],
+        "movementExecutions": []
       }
     }"#;
 
@@ -204,6 +205,7 @@ mod tests {
                 fixture.expected().save().clone(),
                 fixture.expected().state().clone(),
                 Vec::new(),
+                Vec::new(),
             ),
         };
 
@@ -212,6 +214,40 @@ mod tests {
         assert_eq!(
             error.differences().expect("mismatch differences")[0].path(),
             "$.events[0]"
+        );
+    }
+
+    #[test]
+    fn runner_reports_authoritative_movement_drift() {
+        let source = FIXTURE.replace(
+            r#""movementExecutions": []"#,
+            r#""movementExecutions": [{
+              "unitId": "unit_1",
+              "fromCol": 0,
+              "fromRow": 0,
+              "steps": [{"col": 1, "row": 0, "enterCost": 1, "cumulativeCost": 1}]
+            }]"#,
+        );
+        let fixture = FixtureLoader::default()
+            .parse(source.as_bytes())
+            .expect("valid fixture");
+        let actual =
+            MovementExecution::try_new("unit_1", 0, 0, vec![MovementStep::new(2, 0, 1, 1)])
+                .expect("valid execution");
+        let executor = StaticExecutor {
+            output: FixtureOutput::accept(
+                fixture.expected().save().clone(),
+                fixture.expected().state().clone(),
+                fixture.expected().events().to_vec(),
+                vec![actual],
+            ),
+        };
+
+        let error = verify_fixture(&fixture, &executor).expect_err("must detect drift");
+
+        assert_eq!(
+            error.differences().expect("mismatch differences")[0].path(),
+            "$.movementExecutions[0].steps[0].col"
         );
     }
 }

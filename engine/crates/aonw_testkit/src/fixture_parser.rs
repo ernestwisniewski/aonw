@@ -4,8 +4,10 @@ use serde_json::Value;
 
 use crate::FixtureLoadError;
 use crate::fixture::{
-    Fixture, FixtureInput, JsonObject, ReducerExpectedOutcome, SUPPORTED_FIXTURE_VERSION,
+    CURRENT_FIXTURE_VERSION, Fixture, FixtureInput, JsonObject, MIN_SUPPORTED_FIXTURE_VERSION,
+    ReducerExpectedOutcome,
 };
+use crate::movement_execution::{MovementExecution, MovementExecutionError, MovementStep};
 
 const ROOT_KEYS: &[&str] = &["expected", "family", "fixtureVersion", "id", "input"];
 const INPUT_KEYS: &[&str] = &[
@@ -19,7 +21,17 @@ const INPUT_KEYS: &[&str] = &[
     "state",
     "tick",
 ];
-const EXPECTED_KEYS: &[&str] = &["accepted", "events", "reason", "save", "state"];
+const EXPECTED_V1_KEYS: &[&str] = &["accepted", "events", "reason", "save", "state"];
+const EXPECTED_V2_KEYS: &[&str] = &[
+    "accepted",
+    "events",
+    "movementExecutions",
+    "reason",
+    "save",
+    "state",
+];
+const MOVEMENT_EXECUTION_KEYS: &[&str] = &["fromCol", "fromRow", "steps", "unitId"];
+const MOVEMENT_STEP_KEYS: &[&str] = &["col", "cumulativeCost", "enterCost", "row"];
 
 pub(super) fn parse_fixture(
     value: Value,
@@ -28,19 +40,24 @@ pub(super) fn parse_fixture(
     let mut root = require_object(value, "$", path)?;
     require_exact_keys(&root, ROOT_KEYS, "$", path)?;
     let version = take_u64(&mut root, "fixtureVersion", "$.fixtureVersion", path)?;
-    if version != SUPPORTED_FIXTURE_VERSION {
+    if !(MIN_SUPPORTED_FIXTURE_VERSION..=CURRENT_FIXTURE_VERSION).contains(&version) {
         return Err(FixtureLoadError::UnsupportedVersion {
             path: path.map(Path::to_path_buf),
             found: version,
-            supported: SUPPORTED_FIXTURE_VERSION,
+            supported: CURRENT_FIXTURE_VERSION,
         });
     }
 
     let id = take_kebab_case(&mut root, "id", "$.id", path)?;
     let family = take_kebab_case(&mut root, "family", "$.family", path)?;
     let input = parse_input(take(&mut root, "input", "$.input", path)?, path)?;
-    let expected = parse_expected(take(&mut root, "expected", "$.expected", path)?, path)?;
+    let expected = parse_expected(
+        take(&mut root, "expected", "$.expected", path)?,
+        version,
+        path,
+    )?;
     Ok(Fixture {
+        version,
         id: id.into_boxed_str(),
         family: family.into_boxed_str(),
         input,
@@ -88,10 +105,16 @@ fn parse_input(value: Value, path: Option<&Path>) -> Result<FixtureInput, Fixtur
 
 fn parse_expected(
     value: Value,
+    fixture_version: u64,
     path: Option<&Path>,
 ) -> Result<ReducerExpectedOutcome, FixtureLoadError> {
     let mut expected = require_object(value, "$.expected", path)?;
-    require_exact_keys(&expected, EXPECTED_KEYS, "$.expected", path)?;
+    let expected_keys = if fixture_version == 1 {
+        EXPECTED_V1_KEYS
+    } else {
+        EXPECTED_V2_KEYS
+    };
+    require_exact_keys(&expected, expected_keys, "$.expected", path)?;
     let accepted = take_bool(&mut expected, "accepted", "$.expected.accepted", path)?;
     let reason = take_optional_string(&mut expected, "reason", "$.expected.reason", path)?;
     if accepted == reason.is_some() {
@@ -101,13 +124,138 @@ fn parse_expected(
             "must be null exactly when accepted is true",
         ));
     }
+    let movement_executions = if fixture_version == 1 {
+        None
+    } else {
+        Some(
+            parse_movement_executions(
+                take(
+                    &mut expected,
+                    "movementExecutions",
+                    "$.expected.movementExecutions",
+                    path,
+                )?,
+                path,
+            )?
+            .into_boxed_slice(),
+        )
+    };
+    let save = take_object(&mut expected, "save", "$.expected.save", path)?;
+    let state = take_object(&mut expected, "state", "$.expected.state", path)?;
+    let events = take_object_array(&mut expected, "events", "$.expected.events", path)?;
     Ok(ReducerExpectedOutcome {
         accepted,
         reason: reason.map(String::into_boxed_str),
-        save: take_object(&mut expected, "save", "$.expected.save", path)?,
-        state: take_object(&mut expected, "state", "$.expected.state", path)?,
-        events: take_object_array(&mut expected, "events", "$.expected.events", path)?,
+        save,
+        state,
+        events,
+        movement_executions,
     })
+}
+
+fn parse_movement_executions(
+    value: Value,
+    path: Option<&Path>,
+) -> Result<Vec<MovementExecution>, FixtureLoadError> {
+    let Value::Array(values) = value else {
+        return Err(invalid(
+            path,
+            "$.expected.movementExecutions",
+            "must be a JSON array",
+        ));
+    };
+    values
+        .into_iter()
+        .enumerate()
+        .map(|(index, value)| parse_movement_execution(value, index, path))
+        .collect()
+}
+
+fn parse_movement_execution(
+    value: Value,
+    execution_index: usize,
+    path: Option<&Path>,
+) -> Result<MovementExecution, FixtureLoadError> {
+    let execution_path = format!("$.expected.movementExecutions[{execution_index}]");
+    let mut execution = require_object(value, &execution_path, path)?;
+    require_exact_keys(&execution, MOVEMENT_EXECUTION_KEYS, &execution_path, path)?;
+    let unit_id = take_non_empty_string(
+        &mut execution,
+        "unitId",
+        &format!("{execution_path}.unitId"),
+        path,
+    )?;
+    let from_col = take_u32(
+        &mut execution,
+        "fromCol",
+        &format!("{execution_path}.fromCol"),
+        path,
+    )?;
+    let from_row = take_u32(
+        &mut execution,
+        "fromRow",
+        &format!("{execution_path}.fromRow"),
+        path,
+    )?;
+    let steps_path = format!("{execution_path}.steps");
+    let steps_value = take(&mut execution, "steps", &steps_path, path)?;
+    let Value::Array(step_values) = steps_value else {
+        return Err(invalid(path, steps_path, "must be a JSON array"));
+    };
+    let steps = step_values
+        .into_iter()
+        .enumerate()
+        .map(|(step_index, value)| parse_movement_step(value, &execution_path, step_index, path))
+        .collect::<Result<Vec<_>, _>>()?;
+
+    MovementExecution::try_new(unit_id, from_col, from_row, steps)
+        .map_err(|error| movement_execution_error(error, &execution_path, path))
+}
+
+fn parse_movement_step(
+    value: Value,
+    execution_path: &str,
+    step_index: usize,
+    path: Option<&Path>,
+) -> Result<MovementStep, FixtureLoadError> {
+    let step_path = format!("{execution_path}.steps[{step_index}]");
+    let mut step = require_object(value, &step_path, path)?;
+    require_exact_keys(&step, MOVEMENT_STEP_KEYS, &step_path, path)?;
+    Ok(MovementStep::new(
+        take_u32(&mut step, "col", &format!("{step_path}.col"), path)?,
+        take_u32(&mut step, "row", &format!("{step_path}.row"), path)?,
+        take_u32(
+            &mut step,
+            "enterCost",
+            &format!("{step_path}.enterCost"),
+            path,
+        )?,
+        take_u32(
+            &mut step,
+            "cumulativeCost",
+            &format!("{step_path}.cumulativeCost"),
+            path,
+        )?,
+    ))
+}
+
+fn movement_execution_error(
+    error: MovementExecutionError,
+    execution_path: &str,
+    path: Option<&Path>,
+) -> FixtureLoadError {
+    let field = match error {
+        MovementExecutionError::BlankUnitId => format!("{execution_path}.unitId"),
+        MovementExecutionError::EmptySteps => format!("{execution_path}.steps"),
+        MovementExecutionError::ZeroEnterCost { step_index } => {
+            format!("{execution_path}.steps[{step_index}].enterCost")
+        }
+        MovementExecutionError::CostOverflow { step_index }
+        | MovementExecutionError::CumulativeCostMismatch { step_index, .. } => {
+            format!("{execution_path}.steps[{step_index}].cumulativeCost")
+        }
+    };
+    invalid(path, field, error.to_string())
 }
 
 fn require_exact_keys(
@@ -226,6 +374,16 @@ fn take_u64(
     take(object, key, field, path)?
         .as_u64()
         .ok_or_else(|| invalid(path, field, "must be a non-negative integer"))
+}
+
+fn take_u32(
+    object: &mut JsonObject,
+    key: &str,
+    field: &str,
+    path: Option<&Path>,
+) -> Result<u32, FixtureLoadError> {
+    let value = take_u64(object, key, field, path)?;
+    u32::try_from(value).map_err(|_| invalid(path, field, "must fit in an unsigned 32-bit integer"))
 }
 
 fn take_bool(

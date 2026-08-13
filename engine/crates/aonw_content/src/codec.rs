@@ -33,6 +33,23 @@ impl MapDocument {
     }
 }
 
+impl MapDefinition {
+    /// Decodes a logical map from the existing unversioned Flutter shape.
+    ///
+    /// Unlike [`MapDocument::from_legacy_json`], this adapter does not apply
+    /// authored-document camera or minimum-size constraints. It is intended
+    /// for complete simulation maps embedded in deterministic fixtures.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapLoadError`] for malformed input or logical map invariant
+    /// violations.
+    pub fn from_legacy_json(source: &[u8]) -> Result<Self, MapLoadError> {
+        check_size(source)?;
+        build_map(serde_json::from_slice::<LegacyMapDocument>(source)?.into())
+    }
+}
+
 const fn check_size(source: &[u8]) -> Result<(), MapLoadError> {
     if source.len() <= MAX_MAP_DOCUMENT_BYTES {
         return Ok(());
@@ -44,6 +61,11 @@ const fn check_size(source: &[u8]) -> Result<(), MapLoadError> {
 }
 
 fn build_document(raw: RawMap) -> Result<MapDocument, MapLoadError> {
+    let default_zoom = raw.default_zoom;
+    MapDocument::try_new(build_map(raw)?, default_zoom).map_err(Into::into)
+}
+
+fn build_map(raw: RawMap) -> Result<MapDefinition, MapLoadError> {
     let cols = u16_value("$.cols", raw.cols)?;
     let rows = u16_value("$.rows", raw.rows)?;
     let tiles = raw
@@ -58,15 +80,15 @@ fn build_document(raw: RawMap) -> Result<MapDocument, MapLoadError> {
         .enumerate()
         .map(|(index, objective)| build_objective(objective, index))
         .collect::<Result<Vec<_>, _>>()?;
-    let map = MapDefinition::try_new(
+    MapDefinition::try_new(
         raw.map_name,
         GridLayout::OddQFlatTop,
         cols,
         rows,
         tiles,
         objectives,
-    )?;
-    MapDocument::try_new(map, raw.default_zoom).map_err(Into::into)
+    )
+    .map_err(Into::into)
 }
 
 fn build_tile(raw: RawTile, index: usize) -> Result<TileDefinition, MapLoadError> {

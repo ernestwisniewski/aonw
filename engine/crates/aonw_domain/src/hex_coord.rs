@@ -24,6 +24,28 @@ impl HexCoord {
         self.row
     }
 
+    /// Iterates adjacent coordinates in the canonical Dart odd-q order.
+    ///
+    /// Coordinates that would overflow the `i32` representation are omitted.
+    pub fn neighbors(self) -> impl Iterator<Item = Self> {
+        const EVEN_COLUMN_OFFSETS: [(i32, i32); 6] =
+            [(1, -1), (1, 0), (0, 1), (-1, 0), (-1, -1), (0, -1)];
+        const ODD_COLUMN_OFFSETS: [(i32, i32); 6] =
+            [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (0, -1)];
+
+        let offsets = if self.col & 1 == 0 {
+            EVEN_COLUMN_OFFSETS
+        } else {
+            ODD_COLUMN_OFFSETS
+        };
+        offsets.into_iter().filter_map(move |(col, row)| {
+            Some(Self::new(
+                self.col.checked_add(col)?,
+                self.row.checked_add(row)?,
+            ))
+        })
+    }
+
     /// Computes exact odd-q hex distance using widened integer arithmetic.
     #[must_use]
     pub fn distance_to(self, other: Self) -> u64 {
@@ -62,5 +84,39 @@ mod tests {
         let maximum = HexCoord::new(i32::MAX, i32::MAX);
 
         assert_eq!(minimum.distance_to(maximum), 6_442_450_943);
+    }
+
+    #[test]
+    fn even_column_neighbors_match_dart_order() {
+        let neighbors = HexCoord::new(0, 1).neighbors().collect::<Vec<_>>();
+
+        assert_eq!(
+            neighbors,
+            [
+                HexCoord::new(1, 0),
+                HexCoord::new(1, 1),
+                HexCoord::new(0, 2),
+                HexCoord::new(-1, 1),
+                HexCoord::new(-1, 0),
+                HexCoord::new(0, 0),
+            ]
+        );
+    }
+
+    #[test]
+    fn odd_column_neighbors_match_dart_order() {
+        let neighbors = HexCoord::new(1, 1).neighbors().collect::<Vec<_>>();
+
+        assert_eq!(
+            neighbors,
+            [
+                HexCoord::new(2, 1),
+                HexCoord::new(2, 2),
+                HexCoord::new(1, 2),
+                HexCoord::new(0, 2),
+                HexCoord::new(0, 1),
+                HexCoord::new(1, 0),
+            ]
+        );
     }
 }

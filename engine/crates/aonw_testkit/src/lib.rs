@@ -12,14 +12,16 @@ mod fixture;
 mod fixture_parser;
 mod loader;
 mod loader_error;
+mod movement_execution;
 mod runner;
 mod unique_json;
 
 pub use diff::{DifferenceKind, JsonDifference, compare_json};
 pub use fixture::{
-    Fixture, FixtureInput, FixtureOutput, JsonObject, ReducerExpectedOutcome,
-    SUPPORTED_FIXTURE_VERSION,
+    CURRENT_FIXTURE_VERSION, Fixture, FixtureInput, FixtureOutput, JsonObject,
+    MIN_SUPPORTED_FIXTURE_VERSION, ReducerExpectedOutcome, SUPPORTED_FIXTURE_VERSION,
 };
 pub use loader::{FixtureLimits, FixtureLoader};
 pub use loader_error::FixtureLoadError;
+pub use movement_execution::{MovementExecution, MovementExecutionError, MovementStep};
 pub use runner::{FixtureExecutor, FixtureRunError, verify_corpus, verify_fixture};

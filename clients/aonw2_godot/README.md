@@ -80,6 +80,11 @@ hash owner. The Workbench distinguishes strict v1 content from the explicit
 legacy adapter. A generated Godot scene is a presentation artifact and never a
 second source of gameplay rules.
 
+The Rust engine now exposes a deterministic terrain-only route query, but the
+Godot client is not connected to it yet. The next native vertical slice will
+map picked hexes to revision-bound Rust queries and render returned route and
+reachable overlays. GDScript must not calculate movement legality or paths.
+
 ## Verification
 
 ```sh

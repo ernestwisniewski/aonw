@@ -1,4 +1,4 @@
-use aonw_domain::HexCoord;
+use aonw_domain::{HexCoord, HexGridBounds, HexTileIndex};
 
 use crate::catalog::{GridLayout, MapObjectiveType, ResourceType, TerrainType};
 use crate::validation::{MapValidationError, validate_content_id};
@@ -199,6 +199,7 @@ pub struct MapDefinition {
     grid_layout: GridLayout,
     cols: u16,
     rows: u16,
+    bounds: HexGridBounds,
     tiles: Box<[TileDefinition]>,
     objectives: Box<[MapObjective]>,
 }
@@ -223,6 +224,9 @@ impl MapDefinition {
         validate_content_id("$.mapName", &map_id)?;
         validate_dimension("$.cols", cols, MIN_COLS, MAX_COLS)?;
         validate_dimension("$.rows", rows, MIN_ROWS, MAX_ROWS)?;
+        let bounds = HexGridBounds::new(cols, rows).ok_or_else(|| {
+            MapValidationError::new("$", "validated map dimensions must be non-zero")
+        })?;
         validate_tiles(&mut tiles, cols, rows)?;
         validate_objectives(&mut objectives, cols, rows)?;
         Ok(Self {
@@ -230,6 +234,7 @@ impl MapDefinition {
             grid_layout,
             cols,
             rows,
+            bounds,
             tiles: tiles.into_boxed_slice(),
             objectives: objectives.into_boxed_slice(),
         })
@@ -265,15 +270,34 @@ impl MapDefinition {
         &self.objectives
     }
 
+    /// Returns the non-empty rectangular bounds validated for this map.
+    #[must_use]
+    pub const fn bounds(&self) -> HexGridBounds {
+        self.bounds
+    }
+
+    /// Returns the row-major tile index for an in-bounds coordinate.
+    #[must_use]
+    pub fn tile_index(&self, coordinate: HexCoord) -> Option<HexTileIndex> {
+        self.bounds().index_of(coordinate)
+    }
+
+    /// Returns the coordinate at a row-major tile index.
+    #[must_use]
+    pub fn coordinate_at(&self, index: HexTileIndex) -> Option<HexCoord> {
+        self.bounds().coordinate_at(index)
+    }
+
+    /// Iterates in-bounds adjacent coordinates in canonical Dart odd-q order.
+    pub fn neighbors(&self, coordinate: HexCoord) -> impl Iterator<Item = HexCoord> {
+        self.bounds().neighbors(coordinate)
+    }
+
     #[must_use]
     pub fn tile_at(&self, coordinate: HexCoord) -> Option<&TileDefinition> {
-        let col = usize::try_from(coordinate.col()).ok()?;
-        let row = usize::try_from(coordinate.row()).ok()?;
-        if col >= usize::from(self.cols) || row >= usize::from(self.rows) {
-            return None;
-        }
+        let index = self.tile_index(coordinate)?;
         self.tiles
-            .get(row * usize::from(self.cols) + col)
+            .get(index.get())
             .filter(|tile| tile.coordinate == coordinate)
     }
 }

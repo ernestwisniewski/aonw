@@ -4,7 +4,7 @@ use aonw_content::{
     GridLayout, MapDefinition, MapDocument, MapLoadError, MapObjective, MapObjectiveType,
     ResourceType, TerrainType, TileDefinition,
 };
-use aonw_domain::HexCoord;
+use aonw_domain::{HexCoord, HexTileIndex};
 use serde_json::{Value, json};
 
 type Mutation = (&'static str, Box<dyn Fn(&mut Value)>);
@@ -48,6 +48,27 @@ fn document() -> Value {
 
 fn decode(value: &Value) -> Result<MapDocument, MapLoadError> {
     MapDocument::from_json(&serde_json::to_vec(value).expect("test JSON must encode"))
+}
+
+fn legacy_map(cols: u16, rows: u16) -> Value {
+    json!({
+        "cols": cols,
+        "rows": rows,
+        "mapName": "movement_fixture",
+        "tiles": (0..rows)
+            .flat_map(|row| {
+                (0..cols).map(move |col| {
+                    json!({
+                        "col": col,
+                        "row": row,
+                        "terrains": ["grassland"],
+                        "resources": [],
+                        "height": 0
+                    })
+                })
+            })
+            .collect::<Vec<_>>()
+    })
 }
 
 #[test]
@@ -278,4 +299,60 @@ fn simulation_maps_allow_small_fixture_grids_but_authored_documents_do_not() {
     .expect("logical simulation map");
 
     assert!(MapDocument::try_new(map, 1.0).is_err());
+}
+
+#[test]
+fn logical_legacy_decoder_accepts_one_by_one_and_three_by_three_maps() {
+    for (cols, rows) in [(1, 1), (3, 3)] {
+        let source = serde_json::to_vec(&legacy_map(cols, rows)).expect("test JSON must encode");
+        let map = MapDefinition::from_legacy_json(&source).expect("logical fixture map");
+
+        assert_eq!(map.cols(), cols);
+        assert_eq!(map.rows(), rows);
+        assert_eq!(map.tiles().len(), usize::from(cols) * usize::from(rows));
+    }
+}
+
+#[test]
+fn logical_legacy_decoder_remains_strict() {
+    let mut unknown_field = legacy_map(3, 3);
+    unknown_field["previewOnly"] = json!(true);
+    let source = serde_json::to_vec(&unknown_field).expect("test JSON must encode");
+
+    assert!(matches!(
+        MapDefinition::from_legacy_json(&source),
+        Err(MapLoadError::Json(_))
+    ));
+}
+
+#[test]
+fn logical_map_exposes_row_major_indices_and_ordered_bounded_neighbors() {
+    let source = serde_json::to_vec(&legacy_map(3, 3)).expect("test JSON must encode");
+    let map = MapDefinition::from_legacy_json(&source).expect("logical fixture map");
+
+    assert_eq!(
+        map.tile_index(HexCoord::new(2, 1)),
+        Some(HexTileIndex::new(5))
+    );
+    assert_eq!(
+        map.coordinate_at(HexTileIndex::new(5)),
+        Some(HexCoord::new(2, 1))
+    );
+    assert_eq!(
+        map.neighbors(HexCoord::new(1, 1)).collect::<Vec<_>>(),
+        [
+            HexCoord::new(2, 1),
+            HexCoord::new(2, 2),
+            HexCoord::new(1, 2),
+            HexCoord::new(0, 2),
+            HexCoord::new(0, 1),
+            HexCoord::new(1, 0),
+        ]
+    );
+    assert_eq!(
+        map.neighbors(HexCoord::new(0, 0)).collect::<Vec<_>>(),
+        [HexCoord::new(1, 0), HexCoord::new(0, 1)]
+    );
+    assert!(map.tile_index(HexCoord::new(-1, 0)).is_none());
+    assert!(map.coordinate_at(HexTileIndex::new(9)).is_none());
 }
