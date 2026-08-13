@@ -186,6 +186,28 @@ impl Unit {
         .try_with_queued_path(self.queued_path.clone())
         .map(|unit| unit.with_carried_artifact(self.carried_artifact_id.clone()))
     }
+
+    /// Applies an authoritative movement result while preserving all unrelated fields.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a retained path does not start at the destination.
+    pub fn after_movement(
+        &self,
+        position: HexCoord,
+        movement_units: MovementUnits,
+        queued_path: Option<QueuedMovePath>,
+    ) -> Result<Self, UnitBuildError> {
+        let mut updated = self.clone();
+        updated.position = position;
+        updated.movement_units = movement_units;
+        updated.queued_path = queued_path;
+        updated.posture = UnitPosture::Active;
+        updated
+            .movement_projection()
+            .map_err(UnitBuildError::InvalidQueuedPath)?;
+        Ok(updated)
+    }
 }
 
 /// Builder for the complete unit entity.

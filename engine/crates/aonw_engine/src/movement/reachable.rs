@@ -6,10 +6,10 @@ use aonw_domain::{
     HexCoord, HexTileIndex, MovementState, MovementUnit, MovementUnits, UnitId, UnitPosture,
 };
 
+use super::cost::movement_cost_for_edge;
 use super::query::{validate_revision, validate_unit};
 use super::{
-    MovementCost, MovementPlanningView, MovementSearchMetrics, TerrainMovementQueryError,
-    maximum_movement_units, terrain_entry_cost,
+    MovementCost, MovementSearchMetrics, TerrainMovementQueryError, maximum_movement_units,
 };
 use crate::EngineContext;
 
@@ -132,14 +132,8 @@ pub(crate) fn find_reachable_tiles(
 ) -> Result<ReachableMovement, TerrainMovementQueryError> {
     validate_revision(state, query.expected_revision)?;
     let unit = validate_unit(state, context, query.unit_id)?;
-    let available = movement_available_for_query(unit);
-    let (costs, search_metrics) = reachable_costs(
-        state,
-        context.map(),
-        context.planning_view(),
-        unit,
-        available,
-    );
+    let available = movement_available_for_query(unit, context.ruleset());
+    let (costs, search_metrics) = reachable_costs(state, context.map(), unit, available, context);
     let tiles = costs
         .into_iter()
         .enumerate()
@@ -165,9 +159,12 @@ pub(crate) fn find_reachable_tiles(
     })
 }
 
-pub(super) fn movement_available_for_query(unit: &MovementUnit) -> MovementUnits {
+pub(super) fn movement_available_for_query(
+    unit: &MovementUnit,
+    ruleset: &aonw_content::RulesetDefinition,
+) -> MovementUnits {
     if unit.posture() == UnitPosture::Fortified {
-        maximum_movement_units(unit.kind(), unit.carried_artifact_id().is_some())
+        maximum_movement_units(ruleset, unit.kind(), unit.carried_artifact_id().is_some())
     } else {
         unit.movement_units()
     }
@@ -176,17 +173,23 @@ pub(super) fn movement_available_for_query(unit: &MovementUnit) -> MovementUnits
 fn reachable_costs(
     state: &MovementState,
     map: &MapDefinition,
-    planning_view: MovementPlanningView<'_>,
     unit: &MovementUnit,
     available: MovementUnits,
+    context: EngineContext<'_>,
 ) -> (Vec<Option<MovementUnits>>, MovementSearchMetrics) {
+    let Some(definition) = context.ruleset().unit(unit.kind()) else {
+        return (
+            vec![None; map.bounds().tile_count()],
+            MovementSearchMetrics::default(),
+        );
+    };
     let mut metrics = MovementSearchMetrics::default();
     let Some(start) = map.tile_index(unit.position()).map(HexTileIndex::get) else {
         return (vec![None; map.bounds().tile_count()], metrics);
     };
     let mut occupied = vec![false; map.bounds().tile_count()];
     for candidate in state.units() {
-        if candidate.id() == unit.id() || !planning_view.observes_occupancy(unit, candidate) {
+        if candidate.id() == unit.id() || !context.observes_occupancy(unit, candidate) {
             continue;
         }
         if let Some(index) = map.tile_index(candidate.position()) {
@@ -204,7 +207,11 @@ fn reachable_costs(
         row: start_coord.row(),
     });
     metrics.pushed();
-    let maximum = maximum_movement_units(unit.kind(), unit.carried_artifact_id().is_some());
+    let maximum = maximum_movement_units(
+        context.ruleset(),
+        unit.kind(),
+        unit.carried_artifact_id().is_some(),
+    );
 
     while let Some(current) = frontier.pop() {
         metrics.popped();
@@ -226,12 +233,20 @@ fn reachable_costs(
             if occupied[next_index] {
                 continue;
             }
+            if !context.can_plan_through_tile(unit, next) || context.city_block_is_known(unit, next)
+            {
+                continue;
+            }
             let Some(tile) = map.tile_at(next) else {
                 continue;
             };
-            let MovementCost::Passable(enter_cost) =
-                terrain_entry_cost(tile, unit.kind().movement_domain())
-            else {
+            let MovementCost::Passable(enter_cost) = movement_cost_for_edge(
+                coordinate,
+                next,
+                tile,
+                definition.capabilities().movement_domain.domain(),
+                context,
+            ) else {
                 continue;
             };
             if enter_cost > maximum && unit.carried_artifact_id().is_none() {

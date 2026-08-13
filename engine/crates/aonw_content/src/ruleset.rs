@@ -156,27 +156,22 @@ impl UnitKindValue {
 #[serde(rename_all = "camelCase")]
 pub struct RulesetDefinition {
     schema_version: u16,
-    ruleset_id: Box<str>,
+    ruleset_id: &'static str,
     occupancy_policy: UnitOccupancyPolicyValue,
-    unit_definitions: Box<[UnitDefinition]>,
+    unit_definitions: &'static [UnitDefinition],
 }
 
 impl RulesetDefinition {
     /// Returns the built-in ruleset matching current movement behavior.
     #[must_use]
-    pub fn standard() -> Self {
-        Self {
-            schema_version: 1,
-            ruleset_id: "aonw-standard".into(),
-            occupancy_policy: UnitOccupancyPolicyValue::FriendlyStacking,
-            unit_definitions: STANDARD_UNITS.into(),
-        }
+    pub const fn standard() -> &'static Self {
+        &STANDARD_RULESET
     }
 
     /// Returns the stable identifier.
     #[must_use]
     pub fn ruleset_id(&self) -> &str {
-        &self.ruleset_id
+        self.ruleset_id
     }
 
     /// Returns the unit occupancy policy.
@@ -192,6 +187,17 @@ impl RulesetDefinition {
             .iter()
             .copied()
             .find(|definition| definition.kind() == kind)
+    }
+
+    /// Returns the configured movement allowance for one unit.
+    #[must_use]
+    pub fn maximum_movement(
+        &self,
+        kind: UnitKind,
+        carries_artifact: bool,
+    ) -> Option<MovementUnits> {
+        self.unit(kind)
+            .map(|definition| definition.maximum_movement(carries_artifact))
     }
 
     /// Computes SHA-256 over stable compact ruleset JSON.
@@ -275,6 +281,12 @@ const AIR_RECON: UnitCapabilities = caps(
     UnitMovementDomainValue::Air,
     PRODUCIBLE | EXPERIENCE | MILITARY | RECON,
 );
+static STANDARD_RULESET: RulesetDefinition = RulesetDefinition {
+    schema_version: 1,
+    ruleset_id: "aonw-standard",
+    occupancy_policy: UnitOccupancyPolicyValue::FriendlyStacking,
+    unit_definitions: &STANDARD_UNITS,
+};
 const STANDARD_UNITS: [UnitDefinition; 17] = [
     unit(UnitKindValue::Commander, 5, LAND_MILITARY),
     unit(UnitKindValue::Warrior, 3, LAND_MILITARY),

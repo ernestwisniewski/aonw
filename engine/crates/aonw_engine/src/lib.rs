@@ -6,17 +6,24 @@
 
 #![forbid(unsafe_code)]
 
+mod canonical_engine;
 mod movement;
+mod state_digest;
 
-use aonw_content::MapDefinition;
-use aonw_domain::{MovementState, PlayerId};
+use aonw_content::{MapDefinition, RulesetDefinition};
+use aonw_domain::{FogVisibility, GameState, HexCoord, MovementState, MovementUnit, PlayerId};
 
+pub use canonical_engine::{
+    CanonicalEngineError, CanonicalQueryError, DomainCommand, DomainEvent, DomainRejection,
+    DomainTransition, ExecutionEvidence, GameQuery, QueryResult,
+};
 pub use movement::{
     MoveUnitCommand, MoveUnitError, MovementCost, MovementPlanningView, MovementSearchMetrics,
     MovementTransition, ReachableMovement, ReachableMovementQuery, ReachableMovementTile,
     TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError, UnitMovedEvent,
     UnitMovementExecution, maximum_movement_units, terrain_entry_cost,
 };
+pub use state_digest::StateDigest;
 
 /// Engine behavior version implemented by this workspace.
 ///
@@ -121,11 +128,31 @@ pub struct MovementStateSummary {
 pub struct EngineContext<'context> {
     actor_player_id: &'context PlayerId,
     map: &'context MapDefinition,
+    ruleset: &'context RulesetDefinition,
     planning_view: MovementPlanningView<'context>,
     can_act: bool,
+    world: Option<&'context GameState>,
 }
 
 impl<'context> EngineContext<'context> {
+    /// Constructs canonical context. Visibility is derived from [`GameState`]
+    /// by [`GameEngine::apply`] and [`GameEngine::query`].
+    #[must_use]
+    pub const fn canonical(
+        actor_player_id: &'context PlayerId,
+        map: &'context MapDefinition,
+        ruleset: &'context RulesetDefinition,
+    ) -> Self {
+        Self {
+            actor_player_id,
+            map,
+            ruleset,
+            planning_view: MovementPlanningView::fog_disabled(),
+            can_act: true,
+            world: None,
+        }
+    }
+
     /// Constructs an explicit context without ambient actor or map state.
     #[must_use]
     pub const fn new(
@@ -136,9 +163,18 @@ impl<'context> EngineContext<'context> {
         Self {
             actor_player_id,
             map,
+            ruleset: RulesetDefinition::standard(),
             planning_view,
             can_act: true,
+            world: None,
         }
+    }
+
+    /// Replaces the standard ruleset with an explicit validated definition.
+    #[must_use]
+    pub const fn with_ruleset(mut self, ruleset: &'context RulesetDefinition) -> Self {
+        self.ruleset = ruleset;
+        self
     }
 
     /// Replaces the application-level permission result for this operation.
@@ -160,6 +196,12 @@ impl<'context> EngineContext<'context> {
         self.map
     }
 
+    /// Returns the immutable ruleset used by the operation.
+    #[must_use]
+    pub const fn ruleset(self) -> &'context RulesetDefinition {
+        self.ruleset
+    }
+
     /// Returns actor-visible occupancy used by movement planning.
     #[must_use]
     pub const fn planning_view(self) -> MovementPlanningView<'context> {
@@ -170,6 +212,109 @@ impl<'context> EngineContext<'context> {
     #[must_use]
     pub const fn can_act(self) -> bool {
         self.can_act
+    }
+
+    const fn with_world(mut self, world: &'context GameState) -> Self {
+        self.world = Some(world);
+        self
+    }
+
+    pub(crate) fn observes_occupancy(
+        self,
+        moving_unit: &MovementUnit,
+        candidate: &MovementUnit,
+    ) -> bool {
+        if candidate.owner_player_id() == moving_unit.owner_player_id() {
+            return true;
+        }
+        self.world.map_or_else(
+            || {
+                self.planning_view
+                    .observes_occupancy(moving_unit, candidate)
+            },
+            |world| {
+                world
+                    .fog_of_war()
+                    .visibility(self.actor_player_id, candidate.position())
+                    == FogVisibility::Visible
+            },
+        )
+    }
+
+    pub(crate) fn can_plan_through_tile(
+        self,
+        moving_unit: &MovementUnit,
+        coordinate: HexCoord,
+    ) -> bool {
+        let Some(world) = self.world else {
+            return true;
+        };
+        let fog = world.fog_of_war();
+        if !fog.tracks(self.actor_player_id)
+            || fog.visibility(self.actor_player_id, coordinate) != FogVisibility::Hidden
+        {
+            return true;
+        }
+        moving_unit.position().distance_to(coordinate) <= 3
+    }
+
+    pub(crate) fn city_blocks(self, moving_unit: &MovementUnit, coordinate: HexCoord) -> bool {
+        self.world
+            .and_then(|world| world.city_at(coordinate))
+            .is_some_and(|city| city.owner_player_id() != moving_unit.owner_player_id())
+    }
+
+    pub(crate) fn city_block_is_known(
+        self,
+        moving_unit: &MovementUnit,
+        coordinate: HexCoord,
+    ) -> bool {
+        if !self.city_blocks(moving_unit, coordinate) {
+            return false;
+        }
+        self.world.is_none_or(|world| {
+            !world.fog_of_war().tracks(self.actor_player_id)
+                || world
+                    .fog_of_war()
+                    .visibility(self.actor_player_id, coordinate)
+                    != FogVisibility::Hidden
+        })
+    }
+
+    pub(crate) fn has_known_operational_road(self, coordinate: HexCoord) -> bool {
+        let Some(world) = self.world else {
+            return false;
+        };
+        let Some(segment) = world.transport_network().at(coordinate) else {
+            return false;
+        };
+        if !segment.is_operational() {
+            return false;
+        }
+        segment.built_by_player_id() == self.actor_player_id
+            || segment
+                .built_by_city_id()
+                .and_then(|city_id| world.city(city_id))
+                .is_some_and(|city| city.owner_player_id() == self.actor_player_id)
+            || !world.fog_of_war().tracks(self.actor_player_id)
+            || world
+                .fog_of_war()
+                .visibility(self.actor_player_id, coordinate)
+                != FogVisibility::Hidden
+    }
+
+    pub(crate) fn is_known_city_center(self, coordinate: HexCoord) -> bool {
+        let Some(world) = self.world else {
+            return false;
+        };
+        world.city_at(coordinate).is_some_and(|city| {
+            city.owner_player_id() == self.actor_player_id
+                || !world.fog_of_war().tracks(self.actor_player_id)
+                || world
+                    .fog_of_war()
+                    .visibility(self.actor_player_id, coordinate)
+                    != FogVisibility::Hidden
+        })
     }
 }
 

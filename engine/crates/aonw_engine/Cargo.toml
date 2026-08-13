@@ -12,8 +12,11 @@ publish.workspace = true
 [dependencies]
 aonw_content = { path = "../aonw_content" }
 aonw_domain = { path = "../aonw_domain" }
+sha2.workspace = true
 
 [dev-dependencies]
+aonw_contract_mapping = { path = "../aonw_contract_mapping" }
+aonw_contracts = { path = "../aonw_contracts" }
 aonw_testkit = { path = "../aonw_testkit" }
 serde_json.workspace = true
 

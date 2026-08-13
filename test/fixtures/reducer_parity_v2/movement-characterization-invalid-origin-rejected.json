@@ -1,0 +1,611 @@
+{
+  "fixtureVersion": 2,
+  "id": "movement-characterization-invalid-origin-rejected",
+  "family": "movement",
+  "input": {
+    "now": "2026-01-02T03:04:05.000Z",
+    "actorPlayerId": "player_1",
+    "tick": 213,
+    "rulesetId": "standard",
+    "map": {
+      "cols": 3,
+      "rows": 1,
+      "mapName": "reducer_parity",
+      "tiles": [
+        {
+          "col": 0,
+          "row": 0,
+          "terrains": [
+            "grassland"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 1,
+          "row": 0,
+          "terrains": [
+            "grassland"
+          ],
+          "resources": [],
+          "height": 0
+        },
+        {
+          "col": 2,
+          "row": 0,
+          "terrains": [
+            "grassland"
+          ],
+          "resources": [],
+          "height": 0
+        }
+      ]
+    },
+    "match": {
+      "v": 4,
+      "id": "reducer-parity-match",
+      "ownerUserId": "user_1",
+      "name": "Reducer parity",
+      "mapName": "reducer_parity",
+      "players": [
+        {
+          "id": "player_1",
+          "userId": "user_1",
+          "name": "Player 1",
+          "colorValue": 4282212264,
+          "countryId": "poland",
+          "kind": "human",
+          "connectionState": "connected",
+          "ready": true
+        },
+        {
+          "id": "player_2",
+          "userId": "user_2",
+          "name": "Player 2",
+          "colorValue": 4290263610,
+          "countryId": "japan",
+          "kind": "human",
+          "connectionState": "connected",
+          "ready": true
+        }
+      ],
+      "maxPlayers": 2,
+      "minPlayers": 2,
+      "quickplay": false,
+      "turn": 7,
+      "state": "running",
+      "createdAt": "2026-01-02T00:00:00.000Z"
+    },
+    "save": {
+      "id": "reducer-parity-match",
+      "schemaVersion": 3,
+      "name": "Reducer parity",
+      "mapName": "reducer_parity",
+      "mapSource": "asset",
+      "turn": 7,
+      "playerStates": {
+        "player_1": "active",
+        "player_2": "active"
+      },
+      "savedAt": "2026-01-02T02:30:00.000Z",
+      "camera": {
+        "x": 0.0,
+        "y": 0.0,
+        "zoom": 1.0
+      },
+      "ruleset": {
+        "gameLength": {
+          "kind": "targetMinutes",
+          "targetMinutes": 60,
+          "turnLimit": 120,
+          "paceProfile": "standard60",
+          "scoreFallbackEnabled": true
+        },
+        "victory": {
+          "conquestEnabled": true,
+          "dominationEnabled": true,
+          "dominationControlPercent": 45.0,
+          "dominationHoldTurns": 10,
+          "scoreFallbackEnabled": true,
+          "turnLimit": 120,
+          "culturalEnabled": true,
+          "culturalRequiredArtifacts": 6,
+          "culturalHoldTurns": 5
+        },
+        "balance": {}
+      },
+      "players": [
+        {
+          "id": "player_1",
+          "name": "Player 1",
+          "colorValue": 4282212264,
+          "country": "poland",
+          "kind": "human"
+        },
+        {
+          "id": "player_2",
+          "name": "Player 2",
+          "colorValue": 4290263610,
+          "country": "japan",
+          "kind": "human"
+        }
+      ],
+      "gameMode": "multiplayer",
+      "origin": "network"
+    },
+    "state": {
+      "playerColors": {
+        "player_1": 4282212264,
+        "player_2": 4290263610
+      },
+      "playerCountries": {
+        "player_1": "poland",
+        "player_2": "japan"
+      },
+      "playerGold": {
+        "player_1": 17,
+        "player_2": 23
+      },
+      "playerWarWeariness": {
+        "player_1": 2,
+        "player_2": 3
+      },
+      "playerStabilityNet": {
+        "player_1": 4,
+        "player_2": 5
+      },
+      "units": [
+        {
+          "id": "movement_mover",
+          "ownerPlayerId": "player_1",
+          "type": "commander",
+          "name": "Movement mover",
+          "col": -1,
+          "row": 0,
+          "movementPoints": 5,
+          "army": []
+        },
+        {
+          "id": "movement_sentinel",
+          "ownerPlayerId": "player_2",
+          "type": "scout",
+          "name": "Movement sentinel",
+          "col": 40,
+          "row": 40,
+          "movementPoints": 1,
+          "army": []
+        }
+      ],
+      "cities": [
+        {
+          "id": "movement_sentinel_city",
+          "ownerPlayerId": "player_2",
+          "name": "Movement sentinel city",
+          "population": 3,
+          "storedFood": 0,
+          "maxHexes": 6,
+          "territoryRadius": 2,
+          "center": {
+            "col": 41,
+            "row": 41
+          },
+          "controlledHexes": [],
+          "workedHexes": [],
+          "buildings": [],
+          "productionOverflow": 0
+        }
+      ],
+      "artifacts": [
+        {
+          "id": "movement_sentinel_artifact",
+          "type": "astronomersTablets",
+          "location": {
+            "kind": "map",
+            "col": 42,
+            "row": 42
+          }
+        }
+      ],
+      "fieldImprovements": [
+        {
+          "hex": {
+            "col": 43,
+            "row": 43
+          },
+          "type": "mine",
+          "builtByCityId": "movement_sentinel_city"
+        }
+      ],
+      "transportNetwork": [],
+      "fogOfWar": [
+        {
+          "playerId": "player_1",
+          "discoveredHexes": [
+            {
+              "col": 0,
+              "row": 0
+            },
+            {
+              "col": 1,
+              "row": 0
+            },
+            {
+              "col": 2,
+              "row": 0
+            }
+          ],
+          "visibleHexes": [
+            {
+              "col": 0,
+              "row": 0
+            },
+            {
+              "col": 1,
+              "row": 0
+            },
+            {
+              "col": 2,
+              "row": 0
+            }
+          ]
+        }
+      ],
+      "research": {
+        "players": {
+          "player_2": {
+            "unlockedTechnologyIds": [
+              "writing"
+            ],
+            "progressByTechnologyId": {},
+            "scienceOverflow": 11
+          }
+        }
+      },
+      "lifecycle": {
+        "cityFoundingDraft": {
+          "unitId": "movement_sentinel",
+          "ownerPlayerId": "player_2",
+          "center": {
+            "col": 44,
+            "row": 44
+          },
+          "controlledHexes": [
+            {
+              "col": 45,
+              "row": 44
+            }
+          ]
+        },
+        "pendingAction": {
+          "type": "cityExpansionSelection",
+          "ownerPlayerId": "player_2",
+          "cityId": "movement_sentinel_city"
+        },
+        "submittedPlayerIds": [
+          "player_2"
+        ],
+        "timeoutStreaksByPlayerId": {
+          "player_2": 2
+        },
+        "afkPlayerIds": [
+          "player_2"
+        ],
+        "kickedPlayerIds": [
+          "player_2"
+        ],
+        "turnStartedAt": "2026-07-01T12:00:00.000Z",
+        "intendedAttacks": [
+          {
+            "attackerUnitId": "sentinel_attacker",
+            "defenderCol": 30,
+            "defenderRow": 30,
+            "declaredAtTick": 41,
+            "declaringPlayerId": "player_2"
+          }
+        ],
+        "diplomacy": {
+          "contacts": [
+            "player_1|player_2"
+          ]
+        },
+        "dominationHoldTurnsByPlayerId": {
+          "player_2": 3
+        },
+        "culturalVictoryHoldTurnsByPlayerId": {
+          "player_2": 4
+        },
+        "mapObjectiveHoldStates": [
+          {
+            "objectiveId": "sentinel_objective",
+            "playerId": "player_2",
+            "holdTurns": 2
+          }
+        ],
+        "resourceTradeAgreements": [
+          {
+            "id": "movement_sentinel_trade",
+            "exporterPlayerId": "player_2",
+            "importerPlayerId": "player_1",
+            "resource": "coal",
+            "goldPerTurn": 7,
+            "remainingTurns": 9
+          }
+        ]
+      },
+      "wonderRegistry": {
+        "greatLibrary": "player_2"
+      }
+    },
+    "command": {
+      "type": "MoveUnit",
+      "unitId": "movement_mover",
+      "targetCol": 0,
+      "targetRow": 0
+    }
+  },
+  "expected": {
+    "accepted": false,
+    "reason": "unit_out_of_bounds",
+    "save": {
+      "id": "reducer-parity-match",
+      "schemaVersion": 3,
+      "name": "Reducer parity",
+      "mapName": "reducer_parity",
+      "mapSource": "asset",
+      "turn": 7,
+      "playerStates": {
+        "player_1": "active",
+        "player_2": "active"
+      },
+      "camera": {
+        "x": 0.0,
+        "y": 0.0,
+        "zoom": 1.0
+      },
+      "ruleset": {
+        "gameLength": {
+          "kind": "targetMinutes",
+          "targetMinutes": 60,
+          "turnLimit": 120,
+          "paceProfile": "standard60",
+          "scoreFallbackEnabled": true
+        },
+        "victory": {
+          "conquestEnabled": true,
+          "dominationEnabled": true,
+          "dominationControlPercent": 45.0,
+          "dominationHoldTurns": 10,
+          "scoreFallbackEnabled": true,
+          "turnLimit": 120,
+          "culturalEnabled": true,
+          "culturalRequiredArtifacts": 6,
+          "culturalHoldTurns": 5
+        },
+        "balance": {}
+      },
+      "players": [
+        {
+          "id": "player_1",
+          "name": "Player 1",
+          "colorValue": 4282212264,
+          "country": "poland",
+          "kind": "human"
+        },
+        {
+          "id": "player_2",
+          "name": "Player 2",
+          "colorValue": 4290263610,
+          "country": "japan",
+          "kind": "human"
+        }
+      ],
+      "gameMode": "multiplayer",
+      "origin": "network"
+    },
+    "state": {
+      "playerColors": {
+        "player_1": 4282212264,
+        "player_2": 4290263610
+      },
+      "playerCountries": {
+        "player_1": "poland",
+        "player_2": "japan"
+      },
+      "playerGold": {
+        "player_1": 17,
+        "player_2": 23
+      },
+      "playerWarWeariness": {
+        "player_1": 2,
+        "player_2": 3
+      },
+      "playerStabilityNet": {
+        "player_1": 4,
+        "player_2": 5
+      },
+      "units": [
+        {
+          "id": "movement_mover",
+          "ownerPlayerId": "player_1",
+          "type": "commander",
+          "name": "Movement mover",
+          "col": -1,
+          "row": 0,
+          "movementPoints": 5,
+          "army": []
+        },
+        {
+          "id": "movement_sentinel",
+          "ownerPlayerId": "player_2",
+          "type": "scout",
+          "name": "Movement sentinel",
+          "col": 40,
+          "row": 40,
+          "movementPoints": 1,
+          "army": []
+        }
+      ],
+      "cities": [
+        {
+          "id": "movement_sentinel_city",
+          "ownerPlayerId": "player_2",
+          "name": "Movement sentinel city",
+          "population": 3,
+          "storedFood": 0,
+          "maxHexes": 6,
+          "territoryRadius": 2,
+          "center": {
+            "col": 41,
+            "row": 41
+          },
+          "controlledHexes": [],
+          "workedHexes": [],
+          "buildings": [],
+          "productionOverflow": 0
+        }
+      ],
+      "artifacts": [
+        {
+          "id": "movement_sentinel_artifact",
+          "type": "astronomersTablets",
+          "location": {
+            "kind": "map",
+            "col": 42,
+            "row": 42
+          }
+        }
+      ],
+      "fieldImprovements": [
+        {
+          "hex": {
+            "col": 43,
+            "row": 43
+          },
+          "type": "mine",
+          "builtByCityId": "movement_sentinel_city"
+        }
+      ],
+      "transportNetwork": [],
+      "fogOfWar": [
+        {
+          "playerId": "player_1",
+          "discoveredHexes": [
+            {
+              "col": 0,
+              "row": 0
+            },
+            {
+              "col": 1,
+              "row": 0
+            },
+            {
+              "col": 2,
+              "row": 0
+            }
+          ],
+          "visibleHexes": [
+            {
+              "col": 0,
+              "row": 0
+            },
+            {
+              "col": 1,
+              "row": 0
+            },
+            {
+              "col": 2,
+              "row": 0
+            }
+          ]
+        }
+      ],
+      "research": {
+        "players": {
+          "player_2": {
+            "unlockedTechnologyIds": [
+              "writing"
+            ],
+            "progressByTechnologyId": {},
+            "scienceOverflow": 11
+          }
+        }
+      },
+      "lifecycle": {
+        "cityFoundingDraft": {
+          "unitId": "movement_sentinel",
+          "ownerPlayerId": "player_2",
+          "center": {
+            "col": 44,
+            "row": 44
+          },
+          "controlledHexes": [
+            {
+              "col": 45,
+              "row": 44
+            }
+          ]
+        },
+        "pendingAction": {
+          "type": "cityExpansionSelection",
+          "ownerPlayerId": "player_2",
+          "cityId": "movement_sentinel_city"
+        },
+        "submittedPlayerIds": [
+          "player_2"
+        ],
+        "timeoutStreaksByPlayerId": {
+          "player_2": 2
+        },
+        "afkPlayerIds": [
+          "player_2"
+        ],
+        "kickedPlayerIds": [
+          "player_2"
+        ],
+        "turnStartedAt": "2026-07-01T12:00:00.000Z",
+        "intendedAttacks": [
+          {
+            "attackerUnitId": "sentinel_attacker",
+            "defenderCol": 30,
+            "defenderRow": 30,
+            "declaredAtTick": 41,
+            "declaringPlayerId": "player_2"
+          }
+        ],
+        "diplomacy": {
+          "contacts": [
+            "player_1|player_2"
+          ]
+        },
+        "dominationHoldTurnsByPlayerId": {
+          "player_2": 3
+        },
+        "culturalVictoryHoldTurnsByPlayerId": {
+          "player_2": 4
+        },
+        "mapObjectiveHoldStates": [
+          {
+            "objectiveId": "sentinel_objective",
+            "playerId": "player_2",
+            "holdTurns": 2
+          }
+        ],
+        "resourceTradeAgreements": [
+          {
+            "id": "movement_sentinel_trade",
+            "exporterPlayerId": "player_2",
+            "importerPlayerId": "player_1",
+            "resource": "coal",
+            "goldPerTurn": 7,
+            "remainingTurns": 9
+          }
+        ]
+      },
+      "wonderRegistry": {
+        "greatLibrary": "player_2"
+      }
+    },
+    "events": [],
+    "movementExecutions": []
+  }
+}

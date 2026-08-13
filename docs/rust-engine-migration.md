@@ -2,12 +2,12 @@
 
 - Status: Target architecture and living migration plan
 - Last updated: 2026-08-13
-- Implementation checkpoint: the movement oracle/baseline and canonical-state
-  foundation exist under `engine/`: strict maps, hash-addressed ruleset and
-  scenario content, complete unit entities, `GameState`, movement projection,
-  route/reachable queries, `MoveUnit`, three v2 parity fixtures, and Godot
-  GDExtension smoke coverage. Full-state command integration and complete
-  movement parity have not started
+- Implementation checkpoint: the movement foundation and first authoritative
+  Rust slice exist under `engine/`: strict maps, hash-addressed ruleset and
+  scenario content, complete unit entities, movement-authoritative `GameState`,
+  strict state contracts, canonical query/apply transitions, fog, diplomacy,
+  cities, roads, stable state digests, and all 38 current movement v2 fixtures.
+  The next stage is the local runtime and Godot session cutover
 - Governing decision: [ADR 0008](adr/0008-rust-engine-ownership-and-strangler-migration.md)
 
 ## Purpose
@@ -128,7 +128,8 @@ aonw/
 ├── lib/                            # existing Flutter AoNW1 client
 ├── test/
 │   └── fixtures/
-│       └── reducer_parity/         # shared independent slice oracle
+│       ├── reducer_parity/         # existing Dart migration corpus
+│       └── reducer_parity_v2/      # current Rust/Dart movement oracle
 ├── assets/
 ├── android/ ios/ macos/ linux/ windows/ web/
 ├── pubspec.yaml
@@ -184,22 +185,23 @@ logical map content, immutable standard ruleset, validated scenario bootstrap,
 the canonical `GameState` skeleton and complete `Unit` entity, strict small
 logical-map fixtures, odd-q row-major topology, movement-oriented compatibility
 DTO mapping, fixed-point terrain costs, fog-safe route/reachable planning, an
-authoritative movement transition, and the Godot 3D map preview. Three reviewed movement fixtures use contract version
-2 and execute through the Rust engine, including exact movement evidence. Rust
-accepts only this current fixture contract; the remaining version 1 fixtures
-are exercised only by the existing Dart harness until they are deliberately
-migrated. The compatibility `MovementState` is explicitly not a save format.
-Cities, diplomacy, roads, complete fog state, full movement parity,
-Flutter FFI, and production runtime integration remain future work.
+authoritative movement transition, and the Godot 3D map preview. The 38 current
+movement fixtures use contract version 2 and execute through canonical
+`GameEngine::apply`, including full envelope preservation, fog, diplomacy,
+roads, cities, rejection precedence, and exact movement evidence. Rust accepts
+only this current fixture contract. The compatibility `MovementState` is
+explicitly not a save format. Local runtime ownership, save/replay, Flutter
+FFI, and production runtime integration remain future work.
 `aonw_native_bridge` and top-level contract publication remain planned.
 Additional crates shown in the target layout below are created with their first
 behavior and tests rather than as empty packages. `aonw_godot` is a narrow
 GDExtension adapter around the movement projection; no complete local runtime,
 AI, Flutter bridge, or recipient-replica crate exists yet.
 
-The parity fixtures are not copied into `engine/`. Dart reads the complete
-committed corpus; Rust selects the reviewed version 2 fixtures from that same
-location and rejects older contracts. Rust and Godot load logical maps only
+The parity fixtures are not copied into `engine/`. Dart retains its migration
+corpus and generates reviewed candidates for the separate current-only v2
+directory; Rust executes every file in that directory and rejects older
+contracts. Rust and Godot load logical maps only
 from the versioned `content/` root. Existing Flutter map JSON remains unchanged
 under `assets/maps/`; matching JPG slices may still be used as Godot reference
 art. Client-specific graphics and audio remain with clients.

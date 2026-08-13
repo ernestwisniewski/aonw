@@ -17,7 +17,7 @@ platform, shadow, canary, and rollback gates in the
 | --- | --- |
 | `aonw_domain` | `GameState`, complete unit entities, validated identifiers, odd-q topology, and fixed-point values. |
 | `aonw_content` | Strict maps, immutable rulesets and scenarios, catalogs, validation, and separate deterministic content hashes. |
-| `aonw_contracts` | Versioned, domain-independent boundary DTOs. It deliberately does not choose a wire codec yet. |
+| `aonw_contracts` | Versioned boundary DTOs and a strict bounded canonical-state JSON codec. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
 | `aonw_engine` | Fog-safe movement planning, reachable-hex queries, and the revision-bound authoritative `MoveUnit` transition. |
 | `aonw_godot` | Thin GDExtension exposing Rust map validation and an in-process movement session to Godot. |
@@ -60,19 +60,19 @@ deterministic lookup. Boundary mappings validate all external input before
 domain construction. Release builds retain integer overflow checks.
 
 Reducer fixture version 2 requires ordered authoritative `movementExecutions`.
-Three reviewed movement fixtures now execute through `GameEngine` and compare
-complete state, rejection, events, and exact movement evidence. `aonw_testkit`
-accepts only the current fixture contract. Rust and Godot map boundaries contain
-only the strict, versioned map codec.
+The current static corpus contains 38 movement fixtures: three original cases
+and the complete 35-case Dart characterization. Every fixture executes through
+canonical `GameEngine::apply` and compares the complete Dart state envelope,
+rejection, ordered events, and exact movement evidence. `aonw_testkit` accepts
+only the current fixture contract. Rust and Godot boundaries use strict,
+versioned codecs.
 
-The independent Dart movement characterization contains 35 fail-closed cases.
-It covers terrain bases and features, roads, partial and queued movement,
-occupancy and hidden information, cities, fog, diplomatic contact, posture,
-artifact capacity, rejection precedence, and exact movement evidence. Both the
-local and server reducers run every case in canonical and reversed input order.
-Only the three committed JSON v2 fixtures execute through Rust today; moving the
-complete characterization to the shared static v2 corpus belongs to the full
-`GameState` movement parity stage.
+The characterization covers terrain bases and features, roads, partial and
+queued movement, occupancy and hidden information, cities, fog, diplomatic
+contact, posture, artifact capacity, rejection precedence, and exact movement
+evidence. Both Dart reducers and Rust execute the same reviewed outcomes. Run
+`make rust-movement-oracle` only to regenerate review candidates; generation
+never blesses a changed oracle.
 
 ## Map content contract
 
@@ -89,16 +89,16 @@ smaller positive grids constructed inside deterministic engine test adapters,
 such as the existing 3×3 movement oracle. Map bounds expose canonical odd-q
 neighbors and row-major indices without allocation.
 
-The actor is command/query context, not persisted state. `MovementStateDto` is
-explicitly a partial projection containing revision, turn, and movement unit
-data. Adapters must apply returned changes without dropping unrelated canonical
-fields. `EngineContext` supplies actor, permission, validated map, and the
-actor-visible occupancy projection.
+The actor is command/query context, not persisted state. `GameStateDto` is the
+strict current contract for all movement-authoritative state. `MovementStateDto`
+remains a temporary adapter projection and is not a save format.
+`EngineContext` supplies actor, permission, validated map, and immutable
+ruleset; canonical fog and occupancy are derived from `GameState`.
 
 ## Movement foundation
 
-`GameState` is the canonical aggregate skeleton for a simulation. It uses the
-nominal `StateRevision`, preserves unit contract order in contiguous storage,
+`GameState` is the canonical aggregate root for the implemented simulation
+slice. It uses the nominal `StateRevision`, preserves unit contract order in contiguous storage,
 and maintains a private sorted ID index. Construction validates map bounds,
 duplicate IDs, and the occupancy policy selected by the ruleset.
 
@@ -113,22 +113,23 @@ links exact map and ruleset hashes to validated starting placements and can
 bootstrap a revision-zero `GameState`. Map, ruleset, and scenario identities
 are separate SHA-256 hashes with golden vectors.
 
-The earlier `MovementState` remains a temporary compatibility projection for
-the current Godot adapter and three Rust parity fixtures. It is not a save
-format and will be removed after the full-state command/query boundary replaces
-it.
+The earlier `MovementState` remains a temporary projection for the current
+Godot adapter. It is not a save format and will be removed when the local
+runtime replaces that adapter in the next stage.
 
 The current unit projection carries all data needed by the first movement
 slice: stable type, owner, odd-q position, fixed-point movement balance,
 posture, availability, queued route, and carried artifact. Boundary mapping
 round-trips these values and validates queued coordinates and cumulative costs.
 
-`GameEngine::plan_terrain_route` and `reachable_movement` use row-major map
+`GameEngine::query` and `apply` are the canonical full-state boundary.
+Route/reachable planning uses row-major map
 indices, bounded heap searches, actor-visible occupancy, exact odd-q order, and
 fixed-point terrain costs. Occupied targets use deterministic approach planning.
-Hidden occupancy is resolved only by `apply_move_unit`, which returns an
-accepted no-op rather than disclosing the blocker. Accepted movement returns a
-new revision, `UnitMovedEvent`, and exact authoritative execution steps.
+Hidden occupancy is resolved only during apply, which returns an accepted no-op
+rather than disclosing the blocker. Accepted movement returns a new revision,
+recomputed fog and diplomatic contacts, an ordered `UnitMovedEvent`, exact
+authoritative execution evidence, state digest, map hash, and ruleset hash.
 
 `aonw_godot` validates strict versioned maps in Rust and exposes
 `AonwLocalSession` for movement projection load, reachable queries, and
@@ -142,8 +143,7 @@ enforces entity, route, and balance limits even for non-JSON DTO producers.
 
 ## Deliberately deferred
 
-- full canonical state/save codecs and the remaining movement inputs such as
-  roads, cities, diplomacy, and complete fog state;
+- canonical save/replay envelopes and state upcasters;
 - Flutter/native C ABI and production packaging beyond the Godot debug adapter;
 - local runtime, AI, recipient projection, and remote replica crates;
 - any integration that could change the active Flutter or Serverpod runtime.

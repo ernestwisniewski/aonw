@@ -6,6 +6,10 @@
 
 #![forbid(unsafe_code)]
 
+mod game_state_mapping;
+
+pub use game_state_mapping::{GameStateMappingError, decode_game_state, encode_game_state};
+
 use core::fmt;
 
 use aonw_contracts::{

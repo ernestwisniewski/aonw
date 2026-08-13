@@ -423,7 +423,7 @@ mod tests {
         let scenario = ScenarioDefinition::try_new(
             "duel",
             &map,
-            &ruleset,
+            ruleset,
             [
                 initial("unit-1", "player-1", HexCoord::new(0, 0)),
                 initial("unit-2", "player-2", HexCoord::new(1, 1)),
@@ -431,7 +431,7 @@ mod tests {
         )
         .expect("scenario");
 
-        let state = scenario.bootstrap(&map, &ruleset).expect("state");
+        let state = scenario.bootstrap(&map, ruleset).expect("state");
         assert_eq!(state.units().len(), 2);
         assert_eq!(
             state.units()[0].movement_units(),
@@ -460,7 +460,7 @@ mod tests {
             ScenarioDefinition::try_new(
                 "friendly",
                 &map,
-                &ruleset,
+                ruleset,
                 [
                     initial("one", "player-1", position),
                     initial("two", "player-1", position)
@@ -472,7 +472,7 @@ mod tests {
             ScenarioDefinition::try_new(
                 "hostile",
                 &map,
-                &ruleset,
+                ruleset,
                 [
                     initial("one", "player-1", position),
                     initial("two", "player-2", position)

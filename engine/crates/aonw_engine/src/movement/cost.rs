@@ -1,7 +1,8 @@
 use aonw_content::{TerrainType, TileDefinition};
-use aonw_domain::{MovementUnits, UnitMovementDomain};
+use aonw_domain::{HexCoord, MovementUnits, UnitMovementDomain};
 
 use super::terrain_profile::TerrainProfile;
+use crate::EngineContext;
 
 /// Result of applying terrain passability and entry-cost rules.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -49,6 +50,28 @@ pub fn terrain_entry_cost(tile: &TileDefinition, domain: UnitMovementDomain) -> 
         cost += MovementUnits::PER_POINT;
     }
     MovementCost::Passable(MovementUnits::new(cost))
+}
+
+pub(super) fn movement_cost_for_edge(
+    from: HexCoord,
+    to: HexCoord,
+    tile: &TileDefinition,
+    domain: UnitMovementDomain,
+    context: EngineContext<'_>,
+) -> MovementCost {
+    let base = terrain_entry_cost(tile, domain);
+    if domain != UnitMovementDomain::Land || matches!(base, MovementCost::Blocked) {
+        return base;
+    }
+    let from_road = context.has_known_operational_road(from);
+    let to_road = context.has_known_operational_road(to);
+    if (from_road || context.is_known_city_center(from)) && to_road
+        || (from_road && context.is_known_city_center(to))
+    {
+        MovementCost::Passable(MovementUnits::new(1))
+    } else {
+        base
+    }
 }
 
 const fn base_land_cost(base: Option<TerrainType>) -> Option<u32> {

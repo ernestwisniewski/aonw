@@ -22,7 +22,7 @@ void main() {
 
   _registerMovementCorpusGuards(() => fixtures);
   _registerMovementOracleGuards(() => fixtures);
-  _registerMovementIndependenceGuards();
+  _registerMovementIndependenceGuards(() => fixtures);
 }
 
 typedef _FixtureProvider = List<ReducerParityFixture> Function();
@@ -235,7 +235,7 @@ void _registerMovementOracleGuards(_FixtureProvider fixtureProvider) {
   });
 }
 
-void _registerMovementIndependenceGuards() {
+void _registerMovementIndependenceGuards(_FixtureProvider fixtureProvider) {
   test('movement expectation sources cannot call production calculators', () {
     final support = '${Directory.current.path}/test/support';
     final sources = [
@@ -269,14 +269,23 @@ void _registerMovementIndependenceGuards() {
     }
   });
 
-  test('programmatic characterization is not duplicated as JSON', () {
+  test('current Rust corpus contains the exact reviewed movement matrix', () {
     final directory = Directory(
-      '${Directory.current.path}/test/fixtures/reducer_parity',
+      '${Directory.current.path}/test/fixtures/reducer_parity_v2',
     );
-    final names = directory.listSync().whereType<File>().map(
-      (file) => file.uri.pathSegments.last,
-    );
-    expect(names, isNot(contains(startsWith('movement-characterization-'))));
+    final names = directory
+        .listSync()
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.json'))
+        .map((file) => file.uri.pathSegments.last)
+        .toSet();
+    final expected = {
+      'movement-adjacent-accepted.json',
+      'movement-out-of-bounds-rejected.json',
+      'movement-wrong-actor-rejected.json',
+      for (final fixture in fixtureProvider()) '${fixture.id}.json',
+    };
+    expect(names, expected);
   });
 }
 

@@ -8,28 +8,24 @@ Every JSON file is a third, committed oracle reviewed independently from both
 implementations. Tests must never calculate or bless `expected` from either
 runtime path.
 
-The same corpus is also the independent compatibility oracle for the Rust
-engine migration described in
+This corpus is the source used to derive reviewed current movement candidates
+for the Rust engine migration described in
 [ADR 0008](../../../docs/adr/0008-rust-engine-ownership-and-strangler-migration.md).
-It remains in this shared repository location rather than being copied into
-`engine/`. As migration harnesses are introduced, Dart, Rust CLI, native, Godot,
-and server-shadow paths will compare their covered slices with this committed
-data; a live Dart-to-Rust diff is additional evidence and never replaces the
-oracle. The Dart harness currently accepts versions 1 and 2. Rust
-`aonw_testkit` accepts only version 2 and runs the explicitly reviewed movement
-fixtures through the Rust backend without exposing expected outputs to the
-executor. The corpus does not claim coverage of offsets, database transactions,
-recipient projections, system/timeout commands, or other explicitly excluded
-boundaries.
+The Dart harness currently accepts versions 1 and 2. Rust never reads version
+1; it executes the current-only version 2 corpus in the sibling
+`reducer_parity_v2/` directory. A live Dart-to-Rust diff is additional evidence
+and never replaces the committed oracle. The corpus does not claim coverage of
+offsets, database transactions, recipient projections, system/timeout commands,
+or other explicitly excluded boundaries.
 
 The Dart harness also runs a programmatic, fail-closed movement characterization
 of exactly 35 cases. Every case has an explicit complete-state oracle, ordered
 events, and ordered `movementExecutions`; accepted no-ops and rejections require
 `[]`. This matrix pins terrain bases and features, road subpoints, partial and
 queued movement, visible and hidden occupancy, cities, fog, contact discovery,
-posture, artifact capacity, and rejection precedence. It is intentionally not
-duplicated as JSON until the complete Rust `GameState` can execute and compare
-the full state without adapter-owned rules.
+posture, artifact capacity, and rejection precedence. The 35 cases are now
+committed as reviewed version 2 JSON under `reducer_parity_v2/`, together with
+the three original current movement fixtures.
 
 Each legacy version 1 fixture contains:
 

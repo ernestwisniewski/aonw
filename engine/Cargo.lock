@@ -23,6 +23,10 @@ dependencies = [
 [[package]]
 name = "aonw_contracts"
 version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "aonw_domain"
@@ -33,9 +37,12 @@ name = "aonw_engine"
 version = "0.1.0"
 dependencies = [
  "aonw_content",
+ "aonw_contract_mapping",
+ "aonw_contracts",
  "aonw_domain",
  "aonw_testkit",
  "serde_json",
+ "sha2",
 ]
 
 [[package]]

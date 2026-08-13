@@ -1,13 +1,21 @@
 //! Domain-independent DTOs for versioned engine boundaries.
 //!
 //! These values define admissible data shape, not game invariants. Conversion
-//! into canonical domain types belongs to `aonw_contract_mapping`. A concrete
-//! JSON or binary codec is intentionally deferred until the reviewed Dart
-//! contract inventory is committed.
+//! into canonical domain types belongs to `aonw_contract_mapping`. Current
+//! canonical state DTOs provide a strict bounded JSON codec; framework-specific
+//! transport remains outside this crate.
 
 #![forbid(unsafe_code)]
 
+mod canonical;
 mod limits;
+
+pub use canonical::{
+    ArmyTroopDto, CURRENT_GAME_STATE_VERSION, CityDto, CityFoundingJobDto, CoordinateDto,
+    FieldImprovementKindDto, GameStateCodecError, GameStateDto, MerchantTradeRouteDto,
+    PlayerFogDto, PlayerPairDto, TransportConditionDto, TransportSegmentDto, TroopKindDto,
+    UnitActivityDto, UnitDto, UnitOccupancyPolicyDto, WorkerJobDto,
+};
 
 pub use limits::{
     MAX_KNOWN_UNIT_ID_COUNT, MAX_KNOWN_UNIT_IDS_JSON_BYTES, MAX_MOVEMENT_BALANCE_UNITS,
@@ -60,7 +68,8 @@ pub struct MovementUnitDto {
 
 /// Stable unit type used at engine boundaries.
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub enum UnitKindDto {
     Commander,
     Warrior,
@@ -83,7 +92,8 @@ pub enum UnitKindDto {
 
 /// Persistent unit behavior used at engine boundaries.
 #[allow(missing_docs)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub enum UnitPostureDto {
     Active,
     Fortified,
@@ -92,7 +102,8 @@ pub enum UnitPostureDto {
 }
 
 /// One persisted step of a queued movement route.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct MovementStepDto {
     /// Odd-q offset-grid column.
     pub col: i32,
@@ -105,7 +116,8 @@ pub struct MovementStepDto {
 }
 
 /// Persisted movement route retained between commands.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct QueuedMovePathDto {
     /// Final requested odd-q column.
     pub target_col: i32,

@@ -1,5 +1,6 @@
 mod balance;
 mod cost;
+mod fog;
 mod metrics;
 mod planning_view;
 mod query;
@@ -22,6 +23,7 @@ pub use transition::{
     MoveUnitCommand, MoveUnitError, MovementTransition, UnitMovedEvent, UnitMovementExecution,
 };
 
+pub(crate) use fog::{merge_discovered_contacts, recompute_after_move};
 pub(crate) use query::plan_terrain_route;
 pub(crate) use reachable::find_reachable_tiles;
 pub(crate) use transition::apply_move_unit;

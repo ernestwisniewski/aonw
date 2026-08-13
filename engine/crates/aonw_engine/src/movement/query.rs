@@ -1,8 +1,8 @@
-use aonw_content::MapDefinition;
+use aonw_content::{MapDefinition, RulesetDefinition};
 use aonw_domain::{HexCoord, MovementState, MovementStep, MovementUnit, MovementUnits, UnitId};
 
 use super::reachable::movement_available_for_query;
-use super::route_search::find_route;
+use super::route_search::{find_route, find_route_ignoring_capacity};
 use super::{MovementSearchMetrics, maximum_movement_units};
 use crate::EngineContext;
 
@@ -123,7 +123,9 @@ pub enum TerrainMovementQueryError {
     UnitOutOfBounds,
     TargetOutOfBounds,
     TargetIsCurrentTile,
+    TargetIsForeignCityCenter,
     TargetOccupied,
+    MovementCapacityInsufficient,
     PathNotFound,
 }
 
@@ -140,7 +142,9 @@ impl TerrainMovementQueryError {
             Self::UnitOutOfBounds => "unit_out_of_bounds",
             Self::TargetOutOfBounds => "move_target_out_of_bounds",
             Self::TargetIsCurrentTile => "move_target_is_current_tile",
+            Self::TargetIsForeignCityCenter => "move_target_is_foreign_city_center",
             Self::TargetOccupied => "move_target_occupied",
+            Self::MovementCapacityInsufficient => "unit_movement_capacity_insufficient",
             Self::PathNotFound => "move_path_not_found",
         }
     }
@@ -162,7 +166,13 @@ impl core::fmt::Display for TerrainMovementQueryError {
             Self::UnitOutOfBounds => formatter.write_str("unit is outside map bounds"),
             Self::TargetOutOfBounds => formatter.write_str("target is outside map bounds"),
             Self::TargetIsCurrentTile => formatter.write_str("target is the current tile"),
+            Self::TargetIsForeignCityCenter => {
+                formatter.write_str("target is a foreign city center")
+            }
             Self::TargetOccupied => formatter.write_str("target is occupied"),
+            Self::MovementCapacityInsufficient => {
+                formatter.write_str("unit movement capacity is insufficient")
+            }
             Self::PathNotFound => formatter.write_str("movement path not found"),
         }
     }
@@ -178,9 +188,12 @@ pub(crate) fn plan_terrain_route(
     validate_revision(state, query.expected_revision)?;
     let unit = validate_unit(state, context, query.unit_id)?;
     validate_target(context.map(), unit, query.target)?;
+    if context.city_block_is_known(unit, query.target) {
+        return Err(TerrainMovementQueryError::TargetIsForeignCityCenter);
+    }
 
-    let available_movement = movement_available_for_query(unit);
-    let known_blocker = known_target_blocker(state, unit, query.target, context.planning_view());
+    let available_movement = movement_available_for_query(unit, context.ruleset());
+    let known_blocker = known_target_blocker(state, unit, query.target, context);
     let (steps, search_metrics) = if let Some(blocker) = known_blocker {
         let approach = find_approach_route(
             state,
@@ -188,11 +201,14 @@ pub(crate) fn plan_terrain_route(
             unit,
             query.target,
             available_movement,
-            context.planning_view(),
+            context,
         );
         let steps = approach
             .steps
             .ok_or(TerrainMovementQueryError::TargetOccupied)?;
+        if steps.len() == 1 {
+            return Err(TerrainMovementQueryError::TargetOccupied);
+        }
         let approach_cost = steps
             .last()
             .map_or(MovementUnits::ZERO, |step| step.cumulative_cost());
@@ -209,14 +225,24 @@ pub(crate) fn plan_terrain_route(
             unit,
             query.target,
             available_movement,
-            context.planning_view(),
+            context,
         );
-        (
-            search
-                .steps
-                .ok_or(TerrainMovementQueryError::PathNotFound)?,
-            search.metrics,
-        )
+        let Some(steps) = search.steps else {
+            let diagnostic = find_route_ignoring_capacity(
+                state,
+                context.map(),
+                unit,
+                query.target,
+                available_movement,
+                context,
+            );
+            return Err(if diagnostic.steps.is_some() {
+                TerrainMovementQueryError::MovementCapacityInsufficient
+            } else {
+                TerrainMovementQueryError::PathNotFound
+            });
+        };
+        (steps, search.metrics)
     };
     let total_cost = steps
         .last()
@@ -273,7 +299,10 @@ pub(super) fn validate_unit<'state>(
     if unit.is_movement_blocked() {
         return Err(TerrainMovementQueryError::UnitUnavailable);
     }
-    if unit.kind().uses_trade_routes() {
+    let Some(definition) = context.ruleset().unit(unit.kind()) else {
+        return Err(TerrainMovementQueryError::UnitUnavailable);
+    };
+    if definition.capabilities().uses_trade_routes() {
         return Err(TerrainMovementQueryError::UnitUsesTradeRoutes);
     }
     if context.map().tile_at(unit.position()).is_none() {
@@ -300,12 +329,12 @@ fn known_target_blocker<'state>(
     state: &'state MovementState,
     unit: &MovementUnit,
     target: HexCoord,
-    planning_view: super::MovementPlanningView<'_>,
+    context: EngineContext<'_>,
 ) -> Option<&'state MovementUnit> {
     state.units().iter().find(|candidate| {
         candidate.id() != unit.id()
             && candidate.position() == target
-            && planning_view.observes_occupancy(unit, candidate)
+            && context.observes_occupancy(unit, candidate)
     })
 }
 
@@ -320,19 +349,12 @@ fn find_approach_route(
     unit: &MovementUnit,
     target: HexCoord,
     available_movement: MovementUnits,
-    planning_view: super::MovementPlanningView<'_>,
+    context: EngineContext<'_>,
 ) -> ApproachSearchResult {
     let mut metrics = MovementSearchMetrics::default();
     let mut best = None;
     for destination in map.neighbors(target) {
-        let search = find_route(
-            state,
-            map,
-            unit,
-            destination,
-            available_movement,
-            planning_view,
-        );
+        let search = find_route(state, map, unit, destination, available_movement, context);
         metrics.merge(search.metrics);
         let Some(steps) = search.steps else {
             continue;
@@ -341,7 +363,7 @@ fn find_approach_route(
             continue;
         };
         let key = (
-            estimated_turns(&steps, available_movement, unit),
+            estimated_turns(&steps, available_movement, unit, context.ruleset()),
             total_cost,
             steps.len(),
             destination.col(),
@@ -357,8 +379,14 @@ fn find_approach_route(
     }
 }
 
-fn estimated_turns(steps: &[MovementStep], available: MovementUnits, unit: &MovementUnit) -> u32 {
-    let maximum = maximum_movement_units(unit.kind(), unit.carried_artifact_id().is_some());
+fn estimated_turns(
+    steps: &[MovementStep],
+    available: MovementUnits,
+    unit: &MovementUnit,
+    ruleset: &RulesetDefinition,
+) -> u32 {
+    let maximum =
+        maximum_movement_units(ruleset, unit.kind(), unit.carried_artifact_id().is_some());
     let mut turns = u32::from(steps.len() > 1);
     let mut remaining = available.get();
     for step in steps.iter().skip(1) {

@@ -32,7 +32,7 @@ impl<'view> MovementPlanningView<'view> {
             .is_none_or(|known| known.iter().any(|candidate| candidate == unit_id))
     }
 
-    pub(super) fn observes_occupancy(
+    pub(crate) fn observes_occupancy(
         self,
         moving_unit: &MovementUnit,
         candidate: &MovementUnit,

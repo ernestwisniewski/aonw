@@ -6,10 +6,9 @@ use aonw_domain::{
     HexCoord, HexTileIndex, MovementState, MovementStep, MovementUnit, MovementUnits,
 };
 
-use super::{
-    MovementCost, MovementPlanningView, MovementSearchMetrics, maximum_movement_units,
-    terrain_entry_cost,
-};
+use super::cost::{movement_cost_for_edge, terrain_entry_cost};
+use super::{MovementCost, MovementSearchMetrics, maximum_movement_units};
+use crate::EngineContext;
 
 pub(super) struct RouteSearchResult {
     pub(super) steps: Option<Vec<MovementStep>>,
@@ -73,6 +72,7 @@ struct PreparedRouteSearch {
     best_by_tile: Vec<Vec<(u32, bool, RouteScore, usize)>>,
     frontier: BinaryHeap<FrontierNode>,
     metrics: MovementSearchMetrics,
+    movement_domain: aonw_domain::UnitMovementDomain,
 }
 
 pub(super) fn find_route(
@@ -81,17 +81,70 @@ pub(super) fn find_route(
     unit: &MovementUnit,
     target: HexCoord,
     available_movement: MovementUnits,
-    planning_view: MovementPlanningView<'_>,
+    context: EngineContext<'_>,
 ) -> RouteSearchResult {
-    let Some(prepared) =
-        prepare_route_search(state, map, unit, target, available_movement, planning_view)
-    else {
+    find_route_with_maximum(state, map, unit, target, available_movement, context, None)
+}
+
+pub(super) fn find_route_ignoring_capacity(
+    state: &MovementState,
+    map: &MapDefinition,
+    unit: &MovementUnit,
+    target: HexCoord,
+    available_movement: MovementUnits,
+    context: EngineContext<'_>,
+) -> RouteSearchResult {
+    let Some(definition) = context.ruleset().unit(unit.kind()) else {
         return RouteSearchResult {
             steps: None,
             metrics: MovementSearchMetrics::default(),
         };
     };
-    run_route_search(prepared, map, unit)
+    let movement_domain = definition.capabilities().movement_domain.domain();
+    let diagnostic_maximum = map
+        .tiles()
+        .iter()
+        .filter_map(|tile| match terrain_entry_cost(tile, movement_domain) {
+            MovementCost::Passable(cost) => Some(cost),
+            MovementCost::Blocked => None,
+        })
+        .max()
+        .unwrap_or(available_movement);
+    find_route_with_maximum(
+        state,
+        map,
+        unit,
+        target,
+        available_movement,
+        context,
+        Some(diagnostic_maximum),
+    )
+}
+
+fn find_route_with_maximum(
+    state: &MovementState,
+    map: &MapDefinition,
+    unit: &MovementUnit,
+    target: HexCoord,
+    available_movement: MovementUnits,
+    context: EngineContext<'_>,
+    maximum_override: Option<MovementUnits>,
+) -> RouteSearchResult {
+    let Some(prepared) = prepare_route_search(
+        state,
+        map,
+        unit,
+        target,
+        available_movement,
+        context,
+        maximum_override,
+    ) else {
+        return RouteSearchResult {
+            steps: None,
+            metrics: MovementSearchMetrics::default(),
+        };
+    };
+    run_route_search(prepared, map, unit, context)
 }
 
 fn prepare_route_search(
@@ -100,13 +153,15 @@ fn prepare_route_search(
     unit: &MovementUnit,
     target: HexCoord,
     available_movement: MovementUnits,
-    planning_view: MovementPlanningView<'_>,
+    context: EngineContext<'_>,
+    maximum_override: Option<MovementUnits>,
 ) -> Option<PreparedRouteSearch> {
+    let definition = context.ruleset().unit(unit.kind())?;
     let start_index = map.tile_index(unit.position()).map(HexTileIndex::get)?;
     let target_index = map.tile_index(target).map(HexTileIndex::get)?;
     let mut occupied = vec![false; map.bounds().tile_count()];
     for candidate in state.units() {
-        if candidate.id() == unit.id() || !planning_view.observes_occupancy(unit, candidate) {
+        if candidate.id() == unit.id() || !context.observes_occupancy(unit, candidate) {
             continue;
         }
         if let Some(index) = map.tile_index(candidate.position()) {
@@ -140,12 +195,19 @@ fn prepare_route_search(
     metrics.pushed();
     Some(PreparedRouteSearch {
         target_index,
-        maximum_movement: maximum_movement_units(unit.kind(), unit.carried_artifact_id().is_some()),
+        maximum_movement: maximum_override.unwrap_or_else(|| {
+            maximum_movement_units(
+                context.ruleset(),
+                unit.kind(),
+                unit.carried_artifact_id().is_some(),
+            )
+        }),
         occupied,
         records,
         best_by_tile,
         frontier,
         metrics,
+        movement_domain: definition.capabilities().movement_domain.domain(),
     })
 }
 
@@ -153,6 +215,7 @@ fn run_route_search(
     mut search: PreparedRouteSearch,
     map: &MapDefinition,
     unit: &MovementUnit,
+    context: EngineContext<'_>,
 ) -> RouteSearchResult {
     while let Some(current_node) = search.frontier.pop() {
         search.metrics.popped();
@@ -179,12 +242,21 @@ fn run_route_search(
             if search.occupied[next_index] {
                 continue;
             }
+            if !context.can_plan_through_tile(unit, next_coordinate)
+                || context.city_block_is_known(unit, next_coordinate)
+            {
+                continue;
+            }
             let Some(tile) = map.tile_at(next_coordinate) else {
                 continue;
             };
-            let MovementCost::Passable(enter_cost) =
-                terrain_entry_cost(tile, unit.kind().movement_domain())
-            else {
+            let MovementCost::Passable(enter_cost) = movement_cost_for_edge(
+                coordinate,
+                next_coordinate,
+                tile,
+                search.movement_domain,
+                context,
+            ) else {
                 continue;
             };
             if enter_cost > search.maximum_movement && unit.carried_artifact_id().is_none() {

@@ -25,6 +25,12 @@ impl<'command> MoveUnitCommand<'command> {
             target,
         }
     }
+
+    /// Returns the commanded unit.
+    #[must_use]
+    pub const fn unit_id(self) -> &'command UnitId {
+        self.unit_id
+    }
 }
 
 /// One authoritative unit-movement event.
@@ -202,9 +208,12 @@ pub(crate) fn apply_move_unit(
         state.units().iter().any(|candidate| {
             candidate.id() != unit.id()
                 && candidate.owner_player_id() != unit.owner_player_id()
-                && !context.planning_view().knows(candidate.id())
+                && !context.observes_occupancy(unit, candidate)
                 && candidate.position() == step.coordinate()
         })
+    }) || reachable_steps.iter().skip(1).any(|step| {
+        context.city_blocks(unit, step.coordinate())
+            && !context.city_block_is_known(unit, step.coordinate())
     }) {
         return Ok(MovementTransition {
             state: state.with_revision(next_revision),

@@ -1,31 +1,18 @@
+use aonw_content::RulesetDefinition;
 use aonw_domain::{MovementUnits, UnitKind};
 
 /// Returns the per-turn movement allowance used by the standard ruleset.
 #[must_use]
-pub const fn maximum_movement_units(kind: UnitKind, carries_artifact: bool) -> MovementUnits {
-    let points = if carries_artifact {
-        2
-    } else {
-        match kind {
-            UnitKind::Commander
-            | UnitKind::Cavalry
-            | UnitKind::Tank
-            | UnitKind::ScoutShip
-            | UnitKind::Warship => 5,
-            UnitKind::Catapult | UnitKind::FieldCannon => 2,
-            UnitKind::ReconPlane => 7,
-            UnitKind::Warrior
-            | UnitKind::Archer
-            | UnitKind::Settler
-            | UnitKind::Worker
-            | UnitKind::Merchant
-            | UnitKind::Scout
-            | UnitKind::Spearman
-            | UnitKind::HeavyInfantry
-            | UnitKind::Rifleman => 3,
-        }
-    };
-    MovementUnits::new(points * MovementUnits::PER_POINT)
+pub fn maximum_movement_units(
+    ruleset: &RulesetDefinition,
+    kind: UnitKind,
+    carries_artifact: bool,
+) -> MovementUnits {
+    ruleset
+        .unit(kind)
+        .map_or(MovementUnits::ZERO, |definition| {
+            definition.maximum_movement(carries_artifact)
+        })
 }
 
 #[cfg(test)]
@@ -33,27 +20,28 @@ mod tests {
     use aonw_domain::{MovementUnits, UnitKind};
 
     use super::maximum_movement_units;
+    use aonw_content::RulesetDefinition;
 
     #[test]
     fn standard_allowances_match_dart_balance() {
         assert_eq!(
-            maximum_movement_units(UnitKind::Commander, false),
+            maximum_movement_units(RulesetDefinition::standard(), UnitKind::Commander, false),
             MovementUnits::new(10)
         );
         assert_eq!(
-            maximum_movement_units(UnitKind::Warrior, false),
+            maximum_movement_units(RulesetDefinition::standard(), UnitKind::Warrior, false),
             MovementUnits::new(6)
         );
         assert_eq!(
-            maximum_movement_units(UnitKind::FieldCannon, false),
+            maximum_movement_units(RulesetDefinition::standard(), UnitKind::FieldCannon, false),
             MovementUnits::new(4)
         );
         assert_eq!(
-            maximum_movement_units(UnitKind::ReconPlane, false),
+            maximum_movement_units(RulesetDefinition::standard(), UnitKind::ReconPlane, false),
             MovementUnits::new(14)
         );
         assert_eq!(
-            maximum_movement_units(UnitKind::ReconPlane, true),
+            maximum_movement_units(RulesetDefinition::standard(), UnitKind::ReconPlane, true),
             MovementUnits::new(4)
         );
     }

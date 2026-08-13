@@ -1,15 +1,19 @@
-//! Executes the reviewed movement oracle through the Rust engine.
+//! Executes the current Dart movement oracle through the canonical Rust engine.
 
 use std::collections::BTreeSet;
 use std::fmt;
 use std::path::{Path, PathBuf};
 
-use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
-use aonw_domain::{
-    HexCoord, MovementState, MovementUnit, MovementUnits, PlayerId, UnitId, UnitKind,
+use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
+use aonw_contract_mapping::decode_game_state;
+use aonw_contracts::{
+    CURRENT_GAME_STATE_VERSION, CityDto, CoordinateDto, GameStateDto, PlayerFogDto, PlayerPairDto,
+    TransportConditionDto, TransportSegmentDto, UnitActivityDto, UnitDto, UnitKindDto,
+    UnitOccupancyPolicyDto, UnitPostureDto,
 };
+use aonw_domain::{HexCoord, HexGridBounds, MovementUnits, PlayerId, UnitId};
 use aonw_engine::{
-    EngineContext, GameEngine, MoveUnitCommand, MovementPlanningView, MovementTransition,
+    DomainCommand, DomainEvent, EngineContext, ExecutionEvidence, GameEngine, MoveUnitCommand,
 };
 use aonw_testkit::{
     FixtureExecutor, FixtureInput, FixtureLoader, FixtureOutput, JsonObject, MovementExecution,
@@ -17,11 +21,7 @@ use aonw_testkit::{
 };
 use serde_json::{Map, Value, json};
 
-const FIXTURE_IDS: [&str; 3] = [
-    "movement-adjacent-accepted",
-    "movement-out-of-bounds-rejected",
-    "movement-wrong-actor-rejected",
-];
+const REVIEWED_FIXTURE_COUNT: usize = 38;
 
 #[derive(Debug)]
 struct AdapterError(String);
@@ -41,17 +41,15 @@ impl FixtureExecutor for RustMovementFixtureExecutor {
 
     fn execute(
         &self,
-        fixture_id: &str,
+        _fixture_id: &str,
         family: &str,
         input: &FixtureInput,
     ) -> Result<FixtureOutput, Self::Error> {
-        if family != "movement" || !FIXTURE_IDS.contains(&fixture_id) {
-            return Err(error(format!("unsupported fixture: {fixture_id}")));
+        if family != "movement" {
+            return Err(error(format!("unsupported fixture family: {family}")));
         }
 
         let map = decode_map(input.map())?;
-        let state = decode_state(input)?;
-        let actor = PlayerId::new(input.actor_player_id()).map_err(display_error)?;
         let unit_id =
             UnitId::new(required_string(input.command(), "unitId")?).map_err(display_error)?;
         let command_type = required_string(input.command(), "type")?;
@@ -62,26 +60,63 @@ impl FixtureExecutor for RustMovementFixtureExecutor {
             required_i32(input.command(), "targetCol")?,
             required_i32(input.command(), "targetRow")?,
         );
-        let context = EngineContext::new(&actor, &map, MovementPlanningView::fog_disabled());
-        let transition = GameEngine::apply_move_unit(
-            &state,
-            context,
-            MoveUnitCommand::new(input.tick(), &unit_id, target),
-        );
         let mut save = input.save().clone();
         save.remove("savedAt");
 
-        match transition {
-            Ok(transition) => accepted_output(input, &map, &transition, save),
-            Err(rejection) => Ok(FixtureOutput::reject(
+        let state = match decode_state(input, map.bounds(), &unit_id)? {
+            DecodedState::Valid(state) => state,
+            DecodedState::CommandUnitOutOfBounds => {
+                return Ok(FixtureOutput::reject(
+                    "unit_out_of_bounds",
+                    save,
+                    input.state().clone(),
+                    Vec::new(),
+                    Vec::new(),
+                ));
+            }
+        };
+        let actor = PlayerId::new(input.actor_player_id()).map_err(display_error)?;
+        let context = EngineContext::canonical(&actor, &map, RulesetDefinition::standard());
+        let transition = GameEngine::apply(
+            &state,
+            context,
+            DomainCommand::MoveUnit(MoveUnitCommand::new(input.tick(), &unit_id, target)),
+        )
+        .map_err(display_error)?;
+
+        if let Some(rejection) = transition.rejection() {
+            return Ok(FixtureOutput::reject(
                 rejection.code(),
                 save,
                 input.state().clone(),
                 Vec::new(),
                 Vec::new(),
-            )),
+            ));
         }
+
+        let mut output_state = input.state().clone();
+        apply_canonical_projection(&mut output_state, transition.state(), transition.evidence())?;
+        Ok(FixtureOutput::accept(
+            save,
+            output_state,
+            transition
+                .events()
+                .iter()
+                .map(event_json)
+                .collect::<Result<Vec<_>, _>>()?,
+            transition
+                .evidence()
+                .map(evidence_execution)
+                .transpose()?
+                .into_iter()
+                .collect::<Vec<_>>(),
+        ))
     }
+}
+
+enum DecodedState {
+    Valid(aonw_domain::GameState),
+    CommandUnitOutOfBounds,
 }
 
 fn repository_root() -> PathBuf {
@@ -89,41 +124,36 @@ fn repository_root() -> PathBuf {
         .ancestors()
         .find(|path| {
             path.join("engine/Cargo.toml").is_file()
-                && path.join("test/fixtures/reducer_parity").is_dir()
+                && path.join("test/fixtures/reducer_parity_v2").is_dir()
         })
-        .expect("repository root must contain engine and reducer fixtures")
+        .expect("repository root must contain engine and current reducer fixtures")
         .to_path_buf()
 }
 
 fn decode_map(raw: &JsonObject) -> Result<MapDefinition, AdapterError> {
     let cols = u16::try_from(required_u32(raw, "cols")?).map_err(display_error)?;
     let rows = u16::try_from(required_u32(raw, "rows")?).map_err(display_error)?;
-    let map_id = required_string(raw, "mapName")?;
     let tiles = required_array(raw, "tiles")?
         .iter()
         .enumerate()
         .map(|(index, value)| {
             let path = format!("input.map.tiles[{index}]");
-            let tile = value
-                .as_object()
-                .ok_or_else(|| error(format!("{path} must be an object")))?;
-            let terrains = required_array(tile, "terrains")?;
-            if terrains.len() != 1 || terrains[0].as_str() != Some("grassland") {
-                return Err(error(format!(
-                    "{path}.terrains must contain the reviewed grassland fixture terrain"
-                )));
-            }
-            if !required_array(tile, "resources")?.is_empty() {
-                return Err(error(format!(
-                    "{path}.resources must be empty in reviewed movement fixtures"
-                )));
+            let tile = object_at(value, &path)?;
+            let mut terrains = required_array(tile, "terrains")?
+                .iter()
+                .map(|value| {
+                    value
+                        .as_str()
+                        .ok_or_else(|| error(format!("{path}.terrains must contain strings")))
+                        .and_then(parse_terrain)
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            if terrains.first().is_some_and(|terrain| terrain.is_feature()) {
+                terrains.insert(0, TerrainType::Grassland);
             }
             TileDefinition::try_new(
-                HexCoord::new(
-                    required_i32_at(tile, "col", &path)?,
-                    required_i32_at(tile, "row", &path)?,
-                ),
-                vec![TerrainType::Grassland],
+                coordinate_fields(tile, &path)?,
+                terrains,
                 Vec::new(),
                 u8::try_from(required_u32_at(tile, "height", &path)?).map_err(display_error)?,
             )
@@ -131,7 +161,7 @@ fn decode_map(raw: &JsonObject) -> Result<MapDefinition, AdapterError> {
         })
         .collect::<Result<Vec<_>, _>>()?;
     MapDefinition::try_new(
-        map_id,
+        required_string(raw, "mapName")?,
         GridLayout::OddQFlatTop,
         cols,
         rows,
@@ -141,245 +171,489 @@ fn decode_map(raw: &JsonObject) -> Result<MapDefinition, AdapterError> {
     .map_err(display_error)
 }
 
-fn decode_state(input: &FixtureInput) -> Result<MovementState, AdapterError> {
-    let turn = required_u32(input.save(), "turn")?;
-    let units = required_array(input.state(), "units")?
+fn parse_terrain(value: &str) -> Result<TerrainType, AdapterError> {
+    match value {
+        "ocean" => Ok(TerrainType::Ocean),
+        "coast" => Ok(TerrainType::Coast),
+        "lake" => Ok(TerrainType::Lake),
+        "plains" => Ok(TerrainType::Plains),
+        "grassland" => Ok(TerrainType::Grassland),
+        "desert" => Ok(TerrainType::Desert),
+        "tundra" => Ok(TerrainType::Tundra),
+        "snow" => Ok(TerrainType::Snow),
+        "mountain" => Ok(TerrainType::Mountain),
+        "hills" => Ok(TerrainType::Hills),
+        "wetlands" => Ok(TerrainType::Wetlands),
+        "jungle" => Ok(TerrainType::Jungle),
+        "forest" => Ok(TerrainType::Forest),
+        "river" => Ok(TerrainType::River),
+        _ => Err(error(format!("unknown terrain: {value}"))),
+    }
+}
+
+fn decode_state(
+    input: &FixtureInput,
+    bounds: HexGridBounds,
+    command_unit_id: &UnitId,
+) -> Result<DecodedState, AdapterError> {
+    let (units, command_unit_out_of_bounds) = decode_units(input.state(), bounds, command_unit_id)?;
+    if command_unit_out_of_bounds {
+        return Ok(DecodedState::CommandUnitOutOfBounds);
+    }
+    let cities = decode_cities(input.state(), bounds)?;
+    let fog_of_war = required_array(input.state(), "fogOfWar")?
         .iter()
         .enumerate()
-        .map(|(index, value)| decode_unit(index, value))
+        .map(|(index, value)| decode_fog(value, &format!("input.state.fogOfWar[{index}]")))
         .collect::<Result<Vec<_>, _>>()?;
-    MovementState::try_new(input.tick(), turn, units).map_err(display_error)
-}
-
-fn decode_unit(index: usize, raw: &Value) -> Result<MovementUnit, AdapterError> {
-    let object = raw
-        .as_object()
-        .ok_or_else(|| error(format!("state.units[{index}] must be an object")))?;
-    let path = format!("state.units[{index}]");
-    let id = UnitId::new(required_string_at(object, "id", &path)?).map_err(display_error)?;
-    let owner = PlayerId::new(required_string_at(object, "ownerPlayerId", &path)?)
-        .map_err(display_error)?;
-    let kind = parse_unit_kind(required_string_at(object, "type", &path)?)?;
-    let position = HexCoord::new(
-        required_i32_at(object, "col", &path)?,
-        required_i32_at(object, "row", &path)?,
-    );
-    let movement = match object.get("movementUnits") {
-        Some(value) => MovementUnits::new(value_to_u32(value, &format!("{path}.movementUnits"))?),
-        None => MovementUnits::checked_from_whole_points(required_u32_at(
-            object,
-            "movementPoints",
-            &path,
-        )?)
-        .ok_or_else(|| error(format!("{path}.movementPoints overflows fixed-point units")))?,
+    let diplomatic_contacts = decode_contacts(input.state())?;
+    let transport_network = required_array(input.state(), "transportNetwork")?
+        .iter()
+        .enumerate()
+        .map(|(index, value)| {
+            decode_transport(value, &format!("input.state.transportNetwork[{index}]"))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let dto = GameStateDto {
+        schema_version: CURRENT_GAME_STATE_VERSION,
+        revision: input.tick(),
+        turn: required_u32(input.save(), "turn")?,
+        cols: bounds.cols(),
+        rows: bounds.rows(),
+        occupancy_policy: UnitOccupancyPolicyDto::FriendlyStacking,
+        units,
+        cities,
+        fog_of_war,
+        diplomatic_contacts,
+        transport_network,
     };
-    let movement_blocked = [
-        "workerJob",
-        "cityFoundingJob",
-        "workerAssignment",
-        "excavatingArtifactId",
-    ]
-    .iter()
-    .any(|field| object.get(*field).is_some_and(|value| !value.is_null()));
-
-    Ok(MovementUnit::new(id, owner, kind, position, movement)
-        .with_movement_blocked(movement_blocked))
+    decode_game_state(dto)
+        .map(DecodedState::Valid)
+        .map_err(display_error)
 }
 
-fn parse_unit_kind(value: &str) -> Result<UnitKind, AdapterError> {
+fn decode_units(
+    state: &JsonObject,
+    bounds: HexGridBounds,
+    command_unit_id: &UnitId,
+) -> Result<(Vec<UnitDto>, bool), AdapterError> {
+    let mut command_unit_out_of_bounds = false;
+    let units = required_array(state, "units")?
+        .iter()
+        .enumerate()
+        .filter_map(|(index, value)| {
+            let object = match object_at(value, &format!("input.state.units[{index}]")) {
+                Ok(object) => object,
+                Err(error) => return Some(Err(error)),
+            };
+            let path = format!("input.state.units[{index}]");
+            let coordinate = match coordinate_fields(object, &path) {
+                Ok(coordinate) => coordinate,
+                Err(error) => return Some(Err(error)),
+            };
+            if !bounds.contains(coordinate) {
+                if object.get("id").and_then(Value::as_str) == Some(command_unit_id.as_str()) {
+                    command_unit_out_of_bounds = true;
+                }
+                return None;
+            }
+            Some(decode_unit(object, &path))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok((units, command_unit_out_of_bounds))
+}
+
+fn decode_cities(state: &JsonObject, bounds: HexGridBounds) -> Result<Vec<CityDto>, AdapterError> {
+    required_array(state, "cities")?
+        .iter()
+        .enumerate()
+        .filter_map(|(index, value)| {
+            let path = format!("input.state.cities[{index}]");
+            let object = match object_at(value, &path) {
+                Ok(object) => object,
+                Err(error) => return Some(Err(error)),
+            };
+            let center = match object
+                .get("center")
+                .ok_or_else(|| error(format!("{path}.center is required")))
+                .and_then(|value| object_at(value, &format!("{path}.center")))
+                .and_then(|center| coordinate_fields(center, &format!("{path}.center")))
+            {
+                Ok(center) => center,
+                Err(error) => return Some(Err(error)),
+            };
+            let controlled = match required_array(object, "controlledHexes").and_then(|values| {
+                values
+                    .iter()
+                    .enumerate()
+                    .map(|(coordinate_index, value)| {
+                        let coordinate_path = format!("{path}.controlledHexes[{coordinate_index}]");
+                        object_at(value, &coordinate_path)
+                            .and_then(|value| coordinate_fields(value, &coordinate_path))
+                    })
+                    .collect::<Result<Vec<_>, _>>()
+            }) {
+                Ok(controlled) => controlled,
+                Err(error) => return Some(Err(error)),
+            };
+            if !bounds.contains(center)
+                || controlled
+                    .iter()
+                    .any(|coordinate| !bounds.contains(*coordinate))
+            {
+                return None;
+            }
+            let id = match required_string_at(object, "id", &path) {
+                Ok(value) => value.to_owned(),
+                Err(error) => return Some(Err(error)),
+            };
+            let owner_player_id = match required_string_at(object, "ownerPlayerId", &path) {
+                Ok(value) => value.to_owned(),
+                Err(error) => return Some(Err(error)),
+            };
+            Some(Ok(CityDto {
+                id,
+                owner_player_id,
+                center: coordinate_dto(center),
+                controlled_hexes: controlled.into_iter().map(coordinate_dto).collect(),
+            }))
+        })
+        .collect()
+}
+
+fn decode_unit(object: &JsonObject, path: &str) -> Result<UnitDto, AdapterError> {
+    let movement_units = if let Some(value) = object.get("movementUnits") {
+        value_to_u32(value, &format!("{path}.movementUnits"))?
+    } else {
+        let points = required_u32_at(object, "movementPoints", path)?;
+        let subpoints = object
+            .get("movementSubpoints")
+            .map(|value| value_to_u32(value, &format!("{path}.movementSubpoints")))
+            .transpose()?
+            .unwrap_or(0);
+        points
+            .checked_mul(MovementUnits::PER_POINT)
+            .and_then(|units| units.checked_add(subpoints))
+            .ok_or_else(|| error(format!("{path}.movementPoints overflows")))?
+    };
+    let posture = match object.get("posture").and_then(Value::as_str) {
+        None | Some("active") => UnitPostureDto::Active,
+        Some("fortified") => UnitPostureDto::Fortified,
+        Some("autoExploring") => UnitPostureDto::AutoExploring,
+        Some("autoWorking") => UnitPostureDto::AutoWorking,
+        Some(value) => return Err(error(format!("unknown unit posture: {value}"))),
+    };
+    Ok(UnitDto {
+        id: required_string_at(object, "id", path)?.to_owned(),
+        owner_player_id: required_string_at(object, "ownerPlayerId", path)?.to_owned(),
+        kind: parse_unit_kind(required_string_at(object, "type", path)?)?,
+        name: required_string_at(object, "name", path)?.to_owned(),
+        col: required_i32_at(object, "col", path)?,
+        row: required_i32_at(object, "row", path)?,
+        movement_units,
+        army: Vec::new(),
+        queued_path: None,
+        merchant_trade_route: None,
+        activity: UnitActivityDto {
+            worker_job: None,
+            city_founding_job: None,
+            worker_assignment: None,
+            excavating_artifact_id: optional_string(object, "excavatingArtifactId")?,
+        },
+        worker_build_charges: 0,
+        hit_points: None,
+        experience_points: 0,
+        posture,
+        carried_artifact_id: optional_string(object, "carriedArtifactId")?,
+    })
+}
+
+fn parse_unit_kind(value: &str) -> Result<UnitKindDto, AdapterError> {
     match value {
-        "commander" => Ok(UnitKind::Commander),
-        "warrior" => Ok(UnitKind::Warrior),
-        "archer" => Ok(UnitKind::Archer),
-        "settler" => Ok(UnitKind::Settler),
-        "worker" => Ok(UnitKind::Worker),
-        "merchant" => Ok(UnitKind::Merchant),
-        "scout" => Ok(UnitKind::Scout),
-        "spearman" => Ok(UnitKind::Spearman),
-        "cavalry" => Ok(UnitKind::Cavalry),
-        "catapult" => Ok(UnitKind::Catapult),
-        "heavyInfantry" => Ok(UnitKind::HeavyInfantry),
-        "fieldCannon" => Ok(UnitKind::FieldCannon),
-        "rifleman" => Ok(UnitKind::Rifleman),
-        "tank" => Ok(UnitKind::Tank),
-        "scoutShip" => Ok(UnitKind::ScoutShip),
-        "warship" => Ok(UnitKind::Warship),
-        "reconPlane" => Ok(UnitKind::ReconPlane),
+        "commander" => Ok(UnitKindDto::Commander),
+        "warrior" => Ok(UnitKindDto::Warrior),
+        "archer" => Ok(UnitKindDto::Archer),
+        "settler" => Ok(UnitKindDto::Settler),
+        "worker" => Ok(UnitKindDto::Worker),
+        "merchant" => Ok(UnitKindDto::Merchant),
+        "scout" => Ok(UnitKindDto::Scout),
+        "spearman" => Ok(UnitKindDto::Spearman),
+        "cavalry" => Ok(UnitKindDto::Cavalry),
+        "catapult" => Ok(UnitKindDto::Catapult),
+        "heavyInfantry" => Ok(UnitKindDto::HeavyInfantry),
+        "fieldCannon" => Ok(UnitKindDto::FieldCannon),
+        "rifleman" => Ok(UnitKindDto::Rifleman),
+        "tank" => Ok(UnitKindDto::Tank),
+        "scoutShip" => Ok(UnitKindDto::ScoutShip),
+        "warship" => Ok(UnitKindDto::Warship),
+        "reconPlane" => Ok(UnitKindDto::ReconPlane),
         _ => Err(error(format!("unknown unit type: {value}"))),
     }
 }
 
-fn accepted_output(
-    input: &FixtureInput,
-    map: &MapDefinition,
-    transition: &MovementTransition,
-    save: JsonObject,
-) -> Result<FixtureOutput, AdapterError> {
-    let mut state = input.state().clone();
-    apply_movement_projection(&mut state, transition)?;
+fn decode_fog(value: &Value, path: &str) -> Result<PlayerFogDto, AdapterError> {
+    let object = object_at(value, path)?;
+    Ok(PlayerFogDto {
+        player_id: required_string_at(object, "playerId", path)?.to_owned(),
+        discovered_hexes: decode_coordinates(required_array(object, "discoveredHexes")?, path)?,
+        visible_hexes: decode_coordinates(required_array(object, "visibleHexes")?, path)?,
+    })
+}
 
-    let mut events = Vec::new();
-    if let Some(event) = transition.event() {
-        events.push(json_object(&json!({
+fn decode_contacts(state: &JsonObject) -> Result<Vec<PlayerPairDto>, AdapterError> {
+    let Some(contacts) = state
+        .get("lifecycle")
+        .and_then(Value::as_object)
+        .and_then(|lifecycle| lifecycle.get("diplomacy"))
+        .and_then(Value::as_object)
+        .and_then(|diplomacy| diplomacy.get("contacts"))
+        .and_then(Value::as_array)
+    else {
+        return Ok(Vec::new());
+    };
+    contacts
+        .iter()
+        .enumerate()
+        .map(|(index, value)| {
+            let value = value.as_str().ok_or_else(|| {
+                error(format!(
+                    "input.state.lifecycle.diplomacy.contacts[{index}] must be a string"
+                ))
+            })?;
+            let (first, second) = value
+                .split_once('|')
+                .ok_or_else(|| error(format!("invalid diplomacy contact: {value}")))?;
+            Ok(PlayerPairDto {
+                first_player_id: first.to_owned(),
+                second_player_id: second.to_owned(),
+            })
+        })
+        .collect()
+}
+
+fn decode_transport(value: &Value, path: &str) -> Result<TransportSegmentDto, AdapterError> {
+    let object = object_at(value, path)?;
+    if required_string_at(object, "kind", path)? != "road" {
+        return Err(error(format!("{path}.kind must be road")));
+    }
+    let condition = match required_string_at(object, "condition", path)? {
+        "operational" => TransportConditionDto::Operational,
+        "pillaged" => TransportConditionDto::Pillaged,
+        value => return Err(error(format!("unknown transport condition: {value}"))),
+    };
+    Ok(TransportSegmentDto {
+        coordinate: coordinate_dto(coordinate_fields(object, path)?),
+        condition,
+        built_by_player_id: required_string_at(object, "builtByPlayerId", path)?.to_owned(),
+        built_by_city_id: optional_string(object, "builtByCityId")?,
+    })
+}
+
+fn apply_canonical_projection(
+    state: &mut JsonObject,
+    canonical: &aonw_domain::GameState,
+    evidence: Option<&ExecutionEvidence>,
+) -> Result<(), AdapterError> {
+    let units = state
+        .get_mut("units")
+        .and_then(Value::as_array_mut)
+        .ok_or_else(|| error("state.units must be an array"))?;
+    for unit in canonical.units() {
+        let raw = units
+            .iter_mut()
+            .find(|value| value.get("id").and_then(Value::as_str) == Some(unit.id().as_str()))
+            .and_then(Value::as_object_mut)
+            .ok_or_else(|| error(format!("missing canonical unit: {}", unit.id())))?;
+        raw.insert("col".into(), unit.position().col().into());
+        raw.insert("row".into(), unit.position().row().into());
+        let movement = unit.movement_units().get();
+        raw.insert(
+            "movementPoints".into(),
+            (movement / MovementUnits::PER_POINT).into(),
+        );
+        if movement % MovementUnits::PER_POINT == 0 {
+            raw.remove("movementSubpoints");
+        } else {
+            raw.insert(
+                "movementSubpoints".into(),
+                (movement % MovementUnits::PER_POINT).into(),
+            );
+        }
+        raw.remove("posture");
+        match unit.queued_path() {
+            Some(path) => {
+                let steps = dart_queued_path_steps(unit.id(), path, evidence);
+                raw.insert(
+                    "queuedPath".into(),
+                    json!({
+                        "targetCol": path.target().col(),
+                        "targetRow": path.target().row(),
+                        "steps": steps,
+                    }),
+                );
+            }
+            None => {
+                raw.remove("queuedPath");
+            }
+        }
+    }
+
+    state.insert(
+        "fogOfWar".into(),
+        Value::Array(
+            canonical
+                .fog_of_war()
+                .players()
+                .iter()
+                .map(|fog| {
+                    json!({
+                        "playerId": fog.player_id().as_str(),
+                        "discoveredHexes": coordinate_values(fog.discovered_hexes()),
+                        "visibleHexes": coordinate_values(fog.visible_hexes()),
+                    })
+                })
+                .collect(),
+        ),
+    );
+    let lifecycle = state
+        .get_mut("lifecycle")
+        .and_then(Value::as_object_mut)
+        .ok_or_else(|| error("state.lifecycle must be an object"))?;
+    if canonical.diplomacy().contacts().is_empty() {
+        lifecycle.remove("diplomacy");
+    } else {
+        lifecycle.insert(
+            "diplomacy".into(),
+            json!({
+                "contacts": canonical.diplomacy().contacts().iter().map(|pair| {
+                    format!("{}|{}", pair.first(), pair.second())
+                }).collect::<Vec<_>>(),
+            }),
+        );
+    }
+    Ok(())
+}
+
+fn dart_queued_path_steps(
+    unit_id: &UnitId,
+    path: &aonw_domain::QueuedMovePath,
+    evidence: Option<&ExecutionEvidence>,
+) -> Vec<Value> {
+    let Some(ExecutionEvidence::UnitMovement(execution)) = evidence else {
+        return movement_steps_json(path.steps(), MovementUnits::ZERO);
+    };
+    if execution.unit_id() != unit_id || execution.steps().is_empty() {
+        return movement_steps_json(path.steps(), MovementUnits::ZERO);
+    }
+    let mut steps = vec![json!({
+        "col": execution.from().col(),
+        "row": execution.from().row(),
+        "enterCost": 0,
+        "cumulativeCost": 0,
+    })];
+    steps.extend(movement_steps_json(execution.steps(), MovementUnits::ZERO));
+    let executed_cost = execution
+        .steps()
+        .last()
+        .map_or(MovementUnits::ZERO, |step| step.cumulative_cost());
+    steps.extend(movement_steps_json(&path.steps()[1..], executed_cost));
+    steps
+}
+
+fn movement_steps_json(
+    steps: &[aonw_domain::MovementStep],
+    cumulative_offset: MovementUnits,
+) -> Vec<Value> {
+    steps
+        .iter()
+        .map(|step| {
+            json!({
+                "col": step.coordinate().col(),
+                "row": step.coordinate().row(),
+                "enterCost": step.enter_cost().get(),
+                "cumulativeCost": step.cumulative_cost().get() + cumulative_offset.get(),
+            })
+        })
+        .collect()
+}
+
+fn event_json(event: &DomainEvent) -> Result<JsonObject, AdapterError> {
+    match event {
+        DomainEvent::UnitMoved(event) => json_object(&json!({
             "type": "UnitMoved",
             "unitId": event.unit_id().as_str(),
             "fromCol": event.from().col(),
             "fromRow": event.from().row(),
             "toCol": event.to().col(),
             "toRow": event.to().row(),
-        }))?);
-        update_fixture_fog(&mut state, map, event.unit_id())?;
+        })),
     }
-
-    let movement_executions = transition
-        .execution()
-        .map(to_fixture_execution)
-        .transpose()?
-        .into_iter()
-        .collect::<Vec<_>>();
-    Ok(FixtureOutput::accept(
-        save,
-        state,
-        events,
-        movement_executions,
-    ))
 }
 
-fn apply_movement_projection(
-    state: &mut JsonObject,
-    transition: &MovementTransition,
-) -> Result<(), AdapterError> {
-    let units = state
-        .get_mut("units")
-        .and_then(Value::as_array_mut)
-        .ok_or_else(|| error("state.units must be an array"))?;
-    for projected in transition.state().units() {
-        let raw = units
-            .iter_mut()
-            .find(|value| value.get("id").and_then(Value::as_str) == Some(projected.id().as_str()))
-            .and_then(Value::as_object_mut)
-            .ok_or_else(|| error(format!("missing canonical unit: {}", projected.id())))?;
-        raw.insert("col".into(), projected.position().col().into());
-        raw.insert("row".into(), projected.position().row().into());
-        if raw.contains_key("movementUnits") {
-            raw.insert(
-                "movementUnits".into(),
-                projected.movement_units().get().into(),
-            );
-        } else {
-            let units = projected.movement_units().get();
-            if units % MovementUnits::PER_POINT != 0 {
-                return Err(error("fixture movementPoints cannot represent half points"));
-            }
-            raw.insert(
-                "movementPoints".into(),
-                (units / MovementUnits::PER_POINT).into(),
-            );
+fn evidence_execution(evidence: &ExecutionEvidence) -> Result<MovementExecution, AdapterError> {
+    match evidence {
+        ExecutionEvidence::UnitMovement(execution) => {
+            let steps = execution
+                .steps()
+                .iter()
+                .map(|step| {
+                    Ok(MovementStep::new(
+                        u32::try_from(step.coordinate().col()).map_err(display_error)?,
+                        u32::try_from(step.coordinate().row()).map_err(display_error)?,
+                        step.enter_cost().get(),
+                        step.cumulative_cost().get(),
+                    ))
+                })
+                .collect::<Result<Vec<_>, AdapterError>>()?;
+            MovementExecution::try_new(
+                execution.unit_id().as_str(),
+                u32::try_from(execution.from().col()).map_err(display_error)?,
+                u32::try_from(execution.from().row()).map_err(display_error)?,
+                steps,
+            )
+            .map_err(display_error)
         }
     }
-    Ok(())
 }
 
-fn update_fixture_fog(
-    state: &mut JsonObject,
-    map: &MapDefinition,
-    moved_unit_id: &UnitId,
-) -> Result<(), AdapterError> {
-    let units = required_array(state, "units")?;
-    let moved = units
-        .iter()
-        .find(|value| value.get("id").and_then(Value::as_str) == Some(moved_unit_id.as_str()))
-        .and_then(Value::as_object)
-        .ok_or_else(|| error(format!("missing moved unit: {moved_unit_id}")))?;
-    let player_id = required_string_at(moved, "ownerPlayerId", "moved unit")?.to_owned();
-    let origin = HexCoord::new(
-        required_i32_at(moved, "col", "moved unit")?,
-        required_i32_at(moved, "row", "moved unit")?,
-    );
-    let height = u32::from(
-        map.tile_at(origin)
-            .ok_or_else(|| error("moved unit is outside the map"))?
-            .height(),
-    );
-    let range = (2 + height / 2).min(3);
-    let visible = map
-        .tiles()
-        .iter()
-        .map(aonw_content::TileDefinition::coordinate)
-        .filter(|coordinate| origin.distance_to(*coordinate) <= u64::from(range))
-        .collect::<BTreeSet<_>>();
-
-    let fog = state
-        .get_mut("fogOfWar")
-        .and_then(Value::as_array_mut)
-        .ok_or_else(|| error("state.fogOfWar must be an array"))?;
-    let existing_index = fog
-        .iter()
-        .position(|value| value.get("playerId").and_then(Value::as_str) == Some(&player_id));
-    let mut discovered = existing_index
-        .and_then(|index| fog[index].get("discoveredHexes"))
-        .and_then(Value::as_array)
-        .map(|values| decode_coordinates(values, "fogOfWar.discoveredHexes"))
-        .transpose()?
-        .unwrap_or_default();
-    discovered.extend(visible.iter().copied());
-    let value = json!({
-        "playerId": player_id,
-        "discoveredHexes": coordinates_json(&discovered),
-        "visibleHexes": coordinates_json(&visible),
-    });
-    if let Some(index) = existing_index {
-        fog[index] = value;
-    } else {
-        fog.push(value);
-    }
-    Ok(())
-}
-
-fn to_fixture_execution(
-    execution: &aonw_engine::UnitMovementExecution,
-) -> Result<MovementExecution, AdapterError> {
-    let from_col = u32::try_from(execution.from().col()).map_err(display_error)?;
-    let from_row = u32::try_from(execution.from().row()).map_err(display_error)?;
-    let steps = execution
-        .steps()
-        .iter()
-        .map(|step| {
-            Ok(MovementStep::new(
-                u32::try_from(step.coordinate().col()).map_err(display_error)?,
-                u32::try_from(step.coordinate().row()).map_err(display_error)?,
-                step.enter_cost().get(),
-                step.cumulative_cost().get(),
-            ))
-        })
-        .collect::<Result<Vec<_>, AdapterError>>()?;
-    MovementExecution::try_new(execution.unit_id().as_str(), from_col, from_row, steps)
-        .map_err(display_error)
-}
-
-fn decode_coordinates(values: &[Value], path: &str) -> Result<BTreeSet<HexCoord>, AdapterError> {
+fn decode_coordinates(values: &[Value], path: &str) -> Result<Vec<CoordinateDto>, AdapterError> {
     values
         .iter()
         .enumerate()
         .map(|(index, value)| {
-            let object = value
-                .as_object()
-                .ok_or_else(|| error(format!("{path}[{index}] must be an object")))?;
-            Ok(HexCoord::new(
-                required_i32_at(object, "col", path)?,
-                required_i32_at(object, "row", path)?,
-            ))
+            let path = format!("{path}[{index}]");
+            object_at(value, &path)
+                .and_then(|object| coordinate_fields(object, &path))
+                .map(coordinate_dto)
         })
         .collect()
 }
 
-fn coordinates_json(coordinates: &BTreeSet<HexCoord>) -> Vec<Value> {
-    let mut sorted = coordinates.iter().copied().collect::<Vec<_>>();
-    sorted.sort_unstable_by_key(|coordinate| (coordinate.col(), coordinate.row()));
-    sorted
-        .into_iter()
+fn coordinate_values(coordinates: &[HexCoord]) -> Vec<Value> {
+    coordinates
+        .iter()
         .map(|coordinate| json!({"col": coordinate.col(), "row": coordinate.row()}))
         .collect()
+}
+
+fn coordinate_dto(coordinate: HexCoord) -> CoordinateDto {
+    CoordinateDto {
+        col: coordinate.col(),
+        row: coordinate.row(),
+    }
+}
+
+fn coordinate_fields(object: &JsonObject, path: &str) -> Result<HexCoord, AdapterError> {
+    Ok(HexCoord::new(
+        required_i32_at(object, "col", path)?,
+        required_i32_at(object, "row", path)?,
+    ))
+}
+
+fn object_at<'value>(value: &'value Value, path: &str) -> Result<&'value JsonObject, AdapterError> {
+    value
+        .as_object()
+        .ok_or_else(|| error(format!("{path} must be an object")))
 }
 
 fn required_array<'value>(
@@ -410,6 +684,14 @@ fn required_string_at<'value>(
         .ok_or_else(|| error(format!("{path}.{field} must be a string")))
 }
 
+fn optional_string(object: &JsonObject, field: &str) -> Result<Option<String>, AdapterError> {
+    match object.get(field) {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::String(value)) => Ok(Some(value.clone())),
+        Some(_) => Err(error(format!("{field} must be a string or null"))),
+    }
+}
+
 fn required_i32(object: &JsonObject, field: &str) -> Result<i32, AdapterError> {
     required_i32_at(object, field, "input")
 }
@@ -421,8 +703,7 @@ fn required_i32_at(
 ) -> Result<i32, AdapterError> {
     let value = object
         .get(field)
-        .ok_or_else(|| error(format!("{path}.{field} is required")))?;
-    let value = value
+        .ok_or_else(|| error(format!("{path}.{field} is required")))?
         .as_i64()
         .ok_or_else(|| error(format!("{path}.{field} must be an integer")))?;
     i32::try_from(value).map_err(display_error)
@@ -437,17 +718,17 @@ fn required_u32_at(
     field: &str,
     path: &str,
 ) -> Result<u32, AdapterError> {
-    let value = object
+    object
         .get(field)
-        .ok_or_else(|| error(format!("{path}.{field} is required")))?;
-    value_to_u32(value, &format!("{path}.{field}"))
+        .ok_or_else(|| error(format!("{path}.{field} is required")))
+        .and_then(|value| value_to_u32(value, &format!("{path}.{field}")))
 }
 
 fn value_to_u32(value: &Value, path: &str) -> Result<u32, AdapterError> {
-    let value = value
+    value
         .as_u64()
-        .ok_or_else(|| error(format!("{path} must be a non-negative integer")))?;
-    u32::try_from(value).map_err(display_error)
+        .ok_or_else(|| error(format!("{path} must be a non-negative integer")))
+        .and_then(|value| u32::try_from(value).map_err(display_error))
 }
 
 fn json_object(value: &Value) -> Result<JsonObject, AdapterError> {
@@ -466,30 +747,26 @@ fn display_error(source: impl fmt::Display) -> AdapterError {
 }
 
 #[test]
-fn rust_executes_reviewed_movement_v2_fixtures() {
-    let fixture_dir = repository_root().join("test/fixtures/reducer_parity");
-    let loader = FixtureLoader::default();
-    let selected = FIXTURE_IDS
-        .iter()
-        .map(|fixture_id| {
-            loader
-                .load_file(fixture_dir.join(format!("{fixture_id}.json")))
-                .expect("current reducer-parity fixture must load")
-        })
-        .collect::<Vec<_>>();
+fn rust_executes_complete_current_movement_oracle() {
+    let fixture_dir = repository_root().join("test/fixtures/reducer_parity_v2");
+    let fixtures = FixtureLoader::default()
+        .load_corpus(&fixture_dir)
+        .expect("current reducer-parity corpus must load");
 
-    assert_eq!(
-        selected
-            .iter()
-            .map(aonw_testkit::Fixture::id)
-            .collect::<BTreeSet<_>>(),
-        FIXTURE_IDS.into_iter().collect()
-    );
+    assert_eq!(fixtures.len(), REVIEWED_FIXTURE_COUNT);
     assert!(
-        selected
+        fixtures
             .iter()
             .all(|fixture| fixture.fixture_version() == 2)
     );
-    verify_corpus(&selected, &RustMovementFixtureExecutor)
+    assert_eq!(
+        fixtures
+            .iter()
+            .map(aonw_testkit::Fixture::id)
+            .collect::<BTreeSet<_>>()
+            .len(),
+        REVIEWED_FIXTURE_COUNT
+    );
+    verify_corpus(&fixtures, &RustMovementFixtureExecutor)
         .unwrap_or_else(|failure| panic!("{failure:?}"));
 }
