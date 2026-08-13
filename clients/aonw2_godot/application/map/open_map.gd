@@ -33,6 +33,8 @@ func execute(source: AonwMapSource) -> Dictionary:
 		"missing_tiles": atlas_result["missing_tiles"],
 		"invalid_tiles": atlas_result["invalid_tiles"],
 		"resized_tiles": atlas_result["resized_tiles"],
+		"source_tile_size": atlas_result["source_tile_size"],
 		"source_path": map_result["source_path"],
+		"content_hash": map_result["content_hash"],
 		"source": source,
 	}

@@ -50,25 +50,29 @@ fn decode(value: &Value) -> Result<MapDocument, MapLoadError> {
     MapDocument::from_json(&serde_json::to_vec(value).expect("test JSON must encode"))
 }
 
-fn legacy_map(cols: u16, rows: u16) -> Value {
-    json!({
-        "cols": cols,
-        "rows": rows,
-        "mapName": "movement_fixture",
-        "tiles": (0..rows)
-            .flat_map(|row| {
-                (0..cols).map(move |col| {
-                    json!({
-                        "col": col,
-                        "row": row,
-                        "terrains": ["grassland"],
-                        "resources": [],
-                        "height": 0
-                    })
-                })
+fn logical_map(cols: u16, rows: u16) -> MapDefinition {
+    let tiles = (0..rows)
+        .flat_map(|row| {
+            (0..cols).map(move |col| {
+                TileDefinition::try_new(
+                    HexCoord::new(i32::from(col), i32::from(row)),
+                    vec![TerrainType::Grassland],
+                    Vec::new(),
+                    0,
+                )
+                .expect("valid fixture tile")
             })
-            .collect::<Vec<_>>()
-    })
+        })
+        .collect();
+    MapDefinition::try_new(
+        "movement_fixture",
+        GridLayout::OddQFlatTop,
+        cols,
+        rows,
+        tiles,
+        Vec::new(),
+    )
+    .expect("valid logical map")
 }
 
 #[test]
@@ -96,6 +100,24 @@ fn strict_document_requires_every_schema_field() {
         .as_object_mut()
         .expect("objective")
         .remove("victoryPoints");
+    assert!(matches!(decode(&value), Err(MapLoadError::Json(_))));
+}
+
+#[test]
+fn integer_valued_json_numbers_survive_godot_round_trips() {
+    let mut value = document();
+    value["schemaVersion"] = json!(1.0);
+    value["cols"] = json!(5.0);
+    value["rows"] = json!(5.0);
+    value["tiles"][0]["col"] = json!(0.0);
+    value["tiles"][0]["row"] = json!(0.0);
+    value["tiles"][0]["height"] = json!(0.0);
+    value["objectives"][0]["hex"]["col"] = json!(2.0);
+    value["objectives"][0]["requiredHoldTurns"] = json!(3.0);
+
+    decode(&value).expect("integer-valued numbers remain valid JSON integers");
+
+    value["tiles"][0]["height"] = json!(0.5);
     assert!(matches!(decode(&value), Err(MapLoadError::Json(_))));
 }
 
@@ -302,33 +324,29 @@ fn simulation_maps_allow_small_fixture_grids_but_authored_documents_do_not() {
 }
 
 #[test]
-fn logical_legacy_decoder_accepts_one_by_one_and_three_by_three_maps() {
-    for (cols, rows) in [(1, 1), (3, 3)] {
-        let source = serde_json::to_vec(&legacy_map(cols, rows)).expect("test JSON must encode");
-        let map = MapDefinition::from_legacy_json(&source).expect("logical fixture map");
+fn tile_requires_one_explicit_primary_terrain() {
+    let feature_first = TileDefinition::try_new(
+        HexCoord::new(0, 0),
+        vec![TerrainType::Forest, TerrainType::Plains],
+        Vec::new(),
+        0,
+    )
+    .expect_err("feature-first terrain must fail closed");
+    assert_eq!(feature_first.path(), "$.terrains[0]");
 
-        assert_eq!(map.cols(), cols);
-        assert_eq!(map.rows(), rows);
-        assert_eq!(map.tiles().len(), usize::from(cols) * usize::from(rows));
-    }
-}
-
-#[test]
-fn logical_legacy_decoder_remains_strict() {
-    let mut unknown_field = legacy_map(3, 3);
-    unknown_field["previewOnly"] = json!(true);
-    let source = serde_json::to_vec(&unknown_field).expect("test JSON must encode");
-
-    assert!(matches!(
-        MapDefinition::from_legacy_json(&source),
-        Err(MapLoadError::Json(_))
-    ));
+    let second_primary = TileDefinition::try_new(
+        HexCoord::new(0, 0),
+        vec![TerrainType::Plains, TerrainType::Grassland],
+        Vec::new(),
+        0,
+    )
+    .expect_err("multiple primary terrains must fail closed");
+    assert_eq!(second_primary.path(), "$.terrains[1]");
 }
 
 #[test]
 fn logical_map_exposes_row_major_indices_and_ordered_bounded_neighbors() {
-    let source = serde_json::to_vec(&legacy_map(3, 3)).expect("test JSON must encode");
-    let map = MapDefinition::from_legacy_json(&source).expect("logical fixture map");
+    let map = logical_map(3, 3);
 
     assert_eq!(
         map.tile_index(HexCoord::new(2, 1)),

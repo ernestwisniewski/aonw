@@ -32,8 +32,7 @@ impl std::error::Error for IdentifierError {}
 
 /// Opaque player identifier.
 ///
-/// A boxed string preserves compatibility with current Dart identifiers while
-/// keeping the value immutable and one allocation wide.
+/// A boxed string keeps the value immutable and one allocation wide.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct PlayerId(Box<str>);
 

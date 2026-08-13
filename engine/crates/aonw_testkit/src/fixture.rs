@@ -7,14 +7,8 @@ use crate::movement_execution::MovementExecution;
 /// JSON object used at language-neutral fixture boundaries.
 pub type JsonObject = Map<String, Value>;
 
-/// Oldest reducer-parity fixture version accepted for migration.
-pub const MIN_SUPPORTED_FIXTURE_VERSION: u64 = 1;
-
 /// Current reducer-parity fixture version written by new fixtures.
 pub const CURRENT_FIXTURE_VERSION: u64 = 2;
-
-/// Current reducer-parity fixture version.
-pub const SUPPORTED_FIXTURE_VERSION: u64 = CURRENT_FIXTURE_VERSION;
 
 /// One independently reviewed reducer-parity fixture.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -142,7 +136,7 @@ pub struct ReducerExpectedOutcome {
     pub(crate) save: JsonObject,
     pub(crate) state: JsonObject,
     pub(crate) events: Vec<JsonObject>,
-    pub(crate) movement_executions: Option<Box<[MovementExecution]>>,
+    pub(crate) movement_executions: Box<[MovementExecution]>,
 }
 
 impl ReducerExpectedOutcome {
@@ -176,13 +170,10 @@ impl ReducerExpectedOutcome {
         &self.events
     }
 
-    /// Returns authoritative movement evidence for fixture v2.
-    ///
-    /// Legacy v1 fixtures return `None`; this is distinct from the explicit
-    /// empty list required by v2.
+    /// Returns authoritative movement evidence.
     #[must_use]
-    pub fn movement_executions(&self) -> Option<&[MovementExecution]> {
-        self.movement_executions.as_deref()
+    pub fn movement_executions(&self) -> &[MovementExecution] {
+        &self.movement_executions
     }
 
     /// Creates a standalone output value for adapter tests.
@@ -194,7 +185,7 @@ impl ReducerExpectedOutcome {
             save: self.save.clone(),
             state: self.state.clone(),
             events: self.events.clone(),
-            movement_executions: self.movement_executions.clone().unwrap_or_default(),
+            movement_executions: self.movement_executions.clone(),
         }
     }
 
@@ -205,7 +196,7 @@ impl ReducerExpectedOutcome {
             &self.save,
             &self.state,
             &self.events,
-            self.movement_executions.as_deref(),
+            &self.movement_executions,
         )
     }
 }
@@ -302,7 +293,7 @@ impl FixtureOutput {
             &self.save,
             &self.state,
             &self.events,
-            Some(&self.movement_executions),
+            &self.movement_executions,
         )
     }
 }

@@ -8,8 +8,12 @@ import 'reducer_parity_accepted_semantics.dart';
 import 'reducer_parity_contract.dart';
 import 'reducer_parity_fixture_infrastructure_validation.dart';
 import 'reducer_parity_json.dart';
+import 'reducer_parity_movement_contract.dart';
 import 'reducer_parity_production_semantics.dart';
 import 'reducer_parity_rush_semantics.dart';
+
+export 'reducer_parity_movement_contract.dart'
+    show reducerParityMovementExecutions;
 
 part 'reducer_parity_fixture_city_expansion_validation.dart';
 part 'reducer_parity_fixture_city_founding_validation.dart';
@@ -40,6 +44,7 @@ final class ReducerParityFixture {
     required this.expectedSave,
     required this.expectedState,
     required this.expectedEvents,
+    this.expectedMovementExecutions,
   });
 
   final String id;
@@ -57,6 +62,7 @@ final class ReducerParityFixture {
   final Map<String, dynamic> expectedSave;
   final Map<String, dynamic> expectedState;
   final List<Map<String, dynamic>> expectedEvents;
+  final List<Map<String, dynamic>>? expectedMovementExecutions;
 }
 
 abstract final class ReducerParityCorpus {
@@ -116,7 +122,7 @@ abstract final class ReducerParityCorpus {
       'expected',
     }, file.path);
     final fixtureVersion = _asInt(root['fixtureVersion'], 'fixtureVersion');
-    if (fixtureVersion != 1) {
+    if (fixtureVersion != 1 && fixtureVersion != 2) {
       throw FormatException(
         'Unsupported fixtureVersion $fixtureVersion in ${file.path}.',
       );
@@ -185,26 +191,10 @@ abstract final class ReducerParityCorpus {
       throw FormatException('$id.command is not in canonical serialized form.');
     }
 
-    final expected = _asMap(root['expected'], '$id.expected');
-    _requireExactKeys(expected, const {
-      'accepted',
-      'reason',
-      'save',
-      'state',
-      'events',
-    }, '$id.expected');
-    final accepted = _asBool(expected['accepted'], '$id.accepted');
-    final reason = _asNullableString(expected['reason'], '$id.reason');
-    if (accepted == (reason != null)) {
-      throw FormatException(
-        '$id must have a null reason exactly when it is accepted.',
-      );
-    }
-    final expectedSave = _asMap(expected['save'], '$id.expected.save');
-    final expectedState = _asMap(expected['state'], '$id.expected.state');
-    final expectedEvents = _asMapList(
-      expected['events'],
-      '$id.expected.events',
+    final expected = readReducerParityExpected(
+      root['expected'],
+      id,
+      fixtureVersion,
     );
 
     final fixture = ReducerParityFixture(
@@ -218,11 +208,12 @@ abstract final class ReducerParityCorpus {
       save: save,
       state: state,
       command: command,
-      expectedAccepted: accepted,
-      expectedReason: reason,
-      expectedSave: expectedSave,
-      expectedState: expectedState,
-      expectedEvents: expectedEvents,
+      expectedAccepted: expected.accepted,
+      expectedReason: expected.reason,
+      expectedSave: expected.save,
+      expectedState: expected.state,
+      expectedEvents: expected.events,
+      expectedMovementExecutions: expected.movementExecutions,
     );
     _validateFixture(fixture);
     return fixture;
@@ -330,34 +321,14 @@ Map<String, dynamic> _asMap(Object? value, String field) {
   throw FormatException('$field must be a JSON object.');
 }
 
-List<Map<String, dynamic>> _asMapList(Object? value, String field) {
-  if (value is! List<Object?>) {
-    throw FormatException('$field must be a JSON array.');
-  }
-  return [
-    for (var index = 0; index < value.length; index++)
-      _asMap(value[index], '$field[$index]'),
-  ];
-}
-
 String _asNonEmptyString(Object? value, String field) {
   if (value is String && value.isNotEmpty) return value;
   throw FormatException('$field must be a non-empty string.');
 }
 
-String? _asNullableString(Object? value, String field) {
-  if (value == null) return null;
-  return _asNonEmptyString(value, field);
-}
-
 int _asInt(Object? value, String field) {
   if (value is int) return value;
   throw FormatException('$field must be an integer.');
-}
-
-bool _asBool(Object? value, String field) {
-  if (value is bool) return value;
-  throw FormatException('$field must be a boolean.');
 }
 
 void _requireExactKeys(

@@ -275,7 +275,7 @@ fn imported_high_movement_balance_does_not_change_query_precedence() {
         EngineContext::new(&actor, &map, MovementPlanningView::fog_disabled()),
         TerrainMovementQuery::new(12, &unit_id, HexCoord::new(1, 0)),
     )
-    .expect("legacy balance remains usable until import normalization");
+    .expect("imported high balance remains usable until normalization");
 
     assert_eq!(plan.destination(), HexCoord::new(1, 0));
 }

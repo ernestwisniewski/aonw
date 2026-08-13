@@ -26,14 +26,26 @@ struct MovementUnitWire {
     col: i32,
     row: i32,
     movement_units: u32,
-    #[serde(default)]
     posture: UnitPostureWire,
-    #[serde(default)]
     movement_blocked: bool,
-    #[serde(default)]
-    queued_path: Option<QueuedMovePathWire>,
-    #[serde(default)]
-    carried_artifact_id: Option<String>,
+    queued_path: RequiredNullable<QueuedMovePathWire>,
+    carried_artifact_id: RequiredNullable<String>,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum RequiredNullable<Value> {
+    Null(()),
+    Value(Value),
+}
+
+impl<Value> RequiredNullable<Value> {
+    fn into_option(self) -> Option<Value> {
+        match self {
+            Self::Null(()) => None,
+            Self::Value(value) => Some(value),
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -75,10 +87,9 @@ enum UnitKindWire {
     ReconPlane,
 }
 
-#[derive(Clone, Copy, Default, Deserialize)]
+#[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase")]
 enum UnitPostureWire {
-    #[default]
     Active,
     Fortified,
     AutoExploring,
@@ -107,8 +118,8 @@ impl From<MovementUnitWire> for MovementUnitDto {
             movement_units: value.movement_units,
             posture: value.posture.into(),
             movement_blocked: value.movement_blocked,
-            queued_path: value.queued_path.map(Into::into),
-            carried_artifact_id: value.carried_artifact_id,
+            queued_path: value.queued_path.into_option().map(Into::into),
+            carried_artifact_id: value.carried_artifact_id.into_option(),
         }
     }
 }
@@ -186,4 +197,75 @@ pub(crate) fn encode_json(value: &Value) -> GString {
         r#"{"ok":false,"code":"adapter_serialization_failed","message":"adapter serialization failed"}"#.to_owned()
     });
     GString::from(&encoded)
+}
+
+#[cfg(test)]
+mod tests {
+    use aonw_contracts::CURRENT_MOVEMENT_STATE_VERSION;
+    use serde_json::json;
+
+    use super::MovementStateWire;
+
+    #[test]
+    fn movement_wire_requires_every_current_unit_field() {
+        let state = json!({
+            "schemaVersion": CURRENT_MOVEMENT_STATE_VERSION,
+            "revision": 1,
+            "turn": 1,
+            "units": [{
+                "id": "unit-1",
+                "ownerPlayerId": "player-1",
+                "kind": "warrior",
+                "col": 0,
+                "row": 0,
+                "movementUnits": 4,
+                "posture": "active",
+                "movementBlocked": false,
+                "queuedPath": null,
+                "carriedArtifactId": null
+            }]
+        });
+
+        serde_json::from_value::<MovementStateWire>(state.clone())
+            .expect("complete movement state must decode");
+        for field in [
+            "posture",
+            "movementBlocked",
+            "queuedPath",
+            "carriedArtifactId",
+        ] {
+            let mut incomplete = state.clone();
+            incomplete["units"][0]
+                .as_object_mut()
+                .expect("unit must be an object")
+                .remove(field);
+            assert!(
+                serde_json::from_value::<MovementStateWire>(incomplete).is_err(),
+                "missing {field} must be rejected"
+            );
+        }
+
+        for (path, field) in [
+            (Vec::<&str>::new(), "unknownRoot"),
+            (vec!["units", "0"], "unknownUnit"),
+        ] {
+            let mut invalid = state.clone();
+            let mut current = &mut invalid;
+            for segment in path {
+                current = if let Ok(index) = segment.parse::<usize>() {
+                    &mut current[index]
+                } else {
+                    &mut current[segment]
+                };
+            }
+            current
+                .as_object_mut()
+                .expect("target must be an object")
+                .insert(field.to_owned(), json!(true));
+            assert!(
+                serde_json::from_value::<MovementStateWire>(invalid).is_err(),
+                "unknown {field} must be rejected"
+            );
+        }
+    }
 }

@@ -3,7 +3,8 @@ extends AonwMapTextureAssembler
 
 const HexGridGeometry := preload("res://domain/map/hex_grid_geometry.gd")
 const MapTextureProjection := preload("res://application/map/map_texture_projection.gd")
-const SOURCE_TILE_SIZE := Vector2i(160, 120)
+const DEFAULT_TILE_SIZE := Vector2i(160, 120)
+const MAX_PREVIEW_TILE_SIZE := Vector2i(160, 120)
 const TERRAIN_COLORS := {
 	"ocean": Color("245b91"),
 	"coast": Color("4f9dc4"),
@@ -25,7 +26,8 @@ func load_atlas(document: AonwMapDocument, source_directory: String) -> Dictiona
 	var resolved_directory := _resolve_path(source_directory)
 	var geometry := HexGridGeometry.new(document.cols(), document.rows())
 	var projection := MapTextureProjection.new(geometry)
-	var atlas_size := projection.target_atlas_size(SOURCE_TILE_SIZE)
+	var source_tile_size := _preview_tile_size(document, resolved_directory)
+	var atlas_size := projection.target_atlas_size(source_tile_size)
 	var terrain_atlas := Image.create(atlas_size.x, atlas_size.y, false, Image.FORMAT_RGB8)
 	terrain_atlas.fill(Color("6c7178"))
 	_fill_terrain_fallback(terrain_atlas, document, projection, atlas_size)
@@ -69,7 +71,34 @@ func load_atlas(document: AonwMapDocument, source_directory: String) -> Dictiona
 		"invalid_tiles": invalid,
 		"resized_tiles": resized,
 		"atlas_size": atlas_size,
+		"source_tile_size": source_tile_size,
 	}
+
+func _preview_tile_size(document: AonwMapDocument, source_directory: String) -> Vector2i:
+	if source_directory.is_empty():
+		return DEFAULT_TILE_SIZE
+	for tile in document.tiles():
+		var path := source_directory.path_join(
+			"%dx%d.jpg" % [int(tile["col"]) + 1, int(tile["row"]) + 1]
+		)
+		if not FileAccess.file_exists(path):
+			continue
+		var image := Image.load_from_file(path)
+		if image == null or image.is_empty():
+			continue
+		var size := image.get_size()
+		var scale := minf(
+			1.0,
+			minf(
+				float(MAX_PREVIEW_TILE_SIZE.x) / float(size.x),
+				float(MAX_PREVIEW_TILE_SIZE.y) / float(size.y),
+			)
+		)
+		return Vector2i(
+			maxi(1, roundi(float(size.x) * scale)),
+			maxi(1, roundi(float(size.y) * scale)),
+		)
+	return DEFAULT_TILE_SIZE
 
 func _fill_terrain_fallback(
 	atlas: Image,

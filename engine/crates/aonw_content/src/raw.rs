@@ -1,13 +1,19 @@
-use serde::Deserialize;
+use core::fmt;
+
+use serde::de::{Error as _, Visitor};
+use serde::{Deserialize, Deserializer};
 
 use crate::CURRENT_MAP_SCHEMA_VERSION;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(super) struct VersionedMapDocument {
+pub(super) struct RawMapDocument {
+    #[serde(deserialize_with = "deserialize_u64")]
     pub(super) schema_version: u64,
     pub(super) grid_layout: Box<str>,
+    #[serde(deserialize_with = "deserialize_i64")]
     pub(super) cols: i64,
+    #[serde(deserialize_with = "deserialize_i64")]
     pub(super) rows: i64,
     pub(super) map_name: Box<str>,
     pub(super) default_zoom: f64,
@@ -16,25 +22,15 @@ pub(super) struct VersionedMapDocument {
 }
 
 #[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(super) struct LegacyMapDocument {
-    pub(super) cols: i64,
-    pub(super) rows: i64,
-    pub(super) map_name: Box<str>,
-    #[serde(default = "default_zoom")]
-    pub(super) default_zoom: f64,
-    #[serde(default)]
-    pub(super) objectives: Vec<LegacyObjective>,
-    pub(super) tiles: Vec<RawTile>,
-}
-
-#[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct RawTile {
+    #[serde(deserialize_with = "deserialize_i64")]
     pub(super) col: i64,
+    #[serde(deserialize_with = "deserialize_i64")]
     pub(super) row: i64,
     pub(super) terrains: Vec<Box<str>>,
     pub(super) resources: Vec<Box<str>>,
+    #[serde(deserialize_with = "deserialize_i64")]
     pub(super) height: i64,
 }
 
@@ -45,31 +41,62 @@ pub(super) struct RawObjective {
     #[serde(rename = "type")]
     pub(super) objective_type: Box<str>,
     pub(super) hex: RawCoordinate,
+    #[serde(deserialize_with = "deserialize_i64")]
     pub(super) required_hold_turns: i64,
+    #[serde(deserialize_with = "deserialize_i64")]
     pub(super) victory_points: i64,
-    pub(super) gold_per_turn: i64,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(super) struct LegacyObjective {
-    pub(super) id: Box<str>,
-    #[serde(rename = "type")]
-    pub(super) objective_type: Box<str>,
-    pub(super) hex: RawCoordinate,
-    #[serde(default = "default_required_hold_turns")]
-    pub(super) required_hold_turns: i64,
-    #[serde(default)]
-    pub(super) victory_points: i64,
-    #[serde(default)]
+    #[serde(deserialize_with = "deserialize_i64")]
     pub(super) gold_per_turn: i64,
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct RawCoordinate {
+    #[serde(deserialize_with = "deserialize_i64")]
     pub(super) col: i64,
+    #[serde(deserialize_with = "deserialize_i64")]
     pub(super) row: i64,
+}
+
+fn deserialize_i64<'de, D: Deserializer<'de>>(deserializer: D) -> Result<i64, D::Error> {
+    deserializer.deserialize_any(IntegerVisitor)
+}
+
+fn deserialize_u64<'de, D: Deserializer<'de>>(deserializer: D) -> Result<u64, D::Error> {
+    let value = deserialize_i64(deserializer)?;
+    u64::try_from(value).map_err(D::Error::custom)
+}
+
+struct IntegerVisitor;
+
+impl Visitor<'_> for IntegerVisitor {
+    type Value = i64;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("an integer-valued JSON number")
+    }
+
+    fn visit_i64<E: serde::de::Error>(self, value: i64) -> Result<Self::Value, E> {
+        Ok(value)
+    }
+
+    fn visit_u64<E: serde::de::Error>(self, value: u64) -> Result<Self::Value, E> {
+        i64::try_from(value).map_err(E::custom)
+    }
+
+    fn visit_f64<E: serde::de::Error>(self, value: f64) -> Result<Self::Value, E> {
+        const MAX_EXACT_INTEGER: f64 = 9_007_199_254_740_991.0;
+        if !value.is_finite() || value.fract() != 0.0 || value.abs() > MAX_EXACT_INTEGER {
+            return Err(E::custom(
+                "number must be a finite, exactly represented integer",
+            ));
+        }
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "the finite integral value is bounded to the exact f64 integer range"
+        )]
+        Ok(value as i64)
+    }
 }
 
 pub(super) struct RawMap {
@@ -81,10 +108,10 @@ pub(super) struct RawMap {
     pub(super) tiles: Vec<RawTile>,
 }
 
-impl TryFrom<VersionedMapDocument> for RawMap {
+impl TryFrom<RawMapDocument> for RawMap {
     type Error = crate::MapLoadError;
 
-    fn try_from(raw: VersionedMapDocument) -> Result<Self, Self::Error> {
+    fn try_from(raw: RawMapDocument) -> Result<Self, Self::Error> {
         if raw.schema_version != CURRENT_MAP_SCHEMA_VERSION {
             return Err(crate::MapLoadError::UnsupportedSchemaVersion {
                 found: raw.schema_version,
@@ -106,38 +133,4 @@ impl TryFrom<VersionedMapDocument> for RawMap {
             tiles: raw.tiles,
         })
     }
-}
-
-impl From<LegacyMapDocument> for RawMap {
-    fn from(raw: LegacyMapDocument) -> Self {
-        Self {
-            cols: raw.cols,
-            rows: raw.rows,
-            map_name: raw.map_name,
-            default_zoom: raw.default_zoom,
-            objectives: raw.objectives.into_iter().map(RawObjective::from).collect(),
-            tiles: raw.tiles,
-        }
-    }
-}
-
-impl From<LegacyObjective> for RawObjective {
-    fn from(raw: LegacyObjective) -> Self {
-        Self {
-            id: raw.id,
-            objective_type: raw.objective_type,
-            hex: raw.hex,
-            required_hold_turns: raw.required_hold_turns,
-            victory_points: raw.victory_points,
-            gold_per_turn: raw.gold_per_turn,
-        }
-    }
-}
-
-const fn default_zoom() -> f64 {
-    1.0
-}
-
-const fn default_required_hold_turns() -> i64 {
-    3
 }

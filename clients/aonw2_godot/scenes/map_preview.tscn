@@ -1,11 +1,11 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene format=3 uid="uid://mtc1ydmw6cri"]
 
-[ext_resource type="Script" path="res://presentation/map/map_preview_screen.gd" id="1_screen"]
-[ext_resource type="Script" path="res://presentation/map/map_surface.gd" id="2_surface"]
-[ext_resource type="Script" path="res://presentation/camera/orbit_camera_rig.gd" id="3_camera"]
-[ext_resource type="Script" path="res://presentation/map/map_overlay_layer.gd" id="4_overlay"]
-[ext_resource type="Script" path="res://presentation/map/map_interaction_controller.gd" id="5_interaction"]
-[ext_resource type="Script" path="res://presentation/map/unit_layer.gd" id="6_units"]
+[ext_resource type="Script" uid="uid://d26sfcgy35r2e" path="res://presentation/map/map_preview_screen.gd" id="1_screen"]
+[ext_resource type="Script" uid="uid://pafcr7ftu4rk" path="res://presentation/map/map_surface.gd" id="2_surface"]
+[ext_resource type="Script" uid="uid://bcuodwhfvh8pa" path="res://presentation/camera/orbit_camera_rig.gd" id="3_camera"]
+[ext_resource type="Script" uid="uid://h06ewv82d7yc" path="res://presentation/map/map_overlay_layer.gd" id="4_overlay"]
+[ext_resource type="Script" uid="uid://durtsv7lp0qmt" path="res://presentation/map/map_interaction_controller.gd" id="5_interaction"]
+[ext_resource type="Script" uid="uid://8pgfq46qt7d6" path="res://presentation/map/unit_layer.gd" id="6_units"]
 
 [sub_resource type="Environment" id="Environment_preview"]
 background_mode = 1
@@ -27,93 +27,94 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[node name="MapPreview" type="Node3D"]
+[node name="MapPreview" type="Node3D" unique_id=689299749]
 script = ExtResource("1_screen")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1240833735]
 environment = SubResource("Environment_preview")
 
-[node name="MapSurface" type="Node3D" parent="."]
+[node name="MapSurface" type="Node3D" parent="." unique_id=2002447610]
 unique_name_in_owner = true
 script = ExtResource("2_surface")
 
-[node name="BaseTerrain" type="MeshInstance3D" parent="MapSurface"]
+[node name="BaseTerrain" type="MeshInstance3D" parent="MapSurface" unique_id=2116543194]
 unique_name_in_owner = true
 
-[node name="ReferenceTexture" type="MeshInstance3D" parent="MapSurface"]
+[node name="ReferenceTexture" type="MeshInstance3D" parent="MapSurface" unique_id=1649038887]
 unique_name_in_owner = true
 
-[node name="HexGrid" type="MeshInstance3D" parent="MapSurface"]
+[node name="HexGrid" type="MeshInstance3D" parent="MapSurface" unique_id=1271884550]
 unique_name_in_owner = true
 
-[node name="MapOverlay" type="Node3D" parent="MapSurface"]
+[node name="MapOverlay" type="Node3D" parent="MapSurface" unique_id=415055572]
 unique_name_in_owner = true
 script = ExtResource("4_overlay")
 
-[node name="UnitLayer" type="Node3D" parent="MapSurface"]
+[node name="UnitLayer" type="Node3D" parent="MapSurface" unique_id=2011736136]
 unique_name_in_owner = true
 script = ExtResource("6_units")
 
-[node name="OrbitCameraRig" type="Node3D" parent="."]
+[node name="OrbitCameraRig" type="Node3D" parent="." unique_id=583952653]
 unique_name_in_owner = true
 script = ExtResource("3_camera")
 
-[node name="Yaw" type="Node3D" parent="OrbitCameraRig"]
+[node name="Yaw" type="Node3D" parent="OrbitCameraRig" unique_id=1497743711]
 unique_name_in_owner = true
 
-[node name="Pitch" type="Node3D" parent="OrbitCameraRig/Yaw"]
+[node name="Pitch" type="Node3D" parent="OrbitCameraRig/Yaw" unique_id=1855133315]
 unique_name_in_owner = true
 
-[node name="Camera" type="Camera3D" parent="OrbitCameraRig/Yaw/Pitch"]
+[node name="Camera" type="Camera3D" parent="OrbitCameraRig/Yaw/Pitch" unique_id=159891891]
 unique_name_in_owner = true
 current = true
 fov = 48.0
-near = 0.05
 far = 300.0
 
-[node name="MapInteraction" type="Node" parent="."]
+[node name="MapInteraction" type="Node" parent="." unique_id=2137004959]
 unique_name_in_owner = true
 script = ExtResource("5_interaction")
 
-[node name="Interface" type="CanvasLayer" parent="."]
+[node name="Interface" type="CanvasLayer" parent="." unique_id=1379941578]
 
-[node name="Toolbar" type="PanelContainer" parent="Interface"]
+[node name="Toolbar" type="PanelContainer" parent="Interface" unique_id=52331720]
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 608.0
 offset_bottom = 64.0
 theme_override_styles/panel = SubResource("Style_toolbar")
 
-[node name="Margin" type="MarginContainer" parent="Interface/Toolbar"]
+[node name="Margin" type="MarginContainer" parent="Interface/Toolbar" unique_id=1305189032]
+layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 7
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 7
 
-[node name="Actions" type="HBoxContainer" parent="Interface/Toolbar/Margin"]
+[node name="Actions" type="HBoxContainer" parent="Interface/Toolbar/Margin" unique_id=2021919362]
+layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="OpenMap" type="Button" parent="Interface/Toolbar/Margin/Actions"]
-text = "Otwórz mapę…"
+[node name="OpenMap" type="Button" parent="Interface/Toolbar/Margin/Actions" unique_id=1311712925]
+layout_mode = 2
+text = "Open map…"
 
-[node name="GridToggle" type="CheckButton" parent="Interface/Toolbar/Margin/Actions"]
+[node name="GridToggle" type="CheckButton" parent="Interface/Toolbar/Margin/Actions" unique_id=1521634044]
 unique_name_in_owner = true
+layout_mode = 2
 button_pressed = true
-text = "Siatka heksów (G)"
+text = "Hex grid (G)"
 
-[node name="LegacyToggle" type="CheckButton" parent="Interface/Toolbar/Margin/Actions"]
+[node name="Separator" type="VSeparator" parent="Interface/Toolbar/Margin/Actions" unique_id=1140775945]
+layout_mode = 2
+
+[node name="Status" type="Label" parent="Interface/Toolbar/Margin/Actions" unique_id=1161994625]
 unique_name_in_owner = true
-text = "Format legacy"
-
-[node name="Separator" type="VSeparator" parent="Interface/Toolbar/Margin/Actions"]
-
-[node name="Status" type="Label" parent="Interface/Toolbar/Margin/Actions"]
-unique_name_in_owner = true
+layout_mode = 2
 size_flags_horizontal = 3
-text = "Wczytywanie mapy…"
+text = "Loading map…"
 vertical_alignment = 1
 
-[node name="Help" type="Label" parent="Interface"]
+[node name="Help" type="Label" parent="Interface" unique_id=1438332032]
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
@@ -124,11 +125,11 @@ offset_right = -16.0
 offset_bottom = -14.0
 grow_horizontal = 2
 grow_vertical = 0
-text = "LPM: wybór heksa · PPM: obrót · ŚPM: przesunięcie · kółko: zoom · strzałki: przesunięcie"
+text = "LMB: select hex · RMB: orbit · MMB: pan · wheel: zoom · arrows: pan"
 
-[node name="OpenMapDialog" type="FileDialog" parent="Interface"]
+[node name="OpenMapDialog" type="FileDialog" parent="Interface" unique_id=1666186910]
 unique_name_in_owner = true
-title = "Otwórz map.json"
+title = "Open a File"
 initial_position = 2
 size = Vector2i(900, 620)
 file_mode = 0

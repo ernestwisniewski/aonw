@@ -1,7 +1,7 @@
 SHELL := /bin/sh
 
 RUST_WORKSPACE ?= engine
-RUST_CARGO ?= cargo
+RUST_CARGO ?= $(if $(wildcard $(HOME)/.cargo/bin/cargo),$(HOME)/.cargo/bin/cargo,cargo)
 GODOT_PROJECT ?= clients/aonw2_godot
 GODOT_BIN ?= $(if $(wildcard /Applications/Godot.app/Contents/MacOS/Godot),/Applications/Godot.app/Contents/MacOS/Godot,godot)
 GODOT_TEST_LOG ?= /tmp/aonw-godot-test.log

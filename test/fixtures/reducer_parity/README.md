@@ -15,11 +15,12 @@ It remains in this shared repository location rather than being copied into
 `engine/`. As migration harnesses are introduced, Dart, Rust CLI, native, Godot,
 and server-shadow paths will compare their covered slices with this committed
 data; a live Dart-to-Rust diff is additional evidence and never replaces the
-oracle. `engine/crates/aonw_testkit` loads and validates this corpus, performs
-bounded structural diffs, and runs backend adapters without exposing expected
-outputs to their executors. The corpus does not claim coverage of offsets,
-database transactions, recipient projections, system/timeout commands, or
-other explicitly excluded boundaries.
+oracle. The Dart harness currently accepts versions 1 and 2. Rust
+`aonw_testkit` accepts only version 2 and runs the explicitly reviewed movement
+fixtures through the Rust backend without exposing expected outputs to the
+executor. The corpus does not claim coverage of offsets, database transactions,
+recipient projections, system/timeout commands, or other explicitly excluded
+boundaries.
 
 Each legacy version 1 fixture contains:
 
@@ -51,11 +52,10 @@ non-empty, every entry cost is positive, and cumulative costs must equal the
 checked running sum. Unknown keys, a missing field, JSON `null`, invalid
 integers, and inconsistent costs fail closed.
 
-The Rust loader keeps version 1 readable during the migration, representing its
-missing movement evidence as unknown rather than inventing `[]`. New or edited
-fixtures must use version 2. A reviewed migration of existing fixtures must
-obtain executions from the authoritative reducer result and must not infer a
-path from state deltas or `UnitMoved` events.
+Rust does not decode version 1. New or edited fixtures must use version 2. A
+reviewed migration of existing fixtures must obtain executions from the
+authoritative reducer result and must not infer a path from state deltas or
+`UnitMoved` events.
 
 The local test calls `LocalCommandResolver(GameStateReducer)`. The server test
 calls `ServerCommandReducer`. Both deserialize the same input and compare their

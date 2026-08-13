@@ -183,37 +183,40 @@ logical map content, strict small logical-map fixtures, odd-q row-major
 topology, movement-oriented unit DTO mapping, fixed-point terrain costs,
 fog-safe route/reachable planning, an authoritative movement transition, and
 the Godot 3D map preview. Three reviewed movement fixtures use contract version
-2 and execute through the Rust engine, including exact movement evidence. The
-rest of the corpus remains readable version 1. Cities, diplomacy, roads,
-complete fog state, full movement parity, Flutter FFI, and production runtime
-integration remain future work.
+2 and execute through the Rust engine, including exact movement evidence. Rust
+accepts only this current fixture contract; the remaining version 1 fixtures
+are exercised only by the existing Dart harness until they are deliberately
+migrated. Cities, diplomacy, roads, complete fog state, full movement parity,
+Flutter FFI, and production runtime integration remain future work.
 `aonw_native_bridge` and top-level contract publication remain planned.
 Additional crates shown in the target layout below are created with their first
 behavior and tests rather than as empty packages. `aonw_godot` is a narrow
 GDExtension adapter around the movement projection; no complete local runtime,
 AI, Flutter bridge, or recipient-replica crate exists yet.
 
-The parity fixtures are not copied into `engine/`. Both implementations read
-the same committed corpus. New shared maps use the versioned `content/` root;
-existing Flutter maps remain under `assets/maps/` and load through an explicit
-Rust legacy adapter. Client-specific graphics and audio remain with clients.
+The parity fixtures are not copied into `engine/`. Dart reads the complete
+committed corpus; Rust selects the reviewed version 2 fixtures from that same
+location and rejects older contracts. Rust and Godot load logical maps only
+from the versioned `content/` root. Existing Flutter map JSON remains unchanged
+under `assets/maps/`; matching JPG slices may still be used as Godot reference
+art. Client-specific graphics and audio remain with clients.
 
 The map boundary separates the editable `MapDocument` from its validated
 logical `MapDefinition`. `defaultZoom` remains in the document as a client
 presentation hint and is excluded from logical canonical bytes and the content
 hash. The public compact canonical bytes are exactly the bytes hashed by Rust;
 resource ordering uses a stable wire rank rather than enum declaration order.
-Versioned documents are strict and fail closed, while defaults are confined to
-the explicitly selected legacy adapter.
+Versioned documents are strict, fail closed, and apply no compatibility
+defaults.
 
 The authored document schema retains a 5×5 minimum. The logical
 `MapDefinition` accepts smaller positive grids so compact engine fixtures do
 not need presentation-only padding.
 
-The Godot Map Workbench is a client-side authoring adapter. It discovers legacy
-maps from `assets/maps/` and strict maps from `content/maps/`, builds an
-elevated hex mesh, stitches the original tile artwork into an independently
-transparent reference layer, and saves a scene under
+The Godot Map Workbench is a client-side authoring adapter. It discovers strict
+maps from `content/maps/`, associates matching artwork from `assets/maps/`,
+builds an elevated hex mesh, stitches the original tile artwork into an
+independently transparent reference layer, and saves a scene under
 `clients/aonw2_godot/scenes/maps/` with its resources under
 `clients/aonw2_godot/assets/generated_maps/<map_id>/`. It uses only built-in
 Godot mesh and texture resources; Terrain3D and Tree3D are not dependencies.

@@ -13,7 +13,6 @@ const DEFAULT_MAP := "res://assets/maps/aonw2_starter/map.json"
 @onready var _camera_rig: AonwOrbitCameraRig = %OrbitCameraRig
 @onready var _open_dialog: FileDialog = %OpenMapDialog
 @onready var _grid_toggle: CheckButton = %GridToggle
-@onready var _legacy_toggle: CheckButton = %LegacyToggle
 @onready var _status: Label = %Status
 
 var _open_map := OpenMap.new(JsonMapRepository.new(), TileAtlasRepository.new())
@@ -31,7 +30,6 @@ func _ready() -> void:
 		"aonw2_starter",
 		DEFAULT_MAP,
 		"",
-		AonwMapSource.Format.VERSIONED,
 		"Godot",
 	))
 
@@ -48,24 +46,18 @@ func _on_grid_toggled(enabled: bool) -> void:
 	_surface.set_grid_visible(enabled)
 
 func _open(source_path: String) -> void:
-	var format := (
-		AonwMapSource.Format.LEGACY
-		if _legacy_toggle.button_pressed
-		else AonwMapSource.Format.VERSIONED
-	)
 	_open_source(AonwMapSource.new(
 		source_path.get_base_dir().get_file(),
 		source_path,
 		source_path.get_base_dir(),
-		format,
 		"file",
 	))
 
 func _open_source(source: AonwMapSource) -> void:
-	_status.text = "Wczytywanie mapy…"
+	_status.text = "Loading map…"
 	var result := _open_map.execute(source)
 	if not result["ok"]:
-		_status.text = "Błąd: %s" % result["message"]
+		_status.text = "Error: %s" % result["message"]
 		return
 
 	_current_document = result["document"]
@@ -86,10 +78,10 @@ func _open_source(source: AonwMapSource) -> void:
 		_current_document.rows(),
 	]
 	if not missing.is_empty():
-		_status.text += " · proceduralne pola: %d" % missing.size()
+		_status.text += " · procedural tiles: %d" % missing.size()
 	var invalid: Array = result["invalid_tiles"]
 	if not invalid.is_empty():
-		_status.text += " · uszkodzone tekstury: %d" % invalid.size()
+		_status.text += " · invalid textures: %d" % invalid.size()
 	_setup_movement_sandbox(source)
 
 func _on_map_presented(world_size: Vector2, maximum_height: float) -> void:
@@ -104,7 +96,7 @@ func _on_hex_selected(coordinate: Vector2i) -> void:
 		_move_selected_unit(coordinate)
 		return
 	_clear_movement_selection()
-	_status.text = "%s · heks %d,%d" % [_current_document.map_name(), coordinate.x, coordinate.y]
+	_status.text = "%s · hex %d,%d" % [_current_document.map_name(), coordinate.x, coordinate.y]
 
 func _setup_movement_sandbox(source: AonwMapSource) -> void:
 	_selected_unit_id = ""
@@ -118,7 +110,7 @@ func _setup_movement_sandbox(source: AonwMapSource) -> void:
 		FileAccess.READ,
 	)
 	if file == null:
-		_status.text += " · brak stanu testowego Rust"
+		_status.text += " · Rust preview state unavailable"
 		return
 	var state := {
 		"schemaVersion": 1,
@@ -128,9 +120,10 @@ func _setup_movement_sandbox(source: AonwMapSource) -> void:
 	}
 	var opened := _native_session.open(
 		file.get_as_text(),
-		source.is_legacy(),
 		state,
 		"preview-player",
+		"unrestricted",
+		[],
 	)
 	if not opened["ok"]:
 		_status.text += " · Rust: %s" % opened["message"]
@@ -179,7 +172,7 @@ func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 		_reachable_hexes[target] = true
 		coordinates.append(target)
 	_interaction.set_reachable_hexes(coordinates)
-	_status.text = "%s · jednostka %s · dostępne heksy: %d" % [
+	_status.text = "%s · unit %s · reachable hexes: %d" % [
 		_current_document.map_name(), unit_id, coordinates.size(),
 	]
 	if _interaction.selected_hex() != coordinate:
@@ -204,7 +197,7 @@ func _move_selected_unit(target: Vector2i) -> void:
 		)
 	var selected := _selected_unit_id
 	_clear_movement_selection()
-	_status.text = "%s · ruch %s → %d,%d" % [
+	_status.text = "%s · moved %s → %d,%d" % [
 		_current_document.map_name(), selected, target.x, target.y,
 	]
 

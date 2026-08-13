@@ -14,32 +14,30 @@ func load_map(source: AonwMapSource) -> Dictionary:
 		return _failure("cannot open %s" % absolute_path)
 
 	var source_json := file.get_as_text()
-	var native_result := _native_engine.validate_map_json(source_json, source.is_legacy())
-	if not native_result["ok"]:
-		return _failure("Rust: %s" % native_result["message"])
-
-	var parser := JSON.new()
-	var parse_error := parser.parse(source_json)
-	if parse_error != OK:
+	var native_result := _native_engine.validate_map_json(source_json)
+	if not bool(native_result.get("ok", false)):
 		return _failure(
-			"invalid JSON at line %d: %s" % [
-				parser.get_error_line(),
-				parser.get_error_message(),
-			]
+			"Rust: %s" % native_result.get("message", "map validator failed")
 		)
-	if not parser.data is Dictionary:
-		return _failure("map root must be an object")
 
-	var result := (
-		MapDocument.create_legacy(parser.data)
-		if source.is_legacy()
-		else MapDocument.create_versioned(parser.data)
-	)
+	var native_value: Dictionary = native_result.get("value", {})
+	var result := MapDocument.from_native_snapshot(native_value.get("document"))
 	if not result["ok"]:
 		return result
+	var document: AonwMapDocument = result["value"]
+	if source.map_id != document.map_id():
+		return _failure(
+			"source id %s does not match mapName %s" % [
+				source.map_id,
+				document.map_id(),
+			]
+		)
+	if native_value.get("mapId", "") != document.map_id():
+		return _failure("Rust validator returned a mismatched map identity")
 	return {
 		"ok": true,
-		"document": result["value"],
+		"document": document,
+		"content_hash": native_value.get("contentHash", ""),
 		"source_path": absolute_path,
 		"visual_directory": source.visual_directory,
 		"source": source,

@@ -873,8 +873,7 @@
         "test/game/presentation/screens/game_primary_action_controller_test.dart::function:main/closure:testWidgets[gamepad_action_bumpers_use_next-action_flow_for_city_and_research_panels]#1": 123,
         "test/game/presentation/widgets/diplomacy_player_modal_test.dart::function:_state": 134,
         "test/game/presentation/widgets/game_event_notification_card_test.dart::function:main/closure:testWidgets[notification_formatter_assigns_concrete_toast_thumbnails]#1/closure:Builder#1": 203,
-        "test/game/presentation/widgets/multiplayer_avatars_rail_test.dart::function:main/closure:testWidgets[full_list_sheet_includes_empire_stats_when_state_is_available]#1": 130,
-        "test/support/reducer_parity_fixture.dart::class:ReducerParityCorpus/method:_readFixture": 124
+        "test/game/presentation/widgets/multiplayer_avatars_rail_test.dart::function:main/closure:testWidgets[full_list_sheet_includes_empire_stats_when_state_is_available]#1": 130
       },
       "nesting": {
         "test/game/presentation/widgets/theme/game_hud_theme_test.dart::function:main/closure:test[keeps_game_HUD_presentation_on_GameIcons_instead_of_Material_icons]#1": 5

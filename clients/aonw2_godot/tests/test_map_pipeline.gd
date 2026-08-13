@@ -24,7 +24,7 @@ func _run() -> void:
 	_test_strict_document_boundary()
 	_test_native_engine_boundary()
 	_test_catalog()
-	_test_legacy_map()
+	_test_canonical_map_with_reference_art()
 	_test_generated_godot_scene()
 
 	if _failures.is_empty():
@@ -35,16 +35,15 @@ func _run() -> void:
 			push_error(failure)
 		quit(1)
 
-func _test_legacy_map() -> void:
+func _test_canonical_map_with_reference_art() -> void:
 	var source := MapSource.new(
 		"myranth",
-		"res://../../assets/maps/myranth/map.json",
+		"res://../../content/maps/myranth/map.json",
 		"res://../../assets/maps/myranth",
-		AonwMapSource.Format.LEGACY,
-		"assets",
+		"content",
 	)
 	var result := _open_map().execute(source)
-	_check(result["ok"], "legacy map opens only through an explicit source format")
+	_check(result["ok"], "canonical content map opens with separate reference art")
 	if not result["ok"]:
 		return
 	var document: AonwMapDocument = result["document"]
@@ -76,6 +75,17 @@ func _test_legacy_map() -> void:
 	_check(reference.get_surface_count() == 1, "reference mesh is built")
 	_check(grid.get_surface_count() == 1, "grid overlay is built")
 	_check(
+		grid.surface_get_primitive_type(0) == Mesh.PRIMITIVE_TRIANGLES,
+		"grid uses visible geometry instead of one-pixel line primitives",
+	)
+	var grid_material := grid.surface_get_material(0) as StandardMaterial3D
+	_check(
+		grid_material != null
+		and grid_material.render_priority > 0
+		and grid_material.no_depth_test,
+		"grid renders after the reference texture",
+	)
+	_check(
 		terrain.surface_get_array_index_len(0) == document.tiles().size() * 18,
 		"terrain contains six triangles per hex",
 	)
@@ -85,7 +95,6 @@ func _test_generated_godot_scene() -> void:
 		"aonw2_starter",
 		"res://assets/maps/aonw2_starter/map.json",
 		"res://assets/maps/aonw2_starter",
-		AonwMapSource.Format.VERSIONED,
 		"Godot",
 	)
 	var scene_repository := GodotMapSceneRepository.new(
@@ -101,6 +110,8 @@ func _test_generated_godot_scene() -> void:
 		"height_step": 0.2,
 		"reference_opacity": 0.45,
 		"grid_visible": true,
+		"grid_opacity": 0.35,
+		"grid_width": 0.06,
 	})
 	_check(result["ok"], "starter map is saved as a self-contained Godot scene")
 	if not result["ok"]:
@@ -141,9 +152,60 @@ func _test_generated_godot_scene() -> void:
 			is_equal_approx(instance.reference_opacity, 0.45),
 			"reference opacity is persisted",
 		)
+		_check(instance.grid_visible, "hex grid visibility is persisted")
+		_check(
+			is_equal_approx(instance.grid_opacity, 0.35),
+			"hex grid opacity is persisted",
+		)
+		_check(is_equal_approx(instance.grid_width, 0.06), "hex grid width is persisted")
+		instance.set_grid_visible(false)
+		_check(not instance.get_node("HexGrid").visible, "hex grid updates in the editor scene")
+		instance.set_grid_visible(true)
+		instance.set_grid_opacity(0.2)
+		var grid_material := instance.get_node("HexGrid").material_override as StandardMaterial3D
+		_check(
+			grid_material != null and is_equal_approx(grid_material.albedo_color.a, 0.2),
+			"hex grid opacity updates without regenerating the scene",
+		)
 		_check(instance.terrain_mesh() != null, "generated scene retains terrain mesh")
 		_check(instance.reference_mesh() != null, "generated scene retains reference texture mesh")
 		_check(instance.grid_mesh() != null, "generated scene retains grid mesh")
+		var opened := _open_map().execute(source)
+		_check(opened["ok"], "generated surface editing context reloads")
+		if opened["ok"]:
+			instance.present(
+				opened["document"],
+				opened["terrain_texture"],
+				opened["reference_texture"],
+			)
+			instance.set_geometry(0.42, 0.08)
+			var edited_bounds := instance.terrain_mesh().get_aabb()
+			var persisted := scene_repository.persist_surface_geometry(instance)
+			_check(persisted["ok"], "edited geometry resources are persisted")
+			var edited_scene := PackedScene.new()
+			_check(
+				edited_scene.pack(authored_root) == OK
+				and ResourceSaver.save(edited_scene, scene_path) == OK,
+				"edited render settings are saved with the authored scene",
+			)
+			var reloaded_scene := ResourceLoader.load(
+				scene_path,
+				"PackedScene",
+				ResourceLoader.CACHE_MODE_REPLACE_DEEP,
+			) as PackedScene
+			var reloaded_root := reloaded_scene.instantiate()
+			var reloaded_surface := reloaded_root.find_child(
+				"AonwMap3D", true, false
+			) as AonwMapSurface
+			var reloaded_bounds := reloaded_surface.terrain_mesh().get_aabb()
+			_check(
+				is_equal_approx(reloaded_surface.height_step, 0.42)
+				and is_equal_approx(reloaded_surface.grid_width, 0.08)
+				and reloaded_bounds.position.is_equal_approx(edited_bounds.position)
+				and reloaded_bounds.size.is_equal_approx(edited_bounds.size),
+				"edit-save-reload keeps render settings and matching geometry",
+			)
+			reloaded_root.free()
 		var manual_child := Node3D.new()
 		manual_child.name = "ManualModel"
 		authored_root.add_child(manual_child)
@@ -192,6 +254,46 @@ func _test_generated_godot_scene() -> void:
 	preserved_root.free()
 
 func _test_strict_document_boundary() -> void:
+	var file := FileAccess.open(
+		"res://assets/maps/aonw2_starter/map.json",
+		FileAccess.READ,
+	)
+	_check(file != null, "content identifier fixture map opens")
+	if file != null:
+		var fixture: Dictionary = JSON.parse_string(file.get_as_text())
+		for valid_identifier in ["a", "a_b-1", "aonw2_starter"]:
+			var valid_map := fixture.duplicate(true)
+			valid_map["mapName"] = valid_identifier
+			var valid_result := NativeEngineBridge.new().validate_map_json(
+				JSON.stringify(valid_map)
+			)
+			_check(
+				valid_result["ok"],
+				"lowercase ASCII content identifiers are accepted: %s" % valid_result,
+			)
+		for invalid_identifier in ["", "Uppercase", "ends_", "żagle"]:
+			var invalid_map := fixture.duplicate(true)
+			invalid_map["mapName"] = invalid_identifier
+			_check(
+				not NativeEngineBridge.new().validate_map_json(JSON.stringify(invalid_map))["ok"],
+				"invalid content identifiers are rejected",
+			)
+		var feature_first := fixture.duplicate(true)
+		feature_first["tiles"][0]["terrains"] = ["forest"]
+		_check(
+			not NativeEngineBridge.new().validate_map_json(JSON.stringify(feature_first))["ok"],
+			"tiles require an explicit primary terrain",
+		)
+		var mismatched_source := MapSource.new(
+			"wrong_map_id",
+			"res://assets/maps/aonw2_starter/map.json",
+			"res://assets/maps/aonw2_starter",
+			"test",
+		)
+		_check(
+			not JsonMapRepository.new().load_map(mismatched_source)["ok"],
+			"source directory id must match mapName",
+		)
 	var raw := {
 		"schemaVersion": 1,
 		"gridLayout": "oddQFlatTop",
@@ -201,10 +303,8 @@ func _test_strict_document_boundary() -> void:
 		"objectives": [],
 		"tiles": [],
 	}
-	var strict_result := MapDocument.create_versioned(raw)
+	var strict_result := NativeEngineBridge.new().validate_map_json(JSON.stringify(raw))
 	_check(not strict_result["ok"], "strict documents require defaultZoom")
-	var legacy_result := MapDocument.create_legacy(raw)
-	_check(not legacy_result["ok"], "legacy mode rejects versioned-only fields")
 
 func _test_native_engine_boundary() -> void:
 	var bridge := NativeEngineBridge.new()
@@ -219,7 +319,7 @@ func _test_native_engine_boundary() -> void:
 	if file == null:
 		return
 	var map_json := file.get_as_text()
-	var validation := bridge.validate_map_json(map_json, false)
+	var validation := bridge.validate_map_json(map_json)
 	_check(validation["ok"] and validation["native"], "Rust validates the strict map")
 	_check(
 		validation.get("value", {}).get("contentHash", "").length() == 64,
@@ -249,9 +349,9 @@ func _test_native_engine_boundary() -> void:
 	})
 	var opened: Dictionary = JSON.parse_string(session.open(
 		map_json,
-		false,
 		state_json,
 		"player-1",
+		"unrestricted",
 		"",
 	))
 	_check(opened["ok"], "native local movement session opens")
@@ -275,6 +375,9 @@ func _test_catalog() -> void:
 		identifiers.append(source.map_id)
 	_check("myranth" in identifiers, "catalog discovers maps from root assets")
 	_check("aonw2_starter" in identifiers, "catalog discovers versioned Godot maps")
+	for source in sources:
+		if source.map_id == "aonw2_starter":
+			_check(source.origin == "content", "canonical content wins duplicate map ids")
 
 func _test_geometry() -> void:
 	var geometry := HexGridGeometry.new(25, 19)
@@ -302,7 +405,6 @@ func _test_map_projection() -> void:
 		"aonw2_starter",
 		"res://assets/maps/aonw2_starter/map.json",
 		"res://assets/maps/aonw2_starter",
-		AonwMapSource.Format.VERSIONED,
 		"Godot",
 	))
 	_check(result["ok"], "projection fixture map opens")
@@ -321,9 +423,22 @@ func _test_map_projection() -> void:
 			Vector3.DOWN,
 		)
 		_check(picked == coordinate, "vertical ray selects the expected hex")
+	var slope_coordinate := Vector2i(4, 5)
+	var slope_target := projection.hex_center(slope_coordinate).lerp(
+		projection.hex_corner(slope_coordinate, 0),
+		0.6,
+	)
+	var slope_origin := slope_target + Vector3(0.2, 5.0, 0.2)
 	_check(
-		projection.ray_to_hex(Vector3.ZERO, Vector3.RIGHT) == HexMapProjection.INVALID_HEX,
-		"parallel ray does not select a hex",
+		projection.ray_to_hex(
+			slope_origin,
+			(slope_target - slope_origin).normalized(),
+		) == slope_coordinate,
+		"angled ray follows the rendered slope triangles",
+	)
+	_check(
+		projection.ray_to_hex(Vector3.ZERO, Vector3.ZERO) == HexMapProjection.INVALID_HEX,
+		"zero-length ray does not select a hex",
 	)
 
 func _open_map() -> AonwOpenMap:

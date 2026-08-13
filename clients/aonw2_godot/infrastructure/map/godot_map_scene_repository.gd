@@ -32,6 +32,8 @@ func save(
 	surface: AonwMapSurface,
 	terrain_texture: Texture2D,
 	reference_texture: Texture2D,
+	content_hash: String,
+	source_tile_size: Vector2i,
 	missing_tiles: Array,
 	invalid_tiles: Array,
 	resized_tiles: Array,
@@ -132,6 +134,9 @@ func save(
 		output_directory.path_join("manifest.json"),
 		source,
 		document,
+		surface,
+		content_hash,
+		source_tile_size,
 		scene_path,
 		missing_tiles,
 		invalid_tiles,
@@ -150,6 +155,43 @@ func save(
 		"invalid_tiles": invalid_tiles,
 		"resized_tiles": resized_tiles,
 	}
+
+func persist_surface_geometry(surface: AonwMapSurface) -> Dictionary:
+	if surface.source_map_id.is_empty():
+		return _failure("map surface has no source id")
+	if not surface.has_editing_context():
+		return _failure("map surface has no editing context")
+	var output_directory := _asset_root.path_join(surface.source_map_id)
+	var mesh_paths := {
+		"terrain": output_directory.path_join("terrain_mesh.res"),
+		"reference": output_directory.path_join("reference_mesh.res"),
+		"grid": output_directory.path_join("grid_mesh.res"),
+	}
+	for entry in [
+		["terrain", surface.terrain_mesh()],
+		["reference", surface.reference_mesh()],
+		["grid", surface.grid_mesh()],
+	]:
+		var error := _save_resource(entry[1], mesh_paths[entry[0]])
+		if error != OK:
+			return _failure("cannot save %s: %s" % [entry[0], error_string(error)])
+	var persisted_terrain := _load_mesh(mesh_paths["terrain"])
+	var persisted_reference := _load_mesh(mesh_paths["reference"])
+	var persisted_grid := _load_mesh(mesh_paths["grid"])
+	if persisted_terrain == null or persisted_reference == null or persisted_grid == null:
+		return _failure("cannot reload persisted map meshes")
+	surface.replace_persisted_resources(
+		persisted_terrain,
+		persisted_reference,
+		persisted_grid,
+	)
+	var manifest_error := _update_manifest_render_settings(
+		output_directory.path_join("manifest.json"),
+		surface,
+	)
+	if manifest_error != OK:
+		return _failure("cannot update map manifest: %s" % error_string(manifest_error))
+	return {"ok": true}
 
 func _create_authored_scene(path: String, map_id: String, generated_scene_path: String) -> Error:
 	var generated_scene := ResourceLoader.load(
@@ -226,6 +268,9 @@ func _write_manifest(
 	path: String,
 	source: AonwMapSource,
 	document: AonwMapDocument,
+	surface: AonwMapSurface,
+	content_hash: String,
+	source_tile_size: Vector2i,
 	scene_path: String,
 	missing_tiles: Array,
 	invalid_tiles: Array,
@@ -237,10 +282,13 @@ func _write_manifest(
 		"mapId": document.map_id(),
 		"cols": document.cols(),
 		"rows": document.rows(),
-		"sourceFormat": "legacy" if source.is_legacy() else "versioned",
+		"mapSchemaVersion": 1,
 		"sourcePath": source.map_path,
 		"sourceSha256": FileAccess.get_sha256(absolute_source),
+		"contentHash": content_hash,
+		"sourceTileSize": {"width": source_tile_size.x, "height": source_tile_size.y},
 		"scenePath": scene_path,
+		"renderSettings": _render_settings(surface),
 		"missingTextureCount": missing_tiles.size(),
 		"invalidTextureCount": invalid_tiles.size(),
 		"resizedTextureCount": resized_tiles.size(),
@@ -250,6 +298,31 @@ func _write_manifest(
 		return FileAccess.get_open_error()
 	file.store_string(JSON.stringify(manifest, "  ", false) + "\n")
 	return OK
+
+func _update_manifest_render_settings(path: String, surface: AonwMapSurface) -> Error:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return FileAccess.get_open_error()
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if not parsed is Dictionary:
+		return ERR_PARSE_ERROR
+	parsed["renderSettings"] = _render_settings(surface)
+	file = FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return FileAccess.get_open_error()
+	file.store_string(JSON.stringify(parsed, "  ", false) + "\n")
+	return OK
+
+func _render_settings(surface: AonwMapSurface) -> Dictionary:
+	return {
+		"hexRadius": surface.hex_radius,
+		"heightStep": surface.height_step,
+		"referenceVisible": surface.reference_visible,
+		"referenceOpacity": surface.reference_opacity,
+		"gridVisible": surface.grid_visible,
+		"gridOpacity": surface.grid_opacity,
+		"gridWidth": surface.grid_width,
+	}
 
 func _copy_source(source_path: String, target_path: String) -> Error:
 	var absolute_source := AonwJsonMapRepository.resolve_path(source_path)

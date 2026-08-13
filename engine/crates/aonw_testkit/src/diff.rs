@@ -69,7 +69,7 @@ pub(super) struct JsonOutcome<'a> {
     save: &'a Map<String, Value>,
     state: &'a Map<String, Value>,
     events: &'a [Map<String, Value>],
-    movement_executions: Option<&'a [MovementExecution]>,
+    movement_executions: &'a [MovementExecution],
 }
 
 impl<'a> JsonOutcome<'a> {
@@ -79,7 +79,7 @@ impl<'a> JsonOutcome<'a> {
         save: &'a Map<String, Value>,
         state: &'a Map<String, Value>,
         events: &'a [Map<String, Value>],
-        movement_executions: Option<&'a [MovementExecution]>,
+        movement_executions: &'a [MovementExecution],
     ) -> Self {
         Self {
             accepted,
@@ -116,30 +116,19 @@ pub(super) fn compare_outcome(
     collect_object_differences("$.save", expected.save, actual.save, &mut output);
     collect_object_differences("$.state", expected.state, actual.state, &mut output);
     collect_object_array_differences("$.events", expected.events, actual.events, &mut output);
-    if let Some(expected_executions) = expected.movement_executions {
-        collect_movement_execution_differences(
-            expected_executions,
-            actual.movement_executions,
-            &mut output,
-        );
-    }
+    collect_movement_execution_differences(
+        expected.movement_executions,
+        actual.movement_executions,
+        &mut output,
+    );
     output
 }
 
 fn collect_movement_execution_differences(
     expected: &[MovementExecution],
-    actual: Option<&[MovementExecution]>,
+    actual: &[MovementExecution],
     output: &mut Vec<JsonDifference>,
 ) {
-    let Some(actual) = actual else {
-        output.push(JsonDifference {
-            path: "$.movementExecutions".into(),
-            kind: DifferenceKind::Missing,
-            expected: Some(format!("array(len={})", expected.len()).into()),
-            actual: None,
-        });
-        return;
-    };
     let common_length = expected.len().min(actual.len());
     for index in 0..common_length {
         if output.len() >= MAX_DIFFERENCES {

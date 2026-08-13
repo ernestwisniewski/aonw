@@ -112,24 +112,24 @@
         "test/game/game_hud_test.dart": 7992,
         "test/game/game_providers_test.dart": 2699,
         "test/game/game_renderer_keyboard_test.dart": 3564,
-        "test/support/reducer_parity_fixture.dart": 3242
+        "test/support/reducer_parity_fixture.dart": 3213
       },
       "callableCount": {
         "test/game/game_hud_test.dart": 293,
         "test/game/game_providers_test.dart": 156,
         "test/game/game_renderer_keyboard_test.dart": 196,
         "test/game/lobby_connection_controller_test.dart": 123,
-        "test/support/reducer_parity_fixture.dart": 170,
+        "test/support/reducer_parity_fixture.dart": 167,
         "test/support/reducer_parity_fixture_guard_test.dart": 138
       },
       "callableLines": {
         "test/game/game_hud_test.dart": 7677,
         "test/game/game_providers_test.dart": 2520,
         "test/game/game_renderer_keyboard_test.dart": 3469,
-        "test/support/reducer_parity_fixture.dart": 2812
+        "test/support/reducer_parity_fixture.dart": 2781
       },
       "cyclomaticComplexity": {
-        "test/support/reducer_parity_fixture.dart": 756
+        "test/support/reducer_parity_fixture.dart": 749
       },
       "cognitiveComplexity": {}
     },

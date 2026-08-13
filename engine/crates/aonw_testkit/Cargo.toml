@@ -1,6 +1,6 @@
 [package]
 name = "aonw_testkit"
-description = "Independent compatibility fixture runner for Age of New Worlds engines"
+description = "Independent reducer-parity fixture runner for Age of New Worlds engines"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

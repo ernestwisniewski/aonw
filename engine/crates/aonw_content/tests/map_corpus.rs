@@ -1,4 +1,4 @@
-//! Compatibility checks for shared and legacy map content.
+//! Contract checks for canonical shared map content.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -13,51 +13,37 @@ fn repository_root() -> PathBuf {
         .to_path_buf()
 }
 
-fn legacy_map_path(map_id: &str) -> PathBuf {
-    let root = repository_root();
-    [
-        root.join("assets/maps"),
-        root.join("clients/aonw_flutter/assets/maps"),
-    ]
-    .into_iter()
-    .map(|directory| directory.join(map_id).join("map.json"))
-    .find(|path| path.is_file())
-    .expect("legacy Flutter map must exist in the active or target client location")
-}
-
 #[test]
-fn shared_starter_map_loads_and_round_trips_canonically() {
-    let path = repository_root().join("content/maps/aonw2_starter/map.json");
-    let source = fs::read(path).expect("starter map must be readable");
-    let document = MapDocument::from_json(&source).expect("starter map must validate");
-    let map = document.map();
-    let versioned = document.to_versioned_json().expect("map must serialize");
-
-    assert_eq!(map.map_id(), "aonw2_starter");
-    assert_eq!(map.grid_layout(), GridLayout::OddQFlatTop);
-    assert_eq!(
-        map.tiles().len(),
-        usize::from(map.cols()) * usize::from(map.rows())
-    );
-    assert_eq!(
-        MapDocument::from_json(versioned.as_bytes())
-            .expect("canonical map must reload")
-            .map()
-            .content_hash()
-            .expect("reloaded map must hash"),
-        map.content_hash().expect("starter map must hash")
-    );
-}
-
-#[test]
-fn current_flutter_maps_load_through_the_legacy_adapter() {
-    for map_name in ["dravonia", "myranth", "terenos", "verdantia"] {
-        let path = legacy_map_path(map_name);
-        let source = fs::read(path).expect("legacy map must be readable");
-        let document = MapDocument::from_legacy_json(&source).expect("legacy map must validate");
+fn every_shared_map_loads_and_round_trips_canonically() {
+    for map_name in [
+        "aonw2_starter",
+        "dravonia",
+        "myranth",
+        "terenos",
+        "verdantia",
+    ] {
+        let path = repository_root()
+            .join("content/maps")
+            .join(map_name)
+            .join("map.json");
+        let source = fs::read(path).expect("canonical map must be readable");
+        let document = MapDocument::from_json(&source).expect("canonical map must validate");
         let map = document.map();
+        let versioned = document.to_versioned_json().expect("map must serialize");
 
         assert_eq!(map.map_id(), map_name);
-        assert!(!map.tiles().is_empty());
+        assert_eq!(map.grid_layout(), GridLayout::OddQFlatTop);
+        assert_eq!(
+            map.tiles().len(),
+            usize::from(map.cols()) * usize::from(map.rows())
+        );
+        assert_eq!(
+            MapDocument::from_json(versioned.as_bytes())
+                .expect("canonical map must reload")
+                .map()
+                .content_hash()
+                .expect("reloaded map must hash"),
+            map.content_hash().expect("canonical map must hash")
+        );
     }
 }

@@ -19,7 +19,7 @@ mod unique_json;
 pub use diff::{DifferenceKind, JsonDifference, compare_json};
 pub use fixture::{
     CURRENT_FIXTURE_VERSION, Fixture, FixtureInput, FixtureOutput, JsonObject,
-    MIN_SUPPORTED_FIXTURE_VERSION, ReducerExpectedOutcome, SUPPORTED_FIXTURE_VERSION,
+    ReducerExpectedOutcome,
 };
 pub use loader::{FixtureLimits, FixtureLoader};
 pub use loader_error::FixtureLoadError;

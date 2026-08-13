@@ -4,7 +4,7 @@ use std::collections::BTreeSet;
 use std::fmt;
 use std::path::{Path, PathBuf};
 
-use aonw_content::MapDefinition;
+use aonw_content::{GridLayout, MapDefinition, TerrainType, TileDefinition};
 use aonw_domain::{
     HexCoord, MovementState, MovementUnit, MovementUnits, PlayerId, UnitId, UnitKind,
 };
@@ -96,8 +96,49 @@ fn repository_root() -> PathBuf {
 }
 
 fn decode_map(raw: &JsonObject) -> Result<MapDefinition, AdapterError> {
-    let bytes = serde_json::to_vec(raw).map_err(display_error)?;
-    MapDefinition::from_legacy_json(&bytes).map_err(display_error)
+    let cols = u16::try_from(required_u32(raw, "cols")?).map_err(display_error)?;
+    let rows = u16::try_from(required_u32(raw, "rows")?).map_err(display_error)?;
+    let map_id = required_string(raw, "mapName")?;
+    let tiles = required_array(raw, "tiles")?
+        .iter()
+        .enumerate()
+        .map(|(index, value)| {
+            let path = format!("input.map.tiles[{index}]");
+            let tile = value
+                .as_object()
+                .ok_or_else(|| error(format!("{path} must be an object")))?;
+            let terrains = required_array(tile, "terrains")?;
+            if terrains.len() != 1 || terrains[0].as_str() != Some("grassland") {
+                return Err(error(format!(
+                    "{path}.terrains must contain the reviewed grassland fixture terrain"
+                )));
+            }
+            if !required_array(tile, "resources")?.is_empty() {
+                return Err(error(format!(
+                    "{path}.resources must be empty in reviewed movement fixtures"
+                )));
+            }
+            TileDefinition::try_new(
+                HexCoord::new(
+                    required_i32_at(tile, "col", &path)?,
+                    required_i32_at(tile, "row", &path)?,
+                ),
+                vec![TerrainType::Grassland],
+                Vec::new(),
+                u8::try_from(required_u32_at(tile, "height", &path)?).map_err(display_error)?,
+            )
+            .map_err(display_error)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    MapDefinition::try_new(
+        map_id,
+        GridLayout::OddQFlatTop,
+        cols,
+        rows,
+        tiles,
+        Vec::new(),
+    )
+    .map_err(display_error)
 }
 
 fn decode_state(input: &FixtureInput) -> Result<MovementState, AdapterError> {
@@ -426,12 +467,15 @@ fn display_error(source: impl fmt::Display) -> AdapterError {
 
 #[test]
 fn rust_executes_reviewed_movement_v2_fixtures() {
-    let corpus = FixtureLoader::default()
-        .load_corpus(repository_root().join("test/fixtures/reducer_parity"))
-        .expect("committed reducer-parity corpus must load");
-    let selected = corpus
-        .into_iter()
-        .filter(|fixture| FIXTURE_IDS.contains(&fixture.id()))
+    let fixture_dir = repository_root().join("test/fixtures/reducer_parity");
+    let loader = FixtureLoader::default();
+    let selected = FIXTURE_IDS
+        .iter()
+        .map(|fixture_id| {
+            loader
+                .load_file(fixture_dir.join(format!("{fixture_id}.json")))
+                .expect("current reducer-parity fixture must load")
+        })
         .collect::<Vec<_>>();
 
     assert_eq!(

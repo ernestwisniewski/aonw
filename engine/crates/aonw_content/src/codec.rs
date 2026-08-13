@@ -1,7 +1,7 @@
 use aonw_domain::HexCoord;
 
 use crate::error::MapLoadError;
-use crate::raw::{LegacyMapDocument, RawMap, RawObjective, RawTile, VersionedMapDocument};
+use crate::raw::{RawMap, RawMapDocument, RawObjective, RawTile};
 use crate::{
     GridLayout, MapDefinition, MapDocument, MapObjective, MapObjectiveType, ResourceType,
     TerrainType, TileDefinition,
@@ -17,36 +17,7 @@ impl MapDocument {
     /// Returns [`MapLoadError`] for malformed, incomplete, unsupported, or invalid input.
     pub fn from_json(source: &[u8]) -> Result<Self, MapLoadError> {
         check_size(source)?;
-        build_document(serde_json::from_slice::<VersionedMapDocument>(source)?.try_into()?)
-    }
-
-    /// Decodes an existing Flutter map without version fields.
-    ///
-    /// Legacy-only defaults are normalized into a complete versioned document.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`MapLoadError`] for malformed input or invariant violations.
-    pub fn from_legacy_json(source: &[u8]) -> Result<Self, MapLoadError> {
-        check_size(source)?;
-        build_document(serde_json::from_slice::<LegacyMapDocument>(source)?.into())
-    }
-}
-
-impl MapDefinition {
-    /// Decodes a logical map from the existing unversioned Flutter shape.
-    ///
-    /// Unlike [`MapDocument::from_legacy_json`], this adapter does not apply
-    /// authored-document camera or minimum-size constraints. It is intended
-    /// for complete simulation maps embedded in deterministic fixtures.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`MapLoadError`] for malformed input or logical map invariant
-    /// violations.
-    pub fn from_legacy_json(source: &[u8]) -> Result<Self, MapLoadError> {
-        check_size(source)?;
-        build_map(serde_json::from_slice::<LegacyMapDocument>(source)?.into())
+        build_document(serde_json::from_slice::<RawMapDocument>(source)?.try_into()?)
     }
 }
 

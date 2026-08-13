@@ -15,7 +15,7 @@ pub enum MovementCost {
 /// Computes the canonical terrain cost for entering a tile.
 #[must_use]
 pub fn terrain_entry_cost(tile: &TileDefinition, domain: UnitMovementDomain) -> MovementCost {
-    let profile = TerrainProfile::from_terrains(tile.terrains());
+    let profile = TerrainProfile::from_tile(tile);
     if profile.has_mountain() {
         return MovementCost::Blocked;
     }
@@ -108,14 +108,15 @@ mod tests {
     }
 
     #[test]
-    fn feature_only_terrain_uses_the_dart_default_base() {
-        assert_eq!(
-            terrain_entry_cost(&tile(vec![TerrainType::Forest]), UnitMovementDomain::Land),
-            MovementCost::Passable(MovementUnits::new(4))
-        );
-        assert_eq!(
-            terrain_entry_cost(&tile(vec![TerrainType::Hills]), UnitMovementDomain::Land),
-            MovementCost::Passable(MovementUnits::new(4))
+    fn primary_terrain_is_explicit() {
+        assert!(
+            TileDefinition::try_new(
+                HexCoord::new(0, 0),
+                vec![TerrainType::Forest],
+                Vec::new(),
+                0,
+            )
+            .is_err()
         );
     }
 

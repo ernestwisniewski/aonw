@@ -45,34 +45,19 @@ fn parser_retains_typed_metadata_and_opaque_payloads() {
 
 #[test]
 fn unsupported_fixture_versions_fail_closed() {
-    let mut value = fixture_json();
-    value["fixtureVersion"] = json!(3);
+    for version in [1, 3] {
+        let mut value = fixture_json();
+        value["fixtureVersion"] = json!(version);
 
-    assert!(matches!(
-        FixtureLoader::default().parse(&encoded(&value)),
-        Err(FixtureLoadError::UnsupportedVersion {
-            found: 3,
-            supported: 2,
-            ..
-        })
-    ));
-}
-
-#[test]
-fn version_one_is_migrated_without_inventing_execution_evidence() {
-    let mut value = fixture_json();
-    value["fixtureVersion"] = json!(1);
-    value["expected"]
-        .as_object_mut()
-        .expect("object")
-        .remove("movementExecutions");
-
-    let fixture = FixtureLoader::default()
-        .parse(&encoded(&value))
-        .expect("legacy fixture must remain readable");
-
-    assert_eq!(fixture.fixture_version(), 1);
-    assert_eq!(fixture.expected().movement_executions(), None);
+        assert!(matches!(
+            FixtureLoader::default().parse(&encoded(&value)),
+            Err(FixtureLoadError::UnsupportedVersion {
+                found,
+                supported: 2,
+                ..
+            }) if found == version
+        ));
+    }
 }
 
 #[test]
@@ -105,10 +90,7 @@ fn movement_execution_is_parsed_as_a_validated_value() {
     let fixture = FixtureLoader::default()
         .parse(&encoded(&value))
         .expect("valid execution");
-    let execution = &fixture
-        .expected()
-        .movement_executions()
-        .expect("version two evidence")[0];
+    let execution = &fixture.expected().movement_executions()[0];
 
     assert_eq!(execution.unit_id(), "unit_1");
     assert_eq!(execution.from_row(), 1);
@@ -165,17 +147,6 @@ fn movement_execution_rejects_empty_steps() {
         FixtureLoader::default().parse(&encoded(&value)),
         Err(FixtureLoadError::Invalid { ref field, .. })
             if field.as_ref() == "$.expected.movementExecutions[0].steps"
-    ));
-}
-
-#[test]
-fn legacy_version_rejects_v2_execution_field() {
-    let mut value = fixture_json();
-    value["fixtureVersion"] = json!(1);
-
-    assert!(matches!(
-        FixtureLoader::default().parse(&encoded(&value)),
-        Err(FixtureLoadError::Invalid { ref field, .. }) if field.as_ref() == "$.expected"
     ));
 }
 
@@ -243,7 +214,7 @@ fn file_loading_stops_at_the_configured_byte_limit() {
 #[test]
 fn duplicate_json_keys_are_rejected() {
     let source = br#"{
-      "fixtureVersion": 1, "fixtureVersion": 1,
+      "fixtureVersion": 2, "fixtureVersion": 2,
       "id": "movement-accepted", "family": "movement",
       "input": {}, "expected": {}
     }"#;

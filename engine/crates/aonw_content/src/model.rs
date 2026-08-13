@@ -55,6 +55,23 @@ impl TileDefinition {
             &terrains,
             TerrainType::canonical_rank,
         )?;
+        if !terrains[0].is_primary() {
+            return Err(MapValidationError::new(
+                format!("{path}.terrains[0]"),
+                "must be a primary terrain",
+            ));
+        }
+        if let Some((index, _)) = terrains
+            .iter()
+            .enumerate()
+            .skip(1)
+            .find(|(_, terrain)| !terrain.is_feature())
+        {
+            return Err(MapValidationError::new(
+                format!("{path}.terrains[{index}]"),
+                "must be a terrain feature",
+            ));
+        }
         validate_unique_values(
             &format!("{path}.resources"),
             &resources,
@@ -83,6 +100,16 @@ impl TileDefinition {
     #[must_use]
     pub fn terrains(&self) -> &[TerrainType] {
         &self.terrains
+    }
+
+    #[must_use]
+    pub const fn primary_terrain(&self) -> TerrainType {
+        self.terrains[0]
+    }
+
+    #[must_use]
+    pub fn has_terrain(&self, terrain: TerrainType) -> bool {
+        self.terrains.contains(&terrain)
     }
 
     #[must_use]

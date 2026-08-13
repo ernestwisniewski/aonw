@@ -27,6 +27,7 @@ func execute(source: AonwMapSource, settings: Dictionary) -> Dictionary:
 	surface.reference_opacity = float(settings.get("reference_opacity", 1.0))
 	surface.grid_visible = bool(settings.get("grid_visible", true))
 	surface.grid_opacity = float(settings.get("grid_opacity", 0.72))
+	surface.grid_width = float(settings.get("grid_width", 0.04))
 	surface.configure_source(source)
 	surface.present(
 		opened["document"],
@@ -39,6 +40,8 @@ func execute(source: AonwMapSource, settings: Dictionary) -> Dictionary:
 		surface,
 		opened["terrain_texture"],
 		opened["reference_texture"],
+		opened["content_hash"],
+		opened["source_tile_size"],
 		opened["missing_tiles"],
 		opened["invalid_tiles"],
 		opened["resized_tiles"],

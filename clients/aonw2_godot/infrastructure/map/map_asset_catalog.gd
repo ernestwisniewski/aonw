@@ -2,39 +2,39 @@ class_name AonwMapAssetCatalog
 extends RefCounted
 
 const MapSource := preload("res://application/map/map_source.gd")
-const DEFAULT_LEGACY_ROOT := "res://../../assets/maps"
 const DEFAULT_CONTENT_ROOT := "res://../../content/maps"
 const BUNDLED_ROOT := "res://assets/maps"
+const REFERENCE_ART_ROOT := "res://../../assets/maps"
 
-var _legacy_root: String
 var _content_root: String
 var _bundled_root: String
+var _reference_art_root: String
 
 func _init(
-	legacy_root: String = DEFAULT_LEGACY_ROOT,
 	content_root: String = DEFAULT_CONTENT_ROOT,
 	bundled_root: String = BUNDLED_ROOT,
+	reference_art_root: String = REFERENCE_ART_ROOT,
 ) -> void:
-	_legacy_root = legacy_root
 	_content_root = content_root
 	_bundled_root = bundled_root
+	_reference_art_root = reference_art_root
 
 func discover() -> Array[AonwMapSource]:
 	var sources: Array[AonwMapSource] = []
-	_append_sources(sources, _legacy_root, AonwMapSource.Format.LEGACY, "assets")
-	_append_sources(sources, _content_root, AonwMapSource.Format.VERSIONED, "content")
-	_append_sources(sources, _bundled_root, AonwMapSource.Format.VERSIONED, "Godot")
+	_append_sources(sources, _content_root, _reference_art_root, "content")
+	_append_sources(sources, _bundled_root, _bundled_root, "Godot")
+	sources = _deduplicate(sources)
 	sources.sort_custom(func(left: AonwMapSource, right: AonwMapSource) -> bool:
 		if left.map_id == right.map_id:
 			return left.origin < right.origin
 		return left.map_id < right.map_id
 	)
-	return _deduplicate(sources)
+	return sources
 
 func _append_sources(
 	target: Array[AonwMapSource],
 	root_path: String,
-	format: AonwMapSource.Format,
+	visual_root: String,
 	origin: String,
 ) -> void:
 	var absolute_root := _resolve_path(root_path)
@@ -50,8 +50,7 @@ func _append_sources(
 		target.append(AonwMapSource.new(
 			directory_name,
 			map_path,
-			source_directory,
-			format,
+			visual_root.path_join(directory_name),
 			origin,
 		))
 
@@ -59,7 +58,7 @@ func _deduplicate(sources: Array[AonwMapSource]) -> Array[AonwMapSource]:
 	var result: Array[AonwMapSource] = []
 	var selected := {}
 	for source in sources:
-		var key := "%s:%d" % [source.map_id, source.format]
+		var key := source.map_id
 		if selected.has(key):
 			continue
 		selected[key] = true

@@ -4,8 +4,7 @@ use serde_json::Value;
 
 use crate::FixtureLoadError;
 use crate::fixture::{
-    CURRENT_FIXTURE_VERSION, Fixture, FixtureInput, JsonObject, MIN_SUPPORTED_FIXTURE_VERSION,
-    ReducerExpectedOutcome,
+    CURRENT_FIXTURE_VERSION, Fixture, FixtureInput, JsonObject, ReducerExpectedOutcome,
 };
 use crate::movement_execution::{MovementExecution, MovementExecutionError, MovementStep};
 
@@ -21,8 +20,7 @@ const INPUT_KEYS: &[&str] = &[
     "state",
     "tick",
 ];
-const EXPECTED_V1_KEYS: &[&str] = &["accepted", "events", "reason", "save", "state"];
-const EXPECTED_V2_KEYS: &[&str] = &[
+const EXPECTED_KEYS: &[&str] = &[
     "accepted",
     "events",
     "movementExecutions",
@@ -40,7 +38,7 @@ pub(super) fn parse_fixture(
     let mut root = require_object(value, "$", path)?;
     require_exact_keys(&root, ROOT_KEYS, "$", path)?;
     let version = take_u64(&mut root, "fixtureVersion", "$.fixtureVersion", path)?;
-    if !(MIN_SUPPORTED_FIXTURE_VERSION..=CURRENT_FIXTURE_VERSION).contains(&version) {
+    if version != CURRENT_FIXTURE_VERSION {
         return Err(FixtureLoadError::UnsupportedVersion {
             path: path.map(Path::to_path_buf),
             found: version,
@@ -51,11 +49,7 @@ pub(super) fn parse_fixture(
     let id = take_kebab_case(&mut root, "id", "$.id", path)?;
     let family = take_kebab_case(&mut root, "family", "$.family", path)?;
     let input = parse_input(take(&mut root, "input", "$.input", path)?, path)?;
-    let expected = parse_expected(
-        take(&mut root, "expected", "$.expected", path)?,
-        version,
-        path,
-    )?;
+    let expected = parse_expected(take(&mut root, "expected", "$.expected", path)?, path)?;
     Ok(Fixture {
         version,
         id: id.into_boxed_str(),
@@ -105,16 +99,10 @@ fn parse_input(value: Value, path: Option<&Path>) -> Result<FixtureInput, Fixtur
 
 fn parse_expected(
     value: Value,
-    fixture_version: u64,
     path: Option<&Path>,
 ) -> Result<ReducerExpectedOutcome, FixtureLoadError> {
     let mut expected = require_object(value, "$.expected", path)?;
-    let expected_keys = if fixture_version == 1 {
-        EXPECTED_V1_KEYS
-    } else {
-        EXPECTED_V2_KEYS
-    };
-    require_exact_keys(&expected, expected_keys, "$.expected", path)?;
+    require_exact_keys(&expected, EXPECTED_KEYS, "$.expected", path)?;
     let accepted = take_bool(&mut expected, "accepted", "$.expected.accepted", path)?;
     let reason = take_optional_string(&mut expected, "reason", "$.expected.reason", path)?;
     if accepted == reason.is_some() {
@@ -124,22 +112,16 @@ fn parse_expected(
             "must be null exactly when accepted is true",
         ));
     }
-    let movement_executions = if fixture_version == 1 {
-        None
-    } else {
-        Some(
-            parse_movement_executions(
-                take(
-                    &mut expected,
-                    "movementExecutions",
-                    "$.expected.movementExecutions",
-                    path,
-                )?,
-                path,
-            )?
-            .into_boxed_slice(),
-        )
-    };
+    let movement_executions = parse_movement_executions(
+        take(
+            &mut expected,
+            "movementExecutions",
+            "$.expected.movementExecutions",
+            path,
+        )?,
+        path,
+    )?
+    .into_boxed_slice();
     let save = take_object(&mut expected, "save", "$.expected.save", path)?;
     let state = take_object(&mut expected, "state", "$.expected.state", path)?;
     let events = take_object_array(&mut expected, "events", "$.expected.events", path)?;

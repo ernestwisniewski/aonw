@@ -77,6 +77,12 @@ Future<void> _runFixture(ReducerParityFixture fixture) async {
   expect(reduction.accepted, fixture.expectedAccepted);
   expect(reduction.reason, fixture.expectedReason);
   expect(reducerParityEvents(reduction.events), fixture.expectedEvents);
+  if (fixture.expectedMovementExecutions case final expected?) {
+    expect(
+      reducerParityMovementExecutions(reduction.movementExecutions),
+      expected,
+    );
+  }
 
   if (fixture.expectedAccepted) {
     final nextSnapshot = reduction.nextSnapshot!;

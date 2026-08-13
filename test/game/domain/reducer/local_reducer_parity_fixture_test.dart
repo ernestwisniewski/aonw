@@ -86,6 +86,12 @@ void _runFixture(ReducerParityFixture fixture) {
     fixture.expectedState,
   );
   expect(reducerParityEvents(result.events), fixture.expectedEvents);
+  if (fixture.expectedMovementExecutions case final expected?) {
+    expect(
+      reducerParityMovementExecutions(result.movementExecutions),
+      expected,
+    );
+  }
   expect(result.snapshot.metadata.savedAtUtc, fixture.now);
   if (!fixture.expectedAccepted &&
       (fixture.id.startsWith('resource-trade-characterization-') ||

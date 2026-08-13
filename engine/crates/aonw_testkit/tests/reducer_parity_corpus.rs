@@ -1,9 +1,14 @@
-//! Compatibility check against the repository's committed reducer corpus.
+//! Loads committed fixtures that use the current parity contract.
 
-use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use aonw_testkit::{Fixture, FixtureLoader};
+use aonw_testkit::FixtureLoader;
+
+const CURRENT_FIXTURES: [&str; 3] = [
+    "movement-adjacent-accepted.json",
+    "movement-out-of-bounds-rejected.json",
+    "movement-wrong-actor-rejected.json",
+];
 
 fn repository_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -17,39 +22,15 @@ fn repository_root() -> PathBuf {
 }
 
 #[test]
-fn current_reducer_parity_corpus_loads_in_rust() {
-    let corpus = FixtureLoader::default()
-        .load_corpus(repository_root().join("test/fixtures/reducer_parity"))
-        .expect("committed reducer-parity corpus must load");
+fn current_reducer_parity_fixtures_load_in_rust() {
+    let fixture_dir = repository_root().join("test/fixtures/reducer_parity");
+    let loader = FixtureLoader::default();
 
-    assert_eq!(corpus.len(), 120);
-    assert_eq!(
-        corpus
-            .iter()
-            .filter(|fixture| fixture.fixture_version() == 2)
-            .count(),
-        3
-    );
-    let families = corpus.iter().map(Fixture::family).collect::<BTreeSet<_>>();
-    assert_eq!(
-        families,
-        BTreeSet::from([
-            "artifacts",
-            "auto-explore",
-            "city-expansion",
-            "city-founding",
-            "city-production",
-            "city-worked-hex",
-            "combat",
-            "detachment",
-            "infrastructure",
-            "merchant-routing",
-            "movement",
-            "research",
-            "resource-trade",
-            "turn-finalization",
-            "unit-actions",
-            "worker",
-        ])
-    );
+    for filename in CURRENT_FIXTURES {
+        let fixture = loader
+            .load_file(fixture_dir.join(filename))
+            .expect("current reducer-parity fixture must load");
+        assert_eq!(fixture.fixture_version(), 2);
+        assert_eq!(fixture.family(), "movement");
+    }
 }

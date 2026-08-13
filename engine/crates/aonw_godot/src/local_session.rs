@@ -11,6 +11,7 @@ use serde_json::{Value, json};
 
 use crate::wire::{MovementStateWire, failure_json, success_json};
 
+#[derive(Debug)]
 struct Session {
     map: MapDefinition,
     state: MovementState,
@@ -52,16 +53,17 @@ impl AonwLocalSession {
     fn open(
         &mut self,
         map_json: GString,
-        legacy_map: bool,
         movement_state_json: GString,
         actor_player_id: GString,
+        visibility_mode: GString,
         known_unit_ids_json: GString,
     ) -> GString {
+        self.session = None;
         match decode_session(
             &map_json.to_string(),
-            legacy_map,
             &movement_state_json.to_string(),
             &actor_player_id.to_string(),
+            &visibility_mode.to_string(),
             &known_unit_ids_json.to_string(),
         ) {
             Ok(session) => {
@@ -155,35 +157,47 @@ impl AonwLocalSession {
 
 fn decode_session(
     map_json: &str,
-    legacy_map: bool,
     movement_state_json: &str,
     actor_player_id: &str,
+    visibility_mode: &str,
     known_unit_ids_json: &str,
 ) -> Result<Session, (&'static str, String)> {
-    let map = if legacy_map {
-        MapDefinition::from_legacy_json(map_json.as_bytes())
-    } else {
-        MapDocument::from_json(map_json.as_bytes()).map(|document| document.map().clone())
-    }
-    .map_err(|error| ("invalid_map", error.to_string()))?;
+    let map = MapDocument::from_json(map_json.as_bytes())
+        .map(|document| document.map().clone())
+        .map_err(|error| ("invalid_map", error.to_string()))?;
     let wire = serde_json::from_str::<MovementStateWire>(movement_state_json)
         .map_err(|error| ("invalid_movement_state_json", error.to_string()))?;
     let state = decode_movement_state(wire.into())
         .map_err(|error| ("invalid_movement_state", error.to_string()))?;
     let actor = PlayerId::new(actor_player_id)
         .map_err(|error| ("invalid_actor_player_id", error.to_string()))?;
-    let known_unit_ids = if known_unit_ids_json.trim().is_empty() {
-        None
-    } else {
-        let values = serde_json::from_str::<Vec<String>>(known_unit_ids_json)
-            .map_err(|error| ("invalid_known_unit_ids", error.to_string()))?;
-        Some(
-            values
-                .into_iter()
-                .map(UnitId::new)
-                .collect::<Result<Vec<_>, _>>()
-                .map_err(|error| ("invalid_known_unit_ids", error.to_string()))?,
-        )
+    let known_unit_ids = match visibility_mode {
+        "unrestricted" => {
+            if !known_unit_ids_json.trim().is_empty() {
+                return Err((
+                    "invalid_visibility",
+                    "unrestricted visibility must not provide known unit ids".to_owned(),
+                ));
+            }
+            None
+        }
+        "knownUnits" => {
+            let values = serde_json::from_str::<Vec<String>>(known_unit_ids_json)
+                .map_err(|error| ("invalid_known_unit_ids", error.to_string()))?;
+            Some(
+                values
+                    .into_iter()
+                    .map(UnitId::new)
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|error| ("invalid_known_unit_ids", error.to_string()))?,
+            )
+        }
+        _ => {
+            return Err((
+                "invalid_visibility",
+                "visibility mode must be unrestricted or knownUnits".to_owned(),
+            ));
+        }
     };
     Ok(Session {
         map,
@@ -232,4 +246,104 @@ fn transition_json(transition: &MovementTransition) -> Value {
             "movementUnits": unit.movement_units().get(),
         })),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use aonw_contracts::CURRENT_MOVEMENT_STATE_VERSION;
+    use serde_json::json;
+
+    use super::decode_session;
+
+    fn map_json() -> String {
+        let tiles = (0..5)
+            .flat_map(|row| {
+                (0..5).map(move |col| {
+                    json!({
+                        "col": col,
+                        "row": row,
+                        "terrains": ["grassland"],
+                        "resources": [],
+                        "height": 0,
+                    })
+                })
+            })
+            .collect::<Vec<_>>();
+        json!({
+            "schemaVersion": 1,
+            "gridLayout": "oddQFlatTop",
+            "cols": 5,
+            "rows": 5,
+            "mapName": "session_test",
+            "defaultZoom": 1.0,
+            "objectives": [],
+            "tiles": tiles,
+        })
+        .to_string()
+    }
+
+    fn state_json(schema_version: u16) -> String {
+        json!({
+            "schemaVersion": schema_version,
+            "revision": 1,
+            "turn": 1,
+            "units": [{
+                "id": "unit-1",
+                "ownerPlayerId": "player-1",
+                "kind": "warrior",
+                "col": 0,
+                "row": 0,
+                "movementUnits": 4,
+                "posture": "active",
+                "movementBlocked": false,
+                "queuedPath": null,
+                "carriedArtifactId": null,
+            }],
+        })
+        .to_string()
+    }
+
+    #[test]
+    fn session_accepts_only_the_current_movement_contract() {
+        decode_session(
+            &map_json(),
+            &state_json(CURRENT_MOVEMENT_STATE_VERSION),
+            "player-1",
+            "unrestricted",
+            "",
+        )
+        .expect("current movement contract must open");
+
+        let error = decode_session(
+            &map_json(),
+            &state_json(CURRENT_MOVEMENT_STATE_VERSION + 1),
+            "player-1",
+            "unrestricted",
+            "",
+        )
+        .expect_err("future movement contract must fail closed");
+        assert_eq!(error.0, "invalid_movement_state");
+    }
+
+    #[test]
+    fn visibility_mode_is_explicit() {
+        decode_session(
+            &map_json(),
+            &state_json(CURRENT_MOVEMENT_STATE_VERSION),
+            "player-1",
+            "knownUnits",
+            "[]",
+        )
+        .expect("knownUnits may explicitly expose no units");
+
+        let error = decode_session(
+            &map_json(),
+            &state_json(CURRENT_MOVEMENT_STATE_VERSION),
+            "player-1",
+            "",
+            "",
+        )
+        .expect_err("missing visibility mode must fail closed");
+        assert_eq!(error.0, "invalid_visibility");
+    }
 }

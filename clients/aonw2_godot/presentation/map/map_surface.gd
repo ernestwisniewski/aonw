@@ -9,12 +9,12 @@ signal map_presented(world_size: Vector2, maximum_height: float)
 @export var source_map_id := ""
 @export var source_map_path := ""
 @export var source_visual_directory := ""
-@export var source_is_legacy := false
 @export_range(0.25, 4.0, 0.05) var hex_radius := 1.0
 @export_range(0.0, 1.0, 0.01) var height_step := 0.16:
 	set(value):
 		height_step = value
-		_rebuild()
+		if not _batching_geometry:
+			_rebuild()
 @export var reference_visible := true:
 	set(value):
 		reference_visible = value
@@ -33,6 +33,11 @@ signal map_presented(world_size: Vector2, maximum_height: float)
 	set(value):
 		grid_opacity = value
 		_update_material_opacity(_grid, value)
+@export_range(0.01, 0.12, 0.005) var grid_width := 0.04:
+	set(value):
+		grid_width = value
+		if not _batching_geometry:
+			_rebuild()
 
 var _builder := MeshBuilder.new()
 var _document: AonwMapDocument
@@ -41,6 +46,7 @@ var _reference_texture: Texture2D
 var _terrain: MeshInstance3D
 var _reference: MeshInstance3D
 var _grid: MeshInstance3D
+var _batching_geometry := false
 
 func _ready() -> void:
 	_ensure_layers()
@@ -62,22 +68,35 @@ func configure_source(source: AonwMapSource) -> void:
 	source_map_id = source.map_id
 	source_map_path = source.map_path
 	source_visual_directory = source.visual_directory
-	source_is_legacy = source.is_legacy()
 
 func set_reference_visible(value: bool) -> void:
+	_ensure_layers()
 	reference_visible = value
 
 func set_reference_opacity(value: float) -> void:
+	_ensure_layers()
 	reference_opacity = clampf(value, 0.0, 1.0)
 
 func set_grid_visible(value: bool) -> void:
+	_ensure_layers()
 	grid_visible = value
 
 func set_grid_opacity(value: float) -> void:
+	_ensure_layers()
 	grid_opacity = clampf(value, 0.0, 1.0)
 
+func set_grid_width(value: float) -> void:
+	set_geometry(height_step, value)
+
 func set_height_step(value: float) -> void:
-	height_step = clampf(value, 0.0, 1.0)
+	set_geometry(value, grid_width)
+
+func set_geometry(value_height_step: float, value_grid_width: float) -> void:
+	_batching_geometry = true
+	height_step = clampf(value_height_step, 0.0, 1.0)
+	grid_width = clampf(value_grid_width, 0.01, 0.12)
+	_batching_geometry = false
+	_rebuild()
 
 func has_editing_context() -> bool:
 	return _document != null and _terrain_texture != null and _reference_texture != null
@@ -119,6 +138,7 @@ func _rebuild() -> void:
 		height_step,
 		reference_opacity,
 		grid_opacity,
+		grid_width,
 	)
 	_reference.material_override = null
 	_grid.material_override = null

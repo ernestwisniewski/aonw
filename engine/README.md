@@ -16,7 +16,7 @@ platform, shadow, canary, and rollback gates in the
 | Crate | Responsibility |
 | --- | --- |
 | `aonw_domain` | Validated identifiers, odd-q topology, fixed-point movement values, and the immutable movement-state projection. |
-| `aonw_content` | Strict versioned map documents, an explicit legacy adapter, domain validation, normalization, lookup, and deterministic logical-content hashing. |
+| `aonw_content` | Strict versioned map documents, domain validation, normalization, lookup, and deterministic logical-content hashing. |
 | `aonw_contracts` | Versioned, domain-independent boundary DTOs. It deliberately does not choose a wire codec yet. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
 | `aonw_engine` | Fog-safe movement planning, reachable-hex queries, and the revision-bound authoritative `MoveUnit` transition. |
@@ -50,8 +50,9 @@ domain construction. Release builds retain integer overflow checks.
 
 Reducer fixture version 2 requires ordered authoritative `movementExecutions`.
 Three reviewed movement fixtures now execute through `GameEngine` and compare
-complete state, rejection, events, and exact movement evidence. The remaining
-legacy corpus stays readable as version 1 without inventing absent evidence.
+complete state, rejection, events, and exact movement evidence. `aonw_testkit`
+accepts only the current fixture contract. Rust and Godot map boundaries contain
+only the strict, versioned map codec.
 
 ## Map content contract
 
@@ -62,13 +63,11 @@ hashes; presentation hints are excluded. Resource order uses an explicit stable
 wire rank, so enum source order cannot change canonical bytes.
 
 Versioned documents fail closed on missing, unknown, duplicated, or invalid
-fields. Defaults exist only in the explicit legacy Flutter map adapter.
-Authored `MapDocument` values retain the schema's 5×5 minimum, while logical
-`MapDefinition` values accept smaller positive grids for deterministic engine
-fixtures such as the existing 3×3 movement oracle. The explicit logical
-legacy decoder bypasses only authored camera and minimum-size constraints; it
-retains strict JSON decoding and all logical-map invariants. Map bounds expose
-canonical odd-q neighbors and row-major indices without allocation.
+fields and apply no compatibility defaults. Authored `MapDocument` values
+retain the schema's 5×5 minimum, while logical `MapDefinition` values accept
+smaller positive grids constructed inside deterministic engine test adapters,
+such as the existing 3×3 movement oracle. Map bounds expose canonical odd-q
+neighbors and row-major indices without allocation.
 
 The actor is command/query context, not persisted state. `MovementStateDto` is
 explicitly a partial projection containing revision, turn, and movement unit
@@ -90,7 +89,7 @@ Hidden occupancy is resolved only by `apply_move_unit`, which returns an
 accepted no-op rather than disclosing the blocker. Accepted movement returns a
 new revision, `UnitMovedEvent`, and exact authoritative execution steps.
 
-`aonw_godot` validates strict or explicit legacy maps in Rust and exposes
+`aonw_godot` validates strict versioned maps in Rust and exposes
 `AonwLocalSession` for movement projection load, reachable queries, and
 revision-bound moves. Build it with `make rust-godot-build`. This is a narrow
 vertical slice, not the complete save/local-runtime boundary.

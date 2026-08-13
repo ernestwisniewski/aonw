@@ -59,6 +59,30 @@ impl TerrainType {
         }
     }
 
+    #[must_use]
+    pub const fn is_primary(self) -> bool {
+        matches!(
+            self,
+            Self::Ocean
+                | Self::Coast
+                | Self::Lake
+                | Self::Plains
+                | Self::Grassland
+                | Self::Desert
+                | Self::Tundra
+                | Self::Snow
+                | Self::Mountain
+        )
+    }
+
+    #[must_use]
+    pub const fn is_feature(self) -> bool {
+        matches!(
+            self,
+            Self::Hills | Self::Wetlands | Self::Jungle | Self::Forest | Self::River
+        )
+    }
+
     pub(crate) const fn canonical_rank(self) -> u8 {
         match self {
             Self::Ocean => 0,

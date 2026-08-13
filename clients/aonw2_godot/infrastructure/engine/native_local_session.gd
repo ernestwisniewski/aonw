@@ -12,19 +12,19 @@ func is_available() -> bool:
 
 func open(
 	map_json: String,
-	legacy_map: bool,
 	movement_state: Dictionary,
 	actor_player_id: String,
-	known_unit_ids: Array[String] = [],
+	visibility_mode: String,
+	known_unit_ids: Array[String],
 ) -> Dictionary:
 	if _session == null:
 		return _unavailable()
-	var known_json := "" if known_unit_ids.is_empty() else JSON.stringify(known_unit_ids)
+	var known_json := "" if visibility_mode == "unrestricted" else JSON.stringify(known_unit_ids)
 	return _decode(_session.open(
 		map_json,
-		legacy_map,
 		JSON.stringify(movement_state),
 		actor_player_id,
+		visibility_mode,
 		known_json,
 	))
 
