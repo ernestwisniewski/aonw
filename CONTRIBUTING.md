@@ -186,6 +186,39 @@ flutter gen-l10n
 Review every generated diff, commit the expected output, and rerun
 `make generated-code-check`.
 
+## Rust Engine Migration
+
+Read the [Rust Engine Migration Plan](docs/rust-engine-migration.md) and
+[ADR 0008](docs/adr/0008-rust-engine-ownership-and-strangler-migration.md)
+before introducing or changing Rust engine code, a Flutter native bridge, or
+the Godot AONW2 client.
+
+The Rust Cargo workspace will be introduced directly at `engine/`; do not
+create a parallel temporary `rust/` root. Keep the existing Flutter project at
+the repository root until the migration plan's Dart retirement gate passes.
+
+Migration changes must preserve these rules:
+
+- port existing behavior before redesigning it;
+- keep `packages/aonw_core` fixable, tested, and releasable while it remains a
+  production or rollback engine;
+- use `test/fixtures/reducer_parity/` as the shared, independently reviewed
+  oracle; neither Dart nor Rust may calculate or bless `expected` during CI;
+- select one complete primary engine for a session or match; shadow execution
+  may compare a second engine but never persist its result;
+- keep domain and engine crates independent of Flutter, Godot, Serverpod, I/O,
+  networking, clocks, and localization;
+- keep gameplay rules out of Dart bridge code, GDScript, Godot scenes, and
+  Serverpod endpoints;
+- change a fixture, schema, behavior version, or public protocol only through
+  its existing review and compatibility policy.
+
+Once `engine/Cargo.toml` exists, Rust changes run formatting, Clippy with
+warnings denied, workspace tests, documentation, relevant target compilation,
+and the shared parity suite in addition to the existing `make ci` gate. Native
+and WASM checks are required according to the platforms affected by the change.
+Do not weaken an existing Flutter/Dart gate to make room for the new workspace.
+
 ## Localization
 
 English is the source language. `lib/l10n/app_en.arb` is the template that

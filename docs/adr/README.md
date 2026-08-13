@@ -9,13 +9,14 @@ Runbooks describe procedures; ADRs describe constraints and ownership.
 
 | ADR | Decision | Status | Implementation |
 | --- | --- | --- | --- |
-| [0001](0001-map-and-state-ownership.md) | Map and state ownership | Accepted | In progress |
-| [0002](0002-deterministic-game-engine.md) | Deterministic game engine | Accepted | In progress |
+| [0001](0001-map-and-state-ownership.md) | Map and state ownership | Superseded | In progress |
+| [0002](0002-deterministic-game-engine.md) | Deterministic game engine | Superseded | In progress |
 | [0003](0003-command-boundaries.md) | Command boundaries | Accepted | Implemented |
 | [0004](0004-versioned-multiplayer-protocol.md) | Versioned multiplayer protocol | Accepted | Implemented |
 | [0005](0005-immutable-deployment.md) | Immutable deployment promotion | Accepted | In progress |
 | [0006](0006-transport-infrastructure.md) | Transport infrastructure ownership and traversal | Accepted | Implemented |
 | [0007](0007-strategic-resource-stockpiles.md) | Strategic resource stockpiles and production allocation | Accepted | Implemented |
+| [0008](0008-rust-engine-ownership-and-strangler-migration.md) | Rust engine ownership and strangler migration | Accepted | Planned |
 
 ## Status And Lifecycle
 

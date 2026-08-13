@@ -1,8 +1,9 @@
 # ADR 0001: Map And State Ownership
 
-- Status: Accepted
+- Status: Superseded
 - Date: 2026-07-12
 - Implementation: In progress
+- Superseded by: [ADR 0008](0008-rust-engine-ownership-and-strangler-migration.md)
 
 ## Context
 
@@ -137,5 +138,6 @@ definition of done.
 
 ## Related Decisions And Documentation
 
+- [ADR 0008: Rust Engine Ownership And Strangler Migration](0008-rust-engine-ownership-and-strangler-migration.md)
 - [Documentation architecture map](../README.md#architecture)
 - [Map validation](../game-design/map-validation.md)

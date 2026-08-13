@@ -11,6 +11,7 @@ behavior unless they explicitly call out historical context or future work.
 | Understand the codebase | [Architecture](#architecture), then [Multiplayer Protocol](multiplayer-protocol.md) if networking is involved. |
 | Change an architectural contract | [Architecture Decision Records](adr/README.md) before changing ownership, determinism, commands, compatibility, or deployment policy. |
 | Refactor or split Dart code | [Architecture Budgets](architecture-budgets.md) for the complete census, role-specific targets, and legacy-debt ratchet. |
+| Work on the Rust engine or Godot migration | [Rust Engine Migration Plan](rust-engine-migration.md), then [ADR 0008](adr/0008-rust-engine-ownership-and-strangler-migration.md). |
 | Build or release the game | [Build And Deploy Runbook](build-and-deploy.md). |
 | Work on tests or coverage | [Test Coverage](test-coverage.md) for line coverage, [Mutation Testing](mutation-testing.md) for critical behavioral assertions, [Performance Benchmarks](performance-benchmarks.md) for deterministic work and frame budgets, and [Critical End-to-End Journeys](critical-e2e.md) for real persistence and network boundaries. |
 | Change gameplay balance | [Pace Profiles](game-design/pace-profiles.md), [Scoring and Outcomes](game-design/scoring-and-outcomes.md), and the relevant gameplay-system document. |
@@ -18,6 +19,12 @@ behavior unless they explicitly call out historical context or future work.
 | Prepare public assets | [Marketing Assets](marketing/README.md) and [Asset Templates](templates/README.md). |
 
 ## Architecture
+
+The table and first diagram in this section describe the current production
+repository. The accepted successor architecture is an incremental migration to
+a Rust workspace at `engine/`; see
+[Rust Engine Migration Plan](rust-engine-migration.md). Until its cutover gates
+pass, the current Dart paths remain authoritative and releasable.
 
 | Area | Responsibility |
 | --- | --- |
@@ -70,17 +77,49 @@ presentation code depends on application ports. When a cross-layer dependency
 is intentional, update this document and the architecture test in the same
 change.
 
+### Accepted Successor Architecture
+
+The first Rust code is added directly under `engine/`. Flutter remains at the
+repository root during migration; Godot AONW2 is added separately under
+`clients/aonw2_godot/`.
+
+```mermaid
+flowchart LR
+  Flutter["Root Flutter / Flame AONW1"] --> FlutterLocal["LocalSessionPort"]
+  Godot["clients/aonw2_godot"] --> GodotLocal["AonwLocalSession"]
+  FlutterLocal --> Runtime["engine/: Rust local runtime"]
+  GodotLocal --> Runtime
+  Runtime --> Rules["Rust domain + GameEngine"]
+  Flutter --> FlutterRemote["RemoteMatchPort"]
+  Godot --> GodotRemote["AonwRemoteReplica"]
+  FlutterRemote --> Server["server/: Serverpod multiplayer host"]
+  GodotRemote --> Server
+  Server --> Rules
+  Server --> Projection["Rust recipient projection policy"]
+  Projection --> FlutterRemote
+  Projection --> GodotRemote
+  Server --> Database[("PostgreSQL")]
+```
+
+The Rust engine becomes the single rules implementation only after parity,
+save compatibility, platform, shadow, canary, and rollback gates pass. The Dart
+`aonw_core` remains in production until then. A live session or match is pinned
+to one complete primary engine backend and is never split by command family.
+
 ## Architecture Decisions
 
-The architecture table above describes the current repository. The accepted
-target boundaries and their migration constraints are recorded in the
+The architecture table above describes the current repository. Historical and
+current target decisions, including supersession, are recorded in the
 [ADR index](adr/README.md):
 
-- [map and state ownership](adr/0001-map-and-state-ownership.md);
-- [the deterministic game engine](adr/0002-deterministic-game-engine.md);
+- [historical Dart map and state ownership](adr/0001-map-and-state-ownership.md);
+- [the historical Dart deterministic engine location](adr/0002-deterministic-game-engine.md);
 - [command boundaries](adr/0003-command-boundaries.md);
 - [multiplayer protocol versioning](adr/0004-versioned-multiplayer-protocol.md);
-- [immutable deployment promotion](adr/0005-immutable-deployment.md).
+- [immutable deployment promotion](adr/0005-immutable-deployment.md);
+- [transport infrastructure ownership](adr/0006-transport-infrastructure.md);
+- [strategic resource stockpiles](adr/0007-strategic-resource-stockpiles.md);
+- [Rust engine ownership and strangler migration](adr/0008-rust-engine-ownership-and-strangler-migration.md).
 
 An accepted ADR is binding for new code even when its implementation is still
 in progress. Do not edit history to change a decision; add a superseding ADR.
@@ -92,6 +131,7 @@ in progress. Do not edit history to change a decision; add a superseding ADR.
 | Document | Use It For |
 | --- | --- |
 | [Architecture Decision Records](adr/README.md) | Durable ownership, determinism, command, compatibility, and deployment decisions. |
+| [Rust Engine Migration Plan](rust-engine-migration.md) | Target `engine/` layout, DDD boundaries, Flutter continuity, Godot integration, parity, phases, cutover, and Dart retirement gates. |
 | [Multiplayer Protocol](multiplayer-protocol.md) | Current client/server protocol surface and rollout procedure. |
 | [Static Analysis](static-analysis.md) | Shared strict analyzer policy, generated-code boundaries, and canonical commands. |
 | [Architecture Budgets](architecture-budgets.md) | Repository-wide Dart census, role-specific size/complexity targets, callable AST metrics, and exact legacy-debt ratchet. |

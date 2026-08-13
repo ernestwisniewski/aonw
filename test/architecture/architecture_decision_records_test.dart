@@ -231,9 +231,13 @@ const _allowedStatuses = {'Proposed', 'Accepted', 'Rejected', 'Superseded'};
 const _allowedImplementations = {'Planned', 'In progress', 'Implemented'};
 
 const _requiredAcceptedAdrs = <String, String>{
-  '0001-map-and-state-ownership.md': 'Map And State Ownership',
-  '0002-deterministic-game-engine.md': 'Deterministic Game Engine',
   '0003-command-boundaries.md': 'Command Boundaries',
   '0004-versioned-multiplayer-protocol.md': 'Versioned Multiplayer Protocol',
   '0005-immutable-deployment.md': 'Immutable Deployment Promotion',
+  '0006-transport-infrastructure.md':
+      'Transport Infrastructure Ownership And Traversal',
+  '0007-strategic-resource-stockpiles.md':
+      'Strategic Resource Stockpiles And Production Allocation',
+  '0008-rust-engine-ownership-and-strangler-migration.md':
+      'Rust Engine Ownership And Strangler Migration',
 };

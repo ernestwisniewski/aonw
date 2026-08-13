@@ -1,11 +1,23 @@
 # Reducer Parity Fixtures
 
-This corpus characterizes the duplicated local and authoritative server command
-paths before they are replaced by the shared engine described in
+This corpus originally characterized duplicated local and authoritative server
+command paths and now protects the covered slices as both adapters use the
+shared Dart engine described historically in
 [ADR 0002](../../../docs/adr/0002-deterministic-game-engine.md).
 Every JSON file is a third, committed oracle reviewed independently from both
 implementations. Tests must never calculate or bless `expected` from either
 runtime path.
+
+The same corpus is also the independent compatibility oracle for the Rust
+engine migration described in
+[ADR 0008](../../../docs/adr/0008-rust-engine-ownership-and-strangler-migration.md).
+It remains in this shared repository location rather than being copied into
+`engine/`. As migration harnesses are introduced, Dart, Rust CLI, native, Godot,
+and server-shadow paths will compare their covered slices with this committed
+data; a live Dart-to-Rust diff is additional evidence and never replaces the
+oracle. The corpus does not claim coverage of offsets, database transactions,
+recipient projections, system/timeout commands, or other explicitly excluded
+boundaries.
 
 Each version 1 fixture contains:
 

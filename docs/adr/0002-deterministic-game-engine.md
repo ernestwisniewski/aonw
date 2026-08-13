@@ -1,8 +1,9 @@
 # ADR 0002: Deterministic Game Engine
 
-- Status: Accepted
+- Status: Superseded
 - Date: 2026-07-12
 - Implementation: In progress
+- Superseded by: [ADR 0008](0008-rust-engine-ownership-and-strangler-migration.md)
 
 ## Context
 
@@ -128,5 +129,6 @@ MCTS/world-map execution through the shared engine.
 
 ## Related Decisions And Documentation
 
+- [ADR 0008: Rust Engine Ownership And Strangler Migration](0008-rust-engine-ownership-and-strangler-migration.md)
 - [ADR 0001: Map And State Ownership](0001-map-and-state-ownership.md)
 - [Multiplayer protocol](../multiplayer-protocol.md)

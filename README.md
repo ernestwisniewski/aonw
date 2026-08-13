@@ -8,6 +8,13 @@ Age of New Worlds is an open-source hex-based 4X strategy game built with
 Flutter, Flame, Dart, and Serverpod. It includes a playable cross-platform
 client, a shared rules package, and a server-backed multiplayer foundation.
 
+The authoritative Dart rules are being prepared for an incremental migration
+to a shared Rust engine under `engine/`. The existing Flutter/Flame game remains
+the fully supported AONW1 client throughout that work, while a separate Godot
+AONW2 presentation client will consume the same engine. The migration intent,
+compatibility requirements, and cutover gates are documented in the
+[Rust Engine Migration Plan](docs/rust-engine-migration.md).
+
 The game currently focuses on the core 4X loop: exploration, fog of war,
 movement, city growth, production, research, combat, save/load, AI opponents,
 and online multiplayer infrastructure.
@@ -32,7 +39,13 @@ and online multiplayer infrastructure.
 | `packages/aonw_core/` | Dart-only rules, protocol models, AI planning, and shared game logic. |
 | `packages/aonw_server_client/` | Generated Serverpod client package used by the Flutter app. |
 | `server/` | Serverpod backend, auth adapters, multiplayer services, and persistence. |
+| `engine/` | Planned Rust workspace for the shared domain, deterministic engine, runtime, AI, contracts, and thin adapters. |
+| `clients/aonw2_godot/` | Planned Godot 3D presentation client; it consumes the Rust engine and does not own gameplay rules. |
 | `docs/` | Architecture, gameplay, operations, release, and publishing documentation. |
+
+`engine/` and `clients/aonw2_godot/` are target paths and are introduced
+incrementally. The Flutter project, platform directories, and release tooling
+stay at the repository root until the Dart engine has been safely retired.
 
 ## Quick Start
 
@@ -177,6 +190,9 @@ Recommended entry points:
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, localization, and pull
   request expectations.
+- [docs/rust-engine-migration.md](docs/rust-engine-migration.md) for the target
+  `engine/` structure, DDD boundaries, Flutter continuity, Godot AONW2, parity,
+  cutover, rollback, and Dart Core retirement criteria.
 - [docs/build-and-deploy.md](docs/build-and-deploy.md) for builds, releases,
   server deploys, store uploads, and public download packaging.
 - [docs/multiplayer-protocol.md](docs/multiplayer-protocol.md) before changing
