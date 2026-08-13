@@ -2,6 +2,8 @@
 
 - Status: Target architecture and living migration plan
 - Last updated: 2026-08-13
+- Implementation checkpoint: phase 2/3 foundation started under `engine/`;
+  production integration and rule-family parity have not started
 - Governing decision: [ADR 0008](adr/0008-rust-engine-ownership-and-strangler-migration.md)
 
 ## Purpose
@@ -143,27 +145,14 @@ aonw/
 │   └── crates/
 │       ├── aonw_domain/
 │       ├── aonw_engine/
-│       ├── aonw_content/
 │       ├── aonw_contracts/
-│       ├── aonw_contract_mapping/
-│       ├── aonw_local_runtime/
-│       ├── aonw_recipient_projection/
-│       ├── aonw_remote_replica/
-│       ├── aonw_ai/
-│       ├── aonw_engine_ffi/
-│       ├── aonw_local_ffi/
-│       ├── aonw_godot/
-│       └── aonw_testkit/
+│       └── aonw_contract_mapping/
 │
 ├── clients/
+│   ├── aonw_flutter/
+│   │   └── README.md               # target boundary; active app stays at root
 │   └── aonw2_godot/
-│       ├── project.godot
-│       ├── addons/aonw_native/
-│       ├── scenes/
-│       ├── scripts/
-│       ├── shaders/
-│       ├── assets/
-│       └── tests/
+│       └── README.md               # expands with first executable Godot slice
 │
 ├── contracts/
 │   ├── manifest/
@@ -175,6 +164,12 @@ aonw/
 ├── tool/
 └── Makefile
 ```
+
+The `engine/` and `clients/` portion above is the implemented phase 2/3
+foundation; `aonw_native_bridge` and top-level contract publication remain
+planned. Additional crates shown in the target layout below are created with
+their first behavior and tests rather than as empty packages. In particular, no
+FFI, GDExtension, local runtime, AI, or recipient-replica crate exists yet.
 
 The parity fixtures are not copied into `engine/`. Both implementations read
 the same committed corpus. Shared logical maps and catalogs may move to a

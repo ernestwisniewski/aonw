@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-13
-- Implementation: Planned
+- Implementation: In progress
 
 ## Context
 

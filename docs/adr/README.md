@@ -16,7 +16,7 @@ Runbooks describe procedures; ADRs describe constraints and ownership.
 | [0005](0005-immutable-deployment.md) | Immutable deployment promotion | Accepted | In progress |
 | [0006](0006-transport-infrastructure.md) | Transport infrastructure ownership and traversal | Accepted | Implemented |
 | [0007](0007-strategic-resource-stockpiles.md) | Strategic resource stockpiles and production allocation | Accepted | Implemented |
-| [0008](0008-rust-engine-ownership-and-strangler-migration.md) | Rust engine ownership and strangler migration | Accepted | Planned |
+| [0008](0008-rust-engine-ownership-and-strangler-migration.md) | Rust engine ownership and strangler migration | Accepted | In progress |
 
 ## Status And Lifecycle
 

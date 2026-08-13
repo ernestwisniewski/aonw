@@ -79,10 +79,11 @@ change.
 
 ### Accepted Successor Architecture
 
-When Rust implementation resumes, its first code will be added directly under
-`engine/`; that directory has intentionally not been created yet. Flutter
-remains at the repository root during migration; Godot AoNW2 will be added
-separately under `clients/aonw2_godot/`.
+Rust implementation starts directly under `engine/`. Its current foundation
+contains domain types, versioned state DTOs, validated contract mapping, and a
+pure engine query surface; it is not connected to production execution.
+Flutter remains at the repository root during migration. The two `clients/`
+directories currently contain README boundary markers only.
 
 ```mermaid
 flowchart TB
