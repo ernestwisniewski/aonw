@@ -98,12 +98,19 @@ impl TerrainMovementPlan {
 #[allow(missing_docs)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum TerrainMovementQueryError {
-    StaleRevision { expected: u64, actual: u64 },
+    StaleRevision {
+        expected: u64,
+        actual: u64,
+    },
     UnitNotFound,
     UnitNotControlled,
     UnitUnavailable,
     UnitUsesTradeRoutes,
     UnitOutOfBounds,
+    InvalidMovementBalance {
+        actual: MovementUnits,
+        maximum: MovementUnits,
+    },
     TargetOutOfBounds,
     TargetIsCurrentTile,
     TargetOccupied,
@@ -124,6 +131,12 @@ impl core::fmt::Display for TerrainMovementQueryError {
             Self::UnitUnavailable => formatter.write_str("unit is unavailable for manual movement"),
             Self::UnitUsesTradeRoutes => formatter.write_str("unit uses trade routes"),
             Self::UnitOutOfBounds => formatter.write_str("unit is outside map bounds"),
+            Self::InvalidMovementBalance { actual, maximum } => write!(
+                formatter,
+                "unit movement balance {} exceeds maximum {}",
+                actual.get(),
+                maximum.get()
+            ),
             Self::TargetOutOfBounds => formatter.write_str("target is outside map bounds"),
             Self::TargetIsCurrentTile => formatter.write_str("target is the current tile"),
             Self::TargetOccupied => formatter.write_str("target is occupied"),
@@ -206,6 +219,13 @@ fn validate_unit<'state>(
     }
     if context.map().tile_at(unit.position()).is_none() {
         return Err(TerrainMovementQueryError::UnitOutOfBounds);
+    }
+    let maximum = maximum_movement_units(unit.kind(), unit.carried_artifact_id().is_some());
+    if unit.posture() != UnitPosture::Fortified && unit.movement_units() > maximum {
+        return Err(TerrainMovementQueryError::InvalidMovementBalance {
+            actual: unit.movement_units(),
+            maximum,
+        });
     }
     Ok(unit)
 }

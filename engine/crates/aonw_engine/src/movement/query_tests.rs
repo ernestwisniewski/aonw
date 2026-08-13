@@ -254,3 +254,28 @@ fn route_search_handles_the_maximum_supported_map() {
         Some(HexCoord::new(39, 29))
     );
 }
+
+#[test]
+fn invalid_movement_balance_fails_before_search() {
+    let actor = PlayerId::new("player-1").expect("valid actor");
+    let map = map(2, 1, &[], &[]);
+    let unit_id = UnitId::new("unit-1").expect("valid unit id");
+    let state = WorldState::try_new(
+        12,
+        1,
+        [unit("unit-1", &actor, HexCoord::new(0, 0), u32::MAX)],
+    )
+    .expect("structurally valid state");
+
+    assert_eq!(
+        plan_terrain_route(
+            &state,
+            EngineContext::new(&actor, &map),
+            TerrainMovementQuery::new(12, &unit_id, HexCoord::new(1, 0)),
+        ),
+        Err(TerrainMovementQueryError::InvalidMovementBalance {
+            actual: MovementUnits::new(u32::MAX),
+            maximum: MovementUnits::new(6),
+        })
+    );
+}

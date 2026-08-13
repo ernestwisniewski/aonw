@@ -85,7 +85,8 @@ Godot movement previews and later command parity. It uses row-major map indices,
 a binary heap, known unit occupancy, exact odd-q order, fixed-point terrain
 costs, and the current-turn boundary-step rule. It is deliberately named
 terrain-only: fog, cities, diplomacy, roads, state mutation, events, and
-authoritative movement evidence are not implemented by this query.
+authoritative movement evidence are not implemented by this query. Movement
+balances above the ruleset maximum fail before allocation-heavy route search.
 
 ## Deliberately deferred
 
