@@ -115,6 +115,11 @@ created. `AonwNativeLocalSession` exposes reachable queries and
 revision-bound movement from Rust; unit/entity presentation can consume its
 results without calculating legality or paths in GDScript.
 
+The native adapter rejects oversized movement-state and visibility documents
+before JSON decoding, then applies the same unit, route, identifier, and balance
+limits as the framework-neutral Rust mapping boundary. These are safety limits,
+not gameplay balance configured by Godot.
+
 Build the native adapter before opening or running Godot:
 
 ```sh

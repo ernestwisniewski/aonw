@@ -17,5 +17,9 @@ aonw_domain = { path = "../aonw_domain" }
 aonw_testkit = { path = "../aonw_testkit" }
 serde_json.workspace = true
 
+[[bench]]
+name = "movement"
+harness = false
+
 [lints]
 workspace = true

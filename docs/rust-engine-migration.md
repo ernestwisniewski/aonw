@@ -694,10 +694,12 @@ The Rust workspace exposes a standalone local gate:
 
 ```sh
 make rust-check
+make rust-benchmark
 ```
 
-It combines `make rust-format-check`, `make rust-clippy`, `make rust-test`, and
-`make rust-doc` using the pinned toolchain. These targets are not yet dependencies
+`make rust-check` combines `make rust-format-check`, `make rust-clippy`,
+`make rust-test`, and `make rust-doc` using the pinned toolchain. The benchmark
+is a separate release-profile diagnostic. These targets are not yet dependencies
 of the existing Dart/Flutter `make ci` target or GitHub Actions. CI integration,
 supported native targets, WASM when required, schema compatibility, full fixture
 parity, save round trips, Flutter FFI, release GDExtension packaging,

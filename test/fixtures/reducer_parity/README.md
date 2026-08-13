@@ -22,6 +22,15 @@ executor. The corpus does not claim coverage of offsets, database transactions,
 recipient projections, system/timeout commands, or other explicitly excluded
 boundaries.
 
+The Dart harness also runs a programmatic, fail-closed movement characterization
+of exactly 35 cases. Every case has an explicit complete-state oracle, ordered
+events, and ordered `movementExecutions`; accepted no-ops and rejections require
+`[]`. This matrix pins terrain bases and features, road subpoints, partial and
+queued movement, visible and hidden occupancy, cities, fog, contact discovery,
+posture, artifact capacity, and rejection precedence. It is intentionally not
+duplicated as JSON until the complete Rust `GameState` can execute and compare
+the full state without adapter-owned rules.
+
 Each legacy version 1 fixture contains:
 
 - `id` and `family`, with accepted, actor-rejected, and semantic-rejected cases

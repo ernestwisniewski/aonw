@@ -1,9 +1,9 @@
 use aonw_content::MapDefinition;
 use aonw_domain::{HexCoord, MovementState, MovementStep, MovementUnit, MovementUnits, UnitId};
 
-use super::maximum_movement_units;
 use super::reachable::movement_available_for_query;
 use super::route_search::find_route;
+use super::{MovementSearchMetrics, maximum_movement_units};
 use crate::EngineContext;
 
 /// Input for deterministic terrain-only movement planning.
@@ -38,6 +38,7 @@ pub struct TerrainMovementPlan {
     remaining_movement: MovementUnits,
     furthest_reachable_step_index: usize,
     steps: Box<[MovementStep]>,
+    search_metrics: MovementSearchMetrics,
 }
 
 impl TerrainMovementPlan {
@@ -89,6 +90,12 @@ impl TerrainMovementPlan {
     #[must_use]
     pub const fn steps(&self) -> &[MovementStep] {
         &self.steps
+    }
+
+    /// Returns deterministic search work counters.
+    #[must_use]
+    pub const fn search_metrics(&self) -> MovementSearchMetrics {
+        self.search_metrics
     }
 
     /// Returns the route prefix executable during the current turn.
@@ -174,7 +181,7 @@ pub(crate) fn plan_terrain_route(
 
     let available_movement = movement_available_for_query(unit);
     let known_blocker = known_target_blocker(state, unit, query.target, context.planning_view());
-    let steps = if let Some(blocker) = known_blocker {
+    let (steps, search_metrics) = if let Some(blocker) = known_blocker {
         let approach = find_approach_route(
             state,
             context.map(),
@@ -182,9 +189,11 @@ pub(crate) fn plan_terrain_route(
             query.target,
             available_movement,
             context.planning_view(),
-        )
-        .ok_or(TerrainMovementQueryError::TargetOccupied)?;
-        let approach_cost = approach
+        );
+        let steps = approach
+            .steps
+            .ok_or(TerrainMovementQueryError::TargetOccupied)?;
+        let approach_cost = steps
             .last()
             .map_or(MovementUnits::ZERO, |step| step.cumulative_cost());
         if blocker.owner_player_id() == unit.owner_player_id()
@@ -192,17 +201,22 @@ pub(crate) fn plan_terrain_route(
         {
             return Err(TerrainMovementQueryError::TargetOccupied);
         }
-        approach
+        (steps, approach.metrics)
     } else {
-        find_route(
+        let search = find_route(
             state,
             context.map(),
             unit,
             query.target,
             available_movement,
             context.planning_view(),
+        );
+        (
+            search
+                .steps
+                .ok_or(TerrainMovementQueryError::PathNotFound)?,
+            search.metrics,
         )
-        .ok_or(TerrainMovementQueryError::PathNotFound)?
     };
     let total_cost = steps
         .last()
@@ -228,6 +242,7 @@ pub(crate) fn plan_terrain_route(
         remaining_movement,
         furthest_reachable_step_index,
         steps: steps.into_boxed_slice(),
+        search_metrics,
     })
 }
 
@@ -294,6 +309,11 @@ fn known_target_blocker<'state>(
     })
 }
 
+struct ApproachSearchResult {
+    steps: Option<Vec<MovementStep>>,
+    metrics: MovementSearchMetrics,
+}
+
 fn find_approach_route(
     state: &MovementState,
     map: &MapDefinition,
@@ -301,31 +321,40 @@ fn find_approach_route(
     target: HexCoord,
     available_movement: MovementUnits,
     planning_view: super::MovementPlanningView<'_>,
-) -> Option<Vec<MovementStep>> {
-    map.neighbors(target)
-        .filter_map(|destination| {
-            let steps = find_route(
-                state,
-                map,
-                unit,
-                destination,
-                available_movement,
-                planning_view,
-            )?;
-            let total_cost = steps.last()?.cumulative_cost().get();
-            let turns = estimated_turns(&steps, available_movement, unit);
-            Some((turns, total_cost, steps.len(), destination, steps))
-        })
-        .min_by_key(|(turns, total_cost, step_count, destination, _)| {
-            (
-                *turns,
-                *total_cost,
-                *step_count,
-                destination.col(),
-                destination.row(),
-            )
-        })
-        .map(|(_, _, _, _, steps)| steps)
+) -> ApproachSearchResult {
+    let mut metrics = MovementSearchMetrics::default();
+    let mut best = None;
+    for destination in map.neighbors(target) {
+        let search = find_route(
+            state,
+            map,
+            unit,
+            destination,
+            available_movement,
+            planning_view,
+        );
+        metrics.merge(search.metrics);
+        let Some(steps) = search.steps else {
+            continue;
+        };
+        let Some(total_cost) = steps.last().map(|step| step.cumulative_cost().get()) else {
+            continue;
+        };
+        let key = (
+            estimated_turns(&steps, available_movement, unit),
+            total_cost,
+            steps.len(),
+            destination.col(),
+            destination.row(),
+        );
+        if best.as_ref().is_none_or(|(best_key, _)| key < *best_key) {
+            best = Some((key, steps));
+        }
+    }
+    ApproachSearchResult {
+        steps: best.map(|(_, steps)| steps),
+        metrics,
+    }
 }
 
 fn estimated_turns(steps: &[MovementStep], available: MovementUnits, unit: &MovementUnit) -> u32 {

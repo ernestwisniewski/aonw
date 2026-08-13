@@ -1,5 +1,6 @@
 use aonw_content::{MapDefinition, MapDocument};
 use aonw_contract_mapping::decode_movement_state;
+use aonw_contracts::{MAX_KNOWN_UNIT_ID_COUNT, MAX_KNOWN_UNIT_IDS_JSON_BYTES};
 use aonw_domain::{MovementState, PlayerId, UnitId};
 use aonw_engine::{
     EngineContext, GameEngine, MoveUnitCommand, MovementPlanningView, MovementTransition,
@@ -165,7 +166,7 @@ fn decode_session(
     let map = MapDocument::from_json(map_json.as_bytes())
         .map(|document| document.map().clone())
         .map_err(|error| ("invalid_map", error.to_string()))?;
-    let wire = serde_json::from_str::<MovementStateWire>(movement_state_json)
+    let wire = MovementStateWire::parse(movement_state_json)
         .map_err(|error| ("invalid_movement_state_json", error.to_string()))?;
     let state = decode_movement_state(wire.into())
         .map_err(|error| ("invalid_movement_state", error.to_string()))?;
@@ -181,17 +182,10 @@ fn decode_session(
             }
             None
         }
-        "knownUnits" => {
-            let values = serde_json::from_str::<Vec<String>>(known_unit_ids_json)
-                .map_err(|error| ("invalid_known_unit_ids", error.to_string()))?;
-            Some(
-                values
-                    .into_iter()
-                    .map(UnitId::new)
-                    .collect::<Result<Vec<_>, _>>()
-                    .map_err(|error| ("invalid_known_unit_ids", error.to_string()))?,
-            )
-        }
+        "knownUnits" => Some(
+            decode_known_unit_ids(known_unit_ids_json)
+                .map_err(|message| ("invalid_known_unit_ids", message))?,
+        ),
         _ => {
             return Err((
                 "invalid_visibility",
@@ -205,6 +199,33 @@ fn decode_session(
         actor,
         known_unit_ids,
     })
+}
+
+fn decode_known_unit_ids(input: &str) -> Result<Vec<UnitId>, String> {
+    if input.len() > MAX_KNOWN_UNIT_IDS_JSON_BYTES {
+        return Err(format!(
+            "known unit ids JSON has {} bytes; maximum is {MAX_KNOWN_UNIT_IDS_JSON_BYTES}",
+            input.len()
+        ));
+    }
+    let values = serde_json::from_str::<Vec<String>>(input).map_err(|error| error.to_string())?;
+    if values.len() > MAX_KNOWN_UNIT_ID_COUNT {
+        return Err(format!(
+            "known unit ids has {} entries; maximum is {MAX_KNOWN_UNIT_ID_COUNT}",
+            values.len()
+        ));
+    }
+    let identifiers = values
+        .into_iter()
+        .map(UnitId::new)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())?;
+    let mut sorted = identifiers.iter().collect::<Vec<_>>();
+    sorted.sort_unstable();
+    if sorted.windows(2).any(|pair| pair[0] == pair[1]) {
+        return Err("known unit ids must be unique".to_owned());
+    }
+    Ok(identifiers)
 }
 
 fn transition_json(transition: &MovementTransition) -> Value {
@@ -250,15 +271,20 @@ fn transition_json(transition: &MovementTransition) -> Value {
 
 #[cfg(test)]
 mod tests {
-    use aonw_contracts::CURRENT_MOVEMENT_STATE_VERSION;
+    use std::hint::black_box;
+    use std::time::Instant;
+
+    use aonw_contracts::{
+        CURRENT_MOVEMENT_STATE_VERSION, MAX_KNOWN_UNIT_ID_COUNT, MAX_KNOWN_UNIT_IDS_JSON_BYTES,
+    };
     use serde_json::json;
 
-    use super::decode_session;
+    use super::{decode_known_unit_ids, decode_session};
 
-    fn map_json() -> String {
-        let tiles = (0..5)
+    fn map_json(cols: u16, rows: u16) -> String {
+        let tiles = (0..rows)
             .flat_map(|row| {
-                (0..5).map(move |col| {
+                (0..cols).map(move |col| {
                     json!({
                         "col": col,
                         "row": row,
@@ -272,8 +298,8 @@ mod tests {
         json!({
             "schemaVersion": 1,
             "gridLayout": "oddQFlatTop",
-            "cols": 5,
-            "rows": 5,
+            "cols": cols,
+            "rows": rows,
             "mapName": "session_test",
             "defaultZoom": 1.0,
             "objectives": [],
@@ -303,10 +329,36 @@ mod tests {
         .to_string()
     }
 
+    fn state_json_with_units(unit_count: usize) -> String {
+        let units = (0..unit_count)
+            .map(|index| {
+                json!({
+                    "id": format!("unit-{index}"),
+                    "ownerPlayerId": "player-1",
+                    "kind": "warrior",
+                    "col": i32::try_from(index % 40).expect("column"),
+                    "row": i32::try_from(index / 40).expect("row"),
+                    "movementUnits": 6,
+                    "posture": "active",
+                    "movementBlocked": false,
+                    "queuedPath": null,
+                    "carriedArtifactId": null,
+                })
+            })
+            .collect::<Vec<_>>();
+        json!({
+            "schemaVersion": CURRENT_MOVEMENT_STATE_VERSION,
+            "revision": 1,
+            "turn": 1,
+            "units": units,
+        })
+        .to_string()
+    }
+
     #[test]
     fn session_accepts_only_the_current_movement_contract() {
         decode_session(
-            &map_json(),
+            &map_json(5, 5),
             &state_json(CURRENT_MOVEMENT_STATE_VERSION),
             "player-1",
             "unrestricted",
@@ -315,7 +367,7 @@ mod tests {
         .expect("current movement contract must open");
 
         let error = decode_session(
-            &map_json(),
+            &map_json(5, 5),
             &state_json(CURRENT_MOVEMENT_STATE_VERSION + 1),
             "player-1",
             "unrestricted",
@@ -328,7 +380,7 @@ mod tests {
     #[test]
     fn visibility_mode_is_explicit() {
         decode_session(
-            &map_json(),
+            &map_json(5, 5),
             &state_json(CURRENT_MOVEMENT_STATE_VERSION),
             "player-1",
             "knownUnits",
@@ -337,7 +389,7 @@ mod tests {
         .expect("knownUnits may explicitly expose no units");
 
         let error = decode_session(
-            &map_json(),
+            &map_json(5, 5),
             &state_json(CURRENT_MOVEMENT_STATE_VERSION),
             "player-1",
             "",
@@ -345,5 +397,47 @@ mod tests {
         )
         .expect_err("missing visibility mode must fail closed");
         assert_eq!(error.0, "invalid_visibility");
+    }
+
+    #[test]
+    fn known_unit_ids_are_bounded_and_unique() {
+        let too_many = serde_json::to_string(
+            &(0..=MAX_KNOWN_UNIT_ID_COUNT)
+                .map(|index| format!("unit-{index}"))
+                .collect::<Vec<_>>(),
+        )
+        .expect("known ids JSON");
+        assert!(decode_known_unit_ids(&too_many).is_err());
+        assert!(decode_known_unit_ids(r#"["unit-1","unit-1"]"#).is_err());
+
+        let oversized = " ".repeat(MAX_KNOWN_UNIT_IDS_JSON_BYTES + 1);
+        assert!(decode_known_unit_ids(&oversized).is_err());
+    }
+
+    #[test]
+    #[ignore = "diagnostic wall-clock benchmark"]
+    fn native_session_open_benchmark() {
+        const ITERATIONS: usize = 20;
+        let map = map_json(40, 30);
+        let state = state_json_with_units(512);
+        for _ in 0..3 {
+            black_box(
+                decode_session(&map, &state, "player-1", "unrestricted", "").expect("warm session"),
+            );
+        }
+
+        let mut samples = Vec::with_capacity(ITERATIONS);
+        for _ in 0..ITERATIONS {
+            let started = Instant::now();
+            let session = decode_session(&map, &state, "player-1", "unrestricted", "")
+                .expect("benchmark session");
+            assert_eq!(session.state.units().len(), 512);
+            black_box(session);
+            samples.push(started.elapsed().as_nanos());
+        }
+        samples.sort_unstable();
+        let median = samples[samples.len() / 2];
+        let p95 = samples[(samples.len() * 95 / 100).min(samples.len() - 1)];
+        println!("native_session_open,1200,512,{ITERATIONS},{median},{p95}");
     }
 }

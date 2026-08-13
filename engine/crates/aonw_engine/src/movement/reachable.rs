@@ -8,8 +8,8 @@ use aonw_domain::{
 
 use super::query::{validate_revision, validate_unit};
 use super::{
-    MovementCost, MovementPlanningView, TerrainMovementQueryError, maximum_movement_units,
-    terrain_entry_cost,
+    MovementCost, MovementPlanningView, MovementSearchMetrics, TerrainMovementQueryError,
+    maximum_movement_units, terrain_entry_cost,
 };
 use crate::EngineContext;
 
@@ -66,6 +66,7 @@ pub struct ReachableMovement {
     unit_id: UnitId,
     available_movement: MovementUnits,
     tiles: Box<[ReachableMovementTile]>,
+    search_metrics: MovementSearchMetrics,
 }
 
 impl ReachableMovement {
@@ -91,6 +92,12 @@ impl ReachableMovement {
     #[must_use]
     pub const fn tiles(&self) -> &[ReachableMovementTile] {
         &self.tiles
+    }
+
+    /// Returns deterministic search work counters.
+    #[must_use]
+    pub const fn search_metrics(&self) -> MovementSearchMetrics {
+        self.search_metrics
     }
 }
 
@@ -126,7 +133,7 @@ pub(crate) fn find_reachable_tiles(
     validate_revision(state, query.expected_revision)?;
     let unit = validate_unit(state, context, query.unit_id)?;
     let available = movement_available_for_query(unit);
-    let costs = reachable_costs(
+    let (costs, search_metrics) = reachable_costs(
         state,
         context.map(),
         context.planning_view(),
@@ -154,6 +161,7 @@ pub(crate) fn find_reachable_tiles(
         unit_id: unit.id().clone(),
         available_movement: available,
         tiles,
+        search_metrics,
     })
 }
 
@@ -171,9 +179,10 @@ fn reachable_costs(
     planning_view: MovementPlanningView<'_>,
     unit: &MovementUnit,
     available: MovementUnits,
-) -> Vec<Option<MovementUnits>> {
+) -> (Vec<Option<MovementUnits>>, MovementSearchMetrics) {
+    let mut metrics = MovementSearchMetrics::default();
     let Some(start) = map.tile_index(unit.position()).map(HexTileIndex::get) else {
-        return vec![None; map.bounds().tile_count()];
+        return (vec![None; map.bounds().tile_count()], metrics);
     };
     let mut occupied = vec![false; map.bounds().tile_count()];
     for candidate in state.units() {
@@ -194,9 +203,11 @@ fn reachable_costs(
         col: start_coord.col(),
         row: start_coord.row(),
     });
+    metrics.pushed();
     let maximum = maximum_movement_units(unit.kind(), unit.carried_artifact_id().is_some());
 
     while let Some(current) = frontier.pop() {
+        metrics.popped();
         if costs[current.index].is_none_or(|known| known.get() != current.cost) {
             continue;
         }
@@ -206,7 +217,9 @@ fn reachable_costs(
         let Some(coordinate) = map.coordinate_at(HexTileIndex::new(current.index)) else {
             continue;
         };
+        metrics.expanded();
         for next in map.neighbors(coordinate) {
+            metrics.examined_edge();
             let Some(next_index) = map.tile_index(next).map(HexTileIndex::get) else {
                 continue;
             };
@@ -238,7 +251,8 @@ fn reachable_costs(
                 col: next.col(),
                 row: next.row(),
             });
+            metrics.pushed();
         }
     }
-    costs
+    (costs, metrics)
 }

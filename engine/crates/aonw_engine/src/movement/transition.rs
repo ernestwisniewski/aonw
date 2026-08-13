@@ -3,6 +3,7 @@ use aonw_domain::{
     MovementUnits, QueuedMovePath, UnitId,
 };
 
+use super::MovementSearchMetrics;
 use super::{TerrainMovementQuery, TerrainMovementQueryError};
 use crate::{EngineContext, GameEngine};
 
@@ -88,6 +89,7 @@ pub struct MovementTransition {
     state: MovementState,
     event: Option<UnitMovedEvent>,
     execution: Option<UnitMovementExecution>,
+    search_metrics: MovementSearchMetrics,
 }
 
 impl MovementTransition {
@@ -107,6 +109,12 @@ impl MovementTransition {
     #[must_use]
     pub const fn execution(&self) -> Option<&UnitMovementExecution> {
         self.execution.as_ref()
+    }
+
+    /// Returns deterministic planning work counters.
+    #[must_use]
+    pub const fn search_metrics(&self) -> MovementSearchMetrics {
+        self.search_metrics
     }
 
     /// Returns whether hidden authoritative occupancy caused an accepted no-op.
@@ -202,6 +210,7 @@ pub(crate) fn apply_move_unit(
             state: state.with_revision(next_revision),
             event: None,
             execution: None,
+            search_metrics: plan.search_metrics(),
         });
     }
 
@@ -231,6 +240,7 @@ pub(crate) fn apply_move_unit(
             state: next_state,
             event: None,
             execution: None,
+            search_metrics: plan.search_metrics(),
         });
     }
     let executed_steps = reachable_steps
@@ -251,6 +261,7 @@ pub(crate) fn apply_move_unit(
             from: unit.position(),
             steps: executed_steps,
         }),
+        search_metrics: plan.search_metrics(),
     })
 }
 

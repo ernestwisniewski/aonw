@@ -6,7 +6,15 @@ use aonw_domain::{
     HexCoord, HexTileIndex, MovementState, MovementStep, MovementUnit, MovementUnits,
 };
 
-use super::{MovementCost, MovementPlanningView, maximum_movement_units, terrain_entry_cost};
+use super::{
+    MovementCost, MovementPlanningView, MovementSearchMetrics, maximum_movement_units,
+    terrain_entry_cost,
+};
+
+pub(super) struct RouteSearchResult {
+    pub(super) steps: Option<Vec<MovementStep>>,
+    pub(super) metrics: MovementSearchMetrics,
+}
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 struct RouteScore {
@@ -57,6 +65,16 @@ impl PartialOrd for FrontierNode {
     }
 }
 
+struct PreparedRouteSearch {
+    target_index: usize,
+    maximum_movement: MovementUnits,
+    occupied: Vec<bool>,
+    records: Vec<RouteRecord>,
+    best_by_tile: Vec<Vec<(u32, bool, RouteScore, usize)>>,
+    frontier: BinaryHeap<FrontierNode>,
+    metrics: MovementSearchMetrics,
+}
+
 pub(super) fn find_route(
     state: &MovementState,
     map: &MapDefinition,
@@ -64,11 +82,28 @@ pub(super) fn find_route(
     target: HexCoord,
     available_movement: MovementUnits,
     planning_view: MovementPlanningView<'_>,
-) -> Option<Vec<MovementStep>> {
-    let start_index = map.tile_index(unit.position())?.get();
-    let target_index = map.tile_index(target)?.get();
-    let maximum_movement =
-        maximum_movement_units(unit.kind(), unit.carried_artifact_id().is_some());
+) -> RouteSearchResult {
+    let Some(prepared) =
+        prepare_route_search(state, map, unit, target, available_movement, planning_view)
+    else {
+        return RouteSearchResult {
+            steps: None,
+            metrics: MovementSearchMetrics::default(),
+        };
+    };
+    run_route_search(prepared, map, unit)
+}
+
+fn prepare_route_search(
+    state: &MovementState,
+    map: &MapDefinition,
+    unit: &MovementUnit,
+    target: HexCoord,
+    available_movement: MovementUnits,
+    planning_view: MovementPlanningView<'_>,
+) -> Option<PreparedRouteSearch> {
+    let start_index = map.tile_index(unit.position()).map(HexTileIndex::get)?;
+    let target_index = map.tile_index(target).map(HexTileIndex::get)?;
     let mut occupied = vec![false; map.bounds().tile_count()];
     for candidate in state.units() {
         if candidate.id() == unit.id() || !planning_view.observes_occupancy(unit, candidate) {
@@ -89,7 +124,7 @@ pub(super) fn find_route(
         total_cost: 0,
         step_count: 0,
     };
-    let mut records = vec![RouteRecord {
+    let records = vec![RouteRecord {
         state: start_state,
         score: start_score,
         parent: None,
@@ -98,28 +133,61 @@ pub(super) fn find_route(
     let mut best_by_tile = vec![Vec::<(u32, bool, RouteScore, usize)>::new(); occupied.len()];
     best_by_tile[start_index].push((start_state.remaining, start_state.started, start_score, 0));
     let mut frontier = BinaryHeap::new();
-    frontier.push(frontier_node(map, 0, records[0])?);
+    let start_node = frontier_node(map, 0, records[0])?;
+    frontier.push(start_node);
+    let mut metrics = MovementSearchMetrics::default();
+    metrics.retained_record();
+    metrics.pushed();
+    Some(PreparedRouteSearch {
+        target_index,
+        maximum_movement: maximum_movement_units(unit.kind(), unit.carried_artifact_id().is_some()),
+        occupied,
+        records,
+        best_by_tile,
+        frontier,
+        metrics,
+    })
+}
 
-    while let Some(current_node) = frontier.pop() {
-        if !is_current_best(&best_by_tile, current_node) {
+fn run_route_search(
+    mut search: PreparedRouteSearch,
+    map: &MapDefinition,
+    unit: &MovementUnit,
+) -> RouteSearchResult {
+    while let Some(current_node) = search.frontier.pop() {
+        search.metrics.popped();
+        if !is_current_best(&search.best_by_tile, current_node) {
             continue;
         }
-        let current = records[current_node.record_index];
-        if current.state.tile_index == target_index {
-            return reconstruct_route(map, &records, current_node.record_index);
+        let current = search.records[current_node.record_index];
+        if current.state.tile_index == search.target_index {
+            return RouteSearchResult {
+                steps: reconstruct_route(map, &search.records, current_node.record_index),
+                metrics: search.metrics,
+            };
         }
-        let coordinate = map.coordinate_at(HexTileIndex::new(current.state.tile_index))?;
+        let Some(coordinate) = map.coordinate_at(HexTileIndex::new(current.state.tile_index))
+        else {
+            continue;
+        };
+        search.metrics.expanded();
         for next_coordinate in map.neighbors(coordinate) {
-            let next_index = map.tile_index(next_coordinate)?.get();
-            if occupied[next_index] {
+            search.metrics.examined_edge();
+            let Some(next_index) = map.tile_index(next_coordinate).map(HexTileIndex::get) else {
+                continue;
+            };
+            if search.occupied[next_index] {
                 continue;
             }
+            let Some(tile) = map.tile_at(next_coordinate) else {
+                continue;
+            };
             let MovementCost::Passable(enter_cost) =
-                terrain_entry_cost(map.tile_at(next_coordinate)?, unit.kind().movement_domain())
+                terrain_entry_cost(tile, unit.kind().movement_domain())
             else {
                 continue;
             };
-            if enter_cost > maximum_movement && unit.carried_artifact_id().is_none() {
+            if enter_cost > search.maximum_movement && unit.carried_artifact_id().is_none() {
                 continue;
             }
             let Some(next_score) = next_score(current.score, enter_cost) else {
@@ -129,7 +197,7 @@ pub(super) fn find_route(
                 current.state,
                 current.score.turns,
                 enter_cost,
-                maximum_movement,
+                search.maximum_movement,
             ) else {
                 continue;
             };
@@ -143,27 +211,32 @@ pub(super) fn find_route(
                 ..next_score
             };
             if !record_if_better(
-                &mut best_by_tile[next_index],
+                &mut search.best_by_tile[next_index],
                 next_state,
                 next_score,
-                records.len(),
+                search.records.len(),
             ) {
                 continue;
             }
-            let record_index = records.len();
+            let record_index = search.records.len();
             let record = RouteRecord {
                 state: next_state,
                 score: next_score,
                 parent: Some(current_node.record_index),
                 enter_cost,
             };
-            records.push(record);
+            search.records.push(record);
+            search.metrics.retained_record();
             if let Some(node) = frontier_node(map, record_index, record) {
-                frontier.push(node);
+                search.frontier.push(node);
+                search.metrics.pushed();
             }
         }
     }
-    None
+    RouteSearchResult {
+        steps: None,
+        metrics: search.metrics,
+    }
 }
 
 fn frontier_node(

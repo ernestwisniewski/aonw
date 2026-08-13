@@ -66,7 +66,9 @@ GameUnit _movementUnit({
   int col = 0,
   int row = 0,
   int? movementPoints,
+  int? movementUnits,
   UnitPosture posture = UnitPosture.active,
+  String? carriedArtifactId,
   String? excavatingArtifactId,
 }) {
   return GameUnit(
@@ -77,7 +79,9 @@ GameUnit _movementUnit({
     col: col,
     row: row,
     movementPoints: movementPoints,
+    movementUnits: movementUnits,
     posture: posture,
+    carriedArtifactId: carriedArtifactId,
     excavatingArtifactId: excavatingArtifactId,
   );
 }
@@ -89,12 +93,14 @@ DomainState _movementState(
   List<GameCity> cities = const [],
   FogOfWarState? fogOfWar,
   DiplomacyState? diplomacy,
+  TransportNetworkState? transportNetwork,
 }) {
   return source.copyWith(
     units: [...units, _movementSentinelUnit],
     cities: [...cities, _movementSentinelCity],
     artifacts: const [_movementSentinelArtifact],
     fieldImprovements: const [_movementSentinelFieldImprovement],
+    transportNetwork: transportNetwork ?? TransportNetworkState.empty,
     fogOfWar: fogOfWar ?? _movementVisibleFog(mapCols),
     research: _movementSentinelResearch,
 
@@ -218,5 +224,6 @@ ReducerParityFixture _movementFixture(
       _movementExpectedState(id, state),
     ),
     expectedEvents: reducerParityEvents(_movementExpectedEvents(id)),
+    expectedMovementExecutions: _movementExpectedExecutions(id),
   );
 }

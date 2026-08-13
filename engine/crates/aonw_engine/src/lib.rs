@@ -12,10 +12,10 @@ use aonw_content::MapDefinition;
 use aonw_domain::{MovementState, PlayerId};
 
 pub use movement::{
-    MoveUnitCommand, MoveUnitError, MovementCost, MovementPlanningView, MovementTransition,
-    ReachableMovement, ReachableMovementQuery, ReachableMovementTile, TerrainMovementPlan,
-    TerrainMovementQuery, TerrainMovementQueryError, UnitMovedEvent, UnitMovementExecution,
-    maximum_movement_units, terrain_entry_cost,
+    MoveUnitCommand, MoveUnitError, MovementCost, MovementPlanningView, MovementSearchMetrics,
+    MovementTransition, ReachableMovement, ReachableMovementQuery, ReachableMovementTile,
+    TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError, UnitMovedEvent,
+    UnitMovementExecution, maximum_movement_units, terrain_entry_cost,
 };
 
 /// Engine behavior version implemented by this workspace.

@@ -28,9 +28,9 @@ void main() {
 typedef _FixtureProvider = List<ReducerParityFixture> Function();
 
 void _registerMovementCorpusGuards(_FixtureProvider fixtureProvider) {
-  test('movement corpus has exactly 19 reviewed wire-safe shared cases', () {
+  test('movement corpus has exactly 35 reviewed wire-safe shared cases', () {
     final fixtures = fixtureProvider();
-    expect(fixtures, hasLength(19));
+    expect(fixtures, hasLength(35));
     expect(
       () => MovementReducerParityCharacterization.validateForTest(fixtures),
       returnsNormally,
@@ -38,6 +38,7 @@ void _registerMovementCorpusGuards(_FixtureProvider fixtureProvider) {
     for (final fixture in fixtures) {
       final encoded = DomainCommandCodec.toJson(fixture.command);
       expect(DomainCommandCodec.fromJson(encoded), fixture.command);
+      expect(fixture.expectedMovementExecutions, isNotNull);
     }
   });
 
@@ -88,6 +89,7 @@ void _registerMovementCorpusGuards(_FixtureProvider fixtureProvider) {
     for (final drifted in [
       _copyMovementFixture(source, expectedState: driftedState),
       _copyMovementFixture(source, expectedEvents: const []),
+      _copyMovementFixture(source, expectedMovementExecutions: const []),
     ]) {
       expect(
         () => MovementReducerParityCharacterization.validateForTest(
@@ -302,6 +304,7 @@ ReducerParityFixture _copyMovementFixture(
   Object? expectedReason = _movementUnchanged,
   Map<String, dynamic>? expectedState,
   List<Map<String, dynamic>>? expectedEvents,
+  List<Map<String, dynamic>>? expectedMovementExecutions,
 }) {
   return ReducerParityFixture(
     id: source.id,
@@ -321,6 +324,8 @@ ReducerParityFixture _copyMovementFixture(
     expectedSave: source.expectedSave,
     expectedState: expectedState ?? source.expectedState,
     expectedEvents: expectedEvents ?? source.expectedEvents,
+    expectedMovementExecutions:
+        expectedMovementExecutions ?? source.expectedMovementExecutions,
   );
 }
 

@@ -15,27 +15,50 @@ const _movementIdentityStateFixtureIds = <String>{
   'movement-characterization-invalid-origin-rejected',
   'movement-characterization-far-hidden-rejected',
   'movement-characterization-no-fog-occupied-rejected',
+  'movement-characterization-terrain-ocean-land-rejected',
+  'movement-characterization-terrain-lake-land-rejected',
+  'movement-characterization-terrain-mountain-rejected',
+};
+
+const _movementSimpleAcceptedCosts = <String, int>{
+  'movement-characterization-fortified-move-accepted': 2,
+  'movement-characterization-terrain-plains-accepted': 2,
+  'movement-characterization-terrain-desert-accepted': 4,
+  'movement-characterization-terrain-tundra-accepted': 4,
+  'movement-characterization-terrain-snow-accepted': 6,
+  'movement-characterization-terrain-wetlands-accepted': 4,
+  'movement-characterization-terrain-forest-accepted': 4,
+  'movement-characterization-terrain-jungle-accepted': 4,
+  'movement-characterization-terrain-hills-accepted': 4,
+  'movement-characterization-terrain-river-accepted': 2,
+  'movement-characterization-terrain-coast-land-accepted': 2,
+  'movement-characterization-terrain-ocean-naval-accepted': 2,
+  'movement-characterization-road-half-point-accepted': 1,
+  'movement-characterization-artifact-capacity-accepted': 10,
 };
 
 DomainState _movementExpectedState(String fixtureId, DomainState input) {
   if (_movementIdentityStateFixtureIds.contains(fixtureId)) return input;
+  if (_movementSimpleAcceptedCosts[fixtureId] case final cost?) {
+    final unit = _inputMovementUnit(input);
+    final available =
+        fixtureId == 'movement-characterization-fortified-move-accepted'
+        ? 10
+        : unit.movementUnits;
+    final remaining = cost >= available ? 0 : available - cost;
+    return _movementStateWithUnit(
+      input,
+      unit
+          .copyWith(
+            col: 1,
+            row: 0,
+            movementUnits: remaining,
+            posture: UnitPosture.active,
+          )
+          .copyWithQueuedPath(null),
+    );
+  }
   return switch (fixtureId) {
-    'movement-characterization-fortified-move-accepted' =>
-      _movementStateWithUnit(
-        input,
-        _inputMovementUnit(input)
-            .copyWith(
-              col: 1,
-              row: 0,
-              movementPoints:
-                  UnitMovementBalance.maxMovementPointsForType(
-                    _inputMovementUnit(input).type,
-                  ) -
-                  1,
-              posture: UnitPosture.active,
-            )
-            .copyWithQueuedPath(null),
-      ),
     'movement-characterization-partial-queued-accepted' =>
       _movementStateWithUnit(
         input,
@@ -92,8 +115,8 @@ List<GameEvent> _movementExpectedEvents(String fixtureId) {
       _movementIdentityStateFixtureIds.contains(fixtureId)) {
     return const [];
   }
-  return switch (fixtureId) {
-    'movement-characterization-fortified-move-accepted' => const [
+  if (_movementSimpleAcceptedCosts.containsKey(fixtureId)) {
+    return const [
       UnitMovedEvent(
         unitId: _movementUnitId,
         fromCol: 0,
@@ -101,7 +124,9 @@ List<GameEvent> _movementExpectedEvents(String fixtureId) {
         toCol: 1,
         toRow: 0,
       ),
-    ],
+    ];
+  }
+  return switch (fixtureId) {
     'movement-characterization-partial-queued-accepted' => const [
       UnitMovedEvent(
         unitId: _movementUnitId,
@@ -130,6 +155,56 @@ List<GameEvent> _movementExpectedEvents(String fixtureId) {
       ),
     ],
     _ => throw StateError('Unknown movement event oracle id: $fixtureId.'),
+  };
+}
+
+List<Map<String, dynamic>> _movementExpectedExecutions(String fixtureId) {
+  if (fixtureId == 'movement-characterization-zero-movement-queued-accepted' ||
+      _movementIdentityStateFixtureIds.contains(fixtureId)) {
+    return const [];
+  }
+  if (_movementSimpleAcceptedCosts[fixtureId] case final cost?) {
+    return [
+      _movementExecution([(col: 1, row: 0, cost: cost)]),
+    ];
+  }
+  return switch (fixtureId) {
+    'movement-characterization-partial-queued-accepted' => [
+      _movementExecution(const [
+        (col: 1, row: 0, cost: 2),
+        (col: 2, row: 0, cost: 2),
+      ]),
+    ],
+    'movement-characterization-rough-prefix-exhausted-accepted' => [
+      _movementExecution(const [
+        (col: 1, row: 0, cost: 4),
+        (col: 2, row: 0, cost: 4),
+      ]),
+    ],
+    'movement-characterization-contact-discovery-accepted' => [
+      _movementExecution(const [(col: 1, row: 0, cost: 2)]),
+    ],
+    _ => throw StateError('Unknown movement execution oracle id: $fixtureId.'),
+  };
+}
+
+Map<String, dynamic> _movementExecution(
+  List<({int col, int row, int cost})> route,
+) {
+  var cumulativeCost = 0;
+  return {
+    'unitId': _movementUnitId,
+    'fromCol': 0,
+    'fromRow': 0,
+    'steps': [
+      for (final step in route)
+        {
+          'col': step.col,
+          'row': step.row,
+          'enterCost': step.cost,
+          'cumulativeCost': cumulativeCost += step.cost,
+        },
+    ],
   };
 }
 

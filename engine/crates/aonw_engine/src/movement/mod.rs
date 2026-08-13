@@ -1,5 +1,6 @@
 mod balance;
 mod cost;
+mod metrics;
 mod planning_view;
 mod query;
 #[cfg(test)]
@@ -13,6 +14,7 @@ mod transition_tests;
 
 pub use balance::maximum_movement_units;
 pub use cost::{MovementCost, terrain_entry_cost};
+pub use metrics::MovementSearchMetrics;
 pub use planning_view::MovementPlanningView;
 pub use query::{TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError};
 pub use reachable::{ReachableMovement, ReachableMovementQuery, ReachableMovementTile};

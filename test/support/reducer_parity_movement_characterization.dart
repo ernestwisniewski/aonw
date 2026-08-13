@@ -110,6 +110,70 @@ const _requiredMovementCharacterization = <String, _MovementRequirement>{
     accepted: true,
     reason: null,
   ),
+  'movement-characterization-terrain-plains-accepted': (
+    accepted: true,
+    reason: null,
+  ),
+  'movement-characterization-terrain-desert-accepted': (
+    accepted: true,
+    reason: null,
+  ),
+  'movement-characterization-terrain-tundra-accepted': (
+    accepted: true,
+    reason: null,
+  ),
+  'movement-characterization-terrain-snow-accepted': (
+    accepted: true,
+    reason: null,
+  ),
+  'movement-characterization-terrain-wetlands-accepted': (
+    accepted: true,
+    reason: null,
+  ),
+  'movement-characterization-terrain-forest-accepted': (
+    accepted: true,
+    reason: null,
+  ),
+  'movement-characterization-terrain-jungle-accepted': (
+    accepted: true,
+    reason: null,
+  ),
+  'movement-characterization-terrain-hills-accepted': (
+    accepted: true,
+    reason: null,
+  ),
+  'movement-characterization-terrain-river-accepted': (
+    accepted: true,
+    reason: null,
+  ),
+  'movement-characterization-terrain-coast-land-accepted': (
+    accepted: true,
+    reason: null,
+  ),
+  'movement-characterization-terrain-ocean-land-rejected': (
+    accepted: false,
+    reason: 'move_path_not_found',
+  ),
+  'movement-characterization-terrain-lake-land-rejected': (
+    accepted: false,
+    reason: 'move_path_not_found',
+  ),
+  'movement-characterization-terrain-mountain-rejected': (
+    accepted: false,
+    reason: 'move_path_not_found',
+  ),
+  'movement-characterization-terrain-ocean-naval-accepted': (
+    accepted: true,
+    reason: null,
+  ),
+  'movement-characterization-road-half-point-accepted': (
+    accepted: true,
+    reason: null,
+  ),
+  'movement-characterization-artifact-capacity-accepted': (
+    accepted: true,
+    reason: null,
+  ),
 };
 
 void _requireExactMovementCharacterization(
@@ -127,6 +191,7 @@ void _requireExactMovementCharacterization(
     final required = _requiredMovementCharacterization[fixture.id]!;
     final expectedState = _movementExpectedState(fixture.id, fixture.state);
     final expectedEvents = _movementExpectedEvents(fixture.id);
+    final expectedExecutions = _movementExpectedExecutions(fixture.id);
     if (fixture.family != 'movement' ||
         fixture.command is! MoveUnitCommand ||
         fixture.expectedAccepted != required.accepted ||
@@ -142,6 +207,10 @@ void _requireExactMovementCharacterization(
         !_movementJsonEquals(
           fixture.expectedEvents,
           reducerParityEvents(expectedEvents),
+        ) ||
+        !_movementJsonEquals(
+          fixture.expectedMovementExecutions,
+          expectedExecutions,
         )) {
       throw StateError(
         'Movement parity characterization drifted: ${fixture.id}.',

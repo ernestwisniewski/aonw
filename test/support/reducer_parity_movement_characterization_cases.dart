@@ -64,6 +64,30 @@ List<ReducerParityFixture> _movementSpatialRejectionCases(
 ) => [
   ..._movementTerrainAndOccupancyRejectionCases(template),
   ..._movementBoundsAndVisibilityRejectionCases(template),
+  ..._movementImpassableTerrainCases(template),
+];
+
+List<ReducerParityFixture> _movementImpassableTerrainCases(
+  ReducerParityFixture template,
+) => [
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-ocean-land-rejected',
+    tickOffset: 213,
+    targetTerrains: const [TerrainType.ocean],
+  ),
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-lake-land-rejected',
+    tickOffset: 214,
+    targetTerrains: const [TerrainType.lake],
+  ),
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-mountain-rejected',
+    tickOffset: 215,
+    targetTerrains: const [TerrainType.mountain],
+  ),
 ];
 
 List<ReducerParityFixture> _movementTerrainAndOccupancyRejectionCases(
@@ -162,7 +186,161 @@ List<ReducerParityFixture> _movementTerrainAndOccupancyRejectionCases(
       ),
       command: const MoveUnitCommand(_movementUnitId, 1, 0),
     ),
+    ..._movementPassableTerrainCases(template),
   ];
+}
+
+List<ReducerParityFixture> _movementPassableTerrainCases(
+  ReducerParityFixture template,
+) => [
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-plains-accepted',
+    tickOffset: 228,
+    targetTerrains: const [TerrainType.plains],
+  ),
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-desert-accepted',
+    tickOffset: 229,
+    targetTerrains: const [TerrainType.desert],
+  ),
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-tundra-accepted',
+    tickOffset: 230,
+    targetTerrains: const [TerrainType.tundra],
+  ),
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-snow-accepted',
+    tickOffset: 231,
+    targetTerrains: const [TerrainType.snow],
+  ),
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-wetlands-accepted',
+    tickOffset: 232,
+    targetTerrains: const [TerrainType.wetlands],
+  ),
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-forest-accepted',
+    tickOffset: 233,
+    targetTerrains: const [TerrainType.grassland, TerrainType.forest],
+  ),
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-jungle-accepted',
+    tickOffset: 234,
+    targetTerrains: const [TerrainType.grassland, TerrainType.jungle],
+  ),
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-hills-accepted',
+    tickOffset: 235,
+    targetTerrains: const [TerrainType.grassland, TerrainType.hills],
+  ),
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-river-accepted',
+    tickOffset: 236,
+    targetTerrains: const [TerrainType.grassland, TerrainType.river],
+  ),
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-coast-land-accepted',
+    tickOffset: 237,
+    targetTerrains: const [TerrainType.coast],
+  ),
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-terrain-ocean-naval-accepted',
+    tickOffset: 238,
+    originTerrains: const [TerrainType.coast],
+    targetTerrains: const [TerrainType.ocean],
+    unit: _movementUnit(type: GameUnitType.scoutShip),
+  ),
+  _movementRoadAcceptanceCase(template),
+  _movementTerrainFixture(
+    template,
+    id: 'movement-characterization-artifact-capacity-accepted',
+    tickOffset: 240,
+    targetTerrains: const [
+      TerrainType.snow,
+      TerrainType.forest,
+      TerrainType.hills,
+    ],
+    unit: _movementUnit(
+      movementPoints: 2,
+      carriedArtifactId: 'movement_carried_artifact',
+    ),
+  ),
+];
+
+ReducerParityFixture _movementTerrainFixture(
+  ReducerParityFixture template, {
+  required String id,
+  required int tickOffset,
+  required List<TerrainType> targetTerrains,
+  List<TerrainType> originTerrains = const [TerrainType.grassland],
+  GameUnit? unit,
+}) {
+  return _movementFixture(
+    template,
+    id: id,
+    tickOffset: tickOffset,
+    mapData: _movementMap(
+      template,
+      cols: 2,
+      terrainOverrides: {
+        (col: 0, row: 0): originTerrains,
+        (col: 1, row: 0): targetTerrains,
+      },
+    ),
+    state: _movementState(
+      template.state,
+      mapCols: 2,
+      units: [unit ?? _movementUnit()],
+    ),
+    command: const MoveUnitCommand(_movementUnitId, 1, 0),
+  );
+}
+
+ReducerParityFixture _movementRoadAcceptanceCase(
+  ReducerParityFixture template,
+) {
+  final roads = TransportNetworkState(
+    segments: const [
+      TransportSegment(
+        hex: HexCoord(col: 0, row: 0),
+        builtByPlayerId: _movementActorId,
+      ),
+      TransportSegment(
+        hex: HexCoord(col: 1, row: 0),
+        builtByPlayerId: _movementActorId,
+      ),
+    ],
+  );
+  return _movementFixture(
+    template,
+    id: 'movement-characterization-road-half-point-accepted',
+    tickOffset: 239,
+    mapData: _movementMap(
+      template,
+      cols: 2,
+      terrainOverrides: const {
+        (col: 1, row: 0): [TerrainType.snow],
+      },
+    ),
+    state: _movementState(
+      template.state,
+      mapCols: 2,
+      units: [_movementUnit()],
+      transportNetwork: roads,
+    ),
+    command: const MoveUnitCommand(_movementUnitId, 1, 0),
+  );
 }
 
 List<ReducerParityFixture> _movementBoundsAndVisibilityRejectionCases(

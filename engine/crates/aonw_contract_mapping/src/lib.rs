@@ -9,7 +9,8 @@
 use core::fmt;
 
 use aonw_contracts::{
-    CURRENT_MOVEMENT_STATE_VERSION, MovementStateDto, MovementStepDto, MovementUnitDto,
+    CURRENT_MOVEMENT_STATE_VERSION, MAX_MOVEMENT_BALANCE_UNITS, MAX_MOVEMENT_STATE_UNIT_COUNT,
+    MAX_QUEUED_PATH_STEP_COUNT, MovementStateDto, MovementStepDto, MovementUnitDto,
     QueuedMovePathDto, UnitKindDto, UnitPostureDto,
 };
 use aonw_domain::{
@@ -27,6 +28,31 @@ pub enum MappingError {
         found: u16,
         /// Version accepted by this build.
         supported: u16,
+    },
+    /// The state exceeds the bounded entity count.
+    TooManyUnits {
+        /// Unit count found in the input.
+        found: usize,
+        /// Maximum accepted unit count.
+        maximum: usize,
+    },
+    /// A unit carries an unbounded current-turn movement balance.
+    MovementBalanceOutOfRange {
+        /// Unit array index carrying the invalid value.
+        index: usize,
+        /// Fixed-point balance found in the input.
+        found: u32,
+        /// Maximum accepted fixed-point balance.
+        maximum: u32,
+    },
+    /// A queued route exceeds the bounded map scale.
+    QueuedPathTooLong {
+        /// Unit array index carrying the invalid route.
+        index: usize,
+        /// Step count found in the input.
+        found: usize,
+        /// Maximum accepted step count.
+        maximum: usize,
     },
     /// A unit identifier is invalid.
     InvalidUnitId {
@@ -74,6 +100,28 @@ impl fmt::Display for MappingError {
                 formatter,
                 "unsupported state contract version {found}; supported version is {supported}"
             ),
+            Self::TooManyUnits { found, maximum } => {
+                write!(
+                    formatter,
+                    "movement state has {found} units; maximum is {maximum}"
+                )
+            }
+            Self::MovementBalanceOutOfRange {
+                index,
+                found,
+                maximum,
+            } => write!(
+                formatter,
+                "movement balance at unit index {index} is {found}; maximum is {maximum}"
+            ),
+            Self::QueuedPathTooLong {
+                index,
+                found,
+                maximum,
+            } => write!(
+                formatter,
+                "queued path at unit index {index} has {found} steps; maximum is {maximum}"
+            ),
             Self::InvalidUnitId { index, source } => {
                 write!(formatter, "invalid unit id at index {index}: {source}")
             }
@@ -117,7 +165,10 @@ impl std::error::Error for MappingError {
             Self::InvalidQueuedMovePath { source, .. } => Some(source),
             Self::InvalidMovementUnit { source, .. } => Some(source),
             Self::InvalidMovementState(source) => Some(source),
-            Self::UnsupportedStateContractVersion { .. } => None,
+            Self::UnsupportedStateContractVersion { .. }
+            | Self::TooManyUnits { .. }
+            | Self::MovementBalanceOutOfRange { .. }
+            | Self::QueuedPathTooLong { .. } => None,
         }
     }
 }
@@ -133,6 +184,12 @@ pub fn decode_movement_state(dto: MovementStateDto) -> Result<MovementState, Map
         return Err(MappingError::UnsupportedStateContractVersion {
             found: dto.schema_version,
             supported: CURRENT_MOVEMENT_STATE_VERSION,
+        });
+    }
+    if dto.units.len() > MAX_MOVEMENT_STATE_UNIT_COUNT {
+        return Err(MappingError::TooManyUnits {
+            found: dto.units.len(),
+            maximum: MAX_MOVEMENT_STATE_UNIT_COUNT,
         });
     }
 
@@ -171,6 +228,22 @@ fn decode_unit(index: usize, dto: MovementUnitDto) -> Result<MovementUnit, Mappi
         queued_path,
         carried_artifact_id,
     } = dto;
+    if movement_units > MAX_MOVEMENT_BALANCE_UNITS {
+        return Err(MappingError::MovementBalanceOutOfRange {
+            index,
+            found: movement_units,
+            maximum: MAX_MOVEMENT_BALANCE_UNITS,
+        });
+    }
+    if let Some(path) = &queued_path
+        && path.steps.len() > MAX_QUEUED_PATH_STEP_COUNT
+    {
+        return Err(MappingError::QueuedPathTooLong {
+            index,
+            found: path.steps.len(),
+            maximum: MAX_QUEUED_PATH_STEP_COUNT,
+        });
+    }
     let id = UnitId::new(id).map_err(|source| MappingError::InvalidUnitId { index, source })?;
     let owner_player_id = PlayerId::new(owner_player_id)
         .map_err(|source| MappingError::InvalidUnitOwnerId { index, source })?;
@@ -312,7 +385,8 @@ fn encode_queued_path(path: &QueuedMovePath) -> QueuedMovePathDto {
 #[cfg(test)]
 mod tests {
     use aonw_contracts::{
-        CURRENT_MOVEMENT_STATE_VERSION, MovementStateDto, MovementStepDto, MovementUnitDto,
+        CURRENT_MOVEMENT_STATE_VERSION, MAX_MOVEMENT_BALANCE_UNITS, MAX_MOVEMENT_STATE_UNIT_COUNT,
+        MAX_QUEUED_PATH_STEP_COUNT, MovementStateDto, MovementStepDto, MovementUnitDto,
         QueuedMovePathDto, UnitKindDto, UnitPostureDto,
     };
     use aonw_domain::{
@@ -443,6 +517,68 @@ mod tests {
             Err(MappingError::UnsupportedStateContractVersion {
                 found: CURRENT_MOVEMENT_STATE_VERSION + 1,
                 supported: CURRENT_MOVEMENT_STATE_VERSION,
+            })
+        );
+    }
+
+    #[test]
+    fn movement_state_entity_count_is_bounded() {
+        let mut dto = state_dto();
+        let template = dto.units[0].clone();
+        dto.units = (0..=MAX_MOVEMENT_STATE_UNIT_COUNT)
+            .map(|index| {
+                let mut unit = template.clone();
+                unit.id = format!("unit-{index}");
+                unit.queued_path = None;
+                unit
+            })
+            .collect();
+
+        assert_eq!(
+            decode_movement_state(dto),
+            Err(MappingError::TooManyUnits {
+                found: MAX_MOVEMENT_STATE_UNIT_COUNT + 1,
+                maximum: MAX_MOVEMENT_STATE_UNIT_COUNT,
+            })
+        );
+    }
+
+    #[test]
+    fn movement_balance_is_bounded_before_domain_construction() {
+        let mut dto = state_dto();
+        dto.units[0].movement_units = MAX_MOVEMENT_BALANCE_UNITS + 1;
+
+        assert_eq!(
+            decode_movement_state(dto),
+            Err(MappingError::MovementBalanceOutOfRange {
+                index: 0,
+                found: MAX_MOVEMENT_BALANCE_UNITS + 1,
+                maximum: MAX_MOVEMENT_BALANCE_UNITS,
+            })
+        );
+    }
+
+    #[test]
+    fn queued_path_length_is_bounded_before_path_validation() {
+        let mut dto = state_dto();
+        let origin = MovementStepDto {
+            col: 2,
+            row: 1,
+            enter_cost_units: 0,
+            cumulative_cost_units: 0,
+        };
+        dto.units[0]
+            .queued_path
+            .as_mut()
+            .expect("queued path")
+            .steps = vec![origin; MAX_QUEUED_PATH_STEP_COUNT + 1];
+
+        assert_eq!(
+            decode_movement_state(dto),
+            Err(MappingError::QueuedPathTooLong {
+                index: 0,
+                found: MAX_QUEUED_PATH_STEP_COUNT + 1,
+                maximum: MAX_QUEUED_PATH_STEP_COUNT,
             })
         );
     }

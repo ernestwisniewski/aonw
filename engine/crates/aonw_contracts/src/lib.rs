@@ -7,6 +7,13 @@
 
 #![forbid(unsafe_code)]
 
+mod limits;
+
+pub use limits::{
+    MAX_KNOWN_UNIT_ID_COUNT, MAX_KNOWN_UNIT_IDS_JSON_BYTES, MAX_MOVEMENT_BALANCE_UNITS,
+    MAX_MOVEMENT_STATE_JSON_BYTES, MAX_MOVEMENT_STATE_UNIT_COUNT, MAX_QUEUED_PATH_STEP_COUNT,
+};
+
 /// The only movement projection version accepted by the mapping crate.
 pub const CURRENT_MOVEMENT_STATE_VERSION: u16 = 1;
 

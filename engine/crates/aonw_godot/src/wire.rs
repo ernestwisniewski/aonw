@@ -1,8 +1,8 @@
 use std::fmt;
 
 use aonw_contracts::{
-    MovementStateDto, MovementStepDto, MovementUnitDto, QueuedMovePathDto, UnitKindDto,
-    UnitPostureDto,
+    MAX_MOVEMENT_STATE_JSON_BYTES, MovementStateDto, MovementStepDto, MovementUnitDto,
+    QueuedMovePathDto, UnitKindDto, UnitPostureDto,
 };
 use godot::prelude::GString;
 use serde::Deserialize;
@@ -15,6 +15,45 @@ pub(crate) struct MovementStateWire {
     revision: u64,
     turn: u32,
     units: Vec<MovementUnitWire>,
+}
+
+#[derive(Debug)]
+pub(crate) enum MovementStateWireError {
+    TooLarge { found: usize, maximum: usize },
+    InvalidJson(serde_json::Error),
+}
+
+impl fmt::Display for MovementStateWireError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::TooLarge { found, maximum } => write!(
+                formatter,
+                "movement state JSON has {found} bytes; maximum is {maximum}"
+            ),
+            Self::InvalidJson(error) => error.fmt(formatter),
+        }
+    }
+}
+
+impl std::error::Error for MovementStateWireError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::InvalidJson(error) => Some(error),
+            Self::TooLarge { .. } => None,
+        }
+    }
+}
+
+impl MovementStateWire {
+    pub(crate) fn parse(input: &str) -> Result<Self, MovementStateWireError> {
+        if input.len() > MAX_MOVEMENT_STATE_JSON_BYTES {
+            return Err(MovementStateWireError::TooLarge {
+                found: input.len(),
+                maximum: MAX_MOVEMENT_STATE_JSON_BYTES,
+            });
+        }
+        serde_json::from_str(input).map_err(MovementStateWireError::InvalidJson)
+    }
 }
 
 #[derive(Deserialize)]
@@ -201,10 +240,10 @@ pub(crate) fn encode_json(value: &Value) -> GString {
 
 #[cfg(test)]
 mod tests {
-    use aonw_contracts::CURRENT_MOVEMENT_STATE_VERSION;
+    use aonw_contracts::{CURRENT_MOVEMENT_STATE_VERSION, MAX_MOVEMENT_STATE_JSON_BYTES};
     use serde_json::json;
 
-    use super::MovementStateWire;
+    use super::{MovementStateWire, MovementStateWireError};
 
     #[test]
     fn movement_wire_requires_every_current_unit_field() {
@@ -267,5 +306,18 @@ mod tests {
                 "unknown {field} must be rejected"
             );
         }
+    }
+
+    #[test]
+    fn movement_wire_rejects_oversized_input_before_json_decode() {
+        let oversized = " ".repeat(MAX_MOVEMENT_STATE_JSON_BYTES + 1);
+
+        assert!(matches!(
+            MovementStateWire::parse(&oversized),
+            Err(MovementStateWireError::TooLarge {
+                found,
+                maximum: MAX_MOVEMENT_STATE_JSON_BYTES,
+            }) if found == MAX_MOVEMENT_STATE_JSON_BYTES + 1
+        ));
     }
 }

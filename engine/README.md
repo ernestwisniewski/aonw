@@ -41,6 +41,17 @@ The component targets are `rust-format-check`, `rust-clippy`, `rust-test`, and
 `rust-doc`. They are intentionally independent of the existing Dart/Flutter
 `make ci` target during this migration phase.
 
+Run the diagnostic release baseline separately:
+
+```sh
+make rust-benchmark
+```
+
+It reports map open/hash plus reachable, route, and apply workloads for 100,
+600, and 1200 tiles. Movement cases cover 1, 10, 64, and 512 units. The native
+boundary case opens a 1200-tile session with 512 units. Wall-clock values are
+diagnostic; stable result signatures and search-work counters are test gates.
+
 The toolchain is pinned in `rust-toolchain.toml`. Production rules and all
 non-FFI crates forbid `unsafe`; the single required `unsafe impl` is confined to
 the godot-rust extension entry point. Canonical entities preserve contract
@@ -53,6 +64,15 @@ Three reviewed movement fixtures now execute through `GameEngine` and compare
 complete state, rejection, events, and exact movement evidence. `aonw_testkit`
 accepts only the current fixture contract. Rust and Godot map boundaries contain
 only the strict, versioned map codec.
+
+The independent Dart movement characterization contains 35 fail-closed cases.
+It covers terrain bases and features, roads, partial and queued movement,
+occupancy and hidden information, cities, fog, diplomatic contact, posture,
+artifact capacity, rejection precedence, and exact movement evidence. Both the
+local and server reducers run every case in canonical and reversed input order.
+Only the three committed JSON v2 fixtures execute through Rust today; moving the
+complete characterization to the shared static v2 corpus belongs to the full
+`GameState` movement parity stage.
 
 ## Map content contract
 
@@ -93,6 +113,11 @@ new revision, `UnitMovedEvent`, and exact authoritative execution steps.
 `AonwLocalSession` for movement projection load, reachable queries, and
 revision-bound moves. Build it with `make rust-godot-build`. This is a narrow
 vertical slice, not the complete save/local-runtime boundary.
+
+Native inputs are bounded before domain construction: movement-state JSON at
+8 MiB, known-unit JSON at 512 KiB, 4096 units, 4096 unique known identifiers,
+1200 queued-path steps, and 14 fixed-point current movement units. Mapping
+enforces entity, route, and balance limits even for non-JSON DTO producers.
 
 ## Deliberately deferred
 
