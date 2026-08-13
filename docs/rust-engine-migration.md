@@ -146,7 +146,8 @@ aonw/
 │       ├── aonw_domain/
 │       ├── aonw_engine/
 │       ├── aonw_contracts/
-│       └── aonw_contract_mapping/
+│       ├── aonw_contract_mapping/
+│       └── aonw_testkit/
 │
 ├── clients/
 │   ├── aonw_flutter/
@@ -337,13 +338,15 @@ flowchart BT
   EngineFfi --> Mapping
   LocalFfi["aonw_local_ffi"] --> Runtime
   Godot["aonw_godot"] --> Runtime
-  Testkit["aonw_testkit"] --> Engine
+  Testkit["aonw_testkit"]
 ```
 
 `aonw_domain` and `aonw_engine` forbid unsafe code and have no dependency on
 Godot, Flutter, Serverpod, filesystem, database, network, ambient time, or a
 mutable random source. Unsafe code is isolated in boundary adapters, minimized,
 documented with `SAFETY` comments, and tested independently.
+`aonw_testkit` is also engine-neutral; backend test adapters depend on both the
+testkit and the concrete engine they execute.
 
 Domain fields are private and created through invariant-preserving
 constructors. Identifiers and units use newtypes rather than interchangeable

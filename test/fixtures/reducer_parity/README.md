@@ -15,9 +15,11 @@ It remains in this shared repository location rather than being copied into
 `engine/`. As migration harnesses are introduced, Dart, Rust CLI, native, Godot,
 and server-shadow paths will compare their covered slices with this committed
 data; a live Dart-to-Rust diff is additional evidence and never replaces the
-oracle. The corpus does not claim coverage of offsets, database transactions,
-recipient projections, system/timeout commands, or other explicitly excluded
-boundaries.
+oracle. `engine/crates/aonw_testkit` loads and validates this corpus, performs
+bounded structural diffs, and runs backend adapters without exposing expected
+outputs to their executors. The corpus does not claim coverage of offsets,
+database transactions, recipient projections, system/timeout commands, or
+other explicitly excluded boundaries.
 
 Each version 1 fixture contains:
 
