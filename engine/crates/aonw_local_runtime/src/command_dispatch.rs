@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use aonw_domain::{HexCoord, UnitId};
 use aonw_engine::{DomainCommand, DomainEvent, ExecutionEvidence, GameEngine, MoveUnitCommand};
 
+use crate::persistence::{replay_context, replay_entry};
 use crate::player_view::{PlayerUnitViewV1, visible_units};
 use crate::session::Session;
 use crate::{RuntimeError, SessionStampV1};
@@ -58,6 +59,8 @@ pub(crate) fn dispatch_move(
     session: &mut Session,
     command: &MoveUnitV1,
 ) -> Result<MoveUnitResultV1, RuntimeError> {
+    session.prepare_replay_segment();
+    let before_context = replay_context(session);
     let before_revision = session.state().revision().get();
     let before_view = visible_units(session.state(), session.actor());
     let state = session.take_state();
@@ -75,6 +78,7 @@ pub(crate) fn dispatch_move(
     let rejection = parts.rejection.map(aonw_engine::DomainRejection::code);
     let events = parts.events;
     let evidence = parts.evidence;
+    session.advance_event_offset(events.len())?;
     session.replace_state(parts.state, parts.digest);
     let after_view = visible_units(session.state(), session.actor());
     let view_patch = diff_view(
@@ -83,13 +87,16 @@ pub(crate) fn dispatch_move(
         before_view,
         after_view,
     );
-    Ok(MoveUnitResultV1 {
+    let result = MoveUnitResultV1 {
         stamp: session.stamp(),
         rejection,
         events,
         evidence,
         view_patch,
-    })
+    };
+    let replay = replay_entry(session, command, before_context, &result);
+    session.push_replay(replay);
+    Ok(result)
 }
 
 fn diff_view(

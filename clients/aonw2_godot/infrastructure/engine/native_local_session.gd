@@ -25,6 +25,26 @@ func close() -> Dictionary:
 		return _unavailable()
 	return _decode(_session.close())
 
+func save_game() -> Dictionary:
+	if _session == null:
+		return _unavailable()
+	return _decode(_session.save_game_json())
+
+func open_save(map_json: String, save_json: String) -> Dictionary:
+	if _session == null:
+		return _unavailable()
+	return _decode(_session.open_save(map_json, save_json))
+
+func replay_log() -> Dictionary:
+	if _session == null:
+		return _unavailable()
+	return _decode(_session.replay_log_json())
+
+func verify_replay(map_json: String, replay_json: String) -> Dictionary:
+	if _session == null:
+		return _unavailable()
+	return _decode(_session.verify_replay(map_json, replay_json))
+
 func snapshot() -> Dictionary:
 	if _session == null:
 		return _unavailable()

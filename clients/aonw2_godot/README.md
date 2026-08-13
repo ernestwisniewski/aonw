@@ -120,6 +120,12 @@ events remain owned by Rust. The local runtime prepares topology and terrain
 costs once, reuses search storage, and caches revision-scoped queries; GDScript
 does not mirror these optimizations or rules.
 
+The same native session exposes `save_game_json`, `open_save`,
+`replay_log_json`, and `verify_replay`. Saves contain the complete canonical
+state and exact content identities; replay verification re-executes every
+recorded command in Rust. Godot owns file dialogs and `FileAccess`, while the
+runtime owns validation and deterministic semantics.
+
 Build the native adapter before opening or running Godot:
 
 ```sh
@@ -138,7 +144,7 @@ make godot-check
 ```
 
 The test covers strict Rust validation, scenario bootstrap, native
-snapshot/reachable/route/move calls,
+snapshot/reachable/route/move and persistence calls,
 asset discovery, immutable map views, projection/picking round trips, texture
 assembly, mesh generation, regeneration safety, and preserving authored nodes.
 `GODOT_BIN` can override the editor executable.

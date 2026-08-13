@@ -86,7 +86,9 @@ local runtime, and a Godot GDExtension consuming player snapshots and patches.
 The runtime also owns compiled movement topology, tile-indexed occupancy and
 visibility, reusable search storage, revision-scoped query caching, and an
 owned-state apply path measured by the Rust benchmark target.
-It is not connected to Flutter, Serverpod, or production saves.
+Strict current-version save/restore and deterministic replay verification are
+available through the local runtime and Godot adapter. They are not connected
+to Flutter, Serverpod, or production storage.
 Flutter remains at the repository root during migration; AoNW2 already lives
 under `clients/aonw2_godot/`.
 

@@ -157,9 +157,28 @@ then delegates lifecycle and simulation to `aonw_local_runtime`. Godot obtains
 units from the runtime snapshot and never constructs a synthetic canonical
 unit. Build it with `make rust-godot-build`.
 
+## Save and replay
+
+`aonw_contracts` owns separate current-only save and replay schemas. A save
+contains the complete `GameStateDto`, behavior version, exact map and ruleset
+identities, actor, deterministic RNG position, event offset, and canonical
+state digest. Restore is transactional and rejects mismatched content, behavior,
+state invariants, or digest before replacing an open session.
+
+The bounded replay segment stores its complete initial state and context, then
+each revision-bound command with pre-command context and the exact rejection,
+events, execution evidence, RNG position, event offset, revision, and resulting
+digest. Verification executes every command again through `GameEngine` and
+fails on the first context or result drift. The recorder rolls to a new
+checkpoint after 512 commands; adapters own filesystem paths and I/O.
+
+Godot exposes save/open and replay export/verification through
+`AonwNativeLocalSession`. These methods transfer strict JSON documents and do
+not move persistence rules into GDScript.
+
 ## Deliberately deferred
 
-- canonical save/replay envelopes and state upcasters;
+- historical save/replay upcasters and long-term compatibility manifests;
 - Flutter/native C ABI and production packaging beyond the Godot debug adapter;
 - AI and remote replica crates;
 - any integration that could change the active Flutter or Serverpod runtime.

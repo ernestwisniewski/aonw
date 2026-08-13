@@ -434,6 +434,33 @@ func _test_native_engine_boundary() -> void:
 		and moved["value"]["evidence"]["steps"][-1]["row"] == 2,
 		"native session applies a revision-bound move",
 	)
+	var saved: Dictionary = JSON.parse_string(session.save_game_json())
+	_check(
+		saved["ok"] and not saved["value"]["document"].is_empty(),
+		"native session exports a canonical save",
+	)
+	var replay: Dictionary = JSON.parse_string(session.replay_log_json())
+	_check(
+		replay["ok"] and not replay["value"]["document"].is_empty(),
+		"native session exports a deterministic replay",
+	)
+	var verified: Dictionary = JSON.parse_string(session.verify_replay(
+		map_json,
+		replay["value"]["document"],
+	))
+	_check(
+		verified["ok"] and verified["value"]["entryCount"] == 1,
+		"native session verifies replay results in Rust",
+	)
+	session.close()
+	var restored: Dictionary = JSON.parse_string(session.open_save(
+		map_json,
+		saved["value"]["document"],
+	))
+	_check(
+		restored["ok"] and restored["value"]["revision"] == 1,
+		"native session restores a canonical save",
+	)
 
 func _test_catalog() -> void:
 	var sources := MapAssetCatalog.new().discover()

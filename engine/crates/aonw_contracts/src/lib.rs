@@ -9,6 +9,7 @@
 
 mod canonical;
 mod limits;
+mod persistence;
 
 pub use canonical::{
     ArmyTroopDto, CURRENT_GAME_STATE_VERSION, CityDto, CityFoundingJobDto, CoordinateDto,
@@ -20,6 +21,12 @@ pub use canonical::{
 pub use limits::{
     MAX_KNOWN_UNIT_ID_COUNT, MAX_KNOWN_UNIT_IDS_JSON_BYTES, MAX_MOVEMENT_BALANCE_UNITS,
     MAX_MOVEMENT_STATE_JSON_BYTES, MAX_MOVEMENT_STATE_UNIT_COUNT, MAX_QUEUED_PATH_STEP_COUNT,
+};
+pub use persistence::{
+    CURRENT_REPLAY_LOG_VERSION, CURRENT_SAVE_GAME_VERSION, MAX_REPLAY_ENTRY_COUNT,
+    MAX_REPLAY_LOG_JSON_BYTES, MAX_SAVE_GAME_JSON_BYTES, PersistenceCodecError, ReplayCommandDto,
+    ReplayContextDto, ReplayEntryDto, ReplayEventDto, ReplayEvidenceDto, ReplayLogDto,
+    ReplayResultDto, RngStateDto, SaveGameDto,
 };
 
 /// The only movement projection version accepted by the mapping crate.

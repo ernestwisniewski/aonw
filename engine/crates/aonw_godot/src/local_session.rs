@@ -37,9 +37,11 @@ impl AonwLocalSession {
         success_json(&json!({
             "contractVersion": capabilities.contract_version,
             "behaviorVersion": capabilities.behavior_version,
-            "routePlan": capabilities.route_plan,
-            "reachable": capabilities.reachable,
-            "moveUnit": capabilities.move_unit,
+            "routePlan": capabilities.route_plan(),
+            "reachable": capabilities.reachable(),
+            "moveUnit": capabilities.move_unit(),
+            "saveGame": capabilities.save_game(),
+            "replayVerification": capabilities.replay_verification(),
         }))
     }
 
@@ -68,6 +70,58 @@ impl AonwLocalSession {
     fn close(&mut self) -> GString {
         self.runtime.close();
         success_json(&json!({"closed": true}))
+    }
+
+    #[func]
+    fn save_game_json(&self) -> GString {
+        match self.runtime.export_save_json() {
+            Ok(document) => success_json(&json!({"document": document})),
+            Err(error) => failure_json("save_export_failed", error),
+        }
+    }
+
+    #[func]
+    fn open_save(&mut self, map_json: GString, save_json: GString) -> GString {
+        let map = match decode_map(&map_json.to_string()) {
+            Ok(map) => map,
+            Err((code, message)) => return failure_json(code, message),
+        };
+        match self.runtime.open_save_json(
+            map,
+            RulesetDefinition::standard().clone(),
+            &save_json.to_string(),
+        ) {
+            Ok(stamp) => success_json(&stamp_json(stamp)),
+            Err(error) => failure_json("save_open_failed", error),
+        }
+    }
+
+    #[func]
+    fn replay_log_json(&self) -> GString {
+        match self.runtime.export_replay_json() {
+            Ok(document) => success_json(&json!({"document": document})),
+            Err(error) => failure_json("replay_export_failed", error),
+        }
+    }
+
+    #[func]
+    fn verify_replay(&self, map_json: GString, replay_json: GString) -> GString {
+        let map = match decode_map(&map_json.to_string()) {
+            Ok(map) => map,
+            Err((code, message)) => return failure_json(code, message),
+        };
+        match LocalRuntime::verify_replay_json(
+            map,
+            RulesetDefinition::standard().clone(),
+            &replay_json.to_string(),
+        ) {
+            Ok(result) => success_json(&json!({
+                "entryCount": result.entry_count,
+                "finalEventOffset": result.final_event_offset,
+                "finalStamp": stamp_json(result.final_stamp),
+            })),
+            Err(error) => failure_json("replay_verification_failed", error),
+        }
     }
 
     #[func]
@@ -181,16 +235,20 @@ fn decode_open_request(
     scenario_json: &str,
     actor_player_id: &str,
 ) -> Result<OpenSessionV1, (&'static str, String)> {
-    let document = MapDocument::from_json(map_json.as_bytes())
-        .map_err(|error| ("invalid_map", error.to_string()))?;
+    let map = decode_map(map_json)?;
     let ruleset = RulesetDefinition::standard().clone();
-    let scenario =
-        ScenarioDefinition::from_json(scenario_json.as_bytes(), document.map(), &ruleset)
-            .map_err(|error| ("invalid_scenario", error.to_string()))?;
+    let scenario = ScenarioDefinition::from_json(scenario_json.as_bytes(), &map, &ruleset)
+        .map_err(|error| ("invalid_scenario", error.to_string()))?;
     let actor = PlayerId::new(actor_player_id)
         .map_err(|error| ("invalid_actor_player_id", error.to_string()))?;
-    OpenSessionV1::from_scenario(document.map().clone(), ruleset, &scenario, actor)
+    OpenSessionV1::from_scenario(map, ruleset, &scenario, actor)
         .map_err(|error| ("invalid_session", error.to_string()))
+}
+
+fn decode_map(map_json: &str) -> Result<aonw_content::MapDefinition, (&'static str, String)> {
+    MapDocument::from_json(map_json.as_bytes())
+        .map(|document| document.map().clone())
+        .map_err(|error| ("invalid_map", error.to_string()))
 }
 
 fn reachable_request(
