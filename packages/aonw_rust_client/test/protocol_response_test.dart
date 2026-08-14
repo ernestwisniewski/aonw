@@ -164,7 +164,7 @@ Map<String, Object?> _commandResult(Map<String, Object?> outcome) => {
   'viewPatch': const {
     'fromRevision': 7,
     'toRevision': 7,
-    'upsertedUnits': [],
-    'removedUnitIds': [],
+    'upsertedUnits': <Object?>[],
+    'removedUnitIds': <Object?>[],
   },
 };
