@@ -1,6 +1,13 @@
 import 'dart:convert';
 
 import 'package:aonw_rust_client/src/api.dart';
+import 'package:aonw_rust_client/src/protocol_json.dart';
+import 'package:aonw_rust_client/src/protocol_response.dart';
+
+export 'protocol_execution.dart';
+export 'protocol_query.dart';
+export 'protocol_response.dart';
+export 'protocol_values.dart';
 
 const aonwClientApiVersion = 1;
 
@@ -138,38 +145,50 @@ final class AonwClientResponse {
 
   factory AonwClientResponse.parse(String source) {
     final value = jsonDecode(source);
-    final envelope = _map(value, 'client response');
+    final envelope = readObject(value, 'client response');
+    requireKeys(envelope, const {'apiVersion', 'outcome'}, 'client response');
     if (envelope['apiVersion'] != aonwClientApiVersion) {
       throw const FormatException('Unsupported AoNW client API version.');
     }
-    final outcome = _map(envelope['outcome'], 'client outcome');
+    final outcome = readObject(envelope['outcome'], 'client outcome');
     return switch (outcome['status']) {
-      'success' => AonwClientResponse._(
-        response: _map(outcome['response'], 'client success response'),
-      ),
-      'failure' => AonwClientResponse._(
-        error: AonwClientError.fromJson(
-          _map(outcome['error'], 'client failure response'),
-        ),
-      ),
+      'success' => _success(outcome),
+      'failure' => AonwClientResponse._(error: _failure(outcome)),
       _ => throw const FormatException('Invalid AoNW client outcome.'),
     };
   }
 
-  final Map<String, Object?>? response;
+  final AonwClientResponseBody? response;
   final AonwClientError? error;
 
   bool get isSuccess => response != null;
 
-  Map<String, Object?> requireResponse(String type) {
+  T require<T extends AonwClientResponseBody>() {
     final value = response;
     if (value == null) {
       throw StateError(error?.message ?? 'Client request failed.');
     }
-    if (value['type'] != type) {
-      throw FormatException('Expected AoNW response type $type.');
+    if (value is! T) {
+      throw FormatException('Expected AoNW response type $T.');
     }
     return value;
+  }
+
+  static AonwClientResponse _success(Map<String, Object?> outcome) {
+    requireKeys(outcome, const {
+      'status',
+      'response',
+    }, 'successful client outcome');
+    return AonwClientResponse._(
+      response: AonwClientResponseBody.fromJson(outcome['response']),
+    );
+  }
+
+  static AonwClientError _failure(Map<String, Object?> outcome) {
+    requireKeys(outcome, const {'status', 'error'}, 'failed client outcome');
+    return AonwClientError.fromJson(
+      readObject(outcome['error'], 'client failure response'),
+    );
   }
 }
 
@@ -177,6 +196,7 @@ final class AonwClientError {
   const AonwClientError({required this.code, required this.message});
 
   factory AonwClientError.fromJson(Map<String, Object?> value) {
+    requireKeys(value, const {'code', 'message'}, 'client error');
     final code = value['code'];
     final message = value['message'];
     if (code is! String || message is! String) {
@@ -192,11 +212,4 @@ final class AonwClientError {
 extension AonwRustSessionClientProtocol on AonwRustSession {
   Future<AonwClientResponse> send(AonwClientRequest request) async =>
       AonwClientResponse.parse(await requestJson(request.toJson()));
-}
-
-Map<String, Object?> _map(Object? value, String label) {
-  if (value is! Map<String, Object?>) {
-    throw FormatException('Invalid AoNW $label.');
-  }
-  return value;
 }

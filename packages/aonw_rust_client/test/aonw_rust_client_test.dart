@@ -12,19 +12,20 @@ void main() {
       targetCol: 3,
       targetRow: 4,
     );
-    final requestGolden = File(
-      'test/fixtures/client_protocol/move_unit_request.json',
+    final requestGolden = _fixture(
+      'move_unit_request.json',
     ).readAsStringSync().trim();
     expect(request.toJson(), requestGolden);
 
-    final responseGolden = File(
-      'test/fixtures/client_protocol/command_result_response.json',
+    final responseGolden = _fixture(
+      'command_result_response.json',
     ).readAsStringSync();
     final response = AonwClientResponse.parse(responseGolden);
-    expect(
-      response.requireResponse('command')['result'],
-      isA<Map<String, Object?>>(),
-    );
+    final command = response.require<AonwCommandResponse>().result;
+    expect(command.stamp.revision, 8);
+    expect(command.viewPatch.upsertedUnits.single.kind, AonwUnitKind.commander);
+    expect(command.events.single, isA<AonwUnitMovedEvent>());
+    expect(command.evidence, isA<AonwUnitMovementEvidence>());
   });
 
   test('client response rejects foreign versions', () {
@@ -48,6 +49,20 @@ void main() {
     );
     final response = jsonDecode(rawResponse) as Map<String, dynamic>;
     expect(response['apiVersion'], aonwClientApiVersion);
-    expect(AonwClientResponse.parse(rawResponse).isSuccess, isTrue);
+    final capabilities = AonwClientResponse.parse(
+      rawResponse,
+    ).require<AonwCapabilitiesResponse>();
+    expect(capabilities.features, contains(AonwClientFeature.snapshot));
   });
+}
+
+File _fixture(String name) {
+  for (final root in [
+    'test/fixtures/client_protocol',
+    '../../test/fixtures/client_protocol',
+  ]) {
+    final candidate = File('$root/$name');
+    if (candidate.existsSync()) return candidate;
+  }
+  throw StateError('Shared client fixture not found: $name');
 }

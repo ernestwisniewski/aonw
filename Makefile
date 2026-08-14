@@ -482,8 +482,8 @@ rust-benchmark:
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench -p aonw_local_runtime --bench runtime
 
 rust-flutter-test: root-dependencies
-	@dart test packages/aonw_rust_client/test/aonw_rust_client_test.dart
-	@AONW_ENABLE_RUST_FLUTTER=1 dart test packages/aonw_rust_client/test/aonw_rust_client_test.dart
+	@dart test packages/aonw_rust_client/test
+	@AONW_ENABLE_RUST_FLUTTER=1 dart test packages/aonw_rust_client/test
 
 rust-engine-oracle:
 	@dart run tool/generate_rust_engine_oracle.dart

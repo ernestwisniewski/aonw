@@ -196,9 +196,11 @@ constructs a synthetic canonical unit. Build it with `make rust-godot-build`.
 
 `aonw_flutter` exposes the same dispatcher through a panic-contained C ABI.
 `packages/aonw_rust_client` bundles it with Flutter build hooks and keeps native
-calls on a helper isolate. Normal builds use an unavailable C stub, so the Dart
-local engine remains buildable and active. `make rust-flutter-test` verifies
-both the stub and opt-in Rust lanes.
+calls on a helper isolate. Its strict Dart read models cover snapshots, queries,
+commands, events, evidence, patches, and persistence results. Normal builds use
+an unavailable C stub, so the Dart local engine remains buildable and active.
+`make rust-flutter-test` verifies both lanes. A concrete Flutter
+`LocalEnginePort` remains gated on lossless complete-state mapping.
 
 ## Save and replay
 

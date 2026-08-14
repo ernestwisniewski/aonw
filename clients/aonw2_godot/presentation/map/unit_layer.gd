@@ -8,13 +8,12 @@ var _units: Dictionary = {}
 var _instances: Dictionary = {}
 var _movement_tweens: Dictionary = {}
 
-func present(projection: AonwHexMapProjection, units: Array) -> void:
+func present(projection: AonwHexMapProjection, units: Array[AonwClientReadModels.UnitView]) -> void:
 	_projection = projection
 	_clear_instances()
-	for value in units:
-		var unit: Dictionary = value
-		var unit_id := str(unit["id"])
-		_units[unit_id] = unit.duplicate(true)
+	for unit in units:
+		var unit_id := unit.id
+		_units[unit_id] = unit
 		var instance := _create_marker(unit_id)
 		_instances[unit_id] = instance
 		add_child(instance)
@@ -22,40 +21,26 @@ func present(projection: AonwHexMapProjection, units: Array) -> void:
 
 func unit_at(coordinate: Vector2i) -> String:
 	for unit_id in _units:
-		var unit: Dictionary = _units[unit_id]
+		var unit: AonwClientReadModels.UnitView = _units[unit_id]
 		if _coordinate(unit) == coordinate:
 			return unit_id
 	return ""
 
-func move_unit(unit_id: String, coordinate: Vector2i, animated: bool = true) -> void:
-	if not _units.has(unit_id) or not _instances.has(unit_id):
-		return
-	var unit: Dictionary = _units[unit_id]
-	unit["coordinate"] = {"col": coordinate.x, "row": coordinate.y}
-	_units[unit_id] = unit
-	var instance: MeshInstance3D = _instances[unit_id]
-	var target := _unit_position(unit)
-	if not animated or not is_inside_tree():
-		instance.position = target
-		return
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_CUBIC)
-	tween.set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(instance, "position", target, 0.28)
-
-func apply_transition(patch: Dictionary, evidence: Variant) -> void:
-	for value in patch["removedUnitIds"]:
-		_remove_unit(str(value))
+func apply_transition(
+	patch: AonwClientReadModels.ViewPatch,
+	evidence: AonwClientReadModels.MovementEvidence,
+) -> void:
+	for unit_id in patch.removed_unit_ids:
+		_remove_unit(unit_id)
 	var movement_unit_id := ""
-	var steps: Array = []
-	if evidence is Dictionary and evidence.get("type", "") == "unitMovement":
-		movement_unit_id = str(evidence["unitId"])
-		steps = evidence["steps"]
-	for value in patch["upsertedUnits"]:
-		var unit: Dictionary = value
-		var unit_id := str(unit["id"])
+	var steps: Array[AonwClientReadModels.MovementStep] = []
+	if evidence != null:
+		movement_unit_id = evidence.unit_id
+		steps = evidence.steps
+	for unit in patch.upserted_units:
+		var unit_id := unit.id
 		var exists := _instances.has(unit_id)
-		_units[unit_id] = unit.duplicate(true)
+		_units[unit_id] = unit
 		if not exists:
 			var instance := _create_marker(unit_id)
 			_instances[unit_id] = instance
@@ -78,20 +63,18 @@ func _animate_steps(unit_id: String, steps: Array) -> void:
 	tween.set_trans(Tween.TRANS_CUBIC)
 	tween.set_ease(Tween.EASE_IN_OUT)
 	for value in steps:
-		var step: Dictionary = value
-		var coordinate := _coordinate(step)
+		var coordinate: Vector2i = value.coordinate
 		tween.tween_property(instance, "position", _projection.hex_center(
 			coordinate,
 			UNIT_OFFSET,
 		), 0.18)
 	tween.finished.connect(func() -> void: _movement_tweens.erase(unit_id))
 
-func _unit_position(unit: Dictionary) -> Vector3:
+func _unit_position(unit: AonwClientReadModels.UnitView) -> Vector3:
 	return _projection.hex_center(_coordinate(unit), UNIT_OFFSET)
 
-func _coordinate(value: Dictionary) -> Vector2i:
-	var coordinate: Dictionary = value["coordinate"]
-	return Vector2i(int(coordinate["col"]), int(coordinate["row"]))
+func _coordinate(value: AonwClientReadModels.UnitView) -> Vector2i:
+	return value.coordinate
 
 func _create_marker(unit_id: String) -> MeshInstance3D:
 	var mesh := CylinderMesh.new()

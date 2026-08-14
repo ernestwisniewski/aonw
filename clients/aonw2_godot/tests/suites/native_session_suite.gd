@@ -6,6 +6,7 @@ const NativeEngineBridge := preload("res://infrastructure/engine/native_engine_b
 const ClientResponseDecoder := preload(
 	"res://infrastructure/engine/client_response_decoder.gd"
 )
+const ClientReadModels := preload("res://application/session/client_read_models.gd")
 const LocalMatchSessionController := preload(
 	"res://application/session/local_match_session_controller.gd"
 )
@@ -128,45 +129,45 @@ func _test_native_engine_boundary() -> void:
 	_check(opened["ok"], "native local scenario session opens")
 	var snapshot: Dictionary = session.snapshot()
 	_check(
-		snapshot["ok"] and snapshot["value"]["units"].size() == 1,
+		snapshot["ok"] and snapshot["value"].units.size() == 1,
 		"native snapshot owns the scenario unit view",
 	)
 	var reachable: Dictionary = session.reachable("preview-commander")
 	_check(
-		reachable["ok"] and not reachable["value"]["tiles"].is_empty(),
+		reachable["ok"] and not reachable["value"].tiles.is_empty(),
 		"native session returns reachable hexes",
 	)
 	var route: Dictionary = session.route_plan("preview-commander", Vector2i(2, 2))
-	_check(route["ok"] and route["value"]["steps"].size() > 1, "native route is planned")
+	_check(route["ok"] and route["value"].steps.size() > 1, "native route is planned")
 	var moved: Dictionary = session.move_unit("preview-commander", Vector2i(2, 2))
 	_check(
 		moved["ok"]
-		and moved["value"]["accepted"]
-		and moved["value"]["stamp"]["revision"] == 1
-		and moved["value"]["evidence"]["steps"][-1]["coordinate"]["row"] == 2,
+		and moved["value"].accepted
+		and moved["value"].stamp.revision == 1
+		and moved["value"].evidence.steps[-1].coordinate.y == 2,
 		"native session applies a revision-bound move",
 	)
 	var skipped: Dictionary = session.skip_unit_turn("preview-commander")
 	_check(
 		skipped["ok"]
-		and skipped["value"]["accepted"]
-		and skipped["value"]["stamp"]["revision"] == 2
-		and skipped["value"]["viewPatch"]["upsertedUnits"][0]["movementUnits"] == 0,
+		and skipped["value"].accepted
+		and skipped["value"].stamp.revision == 2
+		and skipped["value"].patch.upserted_units[0].movement_units == 0,
 		"native session skips a unit turn",
 	)
 	var cancelled: Dictionary = session.cancel_unit_action("preview-commander")
 	_check(
 		cancelled["ok"]
-		and cancelled["value"]["accepted"]
-		and cancelled["value"]["stamp"]["revision"] == 3,
+		and cancelled["value"].accepted
+		and cancelled["value"].stamp.revision == 3,
 		"native session cancels a unit action",
 	)
 	var fortified: Dictionary = session.fortify_unit("preview-commander")
 	_check(
 		fortified["ok"]
-		and fortified["value"]["accepted"]
-		and fortified["value"]["stamp"]["revision"] == 4
-		and fortified["value"]["viewPatch"]["upsertedUnits"][0]["posture"] == "fortified",
+		and fortified["value"].accepted
+		and fortified["value"].stamp.revision == 4
+		and fortified["value"].patch.upserted_units[0].posture == "fortified",
 		"native session fortifies an idle unit",
 	)
 	var saved: Dictionary = session.save_game()
@@ -216,6 +217,16 @@ func _test_shared_client_contract() -> void:
 		_check(
 			decoded.get("outcome", {}).get("status", "") == "success",
 			"Godot consumes the shared command response contract",
+		)
+		var body: Dictionary = decoded["outcome"]["response"]
+		var command: AonwClientReadModels.CommandResult = (
+			ClientReadModels.decode_command(body.get("result", {}))
+		)
+		_check(
+			command != null
+			and command.patch.upserted_units[0].kind == "commander"
+			and command.evidence.steps[-1].coordinate == Vector2i(3, 4),
+			"Godot maps the shared response into typed client read models",
 		)
 
 	var foreign := LocalMatchSessionController.new(ForeignVersionTransport.new()).capabilities()

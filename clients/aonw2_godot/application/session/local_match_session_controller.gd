@@ -2,6 +2,7 @@ class_name AonwLocalMatchSessionController
 extends RefCounted
 
 const NativeLocalSession := preload("res://infrastructure/engine/native_local_session.gd")
+const ReadModels := preload("res://application/session/client_read_models.gd")
 
 var _transport: RefCounted
 var _stamp: Dictionary = {}
@@ -34,22 +35,40 @@ func close() -> Dictionary:
 	return result
 
 func snapshot() -> Dictionary:
-	return _extract(_execute({"type": "snapshot"}, "snapshot"), "snapshot")
+	var result := _extract(_execute({"type": "snapshot"}, "snapshot"), "snapshot")
+	if not result["ok"]:
+		return result
+	var snapshot := ReadModels.decode_snapshot(result["value"])
+	if snapshot == null:
+		return _failure("invalid_client_response", "Rust returned an invalid snapshot")
+	return {"ok": true, "value": snapshot}
 
 func reachable(unit_id: String) -> Dictionary:
-	return _query({
+	var result := _query({
 		"type": "reachable",
 		"expectedRevision": revision(),
 		"unitId": unit_id,
 	}, "reachable")
+	if not result["ok"]:
+		return result
+	var reachable_view := ReadModels.decode_reachable(result["value"])
+	if reachable_view == null:
+		return _failure("invalid_client_response", "Rust returned invalid reachable tiles")
+	return {"ok": true, "value": reachable_view}
 
 func route_plan(unit_id: String, target: Vector2i) -> Dictionary:
-	return _query({
+	var result := _query({
 		"type": "routePlan",
 		"expectedRevision": revision(),
 		"unitId": unit_id,
 		"target": _coordinate(target),
 	}, "routePlan")
+	if not result["ok"]:
+		return result
+	var route := ReadModels.decode_route_plan(result["value"])
+	if route == null:
+		return _failure("invalid_client_response", "Rust returned an invalid route plan")
+	return {"ok": true, "value": route}
 
 func move_unit(unit_id: String, target: Vector2i) -> Dictionary:
 	return _command({
@@ -100,10 +119,16 @@ func _query(query: Dictionary, result_type: String) -> Dictionary:
 	return {"ok": true, "value": value}
 
 func _command(command: Dictionary) -> Dictionary:
-	return _extract(
+	var result := _extract(
 		_execute({"type": "dispatch", "command": command}, "command"),
 		"result",
 	)
+	if not result["ok"]:
+		return result
+	var command_result := ReadModels.decode_command(result["value"])
+	if command_result == null:
+		return _failure("invalid_client_response", "Rust returned an invalid command result")
+	return {"ok": true, "value": command_result}
 
 func _unit_action(action_type: String, unit_id: String) -> Dictionary:
 	return _command({

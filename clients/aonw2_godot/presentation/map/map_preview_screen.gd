@@ -109,13 +109,13 @@ func _setup_local_session(source: AonwMapSource) -> void:
 	)
 	if map_file == null:
 		_status.text += " · Rust map unavailable"
-		_unit_layer.present(_interaction.projection(), [])
+		_present_empty_unit_layer()
 		return
 	var scenario_path := "res://assets/scenarios/%s.json" % _current_document.map_name()
 	var scenario_file := FileAccess.open(scenario_path, FileAccess.READ)
 	if scenario_file == null:
 		_status.text += " · no local scenario"
-		_unit_layer.present(_interaction.projection(), [])
+		_present_empty_unit_layer()
 		return
 	var opened := _local_session.open(
 		map_file.get_as_text(),
@@ -124,7 +124,7 @@ func _setup_local_session(source: AonwMapSource) -> void:
 	)
 	if not opened["ok"]:
 		_status.text += " · Rust: %s" % opened["message"]
-		_unit_layer.present(_interaction.projection(), [])
+		_present_empty_unit_layer()
 		return
 	_refresh_session_snapshot()
 
@@ -132,11 +132,15 @@ func _refresh_session_snapshot() -> bool:
 	var snapshot := _local_session.snapshot()
 	if not snapshot["ok"]:
 		_status.text += " · Rust: %s" % snapshot["message"]
-		_unit_layer.present(_interaction.projection(), [])
+		_present_empty_unit_layer()
 		return false
-	var value: Dictionary = snapshot["value"]
-	_unit_layer.present(_interaction.projection(), value["units"])
+	var value: AonwClientReadModels.SnapshotView = snapshot["value"]
+	_unit_layer.present(_interaction.projection(), value.units)
 	return true
+
+func _present_empty_unit_layer() -> void:
+	var units: Array[AonwClientReadModels.UnitView] = []
+	_unit_layer.present(_interaction.projection(), units)
 
 func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 	var reachable := _local_session.reachable(unit_id)
@@ -146,9 +150,9 @@ func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 	_selected_unit_id = unit_id
 	_reachable_hexes.clear()
 	var coordinates: Array[Vector2i] = []
-	for tile: Dictionary in reachable["value"]["tiles"]:
-		var wire_coordinate: Dictionary = tile["coordinate"]
-		var target := Vector2i(int(wire_coordinate["col"]), int(wire_coordinate["row"]))
+	var reachable_view: AonwClientReadModels.ReachableView = reachable["value"]
+	for tile in reachable_view.tiles:
+		var target := tile.coordinate
 		_reachable_hexes[target] = true
 		coordinates.append(target)
 	_interaction.set_reachable_hexes(coordinates)
@@ -167,15 +171,14 @@ func _move_selected_unit(target: Vector2i) -> void:
 	if not moved["ok"]:
 		_status.text = "Rust: %s" % moved["message"]
 		return
-	var value: Dictionary = moved["value"]
-	if not bool(value["accepted"]):
-		_status.text = "Rust: %s" % value["rejection"]
+	var value: AonwClientReadModels.CommandResult = moved["value"]
+	if not value.accepted:
+		_status.text = "Rust: %s" % value.rejection
 		return
-	var patch: Dictionary = value["viewPatch"]
-	if int(patch["fromRevision"]) != previous_revision:
+	if value.patch.from_revision != previous_revision:
 		_refresh_session_snapshot()
 	else:
-		_unit_layer.apply_transition(patch, value["evidence"])
+		_unit_layer.apply_transition(value.patch, value.evidence)
 	var selected := _selected_unit_id
 	_clear_movement_selection()
 	_status.text = "%s · moved %s → %d,%d" % [

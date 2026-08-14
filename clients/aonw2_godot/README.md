@@ -130,6 +130,11 @@ are exercised by Rust, Dart, and Godot tests.
 Strict maps and scenarios, snapshots, reachable and route queries, movement,
 unit actions, saves, and replays all pass through this boundary.
 
+Snapshots, reachable tiles, routes, command results, events, evidence, and view
+patches are decoded into application-layer read models before they reach the
+map screen or unit layer. Raw response dictionaries remain inside the session
+controller and infrastructure boundary.
+
 Selection is presentation-only; canonical state, visibility, paths, costs,
 revisions, events, and persistence remain owned by Rust. The local runtime
 prepares topology and terrain costs once, reuses search storage, and caches

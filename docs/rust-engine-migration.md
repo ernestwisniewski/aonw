@@ -628,6 +628,12 @@ complete local-session/save/replay ownership behind `aonw_local_runtime` and a
 stateful native adapter, but that broader handoff is a later migration with its
 own compatibility tests; it is not implied by the first engine seam.
 
+The current implementation stops before authoritative Flutter delegation.
+Typed recipient snapshots and patches cannot reconstruct every field of the
+complete Dart `DomainState`, so no concrete Rust `LocalEnginePort` is composed
+yet. Enabling it requires a lossless complete-state mapper plus persistence and
+differential parity; returning a partial handled result is forbidden.
+
 Godot has equivalent client-native entry points: `AonwLocalSession` for the
 local Rust runtime and `AonwRemoteReplica` for recipient-scoped Serverpod state.
 

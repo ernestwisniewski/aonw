@@ -43,3 +43,9 @@ fallback. Active backend failures propagate so one command is never executed by
 two engines. The `aonw_rust_client` package provides the shared-protocol native
 session, while gameplay cutover remains opt-in until the corresponding state
 and command mapping has parity coverage.
+
+No concrete Rust port is composed into the Flutter app yet. Recipient-safe
+snapshots and patches are sufficient for presentation but cannot reconstruct
+the complete Dart `DomainState` required by `CommandTransportResult`. Until a
+complete-state cutover mapper preserves every unrelated field and persistence
+side effect, the optional port stays absent and Dart remains authoritative.
