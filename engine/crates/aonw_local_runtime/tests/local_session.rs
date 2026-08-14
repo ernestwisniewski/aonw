@@ -185,6 +185,26 @@ fn failed_reopen_preserves_session_and_close_is_idempotent() {
 }
 
 #[test]
+fn exhausted_event_offset_rejects_dispatch_without_closing_session() {
+    let mut runtime = LocalRuntime::default();
+    let opened = runtime
+        .open(request().with_runtime_state(RngState::new(0, 0, 0), u64::MAX))
+        .expect("open");
+
+    let result = runtime.dispatch(&MoveUnitRequest {
+        expected_revision: 0,
+        unit_id: UnitId::new("unit-1").expect("unit id"),
+        target: HexCoord::new(1, 0),
+    });
+
+    assert_eq!(result, Err(RuntimeError::EventOffsetOverflow));
+    assert_eq!(
+        runtime.snapshot().expect("session remains open").stamp(),
+        &opened
+    );
+}
+
+#[test]
 fn repeated_and_batch_queries_use_revision_scoped_cache() {
     let mut runtime = LocalRuntime::default();
     runtime.open(request()).expect("open");

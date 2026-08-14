@@ -160,6 +160,9 @@ response carries behavior version, revision, state digest, map hash, and ruleset
 hash. It exposes full recipient-safe snapshots, reachable and route queries,
 revision-bound commands, ordered events, exact execution evidence, and view
 patches including unit posture.
+Recipient unit views are sorted by stable unit identifier before snapshots and
+linear patch generation, independently from canonical contract order. Event
+offset capacity is checked before an owned-state dispatch can begin.
 
 `aonw_contracts::client` owns the single client protocol shared by Godot and
 Flutter native adapters. `ClientRequestDto` contains tagged lifecycle,
@@ -170,9 +173,9 @@ canonical `GameStateDto` never crosses this boundary. The protocol accepts only
 runtime types deliberately have no version suffix.
 
 The shared golden documents in `test/fixtures/client_protocol` are consumed by
-Rust, Godot, and Dart tests. Native adapters report `CLIENT_API_VERSION`; client
-controllers reject a response before inspecting its payload when that version
-does not match. Map authoring output comes from `MapDocument::to_versioned_json`
+Rust, Godot, and Dart tests. Native adapters report `CLIENT_API_VERSION`; each
+client owns the same supported constant and rejects an incompatible adapter or
+response before inspecting its payload. Map authoring output comes from `MapDocument::to_versioned_json`
 so the Godot bridge does not maintain a second map serializer.
 
 The runtime prepares `CompiledMovementMap` once per map/ruleset, keeps

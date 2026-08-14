@@ -3,9 +3,10 @@ extends RefCounted
 
 const NativeLocalSession := preload("res://infrastructure/engine/native_local_session.gd")
 const ReadModels := preload("res://application/session/client_read_models.gd")
+const ClientProtocol := preload("res://application/session/client_protocol.gd")
 
 var _transport: RefCounted
-var _stamp: Dictionary = {}
+var _stamp: RefCounted
 
 func _init(transport: RefCounted = null) -> void:
 	_transport = transport if transport != null else NativeLocalSession.new()
@@ -14,7 +15,7 @@ func is_available() -> bool:
 	return bool(_transport.call("is_available"))
 
 func revision() -> int:
-	return int(_stamp.get("revision", 0))
+	return 0 if _stamp == null else int(_stamp.get("revision"))
 
 func capabilities() -> Dictionary:
 	return _execute({"type": "capabilities"}, "capabilities")
@@ -26,12 +27,12 @@ func open(map_document: String, scenario_document: String, actor_player_id: Stri
 		"scenarioDocument": scenario_document,
 		"actorPlayerId": actor_player_id,
 	}, "sessionOpened")
-	return _extract(result, "stamp")
+	return _extract_stamp(result, "stamp")
 
 func close() -> Dictionary:
 	var result := _execute({"type": "closeSession"}, "sessionClosed")
 	if result["ok"]:
-		_stamp.clear()
+		_stamp = null
 	return result
 
 func snapshot() -> Dictionary:
@@ -41,6 +42,7 @@ func snapshot() -> Dictionary:
 	var snapshot := ReadModels.decode_snapshot(result["value"])
 	if snapshot == null:
 		return _failure("invalid_client_response", "Rust returned an invalid snapshot")
+	_stamp = snapshot.stamp
 	return {"ok": true, "value": snapshot}
 
 func reachable(unit_id: String) -> Dictionary:
@@ -54,6 +56,7 @@ func reachable(unit_id: String) -> Dictionary:
 	var reachable_view := ReadModels.decode_reachable(result["value"])
 	if reachable_view == null:
 		return _failure("invalid_client_response", "Rust returned invalid reachable tiles")
+	_stamp = reachable_view.stamp
 	return {"ok": true, "value": reachable_view}
 
 func route_plan(unit_id: String, target: Vector2i) -> Dictionary:
@@ -68,6 +71,7 @@ func route_plan(unit_id: String, target: Vector2i) -> Dictionary:
 	var route := ReadModels.decode_route_plan(result["value"])
 	if route == null:
 		return _failure("invalid_client_response", "Rust returned an invalid route plan")
+	_stamp = route.stamp
 	return {"ok": true, "value": route}
 
 func move_unit(unit_id: String, target: Vector2i) -> Dictionary:
@@ -96,7 +100,7 @@ func open_save(map_document: String, save_document: String) -> Dictionary:
 		"mapDocument": map_document,
 		"saveDocument": save_document,
 	}, "saveOpened")
-	return _extract(result, "stamp")
+	return _extract_stamp(result, "stamp")
 
 func replay_log() -> Dictionary:
 	return _extract(_execute({"type": "exportReplay"}, "replayExported"), "document")
@@ -128,6 +132,7 @@ func _command(command: Dictionary) -> Dictionary:
 	var command_result := ReadModels.decode_command(result["value"])
 	if command_result == null:
 		return _failure("invalid_client_response", "Rust returned an invalid command result")
+	_stamp = command_result.stamp
 	return {"ok": true, "value": command_result}
 
 func _unit_action(action_type: String, unit_id: String) -> Dictionary:
@@ -138,10 +143,13 @@ func _unit_action(action_type: String, unit_id: String) -> Dictionary:
 	})
 
 func _execute(request: Dictionary, response_type: String) -> Dictionary:
+	if int(_transport.call("client_api_version")) != ClientProtocol.API_VERSION:
+		return _failure(
+			"unsupported_client_api",
+			"The client transport uses an unsupported API version",
+		)
 	var envelope: Dictionary = _transport.call("request", request)
-	if int(envelope.get("apiVersion", -1)) != int(
-		_transport.call("client_api_version")
-	):
+	if int(envelope.get("apiVersion", -1)) != ClientProtocol.API_VERSION:
 		return _failure(
 			"unsupported_client_api",
 			"Rust returned an unsupported client API version",
@@ -157,7 +165,6 @@ func _execute(request: Dictionary, response_type: String) -> Dictionary:
 	var response: Variant = outcome.get("response")
 	if not response is Dictionary or response.get("type", "") != response_type:
 		return _failure("invalid_client_response", "Rust returned an unexpected response type")
-	_capture_stamp(response)
 	return {"ok": true, "value": response}
 
 func _extract(result: Dictionary, field: String) -> Dictionary:
@@ -168,15 +175,15 @@ func _extract(result: Dictionary, field: String) -> Dictionary:
 		return _failure("invalid_client_response", "Rust response is missing %s" % field)
 	return {"ok": true, "value": body[field]}
 
-func _capture_stamp(response: Dictionary) -> void:
-	if response.get("stamp") is Dictionary:
-		_stamp = response["stamp"].duplicate(true)
-		return
-	for field in ["snapshot", "result", "verification"]:
-		var value: Variant = response.get(field)
-		if value is Dictionary and value.get("stamp") is Dictionary:
-			_stamp = value["stamp"].duplicate(true)
-			return
+func _extract_stamp(result: Dictionary, field: String) -> Dictionary:
+	var extracted := _extract(result, field)
+	if not extracted["ok"]:
+		return extracted
+	var stamp := ReadModels.decode_stamp(extracted["value"])
+	if stamp == null:
+		return _failure("invalid_client_response", "Rust returned an invalid session stamp")
+	_stamp = stamp
+	return extracted
 
 func _coordinate(value: Vector2i) -> Dictionary:
 	return {"col": value.x, "row": value.y}

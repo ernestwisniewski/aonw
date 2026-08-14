@@ -99,7 +99,7 @@ impl PlayerViewSnapshot {
 }
 
 pub(crate) fn visible_units(state: &GameState, actor: &PlayerId) -> Vec<PlayerUnitView> {
-    state
+    let mut units = state
         .units()
         .iter()
         .filter(|unit| {
@@ -107,5 +107,53 @@ pub(crate) fn visible_units(state: &GameState, actor: &PlayerId) -> Vec<PlayerUn
                 || state.fog_of_war().visibility(actor, unit.position()) == FogVisibility::Visible
         })
         .map(PlayerUnitView::from_unit)
-        .collect()
+        .collect::<Vec<_>>();
+    units.sort_unstable_by(|left, right| left.id().cmp(right.id()));
+    units
+}
+
+#[cfg(test)]
+mod tests {
+    use aonw_domain::{
+        GameState, HexCoord, HexGridBounds, MovementUnits, PlayerId, StateRevision, Unit, UnitId,
+        UnitKind, UnitOccupancyPolicy,
+    };
+
+    use super::visible_units;
+
+    #[test]
+    fn visible_units_have_stable_identifier_order() {
+        let actor = PlayerId::new("player-1").expect("player id");
+        let state = GameState::try_new(
+            StateRevision::INITIAL,
+            0,
+            HexGridBounds::new(5, 5).expect("bounds"),
+            UnitOccupancyPolicy::Exclusive,
+            [
+                unit("unit-z", &actor, HexCoord::new(1, 1)),
+                unit("unit-a", &actor, HexCoord::new(2, 1)),
+            ],
+        )
+        .expect("state");
+
+        let identifiers = visible_units(&state, &actor)
+            .into_iter()
+            .map(|unit| unit.id().as_str().to_owned())
+            .collect::<Vec<_>>();
+
+        assert_eq!(identifiers, ["unit-a", "unit-z"]);
+    }
+
+    fn unit(id: &str, actor: &PlayerId, position: HexCoord) -> Unit {
+        Unit::builder(
+            UnitId::new(id).expect("unit id"),
+            actor.clone(),
+            UnitKind::Commander,
+            "Commander",
+            position,
+            MovementUnits::new(10),
+        )
+        .build()
+        .expect("unit")
+    }
 }

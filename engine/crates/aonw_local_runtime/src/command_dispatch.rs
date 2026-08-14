@@ -11,6 +11,8 @@ use crate::player_view::{PlayerUnitView, visible_units};
 use crate::session::Session;
 use crate::{RuntimeError, SessionStamp};
 
+const MAX_EVENTS_PER_DISPATCH: usize = 1;
+
 /// Current revision-bound manual-movement command.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MoveUnitRequest {
@@ -134,6 +136,7 @@ fn dispatch_domain(
     command: DomainCommand<'_>,
     replay_command: ReplayCommandDto,
 ) -> Result<CommandResult, RuntimeError> {
+    session.ensure_event_capacity(MAX_EVENTS_PER_DISPATCH)?;
     session.prepare_replay_segment();
     let before_context = replay_context(session);
     let before_revision = session.state().revision().get();
@@ -144,6 +147,7 @@ fn dispatch_domain(
     let parts = transition.into_parts();
     let rejection = parts.rejection.map(aonw_engine::DomainRejection::code);
     let events = parts.events;
+    debug_assert!(events.len() <= MAX_EVENTS_PER_DISPATCH);
     let evidence = parts.evidence;
     session.advance_event_offset(events.len())?;
     session.replace_state(parts.state, parts.digest);

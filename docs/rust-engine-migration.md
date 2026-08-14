@@ -209,7 +209,7 @@ adapter clone. Raw/prepared and fresh/reused parity tests preserve the reviewed
 behavior. Benchmarks remain diagnostic and include strict 1200-tile, 512-unit
 runtime and shared JSON boundaries. The prepared command path reuses compiled
 content hashes, and recipient patch generation performs a linear merge over
-canonical unit order without temporary tree maps.
+identifier-sorted recipient views without temporary tree maps.
 
 Canonical persistence now uses separate strict current-only save and replay
 contracts. Saves contain the complete game state plus behavior/content hashes,

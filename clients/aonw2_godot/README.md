@@ -123,8 +123,9 @@ the shared `aonw_contracts::client` protocol. `AonwNativeLocalSession` is only
 the JSON transport adapter. `AonwLocalMatchSessionController` owns the Godot
 application lifecycle and current revision while sending the same tagged
 requests and consuming the same recipient-safe responses planned for Flutter.
-The GDExtension reports the current client API version, and the transport plus
-controller reject mismatched responses before reading their payload. Shared
+The Godot application owns its supported API constant independently from the
+version reported by the loaded GDExtension. The transport and controller reject
+an incompatible native library or response before reading its payload. Shared
 request and response goldens are stored in `test/fixtures/client_protocol` and
 are exercised by Rust, Dart, and Godot tests.
 Strict maps and scenarios, snapshots, reachable and route queries, movement,

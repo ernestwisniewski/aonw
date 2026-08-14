@@ -84,6 +84,14 @@ impl Session {
         self.event_offset
     }
 
+    pub(crate) fn ensure_event_capacity(&self, count: usize) -> Result<(), RuntimeError> {
+        let count = u64::try_from(count).map_err(|_| RuntimeError::EventOffsetOverflow)?;
+        self.event_offset
+            .checked_add(count)
+            .map(|_| ())
+            .ok_or(RuntimeError::EventOffsetOverflow)
+    }
+
     pub(crate) fn advance_event_offset(&mut self, count: usize) -> Result<(), RuntimeError> {
         let count = u64::try_from(count).map_err(|_| RuntimeError::EventOffsetOverflow)?;
         self.event_offset = self

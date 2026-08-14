@@ -31,6 +31,53 @@ class ForeignVersionTransport:
 			},
 		}
 
+class UnsupportedClientTransport:
+	extends RefCounted
+
+	var requested := false
+
+	func is_available() -> bool:
+		return true
+
+	func client_api_version() -> int:
+		return 2
+
+	func request(_body: Dictionary) -> Dictionary:
+		requested = true
+		return {}
+
+class MalformedSnapshotTransport:
+	extends RefCounted
+
+	func is_available() -> bool:
+		return true
+
+	func client_api_version() -> int:
+		return 1
+
+	func request(body: Dictionary) -> Dictionary:
+		if body.get("type", "") == "openSession":
+			return _success({"type": "sessionOpened", "stamp": _stamp(7)})
+		return _success({
+			"type": "snapshot",
+			"snapshot": {"stamp": _stamp(99), "units": "invalid"},
+		})
+
+	func _success(response: Dictionary) -> Dictionary:
+		return {
+			"apiVersion": 1,
+			"outcome": {"status": "success", "response": response},
+		}
+
+	func _stamp(revision: int) -> Dictionary:
+		return {
+			"behaviorVersion": 1,
+			"revision": revision,
+			"stateDigest": "state",
+			"mapHash": "map",
+			"rulesetHash": "ruleset",
+		}
+
 func run(failures: Array[String]) -> void:
 	_failures = failures
 	_test_strict_document_boundary()
@@ -233,6 +280,25 @@ func _test_shared_client_contract() -> void:
 	_check(
 		not foreign["ok"] and foreign["code"] == "unsupported_client_api",
 		"Godot rejects foreign client API responses",
+	)
+
+	var unsupported_transport := UnsupportedClientTransport.new()
+	var unsupported := LocalMatchSessionController.new(unsupported_transport).capabilities()
+	_check(
+		not unsupported["ok"]
+		and unsupported["code"] == "unsupported_client_api"
+		and not unsupported_transport.requested,
+		"Godot rejects an incompatible transport before dispatch",
+	)
+
+	var malformed_controller := LocalMatchSessionController.new(MalformedSnapshotTransport.new())
+	var opened := malformed_controller.open("map", "scenario", "player")
+	var malformed := malformed_controller.snapshot()
+	_check(
+		opened["ok"]
+		and not malformed["ok"]
+		and malformed_controller.revision() == 7,
+		"Godot updates revision only after complete typed response validation",
 	)
 
 func _check(condition: bool, message: String) -> void:
