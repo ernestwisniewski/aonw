@@ -2,7 +2,8 @@
 
 This directory contains only fixture contract version 2. The 44 committed
 fixtures cover 38 movement cases and six cancel/skip/fortify cases generated
-from the independently reviewed Dart corpus.
+from the independently reviewed Dart corpus. Cancellation also verifies that
+an interrupted artifact excavation returns the artifact to its map coordinate.
 
 Regenerate candidates with:
 

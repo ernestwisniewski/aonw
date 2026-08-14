@@ -1,6 +1,7 @@
 use aonw_domain::{
-    FieldImprovementKind, GameState, HexCoord, MovementUnits, TransportCondition, TroopKind, Unit,
-    UnitActivity, UnitKind, UnitOccupancyPolicy, UnitPosture, WorkerJob,
+    FieldImprovementKind, GameState, HexCoord, InteractionState, PendingInteraction,
+    TransportCondition, TroopKind, Unit, UnitActivity, UnitKind, UnitOccupancyPolicy, UnitPosture,
+    WorkerJob, WorldArtifact, WorldArtifactLocation, WorldArtifactType,
 };
 use sha2::{Digest, Sha256};
 
@@ -27,7 +28,7 @@ impl core::fmt::Display for StateDigest {
 
 pub(crate) fn digest_state(state: &GameState) -> StateDigest {
     let mut writer = DigestWriter(Sha256::new());
-    writer.text("aonw-game-state-v2");
+    writer.text("aonw-game-state-v3");
     writer.u64(state.revision().get());
     writer.u32(state.turn());
     writer.u16(state.bounds().cols());
@@ -56,6 +57,14 @@ pub(crate) fn digest_state(state: &GameState) -> StateDigest {
             writer.coordinate(*coordinate);
         }
     }
+
+    let mut artifacts = state.artifacts().iter().collect::<Vec<_>>();
+    artifacts.sort_unstable_by(|left, right| left.id().cmp(right.id()));
+    writer.usize(artifacts.len());
+    for artifact in artifacts {
+        hash_artifact(&mut writer, artifact);
+    }
+    hash_interaction(&mut writer, state.interaction());
 
     writer.usize(state.fog_of_war().players().len());
     for fog in state.fog_of_war().players() {
@@ -90,7 +99,6 @@ fn hash_unit(writer: &mut DigestWriter, unit: &Unit) {
     writer.text(unit.name());
     writer.coordinate(unit.position());
     writer.u32(unit.movement_units().get());
-    writer.optional_u32(unit.skipped_movement_restore().map(MovementUnits::get));
     writer.usize(unit.army().len());
     for troop in unit.army() {
         writer.u8(match troop.kind() {
@@ -125,6 +133,140 @@ fn hash_unit(writer: &mut DigestWriter, unit: &Unit) {
         unit.carried_artifact_id()
             .map(aonw_domain::ArtifactId::as_str),
     );
+}
+
+fn hash_artifact(writer: &mut DigestWriter, artifact: &WorldArtifact) {
+    writer.text(artifact.id().as_str());
+    writer.u8(match artifact.artifact_type() {
+        WorldArtifactType::AncientImperialCrown => 0,
+        WorldArtifactType::AstronomersTablets => 1,
+        WorldArtifactType::ProphetMask => 2,
+        WorldArtifactType::HeroSword => 3,
+        WorldArtifactType::MerchantsSeal => 4,
+        WorldArtifactType::FirstPeoplesChronicle => 5,
+        WorldArtifactType::TempleReliquary => 6,
+        WorldArtifactType::QueensMirror => 7,
+    });
+    match artifact.location() {
+        WorldArtifactLocation::Map(coordinate) => {
+            writer.u8(0);
+            writer.coordinate(*coordinate);
+        }
+        WorldArtifactLocation::Carried(unit_id) => {
+            writer.u8(1);
+            writer.text(unit_id.as_str());
+        }
+        WorldArtifactLocation::Stored(city_id) => {
+            writer.u8(2);
+            writer.text(city_id.as_str());
+        }
+        WorldArtifactLocation::Excavation {
+            unit_id,
+            coordinate,
+            remaining_turns,
+        } => {
+            writer.u8(3);
+            writer.text(unit_id.as_str());
+            writer.coordinate(*coordinate);
+            writer.u32(*remaining_turns);
+        }
+    }
+}
+
+fn hash_interaction(writer: &mut DigestWriter, interaction: &InteractionState) {
+    match interaction.city_founding_draft() {
+        None => writer.u8(0),
+        Some(draft) => {
+            writer.u8(1);
+            writer.text(draft.unit_id().as_str());
+            writer.text(draft.owner_player_id().as_str());
+            writer.coordinate(draft.center());
+            writer.coordinates(draft.controlled_hexes());
+        }
+    }
+    match interaction.pending() {
+        None => writer.u8(0),
+        Some(PendingInteraction::ResearchSelection { owner_player_id }) => {
+            writer.u8(1);
+            writer.text(owner_player_id.as_str());
+        }
+        Some(PendingInteraction::CityWorkedHexSelection {
+            owner_player_id,
+            city_id,
+        }) => {
+            writer.u8(2);
+            writer.text(owner_player_id.as_str());
+            writer.text(city_id.as_str());
+        }
+        Some(PendingInteraction::CityExpansionSelection {
+            owner_player_id,
+            city_id,
+        }) => {
+            writer.u8(3);
+            writer.text(owner_player_id.as_str());
+            writer.text(city_id.as_str());
+        }
+        Some(PendingInteraction::WorkerActionSelection {
+            owner_player_id,
+            unit_id,
+            improvement,
+        }) => {
+            writer.u8(4);
+            writer.text(owner_player_id.as_str());
+            writer.text(unit_id.as_str());
+            match improvement {
+                None => writer.u8(0),
+                Some(improvement) => {
+                    writer.u8(1);
+                    writer.u8(improvement_tag(*improvement));
+                }
+            }
+        }
+        Some(PendingInteraction::MerchantTradeRouteSelection {
+            owner_player_id,
+            unit_id,
+        }) => {
+            writer.u8(5);
+            writer.text(owner_player_id.as_str());
+            writer.text(unit_id.as_str());
+        }
+        Some(PendingInteraction::MerchantMoveToCitySelection {
+            owner_player_id,
+            unit_id,
+        }) => {
+            writer.u8(6);
+            writer.text(owner_player_id.as_str());
+            writer.text(unit_id.as_str());
+        }
+        Some(PendingInteraction::UnitTurnSkip {
+            owner_player_id,
+            unit_id,
+            restore_movement,
+        }) => {
+            writer.u8(7);
+            writer.text(owner_player_id.as_str());
+            writer.text(unit_id.as_str());
+            writer.u32(restore_movement.get());
+        }
+        Some(PendingInteraction::AttackTargeting {
+            owner_player_id,
+            unit_id,
+            defender,
+        }) => {
+            writer.u8(8);
+            writer.text(owner_player_id.as_str());
+            writer.text(unit_id.as_str());
+            writer.optional_coordinate(*defender);
+        }
+        Some(PendingInteraction::CommanderMergeSelection {
+            owner_player_id,
+            unit_id,
+        }) => {
+            writer.u8(9);
+            writer.text(owner_player_id.as_str());
+            writer.text(unit_id.as_str());
+        }
+    }
 }
 
 fn hash_activity(writer: &mut DigestWriter, activity: &UnitActivity) {
@@ -299,8 +441,9 @@ impl DigestWriter {
 #[cfg(test)]
 mod tests {
     use aonw_domain::{
-        GameState, HexCoord, HexGridBounds, MovementUnits, PlayerId, StateRevision, Unit, UnitId,
-        UnitKind, UnitOccupancyPolicy,
+        Diplomacy, FogOfWar, GameState, HexCoord, HexGridBounds, InteractionState, MovementUnits,
+        PendingInteraction, PlayerId, StateRevision, TransportNetwork, Unit, UnitId, UnitKind,
+        UnitOccupancyPolicy,
     };
 
     use super::digest_state;
@@ -346,7 +489,7 @@ mod tests {
         assert_eq!(digest_state(&left), digest_state(&right));
         assert_eq!(
             digest_state(&left).to_string(),
-            "d23fad065c66ce354727b8bd29c8a80b671f9e6c0956b9cf4887d70d9d39756c"
+            "1ad543ae0138659b8fc285214ef5dd3ec9b867eab72b80c3b1259396bd12eab5"
         );
     }
 
@@ -362,7 +505,6 @@ mod tests {
             base.position(),
             MovementUnits::ZERO,
         )
-        .with_skipped_movement_restore(Some(MovementUnits::new(10)))
         .build()
         .expect("skipped unit");
         let base_state = GameState::try_new(
@@ -373,12 +515,25 @@ mod tests {
             [base],
         )
         .expect("base state");
-        let skipped_state = GameState::try_new(
+        let skipped_state = GameState::try_new_with_world(
             StateRevision::new(1),
             2,
             bounds,
             UnitOccupancyPolicy::Exclusive,
             [skipped],
+            [],
+            [],
+            InteractionState::new(
+                None,
+                Some(PendingInteraction::UnitTurnSkip {
+                    owner_player_id: PlayerId::new("player-1").expect("player"),
+                    unit_id: UnitId::new("unit").expect("unit"),
+                    restore_movement: MovementUnits::new(10),
+                }),
+            ),
+            FogOfWar::default(),
+            Diplomacy::default(),
+            TransportNetwork::default(),
         )
         .expect("skipped state");
 

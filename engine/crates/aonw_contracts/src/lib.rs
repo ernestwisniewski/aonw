@@ -13,10 +13,12 @@ mod limits;
 mod persistence;
 
 pub use canonical::{
-    ArmyTroopDto, CURRENT_GAME_STATE_VERSION, CityDto, CityFoundingJobDto, CoordinateDto,
-    FieldImprovementKindDto, GameStateCodecError, GameStateDto, MerchantTradeRouteDto,
-    PlayerFogDto, PlayerPairDto, TransportConditionDto, TransportSegmentDto, TroopKindDto,
-    UnitActivityDto, UnitDto, UnitOccupancyPolicyDto, WorkerJobDto,
+    ArmyTroopDto, CURRENT_GAME_STATE_VERSION, CityDto, CityFoundingDraftDto, CityFoundingJobDto,
+    CoordinateDto, FieldImprovementKindDto, GameStateCodecError, GameStateDto, InteractionStateDto,
+    MerchantTradeRouteDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto,
+    TransportConditionDto, TransportSegmentDto, TroopKindDto, UnitActivityDto, UnitDto,
+    UnitOccupancyPolicyDto, WorkerJobDto, WorldArtifactDto, WorldArtifactLocationDto,
+    WorldArtifactTypeDto,
 };
 
 pub use limits::{

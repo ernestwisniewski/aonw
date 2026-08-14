@@ -6,11 +6,13 @@ use std::path::{Path, PathBuf};
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
 use aonw_contract_mapping::decode_game_state;
 use aonw_contracts::{
-    CURRENT_GAME_STATE_VERSION, CityDto, CoordinateDto, GameStateDto, MovementStepDto,
-    PlayerFogDto, PlayerPairDto, QueuedMovePathDto, TransportConditionDto, TransportSegmentDto,
-    UnitActivityDto, UnitDto, UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto,
+    CURRENT_GAME_STATE_VERSION, CityDto, CoordinateDto, GameStateDto, InteractionStateDto,
+    MovementStepDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto,
+    TransportConditionDto, TransportSegmentDto, UnitActivityDto, UnitDto, UnitKindDto,
+    UnitOccupancyPolicyDto, UnitPostureDto, WorldArtifactDto, WorldArtifactLocationDto,
+    WorldArtifactTypeDto,
 };
-use aonw_domain::{HexCoord, HexGridBounds, MovementUnits, PlayerId, UnitId};
+use aonw_domain::{HexCoord, HexGridBounds, MovementUnits, PendingInteraction, PlayerId, UnitId};
 use aonw_engine::{
     DomainCommand, DomainEvent, EngineContext, ExecutionEvidence, GameEngine, MoveUnitCommand,
     UnitActionCommand,
@@ -129,7 +131,7 @@ impl FixtureExecutor for RustEngineFixtureExecutor {
 }
 
 enum DecodedState {
-    Valid(aonw_domain::GameState),
+    Valid(Box<aonw_domain::GameState>),
     CommandUnitOutOfBounds,
 }
 
@@ -217,6 +219,8 @@ fn decode_state(
         return Ok(DecodedState::CommandUnitOutOfBounds);
     }
     let cities = decode_cities(input.state(), bounds)?;
+    let artifacts = decode_referenced_artifacts(input.state(), &units)?;
+    let interaction = decode_interaction(input.state())?;
     let fog_of_war = required_array(input.state(), "fogOfWar")?
         .iter()
         .enumerate()
@@ -239,11 +243,14 @@ fn decode_state(
         occupancy_policy: UnitOccupancyPolicyDto::FriendlyStacking,
         units,
         cities,
+        artifacts,
+        interaction,
         fog_of_war,
         diplomatic_contacts,
         transport_network,
     };
     decode_game_state(dto)
+        .map(Box::new)
         .map(DecodedState::Valid)
         .map_err(display_error)
 }
@@ -255,11 +262,6 @@ fn decode_units(
     include_unit_orders: bool,
 ) -> Result<(Vec<UnitDto>, bool), AdapterError> {
     let mut command_unit_out_of_bounds = false;
-    let pending_skip = if include_unit_orders {
-        pending_turn_skip(state)?
-    } else {
-        None
-    };
     let units = required_array(state, "units")?
         .iter()
         .enumerate()
@@ -279,12 +281,7 @@ fn decode_units(
                 }
                 return None;
             }
-            let restore = object
-                .get("id")
-                .and_then(Value::as_str)
-                .and_then(|id| pending_skip.as_ref().filter(|(unit_id, _)| unit_id == id))
-                .map(|(_, restore)| *restore);
-            Some(decode_unit(object, &path, include_unit_orders, restore))
+            Some(decode_unit(object, &path, include_unit_orders))
         })
         .collect::<Result<Vec<_>, _>>()?;
     Ok((units, command_unit_out_of_bounds))
@@ -348,11 +345,94 @@ fn decode_cities(state: &JsonObject, bounds: HexGridBounds) -> Result<Vec<CityDt
         .collect()
 }
 
+fn decode_referenced_artifacts(
+    state: &JsonObject,
+    units: &[UnitDto],
+) -> Result<Vec<WorldArtifactDto>, AdapterError> {
+    let raw_artifacts = required_array(state, "artifacts")?;
+    let mut artifacts = Vec::new();
+    for unit in units {
+        if let Some(artifact_id) = &unit.carried_artifact_id {
+            artifacts.push(WorldArtifactDto {
+                id: artifact_id.clone(),
+                artifact_type: referenced_artifact_type(raw_artifacts, artifact_id)?,
+                location: WorldArtifactLocationDto::Carried {
+                    unit_id: unit.id.clone(),
+                },
+            });
+        }
+        if let Some(artifact_id) = &unit.activity.excavating_artifact_id {
+            let raw_location = raw_artifacts
+                .iter()
+                .find(|value| value.get("id").and_then(Value::as_str) == Some(artifact_id))
+                .and_then(|value| value.get("location"))
+                .and_then(Value::as_object);
+            let coordinate = raw_location
+                .filter(|location| {
+                    location.get("kind").and_then(Value::as_str) == Some("excavation")
+                })
+                .map(|location| {
+                    Ok(CoordinateDto {
+                        col: required_i32_at(location, "col", "input.state.artifacts[].location")?,
+                        row: required_i32_at(location, "row", "input.state.artifacts[].location")?,
+                    })
+                })
+                .transpose()?
+                .unwrap_or(CoordinateDto {
+                    col: unit.col,
+                    row: unit.row,
+                });
+            let remaining_turns = raw_location
+                .filter(|location| {
+                    location.get("kind").and_then(Value::as_str) == Some("excavation")
+                })
+                .and_then(|location| location.get("remainingTurns"))
+                .map(|value| value_to_u32(value, "input.state.artifacts[].location.remainingTurns"))
+                .transpose()?
+                .unwrap_or(1);
+            artifacts.push(WorldArtifactDto {
+                id: artifact_id.clone(),
+                artifact_type: referenced_artifact_type(raw_artifacts, artifact_id)?,
+                location: WorldArtifactLocationDto::Excavation {
+                    unit_id: unit.id.clone(),
+                    coordinate,
+                    remaining_turns,
+                },
+            });
+        }
+    }
+    Ok(artifacts)
+}
+
+fn referenced_artifact_type(
+    raw_artifacts: &[Value],
+    artifact_id: &str,
+) -> Result<WorldArtifactTypeDto, AdapterError> {
+    let Some(value) = raw_artifacts
+        .iter()
+        .find(|value| value.get("id").and_then(Value::as_str) == Some(artifact_id))
+        .and_then(|value| value.get("type"))
+        .and_then(Value::as_str)
+    else {
+        return Ok(WorldArtifactTypeDto::AstronomersTablets);
+    };
+    match value {
+        "ancientImperialCrown" => Ok(WorldArtifactTypeDto::AncientImperialCrown),
+        "astronomersTablets" => Ok(WorldArtifactTypeDto::AstronomersTablets),
+        "prophetMask" => Ok(WorldArtifactTypeDto::ProphetMask),
+        "heroSword" => Ok(WorldArtifactTypeDto::HeroSword),
+        "merchantsSeal" => Ok(WorldArtifactTypeDto::MerchantsSeal),
+        "firstPeoplesChronicle" => Ok(WorldArtifactTypeDto::FirstPeoplesChronicle),
+        "templeReliquary" => Ok(WorldArtifactTypeDto::TempleReliquary),
+        "queensMirror" => Ok(WorldArtifactTypeDto::QueensMirror),
+        _ => Err(error(format!("unknown artifact type: {value}"))),
+    }
+}
+
 fn decode_unit(
     object: &JsonObject,
     path: &str,
     include_unit_orders: bool,
-    skipped_movement_restore_units: Option<u32>,
 ) -> Result<UnitDto, AdapterError> {
     let movement_units = if let Some(value) = object.get("movementUnits") {
         value_to_u32(value, &format!("{path}.movementUnits"))?
@@ -383,7 +463,6 @@ fn decode_unit(
         col: required_i32_at(object, "col", path)?,
         row: required_i32_at(object, "row", path)?,
         movement_units,
-        skipped_movement_restore_units,
         army: Vec::new(),
         queued_path: if include_unit_orders {
             object
@@ -418,26 +497,27 @@ fn decode_unit(
     })
 }
 
-fn pending_turn_skip(state: &JsonObject) -> Result<Option<(String, u32)>, AdapterError> {
+fn decode_interaction(state: &JsonObject) -> Result<InteractionStateDto, AdapterError> {
     let Some(pending) = state
         .get("lifecycle")
         .and_then(Value::as_object)
         .and_then(|lifecycle| lifecycle.get("pendingAction"))
         .and_then(Value::as_object)
     else {
-        return Ok(None);
+        return Ok(InteractionStateDto::default());
     };
     if pending.get("type").and_then(Value::as_str) != Some("unitTurnSkip") {
-        return Ok(None);
+        return Ok(InteractionStateDto::default());
     }
-    Ok(Some((
-        required_string_at(pending, "unitId", "input.state.lifecycle.pendingAction")?.to_owned(),
-        required_u32_at(
-            pending,
-            "restoreMovementUnits",
-            "input.state.lifecycle.pendingAction",
-        )?,
-    )))
+    let path = "input.state.lifecycle.pendingAction";
+    Ok(InteractionStateDto {
+        city_founding_draft: None,
+        pending: Some(PendingInteractionDto::UnitTurnSkip {
+            owner_player_id: required_string_at(pending, "ownerPlayerId", path)?.to_owned(),
+            unit_id: required_string_at(pending, "unitId", path)?.to_owned(),
+            restore_movement_units: required_u32_at(pending, "restoreMovementUnits", path)?,
+        }),
+    })
 }
 
 fn decode_queued_path(value: &Value, unit_path: &str) -> Result<QueuedMovePathDto, AdapterError> {
@@ -562,6 +642,7 @@ fn apply_canonical_projection(
             .ok_or_else(|| error(format!("missing canonical unit: {}", unit.id())))?;
         project_unit(raw, unit, evidence);
     }
+    project_artifacts(state, canonical)?;
 
     state.insert(
         "fogOfWar".into(),
@@ -664,21 +745,19 @@ fn project_unit(
 }
 
 fn project_pending_turn_skip(lifecycle: &mut JsonObject, state: &aonw_domain::GameState) {
-    if let Some(unit) = state
-        .units()
-        .iter()
-        .find(|unit| unit.skipped_movement_restore().is_some())
+    if let Some(PendingInteraction::UnitTurnSkip {
+        owner_player_id,
+        unit_id,
+        restore_movement,
+    }) = state.interaction().pending()
     {
         lifecycle.insert(
             "pendingAction".into(),
             json!({
                 "type": "unitTurnSkip",
-                "ownerPlayerId": unit.owner_player_id().as_str(),
-                "unitId": unit.id().as_str(),
-                "restoreMovementUnits": unit
-                    .skipped_movement_restore()
-                    .expect("matched skipped unit")
-                    .get(),
+                "ownerPlayerId": owner_player_id.as_str(),
+                "unitId": unit_id.as_str(),
+                "restoreMovementUnits": restore_movement.get(),
             }),
         );
         return;
@@ -692,6 +771,53 @@ fn project_pending_turn_skip(lifecycle: &mut JsonObject, state: &aonw_domain::Ga
     {
         lifecycle.remove("pendingAction");
     }
+}
+
+fn project_artifacts(
+    state: &mut JsonObject,
+    canonical: &aonw_domain::GameState,
+) -> Result<(), AdapterError> {
+    let artifacts = state
+        .get_mut("artifacts")
+        .and_then(Value::as_array_mut)
+        .ok_or_else(|| error("state.artifacts must be an array"))?;
+    for artifact in canonical.artifacts() {
+        let Some(raw) = artifacts
+            .iter_mut()
+            .find(|value| value.get("id").and_then(Value::as_str) == Some(artifact.id().as_str()))
+            .and_then(Value::as_object_mut)
+        else {
+            continue;
+        };
+        let location = match artifact.location() {
+            aonw_domain::WorldArtifactLocation::Map(coordinate) => json!({
+                "kind": "map",
+                "col": coordinate.col(),
+                "row": coordinate.row(),
+            }),
+            aonw_domain::WorldArtifactLocation::Carried(unit_id) => json!({
+                "kind": "carried",
+                "unitId": unit_id.as_str(),
+            }),
+            aonw_domain::WorldArtifactLocation::Stored(city_id) => json!({
+                "kind": "stored",
+                "cityId": city_id.as_str(),
+            }),
+            aonw_domain::WorldArtifactLocation::Excavation {
+                unit_id,
+                coordinate,
+                remaining_turns,
+            } => json!({
+                "kind": "excavation",
+                "unitId": unit_id.as_str(),
+                "col": coordinate.col(),
+                "row": coordinate.row(),
+                "remainingTurns": remaining_turns,
+            }),
+        };
+        raw.insert("location".into(), location);
+    }
+    Ok(())
 }
 
 fn dart_queued_path_steps(

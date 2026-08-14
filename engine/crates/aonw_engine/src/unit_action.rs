@@ -1,4 +1,4 @@
-use aonw_domain::{GameState, StateRevision, Unit, UnitId};
+use aonw_domain::{ArtifactId, GameState, InteractionState, StateRevision, Unit, UnitId};
 
 use crate::EngineContext;
 
@@ -82,6 +82,8 @@ impl std::error::Error for UnitActionError {}
 pub(crate) struct UnitActionUpdate {
     pub(crate) revision: StateRevision,
     pub(crate) unit: Unit,
+    pub(crate) interaction: InteractionState,
+    pub(crate) cancelled_excavation: Option<ArtifactId>,
 }
 
 pub(crate) fn apply_unit_action(
@@ -102,16 +104,30 @@ pub(crate) fn apply_unit_action(
     if matches!(kind, UnitActionKind::Fortify) && unit.activity().blocks_manual_movement() {
         return Err(UnitActionError::UnitBusy);
     }
-    let updated = match kind {
+    let (updated, interaction, cancelled_excavation) = match kind {
         UnitActionKind::Cancel => {
             let maximum = context
                 .ruleset()
                 .maximum_movement(unit.kind(), unit.carried_artifact_id().is_some())
                 .ok_or(UnitActionError::UnitDefinitionMissing)?;
-            unit.after_cancel_action(maximum)
+            let restore = state.interaction().turn_skip_restore(unit.id());
+            let excavation = unit.activity().excavating_artifact_id().cloned();
+            (
+                unit.after_cancel_action(maximum, restore),
+                state.interaction().clone().without_unit(unit.id()),
+                excavation,
+            )
         }
-        UnitActionKind::Skip => unit.after_skip_turn(),
-        UnitActionKind::Fortify => unit.after_fortify(),
+        UnitActionKind::Skip => (
+            unit.after_skip_turn(),
+            state.interaction().clone().after_skip(unit),
+            None,
+        ),
+        UnitActionKind::Fortify => (
+            unit.after_fortify(),
+            state.interaction().clone().without_unit(unit.id()),
+            None,
+        ),
     };
     let revision = state
         .revision()
@@ -120,6 +136,8 @@ pub(crate) fn apply_unit_action(
     Ok(UnitActionUpdate {
         revision,
         unit: updated,
+        interaction,
+        cancelled_excavation,
     })
 }
 

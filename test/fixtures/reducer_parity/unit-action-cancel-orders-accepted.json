@@ -173,6 +173,7 @@
           "row": 0,
           "movementPoints": 1,
           "army": [],
+          "excavatingArtifactId": "artifact_excavation",
           "queuedPath": {
             "targetCol": 2,
             "targetRow": 0,
@@ -230,7 +231,19 @@
         }
       ],
       "cities": [],
-      "artifacts": [],
+      "artifacts": [
+        {
+          "id": "artifact_excavation",
+          "type": "astronomersTablets",
+          "location": {
+            "kind": "excavation",
+            "unitId": "settler_1",
+            "col": 1,
+            "row": 0,
+            "remainingTurns": 2
+          }
+        }
+      ],
       "fieldImprovements": [],
       "transportNetwork": [],
       "fogOfWar": [],
@@ -339,7 +352,17 @@
         }
       ],
       "cities": [],
-      "artifacts": [],
+      "artifacts": [
+        {
+          "id": "artifact_excavation",
+          "type": "astronomersTablets",
+          "location": {
+            "kind": "map",
+            "col": 1,
+            "row": 0
+          }
+        }
+      ],
       "fieldImprovements": [],
       "transportNetwork": [],
       "fogOfWar": [],

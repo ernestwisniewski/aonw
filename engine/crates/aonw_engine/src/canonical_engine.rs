@@ -316,7 +316,12 @@ fn apply_canonical_unit_action(
         }
     };
     let next_state = state
-        .into_replacing_unit(update.revision, update.unit)
+        .into_after_unit_action(
+            update.revision,
+            update.unit,
+            update.interaction,
+            update.cancelled_excavation,
+        )
         .map_err(CanonicalEngineError::State)?;
     Ok(DomainTransition {
         digest: crate::state_digest::digest_state(&next_state),

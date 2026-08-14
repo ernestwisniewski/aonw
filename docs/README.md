@@ -88,8 +88,9 @@ visibility, reusable search storage, revision-scoped query caching, and an
 owned-state apply path measured by the Rust benchmark target.
 Strict current-version save/restore, deterministic replay verification, and
 revision-bound cancel/skip/fortify unit actions are available through the local
-runtime and Godot adapter. They are not connected to Flutter, Serverpod, or
-production storage.
+runtime and Godot adapter. Canonical state also owns world artifacts and
+rule-relevant interaction; cancellation restores interrupted excavations. This
+runtime is not yet connected to Flutter, Serverpod, or production storage.
 Flutter remains at the repository root during migration; AoNW2 already lives
 under `clients/aonw2_godot/`.
 

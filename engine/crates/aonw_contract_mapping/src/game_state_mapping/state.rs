@@ -7,7 +7,9 @@ use aonw_domain::{
     UnitOccupancyPolicy,
 };
 
+use super::artifact::{decode_artifact, encode_artifact};
 use super::error::GameStateMappingError;
+use super::interaction::{decode_interaction, encode_interaction};
 use super::unit::{decode_unit, encode_unit};
 use super::world::{
     decode_city, decode_fog, decode_pair, decode_transport, encode_city, encode_fog,
@@ -52,6 +54,13 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         .enumerate()
         .map(|(index, city)| decode_city(index, city))
         .collect::<Result<Vec<_>, _>>()?;
+    let artifacts = dto
+        .artifacts
+        .into_iter()
+        .enumerate()
+        .map(|(index, artifact)| decode_artifact(index, artifact))
+        .collect::<Result<Vec<_>, _>>()?;
+    let interaction = decode_interaction(dto.interaction)?;
     let fog = FogOfWar::try_new(
         dto.fog_of_war
             .into_iter()
@@ -96,6 +105,8 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
         },
         units,
         cities,
+        artifacts,
+        interaction,
         fog,
         diplomacy,
         transport,
@@ -118,6 +129,8 @@ pub fn encode_game_state(state: &GameState) -> GameStateDto {
         },
         units: state.units().iter().map(encode_unit).collect(),
         cities: state.cities().iter().map(encode_city).collect(),
+        artifacts: state.artifacts().iter().map(encode_artifact).collect(),
+        interaction: encode_interaction(state.interaction()),
         fog_of_war: state
             .fog_of_war()
             .players()

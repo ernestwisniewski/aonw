@@ -221,11 +221,13 @@ schema exists.
 The first post-movement command family is implemented in the same bounded
 context: revision-bound cancel, skip, and fortify transitions run through
 `GameEngine`, `aonw_local_runtime`, replay verification, and Godot. Canonical
-state contract version 2 persists the movement balance retained by a current-
-turn skip, so cancellation does not depend on presentation interaction state.
-Unit-action results use the shared command result and recipient patch rather
-than a movement-specific runtime envelope. Turn advancement, artifact-location
-restoration, and non-unit interaction state remain subsequent slices.
+state contract version 3 persists world artifacts and rule-relevant interaction
+state. A current-turn skip retains its restorable movement in that interaction
+state, and cancellation restores an interrupted excavation artifact to its map
+coordinate while clearing interaction owned by the unit. Unit-action results
+use the shared command result and recipient patch rather than a
+movement-specific runtime envelope. Turn advancement remains a subsequent
+slice.
 `aonw_native_bridge` and top-level contract publication remain planned.
 Additional crates shown in the target layout below are created with their first
 behavior and tests rather than as empty packages. `aonw_godot` is a narrow

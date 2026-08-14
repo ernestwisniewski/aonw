@@ -27,15 +27,6 @@ pub(super) fn decode_unit(index: usize, dto: UnitDto) -> Result<Unit, GameStateM
         ));
     }
     if dto
-        .skipped_movement_restore_units
-        .is_some_and(|units| units > MAX_MOVEMENT_BALANCE_UNITS)
-    {
-        return Err(GameStateMappingError::new(
-            format!("{path}.skippedMovementRestoreUnits"),
-            format!("exceeds {MAX_MOVEMENT_BALANCE_UNITS}"),
-        ));
-    }
-    if dto
         .queued_path
         .as_ref()
         .is_some_and(|route| route.steps.len() > MAX_QUEUED_PATH_STEP_COUNT)
@@ -77,7 +68,6 @@ pub(super) fn decode_unit(index: usize, dto: UnitDto) -> Result<Unit, GameStateM
         HexCoord::new(dto.col, dto.row),
         MovementUnits::new(dto.movement_units),
     )
-    .with_skipped_movement_restore(dto.skipped_movement_restore_units.map(MovementUnits::new))
     .with_army(
         dto.army
             .into_iter()
@@ -104,7 +94,6 @@ pub(super) fn encode_unit(unit: &Unit) -> UnitDto {
         col: unit.position().col(),
         row: unit.position().row(),
         movement_units: unit.movement_units().get(),
-        skipped_movement_restore_units: unit.skipped_movement_restore().map(MovementUnits::get),
         army: unit
             .army()
             .iter()

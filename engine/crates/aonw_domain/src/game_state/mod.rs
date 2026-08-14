@@ -1,6 +1,12 @@
+mod validation;
+
 use crate::{
-    City, CityId, Diplomacy, FogOfWar, HexCoord, HexGridBounds, PlayerId, StateRevision,
-    TransportNetwork, Unit, UnitId,
+    ArtifactId, City, CityId, Diplomacy, FogOfWar, HexCoord, HexGridBounds, InteractionState,
+    PlayerId, StateRevision, TransportNetwork, Unit, UnitId, WorldArtifact,
+};
+use validation::{
+    artifact_indices, city_indices, unit_indices, validate_artifacts, validate_environment,
+    validate_interaction,
 };
 
 /// Occupancy policy selected by the immutable ruleset.
@@ -40,6 +46,8 @@ pub enum GameStateBuildError {
     },
     /// More than one city used an identifier.
     DuplicateCityId(CityId),
+    /// More than one artifact used an identifier.
+    DuplicateArtifactId(ArtifactId),
     /// A city center or controlled coordinate is outside the map.
     CityOutOfBounds {
         /// City carrying invalid topology.
@@ -56,6 +64,51 @@ pub enum GameStateBuildError {
     },
     /// A transport segment is outside the map.
     TransportOutOfBounds(HexCoord),
+    /// An artifact map coordinate is outside the map.
+    ArtifactOutOfBounds {
+        /// Artifact carrying the coordinate.
+        artifact_id: ArtifactId,
+        /// Invalid coordinate.
+        position: HexCoord,
+    },
+    /// An artifact references an absent unit.
+    ArtifactUnitNotFound {
+        /// Artifact carrying the invalid reference.
+        artifact_id: ArtifactId,
+        /// Referenced unit.
+        unit_id: UnitId,
+    },
+    /// An artifact references an absent city.
+    ArtifactCityNotFound {
+        /// Artifact carrying the invalid reference.
+        artifact_id: ArtifactId,
+        /// Referenced city.
+        city_id: CityId,
+    },
+    /// Unit and artifact ownership references differ.
+    ArtifactUnitMismatch {
+        /// Artifact carrying the invalid ownership.
+        artifact_id: ArtifactId,
+        /// Referenced unit.
+        unit_id: UnitId,
+    },
+    /// A unit references an absent artifact.
+    UnitArtifactNotFound {
+        /// Unit carrying the invalid reference.
+        unit_id: UnitId,
+        /// Referenced artifact.
+        artifact_id: ArtifactId,
+    },
+    /// Interaction state references an absent unit.
+    InteractionUnitNotFound(UnitId),
+    /// Interaction state references an absent city.
+    InteractionCityNotFound(CityId),
+    /// Interaction state contains an out-of-bounds coordinate.
+    InteractionOutOfBounds(HexCoord),
+    /// Interaction ownership differs from the referenced unit or city.
+    InteractionOwnerMismatch,
+    /// A pending turn skip does not match the skipped unit state.
+    InvalidTurnSkipState(UnitId),
 }
 
 #[cfg(test)]
@@ -162,6 +215,7 @@ impl core::fmt::Display for GameStateBuildError {
                 position.row()
             ),
             Self::DuplicateCityId(id) => write!(formatter, "duplicate city id: {id}"),
+            Self::DuplicateArtifactId(id) => write!(formatter, "duplicate artifact id: {id}"),
             Self::CityOutOfBounds { city_id, position } => write!(
                 formatter,
                 "city {city_id} references ({}, {}) outside the map",
@@ -183,6 +237,61 @@ impl core::fmt::Display for GameStateBuildError {
                 position.col(),
                 position.row()
             ),
+            Self::ArtifactOutOfBounds {
+                artifact_id,
+                position,
+            } => write!(
+                formatter,
+                "artifact {artifact_id} is outside the map at ({}, {})",
+                position.col(),
+                position.row()
+            ),
+            Self::ArtifactUnitNotFound {
+                artifact_id,
+                unit_id,
+            } => write!(
+                formatter,
+                "artifact {artifact_id} references missing unit {unit_id}"
+            ),
+            Self::ArtifactCityNotFound {
+                artifact_id,
+                city_id,
+            } => write!(
+                formatter,
+                "artifact {artifact_id} references missing city {city_id}"
+            ),
+            Self::ArtifactUnitMismatch {
+                artifact_id,
+                unit_id,
+            } => write!(
+                formatter,
+                "artifact {artifact_id} and unit {unit_id} ownership differ"
+            ),
+            Self::UnitArtifactNotFound {
+                unit_id,
+                artifact_id,
+            } => write!(
+                formatter,
+                "unit {unit_id} references missing artifact {artifact_id}"
+            ),
+            Self::InteractionUnitNotFound(id) => {
+                write!(formatter, "interaction references missing unit {id}")
+            }
+            Self::InteractionCityNotFound(id) => {
+                write!(formatter, "interaction references missing city {id}")
+            }
+            Self::InteractionOutOfBounds(position) => write!(
+                formatter,
+                "interaction references ({}, {}) outside the map",
+                position.col(),
+                position.row()
+            ),
+            Self::InteractionOwnerMismatch => {
+                formatter.write_str("interaction owner does not own its referenced entity")
+            }
+            Self::InvalidTurnSkipState(id) => {
+                write!(formatter, "pending turn skip does not match unit {id}")
+            }
         }
     }
 }
@@ -200,6 +309,9 @@ pub struct GameState {
     unit_indices_by_id: Box<[usize]>,
     cities: Box<[City]>,
     city_indices_by_id: Box<[usize]>,
+    artifacts: Box<[WorldArtifact]>,
+    artifact_indices_by_id: Box<[usize]>,
+    interaction: InteractionState,
     fog_of_war: FogOfWar,
     diplomacy: Diplomacy,
     transport_network: TransportNetwork,
@@ -225,6 +337,8 @@ impl GameState {
             occupancy_policy,
             units,
             [],
+            [],
+            InteractionState::default(),
             FogOfWar::default(),
             Diplomacy::default(),
             TransportNetwork::default(),
@@ -244,85 +358,21 @@ impl GameState {
         occupancy_policy: UnitOccupancyPolicy,
         units: impl IntoIterator<Item = Unit>,
         cities: impl IntoIterator<Item = City>,
+        artifacts: impl IntoIterator<Item = WorldArtifact>,
+        interaction: InteractionState,
         fog_of_war: FogOfWar,
         diplomacy: Diplomacy,
         transport_network: TransportNetwork,
     ) -> Result<Self, GameStateBuildError> {
         let units = units.into_iter().collect::<Vec<_>>();
-        for unit in &units {
-            if !bounds.contains(unit.position()) {
-                return Err(GameStateBuildError::UnitOutOfBounds {
-                    unit_id: unit.id().clone(),
-                    position: unit.position(),
-                });
-            }
-        }
-        let mut unit_indices_by_id = (0..units.len()).collect::<Vec<_>>();
-        unit_indices_by_id
-            .sort_unstable_by(|left, right| units[*left].id().cmp(units[*right].id()));
-        if let Some(pair) = unit_indices_by_id
-            .windows(2)
-            .find(|pair| units[pair[0]].id() == units[pair[1]].id())
-        {
-            return Err(GameStateBuildError::DuplicateUnitId(
-                units[pair[0]].id().clone(),
-            ));
-        }
-        let mut units_by_position = units.iter().collect::<Vec<_>>();
-        units_by_position.sort_unstable_by_key(|unit| unit.position());
-        if let Some(pair) = units_by_position.windows(2).find(|pair| {
-            pair[0].position() == pair[1].position()
-                && !occupancy_policy.permits(pair[0].owner_player_id(), pair[1].owner_player_id())
-        }) {
-            return Err(GameStateBuildError::OccupiedCoordinate {
-                position: pair[0].position(),
-            });
-        }
+        let unit_indices_by_id = unit_indices(bounds, occupancy_policy, &units)?;
         let cities = cities.into_iter().collect::<Vec<_>>();
-        for city in &cities {
-            for position in
-                core::iter::once(city.center()).chain(city.controlled_hexes().iter().copied())
-            {
-                if !bounds.contains(position) {
-                    return Err(GameStateBuildError::CityOutOfBounds {
-                        city_id: city.id().clone(),
-                        position,
-                    });
-                }
-            }
-        }
-        let mut city_indices_by_id = (0..cities.len()).collect::<Vec<_>>();
-        city_indices_by_id
-            .sort_unstable_by(|left, right| cities[*left].id().cmp(cities[*right].id()));
-        if let Some(pair) = city_indices_by_id
-            .windows(2)
-            .find(|pair| cities[pair[0]].id() == cities[pair[1]].id())
-        {
-            return Err(GameStateBuildError::DuplicateCityId(
-                cities[pair[0]].id().clone(),
-            ));
-        }
-        for player_fog in fog_of_war.players() {
-            if let Some(position) = player_fog
-                .discovered_hexes()
-                .iter()
-                .find(|coordinate| !bounds.contains(**coordinate))
-            {
-                return Err(GameStateBuildError::FogOutOfBounds {
-                    player_id: player_fog.player_id().clone(),
-                    position: *position,
-                });
-            }
-        }
-        if let Some(segment) = transport_network
-            .segments()
-            .iter()
-            .find(|segment| !bounds.contains(segment.coordinate()))
-        {
-            return Err(GameStateBuildError::TransportOutOfBounds(
-                segment.coordinate(),
-            ));
-        }
+        let city_indices_by_id = city_indices(bounds, &cities)?;
+        let artifacts = artifacts.into_iter().collect::<Vec<_>>();
+        let artifact_indices_by_id = artifact_indices(&artifacts)?;
+        validate_artifacts(bounds, &units, &cities, &artifacts)?;
+        validate_interaction(bounds, &units, &cities, &interaction)?;
+        validate_environment(bounds, &fog_of_war, &transport_network)?;
         Ok(Self {
             revision,
             turn,
@@ -332,6 +382,9 @@ impl GameState {
             unit_indices_by_id: unit_indices_by_id.into_boxed_slice(),
             cities: cities.into_boxed_slice(),
             city_indices_by_id: city_indices_by_id.into_boxed_slice(),
+            artifacts: artifacts.into_boxed_slice(),
+            artifact_indices_by_id: artifact_indices_by_id.into_boxed_slice(),
+            interaction,
             fog_of_war,
             diplomacy,
             transport_network,
@@ -368,6 +421,16 @@ impl GameState {
     pub const fn cities(&self) -> &[City] {
         &self.cities
     }
+    /// Returns artifacts in canonical contract order.
+    #[must_use]
+    pub const fn artifacts(&self) -> &[WorldArtifact] {
+        &self.artifacts
+    }
+    /// Returns rule-relevant interaction state.
+    #[must_use]
+    pub const fn interaction(&self) -> &InteractionState {
+        &self.interaction
+    }
     /// Returns canonical fog state.
     #[must_use]
     pub const fn fog_of_war(&self) -> &FogOfWar {
@@ -398,6 +461,14 @@ impl GameState {
             .binary_search_by(|index| self.cities[*index].id().cmp(city_id))
             .ok()
             .map(|index| &self.cities[self.city_indices_by_id[index]])
+    }
+    /// Finds an artifact through the deterministic secondary index.
+    #[must_use]
+    pub fn artifact(&self, artifact_id: &ArtifactId) -> Option<&WorldArtifact> {
+        self.artifact_indices_by_id
+            .binary_search_by(|index| self.artifacts[*index].id().cmp(artifact_id))
+            .ok()
+            .map(|index| &self.artifacts[self.artifact_indices_by_id[index]])
     }
 
     /// Finds the first city center at a coordinate.
@@ -448,21 +519,25 @@ impl GameState {
             self.occupancy_policy,
             units,
             self.cities.into_vec(),
+            self.artifacts.into_vec(),
+            self.interaction,
             fog_of_war,
             diplomacy,
             self.transport_network,
         )
     }
 
-    /// Consumes the aggregate and replaces one unit without changing world slices.
+    /// Consumes the aggregate and applies one complete unit-action update.
     ///
     /// # Errors
     ///
     /// Returns an error if the unit is absent or the next aggregate is invalid.
-    pub fn into_replacing_unit(
+    pub fn into_after_unit_action(
         self,
         revision: StateRevision,
         unit: Unit,
+        interaction: InteractionState,
+        cancelled_excavation: Option<ArtifactId>,
     ) -> Result<Self, GameStateBuildError> {
         let index = self
             .unit_indices_by_id
@@ -470,7 +545,16 @@ impl GameState {
             .map(|source_index| self.unit_indices_by_id[source_index])
             .map_err(|_| GameStateBuildError::UnitNotFound(unit.id().clone()))?;
         let mut units = self.units.into_vec();
+        let unit_id = unit.id().clone();
         units[index] = unit;
+        let mut artifacts = self.artifacts.into_vec();
+        if let Some(artifact_id) = cancelled_excavation
+            && let Some(artifact) = artifacts
+                .iter_mut()
+                .find(|artifact| artifact.id() == &artifact_id)
+        {
+            artifact.restore_excavation(&unit_id);
+        }
         Self::try_new_with_world(
             revision,
             self.turn,
@@ -478,6 +562,8 @@ impl GameState {
             self.occupancy_policy,
             units,
             self.cities.into_vec(),
+            artifacts,
+            interaction,
             self.fog_of_war,
             self.diplomacy,
             self.transport_network,

@@ -226,11 +226,24 @@
             ],
             "remainingTurns": 1,
             "totalTurns": 2
-          }
+          },
+          "excavatingArtifactId": "artifact_excavation"
         }
       ],
       "cities": [],
-      "artifacts": [],
+      "artifacts": [
+        {
+          "id": "artifact_excavation",
+          "type": "astronomersTablets",
+          "location": {
+            "kind": "excavation",
+            "col": 1,
+            "row": 0,
+            "unitId": "settler_1",
+            "remainingTurns": 2
+          }
+        }
+      ],
       "fieldImprovements": [],
       "transportNetwork": [],
       "fogOfWar": [],
@@ -339,7 +352,17 @@
         }
       ],
       "cities": [],
-      "artifacts": [],
+      "artifacts": [
+        {
+          "id": "artifact_excavation",
+          "type": "astronomersTablets",
+          "location": {
+            "kind": "map",
+            "col": 1,
+            "row": 0
+          }
+        }
+      ],
       "fieldImprovements": [],
       "transportNetwork": [],
       "fogOfWar": [],

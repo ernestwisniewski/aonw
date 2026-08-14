@@ -347,7 +347,7 @@ mod tests {
 
     #[test]
     fn strict_save_codec_rejects_unknown_duplicate_and_oversized_input() {
-        let base = r#"{"schemaVersion":2,"behaviorVersion":2,"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","rngState":{"seed":0,"stream":0,"counter":0},"eventOffset":0,"stateDigest":"d","state":{"schemaVersion":2,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]}}"#;
+        let base = r#"{"schemaVersion":2,"behaviorVersion":2,"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","rngState":{"seed":0,"stream":0,"counter":0},"eventOffset":0,"stateDigest":"d","state":{"schemaVersion":3,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]}}"#;
         let unknown = base.replacen("\"state\":", "\"extra\":true,\"state\":", 1);
         assert!(SaveGameDto::from_json(&unknown).is_err());
         let duplicate = base.replacen(
@@ -361,7 +361,7 @@ mod tests {
 
     #[test]
     fn strict_replay_codec_rejects_unknown_and_duplicate_fields() {
-        let base = r#"{"schemaVersion":2,"behaviorVersion":2,"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","initialRngState":{"seed":0,"stream":0,"counter":0},"initialEventOffset":0,"initialStateDigest":"d","initialState":{"schemaVersion":2,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]},"entries":[]}"#;
+        let base = r#"{"schemaVersion":2,"behaviorVersion":2,"mapId":"m","mapHash":"h","rulesetId":"r","rulesetHash":"h","actorPlayerId":"p","initialRngState":{"seed":0,"stream":0,"counter":0},"initialEventOffset":0,"initialStateDigest":"d","initialState":{"schemaVersion":3,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]},"entries":[]}"#;
         assert!(ReplayLogDto::from_json(base).is_ok());
         let unknown = base.replacen("\"entries\":", "\"extra\":true,\"entries\":", 1);
         assert!(ReplayLogDto::from_json(&unknown).is_err());

@@ -28,8 +28,6 @@ pub enum UnitBuildError {
     InvalidJobDuration,
     /// Explicit combat hit points must be positive.
     ZeroHitPoints,
-    /// A skipped turn must be active with no current movement.
-    InvalidTurnSkipState,
 }
 
 impl core::fmt::Display for UnitBuildError {
@@ -49,9 +47,6 @@ impl core::fmt::Display for UnitBuildError {
             ),
             Self::InvalidJobDuration => formatter.write_str("unit job duration is invalid"),
             Self::ZeroHitPoints => formatter.write_str("unit hit points must be positive"),
-            Self::InvalidTurnSkipState => {
-                formatter.write_str("skipped unit must be active with zero movement")
-            }
         }
     }
 }
@@ -67,7 +62,6 @@ pub struct Unit {
     name: Box<str>,
     position: HexCoord,
     movement_units: MovementUnits,
-    skipped_movement_restore: Option<MovementUnits>,
     army: Box<[ArmyTroop]>,
     queued_path: Option<QueuedMovePath>,
     merchant_trade_route: Option<MerchantTradeRoute>,
@@ -97,7 +91,6 @@ impl Unit {
             name: name.into(),
             position,
             movement_units,
-            skipped_movement_restore: None,
             army: Vec::new(),
             queued_path: None,
             merchant_trade_route: None,
@@ -139,11 +132,6 @@ impl Unit {
     #[must_use]
     pub const fn movement_units(&self) -> MovementUnits {
         self.movement_units
-    }
-    /// Returns movement retained by a current-turn skip.
-    #[must_use]
-    pub const fn skipped_movement_restore(&self) -> Option<MovementUnits> {
-        self.skipped_movement_restore
     }
     /// Returns army troops in canonical order.
     #[must_use]
@@ -205,7 +193,6 @@ impl Unit {
         let mut updated = self.clone();
         updated.position = position;
         updated.movement_units = movement_units;
-        updated.skipped_movement_restore = None;
         updated.queued_path = queued_path;
         updated.posture = UnitPosture::Active;
         validate_queued_path_origin(updated.position, updated.queued_path.as_ref())?;
@@ -214,16 +201,19 @@ impl Unit {
 
     /// Clears all cancellable orders and wakes the unit.
     #[must_use]
-    pub fn after_cancel_action(&self, maximum_movement: MovementUnits) -> Self {
+    pub fn after_cancel_action(
+        &self,
+        maximum_movement: MovementUnits,
+        skipped_movement_restore: Option<MovementUnits>,
+    ) -> Self {
         let mut updated = self.clone();
-        updated.movement_units = self.skipped_movement_restore.unwrap_or_else(|| {
+        updated.movement_units = skipped_movement_restore.unwrap_or_else(|| {
             if self.posture == UnitPosture::Fortified {
                 maximum_movement
             } else {
                 self.movement_units
             }
         });
-        updated.skipped_movement_restore = None;
         updated.queued_path = None;
         updated.merchant_trade_route = None;
         updated.activity = UnitActivity::default();
@@ -231,11 +221,10 @@ impl Unit {
         updated
     }
 
-    /// Consumes current movement and records the reversible skip balance.
+    /// Consumes current movement for a turn skip.
     #[must_use]
     pub fn after_skip_turn(&self) -> Self {
         let mut updated = self.clone();
-        updated.skipped_movement_restore = Some(self.movement_units);
         updated.movement_units = MovementUnits::ZERO;
         updated.queued_path = None;
         updated.posture = UnitPosture::Active;
@@ -246,7 +235,6 @@ impl Unit {
     #[must_use]
     pub fn after_fortify(&self) -> Self {
         let mut updated = self.clone();
-        updated.skipped_movement_restore = None;
         updated.movement_units = MovementUnits::ZERO;
         updated.queued_path = None;
         updated.posture = UnitPosture::Fortified;
@@ -263,7 +251,6 @@ pub struct UnitBuilder {
     name: Box<str>,
     position: HexCoord,
     movement_units: MovementUnits,
-    skipped_movement_restore: Option<MovementUnits>,
     army: Vec<ArmyTroop>,
     queued_path: Option<QueuedMovePath>,
     merchant_trade_route: Option<MerchantTradeRoute>,
@@ -280,12 +267,6 @@ impl UnitBuilder {
     #[must_use]
     pub fn with_army(mut self, army: impl IntoIterator<Item = ArmyTroop>) -> Self {
         self.army = army.into_iter().collect();
-        self
-    }
-    /// Sets movement retained by a current-turn skip.
-    #[must_use]
-    pub const fn with_skipped_movement_restore(mut self, movement: Option<MovementUnits>) -> Self {
-        self.skipped_movement_restore = movement;
         self
     }
     /// Sets the queued manual route.
@@ -365,11 +346,6 @@ impl UnitBuilder {
         if self.hit_points == Some(0) {
             return Err(UnitBuildError::ZeroHitPoints);
         }
-        if self.skipped_movement_restore.is_some()
-            && (self.movement_units != MovementUnits::ZERO || self.posture != UnitPosture::Active)
-        {
-            return Err(UnitBuildError::InvalidTurnSkipState);
-        }
         let unit = Unit {
             id: self.id,
             owner_player_id: self.owner_player_id,
@@ -377,7 +353,6 @@ impl UnitBuilder {
             name: self.name,
             position: self.position,
             movement_units: self.movement_units,
-            skipped_movement_restore: self.skipped_movement_restore,
             army: self.army.into_boxed_slice(),
             queued_path: self.queued_path,
             merchant_trade_route: self.merchant_trade_route,
@@ -513,33 +488,18 @@ mod tests {
     fn unit_actions_preserve_reversible_skip_and_clear_owned_orders() {
         let skipped = builder().build().expect("unit").after_skip_turn();
         assert_eq!(skipped.movement_units(), MovementUnits::ZERO);
-        assert_eq!(
-            skipped.skipped_movement_restore(),
-            Some(MovementUnits::new(6))
-        );
-
-        let cancelled = skipped.after_cancel_action(MovementUnits::new(20));
+        let cancelled =
+            skipped.after_cancel_action(MovementUnits::new(20), Some(MovementUnits::new(6)));
         assert_eq!(cancelled.movement_units(), MovementUnits::new(6));
-        assert_eq!(cancelled.skipped_movement_restore(), None);
 
         let fortified = cancelled.after_fortify();
         assert_eq!(fortified.posture(), crate::UnitPosture::Fortified);
         assert_eq!(fortified.movement_units(), MovementUnits::ZERO);
         assert_eq!(
             fortified
-                .after_cancel_action(MovementUnits::new(10))
+                .after_cancel_action(MovementUnits::new(10), None)
                 .movement_units(),
             MovementUnits::new(10)
-        );
-    }
-
-    #[test]
-    fn skipped_state_is_validated_at_construction() {
-        assert_eq!(
-            builder()
-                .with_skipped_movement_restore(Some(MovementUnits::new(6)))
-                .build(),
-            Err(UnitBuildError::InvalidTurnSkipState)
         );
     }
 }

@@ -3,9 +3,10 @@
 use aonw_contract_mapping::{decode_game_state, encode_game_state};
 use aonw_contracts::{
     ArmyTroopDto, CURRENT_GAME_STATE_VERSION, CityDto, CoordinateDto, GameStateDto,
-    MovementStepDto, PlayerFogDto, PlayerPairDto, QueuedMovePathDto, TransportConditionDto,
-    TransportSegmentDto, TroopKindDto, UnitActivityDto, UnitDto, UnitKindDto,
-    UnitOccupancyPolicyDto, UnitPostureDto, WorkerJobDto,
+    InteractionStateDto, MovementStepDto, PendingInteractionDto, PlayerFogDto, PlayerPairDto,
+    QueuedMovePathDto, TransportConditionDto, TransportSegmentDto, TroopKindDto, UnitActivityDto,
+    UnitDto, UnitKindDto, UnitOccupancyPolicyDto, UnitPostureDto, WorkerJobDto, WorldArtifactDto,
+    WorldArtifactLocationDto, WorldArtifactTypeDto,
 };
 use aonw_domain::{FogVisibility, HexCoord, UnitId};
 
@@ -25,7 +26,6 @@ fn contract() -> GameStateDto {
             col: 1,
             row: 1,
             movement_units: 4,
-            skipped_movement_restore_units: None,
             army: vec![ArmyTroopDto {
                 kind: TroopKindDto::Settler,
                 count: 2,
@@ -71,6 +71,25 @@ fn contract() -> GameStateDto {
             center: CoordinateDto { col: 0, row: 0 },
             controlled_hexes: vec![CoordinateDto { col: 0, row: 1 }],
         }],
+        artifacts: vec![
+            WorldArtifactDto {
+                id: "artifact-1".to_owned(),
+                artifact_type: WorldArtifactTypeDto::AstronomersTablets,
+                location: WorldArtifactLocationDto::Excavation {
+                    unit_id: "unit-1".to_owned(),
+                    coordinate: CoordinateDto { col: 1, row: 1 },
+                    remaining_turns: 2,
+                },
+            },
+            WorldArtifactDto {
+                id: "artifact-2".to_owned(),
+                artifact_type: WorldArtifactTypeDto::HeroSword,
+                location: WorldArtifactLocationDto::Carried {
+                    unit_id: "unit-1".to_owned(),
+                },
+            },
+        ],
+        interaction: InteractionStateDto::default(),
         fog_of_war: vec![PlayerFogDto {
             player_id: "player-1".to_owned(),
             discovered_hexes: vec![
@@ -127,10 +146,16 @@ fn current_turn_skip_round_trip_preserves_restore_balance() {
     let mut source = contract();
     let unit = &mut source.units[0];
     unit.movement_units = 0;
-    unit.skipped_movement_restore_units = Some(4);
     unit.queued_path = None;
     unit.activity = UnitActivityDto::default();
     unit.posture = UnitPostureDto::Active;
+    unit.carried_artifact_id = None;
+    source.artifacts.clear();
+    source.interaction.pending = Some(PendingInteractionDto::UnitTurnSkip {
+        owner_player_id: "player-1".to_owned(),
+        unit_id: "unit-1".to_owned(),
+        restore_movement_units: 4,
+    });
 
     let state = decode_game_state(source.clone()).expect("decode skipped unit");
     assert_eq!(encode_game_state(&state), source);

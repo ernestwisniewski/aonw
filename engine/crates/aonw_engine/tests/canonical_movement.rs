@@ -65,6 +65,8 @@ fn world(
         UnitOccupancyPolicy::FriendlyStacking,
         units,
         cities,
+        [],
+        aonw_domain::InteractionState::default(),
         fog,
         Diplomacy::default(),
         transport,

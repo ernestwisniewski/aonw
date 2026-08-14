@@ -2,8 +2,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{MovementStepDto, QueuedMovePathDto, UnitKindDto, UnitPostureDto};
 
+mod artifact;
+mod interaction;
+
+pub use artifact::{WorldArtifactDto, WorldArtifactLocationDto, WorldArtifactTypeDto};
+pub use interaction::{CityFoundingDraftDto, InteractionStateDto, PendingInteractionDto};
+
 /// Current canonical game-state contract version.
-pub const CURRENT_GAME_STATE_VERSION: u16 = 2;
+pub const CURRENT_GAME_STATE_VERSION: u16 = 3;
 
 #[allow(missing_docs)]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -17,6 +23,8 @@ pub struct GameStateDto {
     pub occupancy_policy: UnitOccupancyPolicyDto,
     pub units: Vec<UnitDto>,
     pub cities: Vec<CityDto>,
+    pub artifacts: Vec<WorldArtifactDto>,
+    pub interaction: InteractionStateDto,
     pub fog_of_war: Vec<PlayerFogDto>,
     pub diplomatic_contacts: Vec<PlayerPairDto>,
     pub transport_network: Vec<TransportSegmentDto>,
@@ -41,7 +49,6 @@ pub struct UnitDto {
     pub col: i32,
     pub row: i32,
     pub movement_units: u32,
-    pub skipped_movement_restore_units: Option<u32>,
     pub army: Vec<ArmyTroopDto>,
     pub queued_path: Option<QueuedMovePathDto>,
     pub merchant_trade_route: Option<MerchantTradeRouteDto>,
@@ -260,9 +267,9 @@ mod tests {
 
     #[test]
     fn strict_codec_rejects_unknown_and_duplicate_fields() {
-        let unknown = r#"{"schemaVersion":1,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[],"extra":true}"#;
+        let unknown = r#"{"schemaVersion":3,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[],"extra":true}"#;
         assert!(GameStateDto::from_json(unknown, 4096).is_err());
-        let duplicate = r#"{"schemaVersion":1,"schemaVersion":1,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]}"#;
+        let duplicate = r#"{"schemaVersion":3,"schemaVersion":3,"revision":0,"turn":0,"cols":1,"rows":1,"occupancyPolicy":"exclusive","units":[],"cities":[],"artifacts":[],"interaction":{"cityFoundingDraft":null,"pending":null},"fogOfWar":[],"diplomaticContacts":[],"transportNetwork":[]}"#;
         assert!(GameStateDto::from_json(duplicate, 4096).is_err());
     }
 }

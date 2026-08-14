@@ -98,18 +98,19 @@ such as the existing 3×3 movement oracle. Map bounds expose canonical odd-q
 neighbors and row-major indices without allocation.
 
 The actor is command/query context, not persisted state. `GameStateDto` version
-2 is the strict current contract for all implemented authoritative state. It
-persists a reversible current-turn unit skip without moving that rule into UI.
+3 is the strict current contract for all implemented authoritative state. It
+persists artifacts and rule-relevant interaction state, including reversible
+current-turn unit skips, without moving those rules into UI.
 `EngineContext` supplies actor, permission, validated map, and immutable
 ruleset; canonical fog and occupancy are derived from `GameState`.
 
 ## Movement foundation
 
 `GameState` is the canonical aggregate root for the implemented simulation
-slice. It uses the nominal `StateRevision`, preserves unit contract order in
-contiguous storage, and maintains a private sorted ID index. Construction
-validates map bounds, duplicate IDs, and the occupancy policy selected by the
-ruleset.
+slice. It uses the nominal `StateRevision`, preserves entity contract order in
+contiguous storage, and maintains private sorted ID indices. Construction
+validates map bounds, duplicate IDs, unit occupancy, artifact locations and
+ownership, and rule-relevant interaction references.
 
 The complete `Unit` entity preserves identity, display name, HP, XP, army,
 queued and merchant routes, worker charges, posture, artifacts, and concrete
@@ -137,9 +138,10 @@ authoritative execution evidence, state digest, map hash, and ruleset hash.
 
 `CancelUnitAction`, `SkipUnitTurn`, and `FortifyUnit` use the same full-state
 boundary and rejection semantics. Skip records its restorable movement inside
-the canonical unit entity; cancel clears unit-owned queued/activity/merchant
-orders and wakes the unit; fortify accepts only an idle controlled unit. These
-actions emit no synthetic movement events or evidence.
+canonical `InteractionState`; cancel clears unit-owned interaction,
+queued/activity/merchant orders, restores an interrupted excavation artifact to
+its map coordinate, and wakes the unit. Fortify accepts only an idle controlled
+unit. These actions emit no synthetic movement events or evidence.
 
 `aonw_local_runtime::LocalRuntime` owns one validated local session. Opening is
 transactional, closing is idempotent, and every snapshot, query, and dispatch

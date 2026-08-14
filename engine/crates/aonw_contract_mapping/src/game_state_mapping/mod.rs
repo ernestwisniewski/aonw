@@ -1,4 +1,6 @@
+mod artifact;
 mod error;
+mod interaction;
 mod state;
 mod unit;
 mod value;
