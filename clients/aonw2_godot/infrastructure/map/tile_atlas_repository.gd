@@ -1,8 +1,10 @@
 class_name AonwTileAtlasRepository
 extends AonwMapTextureAssembler
 
-const HexGridGeometry := preload("res://domain/map/hex_grid_geometry.gd")
-const MapTextureProjection := preload("res://application/map/map_texture_projection.gd")
+const HexGridGeometry := preload("res://presentation/map/geometry/hex_grid_geometry.gd")
+const MapTextureProjection := preload(
+	"res://presentation/map/geometry/map_texture_projection.gd"
+)
 const DEFAULT_TILE_SIZE := Vector2i(160, 120)
 const MAX_PREVIEW_TILE_SIZE := Vector2i(160, 120)
 const TERRAIN_COLORS := {

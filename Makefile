@@ -495,7 +495,7 @@ godot-native-config:
 	@mkdir -p "$(GODOT_PROJECT)/.godot"
 	@printf '%s\n' 'res://aonw_engine.gdextension' > "$(GODOT_PROJECT)/.godot/extension_list.cfg"
 
-godot-check: rust-godot-build godot-test godot-editor-check
+godot-check: godot-test
 
 godot-editor-check: rust-godot-build godot-native-config
 	@$(GODOT_BIN) --headless --log-file "$(GODOT_EDITOR_LOG)" --editor --path "$(GODOT_PROJECT)" --quit
@@ -507,7 +507,7 @@ godot-editor: rust-godot-build godot-native-config
 godot-run: rust-godot-build godot-native-config
 	@$(GODOT_BIN) --path "$(GODOT_PROJECT)"
 
-godot-test: rust-godot-build godot-native-config
+godot-test: godot-editor-check
 	@$(GODOT_BIN) --headless --log-file "$(GODOT_CHECK_ONLY_LOG)" --path "$(GODOT_PROJECT)" --check-only --script res://tests/test_map_pipeline.gd
 	@tool/check_godot_log.sh "$(GODOT_CHECK_ONLY_LOG)"
 	@$(GODOT_BIN) --headless --log-file "$(GODOT_TEST_LOG)" --path "$(GODOT_PROJECT)" --script res://tests/test_map_pipeline.gd

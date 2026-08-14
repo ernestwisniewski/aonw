@@ -1,8 +1,10 @@
 class_name AonwMapSurfaceMeshBuilder
 extends RefCounted
 
-const HexGridGeometry := preload("res://domain/map/hex_grid_geometry.gd")
-const MapTextureProjection := preload("res://application/map/map_texture_projection.gd")
+const HexGridGeometry := preload("res://presentation/map/geometry/hex_grid_geometry.gd")
+const MapTextureProjection := preload(
+	"res://presentation/map/geometry/map_texture_projection.gd"
+)
 const HexMapProjection := preload("res://presentation/map/hex_map_projection.gd")
 const REFERENCE_OFFSET := 0.012
 const GRID_OFFSET := 0.035

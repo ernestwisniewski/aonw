@@ -1,9 +1,11 @@
 use aonw_domain::{
-    FieldImprovementKind, GameState, HexCoord, InteractionState, PendingInteraction,
-    TransportCondition, TroopKind, Unit, UnitActivity, UnitKind, UnitOccupancyPolicy, UnitPosture,
-    WorkerJob, WorldArtifact, WorldArtifactLocation, WorldArtifactType,
+    FieldImprovementKind, GameState, InteractionState, PendingInteraction, TransportCondition,
+    TroopKind, Unit, UnitActivity, UnitKind, UnitOccupancyPolicy, UnitPosture, WorkerJob,
+    WorldArtifact, WorldArtifactLocation, WorldArtifactType,
 };
-use sha2::{Digest, Sha256};
+mod writer;
+
+use writer::DigestWriter;
 
 /// SHA-256 identity of canonical simulation state.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -27,7 +29,7 @@ impl core::fmt::Display for StateDigest {
 }
 
 pub(crate) fn digest_state(state: &GameState) -> StateDigest {
-    let mut writer = DigestWriter(Sha256::new());
+    let mut writer = DigestWriter::new();
     writer.text("aonw-game-state-v3");
     writer.u64(state.revision().get());
     writer.u32(state.turn());
@@ -89,7 +91,7 @@ pub(crate) fn digest_state(state: &GameState) -> StateDigest {
         writer.text(segment.built_by_player_id().as_str());
         writer.optional_text(segment.built_by_city_id().map(aonw_domain::CityId::as_str));
     }
-    StateDigest(writer.0.finalize().into())
+    StateDigest(writer.finish())
 }
 
 fn hash_unit(writer: &mut DigestWriter, unit: &Unit) {
@@ -359,184 +361,5 @@ const fn improvement_tag(kind: FieldImprovementKind) -> u8 {
     }
 }
 
-struct DigestWriter(Sha256);
-
-impl DigestWriter {
-    fn u8(&mut self, value: u8) {
-        self.0.update([value]);
-    }
-    fn u16(&mut self, value: u16) {
-        self.0.update(value.to_le_bytes());
-    }
-    fn u32(&mut self, value: u32) {
-        self.0.update(value.to_le_bytes());
-    }
-    fn u64(&mut self, value: u64) {
-        self.0.update(value.to_le_bytes());
-    }
-    fn usize(&mut self, value: usize) {
-        self.u64(u64::try_from(value).expect("bounded length"));
-    }
-    fn text(&mut self, value: &str) {
-        self.usize(value.len());
-        self.0.update(value.as_bytes());
-    }
-    fn coordinate(&mut self, value: HexCoord) {
-        self.0.update(value.col().to_le_bytes());
-        self.0.update(value.row().to_le_bytes());
-    }
-    fn coordinates(&mut self, values: &[HexCoord]) {
-        self.usize(values.len());
-        for value in values {
-            self.coordinate(*value);
-        }
-    }
-    fn optional_coordinate(&mut self, value: Option<HexCoord>) {
-        match value {
-            None => self.u8(0),
-            Some(value) => {
-                self.u8(1);
-                self.coordinate(value);
-            }
-        }
-    }
-    fn optional_u32(&mut self, value: Option<u32>) {
-        match value {
-            None => self.u8(0),
-            Some(value) => {
-                self.u8(1);
-                self.u32(value);
-            }
-        }
-    }
-    fn optional_text(&mut self, value: Option<&str>) {
-        match value {
-            None => self.u8(0),
-            Some(value) => {
-                self.u8(1);
-                self.text(value);
-            }
-        }
-    }
-    fn steps(&mut self, steps: &[aonw_domain::MovementStep]) {
-        self.usize(steps.len());
-        for step in steps {
-            self.coordinate(step.coordinate());
-            self.u32(step.enter_cost().get());
-            self.u32(step.cumulative_cost().get());
-        }
-    }
-    fn optional_route(&mut self, route: Option<&aonw_domain::QueuedMovePath>) {
-        match route {
-            None => self.u8(0),
-            Some(route) => {
-                self.u8(1);
-                self.coordinate(route.target());
-                self.steps(route.steps());
-            }
-        }
-    }
-}
-
 #[cfg(test)]
-mod tests {
-    use aonw_domain::{
-        Diplomacy, FogOfWar, GameState, HexCoord, HexGridBounds, InteractionState, MovementUnits,
-        PendingInteraction, PlayerId, StateRevision, TransportNetwork, Unit, UnitId, UnitKind,
-        UnitOccupancyPolicy,
-    };
-
-    use super::digest_state;
-
-    fn unit(id: &str, position: HexCoord) -> Unit {
-        Unit::builder(
-            UnitId::new(id).expect("id"),
-            PlayerId::new("player-1").expect("player"),
-            UnitKind::Commander,
-            "unit.commander",
-            position,
-            MovementUnits::new(10),
-        )
-        .build()
-        .expect("unit")
-    }
-
-    #[test]
-    fn digest_is_independent_of_entity_input_order() {
-        let bounds = HexGridBounds::new(3, 3).expect("bounds");
-        let left = GameState::try_new(
-            StateRevision::new(1),
-            2,
-            bounds,
-            UnitOccupancyPolicy::Exclusive,
-            [
-                unit("b", HexCoord::new(1, 1)),
-                unit("a", HexCoord::new(0, 0)),
-            ],
-        )
-        .expect("state");
-        let right = GameState::try_new(
-            StateRevision::new(1),
-            2,
-            bounds,
-            UnitOccupancyPolicy::Exclusive,
-            [
-                unit("a", HexCoord::new(0, 0)),
-                unit("b", HexCoord::new(1, 1)),
-            ],
-        )
-        .expect("state");
-        assert_eq!(digest_state(&left), digest_state(&right));
-        assert_eq!(
-            digest_state(&left).to_string(),
-            "1ad543ae0138659b8fc285214ef5dd3ec9b867eab72b80c3b1259396bd12eab5"
-        );
-    }
-
-    #[test]
-    fn digest_includes_reversible_skip_balance() {
-        let bounds = HexGridBounds::new(3, 3).expect("bounds");
-        let base = unit("unit", HexCoord::new(1, 1));
-        let skipped = Unit::builder(
-            base.id().clone(),
-            base.owner_player_id().clone(),
-            base.kind(),
-            base.name(),
-            base.position(),
-            MovementUnits::ZERO,
-        )
-        .build()
-        .expect("skipped unit");
-        let base_state = GameState::try_new(
-            StateRevision::new(1),
-            2,
-            bounds,
-            UnitOccupancyPolicy::Exclusive,
-            [base],
-        )
-        .expect("base state");
-        let skipped_state = GameState::try_new_with_world(
-            StateRevision::new(1),
-            2,
-            bounds,
-            UnitOccupancyPolicy::Exclusive,
-            [skipped],
-            [],
-            [],
-            InteractionState::new(
-                None,
-                Some(PendingInteraction::UnitTurnSkip {
-                    owner_player_id: PlayerId::new("player-1").expect("player"),
-                    unit_id: UnitId::new("unit").expect("unit"),
-                    restore_movement: MovementUnits::new(10),
-                }),
-            ),
-            FogOfWar::default(),
-            Diplomacy::default(),
-            TransportNetwork::default(),
-        )
-        .expect("skipped state");
-
-        assert_ne!(digest_state(&base_state), digest_state(&skipped_state));
-    }
-}
+mod tests;

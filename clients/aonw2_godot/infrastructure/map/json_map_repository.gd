@@ -1,7 +1,7 @@
 class_name AonwJsonMapRepository
 extends AonwMapDocumentReader
 
-const MapDocument := preload("res://domain/map/map_document.gd")
+const MapDocument := preload("res://application/map/read_model/map_document.gd")
 const MapSource := preload("res://application/map/map_source.gd")
 const NativeEngineBridge := preload("res://infrastructure/engine/native_engine_bridge.gd")
 

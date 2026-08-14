@@ -35,7 +35,10 @@ Large responsibilities are organized as modules instead of monolithic crate
 roots: scenarios separate model, codec, bootstrap, canonicalization, and tests;
 state mapping separates aggregate, unit, world, value, and error conversion;
 local runtime sessions separate lifecycle, state, capabilities, and execution;
-the Godot adapter separates request parsing, response mapping, and bindings.
+the engine separates application commands, queries, transitions, context, and
+state-digest writing; the Godot adapter separates request parsing, response
+mapping, and bindings. Reducer-parity support separates input decoding, JSON
+helpers, and output projection from fixture execution.
 
 ## Quality gates
 

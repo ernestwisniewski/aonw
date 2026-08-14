@@ -5,7 +5,7 @@ use aonw_domain::{
 };
 
 use super::{MoveUnitCommand, TerrainMovementQueryError, apply_move_unit};
-use crate::{EngineContext, MoveUnitError, MovementPlanningView};
+use crate::{EngineContext, MoveUnitError, movement::MovementPlanningView};
 
 fn map(cols: u16, rows: u16, rough: &[HexCoord]) -> MapDefinition {
     let mut tiles = Vec::new();

@@ -22,7 +22,7 @@ pub use compiled_map::{CompiledMovementMap, CompiledMovementMapError};
 pub use cost::{MovementCost, terrain_entry_cost};
 pub use metrics::MovementSearchMetrics;
 pub(crate) use occupancy::MovementOccupancy;
-pub use planning_view::MovementPlanningView;
+pub(crate) use planning_view::MovementPlanningView;
 pub use query::{TerrainMovementPlan, TerrainMovementQuery, TerrainMovementQueryError};
 pub use reachable::{ReachableMovement, ReachableMovementQuery, ReachableMovementTile};
 pub use transition::{MoveUnitCommand, MoveUnitError, UnitMovedEvent, UnitMovementExecution};

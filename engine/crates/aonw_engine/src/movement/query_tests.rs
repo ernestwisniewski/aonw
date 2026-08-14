@@ -8,7 +8,7 @@ use super::{
     ReachableMovementQuery, TerrainMovementQuery, TerrainMovementQueryError, find_reachable_tiles,
     plan_terrain_route,
 };
-use crate::{EngineContext, MovementPlanningView};
+use crate::{EngineContext, movement::MovementPlanningView};
 
 fn map(cols: u16, rows: u16, rough: &[HexCoord], blocked: &[HexCoord]) -> MapDefinition {
     let mut tiles = Vec::new();

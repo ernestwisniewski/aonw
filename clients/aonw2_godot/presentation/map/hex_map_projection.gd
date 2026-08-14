@@ -1,7 +1,7 @@
 class_name AonwHexMapProjection
 extends RefCounted
 
-const HexGridGeometry := preload("res://domain/map/hex_grid_geometry.gd")
+const HexGridGeometry := preload("res://presentation/map/geometry/hex_grid_geometry.gd")
 const INVALID_HEX := Vector2i(-1, -1)
 
 var _document: AonwMapDocument

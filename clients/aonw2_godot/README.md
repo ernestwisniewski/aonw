@@ -98,7 +98,7 @@ contain no movement legality rules.
 
 ## Boundaries
 
-- `domain/map/` owns the immutable renderer read model and odd-q geometry;
+- `application/map/read_model/` owns the immutable recipient renderer view;
 - `application/map/` orchestrates loading and Godot scene generation;
 - `application/session/` owns local-match lifecycle, revision tracking, and
   client command/query construction;
@@ -106,6 +106,7 @@ contain no movement legality rules.
   persists Godot resources; authored scenes, manifests, and atomic file writes
   are separate stores coordinated by the scene repository;
 - `infrastructure/engine/` adapts JSON at the GDExtension boundary;
+- `presentation/map/geometry/` owns odd-q render and texture projection math;
 - `presentation/` owns meshes, camera, runtime UI, and editor controls;
 - `addons/aonw_map_workbench/` is the editor composition root.
 
@@ -142,7 +143,8 @@ make rust-godot-build
 
 `make godot-editor`, `make godot-run`, and `make godot-test` build it
 automatically. The Makefile also discovers Cargo in the default rustup location
-when it is not present in the interactive shell `PATH`.
+when it is not present in the interactive shell `PATH`. Headless tests first
+run an editor scan so moved global classes are resolved from a clean checkout.
 
 ## Verification
 
@@ -151,8 +153,9 @@ make godot-test
 make godot-check
 ```
 
-The test covers strict Rust validation, scenario bootstrap, native
-snapshot/reachable/route/move and persistence calls,
-asset discovery, immutable map views, projection/picking round trips, texture
-assembly, mesh generation, regeneration safety, and preserving authored nodes.
+The runner delegates to focused authoring, geometry, and native-session suites.
+They cover strict Rust validation, scenario bootstrap, native
+snapshot/reachable/route/move and persistence calls, asset discovery, immutable
+map views, projection/picking round trips, texture assembly, mesh generation,
+regeneration safety, and preserving authored nodes.
 `GODOT_BIN` can override the editor executable.

@@ -6,22 +6,23 @@ use aonw_domain::{Unit, UnitId};
 /// explicit fog-disabled constructor is intended for local games and tests
 /// where every unit is legitimately known.
 #[derive(Clone, Copy, Debug)]
-pub struct MovementPlanningView<'view> {
+pub(crate) struct MovementPlanningView<'view> {
     known_unit_ids: Option<&'view [UnitId]>,
 }
 
-impl<'view> MovementPlanningView<'view> {
+impl MovementPlanningView<'_> {
     /// Builds a fog-aware view from unit identifiers known to the actor.
     #[must_use]
-    pub const fn known_units(known_unit_ids: &'view [UnitId]) -> Self {
-        Self {
+    #[cfg(test)]
+    pub(crate) const fn known_units(known_unit_ids: &[UnitId]) -> MovementPlanningView<'_> {
+        MovementPlanningView {
             known_unit_ids: Some(known_unit_ids),
         }
     }
 
     /// Builds an explicit fog-disabled view in which every unit is known.
     #[must_use]
-    pub const fn fog_disabled() -> Self {
+    pub(crate) const fn fog_disabled() -> Self {
         Self {
             known_unit_ids: None,
         }
