@@ -14,6 +14,18 @@ use decode::DecodedCommand;
 pub struct ClientProtocol;
 
 impl ClientProtocol {
+    /// Decodes, dispatches, and encodes one strict client JSON document.
+    #[must_use]
+    pub fn dispatch_json(runtime: &mut LocalRuntime, input: &str) -> String {
+        let response = match ClientRequestDto::from_json(input) {
+            Ok(request) => Self::dispatch(runtime, request),
+            Err(error) => failure("invalid_client_request", error),
+        };
+        response
+            .to_json()
+            .unwrap_or_else(|_| serialization_failure())
+    }
+
     /// Executes one validated current client request against a local runtime.
     #[must_use]
     pub fn dispatch(runtime: &mut LocalRuntime, request: ClientRequestDto) -> ClientResponseDto {
@@ -107,6 +119,12 @@ impl ClientProtocol {
             },
         }
     }
+}
+
+fn serialization_failure() -> String {
+    format!(
+        r#"{{"apiVersion":{CLIENT_API_VERSION},"outcome":{{"status":"failure","error":{{"code":"adapter_serialization_failed","message":"adapter serialization failed"}}}}}}"#
+    )
 }
 
 fn dispatch_command(runtime: &mut LocalRuntime, command: DecodedCommand) -> ClientResponseDto {

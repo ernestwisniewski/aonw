@@ -15,10 +15,10 @@ created in the session repository provider composition root. Adapter libraries
 must not re-export these contracts: callers import the application-owned port
 and the concrete adapter separately when they compose the runtime.
 
-## Planned Local Engine Seam
+## Local Engine Seam
 
 The [Rust Engine Migration Plan](../../../../docs/rust-engine-migration.md)
-introduces an application-owned `LocalEnginePort` beneath the existing
+provides an application-owned `LocalEnginePort` beneath the existing
 `LocalCommandTransport`. During migration the local transport will select a
 Dart, Rust native, or Rust WASM engine; an internal differential decorator may
 run a shadow comparison. This seam must not route individual command families
@@ -37,6 +37,9 @@ Today Serverpod already sends a recipient-scoped projection, but
 exception belongs to the remote-replica migration; it is not a reason to put
 authoritative rules in the Flutter network adapter.
 
-This is a target boundary, not a claim that the Rust backend is currently
-implemented. Add the concrete port and adapters together with their first
-executable slice and architecture tests.
+`LocalCommandTransport` now accepts this optional port. A handled result bypasses
+the Dart reducer; `null` means unsupported or unavailable and selects the Dart
+fallback. Active backend failures propagate so one command is never executed by
+two engines. The `aonw_rust_client` package provides the shared-protocol native
+session, while gameplay cutover remains opt-in until the corresponding state
+and command mapping has parity coverage.

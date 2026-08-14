@@ -150,8 +150,8 @@ hash. It exposes full recipient-safe snapshots, reachable and route queries,
 revision-bound commands, ordered events, exact execution evidence, and view
 patches including unit posture.
 
-`aonw_contracts::client` owns the single client protocol shared by Godot and the
-planned Flutter FFI adapter. `ClientRequestDto` contains tagged lifecycle,
+`aonw_contracts::client` owns the single client protocol shared by Godot and
+Flutter native adapters. `ClientRequestDto` contains tagged lifecycle,
 command, and query operations. `ClientResponseDto` contains only recipient-safe
 snapshots, patches, events, evidence, persistence documents, and stable errors;
 canonical `GameStateDto` never crosses this boundary. The protocol accepts only
@@ -177,6 +177,12 @@ lifecycle, query, command, save, and replay operation to `ClientProtocol` in
 `aonw_local_runtime`. Godot obtains units from the recipient snapshot and never
 constructs a synthetic canonical unit. Build it with `make rust-godot-build`.
 
+`aonw_flutter` exposes the same dispatcher through a panic-contained C ABI.
+`packages/aonw_rust_client` bundles it with Flutter build hooks and keeps native
+calls on a helper isolate. Normal builds use an unavailable C stub, so the Dart
+local engine remains buildable and active. `make rust-flutter-test` verifies
+both the stub and opt-in Rust lanes.
+
 ## Save and replay
 
 `aonw_contracts` owns separate current-only save and replay schemas. A save
@@ -198,6 +204,6 @@ client protocol as every other operation. Persistence rules remain in Rust.
 ## Deliberately deferred
 
 - historical client/save/replay upcasters and long-term compatibility manifests;
-- Flutter/native C ABI and production packaging beyond the Godot debug adapter;
+- production Flutter session cutover and cross-target Rust packaging;
 - AI and remote replica crates;
 - any integration that could change the active Flutter or Serverpod runtime.

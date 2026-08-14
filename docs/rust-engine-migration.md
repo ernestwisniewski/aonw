@@ -445,7 +445,8 @@ Flutter and Godot share one current-only recipient client protocol owned by
 `aonw_contracts::client`. The protocol has one `CLIENT_API_VERSION`, strict
 tagged command/query/response envelopes, byte limits, and committed golden
 vectors. It does not expose canonical `GameStateDto`. Godot GDExtension and the
-planned Flutter C ABI are transport adapters for the same documents. Runtime
+Flutter `package_ffi` C ABI are transport adapters for the same documents.
+Runtime
 types inside one Rust process are unversioned; map, scenario, save, replay, and
 client documents retain explicit schema versions because they cross process or
 persistence boundaries. No historical readers or upcasters are maintained
@@ -576,8 +577,7 @@ Flutter AoNW1 remains a complete production client throughout the migration:
   gates;
 - Dart remains the default local engine until the corresponding Rust target is
   explicitly enabled;
-- Rust is not an unconditional dependency of legacy Flutter builds before the
-  bridge is introduced for that target;
+- normal Flutter builds compile an unavailable C stub and do not require Cargo;
 - UI-only fixes remain Flutter-only;
 - a fix in an unported rule updates Dart plus an independently reviewed fixture;
 - a fix in a ported rule updates the fixture, Dart, and Rust while the Dart
@@ -607,6 +607,14 @@ the new narrow seam introduced beneath the local transport so persistence,
 event-log, and snapshot orchestration remain stable while Dart and Rust are
 compared. The differential decorator is internal, not a
 presentation-selectable remote backend.
+
+`packages/aonw_rust_client` provides the native-assets build hook and a
+persistent helper-isolate session for the shared JSON protocol. The hook builds
+the Rust adapter only when `AONW_ENABLE_RUST_FLUTTER=1`; otherwise it bundles an
+unavailable stub. `LocalCommandTransport` accepts an optional
+`LocalEnginePort`, uses its handled result, and falls back to the existing Dart
+reducer only when the port reports the command as unsupported. Failures from an
+active implementation are not silently converted into Dart execution.
 
 This is deliberately staged. Initially `LocalCommandTransport` keeps its
 current persistence, event-log, snapshot, and clock orchestration and delegates

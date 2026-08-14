@@ -4,6 +4,7 @@ import 'package:aonw/game/application/ports/clock.dart';
 import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
+import 'package:aonw/game/application/ports/local_engine_port.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/replay_store.dart';
@@ -39,6 +40,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 part 'local_command_transport_combat_tests.dart';
 part 'local_command_transport_movement_presentation_tests.dart';
+part 'local_command_transport_native_backend_tests.dart';
 part 'local_command_transport_preview_fast_path_tests.dart';
 part 'local_command_transport_test_support.dart';
 part 'local_command_transport_unit_action_tests.dart';
@@ -51,6 +53,7 @@ void main() {
     _registerPreviewFastPathTests();
     _registerUnitActionTransportTests();
     _registerMovementPresentationTransportTests();
+    _registerNativeBackendTests();
     _registerCombatTransportTests();
 
     test(

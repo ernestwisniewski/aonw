@@ -1,6 +1,3 @@
-use aonw_contracts::client::{
-    CLIENT_API_VERSION, ClientErrorDto, ClientOutcomeDto, ClientRequestDto, ClientResponseDto,
-};
 use aonw_local_runtime::{ClientProtocol, LocalRuntime};
 use godot::classes::{IRefCounted, RefCounted};
 use godot::prelude::*;
@@ -33,23 +30,7 @@ impl AonwLocalSession {
 }
 
 fn dispatch_json(runtime: &mut LocalRuntime, input: &str) -> String {
-    let response = match ClientRequestDto::from_json(input) {
-        Ok(request) => ClientProtocol::dispatch(runtime, request),
-        Err(error) => ClientResponseDto {
-            api_version: CLIENT_API_VERSION,
-            outcome: ClientOutcomeDto::Failure {
-                error: ClientErrorDto {
-                    code: "invalid_client_request".to_owned(),
-                    message: error.to_string(),
-                },
-            },
-        },
-    };
-    response.to_json().unwrap_or_else(|_| {
-        format!(
-            r#"{{"apiVersion":{CLIENT_API_VERSION},"outcome":{{"status":"failure","error":{{"code":"adapter_serialization_failed","message":"adapter serialization failed"}}}}}}"#
-        )
-    })
+    ClientProtocol::dispatch_json(runtime, input)
 }
 
 #[cfg(test)]

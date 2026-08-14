@@ -2,6 +2,7 @@ import 'package:aonw/game/application/ports/clock.dart';
 import 'package:aonw/game/application/ports/command_transport.dart';
 import 'package:aonw/game/application/ports/event_log.dart';
 import 'package:aonw/game/application/ports/game_repository.dart';
+import 'package:aonw/game/application/ports/local_engine_port.dart';
 import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/ports/snapshot_store.dart';
@@ -24,6 +25,7 @@ class LocalCommandTransport implements CommandTransport {
   final SnapshotStore snapshotStore;
   final int snapshotEvery;
   final Clock clock;
+  final LocalEnginePort? preferredEngine;
 
   const LocalCommandTransport({
     required this.reducer,
@@ -32,6 +34,7 @@ class LocalCommandTransport implements CommandTransport {
     required this.snapshotStore,
     this.snapshotEvery = 50,
     this.clock = const SystemClock(),
+    this.preferredEngine,
   });
 
   @override
@@ -41,13 +44,23 @@ class LocalCommandTransport implements CommandTransport {
     required DomainCommand command,
     GameCommandContext context = const GameCommandContext(),
     bool fromMovePreviewConfirmation = false,
-  }) => _dispatchPersistent(
-    saveId: saveId,
-    currentState: currentState,
-    command: command,
-    context: context,
-    fromMovePreviewConfirmation: fromMovePreviewConfirmation,
-  );
+  }) async {
+    final accelerated = await preferredEngine?.dispatchIfSupported(
+      saveId: saveId,
+      currentState: currentState,
+      command: command,
+      context: context,
+      fromMovePreviewConfirmation: fromMovePreviewConfirmation,
+    );
+    if (accelerated != null) return accelerated;
+    return _dispatchPersistent(
+      saveId: saveId,
+      currentState: currentState,
+      command: command,
+      context: context,
+      fromMovePreviewConfirmation: fromMovePreviewConfirmation,
+    );
+  }
 
   Future<CommandTransportResult> _dispatchPersistent({
     required String saveId,

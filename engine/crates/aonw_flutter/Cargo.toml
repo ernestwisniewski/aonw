@@ -1,0 +1,27 @@
+[package]
+name = "aonw_flutter"
+description = "C ABI adapter for the AoNW Flutter local client"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+aonw_contracts = { path = "../aonw_contracts" }
+aonw_local_runtime = { path = "../aonw_local_runtime" }
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+
+[lints.rust]
+missing_docs = "warn"
+unreachable_pub = "warn"
+unsafe_code = "deny"

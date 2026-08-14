@@ -46,6 +46,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "aonw_flutter"
+version = "0.1.0"
+dependencies = [
+ "aonw_contracts",
+ "aonw_local_runtime",
+]
+
+[[package]]
 name = "aonw_godot"
 version = "0.1.0"
 dependencies = [
