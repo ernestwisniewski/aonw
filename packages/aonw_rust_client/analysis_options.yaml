@@ -1,1 +1,2 @@
-include: ../../analysis_options_base.yaml
+include:
+  - ../../analysis_options_base.yaml

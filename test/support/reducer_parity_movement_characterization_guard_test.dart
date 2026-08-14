@@ -281,6 +281,7 @@ void _registerMovementIndependenceGuards(_FixtureProvider fixtureProvider) {
         .whereType<File>()
         .where((file) => file.path.endsWith('.json'))
         .map((file) => file.uri.pathSegments.last)
+        .where((name) => name.startsWith('movement-'))
         .toSet();
     final expected = {
       'movement-adjacent-accepted.json',

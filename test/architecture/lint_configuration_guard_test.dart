@@ -6,7 +6,6 @@ import 'package:yaml/yaml.dart';
 import 'support/lint_configuration_ci_guard.dart';
 
 const _basePath = 'analysis_options_base.yaml';
-
 const _sharedRules = <String>{
   'always_use_package_imports',
   'avoid_dynamic_calls',
@@ -40,6 +39,9 @@ const _leafProfiles = <String, _LeafProfile>{
       '../../analysis_options_base.yaml',
     ],
   ),
+  'packages/aonw_rust_client/analysis_options.yaml': _LeafProfile(
+    includes: ['../../analysis_options_base.yaml'],
+  ),
   'packages/aonw_server_client/analysis_options.yaml': _LeafProfile(
     includes: [
       'package:lints/recommended.yaml',
@@ -68,13 +70,11 @@ void main() {
       _basePath,
       '**/analysis_options_base.yaml',
     ]);
-
     expect(configurations, {_basePath, ..._leafProfiles.keys});
   });
 
   test('shared base owns the exact strict workspace policy', () {
     final base = _loadMap(_basePath);
-
     expect(_keys(base), {'analyzer', 'linter'});
     final analyzer = _asMap(base['analyzer'], '$_basePath analyzer');
     expect(_keys(analyzer), {'language'});
@@ -96,7 +96,7 @@ void main() {
     expect(rules.values, everyElement(isTrue));
   });
 
-  test('all four packages compose upstream, shared, then local policy', () {
+  test('all packages use their exact classified lint policy', () {
     for (final entry in _leafProfiles.entries) {
       final path = entry.key;
       final profile = entry.value;
