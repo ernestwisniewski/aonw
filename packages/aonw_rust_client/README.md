@@ -5,7 +5,8 @@ used by the Godot GDExtension. Native calls run on a dedicated helper isolate.
 `AonwClientRequest`, `AonwClientResponse`, and the `AonwRustSession.send`
 extension provide the typed Dart boundary. Snapshots, queries, command results,
 events, evidence, patches, stamps, and persistence responses are parsed into
-strict read models; raw JSON remains confined to the transport. Rust, Dart, and
+strict read models; command acceptance is a tagged accepted/rejected outcome.
+Raw JSON remains confined to the transport. Rust, Dart, and
 Godot consume the same committed protocol goldens.
 
 Normal Flutter builds compile a small unavailable stub and keep the Dart local

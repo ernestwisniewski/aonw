@@ -85,11 +85,47 @@ final class AonwUnitMovementEvidence extends AonwClientEvidence {
   final List<AonwMovementStep> steps;
 }
 
+sealed class AonwCommandOutcome {
+  const AonwCommandOutcome();
+
+  factory AonwCommandOutcome.fromJson(Object? source) {
+    final value = readObject(source, 'command outcome');
+    return switch (value['status']) {
+      'accepted' => _accepted(value),
+      'rejected' => _rejected(value),
+      final Object? status => throw FormatException(
+        'Unknown AoNW command outcome $status.',
+      ),
+    };
+  }
+
+  static AonwCommandOutcome _accepted(Map<String, Object?> value) {
+    requireKeys(value, const {'status'}, 'accepted command outcome');
+    return const AonwCommandAccepted();
+  }
+
+  static AonwCommandOutcome _rejected(Map<String, Object?> value) {
+    requireKeys(value, const {'status', 'code'}, 'rejected command outcome');
+    return AonwCommandRejected(
+      readString(value['code'], 'command rejection code'),
+    );
+  }
+}
+
+final class AonwCommandAccepted extends AonwCommandOutcome {
+  const AonwCommandAccepted();
+}
+
+final class AonwCommandRejected extends AonwCommandOutcome {
+  const AonwCommandRejected(this.code);
+
+  final String code;
+}
+
 final class AonwCommandResult {
   const AonwCommandResult({
     required this.stamp,
-    required this.accepted,
-    required this.rejection,
+    required this.outcome,
     required this.events,
     required this.evidence,
     required this.viewPatch,
@@ -99,24 +135,14 @@ final class AonwCommandResult {
     final value = readObject(source, 'command result');
     requireKeys(value, const {
       'stamp',
-      'accepted',
-      'rejection',
+      'outcome',
       'events',
       'evidence',
       'viewPatch',
     }, 'command result');
-    final accepted = readBool(value['accepted'], 'command acceptance');
-    final rejection = readNullableString(
-      value['rejection'],
-      'command rejection',
-    );
-    if (accepted == (rejection != null)) {
-      throw const FormatException('Incoherent AoNW command result.');
-    }
     return AonwCommandResult(
       stamp: AonwSessionStamp.fromJson(value['stamp']),
-      accepted: accepted,
-      rejection: rejection,
+      outcome: AonwCommandOutcome.fromJson(value['outcome']),
       events: readList(
         value['events'],
         'command events',
@@ -130,9 +156,15 @@ final class AonwCommandResult {
   }
 
   final AonwSessionStamp stamp;
-  final bool accepted;
-  final String? rejection;
+  final AonwCommandOutcome outcome;
   final List<AonwClientEvent> events;
   final AonwClientEvidence? evidence;
   final AonwPlayerViewPatch viewPatch;
+
+  bool get accepted => outcome is AonwCommandAccepted;
+
+  String? get rejection => switch (outcome) {
+    AonwCommandRejected(:final code) => code,
+    AonwCommandAccepted() => null,
+  };
 }

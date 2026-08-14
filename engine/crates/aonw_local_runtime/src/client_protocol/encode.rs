@@ -1,8 +1,8 @@
 use aonw_contract_mapping::{encode_unit_kind, encode_unit_posture};
 use aonw_contracts::CoordinateDto;
 use aonw_contracts::client::{
-    ClientCommandResultDto, ClientEventDto, ClientEvidenceDto, ClientFeatureDto,
-    ClientQueryResultDto, ClientReplayVerificationDto, ClientResponseBodyDto,
+    ClientCommandOutcomeDto, ClientCommandResultDto, ClientEventDto, ClientEvidenceDto,
+    ClientFeatureDto, ClientQueryResultDto, ClientReplayVerificationDto, ClientResponseBodyDto,
     ClientSessionStampDto, MovementStepViewDto, PlayerUnitViewDto, PlayerViewPatchDto,
     PlayerViewSnapshotDto, ReachableTileViewDto,
 };
@@ -98,8 +98,13 @@ pub(super) fn query_result(value: &RuntimeQueryResult) -> ClientQueryResultDto {
 pub(super) fn command_result(value: &CommandResult) -> ClientCommandResultDto {
     ClientCommandResultDto {
         stamp: stamp(value.stamp),
-        accepted: value.is_accepted(),
-        rejection: value.rejection.map(str::to_owned),
+        outcome: value
+            .rejection
+            .map_or(ClientCommandOutcomeDto::Accepted, |code| {
+                ClientCommandOutcomeDto::Rejected {
+                    code: code.to_owned(),
+                }
+            }),
         events: value.events.iter().map(event).collect(),
         evidence: value.evidence.as_ref().map(evidence),
         view_patch: patch(&value.view_patch),

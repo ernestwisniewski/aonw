@@ -8,23 +8,30 @@ sealed class AonwClientResponseBody {
 
   factory AonwClientResponseBody.fromJson(Object? source) {
     final value = readObject(source, 'success response');
-    return switch (value['type']) {
-      'capabilities' => AonwCapabilitiesResponse.fromJson(value),
-      'sessionOpened' => AonwSessionOpenedResponse.fromJson(value),
-      'sessionClosed' => AonwSessionClosedResponse.fromJson(value),
-      'snapshot' => AonwSnapshotResponse.fromJson(value),
-      'query' => AonwQueryResponse.fromJson(value),
-      'command' => AonwCommandResponse.fromJson(value),
-      'saveExported' => AonwSaveExportedResponse.fromJson(value),
-      'saveOpened' => AonwSaveOpenedResponse.fromJson(value),
-      'replayExported' => AonwReplayExportedResponse.fromJson(value),
-      'replayVerified' => AonwReplayVerifiedResponse.fromJson(value),
-      final Object? type => throw FormatException(
-        'Unknown AoNW client response $type.',
-      ),
-    };
+    final type = readString(value['type'], 'client response type');
+    final parser = _responseParsers[type];
+    if (parser == null) {
+      throw FormatException('Unknown AoNW client response $type.');
+    }
+    return parser(value);
   }
 }
+
+typedef _ResponseParser =
+    AonwClientResponseBody Function(Map<String, Object?> value);
+
+final Map<String, _ResponseParser> _responseParsers = {
+  'capabilities': AonwCapabilitiesResponse.fromJson,
+  'sessionOpened': AonwSessionOpenedResponse.fromJson,
+  'sessionClosed': AonwSessionClosedResponse.fromJson,
+  'snapshot': AonwSnapshotResponse.fromJson,
+  'query': AonwQueryResponse.fromJson,
+  'command': AonwCommandResponse.fromJson,
+  'saveExported': AonwSaveExportedResponse.fromJson,
+  'saveOpened': AonwSaveOpenedResponse.fromJson,
+  'replayExported': AonwReplayExportedResponse.fromJson,
+  'replayVerified': AonwReplayVerifiedResponse.fromJson,
+};
 
 final class AonwCapabilitiesResponse extends AonwClientResponseBody {
   const AonwCapabilitiesResponse({

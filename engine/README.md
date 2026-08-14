@@ -171,6 +171,8 @@ snapshots, patches, events, evidence, persistence documents, and stable errors;
 canonical `GameStateDto` never crosses this boundary. The protocol accepts only
 `CLIENT_API_VERSION` and has no historical readers or upcasters. Rust in-process
 runtime types deliberately have no version suffix.
+Command results use a tagged accepted/rejected outcome, so an incoherent
+acceptance flag and rejection code cannot be represented on the wire.
 
 The shared golden documents in `test/fixtures/client_protocol` are consumed by
 Rust, Godot, and Dart tests. Native adapters report `CLIENT_API_VERSION`; each

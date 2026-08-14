@@ -449,7 +449,8 @@ testkit and the concrete engine they execute.
 Flutter and Godot share one current-only recipient client protocol owned by
 `aonw_contracts::client`. The protocol has one `CLIENT_API_VERSION`, strict
 tagged command/query/response envelopes, byte limits, and committed golden
-vectors. It does not expose canonical `GameStateDto`. Godot GDExtension and the
+vectors. Command outcomes are tagged so contradictory accepted/rejected fields
+cannot cross the boundary. It does not expose canonical `GameStateDto`. Godot GDExtension and the
 Flutter `package_ffi` C ABI are transport adapters for the same documents.
 Runtime
 types inside one Rust process are unversioned; map, scenario, save, replay, and

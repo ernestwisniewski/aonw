@@ -9,7 +9,7 @@ export 'protocol_query.dart';
 export 'protocol_response.dart';
 export 'protocol_values.dart';
 
-const aonwClientApiVersion = 1;
+const aonwClientApiVersion = 2;
 
 final class AonwClientRequest {
   AonwClientRequest._(this.request);

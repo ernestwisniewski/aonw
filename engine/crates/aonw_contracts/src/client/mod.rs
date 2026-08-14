@@ -7,11 +7,12 @@ mod response;
 pub use codec::{ClientCodecError, MAX_CLIENT_REQUEST_JSON_BYTES, MAX_CLIENT_RESPONSE_JSON_BYTES};
 pub use request::{ClientCommandDto, ClientQueryDto, ClientRequestBodyDto, ClientRequestDto};
 pub use response::{
-    ClientCommandResultDto, ClientErrorDto, ClientEventDto, ClientEvidenceDto, ClientFeatureDto,
-    ClientOutcomeDto, ClientQueryResultDto, ClientReplayVerificationDto, ClientResponseBodyDto,
-    ClientResponseDto, ClientSessionStampDto, MovementStepViewDto, PlayerUnitViewDto,
-    PlayerViewPatchDto, PlayerViewSnapshotDto, ReachableTileViewDto,
+    ClientCommandOutcomeDto, ClientCommandResultDto, ClientErrorDto, ClientEventDto,
+    ClientEvidenceDto, ClientFeatureDto, ClientOutcomeDto, ClientQueryResultDto,
+    ClientReplayVerificationDto, ClientResponseBodyDto, ClientResponseDto, ClientSessionStampDto,
+    MovementStepViewDto, PlayerUnitViewDto, PlayerViewPatchDto, PlayerViewSnapshotDto,
+    ReachableTileViewDto,
 };
 
 /// The only client protocol version accepted by this build.
-pub const CLIENT_API_VERSION: u16 = 1;
+pub const CLIENT_API_VERSION: u16 = 2;

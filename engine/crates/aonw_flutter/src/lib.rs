@@ -139,7 +139,9 @@ fn adapter_failure(code: &str, message: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use aonw_contracts::client::{ClientOutcomeDto, ClientResponseBodyDto, ClientResponseDto};
+    use aonw_contracts::client::{
+        CLIENT_API_VERSION, ClientOutcomeDto, ClientResponseBodyDto, ClientResponseDto,
+    };
 
     use super::{
         aonw_flutter_response_data, aonw_flutter_response_free, aonw_flutter_response_len,
@@ -149,7 +151,8 @@ mod tests {
     #[test]
     #[allow(unsafe_code)]
     fn c_abi_dispatches_the_shared_client_protocol() {
-        let request = br#"{"apiVersion":1,"request":{"type":"capabilities"}}"#;
+        let request =
+            format!(r#"{{"apiVersion":{CLIENT_API_VERSION},"request":{{"type":"capabilities"}}}}"#);
         let session = aonw_flutter_session_new();
         // SAFETY: This test owns every handle and preserves the request buffer for the call.
         let response =

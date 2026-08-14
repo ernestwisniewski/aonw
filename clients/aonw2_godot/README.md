@@ -133,7 +133,8 @@ unit actions, saves, and replays all pass through this boundary.
 
 Snapshots, reachable tiles, routes, command results, events, evidence, and view
 patches are decoded into application-layer read models before they reach the
-map screen or unit layer. Raw response dictionaries remain inside the session
+map screen or unit layer. Read-model definitions and strict decoding have
+separate modules. Raw response dictionaries remain inside the session
 controller and infrastructure boundary.
 
 Selection is presentation-only; canonical state, visibility, paths, costs,

@@ -106,6 +106,27 @@ void main() {
     expect(route.result, isA<AonwRoutePlanResult>());
   });
 
+  test('command result uses one tagged accepted or rejected outcome', () {
+    final accepted = AonwCommandResult.fromJson(
+      _commandResult(const {'status': 'accepted'}),
+    );
+    final rejected = AonwCommandResult.fromJson(
+      _commandResult(const {'status': 'rejected', 'code': 'stale_revision'}),
+    );
+
+    expect(accepted.accepted, isTrue);
+    expect(accepted.rejection, isNull);
+    expect(rejected.accepted, isFalse);
+    expect(rejected.rejection, 'stale_revision');
+    expect(
+      () => AonwCommandResult.fromJson({
+        ..._commandResult(const {'status': 'accepted'}),
+        'accepted': true,
+      }),
+      throwsFormatException,
+    );
+  });
+
   test('failure response is typed and cannot be required as success', () {
     final response = AonwClientResponse.parse(
       jsonEncode({
@@ -134,3 +155,16 @@ String _success(Map<String, Object?> response) => jsonEncode({
   'apiVersion': aonwClientApiVersion,
   'outcome': {'status': 'success', 'response': response},
 });
+
+Map<String, Object?> _commandResult(Map<String, Object?> outcome) => {
+  'stamp': _stamp,
+  'outcome': outcome,
+  'events': const [],
+  'evidence': null,
+  'viewPatch': const {
+    'fromRevision': 7,
+    'toRevision': 7,
+    'upsertedUnits': [],
+    'removedUnitIds': [],
+  },
+};

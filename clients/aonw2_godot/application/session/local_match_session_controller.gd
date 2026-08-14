@@ -2,7 +2,9 @@ class_name AonwLocalMatchSessionController
 extends RefCounted
 
 const NativeLocalSession := preload("res://infrastructure/engine/native_local_session.gd")
-const ReadModels := preload("res://application/session/client_read_models.gd")
+const ReadModelDecoder := preload(
+	"res://application/session/client_read_model_decoder.gd"
+)
 const ClientProtocol := preload("res://application/session/client_protocol.gd")
 
 var _transport: RefCounted
@@ -39,7 +41,7 @@ func snapshot() -> Dictionary:
 	var result := _extract(_execute({"type": "snapshot"}, "snapshot"), "snapshot")
 	if not result["ok"]:
 		return result
-	var snapshot := ReadModels.decode_snapshot(result["value"])
+	var snapshot := ReadModelDecoder.decode_snapshot(result["value"])
 	if snapshot == null:
 		return _failure("invalid_client_response", "Rust returned an invalid snapshot")
 	_stamp = snapshot.stamp
@@ -53,7 +55,7 @@ func reachable(unit_id: String) -> Dictionary:
 	}, "reachable")
 	if not result["ok"]:
 		return result
-	var reachable_view := ReadModels.decode_reachable(result["value"])
+	var reachable_view := ReadModelDecoder.decode_reachable(result["value"])
 	if reachable_view == null:
 		return _failure("invalid_client_response", "Rust returned invalid reachable tiles")
 	_stamp = reachable_view.stamp
@@ -68,7 +70,7 @@ func route_plan(unit_id: String, target: Vector2i) -> Dictionary:
 	}, "routePlan")
 	if not result["ok"]:
 		return result
-	var route := ReadModels.decode_route_plan(result["value"])
+	var route := ReadModelDecoder.decode_route_plan(result["value"])
 	if route == null:
 		return _failure("invalid_client_response", "Rust returned an invalid route plan")
 	_stamp = route.stamp
@@ -129,7 +131,7 @@ func _command(command: Dictionary) -> Dictionary:
 	)
 	if not result["ok"]:
 		return result
-	var command_result := ReadModels.decode_command(result["value"])
+	var command_result := ReadModelDecoder.decode_command(result["value"])
 	if command_result == null:
 		return _failure("invalid_client_response", "Rust returned an invalid command result")
 	_stamp = command_result.stamp
@@ -179,7 +181,7 @@ func _extract_stamp(result: Dictionary, field: String) -> Dictionary:
 	var extracted := _extract(result, field)
 	if not extracted["ok"]:
 		return extracted
-	var stamp := ReadModels.decode_stamp(extracted["value"])
+	var stamp := ReadModelDecoder.decode_stamp(extracted["value"])
 	if stamp == null:
 		return _failure("invalid_client_response", "Rust returned an invalid session stamp")
 	_stamp = stamp

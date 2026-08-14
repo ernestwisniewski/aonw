@@ -179,16 +179,32 @@ pub struct PlayerViewPatchDto {
 pub struct ClientCommandResultDto {
     /// Identity of the resulting canonical state.
     pub stamp: ClientSessionStampDto,
-    /// Whether the command was accepted.
-    pub accepted: bool,
-    /// Stable rejection reason when rejected.
-    pub rejection: Option<String>,
+    /// Accepted or rejected authoritative outcome.
+    pub outcome: ClientCommandOutcomeDto,
     /// Ordered presentation-safe domain events.
     pub events: Vec<ClientEventDto>,
     /// Exact execution evidence when produced.
     pub evidence: Option<ClientEvidenceDto>,
     /// Recipient-safe state delta.
     pub view_patch: PlayerViewPatchDto,
+}
+
+/// Coherent authoritative command outcome.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(
+    tag = "status",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+pub enum ClientCommandOutcomeDto {
+    /// The command was accepted.
+    Accepted,
+    /// The command was rejected without changing canonical state.
+    Rejected {
+        /// Stable language-neutral rejection code.
+        code: String,
+    },
 }
 
 /// Presentation-safe authoritative event.

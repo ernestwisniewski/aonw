@@ -117,7 +117,8 @@ fn native_adapter_rejects_non_protocol_and_foreign_version_documents() {
     let mut runtime = LocalRuntime::default();
     for input in [
         "{}".to_owned(),
-        json!({"apiVersion": 2, "request": {"type": "capabilities"}}).to_string(),
+        json!({"apiVersion": CLIENT_API_VERSION + 1, "request": {"type": "capabilities"}})
+            .to_string(),
     ] {
         let response = ClientResponseDto::from_json(&dispatch_json(&mut runtime, &input))
             .expect("failure response");

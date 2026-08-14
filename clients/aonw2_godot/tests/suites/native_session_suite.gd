@@ -7,6 +7,9 @@ const ClientResponseDecoder := preload(
 	"res://infrastructure/engine/client_response_decoder.gd"
 )
 const ClientReadModels := preload("res://application/session/client_read_models.gd")
+const ClientReadModelDecoder := preload(
+	"res://application/session/client_read_model_decoder.gd"
+)
 const LocalMatchSessionController := preload(
 	"res://application/session/local_match_session_controller.gd"
 )
@@ -20,11 +23,11 @@ class ForeignVersionTransport:
 		return true
 
 	func client_api_version() -> int:
-		return 1
+		return 2
 
 	func request(_body: Dictionary) -> Dictionary:
 		return {
-			"apiVersion": 2,
+			"apiVersion": 3,
 			"outcome": {
 				"status": "success",
 				"response": {"type": "capabilities"},
@@ -40,7 +43,7 @@ class UnsupportedClientTransport:
 		return true
 
 	func client_api_version() -> int:
-		return 2
+		return 3
 
 	func request(_body: Dictionary) -> Dictionary:
 		requested = true
@@ -53,7 +56,7 @@ class MalformedSnapshotTransport:
 		return true
 
 	func client_api_version() -> int:
-		return 1
+		return 2
 
 	func request(body: Dictionary) -> Dictionary:
 		if body.get("type", "") == "openSession":
@@ -65,7 +68,7 @@ class MalformedSnapshotTransport:
 
 	func _success(response: Dictionary) -> Dictionary:
 		return {
-			"apiVersion": 1,
+			"apiVersion": 2,
 			"outcome": {"status": "success", "response": response},
 		}
 
@@ -249,7 +252,7 @@ func _test_shared_client_contract() -> void:
 		var request: Variant = JSON.parse_string(request_file.get_as_text())
 		_check(
 			request is Dictionary
-			and request["apiVersion"] == 1
+			and request["apiVersion"] == 2
 			and request["request"]["command"]["type"] == "moveUnit",
 			"Godot consumes the shared move request contract",
 		)
@@ -260,20 +263,28 @@ func _test_shared_client_contract() -> void:
 	)
 	_check(response_file != null, "shared client response golden opens in Godot")
 	if response_file != null:
-		var decoded := ClientResponseDecoder.new(1).decode(response_file.get_as_text())
+		var decoder := ClientResponseDecoder.new(2)
+		var decoded := decoder.decode(response_file.get_as_text())
 		_check(
 			decoded.get("outcome", {}).get("status", "") == "success",
 			"Godot consumes the shared command response contract",
 		)
 		var body: Dictionary = decoded["outcome"]["response"]
 		var command: AonwClientReadModels.CommandResult = (
-			ClientReadModels.decode_command(body.get("result", {}))
+			ClientReadModelDecoder.decode_command(body.get("result", {}))
 		)
 		_check(
 			command != null
 			and command.patch.upserted_units[0].kind == "commander"
 			and command.evidence.steps[-1].coordinate == Vector2i(3, 4),
 			"Godot maps the shared response into typed client read models",
+		)
+		var invalid_version := decoder.decode(
+			'{"apiVersion":"2","outcome":{"status":"success","response":{}}}'
+		)
+		_check(
+			invalid_version.get("outcome", {}).get("status", "") == "failure",
+			"Godot rejects coercible client API versions",
 		)
 
 	var foreign := LocalMatchSessionController.new(ForeignVersionTransport.new()).capabilities()
