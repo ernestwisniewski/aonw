@@ -2,12 +2,18 @@
 class_name AonwMapWorkbenchView
 extends VBoxContainer
 
+const RenderSettings := preload("res://presentation/map/map_render_settings.gd")
+
 var _map_picker := OptionButton.new()
 var _generate_button := Button.new()
 var _open_button := Button.new()
 var _refresh_button := Button.new()
 var _save_button := Button.new()
 var _status := Label.new()
+var _terrain_backend := OptionButton.new()
+var _terrain_backend_status := Label.new()
+var _terrain_samples := SpinBox.new()
+var _terrain_region_size := OptionButton.new()
 var _reference_toggle := CheckButton.new()
 var _reference_opacity := HSlider.new()
 var _reference_opacity_value := Label.new()
@@ -48,6 +54,25 @@ func _build_interface() -> void:
 	add_child(HSeparator.new())
 
 	add_child(_section_label("Terrain"))
+	_terrain_backend.add_item("Legacy mesh", RenderSettings.TerrainBackend.LEGACY_MESH)
+	_terrain_backend.add_item("Terrain3D", RenderSettings.TerrainBackend.TERRAIN_3D)
+	add_child(_control_with_label("Rendering backend", _terrain_backend))
+	_terrain_backend_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	add_child(_terrain_backend_status)
+
+	_terrain_samples.min_value = 2.0
+	_terrain_samples.max_value = 16.0
+	_terrain_samples.step = 1.0
+	_terrain_samples.value = 8.0
+	_terrain_samples.tooltip_text = "Terrain3D height samples per logical hex radius"
+	add_child(_control_with_label("Samples per hex radius", _terrain_samples))
+
+	for size in RenderSettings.VALID_REGION_SIZES:
+		_terrain_region_size.add_item(str(size), size)
+	_select_option_by_id(_terrain_region_size, 256)
+	_terrain_region_size.tooltip_text = "Terrain3D region width in vertices"
+	add_child(_control_with_label("Terrain3D region size", _terrain_region_size))
+
 	_height_step.min_value = 0.0
 	_height_step.max_value = 1.0
 	_height_step.step = 0.01
@@ -85,6 +110,7 @@ func _build_interface() -> void:
 	_geometry_update_timer.wait_time = 0.15
 	add_child(_geometry_update_timer)
 	_update_opacity_labels()
+	_update_terrain_control_state()
 
 	_save_button.text = "Save current scene"
 	add_child(_save_button)
@@ -92,6 +118,28 @@ func _build_interface() -> void:
 	_status.text = "Select a map from assets."
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(_status)
+
+func selected_terrain_backend() -> int:
+	return _terrain_backend.get_selected_id()
+
+func selected_terrain_region_size() -> int:
+	return _terrain_region_size.get_selected_id()
+
+func set_terrain_backend_status(text: String) -> void:
+	_terrain_backend_status.text = text
+
+func _update_terrain_control_state() -> void:
+	var terrain3d_selected := (
+		selected_terrain_backend() == RenderSettings.TerrainBackend.TERRAIN_3D
+	)
+	_terrain_samples.editable = terrain3d_selected
+	_terrain_region_size.disabled = not terrain3d_selected
+
+func _select_option_by_id(option: OptionButton, id: int) -> void:
+	for index in range(option.item_count):
+		if option.get_item_id(index) == id:
+			option.select(index)
+			return
 
 func _section_label(text: String) -> Label:
 	var label := Label.new()

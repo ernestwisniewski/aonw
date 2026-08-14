@@ -96,6 +96,9 @@ func save(
 	if persisted_terrain == null or persisted_reference == null:
 		return _failure("cannot reload persisted map textures")
 	surface.present(document, persisted_terrain, persisted_reference)
+	var backend_validation := surface.validate_backend()
+	if not backend_validation["ok"]:
+		return backend_validation
 
 	var mesh_paths := _mesh_paths(generation_directory)
 	for entry in [
@@ -128,6 +131,11 @@ func save(
 		persisted_grid_mesh,
 		persisted_settings,
 	)
+	var backend_result := surface.persist_backend_data(
+		generation_directory.path_join("terrain3d")
+	)
+	if not backend_result["ok"]:
+		return backend_result
 	surface.assign_layer_owners(surface)
 	var snapshot_path := generation_directory.path_join("map.json")
 	var snapshot_error := _copy_source(source.map_path, snapshot_path)
@@ -181,6 +189,8 @@ func save(
 		"generation_id": generation_id,
 		"terrain_texture_path": terrain_texture_path,
 		"reference_texture_path": reference_texture_path,
+		"terrain_backend": surface.terrain_backend_name(),
+		"terrain3d_data_directory": surface.terrain3d_data_directory,
 		"authored_scene_created": authored_scene_created,
 		"output_directory": output_directory,
 		"missing_tiles": missing_tiles,
@@ -193,6 +203,9 @@ func persist_surface_geometry(surface: AonwMapSurface) -> Dictionary:
 		return _failure("map surface has no source id")
 	if not surface.has_editing_context():
 		return _failure("map surface has no editing context")
+	var backend_validation := surface.validate_backend()
+	if not backend_validation["ok"]:
+		return backend_validation
 	var output_directory := _asset_root.path_join(surface.source_map_id)
 	var generation := _create_generation(output_directory)
 	if not generation["ok"]:
@@ -228,10 +241,17 @@ func persist_surface_geometry(surface: AonwMapSurface) -> Dictionary:
 		persisted_grid,
 		persisted_settings,
 	)
+	var backend_result := surface.persist_backend_data(
+		generation_directory.path_join("terrain3d")
+	)
+	if not backend_result["ok"]:
+		return backend_result
 	return {
 		"ok": true,
 		"generation_id": generation["generation_id"],
 		"generation_directory": generation_directory,
+		"terrain_backend": surface.terrain_backend_name(),
+		"terrain3d_data_directory": surface.terrain3d_data_directory,
 	}
 
 func publish_surface_geometry(surface: AonwMapSurface) -> Dictionary:

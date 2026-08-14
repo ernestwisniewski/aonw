@@ -6,6 +6,7 @@ const SELECTION_OFFSET := 0.05
 const REACHABLE_OFFSET := 0.045
 
 var _projection: AonwHexMapProjection
+var _height_sampler := Callable()
 var _hover: MeshInstance3D
 var _selection: MeshInstance3D
 var _reachable: MeshInstance3D
@@ -13,8 +14,12 @@ var _reachable: MeshInstance3D
 func _ready() -> void:
 	_ensure_layers()
 
-func present(projection: AonwHexMapProjection) -> void:
+func present(
+	projection: AonwHexMapProjection,
+	height_sampler: Callable = Callable(),
+) -> void:
 	_projection = projection
+	_height_sampler = height_sampler
 	_ensure_layers()
 	clear()
 
@@ -49,11 +54,17 @@ func _build_mesh(coordinates: Array, offset: float) -> ArrayMesh:
 		var coordinate: Vector2i = value
 		if not _projection.contains(coordinate):
 			continue
-		var center := _projection.hex_center(coordinate, offset)
+		var center := _sample_height(_projection.hex_center(coordinate), offset)
 		for corner in 6:
 			vertices.append(center)
-			vertices.append(_projection.hex_corner(coordinate, corner, offset))
-			vertices.append(_projection.hex_corner(coordinate, (corner + 1) % 6, offset))
+			vertices.append(_sample_height(
+				_projection.hex_corner(coordinate, corner),
+				offset,
+			))
+			vertices.append(_sample_height(
+				_projection.hex_corner(coordinate, (corner + 1) % 6),
+				offset,
+			))
 	if vertices.is_empty():
 		return null
 	var arrays := []
@@ -62,6 +73,13 @@ func _build_mesh(coordinates: Array, offset: float) -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
+
+func _sample_height(point: Vector3, offset: float) -> Vector3:
+	var result := point
+	if _height_sampler.is_valid():
+		result.y = float(_height_sampler.call(point))
+	result.y += offset
+	return result
 
 func _ensure_layers() -> void:
 	if _reachable == null:

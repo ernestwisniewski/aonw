@@ -29,6 +29,10 @@ func execute(source: AonwMapSource, settings: Dictionary) -> Dictionary:
 		opened["terrain_texture"],
 		opened["reference_texture"],
 	)
+	var validation := surface.validate_backend()
+	if not validation["ok"]:
+		surface.free()
+		return validation
 	var result := _scene_repository.save(
 		source,
 		opened["document"],

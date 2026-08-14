@@ -4,12 +4,18 @@ extends Node3D
 const UNIT_OFFSET := 0.24
 
 var _projection: AonwHexMapProjection
+var _height_sampler := Callable()
 var _units: Dictionary = {}
 var _instances: Dictionary = {}
 var _movement_tweens: Dictionary = {}
 
-func present(projection: AonwHexMapProjection, units: Array[AonwClientReadModels.UnitView]) -> void:
+func present(
+	projection: AonwHexMapProjection,
+	units: Array[AonwClientReadModels.UnitView],
+	height_sampler: Callable = Callable(),
+) -> void:
 	_projection = projection
+	_height_sampler = height_sampler
 	_clear_instances()
 	for unit in units:
 		var unit_id := unit.id
@@ -64,14 +70,23 @@ func _animate_steps(unit_id: String, steps: Array) -> void:
 	tween.set_ease(Tween.EASE_IN_OUT)
 	for value in steps:
 		var coordinate: Vector2i = value.coordinate
-		tween.tween_property(instance, "position", _projection.hex_center(
-			coordinate,
-			UNIT_OFFSET,
-		), 0.18)
+		tween.tween_property(
+			instance,
+			"position",
+			_surface_position(_projection.hex_center(coordinate)),
+			0.18,
+		)
 	tween.finished.connect(func() -> void: _movement_tweens.erase(unit_id))
 
 func _unit_position(unit: AonwClientReadModels.UnitView) -> Vector3:
-	return _projection.hex_center(_coordinate(unit), UNIT_OFFSET)
+	return _surface_position(_projection.hex_center(_coordinate(unit)))
+
+func _surface_position(point: Vector3) -> Vector3:
+	var result := point
+	if _height_sampler.is_valid():
+		result.y = float(_height_sampler.call(point))
+	result.y += UNIT_OFFSET
+	return result
 
 func _coordinate(value: AonwClientReadModels.UnitView) -> Vector2i:
 	return value.coordinate

@@ -22,7 +22,7 @@ func write(
 ) -> Error:
 	var absolute_source := AonwJsonMapRepository.resolve_path(source.map_path)
 	var manifest := {
-		"formatVersion": 1,
+		"formatVersion": 2,
 		"mapId": document.map_id(),
 		"cols": document.cols(),
 		"rows": document.rows(),
@@ -34,6 +34,8 @@ func write(
 		"scenePath": scene_path,
 		"generatedScenePath": generated_scene_path,
 		"activeGeneration": generation_id,
+		"terrainBackend": surface.terrain_backend_name(),
+		"terrain3d": surface.terrain3d_manifest(),
 		"renderSettings": surface.render_settings.to_dictionary(),
 		"missingTextureCount": missing_tiles.size(),
 		"invalidTextureCount": invalid_tiles.size(),
@@ -48,6 +50,9 @@ func update_render_settings(path: String, surface: AonwMapSurface) -> Error:
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if not parsed is Dictionary:
 		return ERR_PARSE_ERROR
+	parsed["formatVersion"] = 2
+	parsed["terrainBackend"] = surface.terrain_backend_name()
+	parsed["terrain3d"] = surface.terrain3d_manifest()
 	parsed["renderSettings"] = surface.render_settings.to_dictionary()
 	var settings_path := surface.render_settings.resource_path
 	if not settings_path.is_empty():

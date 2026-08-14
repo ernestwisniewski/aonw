@@ -3,7 +3,12 @@ class_name AonwAuthoredMapSceneStore
 extends RefCounted
 
 const AtomicResourceStore := preload("res://infrastructure/map/atomic_resource_store.gd")
-const GENERATED_LAYER_NAMES := [&"BaseTerrain", &"ReferenceTexture", &"HexGrid"]
+const GENERATED_LAYER_NAMES := [
+	&"BaseTerrain",
+	&"ReferenceTexture",
+	&"HexGrid",
+	&"Terrain3DGround",
+]
 
 var _atomic_store := AtomicResourceStore.new()
 

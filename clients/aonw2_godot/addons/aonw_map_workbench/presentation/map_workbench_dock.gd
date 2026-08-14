@@ -7,6 +7,9 @@ const TileAtlasRepository := preload("res://infrastructure/map/tile_atlas_reposi
 const OpenMap := preload("res://application/map/open_map.gd")
 const GenerateGodotMap := preload("res://application/map/generate_godot_map.gd")
 const GodotMapSceneRepository := preload("res://infrastructure/map/godot_map_scene_repository.gd")
+const Terrain3DAdapter := preload(
+	"res://presentation/map/terrain3d/terrain3d_runtime_adapter.gd"
+)
 
 var _catalog := MapAssetCatalog.new()
 var _map_reader := JsonMapRepository.new()
@@ -20,12 +23,16 @@ var _sources: Array[AonwMapSource] = []
 func _ready() -> void:
 	_build_interface()
 	_connect_interface()
+	_update_terrain3d_availability()
 	_refresh_sources()
 
 func _connect_interface() -> void:
 	_refresh_button.pressed.connect(_refresh_sources)
 	_generate_button.pressed.connect(_generate_selected_map)
 	_open_button.pressed.connect(_open_selected_scene)
+	_terrain_backend.item_selected.connect(_on_terrain_backend_selected)
+	_terrain_samples.value_changed.connect(_queue_geometry_update)
+	_terrain_region_size.item_selected.connect(_queue_geometry_update)
 	_reference_toggle.toggled.connect(_set_reference_visible)
 	_reference_opacity.value_changed.connect(_set_reference_opacity)
 	_height_step.value_changed.connect(_queue_geometry_update)
@@ -64,6 +71,9 @@ func _generate_selected_map() -> void:
 	await get_tree().process_frame
 	var result := _generator.execute(source, {
 		"height_step": _height_step.value,
+		"terrain_backend": selected_terrain_backend(),
+		"terrain_samples_per_radius": roundi(_terrain_samples.value),
+		"terrain3d_region_size": selected_terrain_region_size(),
 		"reference_visible": _reference_toggle.button_pressed,
 		"reference_opacity": _reference_opacity.value,
 		"grid_visible": _grid_toggle.button_pressed,
@@ -90,6 +100,11 @@ func _open_selected_scene() -> void:
 		_status.text = "Generate the 3D map first."
 		return
 	EditorInterface.open_scene_from_path(scene_path)
+
+func _on_terrain_backend_selected(_index: int) -> void:
+	_update_terrain_control_state()
+	_update_terrain3d_availability()
+	_queue_geometry_update()
 
 func _set_reference_visible(value: bool) -> void:
 	var surface := _current_surface()
@@ -122,7 +137,7 @@ func _set_reference_opacity(value: float) -> void:
 		UndoRedo.MERGE_ENDS,
 	)
 
-func _queue_geometry_update(_value: float) -> void:
+func _queue_geometry_update(_value: Variant = null) -> void:
 	_geometry_update_timer.start()
 
 func _apply_geometry_settings() -> void:
@@ -136,21 +151,41 @@ func _apply_geometry_settings() -> void:
 			return
 	var next_height := float(_height_step.value)
 	var next_grid_width := float(_grid_width.value)
+	var next_backend := selected_terrain_backend()
+	var next_samples := roundi(_terrain_samples.value)
+	var next_region_size := selected_terrain_region_size()
 	if (
 		is_equal_approx(surface.render_settings.height_step, next_height)
 		and is_equal_approx(surface.render_settings.grid_width, next_grid_width)
+		and surface.render_settings.terrain_backend == next_backend
+		and surface.render_settings.terrain_samples_per_radius == next_samples
+		and surface.render_settings.terrain3d_region_size == next_region_size
 	):
 		return
 	var undo_redo := EditorInterface.get_editor_undo_redo()
-	undo_redo.create_action("Change map geometry", UndoRedo.MERGE_DISABLE, surface)
-	undo_redo.add_do_method(surface, "set_geometry", next_height, next_grid_width)
+	undo_redo.create_action("Change map terrain", UndoRedo.MERGE_DISABLE, surface)
+	undo_redo.add_do_method(
+		surface,
+		"set_render_configuration",
+		next_height,
+		next_grid_width,
+		next_backend,
+		next_samples,
+		next_region_size,
+	)
 	undo_redo.add_undo_method(
 		surface,
-		"set_geometry",
+		"set_render_configuration",
 		surface.render_settings.height_step,
 		surface.render_settings.grid_width,
+		surface.render_settings.terrain_backend,
+		surface.render_settings.terrain_samples_per_radius,
+		surface.render_settings.terrain3d_region_size,
 	)
 	undo_redo.commit_action()
+	var validation := surface.validate_backend()
+	if not validation["ok"]:
+		_status.text = "Terrain backend warning: %s" % validation["message"]
 
 func _set_grid_visible(value: bool) -> void:
 	var surface := _current_surface()
@@ -245,6 +280,14 @@ func sync_from_edited_scene() -> void:
 	var surface := _current_surface()
 	if surface == null:
 		return
+	_select_option_by_id(_terrain_backend, surface.render_settings.terrain_backend)
+	_terrain_samples.set_value_no_signal(
+		float(surface.render_settings.terrain_samples_per_radius)
+	)
+	_select_option_by_id(
+		_terrain_region_size,
+		surface.render_settings.terrain3d_region_size,
+	)
 	_reference_toggle.set_pressed_no_signal(surface.render_settings.reference_visible)
 	_reference_opacity.set_value_no_signal(surface.render_settings.reference_opacity)
 	_height_step.set_value_no_signal(surface.render_settings.height_step)
@@ -252,6 +295,8 @@ func sync_from_edited_scene() -> void:
 	_grid_opacity.set_value_no_signal(surface.render_settings.grid_opacity)
 	_grid_width.set_value_no_signal(surface.render_settings.grid_width)
 	_update_opacity_labels()
+	_update_terrain_control_state()
+	_update_terrain3d_availability()
 
 func _restore_surface_editing_context(surface: AonwMapSurface) -> Dictionary:
 	if surface.source_map_id.is_empty() or surface.source_map_path.is_empty():
@@ -273,11 +318,24 @@ func _set_busy(busy: bool) -> void:
 	_generate_button.disabled = busy
 	_open_button.disabled = busy
 	_map_picker.disabled = busy
+	_terrain_backend.disabled = busy
+	_terrain_samples.editable = not busy and (
+		selected_terrain_backend() == RenderSettings.TerrainBackend.TERRAIN_3D
+	)
+	_terrain_region_size.disabled = busy or (
+		selected_terrain_backend() != RenderSettings.TerrainBackend.TERRAIN_3D
+	)
 
 func _success_message(source: AonwMapSource, result: Dictionary) -> String:
-	var message := "%s was saved as a Godot 3D scene." % source.map_id
+	var message := "%s was saved as a Godot 3D scene using %s." % [
+		source.map_id,
+		result.get("terrain_backend", "legacyMesh"),
+	]
 	if not result["missing_tiles"].is_empty():
 		message += " Missing textures: %d." % result["missing_tiles"].size()
 	if not result["invalid_tiles"].is_empty():
 		message += " Invalid textures: %d." % result["invalid_tiles"].size()
 	return message
+
+func _update_terrain3d_availability() -> void:
+	set_terrain_backend_status(Terrain3DAdapter.availability_message())

@@ -135,12 +135,20 @@ func _refresh_session_snapshot() -> bool:
 		_present_empty_unit_layer()
 		return false
 	var value: AonwClientReadModels.SnapshotView = snapshot["value"]
-	_unit_layer.present(_interaction.projection(), value.units)
+	_unit_layer.present(
+		_interaction.projection(),
+		value.units,
+		Callable(_surface, &"height_at_local_point"),
+	)
 	return true
 
 func _present_empty_unit_layer() -> void:
 	var units: Array[AonwClientReadModels.UnitView] = []
-	_unit_layer.present(_interaction.projection(), units)
+	_unit_layer.present(
+		_interaction.projection(),
+		units,
+		Callable(_surface, &"height_at_local_point"),
+	)
 
 func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 	var reachable := _local_session.reachable(unit_id)

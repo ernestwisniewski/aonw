@@ -5,24 +5,11 @@ const HexGridGeometry := preload("res://presentation/map/geometry/hex_grid_geome
 const MapTextureProjection := preload(
 	"res://presentation/map/geometry/map_texture_projection.gd"
 )
+const VisualCatalog := preload(
+	"res://presentation/map/terrain/terrain_visual_catalog.gd"
+)
 const DEFAULT_TILE_SIZE := Vector2i(160, 120)
 const MAX_PREVIEW_TILE_SIZE := Vector2i(160, 120)
-const TERRAIN_COLORS := {
-	"ocean": Color("245b91"),
-	"coast": Color("4f9dc4"),
-	"lake": Color("3f87b3"),
-	"plains": Color("b7a66a"),
-	"grassland": Color("6e9c54"),
-	"desert": Color("c5a15f"),
-	"tundra": Color("89938a"),
-	"snow": Color("d9e2e3"),
-	"mountain": Color("666b6f"),
-	"hills": Color("8a7957"),
-	"wetlands": Color("537a68"),
-	"jungle": Color("356a43"),
-	"forest": Color("3e7148"),
-	"river": Color("3e83ad"),
-}
 
 func load_atlas(document: AonwMapDocument, source_directory: String) -> Dictionary:
 	var resolved_directory := _resolve_path(source_directory)
@@ -31,7 +18,7 @@ func load_atlas(document: AonwMapDocument, source_directory: String) -> Dictiona
 	var source_tile_size := _preview_tile_size(document, resolved_directory)
 	var atlas_size := projection.target_atlas_size(source_tile_size)
 	var terrain_atlas := Image.create(atlas_size.x, atlas_size.y, false, Image.FORMAT_RGB8)
-	terrain_atlas.fill(Color("6c7178"))
+	terrain_atlas.fill(VisualCatalog.FALLBACK_COLOR)
 	_fill_terrain_fallback(terrain_atlas, document, projection, atlas_size)
 	var reference_atlas := Image.create(atlas_size.x, atlas_size.y, false, Image.FORMAT_RGBA8)
 	reference_atlas.fill(Color.TRANSPARENT)
@@ -113,14 +100,7 @@ func _fill_terrain_fallback(
 		var rect: Rect2i = projection.tile_slice_rect(coordinate, atlas_size)
 		if rect.size.x <= 0 or rect.size.y <= 0:
 			continue
-		var color := _terrain_color(tile["terrains"])
-		atlas.fill_rect(rect, color)
-
-func _terrain_color(terrains: Array) -> Color:
-	for feature in ["river", "mountain", "forest", "jungle", "hills"]:
-		if feature in terrains:
-			return TERRAIN_COLORS[feature]
-	return TERRAIN_COLORS.get(terrains[0], Color("6c7178"))
+		atlas.fill_rect(rect, VisualCatalog.color_for(tile["terrains"]))
 
 static func _resolve_path(path: String) -> String:
 	if path.begins_with("res://") or path.begins_with("user://"):
