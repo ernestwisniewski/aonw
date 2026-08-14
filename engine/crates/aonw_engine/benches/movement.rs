@@ -1,20 +1,22 @@
 //! Diagnostic map and movement baseline without a timing gate.
 
 use std::hint::black_box;
-use std::time::Instant;
 
-use aonw_content::{GridLayout, MapDefinition, MapDocument, TerrainType, TileDefinition};
-use aonw_domain::{
-    GameState, HexCoord, HexGridBounds, MovementUnits, PlayerId, StateRevision, Unit, UnitId,
-    UnitKind, UnitOccupancyPolicy,
-};
+use aonw_content::{MapDefinition, MapDocument};
+use aonw_domain::{GameState, HexCoord, PlayerId, UnitId};
 use aonw_engine::{
     CanonicalQueryError, CompiledMovementMap, DomainCommand, EngineContext, GameEngine, GameQuery,
     MoveUnitCommand, MovementSearchMetrics, MovementSearchWorkspace, QueryResult,
     ReachableMovement, ReachableMovementQuery, TerrainMovementPlan, TerrainMovementQuery,
 };
 
-const ITERATIONS: usize = 20;
+#[path = "movement/support.rs"]
+mod support;
+
+use support::{
+    hidden_blocker_state, map, mix, movement_state, occupied_target_state, report, signature_bytes,
+    signed,
+};
 
 fn main() {
     println!(
@@ -103,6 +105,7 @@ fn benchmark_movement(map: &MapDefinition, cols: u16, rows: u16, unit_count: usi
     benchmark_apply(
         &state,
         context,
+        prepared_context,
         &mover_id,
         (cols, rows, unit_count),
         apply_metrics,
@@ -212,6 +215,7 @@ fn benchmark_routes(
 fn benchmark_apply(
     state: &GameState,
     context: EngineContext<'_>,
+    prepared_context: EngineContext<'_>,
     mover_id: &UnitId,
     dimensions: (u16, u16, usize),
     metrics: MovementSearchMetrics,
@@ -229,16 +233,78 @@ fn benchmark_apply(
         )
         .map_or_else(
             |error| signature_bytes(error.to_string().as_bytes()),
-            |result| {
-                let next = result.state();
-                let moved = next.unit(mover_id).expect("moved unit");
-                mix(
-                    mix(next.revision().get(), signed(moved.position().col())),
-                    u64::from(moved.movement_units().get()),
-                )
-            },
+            |result| transition_signature(&result, mover_id),
         )
     });
+    report("prepared_apply_owned", cols, rows, units, metrics, || {
+        GameEngine::apply_owned(
+            black_box(state.clone()),
+            prepared_context,
+            DomainCommand::MoveUnit(MoveUnitCommand::new(
+                state.revision().get(),
+                mover_id,
+                HexCoord::new(1, 0),
+            )),
+        )
+        .map_or_else(
+            |error| signature_bytes(error.to_string().as_bytes()),
+            |result| transition_signature(&result, mover_id),
+        )
+    });
+    report(
+        "prepared_apply_rejected",
+        cols,
+        rows,
+        units,
+        MovementSearchMetrics::default(),
+        || {
+            GameEngine::apply_owned(
+                black_box(state.clone()),
+                prepared_context,
+                DomainCommand::MoveUnit(MoveUnitCommand::new(
+                    state.revision().get() + 1,
+                    mover_id,
+                    HexCoord::new(1, 0),
+                )),
+            )
+            .map_or_else(
+                |error| signature_bytes(error.to_string().as_bytes()),
+                |result| result.digest().as_bytes()[0].into(),
+            )
+        },
+    );
+    let hidden = hidden_blocker_state(cols, rows, context.actor_player_id());
+    report(
+        "prepared_apply_hidden_noop",
+        cols,
+        rows,
+        units + 1,
+        MovementSearchMetrics::default(),
+        || {
+            GameEngine::apply_owned(
+                black_box(hidden.clone()),
+                prepared_context,
+                DomainCommand::MoveUnit(MoveUnitCommand::new(
+                    hidden.revision().get(),
+                    mover_id,
+                    HexCoord::new(1, 0),
+                )),
+            )
+            .map_or_else(
+                |error| signature_bytes(error.to_string().as_bytes()),
+                |result| transition_signature(&result, mover_id),
+            )
+        },
+    );
+}
+
+fn transition_signature(result: &aonw_engine::DomainTransition, mover_id: &UnitId) -> u64 {
+    let next = result.state();
+    let moved = next.unit(mover_id).expect("moved unit");
+    mix(
+        mix(next.revision().get(), signed(moved.position().col())),
+        u64::from(moved.movement_units().get()),
+    )
 }
 
 fn route_signature(result: &aonw_engine::TerrainMovementPlan) -> u64 {
@@ -329,139 +395,4 @@ fn route(
         QueryResult::Route(result) => Ok(result),
         QueryResult::Reachable(_) => unreachable!("route query returned reachable result"),
     }
-}
-
-fn report(
-    workload: &str,
-    cols: u16,
-    rows: u16,
-    units: usize,
-    metrics: MovementSearchMetrics,
-    mut operation: impl FnMut() -> u64,
-) {
-    for _ in 0..3 {
-        black_box(operation());
-    }
-    let mut samples = Vec::with_capacity(ITERATIONS);
-    let mut signature = 0;
-    for _ in 0..ITERATIONS {
-        let started = Instant::now();
-        signature = black_box(operation());
-        samples.push(started.elapsed().as_nanos());
-    }
-    samples.sort_unstable();
-    let median = samples[samples.len() / 2];
-    let p95 = samples[(samples.len() * 95 / 100).min(samples.len() - 1)];
-    println!(
-        "{workload},{},{units},{ITERATIONS},{median},{p95},{},{},{},{},{},{signature:016x}",
-        usize::from(cols) * usize::from(rows),
-        metrics.frontier_pops(),
-        metrics.expanded_tiles(),
-        metrics.examined_edges(),
-        metrics.heap_pushes(),
-        metrics.route_records(),
-    );
-}
-
-fn map(cols: u16, rows: u16) -> MapDefinition {
-    let tiles = (0..rows)
-        .flat_map(|row| {
-            (0..cols).map(move |col| {
-                TileDefinition::try_new(
-                    HexCoord::new(i32::from(col), i32::from(row)),
-                    vec![TerrainType::Grassland],
-                    Vec::new(),
-                    0,
-                )
-                .expect("benchmark tile")
-            })
-        })
-        .collect();
-    MapDefinition::try_new(
-        format!("benchmark_{cols}x{rows}"),
-        GridLayout::OddQFlatTop,
-        cols,
-        rows,
-        tiles,
-        Vec::new(),
-    )
-    .expect("benchmark map")
-}
-
-fn movement_state(cols: u16, rows: u16, unit_count: usize, actor: &PlayerId) -> GameState {
-    let mut units = Vec::with_capacity(unit_count);
-    units.push(unit(
-        "unit-0",
-        actor,
-        UnitKind::Commander,
-        HexCoord::new(0, 0),
-        10,
-    ));
-    let positions = (1..rows).flat_map(|row| {
-        (0..cols.saturating_sub(1)).map(move |col| HexCoord::new(i32::from(col), i32::from(row)))
-    });
-    for (index, position) in positions.take(unit_count.saturating_sub(1)).enumerate() {
-        units.push(unit(
-            &format!("unit-{}", index + 1),
-            actor,
-            UnitKind::Warrior,
-            position,
-            6,
-        ));
-    }
-    assert_eq!(units.len(), unit_count, "benchmark unit count must fit map");
-    GameState::try_new(
-        StateRevision::new(1),
-        1,
-        HexGridBounds::new(cols, rows).expect("benchmark bounds"),
-        UnitOccupancyPolicy::Exclusive,
-        units,
-    )
-    .expect("benchmark state")
-}
-
-fn occupied_target_state(state: &GameState, target: HexCoord) -> GameState {
-    let mut units = state.units().to_vec();
-    units.push(unit(
-        "occupied-target",
-        &PlayerId::new("player-2").expect("blocker owner"),
-        UnitKind::Warrior,
-        target,
-        6,
-    ));
-    GameState::try_new(
-        state.revision(),
-        state.turn(),
-        state.bounds(),
-        state.occupancy_policy(),
-        units,
-    )
-    .expect("occupied target state")
-}
-
-fn unit(id: &str, owner: &PlayerId, kind: UnitKind, position: HexCoord, movement: u32) -> Unit {
-    Unit::builder(
-        UnitId::new(id).expect("unit id"),
-        owner.clone(),
-        kind,
-        format!("unit.{id}"),
-        position,
-        MovementUnits::new(movement),
-    )
-    .build()
-    .expect("unit")
-}
-
-fn signed(value: i32) -> u64 {
-    i64::from(value).cast_unsigned()
-}
-
-fn signature_bytes(bytes: &[u8]) -> u64 {
-    bytes.iter().fold(0xcbf2_9ce4_8422_2325, |digest, byte| {
-        mix(digest, u64::from(*byte))
-    })
-}
-
-const fn mix(digest: u64, value: u64) -> u64 {
-    (digest ^ value).wrapping_mul(0x0000_0100_0000_01b3)
 }

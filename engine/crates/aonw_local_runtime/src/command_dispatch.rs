@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use core::cmp::Ordering;
 
 use aonw_contracts::ReplayCommandDto;
 use aonw_domain::{HexCoord, UnitId};
@@ -172,30 +172,88 @@ fn diff_view(
     before: Vec<PlayerUnitView>,
     after: Vec<PlayerUnitView>,
 ) -> PlayerViewPatch {
-    let before = before
-        .into_iter()
-        .map(|unit| (unit.id().clone(), unit))
-        .collect::<BTreeMap<_, _>>();
-    let after = after
-        .into_iter()
-        .map(|unit| (unit.id().clone(), unit))
-        .collect::<BTreeMap<_, _>>();
-    let upserted_units = after
-        .iter()
-        .filter(|(id, unit)| before.get(*id) != Some(*unit))
-        .map(|(_, unit)| unit.clone())
-        .collect::<Vec<_>>()
-        .into_boxed_slice();
-    let removed_unit_ids = before
-        .keys()
-        .filter(|id| !after.contains_key(*id))
-        .cloned()
-        .collect::<Vec<_>>()
-        .into_boxed_slice();
+    debug_assert!(before.windows(2).all(|pair| pair[0].id() < pair[1].id()));
+    debug_assert!(after.windows(2).all(|pair| pair[0].id() < pair[1].id()));
+    let mut before = before.into_iter().peekable();
+    let mut after = after.into_iter().peekable();
+    let mut upserted_units = Vec::new();
+    let mut removed_unit_ids = Vec::new();
+    while let (Some(previous), Some(current)) = (before.peek(), after.peek()) {
+        match previous.id().cmp(current.id()) {
+            Ordering::Less => {
+                if let Some(previous) = before.next() {
+                    removed_unit_ids.push(previous.id().clone());
+                }
+            }
+            Ordering::Equal => {
+                if let (Some(previous), Some(current)) = (before.next(), after.next())
+                    && previous != current
+                {
+                    upserted_units.push(current);
+                }
+            }
+            Ordering::Greater => {
+                if let Some(current) = after.next() {
+                    upserted_units.push(current);
+                }
+            }
+        }
+    }
+    removed_unit_ids.extend(before.map(|unit| unit.id().clone()));
+    upserted_units.extend(after);
     PlayerViewPatch {
         from_revision,
         to_revision,
-        upserted_units,
-        removed_unit_ids,
+        upserted_units: upserted_units.into_boxed_slice(),
+        removed_unit_ids: removed_unit_ids.into_boxed_slice(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use aonw_domain::{HexCoord, MovementUnits, PlayerId, Unit, UnitId, UnitKind};
+
+    use super::diff_view;
+    use crate::player_view::PlayerUnitView;
+
+    #[test]
+    fn sorted_view_diff_reports_updates_insertions_and_removals() {
+        let before = vec![view("unit-a", 0), view("unit-b", 1)];
+        let after = vec![view("unit-b", 2), view("unit-c", 3)];
+
+        let patch = diff_view(4, 5, before, after);
+
+        assert_eq!(patch.from_revision, 4);
+        assert_eq!(patch.to_revision, 5);
+        assert_eq!(
+            patch
+                .upserted_units
+                .iter()
+                .map(|unit| unit.id().as_str())
+                .collect::<Vec<_>>(),
+            ["unit-b", "unit-c"]
+        );
+        assert_eq!(
+            patch
+                .removed_unit_ids
+                .iter()
+                .map(UnitId::as_str)
+                .collect::<Vec<_>>(),
+            ["unit-a"]
+        );
+    }
+
+    fn view(id: &str, col: i32) -> PlayerUnitView {
+        let unit = Unit::builder(
+            UnitId::new(id).expect("unit id"),
+            PlayerId::new("player-1").expect("player id"),
+            UnitKind::Commander,
+            "Commander",
+            HexCoord::new(col, 0),
+            MovementUnits::new(10),
+        )
+        .build()
+        .expect("unit");
+        PlayerUnitView::from_unit(&unit)
     }
 }

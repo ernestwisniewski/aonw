@@ -55,10 +55,16 @@ make rust-benchmark
 ```
 
 It reports map open/hash plus raw and prepared reachable/route, occupied-target
-approach, and apply workloads for 100, 600, and 1200 tiles. Movement cases cover
-1, 10, 64, and 512 units. The native boundary opens a strict 1200-tile scenario
-with 512 units. Wall-clock values are diagnostic; stable result signatures and
-search-work counters are test gates.
+approach, owned apply, direct local-runtime dispatch, and shared client JSON
+workloads. Movement cases cover 1, 10, 64, and 512 units, including accepted,
+rejected, and hidden no-op commands. Wall-clock values are diagnostic; stable
+result signatures and search-work counters are test gates.
+
+The 2026-08-14 reference run on the development Mac kept the 40×30, 512-unit
+accepted runtime dispatch at about 1.46 ms p95, including state digest, replay
+entry, recipient view patch, and JSON response at about 1.47 ms p95. Prepared
+content hashes are reused by every command, and recipient views use a linear
+merge over canonical ID order instead of temporary tree maps.
 
 The toolchain is pinned in `rust-toolchain.toml`. Production rules and all
 non-FFI crates forbid `unsafe`; the single required `unsafe impl` is confined to

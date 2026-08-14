@@ -196,8 +196,9 @@ roads, cities, rejection precedence, and exact movement evidence. Rust accepts
 only this current fixture contract. The compatibility `MovementState` is
 explicitly not a save format. `aonw_local_runtime` now owns transactional
 open/close, recipient snapshots, route/reachable queries, movement and unit-action dispatch,
-stable identity stamps, and player-view patches. Flutter FFI and production
-runtime integration remain future work.
+stable identity stamps, and player-view patches. Flutter native packaging is
+available as an opt-in current-protocol adapter; production session cutover
+remains future work.
 
 The optimized local path compiles map topology and terrain costs once, uses
 tile-indexed occupancy and visibility bitsets, reuses reachable-search storage,
@@ -205,8 +206,10 @@ performs one multi-target search for occupied destinations, and caches queries
 against revision plus state/visibility and content hashes. Owned apply reuses
 canonical entity storage and `DomainTransition::into_parts` removes the second
 adapter clone. Raw/prepared and fresh/reused parity tests preserve the reviewed
-behavior. Benchmarks remain diagnostic and include a strict 1200-tile,
-512-unit native session boundary.
+behavior. Benchmarks remain diagnostic and include strict 1200-tile, 512-unit
+runtime and shared JSON boundaries. The prepared command path reuses compiled
+content hashes, and recipient patch generation performs a linear merge over
+canonical unit order without temporary tree maps.
 
 Canonical persistence now uses separate strict current-only save and replay
 contracts. Saves contain the complete game state plus behavior/content hashes,
@@ -761,7 +764,7 @@ make rust-benchmark
 is a separate release-profile diagnostic. These targets are not yet dependencies
 of the existing Dart/Flutter `make ci` target or GitHub Actions. CI integration,
 supported native targets, WASM when required, schema compatibility, full fixture
-parity, save round trips, Flutter FFI, release GDExtension packaging,
+parity, save round trips, production Flutter cutover, release GDExtension packaging,
 architecture ratchets, fuzzing, sanitizers or Miri, mutation testing, dependency
 policy, SBOM, and artifact checksums remain later migration gates. The current
 Godot 4.7 headless smoke covers the local development GDExtension only.

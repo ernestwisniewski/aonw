@@ -247,14 +247,7 @@ impl GameEngine {
         context: EngineContext<'_>,
         command: DomainCommand<'_>,
     ) -> Result<DomainTransition, CanonicalEngineError> {
-        let map_hash = context
-            .map()
-            .content_hash()
-            .map_err(|error| CanonicalEngineError::ContentHash(error.to_string().into()))?;
-        let ruleset_hash = context
-            .ruleset()
-            .content_hash()
-            .map_err(|error| CanonicalEngineError::ContentHash(error.to_string().into()))?;
+        let (map_hash, ruleset_hash) = content_hashes(context)?;
         let map = context.map();
         match command {
             DomainCommand::MoveUnit(command) => {
@@ -294,6 +287,23 @@ impl GameEngine {
     pub fn state_digest(state: &GameState) -> StateDigest {
         crate::state_digest::digest_state(state)
     }
+}
+
+fn content_hashes(
+    context: EngineContext<'_>,
+) -> Result<(ContentHash, ContentHash), CanonicalEngineError> {
+    if let Some(compiled) = context.compiled_movement_map() {
+        return Ok((compiled.map_hash(), compiled.ruleset_hash()));
+    }
+    let map_hash = context
+        .map()
+        .content_hash()
+        .map_err(|error| CanonicalEngineError::ContentHash(error.to_string().into()))?;
+    let ruleset_hash = context
+        .ruleset()
+        .content_hash()
+        .map_err(|error| CanonicalEngineError::ContentHash(error.to_string().into()))?;
+    Ok((map_hash, ruleset_hash))
 }
 
 fn apply_canonical_unit_action(

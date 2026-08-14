@@ -1,6 +1,3 @@
-use std::hint::black_box;
-use std::time::Instant;
-
 use aonw_contracts::CoordinateDto;
 use aonw_contracts::client::{
     CLIENT_API_VERSION, ClientCommandDto, ClientOutcomeDto, ClientRequestBodyDto, ClientRequestDto,
@@ -126,28 +123,4 @@ fn native_adapter_rejects_non_protocol_and_foreign_version_documents() {
             .expect("failure response");
         assert!(matches!(response.outcome, ClientOutcomeDto::Failure { .. }));
     }
-}
-
-#[test]
-#[ignore = "diagnostic wall-clock benchmark"]
-fn native_session_open_benchmark() {
-    const ITERATIONS: usize = 20;
-    let request = request(ClientRequestBodyDto::OpenSession {
-        map_document: map_json(40, 30, "benchmark-session"),
-        scenario_document: scenario_json(512, "benchmark-session", "benchmark-session"),
-        actor_player_id: "player-1".to_owned(),
-    });
-    for _ in 0..3 {
-        black_box(dispatch_json(&mut LocalRuntime::default(), &request));
-    }
-    let mut samples = Vec::with_capacity(ITERATIONS);
-    for _ in 0..ITERATIONS {
-        let started = Instant::now();
-        black_box(dispatch_json(&mut LocalRuntime::default(), &request));
-        samples.push(started.elapsed().as_nanos());
-    }
-    samples.sort_unstable();
-    let median = samples[samples.len() / 2];
-    let p95 = samples[(samples.len() * 95 / 100).min(samples.len() - 1)];
-    println!("native_session_open,1200,512,{ITERATIONS},{median},{p95}");
 }

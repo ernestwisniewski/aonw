@@ -481,7 +481,7 @@ rust-doc:
 
 rust-benchmark:
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench -p aonw_engine --bench movement
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --release -p aonw_godot native_session_open_benchmark -- --ignored --nocapture
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench -p aonw_local_runtime --bench runtime
 
 rust-flutter-test: root-dependencies
 	@dart test packages/aonw_rust_client/test/aonw_rust_client_test.dart

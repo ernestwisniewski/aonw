@@ -35,6 +35,22 @@ not a substitute for Flutter `FrameTiming` collected from a real device.
 Canonical workloads perform warm-up before collecting 21 timing samples, so a
 p95 summary is not merely the slowest value from a three- or nine-sample run.
 
+## Rust Engine Diagnostics
+
+`make rust-benchmark` runs release-profile Rust diagnostics separately from the
+portable Dart baseline. It covers 100, 600, and 1,200 tile maps; 1, 10, 64, and
+512 units; raw and compiled route/reachable queries; accepted, rejected, and
+hidden no-op owned transitions; direct local-runtime dispatch; strict JSON
+open; and shared client-protocol dispatch. Fixture setup and runtime cloning are
+outside timed samples. Output signatures and movement-work counters protect
+determinism; median and p95 nanoseconds remain host-local observations.
+
+The prepared path must use map and ruleset hashes stored in
+`CompiledMovementMap`, reusable search storage, and linear recipient-view
+patching. Performance work is accepted only with behavior-parity tests and a
+measured improvement; the project does not add ECS, Rayon, SIMD, or GPU
+pathfinding without a workload that justifies it.
+
 ## Stable Results and Observations
 
 Each case produces two independent sections:

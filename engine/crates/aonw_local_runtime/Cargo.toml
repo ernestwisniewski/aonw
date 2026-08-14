@@ -16,5 +16,12 @@ aonw_contracts = { path = "../aonw_contracts" }
 aonw_domain = { path = "../aonw_domain" }
 aonw_engine = { path = "../aonw_engine" }
 
+[dev-dependencies]
+serde_json.workspace = true
+
+[[bench]]
+name = "runtime"
+harness = false
+
 [lints]
 workspace = true

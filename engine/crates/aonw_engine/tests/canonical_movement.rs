@@ -7,8 +7,8 @@ use aonw_domain::{
     Unit, UnitId, UnitKind, UnitOccupancyPolicy,
 };
 use aonw_engine::{
-    DomainCommand, EngineContext, ExecutionEvidence, GameEngine, GameQuery, MoveUnitCommand,
-    QueryResult, TerrainMovementQuery,
+    CompiledMovementMap, DomainCommand, EngineContext, ExecutionEvidence, GameEngine, GameQuery,
+    MoveUnitCommand, QueryResult, TerrainMovementQuery,
 };
 
 fn map() -> MapDefinition {
@@ -166,14 +166,22 @@ fn owned_apply_matches_borrowed_apply_and_exposes_owned_parts() {
         || DomainCommand::MoveUnit(MoveUnitCommand::new(4, &unit_id, HexCoord::new(1, 0)));
     let context = EngineContext::canonical(&actor, &map, RulesetDefinition::standard());
     let borrowed = GameEngine::apply(&state, context, command()).expect("borrowed apply");
-    let owned = GameEngine::apply_owned(state, context, command())
-        .expect("owned apply")
-        .into_parts();
+    let compiled =
+        CompiledMovementMap::compile(&map, RulesetDefinition::standard()).expect("compiled map");
+    let owned = GameEngine::apply_owned(
+        state,
+        context.with_compiled_movement_map(&compiled),
+        command(),
+    )
+    .expect("owned apply")
+    .into_parts();
 
     assert_eq!(owned.state, *borrowed.state());
     assert_eq!(owned.digest, borrowed.digest());
     assert_eq!(&*owned.events, borrowed.events());
     assert_eq!(owned.evidence.as_ref(), borrowed.evidence());
+    assert_eq!(owned.map_hash, compiled.map_hash());
+    assert_eq!(owned.ruleset_hash, compiled.ruleset_hash());
 }
 
 #[test]
