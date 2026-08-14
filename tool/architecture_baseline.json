@@ -840,7 +840,7 @@
         "test/game/game_rendering_coordinator_test.dart": 1470,
         "test/game/game_screen_test.dart": 1422,
         "test/game/hover_intent_marker_test.dart": 923,
-        "test/game/infrastructure/transport/local_command_transport_test.dart": 555,
+        "test/game/infrastructure/transport/local_command_transport_test.dart": 553,
         "test/game/presentation/widgets/activity_log_panel_test.dart": 571,
         "test/game/presentation/widgets/bottom_toolbar/end_turn_button_test.dart": 552,
         "test/game/presentation/widgets/city_production_dialog_view_model_test.dart": 627,
@@ -863,7 +863,7 @@
       "declarations": {},
       "callableLines": {
         "test/architecture/architecture_callable_metrics_test.dart::function:main/closure:test[control-flow_complexity_has_deterministic_golden_values]#1": 131,
-        "test/architecture/architecture_configuration_guard_test.dart::function:main/closure:test[architecture_policy_owns_every_Dart_source_with_coherent_targets]#1": 155,
+        "test/architecture/architecture_configuration_guard_test.dart::function:main/closure:test[architecture_policy_owns_every_Dart_source_with_coherent_targets]#1": 127,
         "test/architecture/critical_e2e_configuration_guard_test.dart::function:main/closure:test[live_harness_fails_closed_around_process__secrets__and_database]#1": 161,
         "test/architecture/lint_configuration_guard_test.dart::function:main/closure:test[Make_owns_fatal_analyzers_and_CI_delegates_without_command_drift]#1": 297,
         "test/game/game_screen_test.dart::function:main/closure:testWidgets[full_GameScreen_mobile_panel_capture_keeps_sheets_above_map]#1": 140,
@@ -899,7 +899,7 @@
       },
       "callableLines": {
         "tool/analyze_human_trace.dart::function:_markdownReport": 120,
-        "tool/architecture/gate.dart::class:ArchitectureGate/method:_historicalRatchetFailures": 118,
+        "tool/architecture/gate.dart::class:ArchitectureGate/method:_historicalRatchetFailures": 117,
         "tool/architecture/policy.dart::class:ArchitecturePolicy/constructor:parse": 108,
         "tool/architecture/policy.dart::class:ScopePolicy/constructor:parse": 107,
         "tool/check_coverage.dart::class:_LcovParser/method:parse": 108,
@@ -963,6 +963,33 @@
         "tool/run_save_ai_benchmark/report_models.dart::class:_BenchmarkReport/method:toMarkdown": 81,
         "tool/serverpod_multiplayer_smoke.dart::class:_RuntimeSmoke/method:run": 36
       }
+    },
+    "rust_client_hook": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "rust_client_lib": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "rust_client_test": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
     },
     "server_bin": {
       "files": {},

@@ -10,38 +10,44 @@ import '../../tool/architecture/source_census.dart';
 
 const _policyPath = 'tool/architecture_policy.json';
 const _baselinePath = 'tool/architecture_baseline.json';
+const _expectedRoots = {
+  'client_lib': 'packages/aonw_server_client/lib',
+  'client_test': 'packages/aonw_server_client/test',
+  'core_lib': 'packages/aonw_core/lib',
+  'core_test': 'packages/aonw_core/test',
+  'core_tool': 'packages/aonw_core/tool',
+  'root_lib': 'lib',
+  'root_test': 'test',
+  'root_tool': 'tool',
+  'rust_client_hook': 'packages/aonw_rust_client/hook',
+  'rust_client_lib': 'packages/aonw_rust_client/lib',
+  'rust_client_test': 'packages/aonw_rust_client/test',
+  'server_bin': 'server/bin',
+  'server_lib': 'server/lib',
+  'server_test': 'server/test',
+  'vendor_sign_in_with_apple': 'third_party/sign_in_with_apple/lib',
+};
+const _expectedDefaultRoles = {
+  'client_lib': 'production',
+  'client_test': 'test',
+  'core_lib': 'production',
+  'core_test': 'test',
+  'core_tool': 'tool',
+  'root_lib': 'production',
+  'root_test': 'test',
+  'root_tool': 'tool',
+  'rust_client_hook': 'tool',
+  'rust_client_lib': 'production',
+  'rust_client_test': 'test',
+  'server_bin': 'production',
+  'server_lib': 'production',
+  'server_test': 'test',
+  'vendor_sign_in_with_apple': 'production',
+};
 
 void main() {
   test('architecture policy owns every Dart source with coherent targets', () {
     final policy = ArchitecturePolicy.load(_policyPath);
-    const expectedRoots = {
-      'client_lib': 'packages/aonw_server_client/lib',
-      'client_test': 'packages/aonw_server_client/test',
-      'core_lib': 'packages/aonw_core/lib',
-      'core_test': 'packages/aonw_core/test',
-      'core_tool': 'packages/aonw_core/tool',
-      'root_lib': 'lib',
-      'root_test': 'test',
-      'root_tool': 'tool',
-      'server_bin': 'server/bin',
-      'server_lib': 'server/lib',
-      'server_test': 'server/test',
-      'vendor_sign_in_with_apple': 'third_party/sign_in_with_apple/lib',
-    };
-    const expectedDefaultRoles = {
-      'client_lib': 'production',
-      'client_test': 'test',
-      'core_lib': 'production',
-      'core_test': 'test',
-      'core_tool': 'tool',
-      'root_lib': 'production',
-      'root_test': 'test',
-      'root_tool': 'tool',
-      'server_bin': 'production',
-      'server_lib': 'production',
-      'server_test': 'test',
-      'vendor_sign_in_with_apple': 'production',
-    };
     const expectedRoles = {
       'flame_rendering': {
         'fileLines': 500,
@@ -99,14 +105,14 @@ void main() {
         'lib/menu/menu_route_shell.dart',
       ]),
     );
-    expect(policy.scopes.keys.toSet(), expectedRoots.keys.toSet());
+    expect(policy.scopes.keys.toSet(), _expectedRoots.keys.toSet());
     expect({
       for (final entry in policy.roles.entries) entry.key: entry.value.toJson(),
     }, expectedRoles);
     expect({
       for (final entry in policy.scopes.entries)
         entry.key: entry.value.defaultRole,
-    }, expectedDefaultRoles);
+    }, _expectedDefaultRoles);
     expect(
       {
         for (final entry in policy.scopes.entries)
@@ -124,7 +130,7 @@ void main() {
       },
     );
     expect(policy.buildRunnerScopes, ['core_lib', 'root_lib']);
-    for (final entry in expectedRoots.entries) {
+    for (final entry in _expectedRoots.entries) {
       final scope = policy.scopes[entry.key]!;
       expect(scope.sourceRoot, entry.value, reason: entry.key);
     }
@@ -164,7 +170,7 @@ void main() {
     ).validateRepositoryCoverage();
     expect(
       ArchitectureBaseline.load(_baselinePath, policy).scopes.keys.toSet(),
-      expectedRoots.keys.toSet(),
+      _expectedRoots.keys.toSet(),
     );
   });
 

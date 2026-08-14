@@ -49,12 +49,7 @@ part 'local_command_transport_worker_replay_tests.dart';
 
 void main() {
   group('LocalCommandTransport', () {
-    _registerWorkerReplayTests();
-    _registerPreviewFastPathTests();
-    _registerUnitActionTransportTests();
-    _registerMovementPresentationTransportTests();
-    _registerNativeBackendTests();
-    _registerCombatTransportTests();
+    _registerTransportTests();
 
     test(
       'logs command events and saves the updated repository snapshot',

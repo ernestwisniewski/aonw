@@ -121,7 +121,10 @@ historical comparison then rejects:
 - growth of an existing above-target metric;
 - a refreshed baseline that attempts to hide either regression.
 
-Schema 2 is immutable after rollout. Its one-time migration records SHA-256
+Schema 2 keeps all existing roles, targets, and source ownership immutable
+after rollout. New disjoint source scopes may be added with the existing roles;
+their ratchets start from an empty baseline and cannot reset debt in an existing
+scope. Its one-time migration records SHA-256
 digests of the reviewed schema-1 policy and baseline. When the trusted ref is
 still schema 1, the gate verifies both digests and remeasures the candidate
 with the old file/profile and declaration thresholds before accepting the new
@@ -129,8 +132,8 @@ snapshot. Every schema-1 file governed by a stricter old target is also copied
 into the schema-2 migration map and remains ratcheted after rollout. This bridge
 therefore cannot reset old debt. The schema-1 bridge is accepted only for the
 exact reviewed anchor; once the trusted ref contains schema 2, every metric
-participates in the normal historical ratchet. A future policy change requires
-another explicit schema and migration tests.
+participates in the normal historical ratchet. Changing existing ownership or
+targets requires another explicit schema and migration tests.
 
 The trusted ref itself is used even when histories diverge; their unique merge
 base must remain comparable with the rollout anchor. This preserves

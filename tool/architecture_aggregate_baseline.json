@@ -151,6 +151,27 @@
         "tool/run_save_ai_benchmark.dart": 826
       }
     },
+    "rust_client_hook": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "rust_client_lib": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "rust_client_test": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
     "server_bin": {
       "sourceLines": {},
       "callableCount": {},

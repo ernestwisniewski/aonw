@@ -166,10 +166,9 @@ final class ArchitectureGate {
       historicalPolicyText,
       'historical architecture policy',
     );
-    if (historicalPolicy.canonicalRepresentation !=
-        policy.canonicalRepresentation) {
+    if (!policy.isMonotonicExtensionOf(historicalPolicy)) {
       throw const ArchitectureFailure(
-        'Architecture policy is immutable for schema 2.',
+        'Architecture policy is immutable for schema 2; only new scopes are allowed.',
       );
     }
     final historicalBaseline = ArchitectureBaseline.parse(
@@ -177,7 +176,7 @@ final class ArchitectureGate {
       historicalPolicy,
       'historical architecture baseline',
     );
-    return current.ratchetDifferences(historicalBaseline);
+    return current.ratchetDifferencesAllowingNewScopes(historicalBaseline);
   }
 }
 

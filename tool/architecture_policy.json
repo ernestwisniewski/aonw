@@ -162,6 +162,24 @@
       "defaultRole": "tool",
       "roleAssignments": {}
     },
+    "rust_client_hook": {
+      "sourceRoot": "packages/aonw_rust_client/hook",
+      "generatedPrefixes": [],
+      "defaultRole": "tool",
+      "roleAssignments": {}
+    },
+    "rust_client_lib": {
+      "sourceRoot": "packages/aonw_rust_client/lib",
+      "generatedPrefixes": [],
+      "defaultRole": "production",
+      "roleAssignments": {}
+    },
+    "rust_client_test": {
+      "sourceRoot": "packages/aonw_rust_client/test",
+      "generatedPrefixes": [],
+      "defaultRole": "test",
+      "roleAssignments": {}
+    },
     "server_bin": {
       "sourceRoot": "server/bin",
       "generatedPrefixes": [],

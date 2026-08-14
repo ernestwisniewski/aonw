@@ -92,6 +92,14 @@ final class LibraryAggregateBaseline {
 
   String get canonicalRepresentation => canonicalJson(toJson());
 
+  LibraryAggregateBaseline withEmptyScopes(Iterable<String> scopeNames) =>
+      LibraryAggregateBaseline(
+        scopes: {
+          for (final name in scopeNames)
+            name: scopes[name] ?? ScopeLibraryAggregateBaseline.empty,
+        },
+      );
+
   List<String> exactDifferences(LibraryAggregateBaseline expected) => [
     for (final name in scopes.keys)
       ...scopes[name]!.exactDifferences(expected.scopes[name]!, name),
@@ -101,6 +109,10 @@ final class LibraryAggregateBaseline {
     for (final name in scopes.keys)
       ...scopes[name]!.ratchetDifferences(historical.scopes[name]!, name),
   ];
+
+  List<String> ratchetDifferencesAllowingNewScopes(
+    LibraryAggregateBaseline historical,
+  ) => ratchetDifferences(historical.withEmptyScopes(scopes.keys));
 
   int get debtCount {
     final libraries = <String>{};
@@ -124,6 +136,14 @@ final class ScopeLibraryAggregateBaseline {
     required this.cyclomaticComplexity,
     required this.cognitiveComplexity,
   });
+
+  static const empty = ScopeLibraryAggregateBaseline(
+    sourceLines: {},
+    callableCount: {},
+    callableLines: {},
+    cyclomaticComplexity: {},
+    cognitiveComplexity: {},
+  );
 
   factory ScopeLibraryAggregateBaseline.fromMetrics(
     ScopePolicy scope,

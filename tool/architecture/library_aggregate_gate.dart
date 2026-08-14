@@ -59,26 +59,48 @@ final class LibraryAggregateGate {
   ) {
     repository.requireCommit(ratchetRef, 'architecture aggregate ratchet ref');
     final policyPath = repository.repositoryRelativePath(aggregatePolicyPath);
+    final architecturePolicyRepositoryPath = repository.repositoryRelativePath(
+      architecturePolicyPath,
+    );
     final aggregateBaselinePath = repository.repositoryRelativePath(
       baselinePath,
     );
     final historicalPolicyText = repository.show(ratchetRef, policyPath);
+    final historicalArchitecturePolicyText = repository.show(
+      ratchetRef,
+      architecturePolicyRepositoryPath,
+    );
     final historicalBaselineText = repository.show(
       ratchetRef,
       aggregateBaselinePath,
     );
-    if (historicalPolicyText == null && historicalBaselineText == null) {
+    if (historicalPolicyText == null &&
+        historicalBaselineText == null &&
+        historicalArchitecturePolicyText == null) {
       return const [];
     }
-    if (historicalPolicyText == null || historicalBaselineText == null) {
+    if (historicalPolicyText == null ||
+        historicalBaselineText == null ||
+        historicalArchitecturePolicyText == null) {
       throw ArchitectureFailure(
-        'Trusted aggregate ratchet ref must contain both $policyPath and '
-        '$aggregateBaselinePath.',
+        'Trusted aggregate ratchet ref must contain $policyPath, '
+        '$aggregateBaselinePath, and $architecturePolicyRepositoryPath.',
+      );
+    }
+    final historicalArchitecturePolicy = ArchitecturePolicy.parse(
+      historicalArchitecturePolicyText,
+      'historical architecture policy',
+    );
+    if (!architecturePolicy.isMonotonicExtensionOf(
+      historicalArchitecturePolicy,
+    )) {
+      throw const ArchitectureFailure(
+        'Architecture policy is immutable for schema 2; only new scopes are allowed.',
       );
     }
     final historicalPolicy = LibraryAggregatePolicy.parse(
       historicalPolicyText,
-      architecturePolicy,
+      historicalArchitecturePolicy,
       'historical architecture aggregate policy',
     );
     if (historicalPolicy.canonicalRepresentation !=
@@ -89,11 +111,11 @@ final class LibraryAggregateGate {
     }
     final historicalBaseline = LibraryAggregateBaseline.parse(
       historicalBaselineText,
-      architecturePolicy,
+      historicalArchitecturePolicy,
       historicalPolicy,
       'historical architecture aggregate baseline',
     );
-    return current.ratchetDifferences(historicalBaseline);
+    return current.ratchetDifferencesAllowingNewScopes(historicalBaseline);
   }
 }
 

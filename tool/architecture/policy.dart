@@ -164,6 +164,44 @@ final class ArchitecturePolicy {
 
   String get canonicalRepresentation => canonicalJson(toJson());
 
+  bool isMonotonicExtensionOf(ArchitecturePolicy historical) {
+    if (enforcedSince != historical.enforcedSince ||
+        canonicalJson(migration.toJson()) !=
+            canonicalJson(historical.migration.toJson()) ||
+        !_sameSet(
+          generatedSuffixes.toSet(),
+          historical.generatedSuffixes.toSet(),
+        ) ||
+        canonicalJson({
+              for (final entry in roles.entries)
+                entry.key: entry.value.toJson(),
+            }) !=
+            canonicalJson({
+              for (final entry in historical.roles.entries)
+                entry.key: entry.value.toJson(),
+            })) {
+      return false;
+    }
+    final addedScopes = scopes.keys.toSet().difference(
+      historical.scopes.keys.toSet(),
+    );
+    if (!scopes.keys.toSet().containsAll(historical.scopes.keys)) {
+      return false;
+    }
+    for (final entry in historical.scopes.entries) {
+      if (canonicalJson(scopes[entry.key]!.toJson()) !=
+          canonicalJson(entry.value.toJson())) {
+        return false;
+      }
+    }
+    final historicalBuildScopes = historical.buildRunnerScopes.toSet();
+    final currentBuildScopes = buildRunnerScopes.toSet();
+    return currentBuildScopes.containsAll(historicalBuildScopes) &&
+        currentBuildScopes
+            .difference(historicalBuildScopes)
+            .every(addedScopes.contains);
+  }
+
   bool isGenerated(String path, String scopeName, ScopePolicy scope) =>
       (buildRunnerScopes.contains(scopeName) &&
           generatedSuffixes.any(path.endsWith)) ||

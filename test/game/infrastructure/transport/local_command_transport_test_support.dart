@@ -1,5 +1,14 @@
 part of 'local_command_transport_test.dart';
 
+void _registerTransportTests() {
+  _registerWorkerReplayTests();
+  _registerPreviewFastPathTests();
+  _registerUnitActionTransportTests();
+  _registerMovementPresentationTransportTests();
+  _registerNativeBackendTests();
+  _registerCombatTransportTests();
+}
+
 extension _LocalTransportClientBoundary on LocalCommandTransport {
   Future<CommandTransportResult> dispatchAcrossBoundary({
     required String saveId,

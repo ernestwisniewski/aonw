@@ -72,6 +72,14 @@ final class ArchitectureBaseline {
 
   String get canonicalRepresentation => canonicalJson(toJson());
 
+  ArchitectureBaseline withEmptyScopes(Iterable<String> scopeNames) =>
+      ArchitectureBaseline(
+        scopes: {
+          for (final name in scopeNames)
+            name: scopes[name] ?? ScopeBaseline.empty,
+        },
+      );
+
   List<String> exactDifferences(ArchitectureBaseline expected) {
     final failures = <String>[];
     for (final name in scopes.keys) {
@@ -91,6 +99,10 @@ final class ArchitectureBaseline {
     }
     return failures;
   }
+
+  List<String> ratchetDifferencesAllowingNewScopes(
+    ArchitectureBaseline historical,
+  ) => ratchetDifferences(historical.withEmptyScopes(scopes.keys));
 
   int get fileDebtCount => _uniqueFileDebt.length;
   int get declarationDebtCount => _sum((scope) => scope.declarations.length);
