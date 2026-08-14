@@ -12,12 +12,33 @@ const MapAssetCatalog := preload("res://infrastructure/map/map_asset_catalog.gd"
 const GodotMapSceneRepository := preload("res://infrastructure/map/godot_map_scene_repository.gd")
 const TileAtlasRepository := preload("res://infrastructure/map/tile_atlas_repository.gd")
 const NativeEngineBridge := preload("res://infrastructure/engine/native_engine_bridge.gd")
+const ClientResponseDecoder := preload(
+	"res://infrastructure/engine/client_response_decoder.gd"
+)
 const LocalMatchSessionController := preload(
 	"res://application/session/local_match_session_controller.gd"
 )
 const RenderSettings := preload("res://presentation/map/map_render_settings.gd")
 
 var _failures: Array[String] = []
+
+class ForeignVersionTransport:
+	extends RefCounted
+
+	func is_available() -> bool:
+		return true
+
+	func client_api_version() -> int:
+		return 1
+
+	func request(_body: Dictionary) -> Dictionary:
+		return {
+			"apiVersion": 2,
+			"outcome": {
+				"status": "success",
+				"response": {"type": "capabilities"},
+			},
+		}
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -27,6 +48,7 @@ func _run() -> void:
 	_test_map_projection()
 	_test_strict_document_boundary()
 	_test_native_engine_boundary()
+	_test_shared_client_contract()
 	_test_catalog()
 	_test_canonical_map_with_reference_art()
 	_test_generated_godot_scene()
@@ -480,6 +502,39 @@ func _test_native_engine_boundary() -> void:
 	_check(
 		restored["ok"] and restored["value"]["revision"] == 4,
 		"native session restores a canonical save",
+	)
+
+func _test_shared_client_contract() -> void:
+	var request_file := FileAccess.open(
+		"res://../../test/fixtures/client_protocol/move_unit_request.json",
+		FileAccess.READ,
+	)
+	_check(request_file != null, "shared client request golden opens in Godot")
+	if request_file != null:
+		var request: Variant = JSON.parse_string(request_file.get_as_text())
+		_check(
+			request is Dictionary
+			and request["apiVersion"] == 1
+			and request["request"]["command"]["type"] == "moveUnit",
+			"Godot consumes the shared move request contract",
+		)
+
+	var response_file := FileAccess.open(
+		"res://../../test/fixtures/client_protocol/command_result_response.json",
+		FileAccess.READ,
+	)
+	_check(response_file != null, "shared client response golden opens in Godot")
+	if response_file != null:
+		var decoded := ClientResponseDecoder.new(1).decode(response_file.get_as_text())
+		_check(
+			decoded.get("outcome", {}).get("status", "") == "success",
+			"Godot consumes the shared command response contract",
+		)
+
+	var foreign := LocalMatchSessionController.new(ForeignVersionTransport.new()).capabilities()
+	_check(
+		not foreign["ok"] and foreign["code"] == "unsupported_client_api",
+		"Godot rejects foreign client API responses",
 	)
 
 func _test_catalog() -> void:

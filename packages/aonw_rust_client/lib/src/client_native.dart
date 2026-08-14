@@ -5,14 +5,13 @@ import 'dart:isolate';
 
 import 'package:aonw_rust_client/aonw_rust_client_bindings.dart' as bindings;
 import 'package:aonw_rust_client/src/api.dart';
+import 'package:aonw_rust_client/src/protocol.dart';
 import 'package:ffi/ffi.dart';
-
-const _clientApiVersion = 1;
 
 bool get aonwRustClientAvailable {
   try {
     return bindings.aonwFlutterIsAvailable() == 1 &&
-        bindings.aonwFlutterClientApiVersion() == _clientApiVersion;
+        bindings.aonwFlutterClientApiVersion() == aonwClientApiVersion;
   } on Object {
     return false;
   }

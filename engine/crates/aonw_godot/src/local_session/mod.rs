@@ -1,3 +1,4 @@
+use aonw_contracts::client::CLIENT_API_VERSION;
 use aonw_local_runtime::{ClientProtocol, LocalRuntime};
 use godot::classes::{IRefCounted, RefCounted};
 use godot::prelude::*;
@@ -20,8 +21,13 @@ impl IRefCounted for AonwLocalSession {
 }
 
 #[godot_api]
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::unused_self)]
 impl AonwLocalSession {
+    #[func]
+    fn client_api_version(&self) -> i64 {
+        i64::from(CLIENT_API_VERSION)
+    }
+
     #[func]
     fn request_json(&mut self, request_json: GString) -> GString {
         let response = dispatch_json(&mut self.runtime, &request_json.to_string());

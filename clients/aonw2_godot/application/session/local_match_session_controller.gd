@@ -3,11 +3,14 @@ extends RefCounted
 
 const NativeLocalSession := preload("res://infrastructure/engine/native_local_session.gd")
 
-var _transport := NativeLocalSession.new()
+var _transport: RefCounted
 var _stamp: Dictionary = {}
 
+func _init(transport: RefCounted = null) -> void:
+	_transport = transport if transport != null else NativeLocalSession.new()
+
 func is_available() -> bool:
-	return _transport.is_available()
+	return bool(_transport.call("is_available"))
 
 func revision() -> int:
 	return int(_stamp.get("revision", 0))
@@ -110,7 +113,14 @@ func _unit_action(action_type: String, unit_id: String) -> Dictionary:
 	})
 
 func _execute(request: Dictionary, response_type: String) -> Dictionary:
-	var envelope := _transport.request(request)
+	var envelope: Dictionary = _transport.call("request", request)
+	if int(envelope.get("apiVersion", -1)) != int(
+		_transport.call("client_api_version")
+	):
+		return _failure(
+			"unsupported_client_api",
+			"Rust returned an unsupported client API version",
+		)
 	var outcome: Variant = envelope.get("outcome")
 	if not outcome is Dictionary:
 		return _failure("invalid_client_response", "Rust returned an invalid response envelope")

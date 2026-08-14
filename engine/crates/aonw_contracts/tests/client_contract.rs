@@ -75,7 +75,8 @@ fn golden_move_request_is_stable_and_strict() {
             },
         },
     };
-    let golden = include_str!("data/client/move_unit_request.json").trim();
+    let golden =
+        include_str!("../../../../test/fixtures/client_protocol/move_unit_request.json").trim();
 
     assert_eq!(request.to_json().expect("request JSON"), golden);
     assert_eq!(
@@ -94,7 +95,9 @@ fn golden_command_response_is_stable_and_strict() {
             }),
         },
     };
-    let golden = include_str!("data/client/command_result_response.json").trim();
+    let golden =
+        include_str!("../../../../test/fixtures/client_protocol/command_result_response.json")
+            .trim();
 
     assert_eq!(response.to_json().expect("response JSON"), golden);
     assert_eq!(

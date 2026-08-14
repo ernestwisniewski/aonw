@@ -2,6 +2,9 @@
 
 This `package_ffi` package exposes the same current-only JSON client protocol
 used by the Godot GDExtension. Native calls run on a dedicated helper isolate.
+`AonwClientRequest`, `AonwClientResponse`, and the `AonwRustSession.send`
+extension provide the typed Dart boundary; raw JSON remains confined to the
+transport. Rust, Dart, and Godot consume the same committed protocol goldens.
 
 Normal Flutter builds compile a small unavailable stub and keep the Dart local
 engine active. Set `AONW_ENABLE_RUST_FLUTTER=1` to build and bundle the host

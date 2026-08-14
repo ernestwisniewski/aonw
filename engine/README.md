@@ -22,6 +22,7 @@ platform, shadow, canary, and rollback gates in the
 | `aonw_engine` | Authoritative movement queries/transitions and revision-bound cancel, skip, and fortify unit actions. |
 | `aonw_local_runtime` | Transactional local-session lifecycle, player snapshots, query/command dispatch, and recipient-safe patches. |
 | `aonw_godot` | Thin GDExtension translating Godot calls into the framework-neutral local runtime. |
+| `aonw_flutter` | Panic-contained C ABI exposing the same client protocol to Flutter Native Assets. |
 | `aonw_testkit` | Bounded fixture/corpus loader, duplicate-key rejection, structural state/event/execution diff, and engine-neutral runner for the shared reducer-parity corpus. |
 
 The split enforces an inward dependency direction: contracts and domain do not
@@ -163,6 +164,12 @@ snapshots, patches, events, evidence, persistence documents, and stable errors;
 canonical `GameStateDto` never crosses this boundary. The protocol accepts only
 `CLIENT_API_VERSION` and has no historical readers or upcasters. Rust in-process
 runtime types deliberately have no version suffix.
+
+The shared golden documents in `test/fixtures/client_protocol` are consumed by
+Rust, Godot, and Dart tests. Native adapters report `CLIENT_API_VERSION`; client
+controllers reject a response before inspecting its payload when that version
+does not match. Map authoring output comes from `MapDocument::to_versioned_json`
+so the Godot bridge does not maintain a second map serializer.
 
 The runtime prepares `CompiledMovementMap` once per map/ruleset, keeps
 tile-indexed visibility, builds occupancy as a compact bitset, reuses reachable

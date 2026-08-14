@@ -1,16 +1,25 @@
 class_name AonwNativeLocalSession
 extends RefCounted
 
-const CLIENT_API_VERSION := 1
+const ClientResponseDecoder := preload(
+	"res://infrastructure/engine/client_response_decoder.gd"
+)
 
 var _session: Object
+var _api_version := 0
+var _response_decoder: RefCounted
 
 func _init() -> void:
 	if ClassDB.class_exists("AonwLocalSession"):
 		_session = ClassDB.instantiate("AonwLocalSession")
+		_api_version = int(_session.client_api_version())
+		_response_decoder = ClientResponseDecoder.new(_api_version)
 
 func is_available() -> bool:
-	return _session != null
+	return _session != null and _api_version > 0
+
+func client_api_version() -> int:
+	return _api_version
 
 func request(body: Dictionary) -> Dictionary:
 	if _session == null:
@@ -19,17 +28,18 @@ func request(body: Dictionary) -> Dictionary:
 			"Build aonw_godot before opening a native session",
 		)
 	var document := JSON.stringify({
-		"apiVersion": CLIENT_API_VERSION,
+		"apiVersion": _api_version,
 		"request": body,
 	})
-	var value: Variant = JSON.parse_string(_session.request_json(document))
-	if value is Dictionary:
-		return value
-	return _failure("invalid_native_response", "Rust session returned invalid JSON")
+	var response: Dictionary = _response_decoder.call(
+		"decode",
+		_session.request_json(document),
+	)
+	return response
 
 func _failure(code: String, message: String) -> Dictionary:
 	return {
-		"apiVersion": CLIENT_API_VERSION,
+		"apiVersion": _api_version,
 		"outcome": {
 			"status": "failure",
 			"error": {"code": code, "message": message},
