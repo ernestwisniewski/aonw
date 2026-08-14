@@ -124,8 +124,9 @@ ownership, and rule-relevant interaction references.
 
 The complete `Unit` entity preserves identity, display name, HP, XP, army,
 queued and merchant routes, worker charges, posture, artifacts, and concrete
-worker/founding/assignment/excavation activity. Manual movement availability is
-derived from that activity; it is not a client-supplied canonical boolean.
+worker/founding/assignment/excavation activity. These independently persisted
+activity slots may coexist in current game state. Manual movement availability
+is derived from them; it is not a client-supplied canonical boolean.
 
 `RulesetDefinition` owns all 17 unit movement allowances, movement domains,
 capabilities, artifact allowance, and occupancy policy. `ScenarioDefinition`

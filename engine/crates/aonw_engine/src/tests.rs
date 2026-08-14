@@ -1,49 +1,7 @@
 use aonw_content::{GridLayout, MapDefinition, RulesetDefinition, TerrainType, TileDefinition};
-use aonw_domain::{
-    GameState, HexCoord, HexGridBounds, MovementUnits, PlayerId, StateRevision, Unit, UnitId,
-    UnitKind, UnitOccupancyPolicy,
-};
+use aonw_domain::{HexCoord, PlayerId};
 
-use crate::{
-    CompiledMovementMap, ENGINE_BEHAVIOR_VERSION, EngineContext, GameEngine,
-    movement::MovementPlanningView,
-};
-
-#[test]
-fn engine_summary_reports_canonical_state() {
-    let player_id = PlayerId::new("player-1").expect("valid player id");
-    let unit = Unit::builder(
-        UnitId::new("unit-1").expect("valid unit id"),
-        player_id,
-        UnitKind::Commander,
-        "unit.commander",
-        HexCoord::new(3, 2),
-        MovementUnits::new(10),
-    )
-    .build()
-    .expect("valid unit");
-    let state = GameState::try_new(
-        StateRevision::new(12),
-        4,
-        HexGridBounds::new(5, 5).expect("valid bounds"),
-        UnitOccupancyPolicy::Exclusive,
-        [unit],
-    )
-    .expect("valid state");
-
-    let summary = GameEngine::summarize_state(&state);
-    assert_eq!(summary.revision, 12);
-    assert_eq!(summary.turn, 4);
-    assert_eq!(summary.unit_count, 1);
-}
-
-#[test]
-fn engine_version_axes_are_explicit() {
-    let version = GameEngine::version();
-
-    assert_eq!(version.crate_version, env!("CARGO_PKG_VERSION"));
-    assert_eq!(version.behavior_version, ENGINE_BEHAVIOR_VERSION);
-}
+use crate::{CompiledMovementMap, EngineContext, movement::MovementPlanningView};
 
 #[test]
 fn engine_context_carries_actor_and_map_explicitly() {

@@ -38,25 +38,6 @@ pub const ENGINE_BEHAVIOR_VERSION: u16 = 2;
 pub struct GameEngine;
 
 impl GameEngine {
-    /// Returns compile-time crate version metadata.
-    #[must_use]
-    pub const fn version() -> EngineVersion {
-        EngineVersion {
-            crate_version: env!("CARGO_PKG_VERSION"),
-            behavior_version: ENGINE_BEHAVIOR_VERSION,
-        }
-    }
-
-    /// Inspects canonical state without allocation or mutation.
-    #[must_use]
-    pub const fn summarize_state(state: &GameState) -> GameStateSummary {
-        GameStateSummary {
-            revision: state.revision().get(),
-            turn: state.turn(),
-            unit_count: state.units().len(),
-        }
-    }
-
     pub(crate) fn plan_terrain_route(
         state: &GameState,
         context: EngineContext<'_>,
@@ -81,26 +62,6 @@ impl GameEngine {
     ) -> Result<movement::MovementTransition, MoveUnitError> {
         movement::apply_move_unit(state, context, command)
     }
-}
-
-/// Compile-time engine version metadata.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct EngineVersion {
-    /// Cargo crate version.
-    pub crate_version: &'static str,
-    /// Deterministic behavior compatibility version.
-    pub behavior_version: u16,
-}
-
-/// Canonical-state summary for health checks and adapters.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct GameStateSummary {
-    /// State revision.
-    pub revision: u64,
-    /// Current turn.
-    pub turn: u32,
-    /// Number of projected units.
-    pub unit_count: usize,
 }
 
 #[cfg(test)]

@@ -1,5 +1,5 @@
 use aonw_contracts::{
-    CURRENT_GAME_STATE_VERSION, GameStateDto, MAX_MOVEMENT_STATE_UNIT_COUNT, PlayerPairDto,
+    CURRENT_GAME_STATE_VERSION, GameStateDto, MAX_GAME_STATE_UNIT_COUNT, PlayerPairDto,
     UnitOccupancyPolicyDto,
 };
 use aonw_domain::{
@@ -31,11 +31,11 @@ pub fn decode_game_state(dto: GameStateDto) -> Result<GameState, GameStateMappin
             ),
         ));
     }
-    if dto.units.len() > MAX_MOVEMENT_STATE_UNIT_COUNT {
+    if dto.units.len() > MAX_GAME_STATE_UNIT_COUNT {
         return Err(GameStateMappingError::new(
             "$.units",
             format!(
-                "contains {} units; maximum is {MAX_MOVEMENT_STATE_UNIT_COUNT}",
+                "contains {} units; maximum is {MAX_GAME_STATE_UNIT_COUNT}",
                 dto.units.len()
             ),
         ));

@@ -187,15 +187,15 @@ aonw/
 The implemented foundation includes the Rust workspace, testkit, versioned
 logical map content, immutable standard ruleset, validated scenario bootstrap,
 the canonical `GameState` skeleton and complete `Unit` entity, strict small
-logical-map fixtures, odd-q row-major topology, movement-oriented compatibility
-DTO mapping, fixed-point terrain costs, fog-safe route/reachable planning, an
+logical-map fixtures, odd-q row-major topology, current canonical-state DTO
+mapping, fixed-point terrain costs, fog-safe route/reachable planning, an
 authoritative movement transition, and the Godot 3D map preview. The 44 current
-movement and unit-action fixtures use contract version 2 and execute through canonical
-`GameEngine::apply`, including full envelope preservation, fog, diplomacy,
-roads, cities, rejection precedence, and exact movement evidence. Rust accepts
-only this current fixture contract. The compatibility `MovementState` is
-explicitly not a save format. `aonw_local_runtime` now owns transactional
-open/close, recipient snapshots, route/reachable queries, movement and unit-action dispatch,
+movement and unit-action fixtures use contract version 2 and execute through
+canonical `GameEngine::apply`, including full envelope preservation, fog,
+diplomacy, roads, cities, rejection precedence, and exact movement evidence.
+Rust accepts only this current fixture contract and has no partial
+movement-state boundary. `aonw_local_runtime` now owns transactional open/close,
+recipient snapshots, route/reachable queries, movement and unit-action dispatch,
 stable identity stamps, and player-view patches. Flutter native packaging is
 available as an opt-in current-protocol adapter; production session cutover
 remains future work.
@@ -214,6 +214,8 @@ canonical unit order without temporary tree maps.
 Canonical persistence now uses separate strict current-only save and replay
 contracts. Saves contain the complete game state plus behavior/content hashes,
 actor, RNG position, event offset, and state digest. Restore is transactional.
+Digest sensitivity tests cover every complete unit field and every canonical
+state section so omitted persisted state cannot silently share an identity.
 Replay segments retain a complete starting checkpoint and record each command,
 trusted context, ordered events, exact execution evidence, RNG/event positions,
 revision, rejection, and resulting digest. Verification re-executes every entry

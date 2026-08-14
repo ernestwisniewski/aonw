@@ -1,6 +1,6 @@
 use crate::{
-    ArmyTroop, ArtifactId, HexCoord, MovementUnits, PlayerId, TroopKind, Unit, UnitActivity,
-    UnitBuildError, UnitId, UnitKind, WorkerJob,
+    ArmyTroop, ArtifactId, CityFoundingJob, HexCoord, MovementUnits, PlayerId, TroopKind, Unit,
+    UnitActivity, UnitBuildError, UnitId, UnitKind, WorkerJob,
 };
 
 fn builder() -> super::UnitBuilder {
@@ -22,7 +22,12 @@ fn full_unit_preserves_non_movement_fields_and_derives_availability() {
             remaining_turns: 1,
             total_turns: 3,
         }),
-        None,
+        Some(CityFoundingJob::new(
+            HexCoord::new(1, 2),
+            [HexCoord::new(1, 1), HexCoord::new(2, 2)],
+            2,
+            4,
+        )),
         Some(HexCoord::new(1, 2)),
         Some(ArtifactId::new("ruins-1").expect("artifact id")),
     );
@@ -40,6 +45,9 @@ fn full_unit_preserves_non_movement_fields_and_derives_availability() {
     assert_eq!(unit.hit_points(), Some(7));
     assert_eq!(unit.experience_points(), 12);
     assert!(unit.activity().blocks_manual_movement());
+
+    let cancelled = unit.after_cancel_action(MovementUnits::new(10), None);
+    assert_eq!(cancelled.activity(), &UnitActivity::default());
 }
 
 #[test]

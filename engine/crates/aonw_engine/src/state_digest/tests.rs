@@ -6,6 +6,10 @@ use aonw_domain::{
 
 use super::digest_state;
 
+mod fixture;
+mod state_completeness;
+mod unit_completeness;
+
 fn unit(id: &str, position: HexCoord) -> Unit {
     Unit::builder(
         UnitId::new(id).expect("id"),
