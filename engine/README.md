@@ -169,10 +169,11 @@ for compatibility and tests. Prepared and raw paths have deterministic parity
 tests. Rayon, ECS, SIMD, GPU pathfinding, custom allocators, and `unsafe` are not
 used because the measured 1200-tile workload does not justify them.
 
-`aonw_godot::AonwLocalSession` validates strict map and scenario documents,
-then delegates lifecycle and simulation to `aonw_local_runtime`. Godot obtains
-units from the runtime snapshot and never constructs a synthetic canonical
-unit. Build it with `make rust-godot-build`.
+`aonw_godot::AonwLocalSession` exposes one `request_json` transport operation.
+It decodes and encodes `aonw_contracts::client` documents and delegates every
+lifecycle, query, command, save, and replay operation to `ClientProtocol` in
+`aonw_local_runtime`. Godot obtains units from the recipient snapshot and never
+constructs a synthetic canonical unit. Build it with `make rust-godot-build`.
 
 ## Save and replay
 
@@ -189,9 +190,8 @@ digest. Verification executes every command again through `GameEngine` and
 fails on the first context or result drift. The recorder rolls to a new
 checkpoint after 512 commands; adapters own filesystem paths and I/O.
 
-Godot exposes save/open and replay export/verification through
-`AonwNativeLocalSession`. These methods transfer strict JSON documents and do
-not move persistence rules into GDScript.
+Godot sends save/open and replay export/verification through the same tagged
+client protocol as every other operation. Persistence rules remain in Rust.
 
 ## Deliberately deferred
 

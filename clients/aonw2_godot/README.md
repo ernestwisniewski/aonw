@@ -100,6 +100,8 @@ contain no movement legality rules.
 
 - `domain/map/` owns the immutable renderer read model and odd-q geometry;
 - `application/map/` orchestrates loading and Godot scene generation;
+- `application/session/` owns local-match lifecycle, revision tracking, and
+  client command/query construction;
 - `infrastructure/map/` discovers files, decodes JSON, assembles textures, and
   persists Godot resources; authored scenes, manifests, and atomic file writes
   are separate stores coordinated by the scene repository;
@@ -115,25 +117,18 @@ persistence behavior.
 hash owner. A generated Godot scene is a presentation artifact and never a
 second source of gameplay rules.
 
-The `aonw_godot` GDExtension is connected to map loading. Strict versioned maps
-are validated by `aonw_content` before the immutable Godot render view is
-created. `AonwNativeLocalSession` opens strict map and scenario content through
-`aonw_local_runtime`, obtains unit views from snapshots, exposes reachable and
-route queries, and applies recipient-safe patches after movement. Selection is
-presentation-only; canonical state, visibility, paths, costs, revisions, and
-events remain owned by Rust. The local runtime prepares topology and terrain
-costs once, reuses search storage, and caches revision-scoped queries; GDScript
-does not mirror these optimizations or rules.
+The `aonw_godot` GDExtension exposes one strict `request_json` operation for
+the shared `aonw_contracts::client` protocol. `AonwNativeLocalSession` is only
+the JSON transport adapter. `AonwLocalMatchSessionController` owns the Godot
+application lifecycle and current revision while sending the same tagged
+requests and consuming the same recipient-safe responses planned for Flutter.
+Strict maps and scenarios, snapshots, reachable and route queries, movement,
+unit actions, saves, and replays all pass through this boundary.
 
-The same native session exposes `save_game_json`, `open_save`,
-`replay_log_json`, and `verify_replay`. Saves contain the complete canonical
-state and exact content identities; replay verification re-executes every
-recorded command in Rust. Godot owns file dialogs and `FileAccess`, while the
-runtime owns validation and deterministic semantics.
-
-The native session also exposes revision-bound `cancel_unit_action_json`,
-`skip_unit_turn_json`, and `fortify_unit_json`. Returned player patches include
-movement balance and posture; GDScript does not reproduce these state rules.
+Selection is presentation-only; canonical state, visibility, paths, costs,
+revisions, events, and persistence remain owned by Rust. The local runtime
+prepares topology and terrain costs once, reuses search storage, and caches
+revision-scoped queries; GDScript does not mirror these optimizations or rules.
 
 Build the native adapter before opening or running Godot:
 

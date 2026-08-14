@@ -23,7 +23,7 @@ func present(projection: AonwHexMapProjection, units: Array) -> void:
 func unit_at(coordinate: Vector2i) -> String:
 	for unit_id in _units:
 		var unit: Dictionary = _units[unit_id]
-		if Vector2i(int(unit["col"]), int(unit["row"])) == coordinate:
+		if _coordinate(unit) == coordinate:
 			return unit_id
 	return ""
 
@@ -31,8 +31,7 @@ func move_unit(unit_id: String, coordinate: Vector2i, animated: bool = true) -> 
 	if not _units.has(unit_id) or not _instances.has(unit_id):
 		return
 	var unit: Dictionary = _units[unit_id]
-	unit["col"] = coordinate.x
-	unit["row"] = coordinate.y
+	unit["coordinate"] = {"col": coordinate.x, "row": coordinate.y}
 	_units[unit_id] = unit
 	var instance: MeshInstance3D = _instances[unit_id]
 	var target := _unit_position(unit)
@@ -80,7 +79,7 @@ func _animate_steps(unit_id: String, steps: Array) -> void:
 	tween.set_ease(Tween.EASE_IN_OUT)
 	for value in steps:
 		var step: Dictionary = value
-		var coordinate := Vector2i(int(step["col"]), int(step["row"]))
+		var coordinate := _coordinate(step)
 		tween.tween_property(instance, "position", _projection.hex_center(
 			coordinate,
 			UNIT_OFFSET,
@@ -88,8 +87,11 @@ func _animate_steps(unit_id: String, steps: Array) -> void:
 	tween.finished.connect(func() -> void: _movement_tweens.erase(unit_id))
 
 func _unit_position(unit: Dictionary) -> Vector3:
-	var coordinate := Vector2i(int(unit["col"]), int(unit["row"]))
-	return _projection.hex_center(coordinate, UNIT_OFFSET)
+	return _projection.hex_center(_coordinate(unit), UNIT_OFFSET)
+
+func _coordinate(value: Dictionary) -> Vector2i:
+	var coordinate: Dictionary = value["coordinate"]
+	return Vector2i(int(coordinate["col"]), int(coordinate["row"]))
 
 func _create_marker(unit_id: String) -> MeshInstance3D:
 	var mesh := CylinderMesh.new()

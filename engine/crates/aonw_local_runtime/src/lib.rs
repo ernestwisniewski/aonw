@@ -2,6 +2,7 @@
 
 #![forbid(unsafe_code)]
 
+mod client_protocol;
 mod command_dispatch;
 mod persistence;
 mod persistence_error;
@@ -12,6 +13,7 @@ mod query_cache;
 mod query_dispatch;
 mod session;
 
+pub use client_protocol::ClientProtocol;
 pub use command_dispatch::{CommandResult, MoveUnitRequest, PlayerViewPatch, UnitActionRequest};
 pub use persistence::{PersistenceError, ReplayVerification, RngState};
 pub use player_view::{PlayerUnitView, PlayerViewSnapshot};

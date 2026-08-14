@@ -50,7 +50,7 @@ name = "aonw_godot"
 version = "0.1.0"
 dependencies = [
  "aonw_content",
- "aonw_domain",
+ "aonw_contracts",
  "aonw_engine",
  "aonw_local_runtime",
  "godot",

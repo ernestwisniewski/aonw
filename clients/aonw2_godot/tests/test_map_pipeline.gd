@@ -12,6 +12,9 @@ const MapAssetCatalog := preload("res://infrastructure/map/map_asset_catalog.gd"
 const GodotMapSceneRepository := preload("res://infrastructure/map/godot_map_scene_repository.gd")
 const TileAtlasRepository := preload("res://infrastructure/map/tile_atlas_repository.gd")
 const NativeEngineBridge := preload("res://infrastructure/engine/native_engine_bridge.gd")
+const LocalMatchSessionController := preload(
+	"res://application/session/local_match_session_controller.gd"
+)
 const RenderSettings := preload("res://presentation/map/map_render_settings.gd")
 
 var _failures: Array[String] = []
@@ -391,9 +394,9 @@ func _test_native_engine_boundary() -> void:
 		"Rust returns the logical content hash",
 	)
 
-	var session: Object = ClassDB.instantiate("AonwLocalSession")
-	_check(session != null, "native local session is registered")
-	if session == null:
+	var session := LocalMatchSessionController.new()
+	_check(session.is_available(), "native local session is registered")
+	if not session.is_available():
 		return
 	var scenario_file := FileAccess.open(
 		"res://assets/scenarios/aonw2_starter.json",
@@ -402,90 +405,78 @@ func _test_native_engine_boundary() -> void:
 	_check(scenario_file != null, "native boundary scenario opens")
 	if scenario_file == null:
 		return
-	var opened: Dictionary = JSON.parse_string(session.open(
+	var opened: Dictionary = session.open(
 		map_json,
 		scenario_file.get_as_text(),
 		"preview-player",
-	))
+	)
 	_check(opened["ok"], "native local scenario session opens")
-	var snapshot: Dictionary = JSON.parse_string(session.snapshot_json())
+	var snapshot: Dictionary = session.snapshot()
 	_check(
 		snapshot["ok"] and snapshot["value"]["units"].size() == 1,
 		"native snapshot owns the scenario unit view",
 	)
-	var reachable: Dictionary = JSON.parse_string(
-		session.reachable_json("preview-commander", 0),
-	)
+	var reachable: Dictionary = session.reachable("preview-commander")
 	_check(
 		reachable["ok"] and not reachable["value"]["tiles"].is_empty(),
 		"native session returns reachable hexes",
 	)
-	var route: Dictionary = JSON.parse_string(
-		session.route_plan_json("preview-commander", 2, 2, 0),
-	)
+	var route: Dictionary = session.route_plan("preview-commander", Vector2i(2, 2))
 	_check(route["ok"] and route["value"]["steps"].size() > 1, "native route is planned")
-	var moved: Dictionary = JSON.parse_string(
-		session.move_unit_json("preview-commander", 2, 2, 0),
-	)
+	var moved: Dictionary = session.move_unit("preview-commander", Vector2i(2, 2))
 	_check(
 		moved["ok"]
 		and moved["value"]["accepted"]
-		and moved["value"]["revision"] == 1
-		and moved["value"]["evidence"]["steps"][-1]["row"] == 2,
+		and moved["value"]["stamp"]["revision"] == 1
+		and moved["value"]["evidence"]["steps"][-1]["coordinate"]["row"] == 2,
 			"native session applies a revision-bound move",
 		)
-	var skipped: Dictionary = JSON.parse_string(
-		session.skip_unit_turn_json("preview-commander", 1),
-	)
+	var skipped: Dictionary = session.skip_unit_turn("preview-commander")
 	_check(
 		skipped["ok"]
 		and skipped["value"]["accepted"]
-		and skipped["value"]["revision"] == 2
+		and skipped["value"]["stamp"]["revision"] == 2
 		and skipped["value"]["viewPatch"]["upsertedUnits"][0]["movementUnits"] == 0,
 		"native session skips a unit turn",
 	)
-	var cancelled: Dictionary = JSON.parse_string(
-		session.cancel_unit_action_json("preview-commander", 2),
-	)
+	var cancelled: Dictionary = session.cancel_unit_action("preview-commander")
 	_check(
 		cancelled["ok"]
 		and cancelled["value"]["accepted"]
-		and cancelled["value"]["revision"] == 3,
+		and cancelled["value"]["stamp"]["revision"] == 3,
 		"native session cancels a unit action",
 	)
-	var fortified: Dictionary = JSON.parse_string(
-		session.fortify_unit_json("preview-commander", 3),
-	)
+	var fortified: Dictionary = session.fortify_unit("preview-commander")
 	_check(
 		fortified["ok"]
 		and fortified["value"]["accepted"]
-		and fortified["value"]["revision"] == 4
+		and fortified["value"]["stamp"]["revision"] == 4
 		and fortified["value"]["viewPatch"]["upsertedUnits"][0]["posture"] == "fortified",
 		"native session fortifies an idle unit",
 	)
-	var saved: Dictionary = JSON.parse_string(session.save_game_json())
+	var saved: Dictionary = session.save_game()
 	_check(
-		saved["ok"] and not saved["value"]["document"].is_empty(),
+		saved["ok"] and not saved["value"].is_empty(),
 		"native session exports a canonical save",
 	)
-	var replay: Dictionary = JSON.parse_string(session.replay_log_json())
+	var replay: Dictionary = session.replay_log()
 	_check(
-		replay["ok"] and not replay["value"]["document"].is_empty(),
+		replay["ok"] and not replay["value"].is_empty(),
 		"native session exports a deterministic replay",
 	)
-	var verified: Dictionary = JSON.parse_string(session.verify_replay(
+	var verified: Dictionary = session.verify_replay(
 		map_json,
-		replay["value"]["document"],
-	))
+		replay["value"],
+	)
 	_check(
 		verified["ok"] and verified["value"]["entryCount"] == 4,
 		"native session verifies replay results in Rust",
 	)
 	session.close()
-	var restored: Dictionary = JSON.parse_string(session.open_save(
+	var restored: Dictionary = session.open_save(
 		map_json,
-		saved["value"]["document"],
-	))
+		saved["value"],
+	)
 	_check(
 		restored["ok"] and restored["value"]["revision"] == 4,
 		"native session restores a canonical save",

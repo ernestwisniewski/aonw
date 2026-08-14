@@ -37,7 +37,9 @@ const fn decode_unit_kind(kind: UnitKindDto) -> UnitKind {
     }
 }
 
-const fn encode_unit_kind(kind: UnitKind) -> UnitKindDto {
+/// Converts a validated domain unit kind into its stable wire value.
+#[must_use]
+pub const fn encode_unit_kind(kind: UnitKind) -> UnitKindDto {
     match kind {
         UnitKind::Commander => UnitKindDto::Commander,
         UnitKind::Warrior => UnitKindDto::Warrior,
@@ -68,7 +70,9 @@ const fn decode_unit_posture(posture: UnitPostureDto) -> UnitPosture {
     }
 }
 
-const fn encode_unit_posture(posture: UnitPosture) -> UnitPostureDto {
+/// Converts a validated domain posture into its stable wire value.
+#[must_use]
+pub const fn encode_unit_posture(posture: UnitPosture) -> UnitPostureDto {
     match posture {
         UnitPosture::Active => UnitPostureDto::Active,
         UnitPosture::Fortified => UnitPostureDto::Fortified,

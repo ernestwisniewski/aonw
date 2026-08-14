@@ -4,7 +4,9 @@ const OpenMap := preload("res://application/map/open_map.gd")
 const JsonMapRepository := preload("res://infrastructure/map/json_map_repository.gd")
 const TileAtlasRepository := preload("res://infrastructure/map/tile_atlas_repository.gd")
 const MapSource := preload("res://application/map/map_source.gd")
-const NativeLocalSession := preload("res://infrastructure/engine/native_local_session.gd")
+const LocalMatchSessionController := preload(
+	"res://application/session/local_match_session_controller.gd"
+)
 const DEFAULT_MAP := "res://assets/maps/aonw2_starter/map.json"
 
 @onready var _surface: AonwMapSurface = %MapSurface
@@ -16,9 +18,8 @@ const DEFAULT_MAP := "res://assets/maps/aonw2_starter/map.json"
 @onready var _status: Label = %Status
 
 var _open_map := OpenMap.new(JsonMapRepository.new(), TileAtlasRepository.new())
-var _native_session := NativeLocalSession.new()
+var _local_session := LocalMatchSessionController.new()
 var _current_document: AonwMapDocument
-var _movement_revision := 0
 var _selected_unit_id := ""
 var _reachable_hexes: Dictionary = {}
 
@@ -101,7 +102,7 @@ func _on_hex_selected(coordinate: Vector2i) -> void:
 func _setup_local_session(source: AonwMapSource) -> void:
 	_selected_unit_id = ""
 	_reachable_hexes.clear()
-	_native_session.close()
+	_local_session.close()
 	var map_file := FileAccess.open(
 		AonwJsonMapRepository.resolve_path(source.map_path),
 		FileAccess.READ,
@@ -116,7 +117,7 @@ func _setup_local_session(source: AonwMapSource) -> void:
 		_status.text += " · no local scenario"
 		_unit_layer.present(_interaction.projection(), [])
 		return
-	var opened := _native_session.open(
+	var opened := _local_session.open(
 		map_file.get_as_text(),
 		scenario_file.get_as_text(),
 		"preview-player",
@@ -128,18 +129,17 @@ func _setup_local_session(source: AonwMapSource) -> void:
 	_refresh_session_snapshot()
 
 func _refresh_session_snapshot() -> bool:
-	var snapshot := _native_session.snapshot()
+	var snapshot := _local_session.snapshot()
 	if not snapshot["ok"]:
 		_status.text += " · Rust: %s" % snapshot["message"]
 		_unit_layer.present(_interaction.projection(), [])
 		return false
 	var value: Dictionary = snapshot["value"]
-	_movement_revision = int(value["revision"])
 	_unit_layer.present(_interaction.projection(), value["units"])
 	return true
 
 func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
-	var reachable := _native_session.reachable(unit_id, _movement_revision)
+	var reachable := _local_session.reachable(unit_id)
 	if not reachable["ok"]:
 		_status.text = "Rust: %s" % reachable["message"]
 		return
@@ -147,7 +147,8 @@ func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 	_reachable_hexes.clear()
 	var coordinates: Array[Vector2i] = []
 	for tile: Dictionary in reachable["value"]["tiles"]:
-		var target := Vector2i(int(tile["col"]), int(tile["row"]))
+		var wire_coordinate: Dictionary = tile["coordinate"]
+		var target := Vector2i(int(wire_coordinate["col"]), int(wire_coordinate["row"]))
 		_reachable_hexes[target] = true
 		coordinates.append(target)
 	_interaction.set_reachable_hexes(coordinates)
@@ -158,10 +159,10 @@ func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 		push_error("movement selection is inconsistent with the picked hex")
 
 func _move_selected_unit(target: Vector2i) -> void:
-	var moved := _native_session.move_unit(
+	var previous_revision := _local_session.revision()
+	var moved := _local_session.move_unit(
 		_selected_unit_id,
 		target,
-		_movement_revision,
 	)
 	if not moved["ok"]:
 		_status.text = "Rust: %s" % moved["message"]
@@ -170,8 +171,6 @@ func _move_selected_unit(target: Vector2i) -> void:
 	if not bool(value["accepted"]):
 		_status.text = "Rust: %s" % value["rejection"]
 		return
-	var previous_revision := _movement_revision
-	_movement_revision = int(value["revision"])
 	var patch: Dictionary = value["viewPatch"]
 	if int(patch["fromRevision"]) != previous_revision:
 		_refresh_session_snapshot()

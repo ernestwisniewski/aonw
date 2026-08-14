@@ -1,14 +1,20 @@
 use std::hint::black_box;
 use std::time::Instant;
 
+use aonw_contracts::CoordinateDto;
+use aonw_contracts::client::{
+    CLIENT_API_VERSION, ClientCommandDto, ClientOutcomeDto, ClientRequestBodyDto, ClientRequestDto,
+    ClientResponseBodyDto, ClientResponseDto,
+};
+use aonw_local_runtime::LocalRuntime;
 use serde_json::json;
 
-use super::request::decode_open_request;
+use super::dispatch_json;
 
-fn map_json() -> String {
-    let tiles = (0..5)
+fn map_json(cols: u16, rows: u16, map_id: &str) -> String {
+    let tiles = (0..rows)
         .flat_map(|row| {
-            (0..5).map(move |col| {
+            (0..cols).map(move |col| {
                 json!({
                     "col": col,
                     "row": row,
@@ -22,9 +28,9 @@ fn map_json() -> String {
     json!({
         "schemaVersion": 1,
         "gridLayout": "oddQFlatTop",
-        "cols": 5,
-        "rows": 5,
-        "mapName": "session-test",
+        "cols": cols,
+        "rows": rows,
+        "mapName": map_id,
         "defaultZoom": 1.0,
         "objectives": [],
         "tiles": tiles,
@@ -32,39 +38,8 @@ fn map_json() -> String {
     .to_string()
 }
 
-fn scenario_json() -> String {
-    json!({
-        "schemaVersion": 1,
-        "scenarioId": "session-test",
-        "mapId": "session-test",
-        "rulesetId": "aonw-standard",
-        "initialUnits": [{
-            "id": "unit-1",
-            "ownerPlayerId": "player-1",
-            "kind": "commander",
-            "name": "Commander",
-            "col": 0,
-            "row": 0,
-        }],
-    })
-    .to_string()
-}
-
-fn benchmark_documents() -> (String, String) {
-    let tiles = (0..30)
-        .flat_map(|row| {
-            (0..40).map(move |col| {
-                json!({
-                    "col": col,
-                    "row": row,
-                    "terrains": ["grassland"],
-                    "resources": [],
-                    "height": 0,
-                })
-            })
-        })
-        .collect::<Vec<_>>();
-    let units = (0..512)
+fn scenario_json(unit_count: usize, scenario_id: &str, map_id: &str) -> String {
+    let units = (0..unit_count)
         .map(|index| {
             json!({
                 "id": format!("unit-{index}"),
@@ -76,53 +51,99 @@ fn benchmark_documents() -> (String, String) {
             })
         })
         .collect::<Vec<_>>();
-    (
-        json!({
-            "schemaVersion": 1,
-            "gridLayout": "oddQFlatTop",
-            "cols": 40,
-            "rows": 30,
-            "mapName": "benchmark-session",
-            "defaultZoom": 1.0,
-            "objectives": [],
-            "tiles": tiles,
-        })
-        .to_string(),
-        json!({
-            "schemaVersion": 1,
-            "scenarioId": "benchmark-session",
-            "mapId": "benchmark-session",
-            "rulesetId": "aonw-standard",
-            "initialUnits": units,
-        })
-        .to_string(),
-    )
+    json!({
+        "schemaVersion": 1,
+        "scenarioId": scenario_id,
+        "mapId": map_id,
+        "rulesetId": "aonw-standard",
+        "initialUnits": units,
+    })
+    .to_string()
+}
+
+fn request(body: ClientRequestBodyDto) -> String {
+    ClientRequestDto {
+        api_version: CLIENT_API_VERSION,
+        request: body,
+    }
+    .to_json()
+    .expect("client request")
+}
+
+fn response(runtime: &mut LocalRuntime, body: ClientRequestBodyDto) -> ClientResponseBodyDto {
+    let response = ClientResponseDto::from_json(&dispatch_json(runtime, &request(body)))
+        .expect("client response");
+    let ClientOutcomeDto::Success { response } = response.outcome else {
+        panic!("successful client response")
+    };
+    *response
 }
 
 #[test]
-fn adapter_open_contract_is_strict_and_current() {
-    decode_open_request(&map_json(), &scenario_json(), "player-1")
-        .expect("current contracts must open");
-    let future = scenario_json().replace("\"schemaVersion\":1", "\"schemaVersion\":2");
-    let error = decode_open_request(&map_json(), &future, "player-1")
-        .expect_err("future contract must fail closed");
-    assert_eq!(error.0, "invalid_scenario");
+fn native_adapter_uses_the_shared_client_protocol_end_to_end() {
+    let map = map_json(5, 5, "session-test");
+    let scenario = scenario_json(1, "session-test", "session-test");
+    let mut runtime = LocalRuntime::default();
+
+    assert!(matches!(
+        response(
+            &mut runtime,
+            ClientRequestBodyDto::OpenSession {
+                map_document: map,
+                scenario_document: scenario,
+                actor_player_id: "player-1".to_owned(),
+            }
+        ),
+        ClientResponseBodyDto::SessionOpened { .. }
+    ));
+    assert!(matches!(
+        response(&mut runtime, ClientRequestBodyDto::Snapshot),
+        ClientResponseBodyDto::Snapshot { .. }
+    ));
+    assert!(matches!(
+        response(
+            &mut runtime,
+            ClientRequestBodyDto::Dispatch {
+                command: ClientCommandDto::MoveUnit {
+                    expected_revision: 0,
+                    unit_id: "unit-0".to_owned(),
+                    target: CoordinateDto { col: 1, row: 0 },
+                },
+            }
+        ),
+        ClientResponseBodyDto::Command { .. }
+    ));
+}
+
+#[test]
+fn native_adapter_rejects_non_protocol_and_foreign_version_documents() {
+    let mut runtime = LocalRuntime::default();
+    for input in [
+        "{}".to_owned(),
+        json!({"apiVersion": 2, "request": {"type": "capabilities"}}).to_string(),
+    ] {
+        let response = ClientResponseDto::from_json(&dispatch_json(&mut runtime, &input))
+            .expect("failure response");
+        assert!(matches!(response.outcome, ClientOutcomeDto::Failure { .. }));
+    }
 }
 
 #[test]
 #[ignore = "diagnostic wall-clock benchmark"]
 fn native_session_open_benchmark() {
     const ITERATIONS: usize = 20;
-    let (map, scenario) = benchmark_documents();
+    let request = request(ClientRequestBodyDto::OpenSession {
+        map_document: map_json(40, 30, "benchmark-session"),
+        scenario_document: scenario_json(512, "benchmark-session", "benchmark-session"),
+        actor_player_id: "player-1".to_owned(),
+    });
     for _ in 0..3 {
-        black_box(decode_open_request(&map, &scenario, "player-1").expect("warm native session"));
+        black_box(dispatch_json(&mut LocalRuntime::default(), &request));
     }
     let mut samples = Vec::with_capacity(ITERATIONS);
     for _ in 0..ITERATIONS {
         let started = Instant::now();
-        black_box(
-            decode_open_request(&map, &scenario, "player-1").expect("benchmark native session"),
-        );
+        black_box(dispatch_json(&mut LocalRuntime::default(), &request));
         samples.push(started.elapsed().as_nanos());
     }
     samples.sort_unstable();
