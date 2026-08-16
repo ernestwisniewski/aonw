@@ -1,234 +1,33 @@
-# Yield Unification
+# Yield unification
 
-This document describes the current yield contract. The goal is for UI, city
-economy, worker recommendations, and AI to stop relying on different value
-tables.
+City economy, tile inspection, worker recommendations, AI, and supply must use one active ruleset instead of private value tables.
 
-## Source of Truth
+## Sources of truth
 
-| Area | Source |
+| Value | Owner |
 | --- | --- |
-| Base terrain yield | `CityRuleset.terrainYields` |
-| River yield | `CityRuleset.riverYield` |
-| Resource yield | `CityRuleset.resourceYields` |
-| Improvement yield | `CityRuleset.improvements[*].tileYield` |
-| City center | `CityRuleset.cityCenterYield` |
-| Stored artifact yield | `WorldArtifactType.cityYield` |
-| Building science | `CityBuildingEffect.FlatCityScienceEffect` |
+| Terrain, river, resource, improvement, and city-center yield | `CityRuleset` |
+| Stored artifact yield | `WorldArtifactType` |
+| Building science | building effects plus `ScienceYieldCalculator` |
+| Worker recommendation | `WorkerImprovementRecommendation` and shared scoring |
+| Unit supply | `CityUnitSupplyRules` using the same city economy inputs |
 
-`TileYieldRules` no longer has a separate balance table. For the standard game
-it uses `CityRulesets.standard`, and balance variants can inject another
-`CityRuleset`.
+`TileYieldRules` and `CityTileYieldRules` read the injected ruleset. For a tile without an improvement, their base result must agree.
 
-Science is not part of `TileYield`. It is calculated by
-`ScienceYieldCalculator` because research has a separate stream from food,
-production, gold, and defense and must combine city base, technologies,
-specializations, projects, and buildings without muddying city economy.
+Science is deliberately separate from `TileYield`. `ScienceYieldCalculator` combines city base science, technologies, specialization, buildings, and project output without mixing research into food/production/gold/defense.
 
-## Domain Contracts
+## Worker recommendations
 
-| API | Role |
-| --- | --- |
-| `TileYieldRules.forTile(tile, ruleset)` | Base hex yield without improvement |
-| `TileYieldRules.forInput(input, ruleset)` | Base yield for assessment systems |
-| `CityTileYieldRules.forTile(tile, improvement, ruleset)` | Hex yield with optional improvement |
-| `CityTileYieldRules.forCityHex(...)` | Hex yield in city context; the center has fixed city-center yield |
-| `CityUnitSupplyRules.forPlayer(...)` | Player unit-supply capacity from city economy, stored artifacts, and the map cap |
-| `ScienceYieldCalculator.totalForPlayer(...)` | Player science/turn from city base, technology effects, specialization, and buildings |
-| `WorkerImprovementScoring.scoreFor(...)` | Shared scoring for worker improvement recommendations |
-| `WorkerImprovementChargeRules` | Number of improvements a worker can complete before disappearing |
+Manual **Improve** and automated worker planning share legality, scoring, and deterministic tie-breaks. The heuristic may weight food, production, gold, defense, resource specialization, and base tile value, but the underlying yield comes from city economy rules.
 
-Parity required by tests:
+A worker's build charge is consumed only when construction completes. Cancellation or an illegal job does not spend it. A persistent assignment uses the normal assignment bonus and no build charge.
 
-```text
-TileYieldRules.forTile(tile, ruleset)
-==
-CityTileYieldRules.forTile(tile, ruleset: ruleset)
-```
+## Supply and selection
 
-for a hex without an improvement.
+Unit supply uses the same city economy, stored-artifact context, and map cap in gameplay, production UI, AI, and telemetry. Callers must pass the complete context rather than silently omitting artifact food.
 
-## Current Standard Values
+City selection projects raw yield, stability-adjusted economy, and the matching source breakdown together. Do not combine a fresh breakdown with cached economy from another state.
 
-### Terrain
+## Change rule
 
-| Terrain | Food | Production | Gold | Defense |
-| --- | ---: | ---: | ---: | ---: |
-| grassland | 2 | 0 | 0 | 0 |
-| plains | 1 | 1 | 0 | 0 |
-| forest | 1 | 1 | 0 | 0 |
-| hills | 0 | 2 | 0 | 0 |
-| tundra | 1 | 0 | 0 | 0 |
-| jungle | 1 | 0 | 0 | 0 |
-| wetlands | 2 | 0 | 0 | 0 |
-| coast | 1 | 0 | 0 | 0 |
-| lake | 1 | 0 | 0 | 0 |
-| desert/snow/mountain/ocean | 0 | 0 | 0 | 0 |
-
-### Modifiers and Resources
-
-| Element | Food | Production | Gold | Defense |
-| --- | ---: | ---: | ---: | ---: |
-| river | 1 | 0 | 0 | 0 |
-| wheat/fish/rice/apple/banana/citrus | 2 | 0 | 0 | 0 |
-| deer/cow/sheep | 1 | 1 | 0 | 0 |
-| iron/marble | 0 | 2 | 0 | 0 |
-| luxury strategic late resources | 0 | 0 | 0 | 0 |
-
-Luxuries and later strategic resources can still have value through unlocks,
-improvements, technologies, or future inventory/economy hooks. They do not
-automatically grant base hex yield unless `CityRuleset.resourceYields` says so.
-
-## Building Science
-
-Only selected standard buildings from `CityBuildingCatalog.standard` provide
-`FlatCityScienceEffect`. The effect is reserved for buildings tied to
-knowledge, applied science, medicine, or information storage.
-
-| Building | Science |
-| --- | ---: |
-| `archive` | +2 |
-| `academy` | +3 |
-| `university` | +3 |
-| `observatory` | +3 |
-| `laboratory` | +4 |
-| `reactor` | +3 |
-| `surveyorsOffice` | +2 |
-| `apothecary` | +1 |
-| `hospital` | +2 |
-| `mapRoom` | +2 |
-| `museum` | +2 |
-
-City science/turn is built from:
-
-```text
-baseSciencePerCity
-+ cityScienceBonus from technologies
-+ science specialization
-+ effective science from buildings
-```
-
-Building science has diminishing returns within a city. Effects are sorted from
-largest to smallest, then multiplied by:
-
-| Science-building slot | Multiplier |
-| --- | ---: |
-| Best building | 1.00 |
-| Second building | 0.70 |
-| Third and later | 0.35 |
-
-This lets knowledge-related buildings help research without making a wide stack
-of such buildings scale linearly. `maxSciencePerCity`, when enabled in the
-ruleset, still caps total city science after buildings are included.
-
-UI and AI must pass the active `CityRuleset` to
-`ScienceYieldCalculator.totalForPlayer(...)` so balance variants and test
-rulesets see the same building effects as gameplay. `research` projects remain
-separate `bonusScience`/project output and are not covered by the city building
-multiplier.
-
-## Worker Improvement Scoring
-
-`WorkerImprovementScoring` moves the improvement-recommendation heuristic into
-core. `WorkerImprovementRecommendation` applies the same legality, scoring, and
-tie-break policy to the manual `Improve` panel and automated worker planning.
-
-| Parameter | Weight |
-| --- | ---: |
-| Food from improvement | 1000 |
-| Production from improvement | 300 |
-| Gold from improvement | 180 |
-| Defense from improvement | 80 |
-| Resource specialist bonus | 700 |
-| Food from base hex | 20 |
-| Production from base hex | 5 |
-
-This is still a heuristic, not hard economic balance. The important change is
-that its `baseYield` comes from `CityTileYieldRules.forTile`, which is the same
-model used by city economy. Changing these weights affects recommendations in
-the manual worker panel and the secondary ordering of equally near automatic
-build targets.
-
-When no legal improvement can be built anywhere in the player's cities,
-automation can assign the worker to a free completed improvement. The existing
-`CityYieldCalculator.workerAssignmentBonusFor(...)` adds 50% of that tile's
-yield while the worker remains assigned; this does not consume a build charge.
-
-## Worker Improvement Charges
-
-The worker is no longer a permanent unit that can improve the map forever. It
-has a `workerBuildCharges` counter that determines how many completed
-improvements it can still build.
-
-| Parameter | Current value | Balance meaning |
-| --- | ---: | --- |
-| `WorkerImprovementChargeRules.defaultWorkerCharges` | 1 | Default worker disappears after completing the first improvement |
-| `GameUnit.workerBuildCharges` | per unit | Allows future workers with 2-3 improvements without changing HUD flow |
-| `remainingAfterImprovement(...)` | `charges - 1` | Charge consumption after actual construction completion |
-
-Worker removal happens only after `workerJob` completes, not when an option is
-selected. Canceling construction or receiving an illegal job should not consume
-a charge.
-
-## Unit Supply And Artifact Food
-
-Unit supply derives its food component through the city yield and economy
-calculators:
-
-```text
-city supply = max(0, population + net food)
-player supply = min(sum(city supply), map capacity)
-```
-
-Food from an artifact participates in that calculation only while the artifact
-is stored in one of the player's cities. It can increase that city's raw supply
-before the map cap is applied; existing food consumption and the non-negative
-net-food clamp can absorb some or all of the bonus. An artifact carried by a
-unit, placed on the map, under excavation, stored in another player's city, or
-pointing at a missing city contributes no supply.
-
-Gameplay reducers, the production dialog, AI/MCTS, and economy telemetry must
-pass the same artifact collection to `CityUnitSupplyRules`. The parameter is
-required so a new caller cannot silently calculate a different supply limit.
-Wonder and stability modifiers remain separate balance decisions and are not
-implicitly added by this contract.
-
-## Stability In City Selection
-
-Fresh city selections project economy with the cached
-`GameState.playerStabilityNet` of the city's owner and the active
-`StabilityRuleset`. That cached value already includes relative-standing
-adjustment from the turn processor, so selection must not calculate the
-adjustment a second time.
-
-`cityYield` remains the raw city yield. Stability is stored on the projected
-`cityEconomy`: strained and unrest states apply their production/gold
-multipliers and halt growth, while content can add food to the growth deposit.
-The compact city panel and its detailed yield rows consume that same projected
-economy. The details include an explicit stability delta so their rows still
-sum to the displayed net yield.
-
-Direct selection, turn refresh, production refresh, worked-hex changes, and
-city expansion all pass the same ruleset into `CitySelectionProjector`.
-Multiplayer reconciliation is intentionally different: it rebinds the latest
-authoritative city entity while retaining the already projected interaction
-snapshot until the next fresh projection. That snapshot keeps the raw yield,
-its exact tile-source breakdown, and economy together; the detailed panel must
-never combine a fresh tile breakdown with cached economy.
-
-## What We Are Not Doing Yet
-
-| Out of scope | Reason |
-| --- | --- |
-| Multi-turn auto-improve | Requires saved unit mode, pathfinding, and cancellation rules |
-| City role suggestion | Will use unified yield, but needs a separate city-role model |
-| Resource-value-card tuning | The card exists as an explanatory layer; separate luxury/strategic tuning needs a balance decision |
-| Balance-value changes | Yield unification removes model divergence, but does not tune a new economy |
-
-## Risks To Watch
-
-| Risk | Signal | Possible response |
-| --- | --- | --- |
-| Hex assessment feels less "rich" | Many hexes have lower gold/defense preview than old `TileYieldRules` | Add a separate strategic assessment score instead of pretending it is city yield |
-| AI likes certain starts more or less | Basic strategy site-yield evaluation shifts | Tune `AiCitySiteScorer`, do not return to a second yield table |
-| Worker recommends too much food | Food weight 1000 dominates | Change weights in `WorkerImprovementScoreBalance` |
+When tuning a value, change the ruleset/catalog and its tests. If a UI needs a strategic assessment different from real city yield, name it as a separate score; do not create a second value table and label it yield.

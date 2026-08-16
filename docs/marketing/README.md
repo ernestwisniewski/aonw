@@ -1,11 +1,9 @@
-# Marketing Assets
+# Marketing assets
 
-This folder contains store-listing and brand collateral that is useful for
-publishing Age of New Worlds but is not loaded by the Flutter runtime.
+This directory contains store and brand artwork used for publishing Age of New Worlds. The Flutter runtime does not load these files.
 
-- `appstore-icon.png` - App Store icon candidate.
-- `playstore-icon.png` - Google Play icon candidate.
-- `app-icons/Assets.xcassets/` - exported app icon set kept as source
-  collateral, separate from platform runtime asset catalogs.
+- `appstore-icon.png` — App Store source candidate.
+- `playstore-icon.png` — Google Play source candidate.
+- `app-icons/Assets.xcassets/` — exported icon set kept as publishing collateral.
 
-Runtime assets stay under `assets/`, `web/`, and platform-specific app folders.
+Runtime assets belong under `assets/`, `web/`, or the relevant platform project. Do not import files from this directory into gameplay code.

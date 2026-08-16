@@ -1,86 +1,23 @@
-# Resource Value Cards
+# Resource value cards
 
-This document describes the resource-value card contract. The goal is for
-clicking a resource hex to answer: "What does this tile provide now, what will
-it unlock later, and why is it worth expanding toward?".
+A resource card explains what a selected hex provides now, how it can be improved, what later rules use it, and why it may be worth claiming.
 
-## UI Placement
+The card belongs to map inspection rather than a separate global screen. A hex with resources exposes the card from its inspection panel and compact long-press view.
 
-| Element | Behavior |
+## Data
+
+| Section | Source |
 | --- | --- |
-| Hex click | The existing inspection panel shows a `Resources` chip when the hex has at least one resource |
-| Hex long-press | A compact popup shows the description, terrain, resources, and matching `Possible improvements` |
-| `Resources` chip | Opens a detailed popup with one card per resource on the hex |
-| Old fallback | If the model has no value cards, the popup can still show a simple resource-name list |
+| Category and name | `ResourceCatalog` and localized display names |
+| Current tile value | shared hex/city yield assessment |
+| Legal improvement | field-improvement rules and technology unlock query |
+| Future use | technology requirements, boosts, effects, production/trade roles |
+| Expansion note | resource economy mode and dominant improved value |
 
-We do not add a separate global screen. The card is part of the map-inspection
-flow because the player should see it exactly when deciding whether to explore,
-found a city, or send a worker.
+The card has no private yield or unlock table. Changes to the active ruleset, technology catalog, or improvement catalog must appear automatically.
 
-The long-press popup uses the same list of matching improvements as the hex
-inspection model. Each improvement shows the required technology in
-parentheses: red text means the active player does not have it yet, green means
-the technology is already unlocked.
+Improvement status distinguishes missing technology, territory/city blockers, an existing improvement, and a legal current action. The long-press view uses the same legality model and color coding.
 
-## Card Sections
+Bonus, luxury, presence-gated strategic, and stockpiled strategic resources have different player roles; read the mode from `ResourceCatalog`, not from enum names or a UI-maintained list.
 
-| Section | Meaning | Data source |
-| --- | --- | --- |
-| Header | Resource name and `Bonus`, `Luxury`, or `Strategic` category | `ResourceType`, `GameDisplayNames.resource`, resource groups |
-| `Now` | Base resource yield and the whole hex potential before improvement | `ResourceYieldRules`, `HexAssessment.yield` |
-| `Improve` | Best matching improvement, its yield, and current status | `FieldImprovementRules`, `TechnologyUnlockQuery`, city/border status |
-| `Later` | Technologies, research boosts, or effects that increase resource value | `TechnologyRuleset.technologies`, technology boosts and effects |
-| `Expansion` | Short strategic reason to claim the tile inside borders | Resource category and dominant yield after improvement |
-
-## Categories
-
-| Category | Resources | Player role |
-| --- | --- | --- |
-| Bonus | Food and early-growth resources, for example wheat, fish, deer, sheep, rice, fruit | Faster city growth, stronger starts, and more workable tiles |
-| Luxury | Gold, silver, gems, silk, spices, cotton, grapes, ivory, pearls, coffee, cocoa, tobacco, sugar | Economy, gold, and expansion reasons after the right improvement |
-| Strategic | Iron, coal, oil, aluminium, uranium, and horses | Secures production, military, and late technologies before rivals do; oil and aluminium also feed the global stockpile economy |
-
-## Balance Contract
-
-The card has no private yield table. It reads the active ruleset:
-
-| Value | Contract |
-| --- | --- |
-| Base tile yield | `HexAssessment.yield`, the same unified yield preview used by city economy |
-| Resource yield | `ResourceYieldRules.yieldFor(resource, ruleset)` |
-| Improvement yield | `FieldImprovementRules.yieldFor(type, ruleset)` |
-| Improvement unlock | `TechnologyUnlockQuery.unlockingTechnologyForFieldImprovement` |
-| Legality status | City/borders/existing improvement/city center plus technology |
-| Future hooks | `ControlsResource`, `ControlsAnyResource`, `StrategicResourceProductionBonus` |
-
-That means changes to `CityRuleset`, the improvement catalog, or technologies
-automatically change card information. Documentation and UI should not manually
-duplicate those values.
-
-## Examples
-
-| Resource | How the card should help |
-| --- | --- |
-| Wheat | Shows immediate food, farm after Agriculture, and the reason: faster city growth |
-| Gold | Shows that the base tile may not yield anything, but a prospector camp/economy can make it an expansion target |
-| Iron | Shows production potential, mine/Mining, and the later Iron Working effect |
-| Horses | Shows that the tile itself is strategic and Horseback Riding increases army and expansion value |
-
-## Out of Scope
-
-| Out of scope | Reason |
-| --- | --- |
-| Resource-yield changes | The card explains the current balance; it does not tune the economy |
-| New `claim resource` objectives | Future work after checking whether the card is clear |
-| AI expansion scoring for resources | Requires separate scoring and telemetry |
-| Luxury happiness | No closed stability ruleset exists for this mechanic yet |
-| Resource-specific automation weights | `Auto work` uses the shared general worker recommendation policy |
-
-## Potential Next Steps
-
-| Direction | Reason |
-| --- | --- |
-| Objective tie-in | After discovering a valuable resource, the `Objectives` panel can suggest claiming it inside borders |
-| City role suggestion | The card can say whether the area looks like a growth, production, or trade city |
-| Resource scarcity goals | Extend oil/aluminium shortage signals into explicit map objectives after telemetry validates the economy |
-| Telemetry | Measure whether players click or claim resources after seeing the card |
+This feature explains current balance. It does not create new objectives, happiness rules, AI scoring, or resource-specific worker automation.

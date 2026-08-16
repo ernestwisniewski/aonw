@@ -1,204 +1,40 @@
-# Turn Flow and Action Focus
+# Turn flow and action focus
 
-This document describes the current start-of-turn focus rule and the difference
-between automatic turn start and the manual "next action" button.
+Turn start and the manual **Action** button use the same pending-decision list for different purposes.
 
-## UX Goal
-
-At the start of a turn, the player should not begin on an empty map or stale
-selection. If the active player has a unit that can move or act, the camera and
-selection move to that unit and movement targeting becomes active.
-
-This shortens the path to the first decision of the turn:
-
-| Situation | Behavior |
+| Flow | Behavior |
 | --- | --- |
-| Player has a unit with movement | Select the unit, enable move targeting, focus the camera on the unit |
-| No unit with movement, but a city has no production | Select the city as the next decision |
-| No units or cities need decisions and no research is active | Fall back to the player's starting object: first unit or city |
-| Stale selection from previous turn exists | Turn start ignores it when choosing the first target |
+| `FocusTurnStartActionCommand` | Selects the highest-ranked first decision; it does not cycle from stale selection. |
+| `FocusNextPendingActionCommand` | Cycles through remaining decisions from the current position. |
 
-## Two Focus Commands
+## Ranking
 
-| Command | Use | Behavior |
-| --- | --- | --- |
-| `FocusTurnStartActionCommand` | Automatic turn start and handoff | Picks the first target by ranking, without cycling |
-| `FocusNextPendingActionCommand` | Manual "next action" button | Cycles from the current selection to the next decision |
+1. ready combat units, with visible contact first;
+2. ready workers and settlers;
+3. other units requiring a decision;
+4. cities without production;
+5. missing research selection.
 
-This split is intentional. Turn start should be predictable and always lead to
-the most important decision, while the manual button should let the player walk
-through the full list of remaining tasks.
+Queued, working, fortified, or automated units are skipped when their posture means they do not need a manual decision.
 
-When either focus command selects an object on the map, the camera first
-completes its smooth move and the object's complete map tile then receives a
-dashed gold hex border for two seconds. Units and cities use the same cue;
-research does not because it has no map coordinate. The border uses the shared
-full-hex selection geometry and dash pattern, and blinks independently of the
-normal gold selection cue and red attack targets. With reduced motion enabled
-it stays visible without blinking for the same two seconds. This is an
-ephemeral renderer effect: it is not saved or replicated as a domain event.
-For a unit target, the border tracks the unit marker's live world position, so
-it follows movement and combat animation instead of remaining on the source
-hex. City targets remain anchored to their fixed center hex.
+Selecting a map target moves the camera and shows a short full-hex focus cue. The cue is renderer state only; reduced-motion mode keeps it static for the same duration.
 
-## `Action` Button and End Turn
+## Action versus end turn
 
-The bottom toolbar combines the end-turn CTA with the pending-decision list. If
-the active player still has something to do, the end-turn button does not end
-the turn immediately; it changes into `Action`.
+The primary bottom button shows **Action** while a pending decision exists. It focuses the next item instead of ending the turn. When no decision remains it becomes **End turn** or the multiplayer submit action.
 
-| Turn state | Label | Click |
-| --- | --- | --- |
-| `readyToEndTurn == false` | `Action` | Focuses the next decision through `focusNextAction` |
-| `readyToEndTurn == true` | `End turn` | Ends or submits the turn |
+Its thumbnail and counter come from the same pending list. Asset geometry follows [asset-icon-rendering.md](asset-icon-rendering.md). A score objective may bias the first matching focus target, but the command still does not execute the decision.
 
-This gate covers units with movement, cities without production, and missing
-active research. The smart end-turn CTA is therefore implemented through
-`Action`, without a separate confirmation modal.
+## Movement evidence
 
-In `Action` mode, the button shows a thumbnail of the next item from the same
-list exposed in the expanded menu: units use `UnitSpriteIcon`, cities use
-`CitySpriteIcon`, and research uses the recommended technology if known. When
-the right segment of the action list is visible with a `1/2` counter, the
-thumbnail is anchored to the right side of that segment; without the segment it
-returns to the right edge of the main button. A soft mask keeps high
-transparency on the left and ramps toward 85% final visibility on the right,
-creating the effect of the icon emerging from the background.
+Every accepted movement-producing transition carries explicit ordered `movementExecutions`.
 
-Inside the right segment, the asset renders at about 140% of base size and is
-shifted slightly beyond the top and right edge so it reads as a layer emerging
-behind the button corner. City thumbnails still use frames and corrections from
-`CitySpriteCatalog`, but in this segment they render with `BoxFit.cover`, fill
-100% of button height, anchor right, and use a less transparent mask so the
-asset edge is not visible. Their opacity ramps more slowly than research
-thumbnails, and all toolbar thumbnails end at 85% mask visibility. Units use a
-separate slower fade curve so the silhouette does not appear too abruptly. The
-action counter in the segment has a subtle glow to stay readable over the
-asset. After an action completes, the pending-decision list rebuilds and the
-thumbnail moves to the next action in the same order.
+- non-empty evidence is validated and animated in the supplied global order;
+- `[]` means no movement visible to that recipient;
+- missing or malformed evidence invalidates the strict envelope;
+- recovery snapshots, stale events, and offset gaps apply state without inferred animation;
+- `UnitMovedEvent` remains notification/history data and does not create a duplicate renderer move.
 
-The detailed asset-icon rendering contract lives in
-`docs/game-design/asset-icon-rendering.md`.
+Recipient projection omits an entire route when revealing any segment would leak hidden movement. The owner may receive the complete chain.
 
-If the current selection already matches the current queue item, the thumbnail
-on `Action` shows the next item because that is where clicking will go. With a
-single action, the thumbnail is hidden only when the selection already matches
-that action; if the object is not selected, the thumbnail still shows the click
-target. Unit thumbnails have a light per-type scale correction, with the worker
-as reference, so slimmer sprites do not look optically smaller in the same
-button location.
-
-When a selected unit has exactly 1 movement point and can still act, the `Skip`
-command in the bottom toolbar pulses its border. This reminds the player that
-the remaining movement can be intentionally closed instead of looking for a
-forced action.
-
-## Explicit Automatic Actions
-
-Automatic actions do not change the turn-start flow. They are treated like
-normal commands available after selecting a unit.
-
-| Action | When visible | Result |
-| --- | --- | --- |
-| `Explore` | Active scout with movement or scout in `autoExploring` | Enables or cancels automatic exploration |
-
-`Explore` stores the explicit `UnitPosture.autoExploring` posture. A scout with
-that posture does not block next-action selection for the turn; at the start of
-the next turn it receives another legal exploration move. Manual movement or
-canceling the action clears posture back to `active`.
-
-## Turn Target Ranking
-
-The ranking is shared by turn start and the "next action" button. Only the list
-start point differs.
-
-| Priority | Target | Condition |
-| --- | --- | --- |
-| 1 | Combat unit | Has movement points, is not working, has no queued path, is not fortified |
-| 2 | Worker/settler | Has movement points, is not working, has no queued path, is not fortified |
-| 3 | Other unit | Has movement points and requires a decision |
-| 4 | City without production queue | Active player must choose production |
-| 5 | Research | Active player has no active technology and has an available technology |
-
-Combat units with visible enemies rank above combat units without contact.
-Within the same category, keep the stable order from the unit list.
-
-## State After Unit Selection
-
-When turn start selects a unit:
-
-| Field | Required state |
-| --- | --- |
-| `GameState.selection` | `GameSelection.unit(...)` for the selected unit |
-| `GameState.selectedUnitId` | Selected unit id |
-| `GameState.moveCommandActive` | `true` if the unit is controllable and has movement |
-| `GameState.movePreview` | `null` until the player points at a movement target |
-| Camera | `SmoothCameraEffect` to the unit position |
-
-`movePreview` is not created automatically because it requires a movement
-target. Entering movement targeting only means the UI is ready for the player
-to choose a destination hex.
-
-## Authoritative Movement Animations
-
-Every movement-producing transition carries an explicit authoritative
-`movementExecutions` list. A regular `MoveUnitCommand` carries its exact single
-`MovementCommandExecution`. Simultaneous-turn finalization carries the complete
-globally ordered chain for queued-path and automatic turn movement. These
-executions, not a synthetic `UnitMovedEvent` or a snapshot delta, are the
-animation source. They carry each exact origin, travel step, entry cost, and
-cumulative cost through server persistence and recipient projection.
-
-The presentation contract is:
-
-| Transition evidence | Renderer behavior |
-| --- | --- |
-| Non-empty authoritative executions | Validate complete per-unit chains against the previous and next snapshots, then play them in the supplied global order |
-| Explicit authoritative `[]` | Treat the lack of visible movement as intentional, apply state without movement animation, and never infer movement from the snapshot delta |
-| Missing key, JSON `null`, or malformed evidence | Reject the invalid strict event-v3 or ACK-v4 envelope |
-| Snapshot recovery, offset gap, stale event, or mismatched attached snapshot | Apply authoritative state without movement animation and never infer movement from the snapshot delta |
-| `UnitMovedEvent` beside authoritative executions | Keep it for activity/notification semantics and suppress its duplicate renderer move |
-
-The global order may interleave segments from the same unit. Given
-`[A1, B1, A2]`, the renderer completes A1, keeps A's marker at that intermediate
-destination while B1 runs and while A2's camera pre-roll starts, then begins A2
-from the retained position. Only A's final segment releases the position lock
-and synchronizes it to the authoritative snapshot. Reduced-motion mode follows
-the same ownership and final-sync rules synchronously.
-
-Recipient projection never exposes part of a hidden unit route. An opponent
-receives the whole chain only when its origin and every executed coordinate are
-visible in both the previous and next fog state; otherwise that unit's complete
-chain is omitted and the recipient receives explicit empty evidence when
-nothing remains visible. The owner can receive the complete chain.
-
-The command caller receives movement through the direct ACK and is excluded
-from the matching event broadcast. Other recipients receive the projected live
-event. Retrying the same accepted command reuses its stored plan and offset
-without creating another transition, while client echo and offset guards keep
-it from animating twice.
-
-Reconnect installs the latest snapshot and requests only events newer than
-that state, so movement already represented by the snapshot is not replayed.
-Recovery never reconstructs a movement animation from the snapshot delta.
-`NetworkEventLog` remains an activity/history reader rather than an exact
-renderer replay source; durable exact animation replay is a separate
-event-plan contract.
-
-This contract guarantees route and order, not shared wall-clock animation
-timing. Protocol v4 still has no authoritative start tick or cross-client
-clock, and camera pre-roll, reduced-motion settings, runtime load, or recipient
-filtering can change local timing. Exact same-moment playback for every client
-remains the separate Etap 4 versioned `AnimationPlan` and virtual-clock
-milestone.
-
-## Fallback
-
-If ranking does not produce a map target, the HUD tries to focus the camera on
-the first known object owned by the player:
-
-1. first unit of the active player,
-2. first city of the active player.
-
-The fallback must not create an artificial decision. It only avoids a turn
-start that shows no meaningful map location to the player.
+Reconnect starts from the latest projected snapshot and does not replay movement already represented by that state. The protocol guarantees route and order, not identical wall-clock animation timing across devices.

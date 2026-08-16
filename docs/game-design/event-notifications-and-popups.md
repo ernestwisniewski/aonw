@@ -1,58 +1,22 @@
-# Event Notifications and Popups
+# Event notifications and popups
 
-This document describes popups built from `gameEventNotificationsProvider`.
+Notifications provide one event-to-message model for toasts, activity history, focus actions, and selected popups. A popup may have its own layout and local mute preference without changing the domain event.
 
-## Principle
+## First contact
 
-A popup may use the same source as a toast and the activity log, but it does
-not need the same shape or settings. Technologies still use their own popup
-with a "Do not show again" option. Civilization contact also has a per-save,
-per-player "Do not show again" setting, because repeated first-contact popups
-are noisy in hotseat and long-running test saves.
+`CivilizationMetEvent` is projected by comparing the previous and current recipient state. Contact occurs when the active player first sees a rival unit or remembers a rival city through fog of war.
 
-## Civilization Contact
+The game does not persist a second "known civilizations" aggregate for this UI. The popup mute preference is local and keyed by save and player in `SharedPreferences`; it is not multiplayer state.
 
-`CivilizationMetEvent` is the first-contact UI event. The notification provider
-derives it by comparing `previousState` with the new `GameState` for the active
-player:
+The contact notification:
 
-| Contact | Condition |
-| --- | --- |
-| Visible rival unit | The unit hex enters the active player's `visibleHexes` |
-| Known rival city | The city hex enters the active player's discovered hexes |
+- names the nation, leader, and player;
+- appears in the toast and activity feed;
+- can focus the first known city or unit;
+- is delivered through the same projection path for local play, AI turns, and live multiplayer updates.
 
-We do not add a separate "known civilizations" field to the save file. The
-popup appears when a specific state transition reveals a new object owner in
-vision or map memory. This keeps the logic close to fog of war and avoids
-another migration-bearing state field.
+## Wonders
 
-The mute state is intentionally not part of the save payload. It is stored in
-local `SharedPreferences` under
-`game.<saveId>.player.<playerId>.civilization_met_popup.show`, so suppressing
-the popup affects only that local device/user preference and not multiplayer
-state.
+Wonder completion uses normal city-event notifications. `CityBuiltWonderEvent` reports the winner; `WonderProductionRefundedEvent` reports losing queues after invested production returns to overflow.
 
-In the HUD:
-
-- the toast and activity log receive the `New civilization` title,
-- the dedicated `CivilizationMetPopupOverlay` shows the nation, leader, and
-  player,
-- the popup has a `Do not show again` checkbox backed by the per-player local
-  setting,
-- tapping the toast focuses the first known city or unit of the encountered
-  player.
-
-## Multiplayer
-
-Network snapshots after live events pass events to
-`gameEventNotificationsProvider` after the renderer has applied them. That
-keeps the same mechanism working for local commands, single-player AI, and
-opponent moves in multiplayer.
-
-## World Wonders
-
-World wonder completion uses the standard city-event notification path. A
-completed wonder emits `CityBuiltWonderEvent` for the winning city, while losing
-queues that were racing the same wonder emit `WonderProductionRefundedEvent`
-after their invested production is returned to overflow. Both events are visible
-in the activity log and can focus the affected city.
+Technology completion keeps its dedicated popup and local "do not show again" preference. Do not add UI preference fields to save or protocol state.

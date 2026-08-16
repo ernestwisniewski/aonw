@@ -4,21 +4,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Made with Flutter](https://img.shields.io/badge/Made%20with-Flutter-02569B.svg)](https://flutter.dev)
 
-Age of New Worlds is an open-source hex-based 4X strategy game currently built
-with Flutter, Flame, Dart, and Serverpod. It includes a playable cross-platform
-client, a shared rules package, and a server-backed multiplayer foundation;
-Rust and Godot belong to the accepted successor architecture described below.
+Age of New Worlds is an open-source, turn-based 4X game built around a hex map. The shipping client uses Flutter and Flame, shared gameplay rules live in Dart, and online matches are hosted by Serverpod.
 
-The authoritative Dart rules are being prepared for an incremental migration
-to a shared Rust engine under `engine/`. The existing Flutter/Flame game remains
-the fully supported AoNW1 client throughout that work, while a separate Godot
-AoNW2 presentation client will consume the same engine. The migration intent,
-compatibility requirements, and cutover gates are documented in the
-[Rust Engine Migration Plan](docs/rust-engine-migration.md).
-
-The game currently focuses on the core 4X loop: exploration, fog of war,
-movement, city growth, production, research, combat, save/load, AI opponents,
-and online multiplayer infrastructure.
+A Rust engine is being introduced incrementally under `engine/`. It already powers the experimental Godot client, but `packages/aonw_core/` remains the production rules implementation until the migration gates are complete.
 
 ## Public Links
 
@@ -36,202 +24,87 @@ and online multiplayer infrastructure.
 
 | Area | Purpose |
 | --- | --- |
-| `lib/game/` | Flutter client gameplay, UI, Flame rendering, local persistence, and adapters. |
-| `packages/aonw_core/` | Current production Dart rules, protocol models, and AI; planned to be replaced by the shared Rust engine in `engine/` after migration gates pass. |
-| `packages/aonw_server_client/` | Generated Serverpod client package used by the Flutter app. |
-| `server/` | Serverpod backend, auth adapters, multiplayer services, and persistence. |
-| `engine/` | Rust workspace for the shared domain, versioned content, contracts, validated mapping, testkit, and deterministic engine boundary; it is not production-integrated yet. |
-| `content/` | Versioned logical maps and their schemas, shared by Rust and presentation clients. |
-| `clients/aonw_flutter/` | Final location planned for the Flutter/Flame AoNW1 presentation client after Dart Core retirement; Flutter remains at the repository root during migration. |
-| `clients/aonw2_godot/` | Godot 3D presentation client with a textured continuous map surface and optional hex overlay; it does not own gameplay rules. |
-| `docs/` | Architecture, gameplay, operations, release, and publishing documentation. |
+| `lib/game/` | Flutter client orchestration, UI, Flame rendering, persistence, and adapters. |
+| `packages/aonw_core/` | Production Dart rules, protocol models, and AI. |
+| `packages/aonw_server_client/` | Generated Serverpod client used by Flutter. |
+| `server/` | Serverpod backend, authentication, multiplayer lifecycle, and persistence. |
+| `engine/` | Rust workspace for the successor deterministic engine and native adapters. |
+| `content/` | Versioned logical maps and scenarios shared with Rust and Godot. |
+| `clients/aonw_flutter/` | Reserved final location for Flutter after the Dart engine is retired. The active app remains at the repository root. |
+| `clients/aonw2_godot/` | Godot 3D presentation client and map workbench. Gameplay rules stay in Rust. |
+| `docs/` | Architecture, gameplay contracts, quality policy, and runbooks. |
 
-`engine/` contains the pure Rust foundation and validated map content boundary.
-The Godot client contains an executable 3D map preview; the Flutter client
-remains at the repository root. Platform directories and release tooling stay
-there until the Dart engine has been safely retired; its final move is a
-separate mechanical cleanup.
+## Quick start
 
-## Quick Start
-
-The canonical local and CI SDK pin is [`.fvmrc`](.fvmrc). Install that exact
-Flutter release and use its bundled Dart SDK. FVM is optional; if used,
-`fvm install --setup --skip-pub-get` creates `.fvm/flutter_sdk` without
-resolving dependencies outside the locked bootstrap; Make automatically places
-that SDK first on `PATH`. Bootstrap all four locked packages and the matching
-Serverpod CLI with one command:
+Use the Flutter version pinned in [`.fvmrc`](.fvmrc). FVM is optional; Make uses `.fvm/flutter_sdk` automatically when it exists.
 
 ```sh
 make bootstrap
-```
-
-Bootstrap fails before dependency resolution when the active Flutter/Dart pair
-differs from `.fvmrc`. It does not generate code, start services, or alter
-tracked lockfiles.
-
-For the full local quality gate:
-
-```sh
 make ci
 ```
 
-`make ci` includes generated-code drift, formatting, analysis, architecture,
-mutation, deterministic performance, and coverage gates, plus the
-generated-client smoke test. The
-generated-code gate uses an isolated snapshot of the current workspace, so
-checking root and `aonw_core` build-runner output, localizations, Serverpod
-output, and migrations never rewrites the active checkout. It requires the
-Serverpod CLI version pinned by the backend; `make bootstrap` installs or
-verifies that CLI as part of workspace setup.
+`make bootstrap` installs the locked package graphs and the matching Serverpod CLI. It does not generate code, start Docker, or alter lockfiles.
 
-Run `make analyze` for the focused, fatal static-analysis gate across all four
-packages. Its shared rules, generated-code exceptions, and extension procedure
-are documented in [the static-analysis policy](docs/static-analysis.md).
-
-Run `make coverage-check` for the line-coverage gate across the Flutter app,
-shared core, and server. It enforces exact per-layer instrumented totals,
-portable coverage floors, a non-regressing historical ratchet, and 90%
-changed-line coverage; see the [test coverage policy](docs/test-coverage.md).
-
-Run `make architecture` for the repository-wide Dart census, role-specific
-file/type targets, callable length, nesting, cyclomatic and cognitive
-complexity, and the exact legacy-debt ratchet; see
-[the architecture-budget policy](docs/architecture-budgets.md).
-
-Run `make mutation` for deterministic mutation testing of the critical combat
-wire format, unit-command decisions, and authentication input validation. The
-gate accepts only real behavioral test failures as kills and keeps an exact
-target/operator census with a historical survivor ratchet; see the
-[mutation-testing policy](docs/mutation-testing.md).
-
-Run `make performance` for deterministic map, persistence, replay, AI, and
-headless renderer workloads. Portable CI gates work counters and output
-fingerprints; headless wall-clock percentiles remain diagnostic. A report from
-the pinned profile device can be enforced with `make performance-frame-check`.
-See the
-[performance benchmark policy](docs/performance-benchmarks.md).
-
-When generator inputs change, regenerate the affected output deliberately in
-the real checkout, review the diff, and commit it:
+Useful focused checks:
 
 ```sh
-flutter pub run build_runner build
-(cd packages/aonw_core && dart run build_runner build)
-flutter gen-l10n
-(cd server && dart pub global run serverpod_cli:serverpod_cli generate)
-(cd server && dart pub global run serverpod_cli:serverpod_cli create-migration)
-make generated-code-check
+make analyze
+make coverage-check
+make architecture
+make mutation
+make performance
 ```
 
-## Local Backend
+## Run the Flutter client
 
-Copy the sample environment and replace every placeholder secret before running
-services:
+For offline work, run the app with the normal Flutter tooling after bootstrap.
+
+For the local multiplayer stack:
 
 ```sh
 cp .env.example .env
+# Replace every placeholder secret in .env.
 make local-start
-```
-
-`make local-start` starts PostgreSQL, Redis, and the Serverpod API in Docker,
-waits for readiness, and seeds four reusable multiplayer accounts. Run the web
-client with the stable Google OAuth origin and Docker API in one command:
-
-```sh
 make local
 ```
 
-The local web app runs at `http://localhost:7357` and targets the Docker API at
-`http://localhost:8080`. The seeded accounts are `test1@example.test` through
-`test4@example.test`, all using `AonwTest123!`. Use separate browser profiles
-or a normal and private window to test two players concurrently.
+The web client runs at `http://localhost:7357` and the API at `http://localhost:8080`. Four local accounts are seeded as `test1@example.test` through `test4@example.test`; the shared development password is `AonwTest123!`.
 
-For an automated multiplayer round trip, including the global quickplay queue,
-public-lobby discovery and join, realtime streams, commands, reconnect, and
-persisted event history, run:
+Run the automated multiplayer smoke with:
 
 ```sh
 make local-multiplayer-smoke
 ```
 
-Desktop/web/iOS/macOS builds use `http://localhost:8080` by default. The
-Android emulator uses `http://10.0.2.2:8080`. Google Web requires the stable
-`http://localhost:7357` origin. Apple Web still requires a registered public
-HTTPS callback; native Apple sign-in can use the local API.
-
-Stop the local stack without deleting its data with `make local-down`.
-
-For a faster server edit loop, run only dependencies in Docker and start
-Serverpod on the host:
+Stop the stack without removing its data:
 
 ```sh
-cd server
-docker compose -f compose.yml up -d postgres redis
-dart run bin/main.dart \
-  --mode=development \
-  --server-id=local \
-  --logging=normal \
-  --role=monolith \
-  --apply-migrations
+make local-down
 ```
 
-Run the hermetic PostgreSQL gate, including every Serverpod integration smoke
-and the public critical E2E journey, with:
+## Rust and Godot
+
+The Rust workspace and Godot client are separate from the shipping Flutter path.
 
 ```sh
-tool/run_postgres_smoke.sh
+make rust-check
+make godot-check
+make godot-editor
+make godot-run
 ```
 
-Focused Serverpod targets require an already provisioned `aonw_test` database;
-the local persistence journey does not require PostgreSQL and runs with
-`make local-game-e2e-test`.
+Read [the migration plan](docs/rust-engine-migration.md) before moving rules across the Dart/Rust boundary.
 
 ## Documentation
 
-Start with [docs/README.md](docs/README.md) for the architecture map and
-document index.
+Start with [docs/README.md](docs/README.md). It explains which implementation is authoritative, where each subsystem lives, and which checks apply to a change.
 
-Recommended entry points:
-
-- [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, localization, and pull
-  request expectations.
-- [docs/rust-engine-migration.md](docs/rust-engine-migration.md) for the target
-  `engine/` structure, DDD boundaries, Flutter continuity, Godot AoNW2, parity,
-  cutover, rollback, and Dart Core retirement criteria.
-- [docs/build-and-deploy.md](docs/build-and-deploy.md) for builds, releases,
-  server deploys, store uploads, and public download packaging.
-- [docs/multiplayer-protocol.md](docs/multiplayer-protocol.md) before changing
-  Serverpod protocol surfaces, multiplayer sessions, or realtime streams.
-- [docs/test-coverage.md](docs/test-coverage.md) for measured scopes, baseline
-  updates, exclusions, and changed-line coverage.
-- [docs/critical-e2e.md](docs/critical-e2e.md) for the local save/reload and
-  public Serverpod auth/match/command/reconnect release journeys.
-- [docs/architecture-budgets.md](docs/architecture-budgets.md) for the complete
-  Dart-source census, role-specific targets, and exact legacy-debt ratchet.
-- [docs/mutation-testing.md](docs/mutation-testing.md) for critical mutation
-  scopes, deterministic execution, and the survivor ratchet.
-- [docs/performance-benchmarks.md](docs/performance-benchmarks.md) for workload
-  scales, the stable baseline, timing diagnostics, and renderer frame budgets.
-- [docs/adr/README.md](docs/adr/README.md) before changing architecture
-  ownership, command semantics, compatibility policy, or deployment identity.
-- `docs/game-design/` for gameplay systems, balance, UX, and
-  rendering behavior.
+Contribution setup and pull-request expectations are in [CONTRIBUTING.md](CONTRIBUTING.md). Architecture decisions are indexed in [docs/adr/README.md](docs/adr/README.md).
 
 ## Localization
 
-The app ships English, Polish, German, Spanish, Dutch, and French. English is
-the source language in `lib/l10n/app_en.arb`; other locales translate it and
-fall back to English. See [CONTRIBUTING.md](CONTRIBUTING.md) before changing
-user-facing text.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, and contribution
-expectations. Community behavior is covered in
-[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), and security reporting is covered in
-[SECURITY.md](SECURITY.md).
+English is the source language in `lib/l10n/app_en.arb`. The app also ships Polish, German, Spanish, Dutch, and French. Regenerate localization output with `flutter gen-l10n` after changing ARB files.
 
 ## License
 
-Code is released under the [MIT License](LICENSE). Asset and third-party
-notices are summarized in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Code is released under the [MIT License](LICENSE). Asset and dependency notices are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

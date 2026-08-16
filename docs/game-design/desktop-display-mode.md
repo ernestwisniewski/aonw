@@ -1,32 +1,15 @@
-# Desktop Display Mode
+# Desktop display mode
 
-The Linux, macOS, and Windows clients start in native full-screen mode. A
-player can opt into windowed mode in **Main menu > Settings > Graphics**. The
-choice is persisted locally and applied before the desktop window is shown on
-the next launch.
+Linux, macOS, and Windows start in native full-screen mode. The player can choose windowed mode in **Settings > Graphics**; the preference is stored locally and applied before the next desktop window is shown.
 
-## Ownership
+Display mode belongs to the application shell:
 
-Display mode belongs to the application shell rather than the game domain:
+- `DisplaySettings` — persisted preference;
+- `DisplaySettingsController` — application coordination;
+- `GameWindow` — platform port;
+- `PlatformGameWindow` — desktop adapter;
+- `DisplayBootstrap` — applies the preference before `HexApp` mounts.
 
-- `DisplaySettings` represents the persisted player choice;
-- `DisplaySettingsController` coordinates UI state, persistence, and the
-  window port;
-- `GameWindow` is the platform boundary;
-- `PlatformGameWindow` adapts the Linux, macOS, and Windows window manager;
-- `DisplayBootstrap` applies the stored choice before `HexApp` is mounted.
+Mobile and web do not expose the setting. A failed transition restores the previous UI/window state and does not persist the failed choice.
 
-Mobile and web clients do not expose the setting. A failed runtime transition
-restores the prior UI and window state and leaves the stored preference
-unchanged.
-
-## Layout Contract
-
-Changing display mode changes the logical Flutter viewport. Flutter and Flame
-continue to handle device-pixel ratio and resize notifications. The map keeps
-its current camera zoom, so a larger viewport shows more world; display mode
-does not introduce a virtual resolution or global UI transform.
-
-Responsive widgets must continue to base layout decisions on their available
-constraints. Full-screen behavior should be checked on standard, short, and
-ultrawide desktop viewports when changing menu or HUD layouts.
+Changing mode changes the Flutter viewport. It does not add a virtual resolution, reset camera zoom, or scale the entire HUD manually. Layout code continues to use available constraints and should be checked on short, standard, and ultrawide desktop viewports.
