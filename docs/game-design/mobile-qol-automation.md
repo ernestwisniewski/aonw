@@ -2,6 +2,18 @@
 
 Automation is opt-in and reduces repetitive input. It never bypasses command legality or hides a private plan outside canonical state.
 
+```mermaid
+stateDiagram-v2
+  [*] --> Manual
+  Manual --> Automated: player enables auto-explore or auto-work
+  Automated --> Replan: turn starts or state changes
+  Replan --> Execute: legal target exists
+  Execute --> Replan: next turn
+  Replan --> Stopped: no legal useful action
+  Automated --> Stopped: manual move or cancel
+  Stopped --> Manual
+```
+
 ## Shared rules
 
 - the player explicitly enables an automatic mode;

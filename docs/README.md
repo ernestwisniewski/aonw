@@ -16,27 +16,25 @@ This directory documents contracts that are easy to misuse or expensive to redis
 
 ## Current architecture
 
-The shipping game still uses the Dart engine:
+The shipping Dart engine and the Rust successor coexist during the strangler migration:
 
-```text
-Flutter / Flame
-  -> application and transport adapters
-  -> packages/aonw_core
+```mermaid
+flowchart LR
+  subgraph Today["Production today"]
+    Flutter["Flutter / Flame"] --> ClientAdapters["Application and transport adapters"]
+    ClientAdapters --> DartCore["packages/aonw_core"]
+    Serverpod["Serverpod"] --> DartCore
+    Serverpod --> PostgreSQL[(PostgreSQL)]
+  end
 
-Serverpod
-  -> authenticated multiplayer services
-  -> packages/aonw_core
-  -> PostgreSQL
-```
+  subgraph Successor["Successor path"]
+    FlutterFuture["Flutter local client"] --> RustRuntime["engine/ Rust runtime"]
+    Godot["Godot AoNW2"] --> RustRuntime
+    ServerpodFuture["Serverpod online host"] --> RustRuntime
+    ServerpodFuture --> PostgreSQLFuture[(PostgreSQL)]
+  end
 
-The successor path is developed alongside it:
-
-```text
-Flutter (future local backend) ----\
-                                   -> engine/ Rust runtime
-Godot AoNW2 -----------------------/
-
-Serverpod remains the online host, transaction owner, and persistence boundary.
+  DartCore -. parity-tested migration .-> RustRuntime
 ```
 
 Until the cutover gates pass:

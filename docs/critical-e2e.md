@@ -7,6 +7,17 @@ Two stateful journeys protect boundaries that unit tests do not cover completely
 | Local save and reload | use cases, command transport, event log, snapshot store, fresh runtime | `test/game/local_game_persistence_flow_test.dart` |
 | Public multiplayer | auth, JWT refresh, PostgreSQL, generated client, WebSocket stream, idempotent command, reconnect | `tool/serverpod_critical_e2e.dart` |
 
+```mermaid
+flowchart LR
+  subgraph Local["Local save and reload"]
+    L1["Create runtime"] --> L2["Dispatch deterministic commands"] --> L3["Persist event log + snapshot"] --> L4["Replace runtime"] --> L5["Bootstrap / replay"] --> L6["Assert durable state"]
+  end
+
+  subgraph Online["Public multiplayer"]
+    O1["Authenticate"] --> O2["Open HTTP + WebSocket session"] --> O3["Send idempotent command"] --> O4["Persist in PostgreSQL"] --> O5["Reconnect + recover"] --> O6["Assert snapshot and offset"]
+  end
+```
+
 Both journeys use deterministic commands and assert durable state. They do not treat widget internals, fixed delays, or injected authentication as evidence.
 
 ## Commands

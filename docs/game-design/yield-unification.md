@@ -2,6 +2,21 @@
 
 City economy, tile inspection, worker recommendations, AI, and supply must use one active ruleset instead of private value tables.
 
+```mermaid
+flowchart LR
+  Rules["Active CityRuleset and catalogs"] --> Tile["TileYieldRules / CityTileYieldRules"]
+  Rules --> Science["ScienceYieldCalculator"]
+  Tile --> Economy["City economy and selection breakdown"]
+  Tile --> Worker["Worker recommendations"]
+  Tile --> Supply["Unit supply"]
+  Tile --> AI["AI and telemetry"]
+  Science --> Research["Research progress and forecasts"]
+  Economy --> UI["UI read models"]
+  Worker --> UI
+  Supply --> UI
+  Research --> UI
+```
+
 ## Sources of truth
 
 | Value | Owner |

@@ -2,6 +2,18 @@
 
 `MapValidator` rejects unusable setups and warns about poor pacing before a match starts. It reports problems; it does not generate or repair maps.
 
+```mermaid
+flowchart LR
+  Input["Selected map + player count + pace profile"] --> Validator["MapValidator"]
+  Validator --> Problems["Stable validation problem codes"]
+  Problems --> Errors{"Any errors?"}
+  Errors -- yes --> Block["Block local start or online match creation"]
+  Errors -- no --> Warnings{"Any warnings?"}
+  Warnings -- yes --> Confirm["Show dismissible warning confirmation"]
+  Warnings -- no --> Start["Start match"]
+  Confirm --> Start
+```
+
 ## Severity
 
 - **Error** — normal play should not start.

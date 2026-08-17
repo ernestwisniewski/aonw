@@ -19,6 +19,19 @@ Input and output use four distinct categories:
 | `SystemCommand` | Trusted deterministic transition such as timeout or forced finalization. Never exposed through the player command endpoint. |
 | `DomainEvent` | Accepted domain fact. Not a command, UI effect, or log instruction. |
 
+```mermaid
+flowchart LR
+  Input["Tap / controller input"] --> Intent["GameIntent"]
+  Intent --> Controller["Presentation controller"]
+  Controller --> Domain["DomainCommand"]
+  AI["AI planner"] --> Domain
+  Scheduler["Trusted scheduler / timeout"] --> System["SystemCommand"]
+  Domain --> Engine["Deterministic engine"]
+  System --> Engine
+  Engine --> Event["DomainEvent"]
+  Event --> Projection["Persistence / transport / UI projection"]
+```
+
 Actor identity, match id, client request id, tick, expected turn/offset, and authentication evidence belong to the command envelope or context. The server derives the actor from the authenticated session and rejects conflicting payload data.
 
 The domain and trusted command codecs are separate, exhaustive, and fail closed for unknown or partial variants. UI effects are projections of accepted events plus local interaction state.

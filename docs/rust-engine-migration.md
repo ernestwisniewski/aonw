@@ -7,6 +7,19 @@
 
 Age of New Worlds is moving authoritative gameplay rules from Dart to Rust so the same engine can serve Flutter, Godot, AI, replay, and Serverpod. This is a compatibility port, not a gameplay rewrite.
 
+```mermaid
+flowchart LR
+  Contracts["1. Stabilize deterministic contracts"] --> Slices["2. Port complete vertical slices"]
+  Slices --> Clients["3. Prove Flutter and Godot boundaries"]
+  Clients --> Modes["4. Add complete backend modes"]
+  Modes --> Cutover["5. Cut over new saves and matches"]
+  Cutover --> Retire["6. Retire Dart authority"]
+
+  Dart["packages/aonw_core<br/>production reference"] -. parity fixtures .-> Slices
+  Slices -. accepted/rejected output, digests, events, evidence .-> Dart
+  Modes -. kill switch / rollback .-> Dart
+```
+
 ## Current checkpoint
 
 The Rust workspace has a working vertical slice for strict content, canonical state, movement queries and transitions, fog, diplomacy, cities, roads, save/replay contracts, local runtime sessions, recipient-safe patches, initial unit actions, and thin Godot/Flutter native adapters.
@@ -29,6 +42,26 @@ The current crate inventory and commands are documented in [`../engine/README.md
 8. Public protocol and durable schema changes follow their existing compatibility process; a language port does not imply a version bump.
 
 ## Target ownership
+
+```mermaid
+flowchart TB
+  subgraph Pure["Pure deterministic Rust"]
+    Domain["Domain + engine"]
+    Contracts["Content + versioned contracts"]
+    Projection["Recipient projection"]
+    Contracts --> Domain
+    Domain --> Projection
+  end
+
+  Runtime["Local runtime"] --> Domain
+  Runtime --> Projection
+  Flutter["Flutter adapter"] --> Runtime
+  Godot["Godot adapter"] --> Runtime
+  Serverpod["Serverpod host"] --> Domain
+  Serverpod --> Projection
+  Serverpod --> DB[(PostgreSQL)]
+
+```
 
 | Component | Responsibility |
 | --- | --- |

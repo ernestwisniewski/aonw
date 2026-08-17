@@ -14,6 +14,19 @@ Server startup can also apply migrations, coupling application replicas to a sin
 
 A release is one immutable artifact set built once from a selected green source SHA and promoted unchanged.
 
+```mermaid
+flowchart LR
+  Green["Green source SHA"] --> Build["Build once"]
+  Build --> Manifest["Release manifest + immutable digests"]
+  Manifest --> Staging["Deploy the same digests to staging"]
+  Migration["Separate migration job using the same image"] --> Staging
+  Staging --> Verify["Startup + liveness + readiness + synthetic smoke"]
+  Verify --> Production["Promote the same digests to production"]
+  Migration --> Production
+  Production --> Observe["Observe health"]
+  Observe -->|failure| Previous["Select the retained previous manifest"]
+```
+
 A release manifest binds:
 
 - source SHA and application versions;

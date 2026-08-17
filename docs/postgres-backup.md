@@ -2,6 +2,16 @@
 
 Docker volumes are not backups. Production and shared staging data need custom-format `pg_dump` files on durable storage and a regular restore test.
 
+```mermaid
+flowchart LR
+  DB[(PostgreSQL)] --> Dump["Custom-format pg_dump"]
+  Dump --> Files["Timestamped .dump + .sha256"]
+  Files --> Local["Retention-managed backup directory"]
+  Local --> Offsite["Durable offsite or object storage"]
+  Files --> Throwaway[(Empty throwaway database)]
+  Throwaway --> Verify["Migration table + startup and match checks"]
+```
+
 ## Create a backup
 
 ```sh
@@ -28,6 +38,16 @@ AONW_RESTORE_DATABASE_URL="$AONW_EMPTY_RESTORE_DATABASE_URL" \
 The restore script refuses to target `DATABASE_URL` unless `AONW_RESTORE_ALLOW_PROD=true` is set. It verifies that the Serverpod migration table is readable after restore.
 
 ## Incident restore
+
+```mermaid
+flowchart TD
+  Stop["Stop writes or remove API from traffic"] --> Target["Create or select target database"]
+  Target --> Checksum["Verify dump checksum"]
+  Checksum --> Restore["Run restore.sh against the target"]
+  Restore --> Start["Start Serverpod"]
+  Start --> Health["Check startupz, livez, readyz, auth, and known match load"]
+  Health --> Evidence["Retain dump, output, and incident notes"]
+```
 
 1. Stop application writes or remove the API from traffic.
 2. Create or select the target database.

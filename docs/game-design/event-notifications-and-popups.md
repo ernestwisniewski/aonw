@@ -2,6 +2,19 @@
 
 Notifications provide one event-to-message model for toasts, activity history, focus actions, and selected popups. A popup may have its own layout and local mute preference without changing the domain event.
 
+```mermaid
+flowchart LR
+  Event["Accepted domain event"] --> Projection["Notification projection"]
+  Previous["Previous recipient state"] --> Projection
+  Current["Current recipient state"] --> Projection
+  Projection --> Model["GameEventNotification"]
+  Model --> Toast["Toast"]
+  Model --> Activity["Activity history"]
+  Model --> Focus["Map focus action"]
+  Model --> Popup["Selected popup layout"]
+  Preference["Local mute preference"] -. presentation only .-> Popup
+```
+
 ## First contact
 
 `CivilizationMetEvent` is projected by comparing the previous and current recipient state. Contact occurs when the active player first sees a rival unit or remembers a rival city through fog of war.

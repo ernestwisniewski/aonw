@@ -2,6 +2,16 @@
 
 Combat preview is an informational projection of the real instant-combat resolver. It spends no movement, changes no state, and emits no events.
 
+```mermaid
+flowchart LR
+  State["Current state + explicit context"] --> Shared["Shared modifier collectors + CombatResolver"]
+  Shared --> Preview["Read-only combat preview"]
+  Shared --> Command["Accepted attack transition"]
+  Preview -. parity test .-> Command
+  Preview --> UI["HP, stats, retaliation, and outcome"]
+  Command --> Events["State change + combat events"]
+```
+
 ## Visibility
 
 A prediction is shown only when:

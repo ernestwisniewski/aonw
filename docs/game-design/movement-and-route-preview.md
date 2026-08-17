@@ -2,6 +2,17 @@
 
 Authoritative movement plans and costs come from `aonw_core` today and from the Rust engine after cutover. Flutter/Flame renders a `UnitMovementPlan`; it does not recalculate reachability.
 
+```mermaid
+flowchart LR
+  State["Authoritative state + map + ruleset"] --> Engine["Pathfinding and UnitTraversalCostResolver"]
+  Engine --> Plan["UnitMovementPlan"]
+  Plan --> Command["Movement command resolution"]
+  Plan --> Preview["Flutter / Flame route preview"]
+  Command --> Evidence["Ordered movementExecutions"]
+  Evidence --> Animation["Authoritative movement animation"]
+  Preview -. renders only .-> Animation
+```
+
 ## Cost model
 
 Entry cost is based on the destination tile. There is no exit cost.

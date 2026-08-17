@@ -2,6 +2,19 @@
 
 Wonders are globally unique production targets. They are not ordinary city buildings because they need worldwide ownership, race resolution, host-city state, and empire-wide effects.
 
+```mermaid
+flowchart TD
+  Start["Eligible city starts a wonder"] --> Invest["Invest production or rush through the shared resolver"]
+  Invest --> Finish{"One or more players finish this turn?"}
+  Finish -- no --> Invest
+  Finish -- yes --> Order["Apply deterministic player processing order"]
+  Order --> Winner["Winner completes and hosts the wonder"]
+  Order --> Losers["Remove losing queues and refund invested production to overflow"]
+  Winner --> Capture{"What happens to the host city?"}
+  Capture -- captured --> Transfer["Transfer host and active effects"]
+  Capture -- destroyed --> Inactive["Wonder remains completed but inactive"]
+```
+
 ## Ownership
 
 `WonderRegistry` records the player that completed each wonder, while the host city stores the wonder itself. The registry blocks future production globally.

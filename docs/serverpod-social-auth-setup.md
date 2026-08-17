@@ -4,6 +4,27 @@ The backend uses Serverpod Auth Core for sessions, Google and Apple through Serv
 
 Provider-console settings live outside the repository. Before release, verify callback URLs, client IDs, bundle identifiers, package names, signing fingerprints, and enabled capabilities against the current app configuration.
 
+```mermaid
+sequenceDiagram
+  participant App as Flutter app
+  participant API as Serverpod API
+  participant DB as PostgreSQL
+  participant Browser as System browser
+  participant Provider as Google / Apple / Steam
+
+  App->>API: Create one-time auth request
+  API->>DB: Persist short-lived request
+  API-->>App: Request id + browser URL
+  App->>Browser: Open external login
+  Browser->>Provider: Authenticate and consent
+  Provider->>API: HTTPS callback
+  API->>DB: Validate and complete request
+  loop Until complete or expired
+    App->>API: Poll request id
+  end
+  API-->>App: Serverpod access + refresh tokens
+```
+
 ## Server configuration
 
 Secrets are read from the environment; do not add a `passwords.yaml` or commit provider credentials.

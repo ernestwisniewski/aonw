@@ -18,6 +18,23 @@ Multiplayer has three independent compatibility axes:
 | `kProtocolVersion` | Transient command, ACK, and match envelope schema. |
 | `kSnapshotEventVersion` | Durable snapshot and event schema. |
 
+```mermaid
+flowchart TB
+  Change["Multiplayer change"] --> Functional["Functional revision"]
+  Change --> Wire{"Transient envelope changed?"}
+  Change --> Durable{"Stored snapshot/event changed?"}
+  Wire -- yes --> Protocol["Command / ACK / match schema"]
+  Wire -- no --> KeepProtocol["Keep transient schema"]
+  Durable -- yes --> Snapshot["Snapshot / event schema"]
+  Durable -- no --> KeepSnapshot["Keep durable schema"]
+  Functional --> Readers["Deploy compatible readers and status-aware server first"]
+  Protocol --> Readers
+  KeepProtocol --> Readers
+  Snapshot --> Readers
+  KeepSnapshot --> Readers
+  Readers --> Client["Require the new client revision only after rollout is safe"]
+```
+
 Current values are defined in `packages/aonw_core/lib/protocol/protocol_version.dart`. At the time of this decision update they are functional revision 9, transient schema 4, and durable write schema 7, with bounded readers for durable schemas 3 through 7.
 
 The binding rules are:

@@ -24,6 +24,31 @@ Read the constants from `packages/aonw_core/lib/protocol/protocol_version.dart` 
 
 ## Command flow
 
+```mermaid
+sequenceDiagram
+  participant C as Authenticated client
+  participant S as Serverpod match service
+  participant DB as PostgreSQL
+  participant O as Other subscribers
+
+  C->>S: Open multiplayer.connect
+  C->>S: Command(clientMessageId)
+  S->>S: Authenticate actor and lock match
+  S->>S: Apply canonical command
+  S->>DB: Store snapshot, event, offset, and ACK result
+  DB-->>S: Commit succeeds
+  S-->>C: Correlated ACK + recipient projection
+  S-->>O: Projected event + attached snapshot
+
+  alt identical retry
+    C->>S: Same id and same command
+    S-->>C: Stored result
+  else id reused for another command
+    C->>S: Same id and different command
+    S-->>C: Reject
+  end
+```
+
 1. The authenticated client opens `multiplayer.connect` and owns the outbound message stream.
 2. Every command carries a `clientMessageId`.
 3. The server authenticates the actor, locks the match, applies the canonical command, and stores the new snapshot and event before delivery.
@@ -33,6 +58,16 @@ Read the constants from `packages/aonw_core/lib/protocol/protocol_version.dart` 
 ACK identity is the `clientMessageId`, not the event offset. Late or unknown ACKs must not complete a newer command.
 
 ## Ordering and recovery
+
+```mermaid
+flowchart LR
+  Disconnect["Connection lost"] --> Snapshot["Load latest recipient-projected snapshot"]
+  Snapshot --> Offset["Install its applied offset"]
+  Offset --> CatchUp["Request data newer than the snapshot"]
+  CatchUp --> Adjacent{"Adjacent valid transition?"}
+  Adjacent -- yes --> Apply["Apply projected event and state"]
+  Adjacent -- no --> Recover["Suppress effects and recover from a fresh snapshot"]
+```
 
 - Offsets are monotonic.
 - Clients apply only valid adjacent live transitions.

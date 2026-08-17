@@ -14,6 +14,19 @@ Applying a road discount in every movement caller would also let previews, queue
 
 Transport is an independent aggregate in authoritative state.
 
+```mermaid
+flowchart LR
+  Worker["Ready worker"] --> BuildCommand["Build road command"]
+  BuildCommand --> Job["Authoritative worker road job"]
+  Job --> WorkerPhase["Worker economy phase"]
+  WorkerPhase --> Segment["TransportSegment in state"]
+  Improvement["Field improvement"] -. coexists on the same hex .-> Segment
+  Segment --> Resolver["UnitTraversalCostResolver"]
+  Resolver --> Consumers["Manual move / preview / queued path / automation / merchants / AI"]
+  Segment --> Projection["Recipient projection"]
+  Segment --> Renderer["Independent road rendering"]
+```
+
 `TransportNetworkState` stores deterministic `TransportSegment` values keyed by hex. A segment may coexist with a field improvement and records its kind, condition, builder, and optional originating city.
 
 The binding rules are:

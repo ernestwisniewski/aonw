@@ -2,6 +2,15 @@
 
 UI widgets use shared asset catalogs and `SpriteAtlasIcon`; they do not calculate private crops, offsets, or atlas coordinates.
 
+```mermaid
+flowchart LR
+  Atlas["Sprite atlas"] --> Catalog["Shared asset catalog"]
+  Adjustments["AnimationFrameAdjustment data"] --> Icon["SpriteAtlasIcon / UnitSpriteComponent"]
+  Catalog --> Icon
+  Icon --> Widgets["HUD, lists, and detail widgets"]
+  Icon --> Map["Animated map rendering"]
+```
+
 | Asset | Entry point |
 | --- | --- |
 | Units | `UnitSpriteIcon` |

@@ -2,6 +2,17 @@
 
 Turn start and the manual **Action** button use the same pending-decision list for different purposes.
 
+```mermaid
+flowchart TD
+  State["Current recipient state"] --> Pending["Build ranked pending-decision list"]
+  Pending --> Any{"Any pending decision?"}
+  Any -- yes --> Button["Primary button = Action"]
+  Button --> Focus["Focus first or next ranked decision"]
+  Focus --> State
+  Any -- no --> Turn["Primary button = End turn / Submit turn"]
+  Turn --> Next["Advance local turn or submit multiplayer readiness"]
+```
+
 | Flow | Behavior |
 | --- | --- |
 | `FocusTurnStartActionCommand` | Selects the highest-ranked first decision; it does not cycle from stale selection. |
@@ -26,6 +37,16 @@ The primary bottom button shows **Action** while a pending decision exists. It f
 Its thumbnail and counter come from the same pending list. Asset geometry follows [asset-icon-rendering.md](asset-icon-rendering.md). A score objective may bias the first matching focus target, but the command still does not execute the decision.
 
 ## Movement evidence
+
+```mermaid
+flowchart LR
+  Transition["Accepted movement-producing transition"] --> Evidence["Explicit ordered movementExecutions"]
+  Evidence --> NonEmpty{"Evidence shape"}
+  NonEmpty -- non-empty --> Animate["Validate and animate supplied route"]
+  NonEmpty -- empty list --> NoMove["No visible movement"]
+  NonEmpty -- missing or malformed --> Invalid["Reject strict envelope / recover"]
+  Snapshot["Recovery snapshot or offset gap"] --> StateOnly["Apply state without inferred animation"]
+```
 
 Every accepted movement-producing transition carries explicit ordered `movementExecutions`.
 

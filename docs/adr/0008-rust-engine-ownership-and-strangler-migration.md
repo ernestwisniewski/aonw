@@ -14,6 +14,21 @@ A permanent second engine would drift. A big-bang rewrite would remove the produ
 
 The successor authoritative engine is the Rust workspace under `engine/`. It replaces Dart incrementally behind complete engine boundaries.
 
+```mermaid
+stateDiagram-v2
+  [*] --> DartOnly
+  DartOnly --> DartPrimaryRustShadow: parity slices available
+  DartPrimaryRustShadow --> RustPrimaryDartShadow: cutover gates pass
+  RustPrimaryDartShadow --> RustPrimaryDartStandby: confidence window passes
+  RustPrimaryDartStandby --> RustOnly: retirement gates pass
+  RustPrimaryDartShadow --> DartPrimaryRustShadow: rollback defaults for new work
+
+  note right of DartOnly
+    An active save or match stays pinned
+    to one primary engine backend.
+  end note
+```
+
 The language-neutral state, canonical/recipient separation, determinism, explicit context, command, event, AI, and replay rules from ADRs 0001-0003 remain binding.
 
 The binding migration rules are:

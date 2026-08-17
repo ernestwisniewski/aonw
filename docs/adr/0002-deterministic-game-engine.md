@@ -18,6 +18,18 @@ apply(state, domain-or-system-command, explicit context)
   -> accepted or rejected transition
 ```
 
+```mermaid
+flowchart LR
+  Adapter["UI / Serverpod / AI / replay"] --> Input["State + command + explicit context"]
+  Input --> Engine["Pure deterministic engine"]
+  Engine --> Accepted{"Accepted?"}
+  Accepted -- yes --> Transition["New state + ordered events + evidence"]
+  Accepted -- no --> Rejection["Stable rejection + unchanged state"]
+  Transition --> Effects["Persist / project / broadcast / animate"]
+  Rejection --> Adapter
+  Effects --> Adapter
+```
+
 The engine:
 
 - performs no filesystem, database, network, clock, logging, localization, Flutter, or Serverpod work;

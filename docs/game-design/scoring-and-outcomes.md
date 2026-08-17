@@ -4,6 +4,21 @@
 
 ## Resolution order
 
+```mermaid
+flowchart TD
+  Evaluate["Evaluate current canonical state"] --> Conquest{"Exactly one roster player owns a city or unit?"}
+  Conquest -- yes --> WinConquest["Conquest victory"]
+  Conquest -- no --> Domination{"Domination hold complete?"}
+  Domination -- yes --> WinDomination["Domination victory"]
+  Domination -- no --> Cultural{"Cultural exhibition hold complete?"}
+  Cultural -- yes --> WinCultural["Cultural victory"]
+  Cultural -- no --> Cap{"Turn limit reached?"}
+  Cap -- no --> Continue["Match continues"]
+  Cap -- yes --> Tie{"Highest score tied?"}
+  Tie -- yes --> Draw["Draw"]
+  Tie -- no --> WinScore["Score victory"]
+```
+
 1. **Conquest** — exactly one roster player still owns any city or unit.
 2. **Domination** — a player has held the required share of valid map tiles for the configured number of full turns.
 3. **Cultural** — a player has stored the required artifacts and held the exhibition state for the configured turns.

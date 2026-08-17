@@ -14,6 +14,21 @@ Stockpiles affect commands, saves, multiplayer projection, turn order, trade, AI
 
 `ResourceCatalog` assigns each resource an economy mode: local yield, presence gate, or quantitative stockpile.
 
+```mermaid
+flowchart LR
+  Source["Controlled revealed source + required improvement"] --> Extraction["Deterministic extraction"]
+  Extraction --> Stock[(Player stockpile)]
+  QueueChange["City queue change"] --> Refund["Refund old allocation"]
+  Refund --> Quote["Authoritative availability quote"]
+  Stock --> Quote
+  Quote --> Debit["Debit selected bundle atomically"]
+  Debit --> Queue["Persist allocation on the queue"]
+  Queue --> Completion["Completion or rush does not charge again"]
+  Completion --> Spawn{"Spawn possible?"}
+  Spawn -- yes --> Unit["Create unit"]
+  Spawn -- no --> Hold["Keep completed queue and allocation"]
+```
+
 Oil and aluminium currently use stockpiles. Iron, coal, uranium, horses, and marble remain presence-gated until a separate balance decision changes them.
 
 The binding rules are:

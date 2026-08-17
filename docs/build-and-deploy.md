@@ -4,6 +4,18 @@ Use the Make targets from the repository root. They are the shared contract betw
 
 [ADR 0005](adr/0005-immutable-deployment.md) describes the target build-once promotion model. The current release flow still contains transitional host-side build steps; do not describe those as immutable promotion.
 
+```mermaid
+flowchart LR
+  Checks["make release-check"] --> Build["Build release artifacts"]
+  Build --> Stage["Deploy the staging overlay"]
+  Stage --> Probe["/startupz + /livez + /readyz"]
+  Probe --> Smoke["Synthetic and multiplayer smoke"]
+  Smoke --> Production["Production deployment"]
+  Production --> Record["Record SHA, artifacts, migration state, and health evidence"]
+  Probe -->|failure| Stop["Stop the rollout"]
+  Production -->|failure| Rollback["Use retained previous artifacts or a forward fix"]
+```
+
 ## Before a release
 
 ```sh

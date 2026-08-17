@@ -4,6 +4,17 @@ Objectives provide a short answer to "what should I do next?" without becoming a
 
 ## Tracks and phases
 
+```mermaid
+flowchart LR
+  Foundation["Foundation<br/>research, capital, exploration, worker"] --> Expansion["Expansion<br/>building, improvements, third city"]
+  Expansion --> Pressure["Pressure<br/>wider exploration and defense"]
+  Pressure --> Endgame["Endgame<br/>domination or score pressure"]
+  Strategic["Urgent strategic objective"] -. may temporarily precede .-> Foundation
+  Strategic -. may temporarily precede .-> Expansion
+  Strategic -. may temporarily precede .-> Pressure
+  Strategic -. may temporarily precede .-> Endgame
+```
+
 | Phase | Purpose |
 | --- | --- |
 | Foundation | Research, first city, exploration, worker, first improvement, second city. |
@@ -16,6 +27,20 @@ Objectives provide a short answer to "what should I do next?" without becoming a
 Domain definitions contain stable id, phase, track, target, tone, and target-scaling policy. Titles, hints, rewards, and micro-tooltips stay in localization through `GameObjectiveLabels`.
 
 ## Selection
+
+```mermaid
+flowchart TD
+  State["Current player state and victory pressure"] --> Urgent{"Urgent endgame condition?"}
+  Urgent -- own domination hold --> Hold["Hold the threshold"]
+  Urgent -- rival domination hold --> Break["Break the rival hold"]
+  Urgent -- final score window --> Score["Protect lead or close largest score gap"]
+  Urgent -- no --> Guidance["Next incomplete guidance objectives"]
+  Hold --> List["Active objective list"]
+  Break --> List
+  Score --> List
+  Guidance --> List
+  List --> Action["Action button focuses a matching pending decision"]
+```
 
 `GameObjectiveTracker.activeObjectivesForPlayer(...)` calculates progress, removes completed goals, and returns the next small set.
 

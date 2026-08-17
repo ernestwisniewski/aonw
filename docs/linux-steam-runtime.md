@@ -6,6 +6,17 @@ The supported Linux release target is x86-64 Steam Linux Runtime 4 (SLR4). Build
 
 `.github/workflows/linux-steam-build.yml` captures the Platform SONAME set, builds the Flutter bundle in the SDK, and calls `tool/linux/package_steamrt4_bundle.sh`.
 
+```mermaid
+flowchart LR
+  Source["Selected source revision"] --> SDK["Pinned SLR4 SDK image"]
+  SDK --> Flutter["Flutter Linux bundle"]
+  Platform["Pinned SLR4 Platform SONAME set"] --> Packager["package_steamrt4_bundle.sh"]
+  Flutter --> Packager
+  Packager --> Zip["Release ZIP + runtime manifest"]
+  Zip --> Verify["verify_steamrt4_bundle.sh + CI checks"]
+  Verify --> Acceptance["SteamOS / Steam Deck acceptance"]
+```
+
 The packaged app includes only dependencies missing from the Platform, plus the required GStreamer plugins, scanner, GLib schemas, GTK data, notices, and runtime manifest. The launcher scopes library and plugin paths to the bundle before starting `aonw-bin`.
 
 Desktop authentication uses the system browser. WebKitGTK is intentionally not part of startup.

@@ -4,6 +4,23 @@ Post-combat feedback answers what actually happened. It uses accepted combat eve
 
 ## Presentation order
 
+```mermaid
+sequenceDiagram
+  participant E as Accepted combat events
+  participant R as Renderer
+  participant C as Camera and effects
+  participant N as Shared notification model
+  participant UI as Toasts, activity, and log
+
+  E->>R: Play authoritative combat animation
+  R->>C: Focus attacked city when relevant
+  C->>C: Shake camera and emit impact particles
+  E->>R: Show defender and attacker damage
+  E->>R: Show retreat or defeat
+  E->>N: Project final combat message
+  N->>UI: Publish one consistent summary
+```
+
 1. play the authoritative combat animation;
 2. focus the active player's attacked city when relevant;
 3. apply camera shake and city-impact particles;

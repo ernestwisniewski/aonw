@@ -2,6 +2,22 @@
 
 Gamepad input is normalized before it reaches the game screen. Platform-specific button codes do not enter gameplay, save, or wire state.
 
+```mermaid
+flowchart LR
+  Raw["Platform gamepad events"] --> Settings["Remap, deadzone, sensitivity, inversion"]
+  Settings --> Snapshot["Normalized input snapshot"]
+  Snapshot --> Router["GamepadInputRouterScope"]
+  Router --> Modal["Modal / tutorial"]
+  Router --> Panel["Panel"]
+  Router --> HUD["HUD focus"]
+  Router --> Map["Map route"]
+  HUD --> Commands["Existing application callbacks and command paths"]
+  Panel --> Commands
+  Map --> Commands
+  Snapshot --> Continuous["Continuous camera / zoom deltas"]
+  Continuous --> Flame["Flame renderer"]
+```
+
 ## Default mapping
 
 | Input | Action |

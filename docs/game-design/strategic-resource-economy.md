@@ -14,6 +14,21 @@ Oil and aluminium currently use stockpiles. Iron, horses, coal, uranium, and mar
 
 ## Turn flow
 
+```mermaid
+flowchart LR
+  Sources["Controlled, revealed, improved sources"] --> Extraction["Deterministic extraction step"]
+  Extraction --> Stock[(Empire stockpile)]
+  Imports["Atomic trade deliveries"] --> Stock
+  Stock --> Quote["Authoritative production availability quote"]
+  Old["Existing city allocation"] --> Refund["Atomic refund"]
+  Refund --> Quote
+  Quote --> Debit["Debit selected resource bundle"]
+  Debit --> Queue["Persist allocation on city queue"]
+  Queue --> Complete{"Unit completed and spawn legal?"}
+  Complete -- yes --> Spawn["Spawn unit; allocation consumed"]
+  Complete -- no --> Hold["Keep completed queue and allocation"]
+```
+
 A valid source is a controlled, revealed resource with the required improvement. Extraction is credited before trade settlement. A newly completed improvement contributes from the next eligible extraction step.
 
 Production costs are allocated when a unit enters a city queue:
@@ -27,6 +42,15 @@ Production costs are allocated when a unit enters a city queue:
 Exact source output and unit costs live in `GameRuleset.resources` and unit-production definitions.
 
 ## Trade
+
+```mermaid
+flowchart TD
+  Trade["Proposed stockpiled trade leg or barter group"] --> Legal{"Route, stock, payment, and quantity legal?"}
+  Legal -- no --> NoCharge["No delivery and no silent charge"]
+  Legal -- yes --> Settle["Settle payment and delivery atomically"]
+  Settle --> Exporter["Debit exporter / credit payment"]
+  Settle --> Importer["Credit importer / debit payment"]
+```
 
 A stockpiled trade leg settles only when route, exporter stock, importer payment, and quantity are all legal. Payment and delivery are atomic. Reciprocal barter legs in one exchange group settle together or not at all.
 

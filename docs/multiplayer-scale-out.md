@@ -4,6 +4,28 @@ The current safe operating mode is one active API/maintenance instance for live 
 
 PostgreSQL stores authoritative state, but the application subscriber registry is process-local. Redis supports Serverpod infrastructure; the game does not yet publish committed match events through a shared application event bus. Two unrestricted active instances can therefore persist correct state while missing each other's live broadcasts.
 
+```mermaid
+flowchart TB
+  subgraph Current["Current safe topology"]
+    LB["Reverse proxy"] --> Active["One active API + maintenance instance"]
+    Active --> DB[(PostgreSQL)]
+    Active --> Redis[(Redis)]
+    Active --> Registry["Process-local subscriber registry"]
+  end
+
+  subgraph Target["Required before active-active"]
+    LB2["Reverse proxy"] --> A["API instance A"]
+    LB2 --> B["API instance B"]
+    A --> DB2[(PostgreSQL)]
+    B --> DB2
+    DB2 --> Bus["Committed-offset event bus"]
+    Bus --> A
+    Bus --> B
+    A --> PA["Recipient-projected broadcast"]
+    B --> PB["Recipient-projected broadcast"]
+  end
+```
+
 ## Current contract
 
 - Run one active multiplayer mutation and maintenance instance.
@@ -22,6 +44,21 @@ Lobby presence is backed by PostgreSQL leases, not only by the in-process stream
 ## Deployment drain
 
 Graceful drain is a target automation contract, not a fully proven property of the current Compose recreate path.
+
+```mermaid
+sequenceDiagram
+  participant R as Reverse proxy
+  participant Old as Old instance
+  participant New as Replacement
+  participant C as Clients
+
+  New->>New: Start and pass readiness outside traffic
+  R->>Old: Mark unready and stop new mutations
+  Old->>Old: Settle accepted calls and close streams
+  R->>New: Establish the single mutation target
+  C->>New: Reconnect and install latest projected snapshot
+  Old->>Old: Terminate after cutover
+```
 
 A correct drain should:
 
