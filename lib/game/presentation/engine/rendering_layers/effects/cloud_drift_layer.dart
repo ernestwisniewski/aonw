@@ -110,6 +110,8 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
       size = Vector2(_mapBounds.width, _mapBounds.height);
       position = Vector2.zero();
       priority = _priorityFor(mapData);
+      _discoveredClipPath = null;
+      _clearClouds();
     }
     if (!mapChanged &&
         _lastVisibilityPlayerId == visibility.playerId &&
@@ -123,10 +125,9 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
       mapData: mapData,
       visibility: visibility,
     );
-    _discoveredClipPath = discoveredClip?.path;
-    if (_discoveredClipPath == null) {
-      _clearClouds();
-    }
+    if (discoveredClip == null) return;
+
+    _discoveredClipPath = discoveredClip.path;
   }
 
   @override
@@ -135,7 +136,7 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
   @override
   void update(double dt) {
     super.update(dt);
-    if (_reduceMotion || _mapBounds.isEmpty || _discoveredClipPath == null) {
+    if (_reduceMotion || _mapBounds.isEmpty) {
       _clearClouds();
       return;
     }
