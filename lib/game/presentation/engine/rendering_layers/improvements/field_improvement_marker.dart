@@ -6,6 +6,10 @@ import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asse
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_cache.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_catalog.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/map/rendering/map_alpha.dart';
+import 'package:aonw/shared/theme/hud_paint.dart';
+import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
@@ -87,9 +91,38 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
   @override
   void render(Canvas canvas) {
     super.render(canvas);
+    final center = ui.Offset(_width / 2, _height / 2);
+    _paintImprovementSprite(canvas, center);
+  }
+
+  bool _paintImprovementSprite(Canvas canvas, ui.Offset center) {
+    final spriteBounds = _spriteBoundsFor(center);
+    final spriteClipPath = _improvementMarkerClipPathFor(spriteBounds);
+    final imagePaint = Paint()..filterQuality = FilterQuality.medium;
+
+    canvas
+      ..save()
+      ..clipPath(spriteClipPath)
+      ..drawRect(
+        spriteBounds,
+        HudPaint.fill(HudPalette.surface, alpha: MapAlpha.whisper),
+      );
+
     final spritePath = FieldImprovementSpriteCatalog.assetPathFor(_type);
     final image = FieldImprovementSpriteCache.imageFor(spritePath);
-    if (image == null) return;
+    if (image == null) {
+      _paintFallbackIcon(canvas, center);
+      canvas.restore();
+      canvas.drawPath(
+        spriteClipPath,
+        HudPaint.stroke(
+          HudPalette.gold,
+          alpha: MapAlpha.solid,
+          strokeWidth: MapStroke.thin,
+        ),
+      );
+      return false;
+    }
 
     final baseSource = FieldImprovementSpriteCatalog.sourceRectFor(
       imageWidth: image.width,
@@ -99,9 +132,7 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
     );
     final adjustment = _frameAdjustment();
     final source = adjustment.croppedSourceFor(baseSource);
-    final baseDestination = _spriteBoundsFor(
-      ui.Offset(_width / 2, _height / 2),
-    );
+    final baseDestination = spriteBounds;
     final offset = adjustment.scaledOffset(
       baseSize: ui.Size(_spriteWidth, _spriteHeight),
       targetSize: baseDestination.size,
@@ -113,16 +144,44 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
         )
         .shift(offset);
 
-    BoardAssetCapPainter.paint(
-      canvas: canvas,
-      style: _capStyle,
-      image: image,
-      sourceRect: source,
-      topRect: destination,
-      imagePaint: Paint()..filterQuality = FilterQuality.medium,
-      rimColor: effectiveRimColor,
-      rimShadowColor: effectiveRimShadowColor,
+    canvas.drawImageRect(image, source, destination, imagePaint);
+    canvas.restore();
+    canvas.drawPath(
+      spriteClipPath,
+      HudPaint.stroke(
+        HudPalette.gold,
+        alpha: MapAlpha.solid,
+        strokeWidth: MapStroke.thin,
+      ),
     );
+    return true;
+  }
+
+  void _paintFallbackIcon(Canvas canvas, ui.Offset center) {
+    const iconSize = 30;
+    GameIconRenderer.paintIcon(
+      canvas,
+      GameIcons.improvement,
+      topLeft: ui.Offset(center.dx - iconSize / 2, center.dy - iconSize / 2),
+      size: iconSize,
+      color: HudPalette.goldLight,
+    );
+  }
+
+  @visibleForTesting
+  Path _improvementMarkerClipPathFor(ui.Rect spriteBounds) {
+    final halfWidth = spriteBounds.width / 2;
+    final halfHeight = spriteBounds.height / 2;
+    final center = spriteBounds.center;
+
+    return Path()
+      ..moveTo(center.dx + halfWidth / 2, center.dy - halfHeight)
+      ..lineTo(center.dx + halfWidth, center.dy)
+      ..lineTo(center.dx + halfWidth / 2, center.dy + halfHeight)
+      ..lineTo(center.dx - halfWidth / 2, center.dy + halfHeight)
+      ..lineTo(center.dx - halfWidth, center.dy)
+      ..lineTo(center.dx - halfWidth / 2, center.dy - halfHeight)
+      ..close();
   }
 
   AnimationFrameAdjustment _frameAdjustment() {
@@ -198,7 +257,7 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
 
   @visibleForTesting
   Path get spriteClipPathForTesting =>
-      BoardAssetCapPainter.clipPathFor(spriteBoundsForTesting);
+      _improvementMarkerClipPathFor(spriteBoundsForTesting);
 
   @visibleForTesting
   BoardAssetCapStyle get boardCapStyleForTesting => _capStyle;
