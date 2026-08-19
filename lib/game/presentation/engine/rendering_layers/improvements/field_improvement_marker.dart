@@ -158,7 +158,7 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
   }
 
   void _paintFallbackIcon(Canvas canvas, ui.Offset center) {
-    const iconSize = 30;
+    const double iconSize = 30;
     GameIconRenderer.paintIcon(
       canvas,
       GameIcons.improvement,
