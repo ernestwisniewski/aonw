@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:aonw/map/rendering/hex_outline_painter.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
-import 'package:aonw/map/rendering/map_icon_badge.dart';
 import 'package:aonw/map/rendering/map_intent_marker.dart';
 import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_geometry_layout.dart';
@@ -27,7 +26,6 @@ class HexTilePainter {
   late final Paint _paintSelectionDash;
   late final Paint _paintCitySiteCompactFill;
   late final Paint _paintCitySiteCompactBorder;
-  late final Paint _paintCityGrowthMarker;
   late final Paint _paintWorkerImprovementNowMarker;
   late final Paint _paintWorkerImprovementCandidateFill;
   late final Paint _paintWorkerImprovementCandidateBorder;
@@ -38,29 +36,16 @@ class HexTilePainter {
   late final Paint _paintMovementBlockerOverlay;
   late final Paint _paintMovementBlockerOutline;
   late final ui.Paragraph _heightParagraph;
+  late final ui.Paragraph _heightParagraphShadow;
 
   static final _paintMapIconImage = Paint()
     ..filterQuality = FilterQuality.medium;
-  static final _paintBadgeBg = HudPaint.fill(
-    HudPalette.surface,
-    alpha: _heightBadgeBackgroundAlpha,
-  );
-  static final _paintBadgeBorder = HudPaint.stroke(
-    HudPalette.gold,
-    alpha: _heightBadgeBorderAlpha,
-    strokeWidth: 1.1,
-  );
-
-  static const double _intentMarkerPairGap = 4.0;
-  static const double _heightBadgeParagraphWidth = 16.0;
-  static const int _heightBadgeBackgroundAlpha = 238;
-  static const int _heightBadgeBorderAlpha = 230;
+  static const double _heightBadgeParagraphWidth = 18.0;
   static const int _planningMarkerAlpha = 214;
   static const int _attackTargetFillAlpha = MapAlpha.soft;
   static const double _attackTargetHatchSpacing = 9.0;
   static const int _movementBlockerAlpha = 86;
   static const int _movementBlockerOutlineAlpha = 210;
-  static const int _shadowAlpha = 153;
 
   HexTilePainter({
     required Color topColor,
@@ -88,7 +73,6 @@ class HexTilePainter {
       alpha: MapAlpha.opaque,
       strokeWidth: MapStroke.thin,
     );
-    _paintCityGrowthMarker = HudPaint.fill(HudPalette.successLight);
     _paintWorkerImprovementNowMarker = HudPaint.fill(
       HudPalette.success,
       alpha: _planningMarkerAlpha,
@@ -132,7 +116,14 @@ class HexTilePainter {
       alpha: _movementBlockerOutlineAlpha,
       strokeWidth: 1.5,
     );
-    _heightParagraph = _createHeightParagraph(tileHeight);
+    _heightParagraph = _createHeightParagraph(
+      tileHeight: tileHeight,
+      color: Colors.white,
+    );
+    _heightParagraphShadow = _createHeightParagraph(
+      tileHeight: tileHeight,
+      color: HudPalette.roadEdge,
+    );
   }
 
   double get heightParagraphHeight => _heightParagraph.height;
@@ -195,41 +186,29 @@ class HexTilePainter {
     if (showHeightBadge && (alwaysShowHeight || tileHeight > 0)) {
       _drawHeightBadge(
         canvas: canvas,
-        rect: overlays.heightBadge.badgeRect,
         paragraphOffset: overlays.heightBadge.paragraphOffset,
         perspectiveY: heightPerspectiveY,
       );
     }
 
     if (showTerrain) {
-      _drawIconBox(
+      _drawResourceIcons(
         canvas: canvas,
-        box: overlays.terrainIcons.boxRect,
-        badges: overlays.terrainIcons.badgeRects,
         iconRects: overlays.terrainIcons.iconRects,
         iconPaths: terrainIconPaths,
-        accent: HudPalette.textMuted,
       );
     }
     if (showResources) {
       _drawResourceIcons(
         canvas: canvas,
-        box: overlays.resourceIcons.boxRect,
-        badges: overlays.resourceIcons.badgeRects,
         iconRects: overlays.resourceIcons.iconRects,
         iconPaths: resourceIconPaths,
-        accent: HudPalette.resourcesAccent,
       );
     }
 
     _drawVisiblePlanningMarkers(
       canvas: canvas,
       geometry: geometry,
-      showIcon: showIcon,
-      showTerrain: showTerrain,
-      showResources: showResources,
-      terrainIconPaths: terrainIconPaths,
-      resourceIconPaths: resourceIconPaths,
       visibility: (
         citySite: showCitySiteMarker,
         recommendedCitySite: showRecommendedCitySiteMarker,
@@ -247,24 +226,12 @@ class HexTilePainter {
   void _drawVisiblePlanningMarkers({
     required Canvas canvas,
     required HexTileGeometrySnapshot geometry,
-    required bool showIcon,
-    required bool showTerrain,
-    required bool showResources,
-    required List<String> terrainIconPaths,
-    required List<String> resourceIconPaths,
     required _PlanningMarkerVisibility visibility,
   }) {
     if (!_hasPlanningMarkers(visibility)) return;
-    final hasMapInfo = _hasMapInfo(
-      showTerrain,
-      showResources,
-      terrainIconPaths,
-      resourceIconPaths,
-    );
     _drawPlanningMarkers(
       canvas: canvas,
       geometry: geometry,
-      avoidMapInfo: hasMapInfo,
       showCitySiteMarker: visibility.citySite,
       showRecommendedCitySiteMarker: visibility.recommendedCitySite,
       showCityGrowthMarker: visibility.cityGrowth,
@@ -287,21 +254,12 @@ typedef _PlanningMarkerVisibility = ({
   bool attackTarget,
 });
 
-bool _hasPlanningMarkers(_PlanningMarkerVisibility visibility) =>
+  bool _hasPlanningMarkers(_PlanningMarkerVisibility visibility) =>
     visibility.citySite ||
     visibility.cityGrowth ||
     _showWorkerNow(visibility) ||
     _showWorkerTechnology(visibility) ||
     visibility.attackTarget;
-
-bool _hasMapInfo(
-  bool showTerrain,
-  bool showResources,
-  List<String> terrainIconPaths,
-  List<String> resourceIconPaths,
-) =>
-    (showTerrain && terrainIconPaths.isNotEmpty) ||
-    (showResources && resourceIconPaths.isNotEmpty);
 
 bool _showWorkerNow(_PlanningMarkerVisibility visibility) =>
     visibility.workerAvailabilityHint && visibility.workerNow;

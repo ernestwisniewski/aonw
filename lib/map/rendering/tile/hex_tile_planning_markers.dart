@@ -126,7 +126,6 @@ extension _HexTilePlanningMarkers on HexTilePainter {
   void _drawPlanningMarkers({
     required Canvas canvas,
     required HexTileGeometrySnapshot geometry,
-    required bool avoidMapInfo,
     required bool showCitySiteMarker,
     required bool showRecommendedCitySiteMarker,
     required bool showCityGrowthMarker,
@@ -139,12 +138,25 @@ extension _HexTilePlanningMarkers on HexTilePainter {
       _drawAttackTargetMarker(canvas, geometry);
       return;
     }
-    final hexRadius = _hexRadiusFor(geometry);
-    final cityAnchor = avoidMapInfo
-        ? geometry.topCenter.translate(hexRadius * 0.16, -hexRadius * 0.55)
-        : geometry.topCenter.translate(0, -6);
+    final topVertexY = geometry.topCorners
+        .map((corner) => corner.y)
+        .reduce((a, b) => math.min(a, b));
+    final rightEdgeX = geometry.topCorners
+        .map((corner) => corner.x)
+        .reduce((a, b) => math.max(a, b));
+    const cityMarkerRadius = 6.5;
+    final cityMarkerInset = HexTileOverlayGeometry.compactMarkerWallMargin;
+    final citySiteAnchor = Offset(
+      geometry.topCenter.dx,
+      topVertexY + cityMarkerRadius + cityMarkerInset,
+    );
+    final cityGrowthAnchor = Offset(
+      rightEdgeX - cityMarkerRadius - cityMarkerInset,
+      geometry.topCenter.dy,
+    );
     final cityMarkerCenters = _cityPlanningMarkerCenters(
-      topCenter: cityAnchor,
+      citySiteAnchor: citySiteAnchor,
+      cityGrowthAnchor: cityGrowthAnchor,
       showCitySiteMarker: showCitySiteMarker,
       showCityGrowthMarker: showCityGrowthMarker,
     );
@@ -171,34 +183,23 @@ extension _HexTilePlanningMarkers on HexTilePainter {
     }
   }
 
-  double _hexRadiusFor(HexTileGeometrySnapshot geometry) {
-    final center = geometry.topCenter;
-    final corner = geometry.topCorners.first;
-    final dx = corner.x - center.dx;
-    final dy = corner.y - center.dy;
-    return math.sqrt(dx * dx + dy * dy);
-  }
-
   ({Offset? citySite, Offset? cityGrowth}) _cityPlanningMarkerCenters({
-    required Offset topCenter,
+    required Offset citySiteAnchor,
+    required Offset cityGrowthAnchor,
     required bool showCitySiteMarker,
     required bool showCityGrowthMarker,
   }) {
     if (showCitySiteMarker && showCityGrowthMarker) {
-      const offset =
-          (MapIntentMarker.defaultBadgeSize +
-              HexTilePainter._intentMarkerPairGap) /
-          2;
       return (
-        citySite: topCenter.translate(-offset, 0),
-        cityGrowth: topCenter.translate(offset, 0),
+        citySite: citySiteAnchor,
+        cityGrowth: cityGrowthAnchor,
       );
     }
     if (showCitySiteMarker) {
-      return (citySite: topCenter, cityGrowth: null);
+      return (citySite: citySiteAnchor, cityGrowth: null);
     }
     if (showCityGrowthMarker) {
-      return (citySite: null, cityGrowth: topCenter);
+      return (citySite: null, cityGrowth: cityGrowthAnchor);
     }
     return (citySite: null, cityGrowth: null);
   }
@@ -209,14 +210,13 @@ extension _HexTilePlanningMarkers on HexTilePainter {
     required bool recommended,
   }) {
     if (!recommended) {
-      canvas
-        ..drawCircle(center, 6.5, _paintCitySiteCompactFill)
-        ..drawCircle(center, 6.5, _paintCitySiteCompactBorder);
-      MapIntentMarker.paintGlyph(
+      _drawCompactCityIntentMarker(
         canvas,
         center,
-        MapIntentGlyph.city,
-        scale: 0.72,
+        fillColor: _paintCitySiteCompactFill.color,
+        borderColor: _paintCitySiteCompactBorder.color,
+        glyph: MapIntentGlyph.city,
+        glyphScale: 0.72,
       );
       return;
     }
@@ -232,12 +232,37 @@ extension _HexTilePlanningMarkers on HexTilePainter {
   }
 
   void _drawCityGrowthMarker(Canvas canvas, Offset center) {
-    _drawIntentBadge(
+    _drawCompactCityIntentMarker(
       canvas,
       center,
-      color: _paintCityGrowthMarker.color,
-      glow: HudPalette.success,
+      fillColor: _paintCitySiteCompactFill.color,
+      borderColor: _paintCitySiteCompactBorder.color,
       glyph: MapIntentGlyph.growth,
+      glyphScale: 0.72,
+    );
+  }
+
+  void _drawCompactCityIntentMarker(
+    Canvas canvas,
+    Offset center, {
+    required Color fillColor,
+    required Color borderColor,
+    required MapIntentGlyph glyph,
+    double glyphScale = 0.72,
+  }) {
+    canvas
+      ..drawCircle(center, 6.5, HudPaint.fill(fillColor))
+      ..drawCircle(
+        center,
+        6.5,
+        HudPaint.stroke(borderColor, strokeWidth: MapStroke.thin),
+      );
+    MapIntentMarker.paintGlyph(
+      canvas,
+      center,
+      glyph,
+      scale: glyphScale,
+      color: HudPalette.goldLight,
     );
   }
 

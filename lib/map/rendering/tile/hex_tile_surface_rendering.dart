@@ -78,7 +78,10 @@ extension _HexTileSurfaceRendering on HexTilePainter {
   }
 }
 
-ui.Paragraph _createHeightParagraph(int tileHeight) {
+ui.Paragraph _createHeightParagraph({
+  required int tileHeight,
+  required Color color,
+}) {
   return (ui.ParagraphBuilder(
           ui.ParagraphStyle(
             fontSize: 10,
@@ -87,9 +90,9 @@ ui.Paragraph _createHeightParagraph(int tileHeight) {
             textAlign: TextAlign.center,
           ),
         )
-        ..pushStyle(ui.TextStyle(color: HudPalette.textBright))
+        ..pushStyle(ui.TextStyle(color: color))
         ..addText('$tileHeight'))
-      .build()
+        .build()
     ..layout(
       const ui.ParagraphConstraints(
         width: HexTilePainter._heightBadgeParagraphWidth,

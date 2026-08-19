@@ -1,38 +1,31 @@
 import 'package:flutter/material.dart';
 
 class HexHeightBadgeGeometry {
-  final RRect badgeRect;
   final Offset paragraphOffset;
 
   const HexHeightBadgeGeometry({
-    required this.badgeRect,
     required this.paragraphOffset,
   });
 }
 
 abstract final class HexHeightBadgeLayout {
-  static const double badgeSize = 16.0;
-  static const double badgeRadius = 5.0;
+  static const double _heightTextWidth = 16.0;
 
   static HexHeightBadgeGeometry build({
     required Offset center,
     required double hexRadius,
     required double paragraphHeight,
     required double perspectiveY,
+    double? leftWallX,
+    double wallMargin = 0.0,
   }) {
-    final badgeX = center.dx - hexRadius * 0.46;
-    final badgeY = center.dy - hexRadius * 0.26;
+    final badgeX = leftWallX == null
+        ? center.dx - hexRadius * 0.46
+        : leftWallX + wallMargin + _heightTextWidth / 2;
+    final badgeY = center.dy;
     return HexHeightBadgeGeometry(
-      badgeRect: RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset(badgeX, badgeY),
-          width: badgeSize,
-          height: badgeSize,
-        ),
-        const Radius.circular(badgeRadius),
-      ),
       paragraphOffset: Offset(
-        badgeX - badgeSize / 2,
+        badgeX - _heightTextWidth / 2,
         (badgeY - paragraphHeight / 2) * perspectiveY,
       ),
     );

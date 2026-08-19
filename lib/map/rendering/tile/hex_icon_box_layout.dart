@@ -15,84 +15,85 @@ class HexIconBoxGeometry {
 }
 
 abstract final class HexIconBoxLayout {
-  static const double terrainIconSize = 17.0;
-  static const double terrainBadgeSize = 24.0;
-  static const double resourceIconSize = 22.0;
-  static const double terrainBoxPadding = 2.5;
-  static const double resourceBadgePadding = 4.5;
-  static const double resourceTrayPadding = 2.0;
-  static const double boxGap = 5.0;
-  static const double terrainBadgeGap = 3.0;
-  static const double resourceBadgeGap = 4.0;
+  static const double terrainIconSize = 20.0;
+  static const double terrainSlotPadding = 2.5;
+  static const double terrainSlotGap = 2.0;
+  static const double resourceIconSize = 24.0;
+  static const double resourceSlotPadding = 4.0;
+  static const double resourceSlotGap = 4.0;
   static const int _resourceColumns = 3;
 
   static HexIconBoxGeometry terrain({
     required Offset center,
     required int iconCount,
-    required bool hasResourceIcons,
   }) {
     if (iconCount == 0) return HexIconBoxGeometry.empty;
 
-    final boxSize = _terrainBoxSize(iconCount);
-    final totalHeight = hasResourceIcons
-        ? boxSize.height + boxGap + resourceBadgeSize
-        : boxSize.height;
-    final topY = center.dy - totalHeight / 2;
+    final boxSize = _terrainClusterSize(iconCount);
+    final topY = center.dy - boxSize.height / 2;
     final left = center.dx - boxSize.width / 2;
-    return _buildTerrainGeometry(
+    return _buildIconClusterGeometry(
       left: left,
       top: topY,
-      size: boxSize,
+      clusterWidth: boxSize.width,
+      iconSize: terrainIconSize,
+      slotPadding: terrainSlotPadding,
+      slotGap: terrainSlotGap,
       iconCount: iconCount,
     );
   }
 
   static HexIconBoxGeometry resource({
-    required Offset center,
+    required Offset topCenter,
+    required double hexRadius,
     required int iconCount,
-    required int terrainIconCount,
+    double? wallBottomY,
+    double wallMargin = 0.0,
   }) {
     if (iconCount == 0) return HexIconBoxGeometry.empty;
 
     final boxSize = _resourceClusterSize(iconCount);
-    final terrainBoxHeight = terrainIconCount > 0
-        ? _terrainBoxSize(terrainIconCount).height
-        : 0.0;
-    final totalHeight = terrainBoxHeight > 0
-        ? terrainBoxHeight + boxGap + boxSize.height
-        : boxSize.height;
-    final topY =
-        center.dy -
-        totalHeight / 2 +
-        terrainBoxHeight +
-        (terrainBoxHeight > 0 ? boxGap : 0);
-    final left = center.dx - boxSize.width / 2;
-    return _buildResourceGeometry(
+    final defaultBottomY = topCenter.dy + hexRadius * 0.866;
+    final wallBottomYOrDefault = wallBottomY == null
+        ? defaultBottomY
+        : wallBottomY + resourceSlotPadding - wallMargin;
+    final bottomY = wallBottomYOrDefault;
+    final topY = bottomY - boxSize.height;
+    final left = topCenter.dx - boxSize.width / 2;
+    return _buildIconClusterGeometry(
       left: left,
       top: topY,
-      size: boxSize,
+      clusterWidth: boxSize.width,
+      iconSize: resourceIconSize,
+      slotPadding: resourceSlotPadding,
+      slotGap: resourceSlotGap,
       iconCount: iconCount,
     );
   }
 
-  static double get resourceBadgeSize =>
-      resourceIconSize + resourceBadgePadding * 2;
+  static double get _resourceSlotSize =>
+      resourceIconSize + resourceSlotPadding * 2;
 
-  static Size _terrainBoxSize(int iconCount) {
-    return Size(
-      terrainBadgeSize * iconCount +
-          terrainBoxPadding * 2 +
-          (iconCount - 1) * terrainBadgeGap,
-      terrainBadgeSize + terrainBoxPadding * 2,
-    );
+  static double get _terrainSlotSize {
+    return terrainIconSize + terrainSlotPadding * 2;
   }
 
   static Size _resourceClusterSize(int iconCount) {
     final columns = _resourceColumnCount(iconCount);
     final rows = _resourceRowCount(iconCount);
     return Size(
-      resourceBadgeSize * columns + (columns - 1) * resourceBadgeGap,
-      resourceBadgeSize * rows + (rows - 1) * resourceBadgeGap,
+      _resourceSlotSize * columns + (columns - 1) * resourceSlotGap,
+      _resourceSlotSize * rows + (rows - 1) * resourceSlotGap,
+    );
+  }
+
+  static Size _terrainClusterSize(int iconCount) {
+    final columns = _resourceColumnCount(iconCount);
+    final rows = _resourceRowCount(iconCount);
+    final slotSize = _terrainSlotSize;
+    return Size(
+      slotSize * columns + (columns - 1) * terrainSlotGap,
+      slotSize * rows + (rows - 1) * terrainSlotGap,
     );
   }
 
@@ -104,94 +105,43 @@ abstract final class HexIconBoxLayout {
     return ((iconCount + _resourceColumns - 1) / _resourceColumns).floor();
   }
 
-  static HexIconBoxGeometry _buildTerrainGeometry({
+  static HexIconBoxGeometry _buildIconClusterGeometry({
     required double left,
     required double top,
-    required Size size,
+    required double clusterWidth,
     required int iconCount,
-  }) {
-    final boxRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(left, top, size.width, size.height),
-      const Radius.circular(7),
-    );
-    final badgeRects = List<RRect>.generate(iconCount, (i) {
-      final cx =
-          left +
-          terrainBoxPadding +
-          i * (terrainBadgeSize + terrainBadgeGap) +
-          terrainBadgeSize / 2;
-      final cy = top + terrainBoxPadding + terrainBadgeSize / 2;
-      return RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset(cx, cy),
-          width: terrainBadgeSize,
-          height: terrainBadgeSize,
-        ),
-        const Radius.circular(8),
-      );
-    }, growable: false);
-    final iconRects = badgeRects
-        .map(
-          (badge) => Rect.fromCenter(
-            center: badge.outerRect.center,
-            width: terrainIconSize,
-            height: terrainIconSize,
-          ),
-        )
-        .toList(growable: false);
-    return HexIconBoxGeometry(
-      boxRect: boxRect,
-      iconRects: iconRects,
-      badgeRects: badgeRects,
-    );
-  }
-
-  static HexIconBoxGeometry _buildResourceGeometry({
-    required double left,
-    required double top,
-    required Size size,
-    required int iconCount,
+    required double iconSize,
+    required double slotPadding,
+    required double slotGap,
   }) {
     final columns = _resourceColumnCount(iconCount);
-    final badgeRects = List<RRect>.generate(iconCount, (i) {
+    final slotSize = iconSize + slotPadding * 2;
+    final iconRects = List<Rect>.generate(iconCount, (i) {
       final col = i % columns;
       final row = i ~/ columns;
-      final rowCount = i == iconCount - 1 && iconCount.isOdd ? 1 : columns;
+      final iconsRemainingInRow = iconCount - row * columns;
+      final rowCount = iconsRemainingInRow < columns ? iconsRemainingInRow : columns;
       final rowWidth =
-          resourceBadgeSize * rowCount + (rowCount - 1) * resourceBadgeGap;
-      final rowLeft = left + (size.width - rowWidth) / 2;
-      final leftOffset = rowLeft + col * (resourceBadgeSize + resourceBadgeGap);
-      final topOffset = top + row * (resourceBadgeSize + resourceBadgeGap);
-      final rect = Rect.fromLTWH(
+          slotSize * rowCount + (rowCount - 1) * slotGap;
+      final rowLeft = left + (clusterWidth - rowWidth) / 2;
+      final leftOffset = rowLeft + col * (slotSize + slotGap);
+      final topOffset = top + row * (slotSize + slotGap);
+      final badgeRect = Rect.fromLTWH(
         leftOffset,
         topOffset,
-        resourceBadgeSize,
-        resourceBadgeSize,
+        slotSize,
+        slotSize,
       );
-      return RRect.fromRectAndRadius(rect, const Radius.circular(10));
+      return Rect.fromCenter(
+        center: badgeRect.center,
+        width: iconSize,
+        height: iconSize,
+      );
     }, growable: false);
-    final boxRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        left,
-        top,
-        size.width,
-        size.height,
-      ).inflate(resourceTrayPadding),
-      const Radius.circular(10),
-    );
-    final iconRects = badgeRects
-        .map(
-          (badge) => Rect.fromCenter(
-            center: badge.outerRect.center,
-            width: resourceIconSize,
-            height: resourceIconSize,
-          ),
-        )
-        .toList(growable: false);
     return HexIconBoxGeometry(
-      boxRect: boxRect,
+      boxRect: null,
       iconRects: iconRects,
-      badgeRects: badgeRects,
+      badgeRects: const [],
     );
   }
 }

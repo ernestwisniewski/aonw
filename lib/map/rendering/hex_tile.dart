@@ -263,6 +263,7 @@ class HexTile extends PositionComponent with TapCallbacks {
       hexRadius: hexRadius,
       heightParagraphHeight: _painter.heightParagraphHeight,
       heightPerspectiveY: HexGrid.perspectiveY,
+      topCorners: _geometry.topCorners,
     );
   }
 
