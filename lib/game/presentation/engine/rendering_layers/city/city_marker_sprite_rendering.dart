@@ -2,19 +2,48 @@ part of 'city_marker.dart';
 
 extension _CityMarkerSpriteRendering on CityMarker {
   bool _paintCitySprite(Canvas canvas, Offset center) {
+    final spriteBounds = _spriteBoundsFor(center);
+    final spriteClipPath = _cityMarkerClipPath(spriteBounds);
+    final imagePaint = Paint()..filterQuality = FilterQuality.medium;
+
+    canvas
+      ..save()
+      ..clipPath(spriteClipPath)
+      ..drawRect(
+        spriteBounds,
+        HudPaint.fill(HudPalette.surface, alpha: MapAlpha.whisper),
+      );
+
     final image = HexIconCache.imageFor(CityMarker._citySpritePath);
     if (image == null) {
       _paintFallbackIcon(canvas, center);
+      canvas.restore();
+      canvas.drawPath(
+        spriteClipPath,
+        HudPaint.stroke(
+          HudPalette.gold,
+          alpha: MapAlpha.solid,
+          strokeWidth: MapStroke.thin,
+        ),
+      );
       return false;
     }
 
-    final destination = _spriteBoundsFor(center);
-    _drawCityFrame(
-      canvas,
-      image: image,
-      row: _spriteRow,
+    final sourceRect = CitySpriteCatalog.sourceRectFor(
+      imageWidth: image.width,
+      imageHeight: image.height,
       column: _spriteColumn,
-      destination: destination,
+      row: _spriteRow,
+    );
+    canvas.drawImageRect(image, sourceRect, spriteBounds, imagePaint);
+    canvas.restore();
+    canvas.drawPath(
+      spriteClipPath,
+      HudPaint.stroke(
+        HudPalette.gold,
+        alpha: MapAlpha.solid,
+        strokeWidth: MapStroke.thin,
+      ),
     );
     return true;
   }
@@ -64,31 +93,6 @@ extension _CityMarkerSpriteRendering on CityMarker {
     );
   }
 
-  void _drawCityFrame(
-    Canvas canvas, {
-    required ui.Image image,
-    required int row,
-    required int column,
-    required Rect destination,
-  }) {
-    final baseSourceRect = CitySpriteCatalog.sourceRectFor(
-      imageWidth: image.width,
-      imageHeight: image.height,
-      column: column,
-      row: row,
-    );
-    BoardAssetCapPainter.paint(
-      canvas: canvas,
-      style: CityMarker._capStyle,
-      image: image,
-      sourceRect: baseSourceRect,
-      topRect: destination,
-      imagePaint: Paint()..filterQuality = FilterQuality.medium,
-      rimColor: effectiveRimColor,
-      rimShadowColor: effectiveRimShadowColor,
-    );
-  }
-
   void _paintFallbackIcon(Canvas canvas, Offset center) {
     const iconSize = 34.0;
     GameIconRenderer.paintIcon(
@@ -99,4 +103,19 @@ extension _CityMarkerSpriteRendering on CityMarker {
       color: HudPalette.goldLight,
     );
   }
+}
+
+Path _cityMarkerClipPath(Rect spriteBounds) {
+  final center = spriteBounds.center;
+  final halfWidth = spriteBounds.width / 2;
+  final halfHeight = spriteBounds.height / 2;
+
+  return Path()
+    ..moveTo(center.dx + halfWidth, center.dy)
+    ..lineTo(center.dx + halfWidth / 2, center.dy + halfHeight)
+    ..lineTo(center.dx - halfWidth / 2, center.dy + halfHeight)
+    ..lineTo(center.dx - halfWidth, center.dy)
+    ..lineTo(center.dx - halfWidth / 2, center.dy - halfHeight)
+    ..lineTo(center.dx + halfWidth / 2, center.dy - halfHeight)
+    ..close();
 }

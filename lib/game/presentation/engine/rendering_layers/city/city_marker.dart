@@ -141,9 +141,7 @@ class CityMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
   bool containsLocalPoint(Vector2 point) {
     final offset = Offset(point.x, point.y);
     final center = Offset(_width / 2, _height / 2);
-    if (BoardAssetCapPainter.clipPathFor(
-      _spriteBoundsFor(center),
-    ).contains(offset)) {
+    if (_cityMarkerClipPath(_spriteBoundsFor(center)).contains(offset)) {
       return true;
     }
     return _labelHitRect.contains(offset);
