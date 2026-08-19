@@ -24,6 +24,14 @@ backups/
 .codex/
 **/.godot/
 
+# Generated Godot runtime artifacts
+clients/aonw2_godot/scenes/
+clients/aonw2_godot/scenes/**
+clients/aonw2_godot/addons/
+clients/aonw2_godot/addons/**
+clients/aonw2_godot/assets/generated_maps/
+clients/aonw2_godot/assets/generated_maps/**
+
 # Local environment files
 .env
 .env.*

@@ -175,7 +175,7 @@ class HexTile extends PositionComponent with TapCallbacks {
   Future<void> onLoad() async {
     await super.onLoad();
 
-    if (!showIcon) return;
+    if (!showTerrain && !showResources) return;
     // Load into the global cache; already-cached paths are no-ops.
     final allPaths = {..._terrainIconPaths, ..._resourceIconPaths};
     await HexIconCache.loadAll(allPaths);

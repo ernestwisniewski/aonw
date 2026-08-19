@@ -301,6 +301,64 @@ void main() {
         greaterThan(100),
       );
     });
+
+    test('draws terrain icons when icon layer flag is disabled', () async {
+      final withoutTerrainIcons = await _renderTile(
+        outlineOnlyTopFace: true,
+        showIcon: false,
+        showTerrain: true,
+        showResources: false,
+        terrainIconCount: 0,
+      );
+      final withTerrainIcons = await _renderTile(
+        outlineOnlyTopFace: true,
+        showIcon: false,
+        showTerrain: true,
+        showResources: false,
+        terrainIconCount: 1,
+      );
+
+      final terrainIconCenter =
+          withTerrainIcons.overlays.terrainIcons.iconRects.single.center;
+
+      expect(
+        _maxChannelDelta(
+          withoutTerrainIcons,
+          withTerrainIcons,
+          terrainIconCenter,
+        ),
+        greaterThan(0),
+      );
+    });
+
+    test('draws resource icons when icon layer flag is disabled', () async {
+      final withoutResourceIcons = await _renderTile(
+        outlineOnlyTopFace: true,
+        showIcon: false,
+        showTerrain: false,
+        showResources: false,
+        resourceIconCount: 0,
+      );
+      final withResourceIcons = await _renderTile(
+        outlineOnlyTopFace: true,
+        showIcon: false,
+        showTerrain: false,
+        showResources: true,
+        resourceIconCount: 1,
+      );
+
+      final resourceIconCenter =
+          withResourceIcons.overlays.resourceIcons.iconRects.single.center;
+
+      expect(
+        _maxChannelDelta(
+          withoutResourceIcons,
+          withResourceIcons,
+          resourceIconCenter,
+        ),
+        greaterThan(0),
+      );
+    });
   });
 }
 
@@ -497,4 +555,21 @@ class _RenderedTile {
       center.dy + (corner.y - center.dy) * 0.68,
     );
   }
+}
+
+int _maxChannelDelta(_RenderedTile before, _RenderedTile after, Offset offset) {
+  assert(before.width == after.width);
+  assert(before.height == after.height);
+  final x = offset.dx.round().clamp(0, before.width - 1);
+  final y = offset.dy.round().clamp(0, before.height - 1);
+  final beforeIndex = (y * before.width + x) * 4;
+  final afterIndex = (y * after.width + x) * 4;
+  var maxDelta = 0;
+  for (var i = 0; i < 4; i++) {
+    final a = before.bytes.getUint8(beforeIndex + i);
+    final b = after.bytes.getUint8(afterIndex + i);
+    final delta = (a - b).abs();
+    if (delta > maxDelta) maxDelta = delta;
+  }
+  return maxDelta;
 }

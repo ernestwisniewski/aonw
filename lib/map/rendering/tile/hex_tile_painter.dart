@@ -201,7 +201,7 @@ class HexTilePainter {
       );
     }
 
-    if (showIcon && showTerrain) {
+    if (showTerrain) {
       _drawIconBox(
         canvas: canvas,
         box: overlays.terrainIcons.boxRect,
@@ -211,7 +211,7 @@ class HexTilePainter {
         accent: HudPalette.textMuted,
       );
     }
-    if (showIcon && showResources) {
+    if (showResources) {
       _drawResourceIcons(
         canvas: canvas,
         box: overlays.resourceIcons.boxRect,
@@ -256,7 +256,6 @@ class HexTilePainter {
   }) {
     if (!_hasPlanningMarkers(visibility)) return;
     final hasMapInfo = _hasMapInfo(
-      showIcon,
       showTerrain,
       showResources,
       terrainIconPaths,
@@ -296,15 +295,13 @@ bool _hasPlanningMarkers(_PlanningMarkerVisibility visibility) =>
     visibility.attackTarget;
 
 bool _hasMapInfo(
-  bool showIcon,
   bool showTerrain,
   bool showResources,
   List<String> terrainIconPaths,
   List<String> resourceIconPaths,
 ) =>
-    showIcon &&
-    ((showTerrain && terrainIconPaths.isNotEmpty) ||
-        (showResources && resourceIconPaths.isNotEmpty));
+    (showTerrain && terrainIconPaths.isNotEmpty) ||
+    (showResources && resourceIconPaths.isNotEmpty);
 
 bool _showWorkerNow(_PlanningMarkerVisibility visibility) =>
     visibility.workerAvailabilityHint && visibility.workerNow;

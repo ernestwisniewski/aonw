@@ -34,6 +34,7 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
   Rect _mapBounds = Rect.zero;
   FogOfWarState? _lastVisibilityState;
   String? _lastVisibilityPlayerId;
+  @visibleForTesting
   bool fastRendering = false;
 
   final Paint _hazePaint = Paint()
@@ -158,7 +159,7 @@ class CloudDriftLayer extends PositionComponent with LayerAttachment {
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    if (_reduceMotion || fastRendering || _clouds.isEmpty) return;
+    if (_reduceMotion || _clouds.isEmpty) return;
     final clipPath = _discoveredClipPath;
     if (clipPath == null) return;
 

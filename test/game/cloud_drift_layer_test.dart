@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/cloud_drift_layer.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
@@ -151,7 +152,59 @@ void main() {
       expect(layer.attachedOwner, same(parent));
       expect(layer.containsLocalPoint(Vector2.zero()), isFalse);
     });
+
+    test('renders while fast rendering is enabled', () async {
+      final layer =
+          CloudDriftLayer(
+              random: const _CloudLayerRandom(),
+              initialDelaySeconds: 0,
+              spawnGapSeconds: const (min: 1, max: 1),
+              durationSeconds: const (min: 2, max: 2),
+            )
+            ..sync(
+              parent: Component(),
+              mapData: _map(cols: 10, rows: 10),
+              visibility: _visibility(
+                discovered: {
+                  for (var row = 0; row < 10; row++)
+                    for (var col = 0; col < 10; col++)
+                      HexCoordinate(col: col, row: row),
+                },
+              ),
+            )
+            ..update(0.01);
+
+      expect(layer.activeCloudCountForTesting, inInclusiveRange(1, 3));
+
+      layer.fastRendering = true;
+
+      final recorder = ui.PictureRecorder();
+      final canvas = ui.Canvas(recorder);
+      layer.render(canvas);
+      final picture = recorder.endRecording();
+      final width = layer.size.x.toInt().clamp(1, 4096).toInt();
+      final height = layer.size.y.toInt().clamp(1, 4096).toInt();
+
+      final image = await picture.toImage(width, height);
+
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+      image.dispose();
+      expect(_containsAnyAlpha(bytes), isTrue);
+    });
   });
+}
+
+class _CloudLayerRandom extends math.Random {
+  const _CloudLayerRandom();
+
+  @override
+  bool nextBool() => true;
+
+  @override
+  double nextDouble() => 0;
+
+  @override
+  int nextInt(int max) => 0;
 }
 
 class _LowRandom implements math.Random {
@@ -209,4 +262,13 @@ FogVisibilityQuery _visibility({
       },
     ),
   );
+}
+
+bool _containsAnyAlpha(ui.ByteData? byteData) {
+  if (byteData == null || byteData.lengthInBytes == 0) return false;
+  final bytes = byteData.buffer.asUint8List();
+  for (var i = 3; i < bytes.length; i += 4) {
+    if (bytes[i] > 0) return true;
+  }
+  return false;
 }
