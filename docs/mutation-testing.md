@@ -2,6 +2,8 @@
 
 Mutation testing checks that focused tests detect small behavioral changes in critical code. It complements line coverage: a line can be executed without being meaningfully asserted.
 
+The gate enforces seven reviewed operators in mutation policy and keeps scope narrowly constrained to one operatorized regression path per run.
+
 ## Current targets
 
 | Area | Production file | Focused test |

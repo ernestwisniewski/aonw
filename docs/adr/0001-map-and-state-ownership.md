@@ -32,9 +32,31 @@ Persistence and wire codecs translate at the boundary. New parallel map/state mo
 
 One state vocabulary improves replay, equality, cache invalidation, deterministic tests, and local/server parity. The editor must convert mutable work into validated immutable content before it reaches the game.
 
-## Current exceptions
+## Migration And Verification
 
-The Dart implementation still has presentation leaves that accept more map access than they need, and some deterministic pending-action data still needs final classification between domain and interaction state.
+The canonical ownership model is complete for gameplay authority, but two migration-aware checks remain:
+
+- `MapDraft` conversion is currently validated by end-to-end test fixtures and must remain stable for compatibility with old map tooling.
+- Receipt and handling of pending interaction artifacts are covered by the state contract tests, and any future canonicalization change must preserve deterministic replay.
+
+```mermaid
+flowchart LR
+  Legacy["Legacy map/state paths"] --> Validator["Validate and freeze"] --> Domain["DomainState"]
+  Domain --> Projection["RecipientSnapshot"]
+  Projection --> Client["Client filters and animations"]
+```
+
+## Related Decisions And Documentation
+
+- [ADR 0008-rust-engine-ownership-and-strangler-migration](0008-rust-engine-ownership-and-strangler-migration.md)
+- [ADRs index](README.md)
+
+## Rejected alternatives:
+
+The alternatives below were considered but not selected:
+- A single mutable state object for both editor and gameplay.
+- Multiple authoritative map models with per-surface conversion.
+- Persistence that stores rendering-only cache entries inside authoritative snapshots.
 
 ADR 0008 supersedes the physical owner: these language-neutral invariants remain, but Rust is the target implementation.
 

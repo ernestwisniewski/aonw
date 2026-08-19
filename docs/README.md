@@ -11,7 +11,7 @@ This directory documents contracts that are easy to misuse or expensive to redis
 | Change gameplay rules | [`adr/README.md`](adr/README.md) and [`game-design/README.md`](game-design/README.md) |
 | Change multiplayer | [`multiplayer-protocol.md`](multiplayer-protocol.md) |
 | Work on Rust or Godot | [`rust-engine-migration.md`](rust-engine-migration.md) |
-| Change tests or quality gates | [`static-analysis.md`](static-analysis.md), [`test-coverage.md`](test-coverage.md), [`architecture-budgets.md`](architecture-budgets.md) |
+| Change tests or quality gates | [`static-analysis.md`](static-analysis.md), [`test-coverage.md`](test-coverage.md), [`architecture-budgets.md`](architecture-budgets.md), [`mutation-testing.md`](mutation-testing.md), [`critical-e2e.md`](critical-e2e.md), [`multiplayer-protocol.md`](multiplayer-protocol.md) |
 | Release or operate the backend | [`build-and-deploy.md`](build-and-deploy.md) |
 
 ## Current architecture
@@ -80,6 +80,9 @@ ADRs record constraints that should survive refactors. Read the index before cha
 
 - [`adr/0003-command-boundaries.md`](adr/0003-command-boundaries.md): UI intent, player commands, trusted system commands, and events are different types.
 - [`adr/0004-versioned-multiplayer-protocol.md`](adr/0004-versioned-multiplayer-protocol.md): functional compatibility, transient wire schemas, and durable schemas are versioned separately.
+- [`adr/0005-immutable-deployment.md`](adr/0005-immutable-deployment.md): immutable deployment promotion and promotion workflow transition controls.
+- [`adr/0006-transport-infrastructure.md`](adr/0006-transport-infrastructure.md): transport and traversal ownership for the online stack.
+- [`adr/0007-strategic-resource-stockpiles.md`](adr/0007-strategic-resource-stockpiles.md): strategic resources are production-gated and tracked for compatibility.
 - [`adr/0008-rust-engine-ownership-and-strangler-migration.md`](adr/0008-rust-engine-ownership-and-strangler-migration.md): Rust becomes the engine through an incremental, parity-tested migration.
 
 ## Runbooks and policies

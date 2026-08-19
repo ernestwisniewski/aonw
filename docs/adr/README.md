@@ -6,8 +6,8 @@ ADRs explain why a long-lived boundary exists and what new code must preserve. R
 
 | ADR | Decision | Status | Implementation |
 | --- | --- | --- | --- |
-| [0001](0001-map-and-state-ownership.md) | Map and state ownership | Superseded by 0008 | In progress |
-| [0002](0002-deterministic-game-engine.md) | Deterministic game engine | Superseded by 0008 | In progress |
+| [0001](0001-map-and-state-ownership.md) | Map and state ownership | Superseded | In progress |
+| [0002](0002-deterministic-game-engine.md) | Deterministic game engine | Superseded | In progress |
 | [0003](0003-command-boundaries.md) | Command boundaries | Accepted | Implemented |
 | [0004](0004-versioned-multiplayer-protocol.md) | Versioned multiplayer protocol | Accepted | Implemented |
 | [0005](0005-immutable-deployment.md) | Immutable deployment promotion | Accepted | In progress |

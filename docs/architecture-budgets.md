@@ -6,6 +6,8 @@ The architecture gate keeps new Dart code reviewable and prevents existing compl
 
 Every handwritten Dart file is assigned to one role: production, Flame rendering, test, or tool. Generated files are excluded only when their generator provenance is valid.
 
+Per-file overrides and inline suppressions are only allowed when a file cannot be reduced without changing behavior; all approved exceptions are recorded in the baseline and are intended to be paid down.
+
 New code is expected to stay within these limits:
 
 | Role | Callable lines | Nesting | Cyclomatic | Cognitive |
@@ -18,6 +20,8 @@ New code is expected to stay within these limits:
 The common file target is 500 lines and the type-declaration target is 350 lines. Existing exceptions are recorded at their exact measured value and may stay level or decrease; they may not gain extra headroom.
 
 The aggregate gate also measures complete Dart libraries, including handwritten `part` files. Moving code into a part therefore does not reset its budget.
+
+The aggregate baseline file (`architecture_aggregate_baseline.json`) uses schema 2 and the matching policy file (`architecture_aggregate_policy.json`) tracks the same target set.
 
 ## Commands
 

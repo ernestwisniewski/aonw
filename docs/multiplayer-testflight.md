@@ -34,9 +34,18 @@ The local web origin is `http://localhost:7357`; the API is `http://localhost:80
 
 Use the staging overlay; it fixes the Serverpod run mode and must not be replaced by a value in `.env`.
 
+```env
+SERVERPOD_SERVER_ID=staging
+SERVERPOD_API_SERVER_PUBLIC_HOST=api.aonw.net
+SERVERPOD_API_SERVER_PUBLIC_PORT=443
+SERVERPOD_API_SERVER_PUBLIC_SCHEME=https
+SERVERPOD_WEB_SERVER_PUBLIC_HOST=api.aonw.net
+SERVERPOD_WEB_SERVER_PUBLIC_PORT=443
+SERVERPOD_WEB_SERVER_PUBLIC_SCHEME=https
+```
+
 ```sh
-docker compose -f compose.yml -f compose.staging.yml \
-  --profile staging up -d --build
+docker compose -f compose.yml -f compose.staging.yml --profile staging up -d --build
 
 curl -fsS https://api.aonw.net/startupz
 curl -fsS https://api.aonw.net/livez
@@ -44,6 +53,10 @@ curl -fsS https://api.aonw.net/readyz
 ```
 
 For a production-like single host, use the production overlay. An external PostgreSQL or Redis service needs an explicit deployment override that removes the bundled service and its `depends_on`; selecting fewer services on the command line is not enough.
+
+```sh
+docker compose -f compose.yml -f compose.prod.yml --profile prod up -d --build
+```
 
 ## Two-device acceptance
 

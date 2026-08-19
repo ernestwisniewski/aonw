@@ -2,7 +2,7 @@
 
 Use the Make targets from the repository root. They are the shared contract between local work, CI, and release automation. Real hosts, keys, service accounts, signing material, and `.env` files do not belong in Git.
 
-[ADR 0005](adr/0005-immutable-deployment.md) describes the target build-once promotion model. The current release flow still contains transitional host-side build steps; do not describe those as immutable promotion.
+[ADR 0005](adr/0005-immutable-deployment.md) describes the target build-once promotion model. The current release flow still contains transitional host-side build steps, and this is the currently implemented workflow; do not describe those as immutable promotion.
 
 ```mermaid
 flowchart LR
@@ -22,6 +22,28 @@ flowchart LR
 make bootstrap
 make release-check
 ```
+
+## Release options
+
+| Option | Default | Allowed values | Description |
+| --- | --- | --- | --- |
+| `DEPLOY_ENV` | `staging` | `staging`, `prod` | Backend deployment environment. |
+| `DEPLOY_ALL_IOS_MODE` | `best-effort` | `off`, `best-effort`, `required` | iOS archive policy. |
+| `DEPLOY_ALL_STEAMWORKS` | `0` | `0`, `1` | Enable the Steamworks upload. |
+| `DEPLOY_ALL_GOOGLE_PLAY` | `0` | `0`, `1` | Enable the Google Play action. |
+| `DEPLOY_ALL_GOOGLE_PLAY_MODE` | `closed` | `closed`, `internal`, `alpha`, `beta`, `production` | Google Play destination track. |
+| `DEPLOY_ALL_GOOGLE_PLAY_VALIDATE_ONLY` | `0` | `0`, `1` | Validate the Play upload without publishing. |
+| `DEPLOY_ALL_ITCH` | `0` | `0`, `1` | Enable itch.io uploads. |
+| `ITCH_TARGET` | empty | `user/game`, `empty` | Required destination when itch.io is enabled. |
+| `STEAM_INCLUDE_LINUX` | `0` | `0`, `1` | Include Linux in the Steam depot. |
+| `ITCH_INCLUDE_LINUX` | `0` | `0`, `1` | Include Linux in itch.io uploads. |
+| `DOWNLOAD_INCLUDE_LINUX` | `0` | `0`, `1` | Include Linux in public downloads. |
+| `STEAM_WINDOWS_SOURCE` | `auto` | `auto`, `local`, `github`, `existing` | Windows artifact source. |
+| `STEAM_LINUX_SOURCE` | `auto` | `auto`, `local`, `github`, `existing` | Linux artifact source. |
+| `VERSION_BUMP` | `patch` | `patch`, `none` | Marketing-version policy. |
+| `NEW_VERSION` | empty | `x.y.z`, `empty` | Optional marketing-version override. |
+| `NEW_BUILD` | empty | `integer greater than current`, `empty` | Optional monotonic build override. |
+| `DEPLOY_ALL_PLAN_FORMAT` | `human` | `human`, `json`, `artifact-json` | Planner output format. |
 
 `release-check` runs the repository quality gate, generated-code and migration drift checks, Compose validation, PostgreSQL-backed server smoke, and critical E2E journeys.
 
@@ -101,9 +123,11 @@ Staging and production must use the matching Compose overlay:
 ```sh
 # staging
 make up PROFILE=staging
+docker compose -f compose.yml -f compose.staging.yml --profile staging up -d --build
 
 # production
 make up PROFILE=prod
+docker compose -f compose.yml -f compose.prod.yml --profile prod up -d --build
 ```
 
 The overlays own `SERVERPOD_RUN_MODE`; do not set it in the root deployment `.env`. Omitting or mixing overlays is expected to fail closed.

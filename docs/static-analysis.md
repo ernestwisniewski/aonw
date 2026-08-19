@@ -11,11 +11,14 @@ All handwritten Dart code uses one workspace policy. Package files add the appro
 
 The shared policy owns strict casts, inference, raw types, async rules, import order, and API hygiene. Do not copy these rules into package-specific files.
 
-Generated and vendored exclusions are intentionally narrow. Serverpod output is excluded from strict analysis because the pinned generator does not satisfy every rule, but `make generated-code-check` must be able to reproduce it. Handwritten files must not hide under a generated path.
+Generated and vendored exclusions are intentionally narrow. The routing boundary between handwritten and generated code is explicit, with generated paths like `server/**`, `lib/src/protocol/**`, and `lib/src/generated/**` intentionally excluded only where required by upstream compatibility.
+
+Serverpod output is excluded from strict analysis because the pinned generator does not satisfy every rule, but `make generated-code-check` must be able to reproduce it. Handwritten files must not hide under a generated path.
 
 ## Commands
 
 ```sh
+flutter pub get --enforce-lockfile
 make analyze
 ```
 

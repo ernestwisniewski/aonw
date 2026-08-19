@@ -52,7 +52,9 @@ make analyze
 make coverage-check
 make architecture
 make mutation
+make critical-e2e-test
 make performance
+make generated-code-check
 ```
 
 ## Run the Flutter client
@@ -97,7 +99,7 @@ Read [the migration plan](docs/rust-engine-migration.md) before moving rules acr
 
 ## Documentation
 
-Start with [docs/README.md](docs/README.md). It explains which implementation is authoritative, where each subsystem lives, and which checks apply to a change.
+Start with [docs/README.md](docs/README.md). It explains which implementation is authoritative, where each subsystem lives, and which checks apply to a change, including [static analysis](docs/static-analysis.md), [critical journeys](docs/critical-e2e.md), [mutation testing](docs/mutation-testing.md), and [architecture budgets](docs/architecture-budgets.md).
 
 Contribution setup and pull-request expectations are in [CONTRIBUTING.md](CONTRIBUTING.md). Architecture decisions are indexed in [docs/adr/README.md](docs/adr/README.md).
 
