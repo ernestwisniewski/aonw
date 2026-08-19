@@ -113,14 +113,7 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
     if (image == null) {
       _paintFallbackIcon(canvas, center);
       canvas.restore();
-      canvas.drawPath(
-        spriteClipPath,
-        HudPaint.stroke(
-          HudPalette.gold,
-          alpha: MapAlpha.solid,
-          strokeWidth: MapStroke.thin,
-        ),
-      );
+      _paintRim(canvas, spriteClipPath);
       return false;
     }
 
@@ -146,15 +139,29 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
 
     canvas.drawImageRect(image, source, destination, imagePaint);
     canvas.restore();
+    _paintRim(canvas, spriteClipPath);
+    return true;
+  }
+
+  void _paintRim(Canvas canvas, Path spriteClipPath) {
+    if (_selected) {
+      canvas.drawPath(
+        spriteClipPath,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = MapStroke.glow
+          ..color = effectiveRimShadowColor.withAlpha(MapAlpha.soft)
+          ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 2.6),
+      );
+    }
     canvas.drawPath(
       spriteClipPath,
       HudPaint.stroke(
-        HudPalette.gold,
+        effectiveRimColor,
         alpha: MapAlpha.solid,
         strokeWidth: MapStroke.thin,
       ),
     );
-    return true;
   }
 
   void _paintFallbackIcon(Canvas canvas, ui.Offset center) {
