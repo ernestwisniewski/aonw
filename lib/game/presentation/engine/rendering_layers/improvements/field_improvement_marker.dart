@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
@@ -7,7 +8,10 @@ import 'package:aonw/game/presentation/engine/rendering_layers/improvements/fiel
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_catalog.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/map/rendering/hex_geometry.dart';
+import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:flame/components.dart';
@@ -23,8 +27,12 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
   static const BoardAssetCapStyle _capStyle = BoardAssetCapStyles.improvement;
   static const Color _selectedRimColor = Color(0xFFF1F4F8);
   static const Color _selectedRimShadowColor = Color(0xFF9AA2AE);
-  static final double _width = _capStyle.componentSize.width;
-  static final double _height = _capStyle.componentSize.height;
+  static const double _sizeScale = 0.70;
+  static final double _hexWidth = MapConfig.defaultConfig.hexRadius * 2;
+  static final double _hexHeight =
+      MapConfig.defaultConfig.hexRadius * math.sqrt(3) * HexGrid.perspectiveY;
+  static final double _width = _hexWidth * _sizeScale;
+  static final double _height = _hexHeight * _sizeScale;
   static final double _spriteWidth = _capStyle.topSize.width;
   static final double _spriteHeight = _capStyle.topSize.height;
   static const double _sourceInset = FieldImprovementSpriteCatalog.sourceInset;
@@ -149,6 +157,14 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
         spriteClipPath,
         Paint()
           ..style = PaintingStyle.stroke
+          ..strokeWidth = MapStroke.glow + 2
+          ..color = effectiveRimShadowColor.withAlpha(MapAlpha.regular)
+          ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 4.0),
+      );
+      canvas.drawPath(
+        spriteClipPath,
+        Paint()
+          ..style = PaintingStyle.stroke
           ..strokeWidth = MapStroke.glow
           ..color = effectiveRimShadowColor.withAlpha(MapAlpha.soft)
           ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 2.6),
@@ -177,18 +193,10 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
 
   @visibleForTesting
   Path _improvementMarkerClipPathFor(ui.Rect spriteBounds) {
-    final halfWidth = spriteBounds.width / 2;
-    final halfHeight = spriteBounds.height / 2;
-    final center = spriteBounds.center;
-
-    return Path()
-      ..moveTo(center.dx + halfWidth / 2, center.dy - halfHeight)
-      ..lineTo(center.dx + halfWidth, center.dy)
-      ..lineTo(center.dx + halfWidth / 2, center.dy + halfHeight)
-      ..lineTo(center.dx - halfWidth / 2, center.dy + halfHeight)
-      ..lineTo(center.dx - halfWidth, center.dy)
-      ..lineTo(center.dx - halfWidth / 2, center.dy - halfHeight)
-      ..close();
+    return HexGeometry.projectedTopFacePath(
+      bounds: spriteBounds,
+      perspectiveY: HexGrid.perspectiveY,
+    );
   }
 
   AnimationFrameAdjustment _frameAdjustment() {
@@ -203,7 +211,11 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
   }
 
   ui.Rect _spriteBoundsFor(ui.Offset center) {
-    return _capStyle.topRectFor(center);
+    return ui.Rect.fromCenter(
+      center: center,
+      width: _width,
+      height: _height,
+    );
   }
 
   static int _clampedEraColumn(int value) {

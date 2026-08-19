@@ -4,7 +4,9 @@ import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/combat.dart';
 import 'package:aonw_core/game/domain/match_rules.dart';
+import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -290,6 +292,38 @@ String empireUnitSubtitle(AppLocalizations l10n, GameUnit unit) {
   if (unit.workerAssignment != null) parts.add(l10n.empireUnitWorking);
   if (unit.queuedPath != null) parts.add(l10n.empireUnitEnRoute);
   return parts.join(' - ');
+}
+
+String empireUnitMovementLabel(GameUnit unit) {
+  final maxMovement = UnitMovementBalance.maxMovementPointsFor(
+    type: unit.type,
+    carriedArtifactId: unit.carriedArtifactId,
+  );
+  return '${unit.exactMovementPoints}/$maxMovement';
+}
+
+String empireUnitStateLabel(AppLocalizations l10n, GameUnit unit) {
+  final parts = <String>[];
+  if (unit.isFortified) {
+    parts.add(
+      UnitFortificationRules.canHeal(unit)
+          ? l10n.empireUnitHealing
+          : l10n.empireUnitFortifying,
+    );
+  }
+  if (unit.workerJob != null) parts.add(l10n.empireUnitBuilding);
+  if (unit.workerAssignment != null) parts.add(l10n.empireUnitWorking);
+  if (unit.queuedPath != null) parts.add(l10n.empireUnitEnRoute);
+  return parts.isEmpty ? l10n.commonReady : parts.join(' - ');
+}
+
+String empireUnitHpLabel(GameUnit unit) {
+  final combatStats = UnitCombatStats.derive(unit);
+  final currentHp = UnitCombatHealth.currentHp(
+    unit,
+    effectiveStats: combatStats,
+  );
+  return '$currentHp/${combatStats.hp}';
 }
 
 String empireUnitGroupSubtitle(AppLocalizations l10n, EmpireUnitGroup group) {

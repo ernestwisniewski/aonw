@@ -8,6 +8,8 @@ class _GroupShell extends StatelessWidget {
     required this.focusTooltip,
     required this.onTap,
     required this.children,
+    this.leading,
+    this.useTileLayout = false,
   });
 
   final GameIconData icon;
@@ -16,6 +18,8 @@ class _GroupShell extends StatelessWidget {
   final String focusTooltip;
   final VoidCallback onTap;
   final List<Widget> children;
+  final Widget? leading;
+  final bool useTileLayout;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +38,7 @@ class _GroupShell extends StatelessWidget {
           children: [
             _EmpireGroupHeader(
               icon: icon,
+              leading: leading,
               title: title,
               subtitle: subtitle,
               focusTooltip: focusTooltip,
@@ -47,18 +52,46 @@ class _GroupShell extends StatelessWidget {
                   border: BorderEmphasis.subtle,
                   topBorder: true,
                 ),
-                child: Column(
-                  children: [
-                    for (var i = 0; i < children.length; i++) ...[
-                      if (i > 0)
-                        Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: SurfaceElevation.flat.strokeColor(alpha: 62),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: useTileLayout
+                      ? LayoutBuilder(
+                          builder: (context, constraints) {
+                            final availableWidth = constraints.maxWidth;
+                            final columns =
+                                availableWidth == double.infinity
+                                    ? 1
+                                    : (availableWidth / 220).floor().clamp(1, 5);
+                            final columnsOrDefault = columns <= 0 ? 1 : columns;
+                            final itemWidth =
+                                (availableWidth - (columnsOrDefault - 1) * 8) /
+                                columnsOrDefault;
+                            return Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final child in children)
+                                  SizedBox(
+                                    width: itemWidth,
+                                    child: child,
+                                  ),
+                              ],
+                            );
+                          },
+                        )
+                      : Column(
+                          children: [
+                            for (var i = 0; i < children.length; i++) ...[
+                              if (i > 0)
+                                Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: SurfaceElevation.flat.strokeColor(alpha: 62),
+                                ),
+                              children[i],
+                            ],
+                          ],
                         ),
-                      children[i],
-                    ],
-                  ],
                 ),
               ),
           ],
@@ -71,6 +104,7 @@ class _GroupShell extends StatelessWidget {
 class _EmpireGroupHeader extends StatelessWidget {
   const _EmpireGroupHeader({
     required this.icon,
+    this.leading,
     required this.title,
     required this.subtitle,
     required this.focusTooltip,
@@ -78,6 +112,7 @@ class _EmpireGroupHeader extends StatelessWidget {
   });
 
   final GameIconData icon;
+  final Widget? leading;
   final String title;
   final String subtitle;
   final String focusTooltip;
@@ -106,12 +141,13 @@ class _EmpireGroupHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(5),
                   includeShadow: false,
                 ),
-                child: Center(
-                  child: GameIcon(
-                    icon,
-                    size: GameIconSize.regular,
-                    color: GameUiTheme.gold,
-                  ),
+              child: Center(
+                  child: leading ??
+                      GameIcon(
+                        icon,
+                        size: GameIconSize.regular,
+                        color: GameUiTheme.gold,
+                      ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -264,6 +300,134 @@ class _EmpireEntityRow extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmpireUnitBlock extends StatelessWidget {
+  const _EmpireUnitBlock({
+    required this.icon,
+    required this.title,
+    required this.movement,
+    required this.state,
+    required this.hp,
+    required this.focusTooltip,
+    required this.onTap,
+    super.key,
+  });
+
+  final GameIconData icon;
+  final String title;
+  final String movement;
+  final String state;
+  final String hp;
+  final String focusTooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                decoration: SurfaceElevation.flat.decoration(
+                  accent: GameUiTheme.textSecondary,
+                  background: GameUiTheme.textSecondary,
+                  backgroundAlpha: 18,
+                  borderAlpha: 42,
+                  borderRadius: BorderRadius.circular(5),
+                  includeShadow: false,
+                ),
+                child: Center(
+                  child: GameIcon(
+                    icon,
+                    size: GameIconSize.small,
+                    color: GameUiTheme.textSecondary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: GameUiTheme.textBright,
+                        fontFamily: GameUiTheme.bodyFont,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    _EmpireUnitMetadataLine(
+                      label: 'PR',
+                      value: movement,
+                    ),
+                    _EmpireUnitMetadataLine(
+                      label: 'Stan',
+                      value: state,
+                    ),
+                    _EmpireUnitMetadataLine(
+                      label: 'HP',
+                      value: hp,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Tooltip(
+                message: focusTooltip,
+                child: const GameIcon(
+                  GameIcons.focus,
+                  color: GameUiTheme.gold,
+                  size: GameIconSize.small,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmpireUnitMetadataLine extends StatelessWidget {
+  const _EmpireUnitMetadataLine({
+    required this.label,
+    required this.value,
+    super.key,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Text(
+        '$label: $value',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: GameUiTheme.textSecondary,
+          fontFamily: GameUiTheme.bodyFont,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

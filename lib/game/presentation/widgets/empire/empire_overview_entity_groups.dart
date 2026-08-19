@@ -1,6 +1,7 @@
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/widgets/empire/empire_overview_view_model.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/game/presentation/widgets/theme/unit_sprite_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';
@@ -35,13 +36,25 @@ class EmpireUnitGroupBlock extends StatelessWidget {
       subtitle: empireUnitGroupSubtitle(l10n, group),
       focusTooltip: l10n.empireShowFirstUnitTooltip,
       onTap: () => onUnitSelected(first),
+      leading: UnitSpriteIcon(
+        type: group.type,
+        size: 28,
+        fallback: GameIcon(
+          gameIconForUnitType(group.type),
+          size: GameIconSize.large,
+          color: GameUiTheme.goldLight,
+        ),
+      ),
+      useTileLayout: true,
       children: [
         for (final unit in group.units)
-          _EmpireEntityRow(
+          _EmpireUnitBlock(
             key: Key('empire.unit.${unit.id}'),
             icon: gameIconForUnitType(unit.type),
             title: GameDisplayNames.unit(l10n, unit),
-            subtitle: empireUnitSubtitle(l10n, unit),
+            movement: empireUnitMovementLabel(unit),
+            state: empireUnitStateLabel(l10n, unit),
+            hp: empireUnitHpLabel(unit),
             focusTooltip: l10n.empireShowUnitTooltip,
             onTap: () => onUnitSelected(unit),
           ),

@@ -6,6 +6,9 @@ import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker_
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_sprite_catalog.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/marker_health_bar.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/map/rendering/hex_geometry.dart';
+import 'package:aonw/map/rendering/hex_grid.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
 import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
@@ -30,11 +33,12 @@ class CityMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
   double? _cachedNameMaxWidth;
 
   static const BoardAssetCapStyle _capStyle = BoardAssetCapStyles.city;
-  static const Color _selectedRimColor = Color(0xFFF2DFA4);
-  static const Color _selectedRimShadowColor = Color(0xFFA47C35);
+  static const Color _selectedRimColor = HudPalette.goldLight;
+  static const Color _selectedRimShadowColor = HudPalette.goldDark;
   static const String _citySpritePath = CitySpriteCatalog.assetPath;
-  static final double _width = _capStyle.componentSize.width;
-  static final double _height = _capStyle.componentSize.height;
+  static final double _width = MapConfig.defaultConfig.hexRadius * 2;
+  static final double _height =
+      MapConfig.defaultConfig.hexRadius * math.sqrt(3) * HexGrid.perspectiveY;
   static const int _frameColumns = CitySpriteCatalog.technologyProfileCount;
   static const int _frameRows = CitySpriteCatalog.visualLevelCount;
   static const double _sourceInset = CitySpriteCatalog.sourceInset;

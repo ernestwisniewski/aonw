@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_hud_theme.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
@@ -11,6 +13,44 @@ class DescriptionInfoList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (items.isEmpty) return const SizedBox.shrink();
+
+        final maxWidth = constraints.maxWidth;
+        if (maxWidth <= 0 || maxWidth.isInfinite) {
+          return _buildStandardRows();
+        }
+
+        final spacing = 6.0;
+        final minTileWidth = 150.0;
+        final columns = max(1, min(
+          4,
+          (maxWidth + spacing) ~/ (minTileWidth + spacing),
+        ));
+        final tileWidth = (maxWidth - (columns - 1) * spacing) / columns;
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final item in items)
+                  SizedBox(
+                    width: tileWidth,
+                    child: _DescriptionInfoRow(item: item),
+                  ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildStandardRows() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

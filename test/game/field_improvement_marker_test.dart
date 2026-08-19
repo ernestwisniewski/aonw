@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'dart:math' as math;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asset_cap.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_marker.dart';
@@ -35,6 +36,11 @@ void main() {
         ),
       );
       const capStyle = BoardAssetCapStyles.improvement;
+      const sizeScale = 0.70;
+      final markerWidth = MapConfig.defaultConfig.hexRadius * 2 * sizeScale;
+      final markerHeight =
+          MapConfig.defaultConfig.hexRadius * math.sqrt(3) * HexGrid.perspectiveY *
+          sizeScale;
       final marker = FieldImprovementMarker(
         position: Vector2.zero(),
         type: FieldImprovementType.orchard,
@@ -43,11 +49,11 @@ void main() {
 
       expect(
         marker.markerSizeForTesting.x,
-        closeTo(capStyle.componentSize.width, 0.0001),
+        closeTo(markerWidth, 0.0001),
       );
       expect(
         marker.markerSizeForTesting.y,
-        closeTo(capStyle.componentSize.height, 0.0001),
+        closeTo(markerHeight, 0.0001),
       );
       expect(marker.anchor, Anchor.center);
       expect(marker.sourceInsetForTesting, 0);
@@ -82,21 +88,20 @@ void main() {
         eraColumn: 1,
       );
       const capStyle = BoardAssetCapStyles.improvement;
+      const sizeScale = 0.70;
+      final expectedWidth = MapConfig.defaultConfig.hexRadius * 2 * sizeScale;
+      final expectedHeight =
+          MapConfig.defaultConfig.hexRadius * math.sqrt(3) * HexGrid.perspectiveY *
+          sizeScale;
       final bounds = marker.spriteBoundsForTesting;
       final clip = marker.spriteClipPathForTesting;
 
-      expect(bounds.width, capStyle.topSize.width);
-      expect(bounds.height, capStyle.topSize.height);
+      expect(bounds.width, closeTo(expectedWidth, 0.0001));
+      expect(bounds.height, closeTo(expectedHeight, 0.0001));
       expect(clip.contains(bounds.center), isTrue);
       expect(clip.contains(bounds.topLeft), isFalse);
-      expect(
-        capStyle.topSize.width,
-        lessThan(BoardAssetCapStyles.city.topSize.width),
-      );
-      expect(
-        capStyle.topSize.height,
-        lessThan(BoardAssetCapStyles.city.topSize.height),
-      );
+      expect(bounds.width, greaterThan(capStyle.topSize.width));
+      expect(bounds.height, greaterThan(capStyle.topSize.height));
     });
 
     test('uses a silver rim that brightens when selected', () {

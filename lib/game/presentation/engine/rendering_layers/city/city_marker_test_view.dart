@@ -91,7 +91,7 @@ final class CityMarkerDebugSnapshot {
           marker._selected && marker._shouldPaintLabel,
       markerSize = marker.size.clone(),
       spriteBounds = _spriteBounds(marker),
-      spriteClipPath = BoardAssetCapPainter.clipPathFor(_spriteBounds(marker)),
+      spriteClipPath = _cityMarkerClipPath(_spriteBounds(marker)),
       boardCapStyle = CityMarker._capStyle,
       sourceInset = CityMarker._sourceInset,
       statusTop = marker._statusTopFor(_spriteBounds(marker));

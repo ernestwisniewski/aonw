@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asset_cap.dart';
@@ -48,16 +49,19 @@ void main() {
     test('uses the city sprite without a duplicated type icon badge', () async {
       await HexIconCache.load(CitySpriteCatalog.assetPath);
       const capStyle = BoardAssetCapStyles.city;
+      final markerWidth = MapConfig.defaultConfig.hexRadius * 2;
+      final markerHeight =
+          MapConfig.defaultConfig.hexRadius * math.sqrt(3) * HexGrid.perspectiveY;
 
       final marker = CityMarker(
         position: Vector2.zero(),
         colorValue: 0xFF0000FF,
       );
 
-      expect(marker.debugSnapshot.markerSize.x, capStyle.componentSize.width);
+      expect(marker.debugSnapshot.markerSize.x, closeTo(markerWidth, 0.0001));
       expect(
         marker.debugSnapshot.markerSize.y,
-        closeTo(capStyle.componentSize.height, 0.0001),
+        closeTo(markerHeight, 0.0001),
       );
       expect(marker.anchor, Anchor.center);
       expect(marker.debugSnapshot.sourceInset, 0);
@@ -161,14 +165,16 @@ void main() {
     test('fits the city board cap on the projected map hex', () {
       final marker = CityMarker(position: Vector2.zero(), colorValue: 0);
       final spriteBounds = marker.debugSnapshot.spriteBounds;
-      const capStyle = BoardAssetCapStyles.city;
+      final expectedWidth = MapConfig.defaultConfig.hexRadius * 2;
+      final expectedHeight =
+          MapConfig.defaultConfig.hexRadius * math.sqrt(3) * HexGrid.perspectiveY;
 
-      expect(spriteBounds.width, capStyle.topSize.width);
-      expect(spriteBounds.height, closeTo(capStyle.topSize.height, 0.0001));
+      expect(spriteBounds.width, closeTo(expectedWidth, 0.0001));
+      expect(spriteBounds.height, closeTo(expectedHeight, 0.0001));
       expect(
         spriteBounds.center.dy,
         closeTo(
-          marker.debugSnapshot.markerSize.y / 2 - capStyle.sideDepth / 2,
+          marker.debugSnapshot.markerSize.y / 2,
           0.0001,
         ),
       );

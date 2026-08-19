@@ -136,12 +136,14 @@ abstract final class CitySelectionViewModelFactory {
           label: l10n.commonPopulation,
           value: '${economy.population}',
           color: cityColor,
+          semanticId: SelectionInfoItemSemanticId.population,
         ),
         SelectionInfoItem(
           icon: GameIcons.workedHexes,
           label: l10n.citySelectionTerritoryLabel,
           value: '${economy.territoryHexCount}/$maxHexes',
           color: GameUiTheme.accent,
+          semanticId: SelectionInfoItemSemanticId.territory,
         ),
         SelectionInfoItem(
           icon: GameIcons.food,

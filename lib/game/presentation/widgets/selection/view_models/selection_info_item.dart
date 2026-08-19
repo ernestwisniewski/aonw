@@ -2,6 +2,8 @@ import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:flutter/material.dart';
 
 abstract final class SelectionInfoItemSemanticId {
+  static const population = 'population';
+  static const territory = 'territory';
   static const terrain = 'terrain';
   static const resources = 'resources';
   static const height = 'height';

@@ -34,23 +34,31 @@ extension _CityMarkerSpriteRendering on CityMarker {
     return true;
   }
 
-  void _paintRim(Canvas canvas, Path spriteClipPath) {
+  void _paintRim(Canvas canvas, Path outlinePath) {
     if (_selected) {
       canvas.drawPath(
-        spriteClipPath,
+        outlinePath,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = MapStroke.glow + 1.2
+          ..color = effectiveRimShadowColor.withAlpha(MapAlpha.regular)
+          ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 4.4),
+      );
+      canvas.drawPath(
+        outlinePath,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = MapStroke.glow
-          ..color = effectiveRimShadowColor.withAlpha(MapAlpha.soft)
-          ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 2.8),
+          ..color = effectiveRimShadowColor.withAlpha(MapAlpha.faint + 10)
+          ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 2.9),
       );
     }
     canvas.drawPath(
-      spriteClipPath,
+      outlinePath,
       HudPaint.stroke(
         effectiveRimColor,
-        alpha: MapAlpha.solid,
-        strokeWidth: MapStroke.thin,
+        alpha: MapAlpha.strong,
+        strokeWidth: MapStroke.bold,
       ),
     );
   }
@@ -113,16 +121,8 @@ extension _CityMarkerSpriteRendering on CityMarker {
 }
 
 Path _cityMarkerClipPath(Rect spriteBounds) {
-  final center = spriteBounds.center;
-  final halfWidth = spriteBounds.width / 2;
-  final halfHeight = spriteBounds.height / 2;
-
-  return Path()
-    ..moveTo(center.dx + halfWidth, center.dy)
-    ..lineTo(center.dx + halfWidth / 2, center.dy + halfHeight)
-    ..lineTo(center.dx - halfWidth / 2, center.dy + halfHeight)
-    ..lineTo(center.dx - halfWidth, center.dy)
-    ..lineTo(center.dx - halfWidth / 2, center.dy - halfHeight)
-    ..lineTo(center.dx + halfWidth / 2, center.dy - halfHeight)
-    ..close();
+  return HexGeometry.projectedTopFacePath(
+    bounds: spriteBounds,
+    perspectiveY: HexGrid.perspectiveY,
+  );
 }

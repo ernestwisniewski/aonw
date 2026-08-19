@@ -1,8 +1,11 @@
 part of 'city_marker.dart';
 
 extension _CityMarkerLabelSupport on CityMarker {
-  Rect _spriteBoundsFor(Offset center) =>
-      CityMarker._capStyle.topRectFor(center);
+  Rect _spriteBoundsFor(Offset center) => Rect.fromCenter(
+        center: center,
+        width: CityMarker._width,
+        height: CityMarker._height,
+      );
 
   bool get _shouldPaintLabel => _showLabel || _selected;
 

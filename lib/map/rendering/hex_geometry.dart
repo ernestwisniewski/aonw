@@ -95,6 +95,30 @@ abstract final class HexGeometry {
     ]);
   }
 
+  /// Returns a compact top-face hex path that fits in [bounds] and uses the same
+  /// projected 60° corner geometry as a flat-top hex tile.
+  static Path projectedTopFacePath({
+    required Rect bounds,
+    required double perspectiveY,
+  }) {
+    final center = bounds.center;
+    final halfWidth = bounds.width / 2;
+    if (halfWidth <= 0 || bounds.height <= 0) return Path();
+
+    final projectedHalfHeight = halfWidth * (math.sqrt(3) / 2) * perspectiveY;
+    final halfHeight = math.min(bounds.height / 2, projectedHalfHeight);
+    final halfWidthHalf = halfWidth / 2;
+
+    return Path()
+      ..moveTo(center.dx + halfWidth, center.dy)
+      ..lineTo(center.dx + halfWidthHalf, center.dy + halfHeight)
+      ..lineTo(center.dx - halfWidthHalf, center.dy + halfHeight)
+      ..lineTo(center.dx - halfWidth, center.dy)
+      ..lineTo(center.dx - halfWidthHalf, center.dy - halfHeight)
+      ..lineTo(center.dx + halfWidthHalf, center.dy - halfHeight)
+      ..close();
+  }
+
   static Path _pathFromOffsets(List<Offset> corners) {
     final path = Path()..moveTo(corners.first.dx, corners.first.dy);
     for (final corner in corners.skip(1)) {
