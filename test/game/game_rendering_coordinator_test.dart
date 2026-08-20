@@ -894,7 +894,7 @@ void main() {
     });
 
     test(
-      'highlights improvement city territory without selecting city marker',
+      'highlights the improvement empire without treating it as city selection',
       () {
         final map = _map();
         const city = GameCity(
@@ -934,6 +934,7 @@ void main() {
 
         expect(cityTerritory.lastSelectedCityId, city.id);
         expect(cityMarkers.lastSelectedCityId, isNull);
+        expect(cityMarkers.lastHighlightedPlayerId, city.ownerPlayerId);
       },
     );
 
@@ -1252,6 +1253,7 @@ class _NoopCityMarkerLayer extends CityMarkerLayer {
     required Component parent,
     required Iterable<GameCity> cities,
     required String? selectedCityId,
+    String? highlightedPlayerId,
     Map<String, double> healthFractions = const {},
     bool showLabels = true,
     Set<String> citiesWithStoredArtifacts = const {},
@@ -1357,6 +1359,7 @@ class _RecordingCityMarkerLayer extends CityMarkerLayer {
   Set<String> lastCitiesWithStoredArtifacts = const {};
   ResearchState? lastResearch;
   String? lastSelectedCityId;
+  String? lastHighlightedPlayerId;
 
   _RecordingCityMarkerLayer() : super(colorForPlayer: (_) => 0);
 
@@ -1365,6 +1368,7 @@ class _RecordingCityMarkerLayer extends CityMarkerLayer {
     required Component parent,
     required Iterable<GameCity> cities,
     required String? selectedCityId,
+    String? highlightedPlayerId,
     Map<String, double> healthFractions = const {},
     bool showLabels = true,
     Set<String> citiesWithStoredArtifacts = const {},
@@ -1376,6 +1380,7 @@ class _RecordingCityMarkerLayer extends CityMarkerLayer {
     lastCitiesWithStoredArtifacts = Set.unmodifiable(citiesWithStoredArtifacts);
     lastResearch = research;
     lastSelectedCityId = selectedCityId;
+    lastHighlightedPlayerId = highlightedPlayerId;
   }
 }
 

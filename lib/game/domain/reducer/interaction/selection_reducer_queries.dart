@@ -5,11 +5,6 @@ bool _isSelectedUnit(GameClientState state, GameUnit unit) {
       state.selection?.unit?.id == unit.id;
 }
 
-bool _isActivePlayerOwned(_ClientState state, String ownerPlayerId) {
-  return state.activePlayerId.isNotEmpty &&
-      state.activePlayerId == ownerPlayerId;
-}
-
 FieldImprovement? _fieldImprovementAt(
   GameClientState state,
   MapTileView tile,

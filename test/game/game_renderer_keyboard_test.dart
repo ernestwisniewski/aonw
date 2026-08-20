@@ -3,7 +3,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
 import 'package:aonw/game/presentation/engine.dart';
-import 'package:aonw/game/presentation/engine/artifact_marker_tap_cycle.dart';
+import 'package:aonw/game/presentation/engine/map_tap_cycle.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_option.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_management_overlay.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker.dart';

@@ -63,12 +63,6 @@ class _TerritoryRenderStyle {
     HudPalette.goldLight,
     0.18,
   )!;
-  late final Color _selectedBorderHighlightColor = Color.lerp(
-    color,
-    HudPalette.textBright,
-    0.34,
-  )!;
-
   late final Paint outerBorderPaint = HudPaint.stroke(
     _borderShadowColor,
     alpha: strategicView ? MapAlpha.strong : MapAlpha.solid,
@@ -163,9 +157,17 @@ class _TerritoryRenderStyle {
     )..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.6);
   }
 
-  Paint selectedBorderHighlightPaint(int alpha) {
+  late final Paint selectedBorderBackingPaint = HudPaint.stroke(
+    HudPalette.bg,
+    alpha: MapAlpha.solid,
+    strokeWidth: _selectedBorderHighlightWidth + 2.2,
+    strokeCap: StrokeCap.round,
+    strokeJoin: StrokeJoin.round,
+  );
+
+  Paint selectedPlayerColorBorderPaint(int alpha) {
     return HudPaint.stroke(
-      _selectedBorderHighlightColor,
+      color,
       alpha: alpha,
       strokeWidth: _selectedBorderHighlightWidth,
       strokeCap: StrokeCap.round,

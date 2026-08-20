@@ -9,7 +9,7 @@ extension _CityTerritoryOverlayDrawing on CityTerritoryOverlay {
         style.fillColor,
         alpha: strategicView
             ? _tileTerritoryFillAlpha
-            : territory.selected
+            : territory.empireHighlighted
             ? _emphasizedAlpha(
                 _selectedTerritoryFillAlpha,
                 _selectedTerritoryFillAlphaZoomedOut,
@@ -26,7 +26,7 @@ extension _CityTerritoryOverlayDrawing on CityTerritoryOverlay {
           canvas,
           territoryPath,
           style,
-          selected: territory.selected,
+          selected: territory.empireHighlighted,
         );
       }
     }
@@ -37,12 +37,13 @@ extension _CityTerritoryOverlayDrawing on CityTerritoryOverlay {
       if (_isOffscreen(territory, clipBounds)) continue;
       final boundaryPath = _cachedBoundaryPath(territory);
       final style = _renderStyleFor(territory.color);
+      if (territory.selected) continue;
       if (!strategicView) {
         _drawTerritoryEdgeBand(
           canvas,
           boundaryPath,
           style,
-          selected: territory.selected,
+          selected: territory.empireHighlighted,
         );
       }
       if (strategicView) {
@@ -93,28 +94,27 @@ extension _CityTerritoryOverlayDrawing on CityTerritoryOverlay {
   ) {
     final boundaryPath = _cachedBoundaryPath(selectedTerritory);
     final style = _renderStyleFor(selectedTerritory.color);
-    canvas
-      ..drawPath(
-        boundaryPath,
-        style.selectedBorderGlowPaint(
-          _emphasizedAlpha(
-            _selectedBorderGlowAlpha,
-            _selectedBorderGlowAlphaZoomedOut,
-          ),
+    _drawDashedPath(
+      canvas,
+      boundaryPath,
+      style.selectedBorderGlowPaint(
+        _emphasizedAlpha(
+          _selectedBorderGlowAlpha,
+          _selectedBorderGlowAlphaZoomedOut,
         ),
-      )
-      ..drawPath(boundaryPath, style.outerBorderPaint)
-      ..drawPath(boundaryPath, style.solidBorderPaint)
-      ..drawPath(boundaryPath, style.atlasInkBorderPaint)
-      ..drawPath(
-        boundaryPath,
-        style.selectedBorderHighlightPaint(
-          _emphasizedAlpha(
-            _selectedBorderHighlightAlpha,
-            _selectedBorderHighlightAlphaZoomedOut,
-          ),
+      ),
+    );
+    _drawDashedPath(canvas, boundaryPath, style.selectedBorderBackingPaint);
+    _drawDashedPath(
+      canvas,
+      boundaryPath,
+      style.selectedPlayerColorBorderPaint(
+        _emphasizedAlpha(
+          _selectedBorderHighlightAlpha,
+          _selectedBorderHighlightAlphaZoomedOut,
         ),
-      );
+      ),
+    );
   }
 
   void _drawTerritoryInsetWash(
@@ -187,7 +187,10 @@ extension _CityTerritoryOverlayDrawing on CityTerritoryOverlay {
       );
   }
 
-  void _drawMapDimming(Canvas canvas, CityTerritory selectedTerritory) {
+  void _drawMapDimming(
+    Canvas canvas,
+    Iterable<CityTerritory> highlightedEmpire,
+  ) {
     final path = Path()
       ..fillType = PathFillType.evenOdd
       ..addRect(
@@ -197,9 +200,22 @@ extension _CityTerritoryOverlayDrawing on CityTerritoryOverlay {
           _mapDimmingExtent,
           _mapDimmingExtent,
         ),
-      )
-      ..addPath(_cachedBoundaryPath(selectedTerritory), Offset.zero);
+      );
+    for (final territory in highlightedEmpire) {
+      path.addPath(_cachedBoundaryPath(territory), Offset.zero);
+    }
     canvas.drawPath(path, _mapDimmingPaint);
+  }
+
+  void _drawDashedPath(Canvas canvas, Path path, Paint paint) {
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final end = (distance + _selectedDashLength).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(distance, end), paint);
+        distance = end + _selectedDashGapLength;
+      }
+    }
   }
 
   int _emphasizedAlpha(int baseAlpha, int zoomedOutAlpha) {

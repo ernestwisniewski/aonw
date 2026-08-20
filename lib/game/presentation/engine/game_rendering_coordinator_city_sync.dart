@@ -17,6 +17,10 @@ extension _GameRenderingCoordinatorCitySync on GameRenderingCoordinator {
       selection,
       knownCities,
     );
+    final highlightedEmpirePlayerId = _cityOwnerPlayerId(
+      selectedTerritoryCityId,
+      knownCities,
+    );
     cityTerritory.sync(
       parent: grid,
       cities: knownCities,
@@ -30,6 +34,7 @@ extension _GameRenderingCoordinatorCitySync on GameRenderingCoordinator {
       parent: world,
       cities: knownCities,
       selectedCityId: selectedCityId,
+      highlightedPlayerId: highlightedEmpirePlayerId,
       healthFractions: _cityHealthFractions(state, knownCities),
       showLabels: showCityLabels,
       citiesWithStoredArtifacts: _citiesWithStoredArtifacts(state),
@@ -43,6 +48,14 @@ extension _GameRenderingCoordinatorCitySync on GameRenderingCoordinator {
         if (artifact.location.isStored && artifact.location.cityId != null)
           artifact.location.cityId!,
     };
+  }
+
+  String? _cityOwnerPlayerId(String? cityId, Iterable<GameCity> cities) {
+    if (cityId == null) return null;
+    for (final city in cities) {
+      if (city.id == cityId) return city.ownerPlayerId;
+    }
+    return null;
   }
 
   String? _selectedTerritoryCityId(

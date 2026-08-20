@@ -15,8 +15,6 @@ import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.da
 import 'package:aonw/game/presentation/widgets.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
 import 'package:aonw/game/presentation/widgets/screen/game_startup_asset_preloader.dart';
-import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
-import 'package:aonw/game/presentation/widgets/selection_info/providers.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
 import 'package:aonw/map/widgets/dice_roll_test_overlay.dart';

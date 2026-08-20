@@ -6,30 +6,16 @@ extension GameRendererTileInteractions on GameRenderer {
     final selectedId = _renderState.selectedUnitId;
     if (selectedId != null &&
         _unitAnimationController.isUnitAnimating(selectedId)) {
-      _artifactTapCycle.clear();
+      _mapTapCycle.clear();
       return;
     }
     final pending = _renderState.pendingAction;
     if (pending is PendingCityExpansionSelection) {
-      _artifactTapCycle.clear();
+      _mapTapCycle.clear();
       await onCommand(TileTappedCommand(tileData.col, tileData.row));
       return;
     }
-    if (_selectedUnitOnCityCenter(tileData) &&
-        _handleStackedMapObjectTap(
-          this,
-          tileData.col,
-          tileData.row,
-          includeTileInspection: true,
-          preferCityUnitTerrainCycle: true,
-        )) {
-      return;
-    }
-    if (_selectedTileIsCityCenter(tileData)) {
-      _artifactTapCycle.clear();
-      await onCommand(TileTappedCommand(tileData.col, tileData.row));
-      return;
-    }
+    if (_handleCityOrImprovementTerrainCycle(tileData)) return;
     if (_selectionMatchesTile(tileData) &&
         _handleStackedMapObjectTap(
           this,
@@ -40,36 +26,12 @@ extension GameRendererTileInteractions on GameRenderer {
         )) {
       return;
     }
-    _artifactTapCycle.clear();
+    _mapTapCycle.clear();
     await onCommand(TileTappedCommand(tileData.col, tileData.row));
   }
 
   bool _selectionMatchesTile(WorldTile tileData) {
     return _selectionMatchesTileCoordinates(tileData.col, tileData.row);
-  }
-
-  bool _selectedUnitOnCityCenter(WorldTile tileData) {
-    final selected = _renderState.selectedUnit;
-    if (selected == null ||
-        selected.col != tileData.col ||
-        selected.row != tileData.row) {
-      return false;
-    }
-    return _renderState.citiesKnownToActivePlayer.any(
-      (city) => city.occupiesCenter(tileData.col, tileData.row),
-    );
-  }
-
-  bool _selectedTileIsCityCenter(WorldTile tileData) {
-    final selection = _renderState.selection;
-    if (selection?.type != GameSelectionType.tile ||
-        selection?.tile?.col != tileData.col ||
-        selection?.tile?.row != tileData.row) {
-      return false;
-    }
-    return _renderState.citiesKnownToActivePlayer.any(
-      (city) => city.occupiesCenter(tileData.col, tileData.row),
-    );
   }
 
   bool _selectionMatchesTileCoordinates(int col, int row) {
@@ -104,68 +66,6 @@ extension GameRendererTileInteractions on GameRenderer {
       playerId: _renderState.activePlayerId,
       research: _renderState.research,
     );
-  }
-
-  void _handleCityMarkerTapped(GameCity city) {
-    if (_shouldSuppressTapAfterLongPress()) return;
-    if (_markerTapTargetsHex()) {
-      _artifactTapCycle.clear();
-      _cityTapTracker.clear();
-      unawaited(onCommand(TileTappedCommand(city.center.col, city.center.row)));
-      return;
-    }
-
-    final current = _renderState.selection;
-    final unitOnCity = _renderState.unitAt(city.center.col, city.center.row);
-    final onThisCity =
-        current?.type == GameSelectionType.city && current?.city?.id == city.id;
-    final onUnitHere =
-        current?.type == GameSelectionType.unit &&
-        current?.unit?.col == city.center.col &&
-        current?.unit?.row == city.center.row;
-    final onThisTile =
-        current?.type == GameSelectionType.tile &&
-        current?.tile?.col == city.center.col &&
-        current?.tile?.row == city.center.row;
-    final shouldInspectObject =
-        (onThisCity && unitOnCity == null) || onUnitHere || onThisTile;
-    if (onThisCity && unitOnCity != null) {
-      _artifactTapCycle.clear();
-      _cityTapTracker.clear();
-      unawaited(onCommand(CityTappedCommand(city.id)));
-      return;
-    }
-    if (onUnitHere &&
-        _handleStackedMapObjectTap(
-          this,
-          city.center.col,
-          city.center.row,
-          includeTileInspection: true,
-          preferCityUnitTerrainCycle: true,
-        )) {
-      _cityTapTracker.clear();
-      return;
-    }
-    if (shouldInspectObject &&
-        _handleStackedMapObjectTap(this, city.center.col, city.center.row)) {
-      return;
-    }
-
-    _artifactTapCycle.clear();
-    final doubleTap = _cityTapTracker.registerTap(city.id);
-    if (_isReady) _focusCity(city);
-    _lastFocusedSelectionKey = 'city:${city.id}';
-    if (doubleTap) {
-      unawaited(_selectCityAndOpenDescription(city));
-    } else {
-      unawaited(onCommand(CityTappedCommand(city.id)));
-    }
-  }
-
-  Future<void> _selectCityAndOpenDescription(GameCity city) async {
-    await onCommand(SelectCityCommand(city.id));
-    if (_isDisposed) return;
-    onCityDescriptionRequested?.call(city);
   }
 
   void _handleUnitMarkerTapped(String unitId) =>

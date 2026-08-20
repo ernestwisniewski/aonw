@@ -151,6 +151,7 @@ class CityMarkerLayer extends Component with LayerAttachment {
     required Component parent,
     required Iterable<GameCity> cities,
     required String? selectedCityId,
+    String? highlightedPlayerId,
     Map<String, double> healthFractions = const {},
     bool showLabels = true,
     Set<String> citiesWithStoredArtifacts = const {},
@@ -184,7 +185,9 @@ class CityMarkerLayer extends Component with LayerAttachment {
         continue;
       }
       final position = worldPositionFor(city.center.col, city.center.row);
-      final selected = city.id == selectedCityId;
+      final selected =
+          city.id == selectedCityId ||
+          city.ownerPlayerId == highlightedPlayerId;
       final healthFraction = healthFractions[city.id] ?? 1.0;
       final isCapital = capitalCityIds.contains(city.id);
       final hasStoredArtifact = citiesWithStoredArtifacts.contains(city.id);
@@ -235,16 +238,6 @@ class CityMarkerLayer extends Component with LayerAttachment {
     _markers.clear();
     _retainedAnimationCityIds.clear();
     super.onRemove();
-  }
-
-  Set<String> _capitalCityIds(List<GameCity> cities) {
-    final seenOwners = <String>{};
-    final capitalIds = <String>{};
-    for (final city in cities) {
-      if (!seenOwners.add(city.capitalOwnerPlayerId)) continue;
-      capitalIds.add(city.id);
-    }
-    return capitalIds;
   }
 
   static Vector2 worldPositionFor(int col, int row) {
@@ -361,4 +354,14 @@ class CityMarkerLayer extends Component with LayerAttachment {
       TechnologyId.nuclearPhysics => CitySpriteTechnologyProfile.industryModern,
     };
   }
+}
+
+Set<String> _capitalCityIds(List<GameCity> cities) {
+  final seenOwners = <String>{};
+  final capitalIds = <String>{};
+  for (final city in cities) {
+    if (!seenOwners.add(city.capitalOwnerPlayerId)) continue;
+    capitalIds.add(city.id);
+  }
+  return capitalIds;
 }

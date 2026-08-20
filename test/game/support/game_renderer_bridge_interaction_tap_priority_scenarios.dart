@@ -158,18 +158,18 @@ void _registerRendererInteractionTapPriorityScenarios() {
     expect(inspectedTiles.map((tile) => '${tile.col}:${tile.row}'), ['1:1']);
   });
   test('occupied artifact unit marker taps follow hex priority', () async {
-    final cycle = ArtifactMarkerTapCycle();
+    final cycle = MapTapCycle();
     expect(
       cycle.nextOccupiedTarget('artifact', unitAlreadySelected: false),
-      ArtifactMarkerTapTarget.unit,
+      MapTapTarget.unit,
     );
     expect(
       cycle.nextOccupiedTarget('artifact', unitAlreadySelected: true),
-      ArtifactMarkerTapTarget.artifact,
+      MapTapTarget.artifact,
     );
     expect(
       cycle.nextOccupiedTarget('artifact', unitAlreadySelected: true),
-      ArtifactMarkerTapTarget.hex,
+      MapTapTarget.hex,
     );
 
     final map = kbMap(3, 3);

@@ -222,19 +222,6 @@ abstract final class SelectionReducer {
         ? state.unitAt(city.center.col, city.center.row)
         : null;
 
-    if (!state.canControlCity(city) &&
-        !_isActivePlayerOwned(state, city.ownerPlayerId)) {
-      final current = state.selection;
-      final onThisTile =
-          current?.tile?.col == city.center.col &&
-          current?.tile?.row == city.center.row;
-      if (unitOnCity != null && onThisTile) {
-        return _selectUnitDirect(state, unitOnCity, mapTiles);
-      } else {
-        return _selectCityCenterTile(state, city, mapTiles);
-      }
-    }
-
     final current = state.selection;
     final onThisCity =
         current?.type == GameSelectionType.city && current?.city?.id == city.id;

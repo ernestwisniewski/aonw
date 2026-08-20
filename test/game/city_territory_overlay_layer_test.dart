@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('CityTerritoryOverlayLayer', () {
-    test('marks only the selected city territory', () {
+    test('highlights every city in the selected city empire', () {
       final layer = CityTerritoryOverlayLayer(colorForPlayer: (_) => 0);
       final parent = Component();
       const selectedCity = GameCity(
@@ -23,18 +23,29 @@ void main() {
         center: CityHex(col: 4, row: 0),
         controlledHexes: [CityHex(col: 4, row: 1)],
       );
+      const sameEmpireCity = GameCity(
+        id: 'city_same_empire',
+        ownerPlayerId: 'player_1',
+        name: 'Same empire',
+        center: CityHex(col: 2, row: 0),
+        controlledHexes: [CityHex(col: 2, row: 1)],
+      );
 
       layer.sync(
         parent: parent,
-        cities: const [selectedCity, otherCity],
+        cities: const [selectedCity, otherCity, sameEmpireCity],
         selectedCityId: selectedCity.id,
       );
 
       final territories = layer.territoriesForTesting;
       expect(parent.children.query<CityTerritoryOverlayLayer>(), hasLength(1));
-      expect(territories, hasLength(2));
+      expect(territories, hasLength(3));
       expect(territories[0].selected, isTrue);
       expect(territories[1].selected, isFalse);
+      expect(territories[2].selected, isFalse);
+      expect(territories[0].empireHighlighted, isTrue);
+      expect(territories[1].empireHighlighted, isFalse);
+      expect(territories[2].empireHighlighted, isTrue);
       expect(territories[0].hexes, selectedCity.territoryHexes);
     });
 

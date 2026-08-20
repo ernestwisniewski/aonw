@@ -2,7 +2,7 @@ part of '../game_renderer_keyboard_test.dart';
 
 void _registerRendererPlanningCitySitesScenarios() {
   test(
-    'tapping the active city icon recenters even without selection change',
+    'tapping the active city icon uses the same tile intent as the hex',
     () async {
       final map = kbMap(3, 3);
       final commands = <GameIntent>[];
@@ -19,71 +19,62 @@ void _registerRendererPlanningCitySitesScenarios() {
       addTearDown(game.disposeRenderer);
 
       game
-        ..applyState(
-          GameClientState(
-            cities: const [city],
-            interaction: InteractionState(
-              selection: GameSelection.city(
-                city,
-                cityYield: const TileYield(
-                  food: 0,
-                  production: 0,
-                  gold: 0,
-                  defense: 0,
-                ),
-                playerColor: 0xFF0000FF,
-              ),
-            ),
-          ),
-        )
+        ..applyState(GameClientState(cities: const [city]))
         ..onGameResize(Vector2(800, 600));
       await game.onLoad();
       game.camera.viewfinder
         ..zoom = 1.6
         ..position = Vector2(900, 700);
       final start = _visibleCenter(game).clone();
-      final target = CityMarkerLayer.worldPositionFor(1, 1);
 
       game.world.children.whereType<CityMarker>().single.onTap?.call();
       await Future<void>.delayed(Duration.zero);
 
-      expect(commands, [CityTappedCommand(city.id)]);
+      expect(commands, [const TileTappedCommand(1, 1)]);
       _expectVectorClose(_visibleCenter(game), start);
-
-      game.update(1);
-
-      _expectVectorClose(_visibleCenter(game), target);
     },
   );
-  test('quick double tapping a city opens its description detail', () async {
+  test('quick double tapping a city opens terrain inspection', () async {
     final map = kbMap(3, 3);
+    final reducer = GameStateReducer(mapData: map);
     final commands = <GameIntent>[];
-    final descriptionRequests = <String>[];
+    final inspectedTiles = <WorldTile>[];
     const city = GameCity(
       id: 'city_1',
       ownerPlayerId: 'player_1',
       name: 'Capital',
       center: CityHex(col: 1, row: 1),
     );
-    final game = GameRenderer(
+    var state = GameClientState(
+      activePlayerId: 'player_1',
+      cities: const [city],
+      fogOfWar: _fog(visible: {const HexCoordinate(col: 1, row: 1)}),
+    );
+    late final GameRenderer game;
+    game = GameRenderer(
       mapData: map,
-      onCommand: (command) async => commands.add(command),
-      onCityDescriptionRequested: (city) => descriptionRequests.add(city.id),
+      onCommand: (command) async {
+        commands.add(command);
+        state = resolveGameIntent(reducer, state, command).state;
+        game.applyState(state);
+      },
+      onTileInspected: (tile, _) => inspectedTiles.add(tile),
     );
     addTearDown(game.disposeRenderer);
 
     game
-      ..applyState(GameClientState(cities: [city]))
+      ..applyState(state)
       ..onGameResize(Vector2(800, 600));
     await game.onLoad();
 
-    final marker = game.world.children.whereType<CityMarker>().single;
-    marker.onTap?.call();
-    marker.onTap?.call();
+    game
+      ..handleCityMarkerTappedForTesting(city)
+      ..handleCityMarkerTappedForTesting(city);
     await Future<void>.delayed(Duration.zero);
 
-    expect(commands, [CityTappedCommand(city.id), SelectCityCommand(city.id)]);
-    expect(descriptionRequests, [city.id]);
+    expect(commands, [const TileTappedCommand(1, 1)]);
+    expect(state.selection?.type, GameSelectionType.city);
+    expect(inspectedTiles.map((tile) => '${tile.col}:${tile.row}'), ['1:1']);
   });
   test(
     'combat animation retains killed defender marker until completion',

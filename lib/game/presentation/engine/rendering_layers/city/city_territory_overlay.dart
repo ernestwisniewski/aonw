@@ -19,6 +19,7 @@ class CityTerritory {
   final CityHex center;
   final List<CityHex> hexes;
   final bool selected;
+  final bool empireHighlighted;
   // Stable key derived from the hex set so cached boundary geometry can be
   // reused across overlay instances that get rebuilt every time game state
   // changes. Equal `hexes` lists always produce the same key.
@@ -29,7 +30,9 @@ class CityTerritory {
     required this.center,
     required List<CityHex> hexes,
     this.selected = false,
-  }) : hexes = List.unmodifiable(hexes),
+    bool? empireHighlighted,
+  }) : empireHighlighted = empireHighlighted ?? selected,
+       hexes = List.unmodifiable(hexes),
        hexesSignature = _signatureFor(hexes);
 
   static String _signatureFor(List<CityHex> hexes) {
@@ -105,6 +108,7 @@ class CityTerritoryOverlay extends Component {
 
     final clipBounds = canvas.getLocalClipBounds();
     final selectedTerritory = _selectedTerritory();
+    final highlightedEmpire = _highlightedEmpireTerritories();
     _drawTerritoryFills(canvas, clipBounds);
     _drawTerritoryBorders(canvas, clipBounds);
     if (strategicView) {
@@ -115,9 +119,7 @@ class CityTerritoryOverlay extends Component {
       return;
     }
 
-    if (!strategicView) {
-      _drawMapDimming(canvas, selectedTerritory);
-    }
+    _drawMapDimming(canvas, highlightedEmpire);
     _drawSelectedTerritoryBorder(canvas, selectedTerritory);
   }
 
@@ -166,6 +168,8 @@ const double _innerBorderWidth = 1.1;
 const double _strategicInnerBorderWidth = 1.2;
 const double _selectedBorderGlowWidth = 8.8;
 const double _selectedBorderHighlightWidth = 1.6;
+const double _selectedDashLength = 12.0;
+const double _selectedDashGapLength = 7.0;
 const double _solidBorderPlayerDarken = 0.48;
 const double _strategicBorderPlayerDarken = 0.12;
 // Inflation around boundary path bounds for off-screen culling. Must cover

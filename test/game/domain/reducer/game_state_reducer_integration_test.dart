@@ -805,7 +805,7 @@ void main() {
       expect(state.selection?.type, GameSelectionType.city);
     });
 
-    test('enemy city known from discovered fog is selected as a tile', () {
+    test('enemy city known from discovered fog is selected as a city', () {
       final map = _map(8, 8);
       final reducer = GameStateReducer(mapData: map);
       final rememberedEnemyCity = _city(
@@ -834,13 +834,11 @@ void main() {
         CityTappedCommand(rememberedEnemyCity.id),
       ).state;
 
-      expect(state.selection?.type, GameSelectionType.tile);
-      expect(state.selection?.city, isNull);
-      expect(state.selection?.tile?.col, rememberedEnemyCity.center.col);
-      expect(state.selection?.tile?.row, rememberedEnemyCity.center.row);
+      expect(state.selection?.type, GameSelectionType.city);
+      expect(state.selection?.city, rememberedEnemyCity);
     });
 
-    test('active player selects own city but not opponent city', () {
+    test('active player can inspect own and opponent cities', () {
       final map = _map(4, 4);
       final reducer = GameStateReducer(mapData: map);
       final playerCity = _city(ownerPlayerId: 'player_1', col: 1, row: 1);
@@ -860,10 +858,8 @@ void main() {
         CityTappedCommand(opponentCity.id),
       ).state;
 
-      expect(state.selection?.type, GameSelectionType.tile);
-      expect(state.selection?.city, isNull);
-      expect(state.selection?.tile?.col, opponentCity.center.col);
-      expect(state.selection?.tile?.row, opponentCity.center.row);
+      expect(state.selection?.type, GameSelectionType.city);
+      expect(state.selection?.city, opponentCity);
 
       state = _dispatch(reducer, state, CityTappedCommand(playerCity.id)).state;
 

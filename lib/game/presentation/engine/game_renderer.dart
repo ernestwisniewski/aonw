@@ -4,9 +4,7 @@ import 'package:aonw/game/application/ports/clock.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
-import 'package:aonw/game/presentation/engine/artifact_marker_tap_cycle.dart';
 import 'package:aonw/game/presentation/engine/authoritative_presentation_scheduler.dart';
-import 'package:aonw/game/presentation/engine/city_description_tap_tracker.dart';
 import 'package:aonw/game/presentation/engine/game_camera_controller.dart';
 import 'package:aonw/game/presentation/engine/game_effect_dispatcher.dart';
 import 'package:aonw/game/presentation/engine/game_render_view_model.dart';
@@ -19,6 +17,8 @@ import 'package:aonw/game/presentation/engine/game_renderer_runtime_factory.dart
 import 'package:aonw/game/presentation/engine/game_renderer_state_sync_handler.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_transition_handler.dart';
 import 'package:aonw/game/presentation/engine/game_scene_builder.dart';
+import 'package:aonw/game/presentation/engine/map_hex_double_tap_tracker.dart';
+import 'package:aonw/game/presentation/engine/map_tap_cycle.dart';
 import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
 import 'package:aonw/game/presentation/engine/projected_transition_presenter.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_component.dart';
@@ -69,6 +69,7 @@ import 'package:flutter/material.dart' show Offset;
 part 'game_renderer_artifact_taps.dart';
 part 'game_renderer_camera_focus.dart';
 part 'game_renderer_camera_rendering.dart';
+part 'game_renderer_entity_taps.dart';
 part 'game_renderer_gamepad_input.dart';
 part 'game_renderer_projected_effects.dart';
 part 'game_renderer_testing.dart';
@@ -97,7 +98,6 @@ class GameRenderer extends HexWorld
   final bool startCameraOffMap;
   final bool focusActivePlayerOnFirstState;
   final Future<void> Function(GameIntent intent) onCommand;
-  final void Function(GameCity city)? onCityDescriptionRequested;
   final TileInspectionCallback? onTileInspected;
   final TileInspectionCallback? onTileInspectionPreviewed;
   final ArtifactInspectionCallback? onArtifactInspected;
@@ -123,9 +123,9 @@ class GameRenderer extends HexWorld
   Vector2? _deferredInitialFocusPoint;
   bool _didPrimeSelectionFocus = false;
   String? _lastFocusedSelectionKey;
-  final CityDescriptionTapTracker _cityTapTracker =
-      CityDescriptionTapTracker.withStopwatch();
-  final ArtifactMarkerTapCycle _artifactTapCycle = ArtifactMarkerTapCycle();
+  final MapHexDoubleTapTracker _cityMarkerDoubleTapTracker =
+      MapHexDoubleTapTracker.withStopwatch();
+  final MapTapCycle _mapTapCycle = MapTapCycle();
   final ValueNotifier<RenderState> _viewModelNotifier = ValueNotifier(
     RenderState.empty,
   );
@@ -165,7 +165,6 @@ class GameRenderer extends HexWorld
     this.startCameraOffMap = false,
     this.focusActivePlayerOnFirstState = false,
     required this.onCommand,
-    this.onCityDescriptionRequested,
     this.onTileInspected,
     this.onTileInspectionPreviewed,
     this.onArtifactInspected,

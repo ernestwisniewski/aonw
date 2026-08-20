@@ -2,13 +2,14 @@ part of 'game_renderer.dart';
 
 void _handleRendererUnitMarkerTapped(GameRenderer renderer, String unitId) {
   if (renderer._shouldSuppressTapAfterLongPress()) return;
+  renderer._cityMarkerDoubleTapTracker.clear();
   final unit = renderer._renderState.unitById(unitId);
   if (unit == null) {
-    renderer._artifactTapCycle.clear();
+    renderer._mapTapCycle.clear();
     return;
   }
 
-  renderer._artifactTapCycle.clear();
+  renderer._mapTapCycle.clear();
   unawaited(renderer.onCommand(TileTappedCommand(unit.col, unit.row)));
 }
 
@@ -17,10 +18,11 @@ void _handleRendererArtifactMarkerTapped(
   WorldArtifact artifact,
 ) {
   if (renderer._shouldSuppressTapAfterLongPress()) return;
+  renderer._cityMarkerDoubleTapTracker.clear();
   final tile = _tileForArtifactLocation(renderer, artifact.location);
   if (tile == null) return;
   if (renderer._markerTapTargetsHex()) {
-    renderer._artifactTapCycle.clear();
+    renderer._mapTapCycle.clear();
     unawaited(renderer.onCommand(TileTappedCommand(tile.col, tile.row)));
     return;
   }
@@ -33,9 +35,8 @@ void _handleRendererArtifactMarkerTapped(
   )) {
     return;
   }
-  final target = renderer._artifactTapCycle.nextTarget(artifact.id);
-  if (target == ArtifactMarkerTapTarget.artifact &&
-      renderer.onArtifactInspected != null) {
+  final target = renderer._mapTapCycle.nextTarget(artifact.id);
+  if (target == MapTapTarget.artifact && renderer.onArtifactInspected != null) {
     renderer.onArtifactInspected?.call(
       artifact,
       renderer.inspectionAnchorForTile(tile),
@@ -50,11 +51,12 @@ void _handleRendererMapObjectiveMarkerTapped(
   MapObjectiveProgress progress,
 ) {
   if (renderer._shouldSuppressTapAfterLongPress()) return;
+  renderer._cityMarkerDoubleTapTracker.clear();
   final definition = progress.definition;
   final tile = renderer.mapData.tileAt(definition.hex.col, definition.hex.row);
   if (tile == null) return;
   if (renderer._markerTapTargetsHex()) {
-    renderer._artifactTapCycle.clear();
+    renderer._mapTapCycle.clear();
     unawaited(renderer.onCommand(TileTappedCommand(tile.col, tile.row)));
     return;
   }
@@ -68,10 +70,10 @@ void _handleRendererMapObjectiveMarkerTapped(
     return;
   }
 
-  final target = renderer._artifactTapCycle.nextTarget(
+  final target = renderer._mapTapCycle.nextTarget(
     _objectiveCycleId(definition.id),
   );
-  if (target == ArtifactMarkerTapTarget.artifact &&
+  if (target == MapTapTarget.artifact &&
       renderer.onObjectiveInspected != null) {
     renderer.onObjectiveInspected?.call(
       progress,
@@ -128,24 +130,24 @@ bool _handleStackedMapObjectTap(
   }
 
   final targets = cityUnitTerrainCycle
-      ? <ArtifactMarkerTapTarget>[
-          if (canInspectTile) ArtifactMarkerTapTarget.tileInspection,
-          ArtifactMarkerTapTarget.hex,
+      ? <MapTapTarget>[
+          if (canInspectTile) MapTapTarget.tileInspection,
+          MapTapTarget.hex,
         ]
       : occupiedHexTapCycle
-      ? <ArtifactMarkerTapTarget>[
-          ArtifactMarkerTapTarget.unit,
-          ArtifactMarkerTapTarget.hex,
-          if (canInspectTile) ArtifactMarkerTapTarget.tileInspection,
+      ? <MapTapTarget>[
+          MapTapTarget.unit,
+          MapTapTarget.hex,
+          if (canInspectTile) MapTapTarget.tileInspection,
         ]
-      : <ArtifactMarkerTapTarget>[
-          if (unit != null) ArtifactMarkerTapTarget.unit,
+      : <MapTapTarget>[
+          if (unit != null) MapTapTarget.unit,
           if (artifact != null && renderer.onArtifactInspected != null)
-            ArtifactMarkerTapTarget.artifact,
+            MapTapTarget.artifact,
           if (objective != null && renderer.onObjectiveInspected != null)
-            ArtifactMarkerTapTarget.objective,
-          if (canInspectTile) ArtifactMarkerTapTarget.tileInspection,
-          ArtifactMarkerTapTarget.hex,
+            MapTapTarget.objective,
+          if (canInspectTile) MapTapTarget.tileInspection,
+          MapTapTarget.hex,
         ];
   final preferredFirstTarget = _preferredStackTarget(
     renderer,
@@ -159,7 +161,7 @@ bool _handleStackedMapObjectTap(
     preferCityUnitTerrainCycle: cityUnitTerrainCycle,
     preferOccupiedHexCycle: occupiedHexTapCycle,
   );
-  final target = renderer._artifactTapCycle.nextStackTarget(
+  final target = renderer._mapTapCycle.nextStackTarget(
     _mapStackCycleId(
       col,
       row,
@@ -172,26 +174,26 @@ bool _handleStackedMapObjectTap(
   );
 
   switch (target) {
-    case ArtifactMarkerTapTarget.unit:
+    case MapTapTarget.unit:
       if (unit == null) return false;
       if (renderer._isReady) renderer._focusUnit(unit);
       renderer._lastFocusedSelectionKey = 'unit:${unit.id}';
       unawaited(renderer.onCommand(SelectUnitCommand(unit.id)));
-    case ArtifactMarkerTapTarget.artifact:
+    case MapTapTarget.artifact:
       if (artifact == null) return false;
       renderer.onArtifactInspected?.call(
         artifact,
         renderer.inspectionAnchorForTile(tile),
       );
-    case ArtifactMarkerTapTarget.objective:
+    case MapTapTarget.objective:
       if (objective == null) return false;
       renderer.onObjectiveInspected?.call(
         objective,
         renderer.inspectionAnchorForTile(tile),
       );
-    case ArtifactMarkerTapTarget.tileInspection:
+    case MapTapTarget.tileInspection:
       renderer._handleTileInspected(tile);
-    case ArtifactMarkerTapTarget.hex:
+    case MapTapTarget.hex:
       unawaited(
         renderer.onCommand(
           useTileTappedForHexTarget
@@ -203,7 +205,7 @@ bool _handleStackedMapObjectTap(
   return true;
 }
 
-ArtifactMarkerTapTarget _preferredStackTarget(
+MapTapTarget _preferredStackTarget(
   GameRenderer renderer,
   int col,
   int row, {
@@ -218,30 +220,30 @@ ArtifactMarkerTapTarget _preferredStackTarget(
   if (preferCityUnitTerrainCycle) {
     return renderer._renderState.selection?.type == GameSelectionType.tile &&
             renderer._selectionMatchesTileCoordinates(col, row)
-        ? ArtifactMarkerTapTarget.hex
-        : ArtifactMarkerTapTarget.tileInspection;
+        ? MapTapTarget.hex
+        : MapTapTarget.tileInspection;
   }
   if (preferOccupiedHexCycle) {
     if (unit != null && renderer._renderState.selectedUnitId != unit.id) {
-      return ArtifactMarkerTapTarget.unit;
+      return MapTapTarget.unit;
     }
     if (renderer._renderState.selection?.type == GameSelectionType.tile &&
         renderer._selectionMatchesTileCoordinates(col, row)) {
-      return ArtifactMarkerTapTarget.tileInspection;
+      return MapTapTarget.tileInspection;
     }
-    return ArtifactMarkerTapTarget.hex;
+    return MapTapTarget.hex;
   }
-  if (preferredArtifact != null) return ArtifactMarkerTapTarget.artifact;
-  if (preferredObjective != null) return ArtifactMarkerTapTarget.objective;
+  if (preferredArtifact != null) return MapTapTarget.artifact;
+  if (preferredObjective != null) return MapTapTarget.objective;
   if (unit != null && renderer._renderState.selectedUnitId != unit.id) {
-    return ArtifactMarkerTapTarget.unit;
+    return MapTapTarget.unit;
   }
   if (renderer._selectionMatchesTileCoordinates(col, row)) {
-    if (artifact != null) return ArtifactMarkerTapTarget.artifact;
-    if (objective != null) return ArtifactMarkerTapTarget.objective;
-    return ArtifactMarkerTapTarget.tileInspection;
+    if (artifact != null) return MapTapTarget.artifact;
+    if (objective != null) return MapTapTarget.objective;
+    return MapTapTarget.tileInspection;
   }
-  return ArtifactMarkerTapTarget.unit;
+  return MapTapTarget.unit;
 }
 
 WorldArtifact? _mapArtifactAt(GameRenderer renderer, int col, int row) {

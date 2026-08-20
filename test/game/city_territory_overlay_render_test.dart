@@ -105,6 +105,49 @@ void main() {
       expect(baseAlpha, closeTo(230, 2));
       expect(zoomedOutAlpha, baseAlpha);
     });
+
+    test(
+      'dims the map outside every territory in the selected empire',
+      () async {
+        const selectedHex = CityHex(col: 0, row: 0);
+        const sameEmpireHex = CityHex(col: 0, row: 1);
+        const otherEmpireHex = CityHex(col: 1, row: 0);
+        final rendered = await _renderOverlay(
+          CityTerritoryOverlay(
+            territories: [
+              CityTerritory(
+                color: HudPalette.danger,
+                center: selectedHex,
+                hexes: const [selectedHex],
+                selected: true,
+                empireHighlighted: true,
+              ),
+              CityTerritory(
+                color: HudPalette.danger,
+                center: sameEmpireHex,
+                hexes: const [sameEmpireHex],
+                empireHighlighted: true,
+              ),
+              CityTerritory(
+                color: HudPalette.success,
+                center: otherEmpireHex,
+                hexes: const [otherEmpireHex],
+              ),
+            ],
+          ),
+        );
+
+        final sameEmpireAlpha = rendered.alphaAt(
+          rendered.translate(_hexCenter(sameEmpireHex)),
+        );
+        final otherEmpireAlpha = rendered.alphaAt(
+          rendered.translate(_hexCenter(otherEmpireHex)),
+        );
+
+        expect(sameEmpireAlpha, lessThan(otherEmpireAlpha));
+        expect(otherEmpireAlpha - sameEmpireAlpha, greaterThan(40));
+      },
+    );
   });
 }
 

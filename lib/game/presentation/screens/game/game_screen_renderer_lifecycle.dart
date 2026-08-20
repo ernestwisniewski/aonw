@@ -19,12 +19,6 @@ extension _GameScreenRendererLifecycle on _GameRendererSessionHostState {
               session.initialCamera == CameraState.zero),
       initialViewMode: session.viewMode,
       onCommand: _dispatchRendererCommand,
-      onCityDescriptionRequested: (_) {
-        ref.read(mapInspectionControllerProvider.notifier).clear();
-        ref
-            .read(openSelectionDetailControllerProvider.notifier)
-            .open(SelectionInfoChipId.description);
-      },
       onTileInspected: mapInspection.inspectTile,
       onTileInspectionPreviewed: mapInspection.previewTile,
       onArtifactInspected: (artifact, anchor) {

@@ -663,7 +663,7 @@ void main() {
   // handleCityTapped -- enemy city
 
   group('handleCityTapped -- enemy city', () {
-    test('with unit: first tap selects tile, second tap selects unit', () {
+    test('with unit follows the same city, unit, tile cycle', () {
       final city = _city(ownerPlayerId: 'p2', col: 2, row: 2);
       final unit = _unit(ownerPlayerId: 'p2', col: 2, row: 2);
       final tile = _tile(2, 2);
@@ -677,16 +677,24 @@ void main() {
         fogOfWar: fog,
       );
 
-      // First tap -> tile (not on this tile yet)
+      // First tap -> city.
       var result = SelectionReducer.handleCityTapped(state, city, mapData);
-      expect(result.selection!.type, GameSelectionType.tile);
+      expect(result.selection!.type, GameSelectionType.city);
 
-      // Second tap (on this tile) -> unit
+      // Second tap -> unit.
       result = SelectionReducer.handleCityTapped(result, city, mapData);
       expect(result.selection!.type, GameSelectionType.unit);
+
+      // Third tap -> tile.
+      result = SelectionReducer.handleCityTapped(result, city, mapData);
+      expect(result.selection!.type, GameSelectionType.tile);
+
+      // Fourth tap -> city again.
+      result = SelectionReducer.handleCityTapped(result, city, mapData);
+      expect(result.selection!.type, GameSelectionType.city);
     });
 
-    test('without unit: selects tile', () {
+    test('without unit follows the same city, tile cycle', () {
       final city = _city(ownerPlayerId: 'p2', col: 2, row: 2);
       final tile = _tile(2, 2);
       final mapData = _mapWith([tile]);
@@ -698,8 +706,14 @@ void main() {
         fogOfWar: fog,
       );
 
-      final result = SelectionReducer.handleCityTapped(state, city, mapData);
+      var result = SelectionReducer.handleCityTapped(state, city, mapData);
+      expect(result.selection!.type, GameSelectionType.city);
+
+      result = SelectionReducer.handleCityTapped(result, city, mapData);
       expect(result.selection!.type, GameSelectionType.tile);
+
+      result = SelectionReducer.handleCityTapped(result, city, mapData);
+      expect(result.selection!.type, GameSelectionType.city);
     });
 
     test('during founding returns unchanged', () {

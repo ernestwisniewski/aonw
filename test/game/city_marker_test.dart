@@ -51,7 +51,9 @@ void main() {
       const capStyle = BoardAssetCapStyles.city;
       final markerWidth = MapConfig.defaultConfig.hexRadius * 2;
       final markerHeight =
-          MapConfig.defaultConfig.hexRadius * math.sqrt(3) * HexGrid.perspectiveY;
+          MapConfig.defaultConfig.hexRadius *
+          math.sqrt(3) *
+          HexGrid.perspectiveY;
 
       final marker = CityMarker(
         position: Vector2.zero(),
@@ -59,10 +61,7 @@ void main() {
       );
 
       expect(marker.debugSnapshot.markerSize.x, closeTo(markerWidth, 0.0001));
-      expect(
-        marker.debugSnapshot.markerSize.y,
-        closeTo(markerHeight, 0.0001),
-      );
+      expect(marker.debugSnapshot.markerSize.y, closeTo(markerHeight, 0.0001));
       expect(marker.anchor, Anchor.center);
       expect(marker.debugSnapshot.sourceInset, 0);
       expect(marker.debugSnapshot.boardCapStyle, capStyle);
@@ -167,16 +166,15 @@ void main() {
       final spriteBounds = marker.debugSnapshot.spriteBounds;
       final expectedWidth = MapConfig.defaultConfig.hexRadius * 2;
       final expectedHeight =
-          MapConfig.defaultConfig.hexRadius * math.sqrt(3) * HexGrid.perspectiveY;
+          MapConfig.defaultConfig.hexRadius *
+          math.sqrt(3) *
+          HexGrid.perspectiveY;
 
       expect(spriteBounds.width, closeTo(expectedWidth, 0.0001));
       expect(spriteBounds.height, closeTo(expectedHeight, 0.0001));
       expect(
         spriteBounds.center.dy,
-        closeTo(
-          marker.debugSnapshot.markerSize.y / 2,
-          0.0001,
-        ),
+        closeTo(marker.debugSnapshot.markerSize.y / 2, 0.0001),
       );
       final clipPath = marker.debugSnapshot.spriteClipPath;
       final clipBounds = clipPath.getBounds();
@@ -380,6 +378,49 @@ void main() {
 
       expect(layer.markerReduceMotionForTesting(city.id), isFalse);
       expect(layer.markerHasAmbientFloatForTesting(city.id), isFalse);
+    });
+
+    test('highlights every city marker in the focused empire', () {
+      final layer = CityMarkerLayer(colorForPlayer: (_) => 0);
+      final parent = Component();
+      const focusedCity = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'Focused',
+        center: CityHex(col: 0, row: 0),
+      );
+      const sameEmpireCity = GameCity(
+        id: 'city_2',
+        ownerPlayerId: 'player_1',
+        name: 'Same empire',
+        center: CityHex(col: 1, row: 0),
+      );
+      const otherEmpireCity = GameCity(
+        id: 'city_3',
+        ownerPlayerId: 'player_2',
+        name: 'Other empire',
+        center: CityHex(col: 2, row: 0),
+      );
+
+      layer.sync(
+        parent: parent,
+        cities: const [focusedCity, sameEmpireCity, otherEmpireCity],
+        selectedCityId: focusedCity.id,
+        highlightedPlayerId: focusedCity.ownerPlayerId,
+      );
+
+      expect(
+        layer.markerPaintsSelectedLabelBorderForTesting(focusedCity.id),
+        isTrue,
+      );
+      expect(
+        layer.markerPaintsSelectedLabelBorderForTesting(sameEmpireCity.id),
+        isTrue,
+      );
+      expect(
+        layer.markerPaintsSelectedLabelBorderForTesting(otherEmpireCity.id),
+        isFalse,
+      );
     });
 
     test('keeps city atlas variant static on one marker position', () async {

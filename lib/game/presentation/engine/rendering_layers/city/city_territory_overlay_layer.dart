@@ -31,8 +31,15 @@ class CityTerritoryOverlayLayer extends Component with LayerAttachment {
     bool strategicView = false,
   }) {
     ensureAttachedTo(parent);
+    final knownCities = cities.toList(growable: false);
+    String? highlightedEmpirePlayerId;
+    for (final city in knownCities) {
+      if (city.id != selectedCityId) continue;
+      highlightedEmpirePlayerId = city.ownerPlayerId;
+      break;
+    }
     final territories = <CityTerritory>[];
-    for (final city in cities) {
+    for (final city in knownCities) {
       final color = Color(colorForPlayer(city.ownerPlayerId));
       final visibleHexes = canShowHex == null
           ? city.territoryHexes
@@ -44,6 +51,7 @@ class CityTerritoryOverlayLayer extends Component with LayerAttachment {
           center: city.center,
           hexes: visibleHexes,
           selected: city.id == selectedCityId,
+          empireHighlighted: city.ownerPlayerId == highlightedEmpirePlayerId,
         ),
       );
     }

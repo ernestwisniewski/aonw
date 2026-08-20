@@ -59,4 +59,11 @@ extension _CityTerritoryOverlayCache on CityTerritoryOverlay {
     }
     return null;
   }
+
+  List<CityTerritory> _highlightedEmpireTerritories() {
+    return [
+      for (final territory in territories)
+        if (territory.empireHighlighted) territory,
+    ];
+  }
 }
