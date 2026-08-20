@@ -15,7 +15,6 @@ abstract final class MapStroke {
   static const double regular = 2.0;
   static const double bold = 2.8;
   static const double glow = 5.0;
-  static const double routeLine = 2.7;
   static const double routeGlow = 5.2;
   static const double routeShadow = 9.5;
 }

@@ -60,12 +60,16 @@ extension _GameRenderingCoordinatorUnitSync on GameRenderingCoordinator {
             maxMovementPointsPerTurn: unit == null
                 ? null
                 : UnitMovePreviewEntryBuilder.maxMovementUnits(unit),
+            roadSegmentIndices:
+                UnitMovePreviewEntryBuilder.roadSegmentIndicesFor(
+                  state: state,
+                  unitType: unit?.type,
+                  steps: activePreview.steps,
+                ),
             dimmed: dimmed,
             subdued: !selected,
             showCostLabel: false,
-            showConfirmationHint: selected,
-            showTargetPulse: selected,
-            showTargetArrow: false,
+            showTargetOutline: selected,
           ),
         );
     }

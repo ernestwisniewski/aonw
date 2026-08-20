@@ -133,7 +133,7 @@ final class GameHoverIntentResolver {
     return _hoverIntent(
       hex,
       HoverIntentKind.move,
-      blocked ? HudPalette.danger : HudPalette.gold,
+      blocked ? HudPalette.danger : HudPalette.roadMarking,
       blocked: blocked,
     );
   }

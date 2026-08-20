@@ -58,8 +58,6 @@ final class GameRendererComponents {
     );
     movePreview = UnitMovePreviewLayer(
       turnCostLabelBuilder: turnCostLabelBuilder,
-      confirmationLabelBuilder: confirmationLabelBuilder,
-      confirmationLabel: l10n?.selectionActionConfirm,
     );
     fieldImprovements = FieldImprovementMarkerLayer();
     transportNetwork = TransportNetworkLayer();

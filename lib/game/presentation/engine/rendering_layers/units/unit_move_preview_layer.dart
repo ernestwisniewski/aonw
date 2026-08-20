@@ -17,32 +17,26 @@ class UnitMovePreviewLayerEntry {
   final UnitMovementPlan preview;
   final List<UnitMovementStep>? displaySteps;
   final int travelledUpToIndex;
+  final Set<int> roadSegmentIndices;
   final GameUnitType? unitType;
   final int? maxMovementPointsPerTurn;
-  final UnitMovePreviewRouteKind routeKind;
   final bool dimmed;
   final bool subdued;
   final bool showCostLabel;
-  final bool showConfirmationHint;
-  final bool showTargetPulse;
-  final bool showTargetArrow;
-  final bool showConfirmedTarget;
+  final bool showTargetOutline;
 
   UnitMovePreviewLayerEntry({
     required this.id,
     required this.preview,
     this.displaySteps,
     this.travelledUpToIndex = 0,
+    this.roadSegmentIndices = const {},
     this.unitType,
     this.maxMovementPointsPerTurn,
-    this.routeKind = UnitMovePreviewRouteKind.movement,
     this.dimmed = false,
     this.subdued = false,
     this.showCostLabel = true,
-    this.showConfirmationHint = false,
-    this.showTargetPulse = false,
-    this.showTargetArrow = false,
-    this.showConfirmedTarget = false,
+    this.showTargetOutline = false,
   }) : assert(
          displaySteps == null ||
              (travelledUpToIndex >= 0 &&
@@ -65,16 +59,10 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
   final Map<String, UnitMovePreviewLayerEntry> _entries = {};
   final Map<String, String> _routeSignatures = {};
   final String Function(int turns)? turnCostLabelBuilder;
-  final String Function(int turns)? confirmationLabelBuilder;
-  final String? confirmationLabel;
   bool _showCostLabel = true;
   bool _dimmed = false;
 
-  UnitMovePreviewLayer({
-    this.turnCostLabelBuilder,
-    this.confirmationLabelBuilder,
-    this.confirmationLabel,
-  });
+  UnitMovePreviewLayer({this.turnCostLabelBuilder});
 
   bool get showCostLabel => _showCostLabel;
 
@@ -104,12 +92,8 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
     required UnitMovementPlan? preview,
     int travelledUpToIndex = 0,
     GameUnitType? unitType,
-    UnitMovePreviewRouteKind routeKind = UnitMovePreviewRouteKind.movement,
     bool dimmed = false,
-    bool showConfirmationHint = false,
-    bool showTargetPulse = false,
-    bool showTargetArrow = false,
-    bool showConfirmedTarget = false,
+    bool showTargetOutline = false,
   }) {
     syncMany(
       parent: parent,
@@ -121,12 +105,8 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
                 preview: preview,
                 travelledUpToIndex: travelledUpToIndex,
                 unitType: unitType,
-                routeKind: routeKind,
                 dimmed: dimmed,
-                showConfirmationHint: showConfirmationHint,
-                showTargetPulse: showTargetPulse,
-                showTargetArrow: showTargetArrow,
-                showConfirmedTarget: showConfirmedTarget,
+                showTargetOutline: showTargetOutline,
               ),
             ],
     );
@@ -192,13 +172,12 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
         for (var index = 0; index < displaySteps.length; index++)
           _isDisplayStepReachable(entry, index),
       ],
+      turnBoundaryPointIndices: _turnBoundaryPointIndices(entry),
+      roadSegmentIndices: entry.roadSegmentIndices,
       unitType: entry.unitType,
-      routeKind: entry.routeKind,
       dimmed: entry.dimmed,
       subdued: entry.subdued,
-      showTargetPulse: entry.showTargetPulse,
-      showTargetArrow: entry.showTargetArrow,
-      showConfirmedTarget: entry.showConfirmedTarget,
+      showTargetOutline: entry.showTargetOutline,
       travelledUpToIndex: entry.travelledUpToIndex,
     );
   }
@@ -210,9 +189,7 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
     component
       ..dimmed = entry.dimmed
       ..subdued = entry.subdued
-      ..showTargetPulse = entry.showTargetPulse
-      ..showTargetArrow = entry.showTargetArrow
-      ..showConfirmedTarget = entry.showConfirmedTarget
+      ..showTargetOutline = entry.showTargetOutline
       ..priority = routePriority;
   }
 
@@ -223,7 +200,9 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
       ..write('|')
       ..write(entry.unitType?.name ?? '-')
       ..write('|')
-      ..write(entry.routeKind.name)
+      ..writeAll(_turnBoundaryPointIndices(entry), ',')
+      ..write('|')
+      ..writeAll(entry.roadSegmentIndices.toList()..sort(), ',')
       ..write('|');
     for (var index = 0; index < displaySteps.length; index++) {
       final step = displaySteps[index];
@@ -253,6 +232,42 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
     return entry.preview.canReachStepThisTurn(
       entry.preview.steps[previewIndex],
     );
+  }
+
+  List<int> _turnBoundaryPointIndices(UnitMovePreviewLayerEntry entry) {
+    final preview = entry.preview;
+    if (preview.steps.length < 3) return const [];
+
+    final displayOffset = entry.displaySteps == null
+        ? 0
+        : entry.travelledUpToIndex;
+    final lastDisplayIndex =
+        (entry.displaySteps?.length ?? preview.steps.length) - 1;
+    final fullTurnMovement = _movementUnitsPerTurn(entry);
+    var remainingMovement = preview.availableMovementUnits;
+    final boundaries = <int>[];
+
+    for (
+      var previewIndex = 1;
+      previewIndex < preview.steps.length;
+      previewIndex++
+    ) {
+      final step = preview.steps[previewIndex];
+      if (remainingMovement <= 0) {
+        final displayIndex = displayOffset + previewIndex - 1;
+        if (displayIndex > 0 && displayIndex < lastDisplayIndex) {
+          boundaries.add(displayIndex);
+        }
+        remainingMovement = step.enterCost >= fullTurnMovement
+            ? 0
+            : fullTurnMovement - step.enterCost;
+      } else if (step.enterCost <= remainingMovement) {
+        remainingMovement -= step.enterCost;
+      } else {
+        remainingMovement = 0;
+      }
+    }
+    return boundaries;
   }
 
   void _syncPillsForCurrentEntries() {
@@ -296,15 +311,6 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
   }
 
   String _pillLabelFor(UnitMovePreviewLayerEntry entry) {
-    if (entry.showTargetArrow && entry.showConfirmationHint) {
-      final turns = _estimatedTurnCost(entry);
-      final localized = confirmationLabelBuilder?.call(turns);
-      if (localized != null && localized.isNotEmpty) return localized;
-      final confirm = confirmationLabel;
-      if (confirm != null && confirm.isNotEmpty) {
-        return '$confirm (${_turnCostLabel(entry)})';
-      }
-    }
     return _turnCostLabel(entry);
   }
 
@@ -318,12 +324,14 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
   int _estimatedTurnCost(UnitMovePreviewLayerEntry entry) {
     final preview = entry.preview;
     if (preview.totalCost <= 0) return 0;
-    final movementPerTurn =
-        entry.maxMovementPointsPerTurn ??
+    return preview.estimatedTurns(_movementUnitsPerTurn(entry));
+  }
+
+  int _movementUnitsPerTurn(UnitMovePreviewLayerEntry entry) {
+    return entry.maxMovementPointsPerTurn ??
         (entry.unitType == null
-            ? math.max(1, preview.availableMovementUnits)
+            ? math.max(1, entry.preview.availableMovementUnits)
             : UnitMovementBalance.maxMovementUnitsForType(entry.unitType!));
-    return preview.estimatedTurns(movementPerTurn);
   }
 
   MapPillTone _pillToneFor(UnitMovementPlan preview) {
@@ -344,11 +352,11 @@ class UnitMovePreviewLayer extends Component with LayerAttachment {
   }
 
   Vector2 _tileWorldCenter(int col, int row) {
-    final center = HexGeometry.tilePosition(
+    return HexGeometry.projectedTopFaceCenter(
       col: col,
       row: row,
+      perspectiveY: HexGrid.perspectiveY,
       hexRadius: MapConfig.defaultConfig.hexRadius,
     );
-    return Vector2(center.x, center.y * HexGrid.perspectiveY - 12);
   }
 }

@@ -19,6 +19,7 @@ import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_p
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/map_objective_marker_layer.dart';
 import 'package:aonw_core/domain/world_map.dart';
+import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/combat.dart';
@@ -28,6 +29,7 @@ import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/transport.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
@@ -157,8 +159,7 @@ void main() {
       expect(movePreview.lastUnitType, GameUnitType.commander);
       expect(movePreview.lastSubdued, isFalse);
       expect(movePreview.lastShowCostLabel, isTrue);
-      expect(movePreview.lastShowConfirmationHint, isFalse);
-      expect(movePreview.lastShowConfirmedTarget, isTrue);
+      expect(movePreview.lastShowTargetOutline, isTrue);
     });
 
     _registerQueuedPathRenderingTests();
@@ -181,8 +182,7 @@ void main() {
       expect(movePreview.lastUnitType, GameUnitType.commander);
       expect(movePreview.lastSubdued, isTrue);
       expect(movePreview.lastShowCostLabel, isFalse);
-      expect(movePreview.lastShowConfirmationHint, isFalse);
-      expect(movePreview.lastShowConfirmedTarget, isFalse);
+      expect(movePreview.lastShowTargetOutline, isFalse);
     });
 
     test('shows queued paths for every controllable unit', () {
@@ -235,7 +235,7 @@ void main() {
       );
     });
 
-    test('renders merchant trade routes with the trade route style', () {
+    test('renders merchant routes with the shared route style', () {
       final map = _map();
       final merchant =
           GameUnit(
@@ -289,9 +289,8 @@ void main() {
       expect(movePreview.lastPreview?.targetCol, 3);
       expect(movePreview.lastTravelledUpToIndex, 1);
       expect(movePreview.lastUnitType, GameUnitType.merchant);
-      expect(movePreview.lastRouteKind, UnitMovePreviewRouteKind.trade);
       expect(movePreview.lastShowCostLabel, isFalse);
-      expect(movePreview.lastShowConfirmedTarget, isTrue);
+      expect(movePreview.lastShowTargetOutline, isTrue);
     });
 
     test('marks active move preview as confirmation state', () {
@@ -328,10 +327,52 @@ void main() {
       expect(movePreview.lastPreview, preview);
       expect(movePreview.lastSubdued, isFalse);
       expect(movePreview.lastShowCostLabel, isFalse);
-      expect(movePreview.lastShowConfirmationHint, isTrue);
-      expect(movePreview.lastShowTargetPulse, isTrue);
-      expect(movePreview.lastShowTargetArrow, isFalse);
-      expect(movePreview.lastShowConfirmedTarget, isFalse);
+      expect(movePreview.lastShowTargetOutline, isTrue);
+    });
+
+    test('binds active movement preview segments to operational roads', () {
+      final map = _map();
+      final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
+      final preview = UnitMovementPlan(
+        unitId: commander.id,
+        targetCol: 1,
+        targetRow: 0,
+        totalCost: 1,
+        availableMovementUnits: 5,
+        steps: const [
+          UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
+          UnitMovementStep(col: 1, row: 0, enterCost: 1, cumulativeCost: 1),
+        ],
+      );
+      final movePreview = _RecordingMovePreviewLayer();
+
+      _coordinator(map: map, movePreview: movePreview).syncAll(
+        state: GameClientState(
+          activePlayerId: 'player_1',
+          units: [commander],
+          transportNetwork: TransportNetworkState(
+            segments: const [
+              TransportSegment(
+                hex: HexCoord(col: 0, row: 0),
+                builtByPlayerId: 'player_1',
+              ),
+              TransportSegment(
+                hex: HexCoord(col: 1, row: 0),
+                builtByPlayerId: 'player_1',
+              ),
+            ],
+          ),
+          interaction: InteractionState(
+            selection: GameSelection.unit(commander, tile: _tile(map, 0)),
+            movePreview: preview,
+            moveCommandActive: true,
+          ),
+        ),
+        parent: Component(),
+        viewModelNotifier: ValueNotifier(RenderState.empty),
+      );
+
+      expect(movePreview.lastRoadSegmentIndices, {1});
     });
 
     test('mutes active move preview when its unit is not selected', () {
@@ -367,9 +408,7 @@ void main() {
       expect(movePreview.lastPreview, preview);
       expect(movePreview.lastSubdued, isTrue);
       expect(movePreview.lastShowCostLabel, isFalse);
-      expect(movePreview.lastShowConfirmationHint, isFalse);
-      expect(movePreview.lastShowTargetPulse, isFalse);
-      expect(movePreview.lastShowTargetArrow, isFalse);
+      expect(movePreview.lastShowTargetOutline, isFalse);
     });
 
     test('does not show stale active preview for enemy unit', () {

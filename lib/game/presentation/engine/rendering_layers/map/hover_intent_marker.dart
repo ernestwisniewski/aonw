@@ -7,6 +7,7 @@ import 'package:aonw/map/rendering/map_alpha.dart';
 import 'package:aonw/map/rendering/map_intent_marker.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
+import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -65,6 +66,12 @@ class HoverIntentMarker extends Component {
   void render(Canvas canvas) {
     super.render(canvas);
 
+    final center = _hexCenter(hex);
+    if (kind == HoverIntentKind.move && blocked) {
+      _paintBlockedMoveGlyph(canvas, center);
+      return;
+    }
+
     final corners = _hexCorners(hex);
     final hexPath = Path()..moveTo(corners.first.dx, corners.first.dy);
     for (var i = 1; i < corners.length; i++) {
@@ -72,7 +79,11 @@ class HoverIntentMarker extends Component {
     }
     hexPath.close();
 
-    final center = _hexCenter(hex);
+    if (kind == HoverIntentKind.move) {
+      _paintMoveTarget(canvas, hexPath, center);
+      return;
+    }
+
     if (kind != HoverIntentKind.inspect) {
       canvas.drawPath(
         hexPath,
@@ -103,9 +114,7 @@ class HoverIntentMarker extends Component {
 
     switch (kind) {
       case HoverIntentKind.move:
-        blocked
-            ? _paintBlockedMoveGlyph(canvas, center)
-            : _paintMoveGlyph(canvas, center);
+        return;
       case HoverIntentKind.attack:
         _paintAttackGlyph(canvas, center);
       case HoverIntentKind.founding:
@@ -125,6 +134,10 @@ class HoverIntentMarker extends Component {
   HoverIntentKind get kindForTesting => kind;
   Color get colorForTesting => color;
   bool get blockedForTesting => blocked;
+  bool get drawsMoveHexOutlineForTesting =>
+      kind == HoverIntentKind.move && !blocked;
+  bool get usesBareBlockedCueForTesting =>
+      kind == HoverIntentKind.move && blocked;
 
   int get fillAlphaForTesting {
     return switch (kind) {
@@ -148,12 +161,49 @@ class HoverIntentMarker extends Component {
     };
   }
 
-  void _paintMoveGlyph(Canvas canvas, Offset center) {
-    MapIntentMarker.paintMoveBadge(canvas, center);
+  void _paintMoveTarget(Canvas canvas, Path hexPath, Offset center) {
+    canvas
+      ..drawPath(
+        hexPath,
+        HudPaint.stroke(
+          HudPalette.roadMarking,
+          alpha: MapAlpha.faint,
+          strokeWidth: MapStroke.glow,
+          strokeCap: StrokeCap.round,
+          strokeJoin: StrokeJoin.round,
+        )..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.8),
+      )
+      ..drawPath(
+        hexPath,
+        HudPaint.stroke(
+          HudPalette.roadMarking,
+          alpha: MapAlpha.full,
+          strokeWidth: MapStroke.regular,
+          strokeCap: StrokeCap.round,
+          strokeJoin: StrokeJoin.round,
+        ),
+      )
+      ..drawCircle(
+        center,
+        7.0,
+        HudPaint.fill(HudPalette.roadMarking, alpha: MapAlpha.whisper)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0),
+      )
+      ..drawCircle(
+        center,
+        3.2,
+        HudPaint.fill(HudPalette.roadMarking, alpha: MapAlpha.full),
+      );
   }
 
   void _paintBlockedMoveGlyph(Canvas canvas, Offset center) {
-    _paintIntentBadge(canvas, center, MapIntentGlyph.unavailable);
+    MapIntentMarker.paintGlyph(
+      canvas,
+      center,
+      MapIntentGlyph.unavailable,
+      color: HudPalette.danger,
+      scale: 1.4,
+    );
   }
 
   void _paintAttackGlyph(Canvas canvas, Offset center) {

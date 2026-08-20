@@ -23,11 +23,7 @@ extension _UnitMovePreviewMotion on UnitMovePreview {
   }) {
     if (startIndex >= points.length - 1) return null;
 
-    final route = Path()..moveTo(points[startIndex].x, points[startIndex].y);
-    for (var i = startIndex + 1; i < points.length; i++) {
-      route.lineTo(points[i].x, points[i].y);
-    }
-
+    final route = _routePathFrom(startIndex);
     final metrics = route.computeMetrics().toList(growable: false);
     final length = metrics.fold<double>(
       0,
@@ -54,16 +50,10 @@ extension _UnitMovePreviewMotion on UnitMovePreview {
     final sample = _routeSample(startIndex);
     if (sample == null) return;
 
-    final glow = _glowColorForPoint(points.length - 1);
     final sprite = _unitSpriteController?.sprite;
 
     if (sprite == null || !sprite.isReady) {
-      _drawFallbackRouteCircle(
-        canvas,
-        center: sample.position,
-        color: _colorForPoint(points.length - 1),
-        glow: glow,
-      );
+      _drawTravellingFallback(canvas, sample.position);
       return;
     }
 
@@ -71,50 +61,43 @@ extension _UnitMovePreviewMotion on UnitMovePreview {
   }
 
   void _drawDestinationMarker(Canvas canvas) {
-    final end = points.last;
-    final center = end.toOffset();
-    _drawFallbackRouteCircle(
-      canvas,
-      center: center,
-      color: _colorForPoint(points.length - 1),
-      glow: _glowColorForPoint(points.length - 1),
-      radius: 9.0,
-      alpha: MapAlpha.solid,
-    );
-  }
-
-  void _drawFallbackRouteCircle(
-    Canvas canvas, {
-    required Offset center,
-    required Color color,
-    required Color glow,
-    double radius = 10.5,
-    int alpha = MapAlpha.strong,
-  }) {
-    final pulse =
-        0.5 +
-        0.5 * math.sin(_flowPhase / UnitMovePreview._pulsePeriod * 2 * math.pi);
+    final center = points.last.toOffset();
+    if (_destinationIsReachableThisTurn) {
+      _drawRouteBoundaryDot(canvas, center, emphasized: true);
+      return;
+    }
     canvas
       ..drawCircle(
         center,
-        radius + 4.0 + pulse * 1.0,
-        HudPaint.fill(glow, alpha: MapAlpha.soft)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
-      )
-      ..drawCircle(center, radius, HudPaint.fill(color, alpha: alpha))
-      ..drawCircle(
-        center,
-        radius - 3.5,
-        HudPaint.fill(color, alpha: MapAlpha.strong),
+        7.0,
+        HudPaint.fill(HudPalette.roadMarking, alpha: MapAlpha.whisper)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0),
       )
       ..drawCircle(
         center,
-        radius + 1.5,
-        HudPaint.stroke(
-          color,
-          alpha: MapAlpha.solid,
-          strokeWidth: MapStroke.thin,
-        ),
+        3.2,
+        HudPaint.fill(HudPalette.roadMarking, alpha: MapAlpha.full),
+      );
+  }
+
+  bool get _destinationIsReachableThisTurn {
+    final destinationIndex = points.length - 1;
+    return destinationIndex > _clampedTravelledIndex &&
+        _isReachablePoint(destinationIndex);
+  }
+
+  void _drawTravellingFallback(Canvas canvas, Offset center) {
+    canvas
+      ..drawCircle(
+        center,
+        9.0,
+        HudPaint.fill(HudPalette.roadMarking, alpha: MapAlpha.soft)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0),
+      )
+      ..drawCircle(
+        center,
+        5.0,
+        HudPaint.fill(HudPalette.roadMarking, alpha: MapAlpha.full),
       );
   }
 

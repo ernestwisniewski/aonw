@@ -39,6 +39,17 @@ abstract final class HexGeometry {
     );
   }
 
+  /// Returns the top-face center after the board's vertical projection.
+  static Vector2 projectedTopFaceCenter({
+    required int col,
+    required int row,
+    required double perspectiveY,
+    double? hexRadius,
+  }) {
+    final center = topFaceCenter(col: col, row: row, hexRadius: hexRadius);
+    return Vector2(center.x, center.y * perspectiveY);
+  }
+
   /// Returns top-face corner offsets for a board tile.
   static List<Offset> topFaceCornerOffsets({
     required int col,

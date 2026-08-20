@@ -1,8 +1,12 @@
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/engine/game_renderer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/hover_intent_marker.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
+import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:aonw_core/domain/world_map.dart';
@@ -32,15 +36,16 @@ void main() {
         intent: const HoverIntentMarkerSpec(
           hex: hex,
           kind: HoverIntentKind.move,
-          color: HudPalette.gold,
+          color: HudPalette.roadMarking,
         ),
       );
 
       expect(layer.hexForTesting, hex);
       expect(layer.kindForTesting, HoverIntentKind.move);
-      expect(layer.colorForTesting, HudPalette.gold);
+      expect(layer.colorForTesting, HudPalette.roadMarking);
       expect(layer.blockedForTesting, isFalse);
       expect(layer.markerForTesting?.blockedForTesting, isFalse);
+      expect(layer.markerForTesting?.drawsMoveHexOutlineForTesting, isTrue);
       expect(layer.markerForTesting?.priority, MapPriority.hoverIntentOverlay);
 
       layer.clear();
@@ -49,6 +54,34 @@ void main() {
       expect(layer.kindForTesting, isNull);
       expect(layer.markerForTesting, isNull);
     });
+
+    test(
+      'reachable move paints a hex, blocked move paints only an X',
+      () async {
+        final reachable = HoverIntentMarker(
+          hex: const CityHex(col: 0, row: 0),
+          kind: HoverIntentKind.move,
+          color: HudPalette.roadMarking,
+        );
+        final blocked = HoverIntentMarker(
+          hex: const CityHex(col: 0, row: 0),
+          kind: HoverIntentKind.move,
+          color: HudPalette.danger,
+          blocked: true,
+        );
+
+        final reachableBounds = await _paintedMoveCueBounds(reachable);
+        final blockedBounds = await _paintedMoveCueBounds(blocked);
+
+        expect(reachable.drawsMoveHexOutlineForTesting, isTrue);
+        expect(reachableBounds, isNotNull);
+        expect(reachableBounds!.width, greaterThan(80));
+        expect(blocked.usesBareBlockedCueForTesting, isTrue);
+        expect(blockedBounds, isNotNull);
+        expect(blockedBounds!.width, lessThan(40));
+        expect(blockedBounds.height, lessThan(40));
+      },
+    );
   });
 
   group('GameRenderer hover intent', () {
@@ -81,7 +114,10 @@ void main() {
 
       expect(game.hoverIntentKindForTesting, HoverIntentKind.move);
       expect(game.hoverIntentTileForTesting, (col: 1, row: 1));
-      expect(game.hoverIntentColorValueForTesting, HudPalette.gold.toARGB32());
+      expect(
+        game.hoverIntentColorValueForTesting,
+        HudPalette.roadMarking.toARGB32(),
+      );
       expect(game.hoverIntentBlockedForTesting, isFalse);
     });
 
@@ -306,7 +342,10 @@ void main() {
 
       expect(game.hoverIntentKindForTesting, HoverIntentKind.move);
       expect(game.hoverIntentTileForTesting, (col: 1, row: 1));
-      expect(game.hoverIntentColorValueForTesting, HudPalette.gold.toARGB32());
+      expect(
+        game.hoverIntentColorValueForTesting,
+        HudPalette.roadMarking.toARGB32(),
+      );
       expect(game.hoverIntentBlockedForTesting, isFalse);
     });
 
@@ -868,6 +907,45 @@ void main() {
       expect(game.hoverIntentKindForTesting, isNull);
     });
   });
+}
+
+Future<ui.Rect?> _paintedMoveCueBounds(HoverIntentMarker marker) async {
+  const imageSize = 160;
+  final recorder = ui.PictureRecorder();
+  final canvas = ui.Canvas(recorder);
+  final worldCenter = HexGeometry.topFaceCentroid(col: 0, row: 0);
+  canvas.translate(80 - worldCenter.dx, 80 - worldCenter.dy);
+  marker.render(canvas);
+  final picture = recorder.endRecording();
+  final image = await picture.toImage(imageSize, imageSize);
+  picture.dispose();
+  final bytes = await image.toByteData(
+    format: ui.ImageByteFormat.rawStraightRgba,
+  );
+  image.dispose();
+  if (bytes == null) return null;
+
+  var left = imageSize;
+  var top = imageSize;
+  var right = -1;
+  var bottom = -1;
+  for (var y = 0; y < imageSize; y++) {
+    for (var x = 0; x < imageSize; x++) {
+      final alpha = bytes.getUint8(((y * imageSize) + x) * 4 + 3);
+      if (alpha == 0) continue;
+      left = math.min(left, x);
+      top = math.min(top, y);
+      right = math.max(right, x);
+      bottom = math.max(bottom, y);
+    }
+  }
+  if (right < left || bottom < top) return null;
+  return ui.Rect.fromLTRB(
+    left.toDouble(),
+    top.toDouble(),
+    (right + 1).toDouble(),
+    (bottom + 1).toDouble(),
+  );
 }
 
 Future<GameRenderer> _loadedGame(

@@ -8,7 +8,6 @@ import 'package:aonw_core/game/domain/transport/transport_network_state.dart';
 import 'package:aonw_core/game/domain/transport/transport_network_visibility_rules.dart';
 import 'package:aonw_core/game/domain/unit/game_unit.dart';
 import 'package:aonw_core/game/domain/unit/unit_movement_domain.dart';
-import 'package:aonw_core/map/domain/hex_grid_topology.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 abstract interface class UnitTraversalCostResolver {
@@ -92,19 +91,12 @@ final class InfrastructureAwareTraversalCostResolver
   }
 
   bool _isOperationalRoadEdge(MapTileView from, MapTileView to) {
-    if (!HexGridTopology.areNeighbors(
-      col: from.col,
-      row: from.row,
-      targetCol: to.col,
-      targetRow: to.row,
-    )) {
-      return false;
-    }
-    final fromRoad = _network.hasOperationalRoadAt(from.col, from.row);
-    final toRoad = _network.hasOperationalRoadAt(to.col, to.row);
-    if (fromRoad && toRoad) return true;
-    final fromCity = _cityCenters.contains(HexCoordinate.fromTile(from));
-    final toCity = _cityCenters.contains(HexCoordinate.fromTile(to));
-    return (fromCity && toRoad) || (fromRoad && toCity);
+    return _network.hasOperationalRoadEdge(
+      fromCol: from.col,
+      fromRow: from.row,
+      toCol: to.col,
+      toRow: to.row,
+      cityCenters: _cityCenters,
+    );
   }
 }

@@ -86,7 +86,7 @@ void main() {
       for (final intent in cavalryIntents) {
         expect(intent?.kind, HoverIntentKind.move);
         expect(intent?.blocked, isFalse);
-        expect(intent?.color, HudPalette.gold);
+        expect(intent?.color, HudPalette.roadMarking);
       }
     });
 
@@ -130,7 +130,7 @@ void main() {
       for (final intent in intents) {
         expect(intent?.kind, HoverIntentKind.move);
         expect(intent?.blocked, isFalse);
-        expect(intent?.color, HudPalette.gold);
+        expect(intent?.color, HudPalette.roadMarking);
       }
     });
 
@@ -157,7 +157,7 @@ void main() {
       for (final intent in intents) {
         expect(intent?.kind, HoverIntentKind.move);
         expect(intent?.blocked, isFalse);
-        expect(intent?.color, HudPalette.gold);
+        expect(intent?.color, HudPalette.roadMarking);
       }
     });
 
@@ -186,7 +186,7 @@ void main() {
       for (final intent in intents) {
         expect(intent?.kind, HoverIntentKind.move);
         expect(intent?.blocked, isFalse);
-        expect(intent?.color, HudPalette.gold);
+        expect(intent?.color, HudPalette.roadMarking);
       }
     });
 
@@ -207,7 +207,7 @@ void main() {
       for (final intent in intents) {
         expect(intent?.kind, HoverIntentKind.move);
         expect(intent?.blocked, isFalse);
-        expect(intent?.color, HudPalette.gold);
+        expect(intent?.color, HudPalette.roadMarking);
       }
     });
 

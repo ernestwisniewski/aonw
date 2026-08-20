@@ -16,35 +16,29 @@ part 'unit_move_preview_motion.dart';
 part 'unit_move_preview_route_rendering.dart';
 part 'unit_move_preview_target_rendering.dart';
 
-enum UnitMovePreviewRouteKind { movement, trade }
-
 class UnitMovePreview extends Component {
-  static const double _routeDashLength = 13.0;
-  static const double _routeGapLength = 8.0;
+  static const double _routeDashLength = 12.0;
+  static const double _routeGapLength = 7.0;
   static const double _routeDashPattern = _routeDashLength + _routeGapLength;
-  static const double _travelledDashLength = 7.5;
-  static const double _travelledGapLength = 5.5;
   static const double _flowSpeed = 24.0;
-  static const double _pulsePeriod = 42.0;
-  static const int _focusedForwardHexes = 2;
-  static const double _minRouteStrokeScale = 0.74;
-  static const double _nearBackRouteStrokeScale = 0.90;
-  static const double _backRouteStrokeFalloff = 0.055;
-  static const double _frontRouteStrokeFalloff = 0.06;
+  static const double _routeBoundaryRadius = 2.8;
+  static const double _routeBoundaryHaloRadius = 5.2;
+  static const double _currentTurnBoundaryRadius = 4.4;
+  static const double _currentTurnBoundaryHaloRadius = 7.4;
 
   final List<Vector2> points;
   final List<bool> reachablePoints;
+  final List<int> turnBoundaryPointIndices;
+  final Set<int> roadSegmentIndices;
   final GameUnitType? unitType;
-  final UnitMovePreviewRouteKind routeKind;
   bool dimmed;
   bool subdued;
-  bool showTargetPulse;
-  bool showTargetArrow;
-  bool showConfirmedTarget;
+  bool showTargetOutline;
 
-  /// Points at index <= travelledUpToIndex are rendered as dashed (already travelled).
+  /// Steps ending at or before this index are treated as travelled history.
   final int travelledUpToIndex;
   final UnitMovePreviewStyle _style = UnitMovePreviewStyle();
+  final Map<int, Path> _routeSegmentCache = {};
   late final UnitMarkerSpriteController? _unitSpriteController =
       unitType == null ? null : UnitMarkerSpriteController(unitType!);
   double _flowPhase = 0;
@@ -52,28 +46,21 @@ class UnitMovePreview extends Component {
   UnitMovePreview({
     required List<Vector2> points,
     required List<bool> reachablePoints,
+    List<int> turnBoundaryPointIndices = const [],
+    Set<int> roadSegmentIndices = const {},
     this.unitType,
-    this.routeKind = UnitMovePreviewRouteKind.movement,
     this.dimmed = false,
     this.subdued = false,
-    this.showTargetPulse = false,
-    this.showTargetArrow = false,
-    this.showConfirmedTarget = false,
+    this.showTargetOutline = false,
     this.travelledUpToIndex = 0,
   }) : points = [for (final point in points) point.clone()],
-       reachablePoints = List.unmodifiable(reachablePoints);
+       reachablePoints = List.unmodifiable(reachablePoints),
+       turnBoundaryPointIndices = List.unmodifiable(turnBoundaryPointIndices),
+       roadSegmentIndices = Set.unmodifiable(roadSegmentIndices);
 
-  Color get reachableColor => _style.reachableColor;
+  Color get routeColor => UnitMovePreviewStyle.routeColor;
 
-  Color get reachableGlow => _style.reachableGlow;
-
-  Color get reachableCore => _style.reachableCore;
-
-  Color get unreachableColor => _style.unreachableColor;
-
-  Color get unreachableGlow => _style.unreachableGlow;
-
-  Color get unreachableCore => _style.unreachableCore;
+  Color get targetOutlineColor => UnitMovePreviewStyle.confirmedTargetColor;
 
   GameUnitType? get unitTypeForTesting => unitType;
 
@@ -83,20 +70,7 @@ class UnitMovePreview extends Component {
 
   bool get subduedForTesting => subdued;
 
-  bool get showTargetPulseForTesting => showTargetPulse;
-
-  bool get showTargetArrowForTesting => showTargetArrow;
-
-  bool get showConfirmedTargetForTesting => showConfirmedTarget;
-
-  bool get showStartMarkerForTesting => points.length >= 2;
-
-  @visibleForTesting
-  bool routePointMutedForTesting(int index) => _isMutedPoint(index);
-
-  @visibleForTesting
-  double routeStrokeScaleForTesting(int index) =>
-      _routeStrokeScaleForPoint(index);
+  bool get showTargetOutlineForTesting => showTargetOutline;
 
   @visibleForTesting
   List<double> dashStartsForTesting({
@@ -119,6 +93,70 @@ class UnitMovePreview extends Component {
       startIndex ?? _clampedTravelledIndex,
       phase: phase,
     )?.position;
+  }
+
+  @visibleForTesting
+  double routeSegmentLengthForTesting(int index) {
+    return _routeSegmentPath(index).computeMetrics().single.length;
+  }
+
+  @visibleForTesting
+  Rect routeSegmentBoundsForTesting(int index) {
+    return _routeSegmentPath(index).getBounds();
+  }
+
+  @visibleForTesting
+  bool routeSegmentFollowsRoadForTesting(int index) =>
+      roadSegmentIndices.contains(index);
+
+  @visibleForTesting
+  bool routeSegmentAnimatedForTesting(int index) =>
+      index > _clampedTravelledIndex;
+
+  @visibleForTesting
+  bool routeSegmentGlowingForTesting(int index) =>
+      index > _clampedTravelledIndex && _isReachablePoint(index);
+
+  @visibleForTesting
+  double routeSegmentDashPhaseForTesting(int index) =>
+      _dashPhaseForSegment(index);
+
+  @visibleForTesting
+  List<int> get routeBoundaryPointIndicesForTesting =>
+      _routeBoundaryPointIndices.toList(growable: false);
+
+  @visibleForTesting
+  double routeBoundaryRadiusForTesting(int index) =>
+      _routeBoundaryRadiusForPoint(index);
+
+  @visibleForTesting
+  bool routeBoundaryHasBorderForTesting(int index) =>
+      _isCurrentTurnEndBoundary(index);
+
+  @visibleForTesting
+  bool get destinationMarkerHasBorderForTesting =>
+      _destinationIsReachableThisTurn;
+
+  void _drawRouteBoundaryDot(
+    Canvas canvas,
+    Offset center, {
+    required bool emphasized,
+  }) {
+    final radius = emphasized
+        ? UnitMovePreview._currentTurnBoundaryRadius
+        : UnitMovePreview._routeBoundaryRadius;
+    canvas
+      ..drawCircle(
+        center,
+        emphasized
+            ? UnitMovePreview._currentTurnBoundaryHaloRadius
+            : UnitMovePreview._routeBoundaryHaloRadius,
+        _style.routeBoundaryHaloPaint,
+      )
+      ..drawCircle(center, radius, _style.routeBoundaryDotPaint);
+    if (emphasized) {
+      canvas.drawCircle(center, radius, _style.currentTurnBoundaryBorderPaint);
+    }
   }
 
   @override
@@ -144,7 +182,7 @@ class UnitMovePreview extends Component {
       canvas.saveLayer(null, emphasisPaint);
     }
 
-    if (showTargetPulse || showConfirmedTarget) {
+    if (showTargetOutline) {
       _drawTargetHexOutline(canvas);
     }
 
@@ -154,26 +192,15 @@ class UnitMovePreview extends Component {
 
     for (var i = 1; i < points.length; i++) {
       if (i <= travelledIndex) {
-        _drawDashedSegment(canvas, points[i - 1], points[i], i);
+        _drawTravelledSegment(canvas, i);
       } else {
-        _drawLitSegment(canvas, points[i - 1], points[i], i);
+        _drawPlannedSegment(canvas, i);
       }
     }
 
-    _drawStartRing(canvas);
-
-    for (var i = 1; i < points.length - 1; i++) {
-      if (i > travelledIndex) {
-        _drawWaypointNode(canvas, i);
-      }
-    }
-
+    _drawRouteBoundaryMarkers(canvas);
     _drawTravellingMarker(canvas, travelledIndex);
-    _drawTargetRing(canvas);
     _drawDestinationMarker(canvas);
-    if (showTargetArrow) {
-      _drawTargetArrow(canvas);
-    }
     if (emphasisPaint != null) {
       canvas.restore();
     }

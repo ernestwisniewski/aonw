@@ -10,7 +10,6 @@ enum MapIntentGlyph {
   growth,
   improve,
   attack,
-  move,
   unavailable,
   workedHex,
   inspect,
@@ -103,58 +102,6 @@ abstract final class MapIntentMarker {
     );
   }
 
-  static void paintMoveBadge(
-    Canvas canvas,
-    Offset center, {
-    double size = touchBadgeSize,
-  }) {
-    final rect = badgeRectFor(center, size: size, radius: size * 0.46);
-    final fill = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [HudPalette.goldLight, HudPalette.gold, HudPalette.goldDark],
-        stops: [0.0, 0.48, 1.0],
-      ).createShader(rect.outerRect);
-    canvas
-      ..drawRRect(
-        RRect.fromRectAndRadius(
-          rect.outerRect.inflate(4.0),
-          Radius.circular(size * 0.56),
-        ),
-        HudPaint.fill(HudPalette.gold, alpha: MapAlpha.soft)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
-      )
-      ..drawRRect(rect.shift(const Offset(0, 1.4)), HudPaint.shadow())
-      ..drawRRect(rect, fill)
-      ..drawRRect(
-        rect,
-        HudPaint.stroke(
-          HudPalette.gold,
-          alpha: MapAlpha.full,
-          strokeWidth: MapStroke.thin,
-          strokeCap: StrokeCap.round,
-          strokeJoin: StrokeJoin.round,
-        ),
-      )
-      ..drawRRect(
-        rect.deflate(1.5),
-        HudPaint.stroke(
-          HudPalette.goldLight,
-          alpha: MapAlpha.strong,
-          strokeWidth: MapStroke.hairline,
-        ),
-      );
-
-    paintGlyph(
-      canvas,
-      rect.outerRect.center,
-      MapIntentGlyph.move,
-      color: HudPalette.goldLight,
-      scale: size / defaultBadgeSize,
-    );
-  }
-
   static void paintGlyph(
     Canvas canvas,
     Offset center,
@@ -176,7 +123,6 @@ abstract final class MapIntentMarker {
     Color color,
   ) {
     final stroke = _glyphStroke(color: color);
-    final fill = _glyphFill(color: color);
     const c = Offset.zero;
     switch (glyph) {
       case MapIntentGlyph.city:
@@ -239,10 +185,6 @@ abstract final class MapIntentMarker {
           ..drawLine(Offset(c.dx - 4.2, c.dy), Offset(c.dx + 4.2, c.dy), stroke)
           ..drawLine(Offset(c.dx, c.dy - 4.2), Offset(c.dx, c.dy + 4.2), stroke)
           ..drawCircle(c, 2.7, stroke);
-      case MapIntentGlyph.move:
-        canvas
-          ..drawCircle(c, 2.4, fill)
-          ..drawCircle(c, 5.1, stroke);
       case MapIntentGlyph.unavailable:
         canvas
           ..drawLine(
@@ -325,9 +267,5 @@ abstract final class MapIntentMarker {
       strokeCap: StrokeCap.round,
       strokeJoin: StrokeJoin.round,
     );
-  }
-
-  static Paint _glyphFill({required Color color}) {
-    return HudPaint.fill(color, alpha: MapAlpha.opaque);
   }
 }

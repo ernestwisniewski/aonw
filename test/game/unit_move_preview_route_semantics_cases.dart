@@ -174,7 +174,7 @@ void _registerRouteSemanticsTests() {
     ]);
   });
 
-  test('unreachable destination marker keeps the danger color', () async {
+  test('later-turn destination marker stays white', () async {
     const width = 128;
     const height = 64;
     const targetX = 96;
@@ -186,6 +186,7 @@ void _registerRouteSemanticsTests() {
       ],
       reachablePoints: const [true, false],
     );
+    expect(preview.destinationMarkerHasBorderForTesting, isFalse);
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
 
@@ -203,16 +204,25 @@ void _registerRouteSemanticsTests() {
     expect(bytes, isNotNull);
     expect(
       bytes!.getUint8(pixelOffset),
-      closeTo((preview.unreachableColor.toARGB32() >> 16) & 0xFF, 3),
+      closeTo((preview.routeColor.toARGB32() >> 16) & 0xFF, 3),
     );
     expect(
       bytes.getUint8(pixelOffset + 1),
-      closeTo((preview.unreachableColor.toARGB32() >> 8) & 0xFF, 3),
+      closeTo((preview.routeColor.toARGB32() >> 8) & 0xFF, 3),
     );
     expect(
       bytes.getUint8(pixelOffset + 2),
-      closeTo(preview.unreachableColor.toARGB32() & 0xFF, 3),
+      closeTo(preview.routeColor.toARGB32() & 0xFF, 3),
     );
+  });
+
+  test('this-turn destination uses the large bordered route marker', () {
+    final preview = UnitMovePreview(
+      points: [Vector2(24, 32), Vector2(96, 32)],
+      reachablePoints: const [true, true],
+    );
+
+    expect(preview.destinationMarkerHasBorderForTesting, isTrue);
   });
 
   test('cost label uses the unit movement cap supplied by the domain', () {

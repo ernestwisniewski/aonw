@@ -44,11 +44,6 @@ UnitMovementPlan _plan({
 
 String _turnCountLabel(int turns) => AppLocalizationsEn().turnCountLabel(turns);
 
-String get _confirmLabel => AppLocalizationsEn().selectionActionConfirm;
-
-String _confirmWithTurns(int turns) => AppLocalizationsEn()
-    .selectionActionConfirmWithTurns(_turnCountLabel(turns));
-
 List<UnitMovePreview> _previewsIn(Component parent) {
   return parent.children.query<UnitMovePreview>().toList(growable: false);
 }
@@ -69,13 +64,14 @@ void main() {
       UnitMovePreviewLayer().sync(parent: parent, preview: _plan());
 
       final preview = _singlePreviewIn(parent);
-      final expectedStart = HexGeometry.tilePosition(
+      final expectedStart = HexGeometry.projectedTopFaceCenter(
         col: 0,
         row: 0,
+        perspectiveY: HexGrid.perspectiveY,
         hexRadius: MapConfig.defaultConfig.hexRadius,
       );
       expect(parent.children.query<UnitMovePreviewLayer>(), hasLength(1));
-      expect(preview.reachableColor, HudPalette.gold);
+      expect(preview.routeColor, HudPalette.roadMarking);
       expect(preview.priority, UnitMovePreviewLayer.routePriority);
       expect(
         preview.priority,
@@ -84,10 +80,7 @@ void main() {
       expect(preview.points, hasLength(2));
       expect(preview.reachablePoints, [isTrue, isTrue]);
       expect(preview.points.first.x, closeTo(expectedStart.x, 0.001));
-      expect(
-        preview.points.first.y,
-        closeTo(expectedStart.y * HexGrid.perspectiveY - 12, 0.001),
-      );
+      expect(preview.points.first.y, closeTo(expectedStart.y, 0.001));
     });
 
     test('sync reuses a layer already attached to the parent', () async {
@@ -197,8 +190,6 @@ void main() {
             id: 'active:commander',
             preview: _plan(),
             unitType: GameUnitType.commander,
-            showConfirmationHint: true,
-            showTargetArrow: true,
           ),
         ],
       );
@@ -252,32 +243,28 @@ void main() {
       expect(preview.dimmedForTesting, isFalse);
     });
 
-    test('sync propagates the confirmation label state', () {
+    test('sync uses the localized turn estimate', () {
       final parent = Component();
       UnitMovePreviewLayer(turnCostLabelBuilder: _turnCountLabel).sync(
         parent: parent,
         preview: _confirmationEtaPlan(),
         unitType: GameUnitType.warrior,
-        showConfirmationHint: true,
       );
 
       expect(_singlePillIn(parent).labelForTesting, '2 turns');
     });
 
-    test('sync propagates target preview and confirmed target emphasis', () {
+    test('sync propagates the target outline', () {
       final parent = Component();
       UnitMovePreviewLayer().sync(
         parent: parent,
         preview: _plan(),
-        showTargetPulse: true,
-        showTargetArrow: true,
-        showConfirmedTarget: true,
+        showTargetOutline: true,
       );
 
       final preview = _singlePreviewIn(parent);
-      expect(preview.showTargetPulseForTesting, isTrue);
-      expect(preview.showTargetArrowForTesting, isTrue);
-      expect(preview.showConfirmedTargetForTesting, isTrue);
+      expect(preview.showTargetOutlineForTesting, isTrue);
+      expect(preview.targetOutlineColor, HudPalette.info);
     });
 
     test('sync reuses preview component when only visual state changes', () {
@@ -288,16 +275,11 @@ void main() {
       layer.sync(parent: parent, preview: plan);
       final initial = _singlePreviewIn(parent);
 
-      layer.sync(
-        parent: parent,
-        preview: plan,
-        showConfirmationHint: true,
-        showTargetArrow: true,
-      );
+      layer.sync(parent: parent, preview: plan, showTargetOutline: true);
 
       final updated = _singlePreviewIn(parent);
       expect(updated, same(initial));
-      expect(updated.showTargetArrowForTesting, isTrue);
+      expect(updated.showTargetOutlineForTesting, isTrue);
     });
 
     test('sync uses domain reachability for route segments', () {
@@ -343,79 +325,121 @@ void main() {
       expect(firstVisibleLater, greaterThan(firstVisibleAtStart));
     });
 
-    test('movement route fades after two hexes, not two turns', () {
+    test('straight hex steps render as stable organic curves', () {
       final preview = UnitMovePreview(
-        points: [
-          Vector2(0, 0),
-          Vector2(20, 0),
-          Vector2(40, 0),
-          Vector2(60, 0),
-          Vector2(80, 0),
-        ],
-        reachablePoints: const [true, false, false, false, false],
+        points: [Vector2(0, 0), Vector2(100, 0)],
+        reachablePoints: const [true, true],
       );
 
-      expect(preview.routePointMutedForTesting(1), isFalse);
-      expect(preview.routePointMutedForTesting(2), isFalse);
-      expect(preview.routePointMutedForTesting(3), isTrue);
-      expect(preview.routePointMutedForTesting(4), isTrue);
+      final firstBounds = preview.routeSegmentBoundsForTesting(1);
+      final firstLength = preview.routeSegmentLengthForTesting(1);
+      final secondBounds = preview.routeSegmentBoundsForTesting(1);
+      final secondLength = preview.routeSegmentLengthForTesting(1);
+
+      expect(firstBounds.height, greaterThan(1));
+      expect(firstLength, greaterThan(100));
+      expect(secondBounds, firstBounds);
+      expect(secondLength, firstLength);
     });
 
-    test('movement route focus follows the travelled preview position', () {
+    test('road segments use the exact road centerline', () {
+      final preview = UnitMovePreview(
+        points: [Vector2(0, 0), Vector2(100, 0), Vector2(200, 0)],
+        reachablePoints: const [true, true, true],
+        roadSegmentIndices: const {1},
+      );
+
+      expect(preview.routeSegmentFollowsRoadForTesting(1), isTrue);
+      expect(preview.routeSegmentBoundsForTesting(1).height, 0);
+      expect(preview.routeSegmentLengthForTesting(1), 100);
+      expect(
+        preview.travellingMarkerPositionForTesting(phase: 20)?.dy,
+        closeTo(0, 0.001),
+      );
+      expect(preview.routeSegmentFollowsRoadForTesting(2), isFalse);
+      expect(preview.routeSegmentBoundsForTesting(2).height, greaterThan(1));
+    });
+
+    test('route states separate history, this turn, and later turns', () {
       final preview = UnitMovePreview(
         points: [
           Vector2(0, 0),
-          Vector2(20, 0),
           Vector2(40, 0),
-          Vector2(60, 0),
           Vector2(80, 0),
+          Vector2(120, 0),
         ],
-        reachablePoints: const [true, true, false, false, false],
+        reachablePoints: const [true, true, true, false],
         travelledUpToIndex: 1,
       );
 
-      expect(preview.routePointMutedForTesting(2), isFalse);
-      expect(preview.routePointMutedForTesting(3), isFalse);
-      expect(preview.routePointMutedForTesting(4), isTrue);
+      expect(preview.routeSegmentAnimatedForTesting(1), isFalse);
+      expect(preview.routeSegmentGlowingForTesting(1), isFalse);
+      expect(preview.routeSegmentAnimatedForTesting(2), isTrue);
+      expect(preview.routeSegmentGlowingForTesting(2), isTrue);
+      expect(preview.routeSegmentAnimatedForTesting(3), isTrue);
+      expect(preview.routeSegmentGlowingForTesting(3), isFalse);
+      expect(preview.routeBoundaryPointIndicesForTesting, [1, 2]);
+      expect(
+        preview.routeBoundaryRadiusForTesting(2),
+        greaterThan(preview.routeBoundaryRadiusForTesting(1)),
+      );
+      expect(preview.routeBoundaryHasBorderForTesting(2), isTrue);
+      expect(preview.routeBoundaryHasBorderForTesting(1), isFalse);
+
+      final phasesBefore = [
+        for (var index = 1; index <= 3; index++)
+          preview.routeSegmentDashPhaseForTesting(index),
+      ];
+      preview.update(0.25);
+      final phasesAfter = [
+        for (var index = 1; index <= 3; index++)
+          preview.routeSegmentDashPhaseForTesting(index),
+      ];
+      expect(phasesAfter[0], phasesBefore[0]);
+      expect(phasesAfter[1], isNot(phasesBefore[1]));
+      expect(phasesAfter[2], isNot(phasesBefore[2]));
     });
 
-    test('route stroke tapers gently after the next two forward hexes', () {
+    test('route boundary dots only mark transitions between route states', () {
       final preview = UnitMovePreview(
         points: [
           Vector2(0, 0),
-          Vector2(20, 0),
-          Vector2(40, 0),
+          Vector2(30, 0),
           Vector2(60, 0),
-          Vector2(80, 0),
-          Vector2(100, 0),
+          Vector2(90, 0),
+          Vector2(120, 0),
+          Vector2(150, 0),
         ],
-        reachablePoints: const [true, true, false, false, false, false],
+        reachablePoints: const [true, true, true, true, false, false],
+        travelledUpToIndex: 2,
       );
 
-      expect(preview.routeStrokeScaleForTesting(1), 1.0);
-      expect(preview.routeStrokeScaleForTesting(2), 1.0);
-      expect(preview.routeStrokeScaleForTesting(3), closeTo(0.94, 0.001));
-      expect(preview.routeStrokeScaleForTesting(4), closeTo(0.88, 0.001));
-      expect(preview.routeStrokeScaleForTesting(5), closeTo(0.82, 0.001));
+      expect(preview.routeBoundaryPointIndicesForTesting, [2, 3]);
+      expect(
+        preview.routeBoundaryRadiusForTesting(3),
+        greaterThan(preview.routeBoundaryRadiusForTesting(2)),
+      );
     });
 
-    test('route stroke tapers behind the travelled preview position', () {
-      final preview = UnitMovePreview(
-        points: [
-          Vector2(0, 0),
-          Vector2(20, 0),
-          Vector2(40, 0),
-          Vector2(60, 0),
-          Vector2(80, 0),
+    test('route boundary dots mark the end of every movement turn', () {
+      final parent = Component();
+      UnitMovePreviewLayer().syncMany(
+        parent: parent,
+        previews: [
+          UnitMovePreviewLayerEntry(
+            id: 'three-turn-route',
+            preview: _linearPlan(totalCost: 8, availableMovementUnits: 3),
+            maxMovementPointsPerTurn: 3,
+          ),
         ],
-        reachablePoints: const [true, true, false, false, false],
-        travelledUpToIndex: 3,
       );
 
-      expect(preview.routeStrokeScaleForTesting(4), 1.0);
-      expect(preview.routeStrokeScaleForTesting(3), closeTo(0.90, 0.001));
-      expect(preview.routeStrokeScaleForTesting(2), closeTo(0.845, 0.001));
-      expect(preview.routeStrokeScaleForTesting(1), closeTo(0.79, 0.001));
+      final preview = _singlePreviewIn(parent);
+      expect(preview.routeBoundaryPointIndicesForTesting, [3, 6]);
+      expect(
+        preview.routeBoundaryRadiusForTesting(3),
+        greaterThan(preview.routeBoundaryRadiusForTesting(6)),
+      );
     });
 
     test('travelling unit marker samples the full planned route', () {
@@ -460,49 +484,37 @@ void main() {
       expect(layer.pillForTesting('five')?.labelForTesting, '5 turns');
     });
 
-    test('cost popup adds confirm hint for active planning preview', () {
+    test('target outline can change without rebuilding the route', () {
       final parent = Component();
-      final layer =
-          UnitMovePreviewLayer(
-            turnCostLabelBuilder: _turnCountLabel,
-            confirmationLabelBuilder: _confirmWithTurns,
-            confirmationLabel: _confirmLabel,
-          )..syncMany(
-            parent: parent,
-            previews: [
-              UnitMovePreviewLayerEntry(
-                id: 'active',
-                preview: _linearPlan(totalCost: 30, availableMovementUnits: 6),
-                unitType: GameUnitType.warrior,
-                showConfirmationHint: true,
-                showTargetPulse: true,
-                showTargetArrow: true,
-              ),
-            ],
-          );
+      final layer = UnitMovePreviewLayer()
+        ..syncMany(
+          parent: parent,
+          previews: [
+            UnitMovePreviewLayerEntry(
+              id: 'active',
+              preview: _linearPlan(totalCost: 3, availableMovementUnits: 6),
+              unitType: GameUnitType.warrior,
+              showTargetOutline: true,
+            ),
+          ],
+        );
 
       final preview = _singlePreviewIn(parent);
-      expect(
-        layer.pillForTesting('active')?.labelForTesting,
-        'Confirm (5 turns)',
-      );
-      expect(preview.showTargetPulseForTesting, isTrue);
-      expect(preview.showTargetArrowForTesting, isTrue);
+      expect(preview.showTargetOutlineForTesting, isTrue);
 
       layer.syncMany(
         parent: parent,
         previews: [
           UnitMovePreviewLayerEntry(
             id: 'active',
-            preview: _linearPlan(totalCost: 30, availableMovementUnits: 6),
+            preview: _linearPlan(totalCost: 3, availableMovementUnits: 6),
             unitType: GameUnitType.warrior,
           ),
         ],
       );
 
-      expect(layer.pillForTesting('active')?.labelForTesting, '5 turns');
-      expect(_singlePreviewIn(parent).showTargetPulseForTesting, isFalse);
-      expect(_singlePreviewIn(parent).showTargetArrowForTesting, isFalse);
+      expect(_singlePreviewIn(parent), same(preview));
+      expect(preview.showTargetOutlineForTesting, isFalse);
     });
 
     test('map pill grows to fit localized confirmation labels', () {
@@ -515,13 +527,13 @@ void main() {
       expect(size.x, lessThanOrEqualTo(MapPillPainter.maxWidth));
     });
 
-    test('sync uses shared HUD intent colors', () {
+    test('sync uses white routes and the fortification cue target color', () {
       final parent = Component();
       UnitMovePreviewLayer().sync(parent: parent, preview: _plan());
 
       final preview = _singlePreviewIn(parent);
-      expect(preview.reachableColor, HudPalette.gold);
-      expect(preview.unreachableColor, HudPalette.danger);
+      expect(preview.routeColor, HudPalette.roadMarking);
+      expect(preview.targetOutlineColor, HudPalette.info);
     });
 
     test('render draws the animated travel marker without throwing', () {
@@ -529,14 +541,12 @@ void main() {
         points: [Vector2(0, 0), Vector2(54, 0), Vector2(92, 28)],
         reachablePoints: const [true, true, true],
         unitType: GameUnitType.warrior,
-        showTargetPulse: true,
-        showTargetArrow: true,
-        showConfirmedTarget: true,
+        showTargetOutline: true,
       )..update(0.16);
       final recorder = ui.PictureRecorder();
       final canvas = ui.Canvas(recorder);
 
-      expect(preview.showStartMarkerForTesting, isTrue);
+      expect(preview.showTargetOutlineForTesting, isTrue);
       expect(() => preview.render(canvas), returnsNormally);
 
       recorder.endRecording().dispose();

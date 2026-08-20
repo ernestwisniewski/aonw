@@ -1,7 +1,8 @@
 import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_move_preview_layer.dart';
+import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
+import 'package:aonw_core/game/domain/transport.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 abstract final class UnitMovePreviewEntryBuilder {
@@ -31,7 +32,6 @@ abstract final class UnitMovePreviewEntryBuilder {
         displaySteps: tradeRoute.steps,
         travelled: travelled,
         dimmed: dimmed,
-        routeKind: UnitMovePreviewRouteKind.trade,
         showCostLabel: false,
       );
     }
@@ -67,6 +67,43 @@ abstract final class UnitMovePreviewEntryBuilder {
     );
   }
 
+  static Set<int> roadSegmentIndicesFor({
+    required GameClientState state,
+    required GameUnitType? unitType,
+    required List<UnitMovementStep> steps,
+  }) {
+    if (unitType?.movementDomain != UnitMovementDomain.land ||
+        steps.length < 2) {
+      return const {};
+    }
+
+    final knownNetwork = TransportNetworkVisibilityRules.knownFor(
+      network: state.transportNetwork,
+      playerId: state.activePlayerId,
+      ownCityIds: [
+        for (final city in state.cities)
+          if (city.ownerPlayerId == state.activePlayerId) city.id,
+      ],
+      visibility: state.activePlayerVisibility,
+    );
+    final roadNetwork = TransportNetworkIndex(knownNetwork);
+    final cityCenters = <HexCoordinate>{
+      for (final city in state.citiesKnownToActivePlayer)
+        city.center.toCoordinate(),
+    };
+    return Set.unmodifiable({
+      for (var index = 1; index < steps.length; index++)
+        if (roadNetwork.hasOperationalRoadEdge(
+          fromCol: steps[index - 1].col,
+          fromRow: steps[index - 1].row,
+          toCol: steps[index].col,
+          toRow: steps[index].row,
+          cityCenters: cityCenters,
+        ))
+          index,
+    });
+  }
+
   static int _travelledIndex(List<UnitMovementStep> steps, GameUnit unit) {
     return steps.indexWhere(
       (step) => step.col == unit.col && step.row == unit.row,
@@ -82,7 +119,6 @@ abstract final class UnitMovePreviewEntryBuilder {
     required int travelled,
     required bool dimmed,
     required bool showCostLabel,
-    UnitMovePreviewRouteKind routeKind = UnitMovePreviewRouteKind.movement,
   }) {
     final selected = state.selectedUnitId == unit.id;
     return UnitMovePreviewLayerEntry(
@@ -90,13 +126,17 @@ abstract final class UnitMovePreviewEntryBuilder {
       preview: plan,
       displaySteps: displaySteps,
       travelledUpToIndex: travelled,
+      roadSegmentIndices: roadSegmentIndicesFor(
+        state: state,
+        unitType: unit.type,
+        steps: displaySteps,
+      ),
       unitType: unit.type,
       maxMovementPointsPerTurn: maxMovementUnits(unit),
-      routeKind: routeKind,
       dimmed: dimmed,
       subdued: !selected,
       showCostLabel: showCostLabel,
-      showConfirmedTarget: selected,
+      showTargetOutline: selected,
     );
   }
 }

@@ -76,14 +76,11 @@ class _RecordingMovePreviewLayer extends UnitMovePreviewLayer {
   int? lastTravelledUpToIndex;
   GameUnitType? lastUnitType;
   int? lastMaxMovementPointsPerTurn;
-  UnitMovePreviewRouteKind? lastRouteKind;
   bool? lastDimmed;
   bool? lastSubdued;
   bool? lastShowCostLabel;
-  bool? lastShowConfirmationHint;
-  bool? lastShowTargetPulse;
-  bool? lastShowTargetArrow;
-  bool? lastShowConfirmedTarget;
+  bool? lastShowTargetOutline;
+  Set<int>? lastRoadSegmentIndices;
 
   @override
   void sync({
@@ -91,12 +88,8 @@ class _RecordingMovePreviewLayer extends UnitMovePreviewLayer {
     required UnitMovementPlan? preview,
     int travelledUpToIndex = 0,
     GameUnitType? unitType,
-    UnitMovePreviewRouteKind routeKind = UnitMovePreviewRouteKind.movement,
     bool dimmed = false,
-    bool showConfirmationHint = false,
-    bool showTargetPulse = false,
-    bool showTargetArrow = false,
-    bool showConfirmedTarget = false,
+    bool showTargetOutline = false,
   }) => syncMany(
     parent: parent,
     previews: preview == null
@@ -107,12 +100,8 @@ class _RecordingMovePreviewLayer extends UnitMovePreviewLayer {
               preview: preview,
               travelledUpToIndex: travelledUpToIndex,
               unitType: unitType,
-              routeKind: routeKind,
               dimmed: dimmed,
-              showConfirmationHint: showConfirmationHint,
-              showTargetPulse: showTargetPulse,
-              showTargetArrow: showTargetArrow,
-              showConfirmedTarget: showConfirmedTarget,
+              showTargetOutline: showTargetOutline,
             ),
           ],
   );
@@ -130,14 +119,11 @@ class _RecordingMovePreviewLayer extends UnitMovePreviewLayer {
     lastTravelledUpToIndex = last?.travelledUpToIndex;
     lastUnitType = last?.unitType;
     lastMaxMovementPointsPerTurn = last?.maxMovementPointsPerTurn;
-    lastRouteKind = last?.routeKind;
     lastDimmed = last?.dimmed;
     lastSubdued = last?.subdued;
     lastShowCostLabel = last?.showCostLabel;
-    lastShowConfirmationHint = last?.showConfirmationHint;
-    lastShowTargetPulse = last?.showTargetPulse;
-    lastShowTargetArrow = last?.showTargetArrow;
-    lastShowConfirmedTarget = last?.showConfirmedTarget;
+    lastShowTargetOutline = last?.showTargetOutline;
+    lastRoadSegmentIndices = last?.roadSegmentIndices;
   }
 
   @override
@@ -148,13 +134,10 @@ class _RecordingMovePreviewLayer extends UnitMovePreviewLayer {
     lastTravelledUpToIndex = null;
     lastUnitType = null;
     lastMaxMovementPointsPerTurn = null;
-    lastRouteKind = null;
     lastDimmed = null;
     lastSubdued = null;
     lastShowCostLabel = null;
-    lastShowConfirmationHint = null;
-    lastShowTargetPulse = null;
-    lastShowTargetArrow = null;
-    lastShowConfirmedTarget = null;
+    lastShowTargetOutline = null;
+    lastRoadSegmentIndices = null;
   }
 }

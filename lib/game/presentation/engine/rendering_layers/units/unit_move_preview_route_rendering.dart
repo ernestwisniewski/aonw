@@ -14,90 +14,204 @@ extension _UnitMovePreviewRouteRendering on UnitMovePreview {
     return null;
   }
 
-  void _drawDashedSegment(Canvas canvas, Vector2 from, Vector2 to, int index) {
-    final path = _linePath(from, to);
-    final phase =
-        _flowPhase %
-        (UnitMovePreview._travelledDashLength +
-            UnitMovePreview._travelledGapLength);
+  void _drawTravelledSegment(Canvas canvas, int index) {
     _drawDashedPath(
       canvas,
-      path,
-      _routePaintForPoint(
-        _isTradeRoute
-            ? _style.tradeRouteMutedGlowPaint
-            : _style.travelledShadowPaint,
-        index,
-      ),
-      dashLength: UnitMovePreview._travelledDashLength,
-      gapLength: UnitMovePreview._travelledGapLength,
-      phase: phase,
-    );
-    _drawDashedPath(
-      canvas,
-      path,
-      _routePaintForPoint(
-        _isTradeRoute
-            ? _style.tradeRouteMutedLinePaint
-            : _style.travelledLinePaint,
-        index,
-      ),
-      dashLength: UnitMovePreview._travelledDashLength,
-      gapLength: UnitMovePreview._travelledGapLength,
-      phase: phase,
+      _routeSegmentPath(index),
+      _style.travelledLinePaint,
+      phase: 0,
+      patternSeed: index,
     );
   }
 
-  void _drawLitSegment(Canvas canvas, Vector2 from, Vector2 to, int index) {
-    final path = _linePath(from, to);
-    final phase =
-        (_flowPhase + index * 3.5) % UnitMovePreview._routeDashPattern;
+  void _drawPlannedSegment(Canvas canvas, int index) {
+    final path = _routeSegmentPath(index);
+    if (_isReachablePoint(index)) {
+      _drawDashedPath(
+        canvas,
+        path,
+        _style.currentTurnGlowPaint,
+        phase: _dashPhaseForSegment(index),
+        patternSeed: index,
+      );
+      _drawDashedPath(
+        canvas,
+        path,
+        _style.currentTurnLinePaint,
+        phase: _dashPhaseForSegment(index),
+        patternSeed: index,
+      );
+      return;
+    }
+
     _drawDashedPath(
       canvas,
       path,
-      _routePaintForPoint(_edgePaintForPoint(index), index),
-      dashLength: UnitMovePreview._routeDashLength,
-      gapLength: UnitMovePreview._routeGapLength,
-      phase: phase,
-    );
-    _drawDashedPath(
-      canvas,
-      path,
-      _routePaintForPoint(_linePaintForPoint(index), index),
-      dashLength: UnitMovePreview._routeDashLength,
-      gapLength: UnitMovePreview._routeGapLength,
-      phase: phase,
+      _style.futureTurnLinePaint,
+      phase: _dashPhaseForSegment(index),
+      patternSeed: index,
     );
   }
 
-  Path _linePath(Vector2 from, Vector2 to) {
-    return Path()
-      ..moveTo(from.x, from.y)
-      ..lineTo(to.x, to.y);
+  double _dashPhaseForSegment(int index) {
+    if (index <= _clampedTravelledIndex) return 0;
+    return (_flowPhase + index * 3.5) % UnitMovePreview._routeDashPattern;
+  }
+
+  void _drawRouteBoundaryMarkers(Canvas canvas) {
+    for (final index in _routeBoundaryPointIndices) {
+      final center = points[index].toOffset();
+      final currentTurnEnd = _isCurrentTurnEndBoundary(index);
+      _drawRouteBoundaryDot(canvas, center, emphasized: currentTurnEnd);
+    }
+  }
+
+  double _routeBoundaryRadiusForPoint(int index) =>
+      _isCurrentTurnEndBoundary(index)
+      ? UnitMovePreview._currentTurnBoundaryRadius
+      : UnitMovePreview._routeBoundaryRadius;
+
+  bool _isCurrentTurnEndBoundary(int index) {
+    return index > 0 &&
+        index < points.length - 1 &&
+        _routeSegmentState(index) == _RouteSegmentState.currentTurn &&
+        _routeSegmentState(index + 1) == _RouteSegmentState.futureTurn;
+  }
+
+  Iterable<int> get _routeBoundaryPointIndices {
+    final indices = <int>{
+      for (final index in turnBoundaryPointIndices)
+        if (index > 0 && index < points.length - 1) index,
+      ..._routeStateBoundaryPointIndices,
+    }.toList(growable: false)..sort();
+    return indices;
+  }
+
+  Iterable<int> get _routeStateBoundaryPointIndices sync* {
+    for (var index = 1; index < points.length - 1; index++) {
+      if (_routeSegmentState(index) != _routeSegmentState(index + 1)) {
+        yield index;
+      }
+    }
+  }
+
+  _RouteSegmentState _routeSegmentState(int index) {
+    if (index <= _clampedTravelledIndex) {
+      return _RouteSegmentState.travelled;
+    }
+    return _isReachablePoint(index)
+        ? _RouteSegmentState.currentTurn
+        : _RouteSegmentState.futureTurn;
+  }
+
+  /// Builds one stable, tangent-continuous movement step.
+  ///
+  /// Adjacent segments share the same perturbed tangent at their common hex,
+  /// so turns round naturally instead of forming a polyline corner. The
+  /// perturbation also keeps a straight run of hexes from looking ruler-drawn.
+  Path _routeSegmentPath(int index) {
+    return _routeSegmentCache.putIfAbsent(
+      index,
+      () => _buildRouteSegmentPath(index),
+    );
+  }
+
+  Path _buildRouteSegmentPath(int index) {
+    assert(index > 0 && index < points.length);
+    final from = points[index - 1];
+    final to = points[index];
+    final dx = to.x - from.x;
+    final dy = to.y - from.y;
+    final length = math.sqrt(dx * dx + dy * dy);
+    final path = Path()..moveTo(from.x, from.y);
+    if (length <= 0.001) return path..lineTo(to.x, to.y);
+    if (roadSegmentIndices.contains(index)) {
+      return path..lineTo(to.x, to.y);
+    }
+
+    final fromTangent = _routeTangentAt(index - 1);
+    final toTangent = _routeTangentAt(index);
+    final handleLength = length * 0.34;
+
+    return path..cubicTo(
+      from.x + fromTangent.dx * handleLength,
+      from.y + fromTangent.dy * handleLength,
+      to.x - toTangent.dx * handleLength,
+      to.y - toTangent.dy * handleLength,
+      to.x,
+      to.y,
+    );
+  }
+
+  Offset _routeTangentAt(int pointIndex) {
+    final previous = points[math.max(0, pointIndex - 1)];
+    final next = points[math.min(points.length - 1, pointIndex + 1)];
+    final dx = next.x - previous.x;
+    final dy = next.y - previous.y;
+    final length = math.sqrt(dx * dx + dy * dy);
+    if (length <= 0.001) return const Offset(1, 0);
+
+    final baseAngle = math.atan2(dy, dx);
+    final perturbation = (_routePointNoise(pointIndex) - 0.5) * 0.42;
+    final angle = baseAngle + perturbation;
+    return Offset(math.cos(angle), math.sin(angle));
+  }
+
+  double _routePointNoise(int pointIndex) {
+    final point = points[pointIndex];
+    var value =
+        (point.x * 10).round() * 73856093 ^
+        (point.y * 10).round() * 19349663 ^
+        pointIndex * 83492791;
+    value = (value ^ (value >> 16)) * 0x45d9f3b;
+    value = (value ^ (value >> 16)) * 0x45d9f3b;
+    value ^= value >> 16;
+    return (value & 0x7fffffff) / 0x7fffffff;
+  }
+
+  Path _routePathFrom(int startIndex) {
+    final route = Path();
+    for (var index = startIndex + 1; index < points.length; index++) {
+      route.addPath(_routeSegmentPath(index), Offset.zero);
+    }
+    return route;
   }
 
   void _drawDashedPath(
     Canvas canvas,
     Path path,
     Paint paint, {
-    required double dashLength,
-    required double gapLength,
     required double phase,
+    required int patternSeed,
   }) {
     for (final metric in path.computeMetrics()) {
-      for (final distance in _dashStartDistances(
-        pathLength: metric.length,
-        dashLength: dashLength,
-        gapLength: gapLength,
-        phase: phase,
-      )) {
+      var distance =
+          (phase % UnitMovePreview._routeDashPattern) -
+          UnitMovePreview._routeDashPattern;
+      var dashIndex = 0;
+      while (distance < metric.length) {
+        final dashLength = _irregularDashLength(patternSeed, dashIndex);
         final start = math.max(0.0, distance);
         final end = math.min(metric.length, distance + dashLength);
         if (end > start) {
           canvas.drawPath(metric.extractPath(start, end), paint);
         }
+        distance += dashLength + _irregularGapLength(patternSeed, dashIndex);
+        dashIndex += 1;
       }
     }
+  }
+
+  double _irregularDashLength(int seed, int dashIndex) {
+    const adjustments = [1.0, -2.2, 2.5, -0.8];
+    return UnitMovePreview._routeDashLength +
+        adjustments[(seed + dashIndex) % adjustments.length];
+  }
+
+  double _irregularGapLength(int seed, int dashIndex) {
+    const adjustments = [0.0, 1.8, -1.2, 0.9];
+    return UnitMovePreview._routeGapLength +
+        adjustments[(seed * 3 + dashIndex) % adjustments.length];
   }
 
   Iterable<double> _dashStartDistances({
@@ -114,109 +228,11 @@ extension _UnitMovePreviewRouteRendering on UnitMovePreview {
     }
   }
 
-  Paint _edgePaintForPoint(int index) {
-    if (_isTradeRoute) {
-      return _isMutedPoint(index)
-          ? _style.tradeRouteMutedGlowPaint
-          : _style.tradeRouteFocusGlowPaint;
-    }
-    if (_isMutedPoint(index)) {
-      return _isReachablePoint(index)
-          ? _style.reachableRouteMutedGlowPaint
-          : _style.unreachableRouteMutedGlowPaint;
-    }
-    return _isReachablePoint(index)
-        ? _style.reachableRouteGlowPaint
-        : _style.unreachableRouteGlowPaint;
-  }
-
-  Paint _linePaintForPoint(int index) {
-    if (_isTradeRoute) {
-      return _isMutedPoint(index)
-          ? _style.tradeRouteMutedLinePaint
-          : _style.tradeRouteFocusLinePaint;
-    }
-    if (_isMutedPoint(index)) {
-      return _isReachablePoint(index)
-          ? _style.reachableRouteMutedLinePaint
-          : _style.unreachableRouteMutedLinePaint;
-    }
-    return _isReachablePoint(index)
-        ? _style.reachableRouteLinePaint
-        : _style.unreachableRouteLinePaint;
-  }
-
-  Paint _nodePaintForPoint(int index) {
-    if (_isTradeRoute) {
-      return _isMutedPoint(index)
-          ? _style.tradeRouteMutedNodePaint
-          : _style.tradeRouteFocusNodePaint;
-    }
-    if (_isMutedPoint(index)) {
-      return _isReachablePoint(index)
-          ? _style.reachableMutedNodePaint
-          : _style.unreachableMutedNodePaint;
-    }
-    return _isReachablePoint(index)
-        ? _style.reachableNodePaint
-        : _style.unreachableNodePaint;
-  }
-
-  Color _glowColorForPoint(int index) {
-    if (_isTradeRoute) return _style.tradeRouteGlow;
-    return _isReachablePoint(index) ? reachableGlow : unreachableGlow;
-  }
-
-  Color _colorForPoint(int index) {
-    if (_isTradeRoute) return _style.tradeRouteColor;
-    return _isReachablePoint(index) ? reachableColor : unreachableColor;
-  }
-
-  bool get _isTradeRoute => routeKind == UnitMovePreviewRouteKind.trade;
-
-  int get _routeFocusEndIndex => math.min(
-    points.length - 1,
-    _clampedTravelledIndex + UnitMovePreview._focusedForwardHexes,
-  );
-
-  bool _isMutedPoint(int index) => index > _routeFocusEndIndex;
-
-  Paint _routePaintForPoint(Paint paint, int index) {
-    return _scaledStrokePaint(paint, _routeStrokeScaleForPoint(index));
-  }
-
-  Paint _scaledStrokePaint(Paint source, double scale) {
-    return Paint()
-      ..style = source.style
-      ..color = source.color
-      ..strokeWidth = math.max(MapStroke.hairline, source.strokeWidth * scale)
-      ..strokeCap = source.strokeCap
-      ..strokeJoin = source.strokeJoin
-      ..maskFilter = source.maskFilter;
-  }
-
-  double _routeStrokeScaleForPoint(int index) {
-    final delta = index - _clampedTravelledIndex;
-    if (delta > 0) {
-      if (delta <= UnitMovePreview._focusedForwardHexes) return 1.0;
-      return math.max(
-        UnitMovePreview._minRouteStrokeScale,
-        1.0 -
-            (delta - UnitMovePreview._focusedForwardHexes) *
-                UnitMovePreview._frontRouteStrokeFalloff,
-      );
-    }
-
-    return math.max(
-      UnitMovePreview._minRouteStrokeScale,
-      UnitMovePreview._nearBackRouteStrokeScale +
-          delta * UnitMovePreview._backRouteStrokeFalloff,
-    );
-  }
-
   bool _isReachablePoint(int index) {
     return index >= 0 &&
         index < reachablePoints.length &&
         reachablePoints[index];
   }
 }
+
+enum _RouteSegmentState { travelled, currentTurn, futureTurn }
