@@ -24,6 +24,7 @@ import 'package:aonw/game/presentation/widgets/hud/global_hud_actions.dart';
 import 'package:aonw/game/presentation/widgets/selection/selection.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_dialog.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/shared/providers/performance_settings_provider.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
@@ -218,7 +219,7 @@ FogOfWarState _visibleFog(
 
 ProviderContainer _makeContainer({
   AsyncValue<WorldMap>? mapAsync,
-  AsyncValue<String?> imagePathAsync = const AsyncData(null),
+  AsyncValue<MapImageSource?> imageSourceAsync = const AsyncData(null),
   AsyncValue<CameraState?> cameraAsync = const AsyncData(null),
   AsyncValue<GameSave?> saveAsync = const AsyncData(null),
 }) {
@@ -227,7 +228,7 @@ ProviderContainer _makeContainer({
       activeMapProvider(
         _selection,
       ).overrideWithValue(mapAsync ?? AsyncData(_makeMap())),
-      mapImagePathProvider(_selection).overrideWithValue(imagePathAsync),
+      mapImageSourceProvider(_selection).overrideWithValue(imageSourceAsync),
       savedCameraProvider('').overrideWithValue(cameraAsync),
       gameSaveProvider('').overrideWithValue(saveAsync),
     ],
@@ -246,7 +247,7 @@ ProviderContainer _makeMultiplayerGameContainer(
   return ProviderContainer(
       overrides: [
         activeMapProvider(_selection).overrideWithValue(AsyncData(_makeMap())),
-        mapImagePathProvider(
+        mapImageSourceProvider(
           _selection,
         ).overrideWithValue(const AsyncData(null)),
         gameRepositoryProvider.overrideWithValue(gameRepository),
@@ -612,7 +613,7 @@ void main() {
           activeMapProvider(
             _selection,
           ).overrideWithValue(AsyncData(_makeMap())),
-          mapImagePathProvider(
+          mapImageSourceProvider(
             _selection,
           ).overrideWithValue(const AsyncData(null)),
           gameRepositoryProvider.overrideWithValue(gameRepository),
@@ -886,7 +887,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           activeMapProvider(_selection).overrideWithValue(AsyncData(panelMap)),
-          mapImagePathProvider(
+          mapImageSourceProvider(
             _selection,
           ).overrideWithValue(const AsyncData(null)),
           gameRepositoryProvider.overrideWithValue(gameRepository),
@@ -1075,7 +1076,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         activeMapProvider(_selection).overrideWithValue(AsyncData(map)),
-        mapImagePathProvider(
+        mapImageSourceProvider(
           _selection,
         ).overrideWithValue(const AsyncData(null)),
         gameRepositoryProvider.overrideWithValue(gameRepository),
@@ -1135,7 +1136,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         activeMapProvider(_selection).overrideWithValue(AsyncData(map)),
-        mapImagePathProvider(
+        mapImageSourceProvider(
           _selection,
         ).overrideWithValue(const AsyncData(null)),
         gameRepositoryProvider.overrideWithValue(gameRepository),
@@ -1192,7 +1193,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           activeMapProvider(_selection).overrideWithValue(AsyncData(map)),
-          mapImagePathProvider(
+          mapImageSourceProvider(
             _selection,
           ).overrideWithValue(const AsyncData(null)),
           gameRepositoryProvider.overrideWithValue(gameRepository),
@@ -1253,7 +1254,7 @@ void main() {
         activeMapProvider(
           _selection,
         ).overrideWith((ref) => throw Exception('map missing')),
-        mapImagePathProvider(
+        mapImageSourceProvider(
           _selection,
         ).overrideWithValue(const AsyncData(null)),
         savedCameraProvider('').overrideWithValue(const AsyncData(null)),
@@ -1276,10 +1277,10 @@ void main() {
         activeMapProvider(
           _otherSelection,
         ).overrideWithValue(AsyncData(_makeOtherMap())),
-        mapImagePathProvider(
+        mapImageSourceProvider(
           _selection,
         ).overrideWithValue(const AsyncData(null)),
-        mapImagePathProvider(
+        mapImageSourceProvider(
           _otherSelection,
         ).overrideWithValue(const AsyncData(null)),
         savedCameraProvider('').overrideWithValue(const AsyncData(null)),

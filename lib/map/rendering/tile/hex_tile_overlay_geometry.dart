@@ -74,9 +74,6 @@ class HexTileOverlayGeometry {
       if (corner.y > bottom) bottom = corner.y;
     }
 
-    return (
-      left: left,
-      bottom: bottom,
-    );
+    return (left: left, bottom: bottom);
   }
 }

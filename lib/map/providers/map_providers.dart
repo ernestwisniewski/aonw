@@ -1,3 +1,4 @@
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/application/map_repository.dart';
 import 'package:aonw/map/persistence/local_map_repository.dart';
 import 'package:aonw_core/domain/world_map.dart';
@@ -20,5 +21,5 @@ Future<WorldMap> activeMap(Ref ref, MapSelection selection) =>
     ref.watch(mapRepositoryProvider).loadMap(selection);
 
 @Riverpod(retry: _doNotRetry)
-Future<String?> mapImagePath(Ref ref, MapSelection selection) =>
-    ref.watch(mapRepositoryProvider).resolveImagePath(selection);
+Future<MapImageSource?> mapImageSource(Ref ref, MapSelection selection) =>
+    ref.watch(mapRepositoryProvider).resolveImageSource(selection);

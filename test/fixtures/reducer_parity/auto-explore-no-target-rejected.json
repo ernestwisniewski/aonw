@@ -18,6 +18,11 @@
           "terrains": [
             "grassland"
           ],
+          "displayTerrain": "grassland",
+          "yieldTerrain": "grassland",
+          "terrainTags": [
+            "grassland"
+          ],
           "resources": [],
           "height": 0
         }

@@ -7,6 +7,7 @@ import 'package:aonw/game/presentation/engine/game_renderer_components.dart';
 import 'package:aonw/game/presentation/engine/game_rendering_coordinator.dart';
 import 'package:aonw/game/presentation/engine/game_scene_builder.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/rendering/hex_world.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw_core/domain/world_map.dart';
@@ -21,7 +22,7 @@ final class GameRendererLifecycleHandler {
     required this.mapData,
     required this.components,
     required this.sceneBuilder,
-    required this.imagePath,
+    required this.imageSource,
     required this.initialCamera,
     required this.startCameraOffMap,
     required this.onLoadingProgress,
@@ -51,7 +52,7 @@ final class GameRendererLifecycleHandler {
   final WorldMap mapData;
   final GameRendererComponents components;
   final GameSceneBuilder sceneBuilder;
-  final String? imagePath;
+  final MapImageSource? imageSource;
   final CameraState? initialCamera;
   final bool startCameraOffMap;
   final ValueChanged<double>? onLoadingProgress;
@@ -119,7 +120,7 @@ final class GameRendererLifecycleHandler {
     await sceneBuilder.build(
       parent: host.world,
       mapData: mapData,
-      imagePath: imagePath,
+      imageSource: imageSource,
       viewMode: viewMode(),
       displaySettings: displaySettings(),
       onTileTapped: (tile) => unawaited(onTileTapped(tile)),

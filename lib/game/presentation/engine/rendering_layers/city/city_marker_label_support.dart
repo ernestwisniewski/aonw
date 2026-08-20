@@ -2,10 +2,10 @@ part of 'city_marker.dart';
 
 extension _CityMarkerLabelSupport on CityMarker {
   Rect _spriteBoundsFor(Offset center) => Rect.fromCenter(
-        center: center,
-        width: CityMarker._width,
-        height: CityMarker._height,
-      );
+    center: center,
+    width: CityMarker._width,
+    height: CityMarker._height,
+  );
 
   bool get _shouldPaintLabel => _showLabel || _selected;
 
@@ -73,9 +73,6 @@ extension _CityMarkerLabelSupport on CityMarker {
     }
     return path..close();
   }
-
-  int get _spriteRow =>
-      _visualLevel.clamp(0, CityMarker._frameRows - 1).toInt();
 
   int get _spriteColumn =>
       _technologyProfile.index.clamp(0, CityMarker._frameColumns - 1);

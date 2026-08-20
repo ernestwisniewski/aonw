@@ -2,16 +2,15 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:aonw/shared/assets/sprite_frame_id.dart';
+import 'package:aonw/shared/assets/sprite_frames.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 part 'dice_roll_motion.dart';
 part 'dice_roll_rendering.dart';
 
 class DiceRollTestOverlay extends StatefulWidget {
   const DiceRollTestOverlay({this.spriteSheetFuture, super.key});
-
-  static const assetPath = 'assets/sprites/dice.png';
 
   @visibleForTesting
   final Future<ui.Image>? spriteSheetFuture;
@@ -24,7 +23,7 @@ class _DiceRollTestOverlayState extends State<DiceRollTestOverlay>
     with SingleTickerProviderStateMixin {
   final _random = math.Random();
   late final AnimationController _controller;
-  late final Future<ui.Image> _spriteSheetFuture;
+  late final Future<List<_DiceFrame>> _framesFuture;
 
   List<_DieThrow> _dice = const [];
   Offset _dragOffset = Offset.zero;
@@ -41,7 +40,10 @@ class _DiceRollTestOverlayState extends State<DiceRollTestOverlay>
           if (status != AnimationStatus.completed || !mounted) return;
           setState(() {});
         });
-    _spriteSheetFuture = widget.spriteSheetFuture ?? _loadSpriteSheet();
+    final testSheet = widget.spriteSheetFuture;
+    _framesFuture = testSheet == null
+        ? _loadFrames()
+        : testSheet.then(_framesFromTestSheet);
   }
 
   @override
@@ -50,11 +52,30 @@ class _DiceRollTestOverlayState extends State<DiceRollTestOverlay>
     super.dispose();
   }
 
-  Future<ui.Image> _loadSpriteSheet() async {
-    final bytes = await rootBundle.load(DiceRollTestOverlay.assetPath);
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    return frame.image;
+  Future<List<_DiceFrame>> _loadFrames() async {
+    return Future.wait([
+      for (var index = 0; index < 36; index++)
+        SpriteFrames.load(
+          SpriteFrameId('dice.$index'),
+        ).then((frame) => _DiceFrame(image: frame.image, source: frame.source)),
+    ]);
+  }
+
+  List<_DiceFrame> _framesFromTestSheet(ui.Image image) {
+    final frameWidth = image.width / 6;
+    final frameHeight = image.height / 6;
+    return [
+      for (var index = 0; index < 36; index++)
+        _DiceFrame(
+          image: image,
+          source: Rect.fromLTWH(
+            (index % 6) * frameWidth,
+            (index ~/ 6) * frameHeight,
+            frameWidth,
+            frameHeight,
+          ),
+        ),
+    ];
   }
 
   void _roll(Size size, {Offset? dragVector, Offset? startCenter}) {
@@ -154,11 +175,16 @@ class _DiceRollTestOverlayState extends State<DiceRollTestOverlay>
         final restingCenter = _restingCenterFor(size);
         final interactionCenter = restingCenter + _dragOffset;
 
-        return FutureBuilder<ui.Image>(
-          future: _spriteSheetFuture,
+        return FutureBuilder<List<_DiceFrame>>(
+          future: _framesFuture,
           builder: (context, snapshot) {
-            final image = snapshot.data;
-            if (image == null) return const SizedBox.expand();
+            final frames = snapshot.data;
+            if (snapshot.hasError) {
+              return ErrorWidget(
+                snapshot.error ?? StateError('Could not load dice sprites'),
+              );
+            }
+            if (frames == null) return const SizedBox.expand();
 
             return Stack(
               key: const Key('diceRollTestOverlay'),
@@ -181,14 +207,14 @@ class _DiceRollTestOverlayState extends State<DiceRollTestOverlay>
                         for (var i = 0; i < dice.length; i++)
                           _PositionedDie(
                             key: Key('diceRollTestOverlay.die.$i'),
-                            spriteSheet: image,
+                            frame:
+                                frames[_frameIndexFor(
+                                  dice[i],
+                                  reduceMotion ? 1 : _controller.value,
+                                  animating: _controller.isAnimating,
+                                )],
                             die: _poseFor(dice[i], reduceMotion: reduceMotion),
                             size: diceSize,
-                            frameIndex: _frameIndexFor(
-                              dice[i],
-                              reduceMotion ? 1 : _controller.value,
-                              animating: _controller.isAnimating,
-                            ),
                           ),
                       ],
                     );
@@ -306,4 +332,11 @@ class _DiceRollTestOverlayState extends State<DiceRollTestOverlay>
     }
     return (die.frameOffset + (progress * 38).floor()) % 24;
   }
+}
+
+class _DiceFrame {
+  const _DiceFrame({required this.image, required this.source});
+
+  final ui.Image image;
+  final Rect source;
 }

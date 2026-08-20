@@ -27,17 +27,14 @@ void main() {
   });
 
   group('TerrainTheme.icon', () {
-    test('returns asset path for terrain', () {
-      expect(
-        TerrainTheme.icon(TerrainType.ocean),
-        'assets/icons/terrain_ocean.png',
-      );
+    test('returns semantic frame ID for terrain', () {
+      expect(TerrainTheme.icon(TerrainType.ocean).value, 'map.terrain.ocean');
     });
 
-    test('returns correct asset path for mountain', () {
+    test('returns correct frame ID for mountain', () {
       expect(
-        TerrainTheme.icon(TerrainType.mountain),
-        'assets/icons/terrain_mountain.png',
+        TerrainTheme.icon(TerrainType.mountain).value,
+        'map.terrain.mountain',
       );
     });
   });

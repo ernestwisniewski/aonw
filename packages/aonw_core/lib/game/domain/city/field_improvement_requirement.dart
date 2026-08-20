@@ -50,8 +50,7 @@ class RequiresAnyBaseTerrain extends FieldImprovementRequirement {
 
   @override
   FieldImprovementRequirementFailure? failureFor(MapTileView tile) {
-    final terrain = TileYieldRules.baseTerrainOrNull(tile);
-    if (terrain != null && terrains.contains(terrain)) return null;
+    if (terrains.contains(TileYieldRules.baseTerrainFor(tile))) return null;
     return const FieldImprovementRequirementFailure(
       FieldImprovementRequirementFailureType.invalidTerrain,
     );

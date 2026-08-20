@@ -33,6 +33,9 @@ extension _CityMarkerVisualStateSupport on CityMarker {
     final resetSelectionEffects =
         previous.selected != value.selected ||
         previous.reduceMotion != value.reduceMotion;
+    final spriteChanged =
+        previous.visualLevel != value.visualLevel ||
+        previous.technologyProfile != value.technologyProfile;
 
     if (previous.name != value.name || previous.isCapital != value.isCapital) {
       _cachedNamePainter = null;
@@ -54,5 +57,6 @@ extension _CityMarkerVisualStateSupport on CityMarker {
       _labelPulseElapsed = 0;
       _syncSelectionEffects();
     }
+    if (spriteChanged && isLoaded) unawaited(_loadCityFrame());
   }
 }

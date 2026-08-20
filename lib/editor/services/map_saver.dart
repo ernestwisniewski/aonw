@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:aonw/editor/domain/map_draft.dart';
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/persistence/map_loader.dart';
 import 'package:aonw/map/persistence/map_storage.dart';
 import 'package:aonw_core/map/domain/map_config.dart';
@@ -166,13 +167,12 @@ abstract final class MapSaver {
     }
   }
 
-  /// Resolves the image path for [mapName]:
+  /// Resolves the typed image source for [mapName]:
   /// 1. `<documents>/maps/<mapName>/1x1.jpg` — sliced tile marker
   /// 2. `<documents>/maps/<mapName>/image.jpg` — single image
-  /// 3. `assets/maps/<mapName>/...` — bundled asset
-  /// 4. Returns null if neither exists
-  static Future<String?> resolveImagePath(String mapName) =>
-      MapStorage.resolveImagePath(mapName);
+  /// 3. Returns null if neither exists
+  static Future<MapImageSource?> resolveImageSource(String mapName) =>
+      MapStorage.resolveImageSource(mapName);
 
   static Future<void> _deleteExistingSliceFiles(String mapName) async {
     final dir = await MapStorage.mapDirectory(mapName);

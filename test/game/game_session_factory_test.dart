@@ -1,4 +1,5 @@
 import 'package:aonw/game/application/services/game_session_factory.dart';
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/map/domain/map_view_mode.dart';
@@ -28,14 +29,17 @@ void main() {
       final session = const GameSessionFactory().create(
         mapData: map,
         saveId: 'save_1',
-        imagePath: '/tmp/map.png',
+        imageSource: const SavedMapSingleImageSource('/tmp/map.png'),
         initialCamera: const CameraState(x: 1, y: 2, zoom: 3),
         gameMode: GameMode.multiplayer,
       );
 
       expect(session.viewMode, MapViewMode.graphic);
       expect(session.saveId, 'save_1');
-      expect(session.imagePath, '/tmp/map.png');
+      expect(
+        session.imageSource,
+        const SavedMapSingleImageSource('/tmp/map.png'),
+      );
       expect(session.mapData, same(map));
       expect(session.initialCamera?.zoom, 3);
       expect(session.gameMode, GameMode.multiplayer);
@@ -45,7 +49,7 @@ void main() {
       final session = const GameSessionFactory().create(
         mapData: _map(),
         saveId: 'save_1',
-        imagePath: '/tmp/map.png',
+        imageSource: const SavedMapSingleImageSource('/tmp/map.png'),
         preferredViewMode: MapViewMode.tile,
       );
 

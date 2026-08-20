@@ -17,7 +17,6 @@ abstract final class CitySiteRules {
 
   static CitySiteFailure? foundingFailureForInput(HexAssessmentInput input) {
     final terrain = input.baseTerrain;
-    if (terrain == null) return CitySiteFailure.noBaseTerrain;
     return switch (terrain) {
       TerrainType.ocean || TerrainType.lake => CitySiteFailure.water,
       TerrainType.mountain => CitySiteFailure.mountain,

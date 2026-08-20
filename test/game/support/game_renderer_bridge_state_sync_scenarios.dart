@@ -149,14 +149,14 @@ void _registerRendererStateSyncScenarios() {
       ..onGameResize(Vector2(800, 600));
     await game.onLoad();
 
-    expect(game.imageLayerPrefersFastRenderingForTesting, isFalse);
+    expect(game.fastCameraRenderingForTesting, isFalse);
     expect(game.cityMarkerPaintsLabelForTesting(city.id), isTrue);
     expect(game.unitMarkerShowsHealthBarForTesting(unit.id), isTrue);
     expect(game.unitMarkerShowsTypeBadgeForTesting(unit.id), isTrue);
     expect(game.unitMarkerAnimateIdleForTesting(unit.id), isTrue);
 
     game.panByScreenDelta(Vector2(24, 0));
-    expect(game.imageLayerPrefersFastRenderingForTesting, isTrue);
+    expect(game.fastCameraRenderingForTesting, isTrue);
     expect(game.cityMarkerPaintsLabelForTesting(city.id), isTrue);
     expect(game.unitMarkerShowsHealthBarForTesting(unit.id), isTrue);
     expect(game.unitMarkerShowsTypeBadgeForTesting(unit.id), isTrue);
@@ -166,7 +166,7 @@ void _registerRendererStateSyncScenarios() {
       ..update(0)
       ..update(0.13);
 
-    expect(game.imageLayerPrefersFastRenderingForTesting, isFalse);
+    expect(game.fastCameraRenderingForTesting, isFalse);
     expect(game.cityMarkerPaintsLabelForTesting(city.id), isTrue);
     expect(game.unitMarkerAnimateIdleForTesting(unit.id), isTrue);
   });

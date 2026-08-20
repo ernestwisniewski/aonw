@@ -9,7 +9,7 @@ abstract final class HexTagRules {
   static List<HexAssessmentTag> tagsFor({
     required HexAssessmentKind kind,
     required HexScore score,
-    required TerrainType? terrain,
+    required TerrainType terrain,
     required bool hasRiver,
     required Set<ResourceType> resources,
     required bool canFoundCity,

@@ -9,6 +9,7 @@ import 'package:aonw/game/presentation/engine/game_scene_builder.dart';
 import 'package:aonw/game/presentation/engine/hex_selection/hex_selection_target.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/marker_density_policy.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/rendering/hex_world.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw_core/domain/world_map.dart';
@@ -46,7 +47,7 @@ final class GameRendererRuntimeBindings {
     required this.initialDisplaySettings,
     required this.initialReduceMotion,
     required this.workerOptionsBuilder,
-    required this.imagePath,
+    required this.imageSource,
     required this.initialCamera,
     required this.startCameraOffMap,
     required this.onLoadingProgress,
@@ -91,7 +92,7 @@ final class GameRendererRuntimeBindings {
   final HexDisplaySettings initialDisplaySettings;
   final bool initialReduceMotion;
   final WorkerActionPaletteOptionsBuilder? workerOptionsBuilder;
-  final String? imagePath;
+  final MapImageSource? imageSource;
   final CameraState? initialCamera;
   final bool startCameraOffMap;
   final ValueChanged<double>? onLoadingProgress;
@@ -195,7 +196,7 @@ abstract final class GameRendererRuntimeFactory {
       mapData: bindings.mapData,
       components: components,
       sceneBuilder: bindings.sceneBuilder,
-      imagePath: bindings.imagePath,
+      imageSource: bindings.imageSource,
       initialCamera: bindings.initialCamera,
       startCameraOffMap: bindings.startCameraOffMap,
       onLoadingProgress: bindings.onLoadingProgress,

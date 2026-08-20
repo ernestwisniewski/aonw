@@ -119,19 +119,16 @@ void main() {
       );
     });
 
-    test('allows city control on every existing tile terrain', () {
-      for (final terrain in TerrainType.values) {
+    test('allows city control on every valid standalone terrain', () {
+      for (final terrain in TerrainType.values.where(
+        (terrain) => terrain != TerrainType.river,
+      )) {
         expect(
           CityTileYieldRules.canCityControlTile(_tile(terrains: [terrain])),
           isTrue,
           reason: '${terrain.name} should be claimable by a city',
         );
       }
-
-      expect(
-        CityTileYieldRules.canCityControlTile(_tile(terrains: const [])),
-        isTrue,
-      );
     });
   });
 }

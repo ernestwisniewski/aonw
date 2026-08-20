@@ -25,9 +25,9 @@ class GameSessionNotifier extends _$GameSessionNotifier {
     final mapData =
         snapshot?.domain.initialResourceDistribution.applyTo(baseMap) ??
         baseMap;
-    final imagePath = await ref
-        .watch(mapImagePathProvider(selection).future)
-        .onError((_, _) => null);
+    final imageSource = await ref.watch(
+      mapImageSourceProvider(selection).future,
+    );
     // One-shot reads: save/camera invalidation should refresh HUD metadata
     // without recreating the active Flame session.
     final initialCamera = snapshot?.save.camera;
@@ -38,7 +38,7 @@ class GameSessionNotifier extends _$GameSessionNotifier {
         .preferredMapViewMode;
     return sessionFactory.create(
       mapData: mapData,
-      imagePath: imagePath,
+      imageSource: imageSource,
       saveId: saveId,
       initialCamera: initialCamera,
       gameMode: save?.gameMode ?? GameMode.hotSeat,

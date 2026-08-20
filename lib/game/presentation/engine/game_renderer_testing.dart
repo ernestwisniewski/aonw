@@ -74,8 +74,7 @@ extension GameRendererTestingHooks on GameRenderer {
   }
 
   @visibleForTesting
-  bool get imageLayerPrefersFastRenderingForTesting =>
-      _sceneBuilder.imageLayer.preferFastRendering;
+  bool get fastCameraRenderingForTesting => _cameraFastRendering;
 
   @visibleForTesting
   int get markerDensitySyncCountForTesting =>

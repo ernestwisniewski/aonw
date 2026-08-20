@@ -71,7 +71,7 @@ allowed_paths=(
   packages/aonw_core/pubspec.yaml
   packages/aonw_core/pubspec.lock
   packages/aonw_core/lib/domain.dart
-  assets/maps/example/map.json
+  content/maps/example/map.json
 )
 
 for path in "${allowed_paths[@]}"; do
@@ -161,7 +161,7 @@ forbidden_paths=(
   packages/aonw_core/analysis_options.yaml
   packages/aonw_core/tool/balance.dart
   packages/aonw_server_client/lib/client.dart
-  assets/maps/.DS_Store
+  content/maps/.DS_Store
   assets/sounds/theme.wav
 )
 

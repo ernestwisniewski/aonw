@@ -14,7 +14,7 @@ final class FileMultiplayerMapCatalog implements MultiplayerMapCatalog {
   @override
   Future<WorldMap> loadAssetMap(String mapName) async {
     final safeName = _safeMapName(mapName);
-    final roots = _roots ?? const ['assets/maps', '../assets/maps'];
+    final roots = _roots ?? const ['content/maps', '../content/maps'];
     for (final root in roots) {
       final file = File('$root/$safeName/map.json');
       if (await file.exists()) {

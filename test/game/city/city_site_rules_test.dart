@@ -53,12 +53,5 @@ void main() {
         CitySiteFailure.mountain,
       );
     });
-
-    test('rejects river-only tiles because river is only a modifier', () {
-      expect(
-        CitySiteRules.foundingFailure(_tile([TerrainType.river])),
-        CitySiteFailure.noBaseTerrain,
-      );
-    });
   });
 }

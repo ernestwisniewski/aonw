@@ -24,11 +24,11 @@ class _AtlasFramePreview extends StatelessWidget {
         borderRadius: GameUiTheme.borderRadius,
         border: Border.all(color: GameUiTheme.gold.withAlpha(46)),
       ),
-      child: FutureBuilder<ui.Image>(
-        future: _SpriteImageCache.load(model.assetPath),
+      child: FutureBuilder<_LoadedAssetFrame>(
+        future: _AssetFrameLoader.load(model, frameIndex),
         builder: (context, snapshot) {
-          final image = snapshot.data;
-          if (image == null) {
+          final frame = snapshot.data;
+          if (frame == null) {
             return const Center(
               child: SizedBox(
                 width: 20,
@@ -40,31 +40,13 @@ class _AtlasFramePreview extends StatelessWidget {
               ),
             );
           }
-          return FutureBuilder<_LoadedAssetFrame>(
-            future: _AssetFrameLoader.load(model, image, frameIndex),
-            builder: (context, frameSnapshot) {
-              final frame = frameSnapshot.data;
-              if (frame == null) {
-                return const Center(
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: GameUiTheme.gold,
-                    ),
-                  ),
-                );
-              }
-              return _InteractiveAtlasFrameCanvas(
-                adjustment: adjustment,
-                editMode: editMode,
-                image: image,
-                model: model,
-                onAdjustmentChanged: onAdjustmentChanged,
-                sourceRect: frame.sourceRect,
-              );
-            },
+          return _InteractiveAtlasFrameCanvas(
+            adjustment: adjustment,
+            editMode: editMode,
+            image: frame.image,
+            model: model,
+            onAdjustmentChanged: onAdjustmentChanged,
+            sourceRect: frame.sourceRect,
           );
         },
       ),

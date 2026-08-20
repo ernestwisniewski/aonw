@@ -2,21 +2,15 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/assets/sprite_frame_stabilizer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_definition.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_frame_sequencer.dart';
+import 'package:aonw/shared/assets/sprite_frame_id.dart';
+import 'package:aonw/shared/assets/sprite_frame_repository.dart';
 import 'package:flame/components.dart';
 
 export 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_definition.dart';
 
 class UnitSpriteComponent extends SpriteAnimationComponent {
-  final UnitSpriteDefinition definition;
-  late final UnitSpriteFrameSequencer _frames;
-  ui.Image? _image;
-  SpriteFrameStabilizer? _stabilizer;
-  AnimationFrameAdjustmentCatalog _adjustments =
-      const AnimationFrameAdjustmentCatalog.empty();
-
   UnitSpriteComponent(this.definition)
     : super(
         size: Vector2(
@@ -28,34 +22,29 @@ class UnitSpriteComponent extends SpriteAnimationComponent {
     _frames = UnitSpriteFrameSequencer(definition);
   }
 
+  final UnitSpriteDefinition definition;
+  late final UnitSpriteFrameSequencer _frames;
+  final Map<SpriteFrameId, SpriteFrame> _loadedFrames = {};
+  AnimationFrameAdjustmentCatalog _adjustments =
+      const AnimationFrameAdjustmentCatalog.empty();
+
   UnitSpriteAction get action => _frames.action;
-
   bool get isReady => animation != null;
-
   bool get idlePausesEnabled => _frames.idlePausesEnabled;
+  int get currentColumn => _frames.currentColumn();
+  bool get isMirrored => _frames.mirrored;
 
   set idlePausesEnabled(bool value) {
     _frames.idlePausesEnabled = value;
   }
 
-  int get currentColumn => _frames.currentColumn();
-
-  bool get isMirrored => _frames.mirrored;
-
   UnitSpriteSize sizeFor({required bool onCity}) =>
       definition.sizeFor(onCity: onCity);
 
-  Future<void> setImage(ui.Image image) async {
-    if (identical(_image, image) && animation != null) return;
-    _image = image;
-    _rebuildAnimation();
-    _stabilizer = await SpriteFrameStabilizerCache.analyze(
-      cacheKey: definition.assetPath,
-      image: image,
-      columns: definition.columns,
-      rows: definition.rows,
-      sourceInset: definition.sourceInset,
-    );
+  Future<void> setFrames(Iterable<SpriteFrame> frames) async {
+    _loadedFrames
+      ..clear()
+      ..addEntries(frames.map((frame) => MapEntry(frame.id, frame)));
     _adjustments = await AnimationFrameAdjustmentCatalogCache.load();
     _rebuildAnimation();
   }
@@ -66,19 +55,13 @@ class UnitSpriteComponent extends SpriteAnimationComponent {
     _frames.updateWithFrameDuration(dt, frameDuration: frameDuration);
   }
 
-  void playIdle() {
-    _setAction(UnitSpriteAction.idle);
-  }
+  void playIdle() => _setAction(UnitSpriteAction.idle);
 
   void playWalkToward({required Vector2 from, required Vector2 to}) {
-    if (_frames.playWalkToward(from: from, to: to)) {
-      _rebuildAnimation();
-    }
+    if (_frames.playWalkToward(from: from, to: to)) _rebuildAnimation();
   }
 
-  void playAttack() {
-    _setAction(UnitSpriteAction.attack);
-  }
+  void playAttack() => _setAction(UnitSpriteAction.attack);
 
   void playAttackToward({required Vector2 from, required Vector2 to}) {
     if (_frames.playActionToward(
@@ -90,13 +73,8 @@ class UnitSpriteComponent extends SpriteAnimationComponent {
     }
   }
 
-  void playWork() {
-    _setAction(UnitSpriteAction.work);
-  }
-
-  void playDie() {
-    _setAction(UnitSpriteAction.die);
-  }
+  void playWork() => _setAction(UnitSpriteAction.work);
+  void playDie() => _setAction(UnitSpriteAction.die);
 
   void _setAction(UnitSpriteAction action, {bool forceRebuild = false}) {
     if (_frames.playAction(action, forceRebuild: forceRebuild)) {
@@ -106,12 +84,12 @@ class UnitSpriteComponent extends SpriteAnimationComponent {
 
   UnitSpriteActionDefinition get actionDefinition => _frames.actionDefinition;
 
+  SpriteSequenceId get currentSequenceId => definition.sequenceIdFor(action);
+
   double get frameDuration {
-    final frameDefinition = actionDefinition;
     return _adjustments.frameDurationFor(
-      assetPath: definition.assetPath,
-      animationId: action.name,
-      defaultFrameDuration: frameDefinition.frameDuration,
+      sequenceId: currentSequenceId,
+      defaultFrameDuration: actionDefinition.frameDuration,
     );
   }
 
@@ -126,77 +104,54 @@ class UnitSpriteComponent extends SpriteAnimationComponent {
   }
 
   double? visibleContentTopOffsetFor(UnitSpriteSize size) {
-    final stabilizer = _stabilizer;
-    if (stabilizer == null) return null;
+    final frame = _currentFrame;
+    if (frame == null || frame.originalSize.height <= 0) return null;
     return frameOffsetFor(size).dy +
-        stabilizer.contentTopFractionForRow(actionDefinition.row) * size.height;
+        frame.statusTop / frame.originalSize.height * size.height;
   }
 
   void _rebuildAnimation() {
-    final image = _image;
-    if (image == null) {
-      animation = null;
-      return;
-    }
-
-    final frameDefinition = actionDefinition;
-    final imageSize = Vector2(image.width.toDouble(), image.height.toDouble());
-    final sprites = [
-      for (final column in _frames.activeColumns)
-        _spriteForFrame(
-          image: image,
-          imageSize: imageSize,
-          frameDefinition: frameDefinition,
-          column: column,
+    final sequence = currentSequenceId;
+    final sprites = <Sprite>[];
+    for (final column in _frames.activeColumns) {
+      final frame = _loadedFrames[sequence.frame(column)];
+      if (frame == null) {
+        animation = null;
+        return;
+      }
+      sprites.add(
+        Sprite(
+          frame.image,
+          srcPosition: Vector2(frame.source.left, frame.source.top),
+          srcSize: Vector2(frame.source.width, frame.source.height),
         ),
-    ];
-
+      );
+    }
     animation = SpriteAnimation.spriteList(
       sprites,
       stepTime: frameDuration,
-      loop: frameDefinition.loops,
+      loop: actionDefinition.loops,
     );
     animationTicker?.currentIndex = _frames.logicalFrameIndex
         .clamp(0, math.max(0, _frames.activeColumns.length - 1))
         .toInt();
   }
 
-  Sprite _spriteForFrame({
-    required ui.Image image,
-    required Vector2 imageSize,
-    required UnitSpriteActionDefinition frameDefinition,
-    required int column,
-  }) {
-    final source = definition.sourceRectFor(
-      imageSize: imageSize,
-      action: frameDefinition,
-      column: column,
-    );
-    return Sprite(
-      image,
-      srcPosition: Vector2(source.left, source.top),
-      srcSize: Vector2(
-        math.max(1.0, source.width),
-        math.max(1.0, source.height),
-      ),
-    );
-  }
+  SpriteFrame? get _currentFrame =>
+      _loadedFrames[currentSequenceId.frame(currentColumn)];
 
   @override
-  // The default SpriteAnimationComponent renderer stretches cropped source
-  // frames back to the full component bounds. Manual rendering preserves scale.
   // ignore: must_call_super
   void render(ui.Canvas canvas) {
-    final image = _image;
-    if (image == null || animation == null) return;
-
+    final frame = _currentFrame;
+    if (frame == null || animation == null) return;
     final geometry = renderGeometryForCurrentFrame();
-
+    if (geometry.source.isEmpty || geometry.destination.isEmpty) return;
     canvas
       ..save()
       ..clipRect(geometry.clipRect)
       ..drawImageRect(
-        image,
+        frame.image,
         geometry.source,
         geometry.destination,
         paint..filterQuality = ui.FilterQuality.medium,
@@ -205,56 +160,46 @@ class UnitSpriteComponent extends SpriteAnimationComponent {
   }
 
   UnitSpriteFrameRenderGeometry renderGeometryForCurrentFrame() {
-    final image = _image;
-    if (image == null) {
-      return UnitSpriteFrameRenderGeometry.empty(
-        ui.Offset.zero & ui.Size(size.x, size.y),
-      );
-    }
+    final frame = _currentFrame;
+    final clipRect = ui.Offset.zero & ui.Size(size.x, size.y);
+    if (frame == null) return UnitSpriteFrameRenderGeometry.empty(clipRect);
 
-    final imageSize = Vector2(image.width.toDouble(), image.height.toDouble());
-    final baseSource = definition.sourceRectFor(
-      imageSize: imageSize,
-      action: actionDefinition,
-      column: currentColumn,
-    );
-    final baseDestination = ui.Offset.zero & ui.Size(size.x, size.y);
+    final logicalFrame = ui.Offset.zero & frame.originalSize;
     final adjustment = _currentAdjustment();
     final offset = adjustment.scaledOffset(
       baseSize: ui.Size(
         definition.normalSize.width,
         definition.normalSize.height,
       ),
-      targetSize: baseDestination.size,
+      targetSize: clipRect.size,
     );
-    final destination = adjustment
+    final logicalSource = adjustment.croppedSourceFor(logicalFrame);
+    final adjustedDestination = adjustment
         .adjustedDestinationFor(
-          baseSource: baseSource,
-          baseDestination: baseDestination,
+          baseSource: logicalFrame,
+          baseDestination: clipRect,
         )
         .shift(offset);
-
+    final geometry = frame.geometryFor(
+      logicalSource: logicalSource,
+      destination: adjustedDestination,
+    );
     return UnitSpriteFrameRenderGeometry(
-      source: adjustment.croppedSourceFor(baseSource),
-      destination: destination,
-      clipRect: baseDestination,
+      source: geometry.source,
+      destination: geometry.destination,
+      clipRect: clipRect,
     );
   }
 
   AnimationFrameAdjustment _currentAdjustment() {
     return _adjustments.adjustmentFor(
-      assetPath: definition.assetPath,
-      animationId: action.name,
+      sequenceId: currentSequenceId,
       frameIndex: currentColumn,
     );
   }
 }
 
 class UnitSpriteFrameRenderGeometry {
-  final ui.Rect source;
-  final ui.Rect destination;
-  final ui.Rect clipRect;
-
   const UnitSpriteFrameRenderGeometry({
     required this.source,
     required this.destination,
@@ -268,4 +213,8 @@ class UnitSpriteFrameRenderGeometry {
       clipRect: frame,
     );
   }
+
+  final ui.Rect source;
+  final ui.Rect destination;
+  final ui.Rect clipRect;
 }

@@ -10,10 +10,10 @@ import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_catalog.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw/shared/assets/sprite_frame_id.dart';
+import 'package:aonw/shared/assets/sprite_frames.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
-import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 part 'assets_editor_toolbar.dart';
@@ -190,13 +190,13 @@ class _AssetsEditorScreenState extends State<AssetsEditorScreen>
         final actionDefinition = action.value;
         previews.add(
           _AssetPreviewModel(
-            assetPath: definition.assetPath,
-            animationId: action.key.name,
+            sequenceId: definition.sequenceIdFor(action.key),
+            frameIdFor: definition.sequenceIdFor(action.key).frame,
             filterId: _unitActionFilterId(action.key),
             filterLabel: actionLabel,
             frameCount: actionDefinition.frameCount,
             frameDuration: actionDefinition.frameDuration,
-            id: '${definition.assetPath}:${action.key.name}',
+            id: definition.sequenceIdFor(action.key).value,
             kindColor: _actionColor(action.key),
             kindLabel: actionLabel,
             loops: actionDefinition.loops,
@@ -204,16 +204,6 @@ class _AssetsEditorScreenState extends State<AssetsEditorScreen>
               definition.normalSize.width,
               definition.normalSize.height,
             ),
-            sourceRectFor: (image, frameIndex) {
-              return definition.sourceRectFor(
-                imageSize: Vector2(
-                  image.width.toDouble(),
-                  image.height.toDouble(),
-                ),
-                action: actionDefinition,
-                column: frameIndex % definition.columns,
-              );
-            },
             useSourceSizeForAdjustmentScale: false,
             title: GameDisplayNames.unitType(l10n, entry.key),
           ),
@@ -223,31 +213,27 @@ class _AssetsEditorScreenState extends State<AssetsEditorScreen>
 
     for (final type in FieldImprovementSpriteCatalog.improvementTypes) {
       for (final eraColumn in FieldImprovementSpriteCatalog.eraColumns) {
-        final assetPath = FieldImprovementSpriteCatalog.assetPathFor(type);
+        final frameId = FieldImprovementSpriteCatalog.frameIdFor(
+          type: type,
+          eraColumn: eraColumn,
+        );
+        final sequenceId = FieldImprovementSpriteCatalog.sequenceIdFor(
+          type: type,
+          eraColumn: eraColumn,
+        );
         previews.add(
           _AssetPreviewModel(
-            animationId: FieldImprovementSpriteCatalog.adjustmentIdForVariant(
-              type: type,
-              eraColumn: eraColumn,
-            ),
-            assetPath: assetPath,
+            sequenceId: sequenceId,
+            frameIdFor: (_) => frameId,
             filterId: _improvementFilterId,
             filterLabel: 'Improvement',
             frameCount: 1,
             frameDuration: 1,
-            id: '$assetPath:${type.name}:era-$eraColumn',
+            id: sequenceId.value,
             kindColor: _improvementColor,
             kindLabel: 'Improvement',
             loops: false,
             outputSize: BoardAssetCapStyles.improvement.topSize,
-            sourceRectFor: (image, _) {
-              return FieldImprovementSpriteCatalog.sourceRectFor(
-                imageWidth: image.width,
-                imageHeight: image.height,
-                type: type,
-                eraColumn: eraColumn,
-              );
-            },
             title:
                 '${GameDisplayNames.fieldImprovement(l10n, type)} - ${FieldImprovementSpriteCatalog.labelForEraColumn(eraColumn)}',
             useSourceSizeForAdjustmentScale: false,
@@ -255,32 +241,20 @@ class _AssetsEditorScreenState extends State<AssetsEditorScreen>
         );
       }
     }
-    for (var index = 0; index < _diceColumns * _diceRows; index++) {
-      final column = index % _diceColumns;
-      final row = index ~/ _diceColumns;
+    for (var index = 0; index < _diceFrameCount; index++) {
       previews.add(
         _AssetPreviewModel(
-          assetPath: _diceAssetPath,
-          animationId: 'dice.frame-$index',
+          sequenceId: SpriteSequenceId('dice.frame-$index'),
+          frameIdFor: (_) => SpriteFrameId('dice.$index'),
           filterId: _diceFilterId,
           filterLabel: 'Dice',
           frameCount: 1,
           frameDuration: 1,
-          id: '$_diceAssetPath:frame-$index',
+          id: 'dice.$index',
           kindColor: _diceColor,
           kindLabel: 'Dice',
           loops: false,
           outputSize: ui.Size.zero,
-          sourceRectFor: (image, _) {
-            final cellWidth = image.width / _diceColumns;
-            final cellHeight = image.height / _diceRows;
-            return ui.Rect.fromLTWH(
-              column * cellWidth,
-              row * cellHeight,
-              cellWidth,
-              cellHeight,
-            );
-          },
           title: 'Dice ${index + 1}',
           useSourceSizeForAdjustmentScale: true,
         ),

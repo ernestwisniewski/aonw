@@ -1,14 +1,18 @@
+import 'dart:async';
+
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_tile_markers.dart';
 import 'package:aonw/map/rendering/map_palette.dart';
 import 'package:aonw/map/rendering/terrain_theme.dart';
-import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_geometry_layout.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_overlay_geometry.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_painter.dart';
+import 'package:aonw/shared/assets/sprite_frame_id.dart';
+import 'package:aonw/shared/assets/sprite_frames.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/tile_terrain_semantics.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +25,7 @@ import 'package:flutter/material.dart';
 /// wall direction: 0 = bottom-right, 1 = bottom, 2 = bottom-left.
 class HexTile extends PositionComponent with TapCallbacks {
   final double hexRadius;
-  final List<TerrainType> terrains;
+  final TileTerrainSemantics terrain;
   final List<ResourceType> resources;
   final int tileHeight;
 
@@ -58,8 +62,8 @@ class HexTile extends PositionComponent with TapCallbacks {
   double _targetLift = 0.0;
 
   /// Resolved icon asset paths split by type.
-  late final List<String> _terrainIconPaths;
-  late final List<String> _resourceIconPaths;
+  late final List<SpriteFrameId> _terrainIconPaths;
+  late final List<SpriteFrameId> _resourceIconPaths;
 
   late HexTilePainter _painter;
   late HexTileGeometrySnapshot _geometry;
@@ -68,7 +72,7 @@ class HexTile extends PositionComponent with TapCallbacks {
 
   HexTile({
     required this.hexRadius,
-    required this.terrains,
+    required this.terrain,
     required this.resources,
     required this.onTapped,
     this.tileHeight = 0,
@@ -97,14 +101,14 @@ class HexTile extends PositionComponent with TapCallbacks {
          ),
          anchor: Anchor.center,
        ) {
-    final sortedTerrains = [...terrains]
+    final sortedTerrains = [...terrain.terrainTags]
       ..sort((a, b) => a.name.compareTo(b.name));
     _terrainIconPaths = sortedTerrains.map(TerrainTheme.icon).toList();
     final sortedResources = [...resources]
       ..sort((a, b) => a.name.compareTo(b.name));
     _resourceIconPaths = sortedResources
         .map((r) => TerrainTheme.resourceIcons[r])
-        .whereType<String>()
+        .whereType<SpriteFrameId>()
         .toList();
     _painter = _createPainter();
     _geometry = HexTileGeometryLayout.build(
@@ -176,9 +180,23 @@ class HexTile extends PositionComponent with TapCallbacks {
     await super.onLoad();
 
     if (!showTerrain && !showResources) return;
-    // Load into the global cache; already-cached paths are no-ops.
+    // Game startup owns the blocking preload. A tile can also live in the map
+    // editor, where decorative icons must not hold the whole Flame world in
+    // the loading state. The continuously rendered tile picks the frame up as
+    // soon as the shared atlas cache has it.
     final allPaths = {..._terrainIconPaths, ..._resourceIconPaths};
-    await HexIconCache.loadAll(allPaths);
+    unawaited(
+      SpriteFrames.preload(allPaths).onError((error, stackTrace) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error ?? StateError('Unknown sprite preload failure'),
+            stack: stackTrace,
+            library: 'hex tile rendering',
+            context: ErrorDescription('while preloading map icon sprites'),
+          ),
+        );
+      }),
+    );
   }
 
   @override
@@ -242,11 +260,8 @@ class HexTile extends PositionComponent with TapCallbacks {
   }
 
   HexTilePainter _createPainter() {
-    final primaryTerrain = terrains.isNotEmpty
-        ? terrains.first
-        : TerrainType.ocean;
     return HexTilePainter(
-      topColor: TerrainTheme.topColor(primaryTerrain, null),
+      topColor: TerrainTheme.topColor(terrain.displayTerrain, null),
       outlineOnlyTopFace: outlineOnlyTopFace,
       outlineColor: outlineColor,
       selectionColor: selectionColor,

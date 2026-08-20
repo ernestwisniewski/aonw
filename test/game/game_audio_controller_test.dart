@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:aonw/game/presentation/audio/audio_asset_catalog.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:flutter/foundation.dart';
@@ -90,13 +91,34 @@ void main() {
   });
 
   group('GameSoundCue assets', () {
-    test('each sound cue has a matching wav file', () {
+    test('each sound cue maps to an explicit physical asset', () {
       for (final cue in GameSoundCue.values) {
+        final path = AudioAssetCatalog.effectFor(cue);
         expect(
-          File('assets/sounds/${cue.assetName}.wav').existsSync(),
+          File(path).existsSync(),
           isTrue,
-          reason: 'Missing asset for $cue',
+          reason: 'Missing $path for $cue',
         );
+      }
+    });
+
+    test('deduplicates byte-identical semantic cues', () {
+      expect(
+        AudioAssetCatalog.effectFor(GameSoundCue.uiPanelClose),
+        AudioAssetCatalog.effectFor(GameSoundCue.menuBack),
+      );
+      expect(
+        AudioAssetCatalog.effectFor(GameSoundCue.movePreview),
+        AudioAssetCatalog.effectFor(GameSoundCue.mapTileSelect),
+      );
+    });
+
+    test('declares every looping track without scanning AssetManifest', () {
+      for (final path in [
+        ...AudioAssetCatalog.music,
+        ...AudioAssetCatalog.nature,
+      ]) {
+        expect(File(path).existsSync(), isTrue, reason: path);
       }
     });
   });

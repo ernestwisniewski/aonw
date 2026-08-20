@@ -5,10 +5,12 @@ import 'package:aonw_core/map/domain/map_read_view.dart';
 import 'package:aonw_core/map/domain/map_tile_source.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/tile_terrain_semantics.dart';
 
 export 'package:aonw_core/map/domain/map_read_view.dart';
 export 'package:aonw_core/map/domain/map_tile_source.dart';
 export 'package:aonw_core/map/domain/map_tile_view.dart';
+export 'package:aonw_core/map/domain/tile_terrain_semantics.dart';
 
 final class WorldMapException implements Exception {
   const WorldMapException(this.message);
@@ -21,16 +23,32 @@ final class WorldMapException implements Exception {
 
 /// Immutable terrain and resource data for one world coordinate.
 final class WorldTile implements MapTileView {
+  /// Creates an editor/generated tile from an explicit authored tag selection.
+  /// Persisted canonical content uses [WorldTile.withTerrainSemantics] instead.
   factory WorldTile({
     required int col,
     required int row,
     required Iterable<TerrainType> terrains,
     required Iterable<ResourceType> resources,
     required int height,
+  }) => WorldTile.withTerrainSemantics(
+    col: col,
+    row: row,
+    terrain: TileTerrainSemantics.fromAuthoredTerrainTags(terrains),
+    resources: resources,
+    height: height,
+  );
+
+  factory WorldTile.withTerrainSemantics({
+    required int col,
+    required int row,
+    required TileTerrainSemantics terrain,
+    required Iterable<ResourceType> resources,
+    required int height,
   }) => WorldTile._owned(
     col: col,
     row: row,
-    terrains: terrains,
+    terrain: terrain,
     resources: resources,
     height: height,
   );
@@ -40,10 +58,22 @@ final class WorldTile implements MapTileView {
     required Iterable<TerrainType> terrains,
     required Iterable<ResourceType> resources,
     required int height,
+  }) => WorldTile.atWithTerrainSemantics(
+    coordinate: coordinate,
+    terrain: TileTerrainSemantics.fromAuthoredTerrainTags(terrains),
+    resources: resources,
+    height: height,
+  );
+
+  factory WorldTile.atWithTerrainSemantics({
+    required HexCoord coordinate,
+    required TileTerrainSemantics terrain,
+    required Iterable<ResourceType> resources,
+    required int height,
   }) => WorldTile._owned(
     col: coordinate.col,
     row: coordinate.row,
-    terrains: terrains,
+    terrain: terrain,
     resources: resources,
     height: height,
   );
@@ -51,11 +81,10 @@ final class WorldTile implements MapTileView {
   WorldTile._owned({
     required this.col,
     required this.row,
-    required Iterable<TerrainType> terrains,
+    required this.terrain,
     required Iterable<ResourceType> resources,
     required this.height,
-  }) : terrains = List.unmodifiable(terrains),
-       resources = List.unmodifiable(resources);
+  }) : resources = List.unmodifiable(resources);
 
   @override
   final int col;
@@ -66,7 +95,15 @@ final class WorldTile implements MapTileView {
   HexCoord get coordinate => HexCoord(col: col, row: row);
 
   @override
-  final List<TerrainType> terrains;
+  final TileTerrainSemantics terrain;
+
+  List<TerrainType> get terrains => terrain.movementTerrains;
+
+  TerrainType get displayTerrain => terrain.displayTerrain;
+
+  TerrainType get yieldTerrain => terrain.yieldTerrain;
+
+  List<TerrainType> get terrainTags => terrain.terrainTags;
 
   @override
   final List<ResourceType> resources;
@@ -74,19 +111,20 @@ final class WorldTile implements MapTileView {
   @override
   final int height;
 
-  @override
-  TerrainType get primaryTerrain =>
-      terrains.isEmpty ? TerrainType.ocean : terrains.first;
-
   WorldTile copyWith({
     Iterable<TerrainType>? terrains,
+    TileTerrainSemantics? terrain,
     Iterable<ResourceType>? resources,
     int? height,
   }) {
-    return WorldTile(
+    return WorldTile.withTerrainSemantics(
       col: col,
       row: row,
-      terrains: List.unmodifiable(terrains ?? this.terrains),
+      terrain:
+          terrain ??
+          (terrains == null
+              ? this.terrain
+              : TileTerrainSemantics.fromAuthoredTerrainTags(terrains)),
       resources: List.unmodifiable(resources ?? this.resources),
       height: height ?? this.height,
     );
@@ -96,6 +134,9 @@ final class WorldTile implements MapTileView {
     'col': col,
     'row': row,
     'terrains': terrains.map((terrain) => terrain.name).toList(),
+    'displayTerrain': displayTerrain.name,
+    'yieldTerrain': yieldTerrain.name,
+    'terrainTags': terrainTags.map((terrain) => terrain.name).toList(),
     'resources': resources.map((resource) => resource.name).toList(),
     'height': height,
   };
@@ -140,7 +181,6 @@ final class WorldMap implements MapReadView, MapTileSource<WorldTile> {
     final sourceTiles = List<MapTileView>.of(tiles);
     for (final tile in sourceTiles) {
       validateWorldMapTile(
-        terrains: tile.terrains,
         height: tile.height,
         reject: _rejectWorldMapInvariant,
       );
@@ -213,7 +253,12 @@ WorldTile _worldTileFromView(MapTileView tile) {
   return WorldTile._owned(
     col: tile.col,
     row: tile.row,
-    terrains: tile.terrains,
+    terrain: TileTerrainSemantics(
+      movementTerrains: tile.terrains,
+      displayTerrain: tile.displayTerrain,
+      yieldTerrain: tile.yieldTerrain,
+      terrainTags: tile.terrainTags,
+    ),
     resources: tile.resources,
     height: tile.height,
   );

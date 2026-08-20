@@ -79,7 +79,7 @@ class _GameRendererPlaySurface extends ConsumerWidget {
           renderer.initialCameraFocusReadyListenable,
       gamepadInputListenable: gamepadInputListenable,
       gameSave: gameSave,
-      allowGraphicMode: session.imagePath != null,
+      allowGraphicMode: session.imageSource != null,
       displaySettings: displaySettings,
       onToggleTerrain: () =>
           ref.read(hexDisplayProvider.notifier).toggleTerrain(),
@@ -136,7 +136,7 @@ class _GameRendererPlaySurface extends ConsumerWidget {
   }
 
   void _setViewMode(WidgetRef ref, MapViewMode value) {
-    if (value == MapViewMode.graphic && session.imagePath == null) return;
+    if (value == MapViewMode.graphic && session.imageSource == null) return;
     ref.read(gameplaySettingsProvider.notifier).setPreferredMapViewMode(value);
     ref
         .read(gameSessionProvider(selection, session.saveId).notifier)

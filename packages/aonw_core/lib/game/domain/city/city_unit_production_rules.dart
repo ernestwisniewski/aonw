@@ -109,11 +109,11 @@ abstract final class CityUnitProductionRules {
   }
 
   static bool _isCoast(MapTileView tile) {
-    return tile.terrains.contains(TerrainType.coast);
+    return tile.terrainTags.contains(TerrainType.coast);
   }
 
   static bool _isOcean(MapTileView tile) {
-    return tile.terrains.contains(TerrainType.ocean);
+    return tile.terrainTags.contains(TerrainType.ocean);
   }
 
   static bool _isOceanAdjacentCoast(

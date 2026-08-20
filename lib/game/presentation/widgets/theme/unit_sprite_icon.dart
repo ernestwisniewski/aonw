@@ -23,34 +23,25 @@ class UnitSpriteIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final definition = UnitSpriteCatalog.definitionFor(type);
-    final safeColumn = definition == null
-        ? column
-        : column.clamp(0, definition.columns - 1).toInt();
-    final safeRow = definition == null
-        ? row
-        : row.clamp(0, definition.rows - 1).toInt();
+    if (definition == null) {
+      return SpriteAtlasIcon(data: null, size: size, opacity: opacity);
+    }
+    final safeColumn = column.clamp(0, 5).toInt();
+    final action = _actionForRow(definition, row);
+    final sequenceId = definition.sequenceIdFor(action);
     return SpriteAtlasIcon(
-      data: definition == null
-          ? null
-          : SpriteAtlasIconData(
-              assetPath: definition.assetPath,
-              columns: definition.columns,
-              rows: definition.rows,
-              column: safeColumn,
-              row: safeRow,
-              sourceInset: definition.sourceInset,
-              adjustmentId: _adjustmentIdForRow(definition, safeRow),
-              adjustmentFrameIndex: safeColumn,
-            ),
+      data: SpriteAtlasIconData(
+        frameId: sequenceId.frame(safeColumn),
+        adjustmentSequenceId: sequenceId,
+        adjustmentFrameIndex: safeColumn,
+      ),
       size: size,
       opacity: opacity,
     );
   }
 
-  String? _adjustmentIdForRow(UnitSpriteDefinition definition, int row) {
-    for (final entry in definition.actions.entries) {
-      if (entry.value.row == row) return entry.key.name;
-    }
-    return UnitSpriteAction.idle.name;
+  UnitSpriteAction _actionForRow(UnitSpriteDefinition definition, int row) {
+    final ordered = definition.actions.keys.toList(growable: false);
+    return ordered[row.clamp(0, ordered.length - 1).toInt()];
   }
 }

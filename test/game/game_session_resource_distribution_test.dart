@@ -48,7 +48,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         activeMapProvider(selection).overrideWithValue(AsyncData(map)),
-        mapImagePathProvider(
+        mapImageSourceProvider(
           selection,
         ).overrideWithValue(const AsyncData(null)),
         gameSaveSnapshotProvider(

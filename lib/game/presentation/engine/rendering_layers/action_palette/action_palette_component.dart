@@ -4,10 +4,11 @@ import 'dart:ui' as ui;
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_option.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asset_cap.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_cache.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
+import 'package:aonw/shared/assets/sprite_frame_repository.dart';
+import 'package:aonw/shared/assets/sprite_frames.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/hud_canvas_shapes.dart';
@@ -110,11 +111,16 @@ class ActionPaletteComponent extends PositionComponent with TapCallbacks {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    await Future.wait(
-      FieldImprovementSpriteCatalog.assetPaths.map(
-        FieldImprovementSpriteCache.load,
-      ),
-    );
+    await Future.wait([
+      for (final type in FieldImprovementSpriteCatalog.improvementTypes)
+        for (final era in FieldImprovementSpriteCatalog.eraColumns)
+          SpriteFrames.load(
+            FieldImprovementSpriteCatalog.frameIdFor(
+              type: type,
+              eraColumn: era,
+            ),
+          ),
+    ]);
     _adjustments = await AnimationFrameAdjustmentCatalogCache.load();
   }
 
@@ -187,11 +193,11 @@ class ActionPaletteComponent extends PositionComponent with TapCallbacks {
 
   @visibleForTesting
   ui.Rect? spriteDestinationForTesting({
-    required ui.Image image,
     required ActionPaletteOption option,
     required Rect iconRect,
   }) {
-    final source = _sourceRectFor(image, option);
+    final frame = _frameFor(option);
+    final source = frame == null ? null : Offset.zero & frame.originalSize;
     if (source == null) return null;
     return _spriteDestinationFor(
       option: option,
@@ -201,11 +207,9 @@ class ActionPaletteComponent extends PositionComponent with TapCallbacks {
   }
 
   @visibleForTesting
-  ui.Rect? spriteSourceForTesting({
-    required ui.Image image,
-    required ActionPaletteOption option,
-  }) {
-    final source = _sourceRectFor(image, option);
+  ui.Rect? spriteSourceForTesting({required ActionPaletteOption option}) {
+    final frame = _frameFor(option);
+    final source = frame == null ? null : Offset.zero & frame.originalSize;
     if (source == null) return null;
     return _spriteSourceFor(option: option, baseSource: source);
   }

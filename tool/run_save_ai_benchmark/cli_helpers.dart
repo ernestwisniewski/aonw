@@ -195,7 +195,7 @@ Future<WorldMap> _loadMap(
   String? mapPath,
 ) async {
   final file = File(
-    mapPath ?? 'assets/maps/${snapshot.metadata.world.name}/map.json',
+    mapPath ?? 'content/maps/${snapshot.metadata.world.name}/map.json',
   );
   if (!await file.exists()) {
     throw _UsageException(

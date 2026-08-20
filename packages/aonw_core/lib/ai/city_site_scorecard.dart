@@ -167,11 +167,11 @@ final class _CitySiteScorecard {
   ) {
     var score = 0.0;
     if (CityTileYieldRules.hasRiver(centerTile)) score += 1.4;
-    if (centerTile.terrains.contains(TerrainType.hills)) score += 0.8;
-    if (centerTile.primaryTerrain == TerrainType.coast) score += 0.6;
+    if (centerTile.terrainTags.contains(TerrainType.hills)) score += 0.8;
+    if (centerTile.displayTerrain == TerrainType.coast) score += 0.6;
     for (final tile in controlledTiles) {
       if (CityTileYieldRules.hasRiver(tile)) score += 0.4;
-      if (tile.primaryTerrain == TerrainType.coast) score += 0.25;
+      if (tile.displayTerrain == TerrainType.coast) score += 0.25;
     }
     return score;
   }

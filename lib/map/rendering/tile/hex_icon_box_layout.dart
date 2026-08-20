@@ -120,9 +120,10 @@ abstract final class HexIconBoxLayout {
       final col = i % columns;
       final row = i ~/ columns;
       final iconsRemainingInRow = iconCount - row * columns;
-      final rowCount = iconsRemainingInRow < columns ? iconsRemainingInRow : columns;
-      final rowWidth =
-          slotSize * rowCount + (rowCount - 1) * slotGap;
+      final rowCount = iconsRemainingInRow < columns
+          ? iconsRemainingInRow
+          : columns;
+      final rowWidth = slotSize * rowCount + (rowCount - 1) * slotGap;
       final rowLeft = left + (clusterWidth - rowWidth) / 2;
       final leftOffset = rowLeft + col * (slotSize + slotGap);
       final topOffset = top + row * (slotSize + slotGap);

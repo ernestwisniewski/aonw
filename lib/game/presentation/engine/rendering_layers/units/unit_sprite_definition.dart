@@ -1,7 +1,6 @@
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
-import 'package:aonw/shared/assets/sprite_atlas_geometry.dart';
+import 'package:aonw/shared/assets/sprite_frame_id.dart';
 import 'package:flame/components.dart';
 
 enum UnitSpriteAction { idle, walk, attack, work, die }
@@ -18,7 +17,6 @@ enum UnitSpriteDirection {
 
   static UnitSpriteDirection fromDelta(Vector2 delta) {
     if (delta.length2 == 0) return sw;
-
     final degrees = (math.atan2(delta.y, delta.x) * 180 / math.pi + 360) % 360;
     if (degrees >= 22.5 && degrees < 67.5) return se;
     if (degrees >= 67.5 && degrees < 112.5) return s;
@@ -32,46 +30,38 @@ enum UnitSpriteDirection {
 }
 
 class UnitSpriteSize {
+  const UnitSpriteSize({required this.width, required this.height});
+
   final double width;
   final double height;
-
-  const UnitSpriteSize({required this.width, required this.height});
 }
 
 class UnitSpriteActionDefinition {
-  final int row;
-  final double frameDuration;
-  final bool loops;
-  final int frameCount;
-
   const UnitSpriteActionDefinition({
-    required this.row,
     required this.frameDuration,
     this.loops = true,
     this.frameCount = 6,
   });
+
+  final double frameDuration;
+  final bool loops;
+  final int frameCount;
 }
 
 class UnitSpriteDefinition {
-  final String assetPath;
-  final int columns;
-  final int rows;
-  final UnitSpriteSize normalSize;
-  final UnitSpriteSize smallSize;
-  final UnitSpriteDirection defaultDirection;
-  final Map<UnitSpriteAction, UnitSpriteActionDefinition> actions;
-  final double sourceInset;
-
   const UnitSpriteDefinition({
-    required this.assetPath,
-    this.columns = 6,
-    this.rows = 4,
+    required this.spriteName,
     required this.normalSize,
     required this.smallSize,
     required this.actions,
     this.defaultDirection = UnitSpriteDirection.se,
-    this.sourceInset = 2.0,
   });
+
+  final String spriteName;
+  final UnitSpriteSize normalSize;
+  final UnitSpriteSize smallSize;
+  final UnitSpriteDirection defaultDirection;
+  final Map<UnitSpriteAction, UnitSpriteActionDefinition> actions;
 
   UnitSpriteActionDefinition actionDefinition(UnitSpriteAction action) {
     return actions[action] ?? actions[UnitSpriteAction.idle]!;
@@ -84,49 +74,18 @@ class UnitSpriteDefinition {
   UnitSpriteSize sizeFor({required bool onCity}) =>
       onCity ? smallSize : normalSize;
 
-  Vector2 sourcePositionFor({
-    required Vector2 imageSize,
-    required UnitSpriteActionDefinition action,
-    required int column,
-  }) {
-    final source = sourceRectFor(
-      imageSize: imageSize,
-      action: action,
-      column: column,
-    );
-    return Vector2(source.left, source.top);
+  SpriteSequenceId sequenceIdFor(UnitSpriteAction action) {
+    final supported = supportedAction(action);
+    return SpriteSequenceId('unit.$spriteName.${supported.name}');
   }
 
-  Vector2 sourceSizeFor(Vector2 imageSize) {
-    final source = SpriteAtlasGeometry.sourceRectFor(
-      imageWidth: imageSize.x.round(),
-      imageHeight: imageSize.y.round(),
-      columns: columns,
-      rows: rows,
-      column: 0,
-      row: 0,
-      sourceInset: sourceInset,
-    );
-    return Vector2(source.width, source.height);
+  Iterable<SpriteFrameId> get allFrameIds sync* {
+    for (final action in actions.keys) {
+      final sequence = sequenceIdFor(action);
+      final count = actionDefinition(action).frameCount;
+      for (var index = 0; index < count; index++) {
+        yield sequence.frame(index);
+      }
+    }
   }
-
-  ui.Rect sourceRectFor({
-    required Vector2 imageSize,
-    required UnitSpriteActionDefinition action,
-    required int column,
-  }) {
-    return SpriteAtlasGeometry.sourceRectFor(
-      imageWidth: imageSize.x.round(),
-      imageHeight: imageSize.y.round(),
-      columns: columns,
-      rows: rows,
-      column: column,
-      row: action.row,
-      sourceInset: sourceInset,
-    );
-  }
-
-  double sourceFrameWidthFor(Vector2 imageSize) => imageSize.x / columns;
-
-  double sourceFrameHeightFor(Vector2 imageSize) => imageSize.y / rows;
 }

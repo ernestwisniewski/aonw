@@ -2,13 +2,11 @@ import 'dart:convert';
 
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustment.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustment_paths.dart';
+import 'package:aonw/shared/assets/sprite_frame_id.dart';
 
 class AnimationFrameAdjustmentCatalog {
   static const String assetPath =
       AnimationFrameAdjustmentPaths.bundledAssetPath;
-
-  final Map<String, AnimationFrameAdjustment> frames;
-  final Map<String, double> animationFrameDurations;
 
   const AnimationFrameAdjustmentCatalog({
     required this.frames,
@@ -19,36 +17,23 @@ class AnimationFrameAdjustmentCatalog {
     : frames = const {},
       animationFrameDurations = const {};
 
+  final Map<String, AnimationFrameAdjustment> frames;
+  final Map<String, double> animationFrameDurations;
+
   AnimationFrameAdjustment adjustmentFor({
-    required String assetPath,
-    required String animationId,
+    required SpriteSequenceId sequenceId,
     required int frameIndex,
   }) {
-    final key = frameKey(
-      assetPath: assetPath,
-      animationId: animationId,
-      frameIndex: frameIndex,
-    );
-    return frames[key] ??
-        frames[_legacyFrameKeyFor(
-          assetPath: assetPath,
-          animationId: animationId,
-          frameIndex: frameIndex,
-        )] ??
+    return frames[frameKey(sequenceId: sequenceId, frameIndex: frameIndex)] ??
         const AnimationFrameAdjustment();
   }
 
   AnimationFrameAdjustmentCatalog withFrame({
-    required String assetPath,
-    required String animationId,
+    required SpriteSequenceId sequenceId,
     required int frameIndex,
     required AnimationFrameAdjustment adjustment,
   }) {
-    final key = frameKey(
-      assetPath: assetPath,
-      animationId: animationId,
-      frameIndex: frameIndex,
-    );
+    final key = frameKey(sequenceId: sequenceId, frameIndex: frameIndex);
     final next = Map<String, AnimationFrameAdjustment>.of(frames);
     if (adjustment.isZero) {
       next.remove(key);
@@ -62,26 +47,19 @@ class AnimationFrameAdjustmentCatalog {
   }
 
   double frameDurationFor({
-    required String assetPath,
-    required String animationId,
+    required SpriteSequenceId sequenceId,
     required double defaultFrameDuration,
   }) {
-    final key = animationKey(assetPath: assetPath, animationId: animationId);
-    return animationFrameDurations[key] ??
-        animationFrameDurations[_legacyAnimationKeyFor(
-          assetPath: assetPath,
-          animationId: animationId,
-        )] ??
+    return animationFrameDurations[animationKey(sequenceId)] ??
         defaultFrameDuration;
   }
 
   AnimationFrameAdjustmentCatalog withAnimationFrameDuration({
-    required String assetPath,
-    required String animationId,
+    required SpriteSequenceId sequenceId,
     required double frameDuration,
     double? defaultFrameDuration,
   }) {
-    final key = animationKey(assetPath: assetPath, animationId: animationId);
+    final key = animationKey(sequenceId);
     final next = Map<String, double>.of(animationFrameDurations);
     if (!_isValidAnimationFrameDuration(frameDuration) ||
         (defaultFrameDuration != null &&
@@ -100,7 +78,7 @@ class AnimationFrameAdjustmentCatalog {
     final sortedKeys = frames.keys.toList()..sort();
     final sortedAnimationKeys = animationFrameDurations.keys.toList()..sort();
     return {
-      'version': 1,
+      'version': 2,
       'frames': {
         for (final key in sortedKeys)
           if (!frames[key]!.isZero) key: frames[key]!.toJson(),
@@ -113,24 +91,20 @@ class AnimationFrameAdjustmentCatalog {
     };
   }
 
-  String toPrettyJson() {
-    return const JsonEncoder.withIndent('  ').convert(toJson());
-  }
+  String toPrettyJson() => const JsonEncoder.withIndent('  ').convert(toJson());
 
   factory AnimationFrameAdjustmentCatalog.fromJson(Object? json) {
-    if (json is! Map) return const AnimationFrameAdjustmentCatalog.empty();
-    final rawFrames = json['frames'];
+    if (json is! Map || json['version'] != 2) {
+      return const AnimationFrameAdjustmentCatalog.empty();
+    }
     final frames = <String, AnimationFrameAdjustment>{};
+    final rawFrames = json['frames'];
     if (rawFrames is Map) {
       for (final entry in rawFrames.entries) {
-        final key = entry.key;
-        if (key is! String) continue;
-        final normalizedKey = _normalizedFrameKey(key);
+        if (entry.key is! String) continue;
         final adjustment = AnimationFrameAdjustment.fromJson(entry.value);
         if (!adjustment.isZero) {
-          if (normalizedKey == key || !frames.containsKey(normalizedKey)) {
-            frames[normalizedKey] = adjustment;
-          }
+          frames[entry.key as String] = adjustment;
         }
       }
     }
@@ -143,87 +117,23 @@ class AnimationFrameAdjustmentCatalog {
   }
 
   static String frameKey({
-    required String assetPath,
-    required String animationId,
+    required SpriteSequenceId sequenceId,
     required int frameIndex,
-  }) {
-    return '$assetPath|$animationId|$frameIndex';
-  }
+  }) => '${sequenceId.value}|$frameIndex';
 
-  static String animationKey({
-    required String assetPath,
-    required String animationId,
-  }) {
-    return '$assetPath|$animationId';
-  }
-
-  static String _normalizedFrameKey(String key) {
-    final parts = key.split('|');
-    if (parts.length != 3) return key;
-    final assetPath = parts[0];
-    final animationId = parts[1];
-    if (!_usesLegacyCivilianWorkKey(assetPath, animationId)) return key;
-    final frameIndex = int.tryParse(parts[2]);
-    if (frameIndex == null) return key;
-    return frameKey(
-      assetPath: assetPath,
-      animationId: 'work',
-      frameIndex: frameIndex,
-    );
-  }
-
-  static String? _legacyFrameKeyFor({
-    required String assetPath,
-    required String animationId,
-    required int frameIndex,
-  }) {
-    if (animationId != 'work' || !_civilianWorkAssets.contains(assetPath)) {
-      return null;
-    }
-    return frameKey(
-      assetPath: assetPath,
-      animationId: 'attack',
-      frameIndex: frameIndex,
-    );
-  }
-
-  static String? _legacyAnimationKeyFor({
-    required String assetPath,
-    required String animationId,
-  }) {
-    if (animationId != 'work' || !_civilianWorkAssets.contains(assetPath)) {
-      return null;
-    }
-    return animationKey(assetPath: assetPath, animationId: 'attack');
-  }
-
-  static bool _usesLegacyCivilianWorkKey(String assetPath, String animationId) {
-    return animationId == 'attack' && _civilianWorkAssets.contains(assetPath);
-  }
+  static String animationKey(SpriteSequenceId sequenceId) => sequenceId.value;
 
   static Map<String, double> _animationFrameDurationsFromJson(Object? json) {
     if (json is! Map) return const {};
     final durations = <String, double>{};
     for (final entry in json.entries) {
-      final key = entry.key;
-      if (key is! String) continue;
-      final normalizedKey = _normalizedAnimationKey(key);
+      if (entry.key is! String) continue;
       final frameDuration = _frameDurationValue(entry.value);
-      if (frameDuration == null) continue;
-      if (normalizedKey == key || !durations.containsKey(normalizedKey)) {
-        durations[normalizedKey] = frameDuration;
+      if (frameDuration != null) {
+        durations[entry.key as String] = frameDuration;
       }
     }
     return durations;
-  }
-
-  static String _normalizedAnimationKey(String key) {
-    final parts = key.split('|');
-    if (parts.length != 2) return key;
-    final assetPath = parts[0];
-    final animationId = parts[1];
-    if (!_usesLegacyCivilianWorkKey(assetPath, animationId)) return key;
-    return animationKey(assetPath: assetPath, animationId: 'work');
   }
 
   static double? _frameDurationValue(Object? json) {
@@ -234,19 +144,11 @@ class AnimationFrameAdjustmentCatalog {
     };
     if (value is! num) return null;
     final duration = value.toDouble();
-    if (!_isValidAnimationFrameDuration(duration)) return null;
-    return duration;
+    return _isValidAnimationFrameDuration(duration) ? duration : null;
   }
 
-  static bool _isValidAnimationFrameDuration(double value) {
-    return value.isFinite && value > 0;
-  }
+  static bool _isValidAnimationFrameDuration(double value) =>
+      value.isFinite && value > 0;
 
   static bool _sameDuration(double a, double b) => (a - b).abs() < 0.000001;
-
-  static const Set<String> _civilianWorkAssets = {
-    'assets/sprites/units/merchant.png',
-    'assets/sprites/units/settler.png',
-    'assets/sprites/units/worker.png',
-  };
 }

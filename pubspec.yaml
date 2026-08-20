@@ -13,6 +13,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flame: ^1.38.0
+  flame_texturepacker: 5.1.2
 
   share_plus: ^13.3.0
   cupertino_icons: ^1.0.8
@@ -83,18 +84,66 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/maps/verdantia/
-    - assets/maps/myranth/
-    - assets/maps/terenos/
-    - assets/maps/dravonia/
-    - assets/icons/
-    - assets/sounds/
-    - assets/sounds/music/
-    - assets/sounds/nature/
-    - assets/sprites/
-    - assets/sprites/units/
+    - content/maps/dravonia/map.json
+    - content/maps/myranth/map.json
+    - content/maps/terenos/map.json
+    - content/maps/verdantia/map.json
+    - assets/runtime/maps/dravonia/
+    - assets/runtime/maps/myranth/
+    - assets/runtime/maps/terenos/
+    - assets/runtime/maps/verdantia/
+    - assets/runtime/sprites/
+    - assets/runtime/sprites/buildings_a/
+    - assets/runtime/sprites/buildings_b/
+    - assets/runtime/sprites/buildings_c/
+    - assets/runtime/sprites/cities/
+    - assets/runtime/sprites/dice/
+    - assets/runtime/sprites/icons_map/
+    - assets/runtime/sprites/improvements_1/
+    - assets/runtime/sprites/improvements_2/
+    - assets/runtime/sprites/improvements_3/
+    - assets/runtime/sprites/improvements_4/
+    - assets/runtime/sprites/technologies/
+    - assets/runtime/sprites/unit_archer/
+    - assets/runtime/sprites/unit_catapult/
+    - assets/runtime/sprites/unit_cavalry/
+    - assets/runtime/sprites/unit_commander/
+    - assets/runtime/sprites/unit_fieldCannon/
+    - assets/runtime/sprites/unit_heavyInfantry/
+    - assets/runtime/sprites/unit_merchant/
+    - assets/runtime/sprites/unit_reconPlane/
+    - assets/runtime/sprites/unit_rifleman/
+    - assets/runtime/sprites/unit_scout/
+    - assets/runtime/sprites/unit_scoutShip/
+    - assets/runtime/sprites/unit_settler/
+    - assets/runtime/sprites/unit_spearman/
+    - assets/runtime/sprites/unit_tank/
+    - assets/runtime/sprites/unit_warrior/
+    - assets/runtime/sprites/unit_warship/
+    - assets/runtime/sprites/unit_worker/
+    - assets/runtime/sprites/wonders/
+    - assets/sounds/attack.wav
+    - assets/sounds/city.wav
+    - assets/sounds/map_tile_select.wav
+    - assets/sounds/menu_back.wav
+    - assets/sounds/menu_click.wav
+    - assets/sounds/move_confirm.wav
+    - assets/sounds/new_turn.wav
+    - assets/sounds/technology.wav
+    - assets/sounds/ui_panel_open.wav
+    - assets/sounds/walk.wav
+    - assets/sounds/music/korona1.mp3
+    - assets/sounds/music/korona2.mp3
+    - assets/sounds/music/kroniki1.mp3
+    - assets/sounds/music/kroniki2.mp3
+    - assets/sounds/music/oddech1.mp3
+    - assets/sounds/music/oddech2.mp3
+    - assets/sounds/music/szepty1.mp3
+    - assets/sounds/music/szepty2.mp3
+    - assets/sounds/nature/656124__itsthegoodstuff__nature-ambiance.mp3
+    - assets/runtime/metadata/animation_frame_adjustments.json
     - assets/main_menu/
-    - assets/logo.png
+    - assets/runtime/ui/logo.webp
 
   shaders:
     - shaders/fog_of_war.frag

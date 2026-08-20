@@ -841,7 +841,7 @@ class _RuntimeSmoke {
 
   static Future<WorldMap> _loadMap(String mapName) async {
     final safeName = _safeMapName(mapName);
-    final file = File('assets/maps/$safeName/map.json');
+    final file = File('content/maps/$safeName/map.json');
     if (!await file.exists()) {
       throw StateError('Bundled map not found: ${file.path}');
     }

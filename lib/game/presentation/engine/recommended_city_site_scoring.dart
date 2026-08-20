@@ -117,12 +117,12 @@ extension _RecommendedCitySiteScoring on RecommendedCitySitePlanner {
   ) {
     var score = 0.0;
     if (CityTileYieldRules.hasRiver(centerTile)) score += 1.2;
-    if (centerTile.terrains.contains(TerrainType.hills)) score += 0.75;
-    if (centerTile.primaryTerrain == TerrainType.coast) score += 0.45;
+    if (centerTile.terrainTags.contains(TerrainType.hills)) score += 0.75;
+    if (centerTile.displayTerrain == TerrainType.coast) score += 0.45;
     for (final tile in initialTiles) {
       if (CityTileYieldRules.hasRiver(tile)) score += 0.35;
-      if (tile.primaryTerrain == TerrainType.hills) score += 0.25;
-      if (tile.primaryTerrain == TerrainType.coast) score += 0.2;
+      if (tile.displayTerrain == TerrainType.hills) score += 0.25;
+      if (tile.displayTerrain == TerrainType.coast) score += 0.2;
     }
     return score;
   }

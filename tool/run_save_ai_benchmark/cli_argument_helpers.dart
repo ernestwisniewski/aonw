@@ -31,7 +31,7 @@ Options:
   --save <path>          snapshot.json path; default: latest save >= --min-turn
   --saves-root <path>    Directory containing save folders
   --min-turn <n>         Minimum turn for auto-discovery, default: 100
-  --map <path>           Map JSON path, default: assets/maps/<save map>/map.json
+  --map <path>           Map JSON path, default: content/maps/<save map>/map.json
   --profiles <list>      Comma-separated: auto,batterySaver,interactive,standard
                          default: auto
   --strategy <id>        Override saved AI strategy: basic,mcts,random

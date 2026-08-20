@@ -97,10 +97,12 @@ void main() {
           mapName: 'sentinel',
           defaultZoom: 1.5,
           tiles: [
-            WorldTile(
+            WorldTile.withTerrainSemantics(
               col: 0,
               row: 0,
-              terrains: [TerrainType.forest],
+              terrain: TileTerrainSemantics.fromAuthoredTerrainTags(const [
+                TerrainType.forest,
+              ]),
               resources: [ResourceType.deer],
               height: 2,
             ),
@@ -119,7 +121,10 @@ void main() {
           {
             'col': 0,
             'row': 0,
-            'terrains': ['forest'],
+            'terrains': ['grassland', 'forest'],
+            'displayTerrain': 'forest',
+            'yieldTerrain': 'forest',
+            'terrainTags': ['forest'],
             'resources': ['deer'],
             'height': 2,
           },
@@ -170,6 +175,9 @@ Map<String, Object?> _jsonTile({
     'col': col,
     'row': row,
     'terrains': terrains,
+    'displayTerrain': terrains.isEmpty ? 'plains' : terrains.first,
+    'yieldTerrain': terrains.isEmpty ? 'plains' : terrains.first,
+    'terrainTags': terrains.isEmpty ? const ['plains'] : terrains,
     'resources': resources,
     'height': height,
   };

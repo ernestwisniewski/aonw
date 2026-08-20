@@ -59,16 +59,25 @@ void main() {
       );
     });
 
-    test('toggleTerrain removes terrain when already selected', () {
+    test('toggleTerrain keeps at least one complete terrain meaning', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
       container
           .read(editorStateProvider.notifier)
           .toggleTerrain(TerrainType.ocean);
-      expect(
-        container.read(editorStateProvider).selectedTerrains,
-        isNot(contains(TerrainType.ocean)),
-      );
+      expect(container.read(editorStateProvider).selectedTerrains, {
+        TerrainType.ocean,
+      });
+
+      container
+          .read(editorStateProvider.notifier)
+          .toggleTerrain(TerrainType.grassland);
+      container
+          .read(editorStateProvider.notifier)
+          .toggleTerrain(TerrainType.ocean);
+      expect(container.read(editorStateProvider).selectedTerrains, {
+        TerrainType.grassland,
+      });
     });
 
     test('toggleResource adds resource when not selected', () {

@@ -4,9 +4,10 @@ import 'dart:ui' as ui;
 import 'package:aonw/map/rendering/hex_outline_painter.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
 import 'package:aonw/map/rendering/map_intent_marker.dart';
-import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_geometry_layout.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_overlay_geometry.dart';
+import 'package:aonw/shared/assets/sprite_frame_id.dart';
+import 'package:aonw/shared/assets/sprite_frames.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:flutter/material.dart';
@@ -148,8 +149,8 @@ class HexTilePainter {
     required bool alwaysShowHeight,
     bool showMovementBlockerOverlay = false,
     required HexTileOverlayGeometry overlays,
-    required List<String> terrainIconPaths,
-    required List<String> resourceIconPaths,
+    required List<SpriteFrameId> terrainIconPaths,
+    required List<SpriteFrameId> resourceIconPaths,
     required double heightPerspectiveY,
   }) {
     _drawWalls(canvas, geometry);
@@ -254,7 +255,7 @@ typedef _PlanningMarkerVisibility = ({
   bool attackTarget,
 });
 
-  bool _hasPlanningMarkers(_PlanningMarkerVisibility visibility) =>
+bool _hasPlanningMarkers(_PlanningMarkerVisibility visibility) =>
     visibility.citySite ||
     visibility.cityGrowth ||
     _showWorkerNow(visibility) ||

@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/hex_assessment.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/tile_terrain_semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 MapTileView _tile(
@@ -8,10 +9,27 @@ MapTileView _tile(
   bool river = false,
   List<ResourceType> resources = const [],
 }) {
+  final movementPrimary = switch (terrain) {
+    TerrainType.hills => TerrainType.plains,
+    TerrainType.forest ||
+    TerrainType.jungle ||
+    TerrainType.wetlands => TerrainType.grassland,
+    _ => terrain,
+  };
+  final terrainTags = [terrain, if (river) TerrainType.river];
   return _TestTile(
     col: 0,
     row: 0,
-    terrains: [terrain, if (river) TerrainType.river],
+    terrain: TileTerrainSemantics(
+      movementTerrains: [
+        movementPrimary,
+        if (movementPrimary != terrain) terrain,
+        if (river) TerrainType.river,
+      ],
+      displayTerrain: terrain,
+      yieldTerrain: terrain,
+      terrainTags: terrainTags,
+    ),
     resources: resources,
     height: 0,
   );
@@ -159,7 +177,7 @@ final class _TestTile implements MapTileView {
   final int row;
 
   @override
-  final List<TerrainType> terrains;
+  final TileTerrainSemantics terrain;
 
   @override
   final List<ResourceType> resources;
@@ -170,11 +188,8 @@ final class _TestTile implements MapTileView {
   const _TestTile({
     required this.col,
     required this.row,
-    required this.terrains,
+    required this.terrain,
     required this.resources,
     required this.height,
   });
-
-  @override
-  TerrainType get primaryTerrain => terrains.first;
 }

@@ -51,7 +51,7 @@ void main() {
       final second = WorldTile(
         col: 2,
         row: 0,
-        terrains: [TerrainType.forest],
+        terrains: [TerrainType.grassland, TerrainType.forest],
         resources: [],
         height: 1,
       );
@@ -59,7 +59,7 @@ void main() {
       final map = WorldMap(cols: 3, rows: 1, tiles: source);
       final readsAfterConstruction = source.elementReads;
 
-      expect(map.tileAt(1, 0)?.primaryTerrain, TerrainType.plains);
+      expect(map.tileAt(1, 0)?.displayTerrain, TerrainType.plains);
       expect(map.tileAtHex(const HexCoord(col: 2, row: 0))?.height, 1);
       expect(map.tileAt(0, 0), isNull);
       expect(source.elementReads, readsAfterConstruction);
@@ -76,10 +76,10 @@ void main() {
           ],
         ),
         throwsA(
-          isA<WorldMapException>().having(
+          isA<TileTerrainSemanticsException>().having(
             (error) => error.message,
             'message',
-            'Tile terrains must not be empty',
+            'Authored terrain tags must not be empty',
           ),
         ),
       );

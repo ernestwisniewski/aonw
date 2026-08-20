@@ -41,7 +41,7 @@ class EditorGrid extends HexGrid<MapDraft> {
     // so the terrain is always clearly readable.
     return HexTile(
       hexRadius: config.hexRadius,
-      terrains: tileData.terrains,
+      terrain: tileData.terrain,
       resources: tileData.resources,
       tileHeight: tileData.height,
       neighborHeights: neighborHeights,
@@ -162,24 +162,12 @@ class EditorGrid extends HexGrid<MapDraft> {
     _applyState(coords.col, coords.row);
   }
 
-  bool clearSelectedTerrains() {
-    final coords = _selectedTileCoords;
-    if (coords == null) return false;
-    final tile = draft.tileAt(coords.col, coords.row);
-    if (tile == null) return false;
-    if (tile.terrains.isEmpty) return true;
-
-    draft.clearTerrainsAt(coords.col, coords.row);
-    _rebuildTileComponent(coords.col, coords.row);
-    return true;
-  }
-
   void _applyState(int col, int row) {
     final key = (col, row);
     if (!draft.updateTile(
       col: col,
       row: row,
-      terrains: editorState.selectedTerrains.toList(),
+      authoredTerrainTags: editorState.selectedTerrains.toList(),
       resources: editorState.selectedResources.toList(),
       height: editorState.selectedHeight,
     )) {
@@ -257,7 +245,9 @@ class EditorGrid extends HexGrid<MapDraft> {
 
   /// Adds a column to the right filled with the currently selected terrain.
   void addColumn() {
-    if (!draft.addColumn(terrains: editorState.selectedTerrains)) return;
+    if (!draft.addColumn(authoredTerrainTags: editorState.selectedTerrains)) {
+      return;
+    }
     rebuild();
   }
 
@@ -273,7 +263,9 @@ class EditorGrid extends HexGrid<MapDraft> {
 
   /// Adds a row at the bottom filled with the currently selected terrain.
   void addRow() {
-    if (!draft.addRow(terrains: editorState.selectedTerrains)) return;
+    if (!draft.addRow(authoredTerrainTags: editorState.selectedTerrains)) {
+      return;
+    }
     rebuild();
   }
 

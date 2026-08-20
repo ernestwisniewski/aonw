@@ -10,7 +10,7 @@ void main() {
 
   group('MapLoader.fromJson', () {
     test('loads a bundled map asset', () async {
-      final data = await MapLoader.load('assets/maps/verdantia/map.json');
+      final data = await MapLoader.load('content/maps/verdantia/map.json');
 
       expect(data.tiles, isNotEmpty);
       expect(data.mapName, 'verdantia');
@@ -22,10 +22,10 @@ void main() {
         "cols": 2,
         "rows": 2,
         "tiles": [
-          { "col": 0, "row": 0, "terrains": ["grassland"], "resources": [], "height": 2 },
-          { "col": 1, "row": 0, "terrains": ["ocean"],     "resources": [], "height": 0 },
-          { "col": 0, "row": 1, "terrains": ["plains"],    "resources": ["iron"], "height": 3 },
-          { "col": 1, "row": 1, "terrains": ["desert"],    "resources": [], "height": 5 }
+          { "col": 0, "row": 0, "terrains": ["grassland"], "displayTerrain": "grassland", "yieldTerrain": "grassland", "terrainTags": ["grassland"], "resources": [], "height": 2 },
+          { "col": 1, "row": 0, "terrains": ["ocean"], "displayTerrain": "ocean", "yieldTerrain": "ocean", "terrainTags": ["ocean"], "resources": [], "height": 0 },
+          { "col": 0, "row": 1, "terrains": ["plains"], "displayTerrain": "plains", "yieldTerrain": "plains", "terrainTags": ["plains"], "resources": ["iron"], "height": 3 },
+          { "col": 1, "row": 1, "terrains": ["desert"], "displayTerrain": "desert", "yieldTerrain": "desert", "terrainTags": ["desert"], "resources": [], "height": 5 }
         ]
       }
       ''';
@@ -39,12 +39,12 @@ void main() {
       final tile0 = data.tiles[0];
       expect(tile0.col, 0);
       expect(tile0.row, 0);
-      expect(tile0.primaryTerrain, TerrainType.grassland);
+      expect(tile0.displayTerrain, TerrainType.grassland);
       expect(tile0.resources, isEmpty);
       expect(tile0.height, 2);
 
       final tile2 = data.tiles[2];
-      expect(tile2.primaryTerrain, TerrainType.plains);
+      expect(tile2.displayTerrain, TerrainType.plains);
       expect(tile2.resources, [ResourceType.iron]);
       expect(tile2.height, 3);
     });
@@ -53,7 +53,7 @@ void main() {
       const json = '''
       {
         "cols": 1, "rows": 1,
-        "tiles": [{ "col": 0, "row": 0, "terrains": ["ocean"], "resources": [], "height": 0 }]
+        "tiles": [{ "col": 0, "row": 0, "terrains": ["ocean"], "displayTerrain": "ocean", "yieldTerrain": "ocean", "terrainTags": ["ocean"], "resources": [], "height": 0 }]
       }
       ''';
       final data = MapLoader.fromJson(json);
@@ -64,7 +64,7 @@ void main() {
       const json = '''
       {
         "cols": 1, "rows": 1,
-        "tiles": [{ "col": 0, "row": 0, "terrains": ["snow"], "resources": [], "height": 5 }]
+        "tiles": [{ "col": 0, "row": 0, "terrains": ["snow"], "displayTerrain": "snow", "yieldTerrain": "snow", "terrainTags": ["snow"], "resources": [], "height": 5 }]
       }
       ''';
       final data = MapLoader.fromJson(json);
@@ -75,7 +75,7 @@ void main() {
       const json = '''
       {
         "cols": 1, "rows": 1,
-        "tiles": [{ "col": 0, "row": 0, "terrains": ["lava"], "resources": [], "height": 1 }]
+        "tiles": [{ "col": 0, "row": 0, "terrains": ["lava"], "displayTerrain": "lava", "yieldTerrain": "lava", "terrainTags": ["lava"], "resources": [], "height": 1 }]
       }
       ''';
       expect(() => MapLoader.fromJson(json), throwsA(isA<MapLoadException>()));
@@ -95,7 +95,7 @@ void main() {
       const json = '''
       {
         "cols": 1, "rows": 1,
-        "tiles": [{ "col": 0, "row": 0, "terrains": ["ocean"], "resources": [], "height": 6 }]
+        "tiles": [{ "col": 0, "row": 0, "terrains": ["ocean"], "displayTerrain": "ocean", "yieldTerrain": "ocean", "terrainTags": ["ocean"], "resources": [], "height": 6 }]
       }
       ''';
       expect(() => MapLoader.fromJson(json), throwsA(isA<MapLoadException>()));
@@ -105,7 +105,7 @@ void main() {
       const json = '''
       {
         "cols": 1, "rows": 1,
-        "tiles": [{ "col": 0, "row": 0, "terrains": [], "resources": [], "height": 0 }]
+        "tiles": [{ "col": 0, "row": 0, "terrains": [], "displayTerrain": "ocean", "yieldTerrain": "ocean", "terrainTags": ["ocean"], "resources": [], "height": 0 }]
       }
       ''';
       expect(() => MapLoader.fromJson(json), throwsA(isA<MapLoadException>()));
@@ -139,7 +139,7 @@ void main() {
       );
       final copy = tile.copyWith(resources: [ResourceType.iron]);
       expect(copy.resources, [ResourceType.iron]);
-      expect(copy.primaryTerrain, TerrainType.grassland);
+      expect(copy.displayTerrain, TerrainType.grassland);
     });
 
     test('clears resources by passing empty list', () {
@@ -180,6 +180,9 @@ void main() {
       expect(json['col'], 3);
       expect(json['row'], 2);
       expect(json['terrains'], ['plains']);
+      expect(json['displayTerrain'], 'plains');
+      expect(json['yieldTerrain'], 'plains');
+      expect(json['terrainTags'], ['plains']);
       expect(json['resources'], ['iron']);
       expect(json['height'], 2);
     });
@@ -197,27 +200,34 @@ void main() {
     });
   });
 
-  group('WorldTile.primaryTerrain', () {
-    test('returns first terrain when list is non-empty', () {
-      final tile = WorldTile(
+  group('WorldTile.displayTerrain', () {
+    test('returns the explicit display terrain', () {
+      final tile = WorldTile.withTerrainSemantics(
         col: 0,
         row: 0,
-        terrains: [TerrainType.plains, TerrainType.grassland],
+        terrain: TileTerrainSemantics(
+          movementTerrains: const [TerrainType.plains],
+          displayTerrain: TerrainType.grassland,
+          yieldTerrain: TerrainType.plains,
+          terrainTags: const [TerrainType.plains, TerrainType.grassland],
+        ),
         resources: [],
         height: 0,
       );
-      expect(tile.primaryTerrain, TerrainType.plains);
+      expect(tile.displayTerrain, TerrainType.grassland);
     });
 
-    test('returns ocean when terrains is empty', () {
-      final tile = WorldTile(
-        col: 0,
-        row: 0,
-        terrains: [],
-        resources: [],
-        height: 0,
+    test('rejects an empty generated movement profile', () {
+      expect(
+        () => WorldTile(
+          col: 0,
+          row: 0,
+          terrains: const [],
+          resources: const [],
+          height: 0,
+        ),
+        throwsA(isA<TileTerrainSemanticsException>()),
       );
-      expect(tile.primaryTerrain, TerrainType.ocean);
     });
   });
 
@@ -308,8 +318,8 @@ void main() {
   "rows": 1,
   "mapName": "testmap",
   "tiles": [
-    {"col": 0, "row": 0, "terrains": ["ocean"], "resources": [], "height": 0},
-    {"col": 1, "row": 0, "terrains": ["ocean"], "resources": [], "height": 0}
+    {"col": 0, "row": 0, "terrains": ["ocean"], "displayTerrain": "ocean", "yieldTerrain": "ocean", "terrainTags": ["ocean"], "resources": [], "height": 0},
+    {"col": 1, "row": 0, "terrains": ["ocean"], "displayTerrain": "ocean", "yieldTerrain": "ocean", "terrainTags": ["ocean"], "resources": [], "height": 0}
   ]
 }''';
       final mapData = MapLoader.fromJson(jsonStr);
@@ -322,8 +332,8 @@ void main() {
   "cols": 2,
   "rows": 1,
   "tiles": [
-    {"col": 0, "row": 0, "terrains": ["ocean"], "resources": [], "height": 0},
-    {"col": 1, "row": 0, "terrains": ["ocean"], "resources": [], "height": 0}
+    {"col": 0, "row": 0, "terrains": ["ocean"], "displayTerrain": "ocean", "yieldTerrain": "ocean", "terrainTags": ["ocean"], "resources": [], "height": 0},
+    {"col": 1, "row": 0, "terrains": ["ocean"], "displayTerrain": "ocean", "yieldTerrain": "ocean", "terrainTags": ["ocean"], "resources": [], "height": 0}
   ]
 }''';
       final mapData = MapLoader.fromJson(jsonStr);
@@ -347,8 +357,8 @@ void main() {
     }
   ],
   "tiles": [
-    {"col": 0, "row": 0, "terrains": ["plains"], "resources": [], "height": 1},
-    {"col": 1, "row": 0, "terrains": ["hills"], "resources": [], "height": 3}
+    {"col": 0, "row": 0, "terrains": ["plains"], "displayTerrain": "plains", "yieldTerrain": "plains", "terrainTags": ["plains"], "resources": [], "height": 1},
+    {"col": 1, "row": 0, "terrains": ["plains", "hills"], "displayTerrain": "hills", "yieldTerrain": "hills", "terrainTags": ["hills"], "resources": [], "height": 3}
   ]
 }''';
 

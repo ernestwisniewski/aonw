@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/services/map_saver.dart';
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
@@ -102,8 +103,15 @@ void main() {
         cols: 1,
         rows: 1,
         mapName: 'invalid',
+        defaultZoom: 0,
         tiles: [
-          WorldTile(col: 0, row: 0, terrains: [], resources: [], height: 0),
+          WorldTile(
+            col: 0,
+            row: 0,
+            terrains: const [TerrainType.plains],
+            resources: const [],
+            height: 0,
+          ),
         ],
       );
 
@@ -181,20 +189,23 @@ void main() {
     });
   });
 
-  group('MapSaver.resolveImagePath', () {
-    test('returns documents path when file exists', () async {
+  group('MapSaver.resolveImageSource', () {
+    test('returns typed documents source when file exists', () async {
       final mapDir = Directory('${tempDir.path}/maps/mymap');
       await mapDir.create(recursive: true);
       final imageFile = File('${mapDir.path}/image.jpg');
       await imageFile.writeAsBytes([0, 1, 2, 3]);
 
-      expect(await MapSaver.resolveImagePath('mymap'), imageFile.path);
+      expect(
+        await MapSaver.resolveImageSource('mymap'),
+        SavedMapSingleImageSource(imageFile.path),
+      );
     });
 
     test(
       'returns null when neither documents nor bundled image exists',
       () async {
-        expect(await MapSaver.resolveImagePath('missing-map'), isNull);
+        expect(await MapSaver.resolveImageSource('missing-map'), isNull);
       },
     );
   });

@@ -157,7 +157,7 @@ class _MenuPanelState extends ConsumerState<_MenuPanel> {
         child: Column(
           children: [
             Image.asset(
-              'assets/logo.png',
+              'assets/runtime/ui/logo.webp',
               width: 192,
               fit: BoxFit.contain,
               filterQuality: FilterQuality.high,

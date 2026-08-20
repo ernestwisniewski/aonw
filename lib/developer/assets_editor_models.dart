@@ -2,8 +2,6 @@ part of 'assets_editor_screen.dart';
 
 class _AssetPreviewModel {
   const _AssetPreviewModel({
-    required this.animationId,
-    required this.assetPath,
     required this.filterId,
     required this.filterLabel,
     required this.frameCount,
@@ -13,13 +11,12 @@ class _AssetPreviewModel {
     required this.kindLabel,
     required this.loops,
     required this.outputSize,
-    required this.sourceRectFor,
+    required this.sequenceId,
     required this.title,
+    required this.frameIdFor,
     this.useSourceSizeForAdjustmentScale = true,
   });
 
-  final String animationId;
-  final String assetPath;
   final String filterId;
   final String filterLabel;
   final int frameCount;
@@ -29,8 +26,8 @@ class _AssetPreviewModel {
   final String kindLabel;
   final bool loops;
   final ui.Size outputSize;
-  final FutureOr<ui.Rect> Function(ui.Image image, int frameIndex)
-  sourceRectFor;
+  final SpriteSequenceId sequenceId;
+  final SpriteFrameId Function(int frameIndex) frameIdFor;
   final String title;
   final bool useSourceSizeForAdjustmentScale;
 
@@ -73,8 +70,7 @@ extension _AssetsEditorAdjustmentQueries on _AssetsEditorScreenState {
 
   String _frameAdjustmentKey(_AssetPreviewModel model, int frameIndex) =>
       AnimationFrameAdjustmentCatalog.frameKey(
-        assetPath: model.assetPath,
-        animationId: model.animationId,
+        sequenceId: model.sequenceId,
         frameIndex: frameIndex,
       );
 
@@ -100,10 +96,7 @@ extension _AssetsEditorAdjustmentQueries on _AssetsEditorScreenState {
   }
 
   String _animationTimingKey(_AssetPreviewModel model) =>
-      AnimationFrameAdjustmentCatalog.animationKey(
-        assetPath: model.assetPath,
-        animationId: model.animationId,
-      );
+      AnimationFrameAdjustmentCatalog.animationKey(model.sequenceId);
 
   Map<String, double> _savedAnimationFrameDurations() {
     final durations = <String, double>{
@@ -123,25 +116,10 @@ extension _AssetsEditorAdjustmentQueries on _AssetsEditorScreenState {
   }
 }
 
-abstract final class _SpriteImageCache {
-  static final Map<String, Future<ui.Image>> _images = {};
-
-  static Future<ui.Image> load(String assetPath) {
-    return _images.putIfAbsent(assetPath, () async {
-      final bytes = await rootBundle.load(assetPath);
-      final codec = await ui.instantiateImageCodec(
-        bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
-      );
-      final frame = await codec.getNextFrame();
-      codec.dispose();
-      return frame.image;
-    });
-  }
-}
-
 class _LoadedAssetFrame {
-  const _LoadedAssetFrame({required this.sourceRect});
+  const _LoadedAssetFrame({required this.image, required this.sourceRect});
 
+  final ui.Image image;
   final ui.Rect sourceRect;
 }
 
@@ -150,22 +128,19 @@ abstract final class _AssetFrameLoader {
 
   static Future<_LoadedAssetFrame> load(
     _AssetPreviewModel model,
-    ui.Image image,
     int frameIndex,
   ) {
-    final key = '${model.id}:$frameIndex:${image.width}x${image.height}';
+    final key = '${model.id}:$frameIndex';
     return _frames.putIfAbsent(key, () async {
-      final sourceRect = await model.sourceRectFor(image, frameIndex);
-      return _LoadedAssetFrame(sourceRect: sourceRect);
+      final frame = await SpriteFrames.load(model.frameIdFor(frameIndex));
+      return _LoadedAssetFrame(image: frame.image, sourceRect: frame.source);
     });
   }
 }
 
 const String _improvementFilterId = 'improvement';
 const String _diceFilterId = 'dice';
-const String _diceAssetPath = 'assets/sprites/dice.png';
-const int _diceColumns = 6;
-const int _diceRows = 6;
+const int _diceFrameCount = 36;
 const double _animationTotalDurationMin = 0.2;
 const double _animationTotalDurationMax = 8.0;
 const Color _improvementColor = Color(0xFF7AA65A);

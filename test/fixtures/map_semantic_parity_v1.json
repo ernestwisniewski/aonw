@@ -1,0 +1,39 @@
+{
+  "fixtureVersion": 1,
+  "provenance": "Reviewed effective-semantics digests derived from the pre-cutover four-map corpus.",
+  "totalTiles": 2575,
+  "maps": {
+    "dravonia": {
+      "tileCount": 1200,
+      "semanticSha256": "d980212a948b7a164a93f6eec8b068d0e262845cd3502152fab18528028cafca",
+      "movementAndPassabilitySha256": "ec2c99e088f8514dbeccc33d75c6e543e7c662e2d459a4abcef8909f92ef205f",
+      "yieldSha256": "b28e865cff33ccda59bd9e669f0c4b7ea3e03823d34f7259a3cbbd928849e17e",
+      "combatAndTagsSha256": "a18941179dfbf58f24ded13f933a574931bfbf59951c2df22189d792efe50fd5",
+      "resourcesAndObjectivesSha256": "246939c5dd7819ba29404b75fcb6e8d978113681289e2b397e143e854c495ecd"
+    },
+    "myranth": {
+      "tileCount": 475,
+      "semanticSha256": "dc0a9cf3a57852de8f5a99f10a1220ba30f3709fc26de52278200ce1d84549a8",
+      "movementAndPassabilitySha256": "e85bd43ed32d252106fb44dba1eacf5cdead1b9b9d90da3b157672f5a4289a62",
+      "yieldSha256": "e71c1ed676e2fcb62d153e330b0f95d2227625bfe39d2b07f611172befd183b3",
+      "combatAndTagsSha256": "106d7a91ebaefbedebfc70460d8f53f7eb91a9075f12d72e0dc304adc355412b",
+      "resourcesAndObjectivesSha256": "2c34d5b6a3bafa9c303dd657e58bd94610c8204eab048cddec258355c4b64eea"
+    },
+    "terenos": {
+      "tileCount": 300,
+      "semanticSha256": "eb711b5a6cab07ef7ddbd6ef1aa55864d34eddfbc95afb35609ae8e168744584",
+      "movementAndPassabilitySha256": "b70af423bb764defa2f64a239fb02cf10175536573ff48f33bc9ac2a8e752f61",
+      "yieldSha256": "821fd34531245701bcc5e2e68fbd46cd9cc4b52732e187d3e2d26d6eab213bea",
+      "combatAndTagsSha256": "5deb09e9438bfba454f64a3c0ffecaa1fe21dbe23d2a35ecd1a05f2d637ba693",
+      "resourcesAndObjectivesSha256": "6eb892fadeacf32aa614fa8d0316c6718ba32838848fda3855d3a30c29564039"
+    },
+    "verdantia": {
+      "tileCount": 600,
+      "semanticSha256": "0c9bbcc16d0483ea74d7d83a7c224ebcdad60ec8b5d3bdc8d10c0c5ae81262dd",
+      "movementAndPassabilitySha256": "73ffb16d99e57c195d4bc3ad65da3526f11f3fa9853c315146eb71bda35832af",
+      "yieldSha256": "e13ce073eeead9c01978ea96d5ff9baa7cbb20dbf6215eea5947b7eb4d8a0ec4",
+      "combatAndTagsSha256": "035d800cbcdef434130964214ba10397165753f96d051310d4d840d11515e0ce",
+      "resourcesAndObjectivesSha256": "ac177efea2b8e5ee4dce2f4b2a2e4add376f6debb9e22a0358c1069e29056c33"
+    }
+  }
+}

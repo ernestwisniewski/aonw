@@ -45,10 +45,6 @@ abstract final class CityTileYieldRules {
     return null;
   }
 
-  static TerrainType? baseTerrainOrNull(MapTileView tile) {
-    return TileYieldRules.baseTerrainOrNull(tile);
-  }
-
   static bool hasRiver(MapTileView tile) => TileYieldRules.hasRiver(tile);
 
   /// Terrain does not restrict city territory; callers enforce map presence,

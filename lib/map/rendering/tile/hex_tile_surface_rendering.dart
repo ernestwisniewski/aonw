@@ -92,7 +92,7 @@ ui.Paragraph _createHeightParagraph({
         )
         ..pushStyle(ui.TextStyle(color: color))
         ..addText('$tileHeight'))
-        .build()
+      .build()
     ..layout(
       const ui.ParagraphConstraints(
         width: HexTilePainter._heightBadgeParagraphWidth,

@@ -140,7 +140,7 @@ abstract final class InitialResourceDistributionGenerator {
     ResourceCategory category,
   ) {
     if (UnitMovementCostRules.costToEnterTile(tile).blocked) return const [];
-    final terrains = tile.terrains.toSet();
+    final terrains = tile.terrainTags.toSet();
     final profile = _resourceProfile(terrains);
     return switch (category) {
       ResourceCategory.bonus => profile.bonus,

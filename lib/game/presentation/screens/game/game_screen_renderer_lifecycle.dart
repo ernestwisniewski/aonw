@@ -11,7 +11,7 @@ extension _GameScreenRendererLifecycle on _GameRendererSessionHostState {
     final mapInspection = MapInspectionBinder(ref: ref, session: session);
     final renderer = GameRenderer(
       mapData: session.mapData,
-      imagePath: session.imagePath,
+      imageSource: session.imageSource,
       initialCamera: session.initialCamera,
       focusActivePlayerOnFirstState:
           session.saveId.isNotEmpty &&
@@ -92,7 +92,7 @@ extension _GameScreenRendererLifecycle on _GameRendererSessionHostState {
     final oldSession = oldWidget.session;
     return oldSession.saveId != widget.session.saveId ||
         oldSession.mapData != widget.session.mapData ||
-        oldSession.imagePath != widget.session.imagePath ||
+        oldSession.imageSource != widget.session.imageSource ||
         oldSession.initialCamera != widget.session.initialCamera ||
         oldWidget.l10n.localeName != widget.l10n.localeName;
   }

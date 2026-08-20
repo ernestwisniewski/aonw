@@ -4,6 +4,7 @@ import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/runtime.dart';
+import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 T _runtimeInstance<T>(T Function() create) => create();
@@ -77,7 +78,7 @@ void main() {
         currentTile: WorldTile(
           col: 2,
           row: 3,
-          terrains: [],
+          terrains: const [TerrainType.grassland],
           resources: [],
           height: 0,
         ),

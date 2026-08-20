@@ -1,1 +1,9 @@
 *.freezed.dart whitespace=-trailing-space
+*.atlas text eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.wav binary
+*.mp3 binary
+*.ttf binary

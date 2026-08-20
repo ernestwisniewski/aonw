@@ -31,19 +31,18 @@ abstract final class AnimationFrameAdjustmentCatalogCache {
       }
     }
 
-    try {
-      final raw = await resolvedBundle.loadString(
-        AnimationFrameAdjustmentCatalog.assetPath,
+    final raw = await resolvedBundle.loadString(
+      AnimationFrameAdjustmentCatalog.assetPath,
+    );
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map || decoded['version'] != 2) {
+      throw const FormatException(
+        'Unsupported bundled animation adjustment manifest',
       );
-      final decoded = jsonDecode(raw);
-      final catalog = AnimationFrameAdjustmentCatalog.fromJson(decoded);
-      _catalog = catalog;
-      return catalog;
-    } on Object {
-      const empty = AnimationFrameAdjustmentCatalog.empty();
-      _catalog = empty;
-      return empty;
     }
+    final catalog = AnimationFrameAdjustmentCatalog.fromJson(decoded);
+    _catalog = catalog;
+    return catalog;
   }
 
   static void replace(AnimationFrameAdjustmentCatalog catalog) {

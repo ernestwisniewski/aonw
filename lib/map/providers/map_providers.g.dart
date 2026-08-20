@@ -161,47 +161,53 @@ final class ActiveMapFamily extends $Family
   String toString() => r'activeMapProvider';
 }
 
-@ProviderFor(mapImagePath)
-final mapImagePathProvider = MapImagePathFamily._();
+@ProviderFor(mapImageSource)
+final mapImageSourceProvider = MapImageSourceFamily._();
 
-final class MapImagePathProvider
-    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
-    with $FutureModifier<String?>, $FutureProvider<String?> {
-  MapImagePathProvider._({
-    required MapImagePathFamily super.from,
+final class MapImageSourceProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<MapImageSource?>,
+          MapImageSource?,
+          FutureOr<MapImageSource?>
+        >
+    with $FutureModifier<MapImageSource?>, $FutureProvider<MapImageSource?> {
+  MapImageSourceProvider._({
+    required MapImageSourceFamily super.from,
     required MapSelection super.argument,
   }) : super(
          retry: _doNotRetry,
-         name: r'mapImagePathProvider',
+         name: r'mapImageSourceProvider',
          isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
 
   @override
-  String debugGetCreateSourceHash() => _$mapImagePathHash();
+  String debugGetCreateSourceHash() => _$mapImageSourceHash();
 
   @override
   String toString() {
-    return r'mapImagePathProvider'
+    return r'mapImageSourceProvider'
         ''
         '($argument)';
   }
 
   @$internal
   @override
-  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+  $FutureProviderElement<MapImageSource?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<String?> create(Ref ref) {
+  FutureOr<MapImageSource?> create(Ref ref) {
     final argument = this.argument as MapSelection;
-    return mapImagePath(ref, argument);
+    return mapImageSource(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is MapImagePathProvider && other.argument == argument;
+    return other is MapImageSourceProvider && other.argument == argument;
   }
 
   @override
@@ -210,22 +216,22 @@ final class MapImagePathProvider
   }
 }
 
-String _$mapImagePathHash() => r'3404e2d13d877313c8fae15e54edb31fbdd2b14d';
+String _$mapImageSourceHash() => r'ab8de82c61d748f0f6f14f713fad9f03d730188e';
 
-final class MapImagePathFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<String?>, MapSelection> {
-  MapImagePathFamily._()
+final class MapImageSourceFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<MapImageSource?>, MapSelection> {
+  MapImageSourceFamily._()
     : super(
         retry: _doNotRetry,
-        name: r'mapImagePathProvider',
+        name: r'mapImageSourceProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
-  MapImagePathProvider call(MapSelection selection) =>
-      MapImagePathProvider._(argument: selection, from: this);
+  MapImageSourceProvider call(MapSelection selection) =>
+      MapImageSourceProvider._(argument: selection, from: this);
 
   @override
-  String toString() => r'mapImagePathProvider';
+  String toString() => r'mapImageSourceProvider';
 }

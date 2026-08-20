@@ -18,6 +18,11 @@
           "terrains": [
             "plains"
           ],
+          "displayTerrain": "plains",
+          "yieldTerrain": "plains",
+          "terrainTags": [
+            "plains"
+          ],
           "resources": [
             "iron"
           ],
@@ -27,6 +32,11 @@
           "col": 2,
           "row": 0,
           "terrains": [
+            "plains"
+          ],
+          "displayTerrain": "plains",
+          "yieldTerrain": "plains",
+          "terrainTags": [
             "plains"
           ],
           "resources": [

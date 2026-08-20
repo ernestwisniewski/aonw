@@ -17,7 +17,7 @@ void main() {
     expect(rules.first, '**');
     expect(rules, isNot(contains('!server/**')));
     expect(rules, isNot(contains('!packages/aonw_core/**')));
-    expect(rules, isNot(contains('!assets/**')));
+    expect(rules, isNot(contains('!content/**')));
     expect(
       rules,
       containsAll([
@@ -25,7 +25,7 @@ void main() {
         'server/config/**',
         'packages/**',
         'packages/aonw_core/**',
-        'assets/**',
+        'content/**',
       ]),
     );
     expect(
@@ -52,9 +52,9 @@ void main() {
         '!packages/aonw_core/pubspec.lock',
         '!packages/aonw_core/lib/',
         '!packages/aonw_core/lib/**',
-        '!assets/',
-        '!assets/maps/',
-        '!assets/maps/**',
+        '!content/',
+        '!content/maps/',
+        '!content/maps/**',
         '!server/migrations/*/definition.sql',
         '!server/migrations/*/migration.sql',
       ]),

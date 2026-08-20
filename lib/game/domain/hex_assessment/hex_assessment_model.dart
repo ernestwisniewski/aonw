@@ -58,7 +58,7 @@ enum HexAssessmentTag {
 }
 
 class HexAssessment {
-  final TerrainType? baseTerrain;
+  final TerrainType baseTerrain;
   final bool hasRiver;
   final bool canFoundCity;
   final TileYield yield;

@@ -5,7 +5,7 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
     final session = widget.session;
     final renderer = GameRenderer(
       mapData: session.mapData,
-      imagePath: session.imagePath,
+      imageSource: session.imageSource,
       // Replay renders from the immutable seed snapshot, not the latest save.
       initialCamera: widget.timeline.initialCamera,
       initialViewMode: session.viewMode,
@@ -49,7 +49,7 @@ extension _ReplayRendererHostLifecycle on _ReplayRendererHostState {
     final session = widget.session;
     return oldSession.saveId != session.saveId ||
         oldSession.mapData != session.mapData ||
-        oldSession.imagePath != session.imagePath ||
+        oldSession.imageSource != session.imageSource ||
         oldWidget.timeline.initialCamera != widget.timeline.initialCamera ||
         oldWidget.l10n.localeName != widget.l10n.localeName;
   }

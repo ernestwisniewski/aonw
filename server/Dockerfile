@@ -48,7 +48,7 @@ COPY --from=builder --chown=aonw:aonw \
 COPY --from=builder --chown=aonw:aonw /workspace/server/migrations /app/migrations
 COPY --from=builder --chown=aonw:aonw /workspace/server/lib/src/generated/protocol.yaml /app/lib/src/generated/protocol.yaml
 COPY --chown=aonw:aonw server/docker-entrypoint.sh /app/docker-entrypoint.sh
-COPY --chown=aonw:aonw assets/maps /app/assets/maps
+COPY --chown=aonw:aonw content/maps /app/content/maps
 
 USER aonw
 

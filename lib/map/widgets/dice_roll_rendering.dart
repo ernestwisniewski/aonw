@@ -1,16 +1,14 @@
 part of 'dice_roll_test_overlay.dart';
 
 class _PositionedDie extends StatelessWidget {
-  final ui.Image spriteSheet;
+  final _DiceFrame frame;
   final _DiePose die;
   final double size;
-  final int frameIndex;
 
   const _PositionedDie({
-    required this.spriteSheet,
+    required this.frame,
     required this.die,
     required this.size,
-    required this.frameIndex,
     super.key,
   });
 
@@ -27,11 +25,7 @@ class _PositionedDie extends StatelessWidget {
           child: Transform.scale(
             scale: die.scale,
             child: CustomPaint(
-              painter: _DiceSpritePainter(
-                spriteSheet: spriteSheet,
-                frameIndex: frameIndex,
-                opacity: die.opacity,
-              ),
+              painter: _DiceSpritePainter(frame: frame, opacity: die.opacity),
             ),
           ),
         ),
@@ -41,31 +35,13 @@ class _PositionedDie extends StatelessWidget {
 }
 
 class _DiceSpritePainter extends CustomPainter {
-  static const _columns = 6;
-
-  final ui.Image spriteSheet;
-  final int frameIndex;
+  final _DiceFrame frame;
   final double opacity;
 
-  const _DiceSpritePainter({
-    required this.spriteSheet,
-    required this.frameIndex,
-    required this.opacity,
-  });
+  const _DiceSpritePainter({required this.frame, required this.opacity});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final frameWidth = spriteSheet.width / _columns;
-    final frameHeight = frameWidth;
-    final column = frameIndex % _columns;
-    final row = frameIndex ~/ _columns;
-    final source = Rect.fromLTWH(
-      column * frameWidth,
-      row * frameHeight,
-      frameWidth,
-      frameHeight,
-    );
-
     final shadowPaint = Paint()
       ..color = Colors.black.withAlpha((88 * opacity).round())
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
@@ -82,13 +58,11 @@ class _DiceSpritePainter extends CustomPainter {
       ..filterQuality = FilterQuality.high
       ..isAntiAlias = true
       ..color = Colors.white.withAlpha((255 * opacity).round());
-    canvas.drawImageRect(spriteSheet, source, Offset.zero & size, paint);
+    canvas.drawImageRect(frame.image, frame.source, Offset.zero & size, paint);
   }
 
   @override
   bool shouldRepaint(_DiceSpritePainter oldDelegate) {
-    return oldDelegate.spriteSheet != spriteSheet ||
-        oldDelegate.frameIndex != frameIndex ||
-        oldDelegate.opacity != opacity;
+    return oldDelegate.frame != frame || oldDelegate.opacity != opacity;
   }
 }

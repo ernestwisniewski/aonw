@@ -83,7 +83,7 @@ abstract final class MapCatalog {
   }
 
   /// Lists bundled maps by scanning the asset manifest for
-  /// `assets/maps/<name>/map.json` entries.
+  /// `content/maps/<name>/map.json` entries.
   static Future<List<MapSelection>> _listBundledMaps({
     AssetBundle? bundle,
   }) async {
@@ -131,7 +131,7 @@ abstract final class MapCatalog {
     MapSource.asset => 1,
   };
 
-  /// Extracts the folder name from `assets/maps/<name>/map.json`.
+  /// Extracts the folder name from `content/maps/<name>/map.json`.
   static String _folderName(String path) {
     final parts = path.split('/');
     return parts[parts.length - 2];

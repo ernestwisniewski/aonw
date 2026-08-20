@@ -58,7 +58,7 @@ void main() {
 }
 
 Future<WorldMap> _loadBundledMap(String mapName) async {
-  final file = File('assets/maps/$mapName/map.json');
+  final file = File('content/maps/$mapName/map.json');
   return MapLoader.fromJson(await file.readAsString());
 }
 

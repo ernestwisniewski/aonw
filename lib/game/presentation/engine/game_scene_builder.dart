@@ -1,3 +1,4 @@
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/map_image_layer.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
@@ -29,7 +30,7 @@ class GameSceneBuilder {
   Future<void> build({
     required Component parent,
     required WorldMap mapData,
-    String? imagePath,
+    MapImageSource? imageSource,
     required MapViewMode viewMode,
     required HexDisplaySettings displaySettings,
     required GameTileTapCallback onTileTapped,
@@ -42,9 +43,9 @@ class GameSceneBuilder {
     );
     await parent.add(_imageLayer!);
 
-    if (imagePath != null) {
-      await _imageLayer!.loadAuto(
-        imagePath,
+    if (imageSource != null) {
+      await _imageLayer!.loadSource(
+        imageSource,
         onProgress: onReferenceImageProgress,
       );
       _hasReferenceImage = _imageLayer!.hasImage;

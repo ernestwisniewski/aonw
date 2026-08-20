@@ -66,7 +66,7 @@ void main() {
       expect(inspected.state.selection?.tile?.col, 2);
       expect(inspected.state.selection?.tile?.row, 1);
       expect(
-        inspected.state.selection?.tile?.primaryTerrain,
+        inspected.state.selection?.tile?.displayTerrain,
         TerrainType.plains,
       );
 

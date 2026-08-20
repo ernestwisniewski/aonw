@@ -22,6 +22,7 @@ import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/providers.dart';
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';

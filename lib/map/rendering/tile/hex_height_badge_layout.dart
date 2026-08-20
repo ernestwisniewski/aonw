@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 class HexHeightBadgeGeometry {
   final Offset paragraphOffset;
 
-  const HexHeightBadgeGeometry({
-    required this.paragraphOffset,
-  });
+  const HexHeightBadgeGeometry({required this.paragraphOffset});
 }
 
 abstract final class HexHeightBadgeLayout {

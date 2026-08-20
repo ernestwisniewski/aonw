@@ -118,7 +118,7 @@ abstract final class UnitSelectionViewModelFactory {
           SelectionInfoItem(
             icon: GameIcons.terrain,
             label: l10n.commonTerrain,
-            value: enumLabelList(tile.terrains, empty: l10n.commonNoneLower),
+            value: enumLabelList(tile.terrainTags, empty: l10n.commonNoneLower),
             color: const Color(0xFF89b66f),
             showLabel: false,
             semanticId: SelectionInfoItemSemanticId.terrain,

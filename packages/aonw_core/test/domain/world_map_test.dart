@@ -25,11 +25,11 @@ void main() {
         const HexCoord(col: 0, row: 0),
       ]);
       expect(
-        map.tileAtHex(const HexCoord(col: 0, row: 0))?.primaryTerrain,
+        map.tileAtHex(const HexCoord(col: 0, row: 0))?.displayTerrain,
         TerrainType.plains,
       );
       expect(
-        map.tileAtHex(const HexCoord(col: 2, row: 1))?.primaryTerrain,
+        map.tileAtHex(const HexCoord(col: 2, row: 1))?.displayTerrain,
         TerrainType.ocean,
       );
       expect(map.tileAtHex(const HexCoord(col: 1, row: 0)), isNull);
@@ -99,7 +99,11 @@ void main() {
       tiles.clear();
       objectives.clear();
 
-      expect(map.tiles.single.terrains, [TerrainType.forest]);
+      expect(map.tiles.single.terrains, [
+        TerrainType.grassland,
+        TerrainType.forest,
+      ]);
+      expect(map.tiles.single.terrainTags, [TerrainType.forest]);
       expect(map.tiles.single.resources, [ResourceType.deer]);
       expect(map.objectives.single.id, 'objective_1');
       expect(
@@ -122,7 +126,11 @@ void main() {
           WorldTile(
             col: 2,
             row: 1,
-            terrains: [TerrainType.hills, TerrainType.forest],
+            terrains: [
+              TerrainType.plains,
+              TerrainType.hills,
+              TerrainType.forest,
+            ],
             resources: [ResourceType.iron],
             height: 3,
           ),
@@ -146,7 +154,11 @@ void main() {
         const HexCoord(col: 2, row: 1),
         const HexCoord(col: 0, row: 0),
       ]);
-      expect(map.tiles.first.terrains, [TerrainType.hills, TerrainType.forest]);
+      expect(map.tiles.first.terrains, [
+        TerrainType.plains,
+        TerrainType.hills,
+        TerrainType.forest,
+      ]);
       expect(map.tiles.first.resources, [ResourceType.iron]);
       expect(map.tiles.first.height, 3);
     });
@@ -155,7 +167,7 @@ void main() {
       final tile = _MutableTileView(
         col: 0,
         row: 0,
-        terrains: [TerrainType.forest],
+        terrains: [TerrainType.grassland, TerrainType.forest],
         resources: [ResourceType.deer],
         height: 2,
       );
@@ -179,7 +191,10 @@ void main() {
 
       expect(map.tiles.single.coordinate, const HexCoord(col: 0, row: 0));
       expect(map.tiles.single.height, 2);
-      expect(map.tiles.single.terrains, [TerrainType.forest]);
+      expect(map.tiles.single.terrains, [
+        TerrainType.grassland,
+        TerrainType.forest,
+      ]);
       expect(map.tiles.single.resources, [ResourceType.deer]);
       expect(map.objectives.single.id, 'objective_1');
       expect(map.tiles.single, isNot(same(tile)));
@@ -198,7 +213,7 @@ void main() {
             WorldTile(col: 0, row: 0, terrains: [], resources: [], height: 0),
           ],
         ),
-        _failsWith('Tile terrains must not be empty'),
+        _failsTerrainSemanticsWith('Authored terrain tags must not be empty'),
       );
     });
 
@@ -229,7 +244,7 @@ void main() {
           rows: 1,
           tiles: [_tile(0, 0, terrains: const [])],
         ),
-        _failsWith('Tile terrains must not be empty'),
+        _failsTerrainSemanticsWith('Authored terrain tags must not be empty'),
       );
       expect(
         () => WorldMap(cols: 1, rows: 1, tiles: [_tile(0, 0, height: -1)]),
@@ -428,6 +443,16 @@ Matcher _failsContaining(String message) {
   );
 }
 
+Matcher _failsTerrainSemanticsWith(String message) {
+  return throwsA(
+    isA<TileTerrainSemanticsException>().having(
+      (error) => error.message,
+      'message',
+      message,
+    ),
+  );
+}
+
 final class _MutableTileView implements MapTileView {
   _MutableTileView({
     required this.col,
@@ -443,15 +468,15 @@ final class _MutableTileView implements MapTileView {
   @override
   int row;
 
-  @override
   final List<TerrainType> terrains;
+
+  @override
+  TileTerrainSemantics get terrain =>
+      TileTerrainSemantics.fromMovementProfile(terrains);
 
   @override
   final List<ResourceType> resources;
 
   @override
   int height;
-
-  @override
-  TerrainType get primaryTerrain => terrains.first;
 }

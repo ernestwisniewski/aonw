@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/fog/fog_visibility_rules.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/terrain.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/util/min_binary_heap.dart';
 
 class FogRevealCalculator {
@@ -44,7 +45,7 @@ class FogRevealCalculator {
         if (tile == null) continue;
 
         final sightCost = FogVisibilityRules.sightCost(
-          TileTerrainProfileRules.fromTile(tile),
+          TileTerrainProfileRules.fromTerrains(tile.terrainTags),
         );
         final nextCost = current.cost + sightCost.value;
 

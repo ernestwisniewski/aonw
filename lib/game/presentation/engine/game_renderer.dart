@@ -48,6 +48,7 @@ import 'package:aonw/game/presentation/engine/unit_animation_controller.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/services/map_focus_visibility.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_tile_markers.dart';
 import 'package:aonw/map/rendering/hex_world.dart';
@@ -99,7 +100,7 @@ class GameRenderer extends HexWorld
   );
 
   final WorldMap mapData;
-  final String? imagePath;
+  final MapImageSource? imageSource;
   final CameraState? initialCamera;
   final bool startCameraOffMap;
   final bool focusActivePlayerOnFirstState;
@@ -163,7 +164,7 @@ class GameRenderer extends HexWorld
 
   GameRenderer({
     required this.mapData,
-    this.imagePath,
+    this.imageSource,
     this.initialCamera,
     this.startCameraOffMap = false,
     this.focusActivePlayerOnFirstState = false,
@@ -439,7 +440,7 @@ extension _GameRendererRuntimeInitialization on GameRenderer {
         initialDisplaySettings: displaySettings,
         initialReduceMotion: reduceMotion,
         workerOptionsBuilder: workerOptionsBuilder,
-        imagePath: imagePath,
+        imageSource: imageSource,
         initialCamera: initialCamera,
         startCameraOffMap: startCameraOffMap,
         onLoadingProgress: onLoadingProgress,

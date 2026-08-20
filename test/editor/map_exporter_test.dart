@@ -138,8 +138,15 @@ void main() {
       final draft = MapDraft(
         cols: 1,
         rows: 1,
+        defaultZoom: 0,
         tiles: [
-          WorldTile(col: 0, row: 0, terrains: [], resources: [], height: 0),
+          WorldTile(
+            col: 0,
+            row: 0,
+            terrains: const [TerrainType.plains],
+            resources: const [],
+            height: 0,
+          ),
         ],
       );
 

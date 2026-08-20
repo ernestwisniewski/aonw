@@ -4,7 +4,7 @@ extension _HexTileIconRendering on HexTilePainter {
   void _drawResourceIcons({
     required Canvas canvas,
     required List<Rect> iconRects,
-    required List<String> iconPaths,
+    required List<SpriteFrameId> iconPaths,
   }) {
     if (iconRects.isEmpty || iconPaths.isEmpty) return;
     final count = math.min(iconPaths.length, iconRects.length);
@@ -13,18 +13,17 @@ extension _HexTileIconRendering on HexTilePainter {
     }
   }
 
-  void _drawIcon(
-    Canvas canvas,
-    String path,
-    Rect iconRect,
-  ) {
-    final image = HexIconCache.imageFor(path);
-    final sourceRect = HexIconCache.sourceRectFor(path);
-    if (image != null && sourceRect != null) {
+  void _drawIcon(Canvas canvas, SpriteFrameId path, Rect iconRect) {
+    final frame = SpriteFrames.cached(path);
+    if (frame != null) {
+      final geometry = frame.geometryFor(
+        logicalSource: Offset.zero & frame.originalSize,
+        destination: iconRect,
+      );
       canvas.drawImageRect(
-        image,
-        sourceRect,
-        iconRect,
+        frame.image,
+        geometry.source,
+        geometry.destination,
         HexTilePainter._paintMapIconImage,
       );
     } else {

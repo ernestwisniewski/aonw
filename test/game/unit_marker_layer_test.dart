@@ -7,7 +7,6 @@ import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
-import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
 import 'package:aonw_core/domain/world_map.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/movement.dart';
@@ -55,8 +54,6 @@ void main() {
     test(
       'records a loaded selected unit render path deterministically',
       () async {
-        HexIconCache.clearForTesting();
-        addTearDown(HexIconCache.clearForTesting);
         final marker = UnitMarker(
           position: Vector2.zero(),
           colorValue: 0xFF3366CC,

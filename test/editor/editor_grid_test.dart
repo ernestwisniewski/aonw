@@ -1,7 +1,6 @@
 import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/engine/editor_grid.dart';
 import 'package:aonw/editor/engine/editor_state.dart';
-import 'package:aonw/editor/engine/editor_world.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/hex_tile.dart';
@@ -12,8 +11,6 @@ import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:aonw_core/map/domain/map_constraints.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -69,50 +66,6 @@ void main() {
   });
 
   group('EditorGrid selection', () {
-    test(
-      'clearSelectedTerrains removes terrain from the selected hex only',
-      () {
-        final mapData = MapDraft(
-          cols: 2,
-          rows: 1,
-          tiles: [
-            WorldTile(
-              col: 0,
-              row: 0,
-              terrains: [TerrainType.grassland, TerrainType.hills],
-              resources: [ResourceType.iron],
-              height: 2,
-            ),
-            WorldTile(
-              col: 1,
-              row: 0,
-              terrains: [TerrainType.ocean],
-              resources: [],
-              height: 0,
-            ),
-          ],
-        );
-        final grid = EditorGrid(
-          draft: mapData,
-          config: MapConfig.defaultConfig,
-          editorState: const EditorState(
-            selectedTerrains: {TerrainType.desert},
-            selectedResources: {},
-            selectedHeight: 0,
-            heightActive: false,
-          ),
-        )..rebuild();
-
-        _tileByCoordinate(grid, 0, 0).onTapped();
-
-        expect(grid.clearSelectedTerrains(), isTrue);
-        expect(mapData.tileAt(0, 0)!.terrains, isEmpty);
-        expect(mapData.tileAt(0, 0)!.resources, [ResourceType.iron]);
-        expect(mapData.tileAt(0, 0)!.height, 2);
-        expect(mapData.tileAt(1, 0)!.terrains, [TerrainType.ocean]);
-      },
-    );
-
     test('addColumn uses the latest editor selection', () {
       final grid =
           EditorGrid(
@@ -311,52 +264,6 @@ void main() {
         expect(mapData.objectives, isEmpty);
       },
     );
-  });
-
-  group('EditorWorld keyboard shortcuts', () {
-    test('T clears all terrain from the selected hex', () async {
-      final selectedTiles = <String>[];
-      final mapData = MapDraft(
-        cols: 1,
-        rows: 1,
-        tiles: [
-          WorldTile(
-            col: 0,
-            row: 0,
-            terrains: [TerrainType.grassland, TerrainType.hills],
-            resources: [ResourceType.iron],
-            height: 2,
-          ),
-        ],
-      );
-      final world = EditorWorld(
-        draft: mapData,
-        editorState: const EditorState(
-          selectedTerrains: {TerrainType.grassland},
-          selectedResources: {},
-          selectedHeight: 0,
-          heightActive: false,
-        ),
-        onTileSelected: (col, row) => selectedTiles.add('$col,$row'),
-      )..onGameResize(Vector2(800, 600));
-      await world.onLoad();
-
-      _tileByCoordinate(world.grid, 0, 0).onTapped();
-      final result = world.onKeyEvent(
-        const KeyDownEvent(
-          physicalKey: PhysicalKeyboardKey.keyT,
-          logicalKey: LogicalKeyboardKey.keyT,
-          timeStamp: Duration.zero,
-        ),
-        {LogicalKeyboardKey.keyT},
-      );
-
-      expect(result, KeyEventResult.handled);
-      expect(mapData.tileAt(0, 0)!.terrains, isEmpty);
-      expect(mapData.tileAt(0, 0)!.resources, [ResourceType.iron]);
-      expect(mapData.tileAt(0, 0)!.height, 2);
-      expect(selectedTiles, ['0,0', '0,0']);
-    });
   });
 
   group('EditorGrid city planning markers', () {

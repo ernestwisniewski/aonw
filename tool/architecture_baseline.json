@@ -630,7 +630,6 @@
         "lib/game/presentation/engine/recommended_city_site_planner.dart::class:RecommendedCitySitePlanner/method:_resourceStrategicValue": 30,
         "lib/game/presentation/engine/recommended_city_site_planner.dart::class:_RecommendedCitySiteCacheKey/operator:==": 13,
         "lib/game/presentation/engine/rendering_layers/action_palette/action_palette_option.dart::class:ActionPaletteOption/operator:==": 13,
-        "lib/game/presentation/engine/rendering_layers/assets/sprite_frame_stabilizer.dart::class:SpriteFrameStabilizer/method:_frameMetrics": 14,
         "lib/game/presentation/engine/rendering_layers/city/city_marker_layer.dart::class:CityMarkerLayer/method:_profileForTechnology": 55,
         "lib/game/presentation/engine/rendering_layers/overlays/threat_overlay_layer.dart::class:ThreatOverlayLayer/method:_threatenedHexes": 14,
         "lib/game/presentation/engine/rendering_layers/units/unit_sprite_definition.dart::enum:UnitSpriteDirection/method:fromDelta": 16,
@@ -769,7 +768,6 @@
         "lib/game/presentation/engine/game_renderer_artifact_taps.dart::function:_preferredStackTarget": 20,
         "lib/game/presentation/engine/game_renderer_tile_interactions.dart::extension:GameRendererTileInteractions/method:_handleCityMarkerTapped": 19,
         "lib/game/presentation/engine/recommended_city_site_planner.dart::class:RecommendedCitySitePlanner/method:_resourceStrategicValue": 27,
-        "lib/game/presentation/engine/rendering_layers/assets/sprite_frame_stabilizer.dart::class:SpriteFrameStabilizer/method:_frameMetrics": 27,
         "lib/game/presentation/engine/rendering_layers/city/city_marker_layer.dart::class:CityMarkerLayer/method:_profileForTechnology": 51,
         "lib/game/presentation/engine/rendering_layers/effects/combat_hex_alert_layer.dart::class:CombatHexAlertLayer/method:syncState": 20,
         "lib/game/presentation/engine/rendering_layers/overlays/threat_overlay_layer.dart::class:ThreatOverlayLayer/method:_threatenedHexes": 22,
@@ -813,7 +811,6 @@
         "lib/game/presentation/widgets/theme/game_icon_path_parser.dart::class:GameIconPathParser/method:parse": 21,
         "lib/map/rendering/hex_geometry.dart::class:HexGeometry/method:tileAt": 19,
         "lib/menu/main_menu_screen.dart::class:_MenuButtonState/method:build/closure:MenuGamepadAction#1": 28,
-        "lib/shared/assets/sprite_atlas_frame_bounds.dart::class:SpriteAtlasFrameBoundsCache/method:_contentRectForFrame": 20,
         "lib/shared/widgets/viewport_gesture_layer.dart::class:ViewportGestureLayer/method:build": 22
       }
     },

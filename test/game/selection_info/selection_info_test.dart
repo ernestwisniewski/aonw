@@ -1,4 +1,3 @@
-import 'package:aonw/game/presentation/engine/rendering_layers/city/city_sprite_catalog.dart';
 import 'package:aonw/game/presentation/formatters/turn_eta.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_yield_breakdown_view_model.dart';
@@ -351,11 +350,8 @@ void main() {
       );
 
       expect(data.cropToContent, isFalse);
-      expect(data.sourceRectResolver, isNull);
-      expect(data.assetPath, CitySpriteCatalog.assetPath);
-      expect(data.column, 2);
-      expect(data.row, 3);
-      expect(data.adjustmentId, isNull);
+      expect(data.frameId.value, 'city.industryModern.2');
+      expect(data.adjustmentSequenceId, isNull);
     });
   });
 }

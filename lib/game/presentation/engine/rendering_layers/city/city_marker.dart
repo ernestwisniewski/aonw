@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -8,12 +9,13 @@ import 'package:aonw/game/presentation/engine/rendering_layers/units/marker_heal
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
-import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
-import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
+import 'package:aonw/shared/assets/sprite_frame_repository.dart';
+import 'package:aonw/shared/assets/sprite_frames.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
@@ -31,17 +33,16 @@ class CityMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
   TextPainter? _cachedPopulationPainter;
   TextPainter? _cachedNamePainter;
   double? _cachedNameMaxWidth;
+  SpriteFrame? _citySpriteFrame;
 
   static const BoardAssetCapStyle _capStyle = BoardAssetCapStyles.city;
   static const Color _selectedRimColor = HudPalette.goldLight;
   static const Color _selectedRimShadowColor = HudPalette.goldDark;
-  static const String _citySpritePath = CitySpriteCatalog.assetPath;
   static final double _width = MapConfig.defaultConfig.hexRadius * 2;
   static final double _height =
       MapConfig.defaultConfig.hexRadius * math.sqrt(3) * HexGrid.perspectiveY;
   static const int _frameColumns = CitySpriteCatalog.technologyProfileCount;
-  static const int _frameRows = CitySpriteCatalog.visualLevelCount;
-  static const double _sourceInset = CitySpriteCatalog.sourceInset;
+  static const double _sourceInset = 0;
   static const double _labelMaxWidth = 116;
   static const double _labelHeight = 18;
   static const double _labelGap = 5;
@@ -120,8 +121,21 @@ class CityMarker extends PositionComponent with HasPaint<String>, TapCallbacks {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    await HexIconCache.load(_citySpritePath);
+    await _loadCityFrame();
     _syncSelectionEffects();
+  }
+
+  Future<void> _loadCityFrame() async {
+    final id = CitySpriteCatalog.frameIdFor(
+      visualLevel: _visualLevel,
+      technologyProfile: _technologyProfile,
+    );
+    final frame = await SpriteFrames.load(id);
+    final currentId = CitySpriteCatalog.frameIdFor(
+      visualLevel: _visualLevel,
+      technologyProfile: _technologyProfile,
+    );
+    if (id == currentId) _citySpriteFrame = frame;
   }
 
   @override

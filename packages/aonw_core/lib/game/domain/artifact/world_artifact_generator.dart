@@ -204,7 +204,7 @@ abstract final class WorldArtifactGenerator {
   }
 
   static int _terrainScore(WorldTile tile) {
-    final terrains = tile.terrains.toSet();
+    final terrains = tile.terrainTags.toSet();
     var score = tile.height;
     if (terrains.contains(TerrainType.desert)) score += 4;
     if (terrains.contains(TerrainType.jungle)) score += 4;
@@ -235,7 +235,7 @@ abstract final class WorldArtifactGenerator {
 
   static bool _isBlocked(WorldTile tile) {
     return UnitMovementCostRules.costToEnter(
-      TileTerrainProfileRules.fromTile(tile),
+      TileTerrainProfileRules.fromTerrains(tile.terrainTags),
     ).blocked;
   }
 

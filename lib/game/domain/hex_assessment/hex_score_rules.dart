@@ -21,8 +21,7 @@ abstract final class HexScoreRules {
     );
   }
 
-  static HexScore scoreTerrain(TerrainType? terrain) {
-    if (terrain == null) return HexScore.zero;
+  static HexScore scoreTerrain(TerrainType terrain) {
     return HexScore(
       city: cityScoreFromTerrain(terrain),
       defense: defenseScoreFromTerrain(terrain),
@@ -98,7 +97,7 @@ abstract final class HexScoreRules {
   }
 
   static HexScore applyPenaltyRules({
-    required TerrainType? terrain,
+    required TerrainType terrain,
     required bool hasRiver,
     required bool hasResources,
     required HexScore score,

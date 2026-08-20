@@ -31,10 +31,10 @@ void main() {
         ],
       ),
       throwsA(
-        isA<WorldMapException>().having(
+        isA<TileTerrainSemanticsException>().having(
           (error) => error.message,
           'message',
-          'Tile terrains must not be empty',
+          'Authored terrain tags must not be empty',
         ),
       ),
     );

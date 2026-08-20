@@ -23,7 +23,6 @@ abstract final class HexKindRules {
   static HexAssessmentKind? _specialKind(HexAssessmentInput input) {
     final context = _HexKindContext(input);
     return switch (context.terrain) {
-      null => HexAssessmentKind.mapTile,
       TerrainType.mountain => HexAssessmentKind.naturalBarrier,
       TerrainType.ocean || TerrainType.lake => HexAssessmentKind.openSea,
       TerrainType.coast => _coastKind(context),
@@ -133,7 +132,7 @@ final class _HexKindContext {
       hasRiver = input.hasRiver,
       resources = input.resources.toSet();
 
-  final TerrainType? terrain;
+  final TerrainType terrain;
   final bool hasRiver;
   final Set<ResourceType> resources;
 

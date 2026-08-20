@@ -4,16 +4,18 @@ import 'dart:ui' as ui;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asset_cap.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_cache.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_catalog.dart';
-import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/map_alpha.dart';
-import 'package:aonw_core/map/domain/map_config.dart';
+import 'package:aonw/shared/assets/sprite_frame_id.dart';
+import 'package:aonw/shared/assets/sprite_frame_repository.dart';
+import 'package:aonw/shared/assets/sprite_frames.dart';
 import 'package:aonw/shared/theme/hud_paint.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
+import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
@@ -23,6 +25,7 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
   bool _selected;
   AnimationFrameAdjustmentCatalog _adjustments =
       const AnimationFrameAdjustmentCatalog.empty();
+  SpriteFrame? _spriteFrame;
 
   static const BoardAssetCapStyle _capStyle = BoardAssetCapStyles.improvement;
   static const Color _selectedRimColor = Color(0xFFF1F4F8);
@@ -35,7 +38,7 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
   static final double _height = _hexHeight * _sizeScale;
   static final double _spriteWidth = _capStyle.topSize.width;
   static final double _spriteHeight = _capStyle.topSize.height;
-  static const double _sourceInset = FieldImprovementSpriteCatalog.sourceInset;
+  static const double _sourceInset = 0;
 
   FieldImprovementMarker({
     required Vector2 position,
@@ -59,7 +62,7 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
     if (_type == value) return;
     _type = value;
     if (isLoaded) {
-      unawaited(_loadSpriteFor(value));
+      unawaited(_loadSprite());
     }
   }
 
@@ -69,6 +72,7 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
     final next = _clampedEraColumn(value);
     if (_eraColumn == next) return;
     _eraColumn = next;
+    if (isLoaded) unawaited(_loadSprite());
   }
 
   bool get selected => _selected;
@@ -92,7 +96,7 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    await _loadSpriteFor(_type);
+    await _loadSprite();
     _adjustments = await AnimationFrameAdjustmentCatalogCache.load();
   }
 
@@ -116,21 +120,15 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
         HudPaint.fill(HudPalette.surface, alpha: MapAlpha.whisper),
       );
 
-    final spritePath = FieldImprovementSpriteCatalog.assetPathFor(_type);
-    final image = FieldImprovementSpriteCache.imageFor(spritePath);
-    if (image == null) {
+    final frame = _spriteFrame;
+    if (frame == null) {
       _paintFallbackIcon(canvas, center);
       canvas.restore();
       _paintRim(canvas, spriteClipPath);
       return false;
     }
 
-    final baseSource = FieldImprovementSpriteCatalog.sourceRectFor(
-      imageWidth: image.width,
-      imageHeight: image.height,
-      type: _type,
-      eraColumn: _eraColumn,
-    );
+    final baseSource = ui.Offset.zero & frame.originalSize;
     final adjustment = _frameAdjustment();
     final source = adjustment.croppedSourceFor(baseSource);
     final baseDestination = spriteBounds;
@@ -145,30 +143,41 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
         )
         .shift(offset);
 
-    canvas.drawImageRect(image, source, destination, imagePaint);
-    canvas.restore();
+    final geometry = frame.geometryFor(
+      logicalSource: source,
+      destination: destination,
+    );
+    canvas
+      ..drawImageRect(
+        frame.image,
+        geometry.source,
+        geometry.destination,
+        imagePaint,
+      )
+      ..restore();
     _paintRim(canvas, spriteClipPath);
     return true;
   }
 
   void _paintRim(Canvas canvas, Path spriteClipPath) {
     if (_selected) {
-      canvas.drawPath(
-        spriteClipPath,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = MapStroke.glow + 2
-          ..color = effectiveRimShadowColor.withAlpha(MapAlpha.regular)
-          ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 4.0),
-      );
-      canvas.drawPath(
-        spriteClipPath,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = MapStroke.glow
-          ..color = effectiveRimShadowColor.withAlpha(MapAlpha.soft)
-          ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 2.6),
-      );
+      canvas
+        ..drawPath(
+          spriteClipPath,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = MapStroke.glow + 2
+            ..color = effectiveRimShadowColor.withAlpha(MapAlpha.regular)
+            ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 4.0),
+        )
+        ..drawPath(
+          spriteClipPath,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = MapStroke.glow
+            ..color = effectiveRimShadowColor.withAlpha(MapAlpha.soft)
+            ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 2.6),
+        );
     }
     canvas.drawPath(
       spriteClipPath,
@@ -191,7 +200,6 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
     );
   }
 
-  @visibleForTesting
   Path _improvementMarkerClipPathFor(ui.Rect spriteBounds) {
     return HexGeometry.projectedTopFacePath(
       bounds: spriteBounds,
@@ -201,8 +209,7 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
 
   AnimationFrameAdjustment _frameAdjustment() {
     return _adjustments.adjustmentFor(
-      assetPath: FieldImprovementSpriteCatalog.assetPathFor(_type),
-      animationId: FieldImprovementSpriteCatalog.adjustmentIdForVariant(
+      sequenceId: FieldImprovementSpriteCatalog.sequenceIdFor(
         type: _type,
         eraColumn: _eraColumn,
       ),
@@ -211,32 +218,28 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
   }
 
   ui.Rect _spriteBoundsFor(ui.Offset center) {
-    return ui.Rect.fromCenter(
-      center: center,
-      width: _width,
-      height: _height,
-    );
+    return ui.Rect.fromCenter(center: center, width: _width, height: _height);
   }
 
   static int _clampedEraColumn(int value) {
     return value.clamp(0, FieldImprovementSpriteCatalog.columns - 1).toInt();
   }
 
-  Future<void> _loadSpriteFor(FieldImprovementType type) {
-    return FieldImprovementSpriteCache.load(
-      FieldImprovementSpriteCatalog.assetPathFor(type),
-    );
-  }
-
-  @visibleForTesting
-  ui.Rect sourceRectForTesting(ui.Image image) {
-    return FieldImprovementSpriteCatalog.sourceRectFor(
-      imageWidth: image.width,
-      imageHeight: image.height,
+  Future<void> _loadSprite() async {
+    final id = FieldImprovementSpriteCatalog.frameIdFor(
       type: _type,
       eraColumn: _eraColumn,
     );
+    final frame = await SpriteFrames.load(id);
+    final currentId = FieldImprovementSpriteCatalog.frameIdFor(
+      type: _type,
+      eraColumn: _eraColumn,
+    );
+    if (id == currentId) _spriteFrame = frame;
   }
+
+  @visibleForTesting
+  ui.Rect get sourceRectForTesting => _spriteFrame?.source ?? ui.Rect.zero;
 
   @visibleForTesting
   ui.Rect get spriteBoundsForTesting =>
@@ -252,8 +255,11 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
   int get eraColumnForTesting => _eraColumn;
 
   @visibleForTesting
-  String get assetPathForTesting =>
-      FieldImprovementSpriteCatalog.assetPathFor(_type);
+  SpriteFrameId get frameIdForTesting =>
+      FieldImprovementSpriteCatalog.frameIdFor(
+        type: _type,
+        eraColumn: _eraColumn,
+      );
 
   @visibleForTesting
   bool get selectedForTesting => _selected;
@@ -265,8 +271,8 @@ class FieldImprovementMarker extends PositionComponent with HasPaint<String> {
   Color get rimShadowColorForTesting => effectiveRimShadowColor;
 
   @visibleForTesting
-  String get adjustmentIdForTesting =>
-      FieldImprovementSpriteCatalog.adjustmentIdForVariant(
+  SpriteSequenceId get adjustmentIdForTesting =>
+      FieldImprovementSpriteCatalog.sequenceIdFor(
         type: _type,
         eraColumn: _eraColumn,
       );

@@ -124,8 +124,8 @@ final class AiTechnologyScoreSnapshot {
   }
 
   static bool _isCoastalTile(MapTileView tile) {
-    return tile.terrains.contains(TerrainType.coast) ||
-        tile.terrains.contains(TerrainType.ocean);
+    return tile.terrainTags.contains(TerrainType.coast) ||
+        tile.terrainTags.contains(TerrainType.ocean);
   }
 }
 

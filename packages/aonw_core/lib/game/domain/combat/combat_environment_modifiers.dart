@@ -5,7 +5,7 @@ List<CombatModifier> _terrainModifiers({
   required CombatRuleset ruleset,
 }) {
   final modifiers = <CombatModifier>[];
-  for (final terrain in tile.terrains) {
+  for (final terrain in tile.terrainTags) {
     modifiers.addAll(
       _modifiersFromStats(
         stats: ruleset.terrainStatsFor(terrain),
@@ -19,15 +19,15 @@ List<CombatModifier> _terrainModifiers({
 }
 
 bool _hasDefensiveTerrain(MapTileView tile) {
-  return tile.terrains.any(_defensiveTerrain.contains);
+  return tile.terrainTags.any(_defensiveTerrain.contains);
 }
 
 bool _hasRoughTerrain(MapTileView tile) {
-  return tile.terrains.any(_roughTerrain.contains);
+  return tile.terrainTags.any(_roughTerrain.contains);
 }
 
 bool _hasOpenTerrain(MapTileView tile) {
-  return tile.terrains.any(_openTerrain.contains) && !_hasRoughTerrain(tile);
+  return tile.terrainTags.any(_openTerrain.contains) && !_hasRoughTerrain(tile);
 }
 
 List<CombatModifier> _fortificationModifiers({

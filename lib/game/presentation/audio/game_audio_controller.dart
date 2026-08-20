@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:aonw/game/presentation/audio/audio_asset_catalog.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw/shared/providers/audio_settings_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 
 const int _playerPoolSize = 6;
 const int _preloadedPlayersPerSound = 2;
@@ -21,28 +21,25 @@ typedef GameAudioErrorReporter =
 
 class GameAudioController {
   GameAudioController({
-    AssetBundle? bundle,
     math.Random? musicRandom,
     GameAudioErrorReporter? errorReporter,
-  }) : _bundle = bundle ?? rootBundle,
-       _errorReporter = errorReporter ?? _reportGameAudioError {
+  }) : _errorReporter = errorReporter ?? _reportGameAudioError {
     _musicLoop = _LoopingAssetFolderPlayer(
-      bundle: _bundle,
+      assetPaths: AudioAssetCatalog.music,
       assetRoot: _musicAssetRoot,
       shufflePlaylist: true,
       random: musicRandom,
       onError: _reportFailure,
     );
     _natureLoop = _LoopingAssetFolderPlayer(
-      bundle: _bundle,
+      assetPaths: AudioAssetCatalog.nature,
       assetRoot: _natureAssetRoot,
       onError: _reportFailure,
     );
   }
 
-  final AssetBundle _bundle;
   final GameAudioErrorReporter _errorReporter;
-  final Map<GameSoundCue, Future<AudioPool>> _poolFutures = {};
+  final Map<String, Future<AudioPool>> _poolFuturesByAsset = {};
   final Set<String> _reportedFailures = {};
   late final _LoopingAssetFolderPlayer _musicLoop;
   late final _LoopingAssetFolderPlayer _natureLoop;
@@ -174,8 +171,9 @@ class GameAudioController {
   }
 
   Future<AudioPool> _poolFor(GameSoundCue cue) {
-    return _poolFutures[cue] ??= AudioPool.create(
-      source: AssetSource('sounds/${cue.assetName}.wav'),
+    final assetPath = AudioAssetCatalog.effectFor(cue);
+    return _poolFuturesByAsset[assetPath] ??= AudioPool.create(
+      source: AssetSource(AudioAssetCatalog.assetSourcePath(assetPath)),
       minPlayers: _preloadedPlayersPerSound,
       maxPlayers: _playerPoolSize,
       audioContext: _audioContext ?? _audioContextFor(_settings),
@@ -183,14 +181,16 @@ class GameAudioController {
   }
 
   void _discardPool(GameSoundCue cue) {
-    final poolFuture = _poolFutures.remove(cue);
+    final poolFuture = _poolFuturesByAsset.remove(
+      AudioAssetCatalog.effectFor(cue),
+    );
     if (poolFuture == null) return;
     unawaited(_disposePoolFuture(poolFuture));
   }
 
   void _discardAllPools() {
-    final poolFutures = _poolFutures.values.toList();
-    _poolFutures.clear();
+    final poolFutures = _poolFuturesByAsset.values.toList();
+    _poolFuturesByAsset.clear();
     for (final poolFuture in poolFutures) {
       unawaited(_disposePoolFuture(poolFuture));
     }
@@ -232,8 +232,8 @@ class GameAudioController {
     _disposed = true;
     await _configurationTail;
     await Future.wait([_musicLoop.dispose(), _natureLoop.dispose()]);
-    final poolFutures = _poolFutures.values.toList();
-    _poolFutures.clear();
+    final poolFutures = _poolFuturesByAsset.values.toList();
+    _poolFuturesByAsset.clear();
     for (final poolFuture in poolFutures) {
       try {
         final pool = await poolFuture;
@@ -322,25 +322,23 @@ void _shufflePlaylist(List<String> playlist, math.Random random) {
 
 class _LoopingAssetFolderPlayer {
   _LoopingAssetFolderPlayer({
-    required AssetBundle bundle,
+    required Iterable<String> assetPaths,
     required String assetRoot,
     bool shufflePlaylist = false,
     math.Random? random,
     required GameAudioErrorReporter onError,
-  }) : _bundle = bundle,
-       _assetRoot = assetRoot,
-       _shufflePlaylist = shufflePlaylist,
-       _random = random,
+  }) : _assetPaths = buildLoopingAudioPlaylist(
+         assetPaths: assetPaths,
+         assetRoot: assetRoot,
+         shuffle: shufflePlaylist,
+         random: random,
+       ),
        _onError = onError;
 
-  final AssetBundle _bundle;
-  final String _assetRoot;
-  final bool _shufflePlaylist;
-  final math.Random? _random;
+  final List<String> _assetPaths;
   final GameAudioErrorReporter _onError;
   AudioPlayer? _player;
   StreamSubscription<void>? _completionSub;
-  Future<List<String>>? _assetPathsFuture;
   AudioContext? _audioContext;
   bool _running = false;
   bool _disposed = false;
@@ -382,7 +380,7 @@ class _LoopingAssetFolderPlayer {
   }
 
   Future<void> _playCurrent() async {
-    final paths = await _assetPaths();
+    final paths = _assetPaths;
     if (!_running || _disposed) return;
     if (paths.isEmpty) {
       _running = false;
@@ -403,23 +401,8 @@ class _LoopingAssetFolderPlayer {
     }
   }
 
-  Future<List<String>> _assetPaths() {
-    return _assetPathsFuture ??= AssetManifest.loadFromAssetBundle(_bundle)
-        .then((manifest) {
-          return buildLoopingAudioPlaylist(
-            assetPaths: manifest.listAssets(),
-            assetRoot: _assetRoot,
-            shuffle: _shufflePlaylist,
-            random: _random,
-          );
-        });
-  }
-
   String _assetSourcePath(String assetPath) {
-    const prefix = 'assets/';
-    return assetPath.startsWith(prefix)
-        ? assetPath.substring(prefix.length)
-        : assetPath;
+    return AudioAssetCatalog.assetSourcePath(assetPath);
   }
 
   AudioPlayer _ensurePlayer() {

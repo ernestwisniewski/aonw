@@ -1,10 +1,12 @@
+import 'dart:ui' as ui;
+
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_component.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/action_palette/action_palette_option.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asset_cap.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_cache.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_catalog.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
+import 'package:aonw/shared/assets/sprite_frames.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -107,18 +109,15 @@ void main() {
         cropLeft: 4,
         scaleX: 1.15,
       );
-      final assetPath = FieldImprovementSpriteCatalog.assetPathFor(
-        FieldImprovementType.farm,
+      final sequenceId = FieldImprovementSpriteCatalog.sequenceIdFor(
+        type: FieldImprovementType.farm,
+        eraColumn: 0,
       );
       AnimationFrameAdjustmentCatalogCache.replace(
         AnimationFrameAdjustmentCatalog(
           frames: {
             AnimationFrameAdjustmentCatalog.frameKey(
-              assetPath: assetPath,
-              animationId: FieldImprovementSpriteCatalog.adjustmentIdForVariant(
-                type: FieldImprovementType.farm,
-                eraColumn: 0,
-              ),
+              sequenceId: sequenceId,
               frameIndex: 0,
             ): adjustment,
           },
@@ -128,14 +127,14 @@ void main() {
 
       final component = buildComponent();
       await component.onLoad();
-      final image = await FieldImprovementSpriteCache.load(assetPath);
-      final iconRect = component.optionRectsForTesting.single;
-      final baseSource = FieldImprovementSpriteCatalog.sourceRectFor(
-        imageWidth: image.width,
-        imageHeight: image.height,
-        type: FieldImprovementType.farm,
-        eraColumn: 0,
+      final frame = await SpriteFrames.load(
+        FieldImprovementSpriteCatalog.frameIdFor(
+          type: FieldImprovementType.farm,
+          eraColumn: 0,
+        ),
       );
+      final iconRect = component.optionRectsForTesting.single;
+      final baseSource = ui.Offset.zero & frame.originalSize;
       final baseDestination = iconRect.deflate(4);
       final expectedDestination = adjustment
           .adjustedDestinationFor(
@@ -150,15 +149,11 @@ void main() {
           );
 
       expect(
-        component.spriteSourceForTesting(image: image, option: farm),
+        component.spriteSourceForTesting(option: farm),
         adjustment.croppedSourceFor(baseSource),
       );
       expect(
-        component.spriteDestinationForTesting(
-          image: image,
-          option: farm,
-          iconRect: iconRect,
-        ),
+        component.spriteDestinationForTesting(option: farm, iconRect: iconRect),
         expectedDestination,
       );
     });

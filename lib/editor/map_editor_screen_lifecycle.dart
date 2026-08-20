@@ -11,17 +11,17 @@ extension _MapEditorScreenLifecycle on _MapEditorScreenState {
       if (widget.selection case final selection?) {
         final mapRepository = ref.read(mapRepositoryProvider);
         final sourceMap = await mapRepository.loadMap(selection);
-        final imagePath = await mapRepository.resolveImagePath(selection);
+        final imageSource = await mapRepository.resolveImageSource(selection);
         if (!mounted) return;
 
         final draft = MapDraft.fromWorldMap(sourceMap);
         ref.read(editorMapProvider.notifier).load(draft);
         _updateState(() {
-          _activeImagePath = imagePath;
+          _activeImageSource = imageSource;
           _pendingImageSourcePath = null;
           _pendingImageSliceMode = false;
-          _hasGraphicMode = imagePath != null;
-          _viewMode = imagePath != null
+          _hasGraphicMode = imageSource != null;
+          _viewMode = imageSource != null
               ? MapViewMode.graphic
               : MapViewMode.tile;
           _defaultZoom = draft.defaultZoom;
@@ -52,7 +52,7 @@ extension _MapEditorScreenLifecycle on _MapEditorScreenState {
         .read(editorMapProvider.notifier)
         .create(config.cols, config.rows, config.defaultTerrain);
     _updateState(() {
-      _activeImagePath = null;
+      _activeImageSource = null;
       _pendingImageSourcePath = null;
       _pendingImageSliceMode = false;
       _viewMode = MapViewMode.tile;
@@ -72,7 +72,7 @@ extension _MapEditorScreenLifecycle on _MapEditorScreenState {
       _game = EditorWorld(
         draft: draft,
         editorState: editorState,
-        imagePath: _activeImagePath,
+        imageSource: _activeImageSource,
         initialViewMode: _viewMode,
         onTileSelected: _onTileSelected,
         onDefaultZoomChanged: (zoom) => _updateState(() => _defaultZoom = zoom),
@@ -95,7 +95,7 @@ extension _MapEditorScreenLifecycle on _MapEditorScreenState {
     ref
         .read(editorStateProvider.notifier)
         .syncToTile(
-          terrains: tile?.terrains ?? editorState.selectedTerrains.toList(),
+          terrains: tile?.terrainTags ?? editorState.selectedTerrains.toList(),
           resources: tile?.resources ?? const [],
           objectiveType: _objectiveTypeAt(draft, col, row),
           height: tile?.height ?? 0,

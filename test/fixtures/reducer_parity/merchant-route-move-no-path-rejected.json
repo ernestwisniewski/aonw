@@ -18,6 +18,11 @@
           "terrains": [
             "plains"
           ],
+          "displayTerrain": "plains",
+          "yieldTerrain": "plains",
+          "terrainTags": [
+            "plains"
+          ],
           "resources": [],
           "height": 0
         },
@@ -27,6 +32,11 @@
           "terrains": [
             "ocean"
           ],
+          "displayTerrain": "ocean",
+          "yieldTerrain": "ocean",
+          "terrainTags": [
+            "ocean"
+          ],
           "resources": [],
           "height": 0
         },
@@ -34,6 +44,11 @@
           "col": 2,
           "row": 0,
           "terrains": [
+            "plains"
+          ],
+          "displayTerrain": "plains",
+          "yieldTerrain": "plains",
+          "terrainTags": [
             "plains"
           ],
           "resources": [],

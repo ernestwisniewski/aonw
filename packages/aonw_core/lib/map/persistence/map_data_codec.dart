@@ -77,7 +77,28 @@ void _requireMapField(Map<String, dynamic> map, String field) {
 WorldTile _decodeWorldTile(Object? entry) {
   final tile = entry as Map<String, dynamic>;
   try {
+    for (final field in [
+      'col',
+      'row',
+      'terrains',
+      'displayTerrain',
+      'yieldTerrain',
+      'terrainTags',
+      'resources',
+      'height',
+    ]) {
+      if (!tile.containsKey(field)) {
+        throw WorldMapLoadException('Missing tile field: $field');
+      }
+    }
     final terrains = (tile['terrains'] as List<dynamic>)
+        .map((value) => TerrainType.fromString(value as String))
+        .toList();
+    final displayTerrain = TerrainType.fromString(
+      tile['displayTerrain'] as String,
+    );
+    final yieldTerrain = TerrainType.fromString(tile['yieldTerrain'] as String);
+    final terrainTags = (tile['terrainTags'] as List<dynamic>)
         .map((value) => TerrainType.fromString(value as String))
         .toList();
     final resources = (tile['resources'] as List<dynamic>)
@@ -86,9 +107,14 @@ WorldTile _decodeWorldTile(Object? entry) {
     if (terrains.isEmpty) {
       throw const WorldMapLoadException('Tile terrains list must not be empty');
     }
-    return WorldTile.at(
+    return WorldTile.atWithTerrainSemantics(
       coordinate: HexCoord(col: tile['col'] as int, row: tile['row'] as int),
-      terrains: terrains,
+      terrain: TileTerrainSemantics(
+        movementTerrains: terrains,
+        displayTerrain: displayTerrain,
+        yieldTerrain: yieldTerrain,
+        terrainTags: terrainTags,
+      ),
       resources: resources,
       height: tile['height'] as int,
     );
@@ -96,6 +122,8 @@ WorldTile _decodeWorldTile(Object? entry) {
     rethrow;
   } on ArgumentError catch (error) {
     throw WorldMapLoadException(error.message.toString());
+  } on TileTerrainSemanticsException catch (error) {
+    throw WorldMapLoadException(error.message);
   }
 }
 

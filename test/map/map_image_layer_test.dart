@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/rendering/map_image_layer.dart';
 import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +31,7 @@ void main() {
         cols: 1,
         rows: 1,
       );
-      await layer.loadSlices(slicePathFor: (_, _) => sliceFile.path);
+      await layer.loadSource(SavedMapSliceSetSource(tempDir.path));
 
       final image = await _renderLayer(layer);
       final outsideHex = await _pixelAt(image, x: 2, y: 2);
@@ -41,7 +42,7 @@ void main() {
       expect(insideHex.red, greaterThan(200));
     });
 
-    test('uses precomposed slice atlas for fast rendering', () async {
+    test('converts saved slices into the paged texture pipeline', () async {
       final sliceFile = File('${tempDir.path}/1x1.jpg');
       await _writeSolidJpeg(sliceFile, width: 8, height: 8, color: Colors.red);
 
@@ -50,11 +51,10 @@ void main() {
         cols: 1,
         rows: 1,
       );
-      await layer.loadSlices(slicePathFor: (_, _) => sliceFile.path);
+      await layer.loadSource(SavedMapSliceSetSource(tempDir.path));
 
-      expect(layer.hasSliceAtlasForTesting, isTrue);
+      expect(layer.usesPagedTexturesForTesting, isTrue);
 
-      layer.preferFastRendering = true;
       final image = await _renderLayer(layer);
       final outsideHex = await _pixelAt(image, x: 2, y: 2);
       final insideHex = await _pixelAt(image, x: 20, y: 17);
@@ -64,7 +64,7 @@ void main() {
       expect(insideHex.red, greaterThan(200));
     });
 
-    test('keeps fast atlas clipped while scaled', () async {
+    test('keeps imported paged texture clipped while scaled', () async {
       final sliceFile = File('${tempDir.path}/1x1.jpg');
       await _writeSolidJpeg(sliceFile, width: 8, height: 8, color: Colors.red);
 
@@ -73,9 +73,8 @@ void main() {
         cols: 1,
         rows: 1,
       );
-      await layer.loadSlices(slicePathFor: (_, _) => sliceFile.path);
+      await layer.loadSource(SavedMapSliceSetSource(tempDir.path));
 
-      layer.preferFastRendering = true;
       final image = await _renderLayer(layer, scale: 0.75);
       final outsideHex = await _pixelAt(image, x: 1, y: 1);
       final insideHex = await _pixelAt(image, x: 15, y: 13);
@@ -99,7 +98,7 @@ void main() {
         cols: 1,
         rows: 1,
       );
-      await layer.loadSlices(slicePathFor: (_, _) => sliceFile.path);
+      await layer.loadSource(SavedMapSliceSetSource(tempDir.path));
 
       final color = layer.averageColorForTile(0, 0);
 
@@ -124,7 +123,7 @@ void main() {
         cols: 2,
         rows: 1,
       );
-      await layer.loadImage(mapFile.path);
+      await layer.loadSource(SavedMapSingleImageSource(mapFile.path));
 
       final left = layer.averageColorForTile(0, 0);
       final right = layer.averageColorForTile(1, 0);

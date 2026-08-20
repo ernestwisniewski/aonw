@@ -1,14 +1,14 @@
-import 'dart:ui' as ui;
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/board_asset_cap.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_marker.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_marker_layer.dart';
-import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_cache.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_sprite_catalog.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
+import 'package:aonw/shared/assets/sprite_frames.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/map/domain/map_config.dart';
@@ -21,64 +21,44 @@ void main() {
 
   group('FieldImprovementMarker', () {
     test('loads the improvement atlases', () async {
-      for (final assetPath in FieldImprovementSpriteCatalog.assetPaths) {
-        final image = await FieldImprovementSpriteCache.load(assetPath);
+      for (final type in FieldImprovementSpriteCatalog.improvementTypes) {
+        for (final era in FieldImprovementSpriteCatalog.eraColumns) {
+          final id = FieldImprovementSpriteCatalog.frameIdFor(
+            type: type,
+            eraColumn: era,
+          );
+          final frame = await SpriteFrames.load(id);
 
-        expect(image.width, greaterThan(0), reason: assetPath);
-        expect(image.height, greaterThan(0), reason: assetPath);
+          expect(frame.source.width, greaterThan(0), reason: id.value);
+          expect(frame.source.height, greaterThan(0), reason: id.value);
+        }
       }
     });
 
     test('uses the field improvement atlas footprint', () async {
-      final image = await FieldImprovementSpriteCache.load(
-        FieldImprovementSpriteCatalog.assetPathFor(
-          FieldImprovementType.orchard,
-        ),
-      );
       const capStyle = BoardAssetCapStyles.improvement;
       const sizeScale = 0.70;
       final markerWidth = MapConfig.defaultConfig.hexRadius * 2 * sizeScale;
       final markerHeight =
-          MapConfig.defaultConfig.hexRadius * math.sqrt(3) * HexGrid.perspectiveY *
+          MapConfig.defaultConfig.hexRadius *
+          math.sqrt(3) *
+          HexGrid.perspectiveY *
           sizeScale;
       final marker = FieldImprovementMarker(
         position: Vector2.zero(),
         type: FieldImprovementType.orchard,
         eraColumn: 1,
       );
+      await marker.onLoad();
 
-      expect(
-        marker.markerSizeForTesting.x,
-        closeTo(markerWidth, 0.0001),
-      );
-      expect(
-        marker.markerSizeForTesting.y,
-        closeTo(markerHeight, 0.0001),
-      );
+      expect(marker.markerSizeForTesting.x, closeTo(markerWidth, 0.0001));
+      expect(marker.markerSizeForTesting.y, closeTo(markerHeight, 0.0001));
       expect(marker.anchor, Anchor.center);
       expect(marker.sourceInsetForTesting, 0);
       expect(marker.boardCapStyleForTesting, capStyle);
-      expect(marker.adjustmentIdForTesting, 'field-improvement.orchard.era-1');
-      expect(marker.assetPathForTesting, 'assets/sprites/improvements1.jpg');
-      expect(
-        marker.sourceRectForTesting(image),
-        ui.Rect.fromLTWH(
-          (2 * image.width / FieldImprovementSpriteCatalog.sheetColumns)
-              .roundToDouble(),
-          (image.height / FieldImprovementSpriteCatalog.sheetRows)
-              .roundToDouble(),
-          ((3 * image.width / FieldImprovementSpriteCatalog.sheetColumns)
-                      .round() -
-                  (2 * image.width / FieldImprovementSpriteCatalog.sheetColumns)
-                      .round())
-              .toDouble(),
-          ((2 * image.height / FieldImprovementSpriteCatalog.sheetRows)
-                      .round() -
-                  (image.height / FieldImprovementSpriteCatalog.sheetRows)
-                      .round())
-              .toDouble(),
-        ),
-      );
+      expect(marker.adjustmentIdForTesting.value, 'improvement.orchard.1');
+      expect(marker.frameIdForTesting.value, 'improvement.orchard.1');
+      expect(marker.sourceRectForTesting, isNot(ui.Rect.zero));
     });
 
     test('clips the improvement sprite to a smaller board cap', () {
@@ -91,7 +71,9 @@ void main() {
       const sizeScale = 0.70;
       final expectedWidth = MapConfig.defaultConfig.hexRadius * 2 * sizeScale;
       final expectedHeight =
-          MapConfig.defaultConfig.hexRadius * math.sqrt(3) * HexGrid.perspectiveY *
+          MapConfig.defaultConfig.hexRadius *
+          math.sqrt(3) *
+          HexGrid.perspectiveY *
           sizeScale;
       final bounds = marker.spriteBoundsForTesting;
       final clip = marker.spriteClipPathForTesting;

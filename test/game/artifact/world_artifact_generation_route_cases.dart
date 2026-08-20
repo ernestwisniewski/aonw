@@ -2,7 +2,7 @@ part of 'world_artifact_mechanics_test.dart';
 
 void _registerWorldArtifactGenerationRouteCases() {
   test('artifact generation avoids the Verdantia coal ridge', () {
-    final mapData = _loadMapData('assets/maps/verdantia/map.json');
+    final mapData = _loadMapData('content/maps/verdantia/map.json');
     final ridgeCoal = mapData.tiles.singleWhere(
       (tile) =>
           tile.col == 16 &&
@@ -35,7 +35,7 @@ void _registerWorldArtifactGenerationRouteCases() {
   });
 
   test('generated artifacts leave carriers a route back to a start', () {
-    final mapData = _loadMapData('assets/maps/myranth/map.json');
+    final mapData = _loadMapData('content/maps/myranth/map.json');
     const players = [
       Player(id: 'p1', name: 'P1', colorValue: 0xFF000001),
       Player(id: 'p2', name: 'P2', colorValue: 0xFF000002),

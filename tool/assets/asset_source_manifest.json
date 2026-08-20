@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "externalSource": {
+    "repository": "https://github.com/ernestwisniewski/aonw-assets.git",
+    "revision": "00b572f5137feb38d68b50684001ee24383a8369",
+    "rootEnvironmentVariable": "AONW_ASSET_MASTERS"
+  },
+  "units": [
+    {"name":"archer","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"f90ba0449c437754d78d82769a0db4ac57dd7913cd496b56c3e3309cf5316fdd"},
+    {"name":"catapult","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"b1b0cad8de1fc5ac787edac0b359f15447bd2448b4e356ba7bcb26c689e4817a"},
+    {"name":"cavalry","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"f2a0e37854002a6309274849742548e78ce1a9751af9442dca92b0cf8c097c42"},
+    {"name":"commander","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"08f7f4288de3001d117a38995e0e1d43878544bfc077e149535c83bcbd82ed3d"},
+    {"name":"fieldCannon","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"1b966406043c513e025d17df1acdb644aad8eb4ac2087cf5bf43a717f2584384"},
+    {"name":"heavyInfantry","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"ecec02615002c3ddc61c0f0030bed8e66aaccea74c165985fc061ec9b2554711"},
+    {"name":"merchant","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"work","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"43bda140c62ef8bb60a360334054f4ffc1f8e7536a48ad9f1f84ef8cc9ec9232"},
+    {"name":"reconPlane","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"911f73a6c65b537e42f0afb1c4fc3c4da9f25bdb8e2fee3ccd3166e238c28815"},
+    {"name":"rifleman","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"6f2e8a7cb847179d7d3960659376d180a9dde7f4b7d1c1b9d7016f02365d534c"},
+    {"name":"scout","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"8a8cf16cb76a64f9415b9678b2310f41fbc387b04877c003ec0e3bca649f6775"},
+    {"name":"scoutShip","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"9a2d3d7b75e3da86138d3cd8144eb6d6f89f5cf4f86b065e635bd793310acb79"},
+    {"name":"settler","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"work","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"72e559fccaf66d37952406cc17c15c89f48379c0fc61d248d112898ac100e36a"},
+    {"name":"spearman","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"538e0ca1236d7d50511585a842c8187367780c0a379452ed0692abf91a20ce28"},
+    {"name":"tank","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"d907704c9d03128ae521a8eee8b9a5b729b8744599afe2160413d72153bd3a92"},
+    {"name":"warrior","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"47fc66872b2379107e1ec339fc5a3691abf369f9cdcfc71fb2aaa22574c0db5f"},
+    {"name":"warship","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"attack","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"f6b587e48fb93973a7f55c7481e22c57e408eaeb704c893a7908b842fb40fbff"},
+    {"name":"worker","columns":6,"rows":4,"targetWidth":1536,"sourceInset":2,"animations":[{"action":"idle","row":0,"sourceColumns":[0,1,2,3,4,5]},{"action":"walk","row":1,"sourceColumns":[0,1,2,3,4,5]},{"action":"work","row":2,"sourceColumns":[0,1,2,3,4,5]},{"action":"die","row":3,"sourceColumns":[0,1,2,3,4,5]}],"sha256":"43edaf8434539ebcc672815ca5ba4c4f4be46580becf71e51948ef17eab1efe7"}
+  ],
+  "dice": {
+    "source": "sprites/dice.png",
+    "columns": 6,
+    "rows": 6,
+    "sha256": "3bf4be10b5190a11fad8f1897cfe435b470625462e1f39aa0f4fa40d4c257dc7"
+  },
+  "technologies": {
+    "source": "sprites/technologies_atlas_8x7_512.webp",
+    "columns": 8,
+    "rows": 7,
+    "sha256": "1eff9a66608dad99311649ee3d541773b27449b0bb184aaab080dada6706297c",
+    "atlasOrder": [
+      "agriculture","mining","hunting","woodworking","animalHusbandry","fishing","craftsmanship","trade",
+      "storage","waterEngineering","stoneworking","militaryOrganization","advancedTrade","construction","navigation","irrigation",
+      "banking","engineering","metallurgy","horsebackRiding","shipbuilding","administration","logistics","ironWorking",
+      "coalMining","machinery","tactics","economy","fortifications","urbanization","strategy","specialization",
+      "writing","mathematics","medicine","civilService","siegecraft","cartography","guilds","law",
+      "education","urbanPlanning","navalDoctrine","steel","bureaucracy","nationalism","scientificMethod","steamPower",
+      "electricity","combustion","flight","massProduction","radio","nuclearPhysics"
+    ]
+  },
+  "buildings": [
+    {"id":"buildings_a","source":"sprites/buildings_atlas_a_5x4_512.webp","columns":5,"rows":4,"sha256":"c20dd7a03c94be3f3abb2ec3d1c8d2e78ff92a2aa5c7be6133db11d597444846"},
+    {"id":"buildings_b","source":"sprites/buildings_atlas_b_5x4_512.webp","columns":5,"rows":4,"sha256":"61a968148769eba8e120dace546f2e4096d8e0ffa038d5bf38cccb35d052f1b5"},
+    {"id":"buildings_c","source":"sprites/buildings_atlas_c_5x4_512.webp","columns":5,"rows":4,"sha256":"33679b50e3940ffbcfaabf6987d324eed8d9c2e2b52b5c55d3908f433d938b59"}
+  ],
+  "wonders": {"source":"sprites/wonders_atlas_a_5x4_512.webp","columns":5,"rows":4,"sha256":"d7f88a0984d928c9309cebecda08d5117ca0ef74c5fe59dd42ff98dd93f99b61"},
+  "cities": {"source":"sprites/cities_atlas_6x4_512x320.jpg","columns":6,"rows":4,"sha256":"026de07a7116d702c2543de3f90356364d231f4ada876c64a470e21e36a36602"},
+  "ui": {"logoSource":"logo.png","logoSha256":"deb1201059ee91f1cd222ab50610baedd131e92b431847d3120a46c084499833"},
+  "metadata": {
+    "animationFrameAdjustments": {
+      "source": "tool/assets/authoring/animation_frame_adjustments.json",
+      "sha256": "4183cb61876394c06508e554c2567168911e21f9c71eab2a13a7cd0378801f87"
+    }
+  },
+  "improvements": [
+    {"source":"sprites/improvements1.jpg","columns":6,"rows":4,"sha256":"a3bffe6c1bfa16500d6de36833e17b78efabe85f4ec688bf093e1a12a19baa38","types":["farm","riverFarm","orchard","pasture","camp"]},
+    {"source":"sprites/improvements2.jpg","columns":6,"rows":4,"sha256":"2be19139a3d149b06cbe31d549f4c4d96df4a0ddbe735256f2b82e9f9de7bb64","types":["fishingBoats","pearlDivers","lumberMill","quarry","mine"]},
+    {"source":"sprites/improvements3.jpg","columns":6,"rows":4,"sha256":"f77ebc12fd99ab01e70778dbebecc0dc31cee7408e54c4b51c44bb220f5bc38a","types":["plantation","vineyard","tradingPost","prospectorCamp","horseRanch"]},
+    {"source":"sprites/improvements4.jpg","columns":6,"rows":4,"sha256":"75c51958070febabe763bb03a3e8acacbe1c91d999628fb75a5c3bd7aa1e28ca","types":["coalShaft","oilWell","bauxiteMine","uraniumMine"]}
+  ],
+  "icons": {
+    "aggregateSha256": "ee3a75f0ab1329ca504f2adc84a6b4096f5a2ecbe5139329d4995dbb007517a4",
+    "frames": {
+      "map.terrain.ocean":"icons/terrain_ocean.png","map.terrain.coast":"icons/terrain_coast.png","map.terrain.lake":"icons/terrain_coast.png",
+      "map.terrain.plains":"icons/terrain_plains.png","map.terrain.grassland":"icons/terrain_grassland.png","map.terrain.desert":"icons/terrain_desert.png",
+      "map.terrain.tundra":"icons/terrain_tundra.png","map.terrain.snow":"icons/terrain_snow.png","map.terrain.mountain":"icons/terrain_mountain.png",
+      "map.terrain.hills":"icons/terrain_hills.png","map.terrain.wetlands":"icons/terrain_river.png","map.terrain.jungle":"icons/terrain_jungle.png",
+      "map.terrain.forest":"icons/terrain_forest.png","map.terrain.river":"icons/terrain_river.png",
+      "map.resource.wheat":"icons/wheat.png","map.resource.fish":"icons/fish.png","map.resource.deer":"icons/deer.png","map.resource.sheep":"icons/sheep.png",
+      "map.resource.rice":"icons/rice.png","map.resource.cow":"icons/cow.png","map.resource.apple":"icons/apple.png","map.resource.banana":"icons/bananas.png",
+      "map.resource.citrus":"icons/citrus.png","map.resource.gold":"icons/gold.png","map.resource.silver":"icons/silver.png","map.resource.gems":"icons/gems.png",
+      "map.resource.silk":"icons/silk.png","map.resource.spices":"icons/spices.png","map.resource.cotton":"icons/cotton.png","map.resource.grapes":"icons/grapes.png",
+      "map.resource.ivory":"icons/ivory.png","map.resource.pearls":"icons/pearls.png","map.resource.coffee":"icons/coffee.png","map.resource.cocoa":"icons/cocoa.png",
+      "map.resource.tobacco":"icons/tobbacco.png","map.resource.sugar":"icons/sugar.png","map.resource.iron":"icons/ironore.png","map.resource.coal":"icons/coal.png",
+      "map.resource.oil":"icons/oil.png","map.resource.aluminium":"icons/aluminium.png","map.resource.uranium":"icons/uranium.png","map.resource.horses":"icons/horse.png",
+      "map.resource.marble":"icons/marble.png"
+    }
+  },
+  "maps": [
+    {"id":"verdantia","cols":30,"rows":20,"aggregateSha256":"4cc0b5f0cfd73f241f2e01a2be196bd8f7eeddb0e748bee8d7c933e5cc569f5d"},
+    {"id":"dravonia","cols":40,"rows":30,"aggregateSha256":"92f18fb477df0f8d07fd98a8f456a4f4e60db230b927c63a5a726fb4f6b71f8a"},
+    {"id":"myranth","cols":25,"rows":19,"aggregateSha256":"481db41d381c0b9d90551d02ae22b16b4f198d09ab16a1c18743af86a84859a9"},
+    {"id":"terenos","cols":20,"rows":15,"aggregateSha256":"3b722d62685388c0338013020df59ab89f91d78351ed80c0f35c9f8e322eac6f"}
+  ]
+}

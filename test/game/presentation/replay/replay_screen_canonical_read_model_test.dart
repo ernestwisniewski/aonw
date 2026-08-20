@@ -64,7 +64,7 @@ Future<void> _pumpReplay(WidgetTester tester, ReplayTimeline timeline) async {
     ProviderScope(
       overrides: [
         activeMapProvider(selection).overrideWithValue(AsyncData(_mapData)),
-        mapImagePathProvider(
+        mapImageSourceProvider(
           selection,
         ).overrideWithValue(const AsyncData(null)),
         gameSaveSnapshotProvider(

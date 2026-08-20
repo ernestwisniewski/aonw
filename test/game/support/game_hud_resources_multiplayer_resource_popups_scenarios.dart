@@ -1,7 +1,7 @@
 part of '../game_hud_test.dart';
 
 void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
-  testWidgets('top right resource pill opens controlled resources popup', (
+  testWidgets('top right resource pill opens categorized resources popup', (
     tester,
   ) async {
     final mapData = WorldMap(
@@ -48,7 +48,16 @@ void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
     await tester.pump();
 
     expect(find.text('Resources'), findsOneWidget);
-    expect(find.text('Controlled deposits'), findsOneWidget);
+    expect(
+      find.byKey(const Key('resourceBreakdown.category.bonus')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('resourceBreakdown.category.strategic')),
+      findsOneWidget,
+    );
+    expect(find.text('Bonus'), findsOneWidget);
+    expect(find.text('Strategic resources'), findsOneWidget);
     expect(find.text('iron'), findsWidgets);
     expect(find.text('wheat'), findsWidgets);
   });

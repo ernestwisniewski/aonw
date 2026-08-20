@@ -7,6 +7,7 @@ import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/movement.dart';
 import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 
 final class BasicStrategyIdleSweepPlanner {
   const BasicStrategyIdleSweepPlanner({
@@ -144,7 +145,7 @@ final class BasicStrategyIdleSweepPlanner {
   ) {
     final tile = view.mapData.tileAt(unit.col, unit.row);
     if (tile == null) return false;
-    return tile.terrains.any(combatRuleset.isDefensiveTerrain);
+    return tile.terrainTags.any(combatRuleset.isDefensiveTerrain);
   }
 
   String _key(int col, int row) => '$col:$row';

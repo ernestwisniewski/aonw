@@ -14,44 +14,49 @@ extension _CityMarkerSpriteRendering on CityMarker {
         HudPaint.fill(HudPalette.surface, alpha: MapAlpha.whisper),
       );
 
-    final image = HexIconCache.imageFor(CityMarker._citySpritePath);
-    if (image == null) {
+    final frame = _citySpriteFrame;
+    if (frame == null) {
       _paintFallbackIcon(canvas, center);
       canvas.restore();
       _paintRim(canvas, spriteClipPath);
       return false;
     }
 
-    final sourceRect = CitySpriteCatalog.sourceRectFor(
-      imageWidth: image.width,
-      imageHeight: image.height,
-      column: _spriteColumn,
-      row: _spriteRow,
+    final geometry = frame.geometryFor(
+      logicalSource: Offset.zero & frame.originalSize,
+      destination: spriteBounds,
     );
-    canvas.drawImageRect(image, sourceRect, spriteBounds, imagePaint);
-    canvas.restore();
+    canvas
+      ..drawImageRect(
+        frame.image,
+        geometry.source,
+        geometry.destination,
+        imagePaint,
+      )
+      ..restore();
     _paintRim(canvas, spriteClipPath);
     return true;
   }
 
   void _paintRim(Canvas canvas, Path outlinePath) {
     if (_selected) {
-      canvas.drawPath(
-        outlinePath,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = MapStroke.glow + 1.2
-          ..color = effectiveRimShadowColor.withAlpha(MapAlpha.regular)
-          ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 4.4),
-      );
-      canvas.drawPath(
-        outlinePath,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = MapStroke.glow
-          ..color = effectiveRimShadowColor.withAlpha(MapAlpha.faint + 10)
-          ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 2.9),
-      );
+      canvas
+        ..drawPath(
+          outlinePath,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = MapStroke.glow + 1.2
+            ..color = effectiveRimShadowColor.withAlpha(MapAlpha.regular)
+            ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 4.4),
+        )
+        ..drawPath(
+          outlinePath,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = MapStroke.glow
+            ..color = effectiveRimShadowColor.withAlpha(MapAlpha.faint + 10)
+            ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 2.9),
+        );
     }
     canvas.drawPath(
       outlinePath,

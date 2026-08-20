@@ -22,23 +22,27 @@ void main() {
     expect(item.metaLabels, ['continuous', '+1 science / turn']);
   });
 
-  test('CityProductionItem.unit exposes progress and rush state', () {
-    final l10n = AppLocalizationsEn();
-    final item = CityProductionItem.unit(
-      l10n: l10n,
-      type: GameUnitType.warrior,
-      title: 'Warrior',
-      active: true,
-      investedProduction: 10,
-      totalCost: 20,
-      productionPerTurn: 5,
-      turnsRemaining: 2,
-      currentTurn: 6,
-    );
+  test(
+    'CityProductionItem.unit exposes semantic type and production state',
+    () {
+      final l10n = AppLocalizationsEn();
+      final item = CityProductionItem.unit(
+        l10n: l10n,
+        type: GameUnitType.warrior,
+        title: 'Warrior',
+        active: true,
+        investedProduction: 10,
+        totalCost: 20,
+        productionPerTurn: 5,
+        turnsRemaining: 2,
+        currentTurn: 6,
+      );
 
-    expect(item.icon, GameIcons.warrior);
-    expect(item.progress, 0.5);
-    expect(item.canBeRushed, isTrue);
-    expect(item.effectiveEta.compactLabel(l10n), '2 turns • T8');
-  });
+      expect(item.unitType, GameUnitType.warrior);
+      expect(item.icon, isNull);
+      expect(item.progress, 0.5);
+      expect(item.canBeRushed, isTrue);
+      expect(item.effectiveEta.compactLabel(l10n), '2 turns • T8');
+    },
+  );
 }

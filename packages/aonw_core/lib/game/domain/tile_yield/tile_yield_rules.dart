@@ -21,9 +21,7 @@ abstract final class TileYieldRules {
     HexAssessmentInput input, {
     CityRuleset ruleset = CityRulesets.standard,
   }) {
-    final terrain = input.baseTerrain == null
-        ? TileYield.zero
-        : terrainYield(input.baseTerrain!, ruleset: ruleset);
+    final terrain = terrainYield(input.baseTerrain, ruleset: ruleset);
     final river = input.hasRiver ? ruleset.riverYield : TileYield.zero;
     final resources = input.resources.fold<TileYield>(
       TileYield.zero,
@@ -32,16 +30,10 @@ abstract final class TileYieldRules {
     return terrain + river + resources;
   }
 
-  static TerrainType baseTerrainFor(MapTileView tile) {
-    return baseTerrainOrNull(tile) ?? TerrainType.ocean;
-  }
-
-  static TerrainType? baseTerrainOrNull(MapTileView tile) {
-    return HexAssessmentInput.baseTerrainFrom(tile.terrains);
-  }
+  static TerrainType baseTerrainFor(MapTileView tile) => tile.yieldTerrain;
 
   static bool hasRiver(MapTileView tile) {
-    return HexAssessmentInput.hasRiverIn(tile.terrains);
+    return HexAssessmentInput.hasRiverIn(tile.terrainTags);
   }
 
   static TileYield terrainYield(

@@ -32,10 +32,10 @@ packages/aonw_core/**
 !packages/aonw_core/lib/**
 
 # Runtime map data.
-!assets/
-assets/**
-!assets/maps/
-!assets/maps/**
+!content/
+content/**
+!content/maps/
+!content/maps/**
 
 # Serverpod migrations are the only plain SQL inputs allowed in the image.
 **/*.sql

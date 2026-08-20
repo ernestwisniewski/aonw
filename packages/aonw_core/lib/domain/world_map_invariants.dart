@@ -1,7 +1,7 @@
 import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/domain/map_objective_definition.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
-import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/tile_terrain_semantics.dart';
 
 typedef WorldMapInvariantViolation = Never Function(String message);
 
@@ -19,11 +19,7 @@ Map<HexCoord, TTile> buildValidatedWorldMapIndex<TTile extends MapTileView>({
 }) {
   final ownedTiles = List<TTile>.of(tiles);
   for (final tile in ownedTiles) {
-    validateWorldMapTile(
-      terrains: tile.terrains,
-      height: tile.height,
-      reject: reject,
-    );
+    validateWorldMapTile(height: tile.height, reject: reject);
   }
 
   _validateMapMetadata(
@@ -59,15 +55,14 @@ Map<HexCoord, TTile> buildValidatedWorldMapIndex<TTile extends MapTileView>({
   return Map.unmodifiable(index);
 }
 
-/// Validates the invariants owned by one tile independently of a map.
+/// Validates non-terrain tile invariants independently of a map.
+///
+/// Terrain invariants live exclusively in [TileTerrainSemantics], which every
+/// [MapTileView] must expose as a complete value object.
 void validateWorldMapTile({
-  required Iterable<TerrainType> terrains,
   required int height,
   required WorldMapInvariantViolation reject,
 }) {
-  if (terrains.isEmpty) {
-    reject('Tile terrains must not be empty');
-  }
   if (height < 0 || height > 5) {
     reject('Tile height $height out of range [0, 5]');
   }

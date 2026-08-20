@@ -1,4 +1,5 @@
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/tile_terrain_semantics.dart';
 
 /// Read-only gameplay view of one map tile.
 ///
@@ -7,10 +8,16 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 abstract interface class MapTileView {
   int get col;
   int get row;
-  Iterable<TerrainType> get terrains;
+  TileTerrainSemantics get terrain;
   Iterable<ResourceType> get resources;
   int get height;
-  TerrainType get primaryTerrain;
+}
+
+extension MapTileTerrainView on MapTileView {
+  Iterable<TerrainType> get terrains => terrain.movementTerrains;
+  TerrainType get displayTerrain => terrain.displayTerrain;
+  TerrainType get yieldTerrain => terrain.yieldTerrain;
+  Iterable<TerrainType> get terrainTags => terrain.terrainTags;
 }
 
 /// Read-only catalog preserving the canonical tile iteration order.

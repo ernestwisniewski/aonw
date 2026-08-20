@@ -132,16 +132,23 @@ extension _ActionPaletteIconRendering on ActionPaletteComponent {
   ) {
     final type = _improvementTypeFor(option);
     if (type == null) return false;
-    final image = FieldImprovementSpriteCache.imageFor(
-      FieldImprovementSpriteCatalog.assetPathFor(type),
+    final frame = _frameFor(option);
+    if (frame == null) return false;
+    final source = Offset.zero & frame.originalSize;
+    final adjustedSource = _spriteSourceFor(option: option, baseSource: source);
+    final adjustedDestination = _spriteDestinationFor(
+      option: option,
+      baseSource: source,
+      iconRect: rect,
     );
-    if (image == null) return false;
-    final source = _sourceRectFor(image, option);
-    if (source == null) return false;
+    final geometry = frame.geometryFor(
+      logicalSource: adjustedSource,
+      destination: adjustedDestination,
+    );
     canvas.drawImageRect(
-      image,
-      _spriteSourceFor(option: option, baseSource: source),
-      _spriteDestinationFor(option: option, baseSource: source, iconRect: rect),
+      frame.image,
+      geometry.source,
+      geometry.destination,
       ActionPaletteComponent._spritePaint,
     );
     return true;
@@ -151,8 +158,7 @@ extension _ActionPaletteIconRendering on ActionPaletteComponent {
     final type = _improvementTypeFor(option);
     if (type == null) return const AnimationFrameAdjustment();
     return _adjustments.adjustmentFor(
-      assetPath: FieldImprovementSpriteCatalog.assetPathFor(type),
-      animationId: FieldImprovementSpriteCatalog.adjustmentIdForVariant(
+      sequenceId: FieldImprovementSpriteCatalog.sequenceIdFor(
         type: type,
         eraColumn: option.iconAtlasColumn ?? 0,
       ),
@@ -197,13 +203,13 @@ FieldImprovementType? _improvementTypeFor(ActionPaletteOption option) {
   return FieldImprovementSpriteCatalog.typesInAtlasOrder[row];
 }
 
-ui.Rect? _sourceRectFor(ui.Image image, ActionPaletteOption option) {
+SpriteFrame? _frameFor(ActionPaletteOption option) {
   final type = _improvementTypeFor(option);
   if (type == null) return null;
-  return FieldImprovementSpriteCatalog.sourceRectFor(
-    imageWidth: image.width,
-    imageHeight: image.height,
-    type: type,
-    eraColumn: option.iconAtlasColumn ?? 0,
+  return SpriteFrames.cached(
+    FieldImprovementSpriteCatalog.frameIdFor(
+      type: type,
+      eraColumn: option.iconAtlasColumn ?? 0,
+    ),
   );
 }

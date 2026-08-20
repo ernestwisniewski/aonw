@@ -145,7 +145,7 @@ extension _HexTilePlanningMarkers on HexTilePainter {
         .map((corner) => corner.x)
         .reduce((a, b) => math.max(a, b));
     const cityMarkerRadius = 6.5;
-    final cityMarkerInset = HexTileOverlayGeometry.compactMarkerWallMargin;
+    const cityMarkerInset = HexTileOverlayGeometry.compactMarkerWallMargin;
     final citySiteAnchor = Offset(
       geometry.topCenter.dx,
       topVertexY + cityMarkerRadius + cityMarkerInset,
@@ -190,10 +190,7 @@ extension _HexTilePlanningMarkers on HexTilePainter {
     required bool showCityGrowthMarker,
   }) {
     if (showCitySiteMarker && showCityGrowthMarker) {
-      return (
-        citySite: citySiteAnchor,
-        cityGrowth: cityGrowthAnchor,
-      );
+      return (citySite: citySiteAnchor, cityGrowth: cityGrowthAnchor);
     }
     if (showCitySiteMarker) {
       return (citySite: citySiteAnchor, cityGrowth: null);

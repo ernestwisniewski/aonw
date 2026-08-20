@@ -3,6 +3,7 @@ import 'package:aonw/editor/map_editor_screen.dart';
 import 'package:aonw/editor/providers/editor_providers.dart';
 import 'package:aonw/editor/widgets/editor_top_bar.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/application/map_repository.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/map/rendering/hex_tile.dart';
@@ -152,5 +153,6 @@ final class _FakeMapRepository implements MapRepository {
   Future<WorldMap> loadMap(MapSelection selection) async => mapData;
 
   @override
-  Future<String?> resolveImagePath(MapSelection selection) async => null;
+  Future<MapImageSource?> resolveImageSource(MapSelection selection) async =>
+      null;
 }

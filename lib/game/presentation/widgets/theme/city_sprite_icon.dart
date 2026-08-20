@@ -13,12 +13,10 @@ abstract final class CitySpriteIconCatalog {
       CitySpriteCatalog.technologyProfileCount - 1,
     );
     return SpriteAtlasIconData(
-      assetPath: CitySpriteCatalog.assetPath,
-      columns: CitySpriteCatalog.columns,
-      rows: CitySpriteCatalog.rows,
-      column: level.toInt(),
-      row: profile.toInt(),
-      sourceInset: CitySpriteCatalog.sourceInset,
+      frameId: CitySpriteCatalog.frameIdFor(
+        visualLevel: level.toInt(),
+        technologyProfile: CitySpriteTechnologyProfile.values[profile.toInt()],
+      ),
       cropToContent: false,
     );
   }

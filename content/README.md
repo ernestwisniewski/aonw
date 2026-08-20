@@ -6,16 +6,25 @@ resources, elevation, and objectives. Renderer meshes, textures, materials,
 audio, and localization remain client-owned assets.
 
 Map schema version 1 uses a complete odd-q, flat-top grid. Tiles are stored in
-row-major order by the canonical serializer. Every terrain list contains
-exactly one primary terrain as its first entry, followed only by feature
-terrains. Resource and objective order is normalized by `aonw_content`, so
-content hashes remain stable across semantically equivalent input ordering.
+row-major order by the canonical serializer. Terrain meaning is explicit and
+split by bounded context on every tile:
 
-The existing maps under `assets/maps/` remain unchanged for Flutter AoNW1.
-Their versioned counterparts under `content/maps/` are the only logical maps
-consumed by Rust and Godot. Existing JPG slices remain reference artwork for
-Godot, but the unversioned JSON files are not part of the new runtime boundary.
-All shared maps must use the schema in `schemas/map-v1.schema.json`.
+- `terrains` is the normalized movement profile: exactly one primary terrain
+  followed only by movement features;
+- `displayTerrain` is the authored visual identity;
+- `yieldTerrain` owns the base economic yield and is never `river`;
+- `terrainTags` is the complete authored tag set used by combat, economy, AI,
+  and presentation rules.
+
+The strict loaders require all four values and validate their relationships;
+runtime code never derives one meaning from list order. Resource and objective
+order is normalized by `aonw_content`, so content hashes remain deterministic.
+
+Maps under `content/maps/` are the only logical maps consumed by Rust, Flutter,
+the server, and Godot. Final client-owned artwork is generated separately under
+`assets/runtime/maps/`; private source artwork and unversioned map JSON are not
+runtime inputs. All shared maps must use the schema in
+`schemas/map-v1.schema.json`.
 
 `content/scenarios/` contains strict starting placements bound to one map ID
 and one immutable ruleset ID. Rust validates both content identities before it

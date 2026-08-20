@@ -1,92 +1,32 @@
 import 'dart:ui' as ui;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
-import 'package:aonw/shared/assets/sprite_atlas_frame_bounds.dart';
-import 'package:aonw/shared/assets/sprite_atlas_geometry.dart';
-import 'package:aonw/shared/assets/ui_image_cache.dart';
+import 'package:aonw/shared/assets/sprite_frame_id.dart';
+import 'package:aonw/shared/assets/sprite_frame_repository.dart';
+import 'package:aonw/shared/assets/sprite_frames.dart';
 import 'package:aonw/shared/theme/surface_elevation.dart';
 import 'package:flutter/material.dart';
 
 class SpriteAtlasIconData {
-  final String assetPath;
-  final int columns;
-  final int rows;
-  final int column;
-  final int row;
-  final double sourceInset;
-  final double contentPadding;
-  final bool cropToContent;
-  final String? adjustmentId;
-  final int adjustmentFrameIndex;
-  final ui.Rect Function(ui.Image image)? sourceRectResolver;
-
   const SpriteAtlasIconData({
-    required this.assetPath,
-    required this.columns,
-    required this.rows,
-    required this.column,
-    required this.row,
-    this.sourceInset = 2.0,
-    this.contentPadding = 18.0,
-    this.cropToContent = true,
-    this.adjustmentId,
+    required this.frameId,
+    this.adjustmentSequenceId,
     this.adjustmentFrameIndex = 0,
-    this.sourceRectResolver,
+    this.cropToContent = true,
   });
 
-  ui.Rect sourceRectFor(ui.Image image) {
-    final resolver = sourceRectResolver;
-    if (resolver != null) return resolver(image);
-
-    return SpriteAtlasGeometry.sourceRectFor(
-      imageWidth: image.width,
-      imageHeight: image.height,
-      columns: columns,
-      rows: rows,
-      column: column,
-      row: row,
-      sourceInset: sourceInset,
-    );
-  }
-
-  Future<ui.Rect> resolvedSourceRectFor(ui.Image image) async {
-    final cachedFrame = cachedSourceRectFor(image);
-    if (cachedFrame != null) return cachedFrame;
-
-    return SpriteAtlasFrameBoundsCache.frameRectFor(
-      cacheKey: assetPath,
-      image: image,
-      columns: columns,
-      rows: rows,
-      column: column,
-      row: row,
-      sourceInset: sourceInset,
-      contentPadding: contentPadding,
-    );
-  }
-
-  ui.Rect? cachedSourceRectFor(ui.Image image) {
-    if (!cropToContent) return sourceRectFor(image);
-    return SpriteAtlasFrameBoundsCache.cachedFrameRectFor(
-      cacheKey: assetPath,
-      image: image,
-      columns: columns,
-      rows: rows,
-      column: column,
-      row: row,
-      sourceInset: sourceInset,
-      contentPadding: contentPadding,
-    );
-  }
+  final SpriteFrameId frameId;
+  final SpriteSequenceId? adjustmentSequenceId;
+  final int adjustmentFrameIndex;
+  final bool cropToContent;
 
   AnimationFrameAdjustment adjustmentFor(
     AnimationFrameAdjustmentCatalog catalog,
   ) {
-    final id = adjustmentId;
-    if (id == null) return const AnimationFrameAdjustment();
+    final sequenceId = adjustmentSequenceId;
+    if (sequenceId == null) return const AnimationFrameAdjustment();
     return catalog.adjustmentFor(
-      assetPath: assetPath,
-      animationId: id,
+      sequenceId: sequenceId,
       frameIndex: adjustmentFrameIndex,
     );
   }
@@ -94,44 +34,22 @@ class SpriteAtlasIconData {
   @override
   bool operator ==(Object other) {
     return other is SpriteAtlasIconData &&
-        other.assetPath == assetPath &&
-        other.columns == columns &&
-        other.rows == rows &&
-        other.column == column &&
-        other.row == row &&
-        other.sourceInset == sourceInset &&
-        other.contentPadding == contentPadding &&
-        other.cropToContent == cropToContent &&
-        other.adjustmentId == adjustmentId &&
+        other.frameId == frameId &&
+        other.adjustmentSequenceId == adjustmentSequenceId &&
         other.adjustmentFrameIndex == adjustmentFrameIndex &&
-        other.sourceRectResolver == sourceRectResolver;
+        other.cropToContent == cropToContent;
   }
 
   @override
   int get hashCode => Object.hash(
-    assetPath,
-    columns,
-    rows,
-    column,
-    row,
-    sourceInset,
-    contentPadding,
-    cropToContent,
-    adjustmentId,
+    frameId,
+    adjustmentSequenceId,
     adjustmentFrameIndex,
-    sourceRectResolver,
+    cropToContent,
   );
 }
 
 class SpriteAtlasIcon extends StatefulWidget {
-  final SpriteAtlasIconData? data;
-  final double size;
-  final double? width;
-  final double? height;
-  final double opacity;
-  final BoxFit fit;
-  final Alignment alignment;
-
   const SpriteAtlasIcon({
     required this.data,
     required this.size,
@@ -142,6 +60,14 @@ class SpriteAtlasIcon extends StatefulWidget {
     this.alignment = Alignment.center,
     super.key,
   });
+
+  final SpriteAtlasIconData? data;
+  final double size;
+  final double? width;
+  final double? height;
+  final double opacity;
+  final BoxFit fit;
+  final Alignment alignment;
 
   @override
   State<SpriteAtlasIcon> createState() => _SpriteAtlasIconState();
@@ -166,6 +92,11 @@ class _SpriteAtlasIconState extends State<SpriteAtlasIcon> {
         ? FutureBuilder<_LoadedSpriteAtlasIcon>(
             future: _pendingFrame ??= _loadIconFrame(data),
             builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return ErrorWidget(
+                  snapshot.error ?? StateError('Could not load sprite icon'),
+                );
+              }
               final loaded = snapshot.data;
               if (loaded == null) return _emptyBox();
               return _paintedIcon(data, loaded);
@@ -183,40 +114,23 @@ class _SpriteAtlasIconState extends State<SpriteAtlasIcon> {
   Future<_LoadedSpriteAtlasIcon> _loadIconFrame(
     SpriteAtlasIconData data,
   ) async {
-    final image =
-        UiImageCache.imageFor(data.assetPath) ??
-        await UiImageCache.load(data.assetPath);
-    return _loadIconFrameFromImage(data, image);
-  }
-
-  Future<_LoadedSpriteAtlasIcon> _loadIconFrameFromImage(
-    SpriteAtlasIconData data,
-    ui.Image image,
-  ) async {
-    final sourceRect = await data.resolvedSourceRectFor(image);
+    final frame = await SpriteFrames.load(data.frameId);
     return _LoadedSpriteAtlasIcon(
       adjustment: await _adjustmentFor(data),
-      image: image,
-      sourceRect: sourceRect,
+      frame: frame,
     );
   }
 
   _LoadedSpriteAtlasIcon? _frameFromCaches(SpriteAtlasIconData data) {
-    final image = UiImageCache.imageFor(data.assetPath);
-    if (image == null) return null;
-    final sourceRect = data.cachedSourceRectFor(image);
-    if (sourceRect == null) return null;
+    final frame = SpriteFrames.cached(data.frameId);
+    if (frame == null) return null;
     final adjustment = _cachedAdjustmentFor(data);
     if (adjustment == null) return null;
-    return _LoadedSpriteAtlasIcon(
-      adjustment: adjustment,
-      image: image,
-      sourceRect: sourceRect,
-    );
+    return _LoadedSpriteAtlasIcon(adjustment: adjustment, frame: frame);
   }
 
   AnimationFrameAdjustment? _cachedAdjustmentFor(SpriteAtlasIconData data) {
-    if (data.adjustmentId == null) {
+    if (data.adjustmentSequenceId == null) {
       return const AnimationFrameAdjustment();
     }
     final catalog = AnimationFrameAdjustmentCatalogCache.cached;
@@ -239,8 +153,7 @@ class _SpriteAtlasIconState extends State<SpriteAtlasIcon> {
       child: CustomPaint(
         painter: _SpriteAtlasIconPainter(
           data,
-          loaded.image,
-          loaded.sourceRect,
+          loaded.frame,
           loaded.adjustment,
           widget.fit,
           widget.alignment,
@@ -258,53 +171,56 @@ class _SpriteAtlasIconState extends State<SpriteAtlasIcon> {
 }
 
 class _LoadedSpriteAtlasIcon {
-  final AnimationFrameAdjustment adjustment;
-  final ui.Image image;
-  final ui.Rect sourceRect;
+  const _LoadedSpriteAtlasIcon({required this.adjustment, required this.frame});
 
-  const _LoadedSpriteAtlasIcon({
-    required this.adjustment,
-    required this.image,
-    required this.sourceRect,
-  });
+  final AnimationFrameAdjustment adjustment;
+  final SpriteFrame frame;
 }
 
 class _SpriteAtlasIconPainter extends CustomPainter {
-  final SpriteAtlasIconData data;
-  final ui.Image image;
-  final ui.Rect sourceRect;
-  final AnimationFrameAdjustment adjustment;
-  final BoxFit fit;
-  final Alignment alignment;
-
   const _SpriteAtlasIconPainter(
     this.data,
-    this.image,
-    this.sourceRect,
+    this.frame,
     this.adjustment,
     this.fit,
     this.alignment,
   );
 
+  final SpriteAtlasIconData data;
+  final SpriteFrame frame;
+  final AnimationFrameAdjustment adjustment;
+  final BoxFit fit;
+  final Alignment alignment;
+
   @override
   void paint(Canvas canvas, Size size) {
-    final fitted = applyBoxFit(fit, sourceRect.size, size);
-    final fittedSourceRect = alignment.inscribe(fitted.source, sourceRect);
-    final baseDestinationRect = alignment.inscribe(
+    final fullLogicalRect = ui.Offset.zero & frame.originalSize;
+    final fitSource = data.cropToContent
+        ? frame.contentBounds
+        : fullLogicalRect;
+    final fitted = applyBoxFit(fit, fitSource.size, size);
+    final fittedLogicalSource = alignment.inscribe(fitted.source, fitSource);
+    final baseDestination = alignment.inscribe(
       fitted.destination,
       Offset.zero & size,
     );
     final offset = adjustment.scaledOffset(
-      baseSize: fittedSourceRect.size,
-      targetSize: baseDestinationRect.size,
+      baseSize: fittedLogicalSource.size,
+      targetSize: baseDestination.size,
     );
-    final adjustedSourceRect = adjustment.croppedSourceFor(fittedSourceRect);
-    final destinationRect = adjustment
+    final logicalSource = adjustment.croppedSourceFor(fittedLogicalSource);
+    final destination = adjustment
         .adjustedDestinationFor(
-          baseSource: fittedSourceRect,
-          baseDestination: baseDestinationRect,
+          baseSource: fittedLogicalSource,
+          baseDestination: baseDestination,
         )
         .shift(offset);
+    final geometry = frame.geometryFor(
+      logicalSource: logicalSource,
+      destination: destination,
+    );
+    if (geometry.source.isEmpty || geometry.destination.isEmpty) return;
+
     final shadowOffset = Offset(0, size.shortestSide * 0.035);
     final shadowPaint = Paint()
       ..filterQuality = FilterQuality.medium
@@ -312,22 +228,25 @@ class _SpriteAtlasIconPainter extends CustomPainter {
         SurfaceElevation.flat.fill(background: Colors.black, alpha: 100),
         BlendMode.srcIn,
       );
-    canvas.drawImageRect(
-      image,
-      adjustedSourceRect,
-      destinationRect.shift(shadowOffset),
-      shadowPaint,
-    );
-
-    final paint = Paint()..filterQuality = FilterQuality.high;
-    canvas.drawImageRect(image, adjustedSourceRect, destinationRect, paint);
+    canvas
+      ..drawImageRect(
+        frame.image,
+        geometry.source,
+        geometry.destination.shift(shadowOffset),
+        shadowPaint,
+      )
+      ..drawImageRect(
+        frame.image,
+        geometry.source,
+        geometry.destination,
+        Paint()..filterQuality = FilterQuality.high,
+      );
   }
 
   @override
   bool shouldRepaint(covariant _SpriteAtlasIconPainter oldDelegate) {
-    return oldDelegate.image != image ||
+    return oldDelegate.frame != frame ||
         oldDelegate.data != data ||
-        oldDelegate.sourceRect != sourceRect ||
         oldDelegate.adjustment != adjustment ||
         oldDelegate.fit != fit ||
         oldDelegate.alignment != alignment;

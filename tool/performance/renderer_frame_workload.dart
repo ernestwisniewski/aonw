@@ -207,7 +207,7 @@ final class _BenchmarkHexGrid extends HexGrid {
     return _CountingHexTile(
       paintCollector: paintCollector,
       hexRadius: config.hexRadius,
-      terrains: tileData.terrains,
+      terrain: tileData.terrain,
       resources: tileData.resources,
       tileHeight: tileData.height,
       neighborHeights: neighborHeights,
@@ -232,7 +232,7 @@ final class _CountingHexTile extends HexTile {
   _CountingHexTile({
     required this.paintCollector,
     required super.hexRadius,
-    required super.terrains,
+    required super.terrain,
     required super.resources,
     required super.onTapped,
     required super.tileHeight,

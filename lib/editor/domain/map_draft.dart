@@ -7,9 +7,10 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 
 /// Mutable map state owned exclusively by the map editor.
 ///
-/// It deliberately permits incomplete tile data while a user is painting. Call
-/// [freeze] at a persistence boundary to validate it as an immutable
-/// [WorldMap]. [toWorldMap] is the single editor JSON/persistence projection.
+/// Every tile keeps a complete [TileTerrainSemantics] value while the user is
+/// painting. [freeze] validates aggregate map metadata and bounds before the
+/// draft crosses a persistence boundary. [toWorldMap] is the single editor
+/// JSON/persistence projection.
 final class MapDraft implements MapTileSource<WorldTile> {
   MapDraft({
     required int cols,
@@ -88,32 +89,22 @@ final class MapDraft implements MapTileSource<WorldTile> {
   bool updateTile({
     required int col,
     required int row,
-    required Iterable<TerrainType> terrains,
+    required Iterable<TerrainType> authoredTerrainTags,
     required Iterable<ResourceType> resources,
     required int height,
   }) {
     final index = _tileIndices[(col, row)];
     if (index == null) return false;
-    _tiles[index] = WorldTile(
+    _tiles[index] = WorldTile.withTerrainSemantics(
       col: col,
       row: row,
-      terrains: List.unmodifiable(terrains),
+      terrain: TileTerrainSemantics.fromAuthoredTerrainTags(
+        authoredTerrainTags,
+      ),
       resources: List.unmodifiable(resources),
       height: height,
     );
     return true;
-  }
-
-  bool clearTerrainsAt(int col, int row) {
-    final tile = tileAt(col, row);
-    if (tile == null || tile.terrains.isEmpty) return tile != null;
-    return updateTile(
-      col: col,
-      row: row,
-      terrains: const [],
-      resources: tile.resources,
-      height: tile.height,
-    );
   }
 
   bool removeObjectiveAt(int col, int row) {
@@ -131,16 +122,16 @@ final class MapDraft implements MapTileSource<WorldTile> {
       ..sort((a, b) => a.id.compareTo(b.id));
   }
 
-  bool addColumn({required Iterable<TerrainType> terrains}) {
+  bool addColumn({required Iterable<TerrainType> authoredTerrainTags}) {
     if (_cols >= MapConstraints.maxCols) return false;
-    final terrainValues = List<TerrainType>.of(terrains);
+    final terrainValues = List<TerrainType>.of(authoredTerrainTags);
     final newCol = _cols;
     for (var row = 0; row < _rows; row++) {
       _tiles.add(
-        WorldTile(
+        WorldTile.withTerrainSemantics(
           col: newCol,
           row: row,
-          terrains: List.unmodifiable(terrainValues),
+          terrain: TileTerrainSemantics.fromAuthoredTerrainTags(terrainValues),
           resources: const [],
           height: 0,
         ),
@@ -161,16 +152,16 @@ final class MapDraft implements MapTileSource<WorldTile> {
     return true;
   }
 
-  bool addRow({required Iterable<TerrainType> terrains}) {
+  bool addRow({required Iterable<TerrainType> authoredTerrainTags}) {
     if (_rows >= MapConstraints.maxRows) return false;
-    final terrainValues = List<TerrainType>.of(terrains);
+    final terrainValues = List<TerrainType>.of(authoredTerrainTags);
     final newRow = _rows;
     for (var col = 0; col < _cols; col++) {
       _tiles.add(
-        WorldTile(
+        WorldTile.withTerrainSemantics(
           col: col,
           row: newRow,
-          terrains: List.unmodifiable(terrainValues),
+          terrain: TileTerrainSemantics.fromAuthoredTerrainTags(terrainValues),
           resources: const [],
           height: 0,
         ),
@@ -260,10 +251,10 @@ final class MapDraft implements MapTileSource<WorldTile> {
 }
 
 WorldTile _copyTile(WorldTile tile) {
-  return WorldTile(
+  return WorldTile.withTerrainSemantics(
     col: tile.col,
     row: tile.row,
-    terrains: List.unmodifiable(tile.terrains),
+    terrain: tile.terrain,
     resources: List.unmodifiable(tile.resources),
     height: tile.height,
   );

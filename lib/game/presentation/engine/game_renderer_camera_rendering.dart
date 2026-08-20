@@ -71,15 +71,9 @@ extension GameRendererCameraRendering on GameRenderer {
   }
 
   void _setFastCameraRendering(bool value) {
-    if (_cameraFastRendering == value) {
-      if (_isReady && !_isDisposed) {
-        _sceneBuilder.imageLayer.preferFastRendering = value;
-      }
-      return;
-    }
+    if (_cameraFastRendering == value) return;
     _cameraFastRendering = value;
     if (_isReady && !_isDisposed) {
-      _sceneBuilder.imageLayer.preferFastRendering = value;
       _syncMarkerDensityForZoom(force: true);
     }
   }

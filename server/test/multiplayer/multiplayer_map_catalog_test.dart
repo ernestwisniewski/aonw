@@ -5,6 +5,20 @@ import 'package:aonw_server/src/multiplayer/multiplayer_map_catalog.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test(
+    'loads canonical repository content through the default roots',
+    () async {
+      final loaded = await const FileMultiplayerMapCatalog().loadAssetMap(
+        'aonw2_starter',
+      );
+
+      expect(loaded.mapName, 'aonw2_starter');
+      expect(loaded.cols, 7);
+      expect(loaded.rows, 7);
+      expect(loaded.tiles, hasLength(49));
+    },
+  );
+
   test('loads the first existing safe map from configured roots', () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'aonw-map-catalog-',
@@ -33,7 +47,10 @@ void main() {
     final tile = loaded.tiles.single;
     expect(tile.col, 0);
     expect(tile.row, 0);
-    expect(tile.terrains, [TerrainType.forest]);
+    expect(tile.terrains, [TerrainType.grassland, TerrainType.forest]);
+    expect(tile.displayTerrain, TerrainType.forest);
+    expect(tile.yieldTerrain, TerrainType.forest);
+    expect(tile.terrainTags, [TerrainType.forest]);
     expect(tile.resources, [ResourceType.deer]);
     expect(tile.height, 2);
   });

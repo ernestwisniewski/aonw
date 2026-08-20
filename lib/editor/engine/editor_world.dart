@@ -1,6 +1,7 @@
 import 'package:aonw/editor/domain/map_draft.dart';
 import 'package:aonw/editor/engine/editor_grid.dart';
 import 'package:aonw/editor/engine/editor_state.dart';
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/rendering/hex_world.dart';
 import 'package:aonw/map/rendering/map_image_layer.dart';
 import 'package:aonw/map/rendering/map_objective_marker_layer.dart';
@@ -10,12 +11,10 @@ import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flame/events.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 
 class EditorWorld extends HexWorld with KeyboardEvents, HexInputBehavior {
   final MapDraft draft;
-  final String? imagePath;
+  final MapImageSource? imageSource;
   EditorState _editorState;
   MapViewMode _viewMode;
   HexDisplaySettings _displaySettings;
@@ -29,7 +28,7 @@ class EditorWorld extends HexWorld with KeyboardEvents, HexInputBehavior {
   EditorWorld({
     required this.draft,
     required EditorState editorState,
-    this.imagePath,
+    this.imageSource,
     this.onTileSelected,
     this.onDefaultZoomChanged,
     MapViewMode initialViewMode = MapViewMode.tile,
@@ -79,8 +78,8 @@ class EditorWorld extends HexWorld with KeyboardEvents, HexInputBehavior {
 
   @override
   Future<void> buildWorld() async {
-    final overlayImagePath = imagePath;
-    _hasReferenceImage = overlayImagePath != null;
+    final overlayImageSource = imageSource;
+    _hasReferenceImage = overlayImageSource != null;
 
     _imageLayer = MapImageLayer(
       config: MapConfig.defaultConfig,
@@ -88,8 +87,8 @@ class EditorWorld extends HexWorld with KeyboardEvents, HexInputBehavior {
       rows: draft.rows,
     );
     await world.add(_imageLayer);
-    if (overlayImagePath != null) {
-      await _loadImageIntoLayer(overlayImagePath);
+    if (overlayImageSource != null) {
+      await _loadImageIntoLayer(overlayImageSource);
     }
 
     _grid = EditorGrid(
@@ -136,41 +135,21 @@ class EditorWorld extends HexWorld with KeyboardEvents, HexInputBehavior {
     _imageLayer.resize(cols, rows);
   }
 
-  Future<void> loadImageOverlay(String imagePath) async {
+  Future<void> loadImageOverlay(MapImageSource source) async {
     if (!_isReady) return;
-    await _loadImageIntoLayer(imagePath);
+    await _loadImageIntoLayer(source);
     _hasReferenceImage = _imageLayer.hasImage;
     _applyViewMode();
   }
 
-  Future<void> _loadImageIntoLayer(String imagePath) =>
-      _imageLayer.loadAuto(imagePath);
+  Future<void> _loadImageIntoLayer(MapImageSource source) =>
+      _imageLayer.loadSource(source);
 
   /// Re-paints the selected tile with the current editorState.
   void repaintSelected() {
     if (!_isReady) return;
     _grid.editorState = _editorState;
     _grid.repaintSelected();
-  }
-
-  void clearSelectedTerrains() {
-    if (!_isReady) return;
-    if (!_grid.clearSelectedTerrains()) return;
-    final coords = _grid.selectedTileCoords;
-    if (coords == null) return;
-    onTileSelected?.call(coords.col, coords.row);
-  }
-
-  @override
-  KeyEventResult onKeyEvent(
-    KeyEvent event,
-    Set<LogicalKeyboardKey> keysPressed,
-  ) {
-    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.keyT) {
-      clearSelectedTerrains();
-      return KeyEventResult.handled;
-    }
-    return super.onKeyEvent(event, keysPressed);
   }
 
   void addColumn() {

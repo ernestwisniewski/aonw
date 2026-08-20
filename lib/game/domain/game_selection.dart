@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/tile_terrain_semantics.dart';
 
 enum GameSelectionType { tile, fieldImprovement, unit, city }
 
@@ -12,16 +13,15 @@ final class SelectedTile implements MapTileView {
     required this.col,
     required this.row,
     required this.height,
-    required Iterable<TerrainType> terrains,
+    required this.terrain,
     required Iterable<ResourceType> resources,
-  }) : terrains = List.unmodifiable(terrains),
-       resources = List.unmodifiable(resources);
+  }) : resources = List.unmodifiable(resources);
 
   SelectedTile._withFrozenResources(SelectedTile source, this.resources)
     : col = source.col,
       row = source.row,
       height = source.height,
-      terrains = source.terrains;
+      terrain = source.terrain;
 
   factory SelectedTile.fromMapTileView(MapTileView tile) {
     if (tile is SelectedTile) return tile;
@@ -29,7 +29,7 @@ final class SelectedTile implements MapTileView {
       col: tile.col,
       row: tile.row,
       height: tile.height,
-      terrains: tile.terrains,
+      terrain: tile.terrain,
       resources: tile.resources,
     );
   }
@@ -44,14 +44,15 @@ final class SelectedTile implements MapTileView {
   final int height;
 
   @override
-  final List<TerrainType> terrains;
+  final TileTerrainSemantics terrain;
+
+  List<TerrainType> get terrains => terrain.movementTerrains;
+  TerrainType get displayTerrain => terrain.displayTerrain;
+  TerrainType get yieldTerrain => terrain.yieldTerrain;
+  List<TerrainType> get terrainTags => terrain.terrainTags;
 
   @override
   final List<ResourceType> resources;
-
-  @override
-  TerrainType get primaryTerrain =>
-      terrains.isEmpty ? TerrainType.ocean : terrains.first;
 
   SelectedTile withResources(Iterable<ResourceType> visibleResources) {
     final copied = List<ResourceType>.unmodifiable(visibleResources);

@@ -6,13 +6,13 @@ void _registerGameSessionNotifierScenarios() {
 
     ProviderContainer makeContainer({
       required AsyncValue<WorldMap> mapAsync,
-      AsyncValue<String?> imagePathAsync = const AsyncData(null),
+      AsyncValue<MapImageSource?> imageSourceAsync = const AsyncData(null),
       AsyncValue<CanonicalGameSnapshot?> snapshotAsync = const AsyncData(null),
     }) {
       return ProviderContainer(
         overrides: [
           activeMapProvider(selection).overrideWithValue(mapAsync),
-          mapImagePathProvider(selection).overrideWithValue(imagePathAsync),
+          mapImageSourceProvider(selection).overrideWithValue(imageSourceAsync),
           gameSaveSnapshotProvider('save_1').overrideWithValue(snapshotAsync),
         ],
       );
@@ -27,33 +27,38 @@ void _registerGameSessionNotifierScenarios() {
       );
       expect(session, isNotNull);
       expect(session.viewMode, MapViewMode.graphic);
-      expect(session.imagePath, isNull);
+      expect(session.imageSource, isNull);
     });
 
-    test('resolves with imagePath when image provider has data', () async {
+    test('resolves with a typed source when image provider has data', () async {
       final container = makeContainer(
         mapAsync: AsyncData(_makeMap()),
-        imagePathAsync: const AsyncData('/tmp/map.png'),
+        imageSourceAsync: const AsyncData(
+          SavedMapSingleImageSource('/tmp/map.png'),
+        ),
       );
       addTearDown(container.dispose);
 
       final session = await container.read(
         gameSessionProvider(selection, 'save_1').future,
       );
-      expect(session.imagePath, '/tmp/map.png');
+      expect(
+        session.imageSource,
+        const SavedMapSingleImageSource('/tmp/map.png'),
+      );
     });
 
-    test('resolves with null imagePath when image provider errors', () async {
+    test('propagates image source errors', () async {
       final container = makeContainer(
         mapAsync: AsyncData(_makeMap()),
-        imagePathAsync: AsyncError(Exception('no image'), StackTrace.empty),
+        imageSourceAsync: AsyncError(Exception('no image'), StackTrace.empty),
       );
       addTearDown(container.dispose);
 
-      final session = await container.read(
-        gameSessionProvider(selection, 'save_1').future,
+      await expectLater(
+        container.read(gameSessionProvider(selection, 'save_1').future),
+        throwsA(anything),
       );
-      expect(session.imagePath, isNull);
     });
 
     test('propagates map load error as AsyncError', () async {
@@ -125,7 +130,7 @@ void _registerGameSessionNotifierScenarios() {
             activeMapProvider(
               selection,
             ).overrideWithValue(AsyncData(_makeMap())),
-            mapImagePathProvider(
+            mapImageSourceProvider(
               selection,
             ).overrideWithValue(const AsyncData(null)),
             gameSaveSnapshotProvider(

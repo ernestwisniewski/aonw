@@ -1,3 +1,4 @@
+import 'package:aonw/shared/assets/sprite_frame_id.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/material.dart';
 
@@ -25,56 +26,56 @@ abstract final class TerrainTheme {
     TerrainType.river: Color(0xFF3a8fbf),
   };
 
-  static const Map<TerrainType, String> _terrainIcons = {
-    TerrainType.ocean: 'assets/icons/terrain_ocean.png',
-    TerrainType.coast: 'assets/icons/terrain_coast.png',
-    TerrainType.lake: 'assets/icons/terrain_coast.png',
-    TerrainType.plains: 'assets/icons/terrain_plains.png',
-    TerrainType.grassland: 'assets/icons/terrain_grassland.png',
-    TerrainType.desert: 'assets/icons/terrain_desert.png',
-    TerrainType.tundra: 'assets/icons/terrain_tundra.png',
-    TerrainType.snow: 'assets/icons/terrain_snow.png',
-    TerrainType.mountain: 'assets/icons/terrain_mountain.png',
-    TerrainType.hills: 'assets/icons/terrain_hills.png',
-    TerrainType.wetlands: 'assets/icons/terrain_river.png',
-    TerrainType.jungle: 'assets/icons/terrain_jungle.png',
-    TerrainType.forest: 'assets/icons/terrain_forest.png',
-    TerrainType.river: 'assets/icons/terrain_river.png',
+  static const Map<TerrainType, SpriteFrameId> _terrainIcons = {
+    TerrainType.ocean: SpriteFrameId('map.terrain.ocean'),
+    TerrainType.coast: SpriteFrameId('map.terrain.coast'),
+    TerrainType.lake: SpriteFrameId('map.terrain.lake'),
+    TerrainType.plains: SpriteFrameId('map.terrain.plains'),
+    TerrainType.grassland: SpriteFrameId('map.terrain.grassland'),
+    TerrainType.desert: SpriteFrameId('map.terrain.desert'),
+    TerrainType.tundra: SpriteFrameId('map.terrain.tundra'),
+    TerrainType.snow: SpriteFrameId('map.terrain.snow'),
+    TerrainType.mountain: SpriteFrameId('map.terrain.mountain'),
+    TerrainType.hills: SpriteFrameId('map.terrain.hills'),
+    TerrainType.wetlands: SpriteFrameId('map.terrain.wetlands'),
+    TerrainType.jungle: SpriteFrameId('map.terrain.jungle'),
+    TerrainType.forest: SpriteFrameId('map.terrain.forest'),
+    TerrainType.river: SpriteFrameId('map.terrain.river'),
   };
 
-  static const Map<ResourceType, String> resourceIcons = {
+  static const Map<ResourceType, SpriteFrameId> resourceIcons = {
     // Bonus
-    ResourceType.wheat: 'assets/icons/wheat.png',
-    ResourceType.fish: 'assets/icons/fish.png',
-    ResourceType.deer: 'assets/icons/deer.png',
-    ResourceType.sheep: 'assets/icons/sheep.png',
-    ResourceType.rice: 'assets/icons/rice.png',
-    ResourceType.cow: 'assets/icons/cow.png',
-    ResourceType.apple: 'assets/icons/apple.png',
-    ResourceType.banana: 'assets/icons/bananas.png',
-    ResourceType.citrus: 'assets/icons/citrus.png',
+    ResourceType.wheat: SpriteFrameId('map.resource.wheat'),
+    ResourceType.fish: SpriteFrameId('map.resource.fish'),
+    ResourceType.deer: SpriteFrameId('map.resource.deer'),
+    ResourceType.sheep: SpriteFrameId('map.resource.sheep'),
+    ResourceType.rice: SpriteFrameId('map.resource.rice'),
+    ResourceType.cow: SpriteFrameId('map.resource.cow'),
+    ResourceType.apple: SpriteFrameId('map.resource.apple'),
+    ResourceType.banana: SpriteFrameId('map.resource.banana'),
+    ResourceType.citrus: SpriteFrameId('map.resource.citrus'),
     // Luxury
-    ResourceType.gold: 'assets/icons/gold.png',
-    ResourceType.silver: 'assets/icons/silver.png',
-    ResourceType.gems: 'assets/icons/gems.png',
-    ResourceType.silk: 'assets/icons/silk.png',
-    ResourceType.spices: 'assets/icons/spices.png',
-    ResourceType.cotton: 'assets/icons/cotton.png',
-    ResourceType.grapes: 'assets/icons/grapes.png',
-    ResourceType.ivory: 'assets/icons/ivory.png',
-    ResourceType.pearls: 'assets/icons/pearls.png',
-    ResourceType.coffee: 'assets/icons/coffee.png',
-    ResourceType.cocoa: 'assets/icons/cocoa.png',
-    ResourceType.tobacco: 'assets/icons/tobbacco.png',
-    ResourceType.sugar: 'assets/icons/sugar.png',
+    ResourceType.gold: SpriteFrameId('map.resource.gold'),
+    ResourceType.silver: SpriteFrameId('map.resource.silver'),
+    ResourceType.gems: SpriteFrameId('map.resource.gems'),
+    ResourceType.silk: SpriteFrameId('map.resource.silk'),
+    ResourceType.spices: SpriteFrameId('map.resource.spices'),
+    ResourceType.cotton: SpriteFrameId('map.resource.cotton'),
+    ResourceType.grapes: SpriteFrameId('map.resource.grapes'),
+    ResourceType.ivory: SpriteFrameId('map.resource.ivory'),
+    ResourceType.pearls: SpriteFrameId('map.resource.pearls'),
+    ResourceType.coffee: SpriteFrameId('map.resource.coffee'),
+    ResourceType.cocoa: SpriteFrameId('map.resource.cocoa'),
+    ResourceType.tobacco: SpriteFrameId('map.resource.tobacco'),
+    ResourceType.sugar: SpriteFrameId('map.resource.sugar'),
     // Strategic
-    ResourceType.iron: 'assets/icons/ironore.png',
-    ResourceType.coal: 'assets/icons/coal.png',
-    ResourceType.oil: 'assets/icons/oil.png',
-    ResourceType.aluminium: 'assets/icons/aluminium.png',
-    ResourceType.uranium: 'assets/icons/uranium.png',
-    ResourceType.horses: 'assets/icons/horse.png',
-    ResourceType.marble: 'assets/icons/marble.png',
+    ResourceType.iron: SpriteFrameId('map.resource.iron'),
+    ResourceType.coal: SpriteFrameId('map.resource.coal'),
+    ResourceType.oil: SpriteFrameId('map.resource.oil'),
+    ResourceType.aluminium: SpriteFrameId('map.resource.aluminium'),
+    ResourceType.uranium: SpriteFrameId('map.resource.uranium'),
+    ResourceType.horses: SpriteFrameId('map.resource.horses'),
+    ResourceType.marble: SpriteFrameId('map.resource.marble'),
   };
 
   /// Dot color shown on the tile when a resource is present (map view mode).
@@ -117,12 +118,12 @@ abstract final class TerrainTheme {
     return _baseColors[terrain]!;
   }
 
-  static String icon(TerrainType terrain) {
+  static SpriteFrameId icon(TerrainType terrain) {
     return _terrainIcons[terrain]!;
   }
 
   /// Returns the resource icon asset path, or null if no resource.
-  static String? resourceIcon(ResourceType? resource) {
+  static SpriteFrameId? resourceIcon(ResourceType? resource) {
     if (resource == null) return null;
     return resourceIcons[resource];
   }

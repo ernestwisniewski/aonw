@@ -6,6 +6,7 @@ import 'package:aonw_core/game/domain/city/city_rulesets.dart';
 import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class CityBuildingRequirementRules {
@@ -33,7 +34,7 @@ abstract final class CityBuildingRequirementRules {
     for (final hex in city.territoryHexes) {
       final tile = mapTiles.tileAt(hex.col, hex.row);
       if (tile == null) continue;
-      if (tile.terrains.any(_coastalTerrains.contains)) {
+      if (tile.terrainTags.any(_coastalTerrains.contains)) {
         return true;
       }
     }

@@ -1,4 +1,5 @@
 import 'package:aonw/game/presentation/providers.dart';
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/shared/providers/gameplay_settings_provider.dart';
 import 'package:aonw_core/domain.dart';
@@ -14,9 +15,9 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         activeMapProvider(selection).overrideWithValue(AsyncData(_testMap())),
-        mapImagePathProvider(
-          selection,
-        ).overrideWithValue(const AsyncData('/tmp/map.png')),
+        mapImageSourceProvider(selection).overrideWithValue(
+          const AsyncData(SavedMapSingleImageSource('/tmp/map.png')),
+        ),
         gameSaveSnapshotProvider(
           'save_1',
         ).overrideWithValue(const AsyncData(null)),

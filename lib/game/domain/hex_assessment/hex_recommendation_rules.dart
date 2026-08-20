@@ -7,7 +7,7 @@ abstract final class HexRecommendationRules {
   static HexRecommendation recommend({
     required HexAssessmentKind kind,
     required HexScore score,
-    required TerrainType? terrain,
+    required TerrainType terrain,
   }) {
     if (terrain == TerrainType.ocean ||
         terrain == TerrainType.lake ||

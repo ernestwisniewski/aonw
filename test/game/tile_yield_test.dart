@@ -76,14 +76,6 @@ void main() {
         const TileYield(food: 1, production: 0, gold: 0, defense: 0),
       );
     });
-
-    test('river-only tile has no implicit base terrain yield', () {
-      final value = TileYieldRules.forTile(
-        _tile(terrains: const [TerrainType.river]),
-      );
-
-      expect(value, TileYieldRules.riverModifier);
-    });
   });
 
   group('TileYieldRules resource yields', () {

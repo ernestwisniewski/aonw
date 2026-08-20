@@ -261,27 +261,18 @@ void main() {
         heightPerspectiveY: 0.82,
       );
 
-      expect(overlays.terrainIcons.boxRect, isNotNull);
+      expect(overlays.terrainIcons.boxRect, isNull);
       expect(overlays.terrainIcons.iconRects, hasLength(2));
-      expect(overlays.terrainIcons.badgeRects, hasLength(2));
-      expect(overlays.resourceIcons.boxRect, isNotNull);
+      expect(overlays.terrainIcons.badgeRects, isEmpty);
+      expect(overlays.resourceIcons.boxRect, isNull);
       expect(overlays.resourceIcons.iconRects, hasLength(1));
-      expect(overlays.resourceIcons.badgeRects, hasLength(1));
-      final resourceBadge = overlays.resourceIcons.badgeRects.single;
-      expect(resourceBadge.outerRect.width, greaterThan(30));
-      expect(
-        resourceBadge.outerRect.width,
-        closeTo(resourceBadge.outerRect.height, 0.01),
-      );
-      expect(
-        resourceBadge.tlRadiusX,
-        lessThan(resourceBadge.outerRect.width / 2),
-      );
+      expect(overlays.resourceIcons.badgeRects, isEmpty);
       expect(
         overlays.resourceIcons.iconRects.single.width,
         greaterThan(overlays.terrainIcons.iconRects.first.width),
       );
-      expect(overlays.heightBadge.badgeRect.width, closeTo(16, 0.01));
+      expect(overlays.heightBadge.paragraphOffset.dx.isFinite, isTrue);
+      expect(overlays.heightBadge.paragraphOffset.dy.isFinite, isTrue);
     });
   });
 

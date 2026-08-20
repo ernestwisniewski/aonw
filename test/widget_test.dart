@@ -375,9 +375,7 @@ void main() {
 
     expect(find.text('1.05x, 1.05x'), findsOneWidget);
 
-    final preview = find.byKey(
-      const Key('assetsEditor.preview.assets/sprites/dice.png:frame-0'),
-    );
+    final preview = find.byKey(const Key('assetsEditor.preview.dice.0'));
     for (var attempt = 0; attempt < 100; attempt++) {
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 50)),

@@ -4,7 +4,8 @@ import 'package:aonw/game/application/services/game_session.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/overlays/fog_of_war_overlay.dart';
 import 'package:aonw/map/rendering/terrain_theme.dart';
-import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
+import 'package:aonw/shared/assets/sprite_frame_id.dart';
+import 'package:aonw/shared/assets/sprite_frames.dart';
 import 'package:flutter/foundation.dart';
 
 abstract final class GameStartupAssetPreloader {
@@ -25,7 +26,7 @@ abstract final class GameStartupAssetPreloader {
       Future.wait(
         iconPaths.map((path) async {
           try {
-            await HexIconCache.load(path);
+            await SpriteFrames.load(path);
           } finally {
             taskDone();
           }
@@ -37,10 +38,10 @@ abstract final class GameStartupAssetPreloader {
     onProgress?.call(1);
   }
 
-  static Iterable<String> _mapIconPaths(GameSession session) sync* {
-    final seen = <String>{};
+  static Iterable<SpriteFrameId> _mapIconPaths(GameSession session) sync* {
+    final seen = <SpriteFrameId>{};
     for (final tile in session.mapData.tiles) {
-      for (final terrain in tile.terrains) {
+      for (final terrain in tile.terrainTags) {
         final path = TerrainTheme.icon(terrain);
         if (seen.add(path)) yield path;
       }

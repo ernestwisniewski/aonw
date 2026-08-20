@@ -147,7 +147,7 @@ class _ResourceGroup extends StatelessWidget {
             return EditorResourceChip(
               label: _labels[resource] ?? resource.name,
               color: dotColor,
-              iconPath: TerrainTheme.resourceIcons[resource],
+              iconId: TerrainTheme.resourceIcons[resource],
               selected: selectedResources.contains(resource),
               onTap: () => onToggleResource(resource),
             );

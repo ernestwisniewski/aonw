@@ -1,11 +1,13 @@
 import 'dart:io';
 
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/shared/persistence/app_data_directory.dart';
 import 'package:aonw_core/map/domain/map_selection.dart';
 import 'package:flutter/services.dart';
 
 abstract final class MapStorage {
-  static const String mapsAssetDir = 'assets/maps/';
+  static const String mapsAssetDir = 'content/maps/';
+  static const String mapTexturesAssetDir = 'assets/runtime/maps/';
 
   static final RegExp _invalidMapNameChars = RegExp(r'[^A-Za-z0-9_-]+');
   static final Set<String> _reservedWindowsNames = {
@@ -47,17 +49,15 @@ abstract final class MapStorage {
     return sanitized;
   }
 
-  /// Resolves the image path for a map.
+  /// Resolves the visual source for a map.
   ///
   /// Saved maps: looks in `<documents>/maps/<name>/` — sliced (`1x1.jpg`)
   /// first, then single (`image.jpg`).
   ///
-  /// Asset maps: looks in `assets/maps/<name>/` — sliced (`1x1.jpg`) first,
-  /// then single (`image.jpg`).
-  ///
-  /// Returns the first-slice path when sliced so [MapImageLayer.loadAuto]
-  /// can detect and load all tiles.
-  static Future<String?> resolveImagePath(
+  /// Bundled maps always use the compiled paged texture manifest under
+  /// `assets/runtime/maps/<name>/`. A missing bundled texture is a broken
+  /// application bundle and is therefore reported to the caller.
+  static Future<MapImageSource?> resolveImageSource(
     String mapName, {
     MapSource source = MapSource.saved,
   }) async {
@@ -66,25 +66,18 @@ abstract final class MapStorage {
 
     if (source == MapSource.saved) {
       final firstSlice = await sliceFile(safeName, 0, 0);
-      if (await firstSlice.exists()) return firstSlice.path;
+      if (await firstSlice.exists()) {
+        return SavedMapSliceSetSource(firstSlice.parent.path);
+      }
       final file = await imageFile(safeName);
-      if (await file.exists()) return file.path;
+      if (await file.exists()) return SavedMapSingleImageSource(file.path);
       return null;
     }
 
-    final assetSlicePath = '$mapsAssetDir$safeName/1x1.jpg';
-    try {
-      await rootBundle.load(assetSlicePath);
-      return assetSlicePath;
-    } catch (_) {}
-
-    final assetImagePath = '$mapsAssetDir$safeName/image.jpg';
-    try {
-      await rootBundle.load(assetImagePath);
-      return assetImagePath;
-    } catch (_) {}
-
-    return null;
+    final manifestPath =
+        '$mapTexturesAssetDir$safeName/map_texture_manifest.json';
+    await rootBundle.load(manifestPath);
+    return BundledMapTextureSource(manifestPath);
   }
 
   /// Root directory: `<documents>/maps/`

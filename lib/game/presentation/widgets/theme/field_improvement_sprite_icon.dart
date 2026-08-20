@@ -9,23 +9,14 @@ abstract final class FieldImprovementSpriteIconCatalog {
         .clamp(0, FieldImprovementSpriteCatalog.columns - 1)
         .toInt();
     return SpriteAtlasIconData(
-      assetPath: FieldImprovementSpriteCatalog.assetPathFor(type),
-      columns: FieldImprovementSpriteCatalog.sheetColumns,
-      rows: FieldImprovementSpriteCatalog.sheetRows,
-      column: FieldImprovementSpriteCatalog.sheetColumnForType(type),
-      row: eraColumn,
-      sourceInset: FieldImprovementSpriteCatalog.sourceInset,
-      adjustmentId: FieldImprovementSpriteCatalog.adjustmentIdForVariant(
+      frameId: FieldImprovementSpriteCatalog.frameIdFor(
         type: type,
         eraColumn: eraColumn,
       ),
-      sourceRectResolver: (image) =>
-          FieldImprovementSpriteCatalog.sourceRectFor(
-            imageWidth: image.width,
-            imageHeight: image.height,
-            type: type,
-            eraColumn: eraColumn,
-          ),
+      adjustmentSequenceId: FieldImprovementSpriteCatalog.sequenceIdFor(
+        type: type,
+        eraColumn: eraColumn,
+      ),
       cropToContent: false,
     );
   }

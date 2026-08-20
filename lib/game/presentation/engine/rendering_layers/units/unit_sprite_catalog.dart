@@ -1,5 +1,4 @@
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
-import 'package:aonw/shared/assets/preferred_image_assets.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 
 abstract final class UnitSpriteCatalog {
@@ -18,42 +17,42 @@ abstract final class UnitSpriteCatalog {
   );
 
   static final UnitSpriteDefinition commander = UnitSpriteDefinition(
-    assetPath: PreferredImageAssets.unitAtlasPath('commander'),
+    spriteName: 'commander',
     normalSize: _normalSize,
     smallSize: _smallSize,
     actions: _unitActions(),
   );
 
   static final UnitSpriteDefinition warrior = UnitSpriteDefinition(
-    assetPath: PreferredImageAssets.unitAtlasPath('warrior'),
+    spriteName: 'warrior',
     normalSize: _normalSize,
     smallSize: _smallSize,
     actions: _unitActions(),
   );
 
   static final UnitSpriteDefinition archer = UnitSpriteDefinition(
-    assetPath: PreferredImageAssets.unitAtlasPath('archer'),
+    spriteName: 'archer',
     normalSize: _normalSize,
     smallSize: _smallSize,
     actions: _unitActions(),
   );
 
   static final UnitSpriteDefinition settler = UnitSpriteDefinition(
-    assetPath: PreferredImageAssets.unitAtlasPath('settler'),
+    spriteName: 'settler',
     normalSize: _normalSize,
     smallSize: _smallSize,
     actions: _civilianUnitActions(),
   );
 
   static final UnitSpriteDefinition worker = UnitSpriteDefinition(
-    assetPath: PreferredImageAssets.unitAtlasPath('worker'),
+    spriteName: 'worker',
     normalSize: _normalSize,
     smallSize: _smallSize,
     actions: _civilianUnitActions(),
   );
 
   static final UnitSpriteDefinition merchant = UnitSpriteDefinition(
-    assetPath: PreferredImageAssets.unitAtlasPath('merchant'),
+    spriteName: 'merchant',
     normalSize: _normalSize,
     smallSize: _smallSize,
     actions: _civilianUnitActions(),
@@ -65,7 +64,7 @@ abstract final class UnitSpriteCatalog {
     UnitSpriteSize smallSize = _smallSize,
   }) {
     return UnitSpriteDefinition(
-      assetPath: PreferredImageAssets.unitAtlasPath(assetName),
+      spriteName: assetName,
       normalSize: normalSize,
       smallSize: smallSize,
       actions: _unitActions(),
@@ -131,19 +130,15 @@ abstract final class UnitSpriteCatalog {
   _civilianUnitActions() {
     return {
       UnitSpriteAction.idle: const UnitSpriteActionDefinition(
-        row: 0,
         frameDuration: 0.9,
       ),
       UnitSpriteAction.walk: const UnitSpriteActionDefinition(
-        row: 1,
         frameDuration: 0.14,
       ),
       UnitSpriteAction.work: const UnitSpriteActionDefinition(
-        row: 2,
         frameDuration: 0.22,
       ),
       UnitSpriteAction.die: const UnitSpriteActionDefinition(
-        row: 3,
         frameDuration: 0.18,
         loops: false,
       ),
@@ -153,20 +148,16 @@ abstract final class UnitSpriteCatalog {
   static Map<UnitSpriteAction, UnitSpriteActionDefinition> _unitActions() {
     return {
       UnitSpriteAction.idle: const UnitSpriteActionDefinition(
-        row: 0,
         frameDuration: 0.9,
       ),
       UnitSpriteAction.walk: const UnitSpriteActionDefinition(
-        row: 1,
         frameDuration: 0.14,
       ),
       UnitSpriteAction.attack: const UnitSpriteActionDefinition(
-        row: 2,
         frameDuration: 0.13,
         loops: false,
       ),
       UnitSpriteAction.die: const UnitSpriteActionDefinition(
-        row: 3,
         frameDuration: 0.18,
         loops: false,
       ),

@@ -27,6 +27,11 @@ void main() {
       expect(draft.defaultZoom, 1.75);
       expect(draft.objectives.single.id, 'pass_1');
       expect(draft.tileAt(1, 0)?.terrains, [
+        TerrainType.grassland,
+        TerrainType.hills,
+        TerrainType.forest,
+      ]);
+      expect(draft.tileAt(1, 0)?.terrainTags, [
         TerrainType.hills,
         TerrainType.forest,
       ]);
@@ -52,7 +57,7 @@ void main() {
         ..updateTile(
           col: 1,
           row: 0,
-          terrains: const [TerrainType.desert],
+          authoredTerrainTags: const [TerrainType.desert],
           resources: const [],
           height: 1,
         )
@@ -62,6 +67,11 @@ void main() {
       expect(frozen.defaultZoom, 1.75);
       expect(frozen.objectives.single.id, 'pass_1');
       expect(frozen.tileAtHex(const HexCoord(col: 1, row: 0))?.terrains, [
+        TerrainType.grassland,
+        TerrainType.hills,
+        TerrainType.forest,
+      ]);
+      expect(frozen.tileAtHex(const HexCoord(col: 1, row: 0))?.terrainTags, [
         TerrainType.hills,
         TerrainType.forest,
       ]);
@@ -71,19 +81,31 @@ void main() {
       );
     });
 
-    test('keeps incomplete terrain editable until freeze', () {
+    test('rejects incomplete terrain at the authoring boundary', () {
       final draft = MapDraft.fromWorldMap(_sentinelMap());
 
-      expect(draft.clearTerrainsAt(1, 0), isTrue);
-      expect(draft.tileAt(1, 0)?.terrains, isEmpty);
-      expect(() => draft.freeze(), throwsA(isA<WorldMapException>()));
-      expect(draft.tileAt(1, 0)?.terrains, isEmpty);
+      expect(
+        () => draft.updateTile(
+          col: 1,
+          row: 0,
+          authoredTerrainTags: const [],
+          resources: const [],
+          height: 0,
+        ),
+        throwsA(isA<TileTerrainSemanticsException>()),
+      );
+      expect(draft.tileAt(1, 0)?.terrainTags, [
+        TerrainType.hills,
+        TerrainType.forest,
+      ]);
+      expect(draft.freeze().tileAt(1, 0)?.terrainTags, [
+        TerrainType.hills,
+        TerrainType.forest,
+      ]);
     });
 
-    test('validates tile values before map metadata when freezing', () {
-      final draft = MapDraft.fromWorldMap(_sentinelMap())
-        ..defaultZoom = 0
-        ..clearTerrainsAt(1, 0);
+    test('validates map metadata when freezing', () {
+      final draft = MapDraft.fromWorldMap(_sentinelMap())..defaultZoom = 0;
 
       expect(
         draft.freeze,
@@ -91,7 +113,7 @@ void main() {
           isA<WorldMapException>().having(
             (error) => error.message,
             'message',
-            'Tile terrains must not be empty',
+            'Map default zoom must be finite and positive, got 0.0',
           ),
         ),
       );
@@ -132,7 +154,7 @@ void main() {
         draft.updateTile(
           col: 0,
           row: 0,
-          terrains: const [TerrainType.desert],
+          authoredTerrainTags: const [TerrainType.desert],
           resources: const [ResourceType.iron],
           height: 2,
         ),
@@ -141,8 +163,14 @@ void main() {
       expect(draft.removeColumn(), isTrue);
       expect(draft.removeRow(), isTrue);
       expect(draft.objectives.map((objective) => objective.id), ['keep']);
-      expect(draft.addColumn(terrains: const [TerrainType.ocean]), isTrue);
-      expect(draft.addRow(terrains: const [TerrainType.grassland]), isTrue);
+      expect(
+        draft.addColumn(authoredTerrainTags: const [TerrainType.ocean]),
+        isTrue,
+      );
+      expect(
+        draft.addRow(authoredTerrainTags: const [TerrainType.grassland]),
+        isTrue,
+      );
 
       expect(draft.cols, cols);
       expect(draft.rows, rows);
@@ -163,10 +191,13 @@ void main() {
       expect(minDraft.removeColumn(), isFalse);
       expect(minDraft.removeRow(), isFalse);
       expect(
-        maxColsDraft.addColumn(terrains: const [TerrainType.ocean]),
+        maxColsDraft.addColumn(authoredTerrainTags: const [TerrainType.ocean]),
         isFalse,
       );
-      expect(maxRowsDraft.addRow(terrains: const [TerrainType.ocean]), isFalse);
+      expect(
+        maxRowsDraft.addRow(authoredTerrainTags: const [TerrainType.ocean]),
+        isFalse,
+      );
     });
 
     test('rejects invalid dimensions, coordinates, and duplicate tiles', () {
@@ -282,6 +313,9 @@ void _expectFrozenWorldMatches(WorldMap world, WorldMap source) {
             'col': tile.col,
             'row': tile.row,
             'terrains': tile.terrains.toList(),
+            'displayTerrain': tile.displayTerrain,
+            'yieldTerrain': tile.yieldTerrain,
+            'terrainTags': tile.terrainTags.toList(),
             'resources': tile.resources.toList(),
             'height': tile.height,
           },
@@ -293,6 +327,9 @@ void _expectFrozenWorldMatches(WorldMap world, WorldMap source) {
             'col': tile.col,
             'row': tile.row,
             'terrains': tile.terrains.toList(),
+            'displayTerrain': tile.displayTerrain,
+            'yieldTerrain': tile.yieldTerrain,
+            'terrainTags': tile.terrainTags.toList(),
             'resources': tile.resources.toList(),
             'height': tile.height,
           },

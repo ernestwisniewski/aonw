@@ -42,9 +42,9 @@ void main() {
   test('listAvailableMaps finds saved maps in folder structure', () async {
     final bundle = _FakeAssetBundle({
       'AssetManifest.json': json.encode({
-        'assets/maps/scenario_one/map.json': <Object>[],
+        'content/maps/scenario_one/map.json': <Object>[],
       }),
-      'assets/maps/scenario_one/map.json': _singleTileJson(),
+      'content/maps/scenario_one/map.json': _singleTileJson(),
     });
 
     final userMapDir = Directory('${tempDir.path}/user_map');
@@ -79,9 +79,9 @@ void main() {
   test('loadMap loads bundled map from asset folder', () async {
     final bundle = _FakeAssetBundle({
       'AssetManifest.json': json.encode({
-        'assets/maps/scenario_one/map.json': <Object>[],
+        'content/maps/scenario_one/map.json': <Object>[],
       }),
-      'assets/maps/scenario_one/map.json': _singleTileJson(),
+      'content/maps/scenario_one/map.json': _singleTileJson(),
     });
 
     final mapData = await MapCatalog.loadMap(
@@ -104,7 +104,7 @@ void main() {
   "rows": 1,
   "mapName": "user_map",
   "tiles": [
-    { "col": 0, "row": 0, "terrains": ["ocean"], "resources": [], "height": 0 }
+    { "col": 0, "row": 0, "terrains": ["ocean"], "displayTerrain": "ocean", "yieldTerrain": "ocean", "terrainTags": ["ocean"], "resources": [], "height": 0 }
   ]
 }''');
 
@@ -124,6 +124,6 @@ String _singleTileJson() => '''
   "cols": 1,
   "rows": 1,
   "tiles": [
-    { "col": 0, "row": 0, "terrains": ["ocean"], "resources": [], "height": 0 }
+    { "col": 0, "row": 0, "terrains": ["ocean"], "displayTerrain": "ocean", "yieldTerrain": "ocean", "terrainTags": ["ocean"], "resources": [], "height": 0 }
   ]
 }''';

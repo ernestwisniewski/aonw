@@ -1,6 +1,6 @@
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_catalog.dart';
-import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
+import 'package:aonw/shared/assets/sprite_frames.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flame/components.dart';
 
@@ -42,9 +42,11 @@ class UnitMarkerSpriteController {
   Future<void> loadIfNeeded() async {
     final sprite = _sprite;
     if (sprite == null) return;
-    final image = await HexIconCache.load(sprite.definition.assetPath);
+    final frames = await Future.wait(
+      sprite.definition.allFrameIds.map(SpriteFrames.load),
+    );
     if (!identical(sprite, _sprite)) return;
-    await sprite.setImage(image);
+    await sprite.setFrames(frames);
   }
 
   void update(double dt) {

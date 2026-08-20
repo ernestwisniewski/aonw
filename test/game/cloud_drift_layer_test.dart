@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/cloud_drift_layer.dart';
@@ -156,7 +157,7 @@ void main() {
     test('renders while fast rendering is enabled', () async {
       final layer =
           CloudDriftLayer(
-              random: const _CloudLayerRandom(),
+              random: _CloudLayerRandom(),
               initialDelaySeconds: 0,
               spawnGapSeconds: const (min: 1, max: 1),
               durationSeconds: const (min: 2, max: 2),
@@ -176,7 +177,9 @@ void main() {
 
       expect(layer.activeCloudCountForTesting, inInclusiveRange(1, 3));
 
-      layer.fastRendering = true;
+      layer
+        ..update(1)
+        ..fastRendering = true;
 
       final recorder = ui.PictureRecorder();
       final canvas = ui.Canvas(recorder);
@@ -194,9 +197,7 @@ void main() {
   });
 }
 
-class _CloudLayerRandom extends math.Random {
-  const _CloudLayerRandom();
-
+class _CloudLayerRandom implements math.Random {
   @override
   bool nextBool() => true;
 
@@ -264,7 +265,7 @@ FogVisibilityQuery _visibility({
   );
 }
 
-bool _containsAnyAlpha(ui.ByteData? byteData) {
+bool _containsAnyAlpha(ByteData? byteData) {
   if (byteData == null || byteData.lengthInBytes == 0) return false;
   final bytes = byteData.buffer.asUint8List();
   for (var i = 3; i < bytes.length; i += 4) {

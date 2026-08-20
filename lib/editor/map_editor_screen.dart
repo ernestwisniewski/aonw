@@ -9,6 +9,7 @@ import 'package:aonw/editor/widgets/editor_bottom_toolbar.dart';
 import 'package:aonw/editor/widgets/editor_options_overlay.dart';
 import 'package:aonw/editor/widgets/editor_top_bar.dart';
 import 'package:aonw/l10n/l10n.dart';
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/map/widgets/dice_roll_test_overlay.dart';
 import 'package:aonw/shared/providers/hex_display_provider.dart';
@@ -39,7 +40,7 @@ class MapEditorScreen extends ConsumerStatefulWidget {
 class _MapEditorScreenState extends ConsumerState<MapEditorScreen> {
   EditorWorld? _game;
   MapDraft? _activeDraft;
-  String? _activeImagePath;
+  MapImageSource? _activeImageSource;
   String? _pendingImageSourcePath;
   bool _pendingImageSliceMode = false;
   MapViewMode _viewMode = MapViewMode.tile;
@@ -49,7 +50,6 @@ class _MapEditorScreenState extends ConsumerState<MapEditorScreen> {
   Object? _loadError;
   double _defaultZoom = 1.0;
 
-  /// True while syncing toolbar to a tapped tile — suppresses repaintSelected.
   bool _syncingFromTile = false;
 
   @override
@@ -98,7 +98,7 @@ class _MapEditorScreenState extends ConsumerState<MapEditorScreen> {
     if (!mounted || pickedPath == null) return;
     final shouldSaveAsSlices = _pendingImageSourcePath != null
         ? _pendingImageSliceMode
-        : _isSlicedImagePath(_activeImagePath);
+        : _activeImageSource is SavedMapSliceSetSource;
     final options = await showMapImageUploadOptionsDialog(
       context,
       imageSourcePath: pickedPath,
@@ -110,9 +110,9 @@ class _MapEditorScreenState extends ConsumerState<MapEditorScreen> {
     var persistedImmediately = false;
 
     try {
-      String imagePath;
+      MapImageSource imageSource;
       if (draft != null && mapName != null && mapName.trim().isNotEmpty) {
-        imagePath = await _saveMapImage(
+        imageSource = await _saveMapImage(
           sourcePath: pickedPath,
           mapName: mapName,
           draft: draft,
@@ -120,12 +120,12 @@ class _MapEditorScreenState extends ConsumerState<MapEditorScreen> {
         );
         persistedImmediately = true;
       } else {
-        imagePath = pickedPath;
+        imageSource = SavedMapSingleImageSource(pickedPath);
       }
-      await _game?.loadImageOverlay(imagePath);
+      await _game?.loadImageOverlay(imageSource);
       if (!mounted) return;
       setState(() {
-        _activeImagePath = imagePath;
+        _activeImageSource = imageSource;
         _pendingImageSourcePath = persistedImmediately ? null : pickedPath;
         _pendingImageSliceMode = persistedImmediately
             ? false
@@ -166,7 +166,7 @@ class _MapEditorScreenState extends ConsumerState<MapEditorScreen> {
 
     final safeName = draft.mapName!; // read back sanitized name after save
 
-    String? savedImagePath;
+    MapImageSource? savedImageSource;
     final saveDialogImageSelected = saveRequest.imageSourcePath != null;
     final imageSourcePath =
         saveRequest.imageSourcePath ?? _pendingImageSourcePath;
@@ -175,7 +175,7 @@ class _MapEditorScreenState extends ConsumerState<MapEditorScreen> {
         final sliceImage = saveDialogImageSelected
             ? saveRequest.sliceImage
             : _pendingImageSliceMode;
-        savedImagePath = await _saveMapImage(
+        savedImageSource = await _saveMapImage(
           sourcePath: imageSourcePath,
           mapName: safeName,
           draft: draft,
@@ -191,19 +191,19 @@ class _MapEditorScreenState extends ConsumerState<MapEditorScreen> {
     if (!mounted) return;
     _showSnackBar('Map "$safeName" saved');
 
-    final resolvedImagePath =
-        savedImagePath ?? await MapSaver.resolveImagePath(safeName);
+    final resolvedImageSource =
+        savedImageSource ?? await MapSaver.resolveImageSource(safeName);
     if (!mounted) return;
 
     setState(() {
-      _activeImagePath = resolvedImagePath;
+      _activeImageSource = resolvedImageSource;
       _pendingImageSourcePath = null;
       _pendingImageSliceMode = false;
-      _hasGraphicMode = resolvedImagePath != null;
+      _hasGraphicMode = resolvedImageSource != null;
     });
 
-    if (resolvedImagePath != null) {
-      await _game?.loadImageOverlay(resolvedImagePath);
+    if (resolvedImageSource != null) {
+      await _game?.loadImageOverlay(resolvedImageSource);
     }
   }
 

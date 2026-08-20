@@ -2,6 +2,7 @@ import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/tile_terrain_semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -88,12 +89,12 @@ final class _MutableTile implements MapTileView {
   @override
   int height;
 
-  @override
   final List<TerrainType> terrains;
 
   @override
-  final List<ResourceType> resources;
+  TileTerrainSemantics get terrain =>
+      TileTerrainSemantics.fromMovementProfile(terrains);
 
   @override
-  TerrainType get primaryTerrain => terrains.first;
+  final List<ResourceType> resources;
 }

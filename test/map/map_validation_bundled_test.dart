@@ -170,6 +170,30 @@ void main() {
       }
     });
 
+    test('bundled maps use one canonical primary terrain per tile', () async {
+      for (final mapName in expectedMaxPlayers.keys) {
+        final mapData = await _loadBundledMap(mapName);
+
+        for (final tile in mapData.tiles) {
+          expect(
+            _primaryTerrains,
+            contains(tile.terrains.first),
+            reason: '$mapName ${tile.col},${tile.row} primary terrain',
+          );
+          expect(
+            tile.terrains.skip(1),
+            everyElement(isIn(_terrainFeatures)),
+            reason: '$mapName ${tile.col},${tile.row} terrain features',
+          );
+          expect(
+            tile.terrains.toSet(),
+            hasLength(tile.terrains.length),
+            reason: '$mapName ${tile.col},${tile.row} unique terrains',
+          );
+        }
+      }
+    });
+
     test(
       'myranth snowy northeast remains traversable for land units',
       () async {
@@ -184,10 +208,9 @@ void main() {
         final target = mapData.tileAt(16, 3);
 
         expect(target?.terrains, [
-          TerrainType.river,
           TerrainType.snow,
           TerrainType.forest,
-          TerrainType.tundra,
+          TerrainType.river,
         ]);
 
         final pathfinder = UnitMovementPathfinder(
@@ -209,7 +232,7 @@ void main() {
     );
 
     test('bundled map assets are JPEG-only outside JSON metadata', () {
-      final pngFiles = Directory('assets/maps')
+      final pngFiles = Directory('assets/runtime/maps')
           .listSync(recursive: true)
           .whereType<File>()
           .where((file) => file.path.toLowerCase().endsWith('.png'))
@@ -221,8 +244,28 @@ void main() {
   });
 }
 
+const _primaryTerrains = {
+  TerrainType.ocean,
+  TerrainType.coast,
+  TerrainType.lake,
+  TerrainType.plains,
+  TerrainType.grassland,
+  TerrainType.desert,
+  TerrainType.tundra,
+  TerrainType.snow,
+  TerrainType.mountain,
+};
+
+const _terrainFeatures = {
+  TerrainType.hills,
+  TerrainType.wetlands,
+  TerrainType.jungle,
+  TerrainType.forest,
+  TerrainType.river,
+};
+
 Future<WorldMap> _loadBundledMap(String mapName) async {
-  final file = File('assets/maps/$mapName/map.json');
+  final file = File('content/maps/$mapName/map.json');
   return MapLoader.fromJson(await file.readAsString());
 }
 

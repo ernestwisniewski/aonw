@@ -4,6 +4,7 @@ import 'package:aonw_core/game/domain/city/game_city.dart';
 import 'package:aonw_core/game/domain/technology/research_state.dart';
 import 'package:aonw_core/game/domain/technology/resource_visibility_rules.dart';
 import 'package:aonw_core/map/domain/map_read_view.dart';
+import 'package:aonw_core/map/domain/map_tile_view.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 
 abstract final class CitySpecializationScorer {
@@ -16,7 +17,7 @@ abstract final class CitySpecializationScorer {
     for (final hex in _uniqueHexes(city.territoryHexes)) {
       final tile = mapData.tileAt(hex.col, hex.row);
       if (tile == null) continue;
-      _scoreTerrains(scores, tile.terrains);
+      _scoreTerrains(scores, tile.terrainTags);
       _scoreResources(
         scores,
         resources: tile.resources,

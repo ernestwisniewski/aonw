@@ -3,6 +3,7 @@ import 'package:aonw/editor/engine/editor_state.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/map/domain/map_constraints.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:aonw_core/map/domain/tile_terrain_semantics.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'editor_providers.g.dart';
@@ -22,6 +23,11 @@ class EditorStateNotifier extends _$EditorStateNotifier {
   void toggleTerrain(TerrainType t) {
     final updated = Set<TerrainType>.of(state.selectedTerrains);
     if (!updated.remove(t)) updated.add(t);
+    try {
+      TileTerrainSemantics.fromAuthoredTerrainTags(updated);
+    } on TileTerrainSemanticsException {
+      return;
+    }
     state = state.copyWith(selectedTerrains: updated);
   }
 

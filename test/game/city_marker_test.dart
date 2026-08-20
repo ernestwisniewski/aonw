@@ -7,7 +7,6 @@ import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker_
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_sprite_catalog.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
-import 'package:aonw/map/rendering/tile/hex_icon_cache.dart';
 import 'package:aonw/map/rendering/tile/hex_tile_metrics.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/technology.dart';
@@ -20,8 +19,6 @@ void main() {
 
   group('CityMarker', () {
     test('records a loaded city render path deterministically', () async {
-      HexIconCache.clearForTesting();
-      addTearDown(HexIconCache.clearForTesting);
       final marker = CityMarker(
         position: Vector2.zero(),
         colorValue: 0xFF3366CC,
@@ -47,7 +44,6 @@ void main() {
     });
 
     test('uses the city sprite without a duplicated type icon badge', () async {
-      await HexIconCache.load(CitySpriteCatalog.assetPath);
       const capStyle = BoardAssetCapStyles.city;
       final markerWidth = MapConfig.defaultConfig.hexRadius * 2;
       final markerHeight =

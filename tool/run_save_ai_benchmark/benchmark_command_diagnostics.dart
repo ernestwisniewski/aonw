@@ -191,7 +191,7 @@ String _describeRejectedCommand(
     details.add('targetOutOfBounds');
     return '$description [${details.join('; ')}]';
   }
-  details.add('targetTerrain=${targetTile.primaryTerrain.name}');
+  details.add('targetTerrain=${targetTile.displayTerrain.name}');
 
   final blocker = _unitAtOrNull(
     state.units,

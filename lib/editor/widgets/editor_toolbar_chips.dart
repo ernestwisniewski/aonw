@@ -1,4 +1,6 @@
+import 'package:aonw/game/presentation/widgets/theme/sprite_atlas_icon.dart';
 import 'package:aonw/map/rendering/terrain_theme.dart';
+import 'package:aonw/shared/assets/sprite_frame_id.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/material.dart';
 
@@ -65,16 +67,11 @@ class EditorTerrainChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(
-                icon,
-                width: 16,
-                height: 16,
-                color: selected ? null : Colors.white.withAlpha(180),
-                colorBlendMode: BlendMode.modulate,
-                errorBuilder: (context, e, stack) => Icon(
-                  Icons.landscape,
+              Opacity(
+                opacity: selected ? 1 : 0.7,
+                child: SpriteAtlasIcon(
+                  data: SpriteAtlasIconData(frameId: icon),
                   size: 16,
-                  color: selected ? _contrastColor(color) : Colors.white54,
                 ),
               ),
               const SizedBox(width: 5),
@@ -99,7 +96,7 @@ class EditorTerrainChip extends StatelessWidget {
 class EditorResourceChip extends StatelessWidget {
   final String label;
   final Color color;
-  final String? iconPath;
+  final SpriteFrameId? iconId;
   final bool selected;
   final VoidCallback onTap;
 
@@ -108,7 +105,7 @@ class EditorResourceChip extends StatelessWidget {
     required this.color,
     required this.selected,
     required this.onTap,
-    this.iconPath,
+    this.iconId,
     super.key,
   });
 
@@ -142,17 +139,12 @@ class EditorResourceChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (iconPath != null)
-                Image.asset(
-                  iconPath!,
-                  width: 16,
-                  height: 16,
-                  color: selected ? null : Colors.white.withAlpha(180),
-                  colorBlendMode: BlendMode.modulate,
-                  errorBuilder: (context, e, stack) => Icon(
-                    Icons.category,
+              if (iconId != null)
+                Opacity(
+                  opacity: selected ? 1 : 0.7,
+                  child: SpriteAtlasIcon(
+                    data: SpriteAtlasIconData(frameId: iconId!),
                     size: 16,
-                    color: selected ? _contrastColor(color) : Colors.white54,
                   ),
                 )
               else

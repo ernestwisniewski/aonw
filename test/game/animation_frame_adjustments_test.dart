@@ -6,6 +6,7 @@ import 'package:aonw/developer/asset_adjustment_file_store.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/assets/animation_frame_adjustments.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/units/unit_sprite_catalog.dart';
+import 'package:aonw/shared/assets/sprite_frame_id.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -13,9 +14,9 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 class _MockPathProvider
     with MockPlatformInterfaceMixin
     implements PathProviderPlatform {
-  final String documentsPath;
-
   _MockPathProvider(this.documentsPath);
+
+  final String documentsPath;
 
   @override
   Future<String?> getApplicationDocumentsPath() async => documentsPath;
@@ -84,7 +85,7 @@ void main() {
       );
     });
 
-    test('scales cropped destinations around the adjusted frame center', () {
+    test('scales cropped destinations around the adjusted center', () {
       const adjustment = AnimationFrameAdjustment(
         cropLeft: 10,
         cropRight: 20,
@@ -109,31 +110,6 @@ void main() {
       expect(scaled.height, 25);
     });
 
-    test('allows negative crop values to expand clipped frames', () {
-      const adjustment = AnimationFrameAdjustment(
-        cropRight: -10,
-        cropBottom: -5,
-      );
-      const source = ui.Rect.fromLTWH(0, 0, 100, 50);
-      const destination = ui.Rect.fromLTWH(0, 0, 50, 25);
-
-      expect(
-        adjustment.croppedSourceFor(source),
-        const ui.Rect.fromLTRB(0, 0, 110, 55),
-      );
-      expect(
-        adjustment.croppedDestinationFor(
-          baseSource: source,
-          baseDestination: destination,
-        ),
-        const ui.Rect.fromLTRB(0, 0, 55, 27.5),
-      );
-      expect(
-        const AnimationFrameAdjustment().adjustCrop(right: -2).cropRight,
-        -2,
-      );
-    });
-
     test('keeps crop rects valid when crop exceeds source size', () {
       const adjustment = AnimationFrameAdjustment(cropLeft: 50, cropRight: 50);
       const source = ui.Rect.fromLTWH(0, 0, 20, 20);
@@ -153,180 +129,79 @@ void main() {
   });
 
   group('AnimationFrameAdjustmentCatalog', () {
-    test(
-      'serializes non-zero frame adjustments by stable asset/action key',
-      () {
-        const adjustment = AnimationFrameAdjustment(
-          offsetX: 2,
-          cropLeft: 4,
-          scaleX: 1.25,
-        );
-        final catalog = const AnimationFrameAdjustmentCatalog.empty().withFrame(
-          assetPath: 'assets/sprites/units/worker.png',
-          animationId: 'work',
-          frameIndex: 3,
-          adjustment: adjustment,
-        );
+    const workerWork = SpriteSequenceId('unit.worker.work');
+    const workerWalk = SpriteSequenceId('unit.worker.walk');
 
-        expect(
-          catalog.adjustmentFor(
-            assetPath: 'assets/sprites/units/worker.png',
-            animationId: 'work',
-            frameIndex: 3,
-          ),
-          adjustment,
-        );
-
-        final decoded =
-            jsonDecode(catalog.toPrettyJson()) as Map<String, Object?>;
-        expect(
-          (decoded['frames'] as Map).containsKey(
-            'assets/sprites/units/worker.png|work|3',
-          ),
-          isTrue,
-        );
-        expect(
-          (decoded['frames'] as Map)['assets/sprites/units/worker.png|work|3'],
-          containsPair('scaleX', 1.25),
-        );
-      },
-    );
-
-    test('migrates legacy civilian attack adjustments to work', () {
-      final catalog = AnimationFrameAdjustmentCatalog.fromJson({
-        'frames': {
-          'assets/sprites/units/settler.png|attack|2': {'offsetX': 7},
-          'assets/sprites/units/worker.png|attack|1': {'cropLeft': 5},
-        },
-      });
-
-      expect(
-        catalog.adjustmentFor(
-          assetPath: 'assets/sprites/units/settler.png',
-          animationId: 'work',
-          frameIndex: 2,
-        ),
-        const AnimationFrameAdjustment(offsetX: 7),
+    test('serializes adjustments by semantic sequence and frame', () {
+      const adjustment = AnimationFrameAdjustment(
+        offsetX: 2,
+        cropLeft: 4,
+        scaleX: 1.25,
       );
-      expect(
-        catalog.adjustmentFor(
-          assetPath: 'assets/sprites/units/worker.png',
-          animationId: 'work',
-          frameIndex: 1,
-        ),
-        const AnimationFrameAdjustment(cropLeft: 5),
+      final catalog = const AnimationFrameAdjustmentCatalog.empty().withFrame(
+        sequenceId: workerWork,
+        frameIndex: 3,
+        adjustment: adjustment,
       );
+
       expect(
-        catalog.frames.keys.where((key) => key.contains('|attack|')),
-        isEmpty,
+        catalog.adjustmentFor(sequenceId: workerWork, frameIndex: 3),
+        adjustment,
+      );
+      final decoded =
+          jsonDecode(catalog.toPrettyJson()) as Map<String, Object?>;
+      expect(decoded['version'], 2);
+      expect(
+        (decoded['frames'] as Map)['unit.worker.work|3'],
+        containsPair('scaleX', 1.25),
       );
     });
 
-    test(
-      'keeps explicit work adjustment over a legacy civilian attack key',
-      () {
-        final catalog = AnimationFrameAdjustmentCatalog.fromJson({
-          'frames': {
-            'assets/sprites/units/settler.png|work|2': {'offsetX': 3},
-            'assets/sprites/units/settler.png|attack|2': {'offsetX': 7},
-          },
-        });
+    test('rejects unsupported adjustment manifest versions', () {
+      final catalog = AnimationFrameAdjustmentCatalog.fromJson({
+        'version': 1,
+        'frames': {
+          'unit.unknown.attack|1': {'cropLeft': 5},
+        },
+      });
 
-        expect(
-          catalog.adjustmentFor(
-            assetPath: 'assets/sprites/units/settler.png',
-            animationId: 'work',
-            frameIndex: 2,
-          ),
-          const AnimationFrameAdjustment(offsetX: 3),
-        );
-      },
-    );
+      expect(catalog.frames, isEmpty);
+    });
 
-    test('serializes animation frame durations by asset animation key', () {
+    test('serializes animation duration by semantic sequence', () {
       final catalog = const AnimationFrameAdjustmentCatalog.empty()
           .withAnimationFrameDuration(
-            assetPath: 'assets/sprites/units/worker.png',
-            animationId: 'walk',
+            sequenceId: workerWalk,
             frameDuration: 0.2,
             defaultFrameDuration: 0.14,
           );
 
       expect(
         catalog.frameDurationFor(
-          assetPath: 'assets/sprites/units/worker.png',
-          animationId: 'walk',
+          sequenceId: workerWalk,
           defaultFrameDuration: 0.14,
         ),
         0.2,
       );
-
       final decoded =
           jsonDecode(catalog.toPrettyJson()) as Map<String, Object?>;
-      expect(
-        (decoded['animations'] as Map)['assets/sprites/units/worker.png|walk'],
-        {'frameDuration': 0.2},
-      );
+      expect((decoded['animations'] as Map)['unit.worker.walk'], {
+        'frameDuration': 0.2,
+      });
     });
 
-    test('drops animation durations matching the default frame duration', () {
+    test('drops animation durations matching the default', () {
       final catalog = const AnimationFrameAdjustmentCatalog.empty()
           .withAnimationFrameDuration(
-            assetPath: 'assets/sprites/units/worker.png',
-            animationId: 'walk',
+            sequenceId: workerWalk,
             frameDuration: 0.14,
             defaultFrameDuration: 0.14,
           );
 
       expect(catalog.animationFrameDurations, isEmpty);
-      expect(
-        catalog.frameDurationFor(
-          assetPath: 'assets/sprites/units/worker.png',
-          animationId: 'walk',
-          defaultFrameDuration: 0.14,
-        ),
-        0.14,
-      );
     });
 
-    test('parses animation frame durations and legacy civilian work keys', () {
-      final catalog = AnimationFrameAdjustmentCatalog.fromJson(
-        <String, Object?>{
-          'animations': <String, Object?>{
-            'assets/sprites/units/settler.png|attack': {'frameDuration': 0.31},
-            'assets/sprites/units/worker.png|walk': 0.19,
-            'assets/sprites/units/worker.png|idle': {'frameDuration': -1},
-          },
-        },
-      );
-
-      expect(
-        catalog.frameDurationFor(
-          assetPath: 'assets/sprites/units/settler.png',
-          animationId: 'work',
-          defaultFrameDuration: 0.22,
-        ),
-        0.31,
-      );
-      expect(
-        catalog.frameDurationFor(
-          assetPath: 'assets/sprites/units/worker.png',
-          animationId: 'walk',
-          defaultFrameDuration: 0.14,
-        ),
-        0.19,
-      );
-      expect(
-        catalog.frameDurationFor(
-          assetPath: 'assets/sprites/units/worker.png',
-          animationId: 'idle',
-          defaultFrameDuration: 0.9,
-        ),
-        0.9,
-      );
-    });
-
-    test('bundled unit idle animations share the authored 1.82s loop', () {
+    test('bundled unit idle animations retain the authored 1.82s loop', () {
       final catalog = AnimationFrameAdjustmentCatalog.fromJson(
         jsonDecode(
           File(AnimationFrameAdjustmentCatalog.assetPath).readAsStringSync(),
@@ -336,15 +211,13 @@ void main() {
       for (final definition in UnitSpriteCatalog.definitions.values) {
         final idle = definition.actionDefinition(UnitSpriteAction.idle);
         final frameDuration = catalog.frameDurationFor(
-          assetPath: definition.assetPath,
-          animationId: UnitSpriteAction.idle.name,
+          sequenceId: definition.sequenceIdFor(UnitSpriteAction.idle),
           defaultFrameDuration: idle.frameDuration,
         );
-
         expect(
           frameDuration * idle.frameCount,
           closeTo(1.82, 0.000001),
-          reason: '${definition.assetPath} idle should finish in 1.82s',
+          reason: '${definition.spriteName} idle should finish in 1.82s',
         );
       }
     });

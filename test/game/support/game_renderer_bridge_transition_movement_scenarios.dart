@@ -42,7 +42,7 @@ void _registerRendererTransitionMovementScenarios() {
     final mid = _visibleCenter(game);
     expect((mid - start).length, greaterThan(0));
     expect((mid - target).length, greaterThan(1));
-    expect(game.imageLayerPrefersFastRenderingForTesting, isTrue);
+    expect(game.fastCameraRenderingForTesting, isTrue);
 
     game.update(1);
     await future;
@@ -51,7 +51,7 @@ void _registerRendererTransitionMovementScenarios() {
 
     game.update(0.13);
 
-    expect(game.imageLayerPrefersFastRenderingForTesting, isFalse);
+    expect(game.fastCameraRenderingForTesting, isFalse);
   });
   test(
     'combat animation focuses the retained killed attacker marker',

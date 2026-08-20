@@ -13,7 +13,9 @@ void main() {
       expect(discoveredMapNames, expectedMapNames);
 
       for (final mapName in discoveredMapNames) {
-        final source = File('assets/maps/$mapName/map.json').readAsStringSync();
+        final source = File(
+          'content/maps/$mapName/map.json',
+        ).readAsStringSync();
         final mapData = WorldMapCodec.fromJson(source);
         final world = _worldMapFromData(mapData);
 
@@ -35,10 +37,13 @@ void main() {
 }
 
 Set<String> _bundledMapNames() {
-  return Directory('assets/maps')
+  return Directory('assets/runtime/maps')
       .listSync()
       .whereType<Directory>()
-      .where((directory) => File('${directory.path}/map.json').existsSync())
+      .where(
+        (directory) =>
+            File('${directory.path}/map_texture_manifest.json').existsSync(),
+      )
       .map((directory) => directory.uri.pathSegments.reversed.skip(1).first)
       .toSet();
 }

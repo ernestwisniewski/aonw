@@ -69,7 +69,7 @@ abstract final class MapResourceAnalyzer {
 
   static bool isPassable(WorldTile tile) {
     return !UnitMovementCostRules.costToEnter(
-      TileTerrainProfileRules.fromTile(tile),
+      TileTerrainProfileRules.fromTerrains(tile.terrainTags),
     ).blocked;
   }
 

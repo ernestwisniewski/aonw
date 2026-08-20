@@ -1,3 +1,4 @@
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/application/map_repository.dart';
 import 'package:aonw/map/persistence/local_map_repository.dart';
 import 'package:aonw/map/providers/map_providers.dart';
@@ -10,13 +11,13 @@ import 'package:flutter_test/flutter_test.dart';
 class _FakeMapRepository implements MapRepository {
   final WorldMap mapData;
   final List<MapSelection> maps;
-  final String? imagePath;
+  final MapImageSource? imageSource;
   String? deletedName;
 
   _FakeMapRepository({
     required this.mapData,
     this.maps = const [],
-    this.imagePath,
+    this.imageSource,
   });
 
   @override
@@ -26,7 +27,8 @@ class _FakeMapRepository implements MapRepository {
   Future<WorldMap> loadMap(MapSelection selection) async => mapData;
 
   @override
-  Future<String?> resolveImagePath(MapSelection selection) async => imagePath;
+  Future<MapImageSource?> resolveImageSource(MapSelection selection) async =>
+      imageSource;
 
   @override
   Future<void> deleteSavedMap(String name) async {
@@ -62,7 +64,7 @@ void main() {
     final repository = _FakeMapRepository(
       mapData: _map(),
       maps: const [selection],
-      imagePath: '/tmp/map.png',
+      imageSource: const SavedMapSingleImageSource('/tmp/map.png'),
     );
     final container = ProviderContainer(
       overrides: [mapRepositoryProvider.overrideWithValue(repository)],
@@ -78,8 +80,8 @@ void main() {
       completion(same(repository.mapData)),
     );
     await expectLater(
-      container.read(mapImagePathProvider(selection).future),
-      completion('/tmp/map.png'),
+      container.read(mapImageSourceProvider(selection).future),
+      completion(const SavedMapSingleImageSource('/tmp/map.png')),
     );
   });
 }

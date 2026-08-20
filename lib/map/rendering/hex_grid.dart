@@ -157,7 +157,7 @@ class HexGrid<T extends MapTileSource<WorldTile>> extends PositionComponent
   }) {
     return HexTile(
       hexRadius: config.hexRadius,
-      terrains: tileData.terrains,
+      terrain: tileData.terrain,
       resources: _resourcesForTile(tileData),
       tileHeight: tileData.height,
       neighborHeights: neighborHeights,

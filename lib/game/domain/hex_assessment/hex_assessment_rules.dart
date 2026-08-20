@@ -52,7 +52,7 @@ abstract final class HexAssessmentRules {
     return HexScoreRules.score(input);
   }
 
-  static HexScore scoreTerrain(TerrainType? terrain) {
+  static HexScore scoreTerrain(TerrainType terrain) {
     return HexScoreRules.scoreTerrain(terrain);
   }
 
@@ -77,7 +77,7 @@ abstract final class HexAssessmentRules {
   }
 
   static HexScore applyPenaltyRules({
-    required TerrainType? terrain,
+    required TerrainType terrain,
     required bool hasRiver,
     required bool hasResources,
     required HexScore score,

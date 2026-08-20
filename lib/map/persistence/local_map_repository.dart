@@ -1,3 +1,4 @@
+import 'package:aonw/map/application/map_image_source.dart';
 import 'package:aonw/map/application/map_repository.dart';
 import 'package:aonw/map/persistence/map_catalog.dart';
 import 'package:aonw/map/persistence/map_storage.dart';
@@ -18,8 +19,8 @@ class LocalMapRepository implements MapRepository {
   }
 
   @override
-  Future<String?> resolveImagePath(MapSelection selection) {
-    return MapStorage.resolveImagePath(
+  Future<MapImageSource?> resolveImageSource(MapSelection selection) {
+    return MapStorage.resolveImageSource(
       selection.name,
       source: selection.source,
     );
