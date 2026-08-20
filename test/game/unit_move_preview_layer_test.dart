@@ -264,7 +264,7 @@ void main() {
 
       final preview = _singlePreviewIn(parent);
       expect(preview.showTargetOutlineForTesting, isTrue);
-      expect(preview.targetOutlineColor, HudPalette.info);
+      expect(preview.targetOutlineColor, HudPalette.roadMarking);
     });
 
     test('sync reuses preview component when only visual state changes', () {
@@ -527,13 +527,13 @@ void main() {
       expect(size.x, lessThanOrEqualTo(MapPillPainter.maxWidth));
     });
 
-    test('sync uses white routes and the fortification cue target color', () {
+    test('sync uses white routes and target outline', () {
       final parent = Component();
       UnitMovePreviewLayer().sync(parent: parent, preview: _plan());
 
       final preview = _singlePreviewIn(parent);
       expect(preview.routeColor, HudPalette.roadMarking);
-      expect(preview.targetOutlineColor, HudPalette.info);
+      expect(preview.targetOutlineColor, HudPalette.roadMarking);
     });
 
     test('render draws the animated travel marker without throwing', () {

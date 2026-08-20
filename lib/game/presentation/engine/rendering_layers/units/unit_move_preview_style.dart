@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 /// flow without a glow.
 final class UnitMovePreviewStyle {
   static const Color routeColor = HudPalette.roadMarking;
-  static const Color confirmedTargetColor = HudPalette.info;
+  static const Color confirmedTargetColor = HudPalette.roadMarking;
 
   late final Paint travelledLinePaint = HudPaint.stroke(
     routeColor,

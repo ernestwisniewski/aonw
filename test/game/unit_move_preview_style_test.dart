@@ -10,7 +10,7 @@ void main() {
       final style = UnitMovePreviewStyle();
 
       expect(UnitMovePreviewStyle.routeColor, HudPalette.roadMarking);
-      expect(UnitMovePreviewStyle.confirmedTargetColor, HudPalette.info);
+      expect(UnitMovePreviewStyle.confirmedTargetColor, HudPalette.roadMarking);
       expect(style.travelledLinePaint.style, PaintingStyle.stroke);
       expect(
         style.travelledLinePaint.color.a,
@@ -37,7 +37,7 @@ void main() {
       );
       expect(
         style.confirmedTargetLinePaint.color.toARGB32(),
-        HudPalette.info.toARGB32(),
+        HudPalette.roadMarking.toARGB32(),
       );
     });
   });
