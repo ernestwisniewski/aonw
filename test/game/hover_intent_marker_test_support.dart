@@ -49,9 +49,7 @@ Future<GameRenderer> _loadedGame(
     onCommand: onCommand ?? (_) async {},
     onTileInspected: onTileInspected,
   );
-  addTearDown(game.disposeRenderer);
-  game.onGameResize(Vector2(800, 600));
-  await game.onLoad();
+  await gameRendererFlameTester.initialize(game);
   return game;
 }
 
@@ -85,4 +83,51 @@ GameCity _city({required String id, required int col, required int row}) {
     center: CityHex(col: col, row: row),
     controlledHexes: [CityHex(col: col, row: row)],
   );
+}
+
+void _registerHoverIntentVisibilityScenarios() {
+  test('hidden fog tile suppresses hover markers', () async {
+    final map = _map();
+    const visibleHex = HexCoordinate(col: 0, row: 0);
+    final fog = FogOfWarState.empty.updatePlayer(
+      PlayerFogOfWar(playerId: 'player_1', visibleHexes: {visibleHex}),
+    );
+    final game = await _loadedGame(map);
+
+    game
+      ..applyState(
+        GameClientState(
+          activePlayerId: 'player_1',
+          fogOfWar: fog,
+          interaction: const InteractionState(moveCommandActive: true),
+        ),
+      )
+      ..syncHoverIntentForTesting(_tile(map, 1, 1));
+
+    expect(game.hoverIntentKindForTesting, isNull);
+
+    game.syncHoverIntentForTesting(_tile(map, 0, 0));
+
+    expect(game.hoverIntentKindForTesting, HoverIntentKind.move);
+    expect(game.hoverIntentTileForTesting, (col: 0, row: 0));
+  });
+
+  test('pointer exit clears the active hover marker', () async {
+    final map = _map();
+    final game = await _loadedGame(map);
+
+    game
+      ..applyState(
+        GameClientState(
+          interaction: const InteractionState(moveCommandActive: true),
+        ),
+      )
+      ..syncHoverIntentForTesting(_tile(map, 1, 1));
+
+    expect(game.hoverIntentKindForTesting, HoverIntentKind.move);
+
+    game.handleViewportPointerExit();
+
+    expect(game.hoverIntentKindForTesting, isNull);
+  });
 }

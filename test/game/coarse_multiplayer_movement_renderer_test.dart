@@ -13,8 +13,9 @@ import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:aonw_core/protocol.dart';
-import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/game_renderer_flame_harness.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -65,12 +66,7 @@ void main() {
       expect((coarse.steps.single.col, coarse.steps.single.row), (3, 0));
       expect(coarse.steps.single.cumulativeCost, 0);
       final renderer = GameRenderer(mapData: _map(), onCommand: (_) async {});
-      addTearDown(renderer.disposeRenderer);
-
-      renderer
-        ..applyState(before)
-        ..onGameResize(Vector2(800, 600));
-      await renderer.onLoad();
+      await gameRendererFlameTester.initializeWithState(renderer, before);
 
       final transition = renderer.applyProjectedTransition(after, batch);
       await Future<void>.delayed(Duration.zero);
@@ -123,12 +119,7 @@ void main() {
         authoritativeStartMicrosUtc + 1000000,
       ),
     );
-    addTearDown(renderer.disposeRenderer);
-
-    renderer
-      ..applyState(before)
-      ..onGameResize(Vector2(800, 600));
-    await renderer.onLoad();
+    await gameRendererFlameTester.initializeWithState(renderer, before);
 
     final transition = renderer.applyProjectedTransition(after, batch);
     await Future<void>.delayed(Duration.zero);
@@ -157,10 +148,8 @@ void main() {
       final state9 = GameClientState(units: [unit.copyWith(col: 2)]);
       final renderer = GameRenderer(mapData: _map(), onCommand: (_) async {})
         ..activateProjectedEffectSource('match_1', nextEventOffset: 7)
-        ..applyState(state6)
-        ..onGameResize(Vector2(800, 600));
-      addTearDown(renderer.disposeRenderer);
-      await renderer.onLoad();
+        ..applyState(state6);
+      await gameRendererFlameTester.initialize(renderer);
 
       final firstMove = renderer.applyProjectedTransition(
         state7,

@@ -10,10 +10,15 @@ import 'package:aonw_core/game/domain/runtime.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
+import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('attack mode marks only legal unit and city target hexes', () async {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWithFlameGame('attack mode marks only legal unit and city target hexes', (
+    game,
+  ) async {
     final map = WorldMap(
       cols: 4,
       rows: 1,
@@ -29,7 +34,7 @@ void main() {
       ],
     );
     final grid = WorldMapGrid(mapData: map, config: MapConfig.defaultConfig);
-    await grid.onLoad();
+    await game.ensureAdd(grid);
     final attacker = GameUnit(
       id: 'archer',
       ownerPlayerId: 'player_1',
@@ -81,5 +86,6 @@ void main() {
     expect(grid.markersForCoordinate(1, 0).canAttackTarget, isTrue);
     expect(grid.markersForCoordinate(2, 0).canAttackTarget, isTrue);
     expect(grid.markersForCoordinate(3, 0).hasAny, isFalse);
+    await game.ensureRemove(grid);
   });
 }

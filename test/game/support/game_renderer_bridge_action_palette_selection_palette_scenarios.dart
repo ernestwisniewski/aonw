@@ -15,19 +15,15 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
         mapData: map,
         onCommand: (command) async => commands.add(command),
       );
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(
-          GameClientState(
-            units: [commander],
-            interaction: InteractionState(
-              selection: GameSelection.unit(commander, tile: kbTile(map, 1, 1)),
-            ),
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(
+          units: [commander],
+          interaction: InteractionState(
+            selection: GameSelection.unit(commander, tile: kbTile(map, 1, 1)),
           ),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+        ),
+      );
       game.camera.viewfinder
         ..zoom = 2
         ..position = Vector2(900, 700);
@@ -69,35 +65,31 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
         mapData: map,
         onCommand: (command) async => commands.add(command),
       );
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(
-          GameClientState(
-            activePlayerId: 'player_1',
-            units: [attacker, defender],
-            fogOfWar: FogOfWarState(
-              players: {
-                'player_1': PlayerFogOfWar(
-                  playerId: 'player_1',
-                  visibleHexes: {
-                    const HexCoordinate(col: 0, row: 0),
-                    const HexCoordinate(col: 1, row: 0),
-                  },
-                ),
-              },
-            ),
-            interaction: InteractionState(
-              selection: GameSelection.unit(attacker, tile: kbTile(map, 0, 0)),
-              pendingAction: const PendingAttackTargeting(
-                ownerPlayerId: 'player_1',
-                attackerUnitId: 'attacker_1',
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(
+          activePlayerId: 'player_1',
+          units: [attacker, defender],
+          fogOfWar: FogOfWarState(
+            players: {
+              'player_1': PlayerFogOfWar(
+                playerId: 'player_1',
+                visibleHexes: {
+                  const HexCoordinate(col: 0, row: 0),
+                  const HexCoordinate(col: 1, row: 0),
+                },
               ),
+            },
+          ),
+          interaction: InteractionState(
+            selection: GameSelection.unit(attacker, tile: kbTile(map, 0, 0)),
+            pendingAction: const PendingAttackTargeting(
+              ownerPlayerId: 'player_1',
+              attackerUnitId: 'attacker_1',
             ),
           ),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+        ),
+      );
 
       final defenderPosition = UnitMarkerLayer.worldPositionFor(1, 0);
       final defenderMarker = game.world.children
@@ -135,33 +127,29 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
         mapData: map,
         onCommand: (command) async => commands.add(command),
       );
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(
-          GameClientState(
-            activePlayerId: 'player_1',
-            activePlayerCanAct: true,
-            units: [commander, unitOnTarget],
-            fogOfWar: FogOfWarState(
-              players: {
-                'player_1': PlayerFogOfWar(
-                  playerId: 'player_1',
-                  visibleHexes: {
-                    const HexCoordinate(col: 0, row: 0),
-                    const HexCoordinate(col: 1, row: 0),
-                  },
-                ),
-              },
-            ),
-            interaction: InteractionState(
-              selection: GameSelection.unit(commander, tile: kbTile(map, 0, 0)),
-              moveCommandActive: true,
-            ),
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+          units: [commander, unitOnTarget],
+          fogOfWar: FogOfWarState(
+            players: {
+              'player_1': PlayerFogOfWar(
+                playerId: 'player_1',
+                visibleHexes: {
+                  const HexCoordinate(col: 0, row: 0),
+                  const HexCoordinate(col: 1, row: 0),
+                },
+              ),
+            },
           ),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+          interaction: InteractionState(
+            selection: GameSelection.unit(commander, tile: kbTile(map, 0, 0)),
+            moveCommandActive: true,
+          ),
+        ),
+      );
 
       final targetPosition = UnitMarkerLayer.worldPositionFor(1, 0);
       final marker = game.world.children.whereType<UnitMarker>().singleWhere(
@@ -197,37 +185,33 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
         mapData: map,
         onCommand: (command) async => commands.add(command),
       );
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(
-          GameClientState(
-            activePlayerId: 'player_1',
-            activePlayerCanAct: true,
-            units: [settler, unitOnTarget],
-            fogOfWar: FogOfWarState(
-              players: {
-                'player_1': PlayerFogOfWar(
-                  playerId: 'player_1',
-                  visibleHexes: {
-                    const HexCoordinate(col: 0, row: 0),
-                    const HexCoordinate(col: 1, row: 0),
-                  },
-                ),
-              },
-            ),
-            interaction: InteractionState(
-              selection: GameSelection.unit(settler, tile: kbTile(map, 0, 0)),
-              cityFoundingDraft: CityFoundingDraft(
-                unitId: 'settler_1',
-                ownerPlayerId: 'player_1',
-                center: const CityHex(col: 0, row: 0),
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+          units: [settler, unitOnTarget],
+          fogOfWar: FogOfWarState(
+            players: {
+              'player_1': PlayerFogOfWar(
+                playerId: 'player_1',
+                visibleHexes: {
+                  const HexCoordinate(col: 0, row: 0),
+                  const HexCoordinate(col: 1, row: 0),
+                },
               ),
+            },
+          ),
+          interaction: InteractionState(
+            selection: GameSelection.unit(settler, tile: kbTile(map, 0, 0)),
+            cityFoundingDraft: CityFoundingDraft(
+              unitId: 'settler_1',
+              ownerPlayerId: 'player_1',
+              center: const CityHex(col: 0, row: 0),
             ),
           ),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+        ),
+      );
 
       final targetPosition = UnitMarkerLayer.worldPositionFor(1, 0);
       final marker = game.world.children.whereType<UnitMarker>().singleWhere(
@@ -262,34 +246,30 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
         mapData: map,
         onCommand: (command) async => commands.add(command),
       );
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(
-          GameClientState(
-            activePlayerId: 'player_1',
-            activePlayerCanAct: true,
-            units: [commander],
-            cities: const [city],
-            fogOfWar: FogOfWarState(
-              players: {
-                'player_1': PlayerFogOfWar(
-                  playerId: 'player_1',
-                  visibleHexes: {
-                    const HexCoordinate(col: 0, row: 0),
-                    const HexCoordinate(col: 1, row: 1),
-                  },
-                ),
-              },
-            ),
-            interaction: InteractionState(
-              selection: GameSelection.unit(commander, tile: kbTile(map, 0, 0)),
-              moveCommandActive: true,
-            ),
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+          units: [commander],
+          cities: const [city],
+          fogOfWar: FogOfWarState(
+            players: {
+              'player_1': PlayerFogOfWar(
+                playerId: 'player_1',
+                visibleHexes: {
+                  const HexCoordinate(col: 0, row: 0),
+                  const HexCoordinate(col: 1, row: 1),
+                },
+              ),
+            },
           ),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+          interaction: InteractionState(
+            selection: GameSelection.unit(commander, tile: kbTile(map, 0, 0)),
+            moveCommandActive: true,
+          ),
+        ),
+      );
 
       game.world.children.whereType<CityMarker>().single.onTap?.call();
       await Future<void>.delayed(Duration.zero);
@@ -319,37 +299,33 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
         mapData: map,
         onCommand: (command) async => commands.add(command),
       );
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(
-          GameClientState(
-            activePlayerId: 'player_1',
-            activePlayerCanAct: true,
-            units: [worker],
-            cities: const [city],
-            fogOfWar: FogOfWarState(
-              players: {
-                'player_1': PlayerFogOfWar(
-                  playerId: 'player_1',
-                  visibleHexes: {
-                    const HexCoordinate(col: 0, row: 0),
-                    const HexCoordinate(col: 1, row: 1),
-                  },
-                ),
-              },
-            ),
-            interaction: InteractionState(
-              selection: GameSelection.unit(worker, tile: kbTile(map, 0, 0)),
-              pendingAction: const PendingWorkerActionSelection(
-                ownerPlayerId: 'player_1',
-                unitId: 'worker_1',
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+          units: [worker],
+          cities: const [city],
+          fogOfWar: FogOfWarState(
+            players: {
+              'player_1': PlayerFogOfWar(
+                playerId: 'player_1',
+                visibleHexes: {
+                  const HexCoordinate(col: 0, row: 0),
+                  const HexCoordinate(col: 1, row: 1),
+                },
               ),
+            },
+          ),
+          interaction: InteractionState(
+            selection: GameSelection.unit(worker, tile: kbTile(map, 0, 0)),
+            pendingAction: const PendingWorkerActionSelection(
+              ownerPlayerId: 'player_1',
+              unitId: 'worker_1',
             ),
           ),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+        ),
+      );
 
       game.world.children.whereType<CityMarker>().single.onTap?.call();
       await Future<void>.delayed(Duration.zero);
@@ -393,25 +369,21 @@ void _registerRendererActionPaletteSelectionPaletteScenarios() {
           ],
       onCommand: (_) async {},
     );
-    addTearDown(game.disposeRenderer);
-
-    game
-      ..applyState(
-        GameClientState(
-          activePlayerId: 'player_1',
-          activePlayerCanAct: true,
-          units: [worker],
-          interaction: InteractionState(
-            selection: GameSelection.unit(worker, tile: kbTile(map, 1, 0)),
-            pendingAction: const PendingWorkerActionSelection(
-              ownerPlayerId: 'player_1',
-              unitId: 'worker_1',
-            ),
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(
+        activePlayerId: 'player_1',
+        activePlayerCanAct: true,
+        units: [worker],
+        interaction: InteractionState(
+          selection: GameSelection.unit(worker, tile: kbTile(map, 1, 0)),
+          pendingAction: const PendingWorkerActionSelection(
+            ownerPlayerId: 'player_1',
+            unitId: 'worker_1',
           ),
         ),
-      )
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+      ),
+    );
 
     expect(game.actionPaletteVisibleForTesting, isTrue);
     expect(game.actionPaletteComponentForTesting?.optionsForTesting.length, 1);

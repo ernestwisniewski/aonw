@@ -30,35 +30,31 @@ void _registerRendererPlanningWorkerHintsScenarios() {
         row: 0,
       );
       final game = GameRenderer(mapData: map, onCommand: (_) async {});
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(
-          GameClientState(
-            activePlayerId: 'player_1',
-            units: [attacker, defender, distantEnemy],
-            fogOfWar: FogOfWarState(
-              players: {
-                'player_1': PlayerFogOfWar(
-                  playerId: 'player_1',
-                  visibleHexes: {
-                    for (var col = 0; col < 4; col++)
-                      HexCoordinate(col: col, row: 0),
-                  },
-                ),
-              },
-            ),
-            interaction: InteractionState(
-              selection: GameSelection.unit(attacker),
-              pendingAction: const PendingAttackTargeting(
-                ownerPlayerId: 'player_1',
-                attackerUnitId: 'warrior_1',
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(
+          activePlayerId: 'player_1',
+          units: [attacker, defender, distantEnemy],
+          fogOfWar: FogOfWarState(
+            players: {
+              'player_1': PlayerFogOfWar(
+                playerId: 'player_1',
+                visibleHexes: {
+                  for (var col = 0; col < 4; col++)
+                    HexCoordinate(col: col, row: 0),
+                },
               ),
+            },
+          ),
+          interaction: InteractionState(
+            selection: GameSelection.unit(attacker),
+            pendingAction: const PendingAttackTargeting(
+              ownerPlayerId: 'player_1',
+              attackerUnitId: 'warrior_1',
             ),
           ),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+        ),
+      );
 
       expect(game.tileMarkersForTesting(1, 0).canAttackTarget, isTrue);
       expect(game.tileMarkersForTesting(3, 0).hasAny, isFalse);
@@ -131,32 +127,28 @@ void _registerRendererPlanningWorkerHintsScenarios() {
       row: 0,
     );
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
-
-    game
-      ..applyState(
-        GameClientState(
-          units: [worker],
-          cities: const [city],
-          fieldImprovements: const [
-            FieldImprovement(
-              hex: CityHex(col: 1, row: 0),
-              type: FieldImprovementType.farm,
-              builtByCityId: 'city_1',
-            ),
-          ],
-          research: ResearchState(
-            players: {
-              'player_1': PlayerResearchState(
-                unlockedTechnologyIds: {TechnologyId.agriculture},
-              ),
-            },
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(
+        units: [worker],
+        cities: const [city],
+        fieldImprovements: const [
+          FieldImprovement(
+            hex: CityHex(col: 1, row: 0),
+            type: FieldImprovementType.farm,
+            builtByCityId: 'city_1',
           ),
-          interaction: InteractionState(selection: GameSelection.unit(worker)),
+        ],
+        research: ResearchState(
+          players: {
+            'player_1': PlayerResearchState(
+              unlockedTechnologyIds: {TechnologyId.agriculture},
+            ),
+          },
         ),
-      )
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+        interaction: InteractionState(selection: GameSelection.unit(worker)),
+      ),
+    );
 
     expect(game.tileMarkersForTesting(1, 0).workerBuildBlocked, isTrue);
     expect(game.tileMarkersForTesting(1, 0).workerBuildAvailable, isFalse);
@@ -243,25 +235,21 @@ void _registerRendererPlanningWorkerHintsScenarios() {
       row: 0,
     );
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
-
-    game
-      ..applyState(
-        GameClientState(
-          units: [worker],
-          cities: const [city],
-          research: ResearchState(
-            players: {
-              'player_1': PlayerResearchState(
-                unlockedTechnologyIds: {TechnologyId.agriculture},
-              ),
-            },
-          ),
-          interaction: InteractionState(selection: GameSelection.unit(worker)),
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(
+        units: [worker],
+        cities: const [city],
+        research: ResearchState(
+          players: {
+            'player_1': PlayerResearchState(
+              unlockedTechnologyIds: {TechnologyId.agriculture},
+            ),
+          },
         ),
-      )
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+        interaction: InteractionState(selection: GameSelection.unit(worker)),
+      ),
+    );
 
     expect(game.tileMarkersForTesting(2, 0).workerBuildAvailable, isTrue);
     expect(game.tileMarkersForTesting(2, 0).workerBuildBlocked, isFalse);
@@ -291,12 +279,7 @@ void _registerRendererPlanningWorkerHintsScenarios() {
           await game.handleEffects(transition.uiEffects.rendererEffects);
         },
       );
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(state)
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+      await gameRendererFlameTester.initializeWithState(game, state);
       await Future<void>.delayed(Duration.zero);
       game.update(0);
       await game.handleTileTappedForTesting(kbTile(map, 0, 0));

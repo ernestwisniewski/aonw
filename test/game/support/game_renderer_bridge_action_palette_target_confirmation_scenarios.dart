@@ -26,23 +26,19 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
       mapData: map,
       onCommand: (command) async => commands.add(command),
     );
-    addTearDown(game.disposeRenderer);
-
-    game
-      ..applyState(
-        GameClientState(
-          activePlayerId: 'player_1',
-          activePlayerCanAct: true,
-          units: [commander],
-          interaction: InteractionState(
-            selection: GameSelection.unit(commander, tile: kbTile(map, 0, 0)),
-            movePreview: preview,
-            moveCommandActive: true,
-          ),
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(
+        activePlayerId: 'player_1',
+        activePlayerCanAct: true,
+        units: [commander],
+        interaction: InteractionState(
+          selection: GameSelection.unit(commander, tile: kbTile(map, 0, 0)),
+          movePreview: preview,
+          moveCommandActive: true,
         ),
-      )
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+      ),
+    );
     await Future<void>.delayed(Duration.zero);
     game.update(0);
 
@@ -82,23 +78,19 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
         mapData: map,
         onCommand: (command) async => commands.add(command),
       );
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(
-          GameClientState(
-            activePlayerId: 'player_1',
-            activePlayerCanAct: true,
-            units: [warrior],
-            interaction: InteractionState(
-              selection: GameSelection.tile(kbTile(map, 1, 0)),
-              movePreview: preview,
-              moveCommandActive: true,
-            ),
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+          units: [warrior],
+          interaction: InteractionState(
+            selection: GameSelection.tile(kbTile(map, 1, 0)),
+            movePreview: preview,
+            moveCommandActive: true,
           ),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+        ),
+      );
       await Future<void>.delayed(Duration.zero);
       game.update(0);
 
@@ -130,22 +122,18 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
         center: const CityHex(col: 1, row: 1),
       );
       final game = GameRenderer(mapData: map, onCommand: (_) async {});
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(
-          GameClientState(
-            activePlayerId: 'player_1',
-            activePlayerCanAct: true,
-            units: [settler],
-            interaction: InteractionState(
-              selection: GameSelection.unit(settler, tile: kbTile(map, 1, 1)),
-              cityFoundingDraft: draft,
-            ),
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+          units: [settler],
+          interaction: InteractionState(
+            selection: GameSelection.unit(settler, tile: kbTile(map, 1, 1)),
+            cityFoundingDraft: draft,
           ),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+        ),
+      );
 
       expect(game.actionPaletteVisibleForTesting, isFalse);
     },
@@ -171,22 +159,18 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
         ],
       );
       final game = GameRenderer(mapData: map, onCommand: (_) async {});
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(
-          GameClientState(
-            activePlayerId: 'player_1',
-            activePlayerCanAct: true,
-            units: [settler],
-            interaction: InteractionState(
-              selection: GameSelection.unit(settler, tile: kbTile(map, 1, 1)),
-              cityFoundingDraft: draft,
-            ),
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+          units: [settler],
+          interaction: InteractionState(
+            selection: GameSelection.unit(settler, tile: kbTile(map, 1, 1)),
+            cityFoundingDraft: draft,
           ),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+        ),
+      );
 
       expect(game.actionPaletteVisibleForTesting, isFalse);
       expect(game.actionPaletteComponentForTesting, isNull);
@@ -230,8 +214,6 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
           ],
       onCommand: (command) async => commands.add(command),
     );
-    addTearDown(game.disposeRenderer);
-
     GameClientState state({FieldImprovementType? improvementType}) =>
         GameClientState(
           activePlayerId: 'player_1',
@@ -247,10 +229,7 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
           ),
         );
 
-    game
-      ..applyState(state())
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    await gameRendererFlameTester.initializeWithState(game, state());
 
     game.actionPaletteComponentForTesting?.tapOptionForTesting('farm');
     await Future<void>.delayed(Duration.zero);
@@ -302,25 +281,21 @@ void _registerRendererActionPaletteTargetConfirmationScenarios() {
           ],
       onCommand: (command) async => commands.add(command),
     );
-    addTearDown(game.disposeRenderer);
-
-    game
-      ..applyState(
-        GameClientState(
-          activePlayerId: 'player_1',
-          activePlayerCanAct: true,
-          units: [worker],
-          interaction: InteractionState(
-            selection: GameSelection.unit(worker, tile: kbTile(map, 1, 0)),
-            pendingAction: const PendingWorkerActionSelection(
-              ownerPlayerId: 'player_1',
-              unitId: 'worker_1',
-            ),
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(
+        activePlayerId: 'player_1',
+        activePlayerCanAct: true,
+        units: [worker],
+        interaction: InteractionState(
+          selection: GameSelection.unit(worker, tile: kbTile(map, 1, 0)),
+          pendingAction: const PendingWorkerActionSelection(
+            ownerPlayerId: 'player_1',
+            unitId: 'worker_1',
           ),
         ),
-      )
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+      ),
+    );
 
     game.actionPaletteComponentForTesting?.tapOptionForTesting('mine');
     await Future<void>.delayed(Duration.zero);

@@ -12,6 +12,7 @@ import 'package:aonw_core/game/domain/artifact.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:flame/components.dart';
+import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -63,6 +64,34 @@ void main() {
 
       recorder.endRecording().dispose();
     });
+
+    testWithFlameGame(
+      'mounts, handles a Flame tap event, and removes cleanly',
+      (game) async {
+        var taps = 0;
+        final marker = ArtifactMarker(
+          position: Vector2.all(48),
+          type: WorldArtifactType.heroSword,
+          markerWorldScale: 1.25,
+          onTap: () => taps++,
+        );
+
+        await game.ensureAdd(marker);
+
+        expect(marker.isMounted, isTrue);
+        expect(marker.scale, Vector2.all(1.25));
+
+        marker.onTapUp(
+          createTapUpEvents(game: game, localPosition: const ui.Offset(17, 18)),
+        );
+
+        expect(taps, 1);
+
+        await game.ensureRemove(marker);
+
+        expect(marker.isMounted, isFalse);
+      },
+    );
   });
 
   group('ArtifactMarkerLayer', () {

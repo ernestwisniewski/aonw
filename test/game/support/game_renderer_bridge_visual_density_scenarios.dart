@@ -11,13 +11,9 @@ void _registerRendererVisualDensityScenarios() {
         name: 'Capital',
         center: CityHex(col: 1, row: 1),
       );
-      final game = GameRenderer(mapData: map, onCommand: (_) async {});
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(GameClientState(cities: [city]))
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+      final game = GameRenderer(mapData: map, onCommand: (_) async {})
+        ..applyState(GameClientState(cities: [city]));
+      await gameRendererFlameTester.initialize(game);
       game.camera.viewfinder
         ..zoom = 1.6
         ..position = Vector2(900, 700);
@@ -63,13 +59,9 @@ void _registerRendererVisualDensityScenarios() {
       name: 'Capital',
       center: CityHex(col: 1, row: 1),
     );
-    final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
-
-    game
-      ..applyState(GameClientState(cities: [city]))
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    final game = GameRenderer(mapData: map, onCommand: (_) async {})
+      ..applyState(GameClientState(cities: [city]));
+    await gameRendererFlameTester.initialize(game);
 
     expect(game.cityMarkerPaintsLabelForTesting(city.id), isTrue);
 
@@ -108,13 +100,9 @@ void _registerRendererVisualDensityScenarios() {
       col: 1,
       row: 1,
     );
-    final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
-
-    game
-      ..applyState(GameClientState(units: [warrior]))
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    final game = GameRenderer(mapData: map, onCommand: (_) async {})
+      ..applyState(GameClientState(units: [warrior]));
+    await gameRendererFlameTester.initialize(game);
 
     game.setZoom(game.unitMarkerDetailsMinZoomForTesting + 0.01);
 
@@ -159,13 +147,9 @@ void _registerRendererVisualDensityScenarios() {
       col: 2,
       row: 1,
     );
-    final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
-
-    game
-      ..applyState(GameClientState(cities: [city], units: [warrior]))
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    final game = GameRenderer(mapData: map, onCommand: (_) async {})
+      ..applyState(GameClientState(cities: [city], units: [warrior]));
+    await gameRendererFlameTester.initialize(game);
 
     game.setZoom(0.34);
 
@@ -256,6 +240,8 @@ void _registerRendererVisualDensityScenarios() {
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
     addTearDown(game.disposeRenderer);
 
+    // Keep the pre-mount state: mounting runs an update that temporarily
+    // suppresses production particles through fast-render density policy.
     game
       ..applyState(
         GameClientState(

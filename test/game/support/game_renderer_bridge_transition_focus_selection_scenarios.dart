@@ -35,28 +35,55 @@ void _registerRendererTransitionFocusSelectionScenarios() {
       );
     },
   );
+  final initialFocusMap = kbMap(3, 3);
+  final initialFocusCommander = GameUnit.startingCommander(
+    ownerPlayerId: 'player_1',
+    col: 1,
+    row: 1,
+  );
+  final switchMap = kbMap(3, 3);
+  final switchCommander = GameUnit.startingCommander(
+    ownerPlayerId: 'player_1',
+    col: 0,
+    row: 0,
+  );
+  final switchSettler = GameUnit(
+    id: 'settler_1',
+    ownerPlayerId: 'player_1',
+    type: GameUnitType.settler,
+    name: GameUnitType.settler.defaultNameToken,
+    col: 1,
+    row: 0,
+  );
+  final focusMap = kbMap(3, 3);
+  final focusCommander = GameUnit.startingCommander(
+    ownerPlayerId: 'player_1',
+    col: 1,
+    row: 1,
+  );
+  final noCameraMap = kbMap(3, 3);
+  final noCameraCommander = GameUnit.startingCommander(
+    ownerPlayerId: 'player_1',
+    col: 1,
+    row: 1,
+  );
+
   test(
     'applies new-game initial focus after restoring the zero camera',
     () async {
-      final map = kbMap(3, 3);
-      final commander = GameUnit.startingCommander(
-        ownerPlayerId: 'player_1',
-        col: 1,
-        row: 1,
-      );
-      final game = GameRenderer(
-        mapData: map,
-        focusActivePlayerOnFirstState: true,
-        initialCamera: CameraState.zero,
-        onCommand: (_) async {},
-      );
-      addTearDown(game.disposeRenderer);
-      game
-        ..applyState(
-          GameClientState(units: [commander], activePlayerId: 'player_1'),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+      final game =
+          GameRenderer(
+            mapData: initialFocusMap,
+            focusActivePlayerOnFirstState: true,
+            initialCamera: CameraState.zero,
+            onCommand: (_) async {},
+          )..applyState(
+            GameClientState(
+              units: [initialFocusCommander],
+              activePlayerId: 'player_1',
+            ),
+          );
+      await gameRendererFlameTester.initialize(game);
 
       expect(game.initialCameraFocusReadyListenable.value, isTrue);
       _expectVectorClose(
@@ -68,43 +95,31 @@ void _registerRendererTransitionFocusSelectionScenarios() {
   test(
     'switches selection from a later unit to an earlier unit without key conflicts',
     () async {
-      final map = kbMap(3, 3);
-      final commander = GameUnit.startingCommander(
-        ownerPlayerId: 'player_1',
-        col: 0,
-        row: 0,
-      );
-      final settler = GameUnit(
-        id: 'settler_1',
-        ownerPlayerId: 'player_1',
-        type: GameUnitType.settler,
-        name: GameUnitType.settler.defaultNameToken,
-        col: 1,
-        row: 0,
-      );
-      final game = GameRenderer(mapData: map, onCommand: (_) async {});
-      addTearDown(game.disposeRenderer);
-
-      game
+      final game = GameRenderer(mapData: switchMap, onCommand: (_) async {})
         ..applyState(
           GameClientState(
             activePlayerId: 'player_1',
-            units: [commander, settler],
+            units: [switchCommander, switchSettler],
             interaction: InteractionState(
-              selection: GameSelection.unit(settler, tile: kbTile(map, 1, 0)),
+              selection: GameSelection.unit(
+                switchSettler,
+                tile: kbTile(switchMap, 1, 0),
+              ),
             ),
           ),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+        );
+      await gameRendererFlameTester.initialize(game);
       game
         ..update(0)
         ..applyState(
           GameClientState(
             activePlayerId: 'player_1',
-            units: [commander, settler],
+            units: [switchCommander, switchSettler],
             interaction: InteractionState(
-              selection: GameSelection.unit(commander, tile: kbTile(map, 0, 0)),
+              selection: GameSelection.unit(
+                switchCommander,
+                tile: kbTile(switchMap, 0, 0),
+              ),
             ),
           ),
         );
@@ -115,19 +130,9 @@ void _registerRendererTransitionFocusSelectionScenarios() {
   test(
     'smoothly focuses newly selected unit at marker center for current zoom',
     () async {
-      final map = kbMap(3, 3);
-      final commander = GameUnit.startingCommander(
-        ownerPlayerId: 'player_1',
-        col: 1,
-        row: 1,
-      );
-      final game = GameRenderer(mapData: map, onCommand: (_) async {});
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(GameClientState(units: [commander]))
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+      final game = GameRenderer(mapData: focusMap, onCommand: (_) async {})
+        ..applyState(GameClientState(units: [focusCommander]));
+      await gameRendererFlameTester.initialize(game);
       game.camera.viewfinder
         ..zoom = 2
         ..position = Vector2(900, 700);
@@ -136,9 +141,12 @@ void _registerRendererTransitionFocusSelectionScenarios() {
 
       game.applyState(
         GameClientState(
-          units: [commander],
+          units: [focusCommander],
           interaction: InteractionState(
-            selection: GameSelection.unit(commander, tile: kbTile(map, 1, 1)),
+            selection: GameSelection.unit(
+              focusCommander,
+              tile: kbTile(focusMap, 1, 1),
+            ),
           ),
         ),
       );
@@ -156,19 +164,9 @@ void _registerRendererTransitionFocusSelectionScenarios() {
     },
   );
   test('can update selection without moving the camera', () async {
-    final map = kbMap(3, 3);
-    final commander = GameUnit.startingCommander(
-      ownerPlayerId: 'player_1',
-      col: 1,
-      row: 1,
-    );
-    final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
-
-    game
-      ..applyState(GameClientState(units: [commander]))
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    final game = GameRenderer(mapData: noCameraMap, onCommand: (_) async {})
+      ..applyState(GameClientState(units: [noCameraCommander]));
+    await gameRendererFlameTester.initialize(game);
     game.camera.viewfinder
       ..zoom = 2
       ..position = Vector2(900, 700);
@@ -176,9 +174,12 @@ void _registerRendererTransitionFocusSelectionScenarios() {
 
     game.applyStateWithoutCameraFocus(
       GameClientState(
-        units: [commander],
+        units: [noCameraCommander],
         interaction: InteractionState(
-          selection: GameSelection.unit(commander, tile: kbTile(map, 1, 1)),
+          selection: GameSelection.unit(
+            noCameraCommander,
+            tile: kbTile(noCameraMap, 1, 1),
+          ),
         ),
       ),
     );

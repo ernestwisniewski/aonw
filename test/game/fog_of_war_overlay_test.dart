@@ -8,6 +8,7 @@ import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flame/components.dart';
+import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 WorldMap _map() => WorldMap(
@@ -27,14 +28,14 @@ WorldMap _map() => WorldMap(
 );
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('FogOfWarOverlay', () {
     test('declares a fragment shader asset', () {
       expect(FogOfWarOverlay.shaderAssetPath, 'shaders/fog_of_war.frag');
     });
 
     test('loads the fragment shader asset', () async {
-      TestWidgetsFlutterBinding.ensureInitialized();
-
       final program = await ui.FragmentProgram.fromAsset(
         FogOfWarOverlay.shaderAssetPath,
       );
@@ -69,10 +70,11 @@ void main() {
       expect(visibleTileAlpha, 0);
     });
 
-    test('extends the shader mask beyond edge tiles', () async {
-      TestWidgetsFlutterBinding.ensureInitialized();
+    testWithFlameGame('extends the shader mask beyond edge tiles', (
+      game,
+    ) async {
       final overlay = _singleVisibleTileOverlay();
-      await overlay.onLoad();
+      await game.ensureAdd(overlay);
 
       final rendered = await _renderOverlay(overlay);
       final offMapAlpha = await rendered.alphaAt(
@@ -84,6 +86,7 @@ void main() {
 
       expect(offMapAlpha, greaterThan(240));
       expect(visibleTileAlpha, 0);
+      await game.ensureRemove(overlay);
     });
 
     test('uses blur for both hidden and discovered fog layers', () {
@@ -111,41 +114,44 @@ void main() {
       expect(FogOfWarOverlay.shaderMaskIntensityFor(FogVisibility.hidden), 1);
     });
 
-    test('coalesces visibility changes and skips equivalent masks', () async {
-      TestWidgetsFlutterBinding.ensureInitialized();
-      final overlay = _singleVisibleTileOverlay();
-      await overlay.onLoad();
-      final initialBuilds = overlay.visibilityMaskBuildCountForTesting;
+    testWithFlameGame(
+      'coalesces visibility changes and skips equivalent masks',
+      (game) async {
+        final overlay = _singleVisibleTileOverlay();
+        await game.ensureAdd(overlay);
+        final initialBuilds = overlay.visibilityMaskBuildCountForTesting;
 
-      expect(
-        overlay.updateVisibility({
-          const HexCoordinate(col: 0, row: 0): FogVisibility.visible,
-        }),
-        isFalse,
-      );
-      expect(overlay.visibilityMaskBuildCountForTesting, initialBuilds);
+        expect(
+          overlay.updateVisibility({
+            const HexCoordinate(col: 0, row: 0): FogVisibility.visible,
+          }),
+          isFalse,
+        );
+        expect(overlay.visibilityMaskBuildCountForTesting, initialBuilds);
 
-      expect(
-        overlay.updateVisibility({
-          const HexCoordinate(col: 0, row: 0): FogVisibility.hidden,
-        }),
-        isTrue,
-      );
-      expect(
-        overlay.updateVisibility({
-          const HexCoordinate(col: 0, row: 0): FogVisibility.discovered,
-        }),
-        isTrue,
-      );
-      expect(overlay.visibilityMaskDirtyForTesting, isTrue);
-      expect(overlay.visibilityMaskBuildCountForTesting, initialBuilds);
+        expect(
+          overlay.updateVisibility({
+            const HexCoordinate(col: 0, row: 0): FogVisibility.hidden,
+          }),
+          isTrue,
+        );
+        expect(
+          overlay.updateVisibility({
+            const HexCoordinate(col: 0, row: 0): FogVisibility.discovered,
+          }),
+          isTrue,
+        );
+        expect(overlay.visibilityMaskDirtyForTesting, isTrue);
+        expect(overlay.visibilityMaskBuildCountForTesting, initialBuilds);
 
-      final rendered = await _renderOverlay(overlay);
-      rendered.image.dispose();
+        final rendered = await _renderOverlay(overlay);
+        rendered.image.dispose();
 
-      expect(overlay.visibilityMaskDirtyForTesting, isFalse);
-      expect(overlay.visibilityMaskBuildCountForTesting, initialBuilds + 1);
-    });
+        expect(overlay.visibilityMaskDirtyForTesting, isFalse);
+        expect(overlay.visibilityMaskBuildCountForTesting, initialBuilds + 1);
+        await game.ensureRemove(overlay);
+      },
+    );
   });
 
   group('FogOfWarOverlayLayer', () {

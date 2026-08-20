@@ -110,7 +110,7 @@
       "sourceLines": {
         "test/game/game_hud_test.dart": 7669,
         "test/game/game_providers_test.dart": 2572,
-        "test/game/game_renderer_keyboard_test.dart": 3549,
+        "test/game/game_renderer_keyboard_test.dart": 3411,
         "test/support/reducer_parity_fixture.dart": 3213
       },
       "callableCount": {
@@ -124,7 +124,7 @@
       "callableLines": {
         "test/game/game_hud_test.dart": 7495,
         "test/game/game_providers_test.dart": 2479,
-        "test/game/game_renderer_keyboard_test.dart": 3458,
+        "test/game/game_renderer_keyboard_test.dart": 3319,
         "test/support/reducer_parity_fixture.dart": 2781
       },
       "cyclomaticComplexity": {

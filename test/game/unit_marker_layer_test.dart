@@ -15,7 +15,12 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
+import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/flame_event_test_helpers.dart';
+
+part 'unit_marker_layer_lifecycle_test_scenarios.dart';
 
 WorldMap _map() => WorldMap(
   cols: 4,
@@ -51,29 +56,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('UnitMarkerLayer', () {
-    test(
-      'records a loaded selected unit render path deterministically',
-      () async {
-        final marker = UnitMarker(
-          position: Vector2.zero(),
-          colorValue: 0xFF3366CC,
-          unitType: GameUnitType.commander,
-          selected: true,
-          healthFraction: 0.5,
-        );
-        await marker.onLoad();
-        final recorder = PictureRecorder();
-
-        marker.render(Canvas(recorder));
-
-        final picture = recorder.endRecording();
-        addTearDown(picture.dispose);
-        expect(picture.approximateBytesUsed, greaterThan(0));
-        expect(marker.spriteRenderSizeForTesting, isNotNull);
-        expect(marker.paintsIdentityBadgeForTesting, isTrue);
-        expect(marker.paintsHealthBarForTesting, isTrue);
-      },
-    );
+    _runUnitMarkerLifecycleScenarios();
 
     test('commander walk sprite uses the sequence row for every direction', () {
       final marker = UnitMarker(
@@ -215,12 +198,15 @@ void main() {
       );
     });
 
-    test('accepts taps on the type icon above the marker body', () {
+    testWithFlameGame('accepts tap events on the type icon', (game) async {
+      var taps = 0;
       final marker = UnitMarker(
-        position: Vector2.zero(),
+        position: Vector2.all(200),
         colorValue: 0xFF0000FF,
         unitType: GameUnitType.commander,
+        onTap: () => taps++,
       );
+      await game.ensureAdd(marker);
       final iconRect = marker.typeIconRectForTesting;
 
       expect(iconRect.bottom, lessThan(0));
@@ -230,6 +216,9 @@ void main() {
         ),
         isTrue,
       );
+      dispatchTapAtLocalPosition(game, marker, iconRect.center);
+      expect(taps, 1);
+      await game.ensureRemove(marker);
     });
 
     test('shows an artifact carrier badge and accepts taps on it', () {
@@ -443,14 +432,16 @@ void main() {
       expect(marker.spriteColumnForTesting, 1);
     });
 
-    test('worker work status follows the work frame geometry', () async {
+    testWithFlameGame('worker work status follows the work frame geometry', (
+      game,
+    ) async {
       final marker = UnitMarker(
         position: Vector2.zero(),
         colorValue: 0xFF0000FF,
         unitType: GameUnitType.worker,
         selected: true,
       );
-      await marker.onLoad();
+      await game.ensureAdd(marker);
       final idleStatusTop = marker.spriteStatusTopForTesting;
 
       marker.playWork();
@@ -470,6 +461,7 @@ void main() {
         marker.spriteStatusTopForTesting,
         isNot(closeTo(idleStatusTop, 0.0001)),
       );
+      await game.ensureRemove(marker);
     });
 
     test('reuses unit markers and updates priority when a unit moves', () {

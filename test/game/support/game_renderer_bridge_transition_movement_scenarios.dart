@@ -12,10 +12,8 @@ void _registerRendererTransitionMovementScenarios() {
             visible: {const HexCoordinate(col: 0, row: 0)},
           ),
         ),
-      )
-      ..onGameResize(Vector2(800, 600));
-    addTearDown(game.disposeRenderer);
-    await game.onLoad();
+      );
+    await gameRendererFlameTester.initialize(game);
     await game.handleEffect(const JumpCameraEffect(col: 0, row: 0));
     final before = _visibleCenter(game).clone();
 
@@ -26,10 +24,7 @@ void _registerRendererTransitionMovementScenarios() {
   test('smooth camera effect animates toward the target tile', () async {
     final map = kbMap(4, 4);
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
-
-    game.onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    await gameRendererFlameTester.initialize(game);
 
     final start = _visibleCenter(game).clone();
     final target = UnitMarkerLayer.worldPositionFor(2, 2);
@@ -72,12 +67,11 @@ void _registerRendererTransitionMovementScenarios() {
         row: 1,
       );
       final game = GameRenderer(mapData: map, onCommand: (_) async {});
-      addTearDown(game.disposeRenderer);
 
-      game
-        ..applyState(GameClientState(units: [attacker, defender]))
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(units: [attacker, defender]),
+      );
       game.camera.viewfinder
         ..zoom = 2
         ..position = Vector2(900, 700);
@@ -119,12 +113,11 @@ void _registerRendererTransitionMovementScenarios() {
       row: 0,
     );
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
 
-    game
-      ..applyState(GameClientState(units: [unit]))
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(units: [unit]),
+    );
     await game.handleEffect(const JumpCameraEffect(col: 3, row: 0));
 
     final moveFuture = game.handleEffect(
@@ -169,12 +162,11 @@ void _registerRendererTransitionMovementScenarios() {
       row: 0,
     );
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
 
-    game
-      ..applyState(GameClientState(units: [unit]))
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(units: [unit]),
+    );
 
     var firstCompleted = false;
     var secondCompleted = false;
@@ -255,14 +247,11 @@ void _registerRendererTransitionMovementScenarios() {
       row: 0,
     );
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
 
-    game
-      ..applyState(
-        GameClientState(units: [hiddenEnemy], activePlayerId: 'player_1'),
-      )
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(units: [hiddenEnemy], activePlayerId: 'player_1'),
+    );
     await game.handleEffect(const JumpCameraEffect(col: 0, row: 0));
     final before = _visibleCenter(game).clone();
 
@@ -289,19 +278,16 @@ void _registerRendererTransitionMovementScenarios() {
       row: 0,
     );
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
     final fog = _fog(visible: {const HexCoordinate(col: 0, row: 0)});
 
-    game
-      ..applyState(
-        GameClientState(
-          activePlayerId: 'player_1',
-          fogOfWar: fog,
-          units: [enemy],
-        ),
-      )
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(
+        activePlayerId: 'player_1',
+        fogOfWar: fog,
+        units: [enemy],
+      ),
+    );
 
     expect(game.unitMarkerPositionForTesting(enemy.id), isNotNull);
 
@@ -347,14 +333,11 @@ void _registerRendererTransitionMovementScenarios() {
       focusActivePlayerOnFirstState: true,
       onCommand: (_) async {},
     );
-    addTearDown(game.disposeRenderer);
 
-    game
-      ..applyState(
-        GameClientState(units: [commander], activePlayerId: 'player_1'),
-      )
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(units: [commander], activePlayerId: 'player_1'),
+    );
 
     expect(game.camera.viewfinder.position.x, isNot(0));
     expect(game.camera.viewfinder.position.y, isNot(0));
@@ -376,17 +359,14 @@ void _registerRendererTransitionMovementScenarios() {
       focusActivePlayerOnFirstState: true,
       onCommand: (_) async {},
     );
-    addTearDown(game.disposeRenderer);
 
-    game
-      ..applyState(
-        GameClientState(
-          activePlayerId: 'player_1',
-          units: [playerOneUnit, playerTwoUnit],
-        ),
-      )
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(
+        activePlayerId: 'player_1',
+        units: [playerOneUnit, playerTwoUnit],
+      ),
+    );
     _expectVectorClose(
       _visibleCenter(game),
       UnitMarkerLayer.worldPositionFor(0, 0),

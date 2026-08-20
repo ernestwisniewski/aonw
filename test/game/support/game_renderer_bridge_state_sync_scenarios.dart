@@ -48,13 +48,8 @@ void _registerRendererStateSyncScenarios() {
       mapData: map,
       initialViewMode: MapViewMode.graphic,
       onCommand: (_) async {},
-    );
-    addTearDown(game.disposeRenderer);
-
-    game
-      ..onGameResize(Vector2(800, 600))
-      ..applyState(GameClientState(cities: [city]));
-    await game.onLoad();
+    )..applyState(GameClientState(cities: [city]));
+    await gameRendererFlameTester.initialize(game);
 
     expect(game.cityTerritoryStrategicViewForTesting, isFalse);
 
@@ -72,13 +67,9 @@ void _registerRendererStateSyncScenarios() {
       center: CityHex(col: 1, row: 1),
       controlledHexes: [CityHex(col: 1, row: 0)],
     );
-    final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
-
-    game
-      ..onGameResize(Vector2(800, 600))
+    final game = GameRenderer(mapData: map, onCommand: (_) async {})
       ..applyState(GameClientState(cities: [city]));
-    await game.onLoad();
+    await gameRendererFlameTester.initialize(game);
 
     game.setZoom(1);
     final closeEmphasis = game.cityTerritoryZoomEmphasisForTesting;
@@ -90,12 +81,8 @@ void _registerRendererStateSyncScenarios() {
   });
 
   test('publishes zoom changes for the performance debug overlay', () async {
-    final map = kbMap(3, 3);
-    final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
-
-    game.onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    final game = GameRenderer(mapData: kbMap(3, 3), onCommand: (_) async {});
+    await gameRendererFlameTester.initialize(game);
 
     game.setZoom(0.75);
 
@@ -103,12 +90,8 @@ void _registerRendererStateSyncScenarios() {
   });
 
   test('skips marker density sync for tiny same-bucket zoom deltas', () async {
-    final map = kbMap(3, 3);
-    final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
-
-    game.onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    final game = GameRenderer(mapData: kbMap(3, 3), onCommand: (_) async {});
+    await gameRendererFlameTester.initialize(game);
 
     game
       ..setZoom(1.2)
@@ -125,6 +108,8 @@ void _registerRendererStateSyncScenarios() {
     expect(game.markerDensitySyncCountForTesting, initialSyncCount + 1);
   });
 
+  // Keep manual lifecycle control here: mounting performs an initial update
+  // that would activate the fast-render state before this scenario begins.
   test('keeps gameplay markers visible while panning the camera', () async {
     final map = kbMap(3, 3);
     const city = GameCity(

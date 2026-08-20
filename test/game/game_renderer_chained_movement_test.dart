@@ -10,6 +10,8 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/game_renderer_flame_harness.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -20,14 +22,11 @@ void main() {
       final unitA = _unit('unit_a', col: 0, row: 0);
       final unitB = _unit('unit_b', col: 0, row: 1);
       final game = GameRenderer(mapData: map, onCommand: (_) async {});
-      addTearDown(game.disposeRenderer);
 
-      game
-        ..applyState(
-          GameClientState(units: [unitA, unitB], activePlayerId: 'player_1'),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(units: [unitA, unitB], activePlayerId: 'player_1'),
+      );
 
       final transition = game.applyTransition(
         GameClientState(

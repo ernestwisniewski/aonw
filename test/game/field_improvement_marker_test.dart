@@ -13,6 +13,7 @@ import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:flame/components.dart';
+import 'package:flame_test/flame_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -35,7 +36,9 @@ void main() {
       }
     });
 
-    test('uses the field improvement atlas footprint', () async {
+    testWithFlameGame('uses the field improvement atlas footprint', (
+      game,
+    ) async {
       const capStyle = BoardAssetCapStyles.improvement;
       const sizeScale = 0.70;
       final markerWidth = MapConfig.defaultConfig.hexRadius * 2 * sizeScale;
@@ -49,7 +52,7 @@ void main() {
         type: FieldImprovementType.orchard,
         eraColumn: 1,
       );
-      await marker.onLoad();
+      await game.ensureAdd(marker);
 
       expect(marker.markerSizeForTesting.x, closeTo(markerWidth, 0.0001));
       expect(marker.markerSizeForTesting.y, closeTo(markerHeight, 0.0001));
@@ -59,6 +62,7 @@ void main() {
       expect(marker.adjustmentIdForTesting.value, 'improvement.orchard.1');
       expect(marker.frameIdForTesting.value, 'improvement.orchard.1');
       expect(marker.sourceRectForTesting, isNot(ui.Rect.zero));
+      await game.ensureRemove(marker);
     });
 
     test('clips the improvement sprite to a smaller board cap', () {

@@ -1,5 +1,35 @@
 part of 'city_marker_test.dart';
 
+void _runCityMarkerLifecycleScenarios() {
+  testWithFlameGame('records a loaded city render path deterministically', (
+    game,
+  ) async {
+    final marker = CityMarker(
+      position: Vector2.zero(),
+      colorValue: 0xFF3366CC,
+      name: 'Aurelian',
+      population: 8,
+      healthFraction: 0.5,
+      isCapital: true,
+      selected: true,
+      hasStoredArtifact: true,
+    );
+    await game.ensureAdd(marker);
+    final recorder = PictureRecorder();
+
+    marker.render(Canvas(recorder));
+
+    final picture = recorder.endRecording();
+    addTearDown(picture.dispose);
+    expect(picture.approximateBytesUsed, greaterThan(0));
+    expect(marker.debugSnapshot.paintsCityHealthBar, isTrue);
+    expect(marker.debugSnapshot.paintsCapitalStar, isTrue);
+    expect(marker.debugSnapshot.paintsSelectedCityLabelBorder, isTrue);
+    expect(marker.debugSnapshot.paintsStoredArtifactBadge, isTrue);
+    await game.ensureRemove(marker);
+  });
+}
+
 void _runCityMarkerOwnershipScenarios() {
   test('city label does not reserve an owner color dot', () {
     final marker = CityMarker(

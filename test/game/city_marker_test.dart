@@ -12,7 +12,10 @@ import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/map/domain/map_config.dart';
 import 'package:flame/components.dart';
+import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/flame_event_test_helpers.dart';
 
 part 'city_marker_test_scenarios.dart';
 
@@ -20,30 +23,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('CityMarker', () {
-    test('records a loaded city render path deterministically', () async {
-      final marker = CityMarker(
-        position: Vector2.zero(),
-        colorValue: 0xFF3366CC,
-        name: 'Aurelian',
-        population: 8,
-        healthFraction: 0.5,
-        isCapital: true,
-        selected: true,
-        hasStoredArtifact: true,
-      );
-      await marker.onLoad();
-      final recorder = PictureRecorder();
-
-      marker.render(Canvas(recorder));
-
-      final picture = recorder.endRecording();
-      addTearDown(picture.dispose);
-      expect(picture.approximateBytesUsed, greaterThan(0));
-      expect(marker.debugSnapshot.paintsCityHealthBar, isTrue);
-      expect(marker.debugSnapshot.paintsCapitalStar, isTrue);
-      expect(marker.debugSnapshot.paintsSelectedCityLabelBorder, isTrue);
-      expect(marker.debugSnapshot.paintsStoredArtifactBadge, isTrue);
-    });
+    _runCityMarkerLifecycleScenarios();
 
     test('uses the city sprite without a duplicated type icon badge', () async {
       const capStyle = BoardAssetCapStyles.city;
@@ -287,13 +267,17 @@ void main() {
       expect(layer.markerColorValueForTesting(city.id), 0xFF222222);
     });
 
-    test('accepts taps on the city name label above the asset', () async {
+    testWithFlameGame('accepts tap events on the city name label', (
+      game,
+    ) async {
+      var taps = 0;
       final marker = CityMarker(
-        position: Vector2.zero(),
+        position: Vector2.all(200),
         colorValue: 0xFF0000FF,
         name: 'Aurelian',
+        onTap: () => taps++,
       );
-      await marker.onLoad();
+      await game.ensureAdd(marker);
       final labelRect = marker.debugSnapshot.cityLabelHitRect;
 
       expect(marker.debugSnapshot.typeIconRect, Rect.zero);
@@ -304,15 +288,20 @@ void main() {
         ),
         isTrue,
       );
+      dispatchTapAtLocalPosition(game, marker, labelRect.center);
+      expect(taps, 1);
+      await game.ensureRemove(marker);
     });
 
-    test('pulses the city name marker border while selected', () async {
+    testWithFlameGame('pulses the city name marker border while selected', (
+      game,
+    ) async {
       final marker = CityMarker(
         position: Vector2.zero(),
         colorValue: 0xFF0000FF,
         selected: true,
       );
-      await marker.onLoad();
+      await game.ensureAdd(marker);
       final initialPulse = marker.debugSnapshot.cityLabelPulse;
 
       marker.update(0.3);
@@ -324,6 +313,7 @@ void main() {
 
       expect(marker.debugSnapshot.cityLabelPulse, 0);
       expect(marker.debugSnapshot.paintsSelectedCityLabelBorder, isFalse);
+      await game.ensureRemove(marker);
     });
 
     test('keeps selected city cues static with reduce motion', () {
@@ -421,48 +411,56 @@ void main() {
       );
     });
 
-    test('keeps city atlas variant static on one marker position', () async {
-      final marker = CityMarker(
-        position: Vector2.zero(),
-        colorValue: 0xFF0000FF,
-        technologyProfile: CitySpriteTechnologyProfile.industryModern,
-      );
-      await marker.onLoad();
-      final originalPosition = marker.position.clone();
-      final rawSpriteTop = marker.debugSnapshot.spriteBounds.top;
+    testWithFlameGame(
+      'keeps city atlas variant static on one marker position',
+      (game) async {
+        final marker = CityMarker(
+          position: Vector2.zero(),
+          colorValue: 0xFF0000FF,
+          technologyProfile: CitySpriteTechnologyProfile.industryModern,
+        );
+        await game.ensureAdd(marker);
+        final originalPosition = marker.position.clone();
+        final rawSpriteTop = marker.debugSnapshot.spriteBounds.top;
 
-      expect(
-        marker.debugSnapshot.frameIndex,
-        CitySpriteTechnologyProfile.industryModern.index,
-      );
+        expect(
+          marker.debugSnapshot.frameIndex,
+          CitySpriteTechnologyProfile.industryModern.index,
+        );
 
-      marker.update(1.02);
+        marker.update(1.02);
 
-      expect(marker.position, originalPosition);
-      expect(
-        marker.debugSnapshot.frameIndex,
-        CitySpriteTechnologyProfile.industryModern.index,
-      );
-      expect(marker.debugSnapshot.statusTop, closeTo(rawSpriteTop, 0.0001));
-    });
+        expect(marker.position, originalPosition);
+        expect(
+          marker.debugSnapshot.frameIndex,
+          CitySpriteTechnologyProfile.industryModern.index,
+        );
+        expect(marker.debugSnapshot.statusTop, closeTo(rawSpriteTop, 0.0001));
+        await game.ensureRemove(marker);
+      },
+    );
 
-    test('does not use asset editor offsets for city atlas variants', () async {
-      final marker = CityMarker(
-        position: Vector2.zero(),
-        colorValue: 0xFF0000FF,
-        technologyProfile: CitySpriteTechnologyProfile.militaryFortified,
-      );
-      await marker.onLoad();
+    testWithFlameGame(
+      'does not use asset editor offsets for city atlas variants',
+      (game) async {
+        final marker = CityMarker(
+          position: Vector2.zero(),
+          colorValue: 0xFF0000FF,
+          technologyProfile: CitySpriteTechnologyProfile.militaryFortified,
+        );
+        await game.ensureAdd(marker);
 
-      final spriteTop = marker.debugSnapshot.spriteBounds.top;
-      marker.update(1.01);
+        final spriteTop = marker.debugSnapshot.spriteBounds.top;
+        marker.update(1.01);
 
-      expect(marker.debugSnapshot.statusTop, closeTo(spriteTop, 0.0001));
-      expect(
-        marker.debugSnapshot.frameIndex,
-        CitySpriteTechnologyProfile.militaryFortified.index,
-      );
-    });
+        expect(marker.debugSnapshot.statusTop, closeTo(spriteTop, 0.0001));
+        expect(
+          marker.debugSnapshot.frameIndex,
+          CitySpriteTechnologyProfile.militaryFortified.index,
+        );
+        await game.ensureRemove(marker);
+      },
+    );
 
     test('selects city atlas row from city maturity', () {
       final layer = CityMarkerLayer(colorForPlayer: (_) => 0);

@@ -21,6 +21,8 @@ import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/game_renderer_flame_harness.dart';
+
 part 'hover_intent_marker_test_support.dart';
 
 void main() {
@@ -865,49 +867,6 @@ void main() {
       expect(commands, isEmpty);
     });
 
-    test('hidden fog tile suppresses hover markers', () async {
-      final map = _map();
-      const visibleHex = HexCoordinate(col: 0, row: 0);
-      final fog = FogOfWarState.empty.updatePlayer(
-        PlayerFogOfWar(playerId: 'player_1', visibleHexes: {visibleHex}),
-      );
-      final game = await _loadedGame(map);
-
-      game
-        ..applyState(
-          GameClientState(
-            activePlayerId: 'player_1',
-            fogOfWar: fog,
-            interaction: const InteractionState(moveCommandActive: true),
-          ),
-        )
-        ..syncHoverIntentForTesting(_tile(map, 1, 1));
-
-      expect(game.hoverIntentKindForTesting, isNull);
-
-      game.syncHoverIntentForTesting(_tile(map, 0, 0));
-
-      expect(game.hoverIntentKindForTesting, HoverIntentKind.move);
-      expect(game.hoverIntentTileForTesting, (col: 0, row: 0));
-    });
-
-    test('pointer exit clears the active hover marker', () async {
-      final map = _map();
-      final game = await _loadedGame(map);
-
-      game
-        ..applyState(
-          GameClientState(
-            interaction: const InteractionState(moveCommandActive: true),
-          ),
-        )
-        ..syncHoverIntentForTesting(_tile(map, 1, 1));
-
-      expect(game.hoverIntentKindForTesting, HoverIntentKind.move);
-
-      game.handleViewportPointerExit();
-
-      expect(game.hoverIntentKindForTesting, isNull);
-    });
+    _registerHoverIntentVisibilityScenarios();
   });
 }

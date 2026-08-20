@@ -30,6 +30,7 @@ import 'package:flame/game.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/game_intent_test_resolver.dart';
+import 'support/game_renderer_flame_harness.dart';
 import 'support/game_renderer_keyboard_shared_fixtures.dart';
 
 part 'game_renderer_keyboard_movement_fixture.dart';

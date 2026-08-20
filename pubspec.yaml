@@ -50,6 +50,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flame_test: ^2.3.0
 
   analyzer: 12.1.0
   crypto: 3.0.7

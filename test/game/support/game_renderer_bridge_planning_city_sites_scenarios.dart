@@ -16,12 +16,10 @@ void _registerRendererPlanningCitySitesScenarios() {
         mapData: map,
         onCommand: (command) async => commands.add(command),
       );
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(GameClientState(cities: const [city]))
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(cities: const [city]),
+      );
       game.camera.viewfinder
         ..zoom = 1.6
         ..position = Vector2(900, 700);
@@ -60,12 +58,7 @@ void _registerRendererPlanningCitySitesScenarios() {
           game.applyState(state);
         },
       );
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(state)
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+      await gameRendererFlameTester.initializeWithState(game, state);
 
       game.handleRapidCityDoubleTapForTesting(city);
       await Future<void>.delayed(Duration.zero);
@@ -100,12 +93,10 @@ void _registerRendererPlanningCitySitesScenarios() {
         row: 0,
       );
       final game = GameRenderer(mapData: map, onCommand: (_) async {});
-      addTearDown(game.disposeRenderer);
-
-      game
-        ..applyState(GameClientState(units: [attacker, defender]))
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(units: [attacker, defender]),
+      );
       game.update(0);
 
       final future = game.applyTransition(
@@ -171,12 +162,10 @@ void _registerRendererPlanningCitySitesScenarios() {
       controlledHexes: [CityHex(col: 1, row: 0)],
     );
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
-
-    game
-      ..applyState(GameClientState(cities: [city]))
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(cities: [city]),
+    );
 
     final center = game.tileMarkersForTesting(0, 0);
     final owned = game.tileMarkersForTesting(1, 0);
@@ -203,17 +192,13 @@ void _registerRendererPlanningCitySitesScenarios() {
       army: const [ArmyTroop(type: TroopType.settler, count: 1)],
     );
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
-
-    game
-      ..applyState(
-        GameClientState(
-          units: [settler],
-          interaction: InteractionState(selection: GameSelection.unit(settler)),
-        ),
-      )
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(
+        units: [settler],
+        interaction: InteractionState(selection: GameSelection.unit(settler)),
+      ),
+    );
 
     final candidate = game.tileMarkersForTesting(1, 0);
 
@@ -273,7 +258,6 @@ void _registerRendererPlanningCitySitesScenarios() {
       army: const [ArmyTroop(type: TroopType.settler, count: 1)],
     );
     final game = GameRenderer(mapData: map, onCommand: (_) async {});
-    addTearDown(game.disposeRenderer);
     final visibleHexes = {
       for (final tile in map.tiles) HexCoordinate.fromTile(tile),
     };
@@ -281,19 +265,17 @@ void _registerRendererPlanningCitySitesScenarios() {
       PlayerFogOfWar(playerId: 'player_1', visibleHexes: visibleHexes),
     );
 
-    game
-      ..applyState(
-        GameClientState(
-          activePlayerId: 'player_1',
-          fogOfWar: fogOfWar,
-          units: [settler],
-          interaction: InteractionState(
-            selection: GameSelection.unit(settler, tile: kbTile(map, 2, 0)),
-          ),
+    await gameRendererFlameTester.initializeWithState(
+      game,
+      GameClientState(
+        activePlayerId: 'player_1',
+        fogOfWar: fogOfWar,
+        units: [settler],
+        interaction: InteractionState(
+          selection: GameSelection.unit(settler, tile: kbTile(map, 2, 0)),
         ),
-      )
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+      ),
+    );
 
     final actualRecommended = {
       for (final tile in map.tiles)
@@ -358,7 +340,6 @@ void _registerRendererPlanningCitySitesScenarios() {
         center: CityHex(col: 8, row: 2),
       );
       final game = GameRenderer(mapData: map, onCommand: (_) async {});
-      addTearDown(game.disposeRenderer);
       final visibleHexes = {
         for (final tile in map.tiles) HexCoordinate.fromTile(tile),
       };
@@ -366,20 +347,18 @@ void _registerRendererPlanningCitySitesScenarios() {
         PlayerFogOfWar(playerId: 'player_1', visibleHexes: visibleHexes),
       );
 
-      game
-        ..applyState(
-          GameClientState(
-            activePlayerId: 'player_1',
-            fogOfWar: fogOfWar,
-            units: [settler],
-            cities: [ownCity, enemyCity],
-            interaction: InteractionState(
-              selection: GameSelection.unit(settler, tile: kbTile(map, 3, 1)),
-            ),
+      await gameRendererFlameTester.initializeWithState(
+        game,
+        GameClientState(
+          activePlayerId: 'player_1',
+          fogOfWar: fogOfWar,
+          units: [settler],
+          cities: [ownCity, enemyCity],
+          interaction: InteractionState(
+            selection: GameSelection.unit(settler, tile: kbTile(map, 3, 1)),
           ),
-        )
-        ..onGameResize(Vector2(800, 600));
-      await game.onLoad();
+        ),
+      );
 
       final recommended = {
         for (final tile in map.tiles)

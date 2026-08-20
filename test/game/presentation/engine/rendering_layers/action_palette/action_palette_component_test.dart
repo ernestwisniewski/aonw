@@ -9,7 +9,10 @@ import 'package:aonw/map/rendering/map_priority.dart';
 import 'package:aonw/shared/assets/sprite_frames.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:flame/components.dart';
+import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../../../support/flame_event_test_helpers.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -102,7 +105,9 @@ void main() {
       },
     );
 
-    test('applies asset editor frame offsets to option sprites', () async {
+    testWithFlameGame('applies asset editor frame offsets to option sprites', (
+      game,
+    ) async {
       const adjustment = AnimationFrameAdjustment(
         offsetX: 9,
         offsetY: -3,
@@ -126,7 +131,7 @@ void main() {
       addTearDown(AnimationFrameAdjustmentCatalogCache.clearForTesting);
 
       final component = buildComponent();
-      await component.onLoad();
+      await game.ensureAdd(component);
       final frame = await SpriteFrames.load(
         FieldImprovementSpriteCatalog.frameIdFor(
           type: FieldImprovementType.farm,
@@ -156,15 +161,43 @@ void main() {
         component.spriteDestinationForTesting(option: farm, iconRect: iconRect),
         expectedDestination,
       );
+
+      await game.ensureRemove(component);
     });
 
-    test('available option tap calls onPreview', () {
+    testWithFlameGame('available option tap event calls onPreview', (
+      game,
+    ) async {
       String? previewed;
       final component = buildComponent(onPreview: (id) => previewed = id)
-        ..tapOptionForTesting('farm');
+        ..position = Vector2.all(200);
+      await game.ensureAdd(component);
+
+      dispatchTapAtLocalPosition(
+        game,
+        component,
+        component.optionRectsForTesting.single.center,
+      );
 
       expect(component.optionsForTesting.single.id, 'farm');
       expect(previewed, 'farm');
+
+      await game.ensureRemove(component);
+    });
+
+    testWithFlameGame('tap event outside an option calls onCancel', (
+      game,
+    ) async {
+      var canceled = false;
+      final component = buildComponent(onCancel: () => canceled = true)
+        ..position = Vector2.all(200);
+      await game.ensureAdd(component);
+
+      dispatchTapAtLocalPosition(game, component, const ui.Offset(2, 2));
+
+      expect(canceled, isTrue);
+
+      await game.ensureRemove(component);
     });
   });
 
@@ -185,15 +218,22 @@ void main() {
       expect(component.ctaRectForTesting, isNotNull);
     });
 
-    test('CTA tap confirms the previewed option', () {
+    testWithFlameGame('CTA tap event confirms the previewed option', (
+      game,
+    ) async {
       String? confirmed;
       final component = buildComponent(
         previewedOptionId: 'farm',
         onConfirm: (id) => confirmed = id,
-      )..tapCtaForTesting();
+      )..position = Vector2.all(200);
+      await game.ensureAdd(component);
+      final ctaRect = component.ctaRectForTesting;
 
-      expect(component.ctaRectForTesting, isNotNull);
+      dispatchTapAtLocalPosition(game, component, ctaRect!.center);
+
       expect(confirmed, 'farm');
+
+      await game.ensureRemove(component);
     });
   });
 

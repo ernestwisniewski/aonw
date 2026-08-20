@@ -5,6 +5,7 @@ import 'package:aonw_core/domain/hex_coord.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/transport.dart';
 import 'package:flame/components.dart';
+import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -80,5 +81,34 @@ void main() {
 
       expect(layer.cityConnectionCountForTesting, 0);
     });
+
+    testGolden(
+      'renders a deterministic three-hex road scene',
+      (game, _) async {
+        final layer = TransportNetworkLayer();
+        await game.ensureAdd(layer);
+        layer.sync(
+          parent: game,
+          segments: const [
+            TransportSegment(
+              hex: HexCoord(col: 0, row: 0),
+              builtByPlayerId: 'player_1',
+            ),
+            TransportSegment(
+              hex: HexCoord(col: 1, row: 0),
+              builtByPlayerId: 'player_1',
+            ),
+            TransportSegment(
+              hex: HexCoord(col: 2, row: 0),
+              builtByPlayerId: 'player_1',
+            ),
+          ],
+          cityCenters: const [],
+        );
+      },
+      goldenFile: 'goldens/transport_network_layer.png',
+      size: Vector2(300, 170),
+      backgroundColor: const Color(0xFF111820),
+    );
   });
 }
