@@ -11,16 +11,19 @@ typedef HiddenAiCommandDispatch =
       DomainCommand command, {
       required GameCommandContext context,
     });
+typedef HiddenAiPresentationGuard = bool Function();
 
 final class HiddenAiCommandPresenter {
   final HiddenAiCommandDispatch dispatchTransition;
   final HiddenAiRendererPlayback rendererPlayback;
+  final HiddenAiPresentationGuard canPresent;
 
   HiddenAiCommandPresenter({
     required this.dispatchTransition,
     required HiddenAiRendererStateReader rendererStateReader,
     required HiddenAiLocalizationReader localizationReader,
     required HiddenAiProjectedTransitionApplier applyProjectedTransition,
+    this.canPresent = _alwaysPresent,
   }) : rendererPlayback = HiddenAiRendererPlayback(
          rendererStateReader: rendererStateReader,
          localizationReader: localizationReader,
@@ -30,6 +33,7 @@ final class HiddenAiCommandPresenter {
   const HiddenAiCommandPresenter.withPlayback({
     required this.dispatchTransition,
     required this.rendererPlayback,
+    this.canPresent = _alwaysPresent,
   });
 
   Future<DispatchCommandResult> dispatchAndPresent({
@@ -38,12 +42,14 @@ final class HiddenAiCommandPresenter {
     required DomainCommand command,
     required GameCommandContext context,
   }) async {
-    final previousRendererState = rendererPlayback.previousRendererState(
-      currentState,
-    );
+    final previousRendererState = canPresent()
+        ? rendererPlayback.previousRendererState(currentState)
+        : currentState;
     final result = await dispatchTransition(command, context: context);
 
-    if (!_isTerminalCommand(command)) {
+    if (!canPresent()) {
+      return _resultWithActionContext(result, currentState);
+    } else if (!_isTerminalCommand(command)) {
       await rendererPlayback.playCommandEffects(
         previousRendererState: previousRendererState,
         commandState: result.state,
@@ -73,6 +79,13 @@ final class HiddenAiCommandPresenter {
       );
     }
 
+    return _resultWithActionContext(result, currentState);
+  }
+
+  static DispatchCommandResult _resultWithActionContext(
+    DispatchCommandResult result,
+    GameClientState currentState,
+  ) {
     return DispatchCommandResult(
       state: HiddenAiRendererPlayback.withActionContext(
         result.state,
@@ -103,3 +116,5 @@ final class HiddenAiCommandPresenter {
     return result.snapshot?.domain.turn;
   }
 }
+
+bool _alwaysPresent() => true;

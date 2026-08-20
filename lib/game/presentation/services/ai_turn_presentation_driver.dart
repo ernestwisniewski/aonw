@@ -19,6 +19,7 @@ typedef AiTurnHiddenCommandDispatcher =
     });
 typedef AiTurnTransitionApplier =
     Future<void> Function(GameClientState state, List<RendererEffect> effects);
+typedef AiTurnPresentationGuard = bool Function();
 
 final class AiTurnPresentationDriver {
   final AiTurnPresentationSessionReader sessionReader;
@@ -27,6 +28,7 @@ final class AiTurnPresentationDriver {
   final AiTurnTransitionApplier applyTransition;
   final HiddenAiProjectedTransitionApplier applyProjectedTransition;
   final AiTurnHiddenCommandDispatcher hiddenDispatch;
+  final AiTurnPresentationGuard canContinue;
 
   const AiTurnPresentationDriver({
     required this.sessionReader,
@@ -35,6 +37,7 @@ final class AiTurnPresentationDriver {
     required this.applyTransition,
     required this.applyProjectedTransition,
     required this.hiddenDispatch,
+    this.canContinue = _alwaysContinue,
   });
 
   Future<DispatchCommandResult> dispatchCommand({
@@ -43,6 +46,8 @@ final class AiTurnPresentationDriver {
     required DomainCommand command,
     required GameCommandContext context,
   }) async {
+    if (!canContinue()) return DispatchCommandResult(state: currentState);
+
     final session = sessionReader();
     if (session == null || session.saveId != saveId) {
       return DispatchCommandResult(state: currentState);
@@ -61,6 +66,7 @@ final class AiTurnPresentationDriver {
           context: context,
         );
       },
+      canPresent: canContinue,
     );
     return presenter.dispatchAndPresent(
       sourceId: saveId,
@@ -74,6 +80,8 @@ final class AiTurnPresentationDriver {
     required String saveId,
     required Iterable<UiEffect> terminalUiEffects,
   }) async {
+    if (!canContinue()) return 0;
+
     final rendererEffects = GameCameraEffectNormalizer.forTurnAdvance(
       effects: terminalUiEffects.rendererEffects,
     );
@@ -86,3 +94,5 @@ final class AiTurnPresentationDriver {
     return rendererEffects.length;
   }
 }
+
+bool _alwaysContinue() => true;

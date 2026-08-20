@@ -138,6 +138,49 @@ void main() {
       },
     );
 
+    test(
+      'skips renderer playback when its owner unmounts during dispatch',
+      () async {
+        var canContinue = true;
+        var localizationRead = false;
+        var transitionApplied = false;
+        final driver = _driver(
+          session: _session(),
+          canContinue: () => canContinue,
+          localizationReader: () {
+            localizationRead = true;
+            return null;
+          },
+          applyProjectedTransition: (state, batch) async {
+            transitionApplied = true;
+          },
+          hiddenDispatch:
+              ({required saveId, required command, required context}) async {
+                canContinue = false;
+                return DispatchCommandResult(
+                  state: GameClientState(activePlayerId: 'human'),
+                  offset: 7,
+                );
+              },
+        );
+
+        final result = await driver.dispatchCommand(
+          saveId: 'save_1',
+          currentState: GameClientState(
+            activePlayerId: 'ai_1',
+            activePlayerCanAct: true,
+          ),
+          command: const EndTurnCommand('ai_1'),
+          context: const GameCommandContext(actorPlayerId: 'ai_1'),
+        );
+
+        expect(result.state.activePlayerId, 'ai_1');
+        expect(result.state.activePlayerCanAct, isTrue);
+        expect(localizationRead, isFalse);
+        expect(transitionApplied, isFalse);
+      },
+    );
+
     test('plays smoothed hidden turn-advance effects', () async {
       final applied = <_AppliedTransition>[];
       final driver = _driver(
@@ -204,13 +247,15 @@ AiTurnPresentationDriver _driver({
   AiTurnTransitionApplier? applyTransition,
   HiddenAiProjectedTransitionApplier? applyProjectedTransition,
   AiTurnHiddenCommandDispatcher? hiddenDispatch,
+  HiddenAiLocalizationReader? localizationReader,
+  AiTurnPresentationGuard? canContinue,
 }) {
   return AiTurnPresentationDriver(
     sessionReader: () => session,
     stateReader: (_) => identical(rendererState, _defaultRendererState)
         ? GameClientState(activePlayerId: 'human')
         : rendererState as GameClientState?,
-    localizationReader: () => null,
+    localizationReader: localizationReader ?? () => null,
     applyTransition:
         applyTransition ??
         (state, effects) async {
@@ -226,6 +271,7 @@ AiTurnPresentationDriver _driver({
         ({required saveId, required command, required context}) async {
           return DispatchCommandResult(state: GameClientState());
         },
+    canContinue: canContinue ?? () => true,
   );
 }
 

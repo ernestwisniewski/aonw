@@ -317,6 +317,7 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
             .read(gameStateProvider(saveId).notifier)
             .dispatchTransition(command, context: context);
       },
+      canContinue: () => mounted,
     );
   }
 
