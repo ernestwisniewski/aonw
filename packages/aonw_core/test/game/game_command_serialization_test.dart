@@ -30,6 +30,38 @@ void main() {
     },
   );
 
+  test('city target intents have subtype-aware value semantics', () {
+    const startWorked = StartCityWorkedHexSelectionCommand('city_1');
+    const sameStartWorked = StartCityWorkedHexSelectionCommand('city_1');
+    const otherCity = StartCityWorkedHexSelectionCommand('city_2');
+    const cancelWorked = CancelCityWorkedHexSelectionCommand('city_1');
+    const startExpansion = StartCityExpansionSelectionCommand('city_1');
+    const cancelExpansion = CancelCityExpansionSelectionCommand('city_1');
+
+    expect(startWorked, sameStartWorked);
+    expect(startWorked.hashCode, sameStartWorked.hashCode);
+    expect(startWorked, isNot(otherCity));
+    expect(startWorked, isNot(cancelWorked));
+    expect({
+      startWorked,
+      cancelWorked,
+      startExpansion,
+      cancelExpansion,
+    }, hasLength(4));
+  });
+
+  test('field improvement selection intent has coordinate value semantics', () {
+    const selection = SelectFieldImprovementCommand(2, 3);
+    const sameSelection = SelectFieldImprovementCommand(2, 3);
+    const otherColumn = SelectFieldImprovementCommand(1, 3);
+    const otherRow = SelectFieldImprovementCommand(2, 4);
+
+    expect(selection, sameSelection);
+    expect(selection.hashCode, sameSelection.hashCode);
+    expect(selection, isNot(otherColumn));
+    expect(selection, isNot(otherRow));
+  });
+
   group('DomainCommandCodec', () {
     DomainCommand roundTrip(DomainCommand command) {
       return DomainCommandCodec.fromJson(DomainCommandCodec.toJson(command));

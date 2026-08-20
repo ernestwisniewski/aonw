@@ -115,6 +115,22 @@ void main() {
       expect(() => map.objectives.clear(), throwsUnsupportedError);
     });
 
+    test('tile copyWith canonicalizes explicit authored terrain tags', () {
+      final original = _tile(0, 0);
+      final copied = original.copyWith(
+        terrains: const [TerrainType.forest, TerrainType.river],
+      );
+
+      expect(copied.terrains, [
+        TerrainType.grassland,
+        TerrainType.forest,
+        TerrainType.river,
+      ]);
+      expect(copied.displayTerrain, TerrainType.forest);
+      expect(copied.yieldTerrain, TerrainType.forest);
+      expect(copied.terrainTags, [TerrainType.forest, TerrainType.river]);
+    });
+
     test('freezes representation-neutral tiles in their source order', () {
       final objective = _objective(hex: const HexCoord(col: 2, row: 1));
       final map = WorldMap.fromTileViews(

@@ -21,6 +21,16 @@ void main() {
               message: 'Tile terrains list must not be empty',
             ),
             (
+              name: 'missing canonical terrain field',
+              json: _jsonMap(tiles: [_jsonTile()..remove('terrainTags')]),
+              message: 'Missing tile field: terrainTags',
+            ),
+            (
+              name: 'invalid canonical movement terrain',
+              json: _jsonMap(terrains: const ['forest']),
+              message: 'Movement terrain forest must be a primary terrain',
+            ),
+            (
               name: 'invalid dimensions',
               json: _jsonMap(cols: 0, tiles: []),
               message: 'Map cols must be positive, got 0',

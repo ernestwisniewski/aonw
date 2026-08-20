@@ -12,6 +12,57 @@ void main() {
       expect(() => ResourceType.fromString('amber'), throwsArgumentError);
     });
 
+    test('resolves authored terrain meanings deterministically', () {
+      final terrain = TileTerrainSemantics.fromAuthoredTerrainTags(const [
+        TerrainType.ocean,
+        TerrainType.plains,
+        TerrainType.river,
+      ]);
+
+      expect(terrain.movementTerrains, [TerrainType.plains, TerrainType.river]);
+      expect(terrain.displayTerrain, TerrainType.ocean);
+      expect(terrain.yieldTerrain, TerrainType.ocean);
+      expect(terrain.terrainTags, [
+        TerrainType.ocean,
+        TerrainType.plains,
+        TerrainType.river,
+      ]);
+    });
+
+    test('reports invalid terrain semantic contracts', () {
+      expect(
+        () => TileTerrainSemantics.fromAuthoredTerrainTags(const [
+          TerrainType.river,
+        ]),
+        throwsA(
+          isA<TileTerrainSemanticsException>().having(
+            (error) => error.message,
+            'message',
+            'Authored terrain tags must include a non-river yield terrain',
+          ),
+        ),
+      );
+      expect(
+        () => TileTerrainSemantics(
+          movementTerrains: const [TerrainType.forest],
+          displayTerrain: TerrainType.forest,
+          yieldTerrain: TerrainType.forest,
+          terrainTags: const [TerrainType.forest],
+        ),
+        throwsA(
+          isA<TileTerrainSemanticsException>().having(
+            (error) => error.message,
+            'message',
+            'Movement terrain forest must be a primary terrain',
+          ),
+        ),
+      );
+      expect(
+        const TileTerrainSemanticsException('sentinel').toString(),
+        'TileTerrainSemanticsException: sentinel',
+      );
+    });
+
     test('owns deeply immutable tile and objective values', () {
       final terrains = <TerrainType>[TerrainType.plains];
       final objectives = <MapObjectiveDefinition>[_objective()];

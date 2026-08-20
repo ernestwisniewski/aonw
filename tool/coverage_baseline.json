@@ -15,22 +15,22 @@
         },
         "domain": {
           "files": {
-            "hit": 431,
+            "hit": 432,
             "found": 441
           },
           "lines": {
-            "hit": 15316,
-            "found": 17460
+            "hit": 15340,
+            "found": 17462
           }
         },
         "map": {
           "files": {
-            "hit": 7,
-            "found": 7
+            "hit": 9,
+            "found": 9
           },
           "lines": {
-            "hit": 167,
-            "found": 172
+            "hit": 245,
+            "found": 250
           }
         },
         "protocol": {
