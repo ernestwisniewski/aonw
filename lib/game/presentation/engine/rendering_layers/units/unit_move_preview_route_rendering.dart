@@ -80,6 +80,7 @@ extension _UnitMovePreviewRouteRendering on UnitMovePreview {
 
   Iterable<int> get _routeBoundaryPointIndices {
     final indices = <int>{
+      if (_clampedTravelledIndex > 0) 0,
       for (final index in turnBoundaryPointIndices)
         if (index > 0 && index < points.length - 1) index,
       ..._routeStateBoundaryPointIndices,

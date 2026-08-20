@@ -338,7 +338,8 @@ void main() {
       expect(preview.routeSegmentGlowingForTesting(2), isTrue);
       expect(preview.routeSegmentAnimatedForTesting(3), isTrue);
       expect(preview.routeSegmentGlowingForTesting(3), isFalse);
-      expect(preview.routeBoundaryPointIndicesForTesting, [1, 2]);
+      expect(preview.routeBoundaryPointIndicesForTesting, [0, 1, 2]);
+      expect(preview.routeBoundaryHasBorderForTesting(0), isFalse);
       expect(
         preview.routeBoundaryRadiusForTesting(2),
         greaterThan(preview.routeBoundaryRadiusForTesting(1)),
@@ -374,11 +375,27 @@ void main() {
         travelledUpToIndex: 2,
       );
 
-      expect(preview.routeBoundaryPointIndicesForTesting, [2, 3]);
+      expect(preview.routeBoundaryPointIndicesForTesting, [0, 2, 3]);
       expect(
         preview.routeBoundaryRadiusForTesting(3),
         greaterThan(preview.routeBoundaryRadiusForTesting(2)),
       );
+    });
+
+    test('travelled route marks its original start hex with a dot', () {
+      final untouched = UnitMovePreview(
+        points: [Vector2(0, 0), Vector2(30, 0), Vector2(60, 0)],
+        reachablePoints: const [true, true, true],
+      );
+      final travelled = UnitMovePreview(
+        points: [Vector2(0, 0), Vector2(30, 0), Vector2(60, 0)],
+        reachablePoints: const [true, true, true],
+        travelledUpToIndex: 1,
+      );
+
+      expect(untouched.routeBoundaryPointIndicesForTesting, isNot(contains(0)));
+      expect(travelled.routeBoundaryPointIndicesForTesting, contains(0));
+      expect(travelled.routeBoundaryHasBorderForTesting(0), isFalse);
     });
 
     test('route boundary dots mark the end of every movement turn', () {
