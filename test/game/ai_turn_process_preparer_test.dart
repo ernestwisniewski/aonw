@@ -6,6 +6,7 @@ import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/ai_plan_precompute_cache.dart';
+import 'package:aonw/game/application/services/ai_planning_deadline_policy.dart';
 import 'package:aonw/game/application/services/ai_runtime_strategy_registry.dart';
 import 'package:aonw/game/application/services/ai_runtime_throttler.dart';
 import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
@@ -79,6 +80,10 @@ void main() {
       expect(process.useCase.mapData.tileCount, mapData.tiles.length);
       expect(process.useCase.mapData.tileViews, orderedEquals(mapData.tiles));
       expect(process.useCase.precomputeCache, same(precomputeCache));
+      expect(
+        process.useCase.planningDeadlinePolicy,
+        AiPlanningDeadlinePolicy.unbounded,
+      );
       expect(
         process.useCase.strategicPlanProvider,
         same(strategicPlanProvider),
@@ -221,6 +226,52 @@ void main() {
       expect(process, isNull);
       expect(repository.loadCount, 0);
     });
+
+    test(
+      'keeps local single-player planning unbounded under multiplayer rules',
+      () async {
+        final save = _save(
+          gameMode: GameMode.multiplayer,
+          origin: GameSaveOrigin.local,
+        );
+        final preparer = _preparer(
+          repository: _FakeGameRepository(
+            GameSnapshotFactory.create(save: save),
+          ),
+          sessionReader: () => _session(gameMode: GameMode.multiplayer),
+        );
+
+        final process = await preparer.prepare(
+          saveId: save.id,
+          playerId: 'ai_1',
+        );
+
+        expect(process, isNotNull);
+        expect(
+          process?.useCase.planningDeadlinePolicy,
+          AiPlanningDeadlinePolicy.unbounded,
+        );
+      },
+    );
+
+    test('rejects a network-backed save after loading it', () async {
+      final save = _save(
+        gameMode: GameMode.multiplayer,
+        origin: GameSaveOrigin.network,
+      );
+      final repository = _FakeGameRepository(
+        GameSnapshotFactory.create(save: save),
+      );
+      final preparer = _preparer(
+        repository: repository,
+        sessionReader: () => _session(gameMode: GameMode.multiplayer),
+      );
+
+      final process = await preparer.prepare(saveId: save.id, playerId: 'ai_1');
+
+      expect(process, isNull);
+      expect(repository.loadCount, 1);
+    });
   });
 }
 
@@ -288,7 +339,11 @@ GameSession _session({
   );
 }
 
-GameSave _save({int turn = 1}) {
+GameSave _save({
+  int turn = 1,
+  GameMode gameMode = GameMode.hotSeat,
+  GameSaveOrigin origin = GameSaveOrigin.local,
+}) {
   return GameSave(
     id: 'save_1',
     name: 'AI process preparer test',
@@ -316,6 +371,8 @@ GameSave _save({int turn = 1}) {
         ),
       ),
     ],
+    gameMode: gameMode,
+    origin: origin,
   );
 }
 

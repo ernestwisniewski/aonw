@@ -59,7 +59,7 @@ class GameHudOverlayPanelsHost extends ConsumerWidget {
       gameState: gameState,
       gameSave: gameSave,
       activePlayerId: activePlayerId,
-      activePlayerCanAct: playerControl.canAct,
+      activePlayerCanAct: playerControl.canInteract,
     );
     final layoutMetrics = HudLayoutMetrics.fromSize(
       size: MediaQuery.sizeOf(context),

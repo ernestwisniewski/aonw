@@ -23,6 +23,7 @@ typedef AiTurnPlayerSelector =
     Player? Function({
       required GameSave save,
       required PlayerControlState control,
+      required NetworkSession? networkSession,
       required GameClientState? gameState,
     });
 typedef AiTurnRequestDispatcher = void Function(AiTurnRunRequest request);
@@ -72,6 +73,7 @@ final class AiTurnAutoScheduler {
         _scheduleRunnableAi(
           save: save,
           control: control,
+          networkSession: networkSession,
           gameState: gameState,
         )) {
       return;
@@ -88,11 +90,13 @@ final class AiTurnAutoScheduler {
   bool _scheduleRunnableAi({
     required GameSave save,
     required PlayerControlState control,
+    required NetworkSession? networkSession,
     required GameClientState? gameState,
   }) {
     final player = aiPlayerToRun(
       save: save,
       control: control,
+      networkSession: networkSession,
       gameState: gameState,
     );
     if (!_isAiPlayer(player)) return false;

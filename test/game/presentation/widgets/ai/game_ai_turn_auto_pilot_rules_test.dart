@@ -27,13 +27,14 @@ void main() {
       final player = GameAiTurnAutoPilotRules.aiPlayerToRun(
         save: save,
         control: control,
+        networkSession: null,
         gameState: gameState,
       );
 
       expect(player?.id, 'ai_1');
     });
 
-    test('finds the next active AI after a multiplayer human handoff', () {
+    test('waits for local single-player human submission', () {
       final save = _save(
         gameMode: GameMode.multiplayer,
         playerStates: const {
@@ -51,10 +52,82 @@ void main() {
       final player = GameAiTurnAutoPilotRules.aiPlayerToRun(
         save: save,
         control: control,
+        networkSession: null,
+        gameState: gameState,
+      );
+
+      expect(player, isNull);
+    });
+
+    test('planning phase gates AI independently of the current view', () {
+      final save = _save(
+        gameMode: GameMode.multiplayer,
+        playerStates: const {
+          'human': PlayerTurnState.active,
+          'ai_1': PlayerTurnState.active,
+          'ai_2': PlayerTurnState.active,
+        },
+      );
+      const control = PlayerControlState(activePlayerId: 'ai_1');
+      final gameState = GameClientState(
+        activePlayerId: 'ai_1',
+        activePlayerCanAct: true,
+      );
+
+      final player = GameAiTurnAutoPilotRules.aiPlayerToRun(
+        save: save,
+        control: control,
+        networkSession: null,
+        gameState: gameState,
+      );
+
+      expect(player, isNull);
+    });
+
+    test('keeps network-backed multiplayer human handoff behavior', () {
+      final save = _save(
+        gameMode: GameMode.multiplayer,
+        origin: GameSaveOrigin.network,
+        playerStates: const {
+          'human': PlayerTurnState.active,
+          'ai_1': PlayerTurnState.active,
+          'ai_2': PlayerTurnState.active,
+        },
+      );
+      const control = PlayerControlState(activePlayerId: 'human');
+      final gameState = GameClientState(
+        activePlayerId: 'human',
+        activePlayerCanAct: true,
+      );
+
+      final player = GameAiTurnAutoPilotRules.aiPlayerToRun(
+        save: save,
+        control: control,
+        networkSession: null,
         gameState: gameState,
       );
 
       expect(player?.id, 'ai_1');
+    });
+
+    test('never runs local AI for an explicit network save offline', () {
+      final save = _save(
+        gameMode: GameMode.multiplayer,
+        origin: GameSaveOrigin.network,
+        playerStates: const {
+          'human': PlayerTurnState.active,
+          'ai_1': PlayerTurnState.active,
+          'ai_2': PlayerTurnState.active,
+        },
+      );
+
+      expect(
+        GameAiTurnAutoPilotRules.shouldRunLocalAi(
+          save: save,
+          networkSession: null,
+        ),
+        isFalse,
+      );
     });
 
     test('advances from a finished human to the next active AI', () {
@@ -78,6 +151,7 @@ void main() {
       final player = GameAiTurnAutoPilotRules.aiPlayerToRun(
         save: save,
         control: control,
+        networkSession: null,
         gameState: gameState,
       );
 
@@ -133,6 +207,7 @@ void main() {
 GameSave _save({
   required GameMode gameMode,
   required Map<String, PlayerTurnState> playerStates,
+  GameSaveOrigin origin = GameSaveOrigin.local,
 }) {
   return GameSave(
     id: 'save_1',
@@ -171,5 +246,6 @@ GameSave _save({
       ),
     ],
     gameMode: gameMode,
+    origin: origin,
   );
 }

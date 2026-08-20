@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/services/end_turn_strategy.dart';
 import 'package:aonw/game/application/services/game_handoff.dart';
+import 'package:aonw/game/application/services/local_single_player_turn_phase.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
+import 'package:aonw/game/application/services/turn_opening_lease.dart';
 import 'package:aonw/game/application/use_cases/confirm_handoff_use_case.dart';
 import 'package:aonw/game/application/use_cases/end_turn_use_case.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
@@ -17,6 +20,9 @@ import 'package:aonw_core/game/domain/save.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'player_control_provider.g.dart';
+part 'player_control_provider_handoff.dart';
+part 'player_control_provider_sync.dart';
+part 'player_control_provider_turns.dart';
 
 /// Scoped HUD-level provider holding the current [GameSave] for player control.
 @Riverpod(dependencies: [])
@@ -26,191 +32,38 @@ GameSave? gamePlayerControlSave(Ref ref) => null;
   dependencies: [
     gamePlayerControlSave,
     activeGameSession,
+    networkSession,
     activeRendererViewModel,
     GameCommandController,
     GameStateNotifier,
   ],
 )
 class GamePlayerControlController extends _$GamePlayerControlController {
+  PlayerControlState? _pendingHumanTurnRelease;
+  TurnOpeningLease? _turnOpeningLease;
+
+  Ref get _providerRef => ref;
+  bool get _isMounted => ref.mounted;
+  PlayerControlState get _currentControl => state;
+  set _currentControl(PlayerControlState value) => state = value;
+
   @override
   PlayerControlState build() {
     final save = ref.watch(gamePlayerControlSaveProvider);
+    final networkSession = ref.watch(networkSessionProvider);
     final previous = stateOrNull ?? const PlayerControlState();
-    return PlayerControlCoordinator.normalize(current: previous, save: save);
-  }
-
-  void syncWithSave(GameSave? save, {String? preferredPlayerId}) {
-    _setAndSync(
-      PlayerControlCoordinator.normalizeForPlayer(
-        current: state,
-        save: save,
-        preferredPlayerId: preferredPlayerId,
-      ),
+    final normalized = PlayerControlCoordinator.normalize(
+      current: previous,
+      save: save,
     );
-  }
-
-  void selectPlayer(GameSave? save, String playerId) {
-    _setAndSync(
-      PlayerControlCoordinator.selectPlayer(
-        current: state,
-        save: save,
-        playerId: playerId,
-      ),
+    if (normalized.activePlayerId != previous.activePlayerId) {
+      _clearTurnOpening();
+    }
+    return _withSavePhase(
+      normalized,
+      save: save,
+      previous: previous,
+      networkSession: networkSession,
     );
-  }
-
-  Future<GameSave?> endTurn(GameSave gameSave) async {
-    final keepAlive = ref.keepAlive();
-    try {
-      return await _endTurn(gameSave);
-    } finally {
-      keepAlive.close();
-    }
-  }
-
-  Future<GameSave?> _endTurn(GameSave gameSave) async {
-    if (state.activePlayerId.isEmpty) return null;
-
-    final session = ref.read(activeGameSessionProvider);
-    if (session == null || session.saveId != gameSave.id) return null;
-
-    late final EndTurnResult result;
-    final logger = ref.read(gameLoggerProvider);
-    HandoffPresentation? pendingPresentation;
-    try {
-      final endTurnResult =
-          await EndTurnUseCase(
-            repository: gameRepositoryForSave(ref, gameSave.id),
-            strategy: EndTurnStrategies.forMode(session.gameMode),
-          ).execute(
-            save: gameSave,
-            control: state,
-            dispatch: (command) async {
-              if (session.gameMode == GameMode.hotSeat &&
-                  command is EndTurnCommand) {
-                final presentation = await ref
-                    .read(gameCommandControllerProvider.notifier)
-                    .dispatchForHandoffPresentation(command);
-                pendingPresentation = presentation;
-                return presentation.uiEffects;
-              }
-              return _dispatchAndHandle(command);
-            },
-          );
-      if (endTurnResult == null) return null;
-      result = endTurnResult;
-    } catch (error, stackTrace) {
-      logger.warn(
-        'GamePlayerControlController',
-        'end turn failed',
-        error,
-        stackTrace,
-      );
-      return null;
-    }
-
-    if (!ref.mounted) return result.updatedSave;
-
-    _invalidateSave(gameSave.id);
-
-    if (result.handoff != null) {
-      ref.read(gameHandoffProvider.notifier).setPending(result.handoff!);
-      final presentation = pendingPresentation;
-      if (presentation != null) {
-        ref
-            .read(gameCommandControllerProvider.notifier)
-            .addHandoffNotifications(presentation);
-      }
-    } else {
-      final presentation = pendingPresentation;
-      if (presentation != null) {
-        await ref
-            .read(gameCommandControllerProvider.notifier)
-            .presentHandoffPresentation(presentation);
-        if (!ref.mounted) return result.updatedSave;
-      }
-      await _setAndSyncAndWait(result.nextControl);
-    }
-
-    return result.updatedSave;
-  }
-
-  Future<void> confirmHandoff(String playerId) async {
-    final keepAlive = ref.keepAlive();
-    try {
-      await _confirmHandoff(playerId);
-    } finally {
-      keepAlive.close();
-    }
-  }
-
-  Future<void> _confirmHandoff(String playerId) async {
-    final session = ref.read(activeGameSessionProvider);
-    if (session == null || session.saveId.isEmpty) return;
-
-    late final ConfirmHandoffResult? result;
-    try {
-      result = await ConfirmHandoffUseCase(
-        repository: ref.read(gameRepositoryProvider),
-      ).execute(saveId: session.saveId, current: state, playerId: playerId);
-    } catch (error, stackTrace) {
-      if (ref.mounted) {
-        ref
-            .read(gameLoggerProvider)
-            .warn(
-              'GamePlayerControlController',
-              'confirm handoff failed',
-              error,
-              stackTrace,
-            );
-      }
-      return;
-    }
-    if (!ref.mounted || result == null) return;
-
-    await _setAndSyncAndWait(result.nextControl);
-  }
-
-  void _invalidateSave(String saveId) {
-    if (!ref.mounted) return;
-    ref.invalidate(gameSaveSnapshotProvider(saveId));
-  }
-
-  void _setAndSync(PlayerControlState next) {
-    if (state != next) {
-      state = next;
-    }
-    unawaited(_syncGameState(next));
-  }
-
-  Future<void> _setAndSyncAndWait(PlayerControlState next) async {
-    if (state != next) {
-      state = next;
-    }
-    await _syncGameState(next);
-  }
-
-  Future<void> _syncGameState(PlayerControlState next) async {
-    final logger = ref.read(gameLoggerProvider);
-    try {
-      await ref
-          .read(
-            gameStateProvider(
-              ref.read(activeGameSessionProvider)?.saveId ?? '',
-            ).notifier,
-          )
-          .syncActivePlayer(playerId: next.activePlayerId, canAct: next.canAct);
-    } catch (error, stackTrace) {
-      logger.warn(
-        'GamePlayerControlController',
-        'game state sync failed',
-        error,
-        stackTrace,
-      );
-    }
-  }
-
-  Future<List<UiEffect>> _dispatchAndHandle(DomainCommand command) {
-    return ref.read(gameCommandControllerProvider.notifier).dispatch(command);
   }
 }

@@ -71,6 +71,7 @@ final class GamePlayerControlControllerProvider
         dependencies: <ProviderOrFamily>[
           gamePlayerControlSaveProvider,
           activeGameSessionProvider,
+          networkSessionProvider,
           activeRendererViewModelProvider,
           gameCommandControllerProvider,
           gameStateProvider,
@@ -88,14 +89,13 @@ final class GamePlayerControlControllerProvider
 
   static final $allTransitiveDependencies0 = gamePlayerControlSaveProvider;
   static final $allTransitiveDependencies1 = activeGameSessionProvider;
-  static final $allTransitiveDependencies2 = activeRendererViewModelProvider;
-  static final $allTransitiveDependencies3 =
+  static final $allTransitiveDependencies2 = networkSessionProvider;
+  static final $allTransitiveDependencies3 = activeRendererViewModelProvider;
+  static final $allTransitiveDependencies4 =
       ActiveRendererViewModelProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies4 = gameCommandControllerProvider;
-  static final $allTransitiveDependencies5 =
-      GameCommandControllerProvider.$allTransitiveDependencies3;
+  static final $allTransitiveDependencies5 = gameCommandControllerProvider;
   static final $allTransitiveDependencies6 =
-      GameCommandControllerProvider.$allTransitiveDependencies4;
+      GameCommandControllerProvider.$allTransitiveDependencies3;
 
   @override
   String debugGetCreateSourceHash() => _$gamePlayerControlControllerHash();
@@ -114,7 +114,7 @@ final class GamePlayerControlControllerProvider
 }
 
 String _$gamePlayerControlControllerHash() =>
-    r'932242535769b1788cadbee4992776404712aab4';
+    r'300ee61dfaa151f3eefbbde502f42e20cb878854';
 
 abstract class _$GamePlayerControlController
     extends $Notifier<PlayerControlState> {

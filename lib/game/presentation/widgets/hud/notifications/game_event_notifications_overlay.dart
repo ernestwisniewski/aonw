@@ -157,6 +157,7 @@ class _GameEventNotificationsOverlayState
   }
 
   Future<void> _focusNotification(GameEventNotification notification) async {
+    if (!ref.read(gamePlayerControlControllerProvider).canInteract) return;
     final target = _focusTargetFor(notification);
     if (target == null) return;
 

@@ -43,6 +43,7 @@ class _RuntimeUseCaseSmokeRunner {
       runner: runner,
       ruleset: smokeRuleset,
       mapData: mapView,
+      planningDeadlinePolicy: AiPlanningDeadlinePolicy.unbounded,
       strategicPlanProvider: AiStrategicPlanProvider(),
     );
     final playerReports = <_RuntimeUseCaseSmokePlayerReport>[];

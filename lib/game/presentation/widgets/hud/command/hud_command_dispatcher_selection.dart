@@ -2,6 +2,7 @@ part of 'hud_command_dispatcher.dart';
 
 extension HudCommandDispatcherSelection on HudCommandDispatcher {
   void showArmySelectionDetail() {
+    if (!_canInteract) return;
     _applyPanelModes(
       _ref.read(hudPanelControllerProvider).closePrimaryPanels(),
     );
@@ -11,6 +12,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   }
 
   void moveSelectedUnit() {
+    if (!_canInteract) return;
     _applyPanelModes(
       _ref.read(hudPanelControllerProvider).closeUnitActionPanels(),
     );
@@ -18,18 +20,21 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   }
 
   Future<void> focusUnitMapTarget(String unitId) {
+    if (!_canInteract) return Future<void>.value();
     return _ref
         .read(gameCommandControllerProvider.notifier)
         .focusUnitMapTarget(unitId);
   }
 
   Future<void> focusCityMapTarget(String cityId) {
+    if (!_canInteract) return Future<void>.value();
     return _ref
         .read(gameCommandControllerProvider.notifier)
         .focusCityMapTarget(cityId);
   }
 
   void autoExploreSelectedUnit(GameClientState? state) {
+    if (!_canInteract) return;
     final command = HudSelectionCommands.autoExploreSelectedUnit(state);
     if (command == null) return;
 
@@ -41,6 +46,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   }
 
   void automateWorker(GameClientState? state) {
+    if (!_canInteract) return;
     final command = HudSelectionCommands.automateSelectedWorker(state);
     if (command == null) return;
 
@@ -52,6 +58,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   }
 
   void buildRoad(GameClientState? state) {
+    if (!_canInteract) return;
     final command = HudSelectionCommands.buildRoad(state);
     if (command == null) return;
 
@@ -63,6 +70,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   }
 
   void startAttackTargeting(GameClientState? state) {
+    if (!_canInteract) return;
     final command = HudSelectionCommands.startAttackTargeting(state);
     if (command == null) return;
     _applyPanelModes(
@@ -78,12 +86,14 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   }
 
   void detachTroop(TroopType troopType) {
+    if (!_canInteract) return;
     unawaited(
       _ref.read(gameCommandControllerProvider.notifier).detachTroop(troopType),
     );
   }
 
   void startCityFounding() {
+    if (!_canInteract) return;
     _applyPanelModes(
       _ref.read(hudPanelControllerProvider).closeUnitActionPanels(),
     );
@@ -106,6 +116,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   }
 
   void startCityWorkedHexSelection(GameClientState? state) {
+    if (!_canInteract) return;
     final command = HudSelectionCommands.startCityWorkedHexSelection(state);
     if (command == null) return;
     _applyPanelModes(
@@ -121,6 +132,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   }
 
   void startCityExpansionSelection(GameClientState? state) {
+    if (!_canInteract) return;
     final command = HudSelectionCommands.startCityExpansionSelection(state);
     if (command == null) return;
     _applyPanelModes(
@@ -140,6 +152,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   }
 
   void startWorkerActionSelection(GameClientState? state) {
+    if (!_canInteract) return;
     final command = HudSelectionCommands.startWorkerActionSelection(state);
     if (command == null) return;
     _applyPanelModes(
@@ -159,6 +172,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   }
 
   void startMerchantTradeRouteSelection(GameClientState? state) {
+    if (!_canInteract) return;
     final command = HudSelectionCommands.startMerchantTradeRouteSelection(
       state,
     );
@@ -188,6 +202,7 @@ extension HudCommandDispatcherSelection on HudCommandDispatcher {
   }
 
   void startMerchantMoveToCitySelection(GameClientState? state) {
+    if (!_canInteract) return;
     final command = HudSelectionCommands.startMerchantMoveToCitySelection(
       state,
     );

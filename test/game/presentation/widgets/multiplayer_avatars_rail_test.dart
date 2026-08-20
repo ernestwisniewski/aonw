@@ -1,5 +1,9 @@
+import 'package:aonw/game/application/services/local_single_player_turn_phase.dart';
 import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_gamepad_focus_controller_provider.dart';
 import 'package:aonw/game/presentation/providers/multiplayer/multiplayer_status_sheet_provider.dart';
+import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
+import 'package:aonw/game/presentation/widgets/hud/gamepad/hud_gamepad_focus_controller.dart';
 import 'package:aonw/game/presentation/widgets/multiplayer/multiplayer_avatars_rail.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/ai.dart';
@@ -94,6 +98,7 @@ Future<void> _pumpRail(
 Future<void> _pumpRailOverlay(WidgetTester tester, {required GameSave save}) {
   return tester.pumpWidget(
     ProviderScope(
+      overrides: [gamePlayerControlSaveProvider.overrideWithValue(save)],
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         locale: const Locale('en'),
@@ -258,6 +263,128 @@ void main() {
 
     expect(find.byKey(const Key('multiplayerAvatarsRail.sheet')), findsNothing);
   });
+
+  testWidgets('blocks rail taps and gamepad targets during turn opening', (
+    tester,
+  ) async {
+    final save = _save(
+      players: const [_alice, _cpu],
+      playerStates: const {
+        'player_1': PlayerTurnState.active,
+        'player_4': PlayerTurnState.active,
+      },
+    );
+
+    await _pumpRailOverlay(tester, save: save);
+    await tester.pump();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MultiplayerAvatarsRailOverlay)),
+      listen: false,
+    );
+    final control = container.read(
+      gamePlayerControlControllerProvider.notifier,
+    );
+    expect(
+      container.read(gamePlayerControlControllerProvider).phase,
+      LocalSinglePlayerTurnPhase.humanPlanning,
+    );
+    final registeredTargets = HudGamepadFocusTargetRegistry.flatten(
+      container.read(hudGamepadFocusTargetRegistryProvider),
+    );
+    final staleStatusTarget = registeredTargets.singleWhere(
+      (target) => target.id == HudGamepadFocusTargetIds.playerStatusSheet,
+    );
+
+    control.beginTurnOpening('player_1');
+    staleStatusTarget.onActivate();
+
+    expect(
+      container.read(gamePlayerControlControllerProvider).phase,
+      LocalSinglePlayerTurnPhase.turnOpening,
+    );
+    expect(container.read(multiplayerStatusSheetRequestProvider), isNull);
+
+    await tester.pump();
+    await tester.pump();
+
+    final blockedTargets = HudGamepadFocusTargetRegistry.flatten(
+      container.read(hudGamepadFocusTargetRegistryProvider),
+    );
+    expect(
+      blockedTargets.where(
+        (target) => target.section == HudGamepadFocusSection.rightPlayers,
+      ),
+      isEmpty,
+    );
+    expect(
+      tester
+          .widget<IgnorePointer>(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is IgnorePointer &&
+                  widget.child is MultiplayerAvatarsRail,
+            ),
+          )
+          .ignoring,
+      isTrue,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('multiplayerAvatarsRail.openSheet')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('multiplayerAvatarsRail.sheet')), findsNothing);
+  });
+
+  testWidgets(
+    'keeps multiplayer rail enabled for notApplicable when player cannot act',
+    (tester) async {
+      final save = _save(
+        players: const [_alice, _bob],
+        playerStates: const {
+          'player_1': PlayerTurnState.finished,
+          'player_2': PlayerTurnState.active,
+        },
+      );
+
+      await _pumpRailOverlay(tester, save: save);
+      await tester.pump();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MultiplayerAvatarsRailOverlay)),
+        listen: false,
+      );
+
+      expect(
+        container.read(gamePlayerControlControllerProvider).phase,
+        LocalSinglePlayerTurnPhase.notApplicable,
+      );
+      expect(
+        container.read(gamePlayerControlControllerProvider).canInteract,
+        isFalse,
+      );
+      final targets = HudGamepadFocusTargetRegistry.flatten(
+        container.read(hudGamepadFocusTargetRegistryProvider),
+      );
+      expect(
+        targets.where(
+          (target) => target.section == HudGamepadFocusSection.rightPlayers,
+        ),
+        hasLength(3),
+      );
+
+      await tester.tap(
+        find.byKey(const Key('multiplayerAvatarsRail.openSheet')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('multiplayerAvatarsRail.sheet')),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('expanded rail opens status sheet with wider leader chips', (
     tester,

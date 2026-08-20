@@ -42,11 +42,12 @@ final class LocalResearchDiplomacyCommandResolver {
         (!context.hasActor && !currentState.activePlayerCanAct)) {
       return _unchanged(baseSnapshot, currentState, savedAt);
     }
+    final actorPlayerId = _actorPlayerId(command, currentState, context);
     final result = const GameEngine().apply(
       snapshot: baseSnapshot.canonical,
       command: command,
       context: GameEngineContext(
-        actorPlayerId: _actorPlayerId(command, currentState, context),
+        actorPlayerId: actorPlayerId,
         mapView: mapView,
         ruleset: ruleset,
         commandTick: context.commandTick,
@@ -66,6 +67,7 @@ final class LocalResearchDiplomacyCommandResolver {
         command: command,
         family: GameEngine.commandFamily(command)!,
         domainActions: accepted.snapshot.domain.actions,
+        actorPlayerId: actorPlayerId,
       ).withDomain(accepted.snapshot.domain),
       events: accepted.events,
     );

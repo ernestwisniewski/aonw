@@ -45,6 +45,7 @@ class _MultiplayerAvatarsRailOverlayState
       current: ref.watch(gamePlayerControlControllerProvider),
       save: gameSave,
     );
+    final avatarInputBlocked = playerControl.phase.blocksHumanInput;
     final gameState = ref.watch(gameStateProvider(gameSave.id)).value;
     ref.watch(activeGameSessionProvider);
     final diplomacy = gameState?.diplomacy ?? DiplomacyState.empty;
@@ -76,23 +77,26 @@ class _MultiplayerAvatarsRailOverlayState
     return Positioned(
       top: safePadding.top + _topOffset(compact),
       right: safePadding.right + _rightOffset(compact),
-      child: MultiplayerAvatarsRail(
-        gameSave: gameSave,
-        activePlayerId: playerControl.activePlayerId,
-        diplomacy: diplomacy,
-        gameState: gameState,
-        gamepadFocusedTargetId: focusedTargetId,
-        gamepadInputListenable: widget.gamepadInputListenable,
-        onGamepadSheetOpenChanged: (captured) => _setPopupInputCaptured(
-          captured,
-          sourceId: 'multiplayerAvatarsRail.fullListSheet',
-        ),
-        onAvatarTapped: (playerId) => _handleAvatarTapped(
-          context,
+      child: IgnorePointer(
+        ignoring: avatarInputBlocked,
+        child: MultiplayerAvatarsRail(
           gameSave: gameSave,
-          gameState: gameState,
           activePlayerId: playerControl.activePlayerId,
-          playerId: playerId,
+          diplomacy: diplomacy,
+          gameState: gameState,
+          gamepadFocusedTargetId: avatarInputBlocked ? null : focusedTargetId,
+          gamepadInputListenable: widget.gamepadInputListenable,
+          onGamepadSheetOpenChanged: (captured) => _setPopupInputCaptured(
+            captured,
+            sourceId: 'multiplayerAvatarsRail.fullListSheet',
+          ),
+          onAvatarTapped: (playerId) => _handleAvatarTapped(
+            context,
+            gameSave: gameSave,
+            gameState: gameState,
+            activePlayerId: playerControl.activePlayerId,
+            playerId: playerId,
+          ),
         ),
       ),
     );

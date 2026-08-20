@@ -53,11 +53,17 @@ final class LocalCombatCommandResolver {
         savedAt: savedAt,
       );
     }
-    final result = _applyEngine(
-      baseSnapshot: baseSnapshot,
-      currentState: currentState,
+    final actorPlayerId = _actorPlayerId(
+      snapshot: baseSnapshot,
+      state: currentState,
       command: command,
       context: context,
+    );
+    final result = _applyEngine(
+      baseSnapshot: baseSnapshot,
+      command: command,
+      context: context,
+      actorPlayerId: actorPlayerId,
     );
     if (result case final GameEngineRejected rejected) {
       return _unchanged(
@@ -73,22 +79,43 @@ final class LocalCombatCommandResolver {
       );
     }
     final accepted = result as GameEngineAccepted;
+    return _acceptedResolution(
+      baseSnapshot: baseSnapshot,
+      currentState: currentState,
+      command: command,
+      savedAt: savedAt,
+      accepted: accepted,
+      actorPlayerId: actorPlayerId,
+    );
+  }
+
+  LocalCombatCommandResolution _acceptedResolution({
+    required CanonicalGameSnapshot baseSnapshot,
+    required GameClientState currentState,
+    required AttackHexCommand command,
+    required DateTime savedAt,
+    required GameEngineAccepted accepted,
+    required String actorPlayerId,
+  }) {
+    final interactionSource = acceptedEngineCommandInteractionSource(
+      currentState: currentState,
+      command: command,
+      family: GameEngineCommandFamily.combat,
+      domainActions: accepted.snapshot.domain.actions,
+      actorPlayerId: actorPlayerId,
+    );
+    final projectedState = projectLocalCombatEngineResult(
+      currentState: interactionSource,
+      result: accepted,
+      command: command,
+      actorPlayerId: actorPlayerId,
+    );
     return LocalCombatCommandResolution(
       snapshot: baseSnapshot.withEngineResult(
         resultSnapshot: accepted.snapshot,
         savedAt: savedAt,
       ),
-      state: projectLocalCombatEngineResult(
-        currentState: acceptedEngineCommandInteractionSource(
-          currentState: currentState,
-          command: command,
-          family: GameEngineCommandFamily.combat,
-          domainActions: accepted.snapshot.domain.actions,
-        ),
-        result: accepted,
-        command: command,
-        mapView: mapView,
-      ),
+      state: projectedState,
       events: accepted.events,
       uiEffects: const [],
       combatAnimations: accepted.combatAnimations,
@@ -97,20 +124,15 @@ final class LocalCombatCommandResolver {
 
   GameEngineResult _applyEngine({
     required CanonicalGameSnapshot baseSnapshot,
-    required GameClientState currentState,
     required AttackHexCommand command,
     required GameCommandContext context,
+    required String actorPlayerId,
   }) {
     return const GameEngine().apply(
       snapshot: baseSnapshot.canonical,
       command: command,
       context: GameEngineContext(
-        actorPlayerId: _actorPlayerId(
-          snapshot: baseSnapshot,
-          state: currentState,
-          command: command,
-          context: context,
-        ),
+        actorPlayerId: actorPlayerId,
         mapView: mapView,
         ruleset: ruleset,
         commandTick: context.commandTick,

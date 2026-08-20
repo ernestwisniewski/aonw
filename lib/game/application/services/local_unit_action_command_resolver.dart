@@ -43,16 +43,17 @@ final class LocalUnitActionCommandResolver {
         (!context.hasActor && !currentState.activePlayerCanAct)) {
       return _unchanged(baseSnapshot, currentState, savedAt);
     }
+    final actorPlayerId = _actorPlayerId(
+      snapshot: baseSnapshot,
+      state: currentState,
+      command: command,
+      context: context,
+    );
     final result = const GameEngine().apply(
       snapshot: baseSnapshot.canonical,
       command: command,
       context: GameEngineContext(
-        actorPlayerId: _actorPlayerId(
-          snapshot: baseSnapshot,
-          state: currentState,
-          command: command,
-          context: context,
-        ),
+        actorPlayerId: actorPlayerId,
         mapView: mapView,
         ruleset: ruleset,
         commandTick: context.commandTick,
@@ -68,6 +69,7 @@ final class LocalUnitActionCommandResolver {
       currentState: currentState,
       command: command,
       savedAt: savedAt,
+      actorPlayerId: actorPlayerId,
     );
   }
 
@@ -77,6 +79,7 @@ final class LocalUnitActionCommandResolver {
     required GameClientState currentState,
     required DomainCommand command,
     required DateTime savedAt,
+    required String actorPlayerId,
   }) {
     final snapshot = baseSnapshot.withEngineResult(
       resultSnapshot: result.snapshot,
@@ -89,6 +92,7 @@ final class LocalUnitActionCommandResolver {
         command: command,
         family: GameEngineCommandFamily.unitAction,
         domainActions: result.snapshot.domain.actions,
+        actorPlayerId: actorPlayerId,
       ),
       resultSnapshot: result.snapshot,
       command: command,

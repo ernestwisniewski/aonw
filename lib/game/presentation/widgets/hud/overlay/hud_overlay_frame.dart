@@ -166,7 +166,7 @@ class HudOverlayFrame {
       gameState: gameState,
       gameSave: gameSave,
       activePlayerId: activePlayerId,
-      activePlayerCanAct: playerControl.canAct,
+      activePlayerCanAct: playerControl.canInteract,
     );
     final resourceSummary = HudResourceSummary.fromGameState(
       state: gameState,
@@ -244,7 +244,7 @@ class HudOverlayFrame {
       l10n: l10n,
       gameState: gameState,
       activePlayerId: activePlayerId,
-      activePlayerCanAct: playerControl.canAct,
+      activePlayerCanAct: playerControl.canInteract,
       actionsLocked: playerActionState.actionsLocked,
       readyToEndTurn: readyToEndTurn,
       technologyViewModel: technologyViewModel,
@@ -386,7 +386,7 @@ class HudOverlayFrame {
         gameSave.turn == 1 &&
         gameState != null &&
         activePlayerId.isNotEmpty &&
-        playerControl.canAct &&
+        playerControl.canInteract &&
         coachmarksHaveOwnedSelection;
     final coachmarksEnabled =
         coachmarksActive &&
@@ -399,7 +399,7 @@ class HudOverlayFrame {
         coachmarksAllowModeBanner;
 
     return HudOverlayFrame(
-      activePlayerCanAct: playerControl.canAct,
+      activePlayerCanAct: playerControl.canInteract,
       moveModeActive: moveModeActive,
       cityFoundingDraft: cityFoundingDraft,
       modes: modes,

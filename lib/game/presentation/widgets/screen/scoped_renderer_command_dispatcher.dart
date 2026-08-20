@@ -49,6 +49,10 @@ class _ScopedRendererCommandDispatcherState
 
   Future<void> _dispatch(GameIntent command) async {
     if (widget.session.saveId.isEmpty) return;
+    if (ref.read(gamePlayerControlControllerProvider).phase.blocksHumanInput) {
+      return;
+    }
+    ref.read(mapInspectionControllerProvider.notifier).clear();
     await ref
         .read(gameCommandControllerProvider.notifier)
         .dispatchIntent(command);

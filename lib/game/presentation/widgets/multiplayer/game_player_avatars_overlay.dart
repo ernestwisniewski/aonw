@@ -61,7 +61,7 @@ class GamePlayerAvatarsOverlay extends ConsumerWidget {
             activePlayerId: playerControl.activePlayerId,
             targetPlayerId: playerId,
             onCommand: ref
-                .read(gameCommandControllerProvider.notifier)
+                .read(hudCommandDispatcherProvider)
                 .dispatchTransition,
           ),
         );

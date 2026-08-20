@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:aonw/game/application/services/local_single_player_turn_phase.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw/game/presentation/providers.dart';
+import 'package:aonw/game/presentation/services/turn_presentation_sequencer.dart';
 import 'package:aonw/game/presentation/widgets/hud/city/hud_city_production_commands.dart';
 import 'package:aonw/game/presentation/widgets/hud/command/hud_pending_action_commands.dart';
 import 'package:aonw/game/presentation/widgets/hud/command/hud_pending_action_targets.dart';
@@ -33,6 +35,9 @@ part 'hud_command_dispatcher_selection.dart';
 part 'hud_command_dispatcher_turn_flow.dart';
 
 class HudCommandDispatcher {
+  static const humanInteractionBlockedReason =
+      'human turn interaction is blocked';
+
   const HudCommandDispatcher(this._ref);
 
   final Ref _ref;
@@ -43,13 +48,18 @@ class HudCommandDispatcher {
     return _ref.read(gameStateProvider(saveId)).value;
   }
 
+  bool get _canInteract =>
+      _ref.read(gamePlayerControlControllerProvider).canInteract;
+
   Future<void> dispatch(DomainCommand command) async {
+    if (!_canInteract) return;
     await dispatchTransition(command);
   }
 
   Future<DispatchCommandResult> dispatchTransition(
     DomainCommand command,
   ) async {
+    if (!_canInteract) return _blockedDispatchResult();
     _ref.read(mapInspectionControllerProvider.notifier).clear();
     return _ref
         .read(gameCommandControllerProvider.notifier)
@@ -57,10 +67,19 @@ class HudCommandDispatcher {
   }
 
   Future<void> dispatchIntent(GameIntent intent) async {
+    if (!_canInteract) return;
     _ref.read(mapInspectionControllerProvider.notifier).clear();
     await _ref
         .read(gameCommandControllerProvider.notifier)
         .dispatchIntent(intent);
+  }
+
+  DispatchCommandResult _blockedDispatchResult() {
+    return DispatchCommandResult(
+      state: _currentGameState() ?? GameClientState(),
+      accepted: false,
+      rejectionReason: humanInteractionBlockedReason,
+    );
   }
 
   void _applyPanelModes(HudPanelModes modes, {bool playSound = true}) {

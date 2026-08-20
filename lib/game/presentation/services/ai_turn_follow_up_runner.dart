@@ -18,8 +18,10 @@ final class AiTurnFollowUpRunner {
   final AiTurnLocalRuntimeEnabledReader localAiRuntimeEnabled;
   final AiTurnControlPlayerIdReader controlPlayerId;
   final AiTurnAdvanceEffectsPlayer playTurnAdvanceEffects;
-  final HumanTurnConfirmer confirmHumanTurn;
+  final TurnOpeningBeginner beginTurnOpening;
+  final HumanTurnPreparer prepareHumanTurn;
   final TurnStartFocusRequester focusTurnStartMapTarget;
+  final HumanTurnReleaser releaseHumanTurn;
   final bool Function() canContinue;
   final HandoffClearer clearHandoff;
   final HandoffSetter setHandoff;
@@ -30,8 +32,10 @@ final class AiTurnFollowUpRunner {
     required this.localAiRuntimeEnabled,
     required this.controlPlayerId,
     required this.playTurnAdvanceEffects,
-    required this.confirmHumanTurn,
+    required this.beginTurnOpening,
+    required this.prepareHumanTurn,
     required this.focusTurnStartMapTarget,
+    required this.releaseHumanTurn,
     required this.canContinue,
     required this.clearHandoff,
     required this.setHandoff,
@@ -61,8 +65,10 @@ final class AiTurnFollowUpRunner {
             terminalUiEffects: effects,
           );
         },
-        confirmHumanTurn: confirmHumanTurn,
+        beginTurnOpening: beginTurnOpening,
+        prepareHumanTurn: prepareHumanTurn,
         focusTurnStartMapTarget: focusTurnStartMapTarget,
+        releaseHumanTurn: releaseHumanTurn,
         canContinue: canContinue,
       ),
       clearHandoff: clearHandoff,

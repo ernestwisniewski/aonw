@@ -1,6 +1,7 @@
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
+import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
 import 'package:aonw/game/presentation/providers/renderer/renderer_provider.dart';
 import 'package:aonw/game/presentation/widgets/hud/map/hud_map_focus_target.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
@@ -51,6 +52,7 @@ class HudMapFocusController {
     HudMapFocusTarget target, {
     required HudPanelModes panelModes,
   }) async {
+    if (!_ref.read(gamePlayerControlControllerProvider).canInteract) return;
     _ref.read(hudPanelControllerProvider.notifier).apply(panelModes);
     await _ref
         .read(hudCommandDispatcherProvider)

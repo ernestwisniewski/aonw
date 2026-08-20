@@ -6,12 +6,14 @@ import 'package:aonw/game/application/services/ai_runtime_strategy_resolver.dart
 import 'package:aonw/game/application/services/ai_runtime_throttler.dart';
 import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
 import 'package:aonw/game/application/services/ai_turn_run_scheduler.dart';
+import 'package:aonw/game/application/services/turn_opening_lease.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/engine/renderer_view_model.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/services/ai_turn_auto_scheduler.dart';
 import 'package:aonw/game/presentation/services/ai_turn_execution_runner.dart';
+import 'package:aonw/game/presentation/services/ai_turn_follow_up_identity_guard.dart';
 import 'package:aonw/game/presentation/services/ai_turn_follow_up_runner.dart';
 import 'package:aonw/game/presentation/services/ai_turn_lifecycle_coordinator.dart';
 import 'package:aonw/game/presentation/services/ai_turn_precompute_coordinator.dart';
@@ -28,6 +30,10 @@ import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+part 'game_ai_turn_auto_pilot_execution.dart';
+part 'game_ai_turn_auto_pilot_process.dart';
+part 'game_ai_turn_auto_pilot_runtime.dart';
 
 class GameAiTurnAutoPilot extends ConsumerStatefulWidget {
   final GameSave? gameSave;
@@ -56,25 +62,14 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
   final AiTurnPrecomputeCoordinator _precomputeCoordinator =
       AiTurnPrecomputeCoordinator();
   final AiTurnRunScheduler _runScheduler = AiTurnRunScheduler();
-
-  AiStrategyRegistry _strategyRegistryFor({
-    required String playerId,
-    required GameSave save,
-    required GameClientState gameState,
-    required NetworkSession? networkSession,
-  }) {
-    return _aiRuntimeStrategyResolver().resolve(
-      playerId: playerId,
-      save: save,
-      gameState: gameState,
-      networkSession: networkSession,
-    );
-  }
+  final AiTurnFollowUpIdentityGuard _followUpIdentityGuard =
+      AiTurnFollowUpIdentityGuard();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _followUpIdentityGuard.initialize(_saveIdentity(widget.gameSave));
     _runtimeCoordinator = _createAiTurnRuntimeCoordinator();
     _lifecycleCoordinator = _createAiTurnLifecycleCoordinator();
   }
@@ -82,6 +77,12 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
   @override
   void didUpdateWidget(GameAiTurnAutoPilot oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final invalidatedLease = _followUpIdentityGuard.handleSaveChange(
+      _saveIdentity(widget.gameSave),
+    );
+    if (invalidatedLease != null) {
+      _cancelTurnOpening(invalidatedLease);
+    }
     _lifecycleCoordinator.handleSaveChange(
       previousSave: oldWidget.gameSave,
       currentSave: widget.gameSave,
@@ -98,6 +99,10 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    final invalidatedLease = _followUpIdentityGuard.invalidate();
+    if (invalidatedLease != null) {
+      _cancelTurnOpening(invalidatedLease);
+    }
     _lifecycleCoordinator.dispose();
     super.dispose();
   }
@@ -122,204 +127,19 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
     return const SizedBox.shrink();
   }
 
-  AiTurnAutoScheduler _aiTurnAutoScheduler() {
-    return AiTurnAutoScheduler(
-      logger: ref.read(gameLoggerProvider),
-      runScheduler: _runScheduler,
-      precomputeCoordinator: _precomputeCoordinator,
-      precomputeCache: _precomputeCache,
-      throttler: _runtimeThrottler,
-      shouldRunLocalAi: GameAiTurnAutoPilotRules.shouldRunLocalAi,
-      aiPlayerToRun: GameAiTurnAutoPilotRules.aiPlayerToRun,
-      scheduleTurn: _runtimeCoordinator.scheduleTurn,
-      schedulePendingPrecompute: _runtimeCoordinator.schedulePendingPrecompute,
-      precomputeStats: _runtimeCoordinator.precomputeStats,
-      throttleStats: _runtimeCoordinator.throttleStats,
-      logThrottleChange: _runtimeCoordinator.logThrottleChange,
-    );
+  AiTurnSaveIdentity? _saveIdentity(GameSave? save) {
+    if (save == null) return null;
+    return AiTurnSaveIdentity(saveId: save.id, turn: save.turn);
   }
 
-  AiTurnLifecycleCoordinator _createAiTurnLifecycleCoordinator() {
-    return AiTurnLifecycleCoordinator(
-      runScheduler: _runScheduler,
-      precomputeCoordinator: _precomputeCoordinator,
-      precomputeCache: _precomputeCache,
-      strategicPlanProvider: _strategicPlanProvider,
-      throttler: _runtimeThrottler,
-      cancelQueuedPrecompute: _runtimeCoordinator.cancelQueuedPrecompute,
-      schedulePendingPrecompute: _runtimeCoordinator.schedulePendingPrecompute,
-      shutdownPrecomputeExecutor: () {
-        unawaited(shutdownIsolatedAiPlanExecutor());
-      },
-    );
+  void _notifyStateChanged() {
+    if (mounted) setState(() {});
   }
 
-  AiTurnRuntimeCoordinator _createAiTurnRuntimeCoordinator() {
-    return AiTurnRuntimeCoordinator(
-      logger: ref.read(gameLoggerProvider),
-      runScheduler: _runScheduler,
-      precomputeCoordinator: _precomputeCoordinator,
-      throttler: _runtimeThrottler,
-      executionRunner: _aiTurnExecutionRunner,
-      precomputeRunner: _aiTurnPrecomputeRunner,
-      schedulePostFrame: (callback) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => callback());
-      },
-      canContinue: () => mounted,
-      notifyStateChanged: () {
-        if (mounted) setState(() {});
-      },
-      interCommandDelay: () => widget.interCommandDelay,
-      now: _nowUtc,
-    );
+  void _cancelTurnOpening(TurnOpeningLease lease) {
+    if (!mounted) return;
+    ref
+        .read(gamePlayerControlControllerProvider.notifier)
+        .cancelTurnOpening(lease);
   }
-
-  AiRuntimeStrategyResolver _aiRuntimeStrategyResolver() {
-    return AiRuntimeStrategyResolver(
-      logger: ref.read(gameLoggerProvider),
-      throttler: _runtimeThrottler,
-      forceBatterySaver: () => ref.read(aiSettingsProvider).batterySaver,
-    );
-  }
-
-  AiTurnExecutionRunner _aiTurnExecutionRunner() {
-    final followUpRunner = _aiTurnFollowUpRunner();
-    return AiTurnExecutionRunner.fromPreparedProcess(
-      logger: ref.read(gameLoggerProvider),
-      throttler: _runtimeThrottler,
-      prepareProcess: _prepareAiTurnProcess,
-      invalidateSaveSnapshot: (saveId) =>
-          ref.invalidate(gameSaveSnapshotProvider(saveId)),
-      advanceAfterAiTurn: followUpRunner.advanceAfterAiTurn,
-      canContinue: () => mounted,
-      precomputeStats: _runtimeCoordinator.precomputeStats,
-      throttleStats: _runtimeCoordinator.throttleStats,
-      logThrottleChange: _runtimeCoordinator.logThrottleChange,
-    );
-  }
-
-  AiTurnFollowUpRunner _aiTurnFollowUpRunner() {
-    final presentationDriver = _aiTurnPresentationDriver();
-    return AiTurnFollowUpRunner(
-      logger: ref.read(gameLoggerProvider),
-      localAiRuntimeEnabled: (save) {
-        return GameAiTurnAutoPilotRules.shouldRunLocalAi(
-          save: save,
-          networkSession: ref.read(networkSessionProvider),
-        );
-      },
-      controlPlayerId: () {
-        return ref.read(gamePlayerControlControllerProvider).activePlayerId;
-      },
-      playTurnAdvanceEffects: ({required saveId, required terminalUiEffects}) {
-        return presentationDriver.playTurnAdvanceEffects(
-          saveId: saveId,
-          terminalUiEffects: terminalUiEffects,
-        );
-      },
-      confirmHumanTurn: (playerId) {
-        return ref
-            .read(gamePlayerControlControllerProvider.notifier)
-            .confirmHandoff(playerId);
-      },
-      focusTurnStartMapTarget: (playerId) {
-        return ref
-            .read(hudCommandDispatcherProvider)
-            .focusTurnStartMapTarget(
-              activePlayerId: playerId,
-              state: ref
-                  .read(gameStateProvider(widget.gameSave?.id ?? ''))
-                  .value,
-            );
-      },
-      canContinue: () => mounted,
-      clearHandoff: ref.read(gameHandoffProvider.notifier).clear,
-      setHandoff: ref.read(gameHandoffProvider.notifier).setPending,
-      playerNameFormatter: (player) {
-        return GameDisplayNames.player(AppLocalizations.of(context), player);
-      },
-    );
-  }
-
-  AiTurnPrecomputeRunner _aiTurnPrecomputeRunner() {
-    return AiTurnPrecomputeRunner(
-      logger: ref.read(gameLoggerProvider),
-      coordinator: _precomputeCoordinator,
-      throttler: _runtimeThrottler,
-      planExecutor: isolatedAiPlanPrecomputeExecutor,
-      startPrecompute:
-          ({required saveId, required playerId, required planExecutor}) async {
-            final process = await _prepareAiTurnProcess(
-              saveId: saveId,
-              playerId: playerId,
-            );
-            return process?.precompute(planExecutor: planExecutor);
-          },
-      cacheSizeReader: () => _precomputeCache.length,
-      precomputeStats: _runtimeCoordinator.precomputeStats,
-      throttleStats: _runtimeCoordinator.throttleStats,
-      logThrottleChange: _runtimeCoordinator.logThrottleChange,
-    );
-  }
-
-  Future<PreparedAiTurnProcess?> _prepareAiTurnProcess({
-    required String saveId,
-    required String playerId,
-    int? scheduledTurn,
-  }) {
-    final presentationDriver = _aiTurnPresentationDriver();
-    final preparer = AiTurnProcessPreparer(
-      repository: ref.read(gameRepositoryProvider),
-      logger: ref.read(gameLoggerProvider),
-      dispatch: presentationDriver.dispatchCommand,
-      planExecutor: isolatedAiPlanExecutor,
-      sessionReader: () => ref.read(activeGameSessionProvider),
-      networkSessionReader: () => ref.read(networkSessionProvider),
-      canContinue: () => mounted,
-      shouldRunLocalAiForMode: GameAiTurnAutoPilotRules.shouldRunLocalAiForMode,
-      canRunScheduledAiTurn: GameAiTurnAutoPilotRules.canRunScheduledAiTurn,
-      strategyRegistryFor: _strategyRegistryFor,
-      rulesetReader: () {
-        return GameRuleset.standard().copyWith(
-          city: ref.read(cityRulesetProvider),
-          technology: ref.read(technologyRulesetProvider),
-          stability: ref.read(stabilityRulesetProvider),
-        );
-      },
-      eventLogReader: () => ref.read(eventLogProvider),
-      precomputeCache: _precomputeCache,
-      strategicPlanProvider: _strategicPlanProvider,
-    );
-    return preparer.prepare(
-      saveId: saveId,
-      playerId: playerId,
-      scheduledTurn: scheduledTurn,
-    );
-  }
-
-  AiTurnPresentationDriver _aiTurnPresentationDriver() {
-    return AiTurnPresentationDriver(
-      sessionReader: () => ref.read(activeGameSessionProvider),
-      stateReader: (saveId) => ref.read(gameStateProvider(saveId)).value,
-      localizationReader: () => ref.read(activeRendererViewModelProvider)?.l10n,
-      applyTransition: (state, effects) async {
-        final renderer = ref.read(activeRendererViewModelProvider);
-        if (renderer == null) return;
-        await renderer.applyTransition(state, effects);
-      },
-      applyProjectedTransition: (state, batch) async {
-        final renderer = ref.read(activeRendererViewModelProvider);
-        if (renderer == null) return;
-        await renderer.applyProjectedTransition(state, batch);
-      },
-      hiddenDispatch: ({required saveId, required command, required context}) {
-        return ref
-            .read(gameStateProvider(saveId).notifier)
-            .dispatchTransition(command, context: context);
-      },
-      canContinue: () => mounted,
-    );
-  }
-
-  DateTime _nowUtc() => ref.read(gameClockProvider).nowUtc();
 }

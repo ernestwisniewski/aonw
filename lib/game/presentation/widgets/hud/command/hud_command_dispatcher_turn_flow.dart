@@ -8,7 +8,7 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
     int? actionIndex,
     int actionStep = 1,
   }) async {
-    if (activePlayerId.isEmpty) return;
+    if (activePlayerId.isEmpty || !_canInteract) return;
 
     await dispatchIntent(
       FocusNextPendingActionCommand(
@@ -96,6 +96,7 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
     required GameClientState? Function() currentState,
     GameObjectiveAdvice? preferredObjectiveAdvice,
   }) async {
+    if (!_canInteract) return;
     if (animatingUnitIdsListenable.value.isNotEmpty) return;
     if (!readyToEndTurn) {
       await focusNextAction(
@@ -114,6 +115,41 @@ extension HudCommandDispatcherTurnFlow on HudCommandDispatcher {
     if (gameSave.gameMode != GameMode.multiplayer ||
         updatedSave == null ||
         updatedSave.turn <= gameSave.turn) {
+      return;
+    }
+
+    final control = _ref.read(gamePlayerControlControllerProvider);
+    if (control.phase == LocalSinglePlayerTurnPhase.aiResolving) {
+      await TurnPresentationSequencer(
+        playTurnAdvanceEffects: (effects) async => 0,
+        beginTurnOpening: (playerId) {
+          _ref
+              .read(gamePlayerControlControllerProvider.notifier)
+              .beginTurnOpening(playerId);
+        },
+        prepareHumanTurn: (playerId) {
+          return _ref
+              .read(gamePlayerControlControllerProvider.notifier)
+              .prepareHumanTurn(playerId);
+        },
+        focusTurnStartMapTarget: (playerId) {
+          return focusTurnStartMapTarget(
+            activePlayerId: playerId,
+            state: currentState(),
+            moveCamera: true,
+          );
+        },
+        releaseHumanTurn: (playerId) {
+          return _ref
+              .read(gamePlayerControlControllerProvider.notifier)
+              .releaseHumanTurn(playerId);
+        },
+        canContinue: () => _ref.mounted,
+      ).presentHumanTurnStart(
+        playerId: activePlayerId,
+        shouldPlayTurnAdvanceEffects: false,
+        turnAdvanceEffects: const [],
+      );
       return;
     }
 

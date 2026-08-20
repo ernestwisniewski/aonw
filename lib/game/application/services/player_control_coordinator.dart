@@ -1,21 +1,42 @@
+import 'package:aonw/game/application/services/local_single_player_turn_phase.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/save.dart';
 
 class PlayerControlState {
   final String activePlayerId;
   final bool canAct;
+  final LocalSinglePlayerTurnPhase phase;
 
-  const PlayerControlState({this.activePlayerId = '', this.canAct = true});
+  const PlayerControlState({
+    this.activePlayerId = '',
+    this.canAct = true,
+    this.phase = LocalSinglePlayerTurnPhase.notApplicable,
+  });
+
+  bool get canInteract => canAct && !phase.blocksHumanInput;
+
+  PlayerControlState copyWith({
+    String? activePlayerId,
+    bool? canAct,
+    LocalSinglePlayerTurnPhase? phase,
+  }) {
+    return PlayerControlState(
+      activePlayerId: activePlayerId ?? this.activePlayerId,
+      canAct: canAct ?? this.canAct,
+      phase: phase ?? this.phase,
+    );
+  }
 
   @override
   bool operator ==(Object other) {
     return other is PlayerControlState &&
         other.activePlayerId == activePlayerId &&
-        other.canAct == canAct;
+        other.canAct == canAct &&
+        other.phase == phase;
   }
 
   @override
-  int get hashCode => Object.hash(activePlayerId, canAct);
+  int get hashCode => Object.hash(activePlayerId, canAct, phase);
 }
 
 abstract final class PlayerControlCoordinator {
@@ -67,6 +88,9 @@ abstract final class PlayerControlCoordinator {
         save: save,
         playerId: preferredPlayerId,
         previousCanAct: current.canAct,
+        phase: preferredPlayerId == current.activePlayerId
+            ? current.phase
+            : LocalSinglePlayerTurnPhase.notApplicable,
       );
     }
     return normalize(current: current, save: save);
@@ -87,6 +111,7 @@ abstract final class PlayerControlCoordinator {
       save: save,
       playerId: activePlayerId,
       previousCanAct: current.canAct,
+      phase: current.phase,
     );
   }
 
@@ -99,6 +124,7 @@ abstract final class PlayerControlCoordinator {
       save: save,
       playerId: playerId,
       previousCanAct: current.canAct,
+      phase: LocalSinglePlayerTurnPhase.notApplicable,
     );
   }
 
@@ -146,18 +172,21 @@ abstract final class PlayerControlCoordinator {
     required GameSave? save,
     required String playerId,
     required bool previousCanAct,
+    LocalSinglePlayerTurnPhase phase = LocalSinglePlayerTurnPhase.notApplicable,
   }) {
     if (playerId.isEmpty) return const PlayerControlState();
     if (save == null) {
       return PlayerControlState(
         activePlayerId: playerId,
         canAct: previousCanAct,
+        phase: phase,
       );
     }
 
     return PlayerControlState(
       activePlayerId: playerId,
       canAct: save.playerStates[playerId] != PlayerTurnState.finished,
+      phase: phase,
     );
   }
 

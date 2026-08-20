@@ -1,3 +1,4 @@
+import 'package:aonw/game/application/services/local_single_player_turn_phase.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/save.dart';
@@ -99,6 +100,20 @@ void main() {
 
       expect(state.activePlayerId, 'player_2');
       expect(state.canAct, isFalse);
+    });
+
+    test('normalize preserves an in-flight turn-opening input barrier', () {
+      final state = PlayerControlCoordinator.normalize(
+        current: const PlayerControlState(
+          activePlayerId: 'player_1',
+          phase: LocalSinglePlayerTurnPhase.turnOpening,
+        ),
+        save: _save(),
+      );
+
+      expect(state.canAct, isTrue);
+      expect(state.phase, LocalSinglePlayerTurnPhase.turnOpening);
+      expect(state.canInteract, isFalse);
     });
 
     test('normalize resets a missing player to the first save player', () {

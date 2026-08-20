@@ -1,3 +1,4 @@
+import 'package:aonw/game/application/services/local_single_player_turn_phase.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
@@ -5,6 +6,7 @@ import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provid
 import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
 import 'package:aonw/game/presentation/widgets/diplomacy/diplomatic_message_popup_overlay.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/diplomacy.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
@@ -15,10 +17,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+part 'diplomatic_message_popup_turn_phase_cases.dart';
+part 'diplomatic_message_popup_test_support.dart';
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
+  _registerDiplomaticMessagePopupTurnPhaseCases();
 
   testWidgets('shows an incoming diplomatic message popup for the recipient', (
     tester,
@@ -347,39 +353,6 @@ void main() {
 
     expect(find.text('New proposal'), findsNothing);
   });
-}
-
-Future<void> _pumpOverlay(
-  WidgetTester tester, {
-  ValueNotifier<GamepadInputSnapshot>? gamepadInput,
-  VoidCallback? onRendererCancel,
-}) async {
-  Widget overlay = DiplomaticMessagePopupOverlay(gameSave: _save);
-  if (gamepadInput != null) {
-    overlay = GamepadInputRouterScope(
-      input: gamepadInput,
-      child: GamepadInputRouteListener(
-        route: GamepadInputRoute(
-          priority: GamepadInputRoutePriority.renderer,
-          onCancel: onRendererCancel,
-        ),
-        child: overlay,
-      ),
-    );
-  }
-  await tester.pumpWidget(
-    ProviderScope(
-      child: MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        locale: const Locale('en'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: ProviderScope(
-          overrides: [gamePlayerControlSaveProvider.overrideWithValue(_save)],
-          child: Scaffold(body: overlay),
-        ),
-      ),
-    ),
-  );
 }
 
 ProviderContainer _container(WidgetTester tester) {

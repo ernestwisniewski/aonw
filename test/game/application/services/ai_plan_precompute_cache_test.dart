@@ -3,6 +3,7 @@ import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/ai_plan_precompute_cache.dart';
+import 'package:aonw/game/application/services/ai_planning_deadline_policy.dart';
 import 'package:aonw/game/application/services/ai_turn_runner.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
 import 'package:aonw/game/application/use_cases/run_ai_turn_use_case.dart';
@@ -199,6 +200,7 @@ RunAiTurnUseCase _useCase({
     ),
     ruleset: GameRuleset.defaults,
     mapData: _mapData,
+    planningDeadlinePolicy: AiPlanningDeadlinePolicy.unbounded,
     precomputeCache: cache,
   );
 }

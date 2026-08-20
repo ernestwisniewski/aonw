@@ -1,3 +1,4 @@
+import 'package:aonw/game/application/services/local_single_player_turn_phase.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
@@ -5,6 +6,7 @@ import 'package:aonw/game/presentation/providers/hud/civilization_met_popup_sett
 import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
 import 'package:aonw/game/presentation/widgets/diplomacy/civilization_met_popup_overlay.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/save.dart';
@@ -24,6 +26,11 @@ void main() {
   ) async {
     await _pumpOverlay(tester);
     final container = _container(tester);
+
+    expect(
+      container.read(gamePlayerControlControllerProvider).phase,
+      LocalSinglePlayerTurnPhase.notApplicable,
+    );
 
     _addCivilizationMetNotification(container);
     await tester.pump();
@@ -155,14 +162,58 @@ void main() {
     expect(find.text('Civilization encountered'), findsNothing);
     expect(container.read(gameEventNotificationsProvider), isNotEmpty);
   });
+
+  testWidgets(
+    'defers local single-player civilization popup until human planning',
+    (tester) async {
+      await _pumpOverlay(tester, save: _localAiResolvingSave);
+      final container = _container(tester);
+      final control = container.read(
+        gamePlayerControlControllerProvider.notifier,
+      );
+
+      expect(
+        container.read(gamePlayerControlControllerProvider).phase,
+        LocalSinglePlayerTurnPhase.aiResolving,
+      );
+
+      _addCivilizationMetNotification(container);
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Civilization encountered'), findsNothing);
+      expect(container.read(gameEventNotificationsProvider), isNotEmpty);
+
+      control.beginTurnOpening('player_1');
+      await tester.pump();
+
+      expect(
+        container.read(gamePlayerControlControllerProvider).phase,
+        LocalSinglePlayerTurnPhase.turnOpening,
+      );
+      expect(find.text('Civilization encountered'), findsNothing);
+
+      await control.releaseHumanTurn('player_1');
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        container.read(gamePlayerControlControllerProvider).phase,
+        LocalSinglePlayerTurnPhase.humanPlanning,
+      );
+      expect(find.text('Civilization encountered'), findsOneWidget);
+    },
+  );
 }
 
 Future<void> _pumpOverlay(
   WidgetTester tester, {
+  GameSave? save,
   ValueNotifier<GamepadInputSnapshot>? gamepadInput,
   VoidCallback? onRendererCancel,
 }) async {
-  Widget overlay = CivilizationMetPopupOverlay(gameSave: _save);
+  final gameSave = save ?? _save;
+  Widget overlay = CivilizationMetPopupOverlay(gameSave: gameSave);
   if (gamepadInput != null) {
     overlay = GamepadInputRouterScope(
       input: gamepadInput,
@@ -182,7 +233,9 @@ Future<void> _pumpOverlay(
         locale: const Locale('en'),
         supportedLocales: AppLocalizations.supportedLocales,
         home: ProviderScope(
-          overrides: [gamePlayerControlSaveProvider.overrideWithValue(_save)],
+          overrides: [
+            gamePlayerControlSaveProvider.overrideWithValue(gameSave),
+          ],
           child: Scaffold(body: overlay),
         ),
       ),
@@ -241,4 +294,25 @@ final _save = GameSave(
       kind: PlayerKind.ai,
     ),
   ],
+);
+
+final _localAiResolvingSave = _save.copyWith(
+  id: 'local_single_player',
+  playerStates: const {
+    'player_1': PlayerTurnState.finished,
+    'player_2': PlayerTurnState.active,
+  },
+  players: const [
+    Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4A7FC4),
+    Player(
+      id: 'player_2',
+      name: 'Bruno',
+      colorValue: 0xFFB83A3A,
+      country: PlayerCountry.germany,
+      kind: PlayerKind.ai,
+      ai: AiPlayer(strategyId: AiStrategyId.basic, seed: 42),
+    ),
+  ],
+  gameMode: GameMode.multiplayer,
+  origin: GameSaveOrigin.local,
 );

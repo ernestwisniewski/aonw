@@ -2,6 +2,9 @@ part of 'multiplayer_avatars_rail.dart';
 
 extension _MultiplayerAvatarsRailOverlayGamepad
     on _MultiplayerAvatarsRailOverlayState {
+  bool get _avatarInputBlocked =>
+      ref.read(gamePlayerControlControllerProvider).phase.blocksHumanInput;
+
   void _handleAvatarTapped(
     BuildContext context, {
     required GameSave gameSave,
@@ -9,6 +12,7 @@ extension _MultiplayerAvatarsRailOverlayGamepad
     required String activePlayerId,
     required String playerId,
   }) {
+    if (_avatarInputBlocked) return;
     if (playerId == activePlayerId || gameState == null) {
       unawaited(
         ref
@@ -57,9 +61,7 @@ extension _MultiplayerAvatarsRailOverlayGamepad
         activePlayerId: activePlayerId,
         targetPlayerId: targetPlayerId,
         gamepadInputListenable: widget.gamepadInputListenable,
-        onCommand: ref
-            .read(gameCommandControllerProvider.notifier)
-            .dispatchTransition,
+        onCommand: ref.read(hudCommandDispatcherProvider).dispatchTransition,
       );
     } finally {
       _setPopupInputCaptured(
@@ -111,6 +113,7 @@ extension _MultiplayerAvatarsRailOverlayGamepad
     required GameClientState? gameState,
     required String activePlayerId,
   }) {
+    if (_avatarInputBlocked) return const [];
     return [
       for (final player in gameSave.players)
         HudGamepadFocusTarget(
@@ -136,6 +139,7 @@ extension _MultiplayerAvatarsRailOverlayGamepad
         id: HudGamepadFocusTargetIds.playerStatusSheet,
         label: l10n.multiplayerStatusTooltip,
         onActivate: () {
+          if (_avatarInputBlocked) return;
           ref
               .read(multiplayerStatusSheetRequestProvider.notifier)
               .request(save: gameSave, activePlayerId: activePlayerId);

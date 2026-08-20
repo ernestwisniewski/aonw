@@ -92,9 +92,11 @@ void main() {
 
         expect(calls, const [
           'clear',
+          'begin:human',
           'effects:1',
-          'confirm:human',
+          'prepare:human',
           'focus:human',
+          'release:human',
           'report:1',
         ]);
         expect(reports, hasLength(1));
@@ -126,11 +128,17 @@ AiTurnFollowUpPresenter _presenter(
         calls.add('effects:${effects.length}');
         return effects.length;
       },
-      confirmHumanTurn: (playerId) async {
-        calls.add('confirm:$playerId');
+      beginTurnOpening: (playerId) {
+        calls.add('begin:$playerId');
+      },
+      prepareHumanTurn: (playerId) async {
+        calls.add('prepare:$playerId');
       },
       focusTurnStartMapTarget: (playerId) async {
         calls.add('focus:$playerId');
+      },
+      releaseHumanTurn: (playerId) async {
+        calls.add('release:$playerId');
       },
     ),
   );

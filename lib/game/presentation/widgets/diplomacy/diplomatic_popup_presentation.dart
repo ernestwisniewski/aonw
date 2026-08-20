@@ -1,6 +1,64 @@
 part of 'diplomatic_message_popup_overlay.dart';
 
 extension _PopupPresentation on _DiplomaticMessagePopupOverlayState {
+  void _scheduleShowNext() {
+    if (_deferredRestoreEntry != null) {
+      _scheduleDeferredRestore();
+      return;
+    }
+    if (!_canSchedulePopupPresentation()) return;
+    _showScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showScheduled = false;
+      unawaited(_showNext());
+    });
+  }
+
+  Future<void> _showNext() async {
+    if (!_canShowQueuedPopup()) return;
+    final activePlayerId = _readActivePopupPlayerId();
+    if (activePlayerId.isEmpty) return;
+
+    final proposal = _takeNextProposalFor(activePlayerId);
+    if (proposal != null) {
+      await _showProposal(proposal);
+      return;
+    }
+
+    final message = _takeNextMessageFor(activePlayerId);
+    if (message != null) {
+      await _showMessage(message);
+      return;
+    }
+
+    final notification = _takeNextDiplomacyEventFor(activePlayerId);
+    if (notification != null) await _showDiplomacyEvent(notification);
+  }
+
+  bool _canSchedulePopupPresentation() {
+    return !_showScheduled &&
+        !_dialogOpen &&
+        !_handoffBlocked &&
+        !_popupPresentationBlocked &&
+        ref.read(gameHandoffProvider) == null &&
+        _hasPendingPopup &&
+        ref.read(hudMinimizedPopupsProvider).loaded;
+  }
+
+  bool _canShowQueuedPopup() {
+    return mounted &&
+        !_dialogOpen &&
+        !_popupPresentationBlocked &&
+        _hasPendingPopup &&
+        ref.read(gameHandoffProvider) == null &&
+        ref.read(hudMinimizedPopupsProvider).loaded;
+  }
+
+  bool get _hasPendingPopup => _inbox.hasPendingPopup;
+
+  bool get _popupPresentationBlocked =>
+      ref.read(gamePlayerControlControllerProvider).phase.blocksHumanInput;
+
   void _listenForRestoreRequests() {
     ref.listen<HudMinimizedPopupsState>(hudMinimizedPopupsProvider, (
       previous,
@@ -18,6 +76,10 @@ extension _PopupPresentation on _DiplomaticMessagePopupOverlayState {
   }
 
   void _restoreEntry(HudMinimizedPopupEntry entry) {
+    if (_popupPresentationBlocked) {
+      _deferredRestoreEntry = entry;
+      return;
+    }
     switch (entry.kind) {
       case HudMinimizedPopupKind.diplomaticMessage:
         unawaited(_restoreMessage(entry));
@@ -29,6 +91,30 @@ extension _PopupPresentation on _DiplomaticMessagePopupOverlayState {
           HudMinimizedPopupKind.autoTurnHint:
         return;
     }
+  }
+
+  void _scheduleDeferredRestore() {
+    if (_restoreScheduled ||
+        _deferredRestoreEntry == null ||
+        _dialogOpen ||
+        _popupPresentationBlocked ||
+        ref.read(gameHandoffProvider) != null) {
+      return;
+    }
+    _restoreScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _restoreScheduled = false;
+      if (!mounted ||
+          _dialogOpen ||
+          _popupPresentationBlocked ||
+          ref.read(gameHandoffProvider) != null) {
+        return;
+      }
+      final entry = _deferredRestoreEntry;
+      if (entry == null) return;
+      _deferredRestoreEntry = null;
+      _restoreEntry(entry);
+    });
   }
 
   Future<void> _restoreMessage(HudMinimizedPopupEntry entry) async {
@@ -97,9 +183,9 @@ extension _PopupPresentation on _DiplomaticMessagePopupOverlayState {
     _dialogOpen = false;
 
     if (result?.response != null) {
-      await ref
-          .read(gameCommandControllerProvider.notifier)
-          .dispatch(
+      final dispatchResult = await ref
+          .read(hudCommandDispatcherProvider)
+          .dispatchTransition(
             RespondDiplomaticMessageCommand(
               playerId: message.toPlayerId,
               messageId: message.id,
@@ -107,7 +193,12 @@ extension _PopupPresentation on _DiplomaticMessagePopupOverlayState {
             ),
           );
       if (!mounted) return;
-      _dismissNotifications(message.id, proposal: false);
+      if (dispatchResult.rejectionReason ==
+          HudCommandDispatcher.humanInteractionBlockedReason) {
+        _inbox.deferMessage(message);
+      } else {
+        _dismissNotifications(message.id, proposal: false);
+      }
     } else if (result == null || result.minimize) {
       _minimizeMessage(
         l10n: l10n,
@@ -145,9 +236,9 @@ extension _PopupPresentation on _DiplomaticMessagePopupOverlayState {
     _dialogOpen = false;
 
     if (result?.accepted != null) {
-      await ref
-          .read(gameCommandControllerProvider.notifier)
-          .dispatch(
+      final dispatchResult = await ref
+          .read(hudCommandDispatcherProvider)
+          .dispatchTransition(
             RespondDiplomaticProposalCommand(
               playerId: proposal.toPlayerId,
               proposalId: proposal.id,
@@ -155,7 +246,12 @@ extension _PopupPresentation on _DiplomaticMessagePopupOverlayState {
             ),
           );
       if (!mounted) return;
-      _dismissNotifications(proposal.id, proposal: true);
+      if (dispatchResult.rejectionReason ==
+          HudCommandDispatcher.humanInteractionBlockedReason) {
+        _inbox.deferProposal(proposal);
+      } else {
+        _dismissNotifications(proposal.id, proposal: true);
+      }
     } else if (result == null || result.minimize) {
       _minimizeProposal(
         l10n: l10n,

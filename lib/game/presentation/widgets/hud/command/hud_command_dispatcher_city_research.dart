@@ -52,7 +52,7 @@ extension HudCommandDispatcherCityResearch on HudCommandDispatcher {
     required String activePlayerId,
     required TechnologyId technologyId,
   }) {
-    if (activePlayerId.isEmpty) return Future.value();
+    if (activePlayerId.isEmpty || !_canInteract) return Future.value();
     final modes = _ref.read(hudPanelControllerProvider);
     if (modes.technology) {
       _applyPanelModes(modes.closeTechnology(), playSound: false);

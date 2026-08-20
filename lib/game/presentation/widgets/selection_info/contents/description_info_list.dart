@@ -22,12 +22,12 @@ class DescriptionInfoList extends StatelessWidget {
           return _buildStandardRows();
         }
 
-        final spacing = 6.0;
-        final minTileWidth = 150.0;
-        final columns = max(1, min(
-          4,
-          (maxWidth + spacing) ~/ (minTileWidth + spacing),
-        ));
+        const spacing = 6.0;
+        const minTileWidth = 150.0;
+        final columns = max(
+          1,
+          min(4, (maxWidth + spacing) ~/ (minTileWidth + spacing)),
+        );
         final tileWidth = (maxWidth - (columns - 1) * spacing) / columns;
 
         return Column(

@@ -4,18 +4,27 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('TurnPresentationSequencer', () {
-    test('plays turn-advance effects before confirm and focus', () async {
+    test('plays effects before prepare, focus, and release', () async {
       final calls = <String>[];
+      var inputBlocked = false;
       final sequencer = TurnPresentationSequencer(
         playTurnAdvanceEffects: (effects) async {
+          expect(inputBlocked, isTrue);
           calls.add('effects:${effects.length}');
           return effects.length;
         },
-        confirmHumanTurn: (playerId) async {
-          calls.add('confirm:$playerId');
+        beginTurnOpening: (playerId) {
+          inputBlocked = true;
+          calls.add('begin:$playerId');
+        },
+        prepareHumanTurn: (playerId) async {
+          calls.add('prepare:$playerId');
         },
         focusTurnStartMapTarget: (playerId) async {
           calls.add('focus:$playerId');
+        },
+        releaseHumanTurn: (playerId) async {
+          calls.add('release:$playerId');
         },
       );
 
@@ -32,25 +41,39 @@ void main() {
         ],
       );
 
-      expect(calls, const ['effects:1', 'confirm:human', 'focus:human']);
+      expect(calls, const [
+        'begin:human',
+        'effects:1',
+        'prepare:human',
+        'focus:human',
+        'release:human',
+      ]);
       expect(report.turnAdvanceEffectsPlayed, isTrue);
       expect(report.turnAdvanceEffectCount, 1);
-      expect(report.confirmedHumanTurn, isTrue);
+      expect(report.beganTurnOpening, isTrue);
+      expect(report.preparedHumanTurn, isTrue);
       expect(report.focusedTurnStart, isTrue);
+      expect(report.releasedHumanTurn, isTrue);
     });
 
-    test('confirms and focuses without effects when not requested', () async {
+    test('prepares, focuses, and releases without optional effects', () async {
       final calls = <String>[];
       final sequencer = TurnPresentationSequencer(
         playTurnAdvanceEffects: (effects) async {
           calls.add('effects');
           return effects.length;
         },
-        confirmHumanTurn: (playerId) async {
-          calls.add('confirm:$playerId');
+        beginTurnOpening: (playerId) {
+          calls.add('begin:$playerId');
+        },
+        prepareHumanTurn: (playerId) async {
+          calls.add('prepare:$playerId');
         },
         focusTurnStartMapTarget: (playerId) async {
           calls.add('focus:$playerId');
+        },
+        releaseHumanTurn: (playerId) async {
+          calls.add('release:$playerId');
         },
       );
 
@@ -60,11 +83,17 @@ void main() {
         turnAdvanceEffects: const [],
       );
 
-      expect(calls, const ['confirm:human', 'focus:human']);
+      expect(calls, const [
+        'begin:human',
+        'prepare:human',
+        'focus:human',
+        'release:human',
+      ]);
       expect(report.turnAdvanceEffectsPlayed, isFalse);
       expect(report.turnAdvanceEffectCount, 0);
-      expect(report.confirmedHumanTurn, isTrue);
+      expect(report.preparedHumanTurn, isTrue);
       expect(report.focusedTurnStart, isTrue);
+      expect(report.releasedHumanTurn, isTrue);
     });
 
     test(
@@ -79,11 +108,17 @@ void main() {
             canContinue = false;
             return effects.length;
           },
-          confirmHumanTurn: (playerId) async {
-            calls.add('confirm:$playerId');
+          beginTurnOpening: (playerId) {
+            calls.add('begin:$playerId');
+          },
+          prepareHumanTurn: (playerId) async {
+            calls.add('prepare:$playerId');
           },
           focusTurnStartMapTarget: (playerId) async {
             calls.add('focus:$playerId');
+          },
+          releaseHumanTurn: (playerId) async {
+            calls.add('release:$playerId');
           },
         );
 
@@ -100,37 +135,180 @@ void main() {
           ],
         );
 
-        expect(calls, const ['effects']);
+        expect(calls, const ['begin:human', 'effects']);
         expect(report.turnAdvanceEffectsPlayed, isTrue);
-        expect(report.confirmedHumanTurn, isFalse);
+        expect(report.preparedHumanTurn, isFalse);
         expect(report.focusedTurnStart, isFalse);
+        expect(report.releasedHumanTurn, isFalse);
       },
     );
 
-    test('stops after confirm when continuation is lost', () async {
+    test(
+      'does not focus or release when continuation is lost after prepare',
+      () async {
+        final calls = <String>[];
+        var canContinue = true;
+        final sequencer = TurnPresentationSequencer(
+          canContinue: () => canContinue,
+          playTurnAdvanceEffects: (effects) async => effects.length,
+          beginTurnOpening: (playerId) {
+            calls.add('begin:$playerId');
+          },
+          prepareHumanTurn: (playerId) async {
+            calls.add('prepare:$playerId');
+            canContinue = false;
+          },
+          focusTurnStartMapTarget: (playerId) async {
+            calls.add('focus:$playerId');
+          },
+          releaseHumanTurn: (playerId) async {
+            calls.add('release:$playerId');
+          },
+        );
+
+        final report = await sequencer.presentHumanTurnStart(
+          playerId: 'human',
+          shouldPlayTurnAdvanceEffects: false,
+          turnAdvanceEffects: const [],
+        );
+
+        expect(calls, const ['begin:human', 'prepare:human']);
+        expect(report.preparedHumanTurn, isTrue);
+        expect(report.focusedTurnStart, isFalse);
+        expect(report.releasedHumanTurn, isFalse);
+      },
+    );
+
+    test('focuses exactly once before human input is released', () async {
       final calls = <String>[];
-      var canContinue = true;
+      var focusCount = 0;
       final sequencer = TurnPresentationSequencer(
-        canContinue: () => canContinue,
         playTurnAdvanceEffects: (effects) async => effects.length,
-        confirmHumanTurn: (playerId) async {
-          calls.add('confirm:$playerId');
-          canContinue = false;
+        beginTurnOpening: (playerId) {
+          calls.add('begin:$playerId');
+        },
+        prepareHumanTurn: (playerId) async {
+          calls.add('prepare:$playerId');
         },
         focusTurnStartMapTarget: (playerId) async {
+          focusCount++;
           calls.add('focus:$playerId');
+        },
+        releaseHumanTurn: (playerId) async {
+          calls.add('release:$playerId');
         },
       );
 
-      final report = await sequencer.presentHumanTurnStart(
+      await sequencer.presentHumanTurnStart(
         playerId: 'human',
         shouldPlayTurnAdvanceEffects: false,
         turnAdvanceEffects: const [],
       );
 
-      expect(calls, const ['confirm:human']);
-      expect(report.confirmedHumanTurn, isTrue);
-      expect(report.focusedTurnStart, isFalse);
+      expect(focusCount, 1);
+      expect(calls, const [
+        'begin:human',
+        'prepare:human',
+        'focus:human',
+        'release:human',
+      ]);
+    });
+
+    test('releases human input when turn-advance playback fails', () async {
+      final calls = <String>[];
+      final sequencer = TurnPresentationSequencer(
+        playTurnAdvanceEffects: (effects) async {
+          calls.add('effects');
+          throw StateError('effects failed');
+        },
+        beginTurnOpening: (playerId) {
+          calls.add('begin:$playerId');
+        },
+        prepareHumanTurn: (playerId) async {
+          calls.add('prepare:$playerId');
+        },
+        focusTurnStartMapTarget: (playerId) async {
+          calls.add('focus:$playerId');
+        },
+        releaseHumanTurn: (playerId) async {
+          calls.add('release:$playerId');
+        },
+      );
+
+      await expectLater(
+        sequencer.presentHumanTurnStart(
+          playerId: 'human',
+          shouldPlayTurnAdvanceEffects: true,
+          turnAdvanceEffects: const [],
+        ),
+        throwsStateError,
+      );
+      expect(calls, const ['begin:human', 'effects', 'release:human']);
+    });
+
+    test('releases human input when turn preparation fails', () async {
+      final calls = <String>[];
+      final sequencer = TurnPresentationSequencer(
+        playTurnAdvanceEffects: (effects) async => effects.length,
+        beginTurnOpening: (playerId) {
+          calls.add('begin:$playerId');
+        },
+        prepareHumanTurn: (playerId) async {
+          calls.add('prepare:$playerId');
+          throw StateError('prepare failed');
+        },
+        focusTurnStartMapTarget: (playerId) async {
+          calls.add('focus:$playerId');
+        },
+        releaseHumanTurn: (playerId) async {
+          calls.add('release:$playerId');
+        },
+      );
+
+      await expectLater(
+        sequencer.presentHumanTurnStart(
+          playerId: 'human',
+          shouldPlayTurnAdvanceEffects: false,
+          turnAdvanceEffects: const [],
+        ),
+        throwsStateError,
+      );
+      expect(calls, const ['begin:human', 'prepare:human', 'release:human']);
+    });
+
+    test('releases human input when turn-start focus fails', () async {
+      final calls = <String>[];
+      final sequencer = TurnPresentationSequencer(
+        playTurnAdvanceEffects: (effects) async => effects.length,
+        beginTurnOpening: (playerId) {
+          calls.add('begin:$playerId');
+        },
+        prepareHumanTurn: (playerId) async {
+          calls.add('prepare:$playerId');
+        },
+        focusTurnStartMapTarget: (playerId) async {
+          calls.add('focus:$playerId');
+          throw StateError('focus failed');
+        },
+        releaseHumanTurn: (playerId) async {
+          calls.add('release:$playerId');
+        },
+      );
+
+      await expectLater(
+        sequencer.presentHumanTurnStart(
+          playerId: 'human',
+          shouldPlayTurnAdvanceEffects: false,
+          turnAdvanceEffects: const [],
+        ),
+        throwsStateError,
+      );
+      expect(calls, const [
+        'begin:human',
+        'prepare:human',
+        'focus:human',
+        'release:human',
+      ]);
     });
   });
 }

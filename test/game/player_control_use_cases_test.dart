@@ -230,6 +230,9 @@ void main() {
 
       expect(result?.nextControl.activePlayerId, 'player_1');
       expect(result?.nextControl.canAct, isTrue);
+      expect(result?.save.id, save.id);
+      expect(result?.save.turn, save.turn);
+      expect(result?.save.playerStates, save.playerStates);
     });
   });
 }

@@ -15,6 +15,7 @@ extension HudCommandDispatcherResources on HudCommandDispatcher {
 
   void _toggleTopResourcePopup(TopResourcePopupType type) {
     final opening = _ref.read(hudResourceBreakdownControllerProvider) != type;
+    if (opening && !_canInteract) return;
     _ref.read(hudResourceBreakdownControllerProvider.notifier).toggle(type);
     _ref.playSound(
       opening ? GameSoundCue.uiPanelOpen : GameSoundCue.uiPanelClose,

@@ -58,10 +58,9 @@ class _GroupShell extends StatelessWidget {
                       ? LayoutBuilder(
                           builder: (context, constraints) {
                             final availableWidth = constraints.maxWidth;
-                            final columns =
-                                availableWidth == double.infinity
-                                    ? 1
-                                    : (availableWidth / 220).floor().clamp(1, 5);
+                            final columns = availableWidth == double.infinity
+                                ? 1
+                                : (availableWidth / 220).floor().clamp(1, 5);
                             final columnsOrDefault = columns <= 0 ? 1 : columns;
                             final itemWidth =
                                 (availableWidth - (columnsOrDefault - 1) * 8) /
@@ -71,10 +70,7 @@ class _GroupShell extends StatelessWidget {
                               runSpacing: 8,
                               children: [
                                 for (final child in children)
-                                  SizedBox(
-                                    width: itemWidth,
-                                    child: child,
-                                  ),
+                                  SizedBox(width: itemWidth, child: child),
                               ],
                             );
                           },
@@ -86,7 +82,9 @@ class _GroupShell extends StatelessWidget {
                                 Divider(
                                   height: 1,
                                   thickness: 1,
-                                  color: SurfaceElevation.flat.strokeColor(alpha: 62),
+                                  color: SurfaceElevation.flat.strokeColor(
+                                    alpha: 62,
+                                  ),
                                 ),
                               children[i],
                             ],
@@ -141,8 +139,9 @@ class _EmpireGroupHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(5),
                   includeShadow: false,
                 ),
-              child: Center(
-                  child: leading ??
+                child: Center(
+                  child:
+                      leading ??
                       GameIcon(
                         icon,
                         size: GameIconSize.regular,
@@ -373,18 +372,9 @@ class _EmpireUnitBlock extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 3),
-                    _EmpireUnitMetadataLine(
-                      label: 'PR',
-                      value: movement,
-                    ),
-                    _EmpireUnitMetadataLine(
-                      label: 'Stan',
-                      value: state,
-                    ),
-                    _EmpireUnitMetadataLine(
-                      label: 'HP',
-                      value: hp,
-                    ),
+                    _EmpireUnitMetadataLine(label: 'PR', value: movement),
+                    _EmpireUnitMetadataLine(label: 'Stan', value: state),
+                    _EmpireUnitMetadataLine(label: 'HP', value: hp),
                   ],
                 ),
               ),
@@ -406,11 +396,7 @@ class _EmpireUnitBlock extends StatelessWidget {
 }
 
 class _EmpireUnitMetadataLine extends StatelessWidget {
-  const _EmpireUnitMetadataLine({
-    required this.label,
-    required this.value,
-    super.key,
-  });
+  const _EmpireUnitMetadataLine({required this.label, required this.value});
 
   final String label;
   final String value;

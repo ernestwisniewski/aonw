@@ -2,7 +2,7 @@ part of '../game_hud_test.dart';
 
 void _registerGameHudAiHandoffMultiplayerChainScenarios() {
   testWidgets(
-    'local multiplayer AI chain keeps camera and perspective on the human',
+    'local single-player AI chain keeps camera and perspective on the human',
     (tester) async {
       final fixture = _createMultiplayerAiChainFixture();
       final save = fixture.save;
@@ -36,6 +36,7 @@ void _registerGameHudAiHandoffMultiplayerChainScenarios() {
       final control = container.read(gamePlayerControlControllerProvider);
       expect(control.activePlayerId, 'player_1');
       expect(control.canAct, isTrue);
+      expect(control.canInteract, isTrue);
       final state = container.read(gameStateProvider('save')).value;
       expect(state?.activePlayerId, 'player_1');
       expect(state?.activePlayerCanAct, isTrue);
@@ -55,7 +56,7 @@ void _registerGameHudAiHandoffMultiplayerChainScenarios() {
       );
     },
   );
-  testWidgets('local multiplayer AI can submit before the human ends turn', (
+  testWidgets('local single-player AI waits for the human submission', (
     tester,
   ) async {
     final aiPlayer = _player2.copyWith(
@@ -100,26 +101,206 @@ void _registerGameHudAiHandoffMultiplayerChainScenarios() {
     await container.read(gameStateProvider('save').future);
     await tester.pump();
 
-    await _pumpUntil(tester, () {
-      return repository.snapshot.save.playerStates['player_2'] ==
-          PlayerTurnState.finished;
-    });
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(repository.snapshot.save.turn, save.turn);
     expect(repository.snapshot.save.playerStates, const {
       'player_1': PlayerTurnState.active,
-      'player_2': PlayerTurnState.finished,
+      'player_2': PlayerTurnState.active,
+    });
+
+    GameSave? submittedSave;
+    var endTurnCompleted = false;
+    final endTurn = container
+        .read(gamePlayerControlControllerProvider.notifier)
+        .endTurn(repository.snapshot.save)
+        .then((value) => submittedSave = value)
+        .whenComplete(() => endTurnCompleted = true);
+    await _pumpUntil(tester, () => endTurnCompleted);
+    await endTurn;
+    expect(submittedSave, isNotNull);
+
+    await _pumpHud(
+      tester,
+      repository: repository,
+      gameSave: submittedSave,
+      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      aiAutopilotEnabled: true,
+    );
+
+    await _pumpUntil(tester, () {
+      return repository.snapshot.save.turn > save.turn;
+    });
+    await tester.pump();
+
+    expect(repository.snapshot.save.turn, save.turn + 1);
+    expect(repository.snapshot.save.playerStates, const {
+      'player_1': PlayerTurnState.active,
+      'player_2': PlayerTurnState.active,
     });
     final control = container.read(gamePlayerControlControllerProvider);
     expect(control.activePlayerId, 'player_1');
     expect(control.canAct, isTrue);
+    expect(control.canInteract, isTrue);
     final state = container.read(gameStateProvider('save')).value;
     expect(state?.activePlayerId, 'player_1');
     expect(state?.activePlayerCanAct, isTrue);
   });
+
+  testWidgets('end turn immediately shows waiting and ignores a second tap', (
+    tester,
+  ) async {
+    final aiPlayer = _player2.copyWith(
+      name: 'AI Bob',
+      kind: PlayerKind.ai,
+      ai: const AiPlayer(
+        strategyId: AiStrategyId.random,
+        difficulty: AiDifficulty.normal,
+        persona: AiPersona.balanced,
+        seed: 42,
+      ),
+    );
+    final save = _save.copyWith(
+      gameMode: GameMode.multiplayer,
+      players: [_player, aiPlayer],
+      playerStates: const {
+        'player_1': PlayerTurnState.active,
+        'player_2': PlayerTurnState.active,
+      },
+    );
+    final eventLog = _FakeEventLog();
+    final repository = _FakeGameRepository(
+      snapshot: GameSnapshotFactory.fromClientState(
+        save: save,
+        state: GameClientState(
+          activePlayerId: 'player_1',
+          activePlayerCanAct: true,
+          research: ResearchState(
+            players: {
+              'player_1': PlayerResearchState(
+                activeTechnologyId: TechnologyId.agriculture,
+              ),
+            },
+          ),
+        ),
+      ),
+    );
+
+    await _pumpHud(
+      tester,
+      repository: repository,
+      gameSave: save,
+      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      eventLog: eventLog,
+      aiAutopilotEnabled: false,
+    );
+    await tester.pump();
+
+    final loadGate = Completer<void>();
+    repository.loadGate = loadGate;
+    await tester.tap(find.byType(EndTurnButton));
+    await tester.pump();
+
+    expect(find.text('WAITING'), findsOneWidget);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(GameHud)),
+      listen: false,
+    );
+    expect(
+      container.read(gamePlayerControlControllerProvider).canInteract,
+      isFalse,
+    );
+
+    await tester.tap(find.text('WAITING'), warnIfMissed: false);
+    await tester.pump();
+    loadGate.complete();
+    await _pumpUntil(
+      tester,
+      () => eventLog.commands
+          .where((entry) => entry.command is SubmitTurnCommand)
+          .isNotEmpty,
+    );
+
+    expect(
+      eventLog.commands.where((entry) => entry.command is SubmitTurnCommand),
+      hasLength(1),
+    );
+  });
+
   testWidgets(
-    'local multiplayer AI animates visible movement without exposing AI perspective',
+    'local single-player direct turn advance completes turn opening',
+    (tester) async {
+      final aiPlayer = _player2.copyWith(
+        name: 'AI Bob',
+        kind: PlayerKind.ai,
+        ai: const AiPlayer(
+          strategyId: AiStrategyId.random,
+          difficulty: AiDifficulty.normal,
+          persona: AiPersona.balanced,
+          seed: 42,
+        ),
+      );
+      final save = _save.copyWith(
+        gameMode: GameMode.multiplayer,
+        players: [_player, aiPlayer],
+        playerStates: const {
+          'player_1': PlayerTurnState.active,
+          'player_2': PlayerTurnState.finished,
+        },
+      );
+      final repository = _FakeGameRepository(
+        snapshot: GameSnapshotFactory.fromClientState(
+          save: save,
+          state: GameClientState(
+            activePlayerId: 'player_1',
+            activePlayerCanAct: true,
+          ),
+        ),
+      );
+
+      await _pumpHud(
+        tester,
+        repository: repository,
+        gameSave: save,
+        session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+        aiAutopilotEnabled: false,
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(GameHud)),
+        listen: false,
+      );
+      await container.read(gameStateProvider('save').future);
+      await tester.pump();
+
+      final animatingUnitIds = ValueNotifier(const <String>{});
+      addTearDown(animatingUnitIds.dispose);
+      var endTurnCompleted = false;
+      final endTurn = container
+          .read(hudCommandDispatcherProvider)
+          .endTurn(
+            animatingUnitIdsListenable: animatingUnitIds,
+            gameSave: save,
+            activePlayerId: 'player_1',
+            readyToEndTurn: true,
+            currentState: () => container.read(gameStateProvider('save')).value,
+          )
+          .whenComplete(() => endTurnCompleted = true);
+      await _pumpUntil(tester, () => endTurnCompleted);
+      await endTurn;
+
+      expect(repository.snapshot.save.turn, save.turn + 1);
+      final control = container.read(gamePlayerControlControllerProvider);
+      expect(control.activePlayerId, 'player_1');
+      expect(control.canAct, isTrue);
+      expect(control.canInteract, isTrue);
+      final state = container.read(gameStateProvider('save')).value;
+      expect(state?.activePlayerId, 'player_1');
+      expect(state?.activePlayerCanAct, isTrue);
+    },
+  );
+
+  testWidgets(
+    'local single-player AI animates visible movement after human submission',
     (tester) async {
       final aiPlayer = _player2.copyWith(
         name: 'AI Bob',
@@ -192,6 +373,39 @@ void _registerGameHudAiHandoffMultiplayerChainScenarios() {
       await container.read(gameStateProvider('save').future);
       await tester.pump();
 
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(
+        renderer.handledEffects.whereType<AnimateUnitMoveEffect>(),
+        isEmpty,
+      );
+      expect(
+        repository.snapshot.save.playerStates['player_2'],
+        PlayerTurnState.active,
+      );
+
+      GameSave? submittedSave;
+      var endTurnCompleted = false;
+      final endTurn = container
+          .read(gamePlayerControlControllerProvider.notifier)
+          .endTurn(repository.snapshot.save)
+          .then((value) => submittedSave = value)
+          .whenComplete(() => endTurnCompleted = true);
+      await _pumpUntil(tester, () => endTurnCompleted);
+      await endTurn;
+      expect(submittedSave, isNotNull);
+
+      await _pumpHud(
+        tester,
+        repository: repository,
+        gameSave: submittedSave,
+        session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+        renderer: renderer,
+        eventLog: eventLog,
+        logger: logger,
+        aiAutopilotEnabled: true,
+      );
+
       await _pumpUntil(tester, () {
         return renderer.handledEffects.whereType<AnimateUnitMoveEffect>().any(
           (effect) => effect.unitId == aiUnit.id,
@@ -199,8 +413,7 @@ void _registerGameHudAiHandoffMultiplayerChainScenarios() {
       }, frames: 10);
       await tester.pump(const Duration(milliseconds: 250));
       await _pumpUntil(tester, () {
-        return repository.snapshot.save.playerStates['player_2'] ==
-            PlayerTurnState.finished;
+        return repository.snapshot.save.turn > save.turn;
       }, frames: 10);
       await tester.pump();
 
@@ -218,10 +431,10 @@ void _registerGameHudAiHandoffMultiplayerChainScenarios() {
         eventLog.commands.map((command) => command.command.runtimeType),
         contains(SubmitTurnCommand),
       );
-      expect(repository.snapshot.save.turn, save.turn);
+      expect(repository.snapshot.save.turn, save.turn + 1);
       expect(
         repository.snapshot.save.playerStates['player_2'],
-        PlayerTurnState.finished,
+        PlayerTurnState.active,
       );
       expect(
         renderer.handledEffects.whereType<AnimateUnitMoveEffect>().map(
@@ -235,7 +448,7 @@ void _registerGameHudAiHandoffMultiplayerChainScenarios() {
       );
       expect(
         renderer.appliedStates.map((state) => state.activePlayerCanAct),
-        everyElement(isTrue),
+        containsAllInOrder(const [false, true]),
       );
       final state = container.read(gameStateProvider('save')).value;
       expect(state?.activePlayerId, 'player_1');

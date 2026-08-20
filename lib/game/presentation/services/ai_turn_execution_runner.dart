@@ -33,6 +33,13 @@ typedef AiTurnFollowUpAdvancer =
       required String playerId,
       required Iterable<UiEffect> terminalUiEffects,
     });
+typedef AiTurnFollowUpAuthorizer =
+    bool Function({
+      required GameSave updatedSave,
+      required int previousTurn,
+      required String playerId,
+    });
+typedef AiTurnExecutionSettled = void Function(AiTurnRunRequest request);
 
 final class AiTurnExecutedProcess {
   final AiTurnReport? report;
@@ -69,7 +76,9 @@ final class AiTurnExecutionRunner {
   final AiRuntimeThrottler throttler;
   final AiTurnExecutionStarter startTurn;
   final AiTurnSaveSnapshotInvalidator invalidateSaveSnapshot;
+  final AiTurnFollowUpAuthorizer authorizeFollowUp;
   final AiTurnFollowUpAdvancer advanceAfterAiTurn;
+  final AiTurnExecutionSettled onExecutionSettled;
   final AiTurnExecutionCanContinue canContinue;
   final AiTurnExecutionStatsReader precomputeStats;
   final AiTurnExecutionStatsReader throttleStats;
@@ -80,7 +89,9 @@ final class AiTurnExecutionRunner {
     required this.throttler,
     required this.startTurn,
     required this.invalidateSaveSnapshot,
+    this.authorizeFollowUp = _alwaysAuthorizeFollowUp,
     required this.advanceAfterAiTurn,
+    this.onExecutionSettled = _ignoreExecutionSettled,
     required this.canContinue,
     required this.precomputeStats,
     required this.throttleStats,
@@ -92,7 +103,9 @@ final class AiTurnExecutionRunner {
     required AiRuntimeThrottler throttler,
     required AiTurnPreparedProcessLoader prepareProcess,
     required AiTurnSaveSnapshotInvalidator invalidateSaveSnapshot,
+    AiTurnFollowUpAuthorizer authorizeFollowUp = _alwaysAuthorizeFollowUp,
     required AiTurnFollowUpAdvancer advanceAfterAiTurn,
+    AiTurnExecutionSettled onExecutionSettled = _ignoreExecutionSettled,
     required AiTurnExecutionCanContinue canContinue,
     required AiTurnExecutionStatsReader precomputeStats,
     required AiTurnExecutionStatsReader throttleStats,
@@ -128,7 +141,9 @@ final class AiTurnExecutionRunner {
             );
           },
       invalidateSaveSnapshot: invalidateSaveSnapshot,
+      authorizeFollowUp: authorizeFollowUp,
       advanceAfterAiTurn: advanceAfterAiTurn,
+      onExecutionSettled: onExecutionSettled,
       canContinue: canContinue,
       precomputeStats: precomputeStats,
       throttleStats: throttleStats,
@@ -173,11 +188,19 @@ final class AiTurnExecutionRunner {
         logThrottleChange('AI turn ${report.planningSource.name}');
       }
 
-      invalidateSaveSnapshot(request.saveId);
       final updatedSave = await process.reloadSave();
       if (!canContinue()) {
         return const AiTurnExecutionResult.notCompleted();
       }
+      if (!authorizeFollowUp(
+        updatedSave: updatedSave,
+        previousTurn: request.turn,
+        playerId: request.playerId,
+      )) {
+        return const AiTurnExecutionResult.completed();
+      }
+
+      invalidateSaveSnapshot(request.saveId);
 
       final followUpAiPlayerId = await advanceAfterAiTurn(
         updatedSave: updatedSave,
@@ -192,6 +215,16 @@ final class AiTurnExecutionRunner {
     } catch (error, stackTrace) {
       logger.warn('AI', 'local AI turn failed', error, stackTrace);
       return const AiTurnExecutionResult.notCompleted();
+    } finally {
+      onExecutionSettled(request);
     }
   }
 }
+
+bool _alwaysAuthorizeFollowUp({
+  required GameSave updatedSave,
+  required int previousTurn,
+  required String playerId,
+}) => true;
+
+void _ignoreExecutionSettled(AiTurnRunRequest request) {}

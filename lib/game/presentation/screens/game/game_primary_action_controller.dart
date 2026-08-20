@@ -64,7 +64,7 @@ class _GamePrimaryActionControllerState
       save: save,
     );
     final activePlayerId = playerControl.activePlayerId;
-    if (activePlayerId.isEmpty || !playerControl.canAct) return;
+    if (activePlayerId.isEmpty || !playerControl.canInteract) return;
     if (save.playerStates[activePlayerId] == PlayerTurnState.finished) {
       return;
     }
@@ -117,7 +117,7 @@ class _GamePrimaryActionControllerState
       save: save,
     );
     final activePlayerId = playerControl.activePlayerId;
-    if (activePlayerId.isEmpty || !playerControl.canAct) return;
+    if (activePlayerId.isEmpty || !playerControl.canInteract) return;
     if (save.playerStates[activePlayerId] == PlayerTurnState.finished) {
       return;
     }

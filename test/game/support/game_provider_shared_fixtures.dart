@@ -332,6 +332,18 @@ WorldMap _makeLandMap() => WorldMap(
 
 const _player1 = Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4);
 const _player2 = Player(id: 'player_2', name: 'Bob', colorValue: 0xFFc45050);
+const _localAiPlayer = Player(
+  id: 'ai_1',
+  name: 'AI',
+  colorValue: 0xFFc45050,
+  kind: PlayerKind.ai,
+  ai: AiPlayer(
+    strategyId: AiStrategyId.random,
+    difficulty: AiDifficulty.normal,
+    persona: AiPersona.balanced,
+    seed: 17,
+  ),
+);
 
 GameSave _makeSave({
   int turn = 1,

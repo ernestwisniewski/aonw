@@ -80,6 +80,22 @@ final class _DiplomaticPopupInbox {
     _pendingProposalIds.add(proposalId);
   }
 
+  void deferMessage(DiplomaticMessage message) {
+    _notificationMessages[message.id] = message;
+    _seenMessageIds.remove(message.id);
+    if (!_pendingMessageIds.contains(message.id)) {
+      _pendingMessageIds.addFirst(message.id);
+    }
+  }
+
+  void deferProposal(DiplomaticProposal proposal) {
+    _notificationProposals[proposal.id] = proposal;
+    _seenProposalIds.remove(proposal.id);
+    if (!_pendingProposalIds.contains(proposal.id)) {
+      _pendingProposalIds.addFirst(proposal.id);
+    }
+  }
+
   void markMessageSeen(String messageId) {
     _seenMessageIds.add(messageId);
   }

@@ -6,9 +6,9 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/formatters/game_event_notification_message.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
-import 'package:aonw/game/presentation/providers/game/game_actions_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_state_provider.dart';
+import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provider.dart';
 import 'package:aonw/game/presentation/providers/player/handoff_provider.dart';
 import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
@@ -56,6 +56,8 @@ class _DiplomaticMessagePopupOverlayState
   bool _dialogOpen = false;
   bool _handoffBlocked = false;
   bool _showScheduled = false;
+  bool _restoreScheduled = false;
+  HudMinimizedPopupEntry? _deferredRestoreEntry;
 
   @override
   void didUpdateWidget(covariant DiplomaticMessagePopupOverlay oldWidget) {
@@ -63,6 +65,8 @@ class _DiplomaticMessagePopupOverlayState
     if (oldWidget.gameSave?.id == widget.gameSave?.id) return;
     _inbox.clear();
     _showScheduled = false;
+    _restoreScheduled = false;
+    _deferredRestoreEntry = null;
   }
 
   @override
@@ -72,10 +76,17 @@ class _DiplomaticMessagePopupOverlayState
     final activePlayerId = _watchActivePopupPlayerId();
     final gameState = ref.watch(gameStateProvider(save.id)).value;
     final minimizedState = ref.watch(hudMinimizedPopupsProvider);
+    final popupPresentationBlocked = ref.watch(
+      gamePlayerControlControllerProvider.select(
+        (control) => control.phase.blocksHumanInput,
+      ),
+    );
     _handoffBlocked = ref.watch(gameHandoffProvider) != null;
     _listenForDiplomacyNotifications();
     _listenForRestoreRequests();
-    if (minimizedState.loaded && !_handoffBlocked) {
+    if (minimizedState.loaded &&
+        !_handoffBlocked &&
+        !popupPresentationBlocked) {
       _scanIncomingMessages(activePlayerId, gameState);
       _scheduleShowNext();
     }
@@ -129,57 +140,6 @@ class _DiplomaticMessagePopupOverlayState
       minimized: _isProposalMinimized(proposalId),
     );
   }
-
-  void _scheduleShowNext() {
-    if (!_canSchedulePopupPresentation()) return;
-    _showScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showScheduled = false;
-      unawaited(_showNext());
-    });
-  }
-
-  Future<void> _showNext() async {
-    if (!_canShowQueuedPopup()) return;
-    final activePlayerId = _readActivePopupPlayerId();
-    if (activePlayerId.isEmpty) return;
-
-    final proposal = _takeNextProposalFor(activePlayerId);
-    if (proposal != null) {
-      await _showProposal(proposal);
-      return;
-    }
-
-    final message = _takeNextMessageFor(activePlayerId);
-    if (message != null) {
-      await _showMessage(message);
-      return;
-    }
-
-    final notification = _takeNextDiplomacyEventFor(activePlayerId);
-    if (notification != null) {
-      await _showDiplomacyEvent(notification);
-    }
-  }
-
-  bool _canSchedulePopupPresentation() {
-    return !_showScheduled &&
-        !_dialogOpen &&
-        !_handoffBlocked &&
-        ref.read(gameHandoffProvider) == null &&
-        _hasPendingPopup &&
-        ref.read(hudMinimizedPopupsProvider).loaded;
-  }
-
-  bool _canShowQueuedPopup() {
-    return mounted &&
-        !_dialogOpen &&
-        _hasPendingPopup &&
-        ref.read(gameHandoffProvider) == null &&
-        ref.read(hudMinimizedPopupsProvider).loaded;
-  }
-
-  bool get _hasPendingPopup => _inbox.hasPendingPopup;
 
   DiplomaticProposal? _takeNextProposalFor(String activePlayerId) {
     final pendingProposalCount = _inbox.pendingProposalCount;

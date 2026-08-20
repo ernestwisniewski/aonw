@@ -59,9 +59,11 @@ void main() {
         expect(nextAi, isNull);
         expect(calls, const [
           'clear',
+          'begin:human',
           'effects:save_1:1',
-          'confirm:human',
+          'prepare:human',
           'focus:human',
+          'release:human',
         ]);
         expect(
           logger.infoMessages.single,
@@ -131,11 +133,17 @@ AiTurnFollowUpRunner _runner(
           calls.add('effects:$saveId:${terminalUiEffects.length}');
           return terminalUiEffects.length;
         },
-    confirmHumanTurn: (playerId) async {
-      calls.add('confirm:$playerId');
+    beginTurnOpening: (playerId) {
+      calls.add('begin:$playerId');
+    },
+    prepareHumanTurn: (playerId) async {
+      calls.add('prepare:$playerId');
     },
     focusTurnStartMapTarget: (playerId) async {
       calls.add('focus:$playerId');
+    },
+    releaseHumanTurn: (playerId) async {
+      calls.add('release:$playerId');
     },
     canContinue: () => true,
     clearHandoff: () {

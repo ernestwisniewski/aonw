@@ -1,6 +1,30 @@
 part of 'game_screen.dart';
 
 extension _GameScreenRendererLifecycle on _GameRendererSessionHostState {
+  Future<void> _dispatchRendererCommand(GameIntent command) async {
+    await _rendererCommandDispatcher?.call(command);
+  }
+
+  Future<void> _returnToMainMenu() async {
+    await _rememberActiveMultiplayerMatch();
+    if (!mounted) return;
+    context.go('/');
+  }
+
+  void _scheduleResumeMatchPersistence() {
+    final matchId = _activeMultiplayerMatchId();
+    if (matchId == null) return;
+    unawaited(
+      ref.read(networkSessionStateProvider.notifier).rememberMatch(matchId),
+    );
+  }
+
+  Future<void> _rememberActiveMultiplayerMatch() async {
+    final matchId = _activeMultiplayerMatchId();
+    if (matchId == null) return;
+    await ref.read(networkSessionStateProvider.notifier).rememberMatch(matchId);
+  }
+
   void _loadMapDisplayColors() => unawaited(
     ref.read(hexDisplayProvider.notifier).loadMapColors(widget.selection),
   );

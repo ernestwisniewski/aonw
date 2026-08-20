@@ -1,3 +1,4 @@
+import 'package:aonw/game/application/services/client_interaction_ownership.dart';
 import 'package:aonw/game/domain/city_selection_projector.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -15,6 +16,7 @@ GameClientState projectLocalCityEconomyEngineResult({
   required MapTileLookup mapTiles,
   required GameRuleset ruleset,
   required PaceBalance paceBalance,
+  required String actorPlayerId,
 }) {
   final domain = result.snapshot.domain;
   final state = currentState.withDomain(domain);
@@ -31,21 +33,20 @@ GameClientState projectLocalCityEconomyEngineResult({
   if (cityId != null) {
     return _refreshCitySelection(state, cityId, mapTiles, ruleset, paceBalance);
   }
-  final worker = _workerProjection(command);
-  if (worker != null) {
+  final workerUnitId = _workerUnitId(command);
+  if (workerUnitId != null) {
     return _refreshUnitSelection(
-      worker.clearTransientInteraction
-          ? state.copyWithInteraction(
-              pendingAction: null,
-              moveCommandActive: false,
-              movePreview: null,
-            )
-          : state,
-      worker.unitId,
+      state,
+      workerUnitId,
       mapTiles,
+      onlyWhenAlreadySelected: true,
     );
   }
-  if (_clearsSelection(command)) {
+  if (_clearsSelection(command) &&
+      ClientInteractionOwnership.actorMayProject(
+        state: currentState,
+        actorPlayerId: actorPlayerId,
+      )) {
     return state.copyWithInteraction(
       selection: null,
       movePreview: null,
@@ -67,18 +68,12 @@ String? _cityId(DomainCommand command) => switch (command) {
   _ => null,
 };
 
-({String unitId, bool clearTransientInteraction})? _workerProjection(
-  DomainCommand command,
-) => switch (command) {
+String? _workerUnitId(DomainCommand command) => switch (command) {
   SelectWorkerImprovementCommand(:final unitId) ||
   ConfirmWorkerImprovementCommand(:final unitId) ||
-  AssignWorkerToHexCommand(
-    :final unitId,
-  ) => (unitId: unitId, clearTransientInteraction: true),
+  AssignWorkerToHexCommand(:final unitId) => unitId,
   CancelWorkerJobCommand(:final unitId) ||
-  CancelWorkerAssignmentCommand(
-    :final unitId,
-  ) => (unitId: unitId, clearTransientInteraction: false),
+  CancelWorkerAssignmentCommand(:final unitId) => unitId,
   _ => null,
 };
 
@@ -95,7 +90,11 @@ GameClientState _refreshUnitSelection(
 }) {
   if (onlyWhenAlreadySelected && state.selectedUnitId != unitId) return state;
   final unit = state.units.byId(unitId);
-  if (unit == null) return state;
+  if (unit == null) {
+    return state.selectedUnitId == unitId
+        ? state.copyWithInteraction(selection: null)
+        : state;
+  }
   return state.copyWithInteraction(
     selection: GameSelection.unit(
       unit,

@@ -15,6 +15,7 @@ void _registerGamePlayerControlScenarios() {
       expect(state.activePlayerId, 'player_1');
       expect(state.canAct, isTrue);
     });
+    _registerGameProviderLocalSinglePlayerControlScenarios();
 
     test('syncWithSave mirrors active player into GameStateNotifier', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');

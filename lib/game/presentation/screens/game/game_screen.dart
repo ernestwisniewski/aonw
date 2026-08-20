@@ -226,114 +226,96 @@ class _GameRendererSessionHostState
     );
   }
 
-  Future<void> _dispatchRendererCommand(GameIntent command) async {
-    ref.read(mapInspectionControllerProvider.notifier).clear();
-    await _rendererCommandDispatcher?.call(command);
-  }
-
-  Future<void> _returnToMainMenu() async {
-    await _rememberActiveMultiplayerMatch();
-    if (!mounted) return;
-    context.go('/');
-  }
-
-  void _scheduleResumeMatchPersistence() {
-    final matchId = _activeMultiplayerMatchId();
-    if (matchId == null) return;
-    unawaited(
-      ref.read(networkSessionStateProvider.notifier).rememberMatch(matchId),
-    );
-  }
-
-  Future<void> _rememberActiveMultiplayerMatch() async {
-    final matchId = _activeMultiplayerMatchId();
-    if (matchId == null) return;
-
-    await ref.read(networkSessionStateProvider.notifier).rememberMatch(matchId);
-  }
-
   @override
   Widget build(BuildContext context) {
     final session = widget.session;
     final gameplaySettings = ref.watch(gameplaySettingsProvider);
-    final hudPanelModes = ref.watch(hudPanelControllerProvider);
-    final hudGamepadFocusActive = ref.watch(
-      hudGamepadFocusControllerProvider.select((state) => state.active),
-    );
-    final hudGamepadPopupInputCaptured = ref.watch(
-      hudGamepadPopupInputCaptureProvider,
-    );
-    final rendererGamepadInputEnabled =
-        !hudGamepadFocusActive &&
-        !hudGamepadPopupInputCaptured &&
-        !hudPanelModes.blocksRendererInput;
     return ProviderScope(
       overrides: [
         activeGameSessionProvider.overrideWithValue(session),
         activeGameRendererProvider.overrideWithValue(_renderer),
+        gamePlayerControlSaveProvider.overrideWithValue(widget.gameSave),
       ],
       child: _GameStateReadyGate(
         selection: widget.selection,
         session: session,
-        child: ScopedRendererCommandDispatcher(
-          session: session,
-          onDispatcherChanged: (dispatcher) {
-            _rendererCommandDispatcher = dispatcher;
-          },
-          child: Scaffold(
-            backgroundColor: GameUiTheme.bg,
-            body: GameRuntimeBinding(
+        child: Scaffold(
+          backgroundColor: GameUiTheme.bg,
+          body: GameRuntimeBinding(
+            session: session,
+            renderer: _renderer,
+            displaySettings: widget.displaySettings,
+            reduceMotion:
+                MediaQuery.maybeOf(context)?.disableAnimations ?? false,
+            focusOwnUnitMovementCamera:
+                gameplaySettings.focusOwnUnitMovementCamera,
+            followOwnUnitMovementCamera:
+                gameplaySettings.followOwnUnitMovementCamera,
+            focusEnemyUnitMovementCamera:
+                gameplaySettings.focusEnemyUnitMovementCamera,
+            followEnemyUnitMovementCamera:
+                gameplaySettings.followEnemyUnitMovementCamera,
+            cinematicCameraEnabled: gameplaySettings.cinematicCameraEnabled,
+            child: ScopedRendererCommandDispatcher(
               session: session,
-              renderer: _renderer,
-              displaySettings: widget.displaySettings,
-              reduceMotion:
-                  MediaQuery.maybeOf(context)?.disableAnimations ?? false,
-              focusOwnUnitMovementCamera:
-                  gameplaySettings.focusOwnUnitMovementCamera,
-              followOwnUnitMovementCamera:
-                  gameplaySettings.followOwnUnitMovementCamera,
-              focusEnemyUnitMovementCamera:
-                  gameplaySettings.focusEnemyUnitMovementCamera,
-              followEnemyUnitMovementCamera:
-                  gameplaySettings.followEnemyUnitMovementCamera,
-              cinematicCameraEnabled: gameplaySettings.cinematicCameraEnabled,
-              child: ProviderScope(
-                overrides: [
-                  gamePlayerControlSaveProvider.overrideWithValue(
-                    widget.gameSave,
-                  ),
-                ],
-                child: GamepadRendererInputBinding(
-                  renderer: _renderer,
-                  gamepadSettings: gameplaySettings.gamepad,
-                  rendererInputEnabled: rendererGamepadInputEnabled,
-                  builder: (context, gamepadInput) =>
-                      GamePrimaryActionController(
-                        session: session,
-                        gameSave: widget.gameSave,
-                        animatingUnitIdsListenable:
-                            _renderer.animatingUnitIdsListenable,
-                        gamepadInputListenable: gamepadInput,
-                        child: _GameRendererPlaySurface(
-                          selection: widget.selection,
+              onDispatcherChanged: (dispatcher) {
+                _rendererCommandDispatcher = dispatcher;
+              },
+              child: Consumer(
+                builder: (context, scopedRef, _) {
+                  final turnPresentationBlocksInput = scopedRef.watch(
+                    gamePlayerControlControllerProvider.select(
+                      (control) => control.phase.blocksHumanInput,
+                    ),
+                  );
+                  final hudPanelModes = scopedRef.watch(
+                    hudPanelControllerProvider,
+                  );
+                  final hudGamepadFocusActive = scopedRef.watch(
+                    hudGamepadFocusControllerProvider.select(
+                      (state) => state.active,
+                    ),
+                  );
+                  final hudGamepadPopupInputCaptured = scopedRef.watch(
+                    hudGamepadPopupInputCaptureProvider,
+                  );
+                  final rendererGamepadInputEnabled =
+                      !turnPresentationBlocksInput &&
+                      !hudGamepadFocusActive &&
+                      !hudGamepadPopupInputCaptured &&
+                      !hudPanelModes.blocksRendererInput;
+                  return GamepadRendererInputBinding(
+                    renderer: _renderer,
+                    gamepadSettings: gameplaySettings.gamepad,
+                    rendererInputEnabled: rendererGamepadInputEnabled,
+                    builder: (context, gamepadInput) =>
+                        GamePrimaryActionController(
                           session: session,
                           gameSave: widget.gameSave,
-                          renderer: _renderer,
-                          displaySettings: widget.displaySettings,
-                          loadingProgress: _loadingProgressController,
+                          animatingUnitIdsListenable:
+                              _renderer.animatingUnitIdsListenable,
                           gamepadInputListenable: gamepadInput,
-                          preloadFuture: _startupAssetPreload,
-                          showDiceRollTestOverlay: _showDiceRollTestOverlay,
-                          onToggleDiceRollTest: () {
-                            setState(() {
-                              _showDiceRollTestOverlay =
-                                  !_showDiceRollTestOverlay;
-                            });
-                          },
-                          onClose: _returnToMainMenu,
+                          child: _GameRendererPlaySurface(
+                            selection: widget.selection,
+                            session: session,
+                            gameSave: widget.gameSave,
+                            renderer: _renderer,
+                            displaySettings: widget.displaySettings,
+                            loadingProgress: _loadingProgressController,
+                            gamepadInputListenable: gamepadInput,
+                            preloadFuture: _startupAssetPreload,
+                            showDiceRollTestOverlay: _showDiceRollTestOverlay,
+                            onToggleDiceRollTest: () {
+                              setState(() {
+                                _showDiceRollTestOverlay =
+                                    !_showDiceRollTestOverlay;
+                              });
+                            },
+                            onClose: _returnToMainMenu,
+                          ),
                         ),
-                      ),
-                ),
+                  );
+                },
               ),
             ),
           ),

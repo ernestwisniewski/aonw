@@ -4,11 +4,13 @@ import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/ai_plan_precompute_cache.dart';
+import 'package:aonw/game/application/services/ai_planning_deadline_policy.dart';
 import 'package:aonw/game/application/services/ai_recent_hostility_tracker.dart';
 import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
 import 'package:aonw/game/application/services/ai_turn_command_executor.dart';
 import 'package:aonw/game/application/services/ai_turn_runner.dart';
 import 'package:aonw/game/application/services/game_session.dart';
+import 'package:aonw/game/application/services/multiplayer_save_origin.dart';
 import 'package:aonw/game/application/use_cases/run_ai_turn_use_case.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/ai.dart';
@@ -128,33 +130,84 @@ final class AiTurnProcessPreparer {
     required String playerId,
     int? scheduledTurn,
   }) async {
-    final session = sessionReader();
-    if (session == null || !_canUseSession(session, saveId)) return null;
+    if (!_hasUsableInitialSession(saveId)) return null;
 
     final snapshot = await repository.load(saveId);
     if (!canContinue()) return null;
-
-    final currentSession = sessionReader();
-    if (currentSession == null || !_canUseSession(currentSession, saveId)) {
+    final networkSession = networkSessionReader();
+    if (isNetworkBackedGameSave(
+      save: snapshot.save,
+      networkSession: networkSession,
+    )) {
       return null;
     }
 
-    if (scheduledTurn != null &&
-        !canRunScheduledAiTurn(
+    final currentSession = _usableCurrentSession(saveId, networkSession);
+    if (currentSession == null) return null;
+    if (!_scheduledTurnIsCurrent(
+      snapshot: snapshot,
+      playerId: playerId,
+      scheduledTurn: scheduledTurn,
+    )) {
+      return null;
+    }
+
+    return _buildPreparedProcess(
+      snapshot: snapshot,
+      session: currentSession,
+      networkSession: networkSession,
+      saveId: saveId,
+      playerId: playerId,
+    );
+  }
+
+  bool _hasUsableInitialSession(String saveId) {
+    final session = sessionReader();
+    return session != null &&
+        _canUseSession(session, saveId, networkSessionReader());
+  }
+
+  GameSession? _usableCurrentSession(
+    String saveId,
+    NetworkSession? networkSession,
+  ) {
+    final session = sessionReader();
+    if (session == null || !_canUseSession(session, saveId, networkSession)) {
+      return null;
+    }
+    return session;
+  }
+
+  bool _scheduledTurnIsCurrent({
+    required CanonicalGameSnapshot snapshot,
+    required String playerId,
+    required int? scheduledTurn,
+  }) {
+    if (scheduledTurn == null ||
+        canRunScheduledAiTurn(
           save: snapshot.save,
           scheduledTurn: scheduledTurn,
           playerId: playerId,
         )) {
-      logger.info(
-        'AI Runtime',
-        'scheduled AI turn skipped because snapshot changed '
-            'player=$playerId scheduledTurn=$scheduledTurn '
-            'currentTurn=${snapshot.save.turn} '
-            'state=${snapshot.save.playerStates[playerId]}',
-      );
-      return null;
+      return true;
     }
+    logger.info(
+      'AI Runtime',
+      'scheduled AI turn skipped because snapshot changed '
+          'player=$playerId scheduledTurn=$scheduledTurn '
+          'currentTurn=${snapshot.save.turn} '
+          'state=${snapshot.save.playerStates[playerId]}',
+    );
+    return false;
+  }
 
+  PreparedAiTurnProcess _buildPreparedProcess({
+    required CanonicalGameSnapshot snapshot,
+    required GameSession session,
+    required NetworkSession? networkSession,
+    required String saveId,
+    required String playerId,
+  }) {
     final currentState = snapshot.toClientState(
       activePlayerId: playerId,
       activePlayerCanAct: true,
@@ -170,7 +223,7 @@ final class AiTurnProcessPreparer {
           playerId: playerId,
           save: snapshot.save,
           gameState: currentState,
-          networkSession: networkSessionReader(),
+          networkSession: networkSession,
         ),
         runner: AiTurnRunner(
           dispatch: dispatch,
@@ -178,7 +231,8 @@ final class AiTurnProcessPreparer {
           planExecutor: planExecutor,
         ),
         ruleset: rulesetReader(),
-        mapData: currentSession.mapData,
+        mapData: session.mapData,
+        planningDeadlinePolicy: AiPlanningDeadlinePolicy.unbounded,
         precomputeCache: precomputeCache,
         strategicPlanProvider: strategicPlanProvider,
         recentHostilityTracker: AiRecentHostilityTracker(
@@ -188,12 +242,16 @@ final class AiTurnProcessPreparer {
     );
   }
 
-  bool _canUseSession(GameSession session, String saveId) {
+  bool _canUseSession(
+    GameSession session,
+    String saveId,
+    NetworkSession? networkSession,
+  ) {
     if (session.saveId != saveId) return false;
     return shouldRunLocalAiForMode(
       gameMode: session.gameMode,
       saveId: saveId,
-      networkSession: networkSessionReader(),
+      networkSession: networkSession,
     );
   }
 }

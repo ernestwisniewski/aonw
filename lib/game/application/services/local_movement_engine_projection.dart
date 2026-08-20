@@ -1,4 +1,6 @@
+import 'package:aonw/game/application/services/client_interaction_ownership.dart';
 import 'package:aonw/game/application/services/local_movement_presentation_origin.dart';
+import 'package:aonw/game/application/services/multiplayer_interaction_reconciler.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw_core/application.dart';
@@ -23,14 +25,44 @@ LocalMovementEngineProjection projectLocalMovementEngineResult({
   required GameEngineAccepted result,
   required DomainCommand command,
   required MapReadView mapView,
+  required String actorPlayerId,
   LocalMovementPresentationOrigin presentationOrigin =
       LocalMovementPresentationOrigin.direct,
+}) {
+  final state =
+      ClientInteractionOwnership.actorMayProject(
+        state: currentState,
+        actorPlayerId: actorPlayerId,
+      )
+      ? _projectActorInteraction(
+          currentState: currentState,
+          result: result,
+          command: command,
+          mapView: mapView,
+          presentationOrigin: presentationOrigin,
+        )
+      : _reconcileForeignActorInteraction(
+          currentState: currentState,
+          result: result,
+        );
+  return LocalMovementEngineProjection(
+    state: state,
+    movementExecutions: result.movementDelta.executions,
+  );
+}
+
+GameClientState _projectActorInteraction({
+  required GameClientState currentState,
+  required GameEngineAccepted result,
+  required DomainCommand command,
+  required MapReadView mapView,
+  required LocalMovementPresentationOrigin presentationOrigin,
 }) {
   final projected = _projectCanonicalSlices(
     currentState: currentState,
     result: result,
   );
-  final state = switch (command) {
+  return switch (command) {
     MoveUnitCommand(:final unitId) => _projectMove(
       currentState: currentState,
       projected: projected,
@@ -63,9 +95,19 @@ LocalMovementEngineProjection projectLocalMovementEngineResult({
     ),
     _ => projected,
   };
-  return LocalMovementEngineProjection(
-    state: state,
-    movementExecutions: result.movementDelta.executions,
+}
+
+GameClientState _reconcileForeignActorInteraction({
+  required GameClientState currentState,
+  required GameEngineAccepted result,
+}) {
+  return MultiplayerInteractionReconciler.reconcile(
+    authoritativeState: GameClientState.fromDomain(
+      domain: result.snapshot.domain,
+      activePlayerId: currentState.activePlayerId,
+      activePlayerCanAct: currentState.activePlayerCanAct,
+    ),
+    interactionSource: currentState,
   );
 }
 
@@ -81,9 +123,13 @@ GameClientState _projectMove({
   required MapReadView mapView,
   required LocalMovementPresentationOrigin presentationOrigin,
 }) {
+  final ownsMoveTargeting =
+      currentState.selectedUnitId == unitId ||
+      currentState.movePreview?.unitId == unitId;
   if (identical(projected.units, currentState.units)) {
-    if (presentationOrigin !=
-        LocalMovementPresentationOrigin.previewConfirmation) {
+    if (!ownsMoveTargeting ||
+        presentationOrigin !=
+            LocalMovementPresentationOrigin.previewConfirmation) {
       return projected;
     }
     final unit = projected.units.byId(unitId);
@@ -93,14 +139,16 @@ GameClientState _projectMove({
     );
   }
   final updatedUnit = projected.units.byId(unitId);
-  var state = projected.copyWithInteraction(
-    moveCommandActive:
-        presentationOrigin ==
-            LocalMovementPresentationOrigin.previewConfirmation
-        ? _canRetargetMove(projected, updatedUnit)
-        : currentState.moveCommandActive,
-    movePreview: null,
-  );
+  var state = ownsMoveTargeting
+      ? projected.copyWithInteraction(
+          moveCommandActive:
+              presentationOrigin ==
+                  LocalMovementPresentationOrigin.previewConfirmation
+              ? _canRetargetMove(projected, updatedUnit)
+              : currentState.moveCommandActive,
+          movePreview: null,
+        )
+      : projected;
   if (state.selectedUnitId == unitId) {
     state = _selectUpdatedUnit(state, unitId, mapView);
   }
@@ -160,10 +208,7 @@ GameClientState _projectAutoExplore({
   required String unitId,
   required MapReadView mapView,
 }) {
-  var state = projected.copyWithInteraction(
-    moveCommandActive: false,
-    movePreview: null,
-  );
+  var state = _clearOwnedMoveTargeting(projected, unitId);
   if (state.selectedUnitId == unitId) {
     state = _selectUpdatedUnit(state, unitId, mapView);
   }
@@ -180,12 +225,7 @@ GameClientState _projectMerchant({
   if (state.pendingAction?.ownsUnit(unitId) ?? false) {
     state = state.copyWithInteraction(pendingAction: null);
   }
-  if (state.moveCommandActive || state.movePreview != null) {
-    state = state.copyWithInteraction(
-      moveCommandActive: false,
-      movePreview: null,
-    );
-  }
+  state = _clearOwnedMoveTargeting(state, unitId);
   if (state.cityFoundingDraft?.unitId == unitId) {
     state = state.copyWithInteraction(cityFoundingDraft: null);
   }
@@ -196,17 +236,27 @@ GameClientState _projectMerchant({
   return state;
 }
 
+GameClientState _clearOwnedMoveTargeting(GameClientState state, String unitId) {
+  final ownsTargeting =
+      state.selectedUnitId == unitId || state.movePreview?.unitId == unitId;
+  if (!ownsTargeting || !state.moveCommandActive && state.movePreview == null) {
+    return state;
+  }
+  return state.copyWithInteraction(moveCommandActive: false, movePreview: null);
+}
+
 GameClientState _projectDetachment({
   required GameClientState projected,
   required String unitId,
   required MapReadView mapView,
 }) {
-  final state = projected.copyWithInteraction(
-    moveCommandActive: false,
-    movePreview: null,
-    cityFoundingDraft: null,
-  );
-  return _selectUpdatedUnit(state, unitId, mapView);
+  var state = _clearOwnedMoveTargeting(projected, unitId);
+  if (state.cityFoundingDraft?.unitId == unitId) {
+    state = state.copyWithInteraction(cityFoundingDraft: null);
+  }
+  return state.selectedUnitId == unitId
+      ? _selectUpdatedUnit(state, unitId, mapView)
+      : state;
 }
 
 GameClientState _selectUpdatedUnit(

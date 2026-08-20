@@ -46,6 +46,8 @@ class _TechnologyDiscoveryPopupOverlayState
   bool _dialogOpen = false;
   bool _handoffBlocked = false;
   bool _showScheduled = false;
+  bool _restoreScheduled = false;
+  HudMinimizedPopupEntry? _deferredRestoreEntry;
 
   @override
   Widget build(BuildContext context) {
@@ -54,10 +56,22 @@ class _TechnologyDiscoveryPopupOverlayState
       technologyDiscoveryPopupSettingsProvider(_settingsKeyFor(activePlayerId)),
     );
     final minimizedState = ref.watch(hudMinimizedPopupsProvider);
+    final popupPresentationBlocked = ref.watch(
+      gamePlayerControlControllerProvider.select(
+        (control) => control.phase.blocksHumanInput,
+      ),
+    );
     _handoffBlocked = ref.watch(gameHandoffProvider) != null;
     _listenForTechnologyNotifications();
     _listenForRestoreRequests();
-    if (!settings.loaded || !minimizedState.loaded || _handoffBlocked) {
+    if (!settings.loaded ||
+        !minimizedState.loaded ||
+        _handoffBlocked ||
+        popupPresentationBlocked) {
+      return const SizedBox.shrink();
+    }
+    if (_deferredRestoreEntry != null) {
+      _scheduleDeferredRestore();
       return const SizedBox.shrink();
     }
     if (settings.showPopup) _scheduleShowNext();
@@ -101,14 +115,23 @@ class _TechnologyDiscoveryPopupOverlayState
           !entry.belongsToSave(_saveId)) {
         return;
       }
+      if (_popupPresentationBlocked) {
+        _deferredRestoreEntry = entry;
+        return;
+      }
       unawaited(_restoreDiscovery(entry));
     });
   }
 
   void _scheduleShowNext() {
+    if (_deferredRestoreEntry != null) {
+      _scheduleDeferredRestore();
+      return;
+    }
     if (_showScheduled ||
         _dialogOpen ||
         _handoffBlocked ||
+        _popupPresentationBlocked ||
         ref.read(gameHandoffProvider) != null ||
         _pending.isEmpty) {
       return;
@@ -121,16 +144,9 @@ class _TechnologyDiscoveryPopupOverlayState
   }
 
   Future<void> _showNext() async {
-    if (!mounted || _dialogOpen || _pending.isEmpty) return;
-    if (ref.read(gameHandoffProvider) != null) return;
-    final activePlayerId = _readActivePopupPlayerId();
-    if (activePlayerId.isEmpty) return;
-    final settings = ref.read(
-      technologyDiscoveryPopupSettingsProvider(_settingsKeyFor(activePlayerId)),
-    );
-    if (!ref.read(hudMinimizedPopupsProvider).loaded) return;
-    if (!settings.loaded) return;
-
+    final popupContext = _nextPopupContext();
+    if (popupContext == null) return;
+    final activePlayerId = popupContext.activePlayerId;
     final pendingCount = _pending.length;
     for (var i = 0; i < pendingCount; i++) {
       final notification = _pending.removeFirst();
@@ -140,13 +156,30 @@ class _TechnologyDiscoveryPopupOverlayState
       }
       final event = notification.event;
       if (event is! TechnologyResearchedEvent) continue;
-      if (_isDiscoveryMinimized(event)) {
-        continue;
-      }
-      if (!settings.showPopup) continue;
+      if (_isDiscoveryMinimized(event)) continue;
+      if (!popupContext.showPopup) continue;
       await _showTechnologyNotification(notification);
       return;
     }
+  }
+
+  ({String activePlayerId, bool showPopup})? _nextPopupContext() {
+    if (!mounted ||
+        _dialogOpen ||
+        _pending.isEmpty ||
+        _popupPresentationBlocked ||
+        ref.read(gameHandoffProvider) != null) {
+      return null;
+    }
+    final activePlayerId = _readActivePopupPlayerId();
+    if (activePlayerId.isEmpty) return null;
+    final settings = ref.read(
+      technologyDiscoveryPopupSettingsProvider(_settingsKeyFor(activePlayerId)),
+    );
+    if (!ref.read(hudMinimizedPopupsProvider).loaded || !settings.loaded) {
+      return null;
+    }
+    return (activePlayerId: activePlayerId, showPopup: settings.showPopup);
   }
 
   Future<void> _showTechnologyNotification(
@@ -186,8 +219,37 @@ class _TechnologyDiscoveryPopupOverlayState
     return ref.read(hudMinimizedPopupsProvider).hasEntry(_popupIdFor(event));
   }
 
+  void _scheduleDeferredRestore() {
+    if (_restoreScheduled ||
+        _deferredRestoreEntry == null ||
+        _dialogOpen ||
+        _popupPresentationBlocked ||
+        ref.read(gameHandoffProvider) != null) {
+      return;
+    }
+    _restoreScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _restoreScheduled = false;
+      if (!mounted ||
+          _dialogOpen ||
+          _popupPresentationBlocked ||
+          ref.read(gameHandoffProvider) != null) {
+        return;
+      }
+      final entry = _deferredRestoreEntry;
+      if (entry == null) return;
+      _deferredRestoreEntry = null;
+      unawaited(_restoreDiscovery(entry));
+    });
+  }
+
   Future<void> _restoreDiscovery(HudMinimizedPopupEntry entry) async {
-    if (!mounted || _dialogOpen) return;
+    if (!mounted) return;
+    if (_popupPresentationBlocked) {
+      _deferredRestoreEntry = entry;
+      return;
+    }
+    if (_dialogOpen) return;
     final playerId = entry.payload['playerId'];
     final technologyId = _technologyIdFromName(entry.payload['technologyId']);
     if (playerId == null || technologyId == null) return;
@@ -284,6 +346,9 @@ class _TechnologyDiscoveryPopupOverlayState
     }
     return '';
   }
+
+  bool get _popupPresentationBlocked =>
+      ref.read(gamePlayerControlControllerProvider).phase.blocksHumanInput;
 
   String get _saveId => widget.gameSave?.id ?? 'transient';
 }

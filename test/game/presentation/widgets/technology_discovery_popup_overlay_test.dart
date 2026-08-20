@@ -1,3 +1,4 @@
+import 'package:aonw/game/application/services/local_single_player_turn_phase.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
@@ -6,6 +7,7 @@ import 'package:aonw/game/presentation/providers/hud/technology_discovery_popup_
 import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_discovery_popup_overlay.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/game/domain/event.dart';
 import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/save.dart';
@@ -16,15 +18,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+part 'technology_discovery_popup_turn_phase_cases.dart';
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
+  _registerTechnologyDiscoveryPopupTurnPhaseCases();
 
   testWidgets('shows a technology discovery popup', (tester) async {
     await _pumpOverlay(tester);
     await tester.pumpAndSettle();
     final container = _container(tester);
+
+    expect(
+      container.read(gamePlayerControlControllerProvider).phase,
+      LocalSinglePlayerTurnPhase.notApplicable,
+    );
 
     _addTechnologyNotification(container, TechnologyId.agriculture);
     await tester.pump();
@@ -372,9 +382,12 @@ void _addTechnologyNotification(
   ], GameClientState(activePlayerId: playerId));
 }
 
-String _technologyDiscoveryPopupId(TechnologyId technologyId) {
+String _technologyDiscoveryPopupId(
+  TechnologyId technologyId, {
+  String saveId = 'save',
+}) {
   return HudMinimizedPopupIds.technologyDiscovery(
-    _save.id,
+    saveId,
     'player_1.${technologyId.name}',
   );
 }

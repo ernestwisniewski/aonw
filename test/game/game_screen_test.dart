@@ -15,6 +15,7 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/engine.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/screens.dart';
+import 'package:aonw/game/presentation/screens/game/gamepad_renderer_input_binding.dart';
 import 'package:aonw/game/presentation/widgets.dart';
 import 'package:aonw/game/presentation/widgets/activity_log/activity_log_dialog.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_dialog.dart';
@@ -29,6 +30,7 @@ import 'package:aonw/map/providers/map_providers.dart';
 import 'package:aonw/shared/providers/performance_settings_provider.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_options_panel.dart';
+import 'package:aonw/shared/widgets/viewport_gesture_layer.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:aonw_core/protocol.dart';
 import 'package:flame/game.dart';
@@ -149,8 +151,15 @@ class _FakeSnapshotStore implements SnapshotStore {
 }
 
 const _player1 = Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4);
+const _localAiPlayer = Player(
+  id: 'ai_1',
+  name: 'AI',
+  colorValue: 0xFFc45050,
+  kind: PlayerKind.ai,
+  ai: AiPlayer(strategyId: AiStrategyId.basic, seed: 1),
+);
 
-WorldMap _makeMap() => WorldMap(
+WorldMap _makeMap({TerrainType terrain = TerrainType.ocean}) => WorldMap(
   cols: 3,
   rows: 3,
   tiles: [
@@ -159,7 +168,7 @@ WorldMap _makeMap() => WorldMap(
         WorldTile(
           col: c,
           row: r,
-          terrains: const [TerrainType.ocean],
+          terrains: [terrain],
           resources: const [],
           height: 0,
         ),
@@ -1110,6 +1119,127 @@ void main() {
 
     expect(gameRepository.snapshots[save.id]!.units, [unit]);
   });
+
+  testWidgets(
+    'turn-opening gate drops renderer intent but allows system focus',
+    (tester) async {
+      final map = _makeMap(terrain: TerrainType.grassland);
+      final unit = GameUnit.startingCommander(
+        ownerPlayerId: _player1.id,
+        col: 1,
+        row: 1,
+        army: const [ArmyTroop(type: TroopType.warrior, count: 2)],
+      );
+      final save = _makeSave(players: const [_player1, _localAiPlayer]);
+      final gameRepository = _FakeGameRepository(
+        snapshots: {
+          save.id: _makeSnapshot(
+            save: save,
+            units: [unit],
+            fogOfWar: _visibleFog(_player1.id, const [
+              HexCoordinate(col: 1, row: 1),
+              HexCoordinate(col: 2, row: 1),
+            ]),
+          ),
+        },
+      );
+      final container = ProviderContainer(
+        overrides: [
+          activeMapProvider(_selection).overrideWithValue(AsyncData(map)),
+          mapImageSourceProvider(
+            _selection,
+          ).overrideWithValue(const AsyncData(null)),
+          gameRepositoryProvider.overrideWithValue(gameRepository),
+          eventLogProvider.overrideWithValue(_FakeEventLog()),
+          snapshotStoreProvider.overrideWithValue(_FakeSnapshotStore()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await _pumpGameScreen(tester, container, saveId: save.id);
+      final scopedContainer = ProviderScope.containerOf(
+        tester.element(find.byType(ScopedRendererCommandDispatcher)),
+        listen: false,
+      );
+      await scopedContainer.read(gameStateProvider(save.id).future);
+      await tester.pump();
+      final renderer = await _pumpUntilRendererReady(tester, scopedContainer);
+      final rendererPointerGate = find.byWidgetPredicate(
+        (widget) =>
+            widget is AbsorbPointer && widget.child is ViewportGestureLayer,
+      );
+      final control = scopedContainer.read(
+        gamePlayerControlControllerProvider.notifier,
+      );
+
+      await control.prepareHumanTurn(_player1.id);
+      await tester.pump();
+      expect(
+        scopedContainer.read(gamePlayerControlControllerProvider).canInteract,
+        isFalse,
+      );
+      expect(
+        tester.widget<AbsorbPointer>(rendererPointerGate).absorbing,
+        isTrue,
+      );
+      expect(
+        tester
+            .widget<GamepadRendererInputBinding>(
+              find.byType(GamepadRendererInputBinding),
+            )
+            .rendererInputEnabled,
+        isFalse,
+      );
+
+      await renderer.handleTileTappedForTesting(map.tileAt(2, 1)!);
+      await tester.pump();
+      var state = scopedContainer.read(gameStateProvider(save.id)).value!;
+      expect(state.selectedUnitId, unit.id);
+      expect(state.movePreview, isNull);
+      expect(
+        scopedContainer.read(gamePlayerControlControllerProvider).canInteract,
+        isFalse,
+      );
+
+      scopedContainer
+          .read(hudCommandDispatcherProvider)
+          .detachTroop(TroopType.warrior);
+      await tester.pump();
+      state = scopedContainer.read(gameStateProvider(save.id)).value!;
+      expect(state.unitById(unit.id)!.troopCount(TroopType.warrior), 2);
+
+      final commands = scopedContainer.read(
+        gameCommandControllerProvider.notifier,
+      );
+      await commands.dispatchIntent(const SelectTileCommand(1, 1));
+      state = scopedContainer.read(gameStateProvider(save.id)).value!;
+      expect(state.selectedUnitId, isNull);
+
+      await commands.focusTurnStartMapTarget(_player1.id, moveCamera: false);
+      state = scopedContainer.read(gameStateProvider(save.id)).value!;
+      expect(state.selectedUnitId, unit.id);
+
+      await control.releaseHumanTurn(_player1.id);
+      await tester.pump();
+      expect(
+        scopedContainer.read(gamePlayerControlControllerProvider).canInteract,
+        isTrue,
+      );
+      expect(
+        tester.widget<AbsorbPointer>(rendererPointerGate).absorbing,
+        isFalse,
+      );
+      await renderer.handleTileTappedForTesting(map.tileAt(2, 1)!);
+      await tester.pump();
+      state = scopedContainer.read(gameStateProvider(save.id)).value!;
+      expect(state.movePreview?.targetCol, 2);
+      expect(state.movePreview?.targetRow, 1);
+
+      await commands.detachTroop(TroopType.warrior);
+      state = scopedContainer.read(gameStateProvider(save.id)).value!;
+      expect(state.unitById(unit.id)!.troopCount(TroopType.warrior), 1);
+    },
+  );
 
   testWidgets('renderer inspection shows a tile without changing selection', (
     tester,

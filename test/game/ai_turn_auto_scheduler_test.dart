@@ -49,6 +49,93 @@ void main() {
       expect(pendingStarts, isEmpty);
     });
 
+    test('precomputes but does not run AI during local human planning', () {
+      final turnRequests = <AiTurnRunRequest>[];
+      final pendingStarts = <String>[];
+      final precomputeCoordinator = AiTurnPrecomputeCoordinator();
+      final save = _save(gameMode: GameMode.multiplayer);
+      final gameState = GameClientState(
+        activePlayerId: 'human',
+        activePlayerCanAct: true,
+      );
+
+      _scheduler(
+        turnRequests: turnRequests,
+        pendingStarts: pendingStarts,
+        precomputeCoordinator: precomputeCoordinator,
+      ).evaluate(
+        save: save,
+        control: const PlayerControlState(activePlayerId: 'human'),
+        handoff: null,
+        networkSession: null,
+        gameState: gameState,
+      );
+
+      expect(turnRequests, isEmpty);
+      expect(pendingStarts, const ['pending']);
+      expect(
+        precomputeCoordinator.pendingScheduleKey,
+        _scheduleKey(save: save, gameState: gameState, player: _aiPlayer1),
+      );
+    });
+
+    test('runs local single-player AI after the human submits', () {
+      final turnRequests = <AiTurnRunRequest>[];
+      final pendingStarts = <String>[];
+
+      _scheduler(
+        turnRequests: turnRequests,
+        pendingStarts: pendingStarts,
+      ).evaluate(
+        save: _save(
+          gameMode: GameMode.multiplayer,
+          playerStates: const {
+            'human': PlayerTurnState.finished,
+            'ai_1': PlayerTurnState.active,
+            'ai_2': PlayerTurnState.active,
+          },
+        ),
+        control: const PlayerControlState(
+          activePlayerId: 'human',
+          canAct: false,
+        ),
+        handoff: null,
+        networkSession: null,
+        gameState: GameClientState(
+          activePlayerId: 'human',
+          activePlayerCanAct: false,
+        ),
+      );
+
+      expect(turnRequests.map((request) => request.playerId), const ['ai_1']);
+      expect(pendingStarts, isEmpty);
+    });
+
+    test('does not run or precompute an explicit network save offline', () {
+      final turnRequests = <AiTurnRunRequest>[];
+      final pendingStarts = <String>[];
+
+      _scheduler(
+        turnRequests: turnRequests,
+        pendingStarts: pendingStarts,
+      ).evaluate(
+        save: _save(
+          gameMode: GameMode.multiplayer,
+          origin: GameSaveOrigin.network,
+        ),
+        control: const PlayerControlState(activePlayerId: 'human'),
+        handoff: null,
+        networkSession: null,
+        gameState: GameClientState(
+          activePlayerId: 'human',
+          activePlayerCanAct: true,
+        ),
+      );
+
+      expect(turnRequests, isEmpty);
+      expect(pendingStarts, isEmpty);
+    });
+
     test(
       'queues first precompute target and retains only relevant cache',
       () async {
@@ -272,6 +359,7 @@ AiTurnPlanPrecomputeKey _cacheKey({required String playerId, int turn = 4}) {
 
 GameSave _save({
   required GameMode gameMode,
+  GameSaveOrigin origin = GameSaveOrigin.local,
   Map<String, PlayerTurnState> playerStates = const {
     'human': PlayerTurnState.active,
     'ai_1': PlayerTurnState.active,
@@ -289,6 +377,7 @@ GameSave _save({
     camera: CameraState.zero,
     players: const [_humanPlayer, _aiPlayer1, _aiPlayer2],
     gameMode: gameMode,
+    origin: origin,
   );
 }
 

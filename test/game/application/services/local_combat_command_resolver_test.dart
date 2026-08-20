@@ -91,6 +91,115 @@ void main() {
     },
   );
 
+  test('AI combat preserves unrelated human interaction', () {
+    final aiAttacker = _unit('ai_attacker', 'player_2', 0);
+    final target = _unit('target', 'player_3', 1);
+    final humanUnit = _unit('human', 'player_1', 2);
+    const pending = PendingAttackTargeting(
+      ownerPlayerId: 'player_1',
+      attackerUnitId: 'human',
+    );
+    final draft = CityFoundingDraft(
+      unitId: 'human',
+      ownerPlayerId: 'player_1',
+      center: const CityHex(col: 2, row: 0),
+    );
+    final state = GameClientState(
+      activePlayerId: 'player_1',
+      activePlayerCanAct: true,
+      units: [aiAttacker, target, humanUnit],
+      interaction: InteractionState(
+        selection: GameSelection.unit(humanUnit),
+        pendingAction: pending,
+        cityFoundingDraft: draft,
+        moveCommandActive: true,
+      ),
+    );
+    final snapshot = GameSnapshotFactory.fromClientState(
+      save: _save(),
+      state: state,
+    );
+
+    final result =
+        LocalCommandResolver(reducer: GameStateReducer(mapData: _map)).resolve(
+          baseSnapshot: snapshot,
+          currentState: state,
+          command: const AttackHexCommand('ai_attacker', 1, 0),
+          savedAt: DateTime.utc(2026, 7, 29, 21),
+          context: const GameCommandContext(
+            actorPlayerId: 'player_2',
+            commandTick: 4,
+            ignoreFogOfWar: true,
+          ),
+        );
+
+    expect(result.events, isNotEmpty);
+    expect(result.state.selectedUnitId, 'human');
+    expect(result.state.pendingAction, same(pending));
+    expect(result.state.cityFoundingDraft, same(draft));
+    expect(result.state.moveCommandActive, isTrue);
+  });
+
+  test('AI combat clears interaction invalidated by unit destruction', () {
+    final aiAttacker = _unit('ai_attacker', 'player_2', 0);
+    final humanDefender = _unit(
+      'human_defender',
+      'player_1',
+      1,
+    ).copyWith(hitPoints: 1);
+    const pending = PendingAttackTargeting(
+      ownerPlayerId: 'player_1',
+      attackerUnitId: 'human_defender',
+    );
+    final state = GameClientState(
+      activePlayerId: 'player_1',
+      activePlayerCanAct: true,
+      units: [aiAttacker, humanDefender],
+      interaction: InteractionState(
+        selection: GameSelection.unit(humanDefender),
+        pendingAction: pending,
+        cityFoundingDraft: CityFoundingDraft(
+          unitId: 'human_defender',
+          ownerPlayerId: 'player_1',
+          center: const CityHex(col: 1, row: 0),
+        ),
+        moveCommandActive: true,
+        movePreview: UnitMovementPlan(
+          unitId: 'human_defender',
+          targetCol: 2,
+          targetRow: 0,
+          totalCost: 1,
+          availableMovementUnits: 3,
+          steps: const [],
+        ),
+      ),
+    );
+    final snapshot = GameSnapshotFactory.fromClientState(
+      save: _save(),
+      state: state,
+    );
+
+    final result =
+        LocalCommandResolver(reducer: GameStateReducer(mapData: _map)).resolve(
+          baseSnapshot: snapshot,
+          currentState: state,
+          command: const AttackHexCommand('ai_attacker', 1, 0),
+          savedAt: DateTime.utc(2026, 7, 29, 22),
+          context: const GameCommandContext(
+            actorPlayerId: 'player_2',
+            commandTick: 5,
+            ignoreFogOfWar: true,
+          ),
+        );
+
+    expect(result.state.unitById('human_defender'), isNull);
+    expect(result.state.selection, isNull);
+    expect(result.state.pendingAction, isNull);
+    expect(result.state.cityFoundingDraft, isNull);
+    expect(result.state.movePreview, isNull);
+    expect(result.state.moveCommandActive, isFalse);
+  });
+
   test('treaty rejection remains presentation-only engine feedback', () {
     final attacker = _unit('attacker', 'player_1', 0);
     final defender = _unit('defender', 'player_2', 1);
@@ -150,12 +259,14 @@ GameSave _save() => GameSave(
   playerStates: const {
     'player_1': PlayerTurnState.active,
     'player_2': PlayerTurnState.active,
+    'player_3': PlayerTurnState.active,
   },
   savedAt: DateTime.utc(2026, 7, 29),
   camera: CameraState.zero,
   players: const [
     Player(id: 'player_1', name: 'One', colorValue: 1),
     Player(id: 'player_2', name: 'Two', colorValue: 2),
+    Player(id: 'player_3', name: 'Three', colorValue: 3),
   ],
 );
 

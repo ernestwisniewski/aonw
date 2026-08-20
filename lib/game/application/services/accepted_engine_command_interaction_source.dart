@@ -1,3 +1,4 @@
+import 'package:aonw/game/application/services/client_interaction_ownership.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_command_context.dart';
 import 'package:aonw/game/domain/reducer/game_state/game_state_reducer.dart';
@@ -17,7 +18,14 @@ GameClientState acceptedEngineCommandInteractionSource({
   required DomainCommand command,
   required GameEngineCommandFamily family,
   required DomainActionState domainActions,
+  required String actorPlayerId,
 }) {
+  if (!ClientInteractionOwnership.actorMayProject(
+    state: currentState,
+    actorPlayerId: actorPlayerId,
+  )) {
+    return currentState;
+  }
   final projected = currentState.domain.actions == domainActions
       ? currentState
       : currentState.copyWithInteraction(
@@ -73,6 +81,7 @@ extension AcceptedNetworkCommandTransition on GameStateReducer {
         command: command,
         family: family,
         domainActions: currentState.domain.actions,
+        actorPlayerId: context.actorPlayerId ?? currentState.activePlayerId,
       ),
     );
   }
@@ -101,12 +110,9 @@ GameClientState _cityEconomy(GameClientState state, DomainCommand command) {
     ),
     SelectWorkerImprovementCommand(:final unitId) ||
     ConfirmWorkerImprovementCommand(:final unitId) ||
-    AssignWorkerToHexCommand(:final unitId) => _clearOwnedInteraction(
-      state,
-      unitId,
-      clearPending: true,
-      clearMoveTargetingUnconditionally: true,
-    ),
+    AssignWorkerToHexCommand(
+      :final unitId,
+    ) => _clearOwnedInteraction(state, unitId, clearPending: true),
     StartArtifactExcavationCommand() ||
     StoreArtifactInCityCommand() ||
     TradeArtifactCommand() => state.copyWithInteraction(
@@ -132,7 +138,10 @@ GameClientState _unitAction(GameClientState state, DomainCommand command) {
 
 GameClientState _movement(GameClientState state, DomainCommand command) {
   return switch (command) {
-    MoveUnitCommand() => state.copyWithInteraction(movePreview: null),
+    MoveUnitCommand(:final unitId) =>
+      state.movePreview?.unitId == unitId
+          ? state.copyWithInteraction(movePreview: null)
+          : state,
     CancelUnitActionCommand(:final unitId) ||
     AutomatedUnitCommand(:final unitId) => _clearOwnedInteraction(
       state,
@@ -163,7 +172,6 @@ GameClientState _combat(GameClientState state, DomainCommand command) {
       attackerUnitId,
       clearPending: true,
       clearDraft: true,
-      clearMoveTargetingUnconditionally: true,
     );
   }
   return state;
@@ -174,14 +182,10 @@ GameClientState _clearOwnedInteraction(
   String unitId, {
   bool clearPending = false,
   bool clearDraft = false,
-  bool clearMoveTargetingUnconditionally = false,
 }) {
   final pending = state.pendingAction;
-  final ownsMoveTargeting = [
-    clearMoveTargetingUnconditionally,
-    state.selectedUnitId == unitId,
-    state.movePreview?.unitId == unitId,
-  ].contains(true);
+  final ownsMoveTargeting =
+      state.selectedUnitId == unitId || state.movePreview?.unitId == unitId;
   final shouldClearPending =
       clearPending && (pending?.ownsUnit(unitId) ?? false);
   final shouldClearDraft =

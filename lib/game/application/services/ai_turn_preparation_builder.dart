@@ -1,6 +1,7 @@
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/ai_plan_precompute_cache.dart';
+import 'package:aonw/game/application/services/ai_planning_deadline_policy.dart';
 import 'package:aonw/game/application/services/ai_recent_hostility_tracker.dart';
 import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
 import 'package:aonw/game/domain/ai/city_threat_assessor.dart';
@@ -20,6 +21,7 @@ final class AiTurnPreparationBuilder {
   final AiStrategyRegistry strategyRegistry;
   final GameRuleset ruleset;
   final MapReadView mapData;
+  final AiPlanningDeadlinePolicy planningDeadlinePolicy;
   final AiStrategicPlanProvider? strategicPlanProvider;
   final AiRecentHostilityTracker? recentHostilityTracker;
   final PressureTargetResolver pressureTargetResolver;
@@ -30,6 +32,7 @@ final class AiTurnPreparationBuilder {
     required this.strategyRegistry,
     required this.ruleset,
     required this.mapData,
+    required this.planningDeadlinePolicy,
     this.strategicPlanProvider,
     this.recentHostilityTracker,
     this.pressureTargetResolver = const PressureTargetResolver(),
@@ -106,10 +109,9 @@ final class AiTurnPreparationBuilder {
       difficulty: ai.difficulty,
       civProfile: civProfile,
       scoreRace: pressureTargets.scoreRace,
-      deadline: _deadlineFor(
-        gameMode: domain.gameMode,
+      deadline: planningDeadlinePolicy.resolve(
         savedAt: metadata.savedAtUtc,
-        rawTurnStartedAt: resolvedSnapshot.persistedTurnStartedAt,
+        turnStartedAt: resolvedSnapshot.persistedTurnStartedAt,
       ),
       ownControlPercent: hegemonyContext.controlPercent,
       knownPlayerCount: hegemonyContext.playerCount,
@@ -211,16 +213,6 @@ final class AiTurnPreparationBuilder {
       ),
       ignoreFogOfWar: true,
     );
-  }
-
-  static DateTime? _deadlineFor({
-    required GameMode gameMode,
-    required DateTime savedAt,
-    required DateTime? rawTurnStartedAt,
-  }) {
-    if (gameMode != GameMode.multiplayer) return null;
-    final startedAt = rawTurnStartedAt ?? savedAt;
-    return startedAt.toUtc().add(const Duration(seconds: 115));
   }
 
   static Set<String> _defaultNeutralPlayerIds(

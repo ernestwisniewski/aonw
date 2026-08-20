@@ -29,21 +29,41 @@ class _GameRendererPlaySurface extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final turnPresentationBlocksInput = ref.watch(
+      gamePlayerControlControllerProvider.select(
+        (control) => control.phase.blocksHumanInput,
+      ),
+    );
+    ref.listen<bool>(
+      gamePlayerControlControllerProvider.select(
+        (control) => control.phase.blocksHumanInput,
+      ),
+      (previous, next) {
+        if (previous == true || !next) return;
+        renderer
+          ..clearRendererHexSelectionPalette()
+          ..clearRendererHoverIntent();
+        ref.read(mapInspectionControllerProvider.notifier).clear();
+      },
+    );
     return Stack(
       children: [
         Positioned.fill(
-          child: ViewportGestureLayer(
-            game: renderer,
-            child: GameWidget(
-              key: ValueKey(renderer),
+          child: AbsorbPointer(
+            absorbing: turnPresentationBlocksInput,
+            child: ViewportGestureLayer(
               game: renderer,
-              loadingBuilder: (_) =>
-                  ValueListenableBuilder<GameLoadingProgress>(
-                    valueListenable: loadingProgress,
-                    builder: (context, progress, _) {
-                      return GameLoadingPanel(progress: progress);
-                    },
-                  ),
+              child: GameWidget(
+                key: ValueKey(renderer),
+                game: renderer,
+                loadingBuilder: (_) =>
+                    ValueListenableBuilder<GameLoadingProgress>(
+                      valueListenable: loadingProgress,
+                      builder: (context, progress, _) {
+                        return GameLoadingPanel(progress: progress);
+                      },
+                    ),
+              ),
             ),
           ),
         ),

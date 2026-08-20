@@ -80,10 +80,12 @@ GameStateTransition resolveMovementCommandForTest(
       command: command,
       family: GameEngineCommandFamily.movement,
       domainActions: accepted.snapshot.domain.actions,
+      actorPlayerId: actorPlayerId,
     ),
     result: accepted,
     command: command,
     mapView: mapView,
+    actorPlayerId: actorPlayerId,
     presentationOrigin: _presentationOrigin(state, command),
   );
   return GameStateTransition(

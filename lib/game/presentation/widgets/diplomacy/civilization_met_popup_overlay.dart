@@ -51,9 +51,17 @@ class _CivilizationMetPopupOverlayState
     final settings = ref.watch(
       civilizationMetPopupSettingsProvider(_settingsKeyFor(activePlayerId)),
     );
+    final popupPresentationBlocked = ref.watch(
+      gamePlayerControlControllerProvider.select(
+        (control) => control.phase.blocksHumanInput,
+      ),
+    );
     _handoffBlocked = ref.watch(gameHandoffProvider) != null;
     _listenForCivilizationNotifications();
-    if (settings.loaded && settings.showPopup && !_handoffBlocked) {
+    if (settings.loaded &&
+        settings.showPopup &&
+        !_handoffBlocked &&
+        !popupPresentationBlocked) {
       _scheduleShowNext();
     }
     return const SizedBox.shrink();
@@ -84,6 +92,7 @@ class _CivilizationMetPopupOverlayState
     if (_showScheduled ||
         _dialogOpen ||
         _handoffBlocked ||
+        _popupPresentationBlocked ||
         ref.read(gameHandoffProvider) != null ||
         _pending.isEmpty) {
       return;
@@ -96,15 +105,9 @@ class _CivilizationMetPopupOverlayState
   }
 
   Future<void> _showNext() async {
-    if (!mounted || _dialogOpen || _pending.isEmpty) return;
-    if (ref.read(gameHandoffProvider) != null) return;
-    final activePlayerId = _readActivePopupPlayerId();
-    if (activePlayerId.isEmpty) return;
-    final settings = ref.read(
-      civilizationMetPopupSettingsProvider(_settingsKeyFor(activePlayerId)),
-    );
-    if (!settings.loaded) return;
-
+    final popupContext = _nextPopupContext();
+    if (popupContext == null) return;
+    final activePlayerId = popupContext.activePlayerId;
     final pendingCount = _pending.length;
     for (var i = 0; i < pendingCount; i++) {
       final notification = _pending.removeFirst();
@@ -114,10 +117,27 @@ class _CivilizationMetPopupOverlayState
       }
       final descriptor = GameEventDescriptor.forEvent(notification.event);
       if (descriptor.civilizationMetPlayerId == null) continue;
-      if (!settings.showPopup) continue;
+      if (!popupContext.showPopup) continue;
       await _showCivilizationMet(notification, descriptor);
       return;
     }
+  }
+
+  ({String activePlayerId, bool showPopup})? _nextPopupContext() {
+    if (!mounted ||
+        _dialogOpen ||
+        _pending.isEmpty ||
+        _popupPresentationBlocked ||
+        ref.read(gameHandoffProvider) != null) {
+      return null;
+    }
+    final activePlayerId = _readActivePopupPlayerId();
+    if (activePlayerId.isEmpty) return null;
+    final settings = ref.read(
+      civilizationMetPopupSettingsProvider(_settingsKeyFor(activePlayerId)),
+    );
+    if (!settings.loaded) return null;
+    return (activePlayerId: activePlayerId, showPopup: settings.showPopup);
   }
 
   Future<void> _showCivilizationMet(
@@ -187,6 +207,9 @@ class _CivilizationMetPopupOverlayState
     }
     return '';
   }
+
+  bool get _popupPresentationBlocked =>
+      ref.read(gamePlayerControlControllerProvider).phase.blocksHumanInput;
 
   String get _saveId => widget.gameSave?.id ?? 'transient';
 }

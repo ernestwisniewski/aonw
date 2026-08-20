@@ -1,11 +1,13 @@
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/player_control_coordinator.dart';
+import 'package:aonw_core/game/domain/save.dart';
 
 class ConfirmHandoffResult {
   final PlayerControlState nextControl;
+  final GameSave save;
 
-  const ConfirmHandoffResult({required this.nextControl});
+  const ConfirmHandoffResult({required this.nextControl, required this.save});
 }
 
 class ConfirmHandoffUseCase {
@@ -27,6 +29,6 @@ class ConfirmHandoffUseCase {
       playerId: playerId,
     );
 
-    return ConfirmHandoffResult(nextControl: next);
+    return ConfirmHandoffResult(nextControl: next, save: save);
   }
 }

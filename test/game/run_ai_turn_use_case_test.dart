@@ -4,6 +4,7 @@ import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/ai_planning_deadline_policy.dart';
 import 'package:aonw/game/application/services/ai_recent_hostility_tracker.dart';
 import 'package:aonw/game/application/services/ai_turn_runner.dart';
 import 'package:aonw/game/application/use_cases/dispatch_command_use_case.dart';
@@ -30,6 +31,7 @@ void main() {
         ),
         strategy: strategy,
         transport: transport,
+        planningDeadlinePolicy: AiPlanningDeadlinePolicy.networkTurn,
       );
 
       final report = await useCase.execute(
@@ -48,9 +50,35 @@ void main() {
       expect(strategy.lastContext?.persona, AiPersona.aggressive);
       expect(
         strategy.lastContext?.deadline,
-        turnStartedAt.add(const Duration(seconds: 115)),
+        turnStartedAt.add(AiPlanningDeadlinePolicy.networkTurnDuration),
       );
     });
+
+    test(
+      'does not apply a network deadline to local single-player planning',
+      () async {
+        final strategy = _CapturingStrategy(commands: const []);
+        final transport = _RecordingCommandTransport();
+        final useCase = _useCase(
+          save: _save(
+            gameMode: GameMode.multiplayer,
+            turnStartedAt: DateTime.utc(2026, 4, 27, 10),
+          ),
+          strategy: strategy,
+          transport: transport,
+          planningDeadlinePolicy: AiPlanningDeadlinePolicy.unbounded,
+        );
+
+        final report = await useCase.execute(
+          saveId: 'save_1',
+          playerId: 'player_2',
+          interCommandDelay: Duration.zero,
+        );
+
+        expect(report, isNotNull);
+        expect(strategy.lastContext?.deadline, isNull);
+      },
+    );
 
     test('marks human players as pressure targets for AI planning', () async {
       final strategy = _CapturingStrategy(commands: const []);
@@ -613,6 +641,8 @@ RunAiTurnUseCase _useCase({
   List<IntendedAttack> intendedAttacks = const [],
   int eventLogOffset = 0,
   AiRecentHostilityTracker? recentHostilityTracker,
+  AiPlanningDeadlinePolicy planningDeadlinePolicy =
+      AiPlanningDeadlinePolicy.unbounded,
 }) {
   return RunAiTurnUseCase(
     repository: _MemoryGameRepository(
@@ -648,6 +678,7 @@ RunAiTurnUseCase _useCase({
     ),
     ruleset: GameRuleset.defaults,
     mapData: _mapData,
+    planningDeadlinePolicy: planningDeadlinePolicy,
     recentHostilityTracker: recentHostilityTracker,
   );
 }

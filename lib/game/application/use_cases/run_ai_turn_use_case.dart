@@ -1,6 +1,7 @@
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/ai_plan_precompute_cache.dart';
+import 'package:aonw/game/application/services/ai_planning_deadline_policy.dart';
 import 'package:aonw/game/application/services/ai_recent_hostility_tracker.dart';
 import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
 import 'package:aonw/game/application/services/ai_turn_preparation_builder.dart';
@@ -16,6 +17,7 @@ class RunAiTurnUseCase {
   final AiTurnRunner runner;
   final GameRuleset ruleset;
   final MapReadView mapData;
+  final AiPlanningDeadlinePolicy planningDeadlinePolicy;
   final AiTurnPlanPrecomputeCache? precomputeCache;
   final AiStrategicPlanProvider? strategicPlanProvider;
   final AiRecentHostilityTracker? recentHostilityTracker;
@@ -26,6 +28,7 @@ class RunAiTurnUseCase {
     required this.runner,
     required this.ruleset,
     required this.mapData,
+    required this.planningDeadlinePolicy,
     this.precomputeCache,
     this.strategicPlanProvider,
     this.recentHostilityTracker,
@@ -112,6 +115,7 @@ class RunAiTurnUseCase {
       strategyRegistry: strategyRegistry,
       ruleset: ruleset,
       mapData: mapData,
+      planningDeadlinePolicy: planningDeadlinePolicy,
       strategicPlanProvider: strategicPlanProvider,
       recentHostilityTracker: recentHostilityTracker,
     ).prepare(saveId: saveId, playerId: playerId, snapshot: snapshot);

@@ -18,6 +18,7 @@ void main() {
         final logger = _RecordingGameLogger();
         final invalidatedSaveIds = <String>[];
         final throttleReasons = <String>[];
+        final lifecycleOrder = <String>[];
         final updatedSave = _save(turn: 2);
         final runner = _runner(
           logger: logger,
@@ -41,8 +42,21 @@ void main() {
                     planningSource: AiPlanSource.freshAfterPrecomputeFailure,
                     planningDuration: const Duration(milliseconds: 10),
                   ),
-                  reloadSave: () async => updatedSave,
+                  reloadSave: () async {
+                    lifecycleOrder.add('reload');
+                    return updatedSave;
+                  },
                 );
+              },
+          authorizeFollowUp:
+              ({
+                required updatedSave,
+                required previousTurn,
+                required playerId,
+              }) {
+                lifecycleOrder.add('authorize');
+                expect(invalidatedSaveIds, isEmpty);
+                return true;
               },
           advanceAfterAiTurn:
               ({
@@ -55,8 +69,13 @@ void main() {
                 expect(previousTurn, 1);
                 expect(playerId, 'ai_1');
                 expect(terminalUiEffects, contains(isA<JumpCameraEffect>()));
+                lifecycleOrder.add('advance');
                 return 'ai_2';
               },
+          onExecutionSettled: (_) {
+            lifecycleOrder.add('cleanup');
+          },
+          lifecycleOrder: lifecycleOrder,
         );
 
         final result = await runner.run(
@@ -68,6 +87,13 @@ void main() {
         expect(result.followUpSave, updatedSave);
         expect(result.followUpAiPlayerId, 'ai_2');
         expect(invalidatedSaveIds, const ['save_1']);
+        expect(lifecycleOrder, const [
+          'reload',
+          'authorize',
+          'invalidate',
+          'advance',
+          'cleanup',
+        ]);
         expect(
           logger.infoMessages,
           contains(
@@ -124,6 +150,58 @@ void main() {
       expect(logger.warnMessages, isEmpty);
     });
 
+    test('drops a stale follow-up before snapshot invalidation', () async {
+      final logger = _RecordingGameLogger();
+      final invalidatedSaveIds = <String>[];
+      var advanced = false;
+      var settled = false;
+      final runner = _runner(
+        logger: logger,
+        invalidatedSaveIds: invalidatedSaveIds,
+        startTurn:
+            ({
+              required saveId,
+              required playerId,
+              required scheduledTurn,
+              required interCommandDelay,
+              required onStalePrecomputeDropped,
+            }) async {
+              return AiTurnExecutedProcess(
+                report: _report(),
+                reloadSave: () async => _save(turn: 2),
+              );
+            },
+        authorizeFollowUp:
+            ({required updatedSave, required previousTurn, required playerId}) {
+              return false;
+            },
+        advanceAfterAiTurn:
+            ({
+              required updatedSave,
+              required previousTurn,
+              required playerId,
+              required terminalUiEffects,
+            }) async {
+              advanced = true;
+              return null;
+            },
+        onExecutionSettled: (_) {
+          settled = true;
+        },
+      );
+
+      final result = await runner.run(
+        _request(),
+        interCommandDelay: Duration.zero,
+      );
+
+      expect(result.completed, isTrue);
+      expect(result.followUpSave, isNull);
+      expect(invalidatedSaveIds, isEmpty);
+      expect(advanced, isFalse);
+      expect(settled, isTrue);
+    });
+
     test(
       'completes turn without reload when execution returns no report',
       () async {
@@ -131,6 +209,7 @@ void main() {
         final invalidatedSaveIds = <String>[];
         var reloaded = false;
         var advanced = false;
+        var settled = false;
         final runner = _runner(
           logger: logger,
           invalidatedSaveIds: invalidatedSaveIds,
@@ -160,6 +239,9 @@ void main() {
                 advanced = true;
                 return null;
               },
+          onExecutionSettled: (_) {
+            settled = true;
+          },
         );
 
         final result = await runner.run(
@@ -172,6 +254,7 @@ void main() {
         expect(result.followUpAiPlayerId, isNull);
         expect(reloaded, isFalse);
         expect(advanced, isFalse);
+        expect(settled, isTrue);
         expect(invalidatedSaveIds, isEmpty);
       },
     );
@@ -216,6 +299,7 @@ void main() {
     test('logs failure and leaves turn incomplete', () async {
       final logger = _RecordingGameLogger();
       final invalidatedSaveIds = <String>[];
+      var settled = false;
       final runner = _runner(
         logger: logger,
         invalidatedSaveIds: invalidatedSaveIds,
@@ -229,6 +313,9 @@ void main() {
             }) async {
               throw StateError('boom');
             },
+        onExecutionSettled: (_) {
+          settled = true;
+        },
       );
 
       final result = await runner.run(
@@ -237,6 +324,7 @@ void main() {
       );
 
       expect(result.completed, isFalse);
+      expect(settled, isTrue);
       expect(invalidatedSaveIds, isEmpty);
       expect(
         logger.warnMessages.single,
@@ -250,23 +338,37 @@ AiTurnExecutionRunner _runner({
   required GameLogger logger,
   required List<String> invalidatedSaveIds,
   required AiTurnExecutionStarter startTurn,
+  AiTurnFollowUpAuthorizer? authorizeFollowUp,
   AiTurnFollowUpAdvancer? advanceAfterAiTurn,
+  AiTurnExecutionSettled? onExecutionSettled,
   AiTurnExecutionCanContinue? canContinue,
   List<String>? throttleReasons,
+  List<String>? lifecycleOrder,
 }) {
   final throttler = AiRuntimeThrottler();
   return AiTurnExecutionRunner(
     logger: logger,
     throttler: throttler,
     startTurn: startTurn,
-    invalidateSaveSnapshot: invalidatedSaveIds.add,
+    invalidateSaveSnapshot: (saveId) {
+      lifecycleOrder?.add('invalidate');
+      invalidatedSaveIds.add(saveId);
+    },
+    authorizeFollowUp: authorizeFollowUp ?? _authorizeFollowUp,
     advanceAfterAiTurn: advanceAfterAiTurn ?? _noFollowUp,
+    onExecutionSettled: onExecutionSettled ?? (_) {},
     canContinue: canContinue ?? () => true,
     precomputeStats: () => 'precompute=stats',
     throttleStats: () => 'throttle=${throttler.snapshot}',
     logThrottleChange: throttleReasons?.add ?? (_) {},
   );
 }
+
+bool _authorizeFollowUp({
+  required GameSave updatedSave,
+  required int previousTurn,
+  required String playerId,
+}) => true;
 
 Future<String?> _noFollowUp({
   required GameSave updatedSave,

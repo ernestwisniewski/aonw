@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
-import 'package:aonw/game/presentation/providers/game/game_actions_provider.dart';
 import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_gamepad_focus_controller_provider.dart';
@@ -171,9 +170,7 @@ class HudTopResourceSlot extends ConsumerWidget {
                           activePlayerId: currentPlayerId,
                           targetPlayerId: targetPlayerId,
                           gamepadInputListenable: gamepadInputListenable,
-                          onCommand: ref
-                              .read(gameCommandControllerProvider.notifier)
-                              .dispatchTransition,
+                          onCommand: dispatcher.dispatchTransition,
                         ),
                       );
                     },

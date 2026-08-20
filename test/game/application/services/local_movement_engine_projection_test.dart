@@ -13,11 +13,14 @@ import 'package:aonw_core/domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 part 'local_movement_engine_projection_retargeting_cases.dart';
+part 'local_movement_engine_projection_actor_cases.dart';
 part 'local_movement_engine_projection_test_support.dart';
 
 const _playerId = 'player_1';
 
 void main() {
+  _registerLocalMovementActorCases();
+
   test('direct local move preserves inactive presentation targeting', () {
     final unit = _unit(id: 'mover', movementPoints: 4);
     final state = GameClientState(
@@ -317,12 +320,13 @@ void main() {
       row: 1,
       army: const [ArmyTroop(type: TroopType.warrior, count: 1)],
     );
+    final otherUnit = _unit(id: 'other', col: 0, row: 0);
     final detachmentState = GameClientState(
       activePlayerId: _playerId,
-      units: [commander],
+      units: [commander, otherUnit],
       fogOfWar: _fogGrid(cols: 4, rows: 3),
       interaction: InteractionState(
-        selection: GameSelection.tile(_map(cols: 4, rows: 3).tileAt(0, 0)!),
+        selection: GameSelection.unit(otherUnit),
         moveCommandActive: true,
         cityFoundingDraft: CityFoundingDraft(
           unitId: commander.id,
@@ -340,10 +344,9 @@ void main() {
       context: const GameCommandContext(actorPlayerId: _playerId),
     );
 
-    expect(detached.state.units, hasLength(2));
-    expect(detached.state.selectedUnitId, 'commander');
-    expect(detached.state.selection?.unit, same(detached.state.units.first));
-    expect(detached.state.moveCommandActive, isFalse);
+    expect(detached.state.units, hasLength(3));
+    expect(detached.state.selectedUnitId, 'other');
+    expect(detached.state.moveCommandActive, isTrue);
     expect(detached.state.cityFoundingDraft, isNull);
     expect(detached.uiEffects, isEmpty);
   });

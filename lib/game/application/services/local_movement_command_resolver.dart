@@ -57,11 +57,18 @@ final class LocalMovementCommandResolver {
         presentationOrigin: presentationOrigin,
       );
     }
+    final actorPlayerId = _actorPlayerId(
+      snapshot: baseSnapshot,
+      state: currentState,
+      command: command,
+      context: context,
+    );
     final result = _applyEngine(
       snapshot: baseSnapshot,
       state: currentState,
       command: command,
       context: context,
+      actorPlayerId: actorPlayerId,
     );
     if (result case final GameEngineRejected rejected) {
       return _unchanged(
@@ -81,6 +88,7 @@ final class LocalMovementCommandResolver {
       savedAt: savedAt,
       accepted: accepted,
       presentationOrigin: presentationOrigin,
+      actorPlayerId: actorPlayerId,
     );
   }
 
@@ -89,17 +97,13 @@ final class LocalMovementCommandResolver {
     required GameClientState state,
     required DomainCommand command,
     required GameCommandContext context,
+    required String actorPlayerId,
   }) {
     return const GameEngine().apply(
       snapshot: snapshot.canonical,
       command: command,
       context: GameEngineContext(
-        actorPlayerId: _actorPlayerId(
-          snapshot: snapshot,
-          state: state,
-          command: command,
-          context: context,
-        ),
+        actorPlayerId: actorPlayerId,
         mapView: mapView,
         ruleset: ruleset,
         commandTick: context.commandTick,
@@ -115,6 +119,7 @@ final class LocalMovementCommandResolver {
     required DateTime savedAt,
     required GameEngineAccepted accepted,
     required LocalMovementPresentationOrigin presentationOrigin,
+    required String actorPlayerId,
   }) {
     final presentation = projectLocalMovementEngineResult(
       currentState: acceptedEngineCommandInteractionSource(
@@ -122,10 +127,12 @@ final class LocalMovementCommandResolver {
         command: command,
         family: GameEngineCommandFamily.movement,
         domainActions: accepted.snapshot.domain.actions,
+        actorPlayerId: actorPlayerId,
       ),
       result: accepted,
       command: command,
       mapView: mapView,
+      actorPlayerId: actorPlayerId,
       presentationOrigin: presentationOrigin,
     );
     return LocalMovementCommandResolution(

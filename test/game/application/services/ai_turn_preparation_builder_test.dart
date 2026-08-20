@@ -1,6 +1,7 @@
 import 'package:aonw/game/application/ports/game_repository.dart';
 import 'package:aonw/game/application/ports/new_game_request.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/ai_planning_deadline_policy.dart';
 import 'package:aonw/game/application/services/ai_turn_preparation_builder.dart';
 import 'package:aonw_core/ai.dart';
 import 'package:aonw_core/domain/world_map.dart';
@@ -36,6 +37,7 @@ void main() {
         strategyRegistry: AiStrategyRegistry({AiStrategyId.random: strategy}),
         ruleset: GameRuleset.defaults,
         mapData: _mapData,
+        planningDeadlinePolicy: AiPlanningDeadlinePolicy.unbounded,
       );
 
       final prepared = await builder.prepare(
@@ -57,6 +59,55 @@ void main() {
 
       expect(strategy.lastView, same(preparedTurn.view));
       expect(plan.commands, [const SkipUnitTurnCommand('commander_player_2')]);
+    });
+
+    test('keeps local multiplayer-rules planning unbounded', () async {
+      final snapshot = GameSnapshotFactory.create(
+        save: _save(gameMode: GameMode.multiplayer),
+      );
+      final builder = AiTurnPreparationBuilder(
+        repository: _MemoryGameRepository(snapshot),
+        strategyRegistry: AiStrategyRegistry({
+          AiStrategyId.random: _CapturingStrategy(commands: const []),
+        }),
+        ruleset: GameRuleset.defaults,
+        mapData: _mapData,
+        planningDeadlinePolicy: AiPlanningDeadlinePolicy.unbounded,
+      );
+
+      final prepared = await builder.prepare(
+        saveId: 'save_1',
+        playerId: 'player_2',
+      );
+
+      expect(prepared?.context.deadline, isNull);
+    });
+
+    test('applies the persisted network turn deadline', () async {
+      final turnStartedAt = DateTime.utc(2026, 4, 27, 11, 58);
+      final snapshot = GameSnapshotFactory.create(
+        save: _save(gameMode: GameMode.multiplayer),
+        turnStartedAt: turnStartedAt,
+      );
+      final builder = AiTurnPreparationBuilder(
+        repository: _MemoryGameRepository(snapshot),
+        strategyRegistry: AiStrategyRegistry({
+          AiStrategyId.random: _CapturingStrategy(commands: const []),
+        }),
+        ruleset: GameRuleset.defaults,
+        mapData: _mapData,
+        planningDeadlinePolicy: AiPlanningDeadlinePolicy.networkTurn,
+      );
+
+      final prepared = await builder.prepare(
+        saveId: 'save_1',
+        playerId: 'player_2',
+      );
+
+      expect(
+        prepared?.context.deadline,
+        turnStartedAt.add(AiPlanningDeadlinePolicy.networkTurnDuration),
+      );
     });
   });
 }

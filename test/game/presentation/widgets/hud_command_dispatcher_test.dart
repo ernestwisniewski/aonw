@@ -1,3 +1,5 @@
+import 'package:aonw/game/application/services/local_single_player_turn_phase.dart';
+import 'package:aonw/game/application/services/player_control_coordinator.dart';
 import 'package:aonw/game/domain/game_selection.dart';
 import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
@@ -5,6 +7,7 @@ import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw/game/presentation/providers/audio/game_audio_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
 import 'package:aonw/game/presentation/providers/hud/hud_feedback_provider.dart';
+import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdown_controller.dart';
@@ -13,6 +16,7 @@ import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/fog.dart';
 import 'package:aonw_core/game/domain/hex.dart';
 import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -136,6 +140,86 @@ void main() {
     expect(container.read(hudPanelControllerProvider).objectives, isFalse);
   });
 
+  test('blocked human interaction cannot open or toggle HUD panels', () {
+    final audio = _RecordingAudioController();
+    final container = _blockedContainer(audio: audio);
+    addTearDown(container.dispose);
+    final dispatcher = container.read(hudCommandDispatcherProvider);
+    final city = _city();
+    final state = GameClientState(
+      activePlayerId: 'player-1',
+      interaction: InteractionState(
+        selection: GameSelection.city(
+          city,
+          cityYield: TileYield.zero,
+          playerColor: 0,
+        ),
+      ),
+    );
+
+    dispatcher
+      ..openCityProductionPanel(state: state)
+      ..openTechnologyPanel(activePlayerId: 'player-1', state: state)
+      ..openObjectivesPanel(activePlayerId: 'player-1', state: state)
+      ..openEmpirePanel(activePlayerId: 'player-1', state: state)
+      ..openActivityLogPanel(activePlayerId: 'player-1', state: state)
+      ..toggleCityProductionPanel(state: state)
+      ..toggleTechnologyPanel(activePlayerId: 'player-1', state: state)
+      ..toggleObjectivesPanel(activePlayerId: 'player-1', state: state)
+      ..toggleEmpirePanel(activePlayerId: 'player-1', state: state)
+      ..toggleActivityLogPanel(activePlayerId: 'player-1', state: state);
+
+    expect(container.read(hudPanelControllerProvider), const HudPanelModes());
+    expect(audio.cues, isEmpty);
+  });
+
+  test('blocked human interaction may still close panels through toggles', () {
+    final container = _blockedContainer();
+    addTearDown(container.dispose);
+    container
+        .read(hudPanelControllerProvider.notifier)
+        .apply(
+          const HudPanelModes(
+            cityBuildings: true,
+            technology: true,
+            objectives: true,
+            empire: true,
+            activityLog: true,
+          ),
+        );
+    final dispatcher = container.read(hudCommandDispatcherProvider)
+      ..toggleCityProductionPanel(state: null)
+      ..toggleTechnologyPanel(activePlayerId: 'player-1', state: null)
+      ..toggleObjectivesPanel(activePlayerId: 'player-1', state: null)
+      ..toggleEmpirePanel(activePlayerId: 'player-1', state: null)
+      ..toggleActivityLogPanel(activePlayerId: 'player-1', state: null);
+
+    expect(container.read(hudPanelControllerProvider), const HudPanelModes());
+  });
+
+  test('blocked human interaction only allows closing resource popups', () {
+    final audio = _RecordingAudioController();
+    final container = _blockedContainer(audio: audio);
+    addTearDown(container.dispose);
+    final dispatcher = container.read(hudCommandDispatcherProvider)
+      ..toggleResourceBreakdown(ResourceBreakdownType.gold)
+      ..toggleVictoryBreakdown();
+    expect(container.read(hudResourceBreakdownControllerProvider), isNull);
+
+    container
+        .read(hudResourceBreakdownControllerProvider.notifier)
+        .toggle(TopResourcePopupType.gold);
+    dispatcher.toggleVictoryBreakdown();
+    expect(
+      container.read(hudResourceBreakdownControllerProvider),
+      TopResourcePopupType.gold,
+    );
+
+    dispatcher.toggleResourceBreakdown(ResourceBreakdownType.gold);
+    expect(container.read(hudResourceBreakdownControllerProvider), isNull);
+    expect(audio.cues, [GameSoundCue.uiPanelClose]);
+  });
+
   test('auto-explore without a legal target does not show HUD feedback', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -191,6 +275,20 @@ class _RecordingAudioController extends GameAudioController {
   }
 }
 
+ProviderContainer _blockedContainer({_RecordingAudioController? audio}) {
+  return ProviderContainer(
+    overrides: [
+      gamePlayerControlControllerProvider.overrideWithValue(
+        const PlayerControlState(
+          activePlayerId: 'player-1',
+          phase: LocalSinglePlayerTurnPhase.aiResolving,
+        ),
+      ),
+      if (audio != null) gameAudioControllerProvider.overrideWithValue(audio),
+    ],
+  );
+}
+
 GameUnit _unit(GameUnitType type) {
   return GameUnit(
     id: '${type.name}_1',
@@ -215,5 +313,14 @@ FogOfWarState _fullyDiscoveredFog({required int cols, required int rows}) {
         visibleHexes: hexes,
       ),
     },
+  );
+}
+
+GameCity _city() {
+  return const GameCity(
+    id: 'city-1',
+    ownerPlayerId: 'player-1',
+    name: 'City',
+    center: CityHex(col: 0, row: 0),
   );
 }

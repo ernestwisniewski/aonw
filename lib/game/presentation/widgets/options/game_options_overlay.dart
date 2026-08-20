@@ -30,7 +30,6 @@ import 'package:aonw/shared/providers/hex_display_provider.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_options_panel.dart';
 import 'package:aonw_core/game/domain/match_rules/pace_balance.dart';
-import 'package:aonw_core/game/domain/player.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:flutter/material.dart';
@@ -124,14 +123,11 @@ class _GameOptionsOverlayState extends ConsumerState<GameOptionsOverlay> {
     );
     final activePlayerSubmitted =
         gameState?.hasSubmittedTurn(activePlayerId) ?? false;
-    final activePlayerFinished =
-        widget.gameSave?.playerStates[activePlayerId] ==
-        PlayerTurnState.finished;
     final canShowGlobalActions =
         widget.gameSave != null &&
+        (playerControl?.canInteract ?? false) &&
         activePlayerId.isNotEmpty &&
-        !activePlayerSubmitted &&
-        !activePlayerFinished;
+        !activePlayerSubmitted;
     final objectiveButtonSignal = objectiveSummary.activeObjectives.isEmpty
         ? null
         : HudObjectiveButtonSignal.from(

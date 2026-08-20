@@ -205,7 +205,9 @@ class GameCommandController extends _$GameCommandController {
     await ref.read(activeRendererViewModelProvider)?.handleEffect(effect);
   }
 
-  Future<void> saveCamera() async {
+  Future<void> saveCamera() => _enqueueCommand(_saveCamera);
+
+  Future<void> _saveCamera() async {
     if (!ref.mounted) return;
     final session = ref.read(activeGameSessionProvider);
     final renderer = ref.read(activeRendererViewModelProvider);
