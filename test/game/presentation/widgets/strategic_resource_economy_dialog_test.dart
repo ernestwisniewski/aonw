@@ -38,6 +38,8 @@ void main() {
       expect(find.text('Tank · Krakow'), findsOneWidget);
       expect(find.text('2 oil'), findsOneWidget);
       expect(find.text('oil · Oil Well'), findsOneWidget);
+      expect(find.text('Krakow · +1/Turn'), findsOneWidget);
+      expect(find.textContaining('(2, 2)'), findsNothing);
       expect(find.textContaining('Importing: 1 oil/turn'), findsOneWidget);
       expect(find.text('Trade partners'), findsOneWidget);
       expect(find.text('Bob'), findsAtLeastNWidgets(1));
@@ -47,6 +49,14 @@ void main() {
       );
       await tester.ensureVisible(allocation);
       await tester.tap(allocation);
+      expect(selectedCity?.id, 'city_1');
+
+      selectedCity = null;
+      final source = find.byKey(
+        const Key('strategicResourceEconomy.source.city_1.2.2'),
+      );
+      await tester.ensureVisible(source);
+      await tester.tap(source);
       expect(selectedCity?.id, 'city_1');
 
       final tradeAction = find.byKey(

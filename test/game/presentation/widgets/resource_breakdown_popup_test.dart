@@ -1,7 +1,9 @@
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_strategic_resource_summary.dart';
 import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
+import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
+import 'package:aonw/l10n/generated/app_localizations_pl.dart';
 import 'package:aonw_core/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,6 +29,7 @@ void main() {
     tester,
   ) async {
     var closes = 0;
+    GameCity? selectedCity;
 
     await _pumpPopup(
       tester,
@@ -38,6 +41,7 @@ void main() {
         upkeep: upkeep,
       ),
       onClose: () => closes++,
+      onCityPressed: (city) => selectedCity = city,
     );
 
     expect(find.text('Gold'), findsOneWidget);
@@ -56,12 +60,17 @@ void main() {
     expect(find.text('+6'), findsOneWidget);
     expect(find.text('Krakow'), findsOneWidget);
 
+    await tester.tap(find.text('Krakow'));
+    expect(selectedCity, city);
+
     await tester.tap(find.byTooltip('Close'));
 
     expect(closes, 1);
   });
 
   testWidgets('ResourceBreakdownPopup renders science details', (tester) async {
+    GameCity? selectedCity;
+
     await _pumpPopup(
       tester,
       type: ResourceBreakdownType.science,
@@ -84,6 +93,7 @@ void main() {
       activeTechnologyName: 'Gornictwo',
       activeTechnologyTurnsRemaining: 3,
       activeTechnologyCompletionTurn: 8,
+      onCityPressed: (city) => selectedCity = city,
     );
 
     expect(find.text('Science and research'), findsOneWidget);
@@ -97,6 +107,9 @@ void main() {
     expect(find.text('3 turns • turn 8'), findsOneWidget);
     expect(find.text('Krakow'), findsOneWidget);
     expect(find.text('Krakow: Research'), findsOneWidget);
+
+    await tester.tap(find.text('Krakow: Research'));
+    expect(selectedCity, city);
   });
 
   testWidgets('ResourceBreakdownPopup explains empire stability', (
@@ -138,13 +151,19 @@ void main() {
     tester,
   ) async {
     final l10n = AppLocalizationsEn();
+    GameCity? selectedCity;
 
     await _pumpPopup(
       tester,
       type: ResourceBreakdownType.resources,
       resources: const CityResourceInventory(
         playerId: 'player_1',
-        countsByType: {ResourceType.iron: 2, ResourceType.horses: 1},
+        countsByType: {
+          ResourceType.wheat: 2,
+          ResourceType.gems: 1,
+          ResourceType.iron: 2,
+          ResourceType.horses: 1,
+        },
         sources: [
           CityResourceSource(
             cityId: 'city_1',
@@ -153,16 +172,110 @@ void main() {
           ),
         ],
       ),
+      onCityPressed: (city) => selectedCity = city,
     );
 
     expect(find.text('Resources'), findsOneWidget);
-    expect(find.text('Controlled deposits'), findsOneWidget);
-    expect(find.text('3'), findsOneWidget);
-    expect(find.text('Resource types'), findsOneWidget);
-    expect(find.text('2'), findsAtLeastNWidgets(1));
+    expect(find.text('Bonus'), findsOneWidget);
+    expect(find.text('Luxury'), findsOneWidget);
+    expect(find.text('Strategic resources'), findsOneWidget);
+    expect(find.text(l10n.resourceWheat), findsOneWidget);
+    expect(find.text(l10n.resourceGems), findsOneWidget);
     expect(find.text(l10n.resourceIron), findsAtLeastNWidgets(1));
     expect(find.text(l10n.resourceHorses), findsOneWidget);
-    expect(find.text('Krakow (2, 3)'), findsOneWidget);
+    expect(find.text('Krakow'), findsOneWidget);
+    expect(find.textContaining('(2, 3)'), findsNothing);
+
+    await tester.tap(find.text('Krakow'));
+    expect(selectedCity, city);
+  });
+
+  testWidgets('ResourceBreakdownPopup localizes empty resource groups', (
+    tester,
+  ) async {
+    final l10n = AppLocalizationsPl();
+
+    await _pumpPopup(
+      tester,
+      type: ResourceBreakdownType.resources,
+      l10n: l10n,
+      resources: const CityResourceInventory(
+        playerId: 'player_1',
+        countsByType: {ResourceType.wheat: 0, ResourceType.gems: 0},
+        sources: [],
+      ),
+      strategicResources: const HudStrategicResourceSummary(
+        enabled: true,
+        rows: [
+          HudStrategicResourceRow(
+            resource: ResourceType.oil,
+            available: 0,
+            allocated: 0,
+            domesticProduction: 0,
+            imports: 0,
+            exports: 0,
+            sourceCount: 0,
+            shortage: false,
+          ),
+        ],
+        allocations: [],
+        sources: [],
+      ),
+    );
+
+    for (final category in ['bonus', 'luxury', 'strategic']) {
+      final card = find.byKey(Key('resourceBreakdown.category.$category'));
+      expect(card, findsOneWidget);
+      expect(
+        find.descendant(of: card, matching: find.text(l10n.commonNoneLower)),
+        findsOneWidget,
+      );
+    }
+    expect(find.text(l10n.resourceWheat), findsNothing);
+    expect(find.text(l10n.resourceGems), findsNothing);
+    expect(find.text(l10n.resourceOil), findsNothing);
+    expect(find.text(l10n.resourceBreakdownNetPerTurn), findsNothing);
+  });
+
+  testWidgets('ResourceBreakdownPopup omits zero strategic turn flow', (
+    tester,
+  ) async {
+    await _pumpPopup(
+      tester,
+      type: ResourceBreakdownType.resources,
+      strategicResources: const HudStrategicResourceSummary(
+        enabled: true,
+        rows: [
+          HudStrategicResourceRow(
+            resource: ResourceType.oil,
+            available: 1,
+            allocated: 0,
+            domesticProduction: 0,
+            imports: 0,
+            exports: 0,
+            sourceCount: 0,
+            shortage: false,
+          ),
+        ],
+        allocations: [],
+        sources: [],
+      ),
+    );
+
+    final strategicCard = find.byKey(
+      const Key('resourceBreakdown.category.strategic'),
+    );
+    expect(
+      find.descendant(of: strategicCard, matching: find.text('oil · Stored')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: strategicCard,
+        matching: find.text('oil · Net / turn'),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('ResourceBreakdownPopup renders hidden resource gates', (
@@ -207,7 +320,8 @@ void main() {
 
     expect(find.text(l10n.resourceOil), findsAtLeastNWidgets(1));
     expect(find.text('?x1'), findsOneWidget);
-    expect(find.text('Krakow (2, 1)'), findsOneWidget);
+    expect(find.text('Krakow'), findsNWidgets(2));
+    expect(find.textContaining('(2, 1)'), findsNothing);
     expect(find.text(l10n.unitTank), findsOneWidget);
     expect(find.text('? ${l10n.resourceOil}'), findsAtLeastNWidgets(1));
   });
@@ -252,15 +366,44 @@ void main() {
       tester,
       type: ResourceBreakdownType.resources,
       strategicResources: strategic,
-      onStrategicCityPressed: (value) => selectedCity = value,
+      onCityPressed: (value) => selectedCity = value,
       onOpenStrategicEconomy: () => economyOpens++,
     );
 
-    expect(find.text('Strategic resources'), findsOneWidget);
-    expect(find.text('oil · Stored'), findsOneWidget);
-    expect(find.text('oil · Domestic production'), findsOneWidget);
-    expect(find.text('oil · Oil Well · Krakow (1, 1)'), findsOneWidget);
-    expect(find.text('2 oil'), findsOneWidget);
+    final strategicCard = find.byKey(
+      const Key('resourceBreakdown.category.strategic'),
+    );
+    expect(strategicCard, findsOneWidget);
+    expect(
+      find.descendant(
+        of: strategicCard,
+        matching: find.text('Strategic resources'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: strategicCard, matching: find.text('oil · Stored')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: strategicCard,
+        matching: find.text('oil · Net / turn'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: strategicCard,
+        matching: find.text('oil · Oil Well · Krakow'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: strategicCard, matching: find.text('2 oil')),
+      findsOneWidget,
+    );
+    expect(find.text('Net / turn'), findsNothing);
 
     final economyAction = find.byKey(
       const Key('resourceBreakdown.openStrategicEconomy'),
@@ -270,7 +413,9 @@ void main() {
 
     expect(economyOpens, 1);
 
-    final source = find.text('oil · Oil Well · Krakow (1, 1)');
+    expect(find.textContaining('(1, 1)'), findsNothing);
+
+    final source = find.text('oil · Oil Well · Krakow');
     await tester.ensureVisible(source);
     await tester.tap(source);
 
@@ -315,8 +460,9 @@ Future<void> _pumpPopup(
   EmpireResourceNetwork resourceNetwork = EmpireResourceNetwork.empty,
   HudStrategicResourceSummary strategicResources =
       HudStrategicResourceSummary.empty,
-  ValueChanged<GameCity>? onStrategicCityPressed,
+  ValueChanged<GameCity>? onCityPressed,
   VoidCallback? onOpenStrategicEconomy,
+  AppLocalizations? l10n,
   String? activeTechnologyName,
   int? activeTechnologyTurnsRemaining,
   int? activeTechnologyCompletionTurn,
@@ -348,9 +494,9 @@ Future<void> _pumpPopup(
             activeTechnologyName: activeTechnologyName,
             activeTechnologyTurnsRemaining: activeTechnologyTurnsRemaining,
             activeTechnologyCompletionTurn: activeTechnologyCompletionTurn,
-            l10n: AppLocalizationsEn(),
+            l10n: l10n ?? AppLocalizationsEn(),
             onClose: onClose ?? () {},
-            onStrategicCityPressed: onStrategicCityPressed,
+            onCityPressed: onCityPressed,
             onOpenStrategicEconomy: onOpenStrategicEconomy,
           ),
         ),

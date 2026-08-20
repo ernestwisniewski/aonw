@@ -132,7 +132,7 @@ class HudTopResourceSlot extends ConsumerWidget {
             dispatcher.toggleResourceBreakdown(ResourceBreakdownType.resources),
         onVictoryPressed: dispatcher.toggleVictoryBreakdown,
         onCloseBreakdown: dispatcher.closeResourceBreakdown,
-        onStrategicCityPressed: (city) {
+        onCityPressed: (city) {
           dispatcher.closeResourceBreakdown();
           unawaited(() async {
             await dispatcher.focusCityMapTarget(city.id);

@@ -5,6 +5,7 @@ import 'package:aonw/game/presentation/formatters/stability_band_presentation.da
 import 'package:aonw/game/presentation/formatters/turn_eta.dart';
 import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
 import 'package:aonw/game/presentation/widgets/hud/resources/hud_strategic_resource_summary.dart';
+import 'package:aonw/game/presentation/widgets/resources/resource_breakdown_popup_category_data.dart';
 import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -15,11 +16,9 @@ import 'package:aonw/shared/widgets/game_ui/epic_button.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal_scaffold.dart';
 import 'package:aonw/shared/widgets/game_ui/game_ui_epic_header.dart';
 import 'package:aonw_core/game/domain/city.dart';
-import 'package:aonw_core/game/domain/resource.dart';
 import 'package:aonw_core/game/domain/stability.dart';
 import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -45,7 +44,7 @@ class ResourceBreakdownPopup extends StatelessWidget {
   final int? activeTechnologyCompletionTurn;
   final AppLocalizations l10n;
   final VoidCallback onClose;
-  final ValueChanged<GameCity>? onStrategicCityPressed;
+  final ValueChanged<GameCity>? onCityPressed;
   final VoidCallback? onOpenStrategicEconomy;
   final double maxWidth;
   final double maxHeight;
@@ -66,7 +65,7 @@ class ResourceBreakdownPopup extends StatelessWidget {
     required this.activeTechnologyTurnsRemaining,
     required this.l10n,
     required this.onClose,
-    this.onStrategicCityPressed,
+    this.onCityPressed,
     this.onOpenStrategicEconomy,
     this.maxWidth = 330,
     this.maxHeight = 380,

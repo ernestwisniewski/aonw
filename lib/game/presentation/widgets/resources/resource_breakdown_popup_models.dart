@@ -66,8 +66,17 @@ class GoldBreakdown {
 class _BreakdownSectionModel {
   final String title;
   final List<_BreakdownRowModel> rows;
+  final Color? accent;
+  final bool separatedBefore;
+  final Key? key;
 
-  const _BreakdownSectionModel({required this.title, required this.rows});
+  const _BreakdownSectionModel({
+    required this.title,
+    required this.rows,
+    this.accent,
+    this.separatedBefore = false,
+    this.key,
+  });
 }
 
 class _BreakdownRowModel {
@@ -75,6 +84,8 @@ class _BreakdownRowModel {
   final String value;
   final bool positive;
   final bool negative;
+  final bool muted;
+  final String? groupLabel;
   final VoidCallback? onTap;
 
   const _BreakdownRowModel({
@@ -82,6 +93,8 @@ class _BreakdownRowModel {
     required this.value,
     this.positive = false,
     this.negative = false,
+    this.muted = false,
+    this.groupLabel,
     this.onTap,
   });
 }

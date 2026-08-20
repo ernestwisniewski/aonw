@@ -246,9 +246,8 @@ String _sourceSubtitle(
   HudStrategicResourceSource source,
 ) {
   final city = GameDisplayNames.city(l10n, source.city);
-  final location = '$city (${source.hex.col}, ${source.hex.row})';
   final amount = source.amountPerTurn;
   return amount == null
-      ? location
-      : '$location · ${_signed(amount)}/${l10n.commonTurn}';
+      ? city
+      : '$city · ${_signed(amount)}/${l10n.commonTurn}';
 }

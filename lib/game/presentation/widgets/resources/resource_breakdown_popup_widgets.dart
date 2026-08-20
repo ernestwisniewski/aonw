@@ -42,8 +42,12 @@ class _ResourceBreakdownContent extends StatelessWidget {
         onOpenEconomy: onOpenEconomy,
       ),
       for (var index = 0; index < sections.length; index++) ...[
-        if (index > 0) const SizedBox(height: 10),
-        _BreakdownSection(section: sections[index], accent: accent),
+        if (index > 0)
+          SizedBox(height: sections[index].separatedBefore ? 18 : 10),
+        _BreakdownSection(
+          section: sections[index],
+          accent: sections[index].accent ?? accent,
+        ),
       ],
     ],
   );
@@ -142,6 +146,7 @@ class _BreakdownSection extends StatelessWidget {
       (maxValue, row) => math.max(maxValue, _rowMagnitude(row) ?? 0),
     );
     return Container(
+      key: section.key,
       padding: const EdgeInsets.all(8),
       decoration: SurfaceElevation.flat.decoration(
         accent: accent,
@@ -160,7 +165,22 @@ class _BreakdownSection extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           for (var i = 0; i < section.rows.length; i++) ...[
-            if (i > 0) const SizedBox(height: 5),
+            if (section.rows[i].groupLabel case final groupLabel?) ...[
+              if (i > 0) ...[
+                const SizedBox(height: 7),
+                Divider(height: 1, color: accent.withAlpha(52)),
+                const SizedBox(height: 7),
+              ],
+              Text(
+                groupLabel,
+                style: GameUiTheme.sectionHeader.copyWith(
+                  color: accent.withAlpha(190),
+                  fontSize: 9,
+                ),
+              ),
+              const SizedBox(height: 5),
+            ] else if (i > 0)
+              const SizedBox(height: 5),
             _BreakdownRow(row: section.rows[i], maxMagnitude: maxMagnitude),
           ],
         ],
@@ -207,6 +227,8 @@ class _BreakdownRowContent extends StatelessWidget {
         ? GameUiTheme.danger
         : row.positive
         ? GameUiTheme.goldLight
+        : row.muted
+        ? GameUiTheme.textMuted
         : GameUiTheme.textPrimary;
     final magnitude = _rowMagnitude(row);
     return Column(
@@ -220,7 +242,12 @@ class _BreakdownRowContent extends StatelessWidget {
                 row.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GameUiTheme.bodySmall,
+                style: GameUiTheme.bodySmall.copyWith(
+                  color: row.muted
+                      ? GameUiTheme.textMuted
+                      : GameUiTheme.textSecondary,
+                  fontStyle: row.muted ? FontStyle.italic : null,
+                ),
               ),
             ),
             const SizedBox(width: 10),
