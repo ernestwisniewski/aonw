@@ -87,7 +87,7 @@ const reviewedCityEconomyFamilyPatternSignatures =
       'lib/game/application/services/'
           'local_city_economy_engine_projection.dart': (
         occurrences: 17,
-        digest: -4199011773204335367,
+        digest: 7104975749455038159,
       ),
       'lib/game/application/services/replay_service.dart': (
         occurrences: 3,
