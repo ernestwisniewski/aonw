@@ -19,6 +19,7 @@ class GameHudOverlayPanelsHost extends ConsumerWidget {
   const GameHudOverlayPanelsHost({
     required this.session,
     required this.gameSave,
+    this.visible = true,
     this.gamepadInputListenable =
         const AlwaysStoppedAnimation<GamepadInputSnapshot>(
           GamepadInputSnapshot.empty,
@@ -28,10 +29,13 @@ class GameHudOverlayPanelsHost extends ConsumerWidget {
 
   final GameSession session;
   final GameSave gameSave;
+  final bool visible;
   final ValueListenable<GamepadInputSnapshot> gamepadInputListenable;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!visible) return const SizedBox.shrink();
+
     final playerControl = PlayerControlCoordinator.normalize(
       current: ref.watch(gamePlayerControlControllerProvider),
       save: gameSave,
@@ -66,18 +70,10 @@ class GameHudOverlayPanelsHost extends ConsumerWidget {
       canShowGlobalActions: playerActionState.canShowGlobalActions,
       showTopResources: playerActionState.showTopResources,
     );
-    final largePanelOpen =
-        modes.technology ||
-        modes.empire ||
-        modes.activityLog ||
-        cityProductionContext.city != null;
-    final panelPadding = EdgeInsets.fromLTRB(
-      12,
-      layoutMetrics.panelTopPadding,
-      layoutMetrics.panelRightPadding,
-      largePanelOpen && layoutMetrics.portraitPhone
-          ? HudActionDeck.collapsedHeight + 12
-          : layoutMetrics.panelBottomPadding,
+    final panelPadding = _panelPadding(
+      modes: modes,
+      layoutMetrics: layoutMetrics,
+      cityProductionOpen: cityProductionContext.city != null,
     );
 
     return HudOverlayPanels(
@@ -98,4 +94,24 @@ class GameHudOverlayPanelsHost extends ConsumerWidget {
       gamepadInputListenable: gamepadInputListenable,
     );
   }
+}
+
+EdgeInsets _panelPadding({
+  required HudPanelModes modes,
+  required HudLayoutMetrics layoutMetrics,
+  required bool cityProductionOpen,
+}) {
+  final largePanelOpen =
+      modes.technology ||
+      modes.empire ||
+      modes.activityLog ||
+      cityProductionOpen;
+  return EdgeInsets.fromLTRB(
+    12,
+    layoutMetrics.panelTopPadding,
+    layoutMetrics.panelRightPadding,
+    largePanelOpen && layoutMetrics.portraitPhone
+        ? HudActionDeck.collapsedHeight + 12
+        : layoutMetrics.panelBottomPadding,
+  );
 }

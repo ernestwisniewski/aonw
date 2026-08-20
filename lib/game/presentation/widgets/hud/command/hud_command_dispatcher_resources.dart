@@ -1,4 +1,9 @@
-part of 'hud_command_dispatcher.dart';
+import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
+import 'package:aonw/game/presentation/providers/audio/game_audio_provider.dart';
+import 'package:aonw/game/presentation/widgets/hud/command/hud_command_dispatcher.dart';
+import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
+import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdown_controller.dart';
+import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 
 extension HudCommandDispatcherResources on HudCommandDispatcher {
   void toggleResourceBreakdown(ResourceBreakdownType type) {
@@ -10,20 +15,20 @@ extension HudCommandDispatcherResources on HudCommandDispatcher {
   }
 
   void closeResourceBreakdown() {
-    _ref.read(hudResourceBreakdownControllerProvider.notifier).close();
+    ref.read(hudResourceBreakdownControllerProvider.notifier).close();
   }
 
   void _toggleTopResourcePopup(TopResourcePopupType type) {
-    final opening = _ref.read(hudResourceBreakdownControllerProvider) != type;
-    if (opening && !_canInteract) return;
-    _ref.read(hudResourceBreakdownControllerProvider.notifier).toggle(type);
-    _ref.playSound(
+    final opening = ref.read(hudResourceBreakdownControllerProvider) != type;
+    if (opening && !canInteract) return;
+    ref.read(hudResourceBreakdownControllerProvider.notifier).toggle(type);
+    ref.playSound(
       opening ? GameSoundCue.uiPanelOpen : GameSoundCue.uiPanelClose,
     );
     if (!opening) return;
 
-    final modes = _ref.read(hudPanelControllerProvider);
+    final modes = ref.read(hudPanelControllerProvider);
     if (!modes.objectives) return;
-    _applyPanelModes(modes.closeObjectives());
+    applyPanelModes(modes.closeObjectives());
   }
 }

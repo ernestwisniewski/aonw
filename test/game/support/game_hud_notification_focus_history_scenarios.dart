@@ -20,9 +20,9 @@ void _registerGameHudNotificationFocusHistoryScenarios() {
         ),
       },
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           units: [attacker],
           activePlayerId: 'player_1',
@@ -31,11 +31,7 @@ void _registerGameHudNotificationFocusHistoryScenarios() {
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
@@ -90,9 +86,9 @@ void _registerGameHudNotificationFocusHistoryScenarios() {
         ),
       },
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           units: [attacker],
           activePlayerId: 'player_1',
@@ -101,13 +97,9 @@ void _registerGameHudNotificationFocusHistoryScenarios() {
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
-    await _disableAutoTurnFlow(tester);
+    await disableAutoTurnFlow(tester);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
       listen: false,

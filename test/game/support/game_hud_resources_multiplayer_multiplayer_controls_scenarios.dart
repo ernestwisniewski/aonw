@@ -4,15 +4,15 @@ void _registerGameHudResourcesMultiplayerMultiplayerControlsScenarios() {
   testWidgets(
     'multiplayer does not open player status sheet after submitting turn',
     (tester) async {
-      final save = _save.copyWith(
+      final save = hudSave.copyWith(
         gameMode: GameMode.multiplayer,
-        players: const [_player, _player2],
+        players: const [hudPlayer, hudPlayer2],
         playerStates: const {
           'player_1': PlayerTurnState.active,
           'player_2': PlayerTurnState.active,
         },
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
           save: save,
           state: GameClientState(
@@ -28,18 +28,18 @@ void _registerGameHudResourcesMultiplayerMultiplayerControlsScenarios() {
         ),
       );
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         gameSave: save,
-        session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+        session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
       );
       await tester.pump();
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameHud)),
         listen: false,
       );
-      await _pumpUntil(
+      await pumpUntil(
         tester,
         () => container.read(gameStateProvider('save')).value != null,
         frames: 8,
@@ -78,22 +78,22 @@ void _registerGameHudResourcesMultiplayerMultiplayerControlsScenarios() {
           ..resetDevicePixelRatio();
       });
 
-      final save = _save.copyWith(
+      final save = hudSave.copyWith(
         gameMode: GameMode.multiplayer,
-        players: const [_player, _player2],
+        players: const [hudPlayer, hudPlayer2],
         playerStates: const {
           'player_1': PlayerTurnState.active,
           'player_2': PlayerTurnState.finished,
         },
       );
 
-      await _pumpHud(
+      await pumpHud(
         tester,
-        repository: _FakeGameRepository(
+        repository: FakeHudRepository(
           snapshot: GameSnapshotFactory.create(save: save),
         ),
         gameSave: save,
-        session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+        session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
       );
       await tester.pump();
 
@@ -117,17 +117,17 @@ void _registerGameHudResourcesMultiplayerMultiplayerControlsScenarios() {
   testWidgets('hotseat keeps avatars in the options closed content', (
     tester,
   ) async {
-    final save = _save.copyWith(
-      players: const [_player, _player2],
+    final save = hudSave.copyWith(
+      players: const [hudPlayer, hudPlayer2],
       playerStates: const {
         'player_1': PlayerTurnState.active,
         'player_2': PlayerTurnState.active,
       },
     );
 
-    await _pumpHud(
+    await pumpHud(
       tester,
-      repository: _FakeGameRepository(
+      repository: FakeHudRepository(
         snapshot: GameSnapshotFactory.create(save: save),
       ),
       gameSave: save,
@@ -143,15 +143,15 @@ void _registerGameHudResourcesMultiplayerMultiplayerControlsScenarios() {
   testWidgets('multiplayer HUD keeps the network session player in control', (
     tester,
   ) async {
-    final save = _save.copyWith(
+    final save = hudSave.copyWith(
       gameMode: GameMode.multiplayer,
-      players: const [_player, _player2],
+      players: const [hudPlayer, hudPlayer2],
       playerStates: const {
         'player_1': PlayerTurnState.active,
         'player_2': PlayerTurnState.active,
       },
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -177,19 +177,19 @@ void _registerGameHudResourcesMultiplayerMultiplayerControlsScenarios() {
         ),
       ),
     );
-    final mapData = _makeMap();
+    final mapData = hudMap();
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: save,
-      session: _makeSession(mapData, gameMode: GameMode.multiplayer),
+      session: hudSession(mapData, gameMode: GameMode.multiplayer),
       networkSession: NetworkSession(
         userId: 'user-2',
         playerId: 'player_2',
         token: AuthToken('token'),
         matchId: save.id,
-        connectionState: _connectedNetworkState,
+        connectionState: hudNetworkConnected,
       ),
     );
     await tester.pump();
@@ -198,7 +198,7 @@ void _registerGameHudResourcesMultiplayerMultiplayerControlsScenarios() {
       tester.element(find.byType(GameHud)),
       listen: false,
     );
-    await _pumpUntil(
+    await pumpUntil(
       tester,
       () =>
           container.read(gamePlayerControlControllerProvider).activePlayerId ==

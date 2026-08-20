@@ -3,8 +3,8 @@ part of '../game_providers_test.dart';
 void _registerGameSaveIndexProviderScenarios() {
   group('gameSavesIndexProvider', () {
     test('lists saves through repository', () async {
-      final save = _makeSave();
-      final gameRepository = _FakeGameRepository(
+      final save = providerSave();
+      final gameRepository = FakeGameRepository(
         snapshots: {save.id: GameSnapshotFactory.create(save: save)},
       );
       final container = ProviderContainer(

@@ -13,8 +13,8 @@ void _registerGameSaveProviderScenarios() {
     });
 
     test('loads save through repository', () async {
-      final save = _makeSave();
-      final gameRepository = _FakeGameRepository(saves: {'save_1': save});
+      final save = providerSave();
+      final gameRepository = FakeGameRepository(saves: {'save_1': save});
       final container = ProviderContainer(
         overrides: [gameRepositoryProvider.overrideWithValue(gameRepository)],
       );
@@ -28,7 +28,7 @@ void _registerGameSaveProviderScenarios() {
     });
 
     test('surfaces repository errors', () async {
-      final gameRepository = _FakeGameRepository(throwOnLoad: true);
+      final gameRepository = FakeGameRepository(throwOnLoad: true);
       final container = ProviderContainer(
         overrides: [gameRepositoryProvider.overrideWithValue(gameRepository)],
       );

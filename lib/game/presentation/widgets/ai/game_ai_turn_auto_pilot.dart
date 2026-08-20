@@ -64,6 +64,9 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
   final AiTurnRunScheduler _runScheduler = AiTurnRunScheduler();
   final AiTurnFollowUpIdentityGuard _followUpIdentityGuard =
       AiTurnFollowUpIdentityGuard();
+  bool _active = true;
+
+  bool get _canContinue => mounted && _active;
 
   @override
   void initState() {
@@ -97,7 +100,20 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
   }
 
   @override
+  void activate() {
+    super.activate();
+    _active = true;
+  }
+
+  @override
+  void deactivate() {
+    _active = false;
+    super.deactivate();
+  }
+
+  @override
   void dispose() {
+    _active = false;
     WidgetsBinding.instance.removeObserver(this);
     final invalidatedLease = _followUpIdentityGuard.invalidate();
     if (invalidatedLease != null) {
@@ -133,7 +149,7 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
   }
 
   void _notifyStateChanged() {
-    if (mounted) setState(() {});
+    if (_canContinue) setState(() {});
   }
 
   void _cancelTurnOpening(TurnOpeningLease lease) {

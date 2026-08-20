@@ -282,12 +282,14 @@ WorldTile _syntheticTile({
   required int cols,
 }) {
   final index = row * cols + col;
+  final terrain =
+      TerrainType.values[(col * 7 + row * 11) % TerrainType.values.length];
   return WorldTile(
     col: col,
     row: row,
-    terrains: [
-      TerrainType.values[(col * 7 + row * 11) % TerrainType.values.length],
-    ],
+    terrains: terrain == TerrainType.river
+        ? const [TerrainType.plains, TerrainType.river]
+        : [terrain],
     resources: index % 5 == 0
         ? [ResourceType.values[(index * 3) % ResourceType.values.length]]
         : const [],

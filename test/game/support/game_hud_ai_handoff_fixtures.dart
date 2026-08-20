@@ -1,7 +1,15 @@
-part of '../game_hud_test.dart';
+import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/providers/game/game_state_provider.dart';
+import 'package:aonw/game/presentation/providers/player/handoff_provider.dart';
+import 'package:aonw_core/domain.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-const _aiChainPlayers = [
-  _player,
+import 'game_hud_shared_fixtures.dart';
+
+const aiChainPlayers = [
+  hudPlayer,
   Player(
     id: 'player_2',
     name: 'AI Bob',
@@ -40,15 +48,15 @@ const _aiChainPlayers = [
   ),
 ];
 
-const _aiChainPlayerStates = {
+const aiChainPlayerStates = {
   'player_1': PlayerTurnState.finished,
   'player_2': PlayerTurnState.active,
   'player_3': PlayerTurnState.active,
   'player_4': PlayerTurnState.active,
 };
 
-final class _AiChainFixture {
-  const _AiChainFixture({
+final class AiChainFixture {
+  const AiChainFixture({
     required this.save,
     required this.repository,
     required this.renderer,
@@ -56,21 +64,21 @@ final class _AiChainFixture {
   });
 
   final GameSave save;
-  final _FakeGameRepository repository;
-  final _SpyGameRenderer renderer;
+  final FakeHudRepository repository;
+  final HudTestRenderer renderer;
   final GameUnit? queuedUnit;
 }
 
-_AiChainFixture _createHotseatAiChainFixture() {
-  final save = _save.copyWith(
-    players: _aiChainPlayers,
-    playerStates: _aiChainPlayerStates,
+AiChainFixture createHotseatAiChainFixture() {
+  final save = hudSave.copyWith(
+    players: aiChainPlayers,
+    playerStates: aiChainPlayerStates,
   );
-  final renderer = _SpyGameRenderer(mapData: _makeMap());
-  return _AiChainFixture(
+  final renderer = HudTestRenderer(mapData: hudMap());
+  return AiChainFixture(
     save: save,
     renderer: renderer,
-    repository: _FakeGameRepository(
+    repository: FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -82,11 +90,11 @@ _AiChainFixture _createHotseatAiChainFixture() {
   );
 }
 
-_AiChainFixture _createMultiplayerAiChainFixture() {
-  final save = _save.copyWith(
+AiChainFixture createMultiplayerAiChainFixture() {
+  final save = hudSave.copyWith(
     gameMode: GameMode.multiplayer,
-    players: _aiChainPlayers,
-    playerStates: _aiChainPlayerStates,
+    players: aiChainPlayers,
+    playerStates: aiChainPlayerStates,
   );
   final queuedUnit =
       GameUnit.startingCommander(ownerPlayerId: 'player_1', col: 0, row: 0)
@@ -123,12 +131,12 @@ _AiChainFixture _createMultiplayerAiChainFixture() {
         row: unit.$3,
       ).copyWith(movementPoints: 0),
   ];
-  final renderer = _SpyGameRenderer(mapData: _makeMap());
-  return _AiChainFixture(
+  final renderer = HudTestRenderer(mapData: hudMap());
+  return AiChainFixture(
     save: save,
     queuedUnit: queuedUnit,
     renderer: renderer,
-    repository: _FakeGameRepository(
+    repository: FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -142,10 +150,10 @@ _AiChainFixture _createMultiplayerAiChainFixture() {
   );
 }
 
-Future<void> _waitForHotseatAiChain(
+Future<void> waitForHotseatAiChain(
   WidgetTester tester,
   ProviderContainer container,
-  _AiChainFixture fixture,
+  AiChainFixture fixture,
 ) async {
   for (var frame = 0; frame < 8; frame++) {
     await tester.pump();
@@ -168,10 +176,10 @@ Future<void> _waitForHotseatAiChain(
   await tester.pump();
 }
 
-Future<void> _waitForMultiplayerAiChain(
+Future<void> waitForMultiplayerAiChain(
   WidgetTester tester,
   ProviderContainer container,
-  _AiChainFixture fixture,
+  AiChainFixture fixture,
 ) async {
   for (var frame = 0; frame < 8; frame++) {
     await tester.pump();

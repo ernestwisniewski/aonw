@@ -49,7 +49,7 @@ extension _GameAiTurnAutoPilotExecution on _GameAiTurnAutoPilotState {
           _cancelTurnOpening(settledLease);
         }
       },
-      canContinue: () => mounted,
+      canContinue: () => _canContinue,
       precomputeStats: _runtimeCoordinator.precomputeStats,
       throttleStats: _runtimeCoordinator.throttleStats,
       logThrottleChange: _runtimeCoordinator.logThrottleChange,
@@ -110,7 +110,8 @@ extension _GameAiTurnAutoPilotExecution on _GameAiTurnAutoPilotState {
               .releaseHumanTurn(playerId, lease: token.openingLease);
         });
       },
-      canContinue: () => mounted && _followUpIdentityGuard.isCurrent(token),
+      canContinue: () =>
+          _canContinue && _followUpIdentityGuard.isCurrent(token),
       clearHandoff: () {
         _followUpIdentityGuard.runIfCurrent(token, () {
           ref.read(gameHandoffProvider.notifier).clear();

@@ -185,22 +185,8 @@ class _GameHudState extends ConsumerState<GameHud> {
                 : null,
             onOverlayPanelActiveChanged: _setOptionsOverlayPanelActive,
           ),
-          if (gameSave != null && !handoffBlocksHud)
-            GameHudOverlayHost(
-              session: widget.session,
-              animatingUnitIdsListenable: widget.animatingUnitIdsListenable,
-              initialCameraFocusReadyListenable:
-                  widget.initialCameraFocusReadyListenable,
-              gamepadInputListenable: widget.gamepadInputListenable,
-              gameSave: gameSave,
-              optionsOverlayOpenOverride: _optionsOverlayPanelActive,
-            ),
-          if (gameSave != null && !handoffBlocksHud)
-            GameHudOverlayPanelsHost(
-              session: widget.session,
-              gameSave: gameSave,
-              gamepadInputListenable: widget.gamepadInputListenable,
-            ),
+          if (gameSave != null)
+            ..._overlayHosts(gameSave, visible: !handoffBlocksHud),
           _HudMenuButton(
             onPressed: onReturnToMenu,
             gamepadFocused:
@@ -237,6 +223,27 @@ class _GameHudState extends ConsumerState<GameHud> {
       ),
     );
   }
+
+  List<Widget> _overlayHosts(GameSave gameSave, {required bool visible}) => [
+    GameHudOverlayHost(
+      key: const ValueKey('game-hud-overlay-host'),
+      session: widget.session,
+      animatingUnitIdsListenable: widget.animatingUnitIdsListenable,
+      initialCameraFocusReadyListenable:
+          widget.initialCameraFocusReadyListenable,
+      gamepadInputListenable: widget.gamepadInputListenable,
+      gameSave: gameSave,
+      visible: visible,
+      optionsOverlayOpenOverride: _optionsOverlayPanelActive,
+    ),
+    GameHudOverlayPanelsHost(
+      key: const ValueKey('game-hud-overlay-panels-host'),
+      session: widget.session,
+      gameSave: gameSave,
+      visible: visible,
+      gamepadInputListenable: widget.gamepadInputListenable,
+    ),
+  ];
 
   void _setOptionsOverlayPanelActive(bool active) {
     if (!mounted || _optionsOverlayPanelActive == active) return;

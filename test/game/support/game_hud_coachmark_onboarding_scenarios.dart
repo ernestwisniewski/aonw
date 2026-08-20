@@ -11,7 +11,7 @@ void _registerGameHudCoachmarkOnboardingScenarios() {
   testWidgets('skipped first turn coachmarks stay in question menu', (
     tester,
   ) async {
-    final firstTurnSave = _save.copyWith(
+    final firstTurnSave = hudSave.copyWith(
       turn: 1,
       gameMode: GameMode.multiplayer,
     );
@@ -23,7 +23,7 @@ void _registerGameHudCoachmarkOnboardingScenarios() {
       col: 1,
       row: 1,
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: firstTurnSave,
         state: GameClientState(
@@ -37,11 +37,11 @@ void _registerGameHudCoachmarkOnboardingScenarios() {
       ),
     );
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: firstTurnSave,
-      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
     );
     await tester.pump();
     await tester.pump();
@@ -89,7 +89,7 @@ void _registerGameHudCoachmarkOnboardingScenarios() {
   testWidgets('first turn coachmarks can be disabled from the popup', (
     tester,
   ) async {
-    final firstTurnSave = _save.copyWith(
+    final firstTurnSave = hudSave.copyWith(
       turn: 1,
       gameMode: GameMode.multiplayer,
     );
@@ -101,7 +101,7 @@ void _registerGameHudCoachmarkOnboardingScenarios() {
       col: 1,
       row: 1,
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: firstTurnSave,
         state: GameClientState(
@@ -115,11 +115,11 @@ void _registerGameHudCoachmarkOnboardingScenarios() {
       ),
     );
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: firstTurnSave,
-      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
     );
     await tester.pump();
     await tester.pump();
@@ -154,11 +154,11 @@ void _registerGameHudCoachmarkOnboardingScenarios() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: firstTurnSave,
-      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
     );
     await tester.pump();
     await tester.pump();

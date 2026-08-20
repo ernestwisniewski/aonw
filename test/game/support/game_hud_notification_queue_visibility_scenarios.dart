@@ -5,9 +5,9 @@ void _registerGameHudNotificationQueueVisibilityScenarios() {
     'event notifications show concrete events and skip routine noise',
     (tester) async {
       final state = _notificationMatrixState();
-      await _pumpHud(
+      await pumpHud(
         tester,
-        repository: _FakeGameRepository(),
+        repository: FakeHudRepository(),
         autoActionFlowEnabled: false,
       );
       final container = ProviderScope.containerOf(
@@ -66,7 +66,7 @@ void _registerGameHudNotificationQueueVisibilityScenarios() {
     );
     final state = GameClientState(cities: [city], activePlayerId: 'player_1');
 
-    await _pumpHud(tester, repository: _FakeGameRepository());
+    await pumpHud(tester, repository: FakeHudRepository());
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
       listen: false,
@@ -120,7 +120,7 @@ void _registerGameHudNotificationQueueVisibilityScenarios() {
   testWidgets('event notifications are painted above HUD controls', (
     tester,
   ) async {
-    await _pumpHud(tester, repository: _FakeGameRepository());
+    await pumpHud(tester, repository: FakeHudRepository());
 
     final stack = tester.widget<Stack>(
       find.byWidgetPredicate(
@@ -155,7 +155,7 @@ void _registerGameHudNotificationQueueVisibilityScenarios() {
       tester.view.resetDevicePixelRatio();
     });
 
-    await _pumpHud(tester, repository: _FakeGameRepository());
+    await pumpHud(tester, repository: FakeHudRepository());
 
     final stack = tester.widget<Stack>(
       find.byWidgetPredicate(
@@ -205,16 +205,16 @@ void _registerGameHudNotificationQueueVisibilityScenarios() {
       },
       savedAt: DateTime.utc(2026, 4, 16),
       camera: CameraState.zero,
-      players: const [_player, _player2],
+      players: const [hudPlayer, hudPlayer2],
     );
     final state = GameClientState(
       cities: [ownCity, otherCity],
       activePlayerId: 'player_1',
     );
 
-    await _pumpHud(
+    await pumpHud(
       tester,
-      repository: _FakeGameRepository(),
+      repository: FakeHudRepository(),
       gameSave: hotseatSave,
     );
     final container = ProviderScope.containerOf(
@@ -250,7 +250,7 @@ void _registerGameHudNotificationQueueVisibilityScenarios() {
     );
     final state = GameClientState(cities: [city], activePlayerId: 'player_1');
 
-    await _pumpHud(tester, repository: _FakeGameRepository());
+    await pumpHud(tester, repository: FakeHudRepository());
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
       listen: false,

@@ -7,7 +7,7 @@ final class _DiplomaticPopupNotificationRouter {
     required this.isProposalMinimized,
   });
 
-  final _DiplomaticPopupInbox inbox;
+  final DiplomaticPopupInbox inbox;
   final bool Function(String messageId) isMessageMinimized;
   final bool Function(String proposalId) isProposalMinimized;
 

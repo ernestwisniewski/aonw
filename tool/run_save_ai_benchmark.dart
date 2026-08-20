@@ -69,7 +69,6 @@ const _singlePlayerDelay = Duration(milliseconds: 40);
 const _comfortP95EstimatedVisibleCycleLimit = Duration(seconds: 2);
 const _comfortMaxEstimatedVisibleCycleLimit = Duration(milliseconds: 3000);
 const _comfortP95PlanningLimit = Duration(milliseconds: 300);
-
 void main(List<String> args) async {
   if (_hasFlag(args, '--help') || _hasFlag(args, '-h')) {
     stdout.write(_usage);

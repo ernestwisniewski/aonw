@@ -112,6 +112,19 @@ final class TileTerrainSemantics {
     required TerrainType yieldTerrain,
     required List<TerrainType> terrainTags,
   }) {
+    _validateMovementTerrains(movementTerrains);
+    _validateTerrainTags(
+      terrainTags: terrainTags,
+      displayTerrain: displayTerrain,
+      yieldTerrain: yieldTerrain,
+    );
+    _validateMovementTags(
+      movementTerrains: movementTerrains,
+      terrainTags: terrainTags,
+    );
+  }
+
+  static void _validateMovementTerrains(List<TerrainType> movementTerrains) {
     if (movementTerrains.isEmpty) {
       throw const TileTerrainSemanticsException(
         'Movement terrains must not be empty',
@@ -134,6 +147,13 @@ final class TileTerrainSemantics {
         'Movement terrains must be unique',
       );
     }
+  }
+
+  static void _validateTerrainTags({
+    required List<TerrainType> terrainTags,
+    required TerrainType displayTerrain,
+    required TerrainType yieldTerrain,
+  }) {
     if (terrainTags.isEmpty) {
       throw const TileTerrainSemanticsException(
         'Terrain tags must not be empty',
@@ -157,6 +177,12 @@ final class TileTerrainSemantics {
         'Yield terrain must be present in terrain tags',
       );
     }
+  }
+
+  static void _validateMovementTags({
+    required List<TerrainType> movementTerrains,
+    required List<TerrainType> terrainTags,
+  }) {
     if (movementTerrains
         .skip(1)
         .any((feature) => !terrainTags.contains(feature))) {
@@ -170,6 +196,10 @@ final class TileTerrainSemantics {
 TerrainType _movementPrimaryFor(List<TerrainType> tags) {
   if (tags.contains(TerrainType.mountain)) return TerrainType.mountain;
 
+  return _preferredMovementPrimary(tags) ?? _fallbackMovementPrimary(tags);
+}
+
+TerrainType? _preferredMovementPrimary(List<TerrainType> tags) {
   TerrainType? primary;
   for (final terrain in tags) {
     if (!_primaryTerrains.contains(terrain) ||
@@ -182,7 +212,10 @@ TerrainType _movementPrimaryFor(List<TerrainType> tags) {
       primary = terrain;
     }
   }
-  if (primary != null) return primary;
+  return primary;
+}
+
+TerrainType _fallbackMovementPrimary(List<TerrainType> tags) {
   if (tags.any(_vegetatedFeatures.contains)) return TerrainType.grassland;
   if (tags.contains(TerrainType.hills)) return TerrainType.plains;
   throw const TileTerrainSemanticsException(

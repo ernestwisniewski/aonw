@@ -31,9 +31,9 @@ void _registerGameHudAutoNavigationSelectionCycleScenarios() {
           ),
         },
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(
             units: [unit],
             cities: [city],
@@ -41,9 +41,9 @@ void _registerGameHudAutoNavigationSelectionCycleScenarios() {
           ),
         ),
       );
-      final renderer = _SpyGameRenderer(mapData: _makeMap());
+      final renderer = HudTestRenderer(mapData: hudMap());
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         renderer: renderer,
@@ -51,7 +51,7 @@ void _registerGameHudAutoNavigationSelectionCycleScenarios() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
-      await _enableAutoTurnFlow(tester);
+      await enableAutoTurnFlow(tester);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameHud)),
         listen: false,
@@ -116,9 +116,9 @@ void _registerGameHudAutoNavigationSelectionCycleScenarios() {
           ),
         },
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(
             units: [unit],
             cities: [city],
@@ -126,9 +126,9 @@ void _registerGameHudAutoNavigationSelectionCycleScenarios() {
           ),
         ),
       );
-      final renderer = _SpyGameRenderer(mapData: _makeMap());
+      final renderer = HudTestRenderer(mapData: hudMap());
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         renderer: renderer,
@@ -136,7 +136,7 @@ void _registerGameHudAutoNavigationSelectionCycleScenarios() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
-      await _disableAutoTurnFlow(tester);
+      await disableAutoTurnFlow(tester);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameHud)),
         listen: false,
@@ -196,9 +196,9 @@ void _registerGameHudAutoNavigationSelectionCycleScenarios() {
           ),
         },
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(
             activePlayerId: 'player_1',
             cities: const [city],
@@ -206,9 +206,9 @@ void _registerGameHudAutoNavigationSelectionCycleScenarios() {
           ),
         ),
       );
-      final renderer = _SpyGameRenderer(mapData: _makeMap());
+      final renderer = HudTestRenderer(mapData: hudMap());
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         renderer: renderer,
@@ -216,7 +216,7 @@ void _registerGameHudAutoNavigationSelectionCycleScenarios() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
-      await _disableAutoTurnFlow(tester);
+      await disableAutoTurnFlow(tester);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameHud)),
         listen: false,
@@ -289,9 +289,9 @@ void _registerGameHudAutoNavigationSelectionCycleScenarios() {
         ),
       },
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           units: [firstUnit, secondUnit],
           cities: [city],
@@ -299,9 +299,9 @@ void _registerGameHudAutoNavigationSelectionCycleScenarios() {
         ),
       ),
     );
-    final renderer = _SpyGameRenderer(mapData: _makeMap());
+    final renderer = HudTestRenderer(mapData: hudMap());
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       renderer: renderer,
@@ -309,7 +309,7 @@ void _registerGameHudAutoNavigationSelectionCycleScenarios() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    await _disableAutoTurnFlow(tester);
+    await disableAutoTurnFlow(tester);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
       listen: false,

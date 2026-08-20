@@ -5,14 +5,14 @@ void _registerGameStateNotifierBootstrapScenarios() {
     setUp(LiveEventSubscription.resetLocalCommandEchoGuardForTesting);
     test('loads state from repository for the active session', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final save = _makeSave(
+      final save = providerSave(
         players: const [
           Player(id: 'player_1', name: 'Alice', colorValue: 0xFF123456),
         ],
       );
-      final gameRepository = _FakeGameRepository(
+      final gameRepository = FakeGameRepository(
         snapshots: {
-          save.id: _makeSnapshot(
+          save.id: providerSnapshot(
             save: save,
             units: [commander],
             fogOfWar: FogOfWarState(
@@ -31,10 +31,10 @@ void _registerGameStateNotifierBootstrapScenarios() {
       final container = ProviderContainer(
         overrides: [
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(mapData: _makeLandMap()),
+            providerSession(mapData: providerLandMap()),
           ),
           gameRepositoryProvider.overrideWithValue(gameRepository),
-          ..._transportOverrides(),
+          ...transportOverrides(),
         ],
       );
       addTearDown(container.dispose);
@@ -55,20 +55,20 @@ void _registerGameStateNotifierBootstrapScenarios() {
     });
     test('uses network session player for multiplayer control', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_2');
-      final save = _makeSave(
-        players: const [_player1, _player2],
+      final save = providerSave(
+        players: const [player1, player2],
         gameMode: GameMode.multiplayer,
       );
-      final gameRepository = _FakeGameRepository(
+      final gameRepository = FakeGameRepository(
         snapshots: {
-          save.id: _makeSnapshot(save: save, units: [commander]),
+          save.id: providerSnapshot(save: save, units: [commander]),
         },
       );
       final container = ProviderContainer(
         overrides: [
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(
-              mapData: _makeLandMap(),
+            providerSession(
+              mapData: providerLandMap(),
               gameMode: GameMode.multiplayer,
             ),
           ),
@@ -84,7 +84,7 @@ void _registerGameStateNotifierBootstrapScenarios() {
               ),
             ),
           ),
-          ..._transportOverrides(),
+          ...transportOverrides(),
         ],
       );
       addTearDown(container.dispose);
@@ -100,18 +100,18 @@ void _registerGameStateNotifierBootstrapScenarios() {
       () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_2');
         final moved = commander.copyWith(col: 2, row: 0);
-        final save = _makeSave(
-          players: const [_player1, _player2],
+        final save = providerSave(
+          players: const [player1, player2],
           gameMode: GameMode.multiplayer,
         );
-        final gameRepository = _FakeGameRepository(
+        final gameRepository = FakeGameRepository(
           snapshots: {
-            save.id: _makeSnapshot(save: save, units: [commander]),
+            save.id: providerSnapshot(save: save, units: [commander]),
           },
         );
-        final fakeStream = _FakeMultiplayerStream();
-        final renderer = _SpyGameRenderer(mapData: _makeLandMap());
-        final container = _liveMovementContainer(
+        final fakeStream = FakeMultiplayerStream();
+        final renderer = SpyRenderer(mapData: providerLandMap());
+        final container = liveMovementContainer(
           save: save,
           gameRepository: gameRepository,
           fakeStream: fakeStream,
@@ -126,7 +126,7 @@ void _registerGameStateNotifierBootstrapScenarios() {
         addTearDown(subscription.close);
         await container.read(gameStateProvider(save.id).future);
         await fakeStream.listened.timeout(const Duration(seconds: 1));
-        final snapshot = _makeSnapshot(
+        final snapshot = providerSnapshot(
           save: save,
           units: [moved],
           eventLogOffset: 1,
@@ -214,18 +214,18 @@ void _registerGameStateNotifierBootstrapScenarios() {
       () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_2');
         final moved = commander.copyWith(col: 2, row: 0);
-        final save = _makeSave(
-          players: const [_player1, _player2],
+        final save = providerSave(
+          players: const [player1, player2],
           gameMode: GameMode.multiplayer,
         );
-        final gameRepository = _FakeGameRepository(
+        final gameRepository = FakeGameRepository(
           snapshots: {
-            save.id: _makeSnapshot(save: save, units: [commander]),
+            save.id: providerSnapshot(save: save, units: [commander]),
           },
         );
-        final fakeStream = _FakeMultiplayerStream();
-        final renderer = _SpyGameRenderer(mapData: _makeLandMap());
-        final container = _liveMovementContainer(
+        final fakeStream = FakeMultiplayerStream();
+        final renderer = SpyRenderer(mapData: providerLandMap());
+        final container = liveMovementContainer(
           save: save,
           gameRepository: gameRepository,
           fakeStream: fakeStream,
@@ -241,7 +241,7 @@ void _registerGameStateNotifierBootstrapScenarios() {
         await container.read(gameStateProvider(save.id).future);
         await fakeStream.listened.timeout(const Duration(seconds: 1));
 
-        final snapshot = _makeSnapshot(
+        final snapshot = providerSnapshot(
           save: save,
           units: [moved],
           eventLogOffset: 1,
@@ -295,8 +295,8 @@ void _registerGameStateNotifierBootstrapScenarios() {
         row: 0,
       );
       final retreated = defender.copyWith(col: 2, row: 0, hitPoints: 1);
-      final save = _makeSave(
-        players: const [_player1, _player2],
+      final save = providerSave(
+        players: const [player1, player2],
         gameMode: GameMode.multiplayer,
       );
       final fog = FogOfWarState(
@@ -311,19 +311,19 @@ void _registerGameStateNotifierBootstrapScenarios() {
           ),
         },
       );
-      final gameRepository = _FakeGameRepository(
+      final gameRepository = FakeGameRepository(
         snapshots: {
-          save.id: _makeSnapshot(
+          save.id: providerSnapshot(
             save: save,
             units: [attacker, defender],
             fogOfWar: fog,
           ),
         },
       );
-      final fakeStream = _FakeMultiplayerStream();
-      final renderer = _SpyGameRenderer(mapData: _makeLandMap());
+      final fakeStream = FakeMultiplayerStream();
+      final renderer = SpyRenderer(mapData: providerLandMap());
       final audio = _RecordingAudioController();
-      final container = _liveMovementContainer(
+      final container = liveMovementContainer(
         save: save,
         gameRepository: gameRepository,
         fakeStream: fakeStream,
@@ -340,7 +340,7 @@ void _registerGameStateNotifierBootstrapScenarios() {
       await container.read(gameStateProvider(save.id).future);
       await fakeStream.listened.timeout(const Duration(seconds: 1));
 
-      final snapshot = _makeSnapshot(
+      final snapshot = providerSnapshot(
         save: save,
         units: [attacker, retreated],
         fogOfWar: fog,

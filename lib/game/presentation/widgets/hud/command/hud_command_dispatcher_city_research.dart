@@ -1,4 +1,11 @@
-part of 'hud_command_dispatcher.dart';
+import 'package:aonw/game/presentation/widgets/hud/city/hud_city_production_commands.dart';
+import 'package:aonw/game/presentation/widgets/hud/command/hud_command_dispatcher.dart';
+import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
+import 'package:aonw_core/game/domain/city.dart';
+import 'package:aonw_core/game/domain/command.dart';
+import 'package:aonw_core/game/domain/technology.dart';
+import 'package:aonw_core/game/domain/unit.dart';
+import 'package:aonw_core/game/domain/wonder.dart';
 
 extension HudCommandDispatcherCityResearch on HudCommandDispatcher {
   Future<void> startCityBuilding(String cityId, CityBuildingType buildingType) {
@@ -52,10 +59,10 @@ extension HudCommandDispatcherCityResearch on HudCommandDispatcher {
     required String activePlayerId,
     required TechnologyId technologyId,
   }) {
-    if (activePlayerId.isEmpty || !_canInteract) return Future.value();
-    final modes = _ref.read(hudPanelControllerProvider);
+    if (activePlayerId.isEmpty || !canInteract) return Future.value();
+    final modes = ref.read(hudPanelControllerProvider);
     if (modes.technology) {
-      _applyPanelModes(modes.closeTechnology(), playSound: false);
+      applyPanelModes(modes.closeTechnology(), playSound: false);
     }
     return dispatch(SelectTechnologyCommand(activePlayerId, technologyId));
   }

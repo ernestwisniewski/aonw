@@ -4,17 +4,13 @@ void _registerGameHudLayoutNavigationGlobalActionsScenarios() {
   testWidgets('deck global research action opens technology tree popup', (
     tester,
   ) async {
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
 
     final researchRect = tester.getRect(
@@ -40,17 +36,13 @@ void _registerGameHudLayoutNavigationGlobalActionsScenarios() {
   testWidgets('global objectives action opens objectives panel', (
     tester,
   ) async {
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
 
     expect(find.text('OBJECTIVES'), findsNothing);
@@ -87,17 +79,13 @@ void _registerGameHudLayoutNavigationGlobalActionsScenarios() {
     expect(find.text('OBJECTIVES'), findsNothing);
   });
   testWidgets('global action popup stays above the left menu', (tester) async {
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
 
     await tester.tap(find.byKey(const Key('globalHud.action.research')));
@@ -119,13 +107,13 @@ void _registerGameHudLayoutNavigationGlobalActionsScenarios() {
   testWidgets(
     'left menu keeps objectives and activity log between options and help',
     (tester) async {
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(activePlayerId: 'player_1'),
         ),
       );
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
@@ -192,17 +180,13 @@ void _registerGameHudLayoutNavigationGlobalActionsScenarios() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
 
     final deckRect = tester.getRect(find.byType(HudActionDeck));
@@ -242,14 +226,14 @@ void _registerGameHudLayoutNavigationGlobalActionsScenarios() {
 
     for (final scenario in _hudQaScenarios) {
       tester.view.physicalSize = scenario.size;
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: state,
         ),
       );
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
@@ -274,23 +258,19 @@ void _registerGameHudLayoutNavigationGlobalActionsScenarios() {
         find.byKey(const Key('globalHud.action.empire')),
       );
 
-      _expectRectInside(
+      expectRectInside(
         resourceStrip,
         viewport,
         reason: '${scenario.name} resource strip',
       );
-      _expectRectInside(deck, viewport, reason: '${scenario.name} deck');
-      _expectRectInside(
-        research,
-        viewport,
-        reason: '${scenario.name} research',
-      );
-      _expectRectInside(
+      expectRectInside(deck, viewport, reason: '${scenario.name} deck');
+      expectRectInside(research, viewport, reason: '${scenario.name} research');
+      expectRectInside(
         objectives,
         viewport,
         reason: '${scenario.name} objectives',
       );
-      _expectRectInside(empire, viewport, reason: '${scenario.name} empire');
+      expectRectInside(empire, viewport, reason: '${scenario.name} empire');
       expect(
         research.left,
         lessThan(80),
@@ -344,16 +324,16 @@ void _registerGameHudLayoutNavigationGlobalActionsScenarios() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
     for (final size in const [Size(678, 1442), Size(840, 1436)]) {
       tester.view.physicalSize = size;
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
@@ -371,7 +351,7 @@ void _registerGameHudLayoutNavigationGlobalActionsScenarios() {
       final viewport = Offset.zero & size;
       final panel = tester.getRect(find.byType(TechnologyTreePanel));
 
-      _expectRectInside(panel, viewport, reason: 'technology panel $size');
+      expectRectInside(panel, viewport, reason: 'technology panel $size');
       expect(
         panel.bottom,
         lessThanOrEqualTo(deck.top - 2),

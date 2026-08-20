@@ -1,4 +1,5 @@
 import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_provider.dart';
+import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
 import 'package:aonw/game/presentation/providers/renderer/renderer_provider.dart';
 import 'package:aonw/game/presentation/widgets/hud/map/hud_map_focus_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
@@ -8,6 +9,7 @@ final hudMapFocusControllerProvider = Provider<HudMapFocusController>(
   HudMapFocusController.new,
   dependencies: [
     activeRendererViewModelProvider,
+    gamePlayerControlControllerProvider,
     hudCommandDispatcherProvider,
     hudPanelControllerProvider,
   ],

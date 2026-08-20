@@ -1,6 +1,10 @@
-part of '../game_renderer_keyboard_test.dart';
+import 'package:aonw/game/presentation/engine.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-void _registerKeyboardPanScenarios() {
+import 'support/game_renderer_keyboard_shared_fixtures.dart';
+
+void main() {
   group('GameRenderer keyboard pan', () {
     late GameRenderer game;
 

@@ -8,6 +8,8 @@ import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+part 'game_command_test_scenarios.dart';
+
 void main() {
   group('independent command boundaries', () {
     group('construction and field access', () {
@@ -871,24 +873,7 @@ void main() {
         );
       });
 
-      test('different command types with same data are not equal', () {
-        // e.g. SelectUnitCommand and SelectCityCommand both take a String
-        // but must not be equal to each other.
-        expect(
-          const SelectUnitCommand('x'),
-          isNot(equals(const SelectCityCommand('x'))),
-        );
-      });
-      test('equal commands have equal hashCodes', () {
-        expect(
-          const TileTappedCommand(1, 2).hashCode,
-          equals(const TileTappedCommand(1, 2).hashCode),
-        );
-        expect(
-          const ToggleMoveTargetingCommand().hashCode,
-          equals(const ToggleMoveTargetingCommand().hashCode),
-        );
-      });
+      _runCommandEqualityTailScenarios();
     });
   });
 }

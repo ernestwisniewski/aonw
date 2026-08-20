@@ -27,14 +27,12 @@ import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/map_view_mode.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/game_intent_test_resolver.dart';
 import 'support/game_renderer_keyboard_shared_fixtures.dart';
 
 part 'game_renderer_keyboard_movement_fixture.dart';
-part 'support/game_renderer_keyboard_pan_scenarios.dart';
 part 'support/game_renderer_bridge_interaction_scenarios.dart';
 part 'support/game_renderer_bridge_interaction_tap_priority_scenarios.dart';
 part 'support/game_renderer_bridge_interaction_objective_city_scenarios.dart';
@@ -52,7 +50,6 @@ part 'support/game_renderer_bridge_planning_worker_hints_scenarios.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  _registerKeyboardPanScenarios();
   group('GameRenderer renderer bridge', () {
     _registerRendererInteractionScenarios();
     _registerRendererStateSyncScenarios();

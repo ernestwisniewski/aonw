@@ -24,14 +24,14 @@ void _registerGameHudAutoNavigationPanelRestoreScenarios() {
         investedProduction: 0,
       ),
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(units: [unit], cities: [city]),
       ),
     );
 
-    await _pumpHud(tester, repository: repository);
+    await pumpHud(tester, repository: repository);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     final container = ProviderScope.containerOf(
@@ -80,14 +80,14 @@ void _registerGameHudAutoNavigationPanelRestoreScenarios() {
       const pendingResearch = PendingResearchSelection(
         ownerPlayerId: 'player_1',
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.create(
-          save: _save,
+          save: hudSave,
           pendingAction: pendingResearch,
         ),
       );
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
@@ -187,17 +187,17 @@ void _registerGameHudAutoNavigationPanelRestoreScenarios() {
   testWidgets(
     'question menu opens tutorial and auto turn after player finished',
     (tester) async {
-      final finishedSave = _save.copyWith(
+      final finishedSave = hudSave.copyWith(
         playerStates: const {'player_1': PlayerTurnState.finished},
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
           save: finishedSave,
           state: GameClientState(activePlayerId: 'player_1'),
         ),
       );
 
-      await _pumpHud(tester, repository: repository, gameSave: finishedSave);
+      await pumpHud(tester, repository: repository, gameSave: finishedSave);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       final container = ProviderScope.containerOf(
@@ -241,14 +241,10 @@ void _registerGameHudAutoNavigationPanelRestoreScenarios() {
     },
   );
   testWidgets('close button autosaves camera before leaving', (tester) async {
-    final repository = _FakeGameRepository();
+    final repository = FakeHudRepository();
     var closed = false;
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      onClose: () => closed = true,
-    );
+    await pumpHud(tester, repository: repository, onClose: () => closed = true);
 
     await tester.tap(find.text('✕'));
     await tester.pump();

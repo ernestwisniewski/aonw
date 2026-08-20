@@ -12,6 +12,7 @@ import 'package:aonw/game/presentation/engine/game_render_view_model.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_camera_policy.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_camera_settings.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_components.dart';
+import 'package:aonw/game/presentation/engine/game_renderer_gamepad_controller.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_input_handler.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_lifecycle_handler.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_runtime_factory.dart';
@@ -138,6 +139,7 @@ class GameRenderer extends HexWorld
   final ValueNotifier<double> _zoomNotifier = ValueNotifier(1.0);
   final ValueNotifier<bool> _initialCameraFocusReadyNotifier;
   late final GameRendererStateSyncHandler _stateSyncHandler;
+  late final GameRendererGamepadController _gamepadController;
   late final GameRendererTransitionHandler _transitionHandler =
       GameRendererTransitionHandler(
         ensureActive: _ensureRendererActive,
@@ -215,6 +217,21 @@ class GameRenderer extends HexWorld
       displaySettings: displaySettings ?? const HexDisplaySettings(),
       reduceMotion: reduceMotion,
       workerOptionsBuilder: workerActionPaletteOptionsBuilder,
+    );
+    _gamepadController = GameRendererGamepadController(
+      mapData: mapData,
+      state: () => _renderState,
+      isReady: () => _isReady,
+      isDisposed: () => _isDisposed,
+      viewportSize: () => size,
+      tileAtViewportPoint: (point) =>
+          _sceneBuilder.grid.tileDataAtWorldPoint(camera.globalToLocal(point)),
+      currentZoom: () => camera.viewfinder.zoom,
+      panByScreenDelta: panByScreenDelta,
+      setZoomAround: setZoomAround,
+      inspectTile: _handleTileInspected,
+      syncHoverIntent: _syncHoverIntentForTile,
+      onCommand: onCommand,
     );
   }
 

@@ -65,7 +65,12 @@ class GameStateNotifier extends _$GameStateNotifier {
   Future<DispatchCommandResult> dispatchTransition(
     DomainCommand command, {
     GameCommandContext context = const GameCommandContext(),
-  }) => _commands.dispatchTransition(command, context: context);
+    bool Function()? canPublish,
+  }) => _commands.dispatchTransition(
+    command,
+    context: context,
+    canPublish: canPublish,
+  );
 
   Future<List<UiEffect>> dispatchIntent(
     GameIntent intent, {

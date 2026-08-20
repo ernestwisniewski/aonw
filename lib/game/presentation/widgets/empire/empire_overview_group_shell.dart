@@ -45,56 +45,93 @@ class _GroupShell extends StatelessWidget {
               onTap: onTap,
             ),
             if (children.isNotEmpty)
-              DecoratedBox(
-                decoration: SurfaceElevation.flat.bandDecoration(
-                  background: GameUiTheme.surface,
-                  backgroundAlpha: 188,
-                  border: BorderEmphasis.subtle,
-                  topBorder: true,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: useTileLayout
-                      ? LayoutBuilder(
-                          builder: (context, constraints) {
-                            final availableWidth = constraints.maxWidth;
-                            final columns = availableWidth == double.infinity
-                                ? 1
-                                : (availableWidth / 220).floor().clamp(1, 5);
-                            final columnsOrDefault = columns <= 0 ? 1 : columns;
-                            final itemWidth =
-                                (availableWidth - (columnsOrDefault - 1) * 8) /
-                                columnsOrDefault;
-                            return Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                for (final child in children)
-                                  SizedBox(width: itemWidth, child: child),
-                              ],
-                            );
-                          },
-                        )
-                      : Column(
-                          children: [
-                            for (var i = 0; i < children.length; i++) ...[
-                              if (i > 0)
-                                Divider(
-                                  height: 1,
-                                  thickness: 1,
-                                  color: SurfaceElevation.flat.strokeColor(
-                                    alpha: 62,
-                                  ),
-                                ),
-                              children[i],
-                            ],
-                          ],
-                        ),
-                ),
+              _EmpireGroupChildren(
+                useTileLayout: useTileLayout,
+                children: children,
               ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _EmpireGroupChildren extends StatelessWidget {
+  const _EmpireGroupChildren({
+    required this.children,
+    required this.useTileLayout,
+  });
+
+  final List<Widget> children;
+  final bool useTileLayout;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: SurfaceElevation.flat.bandDecoration(
+        background: GameUiTheme.surface,
+        backgroundAlpha: 188,
+        border: BorderEmphasis.subtle,
+        topBorder: true,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: useTileLayout
+            ? _EmpireTileGrid(children: children)
+            : _EmpireRowList(children: children),
+      ),
+    );
+  }
+}
+
+class _EmpireTileGrid extends StatelessWidget {
+  const _EmpireTileGrid({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
+        final columns = availableWidth == double.infinity
+            ? 1
+            : (availableWidth / 220).floor().clamp(1, 5);
+        final columnsOrDefault = columns <= 0 ? 1 : columns;
+        final itemWidth =
+            (availableWidth - (columnsOrDefault - 1) * 8) / columnsOrDefault;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final child in children)
+              SizedBox(width: itemWidth, child: child),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _EmpireRowList extends StatelessWidget {
+  const _EmpireRowList({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0)
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: SurfaceElevation.flat.strokeColor(alpha: 62),
+            ),
+          children[i],
+        ],
+      ],
     );
   }
 }
@@ -129,26 +166,7 @@ class _EmpireGroupHeader extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(10, 9, 10, 9),
           child: Row(
             children: [
-              Container(
-                width: 30,
-                height: 30,
-                decoration: SurfaceElevation.flat.decoration(
-                  background: GameUiTheme.gold,
-                  backgroundAlpha: 28,
-                  border: BorderEmphasis.subtle,
-                  borderRadius: BorderRadius.circular(5),
-                  includeShadow: false,
-                ),
-                child: Center(
-                  child:
-                      leading ??
-                      GameIcon(
-                        icon,
-                        size: GameIconSize.regular,
-                        color: GameUiTheme.gold,
-                      ),
-                ),
-              ),
+              _EmpireGroupIcon(icon: icon, leading: leading),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -336,46 +354,14 @@ class _EmpireUnitBlock extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 26,
-                height: 26,
-                decoration: SurfaceElevation.flat.decoration(
-                  accent: GameUiTheme.textSecondary,
-                  background: GameUiTheme.textSecondary,
-                  backgroundAlpha: 18,
-                  borderAlpha: 42,
-                  borderRadius: BorderRadius.circular(5),
-                  includeShadow: false,
-                ),
-                child: Center(
-                  child: GameIcon(
-                    icon,
-                    size: GameIconSize.small,
-                    color: GameUiTheme.textSecondary,
-                  ),
-                ),
-              ),
+              _EmpireUnitIcon(icon: icon),
               const SizedBox(width: 10),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: GameUiTheme.textBright,
-                        fontFamily: GameUiTheme.bodyFont,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    _EmpireUnitMetadataLine(label: 'PR', value: movement),
-                    _EmpireUnitMetadataLine(label: 'Stan', value: state),
-                    _EmpireUnitMetadataLine(label: 'HP', value: hp),
-                  ],
+                child: _EmpireUnitSummary(
+                  title: title,
+                  movement: movement,
+                  state: state,
+                  hp: hp,
                 ),
               ),
               const SizedBox(width: 8),
@@ -391,6 +377,73 @@ class _EmpireUnitBlock extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _EmpireUnitIcon extends StatelessWidget {
+  const _EmpireUnitIcon({required this.icon});
+
+  final GameIconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 26,
+      height: 26,
+      decoration: SurfaceElevation.flat.decoration(
+        accent: GameUiTheme.textSecondary,
+        background: GameUiTheme.textSecondary,
+        backgroundAlpha: 18,
+        borderAlpha: 42,
+        borderRadius: BorderRadius.circular(5),
+        includeShadow: false,
+      ),
+      child: Center(
+        child: GameIcon(
+          icon,
+          size: GameIconSize.small,
+          color: GameUiTheme.textSecondary,
+        ),
+      ),
+    );
+  }
+}
+
+class _EmpireUnitSummary extends StatelessWidget {
+  const _EmpireUnitSummary({
+    required this.title,
+    required this.movement,
+    required this.state,
+    required this.hp,
+  });
+
+  final String title;
+  final String movement;
+  final String state;
+  final String hp;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: GameUiTheme.textBright,
+            fontFamily: GameUiTheme.bodyFont,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 3),
+        _EmpireUnitMetadataLine(label: 'PR', value: movement),
+        _EmpireUnitMetadataLine(label: 'Stan', value: state),
+        _EmpireUnitMetadataLine(label: 'HP', value: hp),
+      ],
     );
   }
 }

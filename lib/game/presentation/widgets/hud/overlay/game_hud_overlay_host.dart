@@ -70,6 +70,8 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.visible) return const SizedBox.shrink();
+
     final playerControl = PlayerControlCoordinator.normalize(
       current: ref.watch(gamePlayerControlControllerProvider),
       save: widget.gameSave,
@@ -128,34 +130,14 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
       _closeSelectionDetailAfterBuild();
     }
     final activityLogAvailable = activePlayerId.isNotEmpty && gameState != null;
-    final deckGlobalActions = buildDeckGlobalHudActions(
+    final deckGlobalActions = _deckGlobalActions(
       l10n: l10n,
-      useBottomGlobalActions: frame.layoutMetrics.useBottomGlobalActions,
-      canShowGlobalActions: frame.playerActionState.canShowGlobalActions,
-      technologyActive: frame.modes.technology,
-      activeTechnologyName: frame.activeTechnologySummary.name,
-      activeTechnologyTurnsRemaining:
-          frame.activeTechnologySummary.turnsRemaining,
-      activeTechnologyCompletionTurn:
-          frame.activeTechnologySummary.completionTurn,
-      researchAvailable: frame.researchAvailable,
-      objectivesAvailable: frame.objectiveSummary.activeObjectives.isNotEmpty,
-      objectivesActive: frame.modes.objectives,
-      empireActive: frame.modes.empire,
+      frame: frame,
       activityLogAvailable: activityLogAvailable,
-      activityLogActive: frame.modes.activityLog,
-      onToggleTechnology: actions.toggleTechnologyPanel,
-      onToggleObjectives: actions.toggleObjectivesPanel,
-      onToggleEmpire: actions.toggleEmpirePanel,
-      onToggleActivityLog: actions.toggleActivityLogPanel,
     );
-    final toggleVisibleSelectionDetail = frame.inspectingMap
-        ? (String chipId) => ref
-              .read(mapInspectionControllerProvider.notifier)
-              .toggleDetail(chipId)
-        : (String chipId) => ref
-              .read(openSelectionDetailControllerProvider.notifier)
-              .toggle(chipId);
+    final toggleVisibleSelectionDetail = _selectionDetailToggler(
+      frame.inspectingMap,
+    );
     final selectionActionChips = buildHudSelectionActionChips(
       gameState: gameState,
       mapData: widget.session.mapData,
@@ -336,5 +318,15 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
         ),
       ],
     );
+  }
+
+  void Function(String chipId) _selectionDetailToggler(bool inspectingMap) {
+    if (inspectingMap) {
+      return (chipId) => ref
+          .read(mapInspectionControllerProvider.notifier)
+          .toggleDetail(chipId);
+    }
+    return (chipId) =>
+        ref.read(openSelectionDetailControllerProvider.notifier).toggle(chipId);
   }
 }

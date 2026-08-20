@@ -1,11 +1,51 @@
 part of '../game_hud_test.dart';
 
 void _registerGameHudTurnHandoffScenarios() {
+  testWidgets('hotseat handoff keeps stateful HUD subscribers mounted', (
+    tester,
+  ) async {
+    await pumpHud(
+      tester,
+      repository: FakeHudRepository(),
+      autoActionFlowEnabled: false,
+    );
+    await tester.pump();
+
+    final visibleHost = find.byType(GameHudOverlayHost);
+    final hostState = tester.state(visibleHost);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(GameHud)),
+      listen: false,
+    );
+    container
+        .read(gameHandoffProvider.notifier)
+        .setPending(
+          const HandoffData(
+            playerId: 'player_1',
+            playerName: 'Alice',
+            playerColorValue: 0xFF4a7fc4,
+            turnNumber: 1,
+            freshTurn: true,
+          ),
+        );
+    await tester.pump();
+
+    final hiddenHost = find.byType(GameHudOverlayHost, skipOffstage: false);
+    expect(hiddenHost, findsOneWidget);
+    expect(tester.state(hiddenHost), same(hostState));
+    await container
+        .read(gameStateProvider('save').notifier)
+        .syncActivePlayer(playerId: 'player_1', canAct: false);
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'hotseat handoff stays visible while confirmation prepares turn',
     (tester) async {
-      final repository = _FakeGameRepository();
-      await _pumpHud(
+      final repository = FakeHudRepository();
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
@@ -43,7 +83,7 @@ void _registerGameHudTurnHandoffScenarios() {
       expect(gate.isCompleted, isFalse);
 
       gate.complete();
-      await _pumpUntil(
+      await pumpUntil(
         tester,
         () => find.text('ALICE').evaluate().isEmpty,
         frames: 8,
@@ -55,9 +95,9 @@ void _registerGameHudTurnHandoffScenarios() {
   testWidgets('hotseat handoff prepares turn start after player confirms', (
     tester,
   ) async {
-    final save = _save.copyWith(
+    final save = hudSave.copyWith(
       turn: 3,
-      players: const [_player, _player2],
+      players: const [hudPlayer, hudPlayer2],
       playerStates: const {
         'player_1': PlayerTurnState.active,
         'player_2': PlayerTurnState.active,
@@ -77,7 +117,7 @@ void _registerGameHudTurnHandoffScenarios() {
       col: 2,
       row: 2,
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -86,9 +126,9 @@ void _registerGameHudTurnHandoffScenarios() {
         ),
       ),
     );
-    final renderer = _SpyGameRenderer(mapData: _makeMap());
+    final renderer = HudTestRenderer(mapData: hudMap());
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: save,
@@ -179,9 +219,9 @@ void _registerGameHudTurnHandoffScenarios() {
         name: 'Dale',
         colorValue: 0xFFb8854f,
       );
-      final save = _save.copyWith(
+      final save = hudSave.copyWith(
         turn: 5,
-        players: const [_player, _player2, player3, player4],
+        players: const [hudPlayer, hudPlayer2, player3, player4],
         playerStates: const {
           'player_1': PlayerTurnState.finished,
           'player_2': PlayerTurnState.finished,
@@ -210,7 +250,7 @@ void _registerGameHudTurnHandoffScenarios() {
         col: 1,
         row: 2,
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
           save: save,
           state: GameClientState(
@@ -220,9 +260,9 @@ void _registerGameHudTurnHandoffScenarios() {
           ),
         ),
       );
-      final renderer = _SpyGameRenderer(mapData: _makeMap());
+      final renderer = HudTestRenderer(mapData: hudMap());
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         gameSave: save,
@@ -250,7 +290,7 @@ void _registerGameHudTurnHandoffScenarios() {
       expect(renderer.handledEffects.whereType<SmoothCameraEffect>(), isEmpty);
 
       await tester.tap(find.text('CONTINUE'));
-      await _pumpUntil(
+      await pumpUntil(
         tester,
         () =>
             container.read(gameStateProvider('save')).value?.selectedUnitId ==
@@ -283,14 +323,14 @@ void _registerGameHudTurnHandoffScenarios() {
       name: 'City',
       center: CityHex(col: 1, row: 1),
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(cities: [city], activePlayerId: 'player_1'),
       ),
     );
 
-    await _pumpHud(tester, repository: repository, showEntryHandoff: true);
+    await pumpHud(tester, repository: repository, showEntryHandoff: true);
     await tester.pump();
 
     await tester.tap(find.text('CONTINUE'));
@@ -322,9 +362,9 @@ void _registerGameHudTurnHandoffScenarios() {
       name: 'City',
       center: CityHex(col: 1, row: 1),
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           units: [unit],
           cities: const [city],
@@ -340,7 +380,7 @@ void _registerGameHudTurnHandoffScenarios() {
       ),
     );
 
-    await _pumpHud(tester, repository: repository, showEntryHandoff: true);
+    await pumpHud(tester, repository: repository, showEntryHandoff: true);
     await tester.pump();
 
     await tester.tap(find.text('CONTINUE'));
@@ -370,9 +410,9 @@ void _registerGameHudTurnHandoffScenarios() {
         investedProduction: 0,
       ),
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           cities: [city],
           activePlayerId: 'player_1',
@@ -387,7 +427,7 @@ void _registerGameHudTurnHandoffScenarios() {
       ),
     );
 
-    await _pumpHud(tester, repository: repository, showEntryHandoff: true);
+    await pumpHud(tester, repository: repository, showEntryHandoff: true);
     await tester.pump();
 
     await tester.tap(find.text('CONTINUE'));

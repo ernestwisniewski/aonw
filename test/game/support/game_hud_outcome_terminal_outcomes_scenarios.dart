@@ -4,15 +4,15 @@ void _registerGameHudOutcomeTerminalOutcomesScenarios() {
   testWidgets(
     'terminal multiplayer outcome uses network player perspective with projected state',
     (tester) async {
-      final save = _save.copyWith(
+      final save = hudSave.copyWith(
         gameMode: GameMode.multiplayer,
-        players: const [_player, _player2],
+        players: const [hudPlayer, hudPlayer2],
         playerStates: const {
           'player_1': PlayerTurnState.active,
           'player_2': PlayerTurnState.active,
         },
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
           save: save,
           state: GameClientState(
@@ -39,18 +39,18 @@ void _registerGameHudOutcomeTerminalOutcomesScenarios() {
         ),
       );
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         gameSave: save,
-        session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+        session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
         networkSession: NetworkSession(
           userId: 'user_2',
           playerId: 'player_2',
           token: AuthToken('token'),
           matchId: save.id,
         ),
-        multiplayerMatch: _terminalMatch(
+        multiplayerMatch: terminalMatch(
           outcomeCondition: 'conquest',
           winnerPlayerId: 'player_1',
         ),
@@ -67,15 +67,15 @@ void _registerGameHudOutcomeTerminalOutcomesScenarios() {
   testWidgets('remaining player sees victory after authoritative resignation', (
     tester,
   ) async {
-    final save = _save.copyWith(
+    final save = hudSave.copyWith(
       gameMode: GameMode.multiplayer,
-      players: const [_player, _player2],
+      players: const [hudPlayer, hudPlayer2],
       playerStates: const {
         'player_1': PlayerTurnState.active,
         'player_2': PlayerTurnState.finished,
       },
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -88,18 +88,18 @@ void _registerGameHudOutcomeTerminalOutcomesScenarios() {
       ),
     );
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: save,
-      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
       networkSession: NetworkSession(
         userId: 'user_1',
         playerId: 'player_1',
         token: AuthToken('token'),
         matchId: save.id,
       ),
-      multiplayerMatch: _terminalMatch(
+      multiplayerMatch: terminalMatch(
         outcomeCondition: 'resignation',
         winnerPlayerId: 'player_1',
       ),
@@ -114,15 +114,15 @@ void _registerGameHudOutcomeTerminalOutcomesScenarios() {
   testWidgets('terminal multiplayer draw ignores active-turn perspective', (
     tester,
   ) async {
-    final save = _save.copyWith(
+    final save = hudSave.copyWith(
       gameMode: GameMode.multiplayer,
-      players: const [_player, _player2],
+      players: const [hudPlayer, hudPlayer2],
       playerStates: const {
         'player_1': PlayerTurnState.active,
         'player_2': PlayerTurnState.active,
       },
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -135,18 +135,18 @@ void _registerGameHudOutcomeTerminalOutcomesScenarios() {
       ),
     );
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: save,
-      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
       networkSession: NetworkSession(
         userId: 'user_2',
         playerId: 'player_2',
         token: AuthToken('token'),
         matchId: save.id,
       ),
-      multiplayerMatch: _terminalMatch(
+      multiplayerMatch: terminalMatch(
         outcomeCondition: 'draw',
         winnerPlayerId: null,
       ),
@@ -161,17 +161,17 @@ void _registerGameHudOutcomeTerminalOutcomesScenarios() {
   });
   testWidgets('outcome overlay shows score draw rows', (tester) async {
     final turnLimit = GameLengthConfig.standard60.turnLimit!;
-    final save = _save.copyWith(
+    final save = hudSave.copyWith(
       gameMode: NewGameFlow.singlePlayer.gameMode,
       turn: turnLimit,
       matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
-      players: const [_player, _player2],
+      players: const [hudPlayer, hudPlayer2],
       playerStates: const {
         'player_1': PlayerTurnState.active,
         'player_2': PlayerTurnState.active,
       },
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -196,12 +196,12 @@ void _registerGameHudOutcomeTerminalOutcomesScenarios() {
       ),
     );
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: save,
-      session: _makeSession(
-        _makeMap(),
+      session: hudSession(
+        hudMap(),
         gameMode: NewGameFlow.singlePlayer.gameMode,
       ),
     );

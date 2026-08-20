@@ -187,7 +187,7 @@ void main() {
             activityLog: true,
           ),
         );
-    final dispatcher = container.read(hudCommandDispatcherProvider)
+    container.read(hudCommandDispatcherProvider)
       ..toggleCityProductionPanel(state: null)
       ..toggleTechnologyPanel(activePlayerId: 'player-1', state: null)
       ..toggleObjectivesPanel(activePlayerId: 'player-1', state: null)

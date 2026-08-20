@@ -42,8 +42,8 @@ ResearchState _autoFlowActiveResearch() => ResearchState(
   },
 );
 
-_FakeGameRepository _autoFlowManualPauseRepository(GameSave save) =>
-    _FakeGameRepository(
+FakeHudRepository _autoFlowManualPauseRepository(GameSave save) =>
+    FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -68,9 +68,9 @@ void _registerHudAutoFlowRegressionTests() {
       row: 2,
       productionSelected: false,
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           cities: [resolvedCity, pendingCity],
           research: _autoFlowActiveResearch(),
@@ -78,11 +78,7 @@ void _registerHudAutoFlowRegressionTests() {
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     final container = ProviderScope.containerOf(
@@ -119,15 +115,15 @@ void _registerHudAutoFlowRegressionTests() {
       row: 2,
       productionSelected: false,
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(cities: [firstCity, secondCity]),
       ),
     );
-    final renderer = _SpyGameRenderer(mapData: _makeMap());
+    final renderer = HudTestRenderer(mapData: hudMap());
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       renderer: renderer,
@@ -164,7 +160,7 @@ void _registerHudAutoFlowRegressionTests() {
     await container
         .read(hudCommandDispatcherProvider)
         .startCityBuilding('city_1', CityBuildingType.granary);
-    await _pumpUntil(
+    await pumpUntil(
       tester,
       () =>
           find.byType(CityProductionPanel).evaluate().isNotEmpty &&
@@ -206,7 +202,7 @@ void _registerHudAutoFlowRegressionTests() {
     await container
         .read(hudCommandDispatcherProvider)
         .startCityBuilding('city_2', CityBuildingType.granary);
-    await _pumpUntil(
+    await pumpUntil(
       tester,
       () =>
           find.text('TECHNOLOGY TREE').evaluate().isNotEmpty &&
@@ -228,17 +224,17 @@ void _registerHudAutoFlowLifecycleTests() {
   testWidgets(
     'Auto resumes after a manual pause without leaving an inspected city',
     (tester) async {
-      final repository = _autoFlowManualPauseRepository(_save);
-      await _pumpHud(
+      final repository = _autoFlowManualPauseRepository(hudSave);
+      await pumpHud(
         tester,
         repository: repository,
-        renderer: _SpyGameRenderer(mapData: _makeMap()),
+        renderer: HudTestRenderer(mapData: hudMap()),
         autoActionFlowEnabled: false,
         autoTurnFlowEnabled: false,
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
-      await _enableAutoTurnFlow(tester);
+      await enableAutoTurnFlow(tester);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameHud)),
         listen: false,
@@ -251,14 +247,14 @@ void _registerHudAutoFlowLifecycleTests() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(_autoFlowState(container, 'save')?.selection?.city?.id, 'city_1');
 
-      await _setAutoTurnFlow(tester, false);
-      await _setAutoTurnFlow(tester, true);
+      await setAutoTurnFlow(tester, false);
+      await setAutoTurnFlow(tester, true);
       expect(_autoFlowState(container, 'save')?.selection?.city?.id, 'city_1');
 
       await container
           .read(gameCommandControllerProvider.notifier)
           .dispatchIntent(const SelectTileCommand(1, 0));
-      await _pumpUntil(
+      await pumpUntil(
         tester,
         () => _autoFlowState(container, 'save')?.selectedUnitId == 'warrior_1',
         frames: 8,
@@ -270,16 +266,16 @@ void _registerHudAutoFlowLifecycleTests() {
   testWidgets(
     'Auto flow state does not leak between saves on the same player turn',
     (tester) async {
-      await _pumpHud(
+      await pumpHud(
         tester,
-        repository: _autoFlowManualPauseRepository(_save),
-        renderer: _SpyGameRenderer(mapData: _makeMap()),
+        repository: _autoFlowManualPauseRepository(hudSave),
+        renderer: HudTestRenderer(mapData: hudMap()),
         autoActionFlowEnabled: false,
         autoTurnFlowEnabled: false,
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
-      await _enableAutoTurnFlow(tester);
+      await enableAutoTurnFlow(tester);
       var container = ProviderScope.containerOf(
         tester.element(find.byType(GameHud)),
         listen: false,
@@ -290,9 +286,9 @@ void _registerHudAutoFlowLifecycleTests() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(_autoFlowState(container, 'save')?.selection?.city?.id, 'city_1');
 
-      final nextSave = _save.copyWith(id: 'other_save');
-      final map = _makeMap();
-      await _pumpHud(
+      final nextSave = hudSave.copyWith(id: 'other_save');
+      final map = hudMap();
+      await pumpHud(
         tester,
         repository: _autoFlowManualPauseRepository(nextSave),
         gameSave: nextSave,
@@ -301,7 +297,7 @@ void _registerHudAutoFlowLifecycleTests() {
           viewMode: MapViewMode.tile,
           saveId: nextSave.id,
         ),
-        renderer: _SpyGameRenderer(mapData: map),
+        renderer: HudTestRenderer(mapData: map),
         autoActionFlowEnabled: true,
         autoTurnFlowEnabled: true,
       );
@@ -310,7 +306,7 @@ void _registerHudAutoFlowLifecycleTests() {
         tester.element(find.byType(GameHud)),
         listen: false,
       );
-      await _pumpUntil(
+      await pumpUntil(
         tester,
         () =>
             _autoFlowState(container, nextSave.id)?.selectedUnitId ==
@@ -328,12 +324,12 @@ void _registerHudAutoFlowLifecycleTests() {
   testWidgets(
     'Enabled Auto continues after the selected unit spends movement',
     (tester) async {
-      final map = _makeMap();
+      final map = hudMap();
       final firstUnit = _autoFlowUnit('warrior_1');
       final nextUnit = _autoFlowUnit('warrior_2', col: 2);
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(
             units: [firstUnit, nextUnit],
             cities: [_autoFlowCity('city_1', col: 2, row: 2)],
@@ -347,12 +343,12 @@ void _registerHudAutoFlowLifecycleTests() {
           ),
         ),
       );
-      final renderer = _SpyGameRenderer(mapData: map);
+      final renderer = HudTestRenderer(mapData: map);
 
-      await _pumpHud(tester, repository: repository, renderer: renderer);
+      await pumpHud(tester, repository: repository, renderer: renderer);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
-      await _enableAutoTurnFlow(tester);
+      await enableAutoTurnFlow(tester);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameHud)),
         listen: false,
@@ -393,9 +389,9 @@ void _registerHudAutoFlowLifecycleTests() {
     'Auto action mode stops before ending turn when auto turn is disabled',
     (tester) async {
       final unit = _autoFlowUnit('warrior_1');
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(
             units: [unit],
             cities: [_autoFlowCity('city_1')],
@@ -403,9 +399,9 @@ void _registerHudAutoFlowLifecycleTests() {
           ),
         ),
       );
-      final renderer = _SpyGameRenderer(mapData: _makeMap());
+      final renderer = HudTestRenderer(mapData: hudMap());
 
-      await _pumpHud(tester, repository: repository, renderer: renderer);
+      await pumpHud(tester, repository: repository, renderer: renderer);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
       final container = ProviderScope.containerOf(
@@ -431,7 +427,7 @@ void _registerHudAutoFlowLifecycleTests() {
       });
       await tester.pump();
 
-      expect(repository.snapshot.save.turn, _save.turn);
+      expect(repository.snapshot.save.turn, hudSave.turn);
       expect(
         container.read(gameStateProvider('save')).value?.submittedPlayerIds,
         isEmpty,
@@ -443,9 +439,9 @@ void _registerHudAutoFlowLifecycleTests() {
     tester,
   ) async {
     final unit = _autoFlowUnit('warrior_1');
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           units: [unit],
           cities: [_autoFlowCity('city_1')],
@@ -453,12 +449,12 @@ void _registerHudAutoFlowLifecycleTests() {
         ),
       ),
     );
-    final renderer = _SpyGameRenderer(mapData: _makeMap());
+    final renderer = HudTestRenderer(mapData: hudMap());
 
-    await _pumpHud(tester, repository: repository, renderer: renderer);
+    await pumpHud(tester, repository: repository, renderer: renderer);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    await _enableAutoTurnFlow(tester);
+    await enableAutoTurnFlow(tester);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
       listen: false,
@@ -479,12 +475,12 @@ void _registerHudAutoFlowLifecycleTests() {
     await tester.pump();
     await tester.runAsync(() async {
       for (var i = 0; i < 60; i++) {
-        if (repository.snapshot.save.turn > _save.turn) break;
+        if (repository.snapshot.save.turn > hudSave.turn) break;
         await Future<void>.delayed(const Duration(milliseconds: 20));
       }
     });
     await tester.pump();
 
-    expect(repository.snapshot.save.turn, _save.turn + 1);
+    expect(repository.snapshot.save.turn, hudSave.turn + 1);
   });
 }

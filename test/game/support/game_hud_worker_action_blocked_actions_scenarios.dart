@@ -24,9 +24,9 @@ void _registerGameHudWorkerActionBlockedActionsScenarios() {
         type: FieldImprovementType.farm,
         builtByCityId: 'city_1',
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(
             activePlayerId: 'player_1',
             units: [worker],
@@ -36,7 +36,7 @@ void _registerGameHudWorkerActionBlockedActionsScenarios() {
         ),
       );
 
-      await _pumpHud(tester, repository: repository);
+      await pumpHud(tester, repository: repository);
       await tester.pump();
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameHud)),
@@ -46,14 +46,14 @@ void _registerGameHudWorkerActionBlockedActionsScenarios() {
           .read(gameCommandControllerProvider.notifier)
           .dispatchIntent(const SelectUnitCommand('worker_1'));
       await tester.pump(const Duration(milliseconds: 500));
-      await _cancelMoveTargetingBanner(tester);
+      await cancelMoveTargetingBanner(tester);
 
       expect(
         find.byKey(const Key('hudModeBanner.selectedWorkerMoveToWork')),
         findsNothing,
       );
 
-      await _openHelpEntryById(
+      await openHelpEntryById(
         tester,
         HudMinimizedPopupIds.modeBanner('save', 'selectedWorkerMoveToWork'),
       );
@@ -91,9 +91,9 @@ void _registerGameHudWorkerActionBlockedActionsScenarios() {
       name: 'City',
       center: CityHex(col: 1, row: 1),
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           activePlayerId: 'player_1',
           units: [settler],
@@ -102,11 +102,7 @@ void _registerGameHudWorkerActionBlockedActionsScenarios() {
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
@@ -116,14 +112,14 @@ void _registerGameHudWorkerActionBlockedActionsScenarios() {
         .read(gameCommandControllerProvider.notifier)
         .dispatchIntent(const SelectUnitCommand('settler_1'));
     await tester.pump(const Duration(milliseconds: 500));
-    await _cancelMoveTargetingBanner(tester);
+    await cancelMoveTargetingBanner(tester);
 
     expect(
       find.byKey(const Key('hudModeBanner.selectedSettlerMoveToCitySite')),
       findsNothing,
     );
 
-    await _openHelpEntryById(
+    await openHelpEntryById(
       tester,
       HudMinimizedPopupIds.modeBanner('save', 'selectedSettlerMoveToCitySite'),
     );
@@ -152,20 +148,16 @@ void _registerGameHudWorkerActionBlockedActionsScenarios() {
       row: 1,
       movementPoints: 2,
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(units: [warrior]),
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
-    await _disableAutoTurnFlow(tester);
+    await disableAutoTurnFlow(tester);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
       listen: false,
@@ -203,20 +195,16 @@ void _registerGameHudWorkerActionBlockedActionsScenarios() {
       row: 1,
       movementPoints: 2,
     ).copyWithHitPoints(7);
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(units: [warrior]),
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
-    await _disableAutoTurnFlow(tester);
+    await disableAutoTurnFlow(tester);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
       listen: false,

@@ -37,13 +37,13 @@ void _registerGameHudLayoutNavigationResponsiveLayoutScenarios() {
     Future<void> verifyPanel({
       required Size size,
       required String name,
-      required _FakeGameRepository repository,
+      required FakeHudRepository repository,
       required Future<void> Function() openPanel,
       required Type panelType,
       required Key surfaceKey,
     }) async {
       tester.view.physicalSize = size;
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
@@ -66,9 +66,9 @@ void _registerGameHudLayoutNavigationResponsiveLayoutScenarios() {
         find.byKey(const Key('hudOverlayPanelSlot.mobileSheet')),
       );
 
-      _expectRectInside(panel, viewport, reason: '$name panel in viewport');
-      _expectRectInside(surface, viewport, reason: '$name surface in viewport');
-      _expectRectContains(
+      expectRectInside(panel, viewport, reason: '$name panel in viewport');
+      expectRectInside(surface, viewport, reason: '$name surface in viewport');
+      expectRectContains(
         panel.inflate(1),
         surface,
         reason: '$name surface follows panel',
@@ -97,9 +97,9 @@ void _registerGameHudLayoutNavigationResponsiveLayoutScenarios() {
       await verifyPanel(
         size: size,
         name: 'technology $size',
-        repository: _FakeGameRepository(
+        repository: FakeHudRepository(
           snapshot: GameSnapshotFactory.fromClientState(
-            save: _save,
+            save: hudSave,
             state: GameClientState(activePlayerId: 'player_1'),
           ),
         ),
@@ -112,9 +112,9 @@ void _registerGameHudLayoutNavigationResponsiveLayoutScenarios() {
       await verifyPanel(
         size: size,
         name: 'empire $size',
-        repository: _FakeGameRepository(
+        repository: FakeHudRepository(
           snapshot: GameSnapshotFactory.fromClientState(
-            save: _save,
+            save: hudSave,
             state: GameClientState(
               activePlayerId: 'player_1',
               units: [warrior],
@@ -139,9 +139,9 @@ void _registerGameHudLayoutNavigationResponsiveLayoutScenarios() {
       await verifyPanel(
         size: size,
         name: 'production $size',
-        repository: _FakeGameRepository(
+        repository: FakeHudRepository(
           snapshot: GameSnapshotFactory.fromClientState(
-            save: _save,
+            save: hudSave,
             state: GameClientState(
               activePlayerId: 'player_1',
               cities: const [city],
@@ -155,7 +155,7 @@ void _registerGameHudLayoutNavigationResponsiveLayoutScenarios() {
                     gold: 0,
                     defense: 0,
                   ),
-                  playerColor: _player.colorValue,
+                  playerColor: hudPlayer.colorValue,
                 ),
               ),
             ),
@@ -185,14 +185,14 @@ void _registerGameHudLayoutNavigationResponsiveLayoutScenarios() {
         col: 0,
         row: 1,
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(activePlayerId: 'player_1', units: [warrior]),
         ),
       );
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
@@ -267,20 +267,20 @@ void _registerGameHudLayoutNavigationResponsiveLayoutScenarios() {
         col: 0,
         row: 1,
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(activePlayerId: 'player_1', units: [warrior]),
         ),
       );
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
       );
       await tester.pump();
-      await _disableAutoTurnFlow(tester);
+      await disableAutoTurnFlow(tester);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameHud)),
         listen: false,
@@ -364,20 +364,16 @@ void _registerGameHudLayoutNavigationResponsiveLayoutScenarios() {
       col: 0,
       row: 1,
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(activePlayerId: 'player_1', units: [warrior]),
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
-    await _disableAutoTurnFlow(tester);
+    await disableAutoTurnFlow(tester);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
       listen: false,

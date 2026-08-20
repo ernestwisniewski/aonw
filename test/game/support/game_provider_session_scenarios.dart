@@ -19,7 +19,7 @@ void _registerGameSessionNotifierScenarios() {
     }
 
     test('resolves to GameSession when all providers are ready', () async {
-      final container = makeContainer(mapAsync: AsyncData(_makeMap()));
+      final container = makeContainer(mapAsync: AsyncData(providerMap()));
       addTearDown(container.dispose);
 
       final session = await container.read(
@@ -32,7 +32,7 @@ void _registerGameSessionNotifierScenarios() {
 
     test('resolves with a typed source when image provider has data', () async {
       final container = makeContainer(
-        mapAsync: AsyncData(_makeMap()),
+        mapAsync: AsyncData(providerMap()),
         imageSourceAsync: const AsyncData(
           SavedMapSingleImageSource('/tmp/map.png'),
         ),
@@ -50,7 +50,7 @@ void _registerGameSessionNotifierScenarios() {
 
     test('propagates image source errors', () async {
       final container = makeContainer(
-        mapAsync: AsyncData(_makeMap()),
+        mapAsync: AsyncData(providerMap()),
         imageSourceAsync: AsyncError(Exception('no image'), StackTrace.empty),
       );
       addTearDown(container.dispose);
@@ -74,7 +74,7 @@ void _registerGameSessionNotifierScenarios() {
     });
 
     test('setViewMode updates viewMode in AsyncData state', () async {
-      final container = makeContainer(mapAsync: AsyncData(_makeMap()));
+      final container = makeContainer(mapAsync: AsyncData(providerMap()));
       addTearDown(container.dispose);
 
       await container.read(gameSessionProvider(selection, 'save_1').future);
@@ -103,10 +103,10 @@ void _registerGameSessionNotifierScenarios() {
 
     test('includes saved camera metadata in the session', () async {
       final container = makeContainer(
-        mapAsync: AsyncData(_makeMap()),
+        mapAsync: AsyncData(providerMap()),
         snapshotAsync: AsyncData(
-          _makeSnapshot(
-            save: _makeSave().copyWith(
+          providerSnapshot(
+            save: providerSave().copyWith(
               camera: const CameraState(x: 1, y: 2, zoom: 3),
             ),
           ),
@@ -129,7 +129,7 @@ void _registerGameSessionNotifierScenarios() {
           overrides: [
             activeMapProvider(
               selection,
-            ).overrideWithValue(AsyncData(_makeMap())),
+            ).overrideWithValue(AsyncData(providerMap())),
             mapImageSourceProvider(
               selection,
             ).overrideWithValue(const AsyncData(null)),

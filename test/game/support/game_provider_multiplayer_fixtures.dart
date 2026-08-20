@@ -18,9 +18,9 @@ final class _LiveCommandFixture {
   final GameUnit commander;
   final GameSave save;
   final ProviderContainer container;
-  final _FakeMultiplayerStream stream;
-  final _SpyGameRenderer renderer;
-  final _FakeSnapshotStore snapshotStore;
+  final FakeMultiplayerStream stream;
+  final SpyRenderer renderer;
+  final FakeSnapshotStore snapshotStore;
   final _MutableInt fallbackCommands;
 
   Future<void> bootstrap() async {
@@ -31,20 +31,20 @@ final class _LiveCommandFixture {
 
 _LiveCommandFixture _createLiveCommandFixture() {
   final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-  final save = _makeSave(
-    players: const [_player1],
+  final save = providerSave(
+    players: const [player1],
     gameMode: GameMode.multiplayer,
   );
-  final gameRepository = _FakeGameRepository(
+  final gameRepository = FakeGameRepository(
     snapshots: {
-      save.id: _makeSnapshot(save: save, units: [commander]),
+      save.id: providerSnapshot(save: save, units: [commander]),
     },
   );
-  final renderer = _SpyGameRenderer(mapData: _makeLandMap());
-  final snapshotStore = _FakeSnapshotStore();
-  final stream = _FakeMultiplayerStream();
+  final renderer = SpyRenderer(mapData: providerLandMap());
+  final snapshotStore = FakeSnapshotStore();
+  final stream = FakeMultiplayerStream();
   final fallbackCommands = _MutableInt();
-  final commandDispatcher = _FakeWireCommandDispatcher(({
+  final commandDispatcher = FakeWireCommandDispatcher(({
     required saveId,
     required token,
     required afterOffset,
@@ -57,14 +57,17 @@ _LiveCommandFixture _createLiveCommandFixture() {
   final container = ProviderContainer(
     overrides: [
       activeGameSessionProvider.overrideWithValue(
-        _makeSession(mapData: _makeLandMap(), gameMode: GameMode.multiplayer),
+        providerSession(
+          mapData: providerLandMap(),
+          gameMode: GameMode.multiplayer,
+        ),
       ),
       activeGameRendererProvider.overrideWithValue(renderer),
       activeRendererViewModelProvider.overrideWithValue(
         TestRendererViewModel(renderer),
       ),
       gameRepositoryProvider.overrideWithValue(gameRepository),
-      eventLogProvider.overrideWithValue(_FakeEventLog()),
+      eventLogProvider.overrideWithValue(FakeEventLog()),
       networkEventLogProvider.overrideWith(
         (ref) => ref.watch(eventLogProvider),
       ),

@@ -1,6 +1,14 @@
-part of '../game_providers_test.dart';
+import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/domain/reducer/game_state/game_state_transition.dart';
+import 'package:aonw/game/presentation/providers.dart';
+import 'package:aonw_core/domain.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-void _registerAtomicEndTurnProviderCase() {
+import '../support/test_game_renderer.dart';
+import 'support/game_provider_shared_fixtures.dart';
+
+void main() {
   test(
     'end turn persists and presents next-player queued movement once',
     () async {
@@ -20,24 +28,24 @@ void _registerAtomicEndTurnProviderCase() {
           ],
         ),
       );
-      final save = _makeSave(players: const [_player1, _player2]);
-      final renderer = _SpyGameRenderer(mapData: _makeLandMap());
-      final gameRepository = _FakeGameRepository(
+      final save = providerSave(players: const [player1, player2]);
+      final renderer = SpyRenderer(mapData: providerLandMap());
+      final gameRepository = FakeGameRepository(
         snapshots: {
-          save.id: _makeSnapshot(save: save, units: [queuedUnit]),
+          save.id: providerSnapshot(save: save, units: [queuedUnit]),
         },
       );
       final container = ProviderContainer(
         overrides: [
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(mapData: _makeLandMap()),
+            providerSession(mapData: providerLandMap()),
           ),
           activeGameRendererProvider.overrideWithValue(renderer),
           activeRendererViewModelProvider.overrideWithValue(
             TestRendererViewModel(renderer),
           ),
           gameRepositoryProvider.overrideWithValue(gameRepository),
-          ..._transportOverrides(),
+          ...transportOverrides(),
         ],
       );
       addTearDown(container.dispose);

@@ -48,9 +48,9 @@ void _registerGameHudLayoutNavigationPanelNavigationScenarios() {
       name: 'Antium',
       center: CityHex(col: 2, row: 2),
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           units: [warriorA, warriorB, worker, enemy],
           cities: const [city, enemyCity],
@@ -58,11 +58,7 @@ void _registerGameHudLayoutNavigationPanelNavigationScenarios() {
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
     await tester.tap(find.byKey(const Key('globalHud.action.empire')));
     await tester.pump();
@@ -96,20 +92,16 @@ void _registerGameHudLayoutNavigationPanelNavigationScenarios() {
       name: 'Roma',
       center: CityHex(col: 1, row: 1),
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(units: [warrior], cities: const [city]),
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
-    await _disableAutoTurnFlow(tester);
+    await disableAutoTurnFlow(tester);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
       listen: false,

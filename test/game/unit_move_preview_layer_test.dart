@@ -17,46 +17,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 part 'unit_move_preview_route_semantics_cases.dart';
 
-UnitMovementPlan _plan({
-  int targetCol = 1,
-  int targetRow = 0,
-  int totalCost = 1,
-  int availableMovementUnits = 5,
-  List<UnitMovementStep>? steps,
-}) => UnitMovementPlan(
-  unitId: 'commander_player_1',
-  targetCol: targetCol,
-  targetRow: targetRow,
-  totalCost: totalCost,
-  availableMovementUnits: availableMovementUnits,
-  steps:
-      steps ??
-      [
-        const UnitMovementStep(col: 0, row: 0, enterCost: 0, cumulativeCost: 0),
-        UnitMovementStep(
-          col: targetCol,
-          row: targetRow,
-          enterCost: totalCost,
-          cumulativeCost: totalCost,
-        ),
-      ],
-);
-
-String _turnCountLabel(int turns) => AppLocalizationsEn().turnCountLabel(turns);
-
-List<UnitMovePreview> _previewsIn(Component parent) {
-  return parent.children.query<UnitMovePreview>().toList(growable: false);
-}
-
-UnitMovePreview _singlePreviewIn(Component parent) =>
-    _previewsIn(parent).single;
-
-List<MapPillComponent> _pillsIn(Component parent) {
-  return parent.children.query<MapPillComponent>().toList(growable: false);
-}
-
-MapPillComponent _singlePillIn(Component parent) => _pillsIn(parent).single;
-
 void main() {
   group('UnitMovePreviewLayer', () {
     test('sync adds a preview component with projected path points', () {

@@ -7,6 +7,22 @@ sealed class CityTargetDomainCommand extends DomainCommand {
   String get cityId;
 }
 
+/// A presentation intent targeting one city without additional payload.
+sealed class CityTargetGameIntent extends GameIntent {
+  const CityTargetGameIntent(this.cityId);
+
+  final String cityId;
+
+  @override
+  bool operator ==(Object other) =>
+      other is CityTargetGameIntent &&
+      other.runtimeType == runtimeType &&
+      other.cityId == cityId;
+
+  @override
+  int get hashCode => Object.hash(runtimeType, cityId);
+}
+
 /// Player founds a city using the settler unit [founderId].
 final class FoundCityCommand extends UnitDomainCommand {
   FoundCityCommand(this.founderId, {required List<CityHex> controlledHexes})
@@ -167,31 +183,13 @@ final class CancelCityFoundingCommand extends GameIntent {
 }
 
 /// Player begins choosing manually worked hexes for a city on the map.
-final class StartCityWorkedHexSelectionCommand extends GameIntent {
-  const StartCityWorkedHexSelectionCommand(this.cityId);
-
-  final String cityId;
-
-  @override
-  bool operator ==(Object other) =>
-      other is StartCityWorkedHexSelectionCommand && other.cityId == cityId;
-
-  @override
-  int get hashCode => Object.hash(StartCityWorkedHexSelectionCommand, cityId);
+final class StartCityWorkedHexSelectionCommand extends CityTargetGameIntent {
+  const StartCityWorkedHexSelectionCommand(super.cityId);
 }
 
 /// Player cancels manual worked-hex selection for a city.
-final class CancelCityWorkedHexSelectionCommand extends GameIntent {
-  const CancelCityWorkedHexSelectionCommand(this.cityId);
-
-  final String cityId;
-
-  @override
-  bool operator ==(Object other) =>
-      other is CancelCityWorkedHexSelectionCommand && other.cityId == cityId;
-
-  @override
-  int get hashCode => Object.hash(CancelCityWorkedHexSelectionCommand, cityId);
+final class CancelCityWorkedHexSelectionCommand extends CityTargetGameIntent {
+  const CancelCityWorkedHexSelectionCommand(super.cityId);
 }
 
 /// Player toggles whether a city manually works the hex at ([col], [row]).
@@ -215,31 +213,13 @@ final class ToggleWorkedHexCommand extends CityTargetDomainCommand {
 }
 
 /// Player begins choosing the next expansion hex for a city on the map.
-final class StartCityExpansionSelectionCommand extends GameIntent {
-  const StartCityExpansionSelectionCommand(this.cityId);
-
-  final String cityId;
-
-  @override
-  bool operator ==(Object other) =>
-      other is StartCityExpansionSelectionCommand && other.cityId == cityId;
-
-  @override
-  int get hashCode => Object.hash(StartCityExpansionSelectionCommand, cityId);
+final class StartCityExpansionSelectionCommand extends CityTargetGameIntent {
+  const StartCityExpansionSelectionCommand(super.cityId);
 }
 
 /// Player cancels next-expansion selection for a city.
-final class CancelCityExpansionSelectionCommand extends GameIntent {
-  const CancelCityExpansionSelectionCommand(this.cityId);
-
-  final String cityId;
-
-  @override
-  bool operator ==(Object other) =>
-      other is CancelCityExpansionSelectionCommand && other.cityId == cityId;
-
-  @override
-  int get hashCode => Object.hash(CancelCityExpansionSelectionCommand, cityId);
+final class CancelCityExpansionSelectionCommand extends CityTargetGameIntent {
+  const CancelCityExpansionSelectionCommand(super.cityId);
 }
 
 /// Player chooses which hex a city should claim on its next territory growth.

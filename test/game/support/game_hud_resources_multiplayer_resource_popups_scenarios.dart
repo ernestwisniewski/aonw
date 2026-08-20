@@ -30,18 +30,14 @@ void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
       center: CityHex(col: 1, row: 1),
       controlledHexes: [CityHex(col: 2, row: 1)],
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(cities: [city]),
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      session: _makeSession(mapData),
-    );
+    await pumpHud(tester, repository: repository, session: hudSession(mapData));
     await tester.pump();
 
     await tester.tap(find.byKey(const Key('gameHud.resource.resources')));
@@ -113,9 +109,9 @@ void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
         row: 0,
       ),
     ];
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           activePlayerId: 'player_1',
           cities: const [city],
@@ -125,11 +121,7 @@ void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
 
     final goldFinder = find.byKey(const Key('gameHud.resource.gold'));
@@ -193,9 +185,9 @@ void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
         row: 0,
       ),
     ];
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           activePlayerId: 'player_1',
           cities: const [city],
@@ -205,11 +197,7 @@ void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
 
     await tester.tap(find.byKey(const Key('gameHud.resource.gold')));
@@ -249,9 +237,9 @@ void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
         ..resetDevicePixelRatio();
     });
 
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           activePlayerId: 'player_1',
           playerGold: {'player_1': 17},
@@ -259,11 +247,7 @@ void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
 
     await tester.tap(find.byKey(const Key('gameHud.resource.gold')));
@@ -294,7 +278,7 @@ void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
   testWidgets('options panel does not expose a manual save button', (
     tester,
   ) async {
-    await _pumpHud(tester, repository: _FakeGameRepository());
+    await pumpHud(tester, repository: FakeHudRepository());
 
     final optionsButton = find.byKey(const Key('gameOptions.optionsButton'));
     final optionsRect = tester.getRect(optionsButton);
@@ -311,17 +295,17 @@ void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
     expect(find.text('MULTIPLAYER'), findsNothing);
   });
   testWidgets('multiplayer options expose resign action', (tester) async {
-    final save = _save.copyWith(gameMode: GameMode.multiplayer);
-    await _pumpHud(
+    final save = hudSave.copyWith(gameMode: GameMode.multiplayer);
+    await pumpHud(
       tester,
-      repository: _FakeGameRepository(),
+      repository: FakeHudRepository(),
       gameSave: save,
       networkSession: NetworkSession(
         userId: 'user_1',
         playerId: 'player_1',
         token: AuthToken('jwt-token'),
         matchId: 'save',
-        connectionState: _connectedNetworkState,
+        connectionState: hudNetworkConnected,
       ),
     );
     await tester.tap(find.byKey(const Key('gameOptions.optionsButton')));
@@ -332,22 +316,22 @@ void _registerGameHudResourcesMultiplayerResourcePopupsScenarios() {
   testWidgets('multiplayer shows player rail on the right side', (
     tester,
   ) async {
-    final save = _save.copyWith(
+    final save = hudSave.copyWith(
       gameMode: GameMode.multiplayer,
-      players: const [_player, _player2],
+      players: const [hudPlayer, hudPlayer2],
       playerStates: const {
         'player_1': PlayerTurnState.active,
         'player_2': PlayerTurnState.finished,
       },
     );
 
-    await _pumpHud(
+    await pumpHud(
       tester,
-      repository: _FakeGameRepository(
+      repository: FakeHudRepository(
         snapshot: GameSnapshotFactory.create(save: save),
       ),
       gameSave: save,
-      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
     );
     await tester.pump();
 

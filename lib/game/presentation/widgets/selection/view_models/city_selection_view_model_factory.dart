@@ -61,15 +61,7 @@ abstract final class CitySelectionViewModelFactory {
       ruleset: cityRuleset,
       effects: cityEconomy?.technologyEffects ?? TechnologyEffectSummary.empty,
     );
-    final cityBuildingItems = [
-      for (final type in city.buildings)
-        SelectionCityBuildingItem(
-          type: type,
-          label:
-              buildingName?.call(type) ??
-              GameDisplayNames.cityBuilding(l10n, type),
-        ),
-    ];
+    final cityBuildingItems = _buildingItems(city, buildingName, l10n);
     final cohesionItem = CityCohesionSelectionItem.build(
       city,
       cities,
@@ -192,6 +184,20 @@ abstract final class CitySelectionViewModelFactory {
       tags: const [],
     );
   }
+
+  static List<SelectionCityBuildingItem> _buildingItems(
+    GameCity city,
+    String Function(CityBuildingType type)? buildingName,
+    AppLocalizations l10n,
+  ) => [
+    for (final type in city.buildings)
+      SelectionCityBuildingItem(
+        type: type,
+        label:
+            buildingName?.call(type) ??
+            GameDisplayNames.cityBuilding(l10n, type),
+      ),
+  ];
 
   static String _subtitleFor(
     GameCity city, {

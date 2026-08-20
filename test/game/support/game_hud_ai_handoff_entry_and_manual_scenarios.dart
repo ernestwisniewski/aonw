@@ -4,9 +4,9 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
   testWidgets('hotseat entry shows handoff before turn start preparation', (
     tester,
   ) async {
-    await _pumpHud(
+    await pumpHud(
       tester,
-      repository: _FakeGameRepository(),
+      repository: FakeHudRepository(),
       showEntryHandoff: true,
     );
     for (var i = 0; i < 5 && find.text('ALICE').evaluate().isEmpty; i++) {
@@ -17,11 +17,11 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
     expect(find.text('CONTINUE'), findsOneWidget);
   });
   testWidgets('hotseat entry skips handoff for AI players', (tester) async {
-    final save = _save.copyWith(players: const [_aiPlayer]);
+    final save = hudSave.copyWith(players: const [hudAi]);
 
-    await _pumpHud(
+    await pumpHud(
       tester,
-      repository: _FakeGameRepository(
+      repository: FakeHudRepository(
         snapshot: GameSnapshotFactory.create(save: save),
       ),
       gameSave: save,
@@ -34,27 +34,27 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
   testWidgets('hotseat autopilot ends AI turn and requests human handoff', (
     tester,
   ) async {
-    final save = _save.copyWith(
-      players: const [_aiPlayer, _player2],
+    final save = hudSave.copyWith(
+      players: const [hudAi, hudPlayer2],
       playerStates: const {
         'player_1': PlayerTurnState.active,
         'player_2': PlayerTurnState.active,
       },
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: save,
       aiAutopilotEnabled: true,
     );
-    await _pumpUntil(tester, () {
+    await pumpUntil(tester, () {
       return repository.snapshot.save.playerStates['player_1'] ==
           PlayerTurnState.finished;
     });
@@ -80,7 +80,7 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
     expect(find.text('CONTINUE'), findsOneWidget);
 
     await tester.tap(find.text('CONTINUE'));
-    await _pumpUntil(
+    await pumpUntil(
       tester,
       () =>
           container.read(gameStateProvider('save')).value?.activePlayerId ==
@@ -103,14 +103,14 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
   testWidgets(
     'manual hotseat end turn waits for handoff confirmation before renderer presentation',
     (tester) async {
-      final save = _save.copyWith(
-        players: const [_player, _player2],
+      final save = hudSave.copyWith(
+        players: const [hudPlayer, hudPlayer2],
         playerStates: const {
           'player_1': PlayerTurnState.active,
           'player_2': PlayerTurnState.active,
         },
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
           save: save,
           state: GameClientState(
@@ -125,9 +125,9 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
           ),
         ),
       );
-      final renderer = _SpyGameRenderer(mapData: _makeMap());
+      final renderer = HudTestRenderer(mapData: hudMap());
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         gameSave: save,
@@ -138,7 +138,7 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
       renderer.handledEffects.clear();
 
       await tester.tap(find.byType(EndTurnButton));
-      await _pumpUntil(
+      await pumpUntil(
         tester,
         () => find.text('BOB').evaluate().isNotEmpty,
         frames: 8,
@@ -149,27 +149,27 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
       expect(renderer.handledEffects, isEmpty);
 
       await tester.tap(find.text('CONTINUE'));
-      await _pumpUntil(
+      await pumpUntil(
         tester,
-        () => _readGameState(tester)?.activePlayerId == 'player_2',
+        () => readHudGameState(tester)?.activePlayerId == 'player_2',
         frames: 8,
       );
 
       expect(renderer.appliedStates, isNotEmpty);
-      expect(_readGameState(tester)?.activePlayerId, 'player_2');
+      expect(readHudGameState(tester)?.activePlayerId, 'player_2');
     },
   );
   testWidgets(
     'auto hotseat end turn waits for handoff confirmation before renderer presentation',
     (tester) async {
-      final save = _save.copyWith(
-        players: const [_player, _player2],
+      final save = hudSave.copyWith(
+        players: const [hudPlayer, hudPlayer2],
         playerStates: const {
           'player_1': PlayerTurnState.active,
           'player_2': PlayerTurnState.active,
         },
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
           save: save,
           state: GameClientState(
@@ -184,9 +184,9 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
           ),
         ),
       );
-      final renderer = _SpyGameRenderer(mapData: _makeMap());
+      final renderer = HudTestRenderer(mapData: hudMap());
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         gameSave: save,
@@ -196,8 +196,8 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
       renderer.appliedStates.clear();
       renderer.handledEffects.clear();
 
-      await _enableAutoTurnFlow(tester);
-      await _pumpUntil(
+      await enableAutoTurnFlow(tester);
+      await pumpUntil(
         tester,
         () => find.text('BOB').evaluate().isNotEmpty,
         frames: 8,
@@ -208,25 +208,25 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
       expect(renderer.handledEffects, isEmpty);
 
       await tester.tap(find.text('CONTINUE'));
-      await _pumpUntil(
+      await pumpUntil(
         tester,
-        () => _readGameState(tester)?.activePlayerId == 'player_2',
+        () => readHudGameState(tester)?.activePlayerId == 'player_2',
         frames: 8,
       );
 
       expect(renderer.appliedStates, isNotEmpty);
-      expect(_readGameState(tester)?.activePlayerId, 'player_2');
+      expect(readHudGameState(tester)?.activePlayerId, 'player_2');
     },
   );
   testWidgets(
     'hotseat autopilot chains multiple AI players without exposing AI fog',
     (tester) async {
-      final fixture = _createHotseatAiChainFixture();
+      final fixture = createHotseatAiChainFixture();
       final save = fixture.save;
       final renderer = fixture.renderer;
       final repository = fixture.repository;
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         gameSave: save,
@@ -255,7 +255,7 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
         isFalse,
       );
 
-      await _waitForHotseatAiChain(tester, container, fixture);
+      await waitForHotseatAiChain(tester, container, fixture);
 
       expect(repository.snapshot.save.playerStates, const {
         'player_1': PlayerTurnState.active,
@@ -265,7 +265,7 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
       });
       expect(repository.snapshot.save.turn, save.turn + 1);
       expect(container.read(gameHandoffProvider)?.playerId, 'player_1');
-      await _pumpUntil(
+      await pumpUntil(
         tester,
         () => find.text('ALICE').evaluate().isNotEmpty,
         frames: 8,
@@ -286,7 +286,7 @@ void _registerGameHudAiHandoffEntryAndManualScenarios() {
       );
 
       await tester.tap(find.text('CONTINUE'));
-      await _pumpUntil(tester, () {
+      await pumpUntil(tester, () {
         final state = container.read(gameStateProvider('save')).value;
         final control = container.read(gamePlayerControlControllerProvider);
         return (state?.activePlayerCanAct ?? false) &&

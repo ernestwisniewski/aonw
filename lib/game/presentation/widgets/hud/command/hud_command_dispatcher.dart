@@ -6,31 +6,27 @@ import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/audio/game_sound_cue.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/services/turn_presentation_sequencer.dart';
-import 'package:aonw/game/presentation/widgets/hud/city/hud_city_production_commands.dart';
 import 'package:aonw/game/presentation/widgets/hud/command/hud_pending_action_commands.dart';
 import 'package:aonw/game/presentation/widgets/hud/command/hud_pending_action_targets.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_next_action_panel.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_modes.dart';
 import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_open_availability.dart';
-import 'package:aonw/game/presentation/widgets/hud/resources/hud_resource_breakdown_controller.dart';
 import 'package:aonw/game/presentation/widgets/hud/selection/hud_selection_commands.dart';
-import 'package:aonw/game/presentation/widgets/resources/top_resource_strip.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
 import 'package:aonw/game/presentation/widgets/selection_info/selection_info.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/command.dart';
 import 'package:aonw_core/game/domain/objective.dart';
 import 'package:aonw_core/game/domain/save.dart';
-import 'package:aonw_core/game/domain/technology.dart';
 import 'package:aonw_core/game/domain/unit.dart';
-import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-part 'hud_command_dispatcher_city_research.dart';
+export 'hud_command_dispatcher_city_research.dart';
+export 'hud_command_dispatcher_resources.dart';
+
 part 'hud_command_dispatcher_panels.dart';
-part 'hud_command_dispatcher_resources.dart';
 part 'hud_command_dispatcher_selection.dart';
 part 'hud_command_dispatcher_turn_flow.dart';
 
@@ -41,6 +37,13 @@ class HudCommandDispatcher {
   const HudCommandDispatcher(this._ref);
 
   final Ref _ref;
+
+  Ref get ref => _ref;
+
+  bool get canInteract => _canInteract;
+
+  void applyPanelModes(HudPanelModes modes, {bool playSound = true}) =>
+      _applyPanelModes(modes, playSound: playSound);
 
   GameClientState? _currentGameState() {
     final saveId = _ref.read(activeGameSessionProvider)?.saveId;

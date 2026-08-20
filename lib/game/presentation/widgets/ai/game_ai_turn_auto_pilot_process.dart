@@ -44,7 +44,7 @@ extension _GameAiTurnAutoPilotProcess on _GameAiTurnAutoPilotState {
       planExecutor: isolatedAiPlanExecutor,
       sessionReader: () => ref.read(activeGameSessionProvider),
       networkSessionReader: () => ref.read(networkSessionProvider),
-      canContinue: () => mounted,
+      canContinue: () => _canContinue,
       shouldRunLocalAiForMode: GameAiTurnAutoPilotRules.shouldRunLocalAiForMode,
       canRunScheduledAiTurn: GameAiTurnAutoPilotRules.canRunScheduledAiTurn,
       strategyRegistryFor: _strategyRegistryFor,
@@ -84,9 +84,13 @@ extension _GameAiTurnAutoPilotProcess on _GameAiTurnAutoPilotState {
       hiddenDispatch: ({required saveId, required command, required context}) {
         return ref
             .read(gameStateProvider(saveId).notifier)
-            .dispatchTransition(command, context: context);
+            .dispatchTransition(
+              command,
+              context: context,
+              canPublish: () => _canContinue,
+            );
       },
-      canContinue: () => mounted,
+      canContinue: () => _canContinue,
     );
   }
 }

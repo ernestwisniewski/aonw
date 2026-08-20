@@ -48,7 +48,6 @@ class _RuntimeUseCaseSmokeRunner {
     );
     final playerReports = <_RuntimeUseCaseSmokePlayerReport>[];
     final findings = <_Finding>[];
-
     for (final player in aiPlayers) {
       final playerSnapshot = _unsubmitPlayer(repository.snapshot, player.id);
       repository.replace(playerSnapshot);

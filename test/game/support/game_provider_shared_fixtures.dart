@@ -1,13 +1,35 @@
-part of '../game_providers_test.dart';
+import 'dart:async';
 
-class _FakeGameRepository implements GameRepository {
+import 'package:aonw/api/transport/live_event_subscription.dart';
+import 'package:aonw/game/application/ports/auth_token.dart';
+import 'package:aonw/game/application/ports/event_log.dart';
+import 'package:aonw/game/application/ports/game_logger.dart';
+import 'package:aonw/game/application/ports/game_repository.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
+import 'package:aonw/game/application/ports/network_session.dart' as api;
+import 'package:aonw/game/application/ports/new_game_request.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
+import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/ports/snapshot_store.dart';
+import 'package:aonw/game/application/ports/wire_command_dispatcher.dart';
+import 'package:aonw/game/application/services/game_session.dart';
+import 'package:aonw/game/presentation/audio/game_audio_controller.dart';
+import 'package:aonw/game/presentation/providers.dart';
+import 'package:aonw_core/domain.dart';
+import 'package:aonw_core/protocol.dart';
+import 'package:aonw_server_client/aonw_server_client.dart' as sp;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../support/test_game_renderer.dart';
+
+class FakeGameRepository implements GameRepository {
   final Map<String, CanonicalGameSnapshot> snapshots;
   final Map<String, GameSave>? saves;
   final bool throwOnLoad;
   final Completer<void>? loadGate;
   int loadCount = 0;
 
-  _FakeGameRepository({
+  FakeGameRepository({
     Map<String, CanonicalGameSnapshot>? snapshots,
     this.saves,
     this.throwOnLoad = false,
@@ -97,7 +119,7 @@ class _FakeGameRepository implements GameRepository {
   }
 }
 
-class _FakeEventLog implements EventLog {
+class FakeEventLog implements EventLog {
   final commands = <RecordedDomainCommand>[];
 
   @override
@@ -126,7 +148,7 @@ class _FakeEventLog implements EventLog {
   }
 }
 
-class _TrackedEventLog extends _FakeEventLog {
+class TrackedEventLog extends FakeEventLog {
   int _inFlightOperations = 0;
   int maxConcurrentOperations = 0;
 
@@ -154,7 +176,7 @@ class _TrackedEventLog extends _FakeEventLog {
   }
 }
 
-class _FakeSnapshotStore implements SnapshotStore {
+class FakeSnapshotStore implements SnapshotStore {
   final snapshots = <Snapshot>[];
   final saveIds = <String>[];
 
@@ -170,7 +192,7 @@ class _FakeSnapshotStore implements SnapshotStore {
   }
 }
 
-class _FakeGameLogger implements GameLogger {
+class FakeGameLogger implements GameLogger {
   final warnings = <({String tag, String message, Object? error})>[];
 
   @override
@@ -187,7 +209,7 @@ class _FakeGameLogger implements GameLogger {
   }
 }
 
-class _FakeMultiplayerStream {
+class FakeMultiplayerStream {
   final _listenCompleter = Completer<void>();
   final clientMessages = <sp.MultiplayerClientMessage>[];
   late final _messages = StreamController<sp.MultiplayerServerMessage>(
@@ -217,7 +239,7 @@ class _FakeMultiplayerStream {
   Future<void> close() => _messages.close();
 }
 
-class _FakeWireCommandDispatcher implements WireCommandDispatcher {
+class FakeWireCommandDispatcher implements WireCommandDispatcher {
   final Future<WireCommandAck> Function({
     required String saveId,
     required AuthToken token,
@@ -227,7 +249,7 @@ class _FakeWireCommandDispatcher implements WireCommandDispatcher {
   })
   handler;
 
-  const _FakeWireCommandDispatcher(this.handler);
+  const FakeWireCommandDispatcher(this.handler);
 
   @override
   Future<WireCommandAck> send({
@@ -247,30 +269,33 @@ class _FakeWireCommandDispatcher implements WireCommandDispatcher {
   }
 }
 
-List<T> _transportOverrides<T>() {
+List<T> transportOverrides<T>() {
   return [
-    eventLogProvider.overrideWithValue(_FakeEventLog()) as T,
+    eventLogProvider.overrideWithValue(FakeEventLog()) as T,
     networkEventLogProvider.overrideWith((ref) => ref.watch(eventLogProvider))
         as T,
     networkGameRepositoryProvider.overrideWith(
           (ref) => ref.watch(gameRepositoryProvider),
         )
         as T,
-    snapshotStoreProvider.overrideWithValue(_FakeSnapshotStore()) as T,
+    snapshotStoreProvider.overrideWithValue(FakeSnapshotStore()) as T,
   ];
 }
 
-ProviderContainer _liveMovementContainer({
+ProviderContainer liveMovementContainer({
   required GameSave save,
-  required _FakeGameRepository gameRepository,
-  required _FakeMultiplayerStream fakeStream,
-  required _SpyGameRenderer renderer,
+  required FakeGameRepository gameRepository,
+  required FakeMultiplayerStream fakeStream,
+  required SpyRenderer renderer,
   GameAudioController? audioController,
 }) {
   return ProviderContainer(
     overrides: [
       activeGameSessionProvider.overrideWithValue(
-        _makeSession(mapData: _makeLandMap(), gameMode: GameMode.multiplayer),
+        providerSession(
+          mapData: providerLandMap(),
+          gameMode: GameMode.multiplayer,
+        ),
       ),
       activeGameRendererProvider.overrideWithValue(renderer),
       activeRendererViewModelProvider.overrideWithValue(
@@ -293,12 +318,12 @@ ProviderContainer _liveMovementContainer({
           ),
         ),
       ),
-      ..._transportOverrides(),
+      ...transportOverrides(),
     ],
   );
 }
 
-WorldMap _makeMap() => WorldMap(
+WorldMap providerMap() => WorldMap(
   cols: 5,
   rows: 5,
   tiles: [
@@ -314,7 +339,7 @@ WorldMap _makeMap() => WorldMap(
   ],
 );
 
-WorldMap _makeLandMap() => WorldMap(
+WorldMap providerLandMap() => WorldMap(
   cols: 5,
   rows: 5,
   tiles: [
@@ -330,9 +355,9 @@ WorldMap _makeLandMap() => WorldMap(
   ],
 );
 
-const _player1 = Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4);
-const _player2 = Player(id: 'player_2', name: 'Bob', colorValue: 0xFFc45050);
-const _localAiPlayer = Player(
+const player1 = Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4);
+const player2 = Player(id: 'player_2', name: 'Bob', colorValue: 0xFFc45050);
+const localAiPlayer = Player(
   id: 'ai_1',
   name: 'AI',
   colorValue: 0xFFc45050,
@@ -345,9 +370,9 @@ const _localAiPlayer = Player(
   ),
 );
 
-GameSave _makeSave({
+GameSave providerSave({
   int turn = 1,
-  List<Player> players = const [_player1],
+  List<Player> players = const [player1],
   Map<String, PlayerTurnState>? playerStates,
   GameMode gameMode = GameMode.hotSeat,
 }) => GameSave(
@@ -365,7 +390,7 @@ GameSave _makeSave({
   gameMode: gameMode,
 );
 
-CanonicalGameSnapshot _makeSnapshot({
+CanonicalGameSnapshot providerSnapshot({
   GameSave? save,
   List<GameUnit> units = const [],
   List<GameCity> cities = const [],
@@ -376,7 +401,7 @@ CanonicalGameSnapshot _makeSnapshot({
   int eventLogOffset = 0,
 }) {
   return GameSnapshotFactory.create(
-    save: save ?? _makeSave(),
+    save: save ?? providerSave(),
     units: units,
     cities: cities,
     fieldImprovements: fieldImprovements,
@@ -387,12 +412,12 @@ CanonicalGameSnapshot _makeSnapshot({
   );
 }
 
-GameSession _makeSession({
+GameSession providerSession({
   String saveId = 'save_1',
   WorldMap? mapData,
   GameMode gameMode = GameMode.hotSeat,
 }) {
-  final map = mapData ?? _makeMap();
+  final map = mapData ?? providerMap();
   return GameSession(
     mapData: map,
     viewMode: MapViewMode.tile,
@@ -401,4 +426,4 @@ GameSession _makeSession({
   );
 }
 
-typedef _SpyGameRenderer = TestGameRenderer;
+typedef SpyRenderer = TestGameRenderer;

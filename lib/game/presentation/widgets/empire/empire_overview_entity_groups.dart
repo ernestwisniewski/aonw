@@ -12,6 +12,7 @@ import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:flutter/material.dart';
 
+part 'empire_overview_group_icon.dart';
 part 'empire_overview_group_shell.dart';
 
 class EmpireUnitGroupBlock extends StatelessWidget {

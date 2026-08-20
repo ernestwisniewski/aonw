@@ -126,10 +126,13 @@ void main() {
           final input = json['input'] as Map<String, dynamic>;
           final map = input['map'] as Map<String, dynamic>;
           final tiles = map['tiles'] as List<dynamic>;
-          final target = tiles.cast<Map<String, dynamic>>().singleWhere(
-            (tile) => tile['col'] == 1 && tile['row'] == 0,
-          );
-          _replaceTileTerrainSemantics(target, 'desert');
+          tiles.cast<Map<String, dynamic>>().singleWhere(
+              (tile) => tile['col'] == 1 && tile['row'] == 0,
+            )
+            ..['terrains'] = ['desert']
+            ..['displayTerrain'] = 'desert'
+            ..['yieldTerrain'] = 'desert'
+            ..['terrainTags'] = ['desert'];
         },
       ),
       (
@@ -337,14 +340,6 @@ Map<String, dynamic> _inputCity(Map<String, dynamic> json, String cityId) {
 void _mirrorExpectedState(Map<String, dynamic> json) {
   final expected = json['expected'] as Map<String, dynamic>;
   expected['state'] = jsonDecode(jsonEncode(_inputState(json)));
-}
-
-void _replaceTileTerrainSemantics(Map<String, dynamic> tile, String terrain) {
-  tile
-    ..['terrains'] = [terrain]
-    ..['displayTerrain'] = terrain
-    ..['yieldTerrain'] = terrain
-    ..['terrainTags'] = [terrain];
 }
 
 Directory _copyCorpus() {

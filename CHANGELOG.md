@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased
+
+- Added the shared Rust engine foundation for authoritative maps, movement,
+  unit actions, saves, replays, and client contracts, with Flutter and Godot
+  integration plus deterministic parity and rollback gates.
+- Added the Godot map workbench, runtime map preview, and versioned map content
+  workflow for developing the next presentation client against shared rules.
+- Added a deterministic runtime asset pipeline with atlases, manifests,
+  reproducibility checks, and explicit memory and frame-budget validation.
+- Added a radial hex-selection palette and improved graphic-map clouds,
+  markers, routes, cities, resources, and hover or movement feedback.
+- Improved local single-player and hot-seat turn ownership so AI players wait
+  for the human submission, consecutive AI turns resolve in order, and input
+  remains blocked only until the human turn is fully ready.
+- Fixed AI handoff lifecycle failures caused by late provider writes and
+  disposed HUD widgets by keeping stateful overlay subscribers mounted and
+  cancelling asynchronous publication after disposal.
+- Hardened authored terrain semantics and updated performance fixtures so
+  generated river tiles always retain a valid base yield terrain.
+- Expanded command, renderer, HUD, provider, architecture, performance,
+  coverage, protocol, and mutation regression gates while reducing oversized
+  production and test libraries without relaxing quality thresholds.
+
 ## 1.1.15 - 2026-08-13
 
 - Added a complete strategic-resource economy with revealed deposits,

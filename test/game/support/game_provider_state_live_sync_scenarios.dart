@@ -8,18 +8,18 @@ void _registerGameStateNotifierLiveSyncScenarios() {
       () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_2');
         final moved = commander.copyWith(col: 1, row: 0);
-        final save = _makeSave(
-          players: const [_player1, _player2],
+        final save = providerSave(
+          players: const [player1, player2],
           gameMode: GameMode.multiplayer,
         );
-        final gameRepository = _FakeGameRepository(
+        final gameRepository = FakeGameRepository(
           snapshots: {
-            save.id: _makeSnapshot(save: save, units: [commander]),
+            save.id: providerSnapshot(save: save, units: [commander]),
           },
         );
-        final fakeStream = _FakeMultiplayerStream();
-        final renderer = _SpyGameRenderer(mapData: _makeLandMap());
-        final container = _liveMovementContainer(
+        final fakeStream = FakeMultiplayerStream();
+        final renderer = SpyRenderer(mapData: providerLandMap());
+        final container = liveMovementContainer(
           save: save,
           gameRepository: gameRepository,
           fakeStream: fakeStream,
@@ -35,7 +35,7 @@ void _registerGameStateNotifierLiveSyncScenarios() {
         await container.read(gameStateProvider(save.id).future);
         await fakeStream.listened.timeout(const Duration(seconds: 1));
 
-        final snapshot = _makeSnapshot(
+        final snapshot = providerSnapshot(
           save: save,
           units: [moved],
           eventLogOffset: 1,
@@ -64,8 +64,8 @@ void _registerGameStateNotifierLiveSyncScenarios() {
       },
     );
     test('refreshes save metadata after live multiplayer snapshots', () async {
-      final save = _makeSave(
-        players: const [_player1, _player2],
+      final save = providerSave(
+        players: const [player1, player2],
         gameMode: GameMode.multiplayer,
       );
       final advancedSave = save.copyWith(
@@ -75,15 +75,15 @@ void _registerGameStateNotifierLiveSyncScenarios() {
           'player_2': PlayerTurnState.active,
         },
       );
-      final gameRepository = _FakeGameRepository(
-        snapshots: {save.id: _makeSnapshot(save: save)},
+      final gameRepository = FakeGameRepository(
+        snapshots: {save.id: providerSnapshot(save: save)},
       );
-      final fakeStream = _FakeMultiplayerStream();
+      final fakeStream = FakeMultiplayerStream();
       final container = ProviderContainer(
         overrides: [
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(
-              mapData: _makeLandMap(),
+            providerSession(
+              mapData: providerLandMap(),
               gameMode: GameMode.multiplayer,
             ),
           ),
@@ -102,7 +102,7 @@ void _registerGameStateNotifierLiveSyncScenarios() {
               ),
             ),
           ),
-          ..._transportOverrides(),
+          ...transportOverrides(),
         ],
       );
       addTearDown(container.dispose);
@@ -120,7 +120,7 @@ void _registerGameStateNotifierLiveSyncScenarios() {
       await container.read(gameSaveProvider(save.id).future);
       await container.read(gameStateProvider(save.id).future);
       await fakeStream.listened.timeout(const Duration(seconds: 1));
-      gameRepository.snapshots[save.id] = _makeSnapshot(
+      gameRepository.snapshots[save.id] = providerSnapshot(
         save: advancedSave,
         eventLogOffset: 1,
       );
@@ -152,19 +152,19 @@ void _registerGameStateNotifierLiveSyncScenarios() {
     test(
       'marks multiplayer session reconnecting when live stream closes',
       () async {
-        final save = _makeSave(
-          players: const [_player1, _player2],
+        final save = providerSave(
+          players: const [player1, player2],
           gameMode: GameMode.multiplayer,
         );
-        final gameRepository = _FakeGameRepository(
-          snapshots: {save.id: _makeSnapshot(save: save)},
+        final gameRepository = FakeGameRepository(
+          snapshots: {save.id: providerSnapshot(save: save)},
         );
-        final fakeStream = _FakeMultiplayerStream();
+        final fakeStream = FakeMultiplayerStream();
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(
-              _makeSession(
-                mapData: _makeLandMap(),
+              providerSession(
+                mapData: providerLandMap(),
                 gameMode: GameMode.multiplayer,
               ),
             ),
@@ -172,7 +172,7 @@ void _registerGameStateNotifierLiveSyncScenarios() {
             multiplayerStreamConnectorProvider.overrideWithValue(
               fakeStream.connector,
             ),
-            ..._transportOverrides(),
+            ...transportOverrides(),
           ],
         );
         addTearDown(container.dispose);
@@ -212,22 +212,22 @@ void _registerGameStateNotifierLiveSyncScenarios() {
     );
     test('dispatch updates provider state and persists the snapshot', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final save = _makeSave(players: const [_player1]);
-      final gameRepository = _FakeGameRepository(
+      final save = providerSave(players: const [player1]);
+      final gameRepository = FakeGameRepository(
         snapshots: {
-          save.id: _makeSnapshot(save: save, units: [commander]),
+          save.id: providerSnapshot(save: save, units: [commander]),
         },
       );
       final container = ProviderContainer(
         overrides: [
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(
-              mapData: _makeLandMap(),
+            providerSession(
+              mapData: providerLandMap(),
               gameMode: GameMode.multiplayer,
             ),
           ),
           gameRepositoryProvider.overrideWithValue(gameRepository),
-          ..._transportOverrides(),
+          ...transportOverrides(),
         ],
       );
       addTearDown(container.dispose);
@@ -246,23 +246,25 @@ void _registerGameStateNotifierLiveSyncScenarios() {
       expect(gameRepository.snapshots[save.id]!.units.single.col, 1);
       expect(uiEffects, isEmpty);
     });
-    _registerAtomicEndTurnProviderCase();
     test(
       'serializes concurrent local dispatches before event log writes',
       () async {
-        final save = _makeSave(players: const [_player1]);
-        final gameRepository = _FakeGameRepository(
-          snapshots: {save.id: _makeSnapshot(save: save)},
+        final save = providerSave(players: const [player1]);
+        final gameRepository = FakeGameRepository(
+          snapshots: {save.id: providerSnapshot(save: save)},
         );
-        final eventLog = _TrackedEventLog();
+        final eventLog = TrackedEventLog();
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(
-              _makeSession(mapData: _makeLandMap(), gameMode: GameMode.hotSeat),
+              providerSession(
+                mapData: providerLandMap(),
+                gameMode: GameMode.hotSeat,
+              ),
             ),
             gameRepositoryProvider.overrideWithValue(gameRepository),
             eventLogProvider.overrideWithValue(eventLog),
-            snapshotStoreProvider.overrideWithValue(_FakeSnapshotStore()),
+            snapshotStoreProvider.overrideWithValue(FakeSnapshotStore()),
           ],
         );
         addTearDown(container.dispose);

@@ -10,10 +10,9 @@ import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/providers/map/map_inspection_binder.dart';
 import 'package:aonw/game/presentation/screens/game/game_map_vignette_overlay.dart';
 import 'package:aonw/game/presentation/screens/game/game_primary_action_controller.dart';
-import 'package:aonw/game/presentation/screens/game/gamepad_renderer_input_binding.dart';
+import 'package:aonw/game/presentation/screens/game/game_screen_renderer_input_gate.dart';
 import 'package:aonw/game/presentation/screens/lobby/lobby_match_status_rules.dart';
 import 'package:aonw/game/presentation/widgets.dart';
-import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
 import 'package:aonw/game/presentation/widgets/screen/game_startup_asset_preloader.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
@@ -261,61 +260,33 @@ class _GameRendererSessionHostState
               onDispatcherChanged: (dispatcher) {
                 _rendererCommandDispatcher = dispatcher;
               },
-              child: Consumer(
-                builder: (context, scopedRef, _) {
-                  final turnPresentationBlocksInput = scopedRef.watch(
-                    gamePlayerControlControllerProvider.select(
-                      (control) => control.phase.blocksHumanInput,
-                    ),
-                  );
-                  final hudPanelModes = scopedRef.watch(
-                    hudPanelControllerProvider,
-                  );
-                  final hudGamepadFocusActive = scopedRef.watch(
-                    hudGamepadFocusControllerProvider.select(
-                      (state) => state.active,
-                    ),
-                  );
-                  final hudGamepadPopupInputCaptured = scopedRef.watch(
-                    hudGamepadPopupInputCaptureProvider,
-                  );
-                  final rendererGamepadInputEnabled =
-                      !turnPresentationBlocksInput &&
-                      !hudGamepadFocusActive &&
-                      !hudGamepadPopupInputCaptured &&
-                      !hudPanelModes.blocksRendererInput;
-                  return GamepadRendererInputBinding(
+              child: GameScreenRendererInputGate(
+                renderer: _renderer,
+                gamepadSettings: gameplaySettings.gamepad,
+                builder: (context, gamepadInput) => GamePrimaryActionController(
+                  session: session,
+                  gameSave: widget.gameSave,
+                  animatingUnitIdsListenable:
+                      _renderer.animatingUnitIdsListenable,
+                  gamepadInputListenable: gamepadInput,
+                  child: _GameRendererPlaySurface(
+                    selection: widget.selection,
+                    session: session,
+                    gameSave: widget.gameSave,
                     renderer: _renderer,
-                    gamepadSettings: gameplaySettings.gamepad,
-                    rendererInputEnabled: rendererGamepadInputEnabled,
-                    builder: (context, gamepadInput) =>
-                        GamePrimaryActionController(
-                          session: session,
-                          gameSave: widget.gameSave,
-                          animatingUnitIdsListenable:
-                              _renderer.animatingUnitIdsListenable,
-                          gamepadInputListenable: gamepadInput,
-                          child: _GameRendererPlaySurface(
-                            selection: widget.selection,
-                            session: session,
-                            gameSave: widget.gameSave,
-                            renderer: _renderer,
-                            displaySettings: widget.displaySettings,
-                            loadingProgress: _loadingProgressController,
-                            gamepadInputListenable: gamepadInput,
-                            preloadFuture: _startupAssetPreload,
-                            showDiceRollTestOverlay: _showDiceRollTestOverlay,
-                            onToggleDiceRollTest: () {
-                              setState(() {
-                                _showDiceRollTestOverlay =
-                                    !_showDiceRollTestOverlay;
-                              });
-                            },
-                            onClose: _returnToMainMenu,
-                          ),
-                        ),
-                  );
-                },
+                    displaySettings: widget.displaySettings,
+                    loadingProgress: _loadingProgressController,
+                    gamepadInputListenable: gamepadInput,
+                    preloadFuture: _startupAssetPreload,
+                    showDiceRollTestOverlay: _showDiceRollTestOverlay,
+                    onToggleDiceRollTest: () {
+                      setState(() {
+                        _showDiceRollTestOverlay = !_showDiceRollTestOverlay;
+                      });
+                    },
+                    onClose: _returnToMainMenu,
+                  ),
+                ),
               ),
             ),
           ),

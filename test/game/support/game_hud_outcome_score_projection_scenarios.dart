@@ -10,9 +10,9 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
         name: 'City',
         center: CityHex(col: 1, row: 1),
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(
             activePlayerId: 'player_1',
             cities: [city],
@@ -21,7 +21,7 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
         ),
       );
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
@@ -82,10 +82,10 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
     tester,
   ) async {
     final turnLimit = GameLengthConfig.standard60.turnLimit!;
-    final save = _save.copyWith(
+    final save = hudSave.copyWith(
       turn: turnLimit - 5,
       matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
-      players: const [_player, _player2],
+      players: const [hudPlayer, hudPlayer2],
       playerStates: const {
         'player_1': PlayerTurnState.active,
         'player_2': PlayerTurnState.active,
@@ -97,7 +97,7 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
       name: 'City',
       center: CityHex(col: 1, row: 1),
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -123,7 +123,7 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
       ),
     );
 
-    await _pumpHud(tester, repository: repository, gameSave: save);
+    await pumpHud(tester, repository: repository, gameSave: save);
     await tester.pump();
 
     final victoryFinder = find.byKey(const Key('gameHud.victoryStatus'));
@@ -163,10 +163,10 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
     'score pressure links the score badge, objectives overview and action marker',
     (tester) async {
       final turnLimit = GameLengthConfig.standard60.turnLimit!;
-      final save = _save.copyWith(
+      final save = hudSave.copyWith(
         turn: turnLimit - 5,
         matchRules: MatchRules.forGameLength(GameLengthConfig.standard60),
-        players: const [_player, _player2],
+        players: const [hudPlayer, hudPlayer2],
         playerStates: const {
           'player_1': PlayerTurnState.active,
           'player_2': PlayerTurnState.active,
@@ -184,7 +184,7 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
         name: 'Rywal',
         center: CityHex(col: 2, row: 2),
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
           save: save,
           state: GameClientState(
@@ -217,7 +217,7 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
         ),
       );
 
-      await _pumpHud(tester, repository: repository, gameSave: save);
+      await pumpHud(tester, repository: repository, gameSave: save);
       await tester.pump();
 
       expect(
@@ -241,14 +241,14 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
     tester,
   ) async {
     var closed = false;
-    final save = _save.copyWith(
-      players: const [_player, _player2],
+    final save = hudSave.copyWith(
+      players: const [hudPlayer, hudPlayer2],
       playerStates: const {
         'player_1': PlayerTurnState.active,
         'player_2': PlayerTurnState.active,
       },
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -266,7 +266,7 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
       ),
     );
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: save,
@@ -289,14 +289,14 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
   testWidgets('outcome overlay shows defeat for the active losing player', (
     tester,
   ) async {
-    final save = _save.copyWith(
-      players: const [_player, _player2],
+    final save = hudSave.copyWith(
+      players: const [hudPlayer, hudPlayer2],
       playerStates: const {
         'player_1': PlayerTurnState.finished,
         'player_2': PlayerTurnState.active,
       },
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -314,7 +314,7 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
       ),
     );
 
-    await _pumpHud(tester, repository: repository, gameSave: save);
+    await pumpHud(tester, repository: repository, gameSave: save);
     await tester.pump();
 
     expect(find.byKey(const Key('gameHud.outcomeOverlay')), findsOneWidget);
@@ -325,7 +325,7 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
   testWidgets(
     'local single-player mode still shows victory without a network match',
     (tester) async {
-      final aiPlayer = _player2.copyWith(
+      final aiPlayer = hudPlayer2.copyWith(
         kind: PlayerKind.ai,
         ai: const AiPlayer(
           strategyId: AiStrategyId.random,
@@ -335,15 +335,15 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
         ),
       );
       final localMode = NewGameFlow.singlePlayer.gameMode;
-      final save = _save.copyWith(
+      final save = hudSave.copyWith(
         gameMode: localMode,
-        players: [_player, aiPlayer],
+        players: [hudPlayer, aiPlayer],
         playerStates: const {
           'player_1': PlayerTurnState.active,
           'player_2': PlayerTurnState.active,
         },
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
           save: save,
           state: GameClientState(
@@ -363,11 +363,11 @@ void _registerGameHudOutcomeScoreProjectionScenarios() {
 
       expect(NewGameFlow.singlePlayer.startsLocally, isTrue);
       expect(localMode, GameMode.multiplayer);
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         gameSave: save,
-        session: _makeSession(_makeMap(), gameMode: localMode),
+        session: hudSession(hudMap(), gameMode: localMode),
       );
       await tester.pump();
 

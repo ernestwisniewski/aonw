@@ -2,7 +2,7 @@ part of '../game_hud_test.dart';
 
 Future<({GameSave save, ProviderContainer container})>
 _pumpCoachmarkWalkthrough(WidgetTester tester) async {
-  final save = _save.copyWith(turn: 1, gameMode: GameMode.multiplayer);
+  final save = hudSave.copyWith(turn: 1, gameMode: GameMode.multiplayer);
   final settler = GameUnit(
     id: 'settler_1',
     ownerPlayerId: 'player_1',
@@ -11,7 +11,7 @@ _pumpCoachmarkWalkthrough(WidgetTester tester) async {
     col: 1,
     row: 1,
   );
-  final repository = _FakeGameRepository(
+  final repository = FakeHudRepository(
     snapshot: GameSnapshotFactory.fromClientState(
       save: save,
       state: GameClientState(
@@ -24,11 +24,11 @@ _pumpCoachmarkWalkthrough(WidgetTester tester) async {
       ),
     ),
   );
-  await _pumpHud(
+  await pumpHud(
     tester,
     repository: repository,
     gameSave: save,
-    session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+    session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
   );
   await tester.pump();
   await tester.pump();
@@ -51,7 +51,7 @@ Future<void> _walkCoachmarkStepsOneToFour(
   expect(find.byKey(const Key('firstTurnCoachmarks.minimize')), findsOneWidget);
   expect(find.text('Step 1: read the selection'), findsOneWidget);
   expect(find.text('Step 1/8'), findsOneWidget);
-  _expectCoachmarkHaloTracks(
+  expectCoachmarkHaloTracks(
     tester,
     find.byKey(const Key('hudActionDeck.surface')),
     reason: 'Opening coachmark should track the selected-unit deck.',
@@ -70,7 +70,7 @@ Future<void> _walkCoachmarkStepsOneToFour(
   expect(minimized.single.subtitle, 'First-turn guide');
   expect(find.text('Step 2: check your empire'), findsOneWidget);
   expect(find.text('Step 2/8'), findsOneWidget);
-  _expectCoachmarkHaloTracks(
+  expectCoachmarkHaloTracks(
     tester,
     find.byKey(const Key('gameHud.resource.singleRow')),
     reason: 'Resource coachmark should track the visible top resource row.',
@@ -87,7 +87,7 @@ Future<void> _walkCoachmarkStepsOneToFour(
   expect(updated.single.payload['stepIndex'], '1');
   expect(find.text('Step 3: learn the left menu'), findsOneWidget);
   expect(find.text('Step 3/8'), findsOneWidget);
-  _expectCoachmarkHaloTracks(
+  expectCoachmarkHaloTracks(
     tester,
     find.byKey(const Key('gameOptions.optionsButton')),
     reason: 'Side menu coachmark should track the left menu rail.',
@@ -98,7 +98,7 @@ Future<void> _walkCoachmarkStepsOneToFour(
   expect(find.text('Step 4: give the right order'), findsOneWidget);
   expect(find.text('Step 4/8'), findsOneWidget);
   final target = find.byKey(const Key('hudActionDeck.line.actions'));
-  _expectCoachmarkHaloTracks(
+  expectCoachmarkHaloTracks(
     tester,
     target.evaluate().isNotEmpty
         ? target
@@ -123,7 +123,7 @@ Future<void> _finishCoachmarkWalkthrough(
   expect(minimized.single.payload['stepIndex'], '3');
   expect(find.text('Step 5: choose research'), findsOneWidget);
   expect(find.text('Step 5/8'), findsOneWidget);
-  _expectCoachmarkHaloTracks(
+  expectCoachmarkHaloTracks(
     tester,
     find.byKey(const Key('globalHud.action.research')),
     reason: 'Research coachmark should track the bottom research action.',
@@ -133,7 +133,7 @@ Future<void> _finishCoachmarkWalkthrough(
   await tester.pump();
   expect(find.text('Step 6: set up the city'), findsOneWidget);
   expect(find.text('Step 6/8'), findsOneWidget);
-  _expectCoachmarkHaloTracks(
+  expectCoachmarkHaloTracks(
     tester,
     find.byKey(const Key('hudActionDeck.surface')),
     reason: 'City setup coachmark should return to the bottom deck.',
@@ -142,7 +142,7 @@ Future<void> _finishCoachmarkWalkthrough(
   await tester.pump();
   expect(find.text('Step 7: clear the action queue'), findsOneWidget);
   expect(find.text('Step 7/8'), findsOneWidget);
-  _expectCoachmarkHaloTracks(
+  expectCoachmarkHaloTracks(
     tester,
     find.byType(EndTurnButton),
     reason: 'Action queue coachmark should track the action button.',
@@ -152,7 +152,7 @@ Future<void> _finishCoachmarkWalkthrough(
   expect(find.text('Step 8: end the turn and repeat'), findsOneWidget);
   expect(find.text('Step 8/8'), findsOneWidget);
   expect(find.text('Done'), findsOneWidget);
-  _expectCoachmarkHaloTracks(
+  expectCoachmarkHaloTracks(
     tester,
     find.byType(EndTurnButton),
     reason: 'End-turn coachmark should track the centered action button.',

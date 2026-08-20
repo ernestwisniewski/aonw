@@ -255,7 +255,11 @@ void _registerRushFixtureGuardTests() {
       final tiles = (map['tiles'] as List<dynamic>)
           .cast<Map<String, dynamic>>();
       for (final tile in tiles) {
-        _replaceTileTerrainSemantics(tile, 'grassland');
+        tile
+          ..['terrains'] = ['grassland']
+          ..['displayTerrain'] = 'grassland'
+          ..['yieldTerrain'] = 'grassland'
+          ..['terrainTags'] = ['grassland'];
       }
       final state = _inputState(json);
       (state['units'] as List<dynamic>)

@@ -16,34 +16,7 @@ List<_BreakdownSectionModel> _goldSections(ResourceBreakdownPopup popup) {
   return [
     _BreakdownSectionModel(
       title: popup.l10n.commonSummary,
-      rows: [
-        _BreakdownRowModel(
-          label: popup.l10n.resourceBreakdownTreasury,
-          value: '${gold.treasury}',
-        ),
-        _BreakdownRowModel(
-          label: popup.l10n.resourceBreakdownCityIncome,
-          value: _signed(gold.cityIncome),
-          positive: gold.cityIncome > 0,
-        ),
-        if (gold.projectSources.isNotEmpty)
-          _BreakdownRowModel(
-            label: popup.l10n.commonProjects,
-            value: _signed(gold.projectIncome),
-            positive: gold.projectIncome > 0,
-          ),
-        _BreakdownRowModel(
-          label: popup.l10n.resourceBreakdownUpkeep,
-          value: '-${gold.unitUpkeep}',
-          negative: gold.unitUpkeep > 0,
-        ),
-        _BreakdownRowModel(
-          label: popup.l10n.resourceBreakdownNetPerTurn,
-          value: _signed(gold.netPerTurn),
-          positive: gold.netPerTurn > 0,
-          negative: gold.netPerTurn < 0,
-        ),
-      ],
+      rows: _goldSummaryRows(popup),
     ),
     _BreakdownSectionModel(
       title: popup.l10n.commonCities,
@@ -81,6 +54,38 @@ List<_BreakdownSectionModel> _goldSections(ResourceBreakdownPopup popup) {
     _BreakdownSectionModel(
       title: popup.l10n.unitsSection,
       rows: _unitUpkeepRows(popup),
+    ),
+  ];
+}
+
+List<_BreakdownRowModel> _goldSummaryRows(ResourceBreakdownPopup popup) {
+  final gold = popup.gold;
+  return [
+    _BreakdownRowModel(
+      label: popup.l10n.resourceBreakdownTreasury,
+      value: '${gold.treasury}',
+    ),
+    _BreakdownRowModel(
+      label: popup.l10n.resourceBreakdownCityIncome,
+      value: _signed(gold.cityIncome),
+      positive: gold.cityIncome > 0,
+    ),
+    if (gold.projectSources.isNotEmpty)
+      _BreakdownRowModel(
+        label: popup.l10n.commonProjects,
+        value: _signed(gold.projectIncome),
+        positive: gold.projectIncome > 0,
+      ),
+    _BreakdownRowModel(
+      label: popup.l10n.resourceBreakdownUpkeep,
+      value: '-${gold.unitUpkeep}',
+      negative: gold.unitUpkeep > 0,
+    ),
+    _BreakdownRowModel(
+      label: popup.l10n.resourceBreakdownNetPerTurn,
+      value: _signed(gold.netPerTurn),
+      positive: gold.netPerTurn > 0,
+      negative: gold.netPerTurn < 0,
     ),
   ];
 }

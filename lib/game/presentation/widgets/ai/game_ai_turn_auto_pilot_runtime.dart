@@ -58,7 +58,7 @@ extension _GameAiTurnAutoPilotRuntime on _GameAiTurnAutoPilotState {
       schedulePostFrame: (callback) {
         WidgetsBinding.instance.addPostFrameCallback((_) => callback());
       },
-      canContinue: () => mounted,
+      canContinue: () => _canContinue,
       notifyStateChanged: _notifyStateChanged,
       interCommandDelay: () => widget.interCommandDelay,
       now: _nowUtc,

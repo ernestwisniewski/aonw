@@ -39,6 +39,7 @@ final class GameStateCommands {
   Future<DispatchCommandResult> _dispatchTransitionNow(
     DomainCommand command, {
     GameCommandContext context = const GameCommandContext(),
+    bool Function()? canPublish,
   }) async {
     if (!_binding.isMounted()) {
       return DispatchCommandResult(state: GameClientState());
@@ -62,7 +63,7 @@ final class GameStateCommands {
       command: command,
       context: context,
     );
-    await _publishDispatchResult(result);
+    await _publishDispatchResult(result, canPublish: canPublish);
     return result;
   }
 
@@ -131,8 +132,11 @@ final class GameStateCommands {
     return result;
   }
 
-  Future<void> _publishDispatchResult(DispatchCommandResult result) async {
-    if (_binding.isMounted()) {
+  Future<void> _publishDispatchResult(
+    DispatchCommandResult result, {
+    bool Function()? canPublish,
+  }) async {
+    if (_binding.isMounted() && (canPublish?.call() ?? true)) {
       if (result.offset >= 0) {
         _runtime.eventLogOffset = result.offset;
         _binding.ref.invalidate(gameActivityHistoryProvider(_runtime.saveId));
@@ -169,9 +173,14 @@ final class GameStateCommands {
   Future<DispatchCommandResult> dispatchTransition(
     DomainCommand command, {
     GameCommandContext context = const GameCommandContext(),
+    bool Function()? canPublish,
   }) {
     return _enqueueDispatch(
-      () => _dispatchTransitionNow(command, context: context),
+      () => _dispatchTransitionNow(
+        command,
+        context: context,
+        canPublish: canPublish,
+      ),
     );
   }
 

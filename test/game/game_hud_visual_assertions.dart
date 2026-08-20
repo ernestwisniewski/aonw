@@ -31,7 +31,7 @@ GameClientState _hudQaState() {
           gold: 0,
           defense: 0,
         ),
-        playerColor: _player.colorValue,
+        playerColor: hudPlayer.colorValue,
       ),
     ),
   );

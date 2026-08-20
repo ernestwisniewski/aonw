@@ -189,14 +189,14 @@ void _registerGameStateNotifierDispatchScenarios() {
       },
     );
     test('surfaces bootstrap load errors as AsyncError', () async {
-      final gameRepository = _FakeGameRepository(throwOnLoad: true);
+      final gameRepository = FakeGameRepository(throwOnLoad: true);
       final container = ProviderContainer(
         overrides: [
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(mapData: _makeLandMap()),
+            providerSession(mapData: providerLandMap()),
           ),
           gameRepositoryProvider.overrideWithValue(gameRepository),
-          ..._transportOverrides(),
+          ...transportOverrides(),
         ],
       );
       addTearDown(container.dispose);

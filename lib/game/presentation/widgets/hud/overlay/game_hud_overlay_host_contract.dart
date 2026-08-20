@@ -6,6 +6,7 @@ class GameHudOverlayHost extends ConsumerStatefulWidget {
   final ValueListenable<bool> initialCameraFocusReadyListenable;
   final ValueListenable<GamepadInputSnapshot> gamepadInputListenable;
   final GameSave gameSave;
+  final bool visible;
   final bool optionsOverlayOpenOverride;
 
   const GameHudOverlayHost({
@@ -17,6 +18,7 @@ class GameHudOverlayHost extends ConsumerStatefulWidget {
           GamepadInputSnapshot.empty,
         ),
     required this.gameSave,
+    this.visible = true,
     this.optionsOverlayOpenOverride = false,
     super.key,
   });

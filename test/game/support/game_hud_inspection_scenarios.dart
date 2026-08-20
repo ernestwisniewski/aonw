@@ -2,7 +2,7 @@ part of '../game_hud_test.dart';
 
 void _registerGameHudInspectionScenarios() {
   testWidgets('army detail is inactive on initial render', (tester) async {
-    await _pumpHud(tester, repository: _FakeGameRepository());
+    await pumpHud(tester, repository: FakeHudRepository());
 
     // The army detail sheet should only appear after the Army action is tapped.
     expect(find.text('Warriors'), findsNothing);
@@ -11,20 +11,16 @@ void _registerGameHudInspectionScenarios() {
   testWidgets('map inspection shows tile details without game selection', (
     tester,
   ) async {
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
-    await _disableAutoTurnFlow(tester);
+    await disableAutoTurnFlow(tester);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
       listen: false,
@@ -32,7 +28,7 @@ void _registerGameHudInspectionScenarios() {
 
     container
         .read(mapInspectionControllerProvider.notifier)
-        .inspectTile(_makeMap().tileAt(1, 1)!);
+        .inspectTile(hudMap().tileAt(1, 1)!);
     await tester.pump();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
@@ -61,20 +57,16 @@ void _registerGameHudInspectionScenarios() {
   });
 
   testWidgets('anchored map inspection shows compact hex menu', (tester) async {
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
-    await _disableAutoTurnFlow(tester);
+    await disableAutoTurnFlow(tester);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
       listen: false,
@@ -82,7 +74,7 @@ void _registerGameHudInspectionScenarios() {
 
     container
         .read(mapInspectionControllerProvider.notifier)
-        .inspectTile(_makeMap().tileAt(1, 1)!, anchor: const Offset(180, 120));
+        .inspectTile(hudMap().tileAt(1, 1)!, anchor: const Offset(180, 120));
     await tester.pump();
 
     expect(
@@ -117,20 +109,16 @@ void _registerGameHudInspectionScenarios() {
   testWidgets('anchored map inspection shows map objective details', (
     tester,
   ) async {
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
-    await _disableAutoTurnFlow(tester);
+    await disableAutoTurnFlow(tester);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
       listen: false,
@@ -164,10 +152,10 @@ void _registerGameHudInspectionScenarios() {
   testWidgets(
     'objective inspection keeps a dedicated popup over selected hex',
     (tester) async {
-      final map = _makeMap();
-      final repository = _FakeGameRepository(
+      final map = hudMap();
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(
             activePlayerId: 'player_1',
             interaction: InteractionState(
@@ -177,13 +165,13 @@ void _registerGameHudInspectionScenarios() {
         ),
       );
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
       );
       await tester.pump();
-      await _disableAutoTurnFlow(tester);
+      await disableAutoTurnFlow(tester);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameHud)),
         listen: false,
@@ -219,9 +207,9 @@ void _registerGameHudInspectionScenarios() {
   testWidgets(
     'anchored map inspection marks unlocked improvement technology green',
     (tester) async {
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(
             activePlayerId: 'player_1',
             research: ResearchState(
@@ -235,13 +223,13 @@ void _registerGameHudInspectionScenarios() {
         ),
       );
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
       );
       await tester.pump();
-      await _disableAutoTurnFlow(tester);
+      await disableAutoTurnFlow(tester);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameHud)),
         listen: false,
@@ -249,10 +237,7 @@ void _registerGameHudInspectionScenarios() {
 
       container
           .read(mapInspectionControllerProvider.notifier)
-          .inspectTile(
-            _makeMap().tileAt(1, 1)!,
-            anchor: const Offset(180, 120),
-          );
+          .inspectTile(hudMap().tileAt(1, 1)!, anchor: const Offset(180, 120));
       await tester.pump();
 
       final unlockedTechnology = tester.widget<Text>(

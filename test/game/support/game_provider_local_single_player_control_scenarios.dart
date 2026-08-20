@@ -2,8 +2,8 @@ part of '../game_providers_test.dart';
 
 void _registerGameProviderLocalSinglePlayerControlScenarios() {
   test('resume derives local single-player planning and resolving phases', () {
-    final planningSave = _makeSave(
-      players: const [_player1, _localAiPlayer],
+    final planningSave = providerSave(
+      players: const [player1, localAiPlayer],
       gameMode: GameMode.multiplayer,
     );
     final planningContainer = ProviderContainer(
@@ -19,8 +19,8 @@ void _registerGameProviderLocalSinglePlayerControlScenarios() {
     expect(planning.phase, LocalSinglePlayerTurnPhase.humanPlanning);
     expect(planning.canInteract, isTrue);
 
-    final resolvingSave = _makeSave(
-      players: const [_player1, _localAiPlayer],
+    final resolvingSave = providerSave(
+      players: const [player1, localAiPlayer],
       playerStates: const {
         'player_1': PlayerTurnState.finished,
         'ai_1': PlayerTurnState.active,
@@ -45,24 +45,24 @@ void _registerGameProviderLocalSinglePlayerControlScenarios() {
   test(
     'prepare keeps domain control ready but blocks input until release',
     () async {
-      final save = _makeSave(
-        players: const [_player1, _localAiPlayer],
+      final save = providerSave(
+        players: const [player1, localAiPlayer],
         gameMode: GameMode.multiplayer,
       );
-      final gameRepository = _FakeGameRepository(
-        snapshots: {save.id: _makeSnapshot(save: save)},
+      final gameRepository = FakeGameRepository(
+        snapshots: {save.id: providerSnapshot(save: save)},
       );
       final container = ProviderContainer(
         overrides: [
           gamePlayerControlSaveProvider.overrideWithValue(save),
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(
-              mapData: _makeLandMap(),
+            providerSession(
+              mapData: providerLandMap(),
               gameMode: GameMode.multiplayer,
             ),
           ),
           gameRepositoryProvider.overrideWithValue(gameRepository),
-          ..._transportOverrides(),
+          ...transportOverrides(),
         ],
       );
       addTearDown(container.dispose);
@@ -103,30 +103,35 @@ void _registerGameProviderLocalSinglePlayerControlScenarios() {
   );
 
   test('release uses the authoritative save loaded during prepare', () async {
-    final scopedSave = _makeSave(
-      players: const [_player1, _localAiPlayer],
+    final scopedSave = providerSave(
+      players: const [player1, localAiPlayer],
       playerStates: const {
         'player_1': PlayerTurnState.finished,
         'ai_1': PlayerTurnState.active,
       },
       gameMode: GameMode.multiplayer,
     );
-    final authoritativeSave = _makeSave(
+    final authoritativeSave = providerSave(
       turn: 2,
-      players: const [_player1, _localAiPlayer],
+      players: const [player1, localAiPlayer],
       gameMode: GameMode.multiplayer,
     );
-    final gameRepository = _FakeGameRepository(
-      snapshots: {authoritativeSave.id: _makeSnapshot(save: authoritativeSave)},
+    final gameRepository = FakeGameRepository(
+      snapshots: {
+        authoritativeSave.id: providerSnapshot(save: authoritativeSave),
+      },
     );
     final container = ProviderContainer(
       overrides: [
         gamePlayerControlSaveProvider.overrideWithValue(scopedSave),
         activeGameSessionProvider.overrideWithValue(
-          _makeSession(mapData: _makeLandMap(), gameMode: GameMode.multiplayer),
+          providerSession(
+            mapData: providerLandMap(),
+            gameMode: GameMode.multiplayer,
+          ),
         ),
         gameRepositoryProvider.overrideWithValue(gameRepository),
-        ..._transportOverrides(),
+        ...transportOverrides(),
       ],
     );
     addTearDown(container.dispose);
@@ -150,25 +155,28 @@ void _registerGameProviderLocalSinglePlayerControlScenarios() {
   });
 
   test('release fallback restores input when opening fails early', () async {
-    final scopedSave = _makeSave(
-      players: const [_player1, _localAiPlayer],
+    final scopedSave = providerSave(
+      players: const [player1, localAiPlayer],
       playerStates: const {
         'player_1': PlayerTurnState.finished,
         'ai_1': PlayerTurnState.active,
       },
       gameMode: GameMode.multiplayer,
     );
-    final gameRepository = _FakeGameRepository(
-      snapshots: {scopedSave.id: _makeSnapshot(save: scopedSave)},
+    final gameRepository = FakeGameRepository(
+      snapshots: {scopedSave.id: providerSnapshot(save: scopedSave)},
     );
     final container = ProviderContainer(
       overrides: [
         gamePlayerControlSaveProvider.overrideWithValue(scopedSave),
         activeGameSessionProvider.overrideWithValue(
-          _makeSession(mapData: _makeLandMap(), gameMode: GameMode.multiplayer),
+          providerSession(
+            mapData: providerLandMap(),
+            gameMode: GameMode.multiplayer,
+          ),
         ),
         gameRepositoryProvider.overrideWithValue(gameRepository),
-        ..._transportOverrides(),
+        ...transportOverrides(),
       ],
     );
     addTearDown(container.dispose);
@@ -191,8 +199,8 @@ void _registerGameProviderLocalSinglePlayerControlScenarios() {
   });
 
   test('turn-opening lease only lets its owner cancel the barrier', () {
-    final save = _makeSave(
-      players: const [_player1, _localAiPlayer],
+    final save = providerSave(
+      players: const [player1, localAiPlayer],
       gameMode: GameMode.multiplayer,
     );
     final container = ProviderContainer(
@@ -240,13 +248,13 @@ void _registerGameProviderLocalSinglePlayerControlScenarios() {
   test(
     'local single-player end turn blocks duplicate input immediately',
     () async {
-      final save = _makeSave(
-        players: const [_player1, _localAiPlayer],
+      final save = providerSave(
+        players: const [player1, localAiPlayer],
         gameMode: GameMode.multiplayer,
       );
       final reloadGate = Completer<void>();
       final saves = {save.id: save};
-      final gameRepository = _FakeGameRepository(
+      final gameRepository = FakeGameRepository(
         saves: saves,
         loadGate: reloadGate,
       );
@@ -254,13 +262,13 @@ void _registerGameProviderLocalSinglePlayerControlScenarios() {
         overrides: [
           gamePlayerControlSaveProvider.overrideWithValue(save),
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(
-              mapData: _makeLandMap(),
+            providerSession(
+              mapData: providerLandMap(),
               gameMode: GameMode.multiplayer,
             ),
           ),
           gameRepositoryProvider.overrideWithValue(gameRepository),
-          ..._transportOverrides(),
+          ...transportOverrides(),
         ],
       );
       addTearDown(container.dispose);
@@ -282,9 +290,9 @@ void _registerGameProviderLocalSinglePlayerControlScenarios() {
       expect(finished.canAct, isFalse);
       expect(finished.canInteract, isFalse);
 
-      final nextTurnSave = _makeSave(
+      final nextTurnSave = providerSave(
         turn: 2,
-        players: const [_player1, _localAiPlayer],
+        players: const [player1, localAiPlayer],
         gameMode: GameMode.multiplayer,
       );
       controller.syncWithSave(nextTurnSave);
@@ -301,20 +309,23 @@ void _registerGameProviderLocalSinglePlayerControlScenarios() {
   );
 
   test('failed local single-player end turn restores human input', () async {
-    final save = _makeSave(
-      players: const [_player1, _localAiPlayer],
+    final save = providerSave(
+      players: const [player1, localAiPlayer],
       gameMode: GameMode.multiplayer,
     );
     final container = ProviderContainer(
       overrides: [
         gamePlayerControlSaveProvider.overrideWithValue(save),
         activeGameSessionProvider.overrideWithValue(
-          _makeSession(mapData: _makeLandMap(), gameMode: GameMode.multiplayer),
+          providerSession(
+            mapData: providerLandMap(),
+            gameMode: GameMode.multiplayer,
+          ),
         ),
         gameRepositoryProvider.overrideWithValue(
-          _FakeGameRepository(throwOnLoad: true),
+          FakeGameRepository(throwOnLoad: true),
         ),
-        ..._transportOverrides(),
+        ...transportOverrides(),
       ],
     );
     addTearDown(container.dispose);

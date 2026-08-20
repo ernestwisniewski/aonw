@@ -221,4 +221,33 @@ extension _GameHudOverlayHostHelpers on _GameHudOverlayHostState {
     }
     return details;
   }
+
+  List<Widget> _deckGlobalActions({
+    required AppLocalizations l10n,
+    required HudOverlayFrame frame,
+    required bool activityLogAvailable,
+  }) {
+    final actions = _actions;
+    return buildDeckGlobalHudActions(
+      l10n: l10n,
+      useBottomGlobalActions: frame.layoutMetrics.useBottomGlobalActions,
+      canShowGlobalActions: frame.playerActionState.canShowGlobalActions,
+      technologyActive: frame.modes.technology,
+      activeTechnologyName: frame.activeTechnologySummary.name,
+      activeTechnologyTurnsRemaining:
+          frame.activeTechnologySummary.turnsRemaining,
+      activeTechnologyCompletionTurn:
+          frame.activeTechnologySummary.completionTurn,
+      researchAvailable: frame.researchAvailable,
+      objectivesAvailable: frame.objectiveSummary.activeObjectives.isNotEmpty,
+      objectivesActive: frame.modes.objectives,
+      empireActive: frame.modes.empire,
+      activityLogAvailable: activityLogAvailable,
+      activityLogActive: frame.modes.activityLog,
+      onToggleTechnology: actions.toggleTechnologyPanel,
+      onToggleObjectives: actions.toggleObjectivesPanel,
+      onToggleEmpire: actions.toggleEmpirePanel,
+      onToggleActivityLog: actions.toggleActivityLogPanel,
+    );
+  }
 }

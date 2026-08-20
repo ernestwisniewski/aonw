@@ -34,9 +34,9 @@ void _registerHudCombatCameraTests() {
         row: 0,
         movementPoints: 2,
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(
             activePlayerId: 'player_1',
             units: [attacker, defender],
@@ -57,16 +57,16 @@ void _registerHudCombatCameraTests() {
           ),
         ),
       );
-      final renderer = _SpyGameRenderer(mapData: _makeMap());
+      final renderer = HudTestRenderer(mapData: hudMap());
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         renderer: renderer,
         autoActionFlowEnabled: false,
       );
       await tester.pump();
-      await _disableAutoTurnFlow(tester);
+      await disableAutoTurnFlow(tester);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameHud)),
         listen: false,

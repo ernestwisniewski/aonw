@@ -1,13 +1,7 @@
 import 'dart:async';
 
 import 'package:aonw/game/application/ports/auth_token.dart';
-import 'package:aonw/game/application/ports/event_log.dart';
-import 'package:aonw/game/application/ports/game_logger.dart';
-import 'package:aonw/game/application/ports/game_repository.dart';
-import 'package:aonw/game/application/ports/network_connection.dart';
 import 'package:aonw/game/application/ports/network_session.dart';
-import 'package:aonw/game/application/ports/new_game_request.dart';
-import 'package:aonw/game/application/ports/recorded_domain_command.dart';
 import 'package:aonw/game/application/ports/save_snapshot.dart';
 import 'package:aonw/game/application/services/game_handoff.dart';
 import 'package:aonw/game/application/services/game_session.dart';
@@ -43,15 +37,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../support/test_game_renderer.dart';
+import 'support/game_hud_ai_handoff_fixtures.dart';
 import 'support/game_hud_external_fixtures.dart';
+import 'support/game_hud_shared_fixtures.dart';
 
 part 'game_hud_auto_flow_regression_tests.dart';
 part 'game_hud_combat_camera_tests.dart';
-part 'game_hud_snapshot_fixture.dart';
 part 'game_hud_visual_assertions.dart';
-part 'support/game_hud_shared_fixtures.dart';
-part 'support/game_hud_ai_handoff_fixtures.dart';
 part 'support/game_hud_coachmark_fixtures.dart';
 part 'support/game_hud_notification_fixtures.dart';
 part 'support/game_hud_scenario_registry.dart';
@@ -84,6 +76,9 @@ part 'support/game_hud_primary_action_scenarios.dart';
 part 'support/game_hud_auto_navigation_scenarios.dart';
 part 'support/game_hud_auto_navigation_selection_cycle_scenarios.dart';
 part 'support/game_hud_auto_navigation_panel_restore_scenarios.dart';
+
+const terminalMatch = terminalHudTestMatch;
+const pumpHud = PumpGameHudTest();
 
 void main() {
   setUp(() {

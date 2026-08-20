@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 
 import 'package:aonw/game/application/services/game_event_descriptor.dart';
 import 'package:aonw/game/domain/game_state.dart';
@@ -12,6 +11,7 @@ import 'package:aonw/game/presentation/providers/hud/hud_command_dispatcher_prov
 import 'package:aonw/game/presentation/providers/hud/hud_minimized_popups_provider.dart';
 import 'package:aonw/game/presentation/providers/player/handoff_provider.dart';
 import 'package:aonw/game/presentation/providers/player/player_control_provider.dart';
+import 'package:aonw/game/presentation/widgets/diplomacy/diplomatic_popup_inbox.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';
@@ -34,7 +34,6 @@ part 'diplomatic_dialog_results.dart';
 part 'diplomatic_event_dialog.dart';
 part 'diplomatic_message_dialog.dart';
 part 'diplomatic_popup_event_policy.dart';
-part 'diplomatic_popup_inbox.dart';
 part 'diplomatic_popup_notification_router.dart';
 part 'diplomatic_popup_payloads.dart';
 part 'diplomatic_popup_presentation.dart';
@@ -52,7 +51,7 @@ class DiplomaticMessagePopupOverlay extends ConsumerStatefulWidget {
 
 class _DiplomaticMessagePopupOverlayState
     extends ConsumerState<DiplomaticMessagePopupOverlay> {
-  final _DiplomaticPopupInbox _inbox = _DiplomaticPopupInbox();
+  final DiplomaticPopupInbox _inbox = DiplomaticPopupInbox();
   bool _dialogOpen = false;
   bool _handoffBlocked = false;
   bool _showScheduled = false;

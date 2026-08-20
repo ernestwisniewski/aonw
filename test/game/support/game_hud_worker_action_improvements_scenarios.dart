@@ -26,9 +26,9 @@ void _registerGameHudWorkerActionImprovementsScenarios() {
           ),
         },
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(
             units: [worker],
             cities: [city],
@@ -37,7 +37,7 @@ void _registerGameHudWorkerActionImprovementsScenarios() {
         ),
       );
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
@@ -142,9 +142,9 @@ void _registerGameHudWorkerActionImprovementsScenarios() {
         ),
       },
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           activePlayerId: 'player_1',
           units: [worker],
@@ -154,11 +154,7 @@ void _registerGameHudWorkerActionImprovementsScenarios() {
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
@@ -214,9 +210,9 @@ void _registerGameHudWorkerActionImprovementsScenarios() {
       type: FieldImprovementType.farm,
       builtByCityId: 'city_1',
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           activePlayerId: 'player_1',
           units: [worker],
@@ -226,11 +222,7 @@ void _registerGameHudWorkerActionImprovementsScenarios() {
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
@@ -280,9 +272,9 @@ void _registerGameHudWorkerActionImprovementsScenarios() {
         ),
       },
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(
           units: [worker],
           cities: [city],
@@ -291,11 +283,7 @@ void _registerGameHudWorkerActionImprovementsScenarios() {
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
@@ -356,9 +344,9 @@ void _registerGameHudWorkerActionImprovementsScenarios() {
           ),
         },
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(
             activePlayerId: 'player_1',
             units: [worker],
@@ -368,7 +356,7 @@ void _registerGameHudWorkerActionImprovementsScenarios() {
         ),
       );
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
@@ -382,7 +370,7 @@ void _registerGameHudWorkerActionImprovementsScenarios() {
           .read(gameCommandControllerProvider.notifier)
           .dispatchIntent(const SelectUnitCommand('worker_1'));
       await tester.pump(const Duration(milliseconds: 500));
-      await _cancelMoveTargetingBanner(tester);
+      await cancelMoveTargetingBanner(tester);
 
       final popupId = HudMinimizedPopupIds.modeBanner(
         'save',
@@ -397,7 +385,7 @@ void _registerGameHudWorkerActionImprovementsScenarios() {
         findsOneWidget,
       );
 
-      await _openHelpEntryById(tester, popupId);
+      await openHelpEntryById(tester, popupId);
 
       expect(
         find.byKey(const Key('hudModeBanner.selectedWorkerAction')),

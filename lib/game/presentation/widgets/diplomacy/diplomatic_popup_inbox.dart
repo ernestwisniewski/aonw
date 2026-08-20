@@ -1,6 +1,9 @@
-part of 'diplomatic_message_popup_overlay.dart';
+import 'dart:collection';
 
-final class _DiplomaticPopupInbox {
+import 'package:aonw/game/presentation/providers/game/game_event_notifications_provider.dart';
+import 'package:aonw_core/game/domain/diplomacy.dart';
+
+final class DiplomaticPopupInbox {
   final Queue<String> _pendingMessageIds = Queue();
   final Queue<String> _pendingProposalIds = Queue();
   final Queue<GameEventNotification> _pendingDiplomacyEvents = Queue();

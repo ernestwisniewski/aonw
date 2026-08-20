@@ -6,22 +6,22 @@ void _registerGameCommandControllerScenarios() {
       'dispatch forwards commands to active game state and returns effects',
       () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-        final save = _makeSave(players: const [_player1]);
-        final gameRepository = _FakeGameRepository(
+        final save = providerSave(players: const [player1]);
+        final gameRepository = FakeGameRepository(
           snapshots: {
-            save.id: _makeSnapshot(save: save, units: [commander]),
+            save.id: providerSnapshot(save: save, units: [commander]),
           },
         );
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(
-              _makeSession(
-                mapData: _makeLandMap(),
+              providerSession(
+                mapData: providerLandMap(),
                 gameMode: GameMode.multiplayer,
               ),
             ),
             gameRepositoryProvider.overrideWithValue(gameRepository),
-            ..._transportOverrides(),
+            ...transportOverrides(),
           ],
         );
         addTearDown(container.dispose);
@@ -43,7 +43,7 @@ void _registerGameCommandControllerScenarios() {
       final container = ProviderContainer(
         overrides: [
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(mapData: _makeLandMap()),
+            providerSession(mapData: providerLandMap()),
           ),
         ],
       );
@@ -77,24 +77,24 @@ void _registerGameCommandControllerScenarios() {
         col: 2,
         row: 3,
       );
-      final save = _makeSave(players: const [_player1]);
-      final gameRepository = _FakeGameRepository(
+      final save = providerSave(players: const [player1]);
+      final gameRepository = FakeGameRepository(
         snapshots: {
-          save.id: _makeSnapshot(save: save, units: [commander]),
+          save.id: providerSnapshot(save: save, units: [commander]),
         },
       );
-      final renderer = _SpyGameRenderer(mapData: _makeLandMap());
+      final renderer = SpyRenderer(mapData: providerLandMap());
       final container = ProviderContainer(
         overrides: [
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(mapData: _makeLandMap()),
+            providerSession(mapData: providerLandMap()),
           ),
           activeGameRendererProvider.overrideWithValue(renderer),
           activeRendererViewModelProvider.overrideWithValue(
             TestRendererViewModel(renderer),
           ),
           gameRepositoryProvider.overrideWithValue(gameRepository),
-          ..._transportOverrides(),
+          ...transportOverrides(),
         ],
       );
       addTearDown(container.dispose);
@@ -127,24 +127,24 @@ void _registerGameCommandControllerScenarios() {
           col: 2,
           row: 3,
         );
-        final save = _makeSave(players: const [_player1]);
-        final gameRepository = _FakeGameRepository(
+        final save = providerSave(players: const [player1]);
+        final gameRepository = FakeGameRepository(
           snapshots: {
-            save.id: _makeSnapshot(save: save, units: [commander]),
+            save.id: providerSnapshot(save: save, units: [commander]),
           },
         );
-        final renderer = _SpyGameRenderer(mapData: _makeLandMap());
+        final renderer = SpyRenderer(mapData: providerLandMap());
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(
-              _makeSession(mapData: _makeLandMap()),
+              providerSession(mapData: providerLandMap()),
             ),
             activeGameRendererProvider.overrideWithValue(renderer),
             activeRendererViewModelProvider.overrideWithValue(
               TestRendererViewModel(renderer),
             ),
             gameRepositoryProvider.overrideWithValue(gameRepository),
-            ..._transportOverrides(),
+            ...transportOverrides(),
           ],
         );
         addTearDown(container.dispose);
@@ -168,24 +168,24 @@ void _registerGameCommandControllerScenarios() {
       'dispatch logs and preserves current state when save snapshot is missing',
       () async {
         final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-        final save = _makeSave(players: const [_player1]);
-        final gameRepository = _FakeGameRepository(
+        final save = providerSave(players: const [player1]);
+        final gameRepository = FakeGameRepository(
           snapshots: {
-            save.id: _makeSnapshot(save: save, units: [commander]),
+            save.id: providerSnapshot(save: save, units: [commander]),
           },
         );
-        final logger = _FakeGameLogger();
+        final logger = FakeGameLogger();
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(
-              _makeSession(
-                mapData: _makeLandMap(),
+              providerSession(
+                mapData: providerLandMap(),
                 gameMode: GameMode.multiplayer,
               ),
             ),
             gameRepositoryProvider.overrideWithValue(gameRepository),
             gameLoggerProvider.overrideWithValue(logger),
-            ..._transportOverrides(),
+            ...transportOverrides(),
           ],
         );
         addTearDown(container.dispose);
@@ -209,11 +209,11 @@ void _registerGameCommandControllerScenarios() {
     test(
       'saveCamera stores the current session camera through repository',
       () async {
-        final save = _makeSave();
-        final session = _makeSession();
+        final save = providerSave();
+        final session = providerSession();
         final renderer = _makeRenderer();
         final saves = {save.id: save};
-        final gameRepository = _FakeGameRepository(saves: saves);
+        final gameRepository = FakeGameRepository(saves: saves);
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(session),
@@ -234,14 +234,14 @@ void _registerGameCommandControllerScenarios() {
     );
 
     test('saveCamera skips active network matches', () async {
-      final save = _makeSave(gameMode: GameMode.multiplayer);
-      final session = _makeSession(
+      final save = providerSave(gameMode: GameMode.multiplayer);
+      final session = providerSession(
         saveId: save.id,
         gameMode: GameMode.multiplayer,
       );
       final renderer = _makeRenderer();
-      final gameRepository = _FakeGameRepository(
-        snapshots: {save.id: _makeSnapshot(save: save)},
+      final gameRepository = FakeGameRepository(
+        snapshots: {save.id: providerSnapshot(save: save)},
       );
       final container = ProviderContainer(
         overrides: [
@@ -280,10 +280,10 @@ void _registerGameCommandControllerScenarios() {
             projectType: CityProjectType.wealth,
           ),
         );
-        final save = _makeSave(turn: 4, players: const [_player1]);
-        final gameRepository = _FakeGameRepository(
+        final save = providerSave(turn: 4, players: const [player1]);
+        final gameRepository = FakeGameRepository(
           snapshots: {
-            save.id: _makeSnapshot(
+            save.id: providerSnapshot(
               save: save,
               cities: [city],
               research: ResearchState(
@@ -296,18 +296,18 @@ void _registerGameCommandControllerScenarios() {
             ),
           },
         );
-        final renderer = _SpyGameRenderer(mapData: _makeLandMap());
+        final renderer = SpyRenderer(mapData: providerLandMap());
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(
-              _makeSession(mapData: _makeLandMap()),
+              providerSession(mapData: providerLandMap()),
             ),
             activeGameRendererProvider.overrideWithValue(renderer),
             activeRendererViewModelProvider.overrideWithValue(
               TestRendererViewModel(renderer),
             ),
             gameRepositoryProvider.overrideWithValue(gameRepository),
-            ..._transportOverrides(),
+            ...transportOverrides(),
           ],
         );
         addTearDown(container.dispose);
@@ -341,7 +341,7 @@ void _registerGameCommandControllerScenarios() {
           overrides: [
             activeGameSessionProvider.overrideWithValue(null),
             gameRepositoryProvider.overrideWithValue(
-              _FakeGameRepository(saves: saves),
+              FakeGameRepository(saves: saves),
             ),
           ],
         );

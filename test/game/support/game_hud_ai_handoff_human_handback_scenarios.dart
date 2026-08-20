@@ -4,7 +4,7 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
   testWidgets('single-player AI handback focuses the human ready unit', (
     tester,
   ) async {
-    final aiPlayer = _player2.copyWith(
+    final aiPlayer = hudPlayer2.copyWith(
       name: 'AI Bob',
       kind: PlayerKind.ai,
       ai: const AiPlayer(
@@ -14,9 +14,9 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
         seed: 42,
       ),
     );
-    final save = _save.copyWith(
+    final save = hudSave.copyWith(
       gameMode: GameMode.multiplayer,
-      players: [_player, aiPlayer],
+      players: [hudPlayer, aiPlayer],
       playerStates: const {
         'player_1': PlayerTurnState.finished,
         'player_2': PlayerTurnState.active,
@@ -32,7 +32,7 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
       col: 2,
       row: 2,
     ).copyWith(movementPoints: 0);
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -43,13 +43,13 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
         ),
       ),
     );
-    final renderer = _SpyGameRenderer(mapData: _makeMap());
+    final renderer = HudTestRenderer(mapData: hudMap());
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: save,
-      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
       renderer: renderer,
       aiAutopilotEnabled: true,
     );
@@ -60,7 +60,7 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
     await container.read(gameStateProvider('save').future);
     await tester.pump();
 
-    await _pumpUntil(tester, () {
+    await pumpUntil(tester, () {
       final state = container.read(gameStateProvider('save')).value;
       return repository.snapshot.save.turn > save.turn &&
           state?.selectedUnitId == commander.id;
@@ -84,7 +84,7 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
   testWidgets('AI handback focuses the human map start when research is next', (
     tester,
   ) async {
-    final aiPlayer = _player2.copyWith(
+    final aiPlayer = hudPlayer2.copyWith(
       name: 'AI Bob',
       kind: PlayerKind.ai,
       ai: const AiPlayer(
@@ -94,9 +94,9 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
         seed: 42,
       ),
     );
-    final save = _save.copyWith(
+    final save = hudSave.copyWith(
       gameMode: GameMode.multiplayer,
-      players: [_player, aiPlayer],
+      players: [hudPlayer, aiPlayer],
       playerStates: const {
         'player_1': PlayerTurnState.finished,
         'player_2': PlayerTurnState.active,
@@ -118,7 +118,7 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
         investedProduction: 0,
       ),
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -130,13 +130,13 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
         ),
       ),
     );
-    final renderer = _SpyGameRenderer(mapData: _makeMap());
+    final renderer = HudTestRenderer(mapData: hudMap());
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: save,
-      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
       renderer: renderer,
       aiAutopilotEnabled: true,
     );
@@ -147,7 +147,7 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
     await container.read(gameStateProvider('save').future);
     await tester.pump();
 
-    await _pumpUntil(tester, () {
+    await pumpUntil(tester, () {
       final state = container.read(gameStateProvider('save')).value;
       return repository.snapshot.save.turn > save.turn &&
           state?.pendingAction is PendingResearchSelection &&
@@ -166,7 +166,7 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
     expect(smoothEffects, isNotEmpty);
     expect(smoothEffects.last.col, city.center.col);
     expect(smoothEffects.last.row, city.center.row);
-    await _pumpUntil(
+    await pumpUntil(
       tester,
       () => find.byType(TechnologyTreePanel).evaluate().isNotEmpty,
       frames: 8,
@@ -186,7 +186,7 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
   testWidgets('AI handback keeps city production open for a calm decision', (
     tester,
   ) async {
-    final aiPlayer = _player2.copyWith(
+    final aiPlayer = hudPlayer2.copyWith(
       name: 'AI Bob',
       kind: PlayerKind.ai,
       ai: const AiPlayer(
@@ -196,9 +196,9 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
         seed: 42,
       ),
     );
-    final save = _save.copyWith(
+    final save = hudSave.copyWith(
       gameMode: GameMode.multiplayer,
-      players: [_player, aiPlayer],
+      players: [hudPlayer, aiPlayer],
       playerStates: const {
         'player_1': PlayerTurnState.finished,
         'player_2': PlayerTurnState.active,
@@ -216,7 +216,7 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
       center: CityHex(col: 0, row: 0),
       controlledHexes: [CityHex(col: 0, row: 0)],
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: save,
         state: GameClientState(
@@ -229,12 +229,12 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
       ),
     );
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: save,
-      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
-      renderer: _SpyGameRenderer(mapData: _makeMap()),
+      session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
+      renderer: HudTestRenderer(mapData: hudMap()),
       aiAutopilotEnabled: true,
     );
     final container = ProviderScope.containerOf(
@@ -244,7 +244,7 @@ void _registerGameHudAiHandoffHumanHandbackScenarios() {
     await container.read(gameStateProvider('save').future);
     await tester.pump();
 
-    await _pumpUntil(
+    await pumpUntil(
       tester,
       () =>
           repository.snapshot.save.turn > save.turn &&

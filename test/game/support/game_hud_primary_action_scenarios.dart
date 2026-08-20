@@ -11,18 +11,14 @@ void _registerGameHudPrimaryActionScenarios() {
       center: CityHex(col: 1, row: 1),
       controlledHexes: [CityHex(col: 1, row: 1)],
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(cities: [city]),
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
@@ -87,14 +83,14 @@ void _registerGameHudPrimaryActionScenarios() {
           investedProduction: 0,
         ),
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(units: [unit], cities: [city]),
         ),
       );
 
-      await _pumpHud(
+      await pumpHud(
         tester,
         repository: repository,
         autoActionFlowEnabled: false,
@@ -119,7 +115,7 @@ void _registerGameHudPrimaryActionScenarios() {
       await container
           .read(gameCommandControllerProvider.notifier)
           .dispatch(SkipUnitTurnCommand(unit.id));
-      await _pumpUntil(
+      await pumpUntil(
         tester,
         () =>
             container
@@ -197,21 +193,17 @@ void _registerGameHudPrimaryActionScenarios() {
         investedProduction: 0,
       ),
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(units: [unit], cities: [city]),
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    await _disableAutoTurnFlow(tester);
+    await disableAutoTurnFlow(tester);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
       listen: false,
@@ -264,15 +256,15 @@ void _registerGameHudPrimaryActionScenarios() {
         investedProduction: 0,
       ),
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(units: [unit], cities: [city]),
       ),
     );
-    final renderer = _SpyGameRenderer(mapData: _makeMap());
+    final renderer = HudTestRenderer(mapData: hudMap());
 
-    await _pumpHud(tester, repository: repository, renderer: renderer);
+    await pumpHud(tester, repository: repository, renderer: renderer);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     final container = ProviderScope.containerOf(
@@ -313,18 +305,14 @@ void _registerGameHudPrimaryActionScenarios() {
         investedProduction: 0,
       ),
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
-        save: _save,
+        save: hudSave,
         state: GameClientState(units: [unit], cities: [city]),
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      autoActionFlowEnabled: false,
-    );
+    await pumpHud(tester, repository: repository, autoActionFlowEnabled: false);
     await tester.pump(const Duration(milliseconds: 300));
     final container = ProviderScope.containerOf(
       tester.element(find.byType(GameHud)),
@@ -430,23 +418,23 @@ void _registerGameHudPrimaryActionScenarios() {
           investedProduction: 0,
         ),
       );
-      final repository = _FakeGameRepository(
+      final repository = FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(units: [unit], cities: [city]),
         ),
       );
 
-      await _pumpHud(tester, repository: repository);
+      await pumpHud(tester, repository: repository);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
-      await _enableAutoTurnFlow(tester);
+      await enableAutoTurnFlow(tester);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameHud)),
         listen: false,
       );
 
-      await _pumpUntil(
+      await pumpUntil(
         tester,
         () =>
             find.text('TECHNOLOGY TREE').evaluate().isNotEmpty &&

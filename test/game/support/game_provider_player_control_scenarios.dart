@@ -6,7 +6,7 @@ void _registerGamePlayerControlScenarios() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      final save = _makeSave(players: const [_player1, _player2]);
+      final save = providerSave(players: const [player1, player2]);
       container
           .read(gamePlayerControlControllerProvider.notifier)
           .syncWithSave(save);
@@ -19,22 +19,22 @@ void _registerGamePlayerControlScenarios() {
 
     test('syncWithSave mirrors active player into GameStateNotifier', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
-      final save = _makeSave(players: const [_player1, _player2]);
-      final gameRepository = _FakeGameRepository(
+      final save = providerSave(players: const [player1, player2]);
+      final gameRepository = FakeGameRepository(
         snapshots: {
-          save.id: _makeSnapshot(save: save, units: [commander]),
+          save.id: providerSnapshot(save: save, units: [commander]),
         },
       );
       final container = ProviderContainer(
         overrides: [
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(
-              mapData: _makeLandMap(),
+            providerSession(
+              mapData: providerLandMap(),
               gameMode: GameMode.multiplayer,
             ),
           ),
           gameRepositoryProvider.overrideWithValue(gameRepository),
-          ..._transportOverrides(),
+          ...transportOverrides(),
         ],
       );
       addTearDown(container.dispose);
@@ -61,8 +61,8 @@ void _registerGamePlayerControlScenarios() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      final save = _makeSave(
-        players: const [_player1, _player2],
+      final save = providerSave(
+        players: const [player1, player2],
         playerStates: const {
           'player_1': PlayerTurnState.active,
           'player_2': PlayerTurnState.finished,
@@ -83,25 +83,25 @@ void _registerGamePlayerControlScenarios() {
 
     test('selectPlayer mirrors canAct into GameStateNotifier', () async {
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_2');
-      final save = _makeSave(
-        players: const [_player1, _player2],
+      final save = providerSave(
+        players: const [player1, player2],
         playerStates: const {
           'player_1': PlayerTurnState.active,
           'player_2': PlayerTurnState.finished,
         },
       );
-      final gameRepository = _FakeGameRepository(
+      final gameRepository = FakeGameRepository(
         snapshots: {
-          save.id: _makeSnapshot(save: save, units: [commander]),
+          save.id: providerSnapshot(save: save, units: [commander]),
         },
       );
       final container = ProviderContainer(
         overrides: [
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(mapData: _makeLandMap()),
+            providerSession(mapData: providerLandMap()),
           ),
           gameRepositoryProvider.overrideWithValue(gameRepository),
-          ..._transportOverrides(),
+          ...transportOverrides(),
         ],
       );
       addTearDown(container.dispose);
@@ -130,19 +130,19 @@ void _registerGamePlayerControlScenarios() {
     test(
       'endTurn keeps control on finished player while turn continues',
       () async {
-        final save = _makeSave(players: const [_player1, _player2]);
+        final save = providerSave(players: const [player1, player2]);
         final saves = {save.id: save};
-        final gameRepository = _FakeGameRepository(saves: saves);
+        final gameRepository = FakeGameRepository(saves: saves);
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(
-              _makeSession(
-                mapData: _makeLandMap(),
+              providerSession(
+                mapData: providerLandMap(),
                 gameMode: GameMode.multiplayer,
               ),
             ),
             gameRepositoryProvider.overrideWithValue(gameRepository),
-            ..._transportOverrides(),
+            ...transportOverrides(),
           ],
         );
         addTearDown(container.dispose);
@@ -167,22 +167,22 @@ void _registerGamePlayerControlScenarios() {
     test(
       'endTurn keeps current control until new-turn handoff is confirmed',
       () async {
-        final save = _makeSave(
-          players: const [_player1, _player2],
+        final save = providerSave(
+          players: const [player1, player2],
           playerStates: const {
             'player_1': PlayerTurnState.finished,
             'player_2': PlayerTurnState.active,
           },
         );
         final saves = {save.id: save};
-        final gameRepository = _FakeGameRepository(saves: saves);
+        final gameRepository = FakeGameRepository(saves: saves);
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(
-              _makeSession(mapData: _makeLandMap()),
+              providerSession(mapData: providerLandMap()),
             ),
             gameRepositoryProvider.overrideWithValue(gameRepository),
-            ..._transportOverrides(),
+            ...transportOverrides(),
           ],
         );
         addTearDown(container.dispose);
@@ -210,16 +210,16 @@ void _registerGamePlayerControlScenarios() {
     test(
       'endTurn starts handoff when a hotseat session waits for another player',
       () async {
-        final save = _makeSave(players: const [_player1, _player2]);
+        final save = providerSave(players: const [player1, player2]);
         final saves = {save.id: save};
-        final gameRepository = _FakeGameRepository(saves: saves);
+        final gameRepository = FakeGameRepository(saves: saves);
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(
-              _makeSession(mapData: _makeLandMap()),
+              providerSession(mapData: providerLandMap()),
             ),
             gameRepositoryProvider.overrideWithValue(gameRepository),
-            ..._transportOverrides(),
+            ...transportOverrides(),
           ],
         );
         addTearDown(container.dispose);
@@ -241,22 +241,22 @@ void _registerGamePlayerControlScenarios() {
     test(
       'confirmHandoff reloads the latest save before selecting player',
       () async {
-        final save = _makeSave(
-          players: const [_player1, _player2],
+        final save = providerSave(
+          players: const [player1, player2],
           playerStates: const {
             'player_1': PlayerTurnState.finished,
             'player_2': PlayerTurnState.active,
           },
         );
         final saves = {save.id: save};
-        final gameRepository = _FakeGameRepository(saves: saves);
+        final gameRepository = FakeGameRepository(saves: saves);
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(
-              _makeSession(mapData: _makeLandMap()),
+              providerSession(mapData: providerLandMap()),
             ),
             gameRepositoryProvider.overrideWithValue(gameRepository),
-            ..._transportOverrides(),
+            ...transportOverrides(),
           ],
         );
         addTearDown(container.dispose);
@@ -287,17 +287,17 @@ void _registerGamePlayerControlScenarios() {
     test(
       'confirmHandoff logs repository failures instead of throwing',
       () async {
-        final save = _makeSave(players: const [_player1, _player2]);
-        final gameRepository = _FakeGameRepository(throwOnLoad: true);
-        final logger = _FakeGameLogger();
+        final save = providerSave(players: const [player1, player2]);
+        final gameRepository = FakeGameRepository(throwOnLoad: true);
+        final logger = FakeGameLogger();
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(
-              _makeSession(mapData: _makeLandMap()),
+              providerSession(mapData: providerLandMap()),
             ),
             gameRepositoryProvider.overrideWithValue(gameRepository),
             gameLoggerProvider.overrideWithValue(logger),
-            ..._transportOverrides(),
+            ...transportOverrides(),
           ],
         );
         addTearDown(container.dispose);
@@ -317,19 +317,19 @@ void _registerGamePlayerControlScenarios() {
     );
 
     test('endTurn does not start handoff in multiplayer sessions', () async {
-      final save = _makeSave(players: const [_player1, _player2]);
+      final save = providerSave(players: const [player1, player2]);
       final saves = {save.id: save};
-      final gameRepository = _FakeGameRepository(saves: saves);
+      final gameRepository = FakeGameRepository(saves: saves);
       final container = ProviderContainer(
         overrides: [
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(
-              mapData: _makeLandMap(),
+            providerSession(
+              mapData: providerLandMap(),
               gameMode: GameMode.multiplayer,
             ),
           ),
           gameRepositoryProvider.overrideWithValue(gameRepository),
-          ..._transportOverrides(),
+          ...transportOverrides(),
         ],
       );
       addTearDown(container.dispose);
@@ -348,31 +348,31 @@ void _registerGamePlayerControlScenarios() {
     test(
       'connected multiplayer endTurn reloads through the network repository',
       () async {
-        final save = _makeSave(
-          players: const [_player1, _player2],
+        final save = providerSave(
+          players: const [player1, player2],
           gameMode: GameMode.multiplayer,
         );
-        final initialSnapshot = _makeSnapshot(save: save);
+        final initialSnapshot = providerSnapshot(save: save);
         final submittedSave = save.copyWith(
           playerStates: const {
             'player_1': PlayerTurnState.finished,
             'player_2': PlayerTurnState.active,
           },
         );
-        final submittedSnapshot = _makeSnapshot(
+        final submittedSnapshot = providerSnapshot(
           save: submittedSave,
 
           submittedPlayerIds: {'player_1'},
 
           eventLogOffset: 1,
         );
-        final localRepository = _FakeGameRepository(throwOnLoad: true);
-        final networkRepository = _FakeGameRepository(
+        final localRepository = FakeGameRepository(throwOnLoad: true);
+        final networkRepository = FakeGameRepository(
           snapshots: {save.id: initialSnapshot},
         );
-        final logger = _FakeGameLogger();
-        final fakeStream = _FakeMultiplayerStream();
-        final fallbackDispatcher = _FakeWireCommandDispatcher(({
+        final logger = FakeGameLogger();
+        final fakeStream = FakeMultiplayerStream();
+        final fallbackDispatcher = FakeWireCommandDispatcher(({
           required saveId,
           required token,
           required afterOffset,
@@ -385,19 +385,19 @@ void _registerGamePlayerControlScenarios() {
         final container = ProviderContainer(
           overrides: [
             activeGameSessionProvider.overrideWithValue(
-              _makeSession(
-                mapData: _makeLandMap(),
+              providerSession(
+                mapData: providerLandMap(),
                 gameMode: GameMode.multiplayer,
               ),
             ),
             gameRepositoryProvider.overrideWithValue(localRepository),
             networkGameRepositoryProvider.overrideWithValue(networkRepository),
             gameLoggerProvider.overrideWithValue(logger),
-            eventLogProvider.overrideWithValue(_FakeEventLog()),
+            eventLogProvider.overrideWithValue(FakeEventLog()),
             networkEventLogProvider.overrideWith(
               (ref) => ref.watch(eventLogProvider),
             ),
-            snapshotStoreProvider.overrideWithValue(_FakeSnapshotStore()),
+            snapshotStoreProvider.overrideWithValue(FakeSnapshotStore()),
             wireCommandDispatcherProvider.overrideWithValue(fallbackDispatcher),
             multiplayerStreamConnectorProvider.overrideWithValue(
               fakeStream.connector,
@@ -469,17 +469,17 @@ void _registerGamePlayerControlScenarios() {
     );
 
     test('endTurn does not use Ref after control provider disposal', () async {
-      final save = _makeSave();
+      final save = providerSave();
       final gate = Completer<void>();
       final saves = {save.id: save};
-      final gameRepository = _FakeGameRepository(saves: saves, loadGate: gate);
+      final gameRepository = FakeGameRepository(saves: saves, loadGate: gate);
       final container = ProviderContainer(
         overrides: [
           activeGameSessionProvider.overrideWithValue(
-            _makeSession(mapData: _makeLandMap()),
+            providerSession(mapData: providerLandMap()),
           ),
           gameRepositoryProvider.overrideWithValue(gameRepository),
-          ..._transportOverrides(),
+          ...transportOverrides(),
         ],
       );
       addTearDown(container.dispose);

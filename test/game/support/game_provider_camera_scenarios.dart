@@ -13,8 +13,8 @@ void _registerSavedCameraProviderScenarios() {
     });
 
     test('loads camera through repository', () async {
-      final gameRepository = _FakeGameRepository(
-        saves: {'save_1': _makeSave()},
+      final gameRepository = FakeGameRepository(
+        saves: {'save_1': providerSave()},
       );
       final container = ProviderContainer(
         overrides: [gameRepositoryProvider.overrideWithValue(gameRepository)],
@@ -34,7 +34,7 @@ void _registerSavedCameraProviderScenarios() {
     });
 
     test('surfaces repository errors', () async {
-      final gameRepository = _FakeGameRepository(throwOnLoad: true);
+      final gameRepository = FakeGameRepository(throwOnLoad: true);
       final container = ProviderContainer(
         overrides: [gameRepositoryProvider.overrideWithValue(gameRepository)],
       );

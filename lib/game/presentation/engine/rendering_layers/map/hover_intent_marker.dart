@@ -72,6 +72,10 @@ class HoverIntentMarker extends Component {
       return;
     }
 
+    _paintIntent(canvas, center);
+  }
+
+  void _paintIntent(Canvas canvas, Offset center) {
     final corners = _hexCorners(hex);
     final hexPath = Path()..moveTo(corners.first.dx, corners.first.dy);
     for (var i = 1; i < corners.length; i++) {
@@ -84,6 +88,11 @@ class HoverIntentMarker extends Component {
       return;
     }
 
+    _paintHex(canvas, hexPath);
+    _paintIntentGlyph(canvas, center);
+  }
+
+  void _paintHex(Canvas canvas, Path hexPath) {
     if (kind != HoverIntentKind.inspect) {
       canvas.drawPath(
         hexPath,
@@ -111,7 +120,9 @@ class HoverIntentMarker extends Component {
           strokeJoin: StrokeJoin.round,
         ),
       );
+  }
 
+  void _paintIntentGlyph(Canvas canvas, Offset center) {
     switch (kind) {
       case HoverIntentKind.move:
         return;

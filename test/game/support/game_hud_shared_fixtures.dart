@@ -1,9 +1,29 @@
-part of '../game_hud_test.dart';
+import 'dart:async';
 
-class _FakeGameRepository implements GameRepository {
-  _FakeGameRepository({CanonicalGameSnapshot? snapshot})
+import 'package:aonw/game/application/ports/event_log.dart';
+import 'package:aonw/game/application/ports/game_logger.dart';
+import 'package:aonw/game/application/ports/game_repository.dart';
+import 'package:aonw/game/application/ports/network_connection.dart';
+import 'package:aonw/game/application/ports/new_game_request.dart';
+import 'package:aonw/game/application/ports/recorded_domain_command.dart';
+import 'package:aonw/game/application/ports/save_snapshot.dart';
+import 'package:aonw/game/application/services/game_session.dart';
+import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/input/gamepad/gamepad_input.dart';
+import 'package:aonw/game/presentation/providers.dart';
+import 'package:aonw/game/presentation/widgets.dart';
+import 'package:aonw/game/presentation/widgets/hud/panel/hud_panel_controller.dart';
+import 'package:aonw_core/domain.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import '../../support/test_game_renderer.dart';
+
+class FakeHudRepository implements GameRepository {
+  FakeHudRepository({CanonicalGameSnapshot? snapshot})
     : snapshot = _withHudTestVisibility(
-        snapshot ?? GameSnapshotFactory.create(save: _save),
+        snapshot ?? GameSnapshotFactory.create(save: hudSave),
       );
 
   CanonicalGameSnapshot snapshot;
@@ -51,7 +71,7 @@ class _FakeGameRepository implements GameRepository {
   }
 }
 
-class _FakeEventLog implements EventLog {
+class FakeHudEventLog implements EventLog {
   final commands = <RecordedDomainCommand>[];
 
   @override
@@ -80,7 +100,7 @@ class _FakeEventLog implements EventLog {
   }
 }
 
-class _RecordingGameLogger implements GameLogger {
+class HudTestLogger implements GameLogger {
   final warnings = <({String tag, String message, Object? error})>[];
 
   @override
@@ -97,15 +117,15 @@ class _RecordingGameLogger implements GameLogger {
   }
 }
 
-final class _SpyGameRenderer extends TestGameRenderer {
-  _SpyGameRenderer({required super.mapData})
+final class HudTestRenderer extends TestGameRenderer {
+  HudTestRenderer({required super.mapData})
     : super(applyStateOnTransition: true);
 }
 
-const _player = Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4);
-const _player2 = Player(id: 'player_2', name: 'Bob', colorValue: 0xFFc45050);
-const _connectedNetworkState = NetworkConnectionState(status: .connected);
-const _aiPlayer = Player(
+const hudPlayer = Player(id: 'player_1', name: 'Alice', colorValue: 0xFF4a7fc4);
+const hudPlayer2 = Player(id: 'player_2', name: 'Bob', colorValue: 0xFFc45050);
+const hudNetworkConnected = NetworkConnectionState(status: .connected);
+const hudAi = Player(
   id: 'player_1',
   name: 'AI Random',
   colorValue: 0xFF4a7fc4,
@@ -117,7 +137,7 @@ const _aiPlayer = Player(
     seed: 99,
   ),
 );
-final _save = GameSave(
+final hudSave = GameSave(
   id: 'save',
   name: 'Game',
   mapName: 'verdantia',
@@ -126,10 +146,10 @@ final _save = GameSave(
   playerStates: const {'player_1': PlayerTurnState.active},
   savedAt: DateTime.utc(2026, 4, 16),
   camera: CameraState.zero,
-  players: const [_player],
+  players: const [hudPlayer],
 );
 
-WorldMap _makeMap() => WorldMap(
+WorldMap hudMap() => WorldMap(
   cols: 3,
   rows: 3,
   tiles: [
@@ -145,7 +165,7 @@ WorldMap _makeMap() => WorldMap(
   ],
 );
 
-GameSession _makeSession(
+GameSession hudSession(
   WorldMap mapData, {
   GameMode gameMode = GameMode.hotSeat,
 }) => GameSession(
@@ -155,10 +175,7 @@ GameSession _makeSession(
   gameMode: gameMode,
 );
 
-const _terminalMatch = terminalHudTestMatch;
-const _pumpHud = PumpGameHudTest();
-
-Future<void> _pumpUntil(
+Future<void> pumpUntil(
   WidgetTester tester,
   bool Function() done, {
   int frames = 12,
@@ -179,7 +196,7 @@ Future<void> _pumpUntil(
   }
 }
 
-Future<void> _cancelMoveTargetingBanner(WidgetTester tester) async {
+Future<void> cancelMoveTargetingBanner(WidgetTester tester) async {
   final moveAction = find.byKey(const Key('selectionInfo.action.move'));
   if (moveAction.evaluate().isEmpty) return;
   await tester.tap(find.byKey(const Key('selectionInfo.action.move')));
@@ -187,7 +204,7 @@ Future<void> _cancelMoveTargetingBanner(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 300));
 }
 
-Future<void> _openHelpEntryById(WidgetTester tester, String popupId) async {
+Future<void> openHelpEntryById(WidgetTester tester, String popupId) async {
   await tester.tap(find.byKey(const Key('gameOptions.helpPopupsButton')));
   await tester.pump();
   await tester.tap(find.byKey(Key('gameOptions.helpPopup.$popupId')));
@@ -195,7 +212,7 @@ Future<void> _openHelpEntryById(WidgetTester tester, String popupId) async {
   await tester.pump(const Duration(milliseconds: 300));
 }
 
-GameClientState? _readGameState(WidgetTester tester) {
+GameClientState? readHudGameState(WidgetTester tester) {
   final container = ProviderScope.containerOf(
     tester.element(find.byType(GameHud)),
     listen: false,
@@ -203,15 +220,15 @@ GameClientState? _readGameState(WidgetTester tester) {
   return container.read(gameStateProvider('save')).value;
 }
 
-Future<void> _disableAutoTurnFlow(WidgetTester tester) async {
-  await _setAutoTurnFlow(tester, false);
+Future<void> disableAutoTurnFlow(WidgetTester tester) async {
+  await setAutoTurnFlow(tester, false);
 }
 
-Future<void> _enableAutoTurnFlow(WidgetTester tester) async {
-  await _setAutoTurnFlow(tester, true);
+Future<void> enableAutoTurnFlow(WidgetTester tester) async {
+  await setAutoTurnFlow(tester, true);
 }
 
-Future<void> _setAutoTurnFlow(WidgetTester tester, bool enabled) async {
+Future<void> setAutoTurnFlow(WidgetTester tester, bool enabled) async {
   final container = ProviderScope.containerOf(
     tester.element(find.byType(GameHud)),
     listen: false,
@@ -225,21 +242,21 @@ Future<void> _setAutoTurnFlow(WidgetTester tester, bool enabled) async {
   expect(container.read(hudAutoTurnFlowProvider), enabled);
 }
 
-void _expectRectInside(Rect rect, Rect viewport, {required String reason}) {
+void expectRectInside(Rect rect, Rect viewport, {required String reason}) {
   expect(rect.left, greaterThanOrEqualTo(viewport.left), reason: reason);
   expect(rect.top, greaterThanOrEqualTo(viewport.top), reason: reason);
   expect(rect.right, lessThanOrEqualTo(viewport.right), reason: reason);
   expect(rect.bottom, lessThanOrEqualTo(viewport.bottom), reason: reason);
 }
 
-void _expectRectContains(Rect outer, Rect inner, {required String reason}) {
+void expectRectContains(Rect outer, Rect inner, {required String reason}) {
   expect(inner.left, greaterThanOrEqualTo(outer.left), reason: reason);
   expect(inner.top, greaterThanOrEqualTo(outer.top), reason: reason);
   expect(inner.right, lessThanOrEqualTo(outer.right), reason: reason);
   expect(inner.bottom, lessThanOrEqualTo(outer.bottom), reason: reason);
 }
 
-void _expectCoachmarkHaloTracks(
+void expectCoachmarkHaloTracks(
   WidgetTester tester,
   Finder target, {
   required String reason,
@@ -252,7 +269,7 @@ void _expectCoachmarkHaloTracks(
   expect(halo.overlaps(targetRect), isTrue, reason: reason);
 }
 
-Future<void> _pressGamepad(
+Future<void> pressGamepad(
   WidgetTester tester,
   ValueNotifier<GamepadInputSnapshot> input,
   GamepadInputSnapshot snapshot,
@@ -262,4 +279,28 @@ Future<void> _pressGamepad(
   input.value = GamepadInputSnapshot.empty;
   await tester.pump(const Duration(milliseconds: 16));
   await tester.pump(const Duration(milliseconds: 120));
+}
+
+CanonicalGameSnapshot _withHudTestVisibility(CanonicalGameSnapshot snapshot) {
+  if (snapshot.fogOfWar != FogOfWarState.empty) return snapshot;
+  final playerIds = snapshot.domain.participants
+      .map((player) => player.id)
+      .where((playerId) => playerId.isNotEmpty);
+  return snapshot.copyWith(
+    domain: snapshot.domain.copyWith(
+      fogOfWar: FogOfWarState(
+        players: {
+          for (final playerId in playerIds)
+            playerId: PlayerFogOfWar(
+              playerId: playerId,
+              visibleHexes: {
+                for (var row = 0; row < 3; row++)
+                  for (var col = 0; col < 3; col++)
+                    HexCoordinate(col: col, row: row),
+              },
+            ),
+        },
+      ),
+    ),
+  );
 }

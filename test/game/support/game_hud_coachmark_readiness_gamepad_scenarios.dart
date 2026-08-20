@@ -8,7 +8,7 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
       GamepadInputSnapshot.empty,
     );
     addTearDown(gamepadInput.dispose);
-    final firstTurnSave = _save.copyWith(
+    final firstTurnSave = hudSave.copyWith(
       turn: 1,
       gameMode: GameMode.multiplayer,
     );
@@ -20,7 +20,7 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
       col: 1,
       row: 1,
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: firstTurnSave,
         state: GameClientState(
@@ -34,11 +34,11 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
       ),
     );
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: firstTurnSave,
-      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
       gamepadInputListenable: gamepadInput,
     );
     await tester.pump();
@@ -55,7 +55,7 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
     );
     expect(find.text('Step 1: read the selection'), findsOneWidget);
 
-    await _pressGamepad(
+    await pressGamepad(
       tester,
       gamepadInput,
       const GamepadInputSnapshot(confirm: true),
@@ -63,7 +63,7 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
 
     expect(find.text('Step 2: check your empire'), findsOneWidget);
 
-    await _pressGamepad(
+    await pressGamepad(
       tester,
       gamepadInput,
       const GamepadInputSnapshot(dpadLeft: true),
@@ -71,7 +71,7 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
 
     expect(find.text('Step 1: read the selection'), findsOneWidget);
 
-    await _pressGamepad(
+    await pressGamepad(
       tester,
       gamepadInput,
       const GamepadInputSnapshot(dpadRight: true),
@@ -79,7 +79,7 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
 
     expect(find.text('Step 2: check your empire'), findsOneWidget);
 
-    await _pressGamepad(
+    await pressGamepad(
       tester,
       gamepadInput,
       const GamepadInputSnapshot(focusNext: true),
@@ -87,7 +87,7 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
 
     expect(find.text('Step 3: learn the left menu'), findsOneWidget);
 
-    await _pressGamepad(
+    await pressGamepad(
       tester,
       gamepadInput,
       const GamepadInputSnapshot(cancel: true),
@@ -105,13 +105,13 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
   testWidgets('first turn coachmarks require first-turn ready HUD state', (
     tester,
   ) async {
-    final firstTurnSave = _save.copyWith(
+    final firstTurnSave = hudSave.copyWith(
       turn: 1,
       playerStates: const {'player_1': PlayerTurnState.finished},
     );
-    await _pumpHud(
+    await pumpHud(
       tester,
-      repository: _FakeGameRepository(
+      repository: FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
           save: firstTurnSave,
           state: GameClientState(activePlayerId: ''),
@@ -130,18 +130,14 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
     final readyFirstTurnSave = firstTurnSave.copyWith(
       playerStates: const {'player_1': PlayerTurnState.active},
     );
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: readyFirstTurnSave,
         state: GameClientState(activePlayerId: 'player_1'),
       ),
     );
 
-    await _pumpHud(
-      tester,
-      repository: repository,
-      gameSave: readyFirstTurnSave,
-    );
+    await pumpHud(tester, repository: repository, gameSave: readyFirstTurnSave);
     await tester.pump();
     await tester.pump();
 
@@ -150,10 +146,10 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
   testWidgets('first turn coachmarks wait for the initial camera focus', (
     tester,
   ) async {
-    final firstTurnSave = _save.copyWith(
+    final firstTurnSave = hudSave.copyWith(
       turn: 1,
       gameMode: GameMode.multiplayer,
-      players: const [_player],
+      players: const [hudPlayer],
     );
     final settler = GameUnit.produced(
       id: 'settler_1',
@@ -164,7 +160,7 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
     );
     final focusReady = ValueNotifier(false);
     addTearDown(focusReady.dispose);
-    final repository = _FakeGameRepository(
+    final repository = FakeHudRepository(
       snapshot: GameSnapshotFactory.fromClientState(
         save: firstTurnSave,
         state: GameClientState(
@@ -178,11 +174,11 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
       ),
     );
 
-    await _pumpHud(
+    await pumpHud(
       tester,
       repository: repository,
       gameSave: firstTurnSave,
-      session: _makeSession(_makeMap(), gameMode: GameMode.multiplayer),
+      session: hudSession(hudMap(), gameMode: GameMode.multiplayer),
       initialCameraFocusReadyListenable: focusReady,
     );
     await tester.pump();
@@ -206,11 +202,11 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
     );
     addTearDown(gamepadInput.dispose);
 
-    await _pumpHud(
+    await pumpHud(
       tester,
-      repository: _FakeGameRepository(
+      repository: FakeHudRepository(
         snapshot: GameSnapshotFactory.fromClientState(
-          save: _save,
+          save: hudSave,
           state: GameClientState(activePlayerId: 'player_1'),
         ),
       ),
@@ -245,7 +241,7 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
 
     expect(container.read(hudGamepadFocusControllerProvider).active, isFalse);
 
-    await _pressGamepad(
+    await pressGamepad(
       tester,
       gamepadInput,
       const GamepadInputSnapshot(hudFocusNext: true),
@@ -259,7 +255,7 @@ void _registerGameHudCoachmarkReadinessGamepadScenarios() {
       anyOf(isNull, HudGamepadFocusTargetIds.bottomCommand),
     );
 
-    await _pressGamepad(
+    await pressGamepad(
       tester,
       gamepadInput,
       const GamepadInputSnapshot(cancel: true),

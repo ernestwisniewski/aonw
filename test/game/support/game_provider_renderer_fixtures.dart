@@ -2,7 +2,7 @@ part of '../game_providers_test.dart';
 
 GameRenderer _makeRenderer() {
   return GameRenderer(
-    mapData: _makeMap(),
+    mapData: providerMap(),
     initialViewMode: MapViewMode.tile,
     onCommand: (_) async {},
   );
