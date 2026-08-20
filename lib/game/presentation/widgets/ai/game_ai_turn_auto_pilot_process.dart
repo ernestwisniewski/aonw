@@ -46,6 +46,10 @@ extension GameAiTurnAutoPilotProcess on GameAiTurnAutoPilotContext {
     if (scheduledTurn != null && executionToken == null) return null;
 
     final presentationDriver = aiTurnPresentationDriver();
+    // Capture the resolver before preparation crosses the repository's async
+    // boundary. A bound context method tear-off here traps optimized dart2wasm
+    // builds when background AI precomputation starts.
+    final strategyResolver = aiRuntimeStrategyResolver();
     final preparer = AiTurnProcessPreparer(
       repository: ref.read(gameRepositoryProvider),
       logger: ref.read(gameLoggerProvider),
@@ -56,7 +60,18 @@ extension GameAiTurnAutoPilotProcess on GameAiTurnAutoPilotContext {
       canContinue: canContinue,
       shouldRunLocalAiForMode: GameAiTurnAutoPilotRules.shouldRunLocalAiForMode,
       canRunScheduledAiTurn: GameAiTurnAutoPilotRules.canRunScheduledAiTurn,
-      strategyRegistryFor: strategyRegistryFor,
+      strategyRegistryFor:
+          ({
+            required playerId,
+            required save,
+            required gameState,
+            required networkSession,
+          }) => strategyResolver.resolve(
+            playerId: playerId,
+            save: save,
+            gameState: gameState,
+            networkSession: networkSession,
+          ),
       rulesetReader: () {
         return GameRuleset.standard().copyWith(
           city: ref.read(cityRulesetProvider),

@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:aonw/game/application/ports/network_session.dart';
 import 'package:aonw/game/application/services/ai_runtime_strategy_resolver.dart';
-import 'package:aonw/game/domain/game_state.dart';
 import 'package:aonw/game/presentation/providers.dart';
 import 'package:aonw/game/presentation/services/ai_turn_auto_scheduler.dart';
 import 'package:aonw/game/presentation/services/ai_turn_lifecycle_coordinator.dart';
@@ -13,28 +11,12 @@ import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_execut
 import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_process.dart';
 import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_rules.dart';
 import 'package:aonw/shared/providers/ai_settings_provider.dart';
-import 'package:aonw_core/ai.dart';
-import 'package:aonw_core/game/domain/save.dart';
 import 'package:flutter/widgets.dart';
 
 extension GameAiTurnAutoPilotRuntime on GameAiTurnAutoPilotContext {
   void initialize() {
     runtimeCoordinator = createAiTurnRuntimeCoordinator();
     lifecycleCoordinator = createAiTurnLifecycleCoordinator();
-  }
-
-  AiStrategyRegistry strategyRegistryFor({
-    required String playerId,
-    required GameSave save,
-    required GameClientState gameState,
-    required NetworkSession? networkSession,
-  }) {
-    return aiRuntimeStrategyResolver().resolve(
-      playerId: playerId,
-      save: save,
-      gameState: gameState,
-      networkSession: networkSession,
-    );
   }
 
   AiTurnAutoScheduler aiTurnAutoScheduler() {
