@@ -939,7 +939,10 @@ download-package:
 		echo "Public download packages should not include itch manifests."; \
 		exit 1; \
 	fi
-	@if find "$(DOWNLOAD_BUILD_DIR)" -iname '*steam*' -print -quit | rg . >/dev/null; then \
+	@if find "$(DOWNLOAD_BUILD_DIR)" -iname '*steam*' \
+		! -path "$(DOWNLOAD_BUILD_DIR)/linux/STEAM_RUNTIME_MANIFEST.txt" \
+		! -path "$(DOWNLOAD_BUILD_DIR)/linux/licenses/steamrt-container-host-compat.copyright" \
+		-print -quit | rg . >/dev/null; then \
 		echo "Public download packages contain steam-named paths."; \
 		exit 1; \
 	fi
@@ -1762,7 +1765,10 @@ itch-desktop:
 	@if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then butler validate --platform linux "$(ITCH_LINUX_DIR)"; fi
 	@find_dirs="$(ITCH_MACOS_DIR) $(ITCH_WINDOWS_DIR)"; \
 	if [ "$(ITCH_INCLUDE_LINUX)" = "1" ]; then find_dirs="$$find_dirs $(ITCH_LINUX_DIR)"; fi; \
-	if find $$find_dirs -iname '*steam*' -print -quit | rg . >/dev/null; then \
+	if find $$find_dirs -iname '*steam*' \
+		! -path "$(ITCH_LINUX_DIR)/STEAM_RUNTIME_MANIFEST.txt" \
+		! -path "$(ITCH_LINUX_DIR)/licenses/steamrt-container-host-compat.copyright" \
+		-print -quit | rg . >/dev/null; then \
 		echo "itch desktop folders contain steam-named paths."; \
 		exit 1; \
 	fi
