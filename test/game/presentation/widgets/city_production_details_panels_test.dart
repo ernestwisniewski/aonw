@@ -1,7 +1,6 @@
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_details_panels.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_item_view_model.dart';
-import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/tile_yield.dart';
@@ -29,8 +28,6 @@ void main() {
                 unitType: null,
                 projectType: null,
                 title: 'Granary',
-                emoji: '🌾',
-                icon: null,
                 active: true,
                 investedProduction: 10,
                 totalCost: 30,
@@ -85,8 +82,6 @@ void main() {
                 unitType: null,
                 projectType: null,
                 title: 'Granary',
-                emoji: '🌾',
-                icon: null,
                 active: false,
                 investedProduction: 30,
                 totalCost: 30,
@@ -132,8 +127,6 @@ void main() {
                   unitType: null,
                   projectType: null,
                   title: 'Workshop',
-                  emoji: '🏗️',
-                  icon: null,
                   active: false,
                   investedProduction: 0,
                   totalCost: 15,
@@ -191,8 +184,6 @@ void main() {
                 unitType: GameUnitType.warrior,
                 projectType: null,
                 title: 'Warrior',
-                emoji: null,
-                icon: GameIcons.warrior,
                 active: false,
                 investedProduction: 0,
                 totalCost: 20,

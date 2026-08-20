@@ -35,7 +35,6 @@ class _WorkerImprovementOptionTile extends StatelessWidget {
             child: _WorkerImprovementOptionBody(
               option: option,
               compact: compact,
-              accent: accent,
             ),
           ),
         ),
@@ -55,12 +54,10 @@ class _WorkerImprovementOptionBody extends StatelessWidget {
   const _WorkerImprovementOptionBody({
     required this.option,
     required this.compact,
-    required this.accent,
   });
 
   final WorkerImprovementOptionViewModel option;
   final bool compact;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -72,11 +69,6 @@ class _WorkerImprovementOptionBody extends StatelessWidget {
           child: FieldImprovementSpriteIcon(
             type: option.improvementType,
             size: compact ? 34 : 40,
-            fallback: GameIcon(
-              GameIcons.improvement,
-              size: GameIconSize.small,
-              color: accent,
-            ),
           ),
         ),
         const SizedBox(width: 10),

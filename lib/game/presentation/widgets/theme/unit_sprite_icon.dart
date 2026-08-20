@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 class UnitSpriteIcon extends StatelessWidget {
   final GameUnitType type;
   final double size;
-  final Widget? fallback;
   final double opacity;
   final int column;
   final int row;
@@ -15,7 +14,6 @@ class UnitSpriteIcon extends StatelessWidget {
   const UnitSpriteIcon({
     required this.type,
     required this.size,
-    this.fallback,
     this.opacity = 1,
     this.column = 0,
     this.row = 0,
@@ -45,7 +43,6 @@ class UnitSpriteIcon extends StatelessWidget {
               adjustmentFrameIndex: safeColumn,
             ),
       size: size,
-      fallback: fallback,
       opacity: opacity,
     );
   }

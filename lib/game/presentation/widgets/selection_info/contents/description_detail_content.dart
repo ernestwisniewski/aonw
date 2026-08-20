@@ -5,7 +5,6 @@ import 'package:aonw/game/presentation/widgets/selection_info/contents/descripti
 import 'package:aonw/game/presentation/widgets/theme/city_sprite_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/field_improvement_sprite_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_hud_theme.dart';
-import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:flutter/material.dart';
 
 class DescriptionDetailContent extends StatelessWidget {
@@ -94,12 +93,7 @@ class DescriptionDetailContent extends StatelessWidget {
         ],
         if (assetFocusedDescription && assetIcon != null) ...[
           SizedBox(height: compact ? 10 : 12),
-          _DescriptionAssetPreview(
-            assetIcon: assetIcon,
-            compact: compact,
-            fallbackColor:
-                model.yields.firstOrNull?.color ?? GameHudTheme.accentFallback,
-          ),
+          _DescriptionAssetPreview(assetIcon: assetIcon),
         ],
       ],
     );
@@ -107,18 +101,12 @@ class DescriptionDetailContent extends StatelessWidget {
 }
 
 class _DescriptionAssetPreview extends StatelessWidget {
-  const _DescriptionAssetPreview({
-    required this.assetIcon,
-    required this.compact,
-    required this.fallbackColor,
-  });
+  const _DescriptionAssetPreview({required this.assetIcon});
 
   static const double _sourceAspectRatio = 500 / 370;
   static const double _maxAssetWidth = 250;
 
   final SelectionAssetIconViewModel assetIcon;
-  final bool compact;
-  final Color fallbackColor;
 
   @override
   Widget build(BuildContext context) {
@@ -146,11 +134,6 @@ class _DescriptionAssetPreview extends StatelessWidget {
         size: width,
         width: width,
         height: height,
-        fallback: GameIcon(
-          GameIcons.improvement,
-          size: compact ? GameIconSize.regular : GameIconSize.large,
-          color: fallbackColor,
-        ),
       );
     }
 
@@ -162,11 +145,6 @@ class _DescriptionAssetPreview extends StatelessWidget {
         size: width,
         width: width,
         height: height,
-        fallback: GameIcon(
-          GameIcons.cityFilled,
-          size: compact ? GameIconSize.regular : GameIconSize.large,
-          color: fallbackColor,
-        ),
       );
     }
 

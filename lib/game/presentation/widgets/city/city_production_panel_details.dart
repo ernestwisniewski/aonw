@@ -39,7 +39,6 @@ extension _CityProductionPanelDetails on _CityProductionPanelState {
               ),
           l10n: l10n,
           title: item.title,
-          emoji: item.emoji,
           statusLabel: _buildingStateLabel(l10n, item),
           costLabel: l10n.cityProductionCostShort(definition.productionCost),
           progressLabel: _buildingProgressLabel(l10n, item),
@@ -109,7 +108,6 @@ extension _CityProductionPanelDetails on _CityProductionPanelState {
           ),
           l10n: l10n,
           title: item.title,
-          icon: item.icon ?? gameIconForUnitType(unitType),
           statusLabel: item.active
               ? l10n.productionInProgressLabel
               : item.locked

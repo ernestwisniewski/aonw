@@ -38,7 +38,6 @@ class FieldImprovementSpriteIcon extends StatelessWidget {
     this.eraColumn = 0,
     this.width,
     this.height,
-    this.fallback,
     this.opacity = 1,
     super.key,
   });
@@ -48,7 +47,6 @@ class FieldImprovementSpriteIcon extends StatelessWidget {
   final double size;
   final double? width;
   final double? height;
-  final Widget? fallback;
   final double opacity;
 
   @override
@@ -58,7 +56,6 @@ class FieldImprovementSpriteIcon extends StatelessWidget {
       size: size,
       width: width,
       height: height,
-      fallback: fallback,
       opacity: opacity,
     );
   }

@@ -36,15 +36,7 @@ class EmpireUnitGroupBlock extends StatelessWidget {
       subtitle: empireUnitGroupSubtitle(l10n, group),
       focusTooltip: l10n.empireShowFirstUnitTooltip,
       onTap: () => onUnitSelected(first),
-      leading: UnitSpriteIcon(
-        type: group.type,
-        size: 28,
-        fallback: GameIcon(
-          gameIconForUnitType(group.type),
-          size: GameIconSize.large,
-          color: GameUiTheme.goldLight,
-        ),
-      ),
+      leading: UnitSpriteIcon(type: group.type, size: 28),
       useTileLayout: true,
       children: [
         for (final unit in group.units)

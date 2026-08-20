@@ -138,15 +138,7 @@ class TechnologyActiveResearchBanner extends StatelessWidget {
         children: [
           Row(
             children: [
-              TechnologySpriteIcon(
-                id: card.id,
-                size: compact ? 24 : 28,
-                fallback: const GameIcon(
-                  GameIcons.science,
-                  size: GameIconSize.regular,
-                  color: GameUiTheme.scienceAccent,
-                ),
-              ),
+              TechnologySpriteIcon(id: card.id, size: compact ? 24 : 28),
               const SizedBox(width: 8),
               Text(
                 l10n.activeResearchLabel,

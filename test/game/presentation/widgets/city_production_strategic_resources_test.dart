@@ -4,7 +4,6 @@ import 'package:aonw/game/presentation/widgets/city/city_production_dialog.dart'
 import 'package:aonw/game/presentation/widgets/city/city_production_dialog_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_item_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list.dart';
-import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw_core/domain/world_map.dart';
@@ -127,8 +126,6 @@ void main() {
                 unitType: GameUnitType.tank,
                 projectType: null,
                 title: 'Tank',
-                emoji: null,
-                icon: GameIcons.warrior,
                 active: false,
                 investedProduction: 0,
                 totalCost: 84,

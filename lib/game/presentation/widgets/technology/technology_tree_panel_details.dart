@@ -95,7 +95,6 @@ extension _TechnologyTreePanelDetails on _TechnologyTreePanelState {
               ),
           l10n: l10n,
           title: GameDisplayNames.cityBuilding(l10n, buildingType),
-          emoji: CityBuildingsPanelViewModelFactory.emojiFor(buildingType),
           statusLabel: l10n.technologyDetailsUnlockStatus,
           costLabel: l10n.cityProductionCostShort(definition.productionCost),
           onClose: () => Navigator.of(dialogContext).maybePop(),
@@ -119,7 +118,6 @@ extension _TechnologyTreePanelDetails on _TechnologyTreePanelState {
           ),
           l10n: l10n,
           title: GameDisplayNames.unitType(l10n, unitType),
-          icon: gameIconForUnitType(unitType),
           statusLabel: l10n.technologyDetailsUnlockStatus,
           costLabel: definition == null
               ? null

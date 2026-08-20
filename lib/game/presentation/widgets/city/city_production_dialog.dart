@@ -13,7 +13,6 @@ import 'package:aonw/game/presentation/widgets/city/city_production_header.dart'
 import 'package:aonw/game/presentation/widgets/city/city_production_item_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list.dart';
 import 'package:aonw/game/presentation/widgets/city/wonder_details_dialog.dart';
-import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/game/presentation/widgets/unit/unit_details_panel.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/widgets/game_ui/game_modal.dart';

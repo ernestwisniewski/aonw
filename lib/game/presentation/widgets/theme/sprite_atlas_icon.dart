@@ -50,9 +50,10 @@ class SpriteAtlasIconData {
   }
 
   Future<ui.Rect> resolvedSourceRectFor(ui.Image image) async {
-    if (!cropToContent) return sourceRectFor(image);
+    final cachedFrame = cachedSourceRectFor(image);
+    if (cachedFrame != null) return cachedFrame;
 
-    final cachedFrame = SpriteAtlasFrameBoundsCache.cachedFrameRectFor(
+    return SpriteAtlasFrameBoundsCache.frameRectFor(
       cacheKey: assetPath,
       image: image,
       columns: columns,
@@ -62,9 +63,11 @@ class SpriteAtlasIconData {
       sourceInset: sourceInset,
       contentPadding: contentPadding,
     );
-    if (cachedFrame != null) return cachedFrame;
+  }
 
-    return SpriteAtlasFrameBoundsCache.frameRectFor(
+  ui.Rect? cachedSourceRectFor(ui.Image image) {
+    if (!cropToContent) return sourceRectFor(image);
+    return SpriteAtlasFrameBoundsCache.cachedFrameRectFor(
       cacheKey: assetPath,
       image: image,
       columns: columns,
@@ -120,12 +123,11 @@ class SpriteAtlasIconData {
   );
 }
 
-class SpriteAtlasIcon extends StatelessWidget {
+class SpriteAtlasIcon extends StatefulWidget {
   final SpriteAtlasIconData? data;
   final double size;
   final double? width;
   final double? height;
-  final Widget? fallback;
   final double opacity;
   final BoxFit fit;
   final Alignment alignment;
@@ -135,7 +137,6 @@ class SpriteAtlasIcon extends StatelessWidget {
     required this.size,
     this.width,
     this.height,
-    this.fallback,
     this.opacity = 1,
     this.fit = BoxFit.contain,
     this.alignment = Alignment.center,
@@ -143,35 +144,48 @@ class SpriteAtlasIcon extends StatelessWidget {
   });
 
   @override
+  State<SpriteAtlasIcon> createState() => _SpriteAtlasIconState();
+}
+
+class _SpriteAtlasIconState extends State<SpriteAtlasIcon> {
+  Future<_LoadedSpriteAtlasIcon>? _pendingFrame;
+
+  @override
+  void didUpdateWidget(covariant SpriteAtlasIcon oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.data != widget.data) _pendingFrame = null;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final data = this.data;
-    if (data == null) return _fallbackBox();
+    final data = widget.data;
+    if (data == null) return _emptyBox();
 
-    final cachedImage = UiImageCache.imageFor(data.assetPath);
-    final content = FutureBuilder<_LoadedSpriteAtlasIcon>(
-      future: cachedImage == null
-          ? _loadIconFrame(data)
-          : _loadIconFrameFromImage(data, cachedImage),
-      builder: (context, snapshot) {
-        final loaded = snapshot.data;
-        if (loaded == null) return _fallbackBox();
-        return _paintedIcon(
-          data,
-          loaded.image,
-          loaded.sourceRect,
-          loaded.adjustment,
-        );
-      },
+    final readyFrame = _frameFromCaches(data);
+    final content = readyFrame == null
+        ? FutureBuilder<_LoadedSpriteAtlasIcon>(
+            future: _pendingFrame ??= _loadIconFrame(data),
+            builder: (context, snapshot) {
+              final loaded = snapshot.data;
+              if (loaded == null) return _emptyBox();
+              return _paintedIcon(data, loaded);
+            },
+          )
+        : _paintedIcon(data, readyFrame);
+
+    if (widget.opacity >= 1) return content;
+    return Opacity(
+      opacity: widget.opacity.clamp(0, 1).toDouble(),
+      child: content,
     );
-
-    if (opacity >= 1) return content;
-    return Opacity(opacity: opacity.clamp(0, 1).toDouble(), child: content);
   }
 
   Future<_LoadedSpriteAtlasIcon> _loadIconFrame(
     SpriteAtlasIconData data,
   ) async {
-    final image = await UiImageCache.load(data.assetPath);
+    final image =
+        UiImageCache.imageFor(data.assetPath) ??
+        await UiImageCache.load(data.assetPath);
     return _loadIconFrameFromImage(data, image);
   }
 
@@ -180,41 +194,65 @@ class SpriteAtlasIcon extends StatelessWidget {
     ui.Image image,
   ) async {
     final sourceRect = await data.resolvedSourceRectFor(image);
-    final catalog = await AnimationFrameAdjustmentCatalogCache.load();
     return _LoadedSpriteAtlasIcon(
-      adjustment: data.adjustmentFor(catalog),
+      adjustment: await _adjustmentFor(data),
       image: image,
       sourceRect: sourceRect,
     );
   }
 
-  Widget _paintedIcon(
+  _LoadedSpriteAtlasIcon? _frameFromCaches(SpriteAtlasIconData data) {
+    final image = UiImageCache.imageFor(data.assetPath);
+    if (image == null) return null;
+    final sourceRect = data.cachedSourceRectFor(image);
+    if (sourceRect == null) return null;
+    final adjustment = _cachedAdjustmentFor(data);
+    if (adjustment == null) return null;
+    return _LoadedSpriteAtlasIcon(
+      adjustment: adjustment,
+      image: image,
+      sourceRect: sourceRect,
+    );
+  }
+
+  AnimationFrameAdjustment? _cachedAdjustmentFor(SpriteAtlasIconData data) {
+    if (data.adjustmentId == null) {
+      return const AnimationFrameAdjustment();
+    }
+    final catalog = AnimationFrameAdjustmentCatalogCache.cached;
+    return catalog == null ? null : data.adjustmentFor(catalog);
+  }
+
+  Future<AnimationFrameAdjustment> _adjustmentFor(
     SpriteAtlasIconData data,
-    ui.Image image,
-    ui.Rect sourceRect,
-    AnimationFrameAdjustment adjustment,
-  ) {
+  ) async {
+    final cached = _cachedAdjustmentFor(data);
+    if (cached != null) return cached;
+    final catalog = await AnimationFrameAdjustmentCatalogCache.load();
+    return data.adjustmentFor(catalog);
+  }
+
+  Widget _paintedIcon(SpriteAtlasIconData data, _LoadedSpriteAtlasIcon loaded) {
     return SizedBox(
-      width: width ?? size,
-      height: height ?? size,
+      width: widget.width ?? widget.size,
+      height: widget.height ?? widget.size,
       child: CustomPaint(
         painter: _SpriteAtlasIconPainter(
           data,
-          image,
-          sourceRect,
-          adjustment,
-          fit,
-          alignment,
+          loaded.image,
+          loaded.sourceRect,
+          loaded.adjustment,
+          widget.fit,
+          widget.alignment,
         ),
       ),
     );
   }
 
-  Widget _fallbackBox() {
+  Widget _emptyBox() {
     return SizedBox(
-      width: width ?? size,
-      height: height ?? size,
-      child: Center(child: fallback ?? const SizedBox.shrink()),
+      width: widget.width ?? widget.size,
+      height: widget.height ?? widget.size,
     );
   }
 }

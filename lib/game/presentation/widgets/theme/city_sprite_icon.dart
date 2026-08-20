@@ -31,7 +31,6 @@ class CitySpriteIcon extends StatelessWidget {
     required this.size,
     this.width,
     this.height,
-    this.fallback,
     this.opacity = 1,
     this.fit = BoxFit.contain,
     this.alignment = Alignment.center,
@@ -43,7 +42,6 @@ class CitySpriteIcon extends StatelessWidget {
   final double size;
   final double? width;
   final double? height;
-  final Widget? fallback;
   final double opacity;
   final BoxFit fit;
   final Alignment alignment;
@@ -58,7 +56,6 @@ class CitySpriteIcon extends StatelessWidget {
       size: size,
       width: width,
       height: height,
-      fallback: fallback,
       opacity: opacity,
       fit: fit,
       alignment: alignment,

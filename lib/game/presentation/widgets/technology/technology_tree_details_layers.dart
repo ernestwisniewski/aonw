@@ -6,7 +6,6 @@ import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/city/wonder_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_details_dialog.dart';
-import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/game/presentation/widgets/unit/unit_details_panel.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
@@ -87,7 +86,6 @@ class TechnologyInlineCityBuildingDetailsLayer extends StatelessWidget {
               ),
           l10n: l10n,
           title: GameDisplayNames.cityBuilding(l10n, buildingType),
-          emoji: CityBuildingsPanelViewModelFactory.emojiFor(buildingType),
           statusLabel: l10n.technologyDetailsUnlockStatus,
           costLabel: l10n.cityProductionCostShort(definition.productionCost),
           maxWidth: maxWidth,
@@ -131,7 +129,6 @@ class TechnologyInlineUnitDetailsLayer extends StatelessWidget {
           ),
           l10n: l10n,
           title: GameDisplayNames.unitType(l10n, unitType),
-          icon: gameIconForUnitType(unitType),
           statusLabel: l10n.technologyDetailsUnlockStatus,
           costLabel: definition == null
               ? null

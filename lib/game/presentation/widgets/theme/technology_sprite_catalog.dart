@@ -79,13 +79,11 @@ abstract final class TechnologySpriteCatalog {
 class TechnologySpriteIcon extends StatelessWidget {
   final TechnologyId id;
   final double size;
-  final Widget? fallback;
   final double opacity;
 
   const TechnologySpriteIcon({
     required this.id,
     required this.size,
-    this.fallback,
     this.opacity = 1,
     super.key,
   });
@@ -95,7 +93,6 @@ class TechnologySpriteIcon extends StatelessWidget {
     return SpriteAtlasIcon(
       data: TechnologySpriteCatalog.iconFor(id),
       size: size,
-      fallback: fallback,
       opacity: opacity,
     );
   }

@@ -37,45 +37,18 @@ class ProductionLeading extends StatelessWidget {
   Widget _icon() {
     final buildingType = item.buildingType;
     if (buildingType != null) {
-      return BuildingSpriteIcon(
-        type: buildingType,
-        size: compact ? 38 : 46,
-        fallback: Text(
-          item.emoji ?? '',
-          style: TextStyle(fontSize: compact ? 23 : 27),
-        ),
-      );
+      return BuildingSpriteIcon(type: buildingType, size: compact ? 38 : 46);
     }
 
     final unitType = item.unitType;
     final icon = item.icon;
     final wonderType = item.wonderType;
     if (wonderType != null) {
-      return WonderSpriteIcon(
-        type: wonderType,
-        size: compact ? 38 : 46,
-        fallback: icon == null
-            ? const SizedBox.shrink()
-            : GameIcon(
-                icon,
-                size: compact ? GameIconSize.regular : GameIconSize.large,
-                color: GameUiTheme.goldLight,
-              ),
-      );
+      return WonderSpriteIcon(type: wonderType, size: compact ? 38 : 46);
     }
 
     if (unitType != null) {
-      return UnitSpriteIcon(
-        type: unitType,
-        size: compact ? 37 : 44,
-        fallback: icon == null
-            ? const SizedBox.shrink()
-            : GameIcon(
-                icon,
-                size: compact ? GameIconSize.regular : GameIconSize.large,
-                color: GameUiTheme.goldLight,
-              ),
-      );
+      return UnitSpriteIcon(type: unitType, size: compact ? 37 : 44);
     }
 
     if (icon != null) {
@@ -85,10 +58,7 @@ class ProductionLeading extends StatelessWidget {
         color: GameUiTheme.goldLight,
       );
     }
-    return Text(
-      item.emoji ?? '',
-      style: TextStyle(fontSize: compact ? 23 : 27),
-    );
+    return const SizedBox.shrink();
   }
 }
 

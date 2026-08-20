@@ -149,7 +149,6 @@ class _SelectionContextAssetIcon extends StatelessWidget {
         key: const Key('hudActionDeck.selectionAssetIcon.unit'),
         type: unitType,
         size: size,
-        fallback: _fallbackIcon,
       );
     }
 
@@ -159,7 +158,6 @@ class _SelectionContextAssetIcon extends StatelessWidget {
         visualLevel: assetIcon!.cityVisualLevel ?? 0,
         technologyProfileIndex: assetIcon.cityTechnologyProfileIndex ?? 0,
         size: size,
-        fallback: _fallbackIcon,
       );
     }
 
@@ -169,17 +167,16 @@ class _SelectionContextAssetIcon extends StatelessWidget {
         type: assetIcon!.fieldImprovementType!,
         eraColumn: assetIcon.fieldImprovementEraColumn ?? 0,
         size: size,
-        fallback: _fallbackIcon,
       );
     }
 
     return SizedBox.square(
       dimension: size,
-      child: Center(child: _fallbackIcon),
+      child: Center(child: _selectionIcon),
     );
   }
 
-  Widget get _fallbackIcon {
+  Widget get _selectionIcon {
     return GameIcon(
       selection.icon,
       size: GameIconSize.small,

@@ -28,7 +28,6 @@ class CityBuildingDetailsDialog extends StatelessWidget {
   final TechnologyDefinition? unlockingTechnology;
   final AppLocalizations l10n;
   final String title;
-  final String? emoji;
   final String statusLabel;
   final String costLabel;
   final String? progressLabel;
@@ -44,7 +43,6 @@ class CityBuildingDetailsDialog extends StatelessWidget {
     required this.unlockingTechnology,
     required this.l10n,
     required this.title,
-    required this.emoji,
     required this.statusLabel,
     required this.costLabel,
     this.progressLabel,
@@ -66,7 +64,6 @@ class CityBuildingDetailsDialog extends StatelessWidget {
       unlockingTechnology: unlockingTechnology,
       l10n: l10n,
       title: title,
-      emoji: emoji,
       statusLabel: statusLabel,
       costLabel: costLabel,
       progressLabel: progressLabel,
@@ -86,7 +83,6 @@ class CityBuildingDetailsPanel extends StatelessWidget {
   final TechnologyDefinition? unlockingTechnology;
   final AppLocalizations l10n;
   final String title;
-  final String? emoji;
   final String statusLabel;
   final String costLabel;
   final String? progressLabel;
@@ -104,7 +100,6 @@ class CityBuildingDetailsPanel extends StatelessWidget {
     required this.unlockingTechnology,
     required this.l10n,
     required this.title,
-    required this.emoji,
     required this.statusLabel,
     required this.costLabel,
     this.progressLabel,
@@ -149,7 +144,6 @@ class CityBuildingDetailsPanel extends StatelessWidget {
             _BuildingDetailsHeader(
               buildingType: buildingType,
               title: title,
-              emoji: emoji,
               l10n: l10n,
               onClose: onClose,
             ),

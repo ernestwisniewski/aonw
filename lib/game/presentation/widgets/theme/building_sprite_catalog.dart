@@ -44,13 +44,11 @@ abstract final class BuildingSpriteCatalog {
 class BuildingSpriteIcon extends StatelessWidget {
   final CityBuildingType type;
   final double size;
-  final Widget? fallback;
   final double opacity;
 
   const BuildingSpriteIcon({
     required this.type,
     required this.size,
-    this.fallback,
     this.opacity = 1,
     super.key,
   });
@@ -60,7 +58,6 @@ class BuildingSpriteIcon extends StatelessWidget {
     return SpriteAtlasIcon(
       data: BuildingSpriteCatalog.iconFor(type),
       size: size,
-      fallback: fallback,
       opacity: opacity,
     );
   }

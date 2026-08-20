@@ -1,6 +1,4 @@
-import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/sprite_atlas_icon.dart';
-import 'package:aonw/shared/theme/game_ui_theme.dart';
 import 'package:aonw_core/game/domain/wonder.dart';
 import 'package:flutter/material.dart';
 
@@ -36,14 +34,12 @@ class WonderSpriteIcon extends StatelessWidget {
   const WonderSpriteIcon({
     required this.type,
     required this.size,
-    this.fallback,
     this.opacity = 1,
     super.key,
   });
 
   final WonderType type;
   final double size;
-  final Widget? fallback;
   final double opacity;
 
   @override
@@ -51,13 +47,6 @@ class WonderSpriteIcon extends StatelessWidget {
     return SpriteAtlasIcon(
       data: WonderSpriteCatalog.iconFor(type),
       size: size,
-      fallback:
-          fallback ??
-          const GameIcon(
-            GameIcons.victory,
-            size: GameIconSize.regular,
-            color: GameUiTheme.goldLight,
-          ),
       opacity: opacity,
     );
   }

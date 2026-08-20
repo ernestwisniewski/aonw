@@ -3,7 +3,6 @@ import 'package:aonw/game/presentation/formatters/technology_tree_labels.dart';
 import 'package:aonw/game/presentation/widgets/theme/building_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/unit_sprite_icon.dart';
-import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/wonder_sprite_catalog.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/l10n.dart';
@@ -124,28 +123,12 @@ class TechnologyUnlockRow extends StatelessWidget {
           BuildingSpriteIcon(type: buildingType, size: 38),
           const SizedBox(width: 10),
         ] else if (unitType != null) ...[
-          UnitSpriteIcon(
-            type: unitType,
-            size: 38,
-            fallback: GameIcon(
-              gameIconForUnitType(unitType),
-              size: GameIconSize.regular,
-              color: GameUiTheme.goldLight,
-            ),
-          ),
+          UnitSpriteIcon(type: unitType, size: 38),
           const SizedBox(width: 10),
         ] else if (wonderType != null) ...[
           SizedBox.square(
             dimension: 38,
-            child: WonderSpriteIcon(
-              type: wonderType,
-              size: 38,
-              fallback: const GameIcon(
-                GameIcons.victory,
-                size: GameIconSize.regular,
-                color: GameUiTheme.goldLight,
-              ),
-            ),
+            child: WonderSpriteIcon(type: wonderType, size: 38),
           ),
           const SizedBox(width: 10),
         ],

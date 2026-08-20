@@ -124,11 +124,6 @@ class _EndTurnActionThumbnailBackdrop extends StatelessWidget {
         height: coverCity ? frameSize.height : null,
         fit: coverCity ? BoxFit.cover : BoxFit.contain,
         alignment: coverCity ? Alignment.centerRight : Alignment.center,
-        fallback: GameIcon(
-          GameIcons.cityFilled,
-          size: size * 0.52,
-          color: foreground,
-        ),
       ),
       HudTurnActionThumbnailKind.research =>
         thumbnail.technologyId == null
@@ -142,11 +137,6 @@ class _EndTurnActionThumbnailBackdrop extends StatelessWidget {
                 key: const Key('endTurnButton.actionThumbnail.research'),
                 id: thumbnail.technologyId!,
                 size: size * 0.84,
-                fallback: GameIcon(
-                  GameIcons.science,
-                  size: size * 0.5,
-                  color: foreground,
-                ),
               ),
     };
   }
@@ -158,11 +148,6 @@ class _EndTurnActionThumbnailBackdrop extends StatelessWidget {
       key: const Key('endTurnButton.actionThumbnail.unit'),
       type: type,
       size: unitSize,
-      fallback: GameIcon(
-        gameIconForUnitType(type),
-        size: unitSize * 0.52,
-        color: foreground,
-      ),
     );
   }
 

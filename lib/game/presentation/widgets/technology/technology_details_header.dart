@@ -48,15 +48,7 @@ class TechnologyDetailsHeader extends StatelessWidget {
               includeShadow: false,
             ),
             child: Center(
-              child: TechnologySpriteIcon(
-                id: technologyId,
-                size: 50,
-                fallback: const GameIcon(
-                  GameIcons.science,
-                  size: GameIconSize.large,
-                  color: GameUiTheme.scienceAccent,
-                ),
-              ),
+              child: TechnologySpriteIcon(id: technologyId, size: 50),
             ),
           ),
           const SizedBox(width: 12),

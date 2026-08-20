@@ -2,7 +2,6 @@ import 'package:aonw/game/presentation/formatters/game_wonder_display_names.dart
 import 'package:aonw/game/presentation/formatters/turn_eta.dart';
 import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
-import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw_core/game/domain/city.dart';
 import 'package:aonw_core/game/domain/unit.dart';
@@ -14,8 +13,7 @@ class CityProductionItem {
     required this.unitType,
     required this.projectType,
     required this.title,
-    required this.emoji,
-    required this.icon,
+    this.icon,
     required this.active,
     required this.investedProduction,
     required this.totalCost,
@@ -42,7 +40,6 @@ class CityProductionItem {
   final CityProjectType? projectType;
   final WonderType? wonderType;
   final String title;
-  final String? emoji;
   final GameIconData? icon;
   final bool active;
   final int investedProduction;
@@ -83,8 +80,6 @@ class CityProductionItem {
       projectType: null,
       wonderType: null,
       title: viewModel.displayName,
-      emoji: viewModel.emoji,
-      icon: null,
       active: viewModel.state == CityBuildingCardState.inProgress,
       investedProduction: viewModel.investedProduction,
       totalCost: viewModel.totalCost,
@@ -132,8 +127,6 @@ class CityProductionItem {
       projectType: null,
       wonderType: null,
       title: title,
-      emoji: null,
-      icon: gameIconForUnitType(type),
       active: active,
       investedProduction: investedProduction,
       totalCost: totalCost,
@@ -177,7 +170,6 @@ class CityProductionItem {
       projectType: type,
       wonderType: null,
       title: _projectTitle(type, l10n),
-      emoji: null,
       icon: _iconForProject(type),
       active: active,
       investedProduction: 0,
@@ -221,8 +213,6 @@ class CityProductionItem {
       projectType: null,
       wonderType: type,
       title: WonderDisplayNames.wonder(l10n, type),
-      emoji: null,
-      icon: GameIcons.victory,
       active: active,
       investedProduction: investedProduction,
       totalCost: totalCost,

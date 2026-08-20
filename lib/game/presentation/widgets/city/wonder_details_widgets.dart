@@ -34,17 +34,7 @@ class _WonderDetailsHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               includeShadow: false,
             ),
-            child: Center(
-              child: WonderSpriteIcon(
-                type: wonderType,
-                size: 50,
-                fallback: const GameIcon(
-                  GameIcons.victory,
-                  size: GameIconSize.large,
-                  color: GameUiTheme.goldLight,
-                ),
-              ),
-            ),
+            child: Center(child: WonderSpriteIcon(type: wonderType, size: 50)),
           ),
           const SizedBox(width: 12),
           Expanded(

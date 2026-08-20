@@ -178,15 +178,7 @@ class _RecommendationCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TechnologySpriteIcon(
-                    id: card.id,
-                    size: compact ? 38 : 44,
-                    fallback: const GameIcon(
-                      GameIcons.science,
-                      size: GameIconSize.regular,
-                      color: GameUiTheme.scienceAccent,
-                    ),
-                  ),
+                  TechnologySpriteIcon(id: card.id, size: compact ? 38 : 44),
                   const SizedBox(width: 9),
                   Expanded(
                     child: Column(

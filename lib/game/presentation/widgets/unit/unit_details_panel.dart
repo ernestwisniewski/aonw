@@ -22,7 +22,6 @@ class UnitDetailsPanel extends StatelessWidget {
   final TechnologyDefinition? unlockingTechnology;
   final AppLocalizations l10n;
   final String title;
-  final GameIconData icon;
   final String statusLabel;
   final String? costLabel;
   final String? progressLabel;
@@ -37,7 +36,6 @@ class UnitDetailsPanel extends StatelessWidget {
     required this.unlockingTechnology,
     required this.l10n,
     required this.title,
-    required this.icon,
     required this.statusLabel,
     this.costLabel,
     this.progressLabel,
@@ -72,7 +70,6 @@ class UnitDetailsPanel extends StatelessWidget {
             _UnitDetailsHeader(
               unitType: unitType,
               title: title,
-              icon: icon,
               l10n: l10n,
               onClose: onClose,
             ),
@@ -180,14 +177,12 @@ class UnitDetailsPanel extends StatelessWidget {
 class _UnitDetailsHeader extends StatelessWidget {
   final GameUnitType unitType;
   final String title;
-  final GameIconData icon;
   final AppLocalizations l10n;
   final VoidCallback onClose;
 
   const _UnitDetailsHeader({
     required this.unitType,
     required this.title,
-    required this.icon,
     required this.l10n,
     required this.onClose,
   });
@@ -213,17 +208,7 @@ class _UnitDetailsHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               includeShadow: false,
             ),
-            child: Center(
-              child: UnitSpriteIcon(
-                type: unitType,
-                size: 30,
-                fallback: GameIcon(
-                  icon,
-                  size: GameIconSize.regular,
-                  color: GameUiTheme.goldLight,
-                ),
-              ),
-            ),
+            child: Center(child: UnitSpriteIcon(type: unitType, size: 30)),
           ),
           const SizedBox(width: 12),
           Expanded(

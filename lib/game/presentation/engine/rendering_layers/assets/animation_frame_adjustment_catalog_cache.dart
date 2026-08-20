@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 abstract final class AnimationFrameAdjustmentCatalogCache {
   static AnimationFrameAdjustmentCatalog? _catalog;
 
+  static AnimationFrameAdjustmentCatalog? get cached => _catalog;
+
   static Future<AnimationFrameAdjustmentCatalog> load({
     AssetBundle? bundle,
     bool forceReload = false,

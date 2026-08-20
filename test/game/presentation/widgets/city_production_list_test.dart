@@ -2,9 +2,13 @@ import 'package:aonw/game/presentation/widgets/city/city_production_dialog_view_
 import 'package:aonw/game/presentation/widgets/city/city_production_gamepad_navigation.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_item_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list.dart';
+import 'package:aonw/game/presentation/widgets/city/city_production_list_parts.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list_sections.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list_tile.dart';
+import 'package:aonw/game/presentation/widgets/theme/building_sprite_catalog.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
+import 'package:aonw/game/presentation/widgets/theme/unit_sprite_icon.dart';
+import 'package:aonw/game/presentation/widgets/theme/wonder_sprite_catalog.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/l10n/generated/app_localizations_en.dart';
 import 'package:aonw_core/game/domain/city.dart';
@@ -14,6 +18,60 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets(
+    'ProductionLeading uses only atlas widgets for sprite-backed items',
+    (tester) async {
+      CityProductionItem atlasItem({
+        CityBuildingType? buildingType,
+        GameUnitType? unitType,
+        WonderType? wonderType,
+      }) {
+        return CityProductionItem(
+          buildingType: buildingType,
+          unitType: unitType,
+          projectType: null,
+          wonderType: wonderType,
+          title: 'Atlas item',
+          active: false,
+          investedProduction: 0,
+          totalCost: 20,
+          productionPerTurn: 5,
+          turnsRemaining: 4,
+          rushGoldCost: 0,
+          locked: false,
+          requirementLabel: null,
+          buildingState: null,
+        );
+      }
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Row(
+            children: [
+              ProductionLeading(
+                item: atlasItem(buildingType: CityBuildingType.granary),
+                compact: false,
+              ),
+              ProductionLeading(
+                item: atlasItem(unitType: GameUnitType.warrior),
+                compact: false,
+              ),
+              ProductionLeading(
+                item: atlasItem(wonderType: WonderType.greatLibrary),
+                compact: false,
+              ),
+            ],
+          ),
+        ),
+      );
+
+      expect(find.byType(BuildingSpriteIcon), findsOneWidget);
+      expect(find.byType(UnitSpriteIcon), findsOneWidget);
+      expect(find.byType(WonderSpriteIcon), findsOneWidget);
+      expect(find.byType(GameIcon), findsNothing);
+    },
+  );
+
   testWidgets('CityProductionList routes row build and help details', (
     tester,
   ) async {
@@ -33,8 +91,6 @@ void main() {
                 unitType: null,
                 projectType: null,
                 title: 'Granary',
-                emoji: '🌾',
-                icon: null,
                 active: false,
                 investedProduction: 0,
                 totalCost: 30,
@@ -102,8 +158,6 @@ void main() {
                   unitType: GameUnitType.warrior,
                   projectType: null,
                   title: 'Warrior',
-                  emoji: null,
-                  icon: GameIcons.warrior,
                   active: false,
                   investedProduction: 0,
                   totalCost: 20,
@@ -188,8 +242,6 @@ void main() {
                   unitType: null,
                   projectType: null,
                   title: 'Granary',
-                  emoji: null,
-                  icon: null,
                   active: false,
                   investedProduction: 0,
                   totalCost: 30,
@@ -208,8 +260,6 @@ void main() {
                   unitType: GameUnitType.warrior,
                   projectType: null,
                   title: 'Warrior',
-                  emoji: null,
-                  icon: GameIcons.warrior,
                   active: false,
                   investedProduction: 0,
                   totalCost: 20,
@@ -301,8 +351,6 @@ void main() {
                   unitType: GameUnitType.warrior,
                   projectType: null,
                   title: 'Warrior',
-                  emoji: null,
-                  icon: GameIcons.warrior,
                   active: false,
                   investedProduction: 0,
                   totalCost: 20,
@@ -321,8 +369,6 @@ void main() {
                   projectType: null,
                   wonderType: WonderType.greatLibrary,
                   title: 'Great Library',
-                  emoji: null,
-                  icon: GameIcons.victory,
                   active: false,
                   investedProduction: 0,
                   totalCost: 120,
@@ -339,8 +385,6 @@ void main() {
                   projectType: null,
                   wonderType: WonderType.petra,
                   title: 'Petra',
-                  emoji: null,
-                  icon: GameIcons.victory,
                   active: false,
                   investedProduction: 0,
                   totalCost: 150,
@@ -418,8 +462,6 @@ void main() {
             projectType: null,
             wonderType: WonderType.greatLibrary,
             title: 'Great Library',
-            emoji: null,
-            icon: GameIcons.victory,
             active: false,
             investedProduction: 0,
             totalCost: 120,
@@ -436,8 +478,6 @@ void main() {
             projectType: null,
             wonderType: WonderType.petra,
             title: 'Petra',
-            emoji: null,
-            icon: GameIcons.victory,
             active: false,
             investedProduction: 0,
             totalCost: 150,
@@ -455,8 +495,6 @@ void main() {
             unitType: GameUnitType.warrior,
             projectType: null,
             title: 'Warrior',
-            emoji: null,
-            icon: GameIcons.warrior,
             active: false,
             investedProduction: 0,
             totalCost: 20,
@@ -510,8 +548,6 @@ void main() {
         unitType: null,
         projectType: null,
         title: title,
-        emoji: null,
-        icon: null,
         active: false,
         investedProduction: 0,
         totalCost: turnsRemaining * 5,

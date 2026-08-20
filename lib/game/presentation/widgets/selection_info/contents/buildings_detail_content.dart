@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
-import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_list.dart';
 import 'package:aonw/game/presentation/widgets/selection/view_models.dart';
@@ -107,7 +106,6 @@ class _BuildingsDetailContentState extends State<BuildingsDetailContent> {
               ),
           l10n: l10n,
           title: GameDisplayNames.cityBuilding(l10n, type),
-          emoji: CityBuildingsPanelViewModelFactory.emojiFor(type),
           statusLabel: l10n.cityProductionBuiltLabel,
           costLabel: l10n.cityProductionCostShort(definition.productionCost),
           yieldImpactMode: CityBuildingYieldImpactMode.active,

@@ -8,7 +8,6 @@ import 'package:aonw/game/presentation/widgets/technology/technology_details_hea
 import 'package:aonw/game/presentation/widgets/technology/technology_details_sections.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_unlocks_section.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
-import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/game/presentation/widgets/unit/unit_details_panel.dart';
 import 'package:aonw/game/presentation/widgets/visual/game_insight_widgets.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -109,9 +108,6 @@ class _TechnologyDetailsPanelState extends State<TechnologyDetailsPanel> {
             ),
         l10n: widget.l10n,
         title: GameDisplayNames.cityBuilding(widget.l10n, selectedBuildingType),
-        emoji: CityBuildingsPanelViewModelFactory.emojiFor(
-          selectedBuildingType,
-        ),
         statusLabel: widget.l10n.technologyDetailsUnlockStatus,
         costLabel: widget.l10n.cityProductionCostShort(
           definition.productionCost,
@@ -132,7 +128,6 @@ class _TechnologyDetailsPanelState extends State<TechnologyDetailsPanel> {
         ),
         l10n: widget.l10n,
         title: GameDisplayNames.unitType(widget.l10n, selectedUnitType),
-        icon: gameIconForUnitType(selectedUnitType),
         statusLabel: widget.l10n.technologyDetailsUnlockStatus,
         costLabel: definition == null
             ? null

@@ -13,7 +13,6 @@ import 'package:aonw/game/presentation/widgets/technology/technology_tree_detail
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_gamepad_navigation.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_header.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
-import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/game/presentation/widgets/unit/unit_details_panel.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/border_emphasis.dart';

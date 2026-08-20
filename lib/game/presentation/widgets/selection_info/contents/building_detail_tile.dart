@@ -200,15 +200,7 @@ class _BuildingLeading extends StatelessWidget {
                 size: GameIconSize.regular,
                 color: GameUiTheme.goldLight,
               )
-            : BuildingSpriteIcon(
-                type: type,
-                size: compact ? 38 : 46,
-                fallback: const GameIcon(
-                  GameIcons.city,
-                  size: GameIconSize.regular,
-                  color: GameUiTheme.goldLight,
-                ),
-              ),
+            : BuildingSpriteIcon(type: type, size: compact ? 38 : 46),
       ),
     );
   }

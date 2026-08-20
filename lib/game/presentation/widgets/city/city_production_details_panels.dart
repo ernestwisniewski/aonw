@@ -4,7 +4,6 @@ import 'package:aonw/game/presentation/widgets/bottom_toolbar/view_models.dart';
 import 'package:aonw/game/presentation/widgets/city/city_building_details_dialog.dart';
 import 'package:aonw/game/presentation/widgets/city/city_production_item_view_model.dart';
 import 'package:aonw/game/presentation/widgets/city/wonder_details_dialog.dart';
-import 'package:aonw/game/presentation/widgets/theme/unit_type_icon.dart';
 import 'package:aonw/game/presentation/widgets/unit/unit_details_panel.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/shared/theme/game_ui_theme.dart';
@@ -209,7 +208,6 @@ class CityProductionBuildingDetailsPanel extends StatelessWidget {
       unlockingTechnology: unlockingTechnology,
       l10n: l10n,
       title: item.title,
-      emoji: item.emoji,
       statusLabel: _stateLabel(l10n, item),
       costLabel: l10n.cityProductionCostShort(definition.productionCost),
       progressLabel: '${item.investedProduction}/${item.totalCost}$turns',
@@ -266,7 +264,6 @@ class CityProductionUnitDetailsPanel extends StatelessWidget {
       unlockingTechnology: unlockingTechnology,
       l10n: l10n,
       title: item.title,
-      icon: item.icon ?? gameIconForUnitType(item.unitType!),
       statusLabel: item.active
           ? l10n.productionInProgressLabel
           : item.locked

@@ -3,14 +3,12 @@ part of 'city_building_details_dialog.dart';
 class _BuildingDetailsHeader extends StatelessWidget {
   final CityBuildingType buildingType;
   final String title;
-  final String? emoji;
   final AppLocalizations l10n;
   final VoidCallback onClose;
 
   const _BuildingDetailsHeader({
     required this.buildingType,
     required this.title,
-    required this.emoji,
     required this.l10n,
     required this.onClose,
   });
@@ -37,14 +35,7 @@ class _BuildingDetailsHeader extends StatelessWidget {
               includeShadow: false,
             ),
             child: Center(
-              child: BuildingSpriteIcon(
-                type: buildingType,
-                size: 50,
-                fallback: Text(
-                  emoji ?? '',
-                  style: const TextStyle(fontSize: 28),
-                ),
-              ),
+              child: BuildingSpriteIcon(type: buildingType, size: 50),
             ),
           ),
           const SizedBox(width: 12),
