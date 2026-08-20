@@ -72,6 +72,23 @@ final class SelectCityCommand extends GameIntent {
   int get hashCode => Object.hash(SelectCityCommand, cityId);
 }
 
+/// Selects the field improvement occupying ([col], [row]).
+final class SelectFieldImprovementCommand extends GameIntent {
+  const SelectFieldImprovementCommand(this.col, this.row);
+
+  final int col;
+  final int row;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SelectFieldImprovementCommand &&
+      other.col == col &&
+      other.row == row;
+
+  @override
+  int get hashCode => Object.hash(SelectFieldImprovementCommand, col, row);
+}
+
 /// Focuses the next pending action for [playerId].
 final class FocusNextPendingActionCommand extends GameIntent {
   const FocusNextPendingActionCommand(

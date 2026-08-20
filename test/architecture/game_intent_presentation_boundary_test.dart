@@ -27,6 +27,7 @@ const _expectedConcreteIntents = <String>{
   'FocusNextPendingActionCommand',
   'FocusTurnStartActionCommand',
   'SelectCityCommand',
+  'SelectFieldImprovementCommand',
   'SelectTileCommand',
   'SelectUnitCommand',
   'StartAttackTargetingCommand',

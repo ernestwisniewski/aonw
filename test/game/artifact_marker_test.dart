@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:aonw/game/presentation/engine/rendering_layers/artifacts/artifact_marker.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/artifacts/artifact_marker_layer.dart';
+import 'package:aonw/game/presentation/widgets/theme/artifact_type_icon.dart';
 import 'package:aonw/map/rendering/hex_geometry.dart';
 import 'package:aonw/map/rendering/hex_grid.dart';
 import 'package:aonw/map/rendering/map_priority.dart';
@@ -29,6 +30,10 @@ void main() {
       expect(crown.size.x, 34);
       expect(crown.size.y, 36);
       expect(crown.rimColorForTesting, HudPalette.gold);
+      expect(
+        crown.glyphForTesting,
+        same(gameIconForArtifactType(WorldArtifactType.ancientImperialCrown)),
+      );
 
       crown.selected = true;
 
@@ -48,15 +53,13 @@ void main() {
       expect(marker.glowPulseForTesting, greaterThan(0.95));
     });
 
-    test('renders gradient marker without throwing', () {
-      final marker = ArtifactMarker(
-        position: Vector2.zero(),
-        type: WorldArtifactType.queensMirror,
-      );
+    test('renders every shared artifact glyph without throwing', () {
       final recorder = ui.PictureRecorder();
       final canvas = ui.Canvas(recorder);
 
-      marker.render(canvas);
+      for (final type in WorldArtifactType.values) {
+        ArtifactMarker(position: Vector2.zero(), type: type).render(canvas);
+      }
 
       recorder.endRecording().dispose();
     });

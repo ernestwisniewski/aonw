@@ -20,7 +20,6 @@ extension _GameScreenRendererLifecycle on _GameRendererSessionHostState {
       initialViewMode: session.viewMode,
       onCommand: _dispatchRendererCommand,
       onTileInspected: mapInspection.inspectTile,
-      onTileInspectionPreviewed: mapInspection.previewTile,
       onArtifactInspected: (artifact, anchor) {
         ref
             .read(mapInspectionControllerProvider.notifier)
@@ -31,12 +30,8 @@ extension _GameScreenRendererLifecycle on _GameRendererSessionHostState {
             .read(mapInspectionControllerProvider.notifier)
             .inspectObjective(progress, anchor: anchor);
       },
-      onTileInspectionConfirmed: () {
-        ref.read(mapInspectionControllerProvider.notifier).confirmPreview();
-      },
-      onTileInspectionCanceled: () {
-        ref.read(mapInspectionControllerProvider.notifier).cancelPreview();
-      },
+      onHexSelectionPaletteOpened: () =>
+          ref.read(mapInspectionControllerProvider.notifier).clear(),
       onLoadingProgress: _reportRendererLoadProgress,
       l10n: widget.l10n,
       presentationClock: session.gameMode == GameMode.multiplayer

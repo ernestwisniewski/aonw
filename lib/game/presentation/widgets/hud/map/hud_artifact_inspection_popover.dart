@@ -1,6 +1,7 @@
 import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/widgets/hud/map/hud_artifact_step_pill.dart';
 import 'package:aonw/game/presentation/widgets/hud/map/hud_map_inspection_components.dart';
+import 'package:aonw/game/presentation/widgets/theme/artifact_type_icon.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_hud_theme.dart';
 import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
@@ -47,7 +48,7 @@ class HudArtifactInspectionPopover extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             HudMapInspectionSection(
-              icon: GameIcons.artifact,
+              icon: gameIconForArtifactType(artifact.type),
               title: l10n.worldArtifactBonusTitle,
               child: HudMapInspectionValueLine(
                 value: GameDisplayNames.worldArtifactShortBonus(
@@ -96,9 +97,9 @@ class _ArtifactHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: GameUiTheme.gold.withAlpha(170)),
           ),
-          child: const Center(
+          child: Center(
             child: GameIcon(
-              GameIcons.artifact,
+              gameIconForArtifactType(artifact.type),
               size: 20,
               color: GameUiTheme.goldLight,
             ),

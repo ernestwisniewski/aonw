@@ -40,6 +40,15 @@ extension ReducerEnvironmentInteractionDispatch on ReducerEnvironment {
     );
   }
 
+  GameStateTransition selectFieldImprovement(
+    GameClientState state,
+    SelectFieldImprovementCommand command,
+  ) {
+    return GameStateTransition(
+      state: SelectionReducer.selectFieldImprovement(state, command, mapData),
+    );
+  }
+
   GameStateTransition handleSelectionTileTapped(
     GameClientState state,
     TileTappedCommand command,

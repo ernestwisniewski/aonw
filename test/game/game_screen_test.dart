@@ -22,7 +22,6 @@ import 'package:aonw/game/presentation/widgets/empire/empire_overview_dialog.dar
 import 'package:aonw/game/presentation/widgets/hud/action_deck/hud_action_deck.dart';
 import 'package:aonw/game/presentation/widgets/hud/global_hud_actions.dart';
 import 'package:aonw/game/presentation/widgets/selection/selection.dart';
-import 'package:aonw/game/presentation/widgets/selection_info/selection_detail_sheet.dart';
 import 'package:aonw/game/presentation/widgets/technology/technology_tree_dialog.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/providers/map_providers.dart';
@@ -1183,7 +1182,7 @@ void main() {
   });
 
   testWidgets(
-    'renderer inspection preview and long press selection both work',
+    'long press palette defers terrain selection until its icon is chosen',
     (tester) async {
       final map = _makeMap();
       final save = _makeSave();
@@ -1211,54 +1210,37 @@ void main() {
       await scopedContainer.read(gameStateProvider(save.id).future);
       await tester.pump();
 
-      final renderer = scopedContainer.read(activeGameRendererProvider)!;
-      void previewTile(int col, int row) {
-        renderer.handleTileInspectionPreviewedForTesting(map.tileAt(col, row)!);
-      }
-
-      previewTile(1, 1);
+      final renderer = scopedContainer.read(activeGameRendererProvider)!
+        ..handleTileInspectedForTesting(map.tileAt(1, 1)!);
       await tester.pump();
 
       var inspection = scopedContainer.read(mapInspectionControllerProvider);
       expect(inspection.active, isTrue);
-      expect(inspection.previewing, isTrue);
       expect(inspection.selection?.tile?.col, 1);
       expect(inspection.selection?.tile?.row, 1);
-      expect(find.byType(SelectionDetailSheet), findsNothing);
-
-      renderer.confirmTileInspectionForTesting();
-      await tester.pump();
-
-      inspection = scopedContainer.read(mapInspectionControllerProvider);
-      expect(inspection.active, isTrue);
-      expect(inspection.previewing, isFalse);
-      expect(inspection.selection?.tile?.col, 1);
-      expect(inspection.selection?.tile?.row, 1);
-
-      previewTile(2, 1);
-      await tester.pump();
-      renderer.cancelTileInspectionForTesting();
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(
-        scopedContainer.read(mapInspectionControllerProvider).active,
-        isFalse,
-      );
-      expect(find.byType(SelectionDetailSheet), findsNothing);
 
       renderer.handleTileLongPressedForTesting(map.tileAt(0, 2)!);
       await tester.pump();
 
       inspection = scopedContainer.read(mapInspectionControllerProvider);
+      expect(inspection.active, isFalse);
+      expect(renderer.hexSelectionPaletteVisibleForTesting, isTrue);
+      var selectedState = scopedContainer
+          .read(gameStateProvider(save.id))
+          .value!;
+      expect(selectedState.selection?.tile?.col, isNot(0));
+
+      renderer.hexSelectionPaletteForTesting!.selectForTesting('terrain:0:2');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      inspection = scopedContainer.read(mapInspectionControllerProvider);
+      selectedState = scopedContainer.read(gameStateProvider(save.id)).value!;
+      expect(renderer.hexSelectionPaletteVisibleForTesting, isFalse);
       expect(inspection.active, isTrue);
-      expect(inspection.previewing, isTrue);
       expect(inspection.selection?.tile?.col, 0);
       expect(inspection.selection?.tile?.row, 2);
       expect(inspection.anchor, isNotNull);
-      final selectedState = scopedContainer
-          .read(gameStateProvider(save.id))
-          .value!;
       expect(selectedState.selection?.type, GameSelectionType.tile);
       expect(selectedState.selection?.tile?.col, 0);
       expect(selectedState.selection?.tile?.row, 2);

@@ -550,49 +550,6 @@ void main() {
     );
   });
 
-  testWidgets('renders selection details as a peek while inspecting map', (
-    tester,
-  ) async {
-    Future<void> pump({required bool peek}) async {
-      await _pumpDeck(
-        tester,
-        selection: const SelectionViewModel(
-          icon: GameIcons.terrain,
-          color: Colors.white,
-          title: 'Plain',
-          subtitle: 'Map tile',
-          items: [
-            SelectionInfoItem(
-              icon: GameIcons.info,
-              label: 'Description',
-              value: 'Field',
-              color: Colors.white,
-            ),
-          ],
-          selectionKey: 'tile:0,0',
-        ),
-        openSelectionDetailChipId: SelectionInfoChipId.description,
-        selectionDetailPeek: peek,
-      );
-      await tester.pump(const Duration(milliseconds: 300));
-    }
-
-    await pump(peek: true);
-
-    var sheet = tester.widget<SelectionDetailSheet>(
-      find.byType(SelectionDetailSheet),
-    );
-    expect(sheet.peek, isTrue);
-
-    await pump(peek: false);
-    await tester.pump();
-
-    sheet = tester.widget<SelectionDetailSheet>(
-      find.byType(SelectionDetailSheet),
-    );
-    expect(sheet.peek, isFalse);
-  });
-
   testWidgets('closes selection detail modal when open chip clears', (
     tester,
   ) async {

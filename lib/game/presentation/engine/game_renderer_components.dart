@@ -10,6 +10,8 @@ import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_he
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/era_tint_overlay_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/floating_text_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/particle_effects_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/hex_selection_palette/hex_selection_palette_component.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/hex_selection_palette/hex_selection_palette_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/action_target_hex_focus_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/hover_intent_marker.dart';
@@ -40,6 +42,7 @@ final class GameRendererComponents {
     required ActionPaletteWorkerCallback onConfirmWorkerImprovement,
     required ActionPaletteWorkerCallback onCancelWorkerActionSelection,
     required ActionPaletteMovePreviewCallback onConfirmMovePreview,
+    required HexSelectionTargetCallback onHexSelectionTargetSelected,
     AppLocalizations? l10n,
   }) {
     final turnCostLabelBuilder = l10n == null
@@ -50,6 +53,7 @@ final class GameRendererComponents {
         : (int count) =>
               l10n.selectionActionConfirmWithTurns(l10n.turnCountLabel(count));
 
+    _initializeIndependentLayers();
     unitMarkers = UnitMarkerLayer(
       mapData: mapData,
       colorForPlayer: colorForPlayer,
@@ -59,8 +63,6 @@ final class GameRendererComponents {
     movePreview = UnitMovePreviewLayer(
       turnCostLabelBuilder: turnCostLabelBuilder,
     );
-    fieldImprovements = FieldImprovementMarkerLayer();
-    transportNetwork = TransportNetworkLayer();
     artifacts = ArtifactMarkerLayer(onArtifactTapped: onArtifactTapped);
     mapObjectives = MapObjectiveMarkerLayer(
       colorForPlayer: colorForPlayer,
@@ -72,11 +74,7 @@ final class GameRendererComponents {
       reduceMotion: reduceMotion,
     );
     cityTerritory = CityTerritoryOverlayLayer(colorForPlayer: colorForPlayer);
-    eraTint = EraTintOverlayLayer();
-    cityManagement = CityManagementOverlayLayer();
     cityFounding = CityFoundingPreviewLayer(colorForPlayer: colorForPlayer);
-    fogOfWar = FogOfWarOverlayLayer();
-    particles = ParticleEffectsLayer();
     cityProductionParticles = CityProductionParticleLayer(
       reduceMotion: reduceMotion,
     );
@@ -95,8 +93,6 @@ final class GameRendererComponents {
     actionTargetHexFocus = ActionTargetHexFocusLayer(
       unitPositionFor: unitMarkers.hexAnchorWorldPositionForUnit,
     );
-    threats = ThreatOverlayLayer();
-    hoverIntent = HoverIntentMarkerLayer();
     actionPalette = ActionPaletteLayer(
       onPreviewWorkerImprovement: onPreviewWorkerImprovement,
       onConfirmWorkerImprovement: onConfirmWorkerImprovement,
@@ -106,7 +102,21 @@ final class GameRendererComponents {
       confirmationLabelBuilder: confirmationLabelBuilder,
       confirmationLabel: l10n?.selectionActionConfirm,
     );
+    hexSelectionPalette = HexSelectionPaletteLayer(
+      onSelected: onHexSelectionTargetSelected,
+    );
     unitAnimations = UnitAnimationController(unitMarkers);
+  }
+
+  void _initializeIndependentLayers() {
+    fieldImprovements = FieldImprovementMarkerLayer();
+    transportNetwork = TransportNetworkLayer();
+    eraTint = EraTintOverlayLayer();
+    cityManagement = CityManagementOverlayLayer();
+    fogOfWar = FogOfWarOverlayLayer();
+    particles = ParticleEffectsLayer();
+    threats = ThreatOverlayLayer();
+    hoverIntent = HoverIntentMarkerLayer();
   }
 
   late final UnitMarkerLayer unitMarkers;
@@ -131,5 +141,6 @@ final class GameRendererComponents {
   late final ThreatOverlayLayer threats;
   late final HoverIntentMarkerLayer hoverIntent;
   late final ActionPaletteLayer actionPalette;
+  late final HexSelectionPaletteLayer hexSelectionPalette;
   late final UnitAnimationController unitAnimations;
 }

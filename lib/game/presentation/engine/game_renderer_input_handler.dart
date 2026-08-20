@@ -12,9 +12,11 @@ import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Offset;
 
-typedef TileInspectionPreview = void Function(WorldTile tile, {Offset? anchor});
+typedef HexSelectionPaletteRequest =
+    void Function(WorldTile tile, {required Offset anchor});
 
-/// Owns long-press inspection state and translates it into game intents.
+/// Owns the long-press gesture lifecycle and requests the contextual
+/// selection palette after resolving a visible map tile.
 final class GameRendererInputHandler {
   GameRendererInputHandler({
     required GameClientState Function() state,
@@ -22,31 +24,27 @@ final class GameRendererInputHandler {
     required void Function() clearHover,
     required void Function(WorldTile tile, {bool forceInspect}) syncHover,
     required void Function(Vector2? position) setHoverPosition,
-    required TileInspectionPreview previewInspection,
-    required VoidCallback? confirmInspection,
-    required VoidCallback? cancelInspection,
+    required HexSelectionPaletteRequest openSelectionPalette,
+    required VoidCallback closeSelectionPalette,
   }) : _state = state,
        _onCommand = onCommand,
        _clearHover = clearHover,
        _syncHover = syncHover,
        _setHoverPosition = setHoverPosition,
-       _previewInspection = previewInspection,
-       _confirmInspection = confirmInspection,
-       _cancelInspection = cancelInspection;
+       _openSelectionPalette = openSelectionPalette,
+       _closeSelectionPalette = closeSelectionPalette;
 
   final GameClientState Function() _state;
   final Future<void> Function(GameIntent intent) _onCommand;
   final void Function() _clearHover;
   final void Function(WorldTile tile, {bool forceInspect}) _syncHover;
   final void Function(Vector2? position) _setHoverPosition;
-  final TileInspectionPreview _previewInspection;
-  final VoidCallback? _confirmInspection;
-  final VoidCallback? _cancelInspection;
+  final HexSelectionPaletteRequest _openSelectionPalette;
+  final VoidCallback _closeSelectionPalette;
 
   bool _active = false;
-  bool _previewActive = false;
   bool suppressTapsUntilNextPointerDown = false;
-  CityHex? _inspectHex;
+  CityHex? _pressedHex;
 
   bool get isActive => _active;
 
@@ -61,14 +59,14 @@ final class GameRendererInputHandler {
     if (!isReady || isDragging || hasMultiplePointers) return false;
     final tile = tileAtPosition(widgetPosition);
     if (tile == null) return false;
-    return selectTile(
+    return openForTile(
       tile,
       widgetPosition: widgetPosition,
       anchor: anchorForTile(tile, fallback: widgetPosition),
     );
   }
 
-  bool selectTile(WorldTile tile, {Vector2? widgetPosition, Offset? anchor}) {
+  bool openForTile(WorldTile tile, {Vector2? widgetPosition, Offset? anchor}) {
     suppressTapsUntilNextPointerDown = true;
     if (_cancelMoveTargeting()) return true;
     if (!_canInspect(tile)) {
@@ -76,20 +74,21 @@ final class GameRendererInputHandler {
       return false;
     }
 
-    final inspectHex = CityHex(col: tile.col, row: tile.row);
-    if (_active && _inspectHex == inspectHex) {
+    final pressedHex = CityHex(col: tile.col, row: tile.row);
+    if (_active && _pressedHex == pressedHex) {
       _rememberHover(widgetPosition);
       _syncHover(tile, forceInspect: true);
       return true;
     }
 
     _active = true;
-    _previewActive = true;
-    _inspectHex = inspectHex;
+    _pressedHex = pressedHex;
     _rememberHover(widgetPosition);
     _syncHover(tile, forceInspect: true);
-    unawaited(_onCommand(SelectTileCommand(tile.col, tile.row)));
-    _previewInspection(tile, anchor: anchor);
+    _openSelectionPalette(
+      tile,
+      anchor: anchor ?? Offset(widgetPosition?.x ?? 0, widgetPosition?.y ?? 0),
+    );
     return true;
   }
 
@@ -108,26 +107,15 @@ final class GameRendererInputHandler {
     _syncHover(tile!, forceInspect: true);
   }
 
-  void beginPreviewForTesting(WorldTile tile) {
-    suppressTapsUntilNextPointerDown = true;
-    _active = true;
-    _previewActive = true;
-    _inspectHex = CityHex(col: tile.col, row: tile.row);
-    _previewInspection(tile);
-  }
-
-  void confirm() {
+  void finish() {
     if (!_active) return;
-    final wasPreviewing = _previewActive;
-    _clearInspection();
-    if (wasPreviewing) _confirmInspection?.call();
+    _clearGesture();
   }
 
   void cancel() {
     if (!_active) return;
-    final wasPreviewing = _previewActive;
-    _clearInspection();
-    if (wasPreviewing) _cancelInspection?.call();
+    _clearGesture();
+    _closeSelectionPalette();
   }
 
   bool _cancelMoveTargeting() {
@@ -147,26 +135,25 @@ final class GameRendererInputHandler {
   }
 
   bool _matches(WorldTile? tile) {
-    final inspectHex = _inspectHex;
-    return inspectHex != null &&
+    final pressedHex = _pressedHex;
+    return pressedHex != null &&
         tile != null &&
-        tile.col == inspectHex.col &&
-        tile.row == inspectHex.row;
+        tile.col == pressedHex.col &&
+        tile.row == pressedHex.row;
   }
 
   void _rememberHover(Vector2? position) {
     if (position != null) _setHoverPosition(position.clone());
   }
 
-  void _clearInspection() {
+  void _clearGesture() {
     _active = false;
-    _previewActive = false;
-    _inspectHex = null;
+    _pressedHex = null;
     suppressTapsUntilNextPointerDown = true;
   }
 }
 
-/// Thin Flame adapter; all mutable inspection policy lives in the handler.
+/// Thin Flame adapter; all mutable long-press policy lives in the handler.
 mixin GameRendererInputAdapter on HexWorld, HexInputBehavior {
   final Map<int, Vector2> _pendingViewportPointerMoves = {};
   int _viewportPointerMoveFlushCount = 0;
@@ -175,6 +162,7 @@ mixin GameRendererInputAdapter on HexWorld, HexInputBehavior {
   bool get rendererInputReady;
   void clearRendererHoverIntent();
   void syncRendererHoverAt(Vector2 position);
+  void clearRendererHexSelectionPalette();
 
   @override
   void handleViewportLongPressStart(Vector2 position) {
@@ -196,13 +184,13 @@ mixin GameRendererInputAdapter on HexWorld, HexInputBehavior {
 
   @override
   void handleViewportLongPressUp() {
-    inputHandler.confirm();
+    inputHandler.finish();
     clearRendererHoverIntent();
   }
 
   @override
   void handleViewportLongPressEnd(Vector2 position) {
-    inputHandler.confirm();
+    inputHandler.finish();
     clearRendererHoverIntent();
   }
 
@@ -215,9 +203,9 @@ mixin GameRendererInputAdapter on HexWorld, HexInputBehavior {
   @override
   void handleViewportPointerDown(int pointerId, Vector2 position) {
     _pendingViewportPointerMoves.remove(pointerId);
-    final hadActiveInspection = inputHandler.isActive;
-    if (hadActiveInspection) inputHandler.cancel();
-    inputHandler.suppressTapsUntilNextPointerDown = hadActiveInspection;
+    final hadActiveLongPress = inputHandler.isActive;
+    if (hadActiveLongPress) inputHandler.cancel();
+    inputHandler.suppressTapsUntilNextPointerDown = hadActiveLongPress;
     super.handleViewportPointerDown(
       pointerId,
       worldInputPointForWidget(position),
@@ -259,6 +247,7 @@ mixin GameRendererInputAdapter on HexWorld, HexInputBehavior {
       worldInputPointForWidget(position),
     );
     if (isDragging || hasMultipleViewportPointers) {
+      clearRendererHexSelectionPalette();
       if (!wasDragging || hasMultipleViewportPointers) {
         clearRendererHoverIntent();
       }
@@ -277,7 +266,7 @@ mixin GameRendererInputAdapter on HexWorld, HexInputBehavior {
   @override
   void handleViewportPointerUp(int pointerId) {
     _flushPendingViewportPointerMove(pointerId);
-    inputHandler.confirm();
+    inputHandler.finish();
     super.handleViewportPointerUp(pointerId);
     clearRendererHoverIntent();
   }
@@ -301,6 +290,7 @@ mixin GameRendererInputAdapter on HexWorld, HexInputBehavior {
   @override
   void handleViewportPanZoomStart(Vector2 focalPoint) {
     inputHandler.cancel();
+    clearRendererHexSelectionPalette();
     super.handleViewportPanZoomStart(worldInputPointForWidget(focalPoint));
     clearRendererHoverIntent();
   }

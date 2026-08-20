@@ -25,7 +25,6 @@ class HudActionDeckSlot extends StatelessWidget {
     required this.nextActionObjectiveAdvice,
     required this.selection,
     required this.openSelectionDetailChipId,
-    required this.selectionDetailPeek,
     required this.selectionActions,
     required this.cityFoundingDraft,
     required this.combatPreview,
@@ -56,7 +55,6 @@ class HudActionDeckSlot extends StatelessWidget {
   final GameObjectiveAdvice? nextActionObjectiveAdvice;
   final SelectionViewModel? selection;
   final String? openSelectionDetailChipId;
-  final bool selectionDetailPeek;
   final List<Widget> selectionActions;
   final CityFoundingDraft? cityFoundingDraft;
   final HudCombatPreview? combatPreview;
@@ -92,7 +90,6 @@ class HudActionDeckSlot extends StatelessWidget {
         nextActionObjectiveAdvice: nextActionObjectiveAdvice,
         selection: selection,
         openSelectionDetailChipId: openSelectionDetailChipId,
-        selectionDetailPeek: selectionDetailPeek,
         selectionActions: selectionActions,
         cityFoundingDraft: cityFoundingDraft,
         combatPreview: combatPreview,

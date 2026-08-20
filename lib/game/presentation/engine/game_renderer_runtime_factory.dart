@@ -6,6 +6,7 @@ import 'package:aonw/game/presentation/engine/game_renderer_layer_synchronizer.d
 import 'package:aonw/game/presentation/engine/game_renderer_lifecycle_handler.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_state_sync_handler.dart';
 import 'package:aonw/game/presentation/engine/game_scene_builder.dart';
+import 'package:aonw/game/presentation/engine/hex_selection/hex_selection_target.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/marker_density_policy.dart';
 import 'package:aonw/l10n/generated/app_localizations.dart';
 import 'package:aonw/map/rendering/hex_world.dart';
@@ -67,6 +68,7 @@ final class GameRendererRuntimeBindings {
     required this.onConfirmWorkerImprovement,
     required this.onCancelWorkerActionSelection,
     required this.onConfirmMovePreview,
+    required this.onHexSelectionTargetSelected,
     required this.moveCameraForUnitMovement,
     required this.focusCameraForUnitMovementForUnit,
     required this.followCameraForUnitMovementForUnit,
@@ -112,6 +114,7 @@ final class GameRendererRuntimeBindings {
   final void Function(String unitId) onConfirmWorkerImprovement;
   final void Function(String unitId) onCancelWorkerActionSelection;
   final void Function(int col, int row) onConfirmMovePreview;
+  final void Function(HexSelectionTarget target) onHexSelectionTargetSelected;
   final bool Function() moveCameraForUnitMovement;
   final bool Function(String unitId) focusCameraForUnitMovementForUnit;
   final bool Function(String unitId) followCameraForUnitMovementForUnit;
@@ -186,20 +189,7 @@ abstract final class GameRendererRuntimeFactory {
       hoverIntentMarkerLayer: () => components.hoverIntent,
       tileDataAtWidgetPosition: bindings.tileDataAtWidgetPosition,
     );
-    components = GameRendererComponents(
-      mapData: bindings.mapData,
-      reduceMotion: bindings.initialReduceMotion,
-      colorForPlayer: layerSynchronizer.colorForPlayer,
-      onUnitTapped: bindings.onUnitTapped,
-      onArtifactTapped: bindings.onArtifactTapped,
-      onObjectiveTapped: bindings.onObjectiveTapped,
-      onCityTapped: bindings.onCityTapped,
-      onPreviewWorkerImprovement: bindings.onPreviewWorkerImprovement,
-      onConfirmWorkerImprovement: bindings.onConfirmWorkerImprovement,
-      onCancelWorkerActionSelection: bindings.onCancelWorkerActionSelection,
-      onConfirmMovePreview: bindings.onConfirmMovePreview,
-      l10n: bindings.l10n,
-    );
+    components = _createComponents(bindings, layerSynchronizer);
     lifecycle = GameRendererLifecycleHandler(
       host: bindings.host,
       mapData: bindings.mapData,
@@ -237,6 +227,27 @@ abstract final class GameRendererRuntimeFactory {
       stateSync: stateSync,
       components: components,
       lifecycle: lifecycle,
+    );
+  }
+
+  static GameRendererComponents _createComponents(
+    GameRendererRuntimeBindings bindings,
+    GameRendererLayerSynchronizer layerSynchronizer,
+  ) {
+    return GameRendererComponents(
+      mapData: bindings.mapData,
+      reduceMotion: bindings.initialReduceMotion,
+      colorForPlayer: layerSynchronizer.colorForPlayer,
+      onUnitTapped: bindings.onUnitTapped,
+      onArtifactTapped: bindings.onArtifactTapped,
+      onObjectiveTapped: bindings.onObjectiveTapped,
+      onCityTapped: bindings.onCityTapped,
+      onPreviewWorkerImprovement: bindings.onPreviewWorkerImprovement,
+      onConfirmWorkerImprovement: bindings.onConfirmWorkerImprovement,
+      onCancelWorkerActionSelection: bindings.onCancelWorkerActionSelection,
+      onConfirmMovePreview: bindings.onConfirmMovePreview,
+      onHexSelectionTargetSelected: bindings.onHexSelectionTargetSelected,
+      l10n: bindings.l10n,
     );
   }
 }

@@ -248,6 +248,12 @@ void main() {
         expect(cmd.cityId, 'city-5');
       });
 
+      test('SelectFieldImprovementCommand stores col and row', () {
+        const cmd = SelectFieldImprovementCommand(3, 4);
+        expect(cmd.col, 3);
+        expect(cmd.row, 4);
+      });
+
       test('FocusNextPendingActionCommand stores playerId', () {
         const cmd = FocusNextPendingActionCommand(
           'player-1',
@@ -369,11 +375,12 @@ void main() {
         const SelectTileCommand(0, 0),
         const SelectUnitCommand('u'),
         const SelectCityCommand('c'),
+        const SelectFieldImprovementCommand(0, 0),
         const FocusNextPendingActionCommand('p'),
         const FocusTurnStartActionCommand('p'),
       ];
-      test('there are exactly 65 subtype instances', () {
-        expect(allSubtypes, hasLength(65));
+      test('there are exactly 66 subtype instances', () {
+        expect(allSubtypes, hasLength(66));
       });
 
       test('every subtype has exactly one boundary owner', () {

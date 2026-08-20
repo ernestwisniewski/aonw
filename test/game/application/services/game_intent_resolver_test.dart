@@ -148,6 +148,7 @@ const _allIntents = <GameIntent>[
   SelectTileCommand(0, 0),
   SelectUnitCommand('unit'),
   SelectCityCommand('city'),
+  SelectFieldImprovementCommand(0, 0),
   FocusNextPendingActionCommand('player_1'),
   FocusTurnStartActionCommand('player_1'),
   StartAttackTargetingCommand('unit'),

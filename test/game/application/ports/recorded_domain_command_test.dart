@@ -12,7 +12,7 @@ void main() {
     test('ignores every historical non-domain discriminator', () {
       final decodedTypes = <String>{};
 
-      expect(_historicalCommandFixtures, hasLength(25));
+      expect(_historicalCommandFixtures, hasLength(26));
       for (final fixture in _historicalCommandFixtures) {
         expect(
           RecordedDomainCommandCodec.fromJson(fixture.json),
@@ -265,6 +265,10 @@ const _historicalCommandFixtures =
         command: SelectCityCommand('city_6'),
       ),
       (
+        json: {'type': 'SelectFieldImprovement', 'col': 5, 'row': 6},
+        command: SelectFieldImprovementCommand(5, 6),
+      ),
+      (
         json: {
           'type': 'FocusNextPendingAction',
           'playerId': 'player_4',
@@ -309,6 +313,7 @@ const _historicalCommandTypes = {
   'SelectTile',
   'SelectUnit',
   'SelectCity',
+  'SelectFieldImprovement',
   'FocusNextPendingAction',
   'FocusTurnStartAction',
 };

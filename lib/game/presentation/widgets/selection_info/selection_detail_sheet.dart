@@ -28,7 +28,6 @@ class SelectionDetailSheet extends StatelessWidget {
   final bool fillWidth;
   final bool sidePanel;
   final bool bottomSheet;
-  final bool peek;
   final double sidePanelWidth;
   final CityRuleset cityRuleset;
   final TechnologyRuleset technologyRuleset;
@@ -45,7 +44,6 @@ class SelectionDetailSheet extends StatelessWidget {
     this.fillWidth = false,
     this.sidePanel = false,
     this.bottomSheet = false,
-    this.peek = false,
     this.sidePanelWidth = 360,
     this.cityRuleset = CityRulesets.standard,
     this.technologyRuleset = TechnologyRulesets.standard,
@@ -164,7 +162,6 @@ class SelectionDetailSheet extends StatelessWidget {
   }
 
   double _resolveMaxHeightFactor() {
-    if (peek) return 0.35;
     if (model is WorkerActionSelectionDetail) return 0.58;
     if (!fillWidth) return 0.55;
     return switch (model) {

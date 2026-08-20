@@ -24,16 +24,6 @@ final class MapInspectionBinder {
         );
   }
 
-  void previewTile(WorldTile tileData, Offset? anchor) {
-    ref
-        .read(mapInspectionControllerProvider.notifier)
-        .previewTile(
-          tileData,
-          anchor: anchor,
-          objectiveProgress: _objectiveProgressFor(tileData),
-        );
-  }
-
   MapObjectiveProgress? _objectiveProgressFor(WorldTile tileData) {
     return mapObjectiveProgressForTile(
       mapData: session.mapData,

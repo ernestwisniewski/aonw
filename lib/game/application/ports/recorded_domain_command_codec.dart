@@ -41,6 +41,7 @@ abstract final class RecordedDomainCommandCodec {
     'SelectTile',
     'SelectUnit',
     'SelectCity',
+    'SelectFieldImprovement',
     'FocusNextPendingAction',
     'FocusTurnStartAction',
   };

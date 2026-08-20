@@ -2,9 +2,8 @@ part of 'hud_action_deck.dart';
 
 class _SelectionDetailModalModel {
   final SelectionDetailViewModel detail;
-  final bool peek;
 
-  const _SelectionDetailModalModel({required this.detail, required this.peek});
+  const _SelectionDetailModalModel({required this.detail});
 }
 
 extension _HudActionDeckDetailModal on _HudActionDeckState {
@@ -31,10 +30,7 @@ extension _HudActionDeckDetailModal on _HudActionDeckState {
           _requestedModalKey != _detailModalRequestKey(detail)) {
         return;
       }
-      _detailNotifier.value = _SelectionDetailModalModel(
-        detail: detail,
-        peek: widget.selectionDetailPeek,
-      );
+      _detailNotifier.value = _SelectionDetailModalModel(detail: detail);
     });
   }
 
@@ -50,10 +46,7 @@ extension _HudActionDeckDetailModal on _HudActionDeckState {
       requestKey: _requestedModalKey!,
     );
     _modalPhase = _HudModalPhase.open;
-    _detailNotifier.value = _SelectionDetailModalModel(
-      detail: detail,
-      peek: widget.selectionDetailPeek,
-    );
+    _detailNotifier.value = _SelectionDetailModalModel(detail: detail);
 
     Future<void>? routeClosed;
     ModalRoute<void>? shownRoute;
@@ -105,7 +98,6 @@ extension _HudActionDeckDetailModal on _HudActionDeckState {
                 compact: MediaQuery.sizeOf(modalContext).width < 380,
                 fillWidth: true,
                 bottomSheet: true,
-                peek: currentModal.peek,
                 cityRuleset: widget.cityRuleset,
                 technologyRuleset: widget.technologyRuleset,
                 onClose: () {

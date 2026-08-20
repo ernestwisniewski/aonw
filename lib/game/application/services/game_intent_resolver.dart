@@ -254,6 +254,10 @@ final class GameIntentResolver {
         environment,
       ),
       SelectCityCommand() => environment.selectCity(state, intent),
+      SelectFieldImprovementCommand() => environment.selectFieldImprovement(
+        state,
+        intent,
+      ),
       FocusNextPendingActionCommand() => environment.focusNextPendingAction(
         state,
         intent,

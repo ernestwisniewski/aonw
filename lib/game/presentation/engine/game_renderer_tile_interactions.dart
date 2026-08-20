@@ -1,8 +1,15 @@
 part of 'game_renderer.dart';
 
 extension GameRendererTileInteractions on GameRenderer {
-  Future<void> _handleTileTapped(WorldTile tileData) async {
+  Future<void> _handleTileTapped(
+    WorldTile tileData, {
+    bool trackDoubleTap = true,
+  }) async {
     if (_shouldSuppressTapAfterLongPress()) return;
+    _clearHexSelectionPalette();
+    if (trackDoubleTap && _handleRapidSecondTap(tileData.col, tileData.row)) {
+      return;
+    }
     final selectedId = _renderState.selectedUnitId;
     if (selectedId != null &&
         _unitAnimationController.isUnitAnimating(selectedId)) {
@@ -48,18 +55,6 @@ extension GameRendererTileInteractions on GameRenderer {
     );
   }
 
-  void _handleTileInspectionPreviewed(WorldTile tileData, {Offset? anchor}) {
-    final onPreview = onTileInspectionPreviewed;
-    if (onPreview != null) {
-      onPreview(
-        _visibleTileForActivePlayer(tileData),
-        anchor ?? inspectionAnchorForTile(tileData),
-      );
-      return;
-    }
-    _handleTileInspected(tileData, anchor: anchor);
-  }
-
   WorldTile _visibleTileForActivePlayer(WorldTile tileData) {
     return ResourceVisibilityRules.visibleTile(
       tile: tileData,
@@ -79,6 +74,22 @@ extension GameRendererTileInteractions on GameRenderer {
 
   bool _shouldSuppressTapAfterLongPress() =>
       inputHandler.suppressTapsUntilNextPointerDown;
+
+  bool _handleRapidSecondTap(int col, int row) {
+    if (!_supportsDirectHexGestures) {
+      _mapDoubleTapTracker.clear();
+      return false;
+    }
+    if (!_mapDoubleTapTracker.registerTap(col, row)) return false;
+    _mapTapCycle.clear();
+    unawaited(onCommand(SelectTileCommand(col, row)));
+    return true;
+  }
+
+  bool get _supportsDirectHexGestures =>
+      _renderState.pendingAction == null &&
+      !_renderState.moveCommandActive &&
+      _renderState.cityFoundingDraft == null;
 
   void _handlePreviewWorkerImprovement(String unitId, String optionId) {
     final type = _fieldImprovementTypeById(optionId);

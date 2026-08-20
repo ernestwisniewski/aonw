@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:aonw/game/application/ports/clock.dart';
 import 'package:aonw/game/domain/game_selection.dart';
@@ -17,6 +18,8 @@ import 'package:aonw/game/presentation/engine/game_renderer_runtime_factory.dart
 import 'package:aonw/game/presentation/engine/game_renderer_state_sync_handler.dart';
 import 'package:aonw/game/presentation/engine/game_renderer_transition_handler.dart';
 import 'package:aonw/game/presentation/engine/game_scene_builder.dart';
+import 'package:aonw/game/presentation/engine/hex_selection/hex_selection_target.dart';
+import 'package:aonw/game/presentation/engine/hex_selection/hex_selection_target_resolver.dart';
 import 'package:aonw/game/presentation/engine/map_hex_double_tap_tracker.dart';
 import 'package:aonw/game/presentation/engine/map_tap_cycle.dart';
 import 'package:aonw/game/presentation/engine/projected_game_effect.dart';
@@ -31,6 +34,8 @@ import 'package:aonw/game/presentation/engine/rendering_layers/city/city_marker_
 import 'package:aonw/game/presentation/engine/rendering_layers/city/city_territory_overlay_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/combat_hex_alert_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/effects/particle_effects_layer.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/hex_selection_palette/hex_selection_palette_component.dart';
+import 'package:aonw/game/presentation/engine/rendering_layers/hex_selection_palette/hex_selection_palette_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/improvements/field_improvement_marker_layer.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/hover_intent_marker.dart';
 import 'package:aonw/game/presentation/engine/rendering_layers/map/map_pill.dart';
@@ -71,6 +76,7 @@ part 'game_renderer_camera_focus.dart';
 part 'game_renderer_camera_rendering.dart';
 part 'game_renderer_entity_taps.dart';
 part 'game_renderer_gamepad_input.dart';
+part 'game_renderer_hex_selection.dart';
 part 'game_renderer_projected_effects.dart';
 part 'game_renderer_testing.dart';
 part 'game_renderer_tile_interactions.dart';
@@ -99,11 +105,9 @@ class GameRenderer extends HexWorld
   final bool focusActivePlayerOnFirstState;
   final Future<void> Function(GameIntent intent) onCommand;
   final TileInspectionCallback? onTileInspected;
-  final TileInspectionCallback? onTileInspectionPreviewed;
   final ArtifactInspectionCallback? onArtifactInspected;
   final ObjectiveInspectionCallback? onObjectiveInspected;
-  final VoidCallback? onTileInspectionConfirmed;
-  final VoidCallback? onTileInspectionCanceled;
+  final VoidCallback? onHexSelectionPaletteOpened;
   final ValueChanged<double>? onLoadingProgress;
   final AppLocalizations? l10n;
   final Clock? presentationClock;
@@ -123,7 +127,7 @@ class GameRenderer extends HexWorld
   Vector2? _deferredInitialFocusPoint;
   bool _didPrimeSelectionFocus = false;
   String? _lastFocusedSelectionKey;
-  final MapHexDoubleTapTracker _cityMarkerDoubleTapTracker =
+  final MapHexDoubleTapTracker _mapDoubleTapTracker =
       MapHexDoubleTapTracker.withStopwatch();
   final MapTapCycle _mapTapCycle = MapTapCycle();
   final ValueNotifier<RenderState> _viewModelNotifier = ValueNotifier(
@@ -153,9 +157,8 @@ class GameRenderer extends HexWorld
     clearHover: _clearHoverIntent,
     syncHover: _syncHoverIntentForTile,
     setHoverPosition: (position) => _lastHoverWidgetPosition = position,
-    previewInspection: _handleTileInspectionPreviewed,
-    confirmInspection: onTileInspectionConfirmed,
-    cancelInspection: onTileInspectionCanceled,
+    openSelectionPalette: _openHexSelectionPalette,
+    closeSelectionPalette: _clearHexSelectionPalette,
   );
 
   GameRenderer({
@@ -166,11 +169,9 @@ class GameRenderer extends HexWorld
     this.focusActivePlayerOnFirstState = false,
     required this.onCommand,
     this.onTileInspected,
-    this.onTileInspectionPreviewed,
     this.onArtifactInspected,
     this.onObjectiveInspected,
-    this.onTileInspectionConfirmed,
-    this.onTileInspectionCanceled,
+    this.onHexSelectionPaletteOpened,
     this.onLoadingProgress,
     this.l10n,
     this.presentationClock,
@@ -243,6 +244,7 @@ class GameRenderer extends HexWorld
 
   @override
   void setZoom(double zoom) {
+    _clearHexSelectionPalette();
     _setFastCameraRendering(true);
     super.setZoom(zoom);
     _publishZoom();
@@ -252,6 +254,7 @@ class GameRenderer extends HexWorld
 
   @override
   void panByScreenDelta(Vector2 screenDelta) {
+    _clearHexSelectionPalette();
     _setFastCameraRendering(true);
     super.panByScreenDelta(screenDelta);
   }
@@ -333,6 +336,9 @@ class GameRenderer extends HexWorld
   }
 
   @override
+  void clearRendererHexSelectionPalette() => _clearHexSelectionPalette();
+
+  @override
   GameRendererLifecycleHandler get lifecycleHandler => _lifecycleHandler;
 
   bool get hasReferenceImage => _lifecycleHandler.hasReferenceImage;
@@ -363,6 +369,8 @@ class GameRenderer extends HexWorld
   ThreatOverlayLayer get _threatOverlayLayer => _components.threats;
   HoverIntentMarkerLayer get _hoverIntentMarkerLayer => _components.hoverIntent;
   ActionPaletteLayer get _actionPaletteLayer => _components.actionPalette;
+  HexSelectionPaletteLayer get _hexSelectionPaletteLayer =>
+      _components.hexSelectionPalette;
   UnitAnimationController get _unitAnimationController =>
       _components.unitAnimations;
 
@@ -453,6 +461,7 @@ extension _GameRendererRuntimeInitialization on GameRenderer {
         onConfirmWorkerImprovement: _handleConfirmWorkerImprovement,
         onCancelWorkerActionSelection: _handleCancelWorkerActionSelection,
         onConfirmMovePreview: _handleConfirmMovePreview,
+        onHexSelectionTargetSelected: _handleHexSelectionTargetSelected,
         moveCameraForUnitMovement: () => moveCameraForUnitMovement,
         focusCameraForUnitMovementForUnit: _cameraPolicy.focusCameraForUnit,
         followCameraForUnitMovementForUnit: _cameraPolicy.followCameraForUnit,

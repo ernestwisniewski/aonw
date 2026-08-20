@@ -270,7 +270,6 @@ class _GameHudOverlayHostState extends ConsumerState<GameHudOverlayHost> {
           nextActionObjectiveAdvice: frame.nextActionObjectiveAdvice,
           selection: frame.selectionInfoModel,
           openSelectionDetailChipId: frame.visibleOpenSelectionDetailChipId,
-          selectionDetailPeek: frame.mapInspection.previewing,
           selectionActions: hudGamepadFocus.selectionActions,
           cityFoundingDraft: frame.cityFoundingDraft,
           combatPreview: frame.combatPreview,

@@ -2,8 +2,8 @@ typedef MapInteractionClock = Duration Function();
 
 /// Recognizes a rapid second tap on the same map hex.
 ///
-/// Selection remains command-driven. This tracker only protects the terrain
-/// inspection gesture from racing the asynchronous selection projection.
+/// Selection remains command-driven. The tracker only distinguishes a direct
+/// terrain-selection gesture from ordinary, independently timed map taps.
 final class MapHexDoubleTapTracker {
   MapHexDoubleTapTracker({
     required MapInteractionClock now,

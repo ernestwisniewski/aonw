@@ -19,7 +19,6 @@ import 'package:aonw_core/game/domain/tile_yield.dart';
 import 'package:aonw_core/game/domain/unit.dart';
 import 'package:aonw_core/map/domain/terrain_type.dart';
 import 'package:flame/components.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -654,31 +653,51 @@ void main() {
       },
     );
 
-    test('long press previews tile inspection and selects a tile', () async {
+    test('rapid double tap directly selects a plain hex', () async {
       final map = _map();
       final commands = <GameIntent>[];
-      final events = <String>[];
       final game = await _loadedGame(
         map,
         onCommand: (command) async => commands.add(command),
-        onTileInspectionPreviewed: (tile, _) =>
-            events.add('preview:${tile.col},${tile.row}'),
-        onTileInspectionConfirmed: () => events.add('confirm'),
-        onTileInspectionCanceled: () => events.add('cancel'),
       );
+      final tile = _tile(map, 2, 1);
 
-      game.handleTileLongPressedForTesting(_tile(map, 2, 1));
+      await game.handleRapidTileDoubleTapForTesting(tile);
 
-      expect(events, ['preview:2,1']);
-      expect(commands, [const SelectTileCommand(2, 1)]);
+      expect(commands, [
+        const TileTappedCommand(2, 1),
+        const SelectTileCommand(2, 1),
+      ]);
     });
 
     test(
-      'long press on an undiscovered tile does not preview or select',
+      'long press opens a terrain selection palette without selecting',
       () async {
         final map = _map();
         final commands = <GameIntent>[];
-        final events = <String>[];
+        final game = await _loadedGame(
+          map,
+          onCommand: (command) async => commands.add(command),
+        );
+
+        game.handleTileLongPressedForTesting(_tile(map, 2, 1));
+
+        expect(game.hexSelectionPaletteVisibleForTesting, isTrue);
+        expect(
+          game.hexSelectionPaletteForTesting!.targets.map(
+            (target) => target.key,
+          ),
+          ['terrain:2:1'],
+        );
+        expect(commands, isEmpty);
+      },
+    );
+
+    test(
+      'long press on an undiscovered tile does not open a palette',
+      () async {
+        final map = _map();
+        final commands = <GameIntent>[];
         final fog = FogOfWarState.empty.updatePlayer(
           PlayerFogOfWar(
             playerId: 'player_1',
@@ -688,10 +707,6 @@ void main() {
         final game = await _loadedGame(
           map,
           onCommand: (command) async => commands.add(command),
-          onTileInspectionPreviewed: (tile, _) =>
-              events.add('preview:${tile.col},${tile.row}'),
-          onTileInspectionConfirmed: () => events.add('confirm'),
-          onTileInspectionCanceled: () => events.add('cancel'),
         );
         final tile = _tile(map, 2, 1);
 
@@ -700,80 +715,74 @@ void main() {
             GameClientState(activePlayerId: 'player_1', fogOfWar: fog),
           )
           ..handleTileLongPressedForTesting(tile)
-          ..confirmTileInspectionForTesting();
+          ..finishTileLongPressForTesting();
         await game.handleTileTappedForTesting(tile);
 
-        expect(events, isEmpty);
+        expect(game.hexSelectionPaletteVisibleForTesting, isFalse);
         expect(commands, isEmpty);
         expect(game.hoverIntentKindForTesting, isNull);
       },
     );
 
-    test('confirmed long press suppresses the follow-up tile tap', () async {
+    test(
+      'finished long press keeps the palette and suppresses its tap',
+      () async {
+        final map = _map();
+        final commands = <GameIntent>[];
+        final game = await _loadedGame(
+          map,
+          onCommand: (command) async => commands.add(command),
+        );
+        final tile = _tile(map, 2, 1);
+
+        game
+          ..handleTileLongPressedForTesting(tile)
+          ..finishTileLongPressForTesting();
+        await game.handleTileTappedForTesting(tile);
+
+        expect(commands, isEmpty);
+        expect(game.hexSelectionPaletteVisibleForTesting, isTrue);
+
+        game
+          ..handleViewportPointerDown(99, Vector2.zero())
+          ..handleViewportPointerUp(99);
+        await game.handleTileTappedForTesting(tile);
+
+        expect(commands, [const TileTappedCommand(2, 1)]);
+        expect(game.hexSelectionPaletteVisibleForTesting, isFalse);
+      },
+    );
+
+    test(
+      'terrain palette target selects the hex and opens inspection',
+      () async {
+        final map = _map();
+        final commands = <GameIntent>[];
+        final inspections = <String>[];
+        final game = await _loadedGame(
+          map,
+          onCommand: (command) async => commands.add(command),
+          onTileInspected: (tile, _) =>
+              inspections.add('${tile.col},${tile.row}'),
+        );
+
+        game.handleTileLongPressedForTesting(_tile(map, 1, 2));
+        game.hexSelectionPaletteForTesting!.selectForTesting('terrain:1:2');
+        await Future<void>.delayed(Duration.zero);
+
+        expect(commands, [const SelectTileCommand(1, 2)]);
+        expect(inspections, ['1,2']);
+        expect(game.hexSelectionPaletteVisibleForTesting, isFalse);
+      },
+    );
+
+    test('long press cancels unit move mode before opening palette', () async {
       final map = _map();
       final commands = <GameIntent>[];
-      final game = await _loadedGame(
-        map,
-        onCommand: (command) async => commands.add(command),
-      );
-      final tile = _tile(map, 2, 1);
-
-      game
-        ..handleTileLongPressedForTesting(tile)
-        ..confirmTileInspectionForTesting();
-      await game.handleTileTappedForTesting(tile);
-      await game.handleTileTappedForTesting(tile);
-
-      expect(commands, [const SelectTileCommand(2, 1)]);
-
-      game
-        ..handleViewportPointerDown(99, Vector2.zero())
-        ..handleViewportPointerUp(99);
-      await game.handleTileTappedForTesting(tile);
-
-      expect(commands, [
-        const SelectTileCommand(2, 1),
-        const TileTappedCommand(2, 1),
-      ]);
-    });
-
-    test('long press start suppresses a tile tap before confirm', () async {
-      final map = _map();
-      final commands = <GameIntent>[];
-      final game = await _loadedGame(
-        map,
-        onCommand: (command) async => commands.add(command),
-      );
-      final tile = _tile(map, 2, 1);
-
-      game.handleTileLongPressedForTesting(tile);
-      await game.handleTileTappedForTesting(tile);
-      await game.handleTileTappedForTesting(tile);
-
-      expect(commands, [const SelectTileCommand(2, 1)]);
-
-      game
-        ..confirmTileInspectionForTesting()
-        ..handleViewportPointerDown(99, Vector2.zero())
-        ..handleViewportPointerUp(99);
-      await game.handleTileTappedForTesting(tile);
-
-      expect(commands, [
-        const SelectTileCommand(2, 1),
-        const TileTappedCommand(2, 1),
-      ]);
-    });
-
-    test('long press cancels unit move mode before tile inspection', () async {
-      final map = _map();
-      final commands = <GameIntent>[];
-      final events = <String>[];
       final commander = GameUnit.startingCommander(ownerPlayerId: 'player_1');
       final game = await _loadedGame(
         map,
         onCommand: (command) async => commands.add(command),
-        onTileInspectionPreviewed: (tile, _) =>
-            events.add('preview:${tile.col},${tile.row}'),
       );
       final tile = _tile(map, 2, 1);
       final movingState = GameClientState(
@@ -787,9 +796,9 @@ void main() {
       game
         ..applyState(movingState)
         ..handleTileLongPressedForTesting(tile)
-        ..confirmTileInspectionForTesting();
+        ..finishTileLongPressForTesting();
 
-      expect(events, isEmpty);
+      expect(game.hexSelectionPaletteVisibleForTesting, isFalse);
       expect(commands, [const ToggleMoveTargetingCommand()]);
 
       game
@@ -797,69 +806,61 @@ void main() {
         ..handleViewportPointerDown(99, Vector2.zero())
         ..handleViewportPointerUp(99)
         ..handleTileLongPressedForTesting(tile)
-        ..confirmTileInspectionForTesting();
+        ..finishTileLongPressForTesting();
 
-      expect(events, ['preview:2,1']);
-      expect(commands, [
-        const ToggleMoveTargetingCommand(),
-        const SelectTileCommand(2, 1),
-      ]);
+      expect(game.hexSelectionPaletteVisibleForTesting, isTrue);
+      expect(commands, [const ToggleMoveTargetingCommand()]);
     });
 
-    test('long press inspects a tile while a city is selected', () async {
-      final map = _map();
-      final commands = <GameIntent>[];
-      final events = <String>[];
-      final city = _city(id: 'city_1', col: 0, row: 0);
-      final game = await _loadedGame(
-        map,
-        onCommand: (command) async => commands.add(command),
-        onTileInspectionPreviewed: (tile, _) =>
-            events.add('preview:${tile.col},${tile.row}'),
-      );
-      final tile = _tile(map, 2, 1);
+    test(
+      'long press palette is independent from the current city selection',
+      () async {
+        final map = _map();
+        final commands = <GameIntent>[];
+        final city = _city(id: 'city_1', col: 0, row: 0);
+        final game = await _loadedGame(
+          map,
+          onCommand: (command) async => commands.add(command),
+        );
+        final tile = _tile(map, 2, 1);
 
-      game
-        ..applyState(
-          GameClientState(
-            cities: [city],
-            interaction: InteractionState(
-              selection: GameSelection.city(
-                city,
-                cityYield: TileYield.zero,
-                playerColor: 0xFF4477AA,
+        game
+          ..applyState(
+            GameClientState(
+              cities: [city],
+              interaction: InteractionState(
+                selection: GameSelection.city(
+                  city,
+                  cityYield: TileYield.zero,
+                  playerColor: 0xFF4477AA,
+                ),
               ),
             ),
-          ),
-        )
-        ..handleTileLongPressedForTesting(tile)
-        ..confirmTileInspectionForTesting();
+          )
+          ..handleTileLongPressedForTesting(tile)
+          ..finishTileLongPressForTesting();
 
-      expect(events, ['preview:2,1']);
-      expect(commands, [const SelectTileCommand(2, 1)]);
-    });
+        expect(game.hexSelectionPaletteVisibleForTesting, isTrue);
+        expect(commands, isEmpty);
+      },
+    );
 
-    test('long press cancel clears tile inspection preview', () async {
+    test('canceling long press clears its palette', () async {
       final map = _map();
       final commands = <GameIntent>[];
-      final events = <String>[];
       final game = await _loadedGame(
         map,
         onCommand: (command) async => commands.add(command),
-        onTileInspectionPreviewed: (tile, _) =>
-            events.add('preview:${tile.col},${tile.row}'),
-        onTileInspectionConfirmed: () => events.add('confirm'),
-        onTileInspectionCanceled: () => events.add('cancel'),
       );
       final tile = _tile(map, 1, 1);
 
       game
         ..handleTileLongPressedForTesting(tile)
-        ..cancelTileInspectionForTesting();
+        ..cancelTileLongPressForTesting();
       await game.handleTileTappedForTesting(tile);
 
-      expect(events, ['preview:1,1', 'cancel']);
-      expect(commands, [const SelectTileCommand(1, 1)]);
+      expect(game.hexSelectionPaletteVisibleForTesting, isFalse);
+      expect(commands, isEmpty);
     });
 
     test('hidden fog tile suppresses hover markers', () async {
@@ -951,16 +952,12 @@ Future<ui.Rect?> _paintedMoveCueBounds(HoverIntentMarker marker) async {
 Future<GameRenderer> _loadedGame(
   WorldMap map, {
   Future<void> Function(GameIntent command)? onCommand,
-  TileInspectionCallback? onTileInspectionPreviewed,
-  VoidCallback? onTileInspectionConfirmed,
-  VoidCallback? onTileInspectionCanceled,
+  TileInspectionCallback? onTileInspected,
 }) async {
   final game = GameRenderer(
     mapData: map,
     onCommand: onCommand ?? (_) async {},
-    onTileInspectionPreviewed: onTileInspectionPreviewed,
-    onTileInspectionConfirmed: onTileInspectionConfirmed,
-    onTileInspectionCanceled: onTileInspectionCanceled,
+    onTileInspected: onTileInspected,
   );
   addTearDown(game.disposeRenderer);
   game.onGameResize(Vector2(800, 600));

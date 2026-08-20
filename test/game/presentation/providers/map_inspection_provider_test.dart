@@ -8,39 +8,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('preview tile starts a transient inspection', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    container.read(mapInspectionControllerProvider.notifier).previewTile(_tile);
-
-    final state = container.read(mapInspectionControllerProvider);
-    expect(state.active, isTrue);
-    expect(state.previewing, isTrue);
-    expect(state.openChipId, SelectionInfoChipId.description);
-    expect(state.selection?.tile?.col, 2);
-    expect(state.selection?.tile?.row, 1);
-  });
-
-  test('confirming preview keeps the inspection open', () {
+  test('tile inspection opens the description at the requested anchor', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
     const anchor = Offset(120, 160);
     container
         .read(mapInspectionControllerProvider.notifier)
-        .previewTile(_tile, anchor: anchor);
-    container.read(mapInspectionControllerProvider.notifier).confirmPreview();
+        .inspectTile(_tile, anchor: anchor);
 
     final state = container.read(mapInspectionControllerProvider);
     expect(state.active, isTrue);
-    expect(state.previewing, isFalse);
-    expect(state.anchor, anchor);
+    expect(state.openChipId, SelectionInfoChipId.description);
     expect(state.selection?.tile?.col, 2);
     expect(state.selection?.tile?.row, 1);
+    expect(state.anchor, anchor);
+    expect(state.anchored, isTrue);
   });
 
-  test('tile inspection carries map objective progress through preview', () {
+  test('tile inspection carries map objective progress', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
@@ -57,13 +43,11 @@ void main() {
 
     container
         .read(mapInspectionControllerProvider.notifier)
-        .previewTile(_tile, objectiveProgress: objective);
-    container.read(mapInspectionControllerProvider.notifier).confirmPreview();
+        .inspectTile(_tile, objectiveProgress: objective);
 
     final state = container.read(mapInspectionControllerProvider);
     expect(state.objectiveProgress?.definition.id, 'pass_1');
     expect(state.objectiveProgress?.holdTurns, 2);
-    expect(state.previewing, isFalse);
   });
 
   test('objective inspection opens without a tile selection', () {
@@ -92,30 +76,14 @@ void main() {
     expect(state.anchor, const Offset(120, 160));
   });
 
-  test('canceling preview clears only transient inspection', () {
+  test('clear closes the active inspection', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    container.read(mapInspectionControllerProvider.notifier).previewTile(_tile);
-    container.read(mapInspectionControllerProvider.notifier).cancelPreview();
+    container.read(mapInspectionControllerProvider.notifier).inspectTile(_tile);
+    container.read(mapInspectionControllerProvider.notifier).clear();
 
     expect(container.read(mapInspectionControllerProvider).active, isFalse);
-  });
-
-  test('regular inspection is not previewing', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    const anchor = Offset(80, 90);
-    container
-        .read(mapInspectionControllerProvider.notifier)
-        .inspectTile(_tile, anchor: anchor);
-
-    final state = container.read(mapInspectionControllerProvider);
-    expect(state.active, isTrue);
-    expect(state.previewing, isFalse);
-    expect(state.anchor, anchor);
-    expect(state.anchored, isTrue);
   });
 }
 

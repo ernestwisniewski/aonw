@@ -245,6 +245,44 @@ void main() {
       expect(result, same(state));
     });
   });
+  // SelectFieldImprovementCommand
+
+  group('selectFieldImprovement', () {
+    test('selects the requested improvement without tap cycling', () {
+      final tile = _tile(3, 3);
+      final improvement = _improvement();
+      final mapData = _mapWith([tile]);
+      final state = GameClientState(
+        activePlayerId: 'p1',
+        fogOfWar: _fogVisible('p1', [tile]),
+        fieldImprovements: [improvement],
+        interaction: InteractionState(selection: GameSelection.tile(tile)),
+      );
+
+      final result = SelectionReducer.selectFieldImprovement(
+        state,
+        const SelectFieldImprovementCommand(3, 3),
+        mapData,
+      );
+
+      expect(result.selection?.type, GameSelectionType.fieldImprovement);
+      expect(result.selection?.fieldImprovement, improvement);
+    });
+
+    test('returns unchanged state when no improvement occupies the hex', () {
+      final tile = _tile(3, 3);
+      final mapData = _mapWith([tile]);
+      final state = GameClientState(activePlayerId: 'p1');
+
+      final result = SelectionReducer.selectFieldImprovement(
+        state,
+        const SelectFieldImprovementCommand(3, 3),
+        mapData,
+      );
+
+      expect(result, same(state));
+    });
+  });
   // handleTileTapped
 
   group('handleTileTapped', () {

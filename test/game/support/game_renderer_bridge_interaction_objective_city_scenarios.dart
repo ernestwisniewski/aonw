@@ -154,53 +154,61 @@ void _registerRendererInteractionObjectiveCityScenarios() {
     expect(inspectedTiles.map((tile) => '${tile.col}:${tile.row}'), ['1:1']);
     expect(commands, [const TileTappedCommand(1, 1)]);
   });
-  test('city hex tap opens terrain after selecting the city', () async {
-    final map = kbObjectiveMap();
-    final reducer = GameStateReducer(mapData: map);
-    final commands = <GameIntent>[];
-    final inspectedTiles = <WorldTile>[];
-    const city = GameCity(
-      id: 'city_1',
-      ownerPlayerId: 'player_1',
-      name: 'City',
-      center: CityHex(col: 1, row: 1),
-    );
-    var state = GameClientState(activePlayerId: 'player_1', cities: [city]);
-    late final GameRenderer game;
-    game = GameRenderer(
-      mapData: map,
-      onCommand: (command) async {
-        commands.add(command);
-        final transition = resolveGameIntent(reducer, state, command);
-        state = transition.state;
-        game.applyState(state);
-      },
-      onTileInspected: (tile, _) {
-        inspectedTiles.add(tile);
-      },
-    );
-    addTearDown(game.disposeRenderer);
+  test(
+    'separate city marker taps retain the normal terrain inspection cycle',
+    () async {
+      final map = kbObjectiveMap();
+      final reducer = GameStateReducer(mapData: map);
+      final commands = <GameIntent>[];
+      final inspectedTiles = <WorldTile>[];
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'City',
+        center: CityHex(col: 1, row: 1),
+      );
+      var state = GameClientState(
+        activePlayerId: 'player_1',
+        cities: [city],
+        fogOfWar: _fog(visible: {const HexCoordinate(col: 1, row: 1)}),
+      );
+      late final GameRenderer game;
+      game = GameRenderer(
+        mapData: map,
+        onCommand: (command) async {
+          commands.add(command);
+          final transition = resolveGameIntent(reducer, state, command);
+          state = transition.state;
+          game.applyState(state);
+        },
+        onTileInspected: (tile, _) {
+          inspectedTiles.add(tile);
+        },
+      );
+      addTearDown(game.disposeRenderer);
 
-    game
-      ..applyState(state)
-      ..handleCityMarkerTappedForTesting(city);
-    await Future<void>.delayed(Duration.zero);
+      game
+        ..applyState(state)
+        ..handleCityMarkerTappedForTesting(city);
+      await Future<void>.delayed(Duration.zero);
 
-    expect(commands, [const TileTappedCommand(1, 1)]);
-    state = state.copyWithInteraction(
-      selection: GameSelection.city(
-        city,
-        cityYield: TileYield.zero,
-        playerColor: 0xFF4488CC,
-      ),
-    );
-    game
-      ..applyState(state)
-      ..handleCityMarkerTappedForTesting(city);
-    await Future<void>.delayed(Duration.zero);
+      expect(commands, [const TileTappedCommand(1, 1)]);
+      state = state.copyWithInteraction(
+        selection: GameSelection.city(
+          city,
+          cityYield: TileYield.zero,
+          playerColor: 0xFF4488CC,
+        ),
+      );
+      game
+        ..applyState(state)
+        ..handleCityMarkerTappedForTesting(city);
+      await Future<void>.delayed(Duration.zero);
 
-    expect(inspectedTiles.map((tile) => '${tile.col}:${tile.row}'), ['1:1']);
-  });
+      expect(commands, [const TileTappedCommand(1, 1)]);
+      expect(inspectedTiles.map((tile) => '${tile.col}:${tile.row}'), ['1:1']);
+    },
+  );
   test(
     'city hex with unit cycles city, unit, terrain popup, hex, and city',
     () async {

@@ -2,13 +2,14 @@ part of 'game_renderer.dart';
 
 void _handleRendererUnitMarkerTapped(GameRenderer renderer, String unitId) {
   if (renderer._shouldSuppressTapAfterLongPress()) return;
-  renderer._cityMarkerDoubleTapTracker.clear();
   final unit = renderer._renderState.unitById(unitId);
   if (unit == null) {
     renderer._mapTapCycle.clear();
     return;
   }
 
+  renderer._clearHexSelectionPalette();
+  if (renderer._handleRapidSecondTap(unit.col, unit.row)) return;
   renderer._mapTapCycle.clear();
   unawaited(renderer.onCommand(TileTappedCommand(unit.col, unit.row)));
 }
@@ -18,9 +19,10 @@ void _handleRendererArtifactMarkerTapped(
   WorldArtifact artifact,
 ) {
   if (renderer._shouldSuppressTapAfterLongPress()) return;
-  renderer._cityMarkerDoubleTapTracker.clear();
   final tile = _tileForArtifactLocation(renderer, artifact.location);
   if (tile == null) return;
+  renderer._clearHexSelectionPalette();
+  if (renderer._handleRapidSecondTap(tile.col, tile.row)) return;
   if (renderer._markerTapTargetsHex()) {
     renderer._mapTapCycle.clear();
     unawaited(renderer.onCommand(TileTappedCommand(tile.col, tile.row)));
@@ -51,10 +53,11 @@ void _handleRendererMapObjectiveMarkerTapped(
   MapObjectiveProgress progress,
 ) {
   if (renderer._shouldSuppressTapAfterLongPress()) return;
-  renderer._cityMarkerDoubleTapTracker.clear();
   final definition = progress.definition;
   final tile = renderer.mapData.tileAt(definition.hex.col, definition.hex.row);
   if (tile == null) return;
+  renderer._clearHexSelectionPalette();
+  if (renderer._handleRapidSecondTap(tile.col, tile.row)) return;
   if (renderer._markerTapTargetsHex()) {
     renderer._mapTapCycle.clear();
     unawaited(renderer.onCommand(TileTappedCommand(tile.col, tile.row)));

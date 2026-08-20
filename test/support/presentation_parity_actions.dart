@@ -96,6 +96,7 @@ const presentationGameIntents = <GameIntent>[
   SelectTileCommand(1, 1),
   SelectUnitCommand('unit_1'),
   SelectCityCommand('city_1'),
+  SelectFieldImprovementCommand(1, 1),
   FocusNextPendingActionCommand('player_1'),
   FocusTurnStartActionCommand('player_1'),
   StartAttackTargetingCommand('warrior_1'),

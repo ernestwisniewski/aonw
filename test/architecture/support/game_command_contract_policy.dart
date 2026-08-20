@@ -38,6 +38,7 @@ const _rolePolicy = <String, _CommandRole>{
   'RespondDiplomaticProposalCommand': _CommandRole.domain,
   'RushProductionCommand': _CommandRole.domain,
   'SelectCityCommand': _CommandRole.intent,
+  'SelectFieldImprovementCommand': _CommandRole.intent,
   'SelectCityExpansionHexCommand': _CommandRole.domain,
   'SelectTechnologyCommand': _CommandRole.domain,
   'SelectTileCommand': _CommandRole.intent,

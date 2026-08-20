@@ -85,6 +85,23 @@ abstract final class SelectionReducer {
     );
   }
 
+  /// Selects a field improvement directly, without advancing tap-cycle state.
+  static GameClientState selectFieldImprovement(
+    GameClientState state,
+    SelectFieldImprovementCommand command,
+    MapTileLookup mapTiles,
+  ) {
+    final tile = mapTiles.tileAt(command.col, command.row);
+    if (tile == null) return state;
+    final improvement = _fieldImprovementAt(
+      state,
+      tile,
+      state.activePlayerVisibility,
+    );
+    if (improvement == null) return state;
+    return _selectFieldImprovementDirect(state, improvement, tile);
+  }
+
   /// Handles a tile tap with full selection cycling logic.
   static GameStateTransition handleTileTapped(
     GameClientState state,

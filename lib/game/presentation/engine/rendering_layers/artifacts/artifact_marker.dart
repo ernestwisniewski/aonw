@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:aonw/game/presentation/widgets/theme/artifact_type_icon.dart';
+import 'package:aonw/game/presentation/widgets/theme/game_icon.dart';
 import 'package:aonw/shared/math/scale_clamp.dart';
 import 'package:aonw/shared/theme/hud_palette.dart';
 import 'package:aonw_core/game/domain/artifact.dart';
@@ -189,23 +191,13 @@ class ArtifactMarker extends PositionComponent with TapCallbacks {
   }
 
   void _drawGlyph(Canvas canvas, ui.Offset center, Color color) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.55
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    final path = switch (_type) {
-      WorldArtifactType.ancientImperialCrown => _crownGlyph(center),
-      WorldArtifactType.astronomersTablets => _starGlyph(center),
-      WorldArtifactType.prophetMask => _maskGlyph(center),
-      WorldArtifactType.heroSword => _swordGlyph(center),
-      WorldArtifactType.merchantsSeal => _sealGlyph(center),
-      WorldArtifactType.firstPeoplesChronicle => _bookGlyph(center),
-      WorldArtifactType.templeReliquary => _reliquaryGlyph(center),
-      WorldArtifactType.queensMirror => _mirrorGlyph(center),
-    };
-    canvas.drawPath(path, paint);
+    GameIconRenderer.paintIcon(
+      canvas,
+      gameIconForArtifactType(_type),
+      topLeft: center - const ui.Offset(12, 12),
+      size: 24,
+      color: color,
+    );
   }
 
   void _drawGlint(Canvas canvas, ui.Offset center) {
@@ -218,86 +210,6 @@ class ArtifactMarker extends PositionComponent with TapCallbacks {
       ..drawLine(center.translate(-2.8, 0), center.translate(2.8, 0), paint)
       ..drawLine(center.translate(0, -2.8), center.translate(0, 2.8), paint);
   }
-
-  Path _crownGlyph(ui.Offset c) => Path()
-    ..moveTo(c.dx - 6, c.dy + 3.5)
-    ..lineTo(c.dx - 4.7, c.dy - 3.4)
-    ..lineTo(c.dx - 1.3, c.dy + 0.8)
-    ..lineTo(c.dx + 2, c.dy - 5.2)
-    ..lineTo(c.dx + 5.4, c.dy + 0.8)
-    ..lineTo(c.dx + 6, c.dy + 3.5)
-    ..lineTo(c.dx - 6, c.dy + 3.5);
-
-  Path _starGlyph(ui.Offset c) => Path()
-    ..moveTo(c.dx, c.dy - 6.4)
-    ..lineTo(c.dx + 1.7, c.dy - 1.7)
-    ..lineTo(c.dx + 6.4, c.dy)
-    ..lineTo(c.dx + 1.7, c.dy + 1.7)
-    ..lineTo(c.dx, c.dy + 6.4)
-    ..lineTo(c.dx - 1.7, c.dy + 1.7)
-    ..lineTo(c.dx - 6.4, c.dy)
-    ..lineTo(c.dx - 1.7, c.dy - 1.7)
-    ..close();
-
-  Path _maskGlyph(ui.Offset c) => Path()
-    ..addOval(ui.Rect.fromCenter(center: c, width: 12, height: 9.8))
-    ..moveTo(c.dx - 3.6, c.dy - 0.7)
-    ..lineTo(c.dx - 1.4, c.dy - 0.7)
-    ..moveTo(c.dx + 1.4, c.dy - 0.7)
-    ..lineTo(c.dx + 3.6, c.dy - 0.7)
-    ..moveTo(c.dx - 2.8, c.dy + 3.3)
-    ..quadraticBezierTo(c.dx, c.dy + 5.2, c.dx + 2.8, c.dy + 3.3);
-
-  Path _swordGlyph(ui.Offset c) => Path()
-    ..moveTo(c.dx, c.dy + 6.3)
-    ..lineTo(c.dx, c.dy - 5.7)
-    ..moveTo(c.dx - 2.8, c.dy - 2.8)
-    ..lineTo(c.dx, c.dy - 6.4)
-    ..lineTo(c.dx + 2.8, c.dy - 2.8)
-    ..moveTo(c.dx - 5, c.dy + 2.1)
-    ..lineTo(c.dx + 5, c.dy + 2.1)
-    ..moveTo(c.dx - 2.1, c.dy + 6.3)
-    ..lineTo(c.dx + 2.1, c.dy + 6.3);
-
-  Path _sealGlyph(ui.Offset c) => Path()
-    ..addOval(ui.Rect.fromCenter(center: c, width: 12, height: 12))
-    ..moveTo(c.dx - 3.6, c.dy)
-    ..lineTo(c.dx + 3.6, c.dy)
-    ..moveTo(c.dx, c.dy - 3.6)
-    ..lineTo(c.dx, c.dy + 3.6);
-
-  Path _bookGlyph(ui.Offset c) => Path()
-    ..moveTo(c.dx - 6.2, c.dy - 5.6)
-    ..lineTo(c.dx - 0.8, c.dy - 3.5)
-    ..lineTo(c.dx - 0.8, c.dy + 5.6)
-    ..lineTo(c.dx - 6.2, c.dy + 3.5)
-    ..close()
-    ..moveTo(c.dx + 6.2, c.dy - 5.6)
-    ..lineTo(c.dx + 0.8, c.dy - 3.5)
-    ..lineTo(c.dx + 0.8, c.dy + 5.6)
-    ..lineTo(c.dx + 6.2, c.dy + 3.5)
-    ..close();
-
-  Path _reliquaryGlyph(ui.Offset c) => Path()
-    ..moveTo(c.dx, c.dy - 6.3)
-    ..lineTo(c.dx, c.dy + 6.3)
-    ..moveTo(c.dx - 5, c.dy - 1.4)
-    ..lineTo(c.dx + 5, c.dy - 1.4)
-    ..moveTo(c.dx - 3.5, c.dy + 5.6)
-    ..lineTo(c.dx + 3.5, c.dy + 5.6);
-
-  Path _mirrorGlyph(ui.Offset c) => Path()
-    ..addOval(
-      ui.Rect.fromCenter(
-        center: c.translate(0, -1.4),
-        width: 9.8,
-        height: 11.2,
-      ),
-    )
-    ..moveTo(c.dx, c.dy + 4.2)
-    ..lineTo(c.dx, c.dy + 7)
-    ..moveTo(c.dx - 2.8, c.dy + 7)
-    ..lineTo(c.dx + 2.8, c.dy + 7);
 
   static Color _typeColor(WorldArtifactType type) => switch (type) {
     WorldArtifactType.ancientImperialCrown => const Color(0xFF8B2F22),
@@ -315,6 +227,9 @@ class ArtifactMarker extends PositionComponent with TapCallbacks {
 
   @visibleForTesting
   Color get typeColorForTesting => _typeColor(_type);
+
+  @visibleForTesting
+  GameIconData get glyphForTesting => gameIconForArtifactType(_type);
 
   @visibleForTesting
   int get outlineVertexCountForTesting => 6;

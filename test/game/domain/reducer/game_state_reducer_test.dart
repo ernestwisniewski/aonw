@@ -136,6 +136,7 @@ void main() {
       const SelectTileCommand(0, 0),
       const SelectUnitCommand('u1'),
       const SelectCityCommand('c1'),
+      const SelectFieldImprovementCommand(0, 0),
     ];
 
     for (final cmd in stubCommands) {

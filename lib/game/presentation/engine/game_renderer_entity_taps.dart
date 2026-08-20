@@ -83,23 +83,18 @@ extension GameRendererEntityTaps on GameRenderer {
 
   void _handleCityMarkerTapped(GameCity city) {
     if (_shouldSuppressTapAfterLongPress()) return;
+    _clearHexSelectionPalette();
     final pending = _renderState.pendingAction;
     if (pending is PendingMerchantTradeRouteSelection ||
         pending is PendingMerchantMoveToCitySelection) {
       _mapTapCycle.clear();
-      _cityMarkerDoubleTapTracker.clear();
+      _mapDoubleTapTracker.clear();
       unawaited(onCommand(CityTappedCommand(city.id)));
       return;
     }
     final tile = mapData.tileAt(city.center.col, city.center.row);
     if (tile == null) return;
-    if (pending == null &&
-        !_markerTapTargetsHex() &&
-        _cityMarkerDoubleTapTracker.registerTap(tile.col, tile.row)) {
-      _mapTapCycle.clear();
-      _handleTileInspected(tile);
-      return;
-    }
-    unawaited(_handleTileTapped(tile));
+    if (_handleRapidSecondTap(tile.col, tile.row)) return;
+    unawaited(_handleTileTapped(tile, trackDoubleTap: false));
   }
 }

@@ -34,48 +34,51 @@ void _registerRendererPlanningCitySitesScenarios() {
       _expectVectorClose(_visibleCenter(game), start);
     },
   );
-  test('quick double tapping a city opens terrain inspection', () async {
-    final map = kbMap(3, 3);
-    final reducer = GameStateReducer(mapData: map);
-    final commands = <GameIntent>[];
-    final inspectedTiles = <WorldTile>[];
-    const city = GameCity(
-      id: 'city_1',
-      ownerPlayerId: 'player_1',
-      name: 'Capital',
-      center: CityHex(col: 1, row: 1),
-    );
-    var state = GameClientState(
-      activePlayerId: 'player_1',
-      cities: const [city],
-      fogOfWar: _fog(visible: {const HexCoordinate(col: 1, row: 1)}),
-    );
-    late final GameRenderer game;
-    game = GameRenderer(
-      mapData: map,
-      onCommand: (command) async {
-        commands.add(command);
-        state = resolveGameIntent(reducer, state, command).state;
-        game.applyState(state);
-      },
-      onTileInspected: (tile, _) => inspectedTiles.add(tile),
-    );
-    addTearDown(game.disposeRenderer);
+  test(
+    'quick double tapping a city directly selects its terrain hex',
+    () async {
+      final map = kbMap(3, 3);
+      final reducer = GameStateReducer(mapData: map);
+      final commands = <GameIntent>[];
+      const city = GameCity(
+        id: 'city_1',
+        ownerPlayerId: 'player_1',
+        name: 'Capital',
+        center: CityHex(col: 1, row: 1),
+      );
+      var state = GameClientState(
+        activePlayerId: 'player_1',
+        cities: const [city],
+        fogOfWar: _fog(visible: {const HexCoordinate(col: 1, row: 1)}),
+      );
+      late final GameRenderer game;
+      game = GameRenderer(
+        mapData: map,
+        onCommand: (command) async {
+          commands.add(command);
+          state = resolveGameIntent(reducer, state, command).state;
+          game.applyState(state);
+        },
+      );
+      addTearDown(game.disposeRenderer);
 
-    game
-      ..applyState(state)
-      ..onGameResize(Vector2(800, 600));
-    await game.onLoad();
+      game
+        ..applyState(state)
+        ..onGameResize(Vector2(800, 600));
+      await game.onLoad();
 
-    game
-      ..handleCityMarkerTappedForTesting(city)
-      ..handleCityMarkerTappedForTesting(city);
-    await Future<void>.delayed(Duration.zero);
+      game.handleRapidCityDoubleTapForTesting(city);
+      await Future<void>.delayed(Duration.zero);
 
-    expect(commands, [const TileTappedCommand(1, 1)]);
-    expect(state.selection?.type, GameSelectionType.city);
-    expect(inspectedTiles.map((tile) => '${tile.col}:${tile.row}'), ['1:1']);
-  });
+      expect(commands, [
+        const TileTappedCommand(1, 1),
+        const SelectTileCommand(1, 1),
+      ]);
+      expect(state.selection?.type, GameSelectionType.tile);
+      expect(state.selection?.tile?.col, 1);
+      expect(state.selection?.tile?.row, 1);
+    },
+  );
   test(
     'combat animation retains killed defender marker until completion',
     () async {

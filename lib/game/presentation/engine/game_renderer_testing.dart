@@ -2,8 +2,17 @@ part of 'game_renderer.dart';
 
 extension GameRendererTestingHooks on GameRenderer {
   @visibleForTesting
-  Future<void> handleTileTappedForTesting(WorldTile tileData) =>
-      _handleTileTapped(tileData);
+  Future<void> handleTileTappedForTesting(WorldTile tileData) {
+    _mapDoubleTapTracker.clear();
+    return _handleTileTapped(tileData);
+  }
+
+  @visibleForTesting
+  Future<void> handleRapidTileDoubleTapForTesting(WorldTile tileData) async {
+    _mapDoubleTapTracker.clear();
+    await _handleTileTapped(tileData);
+    await _handleTileTapped(tileData);
+  }
 
   @visibleForTesting
   void handleTileInspectedForTesting(WorldTile tileData) {
@@ -12,41 +21,47 @@ extension GameRendererTestingHooks on GameRenderer {
 
   @visibleForTesting
   void handleArtifactMarkerTappedForTesting(WorldArtifact artifact) {
+    _mapDoubleTapTracker.clear();
     _handleArtifactMarkerTapped(artifact);
   }
 
   @visibleForTesting
   void handleMapObjectiveMarkerTappedForTesting(MapObjectiveProgress progress) {
+    _mapDoubleTapTracker.clear();
     _handleMapObjectiveMarkerTapped(progress);
   }
 
   @visibleForTesting
   void handleUnitMarkerTappedForTesting(String unitId) {
+    _mapDoubleTapTracker.clear();
     _handleUnitMarkerTapped(unitId);
   }
 
   @visibleForTesting
   void handleCityMarkerTappedForTesting(GameCity city) {
+    _mapDoubleTapTracker.clear();
     _handleCityMarkerTapped(city);
   }
 
   @visibleForTesting
-  void handleTileInspectionPreviewedForTesting(WorldTile tileData) {
-    inputHandler.beginPreviewForTesting(tileData);
+  void handleRapidCityDoubleTapForTesting(GameCity city) {
+    _mapDoubleTapTracker.clear();
+    _handleCityMarkerTapped(city);
+    _handleCityMarkerTapped(city);
   }
 
   @visibleForTesting
   void handleTileLongPressedForTesting(WorldTile tileData) {
-    inputHandler.selectTile(tileData);
+    inputHandler.openForTile(tileData);
   }
 
   @visibleForTesting
-  void confirmTileInspectionForTesting() {
-    inputHandler.confirm();
+  void finishTileLongPressForTesting() {
+    inputHandler.finish();
   }
 
   @visibleForTesting
-  void cancelTileInspectionForTesting() {
+  void cancelTileLongPressForTesting() {
     inputHandler.cancel();
   }
 
@@ -324,4 +339,12 @@ extension GameRendererTestingHooks on GameRenderer {
   @visibleForTesting
   Vector2? get actionPalettePositionForTesting =>
       _actionPaletteLayer.positionForTesting;
+
+  @visibleForTesting
+  bool get hexSelectionPaletteVisibleForTesting =>
+      _hexSelectionPaletteLayer.visible;
+
+  @visibleForTesting
+  HexSelectionPaletteComponent? get hexSelectionPaletteForTesting =>
+      _hexSelectionPaletteLayer.componentForTesting;
 }

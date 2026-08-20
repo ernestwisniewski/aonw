@@ -19,7 +19,6 @@ class MapInspectionState {
     this.objectiveProgress,
     this.openChipId,
     this.anchor,
-    this.previewing = false,
   });
 
   static const empty = MapInspectionState();
@@ -29,7 +28,6 @@ class MapInspectionState {
   final MapObjectiveProgress? objectiveProgress;
   final String? openChipId;
   final Offset? anchor;
-  final bool previewing;
 
   bool get active =>
       selection != null || artifact != null || objectiveProgress != null;
@@ -62,36 +60,6 @@ class MapInspectionController extends Notifier<MapInspectionState> {
     state = MapInspectionState(objectiveProgress: progress, anchor: anchor);
   }
 
-  void previewTile(
-    WorldTile tileData, {
-    Offset? anchor,
-    MapObjectiveProgress? objectiveProgress,
-  }) {
-    state = MapInspectionState(
-      selection: GameSelection.tile(tileData),
-      objectiveProgress: objectiveProgress,
-      openChipId: SelectionInfoChipId.description,
-      anchor: anchor,
-      previewing: true,
-    );
-  }
-
-  void confirmPreview() {
-    if (!state.previewing) return;
-    state = MapInspectionState(
-      selection: state.selection,
-      artifact: state.artifact,
-      objectiveProgress: state.objectiveProgress,
-      openChipId: state.openChipId,
-      anchor: state.anchor,
-    );
-  }
-
-  void cancelPreview() {
-    if (!state.previewing) return;
-    state = MapInspectionState.empty;
-  }
-
   void toggleDetail(String chipId) {
     final selection = state.selection;
     if (selection == null) return;
@@ -100,7 +68,6 @@ class MapInspectionController extends Notifier<MapInspectionState> {
       objectiveProgress: state.objectiveProgress,
       openChipId: state.openChipId == chipId ? null : chipId,
       anchor: state.anchor,
-      previewing: false,
     );
   }
 

@@ -93,7 +93,6 @@ class HudActionDeck extends ConsumerStatefulWidget
     required this.activityLogAvailable,
     required this.activityLogModeActive,
     this.showSelectionInfo = true,
-    this.selectionDetailPeek = false,
     this.panelOpen = false,
     this.cityProductionPanelOpen = false,
     required this.onToggleSelectionDetail,
@@ -137,7 +136,6 @@ class HudActionDeck extends ConsumerStatefulWidget
   final bool activityLogAvailable;
   final bool activityLogModeActive;
   final bool showSelectionInfo;
-  final bool selectionDetailPeek;
   final bool panelOpen;
   final bool cityProductionPanelOpen;
   final ValueChanged<String> onToggleSelectionDetail;
