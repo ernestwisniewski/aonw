@@ -1,4 +1,4 @@
-# ADR 0004: Versioned multiplayer protocol
+# ADR 0004: Versioned Multiplayer Protocol
 
 - Status: Accepted
 - Date: 2026-07-12
@@ -65,8 +65,21 @@ Readers precede writers. A durable writer is enabled only with a backup and a ro
 
 Compatible releases can roll out without making wire and storage migration implicit. The cost is explicit review of compatibility on every online change.
 
-## Verification
+## Migration And Verification
 
 Contract tests cover current, removed, undeclared legacy, and future functional revisions; strict wire readers; command retry; recipient projection; reconnect; and generated-code drift.
 
 See [multiplayer-protocol.md](../multiplayer-protocol.md) for the active runtime contract.
+
+## Related Decisions And Documentation
+
+- [Multiplayer protocol](../multiplayer-protocol.md)
+- [Multiplayer scale-out](../multiplayer-scale-out.md)
+- [ADR 0003: Command boundaries](0003-command-boundaries.md)
+- [ADR 0008: Rust engine ownership and strangler migration](0008-rust-engine-ownership-and-strangler-migration.md)
+
+## Rejected alternatives:
+
+- Using one version number for functional behavior, transient envelopes, and durable state.
+- Accepting every older client revision without compatibility fixtures.
+- Enabling a new durable writer before compatible readers and a rollback plan are deployed.

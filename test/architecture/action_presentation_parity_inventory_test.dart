@@ -25,7 +25,7 @@ void main() {
       intents,
     );
     expect(domainCommands, hasLength(39));
-    expect(intents, hasLength(27));
+    expect(intents, hasLength(28));
   });
 
   test('client interaction parity cannot branch on local or network mode', () {
@@ -85,6 +85,7 @@ bool _inheritsFrom(
 
 bool _isAbstractCommandBase(String name) {
   return const {
+    'CityTargetGameIntent',
     'CityTargetDomainCommand',
     'DiplomaticCommand',
     'UnitDomainCommand',

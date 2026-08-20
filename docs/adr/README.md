@@ -6,14 +6,14 @@ ADRs explain why a long-lived boundary exists and what new code must preserve. R
 
 | ADR | Decision | Status | Implementation |
 | --- | --- | --- | --- |
-| [0001](0001-map-and-state-ownership.md) | Map and state ownership | Superseded | In progress |
-| [0002](0002-deterministic-game-engine.md) | Deterministic game engine | Superseded | In progress |
-| [0003](0003-command-boundaries.md) | Command boundaries | Accepted | Implemented |
-| [0004](0004-versioned-multiplayer-protocol.md) | Versioned multiplayer protocol | Accepted | Implemented |
-| [0005](0005-immutable-deployment.md) | Immutable deployment promotion | Accepted | In progress |
-| [0006](0006-transport-infrastructure.md) | Transport infrastructure and traversal | Accepted | Implemented |
-| [0007](0007-strategic-resource-stockpiles.md) | Strategic stockpiles and production allocation | Accepted | Implemented |
-| [0008](0008-rust-engine-ownership-and-strangler-migration.md) | Rust engine ownership and strangler migration | Accepted | In progress |
+| [0001](0001-map-and-state-ownership.md) | Map And State Ownership | Superseded | In progress |
+| [0002](0002-deterministic-game-engine.md) | Deterministic Game Engine | Superseded | In progress |
+| [0003](0003-command-boundaries.md) | Command Boundaries | Accepted | Implemented |
+| [0004](0004-versioned-multiplayer-protocol.md) | Versioned Multiplayer Protocol | Accepted | Implemented |
+| [0005](0005-immutable-deployment.md) | Immutable Deployment Promotion | Accepted | In progress |
+| [0006](0006-transport-infrastructure.md) | Transport Infrastructure Ownership And Traversal | Accepted | Implemented |
+| [0007](0007-strategic-resource-stockpiles.md) | Strategic Resource Stockpiles And Production Allocation | Accepted | Implemented |
+| [0008](0008-rust-engine-ownership-and-strangler-migration.md) | Rust Engine Ownership And Strangler Migration | Accepted | In progress |
 
 ## Status
 

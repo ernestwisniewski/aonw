@@ -1,4 +1,4 @@
-# ADR 0007: Strategic stockpiles and production allocation
+# ADR 0007: Strategic Resource Stockpiles And Production Allocation
 
 - Status: Accepted
 - Date: 2026-08-12
@@ -55,8 +55,23 @@ Oil and aluminium become real production constraints and trade targets. UI read 
 
 Continuous army upkeep, shortage penalties, luxury duplicate effects, and stockpiling the remaining strategic resources are outside this decision.
 
-## Verification
+## Migration And Verification
 
 Tests cover extraction ownership and visibility, turn order, save/projection round trips, allocation/refund, alternative costs, spawn blocking, rush, atomic trade, diplomacy blocking, stale rejection, UI pending state, AI, MCTS, and deterministic resource placement.
 
 See [strategic-resource-economy.md](../game-design/strategic-resource-economy.md).
+
+Any future stockpiled resource or consumption rule must update the catalog, canonical codecs, recipient projection, AI fixtures, and versioned compatibility contract in the same change.
+
+## Related Decisions And Documentation
+
+- [Strategic resource economy](../game-design/strategic-resource-economy.md)
+- [ADR 0002: Deterministic game engine](0002-deterministic-game-engine.md)
+- [ADR 0003: Command boundaries](0003-command-boundaries.md)
+- [ADR 0004: Versioned multiplayer protocol](0004-versioned-multiplayer-protocol.md)
+
+## Rejected alternatives:
+
+- Representing every strategic resource as a binary presence flag.
+- Maintaining a second reservation table separate from production queues.
+- Charging resources again when production completes or is rushed.

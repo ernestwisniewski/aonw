@@ -16,7 +16,7 @@ Flutter uses generated Serverpod endpoint methods for lobby and recovery operati
 
 | Contract | Current value | Compatibility |
 | --- | ---: | --- |
-| Functional multiplayer revision | 9 | Only revision 9 is accepted. Active functional revision is 9. |
+| Functional multiplayer revision | 9 | Only revision 9 is accepted; active functional revision is 9. |
 | Command, ACK, and match schema | 4 | Strict. |
 | Snapshot and event write schema | 7 | Readers accept schemas 3 through 7. |
 

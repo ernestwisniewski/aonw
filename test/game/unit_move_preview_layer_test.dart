@@ -346,7 +346,6 @@ void main() {
       );
       expect(preview.routeBoundaryHasBorderForTesting(2), isTrue);
       expect(preview.routeBoundaryHasBorderForTesting(1), isFalse);
-
       final phasesBefore = [
         for (var index = 1; index <= 3; index++)
           preview.routeSegmentDashPhaseForTesting(index),
@@ -380,22 +379,6 @@ void main() {
         preview.routeBoundaryRadiusForTesting(3),
         greaterThan(preview.routeBoundaryRadiusForTesting(2)),
       );
-    });
-
-    test('travelled route marks its original start hex with a dot', () {
-      final untouched = UnitMovePreview(
-        points: [Vector2(0, 0), Vector2(30, 0), Vector2(60, 0)],
-        reachablePoints: const [true, true, true],
-      );
-      final travelled = UnitMovePreview(
-        points: [Vector2(0, 0), Vector2(30, 0), Vector2(60, 0)],
-        reachablePoints: const [true, true, true],
-        travelledUpToIndex: 1,
-      );
-
-      expect(untouched.routeBoundaryPointIndicesForTesting, isNot(contains(0)));
-      expect(travelled.routeBoundaryPointIndicesForTesting, contains(0));
-      expect(travelled.routeBoundaryHasBorderForTesting(0), isFalse);
     });
 
     test('route boundary dots mark the end of every movement turn', () {

@@ -111,7 +111,6 @@ ADRs record constraints that should survive refactors. Read the index before cha
 ### Product and content
 
 - [`game-design/README.md`](game-design/README.md): index of gameplay and UX contracts.
-- [`templates/README.md`](templates/README.md): sprite and atlas source templates.
 - [`marketing/README.md`](marketing/README.md): publishing-only artwork.
 
 ## Documentation rules

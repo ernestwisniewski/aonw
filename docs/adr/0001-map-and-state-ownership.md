@@ -1,4 +1,4 @@
-# ADR 0001: Map and state ownership
+# ADR 0001: Map And State Ownership
 
 - Status: Superseded
 - Date: 2026-07-12

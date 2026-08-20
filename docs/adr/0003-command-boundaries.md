@@ -1,4 +1,4 @@
-# ADR 0003: Command boundaries
+# ADR 0003: Command Boundaries
 
 - Status: Accepted
 - Date: 2026-07-12
@@ -44,10 +44,22 @@ Replay and multiplayer contain portable authoritative intent, while presentation
 
 Controllers may translate one intent into local state and later into a complete domain command. That two-step interaction is deliberate.
 
-## Verification
+## Migration And Verification
 
 - the umbrella `GameCommand` type remains removed;
 - transport, replay, AI, and server player APIs accept `DomainCommand` only;
 - timeout history stores `RecordedSystemCommand`;
 - architecture tests reject `GameIntent` in transport, event-log, and server boundaries;
 - adding a serializable command requires codec round-trip and completeness tests.
+
+## Related Decisions And Documentation
+
+- [ADR 0002: Deterministic game engine](0002-deterministic-game-engine.md)
+- [ADR 0004: Versioned multiplayer protocol](0004-versioned-multiplayer-protocol.md)
+- [ADR 0008: Rust engine ownership and strangler migration](0008-rust-engine-ownership-and-strangler-migration.md)
+
+## Rejected alternatives:
+
+- Persisting presentation intents as authoritative gameplay commands.
+- Exposing trusted system transitions through the player command endpoint.
+- Maintaining separate command hierarchies for local play, AI, replay, and multiplayer.

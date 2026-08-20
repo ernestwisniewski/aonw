@@ -1,4 +1,4 @@
-# ADR 0008: Rust engine ownership and strangler migration
+# ADR 0008: Rust Engine Ownership And Strangler Migration
 
 - Status: Accepted
 - Date: 2026-08-13
@@ -57,7 +57,7 @@ Flutter can continue shipping while Rust is tested behind existing behavior. God
 
 Flutter Web needs a supported Rust/WASM or deliberate remote-only solution before Dart retirement.
 
-## Migration and verification
+## Migration And Verification
 
 Move through complete vertical slices: state and codecs, commands, queries, turn processing, AI, local runtime, recipient projection, Flutter, Godot, and Serverpod. Each slice compares full accepted/rejected output, state/RNG digests, ordered events, evidence, codecs, and deterministic target behavior.
 
@@ -66,3 +66,16 @@ Required backend modes before rollout are complete Dart, Dart-primary/Rust-shado
 Dart authority is retired only after all commands, system transitions, queries, saves, replay, AI, projections, supported platforms, and server recovery use Rust; no active server match is pinned to Dart; historical formats have a reader or explicit migration policy; and rollback drills have completed.
 
 The living milestone plan is [rust-engine-migration.md](../rust-engine-migration.md).
+
+## Related Decisions And Documentation
+
+- [ADR 0001: Map and state ownership](0001-map-and-state-ownership.md)
+- [ADR 0002: Deterministic game engine](0002-deterministic-game-engine.md)
+- [ADR 0003: Command boundaries](0003-command-boundaries.md)
+- [Rust engine migration plan](../rust-engine-migration.md)
+
+## Rejected alternatives:
+
+- Maintaining permanent authoritative Dart and Rust engines.
+- Replacing the production Dart engine with a big-bang rewrite.
+- Splitting command families between engines inside one active save or match.

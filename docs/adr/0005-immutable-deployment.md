@@ -1,4 +1,4 @@
-# ADR 0005: Immutable deployment promotion
+# ADR 0005: Immutable Deployment Promotion
 
 - Status: Accepted
 - Date: 2026-07-12
@@ -45,6 +45,10 @@ Cutover verifies startup, liveness, readiness, and synthetic smoke before traffi
 
 Rollback selects the retained previous manifest. It does not rebuild or casually reverse the migration.
 
+## Consequences
+
+Build-once promotion makes deployed bytes traceable to one reviewed source revision and keeps staging representative of production. It also requires manifest retention, separate migration operations, artifact storage, and explicit rollback drills.
+
 ## Current state
 
 Implemented foundations include release gates, pinned inputs, Docker-context protection, explicit Compose overlays, configuration checks, readiness, and an environment-neutral manifest schema.
@@ -58,8 +62,20 @@ Still transitional:
 
 Do not describe the current workflow as build-once promotion until these gaps are closed.
 
-## Verification
+## Migration And Verification
 
 The completed implementation must prove that one build creates one digest, staging and production use it unchanged, tag-only deploys fail, application startup cannot migrate, health failure preserves or restores the previous release, and Compose/Caddy/config revisions match the manifest.
 
 See [build-and-deploy.md](../build-and-deploy.md) and [multiplayer-scale-out.md](../multiplayer-scale-out.md).
+
+## Related Decisions And Documentation
+
+- [Build and deploy runbook](../build-and-deploy.md)
+- [Multiplayer scale-out](../multiplayer-scale-out.md)
+- [ADR 0004: Versioned multiplayer protocol](0004-versioned-multiplayer-protocol.md)
+
+## Rejected alternatives:
+
+- Rebuilding independently on staging and production hosts.
+- Treating a mutable image tag as deployment identity.
+- Running schema migrations implicitly in every application replica at startup.
