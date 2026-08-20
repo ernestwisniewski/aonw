@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.16 - 2026-08-20
 
 - Added the shared Rust engine foundation for authoritative maps, movement,
   unit actions, saves, replays, and client contracts, with Flutter and Godot
