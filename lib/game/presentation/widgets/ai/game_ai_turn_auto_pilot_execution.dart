@@ -1,16 +1,24 @@
-part of 'game_ai_turn_auto_pilot.dart';
+import 'package:aonw/game/presentation/formatters/game_display_names.dart';
+import 'package:aonw/game/presentation/providers.dart';
+import 'package:aonw/game/presentation/services/ai_turn_execution_runner.dart';
+import 'package:aonw/game/presentation/services/ai_turn_follow_up_identity_guard.dart';
+import 'package:aonw/game/presentation/services/ai_turn_follow_up_runner.dart';
+import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_context.dart';
+import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_process.dart';
+import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_rules.dart';
+import 'package:aonw/l10n/generated/app_localizations.dart';
 
-extension _GameAiTurnAutoPilotExecution on _GameAiTurnAutoPilotState {
-  AiTurnExecutionRunner _aiTurnExecutionRunner() {
+extension GameAiTurnAutoPilotExecution on GameAiTurnAutoPilotContext {
+  AiTurnExecutionRunner aiTurnExecutionRunner() {
     return AiTurnExecutionRunner.fromPreparedProcess(
       logger: ref.read(gameLoggerProvider),
-      throttler: _runtimeThrottler,
-      prepareProcess: _prepareAiTurnProcess,
+      throttler: runtimeThrottler,
+      prepareProcess: prepareAiTurnProcess,
       invalidateSaveSnapshot: (saveId) =>
           ref.invalidate(gameSaveSnapshotProvider(saveId)),
       authorizeFollowUp:
           ({required updatedSave, required previousTurn, required playerId}) {
-            return _followUpIdentityGuard.authorizeFollowUp(
+            return followUpIdentityGuard.authorizeFollowUp(
                   saveId: updatedSave.id,
                   previousTurn: previousTurn,
                   updatedTurn: updatedSave.turn,
@@ -25,14 +33,14 @@ extension _GameAiTurnAutoPilotExecution on _GameAiTurnAutoPilotState {
             required playerId,
             required terminalUiEffects,
           }) async {
-            final token = _followUpIdentityGuard.authorizedFollowUpToken(
+            final token = followUpIdentityGuard.authorizedFollowUpToken(
               saveId: updatedSave.id,
               previousTurn: previousTurn,
               updatedTurn: updatedSave.turn,
               playerId: playerId,
             );
             if (token == null) return null;
-            return _aiTurnFollowUpRunner(token).advanceAfterAiTurn(
+            return aiTurnFollowUpRunner(token).advanceAfterAiTurn(
               updatedSave: updatedSave,
               previousTurn: previousTurn,
               playerId: playerId,
@@ -40,26 +48,26 @@ extension _GameAiTurnAutoPilotExecution on _GameAiTurnAutoPilotState {
             );
           },
       onExecutionSettled: (request) {
-        final settledLease = _followUpIdentityGuard.finishExecution(
+        final settledLease = followUpIdentityGuard.finishExecution(
           saveId: request.saveId,
           turn: request.turn,
           playerId: request.playerId,
         );
         if (settledLease != null) {
-          _cancelTurnOpening(settledLease);
+          cancelTurnOpening(settledLease);
         }
       },
-      canContinue: () => _canContinue,
-      precomputeStats: _runtimeCoordinator.precomputeStats,
-      throttleStats: _runtimeCoordinator.throttleStats,
-      logThrottleChange: _runtimeCoordinator.logThrottleChange,
+      canContinue: canContinue,
+      precomputeStats: runtimeCoordinator.precomputeStats,
+      throttleStats: runtimeCoordinator.throttleStats,
+      logThrottleChange: runtimeCoordinator.logThrottleChange,
     );
   }
 
-  AiTurnFollowUpRunner _aiTurnFollowUpRunner(
+  AiTurnFollowUpRunner aiTurnFollowUpRunner(
     AiTurnExecutionIdentityToken token,
   ) {
-    final presentationDriver = _aiTurnPresentationDriver();
+    final presentationDriver = aiTurnPresentationDriver();
     return AiTurnFollowUpRunner(
       logger: ref.read(gameLoggerProvider),
       localAiRuntimeEnabled: (save) {
@@ -78,52 +86,55 @@ extension _GameAiTurnAutoPilotExecution on _GameAiTurnAutoPilotState {
         );
       },
       beginTurnOpening: (playerId) {
-        _followUpIdentityGuard.runIfCurrent(token, () {
+        followUpIdentityGuard.runIfCurrent(token, () {
           ref
               .read(gamePlayerControlControllerProvider.notifier)
               .beginTurnOpening(playerId, lease: token.openingLease);
         });
       },
       prepareHumanTurn: (playerId) {
-        return _followUpIdentityGuard.runAsyncIfCurrent(token, () {
+        return followUpIdentityGuard.runAsyncIfCurrent(token, () {
           return ref
               .read(gamePlayerControlControllerProvider.notifier)
               .prepareHumanTurn(playerId, lease: token.openingLease);
         });
       },
       focusTurnStartMapTarget: (playerId) {
-        return _followUpIdentityGuard.runAsyncIfCurrent(token, () {
+        return followUpIdentityGuard.runAsyncIfCurrent(token, () {
           return ref
               .read(hudCommandDispatcherProvider)
               .focusTurnStartMapTarget(
                 activePlayerId: playerId,
                 state: ref
-                    .read(gameStateProvider(widget.gameSave?.id ?? ''))
+                    .read(gameStateProvider(saveReader()?.id ?? ''))
                     .value,
               );
         });
       },
       releaseHumanTurn: (playerId) {
-        return _followUpIdentityGuard.runAsyncIfCurrent(token, () {
+        return followUpIdentityGuard.runAsyncIfCurrent(token, () {
           return ref
               .read(gamePlayerControlControllerProvider.notifier)
               .releaseHumanTurn(playerId, lease: token.openingLease);
         });
       },
       canContinue: () =>
-          _canContinue && _followUpIdentityGuard.isCurrent(token),
+          canContinue() && followUpIdentityGuard.isCurrent(token),
       clearHandoff: () {
-        _followUpIdentityGuard.runIfCurrent(token, () {
+        followUpIdentityGuard.runIfCurrent(token, () {
           ref.read(gameHandoffProvider.notifier).clear();
         });
       },
       setHandoff: (handoff) {
-        _followUpIdentityGuard.runIfCurrent(token, () {
+        followUpIdentityGuard.runIfCurrent(token, () {
           ref.read(gameHandoffProvider.notifier).setPending(handoff);
         });
       },
       playerNameFormatter: (player) {
-        return GameDisplayNames.player(AppLocalizations.of(context), player);
+        return GameDisplayNames.player(
+          AppLocalizations.of(contextReader()),
+          player,
+        );
       },
     );
   }

@@ -183,6 +183,7 @@ final class _PresentationRuleReadVisitor extends RecursiveAstVisitor<void> {
 
 List<String> _gameIntentNames() {
   final declarations = <String, String?>{};
+  final abstractDeclarations = <String>{};
   for (final entity in Directory(
     'packages/aonw_core/lib/game/domain/command',
   ).listSync()) {
@@ -193,10 +194,12 @@ List<String> _gameIntentNames() {
       throwIfDiagnostics: false,
     ).unit;
     for (final declaration in unit.declarations.whereType<ClassDeclaration>()) {
-      declarations[declaration.namePart.typeName.lexeme] = declaration
-          .extendsClause
-          ?.superclass
-          .toSource();
+      final name = declaration.namePart.typeName.lexeme;
+      declarations[name] = declaration.extendsClause?.superclass.toSource();
+      if (declaration.abstractKeyword != null ||
+          declaration.sealedKeyword != null) {
+        abstractDeclarations.add(name);
+      }
     }
   }
 
@@ -210,6 +213,7 @@ List<String> _gameIntentNames() {
   return [
     for (final entry in declarations.entries)
       if (entry.key != 'GameIntent' &&
+          !abstractDeclarations.contains(entry.key) &&
           isIntent(entry.key, <String>{}) &&
           !entry.key.endsWith('InteractionCommand'))
         entry.key,

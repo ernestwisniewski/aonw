@@ -1,42 +1,51 @@
-part of 'game_ai_turn_auto_pilot.dart';
+import 'package:aonw/game/presentation/engine/renderer_view_model.dart';
+import 'package:aonw/game/presentation/providers.dart';
+import 'package:aonw/game/presentation/services/ai_turn_precompute_runner.dart';
+import 'package:aonw/game/presentation/services/ai_turn_presentation_driver.dart';
+import 'package:aonw/game/presentation/services/ai_turn_process_preparer.dart';
+import 'package:aonw/game/presentation/services/isolated_ai_plan_executor.dart';
+import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_context.dart';
+import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_rules.dart';
+import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_runtime.dart';
+import 'package:aonw_core/game/domain/ruleset.dart';
 
-extension _GameAiTurnAutoPilotProcess on _GameAiTurnAutoPilotState {
-  AiTurnPrecomputeRunner _aiTurnPrecomputeRunner() {
+extension GameAiTurnAutoPilotProcess on GameAiTurnAutoPilotContext {
+  AiTurnPrecomputeRunner aiTurnPrecomputeRunner() {
     return AiTurnPrecomputeRunner(
       logger: ref.read(gameLoggerProvider),
-      coordinator: _precomputeCoordinator,
-      throttler: _runtimeThrottler,
+      coordinator: precomputeCoordinator,
+      throttler: runtimeThrottler,
       planExecutor: isolatedAiPlanPrecomputeExecutor,
       startPrecompute:
           ({required saveId, required playerId, required planExecutor}) async {
-            final process = await _prepareAiTurnProcess(
+            final process = await prepareAiTurnProcess(
               saveId: saveId,
               playerId: playerId,
             );
             return process?.precompute(planExecutor: planExecutor);
           },
-      cacheSizeReader: () => _precomputeCache.length,
-      precomputeStats: _runtimeCoordinator.precomputeStats,
-      throttleStats: _runtimeCoordinator.throttleStats,
-      logThrottleChange: _runtimeCoordinator.logThrottleChange,
+      cacheSizeReader: () => precomputeCache.length,
+      precomputeStats: runtimeCoordinator.precomputeStats,
+      throttleStats: runtimeCoordinator.throttleStats,
+      logThrottleChange: runtimeCoordinator.logThrottleChange,
     );
   }
 
-  Future<PreparedAiTurnProcess?> _prepareAiTurnProcess({
+  Future<PreparedAiTurnProcess?> prepareAiTurnProcess({
     required String saveId,
     required String playerId,
     int? scheduledTurn,
   }) async {
     final executionToken = scheduledTurn == null
         ? null
-        : _followUpIdentityGuard.beginExecution(
+        : followUpIdentityGuard.beginExecution(
             saveId: saveId,
             turn: scheduledTurn,
             playerId: playerId,
           );
     if (scheduledTurn != null && executionToken == null) return null;
 
-    final presentationDriver = _aiTurnPresentationDriver();
+    final presentationDriver = aiTurnPresentationDriver();
     final preparer = AiTurnProcessPreparer(
       repository: ref.read(gameRepositoryProvider),
       logger: ref.read(gameLoggerProvider),
@@ -44,10 +53,10 @@ extension _GameAiTurnAutoPilotProcess on _GameAiTurnAutoPilotState {
       planExecutor: isolatedAiPlanExecutor,
       sessionReader: () => ref.read(activeGameSessionProvider),
       networkSessionReader: () => ref.read(networkSessionProvider),
-      canContinue: () => _canContinue,
+      canContinue: canContinue,
       shouldRunLocalAiForMode: GameAiTurnAutoPilotRules.shouldRunLocalAiForMode,
       canRunScheduledAiTurn: GameAiTurnAutoPilotRules.canRunScheduledAiTurn,
-      strategyRegistryFor: _strategyRegistryFor,
+      strategyRegistryFor: strategyRegistryFor,
       rulesetReader: () {
         return GameRuleset.standard().copyWith(
           city: ref.read(cityRulesetProvider),
@@ -56,8 +65,8 @@ extension _GameAiTurnAutoPilotProcess on _GameAiTurnAutoPilotState {
         );
       },
       eventLogReader: () => ref.read(eventLogProvider),
-      precomputeCache: _precomputeCache,
-      strategicPlanProvider: _strategicPlanProvider,
+      precomputeCache: precomputeCache,
+      strategicPlanProvider: strategicPlanProvider,
     );
     return preparer.prepare(
       saveId: saveId,
@@ -66,7 +75,7 @@ extension _GameAiTurnAutoPilotProcess on _GameAiTurnAutoPilotState {
     );
   }
 
-  AiTurnPresentationDriver _aiTurnPresentationDriver() {
+  AiTurnPresentationDriver aiTurnPresentationDriver() {
     return AiTurnPresentationDriver(
       sessionReader: () => ref.read(activeGameSessionProvider),
       stateReader: (saveId) => ref.read(gameStateProvider(saveId)).value,
@@ -87,10 +96,10 @@ extension _GameAiTurnAutoPilotProcess on _GameAiTurnAutoPilotState {
             .dispatchTransition(
               command,
               context: context,
-              canPublish: () => _canContinue,
+              canPublish: canContinue,
             );
       },
-      canContinue: () => _canContinue,
+      canContinue: canContinue,
     );
   }
 }

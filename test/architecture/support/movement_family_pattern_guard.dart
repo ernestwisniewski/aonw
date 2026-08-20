@@ -55,14 +55,14 @@ const reviewedMovementFamilyPatternOccurrences = <String, Map<String, int>>{
     'class:LocalMovementCommandResolver/method:_unchanged::MoveUnitCommand': 1,
   },
   'lib/game/application/services/local_movement_engine_projection.dart': {
-    'function:projectLocalMovementEngineResult::'
+    'function:_projectActorInteraction::'
             'AssignMerchantTradeRouteCommand':
         1,
-    'function:projectLocalMovementEngineResult::AutomatedUnitCommand': 1,
-    'function:projectLocalMovementEngineResult::CancelUnitActionCommand': 1,
-    'function:projectLocalMovementEngineResult::DetachTroopCommand': 1,
-    'function:projectLocalMovementEngineResult::MoveMerchantToCityCommand': 1,
-    'function:projectLocalMovementEngineResult::MoveUnitCommand': 1,
+    'function:_projectActorInteraction::AutomatedUnitCommand': 1,
+    'function:_projectActorInteraction::CancelUnitActionCommand': 1,
+    'function:_projectActorInteraction::DetachTroopCommand': 1,
+    'function:_projectActorInteraction::MoveMerchantToCityCommand': 1,
+    'function:_projectActorInteraction::MoveUnitCommand': 1,
   },
   'lib/game/presentation/audio/game_sound_cue_mapper.dart': {
     'class:GameSoundCueMapper/method:forCommand::MoveUnitCommand': 1,

@@ -1,39 +1,12 @@
-import 'dart:async';
-
-import 'package:aonw/game/application/ports/network_session.dart';
-import 'package:aonw/game/application/services/ai_plan_precompute_cache.dart';
-import 'package:aonw/game/application/services/ai_runtime_strategy_resolver.dart';
-import 'package:aonw/game/application/services/ai_runtime_throttler.dart';
-import 'package:aonw/game/application/services/ai_strategic_plan_provider.dart';
-import 'package:aonw/game/application/services/ai_turn_run_scheduler.dart';
 import 'package:aonw/game/application/services/turn_opening_lease.dart';
-import 'package:aonw/game/domain/game_state.dart';
-import 'package:aonw/game/presentation/engine/renderer_view_model.dart';
-import 'package:aonw/game/presentation/formatters/game_display_names.dart';
 import 'package:aonw/game/presentation/providers.dart';
-import 'package:aonw/game/presentation/services/ai_turn_auto_scheduler.dart';
-import 'package:aonw/game/presentation/services/ai_turn_execution_runner.dart';
 import 'package:aonw/game/presentation/services/ai_turn_follow_up_identity_guard.dart';
-import 'package:aonw/game/presentation/services/ai_turn_follow_up_runner.dart';
-import 'package:aonw/game/presentation/services/ai_turn_lifecycle_coordinator.dart';
-import 'package:aonw/game/presentation/services/ai_turn_precompute_coordinator.dart';
-import 'package:aonw/game/presentation/services/ai_turn_precompute_runner.dart';
-import 'package:aonw/game/presentation/services/ai_turn_presentation_driver.dart';
-import 'package:aonw/game/presentation/services/ai_turn_process_preparer.dart';
-import 'package:aonw/game/presentation/services/ai_turn_runtime_coordinator.dart';
-import 'package:aonw/game/presentation/services/isolated_ai_plan_executor.dart';
-import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_rules.dart';
-import 'package:aonw/l10n/generated/app_localizations.dart';
+import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_context.dart';
+import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_runtime.dart';
 import 'package:aonw/shared/providers/ai_settings_provider.dart';
-import 'package:aonw_core/ai.dart';
-import 'package:aonw_core/game/domain/ruleset.dart';
 import 'package:aonw_core/game/domain/save.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-part 'game_ai_turn_auto_pilot_execution.dart';
-part 'game_ai_turn_auto_pilot_process.dart';
-part 'game_ai_turn_auto_pilot_runtime.dart';
 
 class GameAiTurnAutoPilot extends ConsumerStatefulWidget {
   final GameSave? gameSave;
@@ -52,18 +25,7 @@ class GameAiTurnAutoPilot extends ConsumerStatefulWidget {
 
 class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
     with WidgetsBindingObserver {
-  late final AiTurnRuntimeCoordinator _runtimeCoordinator;
-  late final AiTurnLifecycleCoordinator _lifecycleCoordinator;
-  final AiTurnPlanPrecomputeCache _precomputeCache =
-      AiTurnPlanPrecomputeCache();
-  final AiStrategicPlanProvider _strategicPlanProvider =
-      AiStrategicPlanProvider();
-  final AiRuntimeThrottler _runtimeThrottler = AiRuntimeThrottler();
-  final AiTurnPrecomputeCoordinator _precomputeCoordinator =
-      AiTurnPrecomputeCoordinator();
-  final AiTurnRunScheduler _runScheduler = AiTurnRunScheduler();
-  final AiTurnFollowUpIdentityGuard _followUpIdentityGuard =
-      AiTurnFollowUpIdentityGuard();
+  late final GameAiTurnAutoPilotContext _autoPilot;
   bool _active = true;
 
   bool get _canContinue => mounted && _active;
@@ -72,21 +34,29 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _followUpIdentityGuard.initialize(_saveIdentity(widget.gameSave));
-    _runtimeCoordinator = _createAiTurnRuntimeCoordinator();
-    _lifecycleCoordinator = _createAiTurnLifecycleCoordinator();
+    _autoPilot = GameAiTurnAutoPilotContext(
+      ref: ref,
+      saveReader: () => widget.gameSave,
+      contextReader: () => context,
+      interCommandDelayReader: () => widget.interCommandDelay,
+      canContinue: () => _canContinue,
+      notifyStateChanged: _notifyStateChanged,
+      cancelTurnOpening: _cancelTurnOpening,
+    );
+    _autoPilot.followUpIdentityGuard.initialize(_saveIdentity(widget.gameSave));
+    _autoPilot.initialize();
   }
 
   @override
   void didUpdateWidget(GameAiTurnAutoPilot oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final invalidatedLease = _followUpIdentityGuard.handleSaveChange(
+    final invalidatedLease = _autoPilot.followUpIdentityGuard.handleSaveChange(
       _saveIdentity(widget.gameSave),
     );
     if (invalidatedLease != null) {
       _cancelTurnOpening(invalidatedLease);
     }
-    _lifecycleCoordinator.handleSaveChange(
+    _autoPilot.lifecycleCoordinator.handleSaveChange(
       previousSave: oldWidget.gameSave,
       currentSave: widget.gameSave,
     );
@@ -94,7 +64,7 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    _lifecycleCoordinator.handleLifecyclePaused(
+    _autoPilot.lifecycleCoordinator.handleLifecyclePaused(
       state != AppLifecycleState.resumed,
     );
   }
@@ -115,11 +85,11 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
   void dispose() {
     _active = false;
     WidgetsBinding.instance.removeObserver(this);
-    final invalidatedLease = _followUpIdentityGuard.invalidate();
+    final invalidatedLease = _autoPilot.followUpIdentityGuard.invalidate();
     if (invalidatedLease != null) {
       _cancelTurnOpening(invalidatedLease);
     }
-    _lifecycleCoordinator.dispose();
+    _autoPilot.lifecycleCoordinator.dispose();
     super.dispose();
   }
 
@@ -133,7 +103,7 @@ class _GameAiTurnAutoPilotState extends ConsumerState<GameAiTurnAutoPilot>
     final gameState = save == null
         ? null
         : ref.watch(gameStateProvider(save.id)).value;
-    _aiTurnAutoScheduler().evaluate(
+    _autoPilot.aiTurnAutoScheduler().evaluate(
       save: save,
       control: control,
       handoff: handoff,

@@ -2,9 +2,10 @@
 
 ## 1.1.16 - 2026-08-20
 
-- Added the shared Rust engine foundation for authoritative maps, movement,
-  unit actions, saves, replays, and client contracts, with Flutter and Godot
-  integration plus deterministic parity and rollback gates.
+Added the shared Rust engine foundation for authoritative maps, movement, unit
+actions, saves, replays, and client contracts, with Flutter and Godot
+integration plus deterministic parity and rollback gates.
+
 - Added the Godot map workbench, runtime map preview, and versioned map content
   workflow for developing the next presentation client against shared rules.
 - Added a deterministic runtime asset pipeline with atlases, manifests,

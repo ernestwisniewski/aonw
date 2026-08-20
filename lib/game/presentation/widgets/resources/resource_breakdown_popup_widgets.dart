@@ -289,7 +289,10 @@ class _BreakdownMagnitudeBar extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(999),
       child: ColoredBox(
-        color: GameUiTheme.surfaceDeep.withAlpha(160),
+        color: SurfaceElevation.flat.fill(
+          background: GameUiTheme.surfaceDeep,
+          alpha: 160,
+        ),
         child: Align(
           alignment: Alignment.centerLeft,
           child: FractionallySizedBox(
@@ -297,7 +300,10 @@ class _BreakdownMagnitudeBar extends StatelessWidget {
             child: Container(
               height: 3,
               decoration: BoxDecoration(
-                color: color.withAlpha(210),
+                color: SurfaceElevation.flat.fill(
+                  background: color,
+                  alpha: 210,
+                ),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),

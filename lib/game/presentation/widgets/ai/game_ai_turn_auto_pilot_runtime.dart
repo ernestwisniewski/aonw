@@ -1,13 +1,35 @@
-part of 'game_ai_turn_auto_pilot.dart';
+import 'dart:async';
 
-extension _GameAiTurnAutoPilotRuntime on _GameAiTurnAutoPilotState {
-  AiStrategyRegistry _strategyRegistryFor({
+import 'package:aonw/game/application/ports/network_session.dart';
+import 'package:aonw/game/application/services/ai_runtime_strategy_resolver.dart';
+import 'package:aonw/game/domain/game_state.dart';
+import 'package:aonw/game/presentation/providers.dart';
+import 'package:aonw/game/presentation/services/ai_turn_auto_scheduler.dart';
+import 'package:aonw/game/presentation/services/ai_turn_lifecycle_coordinator.dart';
+import 'package:aonw/game/presentation/services/ai_turn_runtime_coordinator.dart';
+import 'package:aonw/game/presentation/services/isolated_ai_plan_executor.dart';
+import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_context.dart';
+import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_execution.dart';
+import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_process.dart';
+import 'package:aonw/game/presentation/widgets/ai/game_ai_turn_auto_pilot_rules.dart';
+import 'package:aonw/shared/providers/ai_settings_provider.dart';
+import 'package:aonw_core/ai.dart';
+import 'package:aonw_core/game/domain/save.dart';
+import 'package:flutter/widgets.dart';
+
+extension GameAiTurnAutoPilotRuntime on GameAiTurnAutoPilotContext {
+  void initialize() {
+    runtimeCoordinator = createAiTurnRuntimeCoordinator();
+    lifecycleCoordinator = createAiTurnLifecycleCoordinator();
+  }
+
+  AiStrategyRegistry strategyRegistryFor({
     required String playerId,
     required GameSave save,
     required GameClientState gameState,
     required NetworkSession? networkSession,
   }) {
-    return _aiRuntimeStrategyResolver().resolve(
+    return aiRuntimeStrategyResolver().resolve(
       playerId: playerId,
       save: save,
       gameState: gameState,
@@ -15,63 +37,63 @@ extension _GameAiTurnAutoPilotRuntime on _GameAiTurnAutoPilotState {
     );
   }
 
-  AiTurnAutoScheduler _aiTurnAutoScheduler() {
+  AiTurnAutoScheduler aiTurnAutoScheduler() {
     return AiTurnAutoScheduler(
       logger: ref.read(gameLoggerProvider),
-      runScheduler: _runScheduler,
-      precomputeCoordinator: _precomputeCoordinator,
-      precomputeCache: _precomputeCache,
-      throttler: _runtimeThrottler,
+      runScheduler: runScheduler,
+      precomputeCoordinator: precomputeCoordinator,
+      precomputeCache: precomputeCache,
+      throttler: runtimeThrottler,
       shouldRunLocalAi: GameAiTurnAutoPilotRules.shouldRunLocalAi,
       aiPlayerToRun: GameAiTurnAutoPilotRules.aiPlayerToRun,
-      scheduleTurn: _runtimeCoordinator.scheduleTurn,
-      schedulePendingPrecompute: _runtimeCoordinator.schedulePendingPrecompute,
-      precomputeStats: _runtimeCoordinator.precomputeStats,
-      throttleStats: _runtimeCoordinator.throttleStats,
-      logThrottleChange: _runtimeCoordinator.logThrottleChange,
+      scheduleTurn: runtimeCoordinator.scheduleTurn,
+      schedulePendingPrecompute: runtimeCoordinator.schedulePendingPrecompute,
+      precomputeStats: runtimeCoordinator.precomputeStats,
+      throttleStats: runtimeCoordinator.throttleStats,
+      logThrottleChange: runtimeCoordinator.logThrottleChange,
     );
   }
 
-  AiTurnLifecycleCoordinator _createAiTurnLifecycleCoordinator() {
+  AiTurnLifecycleCoordinator createAiTurnLifecycleCoordinator() {
     return AiTurnLifecycleCoordinator(
-      runScheduler: _runScheduler,
-      precomputeCoordinator: _precomputeCoordinator,
-      precomputeCache: _precomputeCache,
-      strategicPlanProvider: _strategicPlanProvider,
-      throttler: _runtimeThrottler,
-      cancelQueuedPrecompute: _runtimeCoordinator.cancelQueuedPrecompute,
-      schedulePendingPrecompute: _runtimeCoordinator.schedulePendingPrecompute,
+      runScheduler: runScheduler,
+      precomputeCoordinator: precomputeCoordinator,
+      precomputeCache: precomputeCache,
+      strategicPlanProvider: strategicPlanProvider,
+      throttler: runtimeThrottler,
+      cancelQueuedPrecompute: runtimeCoordinator.cancelQueuedPrecompute,
+      schedulePendingPrecompute: runtimeCoordinator.schedulePendingPrecompute,
       shutdownPrecomputeExecutor: () {
         unawaited(shutdownIsolatedAiPlanExecutor());
       },
     );
   }
 
-  AiTurnRuntimeCoordinator _createAiTurnRuntimeCoordinator() {
+  AiTurnRuntimeCoordinator createAiTurnRuntimeCoordinator() {
     return AiTurnRuntimeCoordinator(
       logger: ref.read(gameLoggerProvider),
-      runScheduler: _runScheduler,
-      precomputeCoordinator: _precomputeCoordinator,
-      throttler: _runtimeThrottler,
-      executionRunner: _aiTurnExecutionRunner,
-      precomputeRunner: _aiTurnPrecomputeRunner,
+      runScheduler: runScheduler,
+      precomputeCoordinator: precomputeCoordinator,
+      throttler: runtimeThrottler,
+      executionRunner: aiTurnExecutionRunner,
+      precomputeRunner: aiTurnPrecomputeRunner,
       schedulePostFrame: (callback) {
         WidgetsBinding.instance.addPostFrameCallback((_) => callback());
       },
-      canContinue: () => _canContinue,
-      notifyStateChanged: _notifyStateChanged,
-      interCommandDelay: () => widget.interCommandDelay,
-      now: _nowUtc,
+      canContinue: canContinue,
+      notifyStateChanged: notifyStateChanged,
+      interCommandDelay: interCommandDelayReader,
+      now: nowUtc,
     );
   }
 
-  AiRuntimeStrategyResolver _aiRuntimeStrategyResolver() {
+  AiRuntimeStrategyResolver aiRuntimeStrategyResolver() {
     return AiRuntimeStrategyResolver(
       logger: ref.read(gameLoggerProvider),
-      throttler: _runtimeThrottler,
+      throttler: runtimeThrottler,
       forceBatterySaver: () => ref.read(aiSettingsProvider).batterySaver,
     );
   }
 
-  DateTime _nowUtc() => ref.read(gameClockProvider).nowUtc();
+  DateTime nowUtc() => ref.read(gameClockProvider).nowUtc();
 }
