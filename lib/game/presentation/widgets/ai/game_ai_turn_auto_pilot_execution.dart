@@ -13,13 +13,12 @@ extension GameAiTurnAutoPilotExecution on GameAiTurnAutoPilotContext {
     return AiTurnExecutionRunner.fromPreparedProcess(
       logger: ref.read(gameLoggerProvider),
       throttler: runtimeThrottler,
-      prepareProcess:
-          ({required saveId, required playerId, scheduledTurn}) =>
-              prepareAiTurnProcess(
-                saveId: saveId,
-                playerId: playerId,
-                scheduledTurn: scheduledTurn,
-              ),
+      prepareProcess: ({required saveId, required playerId, scheduledTurn}) =>
+          prepareAiTurnProcess(
+            saveId: saveId,
+            playerId: playerId,
+            scheduledTurn: scheduledTurn,
+          ),
       invalidateSaveSnapshot: (saveId) =>
           ref.invalidate(gameSaveSnapshotProvider(saveId)),
       authorizeFollowUp:
