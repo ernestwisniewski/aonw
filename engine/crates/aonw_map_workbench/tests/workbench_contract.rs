@@ -4,11 +4,12 @@ use aonw_content::MapDocument;
 use aonw_map_authoring::TerrainAuthoringProfile;
 use aonw_map_workbench::{
     GeneratedMapPackage, MAP_WORKBENCH_API_VERSION, MapGenerationSpec, MapWorkbenchProtocol,
+    UpdatedTerrainProfile,
 };
 use serde_json::{Value, json};
 
 fn spec(seed: u64) -> MapGenerationSpec {
-    MapGenerationSpec::try_new("generated_world", 40, 30, 1.25, 100.0, seed)
+    MapGenerationSpec::try_new("generated_world", 40, 30, 1.25, 100.0, 240.0, seed)
         .expect("valid generation spec")
 }
 
@@ -27,6 +28,7 @@ fn blank_v1_is_deterministic_and_passes_authoritative_validators() {
     assert_eq!(map.map().cols(), 40);
     assert_eq!(map.map().rows(), 30);
     assert_eq!(map.map().tiles().len(), 1_200);
+    assert!((profile.max_terrain_height_meters() - 240.0).abs() <= f64::EPSILON);
     assert_eq!(
         map.map().content_hash().expect("map hash").to_string(),
         first.map_content_hash()
@@ -102,7 +104,54 @@ fn invalid_specs_are_rejected_before_generation() {
         "rows": 30,
         "defaultZoom": 1.0,
         "hexRadiusMeters": 100.0,
+        "maxTerrainHeightMeters": 240.0,
         "seed": "7",
     });
     assert!(MapGenerationSpec::from_json(invalid.to_string().as_bytes()).is_err());
+}
+
+#[test]
+fn terrain_height_reconfiguration_is_canonical_and_rust_owned() {
+    let generated = GeneratedMapPackage::generate(&spec(7)).expect("generated package");
+    let update = UpdatedTerrainProfile::reconfigure(
+        generated.map_document(),
+        generated.terrain_authoring_document(),
+        175.0,
+    )
+    .expect("profile update");
+    let map = MapDocument::from_json(generated.map_document().as_bytes()).expect("map");
+    let profile = TerrainAuthoringProfile::from_json(
+        update.terrain_authoring_document().as_bytes(),
+        map.map(),
+    )
+    .expect("updated profile");
+
+    assert!((update.max_terrain_height_meters() - 175.0).abs() <= f64::EPSILON);
+    assert!((profile.max_terrain_height_meters() - 175.0).abs() <= f64::EPSILON);
+    assert_eq!(
+        update.authoring_profile_hash(),
+        profile.authoring_profile_hash().expect("hash").to_string(),
+    );
+
+    let request = json!({
+        "apiVersion": MAP_WORKBENCH_API_VERSION,
+        "request": {
+            "type": "reconfigureTerrainHeight",
+            "mapDocument": generated.map_document(),
+            "terrainAuthoringDocument": generated.terrain_authoring_document(),
+            "maxTerrainHeightMeters": 175.0,
+        },
+    });
+    let response: Value =
+        serde_json::from_str(&MapWorkbenchProtocol::dispatch_json(&request.to_string()))
+            .expect("protocol response");
+    assert_eq!(response["outcome"]["status"], "success");
+    assert_eq!(
+        response["outcome"]["response"]["type"],
+        "terrainHeightReconfigured"
+    );
+    assert_eq!(
+        response["outcome"]["response"]["update"]["maxTerrainHeightMeters"],
+        175.0
+    );
 }

@@ -34,6 +34,10 @@ the server, and Godot. Final client-owned artwork is generated separately under
 runtime inputs. All shared maps must use the schema in
 `schemas/map-v1.schema.json`.
 
+Every map directory also owns a required `terrain_authoring.v1.json`. Its
+`maxTerrainHeightMeters` maps logical height `5` to a map-specific metric
+ceiling without changing gameplay rules or the logical map content hash.
+
 `content/scenarios/` contains strict starting placements bound to one map ID
 and one immutable ruleset ID. Rust validates both content identities before it
 bootstraps revision-zero `GameState`. Scenario v1 uses

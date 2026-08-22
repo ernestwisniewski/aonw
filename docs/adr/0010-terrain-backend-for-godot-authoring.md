@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-22
-- Implementation: Implemented in M1.9
+- Implementation: In progress
 
 ## Context
 
@@ -22,11 +22,22 @@ reference and grid points to edited heights.
 
 Terrain3D is the only terrain backend for the Godot client:
 
+```mermaid
+flowchart LR
+  LogicalMap["Rust logical map"] --> Compiler["Rust terrain compiler"]
+  Compiler --> Terrain3D["Terrain3D authoring"]
+  Terrain3D --> Draft["Mutable draft snapshot"]
+  Terrain3D --> Published["Immutable published snapshot"]
+```
+
 - the repository pins the official `v1.0.2-stable` release archive and its
   SHA-256; the downloaded addon remains outside Git;
 - `make bootstrap` installs the verified addon and the project keeps its plugin
   enabled; Godot editor, runtime, and test targets fail when it is absent or
   does not match the pin;
+- the desktop-only client uses Godot's Forward+ rendering method rather than
+  the macOS OpenGL compatibility shader path, and Terrain3D world-background is
+  disabled so only imported map regions are rendered;
 - imported maps will persist height and paint data as Terrain3D regions;
 - mutable working regions are copied into hash-addressed, verified snapshots;
   draft and published collections are separate, and only their small current
@@ -102,7 +113,7 @@ The installer moves an unverified or superseded local addon into ignored
 previous pin and checksum from Git and run `make bootstrap`; authored region
 resources must pass the previous-version smoke before the rollback ships.
 
-## Verification
+## Migration And Verification
 
 `make terrain3d-check` verifies the installed version, source archive checksum
 marker, required native extension and license, and that the plugin is enabled.

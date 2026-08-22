@@ -37,6 +37,7 @@ pub struct MapGenerationSpec {
     rows: u16,
     default_zoom: f64,
     hex_radius_meters: f64,
+    max_terrain_height_meters: f64,
     seed: u64,
 }
 
@@ -54,6 +55,7 @@ impl MapGenerationSpec {
         rows: u16,
         default_zoom: f64,
         hex_radius_meters: f64,
+        max_terrain_height_meters: f64,
         seed: u64,
     ) -> Result<Self, MapWorkbenchError> {
         let map_id = map_id.into();
@@ -82,12 +84,19 @@ impl MapGenerationSpec {
                 "must be finite and positive",
             ));
         }
+        if !max_terrain_height_meters.is_finite() || max_terrain_height_meters <= 0.0 {
+            return Err(MapWorkbenchError::invalid(
+                "$.maxTerrainHeightMeters",
+                "must be finite and positive",
+            ));
+        }
         Ok(Self {
             map_id,
             cols,
             rows,
             default_zoom,
             hex_radius_meters,
+            max_terrain_height_meters,
             seed,
         })
     }
@@ -130,6 +139,7 @@ impl MapGenerationSpec {
             raw.rows,
             raw.default_zoom,
             raw.hex_radius_meters,
+            raw.max_terrain_height_meters,
             seed,
         )
     }
@@ -157,6 +167,11 @@ impl MapGenerationSpec {
     #[must_use]
     pub const fn hex_radius_meters(&self) -> f64 {
         self.hex_radius_meters
+    }
+
+    #[must_use]
+    pub const fn max_terrain_height_meters(&self) -> f64 {
+        self.max_terrain_height_meters
     }
 
     #[must_use]
@@ -215,6 +230,7 @@ struct RawGenerationSpec {
     rows: u16,
     default_zoom: f64,
     hex_radius_meters: f64,
+    max_terrain_height_meters: f64,
     seed: Box<str>,
 }
 
@@ -229,6 +245,7 @@ pub(crate) struct PersistedGenerationSpec<'a> {
     rows: u16,
     default_zoom: f64,
     hex_radius_meters: f64,
+    max_terrain_height_meters: f64,
     seed: String,
 }
 
@@ -243,6 +260,7 @@ impl<'a> From<&'a MapGenerationSpec> for PersistedGenerationSpec<'a> {
             rows: spec.rows(),
             default_zoom: spec.default_zoom(),
             hex_radius_meters: spec.hex_radius_meters(),
+            max_terrain_height_meters: spec.max_terrain_height_meters(),
             seed: spec.seed().to_string(),
         }
     }

@@ -59,7 +59,9 @@ extension GameAiTurnAutoPilotRuntime on GameAiTurnAutoPilotContext {
       throttler: runtimeThrottler,
       // Keep extension calls inside closures. Passing extension method tear-offs
       // across post-frame, timer, or await boundaries traps optimized dart2wasm.
-      executionRunner: () => aiTurnExecutionRunner(),
+      executionRunner: () {
+        return aiTurnExecutionRunner();
+      },
       precomputeRunner: () => aiTurnPrecomputeRunner(),
       schedulePostFrame: (callback) {
         WidgetsBinding.instance.addPostFrameCallback((_) => callback());

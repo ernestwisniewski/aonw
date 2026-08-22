@@ -22,25 +22,14 @@ cleanup() {
 trap cleanup EXIT
 
 map_count=0
-generated_profile_count=0
 for map_path in "${content_root}"/*/map.json; do
   [[ -f "${map_path}" ]] || continue
   map_directory="$(dirname "${map_path}")"
   map_id="$(basename "${map_directory}")"
   profile_path="${map_directory}/terrain_authoring.v1.json"
   if [[ ! -f "${profile_path}" ]]; then
-    profile_path="${staging_root}/${map_id}/terrain_authoring.generated.v1.json"
-    cargo run \
-      --locked \
-      --quiet \
-      --manifest-path "${repo_root}/engine/Cargo.toml" \
-      -p aonw_map_compiler_cli \
-      --bin aonw-map-profile \
-      -- \
-      "${map_path}" \
-      "${profile_path}" \
-      10
-    generated_profile_count=$((generated_profile_count + 1))
+    echo "Missing required terrain profile: ${profile_path}" >&2
+    exit 1
   fi
   cargo run \
     --locked \
@@ -75,4 +64,4 @@ rm -rf -- "${previous_root}"
 previous_root=""
 trap - EXIT
 
-echo "Compiled Terrain3D authoring data for ${map_count} map(s); generated ${generated_profile_count} standard profile(s)."
+echo "Compiled Terrain3D authoring data for ${map_count} map(s)."

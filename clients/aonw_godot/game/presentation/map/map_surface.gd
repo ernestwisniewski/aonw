@@ -128,6 +128,9 @@ func _ensure_layers() -> void:
 		_terrain.name = "Terrain3D"
 		add_child(_terrain)
 	_terrain.free_editor_textures = false
+	if _terrain.material == null:
+		_terrain.material = Terrain3DMaterial.new()
+	_terrain.material.world_background = Terrain3DMaterial.WorldBackground.NONE
 	_reference = _mesh_node("ReferenceTexture")
 	_grid = _mesh_node("HexGrid")
 

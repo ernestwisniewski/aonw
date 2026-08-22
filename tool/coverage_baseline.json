@@ -90,8 +90,8 @@
             "found": 9
           },
           "lines": {
-            "hit": 621,
-            "found": 814
+            "hit": 600,
+            "found": 783
           }
         },
         "editor": {
@@ -100,8 +100,8 @@
             "found": 29
           },
           "lines": {
-            "hit": 1093,
-            "found": 1476
+            "hit": 1076,
+            "found": 1459
           }
         },
         "game_analysis": {
@@ -116,12 +116,12 @@
         },
         "game_application": {
           "files": {
-            "hit": 75,
-            "found": 77
+            "hit": 79,
+            "found": 81
           },
           "lines": {
-            "hit": 2674,
-            "found": 3005
+            "hit": 2717,
+            "found": 3052
           }
         },
         "game_domain": {
@@ -130,8 +130,8 @@
             "found": 50
           },
           "lines": {
-            "hit": 1913,
-            "found": 2113
+            "hit": 1914,
+            "found": 2112
           }
         },
         "game_infrastructure": {
@@ -146,42 +146,42 @@
         },
         "game_presentation_engine": {
           "files": {
-            "hit": 143,
-            "found": 147
+            "hit": 149,
+            "found": 152
           },
           "lines": {
-            "hit": 8708,
-            "found": 10788
+            "hit": 8767,
+            "found": 10782
           }
         },
         "game_presentation_screens": {
           "files": {
-            "hit": 73,
-            "found": 75
+            "hit": 74,
+            "found": 76
           },
           "lines": {
-            "hit": 3877,
-            "found": 4870
+            "hit": 3891,
+            "found": 4878
           }
         },
         "game_presentation_support": {
           "files": {
-            "hit": 101,
-            "found": 104
+            "hit": 106,
+            "found": 109
           },
           "lines": {
-            "hit": 4667,
-            "found": 5486
+            "hit": 4899,
+            "found": 5716
           }
         },
         "game_presentation_widgets": {
           "files": {
-            "hit": 384,
-            "found": 390
+            "hit": 392,
+            "found": 398
           },
           "lines": {
-            "hit": 21685,
-            "found": 24230
+            "hit": 21926,
+            "found": 24526
           }
         },
         "l10n": {
@@ -196,12 +196,12 @@
         },
         "map": {
           "files": {
-            "hit": 42,
-            "found": 42
+            "hit": 44,
+            "found": 45
           },
           "lines": {
-            "hit": 2104,
-            "found": 2503
+            "hit": 2158,
+            "found": 2611
           }
         },
         "menu": {
@@ -216,12 +216,12 @@
         },
         "shared": {
           "files": {
-            "hit": 47,
-            "found": 48
+            "hit": 48,
+            "found": 49
           },
           "lines": {
-            "hit": 1668,
-            "found": 1970
+            "hit": 1733,
+            "found": 2034
           }
         }
       },

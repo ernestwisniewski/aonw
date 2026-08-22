@@ -19,6 +19,7 @@ var world_origin_meters: Vector3
 var cols: int
 var rows: int
 var hex_radius_meters: float
+var max_terrain_height_meters: float
 var reference_translation_meters: Vector3
 var reference_rotation_degrees: Vector3
 var reference_scale: Vector3

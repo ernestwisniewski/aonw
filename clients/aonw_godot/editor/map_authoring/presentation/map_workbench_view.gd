@@ -6,6 +6,8 @@ var _map_picker := OptionButton.new()
 var _generate_button := Button.new()
 var _open_button := Button.new()
 var _refresh_button := Button.new()
+var _max_terrain_height := SpinBox.new()
+var _apply_max_terrain_height := Button.new()
 var _save_draft_button := Button.new()
 var _publish_button := Button.new()
 var _reload_base_button := Button.new()
@@ -47,6 +49,21 @@ func _build_interface() -> void:
 	add_child(source_actions)
 	_open_button.text = "Open saved scene"
 	add_child(_open_button)
+
+	add_child(_section_label("Map height scale"))
+	_max_terrain_height.min_value = 0.5
+	_max_terrain_height.max_value = 10000.0
+	_max_terrain_height.step = 0.5
+	_max_terrain_height.suffix = " m"
+	_max_terrain_height.tooltip_text = (
+		"Metric height assigned to logical level 5 for the selected map"
+	)
+	add_child(_labeled_control("Maximum Terrain3D height", _max_terrain_height))
+	_apply_max_terrain_height.text = "Apply height scale & recompile"
+	_apply_max_terrain_height.tooltip_text = (
+		"Rust rebuilds the map profile and recompiles Terrain3D constraints"
+	)
+	add_child(_apply_max_terrain_height)
 	add_child(HSeparator.new())
 
 	add_child(_section_label("Reference"))

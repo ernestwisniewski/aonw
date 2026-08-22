@@ -3,6 +3,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::Value;
@@ -40,7 +41,7 @@ fn cli_writes_reviewable_exr_r16_and_manifest_artifacts() {
     );
     assert_eq!(
         manifest["authoringProfileHash"],
-        "9c502d2cc8f83247be479e247c719c70019cdf223e67775ee82685732b991808",
+        "52d4f1631dcb506e8a05eee30f928a6d72aabb2f1f2a1d8daf1894295ded61a2",
     );
     let width = manifest["raster"]["width"]
         .as_u64()
@@ -69,6 +70,7 @@ fn cli_writes_reviewable_exr_r16_and_manifest_artifacts() {
     assert_eq!(manifest["authoring"]["cols"], 7);
     assert_eq!(manifest["authoring"]["rows"], 7);
     assert_eq!(manifest["authoring"]["hexRadiusMeters"], 10.0);
+    assert_eq!(manifest["authoring"]["maxTerrainHeightMeters"], 20.0);
     assert_eq!(manifest["authoring"]["cityCoreRadiusMeters"], 4.0);
 }
 
@@ -98,6 +100,7 @@ fn profile_cli_generates_a_deterministic_standard_profile() {
     let profile: Value = serde_json::from_slice(&first).expect("profile must decode");
     assert_eq!(profile["schemaVersion"], 1);
     assert_eq!(profile["hexRadiusMeters"], 10.0);
+    assert_eq!(profile["maxTerrainHeightMeters"], 20.0);
     assert_eq!(profile["hexHeights"].as_array().map(Vec::len), Some(49));
     assert_eq!(
         profile["sourceMapContentHash"],
@@ -107,6 +110,8 @@ fn profile_cli_generates_a_deterministic_standard_profile() {
 
 struct TemporaryDirectory(PathBuf);
 
+static NEXT_TEMPORARY_DIRECTORY: AtomicU64 = AtomicU64::new(0);
+
 impl TemporaryDirectory {
     fn new() -> Self {
         let nonce = SystemTime::now()
@@ -114,8 +119,9 @@ impl TemporaryDirectory {
             .expect("system clock must follow the epoch")
             .as_nanos();
         let path = std::env::temp_dir().join(format!(
-            "aonw-map-compiler-test-{}-{nonce}",
-            std::process::id()
+            "aonw-map-compiler-test-{}-{nonce}-{}",
+            std::process::id(),
+            NEXT_TEMPORARY_DIRECTORY.fetch_add(1, Ordering::Relaxed),
         ));
         fs::create_dir(&path).expect("unique temporary directory must be created");
         Self(path)

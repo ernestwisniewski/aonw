@@ -1,10 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{GeneratedMapPackage, MapGenerationSpec};
+use crate::{GeneratedMapPackage, MapGenerationSpec, UpdatedTerrainProfile};
 
 /// Current framework-neutral logical-map workbench protocol version.
 pub const MAP_WORKBENCH_API_VERSION: u16 = 1;
-const MAX_WORKBENCH_REQUEST_BYTES: usize = 128 * 1024;
+// One edit request can carry a maximum-sized canonical map plus its complete
+// per-hex terrain profile. Each nested codec still enforces its own limit.
+const MAX_WORKBENCH_REQUEST_BYTES: usize = 16 * 1024 * 1024;
 
 /// Strict dispatcher used by native authoring adapters.
 pub struct MapWorkbenchProtocol;
@@ -58,6 +60,23 @@ fn dispatch(request: WorkbenchRequest) -> WorkbenchResponse {
                 Err(error) => failure(error.code(), &error, error.path()),
             }
         }
+        WorkbenchRequestBody::ReconfigureTerrainHeight {
+            map_document,
+            terrain_authoring_document,
+            max_terrain_height_meters,
+        } => match UpdatedTerrainProfile::reconfigure(
+            &map_document,
+            &terrain_authoring_document,
+            max_terrain_height_meters,
+        ) {
+            Ok(update) => WorkbenchResponse {
+                api_version: MAP_WORKBENCH_API_VERSION,
+                outcome: WorkbenchOutcome::Success {
+                    response: WorkbenchResponseBody::TerrainHeightReconfigured { update },
+                },
+            },
+            Err(error) => failure(error.code(), &error, error.path()),
+        },
     }
 }
 
@@ -89,7 +108,14 @@ struct WorkbenchRequest {
     deny_unknown_fields
 )]
 enum WorkbenchRequestBody {
-    GenerateMap { spec_document: String },
+    GenerateMap {
+        spec_document: String,
+    },
+    ReconfigureTerrainHeight {
+        map_document: String,
+        terrain_authoring_document: String,
+        max_terrain_height_meters: f64,
+    },
 }
 
 #[derive(Serialize)]
@@ -118,6 +144,7 @@ enum WorkbenchOutcome {
 )]
 enum WorkbenchResponseBody {
     MapGenerated { package: GeneratedMapPackage },
+    TerrainHeightReconfigured { update: UpdatedTerrainProfile },
 }
 
 #[derive(Serialize)]

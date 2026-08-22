@@ -16,4 +16,4 @@ func execute(source: AonwMapSource) -> Dictionary:
 	var opened := _open_map.execute(source)
 	if not opened["ok"]:
 		return opened
-	return _scene_writer.prepare_scene(source.map_id, opened["reference_texture"])
+	return _scene_writer.prepare_scene(source.map_id)

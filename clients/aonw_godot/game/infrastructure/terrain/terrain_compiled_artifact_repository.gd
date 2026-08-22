@@ -54,8 +54,8 @@ func load_artifact(directory: String, expected_map_id: String = "") -> Dictionar
 		if not raster.has(field):
 			return _failure("compiled terrain raster is missing %s" % field)
 	for field in [
-		"cols", "rows", "hexRadiusMeters", "worldOriginMeters", "referenceTransform",
-		"cityCoreRadiusMeters", "maxCitySlope",
+		"cols", "rows", "hexRadiusMeters", "maxTerrainHeightMeters",
+		"worldOriginMeters", "referenceTransform", "cityCoreRadiusMeters", "maxCitySlope",
 	]:
 		if not authoring.has(field):
 			return _failure("compiled terrain authoring metadata is missing %s" % field)
@@ -84,6 +84,9 @@ func load_artifact(directory: String, expected_map_id: String = "") -> Dictionar
 	)
 	if not max_city_slope_result["ok"]:
 		return max_city_slope_result
+	var max_terrain_height := float(authoring["maxTerrainHeightMeters"])
+	if not is_finite(max_terrain_height) or max_terrain_height <= 0.0:
+		return _failure("maxTerrainHeightMeters must be finite and positive")
 
 	var artifact := Artifact.new()
 	artifact.directory = directory
@@ -100,6 +103,7 @@ func load_artifact(directory: String, expected_map_id: String = "") -> Dictionar
 	artifact.cols = int(authoring["cols"])
 	artifact.rows = int(authoring["rows"])
 	artifact.hex_radius_meters = float(authoring["hexRadiusMeters"])
+	artifact.max_terrain_height_meters = max_terrain_height
 	artifact.reference_translation_meters = reference_result["translation"]
 	artifact.reference_rotation_degrees = reference_result["rotation"]
 	artifact.reference_scale = reference_result["scale"]

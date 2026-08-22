@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-22
+- Implementation: In progress
 
 ## Context
 
@@ -19,6 +20,15 @@ Rust remains the sole owner of logical map construction, editing, validation,
 canonical JSON and `contentHash`. Logical map authoring uses a dedicated
 framework-neutral workbench protocol rather than the gameplay session
 protocol.
+
+```mermaid
+flowchart LR
+  Workbench["Godot Map Workbench"] --> Commands["Rust workbench commands"]
+  Commands --> LogicalMap["Canonical logical map"]
+  Commands --> TerrainProfile["Terrain authoring profile"]
+  Commands --> Decorations["Generated decoration plan"]
+  TerrainProfile --> Terrain3D["Terrain3D authoring"]
+```
 
 The first slice provides `blankV1`. A strict `MapGenerationSpec` contains the
 map identifier, odd-q dimensions, default zoom, metric hex radius, seed,
@@ -62,7 +72,7 @@ A seed participates in generation provenance even when `blankV1` produces the
 same empty logical map for different seeds. Procedural generator versions may
 use it while retaining deterministic replayability and explicit migrations.
 
-## Verification
+## Migration And Verification
 
 - Two executions of the same spec are byte-for-byte identical.
 - Generated map and terrain documents pass their authoritative Rust decoders.
@@ -77,3 +87,9 @@ use it while retaining deterministic replayability and explicit migrations.
 - [ADR 0010: Terrain backend for Godot authoring](0010-terrain-backend-for-godot-authoring.md)
 - [Successor refactor plan](../../.codex/aonw-successor-refactor-plan.md)
 - [Godot Map Workbench](../../clients/aonw_godot/README.md)
+
+## Rejected Alternatives
+
+- Implementing canonical map editing and validation in GDScript.
+- Storing generated trees, rocks, and details as unversioned Godot scene state.
+- Letting procedural regeneration replace manually authored Terrain3D data.

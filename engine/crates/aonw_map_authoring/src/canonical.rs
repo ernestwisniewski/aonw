@@ -48,7 +48,7 @@ impl TerrainAuthoringProfile {
 impl Serialize for CanonicalProfile<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let profile = self.0;
-        let mut value = serializer.serialize_struct("TerrainAuthoringProfile", 10)?;
+        let mut value = serializer.serialize_struct("TerrainAuthoringProfile", 11)?;
         value.serialize_field("schemaVersion", &CURRENT_TERRAIN_AUTHORING_SCHEMA_VERSION)?;
         value.serialize_field(
             "sourceMapContentHash",
@@ -56,6 +56,10 @@ impl Serialize for CanonicalProfile<'_> {
         )?;
         value.serialize_field("orientation", &profile.orientation())?;
         value.serialize_field("hexRadiusMeters", &profile.hex_radius_meters())?;
+        value.serialize_field(
+            "maxTerrainHeightMeters",
+            &profile.max_terrain_height_meters(),
+        )?;
         value.serialize_field(
             "worldOriginMeters",
             &CanonicalVector3(profile.world_origin_meters()),

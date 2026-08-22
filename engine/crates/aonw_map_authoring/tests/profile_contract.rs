@@ -41,6 +41,43 @@ fn decode(
 }
 
 #[test]
+fn every_shared_map_defines_its_own_metric_height_ceiling() {
+    let expected = [
+        ("aonw2_starter", 20.0),
+        ("dravonia", 18.5),
+        ("myranth", 29.5),
+        ("terenos", 16.0),
+        ("verdantia", 20.0),
+    ];
+
+    for (map_id, expected_maximum) in expected {
+        let directory = repository_root().join("content/maps").join(map_id);
+        let map = MapDocument::from_json(
+            &fs::read(directory.join("map.json")).expect("map must be readable"),
+        )
+        .expect("map must validate");
+        let profile = TerrainAuthoringProfile::from_json(
+            &fs::read(directory.join("terrain_authoring.v1.json"))
+                .expect("every map must define terrain authoring"),
+            map.map(),
+        )
+        .expect("terrain authoring profile must validate");
+
+        assert!((profile.max_terrain_height_meters() - expected_maximum).abs() <= f64::EPSILON);
+        assert!(
+            profile.hex_heights().iter().all(|height| {
+                height.max_height_meters() <= profile.max_terrain_height_meters()
+            })
+        );
+        for (tile, height) in map.map().tiles().iter().zip(profile.hex_heights()) {
+            if tile.height() == 5 {
+                assert!((height.base_height_meters() - expected_maximum).abs() <= f64::EPSILON);
+            }
+        }
+    }
+}
+
+#[test]
 fn starter_profile_is_bound_to_logical_content_but_has_its_own_identity() {
     let map = starter_map();
     let map_hash = map.map().content_hash().expect("map must hash");
@@ -50,6 +87,7 @@ fn starter_profile_is_bound_to_logical_content_but_has_its_own_identity() {
     assert_eq!(profile.source_map_content_hash(), map_hash);
     assert_eq!(profile.orientation(), GridLayout::OddQFlatTop);
     assert!((profile.hex_radius_meters() - 10.0).abs() <= f64::EPSILON);
+    assert!((profile.max_terrain_height_meters() - 20.0).abs() <= f64::EPSILON);
     assert_eq!(profile.hex_heights().len(), 49);
     assert!(profile.hex_heights()[0].contains_final_height(1.5));
     assert!(!profile.hex_heights()[0].contains_final_height(5.0));
@@ -58,7 +96,7 @@ fn starter_profile_is_bound_to_logical_content_but_has_its_own_identity() {
             .authoring_profile_hash()
             .expect("profile must hash")
             .to_string(),
-        "9c502d2cc8f83247be479e247c719c70019cdf223e67775ee82685732b991808",
+        "52d4f1631dcb506e8a05eee30f928a6d72aabb2f1f2a1d8daf1894295ded61a2",
         "approved starter authoring profile hash",
     );
     assert_eq!(
@@ -115,6 +153,26 @@ fn profile_round_trip_and_hash_are_deterministic() {
             .canonical_bytes()
             .expect("source profile must serialize")
     );
+}
+
+#[test]
+fn metric_height_ceiling_is_rebuilt_from_logical_heights() {
+    let map = starter_map();
+    let profile = TerrainAuthoringProfile::from_json(&starter_profile_source(), map.map())
+        .expect("starter profile must validate");
+    let updated = profile
+        .with_max_terrain_height_meters(map.map(), 35.0)
+        .expect("metric height scale must update");
+
+    assert!((updated.max_terrain_height_meters() - 35.0).abs() <= f64::EPSILON);
+    assert!((updated.hex_radius_meters() - profile.hex_radius_meters()).abs() <= f64::EPSILON);
+    assert_eq!(updated.world_origin_meters(), profile.world_origin_meters());
+    assert_eq!(updated.reference_transform(), profile.reference_transform());
+    for (tile, envelope) in map.map().tiles().iter().zip(updated.hex_heights()) {
+        let expected_base = f64::from(tile.height()) * 7.0;
+        assert!((envelope.base_height_meters() - expected_base).abs() <= f64::EPSILON);
+        assert!(envelope.max_height_meters() <= 35.0);
+    }
 }
 
 #[test]
@@ -177,6 +235,14 @@ fn non_finite_and_invalid_metric_values_are_rejected() {
     let mut oversized_blend = starter_profile_value();
     oversized_blend["edgeBlendMeters"] = json!(11.0);
     assert!(decode(&oversized_blend, &map).is_err());
+
+    let mut invalid_maximum = starter_profile_value();
+    invalid_maximum["maxTerrainHeightMeters"] = json!(0.0);
+    assert!(decode(&invalid_maximum, &map).is_err());
+
+    let mut envelope_above_maximum = starter_profile_value();
+    envelope_above_maximum["maxTerrainHeightMeters"] = json!(3.0);
+    assert!(decode(&envelope_above_maximum, &map).is_err());
 
     for invalid_number in ["NaN", "1e400", "-1e400"] {
         let source = String::from_utf8(starter_profile_source())

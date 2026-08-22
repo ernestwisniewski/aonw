@@ -10,6 +10,7 @@ const TerrainSpaceTransform := preload(
 const REFERENCE_OFFSET := 0.012
 const GRID_OFFSET := 0.035
 const CONSTRAINT_OFFSET := 0.06
+const MINIMUM_GRID_WIDTH_RATIO := 0.035
 
 func reference_mesh(
 	artifact: AonwTerrainCompiledArtifact,
@@ -114,6 +115,7 @@ func grid_mesh(
 	var vertices := PackedVector3Array()
 	var indices := PackedInt32Array()
 	var edges := {}
+	var visible_width := maxf(width, artifact.hex_radius_meters * MINIMUM_GRID_WIDTH_RATIO)
 	for row in artifact.rows:
 		for col in artifact.cols:
 			var coordinate := Vector2i(col, row)
@@ -136,9 +138,9 @@ func grid_mesh(
 					geometry.corner_position(coordinate, (corner + 1) % 6),
 					GRID_OFFSET,
 				)
-				_append_segment(vertices, indices, first, second, width)
+				_append_segment(vertices, indices, first, second, visible_width)
 	var mesh := _mesh(vertices, PackedVector2Array(), indices)
-	mesh.surface_set_material(0, _material(Color(0.025, 0.035, 0.055, opacity)))
+	mesh.surface_set_material(0, _material(Color(0.0, 0.0, 0.0, opacity)))
 	return mesh
 
 func refresh_grid_heights(
@@ -258,7 +260,8 @@ func _terrain_point(
 	vertical_offset: float,
 ) -> Vector3:
 	var local := space.logical_to_terrain_local(logical_point)
-	local.y = data.get_height(local) + vertical_offset
+	var terrain_height := data.get_height(local)
+	local.y = (terrain_height if is_finite(terrain_height) else 0.0) + vertical_offset
 	return local
 
 func _append_segment(

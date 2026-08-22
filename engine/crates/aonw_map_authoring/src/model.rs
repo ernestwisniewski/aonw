@@ -202,6 +202,7 @@ pub struct TerrainAuthoringProfile {
     cols: u16,
     rows: u16,
     hex_radius_meters: f64,
+    max_terrain_height_meters: f64,
     world_origin_meters: AuthoringVector3,
     reference_transform: ReferenceTransform,
     edge_blend_meters: f64,
@@ -215,8 +216,8 @@ impl TerrainAuthoringProfile {
     /// Builds the standard metric profile used for a newly authored logical map.
     ///
     /// Logical height remains in the gameplay range `0..=5`. The metric base
-    /// and sculpting envelope are derived proportionally from the selected hex
-    /// radius and therefore remain separate presentation-authoring data.
+    /// maps that range to the map-specific maximum terrain height, while the
+    /// sculpting envelope remains separate presentation-authoring data.
     ///
     /// # Errors
     ///
@@ -225,33 +226,19 @@ impl TerrainAuthoringProfile {
     pub fn standard_v1(
         map: &MapDefinition,
         hex_radius_meters: f64,
+        max_terrain_height_meters: f64,
     ) -> Result<Self, TerrainAuthoringLoadError> {
+        validate_positive("$.maxTerrainHeightMeters", max_terrain_height_meters)?;
         let source_map_content_hash = map
             .content_hash()
             .map_err(TerrainAuthoringLoadError::MapHash)?;
-        let height_step = hex_radius_meters * 0.4;
-        let lower_margin = hex_radius_meters * 0.2;
-        let upper_margin = hex_radius_meters * 0.4;
-        let hex_heights = map
-            .tiles()
-            .iter()
-            .enumerate()
-            .map(|(index, tile)| {
-                let base = f64::from(tile.height()) * height_step;
-                TerrainHeightEnvelope::try_new(
-                    &format!("$.hexHeights[{index}]"),
-                    tile.coordinate(),
-                    base,
-                    base - lower_margin,
-                    base + upper_margin,
-                )
-            })
-            .collect::<Result<Vec<_>, _>>()?;
+        let hex_heights = standard_height_envelopes(map, max_terrain_height_meters)?;
         Self::try_new(
             map,
             source_map_content_hash,
             ProfileComponents {
                 hex_radius_meters,
+                max_terrain_height_meters,
                 world_origin_meters: AuthoringVector3::new(0.0, 0.0, 0.0),
                 reference_transform: ReferenceTransform::new(
                     AuthoringVector3::new(0.0, hex_radius_meters * 0.005, 0.0),
@@ -262,6 +249,39 @@ impl TerrainAuthoringProfile {
                 city_core_radius_meters: Some(hex_radius_meters * 0.4),
                 max_city_slope: Some(0.35),
                 hex_heights,
+            },
+        )
+    }
+
+    /// Returns the same spatial authoring profile with its logical `0..=5`
+    /// height scale rebuilt for a new map-specific metric maximum.
+    ///
+    /// Reference alignment, world origin, sampling scale, edge blending, and
+    /// city metadata are preserved. Height envelopes remain derived from the
+    /// authoritative logical map instead of being rescaled by a client.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TerrainAuthoringLoadError`] when the maximum is invalid or
+    /// this profile does not belong to the supplied logical map.
+    pub fn with_max_terrain_height_meters(
+        &self,
+        map: &MapDefinition,
+        max_terrain_height_meters: f64,
+    ) -> Result<Self, TerrainAuthoringLoadError> {
+        validate_positive("$.maxTerrainHeightMeters", max_terrain_height_meters)?;
+        Self::try_new(
+            map,
+            self.source_map_content_hash,
+            ProfileComponents {
+                hex_radius_meters: self.hex_radius_meters,
+                max_terrain_height_meters,
+                world_origin_meters: self.world_origin_meters,
+                reference_transform: self.reference_transform,
+                edge_blend_meters: self.edge_blend_meters,
+                city_core_radius_meters: self.city_core_radius_meters,
+                max_city_slope: self.max_city_slope,
+                hex_heights: standard_height_envelopes(map, max_terrain_height_meters)?,
             },
         )
     }
@@ -289,6 +309,11 @@ impl TerrainAuthoringProfile {
     #[must_use]
     pub const fn hex_radius_meters(&self) -> f64 {
         self.hex_radius_meters
+    }
+
+    #[must_use]
+    pub const fn max_terrain_height_meters(&self) -> f64 {
+        self.max_terrain_height_meters
     }
 
     #[must_use]
@@ -327,6 +352,7 @@ impl TerrainAuthoringProfile {
         raw: ProfileComponents,
     ) -> Result<Self, TerrainAuthoringLoadError> {
         validate_positive("$.hexRadiusMeters", raw.hex_radius_meters)?;
+        validate_positive("$.maxTerrainHeightMeters", raw.max_terrain_height_meters)?;
         raw.world_origin_meters
             .validate_finite("$.worldOriginMeters")?;
         raw.reference_transform.validate()?;
@@ -375,6 +401,14 @@ impl TerrainAuthoringProfile {
                 ));
             }
         }
+        for (index, height) in hex_heights.iter().enumerate() {
+            if height.max_height_meters > raw.max_terrain_height_meters {
+                return Err(TerrainAuthoringLoadError::invalid(
+                    format!("$.hexHeights[{index}].maxHeightMeters"),
+                    "must not exceed maxTerrainHeightMeters",
+                ));
+            }
+        }
 
         Ok(Self {
             source_map_content_hash,
@@ -382,6 +416,7 @@ impl TerrainAuthoringProfile {
             cols: map.cols(),
             rows: map.rows(),
             hex_radius_meters: raw.hex_radius_meters,
+            max_terrain_height_meters: raw.max_terrain_height_meters,
             world_origin_meters: raw.world_origin_meters,
             reference_transform: raw.reference_transform,
             edge_blend_meters: raw.edge_blend_meters,
@@ -392,8 +427,32 @@ impl TerrainAuthoringProfile {
     }
 }
 
+fn standard_height_envelopes(
+    map: &MapDefinition,
+    max_terrain_height_meters: f64,
+) -> Result<Vec<TerrainHeightEnvelope>, TerrainAuthoringLoadError> {
+    let height_step = max_terrain_height_meters / 5.0;
+    let lower_margin = height_step * 0.5;
+    let upper_margin = height_step;
+    map.tiles()
+        .iter()
+        .enumerate()
+        .map(|(index, tile)| {
+            let base = f64::from(tile.height()) * height_step;
+            TerrainHeightEnvelope::try_new(
+                &format!("$.hexHeights[{index}]"),
+                tile.coordinate(),
+                base,
+                base - lower_margin,
+                (base + upper_margin).min(max_terrain_height_meters),
+            )
+        })
+        .collect()
+}
+
 pub(crate) struct ProfileComponents {
     pub(crate) hex_radius_meters: f64,
+    pub(crate) max_terrain_height_meters: f64,
     pub(crate) world_origin_meters: AuthoringVector3,
     pub(crate) reference_transform: ReferenceTransform,
     pub(crate) edge_blend_meters: f64,

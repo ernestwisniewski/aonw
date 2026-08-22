@@ -65,5 +65,13 @@ if ! grep -Fq '"res://addons/terrain_3d/plugin.cfg"' "${project_file}"; then
   echo "Terrain3D must be enabled in ${project_file}." >&2
   exit 1
 fi
+if ! grep -Fq 'config/features=PackedStringArray("4.7", "Forward Plus")' "${project_file}"; then
+  echo "Desktop Terrain3D authoring must use Forward+ instead of macOS OpenGL compatibility." >&2
+  exit 1
+fi
+if grep -Fq 'gl_compatibility' "${project_file}"; then
+  echo "Terrain3D project must not enable the crash-prone macOS OpenGL compatibility path." >&2
+  exit 1
+fi
 
 echo "Terrain3D dependency OK: ${pinned_version}."

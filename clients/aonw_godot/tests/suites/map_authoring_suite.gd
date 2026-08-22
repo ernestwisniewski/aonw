@@ -70,6 +70,11 @@ func _test_terrain3d_runtime_surface() -> void:
 	surface.present(result["map"], result["terrain_artifact"], result["reference_texture"])
 	_check(surface.terrain() is Terrain3D, "runtime terrain backend is Terrain3D")
 	_check(
+		surface.terrain().material.world_background
+		== Terrain3DMaterial.WorldBackground.NONE,
+		"runtime renders no Terrain3D world background outside the map",
+	)
+	_check(
 		surface.terrain().data.get_region_count() > 0,
 		"compiled base raster is imported into Terrain3D",
 	)

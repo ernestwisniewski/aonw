@@ -18,7 +18,7 @@ const OverlayBuilder := preload(
 @export_range(0.0, 1.0, 0.01) var reference_opacity := 0.65
 @export var grid_visible := true
 @export_range(0.0, 1.0, 0.01) var grid_opacity := 0.72
-@export_range(0.01, 1.0, 0.01) var grid_width := 0.12
+@export_range(0.01, 2.0, 0.01) var grid_width := 0.35
 @export var constraints_visible := false
 @export var city_marker_visible := true
 @export var city_marker_coordinate := Vector2i(-1, -1)
@@ -57,8 +57,7 @@ func configure(
 func assign_generated_owners(scene_owner: Node) -> void:
 	_ensure_nodes()
 	for child in [
-		_terrain, _reference, _grid, _minimum_debug, _maximum_debug, _city_marker,
-		_generated_world, _manual_world,
+		_terrain, _reference, _grid, _city_marker, _generated_world, _manual_world,
 	]:
 		child.owner = scene_owner
 
@@ -133,8 +132,10 @@ func set_constraints_visible(value: bool) -> void:
 	_ensure_nodes()
 	if value:
 		_ensure_constraint_meshes()
-	_minimum_debug.visible = value
-	_maximum_debug.visible = value
+	if _minimum_debug != null:
+		_minimum_debug.visible = value
+	if _maximum_debug != null:
+		_maximum_debug.visible = value
 
 func set_city_marker_visible(value: bool) -> void:
 	city_marker_visible = value
@@ -215,8 +216,10 @@ func refresh_overlays() -> void:
 		grid_width,
 		grid_opacity,
 	)
-	_minimum_debug.mesh = null
-	_maximum_debug.mesh = null
+	if _minimum_debug != null:
+		_minimum_debug.mesh = null
+	if _maximum_debug != null:
+		_maximum_debug.mesh = null
 	if constraints_visible:
 		_ensure_constraint_meshes()
 	_refresh_city_marker()
@@ -231,14 +234,15 @@ func _ensure_nodes() -> void:
 	_terrain.free_editor_textures = false
 	if terrain_material == null:
 		terrain_material = Terrain3DMaterial.new()
+	terrain_material.world_background = Terrain3DMaterial.WorldBackground.NONE
 	if terrain_assets == null:
 		terrain_assets = Terrain3DAssets.new()
 	_terrain.material = terrain_material
 	_terrain.assets = terrain_assets
 	_reference = _mesh_node("ReferenceTexture")
 	_grid = _mesh_node("HexGrid")
-	_minimum_debug = _mesh_node("MinimumHeightDebug")
-	_maximum_debug = _mesh_node("MaximumHeightDebug")
+	_minimum_debug = _existing_constraint_node("MinimumHeightDebug")
+	_maximum_debug = _existing_constraint_node("MaximumHeightDebug")
 	_city_marker = _mesh_node("CityCoreMarker")
 	_generated_world = _world_node("GeneratedWorld")
 	_manual_world = _world_node("ManualWorld")
@@ -251,6 +255,14 @@ func _mesh_node(node_name: StringName) -> MeshInstance3D:
 		node.name = node_name
 		add_child(node)
 	return node
+
+func _existing_constraint_node(node_name: StringName) -> MeshInstance3D:
+	var node := get_node_or_null(NodePath(node_name)) as MeshInstance3D
+	if node == null or node.mesh != null:
+		return node
+	remove_child(node)
+	node.free()
+	return null
 
 func _world_node(node_name: StringName) -> Node3D:
 	var node := get_node_or_null(NodePath(node_name)) as Node3D
@@ -283,6 +295,10 @@ func _refresh_city_marker() -> void:
 func _ensure_constraint_meshes() -> void:
 	if _artifact == null:
 		return
+	if _minimum_debug == null:
+		_minimum_debug = _mesh_node("MinimumHeightDebug")
+	if _maximum_debug == null:
+		_maximum_debug = _mesh_node("MaximumHeightDebug")
 	if _minimum_debug.mesh == null:
 		_minimum_debug.mesh = _overlay_builder.constraint_mesh(
 			_artifact,

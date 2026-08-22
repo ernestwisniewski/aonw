@@ -1,4 +1,4 @@
-use aonw_content::MapValidationError;
+use aonw_content::{MapLoadError, MapValidationError};
 use aonw_map_authoring::TerrainAuthoringLoadError;
 
 /// Failure produced while validating or generating workbench documents.
@@ -27,6 +27,8 @@ pub enum MapWorkbenchError {
         /// Stable diagnostic description.
         message: Box<str>,
     },
+    /// An existing logical map document could not be loaded for editing.
+    SourceMap(MapLoadError),
     /// Generated logical content failed its canonical domain validation.
     Map(MapValidationError),
     /// The generated metric authoring profile is invalid.
@@ -48,6 +50,7 @@ impl MapWorkbenchError {
             Self::Json(_) | Self::InvalidSpec { .. } => "invalid_generation_spec",
             Self::UnsupportedSchemaVersion { .. } => "unsupported_generation_schema",
             Self::UnsupportedGenerator { .. } => "unsupported_map_generator",
+            Self::SourceMap(_) => "source_map_invalid",
             Self::Map(_) => "generated_map_invalid",
             Self::TerrainAuthoring(_) => "generated_terrain_profile_invalid",
         }
@@ -58,6 +61,7 @@ impl MapWorkbenchError {
     pub fn path(&self) -> Option<&str> {
         match self {
             Self::InvalidSpec { path, .. } => Some(path),
+            Self::SourceMap(error) => error.path(),
             Self::Map(error) => Some(error.path()),
             Self::TerrainAuthoring(error) => error.path(),
             _ => None,
@@ -81,6 +85,7 @@ impl core::fmt::Display for MapWorkbenchError {
                 "unsupported map generator {generator_id} version {generator_version}"
             ),
             Self::InvalidSpec { path, message } => write!(formatter, "{path}: {message}"),
+            Self::SourceMap(source) => write!(formatter, "source map is invalid: {source}"),
             Self::Map(source) => write!(formatter, "generated map is invalid: {source}"),
             Self::TerrainAuthoring(source) => {
                 write!(formatter, "generated terrain profile is invalid: {source}")
@@ -93,6 +98,7 @@ impl std::error::Error for MapWorkbenchError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Json(source) => Some(source),
+            Self::SourceMap(source) => Some(source),
             Self::Map(source) => Some(source),
             Self::TerrainAuthoring(source) => Some(source),
             _ => None,
@@ -109,6 +115,12 @@ impl From<serde_json::Error> for MapWorkbenchError {
 impl From<MapValidationError> for MapWorkbenchError {
     fn from(source: MapValidationError) -> Self {
         Self::Map(source)
+    }
+}
+
+impl From<MapLoadError> for MapWorkbenchError {
+    fn from(source: MapLoadError) -> Self {
+        Self::SourceMap(source)
     }
 }
 

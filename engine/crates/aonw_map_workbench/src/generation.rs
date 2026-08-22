@@ -39,7 +39,11 @@ impl GeneratedMapPackage {
     pub fn generate(spec: &MapGenerationSpec) -> Result<Self, MapWorkbenchError> {
         let map_document = blank_map(spec)?;
         let map = map_document.map();
-        let terrain_profile = TerrainAuthoringProfile::standard_v1(map, spec.hex_radius_meters())?;
+        let terrain_profile = TerrainAuthoringProfile::standard_v1(
+            map,
+            spec.hex_radius_meters(),
+            spec.max_terrain_height_meters(),
+        )?;
         let map_content_hash = map.content_hash()?.to_string();
         let authoring_profile_hash = terrain_profile.authoring_profile_hash()?.to_string();
         let generation_spec_hash = spec.spec_hash()?.to_string();

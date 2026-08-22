@@ -103,6 +103,7 @@ func _test_logical_map_workbench_boundary() -> void:
 		"rows": 5,
 		"defaultZoom": 1.0,
 		"hexRadiusMeters": 100.0,
+		"maxTerrainHeightMeters": 240.0,
 		"seed": "42",
 	})
 	var first := workbench.generate_map(spec)
@@ -125,6 +126,21 @@ func _test_logical_map_workbench_boundary() -> void:
 		and decorations.get("placements", [null]).is_empty(),
 		"Rust owns canonical map, terrain profile and generated-decoration documents",
 	)
+	var update := workbench.reconfigure_terrain_height(
+		first["package"]["mapDocument"],
+		first["package"]["terrainAuthoringDocument"],
+		180.0,
+	)
+	_check(update["ok"], "Godot requests map height-scale changes through Rust")
+	if update["ok"]:
+		var updated_profile: Dictionary = JSON.parse_string(
+			update["update"]["terrainAuthoringDocument"]
+		)
+		_check(
+			updated_profile.get("maxTerrainHeightMeters") == 180.0
+			and updated_profile.get("hexRadiusMeters") == 100.0,
+			"Rust rebuilds height envelopes and preserves the map spatial scale",
+		)
 	var invalid: Dictionary = JSON.parse_string(spec)
 	invalid["cols"] = 4
 	_check(

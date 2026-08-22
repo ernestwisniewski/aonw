@@ -20,9 +20,6 @@ func _init(root: String) -> void:
 	_root = root
 	_snapshots = SnapshotStore.new(root)
 
-func reference_texture_path() -> String:
-	return _root.path_join("reference_texture.res")
-
 func load_revision(expected_identity: AonwTerrainArtifactIdentity) -> Dictionary:
 	if not FileAccess.file_exists(_snapshots.pointer_path(DRAFT_POINTER_FILE)):
 		return _load_empty_revision()
@@ -46,12 +43,6 @@ func load_revision(expected_identity: AonwTerrainArtifactIdentity) -> Dictionary
 		"revision": int(pointer["terrainRevision"]),
 		"data_directory": workspace["data_directory"],
 	}
-
-func save_reference_texture(texture: Texture2D) -> Error:
-	var error := DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(_root))
-	if error != OK:
-		return error
-	return ResourceSaver.save(texture, reference_texture_path(), ResourceSaver.FLAG_COMPRESS)
 
 func save_draft(
 	data: Terrain3DData,

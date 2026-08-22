@@ -33,21 +33,22 @@ func run(failures: Array[String]) -> void:
 	_camera = Camera3D.new()
 	_camera.position = Vector3(40.0, 100.0, 40.0)
 	Engine.get_main_loop().root.add_child(_camera)
-	_test_legacy_scene_upgrade()
+	_test_authoring_scene_is_isolated_from_runtime_preview()
 	var generation := _generate_scene()
 	_check(generation["ok"], "Terrain3D authoring scene is generated")
 	if generation["ok"]:
 		await _test_authoring_session(generation["scene_path"])
 	_camera.free()
 
-func _test_legacy_scene_upgrade() -> void:
-	var legacy_root := _test_root.path_join("legacy_scenes")
-	var legacy_composition := CompositionRoot.new(
-		legacy_root,
-		_test_root.path_join("legacy_assets"),
+func _test_authoring_scene_is_isolated_from_runtime_preview() -> void:
+	var runtime_root := _test_root.path_join("runtime_scenes")
+	var authoring_root := _test_root.path_join("isolated_authoring_scenes")
+	var isolated_composition := CompositionRoot.new(
+		authoring_root,
+		_test_root.path_join("isolated_assets"),
 		"res://.godot/terrain_compiled",
 	)
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(legacy_root))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(runtime_root))
 	var root := Node3D.new()
 	root.name = "aonw2_starter"
 	var preview := Node3D.new()
@@ -59,37 +60,50 @@ func _test_legacy_scene_upgrade() -> void:
 	if error == OK:
 		error = ResourceSaver.save(
 			legacy_scene,
-			legacy_root.path_join("aonw2_starter.tscn"),
+			runtime_root.path_join("aonw2_starter.tscn"),
 		)
 	root.free()
-	_check(error == OK, "legacy map scene fixture can be saved")
+	_check(error == OK, "runtime preview scene fixture can be saved")
 	if error != OK:
 		return
-	var result := legacy_composition.generator().execute(_starter_source())
+	var result := isolated_composition.generator().execute(_starter_source())
 	_check(
-		result["ok"] and result.get("scene_upgraded", false),
-		"legacy preview scene is upgraded for Terrain3D authoring",
+		result["ok"] and result["scene_path"].begins_with(authoring_root),
+		"Terrain3D authoring uses a dedicated scene directory",
 	)
 	if not result["ok"]:
 		return
-	var upgraded := ResourceLoader.load(
+	var authored := ResourceLoader.load(
 		result["scene_path"],
 		"PackedScene",
 		ResourceLoader.CACHE_MODE_REPLACE_DEEP,
 	) as PackedScene
-	_check(upgraded != null, "upgraded Terrain3D authoring scene can be loaded")
-	if upgraded == null:
+	_check(authored != null, "isolated Terrain3D authoring scene can be loaded")
+	if authored == null:
 		return
-	var upgraded_root := upgraded.instantiate()
+	var authored_root := authored.instantiate()
 	_check(
-		upgraded_root.get_node_or_null("AonwMap3D") != null,
-		"legacy preview content is preserved during the authoring upgrade",
+		authored_root.find_child("AonwMap3D", true, false) == null,
+		"Terrain3D authoring scene contains no runtime preview artifacts",
 	)
 	_check(
-		upgraded_root.find_child("TerrainAuthoring", true, false) != null,
-		"Terrain3D authoring surface is added during the legacy scene upgrade",
+		authored_root.find_child("TerrainAuthoring", true, false) != null,
+		"isolated scene contains the Terrain3D authoring surface",
 	)
-	upgraded_root.free()
+	authored_root.free()
+	var runtime_scene := ResourceLoader.load(
+		runtime_root.path_join("aonw2_starter.tscn"),
+		"PackedScene",
+		ResourceLoader.CACHE_MODE_REPLACE_DEEP,
+	) as PackedScene
+	_check(runtime_scene != null, "runtime preview scene remains readable")
+	if runtime_scene != null:
+		var runtime_root_node := runtime_scene.instantiate()
+		_check(
+			runtime_root_node.get_node_or_null("AonwMap3D") != null,
+			"runtime preview scene remains unchanged",
+		)
+		runtime_root_node.free()
 
 func _generate_scene() -> Dictionary:
 	var source := _starter_source()
@@ -106,6 +120,12 @@ func _generate_scene() -> Dictionary:
 		_check(
 			_scene_has_authored_child(result["scene_path"]),
 			"regeneration preserves manually authored children",
+		)
+		_check(
+			not FileAccess.file_exists(
+				_test_root.path_join("assets/aonw2_starter/terrain_authoring/reference_texture.res")
+			),
+			"reference texture is rebuilt from the canonical map bundle instead of persisted",
 		)
 	return result
 
@@ -172,6 +192,11 @@ func _test_authoring_session(scene_path: String) -> void:
 		0.35,
 		"compiled maxCitySlope is retained as reserved authoring metadata",
 	)
+	_check_approx(
+		artifact.max_terrain_height_meters,
+		20.0,
+		"compiled terrain retains the map-specific maximum height",
+	)
 	_check(
 		surface.find_child("BaseTerrain", true, false) == null,
 		"authoring scene has no alternative mesh terrain backend",
@@ -191,9 +216,9 @@ func _test_authoring_session(scene_path: String) -> void:
 	)
 	_test_overlay_alignment(surface, artifact)
 	_check(
-		surface.get_node("MinimumHeightDebug").mesh == null
-		and surface.get_node("MaximumHeightDebug").mesh == null,
-		"constraint overlays are lazy while hidden",
+		surface.get_node_or_null("MinimumHeightDebug") == null
+		and surface.get_node_or_null("MaximumHeightDebug") == null,
+		"hidden constraint overlays do not leave invalid empty MeshInstance3D nodes",
 	)
 	_test_overlay_controls(surface, artifact)
 	await _test_incremental_overlay_refresh(surface, artifact)
@@ -365,6 +390,11 @@ func _test_overlay_controls(
 	surface: AonwTerrainAuthoringSurface,
 	artifact: AonwTerrainCompiledArtifact,
 ) -> void:
+	_check(
+		surface.terrain().material.world_background
+		== Terrain3DMaterial.WorldBackground.NONE,
+		"authoring renders no Terrain3D world background outside the map",
+	)
 	surface.set_reference_visible(false)
 	_check(not surface.get_node("ReferenceTexture").visible, "reference can be hidden")
 	surface.set_reference_visible(true)
@@ -377,6 +407,19 @@ func _test_overlay_controls(
 	surface.set_grid_visible(false)
 	_check(not surface.get_node("HexGrid").visible, "debug grid can be hidden")
 	surface.set_grid_visible(true)
+	var grid := surface.get_node("HexGrid") as MeshInstance3D
+	var grid_material := grid.mesh.surface_get_material(0) as StandardMaterial3D
+	_check(
+		grid_material.albedo_color.r <= 0.01
+		and grid_material.albedo_color.g <= 0.01
+		and grid_material.albedo_color.b <= 0.01,
+		"hex grid uses the requested black authoring color",
+	)
+	var grid_vertices: PackedVector3Array = grid.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var finite_grid := true
+	for vertex in grid_vertices:
+		finite_grid = finite_grid and vertex.is_finite()
+	_check(finite_grid, "hex grid keeps finite boundary geometry")
 	surface.set_constraints_visible(true)
 	_check(
 		surface.get_node("MinimumHeightDebug").visible

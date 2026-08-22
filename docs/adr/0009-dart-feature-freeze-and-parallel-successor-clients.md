@@ -14,6 +14,13 @@ Waiting for complete Dart retirement would couple UI replacement to the longest 
 
 The current Dart application becomes maintenance-only while successor clients are developed in parallel:
 
+```mermaid
+flowchart LR
+  Rust["Authoritative Rust engine"] --> Flutter["Successor Flutter client"]
+  Rust --> Godot["Godot client and Map Workbench"]
+  Legacy["Frozen Dart application"] -. maintenance only .-> Release["Legacy release path"]
+```
+
 - `lib/` and `packages/aonw_core/` are feature-frozen at the tree OIDs recorded in `tool/legacy_freeze_manifest.v1`;
 - the root Flutter application remains buildable and releasable, but receives no successor features;
 - a freeze exception is limited to a critical production failure, security issue, or toolchain compatibility change;

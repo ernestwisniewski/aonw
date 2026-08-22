@@ -21,6 +21,7 @@ struct RawProfile {
     source_map_content_hash: Box<str>,
     orientation: Box<str>,
     hex_radius_meters: f64,
+    max_terrain_height_meters: f64,
     world_origin_meters: RawVector3,
     reference_transform: RawReferenceTransform,
     edge_blend_meters: f64,
@@ -126,6 +127,7 @@ fn build_profile(
         map_hash,
         ProfileComponents {
             hex_radius_meters: raw.hex_radius_meters,
+            max_terrain_height_meters: raw.max_terrain_height_meters,
             world_origin_meters: raw.world_origin_meters.into(),
             reference_transform: ReferenceTransform::new(
                 raw.reference_transform.translation_meters.into(),

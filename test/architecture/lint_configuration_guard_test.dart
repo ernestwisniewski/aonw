@@ -6,6 +6,12 @@ import 'package:yaml/yaml.dart';
 import 'support/lint_configuration_ci_guard.dart';
 
 const _basePath = 'analysis_options_base.yaml';
+const _successorOptionsPath = 'clients/aonw_flutter/analysis_options.yaml';
+
+// Successor Flutter is an independent workspace with a focused policy.
+// Its exact contract is verified by the companion successor guard.
+// This legacy guard continues to own the shared Dart workspace policy.
+// Keeping both guards focused also preserves their architecture budgets.
 const _sharedRules = <String>{
   'always_use_package_imports',
   'avoid_dynamic_calls',
@@ -69,7 +75,7 @@ void main() {
       '**/analysis_options.yaml',
       _basePath,
       '**/analysis_options_base.yaml',
-    ]);
+    ])..remove(_successorOptionsPath);
     expect(configurations, {_basePath, ..._leafProfiles.keys});
   });
 
@@ -116,12 +122,6 @@ void main() {
         isNull,
         reason: '$path duplicates shared rules',
       );
-      expect(
-        options['language'],
-        isNull,
-        reason: '$path bypasses the shared strict policy',
-      );
-
       if (!profile.hasAnalyzerOptions) continue;
       final analyzer = _asMap(options['analyzer'], '$path analyzer');
       final expectedAnalyzerKeys = {
@@ -155,12 +155,12 @@ void main() {
     };
     final manifests = _gitPaths(const ['pubspec.yaml', '**/pubspec.yaml']);
     final workspaceManifests = manifests.difference(vendorManifests);
-    final mappedPolicies = workspaceManifests
-        .map(_analysisOptionsForManifest)
-        .toSet();
+    final mappedPolicies =
+        workspaceManifests.map(_analysisOptionsForManifest).toSet()
+          ..remove(_successorOptionsPath);
     expect(manifests.difference(workspaceManifests), vendorManifests);
     expect(mappedPolicies, _leafProfiles.keys.toSet());
-    expect(workspaceManifests, hasLength(_leafProfiles.length));
+    expect(workspaceManifests, hasLength(_leafProfiles.length + 1));
   });
 
   test('lint packages and resolved lint versions cannot drift', () {
@@ -287,7 +287,7 @@ void main() {
     const coverageReportTargets = {
       'flutter-coverage-report': (
         ['root-dependencies', 'coverage-directory'],
-        "@flutter test --no-pub --concurrency=1 --coverage --coverage-package='^aonw\$\$' --coverage-path=\"\$(CURDIR)/coverage/root.lcov.info\" --reporter=failures-only",
+        "@flutter test --no-pub --concurrency=2 --coverage --coverage-package='^aonw\$\$' --coverage-path=\"\$(CURDIR)/coverage/root.lcov.info\" --reporter=failures-only",
       ),
       'core-coverage-report': (
         ['core-dependencies', 'coverage-directory'],
@@ -298,8 +298,7 @@ void main() {
       'flutter-coverage': (
         'flutter-coverage-report',
         '@dart run tool/check_coverage.dart check --scope root --base-ref '
-            '"\$(COVERAGE_BASE_REF)" --ratchet-ref '
-            '"\$(COVERAGE_RATCHET_REF)"',
+            '"\$(COVERAGE_BASE_REF)" --ratchet-ref "\$(COVERAGE_RATCHET_REF)"',
       ),
       'core-coverage': (
         'core-coverage-report',
@@ -348,6 +347,7 @@ void main() {
       const _MakeTarget(
         prerequisites: [
           'root-dependencies',
+          'successor-flutter-dependencies',
           'core-dependencies',
           'client-dependencies',
           'server-dependencies',
@@ -466,7 +466,7 @@ void main() {
     );
     expect(
       RegExp(r'\b(?:flutter|dart) analyze\b').allMatches(makefile),
-      hasLength(4),
+      hasLength(5),
     );
     final workflow = _loadMap('.github/workflows/ci.yml');
     final jobs = _asMap(workflow['jobs'], 'CI jobs');

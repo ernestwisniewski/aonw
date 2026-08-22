@@ -4,21 +4,25 @@ extends "res://editor/map_authoring/presentation/map_workbench_view.gd"
 var _catalog: AonwMapSourceCatalog
 var _scene_writer: AonwTerrainAuthoringSceneWriter
 var _generator: AonwGenerateTerrainAuthoringMap
+var _terrain_profile_editor: AonwTerrainProfileEditor
 var _sources: Array[AonwMapSource] = []
 
 func configure(
 	catalog: AonwMapSourceCatalog,
 	generator: AonwGenerateTerrainAuthoringMap,
 	scene_writer: AonwTerrainAuthoringSceneWriter,
+	terrain_profile_editor: AonwTerrainProfileEditor,
 ) -> void:
 	_catalog = catalog
 	_generator = generator
 	_scene_writer = scene_writer
+	_terrain_profile_editor = terrain_profile_editor
 
 func _ready() -> void:
 	assert(_catalog != null, "Map source catalog is required")
 	assert(_generator != null, "Terrain authoring generator is required")
 	assert(_scene_writer != null, "Terrain authoring scene writer is required")
+	assert(_terrain_profile_editor != null, "Terrain profile editor is required")
 	_build_interface()
 	_connect_interface()
 	_refresh_sources()
@@ -27,6 +31,8 @@ func _connect_interface() -> void:
 	_refresh_button.pressed.connect(_refresh_sources)
 	_generate_button.pressed.connect(_generate_selected_map)
 	_open_button.pressed.connect(_open_selected_scene)
+	_map_picker.item_selected.connect(_selected_map_changed)
+	_apply_max_terrain_height.pressed.connect(_apply_selected_height_scale)
 	_reference_toggle.toggled.connect(_set_reference_visible)
 	_reference_opacity.value_changed.connect(_set_reference_opacity)
 	_grid_toggle.toggled.connect(_set_grid_visible)
@@ -50,6 +56,54 @@ func _refresh_sources() -> void:
 		return
 	_set_source_actions_enabled(true)
 	_status.text = "Available Terrain3D maps: %d." % _sources.size()
+	_sync_selected_height_scale()
+
+func _selected_map_changed(_index: int) -> void:
+	_sync_selected_height_scale()
+
+func _sync_selected_height_scale() -> void:
+	var source := _selected_source()
+	if source == null:
+		_max_terrain_height.editable = false
+		_apply_max_terrain_height.disabled = true
+		return
+	var result := _terrain_profile_editor.current_maximum(source)
+	if not result["ok"]:
+		_max_terrain_height.editable = false
+		_apply_max_terrain_height.disabled = true
+		_status.text = "Error: %s" % result["message"]
+		return
+	_max_terrain_height.set_value_no_signal(result["max_terrain_height_meters"])
+	_max_terrain_height.editable = true
+	_apply_max_terrain_height.disabled = false
+
+func _apply_selected_height_scale() -> void:
+	var source := _selected_source()
+	if source == null:
+		return
+	_set_busy(true)
+	_status.text = "Rebuilding %s height scale and Terrain3D constraints…" % source.map_id
+	await get_tree().process_frame
+	var result := _terrain_profile_editor.update_maximum(
+		source,
+		_max_terrain_height.value,
+	)
+	_set_busy(false)
+	if not result["ok"]:
+		_show_error(result["message"])
+		_sync_selected_height_scale()
+		return
+	EditorInterface.get_resource_filesystem().scan()
+	var surface := _current_surface()
+	if surface != null and surface.source_map_id == source.map_id:
+		var refresh_result := surface.refresh_generated_artifact()
+		if not refresh_result["ok"]:
+			_show_error(refresh_result["message"])
+			return
+	_status.text = "Maximum Terrain3D height set to %.1f m for %s." % [
+		result["max_terrain_height_meters"],
+		source.map_id,
+	]
 
 func _generate_selected_map() -> void:
 	var source := _selected_source()
@@ -66,8 +120,6 @@ func _generate_selected_map() -> void:
 	EditorInterface.get_resource_filesystem().scan()
 	if result["scene_created"]:
 		_status.text = "Terrain3D authoring scene created."
-	elif result.get("scene_upgraded", false):
-		_status.text = "Terrain3D authoring added to the existing map scene."
 	else:
 		_status.text = "Existing Terrain3D scene kept; compiled inputs refreshed."
 	EditorInterface.open_scene_from_path(result["scene_path"])
@@ -259,11 +311,15 @@ func _set_busy(busy: bool) -> void:
 	_generate_button.disabled = busy
 	_open_button.disabled = busy
 	_map_picker.disabled = busy
+	_apply_max_terrain_height.disabled = busy
+	_max_terrain_height.editable = not busy
 
 func _set_source_actions_enabled(enabled: bool) -> void:
 	_generate_button.disabled = not enabled
 	_open_button.disabled = not enabled
 	_map_picker.disabled = not enabled
+	_apply_max_terrain_height.disabled = not enabled
+	_max_terrain_height.editable = enabled
 
 func _show_error(message: String) -> void:
 	_status.text = "Error: %s" % message

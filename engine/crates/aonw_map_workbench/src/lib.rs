@@ -9,6 +9,7 @@ mod error;
 mod generation;
 mod protocol;
 mod spec;
+mod terrain_profile;
 
 pub use error::MapWorkbenchError;
 pub use generation::GeneratedMapPackage;
@@ -17,3 +18,4 @@ pub use spec::{
     BLANK_GENERATOR_ID, BLANK_GENERATOR_VERSION, CURRENT_MAP_GENERATION_SCHEMA_VERSION,
     GenerationSpecHash, MapGenerationSpec,
 };
+pub use terrain_profile::UpdatedTerrainProfile;

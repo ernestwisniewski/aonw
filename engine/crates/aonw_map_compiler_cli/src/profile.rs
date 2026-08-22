@@ -10,6 +10,7 @@ use aonw_content::MapDocument;
 use aonw_map_authoring::TerrainAuthoringProfile;
 
 const DEFAULT_HEX_RADIUS_METERS: f64 = 10.0;
+const DEFAULT_MAX_TERRAIN_HEIGHT_METERS: f64 = 20.0;
 
 fn main() {
     if let Err(error) = run() {
@@ -22,7 +23,11 @@ fn run() -> Result<(), Box<dyn Error>> {
     let arguments = Arguments::parse()?;
     let map_source = fs::read(&arguments.map_path)?;
     let map = MapDocument::from_json(&map_source)?;
-    let profile = TerrainAuthoringProfile::standard_v1(map.map(), arguments.hex_radius_meters)?;
+    let profile = TerrainAuthoringProfile::standard_v1(
+        map.map(),
+        arguments.hex_radius_meters,
+        arguments.max_terrain_height_meters,
+    )?;
     if let Some(parent) = arguments.output_path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -34,6 +39,7 @@ struct Arguments {
     map_path: PathBuf,
     output_path: PathBuf,
     hex_radius_meters: f64,
+    max_terrain_height_meters: f64,
 }
 
 impl Arguments {
@@ -52,15 +58,29 @@ impl Arguments {
             })
             .transpose()?
             .unwrap_or(DEFAULT_HEX_RADIUS_METERS);
+        let max_terrain_height_meters = values
+            .next()
+            .map(|value| {
+                value
+                    .to_str()
+                    .ok_or_else(|| invalid_input("maximum terrain height must be UTF-8"))?
+                    .parse::<f64>()
+                    .map_err(|error| {
+                        invalid_input(format!("invalid maximum terrain height: {error}"))
+                    })
+            })
+            .transpose()?
+            .unwrap_or(DEFAULT_MAX_TERRAIN_HEIGHT_METERS);
         if values.next().is_some() {
             return Err(invalid_input(
-                "usage: aonw-map-profile <map.json> <output-profile> [hex-radius-meters]",
+                "usage: aonw-map-profile <map.json> <output-profile> [hex-radius-meters] [max-terrain-height-meters]",
             ));
         }
         Ok(Self {
             map_path,
             output_path,
             hex_radius_meters,
+            max_terrain_height_meters,
         })
     }
 }

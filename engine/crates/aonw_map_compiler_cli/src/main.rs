@@ -227,6 +227,7 @@ fn write_manifest(
             "cols": profile.cols(),
             "rows": profile.rows(),
             "hexRadiusMeters": profile.hex_radius_meters(),
+            "maxTerrainHeightMeters": profile.max_terrain_height_meters(),
             "worldOriginMeters": vector_json(profile.world_origin_meters()),
             "referenceTransform": {
                 "translationMeters": vector_json(

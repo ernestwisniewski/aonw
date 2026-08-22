@@ -16,6 +16,9 @@ make godot-editor
 Bootstrap downloads the exact Godot build pinned by the repository and the
 official pinned Terrain3D addon. Both remain ignored local dependencies. The
 editor commands reject any other version or a disabled Terrain3D plugin.
+The desktop-only client uses Godot's Forward+ rendering method for maximum
+desktop visual quality. On macOS this keeps Terrain3D on Metal and off the
+OpenGL compatibility shader path that can crash inside Apple's shader compiler.
 
 The logical-map backend is also prepared for a later **New Map** flow. The
 framework-neutral Rust `aonw_map_workbench` boundary accepts a versioned
@@ -54,10 +57,9 @@ Workbench writes:
 
 ```text
 clients/aonw_godot/
-├── scenes/maps/<map_id>.tscn                 # stable authored scene
+├── scenes/terrain_authoring/<map_id>.tscn    # clean Terrain3D authoring scene
 └── assets/generated_maps/<map_id>/
 	└── terrain_authoring/
-		├── reference_texture.res
 		├── current_draft.v1.json             # atomic pointer
 		├── current_published.v1.json         # only after successful validation
 		├── workspace/terrain3d_*.res         # mutable Terrain3D working data
@@ -65,10 +67,15 @@ clients/aonw_godot/
 		└── published/<snapshot_hash>/        # immutable published snapshots
 ```
 
-The authored scene contains one `Terrain3D` node plus reference, grid,
-min/max-debug, and city-scale overlays. `ArrayMesh` is used only for those
-overlays; it never represents editable terrain. Select the `Terrain3D` child to
-use Terrain3D's sculpting and texture-painting tools.
+The reference texture is rebuilt from the canonical, identity-checked map
+bundle whenever the scene opens; it is not persisted as a second generated
+artifact. The authored scene contains one `Terrain3D` node plus reference,
+grid, lazy min/max-debug, and city-scale overlays. Hidden min/max overlays do
+not exist as empty `MeshInstance3D` nodes. `ArrayMesh` is used only for those
+overlays; it never represents editable terrain. Select the `Terrain3D` child
+to use Terrain3D's sculpting and texture-painting tools.
+Terrain3D world-background generation is forced off, so no procedural hills
+are rendered beyond the imported map region.
 
 The dock controls reference visibility and opacity, the terrain-sampled hex
 grid, the min/max debug envelopes, and a city-core footprint marker whose
