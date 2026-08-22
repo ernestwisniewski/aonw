@@ -567,17 +567,17 @@ rust-format-check:
 	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) fmt --all -- --check
 
 rust-clippy:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) clippy --workspace --all-targets -- -D warnings
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) clippy --locked --workspace --all-targets -- -D warnings
 
 rust-test:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --workspace
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) test --locked --workspace
 
 rust-doc:
-	@cd "$(RUST_WORKSPACE)" && RUSTDOCFLAGS="-D warnings" $(RUST_CARGO) doc --workspace --no-deps
+	@cd "$(RUST_WORKSPACE)" && RUSTDOCFLAGS="-D warnings" $(RUST_CARGO) doc --locked --workspace --no-deps
 
 rust-benchmark:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench -p aonw_engine --bench movement
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench -p aonw_local_runtime --bench runtime
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench --locked -p aonw_engine --bench movement
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) bench --locked -p aonw_local_runtime --bench runtime
 
 rust-flutter-test: root-dependencies successor-flutter-dependencies
 	@dart test packages/aonw_rust_client/test
@@ -587,7 +587,7 @@ rust-engine-oracle:
 	@dart run tool/generate_rust_engine_oracle.dart
 
 rust-godot-build:
-	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build -p aonw_godot
+	@cd "$(RUST_WORKSPACE)" && $(RUST_CARGO) build --locked -p aonw_godot
 
 godot-terrain-compile:
 	@tool/compile_godot_terrain.sh
