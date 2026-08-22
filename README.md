@@ -91,9 +91,13 @@ The Rust workspace and Godot client are separate from the shipping Flutter path.
 ```sh
 make rust-check
 make godot-check
+make map-stage-1-check
 make godot-editor
 make godot-run
 ```
+
+`make map-stage-1-check` compares normalized Flutter and Godot map semantics;
+client-owned visual goldens remain separate and are never rewritten by this gate.
 
 Read [the migration plan](docs/rust-engine-migration.md) before moving rules across the Dart/Rust boundary.
 

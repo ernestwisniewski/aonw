@@ -2,6 +2,7 @@ class_name AonwHexGridGeometry
 extends RefCounted
 
 const SQRT_3 := 1.7320508075688772
+const DISTANCE_TIE_TOLERANCE := 0.000001
 const CORNER_OFFSETS := [
 	Vector2i(2, 0),
 	Vector2i(1, 1),
@@ -48,14 +49,27 @@ func tile_at_point(point: Vector2) -> Vector2i:
 	)
 	var best := Vector2i(approximate_col, approximate_row)
 	var best_distance := point.distance_squared_to(tile_center(best))
+	var tie_tolerance := radius * radius * DISTANCE_TIE_TOLERANCE
 	for col_offset in range(-1, 2):
 		for row_offset in range(-1, 2):
 			var candidate := Vector2i(approximate_col + col_offset, approximate_row + row_offset)
 			var distance := point.distance_squared_to(tile_center(candidate))
-			if distance < best_distance:
+			if (
+				distance < best_distance - tie_tolerance
+				or (
+					absf(distance - best_distance) <= tie_tolerance
+					and _comes_before(candidate, best)
+				)
+			):
 				best = candidate
 				best_distance = distance
 	return best
+
+func _comes_before(candidate: Vector2i, current: Vector2i) -> bool:
+	return (
+		candidate.x < current.x
+		or (candidate.x == current.x and candidate.y < current.y)
+	)
 
 func contains(coordinate: Vector2i) -> bool:
 	return coordinate.x >= 0 and coordinate.x < cols and coordinate.y >= 0 and coordinate.y < rows

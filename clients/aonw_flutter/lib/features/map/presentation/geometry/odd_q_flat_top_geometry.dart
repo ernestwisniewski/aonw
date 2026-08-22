@@ -17,6 +17,7 @@ final class AonwOddQFlatTopGeometry {
        assert(radius > 0);
 
   static final double sqrt3 = math.sqrt(3);
+  static const _distanceTieTolerance = 0.000001;
   static const _cornerOffsets = <(int, int)>[
     (2, 0),
     (1, 1),
@@ -91,6 +92,7 @@ final class AonwOddQFlatTopGeometry {
             .round();
     var best = (col: approximateCol, row: approximateRow);
     var bestDistance = _distanceSquared(point, center(best));
+    final tieTolerance = radius * radius * _distanceTieTolerance;
     for (var colOffset = -1; colOffset <= 1; colOffset++) {
       for (var rowOffset = -1; rowOffset <= 1; rowOffset++) {
         final candidate = (
@@ -98,7 +100,9 @@ final class AonwOddQFlatTopGeometry {
           row: approximateRow + rowOffset,
         );
         final distance = _distanceSquared(point, center(candidate));
-        if (distance < bestDistance) {
+        if (distance < bestDistance - tieTolerance ||
+            ((distance - bestDistance).abs() <= tieTolerance &&
+                _comesBefore(candidate, best))) {
           best = candidate;
           bestDistance = distance;
         }
@@ -123,4 +127,11 @@ final class AonwOddQFlatTopGeometry {
     final dy = left.y - right.y;
     return dx * dx + dy * dy;
   }
+
+  static bool _comesBefore(
+    AonwHexCoordinate candidate,
+    AonwHexCoordinate current,
+  ) =>
+      candidate.col < current.col ||
+      (candidate.col == current.col && candidate.row < current.row);
 }

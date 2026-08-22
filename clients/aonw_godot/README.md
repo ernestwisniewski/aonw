@@ -167,7 +167,12 @@ run an editor scan so moved global classes are resolved from a clean checkout.
 ```sh
 make godot-test
 make godot-check
+make map-stage-1-check
 ```
+
+`map-stage-1-check` exports normalized map semantics through the native Rust
+adapter and compares them with Flutter. Visual goldens remain client-owned and
+are not part of this gate.
 
 The runner delegates to focused runtime-map, geometry, native-session,
 Terrain3D-spike, and terrain-authoring suites. They cover strict Rust
