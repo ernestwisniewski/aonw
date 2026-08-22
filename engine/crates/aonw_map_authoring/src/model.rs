@@ -199,6 +199,8 @@ impl TerrainHeightEnvelope {
 pub struct TerrainAuthoringProfile {
     source_map_content_hash: ContentHash,
     orientation: GridLayout,
+    cols: u16,
+    rows: u16,
     hex_radius_meters: f64,
     world_origin_meters: AuthoringVector3,
     reference_transform: ReferenceTransform,
@@ -218,6 +220,16 @@ impl TerrainAuthoringProfile {
     #[must_use]
     pub const fn orientation(&self) -> GridLayout {
         self.orientation
+    }
+
+    #[must_use]
+    pub const fn cols(&self) -> u16 {
+        self.cols
+    }
+
+    #[must_use]
+    pub const fn rows(&self) -> u16 {
+        self.rows
     }
 
     #[must_use]
@@ -313,6 +325,8 @@ impl TerrainAuthoringProfile {
         Ok(Self {
             source_map_content_hash,
             orientation: map.grid_layout(),
+            cols: map.cols(),
+            rows: map.rows(),
             hex_radius_meters: raw.hex_radius_meters,
             world_origin_meters: raw.world_origin_meters,
             reference_transform: raw.reference_transform,

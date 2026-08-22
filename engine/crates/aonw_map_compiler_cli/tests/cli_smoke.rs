@@ -1,0 +1,93 @@
+//! Black-box smoke test for the thin terrain artifact writer.
+
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+use serde_json::Value;
+
+fn repository_root() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .ancestors()
+        .find(|path| path.join("engine/Cargo.toml").is_file() && path.join("content").is_dir())
+        .expect("repository root must contain engine and content")
+        .to_path_buf()
+}
+
+#[test]
+fn cli_writes_reviewable_exr_r16_and_manifest_artifacts() {
+    let root = repository_root();
+    let temporary = TemporaryDirectory::new();
+    let status = Command::new(env!("CARGO_BIN_EXE_aonw-map-compiler"))
+        .arg(root.join("content/maps/aonw2_starter/map.json"))
+        .arg(root.join("content/maps/aonw2_starter/terrain_authoring.v1.json"))
+        .arg(temporary.path())
+        .arg("4")
+        .status()
+        .expect("compiler CLI must start");
+    assert!(status.success(), "compiler CLI must succeed");
+
+    let manifest_source = fs::read(temporary.path().join("terrain_compile.v1.json"))
+        .expect("manifest must be written");
+    let manifest: Value = serde_json::from_slice(&manifest_source).expect("manifest must decode");
+    assert_eq!(manifest["schemaVersion"], 1);
+    assert_eq!(manifest["generatorVersion"], "aonw-map-compiler/1");
+    assert_eq!(
+        manifest["mapContentHash"],
+        "4d5603cc00fa8963a71c23133570f89f43c734598d86579e12e1b1059da8712d",
+    );
+    assert_eq!(
+        manifest["authoringProfileHash"],
+        "9c502d2cc8f83247be479e247c719c70019cdf223e67775ee82685732b991808",
+    );
+    let width = manifest["raster"]["width"]
+        .as_u64()
+        .expect("width must be an integer");
+    let height = manifest["raster"]["height"]
+        .as_u64()
+        .expect("height must be an integer");
+    for layer in ["base", "min", "max"] {
+        let exr = fs::read(temporary.path().join(format!("{layer}.exr")))
+            .expect("OpenEXR layer must be written");
+        assert_eq!(&exr[..4], &[0x76, 0x2f, 0x31, 0x01]);
+        let r16 = fs::read(temporary.path().join(format!("{layer}.r16")))
+            .expect("R16 layer must be written");
+        assert_eq!(
+            u64::try_from(r16.len()).expect("length fits u64"),
+            width * height * 2,
+        );
+        assert!(manifest["layers"][layer]["hash"].is_string());
+    }
+    assert_eq!(
+        manifest["generatedBaseHash"],
+        manifest["layers"]["base"]["hash"],
+    );
+}
+
+struct TemporaryDirectory(PathBuf);
+
+impl TemporaryDirectory {
+    fn new() -> Self {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock must follow the epoch")
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "aonw-map-compiler-test-{}-{nonce}",
+            std::process::id()
+        ));
+        fs::create_dir(&path).expect("unique temporary directory must be created");
+        Self(path)
+    }
+
+    fn path(&self) -> &Path {
+        &self.0
+    }
+}
+
+impl Drop for TemporaryDirectory {
+    fn drop(&mut self) {
+        fs::remove_dir_all(&self.0).expect("temporary compiler output must be removable");
+    }
+}
