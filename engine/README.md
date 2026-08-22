@@ -17,6 +17,7 @@ platform, shadow, canary, and rollback gates in the
 | --- | --- |
 | `aonw_domain` | `GameState`, complete unit entities, validated identifiers, odd-q topology, and fixed-point values. |
 | `aonw_content` | Strict maps, immutable rulesets and scenarios, catalogs, validation, and separate deterministic content hashes. |
+| `aonw_map_authoring` | Metric terrain-authoring profiles bound to, but excluded from, logical map identity. |
 | `aonw_contracts` | Current-only shared client API plus strict bounded canonical state, save, and replay codecs. |
 | `aonw_contract_mapping` | Validated conversion between boundary DTOs and domain types. |
 | `aonw_engine` | Authoritative movement queries/transitions and revision-bound cancel, skip, and fortify unit actions. |
@@ -26,9 +27,10 @@ platform, shadow, canary, and rollback gates in the
 | `aonw_testkit` | Bounded fixture/corpus loader, duplicate-key rejection, structural state/event/execution diff, and engine-neutral runner for the shared reducer-parity corpus. |
 
 The split enforces an inward dependency direction: contracts and domain do not
-depend on one another, content depends only on domain coordinates, mapping
-depends on contracts and domain, and the engine depends on domain plus validated
-content. The testkit remains independent of every concrete engine backend.
+depend on one another, content depends only on domain coordinates, map
+authoring depends on validated content, mapping depends on contracts and
+domain, and the engine depends on domain plus validated content. The testkit
+remains independent of every concrete engine backend.
 Recipient state has no conversion into canonical domain state.
 
 Large responsibilities are organized as modules instead of monolithic crate

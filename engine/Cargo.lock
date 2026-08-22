@@ -78,6 +78,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "aonw_map_authoring"
+version = "0.1.0"
+dependencies = [
+ "aonw_content",
+ "aonw_domain",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "aonw_testkit"
 version = "0.1.0"
 dependencies = [

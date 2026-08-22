@@ -9,6 +9,7 @@ members = [
   "crates/aonw_flutter",
   "crates/aonw_godot",
   "crates/aonw_local_runtime",
+  "crates/aonw_map_authoring",
   "crates/aonw_testkit",
 ]
 
