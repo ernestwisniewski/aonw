@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-08-13
 - Implementation: In progress
+- Client topology superseded by: [ADR 0009](0009-dart-feature-freeze-and-parallel-successor-clients.md)
 
 ## Context
 
@@ -69,6 +70,7 @@ The living milestone plan is [rust-engine-migration.md](../rust-engine-migration
 
 ## Related Decisions And Documentation
 
+- [ADR 0009: Dart feature freeze and parallel successor clients](0009-dart-feature-freeze-and-parallel-successor-clients.md)
 - [ADR 0001: Map and state ownership](0001-map-and-state-ownership.md)
 - [ADR 0002: Deterministic game engine](0002-deterministic-game-engine.md)
 - [ADR 0003: Command boundaries](0003-command-boundaries.md)
