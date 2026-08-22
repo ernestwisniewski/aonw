@@ -8,9 +8,11 @@ pin_file="${repo_root}/.terrain3d-version"
 checksum_file="${repo_root}/tool/terrain3d_checksums.txt"
 addon_directory="${repo_root}/clients/aonw_godot/addons/terrain_3d"
 project_file="${repo_root}/clients/aonw_godot/project.godot"
+compatibility_patch="${repo_root}/tool/patches/terrain3d-1.0.2-headless-display-scale.patch"
+compatibility_patch_id="terrain3d-1.0.2-headless-display-scale-v1"
 
-if [[ ! -f "${pin_file}" || ! -f "${checksum_file}" ]]; then
-  echo "Terrain3D pin or checksum manifest is missing." >&2
+if [[ ! -f "${pin_file}" || ! -f "${checksum_file}" || ! -f "${compatibility_patch}" ]]; then
+  echo "Terrain3D pin, checksum manifest, or compatibility patch is missing." >&2
   exit 1
 fi
 
@@ -31,7 +33,8 @@ expected_marker="version=${pinned_version}
 archive=${archive_name}
 sha256=${expected_checksum}
 source=${download_url}
-license=MIT"
+license=MIT
+patch=${compatibility_patch_id}"
 
 for required_file in plugin.cfg terrain.gdextension LICENSE.txt .aonw-install; do
   if [[ ! -f "${addon_directory}/${required_file}" ]]; then
@@ -51,6 +54,11 @@ if [[ "$(<"${addon_directory}/.aonw-install")" != "${expected_marker}" ]]; then
 fi
 if ! grep -Fq "MIT License" "${addon_directory}/LICENSE.txt"; then
   echo "Terrain3D license does not match the reviewed MIT release. Run make bootstrap." >&2
+  exit 1
+fi
+if ! grep -Fq 'if es.has_setting("interface/editor/display_scale"):' \
+  "${addon_directory}/src/double_slider.gd"; then
+  echo "Terrain3D headless display-scale compatibility patch is missing. Run make bootstrap." >&2
   exit 1
 fi
 if ! grep -Fq '"res://addons/terrain_3d/plugin.cfg"' "${project_file}"; then

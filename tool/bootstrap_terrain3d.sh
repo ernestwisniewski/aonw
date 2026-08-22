@@ -7,9 +7,11 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 pin_file="${repo_root}/.terrain3d-version"
 checksum_file="${repo_root}/tool/terrain3d_checksums.txt"
 addon_directory="${repo_root}/clients/aonw_godot/addons/terrain_3d"
+compatibility_patch="${repo_root}/tool/patches/terrain3d-1.0.2-headless-display-scale.patch"
+compatibility_patch_id="terrain3d-1.0.2-headless-display-scale-v1"
 
-if [[ ! -f "${pin_file}" || ! -f "${checksum_file}" ]]; then
-  echo "Terrain3D pin or checksum manifest is missing." >&2
+if [[ ! -f "${pin_file}" || ! -f "${checksum_file}" || ! -f "${compatibility_patch}" ]]; then
+  echo "Terrain3D pin, checksum manifest, or compatibility patch is missing." >&2
   exit 1
 fi
 
@@ -33,7 +35,8 @@ expected_marker="version=${pinned_version}
 archive=${archive_name}
 sha256=${expected_checksum}
 source=${download_url}
-license=MIT"
+license=MIT
+patch=${compatibility_patch_id}"
 installed_plugin_version=""
 if [[ -f "${addon_directory}/plugin.cfg" ]]; then
   installed_plugin_version="$(sed -n 's/^version="\([^"]*\)"/\1/p' "${addon_directory}/plugin.cfg")"
@@ -49,7 +52,7 @@ if [[ -f "${install_marker}" ]] \
   exit 0
 fi
 
-for command_name in curl unzip; do
+for command_name in curl patch unzip; do
   if ! command -v "${command_name}" >/dev/null 2>&1; then
     echo "${command_name} is required to bootstrap Terrain3D." >&2
     exit 1
@@ -96,6 +99,9 @@ if [[ "${plugin_version}" != "${pinned_version}" ]]; then
   echo "Terrain3D plugin version mismatch: expected ${pinned_version}, found ${plugin_version:-unknown}." >&2
   exit 1
 fi
+
+patch --batch --forward --directory="${extracted_addon}" --strip=1 \
+  --input="${compatibility_patch}"
 
 printf '%s\n' "${expected_marker}" > "${extracted_addon}/.aonw-install"
 
