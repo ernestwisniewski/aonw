@@ -6,6 +6,17 @@ const MapTileView := preload("res://game/application/map/read_model/map_tile_vie
 const MapObjectiveView := preload(
 	"res://game/application/map/read_model/map_objective_view.gd"
 )
+const TERRAIN_NAMES := [
+	"ocean", "coast", "lake", "plains", "grassland", "desert", "tundra", "snow",
+	"mountain", "hills", "wetlands", "jungle", "forest", "river",
+]
+const RESOURCE_NAMES := [
+	"wheat", "fish", "deer", "sheep", "rice", "cow", "apple", "banana", "citrus",
+	"gold", "silver", "gems", "silk", "spices", "cotton", "grapes", "ivory",
+	"pearls", "coffee", "cocoa", "tobacco", "sugar", "iron", "coal", "oil",
+	"aluminium", "uranium", "horses", "marble",
+]
+const OBJECTIVE_TYPES := ["ruins", "strategicPass", "holySite", "legendaryResource"]
 
 func from_wire(raw: Variant) -> Dictionary:
 	if not _has_exact_fields(raw, [
@@ -15,7 +26,9 @@ func from_wire(raw: Variant) -> Dictionary:
 		return _failure("Rust map view has invalid fields")
 	if (
 		not raw["mapId"] is String
+		or str(raw["mapId"]).is_empty()
 		or not raw["contentHash"] is String
+		or not _is_sha256(raw["contentHash"])
 		or raw["gridLayout"] != "oddQFlatTop"
 		or not _is_integer(raw["cols"], true)
 		or int(raw["cols"]) == 0
@@ -40,6 +53,14 @@ func from_wire(raw: Variant) -> Dictionary:
 		if not tile_result["ok"]:
 			return tile_result
 		tiles.append(tile_result["value"])
+	var coverage_error := _coverage_error(
+		tiles,
+		objectives,
+		int(raw["cols"]),
+		int(raw["rows"]),
+	)
+	if not coverage_error.is_empty():
+		return _failure(coverage_error)
 
 	return {
 		"ok": true,
@@ -62,7 +83,9 @@ func _objective(raw: Variant) -> Dictionary:
 		return _failure("Rust map objective has invalid fields")
 	if (
 		not raw["id"] is String
+		or str(raw["id"]).is_empty()
 		or not raw["type"] is String
+		or raw["type"] not in OBJECTIVE_TYPES
 		or not _is_coordinate(raw["coordinate"])
 		or not _is_integer(raw["requiredHoldTurns"], true)
 		or not _is_integer(raw["victoryPoints"], true)
@@ -90,16 +113,18 @@ func _tile(raw: Variant) -> Dictionary:
 	if (
 		not _is_coordinate(raw["coordinate"])
 		or not raw["displayTerrain"] is String
+		or raw["displayTerrain"] not in TERRAIN_NAMES
 		or not raw["yieldTerrain"] is String
+		or raw["yieldTerrain"] not in TERRAIN_NAMES
 		or not raw["movementTerrains"] is Array
 		or not raw["terrainTags"] is Array
 		or not raw["resources"] is Array
 		or not _is_integer(raw["height"], true)
 	):
 		return _failure("Rust map tile values are invalid")
-	var movement_terrains := _names(raw["movementTerrains"])
-	var terrain_tags := _names(raw["terrainTags"])
-	var resources := _names(raw["resources"])
+	var movement_terrains := _names(raw["movementTerrains"], TERRAIN_NAMES)
+	var terrain_tags := _names(raw["terrainTags"], TERRAIN_NAMES)
+	var resources := _names(raw["resources"], RESOURCE_NAMES)
 	for result in [movement_terrains, terrain_tags, resources]:
 		if not result["ok"]:
 			return _failure("Rust map tile collections are invalid")
@@ -116,10 +141,10 @@ func _tile(raw: Variant) -> Dictionary:
 		),
 	}
 
-func _names(raw: Array) -> Dictionary:
+func _names(raw: Array, allowed: Array) -> Dictionary:
 	var result: Array[StringName] = []
 	for value in raw:
-		if not value is String:
+		if not value is String or value not in allowed:
 			return _failure("expected a string collection")
 		result.append(StringName(value))
 	return {"ok": true, "value": result}
@@ -142,6 +167,49 @@ func _is_integer(raw: Variant, non_negative: bool) -> bool:
 		return false
 	var integer := int(raw)
 	return float(integer) == float(raw) and (not non_negative or integer >= 0)
+
+func _coverage_error(
+	tiles: Array[AonwMapTileView],
+	objectives: Array[AonwMapObjectiveView],
+	cols: int,
+	rows: int,
+) -> String:
+	if tiles.size() != cols * rows:
+		return "Rust map tile coverage is incomplete"
+	var coordinates := {}
+	for tile in tiles:
+		var coordinate := tile.coordinate()
+		if not _within_bounds(coordinate, cols, rows):
+			return "Rust map tile is outside map bounds"
+		if coordinates.has(coordinate):
+			return "Rust map tile coordinate is duplicated"
+		if tile.height() < 0 or tile.height() > 5:
+			return "Rust map tile height is outside the supported range"
+		coordinates[coordinate] = true
+	var objective_ids := {}
+	for objective in objectives:
+		if not _within_bounds(objective.coordinate(), cols, rows):
+			return "Rust map objective is outside map bounds"
+		if objective_ids.has(objective.id()):
+			return "Rust map objective id is duplicated"
+		objective_ids[objective.id()] = true
+	return ""
+
+func _within_bounds(coordinate: Vector2i, cols: int, rows: int) -> bool:
+	return (
+		coordinate.x >= 0
+		and coordinate.x < cols
+		and coordinate.y >= 0
+		and coordinate.y < rows
+	)
+
+func _is_sha256(value: Variant) -> bool:
+	return (
+		value is String
+		and value.length() == 64
+		and value.to_lower() == value
+		and value.is_valid_hex_number(false)
+	)
 
 func _has_exact_fields(raw: Variant, fields: Array) -> bool:
 	if not raw is Dictionary or raw.size() != fields.size():

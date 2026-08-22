@@ -30,13 +30,16 @@ final class MapViewMapper {
       for (final terrain in wire.terrainTags)
         MapTerrain.values.byName(terrain.name),
     ],
-    resources: [for (final resource in wire.resources) resource.name],
+    resources: [
+      for (final resource in wire.resources)
+        MapResource.values.byName(resource.name),
+    ],
     height: wire.height,
   );
 
   MapObjectiveView _objective(AonwMapObjectiveView wire) => MapObjectiveView(
     id: wire.id,
-    type: wire.type.name,
+    type: MapObjectiveType.values.byName(wire.type.name),
     coordinate: (col: wire.coordinate.col, row: wire.coordinate.row),
     requiredHoldTurns: wire.requiredHoldTurns,
     victoryPoints: wire.victoryPoints,

@@ -2,12 +2,16 @@ class_name AonwHexMapProjection
 extends RefCounted
 
 const HexGridGeometry := preload("res://game/presentation/map/geometry/hex_grid_geometry.gd")
+const TerrainSpaceTransform := preload(
+	"res://game/application/terrain/terrain_space_transform.gd"
+)
 const INVALID_HEX := Vector2i(-1, -1)
 
 var _map: AonwMapView
 var _artifact: AonwTerrainCompiledArtifact
 var _terrain_data: Terrain3DData
 var _geometry: AonwHexGridGeometry
+var _space: AonwTerrainSpaceTransform
 
 func _init(
 	map: AonwMapView,
@@ -23,6 +27,7 @@ func _init(
 	_artifact = artifact
 	_terrain_data = terrain_data
 	_geometry = HexGridGeometry.new(map.cols(), map.rows(), artifact.hex_radius_meters)
+	_space = TerrainSpaceTransform.new(artifact)
 
 func contains(coordinate: Vector2i) -> bool:
 	return _geometry.contains(coordinate)
@@ -37,8 +42,7 @@ func hex_height(coordinate: Vector2i) -> float:
 	return hex_center(coordinate).y
 
 func local_to_hex(local_position: Vector3) -> Vector2i:
-	var world_point := Vector2(local_position.x, local_position.z) + _artifact.world_min_meters
-	var coordinate := _geometry.tile_at_point(world_point)
+	var coordinate := _geometry.tile_at_point(_space.terrain_local_to_logical(local_position))
 	return coordinate if contains(coordinate) else INVALID_HEX
 
 func ray_to_hex(local_origin: Vector3, local_direction: Vector3) -> Vector2i:
@@ -71,12 +75,8 @@ func geometry() -> AonwHexGridGeometry:
 func world_size() -> Vector2:
 	return _geometry.bounds().size
 
-func _terrain_point(world_point: Vector2, vertical_offset: float) -> Vector3:
-	var local := Vector3(
-		world_point.x - _artifact.world_min_meters.x,
-		0.0,
-		world_point.y - _artifact.world_min_meters.y,
-	)
+func _terrain_point(logical_point: Vector2, vertical_offset: float) -> Vector3:
+	var local := _space.logical_to_terrain_local(logical_point)
 	var height := _terrain_data.get_height(local)
 	local.y = (height if is_finite(height) else 0.0) + vertical_offset
 	return local

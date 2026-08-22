@@ -62,6 +62,11 @@ final class MapRuntimeVerifier {
     } on FormatException catch (error) {
       errors.add('${spec.id}: ${error.message}');
     }
+    if ((manifest.worldWidth - mapWorldWidth(spec.columns)).abs() > 1e-6 ||
+        (manifest.worldHeight - mapWorldHeight(spec.columns, spec.rows)).abs() >
+            1e-6) {
+      errors.add('${spec.id}: world bounds do not match odd-q geometry');
+    }
     _verifyAverageColors(manifest, spec, errors);
     for (final page in manifest.pages) {
       await _verifyPage(spec.id, page, root, expectedFiles, errors);

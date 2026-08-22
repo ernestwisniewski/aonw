@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../tool/assets/compile/map_asset_bundle_manifest.dart';
+import '../../tool/assets/compile/map_texture_geometry.dart';
 import '../../tool/assets/compile/starter_map_bundle.dart';
 
 void main() {
@@ -32,6 +33,8 @@ void main() {
       String.fromCharCodes(firstFiles[mapAssetBundleManifestName]!),
     );
     expect(manifest.mapId, 'aonw2_starter');
+    expect(manifest.worldWidth, closeTo(mapWorldWidth(7), 1e-9));
+    expect(manifest.worldHeight, closeTo(mapWorldHeight(7, 7), 1e-9));
     expect(manifest.pages, isNotEmpty);
     for (final page in manifest.pages) {
       expect(firstFiles[page.file], isNotNull);

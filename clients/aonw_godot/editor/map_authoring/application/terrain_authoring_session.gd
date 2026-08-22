@@ -1,13 +1,18 @@
 class_name AonwTerrainAuthoringSession
 extends RefCounted
 
+const TerrainSpaceTransform := preload(
+	"res://game/application/terrain/terrain_space_transform.gd"
+)
+
 signal terrain_changed(changed_pixels: Rect2i)
 
 const HEIGHT_TOLERANCE_METERS := 0.0005
 
 var _data: Terrain3DData
 var _artifact: AonwTerrainCompiledArtifact
-var _store: AonwTerrainAuthoringStore
+var _space: AonwTerrainSpaceTransform
+var _persistence: AonwTerrainAuthoringPersistence
 var _terrain_revision := 0
 var _internal_edit := false
 var _opened := false
@@ -15,25 +20,26 @@ var _opened := false
 func _init(
 	data: Terrain3DData,
 	artifact: AonwTerrainCompiledArtifact,
-	store: AonwTerrainAuthoringStore,
+	persistence: AonwTerrainAuthoringPersistence,
 ) -> void:
 	assert(data != null, "Terrain3D data is required")
 	assert(artifact != null, "Compiled terrain artifact is required")
-	assert(store != null, "Terrain authoring store is required")
+	assert(persistence != null, "Terrain authoring persistence is required")
 	_data = data
 	_artifact = artifact
-	_store = store
+	_space = TerrainSpaceTransform.new(artifact)
+	_persistence = persistence
 
 func open() -> Dictionary:
 	if _opened:
 		return {"ok": true}
-	var revision_result := _store.load_revision(_artifact.map_content_hash)
+	var revision_result := _persistence.load_revision(_artifact.identity())
 	if not revision_result["ok"]:
 		return revision_result
 	_terrain_revision = revision_result["revision"]
 	_internal_edit = true
-	if _store.has_final_terrain():
-		_data.load_directory(_store.data_directory())
+	if revision_result["has_draft"]:
+		_data.load_directory(revision_result["data_directory"])
 		if _data.get_region_count() == 0:
 			_internal_edit = false
 			return _failure("saved Terrain3D final terrain has no regions")
@@ -56,7 +62,7 @@ func terrain_revision() -> int:
 
 func height_at(pixel: Vector2i) -> float:
 	assert(_artifact.contains_pixel(pixel), "Terrain raster pixel is out of bounds")
-	return _data.get_height(_artifact.local_position(pixel))
+	return _data.get_height(_space.raster_pixel_to_terrain_local(pixel))
 
 func set_height(pixel: Vector2i, requested_height: float) -> float:
 	assert(_artifact.contains_pixel(pixel), "Terrain raster pixel is out of bounds")
@@ -115,7 +121,7 @@ func validate_for_publish() -> Dictionary:
 	}
 
 func save_draft() -> Dictionary:
-	return _store.save_draft(_data, _artifact, _terrain_revision)
+	return _persistence.save_draft(_data, _artifact, _terrain_revision)
 
 func publish() -> Dictionary:
 	var validation := validate_for_publish()
@@ -126,7 +132,7 @@ func publish() -> Dictionary:
 				% validation["violation_count"],
 			"validation": validation,
 		}
-	return _store.publish(_data, _artifact, _terrain_revision)
+	return _persistence.publish(_data, _artifact, _terrain_revision)
 
 func refresh_generated_artifact(next_artifact: AonwTerrainCompiledArtifact) -> Dictionary:
 	if next_artifact.map_content_hash != _artifact.map_content_hash:
@@ -143,11 +149,12 @@ func refresh_generated_artifact(next_artifact: AonwTerrainCompiledArtifact) -> D
 			"generated terrain grid changed; migrate final terrain explicitly before refresh"
 		)
 	_artifact = next_artifact
+	_space = TerrainSpaceTransform.new(next_artifact)
 	return {"ok": true, "manual_final_preserved": true}
 
 func _apply_height(pixel: Vector2i, height: float) -> void:
 	_internal_edit = true
-	_data.set_height(_artifact.local_position(pixel), height)
+	_data.set_height(_space.raster_pixel_to_terrain_local(pixel), height)
 	_internal_edit = false
 	_terrain_revision += 1
 	terrain_changed.emit(Rect2i(pixel, Vector2i.ONE))
@@ -166,7 +173,7 @@ func _clamp_region(region: Rect2i) -> int:
 			)
 			if is_equal_approx(previous, next):
 				continue
-			_data.set_height(_artifact.local_position(pixel), next)
+			_data.set_height(_space.raster_pixel_to_terrain_local(pixel), next)
 			changed += 1
 	_internal_edit = false
 	return changed

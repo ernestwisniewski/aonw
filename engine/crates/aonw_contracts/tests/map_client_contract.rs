@@ -10,7 +10,7 @@ use aonw_contracts::client::{
 fn map_view() -> MapViewDto {
     MapViewDto {
         map_id: "map-1".to_owned(),
-        content_hash: "hash-1".to_owned(),
+        content_hash: "a".repeat(64),
         grid_layout: MapGridLayoutDto::OddQFlatTop,
         cols: 1,
         rows: 1,

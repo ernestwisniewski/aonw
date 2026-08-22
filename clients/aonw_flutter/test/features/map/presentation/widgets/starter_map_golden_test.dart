@@ -1,5 +1,6 @@
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
 import 'package:aonw_flutter/features/map/infrastructure/map_view_mapper.dart';
+import 'package:aonw_flutter/features/map/presentation/geometry/odd_q_flat_top_geometry.dart';
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
 import 'package:aonw_flutter/features/map/presentation/widgets/map_canvas.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
@@ -32,14 +33,19 @@ void main() {
     });
     expect(loadedMap, isNotNull);
     final map = loadedMap!;
+    final bounds = AonwOddQFlatTopGeometry(
+      cols: map.cols,
+      rows: map.rows,
+      radius: aonwMapHexRadius,
+    ).bounds;
     final snapshot = MapRenderSnapshot(
       map: map,
       interaction: const MapInteractionState(referenceVisible: false),
       reference: MapReferenceBundle(
         mapId: map.mapId,
         mapContentHash: map.contentHash,
-        worldWidth: 660,
-        worldHeight: 727.4613391789285,
+        worldWidth: bounds.width,
+        worldHeight: bounds.height,
         pages: const [],
       ),
     );

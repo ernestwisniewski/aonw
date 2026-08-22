@@ -1,39 +1,24 @@
 @tool
 extends "res://editor/map_authoring/presentation/map_workbench_view.gd"
 
-const MapAssetCatalog := preload(
-	"res://editor/map_authoring/infrastructure/map_asset_catalog.gd"
-)
-const JsonMapRepository := preload(
-	"res://game/infrastructure/map/json_map_repository.gd"
-)
-const TileAtlasRepository := preload(
-	"res://game/infrastructure/map/tile_atlas_repository.gd"
-)
-const OpenMap := preload("res://game/application/map/open_map.gd")
-const ArtifactRepository := preload(
-	"res://game/infrastructure/terrain/terrain_compiled_artifact_repository.gd"
-)
-const SceneRepository := preload(
-	"res://editor/map_authoring/infrastructure/terrain/terrain_authoring_scene_repository.gd"
-)
-const GenerateTerrainAuthoringMap := preload(
-	"res://editor/map_authoring/application/generate_terrain_authoring_map.gd"
-)
-
-var _catalog := MapAssetCatalog.new()
-var _scene_repository := SceneRepository.new()
-var _generator := GenerateTerrainAuthoringMap.new(
-	OpenMap.new(
-		JsonMapRepository.new(),
-		TileAtlasRepository.new(),
-		ArtifactRepository.new(),
-	),
-	_scene_repository,
-)
+var _catalog: AonwMapSourceCatalog
+var _scene_writer: AonwTerrainAuthoringSceneWriter
+var _generator: AonwGenerateTerrainAuthoringMap
 var _sources: Array[AonwMapSource] = []
 
+func configure(
+	catalog: AonwMapSourceCatalog,
+	generator: AonwGenerateTerrainAuthoringMap,
+	scene_writer: AonwTerrainAuthoringSceneWriter,
+) -> void:
+	_catalog = catalog
+	_generator = generator
+	_scene_writer = scene_writer
+
 func _ready() -> void:
+	assert(_catalog != null, "Map source catalog is required")
+	assert(_generator != null, "Terrain authoring generator is required")
+	assert(_scene_writer != null, "Terrain authoring scene writer is required")
 	_build_interface()
 	_connect_interface()
 	_refresh_sources()
@@ -90,7 +75,7 @@ func _open_selected_scene() -> void:
 	var source := _selected_source()
 	if source == null:
 		return
-	var scene_path := _scene_repository.scene_path_for(source.map_id)
+	var scene_path := _scene_writer.scene_path_for(source.map_id)
 	if not ResourceLoader.exists(scene_path):
 		_status.text = "Create the Terrain3D authoring scene first."
 		return

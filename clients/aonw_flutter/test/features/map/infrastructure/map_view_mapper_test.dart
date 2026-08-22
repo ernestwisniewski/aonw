@@ -23,6 +23,8 @@ void main() {
       MapTerrain.grassland,
     ]);
     expect(map.objectives.single.id, 'ruins-1');
+    expect(map.objectives.single.type, MapObjectiveType.ruins);
+    expect(map.tiles.single.resources, [MapResource.deer]);
     expect(() => map.tiles.add(map.tiles.single), throwsUnsupportedError);
   });
 }

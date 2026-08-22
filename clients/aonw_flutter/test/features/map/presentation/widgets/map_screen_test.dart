@@ -88,6 +88,87 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'initial camera fits authored zoom once and isolates static grid',
+    (tester) async {
+      final controller = MapController(
+        repository: FakeMapRepository.success(
+          testMapScene(cols: 7, rows: 7, defaultZoom: 1.2),
+        ),
+      );
+      final camera = TransformationController();
+      addTearDown(controller.dispose);
+      addTearDown(camera.dispose);
+      await tester.binding.setSurfaceSize(const Size(900, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MapScreen(
+            controller: controller,
+            transformationController: camera,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      const geometry = AonwOddQFlatTopGeometry(cols: 7, rows: 7, radius: 60);
+      final fit = 800 / geometry.bounds.height;
+      expect(camera.value.getMaxScaleOnAxis(), closeTo(fit * 1.2, 1e-6));
+      final initialMatrix = List<double>.of(camera.value.storage);
+      final staticGrid = tester.renderObject(
+        find.byKey(const ValueKey('static-grid-layer')),
+      );
+
+      controller.hover((col: 2, row: 2));
+      await tester.pump();
+
+      expect(camera.value.storage, orderedEquals(initialMatrix));
+      expect(
+        tester.renderObject(find.byKey(const ValueKey('static-grid-layer'))),
+        same(staticGrid),
+      );
+      expect(find.byKey(const ValueKey('interaction-layer')), findsOneWidget);
+    },
+  );
+
+  testWidgets('accepts a replacement external camera controller', (
+    tester,
+  ) async {
+    final controller = MapController(
+      repository: FakeMapRepository.success(testMapScene()),
+    );
+    final firstCamera = TransformationController();
+    final secondCamera = TransformationController();
+    addTearDown(controller.dispose);
+    addTearDown(firstCamera.dispose);
+    addTearDown(secondCamera.dispose);
+    await controller.load();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MapScreen(
+          controller: controller,
+          transformationController: firstCamera,
+          autoLoad: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MapScreen(
+          controller: controller,
+          transformationController: secondCamera,
+          autoLoad: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(secondCamera.value, isNot(equals(Matrix4.identity())));
+  });
+
   testWidgets('shows typed failure and retry action', (tester) async {
     final controller = MapController(
       repository: FakeMapRepository.failure(

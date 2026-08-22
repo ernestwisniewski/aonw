@@ -8,6 +8,7 @@ MapScene testMapScene({
   int rows = 2,
   String? mapId,
   String? contentHash,
+  double defaultZoom = 1,
 }) {
   final terrains = MapTerrain.values;
   final tiles = <MapTileView>[];
@@ -34,7 +35,7 @@ MapScene testMapScene({
       gridLayout: MapGridLayout.oddQFlatTop,
       cols: cols,
       rows: rows,
-      defaultZoom: 1,
+      defaultZoom: defaultZoom,
       tiles: tiles,
       objectives: const [],
     ),

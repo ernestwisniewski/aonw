@@ -28,11 +28,25 @@ Terrain3D is the only terrain backend for the Godot client:
   enabled; Godot editor, runtime, and test targets fail when it is absent or
   does not match the pin;
 - imported maps will persist height and paint data as Terrain3D regions;
+- mutable working regions are copied into hash-addressed, verified snapshots;
+  draft and published collections are separate, and only their small current
+  pointers are replaced atomically;
 - the authoring application session depends directly on `Terrain3DData`,
   applies rasterized authoring-profile limits, and participates in Godot
   undo/redo; there is no generic backend abstraction;
+- the session depends on a small persistence port. A manual editor composition
+  root creates the filesystem adapter, compiled-artifact reader, session, and
+  passive presentation surface; application and infrastructure do not import
+  each other or presentation;
 - reference artwork, hex grid, and picking sample the Terrain3D surface after
   deformation;
+- `maxCitySlope` remains explicit, validated metadata rather than a fake
+  publication rule. It becomes enforceable only after Rust defines canonical
+  city placement; current publication enforces the generated height envelopes;
+- one terrain-space transform converts logical hex, absolute world, raster,
+  and Terrain3D-local coordinates. `worldOriginMeters` therefore works for
+  non-zero X/Z origins, while the reference transform is applied before its
+  final Terrain3D height is sampled instead of moving an already draped mesh;
 - logical terrain, movement, yields, commands, and every other gameplay rule
   remain in Rust. Terrain3D and GDScript own only authoring and presentation.
 
@@ -95,8 +109,9 @@ marker, required native extension and license, and that the plugin is enabled.
 `make godot-check` then compiles the terrain profiles and runs an editor/plugin
 smoke plus headless tests for EXR, R16, bounded region save/load, regional
 clamp, independent publish validation, metadata, undo/redo, overlay alignment,
-base-regeneration safety, final-terrain reopen, and picking on a deformed
-surface.
+base-regeneration safety, immutable publication, complete artifact-identity and
+region-hash verification, draft reopen, non-zero world-origin round trips,
+translated/rotated/scaled reference draping, and picking on a deformed surface.
 
 ## Related Decisions And Documentation
 

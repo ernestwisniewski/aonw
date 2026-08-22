@@ -1,5 +1,6 @@
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
 import 'package:aonw_flutter/features/map/infrastructure/map_view_mapper.dart';
+import 'package:aonw_flutter/features/map/presentation/geometry/odd_q_flat_top_geometry.dart';
 import 'package:aonw_flutter/features/map/presentation/map_render_snapshot.dart';
 import 'package:aonw_flutter/features/map/presentation/widgets/map_canvas.dart';
 import 'package:aonw_flutter/features/map/read_model/map_reference_bundle.dart';
@@ -45,6 +46,11 @@ Future<void> _captureEvidence(
   final map = await _loadMap(tester);
   expect(map, isNotNull);
   final loadedMap = map!;
+  final bounds = AonwOddQFlatTopGeometry(
+    cols: loadedMap.cols,
+    rows: loadedMap.rows,
+    radius: aonwMapHexRadius,
+  ).bounds;
   debugPrint('Flutter evidence: MapView loaded for $fileName');
   await tester.binding.setSurfaceSize(const Size(660, 728));
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -62,8 +68,8 @@ Future<void> _captureEvidence(
               reference: MapReferenceBundle(
                 mapId: loadedMap.mapId,
                 mapContentHash: loadedMap.contentHash,
-                worldWidth: 0,
-                worldHeight: 0,
+                worldWidth: bounds.width,
+                worldHeight: bounds.height,
                 pages: const [],
               ),
             ),

@@ -1,5 +1,5 @@
 class_name AonwMapAssetCatalog
-extends RefCounted
+extends AonwMapSourceCatalog
 
 const MapSource := preload("res://game/application/map/map_source.gd")
 const DEFAULT_CONTENT_ROOT := "res://../../content/maps"

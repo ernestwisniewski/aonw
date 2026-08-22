@@ -2,17 +2,6 @@
 class_name AonwTerrainAuthoringSurface
 extends Node3D
 
-signal session_opened(result: Dictionary)
-
-const ArtifactRepository := preload(
-	"res://game/infrastructure/terrain/terrain_compiled_artifact_repository.gd"
-)
-const AuthoringStore := preload(
-	"res://editor/map_authoring/infrastructure/terrain/terrain_authoring_store.gd"
-)
-const AuthoringSession := preload(
-	"res://editor/map_authoring/application/terrain_authoring_session.gd"
-)
 const OverlayBuilder := preload(
 	"res://game/presentation/map/terrain_overlay_mesh_builder.gd"
 )
@@ -36,8 +25,8 @@ const OverlayBuilder := preload(
 @export var terrain_material: Terrain3DMaterial
 @export var terrain_assets: Terrain3DAssets
 
-var _artifact_repository := ArtifactRepository.new()
 var _overlay_builder := OverlayBuilder.new()
+var _artifact_reader: AonwTerrainCompiledArtifactReader
 var _artifact: AonwTerrainCompiledArtifact
 var _session: AonwTerrainAuthoringSession
 var _terrain: Terrain3D
@@ -48,10 +37,10 @@ var _maximum_debug: MeshInstance3D
 var _city_marker: MeshInstance3D
 var _reference_texture: Texture2D
 var _overlay_refresh_queued := false
+var _pending_changed_pixels := Rect2i()
 
 func _ready() -> void:
 	_ensure_nodes()
-	_open_session.call_deferred()
 
 func configure(
 	map_id: String,
@@ -78,6 +67,36 @@ func artifact() -> AonwTerrainCompiledArtifact:
 func is_session_open() -> bool:
 	return _session != null
 
+func open_session(
+	session: AonwTerrainAuthoringSession,
+	artifact_value: AonwTerrainCompiledArtifact,
+	reference_texture: Texture2D,
+	artifact_reader: AonwTerrainCompiledArtifactReader,
+) -> Dictionary:
+	if _session != null:
+		return {"ok": true}
+	assert(session != null, "Terrain authoring session is required")
+	assert(artifact_value != null, "Compiled terrain artifact is required")
+	assert(reference_texture != null, "Terrain reference texture is required")
+	assert(artifact_reader != null, "Compiled terrain artifact reader is required")
+	_ensure_nodes()
+	_artifact = artifact_value
+	_reference_texture = reference_texture
+	_artifact_reader = artifact_reader
+	_terrain.vertex_spacing = _artifact.sample_spacing_meters
+	_session = session
+	var open_result := _session.open()
+	if not open_result["ok"]:
+		_session = null
+		return open_result
+	if not _session.terrain_changed.is_connected(_on_terrain_changed):
+		_session.terrain_changed.connect(_on_terrain_changed)
+	if city_marker_coordinate.x < 0 or city_marker_coordinate.y < 0:
+		city_marker_coordinate = Vector2i(_artifact.cols / 2, _artifact.rows / 2)
+	_sync_metadata()
+	refresh_overlays()
+	return {"ok": true}
+
 func set_reference_visible(value: bool) -> void:
 	reference_visible = value
 	_ensure_nodes()
@@ -99,6 +118,8 @@ func set_grid_opacity(value: float) -> void:
 func set_constraints_visible(value: bool) -> void:
 	constraints_visible = value
 	_ensure_nodes()
+	if value:
+		_ensure_constraint_meshes()
 	_minimum_debug.visible = value
 	_maximum_debug.visible = value
 
@@ -151,7 +172,7 @@ func publish() -> Dictionary:
 func refresh_generated_artifact() -> Dictionary:
 	if _session == null:
 		return _failure("terrain authoring session is not open")
-	var artifact_result := _artifact_repository.load_artifact(
+	var artifact_result := _artifact_reader.load_artifact(
 		compiled_artifact_directory,
 		source_map_id,
 	)
@@ -174,66 +195,19 @@ func refresh_overlays() -> void:
 		_reference_texture,
 		reference_opacity,
 	)
-	_reference.transform = _artifact.reference_transform()
+	_reference.transform = Transform3D.IDENTITY
 	_grid.mesh = _overlay_builder.grid_mesh(
 		_artifact,
 		_terrain.data,
 		grid_width,
 		grid_opacity,
 	)
-	_minimum_debug.mesh = _overlay_builder.constraint_mesh(
-		_artifact,
-		_artifact.minimum_image,
-		Color(0.15, 0.45, 1.0, 0.22),
-		-OverlayBuilder.CONSTRAINT_OFFSET,
-	)
-	_maximum_debug.mesh = _overlay_builder.constraint_mesh(
-		_artifact,
-		_artifact.maximum_image,
-		Color(1.0, 0.2, 0.15, 0.22),
-		OverlayBuilder.CONSTRAINT_OFFSET,
-	)
+	_minimum_debug.mesh = null
+	_maximum_debug.mesh = null
+	if constraints_visible:
+		_ensure_constraint_meshes()
 	_refresh_city_marker()
 	_apply_visibility()
-
-func _open_session() -> void:
-	if source_map_id.is_empty() or compiled_artifact_directory.is_empty() or authoring_root.is_empty():
-		session_opened.emit(_failure("terrain authoring scene is not configured"))
-		return
-	_ensure_nodes()
-	if _terrain.data == null:
-		await get_tree().process_frame
-	var artifact_result := _artifact_repository.load_artifact(
-		compiled_artifact_directory,
-		source_map_id,
-	)
-	if not artifact_result["ok"]:
-		session_opened.emit(artifact_result)
-		return
-	_artifact = artifact_result["artifact"]
-	_terrain.vertex_spacing = _artifact.sample_spacing_meters
-	var store := AuthoringStore.new(authoring_root)
-	_reference_texture = ResourceLoader.load(
-		store.reference_texture_path(),
-		"Texture2D",
-		ResourceLoader.CACHE_MODE_REPLACE,
-	) as Texture2D
-	if _reference_texture == null:
-		session_opened.emit(_failure("terrain reference texture is missing"))
-		return
-	_session = AuthoringSession.new(_terrain.data, _artifact, store)
-	var open_result := _session.open()
-	if not open_result["ok"]:
-		_session = null
-		session_opened.emit(open_result)
-		return
-	if not _session.terrain_changed.is_connected(_on_terrain_changed):
-		_session.terrain_changed.connect(_on_terrain_changed)
-	if city_marker_coordinate.x < 0 or city_marker_coordinate.y < 0:
-		city_marker_coordinate = Vector2i(_artifact.cols / 2, _artifact.rows / 2)
-	_sync_metadata()
-	refresh_overlays()
-	session_opened.emit({"ok": true})
 
 func _ensure_nodes() -> void:
 	_terrain = get_node_or_null("Terrain3D") as Terrain3D
@@ -283,8 +257,31 @@ func _refresh_city_marker() -> void:
 	_city_marker.position = marker["position"]
 	_city_marker.visible = city_marker_visible
 
-func _on_terrain_changed(_changed_pixels: Rect2i) -> void:
+func _ensure_constraint_meshes() -> void:
+	if _artifact == null:
+		return
+	if _minimum_debug.mesh == null:
+		_minimum_debug.mesh = _overlay_builder.constraint_mesh(
+			_artifact,
+			_artifact.minimum_image,
+			Color(0.15, 0.45, 1.0, 0.22),
+			-OverlayBuilder.CONSTRAINT_OFFSET,
+		)
+	if _maximum_debug.mesh == null:
+		_maximum_debug.mesh = _overlay_builder.constraint_mesh(
+			_artifact,
+			_artifact.maximum_image,
+			Color(1.0, 0.2, 0.15, 0.22),
+			OverlayBuilder.CONSTRAINT_OFFSET,
+		)
+
+func _on_terrain_changed(changed_pixels: Rect2i) -> void:
 	_sync_metadata()
+	_pending_changed_pixels = (
+		_pending_changed_pixels.merge(changed_pixels)
+		if _pending_changed_pixels.has_area()
+		else changed_pixels
+	)
 	if _overlay_refresh_queued:
 		return
 	_overlay_refresh_queued = true
@@ -292,7 +289,31 @@ func _on_terrain_changed(_changed_pixels: Rect2i) -> void:
 
 func _refresh_overlays_deferred() -> void:
 	_overlay_refresh_queued = false
-	refresh_overlays()
+	var changed_pixels := _pending_changed_pixels
+	_pending_changed_pixels = Rect2i()
+	if not changed_pixels.has_area() or _artifact == null:
+		return
+	_overlay_builder.refresh_reference_heights(
+		_reference.mesh,
+		_artifact,
+		_terrain.data,
+		changed_pixels,
+	)
+	_overlay_builder.refresh_grid_heights(
+		_grid.mesh,
+		_artifact,
+		_terrain.data,
+		changed_pixels,
+	)
+	if _city_marker_intersects(changed_pixels):
+		_refresh_city_marker()
+
+func _city_marker_intersects(changed_pixels: Rect2i) -> bool:
+	if _city_marker == null or _city_marker.mesh == null:
+		return false
+	var space := AonwTerrainSpaceTransform.new(_artifact)
+	var pixel := space.terrain_local_to_raster_pixel(_city_marker.position)
+	return changed_pixels.grow(1).has_point(pixel)
 
 func _sync_metadata() -> void:
 	if _artifact == null:

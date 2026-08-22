@@ -70,4 +70,12 @@ func tile_at(coordinate: Vector2i) -> AonwMapTileView:
 	return _tiles_by_coordinate.get(coordinate) as AonwMapTileView
 
 func contains(coordinate: Vector2i) -> bool:
-	return coordinate.x >= 0 and coordinate.x < _cols and coordinate.y >= 0 and coordinate.y < _rows
+	return _tiles_by_coordinate.has(coordinate)
+
+func is_within_bounds(coordinate: Vector2i) -> bool:
+	return (
+		coordinate.x >= 0
+		and coordinate.x < _cols
+		and coordinate.y >= 0
+		and coordinate.y < _rows
+	)

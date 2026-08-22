@@ -124,4 +124,35 @@ if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>
 fi
 echo "Dependency checker rejected a Godot mesh terrain fallback."
 
+authoring_fixture="${dependency_fixture}/clients/aonw_godot/editor/map_authoring"
+mkdir -p \
+  "${authoring_fixture}/application" \
+  "${authoring_fixture}/infrastructure" \
+  "${authoring_fixture}/presentation"
+printf 'const Store := preload("res://editor/map_authoring/infrastructure/store.gd")\n' \
+  >"${authoring_fixture}/application/session.gd"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted Godot application-to-infrastructure coupling." >&2
+  exit 1
+fi
+echo "Dependency checker rejected Godot application-to-infrastructure coupling."
+rm "${authoring_fixture}/application/session.gd"
+
+printf 'const Surface := preload("res://editor/map_authoring/presentation/surface.gd")\n' \
+  >"${authoring_fixture}/infrastructure/scenes.gd"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted Godot infrastructure-to-presentation coupling." >&2
+  exit 1
+fi
+echo "Dependency checker rejected Godot infrastructure-to-presentation coupling."
+rm "${authoring_fixture}/infrastructure/scenes.gd"
+
+printf 'const Store := preload("res://editor/map_authoring/infrastructure/store.gd")\n' \
+  >"${authoring_fixture}/presentation/surface.gd"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted Godot presentation-to-infrastructure coupling." >&2
+  exit 1
+fi
+echo "Dependency checker rejected Godot presentation-to-infrastructure coupling."
+
 echo "Successor boundary negative tests passed."

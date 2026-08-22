@@ -1,14 +1,19 @@
 @tool
 extends EditorPlugin
 
-const Dock := preload("res://editor/map_authoring/presentation/map_workbench_dock.gd")
+const CompositionRoot := preload(
+	"res://editor/map_authoring/composition/map_authoring_composition_root.gd"
+)
 
 var _dock: Control
+var _composition: AonwMapAuthoringCompositionRoot
 
 func _enter_tree() -> void:
-	_dock = Dock.new()
+	_composition = CompositionRoot.new()
+	_dock = _composition.create_dock()
 	add_control_to_dock(DOCK_SLOT_RIGHT_UL, _dock)
 	scene_changed.connect(_on_scene_changed)
+	_compose_scene.call_deferred(EditorInterface.get_edited_scene_root())
 
 func _exit_tree() -> void:
 	if scene_changed.is_connected(_on_scene_changed):
@@ -18,7 +23,16 @@ func _exit_tree() -> void:
 	remove_control_from_docks(_dock)
 	_dock.free()
 	_dock = null
+	_composition = null
 
-func _on_scene_changed(_scene_root: Node) -> void:
+func _on_scene_changed(scene_root: Node) -> void:
+	_compose_scene(scene_root)
+
+func _compose_scene(scene_root: Node) -> void:
+	if _composition == null:
+		return
+	var result: Dictionary = await _composition.open_scene(scene_root)
+	if not result["ok"]:
+		push_error("AoNW Terrain Workbench: %s" % result["message"])
 	if _dock != null:
-		_dock.call_deferred("sync_from_edited_scene")
+		_dock.sync_from_edited_scene()

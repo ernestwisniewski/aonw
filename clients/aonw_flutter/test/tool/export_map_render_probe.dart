@@ -124,7 +124,7 @@ Map<String, Object?> _tileProbe(
       for (final terrain in tile.movementTerrains) terrain.name,
     ],
     'terrainTags': [for (final terrain in tile.terrainTags) terrain.name],
-    'resources': tile.resources,
+    'resources': [for (final resource in tile.resources) resource.name],
     'height': tile.height,
     'center': _point(geometry.normalizedUv(center)),
     'corners': [
@@ -140,7 +140,7 @@ Map<String, Object?> _tileProbe(
 
 Map<String, Object?> _objective(MapObjectiveView objective) => {
   'id': objective.id,
-  'type': objective.type,
+  'type': objective.type.name,
   'coordinate': _hex(objective.coordinate),
   'requiredHoldTurns': objective.requiredHoldTurns,
   'victoryPoints': objective.victoryPoints,

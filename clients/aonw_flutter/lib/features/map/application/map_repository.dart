@@ -17,10 +17,17 @@ abstract interface class MapRepository {
 }
 
 final class MapLoadException implements Exception {
-  const MapLoadException({required this.code, required this.message});
+  const MapLoadException({
+    required this.code,
+    required this.message,
+    this.diagnosticCause,
+    this.diagnosticStackTrace,
+  });
 
   final String code;
   final String message;
+  final Object? diagnosticCause;
+  final StackTrace? diagnosticStackTrace;
 
   @override
   String toString() => 'MapLoadException($code): $message';

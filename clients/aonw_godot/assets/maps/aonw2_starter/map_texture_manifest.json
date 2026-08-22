@@ -6,7 +6,7 @@
   "cols": 7,
   "rows": 7,
   "worldWidth": 660.0,
-  "worldHeight": 727.4613391789285,
+  "worldHeight": 779.4228634059948,
   "compiledScale": 2.0,
   "filterQuality": "medium",
   "pageSizeLimit": 2048,
@@ -16,14 +16,14 @@
       "file": "page_00.jpg",
       "asset": "assets/runtime/maps/aonw2_starter/page_00.jpg",
       "format": "jpeg",
-      "sha256": "b1a4448f0cbbf7c5a66d50394c88241bf6ee282ee337ecb54076e9ab1a60ec64",
+      "sha256": "8a4bd26d944e8774ff3a862de74ff8e66dfce42fed84dba386d635aaacc74126",
       "pixelWidth": 1324,
-      "pixelHeight": 1459,
+      "pixelHeight": 1563,
       "destination": [
         -1.0,
         -1.0,
         662.0,
-        729.5
+        781.5
       ]
     }
   ],

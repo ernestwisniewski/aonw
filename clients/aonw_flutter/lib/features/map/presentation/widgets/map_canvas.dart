@@ -95,14 +95,32 @@ final class _MapLayers extends StatelessWidget {
       clipBehavior: Clip.hardEdge,
       fit: StackFit.expand,
       children: [
-        CustomPaint(
-          painter: MapTerrainPainter(snapshot: snapshot, geometry: geometry),
+        RepaintBoundary(
+          key: const ValueKey('static-terrain-layer'),
+          child: CustomPaint(
+            painter: MapTerrainPainter(snapshot: snapshot, geometry: geometry),
+          ),
         ),
         if (snapshot.interaction.referenceVisible)
-          _ReferenceLayer(snapshot: snapshot, geometry: geometry),
-        IgnorePointer(
+          RepaintBoundary(
+            key: const ValueKey('static-reference-layer'),
+            child: _ReferenceLayer(snapshot: snapshot, geometry: geometry),
+          ),
+        RepaintBoundary(
+          key: const ValueKey('static-grid-layer'),
           child: CustomPaint(
-            painter: MapOverlayPainter(snapshot: snapshot, geometry: geometry),
+            painter: MapGridPainter(map: snapshot.map, geometry: geometry),
+          ),
+        ),
+        IgnorePointer(
+          child: RepaintBoundary(
+            key: const ValueKey('interaction-layer'),
+            child: CustomPaint(
+              painter: MapInteractionPainter(
+                interaction: snapshot.interaction,
+                geometry: geometry,
+              ),
+            ),
           ),
         ),
       ],

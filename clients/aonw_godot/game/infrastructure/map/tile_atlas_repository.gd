@@ -3,6 +3,9 @@ extends AonwMapTextureAssembler
 
 const MANIFEST_NAME := "map_texture_manifest.json"
 const MAX_ATLAS_SIZE := 16_384
+const MAX_DECODED_PIXELS := 64 * 1024 * 1024
+const MAP_HEX_RADIUS := 60.0
+const SQRT_3 := 1.7320508075688772
 
 func load_atlas(map: AonwMapView, source_directory: String) -> Dictionary:
 	var reference := _load_reference_atlas(
@@ -100,6 +103,35 @@ func _manifest_error(
 	for field in ["worldWidth", "worldHeight", "compiledScale"]:
 		if not _is_positive_number(manifest.get(field)):
 			return "%s must be a positive number" % field
+	if manifest.get("filterQuality") != "medium":
+		return "filterQuality is unsupported"
+	if not _is_positive_integer(manifest.get("pageSizeLimit")):
+		return "pageSizeLimit is invalid"
+	if (
+		not _is_non_negative_integer(manifest.get("gutter"))
+		or int(manifest["gutter"]) > 64
+	):
+		return "gutter is invalid"
+	var colors: Variant = manifest.get("averageColors")
+	if colors is not Dictionary or colors.size() != map.cols() * map.rows():
+		return "averageColors do not cover the map"
+	for col in map.cols():
+		for row in map.rows():
+			var color: Variant = colors.get("%d,%d" % [col, row])
+			if (
+				not _is_non_negative_integer(color)
+				or int(color) > 0xffffffff
+			):
+				return "averageColors contain an invalid value"
+	var expected_width := MAP_HEX_RADIUS * 2.0 + float(map.cols() - 1) * 1.5 * MAP_HEX_RADIUS
+	var expected_height := (
+		SQRT_3 * MAP_HEX_RADIUS * (float(map.rows()) + (0.5 if map.cols() > 1 else 0.0))
+	)
+	if (
+		absf(float(manifest["worldWidth"]) - expected_width) > 0.000001
+		or absf(float(manifest["worldHeight"]) - expected_height) > 0.000001
+	):
+		return "world bounds do not match MapView geometry"
 	var scale := float(manifest["compiledScale"])
 	if (
 		ceili(float(manifest["worldWidth"]) * scale) > MAX_ATLAS_SIZE
@@ -141,6 +173,11 @@ func _manifest_error(
 			return "%s has an invalid width" % page_name
 		if not _is_positive_integer(page.get("pixelHeight")):
 			return "%s has an invalid height" % page_name
+		if (
+			int(page["pixelWidth"]) > int(manifest["pageSizeLimit"])
+			or int(page["pixelHeight"]) > int(manifest["pageSizeLimit"])
+		):
+			return "%s exceeds pageSizeLimit" % page_name
 		var destination: Variant = page.get("destination")
 		if destination is not Array or destination.size() != 4:
 			return "%s has an invalid destination" % page_name
@@ -153,6 +190,72 @@ func _manifest_error(
 			or absf(float(destination[3]) * scale - float(page["pixelHeight"])) > 0.01
 		):
 			return "%s destination does not match its pixel size" % page_name
+	return _page_layout_error(manifest)
+
+func _page_layout_error(manifest: Dictionary) -> String:
+	var scale := float(manifest["compiledScale"])
+	var gutter := int(manifest["gutter"])
+	var atlas_size := Vector2i(
+		ceili(float(manifest["worldWidth"]) * scale),
+		ceili(float(manifest["worldHeight"]) * scale),
+	)
+	var decoded_pixels := 0
+	var rectangles: Array[Rect2i] = []
+	for page in manifest["pages"]:
+		var width := int(page["pixelWidth"])
+		var height := int(page["pixelHeight"])
+		decoded_pixels += width * height
+		if decoded_pixels > MAX_DECODED_PIXELS:
+			return "decoded page pixel budget is exceeded"
+		var destination: Array = page["destination"]
+		var start := Vector2i(
+			roundi(float(destination[0]) * scale),
+			roundi(float(destination[1]) * scale),
+		)
+		var end := start + Vector2i(width, height)
+		if (
+			start.x < -gutter
+			or start.y < -gutter
+			or end.x > atlas_size.x + gutter
+			or end.y > atlas_size.y + gutter
+		):
+			return "%s is outside the atlas" % page["file"]
+		var clipped_start := start.max(Vector2i.ZERO)
+		var clipped_end := end.min(atlas_size)
+		rectangles.append(Rect2i(clipped_start, clipped_end - clipped_start))
+	var allowed_overlap := gutter * 2
+	for first in rectangles.size():
+		for second in range(first + 1, rectangles.size()):
+			var overlap := rectangles[first].intersection(rectangles[second])
+			if overlap.size.x > allowed_overlap and overlap.size.y > allowed_overlap:
+				return "pages overlap excessively"
+	var x_boundaries := [0, atlas_size.x]
+	var y_boundaries := [0, atlas_size.y]
+	for rectangle in rectangles:
+		x_boundaries.append(rectangle.position.x)
+		x_boundaries.append(rectangle.end.x)
+		y_boundaries.append(rectangle.position.y)
+		y_boundaries.append(rectangle.end.y)
+	x_boundaries.sort()
+	y_boundaries.sort()
+	for x_index in x_boundaries.size() - 1:
+		for y_index in y_boundaries.size() - 1:
+			var cell := Rect2i(
+				Vector2i(x_boundaries[x_index], y_boundaries[y_index]),
+				Vector2i(
+					x_boundaries[x_index + 1] - x_boundaries[x_index],
+					y_boundaries[y_index + 1] - y_boundaries[y_index],
+				),
+			)
+			if not cell.has_area():
+				continue
+			var covered := false
+			for rectangle in rectangles:
+				if rectangle.encloses(cell):
+					covered = true
+					break
+			if not covered:
+				return "page coverage has a gap"
 	return ""
 
 func _blit_page(atlas: Image, page: Image, destination: Array, scale: float) -> bool:
@@ -184,6 +287,13 @@ static func _is_positive_integer(value: Variant) -> bool:
 		_is_number(value)
 		and float(value) > 0.0
 		and float(value) <= MAX_ATLAS_SIZE
+		and float(value) == floorf(float(value))
+	)
+
+static func _is_non_negative_integer(value: Variant) -> bool:
+	return (
+		typeof(value) in [TYPE_INT, TYPE_FLOAT]
+		and float(value) >= 0.0
 		and float(value) == floorf(float(value))
 	)
 

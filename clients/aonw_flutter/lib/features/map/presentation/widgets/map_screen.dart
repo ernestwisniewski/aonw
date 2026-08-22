@@ -7,6 +7,7 @@ import '../../application/map_controller.dart';
 import '../../application/map_interaction_state.dart';
 import '../../read_model/map_scene.dart';
 import '../../read_model/map_view.dart';
+import '../camera/map_initial_camera.dart';
 import '../geometry/odd_q_flat_top_geometry.dart';
 import '../map_render_snapshot.dart';
 import 'map_canvas.dart';
@@ -28,8 +29,8 @@ final class MapScreen extends StatefulWidget {
 }
 
 final class _MapScreenState extends State<MapScreen> {
-  late final TransformationController _camera;
-  late final bool _ownsCamera;
+  late TransformationController _camera;
+  late bool _ownsCamera;
 
   @override
   void initState() {
@@ -37,6 +38,20 @@ final class _MapScreenState extends State<MapScreen> {
     _ownsCamera = widget.transformationController == null;
     _camera = widget.transformationController ?? TransformationController();
     if (widget.autoLoad) widget.controller.load();
+  }
+
+  @override
+  void didUpdateWidget(MapScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.transformationController != widget.transformationController) {
+      if (_ownsCamera) _camera.dispose();
+      _ownsCamera = widget.transformationController == null;
+      _camera = widget.transformationController ?? TransformationController();
+    }
+    if (widget.autoLoad &&
+        (oldWidget.controller != widget.controller || !oldWidget.autoLoad)) {
+      widget.controller.load();
+    }
   }
 
   @override
@@ -110,7 +125,7 @@ final class _ReadyMap extends StatelessWidget {
   );
 }
 
-final class _MapViewport extends StatelessWidget {
+final class _MapViewport extends StatefulWidget {
   const _MapViewport({
     required this.scene,
     required this.interaction,
@@ -124,39 +139,84 @@ final class _MapViewport extends StatelessWidget {
   final TransformationController camera;
 
   @override
+  State<_MapViewport> createState() => _MapViewportState();
+}
+
+final class _MapViewportState extends State<_MapViewport> {
+  ({String mapId, String contentHash, TransformationController camera})?
+  _initialized;
+  ({String mapId, String contentHash, TransformationController camera})?
+  _pending;
+
+  @override
+  void didUpdateWidget(_MapViewport oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.scene.map.mapId != widget.scene.map.mapId ||
+        oldWidget.scene.map.contentHash != widget.scene.map.contentHash ||
+        oldWidget.camera != widget.camera) {
+      _initialized = null;
+      _pending = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) => LayoutBuilder(builder: _buildLayout);
 
   Widget _buildLayout(BuildContext context, BoxConstraints constraints) {
     final geometry = AonwOddQFlatTopGeometry(
-      cols: scene.map.cols,
-      rows: scene.map.rows,
+      cols: widget.scene.map.cols,
+      rows: widget.scene.map.rows,
       radius: aonwMapHexRadius,
     );
     final bounds = geometry.bounds;
-    final fit = math.min(
-      constraints.maxWidth / bounds.width,
-      constraints.maxHeight / bounds.height,
+    final viewportSize = Size(constraints.maxWidth, constraints.maxHeight);
+    final contentSize = Size(bounds.width, bounds.height);
+    final initialScale = MapInitialCamera.scaleFor(
+      viewport: viewportSize,
+      content: contentSize,
+      authoredZoom: widget.scene.map.defaultZoom,
     );
+    _scheduleInitialCamera(viewportSize, contentSize);
     return ColoredBox(
       color: Theme.of(context).colorScheme.surface,
       child: InteractiveViewer(
         key: const ValueKey('map-viewport'),
-        transformationController: camera,
+        transformationController: widget.camera,
         constrained: false,
-        minScale: math.min(0.25, fit),
-        maxScale: math.max(4, scene.map.defaultZoom * 4),
+        minScale: math.min(0.25, initialScale),
+        maxScale: math.max(4, initialScale * 4),
         boundaryMargin: const EdgeInsets.all(360),
         child: MapCanvas(
           snapshot: MapRenderSnapshot(
-            map: scene.map,
-            interaction: interaction,
-            reference: scene.reference,
+            map: widget.scene.map,
+            interaction: widget.interaction,
+            reference: widget.scene.reference,
           ),
-          onHover: controller.hover,
-          onSelect: controller.select,
+          onHover: widget.controller.hover,
+          onSelect: widget.controller.select,
         ),
       ),
     );
+  }
+
+  void _scheduleInitialCamera(Size viewport, Size content) {
+    final key = (
+      mapId: widget.scene.map.mapId,
+      contentHash: widget.scene.map.contentHash,
+      camera: widget.camera,
+    );
+    if (_initialized == key || _pending == key) return;
+    _pending = key;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _pending != key) return;
+      widget.camera.value = MapInitialCamera.centeredFit(
+        viewport: viewport,
+        content: content,
+        authoredZoom: widget.scene.map.defaultZoom,
+      );
+      _initialized = key;
+      _pending = null;
+    });
   }
 }
 

@@ -45,9 +45,11 @@ clients/aonw_godot/
 └── assets/generated_maps/<map_id>/
 	└── terrain_authoring/
 		├── reference_texture.res
-		├── terrain_authoring_state.v1.json
-		├── published_terrain.v1.json         # only after successful validation
-		└── final/terrain3d_*.res             # manual Terrain3D regions
+		├── current_draft.v1.json             # atomic pointer
+		├── current_published.v1.json         # only after successful validation
+		├── workspace/terrain3d_*.res         # mutable Terrain3D working data
+		├── draft/<snapshot_hash>/            # immutable verified snapshots
+		└── published/<snapshot_hash>/        # immutable published snapshots
 ```
 
 The authored scene contains one `Terrain3D` node plus reference, grid,
@@ -61,13 +63,27 @@ radius cannot exceed one authoring hex. Terrain3D's `maps_edited` signal is
 translated to the affected raster rectangle and only that rectangle is
 clamped. **Validate & publish** always performs a separate full-raster check
 and refuses to publish any non-finite or out-of-envelope height.
+`maxCitySlope` is loaded and preserved as reserved authoring metadata, but is
+not advertised or enforced as a publication constraint yet: the domain has no
+canonical city placement whose slope could be measured. Height envelopes are
+the active constraints until that placement rule is defined in Rust.
 
 **Save draft** persists manual Terrain3D regions and records
 `mapContentHash`, `authoringProfileHash`, `generatedBaseHash`,
-`generatorVersion`, and `terrainRevision`. **Reload compiled base /
-constraints** updates generated inputs but never imports `base` over an
-existing manual `final`. Closing and reopening the scene reloads the final
-Terrain3D regions from disk.
+`generatorVersion`, raster dimensions, sample spacing, and `terrainRevision`.
+Every region is hashed before an atomic pointer switch. **Validate & publish**
+copies that verified snapshot into the separate immutable `published/`
+collection, so a later draft cannot modify an earlier publication. **Reload
+compiled base / constraints** updates generated inputs but never imports
+`base` over existing manual terrain. Closing and reopening the scene verifies
+the complete artifact identity and all region hashes before restoring the
+working data.
+
+If the stored identity differs, opening stops with an explicit compatibility
+result: a constraint refresh for changed profile/base hashes, migration for a
+changed raster grid or legacy layout, rejection for another logical map, or an
+unsupported-generator result. Stored manual terrain is never combined with a
+new compiled artifact silently.
 
 ## Runtime preview
 
@@ -84,6 +100,10 @@ picker accepts only strict map schema v1 documents whose matching asset bundle
 and compiled Terrain3D profile are available. There is no runtime mesh-terrain
 fallback: the compiled base raster is imported into Terrain3D, while the
 reference texture and hex grid remain independent terrain-following overlays.
+Logical hex coordinates, compiled absolute world coordinates, raster pixels,
+and Terrain3D-local coordinates are converted by one terrain-space value. A
+reference translation, rotation, or scale is baked before sampling the final
+Terrain3D height, so transformed artwork remains draped over the edited terrain.
 
 Controls:
 
@@ -116,12 +136,19 @@ contain no movement legality rules.
 - `game/presentation/map/geometry/` owns odd-q render and texture projection math,
   checked against the same neutral vectors as the successor Flutter client;
 - `game/presentation/` owns Terrain3D presentation, overlay meshes, camera, and UI;
-- `editor/map_authoring/` owns Workbench application, infrastructure, and UI;
-- `addons/aonw_map_workbench/` is only the editor plugin composition root.
+- `editor/map_authoring/application/` owns the session and small catalog,
+  persistence, scene-factory, and scene-writer ports;
+- `editor/map_authoring/infrastructure/` implements filesystem and snapshot
+  adapters without importing presentation;
+- `editor/map_authoring/presentation/` owns the passive Terrain3D surface,
+  scene factory, dock, and controls without constructing infrastructure;
+- `editor/map_authoring/composition/` manually wires the ports and adapters;
+- `addons/aonw_map_workbench/` only activates that composition root.
 
 The Workbench dock separates its control view from editor orchestration. This
 keeps widget construction independent from generation, undo/redo, and scene
-persistence behavior.
+persistence behavior. The application session still depends directly on
+`Terrain3DData`; only filesystem persistence is behind a port.
 
 `engine/crates/aonw_content` remains the authoritative logical validator and
 hash owner. A generated Godot scene is a presentation artifact and never a

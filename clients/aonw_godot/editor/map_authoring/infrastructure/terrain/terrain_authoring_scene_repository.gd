@@ -1,15 +1,12 @@
 @tool
 class_name AonwTerrainAuthoringSceneRepository
-extends RefCounted
+extends AonwTerrainAuthoringSceneWriter
 
 const AtomicResourceStore := preload(
 	"res://editor/map_authoring/infrastructure/atomic_resource_store.gd"
 )
 const AuthoringStore := preload(
 	"res://editor/map_authoring/infrastructure/terrain/terrain_authoring_store.gd"
-)
-const AuthoringSurface := preload(
-	"res://editor/map_authoring/presentation/terrain_authoring_surface.gd"
 )
 const SCENE_ROOT := "res://scenes/maps"
 const AUTHORING_ASSET_ROOT := "res://assets/generated_maps"
@@ -18,13 +15,17 @@ const COMPILED_ARTIFACT_ROOT := "res://.godot/terrain_compiled"
 var _scene_root: String
 var _authoring_asset_root: String
 var _compiled_artifact_root: String
+var _scene_factory: AonwTerrainAuthoringSceneFactory
 var _atomic_store := AtomicResourceStore.new()
 
 func _init(
+	scene_factory: AonwTerrainAuthoringSceneFactory,
 	scene_root: String = SCENE_ROOT,
 	authoring_asset_root: String = AUTHORING_ASSET_ROOT,
 	compiled_artifact_root: String = COMPILED_ARTIFACT_ROOT,
 ) -> void:
+	assert(scene_factory != null, "Terrain authoring scene factory is required")
+	_scene_factory = scene_factory
 	_scene_root = scene_root
 	_authoring_asset_root = authoring_asset_root
 	_compiled_artifact_root = compiled_artifact_root
@@ -59,23 +60,14 @@ func prepare_scene(
 	if FileAccess.file_exists(scene_path):
 		return {"ok": true, "scene_path": scene_path, "scene_created": false}
 
-	var root := Node3D.new()
-	root.name = map_id
-	var surface := AuthoringSurface.new()
-	surface.name = "TerrainAuthoring"
-	surface.configure(
+	var packed := _scene_factory.create_scene(
 		map_id,
 		compiled_artifact_directory_for(map_id),
 		authoring_root_for(map_id),
 	)
-	root.add_child(surface)
-	surface.owner = root
-	surface.assign_generated_owners(root)
-	var packed := PackedScene.new()
-	var pack_error := packed.pack(root)
-	if pack_error == OK:
-		pack_error = _atomic_store.save_scene(packed, scene_path)
-	root.free()
+	if packed == null:
+		return _failure("cannot build Terrain3D authoring scene")
+	var pack_error := _atomic_store.save_scene(packed, scene_path)
 	if pack_error != OK:
 		return _failure("cannot save Terrain3D authoring scene: %s" % error_string(pack_error))
 	return {"ok": true, "scene_path": scene_path, "scene_created": true}
@@ -89,8 +81,8 @@ func _validate_existing_scene(scene_path: String) -> Dictionary:
 	if packed == null:
 		return _failure("existing map scene cannot be loaded")
 	var root := packed.instantiate()
-	var surface := root.find_child("TerrainAuthoring", true, false) as AonwTerrainAuthoringSurface
-	var valid := surface != null and surface.terrain() != null
+	var surface := root.find_child("TerrainAuthoring", true, false)
+	var valid := surface != null and surface.get_node_or_null("Terrain3D") is Terrain3D
 	root.free()
 	return (
 		{"ok": true}

@@ -43,6 +43,28 @@ if [[ -d "${successor_godot}/game" ]]; then
     >>"${violations}" || true
 fi
 
+authoring_root="${successor_godot}/editor/map_authoring"
+if [[ -d "${authoring_root}" ]]; then
+  if [[ -d "${authoring_root}/application" ]]; then
+    grep -RInE 'res://.*/infrastructure/' \
+      --include='*.gd' \
+      "${authoring_root}/application" \
+      >>"${violations}" || true
+  fi
+  if [[ -d "${authoring_root}/infrastructure" ]]; then
+    grep -RInE 'res://.*/presentation/' \
+      --include='*.gd' \
+      "${authoring_root}/infrastructure" \
+      >>"${violations}" || true
+  fi
+  if [[ -d "${authoring_root}/presentation" ]]; then
+    grep -RInE 'res://.*/infrastructure/' \
+      --include='*.gd' \
+      "${authoring_root}/presentation" \
+      >>"${violations}" || true
+  fi
+fi
+
 while IFS= read -r -d '' pubspec_file; do
   grep -nHE '^[[:space:]]+(aonw_core|aonw):([[:space:]]|$)' "${pubspec_file}" >>"${violations}" || true
 done < <(

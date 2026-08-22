@@ -1,5 +1,5 @@
 class_name AonwTerrainCompiledArtifactRepository
-extends AonwTerrainArtifactReader
+extends AonwTerrainCompiledArtifactReader
 
 const Artifact := preload(
 	"res://game/application/terrain/terrain_compiled_artifact.gd"
@@ -54,8 +54,8 @@ func load_artifact(directory: String, expected_map_id: String = "") -> Dictionar
 		if not raster.has(field):
 			return _failure("compiled terrain raster is missing %s" % field)
 	for field in [
-		"cols", "rows", "hexRadiusMeters", "referenceTransform",
-		"cityCoreRadiusMeters",
+		"cols", "rows", "hexRadiusMeters", "worldOriginMeters", "referenceTransform",
+		"cityCoreRadiusMeters", "maxCitySlope",
 	]:
 		if not authoring.has(field):
 			return _failure("compiled terrain authoring metadata is missing %s" % field)
@@ -72,9 +72,18 @@ func load_artifact(directory: String, expected_map_id: String = "") -> Dictionar
 	var world_min_result := _vector2_xz(raster["worldMinMeters"], "worldMinMeters")
 	if not world_min_result["ok"]:
 		return world_min_result
+	var world_origin_result := _vector3(authoring["worldOriginMeters"], "worldOriginMeters")
+	if not world_origin_result["ok"]:
+		return world_origin_result
 	var reference_result := _reference_transform(authoring["referenceTransform"])
 	if not reference_result["ok"]:
 		return reference_result
+	var max_city_slope_result := _optional_non_negative_float(
+		authoring["maxCitySlope"],
+		"maxCitySlope",
+	)
+	if not max_city_slope_result["ok"]:
+		return max_city_slope_result
 
 	var artifact := Artifact.new()
 	artifact.directory = directory
@@ -87,6 +96,7 @@ func load_artifact(directory: String, expected_map_id: String = "") -> Dictionar
 	artifact.height = height
 	artifact.sample_spacing_meters = spacing
 	artifact.world_min_meters = world_min_result["value"]
+	artifact.world_origin_meters = world_origin_result["value"]
 	artifact.cols = int(authoring["cols"])
 	artifact.rows = int(authoring["rows"])
 	artifact.hex_radius_meters = float(authoring["hexRadiusMeters"])
@@ -94,6 +104,7 @@ func load_artifact(directory: String, expected_map_id: String = "") -> Dictionar
 	artifact.reference_rotation_degrees = reference_result["rotation"]
 	artifact.reference_scale = reference_result["scale"]
 	artifact.city_core_radius_meters = float(authoring["cityCoreRadiusMeters"])
+	artifact.max_city_slope = max_city_slope_result["value"]
 	artifact.base_image = layers_result["base"]
 	artifact.minimum_image = layers_result["min"]
 	artifact.maximum_image = layers_result["max"]
@@ -167,6 +178,16 @@ func _vector3(raw: Variant, label: String) -> Dictionary:
 			return _failure("%s is missing %s" % [label, axis])
 	var value := Vector3(float(raw["x"]), float(raw["y"]), float(raw["z"]))
 	return {"ok": true, "value": value} if value.is_finite() else _failure("%s is not finite" % label)
+
+func _optional_non_negative_float(raw: Variant, label: String) -> Dictionary:
+	if raw == null:
+		return {"ok": true, "value": null}
+	if not raw is int and not raw is float:
+		return _failure("%s is not a number" % label)
+	var value := float(raw)
+	if not is_finite(value) or value < 0.0:
+		return _failure("%s must be finite and non-negative" % label)
+	return {"ok": true, "value": value}
 
 func _is_sha256(value: String) -> bool:
 	if value.length() != 64:

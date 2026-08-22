@@ -322,7 +322,9 @@ func _test_shared_client_contract() -> void:
 		_check(
 			map_body.get("type", "") == "mapInspected"
 			and mapped["ok"]
-			and mapped["value"].tile_at(Vector2i.ZERO).display_terrain() == &"forest",
+			and mapped["value"].tile_at(Vector2i.ZERO).display_terrain() == &"forest"
+			and mapped["value"].contains(Vector2i.ZERO)
+			and not mapped["value"].contains(Vector2i(1, 0)),
 			"Godot maps the shared response into its map read model",
 		)
 		var foreign_map: Dictionary = map_body["map"].duplicate(true)
@@ -330,6 +332,24 @@ func _test_shared_client_contract() -> void:
 		_check(
 			not MapViewMapper.new().from_wire(foreign_map)["ok"],
 			"Godot rejects foreign map response fields",
+		)
+		var duplicate_tiles: Dictionary = map_body["map"].duplicate(true)
+		duplicate_tiles["tiles"].append(duplicate_tiles["tiles"][0].duplicate(true))
+		_check(
+			not MapViewMapper.new().from_wire(duplicate_tiles)["ok"],
+			"Godot rejects duplicated map tile coordinates",
+		)
+		var unknown_terrain: Dictionary = map_body["map"].duplicate(true)
+		unknown_terrain["tiles"][0]["displayTerrain"] = "futureTerrain"
+		_check(
+			not MapViewMapper.new().from_wire(unknown_terrain)["ok"],
+			"Godot rejects unknown map enum values",
+		)
+		var outside_objective: Dictionary = map_body["map"].duplicate(true)
+		outside_objective["objectives"][0]["coordinate"]["col"] = 1
+		_check(
+			not MapViewMapper.new().from_wire(outside_objective)["ok"],
+			"Godot rejects objectives outside the validated tile coverage",
 		)
 
 	var foreign := LocalMatchSessionController.new(ForeignVersionTransport.new()).capabilities()

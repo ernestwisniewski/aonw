@@ -39,7 +39,12 @@ final class RustMapRepository implements MapRepository {
       );
       if (!response.isSuccess) {
         final error = response.error!;
-        throw MapLoadException(code: error.code, message: error.message);
+        throw MapLoadException(
+          code: error.code,
+          message: 'The map could not be opened.',
+          diagnosticCause: error,
+          diagnosticStackTrace: StackTrace.current,
+        );
       }
       final wire = response.require<AonwMapInspectedResponse>().map;
       final map = _mapper.fromWire(wire);
@@ -50,10 +55,12 @@ final class RustMapRepository implements MapRepository {
       return MapScene(map: map, reference: reference);
     } on MapLoadException {
       rethrow;
-    } on FormatException catch (error) {
+    } on FormatException catch (error, stackTrace) {
       throw MapLoadException(
         code: 'invalid_map_protocol',
-        message: 'The Rust map response is invalid: ${error.message}',
+        message: 'The map data is incompatible with this client.',
+        diagnosticCause: error,
+        diagnosticStackTrace: stackTrace,
       );
     } finally {
       await session.close();

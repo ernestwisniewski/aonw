@@ -112,7 +112,7 @@ func _rebuild_overlays() -> void:
 		_reference_texture,
 		render_settings.reference_opacity,
 	)
-	_reference.transform = _artifact.reference_transform()
+	_reference.transform = Transform3D.IDENTITY
 	_grid.mesh = _overlay_builder.grid_mesh(
 		_artifact,
 		_terrain.data,

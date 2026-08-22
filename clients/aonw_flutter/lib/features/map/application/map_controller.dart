@@ -30,29 +30,57 @@ final class MapFailureState extends MapScreenState {
   final String message;
 }
 
+typedef MapDiagnosticReporter =
+    void Function(String code, Object error, StackTrace stackTrace);
+
+void _reportMapDiagnostic(String code, Object error, StackTrace stackTrace) {
+  debugPrintStack(
+    label: 'Map load diagnostic [$code]: $error',
+    stackTrace: stackTrace,
+  );
+}
+
 final class MapController extends ChangeNotifier {
   MapController({
     required MapRepository repository,
     this.assets = MapAssetPaths.starter,
-  }) : _repository = repository;
+    MapDiagnosticReporter diagnosticReporter = _reportMapDiagnostic,
+  }) : _repository = repository,
+       _diagnosticReporter = diagnosticReporter;
 
   final MapRepository _repository;
+  final MapDiagnosticReporter _diagnosticReporter;
   final MapAssetPaths assets;
   MapScreenState _state = const MapLoadingState();
   var _disposed = false;
+  var _loadGeneration = 0;
 
   MapScreenState get state => _state;
 
   Future<void> load() async {
+    if (_disposed) return;
+    final generation = ++_loadGeneration;
     _setState(const MapLoadingState());
     try {
       final scene = await _repository.load(assets);
+      if (!_isCurrent(generation)) return;
       _setState(
         MapReadyState(scene: scene, interaction: const MapInteractionState()),
       );
-    } on MapLoadException catch (error) {
+    } on MapLoadException catch (error, stackTrace) {
+      if (!_isCurrent(generation)) return;
+      final cause = error.diagnosticCause;
+      if (cause != null) {
+        _diagnosticReporter(
+          error.code,
+          cause,
+          error.diagnosticStackTrace ?? stackTrace,
+        );
+      }
       _setState(MapFailureState(code: error.code, message: error.message));
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      if (!_isCurrent(generation)) return;
+      _diagnosticReporter('unexpected_map_failure', error, stackTrace);
       _setState(
         const MapFailureState(
           code: 'unexpected_map_failure',
@@ -108,8 +136,12 @@ final class MapController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _loadGeneration += 1;
     super.dispose();
   }
+
+  bool _isCurrent(int generation) =>
+      !_disposed && generation == _loadGeneration;
 
   void _setState(MapScreenState value) {
     if (_disposed) return;

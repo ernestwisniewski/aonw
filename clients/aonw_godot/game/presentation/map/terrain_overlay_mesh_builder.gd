@@ -4,6 +4,9 @@ extends RefCounted
 const HexGridGeometry := preload(
 	"res://game/presentation/map/geometry/hex_grid_geometry.gd"
 )
+const TerrainSpaceTransform := preload(
+	"res://game/application/terrain/terrain_space_transform.gd"
+)
 const REFERENCE_OFFSET := 0.012
 const GRID_OFFSET := 0.035
 const CONSTRAINT_OFFSET := 0.06
@@ -14,26 +17,63 @@ func reference_mesh(
 	texture: Texture2D,
 	opacity: float,
 ) -> ArrayMesh:
-	var heights := Image.create(artifact.width, artifact.height, false, Image.FORMAT_RF)
-	for y in artifact.height:
-		for x in artifact.width:
-			var pixel := Vector2i(x, y)
-			heights.set_pixelv(
-				pixel,
-				Color(data.get_height(artifact.local_position(pixel)) + REFERENCE_OFFSET, 0.0, 0.0),
-			)
+	var space := TerrainSpaceTransform.new(artifact)
 	var geometry := HexGridGeometry.new(
 		artifact.cols,
 		artifact.rows,
 		artifact.hex_radius_meters,
 	)
+	var vertices := PackedVector3Array()
+	var uvs := PackedVector2Array()
+	vertices.resize(artifact.width * artifact.height)
+	uvs.resize(vertices.size())
+	for y in artifact.height:
+		for x in artifact.width:
+			var pixel := Vector2i(x, y)
+			var index := y * artifact.width + x
+			var source := space.raster_pixel_to_terrain_local(pixel)
+			var transformed := space.reference_to_terrain_local(source)
+			var terrain_height := data.get_height(Vector3(transformed.x, 0.0, transformed.z))
+			transformed.y += (terrain_height if is_finite(terrain_height) else 0.0)
+			transformed.y += REFERENCE_OFFSET
+			vertices[index] = transformed
+			uvs[index] = space.terrain_local_to_reference_uv(source, geometry.bounds())
 	return _raster_mesh(
 		artifact,
-		heights,
+		vertices,
+		uvs,
 		Color(1.0, 1.0, 1.0, opacity),
 		texture,
-		geometry.bounds(),
 	)
+
+func refresh_reference_heights(
+	mesh: ArrayMesh,
+	artifact: AonwTerrainCompiledArtifact,
+	data: Terrain3DData,
+	changed_pixels: Rect2i,
+) -> int:
+	if mesh == null or not changed_pixels.has_area():
+		return 0
+	var arrays := mesh.surface_get_arrays(0)
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var space := TerrainSpaceTransform.new(artifact)
+	var samples := 0
+	for y in artifact.height:
+		for x in artifact.width:
+			var pixel := Vector2i(x, y)
+			var source := space.raster_pixel_to_terrain_local(pixel)
+			var transformed := space.reference_to_terrain_local(source)
+			var sampled_pixel := space.terrain_local_to_raster_pixel(transformed)
+			if not changed_pixels.has_point(sampled_pixel):
+				continue
+			var terrain_height := data.get_height(Vector3(transformed.x, 0.0, transformed.z))
+			transformed.y += (terrain_height if is_finite(terrain_height) else 0.0)
+			transformed.y += REFERENCE_OFFSET
+			vertices[y * artifact.width + x] = transformed
+			samples += 1
+	if samples > 0:
+		_replace_vertices(mesh, arrays, vertices)
+	return samples
 
 func constraint_mesh(
 	artifact: AonwTerrainCompiledArtifact,
@@ -46,7 +86,18 @@ func constraint_mesh(
 		for x in heights.get_width():
 			var value: float = heights.get_pixel(x, y).r + vertical_offset
 			heights.set_pixel(x, y, Color(value, 0.0, 0.0))
-	return _raster_mesh(artifact, heights, color, null, Rect2())
+	var space := TerrainSpaceTransform.new(artifact)
+	var vertices := PackedVector3Array()
+	vertices.resize(artifact.width * artifact.height)
+	for y in artifact.height:
+		for x in artifact.width:
+			var pixel := Vector2i(x, y)
+			var index := y * artifact.width + x
+			vertices[index] = space.raster_pixel_to_terrain_local(
+				pixel,
+				heights.get_pixelv(pixel).r,
+			)
+	return _raster_mesh(artifact, vertices, PackedVector2Array(), color, null)
 
 func grid_mesh(
 	artifact: AonwTerrainCompiledArtifact,
@@ -54,6 +105,7 @@ func grid_mesh(
 	width: float,
 	opacity: float,
 ) -> ArrayMesh:
+	var space := TerrainSpaceTransform.new(artifact)
 	var geometry := HexGridGeometry.new(
 		artifact.cols,
 		artifact.rows,
@@ -73,13 +125,13 @@ func grid_mesh(
 					continue
 				edges[edge_key] = true
 				var first := _terrain_point(
-					artifact,
+					space,
 					data,
 					geometry.corner_position(coordinate, corner),
 					GRID_OFFSET,
 				)
 				var second := _terrain_point(
-					artifact,
+					space,
 					data,
 					geometry.corner_position(coordinate, (corner + 1) % 6),
 					GRID_OFFSET,
@@ -88,6 +140,31 @@ func grid_mesh(
 	var mesh := _mesh(vertices, PackedVector2Array(), indices)
 	mesh.surface_set_material(0, _material(Color(0.025, 0.035, 0.055, opacity)))
 	return mesh
+
+func refresh_grid_heights(
+	mesh: ArrayMesh,
+	artifact: AonwTerrainCompiledArtifact,
+	data: Terrain3DData,
+	changed_pixels: Rect2i,
+) -> int:
+	if mesh == null or not changed_pixels.has_area():
+		return 0
+	var arrays := mesh.surface_get_arrays(0)
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var space := TerrainSpaceTransform.new(artifact)
+	var affected := changed_pixels.grow(1)
+	var samples := 0
+	for index in vertices.size():
+		var vertex := vertices[index]
+		if not affected.has_point(space.terrain_local_to_raster_pixel(vertex)):
+			continue
+		var height := data.get_height(Vector3(vertex.x, 0.0, vertex.z))
+		vertex.y = (height if is_finite(height) else 0.0) + GRID_OFFSET
+		vertices[index] = vertex
+		samples += 1
+	if samples > 0:
+		_replace_vertices(mesh, arrays, vertices)
+	return samples
 
 func city_marker(
 	artifact: AonwTerrainCompiledArtifact,
@@ -101,8 +178,9 @@ func city_marker(
 		artifact.rows,
 		artifact.hex_radius_meters,
 	)
+	var space := TerrainSpaceTransform.new(artifact)
 	var world_center: Vector2 = geometry.tile_center(coordinate)
-	var center := _terrain_point(artifact, data, world_center, 0.08)
+	var center := _terrain_point(space, data, world_center, 0.08)
 	var mesh := CylinderMesh.new()
 	mesh.top_radius = artifact.city_core_radius_meters
 	mesh.bottom_radius = artifact.city_core_radius_meters
@@ -113,27 +191,12 @@ func city_marker(
 
 func _raster_mesh(
 	artifact: AonwTerrainCompiledArtifact,
-	heights: Image,
+	vertices: PackedVector3Array,
+	uvs: PackedVector2Array,
 	color: Color,
 	texture: Texture2D,
-	uv_bounds: Rect2,
 ) -> ArrayMesh:
-	var vertices := PackedVector3Array()
-	var uvs := PackedVector2Array()
 	var indices := PackedInt32Array()
-	vertices.resize(artifact.width * artifact.height)
-	if texture != null:
-		uvs.resize(vertices.size())
-	for y in artifact.height:
-		for x in artifact.width:
-			var pixel := Vector2i(x, y)
-			var index := y * artifact.width + x
-			vertices[index] = artifact.local_position(pixel, heights.get_pixelv(pixel).r)
-			if texture != null:
-				var world := artifact.world_position(pixel)
-				uvs[index] = (
-					(Vector2(world.x, world.z) - uv_bounds.position) / uv_bounds.size
-				).clamp(Vector2.ZERO, Vector2.ONE)
 	for y in artifact.height - 1:
 		for x in artifact.width - 1:
 			var top_left := y * artifact.width + x
@@ -168,6 +231,17 @@ func _mesh(
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
 
+func _replace_vertices(
+	mesh: ArrayMesh,
+	arrays: Array,
+	vertices: PackedVector3Array,
+) -> void:
+	var material := mesh.surface_get_material(0)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	mesh.clear_surfaces()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	mesh.surface_set_material(0, material)
+
 func _material(color: Color) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -178,16 +252,12 @@ func _material(color: Color) -> StandardMaterial3D:
 	return material
 
 func _terrain_point(
-	artifact: AonwTerrainCompiledArtifact,
+	space: AonwTerrainSpaceTransform,
 	data: Terrain3DData,
-	world_point: Vector2,
+	logical_point: Vector2,
 	vertical_offset: float,
 ) -> Vector3:
-	var local := Vector3(
-		world_point.x - artifact.world_min_meters.x,
-		0.0,
-		world_point.y - artifact.world_min_meters.y,
-	)
+	var local := space.logical_to_terrain_local(logical_point)
 	local.y = data.get_height(local) + vertical_offset
 	return local
 

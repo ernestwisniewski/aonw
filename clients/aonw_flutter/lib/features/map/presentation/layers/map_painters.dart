@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/map_palette.dart';
+import '../../application/map_interaction_state.dart';
 import '../../read_model/map_view.dart';
 import '../geometry/odd_q_flat_top_geometry.dart';
 import '../map_render_snapshot.dart';
@@ -29,10 +30,10 @@ final class MapTerrainPainter extends CustomPainter {
       oldDelegate.snapshot.map != snapshot.map;
 }
 
-final class MapOverlayPainter extends CustomPainter {
-  MapOverlayPainter({required this.snapshot, required this.geometry});
+final class MapGridPainter extends CustomPainter {
+  MapGridPainter({required this.map, required this.geometry});
 
-  final MapRenderSnapshot snapshot;
+  final MapView map;
   final AonwOddQFlatTopGeometry geometry;
 
   @override
@@ -43,18 +44,34 @@ final class MapOverlayPainter extends CustomPainter {
       ..color = MapPalette.grid
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
-    for (final tile in snapshot.map.tiles) {
+    for (final tile in map.tiles) {
       canvas.drawPath(_hexPath(geometry, tile.coordinate), grid);
     }
+  }
+
+  @override
+  bool shouldRepaint(MapGridPainter oldDelegate) => oldDelegate.map != map;
+}
+
+final class MapInteractionPainter extends CustomPainter {
+  MapInteractionPainter({required this.interaction, required this.geometry});
+
+  final MapInteractionState interaction;
+  final AonwOddQFlatTopGeometry geometry;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bounds = geometry.bounds;
+    canvas.translate(-bounds.x, -bounds.y);
     _paintHighlight(
       canvas,
-      snapshot.interaction.hovered,
+      interaction.hovered,
       color: MapPalette.hover,
       width: 3,
     );
     _paintHighlight(
       canvas,
-      snapshot.interaction.selected,
+      interaction.selected,
       color: MapPalette.selection,
       width: 5,
     );
@@ -77,9 +94,8 @@ final class MapOverlayPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(MapOverlayPainter oldDelegate) =>
-      oldDelegate.snapshot.interaction != snapshot.interaction ||
-      oldDelegate.snapshot.map != snapshot.map;
+  bool shouldRepaint(MapInteractionPainter oldDelegate) =>
+      oldDelegate.interaction != interaction;
 }
 
 final class MapHexClipper extends CustomClipper<Path> {
