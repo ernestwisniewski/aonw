@@ -10,7 +10,10 @@ import 'map_atlas_builder.dart';
 const _fixturePath =
     'aonw_tests/fixtures/maps/aonw2_starter/reference_tiles.v1.json';
 const _mapPath = 'content/maps/aonw2_starter/map.json';
-const _defaultOutput = 'clients/aonw_godot/assets/maps/aonw2_starter';
+const _committedOutputs = [
+  'clients/aonw_flutter/assets/maps/aonw2_starter',
+  'clients/aonw_godot/assets/maps/aonw2_starter',
+];
 
 Future<void> main(List<String> arguments) async {
   try {
@@ -23,10 +26,12 @@ Future<void> main(List<String> arguments) async {
     }
     final workspace = Directory.current.absolute;
     if (command == 'compile') {
-      await compileStarterMapBundle(
-        workspace: workspace,
-        output: Directory('${workspace.path}/$_defaultOutput'),
-      );
+      for (final path in _committedOutputs) {
+        await compileStarterMapBundle(
+          workspace: workspace,
+          output: Directory('${workspace.path}/$path'),
+        );
+      }
       return;
     }
     await _check(workspace);
@@ -71,7 +76,9 @@ Future<void> _check(Directory workspace) async {
     await compileStarterMapBundle(workspace: workspace, output: first);
     await compileStarterMapBundle(workspace: workspace, output: second);
     await _compareBundle(first, second);
-    await _compareBundle(Directory('${workspace.path}/$_defaultOutput'), first);
+    for (final path in _committedOutputs) {
+      await _compareBundle(Directory('${workspace.path}/$path'), first);
+    }
   } finally {
     await temporary.delete(recursive: true);
   }

@@ -23,10 +23,17 @@ void main(List<String> args) async {
   });
 }
 
-bool _rustBuildEnabled(BuildInput input) =>
-    Platform.environment['AONW_ENABLE_RUST_FLUTTER'] == '1' &&
-    input.config.code.targetOS == OS.current &&
-    input.config.code.targetArchitecture == Architecture.current;
+bool _rustBuildEnabled(BuildInput input) {
+  final enabled = input.userDefines['rust_backend'];
+  if (enabled is! bool?) {
+    throw const FormatException(
+      'hooks.user_defines.aonw_rust_client.rust_backend must be a boolean.',
+    );
+  }
+  return enabled == true &&
+      input.config.code.targetOS == OS.current &&
+      input.config.code.targetArchitecture == Architecture.current;
+}
 
 Future<void> _buildRust(BuildInput input, BuildOutputBuilder output) async {
   final engineRoot = input.packageRoot.resolve('../../engine/');

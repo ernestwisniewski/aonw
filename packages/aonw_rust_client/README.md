@@ -11,10 +11,18 @@ and presentation semantics as the Godot client.
 Raw JSON remains confined to the transport. Rust, Dart, and
 Godot consume the same committed protocol goldens.
 
-Normal Flutter builds compile a small unavailable stub and keep the Dart local
-engine active. Set `AONW_ENABLE_RUST_FLUTTER=1` to build and bundle the host
-Rust adapter for tests and development. Unsupported targets remain on the Dart
-fallback until their Rust toolchain and packaging are qualified.
+Consumers omit the hook setting to compile a small unavailable stub. A native
+consumer that requires Rust declares the cache-aware setting below in its
+`pubspec.yaml`:
+
+    hooks:
+      user_defines:
+        aonw_rust_client:
+          rust_backend: true
+
+The successor client sets this unconditionally, so it has no Dart engine or
+per-request fallback. Unsupported targets report the typed adapter-unavailable
+state until their Rust toolchain and packaging are qualified.
 
 The package does not yet implement the app's authoritative `LocalEnginePort`.
 The current recipient patch intentionally cannot reconstruct every field of the

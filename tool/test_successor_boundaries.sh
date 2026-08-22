@@ -103,4 +103,14 @@ if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>
 fi
 echo "Dependency checker rejected a legacy Dart import."
 
+printf 'void main() {}\n' >"${dependency_fixture}/clients/aonw_flutter/lib/main.dart"
+mkdir -p "${dependency_fixture}/clients/aonw_flutter/lib/features/map/presentation"
+printf "import 'package:aonw_rust_client/aonw_rust_client.dart';\n" \
+  >"${dependency_fixture}/clients/aonw_flutter/lib/features/map/presentation/map.dart"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted Rust transport in presentation." >&2
+  exit 1
+fi
+echo "Dependency checker rejected Rust transport in presentation."
+
 echo "Successor boundary negative tests passed."

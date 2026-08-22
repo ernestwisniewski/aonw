@@ -1,10 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:aonw_flutter/features/map/presentation/geometry/odd_q_flat_top_geometry.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-// ignore: avoid_relative_lib_imports -- the standalone package is created in M1.3.
-import '../../../../../lib/features/map/presentation/geometry/odd_q_flat_top_geometry.dart';
 
 void main() {
   final fixture = _fixture();
@@ -58,7 +56,7 @@ void main() {
 Map<String, dynamic> _fixture() =>
     jsonDecode(
           File(
-            'aonw_tests/fixtures/geometry/odd_q_flat_top.v1.json',
+            '../../aonw_tests/fixtures/geometry/odd_q_flat_top.v1.json',
           ).readAsStringSync(),
         )
         as Map<String, dynamic>;

@@ -1013,6 +1013,15 @@
       "cyclomaticComplexity": {},
       "cognitiveComplexity": {}
     },
+    "successor_flutter_integration_test": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
     "successor_flutter_lib": {
       "files": {},
       "legacyFiles": {},

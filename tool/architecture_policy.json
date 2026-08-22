@@ -202,6 +202,12 @@
       "defaultRole": "test",
       "roleAssignments": {}
     },
+    "successor_flutter_integration_test": {
+      "sourceRoot": "clients/aonw_flutter/integration_test",
+      "generatedPrefixes": [],
+      "defaultRole": "test",
+      "roleAssignments": {}
+    },
     "successor_flutter_lib": {
       "sourceRoot": "clients/aonw_flutter/lib",
       "generatedPrefixes": [],

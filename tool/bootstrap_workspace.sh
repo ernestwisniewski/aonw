@@ -9,7 +9,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 "${repo_root}/tool/bootstrap_godot.sh"
 "${repo_root}/tool/bootstrap_terrain3d.sh"
 
-for workspace in . packages/aonw_core packages/aonw_server_client server; do
+for workspace in . clients/aonw_flutter packages/aonw_core packages/aonw_server_client server; do
   for input in pubspec.yaml pubspec.lock; do
     if [[ ! -f "${repo_root}/${workspace}/${input}" ]]; then
       echo "Missing locked workspace input: ${workspace}/${input}" >&2
@@ -21,6 +21,12 @@ done
 echo "Resolving root Flutter dependencies..."
 (
   cd "${repo_root}"
+  flutter pub get --enforce-lockfile
+)
+
+echo "Resolving successor Flutter dependencies..."
+(
+  cd "${repo_root}/clients/aonw_flutter"
   flutter pub get --enforce-lockfile
 )
 

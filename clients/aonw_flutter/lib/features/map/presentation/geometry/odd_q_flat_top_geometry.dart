@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+const double aonwMapHexRadius = 60;
+
 typedef AonwHexCoordinate = ({int col, int row});
 typedef AonwPoint = ({double x, double y});
 typedef AonwBounds = ({double x, double y, double width, double height});

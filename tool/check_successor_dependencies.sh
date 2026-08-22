@@ -41,8 +41,32 @@ done < <(
     -type f -name 'pubspec.yaml' -print0
 )
 
+while IFS= read -r -d '' source_file; do
+  case "${source_file}" in
+    */infrastructure/*) ;;
+    *)
+      grep -nHE "package:aonw_rust_client/" "${source_file}" \
+        >>"${violations}" || true
+      ;;
+  esac
+  case "${source_file}" in
+    */presentation/*)
+      grep -nHE "^import .*infrastructure/" "${source_file}" \
+        >>"${violations}" || true
+      ;;
+    */read_model/*)
+      grep -nHE "package:flutter/" "${source_file}" \
+        >>"${violations}" || true
+      ;;
+  esac
+done < <(
+  find "${successor_flutter}/lib" \
+    \( -path '*/.dart_tool' -o -path '*/build' \) -prune -o \
+    -type f -name '*.dart' -print0
+)
+
 if [[ -s "${violations}" ]]; then
-  echo "Successor Flutter must not depend on or import legacy Dart packages:" >&2
+  echo "Successor Flutter dependency boundaries were violated:" >&2
   sed "s#${repo_root}/##" "${violations}" >&2
   exit 1
 fi
