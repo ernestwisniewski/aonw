@@ -69,7 +69,10 @@ void main() {
       final build = await MapAtlasBuilder(
         columns: columns,
         rows: rows,
-        sourceFiles: List.filled(columns * rows, sourceFile),
+        source: FileMapTileImageSource(
+          files: List.filled(columns * rows, sourceFile),
+          rows: rows,
+        ),
       ).build();
       final output = Directory('${temporary.path}/runtime/map');
       await MapPageWriter(mapId: 'seam-test', output: output).write(build);

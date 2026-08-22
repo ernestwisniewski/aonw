@@ -198,6 +198,20 @@
       "cyclomaticComplexity": {},
       "cognitiveComplexity": {}
     },
+    "successor_flutter_lib": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "successor_flutter_test": {
+      "sourceLines": {},
+      "callableCount": {},
+      "callableLines": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
     "vendor_sign_in_with_apple": {
       "sourceLines": {},
       "callableCount": {},

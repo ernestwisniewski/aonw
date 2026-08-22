@@ -5,7 +5,6 @@ const HexGridGeometry := preload("res://game/presentation/map/geometry/hex_grid_
 const MapTextureProjection := preload(
 	"res://game/presentation/map/geometry/map_texture_projection.gd"
 )
-const DEFAULT_TILE_SIZE := Vector2i(160, 120)
 const MANIFEST_NAME := "map_texture_manifest.json"
 const MAP_HEX_RADIUS := 60.0
 const MAX_ATLAS_SIZE := 16_384
@@ -31,7 +30,6 @@ func load_atlas(document: AonwMapDocument, source_directory: String) -> Dictiona
 	var projection := MapTextureProjection.new(geometry)
 	var reference := _load_reference_atlas(
 		document,
-		projection,
 		_resolve_path(source_directory),
 	)
 	if not reference["ok"]:
@@ -60,12 +58,11 @@ func load_atlas(document: AonwMapDocument, source_directory: String) -> Dictiona
 
 func _load_reference_atlas(
 	document: AonwMapDocument,
-	projection,
 	source_directory: String,
 ) -> Dictionary:
 	var manifest_path := source_directory.path_join(MANIFEST_NAME)
 	if source_directory.is_empty() or not FileAccess.file_exists(manifest_path):
-		return _empty_reference_atlas(document, projection)
+		return _failure("map asset bundle is required: %s" % manifest_path)
 
 	var manifest_file := FileAccess.open(manifest_path, FileAccess.READ)
 	if manifest_file == null:
@@ -82,14 +79,13 @@ func _load_reference_atlas(
 	)
 	var atlas := Image.create(atlas_size.x, atlas_size.y, false, Image.FORMAT_RGBA8)
 	atlas.fill(Color.TRANSPARENT)
-	var missing: Array[String] = []
-	var invalid: Array[String] = []
 	for page in manifest["pages"]:
 		var asset := str(page["asset"])
-		var page_path := source_directory.path_join(asset.get_file())
+		var page_path := source_directory.path_join(str(page["file"]))
 		if not FileAccess.file_exists(page_path):
-			missing.append(asset)
-			continue
+			return _failure("missing map asset bundle page: %s" % asset)
+		if FileAccess.get_sha256(page_path) != str(page["sha256"]):
+			return _failure("map asset bundle page hash does not match: %s" % asset)
 		var image := Image.load_from_file(page_path)
 		if (
 			image == null
@@ -97,11 +93,10 @@ func _load_reference_atlas(
 			or image.get_width() != int(page["pixelWidth"])
 			or image.get_height() != int(page["pixelHeight"])
 		):
-			invalid.append(asset)
-			continue
+			return _failure("map asset bundle page is invalid: %s" % asset)
 		image.convert(Image.FORMAT_RGBA8)
 		if not _blit_page(atlas, image, page["destination"], scale):
-			invalid.append(asset)
+			return _failure("map asset bundle page is outside the atlas: %s" % asset)
 
 	return {
 		"ok": true,
@@ -111,23 +106,7 @@ func _load_reference_atlas(
 			ceili(MAP_HEX_RADIUS * 2.0 * scale),
 			ceili(HexGridGeometry.SQRT_3 * MAP_HEX_RADIUS * scale),
 		),
-		"missing_pages": missing,
-		"invalid_pages": invalid,
-	}
-
-func _empty_reference_atlas(document: AonwMapDocument, projection) -> Dictionary:
-	var atlas_size: Vector2i = projection.target_atlas_size(DEFAULT_TILE_SIZE)
-	var atlas := Image.create(atlas_size.x, atlas_size.y, false, Image.FORMAT_RGBA8)
-	atlas.fill(Color.TRANSPARENT)
-	var missing: Array[String] = []
-	for tile in document.tiles():
-		missing.append("%dx%d.jpg" % [int(tile["col"]) + 1, int(tile["row"]) + 1])
-	return {
-		"ok": true,
-		"image": atlas,
-		"atlas_size": atlas_size,
-		"source_tile_size": DEFAULT_TILE_SIZE,
-		"missing_pages": missing,
+		"missing_pages": [],
 		"invalid_pages": [],
 	}
 
@@ -138,10 +117,20 @@ func _manifest_error(
 	if value is not Dictionary:
 		return "root must be an object"
 	var manifest: Dictionary = value
+	if not _has_exact_fields(manifest, [
+		"version", "mapId", "mapContentHash", "gridLayout", "cols", "rows",
+		"worldWidth", "worldHeight", "compiledScale", "filterQuality",
+		"pageSizeLimit", "gutter", "pages", "averageColors",
+	]):
+		return "fields do not match MapAssetBundleManifest v1"
 	if manifest.get("version") != 1:
 		return "unsupported version"
 	if manifest.get("mapId") != document.map_id():
 		return "map identity does not match"
+	if manifest.get("mapContentHash") != document.content_hash():
+		return "map content hash does not match"
+	if manifest.get("gridLayout") != "oddQFlatTop":
+		return "grid layout does not match"
 	if manifest.get("cols") != document.cols() or manifest.get("rows") != document.rows():
 		return "map dimensions do not match"
 	for field in ["worldWidth", "worldHeight", "compiledScale"]:
@@ -162,15 +151,28 @@ func _manifest_error(
 		if page_value is not Dictionary:
 			return "page must be an object"
 		var page: Dictionary = page_value
+		if not _has_exact_fields(page, [
+			"file", "asset", "format", "sha256", "pixelWidth", "pixelHeight",
+			"destination",
+		]):
+			return "page fields do not match MapAssetBundleManifest v1"
 		var asset: Variant = page.get("asset")
-		if asset is not String:
-			return "page asset must be a string"
-		var page_name := str(asset).get_file()
-		if str(asset) != expected_prefix + page_name or not page_name.ends_with(".jpg"):
+		var page_name: Variant = page.get("file")
+		if asset is not String or page_name is not String:
+			return "page paths must be strings"
+		if (
+			str(page_name).get_file() != page_name
+			or not _is_page_file(str(page_name))
+			or str(asset) != expected_prefix + str(page_name)
+		):
 			return "page asset is outside the map runtime directory"
 		if seen.has(page_name):
 			return "page asset is duplicated"
 		seen[page_name] = true
+		if page.get("format") != "jpeg":
+			return "%s has an unsupported format" % page_name
+		if not _is_sha256(page.get("sha256")):
+			return "%s has an invalid SHA-256" % page_name
 		if not _is_positive_integer(page.get("pixelWidth")):
 			return "%s has an invalid width" % page_name
 		if not _is_positive_integer(page.get("pixelHeight")):
@@ -241,6 +243,28 @@ static func _is_number(value: Variant) -> bool:
 		typeof(value) in [TYPE_INT, TYPE_FLOAT]
 		and absf(float(value)) <= 1_000_000.0
 	)
+
+static func _is_sha256(value: Variant) -> bool:
+	return (
+		value is String
+		and value.length() == 64
+		and value.to_lower() == value
+		and value.is_valid_hex_number(false)
+	)
+
+static func _is_page_file(value: String) -> bool:
+	if not value.begins_with("page_") or not value.ends_with(".jpg"):
+		return false
+	var index := value.trim_prefix("page_").trim_suffix(".jpg")
+	return not index.is_empty() and not index.begins_with("-") and index.is_valid_int()
+
+static func _has_exact_fields(value: Dictionary, fields: Array) -> bool:
+	if value.size() != fields.size():
+		return false
+	for field in fields:
+		if not value.has(field):
+			return false
+	return true
 
 static func _failure(message: String) -> Dictionary:
 	return {"ok": false, "message": message}

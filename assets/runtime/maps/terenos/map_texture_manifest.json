@@ -1,6 +1,8 @@
 {
   "version": 1,
   "mapId": "terenos",
+  "mapContentHash": "c580c081e39a677e0d6f5e51f1654fe12b0274bfe9672c03994b9c61d1c88fec",
+  "gridLayout": "oddQFlatTop",
   "cols": 20,
   "rows": 15,
   "worldWidth": 1830.0,
@@ -11,7 +13,10 @@
   "gutter": 2,
   "pages": [
     {
+      "file": "page_00.jpg",
       "asset": "assets/runtime/maps/terenos/page_00.jpg",
+      "format": "jpeg",
+      "sha256": "7ea2aacf622c3d81e1c3991510c8fb06c0b8a700af132d526b1836f1333f8263",
       "pixelWidth": 2048,
       "pixelHeight": 2048,
       "destination": [
@@ -22,7 +27,10 @@
       ]
     },
     {
+      "file": "page_01.jpg",
       "asset": "assets/runtime/maps/terenos/page_01.jpg",
+      "format": "jpeg",
+      "sha256": "47e9835e9dcbab6eb706cb3a1b46b29e5c418363d602478346391ec50d831609",
       "pixelWidth": 1620,
       "pixelHeight": 2048,
       "destination": [
@@ -33,7 +41,10 @@
       ]
     },
     {
+      "file": "page_02.jpg",
       "asset": "assets/runtime/maps/terenos/page_02.jpg",
+      "format": "jpeg",
+      "sha256": "57ed717616f47138c95473ea6d71b1063042a587741d6f1fae434fa345475a5f",
       "pixelWidth": 2048,
       "pixelHeight": 1182,
       "destination": [
@@ -44,7 +55,10 @@
       ]
     },
     {
+      "file": "page_03.jpg",
       "asset": "assets/runtime/maps/terenos/page_03.jpg",
+      "format": "jpeg",
+      "sha256": "7b8ade1c413f0aabe41cfbc89c075fffab1de9cd05a34ade3109fc3e4b2c8d47",
       "pixelWidth": 1620,
       "pixelHeight": 1182,
       "destination": [

@@ -10,6 +10,22 @@ const CORNER_OFFSETS := [
 	Vector2i(-1, -1),
 	Vector2i(1, -1),
 ]
+const EVEN_COLUMN_NEIGHBOR_OFFSETS := [
+	Vector2i(1, -1),
+	Vector2i(1, 0),
+	Vector2i(0, 1),
+	Vector2i(-1, 0),
+	Vector2i(-1, -1),
+	Vector2i(0, -1),
+]
+const ODD_COLUMN_NEIGHBOR_OFFSETS := [
+	Vector2i(1, 0),
+	Vector2i(1, 1),
+	Vector2i(0, 1),
+	Vector2i(-1, 1),
+	Vector2i(-1, 0),
+	Vector2i(0, -1),
+]
 
 var cols: int
 var rows: int
@@ -50,6 +66,17 @@ func corner_key(coordinate: Vector2i, corner: int) -> Vector2i:
 
 func corner_position(coordinate: Vector2i, corner: int) -> Vector2:
 	return lattice_to_world(corner_key(coordinate, corner))
+
+func neighbors(coordinate: Vector2i) -> Array[Vector2i]:
+	var offsets := (
+		ODD_COLUMN_NEIGHBOR_OFFSETS
+		if coordinate.x & 1
+		else EVEN_COLUMN_NEIGHBOR_OFFSETS
+	)
+	var result: Array[Vector2i] = []
+	for offset in offsets:
+		result.append(coordinate + offset)
+	return result
 
 func lattice_to_world(key: Vector2i) -> Vector2:
 	return Vector2(

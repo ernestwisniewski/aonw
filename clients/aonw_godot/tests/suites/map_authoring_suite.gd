@@ -15,6 +15,7 @@ var _failures: Array[String]
 func run(failures: Array[String]) -> void:
 	_failures = failures
 	_test_catalog()
+	_test_every_catalog_bundle_matches_map()
 	_test_display_terrain_color()
 	_test_canonical_map_with_runtime_texture()
 
@@ -72,6 +73,31 @@ func _test_catalog() -> void:
 	for source in sources:
 		if source.map_id == "aonw2_starter":
 			_check(source.origin == "content", "canonical content wins duplicate map ids")
+			_check(
+				source.visual_directory == "res://assets/maps/aonw2_starter",
+				"starter uses the generated Godot visual bundle",
+			)
+
+func _test_every_catalog_bundle_matches_map() -> void:
+	var map_repository := JsonMapRepository.new()
+	var atlas_repository := TileAtlasRepository.new()
+	for source in MapAssetCatalog.new().discover():
+		var map_result: Dictionary = map_repository.load_map(source)
+		_check(map_result["ok"], "%s canonical map opens" % source.map_id)
+		if not map_result["ok"]:
+			continue
+		var manifest_path := ProjectSettings.globalize_path(
+			source.visual_directory.path_join("map_texture_manifest.json")
+		)
+		var manifest_file := FileAccess.open(manifest_path, FileAccess.READ)
+		_check(manifest_file != null, "%s asset bundle exists" % source.map_id)
+		if manifest_file == null:
+			continue
+		var manifest: Variant = JSON.parse_string(manifest_file.get_as_text())
+		_check(
+			atlas_repository._manifest_error(manifest, map_result["document"]).is_empty(),
+			"%s asset bundle matches its Rust map content hash" % source.map_id,
+		)
 
 func _open_map() -> AonwOpenMap:
 	return OpenMap.new(JsonMapRepository.new(), TileAtlasRepository.new())

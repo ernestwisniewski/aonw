@@ -60,8 +60,11 @@ func _deduplicate(sources: Array[AonwMapSource]) -> Array[AonwMapSource]:
 	for source in sources:
 		var key := source.map_id
 		if selected.has(key):
+			if source.origin == "Godot":
+				var canonical: AonwMapSource = selected[key]
+				canonical.visual_directory = source.visual_directory
 			continue
-		selected[key] = true
+		selected[key] = source
 		result.append(source)
 	return result
 

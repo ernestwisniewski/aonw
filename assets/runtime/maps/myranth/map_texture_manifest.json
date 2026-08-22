@@ -1,6 +1,8 @@
 {
   "version": 1,
   "mapId": "myranth",
+  "mapContentHash": "1743616d03d54d04f53fc699c2a6ec2e1ba30f59665ddaa8776419fe06626571",
+  "gridLayout": "oddQFlatTop",
   "cols": 25,
   "rows": 19,
   "worldWidth": 2280.0,
@@ -11,7 +13,10 @@
   "gutter": 2,
   "pages": [
     {
+      "file": "page_00.jpg",
       "asset": "assets/runtime/maps/myranth/page_00.jpg",
+      "format": "jpeg",
+      "sha256": "6322568d166cb65e3e12c67b4f83917b6facff50734f3d8a1967b4476e85000c",
       "pixelWidth": 2048,
       "pixelHeight": 2048,
       "destination": [
@@ -22,7 +27,10 @@
       ]
     },
     {
+      "file": "page_01.jpg",
       "asset": "assets/runtime/maps/myranth/page_01.jpg",
+      "format": "jpeg",
+      "sha256": "2e1feb748dc51385c0013cfcc1b16d7b7da9b2b6c9879f59396799e52ac85223",
       "pixelWidth": 2048,
       "pixelHeight": 2048,
       "destination": [
@@ -33,7 +41,10 @@
       ]
     },
     {
+      "file": "page_02.jpg",
       "asset": "assets/runtime/maps/myranth/page_02.jpg",
+      "format": "jpeg",
+      "sha256": "7aa3e4faf39298ce283f5ae18e1949f17786ce8a5be6330255888c71d4b735de",
       "pixelWidth": 215,
       "pixelHeight": 2048,
       "destination": [
@@ -44,7 +55,10 @@
       ]
     },
     {
+      "file": "page_03.jpg",
       "asset": "assets/runtime/maps/myranth/page_03.jpg",
+      "format": "jpeg",
+      "sha256": "5078ffdbd9cbec373adf9d20a59cb832fca005a61f5dfe0ee167763299061d54",
       "pixelWidth": 2048,
       "pixelHeight": 1683,
       "destination": [
@@ -55,7 +69,10 @@
       ]
     },
     {
+      "file": "page_04.jpg",
       "asset": "assets/runtime/maps/myranth/page_04.jpg",
+      "format": "jpeg",
+      "sha256": "e49af50d8efb88feb4d15dd00e66ef04d446e0d6c9a4bd1919fd368119676480",
       "pixelWidth": 2048,
       "pixelHeight": 1683,
       "destination": [
@@ -66,7 +83,10 @@
       ]
     },
     {
+      "file": "page_05.jpg",
       "asset": "assets/runtime/maps/myranth/page_05.jpg",
+      "format": "jpeg",
+      "sha256": "e58208a2a096cf448f12aa38ad8b64f6fb7e2d18e81f96bd64d0ae9b60d6ac05",
       "pixelWidth": 215,
       "pixelHeight": 1683,
       "destination": [

@@ -282,6 +282,9 @@ jobs:
       - name: Check all generated code and migration drift
         run: make generated-code-check
 
+      - name: Check successor map geometry and bundle reproducibility
+        run: make --no-print-directory successor-map-contract-test
+
   godot-terrain:
     name: Godot Terrain3D
     runs-on: ubuntu-latest

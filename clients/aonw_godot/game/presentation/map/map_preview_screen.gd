@@ -30,7 +30,7 @@ func _ready() -> void:
 	_open_source(AonwMapSource.new(
 		"aonw2_starter",
 		DEFAULT_MAP,
-		"",
+		DEFAULT_MAP.get_base_dir(),
 		"Godot",
 	))
 

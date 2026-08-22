@@ -1,8 +1,9 @@
-import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:image/image.dart' as img;
 
+import 'map_asset_bundle_manifest.dart';
 import 'map_page_writer.dart';
 import 'map_texture_compiler.dart';
 import 'map_texture_geometry.dart';
@@ -50,49 +51,36 @@ final class MapRuntimeVerifier {
       errors.add('missing map texture manifest for ${spec.id}');
       return;
     }
-    final manifest = _decode(await file.readAsString(), spec.id);
-    if (manifest['mapId'] != spec.id ||
-        manifest['cols'] != spec.columns ||
-        manifest['rows'] != spec.rows) {
-      errors.add('${spec.id} map texture contract has wrong identity or size');
+    final manifest = MapAssetBundleManifest.decode(await file.readAsString());
+    try {
+      manifest.verifyMapIdentity(
+        mapId: spec.id,
+        mapContentHash: spec.mapContentHash,
+        cols: spec.columns,
+        rows: spec.rows,
+      );
+    } on FormatException catch (error) {
+      errors.add('${spec.id}: ${error.message}');
     }
     _verifyAverageColors(manifest, spec, errors);
-    final pages = manifest['pages'];
-    if (pages is! List<dynamic> || pages.isEmpty) {
-      errors.add('${spec.id} has no texture pages');
-      return;
+    for (final page in manifest.pages) {
+      await _verifyPage(spec.id, page, root, expectedFiles, errors);
     }
-    for (final value in pages) {
-      if (value is! Map<String, dynamic>) {
-        errors.add('${spec.id} has an invalid texture page');
-        continue;
-      }
-      await _verifyPage(spec.id, value, root, expectedFiles, errors);
-    }
-  }
-
-  Map<String, dynamic> _decode(String contents, String id) {
-    final value = jsonDecode(contents);
-    if (value is! Map<String, dynamic> || value['version'] != 1) {
-      throw FormatException('Unsupported map texture manifest for $id');
-    }
-    return value;
   }
 
   void _verifyAverageColors(
-    Map<String, dynamic> manifest,
+    MapAssetBundleManifest manifest,
     MapSourceSpec spec,
     List<String> errors,
   ) {
-    final colors = manifest['averageColors'];
-    if (colors is! Map<String, dynamic> ||
-        colors.length != spec.columns * spec.rows) {
+    final colors = manifest.averageColors;
+    if (colors.length != spec.columns * spec.rows) {
       errors.add('${spec.id} has incomplete average colors');
       return;
     }
     for (var column = 0; column < spec.columns; column++) {
       for (var row = 0; row < spec.rows; row++) {
-        if (colors['$column,$row'] is! int) {
+        if (!colors.containsKey('$column,$row')) {
           errors.add('${spec.id} has invalid average color $column,$row');
           return;
         }
@@ -102,58 +90,65 @@ final class MapRuntimeVerifier {
 
   Future<void> _verifyPage(
     String id,
-    Map<String, dynamic> page,
+    MapAssetBundlePage page,
     Directory root,
     Set<String> expectedFiles,
     List<String> errors,
   ) async {
-    final asset = page['asset'];
-    final width = page['pixelWidth'];
-    final height = page['pixelHeight'];
-    final name = _pageName(id, asset, errors);
-    if (name == null || !_validDimensions(id, name, width, height, errors)) {
+    final name = _pageName(id, page, errors);
+    if (name == null ||
+        !_validDimensions(
+          id,
+          name,
+          page.pixelWidth,
+          page.pixelHeight,
+          errors,
+        )) {
       return;
     }
     final relative = '$id/$name';
     if (!expectedFiles.add(relative)) errors.add('$id repeats page $name');
     final file = File('${root.path}/$relative');
     if (!await file.exists()) {
-      errors.add('missing map texture page: $asset');
+      errors.add('missing map texture page: ${page.asset}');
       return;
     }
-    final decoded = img.decodeJpg(await file.readAsBytes());
-    if (decoded == null || decoded.width != width || decoded.height != height) {
-      errors.add('$asset does not decode to ${width}x$height');
+    final bytes = await file.readAsBytes();
+    final digest = sha256.convert(bytes).toString();
+    if (digest != page.sha256) {
+      errors.add('${page.asset} SHA-256 does not match its bundle record');
     }
-    if (!_validDestination(page['destination'])) {
-      errors.add('$asset has an invalid destination rectangle');
+    final decoded = img.decodeJpg(bytes);
+    if (decoded == null ||
+        decoded.width != page.pixelWidth ||
+        decoded.height != page.pixelHeight) {
+      errors.add(
+        '${page.asset} does not decode to '
+        '${page.pixelWidth}x${page.pixelHeight}',
+      );
+    }
+    if (!_validDestination(page.destination)) {
+      errors.add('${page.asset} has an invalid destination rectangle');
     }
   }
 
-  String? _pageName(String id, Object? asset, List<String> errors) {
+  String? _pageName(String id, MapAssetBundlePage page, List<String> errors) {
     final prefix = '$mapRuntimeRoot/$id/';
-    if (asset is! String || !asset.startsWith(prefix)) {
-      errors.add('$id has an unsafe texture page asset: $asset');
+    if (page.asset != '$prefix${page.file}') {
+      errors.add('$id has an unsafe texture page asset: ${page.asset}');
       return null;
     }
-    final name = asset.substring(prefix.length);
-    if (name.contains('/') || !RegExp(r'^page_[0-9]+\.jpg$').hasMatch(name)) {
-      errors.add('$id has an invalid texture page name: $name');
-      return null;
-    }
-    return name;
+    return page.file;
   }
 
   bool _validDimensions(
     String id,
     String name,
-    Object? width,
-    Object? height,
+    int width,
+    int height,
     List<String> errors,
   ) {
     final valid =
-        width is int &&
-        height is int &&
         width > 0 &&
         height > 0 &&
         width <= mapPageSize &&

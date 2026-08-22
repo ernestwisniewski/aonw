@@ -25,8 +25,9 @@ The **AoNW Map** dock appears on the right. Its map list discovers:
 For migrated shared maps, the catalog associates the canonical JSON from
 `content/maps/<map_id>/map.json` with the compiled reference atlas described by
 `assets/runtime/maps/<map_id>/map_texture_manifest.json`. Godot assembles its
-JPG pages directly and never depends on raw per-tile artwork. Rust and Godot
-never decode the unversioned Flutter JSON.
+JPG pages directly and verifies the map content hash, dimensions, format, and
+SHA-256 of every page. A missing or stale bundle is rejected; Godot never
+depends on raw per-tile artwork or a procedural texture fallback.
 
 Every Godot editor or test bootstrap compiles each
 `content/maps/<map_id>/terrain_authoring.v1.json` profile through the pure Rust
@@ -77,8 +78,10 @@ make godot-run
 ```
 
 The bundled `aonw2_starter` map is the default and does not depend on files
-outside the Godot project. Maps without compiled runtime art use deterministic
-terrain colors. The file picker accepts only strict map schema v1 documents.
+outside the Godot project. Regenerate it with `make godot-map-sync` and verify
+byte-for-byte reproducibility with `make godot-map-bundle-check`. The file
+picker accepts only strict map schema v1 documents whose matching asset bundle
+is available.
 
 Controls:
 
@@ -103,7 +106,8 @@ contain no movement legality rules.
   client command/query construction;
 - `game/infrastructure/map/` decodes runtime map data and assembles textures;
 - `game/infrastructure/engine/` adapts JSON at the GDExtension boundary;
-- `game/presentation/map/geometry/` owns odd-q render and texture projection math;
+- `game/presentation/map/geometry/` owns odd-q render and texture projection math,
+  checked against the same neutral vectors as the successor Flutter client;
 - `game/presentation/` owns runtime meshes, camera, and UI;
 - `editor/map_authoring/` owns Workbench application, infrastructure, and UI;
 - `addons/aonw_map_workbench/` is only the editor plugin composition root.

@@ -1,6 +1,8 @@
 {
   "version": 1,
   "mapId": "dravonia",
+  "mapContentHash": "64d8d98659a05cf6ba19fe7e0ae0d5e83b70f8b9da753cde9bf1459199519c82",
+  "gridLayout": "oddQFlatTop",
   "cols": 40,
   "rows": 30,
   "worldWidth": 3630.0,
@@ -11,7 +13,10 @@
   "gutter": 2,
   "pages": [
     {
+      "file": "page_00.jpg",
       "asset": "assets/runtime/maps/dravonia/page_00.jpg",
+      "format": "jpeg",
+      "sha256": "6c218c2b367961424db6f1b9fe72abee5f5b1b2fe619406d67f0a573243a2a73",
       "pixelWidth": 2048,
       "pixelHeight": 2048,
       "destination": [
@@ -22,7 +27,10 @@
       ]
     },
     {
+      "file": "page_01.jpg",
       "asset": "assets/runtime/maps/dravonia/page_01.jpg",
+      "format": "jpeg",
+      "sha256": "6d295f85b1ae9dd3396a8cc08672e8cf1120e4a51a2fb11f468890ed5d797277",
       "pixelWidth": 2048,
       "pixelHeight": 2048,
       "destination": [
@@ -33,7 +41,10 @@
       ]
     },
     {
+      "file": "page_02.jpg",
       "asset": "assets/runtime/maps/dravonia/page_02.jpg",
+      "format": "jpeg",
+      "sha256": "eb85420a57183cd47a81aaa0c28eca00af4591d2c9215e40598c6c9eba63402a",
       "pixelWidth": 197,
       "pixelHeight": 2048,
       "destination": [
@@ -44,7 +55,10 @@
       ]
     },
     {
+      "file": "page_03.jpg",
       "asset": "assets/runtime/maps/dravonia/page_03.jpg",
+      "format": "jpeg",
+      "sha256": "fcbfb7e0053721f207a08283928177cdfe1162e9fcccd0a0b4d6133650b7c83a",
       "pixelWidth": 2048,
       "pixelHeight": 1698,
       "destination": [
@@ -55,7 +69,10 @@
       ]
     },
     {
+      "file": "page_04.jpg",
       "asset": "assets/runtime/maps/dravonia/page_04.jpg",
+      "format": "jpeg",
+      "sha256": "9de4c0946b1666a87d33648cfc38f8bc72886f34814da756e6113762acb82d4d",
       "pixelWidth": 2048,
       "pixelHeight": 1698,
       "destination": [
@@ -66,7 +83,10 @@
       ]
     },
     {
+      "file": "page_05.jpg",
       "asset": "assets/runtime/maps/dravonia/page_05.jpg",
+      "format": "jpeg",
+      "sha256": "1f1fb1f685806aa099bc486ef0f9339895c9c138a53ce2446880a23853660737",
       "pixelWidth": 197,
       "pixelHeight": 1698,
       "destination": [

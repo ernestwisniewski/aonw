@@ -1013,6 +1013,24 @@
       "cyclomaticComplexity": {},
       "cognitiveComplexity": {}
     },
+    "successor_flutter_lib": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
+    "successor_flutter_test": {
+      "files": {},
+      "legacyFiles": {},
+      "declarations": {},
+      "callableLines": {},
+      "nesting": {},
+      "cyclomaticComplexity": {},
+      "cognitiveComplexity": {}
+    },
     "vendor_sign_in_with_apple": {
       "files": {},
       "legacyFiles": {},
