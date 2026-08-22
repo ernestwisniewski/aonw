@@ -187,20 +187,22 @@ linear patch generation, independently from canonical contract order. Event
 offset capacity is checked before an owned-state dispatch can begin.
 
 `aonw_contracts::client` owns the single client protocol shared by Godot and
-Flutter native adapters. `ClientRequestDto` contains tagged lifecycle,
-command, and query operations. `ClientResponseDto` contains only recipient-safe
-snapshots, patches, events, evidence, persistence documents, and stable errors;
-canonical `GameStateDto` never crosses this boundary. The protocol accepts only
-`CLIENT_API_VERSION` and has no historical readers or upcasters. Rust in-process
-runtime types deliberately have no version suffix.
+Flutter native adapters. `ClientRequestDto` contains tagged stateless map
+inspection, lifecycle, command, and query operations. `ClientResponseDto`
+contains framework-neutral map views, recipient-safe snapshots, patches,
+events, evidence, persistence documents, and stable errors; canonical
+`GameStateDto` never crosses this boundary. The protocol accepts only
+`CLIENT_API_VERSION` and has no historical readers or upcasters. Rust
+in-process runtime types deliberately have no version suffix.
 Command results use a tagged accepted/rejected outcome, so an incoherent
 acceptance flag and rejection code cannot be represented on the wire.
 
 The shared golden documents in `test/fixtures/client_protocol` are consumed by
 Rust, Godot, and Dart tests. Native adapters report `CLIENT_API_VERSION`; each
 client owns the same supported constant and rejects an incompatible adapter or
-response before inspecting its payload. Map authoring output comes from `MapDocument::to_versioned_json`
-so the Godot bridge does not maintain a second map serializer.
+response before inspecting its payload. The stateless `inspectMap` operation
+validates a strict `MapDocument` and projects the same content hash and
+`MapViewDto` for both clients. Godot has no separate map validator or serializer.
 
 The runtime prepares `CompiledMovementMap` once per map/ruleset, keeps
 tile-indexed visibility, builds occupancy as a compact bitset, reuses reachable
@@ -217,7 +219,7 @@ used because the measured 1200-tile workload does not justify them.
 
 `aonw_godot::AonwLocalSession` exposes one `request_json` transport operation.
 It decodes and encodes `aonw_contracts::client` documents and delegates every
-lifecycle, query, command, save, and replay operation to `ClientProtocol` in
+map inspection, lifecycle, query, command, save, and replay operation to `ClientProtocol` in
 `aonw_local_runtime`. Godot obtains units from the recipient snapshot and never
 constructs a synthetic canonical unit. Build it with `make rust-godot-build`.
 

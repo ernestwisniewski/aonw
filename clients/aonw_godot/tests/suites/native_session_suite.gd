@@ -1,8 +1,9 @@
 extends RefCounted
 
 const MapSource := preload("res://game/application/map/map_source.gd")
+const MapDocument := preload("res://game/application/map/read_model/map_document.gd")
 const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
-const NativeEngineBridge := preload("res://game/infrastructure/engine/native_engine_bridge.gd")
+const NativeLocalSession := preload("res://game/infrastructure/engine/native_local_session.gd")
 const ClientResponseDecoder := preload(
 	"res://game/infrastructure/engine/client_response_decoder.gd"
 )
@@ -23,11 +24,11 @@ class ForeignVersionTransport:
 		return true
 
 	func client_api_version() -> int:
-		return 2
+		return 3
 
 	func request(_body: Dictionary) -> Dictionary:
 		return {
-			"apiVersion": 3,
+			"apiVersion": 4,
 			"outcome": {
 				"status": "success",
 				"response": {"type": "capabilities"},
@@ -43,7 +44,7 @@ class UnsupportedClientTransport:
 		return true
 
 	func client_api_version() -> int:
-		return 3
+		return 4
 
 	func request(_body: Dictionary) -> Dictionary:
 		requested = true
@@ -56,7 +57,7 @@ class MalformedSnapshotTransport:
 		return true
 
 	func client_api_version() -> int:
-		return 2
+		return 3
 
 	func request(body: Dictionary) -> Dictionary:
 		if body.get("type", "") == "openSession":
@@ -68,7 +69,7 @@ class MalformedSnapshotTransport:
 
 	func _success(response: Dictionary) -> Dictionary:
 		return {
-			"apiVersion": 2,
+			"apiVersion": 3,
 			"outcome": {"status": "success", "response": response},
 		}
 
@@ -98,24 +99,24 @@ func _test_strict_document_boundary() -> void:
 		for valid_identifier in ["a", "a_b-1", "aonw2_starter"]:
 			var valid_map := fixture.duplicate(true)
 			valid_map["mapName"] = valid_identifier
-			var valid_result := NativeEngineBridge.new().validate_map_json(
-				JSON.stringify(valid_map)
-			)
+			var valid_result := _inspect_map(JSON.stringify(valid_map))
 			_check(
-				valid_result["ok"],
+				valid_result.get("outcome", {}).get("status", "") == "success",
 				"lowercase ASCII content identifiers are accepted: %s" % valid_result,
 			)
 		for invalid_identifier in ["", "Uppercase", "ends_", "żagle"]:
 			var invalid_map := fixture.duplicate(true)
 			invalid_map["mapName"] = invalid_identifier
 			_check(
-				not NativeEngineBridge.new().validate_map_json(JSON.stringify(invalid_map))["ok"],
+				_inspect_map(JSON.stringify(invalid_map)).get("outcome", {}).get("status", "")
+				== "failure",
 				"invalid content identifiers are rejected",
 			)
 		var feature_first := fixture.duplicate(true)
 		feature_first["tiles"][0]["terrains"] = ["forest"]
 		_check(
-			not NativeEngineBridge.new().validate_map_json(JSON.stringify(feature_first))["ok"],
+			_inspect_map(JSON.stringify(feature_first)).get("outcome", {}).get("status", "")
+			== "failure",
 			"tiles require an explicit primary terrain",
 		)
 		var mismatched_source := MapSource.new(
@@ -137,13 +138,16 @@ func _test_strict_document_boundary() -> void:
 		"objectives": [],
 		"tiles": [],
 	}
-	var strict_result := NativeEngineBridge.new().validate_map_json(JSON.stringify(raw))
-	_check(not strict_result["ok"], "strict documents require defaultZoom")
+	var strict_result := _inspect_map(JSON.stringify(raw))
+	_check(
+		strict_result.get("outcome", {}).get("status", "") == "failure",
+		"strict documents require defaultZoom",
+	)
 
 func _test_native_engine_boundary() -> void:
-	var bridge := NativeEngineBridge.new()
-	_check(bridge.is_available(), "Rust GDExtension is loaded")
-	if not bridge.is_available():
+	var client := NativeLocalSession.new()
+	_check(client.is_available(), "Rust GDExtension is loaded")
+	if not client.is_available():
 		return
 	var file := FileAccess.open(
 		"res://assets/maps/aonw2_starter/map.json",
@@ -153,11 +157,16 @@ func _test_native_engine_boundary() -> void:
 	if file == null:
 		return
 	var map_json := file.get_as_text()
-	var validation := bridge.validate_map_json(map_json)
-	_check(validation["ok"] and validation["native"], "Rust validates the strict map")
+	var validation := client.request({"type": "inspectMap", "mapDocument": map_json})
 	_check(
-		validation.get("value", {}).get("contentHash", "").length() == 64,
-		"Rust returns the logical content hash",
+		validation.get("outcome", {}).get("status", "") == "success",
+		"Rust validates the strict map through inspectMap",
+	)
+	var map_view: Dictionary = validation.get("outcome", {}).get("response", {}).get("map", {})
+	_check(
+		map_view.get("contentHash", "")
+		== "4d5603cc00fa8963a71c23133570f89f43c734598d86579e12e1b1059da8712d",
+		"Rust returns the shared logical content hash",
 	)
 
 	var session := LocalMatchSessionController.new()
@@ -243,6 +252,20 @@ func _test_native_engine_boundary() -> void:
 	)
 
 func _test_shared_client_contract() -> void:
+	var inspect_request_file := FileAccess.open(
+		"res://../../test/fixtures/client_protocol/inspect_map_request.json",
+		FileAccess.READ,
+	)
+	_check(inspect_request_file != null, "shared inspectMap request golden opens in Godot")
+	if inspect_request_file != null:
+		var inspect_request: Variant = JSON.parse_string(inspect_request_file.get_as_text())
+		_check(
+			inspect_request is Dictionary
+			and inspect_request["apiVersion"] == 3
+			and inspect_request["request"]["type"] == "inspectMap",
+			"Godot consumes the shared inspectMap request contract",
+		)
+
 	var request_file := FileAccess.open(
 		"res://../../test/fixtures/client_protocol/move_unit_request.json",
 		FileAccess.READ,
@@ -252,7 +275,7 @@ func _test_shared_client_contract() -> void:
 		var request: Variant = JSON.parse_string(request_file.get_as_text())
 		_check(
 			request is Dictionary
-			and request["apiVersion"] == 2
+			and request["apiVersion"] == 3
 			and request["request"]["command"]["type"] == "moveUnit",
 			"Godot consumes the shared move request contract",
 		)
@@ -263,7 +286,7 @@ func _test_shared_client_contract() -> void:
 	)
 	_check(response_file != null, "shared client response golden opens in Godot")
 	if response_file != null:
-		var decoder := ClientResponseDecoder.new(2)
+		var decoder := ClientResponseDecoder.new(3)
 		var decoded := decoder.decode(response_file.get_as_text())
 		_check(
 			decoded.get("outcome", {}).get("status", "") == "success",
@@ -280,11 +303,33 @@ func _test_shared_client_contract() -> void:
 			"Godot maps the shared response into typed client read models",
 		)
 		var invalid_version := decoder.decode(
-			'{"apiVersion":"2","outcome":{"status":"success","response":{}}}'
+			'{"apiVersion":"3","outcome":{"status":"success","response":{}}}'
 		)
 		_check(
 			invalid_version.get("outcome", {}).get("status", "") == "failure",
 			"Godot rejects coercible client API versions",
+		)
+
+	var map_response_file := FileAccess.open(
+		"res://../../test/fixtures/client_protocol/map_inspected_response.json",
+		FileAccess.READ,
+	)
+	_check(map_response_file != null, "shared map response golden opens in Godot")
+	if map_response_file != null:
+		var decoded_map := ClientResponseDecoder.new(3).decode(map_response_file.get_as_text())
+		var map_body: Dictionary = decoded_map.get("outcome", {}).get("response", {})
+		var mapped := MapDocument.from_map_view(map_body.get("map"))
+		_check(
+			map_body.get("type", "") == "mapInspected"
+			and mapped["ok"]
+			and mapped["value"].tile_at(Vector2i.ZERO)["displayTerrain"] == "forest",
+			"Godot maps the shared response into its map read model",
+		)
+		var foreign_map: Dictionary = map_body["map"].duplicate(true)
+		foreign_map["tiles"][0]["unknown"] = true
+		_check(
+			not MapDocument.from_map_view(foreign_map)["ok"],
+			"Godot rejects foreign map response fields",
 		)
 
 	var foreign := LocalMatchSessionController.new(ForeignVersionTransport.new()).capabilities()
@@ -315,3 +360,9 @@ func _test_shared_client_contract() -> void:
 func _check(condition: bool, message: String) -> void:
 	if not condition:
 		_failures.append(message)
+
+func _inspect_map(map_document: String) -> Dictionary:
+	return NativeLocalSession.new().request({
+		"type": "inspectMap",
+		"mapDocument": map_document,
+	})

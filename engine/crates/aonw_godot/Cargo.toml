@@ -13,11 +13,11 @@ publish.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-aonw_content = { path = "../aonw_content" }
 aonw_contracts = { path = "../aonw_contracts" }
-aonw_engine = { path = "../aonw_engine" }
 aonw_local_runtime = { path = "../aonw_local_runtime" }
 godot.workspace = true
+
+[dev-dependencies]
 serde_json.workspace = true
 
 [lints.clippy]

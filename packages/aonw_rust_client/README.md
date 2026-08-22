@@ -4,8 +4,10 @@ This `package_ffi` package exposes the same current-only JSON client protocol
 used by the Godot GDExtension. Native calls run on a dedicated helper isolate.
 `AonwClientRequest`, `AonwClientResponse`, and the `AonwRustSession.send`
 extension provide the typed Dart boundary. Snapshots, queries, command results,
-events, evidence, patches, stamps, and persistence responses are parsed into
-strict read models; command acceptance is a tagged accepted/rejected outcome.
+map views, events, evidence, patches, stamps, and persistence responses are
+parsed into strict read models; command acceptance is a tagged
+accepted/rejected outcome. `inspectMap` exposes the same validated map identity
+and presentation semantics as the Godot client.
 Raw JSON remains confined to the transport. Rust, Dart, and
 Godot consume the same committed protocol goldens.
 

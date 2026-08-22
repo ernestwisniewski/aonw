@@ -1,4 +1,4 @@
 class_name AonwClientProtocol
 extends RefCounted
 
-const API_VERSION := 2
+const API_VERSION := 3

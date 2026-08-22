@@ -72,7 +72,7 @@ func build(
 			settings.grid_opacity,
 		),
 		"world_size": geometry.bounds().size,
-		"maximum_height": float(AonwMapDocument.MAX_HEIGHT) * settings.height_step,
+		"maximum_height": float(document.maximum_height()) * settings.height_step,
 	}
 
 func _textured_mesh(

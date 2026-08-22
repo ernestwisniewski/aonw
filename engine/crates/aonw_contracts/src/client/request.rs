@@ -23,6 +23,11 @@ pub struct ClientRequestDto {
 pub enum ClientRequestBodyDto {
     /// Returns protocol and engine capabilities.
     Capabilities,
+    /// Validates authored map content and returns its presentation read model.
+    InspectMap {
+        /// Strict canonical map document.
+        map_document: String,
+    },
     /// Opens a session from strict authored content.
     OpenSession {
         /// Strict canonical map document.

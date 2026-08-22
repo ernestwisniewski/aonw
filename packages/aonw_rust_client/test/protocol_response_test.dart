@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:aonw_rust_client/aonw_rust_client.dart';
 import 'package:test/test.dart';
@@ -25,6 +26,32 @@ void main() {
     });
 
     expect(() => AonwClientResponse.parse(source), throwsFormatException);
+  });
+
+  test('map response rejects unknown nested fields and terrain values', () {
+    final fixture =
+        jsonDecode(
+              File(
+                _fixturePath('map_inspected_response.json'),
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final outcome = fixture['outcome'] as Map<String, dynamic>;
+    final response = outcome['response'] as Map<String, dynamic>;
+    final map = response['map'] as Map<String, dynamic>;
+    final tile = (map['tiles'] as List).single as Map<String, dynamic>;
+    tile['unknown'] = true;
+    expect(
+      () => AonwClientResponse.parse(jsonEncode(fixture)),
+      throwsFormatException,
+    );
+
+    tile.remove('unknown');
+    tile['displayTerrain'] = 'volcano';
+    expect(
+      () => AonwClientResponse.parse(jsonEncode(fixture)),
+      throwsFormatException,
+    );
   });
 
   test('typed parser covers lifecycle and persistence responses', () {
@@ -141,6 +168,17 @@ void main() {
     expect(response.error?.code, 'invalid_request');
     expect(response.require<AonwSessionClosedResponse>, throwsStateError);
   });
+}
+
+String _fixturePath(String name) {
+  for (final root in [
+    'test/fixtures/client_protocol',
+    '../../test/fixtures/client_protocol',
+  ]) {
+    final path = '$root/$name';
+    if (File(path).existsSync()) return path;
+  }
+  throw StateError('Shared client fixture not found: $name');
 }
 
 const _stamp = {

@@ -26,12 +26,26 @@ void main() {
     expect(command.viewPatch.upsertedUnits.single.kind, AonwUnitKind.commander);
     expect(command.events.single, isA<AonwUnitMovedEvent>());
     expect(command.evidence, isA<AonwUnitMovementEvidence>());
+
+    final inspectRequest = AonwClientRequest.inspectMap(
+      mapDocument: 'map-document',
+    );
+    expect(
+      inspectRequest.toJson(),
+      _fixture('inspect_map_request.json').readAsStringSync().trim(),
+    );
+    final mapResponse = AonwClientResponse.parse(
+      _fixture('map_inspected_response.json').readAsStringSync(),
+    ).require<AonwMapInspectedResponse>();
+    expect(mapResponse.map.gridLayout, AonwMapGridLayout.oddQFlatTop);
+    expect(mapResponse.map.tiles.single.displayTerrain, AonwMapTerrain.forest);
+    expect(mapResponse.map.objectives.single.type, AonwMapObjectiveType.ruins);
   });
 
   test('client response rejects foreign versions', () {
     expect(
       () => AonwClientResponse.parse(
-        '{"apiVersion":3,"outcome":{"status":"success",'
+        '{"apiVersion":4,"outcome":{"status":"success",'
         '"response":{"type":"sessionClosed"}}}',
       ),
       throwsFormatException,
@@ -53,7 +67,32 @@ void main() {
       rawResponse,
     ).require<AonwCapabilitiesResponse>();
     expect(capabilities.features, contains(AonwClientFeature.snapshot));
+
+    final inspected = AonwClientResponse.parse(
+      await session.requestJson(
+        AonwClientRequest.inspectMap(
+          mapDocument: _starterMap().readAsStringSync(),
+        ).toJson(),
+      ),
+    ).require<AonwMapInspectedResponse>();
+    expect(inspected.map.mapId, 'aonw2_starter');
+    expect(inspected.map.tiles, hasLength(49));
+    expect(
+      inspected.map.contentHash,
+      '4d5603cc00fa8963a71c23133570f89f43c734598d86579e12e1b1059da8712d',
+    );
   });
+}
+
+File _starterMap() {
+  for (final path in [
+    'clients/aonw_godot/assets/maps/aonw2_starter/map.json',
+    '../../clients/aonw_godot/assets/maps/aonw2_starter/map.json',
+  ]) {
+    final candidate = File(path);
+    if (candidate.existsSync()) return candidate;
+  }
+  throw StateError('Starter map fixture not found.');
 }
 
 File _fixture(String name) {

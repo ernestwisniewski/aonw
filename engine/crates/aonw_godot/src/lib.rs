@@ -1,8 +1,6 @@
-//! Godot-only adapter around validated content and the deterministic engine.
+//! Godot adapter for the shared deterministic local client protocol.
 
-mod bridge;
 mod local_session;
-mod wire;
 
 mod extension_entrypoint {
     #![allow(unsafe_code)]

@@ -2,8 +2,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{CoordinateDto, UnitKindDto, UnitPostureDto};
 
+use super::MapViewDto;
+
 /// One current client protocol response.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ClientResponseDto {
     /// Client protocol version.
@@ -13,7 +15,7 @@ pub struct ClientResponseDto {
 }
 
 /// Result envelope shared by Godot and Flutter adapters.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(
     tag = "status",
     rename_all = "camelCase",
@@ -34,7 +36,7 @@ pub enum ClientOutcomeDto {
 }
 
 /// Successful local client results.
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(
     tag = "type",
     rename_all = "camelCase",
@@ -48,6 +50,11 @@ pub enum ClientResponseBodyDto {
         behavior_version: u16,
         /// Supported current protocol features.
         features: Vec<ClientFeatureDto>,
+    },
+    /// A strict authored map was projected for presentation.
+    MapInspected {
+        /// Validated framework-neutral map view.
+        map: MapViewDto,
     },
     /// A local session was opened.
     SessionOpened {
@@ -97,6 +104,8 @@ pub enum ClientResponseBodyDto {
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ClientFeatureDto {
+    /// Stateless strict map inspection.
+    InspectMap,
     /// Complete player snapshot.
     Snapshot,
     /// Reachable movement overlay.
