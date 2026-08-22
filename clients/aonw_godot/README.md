@@ -1,8 +1,8 @@
 # AoNW Godot Client
 
 This directory contains the Godot 4.7 presentation client and the AoNW Map
-Workbench. It converts an existing AoNW map into a self-contained Godot 3D
-scene without Terrain3D or Tree3D.
+Workbench. Terrain3D is the required terrain authoring and rendering backend;
+gameplay rules remain in Rust.
 
 ## Map Workbench
 
@@ -13,8 +13,9 @@ make bootstrap
 make godot-editor
 ```
 
-Bootstrap downloads the exact Godot build pinned by the repository into the
-ignored `.toolchains/` cache. The editor commands reject any other version.
+Bootstrap downloads the exact Godot build pinned by the repository and the
+official pinned Terrain3D addon. Both remain ignored local dependencies. The
+editor commands reject any other version or a disabled Terrain3D plugin.
 
 The **AoNW Map** dock appears on the right. Its map list discovers:
 
@@ -35,15 +36,15 @@ clients/aonw_godot/
 ├── scenes/generated/maps/<map_id>/
 │   └── generation-NNNNNN_surface.tscn
 └── assets/generated_maps/<map_id>/
-    ├── manifest.json
-    └── generations/generation-NNNNNN/
-        ├── map.json                          # full generations
-        ├── render_settings.tres
-        ├── terrain_texture.res               # full generations
-        ├── reference_texture.res
-        ├── terrain_mesh.res
-        ├── reference_mesh.res
-        └── grid_mesh.res
+	├── manifest.json
+	└── generations/generation-NNNNNN/
+		├── map.json                          # full generations
+		├── render_settings.tres
+		├── terrain_texture.res               # full generations
+		├── reference_texture.res
+		├── terrain_mesh.res
+		├── reference_mesh.res
+		└── grid_mesh.res
 ```
 
 The authored scene contains the generated surface plus models and other nodes
@@ -55,6 +56,11 @@ surface contains three independent layers:
 - `ReferenceTexture` projects the compiled runtime atlas and has
   configurable visibility and opacity;
 - `HexGrid` is a separately configurable grid overlay.
+
+This generated `ArrayMesh` terrain is transitional migration output, not a
+supported alternative backend. The Terrain3D authoring slice replaces it;
+reference and grid geometry may remain separate overlays but must sample the
+edited Terrain3D surface.
 
 In the **AoNW Map** dock, use **Show hex outlines** to toggle the overlay.
 **Outline opacity** controls its opacity, while **Texture opacity** controls the
@@ -165,9 +171,11 @@ make godot-test
 make godot-check
 ```
 
-The runner delegates to focused authoring, geometry, and native-session suites.
+The runner delegates to focused authoring, geometry, native-session, and
+Terrain3D suites.
 They cover strict Rust validation, scenario bootstrap, native
 snapshot/reachable/route/move and persistence calls, asset discovery, immutable
 map views, projection/picking round trips, texture assembly, mesh generation,
-regeneration safety, and preserving authored nodes.
+regeneration safety, preserving authored nodes, verified heightmap import,
+region persistence, terrain undo/redo, and picking after deformation.
 `GODOT_BIN` can override the editor executable.

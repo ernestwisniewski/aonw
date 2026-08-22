@@ -7,6 +7,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 "${repo_root}/tool/check_toolchain.sh"
 "${repo_root}/tool/bootstrap_godot.sh"
+"${repo_root}/tool/bootstrap_terrain3d.sh"
 
 for workspace in . packages/aonw_core packages/aonw_server_client server; do
   for input in pubspec.yaml pubspec.lock; do

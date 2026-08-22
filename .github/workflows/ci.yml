@@ -270,11 +270,46 @@ jobs:
           path: .toolchains/godot
           key: ${{ runner.os }}-godot-${{ hashFiles('.godot-version', 'tool/godot_checksums.txt') }}
 
+      - name: Cache pinned Terrain3D
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: clients/aonw_godot/addons/terrain_3d
+          key: ${{ runner.os }}-terrain3d-${{ hashFiles('.terrain3d-version', 'tool/terrain3d_checksums.txt') }}
+
       - name: Bootstrap pinned workspace
         run: make bootstrap
 
       - name: Check all generated code and migration drift
         run: make generated-code-check
+
+  godot-terrain:
+    name: Godot Terrain3D
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Cache pinned Godot
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .toolchains/godot
+          key: ${{ runner.os }}-godot-${{ hashFiles('.godot-version', 'tool/godot_checksums.txt') }}
+
+      - name: Cache pinned Terrain3D
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: clients/aonw_godot/addons/terrain_3d
+          key: ${{ runner.os }}-terrain3d-${{ hashFiles('.terrain3d-version', 'tool/terrain3d_checksums.txt') }}
+
+      - name: Bootstrap pinned Godot and Terrain3D
+        run: |
+          tool/bootstrap_godot.sh
+          tool/bootstrap_terrain3d.sh
+
+      - name: Run Godot Terrain3D gate
+        run: make --no-print-directory godot-check
 
   server-integration:
     name: server integration and critical E2E

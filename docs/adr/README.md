@@ -15,6 +15,7 @@ ADRs explain why a long-lived boundary exists and what new code must preserve. R
 | [0007](0007-strategic-resource-stockpiles.md) | Strategic Resource Stockpiles And Production Allocation | Accepted | Implemented |
 | [0008](0008-rust-engine-ownership-and-strangler-migration.md) | Rust Engine Ownership And Strangler Migration | Accepted | In progress |
 | [0009](0009-dart-feature-freeze-and-parallel-successor-clients.md) | Dart Feature Freeze And Parallel Successor Clients | Accepted | In progress |
+| [0010](0010-terrain-backend-for-godot-authoring.md) | Terrain Backend For Godot Authoring | Accepted | In progress |
 
 ## Status
 
