@@ -154,5 +154,14 @@ if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>
   exit 1
 fi
 echo "Dependency checker rejected Godot presentation-to-infrastructure coupling."
+rm "${authoring_fixture}/presentation/surface.gd"
+
+printf 'var canonical_map := {"terrainTags": []}\n' \
+  >"${authoring_fixture}/presentation/canonical_map_writer.gd"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted a Godot canonical map writer." >&2
+  exit 1
+fi
+echo "Dependency checker rejected a Godot canonical map writer."
 
 echo "Successor boundary negative tests passed."

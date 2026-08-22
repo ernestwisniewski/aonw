@@ -20,15 +20,18 @@ mod validation;
 
 pub use catalog::{GridLayout, MapObjectiveType, ResourceType, TerrainType};
 pub use content_hash::ContentHash;
-pub use document::MapDocument;
+pub use document::{MIN_AUTHORED_MAP_COLS, MIN_AUTHORED_MAP_ROWS, MapDocument};
 pub use error::MapLoadError;
-pub use model::{MapDefinition, MapObjective, TerrainProfile, TileDefinition};
+pub use model::{
+    MAX_MAP_COLS, MAX_MAP_ROWS, MIN_MAP_COLS, MIN_MAP_ROWS, MapDefinition, MapObjective,
+    TerrainProfile, TileDefinition,
+};
 pub use ruleset::{RulesetDefinition, UnitCapabilities, UnitDefinition, UnitMovementDomainValue};
 pub use scenario::{
     ScenarioBootstrapError, ScenarioDefinition, ScenarioLoadError, ScenarioUnitDefinition,
     ScenarioValidationError,
 };
-pub use validation::MapValidationError;
+pub use validation::{MapValidationError, validate_map_id};
 
 /// Map document version emitted by the canonical serializer.
 pub const CURRENT_MAP_SCHEMA_VERSION: u64 = 1;

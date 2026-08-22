@@ -106,6 +106,12 @@ func _test_authoring_session(scene_path: String) -> void:
 	var artifact := surface.artifact()
 	await _test_persistence_port(artifact)
 	_check(surface.terrain() is Terrain3D, "authoring backend is Terrain3D")
+	_check(
+		surface.generated_world().name == "GeneratedWorld"
+		and surface.manual_world().name == "ManualWorld"
+		and surface.generated_world() != surface.manual_world(),
+		"generated and manual world objects have separate scene lifecycles",
+	)
 	_check_approx(
 		float(artifact.max_city_slope),
 		0.35,

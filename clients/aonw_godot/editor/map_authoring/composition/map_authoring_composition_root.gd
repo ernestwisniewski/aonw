@@ -33,11 +33,15 @@ const GenerateTerrainAuthoringMap := preload(
 const WorkbenchDock := preload(
 	"res://editor/map_authoring/presentation/map_workbench_dock.gd"
 )
+const RustLogicalMapWorkbench := preload(
+	"res://editor/map_authoring/infrastructure/rust_logical_map_workbench.gd"
+)
 
 var _catalog: AonwMapSourceCatalog
 var _artifact_reader: AonwTerrainCompiledArtifactRepository
 var _scene_writer: AonwTerrainAuthoringSceneRepository
 var _generator: AonwGenerateTerrainAuthoringMap
+var _logical_map_workbench: AonwLogicalMapWorkbench
 
 func _init(
 	scene_root: String = AonwTerrainAuthoringSceneRepository.SCENE_ROOT,
@@ -60,6 +64,7 @@ func _init(
 		),
 		_scene_writer,
 	)
+	_logical_map_workbench = RustLogicalMapWorkbench.new()
 
 func create_dock() -> Control:
 	var dock := WorkbenchDock.new()
@@ -71,6 +76,9 @@ func generator() -> AonwGenerateTerrainAuthoringMap:
 
 func scene_writer() -> AonwTerrainAuthoringSceneWriter:
 	return _scene_writer
+
+func logical_map_workbench() -> AonwLogicalMapWorkbench:
+	return _logical_map_workbench
 
 func open_scene(scene_root: Node) -> Dictionary:
 	if scene_root == null:

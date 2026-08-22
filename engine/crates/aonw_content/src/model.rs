@@ -3,12 +3,16 @@ use aonw_domain::{HexCoord, HexGridBounds, HexTileIndex};
 use crate::catalog::{GridLayout, MapObjectiveType, ResourceType, TerrainType};
 use crate::validation::{MapValidationError, validate_content_id};
 
-const MIN_COLS: u16 = 1;
-const MAX_COLS: u16 = 40;
-const MIN_ROWS: u16 = 1;
-const MAX_ROWS: u16 = 30;
+/// Minimum logical map width accepted by the content domain.
+pub const MIN_MAP_COLS: u16 = 1;
+/// Maximum logical map width accepted by the content domain.
+pub const MAX_MAP_COLS: u16 = 40;
+/// Minimum logical map height accepted by the content domain.
+pub const MIN_MAP_ROWS: u16 = 1;
+/// Maximum logical map height accepted by the content domain.
+pub const MAX_MAP_ROWS: u16 = 30;
 const MAX_HEIGHT: u8 = 5;
-const MAX_TILE_COUNT: usize = MAX_COLS as usize * MAX_ROWS as usize;
+const MAX_TILE_COUNT: usize = MAX_MAP_COLS as usize * MAX_MAP_ROWS as usize;
 const OBJECTIVE_OCCUPANCY_WORDS: usize = MAX_TILE_COUNT.div_ceil(u64::BITS as usize);
 
 #[allow(missing_docs)]
@@ -436,8 +440,8 @@ impl MapDefinition {
     ) -> Result<Self, MapValidationError> {
         let map_id = map_id.into();
         validate_content_id("$.mapName", &map_id)?;
-        validate_dimension("$.cols", cols, MIN_COLS, MAX_COLS)?;
-        validate_dimension("$.rows", rows, MIN_ROWS, MAX_ROWS)?;
+        validate_dimension("$.cols", cols, MIN_MAP_COLS, MAX_MAP_COLS)?;
+        validate_dimension("$.rows", rows, MIN_MAP_ROWS, MAX_MAP_ROWS)?;
         let bounds = HexGridBounds::new(cols, rows).ok_or_else(|| {
             MapValidationError::new("$", "validated map dimensions must be non-zero")
         })?;

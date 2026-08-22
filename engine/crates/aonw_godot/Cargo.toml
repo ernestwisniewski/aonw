@@ -15,6 +15,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 aonw_contracts = { path = "../aonw_contracts" }
 aonw_local_runtime = { path = "../aonw_local_runtime" }
+aonw_map_workbench = { path = "../aonw_map_workbench" }
 godot.workspace = true
 
 [dev-dependencies]

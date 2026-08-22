@@ -14,6 +14,9 @@ const ClientReadModelDecoder := preload(
 const LocalMatchSessionController := preload(
 	"res://game/application/session/local_match_session_controller.gd"
 )
+const RustLogicalMapWorkbench := preload(
+	"res://editor/map_authoring/infrastructure/rust_logical_map_workbench.gd"
+)
 
 var _failures: Array[String]
 
@@ -87,6 +90,47 @@ func run(failures: Array[String]) -> void:
 	_test_strict_document_boundary()
 	_test_native_engine_boundary()
 	_test_shared_client_contract()
+	_test_logical_map_workbench_boundary()
+
+func _test_logical_map_workbench_boundary() -> void:
+	var workbench := RustLogicalMapWorkbench.new()
+	var spec := JSON.stringify({
+		"schemaVersion": 1,
+		"generatorId": "blank",
+		"generatorVersion": 1,
+		"mapId": "godot_generated",
+		"cols": 5,
+		"rows": 5,
+		"defaultZoom": 1.0,
+		"hexRadiusMeters": 100.0,
+		"seed": "42",
+	})
+	var first := workbench.generate_map(spec)
+	var second := workbench.generate_map(spec)
+	_check(first["ok"], "Godot workbench generates logical map documents through Rust")
+	if not first["ok"]:
+		return
+	_check(first["package"] == second.get("package"), "Godot workbench generation is deterministic")
+	var map: Dictionary = JSON.parse_string(first["package"]["mapDocument"])
+	var authoring: Dictionary = JSON.parse_string(
+		first["package"]["terrainAuthoringDocument"]
+	)
+	var decorations: Dictionary = JSON.parse_string(
+		first["package"]["generatedDecorationPlanDocument"]
+	)
+	_check(
+		map.get("mapName") == "godot_generated"
+		and map.get("tiles", []).size() == 25
+		and authoring.get("sourceMapContentHash") == first["package"]["mapContentHash"]
+		and decorations.get("placements", [null]).is_empty(),
+		"Rust owns canonical map, terrain profile and generated-decoration documents",
+	)
+	var invalid: Dictionary = JSON.parse_string(spec)
+	invalid["cols"] = 4
+	_check(
+		not workbench.generate_map(JSON.stringify(invalid))["ok"],
+		"Rust rejects an invalid authored map specification",
+	)
 
 func _test_strict_document_boundary() -> void:
 	var file := FileAccess.open(

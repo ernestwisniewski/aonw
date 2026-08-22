@@ -212,6 +212,60 @@ pub struct TerrainAuthoringProfile {
 
 #[allow(missing_docs)]
 impl TerrainAuthoringProfile {
+    /// Builds the standard metric profile used for a newly authored logical map.
+    ///
+    /// Logical height remains in the gameplay range `0..=5`. The metric base
+    /// and sculpting envelope are derived proportionally from the selected hex
+    /// radius and therefore remain separate presentation-authoring data.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TerrainAuthoringLoadError`] when the map cannot be hashed or
+    /// the metric scale is invalid.
+    pub fn standard_v1(
+        map: &MapDefinition,
+        hex_radius_meters: f64,
+    ) -> Result<Self, TerrainAuthoringLoadError> {
+        let source_map_content_hash = map
+            .content_hash()
+            .map_err(TerrainAuthoringLoadError::MapHash)?;
+        let height_step = hex_radius_meters * 0.4;
+        let lower_margin = hex_radius_meters * 0.2;
+        let upper_margin = hex_radius_meters * 0.4;
+        let hex_heights = map
+            .tiles()
+            .iter()
+            .enumerate()
+            .map(|(index, tile)| {
+                let base = f64::from(tile.height()) * height_step;
+                TerrainHeightEnvelope::try_new(
+                    &format!("$.hexHeights[{index}]"),
+                    tile.coordinate(),
+                    base,
+                    base - lower_margin,
+                    base + upper_margin,
+                )
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        Self::try_new(
+            map,
+            source_map_content_hash,
+            ProfileComponents {
+                hex_radius_meters,
+                world_origin_meters: AuthoringVector3::new(0.0, 0.0, 0.0),
+                reference_transform: ReferenceTransform::new(
+                    AuthoringVector3::new(0.0, hex_radius_meters * 0.005, 0.0),
+                    AuthoringVector3::new(0.0, 0.0, 0.0),
+                    AuthoringVector3::new(1.0, 1.0, 1.0),
+                ),
+                edge_blend_meters: hex_radius_meters * 0.2,
+                city_core_radius_meters: Some(hex_radius_meters * 0.4),
+                max_city_slope: Some(0.35),
+                hex_heights,
+            },
+        )
+    }
+
     #[must_use]
     pub const fn source_map_content_hash(&self) -> ContentHash {
         self.source_map_content_hash

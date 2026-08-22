@@ -63,6 +63,11 @@ if [[ -d "${authoring_root}" ]]; then
       "${authoring_root}/presentation" \
       >>"${violations}" || true
   fi
+  grep -RInE \
+    '"(terrainTags|displayTerrain|yieldTerrain|tiles|objectives)"[[:space:]]*:' \
+    --include='*.gd' \
+    "${authoring_root}" \
+    >>"${violations}" || true
 fi
 
 while IFS= read -r -d '' pubspec_file; do

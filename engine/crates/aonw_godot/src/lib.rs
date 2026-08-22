@@ -1,6 +1,7 @@
 //! Godot adapter for the shared deterministic local client protocol.
 
 mod local_session;
+mod map_workbench;
 
 mod extension_entrypoint {
     #![allow(unsafe_code)]

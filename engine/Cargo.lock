@@ -65,6 +65,7 @@ version = "0.1.0"
 dependencies = [
  "aonw_contracts",
  "aonw_local_runtime",
+ "aonw_map_workbench",
  "godot",
  "serde_json",
 ]
@@ -111,6 +112,18 @@ dependencies = [
  "aonw_map_authoring",
  "aonw_map_compiler",
  "exr",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
+name = "aonw_map_workbench"
+version = "0.1.0"
+dependencies = [
+ "aonw_content",
+ "aonw_domain",
+ "aonw_map_authoring",
+ "serde",
  "serde_json",
  "sha2",
 ]

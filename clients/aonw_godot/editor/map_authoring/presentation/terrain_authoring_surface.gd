@@ -35,6 +35,8 @@ var _grid: MeshInstance3D
 var _minimum_debug: MeshInstance3D
 var _maximum_debug: MeshInstance3D
 var _city_marker: MeshInstance3D
+var _generated_world: Node3D
+var _manual_world: Node3D
 var _reference_texture: Texture2D
 var _overlay_refresh_queued := false
 var _pending_changed_pixels := Rect2i()
@@ -54,7 +56,10 @@ func configure(
 
 func assign_generated_owners(scene_owner: Node) -> void:
 	_ensure_nodes()
-	for child in [_terrain, _reference, _grid, _minimum_debug, _maximum_debug, _city_marker]:
+	for child in [
+		_terrain, _reference, _grid, _minimum_debug, _maximum_debug, _city_marker,
+		_generated_world, _manual_world,
+	]:
 		child.owner = scene_owner
 
 func terrain() -> Terrain3D:
@@ -63,6 +68,14 @@ func terrain() -> Terrain3D:
 
 func artifact() -> AonwTerrainCompiledArtifact:
 	return _artifact
+
+func generated_world() -> Node3D:
+	_ensure_nodes()
+	return _generated_world
+
+func manual_world() -> Node3D:
+	_ensure_nodes()
+	return _manual_world
 
 func is_session_open() -> bool:
 	return _session != null
@@ -227,12 +240,22 @@ func _ensure_nodes() -> void:
 	_minimum_debug = _mesh_node("MinimumHeightDebug")
 	_maximum_debug = _mesh_node("MaximumHeightDebug")
 	_city_marker = _mesh_node("CityCoreMarker")
+	_generated_world = _world_node("GeneratedWorld")
+	_manual_world = _world_node("ManualWorld")
 	_apply_visibility()
 
 func _mesh_node(node_name: StringName) -> MeshInstance3D:
 	var node := get_node_or_null(NodePath(node_name)) as MeshInstance3D
 	if node == null:
 		node = MeshInstance3D.new()
+		node.name = node_name
+		add_child(node)
+	return node
+
+func _world_node(node_name: StringName) -> Node3D:
+	var node := get_node_or_null(NodePath(node_name)) as Node3D
+	if node == null:
+		node = Node3D.new()
 		node.name = node_name
 		add_child(node)
 	return node

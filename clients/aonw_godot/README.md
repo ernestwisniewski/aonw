@@ -17,6 +17,19 @@ Bootstrap downloads the exact Godot build pinned by the repository and the
 official pinned Terrain3D addon. Both remain ignored local dependencies. The
 editor commands reject any other version or a disabled Terrain3D plugin.
 
+The logical-map backend is also prepared for a later **New Map** flow. The
+framework-neutral Rust `aonw_map_workbench` boundary accepts a versioned
+generation specification and deterministically returns canonical `map.json`,
+`terrain_authoring.v1.json`, generation provenance, and a generated-decoration
+plan. The initial `blankV1` generator creates a validated empty grassland map;
+the dock does not expose the creation form or logical paint tools yet.
+
+Generated visual objects and manual objects have separate `GeneratedWorld` and
+`ManualWorld` scene containers. Future biome/tree/rock generators may replace
+only the generated container. Gameplay-relevant terrain, resources and logical
+height remain Rust content; concrete visual placements remain versioned
+presentation artifacts. See [ADR 0011](../../docs/adr/0011-logical-map-workbench-and-generation.md).
+
 The **AoNW Map** dock appears on the right. Its map list discovers:
 
 - strict shared maps in `content/maps/`;
@@ -137,9 +150,9 @@ contain no movement legality rules.
   checked against the same neutral vectors as the successor Flutter client;
 - `game/presentation/` owns Terrain3D presentation, overlay meshes, camera, and UI;
 - `editor/map_authoring/application/` owns the session and small catalog,
-  persistence, scene-factory, and scene-writer ports;
+  persistence, scene-factory, scene-writer, and logical-workbench ports;
 - `editor/map_authoring/infrastructure/` implements filesystem and snapshot
-  adapters without importing presentation;
+  adapters plus the native Rust workbench adapter without importing presentation;
 - `editor/map_authoring/presentation/` owns the passive Terrain3D surface,
   scene factory, dock, and controls without constructing infrastructure;
 - `editor/map_authoring/composition/` manually wires the ports and adapters;
@@ -153,6 +166,10 @@ persistence behavior. The application session still depends directly on
 `engine/crates/aonw_content` remains the authoritative logical validator and
 hash owner. A generated Godot scene is a presentation artifact and never a
 second source of gameplay rules.
+
+`engine/crates/aonw_map_workbench` owns logical authoring/generation use cases
+and a separate versioned protocol. `AonwMapWorkbenchBridge` exposes that
+protocol to the editor without giving GDScript a canonical map writer.
 
 The `aonw_godot` GDExtension exposes one strict `request_json` operation for
 the shared `aonw_contracts::client` protocol. `AonwNativeLocalSession` is only
