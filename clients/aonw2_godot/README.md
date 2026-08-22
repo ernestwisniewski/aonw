@@ -18,9 +18,10 @@ The **AoNW Map** dock appears on the right. Its map list discovers:
 - bundled Godot maps in `clients/aonw2_godot/assets/maps/`.
 
 For migrated shared maps, the catalog associates the canonical JSON from
-`content/maps/<map_id>/map.json` with matching JPG reference artwork from
-`assets/maps/<map_id>/`. Rust and Godot never decode the unversioned Flutter
-JSON.
+`content/maps/<map_id>/map.json` with the compiled reference atlas described by
+`assets/runtime/maps/<map_id>/map_texture_manifest.json`. Godot assembles its
+JPG pages directly and never depends on raw per-tile artwork. Rust and Godot
+never decode the unversioned Flutter JSON.
 
 Choose a map and select **Generate / update 3D**. The Workbench writes:
 
@@ -47,7 +48,7 @@ sibling nodes and custom children attached to the surface. The generated
 surface contains three independent layers:
 
 - `BaseTerrain` is an elevated hex surface colored from logical terrain data;
-- `ReferenceTexture` projects the original stitched `NxM.jpg` artwork and has
+- `ReferenceTexture` projects the compiled runtime atlas and has
   configurable visibility and opacity;
 - `HexGrid` is a separately configurable grid overlay.
 
@@ -63,11 +64,11 @@ current scene**. The Workbench writes settings and meshes to a new immutable
 generation, saves the authored scene, and only then publishes that generation
 in the manifest. A failed save therefore cannot leave a scene referring to a
 partially overwritten mesh set. Generated textures and meshes are Godot resources, so
-reopening the scene does not load the original JPG slices again. The reference
-atlas preserves native tile dimensions up to the preview cap rather than
-upsampling smaller artwork. Regenerate the scene after changing the source map
-or its tile artwork. The manifest records the source identity, content hash,
-source tile size, active generation, and render settings.
+reopening the scene does not load the compiled JPG pages again. The reference
+atlas preserves the dimensions declared by the runtime texture manifest.
+Regenerate the scene after changing the source map or its runtime artwork. The
+generated-scene manifest records the source identity, content hash, source tile
+size, active generation, and render settings.
 
 ## Runtime preview
 
@@ -78,7 +79,7 @@ make godot-run
 ```
 
 The bundled `aonw2_starter` map is the default and does not depend on files
-outside the Godot project. Maps without painted JPG tiles use deterministic
+outside the Godot project. Maps without compiled runtime art use deterministic
 terrain colors. The file picker accepts only strict map schema v1 documents.
 
 Controls:

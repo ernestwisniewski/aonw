@@ -179,7 +179,7 @@ mod tests {
             1,
             1,
             vec![
-                TileDefinition::try_new(
+                TileDefinition::try_new_for_simulation(
                     HexCoord::new(0, 0),
                     vec![TerrainType::Grassland],
                     Vec::new(),

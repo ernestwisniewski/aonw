@@ -132,7 +132,7 @@ mod tests {
     use super::{MovementCost, terrain_entry_cost};
 
     fn tile(terrains: Vec<TerrainType>) -> TileDefinition {
-        TileDefinition::try_new(HexCoord::new(0, 0), terrains, Vec::new(), 0)
+        TileDefinition::try_new_for_simulation(HexCoord::new(0, 0), terrains, Vec::new(), 0)
             .expect("valid terrain fixture")
     }
 
@@ -165,7 +165,7 @@ mod tests {
     #[test]
     fn primary_terrain_is_explicit() {
         assert!(
-            TileDefinition::try_new(
+            TileDefinition::try_new_for_simulation(
                 HexCoord::new(0, 0),
                 vec![TerrainType::Forest],
                 Vec::new(),

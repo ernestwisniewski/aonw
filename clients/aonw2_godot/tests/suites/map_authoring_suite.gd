@@ -15,18 +15,34 @@ var _failures: Array[String]
 func run(failures: Array[String]) -> void:
 	_failures = failures
 	_test_catalog()
-	_test_canonical_map_with_reference_art()
+	_test_display_terrain_color()
+	_test_canonical_map_with_runtime_texture()
 	_test_generated_godot_scene()
 
-func _test_canonical_map_with_reference_art() -> void:
+func _test_display_terrain_color() -> void:
+	var repository := TileAtlasRepository.new()
+	var color: Color = repository._terrain_color({
+		"terrains": ["mountain", "forest"],
+		"displayTerrain": "ocean",
+	})
+	_check(
+		color.is_equal_approx(Color("245b91")),
+		"base style uses displayTerrain instead of movement terrain order",
+	)
+
+func _test_canonical_map_with_runtime_texture() -> void:
 	var source := MapSource.new(
 		"myranth",
 		"res://../../content/maps/myranth/map.json",
-		"res://../../assets/maps/myranth",
+		"res://../../assets/runtime/maps/myranth",
 		"content",
 	)
 	var result: Dictionary = _open_map().execute(source)
-	_check(result["ok"], "canonical content map opens with separate reference art")
+	_check(
+		result["ok"],
+		"canonical content map opens with compiled runtime art: %s"
+		% result.get("message", "unknown error"),
+	)
 	if not result["ok"]:
 		return
 	var document = result["document"]
@@ -36,15 +52,36 @@ func _test_canonical_map_with_reference_art() -> void:
 	_check(document.tiles().size() == 475, "complete map is normalized")
 	_check(document.tiles().is_read_only(), "tile collection is immutable")
 	_check(document.tiles()[0].is_read_only(), "tile values are immutable")
+	_check(
+		document.tiles()[0]["terrainTags"].is_read_only(),
+		"terrain tags are immutable",
+	)
 	_check(document.objectives().size() == 2, "objectives are retained")
-	_check(result["missing_tiles"].is_empty(), "all map textures load")
-	_check(result["invalid_tiles"].is_empty(), "all map textures decode")
+	_check(result["missing_tiles"].is_empty(), "all runtime texture pages exist")
+	_check(result["invalid_tiles"].is_empty(), "all runtime texture pages decode")
 	_check(reference_texture.get_width() > 0, "reference atlas is created")
+	var manifest_file := FileAccess.open(
+		"res://../../assets/runtime/maps/myranth/map_texture_manifest.json",
+		FileAccess.READ,
+	)
+	_check(manifest_file != null, "runtime texture manifest is readable")
+	if manifest_file == null:
+		return
+	var manifest: Dictionary = JSON.parse_string(manifest_file.get_as_text())
+	var expected_size := Vector2i(
+		ceili(float(manifest["worldWidth"]) * float(manifest["compiledScale"])),
+		ceili(float(manifest["worldHeight"]) * float(manifest["compiledScale"])),
+	)
+	_check(
+		reference_texture.get_size() == Vector2(expected_size),
+		"reference atlas keeps the dimensions declared by the runtime manifest",
+	)
 	var atlas := reference_texture.get_image()
 	var center := Vector2i(atlas.get_width() / 2, atlas.get_height() / 2)
 	_check(
-		atlas.get_pixelv(center).get_luminance() > 0.05,
-		"reference atlas contains source imagery",
+		atlas.get_pixelv(center).a > 0.99
+		and atlas.get_pixelv(center).get_luminance() > 0.05,
+		"reference atlas contains the compiled map artwork",
 	)
 
 	var meshes := MeshBuilder.new().build(
@@ -306,7 +343,7 @@ func _test_catalog() -> void:
 	var identifiers: Array[String] = []
 	for source in sources:
 		identifiers.append(source.map_id)
-	_check("myranth" in identifiers, "catalog discovers maps from root assets")
+	_check("myranth" in identifiers, "catalog discovers canonical content maps")
 	_check("aonw2_starter" in identifiers, "catalog discovers versioned Godot maps")
 	for source in sources:
 		if source.map_id == "aonw2_starter":

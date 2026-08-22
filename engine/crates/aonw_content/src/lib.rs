@@ -22,7 +22,7 @@ pub use catalog::{GridLayout, MapObjectiveType, ResourceType, TerrainType};
 pub use content_hash::ContentHash;
 pub use document::MapDocument;
 pub use error::MapLoadError;
-pub use model::{MapDefinition, MapObjective, TileDefinition};
+pub use model::{MapDefinition, MapObjective, TerrainProfile, TileDefinition};
 pub use ruleset::{RulesetDefinition, UnitCapabilities, UnitDefinition, UnitMovementDomainValue};
 pub use scenario::{
     ScenarioBootstrapError, ScenarioDefinition, ScenarioLoadError, ScenarioUnitDefinition,

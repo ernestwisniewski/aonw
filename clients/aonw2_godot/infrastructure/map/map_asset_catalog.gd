@@ -4,24 +4,24 @@ extends RefCounted
 const MapSource := preload("res://application/map/map_source.gd")
 const DEFAULT_CONTENT_ROOT := "res://../../content/maps"
 const BUNDLED_ROOT := "res://assets/maps"
-const REFERENCE_ART_ROOT := "res://../../assets/maps"
+const RUNTIME_MAP_ASSET_ROOT := "res://../../assets/runtime/maps"
 
 var _content_root: String
 var _bundled_root: String
-var _reference_art_root: String
+var _runtime_map_asset_root: String
 
 func _init(
 	content_root: String = DEFAULT_CONTENT_ROOT,
 	bundled_root: String = BUNDLED_ROOT,
-	reference_art_root: String = REFERENCE_ART_ROOT,
+	runtime_map_asset_root: String = RUNTIME_MAP_ASSET_ROOT,
 ) -> void:
 	_content_root = content_root
 	_bundled_root = bundled_root
-	_reference_art_root = reference_art_root
+	_runtime_map_asset_root = runtime_map_asset_root
 
 func discover() -> Array[AonwMapSource]:
 	var sources: Array[AonwMapSource] = []
-	_append_sources(sources, _content_root, _reference_art_root, "content")
+	_append_sources(sources, _content_root, _runtime_map_asset_root, "content")
 	_append_sources(sources, _bundled_root, _bundled_root, "Godot")
 	sources = _deduplicate(sources)
 	sources.sort_custom(func(left: AonwMapSource, right: AonwMapSource) -> bool:

@@ -16,6 +16,9 @@ fn map_json(cols: u16, rows: u16, map_id: &str) -> String {
                     "col": col,
                     "row": row,
                     "terrains": ["grassland"],
+                    "displayTerrain": "grassland",
+                    "yieldTerrain": "grassland",
+                    "terrainTags": ["grassland"],
                     "resources": [],
                     "height": 0,
                 })

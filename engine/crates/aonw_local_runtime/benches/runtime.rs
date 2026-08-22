@@ -146,7 +146,7 @@ fn map() -> MapDefinition {
     let tiles = (0..ROWS)
         .flat_map(|row| {
             (0..COLS).map(move |col| {
-                TileDefinition::try_new(
+                TileDefinition::try_new_for_simulation(
                     HexCoord::new(i32::from(col), i32::from(row)),
                     vec![TerrainType::Grassland],
                     Vec::new(),

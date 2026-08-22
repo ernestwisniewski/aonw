@@ -15,7 +15,7 @@ fn map() -> MapDefinition {
     let tiles = (0..5)
         .flat_map(|row| {
             (0..5).map(move |col| {
-                TileDefinition::try_new(
+                TileDefinition::try_new_for_simulation(
                     HexCoord::new(col, row),
                     vec![TerrainType::Plains],
                     Vec::new(),

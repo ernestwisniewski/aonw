@@ -59,9 +59,23 @@ static func from_native_snapshot(raw: Variant) -> Dictionary:
 		if not raw_tile is Dictionary:
 			return _failure("Rust render tile must be an object")
 		var tile: Dictionary = raw_tile.duplicate(true)
+		for field in [
+			"col", "row", "terrains", "displayTerrain", "yieldTerrain",
+			"terrainTags", "resources", "height",
+		]:
+			if not tile.has(field):
+				return _failure("Rust render tile is missing %s" % field)
+		if (
+			not tile["terrains"] is Array
+			or not tile["terrainTags"] is Array
+			or not tile["resources"] is Array
+		):
+			return _failure("Rust render tile collections are invalid")
 		var terrains: Array = tile["terrains"]
+		var terrain_tags: Array = tile["terrainTags"]
 		var resources: Array = tile["resources"]
 		terrains.make_read_only()
+		terrain_tags.make_read_only()
 		resources.make_read_only()
 		tile.make_read_only()
 		tiles.append(tile)
