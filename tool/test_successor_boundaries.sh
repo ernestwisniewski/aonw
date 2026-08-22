@@ -113,4 +113,15 @@ if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>
 fi
 echo "Dependency checker rejected Rust transport in presentation."
 
+printf 'void main() {}\n' \
+  >"${dependency_fixture}/clients/aonw_flutter/lib/features/map/presentation/map.dart"
+mkdir -p "${dependency_fixture}/clients/aonw_godot/game/presentation/map"
+printf 'var terrain_mesh_resource\n' \
+  >"${dependency_fixture}/clients/aonw_godot/game/presentation/map/legacy_terrain.gd"
+if "${dependency_checker}" --repo-root "${dependency_fixture}" >"${case_log}" 2>&1; then
+  echo "Dependency checker accepted a Godot mesh terrain fallback." >&2
+  exit 1
+fi
+echo "Dependency checker rejected a Godot mesh terrain fallback."
+
 echo "Successor boundary negative tests passed."

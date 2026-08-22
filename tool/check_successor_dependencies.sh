@@ -22,6 +22,8 @@ if [[ ! -d "${successor_flutter}" ]]; then
   exit 1
 fi
 
+successor_godot="${repo_root}/clients/aonw_godot"
+
 violations="$(mktemp "${TMPDIR:-/tmp}/aonw-successor-dependencies.XXXXXX")"
 trap 'rm -f "${violations}"' EXIT
 
@@ -32,6 +34,14 @@ done < <(
     \( -path '*/.dart_tool' -o -path '*/build' \) -prune -o \
     -type f -name '*.dart' -print0
 )
+
+if [[ -d "${successor_godot}/game" ]]; then
+  grep -RInE \
+    'BaseTerrain|terrain_mesh_resource|map_surface_mesh_builder' \
+    --include='*.gd' \
+    "${successor_godot}/game" \
+    >>"${violations}" || true
+fi
 
 while IFS= read -r -d '' pubspec_file; do
   grep -nHE '^[[:space:]]+(aonw_core|aonw):([[:space:]]|$)' "${pubspec_file}" >>"${violations}" || true
@@ -66,9 +76,9 @@ done < <(
 )
 
 if [[ -s "${violations}" ]]; then
-  echo "Successor Flutter dependency boundaries were violated:" >&2
+  echo "Successor client dependency boundaries were violated:" >&2
   sed "s#${repo_root}/##" "${violations}" >&2
   exit 1
 fi
 
-echo "Successor dependency boundaries are intact."
+echo "Successor client dependency boundaries are intact."

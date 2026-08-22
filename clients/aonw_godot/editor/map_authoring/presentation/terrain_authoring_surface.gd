@@ -5,7 +5,7 @@ extends Node3D
 signal session_opened(result: Dictionary)
 
 const ArtifactRepository := preload(
-	"res://editor/map_authoring/infrastructure/terrain/terrain_compiled_artifact_repository.gd"
+	"res://game/infrastructure/terrain/terrain_compiled_artifact_repository.gd"
 )
 const AuthoringStore := preload(
 	"res://editor/map_authoring/infrastructure/terrain/terrain_authoring_store.gd"
@@ -14,7 +14,7 @@ const AuthoringSession := preload(
 	"res://editor/map_authoring/application/terrain_authoring_session.gd"
 )
 const OverlayBuilder := preload(
-	"res://editor/map_authoring/presentation/terrain_overlay_mesh_builder.gd"
+	"res://game/presentation/map/terrain_overlay_mesh_builder.gd"
 )
 
 @export var source_map_id := ""

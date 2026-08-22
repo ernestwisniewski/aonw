@@ -37,7 +37,7 @@ environment = SubResource("Environment_preview")
 unique_name_in_owner = true
 script = ExtResource("2_surface")
 
-[node name="BaseTerrain" type="MeshInstance3D" parent="MapSurface" unique_id=2116543194]
+[node name="Terrain3D" type="Terrain3D" parent="MapSurface" unique_id=2116543194]
 unique_name_in_owner = true
 
 [node name="ReferenceTexture" type="MeshInstance3D" parent="MapSurface" unique_id=1649038887]

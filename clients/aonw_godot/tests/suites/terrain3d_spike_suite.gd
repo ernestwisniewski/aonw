@@ -2,7 +2,7 @@ extends RefCounted
 
 const SPIKE_DIRECTORY := "res://.godot/terrain3d_spike"
 const MapSource := preload("res://game/application/map/map_source.gd")
-const HexMapProjection := preload("res://game/presentation/map/hex_map_projection.gd")
+const HexGridGeometry := preload("res://game/presentation/map/geometry/hex_grid_geometry.gd")
 const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
 
 var _failures: Array[String]
@@ -143,9 +143,11 @@ func _test_overlays_and_picking() -> void:
 	_check(map_result["ok"], "terrain alignment fixture map opens")
 	if not map_result["ok"]:
 		return
-	var projection := HexMapProjection.new(map_result["document"], 1.0, 0.16)
+	var map: AonwMapView = map_result["map"]
+	var geometry := HexGridGeometry.new(map.cols(), map.rows())
 	var coordinate := Vector2i(4, 4)
-	var logical_center: Vector3 = projection.hex_center(coordinate)
+	var center := geometry.tile_center(coordinate)
+	var logical_center := Vector3(center.x, 0.0, center.y)
 	var sample_position := Vector3(
 		roundf(logical_center.x),
 		0.0,
@@ -168,7 +170,7 @@ func _test_overlays_and_picking() -> void:
 	if intersection.is_finite():
 		_check_approx(intersection.y, 8.0, "picking returns the deformed surface height")
 		_check(
-			projection.local_to_hex(intersection) == coordinate,
+			geometry.tile_at_point(Vector2(intersection.x, intersection.z)) == coordinate,
 			"deformed Terrain3D picking resolves the logical hex",
 		)
 

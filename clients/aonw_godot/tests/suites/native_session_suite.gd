@@ -1,7 +1,7 @@
 extends RefCounted
 
 const MapSource := preload("res://game/application/map/map_source.gd")
-const MapDocument := preload("res://game/application/map/read_model/map_document.gd")
+const MapViewMapper := preload("res://game/infrastructure/map/map_view_mapper.gd")
 const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
 const NativeLocalSession := preload("res://game/infrastructure/engine/native_local_session.gd")
 const ClientResponseDecoder := preload(
@@ -318,17 +318,17 @@ func _test_shared_client_contract() -> void:
 	if map_response_file != null:
 		var decoded_map := ClientResponseDecoder.new(3).decode(map_response_file.get_as_text())
 		var map_body: Dictionary = decoded_map.get("outcome", {}).get("response", {})
-		var mapped := MapDocument.from_map_view(map_body.get("map"))
+		var mapped := MapViewMapper.new().from_wire(map_body.get("map"))
 		_check(
 			map_body.get("type", "") == "mapInspected"
 			and mapped["ok"]
-			and mapped["value"].tile_at(Vector2i.ZERO)["displayTerrain"] == "forest",
+			and mapped["value"].tile_at(Vector2i.ZERO).display_terrain() == &"forest",
 			"Godot maps the shared response into its map read model",
 		)
 		var foreign_map: Dictionary = map_body["map"].duplicate(true)
 		foreign_map["tiles"][0]["unknown"] = true
 		_check(
-			not MapDocument.from_map_view(foreign_map)["ok"],
+			not MapViewMapper.new().from_wire(foreign_map)["ok"],
 			"Godot rejects foreign map response fields",
 		)
 

@@ -5,7 +5,7 @@ const OpenMap := preload("res://game/application/map/open_map.gd")
 const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
 const TileAtlasRepository := preload("res://game/infrastructure/map/tile_atlas_repository.gd")
 const ArtifactRepository := preload(
-	"res://editor/map_authoring/infrastructure/terrain/terrain_compiled_artifact_repository.gd"
+	"res://game/infrastructure/terrain/terrain_compiled_artifact_repository.gd"
 )
 const SceneRepository := preload(
 	"res://editor/map_authoring/infrastructure/terrain/terrain_authoring_scene_repository.gd"
@@ -43,19 +43,61 @@ func _generate_scene() -> Dictionary:
 		"res://.godot/terrain_compiled",
 	)
 	var generator := GenerateTerrainAuthoringMap.new(
-		OpenMap.new(JsonMapRepository.new(), TileAtlasRepository.new()),
-		ArtifactRepository.new(),
+		OpenMap.new(
+			JsonMapRepository.new(),
+			TileAtlasRepository.new(),
+			ArtifactRepository.new(),
+		),
 		scene_repository,
 	)
 	var result := generator.execute(source)
 	if result["ok"]:
 		_check(result["scene_created"], "Terrain3D authoring scene is created once")
+		_add_authored_child(result["scene_path"])
 		var regenerated := generator.execute(source)
 		_check(
 			regenerated["ok"] and not regenerated["scene_created"],
 			"regeneration preserves the existing authored scene",
 		)
+		_check(
+			_scene_has_authored_child(result["scene_path"]),
+			"regeneration preserves manually authored children",
+		)
 	return result
+
+func _add_authored_child(scene_path: String) -> void:
+	var packed := ResourceLoader.load(
+		scene_path,
+		"PackedScene",
+		ResourceLoader.CACHE_MODE_REPLACE_DEEP,
+	) as PackedScene
+	_check(packed != null, "generated authoring scene can be loaded for manual editing")
+	if packed == null:
+		return
+	var root := packed.instantiate()
+	var authored := Node3D.new()
+	authored.name = "AuthoredLandmark"
+	root.add_child(authored)
+	authored.owner = root
+	var updated := PackedScene.new()
+	var error := updated.pack(root)
+	if error == OK:
+		error = ResourceSaver.save(updated, scene_path)
+	_check(error == OK, "manual authored child can be saved")
+	root.free()
+
+func _scene_has_authored_child(scene_path: String) -> bool:
+	var packed := ResourceLoader.load(
+		scene_path,
+		"PackedScene",
+		ResourceLoader.CACHE_MODE_REPLACE_DEEP,
+	) as PackedScene
+	if packed == null:
+		return false
+	var root := packed.instantiate()
+	var found := root.find_child("AuthoredLandmark", true, false) != null
+	root.free()
+	return found
 
 func _test_authoring_session(scene_path: String) -> void:
 	var opened := await _open_surface(scene_path)

@@ -1,63 +1,31 @@
 class_name AonwTileAtlasRepository
 extends AonwMapTextureAssembler
 
-const HexGridGeometry := preload("res://game/presentation/map/geometry/hex_grid_geometry.gd")
-const MapTextureProjection := preload(
-	"res://game/presentation/map/geometry/map_texture_projection.gd"
-)
 const MANIFEST_NAME := "map_texture_manifest.json"
-const MAP_HEX_RADIUS := 60.0
 const MAX_ATLAS_SIZE := 16_384
-const TERRAIN_COLORS := {
-	"ocean": Color("245b91"),
-	"coast": Color("4f9dc4"),
-	"lake": Color("3f87b3"),
-	"plains": Color("b7a66a"),
-	"grassland": Color("6e9c54"),
-	"desert": Color("c5a15f"),
-	"tundra": Color("89938a"),
-	"snow": Color("d9e2e3"),
-	"mountain": Color("666b6f"),
-	"hills": Color("8a7957"),
-	"wetlands": Color("537a68"),
-	"jungle": Color("356a43"),
-	"forest": Color("3e7148"),
-	"river": Color("3e83ad"),
-}
 
-func load_atlas(document: AonwMapDocument, source_directory: String) -> Dictionary:
-	var geometry := HexGridGeometry.new(document.cols(), document.rows())
-	var projection := MapTextureProjection.new(geometry)
+func load_atlas(map: AonwMapView, source_directory: String) -> Dictionary:
 	var reference := _load_reference_atlas(
-		document,
+		map,
 		_resolve_path(source_directory),
 	)
 	if not reference["ok"]:
 		return reference
 
 	var atlas_size: Vector2i = reference["atlas_size"]
-	var terrain_atlas := Image.create(atlas_size.x, atlas_size.y, false, Image.FORMAT_RGB8)
-	terrain_atlas.fill(Color("6c7178"))
-	_fill_terrain_fallback(terrain_atlas, document, projection, atlas_size)
-	terrain_atlas.generate_mipmaps()
-
 	var reference_atlas: Image = reference["image"]
 	reference_atlas.generate_mipmaps()
 	var reference_texture := ImageTexture.create_from_image(reference_atlas)
 	return {
 		"ok": true,
-		"texture": reference_texture,
-		"terrain_texture": ImageTexture.create_from_image(terrain_atlas),
 		"reference_texture": reference_texture,
 		"missing_tiles": reference["missing_pages"],
 		"invalid_tiles": reference["invalid_pages"],
-		"resized_tiles": [],
 		"atlas_size": atlas_size,
-		"source_tile_size": reference["source_tile_size"],
 	}
 
 func _load_reference_atlas(
-	document: AonwMapDocument,
+	map: AonwMapView,
 	source_directory: String,
 ) -> Dictionary:
 	var manifest_path := source_directory.path_join(MANIFEST_NAME)
@@ -68,7 +36,7 @@ func _load_reference_atlas(
 	if manifest_file == null:
 		return _failure("cannot open map texture manifest: %s" % manifest_path)
 	var manifest: Variant = JSON.parse_string(manifest_file.get_as_text())
-	var error := _manifest_error(manifest, document)
+	var error := _manifest_error(manifest, map)
 	if not error.is_empty():
 		return _failure("invalid map texture manifest: %s" % error)
 
@@ -102,17 +70,13 @@ func _load_reference_atlas(
 		"ok": true,
 		"image": atlas,
 		"atlas_size": atlas_size,
-		"source_tile_size": Vector2i(
-			ceili(MAP_HEX_RADIUS * 2.0 * scale),
-			ceili(HexGridGeometry.SQRT_3 * MAP_HEX_RADIUS * scale),
-		),
 		"missing_pages": [],
 		"invalid_pages": [],
 	}
 
 func _manifest_error(
 	value: Variant,
-	document: AonwMapDocument,
+	map: AonwMapView,
 ) -> String:
 	if value is not Dictionary:
 		return "root must be an object"
@@ -125,13 +89,13 @@ func _manifest_error(
 		return "fields do not match MapAssetBundleManifest v1"
 	if manifest.get("version") != 1:
 		return "unsupported version"
-	if manifest.get("mapId") != document.map_id():
+	if manifest.get("mapId") != map.map_id():
 		return "map identity does not match"
-	if manifest.get("mapContentHash") != document.content_hash():
+	if manifest.get("mapContentHash") != map.content_hash():
 		return "map content hash does not match"
 	if manifest.get("gridLayout") != "oddQFlatTop":
 		return "grid layout does not match"
-	if manifest.get("cols") != document.cols() or manifest.get("rows") != document.rows():
+	if manifest.get("cols") != map.cols() or manifest.get("rows") != map.rows():
 		return "map dimensions do not match"
 	for field in ["worldWidth", "worldHeight", "compiledScale"]:
 		if not _is_positive_number(manifest.get(field)):
@@ -145,7 +109,7 @@ func _manifest_error(
 	var pages: Variant = manifest.get("pages")
 	if pages is not Array or pages.is_empty():
 		return "pages must be a non-empty array"
-	var expected_prefix := "assets/runtime/maps/%s/" % document.map_id()
+	var expected_prefix := "assets/runtime/maps/%s/" % map.map_id()
 	var seen := {}
 	for page_value in pages:
 		if page_value is not Dictionary:
@@ -211,21 +175,6 @@ func _blit_page(atlas: Image, page: Image, destination: Array, scale: float) -> 
 		return false
 	atlas.blit_rect(page, Rect2i(source, size), target)
 	return true
-
-func _fill_terrain_fallback(
-	atlas: Image,
-	document: AonwMapDocument,
-	projection,
-	atlas_size: Vector2i,
-) -> void:
-	for tile in document.tiles():
-		var coordinate := Vector2i(tile["col"], tile["row"])
-		var rect: Rect2i = projection.tile_slice_rect(coordinate, atlas_size)
-		if rect.size.x > 0 and rect.size.y > 0:
-			atlas.fill_rect(rect, _terrain_color(tile))
-
-func _terrain_color(tile: Dictionary) -> Color:
-	return TERRAIN_COLORS.get(str(tile["displayTerrain"]), Color("6c7178"))
 
 static func _is_positive_number(value: Variant) -> bool:
 	return _is_number(value) and float(value) > 0.0

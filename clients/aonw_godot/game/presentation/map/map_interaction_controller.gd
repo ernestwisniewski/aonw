@@ -14,12 +14,8 @@ var _projection: AonwHexMapProjection
 var _hovered := INVALID_HEX
 var _selected := INVALID_HEX
 
-func present(
-	document: AonwMapDocument,
-	hex_radius: float,
-	height_step: float,
-) -> void:
-	_projection = AonwHexMapProjection.new(document, hex_radius, height_step)
+func present(projection: AonwHexMapProjection) -> void:
+	_projection = projection
 	_hovered = INVALID_HEX
 	_selected = INVALID_HEX
 	_overlay.present(_projection)
@@ -48,7 +44,7 @@ func pick_screen_position(screen_position: Vector2) -> Vector2i:
 	var local_direction := (
 		inverse.basis * _camera.project_ray_normal(screen_position)
 	).normalized()
-	return _projection.ray_to_hex(local_origin, local_direction)
+	return _surface.pick_ray(local_origin, local_direction)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:

@@ -561,10 +561,10 @@ godot-editor-check: godot-toolchain-check terrain3d-check rust-godot-build godot
 	@"$(GODOT_BIN)" --headless --log-file "$(GODOT_EDITOR_LOG)" --editor --path "$(GODOT_PROJECT)" --quit
 	@tool/check_godot_log.sh "$(GODOT_EDITOR_LOG)"
 
-godot-editor: godot-toolchain-check terrain3d-check rust-godot-build godot-native-config
+godot-editor: godot-toolchain-check terrain3d-check rust-godot-build godot-terrain-compile godot-native-config
 	@"$(GODOT_BIN)" --editor --path "$(GODOT_PROJECT)"
 
-godot-run: godot-toolchain-check terrain3d-check rust-godot-build godot-native-config
+godot-run: godot-toolchain-check terrain3d-check rust-godot-build godot-terrain-compile godot-native-config
 	@"$(GODOT_BIN)" --path "$(GODOT_PROJECT)"
 
 godot-test: godot-editor-check

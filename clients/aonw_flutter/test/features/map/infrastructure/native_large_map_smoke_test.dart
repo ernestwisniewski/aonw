@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:aonw_flutter/features/map/application/map_interaction_state.dart';
@@ -12,6 +13,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('returns the shared starter MapView identity', (tester) async {
+    final loadedMap = await tester.runAsync(_loadStarter);
+    expect(loadedMap, isNotNull);
+    final identity =
+        jsonDecode(
+              File(
+                '../../aonw_tests/fixtures/maps/aonw2_starter/'
+                'map_view_identity.v1.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final map = loadedMap!;
+
+    expect(map.mapId, identity['mapId']);
+    expect(map.contentHash, identity['contentHash']);
+    expect(map.cols, identity['cols']);
+    expect(map.rows, identity['rows']);
+    expect(map.gridLayout.name, identity['gridLayout']);
+  });
+
   testWidgets('renders the Rust-backed 40 by 30 Dravonia map', (tester) async {
     final loadedMap = await tester.runAsync(_loadDravonia);
     expect(loadedMap, isNotNull);
@@ -55,13 +76,18 @@ void main() {
   });
 }
 
+Future<MapView?> _loadStarter() =>
+    _loadMap('../../content/maps/aonw2_starter/map.json');
+
 Future<MapView?> _loadDravonia() async {
+  return _loadMap('../../content/maps/dravonia/map.json');
+}
+
+Future<MapView?> _loadMap(String path) async {
   final session = await createAonwRustSession();
   if (session == null) return null;
   try {
-    final document = File(
-      '../../content/maps/dravonia/map.json',
-    ).readAsStringSync();
+    final document = File(path).readAsStringSync();
     final response = await session.send(
       AonwClientRequest.inspectMap(mapDocument: document),
     );

@@ -2,24 +2,21 @@
 class_name AonwMapSurface
 extends Node3D
 
-const MeshBuilder := preload("res://game/presentation/map/map_surface_mesh_builder.gd")
+const OverlayBuilder := preload(
+	"res://game/presentation/map/terrain_overlay_mesh_builder.gd"
+)
 const RenderSettings := preload("res://game/presentation/map/map_render_settings.gd")
 
 signal map_presented(world_size: Vector2, maximum_height: float)
 
-@export var source_map_id := ""
-@export var source_map_path := ""
-@export var source_visual_directory := ""
 @export var render_settings: Resource = RenderSettings.new()
-@export var terrain_mesh_resource: ArrayMesh
-@export var reference_mesh_resource: ArrayMesh
-@export var grid_mesh_resource: ArrayMesh
 
-var _builder := MeshBuilder.new()
-var _document: AonwMapDocument
-var _terrain_texture: Texture2D
+var _overlay_builder := OverlayBuilder.new()
+var _map: AonwMapView
+var _artifact: AonwTerrainCompiledArtifact
+var _projection: AonwHexMapProjection
 var _reference_texture: Texture2D
-var _terrain: MeshInstance3D
+var _terrain: Terrain3D
 var _reference: MeshInstance3D
 var _grid: MeshInstance3D
 var _ignore_settings_changed := false
@@ -29,30 +26,42 @@ func _ready() -> void:
 	_connect_settings()
 	_ensure_layers()
 	_apply_visibility()
-	_update_material_opacity(_reference, render_settings.reference_opacity)
-	_update_material_opacity(_grid, render_settings.grid_opacity)
 
 func present(
-	document: AonwMapDocument,
-	terrain_texture: Texture2D,
+	map: AonwMapView,
+	artifact: AonwTerrainCompiledArtifact,
 	reference_texture: Texture2D,
 ) -> void:
-	_document = document
-	_terrain_texture = terrain_texture
+	assert(map != null, "MapView is required")
+	assert(artifact != null, "Compiled Terrain3D artifact is required")
+	assert(reference_texture != null, "Reference texture is required")
+	if str(map.map_id()) != artifact.map_id or map.content_hash() != artifact.map_content_hash:
+		push_error("Terrain3D artifact identity does not match MapView")
+		return
+	_map = map
+	_artifact = artifact
 	_reference_texture = reference_texture
-	_rebuild()
+	_ensure_layers()
+	_import_base_terrain()
+	_projection = AonwHexMapProjection.new(_map, _artifact, _terrain.data)
+	_rebuild_overlays()
+	var height_range: Vector2 = _terrain.data.get_height_range()
+	map_presented.emit(_projection.world_size(), height_range.y)
 
-func configure_source(source: AonwMapSource) -> void:
-	source_map_id = source.map_id
-	source_map_path = source.map_path
-	source_visual_directory = source.visual_directory
+func projection() -> AonwHexMapProjection:
+	return _projection
 
-func apply_render_settings(value: Resource) -> void:
-	_disconnect_settings()
-	render_settings = value.snapshot() if value != null else RenderSettings.new()
-	_connect_settings()
-	_rebuild()
-	_apply_visibility()
+func terrain() -> Terrain3D:
+	_ensure_layers()
+	return _terrain
+
+func pick_ray(local_origin: Vector3, local_direction: Vector3) -> Vector2i:
+	if _projection == null or local_direction.is_zero_approx():
+		return AonwHexMapProjection.INVALID_HEX
+	var intersection := _terrain.get_intersection(local_origin, local_direction, false)
+	if not intersection.is_finite():
+		return AonwHexMapProjection.INVALID_HEX
+	return _projection.local_to_hex(intersection)
 
 func set_reference_visible(value: bool) -> void:
 	_ensure_layers()
@@ -62,7 +71,7 @@ func set_reference_visible(value: bool) -> void:
 func set_reference_opacity(value: float) -> void:
 	_ensure_layers()
 	_update_setting(func() -> void: render_settings.reference_opacity = value)
-	_update_material_opacity(_reference, render_settings.reference_opacity)
+	_update_opacity(_reference, render_settings.reference_opacity)
 
 func set_grid_visible(value: bool) -> void:
 	_ensure_layers()
@@ -72,125 +81,63 @@ func set_grid_visible(value: bool) -> void:
 func set_grid_opacity(value: float) -> void:
 	_ensure_layers()
 	_update_setting(func() -> void: render_settings.grid_opacity = value)
-	_update_material_opacity(_grid, render_settings.grid_opacity)
+	_update_opacity(_grid, render_settings.grid_opacity)
 
 func set_grid_width(value: float) -> void:
-	set_geometry(render_settings.height_step, value)
+	_update_setting(func() -> void: render_settings.grid_width = value)
+	_rebuild_overlays()
 
-func set_height_step(value: float) -> void:
-	set_geometry(value, render_settings.grid_width)
+func _import_base_terrain() -> void:
+	_clear_terrain_data()
+	_terrain.vertex_spacing = _artifact.sample_spacing_meters
+	var images: Array[Image]
+	images.resize(Terrain3DRegion.TYPE_MAX)
+	images[Terrain3DRegion.TYPE_HEIGHT] = _artifact.base_image.duplicate()
+	_terrain.data.import_images(images)
+	var camera := get_viewport().get_camera_3d() if is_inside_tree() else null
+	if camera != null:
+		_terrain.set_camera(camera)
 
-func set_geometry(value_height_step: float, value_grid_width: float) -> void:
-	_ignore_settings_changed = true
-	render_settings.height_step = value_height_step
-	render_settings.grid_width = value_grid_width
-	_ignore_settings_changed = false
-	_rebuild()
+func _clear_terrain_data() -> void:
+	for region in _terrain.data.get_regions_active():
+		_terrain.data.remove_region(region, false)
+	_terrain.data.update_maps(Terrain3DRegion.TYPE_MAX, true, false)
 
-func has_editing_context() -> bool:
-	return _document != null and _terrain_texture != null and _reference_texture != null
-
-func terrain_mesh() -> ArrayMesh:
-	_ensure_layers()
-	return terrain_mesh_resource
-
-func reference_mesh() -> ArrayMesh:
-	_ensure_layers()
-	return reference_mesh_resource
-
-func grid_mesh() -> ArrayMesh:
-	_ensure_layers()
-	return grid_mesh_resource
-
-func replace_persisted_resources(
-	terrain: ArrayMesh,
-	reference: ArrayMesh,
-	grid: ArrayMesh,
-	settings: Resource = null,
-) -> void:
-	_ensure_layers()
-	_reference.material_override = null
-	_grid.material_override = null
-	_set_mesh_resources(terrain, reference, grid)
-	if settings != null:
-		_disconnect_settings()
-		render_settings = settings
-		_connect_settings()
-	_apply_visibility()
-
-func restore_editing_context(document: AonwMapDocument) -> bool:
-	_ensure_layers()
-	var terrain_texture := _mesh_texture(terrain_mesh_resource)
-	var reference_texture := _mesh_texture(reference_mesh_resource)
-	if terrain_texture == null or reference_texture == null:
-		return false
-	_document = document
-	_terrain_texture = terrain_texture
-	_reference_texture = reference_texture
-	return true
-
-func _rebuild() -> void:
-	if _document == null or _terrain_texture == null or _reference_texture == null:
+func _rebuild_overlays() -> void:
+	if _artifact == null or _terrain == null or _reference_texture == null:
 		return
-	_ensure_layers()
-	var result := _builder.build(
-		_document,
-		_terrain_texture,
+	_reference.mesh = _overlay_builder.reference_mesh(
+		_artifact,
+		_terrain.data,
 		_reference_texture,
-		render_settings,
+		render_settings.reference_opacity,
 	)
-	_reference.material_override = null
-	_grid.material_override = null
-	_set_mesh_resources(
-		result["terrain_mesh"],
-		result["reference_mesh"],
-		result["grid_mesh"],
+	_reference.transform = _artifact.reference_transform()
+	_grid.mesh = _overlay_builder.grid_mesh(
+		_artifact,
+		_terrain.data,
+		render_settings.grid_width,
+		render_settings.grid_opacity,
 	)
 	_apply_visibility()
-	map_presented.emit(result["world_size"], result["maximum_height"])
 
 func _ensure_layers() -> void:
+	_terrain = get_node_or_null("Terrain3D") as Terrain3D
 	if _terrain == null:
-		_terrain = get_node_or_null("BaseTerrain") as MeshInstance3D
-	if _terrain == null:
-		_terrain = MeshInstance3D.new()
-		_terrain.name = "BaseTerrain"
+		_terrain = Terrain3D.new()
+		_terrain.name = "Terrain3D"
 		add_child(_terrain)
-	if _reference == null:
-		_reference = get_node_or_null("ReferenceTexture") as MeshInstance3D
-	if _reference == null:
-		_reference = MeshInstance3D.new()
-		_reference.name = "ReferenceTexture"
-		add_child(_reference)
-	if _grid == null:
-		_grid = get_node_or_null("HexGrid") as MeshInstance3D
-	if _grid == null:
-		_grid = MeshInstance3D.new()
-		_grid.name = "HexGrid"
-		add_child(_grid)
-	if terrain_mesh_resource == null:
-		terrain_mesh_resource = _terrain.mesh
-	if reference_mesh_resource == null:
-		reference_mesh_resource = _reference.mesh
-	if grid_mesh_resource == null:
-		grid_mesh_resource = _grid.mesh
-	_terrain.mesh = terrain_mesh_resource
-	_reference.mesh = reference_mesh_resource
-	_grid.mesh = grid_mesh_resource
+	_terrain.free_editor_textures = false
+	_reference = _mesh_node("ReferenceTexture")
+	_grid = _mesh_node("HexGrid")
 
-func _set_mesh_resources(terrain: ArrayMesh, reference: ArrayMesh, grid: ArrayMesh) -> void:
-	terrain_mesh_resource = terrain
-	reference_mesh_resource = reference
-	grid_mesh_resource = grid
-	_terrain.mesh = terrain_mesh_resource
-	_reference.mesh = reference_mesh_resource
-	_grid.mesh = grid_mesh_resource
-
-func assign_layer_owners(scene_owner: Node) -> void:
-	_ensure_layers()
-	_terrain.owner = scene_owner
-	_reference.owner = scene_owner
-	_grid.owner = scene_owner
+func _mesh_node(node_name: StringName) -> MeshInstance3D:
+	var node := get_node_or_null(NodePath(node_name)) as MeshInstance3D
+	if node == null:
+		node = MeshInstance3D.new()
+		node.name = node_name
+		add_child(node)
+	return node
 
 func _apply_visibility() -> void:
 	if _reference != null:
@@ -224,25 +171,12 @@ func _update_setting(change: Callable) -> void:
 func _on_settings_changed() -> void:
 	if _ignore_settings_changed:
 		return
-	_rebuild()
-	_apply_visibility()
+	_rebuild_overlays()
 
-func _mesh_texture(mesh: Mesh) -> Texture2D:
-	if mesh == null or mesh.get_surface_count() == 0:
-		return null
-	var material := mesh.surface_get_material(0) as StandardMaterial3D
-	return material.albedo_texture if material != null else null
-
-func _update_material_opacity(layer: MeshInstance3D, value: float) -> void:
+func _update_opacity(layer: MeshInstance3D, value: float) -> void:
 	if layer == null or layer.mesh == null or layer.mesh.get_surface_count() == 0:
 		return
-	var material := layer.material_override as StandardMaterial3D
-	if material == null:
-		var mesh_material := layer.mesh.surface_get_material(0) as StandardMaterial3D
-		if mesh_material != null:
-			material = mesh_material.duplicate() as StandardMaterial3D
-			material.resource_local_to_scene = true
-			layer.material_override = material
+	var material := layer.mesh.surface_get_material(0) as StandardMaterial3D
 	if material == null:
 		return
 	var color := material.albedo_color

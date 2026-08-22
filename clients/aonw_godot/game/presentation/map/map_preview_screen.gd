@@ -3,6 +3,9 @@ extends Node3D
 const OpenMap := preload("res://game/application/map/open_map.gd")
 const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
 const TileAtlasRepository := preload("res://game/infrastructure/map/tile_atlas_repository.gd")
+const TerrainArtifactRepository := preload(
+	"res://game/infrastructure/terrain/terrain_compiled_artifact_repository.gd"
+)
 const MapSource := preload("res://game/application/map/map_source.gd")
 const LocalMatchSessionController := preload(
 	"res://game/application/session/local_match_session_controller.gd"
@@ -17,9 +20,13 @@ const DEFAULT_MAP := "res://assets/maps/aonw2_starter/map.json"
 @onready var _grid_toggle: CheckButton = %GridToggle
 @onready var _status: Label = %Status
 
-var _open_map := OpenMap.new(JsonMapRepository.new(), TileAtlasRepository.new())
+var _open_map := OpenMap.new(
+	JsonMapRepository.new(),
+	TileAtlasRepository.new(),
+	TerrainArtifactRepository.new(),
+)
 var _local_session := LocalMatchSessionController.new()
-var _current_document: AonwMapDocument
+var _current_map: AonwMapView
 var _selected_unit_id := ""
 var _reachable_hexes: Dictionary = {}
 
@@ -61,22 +68,18 @@ func _open_source(source: AonwMapSource) -> void:
 		_status.text = "Error: %s" % result["message"]
 		return
 
-	_current_document = result["document"]
-	_interaction.present(
-		_current_document,
-		_surface.render_settings.hex_radius,
-		_surface.render_settings.height_step,
-	)
+	_current_map = result["map"]
 	_surface.present(
-		_current_document,
-		result["terrain_texture"],
+		_current_map,
+		result["terrain_artifact"],
 		result["reference_texture"],
 	)
+	_interaction.present(_surface.projection())
 	var missing: Array = result["missing_tiles"]
 	_status.text = "%s · %d×%d" % [
-		_current_document.map_name(),
-		_current_document.cols(),
-		_current_document.rows(),
+		_current_map.map_id(),
+		_current_map.cols(),
+		_current_map.rows(),
 	]
 	if not missing.is_empty():
 		_status.text += " · procedural tiles: %d" % missing.size()
@@ -86,7 +89,7 @@ func _open_source(source: AonwMapSource) -> void:
 	_setup_local_session(source)
 
 func _on_map_presented(world_size: Vector2, maximum_height: float) -> void:
-	_camera_rig.frame_map(world_size, _current_document.default_zoom(), maximum_height)
+	_camera_rig.frame_map(world_size, _current_map.default_zoom(), maximum_height)
 
 func _on_hex_selected(coordinate: Vector2i) -> void:
 	var unit_id: String = _unit_layer.unit_at(coordinate)
@@ -97,7 +100,7 @@ func _on_hex_selected(coordinate: Vector2i) -> void:
 		_move_selected_unit(coordinate)
 		return
 	_clear_movement_selection()
-	_status.text = "%s · hex %d,%d" % [_current_document.map_name(), coordinate.x, coordinate.y]
+	_status.text = "%s · hex %d,%d" % [_current_map.map_id(), coordinate.x, coordinate.y]
 
 func _setup_local_session(source: AonwMapSource) -> void:
 	_selected_unit_id = ""
@@ -111,7 +114,7 @@ func _setup_local_session(source: AonwMapSource) -> void:
 		_status.text += " · Rust map unavailable"
 		_present_empty_unit_layer()
 		return
-	var scenario_path := "res://assets/scenarios/%s.json" % _current_document.map_name()
+	var scenario_path := "res://assets/scenarios/%s.json" % _current_map.map_id()
 	var scenario_file := FileAccess.open(scenario_path, FileAccess.READ)
 	if scenario_file == null:
 		_status.text += " · no local scenario"
@@ -157,7 +160,7 @@ func _select_unit(unit_id: String, coordinate: Vector2i) -> void:
 		coordinates.append(target)
 	_interaction.set_reachable_hexes(coordinates)
 	_status.text = "%s · unit %s · reachable hexes: %d" % [
-		_current_document.map_name(), unit_id, coordinates.size(),
+		_current_map.map_id(), unit_id, coordinates.size(),
 	]
 	if _interaction.selected_hex() != coordinate:
 		push_error("movement selection is inconsistent with the picked hex")
@@ -182,7 +185,7 @@ func _move_selected_unit(target: Vector2i) -> void:
 	var selected := _selected_unit_id
 	_clear_movement_selection()
 	_status.text = "%s · moved %s → %d,%d" % [
-		_current_document.map_name(), selected, target.x, target.y,
+		_current_map.map_id(), selected, target.x, target.y,
 	]
 
 func _clear_movement_selection() -> void:

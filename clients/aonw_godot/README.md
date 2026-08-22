@@ -81,7 +81,9 @@ The bundled `aonw2_starter` map is the default and does not depend on files
 outside the Godot project. Regenerate it with `make godot-map-sync` and verify
 byte-for-byte reproducibility with `make godot-map-bundle-check`. The file
 picker accepts only strict map schema v1 documents whose matching asset bundle
-is available.
+and compiled Terrain3D profile are available. There is no runtime mesh-terrain
+fallback: the compiled base raster is imported into Terrain3D, while the
+reference texture and hex grid remain independent terrain-following overlays.
 
 Controls:
 
@@ -100,15 +102,20 @@ contain no movement legality rules.
 
 ## Boundaries
 
-- `game/application/map/read_model/` owns the immutable recipient renderer view;
+- `game/application/map/read_model/` owns the named, deeply immutable recipient
+  `MapView`, tile views, and objective views;
 - `game/application/map/` orchestrates runtime map loading;
+- `game/application/terrain/` owns the compiled Terrain3D application value and
+  its reader port;
 - `game/application/session/` owns local-match lifecycle, revision tracking, and
   client command/query construction;
-- `game/infrastructure/map/` decodes runtime map data and assembles textures;
+- `game/infrastructure/map/` is the only layer that maps raw `MapViewDto` data
+  and verifies reference bundles;
+- `game/infrastructure/terrain/` verifies and loads compiled Terrain3D artifacts;
 - `game/infrastructure/engine/` adapts JSON at the GDExtension boundary;
 - `game/presentation/map/geometry/` owns odd-q render and texture projection math,
   checked against the same neutral vectors as the successor Flutter client;
-- `game/presentation/` owns runtime meshes, camera, and UI;
+- `game/presentation/` owns Terrain3D presentation, overlay meshes, camera, and UI;
 - `editor/map_authoring/` owns Workbench application, infrastructure, and UI;
 - `addons/aonw_map_workbench/` is only the editor plugin composition root.
 

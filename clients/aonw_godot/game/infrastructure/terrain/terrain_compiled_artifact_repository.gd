@@ -1,10 +1,27 @@
 class_name AonwTerrainCompiledArtifactRepository
-extends RefCounted
+extends AonwTerrainArtifactReader
 
 const Artifact := preload(
-	"res://editor/map_authoring/infrastructure/terrain/terrain_compiled_artifact.gd"
+	"res://game/application/terrain/terrain_compiled_artifact.gd"
 )
 const MANIFEST_NAME := "terrain_compile.v1.json"
+const COMPILED_ROOT := "res://.godot/terrain_compiled"
+
+var _compiled_root: String
+
+func _init(compiled_root: String = COMPILED_ROOT) -> void:
+	_compiled_root = compiled_root
+
+func load_terrain(map: AonwMapView) -> Dictionary:
+	var result := load_artifact(_compiled_root.path_join(str(map.map_id())), str(map.map_id()))
+	if not result["ok"]:
+		return result
+	var artifact: AonwTerrainCompiledArtifact = result["artifact"]
+	if artifact.map_content_hash != map.content_hash():
+		return _failure("compiled terrain does not match the current map content hash")
+	if artifact.cols != map.cols() or artifact.rows != map.rows():
+		return _failure("compiled terrain dimensions do not match the current map")
+	return result
 
 func load_artifact(directory: String, expected_map_id: String = "") -> Dictionary:
 	var manifest_path := directory.path_join(MANIFEST_NAME)

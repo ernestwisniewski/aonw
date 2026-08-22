@@ -6,14 +6,21 @@ const HexGridGeometry := preload("res://game/presentation/map/geometry/hex_grid_
 const HexMapProjection := preload("res://game/presentation/map/hex_map_projection.gd")
 const JsonMapRepository := preload("res://game/infrastructure/map/json_map_repository.gd")
 const TileAtlasRepository := preload("res://game/infrastructure/map/tile_atlas_repository.gd")
+const TerrainArtifactRepository := preload(
+	"res://game/infrastructure/terrain/terrain_compiled_artifact_repository.gd"
+)
+const MapSurface := preload("res://game/presentation/map/map_surface.gd")
 const GEOMETRY_FIXTURE := "res://../../aonw_tests/fixtures/geometry/odd_q_flat_top.v1.json"
+const IDENTITY_FIXTURE := (
+	"res://../../aonw_tests/fixtures/maps/aonw2_starter/map_view_identity.v1.json"
+)
 
 var _failures: Array[String]
 
 func run(failures: Array[String]) -> void:
 	_failures = failures
 	_test_geometry()
-	_test_map_projection()
+	await _test_map_projection()
 
 func _test_geometry() -> void:
 	_test_shared_geometry_vectors()
@@ -106,9 +113,22 @@ func _test_map_projection() -> void:
 	_check(result["ok"], "projection fixture map opens")
 	if not result["ok"]:
 		return
-	var document = result["document"]
-	_test_bundle_content_identity(document)
-	var projection := HexMapProjection.new(document, 1.0, 0.16)
+	var map: AonwMapView = result["map"]
+	_test_shared_map_identity(map)
+	_test_bundle_content_identity(map)
+	var camera := Camera3D.new()
+	camera.current = true
+	Engine.get_main_loop().root.add_child(camera)
+	var surface := MapSurface.new()
+	Engine.get_main_loop().root.add_child(surface)
+	await Engine.get_main_loop().process_frame
+	surface.present(map, result["terrain_artifact"], result["reference_texture"])
+	var projection: AonwHexMapProjection = surface.projection()
+	_check(projection != null, "Terrain3D map projection is created")
+	if projection == null:
+		surface.free()
+		camera.free()
+		return
 	for coordinate in [Vector2i(0, 0), Vector2i(2, 3), Vector2i(4, 4)]:
 		var center: Vector3 = projection.hex_center(coordinate)
 		_check(
@@ -137,8 +157,33 @@ func _test_map_projection() -> void:
 		projection.ray_to_hex(Vector3.ZERO, Vector3.ZERO) == HexMapProjection.INVALID_HEX,
 		"zero-length ray does not select a hex",
 	)
+	_check(surface.terrain() is Terrain3D, "runtime terrain backend is Terrain3D")
+	_check(
+		surface.find_child("BaseTerrain", true, false) == null,
+		"runtime has no mesh terrain fallback",
+	)
+	surface.free()
+	camera.free()
 
-func _test_bundle_content_identity(document: AonwMapDocument) -> void:
+func _test_shared_map_identity(map: AonwMapView) -> void:
+	var file := FileAccess.open(ProjectSettings.globalize_path(IDENTITY_FIXTURE), FileAccess.READ)
+	_check(file != null, "shared MapView identity fixture opens")
+	if file == null:
+		return
+	var identity: Variant = JSON.parse_string(file.get_as_text())
+	_check(identity is Dictionary, "shared MapView identity fixture parses")
+	if identity is not Dictionary:
+		return
+	_check(
+		map.map_id() == StringName(identity["mapId"])
+		and map.content_hash() == identity["contentHash"]
+		and map.grid_layout() == StringName(identity["gridLayout"])
+		and map.cols() == int(identity["cols"])
+		and map.rows() == int(identity["rows"]),
+		"Godot MapView matches the shared client identity",
+	)
+
+func _test_bundle_content_identity(map: AonwMapView) -> void:
 	var source_path := ProjectSettings.globalize_path(
 		"res://assets/maps/aonw2_starter/map_texture_manifest.json"
 	)
@@ -157,7 +202,7 @@ func _test_bundle_content_identity(document: AonwMapDocument) -> void:
 		return
 	invalid_file.store_string(JSON.stringify(manifest))
 	invalid_file.close()
-	var result := TileAtlasRepository.new().load_atlas(document, invalid_directory)
+	var result := TileAtlasRepository.new().load_atlas(map, invalid_directory)
 	_check(
 		not result["ok"] and "map content hash does not match" in result["message"],
 		"bundle for a different map content hash is rejected",
@@ -166,7 +211,11 @@ func _test_bundle_content_identity(document: AonwMapDocument) -> void:
 	DirAccess.remove_absolute(invalid_directory)
 
 func _open_map():
-	return OpenMap.new(JsonMapRepository.new(), TileAtlasRepository.new())
+	return OpenMap.new(
+		JsonMapRepository.new(),
+		TileAtlasRepository.new(),
+		TerrainArtifactRepository.new(),
+	)
 
 func _check(condition: bool, message: String) -> void:
 	if not condition:

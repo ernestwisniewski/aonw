@@ -12,7 +12,7 @@ const TileAtlasRepository := preload(
 )
 const OpenMap := preload("res://game/application/map/open_map.gd")
 const ArtifactRepository := preload(
-	"res://editor/map_authoring/infrastructure/terrain/terrain_compiled_artifact_repository.gd"
+	"res://game/infrastructure/terrain/terrain_compiled_artifact_repository.gd"
 )
 const SceneRepository := preload(
 	"res://editor/map_authoring/infrastructure/terrain/terrain_authoring_scene_repository.gd"
@@ -24,8 +24,11 @@ const GenerateTerrainAuthoringMap := preload(
 var _catalog := MapAssetCatalog.new()
 var _scene_repository := SceneRepository.new()
 var _generator := GenerateTerrainAuthoringMap.new(
-	OpenMap.new(JsonMapRepository.new(), TileAtlasRepository.new()),
-	ArtifactRepository.new(),
+	OpenMap.new(
+		JsonMapRepository.new(),
+		TileAtlasRepository.new(),
+		ArtifactRepository.new(),
+	),
 	_scene_repository,
 )
 var _sources: Array[AonwMapSource] = []

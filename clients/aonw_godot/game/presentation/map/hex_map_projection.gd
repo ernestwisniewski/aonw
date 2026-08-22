@@ -4,44 +4,41 @@ extends RefCounted
 const HexGridGeometry := preload("res://game/presentation/map/geometry/hex_grid_geometry.gd")
 const INVALID_HEX := Vector2i(-1, -1)
 
-var _document: AonwMapDocument
+var _map: AonwMapView
+var _artifact: AonwTerrainCompiledArtifact
+var _terrain_data: Terrain3DData
 var _geometry: AonwHexGridGeometry
-var _map_center: Vector2
-var _height_step: float
-var _corner_heights := {}
 
 func _init(
-	document: AonwMapDocument,
-	hex_radius: float = 1.0,
-	height_step: float = 0.16,
+	map: AonwMapView,
+	artifact: AonwTerrainCompiledArtifact,
+	terrain_data: Terrain3DData,
 ) -> void:
-	_document = document
-	_geometry = HexGridGeometry.new(document.cols(), document.rows(), hex_radius)
-	_map_center = _geometry.bounds().get_center()
-	_height_step = height_step
-	_corner_heights = _build_corner_heights()
+	assert(map != null, "MapView is required")
+	assert(artifact != null, "Compiled Terrain3D artifact is required")
+	assert(terrain_data != null, "Terrain3D data is required")
+	assert(str(map.map_id()) == artifact.map_id, "Terrain mapId must match MapView")
+	assert(map.content_hash() == artifact.map_content_hash, "Terrain hash must match MapView")
+	_map = map
+	_artifact = artifact
+	_terrain_data = terrain_data
+	_geometry = HexGridGeometry.new(map.cols(), map.rows(), artifact.hex_radius_meters)
 
 func contains(coordinate: Vector2i) -> bool:
 	return _geometry.contains(coordinate)
 
 func hex_center(coordinate: Vector2i, vertical_offset: float = 0.0) -> Vector3:
-	var center := _geometry.tile_center(coordinate) - _map_center
-	return Vector3(center.x, hex_height(coordinate) + vertical_offset, center.y)
+	return _terrain_point(_geometry.tile_center(coordinate), vertical_offset)
 
 func hex_corner(coordinate: Vector2i, corner: int, vertical_offset: float = 0.0) -> Vector3:
-	var point := _geometry.corner_position(coordinate, corner) - _map_center
-	var key := _geometry.corner_key(coordinate, corner)
-	return Vector3(point.x, float(_corner_heights[key]) + vertical_offset, point.y)
+	return _terrain_point(_geometry.corner_position(coordinate, corner), vertical_offset)
 
 func hex_height(coordinate: Vector2i) -> float:
-	var tile := _document.tile_at(coordinate)
-	if tile.is_empty():
-		return 0.0
-	return float(tile["height"]) * _height_step
+	return hex_center(coordinate).y
 
 func local_to_hex(local_position: Vector3) -> Vector2i:
-	var point := Vector2(local_position.x, local_position.z) + _map_center
-	var coordinate := _geometry.tile_at_point(point)
+	var world_point := Vector2(local_position.x, local_position.z) + _artifact.world_min_meters
+	var coordinate := _geometry.tile_at_point(world_point)
 	return coordinate if contains(coordinate) else INVALID_HEX
 
 func ray_to_hex(local_origin: Vector3, local_direction: Vector3) -> Vector2i:
@@ -49,8 +46,8 @@ func ray_to_hex(local_origin: Vector3, local_direction: Vector3) -> Vector2i:
 		return INVALID_HEX
 	var best := INVALID_HEX
 	var best_distance := INF
-	for tile in _document.tiles():
-		var coordinate := Vector2i(tile["col"], tile["row"])
+	for tile in _map.tiles():
+		var coordinate := tile.coordinate()
 		var center := hex_center(coordinate)
 		for corner in 6:
 			var intersection: Variant = Geometry3D.ray_intersects_triangle(
@@ -71,24 +68,15 @@ func ray_to_hex(local_origin: Vector3, local_direction: Vector3) -> Vector2i:
 func geometry() -> AonwHexGridGeometry:
 	return _geometry
 
-func map_center() -> Vector2:
-	return _map_center
+func world_size() -> Vector2:
+	return _geometry.bounds().size
 
-func corner_keys() -> Array:
-	return _corner_heights.keys()
-
-func corner_height(key: Vector2i) -> float:
-	return float(_corner_heights[key])
-
-func _build_corner_heights() -> Dictionary:
-	var totals := {}
-	for tile in _document.tiles():
-		var coordinate := Vector2i(tile["col"], tile["row"])
-		for corner in 6:
-			var key := _geometry.corner_key(coordinate, corner)
-			var total: Vector2 = totals.get(key, Vector2.ZERO)
-			totals[key] = total + Vector2(float(tile["height"]) * _height_step, 1.0)
-	for key in totals:
-		var total: Vector2 = totals[key]
-		totals[key] = total.x / total.y
-	return totals
+func _terrain_point(world_point: Vector2, vertical_offset: float) -> Vector3:
+	var local := Vector3(
+		world_point.x - _artifact.world_min_meters.x,
+		0.0,
+		world_point.y - _artifact.world_min_meters.y,
+	)
+	var height := _terrain_data.get_height(local)
+	local.y = (height if is_finite(height) else 0.0) + vertical_offset
+	return local
